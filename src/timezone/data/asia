@@ -1,4 +1,4 @@
-# @(#)asia	8.11
+# @(#)asia	8.12
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -568,13 +568,14 @@ Zone Asia/Jayapura	9:22:48 -	LMT	1932 Nov
 # Reingold's/Dershowitz' calculator gives correctly the Gregorian date
 # 2058-03-21 for 1 Farvardin 1437 (astronomical).
 #
-# From Paul Eggert (2006-03-22):
-# The above comments about post-2006 transitions may become relevant again,
-# if Iran ever resuscitates DST, so we'll leave the comments in.
-#
 # From Steffen Thorsen (2006-03-22):
 # Several of my users have reported that Iran will not observe DST anymore:
 # http://www.irna.ir/en/news/view/line-17/0603193812164948.htm
+#
+# From Reuters (2007-09-16), with a heads-up from Jesper Norgaard Welen:
+# ... the Guardian Council ... approved a law on Sunday to re-introduce
+# daylight saving time ...
+# http://uk.reuters.com/article/oilRpt/idUKBLA65048420070916
 #
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Iran	1978	1980	-	Mar	21	0:00	1:00	D
@@ -596,6 +597,36 @@ Rule	Iran	2004	only	-	Mar	21	0:00	1:00	D
 Rule	Iran	2004	only	-	Sep	21	0:00	0	S
 Rule	Iran	2005	only	-	Mar	22	0:00	1:00	D
 Rule	Iran	2005	only	-	Sep	22	0:00	0	S
+Rule	Iran	2008	only	-	Mar	21	0:00	1:00	D
+Rule	Iran	2008	only	-	Sep	21	0:00	0	S
+Rule	Iran	2009	2011	-	Mar	22	0:00	1:00	D
+Rule	Iran	2009	2011	-	Sep	22	0:00	0	S
+Rule	Iran	2012	only	-	Mar	21	0:00	1:00	D
+Rule	Iran	2012	only	-	Sep	21	0:00	0	S
+Rule	Iran	2013	2015	-	Mar	22	0:00	1:00	D
+Rule	Iran	2013	2015	-	Sep	22	0:00	0	S
+Rule	Iran	2016	only	-	Mar	21	0:00	1:00	D
+Rule	Iran	2016	only	-	Sep	21	0:00	0	S
+Rule	Iran	2017	2019	-	Mar	22	0:00	1:00	D
+Rule	Iran	2017	2019	-	Sep	22	0:00	0	S
+Rule	Iran	2020	only	-	Mar	21	0:00	1:00	D
+Rule	Iran	2020	only	-	Sep	21	0:00	0	S
+Rule	Iran	2021	2023	-	Mar	22	0:00	1:00	D
+Rule	Iran	2021	2023	-	Sep	22	0:00	0	S
+Rule	Iran	2024	only	-	Mar	21	0:00	1:00	D
+Rule	Iran	2024	only	-	Sep	21	0:00	0	S
+Rule	Iran	2025	2027	-	Mar	22	0:00	1:00	D
+Rule	Iran	2025	2027	-	Sep	22	0:00	0	S
+Rule	Iran	2028	2029	-	Mar	21	0:00	1:00	D
+Rule	Iran	2028	2029	-	Sep	21	0:00	0	S
+Rule	Iran	2030	2031	-	Mar	22	0:00	1:00	D
+Rule	Iran	2030	2031	-	Sep	22	0:00	0	S
+Rule	Iran	2032	2033	-	Mar	21	0:00	1:00	D
+Rule	Iran	2032	2033	-	Sep	21	0:00	0	S
+Rule	Iran	2034	2035	-	Mar	22	0:00	1:00	D
+Rule	Iran	2034	2035	-	Sep	22	0:00	0	S
+Rule	Iran	2036	2037	-	Mar	21	0:00	1:00	D
+Rule	Iran	2036	2037	-	Sep	21	0:00	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Tehran	3:25:44	-	LMT	1916
 			3:25:44	-	TMT	1946	# Tehran Mean Time
@@ -1518,6 +1549,17 @@ Zone	Asia/Karachi	4:28:12 -	LMT	1907
 # I guess it is likely that next year's date will be moved as well,
 # because of the Ramadan.
 
+# From Jesper Norgaard Welen (2007-09-18):
+# According to Steffen Thorsen's web site the Gaza Strip and the rest of the
+# Palestinian territories left DST early on 13.th. of September at 2:00.
+
+# From Paul Eggert (2007-09-20):
+# My understanding is that Gaza and the West Bank disagree even over when
+# the weekend is (Thursday+Friday versus Friday+Saturday), so I'd be a bit
+# surprised if they agreed about DST.  But for now, assume they agree.
+# For lack of better information, predict that future changes will be
+# the 2nd Thursday of September at 02:00.
+
 # The rules for Egypt are stolen from the `africa' file.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule EgyptAsia	1957	only	-	May	10	0:00	1:00	S
@@ -1533,7 +1575,7 @@ Rule Palestine	2004	only	-	Oct	 1	1:00	0	-
 Rule Palestine	2005	only	-	Oct	 4	2:00	0	-
 Rule Palestine	2006	max	-	Apr	 1	0:00	1:00	S
 Rule Palestine	2006	only	-	Sep	22	0:00	0	-
-Rule Palestine	2007	max	-	Oct	Fri>=15	0:00	0	-
+Rule Palestine	2007	max	-	Sep	Thu>=8	2:00	0	-
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Gaza	2:17:52	-	LMT	1900 Oct
