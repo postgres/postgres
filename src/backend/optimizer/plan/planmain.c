@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.102 2007/07/07 20:46:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.103 2007/10/04 20:44:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,6 +210,13 @@ query_planner(PlannerInfo *root, List *tlist,
 	build_base_rel_tlists(root, tlist);
 
 	joinlist = deconstruct_jointree(root);
+
+	/*
+	 * Vars mentioned in InClauseInfo items also have to be added to baserel
+	 * targetlists.  Nearly always, they'd have got there from the original
+	 * WHERE qual, but in corner cases maybe not.
+	 */
+	add_IN_vars_to_tlists(root);
 
 	/*
 	 * Reconsider any postponed outer-join quals now that we have built up

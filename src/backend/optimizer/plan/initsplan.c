@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.133 2007/08/31 01:44:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.134 2007/10/04 20:44:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,6 +133,40 @@ build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
 	{
 		add_vars_to_targetlist(root, tlist_vars, bms_make_singleton(0));
 		list_free(tlist_vars);
+	}
+}
+
+/*
+ * add_IN_vars_to_tlists
+ *	  Add targetlist entries for each var needed in InClauseInfo entries
+ *	  to the appropriate base relations.
+ *
+ * Normally this is a waste of time because scanning of the WHERE clause
+ * will have added them.  But it is possible that eval_const_expressions()
+ * simplified away all references to the vars after the InClauseInfos were
+ * made.  We need the IN's righthand-side vars to be available at the join
+ * anyway, in case we try to unique-ify the subselect's outputs.  (The only
+ * known case that provokes this is "WHERE false AND foo IN (SELECT ...)".
+ * We don't try to be very smart about such cases, just correct.)
+ */
+void
+add_IN_vars_to_tlists(PlannerInfo *root)
+{
+	ListCell   *l;
+
+	foreach(l, root->in_info_list)
+	{
+		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
+		List	   *in_vars;
+
+		in_vars = pull_var_clause((Node *) ininfo->sub_targetlist, false);
+		if (in_vars != NIL)
+		{
+			add_vars_to_targetlist(root, in_vars,
+								   bms_union(ininfo->lefthand,
+											 ininfo->righthand));
+			list_free(in_vars);
+		}
 	}
 }
 
