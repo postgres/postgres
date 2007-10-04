@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.81.4.1 2005/09/28 21:17:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.81.4.2 2007/10/04 20:45:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,6 +134,13 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 	build_base_rel_tlists(root, tlist);
 
 	(void) distribute_quals_to_rels(root, (Node *) root->jointree, false);
+
+	/*
+	 * Vars mentioned in InClauseInfo items also have to be added to baserel
+	 * targetlists.  Nearly always, they'd have got there from the original
+	 * WHERE qual, but in corner cases maybe not.
+	 */
+	add_IN_vars_to_tlists(root);
 
 	/*
 	 * Use the completed lists of equijoined keys to deduce any implied

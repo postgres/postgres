@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.79.4.1 2005/09/28 21:17:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.79.4.2 2007/10/04 20:45:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@ extern bool is_projection_capable_plan(Plan *plan);
  */
 extern void add_base_rels_to_query(Query *root, Node *jtnode);
 extern void build_base_rel_tlists(Query *root, List *final_tlist);
+extern void add_IN_vars_to_tlists(Query *root);
 extern Relids distribute_quals_to_rels(Query *root, Node *jtnode,
 									   bool below_outer_join);
 extern void process_implied_equality(Query *root,
