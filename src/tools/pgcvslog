@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgcvslog,v 1.37 2007/10/05 16:42:32 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgcvslog,v 1.38 2007/10/05 18:40:52 momjian Exp $
 
 # This utility is used to generate a compact list of changes
 # for each release, bjm 2000-02-22
@@ -129,6 +129,7 @@ awk '	BEGIN	{html="'"$HTML"'"; lineno = 0;}
 	# mark back branches
 	$1 == "revision" \
 	{
+		# back branches have +2 periods in revision number
 		if ($2 ~ /\..*\./)
 			back_branch=" <branch>"
 		else	back_branch = ""
