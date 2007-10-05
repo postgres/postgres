@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.114 2007/09/28 22:33:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.115 2007/10/05 17:06:11 tgl Exp $
  *
  **********************************************************************/
 
@@ -76,7 +76,8 @@ PG_MODULE_MAGIC;
  **********************************************************************/
 typedef struct pltcl_proc_desc
 {
-	char	   *proname;
+	char	   *user_proname;
+	char	   *internal_proname;
 	TransactionId fn_xmin;
 	ItemPointerData fn_tid;
 	bool		fn_readonly;
@@ -549,7 +550,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	 ************************************************************/
 	Tcl_DStringInit(&tcl_cmd);
 	Tcl_DStringInit(&list_tmp);
-	Tcl_DStringAppendElement(&tcl_cmd, prodesc->proname);
+	Tcl_DStringAppendElement(&tcl_cmd, prodesc->internal_proname);
 
 	/************************************************************
 	 * Add all call arguments to the command
@@ -636,9 +637,10 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		UTF_BEGIN;
 		ereport(ERROR,
 				(errmsg("%s", interp->result),
-				 errcontext("%s",
+				 errcontext("%s\nin PL/Tcl function \"%s\"",
 							UTF_U2E(Tcl_GetVar(interp, "errorInfo",
-											   TCL_GLOBAL_ONLY)))));
+											   TCL_GLOBAL_ONLY)),
+							prodesc->user_proname)));
 		UTF_END;
 	}
 
@@ -723,7 +725,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		/* The procedure name */
-		Tcl_DStringAppendElement(&tcl_cmd, prodesc->proname);
+		Tcl_DStringAppendElement(&tcl_cmd, prodesc->internal_proname);
 
 		/* The trigger name for argument TG_name */
 		Tcl_DStringAppendElement(&tcl_cmd, trigdata->tg_trigger->tgname);
@@ -865,9 +867,10 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		UTF_BEGIN;
 		ereport(ERROR,
 				(errmsg("%s", interp->result),
-				 errcontext("%s",
+				 errcontext("%s\nin PL/Tcl function \"%s\"",
 							UTF_U2E(Tcl_GetVar(interp, "errorInfo",
-											   TCL_GLOBAL_ONLY)))));
+											   TCL_GLOBAL_ONLY)),
+							prodesc->user_proname)));
 		UTF_END;
 	}
 
@@ -1085,7 +1088,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 		MemSet(prodesc, 0, sizeof(pltcl_proc_desc));
-		prodesc->proname = strdup(internal_proname);
+		prodesc->user_proname = strdup(NameStr(procStruct->proname));
+		prodesc->internal_proname = strdup(internal_proname);
 		prodesc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
 		prodesc->fn_tid = procTup->t_self;
 
@@ -1101,7 +1105,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 								 0, 0, 0);
 		if (!HeapTupleIsValid(langTup))
 		{
-			free(prodesc->proname);
+			free(prodesc->user_proname);
+			free(prodesc->internal_proname);
 			free(prodesc);
 			elog(ERROR, "cache lookup failed for language %u",
 				 procStruct->prolang);
@@ -1126,7 +1131,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
 			{
-				free(prodesc->proname);
+				free(prodesc->user_proname);
+				free(prodesc->internal_proname);
 				free(prodesc);
 				elog(ERROR, "cache lookup failed for type %u",
 					 procStruct->prorettype);
@@ -1140,7 +1146,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 					 /* okay */ ;
 				else if (procStruct->prorettype == TRIGGEROID)
 				{
-					free(prodesc->proname);
+					free(prodesc->user_proname);
+					free(prodesc->internal_proname);
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1148,7 +1155,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 				}
 				else
 				{
-					free(prodesc->proname);
+					free(prodesc->user_proname);
+					free(prodesc->internal_proname);
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1159,7 +1167,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 
 			if (typeStruct->typtype == TYPTYPE_COMPOSITE)
 			{
-				free(prodesc->proname);
+				free(prodesc->user_proname);
+				free(prodesc->internal_proname);
 				free(prodesc);
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1187,7 +1196,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
 				{
-					free(prodesc->proname);
+					free(prodesc->user_proname);
+					free(prodesc->internal_proname);
 					free(prodesc);
 					elog(ERROR, "cache lookup failed for type %u",
 						 procStruct->proargtypes.values[i]);
@@ -1197,7 +1207,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 				/* Disallow pseudotype argument */
 				if (typeStruct->typtype == TYPTYPE_PSEUDO)
 				{
-					free(prodesc->proname);
+					free(prodesc->user_proname);
+					free(prodesc->internal_proname);
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1305,7 +1316,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		Tcl_DStringFree(&proc_internal_def);
 		if (tcl_rc != TCL_OK)
 		{
-			free(prodesc->proname);
+			free(prodesc->user_proname);
+			free(prodesc->internal_proname);
 			free(prodesc);
 			elog(ERROR, "could not create internal procedure \"%s\": %s",
 				 internal_proname, interp->result);
@@ -1315,7 +1327,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		 * Add the proc description block to the hashtable
 		 ************************************************************/
 		hashent = Tcl_CreateHashEntry(pltcl_proc_hash,
-									  prodesc->proname, &hashnew);
+									  prodesc->internal_proname, &hashnew);
 		Tcl_SetHashValue(hashent, (ClientData) prodesc);
 	}
 

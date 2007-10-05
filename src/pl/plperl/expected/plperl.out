@@ -496,4 +496,4 @@ CREATE OR REPLACE FUNCTION perl_spi_prepared_bad(double precision) RETURNS doubl
   return $result;
 $$ LANGUAGE plperl;
 SELECT perl_spi_prepared_bad(4.35) as "double precision";
-ERROR:  error from Perl function: type "does_not_exist" does not exist at line 2.
+ERROR:  error from Perl function "perl_spi_prepared_bad": type "does_not_exist" does not exist at line 2.

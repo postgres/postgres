@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.129 2007/06/28 17:49:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.130 2007/10/05 17:06:11 tgl Exp $
  *
  **********************************************************************/
 
@@ -39,7 +39,7 @@ PG_MODULE_MAGIC;
  **********************************************************************/
 typedef struct plperl_proc_desc
 {
-	char	   *proname;
+	char	   *proname;		/* user name of procedure */
 	TransactionId fn_xmin;
 	ItemPointerData fn_tid;
 	bool		fn_readonly;
@@ -60,7 +60,7 @@ typedef struct plperl_proc_desc
 
 typedef struct plperl_proc_entry
 {
-	char proc_name[NAMEDATALEN];
+	char proc_name[NAMEDATALEN]; /* internal name, eg __PLPerl_proc_39987 */
 	plperl_proc_desc *proc_data;
 } plperl_proc_entry;
 
@@ -887,7 +887,7 @@ plperl_validator(PG_FUNCTION_ARGS)
  * supplied in s, and returns a reference to the closure.
  */
 static SV  *
-plperl_create_sub(char *s, bool trusted)
+plperl_create_sub(char *proname, char *s, bool trusted)
 {
 	dSP;
 	SV		   *subref;
@@ -941,7 +941,8 @@ plperl_create_sub(char *s, bool trusted)
 		LEAVE;
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("creation of Perl function failed: %s",
+				 errmsg("creation of Perl function \"%s\" failed: %s",
+						proname,
 						strip_trailing_ws(SvPV(ERRSV, PL_na)))));
 	}
 
@@ -1070,7 +1071,8 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		LEAVE;
 		/* XXX need to find a way to assign an errcode here */
 		ereport(ERROR,
-				(errmsg("error from Perl function: %s",
+				(errmsg("error from Perl function \"%s\": %s",
+						desc->proname,
 						strip_trailing_ws(SvPV(ERRSV, PL_na)))));
 	}
 
@@ -1127,7 +1129,8 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 		LEAVE;
 		/* XXX need to find a way to assign an errcode here */
 		ereport(ERROR,
-				(errmsg("error from Perl trigger function: %s",
+				(errmsg("error from Perl function \"%s\": %s",
+						desc->proname,
 						strip_trailing_ws(SvPV(ERRSV, PL_na)))));
 	}
 
@@ -1403,7 +1406,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 {
 	HeapTuple	procTup;
 	Form_pg_proc procStruct;
-	char		internal_proname[64];
+	char		internal_proname[NAMEDATALEN];
 	plperl_proc_desc *prodesc = NULL;
 	int			i;
 	plperl_proc_entry *hash_entry;
@@ -1448,10 +1451,11 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 
 		if (!uptodate)
 		{
-			free(prodesc); /* are we leaking memory here? */
+			free(prodesc->proname);
+			free(prodesc);
 			prodesc = NULL;
 			hash_search(plperl_proc_hash, internal_proname,
-						HASH_REMOVE,NULL);
+						HASH_REMOVE, NULL);
 		}
 	}
 
@@ -1482,7 +1486,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 		MemSet(prodesc, 0, sizeof(plperl_proc_desc));
-		prodesc->proname = strdup(internal_proname);
+		prodesc->proname = strdup(NameStr(procStruct->proname));
 		prodesc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
 		prodesc->fn_tid = procTup->t_self;
 
@@ -1628,7 +1632,9 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 
 		check_interp(prodesc->lanpltrusted);
 
-		prodesc->reference = plperl_create_sub(proc_source, prodesc->lanpltrusted);
+		prodesc->reference = plperl_create_sub(prodesc->proname,
+											   proc_source,
+											   prodesc->lanpltrusted);
 
 		restore_context(oldcontext);
 
