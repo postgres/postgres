@@ -1,12 +1,18 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgcvslog,v 1.36 2007/10/01 13:04:55 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgcvslog,v 1.37 2007/10/05 16:42:32 momjian Exp $
 
 # This utility is used to generate a compact list of changes
 # for each release, bjm 2000-02-22
 
-# Usage:  pgcvslog [-h]
+# Usage:  pgcvslog [-d] [-h]
+# -d delete commits that include back branches
 # -h is HTML output
+
+# This program basically takes a cvs log, groups it by commit timestamp
+# and line number, then compares adjacent messages.  If they have the same
+# commit message, they are assumed to be part of the same commit and
+# appear as one commit message with multiple file names
 
 # All branches:	
 # cvs log -d'>1999-06-14 00:00:00 GMT' . > log
@@ -32,10 +38,26 @@
 #	/cvsroot/pgsql/doc/src/FAQ/FAQ.html
 #
 
+HTML="N"
+DEL="N"
 if [ "X$1" = "X-h" ]
 then	HTML="Y"
 	shift
-else	HTML="N"
+fi
+
+if [ "X$1" = "X-d" ]
+then	DEL="Y"
+	shift
+fi
+
+if [ "X$1" = "X-h" ]
+then	HTML="Y"
+	shift
+fi
+
+if [ "$HTML" = "Y" -a "$DEL" = "Y" ]
+then	echo "Cannot use -d and -h together" 1>&2
+	exit 1
 fi
 
 cat "$@" |
@@ -127,7 +149,7 @@ awk '   BEGIN   { narr_slot = 0; oldnarr_slot=0; save_working = "";
 	{
 		# We have a filename, so we look at the previous
 		# narrative to see if it is new narrative text.
-		if ($0 ~ "^/" || $0 ~ ">/")
+		if ($0 ~ "^/")
 		{
 			# If there are a different number of narrative
 			# lines, they cannot possibly be the same.
@@ -242,5 +264,43 @@ then	echo "<HTML>"
 	cat
 	echo "</BODY>"
 	echo "</HTML>"
+else	cat
+fi |
+
+# if requested, remove any commit that has the "<branch>" text
+if [ "$DEL" = "Y" ]
+then	awk 'BEGIN \
+	{
+		slot = 0;
+	}
+
+	{
+		# new commit?
+		if ($0 ~ "^---$")
+		{
+			skip = "N";
+			for (i=1; i <= slot; i++)
+				if (commit[i] ~ "<branch>")
+					skip = "Y";
+			if (skip == "N")
+				for (i=1; i <= slot; i++)
+					print commit[i];
+			slot = 0;
+		}
+
+		# accumulate commit
+		commit[++slot] = $0;
+	}
+
+	END \
+	{
+		skip = "N";
+		for (i=1; i <= slot; i++)
+			if (commit[i] ~ "<branch>")
+				skip = "Y";
+		if (skip == "N")
+			for (i=1; i <= slot; i++)
+				print commit[i];
+	}'
 else	cat
 fi
