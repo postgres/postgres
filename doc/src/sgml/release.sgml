@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.514 2007/10/04 22:55:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.515 2007/10/05 04:03:41 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -1585,13 +1585,13 @@ do it for earlier branch release files.
 
        <para>
         There is now an <type>xml</> data type and standard operations
-        on it; see <xref linkend="datatype-xml">.
+        on it.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Support enum data types (see <xref linkend="datatype-enum">)
+        Support enum data types
        (Tom Dunstan)
        </para>
       </listitem>
@@ -1599,7 +1599,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Add a <type>uuid</type> data type similar to that defined in RFC
-        4122 (see <xref linkend="datatype-uuid">) (Gevik Babakhani, Neil)
+        4122 (Gevik Babakhani, Neil)
        </para>
       </listitem>
 
