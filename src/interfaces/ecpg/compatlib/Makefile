@@ -2,9 +2,10 @@
 #
 # Makefile for ecpg compatibility library
 #
-# Copyright (c) 1994, Regents of the University of California
+# Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.35 2007/10/04 18:32:07 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.36 2007/10/05 01:51:40 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -46,8 +47,12 @@ snprintf.c: % : $(top_srcdir)/src/port/%
 # Since we can't assume that Windows boxes will have sed, the .DEF files are
 # always built and included in distribution tarballs.
 
+distprep: def-files
+
 .PHONY: def-files
+
 def-files: $(srcdir)/libecpg_compatdll.def $(srcdir)/blibecpg_compatdll.def
+
 $(srcdir)/libecpg_compatdll.def: exports.txt
 	echo '; DEF file for MS VC++' > $@
 	echo 'LIBRARY LIBECPG_COMPAT' >> $@
@@ -93,5 +98,8 @@ installdirs:
 
 uninstall: uninstall-lib
 
-clean distclean maintainer-clean: clean-lib
+clean distclean: clean-lib
 	rm -f $(OBJS) snprintf.c exports.list
+
+maintainer-clean: distclean
+	rm -f $(srcdir)/libecpg_compatdll.def $(srcdir)/blibecpg_compatdll.def
