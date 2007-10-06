@@ -25,7 +25,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/include/regex/regcustom.h,v 1.5 2005/10/15 02:49:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regcustom.h,v 1.6 2007/10/06 16:01:51 tgl Exp $
  */
 
 /* headers if any */
@@ -41,7 +41,8 @@
 #define FUNCPTR(name, args) (*name) args
 #define MALLOC(n)		malloc(n)
 #define FREE(p)			free(VS(p))
-#define REALLOC(p,n)		realloc(VS(p),n)
+#define REALLOC(p,n)	realloc(VS(p),n)
+#define assert(x)		Assert(x)
 
 /* internal character type and related */
 typedef pg_wchar chr;			/* the type itself */
