@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/rege_dfa.c,v 1.7 2007/02/01 19:10:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/rege_dfa.c,v 1.8 2007/10/06 16:05:54 tgl Exp $
  *
  */
 
@@ -78,7 +78,7 @@ longest(struct vars * v,		/* used only for debug and exec flags */
 	if (v->eflags & REG_FTRACE)
 		while (cp < realstop)
 		{
-			FDEBUG(("+++ at c%d +++\n", css - d->ssets));
+			FDEBUG(("+++ at c%d +++\n", (int) (css - d->ssets)));
 			co = GETCOLOR(cm, *cp);
 			FDEBUG(("char %c, color %ld\n", (char) *cp, (long) co));
 			ss = css->outs[co];
@@ -109,7 +109,7 @@ longest(struct vars * v,		/* used only for debug and exec flags */
 		}
 
 	/* shutdown */
-	FDEBUG(("+++ shutdown at c%d +++\n", css - d->ssets));
+	FDEBUG(("+++ shutdown at c%d +++\n", (int) (css - d->ssets)));
 	if (cp == v->stop && stop == v->stop)
 	{
 		if (hitstopp != NULL)
@@ -184,7 +184,7 @@ shortest(struct vars * v,
 	if (v->eflags & REG_FTRACE)
 		while (cp < realmax)
 		{
-			FDEBUG(("--- at c%d ---\n", css - d->ssets));
+			FDEBUG(("--- at c%d ---\n", (int) (css - d->ssets)));
 			co = GETCOLOR(cm, *cp);
 			FDEBUG(("char %c, color %ld\n", (char) *cp, (long) co));
 			ss = css->outs[co];
@@ -503,7 +503,7 @@ miss(struct vars * v,			/* used only for debug flags */
 	for (p = d->ssets, i = d->nssused; i > 0; p++, i--)
 		if (HIT(h, d->work, p, d->wordsper))
 		{
-			FDEBUG(("cached c%d\n", p - d->ssets));
+			FDEBUG(("cached c%d\n", (int) (p - d->ssets)));
 			break;				/* NOTE BREAK OUT */
 		}
 	if (i == 0)
@@ -521,7 +521,8 @@ miss(struct vars * v,			/* used only for debug flags */
 
 	if (!sawlacons)
 	{							/* lookahead conds. always cache miss */
-		FDEBUG(("c%d[%d]->c%d\n", css - d->ssets, co, p - d->ssets));
+		FDEBUG(("c%d[%d]->c%d\n",
+				(int) (css - d->ssets), co, (int) (p - d->ssets)));
 		css->outs[co] = p;
 		css->inchain[co] = p->ins;
 		p->ins.ss = css;
@@ -586,7 +587,7 @@ getvacant(struct vars * v,		/* used only for debug flags */
 	while ((p = ap.ss) != NULL)
 	{
 		co = ap.co;
-		FDEBUG(("zapping c%d's %ld outarc\n", p - d->ssets, (long) co));
+		FDEBUG(("zapping c%d's %ld outarc\n", (int) (p - d->ssets), (long) co));
 		p->outs[co] = NULL;
 		ap = p->inchain[co];
 		p->inchain[co].ss = NULL;		/* paranoia */
@@ -600,7 +601,7 @@ getvacant(struct vars * v,		/* used only for debug flags */
 		assert(p != ss);		/* not self-referential */
 		if (p == NULL)
 			continue;			/* NOTE CONTINUE */
-		FDEBUG(("del outarc %d from c%d's in chn\n", i, p - d->ssets));
+		FDEBUG(("del outarc %d from c%d's in chn\n", i, (int) (p - d->ssets)));
 		if (p->ins.ss == ss && p->ins.co == i)
 			p->ins = ss->inchain[i];
 		else
@@ -678,7 +679,7 @@ pickss(struct vars * v,			/* used only for debug flags */
 			!(ss->flags & LOCKED))
 		{
 			d->search = ss + 1;
-			FDEBUG(("replacing c%d\n", ss - d->ssets));
+			FDEBUG(("replacing c%d\n", (int) (ss - d->ssets)));
 			return ss;
 		}
 	for (ss = d->ssets, end = d->search; ss < end; ss++)
@@ -686,7 +687,7 @@ pickss(struct vars * v,			/* used only for debug flags */
 			!(ss->flags & LOCKED))
 		{
 			d->search = ss + 1;
-			FDEBUG(("replacing c%d\n", ss - d->ssets));
+			FDEBUG(("replacing c%d\n", (int) (ss - d->ssets)));
 			return ss;
 		}
 
