@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.293 2007/10/01 16:43:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.294 2007/10/06 15:50:43 alvherre Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1694,7 +1694,7 @@ postgres$ <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
     </para>
    </step>
 
-   <step
+   <step>
     <para>
      At this point, if you did not use the <command>initdb</> <literal>-A</>
      option, you might want to modify <filename>pg_hba.conf</> to control
