@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.82 2007/09/24 03:12:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.83 2007/10/06 17:45:49 alvherre Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -60,7 +60,7 @@
 
   <para>
    <productname>PostgreSQL</productname>'s <command>VACUUM</> (<xref
-   linkend="sql-vacuum"> command has to run on a regular basis for several
+   linkend="sql-vacuum">) command has to run on a regular basis for several
    reasons:
 
     <orderedlist>
