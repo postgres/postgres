@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.100 2007/10/07 00:23:21 alvherre Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.101 2007/10/07 00:32:11 alvherre Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -53,11 +53,6 @@ ifdef DOCBOOKSTYLE
 CATALOG = -c $(DOCBOOKSTYLE)/catalog
 endif
 
-# Enable draft mode during development
-ifeq ($(DRAFT), Y)
-override JADEFLAGS += -V draft-mode
-endif
-
 # Enable some extra warnings
 # -wfully-tagged needed to throw a warning on missing tags 
 # for older tool chains, 2007-08-31
@@ -89,24 +84,21 @@ man: postgres.sgml $(ALLSGML)
 
 all: html
 
+# The draft target creates HTML output in draft mode
+draft : JADEFLAGS += -V draft-mode
+draft: html-output
+
+html: html-output
+# Re-run this target until HTML.index does not change
+	@cmp -s HTML.index.start HTML.index || $(MAKE) $@
+
 # This is run for all output formats because we need bookindex.sgml
-html: postgres.sgml $(ALLSGML) stylesheet.dsl
+html-output: postgres.sgml $(ALLSGML) stylesheet.dsl
 	@rm -f *.html
 	$(JADE) $(JADEFLAGS) $(SPFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-html -t sgml $<
 ifeq ($(vpath_build), yes)
 	@cp $(srcdir)/stylesheet.css .
 endif
-ifneq ($(DRAFT), Y)
-# If not draft, re-run the this rule until HTML.index does not change
-	@cmp -s HTML.index.start HTML.index || $(MAKE) $@
-endif
-
-
-# The draft rule calls gmake again and sets the DRAFT variable.
-# This seems to be the only way to set gmake variables in a rule.
-draft:
-	@$(MAKE) DRAFT="Y" html
-
 
 COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
 
