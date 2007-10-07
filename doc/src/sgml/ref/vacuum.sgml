@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.48 2007/05/30 19:45:01 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.49 2007/10/07 01:16:42 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -242,6 +242,7 @@ VACUUM
   <simplelist type="inline">
    <member><xref linkend="app-vacuumdb" endterm="app-vacuumdb-title"></member>
    <member><xref linkend="runtime-config-resource-vacuum-cost" endterm="runtime-config-resource-vacuum-cost-title"></member>
+   <member><xref linkend="autovacuum" endterm="autovacuum-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

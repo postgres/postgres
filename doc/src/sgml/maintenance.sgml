@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.83 2007/10/06 17:45:49 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.84 2007/10/07 01:16:42 alvherre Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -59,9 +59,9 @@
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname>'s <command>VACUUM</> (<xref
-   linkend="sql-vacuum">) command has to run on a regular basis for several
-   reasons:
+   <productname>PostgreSQL</productname>'s
+   <xref linkend="sql-vacuum" endterm="sql-vacuum-title"> command has to run on
+   a regular basis for several reasons:
 
     <orderedlist>
      <listitem>
@@ -96,7 +96,8 @@
   </para>
 
   <para>
-   Fortunately, autovacuum (<xref linkend="autovacuum">) monitors table
+   Fortunately, <xref linkend="autovacuum" endterm="autovacuum-title">
+   monitors table
    activity and performs <command>VACUUM</command>s when necessary.
    Autovacuum works dynamically so it is often better
    administration-scheduled vacuuming.
@@ -150,7 +151,8 @@
    </para>
 
    <para>
-    Fortunately, autovacuum (<xref linkend="autovacuum">) monitors table
+    Fortunately, <xref linkend="autovacuum" endterm="autovacuum-title">
+    monitors table
     activity and performs <command>VACUUM</command>s when necessary.  This
     eliminates the need for administrators to worry about disk space
     recovery in all but the most unusual cases.
@@ -218,7 +220,8 @@
     The <productname>PostgreSQL</productname> query planner relies on
     statistical information about the contents of tables in order to
     generate good plans for queries.  These statistics are gathered by
-    the <command>ANALYZE</> command, which can be invoked by itself or
+    the <xref linkend="sql-analyze" endterm="sql-analyze-title"> command,
+    which can be invoked by itself or
     as an optional step in <command>VACUUM</>.  It is important to have
     reasonably accurate statistics, otherwise poor choices of plans might
     degrade database performance.
@@ -262,7 +265,8 @@
    </tip>
 
    <para>
-    Fortunately, autovacuum (<xref linkend="autovacuum">) monitors table
+    Fortunately, <xref linkend="autovacuum" endterm="autovacuum-title">
+    monitors table
     activity and performs <command>ANALYZE</command>s when necessary.  This
     eliminates the need for administrators to manually schedule
     <command>ANALYZE</command>.
@@ -341,8 +345,8 @@
     when it was last vacuumed.
     If it were to go unvacuumed for longer than that,
     data loss could result.  To ensure that this does not
-    happen, the <firstterm>autovacuum</> facility described in
-    <xref linkend="autovacuum"> is invoked on any table
+    happen, <xref linkend="autovacuum" endterm="autovacuum-title">
+    is invoked on any table
     that might contain XIDs older than the age specified by the
     configuration parameter
     <xref linkend="guc-autovacuum-freeze-max-age">.  (This will happen

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.22 2007/05/15 19:13:55 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.23 2007/10/07 01:16:42 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -92,7 +92,12 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
   <title>Notes</title>
 
   <para>
-   It is a good idea to run <command>ANALYZE</command> periodically, or
+   In the default <productname>PostgreSQL</productname> configuration,
+   <xref linkend="autovacuum" endterm="autovacuum-title">
+   takes care of automatic analyzing of tables when they are first loaded
+   with data, and as they change throughout regular operation.
+   When autovacuum is disabled,
+   it is a good idea to run <command>ANALYZE</command> periodically, or
    just after making major changes in the contents of a table.  Accurate
    statistics will help the planner to choose the most appropriate query
    plan, and thereby improve the speed of query processing.  A common
@@ -101,7 +106,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
   </para>
 
   <para>
-   Unlike <command>VACUUM FULL</command>, <command>ANALYZE</command>
+   <command>ANALYZE</command>
    requires only a read lock on the target table, so it can run in
    parallel with other activity on the table.
   </para>
@@ -167,5 +172,16 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
   <para>
    There is no <command>ANALYZE</command> statement in the SQL standard.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-vacuum" endterm="sql-vacuum-title"></member>
+   <member><xref linkend="app-vacuumdb" endterm="app-vacuumdb-title"></member>
+   <member><xref linkend="runtime-config-resource-vacuum-cost" endterm="runtime-config-resource-vacuum-cost-title"></member>
+   <member><xref linkend="autovacuum" endterm="autovacuum-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
