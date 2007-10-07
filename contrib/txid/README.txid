@@ -1,0 +1,111 @@
+
+txid - export transaction id's to user level
+============================================
+
+The goal is to make PostgreSQL internal transaction ID and snapshot
+data usable externally.  This allows very efficient queue
+implementation done inside database.
+
+[towrite: what snapshot means]
+
+The module defines type txid_snapshot and following functions:
+
+
+txid_current() returns int8
+
+  Current transaction ID.
+
+txid_current_snapshot() returns txid_snapshot
+
+  Current snapshot.
+
+txid_snapshot_xmin( snap ) returns int8
+
+  Smallest TXID in snapshot.  TXID's smaller than this
+  are all visible in snapshot.
+
+txid_snapshot_xmax( snap ) returns int8
+
+  Largest TXID in snapshot.  TXID's starting from this one are
+  all invisible in snapshot.
+	
+txid_snapshot_xip( snap ) setof int8
+
+  List of in-progress TXID's in snapshot, that are invisible.
+  Values are between xmin and xmax.
+
+txid_visible_in_snapshot(id, snap) returns bool
+
+  Is TXID visible in snapshot?
+
+
+Fetching events
+---------------
+
+Lets say there is following event table:
+
+  CREATE TABLE events (
+    ev_txid  int8 not null default txid_current(),
+    ev_data  text
+  );
+  CREATE INDEX ev_txid_idx ON events (ev_txid);
+
+Then event between 2 snapshots snap1 and snap2 can be fetched
+with followign query:
+
+  SELECT ev_data FROM events
+   WHERE ev_txid >= txid_snapshot_xmin(:snap1)
+     AND ev_txid < txid_snapshot_xmax(:snap2)
+     AND NOT txid_visible_in_snapshot(ev_txid, :snap1)
+     AND txid_visible_in_snapshot(ev_txid, :snap2);
+
+This is the simplest query but it has problem if there are long
+transactions running - the txid_snapshot_xmin(snap1) will stay low
+and the range will get very large.
+
+This can be fixed by fetching only snap1.xmax ... snap1.xmax by range and
+fetching possible txids below snap1.xmax explicitly:
+
+  SELECT ev_data FROM events
+   WHERE ((ev_txid >= txid_snapshot_xmax(:snap1) AND ev_txid < txid_snapshot_xmax(:snap2))
+          OR
+          (ev_txid IN (SELECT * FROM txid_snapshot_xip(:snap1))))
+     AND NOT txid_visible_in_snapshot(ev_txid, :snap1)
+     AND txid_visible_in_snapshot(ev_txid, :snap2);
+
+Note that although the above queries work, the PostgreSQL fails to
+plan them correctly.  For actual usage the values for txid_snapshot_xmin,
+txid_snapshot_xmax and txid_snapshot_xip should be filled in directly,
+only then will they use index.
+
+There are few more optimizations possible, like:
+
+- Picking out only TXIDs that were actually committed between snap1 and snap2.
+
+- Lowering the range from txid_snapshot_xmax(snap1) to decrease the list if TXIDs to be fetched separately.
+
+To see example code for that it's best to see pgq.batch_event_sql() function in Skytools.
+
+  http://pgfoundry.org/projects/skytools/
+
+
+Dumping and restoring data containing TXIDs.
+--------------------------------------------
+
+[towrite: reason for epoch increase]
+
+You can look at current epoch with query:
+
+  SELECT txid_current() >> 32 as epoch;
+
+So new epoch should be:
+
+  SELECT (txid_current() >> 32) + 1 as newepoch;
+
+Epoch can be changed with pg_resetxlog command:
+
+  pg_resetxlog -e NEWEPOCH DATADIR
+
+Database needs to be shut down for that moment.
+
+
