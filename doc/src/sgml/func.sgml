@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.398 2007/09/24 01:29:27 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.399 2007/10/07 01:13:30 alvherre Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -633,7 +633,7 @@
     <primary>mod</primary>
    </indexterm>
    <indexterm>
-    <primary>&pi;</primary>
+    <primary>pi</primary>
    </indexterm>
    <indexterm>
     <primary>power</primary>
