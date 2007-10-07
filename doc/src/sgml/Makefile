@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.99 2007/08/31 16:41:52 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.100 2007/10/07 00:23:21 alvherre Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -311,3 +311,6 @@ clean distclean maintainer-clean:
 	rm -f postgres.xml htmlhelp.hhp toc.hhc index.hhk *.fo
 # Texinfo
 	rm -f *.texixml *.texi *.info db2texi.refs
+ifeq ($(vpath_build), yes)
+	rm -f stylesheet.css
+endif
