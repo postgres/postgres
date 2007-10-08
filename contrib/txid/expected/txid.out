@@ -8,18 +8,18 @@ select '12:13:'::txid_snapshot;
 (1 row)
 
 select '12:13:1,2'::txid_snapshot;
-ERROR:  illegal txid_snapshot input format
+ERROR:  invalid input for txid_snapshot: "12:13:1,2"
 -- errors
 select '31:12:'::txid_snapshot;
-ERROR:  illegal txid_snapshot input format
+ERROR:  invalid input for txid_snapshot: "31:12:"
 select '0:1:'::txid_snapshot;
-ERROR:  illegal txid_snapshot input format
+ERROR:  invalid input for txid_snapshot: "0:1:"
 select '12:13:0'::txid_snapshot;
-ERROR:  illegal txid_snapshot input format
+ERROR:  invalid input for txid_snapshot: "12:13:0"
 select '12:16:14,13'::txid_snapshot;
-ERROR:  illegal txid_snapshot input format
+ERROR:  invalid input for txid_snapshot: "12:16:14,13"
 select '12:16:14,14'::txid_snapshot;
-ERROR:  illegal txid_snapshot input format
+ERROR:  invalid input for txid_snapshot: "12:16:14,14"
 create table snapshot_test (
 	nr	integer,
 	snap	txid_snapshot
@@ -210,3 +210,12 @@ select txid_visible_in_snapshot('1000100010001015', '1000100010001000:1000100010
  t
 (1 row)
 
+-- test 64bit overflow
+SELECT txid_snapshot '1:9223372036854775807:3';
+      txid_snapshot      
+-------------------------
+ 1:9223372036854775807:3
+(1 row)
+
+SELECT txid_snapshot '1:9223372036854775808:3';
+ERROR:  invalid input for txid_snapshot: "1:9223372036854775808:3"

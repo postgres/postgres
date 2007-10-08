@@ -226,6 +226,39 @@ buf_finalize(StringInfo buf)
 }
 
 /*
+ * simple number parser.
+ *
+ * We return 0 on error, which is invalid value for txid.
+ */
+static txid
+str2txid(const char *s, const char **endp)
+{
+	txid val = 0;
+
+	for (; *s; s++)
+	{
+		txid last = val;
+
+		if (*s < '0' || *s > '9')
+			break;
+
+		val = val * 10 + (*s - '0');
+
+		/*
+		 * check for overflow
+		 */
+		if (val > MAX_TXID || (val / 10) != last)
+		{
+			val = 0;
+			break;
+		}
+	}
+	if (endp)
+		*endp = s;
+	return val;
+}
+
+/*
  * parse snapshot from cstring
  */
 static TxidSnapshot *
@@ -234,21 +267,22 @@ parse_snapshot(const char *str)
 	txid		xmin;
 	txid		xmax;
 	txid		last_val = 0, val;
-	char	   *endp;
+	const char *str_start = str;
+	const char *endp;
 	StringInfo  buf;
 
-	xmin = (txid) strtoull(str, &endp, 0);
+	xmin = str2txid(str, &endp);
 	if (*endp != ':')
 		goto bad_format;
 	str = endp + 1;
 
-	xmax = (txid) strtoull(str, &endp, 0);
+	xmax = str2txid(str, &endp);
 	if (*endp != ':')
 		goto bad_format;
 	str = endp + 1;
 
 	/* it should look sane */
-	if (xmin > xmax || xmin == 0 || xmax > MAX_TXID)
+	if (xmin == 0 || xmax == 0 || xmin > xmax)
 		goto bad_format;
 
 	/* allocate buffer */
@@ -258,11 +292,11 @@ parse_snapshot(const char *str)
 	while (*str != '\0')
 	{
 		/* read next value */
-		val = (txid) strtoull(str, &endp, 0);
+		val = str2txid(str, &endp);
 		str = endp;
 
 		/* require the input to be in order */
-		if (val < xmin || val <= last_val || val >= xmax)
+		if (val < xmin || val >= xmax || val <= last_val)
 			goto bad_format;
 		
 		buf_add_txid(buf, val);
@@ -277,7 +311,7 @@ parse_snapshot(const char *str)
 	return buf_finalize(buf);
 
 bad_format:
-	elog(ERROR, "illegal txid_snapshot input format");
+	elog(ERROR, "invalid input for txid_snapshot: \"%s\"", str_start);
 	return NULL;
 }
 
