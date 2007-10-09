@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Oct 9 16:07:30 EDT 2007
+   Last updated: Tue Oct 9 16:13:00 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -600,12 +600,9 @@
      * The default C locale must be used during initdb because it is not
        possible to know the next-greatest character in a non-C locale.
        You can create a special text_pattern_ops index for such cases
-       that work only for LIKE indexing.
+       that work only for LIKE indexing. It is also possible to use full
+       text indexing for word searches.
        
-   In pre-8.0 releases, indexes often can not be used unless the data
-   types exactly match the index's column types. This was particularly
-   true of int2, int8, and numeric column indexes.
-   
   4.7) How do I see how the query optimizer is evaluating my query?
   
    See the EXPLAIN manual page.
