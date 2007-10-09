@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgcvslog,v 1.38 2007/10/05 18:40:52 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgcvslog,v 1.39 2007/10/09 02:56:44 momjian Exp $
 
 # This utility is used to generate a compact list of changes
 # for each release, bjm 2000-02-22
@@ -8,6 +8,7 @@
 # Usage:  pgcvslog [-d] [-h]
 # -d delete commits that include back branches
 # -h is HTML output
+# "-d" is useful for generating release notes for major releases
 
 # This program basically takes a cvs log, groups it by commit timestamp
 # and line number, then compares adjacent messages.  If they have the same
