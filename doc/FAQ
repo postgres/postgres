@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Sep 27 02:14:24 EDT 2007
+   Last updated: Mon Oct 8 23:19:46 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -840,13 +840,13 @@
   4.21) Why are my table and column names not recognized in my query? Why is
   capitalization not preserved?
   
-   The most common cause of recognized names is the use of double-quotes
-   around table or column names during table creation. When double-quotes
-   are used, table and column names (called identifiers) are stored
-   case-sensitive, meaning you must use double-quotes when referencing
-   the names in a query. Some interfaces, like pgAdmin, automatically
-   double-quote identifiers during table creation. So, for identifiers to
-   be recognized, you must either:
+   The most common cause of unrecognized names is the use of
+   double-quotes around table or column names during table creation. When
+   double-quotes are used, table and column names (called identifiers)
+   are stored case-sensitive, meaning you must use double-quotes when
+   referencing the names in a query. Some interfaces, like pgAdmin,
+   automatically double-quote identifiers during table creation. So, for
+   identifiers to be recognized, you must either:
      * Avoid double-quoting identifiers when creating tables
      * Use only lowercase characters in identifiers
      * Double-quote identifiers when referencing them in queries
