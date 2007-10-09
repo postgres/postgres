@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Oct 8 23:19:46 EDT 2007
+   Last updated: Tue Oct 9 15:52:10 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -697,29 +697,20 @@
         name TEXT
     );
 
-   See the create_sequence manual page for more information about
-   sequences.
+   Automatically created sequence are named <table>_<serialcolumn>_seq,
+   where table and serialcolumn are the names of the table and SERIAL
+   column, respectively. See the create_sequence manual page for more
+   information about sequences.
    
   4.11.2) How do I get the value of a SERIAL insert?
   
-   One approach is to retrieve the next SERIAL value from the sequence
-   object with the nextval() function before inserting and then insert it
-   explicitly. Using the example table in 4.11.1, an example in a
-   pseudo-language would look like this:
-    new_id = execute("SELECT nextval('person_id_seq')");
-    execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
+   The simplest way is to retrieve the assigned SERIAL value with
+   RETURNING. Using the example table in 4.11.1, it would look like this:
+    INSERT INTO person (name) VALUES ('Blaise Pascal') RETURNING id;
 
-   You would then also have the new value stored in new_id for use in
-   other queries (e.g., as a foreign key to the person table). Note that
-   the name of the automatically created SEQUENCE object will be named
-   <table>_< serialcolumn>_seq, where table and serialcolumn are the
-   names of your table and your SERIAL column, respectively.
+   You can also call nextval() and use that value in the INSERT, or call
+   currval() after the INSERT.
    
-   Alternatively, you could retrieve the assigned SERIAL value with the
-   currval() function after it was inserted by default, e.g.,
-    execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
-    new_id = execute("SELECT currval('person_id_seq')");
-
   4.11.3) Doesn't currval() lead to a race condition with other users?
   
    No. currval() returns the current value assigned by your session, not

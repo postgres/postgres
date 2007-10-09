@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Oct  8 23:19:46 EDT 2007</P>
+    <P>Last updated: Tue Oct  9 15:52:10 EDT 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -916,38 +916,28 @@ length</TD></TR>
     );
 </PRE>
 
-    See the <I>create_sequence</I> manual page for more information
-    about sequences.
+    <P>Automatically created sequence are named
+    &lt;<I>table</I>&gt;_&lt;<I>serialcolumn</I>&gt;_<I>seq</I>, where
+    <I>table</I> and <I>serialcolumn</I> are the names of the table and
+    <SMALL>SERIAL</SMALL> column, respectively.  See the
+    <I>create_sequence</I> manual page for more information about
+    sequences.</P>
 
     <H3 id="item4.11.2">4.11.2) How do I get the value of a
     <SMALL>SERIAL</SMALL> insert?</H3>
 
-    <P>One approach is to retrieve the next <SMALL>SERIAL</SMALL> value
-    from the sequence object with the <I>nextval()</I> function
-    <I>before</I> inserting and then insert it explicitly. Using the
-    example table in <A href="#item4.11.1">4.11.1</A>, an example in a
-    pseudo-language would look like this:</P>
+    <P>The simplest way is to retrieve the assigned <SMALL>SERIAL</SMALL>
+    value with <SMALL>RETURNING</SMALL>.  Using the example table in <A
+    href="#item4.11.1">4.11.1</A>, it would look like this:</P>
+
 <PRE>
-    new_id = execute("SELECT nextval('person_id_seq')");
-    execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
+    INSERT INTO person (name) VALUES ('Blaise Pascal') RETURNING id;
 </PRE>
 
-    You would then also have the new value stored in <CODE>new_id</CODE>
-    for use in other queries (e.g., as a foreign key to the <CODE>person
-    </CODE> table). Note that the name of the automatically created
-    <SMALL>SEQUENCE</SMALL> object will be named &lt;<I>table</I>&gt;_&lt;<I>
-    serialcolumn</I>&gt;_<I>seq</I>, where <I>table</I> and <I>serialcolumn</I>
-    are the names of your table and your <SMALL>SERIAL</SMALL> column,
-    respectively.
-
-    <P>Alternatively, you could retrieve the assigned <SMALL>SERIAL</SMALL>
-    value with the <I>currval()</I> function <I>after</I> it was inserted by
-    default, e.g.,</P>
-<PRE>
-    execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
-    new_id = execute("SELECT currval('person_id_seq')");
-</PRE>
-
+    You can also call <I>nextval()</I> and use that value in the
+    <SMALL>INSERT</SMALL>, or call <I>currval()</I> <I>after</I> the
+    <SMALL>INSERT</SMALL>.
+    
     <H3 id="item4.11.3">4.11.3) Doesn't <I>currval()</I>
     lead to a race condition with other users?</H3>
 
