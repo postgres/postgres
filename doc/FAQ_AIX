@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 AIX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-Last updated:        $Date: 2006/12/06 15:45:30 $
+Last updated:        $Date: 2007/10/09 01:28:24 $
 
 Topics
 
@@ -16,7 +16,7 @@ Topics
 -----
 
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2006/12/06 15:45:30 $
+$Date: 2007/10/09 01:28:24 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
@@ -301,7 +301,7 @@ The cause of these problems
 ----------------------------
 
 The overall cause of all these problems is the default bittedness and
-memory model used by the postmaster process.
+memory model used by the server process.
 
 By default, all binaries built on AIX are 32-bit.  This does not
 depend upon hardware type or kernel in use.  These 32-bit processes
@@ -327,10 +327,10 @@ but that's not always practical.  Systems with 32-bit processors can
 build, but not run, 64-bit binaries.  
 
 If a 32-bit binary is desired, set LDR_CNTRL to "MAXDATA=0xn0000000",
-where 1 <= n <= 8, before starting the postmaster and try different
+where 1 <= n <= 8, before starting the postgres server and try different
 values and postgresql.conf settings to find a configuration that works
 satisfactorily.  This use of LDR_CNTRL tells AIX that you want the
-postmaster to have $MAXDATA bytes set aside for the heap, allocated in
+server to have $MAXDATA bytes set aside for the heap, allocated in
 256MB segments.
 
 When you find a workable configuration, ldedit can be used to modify

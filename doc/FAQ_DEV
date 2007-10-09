@@ -428,7 +428,7 @@ General Questions
     4. A README.rpm-dist document that tries to adequately document both
        the differences between the RPM build and the WHY of the
        differences, as well as useful RPM environment operations (like,
-       using syslog, upgrading, getting postmaster to start at OS boot,
+       using syslog, upgrading, getting the server to start at OS boot,
        etc);
     5. The spec file that throws it all together. This is not a trivial
        undertaking in a package of this size.
@@ -755,8 +755,8 @@ typedef struct nameData
 (gdb) call print(any_pointer)
     (gdb) call pprint(any_pointer)
 
-   The output appears in the postmaster log file, or on your screen if
-   you are running a backend directly without a postmaster.
+   The output appears in the server log file, or on your screen if
+   you are running a backend directly.
    
   2.4) I just added a field to a structure. What else should I do?
   
@@ -782,7 +782,7 @@ typedef struct nameData
    ereport() is used to send messages to the front-end, and optionally
    terminate the current query being processed. The first parameter is an
    ereport level of DEBUG (levels 1-5), LOG, INFO, NOTICE, ERROR, FATAL,
-   or PANIC. NOTICE prints on the user's terminal and the postmaster
+   or PANIC. NOTICE prints on the user's terminal and to the server
    logs. INFO prints only to the user's terminal and LOG prints only to
    the server logs. (These can be changed from postgresql.conf.) ERROR
    prints in both places, and terminates the current query, never
@@ -811,7 +811,7 @@ typedef struct nameData
    assert()s monitor the progress of the backend and halt the program
    when something unexpected occurs.
    
-   The postmaster has a -d option that allows even more detailed
+   The postgres server has a -d option that allows even more detailed
    information to be reported. The -d option takes a number that
    specifies the debug level. Be warned that high debug level values
    generate large log files.

@@ -423,10 +423,10 @@
    
   3.5) Why do I get "Sorry, too many clients" when trying to connect?
   
-   You have reached the default limit is 100 database sessions. You need
-   to increase the postmaster's limit on how many concurrent backend
+   You have reached the default limit of 100 database sessions. You need
+   to increase the server's limit on how many concurrent backend
    processes it can start by changing the max_connections value in
-   postgresql.conf and restarting the postmaster.
+   postgresql.conf and restarting the server.
    
   3.6) What is the upgrade process for PostgreSQL?
   
@@ -753,7 +753,7 @@
   
    You probably have run out of virtual memory on your system, or your
    kernel has a low limit for certain resources. Try this before starting
-   postmaster:
+   the server:
     ulimit -d 262144
     limit datasize 256m
 
