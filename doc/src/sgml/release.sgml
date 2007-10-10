@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.516 2007/10/10 13:43:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.517 2007/10/10 14:09:49 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -48,16 +48,14 @@ do it for earlier branch release files.
     <title>Overview</title>
 
     <para>
-     This release adds major new capabilities to the
-     <productname>PostgreSQL</> database system, including:
+     This release adds many improvements that were requested by users,
      including:
 
     <itemizedlist>
 
       <listitem>
        <para>
-        Full text search now fully integrated into the core database
-        system
+        Full text search is now a built-in feature
        </para>
       </listitem>
 
@@ -70,14 +68,13 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Enumerated (enum) data types
+        enum data types
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Universally Unique Identifier (UUID) data type, similar to that
-        defined by RFC 4122
+        UUID data type, similar to that defined by RFC 4122
        </para>
       </listitem>
 
@@ -89,34 +86,32 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Control of whether <literal>NULL</>s sort first or last, using
         <literal>ORDER BY ... NULLS FIRST/LAST</>
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Updatable cursors using <literal>UPDATE/DELETE WHERE CURRENT OF</>
-        <replaceable>cursor_name</>
+        Updatable cursors
+        (<literal>UPDATE/DELETE WHERE CURRENT OF</>
+        <replaceable>cursor_name</>)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Per-function server configuration parameter settings
+        Per-function parameter settings
        </para>
       </listitem>
 
       <listitem>
        <para>
-        User-defined types can now have type modifiers
+        User-defined types can now have type modifiers (parameters)
        </para>
 
        <para>
-        This allows a user type to take an optional modifier when 
-	being created, e.g. <type>SSNUM(7)</>.  Previously only
-	predefined system data types would allow this, e.g.
-	<type>CHAR(4)</>.
+        Declarations such as <type>varchar(42)</type> are no longer
+        restricted to use by built-in data types.
        </para>
       </listitem>
 
@@ -133,10 +128,10 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Numerous improvements in logging and statistics collection,
-        including the ability to emit postmaster log messages in
-        <acronym>CSV</> format, which can be loaded into a database
-        table for analysis
+        Numerous improvements in logging and statistics collection
+        capabilities, including the ability to emit postmaster log messages
+        in CSV format that can be directly loaded into a database table
+        for analysis
        </para>
       </listitem>
 
@@ -152,24 +147,21 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        This allows multiple vacuums to run concurrently, meaning
-        vacuuming of a large table will not prevent smaller tables from
-        being vacuumed at the same time. Autovacuum is now considered
-        mature and therefore is enabled by default.
+        Autovacuum is now considered mature enough to be enabled by default.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        The backend database server can now be compiled with
-        <productname>Microsoft Visual C++</>
+        The entire <productname>PostgreSQL</productname> system can
+        now be compiled with Microsoft Visual C++
        </para>
 
        <para>
-         Windows executables made with Visual C++ might have better
-         stability and performance than those made with other tool sets.
-         Development and debugging tools familiar to Windows developers
-         will also work.
+        This will improve the ability of Windows-based developers to
+        contribute to the project.  Windows executables made with Visual C++
+        may also have better stability and performance than those made with
+        other tool sets.
        </para>
       </listitem>
 
@@ -181,41 +173,32 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Asynchronous commit option allows transactions to be committed
-        but on-disk change to be delayed
+        Asynchronous commit option to allow transactions to be reported
+        committed before they have actually been flushed to disk
        </para>
 
        <para>
-        This feature dramatically increases performance for data
-        modification queries. The disadvantage is that because on-disk
-        changes are delayed, if the operating system crashes before data
-        is written to the disk, committed data will be lost. This is
-        only useful for applications that can accept some data loss.
-        Unlike <varname>fsync</varname>, asynchronous commit does not
-        risk database corruption; the worst case is that after an
-        operating system crash, the last few reportedly-committed
-        transactions will be missing.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        <quote>Distributed</> checkpoints prevent I/O spikes during
-        checkpoints
+        This would not, of course, be acceptable if the client takes some
+        critical external action on the assumption that the transaction
+        will be remembered; but for certain applications, it is an acceptable
+        risk for some or all transactions to use this mode.  Unlike existing
+        options such as <varname>fsync</varname>, asynchronous commit does
+        not risk database corruption; the worst case is that after a crash,
+        the last few reportedly-committed transactions will not have
+        taken effect.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Heap-Only Tuples (<acronym>HOT</>) reduce overhead of updates
+        <quote>Distributed</> checkpoints to spread out the I/O load of a
+        checkpoint
        </para>
+      </listitem>
 
+      <listitem>
        <para>
-        To allow high concurrency <productname>PostgreSQL</> retains old
-        versions of updated rows. Previously only <command>VACUUM</>
-        could reuse space taken by dead rows. With <acronym>HOT</> dead
-        row space can be reused at the time of <command>UPDATE</> or
-        <command>INSERT</>. This allows for more consistent performance.
+        Heap-Only Tuples (HOT) to reduce overhead of updates
        </para>
       </listitem>
 
@@ -224,21 +207,12 @@ do it for earlier branch release files.
         Just-in-time background writer strategy to improve disk write
         efficiency
        </para>
-
-       <para>
-        This basically makes the background writer self-tuning.
-       </para>
-
       </listitem>
 
       <listitem>
        <para>
-        Reduction of both per-field and per-row storage requirements
-       </para>
-
-       <para>
-        For example, two <type>CHAR(1)</type> fields now take 4 bytes
-        instead of 16.
+        Reduction of on-disk data size through reducing both per-tuple
+        and per-field overheads
        </para>
       </listitem>
 
