@@ -9,11 +9,11 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Last updated: Fri Sep 14 14:39:54 EDT 2007</p>
+<p>原文最終更新日:		Last updated: Tue Oct  9 16:13:00 EDT 2007</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
-href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
+href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
 <p>この文書の最新版は<a href=
     "http://www.postgresql.org/docs/faqs.FAQ.html">
     http://www.postgresql.org/docs/faqs.FAQ.html</a>
@@ -99,9 +99,8 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <a href="#item4.16">4.16</a>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<br />
 <a href="#item4.17">4.17</a>) 複数のデータベースを使う問い合わせはどのようにすればできますか？<br />
 <a href="#item4.18">4.18</a>) 関数から複数のロウまたはカラムを返すにはどうしますか？<br />
-<a href="#item4.19">4.19</a>)  PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation with OID ##### does not exist" というエラーを受け取るのでしょうか？<br />
-<a href="#item4.20">4.20</a>) どのようなレプリケーションのソリューションがありますか？<br />
-<a href="#item4.21">4.21</a>) テーブルとカラムの名前がクエリーの中で認識
+<a href="#item4.19">4.19</a>) どのようなレプリケーションのソリューションがありますか？<br />
+<a href="#item4.20">4.20</a>) テーブルとカラムの名前がクエリーの中で認識
 されないのはなぜですか？ なぜ大文字化(キャピタライズ)は温存されないのですか?<br />
 
 <h2 align="center">日本語に関する質問</h2>
@@ -146,7 +145,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
       付けられます。読者がやらなければならないことは、メーリングリストを
       サブスクライブして、議論に 参加することです。（<a
       href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">Developer's
-      FAQ</a>には、PostgreSQL開発に加わり方についての情報があります。）</p>
+      FAQ</a>には、Postgres開発に加わり方についての情報があります。）</p>
 
 
 <h4 id="item1.3">1.3</a>) PostgreSQL の著作権はどうなってますか？</h4>
@@ -231,7 +230,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     "http://pgfoundry.org/projects/pginstaller">
     http://pgfoundry.org/projects/pginstaller</a>
     にあり、利用できます。MSDOSベースのWindowsのバージョン(Win95, Win98,
-    WinMe)では、Cygwinを使って PostgreSQL を走らせることができます。</p>
+    WinMe)では、Cygwinを使って Postgres を走らせることができます。</p>
 
     <small><pre>
     [訳注
@@ -255,8 +254,8 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
     <p>Webブラウザ経由だと、<a href="http://www.postgresql.org/ftp/">
     http://www.postgresql.org/ftp/</a>、それから、ftp経由だと、
-    <a href="ftp://ftp.PostgreSQL.org/pub/">
-    ftp://ftp.PostgreSQL.org/pub/</a> を使います。</p>
+    <a href="ftp://ftp.postgresql.org/pub/">
+    ftp://ftp.postgresql.org/pub/</a> を使います。</p>
 
 
 <h4 id="item1.6">1.6</a>) 最新のリリースはどれですか？</h4>
@@ -300,7 +299,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 	Web会員と正会員の会費は無料ですが、協賛会員の会費と会員の貢献で
 	  会は運営されています。)
 	詳しくは、JPUG のWeb サイト:
-		<a href="http://www.PostgreSQL.jp/">http://www.PostgreSQL.jp/</a>
+		<a href="http://www.postgresql.jp/">http://www.postgresql.jp/</a>
 	をごらんください。
 
 	日本語のIRCチャンネル '#PostgreSQL:*.jp' も存在します。
@@ -322,8 +321,8 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     についての手引と指針があります。</p>
 
     <p> それと同時に ftp サイト <A
-    href="ftp://ftp.PostgreSQL.org/pub/">ftp://ftp.PostgreSQL.org/pub/</a>
-    で、最新バージョンの PostgreSQL を探してみてください。</p>
+    href="ftp://ftp.postgresql.org/pub/">ftp://ftp.postgresql.org/pub/</a>
+    で、最新バージョンの Postgres を探してみてください。</p>
 
 
 <h4 id="item1.9">1.9</a>) 既知のバグや未だ無い機能はどうやって見つけますか？
@@ -357,7 +356,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     リストを最新に更新してゆくほうがより効果的であることを知っています
     ので、バグ追跡システムは使いません。
     現実に、このソフトウェアの中でバグはそれほど長くはい続けませんし、
-    多くのユーザに影響するバグは早急に修正されます。PostgreSQLのリリース
+    多くのユーザに影響するバグは早急に修正されます。Postgresのリリース
     で、すべての変更点、改良点、そして、修正点を知りたければ、
     <a href="http://www.postgresql.org/developer/sourcecode/">CVS</a>
     のログメッセージを見てください。リリースノートにさえ、このソフトウェア
@@ -369,16 +368,16 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     <p> 配付の中に、いくつかのマニュアルとオンライン・マニュアル(マニュ
     アル・ページ)およびいくつかの小さなテスト例題が含まれます。
     <i>/doc</i>ディレクトリをごらんください。また、マニュアルは、<A
-    href="http://www.PostgreSQL.org/docs/">
-http://www.PostgreSQL.org/docs/</a>でオンラインでも閲覧できます。
+    href="http://www.postgresql.org/docs/">
+http://www.postgresql.org/docs/</a>でオンラインでも閲覧できます。
     </p>
 
 
     <p><small><pre>
     [訳注:
 	JPUG 文書・書籍関連分科会で翻訳されたマニュアルもあります。
-		<a href="http://www.postgresql.jp/document/pg820doc/">
-	http://www.postgresql.jp/document/pg803doc/</a>
+		<a href="http://www.postgresql.jp/document/pg825doc/">
+	http://www.postgresql.jp/document/pg825doc/</a>
 	インプレスから、
 	<a href="http://home.impress.co.jp/reference/2108.htm">
 	PostgreSQLオフィシャルマニュアル</a>として出版されています。
@@ -388,12 +387,12 @@ http://www.PostgreSQL.org/docs/</a>でオンラインでも閲覧できます。
 
 
     <p>オンラインで参照できる PostgreSQL の本も2冊あります。<a href=
-    "http://www.PostgreSQL.org/docs/books/awbook.html">
-    http://www.PostgreSQL.org/docs/books/awbook.html</a>
+    "http://www.postgresql.org/docs/books/awbook.html">
+    http://www.postgresql.org/docs/books/awbook.html</a>
 
     <p><small><pre>
     [訳注:
-	この本は、JPUG<a href="http://www.PostgreSQL.jp/wg/psqltrans/">「PostgreSQL Book翻訳分科会」
+	この本は、JPUG<a href="http://www.postgresql.jp/wg/psqltrans/">「PostgreSQL Book翻訳分科会」
 	</a>で翻訳され、ピアソンから<a href="http://www.seshop.com/detail.asp?pid=2587">
 	「はじめてのPostgreSQL」</a>として出版されています。
     ]
@@ -411,11 +410,11 @@ http://www.PostgreSQL.org/docs/</a>でオンラインでも閲覧できます。
     </pre></small></p>
   
     購入可能な書籍の目録は、<a href=
-    "http://techdocs.postgresql.org/techdocs/bookreviews.php">http://techdocs.PostgreSQL.org/techdocs/bookreviews.php</a>
+    "http://techdocs.postgresql.org/techdocs/bookreviews.php">http://techdocs.postgresql.org/techdocs/bookreviews.php</a>
     にあります。
 
     PostgreSQL 技術情報記事も、<a href=
-    "http://techdocs.PostgreSQL.org/">http://techdocs.PostgreSQL.org/</a>
+    "http://techdocs.postgresql.org/">http://techdocs.postgresql.org/</a>
     にあります。</p>
 
     <p><small><pre>
@@ -696,10 +695,9 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 <h4 id="item3.5">3.5</a>) 接続しようとするときに <i>'Sorry, too many clients'</i> が出るのはなぜですか？</h4>
 
     <p> 既定での制限である 100 のデータベースセッションに達してしまって
-    います。<i>postmasterが</i>同時接続できるバックエンドプロセスの制限
-    数を増やす必要があります。<i>postgresql.conf</i> の中の
-    <i>max_connections</i> の値を変更して <i>postmaster</i>を再起動する
-    ことで可能になります。</p>
+    います。サーバーの同時接続できるバックエンドプロセスの制限値を増やす
+    必要があります。<i>postgresql.conf</i> の中の<i>max_connections</i>
+    の値を変更してサーバを再起動することで可能になります。</p>
 
 
 <h4 id="item3.6">3.6</a>)  PostgreSQLのアップグレードの手順はどうなりますか？</h4>
@@ -868,7 +866,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
     <p> 例題として、各行に整数とテキスト記述を持つ 100,000行のファイルを
     考えてみましょう。テキストの文字列の平均長さを20バイトと仮定すると、
-    フラットファイルの大きさは約2.8MB です。このデータを含む PostgreSQL
+    フラットファイルの大きさは約2.8MB です。このデータを含む Postgres
     データベースファイルの大きさは次のように約5.2MBと見積もることができ
     ます： 
 
@@ -879,7 +877,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
    ----------------------------------------
     52 bytes per row
 
-   PostgreSQL のデータページサイズは 8192バイト(8KB)なので:
+   Postgres のデータページサイズは 8192バイト(8KB)なので:
 
    8192 bytes per page
    -------------------   =  146 rows per database page (切り捨て)
@@ -945,15 +943,11 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 	くてはなりません。その理由は、Cロケール以外では次に大きな文字を
 	知ることができないからです。このような場合、<pre>LIKE</pre>イン
 	デクシングにだけ働くような、特別な<pre>text_pattern_ops</pre>イ
-	ンデックスを作成することもできます。
+	ンデックスを作成することもできます。また、それを全文検索のフル
+	テキストのインデックス作成に使うことができます。
 	</li>
     </ul>
     <p>
-
-    <p>8.0より前のリリースでは、インデックスは、データ型がちょうどインデッ
-    クスのカラムの型と一致しなければ、使えないことがしばしばありました。
-    おそらく、int2, int8, および numeric 等のカラムのインデックスがそう
-    です。</p> 
 
 
 <h4 id="ITEM4.7">4.7</a>) 問い合わせオプティマイザがどのように問い合わせを評価するのかを見るにはどうしますか？</h4>
@@ -1079,37 +1073,23 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     ]
     </small></pre></p>
 
-    通番についてのもっと詳しい情報は、オンラインマニュアルで
-    <i>create_sequence</i> をごらんください。
+    <p>自動的に生成される通番は、
+	&lt;<i>table</i>&gt;_&lt;<i>serialcolumn</i>&gt;_<i>seq</i>
+    と名付けられていて、<i>table</i> と <i>serialcolumn</i> は、それぞれ
+    テーブルと <small>SERIAL</small> カラムの名前です。
+    通番については、オンラインマニュアルで<i>create_sequence</i> 
+    をごらんください。</p>
 
 
 <h4 id="item4.11.2">4.11.2</a>) <small>SERIAL</small>データ型に挿入される値は、どうすれば得られますか？</h4>
 
-    <p>ひとつの方法は、<i>nextval()</i> 関数を使ってその値を挿入する<i>
-    前(before)に</i> SEQUENCE オブジェクトから次の <small>SERIAL</small>
-    値を取り出し、それから実際に挿入をすることです。<a
-    href="#item4.11.1">4.11.1</a> のテーブルの例を使うとすると、疑似言語では
-    このようになります。</p> 
+    <p>最も簡単な方法は、割り当てられた<small>SERIAL</small>値を
+    <small>RETURNING</small>として取得することです。
+    <a href="#item4.11.1">4.11.1</a>の例題テーブルを使うと次のように
+    なります。
 
 <pre>
-    new_id = execute("SELECT nextval('person_id_seq')");
-    execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
-</pre>
-
-    そうして、<tt>new_id</tt> に保存した新しい値を他のクエリ(たとえば、
-    <tt>person</tt> テーブルに対する外部キー(foreign key)のように)使うと
-    よいでしょう。自動的に作られた<small>SEQUENCE</small>オブジェクトの
-    名前は、&lt;<i>table</i>&gt;_&lt;<i>serialcolumn</i>&gt;_<i>seq</i>
-    のようになり、このうち、<i>table</i> と <i>serialcolumn</i> はそれぞ
-    れテーブルの名前と<small>SERIAL</small>カラムの名前です。 
-
-    <p>あるいは、与えられた<small>SERIAL</small>値を、それが既定値として
-    挿入された<i>後で(after)</i>、 <i>currval()</i> 関数を使って取り出す
-    こともできます。たとえば、 </p>
-
-<pre>
-    execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
-    new_id = execute("SELECT currval('person_id_seq')");
+    INSERT INTO person (name) VALUES ('Blaise Pascal') RETURNING id;
 </pre>
 
 
@@ -1154,7 +1134,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
     <p>おそらく、システムの仮想メモリーを全て使い果たしてしまっている可
     能性があるか、カーネルがあるリソースについてもつ制限値が低すぎる可能
-    性があります。<i>postmaster</i> を始動する前にこれを試してみてください：</p>
+    性があります。サーバを始動する前にこれを試してみてください：</p>
 
 <pre>
     ulimit -d 262144
@@ -1221,17 +1201,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     を使うと簡単です</p>。
 
 
-<h4 id="item4.19">4.19</a>) PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation with OID ##### does not exist" というエラーを受け取るのでしょうか？</h4>
-
-    <p>PL/PgSQL は関数スクリプトをキャッシュし、不幸にもその副作用で、
-    PL/PgSQL関数が一時テーブルにアクセスする場合、後でそのテーブルを消し
-    て作りなおされ、関数がもう一度呼び出されると、その関数はキャッシュし
-    ている関数の内容はまだ古い一時テーブルを差し示したままだからです。
-    この、解決策として、PL/PgSQLの中で <small>EXECUTE</small> を一時テー
-    ブルへのアクセスのために使います。そうすると、クエリは毎回パースをや
-    り直しされるようになります。</p>
-
-<h4 id="item4.20">4.20</a>) どのようなレプリケーションのソリューションがありますか？</h4>
+<h4 id="item4.19">4.19</a>) どのようなレプリケーションのソリューションがありますか？</h4>
     <p>「レプリケーション」と一言でいいますが、レプリケーションをする
     ための技術はいくつかあり、それぞれ、利点と欠点があります。</p>
 
@@ -1253,9 +1223,9 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     <p>この他にも、商用やハードウェア−ベースのレプリケーションソリュー
     ションがいろいろなレプリケーションモデルをサポートしています。</p>
   
-<h3 id="item4.21">4.21</a>)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大文字化(キャピタライズ)は温存されないのですか?</h3>
+<h3 id="item4.20">4.20</a>)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大文字化(キャピタライズ)は温存されないのですか?</h3>
 
-    <p>認識された名前のもっとも一般的な原因は、テーブルを作成する際に、
+    <p>名前が認識されない、最も一般的な原因は、テーブルを作成する際に、
     テーブルやカラムを囲う二重引用符の使用です。
     二重引用符を使うと、テーブルとカラムの名前（識別子といいます）は<a
     href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-IDENTIFIERS">大文字と小文字の区別</a>
@@ -1307,8 +1277,8 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2007年09月15日
-  翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
+  最終更新日:	2007年10月10日
+  翻訳者:	桑村 潤 (<a href="mailto:juk at postgresql.jp">Jun KUWAMURA &lt;juk at postgresql.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
 
@@ -1326,7 +1296,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 		せせ じゅん(<a href="mailto:sesejun at linet.gr.jp">Jun SESE &lt;sesejun at linet.gr.jp&gt;</a>)
 		神谷 英孝(<a href="mailto:hkamiya at catvmics.ne.jp">Hidetaka KAMIYA &lt;hkamiya at catvmics.ne.jp&gt;</a>)
 		菅原 敦(<a href="mailto:asugawar at f3.dion.ne.jp">Atsushi SUGAWARA &lt;asugawar at f3.dion.ne.jp&gt;</a>)
-		稲葉 香理(<a href="mailto:i-kaori at sra.co.jp">Kaori Inaba &lt;i-kaori at sra.co.jp&gt;</a>)
+		稲葉 香理(<a href="mailto:i-kaori at sraoss.co.jp">Kaori Inaba &lt;i-kaori at sraoss.co.jp&gt;</a>)
 
   をはじめ、ポストグレスに関する話題豊富な日本語PostgreSQLメーリングリスト、
   和訳のきっかけを作ってくれたり、いつもチェックをしてくれる
@@ -1340,11 +1310,11 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
   
   また、最新版は以下のサイトにあります。
 	<a
-  href="http://www.PostgreSQL.jp/wg/jpugdoc/">http://www.PostgreSQL.jp/wg/jpugdoc/</a> 「JPUG文書・書籍関連分科会」
+  href="http://www.postgresql.jp/wg/jpugdoc/">http://www.postgresql.jp/wg/jpugdoc/</a> 「JPUG文書・書籍関連分科会」
 	<a href="http://www.linux.or.jp/JF/JFdocs/INDEX-database.html">http://www.linux.or.jp/JF/JFdocs/INDEX-database.html</a> 「Linux JFプロジェクト」	<a   href="http://www.linet.gr.jp/~juk/pgsql/">http://www.linet.gr.jp/~juk/pgsql/</a> 「PostgreSQL Notes for Japanese」（翻訳者ページ）
 
   なお、この和訳に関するご意見・ご質問は(<a href="mailto:juk at
-  PostgreSQL.jp">juk at PostgreSQL.jp</a>)までお寄せください。
+  postgresql.jp">juk at postgresql.jp</a>)までお寄せください。
   （※ メールアドレスの " at " は適切に直してください。半角の "@" です。）
 ]
 </pre></small></p>

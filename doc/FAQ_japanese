@@ -1,9 +1,9 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Last updated: Fri Sep 14 14:39:54 EDT 2007
+原文最終更新日: Last updated: Tue Oct 9 16:13:00 EDT 2007
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
-Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
+Maintainer of Japanese Translation: Jun Kuwamura (juk at postgresql.jp)
 
 この文書の最新版は http://www.postgresql.org/docs/faqs.FAQ.html で見ることがで
 きます。
@@ -89,10 +89,8 @@ NULLの可能性のあるものをどのようすれば連結できますか? フィールドがNULLかどうか
 4.16) 外部結合(outer join)はどのように実現しますか?
 4.17) 複数のデータベースを使う問い合わせはどのようにすればできますか？
 4.18) 関数から複数のロウまたはカラムを返すにはどうしますか？
-4.19) PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation
-with OID ##### does not exist" というエラーを受け取るのでしょうか？
-4.20) どのようなレプリケーションのソリューションがありますか？
-4.21) テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大
+4.19) どのようなレプリケーションのソリューションがありますか？
+4.20) テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大
 文字化(キャピタライズ)は温存されないのですか?
 
                               日本語に関する質問
@@ -126,8 +124,8 @@ PostgreSQLの門番、中央委員会、あるいは、コントロールをする会社を探そうとしても
 タを持ちますが、これらのグループはコントロールするためというよりも、管理上のも
 のです。ここでは、プロジェクトは、だれでも参加ができる開発者とユーザのコミュニ
 ティにより方向付けられます。読者がやらなければならないことは、メーリングリスト
-をサブスクライブして、議論に参加することです。（Developer's FAQには、PostgreSQL
-開発に加わり方についての情報があります。）
+をサブスクライブして、議論に参加することです。（Developer's FAQには、Postgres開
+発に加わり方についての情報があります。）
 
 1.3) PostgreSQL の著作権はどうなってますか？
 
@@ -204,7 +202,7 @@ PostgreSQL は、Win2000 SP4, WinXP, そして、Win2003 など Microsoft Windows NTベ
 ースのオペレーティングシステムで、ネイティブに走ります。あらかじめパッケージに
 されたインストーラが http://pgfoundry.org/projects/pginstaller にあり、利用でき
 ます。MSDOSベースのWindowsのバージョン(Win95, Win98, WinMe)では、Cygwinを使って
-PostgreSQL を走らせることができます。
+Postgres を走らせることができます。
 
     [訳注
         pgInstaller の入手はFTPミラーサイトの win32 ディレクトリからも可能です。
@@ -223,7 +221,7 @@ sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2Fにあります。
 1.5) PostgreSQL はどこから入手できますか？
 
 Webブラウザ経由だと、 http://www.postgresql.org/ftp/、それから、ftp経由だと、
-ftp://ftp.PostgreSQL.org/pub/ を使います。
+ftp://ftp.postgresql.org/pub/ を使います。
 
 1.6) 最新のリリースはどれですか？
 
@@ -259,7 +257,7 @@ postgresql-br) もあります。また、EFNetにもPostgreSQLチャンネルがあります。
         Web会員と正会員の会費は無料ですが、協賛会員の会費と会員の貢献で
           会は運営されています。)
         詳しくは、JPUG のWeb サイト:
-                http://www.PostgreSQL.jp/
+                http://www.postgresql.jp/
         をごらんください。
 
         日本語のIRCチャンネル '#PostgreSQL:*.jp' も存在します。
@@ -274,8 +272,8 @@ professional_supportにあります。
 http://www.postgresql.org/support/submitbug のPostgreSQL バグフォームを訪れてく
 ださい。バグレポートを提出する仕方についての手引と指針があります。
 
-それと同時に ftp サイト ftp://ftp.PostgreSQL.org/pub/ で、最新バージョンの
-PostgreSQL を探してみてください。
+それと同時に ftp サイト ftp://ftp.postgresql.org/pub/ で、最新バージョンの
+Postgres を探してみてください。
 
 1.9) 既知のバグや未だ無い機能はどうやって見つけますか？
 
@@ -294,22 +292,22 @@ PostgreSQLは拡張されたSQL:2003のサブセットをサポートします。我々のページの TODO
 我々は、PostgreSQL に関して、電子メールで直接対応して TODO リストを最新に更新し
 てゆくほうがより効果的であることを知っていますので、バグ追跡システムは使いませ
 ん。現実に、このソフトウェアの中でバグはそれほど長くはい続けませんし、多くのユ
-ーザに影響するバグは早急に修正されます。PostgreSQLのリリースで、すべての変更点
-、改良点、そして、修正点を知りたければ、 CVS のログメッセージを見てください。リ
-リースノートにさえ、このソフトウェアに加えられたすべての変更点は網羅されていま
-せん。
+ーザに影響するバグは早急に修正されます。Postgresのリリースで、すべての変更点、
+改良点、そして、修正点を知りたければ、 CVS のログメッセージを見てください。リリ
+ースノートにさえ、このソフトウェアに加えられたすべての変更点は網羅されていませ
+ん。
 
 1.10) どのような文書がありますか？
 
 配付の中に、いくつかのマニュアルとオンライン・マニュアル(マニュアル・ページ)お
 よびいくつかの小さなテスト例題が含まれます。 /docディレクトリをごらんください。
-また、マニュアルは、 http://www.PostgreSQL.org/docs/でオンラインでも閲覧できま
+また、マニュアルは、 http://www.postgresql.org/docs/でオンラインでも閲覧できま
 す。
 
     [訳注:
         JPUG 文書・書籍関連分科会で翻訳されたマニュアルもあります。
 
-        http://www.postgresql.jp/document/pg803doc/
+        http://www.postgresql.jp/document/pg825doc/
         インプレスから、
 
         PostgreSQLオフィシャルマニュアルとして出版されています。
@@ -317,7 +315,7 @@ PostgreSQLは拡張されたSQL:2003のサブセットをサポートします。我々のページの TODO
     ]
 
 
-オンラインで参照できる PostgreSQL の本も2冊あります。 http://www.PostgreSQL.org
+オンラインで参照できる PostgreSQL の本も2冊あります。 http://www.postgresql.org
 /docs/books/awbook.html
 
     [訳注:
@@ -335,8 +333,8 @@ PostgreSQLは拡張されたSQL:2003のサブセットをサポートします。我々のページの TODO
     ]
 
 
-購入可能な書籍の目録は、http://techdocs.PostgreSQL.org/techdocs/bookreviews.php
-にあります。 PostgreSQL 技術情報記事も、http://techdocs.PostgreSQL.org/ にあり
+購入可能な書籍の目録は、http://techdocs.postgresql.org/techdocs/bookreviews.php
+にあります。 PostgreSQL 技術情報記事も、http://techdocs.postgresql.org/ にあり
 ます。
 
     [訳注:
@@ -538,10 +536,10 @@ Web への拡張のためには、PHP(http://www.php.net/) が卓越したインターフェースとな
 
 3.5) 接続しようとするときに 'Sorry, too many clients' が出るのはなぜですか？
 
-既定での制限である 100 のデータベースセッションに達してしまっています。
-postmasterが同時接続できるバックエンドプロセスの制限数を増やす必要があります。
-postgresql.conf の中の max_connections の値を変更して postmasterを再起動するこ
-とで可能になります。
+既定での制限である 100 のデータベースセッションに達してしまっています。サーバー
+の同時接続できるバックエンドプロセスの制限値を増やす必要があります。
+postgresql.conf の中のmax_connections の値を変更してサーバを再起動することで可
+能になります。
 
 3.6) PostgreSQLのアップグレードの手順はどうなりますか？
 
@@ -684,8 +682,8 @@ VACUUM FULL tabをしたほうが良いかもしれません。
 
 例題として、各行に整数とテキスト記述を持つ 100,000行のファイルを考えてみましょ
 う。テキストの文字列の平均長さを20バイトと仮定すると、フラットファイルの大きさ
-は約2.8MB です。このデータを含む PostgreSQL データベースファイルの大きさは次の
-ように約5.2MBと見積もることができます：
+は約2.8MB です。このデータを含む Postgres データベースファイルの大きさは次のよ
+うに約5.2MBと見積もることができます：
 
     24 bytes: 各ロウのヘッダ(概算)
     24 bytes: 整数(int)フィールドとテキスト(text)フィールド
@@ -693,7 +691,7 @@ VACUUM FULL tabをしたほうが良いかもしれません。
    ----------------------------------------
     52 bytes per row
 
-   PostgreSQL のデータページサイズは 8192バイト(8KB)なので:
+   Postgres のデータページサイズは 8192バイト(8KB)なので:
 
    8192 bytes per page
    -------------------   =  146 rows per database page (切り捨て)
@@ -754,11 +752,8 @@ LIKE あるいは ~ のようなワイルドカード演算子は特別な環境でしか使えません：
 
     text_pattern_ops
 
-    インデックスを作成することもできます。
-
-8.0より前のリリースでは、インデックスは、データ型がちょうどインデックスのカラム
-の型と一致しなければ、使えないことがしばしばありました。おそらく、int2, int8,
-および numeric 等のカラムのインデックスがそうです。
+    インデックスを作成することもできます。また、それを全文検索のフルテキストの
+    インデックス作成に使うことができます。
 
 4.7) 問い合わせオプティマイザがどのように問い合わせを評価するのかを見るにはどう
 しますか？
@@ -859,28 +854,16 @@ PostgreSQL は SERIAL データ型をサポートします。カラム上にシーケンスを自動作成し
     ]
 
 
-通番についてのもっと詳しい情報は、オンラインマニュアルで create_sequence をごら
-んください。
+自動的に生成される通番は、 <table>_<serialcolumn>_seq と名付けられていて、table
+と serialcolumn は、それぞれテーブルと SERIAL カラムの名前です。通番については
+、オンラインマニュアルでcreate_sequence をごらんください。
 
 4.11.2) SERIALデータ型に挿入される値は、どうすれば得られますか？
 
-ひとつの方法は、nextval() 関数を使ってその値を挿入する前(before)に SEQUENCE オ
-ブジェクトから次の SERIAL 値を取り出し、それから実際に挿入をすることです。
-4.11.1 のテーブルの例を使うとすると、疑似言語ではこのようになります。
+最も簡単な方法は、割り当てられたSERIAL値を RETURNINGとして取得することです。
+4.11.1の例題テーブルを使うと次のようになります。
 
-    new_id = execute("SELECT nextval('person_id_seq')");
-    execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
-
-そうして、new_id に保存した新しい値を他のクエリ(たとえば、 person テーブルに対
-する外部キー(foreign key)のように)使うとよいでしょう。自動的に作られたSEQUENCE
-オブジェクトの名前は、<table>_<serialcolumn>_seq のようになり、このうち、table
-と serialcolumn はそれぞれテーブルの名前とSERIALカラムの名前です。
-
-あるいは、与えられたSERIAL値を、それが既定値として挿入された後で(after)、
-currval() 関数を使って取り出すこともできます。たとえば、
-
-    execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
-    new_id = execute("SELECT currval('person_id_seq')");
+    INSERT INTO person (name) VALUES ('Blaise Pascal') RETURNING id;
 
 4.11.3) currval() は他のユーザとの競合状態に陥ることはないですか？
 
@@ -914,8 +897,8 @@ CTIDは、ロウが修正されたり再読込みされたときに変わります。また、物理ロウを差す
 ぜですか？
 
 おそらく、システムの仮想メモリーを全て使い果たしてしまっている可能性があるか、
-カーネルがあるリソースについてもつ制限値が低すぎる可能性があります。postmaster
-を始動する前にこれを試してみてください：
+カーネルがあるリソースについてもつ制限値が低すぎる可能性があります。サーバを始
+動する前にこれを試してみてください：
 
     ulimit -d 262144
     limit datasize 256m
@@ -975,17 +958,7 @@ techdocs.17
 
 。
 
-4.19) PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation
-with OID ##### does not exist" というエラーを受け取るのでしょうか？
-
-PL/PgSQL は関数スクリプトをキャッシュし、不幸にもその副作用で、 PL/PgSQL関数が
-一時テーブルにアクセスする場合、後でそのテーブルを消して作りなおされ、関数がも
-う一度呼び出されると、その関数はキャッシュしている関数の内容はまだ古い一時テー
-ブルを差し示したままだからです。この、解決策として、PL/PgSQLの中で EXECUTE を一
-時テーブルへのアクセスのために使います。そうすると、クエリは毎回パースをやり直
-しされるようになります。
-
-4.20) どのようなレプリケーションのソリューションがありますか？
+4.19) どのようなレプリケーションのソリューションがありますか？
 
 「レプリケーション」と一言でいいますが、レプリケーションをするための技術はいく
 つかあり、それぞれ、利点と欠点があります。
@@ -1003,10 +976,10 @@ PL/PgSQL は関数スクリプトをキャッシュし、不幸にもその副作用で、 PL/PgSQL関数が
 この他にも、商用やハードウェア−ベースのレプリケーションソリューションがいろい
 ろなレプリケーションモデルをサポートしています。
 
-4.21)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大文
+4.20)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大文
 字化(キャピタライズ)は温存されないのですか?
 
-認識された名前のもっとも一般的な原因は、テーブルを作成する際に、テーブルやカラ
+名前が認識されない、最も一般的な原因は、テーブルを作成する際に、テーブルやカラ
 ムを囲う二重引用符の使用です。二重引用符を使うと、テーブルとカラムの名前（識別
 子といいます）は大文字と小文字の区別をして格納されます。したがって、pgAdminのよ
 うにテーブル作成のときに自動的に二重引用符を使うものはクエリの中でそれらの名前
@@ -1048,8 +1021,8 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2007年09月15日
-  翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
+  最終更新日:   2007年10月10日
+  翻訳者:       桑村 潤 (Jun KUWAMURA <juk at postgresql.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
 
@@ -1067,7 +1040,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
                 せせ じゅん(Jun SESE <sesejun at linet.gr.jp>)
                 神谷 英孝(Hidetaka KAMIYA <hkamiya at catvmics.ne.jp>)
                 菅原 敦(Atsushi SUGAWARA <asugawar at f3.dion.ne.jp>)
-                稲葉 香理(Kaori Inaba <i-kaori at sra.co.jp>)
+                稲葉 香理(Kaori Inaba <i-kaori at sraoss.co.jp>)
 
   をはじめ、ポストグレスに関する話題豊富な日本語PostgreSQLメーリングリスト、
   和訳のきっかけを作ってくれたり、いつもチェックをしてくれる
@@ -1080,10 +1053,10 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
   という項目であります。
 
   また、最新版は以下のサイトにあります。
-        http://www.PostgreSQL.jp/wg/jpugdoc/ 「JPUG文書・書籍関連分科会」
+        http://www.postgresql.jp/wg/jpugdoc/ 「JPUG文書・書籍関連分科会」
         http://www.linux.or.jp/JF/JFdocs/INDEX-database.html 「Linux JFプロジェクト」   http://www.linet.gr.jp/~juk/pgsql/ 「PostgreSQL Notes for Japanese」（翻訳者ページ）
 
-  なお、この和訳に関するご意見・ご質問は(juk at PostgreSQL.jp)までお寄せください。
+  なお、この和訳に関するご意見・ご質問は(juk at postgresql.jp)までお寄せください。
   （※ メールアドレスの " at " は適切に直してください。半角の "@" です。）
 ]
 
