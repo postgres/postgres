@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.353 2007/10/03 11:11:12 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.354 2007/10/10 06:33:17 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -422,7 +422,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS 
-	CONTENT_P CONVERSION_P CONVERT COPY COST CREATE CREATEDB
+	CONTENT_P CONVERSION_P COPY COST CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_P CURRENT_DATE CURRENT_ROLE
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
@@ -4405,10 +4405,6 @@ func_expr:      func_name '(' ')'
 			{ $$ = cat_str(3, make_str("trim(trailing"), $4, make_str(")")); }
 		| TRIM '(' trim_list ')'
 			{ $$ = cat_str(3, make_str("trim("), $3, make_str(")")); }
-		| CONVERT '(' a_expr USING any_name ')'
-		 	{ $$ = cat_str(5, make_str("convert("), $3, make_str("using"), $5, make_str(")"));}
-		| CONVERT '(' expr_list ')'
-			{ $$ = cat_str(3, make_str("convert("), $3, make_str(")")); }
 		| NULLIF '(' a_expr ',' a_expr ')'
 			{ $$ = cat_str(5, make_str("nullif("), $3, make_str(","), $5, make_str(")")); }
 		| COALESCE '(' expr_list ')'
@@ -6652,7 +6648,6 @@ col_name_keyword:
  */
 		| CHARACTER		{ $$ = make_str("character"); }
 		| COALESCE		{ $$ = make_str("coalesce"); }
-		| CONVERT		{ $$ = make_str("convert"); }
 		| DEC			{ $$ = make_str("dec"); }
 		| DECIMAL_P		{ $$ = make_str("decimal"); }
 		| EXISTS		{ $$ = make_str("exists"); }

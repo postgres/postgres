@@ -2260,6 +2260,10 @@ Wed, 03 Oct 2007 10:48:39 +0200
 	  exported.
 	- Created export list for ecpglib.
 	- Also created export list for pgytpeslib and compatlib.
+	
+Wed, 10 Oct 2007 08:31:44 +0200
+	
+	- Synced parser and keyword list.
 	- Set pgtypes library version to 3.0.
 	- Set compat library version to 3.0.
 	- Set ecpg library version to 6.0.

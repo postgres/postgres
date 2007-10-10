@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.82 2007/09/04 10:02:29 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.83 2007/10/10 06:33:17 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,6 @@ static const ScanKeyword ScanPGSQLKeywords[] = {
 	{"constraints", CONSTRAINTS},
 	{"content", CONTENT_P},
 	{"conversion", CONVERSION_P},
-	{"convert", CONVERT},
 	{"copy", COPY},
 	{"cost", COST},
 	{"create", CREATE},
