@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.17 2007/09/14 13:21:30 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.18 2007/10/10 21:48:22 neilc Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -2045,15 +2045,15 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
    <itemizedlist  spacing="compact" mark="bullet">
     <listitem>
      <para>The length of each lexeme must be less than 2K bytes  </para>
-      </listitem>
-      <listitem>
+    </listitem>
+    <listitem>
      <para>The length of a <type>tsvector</type> (lexemes + positions) must be less than 1 megabyte  </para>
     </listitem>
     <listitem>
      <para>The number of lexemes must be less than 2<superscript>64</superscript>  </para>
     </listitem>
     <listitem>
-     <para>Positional information must be non-negative and less than 16,383  </para>
+     <para>Positional information must be greater than 0 and less than 16,383  </para>
     </listitem>
     <listitem>
      <para>No more than 256 positions per lexeme  </para>
