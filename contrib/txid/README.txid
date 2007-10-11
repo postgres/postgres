@@ -1,8 +1,7 @@
+txid - export transaction IDs to user level
+===========================================
 
-txid - export transaction id's to user level
-============================================
-
-The goal is to make PostgreSQL internal transaction ID and snapshot
+The goal is to make PostgreSQL's internal transaction ID and snapshot
 data usable externally.  This allows very efficient queue
 implementation done inside database.
 
@@ -32,7 +31,7 @@ txid_snapshot_xmax( snap ) returns int8
 txid_snapshot_xip( snap ) setof int8
 
   List of in-progress TXID's in snapshot, that are invisible.
-  Values are between xmin and xmax.
+  Values are between xmin (inclusive) and xmax (exclusive).
 
 txid_visible_in_snapshot(id, snap) returns bool
 
@@ -73,8 +72,8 @@ fetching possible txids below snap1.xmax explicitly:
      AND NOT txid_visible_in_snapshot(ev_txid, :snap1)
      AND txid_visible_in_snapshot(ev_txid, :snap2);
 
-Note that although the above queries work, the PostgreSQL fails to
-plan them correctly.  For actual usage the values for txid_snapshot_xmin,
+Note that although the above queries work, PostgreSQL fails to
+plan them efficiently.  For actual usage the values for txid_snapshot_xmin,
 txid_snapshot_xmax and txid_snapshot_xip should be filled in directly,
 only then will they use index.
 
@@ -92,20 +91,16 @@ To see example code for that it's best to see pgq.batch_event_sql() function in 
 Dumping and restoring data containing TXIDs.
 --------------------------------------------
 
-[towrite: reason for epoch increase]
+When reloading TXID data you will typically want to be sure that the current
+XID counter is beyond the reloaded data.  The easiest way to do this is to
+increase the XID epoch to beyond the largest one in the input data.
 
-You can look at current epoch with query:
+You can look at current epoch with queries such as:
 
-  SELECT txid_current() >> 32 as epoch;
-
-So new epoch should be:
-
-  SELECT (txid_current() >> 32) + 1 as newepoch;
+  SELECT MAX(txid) >> 32 as epoch FROM ...;
 
 Epoch can be changed with pg_resetxlog command:
 
   pg_resetxlog -e NEWEPOCH DATADIR
 
 Database needs to be shut down for that moment.
-
-
