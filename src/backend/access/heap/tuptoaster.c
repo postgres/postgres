@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.77 2007/10/01 16:25:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.78 2007/10/11 18:19:58 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -811,9 +811,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 										   use_wal, use_fsm);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
-
 		toast_free[i] = true;
-		toast_sizes[i] = VARSIZE(toast_values[i]);
 
 		need_change = true;
 		need_free = true;
