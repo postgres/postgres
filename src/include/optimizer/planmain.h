@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.102 2007/10/04 20:44:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.103 2007/10/11 18:05:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,8 @@ extern RestrictInfo *build_implied_join_equality(Oid opno,
 extern Plan *set_plan_references(PlannerGlobal *glob,
 								 Plan *plan,
 								 List *rtable);
-extern List *set_returning_clause_references(List *rlist,
+extern List *set_returning_clause_references(PlannerGlobal *glob,
+								List *rlist,
 								Plan *topplan,
 								Index resultRelation);
 extern void fix_opfuncids(Node *node);

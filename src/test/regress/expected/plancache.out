@@ -202,3 +202,20 @@ drop schema s1 cascade;
 NOTICE:  drop cascades to table s1.abc
 drop schema s2 cascade;
 NOTICE:  drop cascades to table abc
+-- Check that invalidation deals with regclass constants
+create temp sequence seq;
+prepare p2 as select nextval('seq');
+execute p2;
+ nextval 
+---------
+       1
+(1 row)
+
+drop sequence seq;
+create temp sequence seq;
+execute p2;
+ nextval 
+---------
+       1
+(1 row)
+

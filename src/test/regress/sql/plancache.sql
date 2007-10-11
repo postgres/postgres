@@ -123,3 +123,17 @@ execute p1;
 
 drop schema s1 cascade;
 drop schema s2 cascade;
+
+-- Check that invalidation deals with regclass constants
+
+create temp sequence seq;
+
+prepare p2 as select nextval('seq');
+
+execute p2;
+
+drop sequence seq;
+
+create temp sequence seq;
+
+execute p2;
