@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.518 2007/10/11 19:46:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.519 2007/10/11 20:04:59 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -56,7 +56,7 @@ do it for earlier branch release files.
      a trajectory moving beyond feature-parity with other database
      systems to a time when <productname>PostgreSQL</> will be a
      technology leader in the database field. Major new capabilities
-     this release include:
+     in this release include:
 
     <itemizedlist>
 
