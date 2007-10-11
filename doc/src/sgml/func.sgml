@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.399 2007/10/07 01:13:30 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.400 2007/10/11 02:43:55 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1362,7 +1362,7 @@
         Also there are some pre-defined conversions. See <xref
         linkend="conversion-names"> for available conversions.
        </entry>
-       <entry><literal>convert( 'text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
+       <entry><literal>convert('text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
        <entry><literal>text_in_utf8</literal> represented in ISO 8859-1 encoding</entry>
       </row>
 
@@ -1377,7 +1377,7 @@
         is specified by <parameter>src_encoding</parameter>. The
         <parameter>string</parameter> must be valid in this encoding.
        </entry>
-       <entry><literal>convert_from( 'text_in_utf8', 'UTF8')</literal></entry>
+       <entry><literal>convert_from('text_in_utf8', 'UTF8')</literal></entry>
        <entry><literal>text_in_utf8</literal> represented in the current database encoding</entry>
       </row>
 
@@ -1390,7 +1390,7 @@
        <entry>
         Convert string to <parameter>dest_encoding</parameter>.
        </entry>
-       <entry><literal>convert_to( 'some text', 'UTF8')</literal></entry>
+       <entry><literal>convert_to('some text', 'UTF8')</literal></entry>
        <entry><literal>some text</literal> represented in the UTF8 encoding</entry>
       </row>
 
@@ -1420,7 +1420,7 @@
         <literal>Escape</> merely outputs null bytes as <literal>\000</> and
         doubles backslashes.
        </entry>
-       <entry><literal>encode( E'123\\000\\001', 'base64')</literal></entry>
+       <entry><literal>encode(E'123\\000\\001', 'base64')</literal></entry>
        <entry><literal>MTIzAAE=</literal></entry>
       </row>       
 
@@ -1535,7 +1535,7 @@
         in an <acronym>SQL</acronym> statement string.
         Embedded single-quotes and backslashes are properly doubled.
        </entry>
-       <entry><literal>quote_literal( 'O\'Reilly')</literal></entry>
+       <entry><literal>quote_literal('O\'Reilly')</literal></entry>
        <entry><literal>'O''Reilly'</literal></entry>
       </row>
 
@@ -1603,7 +1603,7 @@
        <entry>Replace all occurrences in <parameter>string</parameter> of substring
         <parameter>from</parameter> with substring <parameter>to</parameter>
        </entry>
-       <entry><literal>replace( 'abcdefabcdef', 'cd', 'XX')</literal></entry>
+       <entry><literal>replace('abcdefabcdef', 'cd', 'XX')</literal></entry>
        <entry><literal>abXXefabXXef</literal></entry>
       </row>
 
@@ -2592,7 +2592,7 @@
        <entry><literal><function>octet_length</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>int</type></entry>
        <entry>Number of bytes in binary string</entry>
-       <entry><literal>octet_length( E'jo\\000se'::bytea)</literal></entry>
+       <entry><literal>octet_length(E'jo\\000se'::bytea)</literal></entry>
        <entry><literal>5</literal></entry>
       </row>
 
