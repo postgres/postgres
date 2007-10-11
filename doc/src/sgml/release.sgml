@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.517 2007/10/10 14:09:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.518 2007/10/11 19:46:21 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -40,7 +40,7 @@ do it for earlier branch release files.
 
    <note>
     <title>Release date</title>
-    <simpara>2007-??-??</simpara>
+    <simpara>2007-12-??</simpara>
     <para>CURRENT AS OF 2007-10-03</>
    </note>
 
@@ -48,33 +48,48 @@ do it for earlier branch release files.
     <title>Overview</title>
 
     <para>
-     This release adds many improvements that were requested by users,
-     including:
+     This release represents a major leap forward by adding significant
+     new functionality and performance enhancements to
+     <productname>PostgreSQL</>. Many complex ideas that normally take
+     years to implement were added rapidly to this release by our
+     development team. This release starts <productname>PostgreSQL</> on
+     a trajectory moving beyond feature-parity with other database
+     systems to a time when <productname>PostgreSQL</> will be a
+     technology leader in the database field. Major new capabilities
+     this release include:
 
     <itemizedlist>
 
       <listitem>
        <para>
-        Full text search is now a built-in feature
+        Full text search now fully integrated into the core database
+        system
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Support for the SQL/XML standard, including a new <type>xml</type> builtin
+        Support for the SQL/XML standard, including a new <type>XML</type> builtin
         data type
        </para>
       </listitem>
 
       <listitem>
        <para>
-        enum data types
+        Enumerated (<type>ENUM</>) data type support
+       </para>
+
+       <para>
+        This is accomplished by creating a new data type with an
+        <literal>ENUM</> clause, e.g.
+        <literal>CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy')</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        UUID data type, similar to that defined by RFC 4122
+        Universally Unique Identifier (UUID) data type, similar to that
+        defined by RFC 4122
        </para>
       </listitem>
 
@@ -86,58 +101,79 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
+        Control of whether <literal>NULL</>s sort first or last, using
         <literal>ORDER BY ... NULLS FIRST/LAST</>
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Updatable cursors
-        (<literal>UPDATE/DELETE WHERE CURRENT OF</>
-        <replaceable>cursor_name</>)
+        Updatable cursors using <literal>UPDATE/DELETE WHERE CURRENT OF</>
+       </para>
+
+       <para>
+        This eliminates the need to reference a primary key to update or
+        delete rows returned by a cursor.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Per-function parameter settings
+        Server configuration parameters can now be set on a per-function
+        basis
+       </para>
+
+       <para>
+        For example, functions can now set their own
+        <varname>search_path</> to prevent unexpected behavior if a
+        different <varname>search_path</> exists at run-time.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        User-defined types can now have type modifiers (parameters)
+        User-defined types can now have type modifiers
        </para>
 
        <para>
-        Declarations such as <type>varchar(42)</type> are no longer
-        restricted to use by built-in data types.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Automatic plan invalidation when table definitions change
-       </para>
-
-       <para>
-        This will particularly ease usage of temporary tables in
-        PL/PgSQL functions.
+        This allows a user type to take a modifier when
+        being referenced, e.g. <type>SSNUM(7)</>.  Previously only
+        predefined system data types would allow this, e.g.
+        <type>CHAR(4)</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Numerous improvements in logging and statistics collection
-        capabilities, including the ability to emit postmaster log messages
-        in CSV format that can be directly loaded into a database table
-        for analysis
+        Automatically invalidate cached function code when table
+        definitions change
+       </para>
+
+       <para>
+        Previously PL/pgSQL functions that referenced temporary tables
+        would fail if the temporary table was dropped and recreated
+        between function invocations, unless <literal>EXECUTE</> was
+        used.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Numerous improvements in logging and statistics collection,
+        including the ability to emit postmaster log messages in
+        <acronym>CSV</> format, which can be loaded into a database
+        table for analysis
        </para>
       </listitem>
 
       <listitem>
        <para>
         SSPI/GSSAPI authentication support
+       </para>
+
+       <para>
+        This adds native Security Service Provider Interface (SSPI) for
+        Windows.
        </para>
       </listitem>
 
@@ -147,58 +183,81 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        Autovacuum is now considered mature enough to be enabled by default.
+        This allows multiple vacuums to run concurrently, meaning
+        vacuuming of a large table will not prevent smaller tables from
+        being vacuumed at the same time. Autovacuum is now considered
+        mature and thus enabled by default.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        The entire <productname>PostgreSQL</productname> system can
-        now be compiled with Microsoft Visual C++
+        The backend database server can now be compiled with
+        <productname>Microsoft Visual C++</>
        </para>
 
        <para>
-        This will improve the ability of Windows-based developers to
-        contribute to the project.  Windows executables made with Visual C++
-        may also have better stability and performance than those made with
-        other tool sets.
+         Windows executables made with Visual C++ might have better
+         stability and performance than those made with other tool sets.
+         Development and debugging tools familiar to Windows developers
+         will also work.
        </para>
       </listitem>
 
     </itemizedlist>
 
-    Major performance improvements in this release include:
+    Major performance improvements are listed below. Fortunately, most
+    of these enhancements are automatic and require user changes or
+    tuning:
 
     <itemizedlist>
 
       <listitem>
        <para>
-        Asynchronous commit option to allow transactions to be reported
-        committed before they have actually been flushed to disk
+        Asynchronous commit option allows transactions to be committed
+        but on-disk changes to be delayed
        </para>
 
        <para>
-        This would not, of course, be acceptable if the client takes some
-        critical external action on the assumption that the transaction
-        will be remembered; but for certain applications, it is an acceptable
-        risk for some or all transactions to use this mode.  Unlike existing
-        options such as <varname>fsync</varname>, asynchronous commit does
-        not risk database corruption; the worst case is that after a crash,
-        the last few reportedly-committed transactions will not have
-        taken effect.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        <quote>Distributed</> checkpoints to spread out the I/O load of a
-        checkpoint
+        This feature dramatically increases performance for data
+        modification queries. The disadvantage is that because on-disk
+        changes are delayed, if the operating system crashes before data
+        is written to the disk, committed data will be lost. This is
+        useful only for applications that can accept some data loss.
+        Unlike <varname>fsync</varname>, asynchronous commit does not
+        risk database corruption; the worst case is that after an
+        operating system crash the last few reportedly-committed
+        transactions will be missing.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Heap-Only Tuples (HOT) to reduce overhead of updates
+        <quote>Distributed</> checkpoints prevent I/O spikes during
+        checkpoints
+       </para>
+
+       <para>
+        Previously all modified buffers were forced to disk at
+        checkpoint time, causing an I/O spike and decreasing server
+        performance. This new capability spreads checkpoint activity out
+        between checkpoints, reducing peak I/O usage.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Heap-Only Tuples (<acronym>HOT</>) improves <command>UPDATE</>
+        space usage
+       </para>
+
+       <para>
+        To allow high concurrency <productname>PostgreSQL</> retains old
+        versions of updated rows. Previously only <command>VACUUM</>
+        could reuse space taken by dead rows. With <acronym>HOT</> dead
+        row space can be reused at the time of <command>UPDATE</> or
+        <command>INSERT</>. This allows for more consistent performance.
+        <acronym>HOT</> also improved deleted row space reuse.
        </para>
       </listitem>
 
@@ -207,41 +266,66 @@ do it for earlier branch release files.
         Just-in-time background writer strategy to improve disk write
         efficiency
        </para>
+
+       <para>
+        This basically makes the background writer self-tuning.
+       </para>
+
       </listitem>
 
       <listitem>
        <para>
-        Reduction of on-disk data size through reducing both per-tuple
-        and per-field overheads
+        Reduction of both per-field and per-row storage requirements
+       </para>
+
+       <para>
+        Variable-length data types with data values less then 128 bytes
+        will see a decrease of 3-6 bytes. For example, two
+        <type>CHAR(1)</type> fields now take 4 bytes instead of 16. Rows
+        are also 4 bytes shorter.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Efficiency improvements for large sequential scans, including
-        prevention of cache flushing and <quote>piggybacking</quote> to let
-        concurrent scans read the table only once
+        Prevent large sequential scans from forcing out more frequently
+        used cached pages
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Top-N sorting
+        Allow large sequential scans to use cached pages from other
+        concurrent sequential scans
+       </para>
+
+       <para>
+        This is accomplished by starting the new sequential scan in the
+        middle of the table (where the other sequential scan is already
+        in-progress) and wrapping around to the beginning to finish.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Lazy XID assignment to reduce the cost of read-only transactions
+        Allow <literal>ORDER BY ... LIMIT</> to be done without sorting
        </para>
 
        <para>
-        For applications in which there are a large number of read-only
-        transactions, this helps not only by reducing overhead for the
-        transactions themselves, but by reducing overhead that's driven
-        by the rate of XID consumption; notably, reducing contention for
-        transaction log buffers and reducing the frequency of
-        anti-wraparound vacuuming.
+        This is done by scanning the table and using a filter to find
+        the few requested rows, rather than sorting the entire table.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Use pseudo-transaction ids in read-only transactions
+       </para>
+
+       <para>
+        This reduces transaction overhead for read-only transactions,
+        and reduces the need for vacuuming for transaction id
+        wrap-around.
        </para>
       </listitem>
 
@@ -268,8 +352,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        <filename>contrib/tsearch2</> features have been absorbed into
-        the core, with some syntax changes
+        <filename>contrib/tsearch2</> features have been moved into
+        the core server, with some minor syntax changes
        </para>
 
        <para>
@@ -279,23 +363,23 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Casts to <type>text</type> that formerly occurred implicitly may now
-        need to be written explicitly
+        Queries that previously automatically cast values to
+        <type>TEXT</type> might now need explicit casts
        </para>
 
        <para>
-        Data types other than <type>char</> and <type>varchar</> are no
-        longer implicitly castable to <type>text</>, except in the limited
-        case of a <literal>||</> (concatenation) operator whose other
-        input is textual.  While this will require explicit casts in a
-        few queries that didn't need them before, the elimination of
-        surprising interpretations justifies it.
+        Data types other than <type>CHAR</> and <type>VARCHAR</> no
+        longer automatically cast to <type>TEXT</>, except in the
+        limited case of concatenation (<literal>||</>) where the other
+        input is textual. While this change will require additional
+        casts for some queries it also eliminates some unusual
+        behavior.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Numerous changes in administrator-only configuration parameters
+        Numerous changes in administrative server parameters
        </para>
 
        <para>
@@ -310,9 +394,10 @@ do it for earlier branch release files.
         <varname>track_activities</>.
         <varname>stats_block_level</> and <varname>stats_row_level</>
         are merged into <varname>track_counts</>.
-        <varname>archive_command</> changed meaning slightly: you must now set
-        <varname>archive_mode</> to <literal>on</> as well to enable archiving.
-        The default autovacuum-related settings changed.
+        Previously <varname>archive_command</> controlled whether
+        archiving was performed. Now a new boolean configuration
+        parameter, <varname>archive_mode</>, controls this. Autovacuum's
+        default settings have changed.
        </para>
       </listitem>
 
@@ -321,121 +406,126 @@ do it for earlier branch release files.
         Commenting out a parameter in <filename>postgresql.conf</> now
         causes it to revert to its default value
        </para>
-      </listitem>
 
-      <listitem>
        <para>
-        <literal>ARRAY(SELECT ...)</literal> now returns an empty array,
-        rather than a NULL, when the sub-select returns zero rows
+        Previously commenting out a value kept the value unchanged until
+        the next server restart.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        <literal>ORDER BY ... USING</> <replaceable>operator</>
-        will now be rejected if the <replaceable>operator</> is not a
-        less-than or greater-than member of some btree operator class
-       </para>
-
-       <para>
-        This prevents less-than-sane behavior that formerly ensued if an
-        operator that doesn't actually define a proper sort ordering was
-        specified.
+        <literal>ARRAY(SELECT ...)</literal>, where <command>SELECT</>
+        returns no rows, now returns an empty array, rather than NULL
        </para>
       </listitem>
 
       <listitem>
        <para>
-        The array type associated with a type named <quote>foo</quote>
-        is not necessarily named <quote>_foo</quote> anymore
+        <literal>ORDER BY ... USING</> <replaceable>operator</> now must
+        use a less-than or greater-than <replaceable>operator</> that is
+        defined in a btree operator class
+       </para>
+
+       <para>
+        This restriction was added to prevent unexpected results.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        The array name for a base data type is no longer required to
+        be the data type name with an underscore prefix
        </para>
 
        <para>
         The old naming convention is still honored when possible, but
-        client code should migrate away from depending on it.
+        client code should no longer depending on it.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        By default, non-superuser database owners can now instantiate trusted
-        procedural languages in their databases
+        Non-superuser database owners now have privileges to add trusted
+        procedural languages in their databases by default
        </para>
 
        <para>
         While this is reasonably safe, some administrators may wish to
-        revoke the privilege.
+        revoke the privilege. It is controlled by
+        <structname>pg_pltemplate</>.<structfield>tmpldbacreate</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        The effects of <command>SET LOCAL</command> now persist until
-        the end of the current top transaction, unless rolled back
+        <command>SET LOCAL</command> changes now persist until
+        the end of the top-most transaction, unless rolled back
        </para>
 
        <para>
-        In 8.0 through 8.2, <command>SET LOCAL</command>'s
-        effects disappeared at subtransaction commit, leading to behavior
-        that made little sense at the SQL level (one would not normally
-        expect <command>RELEASE</> to do such a thing).
+        Previously <command>SET LOCAL</command>'s effects reverted
+        during subtransaction commit and <command>RELEASE</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Commands that are disallowed in transaction blocks are now disallowed
-        in multiple-statement query strings, too
+        Commands that are disallowed in transaction blocks are now also
+        disallowed in multiple-statement query strings
        </para>
 
        <para>
         For example, <literal>BEGIN; DROP DATABASE; COMMIT</> will now be
-        rejected even if submitted as a single Query message.  This was always
-        quite unsafe, but the <function>PreventTransactionChain</function>
-        test failed to detect it.
+        rejected even if submitted as a single query message.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Additional checks for invalidly-encoded multibyte strings
+        Add additional checks for invalidly-encoded multibyte strings
        </para>
 
        <para>
-        Some cases that might formerly have allowed invalid data to
-        enter the database will now be rejected.  In particular, the
-        <function>chr()</function> function changed behavior.
+        For example, <function>chr()</function> has additional checks.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        <function>convert()</function> family of functions changed behavior
+        <function>convert()</function> encoding has changed behavior
        </para>
 
        <para>
-        Strings that are not in the database's native encoding are now
-        represented as type <type>bytea</> rather than type <type>text</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Minor security restrictions added to database-size inquiry functions
-        and some contrib functions
+        <type>bytea</> is now used for strings that do not match the
+        server encoding, and <function>convert_from</> and
+        <function>convert_to</> have been added for consistency.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        C code that manipulates variable-length datums will need changes
+        Restrict object size functions to users who have reasonable
+        permissions to view such information
        </para>
 
        <para>
-        The new <function>SET_VARSIZE()</> macro <emphasis>must</> be used
-        to set the length word of a generated datum.  Also, it may be
-        necessary to <quote>detoast</quote> input varlena datums in cases
-        where no toasting could have happened before.
+        For example, database size now requires <literal>CONNECT</>
+        permission, and tablespaces size requires <literal>CREATE</>
+        permission.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        New C macros for handling variable-length data values
+       </para>
+
+       <para>
+        The new <function>SET_VARSIZE()</> macro <emphasis>must</> be
+        used to set the length of generated values. Also, it might be
+        necessary to expand (<quote>de-TOAST</quote>) input values in
+        additional places.
        </para>
       </listitem>
 
