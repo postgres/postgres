@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.249 2007/09/06 17:31:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.250 2007/10/11 21:27:49 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3265,9 +3265,20 @@ evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod)
 	/* Get back to outer memory context */
 	MemoryContextSwitchTo(oldcontext);
 
-	/* Must copy result out of sub-context used by expression eval */
+	/*
+	 * Must copy result out of sub-context used by expression eval.
+	 *
+	 * Also, if it's varlena, forcibly detoast it.  This protects us against
+	 * storing TOAST pointers into plans that might outlive the referenced
+	 * data.
+	 */
 	if (!const_is_null)
-		const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
+	{
+		if (resultTypLen == -1)
+			const_val = PointerGetDatum(PG_DETOAST_DATUM_COPY(const_val));
+		else
+			const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
+	}
 
 	/* Release all the junk we just created */
 	FreeExecutorState(estate);
