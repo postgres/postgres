@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.109.2.1 2005/04/14 21:44:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.109.2.2 2007/10/11 21:28:39 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1702,9 +1702,20 @@ simplify_op_or_func(Expr *expr, List *args)
 	const_val = ExecEvalExprSwitchContext((Node *) newexpr, econtext,
 										  &const_is_null, NULL);
 
-	/* Must copy result out of sub-context used by expression eval */
+	/*
+	 * Must copy result out of sub-context used by expression eval.
+	 *
+	 * Also, if it's varlena, forcibly detoast it.  This protects us against
+	 * storing TOAST pointers into plans that might outlive the referenced
+	 * data.
+	 */
 	if (!const_is_null)
-		const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
+	{
+		if (resultTypLen == -1)
+			const_val = PointerGetDatum(PG_DETOAST_DATUM_COPY(const_val));
+		else
+			const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
+	}
 
 	FreeExprContext(econtext);
 	pfree(newexpr);
