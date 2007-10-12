@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.285 2007/09/30 17:28:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.286 2007/10/12 19:39:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1332,6 +1332,40 @@ AdvanceXLInsertBuffer(bool new_segment)
 }
 
 /*
+ * Check whether we've consumed enough xlog space that a checkpoint is needed.
+ *
+ * Caller must have just finished filling the open log file (so that
+ * openLogId/openLogSeg are valid).  We measure the distance from RedoRecPtr
+ * to the open log file and see if that exceeds CheckPointSegments.
+ *
+ * Note: it is caller's responsibility that RedoRecPtr is up-to-date.
+ */
+static bool
+XLogCheckpointNeeded(void)
+{
+	/*
+	 * A straight computation of segment number could overflow 32
+	 * bits.  Rather than assuming we have working 64-bit
+	 * arithmetic, we compare the highest-order bits separately,
+	 * and force a checkpoint immediately when they change.
+	 */
+	uint32		old_segno,
+				new_segno;
+	uint32		old_highbits,
+				new_highbits;
+
+	old_segno = (RedoRecPtr.xlogid % XLogSegSize) * XLogSegsPerFile +
+		(RedoRecPtr.xrecoff / XLogSegSize);
+	old_highbits = RedoRecPtr.xlogid / XLogSegSize;
+	new_segno = (openLogId % XLogSegSize) * XLogSegsPerFile + openLogSeg;
+	new_highbits = openLogId / XLogSegSize;
+	if (new_highbits != old_highbits ||
+		new_segno >= old_segno + (uint32) (CheckPointSegments-1))
+		return true;
+	return false;
+}
+
+/*
  * Write and/or fsync the log at least as far as WriteRqst indicates.
  *
  * If flexible == TRUE, we don't have to write as far as WriteRqst, but
@@ -1522,30 +1556,16 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 
 				/*
 				 * Signal bgwriter to start a checkpoint if we've consumed too
-				 * much xlog since the last one.  (We look at local copy of
-				 * RedoRecPtr which might be a little out of date, but should
-				 * be close enough for this purpose.)
-				 *
-				 * A straight computation of segment number could overflow 32
-				 * bits.  Rather than assuming we have working 64-bit
-				 * arithmetic, we compare the highest-order bits separately,
-				 * and force a checkpoint immediately when they change.
+				 * much xlog since the last one.  For speed, we first check
+				 * using the local copy of RedoRecPtr, which might be
+				 * out of date; if it looks like a checkpoint is needed,
+				 * forcibly update RedoRecPtr and recheck.
 				 */
-				if (IsUnderPostmaster)
+				if (IsUnderPostmaster &&
+					XLogCheckpointNeeded())
 				{
-					uint32		old_segno,
-								new_segno;
-					uint32		old_highbits,
-								new_highbits;
-
-					old_segno = (RedoRecPtr.xlogid % XLogSegSize) * XLogSegsPerFile +
-						(RedoRecPtr.xrecoff / XLogSegSize);
-					old_highbits = RedoRecPtr.xlogid / XLogSegSize;
-					new_segno = (openLogId % XLogSegSize) * XLogSegsPerFile +
-						openLogSeg;
-					new_highbits = openLogId / XLogSegSize;
-					if (new_highbits != old_highbits ||
-						new_segno >= old_segno + (uint32) (CheckPointSegments-1))
+					(void) GetRedoRecPtr();
+					if (XLogCheckpointNeeded())
 						RequestCheckpoint(CHECKPOINT_CAUSE_XLOG);
 				}
 			}
