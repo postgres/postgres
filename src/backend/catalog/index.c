@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.285 2007/09/20 17:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.286 2007/10/12 18:55:12 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -36,6 +36,7 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -538,6 +539,25 @@ index_create(Oid heapRelationId,
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("shared indexes cannot be created after initdb")));
+
+	/*
+	 * Validate shared/non-shared tablespace (must check this before doing
+	 * GetNewRelFileNode, to prevent Assert therein)
+	 */
+	if (shared_relation)
+	{
+		if (tableSpaceId != GLOBALTABLESPACE_OID)
+			/* elog since this is not a user-facing error */
+			elog(ERROR,
+				 "shared relations must be placed in pg_global tablespace");
+	}
+	else
+	{
+		if (tableSpaceId == GLOBALTABLESPACE_OID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("only shared relations can be placed in pg_global tablespace")));
+	}
 
 	if (get_relname_relid(indexRelationName, namespaceId))
 		ereport(ERROR,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.323 2007/09/08 20:31:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.324 2007/10/12 18:55:11 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -43,6 +43,7 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_statistic.h"
+#include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"
@@ -831,6 +832,25 @@ heap_create_with_catalog(const char *relname,
 					 errhint("A relation has an associated type of the same name, "
 							 "so you must use a name that doesn't conflict "
 							 "with any existing type.")));
+	}
+
+	/*
+	 * Validate shared/non-shared tablespace (must check this before doing
+	 * GetNewRelFileNode, to prevent Assert therein)
+	 */
+	if (shared_relation)
+	{
+		if (reltablespace != GLOBALTABLESPACE_OID)
+			/* elog since this is not a user-facing error */
+			elog(ERROR,
+				 "shared relations must be placed in pg_global tablespace");
+	}
+	else
+	{
+		if (reltablespace == GLOBALTABLESPACE_OID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("only shared relations can be placed in pg_global tablespace")));
 	}
 
 	/*

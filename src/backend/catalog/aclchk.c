@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.140 2007/08/21 01:11:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.141 2007/10/12 18:55:11 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1905,14 +1905,7 @@ pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 	Acl		   *acl;
 	Oid			ownerId;
 
-	/*
-	 * Only shared relations can be stored in global space; don't let even
-	 * superusers override this
-	 */
-	if (spc_oid == GLOBALTABLESPACE_OID && !IsBootstrapProcessingMode())
-		return 0;
-
-	/* Otherwise, superusers bypass all permission checking. */
+	/* Superusers bypass all permission checking. */
 	if (superuser_arg(roleid))
 		return mask;
 

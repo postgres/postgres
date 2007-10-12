@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.199 2007/09/28 22:25:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.200 2007/10/12 18:55:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,6 +301,12 @@ createdb(const CreatedbStmt *stmt)
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
 						   tablespacename);
+
+		/* pg_global must never be the default tablespace */
+		if (dst_deftablespace == GLOBALTABLESPACE_OID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("pg_global cannot be used as default tablespace")));
 
 		/*
 		 * If we are trying to change the default tablespace of the template,
