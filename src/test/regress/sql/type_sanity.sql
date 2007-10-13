@@ -57,7 +57,7 @@ FROM pg_type as p1
 WHERE p1.typtype in ('b','e') AND p1.typname NOT LIKE E'\\_%' AND NOT EXISTS
     (SELECT 1 FROM pg_type as p2
      WHERE p2.typname = ('_' || p1.typname)::name AND
-           p2.typelem = p1.oid);
+           p2.typelem = p1.oid and p1.typarray = p2.oid);
 
 -- Make sure typarray points to a varlena array type of our own base
 SELECT p1.oid, p1.typname as basetype, p2.typname as arraytype, 
