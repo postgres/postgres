@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.263 2007/07/17 05:02:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.264 2007/10/13 15:55:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_trigger.h"
 #include "commands/defrem.h"
+#include "commands/tablespace.h"
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
@@ -126,12 +127,13 @@ static char *pg_get_viewdef_worker(Oid viewoid, int prettyFlags);
 static void decompile_column_index_array(Datum column_index_array, Oid relId,
 							 StringInfo buf);
 static char *pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
-static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
+static char *pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
 					   int prettyFlags);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags);
 static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
 				   int prettyFlags);
+static Oid	get_constraint_index(Oid constraintId);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
@@ -577,6 +579,10 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
  * In the extended version, there is a colno argument as well as pretty bool.
  *	if colno == 0, we want a complete index definition.
  *	if colno > 0, we only want the Nth index key's variable or expression.
+ *
+ * Note that the SQL-function versions of this omit any info about the
+ * index tablespace; this is intentional because pg_dump wants it that way.
+ * However pg_get_indexdef_string() includes index tablespace if not default.
  * ----------
  */
 Datum
@@ -584,7 +590,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 {
 	Oid			indexrelid = PG_GETARG_OID(0);
 
-	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, 0, 0)));
+	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, 0,
+														   false, 0)));
 }
 
 Datum
@@ -596,18 +603,20 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 	int			prettyFlags;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
-	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, colno, prettyFlags)));
+	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, colno,
+														 false, prettyFlags)));
 }
 
 /* Internal version that returns a palloc'd C string */
 char *
 pg_get_indexdef_string(Oid indexrelid)
 {
-	return pg_get_indexdef_worker(indexrelid, 0, 0);
+	return pg_get_indexdef_worker(indexrelid, 0, true, 0);
 }
 
 static char *
-pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
+pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
+					   int prettyFlags)
 {
 	HeapTuple	ht_idx;
 	HeapTuple	ht_idxrel;
@@ -798,8 +807,17 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 		}
 
 		/*
-		 * XXX we don't include the tablespace ... this is for pg_dump
+		 * If it's in a nondefault tablespace, say so, but only if requested
 		 */
+		if (showTblSpc)
+		{
+			Oid			tblspc;
+
+			tblspc = get_rel_tablespace(indexrelid);
+			if (OidIsValid(tblspc))
+				appendStringInfo(&buf, " TABLESPACE %s",
+								 quote_identifier(get_tablespace_name(tblspc)));
+		}
 
 		/*
 		 * If it's a partial index, decompile and append the predicate
@@ -1014,6 +1032,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 			{
 				Datum		val;
 				bool		isnull;
+				Oid			indexId;
 
 				/* Start off the constraint definition */
 				if (conForm->contype == CONSTRAINT_PRIMARY)
@@ -1032,15 +1051,24 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				appendStringInfo(&buf, ")");
 
-				if (fullCommand && OidIsValid(conForm->conrelid))
+				indexId = get_constraint_index(constraintId);
+
+				/* XXX why do we only print these bits if fullCommand? */
+				if (fullCommand && OidIsValid(indexId))
 				{
-					char	   *options = flatten_reloptions(conForm->conrelid);
+					char	   *options = flatten_reloptions(indexId);
+					Oid			tblspc;
 
 					if (options)
 					{
 						appendStringInfo(&buf, " WITH (%s)", options);
 						pfree(options);
 					}
+
+					tblspc = get_rel_tablespace(indexId);
+					if (OidIsValid(tblspc))
+						appendStringInfo(&buf, " USING INDEX TABLESPACE %s",
+										 quote_identifier(get_tablespace_name(tblspc)));
 				}
 
 				break;
@@ -1356,7 +1384,69 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 }
 
 
-/* ----------
+/*
+ * get_constraint_index
+ *		Given the OID of a unique or primary-key constraint, return the
+ *		OID of the underlying unique index.
+ *
+ * Return InvalidOid if the index couldn't be found; this suggests the
+ * given OID is bogus, but we leave it to caller to decide what to do.
+ */
+static Oid
+get_constraint_index(Oid constraintId)
+{
+	Oid			indexId = InvalidOid;
+	Relation	depRel;
+	ScanKeyData key[3];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	/* Search the dependency table for the dependent index */
+	depRel = heap_open(DependRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(ConstraintRelationId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(constraintId));
+	ScanKeyInit(&key[2],
+				Anum_pg_depend_refobjsubid,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(0));
+
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+							  SnapshotNow, 3, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
+
+		/*
+		 * We assume any internal dependency of an index on the constraint
+		 * must be what we are looking for.  (The relkind test is just
+		 * paranoia; there shouldn't be any such dependencies otherwise.)
+		 */
+		if (deprec->classid == RelationRelationId &&
+			deprec->objsubid == 0 &&
+			deprec->deptype == DEPENDENCY_INTERNAL &&
+			get_rel_relkind(deprec->objid) == RELKIND_INDEX)
+		{
+			indexId = deprec->objid;
+			break;
+		}
+	}
+
+	systable_endscan(scan);
+	heap_close(depRel, AccessShareLock);
+
+	return indexId;
+}
+
+
+/*
  * deparse_expression			- General utility for deparsing expressions
  *
  * calls deparse_expression_pretty with all prettyPrinting disabled
