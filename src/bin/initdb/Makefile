@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/initdb/Makefile,v 1.54 2007/10/13 20:18:41 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/Makefile,v 1.55 2007/10/13 22:55:38 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ initdb: $(OBJS)
 encnames.c: % : $(top_srcdir)/src/backend/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
 
-pqsignal.c: % : $(libpq_srcdir)/%
+pqsignal.c: % : $(top_srcdir)/src/interfaces/libpq/%
 	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs
