@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.209 2007/08/31 04:52:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.210 2007/10/13 23:06:26 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -244,6 +244,12 @@
        <entry><type>tsvector</type></entry>
        <entry></entry>
        <entry>full text search document</entry>
+      </row>
+
+      <row>
+       <entry><type>txid_snapshot</type></entry>
+       <entry></entry>
+       <entry>user-level transaction ID snapshot</entry>
       </row>
 
       <row>

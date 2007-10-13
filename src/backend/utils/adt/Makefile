@@ -1,7 +1,7 @@
 #
 # Makefile for utils/adt
 #
-# $PostgreSQL: pgsql/src/backend/utils/adt/Makefile,v 1.67 2007/09/07 15:09:56 teodor Exp $
+# $PostgreSQL: pgsql/src/backend/utils/adt/Makefile,v 1.68 2007/10/13 23:06:26 tgl Exp $
 #
 
 subdir = src/backend/utils/adt
@@ -28,8 +28,8 @@ OBJS = acl.o arrayfuncs.o array_userfuncs.o arrayutils.o bool.o \
 	ascii.o quote.o pgstatfuncs.o encode.o dbsize.o genfile.o \
 	tsginidx.o tsgistidx.o tsquery.o tsquery_cleanup.o tsquery_gist.o \
 	tsquery_op.o tsquery_rewrite.o tsquery_util.o tsrank.o \
-	tsvector.o tsvector_op.o tsvector_parser.o\
-	uuid.o xml.o
+	tsvector.o tsvector_op.o tsvector_parser.o \
+	txid.o uuid.o xml.o
 
 like.o: like.c like_match.c
 

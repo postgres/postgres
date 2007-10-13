@@ -1,0 +1,226 @@
+-- txid_snapshot data type and related functions
+-- i/o
+select '12:13:'::txid_snapshot;
+ txid_snapshot 
+---------------
+ 12:13:
+(1 row)
+
+select '12:18:14,16'::txid_snapshot;
+ txid_snapshot 
+---------------
+ 12:18:14,16
+(1 row)
+
+-- errors
+select '31:12:'::txid_snapshot;
+ERROR:  invalid input for txid_snapshot: "31:12:"
+select '0:1:'::txid_snapshot;
+ERROR:  invalid input for txid_snapshot: "0:1:"
+select '12:13:0'::txid_snapshot;
+ERROR:  invalid input for txid_snapshot: "12:13:0"
+select '12:16:14,13'::txid_snapshot;
+ERROR:  invalid input for txid_snapshot: "12:16:14,13"
+select '12:16:14,14'::txid_snapshot;
+ERROR:  invalid input for txid_snapshot: "12:16:14,14"
+create temp table snapshot_test (
+	nr	integer,
+	snap	txid_snapshot
+);
+insert into snapshot_test values (1, '12:13:');
+insert into snapshot_test values (2, '12:20:13,15,18');
+insert into snapshot_test values (3, '100001:100009:100005,100007,100008');
+insert into snapshot_test values (4, '100:150:101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131');
+select snap from snapshot_test order by nr;
+                                                                snap                                                                 
+-------------------------------------------------------------------------------------------------------------------------------------
+ 12:13:
+ 12:20:13,15,18
+ 100001:100009:100005,100007,100008
+ 100:150:101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131
+(4 rows)
+
+select  txid_snapshot_xmin(snap),
+	txid_snapshot_xmax(snap),
+	txid_snapshot_xip(snap)
+from snapshot_test order by nr;
+ txid_snapshot_xmin | txid_snapshot_xmax | txid_snapshot_xip 
+--------------------+--------------------+-------------------
+                 12 |                 20 |                13
+                 12 |                 20 |                15
+                 12 |                 20 |                18
+             100001 |             100009 |            100005
+             100001 |             100009 |            100007
+             100001 |             100009 |            100008
+                100 |                150 |               101
+                100 |                150 |               102
+                100 |                150 |               103
+                100 |                150 |               104
+                100 |                150 |               105
+                100 |                150 |               106
+                100 |                150 |               107
+                100 |                150 |               108
+                100 |                150 |               109
+                100 |                150 |               110
+                100 |                150 |               111
+                100 |                150 |               112
+                100 |                150 |               113
+                100 |                150 |               114
+                100 |                150 |               115
+                100 |                150 |               116
+                100 |                150 |               117
+                100 |                150 |               118
+                100 |                150 |               119
+                100 |                150 |               120
+                100 |                150 |               121
+                100 |                150 |               122
+                100 |                150 |               123
+                100 |                150 |               124
+                100 |                150 |               125
+                100 |                150 |               126
+                100 |                150 |               127
+                100 |                150 |               128
+                100 |                150 |               129
+                100 |                150 |               130
+                100 |                150 |               131
+(37 rows)
+
+select id, txid_visible_in_snapshot(id, snap)
+from snapshot_test, generate_series(11, 21) id
+where nr = 2;
+ id | txid_visible_in_snapshot 
+----+--------------------------
+ 11 | t
+ 12 | t
+ 13 | f
+ 14 | t
+ 15 | f
+ 16 | t
+ 17 | t
+ 18 | f
+ 19 | t
+ 20 | f
+ 21 | f
+(11 rows)
+
+-- test bsearch
+select id, txid_visible_in_snapshot(id, snap)
+from snapshot_test, generate_series(90, 160) id
+where nr = 4;
+ id  | txid_visible_in_snapshot 
+-----+--------------------------
+  90 | t
+  91 | t
+  92 | t
+  93 | t
+  94 | t
+  95 | t
+  96 | t
+  97 | t
+  98 | t
+  99 | t
+ 100 | t
+ 101 | f
+ 102 | f
+ 103 | f
+ 104 | f
+ 105 | f
+ 106 | f
+ 107 | f
+ 108 | f
+ 109 | f
+ 110 | f
+ 111 | f
+ 112 | f
+ 113 | f
+ 114 | f
+ 115 | f
+ 116 | f
+ 117 | f
+ 118 | f
+ 119 | f
+ 120 | f
+ 121 | f
+ 122 | f
+ 123 | f
+ 124 | f
+ 125 | f
+ 126 | f
+ 127 | f
+ 128 | f
+ 129 | f
+ 130 | f
+ 131 | f
+ 132 | t
+ 133 | t
+ 134 | t
+ 135 | t
+ 136 | t
+ 137 | t
+ 138 | t
+ 139 | t
+ 140 | t
+ 141 | t
+ 142 | t
+ 143 | t
+ 144 | t
+ 145 | t
+ 146 | t
+ 147 | t
+ 148 | t
+ 149 | t
+ 150 | f
+ 151 | f
+ 152 | f
+ 153 | f
+ 154 | f
+ 155 | f
+ 156 | f
+ 157 | f
+ 158 | f
+ 159 | f
+ 160 | f
+(71 rows)
+
+-- test current values also
+select txid_current() >= txid_snapshot_xmin(txid_current_snapshot());
+ ?column? 
+----------
+ t
+(1 row)
+
+-- we can't assume current is always less than xmax, however
+select txid_visible_in_snapshot(txid_current(), txid_current_snapshot());
+ txid_visible_in_snapshot 
+--------------------------
+ f
+(1 row)
+
+-- test 64bitness
+select txid_snapshot '1000100010001000:1000100010001100:1000100010001012,1000100010001013';
+                            txid_snapshot                            
+---------------------------------------------------------------------
+ 1000100010001000:1000100010001100:1000100010001012,1000100010001013
+(1 row)
+
+select txid_visible_in_snapshot('1000100010001012', '1000100010001000:1000100010001100:1000100010001012,1000100010001013');
+ txid_visible_in_snapshot 
+--------------------------
+ f
+(1 row)
+
+select txid_visible_in_snapshot('1000100010001015', '1000100010001000:1000100010001100:1000100010001012,1000100010001013');
+ txid_visible_in_snapshot 
+--------------------------
+ t
+(1 row)
+
+-- test 64bit overflow
+SELECT txid_snapshot '1:9223372036854775807:3';
+      txid_snapshot      
+-------------------------
+ 1:9223372036854775807:3
+(1 row)
+
+SELECT txid_snapshot '1:9223372036854775808:3';
+ERROR:  invalid input for txid_snapshot: "1:9223372036854775808:3"

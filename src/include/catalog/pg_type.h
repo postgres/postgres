@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.188 2007/09/03 02:30:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.189 2007/10/13 23:06:27 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -571,6 +571,10 @@ DATA(insert OID = 3644 ( _gtsvector		PGNSP PGUID -1 f b t \054 0	3642 0 array_in
 DATA(insert OID = 3645 ( _tsquery		PGNSP PGUID -1 f b t \054 0	3615 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 3735 ( _regconfig		PGNSP PGUID -1 f b t \054 0 3734 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 3770 ( _regdictionary	PGNSP PGUID -1 f b t \054 0 3769 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+
+DATA(insert OID = 2970 ( txid_snapshot	PGNSP PGUID -1 f b t \054 0 0 2949 txid_snapshot_in txid_snapshot_out txid_snapshot_recv txid_snapshot_send - - - d x f 0 -1 0 _null_ _null_ ));
+DESCR("txid snapshot");
+DATA(insert OID = 2949 ( _txid_snapshot	PGNSP PGUID -1 f b t \054 0	2970 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
 
 /*
  * pseudo-types

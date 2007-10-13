@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.473 2007/09/25 20:03:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.474 2007/10/13 23:06:26 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4398,6 +4398,28 @@ DATA(insert OID = 3773 (  regdictionaryrecv	PGNSP PGUID 12 1 0 f f t f i 1 3769 
 DESCR("I/O");
 DATA(insert OID = 3774 (  regdictionarysend	PGNSP PGUID 12 1 0 f f t f i 1 17 "3769" _null_ _null_ _null_ regdictionarysend - _null_ _null_ ));
 DESCR("I/O");
+
+/* txid */
+DATA(insert OID = 2939 (  txid_snapshot_in			PGNSP PGUID 12 1  0 f f t f i 1 2970 "2275"	_null_ _null_ _null_ txid_snapshot_in - _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2940 (  txid_snapshot_out			PGNSP PGUID 12 1  0 f f t f i 1 2275 "2970" _null_ _null_ _null_ txid_snapshot_out - _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2941 (  txid_snapshot_recv		PGNSP PGUID 12 1  0 f f t f i 1 2970 "2281"	_null_ _null_ _null_ txid_snapshot_recv - _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2942 (  txid_snapshot_send		PGNSP PGUID 12 1  0 f f t f i 1 17 "2970"	_null_ _null_ _null_ txid_snapshot_send - _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2943 (  txid_current				PGNSP PGUID 12 1  0 f f t f s 0 20 ""		_null_ _null_ _null_ txid_current - _null_ _null_ ));
+DESCR("get current transaction ID");
+DATA(insert OID = 2944 (  txid_current_snapshot		PGNSP PGUID 12 1  0 f f t f s 0 2970 ""		_null_ _null_ _null_ txid_current_snapshot - _null_ _null_ ));
+DESCR("get current snapshot");
+DATA(insert OID = 2945 (  txid_snapshot_xmin		PGNSP PGUID 12 1  0 f f t f i 1 20 "2970"	_null_ _null_ _null_ txid_snapshot_xmin - _null_ _null_ ));
+DESCR("get xmin of snapshot");
+DATA(insert OID = 2946 (  txid_snapshot_xmax		PGNSP PGUID 12 1  0 f f t f i 1 20 "2970"	_null_ _null_ _null_ txid_snapshot_xmax - _null_ _null_ ));
+DESCR("get xmax of snapshot");
+DATA(insert OID = 2947 (  txid_snapshot_xip			PGNSP PGUID 12 1 50 f f t t i 1 20 "2970"	_null_ _null_ _null_ txid_snapshot_xip - _null_ _null_ ));
+DESCR("get set of in-progress txids in snapshot");
+DATA(insert OID = 2948 (  txid_visible_in_snapshot	PGNSP PGUID 12 1  0 f f t f i 2 16 "20 2970" _null_ _null_ _null_ txid_visible_in_snapshot - _null_ _null_ ));
+DESCR("is txid visible in snapshot?");
 
 
 /*

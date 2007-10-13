@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.304 2007/09/24 01:29:30 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.305 2007/10/13 23:06:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -938,14 +938,17 @@ extern Datum pg_advisory_unlock_int4(PG_FUNCTION_ARGS);
 extern Datum pg_advisory_unlock_shared_int4(PG_FUNCTION_ARGS);
 extern Datum pg_advisory_unlock_all(PG_FUNCTION_ARGS);
 
-/* access/transam/twophase.c */
-extern Datum pg_prepared_xact(PG_FUNCTION_ARGS);
-
-/* commands/prepare.c */
-extern Datum pg_prepared_statement(PG_FUNCTION_ARGS);
-
-/* utils/mmgr/portalmem.c */
-extern Datum pg_cursor(PG_FUNCTION_ARGS);
+/* txid.c */
+extern Datum txid_snapshot_in(PG_FUNCTION_ARGS);
+extern Datum txid_snapshot_out(PG_FUNCTION_ARGS);
+extern Datum txid_snapshot_recv(PG_FUNCTION_ARGS);
+extern Datum txid_snapshot_send(PG_FUNCTION_ARGS);
+extern Datum txid_current(PG_FUNCTION_ARGS);
+extern Datum txid_current_snapshot(PG_FUNCTION_ARGS);
+extern Datum txid_snapshot_xmin(PG_FUNCTION_ARGS);
+extern Datum txid_snapshot_xmax(PG_FUNCTION_ARGS);
+extern Datum txid_snapshot_xip(PG_FUNCTION_ARGS);
+extern Datum txid_visible_in_snapshot(PG_FUNCTION_ARGS);
 
 /* uuid.c */
 extern Datum uuid_in(PG_FUNCTION_ARGS);
@@ -960,5 +963,14 @@ extern Datum uuid_gt(PG_FUNCTION_ARGS);
 extern Datum uuid_ne(PG_FUNCTION_ARGS);
 extern Datum uuid_cmp(PG_FUNCTION_ARGS);
 extern Datum uuid_hash(PG_FUNCTION_ARGS);
+
+/* access/transam/twophase.c */
+extern Datum pg_prepared_xact(PG_FUNCTION_ARGS);
+
+/* commands/prepare.c */
+extern Datum pg_prepared_statement(PG_FUNCTION_ARGS);
+
+/* utils/mmgr/portalmem.c */
+extern Datum pg_cursor(PG_FUNCTION_ARGS);
 
 #endif   /* BUILTINS_H */

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.400 2007/10/11 02:43:55 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.401 2007/10/13 23:06:26 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -12047,6 +12047,84 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     comments on shared objects.  Some system catalogs are global to all
     databases within each cluster and their descriptions are stored globally
     as well.
+   </para>
+
+   <indexterm>
+    <primary>txid_current</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>txid_current_snapshot</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>txid_snapshot_xmin</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>txid_snapshot_xmax</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>txid_snapshot_xip</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>txid_visible_in_snapshot</primary>
+   </indexterm>
+
+   <para>
+    The functions shown in <xref linkend="functions-txid-snapshot">
+    export server internal transaction info to user level.
+   </para>
+
+   <table id="functions-txid-snapshot">
+    <title>Transaction IDs and snapshots</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry><literal><function>txid_current</function>()</literal></entry>
+       <entry><type>bigint</type></entry>
+       <entry>get current transaction ID</entry>
+      </row>
+      <row>
+       <entry><literal><function>txid_current_snapshot</function>()</literal></entry>
+       <entry><type>txid_snapshot</type></entry>
+       <entry>get current snapshot</entry>
+      </row>
+      <row>
+       <entry><literal><function>txid_snapshot_xmin</function>(<parameter>txid_snapshot</parameter>)</literal></entry>
+       <entry><type>bigint</type></entry>
+       <entry>get xmin of snapshot</entry>
+      </row>
+      <row>
+       <entry><literal><function>txid_snapshot_xmax</function>(<parameter>txid_snapshot</parameter>)</literal></entry>
+       <entry><type>bigint</type></entry>
+       <entry>get xmax of snapshot</entry>
+      </row>
+      <row>
+       <entry><literal><function>txid_snapshot_xip</function>(<parameter>txid_snapshot</parameter>)</literal></entry>
+       <entry><type>setof bigint</type></entry>
+       <entry>get in-progress transaction IDs in snapshot</entry>
+      </row>
+      <row>
+       <entry><literal><function>txid_visible_in_snapshot</function>(<parameter>bigint</parameter>, <parameter>txid_snapshot</parameter>)</literal></entry>
+       <entry><type>boolean</type></entry>
+       <entry>is transaction ID visible in snapshot?</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    The internal transaction ID type (<type>xid</>) is 32 bits wide and so
+    it wraps around every 4 billion transactions.  However, these functions
+    export a 64-bit format that is extended with an <quote>epoch</> counter
+    so that it will not wrap around for the life of an installation.
    </para>
   </sect1>
 
