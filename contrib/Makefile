@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.79 2007/10/07 23:32:19 wieck Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.80 2007/10/13 22:59:43 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -30,7 +30,6 @@ WANTED_DIRS = \
 		pgstattuple	\
 		seg		\
 		spi		\
-		txid		\
 		tablefunc	\
 		vacuumlo
 
