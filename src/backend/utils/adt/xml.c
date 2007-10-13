@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.48 2007/10/13 20:18:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.49 2007/10/13 20:46:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -774,13 +774,17 @@ xmlvalidate(PG_FUNCTION_ARGS)
 #if 0
 		if (uri)
 			xmlFreeURI(uri);
+		uri = NULL;
 #endif
 		if (dtd)
 			xmlFreeDtd(dtd);
+		dtd = NULL;
 		if (doc)
 			xmlFreeDoc(doc);
+		doc = NULL;
 		if (ctxt)
 			xmlFreeParserCtxt(ctxt);
+		ctxt = NULL;
 		xmlCleanupParser();
 	}
 	PG_CATCH();
@@ -1163,13 +1167,13 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace, xml
 
 		if (ctxt)
 			xmlFreeParserCtxt(ctxt);
+		ctxt = NULL;
 		xmlCleanupParser();
 	}
 	PG_CATCH();
 	{
 		if (doc)
 			xmlFreeDoc(doc);
-		doc = NULL;
 		if (ctxt)
 			xmlFreeParserCtxt(ctxt);
 		xmlCleanupParser();
@@ -3203,9 +3207,11 @@ xpath(PG_FUNCTION_ARGS)
 						"invalid XPath expression"); /* TODO: show proper XPath error details */
 
 		xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
-		xmlXPathFreeCompExpr(xpathcomp);
 		if (xpathobj == NULL)
 			ereport(ERROR, (errmsg("could not create XPath object"))); /* TODO: reason? */
+
+		xmlXPathFreeCompExpr(xpathcomp);
+		xpathcomp = NULL;
 
 		/* return empty array in cases when nothing is found */
 		if (xpathobj->nodesetval == NULL)
@@ -3225,9 +3231,13 @@ xpath(PG_FUNCTION_ARGS)
 			}
 
 		xmlXPathFreeObject(xpathobj);
+		xpathobj = NULL;
 		xmlXPathFreeContext(xpathctx);
-		xmlFreeParserCtxt(ctxt);
+		xpathctx = NULL;
 		xmlFreeDoc(doc);
+		doc = NULL;
+		xmlFreeParserCtxt(ctxt);
+		ctxt = NULL;
 		xmlCleanupParser();
 	}
 	PG_CATCH();
