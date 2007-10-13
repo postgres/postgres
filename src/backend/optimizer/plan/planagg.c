@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.32 2007/04/27 22:05:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.33 2007/10/13 00:58:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/predtest.h"
 #include "optimizer/subselect.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
@@ -35,6 +36,7 @@ typedef struct
 	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
 	Oid			aggsortop;		/* Oid of its sort operator */
 	Expr	   *target;			/* expression we are aggregating on */
+	Expr	   *notnulltest;	/* expression for "target IS NOT NULL" */
 	IndexPath  *path;			/* access path for index scan */
 	Cost		pathcost;		/* estimated cost to fetch first row */
 	bool		nulls_first;	/* null ordering direction matching index */
@@ -285,7 +287,22 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 	IndexPath  *best_path = NULL;
 	Cost		best_cost = 0;
 	bool		best_nulls_first = false;
+	NullTest   *ntest;
+	List	   *allquals;
 	ListCell   *l;
+
+	/* Build "target IS NOT NULL" expression for use below */
+	ntest = makeNode(NullTest);
+	ntest->nulltesttype = IS_NOT_NULL;
+	ntest->arg = copyObject(info->target);
+	info->notnulltest = (Expr *) ntest;
+
+	/*
+	 * Build list of existing restriction clauses plus the notnull test.
+	 * We cheat a bit by not bothering with a RestrictInfo node for the
+	 * notnull test --- predicate_implied_by() won't care.
+	 */
+	allquals = list_concat(list_make1(ntest), rel->baserestrictinfo);
 
 	foreach(l, rel->indexlist)
 	{
@@ -302,8 +319,13 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 		if (index->relam != BTREE_AM_OID)
 			continue;
 
-		/* Ignore partial indexes that do not match the query */
-		if (index->indpred != NIL && !index->predOK)
+		/*
+		 * Ignore partial indexes that do not match the query --- unless
+		 * their predicates can be proven from the baserestrict list plus
+		 * the IS NOT NULL test.  In that case we can use them.
+		 */
+		if (index->indpred != NIL && !index->predOK &&
+			!predicate_implied_by(index->indpred, allquals))
 			continue;
 
 		/*
@@ -441,7 +463,6 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	Plan	   *iplan;
 	TargetEntry *tle;
 	SortClause *sortcl;
-	NullTest   *ntest;
 
 	/*
 	 * Generate a suitably modified query.	Much of the work here is probably
@@ -487,7 +508,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	 * basic indexscan, but we have to convert it to a Plan and attach a LIMIT
 	 * node above it.
 	 *
-	 * Also we must add a "WHERE foo IS NOT NULL" restriction to the
+	 * Also we must add a "WHERE target IS NOT NULL" restriction to the
 	 * indexscan, to be sure we don't return a NULL, which'd be contrary to
 	 * the standard behavior of MIN/MAX.  XXX ideally this should be done
 	 * earlier, so that the selectivity of the restriction could be included
@@ -497,6 +518,9 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	 * The NOT NULL qual has to go on the actual indexscan; create_plan might
 	 * have stuck a gating Result atop that, if there were any pseudoconstant
 	 * quals.
+	 *
+	 * We can skip adding the NOT NULL qual if it's redundant with either
+	 * an already-given WHERE condition, or a clause of the index predicate.
 	 */
 	plan = create_plan(&subroot, (Path *) info->path);
 
@@ -508,11 +532,9 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 		iplan = plan;
 	Assert(IsA(iplan, IndexScan));
 
-	ntest = makeNode(NullTest);
-	ntest->nulltesttype = IS_NOT_NULL;
-	ntest->arg = copyObject(info->target);
-
-	iplan->qual = lcons(ntest, iplan->qual);
+	if (!list_member(iplan->qual, info->notnulltest) &&
+		!list_member(info->path->indexinfo->indpred, info->notnulltest))
+		iplan->qual = lcons(info->notnulltest, iplan->qual);
 
 	plan = (Plan *) make_limit(plan,
 							   subparse->limitOffset,
