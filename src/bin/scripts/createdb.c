@@ -5,16 +5,14 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.23 2007/06/04 10:02:40 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.24 2007/10/13 20:18:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres_fe.h"
+
 #include "common.h"
 #include "dumputils.h"
-
-#include "mb/pg_wchar.h"
 
 
 static void help(const char *progname);

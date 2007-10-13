@@ -3,15 +3,45 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.25 2007/01/05 22:19:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.26 2007/10/13 20:18:41 tgl Exp $
+ *
+ * XXX this file does not really belong in psql/.  Perhaps move to libpq?
+ * It also seems that the mbvalidate function is redundant with existing
+ * functionality.
  */
 
 #include "postgres_fe.h"
+#include "mbprint.h"
+#include "libpq-fe.h"
 #ifndef PGSCRIPTS
 #include "settings.h"
 #endif
-#include "mbprint.h"
-#include "mb/pg_wchar.h"
+
+/*
+ * To avoid version-skew problems, this file must not use declarations
+ * from pg_wchar.h: the encoding IDs we are dealing with are determined
+ * by the libpq.so we are linked with, and that might not match the
+ * numbers we see at compile time.  (If this file were inside libpq,
+ * the problem would go away...)
+ *
+ * Hence, we have our own definition of pg_wchar, and we get the values
+ * of any needed encoding IDs on-the-fly.
+ */
+
+typedef unsigned int pg_wchar;
+
+static int
+get_utf8_id(void)
+{
+	static int	utf8_id = -1;
+
+	if (utf8_id < 0)
+		utf8_id = pg_char_to_encoding("utf8");
+	return utf8_id;
+}
+
+#define PG_UTF8		get_utf8_id()
+
 
 static pg_wchar
 utf2ucs(const unsigned char *c)

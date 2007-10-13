@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.66 2007/09/24 16:38:24 adunstan Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.67 2007/10/13 20:18:41 tgl Exp $
  */
 #include "postgres.h"
 
@@ -420,6 +420,12 @@ length_in_encoding(PG_FUNCTION_ARGS)
 	int			src_encoding = pg_char_to_encoding(src_encoding_name);
 	int         len = VARSIZE(string) - VARHDRSZ;
 	int         retval;
+
+	if (src_encoding < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid encoding name \"%s\"",
+						src_encoding_name)));
 
 	retval = pg_verify_mbstr_len(src_encoding, VARDATA(string), len, false);
 	PG_RETURN_INT32(retval);

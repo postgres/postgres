@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.146 2007/08/21 01:11:20 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.147 2007/10/13 20:18:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@
 #endif
 
 #include "libpq/libpq-fs.h"
-#include "mb/pg_wchar.h"
 
 
 const char *progname;
@@ -1639,7 +1638,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->vrev = K_VERS_REV;
 
 	/* initialize for backwards compatible string processing */
-	AH->public.encoding = PG_SQL_ASCII;
+	AH->public.encoding = 0;	/* PG_SQL_ASCII */
 	AH->public.std_strings = false;
 
 	/* sql error handling */

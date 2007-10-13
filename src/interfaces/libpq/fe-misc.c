@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.131 2007/01/05 22:20:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.132 2007/10/13 20:18:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1112,7 +1112,11 @@ PQenv2encoding(void)
 
 	str = getenv("PGCLIENTENCODING");
 	if (str && *str != '\0')
+	{
 		encoding = pg_char_to_encoding(str);
+		if (encoding < 0)
+			encoding = PG_SQL_ASCII;
+	}
 	return encoding;
 }
 

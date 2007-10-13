@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.200 2007/10/12 18:55:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.201 2007/10/13 20:18:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,12 +178,12 @@ createdb(const CreatedbStmt *stmt)
 		else if (IsA(dencoding->arg, String))
 		{
 			encoding_name = strVal(dencoding->arg);
-			if (pg_valid_server_encoding(encoding_name) < 0)
+			encoding = pg_valid_server_encoding(encoding_name);
+			if (encoding < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("%s is not a valid encoding name",
 								encoding_name)));
-			encoding = pg_char_to_encoding(encoding_name);
 		}
 		else
 			elog(ERROR, "unrecognized node type: %d",

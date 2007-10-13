@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.472 2007/09/03 00:39:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.473 2007/10/13 20:18:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@ int			optreset;
 #include "catalog/pg_type.h"
 #include "commands/sequence.h"
 #include "libpq/libpq-fs.h"
-#include "mb/pg_wchar.h"
 
 #include "pg_backup_archiver.h"
 #include "dumputils.h"

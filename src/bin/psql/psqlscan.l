@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.21 2007/01/05 22:19:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.22 2007/10/13 20:18:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,6 @@
 #include "psqlscan.h"
 
 #include <ctype.h>
-
-#include "mb/pg_wchar.h"
 
 #include "common.h"
 #include "settings.h"
@@ -1021,7 +1019,7 @@ psql_scan_setup(PsqlScanState state,
 
 	/* Do we need to hack the character set encoding? */
 	state->encoding = pset.encoding;
-	state->safe_encoding = PG_VALID_BE_ENCODING(state->encoding);
+	state->safe_encoding = pg_valid_server_encoding_id(state->encoding);
 
 	/* needed for prepare_buffer */
 	cur_state = state;

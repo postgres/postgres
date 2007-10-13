@@ -1,19 +1,28 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.73 2007/09/18 17:41:17 adunstan Exp $ */
-
+/*-------------------------------------------------------------------------
+ *
+ * pg_wchar.h
+ *	  multibyte-character support
+ *
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.74 2007/10/13 20:18:41 tgl Exp $
+ *
+ *	NOTES
+ *		This is used both by the backend and by libpq, but should not be
+ *		included by libpq client programs.  In particular, a libpq client
+ *		should not assume that the encoding IDs used by the version of libpq
+ *		it's linked to match up with the IDs declared here.
+ *
+ *-------------------------------------------------------------------------
+ */
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
 
 #include <sys/types.h>
 
-#ifdef FRONTEND
-#undef palloc
-#define palloc malloc
-#undef pfree
-#define pfree free
-#endif
-
 /*
- * The pg_wchar
+ * The pg_wchar type
  */
 typedef unsigned int pg_wchar;
 
@@ -149,7 +158,12 @@ typedef unsigned int pg_wchar;
  *			If you add some encoding don't forget to check
  *			PG_ENCODING_BE_LAST macro.
  *
- * The PG_SQL_ASCII is default encoding and must be = 0.
+ * PG_SQL_ASCII is default encoding and must be = 0.
+ *
+ * XXX  We must avoid renumbering any backend encoding until libpq's major
+ * version number is increased beyond 5; it turns out that the backend
+ * encoding IDs are effectively part of libpq's ABI as far as 8.2 initdb and
+ * psql are concerned.
  */
 typedef enum pg_enc
 {
@@ -158,6 +172,7 @@ typedef enum pg_enc
 	PG_EUC_CN,					/* EUC for Chinese */
 	PG_EUC_KR,					/* EUC for Korean */
 	PG_EUC_TW,					/* EUC for Taiwan */
+	PG_EUC_JIS_2004,			/* EUC-JIS-2004 */
 	PG_UTF8,					/* Unicode UTF8 */
 	PG_MULE_INTERNAL,			/* Mule internal code */
 	PG_LATIN1,					/* ISO-8859-1 Latin 1 */
@@ -186,7 +201,6 @@ typedef enum pg_enc
 	PG_WIN1254,					/* windows-1254 */
 	PG_WIN1255,					/* windows-1255 */
 	PG_WIN1257,					/* windows-1257 */
-	PG_EUC_JIS_2004,			/* EUC-JIS-2004 */
 	/* PG_ENCODING_BE_LAST points to the above entry */
 
 	/* followings are for client encoding only */
@@ -194,14 +208,14 @@ typedef enum pg_enc
 	PG_BIG5,					/* Big5 (Windows-950) */
 	PG_GBK,						/* GBK (Windows-936) */
 	PG_UHC,						/* UHC (Windows-949) */
-	PG_JOHAB,					/* EUC for Korean JOHAB */
 	PG_GB18030,					/* GB18030 */
+	PG_JOHAB,					/* EUC for Korean JOHAB */
 	PG_SHIFT_JIS_2004,			/* Shift-JIS-2004 */
 	_PG_LAST_ENCODING_			/* mark only */
 
 } pg_enc;
 
-#define PG_ENCODING_BE_LAST PG_EUC_JIS_2004
+#define PG_ENCODING_BE_LAST PG_WIN1257
 
 /*
  * Please use these tests before access to pg_encconv_tbl[]
@@ -244,11 +258,6 @@ typedef struct pg_enc2name
 } pg_enc2name;
 
 extern pg_enc2name pg_enc2name_tbl[];
-
-extern pg_encname *pg_char_to_encname_struct(const char *name);
-
-extern int	pg_char_to_encoding(const char *s);
-extern const char *pg_encoding_to_char(int encoding);
 
 /*
  * pg_wchar stuff
@@ -314,6 +323,21 @@ typedef struct
 	uint32 utf1;			/* UTF-8 code 1 */
 	uint32 utf2;			/* UTF-8 code 2 */
 } pg_local_to_utf_combined;
+
+
+/*
+ * These functions are considered part of libpq's exported API and
+ * are also declared in libpq-fe.h.
+ */
+extern int	pg_char_to_encoding(const char *name);
+extern const char *pg_encoding_to_char(int encoding);
+extern int	pg_valid_server_encoding_id(int encoding);
+
+/*
+ * Remaining functions are not considered part of libpq's API, though many
+ * of them do exist inside libpq.
+ */
+extern pg_encname *pg_char_to_encname_struct(const char *name);
 
 extern int	pg_mb2wchar(const char *from, pg_wchar *to);
 extern int	pg_mb2wchar_with_len(const char *from, pg_wchar *to, int len);

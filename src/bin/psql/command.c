@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.181 2007/08/21 01:11:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.182 2007/10/13 20:18:41 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -45,7 +45,6 @@
 #include "psqlscan.h"
 #include "settings.h"
 #include "variables.h"
-#include "mb/pg_wchar.h"
 
 
 /* functions for use in this file */
@@ -295,7 +294,7 @@ exec_command(const char *cmd,
 		}
 
 		if (pset.dirname)
-			pfree(pset.dirname);
+			free(pset.dirname);
 		pset.dirname = pg_strdup(dir);
 		canonicalize_path(pset.dirname);
 

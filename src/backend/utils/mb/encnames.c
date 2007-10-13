@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.34 2007/04/16 18:50:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.35 2007/10/13 20:18:41 tgl Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -12,10 +12,11 @@
 #include "utils/builtins.h"
 #endif
 
+#include <ctype.h>
 #include <unistd.h>
 
 #include "mb/pg_wchar.h"
-#include <ctype.h>
+
 
 /* ----------
  * All encoding names, sorted:		 *** A L P H A B E T I C ***
@@ -314,6 +315,9 @@ pg_enc2name pg_enc2name_tbl[] =
 		"EUC_TW", PG_EUC_TW
 	},
 	{
+		"EUC_JIS_2004", PG_EUC_JIS_2004
+	},
+	{
 		"UTF8", PG_UTF8
 	},
 	{
@@ -398,9 +402,6 @@ pg_enc2name pg_enc2name_tbl[] =
 		"WIN1257", PG_WIN1257
 	},
 	{
-		"EUC_JIS_2004", PG_EUC_JIS_2004
-	},
-	{
 		"SJIS", PG_SJIS
 	},
 	{
@@ -413,10 +414,10 @@ pg_enc2name pg_enc2name_tbl[] =
 		"UHC", PG_UHC
 	},
 	{
-		"JOHAB", PG_JOHAB
+		"GB18030", PG_GB18030
 	},
 	{
-		"GB18030", PG_GB18030
+		"JOHAB", PG_JOHAB
 	},
 	{
 		"SHIFT_JIS_2004", PG_SHIFT_JIS_2004
@@ -453,6 +454,12 @@ pg_valid_server_encoding(const char *name)
 		return -1;
 
 	return enc;
+}
+
+int
+pg_valid_server_encoding_id(int encoding)
+{
+	return PG_VALID_BE_ENCODING(encoding);
 }
 
 /* ----------
@@ -533,14 +540,14 @@ pg_char_to_encname_struct(const char *name)
  * Returns encoding or -1 for error
  */
 int
-pg_char_to_encoding(const char *s)
+pg_char_to_encoding(const char *name)
 {
-	pg_encname *p = NULL;
+	pg_encname *p;
 
-	if (!s)
+	if (!name)
 		return -1;
 
-	p = pg_char_to_encname_struct(s);
+	p = pg_char_to_encname_struct(name);
 	return p ? p->encoding : -1;
 }
 
