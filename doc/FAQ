@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Oct 9 16:13:00 EDT 2007
+   Last updated: Fri Oct 12 23:36:59 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -100,7 +100,7 @@
    developers spread throughout the world and communicating via the
    Internet. It is a community project and is not controlled by any
    company. To get involved, see the developer's FAQ at
-   http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html
+   http://www.postgresql.org/docs/faqs.FAQ_DEV.html
    
   1.2) Who controls PostgreSQL?
   
@@ -253,9 +253,9 @@
    http://www.commandprompt.com/ppbook/. There are a number of PostgreSQL
    books available for purchase. One of the most popular ones is by Korry
    Douglas. A list of book reviews can be found at
-   http://techdocs.postgresql.org/techdocs/bookreviews.php. There is also
-   a collection of PostgreSQL technical articles at
-   http://techdocs.postgresql.org/.
+   http://www.postgresql.org/docs/books/. There is also a collection of
+   PostgreSQL technical articles at
+   http://www.postgresql.org/docs/techdocs.
    
    The command line client program psql has some \d commands to show
    information about types, operators, functions, aggregates, etc. - use
@@ -265,12 +265,10 @@
    
   1.11) How can I learn SQL?
   
-   First, consider the PostgreSQL-specific books mentioned above. Another
-   one is "Teach Yourself SQL in 21 Days, Second Edition" at
-   http://members.tripod.com/er4ebus/sql/index.htm. Many of our users
-   like The Practical SQL Handbook, Bowman, Judith S., et al.,
-   Addison-Wesley. Others like The Complete Reference SQL, Groff et al.,
-   McGraw-Hill.
+   First, consider the PostgreSQL-specific books mentioned above. Many of
+   our users also like The Practical SQL Handbook, Bowman, Judith S., et
+   al., Addison-Wesley. Others like The Complete Reference SQL, Groff et
+   al., McGraw-Hill.
    
    There are also many nice tutorials available online:
      * http://www.intermedia.net/support/sql/sqltut.shtm
@@ -790,19 +788,7 @@
   4.18) How do I return multiple rows or columns from a function?
   
    It is easy using set-returning functions,
-   http://www.postgresql.org/docs/techdocs.17
-   .
-   
-  4.19) Why do I get "relation with OID ##### does not exist" errors when
-  accessing temporary tables in PL/PgSQL functions?
-  
-   PL/PgSQL caches function scripts, and an unfortunate side effect is
-   that if a PL/PgSQL function accesses a temporary table, and that table
-   is later dropped and recreated, and the function called again, the
-   function will fail because the cached function contents still point to
-   the old temporary table. The solution is to use EXECUTE for temporary
-   table access in PL/PgSQL. This will cause the query to be reparsed
-   every time.
+   http://www.postgresql.org/docs/techdocs.17.
    
   4.19) What replication solutions are available?
   
