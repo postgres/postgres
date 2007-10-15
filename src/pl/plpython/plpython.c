@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.90.2.1 2007/08/10 03:16:11 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.90.2.2 2007/10/15 15:53:12 tgl Exp $
  *
  *********************************************************************
  */
@@ -18,6 +18,16 @@
 #else
 #include <Python.h>
 #endif
+
+/*
+ * Py_ssize_t compat for Python <= 2.4
+ */
+#if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
+typedef int Py_ssize_t;
+#define PY_SSIZE_T_MAX INT_MAX
+#define PY_SSIZE_T_MIN INT_MIN
+#endif
+
 #include "postgres.h"
 
 /* system stuff */
@@ -1687,7 +1697,7 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 	HeapTuple	tuple;
 	Datum	   *values;
 	char	   *nulls;
-	int			i;
+	volatile int i;
 
 	Assert(PyMapping_Check(mapping));
 
@@ -1702,8 +1712,8 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;
-		PyObject   *value,
-				   *so;
+		PyObject   * volatile value,
+				   * volatile so;
 
 		key = NameStr(desc->attrs[i]->attname);
 		value = so = NULL;
@@ -1767,7 +1777,7 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 	HeapTuple	tuple;
 	Datum	   *values;
 	char	   *nulls;
-	int			i;
+	volatile int i;
 
 	Assert(PySequence_Check(sequence));
 
@@ -1791,8 +1801,8 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 	nulls = palloc(sizeof(char) * desc->natts);
 	for (i = 0; i < desc->natts; ++i)
 	{
-		PyObject   *value,
-				   *so;
+		PyObject   * volatile value,
+				   * volatile so;
 
 		value = so = NULL;
 		PG_TRY();
@@ -1849,7 +1859,7 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 	HeapTuple	tuple;
 	Datum	   *values;
 	char	   *nulls;
-	int			i;
+	volatile int i;
 
 	desc = lookup_rowtype_tupdesc(info->out.d.typoid, -1);
 	if (info->is_rowtype == 2)
@@ -1862,8 +1872,8 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;
-		PyObject   *value,
-				   *so;
+		PyObject   * volatile value,
+				   * volatile so;
 
 		key = NameStr(desc->attrs[i]->attname);
 		value = so = NULL;
@@ -1943,11 +1953,11 @@ static void PLy_result_dealloc(PyObject *);
 static PyObject *PLy_result_getattr(PyObject *, char *);
 static PyObject *PLy_result_nrows(PyObject *, PyObject *);
 static PyObject *PLy_result_status(PyObject *, PyObject *);
-static int	PLy_result_length(PyObject *);
-static PyObject *PLy_result_item(PyObject *, int);
-static PyObject *PLy_result_slice(PyObject *, int, int);
-static int	PLy_result_ass_item(PyObject *, int, PyObject *);
-static int	PLy_result_ass_slice(PyObject *, int, int, PyObject *);
+static Py_ssize_t PLy_result_length(PyObject *);
+static PyObject *PLy_result_item(PyObject *, Py_ssize_t);
+static PyObject *PLy_result_slice(PyObject *, Py_ssize_t, Py_ssize_t);
+static int	PLy_result_ass_item(PyObject *, Py_ssize_t, PyObject *);
+static int	PLy_result_ass_slice(PyObject *, Py_ssize_t, Py_ssize_t, PyObject *);
 
 
 static PyObject *PLy_spi_prepare(PyObject *, PyObject *);
@@ -1967,9 +1977,9 @@ static PyTypeObject PLy_PlanType = {
 	/*
 	 * methods
 	 */
-	(destructor) PLy_plan_dealloc,		/* tp_dealloc */
+	PLy_plan_dealloc,			/* tp_dealloc */
 	0,							/* tp_print */
-	(getattrfunc) PLy_plan_getattr,		/* tp_getattr */
+	PLy_plan_getattr,			/* tp_getattr */
 	0,							/* tp_setattr */
 	0,							/* tp_compare */
 	0,							/* tp_repr */
@@ -1991,15 +2001,14 @@ static PyMethodDef PLy_plan_methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-
 static PySequenceMethods PLy_result_as_sequence = {
-	(inquiry) PLy_result_length,	/* sq_length */
-	(binaryfunc) 0,				/* sq_concat */
-	(intargfunc) 0,				/* sq_repeat */
-	(intargfunc) PLy_result_item,		/* sq_item */
-	(intintargfunc) PLy_result_slice,	/* sq_slice */
-	(intobjargproc) PLy_result_ass_item,		/* sq_ass_item */
-	(intintobjargproc) PLy_result_ass_slice,	/* sq_ass_slice */
+	PLy_result_length,		/* sq_length */
+	NULL,					/* sq_concat */
+	NULL,					/* sq_repeat */
+	PLy_result_item,		/* sq_item */
+	PLy_result_slice,		/* sq_slice */
+	PLy_result_ass_item,	/* sq_ass_item */
+	PLy_result_ass_slice,	/* sq_ass_slice */
 };
 
 static PyTypeObject PLy_ResultType = {
@@ -2012,9 +2021,9 @@ static PyTypeObject PLy_ResultType = {
 	/*
 	 * methods
 	 */
-	(destructor) PLy_result_dealloc,	/* tp_dealloc */
+	PLy_result_dealloc,			/* tp_dealloc */
 	0,							/* tp_print */
-	(getattrfunc) PLy_result_getattr,	/* tp_getattr */
+	PLy_result_getattr,			/* tp_getattr */
 	0,							/* tp_setattr */
 	0,							/* tp_compare */
 	0,							/* tp_repr */
@@ -2180,7 +2189,7 @@ PLy_result_status(PyObject * self, PyObject * args)
 	return ob->status;
 }
 
-static int
+static Py_ssize_t
 PLy_result_length(PyObject * arg)
 {
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2189,7 +2198,7 @@ PLy_result_length(PyObject * arg)
 }
 
 static PyObject *
-PLy_result_item(PyObject * arg, int idx)
+PLy_result_item(PyObject * arg, Py_ssize_t idx)
 {
 	PyObject   *rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2201,7 +2210,7 @@ PLy_result_item(PyObject * arg, int idx)
 }
 
 static int
-PLy_result_ass_item(PyObject * arg, int idx, PyObject * item)
+PLy_result_ass_item(PyObject * arg, Py_ssize_t idx, PyObject * item)
 {
 	int			rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2212,7 +2221,7 @@ PLy_result_ass_item(PyObject * arg, int idx, PyObject * item)
 }
 
 static PyObject *
-PLy_result_slice(PyObject * arg, int lidx, int hidx)
+PLy_result_slice(PyObject * arg, Py_ssize_t lidx, Py_ssize_t hidx)
 {
 	PyObject   *rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2225,7 +2234,7 @@ PLy_result_slice(PyObject * arg, int lidx, int hidx)
 }
 
 static int
-PLy_result_ass_slice(PyObject * arg, int lidx, int hidx, PyObject * slice)
+PLy_result_ass_slice(PyObject * arg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject * slice)
 {
 	int			rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2440,13 +2449,14 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	PG_TRY();
 	{
 		char	   *nulls = palloc(nargs * sizeof(char));
+		volatile int j;
 
-		for (i = 0; i < nargs; i++)
+		for (j = 0; j < nargs; j++)
 		{
 			PyObject   *elem,
 					   *so;
 
-			elem = PySequence_GetItem(list, i);
+			elem = PySequence_GetItem(list, j);
 			if (elem != Py_None)
 			{
 				so = PyObject_Str(elem);
@@ -2459,10 +2469,10 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 				{
 					char	   *sv = PyString_AsString(so);
 
-					plan->values[i] =
-						InputFunctionCall(&(plan->args[i].out.d.typfunc),
+					plan->values[j] =
+						InputFunctionCall(&(plan->args[j].out.d.typfunc),
 										  sv,
-										  plan->args[i].out.d.typioparam,
+										  plan->args[j].out.d.typioparam,
 										  -1);
 				}
 				PG_CATCH();
@@ -2473,17 +2483,17 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 				PG_END_TRY();
 
 				Py_DECREF(so);
-				nulls[i] = ' ';
+				nulls[j] = ' ';
 			}
 			else
 			{
 				Py_DECREF(elem);
-				plan->values[i] =
-					InputFunctionCall(&(plan->args[i].out.d.typfunc),
+				plan->values[j] =
+					InputFunctionCall(&(plan->args[j].out.d.typfunc),
 									  NULL,
-									  plan->args[i].out.d.typioparam,
+									  plan->args[j].out.d.typioparam,
 									  -1);
-				nulls[i] = 'n';
+				nulls[j] = 'n';
 			}
 		}
 
@@ -2494,6 +2504,8 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	}
 	PG_CATCH();
 	{
+		int		k;
+
 		MemoryContextSwitchTo(oldcontext);
 		PLy_error_in_progress = CopyErrorData();
 		FlushErrorState();
@@ -2501,13 +2513,13 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 		/*
 		 * cleanup plan->values array
 		 */
-		for (i = 0; i < nargs; i++)
+		for (k = 0; k < nargs; k++)
 		{
-			if (!plan->args[i].out.d.typbyval &&
-				(plan->values[i] != PointerGetDatum(NULL)))
+			if (!plan->args[k].out.d.typbyval &&
+				(plan->values[k] != PointerGetDatum(NULL)))
 			{
-				pfree(DatumGetPointer(plan->values[i]));
-				plan->values[i] = PointerGetDatum(NULL);
+				pfree(DatumGetPointer(plan->values[k]));
+				plan->values[k] = PointerGetDatum(NULL);
 			}
 		}
 
