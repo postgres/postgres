@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.74 2007/10/13 20:18:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.75 2007/10/15 22:46:27 tgl Exp $
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
@@ -152,8 +152,9 @@ typedef unsigned int pg_wchar;
 /*
  * PostgreSQL encoding identifiers
  *
- * WARNING: the order of this table must be same as order
- *			in the pg_enc2name[] (mb/encnames.c) array!
+ * WARNING: the order of this enum must be same as order of entries
+ *			in the pg_enc2name_tbl[] array (in mb/encnames.c), and
+ *			in the pg_wchar_table[] array (in mb/wchar.c)!
  *
  *			If you add some encoding don't forget to check
  *			PG_ENCODING_BE_LAST macro.

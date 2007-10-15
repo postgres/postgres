@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.35 2007/10/13 20:18:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.36 2007/10/15 22:46:27 tgl Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -294,7 +294,7 @@ sizeof(pg_encname_tbl) / sizeof(pg_encname_tbl[0]) - 1;
 
 /* ----------
  * These are "official" encoding names.
- * XXX must be sorted by the same order as pg_enc type (see mb/pg_wchar.h)
+ * XXX must be sorted by the same order as enum pg_enc (in mb/pg_wchar.h)
  * ----------
  */
 pg_enc2name pg_enc2name_tbl[] =

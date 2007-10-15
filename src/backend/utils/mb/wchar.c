@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.64 2007/09/18 17:41:17 adunstan Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.65 2007/10/15 22:46:27 tgl Exp $
  *
  */
 /* can be used in either frontend or backend */
@@ -38,8 +38,7 @@
  * SQL/ASCII
  */
 static int
-			pg_ascii2wchar_with_len
-			(const unsigned char *from, pg_wchar *to, int len)
+pg_ascii2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
 	int			cnt = 0;
 
@@ -73,8 +72,8 @@ pg_ascii_dsplen(const unsigned char *s)
 /*
  * EUC
  */
-static int	pg_euc2wchar_with_len
-			(const unsigned char *from, pg_wchar *to, int len)
+static int
+pg_euc2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
 	int			cnt = 0;
 
@@ -148,8 +147,8 @@ pg_euc_dsplen(const unsigned char *s)
 /*
  * EUC_JP
  */
-static int	pg_eucjp2wchar_with_len
-			(const unsigned char *from, pg_wchar *to, int len)
+static int
+pg_eucjp2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
 	return pg_euc2wchar_with_len(from, to, len);
 }
@@ -179,8 +178,8 @@ pg_eucjp_dsplen(const unsigned char *s)
 /*
  * EUC_KR
  */
-static int	pg_euckr2wchar_with_len
-			(const unsigned char *from, pg_wchar *to, int len)
+static int
+pg_euckr2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
 	return pg_euc2wchar_with_len(from, to, len);
 }
@@ -201,8 +200,8 @@ pg_euckr_dsplen(const unsigned char *s)
  * EUC_CN
  *
  */
-static int	pg_euccn2wchar_with_len
-			(const unsigned char *from, pg_wchar *to, int len)
+static int
+pg_euccn2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
 	int			cnt = 0;
 
@@ -268,8 +267,8 @@ pg_euccn_dsplen(const unsigned char *s)
  * EUC_TW
  *
  */
-static int	pg_euctw2wchar_with_len
-			(const unsigned char *from, pg_wchar *to, int len)
+static int
+pg_euctw2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
 	int			cnt = 0;
 
@@ -343,12 +342,6 @@ pg_euctw_dsplen(const unsigned char *s)
 /*
  * JOHAB
  */
-static int
-pg_johab2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
-{
-	return pg_euc2wchar_with_len(from, to, len);
-}
-
 static int
 pg_johab_mblen(const unsigned char *s)
 {
@@ -1307,6 +1300,7 @@ pg_utf8_islegal(const unsigned char *source, int length)
 /*
  *-------------------------------------------------------------------
  * encoding info table
+ * XXX must be sorted by the same order as enum pg_enc (in mb/pg_wchar.h)
  *-------------------------------------------------------------------
  */
 pg_wchar_tbl pg_wchar_table[] = {
@@ -1315,41 +1309,41 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{pg_euccn2wchar_with_len, pg_euccn_mblen, pg_euccn_dsplen, pg_euccn_verifier, 2},	/* 2; PG_EUC_CN */
 	{pg_euckr2wchar_with_len, pg_euckr_mblen, pg_euckr_dsplen, pg_euckr_verifier, 3},	/* 3; PG_EUC_KR */
 	{pg_euctw2wchar_with_len, pg_euctw_mblen, pg_euctw_dsplen, pg_euctw_verifier, 4},	/* 4; PG_EUC_TW */
-	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, pg_utf8_verifier, 4},	/* 5; PG_UTF8 */
-	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, pg_mule_verifier, 4},		/* 6; PG_MULE_INTERNAL */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 7; PG_LATIN1 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 8; PG_LATIN2 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 9; PG_LATIN3 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 10; PG_LATIN4 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 11; PG_LATIN5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 12; PG_LATIN6 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 13; PG_LATIN7 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 14; PG_LATIN8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 15; PG_LATIN9 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 16; PG_LATIN10 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 17; PG_WIN1256 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 18; PG_WIN1258 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 19; PG_WIN874 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 21; PG_KOI8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 22; PG_WIN1251 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 23; PG_WIN1252 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 24; PG_WIN866 */
+	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifier, 3},	/* 5; PG_EUC_JIS_2004 */
+	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, pg_utf8_verifier, 4},			/* 6; PG_UTF8 */
+	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, pg_mule_verifier, 4},		/* 7; PG_MULE_INTERNAL */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 8; PG_LATIN1 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 9; PG_LATIN2 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 10; PG_LATIN3 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 11; PG_LATIN4 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 12; PG_LATIN5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 13; PG_LATIN6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 14; PG_LATIN7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 15; PG_LATIN8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 16; PG_LATIN9 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 17; PG_LATIN10 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 18; PG_WIN1256 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 19; PG_WIN1258 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 20; PG_WIN866 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 21; PG_WIN874 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 22; PG_KOI8R */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 23; PG_WIN1251 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 24; PG_WIN1252 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 25; ISO-8859-5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 25; ISO-8859-6 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 26; ISO-8859-7 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 27; ISO-8859-8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 28; PG_WIN1250 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 29; PG_WIN1253 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 30; PG_WIN1254 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 31; PG_WIN1255 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 32; PG_WIN1257 */
-	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifier, 3},	/* 33; PG_EUC_JIS_2004 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 26; ISO-8859-6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 27; ISO-8859-7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 28; ISO-8859-8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 29; PG_WIN1250 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 30; PG_WIN1253 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 31; PG_WIN1254 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 32; PG_WIN1255 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 33; PG_WIN1257 */
 	{0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2},	/* 34; PG_SJIS */
 	{0, pg_big5_mblen, pg_big5_dsplen, pg_big5_verifier, 2},	/* 35; PG_BIG5 */
 	{0, pg_gbk_mblen, pg_gbk_dsplen, pg_gbk_verifier, 2},		/* 36; PG_GBK */
 	{0, pg_uhc_mblen, pg_uhc_dsplen, pg_uhc_verifier, 2},		/* 37; PG_UHC */
-	{pg_johab2wchar_with_len, pg_johab_mblen, pg_johab_dsplen, pg_johab_verifier, 3},	/* 38; PG_JOHAB */
-	{0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 4},	/* 39; PG_GB18030 */
+	{0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 4},	/* 38; PG_GB18030 */
+	{0, pg_johab_mblen, pg_johab_dsplen, pg_johab_verifier, 3},	/* 39; PG_JOHAB */
 	{0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2}		/* 40; PG_SHIFT_JIS_2004 */
 };
 
@@ -1440,7 +1434,6 @@ pg_verifymbstr(const char *mbstr, int len, bool noError)
 /*
  * Verify mbstr to make sure that it is validly encoded in the specified
  * encoding.
- *
  */
 bool
 pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
