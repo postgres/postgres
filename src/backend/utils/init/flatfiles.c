@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.27 2007/08/01 22:45:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.28 2007/10/15 15:11:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,7 +298,6 @@ write_database_file(Relation drel, bool startup)
  *
  * The format for the flat auth file is
  *		"rolename" "password" "validuntil" "memberof" "memberof" ...
- * Only roles that are marked rolcanlogin are entered into the auth file.
  * Each role's line lists all the roles (groups) of which it is directly
  * or indirectly a member, except for itself.
  *
@@ -312,7 +311,6 @@ write_database_file(Relation drel, bool startup)
 typedef struct
 {
 	Oid			roleid;
-	bool		rolcanlogin;
 	char	   *rolname;
 	char	   *rolpassword;
 	char	   *rolvaliduntil;
@@ -407,8 +405,7 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 						tempname)));
 
 	/*
-	 * Read pg_authid and fill temporary data structures.  Note we must read
-	 * all roles, even those without rolcanlogin.
+	 * Read pg_authid and fill temporary data structures.
 	 */
 	totalblocks = RelationGetNumberOfBlocks(rel_authid);
 	totalblocks = totalblocks ? totalblocks : 1;
@@ -433,7 +430,6 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 		}
 
 		auth_info[curr_role].roleid = HeapTupleGetOid(tuple);
-		auth_info[curr_role].rolcanlogin = aform->rolcanlogin;
 		auth_info[curr_role].rolname = pstrdup(NameStr(aform->rolname));
 		auth_info[curr_role].member_of = NIL;
 
@@ -565,10 +561,6 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 			List	   *roles_names_list = NIL;
 			ListCell   *mem;
 
-			/* We can skip this for non-login roles */
-			if (!auth_info[curr_role].rolcanlogin)
-				continue;
-
 			/*
 			 * This search algorithm is the same as in is_member_of_role; we
 			 * are just working with a different input data structure.
@@ -642,9 +634,6 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 	for (curr_role = 0; curr_role < total_roles; curr_role++)
 	{
 		auth_entry *arole = &auth_info[curr_role];
-
-		if (arole->rolcanlogin)
-		{
 			ListCell   *mem;
 
 			fputs_quote(arole->rolname, fp);
@@ -660,7 +649,6 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 			}
 
 			fputs("\n", fp);
-		}
 	}
 
 	if (FreeFile(fp))
