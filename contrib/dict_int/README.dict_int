@@ -1,0 +1,41 @@
+Dictionary for integers
+=======================
+
+The motivation for this example dictionary is to control the indexing of
+integers (signed and unsigned), and, consequently, to minimize the number of
+unique words which greatly affect the performance of searching.
+
+* Configuration
+
+The dictionary accepts two options: 
+
+  - The MAXLEN parameter specifies the maximum length (number of digits)
+    allowed in an integer word.  The default value is 6.
+
+  - The REJECTLONG parameter specifies if an overlength integer should be
+    truncated or ignored. If REJECTLONG=FALSE (default), the dictionary returns
+    the first MAXLEN digits of the integer. If REJECTLONG=TRUE, the
+    dictionary treats an overlength integer as a stop word, so that it will
+    not be indexed.
+
+* Usage
+
+1. Compile and install
+
+2. Load dictionary
+
+   psql mydb < dict_int.sql
+
+3. Test it
+ 
+   mydb# select ts_lexize('intdict', '12345678');
+    ts_lexize
+   -----------
+    {123456}
+
+4. Change its options as you wish
+
+   mydb# ALTER TEXT SEARCH DICTIONARY intdict (MAXLEN = 4, REJECTLONG = true);
+   ALTER TEXT SEARCH DICTIONARY
+
+That's all.

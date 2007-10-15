@@ -1,0 +1,6 @@
+# Sample rules file for eXtended Synonym (xsyn) dictionary
+# format is as follows:
+#
+# word synonym1 synonym2 ...
+#
+supernova sn sne 1987a

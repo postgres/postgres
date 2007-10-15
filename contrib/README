@@ -1,4 +1,3 @@
-
 The PostgreSQL contrib tree
 ---------------------------
 
@@ -29,8 +28,8 @@ adminpack -
 	by Dave Page <dpage@vale-housing.co.uk>
 
 btree_gist -
-      Support for emulating BTREE indexing in GiST
-      by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
+	Support for emulating BTREE indexing in GiST
+	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
 
 chkpass -
 	An auto-encrypted password datatype
@@ -44,8 +43,16 @@ dblink -
 	Allows remote query execution
 	by Joe Conway <mail@joeconway.com>
 
+dict_int -
+	Text search dictionary template for integers
+	by Sergey Karpov <karpov@sao.ru>
+
+dict_xsyn -
+	Text search dictionary template for extended synonym processing
+	by Sergey Karpov <karpov@sao.ru>
+
 earthdistance -
-	Operator for computing earth distance for two points
+	Operator for computing earth distance between two points
 	by Hal Snyder <hal@vailsys.com>
 
 fuzzystrmatch -
@@ -53,8 +60,8 @@ fuzzystrmatch -
 	by Joe Conway <mail@joeconway.com>, Joel Burton <jburton@scw.org>
 
 hstore -
-	Hstore - module for storing (key,value) pairs
-    by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
+	Module for storing (key, value) pairs
+	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
 
 intagg -
 	Integer aggregator
@@ -92,6 +99,10 @@ pg_freespacemap -
 	Displays the contents of the free space map (FSM)
 	by Mark Kirkwood <markir@paradise.net.nz>
 
+pg_standby -
+	Sample archive_command for warm standby operation
+	by Simon Riggs <simon@2ndquadrant.com>
+
 pg_trgm -
 	Functions for determining the similarity of text based on trigram
 	matching.
@@ -110,7 +121,7 @@ pgrowlocks -
 	by Tatsuo Ishii <ishii@sraoss.co.jp>
 
 pgstattuple -
-	A function to return statistics about "dead" tuples and free
+	Functions to return statistics about "dead" tuples and free
 	space within a table
 	by Tatsuo Ishii <ishii@sraoss.co.jp>
 
@@ -126,11 +137,15 @@ sslinfo -
 	by Victor Wagner <vitus@cryptocom.ru>
 
 start-scripts - 
-	Scripts for starting the server at boot time.
+	Scripts for starting the server at boot time on various platforms.
 
 tablefunc -
 	Examples of functions returning tables
 	by Joe Conway <mail@joeconway.com>
+
+test_parser -
+	Sample text search parser
+	by Sergey Karpov <karpov@sao.ru>
 
 tsearch2 -
 	Full-text-index support using GiST

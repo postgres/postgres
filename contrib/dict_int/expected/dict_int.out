@@ -1,0 +1,308 @@
+--
+-- first, define the datatype.  Turn off echoing so that expected file
+-- does not depend on contents of this file.
+--
+SET client_min_messages = warning;
+\set ECHO none
+RESET client_min_messages;
+--lexize
+select ts_lexize('intdict', '511673');
+ ts_lexize 
+-----------
+ {511673}
+(1 row)
+
+select ts_lexize('intdict', '129');
+ ts_lexize 
+-----------
+ {129}
+(1 row)
+
+select ts_lexize('intdict', '40865854');
+ ts_lexize 
+-----------
+ {408658}
+(1 row)
+
+select ts_lexize('intdict', '952');
+ ts_lexize 
+-----------
+ {952}
+(1 row)
+
+select ts_lexize('intdict', '654980341');
+ ts_lexize 
+-----------
+ {654980}
+(1 row)
+
+select ts_lexize('intdict', '09810106');
+ ts_lexize 
+-----------
+ {098101}
+(1 row)
+
+select ts_lexize('intdict', '14262713');
+ ts_lexize 
+-----------
+ {142627}
+(1 row)
+
+select ts_lexize('intdict', '6532082986');
+ ts_lexize 
+-----------
+ {653208}
+(1 row)
+
+select ts_lexize('intdict', '0150061');
+ ts_lexize 
+-----------
+ {015006}
+(1 row)
+
+select ts_lexize('intdict', '7778');
+ ts_lexize 
+-----------
+ {7778}
+(1 row)
+
+select ts_lexize('intdict', '9547');
+ ts_lexize 
+-----------
+ {9547}
+(1 row)
+
+select ts_lexize('intdict', '753395478');
+ ts_lexize 
+-----------
+ {753395}
+(1 row)
+
+select ts_lexize('intdict', '647652');
+ ts_lexize 
+-----------
+ {647652}
+(1 row)
+
+select ts_lexize('intdict', '6988655574');
+ ts_lexize 
+-----------
+ {698865}
+(1 row)
+
+select ts_lexize('intdict', '1279');
+ ts_lexize 
+-----------
+ {1279}
+(1 row)
+
+select ts_lexize('intdict', '1266645909');
+ ts_lexize 
+-----------
+ {126664}
+(1 row)
+
+select ts_lexize('intdict', '7594193969');
+ ts_lexize 
+-----------
+ {759419}
+(1 row)
+
+select ts_lexize('intdict', '16928207');
+ ts_lexize 
+-----------
+ {169282}
+(1 row)
+
+select ts_lexize('intdict', '196850350328');
+ ts_lexize 
+-----------
+ {196850}
+(1 row)
+
+select ts_lexize('intdict', '22026985592');
+ ts_lexize 
+-----------
+ {220269}
+(1 row)
+
+select ts_lexize('intdict', '2063765');
+ ts_lexize 
+-----------
+ {206376}
+(1 row)
+
+select ts_lexize('intdict', '242387310');
+ ts_lexize 
+-----------
+ {242387}
+(1 row)
+
+select ts_lexize('intdict', '93595');
+ ts_lexize 
+-----------
+ {93595}
+(1 row)
+
+select ts_lexize('intdict', '9374');
+ ts_lexize 
+-----------
+ {9374}
+(1 row)
+
+select ts_lexize('intdict', '996969');
+ ts_lexize 
+-----------
+ {996969}
+(1 row)
+
+select ts_lexize('intdict', '353595982');
+ ts_lexize 
+-----------
+ {353595}
+(1 row)
+
+select ts_lexize('intdict', '925860');
+ ts_lexize 
+-----------
+ {925860}
+(1 row)
+
+select ts_lexize('intdict', '11848378337');
+ ts_lexize 
+-----------
+ {118483}
+(1 row)
+
+select ts_lexize('intdict', '333');
+ ts_lexize 
+-----------
+ {333}
+(1 row)
+
+select ts_lexize('intdict', '799287416765');
+ ts_lexize 
+-----------
+ {799287}
+(1 row)
+
+select ts_lexize('intdict', '745939');
+ ts_lexize 
+-----------
+ {745939}
+(1 row)
+
+select ts_lexize('intdict', '67601305734');
+ ts_lexize 
+-----------
+ {676013}
+(1 row)
+
+select ts_lexize('intdict', '3361113');
+ ts_lexize 
+-----------
+ {336111}
+(1 row)
+
+select ts_lexize('intdict', '9033778607');
+ ts_lexize 
+-----------
+ {903377}
+(1 row)
+
+select ts_lexize('intdict', '7507648');
+ ts_lexize 
+-----------
+ {750764}
+(1 row)
+
+select ts_lexize('intdict', '1166');
+ ts_lexize 
+-----------
+ {1166}
+(1 row)
+
+select ts_lexize('intdict', '9360498');
+ ts_lexize 
+-----------
+ {936049}
+(1 row)
+
+select ts_lexize('intdict', '917795');
+ ts_lexize 
+-----------
+ {917795}
+(1 row)
+
+select ts_lexize('intdict', '9387894');
+ ts_lexize 
+-----------
+ {938789}
+(1 row)
+
+select ts_lexize('intdict', '42764329');
+ ts_lexize 
+-----------
+ {427643}
+(1 row)
+
+select ts_lexize('intdict', '564062');
+ ts_lexize 
+-----------
+ {564062}
+(1 row)
+
+select ts_lexize('intdict', '5413377');
+ ts_lexize 
+-----------
+ {541337}
+(1 row)
+
+select ts_lexize('intdict', '060965');
+ ts_lexize 
+-----------
+ {060965}
+(1 row)
+
+select ts_lexize('intdict', '08273593');
+ ts_lexize 
+-----------
+ {082735}
+(1 row)
+
+select ts_lexize('intdict', '593556010144');
+ ts_lexize 
+-----------
+ {593556}
+(1 row)
+
+select ts_lexize('intdict', '17988843352');
+ ts_lexize 
+-----------
+ {179888}
+(1 row)
+
+select ts_lexize('intdict', '252281774');
+ ts_lexize 
+-----------
+ {252281}
+(1 row)
+
+select ts_lexize('intdict', '313425');
+ ts_lexize 
+-----------
+ {313425}
+(1 row)
+
+select ts_lexize('intdict', '641439323669');
+ ts_lexize 
+-----------
+ {641439}
+(1 row)
+
+select ts_lexize('intdict', '314532610153');
+ ts_lexize 
+-----------
+ {314532}
+(1 row)
+

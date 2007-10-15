@@ -1,0 +1,52 @@
+Example parser
+==============
+
+This is an example of a custom parser for full text search.
+
+It recognizes space-delimited words and returns only two token types:
+
+ - 3,  word,  Word
+
+ - 12, blank, Space symbols
+
+The token numbers have been chosen to keep compatibility with the default
+ts_headline() function, since we do not want to implement our own version.
+
+* Configuration
+
+The parser has no user-configurable parameters.
+
+* Usage
+
+1. Compile and install
+
+2. Load dictionary
+
+   psql mydb < test_parser.sql
+
+3. Test it
+
+   mydb# SELECT * FROM ts_parse('testparser','That''s my first own parser');
+    tokid | token
+   -------+--------
+        3 | That's
+       12 |
+        3 | my
+       12 |
+        3 | first
+       12 |
+        3 | own
+       12 |
+        3 | parser
+
+   mydb# SELECT to_tsvector('testcfg','That''s my first own parser');
+   to_tsvector
+   -------------------------------------------------
+   'my':2 'own':4 'first':3 'parser':5 'that''s':1
+   
+   mydb# SELECT ts_headline('testcfg','Supernovae stars are the brightest phenomena in galaxies', to_tsquery('testcfg', 'star'));
+   headline
+   -----------------------------------------------------------------
+   Supernovae <b>stars</b> are the brightest phenomena in galaxies
+   
+That's all.
