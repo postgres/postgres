@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.242 2007/09/21 21:25:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.243 2007/10/16 17:05:26 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1758,7 +1758,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * Note: below this point, heaptup is the data we actually intend to store
 	 * into the relation; tup is the caller's original untoasted data.
 	 */
-	if (relation->rd_rel->relkind == RELKIND_TOASTVALUE)
+	if (relation->rd_rel->relkind != RELKIND_RELATION)
 	{
 		/* toast table entries should never be recursively toasted */
 		Assert(!HeapTupleHasExternal(tup));
@@ -2125,7 +2125,7 @@ l1:
 	 * because we need to look at the contents of the tuple, but it's OK to
 	 * release the content lock on the buffer first.
 	 */
-	if (relation->rd_rel->relkind == RELKIND_TOASTVALUE)
+	if (relation->rd_rel->relkind != RELKIND_RELATION)
 	{
 		/* toast table entries should never be recursively toasted */
 		Assert(!HeapTupleHasExternal(&tp));
@@ -2440,7 +2440,7 @@ l2:
 	 * We need to invoke the toaster if there are already any out-of-line
 	 * toasted values present, or if the new tuple is over-threshold.
 	 */
-	if (relation->rd_rel->relkind == RELKIND_TOASTVALUE)
+	if (relation->rd_rel->relkind != RELKIND_RELATION)
 	{
 		/* toast table entries should never be recursively toasted */
 		Assert(!HeapTupleHasExternal(&oldtup));
