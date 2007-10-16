@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.105 2007/10/16 05:37:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.106 2007/10/16 14:56:51 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1316,10 +1316,9 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
   <para>
    Continuous archiving can be used to create a <firstterm>high
    availability</> (HA) cluster configuration with one or more
-   <firstterm>standby servers</> ready to take 
-   over operations if the primary server fails. This
-   capability is widely referred to as <firstterm>warm standby</>
-   or <firstterm>log shipping</>.
+   <firstterm>standby servers</> ready to take over operations if the
+   primary server fails. This capability is widely referred to as
+   <firstterm>warm standby</> or <firstterm>log shipping</>.
   </para>
 
   <para>
@@ -1337,26 +1336,26 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    Directly moving WAL or "log" records from one database server to another
    is typically described as log shipping. <productname>PostgreSQL</>
    implements file-based log shipping, which means that WAL records are
-   transferred one file (WAL segment) at a time. WAL
-   files can be shipped easily and cheaply over any distance, whether it be
-   to an adjacent system, another system on the same site or another system
-   on the far side of the globe. The bandwidth required for this technique
+   transferred one file (WAL segment) at a time. WAL files (16MB) can be
+   shipped easily and cheaply over any distance, whether it be to an
+   adjacent system, another system on the same site or another system on
+   the far side of the globe. The bandwidth required for this technique
    varies according to the transaction rate of the primary server.
    Record-based log shipping is also possible with custom-developed
    procedures, as discussed in <xref linkend="warm-standby-record">.
   </para>
 
   <para>
-   It should be noted that the log shipping is asynchronous, i.e. the
-   WAL records are shipped after transaction commit. As a result there
-   is a window for data loss should the primary server
-   suffer a catastrophic failure: transactions not yet shipped will be lost.
-   The length of the window of data loss
-   can be limited by use of the <varname>archive_timeout</varname> parameter,
-   which can be set as low as a few seconds if required.  However such low
-   settings will substantially increase the bandwidth requirements for file
-   shipping.  If you need a window of less than a minute or so, it's probably
-   better to look into record-based log shipping.
+   It should be noted that the log shipping is asynchronous, i.e. the WAL
+   records are shipped after transaction commit. As a result there is a
+   window for data loss should the primary server suffer a catastrophic
+   failure: transactions not yet shipped will be lost.  The length of the
+   window of data loss can be limited by use of the
+   <varname>archive_timeout</varname> parameter, which can be set as low
+   as a few seconds if required.  However such low settings will
+   substantially increase the bandwidth requirements for file shipping.
+   If you need a window of less than a minute or so, it's probably better
+   to look into record-based log shipping.
   </para>
 
   <para>
@@ -1367,7 +1366,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    capability as a warm standby configuration that offers high
    availability. Restoring a server from an archived base backup and
    rollforward will take considerably longer, so that technique only
-   really offers a solution for disaster recovery, not HA.
+   really offers a solution for disaster recovery, not high availability.
   </para>
 
   <sect2 id="warm-standby-planning">
@@ -1416,22 +1415,20 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    </para>
 
    <para>
-    The magic that makes the two loosely coupled servers work together
-    is simply a <varname>restore_command</> used on the standby that waits for
-    the next WAL file to become available from the primary. The
-    <varname>restore_command</> is specified in the <filename>recovery.conf</>
-    file on the standby 
-    server. Normal recovery processing would request a file from the
-    WAL archive, reporting failure if the file was unavailable.  For
-    standby processing it is normal for the next file to be
-    unavailable, so we must be patient and wait for it to appear. A
-    waiting <varname>restore_command</> can be written as a custom
-    script that loops after polling for the existence of the next WAL
-    file. There must also be some way to trigger failover, which
-    should interrupt the <varname>restore_command</>, break the loop
-    and return a file-not-found error to the standby server. This
-    ends recovery and the standby will then come up as a normal
-    server.
+    The magic that makes the two loosely coupled servers work together is
+    simply a <varname>restore_command</> used on the standby that waits
+    for the next WAL file to become available from the primary. The
+    <varname>restore_command</> is specified in the
+    <filename>recovery.conf</> file on the standby server. Normal recovery
+    processing would request a file from the WAL archive, reporting failure
+    if the file was unavailable.  For standby processing it is normal for
+    the next file to be unavailable, so we must be patient and wait for
+    it to appear. A waiting <varname>restore_command</> can be written as
+    a custom script that loops after polling for the existence of the next
+    WAL file. There must also be some way to trigger failover, which should
+    interrupt the <varname>restore_command</>, break the loop and return
+    a file-not-found error to the standby server. This ends recovery and
+    the standby will then come up as a normal server.
    </para>
 
    <para>
