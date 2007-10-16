@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.145 2007/10/13 20:18:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.146 2007/10/16 09:09:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2801,7 +2801,7 @@ main(int argc, char *argv[])
 			  pg_strcasecmp(lc_ctype, "POSIX") == 0))
 		{
 			/* Hmm, couldn't recognize the locale's codeset */
-			fprintf(stderr, _("%s: could not find suitable encoding for locale \"%s\"\n"),
+			fprintf(stderr, _("%s: could not find suitable encoding for locale %s\n"),
 					progname, lc_ctype);
 			fprintf(stderr, _("Rerun %s with the -E option.\n"), progname);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
@@ -2861,7 +2861,7 @@ main(int argc, char *argv[])
 		default_text_search_config = find_matching_ts_config(lc_ctype);
 		if (default_text_search_config == NULL)
 		{
-			printf(_("%s: could not find suitable text search configuration for locale \"%s\"\n"),
+			printf(_("%s: could not find suitable text search configuration for locale %s\n"),
 				   progname, lc_ctype);
 			default_text_search_config = "simple";
 		}
@@ -2872,12 +2872,12 @@ main(int argc, char *argv[])
 
 		if (checkmatch == NULL)
 		{
-			printf(_("%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"),
+			printf(_("%s: warning: suitable text search configuration for locale %s is unknown\n"),
 				   progname, lc_ctype);
 		}
 		else if (strcmp(checkmatch, default_text_search_config) != 0)
 		{
-			printf(_("%s: warning: specified text search configuration \"%s\" might not match locale \"%s\"\n"),
+			printf(_("%s: warning: specified text search configuration \"%s\" might not match locale %s\n"),
 				   progname, default_text_search_config, lc_ctype);
 		}
 	}
