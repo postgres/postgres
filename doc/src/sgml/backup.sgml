@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.104 2007/10/16 02:48:57 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.105 2007/10/16 05:37:40 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1747,7 +1747,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 6543
    has synced up with the master server (running the older version of
    <productname>PostgreSQL</>), you can switch masters and make the slave
    the master and shut down the older database instance.  Such a
-   switch-over results in only several minutes of downtime for an upgrade.
+   switch-over results in only several seconds of downtime for an upgrade.
   </para>
 
   <para>
