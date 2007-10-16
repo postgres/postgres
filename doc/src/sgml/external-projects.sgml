@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.17 2007/10/16 12:14:33 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.18 2007/10/16 19:04:34 mha Exp $ -->
 
  <appendix id="external-projects">
   <title>External Projects</title>
@@ -106,7 +106,7 @@
       <entry>libpqxx</entry>
       <entry>C++</entry>
       <entry>New-style C++ interface</entry>
-      <entry><ulink url="http://pqxx.tk/">http://pqxx.tk/</ulink></entry>
+      <entry><ulink url="http://pqxx.org/">http://pqxx.org/</ulink></entry>
      </row>
 
      <row>
