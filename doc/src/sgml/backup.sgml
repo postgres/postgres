@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.103 2007/09/29 01:36:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.104 2007/10/16 02:48:57 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1738,6 +1738,16 @@ pg_dumpall -p 5432 | psql -d postgres -p 6543
    otherwise you will obviously lose that data. See <xref
    linkend="client-authentication"> for information on how to prohibit
    access.
+  </para>
+
+  <para>
+   It is also possible to use <productname>Slony</> to create a slave
+   server with the updated version of <productname>PostgreSQL</>.  The
+   slave can be on the same computer or a different computer.  Once it
+   has synced up with the master server (running the older version of
+   <productname>PostgreSQL</>), you can switch masters and make the slave
+   the master and shut down the older database instance.  Such a
+   switch-over results in only several minutes of downtime for an upgrade.
   </para>
 
   <para>
