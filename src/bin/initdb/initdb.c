@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.146 2007/10/16 09:09:11 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.147 2007/10/16 11:30:16 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2840,7 +2840,17 @@ main(int argc, char *argv[])
 		/* We allow selection of SQL_ASCII --- see notes in createdb() */
 		if (!(ctype_enc == user_enc ||
 			  ctype_enc == PG_SQL_ASCII ||
-			  user_enc == PG_SQL_ASCII))
+			  user_enc == PG_SQL_ASCII
+#ifdef WIN32			  
+			/*
+			 * On win32, if the encoding chosen is UTF8, all locales are OK 
+			 * (assuming the actual locale name passed the checks above). This
+			 * is because UTF8 is a pseudo-codepage, that we convert to UTF16
+			 * before doing any operations on, and UTF16 supports all locales.
+			 */
+			|| user_enc == PG_UTF8
+#endif
+			  ))
 		{
 			fprintf(stderr, _("%s: encoding mismatch\n"), progname);
 			fprintf(stderr,

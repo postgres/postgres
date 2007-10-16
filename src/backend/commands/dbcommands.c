@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.201 2007/10/13 20:18:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.202 2007/10/16 11:30:16 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,7 +258,7 @@ createdb(const CreatedbStmt *stmt)
 
 	/*
 	 * Check whether encoding matches server locale settings.  We allow
-	 * mismatch in two cases:
+	 * mismatch in three cases:
 	 *
 	 * 1. ctype_encoding = SQL_ASCII, which means either that the locale
 	 * is C/POSIX which works with any encoding, or that we couldn't determine
@@ -268,12 +268,19 @@ createdb(const CreatedbStmt *stmt)
 	 * This is risky but we have historically allowed it --- notably, the
 	 * regression tests require it.
 	 *
+	 * 3. selected encoding is UTF8 and platform is win32. This is because
+	 * UTF8 is a pseudo codepage that is supported in all locales since
+	 * it's converted to UTF16 before being used.
+	 *
 	 * Note: if you change this policy, fix initdb to match.
 	 */
 	ctype_encoding = pg_get_encoding_from_locale(NULL);
 
 	if (!(ctype_encoding == encoding ||
 		  ctype_encoding == PG_SQL_ASCII ||
+#ifdef WIN32
+		  encoding == PG_UTF8 ||
+#endif
 		  (encoding == PG_SQL_ASCII && superuser())))
 		ereport(ERROR,
 				(errmsg("encoding %s does not match server's locale %s",
