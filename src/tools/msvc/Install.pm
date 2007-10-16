@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.23 2007/10/03 13:20:40 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.24 2007/10/16 16:00:00 tgl Exp $
 #
 use strict;
 use warnings;
@@ -312,6 +312,20 @@ sub CopyContribFiles
             foreach my $f (split /\s+/,$flist)
             {
                 lcopy('contrib/' . $d . '/' . $f,$target . '/share/contrib/' . basename($f))
+                  || croak("Could not copy file $f in contrib $d");
+                print '.';
+            }
+        }
+
+        $flist = '';
+        if ($mf =~ /^DATA_TSEARCH\s*=\s*(.*)$/m) {$flist .= $1}
+        if ($flist ne '')
+        {
+            $flist = ParseAndCleanRule($flist, $mf);
+
+            foreach my $f (split /\s+/,$flist)
+            {
+                lcopy('contrib/' . $d . '/' . $f,$target . '/share/tsearch_data/' . basename($f))
                   || croak("Could not copy file $f in contrib $d");
                 print '.';
             }

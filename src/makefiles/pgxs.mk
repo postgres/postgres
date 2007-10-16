@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.10 2007/06/26 22:05:04 tgl Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.11 2007/10/16 15:59:59 tgl Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -22,6 +22,7 @@
 #   DATA -- random files to install into $PREFIX/share/contrib
 #   DATA_built -- random files to install into $PREFIX/share/contrib,
 #     which need to be built first
+#   DATA_TSEARCH -- random files to install into $PREFIX/share/tsearch_data
 #   DOCS -- random files to install under $PREFIX/doc/contrib
 #   SCRIPTS -- script files (not binaries) to install into $PREFIX/bin
 #   SCRIPTS_built -- script files (not binaries) to install into $PREFIX/bin,
@@ -97,6 +98,12 @@ ifneq (,$(DATA)$(DATA_built))
 	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/contrib'; \
 	done
 endif # DATA
+ifneq (,$(DATA_TSEARCH))
+	@for file in $(addprefix $(srcdir)/, $(DATA_TSEARCH)); do \
+	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/tsearch_data'"; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/tsearch_data'; \
+	done
+endif # DATA_TSEARCH
 ifdef MODULES
 	@for file in $(addsuffix $(DLSUFFIX), $(MODULES)); do \
 	  echo "$(INSTALL_SHLIB) $$file '$(DESTDIR)$(pkglibdir)'"; \
@@ -135,6 +142,9 @@ installdirs:
 ifneq (,$(DATA)$(DATA_built))
 	$(mkinstalldirs) '$(DESTDIR)$(datadir)/contrib'
 endif
+ifneq (,$(DATA_TSEARCH))
+	$(mkinstalldirs) '$(DESTDIR)$(datadir)/tsearch_data'
+endif
 ifneq (,$(MODULES)$(MODULE_big))
 	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
 endif
@@ -151,6 +161,9 @@ endif
 uninstall:
 ifneq (,$(DATA)$(DATA_built))
 	rm -f $(addprefix '$(DESTDIR)$(datadir)'/contrib/, $(notdir $(DATA) $(DATA_built)))
+endif
+ifneq (,$(DATA_TSEARCH))
+	rm -f $(addprefix '$(DESTDIR)$(datadir)'/tsearch_data/, $(notdir $(DATA_TSEARCH)))
 endif
 ifdef MODULES
 	rm -f $(addprefix '$(DESTDIR)$(pkglibdir)'/, $(addsuffix $(DLSUFFIX), $(MODULES)))
