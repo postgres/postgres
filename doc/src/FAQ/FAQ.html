@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Oct 12 23:36:59 EDT 2007</P>
+    <P>Last updated: Wed Oct 17 13:34:42 EDT 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -114,8 +114,11 @@
     databases?<BR>
      <A href="#item4.18">4.18</A>) How do I return multiple rows or columns
     from a function?<BR>
-     <A href="#item4.20">4.19</A>) What replication solutions are available?<BR>
-     <A href="#item4.21">4.20</A>) Why are my table and column names not
+     <A href="#item4.19">4.19</A>) Why do I get "relation with OID #####
+    does not exist" errors when accessing temporary tables in PL/PgSQL
+    functions?<BR>
+     <A href="#item4.20">4.20</A>) What replication solutions are available?<BR>
+     <A href="#item4.21">4.21</A>) Why are my table and column names not
     recognized in my query?  Why is capitalization not preserved?<BR>
 
 
@@ -1041,7 +1044,21 @@ length</TD></TR>
     <a href="http://www.postgresql.org/docs/techdocs.17">
     http://www.postgresql.org/docs/techdocs.17</a>.</P>
 
-    <H3 id="item4.19">4.19) What replication solutions are available?
+    <H3 id="item4.19">4.19) Why do I get "relation with OID #####
+    does not exist" errors when accessing temporary tables in PL/PgSQL
+    functions?</H3>
+
+    <P>In PostgreSQL versions < 8.3, PL/PgSQL caches function scripts, and
+    an unfortunate side effect is that if a PL/PgSQL function accesses a
+    temporary table, and that table is later dropped and recreated, and
+    the function called again, the function will fail because the cached
+    function contents still point to the old temporary table. The solution
+    is to use <SMALL>EXECUTE</SMALL> for temporary table access in
+    PL/PgSQL. This will cause the query to be reparsed every time.</P>
+
+    <P>This problem does not occur in PostgreSQL 8.3 and later.</P>
+
+    <H3 id="item4.20">4.20) What replication solutions are available?
     </H3>
 
     <P>Though "replication" is a single term, there are several technologies
@@ -1063,7 +1080,7 @@ length</TD></TR>
     <P>There are also commercial and hardware-based replication solutions
     available supporting a variety of replication models.</P>
 
-    <H3 id="item4.20">4.20) Why are my table and column names not
+    <H3 id="item4.21">4.21) Why are my table and column names not
     recognized in my query?  Why is capitalization not preserved?</H3>
 
     <P>The most common cause of unrecognized names is the use of
@@ -1080,5 +1097,6 @@ length</TD></TR>
     <LI>Use only lowercase characters in identifiers</LI>
     <LI>Double-quote identifiers when referencing them in queries</LI>
     </UL>
+
   </BODY>
 </HTML>

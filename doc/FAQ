@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Oct 12 23:36:59 EDT 2007
+   Last updated: Wed Oct 17 13:34:42 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -78,8 +78,10 @@
    4.16) How do I perform an outer join?
    4.17) How do I perform queries using multiple databases?
    4.18) How do I return multiple rows or columns from a function?
-   4.19) What replication solutions are available?
-   4.20) Why are my table and column names not recognized in my query?
+   4.19) Why do I get "relation with OID ##### does not exist" errors
+   when accessing temporary tables in PL/PgSQL functions?
+   4.20) What replication solutions are available?
+   4.21) Why are my table and column names not recognized in my query?
    Why is capitalization not preserved?
      _________________________________________________________________
    
@@ -790,7 +792,20 @@
    It is easy using set-returning functions,
    http://www.postgresql.org/docs/techdocs.17.
    
-  4.19) What replication solutions are available?
+  4.19) Why do I get "relation with OID ##### does not exist" errors when
+  accessing temporary tables in PL/PgSQL functions?
+  
+   In PostgreSQL versions < 8.3, PL/PgSQL caches function scripts, and an
+   unfortunate side effect is that if a PL/PgSQL function accesses a
+   temporary table, and that table is later dropped and recreated, and
+   the function called again, the function will fail because the cached
+   function contents still point to the old temporary table. The solution
+   is to use EXECUTE for temporary table access in PL/PgSQL. This will
+   cause the query to be reparsed every time.
+   
+   This problem does not occur in PostgreSQL 8.3 and later.
+   
+  4.20) What replication solutions are available?
   
    Though "replication" is a single term, there are several technologies
    for doing replication, with advantages and disadvantages for each.
@@ -809,7 +824,7 @@
    There are also commercial and hardware-based replication solutions
    available supporting a variety of replication models.
    
-  4.20) Why are my table and column names not recognized in my query? Why is
+  4.21) Why are my table and column names not recognized in my query? Why is
   capitalization not preserved?
   
    The most common cause of unrecognized names is the use of
