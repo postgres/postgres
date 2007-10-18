@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.522 2007/10/18 05:39:06 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.523 2007/10/18 06:07:23 neilc Exp $ -->
 <!--
 
 Typical markup:
@@ -65,14 +65,14 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Support for the SQL/XML standard, including a operators and a
-        new <type>XML</type> builtin
+        Support for the SQL/XML standard, including new operators and a
+        new <type>XML</type> builtin type
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Enumerated (<type>ENUM</>) data type support
+        Support for enumerated data types (<type>ENUM</type>)
        </para>
       </listitem>
 
@@ -1305,14 +1305,14 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Support for the SQL/XML standard, including a operators and a
-        new <type>XML</type> builtin (Nikolay Samokhvalov, Peter)
+        Support for the SQL/XML standard, including new operators and a
+        new <type>XML</type> builtin type (Nikolay Samokhvalov, Peter)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Enumerated (<type>ENUM</>) data type support (Tom Dunstan)
+        Support for enumerated data types (<type>ENUM</type>) (Tom Dunstan)
        </para>
 
        <para>
