@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.525 2007/10/18 16:47:58 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.526 2007/10/18 23:05:06 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -66,8 +66,8 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Support for the SQL/XML standard, including new operators and a
-      new <type>XML</type> builtin type
+      Support for the SQL/XML standard, including new operators and
+      an <type>XML</type> data type
      </para>
     </listitem>
 
@@ -79,8 +79,7 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Universally Unique Identifier (<type>UUID</>) data type, similar
-      to that defined by RFC 4122
+      Universally Unique Identifier (<type>UUID</>) data type
      </para>
     </listitem>
 
@@ -171,28 +170,27 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      <quote>Distributed</> checkpoints prevent I/O spikes during
-      checkpoints
+      Distributed checkpoints prevent I/O spikes during checkpoints
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Heap-Only Tuples (<acronym>HOT</>) improves <command>UPDATE</>
-      space usage
+      Heap-Only Tuples (<acronym>HOT</>) accelerate <command>UPDATE</>
+      space reuse
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Just-in-time background writer strategy to improve disk write
+      Just-in-time background writer strategy improves disk write
       efficiency
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Reduction of both per-field and per-row storage requirements
+      Reduction of per-field and per-row storage requirements
      </para>
     </listitem>
 
@@ -218,7 +216,8 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Use pseudo-transaction ids in read-only transactions
+      Reduce need for vacuum by using pseudo-transaction ids in
+      read-only transactions
      </para>
     </listitem>
 
@@ -507,7 +506,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       <quote>Distributed</> checkpoints prevent I/O spikes during
+       Distributed checkpoints prevent I/O spikes during
        checkpoints (Itagaki Takahiro and Heikki Linnakangas)
       </para>
 
@@ -522,8 +521,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Heap-Only Tuples (<acronym>HOT</>) improves <command>UPDATE</>
-       space usage (Pavan Deolasee, with ideas from many others)
+       Heap-Only Tuples (<acronym>HOT</>) accelerate <command>UPDATE</>
+       space reuse (Pavan Deolasee, with ideas from many others)
       </para>
 
       <para>
@@ -540,7 +539,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Just-in-time background writer strategy to improve disk write
+       Just-in-time background writer strategy improves disk write
        efficiency (Greg Smith, Itagaki Takahiro)
       </para>
 
@@ -551,8 +550,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Reduction of both per-field and per-row storage requirements
-       (Greg Stark)
+       Reduction of per-field and per-row storage requirements (Greg
+       Stark)
       </para>
 
       <para>
@@ -565,21 +564,23 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Use pseudo-transaction ids in read-only transactions (Florian Pflug)
+       Reduce need for vacuum by using pseudo-transaction ids in
+       read-only transactions (Florian Pflug)
       </para>
 
       <para>
-       This reduces transaction overhead for read-only transactions,
-       and reduces the necessity of vacuuming for transaction id
-       wrap-around. Other transaction performance improvements were
-       also made that should improve concurrency.
+       Pseudo-transaction ids do not increment the global transaction
+       counter. Therefore, they do not add to the need for vacuum to
+       read all database rows to prevent problems with transaction id
+       wrap-around. Other transaction performance improvements were also
+       made that should improve concurrency.
       </para>
      </listitem>
 
      <listitem>
       <para>
        Create a dedicated <acronym>WAL</> writer process to off-load
-       WAL-writing work from backends (Simon)
+       work from backends (Simon)
       </para>
      </listitem>
 
@@ -621,12 +622,6 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Reduce overhead of populating the statistics tables. (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        Allow <literal>ORDER BY ... LIMIT</> to be done without sorting
        (Greg Stark)
       </para>
@@ -634,6 +629,12 @@ do it for earlier branch release files.
       <para>
        This is done by scanning the table and using a filter to save
        the few requested rows, rather than sorting the entire table.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Reduce overhead of populating the statistics tables (Tom)
       </para>
      </listitem>
 
@@ -1327,8 +1328,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Support for the SQL/XML standard, including new operators and a
-       new <type>XML</type> builtin type (Nikolay Samokhvalov, Peter)
+      Support for the SQL/XML standard, including new operators and an
+      <type>XML</type> data type (Nikolay Samokhvalov, Peter)
       </para>
      </listitem>
 
@@ -1346,8 +1347,12 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Universally Unique Identifier (<type>UUID</>) data type, similar
-       to that defined by RFC 4122 (Gevik Babakhani, Neil)
+       Universally Unique Identifier (<type>UUID</>) data type (Gevik
+       Babakhani, Neil)
+      </para>
+
+      <para>
+       This closely matches <acronym>RFC</> 4122.
       </para>
      </listitem>
 
