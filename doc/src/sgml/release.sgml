@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.524 2007/10/18 16:45:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.525 2007/10/18 16:47:58 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -224,8 +224,6 @@ do it for earlier branch release files.
 
    </itemizedlist>
 
-  </para>
-
   </sect2>
 
   <sect2>
@@ -445,14 +443,6 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      <function>convert()</function> encoding has changed behavior
-     </para>
-
-     <para>
-    </listitem>
-
-    <listitem>
-     <para>
       Restrict object size functions to users who have reasonable
       permissions to view such information (Tom)
      </para>
@@ -483,8 +473,8 @@ do it for earlier branch release files.
    </itemizedlist>
   </sect2>
 
- <sect2>
-  <title>Changes</title>
+  <sect2>
+   <title>Changes</title>
 
    <para>
     Below you will find a detailed account of the
