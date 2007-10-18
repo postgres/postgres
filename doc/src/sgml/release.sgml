@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.521 2007/10/18 05:15:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.522 2007/10/18 05:39:06 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -107,12 +107,6 @@ do it for earlier branch release files.
         Server configuration parameters can now be set on a per-function
         basis
        </para>
-
-       <para>
-        For example, functions can now set their own
-        <varname>search_path</> to prevent unexpected behavior if a
-        different <varname>search_path</> exists at run-time.
-       </para>
       </listitem>
 
       <listitem>
@@ -154,13 +148,6 @@ do it for earlier branch release files.
        <para>
         The backend database server can now be compiled with
         <productname>Microsoft Visual C++</>
-       </para>
-
-       <para>
-         Windows executables made with Visual C++ might have better
-         stability and performance than those made with other tool sets.
-         Development and debugging tools familiar to Windows developers
-         will also work.
        </para>
       </listitem>
 
@@ -1096,13 +1083,16 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Support per-function GUC parameter settings (Tom)
+        Server configuration parameters can now be set on a per-function
+        basis (Tom)
        </para>
 
        <para>
-        This provides a simple way for functions to set local
-        parameters. In particular, security definer functions should set
-        <varname>search_path</varname> to avoid security loopholes.
+        For example, functions can now set their own
+        <varname>search_path</> to prevent unexpected behavior if a
+        different <varname>search_path</> exists at run-time.  Security
+        definer functions should set <varname>search_path</varname> to
+        avoid security loopholes.
        </para>
       </listitem>
 
@@ -2002,12 +1992,16 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Support building the entire Postgres system with Visual C++ (Magnus
-        and others)
+        The backend database server can now be compiled with
+        <productname>Microsoft Visual C++</> (Magnus and others)
        </para>
 
        <para>
-        The client-only C++ build scripts have been removed.
+         Windows executables made with Visual C++ might have better
+         stability and performance than those made with other tool sets.
+         Development and debugging tools familiar to Windows developers
+         will also work.  The client-only C++ build scripts have been
+         removed.
        </para>
       </listitem>
 
