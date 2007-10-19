@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.527 2007/10/18 23:34:54 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.528 2007/10/19 01:56:06 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -804,6 +804,7 @@ do it for earlier branch release files.
        point-in-time recovery.
       </para>
      </listitem>
+
      <listitem>
       <para>
        New boolean configuration parameter, <varname>archive_mode</>,
@@ -2431,112 +2432,113 @@ do it for earlier branch release files.
    <itemizedlist>
 
     <listitem>
-    <para>
-     Support explicit placement of the temporary-table schema within
-     <varname>search_path</>, and disable searching it for functions
-     and operators (Tom)
-    </para>
-    <para>
-     This is needed to allow a security-definer function to set a
-     truly secure value of <varname>search_path</>.  Without it,
-     an unprivileged SQL user can use temporary objects to execute code
-     with the privileges of the security-definer function (CVE-2007-2138).
-     See <command>CREATE FUNCTION</> for more information.
-    </para>
+     <para>
+      Support explicit placement of the temporary-table schema within
+      <varname>search_path</>, and disable searching it for functions
+      and operators (Tom)
+     </para>
+
+     <para>
+      This is needed to allow a security-definer function to set a
+      truly secure value of <varname>search_path</>.  Without it,
+      an unprivileged SQL user can use temporary objects to execute code
+      with the privileges of the security-definer function (CVE-2007-2138).
+      See <command>CREATE FUNCTION</> for more information.
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix <varname>shared_preload_libraries</> for Windows
-     by forcing reload in each backend (Korry Douglas)
-    </para>
+     <para>
+      Fix <varname>shared_preload_libraries</> for Windows
+      by forcing reload in each backend (Korry Douglas)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix <function>to_char()</> so it properly upper/lower cases localized day or month
-     names (Pavel Stehule)
-    </para>
+     <para>
+      Fix <function>to_char()</> so it properly upper/lower cases localized day or month
+      names (Pavel Stehule)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     <filename>/contrib/tsearch2</> crash fixes (Teodor)
-    </para>
+     <para>
+      <filename>/contrib/tsearch2</> crash fixes (Teodor)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Require <command>COMMIT PREPARED</> to be executed in the same
-     database as the transaction was prepared in (Heikki)
-    </para>
+     <para>
+      Require <command>COMMIT PREPARED</> to be executed in the same
+      database as the transaction was prepared in (Heikki)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Allow <command>pg_dump</> to do binary backups larger than two gigabytes
-     on Windows (Magnus)
-    </para>
+     <para>
+      Allow <command>pg_dump</> to do binary backups larger than two gigabytes
+      on Windows (Magnus)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     New traditional (Taiwan) Chinese <acronym>FAQ</> (Zhou Daojing)
-    </para>
+     <para>
+      New traditional (Taiwan) Chinese <acronym>FAQ</> (Zhou Daojing)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Prevent the statistics collector from writing to disk too frequently (Tom)
-    </para>
+     <para>
+      Prevent the statistics collector from writing to disk too frequently (Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix potential-data-corruption bug in how <command>VACUUM FULL</> handles
-     <command>UPDATE</> chains (Tom, Pavan Deolasee)
-    </para>
+     <para>
+      Fix potential-data-corruption bug in how <command>VACUUM FULL</> handles
+      <command>UPDATE</> chains (Tom, Pavan Deolasee)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix bug in domains that use array types (Tom)
-    </para>
+     <para>
+      Fix bug in domains that use array types (Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix <command>pg_dump</> so it can dump a serial column's sequence
-     using <option>-t</> when not also dumping the owning table
-     (Tom)
-    </para>
+     <para>
+      Fix <command>pg_dump</> so it can dump a serial column's sequence
+      using <option>-t</> when not also dumping the owning table
+      (Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Planner fixes, including improving outer join and bitmap scan
-     selection logic (Tom)
-    </para>
+     <para>
+      Planner fixes, including improving outer join and bitmap scan
+      selection logic (Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix possible wrong answers or crash when a PL/pgSQL function tries
-     to <literal>RETURN</> from within an <literal>EXCEPTION</> block
-     (Tom)
-    </para>
+     <para>
+      Fix possible wrong answers or crash when a PL/pgSQL function tries
+      to <literal>RETURN</> from within an <literal>EXCEPTION</> block
+      (Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix PANIC during enlargement of a hash index (Tom)
-    </para>
+     <para>
+      Fix PANIC during enlargement of a hash index (Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix POSIX-style timezone specs to follow new USA DST rules (Tom)
-    </para>
+     <para>
+      Fix POSIX-style timezone specs to follow new USA DST rules (Tom)
+     </para>
     </listitem>
 
    </itemizedlist>
@@ -2571,16 +2573,16 @@ do it for earlier branch release files.
    <itemizedlist>
 
     <listitem>
-    <para>
-     Remove overly-restrictive check for type length in constraints and
-     functional indexes(Tom)
-    </para>
+     <para>
+      Remove overly-restrictive check for type length in constraints and
+      functional indexes(Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix optimization so MIN/MAX in subqueries can again use indexes (Tom)
-    </para>
+     <para>
+      Fix optimization so MIN/MAX in subqueries can again use indexes (Tom)
+     </para>
     </listitem>
 
    </itemizedlist>
@@ -2616,124 +2618,127 @@ do it for earlier branch release files.
    <itemizedlist>
 
     <listitem>
-    <para>
-     Remove security vulnerabilities that allowed connected users
-     to read backend memory (Tom)
-    </para>
-    <para>
-     The vulnerabilities involve suppressing the normal check that a SQL
-     function returns the data type it's declared to, and changing the
-     data type of a table column (CVE-2007-0555, CVE-2007-0556).  These
-     errors can easily be exploited to cause a backend crash, and in
-     principle might be used to read database content that the user
-     should not be able to access.
-    </para>
+     <para>
+      Remove security vulnerabilities that allowed connected users
+      to read backend memory (Tom)
+     </para>
+
+     <para>
+      The vulnerabilities involve suppressing the normal check that a SQL
+      function returns the data type it's declared to, and changing the
+      data type of a table column (CVE-2007-0555, CVE-2007-0556).  These
+      errors can easily be exploited to cause a backend crash, and in
+      principle might be used to read database content that the user
+      should not be able to access.
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix not-so-rare-anymore bug wherein btree index page splits could fail
-     due to choosing an infeasible split point (Heikki Linnakangas)
-    </para>
+     <para>
+      Fix not-so-rare-anymore bug wherein btree index page splits could fail
+      due to choosing an infeasible split point (Heikki Linnakangas)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix Borland C compile scripts (L Bayuk)
-    </para>
+     <para>
+      Fix Borland C compile scripts (L Bayuk)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Properly handle <function>to_char('CC')</> for years ending in
-     <literal>00</> (Tom)
-    </para>
-    <para>
-     Year 2000 is in the twentieth century, not the twenty-first.
-    </para>
+     <para>
+      Properly handle <function>to_char('CC')</> for years ending in
+      <literal>00</> (Tom)
+     </para>
+
+     <para>
+      Year 2000 is in the twentieth century, not the twenty-first.
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     <filename>/contrib/tsearch2</> localization improvements (Tatsuo, Teodor)
-    </para>
+     <para>
+      <filename>/contrib/tsearch2</> localization improvements (Tatsuo, Teodor)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix incorrect permission check in
-     <literal>information_schema.key_column_usage</> view (Tom)
-    </para>
-    <para>
-     The symptom is <quote>relation with OID nnnnn does not exist</> errors.
-     To get this fix without using <command>initdb</>, use <command>CREATE OR
-     REPLACE VIEW</> to install the corrected definition found in
-     <filename>share/information_schema.sql</>.  Note you will need to do
-     this in each database.
-    </para>
+     <para>
+      Fix incorrect permission check in
+      <literal>information_schema.key_column_usage</> view (Tom)
+     </para>
+ 
+     <para>
+      The symptom is <quote>relation with OID nnnnn does not exist</> errors.
+      To get this fix without using <command>initdb</>, use <command>CREATE OR
+      REPLACE VIEW</> to install the corrected definition found in
+      <filename>share/information_schema.sql</>.  Note you will need to do
+      this in each database.
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Improve <command>VACUUM</> performance for databases with many tables (Tom)
-    </para>
+     <para>
+      Improve <command>VACUUM</> performance for databases with many tables (Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix for rare Assert() crash triggered by <literal>UNION</> (Tom)
-    </para>
+     <para>
+      Fix for rare Assert() crash triggered by <literal>UNION</> (Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix potentially incorrect results from index searches using
-     <literal>ROW</> inequality conditions (Tom)
-    </para>
+     <para>
+      Fix potentially incorrect results from index searches using
+      <literal>ROW</> inequality conditions (Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Tighten security of multi-byte character processing for UTF8 sequences
-     over three bytes long (Tom)
-    </para>
+     <para>
+      Tighten security of multi-byte character processing for UTF8 sequences
+      over three bytes long (Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix bogus <quote>permission denied</> failures occurring on Windows
-     due to attempts to fsync already-deleted files (Magnus, Tom)
-    </para>
+     <para>
+      Fix bogus <quote>permission denied</> failures occurring on Windows
+      due to attempts to fsync already-deleted files (Magnus, Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix bug that could cause the statistics collector
-     to hang on Windows (Magnus)
-    </para>
+     <para>
+      Fix bug that could cause the statistics collector
+      to hang on Windows (Magnus)
+     </para>
 
-    <para>
-     This would in turn lead to autovacuum not working.
-    </para>
+     <para>
+      This would in turn lead to autovacuum not working.
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix possible crashes when an already-in-use PL/pgSQL function is
-     updated (Tom)
-    </para>
+     <para>
+      Fix possible crashes when an already-in-use PL/pgSQL function is
+      updated (Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Improve PL/pgSQL handling of domain types (Sergiy Vyshnevetskiy, Tom)
-    </para>
+     <para>
+      Improve PL/pgSQL handling of domain types (Sergiy Vyshnevetskiy, Tom)
+     </para>
     </listitem>
 
     <listitem>
-    <para>
-     Fix possible errors in processing PL/pgSQL exception blocks (Tom)
-    </para>
+     <para>
+      Fix possible errors in processing PL/pgSQL exception blocks (Tom)
+     </para>
     </listitem>
 
    </itemizedlist>
