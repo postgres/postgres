@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.4 2007/09/10 12:36:41 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.5 2007/10/19 22:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,8 +222,7 @@ extern Datum prsd_lextype(PG_FUNCTION_ARGS);
 /*
  * Dictionary interface to SQL
  */
-extern Datum ts_lexize_byid(PG_FUNCTION_ARGS);
-extern Datum ts_lexize_byname(PG_FUNCTION_ARGS);
+extern Datum ts_lexize(PG_FUNCTION_ARGS);
 
 /*
  * Simple built-in dictionary
