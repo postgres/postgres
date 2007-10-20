@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.4 2007/09/11 08:46:29 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.5 2007/10/20 21:06:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ gin_extract_query(PG_FUNCTION_ARGS)
 				if (strategy != TSearchWithClassStrategyNumber && val->weight != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("@@ operator does not support lexeme class restrictions"),
+							 errmsg("@@ operator does not support lexeme weight restrictions in GIN index searches"),
 							 errhint("Use the @@@ operator instead.")));
 			}
 	}
