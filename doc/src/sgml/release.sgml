@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.528 2007/10/19 01:56:06 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.529 2007/10/20 16:41:09 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -91,14 +91,13 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Control over whether <literal>NULL</>s sort first or last, using
-      <literal>ORDER BY ... NULLS FIRST/LAST</>
+      Control over whether <literal>NULL</>s sort first or last
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Updatable cursors using <literal>UPDATE/DELETE WHERE CURRENT OF</>
+      Updatable cursors
      </para>
     </listitem>
 
@@ -124,17 +123,14 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Numerous improvements in logging and statistics collection,
-      including the ability to emit postmaster log messages in
-      <acronym>CSV</> format, which can be loaded into a database
-      table for analysis
+      Numerous improvements in logging and statistics collection
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Support Security Service Provider Interface (SSPI) on
-      authentication for Windows and GSSAPI
+      Support Security Service Provider Interface (<acronym>SSPI</>) for
+      authentication on Windows
      </para>
     </listitem>
 
@@ -163,8 +159,8 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Asynchronous commit option allows transactions to be committed
-      but on-disk changes to be delayed
+      Asynchronous commit allows transactions to be committed but on-disk
+      changes to be delayed
      </para>
     </listitem>
 
@@ -487,8 +483,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Asynchronous commit option allows transactions to be committed
-       but on-disk changes to be delayed (Simon)
+       Asynchronous commit allows transactions to be committed but on-disk
+       changes to be delayed (Simon)
       </para>
 
       <para>
@@ -526,14 +522,14 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       To allow high concurrency <productname>PostgreSQL</> retains old
-       versions of updated rows. Previously only <command>VACUUM</>
-       could reuse space taken by dead rows. With <acronym>HOT</> dead
-       row space can be reused at the time of <command>UPDATE</> or
-       <command>INSERT</>. This allows for more consistent performance.
-       <acronym>HOT</> even allows deleted row space reuse.
-       <command>UPDATE</> space reuse is only possible if no modified
-       columns are indexed.
+       To allow high concurrency <command>UPDATE</> creates a new tuple,
+       rather than replacing the old tuple. Previously only
+       <command>VACUUM</> could reuse space taken by old tuples. With
+       <acronym>HOT</> dead tuple space can be reused at the time of
+       <command>UPDATE</> or <command>INSERT</>.  This allows for more
+       consistent performance.  <acronym>HOT</> even allows deleted row
+       space reuse.  <acronym>HOT</> space reuse is not possible if
+       <command>UPDATE</> changes indexed columns.
       </para>
      </listitem>
 
@@ -627,8 +623,9 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This is done by scanning the table and using a filter to save
-       the few requested rows, rather than sorting the entire table.
+       This is done by sequentially scanning the table and using a filter
+       to save the few requested rows, rather than sorting the entire
+       table.  This is used if there is no matching index.
       </para>
      </listitem>
 
@@ -694,8 +691,13 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Support Security Service Provider Interface (SSPI)
-       authentication on Windows (Magnus)
+       Support Security Service Provider Interface (<acronym>SSPI</>) for
+       authentication on Windows
+      </para>
+
+      <para>
+       This also adds support for the <acryonym>GSSAPI</> authentication
+       <acronym>API</>.
       </para>
      </listitem>
 
@@ -739,6 +741,10 @@ do it for earlier branch release files.
       <para>
        Allow logfile creation in CSV format (Arul Shaji, Greg Smith,
        Andrew Dunstan)
+      </para>
+
+      <para>
+       The CSV file can be loaded into a database table for analysis.
       </para>
      </listitem>
 
@@ -1004,8 +1010,11 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Control over whether <literal>NULL</>s sort first or last, using
-       <literal>ORDER BY ... NULLS FIRST/LAST</> (Teodor, Tom)
+       Control over whether <literal>NULL</>s sort first or last (Teodor, Tom)
+      </para>
+
+      <para>
+       The syntax is <literal>ORDER BY ... NULLS FIRST/LAST</>.
       </para>
      </listitem>
 
@@ -1031,8 +1040,9 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This eliminates the need to reference a primary key to update or
-       delete rows returned by a cursor.
+       This eliminates the need to reference a primary key to
+       <command>UPDATE</> or <command>DELETE</> rows returned by a cursor.
+       The syntax is <literal>UPDATE/DELETE WHERE CURRENT OF</>.
       </para>
      </listitem>
 
