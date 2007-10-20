@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.529 2007/10/20 16:41:09 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.530 2007/10/20 20:19:06 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -696,7 +696,7 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This also adds support for the <acryonym>GSSAPI</> authentication
+       This also adds support for the <acronym>GSSAPI</> authentication
        <acronym>API</>.
       </para>
      </listitem>
