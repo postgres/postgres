@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Last updated: Tue Oct  9 16:13:00 EDT 2007</p>
+<p>原文最終更新日:		Last updated: Wed Oct 17 13:34:42 EDT 2007</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -99,8 +99,9 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
 <a href="#item4.16">4.16</a>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<br />
 <a href="#item4.17">4.17</a>) 複数のデータベースを使う問い合わせはどのようにすればできますか？<br />
 <a href="#item4.18">4.18</a>) 関数から複数のロウまたはカラムを返すにはどうしますか？<br />
-<a href="#item4.19">4.19</a>) どのようなレプリケーションのソリューションがありますか？<br />
-<a href="#item4.20">4.20</a>) テーブルとカラムの名前がクエリーの中で認識
+<a href="#item4.19">4.19</a>)  PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation with OID ##### does not exist" というエラーを受け取るのでしょうか？<br />
+<a href="#item4.19">4.20</a>) どのようなレプリケーションのソリューションがありますか？<br />
+<a href="#item4.20">4.21</a>) テーブルとカラムの名前がクエリーの中で認識
 されないのはなぜですか？ なぜ大文字化(キャピタライズ)は温存されないのですか?<br />
 
 <h2 align="center">日本語に関する質問</h2>
@@ -130,8 +131,8 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
     開発者によって、インターネットを通したコミュニケーションによって行わ
     れています。コミュニティによるプロジェクトであるため、どの企業の制御
     もうけません。開発に参加したければ、<a href=
-    "http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html">
-    http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html</a>
+    "http://www.postgresql.org/docs/faqs.FAQ_DEV.html">
+    http://www.postgresql.org/docs/faqs.FAQ_DEV.html</a>
     にある開発者のFAQを見てください。
     </p>
 
@@ -410,11 +411,11 @@ http://www.postgresql.org/docs/</a>でオンラインでも閲覧できます。
     </pre></small></p>
   
     購入可能な書籍の目録は、<a href=
-    "http://techdocs.postgresql.org/techdocs/bookreviews.php">http://techdocs.postgresql.org/techdocs/bookreviews.php</a>
+    "http://www.postgresql.org/docs/books/">http://www.postgresql.org/docs/books/</a>
     にあります。
 
     PostgreSQL 技術情報記事も、<a href=
-    "http://techdocs.postgresql.org/">http://techdocs.postgresql.org/</a>
+    "http://www.postgresql.org/docs/techdocs">http://www.postgresql.org/docs/techdocs</a>
     にあります。</p>
 
     <p><small><pre>
@@ -435,12 +436,8 @@ http://www.postgresql.org/docs/</a>でオンラインでも閲覧できます。
 <h4 id="item1.11">1.11</a>) <small>SQL</small> はどうすれば学べますか？</h4>
 
     <p>まず、 上記で述べた PostgreSQL についての本を読むことを検討してください。
-    もうひとつは、 "Teach Yourself SQL in 21 Days, Second Edition"
-    at <a href=
-    "http://members.tripod.com/er4ebus/sql/index.htm">http://members.tripod.com/er4ebus/sql/index.htm</a>です。
-
-    <p><i>The Practical SQL Handbook</i>, Bowman Judith S. et al.,
-    Addison-Wesley が多くのユーザに好評です。 ほかでは、<i>The Complete
+    <i>The Practical SQL Handbook</i>, Bowman Judith S. et al.,
+    Addison-Wesley も多くのユーザに好評です。 ほかでは、<i>The Complete
     Reference SQL</i >, Groff et al., McGraw-Hill も好評です。</p>
 
 
@@ -647,11 +644,11 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
     <dd><i>postgresql.conf</i>の設定のいくつかは性能に影響します。
     詳しくは、<a href=
-    "http://www.postgresql.org/docs/current/static/runtime.html">
+    "http://www.postgresql.org/docs/current/static/runtime-config.html">
     Administration Guide/Server Run-time Environment/Run-time
     Configuration</a> の全件リストをごらんください(<a
-    href="http://www.postgresql.jp/document/pg803doc/html/runtime.html">
-    JPUGサイトの日本語版</a>)。
+    href="http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html">
+    JPUGサイトの日本語版、サーバの構成</a>)。
     そして、解説として、<a
     href="http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html">
     http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html</a>
@@ -1073,7 +1070,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     ]
     </small></pre></p>
 
-    <p>自動的に生成される通番は、
+    <p>自動的につくられる通番は、
 	&lt;<i>table</i>&gt;_&lt;<i>serialcolumn</i>&gt;_<i>seq</i>
     と名付けられていて、<i>table</i> と <i>serialcolumn</i> は、それぞれ
     テーブルと <small>SERIAL</small> カラムの名前です。
@@ -1201,7 +1198,21 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     を使うと簡単です</p>。
 
 
-<h4 id="item4.19">4.19</a>) どのようなレプリケーションのソリューションがありますか？</h4>
+<h4 id="item4.19">4.19</a>) PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation with OID ##### does not exist" というエラーを受け取るのでしょうか？</h4>
+
+    <p>バージョン8.3より前の PostgreSQL では、PL/PgSQL は関数スクリプトを
+    キャッシュしたため、運悪くその副作用がありました。PL/PgSQL 関数が一時
+    テーブルにアクセスして後でそのテーブルを消して作りした場合に、関数が
+    もう一度呼び出されたときは、その関数のキャッシュしていた内容がまだ古い
+    一時テーブルを指し示したままだったからです。
+    この、解決策として、PL/PgSQLの中で <small>EXECUTE</small> を一時テー
+    ブルへのアクセスのために使います。そうすると、クエリは毎回パースをや
+    り直しされるようになります。</p>
+
+    <p>この問題は、 PostgreSQL バージョン8.3 以降では起きません。</p>
+
+
+<h4 id="item4.20">4.20</a>) どのようなレプリケーションのソリューションがありますか？</h4>
     <p>「レプリケーション」と一言でいいますが、レプリケーションをする
     ための技術はいくつかあり、それぞれ、利点と欠点があります。</p>
 
@@ -1210,7 +1221,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     問い合わせだけを受け付けることができます。最も人気がある、フリーで利
     用できる、マスタ−スレーブのPostgreSQLレプリケーションソリューション
     は、<a 
-    href="http://gborg.postgresql.org/project/slony1/projdisplay.php">
+    href="http://main.slony.info/">
     Slony-I</a> です。</p>
 
     <p>マルチ−マスタのレプリケーションは、読み／書きのクエリを受けと
@@ -1223,12 +1234,12 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     <p>この他にも、商用やハードウェア−ベースのレプリケーションソリュー
     ションがいろいろなレプリケーションモデルをサポートしています。</p>
   
-<h3 id="item4.20">4.20</a>)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大文字化(キャピタライズ)は温存されないのですか?</h3>
+<h3 id="item4.21">4.21</a>)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大文字化(キャピタライズ)は温存されないのですか?</h3>
 
     <p>名前が認識されない、最も一般的な原因は、テーブルを作成する際に、
     テーブルやカラムを囲う二重引用符の使用です。
     二重引用符を使うと、テーブルとカラムの名前（識別子といいます）は<a
-    href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-IDENTIFIERS">大文字と小文字の区別</a>
+    href="http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS">大文字と小文字の区別</a>
     をして格納されます。したがって、pgAdminのようにテーブル作成のときに
     自動的に二重引用符を使うものはクエリの中でそれらの名前を使うときに
     二重引用符を付けなくてはならないことを意味します。このため、識別子
@@ -1277,7 +1288,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2007年10月10日
+  最終更新日:	2007年10月20日
   翻訳者:	桑村 潤 (<a href="mailto:juk at postgresql.jp">Jun KUWAMURA &lt;juk at postgresql.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):

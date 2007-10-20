@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Last updated: Tue Oct 9 16:13:00 EDT 2007
+原文最終更新日: Last updated: Wed Oct 17 13:34:42 EDT 2007
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at postgresql.jp)
@@ -89,8 +89,10 @@ NULLの可能性のあるものをどのようすれば連結できますか? フィールドがNULLかどうか
 4.16) 外部結合(outer join)はどのように実現しますか?
 4.17) 複数のデータベースを使う問い合わせはどのようにすればできますか？
 4.18) 関数から複数のロウまたはカラムを返すにはどうしますか？
-4.19) どのようなレプリケーションのソリューションがありますか？
-4.20) テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大
+4.19) PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation
+with OID ##### does not exist" というエラーを受け取るのでしょうか？
+4.20) どのようなレプリケーションのソリューションがありますか？
+4.21) テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大
 文字化(キャピタライズ)は温存されないのですか?
 
                               日本語に関する質問
@@ -114,8 +116,8 @@ PostgreSQL はオブジェクト-リレーショナルデータベースシステムで、伝統的な商用デ
 PostgreSQL の開発は、ほとんどが、世界中にひろがったボランティアの開発者によって
 、インターネットを通したコミュニケーションによって行われています。コミュニティ
 によるプロジェクトであるため、どの企業の制御もうけません。開発に参加したければ
-、 http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html にある開発者
-のFAQを見てください。
+、 http://www.postgresql.org/docs/faqs.FAQ_DEV.html にある開発者のFAQを見てくだ
+さい。
 
 1.2) 誰が PostgreSQL をコントロールしていますか？
 
@@ -333,9 +335,8 @@ PostgreSQLは拡張されたSQL:2003のサブセットをサポートします。我々のページの TODO
     ]
 
 
-購入可能な書籍の目録は、http://techdocs.postgresql.org/techdocs/bookreviews.php
-にあります。 PostgreSQL 技術情報記事も、http://techdocs.postgresql.org/ にあり
-ます。
+購入可能な書籍の目録は、http://www.postgresql.org/docs/books/ にあります。
+PostgreSQL 技術情報記事も、http://www.postgresql.org/docs/techdocs にあります。
 
     [訳注:
         日本語の書籍等については、日本PostgreSQLユーザ会の、http://www.postgresql.jp/PostgreSQL/references.html
@@ -351,13 +352,10 @@ PostgreSQLは拡張されたSQL:2003のサブセットをサポートします。我々のページの TODO
 
 1.11) SQL はどうすれば学べますか？
 
-まず、上記で述べた PostgreSQL についての本を読むことを検討してください。もうひ
-とつは、 "Teach Yourself SQL in 21 Days, Second Edition" at http://
-members.tripod.com/er4ebus/sql/index.htmです。
-
-The Practical SQL Handbook, Bowman Judith S. et al., Addison-Wesley が多くのユ
-ーザに好評です。ほかでは、The Complete Reference SQL, Groff et al., McGraw-Hill
-も好評です。
+まず、上記で述べた PostgreSQL についての本を読むことを検討してください。 The
+Practical SQL Handbook, Bowman Judith S. et al., Addison-Wesley も多くのユーザ
+に好評です。ほかでは、The Complete Reference SQL, Groff et al., McGraw-Hill も
+好評です。
 
 素晴らしい手引書は、
  
@@ -511,10 +509,10 @@ Web への拡張のためには、PHP(http://www.php.net/) が卓越したインターフェースとな
 サーバ構成
     postgresql.confの設定のいくつかは性能に影響します。詳しくは、
     Administration Guide/Server Run-time Environment/Run-time Configuration の
-    全件リストをごらんください( JPUGサイトの日本語版)。そして、解説として、
-    http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html お
-    よび、 http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html をごら
-    んください。
+    全件リストをごらんください( JPUGサイトの日本語版、サーバの構成)。そして、解
+    説として、 http://www.varlena.com/varlena/GeneralBits/Tidbits/
+    annotated_conf_e.html および、 http://www.varlena.com/varlena/GeneralBits/
+    Tidbits/perf.html をごらんください。
 
 ハードウェアの選定
     性能におけるハードウェアの影響は http://www.powerpostgresql.com/PerfList/
@@ -854,7 +852,7 @@ PostgreSQL は SERIAL データ型をサポートします。カラム上にシーケンスを自動作成し
     ]
 
 
-自動的に生成される通番は、 <table>_<serialcolumn>_seq と名付けられていて、table
+自動的につくられる通番は、 <table>_<serialcolumn>_seq と名付けられていて、table
 と serialcolumn は、それぞれテーブルと SERIAL カラムの名前です。通番については
 、オンラインマニュアルでcreate_sequence をごらんください。
 
@@ -958,7 +956,19 @@ techdocs.17
 
 。
 
-4.19) どのようなレプリケーションのソリューションがありますか？
+4.19) PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation
+with OID ##### does not exist" というエラーを受け取るのでしょうか？
+
+バージョン8.3より前の PostgreSQL では、PL/PgSQL は関数スクリプトをキャッシュし
+たため、運悪くその副作用がありました。PL/PgSQL 関数が一時テーブルにアクセスして
+後でそのテーブルを消して作りした場合に、関数がもう一度呼び出されたときは、その
+関数のキャッシュしていた内容がまだ古い一時テーブルを指し示したままだったからで
+す。この、解決策として、PL/PgSQLの中で EXECUTE を一時テーブルへのアクセスのため
+に使います。そうすると、クエリは毎回パースをやり直しされるようになります。
+
+この問題は、 PostgreSQL バージョン8.3 以降では起きません。
+
+4.20) どのようなレプリケーションのソリューションがありますか？
 
 「レプリケーション」と一言でいいますが、レプリケーションをするための技術はいく
 つかあり、それぞれ、利点と欠点があります。
@@ -976,7 +986,7 @@ techdocs.17
 この他にも、商用やハードウェア−ベースのレプリケーションソリューションがいろい
 ろなレプリケーションモデルをサポートしています。
 
-4.20)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大文
+4.21)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大文
 字化(キャピタライズ)は温存されないのですか?
 
 名前が認識されない、最も一般的な原因は、テーブルを作成する際に、テーブルやカラ
@@ -1021,7 +1031,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2007年10月10日
+  最終更新日:   2007年10月20日
   翻訳者:       桑村 潤 (Jun KUWAMURA <juk at postgresql.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
