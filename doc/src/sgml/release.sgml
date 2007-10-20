@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.530 2007/10/20 20:19:06 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.531 2007/10/20 23:41:23 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -66,8 +66,8 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Support for the SQL/XML standard, including new operators and
-      an <type>XML</type> data type
+      Support the SQL/XML standard, including new operators and an
+      <type>XML</type> data type
      </para>
     </listitem>
 
@@ -79,25 +79,25 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Universally Unique Identifier (<type>UUID</>) data type
+      Add Universally Unique Identifier (<type>UUID</>) data type
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Arrays of composite types
+      Support arrays of composite types
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Control over whether <literal>NULL</>s sort first or last
+      Add control over whether <literal>NULL</>s sort first or last
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Updatable cursors
+      Support updatable cursors
      </para>
     </listitem>
 
@@ -136,13 +136,14 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Multiple autovacuum worker processes, and other autovacuum improvements
+      Support multiple concurrent autovacuum processes, and other
+      autovacuum improvements
      </para>
     </listitem>
 
     <listitem>
      <para>
-      The backend database server can now be compiled with
+      Allow the backend database server to be compiled with
       <productname>Microsoft Visual C++</>
      </para>
     </listitem>
@@ -159,8 +160,7 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Asynchronous commit allows transactions to be committed but on-disk
-      changes to be delayed
+      Asynchronous commit delays writes to WAL for committed transactions
      </para>
     </listitem>
 
@@ -172,8 +172,8 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Heap-Only Tuples (<acronym>HOT</>) accelerate <command>UPDATE</>
-      space reuse
+      Heap-Only Tuples (<acronym>HOT</>) accelerate space reuse for
+      <command>UPDATE</>s
      </para>
     </listitem>
 
@@ -186,7 +186,7 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Reduction of per-field and per-row storage requirements
+      Reduce per-field and per-row storage requirements
      </para>
     </listitem>
 
@@ -319,8 +319,8 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      The array name for a base data type is no longer required to
-      be the data type name with an underscore prefix
+      The array name for a base data type is no longer always the data
+      type name with an underscore prefix
      </para>
 
      <para>
@@ -345,8 +345,8 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Commands that are disallowed in transaction blocks are now also
-      disallowed in multiple-statement query strings (Tom)
+      Commands rejected in transaction blocks are now also rejected in
+      multiple-statement query strings (Tom)
      </para>
 
      <para>
@@ -357,7 +357,7 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      More checks for invalidly-encoded data (Andrew)
+      Add more checks for invalidly-encoded data (Andrew)
      </para>
 
      <para>
@@ -370,18 +370,17 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Ensure that <function>chr()</function> cannot create invalidly
-      encoded values (Andrew)
+      Ensure that <function>chr()</function> cannot create
+      invalidly-encoded values (Andrew)
      </para>
 
      <para>
-      In UTF8-encoded databases the argument is processed as a Unicode
-      code point. In other multi-byte encodings the argument must
-      designate a 7-bit ASCII character, or an error is raised. Zero
-      also causes an error. <function>ascii()</function> has been
-      adjusted as well to match this behavior.
-
-    </para>
+      In UTF8-encoded databases the argument is now processed as a Unicode
+      code point. In other multi-byte encodings the argument must designate
+      a 7-bit ASCII character, or an error is raised. Zero also causes an
+      error. <function>ascii()</function> has been adjusted as well to
+      match this behavior.
+     </para>
     </listitem>
 
     <listitem>
@@ -394,7 +393,7 @@ do it for earlier branch release files.
       The two argument form of <function>convert()</function> has been
       removed. The three argument form now takes a <type>BYTEA</type>
       first argument and returns a <type>BYTEA</type>. To cover this
-      loss three new functions are introduced:
+      loss three new functions were added:
      </para>
 
      <itemizedlist>
@@ -443,17 +442,17 @@ do it for earlier branch release files.
      </para>
 
      <para>
-      For example, <function>pg_database_size()</function> now
-      requires <literal>CONNECT</> permission, which is granted to
-      everyone by default. <function>pg_tablespace_size()</function>
-      requires <literal>CREATE</> permission in the tablespace, or the
-      tablespace is the default tablespace for the database.
+      For example, <function>pg_database_size()</function> now requires
+      <literal>CONNECT</> permission, which is granted to everyone by
+      default. <function>pg_tablespace_size()</function> requires
+      <literal>CREATE</> permission in the tablespace, or is allowed if
+      the tablespace is the default tablespace for the database.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      New C macros for handling variable-length data values (Greg
+      Add C macros for handling variable-length data values (Greg
       Stark, Tom)
      </para>
 
@@ -483,20 +482,21 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Asynchronous commit allows transactions to be committed but on-disk
-       changes to be delayed (Simon)
+       Asynchronous commit delays writes to WAL for committed transactions
+       (Simon)
       </para>
 
       <para>
-       This feature dramatically increases performance for data
-       modification queries. The disadvantage is that because on-disk
-       changes are delayed, if the operating system crashes before data
-       is written to the disk, committed data will be lost. This is
-       useful only for applications that can accept some data loss.
-       Unlike <varname>fsync</varname>, asynchronous commit does not
-       risk database corruption; the worst case is that after an
-       operating system crash the last few reportedly-committed
-       transactions will be missing.
+       This feature dramatically increases performance for data-modifying
+       queries. The disadvantage is that because on-disk changes are
+       delayed, if the operating system crashes before data is written to
+       the disk, committed data will be lost. This is useful only for
+       applications that can accept some data loss.  Unlike
+       <varname>fsync</varname>, asynchronous commit does not risk database
+       corruption; the worst case is that after an operating system crash
+       the last few reportedly-committed transactions will be missing. 
+       This feature is enabled turning <varname>synchronous_commit</>
+       <literal>off</> and setting <varname>wal_writer_delay</>.
       </para>
      </listitem>
 
@@ -517,8 +517,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Heap-Only Tuples (<acronym>HOT</>) accelerate <command>UPDATE</>
-       space reuse (Pavan Deolasee, with ideas from many others)
+       Heap-Only Tuples (<acronym>HOT</>) accelerate space reuse for
+       <command>UPDATE</>s (Pavan Deolasee, with ideas from many others)
       </para>
 
       <para>
@@ -546,8 +546,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Reduction of per-field and per-row storage requirements (Greg
-       Stark)
+       Reduce per-field and per-row storage requirements (Greg Stark)
       </para>
 
       <para>
@@ -590,7 +589,7 @@ do it for earlier branch release files.
        Unless WAL archiving is enabled, it is possible to just
        <function>fsync()</> the table at the end of the command,
        increasing performance. Additional WAL efficiencies were also
-       added.
+       made.
       </para>
      </listitem>
 
@@ -610,9 +609,9 @@ do it for earlier branch release files.
       <para>
        This is accomplished by starting the new sequential scan in the
        middle of the table (where the other sequential scan is already
-       in-progress) and wrapping around to the beginning to finish.
-       This may affect the order in which rows are returned in a
-       non-<literal>ORDER BY</> query.
+       in-progress) and wrapping around to the beginning to finish.  This
+       may affect the order of returned rows in a non-<literal>ORDER BY</>
+       query.
       </para>
      </listitem>
 
@@ -703,7 +702,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add support for GSSAPI authentication (Henry Hotz, Magnus)
+       Support GSSAPI authentication (Henry Hotz, Magnus)
       </para>
      </listitem>
 
@@ -959,8 +958,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Arrange to put TOAST tables belonging to temporary tables into
-       special schemas named
+       Place temporary table TOAST tables in a special schemas named
        <literal>pg_toast_temp_<replaceable>nnn</></literal> (Tom)
       </para>
 
@@ -998,7 +996,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Text search capability is now in core Postgres (Teodor, Oleg)
+       Full text search now fully integrated into the core database
+       system (Teodor, Oleg)
       </para>
 
       <para>
@@ -1010,7 +1009,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Control over whether <literal>NULL</>s sort first or last (Teodor, Tom)
+       Add control over whether <literal>NULL</>s sort first or last (Teodor, Tom)
       </para>
 
       <para>
@@ -1035,8 +1034,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Updatable cursors using <literal>UPDATE/DELETE WHERE CURRENT
-       OF</> (Arul Shaji, Tom)
+       Support updatable cursors (Arul Shaji, Tom)
       </para>
 
       <para>
@@ -1258,7 +1256,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Allow <command>ALTER VIEW ... RENAME TO</command> and <command>ALTER
+       Add <command>ALTER VIEW ... RENAME TO</command> and <command>ALTER
        SEQUENCE ... RENAME TO</command> (David Fetter, Neil)
       </para>
 
@@ -1339,8 +1337,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-      Support for the SQL/XML standard, including new operators and an
-      <type>XML</type> data type (Nikolay Samokhvalov, Peter)
+       Support the SQL/XML standard, including new operators and an
+       <type>XML</type> data type (Nikolay Samokhvalov, Peter)
       </para>
      </listitem>
 
@@ -1358,7 +1356,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Universally Unique Identifier (<type>UUID</>) data type (Gevik
+       Add Universally Unique Identifier (<type>UUID</>) data type (Gevik
        Babakhani, Neil)
       </para>
 
@@ -1934,7 +1932,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       The backend database server can now be compiled with
+       Allow the backend database server to be compiled with
        <productname>Microsoft Visual C++</> (Magnus and others)
       </para>
 
@@ -1956,7 +1954,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Native shared memory implementation for Windows (Magnus)
+       Add native shared memory implementation for Windows (Magnus)
       </para>
      </listitem>
 
