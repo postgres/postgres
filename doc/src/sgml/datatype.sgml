@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.210 2007/10/13 23:06:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.211 2007/10/21 20:04:37 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -237,13 +237,13 @@
       <row>
        <entry><type>tsquery</type></entry>
        <entry></entry>
-       <entry>full text search query</entry>
+       <entry>text search query</entry>
       </row>
 
       <row>
        <entry><type>tsvector</type></entry>
        <entry></entry>
-       <entry>full text search document</entry>
+       <entry>text search document</entry>
       </row>
 
       <row>
@@ -3232,6 +3232,211 @@ SELECT * FROM test;
    </para>
   </sect1>
 
+  <sect1 id="datatype-textsearch">
+   <title>Text Search Types</title>
+
+   <indexterm zone="datatype-textsearch">
+    <primary>full text search</primary>
+    <secondary>data types</secondary>
+   </indexterm>
+
+   <indexterm zone="datatype-textsearch">
+    <primary>text search</primary>
+    <secondary>data types</secondary>
+   </indexterm>
+
+   <para>
+    <productname>PostgreSQL</productname> provides two data types that
+    are designed to support full text search, which is the activity of
+    searching through a collection of natural-language <firstterm>documents</>
+    to locate those that best match a <firstterm>query</>.
+    The <type>tsvector</type> type represents a document in a form suited
+    for text search, while the <type>tsquery</type> type similarly represents
+    a query.
+    <xref linkend="textsearch"> provides a detailed explanation of this
+    facility, and <xref linkend="functions-textsearch"> summarizes the
+    related functions and operators.
+   </para>
+
+   <sect2 id="datatype-tsvector">
+    <title><type>tsvector</type></title>
+
+    <indexterm>
+     <primary>tsvector (data type)</primary>
+    </indexterm>
+
+    <para>
+     A <type>tsvector</type> value is a sorted list of distinct
+     <firstterm>lexemes</>, which are words that have been
+     <firstterm>normalized</> to make different variants of the same word look
+     alike (see <xref linkend="textsearch"> for details).  Sorting and
+     duplicate-elimination are done automatically during input, as shown in
+     this example:
+
+<programlisting>
+SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector;
+                      tsvector
+----------------------------------------------------
+ 'a' 'on' 'and' 'ate' 'cat' 'fat' 'mat' 'rat' 'sat'
+</programlisting>
+
+     (As the example shows, the sorting is first by length and then
+     alphabetically, but that detail is seldom important.)  To represent
+     lexemes containing whitespace, surround them with quotes:
+
+<programlisting>
+SELECT $$the lexeme '    ' contains spaces$$::tsvector;
+                 tsvector                  
+-------------------------------------------
+ 'the' '    ' 'lexeme' 'spaces' 'contains'
+</programlisting>
+
+     (We use dollar-quoted string literals in this example and the next one,
+     to avoid confusing matters by having to double quote marks within the
+     literals.)  Embedded quotes can be handled by doubling them:
+
+<programlisting>
+SELECT $$the lexeme 'Joe''s' contains a quote$$::tsvector;
+                    tsvector                    
+------------------------------------------------
+ 'a' 'the' 'Joe''s' 'quote' 'lexeme' 'contains'
+</programlisting>
+
+     Optionally, integer <firstterm>position(s)</>
+     can be attached to any or all of the lexemes:
+
+<programlisting>
+SELECT 'a:1 fat:2 cat:3 sat:4 on:5 a:6 mat:7 and:8 ate:9 a:10 fat:11 rat:12'::tsvector;
+                                  tsvector
+-------------------------------------------------------------------------------
+ 'a':1,6,10 'on':5 'and':8 'ate':9 'cat':3 'fat':2,11 'mat':7 'rat':12 'sat':4
+</programlisting>
+
+     A position normally indicates the source word's location in the
+     document.  Positional information can be used for
+     <firstterm>proximity ranking</firstterm>.  Position values can
+     range from 1 to 16383; larger numbers are silently clamped to 16383.
+     Duplicate position entries are discarded.
+    </para>
+
+    <para>
+     Lexemes that have positions can further be labeled with a
+     <firstterm>weight</>, which can be <literal>A</literal>,
+     <literal>B</literal>, <literal>C</literal>, or <literal>D</literal>.
+     <literal>D</literal> is the default and hence is not shown on output:
+
+<programlisting>
+SELECT 'a:1A fat:2B,4C cat:5D'::tsvector;
+          tsvector          
+----------------------------
+ 'a':1A 'cat':5 'fat':2B,4C
+</programlisting>
+
+     Weights are typically used to reflect document structure, for example
+     by marking title words differently from body words.  Text search
+     ranking functions can assign different priorities to the different
+     weight markers.
+    </para>
+
+    <para>
+     It is important to understand that the
+     <type>tsvector</type> type itself does not perform any normalization;
+     it assumes that the words it is given are normalized appropriately
+     for the application.  For example,
+
+<programlisting>
+select 'The Fat Rats'::tsvector;
+      tsvector      
+--------------------
+ 'Fat' 'The' 'Rats'
+</programlisting>
+
+     For most English-text-searching applications the above words would
+     be considered non-normalized, but <type>tsvector</type> doesn't care.
+     Raw document text should usually be passed through
+     <function>to_tsvector</> to normalize the words appropriately
+     for searching:
+
+<programlisting>
+SELECT to_tsvector('english', 'The Fat Rats');         
+   to_tsvector   
+-----------------
+ 'fat':2 'rat':3
+</programlisting>
+
+     Again, see <xref linkend="textsearch"> for more detail.
+    </para>
+
+   </sect2>
+
+   <sect2 id="datatype-tsquery">
+    <title><type>tsquery</type></title>
+
+    <indexterm>
+     <primary>tsquery (data type)</primary>
+    </indexterm>
+
+    <para>
+     A <type>tsquery</type> value stores lexemes that are to be
+     searched for, and combines them using the boolean operators
+     <literal>&amp;</literal> (AND), <literal>|</literal> (OR), and
+     <literal>!</> (NOT).  Parentheses can be used to enforce grouping
+     of the operators:
+
+<programlisting>
+ SELECT 'fat &amp; rat'::tsquery;
+    tsquery    
+---------------
+ 'fat' &amp; 'rat'
+
+SELECT 'fat &amp; (rat | cat)'::tsquery;
+          tsquery          
+---------------------------
+ 'fat' &amp; ( 'rat' | 'cat' )
+
+SELECT 'fat &amp; rat &amp; ! cat'::tsquery;
+        tsquery         
+------------------------
+ 'fat' &amp; 'rat' &amp; !'cat'
+</programlisting>
+
+     In the absence of parentheses, <literal>!</> (NOT) binds most tightly,
+     and <literal>&amp;</literal> (AND) binds more tightly than
+     <literal>|</literal> (OR).
+    </para>
+
+    <para>
+     Optionally, lexemes in a <type>tsquery</type> can be labeled with
+     one or more weight letters, which restricts them to match only
+     <type>tsvector</> lexemes with one of those weights:
+
+<programlisting>
+SELECT 'fat:ab &amp; cat'::tsquery;
+    tsquery
+------------------
+ 'fat':AB &amp; 'cat'
+</programlisting>
+    </para>
+
+    <para>
+     Quoting rules for lexemes are the same as described above for
+     lexemes in <type>tsvector</>; and, as with <type>tsvector</>,
+     any required normalization of words must be done before putting
+     them into the <type>tsquery</> type.  The <function>to_tsquery</>
+     function is convenient for performing such normalization:
+
+<programlisting>
+SELECT to_tsquery('Fat:ab & Cats');
+    to_tsquery    
+------------------
+ 'fat':AB & 'cat'
+</programlisting>
+    </para>
+
+   </sect2>
+
+  </sect1>
+
   <sect1 id="datatype-uuid">
    <title><acronym>UUID</acronym> Type</title>
 
@@ -3240,18 +3445,16 @@ SELECT * FROM test;
    </indexterm>
 
    <para>
-    The data type <type>uuid</type> stores Universally Unique
-    Identifiers (UUID) as per RFC 4122, ISO/IEC 9834-8:2005, and
-    related standards.  (Some systems refer to this data type as
-    globally unique
-    identifier/GUID<indexterm><primary>GUID</primary></indexterm>
-    instead.)  Such an identifier is a 128-bit quantity that is
-    generated by a suitable algorithm so that it is very unlikely to
-    be generated by anyone else in the known universe using the same
-    algorithm.  Therefore, for distributed systems, these identifiers
-    provide a better uniqueness guarantee than that which can be
-    achieved using sequence generators, which are only unique within a
-    single database.
+    The data type <type>uuid</type> stores Universally Unique Identifiers
+    (UUID) as defined by RFC 4122, ISO/IEC 9834-8:2005, and related standards.
+    (Some systems refer to this data type as globally unique identifier, or
+    GUID,<indexterm><primary>GUID</primary></indexterm> instead.)  Such an
+    identifier is a 128-bit quantity that is generated by an algorithm chosen
+    to make it very unlikely that the same identifier will be generated by
+    anyone else in the known universe using the same algorithm.  Therefore,
+    for distributed systems, these identifiers provide a better uniqueness
+    guarantee than that which can be achieved using sequence generators, which
+    are only unique within a single database.
    </para>
 
    <para>
@@ -3263,7 +3466,8 @@ SELECT * FROM test;
 <programlisting>
 a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
 </programlisting>
-    PostgreSQL also accepts the following alternative forms for input:
+    <productname>PostgreSQL</productname> also accepts the following
+    alternative forms for input:
     use of upper-case digits, the standard format surrounded by
     braces, and omitting the hyphens.  Examples are:
 <programlisting>
@@ -3275,138 +3479,15 @@ a0eebc999c0b4ef8bb6d6bb9bd380a11
    </para>
 
    <para>
-    To generate UUIDs, the contrib module <literal>uuid-ossp</literal>
-    provides functions that implement the standard algorithms.
+    <productname>PostgreSQL</productname> provides storage and comparison
+    functions for UUIDs, but the core database does not include any
+    function for generating UUIDs, because no single algorithm is well
+    suited for every application.  The contrib module
+    <filename>contrib/uuid-ossp</filename> provides functions that implement 
+    several standard algorithms.
     Alternatively, UUIDs could be generated by client applications or
     other libraries invoked through a server-side function.
    </para>
-  </sect1>
-
-  <sect1 id="datatype-textsearch">
-   <title>Full Text Search</title>
-
-   <variablelist>
-
-    <varlistentry>
-    <term><firstterm>tsvector</firstterm></term>
-     <listitem>
-
-      <para>
-       <type>tsvector</type>
-       <indexterm><primary>tsvector</primary></indexterm> is a data type
-       that represents a document and is optimized for full text searching.
-       In the simplest case, <type>tsvector</type> is a sorted list of
-       lexemes, so even without indexes full text searches perform better
-       than standard <literal>~</literal> and <literal>LIKE</literal>
-       operations:
-
-<programlisting>
-SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector;
-                      tsvector
-----------------------------------------------------
- 'a' 'on' 'and' 'ate' 'cat' 'fat' 'mat' 'rat' 'sat'
-</programlisting>
-
-       Notice, that <literal>space</literal> is also a lexeme:
-
-<programlisting>
-SELECT 'space ''    '' is a lexeme'::tsvector;
-             tsvector
-----------------------------------
- 'a' 'is' '    ' 'space' 'lexeme'
-</programlisting>
-
-       Each lexeme, optionally, can have positional information which is used for
-       <varname>proximity ranking</varname>:
-
-<programlisting>
-SELECT 'a:1 fat:2 cat:3 sat:4 on:5 a:6 mat:7 and:8 ate:9 a:10 fat:11 rat:12'::tsvector;
-                                  tsvector
--------------------------------------------------------------------------------
- 'a':1,6,10 'on':5 'and':8 'ate':9 'cat':3 'fat':2,11 'mat':7 'rat':12 'sat':4
-</programlisting>
-
-       Each lexeme position also can be labeled as <literal>A</literal>,
-       <literal>B</literal>, <literal>C</literal>, <literal>D</literal>,
-       where <literal>D</literal> is the default. These labels can be used to group
-       lexemes into different <emphasis>importance</emphasis> or
-       <emphasis>rankings</emphasis>, for example to reflect document structure.
-       Actual values can be assigned at search time and used during the calculation
-       of the document rank.  This is very useful for controlling search results.
-      </para>
-
-      <para>
-       The concatenation operator, e.g. <literal>tsvector || tsvector</literal>,
-       can "construct" a document from several parts. The order is important if
-       <type>tsvector</type> contains positional information. Of course,
-       it is also possible to build a document using different tables:
-
-<programlisting>
-SELECT 'fat:1 cat:2'::tsvector || 'fat:1 rat:2'::tsvector;
-         ?column?
----------------------------
- 'cat':2 'fat':1,3 'rat':4
-
-SELECT 'fat:1 rat:2'::tsvector || 'fat:1 cat:2'::tsvector;
-         ?column?
----------------------------
- 'cat':4 'fat':1,3 'rat':2
-</programlisting>
-
-      </para>
-
-     </listitem>
-
-    </varlistentry>
-
-    <varlistentry>
-    <term><firstterm>tsquery</firstterm></term>
-     <listitem>
-
-      <para>
-       <type>tsquery</type>
-       <indexterm><primary>tsquery</primary></indexterm> is a data type
-       for textual queries which supports the boolean operators
-       <literal>&amp;</literal> (AND), <literal>|</literal> (OR), and
-       parentheses.  A <type>tsquery</type> consists of lexemes (optionally
-       labeled by letters) with boolean operators in between:
-
-<programlisting>
-SELECT 'fat &amp; cat'::tsquery;
-    tsquery
----------------
- 'fat' &amp; 'cat'
-SELECT 'fat:ab &amp; cat'::tsquery;
-    tsquery
-------------------
- 'fat':AB &amp; 'cat'
-</programlisting>
-
-       Labels can be used to restrict the search region, which allows the
-       development of different search engines using the same full text index.
-      </para>
-
-      <para>
-       <type>tsqueries</type> can be concatenated using <literal>&amp;&amp;</literal> (AND)
-       and <literal>||</literal> (OR) operators:
-
-<programlisting>
-SELECT 'a &amp; b'::tsquery &amp;&amp; 'c | d'::tsquery;
-         ?column?
----------------------------
- 'a' &amp; 'b' &amp; ( 'c' | 'd' )
-
-SELECT 'a &amp; b'::tsquery || 'c|d'::tsquery;
-         ?column?
----------------------------
- 'a' &amp; 'b' | ( 'c' | 'd' )
-</programlisting>
-
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-
   </sect1>
 
   <sect1 id="datatype-xml">
