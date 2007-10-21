@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.5 2007/10/19 22:01:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.6 2007/10/21 22:29:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +22,12 @@
 
 /* tsvector parser support. */
 
-struct TSVectorParseStateData;
+struct TSVectorParseStateData;	/* opaque struct in tsvector_parser.c */
 typedef struct TSVectorParseStateData *TSVectorParseState;
 
-extern TSVectorParseState init_tsvector_parser(char *input, bool oprisdelim);
+extern TSVectorParseState init_tsvector_parser(char *input,
+											   bool oprisdelim,
+											   bool is_tsquery);
 extern void reset_tsvector_parser(TSVectorParseState state, char *input);
 extern bool gettoken_tsvector(TSVectorParseState state, 
 							  char **token, int *len,

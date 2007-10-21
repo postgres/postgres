@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.7 2007/09/11 16:01:40 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.8 2007/10/21 22:29:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,7 @@ gettoken_query(TSQueryParserState state,
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error at start of operand in tsearch query: \"%s\"",
+							 errmsg("syntax error in tsquery: \"%s\"",
 									state->buffer)));
 				}
 				else if (!t_isspace(state->buf))
@@ -159,7 +159,7 @@ gettoken_query(TSQueryParserState state,
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("no operand in tsearch query: \"%s\"",
+								 errmsg("no operand in tsquery: \"%s\"",
 										state->buffer)));
 				}
 				break;
@@ -232,12 +232,12 @@ pushValue_internal(TSQueryParserState state, pg_crc32 valcrc, int distance, int 
 	if (distance >= MAXSTRPOS)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("value is too big in tsearch query: \"%s\"",
+				 errmsg("value is too big in tsquery: \"%s\"",
 						state->buffer)));
 	if (lenval >= MAXSTRLEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("operand is too long in tsearch query: \"%s\"",
+				 errmsg("operand is too long in tsquery: \"%s\"",
 						state->buffer)));
 
 	tmp = (QueryOperand *) palloc(sizeof(QueryOperand));
@@ -264,7 +264,7 @@ pushValue(TSQueryParserState state, char *strval, int lenval, int2 weight)
 	if (lenval >= MAXSTRLEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("word is too long in tsearch query: \"%s\"",
+				 errmsg("word is too long in tsquery: \"%s\"",
 						state->buffer)));
 
 	INIT_CRC32(valcrc);
@@ -372,7 +372,7 @@ makepol(TSQueryParserState state,
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("syntax error in tsearch query: \"%s\"",
+						 errmsg("syntax error in tsquery: \"%s\"",
 								state->buffer)));
 		}
 	}
@@ -478,7 +478,7 @@ parse_tsquery(char *buf,
 	state.polstr = NIL;
 
 	/* init value parser's state */
-	state.valstate = init_tsvector_parser(NULL, true);
+	state.valstate = init_tsvector_parser(state.buffer, true, true);
 
 	/* init list of operand */
 	state.sumlen = 0;

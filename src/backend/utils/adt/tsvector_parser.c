@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_parser.c,v 1.1 2007/09/07 15:09:56 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_parser.c,v 1.2 2007/10/21 22:29:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,13 +20,24 @@
 #include "tsearch/ts_utils.h"
 #include "utils/memutils.h"
 
+
+/*
+ * Private state of tsvector parser.  Note that tsquery also uses this code to
+ * parse its input, hence the boolean flags.  The two flags are both true or
+ * both false in current usage, but we keep them separate for clarity.
+ * is_tsquery affects *only* the content of error messages.
+ */
 struct TSVectorParseStateData
 {
-	char   *prsbuf;
-	char   *word;		/* buffer to hold the current word */
-	int		len;		/* size in bytes allocated for 'word' */
-	bool	oprisdelim;
+	char   *prsbuf;				/* next input character */
+	char   *bufstart;			/* whole string (used only for errors) */
+	char   *word;				/* buffer to hold the current word */
+	int		len;				/* size in bytes allocated for 'word' */
+	int		eml;				/* max bytes per character */
+	bool	oprisdelim;			/* treat ! | * ( ) as delimiters? */
+	bool	is_tsquery;			/* say "tsquery" not "tsvector" in errors? */
 };
+
 
 /*
  * Initializes parser for the input string. If oprisdelim is set, the
@@ -34,21 +45,24 @@ struct TSVectorParseStateData
  * ! | & ( )
  */
 TSVectorParseState
-init_tsvector_parser(char *input, bool oprisdelim)
+init_tsvector_parser(char *input, bool oprisdelim, bool is_tsquery)
 {
 	TSVectorParseState state;
 
 	state = (TSVectorParseState) palloc(sizeof(struct TSVectorParseStateData));
 	state->prsbuf = input;
+	state->bufstart = input;
 	state->len = 32;
 	state->word = (char *) palloc(state->len);
+	state->eml = pg_database_encoding_max_length();
 	state->oprisdelim = oprisdelim;
+	state->is_tsquery = is_tsquery;
 
 	return state;
 }
 
 /*
- * Reinitializes parser for parsing 'input', instead of previous input.
+ * Reinitializes parser to parse 'input', instead of previous input.
  */
 void
 reset_tsvector_parser(TSVectorParseState state, char *input)
@@ -66,21 +80,21 @@ close_tsvector_parser(TSVectorParseState state)
 	pfree(state);
 }
 
+/* increase the size of 'word' if needed to hold one more character */
 #define RESIZEPRSBUF \
 do { \
-	if ( curpos - state->word + pg_database_encoding_max_length() >= state->len ) \
+	int clen = curpos - state->word; \
+	if ( clen + state->eml >= state->len ) \
 	{ \
-		int clen = curpos - state->word; \
 		state->len *= 2; \
-		state->word = (char*)repalloc( (void*)state->word, state->len ); \
+		state->word = (char *) repalloc(state->word, state->len); \
 		curpos = state->word + clen; \
 	} \
 } while (0)
 
-
 #define ISOPERATOR(x)	( pg_mblen(x)==1 && ( *(x)=='!' || *(x)=='&' || *(x)=='|' || *(x)=='(' || *(x)==')' ) )
 
-/* Fills the output parameters, and returns true */
+/* Fills gettoken_tsvector's output parameters, and returns true */
 #define RETURN_TOKEN \
 do { \
 	if (pos_ptr != NULL) \
@@ -111,18 +125,34 @@ do { \
 #define WAITPOSDELIM	7
 #define WAITCHARCMPLX	8
 
+#define PRSSYNTAXERROR prssyntaxerror(state)
+
+static void
+prssyntaxerror(TSVectorParseState state)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 state->is_tsquery ?
+			 errmsg("syntax error in tsquery: \"%s\"", state->bufstart) :
+			 errmsg("syntax error in tsvector: \"%s\"", state->bufstart)));
+}
+
+
 /*
- * Get next token from string being parsed. Returns false if
- * end of input string is reached, otherwise strval, lenval, pos_ptr
- * and poslen output parameters are filled in:
+ * Get next token from string being parsed. Returns true if successful,
+ * false if end of input string is reached.  On success, these output
+ * parameters are filled in:
  * 
- * *strval 		token
- * *lenval 		length of*strval
+ * *strval 		pointer to token
+ * *lenval 		length of *strval
  * *pos_ptr		pointer to a palloc'd array of positions and weights
  * 				associated with the token. If the caller is not interested
  *				in the information, NULL can be supplied. Otherwise
  *				the caller is responsible for pfreeing the array.
  * *poslen		number of elements in *pos_ptr
+ * *endptr		scan resumption point
+ *
+ * Pass NULL for unwanted output parameters.
  */
 bool
 gettoken_tsvector(TSVectorParseState state, 
@@ -155,9 +185,7 @@ gettoken_tsvector(TSVectorParseState state,
 				oldstate = WAITENDWORD;
 			}
 			else if (state->oprisdelim && ISOPERATOR(state->prsbuf))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("syntax error in tsvector")));
+				PRSSYNTAXERROR;
 			else if (!t_isspace(state->prsbuf))
 			{
 				COPYCHAR(curpos, state->prsbuf);
@@ -170,7 +198,8 @@ gettoken_tsvector(TSVectorParseState state,
 			if (*(state->prsbuf) == '\0')
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("there is no escaped character")));
+						 errmsg("there is no escaped character: \"%s\"",
+								state->bufstart)));
 			else
 			{
 				RESIZEPRSBUF;
@@ -192,18 +221,14 @@ gettoken_tsvector(TSVectorParseState state,
 			{
 				RESIZEPRSBUF;
 				if (curpos == state->word)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
+					PRSSYNTAXERROR;
 				*(curpos) = '\0';
 				RETURN_TOKEN;
 			}
 			else if (t_iseq(state->prsbuf, ':'))
 			{
 				if (curpos == state->word)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
+					PRSSYNTAXERROR;
 				*(curpos) = '\0';
 				if (state->oprisdelim)
 					RETURN_TOKEN;
@@ -229,9 +254,7 @@ gettoken_tsvector(TSVectorParseState state,
 				oldstate = WAITENDCMPLX;
 			}
 			else if (*(state->prsbuf) == '\0')
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("syntax error in tsvector")));
+				PRSSYNTAXERROR;
 			else
 			{
 				RESIZEPRSBUF;
@@ -253,9 +276,7 @@ gettoken_tsvector(TSVectorParseState state,
 				RESIZEPRSBUF;
 				*(curpos) = '\0';
 				if (curpos == state->word)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
+					PRSSYNTAXERROR;
 				if (state->oprisdelim)
 				{
 					/* state->prsbuf+=pg_mblen(state->prsbuf); */
@@ -290,17 +311,17 @@ gettoken_tsvector(TSVectorParseState state,
 				}
 				npos++;
 				WEP_SETPOS(pos[npos - 1], LIMITPOS(atoi(state->prsbuf)));
+				/* we cannot get here in tsquery, so no need for 2 errmsgs */
 				if (WEP_GETPOS(pos[npos - 1]) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("wrong position info in tsvector")));
+							 errmsg("wrong position info in tsvector: \"%s\"",
+									state->bufstart)));
 				WEP_SETWEIGHT(pos[npos - 1], 0);
 				statecode = WAITPOSDELIM;
 			}
 			else
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("syntax error in tsvector")));
+				PRSSYNTAXERROR;
 		}
 		else if (statecode == WAITPOSDELIM)
 		{
@@ -309,42 +330,32 @@ gettoken_tsvector(TSVectorParseState state,
 			else if (t_iseq(state->prsbuf, 'a') || t_iseq(state->prsbuf, 'A') || t_iseq(state->prsbuf, '*'))
 			{
 				if (WEP_GETWEIGHT(pos[npos - 1]))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
+					PRSSYNTAXERROR;
 				WEP_SETWEIGHT(pos[npos - 1], 3);
 			}
 			else if (t_iseq(state->prsbuf, 'b') || t_iseq(state->prsbuf, 'B'))
 			{
 				if (WEP_GETWEIGHT(pos[npos - 1]))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
+					PRSSYNTAXERROR;
 				WEP_SETWEIGHT(pos[npos - 1], 2);
 			}
 			else if (t_iseq(state->prsbuf, 'c') || t_iseq(state->prsbuf, 'C'))
 			{
 				if (WEP_GETWEIGHT(pos[npos - 1]))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
+					PRSSYNTAXERROR;
 				WEP_SETWEIGHT(pos[npos - 1], 1);
 			}
 			else if (t_iseq(state->prsbuf, 'd') || t_iseq(state->prsbuf, 'D'))
 			{
 				if (WEP_GETWEIGHT(pos[npos - 1]))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
+					PRSSYNTAXERROR;
 				WEP_SETWEIGHT(pos[npos - 1], 0);
 			}
 			else if (t_isspace(state->prsbuf) ||
 					 *(state->prsbuf) == '\0')
 				RETURN_TOKEN;
 			else if (!t_isdigit(state->prsbuf))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("syntax error in tsvector")));
+				PRSSYNTAXERROR;
 		}
 		else					/* internal error */
 			elog(ERROR, "internal error in gettoken_tsvector");

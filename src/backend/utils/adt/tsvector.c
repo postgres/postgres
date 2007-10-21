@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.4 2007/09/07 16:03:40 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.5 2007/10/21 22:29:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,7 +204,7 @@ tsvectorin(PG_FUNCTION_ARGS)
 
 	pg_verifymbstr(buf, strlen(buf), false);
 
-	state = init_tsvector_parser(buf, false);
+	state = init_tsvector_parser(buf, false, false);
 	
 	arrlen = 64;
 	arr = (WordEntryIN *) palloc(sizeof(WordEntryIN) * arrlen);
@@ -224,7 +224,7 @@ tsvectorin(PG_FUNCTION_ARGS)
 		if (cur - tmpbuf > MAXSTRPOS)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("position value too large")));
+					 errmsg("position value is too large")));
 
 		/*
 		 * Enlarge buffers if needed
@@ -496,7 +496,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 		datalen += lex_len;
 
 		if (i > 0 && WordEntryCMP(&vec->entries[i], &vec->entries[i - 1], STRPTR(vec)) <= 0)
-			elog(ERROR, "lexemes are unordered");
+			elog(ERROR, "lexemes are misordered");
 
 		/* Receive positions */
 
@@ -523,7 +523,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 			{
 				wepptr[j] = (WordEntryPos) pq_getmsgint(buf, sizeof(WordEntryPos));
 				if (j > 0 && WEP_GETPOS(wepptr[j]) <= WEP_GETPOS(wepptr[j - 1]))
-					elog(ERROR, "position information is unordered");
+					elog(ERROR, "position information is misordered");
 			}
 
 			datalen += (npos + 1) * sizeof(WordEntry);
