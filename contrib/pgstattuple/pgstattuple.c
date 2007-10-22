@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.30 2007/09/20 17:56:30 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.31 2007/10/22 17:29:35 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -291,8 +291,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 			buffer = ReadBuffer(rel, block);
 			LockBuffer(buffer, BUFFER_LOCK_SHARE);
 			stat.free_space += PageGetHeapFreeSpace((Page) BufferGetPage(buffer));
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
+			UnlockReleaseBuffer(buffer);
 			block++;
 		}
 	}
@@ -301,8 +300,9 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 	while (block < nblocks)
 	{
 		buffer = ReadBuffer(rel, block);
+		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 		stat.free_space += PageGetHeapFreeSpace((Page) BufferGetPage(buffer));
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		block++;
 	}
 
