@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.402 2007/10/21 20:04:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.403 2007/10/22 20:13:37 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7857,11 +7857,11 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
       </thead>
       <tbody>
        <row>
-        <entry><literal><function>ts_debug</function>(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>)</literal></entry>
-        <entry><type>setof ts_debug</type></entry>
+        <entry><literal><function>ts_debug</function>(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>, OUT <replaceable class="PARAMETER">alias</> <type>text</>, OUT <replaceable class="PARAMETER">description</> <type>text</>, OUT <replaceable class="PARAMETER">token</> <type>text</>, OUT <replaceable class="PARAMETER">dictionaries</> <type>regdictionary[]</>, OUT <replaceable class="PARAMETER">dictionary</> <type>regdictionary</>, OUT <replaceable class="PARAMETER">lexemes</> <type>text[]</>)</literal></entry>
+        <entry><type>setof record</type></entry>
         <entry>test a configuration</entry>
         <entry><literal>ts_debug('english', 'The Brightest supernovaes')</literal></entry>
-        <entry><literal>(lword,"Latin word",The,{english_stem},"english_stem: {}") ...</literal></entry>
+        <entry><literal>(lword,"Latin word",The,{english_stem},english_stem,{}) ...</literal></entry>
        </row>
        <row>
         <entry><literal><function>ts_lexize</function>(<replaceable class="PARAMETER">dict</replaceable> <type>regdictionary</>, <replaceable class="PARAMETER">token</replaceable> <type>text</>)</literal></entry>

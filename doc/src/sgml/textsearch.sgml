@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.22 2007/10/22 03:37:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.23 2007/10/22 20:13:37 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -1699,18 +1699,18 @@ ON messages FOR EACH ROW EXECUTE PROCEDURE messages_trigger();
     <itemizedlist  spacing="compact" mark="bullet">
      <listitem>
       <para>
-       <structname>word</> <type>text</> &mdash; the value of a lexeme
+       <replaceable>word</> <type>text</> &mdash; the value of a lexeme
       </para>
      </listitem>
      <listitem>
       <para>
-       <structname>ndoc</> <type>integer</> &mdash; number of documents
+       <replaceable>ndoc</> <type>integer</> &mdash; number of documents
        (<type>tsvector</>s) the word occurred in
       </para>
      </listitem>
      <listitem>
       <para>
-       <structname>nentry</> <type>integer</> &mdash; total number of
+       <replaceable>nentry</> <type>integer</> &mdash; total number of
        occurrences of the word
       </para>
      </listitem>
@@ -1901,8 +1901,8 @@ LIMIT 10;
    as the entire word and as each component:
 
 <programlisting>
-SELECT "Alias", "Description", "Token" FROM ts_debug('foo-bar-beta1');
-    Alias    |          Description          |     Token     
+SELECT alias, description, token FROM ts_debug('foo-bar-beta1');
+    alias    |          description          |     token     
 -------------+-------------------------------+---------------
  hword       | Hyphenated word               | foo-bar-beta1
  lpart_hword | Latin part of hyphenated word | foo
@@ -1917,8 +1917,8 @@ SELECT "Alias", "Description", "Token" FROM ts_debug('foo-bar-beta1');
    instructive example:
 
 <programlisting>
-SELECT "Alias", "Description", "Token" FROM ts_debug('http://foo.com/stuff/index.html');
-  Alias   |  Description  |          Token           
+SELECT alias, description, token FROM ts_debug('http://foo.com/stuff/index.html');
+  alias   |  description  |          token           
 ----------+---------------+--------------------------
  protocol | Protocol head | http://
  url      | URL           | foo.com/stuff/index.html
@@ -2186,25 +2186,23 @@ SELECT ts_lexize('public.simple_dict','The');
     synonym dictionary and put it before the <literal>english_stem</> dictionary:
 
 <programlisting>
-SELECT * FROM ts_debug('english','Paris');
- Alias | Description | Token |  Dictionaries  |    Lexized token
--------+-------------+-------+----------------+----------------------
- lword | Latin word  | Paris | {english_stem} | english_stem: {pari}
-(1 row)
+SELECT * FROM ts_debug('english', 'Paris');
+ alias | description | token |  dictionaries  |  dictionary  | lexemes 
+-------+-------------+-------+----------------+--------------+---------
+ lword | Latin word  | Paris | {english_stem} | english_stem | {pari}
 
-CREATE TEXT SEARCH DICTIONARY synonym (
+CREATE TEXT SEARCH DICTIONARY my_synonym (
     TEMPLATE = synonym,
     SYNONYMS = my_synonyms
 );
 
 ALTER TEXT SEARCH CONFIGURATION english
-    ALTER MAPPING FOR lword WITH synonym, english_stem;
+    ALTER MAPPING FOR lword WITH my_synonym, english_stem;
 
-SELECT * FROM ts_debug('english','Paris');
- Alias | Description | Token |      Dictionaries      |  Lexized token
--------+-------------+-------+------------------------+------------------
- lword | Latin word  | Paris | {synonym,english_stem} | synonym: {paris}
-(1 row)
+SELECT * FROM ts_debug('english', 'Paris');
+ alias | description | token |       dictionaries        | dictionary | lexemes 
+-------+-------------+-------+---------------------------+------------+---------
+ lword | Latin word  | Paris | {my_synonym,english_stem} | my_synonym | {paris}
 </programlisting>
    </para>
 
@@ -2711,7 +2709,14 @@ SHOW default_text_search_config;
   </indexterm>
 
   <synopsis>
-   ts_debug(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>) returns <type>setof ts_debug</>
+   ts_debug(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>,
+            OUT <replaceable class="PARAMETER">alias</> <type>text</>,
+            OUT <replaceable class="PARAMETER">description</> <type>text</>,
+            OUT <replaceable class="PARAMETER">token</> <type>text</>,
+            OUT <replaceable class="PARAMETER">dictionaries</> <type>regdictionary[]</>,
+            OUT <replaceable class="PARAMETER">dictionary</> <type>regdictionary</>,
+            OUT <replaceable class="PARAMETER">lexemes</> <type>text[]</>)
+            returns setof record
   </synopsis>
 
   <para>
@@ -2725,23 +2730,47 @@ SHOW default_text_search_config;
   </para>
 
   <para>
-   <function>ts_debug</>'s result row type is defined as:
+   <function>ts_debug</> returns one row for each token identified in the text
+   by the parser.  The columns returned are
 
-<programlisting>
-CREATE TYPE ts_debug AS (
-    "Alias" text,
-    "Description" text,
-    "Token" text,
-    "Dictionaries" regdictionary[],
-    "Lexized token" text
-);
-</programlisting>
-
-   One row is produced for each token identified by the parser.
-   The first three columns describe the token, and the fourth lists
-   the dictionaries selected by the configuration for that token's type.
-   The last column shows the result of dictionary processing: which
-   dictionary (if any) recognized the token, and what it produced.
+    <itemizedlist  spacing="compact" mark="bullet">
+     <listitem>
+      <para>
+       <replaceable>alias</> <type>text</> &mdash; short name of the token type
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <replaceable>description</> <type>text</> &mdash; description of the
+       token type
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <replaceable>token</> <type>text</> &mdash; text of the token
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <replaceable>dictionaries</> <type>regdictionary[]</> &mdash; the
+       dictionaries selected by the configuration for this token type
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <replaceable>dictionary</> <type>regdictionary</> &mdash; the dictionary
+       that recognized the token, or <literal>NULL</> if none did
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <replaceable>lexemes</> <type>text[]</> &mdash; the lexeme(s) produced
+       by the dictionary that recognized the token, or <literal>NULL</> if
+       none did; an empty array (<literal>{}</>) means it was recognized as a
+       stop word
+      </para>
+     </listitem>
+    </itemizedlist>
   </para>
 
   <para>
@@ -2749,33 +2778,32 @@ CREATE TYPE ts_debug AS (
 
 <programlisting>
 SELECT * FROM ts_debug('english','a fat  cat sat on a mat - it ate a fat rats');
- Alias |  Description  | Token | Dictionaries | Lexized token
--------+---------------+-------+--------------+----------------
- lword | Latin word    | a     | {english}    | english: {}
- blank | Space symbols |       |              |
- lword | Latin word    | fat   | {english}    | english: {fat}
- blank | Space symbols |       |              |
- lword | Latin word    | cat   | {english}    | english: {cat}
- blank | Space symbols |       |              |
- lword | Latin word    | sat   | {english}    | english: {sat}
- blank | Space symbols |       |              |
- lword | Latin word    | on    | {english}    | english: {}
- blank | Space symbols |       |              |
- lword | Latin word    | a     | {english}    | english: {}
- blank | Space symbols |       |              |
- lword | Latin word    | mat   | {english}    | english: {mat}
- blank | Space symbols |       |              |
- blank | Space symbols | -     |              |
- lword | Latin word    | it    | {english}    | english: {}
- blank | Space symbols |       |              |
- lword | Latin word    | ate   | {english}    | english: {ate}
- blank | Space symbols |       |              |
- lword | Latin word    | a     | {english}    | english: {}
- blank | Space symbols |       |              |
- lword | Latin word    | fat   | {english}    | english: {fat}
- blank | Space symbols |       |              |
- lword | Latin word    | rats  | {english}    | english: {rat}
-   (24 rows)
+ alias |  description  | token |  dictionaries  |  dictionary  | lexemes 
+-------+---------------+-------+----------------+--------------+---------
+ lword | Latin word    | a     | {english_stem} | english_stem | {}
+ blank | Space symbols |       | {}             |              | 
+ lword | Latin word    | fat   | {english_stem} | english_stem | {fat}
+ blank | Space symbols |       | {}             |              | 
+ lword | Latin word    | cat   | {english_stem} | english_stem | {cat}
+ blank | Space symbols |       | {}             |              | 
+ lword | Latin word    | sat   | {english_stem} | english_stem | {sat}
+ blank | Space symbols |       | {}             |              | 
+ lword | Latin word    | on    | {english_stem} | english_stem | {}
+ blank | Space symbols |       | {}             |              | 
+ lword | Latin word    | a     | {english_stem} | english_stem | {}
+ blank | Space symbols |       | {}             |              | 
+ lword | Latin word    | mat   | {english_stem} | english_stem | {mat}
+ blank | Space symbols |       | {}             |              | 
+ blank | Space symbols | -     | {}             |              | 
+ lword | Latin word    | it    | {english_stem} | english_stem | {}
+ blank | Space symbols |       | {}             |              | 
+ lword | Latin word    | ate   | {english_stem} | english_stem | {ate}
+ blank | Space symbols |       | {}             |              | 
+ lword | Latin word    | a     | {english_stem} | english_stem | {}
+ blank | Space symbols |       | {}             |              | 
+ lword | Latin word    | fat   | {english_stem} | english_stem | {fat}
+ blank | Space symbols |       | {}             |              | 
+ lword | Latin word    | rats  | {english_stem} | english_stem | {rat}
 </programlisting>
   </para>
 
@@ -2801,34 +2829,33 @@ ALTER TEXT SEARCH CONFIGURATION public.english
 
 <programlisting>
 SELECT * FROM ts_debug('public.english','The Brightest supernovaes');
- Alias |  Description  |    Token    |                   Dictionaries                  |          Lexized token
--------+---------------+-------------+-------------------------------------------------+-------------------------------------
- lword | Latin word    | The         | {public.english_ispell,pg_catalog.english_stem} | public.english_ispell: {}
- blank | Space symbols |             |                                                 |
- lword | Latin word    | Brightest   | {public.english_ispell,pg_catalog.english_stem} | public.english_ispell: {bright}
- blank | Space symbols |             |                                                 |
- lword | Latin word    | supernovaes | {public.english_ispell,pg_catalog.english_stem} | pg_catalog.english_stem: {supernova}
-(5 rows)
+ alias |  description  |    token    |         dictionaries          |   dictionary   |   lexemes   
+-------+---------------+-------------+-------------------------------+----------------+-------------
+ lword | Latin word    | The         | {english_ispell,english_stem} | english_ispell | {}
+ blank | Space symbols |             | {}                            |                | 
+ lword | Latin word    | Brightest   | {english_ispell,english_stem} | english_ispell | {bright}
+ blank | Space symbols |             | {}                            |                | 
+ lword | Latin word    | supernovaes | {english_ispell,english_stem} | english_stem   | {supernova}
 </programlisting>
 
   <para>
    In this example, the word <literal>Brightest</> was recognized by the
    parser as a <literal>Latin word</literal> (alias <literal>lword</literal>).
    For this token type the dictionary list is
-   <literal>public.english_ispell</> and
-   <literal>pg_catalog.english_stem</literal>. The word was recognized by
-   <literal>public.english_ispell</literal>, which reduced it to the noun
+   <literal>english_ispell</> and
+   <literal>english_stem</literal>. The word was recognized by
+   <literal>english_ispell</literal>, which reduced it to the noun
    <literal>bright</literal>. The word <literal>supernovaes</literal> is
-   unknown to the <literal>public.english_ispell</literal> dictionary so it
+   unknown to the <literal>english_ispell</literal> dictionary so it
    was passed to the next dictionary, and, fortunately, was recognized (in
-   fact, <literal>public.english_stem</literal> is a Snowball dictionary which
+   fact, <literal>english_stem</literal> is a Snowball dictionary which
    recognizes everything; that is why it was placed at the end of the
    dictionary list).
   </para>
 
   <para>
    The word <literal>The</literal> was recognized by the
-   <literal>public.english_ispell</literal> dictionary as a stop word (<xref
+   <literal>english_ispell</literal> dictionary as a stop word (<xref
    linkend="textsearch-stopwords">) and will not be indexed.
    The spaces are discarded too, since the configuration provides no
    dictionaries at all for them.
@@ -2839,16 +2866,15 @@ SELECT * FROM ts_debug('public.english','The Brightest supernovaes');
    you want to see:
 
 <programlisting>
-SELECT "Alias", "Token", "Lexized token"
+SELECT alias, token, dictionary, lexemes
 FROM ts_debug('public.english','The Brightest supernovaes');
- Alias |    Token    |          Lexized token
--------+-------------+--------------------------------------
- lword | The         | public.english_ispell: {}
- blank |             |
- lword | Brightest   | public.english_ispell: {bright}
- blank |             |
- lword | supernovaes | pg_catalog.english_stem: {supernova}
-(5 rows)
+ alias |    token    |   dictionary   |   lexemes   
+-------+-------------+----------------+-------------
+ lword | The         | english_ispell | {}
+ blank |             |                | 
+ lword | Brightest   | english_ispell | {bright}
+ blank |             |                | 
+ lword | supernovaes | english_stem   | {supernova}
 </programlisting>
   </para>
 
