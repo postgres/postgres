@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.65 2007/09/26 22:36:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.66 2007/10/22 21:34:33 tgl Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -164,10 +164,11 @@ SELECT relpages, reltuples FROM pg_class WHERE relname = 'tenk1';
 </programlisting>
 
     you will find out that <classname>tenk1</classname> has 358 disk
-    pages and 10000 rows.  So the cost is estimated at 358 page
-    reads, costing <xref linkend="guc-seq-page-cost"> apiece (1.0 by
-    default), plus 10000 * <xref linkend="guc-cpu-tuple-cost"> which is
-    0.01 by default.
+    pages and 10000 rows.  The estimated cost is (disk pages read *
+    <xref linkend="guc-seq-page-cost">) + (rows scanned *
+    <xref linkend="guc-cpu-tuple-cost">).  By default,
+    <varname>seq_page_cost</> is 1.0 and <varname>cpu_tuple_cost</> is 0.01.
+    So the estimated cost is (358 * 1.0) + (10000 * 0.01) = 458.
    </para>
 
    <para>
@@ -189,7 +190,8 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
     The estimate of output rows has gone down because of the <literal>WHERE</>
     clause.
     However, the scan will still have to visit all 10000 rows, so the cost
-    hasn't decreased; in fact it has gone up a bit to reflect the extra CPU
+    hasn't decreased; in fact it has gone up a bit (by 10000 * <xref
+    linkend="guc-cpu-operator-cost">, to be exact) to reflect the extra CPU
     time spent checking the <literal>WHERE</> condition.
    </para>
 
@@ -310,7 +312,7 @@ EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t1.unique
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..2.37 rows=106 width=0)
                Index Cond: (unique1 &lt; 100)
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.00..3.01 rows=1 width=244)
-         Index Cond: ("outer".unique2 = t2.unique2)
+         Index Cond: (t2.unique2 = t1.unique2)
 </programlisting>
    </para>
 
@@ -356,7 +358,7 @@ EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t1.unique
                                         QUERY PLAN
 ------------------------------------------------------------------------------------------
  Hash Join  (cost=232.61..741.67 rows=106 width=488)
-   Hash Cond: ("outer".unique2 = "inner".unique2)
+   Hash Cond: (t2.unique2 = t1.unique2)
    -&gt;  Seq Scan on tenk2 t2  (cost=0.00..458.00 rows=10000 width=244)
    -&gt;  Hash  (cost=232.35..232.35 rows=106 width=244)
          -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=2.37..232.35 rows=106 width=244)
@@ -395,7 +397,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..2.37 rows=106 width=0) (actual time=0.546..0.546 rows=100 loops=1)
                Index Cond: (unique1 &lt; 100)
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.00..3.01 rows=1 width=244) (actual time=0.067..0.078 rows=1 loops=100)
-         Index Cond: ("outer".unique2 = t2.unique2)
+         Index Cond: (t2.unique2 = t1.unique2)
  Total runtime: 14.452 ms
 </screen>
 
