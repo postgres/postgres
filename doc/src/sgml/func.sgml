@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.403 2007/10/22 20:13:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.404 2007/10/23 20:46:11 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7861,7 +7861,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><type>setof record</type></entry>
         <entry>test a configuration</entry>
         <entry><literal>ts_debug('english', 'The Brightest supernovaes')</literal></entry>
-        <entry><literal>(lword,"Latin word",The,{english_stem},english_stem,{}) ...</literal></entry>
+        <entry><literal>(asciiword,"Word, all ASCII",The,{english_stem},english_stem,{}) ...</literal></entry>
        </row>
        <row>
         <entry><literal><function>ts_lexize</function>(<replaceable class="PARAMETER">dict</replaceable> <type>regdictionary</>, <replaceable class="PARAMETER">token</replaceable> <type>text</>)</literal></entry>
@@ -7889,14 +7889,14 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><type>setof record</type></entry>
         <entry>get token types defined by parser</entry>
         <entry><literal>ts_token_type('default')</literal></entry>
-        <entry><literal>(1,lword,"Latin word") ...</literal></entry>
+        <entry><literal>(1,asciiword,"Word, all ASCII") ...</literal></entry>
        </row>
        <row>
         <entry><literal><function>ts_token_type</function>(<replaceable class="PARAMETER">parser_oid</> <type>oid</>, OUT <replaceable class="PARAMETER">tokid</> <type>integer</>, OUT <replaceable class="PARAMETER">alias</> <type>text</>, OUT <replaceable class="PARAMETER">description</> <type>text</>)</literal></entry>
         <entry><type>setof record</type></entry>
         <entry>get token types defined by parser</entry>
         <entry><literal>ts_token_type(3722)</literal></entry>
-        <entry><literal>(1,lword,"Latin word") ...</literal></entry>
+        <entry><literal>(1,asciiword,"Word, all ASCII") ...</literal></entry>
        </row>
        <row>
         <entry><literal><function>ts_stat</function>(<replaceable class="PARAMETER">sqlquery</replaceable> <type>text</>, <optional> <replaceable class="PARAMETER">weights</replaceable> <type>text</>, </optional> OUT <replaceable class="PARAMETER">word</replaceable> <type>text</>, OUT <replaceable class="PARAMETER">ndoc</replaceable> <type>integer</>, OUT <replaceable class="PARAMETER">nentry</replaceable> <type>integer</>)</literal></entry>

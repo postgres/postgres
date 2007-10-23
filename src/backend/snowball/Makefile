@@ -2,7 +2,7 @@
 #
 # Makefile for src/backend/snowball
 #
-# $PostgreSQL: pgsql/src/backend/snowball/Makefile,v 1.3 2007/08/27 10:29:49 mha Exp $
+# $PostgreSQL: pgsql/src/backend/snowball/Makefile,v 1.4 2007/10/23 20:46:12 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -46,8 +46,9 @@ OBJS= dict_snowball.o api.o utilities.o \
 	stem_UTF_8_swedish.o \
 	stem_UTF_8_turkish.o
 
-# second column is name of latin dictionary, if different
-# Note order dependency: use of some other language as latin dictionary
+# first column is language name and also name of dictionary for not-all-ASCII
+# words, second is name of dictionary for all-ASCII words
+# Note order dependency: use of some other language as ASCII dictionary
 # must come after creation of that language
 LANGUAGES=  \
 	danish		danish 		\
@@ -95,8 +96,8 @@ ifeq ($(enable_shared), yes)
 	while [ "$$#" -gt 0 ] ; \
 	do \
 		lang=$$1; shift; \
-		nonlatdictname=$$lang; \
-		latdictname=$$1; shift; \
+		nonascdictname=$$lang; \
+		ascdictname=$$1; shift; \
 		if [ -s $(srcdir)/stopwords/$${lang}.stop ] ; then \
 			stop=", StopWords=$${lang}" ; \
 		else \
@@ -106,8 +107,8 @@ ifeq ($(enable_shared), yes)
 			sed -e "s#_LANGNAME_#$$lang#g" | \
 			sed -e "s#_DICTNAME_#$${lang}_stem#g" | \
 			sed -e "s#_CFGNAME_#$$lang#g" | \
-			sed -e "s#_LATDICTNAME_#$${latdictname}_stem#g" | \
-			sed -e "s#_NONLATDICTNAME_#$${nonlatdictname}_stem#g" | \
+			sed -e "s#_ASCDICTNAME_#$${ascdictname}_stem#g" | \
+			sed -e "s#_NONASCDICTNAME_#$${nonascdictname}_stem#g" | \
 			sed -e "s#_STOPWORDS_#$$stop#g" ; \
 	done >> $@
 else

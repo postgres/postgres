@@ -209,8 +209,8 @@ SELECT ts_lexize('synonym', 'Gogle');
 (1 row)
 
 -- Create and simple test thesaurus dictionary
--- More test in configuration checks because of ts_lexize
--- can not give more tat one word as it may wish thesaurus.
+-- More tests in configuration checks because ts_lexize()
+-- cannot pass more than one word to thesaurus.
 CREATE TEXT SEARCH DICTIONARY thesaurus (
                         Template=thesaurus,
 						DictFile=thesaurus_sample, 
@@ -227,7 +227,7 @@ CREATE TEXT SEARCH CONFIGURATION ispell_tst (
 						COPY=english
 );
 ALTER TEXT SEARCH CONFIGURATION ispell_tst ALTER MAPPING FOR
-	hword, lhword, lpart_hword, lword, nlhword, nlpart_hword, nlword, part_hword, word 
+	word, numword, asciiword, hword, numhword, asciihword, hword_part, hword_numpart, hword_asciipart
 	WITH ispell, english_stem;
 SELECT to_tsvector('ispell_tst', 'Booking the skies after rebookings for footballklubber from a foot');
                                             to_tsvector                                             
@@ -276,7 +276,7 @@ CREATE TEXT SEARCH CONFIGURATION synonym_tst (
 						COPY=english
 );
 ALTER TEXT SEARCH CONFIGURATION synonym_tst ALTER MAPPING FOR 
-	lword, lpart_hword, lhword 
+	asciiword, hword_asciipart, asciihword 
 	WITH synonym, english_stem;
 SELECT to_tsvector('synonym_tst', 'Postgresql is often called as postgres or pgsql and pronounced as postgre');
                     to_tsvector                    
@@ -296,7 +296,7 @@ CREATE TEXT SEARCH CONFIGURATION thesaurus_tst (
 						COPY=synonym_tst
 );
 ALTER TEXT SEARCH CONFIGURATION thesaurus_tst ALTER MAPPING FOR 
-	lword, lpart_hword, lhword 
+	asciiword, hword_asciipart, asciihword 
 	WITH synonym, thesaurus, english_stem;
 SELECT to_tsvector('thesaurus_tst', 'one postgres one two one two three one');
            to_tsvector            

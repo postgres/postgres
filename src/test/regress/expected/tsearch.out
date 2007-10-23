@@ -208,31 +208,31 @@ SELECT ts_lexize('english_stem', 'identity');
 (1 row)
 
 SELECT * FROM ts_token_type('default');
- tokid |    alias     |            description            
--------+--------------+-----------------------------------
-     1 | lword        | Latin word
-     2 | nlword       | Non-latin word
-     3 | word         | Word
-     4 | email        | Email
-     5 | url          | URL
-     6 | host         | Host
-     7 | sfloat       | Scientific notation
-     8 | version      | VERSION
-     9 | part_hword   | Part of hyphenated word
-    10 | nlpart_hword | Non-latin part of hyphenated word
-    11 | lpart_hword  | Latin part of hyphenated word
-    12 | blank        | Space symbols
-    13 | tag          | HTML Tag
-    14 | protocol     | Protocol head
-    15 | hword        | Hyphenated word
-    16 | lhword       | Latin hyphenated word
-    17 | nlhword      | Non-latin hyphenated word
-    18 | uri          | URI
-    19 | file         | File or path name
-    20 | float        | Decimal notation
-    21 | int          | Signed integer
-    22 | uint         | Unsigned integer
-    23 | entity       | HTML Entity
+ tokid |      alias      |               description                
+-------+-----------------+------------------------------------------
+     1 | asciiword       | Word, all ASCII
+     2 | word            | Word, all letters
+     3 | numword         | Word, letters and digits
+     4 | email           | Email address
+     5 | url             | URL
+     6 | host            | Host
+     7 | sfloat          | Scientific notation
+     8 | version         | Version number
+     9 | hword_numpart   | Hyphenated word part, letters and digits
+    10 | hword_part      | Hyphenated word part, all letters
+    11 | hword_asciipart | Hyphenated word part, all ASCII
+    12 | blank           | Space symbols
+    13 | tag             | HTML tag
+    14 | protocol        | Protocol head
+    15 | numhword        | Hyphenated word, letters and digits
+    16 | asciihword      | Hyphenated word, all ASCII
+    17 | hword           | Hyphenated word, all letters
+    18 | uri             | URI
+    19 | file            | File or path name
+    20 | float           | Decimal notation
+    21 | int             | Signed integer
+    22 | uint            | Unsigned integer
+    23 | entity          | HTML entity
 (23 rows)
 
 SELECT * FROM ts_parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">

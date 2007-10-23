@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.24 2007/10/16 16:00:00 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.25 2007/10/23 20:46:12 tgl Exp $
 #
 use strict;
 use warnings;
@@ -258,7 +258,7 @@ sub GenerateTsearchFiles
     while ($#pieces > 0)
     {
         my $lang = shift @pieces || last;
-        my $latlang = shift @pieces || last;
+        my $asclang = shift @pieces || last;
         my $txt = $tmpl;
         my $stop = '';
 
@@ -269,8 +269,8 @@ sub GenerateTsearchFiles
         $txt =~ s#_LANGNAME_#${lang}#gs;
         $txt =~ s#_DICTNAME_#${lang}_stem#gs;
         $txt =~ s#_CFGNAME_#${lang}#gs;
-        $txt =~ s#_LATDICTNAME_#${latlang}_stem#gs;
-        $txt =~ s#_NONLATDICTNAME_#${lang}_stem#gs;
+        $txt =~ s#_ASCDICTNAME_#${asclang}_stem#gs;
+        $txt =~ s#_NONASCDICTNAME_#${lang}_stem#gs;
         $txt =~ s#_STOPWORDS_#$stop#gs;
         print $F $txt;
         print ".";
