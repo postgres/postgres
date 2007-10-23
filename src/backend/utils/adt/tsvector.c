@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.5 2007/10/21 22:29:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.6 2007/10/23 00:51:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,16 +22,18 @@
 
 typedef struct
 {
-	WordEntry	entry;			/* should be first ! */
+	WordEntry	entry;			/* must be first! */
 	WordEntryPos *pos;
 	int			poslen;			/* number of elements in pos */
 } WordEntryIN;
 
+
+/* Compare two WordEntryPos values for qsort */
 static int
 comparePos(const void *a, const void *b)
 {
-	int apos = WEP_GETPOS(*(WordEntryPos *) a);
-	int bpos = WEP_GETPOS(*(WordEntryPos *) b);
+	int apos = WEP_GETPOS(*(const WordEntryPos *) a);
+	int bpos = WEP_GETPOS(*(const WordEntryPos *) b);
 
 	if (apos == bpos)
 		return 0;
@@ -53,9 +55,9 @@ uniquePos(WordEntryPos * a, int l)
 	if (l <= 1)
 		return l;
 
-	res = a;
 	qsort((void *) a, l, sizeof(WordEntryPos), comparePos);
 
+	res = a;
 	ptr = a + 1;
 	while (ptr - a < l)
 	{
@@ -63,7 +65,8 @@ uniquePos(WordEntryPos * a, int l)
 		{
 			res++;
 			*res = *ptr;
-			if (res - a >= MAXNUMPOS - 1 || WEP_GETPOS(*res) == MAXENTRYPOS - 1)
+			if (res - a >= MAXNUMPOS - 1 ||
+				WEP_GETPOS(*res) == MAXENTRYPOS - 1)
 				break;
 		}
 		else if (WEP_GETWEIGHT(*ptr) > WEP_GETWEIGHT(*res))
@@ -74,12 +77,13 @@ uniquePos(WordEntryPos * a, int l)
 	return res + 1 - a;
 }
 
+/* Compare two WordEntryIN values for qsort */
 static int
 compareentry(const void *va, const void *vb, void *arg)
 {
+	const WordEntryIN *a = (const WordEntryIN *) va;
+	const WordEntryIN *b = (const WordEntryIN *) vb;
 	char	   *BufferStr = (char *) arg;
-	WordEntryIN *a = (WordEntryIN *) va;
-	WordEntryIN *b = (WordEntryIN *) vb;
 
 	if (a->entry.len == b->entry.len)
 	{
@@ -91,44 +95,40 @@ compareentry(const void *va, const void *vb, void *arg)
 	return (a->entry.len > b->entry.len) ? 1 : -1;
 }
 
+/*
+ * Sort an array of WordEntryIN, remove duplicates.
+ * *outbuflen receives the amount of space needed for strings and positions.
+ */
 static int
 uniqueentry(WordEntryIN * a, int l, char *buf, int *outbuflen)
 {
+	int		buflen;
 	WordEntryIN *ptr,
 			   *res;
 
 	Assert(l >= 1);
 
-	if (l == 1)
-	{
-		if (a->entry.haspos)
-		{
-			a->poslen = uniquePos(a->pos, a->poslen);
-			*outbuflen = SHORTALIGN(a->entry.len) + (a->poslen + 1) * sizeof(WordEntryPos);
-		}
-		else
-			*outbuflen = a->entry.len;
+	if (l > 1)
+		qsort_arg((void *) a, l, sizeof(WordEntryIN), compareentry,
+				  (void *) buf);
 
-		return l;
-	}
+	buflen = 0;
 	res = a;
-
 	ptr = a + 1;
-	qsort_arg((void *) a, l, sizeof(WordEntryIN), compareentry, (void *) buf);
-
 	while (ptr - a < l)
 	{
 		if (!(ptr->entry.len == res->entry.len &&
-			  strncmp(&buf[ptr->entry.pos], &buf[res->entry.pos], res->entry.len) == 0))
+			  strncmp(&buf[ptr->entry.pos], &buf[res->entry.pos],
+					  res->entry.len) == 0))
 		{
+			/* done accumulating data into *res, count space needed */
+			buflen += res->entry.len;
 			if (res->entry.haspos)
 			{
-				*outbuflen += SHORTALIGN(res->entry.len);
 				res->poslen = uniquePos(res->pos, res->poslen);
-				*outbuflen += res->poslen * sizeof(WordEntryPos);
+				buflen = SHORTALIGN(buflen);
+				buflen += res->poslen * sizeof(WordEntryPos) + sizeof(uint16);
 			}
-			else
-				*outbuflen += res->entry.len;
 			res++;
 			memcpy(res, ptr, sizeof(WordEntryIN));
 		}
@@ -136,37 +136,37 @@ uniqueentry(WordEntryIN * a, int l, char *buf, int *outbuflen)
 		{
 			if (res->entry.haspos)
 			{
+				/* append ptr's positions to res's positions */
 				int	newlen = ptr->poslen + res->poslen;
 
-				/* Append res to pos */
-
-				res->pos = (WordEntryPos *) repalloc(res->pos, newlen * sizeof(WordEntryPos));
-				memcpy(&res->pos[res->poslen],
-					   ptr->pos, ptr->poslen * sizeof(WordEntryPos));
+				res->pos = (WordEntryPos *)
+					repalloc(res->pos, newlen * sizeof(WordEntryPos));
+				memcpy(&res->pos[res->poslen], ptr->pos,
+					   ptr->poslen * sizeof(WordEntryPos));
 				res->poslen = newlen;
 				pfree(ptr->pos);
 			}
 			else
 			{
+				/* just give ptr's positions to pos */
 				res->entry.haspos = 1;
 				res->pos = ptr->pos;
+				res->poslen = ptr->poslen;
 			}
 		}
 		ptr++;
 	}
 
-	/* add last item */
-
+	/* count space needed for last item */
+	buflen += res->entry.len;
 	if (res->entry.haspos)
 	{
-		*outbuflen += SHORTALIGN(res->entry.len);
-
 		res->poslen = uniquePos(res->pos, res->poslen);
-		*outbuflen += res->poslen * sizeof(WordEntryPos);
+		buflen = SHORTALIGN(buflen);
+		buflen += res->poslen * sizeof(WordEntryPos) + sizeof(uint16);
 	}
-	else
-		*outbuflen += res->entry.len;
 
+	*outbuflen = buflen;
 	return res + 1 - a;
 }
 
@@ -193,6 +193,8 @@ tsvectorin(PG_FUNCTION_ARGS)
 	int			toklen;
 	WordEntryPos *pos;
 	int			poslen;
+	char	   *strbuf;
+	int			stroff;
 
 	/*
 	 * Tokens are appended to tmpbuf, cur is a pointer
@@ -212,19 +214,17 @@ tsvectorin(PG_FUNCTION_ARGS)
 
 	while (gettoken_tsvector(state, &token, &toklen, &pos, &poslen, NULL))
 	{
-
 		if (toklen >= MAXSTRLEN)
 			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("word is too long (%ld bytes, max %ld bytes)",
 							(long) toklen,
-							(long) MAXSTRLEN)));
-
+							(long) (MAXSTRLEN-1))));
 
 		if (cur - tmpbuf > MAXSTRPOS)
 			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("position value is too large")));
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("string is too long for tsvector")));
 
 		/*
 		 * Enlarge buffers if needed
@@ -232,7 +232,8 @@ tsvectorin(PG_FUNCTION_ARGS)
 		if (len >= arrlen)
 		{
 			arrlen *= 2;
-			arr = (WordEntryIN *) repalloc((void *) arr, sizeof(WordEntryIN) * arrlen);
+			arr = (WordEntryIN *)
+				repalloc((void *) arr, sizeof(WordEntryIN) * arrlen);
 		}
 		while ((cur - tmpbuf) + toklen >= buflen)
 		{
@@ -254,7 +255,11 @@ tsvectorin(PG_FUNCTION_ARGS)
 			arr[len].poslen = poslen;
 		}
 		else
+		{
 			arr[len].entry.haspos = 0;
+			arr[len].pos = NULL;
+			arr[len].poslen = 0;
+		}
 		len++;
 	}
 
@@ -264,39 +269,44 @@ tsvectorin(PG_FUNCTION_ARGS)
 		len = uniqueentry(arr, len, tmpbuf, &buflen);
 	else
 		buflen = 0;
+
+	if (buflen > MAXSTRPOS)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("string is too long for tsvector")));
+
 	totallen = CALCDATASIZE(len, buflen);
 	in = (TSVector) palloc0(totallen);
-
 	SET_VARSIZE(in, totallen);
 	in->size = len;
-	cur = STRPTR(in);
 	inarr = ARRPTR(in);
+	strbuf = STRPTR(in);
+	stroff = 0;
 	for (i = 0; i < len; i++)
 	{
-		memcpy((void *) cur, (void *) &tmpbuf[arr[i].entry.pos], arr[i].entry.len);
-		arr[i].entry.pos = cur - STRPTR(in);
-		cur += SHORTALIGN(arr[i].entry.len);
+		memcpy(strbuf + stroff, &tmpbuf[arr[i].entry.pos], arr[i].entry.len);
+		arr[i].entry.pos = stroff;
+		stroff += arr[i].entry.len;
 		if (arr[i].entry.haspos)
 		{
-			uint16 tmplen;
-
-			if(arr[i].poslen > 0xFFFF)
+			if (arr[i].poslen > 0xFFFF)
 				elog(ERROR, "positions array too long");
 
-			tmplen = (uint16) arr[i].poslen;
-
-			/* Copy length to output struct */
-			memcpy(cur, &tmplen, sizeof(uint16));
-			cur += sizeof(uint16);
+			/* Copy number of positions */
+			stroff = SHORTALIGN(stroff);
+			*(uint16 *) (strbuf + stroff) = (uint16) arr[i].poslen;
+			stroff += sizeof(uint16);
 
 			/* Copy positions */
-			memcpy(cur, arr[i].pos, (arr[i].poslen) * sizeof(WordEntryPos));
-			cur += arr[i].poslen * sizeof(WordEntryPos);
+			memcpy(strbuf + stroff, arr[i].pos, arr[i].poslen * sizeof(WordEntryPos));
+			stroff += arr[i].poslen * sizeof(WordEntryPos);
 
 			pfree(arr[i].pos);
 		}
 		inarr[i] = arr[i].entry;
 	}
+
+	Assert((strbuf + stroff - (char *) in) == totallen);
 
 	PG_RETURN_TSVECTOR(in);
 }
@@ -495,11 +505,12 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 
 		datalen += lex_len;
 
-		if (i > 0 && WordEntryCMP(&vec->entries[i], &vec->entries[i - 1], STRPTR(vec)) <= 0)
+		if (i > 0 && WordEntryCMP(&vec->entries[i],
+								  &vec->entries[i - 1],
+								  STRPTR(vec)) <= 0)
 			elog(ERROR, "lexemes are misordered");
 
 		/* Receive positions */
-
 		if (npos > 0)
 		{
 			uint16		j;

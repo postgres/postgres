@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.4 2007/09/26 10:09:57 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.5 2007/10/23 00:51:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,23 +140,30 @@ uniqueWORD(ParsedWord * a, int4 l)
 TSVector
 make_tsvector(ParsedText *prs)
 {
-	int4		i,
+	int			i,
 				j,
 				lenstr = 0,
 				totallen;
 	TSVector	in;
 	WordEntry  *ptr;
-	char	   *str,
-			   *cur;
+	char	   *str;
+	int			stroff;
 
 	prs->curwords = uniqueWORD(prs->words, prs->curwords);
 	for (i = 0; i < prs->curwords; i++)
 	{
-		lenstr += SHORTALIGN(prs->words[i].len);
-
+		lenstr += prs->words[i].len;
 		if (prs->words[i].alen)
+		{
+			lenstr = SHORTALIGN(lenstr);
 			lenstr += sizeof(uint16) + prs->words[i].pos.apos[0] * sizeof(WordEntryPos);
+		}
 	}
+
+	if (lenstr > MAXSTRPOS)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("string is too long for tsvector")));
 
 	totallen = CALCDATASIZE(prs->curwords, lenstr);
 	in = (TSVector) palloc0(totallen);
@@ -164,31 +171,33 @@ make_tsvector(ParsedText *prs)
 	in->size = prs->curwords;
 
 	ptr = ARRPTR(in);
-	cur = str = STRPTR(in);
+	str = STRPTR(in);
+	stroff = 0;
 	for (i = 0; i < prs->curwords; i++)
 	{
 		ptr->len = prs->words[i].len;
-		if (cur - str > MAXSTRPOS)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("string is too long for tsvector")));
-		ptr->pos = cur - str;
-		memcpy((void *) cur, (void *) prs->words[i].word, prs->words[i].len);
+		ptr->pos = stroff;
+		memcpy(str + stroff, prs->words[i].word, prs->words[i].len);
+		stroff += prs->words[i].len;
 		pfree(prs->words[i].word);
-		cur += SHORTALIGN(prs->words[i].len);
 		if (prs->words[i].alen)
 		{
+			int k = prs->words[i].pos.apos[0];
 			WordEntryPos *wptr;
 
+			if (k > 0xFFFF)
+				elog(ERROR, "positions array too long");
+
 			ptr->haspos = 1;
-			*(uint16 *) cur = prs->words[i].pos.apos[0];
+			stroff = SHORTALIGN(stroff);
+			*(uint16 *) (str + stroff) = (uint16) k;
 			wptr = POSDATAPTR(in, ptr);
-			for (j = 0; j < *(uint16 *) cur; j++)
+			for (j = 0; j < k; j++)
 			{
 				WEP_SETWEIGHT(wptr[j], 0);
 				WEP_SETPOS(wptr[j], prs->words[i].pos.apos[j + 1]);
 			}
-			cur += sizeof(uint16) + prs->words[i].pos.apos[0] * sizeof(WordEntryPos);
+			stroff += sizeof(uint16) + k * sizeof(WordEntryPos);
 			pfree(prs->words[i].pos.apos);
 		}
 		else

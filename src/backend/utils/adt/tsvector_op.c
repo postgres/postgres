@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.5 2007/09/11 08:46:29 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.6 2007/10/23 00:51:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,8 +266,14 @@ compareEntry(char *ptra, WordEntry * a, char *ptrb, WordEntry * b)
 	return (a->len > b->len) ? 1 : -1;
 }
 
+/*
+ * Add positions from src to dest after offsetting them by maxpos.
+ * Return the number added (might be less than expected due to overflow)
+ */
 static int4
-add_pos(TSVector src, WordEntry * srcptr, TSVector dest, WordEntry * destptr, int4 maxpos)
+add_pos(TSVector src, WordEntry * srcptr,
+		TSVector dest, WordEntry * destptr,
+		int4 maxpos)
 {
 	uint16	   *clen = &_POSVECPTR(dest, destptr)->npos;
 	int			i;
@@ -280,7 +286,10 @@ add_pos(TSVector src, WordEntry * srcptr, TSVector dest, WordEntry * destptr, in
 		*clen = 0;
 
 	startlen = *clen;
-	for (i = 0; i < slen && *clen < MAXNUMPOS && (*clen == 0 || WEP_GETPOS(dpos[*clen - 1]) != MAXENTRYPOS - 1); i++)
+	for (i = 0;
+		 i < slen && *clen < MAXNUMPOS &&
+			 (*clen == 0 || WEP_GETPOS(dpos[*clen - 1]) != MAXENTRYPOS - 1);
+		 i++)
 	{
 		WEP_SETWEIGHT(dpos[*clen], WEP_GETWEIGHT(spos[i]));
 		WEP_SETPOS(dpos[*clen], LIMITPOS(WEP_GETPOS(spos[i]) + maxpos));
@@ -307,8 +316,8 @@ tsvector_concat(PG_FUNCTION_ARGS)
 				i,
 				j,
 				i1,
-				i2;
-	char	   *cur;
+				i2,
+				dataoff;
 	char	   *data,
 			   *data1,
 			   *data2;
@@ -336,11 +345,13 @@ tsvector_concat(PG_FUNCTION_ARGS)
 	data2 = STRPTR(in2);
 	i1 = in1->size;
 	i2 = in2->size;
+	/* conservative estimate of space needed */
 	out = (TSVector) palloc0(VARSIZE(in1) + VARSIZE(in2));
 	SET_VARSIZE(out, VARSIZE(in1) + VARSIZE(in2));
 	out->size = in1->size + in2->size;
-	data = cur = STRPTR(out);
 	ptr = ARRPTR(out);
+	data = STRPTR(out);
+	dataoff = 0;
 	while (i1 && i2)
 	{
 		int			cmp = compareEntry(data1, ptr1, data2, ptr2);
@@ -349,16 +360,15 @@ tsvector_concat(PG_FUNCTION_ARGS)
 		{						/* in1 first */
 			ptr->haspos = ptr1->haspos;
 			ptr->len = ptr1->len;
-			memcpy(cur, data1 + ptr1->pos, ptr1->len);
-			ptr->pos = cur - data;
+			memcpy(data + dataoff, data1 + ptr1->pos, ptr1->len);
+			ptr->pos = dataoff;
+			dataoff += ptr1->len;
 			if (ptr->haspos)
 			{
-				cur += SHORTALIGN(ptr1->len);
-				memcpy(cur, _POSVECPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
-				cur += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
+				dataoff = SHORTALIGN(dataoff);
+				memcpy(data + dataoff, _POSVECPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
+				dataoff += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
 			}
-			else
-				cur += ptr1->len;
 				
 			ptr++;
 			ptr1++;
@@ -368,21 +378,21 @@ tsvector_concat(PG_FUNCTION_ARGS)
 		{						/* in2 first */
 			ptr->haspos = ptr2->haspos;
 			ptr->len = ptr2->len;
-			memcpy(cur, data2 + ptr2->pos, ptr2->len);
-			ptr->pos = cur - data;
+			memcpy(data + dataoff, data2 + ptr2->pos, ptr2->len);
+			ptr->pos = dataoff;
+			dataoff += ptr2->len;
 			if (ptr->haspos)
 			{
 				int			addlen = add_pos(in2, ptr2, out, ptr, maxpos);
 
-				cur += SHORTALIGN(ptr2->len);
-
 				if (addlen == 0)
 					ptr->haspos = 0;
 				else
-					cur += addlen * sizeof(WordEntryPos) + sizeof(uint16);
+				{
+					dataoff = SHORTALIGN(dataoff);
+					dataoff += addlen * sizeof(WordEntryPos) + sizeof(uint16);
+				}
 			}
-			else
-				cur += ptr2->len;
 
 			ptr++;
 			ptr2++;
@@ -392,30 +402,32 @@ tsvector_concat(PG_FUNCTION_ARGS)
 		{
 			ptr->haspos = ptr1->haspos | ptr2->haspos;
 			ptr->len = ptr1->len;
-			memcpy(cur, data1 + ptr1->pos, ptr1->len);
-			ptr->pos = cur - data;
+			memcpy(data + dataoff, data1 + ptr1->pos, ptr1->len);
+			ptr->pos = dataoff;
+			dataoff += ptr1->len;
 			if (ptr->haspos)
 			{
-				cur += SHORTALIGN(ptr1->len);
 				if (ptr1->haspos)
 				{
-					memcpy(cur, _POSVECPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
-					cur += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
+					dataoff = SHORTALIGN(dataoff);
+					memcpy(data + dataoff, _POSVECPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
+					dataoff += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
 					if (ptr2->haspos)
-						cur += add_pos(in2, ptr2, out, ptr, maxpos) * sizeof(WordEntryPos);
+						dataoff += add_pos(in2, ptr2, out, ptr, maxpos) * sizeof(WordEntryPos);
 				}
-				else if (ptr2->haspos)
+				else			/* must have ptr2->haspos */
 				{
 					int			addlen = add_pos(in2, ptr2, out, ptr, maxpos);
 
 					if (addlen == 0)
 						ptr->haspos = 0;
 					else
-						cur += addlen * sizeof(WordEntryPos) + sizeof(uint16);
+					{
+						dataoff = SHORTALIGN(dataoff);
+						dataoff += addlen * sizeof(WordEntryPos) + sizeof(uint16);
+					}
 				}
 			}
-			else
-				cur += ptr1->len;
 
 			ptr++;
 			ptr1++;
@@ -429,16 +441,15 @@ tsvector_concat(PG_FUNCTION_ARGS)
 	{
 		ptr->haspos = ptr1->haspos;
 		ptr->len = ptr1->len;
-		memcpy(cur, data1 + ptr1->pos, ptr1->len);
-		ptr->pos = cur - data;
+		memcpy(data + dataoff, data1 + ptr1->pos, ptr1->len);
+		ptr->pos = dataoff;
+		dataoff += ptr1->len;
 		if (ptr->haspos)
 		{
-			cur += SHORTALIGN(ptr1->len);
-			memcpy(cur, _POSVECPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
-			cur += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
+			dataoff = SHORTALIGN(dataoff);
+			memcpy(data + dataoff, _POSVECPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
+			dataoff += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
 		}
-		else
-			cur += ptr1->len;
 
 		ptr++;
 		ptr1++;
@@ -449,31 +460,40 @@ tsvector_concat(PG_FUNCTION_ARGS)
 	{
 		ptr->haspos = ptr2->haspos;
 		ptr->len = ptr2->len;
-		memcpy(cur, data2 + ptr2->pos, ptr2->len);
-		ptr->pos = cur - data;
+		memcpy(data + dataoff, data2 + ptr2->pos, ptr2->len);
+		ptr->pos = dataoff;
+		dataoff += ptr2->len;
 		if (ptr->haspos)
 		{
 			int			addlen = add_pos(in2, ptr2, out, ptr, maxpos);
 
-			cur += SHORTALIGN(ptr2->len);
-
 			if (addlen == 0)
 				ptr->haspos = 0;
 			else
-				cur += addlen * sizeof(WordEntryPos) + sizeof(uint16);
+			{
+				dataoff = SHORTALIGN(dataoff);
+				dataoff += addlen * sizeof(WordEntryPos) + sizeof(uint16);
+			}
 		}
-		else
-			cur += ptr2->len;
 
 		ptr++;
 		ptr2++;
 		i2--;
 	}
 
+	/*
+	 * Instead of checking each offset individually, we check for overflow
+	 * of pos fields once at the end.
+	 */
+	if (dataoff > MAXSTRPOS)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("string is too long for tsvector")));
+
 	out->size = ptr - ARRPTR(out);
-	SET_VARSIZE(out, CALCDATASIZE(out->size, cur - data));
+	SET_VARSIZE(out, CALCDATASIZE(out->size, dataoff));
 	if (data != STRPTR(out))
-		memmove(STRPTR(out), data, cur - data);
+		memmove(STRPTR(out), data, dataoff);
 
 	PG_FREE_IF_COPY(in1, 0);
 	PG_FREE_IF_COPY(in2, 1);
