@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.18 2007/01/05 22:19:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.19 2007/10/23 17:58:01 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,7 +178,7 @@ pgwin32_create_signal_listener(pid_t pid)
 	char		pipename[128];
 	HANDLE		pipe;
 
-	wsprintf(pipename, "\\\\.\\pipe\\pgsignal_%d", (int) pid);
+	snprintf(pipename, sizeof(pipename), "\\\\.\\pipe\\pgsignal_%u", (int) pid);
 
 	pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
 					   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
@@ -251,7 +251,7 @@ pg_signal_thread(LPVOID param)
 	char		pipename[128];
 	HANDLE		pipe = pgwin32_initial_signal_pipe;
 
-	wsprintf(pipename, "\\\\.\\pipe\\pgsignal_%d", GetCurrentProcessId());
+	snprintf(pipename, sizeof(pipename), "\\\\.\\pipe\\pgsignal_%u", GetCurrentProcessId());
 
 	for (;;)
 	{
