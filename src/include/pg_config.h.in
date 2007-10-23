@@ -302,6 +302,9 @@
 /* Define to 1 if you have the `on_exit' function. */
 #undef HAVE_ON_EXIT
 
+/* Define to 1 if you have the <ossp/uuid.h> header file. */
+#undef HAVE_OSSP_UUID_H
+
 /* Define to 1 if you have the <pam/pam_appl.h> header file. */
 #undef HAVE_PAM_PAM_APPL_H
 
@@ -561,6 +564,9 @@
 
 /* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
+
+/* Define to 1 if you have the <uuid.h> header file. */
+#undef HAVE_UUID_H
 
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF

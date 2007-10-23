@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2007 PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.c,v 1.2 2007/05/15 19:47:51 adunstan Exp $
+ * $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.c,v 1.3 2007/10/23 21:38:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,8 +14,21 @@
 #include "utils/builtins.h"
 #include "utils/uuid.h"
 
+/*
+ * There's some confusion over the location of the uuid.h header file.
+ * On Debian, it's installed as ossp/uuid.h, while on Fedora, or if you
+ * install ossp-uuid from a tarball, it's installed as uuid.h. Don't know
+ * what other systems do.
+ */
+#ifdef HAVE_OSSP_UUID_H
+#include <ossp/uuid.h>
+#else
+#ifdef HAVE_UUID_H
 #include <uuid.h>
-
+#else
+#error OSSP uuid.h not found
+#endif
+#endif
 
 /* better both be 16 */
 #if (UUID_LEN != UUID_LEN_BIN)
