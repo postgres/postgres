@@ -673,7 +673,7 @@ SELECT ts_rewrite('moscow', 'SELECT keyword, sample FROM test_tsquery'::text );
 SELECT ts_rewrite('moscow & hotel', 'SELECT keyword, sample FROM test_tsquery'::text );
             ts_rewrite             
 -----------------------------------
- ( 'moskva' | 'moscow' ) & 'hotel'
+ 'hotel' & ( 'moskva' | 'moscow' )
 (1 row)
 
 SELECT ts_rewrite('bar &  new & qq & foo & york', 'SELECT keyword, sample FROM test_tsquery'::text );

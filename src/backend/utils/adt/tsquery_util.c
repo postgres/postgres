@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.4 2007/09/07 16:03:40 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.5 2007/10/23 01:44:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,4 +380,21 @@ QTNCopy(QTNode *in)
 	}
 
 	return out;
+}
+
+void
+QTNClearFlags(QTNode *in, uint32 flags)
+{
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
+	in->flags &= ~flags;
+
+	if (in->valnode->type != QI_VAL)
+	{
+		int			i;
+
+		for (i = 0; i < in->nchild; i++)
+			QTNClearFlags(in->child[i], flags);
+	}
 }

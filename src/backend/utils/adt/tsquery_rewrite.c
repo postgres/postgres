@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.4 2007/09/07 16:03:40 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.5 2007/10/23 01:44:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,6 +467,13 @@ tsquery_rewrite(PG_FUNCTION_ARGS)
 				QTNFree(qsubs);
 				if (qtsubs != (TSQuery) DatumGetPointer(sdata))
 					pfree(qtsubs);
+
+				if (tree)
+				{
+					/* ready the tree for another pass */
+					QTNClearFlags(tree, QTN_NOCHANGE);
+					QTNSort(tree);
+				}
 			}
 		}
 
