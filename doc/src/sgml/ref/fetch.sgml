@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.40 2007/02/01 00:28:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.41 2007/10/24 22:55:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -324,11 +324,6 @@ FETCH <replaceable class="parameter">count</replaceable>
    the end to find the last row, and then traversed backward from
    there.  However, rewinding to the start of the query (as with
    <literal>FETCH ABSOLUTE 0</literal>) is fast.
-  </para>
-
-  <para>
-   Updating data via a cursor is currently not supported by
-   <productname>PostgreSQL</productname>.
   </para>
 
   <para>
