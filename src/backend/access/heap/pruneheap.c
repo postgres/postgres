@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.2 2007/09/21 21:25:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.3 2007/10/24 13:05:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,17 +146,29 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	int				nredirected = 0;
 	int				ndead = 0;
 	int				nunused = 0;
+	bool			page_was_full = false;
+	TransactionId	save_prune_xid;
 
 	START_CRIT_SECTION();
 
 	/*
-	 * Mark the page as clear of prunable tuples.  If we find a tuple which
-	 * may soon become prunable, we shall set the hint again.  Also clear
-	 * the "page is full" flag, since there's no point in repeating the
-	 * prune/defrag process until something else happens to the page.
+	 * Save the current pd_prune_xid and mark the page as clear of prunable
+	 * tuples. If we find a tuple which may soon become prunable, we shall set
+	 * the hint again.
 	 */
+	save_prune_xid = ((PageHeader) page)->pd_prune_xid;
 	PageClearPrunable(page);
-	PageClearFull(page);
+
+	/* 
+	 * Also clear the "page is full" flag if it is set, since there's no point
+	 * in repeating the prune/defrag process until something else happens to
+	 * the page.
+	 */
+	if (PageIsFull(page))
+	{
+		PageClearFull(page);
+		page_was_full = true;
+	}
 
 	/* Scan the page */
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -209,10 +221,13 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	else
 	{
 		/*
-		 * If we didn't prune anything, we have nonetheless updated the
-		 * pd_prune_xid field; treat this as a non-WAL-logged hint.
+		 * If we didn't prune anything, but have updated either the
+		 * pd_prune_xid field or the "page is full" flag, mark the buffer
+		 * dirty.  This is treated as a non-WAL-logged hint.
 		 */
-		SetBufferCommitInfoNeedsSave(buffer);
+		if (((PageHeader) page)->pd_prune_xid != save_prune_xid ||
+			page_was_full)
+			SetBufferCommitInfoNeedsSave(buffer);
 	}
 
 	END_CRIT_SECTION();
