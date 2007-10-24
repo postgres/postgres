@@ -376,15 +376,13 @@ UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
 SELECT * FROM uctest;
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
 SELECT * FROM uctest;
--- sensitive cursor should show effects of updates or deletes
--- XXX current behavior is WRONG
-FETCH RELATIVE 0 FROM c1;
 DELETE FROM uctest WHERE CURRENT OF c1;
 SELECT * FROM uctest;
 DELETE FROM uctest WHERE CURRENT OF c1; -- no-op
 SELECT * FROM uctest;
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1; -- no-op
 SELECT * FROM uctest;
+--- sensitive cursors can't currently scroll back, so this is an error:
 FETCH RELATIVE 0 FROM c1;
 ROLLBACK;
 SELECT * FROM uctest;

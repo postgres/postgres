@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.41 2007/06/11 01:16:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.42 2007/10/24 23:27:07 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -172,7 +172,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     transaction.  Thus, <command>DECLARE</> without <literal>WITH
     HOLD</literal> is useless outside a transaction block: the cursor would
     survive only to the completion of the statement.  Therefore
-    <productname>PostgreSQL</productname> reports an error if this
+    <productname>PostgreSQL</productname> reports an error if such a
     command is used outside a transaction block.
     Use
     <xref linkend="sql-begin" endterm="sql-begin-title">,
@@ -231,6 +231,11 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
    </para>
 
    <para>
+    <literal>SCROLL</literal> may not be specified when the query
+    includes <literal>FOR UPDATE</> or <literal>FOR SHARE</>.
+   </para>
+
+   <para>
     The SQL standard only makes provisions for cursors in embedded
     <acronym>SQL</acronym>.  The <productname>PostgreSQL</productname>
     server does not implement an <command>OPEN</command> statement for
@@ -265,10 +270,11 @@ DECLARE liahona CURSOR FOR SELECT * FROM films;
   <title>Compatibility</title>
 
   <para>
-   The SQL standard specifies that by default, cursors are sensitive to
-   concurrent updates of the underlying data.  In
+   The SQL standard says that it is implementation-dependent whether cursors
+   are sensitive to concurrent updates of the underlying data by default.  In
    <productname>PostgreSQL</productname>, cursors are insensitive by default,
-   and can be made sensitive by specifying <literal>FOR UPDATE</>.
+   and can be made sensitive by specifying <literal>FOR UPDATE</>.  Other
+   products may work differently.
   </para>
 
   <para>

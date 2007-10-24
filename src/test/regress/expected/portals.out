@@ -1073,40 +1073,31 @@ SELECT * FROM uctest;
  23 | three
 (2 rows)
 
--- sensitive cursor should show effects of updates or deletes
--- XXX current behavior is WRONG
-FETCH RELATIVE 0 FROM c1;
+DELETE FROM uctest WHERE CURRENT OF c1;
+SELECT * FROM uctest;
  f1 | f2  
 ----+-----
   8 | one
 (1 row)
 
-DELETE FROM uctest WHERE CURRENT OF c1;
-SELECT * FROM uctest;
- f1 |  f2   
-----+-------
- 23 | three
-(1 row)
-
 DELETE FROM uctest WHERE CURRENT OF c1; -- no-op
 SELECT * FROM uctest;
- f1 |  f2   
-----+-------
- 23 | three
+ f1 | f2  
+----+-----
+  8 | one
 (1 row)
 
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1; -- no-op
 SELECT * FROM uctest;
- f1 |  f2   
-----+-------
- 23 | three
+ f1 | f2  
+----+-----
+  8 | one
 (1 row)
 
+--- sensitive cursors can't currently scroll back, so this is an error:
 FETCH RELATIVE 0 FROM c1;
- f1 | f2 
-----+----
-(0 rows)
-
+ERROR:  cursor can only scan forward
+HINT:  Declare it with SCROLL option to enable backward scan.
 ROLLBACK;
 SELECT * FROM uctest;
  f1 |  f2   

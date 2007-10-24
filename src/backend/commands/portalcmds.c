@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.65 2007/04/27 22:05:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.66 2007/10/24 23:27:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,12 +102,13 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	 *
 	 * If the user didn't specify a SCROLL type, allow or disallow scrolling
 	 * based on whether it would require any additional runtime overhead to do
-	 * so.
+	 * so.  Also, we disallow scrolling for FOR UPDATE cursors.
 	 */
 	portal->cursorOptions = cstmt->options;
 	if (!(portal->cursorOptions & (CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL)))
 	{
-		if (ExecSupportsBackwardScan(stmt->planTree))
+		if (stmt->rowMarks == NIL &&
+			ExecSupportsBackwardScan(stmt->planTree))
 			portal->cursorOptions |= CURSOR_OPT_SCROLL;
 		else
 			portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;

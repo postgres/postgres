@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.367 2007/06/23 22:12:51 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.368 2007/10/24 23:27:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1622,6 +1622,20 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			  errmsg("DECLARE CURSOR WITH HOLD ... FOR UPDATE/SHARE is not supported"),
 				 errdetail("Holdable cursors must be READ ONLY.")));
+
+	/* FOR UPDATE and SCROLL are not compatible */
+	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_SCROLL))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			  errmsg("DECLARE CURSOR SCROLL ... FOR UPDATE/SHARE is not supported"),
+				 errdetail("Scrollable cursors must be READ ONLY.")));
+
+	/* FOR UPDATE and INSENSITIVE are not compatible */
+	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_INSENSITIVE))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			  errmsg("DECLARE CURSOR INSENSITIVE ... FOR UPDATE/SHARE is not supported"),
+				 errdetail("Insensitive cursors must be READ ONLY.")));
 
 	/* We won't need the raw querytree any more */
 	stmt->query = NULL;

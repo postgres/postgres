@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.353 2007/09/03 18:46:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.354 2007/10/24 23:27:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1479,7 +1479,7 @@ typedef struct CommentStmt
 #define CURSOR_OPT_BINARY		0x0001		/* BINARY */
 #define CURSOR_OPT_SCROLL		0x0002		/* SCROLL explicitly given */
 #define CURSOR_OPT_NO_SCROLL	0x0004		/* NO SCROLL explicitly given */
-#define CURSOR_OPT_INSENSITIVE	0x0008		/* INSENSITIVE (unimplemented) */
+#define CURSOR_OPT_INSENSITIVE	0x0008		/* INSENSITIVE */
 #define CURSOR_OPT_HOLD			0x0010		/* WITH HOLD */
 #define CURSOR_OPT_FAST_PLAN	0x0020		/* prefer fast-start plan */
 
