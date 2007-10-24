@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.186 2007/09/22 21:36:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.187 2007/10/24 18:37:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -769,6 +769,7 @@ cost_tidscan(Path *path, PlannerInfo *root,
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
+	bool		isCurrentOf = false;
 	Cost		cpu_per_tuple;
 	QualCost	tid_qual_cost;
 	int			ntuples;
@@ -777,9 +778,6 @@ cost_tidscan(Path *path, PlannerInfo *root,
 	/* Should only be applied to base relations */
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
-
-	if (!enable_tidscan)
-		startup_cost += disable_cost;
 
 	/* Count how many tuples we expect to retrieve */
 	ntuples = 0;
@@ -793,12 +791,34 @@ cost_tidscan(Path *path, PlannerInfo *root,
 
 			ntuples += estimate_array_length(arraynode);
 		}
+		else if (IsA(lfirst(l), CurrentOfExpr))
+		{
+			/* CURRENT OF yields 1 tuple */
+			isCurrentOf = true;
+			ntuples++;
+		}
 		else
 		{
 			/* It's just CTID = something, count 1 tuple */
 			ntuples++;
 		}
 	}
+
+	/*
+	 * We must force TID scan for WHERE CURRENT OF, because only nodeTidscan.c
+	 * understands how to do it correctly.  Therefore, honor enable_tidscan
+	 * only when CURRENT OF isn't present.  Also note that cost_qual_eval
+	 * counts a CurrentOfExpr as having startup cost disable_cost, which we
+	 * subtract off here; that's to prevent other plan types such as seqscan
+	 * from winning.
+	 */
+	if (isCurrentOf)
+	{
+		Assert(baserel->baserestrictcost.startup >= disable_cost);
+		startup_cost -= disable_cost;
+	}
+	else if (!enable_tidscan)
+		startup_cost += disable_cost;
 
 	/*
 	 * The TID qual expressions will be computed once, any other baserestrict
@@ -2002,8 +2022,8 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	}
 	else if (IsA(node, CurrentOfExpr))
 	{
-		/* This is noticeably more expensive than a typical operator */
-		context->total.per_tuple += 100 * cpu_operator_cost;
+		/* Report high cost to prevent selection of anything but TID scan */
+		context->total.startup += disable_cost;
 	}
 	else if (IsA(node, SubLink))
 	{

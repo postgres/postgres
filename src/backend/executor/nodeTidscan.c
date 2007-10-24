@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.55 2007/06/11 22:22:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.56 2007/10/24 18:37:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ TidListCreate(TidScanState *tidstate)
 	tidList = (ItemPointerData *)
 		palloc(numAllocTids * sizeof(ItemPointerData));
 	numTids = 0;
+	tidstate->tss_isCurrentOf = false;
 
 	foreach(l, evalList)
 	{
@@ -165,6 +166,7 @@ TidListCreate(TidScanState *tidstate)
 								 numAllocTids * sizeof(ItemPointerData));
 				}
 				tidList[numTids++] = cursor_tid;
+				tidstate->tss_isCurrentOf = true;
 			}
 		}
 		else
@@ -181,6 +183,9 @@ TidListCreate(TidScanState *tidstate)
 	{
 		int			lastTid;
 		int			i;
+
+		/* CurrentOfExpr could never appear OR'd with something else */
+		Assert(!tidstate->tss_isCurrentOf);
 
 		qsort((void *) tidList, numTids, sizeof(ItemPointerData),
 			  itemptr_comparator);
@@ -269,7 +274,8 @@ TidNext(TidScanState *node)
 
 		/*
 		 * XXX shouldn't we check here to make sure tuple matches TID list? In
-		 * runtime-key case this is not certain, is it?
+		 * runtime-key case this is not certain, is it?  However, in the
+		 * WHERE CURRENT OF case it might not match anyway ...
 		 */
 
 		ExecStoreTuple(estate->es_evTuple[scanrelid - 1],
@@ -319,6 +325,15 @@ TidNext(TidScanState *node)
 	while (node->tss_TidPtr >= 0 && node->tss_TidPtr < numTids)
 	{
 		tuple->t_self = tidList[node->tss_TidPtr];
+
+		/*
+		 * For WHERE CURRENT OF, the tuple retrieved from the cursor might
+		 * since have been updated; if so, we should fetch the version that
+		 * is current according to our snapshot.
+		 */
+		if (node->tss_isCurrentOf)
+			heap_get_latest_tid(heapRelation, snapshot, &tuple->t_self);
+
 		if (heap_fetch(heapRelation, snapshot, tuple, &buffer, false, NULL))
 		{
 			/*
