@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.62 2007/10/24 19:08:25 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.63 2007/10/24 20:55:36 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,7 @@ typedef struct autovac_table
 	int			at_freeze_min_age;
 	int			at_vacuum_cost_delay;
 	int			at_vacuum_cost_limit;
+	bool		at_wraparound;
 } autovac_table;
 
 /*-------------
@@ -280,7 +281,7 @@ static autovac_table *table_recheck_autovac(Oid relid);
 static void relation_needs_vacanalyze(Oid relid, Form_pg_autovacuum avForm,
 						  Form_pg_class classForm,
 						  PgStat_StatTabEntry *tabentry, bool *dovacuum,
-						  bool *doanalyze);
+						  bool *doanalyze, bool *wraparound);
 
 static void autovacuum_do_vac_analyze(Oid relid, bool dovacuum,
 						  bool doanalyze, int freeze_min_age,
@@ -1440,9 +1441,6 @@ AutoVacWorkerMain(int argc, char *argv[])
 	/* Identify myself via ps */
 	init_ps_display("autovacuum worker process", "", "", "");
 
-	if (PostAuthDelay)
-		pg_usleep(PostAuthDelay * 1000000L);
-
 	SetProcessingMode(InitProcessing);
 
 	/*
@@ -1600,6 +1598,9 @@ AutoVacWorkerMain(int argc, char *argv[])
 		set_ps_display(dbname, false);
 		ereport(DEBUG1,
 				(errmsg("autovacuum: processing database \"%s\"", dbname)));
+
+		if (PostAuthDelay)
+			pg_usleep(PostAuthDelay * 1000000L);
 
 		/* And do an appropriate amount of work */
 		recentXid = ReadNewTransactionId();
@@ -2085,6 +2086,14 @@ next_worker:
 		/* clean up memory before each iteration */
 		MemoryContextResetAndDeleteChildren(PortalContext);
 
+		/* set the "vacuum for wraparound" flag in PGPROC */
+		if (tab->at_wraparound)
+		{
+			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+			MyProc->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
+			LWLockRelease(ProcArrayLock);
+		}
+
 		/*
 		 * We will abort vacuuming the current table if something errors out,
 		 * and continue with the next one in schedule; in particular, this
@@ -2119,6 +2128,7 @@ next_worker:
 						   get_rel_name(tab->at_relid));
 			EmitErrorReport();
 
+			/* this resets the PGPROC flags too */
 			AbortOutOfAnyTransaction();
 			FlushErrorState();
 			MemoryContextResetAndDeleteChildren(PortalContext);
@@ -2128,6 +2138,14 @@ next_worker:
 			RESUME_INTERRUPTS();
 		}
 		PG_END_TRY();
+
+		/* reset my PGPROC flag */
+		if (tab->at_wraparound)
+		{
+			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+			MyProc->vacuumFlags &= ~PROC_VACUUM_FOR_WRAPAROUND;
+			LWLockRelease(ProcArrayLock);
+		}
 
 		/* be tidy */
 		pfree(tab);
@@ -2223,9 +2241,10 @@ relation_check_autovac(Oid relid, Form_pg_class classForm,
 {
 	bool	dovacuum;
 	bool	doanalyze;
+	bool	dummy;
 
 	relation_needs_vacanalyze(relid, avForm, classForm, tabentry,
-							  &dovacuum, &doanalyze);
+							  &dovacuum, &doanalyze, &dummy);
 
 	if (classForm->relkind == RELKIND_TOASTVALUE)
 	{
@@ -2272,6 +2291,8 @@ table_recheck_autovac(Oid relid)
 	bool		doit = false;
 	PgStat_StatDBEntry *shared;
 	PgStat_StatDBEntry *dbentry;
+	bool		wraparound,
+				toast_wraparound = false;
 
 	/* use fresh stats */
 	autovac_refresh_stats();
@@ -2298,7 +2319,7 @@ table_recheck_autovac(Oid relid)
 										 shared, dbentry);
 
 	relation_needs_vacanalyze(relid, avForm, classForm, tabentry,
-							  &dovacuum, &doanalyze);
+							  &dovacuum, &doanalyze, &wraparound);
 
 	/* OK, it needs vacuum by itself */
 	if (dovacuum)
@@ -2316,6 +2337,7 @@ table_recheck_autovac(Oid relid)
 		{
 			bool			toast_dovacuum;
 			bool			toast_doanalyze;
+			bool			toast_wraparound;
 			Form_pg_class	toastClassForm;
 			PgStat_StatTabEntry *toasttabentry;
 
@@ -2325,9 +2347,10 @@ table_recheck_autovac(Oid relid)
 													  shared, dbentry);
 
 			/* note we use the pg_autovacuum entry for the main table */
-			relation_needs_vacanalyze(toastrelid, avForm, toastClassForm,
-									  toasttabentry, &toast_dovacuum,
-									  &toast_doanalyze);
+			relation_needs_vacanalyze(toastrelid, avForm,
+									  toastClassForm, toasttabentry,
+									  &toast_dovacuum, &toast_doanalyze,
+									  &toast_wraparound);
 			/* we only consider VACUUM for toast tables */
 			if (toast_dovacuum)
 			{
@@ -2389,6 +2412,7 @@ table_recheck_autovac(Oid relid)
 		tab->at_freeze_min_age = freeze_min_age;
 		tab->at_vacuum_cost_limit = vac_cost_limit;
 		tab->at_vacuum_cost_delay = vac_cost_delay;
+		tab->at_wraparound = wraparound || toast_wraparound;
 	}
 
 	heap_close(avRel, AccessShareLock);
@@ -2403,7 +2427,8 @@ table_recheck_autovac(Oid relid)
  * relation_needs_vacanalyze
  *
  * Check whether a relation needs to be vacuumed or analyzed; return each into
- * "dovacuum" and "doanalyze", respectively.  avForm and tabentry can be NULL,
+ * "dovacuum" and "doanalyze", respectively.  Also return whether the vacuum is
+ * being forced because of Xid wraparound.  avForm and tabentry can be NULL,
  * classForm shouldn't.
  *
  * A table needs to be vacuumed if the number of dead tuples exceeds a
@@ -2437,7 +2462,8 @@ relation_needs_vacanalyze(Oid relid,
 						  PgStat_StatTabEntry *tabentry,
 						  /* output params below */
 						  bool *dovacuum,
-						  bool *doanalyze)
+						  bool *doanalyze,
+						  bool *wraparound)
 {
 	bool		force_vacuum;
 	float4		reltuples;		/* pg_class.reltuples */
@@ -2499,6 +2525,7 @@ relation_needs_vacanalyze(Oid relid,
 	force_vacuum = (TransactionIdIsNormal(classForm->relfrozenxid) &&
 					TransactionIdPrecedes(classForm->relfrozenxid,
 										  xidForceLimit));
+	*wraparound = force_vacuum;
 
 	/* User disabled it in pg_autovacuum?  (But ignore if at risk) */
 	if (avForm && !avForm->enabled && !force_vacuum)

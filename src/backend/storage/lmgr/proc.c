@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.194 2007/09/08 20:31:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.195 2007/10/24 20:55:36 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,8 +291,9 @@ InitProcess(void)
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->inCommit = false;
-	MyProc->inVacuum = false;
-	MyProc->isAutovacuum = IsAutoVacuumWorkerProcess();
+	MyProc->vacuumFlags = 0;
+	if (IsAutoVacuumWorkerProcess())
+		MyProc->vacuumFlags |= PROC_IS_AUTOVACUUM;
 	MyProc->lwWaiting = false;
 	MyProc->lwExclusive = false;
 	MyProc->lwWaitLink = NULL;
@@ -429,8 +430,8 @@ InitAuxiliaryProcess(void)
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->inCommit = false;
-	MyProc->inVacuum = false;
-	MyProc->isAutovacuum = IsAutoVacuumLauncherProcess(); /* is this needed? */
+	/* we don't set the "is autovacuum" flag in the launcher */
+	MyProc->vacuumFlags = 0;
 	MyProc->lwWaiting = false;
 	MyProc->lwExclusive = false;
 	MyProc->lwWaitLink = NULL;

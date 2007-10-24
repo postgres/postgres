@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.359 2007/09/20 17:56:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.360 2007/10/24 20:55:36 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -660,9 +660,9 @@ vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
  *		fixed-size never-null columns, but these are.
  *
  *		Another reason for doing it this way is that when we are in a lazy
- *		VACUUM and have inVacuum set, we mustn't do any updates --- somebody
- *		vacuuming pg_class might think they could delete a tuple marked with
- *		xmin = our xid.
+ *		VACUUM and have PROC_IN_VACUUM set, we mustn't do any updates ---
+ *		somebody vacuuming pg_class might think they could delete a tuple
+ *		marked with xmin = our xid.
  *
  *		This routine is shared by full VACUUM, lazy VACUUM, and stand-alone
  *		ANALYZE.
@@ -987,9 +987,9 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 		 * During a lazy VACUUM we do not run any user-supplied functions, and
 		 * so it should be safe to not create a transaction snapshot.
 		 *
-		 * We can furthermore set the inVacuum flag, which lets other
+		 * We can furthermore set the PROC_IN_VACUUM flag, which lets other
 		 * concurrent VACUUMs know that they can ignore this one while
-		 * determining their OldestXmin.  (The reason we don't set inVacuum
+		 * determining their OldestXmin.  (The reason we don't set it
 		 * during a full VACUUM is exactly that we may have to run user-
 		 * defined functions for functional indexes, and we want to make sure
 		 * that if they use the snapshot set above, any tuples it requires
@@ -997,12 +997,14 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 		 * depends on the contents of other tables is arguably broken, but we
 		 * won't break it here by violating transaction semantics.)
 		 *
-		 * Note: the inVacuum flag remains set until CommitTransaction or
+		 * Note: this flag remains set until CommitTransaction or
 		 * AbortTransaction.  We don't want to clear it until we reset
 		 * MyProc->xid/xmin, else OldestXmin might appear to go backwards,
 		 * which is probably Not Good.
 		 */
-		MyProc->inVacuum = true;
+		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+		MyProc->vacuumFlags |= PROC_IN_VACUUM;
+		LWLockRelease(ProcArrayLock);
 	}
 
 	/*

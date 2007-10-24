@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.35 2007/09/23 18:50:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.36 2007/10/24 20:55:36 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,7 +242,8 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		proc->xid = InvalidTransactionId;
 		proc->lxid = InvalidLocalTransactionId;
 		proc->xmin = InvalidTransactionId;
-		proc->inVacuum = false;			/* must be cleared with xid/xmin */
+		/* must be cleared with xid/xmin: */
+		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 		proc->inCommit = false;			/* be sure this is cleared in abort */
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
@@ -267,7 +268,8 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 
 		proc->lxid = InvalidLocalTransactionId;
 		proc->xmin = InvalidTransactionId;
-		proc->inVacuum = false;			/* must be cleared with xid/xmin */
+		/* must be cleared with xid/xmin: */
+		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 		proc->inCommit = false;			/* be sure this is cleared in abort */
 
 		Assert(proc->subxids.nxids == 0);
@@ -296,8 +298,10 @@ ProcArrayClearTransaction(PGPROC *proc)
 	proc->xid = InvalidTransactionId;
 	proc->lxid = InvalidLocalTransactionId;
 	proc->xmin = InvalidTransactionId;
-	proc->inVacuum = false;			/* redundant, but just in case */
-	proc->inCommit = false;			/* ditto */
+
+	/* redundant, but just in case */
+	proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
+	proc->inCommit = false;
 
 	/* Clear the subtransaction-XID cache too */
 	proc->subxids.nxids = 0;
@@ -546,7 +550,8 @@ TransactionIdIsActive(TransactionId xid)
  * If allDbs is TRUE then all backends are considered; if allDbs is FALSE
  * then only backends running in my own database are considered.
  *
- * If ignoreVacuum is TRUE then backends with inVacuum set are ignored.
+ * If ignoreVacuum is TRUE then backends with the PROC_IN_VACUUM flag set are
+ * ignored.
  *
  * This is used by VACUUM to decide which deleted tuples must be preserved
  * in a table.	allDbs = TRUE is needed for shared relations, but allDbs =
@@ -586,7 +591,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 	{
 		volatile PGPROC	   *proc = arrayP->procs[index];
 
-		if (ignoreVacuum && proc->inVacuum)
+		if (ignoreVacuum && (proc->vacuumFlags & PROC_IN_VACUUM))
 			continue;
 
 		if (allDbs || proc->databaseId == MyDatabaseId)
@@ -723,7 +728,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		TransactionId xid;
 
 		/* Ignore procs running LAZY VACUUM */
-		if (proc->inVacuum)
+		if (proc->vacuumFlags & PROC_IN_VACUUM)
 			continue;
 
 		/* Update globalxmin to be the smallest valid xmin */
@@ -1193,7 +1198,7 @@ CheckOtherDBBackends(Oid databaseId)
 
 			found = true;
 
-			if (proc->isAutovacuum)
+			if (proc->vacuumFlags & PROC_IS_AUTOVACUUM)
 			{
 				/* an autovacuum --- send it SIGTERM before sleeping */
 				int		autopid = proc->pid;
