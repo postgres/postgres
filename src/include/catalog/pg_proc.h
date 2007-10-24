@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.476 2007/10/19 22:01:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.477 2007/10/24 02:24:47 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4258,15 +4258,9 @@ DESCR("number of nodes");
 DATA(insert OID = 3673 (  querytree			PGNSP PGUID 12 1 0 f f t f i 1 25 "3615" _null_ _null_ _null_ tsquerytree - _null_ _null_ ));
 DESCR("show real useful query for GiST index");
 
-DATA(insert OID = 3684 (  ts_rewrite		PGNSP PGUID 12 1 0 f f t f i 3 3615 "3615 3615 3615" _null_ _null_ _null_ tsquery_rewrite_query - _null_ _null_ ));
+DATA(insert OID = 3684 (  ts_rewrite		PGNSP PGUID 12 1 0 f f t f i 3 3615 "3615 3615 3615" _null_ _null_ _null_ tsquery_rewrite - _null_ _null_ ));
 DESCR("rewrite tsquery");
-DATA(insert OID = 3685 (  ts_rewrite		PGNSP PGUID 12 1 0 f f t f v 2 3615 "3615 25" _null_ _null_ _null_ tsquery_rewrite - _null_ _null_ ));
-DESCR("rewrite tsquery");
-DATA(insert OID = 3686 (  ts_rewrite_accum	PGNSP PGUID 12 1 0 f f f f i 2 3615 "3615 3645" _null_ _null_ _null_ ts_rewrite_accum - _null_ _null_ ));
-DESCR("rewrite tsquery accumulator");
-DATA(insert OID = 3687 (  ts_rewrite_finish	PGNSP PGUID 12 1 0 f f t f i 1 3615 "3615" _null_ _null_ _null_ ts_rewrite_finish - _null_ _null_ ));
-DESCR("rewrite tsquery finish");
-DATA(insert OID = 3688 (  ts_rewrite		PGNSP PGUID 12 1 0 t f f f i 1 3615 "3645" _null_ _null_ _null_ aggregate_dummy - _null_ _null_ ));
+DATA(insert OID = 3685 (  ts_rewrite		PGNSP PGUID 12 1 0 f f t f v 2 3615 "3615 25" _null_ _null_ _null_ tsquery_rewrite_query - _null_ _null_ ));
 DESCR("rewrite tsquery");
 
 DATA(insert OID = 3695 (  gtsquery_compress				PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ gtsquery_compress - _null_ _null_ ));

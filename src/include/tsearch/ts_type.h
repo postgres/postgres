@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.6 2007/09/11 16:01:40 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.7 2007/10/24 02:24:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,8 +285,6 @@ extern Datum tsquery_not(PG_FUNCTION_ARGS);
 
 extern Datum tsquery_rewrite(PG_FUNCTION_ARGS);
 extern Datum tsquery_rewrite_query(PG_FUNCTION_ARGS);
-extern Datum ts_rewrite_accum(PG_FUNCTION_ARGS);
-extern Datum ts_rewrite_finish(PG_FUNCTION_ARGS);
 
 extern Datum tsq_mcontains(PG_FUNCTION_ARGS);
 extern Datum tsq_mcontained(PG_FUNCTION_ARGS);

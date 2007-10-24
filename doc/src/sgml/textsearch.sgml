@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.24 2007/10/23 20:46:12 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.25 2007/10/24 02:24:47 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -1448,33 +1448,6 @@ SELECT querytree(to_tsquery('!defined'));
 
 <programlisting>
 SELECT ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
- ts_rewrite
-------------
- 'b' &amp; 'c'
-</programlisting>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-
-      <term>
-       <synopsis>
-        ts_rewrite(ARRAY[<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">target</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">substitute</replaceable> <type>tsquery</>]) returns <type>tsquery</>
-       </synopsis>
-      </term>
-
-      <listitem>
-       <para>
-        Aggregate form.  XXX if we choose not to remove this, it needs to
-        be documented better.  Note it is not listed in
-        textsearch-functions-table at the moment.
-
-<programlisting>
-CREATE TABLE aliases (t tsquery PRIMARY KEY, s tsquery);
-INSERT INTO aliases VALUES('a', 'c');
-
-SELECT ts_rewrite(ARRAY['a &amp; b'::tsquery, t,s]) FROM aliases;
  ts_rewrite
 ------------
  'b' &amp; 'c'

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.5 2007/10/23 01:44:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.6 2007/10/24 02:24:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,135 +250,7 @@ findsubquery(QTNode *root, QTNode *ex, QTNode *subs, bool *isfind)
 }
 
 Datum
-ts_rewrite_accum(PG_FUNCTION_ARGS)
-{
-	TSQuery		acc;
-	ArrayType  *qa;
-	TSQuery		q;
-	QTNode	   *qex = NULL,
-			   *subs = NULL,
-			   *acctree = NULL;
-	bool		isfind = false;
-	Datum	   *elemsp;
-	int			nelemsp;
-	MemoryContext aggcontext;
-	MemoryContext oldcontext;
-
-	aggcontext = ((AggState *) fcinfo->context)->aggcontext;
-
-	if (PG_ARGISNULL(0) || PG_GETARG_POINTER(0) == NULL)
-	{
-		acc = (TSQuery) MemoryContextAlloc(aggcontext, HDRSIZETQ);
-		SET_VARSIZE(acc, HDRSIZETQ);
-		acc->size = 0;
-	}
-	else
-		acc = PG_GETARG_TSQUERY(0);
-
-	if (PG_ARGISNULL(1) || PG_GETARG_POINTER(1) == NULL)
-		PG_RETURN_TSQUERY(acc);
-	else
-		qa = PG_GETARG_ARRAYTYPE_P_COPY(1);
-
-	if (ARR_NDIM(qa) != 1)
-		elog(ERROR, "array must be one-dimensional, not %d dimensions",
-			 ARR_NDIM(qa));
-	if (ArrayGetNItems(ARR_NDIM(qa), ARR_DIMS(qa)) != 3)
-		elog(ERROR, "array must have three elements");
-	if (ARR_ELEMTYPE(qa) != TSQUERYOID)
-		elog(ERROR, "array must contain tsquery elements");
-
-	deconstruct_array(qa, TSQUERYOID, -1, false, 'i', &elemsp, NULL, &nelemsp);
-
-	q = DatumGetTSQuery(elemsp[0]);
-	if (q->size == 0)
-	{
-		pfree(elemsp);
-		PG_RETURN_POINTER(acc);
-	}
-
-	if (!acc->size)
-	{
-		if (VARSIZE(acc) > HDRSIZETQ)
-		{
-			pfree(elemsp);
-			PG_RETURN_POINTER(acc);
-		}
-		else
-			acctree = QT2QTN(GETQUERY(q), GETOPERAND(q));
-	}
-	else
-		acctree = QT2QTN(GETQUERY(acc), GETOPERAND(acc));
-
-	QTNTernary(acctree);
-	QTNSort(acctree);
-
-	q = DatumGetTSQuery(elemsp[1]);
-	if (q->size == 0)
-	{
-		pfree(elemsp);
-		PG_RETURN_POINTER(acc);
-	}
-	qex = QT2QTN(GETQUERY(q), GETOPERAND(q));
-	QTNTernary(qex);
-	QTNSort(qex);
-
-	q = DatumGetTSQuery(elemsp[2]);
-	if (q->size)
-		subs = QT2QTN(GETQUERY(q), GETOPERAND(q));
-
-	acctree = findsubquery(acctree, qex, subs, &isfind);
-
-	if (isfind || !acc->size)
-	{
-		/* pfree( acc ); do not pfree(p), because nodeAgg.c will */
-		if (acctree)
-		{
-			QTNBinary(acctree);
-			oldcontext = MemoryContextSwitchTo(aggcontext);
-			acc = QTN2QT(acctree);
-			MemoryContextSwitchTo(oldcontext);
-		}
-		else
-		{
-			acc = (TSQuery) MemoryContextAlloc(aggcontext, HDRSIZETQ);
-			SET_VARSIZE(acc, HDRSIZETQ);
-			acc->size = 0;
-		}
-	}
-
-	pfree(elemsp);
-	QTNFree(qex);
-	QTNFree(subs);
-	QTNFree(acctree);
-
-	PG_RETURN_TSQUERY(acc);
-}
-
-Datum
-ts_rewrite_finish(PG_FUNCTION_ARGS)
-{
-	TSQuery		acc = PG_GETARG_TSQUERY(0);
-	TSQuery		rewrited;
-
-	if (acc == NULL || PG_ARGISNULL(0) || acc->size == 0)
-	{
-		rewrited = (TSQuery) palloc(HDRSIZETQ);
-		SET_VARSIZE(rewrited, HDRSIZETQ);
-		rewrited->size = 0;
-	}
-	else
-	{
-		rewrited = (TSQuery) palloc(VARSIZE(acc));
-		memcpy(rewrited, acc, VARSIZE(acc));
-		pfree(acc);
-	}
-
-	PG_RETURN_POINTER(rewrited);
-}
-
-Datum
-tsquery_rewrite(PG_FUNCTION_ARGS)
+tsquery_rewrite_query(PG_FUNCTION_ARGS)
 {
 	TSQuery		query = PG_GETARG_TSQUERY_COPY(0);
 	text	   *in = PG_GETARG_TEXT_P(1);
@@ -505,7 +377,7 @@ tsquery_rewrite(PG_FUNCTION_ARGS)
 }
 
 Datum
-tsquery_rewrite_query(PG_FUNCTION_ARGS)
+tsquery_rewrite(PG_FUNCTION_ARGS)
 {
 	TSQuery		query = PG_GETARG_TSQUERY_COPY(0);
 	TSQuery		ex = PG_GETARG_TSQUERY(1);
