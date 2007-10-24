@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.6 2007/10/24 02:24:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.7 2007/10/24 03:30:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,7 +259,7 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	QTNode	   *tree;
 	char	   *buf;
-	void	   *plan;
+	SPIPlanPtr	plan;
 	Portal		portal;
 	bool		isnull;
 	int			i;
@@ -281,12 +281,13 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 	if ((plan = SPI_prepare(buf, 0, NULL)) == NULL)
 		elog(ERROR, "SPI_prepare(\"%s\") failed", buf);
 
-	if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL, false)) == NULL)
+	if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL, true)) == NULL)
 		elog(ERROR, "SPI_cursor_open(\"%s\") failed", buf);
 
 	SPI_cursor_fetch(portal, true, 100);
 
-	if (SPI_tuptable->tupdesc->natts != 2 ||
+	if (SPI_tuptable == NULL ||
+		SPI_tuptable->tupdesc->natts != 2 ||
 		SPI_gettypeid(SPI_tuptable->tupdesc, 1) != TSQUERYOID ||
 		SPI_gettypeid(SPI_tuptable->tupdesc, 2) != TSQUERYOID)
 		ereport(ERROR,

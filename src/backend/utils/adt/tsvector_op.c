@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.6 2007/10/23 00:51:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.7 2007/10/24 03:30:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1088,19 +1088,20 @@ ts_stat_sql(text *txt, text *ws)
 			   *stat;
 	bool		isnull;
 	Portal		portal;
-	void	   *plan;
+	SPIPlanPtr	plan;
 
 	if ((plan = SPI_prepare(query, 0, NULL)) == NULL)
 		/* internal error */
 		elog(ERROR, "SPI_prepare(\"%s\") failed", query);
 
-	if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL, false)) == NULL)
+	if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL, true)) == NULL)
 		/* internal error */
 		elog(ERROR, "SPI_cursor_open(\"%s\") failed", query);
 
 	SPI_cursor_fetch(portal, true, 100);
 
-	if (SPI_tuptable->tupdesc->natts != 1 ||
+	if (SPI_tuptable == NULL ||
+		SPI_tuptable->tupdesc->natts != 1 ||
 		SPI_gettypeid(SPI_tuptable->tupdesc, 1) != TSVECTOROID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
