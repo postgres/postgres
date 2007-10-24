@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.147 2007/10/16 11:30:16 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.148 2007/10/24 20:11:00 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -730,7 +730,7 @@ struct tsearch_config_match
 static const struct tsearch_config_match tsearch_config_languages[] =
 {
 	{"danish", "da_DK"},
-	{"danish", "Danish_Danmark"},
+	{"danish", "Danish_Denmark"},
 	{"dutch", "nl_NL"},
 	{"dutch", "Dutch_Netherlands"},
 	{"english", "C"},
