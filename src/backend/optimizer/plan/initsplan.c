@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.134 2007/10/04 20:44:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.135 2007/10/24 20:54:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -623,6 +623,7 @@ make_outerjoininfo(PlannerInfo *root,
 		 * rel in the lower OJ's min_righthand, not its whole syn_righthand.
 		 */
 		if (bms_overlap(left_rels, otherinfo->syn_righthand) &&
+			bms_overlap(clause_relids, otherinfo->syn_righthand) &&
 			!bms_overlap(strict_relids, otherinfo->min_righthand))
 		{
 			min_lefthand = bms_add_members(min_lefthand,
