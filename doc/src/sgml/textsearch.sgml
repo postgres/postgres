@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.25 2007/10/24 02:24:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.26 2007/10/25 13:06:35 alvherre Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -1750,12 +1750,12 @@ LIMIT 10;
      <row>
       <entry><literal>asciiword</></entry>
       <entry>Word, all ASCII letters</entry>
-      <entry><literal>foo</literal></entry>
+      <entry><literal>elephant</literal></entry>
      </row>
      <row>
       <entry><literal>word</></entry>
       <entry>Word, all letters</entry>
-      <entry><literal>f&oslash;&oslash;</literal></entry>
+      <entry><literal>ma&ntilde;ana</literal></entry>
      </row>
      <row>
       <entry><literal>numword</></entry>
@@ -1765,40 +1765,40 @@ LIMIT 10;
      <row>
       <entry><literal>asciihword</></entry>
       <entry>Hyphenated word, all ASCII</entry>
-      <entry><literal>foo-bar</literal></entry>
+      <entry><literal>up-to-date</literal></entry>
      </row>
      <row>
       <entry><literal>hword</></entry>
       <entry>Hyphenated word, all letters</entry>
-      <entry><literal>f&oslash;&oslash;-bar</literal></entry>
+      <entry><literal>pol&iacute;tico-militar</literal></entry>
      </row>
      <row>
       <entry><literal>numhword</></entry>
       <entry>Hyphenated word, letters and digits</entry>
-      <entry><literal>foo-beta1</literal></entry>
+      <entry><literal>postgresql-beta1</literal></entry>
      </row>
      <row>
       <entry><literal>hword_asciipart</></entry>
       <entry>Hyphenated word part, all ASCII</entry>
-      <entry><literal>foo</literal> or <literal>bar</literal> in the context
-       <literal>foo-bar</literal></entry>
+      <entry><literal>militar</literal> in the context
+       <literal>pol&iacute;tico-militar</literal>, or <literal>postgresql</literal> in the context <literal>postgresql-beta1</literal></entry>
      </row>
      <row>
       <entry><literal>hword_part</></entry>
       <entry>Hyphenated word part, all letters</entry>
-      <entry><literal>f&oslash;&oslash;</literal> in the context
-       <literal>f&oslash;&oslash;-bar</literal></entry>
+      <entry><literal>f&iacute;sico</literal> or <literal>qu&iacute;mico</literal>
+       in the context <literal>f&iacute;sico-qu&iacute;mico</literal></entry>
      </row>
      <row>
       <entry><literal>hword_numpart</></entry>
       <entry>Hyphenated word part, letters and digits</entry>
       <entry><literal>beta1</literal> in the context
-       <literal>foo-beta1</literal></entry>
+       <literal>postgresql-beta1</literal></entry>
      </row>
      <row>
       <entry><literal>email</></entry>
       <entry>Email address</entry>
-      <entry><literal>foo@bar.com</literal></entry>
+      <entry><literal>foo@example.com</literal></entry>
      </row>
      <row>
       <entry><literal>protocol</></entry>
@@ -1808,12 +1808,12 @@ LIMIT 10;
      <row>
       <entry><literal>url</></entry>
       <entry>URL</entry>
-      <entry><literal>foo.com/stuff/index.html</literal></entry>
+      <entry><literal>example.com/stuff/index.html</literal></entry>
      </row>
      <row>
       <entry><literal>host</></entry>
       <entry>Host</entry>
-      <entry><literal>foo.com</literal></entry>
+      <entry><literal>example.com</literal></entry>
      </row>
      <row>
       <entry><literal>uri</></entry>
