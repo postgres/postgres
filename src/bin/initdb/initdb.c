@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.148 2007/10/24 20:11:00 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.149 2007/10/25 20:22:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -719,7 +719,7 @@ get_encoding_id(char *encoding_name)
 
 /*
  * Support for determining the best default text search configuration.
- * We key this off LC_CTYPE, after stripping its encoding indicator if any.
+ * We key this off the first part of LC_CTYPE (ie, the language name).
  */
 struct tsearch_config_match
 {
@@ -729,39 +729,37 @@ struct tsearch_config_match
 
 static const struct tsearch_config_match tsearch_config_languages[] =
 {
-	{"danish", "da_DK"},
-	{"danish", "Danish_Denmark"},
-	{"dutch", "nl_NL"},
-	{"dutch", "Dutch_Netherlands"},
+	{"danish", "da"},
+	{"danish", "Danish"},
+	{"dutch", "nl"},
+	{"dutch", "Dutch"},
 	{"english", "C"},
 	{"english", "POSIX"},
-	{"english", "en_US"},
-	{"english", "English_America"},
-	{"english", "en_UK"},
-	{"english", "English_Britain"},
-	{"finnish", "fi_FI"},
-	{"finnish", "Finnish_Finland"},
-	{"french", "fr_FR"},
-	{"french", "French_France"},
-	{"german", "de_DE"},
-	{"german", "German_Germany"},
-	{"hungarian", "hu_HU"},
-	{"hungarian", "Hungarian_Hungary"},
-	{"italian", "it_IT"},
-	{"italian", "Italian_Italy"},
-	{"norwegian", "no_NO"},
-	{"norwegian", "Norwegian_Norway"},
-	{"portuguese", "pt_PT"},
-	{"portuguese", "Portuguese_Portugal"},
-	{"romanian", "ro_RO"},
-	{"russian", "ru_RU"},
-	{"russian", "Russian_Russia"},
-	{"spanish", "es_ES"},
-	{"spanish", "Spanish_Spain"},
-	{"swedish", "sv_SE"},
-	{"swedish", "Swedish_Sweden"},
-	{"turkish", "tr_TR"},
-	{"turkish", "Turkish_Turkey"},
+	{"english", "en"},
+	{"english", "English"},
+	{"finnish", "fi"},
+	{"finnish", "Finnish"},
+	{"french", "fr"},
+	{"french", "French"},
+	{"german", "de"},
+	{"german", "German"},
+	{"hungarian", "hu"},
+	{"hungarian", "Hungarian"},
+	{"italian", "it"},
+	{"italian", "Italian"},
+	{"norwegian", "no"},
+	{"norwegian", "Norwegian"},
+	{"portuguese", "pt"},
+	{"portuguese", "Portuguese"},
+	{"romanian", "ro"},
+	{"russian", "ru"},
+	{"russian", "Russian"},
+	{"spanish", "es"},
+	{"spanish", "Spanish"},
+	{"swedish", "sv"},
+	{"swedish", "Swedish"},
+	{"turkish", "tr"},
+	{"turkish", "Turkish"},
 	{NULL, NULL}				/* end marker */
 };
 
@@ -777,15 +775,15 @@ find_matching_ts_config(const char *lc_type)
 			   *ptr;
 
 	/*
-	 * Convert lc_ctype to a language name by stripping ".utf8", "@euro", or
-	 * what-have-you
+	 * Convert lc_ctype to a language name by stripping everything after
+	 * an underscore.  Just for paranoia, we also stop at '.' or '@'.
 	 */
 	if (lc_type == NULL)
 		langname = xstrdup("");
 	else
 	{
 		ptr = langname = xstrdup(lc_type);
-		while (*ptr && *ptr != '.' && *ptr != '@')
+		while (*ptr && *ptr != '_' && *ptr != '.' && *ptr != '@')
 			ptr++;
 		*ptr = '\0';
 	}
