@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.64 2007/10/25 14:45:55 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.65 2007/10/25 19:13:37 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2099,11 +2099,9 @@ next_worker:
 
 		/*
 		 * Save the relation name for a possible error message, to avoid a
-		 * catalog lookup in case of an error.  We do it in
-		 * TopTransactionContext so that they go away automatically in the next
-		 * iteration.
+		 * catalog lookup in case of an error.  Note: they must live in a
+		 * long-lived memory context.
 		 */
-		MemoryContextSwitchTo(TopTransactionContext);
 		datname = get_database_name(MyDatabaseId);
 		nspname = get_namespace_name(get_rel_namespace(tab->at_relid));
 		relname = get_rel_name(tab->at_relid);
@@ -2116,6 +2114,7 @@ next_worker:
 		PG_TRY();
 		{
 			/* have at it */
+			MemoryContextSwitchTo(TopTransactionContext);
 			autovacuum_do_vac_analyze(tab->at_relid,
 									  tab->at_dovacuum,
 									  tab->at_doanalyze,
@@ -2152,6 +2151,9 @@ next_worker:
 
 		/* be tidy */
 		pfree(tab);
+		pfree(datname);
+		pfree(nspname);
+		pfree(relname);
 
 		/* remove my info from shared memory */
 		LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
