@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.141 2006/10/06 17:13:58 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.141.2.1 2007/10/25 19:15:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,6 +315,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	Form_pg_sequence seq;
 	FormData_pg_sequence new;
 	List	   *owned_by;
+	int64		save_increment;
 
 	/* open and AccessShareLock sequence */
 	relid = RangeVarGetRelid(stmt->sequence, false);
@@ -324,6 +325,9 @@ AlterSequence(AlterSeqStmt *stmt)
 	if (!pg_class_ownercheck(elm->relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   stmt->sequence->relname);
+
+	/* hack to keep ALTER SEQUENCE OWNED BY from changing currval state */
+	save_increment = elm->increment;
 
 	/* lock page' buffer and read tuple into new sequence structure */
 	seq = read_info(elm, seqrel, &buf);
@@ -338,10 +342,18 @@ AlterSequence(AlterSeqStmt *stmt)
 	/* Now okay to update the on-disk tuple */
 	memcpy(seq, &new, sizeof(FormData_pg_sequence));
 
-	/* Clear local cache so that we don't think we have cached numbers */
-	elm->last = new.last_value; /* last returned number */
-	elm->cached = new.last_value;		/* last cached number (forget cached
+	if (owned_by)
+	{
+		/* Restore previous state of elm (assume nothing else changes) */
+		elm->increment = save_increment;
+	}
+	else
+	{
+		/* Clear local cache so that we don't think we have cached numbers */
+		elm->last = new.last_value; /* last returned number */
+		elm->cached = new.last_value;	/* last cached number (forget cached
 										 * values) */
+	}
 
 	START_CRIT_SECTION();
 
