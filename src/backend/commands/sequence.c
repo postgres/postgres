@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.146 2007/09/20 17:56:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.147 2007/10/25 18:54:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,10 +65,12 @@ typedef struct SeqTableData
 	struct SeqTableData *next;	/* link to next SeqTable object */
 	Oid			relid;			/* pg_class OID of this sequence */
 	LocalTransactionId lxid;	/* xact in which we last did a seq op */
+	bool		last_valid;		/* do we have a valid "last" value? */
 	int64		last;			/* value last returned by nextval */
 	int64		cached;			/* last value already cached for nextval */
 	/* if last != cached, we have not used up all the cached values */
 	int64		increment;		/* copy of sequence's increment field */
+	/* note that increment is zero until we first do read_info() */
 } SeqTableData;
 
 typedef SeqTableData *SeqTable;
@@ -336,13 +338,12 @@ AlterSequence(AlterSeqStmt *stmt)
 	/* Check and set new values */
 	init_params(stmt->options, false, &new, &owned_by);
 
+	/* Clear local cache so that we don't think we have cached numbers */
+	/* Note that we do not change the currval() state */
+	elm->cached = elm->last;
+
 	/* Now okay to update the on-disk tuple */
 	memcpy(seq, &new, sizeof(FormData_pg_sequence));
-
-	/* Clear local cache so that we don't think we have cached numbers */
-	elm->last = new.last_value; /* last returned number */
-	elm->cached = new.last_value;		/* last cached number (forget cached
-										 * values) */
 
 	START_CRIT_SECTION();
 
@@ -443,9 +444,11 @@ nextval_internal(Oid relid)
 
 	if (elm->last != elm->cached)		/* some numbers were cached */
 	{
-		last_used_seq = elm;
+		Assert(elm->last_valid);
+		Assert(elm->increment != 0);
 		elm->last += elm->increment;
 		relation_close(seqrel, NoLock);
+		last_used_seq = elm;
 		return elm->last;
 	}
 
@@ -564,6 +567,7 @@ nextval_internal(Oid relid)
 	/* save info in local cache */
 	elm->last = result;			/* last returned number */
 	elm->cached = last;			/* last fetched number */
+	elm->last_valid = true;
 
 	last_used_seq = elm;
 
@@ -633,7 +637,7 @@ currval_oid(PG_FUNCTION_ARGS)
 				 errmsg("permission denied for sequence %s",
 						RelationGetRelationName(seqrel))));
 
-	if (elm->increment == 0)	/* nextval/read_info were not called */
+	if (!elm->last_valid)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("currval of sequence \"%s\" is not yet defined in this session",
@@ -668,7 +672,7 @@ lastval(PG_FUNCTION_ARGS)
 	seqrel = open_share_lock(last_used_seq);
 
 	/* nextval() must have already been called for this sequence */
-	Assert(last_used_seq->increment != 0);
+	Assert(last_used_seq->last_valid);
 
 	if (pg_class_aclcheck(last_used_seq->relid, GetUserId(), ACL_SELECT) != ACLCHECK_OK &&
 		pg_class_aclcheck(last_used_seq->relid, GetUserId(), ACL_USAGE) != ACLCHECK_OK)
@@ -732,9 +736,15 @@ do_setval(Oid relid, int64 next, bool iscalled)
 						bufm, bufx)));
 	}
 
-	/* save info in local cache */
-	elm->last = next;			/* last returned number */
-	elm->cached = next;			/* last cached number (forget cached values) */
+	/* Set the currval() state only if iscalled = true */
+	if (iscalled)
+	{
+		elm->last = next;		/* last returned number */
+		elm->last_valid = true;
+	}
+
+	/* In any case, forget any future cached numbers */
+	elm->cached = elm->last;
 
 	START_CRIT_SECTION();
 
@@ -893,7 +903,7 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 					 errmsg("out of memory")));
 		elm->relid = relid;
 		elm->lxid = InvalidLocalTransactionId;
-		/* increment is set to 0 until we do read_info (see currval) */
+		elm->last_valid = false;
 		elm->last = elm->cached = elm->increment = 0;
 		elm->next = seqtab;
 		seqtab = elm;
@@ -941,6 +951,7 @@ read_info(SeqTable elm, Relation rel, Buffer *buf)
 
 	seq = (Form_pg_sequence) GETSTRUCT(&tuple);
 
+	/* this is a handy place to update our copy of the increment */
 	elm->increment = seq->increment_by;
 
 	return seq;

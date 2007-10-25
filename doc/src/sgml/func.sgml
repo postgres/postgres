@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.404 2007/10/23 20:46:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.405 2007/10/25 18:54:03 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8733,15 +8733,20 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
       <listitem>
        <para>
         Reset the sequence object's counter value.  The two-parameter
-        form sets the sequence's <literal>last_value</literal> field to the specified
-        value and sets its <literal>is_called</literal> field to <literal>true</literal>,
-        meaning that the next <function>nextval</function> will advance the sequence
-        before returning a value.  In the three-parameter form,
-        <literal>is_called</literal> can be set either <literal>true</literal> or
-        <literal>false</literal>.  If it's set to <literal>false</literal>,
-        the next <function>nextval</function> will return exactly the specified
+        form sets the sequence's <literal>last_value</literal> field to the
+        specified value and sets its <literal>is_called</literal> field to
+        <literal>true</literal>, meaning that the next
+        <function>nextval</function> will advance the sequence before
+        returning a value.  The value reported by <function>currval</> is
+        also set to the specified value.  In the three-parameter form,
+        <literal>is_called</literal> can be set either <literal>true</literal>
+        or <literal>false</literal>.  <literal>true</> has the same effect as
+        the two-parameter form. If it's set to <literal>false</literal>, the
+        next <function>nextval</function> will return exactly the specified
         value, and sequence advancement commences with the following
-        <function>nextval</function>.  For example,
+        <function>nextval</function>.  Furthermore, the value reported by
+        <function>currval</> is not changed in this case (this is a change
+        from pre-8.3 behavior).  For example,
 
 <screen>
 SELECT setval('foo', 42);           <lineannotation>Next <function>nextval</> will return 43</lineannotation>

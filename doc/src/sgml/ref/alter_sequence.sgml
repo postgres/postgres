@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.18 2007/10/03 16:48:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.19 2007/10/25 18:54:03 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -114,7 +114,10 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <rep
        <para>
         The optional clause <literal>RESTART WITH <replaceable
         class="parameter">start</replaceable></literal> changes the
-        current value of the sequence.
+        current value of the sequence.  This is equivalent to calling the
+        <function>setval</> function with <literal>is_called</literal> =
+        <literal>false</>: the specified value will be returned by the
+        <emphasis>next</> call of <function>nextval</>.
        </para>
       </listitem>
      </varlistentry>
@@ -224,6 +227,12 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <rep
    values. They will use up all cached values prior to noticing the changed
    sequence generation parameters.  The current backend will be affected
    immediately.
+  </para>
+
+  <para>
+   <command>ALTER SEQUENCE</command> does not affect the <function>currval</>
+   status for the sequence.  (Before <productname>PostgreSQL</productname>
+   8.3, it sometimes did.)
   </para>
 
   <para>
