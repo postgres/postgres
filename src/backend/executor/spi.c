@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.182 2007/10/24 23:27:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.183 2007/10/25 13:48:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -994,7 +994,7 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 			((PlannedStmt *) linitial(stmt_list))->rowMarks != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("DECLARE CURSOR SCROLL ... FOR UPDATE/SHARE is not supported"),
+					 errmsg("DECLARE SCROLL CURSOR ... FOR UPDATE/SHARE is not supported"),
 					 errdetail("Scrollable cursors must be READ ONLY.")));
 	}
 
