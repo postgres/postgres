@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.63 2007/10/24 20:55:36 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.64 2007/10/25 14:45:55 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1994,6 +1994,9 @@ do_autovacuum(void)
 		autovac_table *tab;
 		WorkerInfo	worker;
 		bool        skipit;
+		char	   *datname,
+				   *nspname,
+				   *relname;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -2095,6 +2098,17 @@ next_worker:
 		}
 
 		/*
+		 * Save the relation name for a possible error message, to avoid a
+		 * catalog lookup in case of an error.  We do it in
+		 * TopTransactionContext so that they go away automatically in the next
+		 * iteration.
+		 */
+		MemoryContextSwitchTo(TopTransactionContext);
+		datname = get_database_name(MyDatabaseId);
+		nspname = get_namespace_name(get_rel_namespace(tab->at_relid));
+		relname = get_rel_name(tab->at_relid);
+
+		/*
 		 * We will abort vacuuming the current table if something errors out,
 		 * and continue with the next one in schedule; in particular, this
 		 * happens if we are interrupted with SIGINT.
@@ -2102,7 +2116,6 @@ next_worker:
 		PG_TRY();
 		{
 			/* have at it */
-			MemoryContextSwitchTo(TopTransactionContext);
 			autovacuum_do_vac_analyze(tab->at_relid,
 									  tab->at_dovacuum,
 									  tab->at_doanalyze,
@@ -2118,14 +2131,10 @@ next_worker:
 			HOLD_INTERRUPTS();
 			if (tab->at_dovacuum)
 				errcontext("automatic vacuum of table \"%s.%s.%s\"",
-						   get_database_name(MyDatabaseId),
-						   get_namespace_name(get_rel_namespace(tab->at_relid)),
-						   get_rel_name(tab->at_relid));
+						   datname, nspname, relname);
 			else
 				errcontext("automatic analyze of table \"%s.%s.%s\"",
-						   get_database_name(MyDatabaseId),
-						   get_namespace_name(get_rel_namespace(tab->at_relid)),
-						   get_rel_name(tab->at_relid));
+						   datname, nspname, relname);
 			EmitErrorReport();
 
 			/* this resets the PGPROC flags too */
@@ -2139,13 +2148,7 @@ next_worker:
 		}
 		PG_END_TRY();
 
-		/* reset my PGPROC flag */
-		if (tab->at_wraparound)
-		{
-			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-			MyProc->vacuumFlags &= ~PROC_VACUUM_FOR_WRAPAROUND;
-			LWLockRelease(ProcArrayLock);
-		}
+		/* the PGPROC flags are reset at the next end of transaction */
 
 		/* be tidy */
 		pfree(tab);
