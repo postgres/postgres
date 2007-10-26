@@ -4,165 +4,165 @@
 <TITLE>PostgreSQL FAQ in Japanese</TITLE>
 </HEAD>
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#FF0000" VLINK="#A00000" ALINK="#0000FF">
-<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<META http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 <div id="pgContentWrap">
 
-<h1>PostgreSQL(�ݥ��ȥ��쥹�����塼������)�ˤĤ��Ƥ褯�������Ȥ��β���(FAQ)</h1>
-<p>��ʸ�ǽ�������:		Last updated: Wed Oct 17 13:34:42 EDT 2007</p>
-<p>���ߤΰݻ�������:	Bruce Momjian (<A
+<h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
+<p>原文最終更新日:		Last updated: Wed Oct 17 13:34:42 EDT 2007</p>
+<p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
 href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
-<p>����ʸ��κǿ��Ǥ�<a href=
+<p>この文書の最新版は<a href=
     "http://www.postgresql.org/docs/faqs.FAQ.html">
     http://www.postgresql.org/docs/faqs.FAQ.html</a>
-�Ǹ��뤳�Ȥ��Ǥ��ޤ���</p>
-<p>�ץ�åȥۡ������ͭ�μ���ˤĤ��Ƥ�:<a href=
+で見ることができます。</p>
+<p>プラットホームに特有の質問については:<a href=
     "http://www.postgresql.org/docs/faq/">
     http://www.postgresql.org/docs/faq/</a>
 <br />
-�˲���������ޤ���</p>
+に解答があります。</p>
 
 <p><small><pre>
-(�ʲ������Ԥˤ������� [������ �� ] �ȤǰϤ�ǵ����ޤ���)
-[������
-	���ܸ��Ǥ�FAQ�ϡ�
+(以下、訳者による注釈を [訳注： と ] とで囲んで記します。)
+[訳注：
+	日本語版のFAQは、
 		http://www.postgresql.org/docs/faqs.FAQ_japanese.html
-	�ˤ���ޤ���
-	�ǿ������ܸ��ǤˤĤ��Ƥϡ�����ʸ��κǸ�ˤ���<a
-	href="#item-japanese">�����ܸ��ǤˤĤ��ơ�</a>�򤴤�󤯤�������
+	にあります。
+	最新の日本語版については、この文書の最後にある<a
+	href="#item-japanese">「日本語版について」</a>をごらんください。
 
 ]
 </pre></small></p>
 
 <hr />
 
-<h2 align="center">����Ū�ʼ���</h2>
+<h2 align="center">一般的な質問</h2>
 
-<a href="#item1.1">1.1</a>) PostgreSQL�Ȥϲ��Ǥ����� ���θƤ����ϡ�<br />
-<a href="#item1.2">1.2</a>) ï�� PostgreSQL �򥳥�ȥ����뤷�Ƥ��ޤ�����<br />
-<a href="#item1.3">1.3</a>) PostgreSQL������Ϥɤ��ʤäƤޤ�����<br />
-<a href="#item1.4">1.4</a>) PostgreSQL�򥵥ݡ��Ȥ���ץ�åȥۡ���ϡ�<br />
-<a href="#item1.5">1.5</a>) PostgreSQL�Ϥɤ���������Ǥ��ޤ�����<br />
-<a href="#item1.6">1.6</a>) �ǿ��Υ�꡼���Ϥɤ�Ǥ�����<br />
-<a href="#item1.7">1.7</a>) ���ݡ��ȤϤɤ��Ǽ������ޤ�����<br />
-<a href="#item1.8">1.8</a>) �Х���ݡ��ȤϤɤΤ褦��ȯ�����ޤ�����<br />
-<a href="#item1.9">1.9</a>) ���ΤΥХ���̤��̵����ǽ�Ϥɤ���äƸ��Ĥ��ޤ�����<br />
-<a href="#item1.10">1.10</a>) �ɤΤ褦��ʸ�񤬤���ޤ�����<br />
-<a href="#item1.11">1.11</a>) <small>SQL</small>�Ϥɤ�����гؤ٤ޤ�����<br />
-<a href="#item1.12">1.12</a>) �ѥå����󶡤����ꡢ��ȯ�����໲�ä���ˤϤɤ�����Ф褤�Ǥ�����<br />
-<a href="#item1.13">1.13</a>) ¾��<small>DBMS</small>����٤�PostgreSQL�Ϥɤ��ʤΤǤ�����<br />
-<a href="#item1.14">1.14</a>) PostgreSQL�Ϲ���κǿ��βƻ��֤��ѹ��򰷤��ޤ�����<br />
+<a href="#item1.1">1.1</a>) PostgreSQLとは何ですか？ その呼び方は？<br />
+<a href="#item1.2">1.2</a>) 誰が PostgreSQL をコントロールしていますか？<br />
+<a href="#item1.3">1.3</a>) PostgreSQLの著作権はどうなってますか？<br />
+<a href="#item1.4">1.4</a>) PostgreSQLをサポートするプラットホームは？<br />
+<a href="#item1.5">1.5</a>) PostgreSQLはどこから入手できますか？<br />
+<a href="#item1.6">1.6</a>) 最新のリリースはどれですか？<br />
+<a href="#item1.7">1.7</a>) サポートはどこで受けられますか？<br />
+<a href="#item1.8">1.8</a>) バグレポートはどのように発信しますか？<br />
+<a href="#item1.9">1.9</a>) 既知のバグや未だ無い機能はどうやって見つけますか？<br />
+<a href="#item1.10">1.10</a>) どのような文書がありますか？<br />
+<a href="#item1.11">1.11</a>) <small>SQL</small>はどうすれば学べますか？<br />
+<a href="#item1.12">1.12</a>) パッチを提供したり、開発チーム参加するにはどうすればよいですか？<br />
+<a href="#item1.13">1.13</a>) 他の<small>DBMS</small>と比べてPostgreSQLはどうなのですか？<br />
+<a href="#item1.14">1.14</a>) PostgreSQLは国毎の最新の夏時間の変更を扱いますか？<br />
 
-<h2 align="center">�桼�������饤����Ȥμ���</h2>
+<h2 align="center">ユーザ・クライアントの質問</h2>
 
-<a href="#item2.1">2.1</a>) PostgreSQL �ˤϤɤ�ʥ��󥿡��ե��������Ȥ��ޤ�����<br />
-<a href="#item2.2">2.2</a>) PostgreSQL �� Web �ڡ�����Ϣ�Ȥ�����ˤϤɤ�ʥġ��뤬����ޤ�����<br />
-<a href="#item2.3">2.3</a>) PostgreSQL �˥���ե����롦�桼�����󥿡��ե������Ϥ���ޤ�����<br />
-
-
-<h2 align="center">������μ���</h2>
-
-<a href="#item3.1">3.1</a>) �ɤ�����С�PostgreSQL��<i>/usr/local/pgsql</i> �ʳ��ξ��˥��󥹥ȡ���Ǥ��ޤ�����<br />
-<a href="#item3.2">3.2</a>) ¾�Υۥ��Ȥ������³�ϤɤΤ褦�����椷�ޤ�����<br />
-<a href="#item3.3">3.3</a>) ����ɤ���ǽ�����뤿��ˤϡ��ǡ����١��������󥸥��ɤΤ褦��Ĵ�����ޤ�����<br />
-<a href="#item3.4">3.4</a>) �ɤΤ褦�ʥǥХ���ǽ���Ȥ��ޤ�����<br />
-<a href="#item3.5">3.5</a>) ��³���褦�Ȥ���Ȥ��� <i>'Sorry, too many clients'</i> ���Ф�ΤϤʤ��Ǥ�����<br />
-<a href="#item3.6">3.6</a>) PostgreSQL�Υ��åץ��졼�ɤμ��Ϥɤ��ʤ�ޤ�����<br />
-<a href="#item3.7">3.7</a>) �ϡ��ɥ������ˤϤɤΤ褦�ʥ���ԥ塼����Ȥ��Ф褤�Ǥ�����<br />
+<a href="#item2.1">2.1</a>) PostgreSQL にはどんなインターフェースが使えますか？<br />
+<a href="#item2.2">2.2</a>) PostgreSQL を Web ページと連携させるにはどんなツールがありますか？<br />
+<a href="#item2.3">2.3</a>) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？<br />
 
 
-<h2 align="center">����μ���</h2>
+<h2 align="center">管理上の質問</h2>
 
-<a href="#item4.1">4.1</a>) �ǽ�Τ����Ĥ��Υ����Τߤ� <small>select</small> ����ˤϤɤ����ޤ����� ������ʥ����� <br />
-<a href="#item4.2">4.2</a>) ������줿�ơ��֥롢����ǥå������ǡ����١���������ӡ��桼����ɤΤ褦�ˤ��Ƹ��Ĥ��Ф��ޤ�����<br />
-<a href="#item4.3">4.3</a>) �����Υǡ��������פ��ѹ�����ˤϤɤ����ޤ�����<br />
-<a href="#item4.4">4.4</a>) �������ơ��֥롢�ǡ����١����κ��祵�����ϡ�<br />
-<a href="#item4.5">4.5</a>) ����Ū�ʥƥ����ȥե�����Υǡ�������¸����ˤϡ��ǡ����١����Υǥ��������̤ϤɤΤ��餤ɬ�פǤ�����<br />
-<a href="#item4.6">4.6</a>) �����꤬�٤��ΤϤʤ��Ǥ��礦�� �ʤ�������ǥå������Ȥ��ʤ��ΤǤ��礦����<br />
-<a href="#item4.7">4.7</a>) �����ꥪ�ץƥ��ޥ��������ɤΤ褦�˥������ɾ�����Ƥ����򡢸���ˤϤɤ����ޤ�����<br />
-<a href="#item4.8">4.8</a>) ����ɽ���Ǥθ�������ʸ���Ⱦ�ʸ���Ȥ���̤��ʤ�����ɽ�������ϤɤΤ褦�˼¸����ޤ�������ʸ���Ⱦ�ʸ���Ȥ���̤��ʤ������Τ���Υ���ǥå����ϤɤΤ褦�˻Ȥ��ޤ�����<br />
-<a href="#item4.9">4.9</a>) ���������ǡ��ե�����ɤ�
-<small>NULL</small> �Ǥ��뤳�Ȥ򸡽Ф���ˤϤɤ����ޤ�����
-<small>NULL</small>�β�ǽ���Τ����Τ�ɤΤ褦�����Ϣ��Ǥ��ޤ���? 
-�ե�����ɤ�<small>NULL</small>���ɤ����ǤɤΤ褦�˥����Ȥ��Ǥ��ޤ�����<br />
-<a href="#item4.10">4.10</a>) ����������ʸ�����Τ��줾��ΰ㤤�ϲ��Ǥ�����<br />
-<a href="#item4.11.1">4.11.1</a>) ����(serial)����ư��ʬ�ե�����ɤϤɤΤ褦�ˤĤ���ޤ�����<br />
-<a href="#item4.11.2">4.11.2</a>) <small>SERIAL</small>�ǡ�����������������ͤϡ��ɤ�����������ޤ�����<br />
-<a href="#item4.11.3">4.11.3</a>) <i>currval()</i> ��¾�Υ桼���Ȥζ�����֤˴٤뤳�ȤϤʤ��Ǥ�����<br />
-<a href="#item4.11.4">4.11.4</a>) �ȥ�󥶥���������Ǥ����Ȥ��ˤ⤦�����ɥ��������ֹ椬�Ȥ��ʤ��ΤϤʤ��Ǥ������������󥹡�SERIAL�����˶���������ΤϤʤ��Ǥ�����<br />
-<a href="#item4.12">4.12</a>) <small>OID</small> �Ȥϲ��Ǥ����� <small>TID</small> �Ȥϲ��Ǥ�����<br />
-<a href="#item4.13">4.13</a>) ���顼��å����� <i>"ERROR: Memory exhausted in AllocSetAlloc()"</i>���Ф�ΤϤʤ��Ǥ�����<br />
-<a href="#item4.14">4.14</a>) �ɤΥС������� PostgreSQL �����餻�Ƥ���Τ���Ĵ�٤�ˤϤɤ����ޤ�����<br />
-<a href="#item4.15">4.15</a>) ���ߤλ��郎�ǥե���ȤȤʤ�褦�ʥ����ϤɤΤ褦�ˤĤ���ޤ�����<br />
-<a href="#item4.16">4.16</a>) <i>����</i>���(<i>outer</i> join)�ϤɤΤ褦�˼¸����ޤ���?<br />
-<a href="#item4.17">4.17</a>) ʣ���Υǡ����١�����Ȥ��䤤��碌�ϤɤΤ褦�ˤ���ФǤ��ޤ�����<br />
-<a href="#item4.18">4.18</a>) �ؿ�����ʣ���Υ����ޤ��ϥ������֤��ˤϤɤ����ޤ�����<br />
-<a href="#item4.19">4.19</a>)  PL/PgSQL �δؿ�����ǰ���ơ��֥�˥�����������Ȥ����ɤ����� "relation with OID ##### does not exist" �Ȥ������顼��������ΤǤ��礦����<br />
-<a href="#item4.19">4.20</a>) �ɤΤ褦�ʥ�ץꥱ�������Υ���塼����󤬤���ޤ�����<br />
-<a href="#item4.20">4.21</a>) �ơ��֥�ȥ�����̾���������꡼�����ǧ��
-����ʤ��ΤϤʤ��Ǥ����� �ʤ���ʸ����(����ԥ��饤��)�ϲ�¸����ʤ��ΤǤ���?<br />
+<a href="#item3.1">3.1</a>) どうすれば、PostgreSQLを<i>/usr/local/pgsql</i> 以外の場所にインストールできますか？<br />
+<a href="#item3.2">3.2</a>) 他のホストからの接続はどのように制御しますか？<br />
+<a href="#item3.3">3.3</a>) より良い性能を得るためには、データベース・エンジンをどのように調整しますか？<br />
+<a href="#item3.4">3.4</a>) どのようなデバグ機能が使えますか？<br />
+<a href="#item3.5">3.5</a>) 接続しようとするときに <i>'Sorry, too many clients'</i> が出るのはなぜですか？<br />
+<a href="#item3.6">3.6</a>) PostgreSQLのアップグレードの手順はどうなりますか？<br />
+<a href="#item3.7">3.7</a>) ハードウェアにはどのようなコンピュータを使えばよいですか？<br />
 
-<h2 align="center">���ܸ�˴ؤ������</h2>
 
-<a href="#item5.1">5.1</a>) ���ܸ줬���ޤ������ʤ��ΤϤʤ��Ǥ�����<br />
-<a href="#item5.2">5.2</a>) psql ��Windows���饢�����������Ȥ��ˡ����ܸ줬ʸ����������ΤǤ�����<br />
+<h2 align="center">操作上の質問</h2>
+
+<a href="#item4.1">4.1</a>) 最初のいくつかのロウのみを <small>select</small> するにはどうしますか？ ランダムなロウ？ <br />
+<a href="#item4.2">4.2</a>) 定義されたテーブル、インデックス、データベース、および、ユーザをどのようにして見つけ出しますか？<br />
+<a href="#item4.3">4.3</a>) カラムのデータタイプを変更するにはどうしますか？<br />
+<a href="#item4.4">4.4</a>) ロウ、テーブル、データベースの最大サイズは？<br />
+<a href="#item4.5">4.5</a>) 一般的なテキストファイルのデータを保存するには、データベースのディスク容量はどのくらい必要ですか？<br />
+<a href="#item4.6">4.6</a>) クエリが遅いのはなぜでしょう？ なぜ、インデックスが使われないのでしょうか？<br />
+<a href="#item4.7">4.7</a>) クエリオプティマイザが、どのようにクエリを評価していかを、見るにはどうしますか？<br />
+<a href="#item4.8">4.8</a>) 正規表現での検索や大文字と小文字とを区別しない正規表現検索はどのように実現しますか？大文字と小文字とを区別しない検索のためのインデックスはどのように使いますか？<br />
+<a href="#item4.9">4.9</a>) クエリの中で、フィールドが
+<small>NULL</small> であることを検出するにはどうしますか？
+<small>NULL</small>の可能性のあるものをどのようすれば連結できますか? 
+フィールドが<small>NULL</small>かどうかでどのようにソートができますか？<br />
+<a href="#item4.10">4.10</a>) いろいろな文字型のそれぞれの違いは何ですか？<br />
+<a href="#item4.11.1">4.11.1</a>) 通番(serial)／自動増分フィールドはどのようにつくりますか？<br />
+<a href="#item4.11.2">4.11.2</a>) <small>SERIAL</small>データ型に挿入される値は、どうすれば得られますか？<br />
+<a href="#item4.11.3">4.11.3</a>) <i>currval()</i> は他のユーザとの競合状態に陥ることはないですか？<br />
+<a href="#item4.11.4">4.11.4</a>) トランザクションが中断したときにもういちどシーケンス番号が使われないのはなぜですか？シーケンス／SERIALカラムに空きがあるのはなぜですか？<br />
+<a href="#item4.12">4.12</a>) <small>OID</small> とは何ですか？ <small>TID</small> とは何ですか？<br />
+<a href="#item4.13">4.13</a>) エラーメッセージ <i>"ERROR: Memory exhausted in AllocSetAlloc()"</i>が出るのはなぜですか？<br />
+<a href="#item4.14">4.14</a>) どのバージョンの PostgreSQL を走らせているのかを調べるにはどうしますか？<br />
+<a href="#item4.15">4.15</a>) 現在の時刻がデフォルトとなるようなカラムはどのようにつくりますか？<br />
+<a href="#item4.16">4.16</a>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<br />
+<a href="#item4.17">4.17</a>) 複数のデータベースを使う問い合わせはどのようにすればできますか？<br />
+<a href="#item4.18">4.18</a>) 関数から複数のロウまたはカラムを返すにはどうしますか？<br />
+<a href="#item4.19">4.19</a>)  PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation with OID ##### does not exist" というエラーを受け取るのでしょうか？<br />
+<a href="#item4.19">4.20</a>) どのようなレプリケーションのソリューションがありますか？<br />
+<a href="#item4.20">4.21</a>) テーブルとカラムの名前がクエリーの中で認識
+されないのはなぜですか？ なぜ大文字化(キャピタライズ)は温存されないのですか?<br />
+
+<h2 align="center">日本語に関する質問</h2>
+
+<a href="#item5.1">5.1</a>) 日本語がうまく扱えないのはなぜですか？<br />
+<a href="#item5.2">5.2</a>) psql でWindowsからアクセスしたときに、日本語が文字化けするのですが？<br />
 
 
 <hr />
 
-<h2 align="center">����Ū�ʼ���</h2>
+<h2 align="center">一般的な質問</h2>
 
-<h4 id="item1.1">1.1</a>) PostgreSQL�Ȥϲ��Ǥ����� ���θƤ����ϡ�</h4>
+<h4 id="item1.1">1.1</a>) PostgreSQLとは何ですか？ その呼び方は？</h4>
 
-    <p>PostgreSQL��<i>Post-Gres-Q-L</i>(�ݥ��ȡ����쥹�����塼������) 
-    ��ȯ�����ޤ��������ä���Ǥ�ñ��� <i>Postgres</i> �ȸƤФ�뤳�Ȥ�
-    ����ޤ�����"PostgreSQL"��ɤ�ȯ�����뤫���ˤʤ�ͤΤ���ˡ�
+    <p>PostgreSQLは<i>Post-Gres-Q-L</i>(ポスト・グレス・キュー・エル) 
+    と発音しますが、会話の中では単純に <i>Postgres</i> と呼ばれることも
+    あります。（"PostgreSQL"をどう発音するか気になる人のために、
      <a href="http://www.postgresql.org/files/postgresql.mp3">
-    �����ե�����</a>���Ѱդ��Ƥ���ޤ���</p>
+    音声ファイル</a>を用意してあります。</p>
 
-    <p>PostgreSQL �ϥ��֥�������-��졼����ʥ�ǡ����١��������ƥ�ǡ�
-    ����Ū�ʾ��ѥǡ����١��������ƥ�ˡ�������<small>DBMS</small>������
-    ��˸�����褦�ʲ��ɤ��ܤ��줿��ħ��ͭ���ޤ���PostgreSQL�ϡ�̵����
-    �����ʥ����������ɤ�������뤳�Ȥ��Ǥ��ޤ���</p>
+    <p>PostgreSQL はオブジェクト-リレーショナルデータベースシステムで、
+    伝統的な商用データベースシステムに、次世代<small>DBMS</small>システ
+    ムに見られるような改良が施された特徴を有します。PostgreSQLは、無料で
+    完全なソースコードを手に入れることができます。</p>
 
-    <p>PostgreSQL �γ�ȯ�ϡ��ۤȤ�ɤ���������ˤҤ����ä��ܥ��ƥ�����
-    ��ȯ�Ԥˤ�äơ����󥿡��ͥåȤ��̤������ߥ�˥��������ˤ�äƹԤ�
-    ��Ƥ��ޤ������ߥ�˥ƥ��ˤ��ץ��������ȤǤ��뤿�ᡢ�ɤδ�Ȥ�����
-    �⤦���ޤ��󡣳�ȯ�˻��ä�������С�<a href=
+    <p>PostgreSQL の開発は、ほとんどが、世界中にひろがったボランティアの
+    開発者によって、インターネットを通したコミュニケーションによって行わ
+    れています。コミュニティによるプロジェクトであるため、どの企業の制御
+    もうけません。開発に参加したければ、<a href=
     "http://www.postgresql.org/docs/faqs.FAQ_DEV.html">
     http://www.postgresql.org/docs/faqs.FAQ_DEV.html</a>
-    �ˤ��볫ȯ�Ԥ�FAQ�򸫤Ƥ���������
+    にある開発者のFAQを見てください。
     </p>
 
-<h4 id="item1.2">1.2</a>) ï�� PostgreSQL �򥳥�ȥ����뤷�Ƥ��ޤ�����</h4>
+<h4 id="item1.2">1.2</a>) 誰が PostgreSQL をコントロールしていますか？</h4>
 
-    <p>PostgreSQL�����֡�����Ѱ��񡢤��뤤�ϡ�����ȥ�����򤹤��Ҥ�
-      õ�����Ȥ��Ƥ⡢���ᤶ��򤨤� ---- ¸�ߤ��ʤ��ΤǤ����桹�ϡ��濴
-      �Ȥʤ륳�ߥåƥ���CVS���ߥå�������ޤ����������Υ��롼�פϥ���
-      �ȥ����뤹�뤿��Ȥ������⡢������Τ�ΤǤ��������Ǥϡ��ץ�����
-      ���Ȥϡ�����Ǥ⻲�ä��Ǥ��볫ȯ�Ԥȥ桼���Υ��ߥ�˥ƥ��ˤ������
-      �դ����ޤ����ɼԤ����ʤ���Фʤ�ʤ����Ȥϡ��᡼��󥰥ꥹ�Ȥ�
-      ���֥����饤�֤��ơ������� ���ä��뤳�ȤǤ�����<a
+    <p>PostgreSQLの門番、中央委員会、あるいは、コントロールをする会社を
+      探そうとしても、諦めざるをえず ---- 存在しないのです。我々は、中心
+      となるコミッティとCVSコミッタを持ちますが、これらのグループはコン
+      トロールするためというよりも、管理上のものです。ここでは、プロジェ
+      クトは、だれでも参加ができる開発者とユーザのコミュニティにより方向
+      付けられます。読者がやらなければならないことは、メーリングリストを
+      サブスクライブして、議論に 参加することです。（<a
       href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">Developer's
-      FAQ</a>�ˤϡ�Postgres��ȯ�˲ä�����ˤĤ��Ƥξ��󤬤���ޤ�����</p>
+      FAQ</a>には、Postgres開発に加わり方についての情報があります。）</p>
 
 
-<h4 id="item1.3">1.3</a>) PostgreSQL ������Ϥɤ��ʤäƤޤ�����</h4>
+<h4 id="item1.3">1.3</a>) PostgreSQL の著作権はどうなってますか？</h4>
 
-    <p> PostgreSQL �ϲ���������˽����ޤ���</p>
-    <p> PostgreSQL�ϸŤ������BSD�饤���󥹤β������ۤ���Ƥ��ޤ�������
-      �ϴ���Ū�ˤϡ����ѼԤ����Υ����ɤ򹥤���������Ѥ��뤳�Ȥ��������
-      ���ޤ������¤�����Ȥ���С����Υ��եȥ�������ȼ�������ʤ�����ˤ�
-      ���Ƥ�ˡŪ����Ǥ��桹����碌�뤳�Ȥ��Ǥ��ʤ��Ȥ������ȤǤ���
-      �ޤ����������ɽ�������Υ��եȥ������Τ��٤Ƥ�ʣ����ɽ�����뤳��
-      ��ɬ�פǤ����ʲ��ˡ��桹���ºݤ˻ȤäƤ���BSD���ѵ�����򼨤��ޤ���
+    <p> PostgreSQL は下記の著作権に従います。</p>
+    <p> PostgreSQLは古くからのBSDライセンスの下で配布されています。それ
+      は基本的には、利用者がそのコードを好き勝手に利用することが許されて
+      います。制限があるとすれば、このソフトウェアに伴ういかなる問題にお
+      いても法的に責任を我々に負わせることができないということです。
+      また、この著作権表示がこのソフトウェアのすべての複製に表示すること
+      も必要です。以下に、我々が実際に使っているBSD使用許諾書を示します：
 </p>
 
     <small><pre>
-    [������
-        ��ʸ�ϱѸ�Ǥ������ͤȤ��ơ���ʸ��ʻ���Ǻܤ��ޤ���
+    [訳注：
+        正文は英語です。参考として、訳文を併記掲載します。
     ]
     </pre></small>
     <p>PostgreSQL Data Base Management System</p>
@@ -190,258 +190,258 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
     MODIFICATIONS.</p>
 
     <small><pre>
-	POSTGRESQL �ǡ����١������������ƥ�
+	POSTGRESQL データベース管理システム
 
-	��ʬŪ��� (c) 1996-2007, PostgreSQL��ݳ�ȯ������
-	��ʬŪ��� (c) 1994-1996 ����ե���˥�����ܹ�
+	部分的著作権 (c) 1996-2007, PostgreSQL国際開発チーム
+	部分的著作権 (c) 1994-1996 カリフォルニア大学本校
 
 
-	  �ܥ��եȥ���������Ӥ���ʸ��켰�Ͼ嵭�����ɽ���ȡ�����ʸ��
-	����Ӥ����³����Ĥ�������Ƥ�ʣ����ź�դ���Ƥ���¤�ˤ���
-	�ơ����ѡ�ʣ����������������դε��Ĥ򡢤����ʤ���Ū�Ǥ��äƤ⡢
-	̵���Ǥ���Ʊ�ս�̵���˹Ԥʤ��뤳�Ȥ򤳤���ǧ��ޤ���
+	  本ソフトウェアおよびその文書一式は上記の著作権表示と、この文章
+	およびこれに続く二つの段落が全ての複製に添付されている限りにおい
+	て、使用、複製、修正および配付の許可を、いかなる目的であっても、
+	無償でかつ同意書無しに行なえることをここに認めます。
 	
-	  ����ե���˥���ؤϡ������ʤ������Ԥˤ������Ƥ⡢���פβ�����
-	�ޤࡢľ��Ū������Ū�����̡��������뤤��ɬ��Ū�ˤ�����餺������
-	»���ˤĤ��ơ����Ȥ�����ե���˥���ؤ�������»���ˤĤ�������
-	������Ƥ����Ȥ��Ƥ⡢���ڤ���Ǥ���餤�ޤ���
+	  カリフォルニア大学は、いかなる当事者にたいしても、利益の壊失を
+	含む、直接的、間接的、特別、偶然あるいは必然的にかかわらず生じた
+	損害について、たとえカリフォルニア大学がこれらの損害について訴追
+	を受けていたとしても、一切の責任を負いません。
 	
-	  ����ե���˥���ؤϡ�������Ū�ˤ�������ۤ��ݾڤȡ�������Ū��
-	��Ŭ�����˴ؤ��ƤϤ�Ȥ�ꡢ�����˸¤餺�������ʤ��ݾڤ�������
-	�뤳�Ȥ��������ޤ����ʲ����Ѱդ��줿���եȥ������ϡ֤��Τޤޡפ�
-	���ܸ����Ȥ�������ե���˥���ؤϤ����ݻ����ٱ硢���������ɤ�
-	�뤤�Ͻ��������̳���餤�ޤ���
+	  カリフォルニア大学は、商用目的における暗黙の保証と、特定目的で
+	の適合性に関してはもとより、これらに限らず、いかなる保証も放棄す
+	ることを明言します。以下に用意されたソフトウェアは「そのまま」を
+	基本原理とし、カリフォルニア大学はそれを維持、支援、更新、改良あ
+	るいは修正する義務を負いません。
 
-    [������
-	����˴ؤ�����ʸ�Ͼ嵭�αѸ�ˤ��ɽ���Ǥ������ܸ����Ϥ����ޤ�
-	�������٤Ȥ��Ƥ���������
+    [訳注：
+	著作権に関する正文は上記の英語による表記です。日本語訳はあくまで
+	参考程度としてください。
     ]
     </pre></small>
 
-<h4 id="item1.4">1.4</a>) PostgreSQL�򥵥ݡ��Ȥ���ץ�åȥۡ���ϡ�</h4>
+<h4 id="item1.4">1.4</a>) PostgreSQLをサポートするプラットホームは？</h4>
 
-    <p>����Ū�ˡ��Ƕ��Unix�ߴ��ץ�åȥۡ���Ǥ����PostgreSQL���Ư��
-    ������Ϥ��Ǥ�����꡼���λ����Ǽºݤ˥ƥ��Ȥ�Ԥʤä����Ȥ����
-    �ʤ��줿�ץ�åȥۡ���ˤĤ��Ƥϥ��󥹥ȡ����������󤷤Ƥ���ޤ���
+    <p>一般的に、最近のUnix互換プラットホームであればPostgreSQLを稼働さ
+    せられるはずです。リリースの時点で実際にテストを行なったことの報告が
+    なされたプラットホームについてはインストール手引書に列挙してあります。
     </p>
 
-    <p>PostgreSQL �ϡ�Win2000 SP4, WinXP, �����ơ�Win2003 �ʤ� Microsoft
-    Windows NT�١����Υ��ڥ졼�ƥ��󥰥����ƥ�ǡ��ͥ��ƥ��֤�����ޤ���
-    ���餫����ѥå������ˤ��줿���󥹥ȡ��餬<a href= 
+    <p>PostgreSQL は、Win2000 SP4, WinXP, そして、Win2003 など Microsoft
+    Windows NTベースのオペレーティングシステムで、ネイティブに走ります。
+    あらかじめパッケージにされたインストーラが<a href= 
     "http://pgfoundry.org/projects/pginstaller">
     http://pgfoundry.org/projects/pginstaller</a>
-    �ˤ��ꡢ���ѤǤ��ޤ���MSDOS�١�����Windows�ΥС������(Win95, Win98,
-    WinMe)�Ǥϡ�Cygwin��Ȥä� Postgres �����餻�뤳�Ȥ��Ǥ��ޤ���</p>
+    にあり、利用できます。MSDOSベースのWindowsのバージョン(Win95, Win98,
+    WinMe)では、Cygwinを使って Postgres を走らせることができます。</p>
 
     <small><pre>
-    [����
-	pgInstaller �������FTP�ߥ顼�����Ȥ� win32 �ǥ��쥯�ȥ꤫����ǽ�Ǥ���
+    [訳注
+	pgInstaller の入手はFTPミラーサイトの win32 ディレクトリからも可能です。
 	    http://www.postgresql.org/mirrors-ftp.html
 
-	�ܤ����ϡ����� Windows�Ǥ˴ؤ���FAQ�������򤴤�󤯤�������
+	詳しくは、次の Windows版に関するFAQの和訳をごらんください。
 	http://old.postgresql.jp/wg/jpugdoc/FAQ_windows.ja.html
     ]
     </pre></small>
 
-    <p>���Υ����Ȥ� Novell Netware 6 �ؤΰܿ��Ǥ⤢��ޤ���
+    <p>次のサイトに Novell Netware 6 への移植版もあります。
     <a href="http://forge.novell.com">http://forge.novell.com</a>
-    �ޤ���OS/2 (eComStation) �С������ϡ�<a href=
+    また、OS/2 (eComStation) バージョンは、<a href=
     "http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F">
-    http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F</a>�ˤ���ޤ���</p>
+    http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F</a>にあります。</p>
 <br />
 
 
-<h4 id="item1.5">1.5</a>) PostgreSQL �Ϥɤ���������Ǥ��ޤ�����</h4>
+<h4 id="item1.5">1.5</a>) PostgreSQL はどこから入手できますか？</h4>
 
-    <p>Web�֥饦����ͳ���ȡ�<a href="http://www.postgresql.org/ftp/">
-    http://www.postgresql.org/ftp/</a>�����줫�顢ftp��ͳ���ȡ�
+    <p>Webブラウザ経由だと、<a href="http://www.postgresql.org/ftp/">
+    http://www.postgresql.org/ftp/</a>、それから、ftp経由だと、
     <a href="ftp://ftp.postgresql.org/pub/">
-    ftp://ftp.postgresql.org/pub/</a> ��Ȥ��ޤ���</p>
+    ftp://ftp.postgresql.org/pub/</a> を使います。</p>
 
 
-<h4 id="item1.6">1.6</a>) �ǿ��Υ�꡼���Ϥɤ�Ǥ�����</h4>
+<h4 id="item1.6">1.6</a>) 最新のリリースはどれですか？</h4>
 
-    <p>PostgreSQL �κǿ��ǤϥС������ 8.2.5 �Ǥ���</p>
-    <p>�桹�ϡ�1ǯ��˥᥸�㡼��꡼���򡢿�����ȤΥޥ��ʡ���꡼����
-    �Ԥʤ����Ȥ�ײ褷�Ƥ��ޤ���</p>
+    <p>PostgreSQL の最新版はバージョン 8.2.5 です。</p>
+    <p>我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを
+    行なうことを計画しています。</p>
 
     <p><small><pre>
-    [����
-	�С�������ֹ�� x.y.z �κǽ�� x.y ���᥸�㡼��꡼�����ֹ����
-	�������Ǹ�� z ���ޥ��ʡ���꡼�����ֹ�ˤʤ�ޤ����᥸�㡼��꡼
-	�����ֹ椬Ʊ���Ǥ���С��ǡ����١��������饹���˸ߴ���������ޤ���
+    [訳注
+	バージョン番号の x.y.z の最初の x.y がメジャーリリースの番号に相
+	当し、最後の z がマイナーリリースの番号になります。メジャーリリー
+	スの番号が同じであれば、データベース・クラスタに互換性があります。
     ]
     </pre></small></p>
 
 
-<h4 id="item1.7">1.7</a>) ���ݡ��ȤϤɤ��Ǽ������ޤ�����</h4>
+<h4 id="item1.7">1.7</a>) サポートはどこで受けられますか？</h4>
 
-    <p>PostgreSQL ���ߥ�˥ƥ���¿���Υ桼���Τ���ˡ��Żҥ᡼���ͳ�λ�
-    ����󶡤��Ƥ��ޤ����Żҥ᡼��ꥹ�Ȥ򥵥֥����饤�֤��뤿��Υᥤ��
-    �Ȥʤ륦���֥����Ȥ�
+    <p>PostgreSQL コミュニティは多くのユーザのために、電子メール経由の支
+    援を提供しています。電子メールリストをサブスクライブするためのメイン
+    となるウェブサイトは
     <a href="http://www.postgresql.org/community/lists/">
-    http://www.postgresql.org/community/lists/</a>�Ǥ������줫�顢�Ϥ��
-    �ΤǤ���� <i>general</i> �ޤ��ϡ�<i>bugs</i> �Ȥ��ä��ꥹ�Ȥ��褤��
-    ���礦��</p>
+    http://www.postgresql.org/community/lists/</a>です。これから、始める
+    のであれば <i>general</i> または、<i>bugs</i> といったリストがよいで
+    しょう。</p>
 
-    <p>�᥸�㡼��IRC �����ͥ�ϡ�Freenode (<i>irc.freenode.net</i>)��
-    <i>#postgresql</i> �Ȥ��������ͥ�Ǥ���UNIX ���ޥ�ɤǤϡ�
-    <code>irc -c '#PostgreSQL' "$USER" irc.freenode.net</code> ��Ȥä�
-    ���äǤ��ޤ���Ʊ���ͥåȥ���ˡ����ڥ����Υ����ͥ�
-    (<i>#postgresql-es</i>)���ե�󥹸�Υ����ͥ�
-    (<i>#postgresqlfr</i>)���֥饸�������ͥ� (<i>#postgresql-br</i>)
-    �⤢��ޤ����ޤ���EFNet�ˤ�PostgreSQL�����ͥ뤬����ޤ���</p>
+    <p>メジャーなIRC チャンネルは、Freenode (<i>irc.freenode.net</i>)の
+    <i>#postgresql</i> というチャンネルです。UNIX コマンドでは、
+    <code>irc -c '#PostgreSQL' "$USER" irc.freenode.net</code> を使って
+    参加できます。同じネットワークに、スペイン語のチャンネル
+    (<i>#postgresql-es</i>)、フランス語のチャンネル
+    (<i>#postgresqlfr</i>)、ブラジル語チャンネル (<i>#postgresql-br</i>)
+    もあります。また、EFNetにもPostgreSQLチャンネルがあります。</p>
 
     <p><small><pre>
-    [����:
-	  1999ǯ7��23�������ܥݥ��ȥ��쥹�桼������ά��JPUG����Ω����ޤ�����
-	JPUG ��������ȿ��ǡ�PostgreSQL�����Ѥ����ã����߶��Ϥξ�ȤʤäƤ��ޤ���  
-	(2006ǯ �����������ư(NPO)ˡ������PostgreSQL�桼����ˤʤ�ޤ�����
-	Web�����������β����̵���Ǥ�������������β���Ȳ���ι׸���
-	  ��ϱ��Ĥ���Ƥ��ޤ���)
-	�ܤ����ϡ�JPUG ��Web ������:
+    [訳注:
+	  1999年7月23日、日本ポストグレスユーザー会、略称JPUGが設立されました。
+	JPUG は非営利組織で、PostgreSQLを利用する人達の相互協力の場となっています。  
+	(2006年 特定非営利活動(NPO)法人日本PostgreSQLユーザ会になりました。
+	Web会員と正会員の会費は無料ですが、協賛会員の会費と会員の貢献で
+	  会は運営されています。)
+	詳しくは、JPUG のWeb サイト:
 		<a href="http://www.postgresql.jp/">http://www.postgresql.jp/</a>
-	�򤴤�󤯤�������
+	をごらんください。
 
-	���ܸ��IRC�����ͥ� '#PostgreSQL:*.jp' ��¸�ߤ��ޤ���
+	日本語のIRCチャンネル '#PostgreSQL:*.jp' も存在します。
     ]
     </pre></small></p>
 
-    <p>���ѥ��ݡ��Ȳ�ҤΥꥹ�Ȥ�<a
+    <p>商用サポート会社のリストは<a
     href="http://www.postgresql.org/support/professional_support">
-    http://www.postgresql.org/support/professional_support</a>�ˤ���ޤ���</p>
+    http://www.postgresql.org/support/professional_support</a>にあります。</p>
 
 
-<h4 id="item1.8">1.8</a>) �Х���ݡ��ȤϤɤΤ褦��ȯ�����ޤ�����
+<h4 id="item1.8">1.8</a>) バグレポートはどのように発信しますか？
 </h4>
 
     <p><a href=
     "http://www.postgresql.org/support/submitbug">
     http://www.postgresql.org/support/submitbug</a>
-    ��PostgreSQL �Х��ե������ˬ��Ƥ��������� �Х���ݡ��Ȥ���Ф������
-    �ˤĤ��Ƥμ���Ȼؿˤ�����ޤ���</p>
+    のPostgreSQL バグフォームを訪れてください。 バグレポートを提出する仕方
+    についての手引と指針があります。</p>
 
-    <p> �����Ʊ���� ftp ������ <A
+    <p> それと同時に ftp サイト <A
     href="ftp://ftp.postgresql.org/pub/">ftp://ftp.postgresql.org/pub/</a>
-    �ǡ��ǿ��С������� Postgres ��õ���ƤߤƤ���������</p>
+    で、最新バージョンの Postgres を探してみてください。</p>
 
 
-<h4 id="item1.9">1.9</a>) ���ΤΥХ���̤��̵����ǽ�Ϥɤ���äƸ��Ĥ��ޤ�����
+<h4 id="item1.9">1.9</a>) 既知のバグや未だ無い機能はどうやって見つけますか？
 </h4>
 
-    <p>PostgreSQL�ϳ�ĥ���줿<small>SQL:2003</small>�Υ��֥��åȤ򥵥ݡ���
-    ���ޤ����桹�Υڡ����� <A
-    href="http://www.PostgreSQL.org/docs/todo.html">TODO</a> �ꥹ�Ȥˡ�
-    ���ΤΥХ�����ǽ�侭��ײ�ˤĤ��Ƥε��Ҥ�����ޤ���</p> 
+    <p>PostgreSQLは拡張された<small>SQL:2003</small>のサブセットをサポート
+    します。我々のページの <A
+    href="http://www.PostgreSQL.org/docs/todo.html">TODO</a> リストに、
+    既知のバグや欠落機能や将来計画についての記述があります。</p> 
 
 
-    <p>��ħ���׵�����̼��Τ����줫�β�������ˤ���ޤ���</p>
+    <p>特徴の要求は普通次のいずれかの解答の中にあります：</p>
     <ul>
-   <li>���ˤ����ˤ��뵡ǽ�ϡ�
+   <li>既にここにある機能は、
     <a href="http://www.postgresql.org/docs/faqs.TODO.html">TODO</a>
-    �ꥹ�ȤǤ�</li>
-    <li>���Τ褦�ʵ�ǽ�������ޤ�Ƥ��ޤ��󡣤���ϡ�
+    リストです</li>
+    <li>次のような機能は目論まれていません。それは：
         <ul>
-        <li>SQL���ʤ˽ऺ���¸�ε�ǽ�Ƚ�ʣ������</li>
-        <li>�����ɤ�ʣ�����Ф������ơ������Τ����ʤ���ǽ</li>
-        <li>���������Τ���ʤ���ǽ</li>
+        <li>SQL規格に準ずる既存の機能と重複するもの</li>
+        <li>コードの複雑性ばかりを高めて、得るものが少ない機能</li>
+        <li>安全性が確められない機能</li>
         </ul>
     </li>
-    <li>��������ǽ�ϡ�
+    <li>新しい機能は、
     <a href="http://www.postgresql.org/docs/faqs.TODO.html">TODO</a>
-    �Υꥹ�Ȥ�</li>�ä������ޤ���
+    のリストに</li>加えられられます。
     </ul>
     
-    <p>�桹�ϡ�PostgreSQL �˴ؤ��ơ��Żҥ᡼���ľ���б�����
+    <p>我々は、PostgreSQL に関して、電子メールで直接対応して
     <a href="http://www.postgresql.org/docs/faqs.TODO.html">TODO</a>
-    �ꥹ�Ȥ�ǿ��˹������Ƥ椯�ۤ���������Ū�Ǥ��뤳�Ȥ��ΤäƤ��ޤ�
-    �Τǡ��Х����ץ����ƥ�ϻȤ��ޤ���
-    ���¤ˡ����Υ��եȥ���������ǥХ��Ϥ���ۤ�Ĺ���Ϥ�³���ޤ��󤷡�
-    ¿���Υ桼���˱ƶ�����Х�����ޤ˽�������ޤ���Postgres�Υ�꡼��
-    �ǡ����٤Ƥ��ѹ������������������ơ����������Τꤿ����С�
+    リストを最新に更新してゆくほうがより効果的であることを知っています
+    ので、バグ追跡システムは使いません。
+    現実に、このソフトウェアの中でバグはそれほど長くはい続けませんし、
+    多くのユーザに影響するバグは早急に修正されます。Postgresのリリース
+    で、すべての変更点、改良点、そして、修正点を知りたければ、
     <a href="http://www.postgresql.org/developer/sourcecode/">CVS</a>
-    �Υ�����å������򸫤Ƥ�����������꡼���Ρ��Ȥˤ��������Υ��եȥ�����
-    �˲ä���줿���٤Ƥ��ѹ��������夵��Ƥ��ޤ���</p>
+    のログメッセージを見てください。リリースノートにさえ、このソフトウェア
+    に加えられたすべての変更点は網羅されていません。</p>
 
 
-<h4 id="item1.10">1.10</a>) �ɤΤ褦��ʸ�񤬤���ޤ�����</h4>
+<h4 id="item1.10">1.10</a>) どのような文書がありますか？</h4>
 
-    <p> ���դ���ˡ������Ĥ��Υޥ˥奢��ȥ���饤�󡦥ޥ˥奢��(�ޥ˥�
-    ���롦�ڡ���)����Ӥ����Ĥ��ξ����ʥƥ������꤬�ޤޤ�ޤ���
-    <i>/doc</i>�ǥ��쥯�ȥ�򤴤�󤯤��������ޤ����ޥ˥奢��ϡ�<A
+    <p> 配付の中に、いくつかのマニュアルとオンライン・マニュアル(マニュ
+    アル・ページ)およびいくつかの小さなテスト例題が含まれます。
+    <i>/doc</i>ディレクトリをごらんください。また、マニュアルは、<A
     href="http://www.postgresql.org/docs/">
-http://www.postgresql.org/docs/</a>�ǥ���饤��Ǥ�����Ǥ��ޤ���
+http://www.postgresql.org/docs/</a>でオンラインでも閲覧できます。
     </p>
 
 
     <p><small><pre>
-    [����:
-	JPUG ʸ�񡦽��Ҵ�Ϣʬ�ʲ���������줿�ޥ˥奢��⤢��ޤ���
+    [訳注:
+	JPUG 文書・書籍関連分科会で翻訳されたマニュアルもあります。
 		<a href="http://www.postgresql.jp/document/pg825doc/">
 	http://www.postgresql.jp/document/pg825doc/</a>
-	����ץ쥹���顢
+	インプレスから、
 	<a href="http://home.impress.co.jp/reference/2108.htm">
-	PostgreSQL���ե������ޥ˥奢��</a>�Ȥ��ƽ��Ǥ���Ƥ��ޤ���
+	PostgreSQLオフィシャルマニュアル</a>として出版されています。
 
     ]
     </pre></small></p>
 
 
-    <p>����饤��ǻ��ȤǤ��� PostgreSQL ���ܤ�2������ޤ���<a href=
+    <p>オンラインで参照できる PostgreSQL の本も2冊あります。<a href=
     "http://www.postgresql.org/docs/books/awbook.html">
     http://www.postgresql.org/docs/books/awbook.html</a>
 
     <p><small><pre>
-    [����:
-	�����ܤϡ�JPUG<a href="http://www.postgresql.jp/wg/psqltrans/">��PostgreSQL Book����ʬ�ʲ��
-	</a>���������졢�ԥ����󤫤�<a href="http://www.seshop.com/detail.asp?pid=2587">
-	�֤Ϥ���Ƥ�PostgreSQL��</a>�Ȥ��ƽ��Ǥ���Ƥ��ޤ���
+    [訳注:
+	この本は、JPUG<a href="http://www.postgresql.jp/wg/psqltrans/">「PostgreSQL Book翻訳分科会」
+	</a>で翻訳され、ピアソンから<a href="http://www.seshop.com/detail.asp?pid=2587">
+	「はじめてのPostgreSQL」</a>として出版されています。
     ]
     </pre></small></p>
 
-    ����ӡ� <a href=
+    および、 <a href=
     "http://www.commandprompt.com/ppbook/">
-    http://www.commandprompt.com/ppbook/</a>�Ǥ���
+    http://www.commandprompt.com/ppbook/</a>です。
 
     <p><small><pre>
-    [����:
-	ˮ����<a href="http://www.oreilly.co.jp/books/4873111021/">�ּ��� PostgreSQL��
-	</a>�����饤�꡼������Ǥ���Ƥ��ޤ���
+    [訳注:
+	邦訳は<a href="http://www.oreilly.co.jp/books/4873111021/">「実践 PostgreSQL」
+	</a>がオライリーから出版されています。
     ]
     </pre></small></p>
   
-    ������ǽ�ʽ��Ҥ���Ͽ�ϡ�<a href=
+    購入可能な書籍の目録は、<a href=
     "http://www.postgresql.org/docs/books/">http://www.postgresql.org/docs/books/</a>
-    �ˤ���ޤ���
+    にあります。
 
-    PostgreSQL ���Ѿ��󵭻��⡢<a href=
+    PostgreSQL 技術情報記事も、<a href=
     "http://www.postgresql.org/docs/techdocs">http://www.postgresql.org/docs/techdocs</a>
-    �ˤ���ޤ���</p>
+    にあります。</p>
 
     <p><small><pre>
-    [����:
-	���ܸ�ν������ˤĤ��Ƥϡ�����PostgreSQL�桼����Ρ�<A
+    [訳注:
+	日本語の書籍等については、日本PostgreSQLユーザ会の、<A
 	href="http://www.postgresql.jp/PostgreSQL/references.html">http://www.postgresql.jp/PostgreSQL/references.html</a>
-	�⤴��󤯤�������
+	もごらんください。
     ]
     </pre></small></p>
 
-    <p> ���ޥ�ɥ饤��Υ��饤����ȥץ������<i>psql</i> �ˤ⡢����
-    �黻�ҡ��ؿ������󡢤���¾�ξ����Ĵ�٤뤿��ˡ������餷�� \d ���ޥ��
-    �������Ĥ�����ޤ���  \? �����Ϥ�������Ѳ�ǽ�ʥ��ޥ�ɤ�ɽ������ޤ���</p>
+    <p> コマンドラインのクライアントプログラム<i>psql</i> にも、型、
+    演算子、関数、集約、その他の情報を調べるために、素晴らしい \d コマンド
+    がいくつかあります。  \? を入力すると利用可能なコマンドが表示されます。</p>
 
-    <p> �桹�� Web �����Ȥˤϡ������������ʸ�񤬤���ޤ���</p>
+    <p> 我々の Web サイトには、さらに沢山の文書があります。</p>
 
 
-<h4 id="item1.11">1.11</a>) <small>SQL</small> �Ϥɤ�����гؤ٤ޤ�����</h4>
+<h4 id="item1.11">1.11</a>) <small>SQL</small> はどうすれば学べますか？</h4>
 
-    <p>�ޤ��� �嵭�ǽҤ٤� PostgreSQL �ˤĤ��Ƥ��ܤ��ɤळ�Ȥ�Ƥ���Ƥ���������
+    <p>まず、 上記で述べた PostgreSQL についての本を読むことを検討してください。
     <i>The Practical SQL Handbook</i>, Bowman Judith S. et al.,
-    Addison-Wesley ��¿���Υ桼���˹�ɾ�Ǥ��� �ۤ��Ǥϡ�<i>The Complete
-    Reference SQL</i >, Groff et al., McGraw-Hill �⹥ɾ�Ǥ���</p>
+    Addison-Wesley も多くのユーザに好評です。 ほかでは、<i>The Complete
+    Reference SQL</i >, Groff et al., McGraw-Hill も好評です。</p>
 
 
-    <p>�����餷�������ϡ�<a href=
+    <p>素晴らしい手引書は、<a href=
     <ul>
     <li> <a href="http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm</a>
     </li>
@@ -456,218 +456,218 @@ http://www.postgresql.org/docs/</a>�ǥ���饤��Ǥ�����Ǥ��ޤ���
     "http://mysite.verizon.net/Graeme_Birchall/id1.html">http://mysite.verizon.net/Graeme_Birchall/id1.html</a>
     </li>
     </ul>
-    �ˤ���ޤ���</p>
+    にあります。</p>
 
 
     <p><small><pre>
-    [����:
-	 ����PostgreSQL�桼��������ܸ�λ���ʸ���ξҲ�ڡ���
+    [訳注:
+	 日本PostgreSQLユーザ会の日本語の参考文献の紹介ページ
 		<a href="http://www.postgresql.jp/PostgreSQL/references.html">
 http://www.postgresql.jp/PostgreSQL/references.html</a>
-	������ޤ���
-	 ��ƣľʸ��Ρֽ鿴�Ը��Σģ��߷����硦�ӣѣ����绲�ͽ�Ҳ�פΥ����ʡ�
+	があります。
+	 近藤直文氏の「初心者向のＤＢ設計入門・ＳＱＬ入門参考書紹介」のコーナー
 		<a href="http://www.shonan.ne.jp/~nkon/ipsql/books_SQL.html">http://www.shonan.ne.jp/~nkon/ipsql/books_SQL.html</a>
-	������ޤ�(���Ť�2000ǯ��)��
-	 �����ѱѻ�Ρ�PostgreSQL���ܸ�ޥ˥奢���
+	があります(やや古い2000年版)。
+	 堀田倫英氏の「PostgreSQL日本語マニュアル」
 		<a href="http://www.net-newbie.com/">http://www.net-newbie.com/</a>
-	�Ǥϥ���饤��ޥ˥奢��θ������Ǥ��ޤ���
-	 �ݻ������׻��UNIX �ǡ����١�������
+	ではオンラインマニュアルの検索ができます。
+	 丸山不二夫氏のUNIX データベース入門
 		<a href="http://www.wakhok.ac.jp/DB/DB.html">http://www.wakhok.ac.jp/DB/DB.html</a>
-	�⥪��饤����ɤळ�Ȥ��Ǥ��ޤ���
-	 Nikkei BP IT Pro �ˤ����а�ã�׻�� <a href="http://itpro.nikkeibp.co.jp/members/ITPro/oss/20050514/160833/">PostgreSQL �����å�</a>
-	�Ǥ���󿷤��������Ȥꤢ���Ƥ��ޤ���
+	もオンラインで読むことができます。
+	 Nikkei BP IT Pro にある石井達夫氏の <a href="http://itpro.nikkeibp.co.jp/members/ITPro/oss/20050514/160833/">PostgreSQL ウォッチ</a>
+	では毎回新しい情報をとりあげています。
     ]
     </pre></small></p>
 
-<h4 id="item1.12">1.12</a>) �ѥå����󶡤����ꡢ��ȯ�����໲�ä���ˤϤɤ�����Ф褤�Ǥ�����</h4>
+<h4 id="item1.12">1.12</a>) パッチを提供したり、開発チーム参加するにはどうすればよいですか？</h4>
 
     <p><a href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">
-    �ʳ�ȯ�Ը����Ρ�Developer's FAQ</a>�򤴤�󤯤�������</p>
+    （開発者向けの）Developer's FAQ</a>をごらんください。</p>
 
 
-<h4 id="item1.13">1.13</a>) ¾��<small>DBMS</small>�����PostgreSQL�Ϥɤ��ʤΤǤ�����</h4>
+<h4 id="item1.13">1.13</a>) 他の<small>DBMS</small>と比べPostgreSQLはどうなのですか？</h4>
 
-    <p>���եȥ�������פ���ˡ�ˤϤ����Ĥ�����ޤ�����ǽ����ǽ�ȿ�������
-    ���ݡ��ȤȲ��ʤǤ���</p> 
+    <p>ソフトウェアを計る方法にはいくつかあります。機能と性能と信頼性と
+    サポートと価格です。</p> 
 
     <dl>
-      <dt> <b>��ǽ(Features)</b></dt>
+      <dt> <b>機能(Features)</b></dt>
       <dd>
-      PostgreSQL�ϡ��ȥ�󥶥�����󡢥��֥����ꡢ�ȥꥬ�����ӥ塼����
-      ���������������ȡ�����ӡ��������줿���å������ʤɡ��絬�Ͼ���
-      <small>DBMS</small>�����ĵ�ǽ��ۤȤ�ɻ��äƤ��ޤ��������
-      PostgreSQL�ϡ��桼����������Ѿ����롼�롢���줫�顢���å�������
-      ������ޥ���С������Ʊ��������ʤɡ�����<small>DBMS</small>���
-      ����碌�ʤ��褦�ʵ�ǽ�򤤤��Ĥ�������碌�Ƥ��ޤ���<br />
+      PostgreSQLは、トランザクション、サブクエリ、トリガー、ビュー、外
+      部キー整合性参照、および、洗練されたロック機構など、大規模商用
+      <small>DBMS</small>が持つ機能をほとんど持っています。さらに
+      PostgreSQLは、ユーザ定義型、継承、ルール、それから、ロック競合を縮
+      小するマルチバージョン同時性制御など、商用<small>DBMS</small>も持
+      ち合わせないような機能をいくつか持ち合わせています。<br />
 
       </dd>
 
-      <dt> <b>��ǽ(Performance)</b></dt>
+      <dt> <b>性能(Performance)</b></dt>
       <dd>
-      PostgreSQL��¾�ξ��Ѥ��뤤�ϥ����ץ󥽡����Υǡ����١����ȸ߳Ѥ���
-      ǽ������ޤ��������̤ǤϤ���ᤫ�ä��ꡢ�ۤ����̤ǤϤ���٤��ä���
-      ���ޤ���¾�Υǡ����١�������٤���ǽ�ϡ��դĤ� +/-10% ���餤�Ǥ��礦��
+      PostgreSQLは他の商用あるいはオープンソースのデータベースと互角の性
+      能も持ちます。ある面ではより早かったり、ほかの面ではより遅かったり
+      します。他のデータベースに比べた性能は、ふつう +/-10% くらいでしょう。
       </dd>
 
-      <dt> <b>������(Reliability)</b></dt>
+      <dt> <b>信頼性(Reliability)</b></dt>
       <dd>
-      �桹�ϡ�<small>DBMS</small>�ο��������⤯�ʤ��ƤϤ��β��ͤ�̵����
-      �Ȥ����򤷤Ƥޤ�����ʬ�ƥ��Ȥ��ơ����ꤷ�������ɤ�Х���Ǿ��ˤ���
-      �����꡼������褦���ؤ�Ƥޤ������줾��Υ�꡼���Ͼ��ʤ��Ȥ�1
-      ����ʾ�Υ١������ƥ��Ȥ�Ԥʤ�������ޤǤΥ�꡼�������򤬡�����
-      �ǤȤ��ư��ꤷ�����Ǥʥ�꡼���Ǥ��뤳�Ȥ�ʪ��äƤ��ޤ�������ʬ��
-      �Ǥϡ�¾�Υǡ����١�������٤Ƥ�½�����ʤ����Ȥ˼�������äƤ��ޤ���
+      我々は、<small>DBMS</small>の信頼性が高くなくてはその価値が無いこ
+      とを理解してます。十分テストして、安定したコードをバグを最小にして
+      からリリースするように努めてます。それぞれのリリースは少なくとも1
+      カ月以上のベータ・テストを行ない、これまでのリリースの履歴が、製品
+      版として安定した堅固なリリースであることを物語っています。この分野
+      では、他のデータベースと比べても遜色がないことに自信を持っています。
       <br /> 
       </dd>
 
-      <dt> <b>���ݡ���(Support)</b></dt>
+      <dt> <b>サポート(Support)</b></dt>
       <dd>
-      �桹�Υ᡼��󥰥ꥹ�Ȥϡ��������뤤���ʤ�����ˤĤ��Ƥ���ؤμ�
-      �����򤷤Ƥ���롢��ȯ�Ԥ�桼�����礭�ʽ��ޤ�ؤ��������󶡤��Ƥ�
-      �ޤ����桹������β����ݾڤ��뤳�ȤϤǤ��ޤ��󤬡����ѥǡ����١�
-      ���Ǥ��äƤ��˲�褵���櫓�ǤϤ���ޤ��󡣳�ȯ�Ԥ䡢�桼������
-      �ߥ�˥ƥ����ޥ˥奢���ࡢ����ˡ������������ɤʤɤ�ľ�ܥ���������
-      ���뤳�Ȥˤ�äơ�PostgreSQL�Υ��ݡ��Ȥϡ�¾��<small>DBMS</small>
-      ���ݡ��Ȥ���ͥ�줿��ΤȤʤäƤ��ޤ�������˾�������ơ�������ξ�
-      �ѥ��ݡ��Ȥʤɤ⤢��ޤ���<a href="#item1.7">FAQ1.7��</a>�򤴤�󤯤�
-      �����ˡ�
+      我々のメーリングリストは、遭遇するいかなる問題についても解決への手
+      助けをしてくれる、開発者やユーザの大きな集まりへの接点を提供してい
+      ます。我々は問題の解決を保証することはできませんが、商用データベー
+      スであっても常に解決されるわけではありません。開発者や、ユーザ・コ
+      ミュニティ、マニュアル類、それに、ソースコードなどへ直接アクセスで
+      きることによって、PostgreSQLのサポートは、他の<small>DBMS</small>
+      サポートよりも優れたものとなっています。御要望に答えて、事柄毎の商
+      用サポートなどもあります（<a href="#item1.7">FAQ1.7節</a>をごらんくだ
+      さい）。
       <br /> 
       </dd>
 
-      <dt> <b>����(Price)</b></dt>
+      <dt> <b>価格(Price)</b></dt>
       <dd>
-      PostgreSQL�����Ѥϡ����ѤǤ����ѤǤ⡢���٤�̵���Ǥ����嵭�˼���
-      �Ƥ���BSD��������λ��ѵ����˳���ʤ��¤ꡢPostgreSQL�Υ����ɤ���
-      ��̵���Ǿ��ʤ��Ȥ߹��ळ�Ȥ��Ǥ��ޤ���<br /> 
+      PostgreSQLの利用は、商用でも非商用でも、すべて無料です。上記に示し
+      てあるBSDスタイルの使用許諾に外れない限り、PostgreSQLのコードを制
+      限無しで商品に組み込むことができます。<br /> 
       </dd>
    </dl>
    </p>
 
-<h3 id="item1.14">1.14) PostgreSQL�Ϲ���κǿ��βƻ��֤��ѹ��򰷤��ޤ�����</h3>
+<h3 id="item1.14">1.14) PostgreSQLは国毎の最新の夏時間の変更を扱いますか？</h3>
 
-   <p>�罣��βƻ��֤��ѹ��ϡ�PostgreSQL�Υ�꡼��8.0.4�ʹ�[4+]�ȡ�����
-      ��Υ᥸�㡼��꡼�������Ȥ��� 8.1 �ˤϴޤޤ�Ƥ��ޤ������ʥ��ȥ���
-      �������ȥ�ꥢ���ѹ��ϡ�8.0.[10+], 8.1.[6+] ����ӡ����θ�Υ᥸�㡼
-      ��꡼���Τ��٤Ƥ˴ޤޤ�ޤ���8.0�������PosrgreSQL�Ǥϥ��ڥ졼�ƥ�
-      �󥰥����ƥ�Υ����ॾ����ǡ����١�����ƻ��־���Τ���˻ȤäƤ�
-      �ޤ���</p>
+   <p>合州国の夏時間の変更は、PostgreSQLのリリース8.0.4以降[4+]と、その
+      後のメジャーリリース、たとえば 8.1 には含まれています。カナダとオー
+      西部ストラリアの変更は、8.0.[10+], 8.1.[6+] および、その後のメジャー
+      リリースのすべてに含まれます。8.0より前のPosrgreSQLではオペレーティ
+      ングシステムのタイムゾーンデータベースを夏時間情報のために使ってい
+      ます。</p>
 
 <hr />
 
-<h2 align="center">�桼�������饤����Ȥμ���</h2>
+<h2 align="center">ユーザ・クライアントの質問</h2>
 
 
-<h4 id="item2.1">2.1</a>) PostgreSQL �ˤϤɤ�ʥ��󥿡��ե��������Ȥ��ޤ�����</h4>
+<h4 id="item2.1">2.1</a>) PostgreSQL にはどんなインターフェースが使えますか？</h4>
 
-    <p>PostgreSQL �Υ��󥹥ȡ���˴ޤޤ��ʪ��<small>C</small>���ȹ���
-    <small>C</small>�Υ��󥿡��ե����������Ǥ�������¾�Υ��󥿡��ե�����
-    ����Ω�����ץ��������Ȥǡ��̡��˥���������ɤ���ޤ���ʬ����뤳�Ȥǡ�
-    ���줾��γ�ȯ�����ब�ȼ��Υ�꡼���������塼�����Ĥ��Ȥ��������
-    ����</p>
+    <p>PostgreSQL のインストールに含まれる物は<small>C</small>と組込み
+    <small>C</small>のインターフェースだけです。その他のインターフェース
+    は独立したプロジェクトで、別々にダウンロードされます。分かれることで、
+    それぞれの開発チームが独自のリリーススケジュールを持つことが許されま
+    す。</p>
 
-    <p><small>PHP</small> �Τ褦�ʤ����Ĥ��Υץ�����ߥ󥰸���ϡ�
-    PostgreSQL�Υ��󥿡��ե�������ޤ�Ǥ��ޤ���Perl, <small>TCL</small>,
-    Python, �����ơ����Τۤ������Ѳ�ǽ�ʸ���Υ��󥿡��ե������ϡ�
+    <p><small>PHP</small> のようないくつかのプログラミング言語は、
+    PostgreSQLのインターフェースを含んでいます。Perl, <small>TCL</small>,
+    Python, そして、そのほかの利用可能な言語のインターフェースは、
     <a href="http://gborg.postgresql.org">http://gborg.postgresql.org</a>
-    �� <i>Drivers/Interfaces</i> �������ȥ��󥿡��ͥåȤθ����ǤߤĤ�
-    ���ޤ���
+    の <i>Drivers/Interfaces</i> の節の中とインターネットの検索でみつけ
+    られます。
     </p>
 
 
-<h4 id="item2.2">2.2</a>) PostgreSQL �� Web �ڡ�����Ϣ�Ȥ�����ˤϤɤ�ʥġ��뤬����ޤ�����</h4>
+<h4 id="item2.2">2.2</a>) PostgreSQL を Web ページと連携させるにはどんなツールがありますか？</h4>
 
-    <p> �ǡ����١�����΢�˻��� Web �ڡ����ˤĤ��Ƥ������餷���Ҳ𤬡�<br />
-    <a href="http://www.webreview.com">http://www.webreview.com</a>�ˤ���ޤ���</p>
-    <p> Web �ؤγ�ĥ�Τ���ˤϡ�PHP(<a  href="http://www.php.net">http://www.php.net/</a>)
-     ����ۤ������󥿡��ե������ȤʤäƤ��ޤ���</p>
+    <p> データベースを裏に持つ Web ページについての素晴らしい紹介が、<br />
+    <a href="http://www.webreview.com">http://www.webreview.com</a>にあります。</p>
+    <p> Web への拡張のためには、PHP(<a  href="http://www.php.net">http://www.php.net/</a>)
+     が卓越したインターフェースとなっています。</p>
 
     <p><small><pre>
-    [����:
-	  PHP�˴ؤ������ܸ�ξ���ϡ�2000ǯ4��19����ȯ­��������PHP�桼����Υ�����
+    [訳注:
+	  PHPに関する日本語の情報は、2000年4月19日に発足した日本PHPユーザ会のサイト
 		<a href="http://www.php.gr.jp/">http://www.php.gr.jp/</a>
-	���뤤�ϡ�ע�� �व��Υ�����
+	あるいは、廣川 類さんのサイト
 		<a href="http://www.geocities.jp/rui_hirokawa/php/">http://www.geocities.jp/rui_hirokawa/php/</a>
-	�ˤ��ʤ�ޤȤ���Ƥ��ޤ���
+	にかなりまとめられています。
     ]
     </pre></small></p>
 
-    <p> ������ʣ���ʾ�硢¿���οͤ� Perl ���󥿡��ե������� CGI.pm ��
-    mod_perl ��Ȥ��ޤ��� </p>
+    <p> 処理が複雑な場合、多くの人は Perl インターフェースと CGI.pm か
+    mod_perl を使います。 </p>
 
 
-<h4 id="item2.3">2.3</a>) PostgreSQL �˥���ե����롦�桼�����󥿡��ե������Ϥ���ޤ�����</h4>
+<h4 id="item2.3">2.3</a>) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？</h4>
 
 
-    <p>���Ѥȥ����ץ󥽡�����ȯ�Ԥˤ����ξ���ǡ�PostgreSQL�ˤ�¿����GUI�ġ��뤬���Ѳ�ǽ�ǡ��ܺ٤ʥꥹ�Ȥϡ�<a href="http://www.postgresql.org/docs/techdocs.54">PostgreSQL���ߥ�˥ƥ�ʸ��</a> �Ǥ���󤯤�������</p>
+    <p>商用とオープンソース開発者によるもの両方で、PostgreSQLには多くのGUIツールが利用可能で、詳細なリストは、<a href="http://www.postgresql.org/docs/techdocs.54">PostgreSQLコミュニティ文書</a> でごらんください。</p>
 
 <hr />
 
-<h2 align="center">������μ���</h2>
+<h2 align="center">管理上の質問</h2>
 
-<h4 id="item3.1">3.1</a>) �ɤΤ褦�ˤ���� <i>/usr/local/pgsql</i> �ʳ��ξ��˥��󥹥ȡ���Ǥ��ޤ�����</h4>
+<h4 id="item3.1">3.1</a>) どのようにすれば <i>/usr/local/pgsql</i> 以外の場所にインストールできますか？</h4>
 
-    <p> ��ñ����ˡ�ϡ� <i>configure</i> �����餻��Ȥ��� --prefix ���ץ���
-    �����ꤹ�뤳�ȤǤ��� </p>
-
-
-<h4 id="item3.2">3.2</a>) ¾�Υۥ��Ȥ������³�ϤɤΤ褦�����椷�ޤ�����</h4>
-
-    <p>�����ͤǤϡ�PostgreSQL �� Unix �ɥᥤ�󥽥��åȡ��ޤ��ϡ�TCP/IP��
-     ³�Υ�������ޥ��󤫤����³���������ޤ���postgresql.conf �����
-     listen_addresses ��������<b>����</b>��<i>$PGDATA/pg_hba.conf</i>
-     �ե������Ŭ�ڤ�ľ���ơ��ۥ��ȼ�Ƴ��ǧ�ڤ�ͭ���ˤ��ʤ�������ϡ�¾
-     �Υޥ��󤫤����³�Ǥ��ʤ��Ǥ��礦��</p>
+    <p> 簡単な方法は、 <i>configure</i> を走らせるときに --prefix オプショ
+    ンを指定することです。 </p>
 
 
-<h4 id="item3.3">3.3</a>) ����ɤ���ǽ�����뤿��ˤϡ��ǡ����١��������󥸥��ɤΤ褦��Ĵ�����ޤ�����</h4>
+<h4 id="item3.2">3.2</a>) 他のホストからの接続はどのように制御しますか？</h4>
+
+    <p>既定値では、PostgreSQL は Unix ドメインソケット、または、TCP/IP接
+     続のローカルマシンからの接続しか許しません。postgresql.conf の中の
+     listen_addresses を修正し、<b>かつ</b>、<i>$PGDATA/pg_hba.conf</i>
+     ファイルを適切に直して、ホスト主導型認証を有効にしないかぎりは、他
+     のマシンからは接続できないでしょう。</p>
+
+
+<h4 id="item3.3">3.3</a>) より良い性能を得るためには、データベース・エンジンをどのように調整しますか？</h4>
  
-    <p>��ǽ�����β�ǽ���Τ��ꤽ���ʼ���ΰ褬3�Ĥ���ޤ���</p>
+    <p>性能改善の可能性のありそうな主な領域が3つあります：</p>
     <dl>
-    <dt><b>��������ѹ�</b></dt>
+    <dt><b>クエリの変更</b></dt>
 
-    <dd>������������Ƥ���ɤ���ǽ�����뤳�Ȥ�ޤߤޤ���
+    <dd>クエリを修正してより良い性能を得ることを含みます：
     <ul>
-    <li>���������ʬ����ǥå�����ޤࡢ����ǥå��������</li>
-    <li>ʣ����<small>INSERT</small>�Τ�����COPY�����</li>
-    <li>ʣ����ʸ�򥰥롼�ײ�����1�ĤΥȥ�󥶥������ˤ��ƥ��ߥåȤΥ����Хإåɤ�︺</li>
-    <li>����ǥå������餫�������Υ�������Ф��Ȥ���<small>CLUSTER</small>�����</li>
-    <li>������ν��ϤΥ��֥��åȤ��֤������<small>LIMIT</small>�����</li>
-    <li>��������Ƥ��륯��������</li>
-    <li>���ץƥ��ޥ��������Τ����פ�ݻ����뤿���<small>ANALYZE</small>�����</li>
-    <li><small>VACUUM</small> �ޤ��� <i>pg_autovacuum</i> �ξ���</li>
-    <li>�礭�ʥǡ����ѹ��Τ���Ȥ��ϥ���ǥå�������</li>
+    <li>式および部分インデックスを含む、インデックスを作成</li>
+    <li>複数の<small>INSERT</small>のかわりにCOPYを使用</li>
+    <li>複数の文をグループ化し、1つのトランザクションにしてコミットのオーバヘッドを削減</li>
+    <li>インデックスからから沢山のロウを取り出すときは<small>CLUSTER</small>を使用</li>
+    <li>クエリの出力のサブセットを返すために<small>LIMIT</small>を使用</li>
+    <li>準備されているクエリを使用</li>
+    <li>オプティマイザの正確な統計を維持するために<small>ANALYZE</small>を使用</li>
+    <li><small>VACUUM</small> または <i>pg_autovacuum</i> の常用</li>
+    <li>大きなデータ変更のあるときはインデックスを削除</li>
     </ul><br/>
     <br/>
     </dd>
 
-    <dt><b>�����й���</b></dt>
+    <dt><b>サーバ構成</b></dt>
 
-    <dd><i>postgresql.conf</i>������Τ����Ĥ�����ǽ�˱ƶ����ޤ���
-    �ܤ����ϡ�<a href=
+    <dd><i>postgresql.conf</i>の設定のいくつかは性能に影響します。
+    詳しくは、<a href=
     "http://www.postgresql.org/docs/current/static/runtime-config.html">
     Administration Guide/Server Run-time Environment/Run-time
-    Configuration</a> ������ꥹ�Ȥ򤴤�󤯤�����(<a
+    Configuration</a> の全件リストをごらんください(<a
     href="http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html">
-    JPUG�����Ȥ����ܸ��ǡ������Фι���</a>)��
-    �����ơ�����Ȥ��ơ�<a
+    JPUGサイトの日本語版、サーバの構成</a>)。
+    そして、解説として、<a
     href="http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html">
     http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html</a>
-    ����ӡ� <a href="http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html">
-    http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html</a> ��
-    ����󤯤�������
+    および、 <a href="http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html">
+    http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html</a> を
+    ごらんください。
     <br/>
     <br/>
     </dd>
 
-    <dt><b>�ϡ��ɥ�����������</b></dt>
+    <dt><b>ハードウェアの選定</b></dt>
 
-    <dd>��ǽ�ˤ�����ϡ��ɥ������αƶ���
+    <dd>性能におけるハードウェアの影響は
     <a href="http://www.powerpostgresql.com/PerfList/">
-    http://www.powerpostgresql.com/PerfList/</a> �ȡ� <a
+    http://www.powerpostgresql.com/PerfList/</a> と、 <a
     href="http://momjian.us/main/writings/pgsql/hw_performance/index.html">
     http://momjian.us/main/writings/pgsql/hw_performance/index.html</a>
-    (<a href="http://www.postgresql.jp/wg/psqltrans/hw_performance_j/index.html">JPUG�����Ȥ����ܸ���</a>)
-    �˽Ҥ٤��Ƥ��ޤ���
+    (<a href="http://www.postgresql.jp/wg/psqltrans/hw_performance_j/index.html">JPUGサイトの日本語版</a>)
+    に述べられています。
     <br/>
     <br/>
     </dd>
@@ -675,103 +675,103 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
 
     <p><small><pre>
-    [����:
-      JPUG����Ĺ���Ҳ�͵����ˤ�롢�ֺ������Ǥ���PostgreSQL���塼�˥󥰡�
-      �Ȥ��������ʡ��� ThinkIT �����Ȥˤ��ꡢ�º�Ȥλ��ͤˤʤ�ޤ���
+    [訳注:
+      JPUG理事長の片岡裕生氏による、「今すぐできるPostgreSQLチューニング」
+      というコーナーが ThinkIT サイトにあり、実作業の参考になります。
     	http://www.thinkit.co.jp/free/tech/10/1/1.html
     ]
     </pre></small></p>
 
 
-<h4 id="item3.4">3.4</a>) �ɤΤ褦�ʥǥХ���ǽ���Ȥ��ޤ�����</h4>
+<h4 id="item3.4">3.4</a>) どのようなデバグ機能が使えますか？</h4>
 
-    <p>�����й����ѿ��ˤ�¿���� <code>log_*</code> �����ꡢ������ȥץ�
-    ���������פ���Ϥ��뤳�Ȥ��Ǥ����ǥХ�����ǽ��¬�ˤȤƤ������Ǥ���</p>
-
-
-<h4 id="item3.5">3.5</a>) ��³���褦�Ȥ���Ȥ��� <i>'Sorry, too many clients'</i> ���Ф�ΤϤʤ��Ǥ�����</h4>
-
-    <p> ����Ǥ����¤Ǥ��� 100 �Υǡ����١������å�����ã���Ƥ��ޤä�
-    ���ޤ��������С���Ʊ����³�Ǥ���Хå�����ɥץ������������ͤ����䤹
-    ɬ�פ�����ޤ���<i>postgresql.conf</i> �����<i>max_connections</i>
-    ���ͤ��ѹ����ƥ����Ф�Ƶ�ư���뤳�Ȥǲ�ǽ�ˤʤ�ޤ���</p>
+    <p>サーバ構成変数には多くの <code>log_*</code> があり、クエリとプロ
+    セスの統計を出力することができ、デバグと性能計測にとても便利です。</p>
 
 
-<h4 id="item3.6">3.6</a>)  PostgreSQL�Υ��åץ��졼�ɤμ��Ϥɤ��ʤ�ޤ�����</h4>
+<h4 id="item3.5">3.5</a>) 接続しようとするときに <i>'Sorry, too many clients'</i> が出るのはなぜですか？</h4>
 
-    <p>�С�������ֹ��դ������ˤˤĤ��ơ��������̤ˤĤ��Ƥβ����<a
-    href="http://www.postgresql.org/support/versioning">http://www.postgresql.org/support/versioning</a> ��
-    �����ơ����åץ��졼�ɤˤĤ��Ƥΰ���Ū�������� <a 
+    <p> 既定での制限である 100 のデータベースセッションに達してしまって
+    います。サーバーの同時接続できるバックエンドプロセスの制限値を増やす
+    必要があります。<i>postgresql.conf</i> の中の<i>max_connections</i>
+    の値を変更してサーバを再起動することで可能になります。</p>
+
+
+<h4 id="item3.6">3.6</a>)  PostgreSQLのアップグレードの手順はどうなりますか？</h4>
+
+    <p>バージョン番号付けの方針について、更新全般についての解説は<a
+    href="http://www.postgresql.org/support/versioning">http://www.postgresql.org/support/versioning</a> を、
+    そして、アップグレードについての一般的な説明は <a 
     href="http://www.postgresql.org/docs/current/static/install-upgrading.html">
     http://www.postgresql.org/docs/current/static/install-upgrading.html</a>
-    ��������������
+    をご覧ください。
     </p>
 <p><small><pre>
-[������
-   ���åץ��졼�ɤˤĤ��Ƥ������Ǥϲ����ˤ���ޤ���
+[訳注：
+   アップグレードについての和訳版は下記にあります。
   <a href="http://www.postgresql.jp/document/current/html/install-upgrading.html">http://www.postgresql.jp/document/current/html/install-upgrading.html</a>
 ]
 </pre></small></p>
 
 
 <small><pre>
-[������
-   ��ʸ�Ǥϡ����������Ƥ�<a href="http://www.postgresql.org/support/versioning">��Ω�����ڡ����˰ܤ���</a>���������Ƥ��ޤ���
+[訳注：
+   原文では、下記の内容は<a href="http://www.postgresql.org/support/versioning">独立したページに移され</a>、削除されています。
 </pre>
 
-    <p>��������ǽ���������PostgreSQL�Υ᥸�㡼��꡼���Ϥ�������ǯ��1��
-    ���ٹԤʤ��ޤ����᥸�㡼��꡼���ϡ����Ȥ��С�8.1����8.2�ؤΤ褦�ˡ�
-    �С�������ֹ��1���ܤ�2���ܤ���ʬ�����䤷�Ƥ椭�ޤ���</p>
+    <p>新しい機能を盛り込むPostgreSQLのメジャーリリースはだいたい年に1回
+    程度行ないます。メジャーリリースは、たとえば、8.1から8.2へのように、
+    バージョン番号の1番目か2番目の部分を増やしてゆきます。</p>
 
-    <p>PostgreSQL�Υ᥸�㡼��꡼�����̾�����ƥ�ơ��֥�ȥǡ�������
-    ���ե����ޥåȤ��ѹ����ޤ����������ѹ��Ϥ����Ƥ���ʣ���ʤΤǤǡ��ǡ�
-    ���ե�����θ����ߴ�����ݻ�������Ϥ��ޤ��󡣥᥸�㡼���åץ��졼��
-    �Τ���ˤϡ��ǡ����١����Υ����/������ɤ�ɬ�פˤʤ�ޤ���</p>
+    <p>PostgreSQLのメジャーリリースは通常、システムテーブルとデータの内
+    部フォーマットを変更します。これらの変更はたいていは複雑なのでで、デー
+    タファイルの後方互換性を維持したりはしません。メジャーアップグレード
+    のためには、データベースのダンプ/リロードが必要になります。</p>
 
-    <p>�ޥ��ʡ���꡼���ϡ����Ȥ��С�8.1.5 ����8.1.6�ؤΤ褦�ˡ��С�����
-    ���ֹ��3���ܤ��ͤ����䤷�ޤ���PostgreSQL������ϡ��ޥ��ʡ���꡼��
-    ���Ф��Ƥϡ��Х��ե����������Ԥʤ��ޤ��󡣤��٤ƤΥ桼���ϡ��Ǥ����
-    ���ǿ��Υޥ��ʡ���꡼���˹������٤��Ǥ������åץ��졼�ɤˤϡ���˥�
-    �������Ĥ���ΤǤ����顢PostgreSQL�Υޥ��ʡ�������꡼���Ǥϡ����ˤ�
-    ȯ�������ꡢ<a href="http://www.postgresql.org/support/security">�������ƥ�</a>�˴ط������ꡢ�ǡ������Ĥ֤��Х���������
-    �������åץ��졼�ɤΥꥹ����Ǿ��¤ˤȤɤ�ޤ����桹�Υ��ߥ�˥ƥ���
-    �ϡ����åץ��졼�ɤ���ꥹ�����⡢���åץ��졼��<i>���ʤ��ꥹ��</i>
-    �Τۤ����⤤�ȹͤ��Ƥ��ޤ���</p>
+    <p>マイナーリリースは、たとえば、8.1.5 から8.1.6へのように、バージョ
+    ン番号の3番目の値を増やします。PostgreSQLチームは、マイナーリリース
+    に対しては、バグフィクスしか行ないません。すべてのユーザは、できるだ
+    け最新のマイナーリリースに更新すべきです。アップグレードには、常にリ
+    スクがつきものですから、PostgreSQLのマイナー修正リリースでは、頻繁に
+    発生したり、<a href="http://www.postgresql.org/support/security">セキュリティ</a>に関係したり、データがつぶれるバグだけを修正
+    し、アップグレードのリスクを最小限にとどめます。我々のコミュニティで
+    は、アップグレードするリスクよりも、アップグレード<i>しないリスク</i>
+    のほうが高いと考えています。</p>
 
-    <p>�ޥ��ʡ���꡼���Υ��åץ��졼�ɤˤϥ���פȥꥹ�ȥ���ɬ�פϤʤ���
-    �ǡ����١��������Ф���ߤ��ơ����åץǡ��Ȥ��줿�Х��ʥ�򥤥󥹥ȡ�
-    �뤷�������Ф�ꥹ�����Ȥ��ޤ���</p>
+    <p>マイナーリリースのアップグレードにはダンプとリストアの必要はなく、
+    データベースサーバを停止して、アップデートされたバイナリをインストー
+    ルし、サーバをリスタートします。</p>
 <pre>
 ]
 </pre></small>
 
 
-<h4 id="item3.7">3.7</a>) �ϡ��ɥ������ˤϤɤΤ褦�ʥ���ԥ塼����Ȥ��Ф褤�Ǥ�����</h4>
+<h4 id="item3.7">3.7</a>) ハードウェアにはどのようなコンピュータを使えばよいですか？</h4>
 
-    <p>PC�ϡ��ɥ������ϤۤȤ�ɸߴ���������ޤ��Τǡ��ۤȤ�ɤοͤϡ���
-    �٤Ƥ�PC�ϡ��ɥ�������Ʊ���ʼ����Ȼפ����෹��������ޤ�������������
-    ��ϴְ㤤�Ǥ���ECC RAM��SCSI������ӡ����ʼ��ޥ����ܡ��ɤϡ��¤��ϡ�
-    �ɥ���������٤�ȡ���꿮�������⤯�������ǽ���ɤ��ΤǤ���
-    PostgreSQL �ϤۤȤ�ɤΥϡ��ɥ������ǲ�Ư���ޤ���������������ǽ����
-    �פʾ��ϡ�������Υϡ��ɥ������Υ��ץ����ˤĤ���Ĵ�����뤳�Ȥ�
-    �����Ǥ����桹�Υ᡼��󥰥ꥹ�Ⱦ�Ǥ�ϡ��ɥ��������ץ����Υȥ졼
-    �ɥ��դˤĤ��Ƶ������뤳�Ȥ��Ǥ��ޤ���</p>
+    <p>PCハードウェアはほとんど互換性がありますので、ほとんどの人は、す
+    べてのPCハードウェアが同じ品質だと思い込む傾向があります。しかし、そ
+    れは間違いです。ECC RAM、SCSI、および、高品質マザーボードは、安いハー
+    ドウェアに比べると、より信頼性が高く、より性能も良いのです。
+    PostgreSQL はほとんどのハードウェアで稼働しますが、信頼性や性能が重
+    要な場合は、使用中のハードウェアのオプションについて調査することが
+    賢明です。我々のメーリングリスト上でもハードウェアオプションのトレー
+    ドオフについて議論することができます。</p>
 
 <hr />
 
 
-<h2 align="center">����μ���</h2>
+<h2 align="center">操作上の質問</h2>
 
-<h4 id="item4.1">4.1</a>) �ǽ�ο������Τߤ� <small>SELECT</small>����ˤϤɤ����ޤ�����������ʥ�����
+<h4 id="item4.1">4.1</a>) 最初の数ロウのみを <small>SELECT</small>するにはどうしますか？ランダムなロウ？
 </h4>
 
-    <p>���ä��ο��ԤΥ�������Ф�����ˡ�����ɬ�פ����狼��С�
-    <small>SELECT</small> �ΤȤ��� <small>LIMIT</small> ��Ȥ��ޤ���
-    <small>ORDER BY</small>�˥���ǥå������ޥå�������硢�ޤä�������
-    �꤬�¹Ԥ���ʤ����Ȥ⤢��ޤ���<small>SELECT</small> �ΤȤ��˲���
-    ��ɬ�פ����Τ�ʤ���С����������Ȥ�<small>FETCH</small>���ޤ���</p>
+    <p>たったの数行のロウを取り出すために、何行必要かがわかれば、
+    <small>SELECT</small> のときに <small>LIMIT</small> を使います。
+    <small>ORDER BY</small>にインデックスがマッチした場合、まったくクエ
+    リが実行されないこともあります。<small>SELECT</small> のときに何行
+    が必要かを知らなければ、カーソルを使い<small>FETCH</small>します。</p>
 
-   <p>�����������<small>SELECT</small>����ˤϡ�����ʸ��Ȥ��ޤ��� 
+   <p>ランダムロウを<small>SELECT</small>するには、次の文を使います： 
 <pre>
     SELECT col
     FROM tab
@@ -780,36 +780,36 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 </pre>
 
 
-<h4 id="item4.2">4.2</a>) ������줿�ơ��֥롢����ǥå������ǡ����١���������ӡ��桼����ɤΤ褦�ˤ��Ƹ��Ĥ��Ф��ޤ�����<i>psql</i>�ǻȤ��Ƥ��륯�����ɽ������ˤϤɤ����ޤ�����</h4>
+<h4 id="item4.2">4.2</a>) 定義されたテーブル、インデックス、データベース、および、ユーザをどのようにして見つけ出しますか？<i>psql</i>で使われているクエリを表示するにはどうしますか？</h4>
 
-    <p><i>psql</i> ����� \dt���ޥ�ɤ�Ȥäƥơ��֥�򸫤뤳�Ȥ��Ǥ�
-    �ޤ���psql����� \? ��Ȥäơ����ޥ�ɤ����ꥹ�Ȥ�Ĵ�٤뤳�Ȥ��Ǥ���
-    ���������ǡ�<i>psql</i> �Υ����������ɤǡ��Хå�����å��女�ޥ�ɤ�
-    ���Ϥ��� <i>pgsql/src/bin/psql/describe.c</i> �ե�������ɤळ�Ȥ��
-    ���ޤ���������ˤϡ� <small>SQL</small> ���ޥ�ɤ�����������ʬ��ޤ�
-    ��ޤ����ޤ��� <i>-E</i> ���ץ������դ��� <i>psql</i> �򳫻Ϥ���ȡ�
-    ���Ϥ��줿���ޥ�ɤ�¹Ԥ��뤿��Υ������������Ϥ���褦�ˤʤ�ޤ���
-    PostgreSQL�� <small>SQL</small> ���� INFORMATION SCHEMA ���󥿡�
-    �ե��������󶡤��ޤ��Τǡ��ǡ����١����ˤĤ��Ƥξ�����䤤��碌�뤳
-    �Ȥ�Ǥ��ޤ���</p>
+    <p><i>psql</i> の中で \dtコマンドを使ってテーブルを見ることができ
+    ます。psqlの中で \? を使って、コマンドの全リストを調べることができま
+    す。一方で、<i>psql</i> のソースコードで、バックスラッシュコマンドを
+    出力する <i>pgsql/src/bin/psql/describe.c</i> ファイルを読むこともで
+    きます。その中には、 <small>SQL</small> コマンドを生成する部分も含ま
+    れます。また、 <i>-E</i> オプションを付けて <i>psql</i> を開始すると、
+    入力されたコマンドを実行するためのクエリを印字出力するようになります。
+    PostgreSQLは <small>SQL</small> 準拠の INFORMATION SCHEMA インター
+    フェースを提供しますので、データベースについての情報を問い合わせるこ
+    ともできます。</p>
 
-    <p><i>pg_</i> �ǻϤޤ륷���ƥ�ơ��֥�Ǥ⤳���򵭽Ҥ��뤳�Ȥ��Ǥ�
-    �ޤ���</p>
+    <p><i>pg_</i> で始まるシステムテーブルでもこれらを記述することができ
+    ます。</p>
     
-    <p><i>psql -l</i>��Ȥ������ƤΥǡ����١�����ꥹ�Ȥ��ޤ���</p>
+    <p><i>psql -l</i>を使うと全てのデータベースをリストします。</p>
 
-    <p>����ȡ�<i>pgsql/src/tutorial/syscat.source</i> ���ƤߤƤ���
-    �����������ˤϡ��ǡ����١����Υ����ƥ�ơ��֥뤫���������뤿���ɬ
-    �פ� <small>SELECT</small> ʸ����������ޤ���</p>
+    <p>それと、<i>pgsql/src/tutorial/syscat.source</i> を試してみてくだ
+    さい。そこには、データベースのシステムテーブルから情報を得るために必
+    要な <small>SELECT</small> 文が沢山あります。</p>
 
 
-<h4 id="item4.3">4.3</a>) �����Υǡ��������ѹ�����ˤϤɤ����ޤ�����</h4>
+<h4 id="item4.3">4.3</a>) カラムのデータ型を変更するにはどうしますか？</h4>
 
-    <p>�����Υǡ��������ѹ��� 8.0 �ʹߤǤϡ�
-    <small>ALTER TABLE ALTER COLUMN TYPE</small> ��Ȥ����Ȥˤ���ñ��
-    �ʤ�ޤ�����</p>
+    <p>カラムのデータ型の変更は 8.0 以降では、
+    <small>ALTER TABLE ALTER COLUMN TYPE</small> を使うことにより間単に
+    なりました。</p>
 
-    <p>���������ΥС������Ǥϡ��ʲ��Τ褦�ˤ��ޤ�:</p>
+    <p>それより前のバージョンでは、以下のようにします:</p>
 <pre>
     BEGIN;
     ALTER TABLE tab ADD COLUMN new_col <i>new_data_type</i>;
@@ -818,171 +818,171 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     COMMIT;
 </pre>
 
-    <p>�����Ԥʤä��Ȥ��ϡ����ä��줿�Ԥ��ȤäƤ���ǥ��������֤���
-    ���뤿���<i>VACUUM FULL tab</i>�򤷤��ۤ����ɤ����⤷��ޤ���</p>
+    <p>これを行なったときは、抹消された行が使っているディスク空間を回収
+    するために<i>VACUUM FULL tab</i>をしたほうが良いかもしれません。</p>
 
-<h4 id="item4.4">4.4</a>) �������ơ��֥롢�ǡ����١����κ��祵�����ϡ�</h4>
+<h4 id="item4.4">4.4</a>) ロウ、テーブル、データベースの最大サイズは？</h4>
 
-    <p>���¤ϰʲ��ΤȤ���Ǥ�:</p>
+    <p>制限は以下のとおりです:</p>
 <blockquote>
 <table>
-<tr><td>�ǡ����١����κ��祵����?</td><td>����̵�� (32 TB �Υǡ����١�����¸�ߤ��ޤ�)</td></tr>
-<tr><td>�ơ��֥�κ��祵����?</td><td>32 TB</td></tr>
-<tr><td>�����κ��祵����?</td><td>400 GB</td></tr>
-<tr><td>�ե�����ɤκ��祵����?</td><td>1 GB</td></tr>
-<tr><td>�ơ��֥���Ǥκ��������?</td><td>����̵��</td></tr>
-<tr><td>�ơ��֥���Ǥκ��祫����?</td><td>�����η��ˤ�ä� 250-1600</td></tr>
-<tr><td>�ơ��֥���Ǥκ��祤��ǥå�����?</td><td>����̵��</td></tr>
+<tr><td>データベースの最大サイズ?</td><td>制限無し (32 TB のデータベースも存在します)</td></tr>
+<tr><td>テーブルの最大サイズ?</td><td>32 TB</td></tr>
+<tr><td>ロウの最大サイズ?</td><td>400 GB</td></tr>
+<tr><td>フィールドの最大サイズ?</td><td>1 GB</td></tr>
+<tr><td>テーブル内での最大ロウ数?</td><td>制限無し</td></tr>
+<tr><td>テーブル内での最大カラム数?</td><td>カラムの型によって 250-1600</td></tr>
+<tr><td>テーブル内での最大インデックス数?</td><td>制限無し</td></tr>
 </table>
 </blockquote>
 
-    <p> ������󡢤����ϼºݤ�̵���¤ǤϤʤ����ǥ��������̤ȥ��꡼��
-    ����åץ��ڡ������礭���ˤ�����¤���ޤ�����ǽ�Ϥ������ͤ����Ȥ�
-    �ۤ��礭�ʻ������������ޤ���</p>
+    <p> もちろん、これらは実際は無制限ではなく、ディスク容量とメモリーや
+    スワップスペースの大きさにより制限されます。性能はこれらの値がことの
+    ほか大きな時に煽りを受けます。</p>
 
-    <p> ����ơ��֥륵������32TB�ϥ��ڥ졼�ƥ��󥰥����ƥ�ˤ�����ե�
-    ����Υ��ݡ��Ȥ�ɬ�פȤ��ޤ��󡣵���ʥơ��֥��ʣ����1GB�Υե�����
-    ��ʬ������¸����ޤ��Τǡ��ե����륷���ƥ�����¤Ͻ��פǤϤ���ޤ���
+    <p> 最大テーブルサイズの32TBはオペレーティングシステムによる巨大ファ
+    イルのサポートは必要としません。巨大なテーブルは複数の1GBのファイル
+    に分けて保存されますので、ファイルシステムの制限は重要ではありません。
     </p>
 
-    <p> �ǥե���ȤΥ֥��å���������32k�����ä��뤳�Ȥǡ�����ơ��֥륵����
-    �ȹԥ������Ⱥ��祫�����Ȥ�4�ܤˤ��뤳�Ȥ��Ǥ��ޤ����ޤ�������ơ��֥�
-    �������ϥơ��֥�ѡ��ƥ�������Ȥä����䤹���Ȥ�Ǥ��ޤ���</p> 
+    <p> デフォルトのブロックサイズを32kに増加することで、最大テーブルサイズ
+    と行サイズと最大カラム数とを4倍にすることができます。また、最大テーブル
+    サイズはテーブルパーティションを使って増やすこともできます。</p> 
 
-    <p>�ҤȤĤ����¤ϡ���2,000ʸ���ʾ��Ĺ���Υ����˥���ǥå�������
-    ���뤳�Ȥ��Ǥ��ʤ����ȤǤ��� �����ˤ⡢���Τ褦�ʥ���ǥå����ϼº�
-    ��ɬ�פ���ޤ���Ĺ��������MD5�ϥå���δؿ�����ǥå����ϰ����
-    ���ʤˤ����ݸ��ǡ��ޤ����ե�ƥ����ȤΥ���ǥå����Ǥϥ�������
-    ñ��򸡺����뤳�Ȥ��Ǥ��ޤ���</p>
+    <p>ひとつの制限は、約2,000文字以上の長さのカラムにインデックスを付
+    けることができないことです。 幸いにも、そのようなインデックスは実際
+    は必要ありません。長いカラムのMD5ハッシュの関数インデックスは一意性
+    がなによりの保険で、また、フルテキストのインデックスではカラム内の
+    単語を検索することができます。</p>
 
-<h4 id="item4.5">4.5</a>) ����Ū�ʥƥ����ȥե�����Υǡ�������¸����ˤϡ��ǡ����١����Υǥ��������̤ϤɤΤ��餤ɬ�פǤ���</h4>
+<h4 id="item4.5">4.5</a>) 一般的なテキストファイルのデータを保存するには、データベースのディスク容量はどのくらい必要です？</h4>
 
-    <p>���̤Υƥ����ȥե������ PostgreSQL �Υǡ����١�������¸����ˤϡ�
-    �������5�ܤΥǥ��������̤�ɬ�פȤ��ޤ���</p>
+    <p>普通のテキストファイルを PostgreSQL のデータベースに保存するには、
+    最大で約5倍のディスク容量を必要とします。</p>
 
 
-    <p> ����Ȥ��ơ��ƹԤ������ȥƥ����ȵ��Ҥ���� 100,000�ԤΥե������
-    �ͤ��Ƥߤޤ��礦���ƥ����Ȥ�ʸ�����ʿ��Ĺ����20�Х��ȤȲ��ꤹ��ȡ�
-    �ե�åȥե�������礭������2.8MB �Ǥ������Υǡ�����ޤ� Postgres
-    �ǡ����١����ե�������礭���ϼ��Τ褦����5.2MB�ȸ��Ѥ�뤳�Ȥ��Ǥ�
-    �ޤ��� 
+    <p> 例題として、各行に整数とテキスト記述を持つ 100,000行のファイルを
+    考えてみましょう。テキストの文字列の平均長さを20バイトと仮定すると、
+    フラットファイルの大きさは約2.8MB です。このデータを含む Postgres
+    データベースファイルの大きさは次のように約5.2MBと見積もることができ
+    ます： 
 
 <pre>
-    24 bytes: �ƥ����Υإå�(����)
-    24 bytes: ����(int)�ե�����ɤȥƥ�����(text)�ե������
-   + 4 bytes: �ڡ�����Υ��åץ�ؤΥݥ���
+    24 bytes: 各ロウのヘッダ(概算)
+    24 bytes: 整数(int)フィールドとテキスト(text)フィールド
+   + 4 bytes: ページ上のタップルへのポインタ
    ----------------------------------------
     52 bytes per row
 
-   Postgres �Υǡ����ڡ����������� 8192�Х���(8KB)�ʤΤ�:
+   Postgres のデータページサイズは 8192バイト(8KB)なので:
 
    8192 bytes per page
-   -------------------   =  146 rows per database page (�ڤ�Τ�)
+   -------------------   =  146 rows per database page (切り捨て)
      52 bytes per row
 
    100000 data rows
-   --------------------  =  633 database pages (�ڤ�夲)
+   --------------------  =  633 database pages (切り上げ)
       158 rows per page
  
   633 database pages * 8192 bytes per page  =  5,185,536 bytes (5.2 MB)
 </pre>
 
-    <p>����ǥå����ϡ�����ۤɤΥ����Хإåɤ��׵ᤷ�ޤ��󤬡�����ǥ�
-   �����դ������ǡ�����ޤ�ʾ塢����ʤ���礭���ʤ�ޤ��� </p>
-    <p><small>NULL</small>�ϥӥåȥޥåפȤ�����¸����Ƥ��ơ�����餬��
-    �����˥��ڡ�����Ȥ��ޤ���</p>
+    <p>インデックスは、これほどのオーバヘッドは要求しませんが、インデッ
+   クス付けされるデータを含む以上、それなりに大きくなります。 </p>
+    <p><small>NULL</small>はビットマップとして保存されていて、それらがわ
+    ずかにスペースを使います。</p>
 
 
-<h4 id="item4.6">4.6</a>) �����꤬�٤��ΤϤʤ��Ǥ��礦�� �ʤ�������ǥå������Ȥ��ʤ��ΤǤ��礦����</h4>
+<h4 id="item4.6">4.6</a>) クエリが遅いのはなぜでしょう？ なぜ、インデックスが使われないのでしょうか？</h4>
 
-    <p>����ǥå����ϡ����٤ƤΥ�����ǻȤ���櫓�ǤϤ���ޤ��󡣥ơ�
-    �֥뤬�Ǿ�����������礭����������Ǥ��Τ鷺���ʥѡ�����ơ����Υ���
-    �����򤹤������������ǥå����ϻȤ��ޤ�������ϥ���ǥå���������
-    ��ˤ�굯������������ʥǥ��������������ϡ��ơ��֥�򥹥ȥ졼��
-    ���ɤ�缡���������٤��ʤ뤳�Ȥ����뤫��Ǥ��� </p>
+    <p>インデックスは、すべてのクエリで使われるわけではありません。テー
+    ブルが最小サイズより大きく、クエリでそのわずかなパーセンテージのロウ
+    を選択する時だけ、インデックスは使われます。これはインデックススキャ
+    ンにより起こされるランダムなディスクアクセスは、テーブルをストレート
+    に読む順次走査よりも遅くなることがあるからです。 </p>
 
-    <p>����ǥå�����Ȥ�������ꤹ�뤿��ˡ�PostgreSQL �ϥơ��֥�ˤĤ�
-    �Ƥ����׾��������ʤ���Фʤ�ޤ��󡣤������׾���ϡ�
-    <small>VACUUM ANALYZE</small>�ޤ��ϡ�ñ�� <small>ANALYZE</small> ��Ȥ�
-    �Ƽ������뤳�Ȥ��Ǥ��ޤ������׾����Ȥäƥ��ץƥ��ޥ����ϥơ��֥��
-    ��ˤ�����������Τꡢ����ǥå�����Ȥ��٤����η�������������Ǥ�
-    �ޤ������׾���Ϻ�Ŭ�ʷ��������ˡ������Ǥ⵮�Ťʤ�Τ⤢��
-    �ޤ������׾���μ����ϡ��ơ��֥�����Ƥ��Ѥ����˷��֤��ʤ�����
-    ���Ǥ���</p>
+    <p>インデックスを使うかを決定するために、PostgreSQL はテーブルについ
+    ての統計情報を持たなければなりません。この統計情報は、
+    <small>VACUUM ANALYZE</small>または、単に <small>ANALYZE</small> を使っ
+    て収集することができます。統計情報を使ってオプティマイザはテーブルの
+    中にあるロウ数を知り、インデックスを使うべきかの決定をより正しくでき
+    ます。統計情報は最適な結合順や結合方法を決める上でも貴重なものもあり
+    ます。統計情報の収集は、テーブルの内容が変わる毎に繰返しなされるべ
+    きです。</p>
 
-    <p> ����ǥå����ϡ��̾� <small>ORDER BY</small> �����Ԥʤ�����
-    �ˤϻȤ��ޤ��󡣽缡��������³������Ū�����Ȥϡ�����ʥơ��֥��
-    ����ǥå����������������̤Ϲ�®�Ǥ���</p>
+    <p> インデックスは、通常 <small>ORDER BY</small> や結合を行なうため
+    には使われません。順次スキャンに続く明示的ソートは、巨大なテーブルの
+    インデックススキャンよりも普通は高速です。</p>
 
-    ��������<small>ORDER BY</small>���Ȥ߹�蘆�줿<small>LIMIT</small>
-    �ϡ��ơ��֥�ξ�������ʬ���֤�����ˤ��Ӥ��ӥ���ǥå�����Ȥ��Ǥ���
-    ����
+    しかし、<small>ORDER BY</small>と組み合わされた<small>LIMIT</small>
+    は、テーブルの小さな部分を返すためにたびたびインデックスを使うでしょ
+    う。
 
-    <p>�⤷�����ץƥ��ޥ������ְ�äƥ������󥷥�륹���������򤷤���
-    �Ȥ˵������ʤ���С�<CODE>SET enable_seqscan TO 'off'</CODE>�����ꤷ
-    �ơ��������⤦���ټ¹Ԥ�������ǥå���������󤬤ޤ������ʤ�®���ʤ�
-    �Ƥ��뤫�ɤ�����ߤƤ���������</p> 
+    <p>もし、オプティマイザが間違ってシーケンシャルスキャンを選択したこ
+    とに疑いがなければ、<CODE>SET enable_seqscan TO 'off'</CODE>に設定し
+    て、クエリをもう一度実行し、インデックススキャンがまちがいなく速くなっ
+    ているかどうかをみてください。</p> 
 
-    <p> <small>LIKE</small> ���뤤�� <i>~</i> �Τ褦�ʥ磻��ɥ����ɱ黻
-    �Ҥ����̤ʴĶ��Ǥ����Ȥ��ޤ���
+    <p> <small>LIKE</small> あるいは <i>~</i> のようなワイルドカード演算
+    子は特別な環境でしか使えません：
     <ul>
-    <li>����ʸ����ʸ����κǽ�ˤ����ޤ������Ȥ��С�</li>
+    <li>検索文字列が文字列の最初にききます。たとえば：</li>
 	<ul>
-	 <li><small>LIKE</small> �ѥ�����<i>%</i>�ǻϤޤ�ʤ�</li>
-	 <li><i>~</i> (����ɽ��) �ѥ������<i>^</i>�ǻϤޤ�ʤ���Фʤ�ʤ�</li>
+	 <li><small>LIKE</small> パターンが<i>%</i>で始まらない</li>
+	 <li><i>~</i> (正規表現) パターンは<i>^</i>で始まらなければならない</li>
 	</ul>
-    <li>����ʸ�����ʸ�����饹����Ϥ�뤳�ȤϤǤ��ޤ��󡣤��Ȥ��С�[a-e]��</li>
-    <li><small>ILIKE</small> �� <i>~*</i> �Τ褦����ʸ���Ⱦ�ʸ������̤�
-	�ʤ������ϻȤ��ޤ��󡣤��Τ���ꡢ����FAQ��<a
-	href="#item4.8">4.8</a>����������뼰����ǥå������Ȥ��ޤ���
+    <li>検索文字列を文字クラスから始めることはできません。たとえば、[a-e]。</li>
+    <li><small>ILIKE</small> や <i>~*</i> のような大文字と小文字を区別し
+	ない検索は使えません。そのかわり、このFAQの<a
+	href="#item4.8">4.8</a>節で説明する式インデックスが使えます。
 	</li> 
-    <li><i>initdb</i> �ˤ����Ƥϡ��ǥե���Ȥ�<i>C</i>�������뤬�Ȥ���
-	���ƤϤʤ�ޤ��󡣤�����ͳ�ϡ�C��������ʳ��Ǥϼ����礭��ʸ����
-	�Τ뤳�Ȥ��Ǥ��ʤ�����Ǥ������Τ褦�ʾ�硢<pre>LIKE</pre>����
-	�ǥ����󥰤ˤ���Ư���褦�ʡ����̤�<pre>text_pattern_ops</pre>��
-	��ǥå�����������뤳�Ȥ�Ǥ��ޤ����ޤ����������ʸ�����Υե�
-	�ƥ����ȤΥ���ǥå��������˻Ȥ����Ȥ��Ǥ��ޤ���
+    <li><i>initdb</i> においては、デフォルトで<i>C</i>ロケールが使われな
+	くてはなりません。その理由は、Cロケール以外では次に大きな文字を
+	知ることができないからです。このような場合、<pre>LIKE</pre>イン
+	デクシングにだけ働くような、特別な<pre>text_pattern_ops</pre>イ
+	ンデックスを作成することもできます。また、それを全文検索のフル
+	テキストのインデックス作成に使うことができます。
 	</li>
     </ul>
     <p>
 
 
-<h4 id="ITEM4.7">4.7</a>) �䤤��碌���ץƥ��ޥ������ɤΤ褦���䤤��碌��ɾ������Τ��򸫤�ˤϤɤ����ޤ�����</h4>
+<h4 id="ITEM4.7">4.7</a>) 問い合わせオプティマイザがどのように問い合わせを評価するのかを見るにはどうしますか？</h4>
 
-    <p>����饤��ޥ˥奢��� <small>EXPLAIN</small> �򸫤Ƥ���������</p>
+    <p>オンラインマニュアルで <small>EXPLAIN</small> を見てください。</p>
 
-<h4 id="item4.8">4.8</a>) ����ɽ���Ǥθ�������ʸ���Ⱦ�ʸ���Ȥ���̤��ʤ�����ɽ�������ϤɤΤ褦�˼¸����ޤ�������ʸ���Ⱦ�ʸ���Ȥ���̤��ʤ������Τ���Υ���ǥå����ϤɤΤ褦�˻Ȥ��ޤ�����</h4>
+<h4 id="item4.8">4.8</a>) 正規表現での検索や大文字と小文字とを区別しない正規表現検索はどのように実現しますか？大文字と小文字とを区別しない検索のためのインデックスはどのように使いますか？</h4>
 
-    <p><i>~</i>�黻�Ҥ�����ɽ���ȹ��Ԥʤ���<i>~*</i> ����ʸ���Ⱦ�ʸ��
-    ����̤��ʤ�(case-insensitive)����ɽ���ȹ��Ԥ��ޤ��� ��ʸ���Ⱦ�ʸ
-    ������̤��ʤ� <small>LIKE</small> �黻�Ҥ� <small>ILIKE</small> ��
-    �����ޤ���</p>
+    <p><i>~</i>演算子は正規表現照合を行ない、<i>~*</i> は大文字と小文字
+    を区別しない(case-insensitive)正規表現照合を行います。 大文字と小文
+    字を区別しない <small>LIKE</small> 演算子を <small>ILIKE</small> と
+    いいます。</p>
 
-    <p>��ʸ���Ⱦ�ʸ������̤��ʤ�������Ӥϼ��Τ褦��ɽ���Ǥ��롧
+    <p>大文字と小文字を区別しない等値比較は次のように表現できる：
 <pre>
     SELECT *
     FROM tab
     WHERE lower(col) = 'abc';
 </pre>
 
-    <p>ɸ�।��ǥå����ǤϻȤ�줺���������ʤ��顢�⤷��������ǥå���
-    ���ä��ʤ餽�줬�Ȥ���Ǥ��礦��</p>
+    <p>標準インデックスでは使われず、しかしながら、もし、式インデックス
+    を作ったならそれが使われるでしょう。</p>
 
 <pre>
     CREATE INDEX tabindex ON tab (lower(col));
 </pre>
 
-    <p>�嵭�Υ���ǥå�����<small>UNIQUE</small>�Ǻ������줿��硢�����
-    ����ʸ���Ⱦ�ʸ�����Ǽ�Ǥ��ޤ��������ΰ㤤��ʸ�������������Ǥ��äƤ�
-    Ʊ��ˤϤʤ�ޤ��󡣤����������ʸ���������򥫥��˳�Ǽ����ˤ�
-    <small>CHECK</small>���󤫡��ȥꥬ����ȤäƤ���������</p>
+    <p>上記のインデックスが<small>UNIQUE</small>で作成された場合、カラム
+    は大文字と小文字を格納できますが、その違いが文字ケースだけであっても
+    同一にはなりません。あえて特定の文字ケースをカラムに格納するには
+    <small>CHECK</small>制約か、トリガーを使ってください。</p>
 
 
 
-<h4 id="item4.9">4.9</a>) ���������ǡ��ե�����ɤ�<small>NULL</small> �Ǥ��뤳�Ȥ򸡽Ф���ˤϤɤ����ޤ����� <small>NULL</small> �Ǥ��뤳�Ȥ򸡽Ф���ˤϤɤ����ޤ����� �ե�����ɤ�<small>NULL</small>���ɤ����ǤɤΤ褦�˥����Ȥ��Ǥ��ޤ�����</h4>
+<h4 id="item4.9">4.9</a>) クエリの中で、フィールドが<small>NULL</small> であることを検出するにはどうしますか？ <small>NULL</small> であることを検出するにはどうしますか？ フィールドが<small>NULL</small>かどうかでどのようにソートができますか？</h4>
 
-    <p>�ʲ��Τ褦�ˡ�<small>IS NULL</small> �� <small>IS NOT
-    NULL</small>�ǡ����Υ�����ƥ��Ȥ��Ƥߤޤ���</p> 
+    <p>以下のように、<small>IS NULL</small> と <small>IS NOT
+    NULL</small>で、そのカラムをテストしてみます：</p> 
 
 <pre>
    SELECT *
@@ -990,19 +990,19 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
    WHERE col IS NULL;
 </pre>
 
-<small>NULL</small>�β�ǽ���Τ����Τ�Ϣ�뤹��ˤϡ�<i>COALESCE()</i>��
-���Τ褦�˻Ȥ��ޤ���
+<small>NULL</small>の可能性のあるものを連結するには、<i>COALESCE()</i>を
+次のように使います。
 
 <pre>
    SELECT COALESCE(col1, '') || COALESCE(col2, '')
    FROM tab
 </pre>
 
-   <p><small>NULL</small>���֤ǥ����Ȥ���ˤϡ�<small>IS NULL</small> ��
-   <small>IS NOT NULL</small> �ν����Ҥ� <small>ORDER BY</small> �����
-   �ǻȤäƤߤޤ���<i>true</i> �Τ�Τ� <i>false</i> �Τ�Τ���⤤��
-   �Ȥ����¤٤��ޤ��Τǡ�������Ǥ� NULL �ε��ܤ���̥ꥹ�Ȥξ�������
-   ����ޤ���
+   <p><small>NULL</small>状態でソートするには、<small>IS NULL</small> と
+   <small>IS NOT NULL</small> の修飾子を <small>ORDER BY</small> 句の中
+   で使ってみます。<i>true</i> のものは <i>false</i> のものよりも高い値
+   として並べられますので、次の例では NULL の記載が結果リストの上部に置
+   かれます。
 
 <pre>
    SELECT *
@@ -1011,42 +1011,42 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 </pre>
 
 
-<h4 id="item4.10">4.10</a>) ����������ʸ�����Τ��줾��ΰ㤤�ϲ��Ǥ�����
+<h4 id="item4.10">4.10</a>) いろいろな文字型のそれぞれの違いは何ですか？
 </h4>
 
 <blockquote>
 <table>
-<tr><th>��</th><th>����̾</th><th>����</th></tr>
-<tr><td>VARCHAR(n)</td><td>varchar</td><td>����Ĺ�Υ���������ꤹ�롢�ͤ�ʪ̵��</td></tr>
-<tr><td>CHAR(n)</td><td>bpchar</td><td>���ꤵ�줿����Ĺ�Ȥʤ�褦�˶��򤬵ͤ����</td></tr>
-<tr><td>TEXT</td><td>text</td><td>Ĺ�������̤ʾ�¤�̵��</td></tr>
-<tr><td>BYTEA</td><td>bytea</td><td>����Ĺ�ΥХ�������(null-byte safe)</td></tr>
-<tr><td>"char"</td><td>char</td><td>1ʸ��</td></tr>
+<tr><th>型</th><th>内部名</th><th>備考</th></tr>
+<tr><td>VARCHAR(n)</td><td>varchar</td><td>最大長のサイズを指定する、詰め物無し</td></tr>
+<tr><td>CHAR(n)</td><td>bpchar</td><td>指定された固定長となるように空白が詰められる</td></tr>
+<tr><td>TEXT</td><td>text</td><td>長さに特別な上限は無し</td></tr>
+<tr><td>BYTEA</td><td>bytea</td><td>可変長のバイト配列(null-byte safe)</td></tr>
+<tr><td>"char"</td><td>char</td><td>1文字</td></tr>
 </table>
 </blockquote>
 
-    <p> ����̾�ˤ��ܤˤ�����Τϡ������ƥࡦ����������Ĵ�٤�Ȥ��䡢���顼
-    ��å�������������Ȥ��Ǥ���</p>
+    <p> 内部名にお目にかかるのは、システム・カタログを調べるときや、エラー
+    メッセージを受け取るときです。</p>
 
-    <p> �嵭�η��Τ����ǽ�Σ��Ĥη��� "varlena" ���Ǥ�(���ʤ�����ǥ���
-    ���κǽ�Σ��Х��Ȥ��ǡ���Ĺ�ǡ�����θ�˼ºݤΥǡ�����³���ޤ�)��
-    ���Τ褦�˼ºݤζ��֤�������줿�礭�����⾯���礭���ʤ�ޤ�������
-    ����Ĺ���ͤϰ��̤����Τǡ��ǥ�������ζ��֤ϻפä����⾮�����ʤ�ޤ���</p>
+    <p> 上記の型のうち最初の４つの型は "varlena" 型です(すなわち、ディス
+    クの最初の４バイトがデータ長で、それの後に実際のデータが続きます)。
+    このように実際の空間は宣言された大きさよりも少し大きくなります。しか
+    し、長い値は圧縮されるので、ディスク上の空間は思ったよりも小さくなります。</p>
 
-    <p><small>VARCHAR(n)</small> �ϲ���Ĺ��ʸ�������¸����Τ˺�Ŭ�Ǥ�
-    ������¸�Ǥ���ʸ�����Ĺ�������¤�����ޤ���<small>TEXT</small> ��Ĺ
-    �������¤�̵��ʸ�������¸�Τ���Τ�Τǡ������ 1�����Х��ȤǤ���
-    <small>CHAR(n)</small>�ϡ�<small>VARCHAR(n)</small>��Ϳ����줿ʸ��
-    ��������¸����Τ��Ф����֥�󥯤�ͤ����Ǥ��Ĥ�Ʊ��Ĺ����ʸ�����
-    ��¸����Τ˺�Ŭ�Ǥ���<small>BYTEA</small>�ϡ���ʬŪ��
-    <small>NULL</small> �ΥХ��Ȥ�ޤ�Х��ʥ�ǡ�������¸���뤿��Τ��
-    �Ǥ��������Υ����פ�Ʊ�����餤����ǽ���������ޤ���</p>
+    <p><small>VARCHAR(n)</small> は可変長の文字列を保存するのに最適です
+    が、保存できる文字列の長さに制限があります。<small>TEXT</small> は長
+    さに制限の無い文字列の保存のためのもので、最大で 1ギガバイトです。
+    <small>CHAR(n)</small>は、<small>VARCHAR(n)</small>が与えられた文字
+    だけを保存するのに対し、ブランクを詰め込んでいつも同じ長さで文字列を
+    保存するのに最適です。<small>BYTEA</small>は、部分的に
+    <small>NULL</small> のバイトを含むバイナリデータを保存するためのもの
+    です。これらのタイプは同じくらいの性能特性をもちます。</p>
 
 
-<h4 id="item4.11.1">4.11.1</a>) ����(serial)����ư��ʬ�ե�����ɤϤɤΤ褦�ˤĤ���ޤ�����</h4>
+<h4 id="item4.11.1">4.11.1</a>) 通番(serial)／自動増分フィールドはどのようにつくりますか？</h4>
 
-    <p> PostgreSQL �� <small>SERIAL</small> �ǡ������򥵥ݡ��Ȥ��ޤ�����
-    ����˥������󥹤�ư�������ޤ������Ȥ��С�</p>
+    <p> PostgreSQL は <small>SERIAL</small> データ型をサポートします。カ
+    ラム上にシーケンスを自動作成します。たとえば、</p>
 
 <pre>
     CREATE TABLE person ( 
@@ -1054,7 +1054,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
         name TEXT 
     );
 </pre>
-    �ϼ�ưŪ�˼��Τ褦����������ޤ�:
+    は自動的に次のように翻訳されます:
 <pre>
     CREATE SEQUENCE person_id_seq;
     CREATE TABLE person ( 
@@ -1064,269 +1064,269 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 </pre>
 
     <p><small><pre>
-    [������
+    [訳注：
 	CREATE UNIQUE INDEX person_id_key ON person ( id );
-	�ϡ� 7.3 �ʹߤϼ�ưŪ�ˤϹԤʤ��ʤ��ʤ�ޤ�����
+	は、 7.3 以降は自動的には行なわれなくなりました。
     ]
     </small></pre></p>
 
-    <p>��ưŪ�ˤĤ��������֤ϡ�
+    <p>自動的につくられる通番は、
 	&lt;<i>table</i>&gt;_&lt;<i>serialcolumn</i>&gt;_<i>seq</i>
-    ��̾�դ����Ƥ��ơ�<i>table</i> �� <i>serialcolumn</i> �ϡ����줾��
-    �ơ��֥�� <small>SERIAL</small> ������̾���Ǥ���
-    ���֤ˤĤ��Ƥϡ�����饤��ޥ˥奢���<i>create_sequence</i> 
-    �򤴤�󤯤�������</p>
+    と名付けられていて、<i>table</i> と <i>serialcolumn</i> は、それぞれ
+    テーブルと <small>SERIAL</small> カラムの名前です。
+    通番については、オンラインマニュアルで<i>create_sequence</i> 
+    をごらんください。</p>
 
 
-<h4 id="item4.11.2">4.11.2</a>) <small>SERIAL</small>�ǡ�����������������ͤϡ��ɤ�����������ޤ�����</h4>
+<h4 id="item4.11.2">4.11.2</a>) <small>SERIAL</small>データ型に挿入される値は、どうすれば得られますか？</h4>
 
-    <p>�Ǥ��ñ����ˡ�ϡ�������Ƥ�줿<small>SERIAL</small>�ͤ�
-    <small>RETURNING</small>�Ȥ��Ƽ������뤳�ȤǤ���
-    <a href="#item4.11.1">4.11.1</a>������ơ��֥��Ȥ��ȼ��Τ褦��
-    �ʤ�ޤ���
+    <p>最も簡単な方法は、割り当てられた<small>SERIAL</small>値を
+    <small>RETURNING</small>として取得することです。
+    <a href="#item4.11.1">4.11.1</a>の例題テーブルを使うと次のように
+    なります。
 
 <pre>
     INSERT INTO person (name) VALUES ('Blaise Pascal') RETURNING id;
 </pre>
 
 
-<h4 id="item4.11.3">4.11.3</a>) <i>currval()</i> ��¾�Υ桼���Ȥζ�����֤˴٤뤳�ȤϤʤ��Ǥ�����</h4>
+<h4 id="item4.11.3">4.11.3</a>) <i>currval()</i> は他のユーザとの競合状態に陥ることはないですか？</h4>
 
-    <p>����Ϥ���ޤ���<i>currval()</i> �ϡ����٤ƤΥ桼���ǤϤ���ޤ�
-    �󤬡��ɼԤΥ��å�����Ϳ����줿���ߤ��ͤ��֤��ޤ��� </p>
-
-
-<h4 id="item4.11.4">4.11.4</a>) �ȥ�󥶥���������Ǥ����Ȥ��ˤ⤦�����ɥ��������ֹ椬�Ȥ��ʤ��ΤϤʤ��Ǥ������������󥹡�SERIAL�����˶���������ΤϤʤ��Ǥ�����</h4>
-
-    <p>Ʊ������������뤿��ˡ��¹���Υȥ�󥶥������ˡ�ɬ�פ˱����ƥ�
-    ��󥶥�����󤬽�λ����ޤǥ��å�����ʤ��褦���������ͤ�Ϳ���Ƥ�
-    �ޤ������Τ���ȥ�󥶥���������Ǥ������ֹ������Ƥ˥���åפ�
-    �����ޤ���</p> 
+    <p>それはありません。<i>currval()</i> は、すべてのユーザではありませ
+    んが、読者のセッションに与えられた現在の値を返します。 </p>
 
 
-<h4 id="item4.12">4.12</a>) <small>OID</small> �Ȥϲ��Ǥ����� <small>CTID</small> �Ȥϲ��Ǥ�����</h4>
+<h4 id="item4.11.4">4.11.4</a>) トランザクションが中断したときにもういちどシーケンス番号が使われないのはなぜですか？シーケンス／SERIALカラムに空きがあるのはなぜですか？</h4>
 
-    <p>�ơ��֥뤬<small>WITH OIDS</small>�ǤĤ���줿���ϡ����줾���
-    �����˰�դ�<small>OID</small>������ޤ���
-    <small>OID</small>�ϼ�ưŪ��4�Х��Ȥ�������Ϳ����졢����ϡ�������
-    ���ȥ졼�������̤��ư�դ��ͤȤʤ�ޤ�������������40���ǥ����С���
-    �������������ơ�<small>OID</small>�Ͻ�ʣ�򤷤Ϥ���ޤ���PostgreSQL��
-    ���������ƥ�ơ��֥����˥�󥯤��뤿���<small>OID</small> ���
-    ���ޤ���
-
-    <p>�桼���Υơ��֥�Υ����˰�դ��ֹ���դ��뤿��ˤϡ�
-    <small>OID</small> �ǤϤʤ� <small>SERIAL</small> ��Ȥ��Τ��Ǥ�褤
-    �Ǥ��礦��<small>SERIAL</small>��Ϣ�֤�1�ĤΥơ��֥���ǤΤ߰�դˤ�
-    �뤫��ǡ������С��ե����򵯤����ˤ����ȹͤ����ޤ���
-    8�Х��ȤΥ��������ͤ���¸���뤿��ˡ�<small>SERIAL8</small>������
-    �ޤ���</p>
-
-    <p><small>CTID</small> �ϡ������ʪ��������֥��å��ȥ��ե��åȤ���
-    �Ǽ��̤��뤿��˻Ȥ��ޤ���<small>CTID</small>�ϡ��������������줿
-    ����ɹ��ߤ��줿�Ȥ����Ѥ��ޤ����ޤ���ʪ�������򺹤�����˥���ǥ�
-    �����ε��ܤ˻Ȥ��ޤ���</p>
+    <p>同時性を改善するために、実行中のトランザクションに、必要に応じてト
+    ランザクションが終了するまでロックされないようシーケンス値を与えてい
+    ます。このためトランザクションが中断されると番号割り当てにギャップを
+    生じます。</p> 
 
 
-<h4 id="item4.13">4.13</a>) ���顼��å����� <i>"ERROR: Memory exhausted in AllocSetAlloc()"</i>���Ф�ΤϤʤ��Ǥ�����</h4>
+<h4 id="item4.12">4.12</a>) <small>OID</small> とは何ですか？ <small>CTID</small> とは何ですか？</h4>
 
-    <p>�����餯�������ƥ�β��ۥ��꡼�����ƻȤ��̤����Ƥ��ޤäƤ����
-    ǽ�������뤫�������ͥ뤬����꥽�����ˤĤ��Ƥ�������ͤ��㤹�����ǽ
-    ��������ޤ��������Ф��ư�������ˤ�����ƤߤƤ���������</p>
+    <p>テーブルが<small>WITH OIDS</small>でつくられた場合は、それぞれの
+    ロウに一意な<small>OID</small>が取られます。
+    <small>OID</small>は自動的に4バイトの整数で与えられ、それは、全イン
+    ストレーションを通して一意な値となります。しかし、約40億でオーバーフ
+    ローし、そして、<small>OID</small>は重複をしはじめます。PostgreSQLは
+    内部システムテーブルを一緒にリンクするために<small>OID</small> を使
+    います。
+
+    <p>ユーザのテーブルのカラムに一意の番号を付けるためには、
+    <small>OID</small> ではなく <small>SERIAL</small> を使うのが最もよい
+    でしょう。<small>SERIAL</small>の連番は1つのテーブル内でのみ一意にな
+    るからで、オーバーフローを起こしにくいと考えられます。
+    8バイトのシーケンス値を保存するために、<small>SERIAL8</small>があり
+    ます。</p>
+
+    <p><small>CTID</small> は、特定の物理ロウをブロックとオフセットの値
+    で識別するために使われます。<small>CTID</small>は、ロウが修正された
+    り再読込みされたときに変わります。また、物理ロウを差すためにインデッ
+    クスの記載に使われます。</p>
+
+
+<h4 id="item4.13">4.13</a>) エラーメッセージ <i>"ERROR: Memory exhausted in AllocSetAlloc()"</i>が出るのはなぜですか？</h4>
+
+    <p>おそらく、システムの仮想メモリーを全て使い果たしてしまっている可
+    能性があるか、カーネルがあるリソースについてもつ制限値が低すぎる可能
+    性があります。サーバを始動する前にこれを試してみてください：</p>
 
 <pre>
     ulimit -d 262144
     limit datasize 256m
 </pre>
 
-    ������ˤ�äơ��ɤ��餫�ҤȤĤ���������Ǥ��礦��������ϥץ�������
-    �ǡ��������������¤���⤯���ꤷ�����֤󥯥��꤬���뤹��褦�ˤ�
-    ��Ǥ��礦�����Υ��ޥ�ɤϸ��ԤΥץ������ȡ����Υ��ޥ�ɤ����餻����
-    �˺�������ƤΥ��֥ץ������ˤĤ���Ŭ�Ѥ���ޤ����Хå�����ɤ��Ȥ�
-    ��¿���Υǡ������֤������<small>SQL</small> ���饤����Ȥ����꤬³
-    ���Ƥ���ΤǤ���С����饤����Ȥ򳫻Ϥ������ˤ�����ƤߤƤ�����
-    ���� 
+    シェルによって、どちらかひとつが成功するでしょうが、これはプロセスの
+    データセグメント制限をより高く設定し、たぶんクエリが完結するようにな
+    るでしょう。このコマンドは現行のプロセスと、このコマンドを走らせた後
+    に作られる全てのサブプロセスについて適用されます。バックエンドがとて
+    も多くのデータを返すために<small>SQL</small> クライアントで問題が続
+    いているのであれば、クライアントを開始する前にこれを試してみてくださ
+    い。 
 
-<h4 id="item4.14">4.14</a>) �ɤΥС������� PostgreSQL �����餻�Ƥ��뤫��Ĵ�٤�ˤϤɤ����ޤ�����<br /></h4>
+<h4 id="item4.14">4.14</a>) どのバージョンの PostgreSQL を走らせているかを調べるにはどうしますか？<br /></h4>
 
-    <p><i>psql</i> ���� <CODE>SELECT version();</CODE> �򥿥��פ��ޤ���</p>
+    <p><i>psql</i> から <CODE>SELECT version();</CODE> をタイプします。</p>
 
 
-<h4 id="item4.15">4.15</a>) ���ߤλ��郎�ǥե���ȤȤʤ�褦�ʥ����ϤɤΤ褦�ˤĤ���ޤ�����<br /></h4>
+<h4 id="item4.15">4.15</a>) 現在の時刻がデフォルトとなるようなカラムはどのようにつくりますか？<br /></h4>
 
-    <p><i>CURRENT_TIMESTAMP</i>��Ȥ��ޤ�:</p>
+    <p><i>CURRENT_TIMESTAMP</i>を使います:</p>
 <pre>
     CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
 </pre>
 
 
-<h4 id="item4.16">4.16</a>) <i>����</i>���(<i>outer</i> join)�ϤɤΤ褦�˼¸����ޤ���?<br /></h4>
+<h4 id="item4.16">4.16</a>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<br /></h4>
 
-    <p>PostgreSQL �� SQL ɸ�๽ʸ��Ȥ��������(�����������祤��)�򥵥ݡ�
-    �Ȥ��ޤ��������� 2�Ĥ����꤬����ޤ���</p> 
+    <p>PostgreSQL は SQL 標準構文を使う外部結合(アウタージョイン)をサポー
+    トします。ここに 2つの例題があります。</p> 
 
 <pre>
     SELECT *
     FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
 </pre>
-���뤤��
+あるいは
 <pre>
     SELECT *
     FROM t1 LEFT OUTER JOIN t2 USING (col);
 </pre>
 
-�����ξ�ħŪ�ʥ�����Ǥ� t1.col �� t2.col �ȷ�礷�ơ�t1 �η�礵��ʤ��ä�����(t2 �Ȱ��פ��ʤ��ä�����)���֤��Ƥ��ޤ���<small>RIGHT</small> ���� t2 �η�礵��ʤ��ä�������ä���Ǥ��礦��<small>FULL</small> ���ϡ����פ��������� t1 �� t2 ����Ϸ�礵��ʤ��ä��������֤��Ǥ��礦��<small>OUTER</small> �Ȥ������դϥ��ץ����� <small>LEFT</small>, <small>RIGHT</small>, �ޤ��� <small>FULL</small> �ʤɤη����ꤵ��Ƥ��ޤ����̾����<small>INNER</small>���ȸƤФ�ޤ���
+これらの象徴的なクエリでは t1.col を t2.col と結合して、t1 の結合されなかったロウ(t2 と一致しなかったロウ)も返しています。<small>RIGHT</small> 結合は t2 の結合されなかったロウを加えるでしょう。<small>FULL</small> 結合は、一致したロウに t1 と t2 からは結合されなかったロウを返すでしょう。<small>OUTER</small> という言葉はオプションで <small>LEFT</small>, <small>RIGHT</small>, または <small>FULL</small> などの結合を仮定されています。通常、結合は<small>INNER</small>結合と呼ばれます。
 
 
-<h4 id="item4.17">4.17</a>) ʣ���Υǡ����١�����Ȥ��䤤��碌�ϤɤΤ褦�ˤ���ФǤ��ޤ�����</h4>
+<h4 id="item4.17">4.17</a>) 複数のデータベースを使う問い合わせはどのようにすればできますか？</h4>
 
-    <p>���ԤΥǡ����١����ʳ��ؤ��䤤��碌����ˡ�Ϥ���ޤ��󡣤Ȥ�����
-    ��PostgreSQL���ǡ����١������ͤΥ����ƥ५���������ɤ߹��ि��ǡ���
-    ���ˤϡ����Ȥ����Τդ�򤹤�����ˤ������ǡ����١�����ۤ����䤤���
-    ���򤹤뤹�٤�����ޤ��� </p>
+    <p>現行のデータベース以外への問い合わせの方法はありません。というの
+    もPostgreSQLがデータベース仕様のシステムカタログを読み込むためで、そ
+    こには、たとえそのふりをするだけにしろ、データベースを越えて問い合わ
+    せをするすべがありません。 </p>
 
-    <p><i>contrib/dblink</i> �ϥǡ����١�����(cross-database)���䤤���
-    ����ؿ��ƽФ��ˤ������ޤ���������󡢥��饤����Ȥ�Ʊ������³����
-    �Υǡ����١����ؤ�ĥ��ʤ��ƤϤʤ餺����̤򥯥饤�����¦�ǥޡ�����
-    �ʤ��ƤϤʤ�ޤ���</p>
+    <p><i>contrib/dblink</i> はデータベース間(cross-database)の問い合わ
+    せを関数呼出しにより許します。もちろん、クライアントは同時に接続を別
+    のデータベースへも張らなくてはならず、結果をクライアント側でマージし
+    なくてはなりません。</p>
 
 
-<h4 id="item4.18">4.18</a>) �ؿ�����ʣ���Υ����ޤ��ϥ������֤��ˤϤɤ����ޤ�����</h4>
+<h4 id="item4.18">4.18</a>) 関数から複数のロウまたはカラムを返すにはどうしますか？</h4>
 
-    <p>������֤��ؿ�(Set Returning Functions):
+    <p>集合を返す関数(Set Returning Functions):
     <a href="http://www.postgresql.org/docs/techdocs.17">
     http://www.postgresql.org/docs/techdocs.17</a></p>
-    ��Ȥ��ȴ�ñ�Ǥ�</p>��
+    を使うと簡単です</p>。
 
 
-<h4 id="item4.19">4.19</a>) PL/PgSQL �δؿ�����ǰ���ơ��֥�˥�����������Ȥ����ɤ����� "relation with OID ##### does not exist" �Ȥ������顼��������ΤǤ��礦����</h4>
+<h4 id="item4.19">4.19</a>) PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation with OID ##### does not exist" というエラーを受け取るのでしょうか？</h4>
 
-    <p>�С������8.3������� PostgreSQL �Ǥϡ�PL/PgSQL �ϴؿ�������ץȤ�
-    ����å��夷�����ᡢ���������������Ѥ�����ޤ�����PL/PgSQL �ؿ������
-    �ơ��֥�˥����������Ƹ�Ǥ��Υơ��֥��ä��ƺ�ꤷ�����ˡ��ؿ���
-    �⤦���ٸƤӽФ��줿�Ȥ��ϡ����δؿ��Υ���å��夷�Ƥ������Ƥ��ޤ��Ť�
-    ����ơ��֥��ؤ��������ޤޤ��ä�����Ǥ���
-    ���Ρ������Ȥ��ơ�PL/PgSQL����� <small>EXECUTE</small> �����ơ�
-    �֥�ؤΥ��������Τ���˻Ȥ��ޤ�����������ȡ�����������ѡ������
-    ��ľ�������褦�ˤʤ�ޤ���</p>
+    <p>バージョン8.3より前の PostgreSQL では、PL/PgSQL は関数スクリプトを
+    キャッシュしたため、運悪くその副作用がありました。PL/PgSQL 関数が一時
+    テーブルにアクセスして後でそのテーブルを消して作りした場合に、関数が
+    もう一度呼び出されたときは、その関数のキャッシュしていた内容がまだ古い
+    一時テーブルを指し示したままだったからです。
+    この、解決策として、PL/PgSQLの中で <small>EXECUTE</small> を一時テー
+    ブルへのアクセスのために使います。そうすると、クエリは毎回パースをや
+    り直しされるようになります。</p>
 
-    <p>��������ϡ� PostgreSQL �С������8.3 �ʹߤǤϵ����ޤ���</p>
+    <p>この問題は、 PostgreSQL バージョン8.3 以降では起きません。</p>
 
 
-<h4 id="item4.20">4.20</a>) �ɤΤ褦�ʥ�ץꥱ�������Υ���塼����󤬤���ޤ�����</h4>
-    <p>�֥�ץꥱ�������פȰ���Ǥ����ޤ�������ץꥱ�������򤹤�
-    ����ε��ѤϤ����Ĥ����ꡢ���줾�졢�����ȷ���������ޤ���</p>
+<h4 id="item4.20">4.20</a>) どのようなレプリケーションのソリューションがありますか？</h4>
+    <p>「レプリケーション」と一言でいいますが、レプリケーションをする
+    ための技術はいくつかあり、それぞれ、利点と欠点があります。</p>
 
-    <p>�ޥ��������졼�֤Υ�ץꥱ�������ϡ��ɤߡ��񤭤Υ�����������
-    �륷�󥰥�ޥ�������ǽ�ǡ����졼�֤Ǥ� �ɤߡ�<small>SELECT</small>��
-    �䤤��碌����������դ��뤳�Ȥ��Ǥ��ޤ����Ǥ�͵������롢�ե꡼����
-    �ѤǤ��롢�ޥ����ݥ��졼�֤�PostgreSQL��ץꥱ������󥽥�塼�����
-    �ϡ�<a 
+    <p>マスタ／スレーブのレプリケーションは、読み／書きのクエリを受け取
+    るシングルマスタが可能で、スレーブでは 読み／<small>SELECT</small>の
+    問い合わせだけを受け付けることができます。最も人気がある、フリーで利
+    用できる、マスタ−スレーブのPostgreSQLレプリケーションソリューション
+    は、<a 
     href="http://main.slony.info/">
-    Slony-I</a> �Ǥ���</p>
+    Slony-I</a> です。</p>
 
-    <p>�ޥ���ݥޥ����Υ�ץꥱ�������ϡ��ɤߡ��񤭤Υ�����������
-    �ꡢʣ���Υ�ץꥱ���Ȥ����륳��ԥ塼�������뤳�Ȥ��Ǥ��ޤ������ε�
-    ǽ�ϡ������д֤��ѹ���Ʊ����ɬ�פʤ��ᡢ��ǽ�˽���ʾ׷��Ϳ���ޤ���
-    <a href="http://pgfoundry.org/projects/pgcluster/">PGCluster</a> �ϡ�
-    ���Τ褦�ʥ���塼�����Ȥ���PostgreSQL�Τ���˥ե꡼�����ѤǤ����
-    �ΤȤ��ơ��Ǥ�͵�������ޤ���</p>
+    <p>マルチ−マスタのレプリケーションは、読み／書きのクエリを受けと
+    り、複数のレプリケートさせるコンピュータに送ることができます。この機
+    能は、サーバ間の変更の同期が必要なため、性能に重大な衝撃を与えます。
+    <a href="http://pgfoundry.org/projects/pgcluster/">PGCluster</a> は、
+    このようなソリューションとしてPostgreSQLのためにフリーで利用できるも
+    のとして、最も人気があります。</p>
 
-    <p>����¾�ˤ⡢���Ѥ�ϡ��ɥ������ݥ١����Υ�ץꥱ������󥽥�塼
-    ����󤬤��������ʥ�ץꥱ��������ǥ�򥵥ݡ��Ȥ��Ƥ��ޤ���</p>
+    <p>この他にも、商用やハードウェア−ベースのレプリケーションソリュー
+    ションがいろいろなレプリケーションモデルをサポートしています。</p>
   
-<h3 id="item4.21">4.21</a>)�ơ��֥�ȥ�����̾���������꡼�����ǧ������ʤ��ΤϤʤ��Ǥ������ʤ���ʸ����(����ԥ��饤��)�ϲ�¸����ʤ��ΤǤ���?</h3>
+<h3 id="item4.21">4.21</a>)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大文字化(キャピタライズ)は温存されないのですか?</h3>
 
-    <p>̾����ǧ������ʤ����Ǥ����Ū�ʸ����ϡ��ơ��֥���������ݤˡ�
-    �ơ��֥�䥫����Ϥ���Ű�����λ��ѤǤ���
-    ��Ű������Ȥ��ȡ��ơ��֥�ȥ�����̾���ʼ��̻ҤȤ����ޤ��ˤ�<a
-    href="http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS">��ʸ���Ⱦ�ʸ���ζ���</a>
-    �򤷤Ƴ�Ǽ����ޤ����������äơ�pgAdmin�Τ褦�˥ơ��֥�����ΤȤ���
-    ��ưŪ����Ű������Ȥ���Τϥ��������Ǥ�����̾����Ȥ��Ȥ���
-    ��Ű�������դ��ʤ��ƤϤʤ�ʤ����Ȥ��̣���ޤ������Τ��ᡢ���̻�
-    ��ǧ�������뤿��ˤϰʲ��Τ����줫�򿴤����ޤ���
+    <p>名前が認識されない、最も一般的な原因は、テーブルを作成する際に、
+    テーブルやカラムを囲う二重引用符の使用です。
+    二重引用符を使うと、テーブルとカラムの名前（識別子といいます）は<a
+    href="http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS">大文字と小文字の区別</a>
+    をして格納されます。したがって、pgAdminのようにテーブル作成のときに
+    自動的に二重引用符を使うものはクエリの中でそれらの名前を使うときに
+    二重引用符を付けなくてはならないことを意味します。このため、識別子
+    を認識させるためには以下のいずれかを心がけます。
 
     <ul>
-    <li>�ơ��֥���������Ȥ�����Ű�����Ǽ��̻Ҥ�Ϥ����Ȥ��򤱤�</li>
-    <li>���̻ҤˤϾ�ʸ��������Ȥ�</li>
-    <li>���������ǻ��Ȥ���Ȥ�����Ű�����Ǽ��̻Ҥ�Ϥ�</li>
+    <li>テーブルを作成するときに二重引用符で識別子を囲うことを避ける</li>
+    <li>識別子には小文字だけを使う</li>
+    <li>クエリの中で参照するときは二重引用符で識別子を囲う</li>
     </ul>
 
 
 <hr />
 
-<h2 align="center">���ܸ�˴ؤ������</h2>
+<h2 align="center">日本語に関する質問</h2>
 
-<h3 id="item5.1">5.1</a>)���ܸ줬���ޤ������ʤ��ΤϤʤ��Ǥ�����</h3>
+<h3 id="item5.1">5.1</a>)日本語がうまく扱えないのはなぜですか？</h3>
 
 
-    <p><i>createdb -E</i>���ޥ�ɥ��ץ����� UTF8 ���뤤�� EUC_JP
-    �Υ��󥳡��ǥ��󥰤���ꤷ�ƥǡ����١�����������������Τ褦��
-    ���󥳡��ǥ��󥰤���ꤷ�ƥǡ����١�����������Ƥ���������</p>
+    <p><i>createdb -E</i>コマンドオプションに UTF8 あるいは EUC_JP
+    のエンコーディングを指定してデータベースを作成すか、次のように
+    エンコーディングを指定してデータベースを作成してください。</p>
 <pre>
         CREATE DATABASE dbname WITH ENCODING 'UTF8';
-    �⤷���ϡ�
+    もしくは、
         CREATE DATABASE dbname WITH ENCODING 'EUC_JP';
 </pre>
 
 
-<h3 id="item5.2">5.2</a>) psql ��Windows���饢�����������Ȥ��ˡ����ܸ줬ʸ����������ΤǤ�����</h3>
+<h3 id="item5.2">5.2</a>) psql でWindowsからアクセスしたときに、日本語が文字化けするのですが？</h3>
 
-    <p><i>psql</i>����ǥ��饤����ȤΥ��󥳡��ǥ��󥰤���ꤷ�Ƥ���������</p>
+    <p><i>psql</i>の中でクライアントのエンコーディングを指定してください。</p>
 <pre>
         SET client_encoding TO 'SJIS'
 </pre>
-    <p>PostgreSQL�ǡ����١����Υ��󥳡��ǥ��󥰤˻Ȥ������ܸ�ʸ��������
-    �� EUC_JP �� UTF-8(UNICODE) �Ǥ��뤿�ᡢShift-JISɽ���Υ��ޥ�ɥץ�
-    ��ץȤ���ϡ�client_encoding�����ꤷ�Ƥ����ʤ��ȡ����ܸ��ɽ������
-    �ݤ�ʸ�������������ޤ���</p>
+    <p>PostgreSQLデータベースのエンコーディングに使える日本語文字コード
+    は EUC_JP か UTF-8(UNICODE) であるため、Shift-JIS表示のコマンドプロ
+    ンプトからは、client_encodingを設定しておかないと、日本語を表示する
+    際に文字化けがおきます。</p>
 
 
 <hr />
 
-<h4 id="item-japanese">�����ܸ��ǤˤĤ��ơ�</h4>
+<h4 id="item-japanese">「日本語版について」</h4>
 <p><small><pre>
-[������
-  ���ܸ��Ǥ�����ˤĤ��Ƥϰʲ����̤�Ǥ���
+[訳注：
+  日本語版の製作については以下の通りです。
 
-  �ǽ�������:	2007ǯ10��20��
-  ������:	��¼ �� (<a href="mailto:juk at postgresql.jp">Jun KUWAMURA &lt;juk at postgresql.jp&gt;</a>)
+  最終更新日:	2007年10月20日
+  翻訳者:	桑村 潤 (<a href="mailto:juk at postgresql.jp">Jun KUWAMURA &lt;juk at postgresql.jp&gt;</a>)
 
-  ����FAQ�������κ����ˤ����궨�Ϥ򤷤Ƥ������ä�����(�ɾΤ�ά�����Ƥ��������ޤ�):
+  このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
 
-		���� ̭(<a href="mailto:Tanaka.Minoru at keiken.co.jp">Minoru TANAKA &lt;Tanaka.Minoru at keiken.co.jp&gt;</a>)
-		�а� ã��(<a href="mailto:ishii at sraoss.co.jp">Tatsuo ISHII &lt;ishii at sraoss.co.jp&gt;</a>)
-		��ƣ �ο�(<a href="mailto:tomos at elelab.nsc.co.jp">Tomohito SAITOH &lt;tomos at elelab.nsc.co.jp&gt;</a>)
-		�Ͼ�  ȥ(<a href="mailto:baba at kusastro.kyoto-u.ac.jp">Hajime BABA &lt;baba at kusastro.kyoto-u.ac.jp&gt;</a>)
-		���� �칬(<a href="mailto:kaz-okamoto at hitachi-system.co.jp">Kazuyuki OKAMOTO &lt;kaz-okamoto at hitachi-system.co.jp&gt;</a>)
-		���� ����(<a href="mailto:s-kosuge at str.hitachi.co.jp">Shoichi Kosuge &lt;s-kosuge at str.hitachi.co.jp&gt;</a>)
-		���� ��Ƿ(<a href="mailto:dica at eurus.dti.ne.jp">Yoshiyuki YAMASHITA &lt;dica at eurus.dti.ne.jp&gt;</a>)
-		�� ����Ϻ(<a href="mailto:s_sakai at mxn.mesh.ne.jp">Sintaro SAKAI &lt;s_sakai at mxn.mesh.ne.jp&gt;</a>)
-		���� ����(<a href="mailto:ogochan at zetabits.com">Masami OGOSHI &lt;ogochan at zetabits.com&gt;</a>)
-		���� �ӹ�(<a href="mailto:tosiyuki at gol.com">Toshiyuki ISHIKAWA &lt;tosiyuki at gol.com&gt;</a>)
-		���� �й�(<a href="mailto:fwif0083 at mb.infoweb.ne.jp">Shigehiro HONDA &lt;fwif0083 at mb.infoweb.ne.jp&gt;</a>)
-		���� �����(<a href="mailto:sesejun at linet.gr.jp">Jun SESE &lt;sesejun at linet.gr.jp&gt;</a>)
-		��ë �ѹ�(<a href="mailto:hkamiya at catvmics.ne.jp">Hidetaka KAMIYA &lt;hkamiya at catvmics.ne.jp&gt;</a>)
-		���� ��(<a href="mailto:asugawar at f3.dion.ne.jp">Atsushi SUGAWARA &lt;asugawar at f3.dion.ne.jp&gt;</a>)
-		���� ����(<a href="mailto:i-kaori at sraoss.co.jp">Kaori Inaba &lt;i-kaori at sraoss.co.jp&gt;</a>)
+		田仲 稔(<a href="mailto:Tanaka.Minoru at keiken.co.jp">Minoru TANAKA &lt;Tanaka.Minoru at keiken.co.jp&gt;</a>)
+		石井 達夫(<a href="mailto:ishii at sraoss.co.jp">Tatsuo ISHII &lt;ishii at sraoss.co.jp&gt;</a>)
+		齊藤 知人(<a href="mailto:tomos at elelab.nsc.co.jp">Tomohito SAITOH &lt;tomos at elelab.nsc.co.jp&gt;</a>)
+		馬場  肇(<a href="mailto:baba at kusastro.kyoto-u.ac.jp">Hajime BABA &lt;baba at kusastro.kyoto-u.ac.jp&gt;</a>)
+		岡本 一幸(<a href="mailto:kaz-okamoto at hitachi-system.co.jp">Kazuyuki OKAMOTO &lt;kaz-okamoto at hitachi-system.co.jp&gt;</a>)
+		小菅 昭一(<a href="mailto:s-kosuge at str.hitachi.co.jp">Shoichi Kosuge &lt;s-kosuge at str.hitachi.co.jp&gt;</a>)
+		山下 義之(<a href="mailto:dica at eurus.dti.ne.jp">Yoshiyuki YAMASHITA &lt;dica at eurus.dti.ne.jp&gt;</a>)
+		境 真太郎(<a href="mailto:s_sakai at mxn.mesh.ne.jp">Sintaro SAKAI &lt;s_sakai at mxn.mesh.ne.jp&gt;</a>)
+		生越 昌己(<a href="mailto:ogochan at zetabits.com">Masami OGOSHI &lt;ogochan at zetabits.com&gt;</a>)
+		石川 俊行(<a href="mailto:tosiyuki at gol.com">Toshiyuki ISHIKAWA &lt;tosiyuki at gol.com&gt;</a>)
+		本田 茂広(<a href="mailto:fwif0083 at mb.infoweb.ne.jp">Shigehiro HONDA &lt;fwif0083 at mb.infoweb.ne.jp&gt;</a>)
+		せせ じゅん(<a href="mailto:sesejun at linet.gr.jp">Jun SESE &lt;sesejun at linet.gr.jp&gt;</a>)
+		神谷 英孝(<a href="mailto:hkamiya at catvmics.ne.jp">Hidetaka KAMIYA &lt;hkamiya at catvmics.ne.jp&gt;</a>)
+		菅原 敦(<a href="mailto:asugawar at f3.dion.ne.jp">Atsushi SUGAWARA &lt;asugawar at f3.dion.ne.jp&gt;</a>)
+		稲葉 香理(<a href="mailto:i-kaori at sraoss.co.jp">Kaori Inaba &lt;i-kaori at sraoss.co.jp&gt;</a>)
 
-  ��Ϥ��ᡢ�ݥ��ȥ��쥹�˴ؤ�������˭�٤����ܸ�PostgreSQL�᡼��󥰥ꥹ�ȡ�
-  �����Τ��ä������äƤ��줿�ꡢ���Ĥ�����å��򤷤Ƥ����
-   <a href="http://jf.linux.or.jp/">JF(Linux Japanese FAQ)�ץ���������</a>��FreeBSD �ɥ�����ơ������ץ���������
-  �����������줫�顢ľ�ܤ��뤤�ϴ���Ū�ˤ�����äƤ������뤹�٤ƤΥ����ץ󥽡���
-  ���ߥ�˥ƥ��Τߤʤ��ޤ˴��դ������ޤ���
+  をはじめ、ポストグレスに関する話題豊富な日本語PostgreSQLメーリングリスト、
+  和訳のきっかけを作ってくれたり、いつもチェックをしてくれる
+   <a href="http://jf.linux.or.jp/">JF(Linux Japanese FAQ)プロジェクト</a>、FreeBSD ドキュメンテーションプロジェクト
+  の方々、それから、直接あるいは間接的にかかわってくださるすべてのオープンソース
+  コミュニティのみなさまに感謝いたします。
 
 
-  ��������ʸ��� <a href="http://www.postgresql.org/docs/faq/">�ܲ� "Frequently Asked Questions" </a> �Υڡ����� "Japanese FAQ" 
-  �Ȥ������ܤǤ���ޤ���
+  この翻訳文書は <a href="http://www.postgresql.org/docs/faq/">本家 "Frequently Asked Questions" </a> のページに "Japanese FAQ" 
+  という項目であります。
   
-  �ޤ����ǿ��Ǥϰʲ��Υ����Ȥˤ���ޤ���
+  また、最新版は以下のサイトにあります。
 	<a
-  href="http://www.postgresql.jp/wg/jpugdoc/">http://www.postgresql.jp/wg/jpugdoc/</a> ��JPUGʸ�񡦽��Ҵ�Ϣʬ�ʲ��
-	<a href="http://www.linux.or.jp/JF/JFdocs/INDEX-database.html">http://www.linux.or.jp/JF/JFdocs/INDEX-database.html</a> ��Linux JF�ץ��������ȡ�	<a   href="http://www.linet.gr.jp/~juk/pgsql/">http://www.linet.gr.jp/~juk/pgsql/</a> ��PostgreSQL Notes for Japanese�ס������ԥڡ�����
+  href="http://www.postgresql.jp/wg/jpugdoc/">http://www.postgresql.jp/wg/jpugdoc/</a> 「JPUG文書・書籍関連分科会」
+	<a href="http://www.linux.or.jp/JF/JFdocs/INDEX-database.html">http://www.linux.or.jp/JF/JFdocs/INDEX-database.html</a> 「Linux JFプロジェクト」	<a   href="http://www.linet.gr.jp/~juk/pgsql/">http://www.linet.gr.jp/~juk/pgsql/</a> 「PostgreSQL Notes for Japanese」（翻訳者ページ）
 
-  �ʤ������������˴ؤ��뤴�ո����������(<a href="mailto:juk at
-  postgresql.jp">juk at postgresql.jp</a>)�ޤǤ��󤻤���������
-  �ʢ� �᡼�륢�ɥ쥹�� " at " ��Ŭ�ڤ�ľ���Ƥ���������Ⱦ�Ѥ� "@" �Ǥ�����
+  なお、この和訳に関するご意見・ご質問は(<a href="mailto:juk at
+  postgresql.jp">juk at postgresql.jp</a>)までお寄せください。
+  （※ メールアドレスの " at " は適切に直してください。半角の "@" です。）
 ]
 </pre></small></p>
 
