@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.87 2007/09/26 18:51:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.88 2007/10/26 18:10:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@ static List *make_rels_by_clauseless_joins(PlannerInfo *root,
 							  RelOptInfo *old_rel,
 							  ListCell *other_rels);
 static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
+static bool has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel);
 
 
 /*
@@ -223,11 +224,11 @@ join_search_one_level(PlannerInfo *root, int level, List **joinrels)
 		 *	 y IN (SELECT ... FROM t4,t5 WHERE ...)
 		 *
 		 * We will flatten this query to a 5-way join problem, but there are
-		 * no 4-way joins that make_join_rel() will consider legal.  We have
+		 * no 4-way joins that join_is_legal() will consider legal.  We have
 		 * to accept failure at level 4 and go on to discover a workable
 		 * bushy plan at level 5.
 		 *
-		 * However, if there are no such clauses then make_join_rel() should
+		 * However, if there are no such clauses then join_is_legal() should
 		 * never fail, and so the following sanity check is useful.
 		 *----------
 		 */
@@ -326,32 +327,29 @@ make_rels_by_clauseless_joins(PlannerInfo *root,
 
 
 /*
- * make_join_rel
- *	   Find or create a join RelOptInfo that represents the join of
- *	   the two given rels, and add to it path information for paths
- *	   created with the two rels as outer and inner rel.
- *	   (The join rel may already contain paths generated from other
- *	   pairs of rels that add up to the same set of base rels.)
+ * join_is_legal
+ *	   Determine whether a proposed join is legal given the query's
+ *	   join order constraints; and if it is, determine the join type.
  *
- * NB: will return NULL if attempted join is not valid.  This can happen
- * when working with outer joins, or with IN clauses that have been turned
- * into joins.
+ * Caller must supply not only the two rels, but the union of their relids.
+ * (We could simplify the API by computing joinrelids locally, but this
+ * would be redundant work in the normal path through make_join_rel.)
+ *
+ * On success, *jointype_p is set to the required join type.
  */
-RelOptInfo *
-make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
+static bool
+join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
+			  Relids joinrelids, JoinType *jointype_p)
 {
-	Relids		joinrelids;
 	JoinType	jointype;
 	bool		is_valid_inner;
-	RelOptInfo *joinrel;
-	List	   *restrictlist;
 	ListCell   *l;
 
-	/* We should never try to join two overlapping sets of rels. */
-	Assert(!bms_overlap(rel1->relids, rel2->relids));
-
-	/* Construct Relids set that identifies the joinrel. */
-	joinrelids = bms_union(rel1->relids, rel2->relids);
+	/*
+	 * Ensure *jointype_p is set on failure return.  This is just to
+	 * suppress uninitialized-variable warnings from overly anal compilers.
+	 */
+	*jointype_p = JOIN_INNER;
 
 	/*
 	 * If we have any outer joins, the proposed join might be illegal; and in
@@ -400,22 +398,14 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 			bms_is_subset(ojinfo->min_righthand, rel2->relids))
 		{
 			if (jointype != JOIN_INNER)
-			{
-				/* invalid join path */
-				bms_free(joinrelids);
-				return NULL;
-			}
+				return false;			/* invalid join path */
 			jointype = ojinfo->is_full_join ? JOIN_FULL : JOIN_LEFT;
 		}
 		else if (bms_is_subset(ojinfo->min_lefthand, rel2->relids) &&
 				 bms_is_subset(ojinfo->min_righthand, rel1->relids))
 		{
 			if (jointype != JOIN_INNER)
-			{
-				/* invalid join path */
-				bms_free(joinrelids);
-				return NULL;
-			}
+				return false;			/* invalid join path */
 			jointype = ojinfo->is_full_join ? JOIN_FULL : JOIN_RIGHT;
 		}
 		else
@@ -458,11 +448,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 
 	/* Fail if violated some OJ's RHS and didn't match to another OJ */
 	if (jointype == JOIN_INNER && !is_valid_inner)
-	{
-		/* invalid join path */
-		bms_free(joinrelids);
-		return NULL;
-	}
+		return false;			/* invalid join path */
 
 	/*
 	 * Similarly, if we are implementing IN clauses as joins, check for
@@ -494,10 +480,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		 * subselect.
 		 */
 		if (!bms_is_subset(ininfo->righthand, joinrelids))
-		{
-			bms_free(joinrelids);
-			return NULL;
-		}
+			return false;
 
 		/*
 		 * At this point we are considering a join of the IN's RHS to some
@@ -525,10 +508,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		 * that needs to trigger here.
 		 */
 		if (jointype != JOIN_INNER)
-		{
-			bms_free(joinrelids);
-			return NULL;
-		}
+			return false;
 		if (bms_is_subset(ininfo->lefthand, rel1->relids) &&
 			bms_equal(ininfo->righthand, rel2->relids))
 			jointype = JOIN_IN;
@@ -540,11 +520,47 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		else if (bms_equal(ininfo->righthand, rel2->relids))
 			jointype = JOIN_UNIQUE_INNER;
 		else
-		{
-			/* invalid join path */
-			bms_free(joinrelids);
-			return NULL;
-		}
+			return false;			/* invalid join path */
+	}
+
+	/* Join is valid */
+	*jointype_p = jointype;
+	return true;
+}
+
+
+/*
+ * make_join_rel
+ *	   Find or create a join RelOptInfo that represents the join of
+ *	   the two given rels, and add to it path information for paths
+ *	   created with the two rels as outer and inner rel.
+ *	   (The join rel may already contain paths generated from other
+ *	   pairs of rels that add up to the same set of base rels.)
+ *
+ * NB: will return NULL if attempted join is not valid.  This can happen
+ * when working with outer joins, or with IN clauses that have been turned
+ * into joins.
+ */
+RelOptInfo *
+make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
+{
+	Relids		joinrelids;
+	JoinType	jointype;
+	RelOptInfo *joinrel;
+	List	   *restrictlist;
+
+	/* We should never try to join two overlapping sets of rels. */
+	Assert(!bms_overlap(rel1->relids, rel2->relids));
+
+	/* Construct Relids set that identifies the joinrel. */
+	joinrelids = bms_union(rel1->relids, rel2->relids);
+
+	/* Check validity and determine join type. */
+	if (!join_is_legal(root, rel1, rel2, joinrelids, &jointype))
+	{
+		/* invalid join path */
+		bms_free(joinrelids);
+		return NULL;
 	}
 
 	/*
@@ -646,6 +662,7 @@ bool
 have_join_order_restriction(PlannerInfo *root,
 							RelOptInfo *rel1, RelOptInfo *rel2)
 {
+	bool		result = false;
 	ListCell   *l;
 
 	/*
@@ -667,10 +684,16 @@ have_join_order_restriction(PlannerInfo *root,
 		/* Can we perform the OJ with these rels? */
 		if (bms_is_subset(ojinfo->min_lefthand, rel1->relids) &&
 			bms_is_subset(ojinfo->min_righthand, rel2->relids))
-			return true;
+		{
+			result = true;
+			break;
+		}
 		if (bms_is_subset(ojinfo->min_lefthand, rel2->relids) &&
 			bms_is_subset(ojinfo->min_righthand, rel1->relids))
-			return true;
+		{
+			result = true;
+			break;
+		}
 
 		/*
 		 * Might we need to join these rels to complete the RHS?  We have
@@ -679,12 +702,18 @@ have_join_order_restriction(PlannerInfo *root,
 		 */
 		if (bms_overlap(ojinfo->min_righthand, rel1->relids) &&
 			bms_overlap(ojinfo->min_righthand, rel2->relids))
-			return true;
+		{
+			result = true;
+			break;
+		}
 
 		/* Likewise for the LHS. */
 		if (bms_overlap(ojinfo->min_lefthand, rel1->relids) &&
 			bms_overlap(ojinfo->min_lefthand, rel2->relids))
-			return true;
+		{
+			result = true;
+			break;
+		}
 	}
 
 	/*
@@ -698,10 +727,16 @@ have_join_order_restriction(PlannerInfo *root,
 		/* Can we perform the IN with these rels? */
 		if (bms_is_subset(ininfo->lefthand, rel1->relids) &&
 			bms_is_subset(ininfo->righthand, rel2->relids))
-			return true;
+		{
+			result = true;
+			break;
+		}
 		if (bms_is_subset(ininfo->lefthand, rel2->relids) &&
 			bms_is_subset(ininfo->righthand, rel1->relids))
-			return true;
+		{
+			result = true;
+			break;
+		}
 
 		/*
 		 * Might we need to join these rels to complete the RHS?  It's
@@ -711,15 +746,37 @@ have_join_order_restriction(PlannerInfo *root,
 		 */
 		if (bms_overlap(ininfo->righthand, rel1->relids) &&
 			bms_overlap(ininfo->righthand, rel2->relids))
-			return true;
+		{
+			result = true;
+			break;
+		}
 
 		/* Likewise for the LHS. */
 		if (bms_overlap(ininfo->lefthand, rel1->relids) &&
 			bms_overlap(ininfo->lefthand, rel2->relids))
-			return true;
+		{
+			result = true;
+			break;
+		}
 	}
 
-	return false;
+	/*
+	 * We do not force the join to occur if either input rel can legally
+	 * be joined to anything else using joinclauses.  This essentially
+	 * means that clauseless bushy joins are put off as long as possible.
+	 * The reason is that when there is a join order restriction high up
+	 * in the join tree (that is, with many rels inside the LHS or RHS),
+	 * we would otherwise expend lots of effort considering very stupid
+	 * join combinations within its LHS or RHS.
+	 */
+	if (result)
+	{
+		if (has_legal_joinclause(root, rel1) ||
+			has_legal_joinclause(root, rel2))
+			result = false;
+	}
+
+	return result;
 }
 
 
@@ -729,7 +786,9 @@ have_join_order_restriction(PlannerInfo *root,
  *		due to being inside an outer join or an IN (sub-SELECT).
  *
  * Essentially, this tests whether have_join_order_restriction() could
- * succeed with this rel and some other one.
+ * succeed with this rel and some other one.  It's OK if we sometimes
+ * say "true" incorrectly.  (Therefore, we don't bother with the relatively
+ * expensive has_legal_joinclause test.)
  */
 static bool
 has_join_restriction(PlannerInfo *root, RelOptInfo *rel)
@@ -768,6 +827,64 @@ has_join_restriction(PlannerInfo *root, RelOptInfo *rel)
 		if (bms_overlap(ininfo->lefthand, rel->relids) ||
 			bms_overlap(ininfo->righthand, rel->relids))
 			return true;
+	}
+
+	return false;
+}
+
+
+/*
+ * has_legal_joinclause
+ *		Detect whether the specified relation can legally be joined
+ *		to any other rels using join clauses.
+ *
+ * We consider only joins to single other relations.  This is sufficient
+ * to get a "true" result in most real queries, and an occasional erroneous
+ * "false" will only cost a bit more planning time.  The reason for this
+ * limitation is that considering joins to other joins would require proving
+ * that the other join rel can legally be formed, which seems like too much
+ * trouble for something that's only a heuristic to save planning time.
+ */
+static bool
+has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel)
+{
+	Index		rti;
+
+	for (rti = 1; rti < root->simple_rel_array_size; rti++)
+	{
+		RelOptInfo *rel2 = root->simple_rel_array[rti];
+
+		/* there may be empty slots corresponding to non-baserel RTEs */
+		if (rel2 == NULL)
+			continue;
+
+		Assert(rel2->relid == rti);		/* sanity check on array */
+
+		/* ignore RTEs that are "other rels" */
+		if (rel2->reloptkind != RELOPT_BASEREL)
+			continue;
+
+		/* ignore RTEs that are already in "rel" */
+		if (bms_overlap(rel->relids, rel2->relids))
+			continue;
+
+		if (have_relevant_joinclause(root, rel, rel2))
+		{
+			Relids		joinrelids;
+			JoinType	jointype;
+
+			/* join_is_legal needs relids of the union */
+			joinrelids = bms_union(rel->relids, rel2->relids);
+
+			if (join_is_legal(root, rel, rel2, joinrelids, &jointype))
+			{
+				/* Yes, this will work */
+				bms_free(joinrelids);
+				return true;
+			}
+
+			bms_free(joinrelids);
+		}
 	}
 
 	return false;

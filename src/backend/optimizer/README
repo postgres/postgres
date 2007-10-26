@@ -174,7 +174,7 @@ than applying a sort to the cheapest other path).
 If the query contains one-sided outer joins (LEFT or RIGHT joins), or
 "IN (sub-select)" WHERE clauses that were converted to joins, then some of
 the possible join orders may be illegal.  These are excluded by having
-make_join_rel consult side lists of outer joins and IN joins to see
+join_is_legal consult side lists of outer joins and IN joins to see
 whether a proposed join is illegal.  (The same consultation allows it
 to see which join style should be applied for a valid join, ie,
 JOIN_INNER, JOIN_LEFT, etc.)
@@ -217,7 +217,7 @@ FULL JOIN ordering is enforced by not collapsing FULL JOIN nodes when
 translating the jointree to "joinlist" representation.  LEFT and RIGHT
 JOIN nodes are normally collapsed so that they participate fully in the
 join order search.  To avoid generating illegal join orders, the planner
-creates an OuterJoinInfo node for each outer join, and make_join_rel
+creates an OuterJoinInfo node for each outer join, and join_is_legal
 checks this list to decide if a proposed join is legal.
 
 What we store in OuterJoinInfo nodes are the minimum sets of Relids
@@ -226,7 +226,7 @@ these are minimums; there's no explicit maximum, since joining other
 rels to the OJ's syntactic rels may be legal.  Per identities 1 and 2,
 non-FULL joins can be freely associated into the lefthand side of an
 OJ, but in general they can't be associated into the righthand side.
-So the restriction enforced by make_join_rel is that a proposed join
+So the restriction enforced by join_is_legal is that a proposed join
 can't join a rel within or partly within an RHS boundary to one outside
 the boundary, unless the join validly implements some outer join.
 (To support use of identity 3, we have to allow cases where an apparent
