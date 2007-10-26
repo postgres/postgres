@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.542 2007/09/26 22:36:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.543 2007/10/26 21:50:10 mha Exp $
  *
  * NOTES
  *
@@ -331,14 +331,17 @@ static void StartAutovacuumWorker(void);
 #ifdef EXEC_BACKEND
 
 #ifdef WIN32
-static void win32_AddChild(pid_t pid, HANDLE handle);
-static void win32_RemoveChild(pid_t pid);
 static pid_t win32_waitpid(int *exitstatus);
-static DWORD WINAPI win32_sigchld_waiter(LPVOID param);
+static void WINAPI pgwin32_deadchild_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired);
 
-static pid_t *win32_childPIDArray;
-static HANDLE *win32_childHNDArray;
-static unsigned long win32_numChildren = 0;
+static HANDLE win32ChildQueue;
+
+typedef struct 
+{
+	HANDLE waitHandle;
+	HANDLE procHandle;
+	DWORD  procId;
+} win32_deadchild_waitinfo;
 
 HANDLE		PostmasterHandle;
 #endif
@@ -899,16 +902,12 @@ PostmasterMain(int argc, char *argv[])
 #ifdef WIN32
 
 	/*
-	 * Initialize the child pid/HANDLE arrays for signal handling.
+	 * Initialize I/O completion port used to deliver list of dead children.
 	 */
-	win32_childPIDArray = (pid_t *)
-		malloc(mul_size(NUM_BACKENDARRAY_ELEMS, sizeof(pid_t)));
-	win32_childHNDArray = (HANDLE *)
-		malloc(mul_size(NUM_BACKENDARRAY_ELEMS, sizeof(HANDLE)));
-	if (!win32_childPIDArray || !win32_childHNDArray)
+	win32ChildQueue = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
+	if (win32ChildQueue == NULL)
 		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+			(errmsg("could not create I/O completion port for child queue")));
 
 	/*
 	 * Set up a handle that child processes can use to check whether the
@@ -2072,12 +2071,7 @@ reaper(SIGNAL_ARGS)
 #define LOOPHEADER()	(exitstatus = status.w_status)
 #else	/* WIN32 */
 #define LOOPTEST()		((pid = win32_waitpid(&exitstatus)) > 0)
-	/*
-	 * We need to do this here, and not in CleanupBackend, since this is
-	 * to be called on all children when we are done with them. Could move
-	 * to LogChildExit, but that seems like asking for future trouble...
-	 */
-#define LOOPHEADER()	(win32_RemoveChild(pid))
+#define LOOPHEADER()
 #endif   /* WIN32 */
 #endif   /* HAVE_WAITPID */
 
@@ -3332,27 +3326,17 @@ internal_forkexec(int argc, char *argv[], Port *port)
 	int			i;
 	int			j;
 	char		cmdLine[MAXPGPATH * 2];
-	HANDLE		childHandleCopy;
-	HANDLE		waiterThread;
 	HANDLE		paramHandle;
 	BackendParameters *param;
 	SECURITY_ATTRIBUTES sa;
 	char		paramHandleStr[32];
+	win32_deadchild_waitinfo *childinfo;
 
 	/* Make sure caller set up argv properly */
 	Assert(argc >= 3);
 	Assert(argv[argc] == NULL);
 	Assert(strncmp(argv[1], "--fork", 6) == 0);
 	Assert(argv[2] == NULL);
-
-	/* Verify that there is room in the child list */
-	if (win32_numChildren >= NUM_BACKENDARRAY_ELEMS)
-	{
-		elog(LOG, "no room for child entry in backend list");
-		/* Report same error as for a fork failure on Unix */
-		errno = EAGAIN;
-		return -1;
-	}
 
 	/* Set up shared memory for parameter passing */
 	ZeroMemory(&sa, sizeof(sa));
@@ -3463,34 +3447,34 @@ internal_forkexec(int argc, char *argv[], Port *port)
 		return -1;
 	}
 
-	if (!IsUnderPostmaster)
-	{
-		/* We are the Postmaster creating a child... */
-		win32_AddChild(pi.dwProcessId, pi.hProcess);
-	}
-
-	/* Set up the thread to handle the SIGCHLD for this process */
-	if (DuplicateHandle(GetCurrentProcess(),
-						pi.hProcess,
-						GetCurrentProcess(),
-						&childHandleCopy,
-						0,
-						FALSE,
-						DUPLICATE_SAME_ACCESS) == 0)
+	/*
+	 * Queue a waiter for to signal when this child dies. The wait will be handled automatically
+	 * by an operating system thread pool.
+	 *
+	 * Note: use malloc instead of palloc, since it needs to be thread-safe. Struct will be 
+	 * free():d from the callback function that runs on a different thread.
+	 */
+	childinfo = malloc(sizeof(win32_deadchild_waitinfo));
+	if (!childinfo)
 		ereport(FATAL,
-		  (errmsg_internal("could not duplicate child handle: error code %d",
+		  (errcode(ERRCODE_OUT_OF_MEMORY),
+		   errmsg("out of memory")));
+
+	childinfo->procHandle = pi.hProcess;
+	childinfo->procId = pi.dwProcessId;
+
+	if (!RegisterWaitForSingleObject(&childinfo->waitHandle,
+									 pi.hProcess,
+									 pgwin32_deadchild_callback,
+									 childinfo,
+									 INFINITE,
+									 WT_EXECUTEONLYONCE | WT_EXECUTEINWAITTHREAD))
+		ereport(FATAL,
+		  (errmsg_internal("could not register process for wait: error code %d",
 						   (int) GetLastError())));
 
-	waiterThread = CreateThread(NULL, 64 * 1024, win32_sigchld_waiter,
-								(LPVOID) childHandleCopy, 0, NULL);
-	if (!waiterThread)
-		ereport(FATAL,
-				(errmsg_internal("could not create sigchld waiter thread: error code %d",
-								 (int) GetLastError())));
-	CloseHandle(waiterThread);
+	/* Don't close pi.hProcess here - the wait thread needs access to it */
 
-	if (IsUnderPostmaster)
-		CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
 
 	return pi.dwProcessId;
@@ -4500,137 +4484,61 @@ ShmemBackendArrayRemove(pid_t pid)
 
 #ifdef WIN32
 
-/*
- * Note: The following three functions must not be interrupted (eg. by
- * signals).  As the Postgres Win32 signalling architecture (currently)
- * requires polling, or APC checking functions which aren't used here, this
- * is not an issue.
- *
- * We keep two separate arrays, instead of a single array of pid/HANDLE
- * structs, to avoid having to re-create a handle array for
- * WaitForMultipleObjects on each call to win32_waitpid.
- */
-
-static void
-win32_AddChild(pid_t pid, HANDLE handle)
-{
-	Assert(win32_childPIDArray && win32_childHNDArray);
-	if (win32_numChildren < NUM_BACKENDARRAY_ELEMS)
-	{
-		win32_childPIDArray[win32_numChildren] = pid;
-		win32_childHNDArray[win32_numChildren] = handle;
-		++win32_numChildren;
-	}
-	else
-		ereport(FATAL,
-				(errmsg_internal("no room for child entry with pid %lu",
-								 (unsigned long) pid)));
-}
-
-static void
-win32_RemoveChild(pid_t pid)
-{
-	int			i;
-
-	Assert(win32_childPIDArray && win32_childHNDArray);
-
-	for (i = 0; i < win32_numChildren; i++)
-	{
-		if (win32_childPIDArray[i] == pid)
-		{
-			CloseHandle(win32_childHNDArray[i]);
-
-			/* Swap last entry into the "removed" one */
-			--win32_numChildren;
-			win32_childPIDArray[i] = win32_childPIDArray[win32_numChildren];
-			win32_childHNDArray[i] = win32_childHNDArray[win32_numChildren];
-			return;
-		}
-	}
-
-	ereport(WARNING,
-			(errmsg_internal("could not find child entry with pid %lu",
-							 (unsigned long) pid)));
-}
-
 static pid_t
 win32_waitpid(int *exitstatus)
 {
+	DWORD dwd;
+	ULONG_PTR key;
+	OVERLAPPED* ovl;
+
 	/*
-	 * Note: Do NOT use WaitForMultipleObjectsEx, as we don't want to run
-	 * queued APCs here.
+	 * Check if there are any dead children. If there are, return the pid of the first one that died.
 	 */
-	int			index;
-	DWORD		exitCode;
-	DWORD		ret;
-	unsigned long offset;
-
-	Assert(win32_childPIDArray && win32_childHNDArray);
-	elog(DEBUG3, "waiting on %lu children", win32_numChildren);
-
-	for (offset = 0; offset < win32_numChildren; offset += MAXIMUM_WAIT_OBJECTS)
+	if (GetQueuedCompletionStatus(win32ChildQueue, &dwd, &key, &ovl, 0))
 	{
-		unsigned long num = Min(MAXIMUM_WAIT_OBJECTS, win32_numChildren - offset);
-
-		ret = WaitForMultipleObjects(num, &win32_childHNDArray[offset], FALSE, 0);
-		switch (ret)
-		{
-			case WAIT_FAILED:
-				ereport(LOG,
-						(errmsg_internal("failed to wait on %lu of %lu children: error code %d",
-							 num, win32_numChildren, (int) GetLastError())));
-				return -1;
-
-			case WAIT_TIMEOUT:
-				/* No children (in this chunk) have finished */
-				break;
-
-			default:
-
-				/*
-				 * Get the exit code, and return the PID of, the respective
-				 * process
-				 */
-				index = offset + ret - WAIT_OBJECT_0;
-				Assert(index >= 0 && index < win32_numChildren);
-				if (!GetExitCodeProcess(win32_childHNDArray[index], &exitCode))
-				{
-					/*
-					 * If we get this far, this should never happen, but, then
-					 * again... No choice other than to assume a catastrophic
-					 * failure.
-					 */
-					ereport(FATAL,
-					(errmsg_internal("failed to get exit code for child %lu",
-							   (unsigned long) win32_childPIDArray[index])));
-				}
-				*exitstatus = (int) exitCode;
-				return win32_childPIDArray[index];
-		}
+		*exitstatus = (int)key;
+		return dwd;
 	}
 
-	/* No children have finished */
 	return -1;
 }
 
 /*
- * Note! Code below executes on separate threads, one for
- * each child process created
+ * Note! Code below executes on a thread pool! All operations must
+ * be thread safe! Note that elog() and friends must *not* be used.
  */
-static DWORD WINAPI
-win32_sigchld_waiter(LPVOID param)
+static void WINAPI
+pgwin32_deadchild_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 {
-	HANDLE		procHandle = (HANDLE) param;
+	win32_deadchild_waitinfo *childinfo = (win32_deadchild_waitinfo *)lpParameter;
+	DWORD		exitcode;
 
-	DWORD		r = WaitForSingleObject(procHandle, INFINITE);
+	if (TimerOrWaitFired)
+		return;	/* timeout. Should never happen, since we use INFINITE as timeout value. */
 
-	if (r == WAIT_OBJECT_0)
-		pg_queue_signal(SIGCHLD);
-	else
-		write_stderr("could not wait on child process handle: error code %d\n",
-					 (int) GetLastError());
-	CloseHandle(procHandle);
-	return 0;
+	/* Remove handle from wait - required even though it's set to wait only once */
+	UnregisterWaitEx(childinfo->waitHandle, NULL);
+
+	if (!GetExitCodeProcess(childinfo->procHandle, &exitcode))
+	{
+		/*
+		 * Should never happen. Inform user and set a fixed exitcode.
+		 */
+		write_stderr("could not read exitcode for process\n");
+		exitcode = 255;
+	}
+
+	if (!PostQueuedCompletionStatus(win32ChildQueue, childinfo->procId, (ULONG_PTR)exitcode, NULL))
+		write_stderr("could not post child completion status\n");
+
+	/* Handle is per-process, so we close it here instead of in the originating thread */
+	CloseHandle(childinfo->procHandle);
+
+	/* Free struct that was allocated before the call to RegisterWaitForSingleObject() */
+	free(childinfo);
+
+	/* Queue SIGCHLD signal */
+	pg_queue_signal(SIGCHLD);
 }
 
 #endif   /* WIN32 */
