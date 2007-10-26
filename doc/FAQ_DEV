@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Sep 26 16:38:09 EDT 2007
+   Last updated: Fri Oct 26 15:08:39 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -137,9 +137,9 @@ General Questions
        preferable if the file changes are single-line changes and do not
        rely on surrounding lines.)
     4. PostgreSQL is licensed under a BSD license. By posting a patch to
-       the public Postgres mailling lists, you are giving the PostgreSQL
-       Global Development Group the non-revokable right to distribute
-       your patch under the BSD license.
+       the public PostgreSQL mailling lists, you are giving the
+       PostgreSQL Global Development Group the non-revokable right to
+       distribute your patch under the BSD license.
     5. Confirm that your changes can pass the regression tests. If your
        changes are port specific, please list the ports you have tested
        it on.
@@ -180,8 +180,8 @@ General Questions
      * Contains no reliability risks
      * Does not overly complicate the source code
      * If performance-related, has a measureable performance benefit
-     * Is of sufficient usefulness to the average Postgres user
-     * Follows existing Postgres coding standards
+     * Is of sufficient usefulness to the average PostgreSQL user
+     * Follows existing PostgreSQL coding standards
        
   1.7) Where can I learn more about the code?
   
@@ -428,7 +428,7 @@ General Questions
     4. A README.rpm-dist document that tries to adequately document both
        the differences between the RPM build and the WHY of the
        differences, as well as useful RPM environment operations (like,
-       using syslog, upgrading, getting the server to start at OS boot,
+       using syslog, upgrading, getting postmaster to start at OS boot,
        etc);
     5. The spec file that throws it all together. This is not a trivial
        undertaking in a package of this size.
@@ -755,8 +755,8 @@ typedef struct nameData
 (gdb) call print(any_pointer)
     (gdb) call pprint(any_pointer)
 
-   The output appears in the server log file, or on your screen if
-   you are running a backend directly.
+   The output appears in the server log file, or on your screen if you
+   are running a backend directly without a postmaster.
    
   2.4) I just added a field to a structure. What else should I do?
   
@@ -782,13 +782,12 @@ typedef struct nameData
    ereport() is used to send messages to the front-end, and optionally
    terminate the current query being processed. The first parameter is an
    ereport level of DEBUG (levels 1-5), LOG, INFO, NOTICE, ERROR, FATAL,
-   or PANIC. NOTICE prints on the user's terminal and to the server
-   logs. INFO prints only to the user's terminal and LOG prints only to
-   the server logs. (These can be changed from postgresql.conf.) ERROR
-   prints in both places, and terminates the current query, never
-   returning from the call. FATAL terminates the backend process. The
-   remaining parameters of ereport are a printf-style set of parameters
-   to print.
+   or PANIC. NOTICE prints on the user's terminal and to the server logs.
+   INFO prints only to the user's terminal and LOG prints only to the
+   server logs. (These can be changed from postgresql.conf.) ERROR prints
+   in both places, and terminates the current query, never returning from
+   the call. FATAL terminates the backend process. The remaining
+   parameters of ereport are a printf-style set of parameters to print.
    
    ereport(ERROR) frees most memory and open file descriptors so you
    don't need to clean these up before the call.
