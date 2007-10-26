@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.195 2007/10/24 20:55:36 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.196 2007/10/26 20:45:10 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -734,6 +734,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	LOCKMASK	myHeldLocks = MyProc->heldLocks;
 	bool		early_deadlock = false;
+	bool 		allow_autovacuum_cancel = true;
 	int			myWaitStatus;
 	PGPROC	   *proc;
 	int			i;
@@ -892,6 +893,48 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		 * behavior (such as missing log messages).
 		 */
 		myWaitStatus = MyProc->waitStatus;
+
+		/*
+		 * If we are not deadlocked, but are waiting on an autovacuum-induced
+		 * task, send a signal to interrupt it.  
+		 */
+		if (deadlock_state == DS_BLOCKED_BY_AUTOVACUUM && allow_autovacuum_cancel)
+		{
+			PGPROC	*autovac = GetBlockingAutoVacuumPgproc();
+
+			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+
+			/*
+			 * Only do it if the worker is not working to protect against Xid
+			 * wraparound.
+			 */
+			if ((autovac != NULL) &&
+				(autovac->vacuumFlags & PROC_IS_AUTOVACUUM) &&
+				!(autovac->vacuumFlags & PROC_VACUUM_FOR_WRAPAROUND))
+			{
+				int		pid = autovac->pid;
+
+				elog(DEBUG2, "sending cancel to blocking autovacuum pid = %d",
+					 pid);
+
+				/* don't hold the lock across the kill() syscall */
+				LWLockRelease(ProcArrayLock);
+
+				/* send the autovacuum worker Back to Old Kent Road */
+				if (kill(pid, SIGINT) < 0)
+				{
+					/* Just a warning to allow multiple callers */
+					ereport(WARNING,
+							(errmsg("could not send signal to process %d: %m",
+									pid)));
+				}
+			}
+			else
+				LWLockRelease(ProcArrayLock);
+
+			/* prevent signal from being resent more than once */
+			allow_autovacuum_cancel = false;
+		}
 
 		/*
 		 * If awoken after the deadlock check interrupt has run, and
@@ -1189,13 +1232,16 @@ CheckDeadLock(void)
 		 * RemoveFromWaitQueue took care of waking up any such processes.
 		 */
 	}
-	else if (log_lock_waits)
+	else if (log_lock_waits || deadlock_state == DS_BLOCKED_BY_AUTOVACUUM)
 	{
 		/*
 		 * Unlock my semaphore so that the interrupted ProcSleep() call can
 		 * print the log message (we daren't do it here because we are inside
 		 * a signal handler).  It will then sleep again until someone
 		 * releases the lock.
+		 *
+		 * If blocked by autovacuum, this wakeup will enable ProcSleep to send
+		 * the cancelling signal to the autovacuum worker.
 		 */
 		PGSemaphoreUnlock(&MyProc->sem);
 	}

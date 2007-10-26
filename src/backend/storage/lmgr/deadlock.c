@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.48 2007/06/19 20:13:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.49 2007/10/26 20:45:10 alvherre Exp $
  *
  *	Interface:
  *
@@ -108,6 +108,9 @@ static int	nPossibleConstraints;
 static int	maxPossibleConstraints;
 static DEADLOCK_INFO *deadlockDetails;
 static int	nDeadlockDetails;
+
+/* PGPROC pointer of any blocking autovacuum worker found */
+static PGPROC *blocking_autovacuum_proc = NULL; 
 
 
 /*
@@ -206,6 +209,9 @@ DeadLockCheck(PGPROC *proc)
 	nPossibleConstraints = 0;
 	nWaitOrders = 0;
 
+	/* Initialize to not blocked by an autovacuum worker */
+	blocking_autovacuum_proc = NULL;
+
 	/* Search for deadlocks and possible fixes */
 	if (DeadLockCheckRecurse(proc))
 	{
@@ -255,8 +261,26 @@ DeadLockCheck(PGPROC *proc)
 	/* Return code tells caller if we had to escape a deadlock or not */
 	if (nWaitOrders > 0)
 		return DS_SOFT_DEADLOCK;
+	else if (blocking_autovacuum_proc != NULL)
+		return DS_BLOCKED_BY_AUTOVACUUM;
 	else
 		return DS_NO_DEADLOCK;
+}
+
+/*
+ * Return the PGPROC of the autovacuum that's blocking a process.
+ *
+ * We reset the saved pointer as soon as we pass it back.
+ */
+PGPROC *
+GetBlockingAutoVacuumPgproc(void)
+{
+	PGPROC	*ptr;
+
+	ptr = blocking_autovacuum_proc;
+	blocking_autovacuum_proc = NULL;
+
+	return ptr;
 }
 
 /*
@@ -497,6 +521,25 @@ FindLockCycleRecurse(PGPROC *checkProc,
 				if ((proclock->holdMask & LOCKBIT_ON(lm)) &&
 					(conflictMask & LOCKBIT_ON(lm)))
 				{
+					/*
+					 * Look for a blocking autovacuum. There can be more than
+					 * one in the deadlock cycle, in which case we just pick a
+					 * random one.  We stash the autovacuum worker's PGPROC so
+					 * that the caller can send a cancel signal to it, if
+					 * appropriate.
+					 *
+					 * Note we read vacuumFlags without any locking.  This is
+					 * OK only for checking the PROC_IS_AUTOVACUUM flag,
+					 * because that flag is set at process start and never
+					 * reset; there is logic elsewhere to avoid cancelling an
+					 * autovacuum that is working for preventing Xid wraparound
+					 * problems (which needs to read a different vacuumFlag
+					 * bit), but we don't do that here to avoid grabbing
+					 * ProcArrayLock.
+					 */
+					if (proc->vacuumFlags & PROC_IS_AUTOVACUUM)
+						blocking_autovacuum_proc = proc;
+
 					/* This proc hard-blocks checkProc */
 					if (FindLockCycleRecurse(proc, depth + 1,
 											 softEdges, nSoftEdges))

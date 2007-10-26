@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.65 2007/10/25 19:13:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.66 2007/10/26 20:45:10 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2120,6 +2120,14 @@ next_worker:
 									  tab->at_doanalyze,
 									  tab->at_freeze_min_age,
 									  bstrategy);
+
+			/*
+			 * Clear a possible query-cancel signal, to avoid a late reaction
+			 * to an automatically-sent signal because of vacuuming the current
+			 * table (we're done with it, so it would make no sense to cancel
+			 * at this point.)
+			 */
+			QueryCancelPending = false;
 		}
 		PG_CATCH();
 		{

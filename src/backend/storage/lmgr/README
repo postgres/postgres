@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.21 2006/09/18 22:40:36 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.22 2007/10/26 20:45:10 alvherre Exp $
 
 
 LOCKING OVERVIEW
@@ -487,6 +487,13 @@ seems a safer approach than trying to allocate workspace on the fly; we
 don't want to risk having the deadlock detector run out of memory, else
 we really have no guarantees at all that deadlock will be detected.
 
+6. We abuse the deadlock detector to implement autovacuum cancellation.
+When we run the detector and we find that there's an autovacuum worker
+involved in the waits-for graph, we store a pointer to its PGPROC, and
+return a special return code (unless a hard deadlock has been detected).
+The caller can then send a cancellation signal.  This implements the
+principle that autovacuum has a low locking priority (eg it must not block
+DDL on the table).
 
 USER LOCKS
 
