@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.116 2007/07/25 04:19:08 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.117 2007/10/26 01:11:09 momjian Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1411,16 +1411,37 @@ RETURN QUERY <replaceable>query</replaceable>;
      </para>
 
      <para>
-      Functions that use <command>RETURN NEXT</command> or
-      <command>RETURN QUERY</command> should be called in the
-      following fashion:
+      Here is an example of a function using <command>RETURN
+      NEXT</command>:
 
 <programlisting>
-SELECT * FROM some_func();
+CREATE TABLE foo (fooid INT, foosubid INT, fooname TEXT);
+INSERT INTO foo VALUES (1, 2, 'three');
+INSERT INTO foo VALUES (4, 5, 'six');
+
+CREATE OR REPLACE FUNCTION getAllFoo() RETURNS SETOF foo AS
+$BODY$
+DECLARE
+    r foo%rowtype;
+BEGIN
+    FOR r IN SELECT * FROM foo
+    WHERE fooid &gt; 0
+    LOOP
+        -- can do some processing here
+        RETURN NEXT r; -- return next row of SELECT
+    END LOOP;
+    RETURN;
+END
+$BODY$
+LANGUAGE 'plpgsql' ;
+
+SELECT * FROM getallfoo();
 </programlisting>
 
-      That is, the function must be used as a table source in a
-      <literal>FROM</literal> clause.
+      Note that functions using <command>RETURN NEXT</command> or
+      <command>RETURN QUERY</command> must be called as a table source in
+      a <literal>FROM</literal> clause.
+
      </para>
 
      <note>
