@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2007, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.128 2007/08/22 08:20:58 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.129 2007/10/26 14:17:53 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -59,9 +59,6 @@ endif
 
 c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
-parser.c: $(top_srcdir)/src/backend/parser/parser.c
-	rm -f $@ && $(LN_S) $< .
-
 distprep: $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
 
 install: all installdirs
@@ -74,7 +71,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/ecpg$(X)'
 
 clean distclean:
-	rm -f *.o ecpg$(X) parser.c
+	rm -f *.o ecpg$(X)
 # garbage from partial builds
 	@rm -f y.tab.c y.tab.h
 # garbage from development
