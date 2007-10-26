@@ -3,10 +3,10 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/ialloc.c,v 1.8 2007/01/26 17:45:42 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/ialloc.c,v 1.9 2007/10/26 13:30:10 tgl Exp $
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #include "private.h"
 

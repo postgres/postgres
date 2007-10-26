@@ -3,10 +3,10 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.21 2007/02/01 19:10:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.22 2007/10/26 13:30:10 tgl Exp $
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>

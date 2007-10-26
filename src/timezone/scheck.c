@@ -3,10 +3,10 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/scheck.c,v 1.7 2005/10/15 02:49:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/scheck.c,v 1.8 2007/10/26 13:30:10 tgl Exp $
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #include "private.h"
 

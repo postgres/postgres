@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.17 2007/08/04 19:29:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.18 2007/10/26 13:30:10 tgl Exp $
  */
 
 /*
@@ -12,7 +12,8 @@
  * (guy@auspex.com).
  */
 
-#include "postgres.h"
+/* this file needs to build in both frontend and backend contexts */
+#include "c.h"
 
 #include <fcntl.h>
 
