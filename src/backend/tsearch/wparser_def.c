@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.6 2007/10/27 17:53:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.7 2007/10/27 19:03:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,19 +181,13 @@ typedef enum
 	TPS_InHyphenWord,
 	TPS_InHyphenNumWordFirst,
 	TPS_InHyphenNumWord,
-	TPS_InHyphenValueFirst,
-	TPS_InHyphenValue,
-	TPS_InHyphenValueExact,
+	TPS_InHyphenDigitLookahead,
 	TPS_InParseHyphen,
 	TPS_InParseHyphenHyphen,
 	TPS_InHyphenWordPart,
 	TPS_InHyphenAsciiWordPart,
 	TPS_InHyphenNumWordPart,
 	TPS_InHyphenUnsignedInt,
-	TPS_InHDecimalPartFirst,
-	TPS_InHDecimalPart,
-	TPS_InHVersionPartFirst,
-	TPS_InHVersionPart,
 	TPS_Null					/* last state (fake value) */
 } TParserState;
 
@@ -1147,8 +1141,7 @@ static const TParserStateActionItem actionTPS_InHyphenAsciiWordFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
 	{p_isasclet, 0, A_NEXT, TPS_InHyphenAsciiWord, 0, NULL},
 	{p_isalpha, 0, A_NEXT, TPS_InHyphenWord, 0, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHyphenValue, 0, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHyphenNumWord, 0, NULL},
+	{p_isdigit, 0, A_NEXT, TPS_InHyphenDigitLookahead, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -1164,8 +1157,7 @@ static const TParserStateActionItem actionTPS_InHyphenAsciiWord[] = {
 static const TParserStateActionItem actionTPS_InHyphenWordFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
 	{p_isalpha, 0, A_NEXT, TPS_InHyphenWord, 0, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHyphenValue, 0, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHyphenNumWord, 0, NULL},
+	{p_isdigit, 0, A_NEXT, TPS_InHyphenDigitLookahead, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -1179,8 +1171,8 @@ static const TParserStateActionItem actionTPS_InHyphenWord[] = {
 
 static const TParserStateActionItem actionTPS_InHyphenNumWordFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHyphenValue, 0, NULL},
 	{p_isalpha, 0, A_NEXT, TPS_InHyphenNumWord, 0, NULL},
+	{p_isdigit, 0, A_NEXT, TPS_InHyphenDigitLookahead, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -1191,34 +1183,18 @@ static const TParserStateActionItem actionTPS_InHyphenNumWord[] = {
 	{NULL, 0, A_BINGO | A_CLRALL, TPS_InParseHyphen, NUMHWORD, SpecialHyphen}
 };
 
-static const TParserStateActionItem actionTPS_InHyphenValueFirst[] = {
+static const TParserStateActionItem actionTPS_InHyphenDigitLookahead[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHyphenValueExact, 0, NULL},
-	{NULL, 0, A_POP, TPS_Null, 0, NULL}
-};
-
-static const TParserStateActionItem actionTPS_InHyphenValue[] = {
-	{p_isEOF, 0, A_BINGO | A_CLRALL, TPS_InParseHyphen, NUMHWORD, SpecialHyphen},
-	{p_isdigit, 0, A_NEXT, TPS_InHyphenValue, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InHyphenValueFirst, 0, NULL},
-	{p_iseqC, '-', A_PUSH, TPS_InHyphenNumWordFirst, 0, NULL},
+	{p_isdigit, 0, A_NEXT, TPS_InHyphenDigitLookahead, 0, NULL},
 	{p_isalpha, 0, A_NEXT, TPS_InHyphenNumWord, 0, NULL},
-	{NULL, 0, A_BINGO | A_CLRALL, TPS_InParseHyphen, NUMHWORD, SpecialHyphen}
-};
-
-static const TParserStateActionItem actionTPS_InHyphenValueExact[] = {
-	{p_isEOF, 0, A_BINGO | A_CLRALL, TPS_InParseHyphen, NUMHWORD, SpecialHyphen},
-	{p_isdigit, 0, A_NEXT, TPS_InHyphenValueExact, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InHyphenValueFirst, 0, NULL},
-	{p_iseqC, '-', A_PUSH, TPS_InHyphenNumWordFirst, 0, NULL},
-	{NULL, 0, A_BINGO | A_CLRALL, TPS_InParseHyphen, NUMHWORD, SpecialHyphen}
+	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
 static const TParserStateActionItem actionTPS_InParseHyphen[] = {
 	{p_isEOF, 0, A_RERUN, TPS_Base, 0, NULL},
 	{p_isasclet, 0, A_NEXT, TPS_InHyphenAsciiWordPart, 0, NULL},
 	{p_isalpha, 0, A_NEXT, TPS_InHyphenWordPart, 0, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHyphenUnsignedInt, 0, NULL},
+	{p_isdigit, 0, A_PUSH, TPS_InHyphenUnsignedInt, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InParseHyphenHyphen, 0, NULL},
 	{NULL, 0, A_RERUN, TPS_Base, 0, NULL}
 };
@@ -1251,37 +1227,10 @@ static const TParserStateActionItem actionTPS_InHyphenNumWordPart[] = {
 };
 
 static const TParserStateActionItem actionTPS_InHyphenUnsignedInt[] = {
-	{p_isEOF, 0, A_BINGO, TPS_Base, UNSIGNEDINT, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHyphenUnsignedInt, 0, NULL},
-	{p_isalpha, 0, A_NEXT, TPS_InHyphenNumWordPart, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InHDecimalPartFirst, 0, NULL},
-	{NULL, 0, A_BINGO, TPS_InParseHyphen, UNSIGNEDINT, NULL}
-};
-
-static const TParserStateActionItem actionTPS_InHDecimalPartFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_isdigit, 0, A_CLEAR, TPS_InHDecimalPart, 0, NULL},
+	{p_isdigit, 0, A_NEXT, TPS_Null, 0, NULL},
+	{p_isalpha, 0, A_CLEAR, TPS_InHyphenNumWordPart, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
-};
-
-static const TParserStateActionItem actionTPS_InHDecimalPart[] = {
-	{p_isEOF, 0, A_BINGO, TPS_Base, DECIMAL, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHDecimalPart, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InHVersionPartFirst, 0, NULL},
-	{NULL, 0, A_BINGO, TPS_InParseHyphen, DECIMAL, NULL}
-};
-
-static const TParserStateActionItem actionTPS_InHVersionPartFirst[] = {
-	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_isdigit, 0, A_CLEAR, TPS_InHVersionPart, 0, NULL},
-	{NULL, 0, A_POP, TPS_Null, 0, NULL}
-};
-
-static const TParserStateActionItem actionTPS_InHVersionPart[] = {
-	{p_isEOF, 0, A_BINGO, TPS_Base, VERSIONNUMBER, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHVersionPart, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InHVersionPartFirst, 0, NULL},
-	{NULL, 0, A_BINGO, TPS_InParseHyphen, VERSIONNUMBER, NULL}
 };
 
 
@@ -1378,19 +1327,13 @@ static const TParserStateAction Actions[] = {
 	TPARSERSTATEACTION(TPS_InHyphenWord),
 	TPARSERSTATEACTION(TPS_InHyphenNumWordFirst),
 	TPARSERSTATEACTION(TPS_InHyphenNumWord),
-	TPARSERSTATEACTION(TPS_InHyphenValueFirst),
-	TPARSERSTATEACTION(TPS_InHyphenValue),
-	TPARSERSTATEACTION(TPS_InHyphenValueExact),
+	TPARSERSTATEACTION(TPS_InHyphenDigitLookahead),
 	TPARSERSTATEACTION(TPS_InParseHyphen),
 	TPARSERSTATEACTION(TPS_InParseHyphenHyphen),
 	TPARSERSTATEACTION(TPS_InHyphenWordPart),
 	TPARSERSTATEACTION(TPS_InHyphenAsciiWordPart),
 	TPARSERSTATEACTION(TPS_InHyphenNumWordPart),
-	TPARSERSTATEACTION(TPS_InHyphenUnsignedInt),
-	TPARSERSTATEACTION(TPS_InHDecimalPartFirst),
-	TPARSERSTATEACTION(TPS_InHDecimalPart),
-	TPARSERSTATEACTION(TPS_InHVersionPartFirst),
-	TPARSERSTATEACTION(TPS_InHVersionPart)
+	TPARSERSTATEACTION(TPS_InHyphenUnsignedInt)
 };
 
 
