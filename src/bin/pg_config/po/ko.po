@@ -3,18 +3,23 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-12-15 07:06+0000\n"
-"PO-Revision-Date: 2004-12-16 00:15+0900\n"
+"Project-Id-Version: PostgreSQL 8.3dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-02-09 01:13-0400\n"
+"PO-Revision-Date: 2007-02-10 01:09+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: KOREAN <pgsql-kr@postgresql.or.kr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=euc-kr\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Korean\n"
-"X-Poedit-Country: KOREA, REPUBLIC OF\n"
 
-#: pg_config.c:36
+#: pg_config.c:231 pg_config.c:247 pg_config.c:263 pg_config.c:279
+#: pg_config.c:295 pg_config.c:311 pg_config.c:327 pg_config.c:343
+#, c-format
+msgid "not recorded\n"
+msgstr "해당 정보 없음\n"
+
+#: pg_config.c:398
 #, c-format
 msgid ""
 "\n"
@@ -25,30 +30,39 @@ msgstr ""
 "%s 프로그램은 설치된 PostgreSQL 버전에 대한 정보를 제공합니다.\n"
 "\n"
 
-#: pg_config.c:37
+#: pg_config.c:399
+#, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
 
-#: pg_config.c:38
+#: pg_config.c:400
 #, c-format
 msgid ""
-"  %s OPTION...\n"
+"  %s [ OPTION ... ]\n"
 "\n"
 msgstr ""
-"  %s 옵션...\n"
+"  %s [ 옵션 ... ]\n"
 "\n"
 
-#: pg_config.c:39
+#: pg_config.c:401
+#, c-format
 msgid "Options:\n"
 msgstr "옵션들:\n"
 
-#: pg_config.c:40
+#: pg_config.c:402
+#, c-format
 msgid "  --bindir              show location of user executables\n"
 msgstr ""
 "  --bindir              사용자가 실행할 수 있는 응용프로그램들이 있는\n"
 "                        경로를 보여줌\n"
 
-#: pg_config.c:41
+#: pg_config.c:403
+#, c-format
+msgid "  --docdir              show location of documentation files\n"
+msgstr "  --docdir              문서 파일들이 있는 위치를 보여줌\n"
+
+#: pg_config.c:404
+#, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
@@ -56,23 +70,58 @@ msgstr ""
 "  --includedir          클라이언트 인터페이스의 C 헤더 파일이 있는 경로를\n"
 "                        보여줌\n"
 
-#: pg_config.c:43
-msgid "  --includedir-server   show location of C header files for the server\n"
+#: pg_config.c:406
+#, c-format
+msgid "  --pkgincludedir       show location of other C header files\n"
+msgstr "  --pkgincludedir       기타 C 헤더 파일 위치를 보여줌\n"
+
+#: pg_config.c:407
+#, c-format
+msgid ""
+"  --includedir-server   show location of C header files for the server\n"
 msgstr "  --includedir-server   서버용 C 헤더 파일 경로를 보여줌\n"
 
-#: pg_config.c:44
+#: pg_config.c:408
+#, c-format
 msgid "  --libdir              show location of object code libraries\n"
 msgstr "  --libdir              라이브러리 경로를 보여줌\n"
 
-#: pg_config.c:45
+#: pg_config.c:409
+#, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
 msgstr "  --pkglibdir           동적 호출 가능 모듈의 경로를 보여줌\n"
 
-#: pg_config.c:46
+#: pg_config.c:410
+#, c-format
+msgid "  --localedir           show location of locale support files\n"
+msgstr "  --localedir           로케인 지원 파일들의 위치를 보여줌\n"
+
+#: pg_config.c:411
+#, c-format
+msgid "  --mandir              show location of manual pages\n"
+msgstr "  --mandir              맨페이지 위치를 보여줌\n"
+
+#: pg_config.c:412
+#, c-format
+msgid ""
+"  --sharedir            show location of architecture-independent support "
+"files\n"
+msgstr ""
+"  --sharedir            각종 공용으로 사용되는 share 파일들의 위치를 보여줌\n"
+
+#: pg_config.c:413
+#, c-format
+msgid ""
+"  --sysconfdir          show location of system-wide configuration files\n"
+msgstr "  --sysconfdir          시스템 전역 환경 설정 파일의 위치를 보여줌\n"
+
+#: pg_config.c:414
+#, c-format
 msgid "  --pgxs                show location of extension makefile\n"
 msgstr "  --pgxs                확장 makefile 경로를 보여줌\n"
 
-#: pg_config.c:47
+#: pg_config.c:415
+#, c-format
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
@@ -80,76 +129,142 @@ msgstr ""
 "  --configure           PostgreSQL 만들 때 사용한 \"configure\" 스크립트의\n"
 "                        옵션들을 보여줌\n"
 
-#: pg_config.c:49
-msgid "  --version             show the PostgreSQL version, then exit\n"
-msgstr "  --version             PostgreSQL 버전을 보여주고 마침\n"
+#: pg_config.c:417
+#, c-format
+msgid "  --cc                  show CC value used when PostgreSQL was built\n"
+msgstr "  --cc                  PostgreSQL 만들 때 사용된 CC 값을 보여줌\n"
 
-#: pg_config.c:50
+#: pg_config.c:418
+#, c-format
 msgid ""
-"  --help                show this help, then exit\n"
+"  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cppflags            PostgreSQL 만들 때 지정한 CPPFLAGS 값\n"
+
+#: pg_config.c:419
+#, c-format
+msgid ""
+"  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr ""
+"  --cflags              PostgreSQL 만들 때, 사용한 CFLAGS 값을 보여줌\n"
+
+#: pg_config.c:420
+#, c-format
+msgid ""
+"  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --cflags_sl           PostgreSQL 만들 때 지정한 CFLAGS_SL 값\n"
+
+#: pg_config.c:421
+#, c-format
+msgid ""
+"  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgstr ""
+"  --ldflags             PostgreSQL 만들 때, 사용한 LDFLAGS 값을 보여줌\n"
+
+#: pg_config.c:422
+#, c-format
+msgid ""
+"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
+"built\n"
+msgstr "  --ldflags_sl          PostgreSQL 만들 때 지정한 LDFLAGS_SL 값\n"
+
+#: pg_config.c:423
+#, c-format
+msgid ""
+"  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr "  --libs                PostgreSQL 만들 때, 사용한 LIBS 값을 보여줌\n"
+
+#: pg_config.c:424
+#, c-format
+msgid "  --version             show the PostgreSQL version\n"
+msgstr "  --version             PostgreSQL 버전을 보여줌\n"
+
+#: pg_config.c:425
+#, c-format
+msgid "  --help                show this help, then exit\n"
+msgstr "  --help                이 도움말을 보여주고 마침\n"
+
+#: pg_config.c:426
+#, c-format
+msgid ""
+"\n"
+"With no arguments, all known items are shown.\n"
 "\n"
 msgstr ""
-"  --help                이 도움말을 보여주고 마침\n"
+"\n"
+"명령행 인자가 없으면 모든 항목에 대한 정보를 보여 줌\n"
 "\n"
 
-#: pg_config.c:51
+#: pg_config.c:427
+#, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "오류보고: <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_config.c:57
+#: pg_config.c:433
 #, c-format
-msgid ""
-"\n"
-"Try \"%s --help\" for more information\n"
-msgstr ""
-"\n"
-"보다 자세한 정보가 필요하면, \"%s --help\"\n"
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "보다 자세한 정보가 필요하면, \"%s --help\"\n"
 
-#: pg_config.c:75
+#: pg_config.c:472
 #, c-format
-msgid "%s: argument required\n"
-msgstr "%s: 인자가 필요함\n"
+msgid "%s: could not find own executable\n"
+msgstr "%s: 실행 가능 파일이 아닙니다\n"
 
-#: pg_config.c:104
+#: pg_config.c:495
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: 잘못된 인자: %s\n"
 
-#: pg_config.c:113
-#, c-format
-msgid "%s: could not find own executable\n"
-msgstr ""
-
-#: ../../port/exec.c:193
-#: ../../port/exec.c:307
-#: ../../port/exec.c:350
+#: ../../port/exec.c:192 ../../port/exec.c:306 ../../port/exec.c:349
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "현재 디렉토리를 알 수 없음: %s"
 
-#: ../../port/exec.c:323
-#: ../../port/exec.c:359
+#: ../../port/exec.c:211
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "잘못된 이진파일: \"%s\""
+
+#: ../../port/exec.c:260
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "\"%s\" 이진 파일을 읽을 수 없음"
+
+#: ../../port/exec.c:267
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "실행할 \"%s\" 파일 찾을 수 없음"
+
+#: ../../port/exec.c:322 ../../port/exec.c:358
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "\"%s\" 디렉토리로 이동 할 수 없음"
 
-#: ../../port/exec.c:338
+#: ../../port/exec.c:337
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "\"%s\" 심벌릭 링크를 읽을 수 없음"
 
-#: ../../port/exec.c:569
+#: ../../port/exec.c:583
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "하위 프로세스가 종료되었음, 종료 코드 %d"
 
-#: ../../port/exec.c:572
+#: ../../port/exec.c:587
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "0x%X 예외처리에 의해 하위 프로세스가 종료되었음"
+
+#: ../../port/exec.c:596
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "%s 시그널이 감지되어 하위 프로세스가 종료되었음"
+
+#: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "하위 프로세스가 종료되었음, 시그널 %d"
 
-#: ../../port/exec.c:575
+#: ../../port/exec.c:603
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "하위 프로세스가 종료되었음, 알수 없는 상태 %d"
-

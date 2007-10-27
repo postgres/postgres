@@ -3,18 +3,17 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-12-15 07:06+0000\n"
+"Project-Id-Version: PostgreSQL 8.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-02-07 00:38+0900\n"
 "PO-Revision-Date: 2004-12-16 11:37+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: KOREAN <pgsql-kr@postgresql.or.kr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=euc-kr\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Korean\n"
-"X-Poedit-Country: KOREA, REPUBLIC OF\n"
 
-#: pg_controldata.c:26
+#: pg_controldata.c:24
 #, c-format
 msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
@@ -23,7 +22,7 @@ msgstr ""
 "%s 프로그램은 PostgreSQL 데이터베이스 클러스터의 제어정보를 보여줌.\n"
 "\n"
 
-#: pg_controldata.c:30
+#: pg_controldata.c:28
 #, c-format
 msgid ""
 "Usage:\n"
@@ -40,10 +39,12 @@ msgstr ""
 "  --help         이 도움말을 보여주고 마침\n"
 "  --version      버전 정보를 보여주고 마침\n"
 
-#: pg_controldata.c:38
+#: pg_controldata.c:36
+#, c-format
 msgid ""
 "\n"
-"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
+"If no data directory (DATADIR) is specified, the environment variable "
+"PGDATA\n"
 "is used.\n"
 "\n"
 msgstr ""
@@ -52,25 +53,30 @@ msgstr ""
 "사용합니다.\n"
 "\n"
 
-#: pg_controldata.c:40
+#: pg_controldata.c:38
+#, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "오류보고: <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_controldata.c:50
+#: pg_controldata.c:48
 msgid "starting up"
 msgstr "시작 중"
 
-#: pg_controldata.c:52
+#: pg_controldata.c:50
 msgid "shut down"
 msgstr "중지됨"
 
-#: pg_controldata.c:54
+#: pg_controldata.c:52
 msgid "shutting down"
 msgstr "중지 중"
 
+#: pg_controldata.c:54
+msgid "in crash recovery"
+msgstr "비정상 종료 복구 중"
+
 #: pg_controldata.c:56
-msgid "in recovery"
-msgstr "복구 작업 중"
+msgid "in archive recovery"
+msgstr "자료 복구 중"
 
 #: pg_controldata.c:58
 msgid "in production"
@@ -101,6 +107,7 @@ msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일을 읽을 수 없습니다: %s\n"
 
 #: pg_controldata.c:132
+#, c-format
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
 "Either the file is corrupt, or it has a different layout than this program\n"
@@ -117,126 +124,150 @@ msgstr ""
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control 버전 번호:                 %u\n"
 
-#: pg_controldata.c:153
+#: pg_controldata.c:154
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "카타로그 버전 번호:                   %u\n"
 
-#: pg_controldata.c:154
+#: pg_controldata.c:156
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "데이터베이스 시스템 식별자:           %s\n"
 
-#: pg_controldata.c:155
+#: pg_controldata.c:158
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "데이터베이스 클러스터 상태:           %s\n"
 
-#: pg_controldata.c:156
+#: pg_controldata.c:160
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "pg_control 마지막 변경시간:           %s\n"
 
-#: pg_controldata.c:157
+#: pg_controldata.c:162
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "현재 로그 파일 ID:                    %u\n"
 
-#: pg_controldata.c:158
+#: pg_controldata.c:164
 #, c-format
 msgid "Next log file segment:                %u\n"
 msgstr "다음 로그 파일 세그먼트:              %u\n"
 
-#: pg_controldata.c:159
+#: pg_controldata.c:166
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "마지막 체크포인트 위치:               %X/%X\n"
 
-#: pg_controldata.c:161
+#: pg_controldata.c:169
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "이전 체크포인트 위치:                 %X/%X\n"
 
-#: pg_controldata.c:163
+#: pg_controldata.c:172
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "마지막 체크포인트 REDO 위치:          %X/%X\n"
 
-#: pg_controldata.c:165
+#: pg_controldata.c:175
 #, c-format
 msgid "Latest checkpoint's UNDO location:    %X/%X\n"
 msgstr "마지막 체크포인트 UNDO 위치:          %X/%X\n"
 
-#: pg_controldata.c:167
+#: pg_controldata.c:178
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "마지막 체크포인트 TimeLineID:         %u\n"
 
-#: pg_controldata.c:168
+#: pg_controldata.c:180
 #, c-format
-msgid "Latest checkpoint's NextXID:          %u\n"
-msgstr "마지막 체크포인트 NextXID:            %u\n"
+msgid "Latest checkpoint's NextXID:          %u/%u\n"
+msgstr "마지막 체크포인트 NextXID:            %u/%u\n"
 
-#: pg_controldata.c:169
+#: pg_controldata.c:183
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "마지막 체크포인트 NextOID:            %u\n"
 
-#: pg_controldata.c:170
+#: pg_controldata.c:185
+#, c-format
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "마지막 체크포인트 NextMultiXactId:    %u\n"
+
+#: pg_controldata.c:187
+#, c-format
+msgid "Latest checkpoint's NextMultiOffset:  %u\n"
+msgstr "마지막 체크포인트 NextMultiOffset:    %u\n"
+
+#: pg_controldata.c:189
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "마지막 체크포인트 시간:               %s\n"
 
-#: pg_controldata.c:171
+#: pg_controldata.c:191
+#, c-format
+msgid "Minimum recovery ending location:     %X/%X\n"
+msgstr "최소 복구 마지막 위치:                %X/%X\n"
+
+#: pg_controldata.c:194
+#, c-format
+msgid "Maximum data alignment:               %u\n"
+msgstr "최대 자료 정렬:                       %u\n"
+
+#: pg_controldata.c:197
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "데이터베이스 블록 크기:               %u\n"
 
-#: pg_controldata.c:172
+#: pg_controldata.c:199
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "대형 릴레이션의 세그먼트당 블럭 갯수: %u\n"
+msgstr "대형 릴레이션의 세그먼트당 블럭 개수: %u\n"
 
-#: pg_controldata.c:173
+#: pg_controldata.c:201
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "WAL 블록 크기:                        %u\n"
+
+#: pg_controldata.c:203
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "WAL 세그먼트의 크기(byte):            %u\n"
 
-#: pg_controldata.c:174
+#: pg_controldata.c:205
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "식별자 최대 길이:                     %u\n"
 
-#: pg_controldata.c:175
+#: pg_controldata.c:207
 #, c-format
-msgid "Maximum number of function arguments: %u\n"
-msgstr "함수 인자의 최대 갯수:                %u\n"
+msgid "Maximum columns in an index:          %u\n"
+msgstr "인덱스에서 사용하는 최대 칼럼수:      %u\n"
 
-#: pg_controldata.c:176
+#: pg_controldata.c:209
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "날짜/시간형 자료의 저장방식:          %s\n"
 
-#: pg_controldata.c:177
+#: pg_controldata.c:210
 msgid "64-bit integers"
 msgstr "64-비트 정수"
 
-#: pg_controldata.c:177
+#: pg_controldata.c:210
 msgid "floating-point numbers"
 msgstr "부동소수"
 
-#: pg_controldata.c:178
+#: pg_controldata.c:211
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "로케일 이름의 최대 길이:              %u\n"
 
-#: pg_controldata.c:179
+#: pg_controldata.c:213
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                           %s\n"
 
-#: pg_controldata.c:180
+#: pg_controldata.c:215
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"
-

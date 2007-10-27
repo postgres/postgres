@@ -1,0 +1,782 @@
+# SOME DESCRIPTIVE TITLE.
+# This file is put in the public domain.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Postgres Tamil Translation\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-09-21 09:15-0300\n"
+"PO-Revision-Date: 2007-09-25 20:54+0530\n"
+"Last-Translator: ஆமாச்சு <amachu@ubuntu.com>\n"
+"Language-Team: Ubuntu Tamil Team <ubuntu-l10n-tam@lists.ubuntu.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Tamil\n"
+"X-Poedit-Country: INDIA\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: initdb.c:264
+#: initdb.c:278
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: நினைவில் இல்லை\n"
+
+#: initdb.c:387
+#: initdb.c:1666
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "%s: \"%s\" கோப்பினை வாசிக்கும் பொருட்டுத் திறக்க இயலவில்லை: %s\n"
+
+#: initdb.c:449
+#: initdb.c:1184
+#: initdb.c:1213
+#, c-format
+msgid "%s: could not open file \"%s\" for writing: %s\n"
+msgstr "%s: \"%s\" கோப்பினை இயற்றும் பொருட்டு திறக்க இயலவில்லை: %s\n"
+
+#: initdb.c:457
+#: initdb.c:465
+#: initdb.c:1191
+#: initdb.c:1219
+#, c-format
+msgid "%s: could not write file \"%s\": %s\n"
+msgstr "%s: கோப்பினை  இயற்ற இயலவில்லை \"%s\": %s\n"
+
+#: initdb.c:484
+#, c-format
+msgid "%s: could not execute command \"%s\": %s\n"
+msgstr "%s: ஆணையை நிறைவேற்ற இயலவில்லை \"%s\": %s\n"
+
+#: initdb.c:604
+#, c-format
+msgid "%s: removing data directory \"%s\"\n"
+msgstr "%s: தரவின் அடைவு அகற்றப் படுகின்றது \"%s\"\n"
+
+#: initdb.c:607
+#, c-format
+msgid "%s: failed to remove data directory\n"
+msgstr "%s: தரவின் அடைவினை அகற்ற இயவில்லை\n"
+
+#: initdb.c:613
+#, c-format
+msgid "%s: removing contents of data directory \"%s\"\n"
+msgstr "%s: தரவு அடைவில் இருப்பவை அகற்றப்படுகின்றன \"%s\"\n"
+
+#: initdb.c:616
+#, c-format
+msgid "%s: failed to remove contents of data directory\n"
+msgstr "%s: தரவு அடைவில் இருப்பனவற்றை  அகற்ற இயலவில்லை\n"
+
+#: initdb.c:622
+#, c-format
+msgid "%s: removing transaction log directory \"%s\"\n"
+msgstr "%s: பரிமாற்றப் பதிவு அடைவு அகற்றப் படுகின்றது \"%s\"\n"
+
+#: initdb.c:625
+#, c-format
+msgid "%s: failed to remove transaction log directory\n"
+msgstr "%s: பரிமாற்றப் பதிவு அடைவினை அகற்ற இயலவில்லை\n"
+
+#: initdb.c:631
+#, c-format
+msgid "%s: removing contents of transaction log directory \"%s\"\n"
+msgstr "%s: பரிமாற்றப் பதிவு அடைவின் இருப்புக்கள் அகற்றப் படுகின்றன \"%s\"\n"
+
+#: initdb.c:634
+#, c-format
+msgid "%s: failed to remove contents of transaction log directory\n"
+msgstr "%s: பரிமாற்றப் பதிவு அடைவின் இருப்புக்களை அகற்ற இயலவில்லை\n"
+
+#: initdb.c:643
+#, c-format
+msgid "%s: data directory \"%s\" not removed at user's request\n"
+msgstr "%s: பயனரின் கோரிக்கைக்கு இணங்க தரவு அடைவு \"%s\" அகற்றப் படவில்லை\n"
+
+#: initdb.c:648
+#, c-format
+msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
+msgstr "%s: பயனரின் கோரிக்கைக்கு இணங்க பரிமாற்றப் பதிவு அடைவு \"%s\" அகற்றப் படவில்லை\n"
+
+#: initdb.c:672
+#, c-format
+msgid ""
+"%s: cannot be run as root\n"
+"Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
+"own the server process.\n"
+msgstr ""
+"%s: மூலவராக இயக்க இயலாது\n"
+" வழங்கியின் பணிகளுக்கு உரிமையுள்ள \n"
+" பயனராக (சலுகையற்ற) நுழையவும் (உ.ம்., \"su\" பயன்படுத்துவது).\n"
+
+#: initdb.c:718
+#, c-format
+msgid "%s: \"%s\" is not a valid server encoding name\n"
+msgstr "%s: \"%s:\" வழங்கியின் என்கோடிங் பெயர் செல்லாதது\n"
+
+#: initdb.c:878
+#, c-format
+msgid "%s: warning: encoding mismatch\n"
+msgstr "%s: எச்சரிக்கை: என்கோடிங் முரண்படுகிறது\n"
+
+#: initdb.c:880
+#, c-format
+msgid ""
+"The encoding you selected (%s) and the encoding that the selected\n"
+"locale uses (%s) are not known to match.  This might lead to\n"
+"misbehavior in various character string processing functions.  To fix\n"
+"this situation, rerun %s and either do not specify an encoding\n"
+"explicitly, or choose a matching combination.\n"
+msgstr ""
+"தாங்கள் தேர்வு செய்த என்கோடிங் வகையும் (%s) தேர்வு செய்யப் பட்ட \n"
+"அகத்தின் என்கோடிங் வகையும் (%s) பொருந்தவில்லை. இது\n"
+" சரங்களின் மீது பணிபுரியும் செயற்பாடுகளை பாதிக்கும். இதனைக்\n"
+" களைய, %sனை என்கோடிங்  வகையைக் கொடுக்காதவாறோ\n"
+"அல்லது பொருந்தக் கூடிய ஒன்றைக் கொடுத்தோ  மீள இயக்கவும்.\n"
+
+#: initdb.c:1109
+#: initdb.c:3144
+#, c-format
+msgid "%s: could not create directory \"%s\": %s\n"
+msgstr "%s: அடைவினை உருவாக்க இயலவில்லை \"%s\":%s\n"
+
+#: initdb.c:1138
+#, c-format
+msgid ""
+"%s: file \"%s\" does not exist\n"
+"This means you have a corrupted installation or identified\n"
+"the wrong directory with the invocation option -L.\n"
+msgstr ""
+"%s: \"%s\" கோப்பு இல்லை\n"
+" அதாவது தாங்கள் பழுதடைந்த நிறுவலை கொண்டிருக்கிறீர்கள் அல்லது\n"
+" துவக்கத் தேர்வு -L ஆக உள்ள தவறான அடைவினை இனங்கண்டுள்ளீர்கள். \n"
+
+#: initdb.c:1144
+#, c-format
+msgid ""
+"%s: could not access file \"%s\": %s\n"
+"This might mean you have a corrupted installation or identified\n"
+"the wrong directory with the invocation option -L.\n"
+msgstr ""
+"%s: \"%s\": %s கோப்பினை அணுக இயலவில்லை\n"
+" தாங்கள் பழுதடைந்த நிறுவலை கொண்டிருக்கவேண்டும் அல்லது\n"
+"  துவக்கத் தேர்வு -L ஆக உள்ள தவறான அடைவினை இனங்கண்டிருக்க வேண்டும்.\n"
+
+#: initdb.c:1153
+#, c-format
+msgid ""
+"%s: file \"%s\" is not a regular file\n"
+"This means you have a corrupted installation or identified\n"
+"the wrong directory with the invocation option -L.\n"
+msgstr ""
+"%s: \"%s\" கோப்பு வழக்கதில் உள்ளது அல்ல.  தாங்கள் பழுதடைந்த நிறுவலை கொண்டிருக்கவேண்டும் அல்லது\n"
+"  துவக்கத் தேர்வு -L ஆக உள்ள தவறான அடைவினை இனங்கண்டிருக்க வேண்டும்.\n"
+
+#: initdb.c:1265
+#, c-format
+msgid "selecting default max_connections ... "
+msgstr "இயல்பிருப்பாக இருக்க வேண்டிய max_connections தேர்வு செய்யப் படுகின்றது ..."
+
+#: initdb.c:1296
+#, c-format
+msgid "selecting default shared_buffers/max_fsm_pages ... "
+msgstr "இயல்பிருப்பு shared_buffers/max_fsm_pages தேர்வு செய்யப் படுகின்றது ..."
+
+#: initdb.c:1342
+msgid "creating configuration files ... "
+msgstr "வடிவமைப்புக் கோப்புகள் உருவாக்கப் படுகின்றன ..."
+
+#: initdb.c:1511
+#, c-format
+msgid "creating template1 database in %s/base/1 ... "
+msgstr "%s/base/1 ல் வார்ப்பு1  தரவுக் களன் உருவாக்கப் படுகிறது ..."
+
+#: initdb.c:1527
+#, c-format
+msgid ""
+"%s: input file \"%s\" does not belong to PostgreSQL %s\n"
+"Check your installation or specify the correct path using the option -L.\n"
+msgstr ""
+"%s: \"%s\" உள்ளீட்டுக் கோப்பு போஸ்ட்கிரெஸுக்கு சொந்தமானது அல்ல %s\n"
+" தங்கள் நிறுவலை  சரி பார்க்கவும் அல்லது -L தேர்வினைப் பயன்படுத்தி சரியானப் பாதையினைத் தரவும். \n"
+
+#: initdb.c:1605
+msgid "initializing pg_authid ... "
+msgstr "pg_authid துவக்கப் படுகின்றது ..."
+
+#: initdb.c:1641
+msgid "Enter new superuser password: "
+msgstr "புதிய முதன்மைப் பயனர் கடவுச் சொல்லை பதியவும்:"
+
+#: initdb.c:1642
+msgid "Enter it again: "
+msgstr "மீண்டும் பதியவும்:"
+
+#: initdb.c:1645
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "கடவுச் சொற்கள் பொருந்தவில்லை.\n"
+
+#: initdb.c:1672
+#, c-format
+msgid "%s: could not read password from file \"%s\": %s\n"
+msgstr "%s: கோப்பிலிருந்து கடவுச் சொல்லினை  வாசிக்க இயலவில்லை \"%s\": %s\n"
+
+#: initdb.c:1685
+#, c-format
+msgid "setting password ... "
+msgstr "கடவுச் சொல் அமைக்கப்படுகின்றது..."
+
+#: initdb.c:1709
+#, c-format
+msgid "%s: The password file was not generated. Please report this problem.\n"
+msgstr "%s: கடவுச் சொல்லுக்கான கோப்பை உருவாக்க இயலவில்லை. இவ்வழுவினை தெரிவிக்கவும்.\n"
+
+#: initdb.c:1793
+msgid "initializing dependencies ... "
+msgstr "சார்புடைமைகள் துவக்கப்படுகின்றன ..."
+
+#: initdb.c:1821
+msgid "creating system views ... "
+msgstr "அமைப்பு பார்வைகள் உருவாக்கப் படுகின்றன ..."
+
+#: initdb.c:1857
+msgid "loading system objects' descriptions ... "
+msgstr "வன் பொருட்களின் விவரங்கள் ஏற்றப்படுகின்றன..."
+
+#: initdb.c:1909
+msgid "creating conversions ... "
+msgstr "மாற்றங்கள் உருவாக்கப் படுகின்றன..."
+
+#: initdb.c:1944
+msgid "creating dictionaries ... "
+msgstr "அகராதிகள் உருவாக்கப் படுகின்றன..."
+
+#: initdb.c:1997
+msgid "setting privileges on built-in objects ... "
+msgstr "உருவாக்கப் பட்டிருக்கும் பொருட்களுக்கு சலுகைகள்  அமைக்கப் படுகின்றன ..."
+
+#: initdb.c:2055
+msgid "creating information schema ... "
+msgstr "தகவல் ஸ்கீமா  உருவாக்கப் படுகின்றாது ..."
+
+#: initdb.c:2111
+msgid "vacuuming database template1 ... "
+msgstr "தரவுக் களத்தின் வார்ப்பு காலியாக்கப் படுகின்றது ..."
+
+#: initdb.c:2165
+msgid "copying template1 to template0 ... "
+msgstr "வார்ப்பு1  வார்ப்பு0 க்கு நகலெடுக்கப் படுகின்றது ..."
+
+#: initdb.c:2196
+msgid "copying template1 to postgres ... "
+msgstr "வார்ப்பு1  போஸ்ட்க்ரெஸுக்கு நகலெடுக்கப் படுகின்றது"
+
+#: initdb.c:2253
+#, c-format
+msgid "caught signal\n"
+msgstr "சமிக்ஞை பெறப் பட்டுள்ளது\n"
+
+#: initdb.c:2259
+#, c-format
+msgid "could not write to child process: %s\n"
+msgstr "துணைப் பணிக்குள் இயற்ற இயலவில்லை: %s\n"
+
+#: initdb.c:2267
+#, c-format
+msgid "ok\n"
+msgstr "சரி\n"
+
+#: initdb.c:2385
+#, c-format
+msgid "%s: invalid locale name \"%s\"\n"
+msgstr "%s: செல்லாத அகப் பெயர் \"%s\"\n"
+
+#: initdb.c:2536
+#, c-format
+msgid ""
+"%s initializes a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s போஸ்ட்க்ரெஸிச் தரவு கள கூட்டத்தை துவக்கும். \n"
+" \n"
+
+#: initdb.c:2537
+#, c-format
+msgid "Usage:\n"
+msgstr "பயன்பாடு:\n"
+
+#: initdb.c:2538
+#, c-format
+msgid "  %s [OPTION]... [DATADIR]\n"
+msgstr "  %s [OPTION]... [DATADIR]\n"
+
+#: initdb.c:2539
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"தேர்வு:\n"
+
+#: initdb.c:2540
+#, c-format
+msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
+msgstr " [-D, --pgdata=]DATADIR     தரவுக் கள கூட்டமைப்பிற்கான இருப்பு\n"
+
+#: initdb.c:2541
+#, c-format
+msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
+msgstr "  -E, --encoding=ENCODING   புதிய தரவுக் களன்களுக்கு இயல்பான என்கோடிங்களை  அமைக்கவும்\n"
+
+#: initdb.c:2542
+#, c-format
+msgid "  --locale=LOCALE           initialize database cluster with given locale\n"
+msgstr "  --locale=LOCALE           கொடுக்கப் பட்ட அகத்தினைக் கொண்டு தரவுக் கள கூட்டமைப்பை துவக்கவும்\n"
+
+#: initdb.c:2543
+#, c-format
+msgid ""
+"  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
+"  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
+"                            initialize database cluster with given locale\n"
+"                            in the respective category (default taken from\n"
+"                            environment)\n"
+msgstr ""
+"  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
+"  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
+"                            கொடுக்கப் பட்ட அகத்தினைக் கொண்டு தரவுக் கள கூட்டமைப்பை அததற்கான வகையிலிருந்து (இயல்பிருப்பு \n"
+" பணிச்சூழலிலிருந்து எடுக்கப்படும்) துவக்கவும்\n"
+
+#: initdb.c:2548
+#, c-format
+msgid "  --no-locale               equivalent to --locale=C\n"
+msgstr "  --no-locale               equivalent to --locale=C\n"
+
+#: initdb.c:2549
+#, c-format
+msgid "  -T, --text-search-config=CFG\n"
+msgstr "  -T, --text-search-config=CFG\n"
+
+#: initdb.c:2550
+#, c-format
+msgid "                            set default text search configuration\n"
+msgstr "                             இயல்பிருப்பு உரைத் தேடல் வடிவமைப்பினை அமைக்கவும்.\n"
+
+#: initdb.c:2551
+#, c-format
+msgid "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
+msgstr "  -X, --xlogdir=XLOGDIR     பரிமாற்றப் பதிவுக்கான அடைவின் இருப்பு\n"
+
+#: initdb.c:2552
+#, c-format
+msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
+msgstr "  -A, --auth=METHOD         உள்ளூர இணைப்புகளுக்கான அனுமதி முறை\n"
+
+#: initdb.c:2553
+#, c-format
+msgid "  -U, --username=NAME       database superuser name\n"
+msgstr "  -U, --username=NAME       தரவுக் கள முதன்மைப் பயனரின் பெயர்\n"
+
+#: initdb.c:2554
+#, c-format
+msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
+msgstr "  -W, --pwprompt            புதிய முதன்மைப் பயனருக்கான கடவுச் சொல்லைக் கோரவும்\n"
+
+#: initdb.c:2555
+#, c-format
+msgid "  --pwfile=FILE             read password for the new superuser from file\n"
+msgstr "  --pwfile=FILE             கோப்பிலிருந்து முதன்மைப் பயனருக்கான கடவுச் சொல்லை  வாசிக்கவும்\n"
+
+#: initdb.c:2556
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                இவ்வுதவியைக் காட்டிய பின் வெளிவருக\n"
+
+#: initdb.c:2557
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version             வெளியீட்டுத் தகவலைக் காட்டியப் பின் வெளிவருக\n"
+
+#: initdb.c:2558
+#, c-format
+msgid ""
+"\n"
+"Less commonly used options:\n"
+msgstr ""
+"\n"
+"அரிதாகப் பயன்படுத்தப் படும் தேர்வுகள்:\n"
+
+#: initdb.c:2559
+#, c-format
+msgid "  -d, --debug               generate lots of debugging output\n"
+msgstr "  -d, --debug               வழு ஆய்வறிக்கைகளை  அதிகமாக கொணரவும்.\n"
+
+#: initdb.c:2560
+#, c-format
+msgid "  -s, --show                show internal settings\n"
+msgstr " -s, --show                 உள் அமைப்புகளைக் காட்டுக\n"
+
+#: initdb.c:2561
+#, c-format
+msgid "  -L DIRECTORY              where to find the input files\n"
+msgstr " -L DIRECTORY               உள்ளீட்டு கோப்புகளை எங்கே  கண்டெடுப்பது\n"
+
+#: initdb.c:2562
+#, c-format
+msgid "  -n, --noclean             do not clean up after errors\n"
+msgstr "  -n, --noclean             வழுக்களுக்குப் பிறகு துடைக்க வேண்டாம்.\n"
+
+#: initdb.c:2563
+#, c-format
+msgid ""
+"\n"
+"If the data directory is not specified, the environment variable PGDATA\n"
+"is used.\n"
+msgstr ""
+"\n"
+" தரவின் அடைவு கொடுக்கப் படவில்லையெனின், பணிச்சுழல் மாறி PGDATA\n"
+" பயன் படுத்தப் படும்.\n"
+
+#: initdb.c:2565
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+" வழுக்களை <pgsql-bugs@postgresql.org> ற்குத் தெரியப் படுத்தவும். \n"
+
+#: initdb.c:2668
+#, c-format
+msgid "Running in debug mode.\n"
+msgstr "வழுஆய்வு முறையில் இயங்கிக் கொண்டிருக்கின்றது. \n"
+
+#: initdb.c:2672
+#, c-format
+msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
+msgstr "துடை தவிர் முறையில் இயங்கிக் கொண்டிருக்கின்றது. வழுக்கள் களையப் படாது.\n"
+
+#: initdb.c:2715
+#: initdb.c:2733
+#: initdb.c:3003
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "மேலும் விவரங்களுக்கு \"%s --help\" முயற்சிக்கவும்\n"
+
+#: initdb.c:2731
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: முனைய-வரி மதிப்புகள் மிக அதிகமாக உள்ளன (முதலாவது \"%s\")\n"
+
+#: initdb.c:2740
+#, c-format
+msgid "%s: password prompt and password file cannot be specified together\n"
+msgstr "%s: மேலெழும்பு கடவுச்சொல்லும் கடவுச் சொல்லுக்கான கோப்பையும் ஒரு சேர வழங்க இயலாது\n"
+
+#: initdb.c:2746
+msgid ""
+"\n"
+"WARNING: enabling \"trust\" authentication for local connections\n"
+"You can change this by editing pg_hba.conf or using the -A option the\n"
+"next time you run initdb.\n"
+msgstr ""
+"\n"
+"எச்சரிக்கை: உள் இணைப்புகளுக்கு\"trust\" அங்கீகாரம் வழங்கப்படுகிறது.\n"
+"இதனை அடுத்த முறை initidb இயக்கும் போது \n"
+" pg_hba.conf கோப்பினை  தொகுப்பதன் மூலமாகவோ அல்லது -A தேர்வினை பயன்படுத்தியோ மாற்றிக் கொள்ளலாம்.\n"
+
+#: initdb.c:2769
+#, c-format
+msgid "%s: unrecognized authentication method \"%s\"\n"
+msgstr "%s: இனங்காண இயலாத சோதனை முறை \"%s\"\n"
+
+#: initdb.c:2779
+#, c-format
+msgid "%s: must specify a password for the superuser to enable %s authentication\n"
+msgstr "%s அனுமதியினை செயல்படுத்த முதன்மைப் பயனருக்கானக் கடவுச் சொல்லொன்றை %s: தருவது அவசியம்.\n"
+
+#: initdb.c:2794
+#, c-format
+msgid ""
+"%s: no data directory specified\n"
+"You must identify the directory where the data for this database system\n"
+"will reside.  Do this with either the invocation option -D or the\n"
+"environment variable PGDATA.\n"
+msgstr ""
+"%s: எந்தவொரு தரவு அடைவும் கொடுக்கப் படவில்லை\n"
+" இத் தரவுக் கள அமைப்பின்\n"
+"தரவுகள் உறையும் இடத்தினைத் தாங்கள் இனங்காண வேண்டும். துவக்கத் தேர்வு -D யின் துணைக் கொண்டோ அல்லது\n"
+" பணிச்சூழலின் மாறி PGDATA வினைக் கொண்டோ இதனைச் செய்யவும்.\n"
+
+#: initdb.c:2870
+#, c-format
+msgid ""
+"The program \"postgres\" is needed by %s but was not found in the\n"
+"same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"%s லுக்கு \"postgres\" நிரல் தேவைப்படுகிறது. \n"
+"ஆனால் அதே அடைவில \"%s\" காணக்கிடைக்கவில்லை.\n"
+"தங்களின் நிறுவலைச் சரிபார்க்கவும்.\n"
+
+#: initdb.c:2877
+#, c-format
+msgid ""
+"The program \"postgres\" was found by \"%s\"\n"
+"but was not the same version as %s.\n"
+"Check your installation.\n"
+msgstr ""
+"\"postgres\" நிரல் \"%s\"\n"
+" ஆல் கண்டுபிடிக்கப்பட்டது.  ஆனால் %s னை  ஒத்த வெளியீடு அல்ல.\n"
+" தங்கள் நிறுவலைச் சரி பார்க்கவும். \n"
+
+#: initdb.c:2896
+#, c-format
+msgid "%s: input file location must be an absolute path\n"
+msgstr "%s: உள்ளீட்டுக் கோப்பின் இருப்பு முழுமையான பாதையினைக் கொண்டிருத்தல் வேண்டும்\n"
+
+#: initdb.c:2904
+#, c-format
+msgid "%s: could not determine valid short version string\n"
+msgstr "%s: ஏற்க உகந்த சிறிய வகை சரத்தை கண்டெடுக்க இயலவில்லை\n"
+
+#: initdb.c:2963
+#, c-format
+msgid ""
+"The files belonging to this database system will be owned by user \"%s\".\n"
+"This user must also own the server process.\n"
+"\n"
+msgstr ""
+"இத் தரவுக் கள அமைப்பின் கோப்புகளின் உரிமையாளர் \"%s\".\n"
+" வழங்கியின் பணிகளுக்கும் இவரே  உரிமையாளராக இருத்தல் வேண்டும்.\n"
+"\n"
+
+#: initdb.c:2973
+#, c-format
+msgid "The database cluster will be initialized with locale %s.\n"
+msgstr "தரவுக் கள கூட்டம் %s அகத்துடன் துவக்கப் படும். \n"
+
+#: initdb.c:2976
+#, c-format
+msgid ""
+"The database cluster will be initialized with locales\n"
+"  COLLATE:  %s\n"
+"  CTYPE:    %s\n"
+"  MESSAGES: %s\n"
+"  MONETARY: %s\n"
+"  NUMERIC:  %s\n"
+"  TIME:     %s\n"
+msgstr ""
+"தரவுக் கள கூட்டமைப்பு கீழ்காணும் அகங்களைக் கொண்டு துவக்கப் படும்\n"
+"COLLATE:  %s\n"
+"  CTYPE:    %s\n"
+"  MESSAGES: %s\n"
+"  MONETARY: %s\n"
+"  NUMERIC:  %s\n"
+"  TIME:     %s\n"
+
+#: initdb.c:3001
+#, c-format
+msgid "%s: could not find suitable encoding for locale \"%s\"\n"
+msgstr "%s: அகத்திற்கு தகுந்த என்கோடிங் வகையை  கண்டுபிடிக்க இயலவில்லை \"%s\"\n"
+
+#: initdb.c:3002
+#, c-format
+msgid "Rerun %s with the -E option.\n"
+msgstr "%s னை -E தேர்வுடன் மீண்டும் இயக்குக\n"
+
+#: initdb.c:3009
+#, c-format
+msgid "The default database encoding has accordingly been set to %s.\n"
+msgstr "தரவுக் களத்தின் இயல்பிருப்பு என்கோடிங் %s ஆக அமைக்கப் பட்டுள்ளது. \n"
+
+#: initdb.c:3023
+#, c-format
+msgid "%s: could not find suitable text search configuration for locale \"%s\"\n"
+msgstr "%s: தக்கதொரு உரை  தேடல் வடிவமைப்பினை அகத்திற்காக கண்டெடுக்க இயலவில்லை \"%s\"\n"
+
+#: initdb.c:3034
+#, c-format
+msgid "%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"
+msgstr "%s: எச்சரிக்கை: அகத்தின் உரைத் தேடலுக்குத் தகுந்த வடிவமைப்பு \"%s\" தெரியவில்லை\n"
+
+#: initdb.c:3039
+#, c-format
+msgid "%s: warning: specified text search configuration \"%s\" may not match locale \"%s\"\n"
+msgstr "%s: எச்சரிக்கை: கொடுக்கப் பட்ட உரைத் தேடல் வடிவமைப்பு \"%s\" அகத்தோடு பொருந்தாது போகலாம்\"%s\"\n"
+
+#: initdb.c:3044
+#, c-format
+msgid "The default text search configuration will be set to \"%s\".\n"
+msgstr "இயல்பாக அமையும் உரைத் தேடல் வடிவமைப்பு \"%s\" ஆக அமைக்கப் படும்.\n"
+
+#: initdb.c:3078
+#: initdb.c:3138
+#, c-format
+msgid "creating directory %s ... "
+msgstr "%s அடைவு உருவாக்கப் படுகிறது..."
+
+#: initdb.c:3092
+#: initdb.c:3157
+#, c-format
+msgid "fixing permissions on existing directory %s ... "
+msgstr "இருக்கக் கூடிய அடைவுகளில் உரிமங்கள் சரிசெய்யப் படுகின்றன %s ..."
+
+#: initdb.c:3098
+#: initdb.c:3163
+#, c-format
+msgid "%s: could not change permissions of directory \"%s\": %s\n"
+msgstr "%s: \"%s\": %sஅடைவிற்கான அனுமதிகளை மாற்ற இயலவில்லை\n"
+
+#: initdb.c:3111
+#, c-format
+msgid ""
+"%s: directory \"%s\" exists but is not empty\n"
+"If you want to create a new database system, either remove or empty\n"
+"the directory \"%s\" or run %s\n"
+"with an argument other than \"%s\".\n"
+msgstr ""
+"%s: அடைவு \"%s\" இருந்தாலும்  காலியாக  இல்லை\n"
+" தாங்கள் புதிய தரவுக் கள அமைப்பினை  உருவாக்க நினைத்தால், ஒன்று அடைவினை அகற்றவோ அல்லது காலியோ\n"
+" செய்யவும் \"%s\" அல்லது %s\n"
+" னை \"%s\" மதிப்பினைத் தவிர வேறேதாவது கொடுத்து இயக்கவும்.\n"
+
+#: initdb.c:3120
+#: initdb.c:3183
+#, c-format
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "%s: \"%s\": அடைவினை அணுக இயலவில்லை %s\n"
+
+#: initdb.c:3175
+#, c-format
+msgid ""
+"%s: directory \"%s\" exists but is not empty\n"
+"If you want to store the transaction log there, either\n"
+"remove or empty the directory \"%s\".\n"
+msgstr ""
+"%s: அடைவு \"%s\" உள்ளது ஆனால் காலியாக இல்லை\n"
+" பரிமாற்றப் பதிவினை  அவ்விடத்தே  காக்க விரும்பிடின் ஒன்று\n"
+" அடைவினை  அகற்றவும் அல்லது காலி செய்யவும் \"%s\".\n"
+
+#: initdb.c:3191
+#, c-format
+msgid "%s: could not create symbolic link \"%s\": %s\n"
+msgstr "%s: இணைப்பு மாதிரிகளை உருவாக்க இயலவில்லை %s\": %s\n"
+
+#: initdb.c:3196
+#, c-format
+msgid "%s: symlinks are not supported on this platform"
+msgstr "இத் தளத்தில் இணைப்பு மாதிரிகள் ஆதரிக்கப் படுவதில்லை %s:"
+
+#: initdb.c:3202
+#, c-format
+msgid "creating subdirectories ... "
+msgstr "துணையடைவுகள் உருவாக்கப் படுகின்றன ..."
+
+#: initdb.c:3264
+#, c-format
+msgid ""
+"\n"
+"Success. You can now start the database server using:\n"
+"\n"
+"    %s%s%spostgres%s -D %s%s%s\n"
+"or\n"
+"    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n"
+"\n"
+msgstr ""
+"\n"
+"வெற்றி.  கீழ்காணும் தகவல்களைப் பயன் படுத்தி தாங்கள் தரவுக் கள வழங்கியைத் துவக்கலாம்:\n"
+"\n"
+"    %s%s%spostgres%s -D %s%s%s\n"
+"or\n"
+"    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n"
+"\n"
+
+#: ../../port/dirmod.c:75
+#: ../../port/dirmod.c:88
+#: ../../port/dirmod.c:101
+#, c-format
+msgid "out of memory\n"
+msgstr "நினைவை  மீறி\n"
+
+#: ../../port/dirmod.c:272
+#, c-format
+msgid "could not set junction for \"%s\": %s\n"
+msgstr "\"%s\": %s க்கான இணைப்பினை அமைக்க இயலவில்லை\n"
+
+#: ../../port/dirmod.c:312
+#, c-format
+msgid "could not open directory \"%s\": %s\n"
+msgstr "\"%s\": %s அடைவைத் திறக்க இயலவில்லை\n"
+
+#: ../../port/dirmod.c:349
+#, c-format
+msgid "could not read directory \"%s\": %s\n"
+msgstr "\"%s\": %s அடைவை வாசிக்க இயலவில்லை\n"
+
+#: ../../port/dirmod.c:447
+#, c-format
+msgid "could not remove file or directory \"%s\": %s\n"
+msgstr "\"%s\": %s அடைவையோக் கோப்பினையோ அகற்ற இயலவில்லை\n"
+
+#: ../../port/exec.c:192
+#: ../../port/exec.c:306
+#: ../../port/exec.c:349
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "தற்போதைய அடைவினை இனங்காண இயலவில்லை: %s"
+
+#: ../../port/exec.c:211
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "செல்லாத இருமம் \"%s\""
+
+#: ../../port/exec.c:260
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "\"%s\" இருமத்தை  வாசிக்க இயலவில்லை"
+
+#: ../../port/exec.c:267
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "செயற்படுத்த \"%s\" னை கண்டுபிடிக்க இயலவில்லை"
+
+#: ../../port/exec.c:322
+#: ../../port/exec.c:358
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "அடைவை \"%s\" ஆக மாற்ற இயலவில்லை"
+
+#: ../../port/exec.c:337
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "\"%s\" இணைப்பு மாதிரிகளை வாசிக்க இயலவில்லை"
+
+#: ../../port/exec.c:583
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "துணைப் பணி வெளியேற்றக் குறியீடு %d யுடன் வெளிவந்தது"
+
+#: ../../port/exec.c:587
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "0x%X விதிவிலக்கால் துணைப் பணி தடைப் பட்டது"
+
+#: ../../port/exec.c:596
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "சமிக்ஞை %s ஆல் துணைப் பணி தடைப் பட்டது"
+
+#: ../../port/exec.c:599
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "சமிக்ஞை %d ஆல் துணைப் பணி தடைப்பட்டது"
+
+#: ../../port/exec.c:603
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "அடையாளங்காண இயலாத நிலை %d யால் துணைப் பணி வெளிவந்தது"
+

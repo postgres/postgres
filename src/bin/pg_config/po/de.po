@@ -1,16 +1,16 @@
 # German message translation file for pg_config
-# Peter Eisentraut <peter_e@gmx.net>, 2004, 2005.
+# Peter Eisentraut <peter_e@gmx.net>, 2004 - 2007.
 #
-# pgtranslation Id: pg_config.po,v 1.4 2006/10/27 13:07:50 petere Exp $
+# pgtranslation Id: pg_config.po,v 1.6 2007/09/25 16:24:04 petere Exp $
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.1\n"
+"Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-20 01:37-0300\n"
-"PO-Revision-Date: 2006-10-27 14:54+0200\n"
+"POT-Creation-Date: 2007-09-24 19:17-0300\n"
+"PO-Revision-Date: 2007-09-25 16:43+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -37,7 +37,7 @@ msgstr ""
 #: pg_config.c:399
 #, c-format
 msgid "Usage:\n"
-msgstr "Benutzung:\n"
+msgstr "Aufruf:\n"
 
 #: pg_config.c:400
 #, c-format
@@ -63,7 +63,8 @@ msgstr ""
 #: pg_config.c:403
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
-msgstr "  --docdir              zeige Installationsverzeichnis der Dokumentation\n"
+msgstr ""
+"  --docdir              zeige Installationsverzeichnis der Dokumentation\n"
 
 #: pg_config.c:404
 #, c-format
@@ -78,7 +79,9 @@ msgstr ""
 #: pg_config.c:406
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
-msgstr "  --pkgincludedir       zeige Installationsverzeichnis von weiteren Headerdateien\n"
+msgstr ""
+"  --pkgincludedir       zeige Installationsverzeichnis von weiteren "
+"Headerdateien\n"
 
 #: pg_config.c:407
 #, c-format
@@ -106,7 +109,8 @@ msgstr ""
 #: pg_config.c:410
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
-msgstr "  --localedir           zeige Installationsverzeichnis der Locale-Dateien\n"
+msgstr ""
+"  --localedir           zeige Installationsverzeichnis der Locale-Dateien\n"
 
 #: pg_config.c:411
 #, c-format
@@ -229,7 +233,7 @@ msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
 #: pg_config.c:472
 #, c-format
-msgid "%s: could not find own executable\n"
+msgid "%s: could not find own program executable\n"
 msgstr "%s: konnte eigene Programmdatei nicht finden\n"
 
 #: pg_config.c:495
@@ -237,47 +241,57 @@ msgstr "%s: konnte eigene Programmdatei nicht finden\n"
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: ungültiges Argument: %s\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#: ../../port/exec.c:192 ../../port/exec.c:306 ../../port/exec.c:349
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "konnte aktuelles Verzeichnis nicht ermitteln: %s"
 
-#: ../../port/exec.c:212
+#: ../../port/exec.c:211
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "ungültige Programmdatei »%s«"
 
-#: ../../port/exec.c:261
+#: ../../port/exec.c:260
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "konnte Programmdatei »%s« nicht lesen"
 
-#: ../../port/exec.c:268
+#: ../../port/exec.c:267
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "konnte kein »%s« zum Ausführen finden"
 
-#: ../../port/exec.c:323 ../../port/exec.c:359
+#: ../../port/exec.c:322 ../../port/exec.c:358
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "konnte nicht in Verzeichnis »%s« wechseln"
 
-#: ../../port/exec.c:338
+#: ../../port/exec.c:337
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "konnte symbolischen Link »%s« nicht lesen"
 
-#: ../../port/exec.c:584
+#: ../../port/exec.c:583
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "Kindprozess hat mit Code %d beendet"
 
 #: ../../port/exec.c:587
 #, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "Kindprozess wurde von Ausnahme 0x%X beendet"
+
+#: ../../port/exec.c:596
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "Kindprozess wurde von Signal %s beendet"
+
+#: ../../port/exec.c:599
+#, c-format
 msgid "child process was terminated by signal %d"
 msgstr "Kindprozess wurde von Signal %d beendet"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:603
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"

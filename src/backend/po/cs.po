@@ -9655,11 +9655,11 @@ msgstr "S:Kvì"
 
 #: utils/adt/formatting.c:2939
 msgid "Jun"
-msgstr "Èen"
+msgstr "Èrn"
 
 #: utils/adt/formatting.c:2942
 msgid "Jul"
-msgstr "Èec"
+msgstr "Èrc"
 
 #: utils/adt/formatting.c:2945
 msgid "Aug"

@@ -1,0 +1,794 @@
+# SOME DESCRIPTIVE TITLE.
+# This file is put in the public domain.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Postgres Tamil Translation\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-09-21 09:19-0300\n"
+"PO-Revision-Date: 2007-10-14 11:58+0530\n"
+"Last-Translator: ஆமாச்சு <amachu@ubuntu.com>\n"
+"Language-Team: Ubuntu Tamil Team <ubuntu-l10n-tam@lists.ubuntu.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Tamil\n"
+"X-Poedit-Country: INDIA\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: fe-auth.c:268
+#, c-format
+msgid "could not set socket to blocking mode: %s\n"
+msgstr "தடுப்பு முறைக்கு சாக்கெட்டினை அமைக்க இயலவில்லை: %s\n"
+
+#: fe-auth.c:286
+#: fe-auth.c:290
+#, c-format
+msgid "Kerberos 5 authentication rejected: %*s\n"
+msgstr "கேர்பரோஸ் 5 அங்கீகாரம் மறுக்கப்பட்டது: %*s\n"
+
+#: fe-auth.c:316
+#, c-format
+msgid "could not restore non-blocking mode on socket: %s\n"
+msgstr "தடையில்லா  முறையினை  சாக்கெட்டின் மீது மீட்டமைக்க இயலவில்லை: %s\n"
+
+#: fe-auth.c:439
+msgid "GSSAPI continuation error"
+msgstr "GSSAPI தொடர்வதில் வழு"
+
+#: fe-auth.c:467
+msgid "duplicate GSS auth request\n"
+msgstr "போலி GSS அங்கீகாரத்துக்கான கோரிக்கை\n"
+
+#: fe-auth.c:487
+msgid "GSSAPI name import error"
+msgstr "GSSAPI பெயர் இறக்க வழு"
+
+#: fe-auth.c:573
+msgid "SSPI continuation error"
+msgstr "SSPI தொடர்வதில் வழு"
+
+#: fe-auth.c:584
+#: fe-auth.c:649
+#: fe-auth.c:675
+#: fe-auth.c:772
+#: fe-connect.c:1299
+#: fe-connect.c:2532
+#: fe-connect.c:2749
+#: fe-connect.c:3078
+#: fe-connect.c:3087
+#: fe-connect.c:3224
+#: fe-connect.c:3264
+#: fe-connect.c:3282
+#: fe-exec.c:2751
+#: fe-lobj.c:669
+#: fe-protocol2.c:1027
+#: fe-protocol3.c:1330
+msgid "out of memory\n"
+msgstr "நினைவைத் தாண்டி\n"
+
+#: fe-auth.c:669
+msgid "hostname must be specified\n"
+msgstr "தருநர் பெயர் கொடுக்கப் பட வேண்டும்\n"
+
+#: fe-auth.c:748
+msgid "SCM_CRED authentication method not supported\n"
+msgstr "SCM_CRED அங்கீகார முறை ஆதரிக்கப் படவில்லை\n"
+
+#: fe-auth.c:830
+msgid "Kerberos 4 authentication not supported\n"
+msgstr "கேபராஸ் 4 அங்கீகாரம் ஆதரிக்கப் படவில்லை\n"
+
+#: fe-auth.c:846
+msgid "Kerberos 5 authentication not supported\n"
+msgstr "கேபராஸ் 5 அங்கீகாரம் ஆதரிக்கப் படவில்லை\n"
+
+#: fe-auth.c:910
+msgid "GSSAPI authentication not supported\n"
+msgstr "GSSAPI அங்கீகாரம் ஆதரிக்கப் படவில்லை\n"
+
+#: fe-auth.c:933
+msgid "SSPI authentication not supported\n"
+msgstr "SSPI அங்கீகாரம் ஆதரிக்கப் படவில்லை\n"
+
+#: fe-auth.c:962
+#, c-format
+msgid "authentication method %u not supported\n"
+msgstr "அங்கீகார முறையான %u ஆதரிக்கப் படவில்லை\n"
+
+#: fe-connect.c:496
+#, c-format
+msgid "invalid sslmode value: \"%s\"\n"
+msgstr "செல்லுபடியாகாத ssimode மதிப்பு: \"%s\"\n"
+
+#: fe-connect.c:516
+#, c-format
+msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
+msgstr "SSL ஆதரவு ஒடுக்கம் பெறாத போது ssimode மதிப்பு \"%s\" செல்லுபடியாகாது\n"
+
+#: fe-connect.c:695
+#, c-format
+msgid "could not set socket to TCP no delay mode: %s\n"
+msgstr "TCP காத்திரா  நிலைக்கு சாக்கெட்டினை அமைக்க இயலவில்லை: %s\n"
+
+#: fe-connect.c:725
+#, c-format
+msgid ""
+"could not connect to server: %s\n"
+"\tIs the server running locally and accepting\n"
+"\tconnections on Unix domain socket \"%s\"?\n"
+msgstr ""
+"வழங்கியுடன் இணைக்க இயலவில்லை: %s\n"
+" \t வழங்கி உள்ளூர இயங்கி\n"
+" யுனிக்ஸ் டொமைன் சாக்கெட் களிலிருந்து இணைபுகளைப் பெறுகிறதா\"%s\"?\n"
+
+#: fe-connect.c:735
+#, c-format
+msgid ""
+"could not connect to server: %s\n"
+"\tIs the server running on host \"%s\" and accepting\n"
+"\tTCP/IP connections on port %s?\n"
+msgstr ""
+"வழங்கியுடன் இணைக்க இயலவில்லை: %s\n"
+"\t தருநரில் வழங்கி இயங்குகிறதா \"%s\" மேலும் \n"
+"\tTCP/IP இணைப்புகளை %s துறையில் பெறுகின்றதா?\n"
+
+#: fe-connect.c:825
+#, c-format
+msgid "could not translate host name \"%s\" to address: %s\n"
+msgstr "தருநர் பெயர் \"%s\" னை %s முகவரிக்கு மொழிபெயர்க்க இயலவில்லை\n"
+
+#: fe-connect.c:829
+#, c-format
+msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
+msgstr "யுனிக்ஸ் டொமைன் சாக்கெட் பாதையினை \"%s\" முகவரி %s க்கு மாற்ற இயலவில்லை\n"
+
+#: fe-connect.c:1030
+msgid "invalid connection state, probably indicative of memory corruption\n"
+msgstr "செல்லுபடியாகாத இணைப்பு நிலை, நினைவு மழுங்கியதற்கான சமிக்ஞையாக இருக்கலாம்\n"
+
+#: fe-connect.c:1073
+#, c-format
+msgid "could not create socket: %s\n"
+msgstr "சாக்கெட்டினை  உருவாக்க இயலவில்லை: %s\n"
+
+#: fe-connect.c:1096
+#, c-format
+msgid "could not set socket to non-blocking mode: %s\n"
+msgstr "தடையில்லா  முறைக்கு சாக்கெட்டினை  அமைக்க இயலவில்லை: %s\n"
+
+#: fe-connect.c:1108
+#, c-format
+msgid "could not set socket to close-on-exec mode: %s\n"
+msgstr "close-on-exec நிலையில் சாக்கெட்டினை அமைக்க இயலவில்லை: %s\n"
+
+#: fe-connect.c:1195
+#, c-format
+msgid "could not get socket error status: %s\n"
+msgstr "சாக்கெட் வழு நிலையை பெற இயலவில்லை: %s\n"
+
+#: fe-connect.c:1233
+#, c-format
+msgid "could not get client address from socket: %s\n"
+msgstr "வாங்கியின் முகவரியினை சாக்கெட்டிலிருந்து பெற இயலவில்லை: %s\n"
+
+#: fe-connect.c:1277
+#, c-format
+msgid "could not send SSL negotiation packet: %s\n"
+msgstr "SSL மத்தியஸ்த பொட்டலத்தை அனுப்ப இயலவில்லை: %s\n"
+
+#: fe-connect.c:1312
+#, c-format
+msgid "could not send startup packet: %s\n"
+msgstr "துவக்க பொட்டலத்தை அனுப்ப இயலவில்லை: %s\n"
+
+#: fe-connect.c:1377
+#: fe-connect.c:1394
+msgid "server does not support SSL, but SSL was required\n"
+msgstr "SSL ஆதாவினை வழங்கி ஆதரிக்கவில்லை, ஆனால் SSL  தேவைப் படுகின்றது\n"
+
+#: fe-connect.c:1410
+#, c-format
+msgid "received invalid response to SSL negotiation: %c\n"
+msgstr "SSL மத்தியஸ்தத்துக்கு ஒவ்வாத பதில் கிடைத்தது: %c\n"
+
+#: fe-connect.c:1486
+#: fe-connect.c:1519
+#, c-format
+msgid "expected authentication request from server, but received %c\n"
+msgstr "அங்கீகார கோரிக்கை  எதிர்பார்க்கப் பட்டது, பெற்றதோ %c\n"
+
+#: fe-connect.c:1696
+#, c-format
+msgid "out of memory allocating GSSAPI buffer (%i)"
+msgstr "GSSAPI நிலையாநினைவினை(%i) ஒதுக்குகையில் நினைவகன்றது"
+
+#: fe-connect.c:1785
+msgid "unexpected message from server during startup\n"
+msgstr "துவங்குகையில் வழங்கியிலிருந்து எதிர்பாராத தகவல்\n"
+
+#: fe-connect.c:1853
+#, c-format
+msgid "invalid connection state %c, probably indicative of memory corruption\n"
+msgstr "செல்லத்தகாத நினைவு நிலை \"%c, நினைவு பழுதடைந்திருக்கலாம்\n"
+
+#: fe-connect.c:2545
+#, c-format
+msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
+msgstr "செல்லாத LDAP URL \"%s\": திட்டம் கட்டாயம் ldap ஆக இருக்க வேண்டும்://\n"
+
+#: fe-connect.c:2560
+#, c-format
+msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
+msgstr "செல்லாத LDAP URL \"%s\": தனித்துவம் வாய்ந்த பெயர் விடுபட்டுள்ளது\n"
+
+#: fe-connect.c:2571
+#: fe-connect.c:2624
+#, c-format
+msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
+msgstr "LDAP இணைப்பு செல்லாது \"%s\": குறைந்தது ஒரு இணைப்பாவது கொண்டிருக்க வேண்டும்\n"
+
+#: fe-connect.c:2581
+#: fe-connect.c:2638
+#, c-format
+msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
+msgstr "LDAP இணைப்பு செல்லாது \"%s\": தேடுவதற்கான வரம்பு கொண்டிருத்தல் வேண்டும் (base/one/sub)\n"
+
+#: fe-connect.c:2592
+#, c-format
+msgid "invalid LDAP URL \"%s\": no filter\n"
+msgstr "LDAP இணைப்பு செல்லாது \"%s\": வழிகட்டு இல்லை\n"
+
+#: fe-connect.c:2613
+#, c-format
+msgid "invalid LDAP URL \"%s\": invalid port number\n"
+msgstr "LDAP இணைப்பு செல்லாது \"%s\": துறை எண் செல்லாது\n"
+
+#: fe-connect.c:2647
+msgid "could not create LDAP structure\n"
+msgstr "LDAP கட்டமைப்பை  உருவாக்க இயலவில்லை\n"
+
+#: fe-connect.c:2689
+#, c-format
+msgid "lookup on LDAP server failed: %s\n"
+msgstr "LDAP வழங்கியில் தேடல் செயலிழந்தது: %s\n"
+
+#: fe-connect.c:2700
+msgid "more than one entry found on LDAP lookup\n"
+msgstr "LDAP தேடலில் ஒன்றுக்கு மேற்பட்ட பதிவு கிடைத்துள்ளது\n"
+
+#: fe-connect.c:2701
+#: fe-connect.c:2713
+msgid "no entry found on LDAP lookup\n"
+msgstr "LDAP தேடலில் எந்தவொரு பதிவும் கிடைக்கவில்லை\n"
+
+#: fe-connect.c:2724
+#: fe-connect.c:2737
+msgid "attribute has no values on LDAP lookup\n"
+msgstr "LDAP தேடலில் பண்பிற்கு மதிப்பு எதுவும் இல்லை\n"
+
+#: fe-connect.c:2788
+#: fe-connect.c:2806
+#: fe-connect.c:3126
+#, c-format
+msgid "missing \"=\" after \"%s\" in connection info string\n"
+msgstr "தொடர்புக்கான தகவல் சரத்தில் \"%s\" க்குப் பிறகு \"=\" இல்லை\n"
+
+#: fe-connect.c:2869
+#: fe-connect.c:3208
+#, c-format
+msgid "invalid connection option \"%s\"\n"
+msgstr "செல்லுபடியாகாத இணைப்புத் தேர்வு \"%s\" \n"
+
+#: fe-connect.c:2882
+#: fe-connect.c:3175
+msgid "unterminated quoted string in connection info string\n"
+msgstr "தொடர்புக்கான தகவல் சரத்தில் நிறைவுபெறாத மேற்கோளிடப் பட்ட சரம்\n"
+
+#: fe-connect.c:2925
+#, c-format
+msgid "ERROR: service file \"%s\" not found\n"
+msgstr "வழு: \"%s\" சேவை  கோப்பினைக் காணவில்லை\n"
+
+#: fe-connect.c:2938
+#, c-format
+msgid "ERROR: line %d too long in service file \"%s\"\n"
+msgstr "வழு: சேவைக் கோப்பில் %d வரி மிகப் பெரிதாக உள்ளது\"%s\"\n"
+
+#: fe-connect.c:3010
+#: fe-connect.c:3037
+#, c-format
+msgid "ERROR: syntax error in service file \"%s\", line %d\n"
+msgstr "வழு: சேவைக் கோப்பு \"%s\" ன் வரி %d ல் நெறி வழு\n"
+
+#: fe-connect.c:3450
+msgid "connection pointer is NULL\n"
+msgstr "இணைப்புச் சுட்டி NULL ஆக உள்ளது\n"
+
+#: fe-connect.c:3724
+#, c-format
+msgid "WARNING: password file \"%s\" is not a plain file\n"
+msgstr "எச்சரிக்கை: கடவுச் சொல்லுக்கானக் கோப்பு \"%s\" ஒரு சாதாரணக் கோப்பு இல்லை\n"
+
+#: fe-connect.c:3734
+#, c-format
+msgid "WARNING: password file \"%s\" has world or group read access; permission should be u=rw (0600)\n"
+msgstr "எச்சரிக்கை: கடவுச் சொல் கோப்பு \"%s\" அனைவரும் அல்லது குழுமம் அணுக ஏதுவாய் உள்ளது; u=rw (0600) ஆக அனுமதி இருத்தல் நல்லது\n"
+
+#: fe-exec.c:498
+msgid "NOTICE"
+msgstr "அறிவிப்பு"
+
+#: fe-exec.c:682
+#: fe-exec.c:739
+#: fe-exec.c:779
+msgid "command string is a null pointer\n"
+msgstr "ஆணைச் சரம் ஒரு வெற்றுச் சுட்டி\n"
+
+#: fe-exec.c:772
+#: fe-exec.c:867
+msgid "statement name is a null pointer\n"
+msgstr "வாசகத்தின் பெயர் ஒரு வெற்றுச் சுட்டி\n"
+
+#: fe-exec.c:787
+#: fe-exec.c:941
+#: fe-exec.c:1570
+#: fe-exec.c:1766
+msgid "function requires at least protocol version 3.0\n"
+msgstr "செயற்பாட்டுக்கு குறைந்த பட்சம் நெறி 3.0 தேவைப் படுகிறது\n"
+
+#: fe-exec.c:898
+msgid "no connection to the server\n"
+msgstr "வழங்கிக்கு இணைப்பு எதுவும் இல்லை\n"
+
+#: fe-exec.c:905
+msgid "another command is already in progress\n"
+msgstr "மற்றொரு ஆணை  நிறைவேற்றப் பட்டுக்கொண்டிருக்கிறது\n"
+
+#: fe-exec.c:1015
+msgid "length must be given for binary parameter\n"
+msgstr "இரும காரணிக்கு நீளம் கட்டாயம் கொடுக்கப்பட்டிருத்தல் வேண்டும்\n"
+
+#: fe-exec.c:1262
+#, c-format
+msgid "unexpected asyncStatus: %d\n"
+msgstr "எதிர்பாராத பொருந்தா நிலை: %d\n"
+
+#: fe-exec.c:1388
+msgid "COPY terminated by new PQexec"
+msgstr "PQexec ஆல்  நகலெடுப்பது நிறுத்தப் பட்டது"
+
+#: fe-exec.c:1396
+msgid "COPY IN state must be terminated first\n"
+msgstr "அக நகல் நிலை  முதலில் நிறுத்தப் பட வேண்டும்\n"
+
+#: fe-exec.c:1416
+msgid "COPY OUT state must be terminated first\n"
+msgstr "புற நகல் நிலை  முதலில் நிறுத்தப் பட வேண்டும்\n"
+
+#: fe-exec.c:1658
+#: fe-exec.c:1723
+#: fe-exec.c:1808
+#: fe-protocol2.c:1172
+#: fe-protocol3.c:1486
+msgid "no COPY in progress\n"
+msgstr "நகலாக்கம் எதுவும் நடைபெறவில்லை\n"
+
+#: fe-exec.c:2000
+msgid "connection in wrong state\n"
+msgstr "இணைப்பு தவறான நிலையில் உள்ளது\n"
+
+#: fe-exec.c:2031
+msgid "invalid ExecStatusType code"
+msgstr "ExecStatusType குறியீடு செல்லுபடியாகாது"
+
+#: fe-exec.c:2095
+#: fe-exec.c:2118
+#, c-format
+msgid "column number %d is out of range 0..%d"
+msgstr "நெடுவரிசை எண் %d வரம்புக்குக்கு 0.. %d வெளியே  உள்ளது\" "
+
+#: fe-exec.c:2111
+#, c-format
+msgid "row number %d is out of range 0..%d"
+msgstr "குறுக்கு வரிசை எண் %d வரம்புக்கு 0.. %d வெளியே  உள்ளது"
+
+#: fe-exec.c:2133
+#, c-format
+msgid "parameter number %d is out of range 0..%d"
+msgstr "காரணி எண் %d வரம்புக்கு வெளியே  உள்ளது 0.. %d"
+
+#: fe-exec.c:2420
+#, c-format
+msgid "could not interpret result from server: %s"
+msgstr "வழங்கியிலிருந்து முடிவை  கணிக்க இயலவில்லை: %s"
+
+#: fe-exec.c:2659
+msgid "incomplete multibyte character\n"
+msgstr "பூர்த்தியாகாத மல்டிபைட் எழுத்து\n"
+
+#: fe-lobj.c:150
+msgid "cannot determine OID of function lo_truncate\n"
+msgstr "lo_truncate செயற்பாட்டின் OID னைக் கண்டுபிடிக்க முடியவில்லை\n"
+
+#: fe-lobj.c:378
+msgid "cannot determine OID of function lo_create\n"
+msgstr "lo_create செயற்பாட்டின் OID யினைக் கணடுபிக்க இயலவில்லை\n"
+
+#: fe-lobj.c:502
+#: fe-lobj.c:597
+#, c-format
+msgid "could not open file \"%s\": %s\n"
+msgstr "\"%s\": %s கோப்பினைத் திறக்க இயலவில்லை\n"
+
+#: fe-lobj.c:548
+#, c-format
+msgid "could not read from file \"%s\": %s\n"
+msgstr "\"%s\": கோப்பிலிருந்து வாசிக்க இயலவில்லை %s\n"
+
+#: fe-lobj.c:612
+#: fe-lobj.c:636
+#, c-format
+msgid "could not write to file \"%s\": %s\n"
+msgstr "\"%s\": கோப்பினுள் இணைக்க இயலவில்லை %s\n"
+
+#: fe-lobj.c:717
+msgid "query to initialize large object functions did not return data\n"
+msgstr "பெரும் பொருள் செயற்பாடுகளைத் துவக்க கோரியது தரவெதையும் திரும்பத் தரவில்லை\n"
+
+#: fe-lobj.c:758
+msgid "cannot determine OID of function lo_open\n"
+msgstr "செயற்பாடு lo_open ஐக் கொண்ட OID யினை கண்டெடுக்க இயலவில்லை\n"
+
+#: fe-lobj.c:765
+msgid "cannot determine OID of function lo_close\n"
+msgstr "செயற்பாடு lo_close ஐக் கொண்ட OID யினை கண்டெடுக்க இயலவில்லை\n"
+
+#: fe-lobj.c:772
+msgid "cannot determine OID of function lo_creat\n"
+msgstr "செயற்பாடு lo_creat ஐக் கொண்ட OID யினை கண்டெடுக்க இயலவில்லை\n"
+
+#: fe-lobj.c:779
+msgid "cannot determine OID of function lo_unlink\n"
+msgstr "செயற்பாடு lo_unlink ஐக் கொண்ட OID யினை கண்டெடுக்க இயலவில்லை\n"
+
+#: fe-lobj.c:786
+msgid "cannot determine OID of function lo_lseek\n"
+msgstr "செயற்பாடு lo_lseek ஐக் கொண்ட OID யினை கண்டெடுக்க இயலவில்லை\n"
+
+#: fe-lobj.c:793
+msgid "cannot determine OID of function lo_tell\n"
+msgstr "செயற்பாடு lo_tell ஐக் கொண்ட OID யினை கண்டெடுக்க இயலவில்லை\n"
+
+#: fe-lobj.c:800
+msgid "cannot determine OID of function loread\n"
+msgstr "செயற்பாடு loread ஐக் கொண்ட OID யினை கண்டெடுக்க இயலவில்லை\n"
+
+#: fe-lobj.c:807
+msgid "cannot determine OID of function lowrite\n"
+msgstr "செயற்பாடு lowrite ஐக் கொண்ட OID யினை கண்டெடுக்க இயலவில்லை\n"
+
+#: fe-misc.c:227
+#, c-format
+msgid "integer of size %lu not supported by pqGetInt"
+msgstr "%lu அளவினைக் கொண்ட எண் pqGetInt ஆல் ஆதரிக்கப் படவில்லை"
+
+#: fe-misc.c:263
+#, c-format
+msgid "integer of size %lu not supported by pqPutInt"
+msgstr "%lu அளவினைக் கொண்ட எண் pqPutInt ஆல் ஆதரிக்கப் படவில்லை"
+
+#: fe-misc.c:543
+#: fe-misc.c:745
+msgid "connection not open\n"
+msgstr " இணைப்பு இல்லை\n"
+
+#: fe-misc.c:608
+#: fe-misc.c:698
+#, c-format
+msgid "could not receive data from server: %s\n"
+msgstr "வழங்கியிலிருந்து தரவினைப் பெற இயலவில்லை: %s\n"
+
+#: fe-misc.c:715
+#: fe-misc.c:783
+msgid ""
+"server closed the connection unexpectedly\n"
+"\tThis probably means the server terminated abnormally\n"
+"\tbefore or while processing the request.\n"
+msgstr ""
+"இணைப்பினை வழங்கி திடீரெனத் துண்டித்துக் கொண்டது\n"
+" \tகோரிக்கையினை நிறைவேற்றுகிற சமயம்\n"
+" \tவழங்கி திடீரென செயலற்று போயிருக்கலாம்.\n"
+
+#: fe-misc.c:800
+#, c-format
+msgid "could not send data to server: %s\n"
+msgstr "வழங்கிக்கு தரவினை அனுப்ப இயலவில்லை: %s\n"
+
+#: fe-misc.c:919
+msgid "timeout expired\n"
+msgstr "காலநிர்ணயம் காலாவதியானது\n"
+
+#: fe-misc.c:964
+msgid "socket not open\n"
+msgstr "சாக்கெட் திறக்கப் படவில்லை\n"
+
+#: fe-misc.c:987
+#, c-format
+msgid "select() failed: %s\n"
+msgstr "select() பலனலிக்கவில்லை: %s\n"
+
+#: fe-protocol2.c:89
+#, c-format
+msgid "invalid setenv state %c, probably indicative of memory corruption\n"
+msgstr "ஏற்பில்லா setenv நிலை %c, நினைவு மழுங்கியமைக்கான சமிக்ஞையாக இருக்கலாம்\n"
+
+#: fe-protocol2.c:330
+#, c-format
+msgid "invalid state %c, probably indicative of memory corruption\n"
+msgstr "ஏற்பில்லா நிலை %c, நினைவு மழுங்கியமைக்கான சமிக்ஞையாக இருக்கலாம்\n"
+
+#: fe-protocol2.c:419
+#: fe-protocol3.c:185
+#, c-format
+msgid "message type 0x%02x arrived from server while idle"
+msgstr "செயலற்று இருந்த போது 0x%02x செய்தி வந்தது"
+
+#: fe-protocol2.c:462
+#, c-format
+msgid "unexpected character %c following empty query response (\"I\" message)"
+msgstr "வெற்று கோரிக்கையின் பதிலைத் தொடரந்து எதிபாராத எழுத்து %c (\"I\" message)"
+
+#: fe-protocol2.c:516
+msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
+msgstr "குறுக்கு வரிசை குறித்த முன் விவரமில்லாது (\"T\"message) வழங்கி தரவினை அனுப்பியது (\"D\"message)"
+
+#: fe-protocol2.c:532
+msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
+msgstr "குறுக்கு வரிசை குறித்த முன் விவரமில்லாது (\"T\"message) வழங்கி இருமத் தரவினை அனுப்பியது (\"B\"message)"
+
+#: fe-protocol2.c:547
+#: fe-protocol3.c:376
+#, c-format
+msgid "unexpected response from server; first received character was \"%c\"\n"
+msgstr "வழங்கியிடமிருந்து எதிர்பாராத தகவல்; முதலில் பெறப் பட்ட எழுத்து \"%c\"\n"
+
+#: fe-protocol2.c:768
+#: fe-protocol3.c:695
+msgid "out of memory for query result\n"
+msgstr "விண்ணப்பத்தின் முடிவு நினைவுக்கு அப்பால் உள்ளன\n"
+
+#: fe-protocol2.c:1215
+#: fe-protocol3.c:1554
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: fe-protocol2.c:1227
+msgid "lost synchronization with server, resetting connection"
+msgstr "வழங்கியுடனான பொருந்தும் தனமையில் பாதிப்பு, இணைப்பு மீண்டும் கொணரப்படுகிறது"
+
+#: fe-protocol2.c:1361
+#: fe-protocol2.c:1393
+#: fe-protocol3.c:1756
+#, c-format
+msgid "protocol error: id=0x%x\n"
+msgstr "நெறி வழு: id=0x%x\n"
+
+#: fe-protocol3.c:338
+msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
+msgstr "குறுக்கு வரிசை குறித்த முன் விவரமில்லாது (\"T\"message) வழங்கி தரவினை அனுப்பியது (\"D\"message)\n"
+
+#: fe-protocol3.c:397
+#, c-format
+msgid "message contents do not agree with length in message type \"%c\"\n"
+msgstr "தகவல் வகையிலுள்ள நீளத்துடன் தகவல் விவரங்கள் ஒத்துப் போகவில்லை \"%c\"\n"
+
+#: fe-protocol3.c:418
+#, c-format
+msgid "lost synchronization with server: got message type \"%c\", length %d\n"
+msgstr "வழங்கியுடன் பொருந்தா நிலை ஏற்பட்டுள்ளது: தகவல் வகை \"%c\" பெறப்பட்டது, நீளம் %d\n"
+
+#: fe-protocol3.c:640
+msgid "unexpected field count in \"D\" message\n"
+msgstr "\"D\" தகவலில் எதிர்பாராத கள எண்ணிக்கை\n"
+
+#. translator: %s represents a digit string
+#: fe-protocol3.c:782
+#: fe-protocol3.c:801
+#, c-format
+msgid " at character %s"
+msgstr " %s எழுத்தில்"
+
+#: fe-protocol3.c:814
+#, c-format
+msgid "DETAIL:  %s\n"
+msgstr "விவரம்: %s\n"
+
+#: fe-protocol3.c:817
+#, c-format
+msgid "HINT:  %s\n"
+msgstr "துப்பு: %s\n"
+
+#: fe-protocol3.c:820
+#, c-format
+msgid "QUERY:  %s\n"
+msgstr "விண்ணப்பம்: %s\n"
+
+#: fe-protocol3.c:823
+#, c-format
+msgid "CONTEXT:  %s\n"
+msgstr "இடம்: %s\n"
+
+#: fe-protocol3.c:835
+msgid "LOCATION:  "
+msgstr "இருப்பிடம்: "
+
+#: fe-protocol3.c:837
+#, c-format
+msgid "%s, "
+msgstr "%s, "
+
+#: fe-protocol3.c:839
+#, c-format
+msgid "%s:%s"
+msgstr "%s:%s"
+
+#: fe-protocol3.c:1064
+#, c-format
+msgid "LINE %d: "
+msgstr "வரி %d: "
+
+#: fe-protocol3.c:1372
+msgid "PQgetline: not doing text COPY OUT\n"
+msgstr "PQgetline: உரை COPY OUT செய்யப் படுலதில்லை\n"
+
+#: fe-secure.c:218
+#, c-format
+msgid "could not establish SSL connection: %s\n"
+msgstr "SSL இணைப்பினை ஏற்படுத்த இயலவில்லை: %s\n"
+
+#: fe-secure.c:289
+#: fe-secure.c:385
+#: fe-secure.c:927
+#, c-format
+msgid "SSL SYSCALL error: %s\n"
+msgstr "SYS SYSCALL வழு: %s\n"
+
+#: fe-secure.c:294
+#: fe-secure.c:391
+#: fe-secure.c:931
+msgid "SSL SYSCALL error: EOF detected\n"
+msgstr "SYS SYSCALL வழு: EOF அடையப்பட்டது\n"
+
+#: fe-secure.c:306
+#: fe-secure.c:402
+#: fe-secure.c:950
+#, c-format
+msgid "SSL error: %s\n"
+msgstr "SSL வழு: %s\n"
+
+#: fe-secure.c:316
+#: fe-secure.c:412
+#: fe-secure.c:960
+#, c-format
+msgid "unrecognized SSL error code: %d\n"
+msgstr "இனங்காண இயலாத SSL வழு குறி: %d\n"
+
+#: fe-secure.c:482
+#, c-format
+msgid "error querying socket: %s\n"
+msgstr "சாக்கெட்டுக்காக் கோரியதில் வழு: %s\n"
+
+#: fe-secure.c:509
+#, c-format
+msgid "could not get information about host \"%s\": %s\n"
+msgstr "தருநர் குறித்த  விவரங்களைப் பெற இயலவில்லை\"%s\":%s\n"
+
+#: fe-secure.c:528
+msgid "unsupported protocol\n"
+msgstr "ஆதரிக்கப் படாத நெறி\n"
+
+#: fe-secure.c:550
+#, c-format
+msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
+msgstr "வழங்கியின் பொதுப் பெயர் \"%s\" %ld.%ld.%ld.%ld க்கு இட்டுச் செல்லவில்லை\n"
+
+#: fe-secure.c:557
+#, c-format
+msgid "server common name \"%s\" does not resolve to peer address\n"
+msgstr "வழங்கியின் பொதுப் பெயரால் \"%s\" தலை முகவரியினைத் துவங்க இயலவில்லை\n"
+
+#: fe-secure.c:589
+msgid "could not get user information\n"
+msgstr "பயனர் விவரங்களை  பெற இயலவில்லை\n"
+
+#: fe-secure.c:598
+#, c-format
+msgid "could not open certificate file \"%s\": %s\n"
+msgstr "சான்றுக் கோப்பினைத் திறக்க இயலவில்லை \"%s\": %s\n"
+
+#: fe-secure.c:607
+#, c-format
+msgid "could not read certificate file \"%s\": %s\n"
+msgstr "சான்றுக் கோப்பினை வாசிக்க இயலவில்லை \"%s\": %s\n"
+
+#: fe-secure.c:627
+msgid "invalid value of PGSSLKEY environment variable\n"
+msgstr "சூழல் மாறி PGSSLKEY க்கு செல்லத்தகாத மதிப்பு\n"
+
+#: fe-secure.c:639
+#, c-format
+msgid "could not load SSL engine \"%s\": %s\n"
+msgstr "SSL என்ஜின்களை ஏற்றவில்லை \"%s\": %s\n"
+
+#: fe-secure.c:653
+#, c-format
+msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
+msgstr "என்ஜினிலிருந்து \"%s\": %s தனிப்பட்ட SSL திறவியினை வாசிக்க இயலவில்லை \"%s\"\n"
+
+#: fe-secure.c:669
+#, c-format
+msgid "certificate present, but not private key file \"%s\"\n"
+msgstr "சான்று உள்ளது, ஆனால் தனித் துருப்புக் கோப்பினைக் காணவில்லை \"%s\"\n"
+
+#: fe-secure.c:678
+#, c-format
+msgid "private key file \"%s\" has wrong permissions\n"
+msgstr "தனித் துருப்புக் கோப்பு \"%s\" தவறான அனுமதிகளைக் கொண்டுள்ளது\n"
+
+#: fe-secure.c:686
+#, c-format
+msgid "could not open private key file \"%s\": %s\n"
+msgstr "தனித் துருப்புக் கோப்பினைத் திறக்க இயலவில்லை \"%s\":%s\n"
+
+#: fe-secure.c:695
+#, c-format
+msgid "private key file \"%s\" changed during execution\n"
+msgstr "செயல்படுத்தும் போது தனித் துருப்புக் கோப்பு \"%s\" மாற்றப் பட்டுள்ளது\n"
+
+#: fe-secure.c:704
+#, c-format
+msgid "could not read private key file \"%s\": %s\n"
+msgstr "தனித் துருப்புக் கோப்பினை  வாசிக்க இயலவில்லை \"%s\":%s\n"
+
+#: fe-secure.c:719
+#, c-format
+msgid "certificate does not match private key file \"%s\": %s\n"
+msgstr "சான்று தனித் துருப்புக் கோப்புடன் பொருந்தவில்லை \"%s\": %s\n"
+
+#: fe-secure.c:808
+#, c-format
+msgid "could not create SSL context: %s\n"
+msgstr "SSL சூழலை உருவாக்க இயலவில்லை: %s\n"
+
+#: fe-secure.c:849
+#, c-format
+msgid "could not read root certificate file \"%s\": %s\n"
+msgstr "\"மூல சான்றினை  வாசிக்க இயவில்லை \"%s\": %s\n"
+
+#: fe-secure.c:869
+#, c-format
+msgid "SSL library does not support CRL certificates (file \"%s\")\n"
+msgstr "CRL சான்றுகளை SSL நிரலகம் ஆதரிக்கவில்லை (கோப்பு \"%s\")\n"
+
+#: fe-secure.c:980
+#, c-format
+msgid "certificate could not be validated: %s\n"
+msgstr "சான்றிதழை  சரி பார்க்க இயலவில்லை: %s\n"
+
+#: fe-secure.c:994
+#, c-format
+msgid "certificate could not be obtained: %s\n"
+msgstr "சான்று கிடைக்கப் பெறவில்லை: %s\n"
+
+#: fe-secure.c:1074
+msgid "no SSL error reported"
+msgstr "SSL வழு எதுவும் தெரிவிக்கப் படவில்லை"
+
+#: fe-secure.c:1083
+#, c-format
+msgid "SSL error code %lu"
+msgstr "SSL வழுக் குறி %lu"
+

@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2006.
 #
-# pgtranslation Id: psql.po,v 1.7 2006/11/24 09:18:46 petere Exp $
+# pgtranslation Id: psql.po,v 1.9 2007/05/31 14:04:40 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -68,7 +68,7 @@ msgstr "Neues Passwort eingeben: "
 
 #: command.c:648
 msgid "Enter it again: "
-msgstr "Wiederholen: "
+msgstr "Geben Sie es noch einmal ein: "
 
 #: command.c:652
 #, c-format
@@ -438,7 +438,7 @@ msgstr ""
 
 #: help.c:81
 msgid "Usage:"
-msgstr "Benutzung:"
+msgstr "Aufruf:"
 
 #: help.c:82
 msgid "  psql [OPTIONS]... [DBNAME [USERNAME]]\n"
@@ -485,7 +485,7 @@ msgstr "  --help          diese Hilfe anzeigen, dann beenden"
 
 #: help.c:97
 msgid "  --version       output version information, then exit"
-msgstr "  -V              zeige Versionsinformationen und beende"
+msgstr "  --version       Versionsinformationen anzeigen, dann beenden"
 
 #: help.c:99
 msgid ""
@@ -667,7 +667,7 @@ msgid ""
 "  \\encoding [ENCODING]\n"
 "                 show or set client encoding\n"
 msgstr ""
-" \\encoding [KODIERUNG]\n"
+"  \\encoding [KODIERUNG]\n"
 "                 zeige oder setze Client-Kodierung\n"
 
 #: help.c:180
@@ -775,7 +775,7 @@ msgid ""
 "  \\qecho [STRING]\n"
 "                 write string to query output stream (see \\o)\n"
 msgstr ""
-" \\qecho [TEXT]   schreibe Text auf Ausgabestrom für Anfrageergebnisse "
+"  \\qecho [TEXT]  schreibe Text auf Ausgabestrom für Anfrageergebnisse "
 "(siehe \\o)\n"
 
 #: help.c:209
@@ -1536,7 +1536,7 @@ msgstr "Liste der Relationen"
 
 #: describe.c:1639
 msgid "Modifier"
-msgstr "Attribute"
+msgstr "Attribut"
 
 #: describe.c:1640
 msgid "Check"
