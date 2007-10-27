@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.4 2007/10/23 20:46:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.5 2007/10/27 16:01:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 #define NUMHWORD		15
 #define ASCIIHWORD		16
 #define HWORD			17
-#define URI				18
+#define URLPATH			18
 #define FILEPATH		19
 #define DECIMAL			20
 #define SIGNEDINT		21
@@ -69,7 +69,7 @@ static const char * const tok_alias[] = {
 	"numhword",
 	"asciihword",
 	"hword",
-	"uri",
+	"url_path",
 	"file",
 	"float",
 	"int",
@@ -96,7 +96,7 @@ static const char * const lex_descr[] = {
 	"Hyphenated word, letters and digits",
 	"Hyphenated word, all ASCII",
 	"Hyphenated word, all letters",
-	"URI",
+	"URL path",
 	"File or path name",
 	"Decimal notation",
 	"Signed integer",
@@ -164,9 +164,9 @@ typedef enum
 	TPS_InPathSecond,
 	TPS_InFile,
 	TPS_InFileNext,
-	TPS_InURIFirst,
-	TPS_InURIStart,
-	TPS_InURI,
+	TPS_InURLPathFirst,
+	TPS_InURLPathStart,
+	TPS_InURLPath,
 	TPS_InFURL,
 	TPS_InProtocolFirst,
 	TPS_InProtocolSecond,
@@ -624,7 +624,7 @@ p_ishost(TParser * prs)
 }
 
 static int
-p_isURI(TParser * prs)
+p_isURLPath(TParser * prs)
 {
 	TParser    *tmpprs = TParserInit(prs->str + prs->state->posbyte, prs->lenstr - prs->state->posbyte);
 	int			res = 0;
@@ -632,7 +632,7 @@ p_isURI(TParser * prs)
 	tmpprs->state = newTParserPosition(tmpprs->state);
 	tmpprs->state->state = TPS_InFileFirst;
 
-	if (TParserGet(tmpprs) && (tmpprs->type == URI || tmpprs->type == FILEPATH))
+	if (TParserGet(tmpprs) && (tmpprs->type == URLPATH || tmpprs->type == FILEPATH))
 	{
 		prs->state->posbyte += tmpprs->lenbytelexeme;
 		prs->state->poschar += tmpprs->lencharlexeme;
@@ -995,7 +995,7 @@ static TParserStateActionItem actionTPS_InHostDomain[] = {
 	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomain, 0, NULL},
 	{p_iseqC, '@', A_PUSH, TPS_InEmail, 0, NULL},
 	{p_isdigit, 0, A_POP, TPS_Null, 0, NULL},
-	{p_isstophost, 0, A_BINGO | A_CLRALL, TPS_InURIStart, HOST, NULL},
+	{p_isstophost, 0, A_BINGO | A_CLRALL, TPS_InURLPathStart, HOST, NULL},
 	{p_iseqC, '/', A_PUSH, TPS_InFURL, 0, NULL},
 	{NULL, 0, A_BINGO | A_CLRALL, TPS_Base, HOST, NULL}
 };
@@ -1009,7 +1009,7 @@ static TParserStateActionItem actionTPS_InPortFirst[] = {
 static TParserStateActionItem actionTPS_InPort[] = {
 	{p_isEOF, 0, A_BINGO | A_CLRALL, TPS_Base, HOST, NULL},
 	{p_isdigit, 0, A_NEXT, TPS_InPort, 0, NULL},
-	{p_isstophost, 0, A_BINGO | A_CLRALL, TPS_InURIStart, HOST, NULL},
+	{p_isstophost, 0, A_BINGO | A_CLRALL, TPS_InURLPathStart, HOST, NULL},
 	{p_iseqC, '/', A_PUSH, TPS_InFURL, 0, NULL},
 	{NULL, 0, A_BINGO | A_CLRALL, TPS_Base, HOST, NULL}
 };
@@ -1042,7 +1042,7 @@ static TParserStateActionItem actionTPS_InFileFirst[] = {
 	{p_isdigit, 0, A_NEXT, TPS_InFile, 0, NULL},
 	{p_iseqC, '.', A_NEXT, TPS_InPathFirst, 0, NULL},
 	{p_iseqC, '_', A_NEXT, TPS_InFile, 0, NULL},
-	{p_iseqC, '?', A_PUSH, TPS_InURIFirst, 0, NULL},
+	{p_iseqC, '?', A_PUSH, TPS_InURLPathFirst, 0, NULL},
 	{p_iseqC, '~', A_PUSH, TPS_InFileTwiddle, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
@@ -1089,7 +1089,7 @@ static TParserStateActionItem actionTPS_InFile[] = {
 	{p_iseqC, '_', A_NEXT, TPS_InFile, 0, NULL},
 	{p_iseqC, '-', A_NEXT, TPS_InFile, 0, NULL},
 	{p_iseqC, '/', A_PUSH, TPS_InFileFirst, 0, NULL},
-	{p_iseqC, '?', A_PUSH, TPS_InURIFirst, 0, NULL},
+	{p_iseqC, '?', A_PUSH, TPS_InURLPathFirst, 0, NULL},
 	{NULL, 0, A_BINGO, TPS_Base, FILEPATH, NULL}
 };
 
@@ -1101,29 +1101,29 @@ static TParserStateActionItem actionTPS_InFileNext[] = {
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
-static TParserStateActionItem actionTPS_InURIFirst[] = {
+static TParserStateActionItem actionTPS_InURLPathFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
 	{p_iseqC, '"', A_POP, TPS_Null, 0, NULL},
 	{p_iseqC, '\'', A_POP, TPS_Null, 0, NULL},
-	{p_isnotspace, 0, A_CLEAR, TPS_InURI, 0, NULL},
+	{p_isnotspace, 0, A_CLEAR, TPS_InURLPath, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL},
 };
 
-static TParserStateActionItem actionTPS_InURIStart[] = {
-	{NULL, 0, A_NEXT, TPS_InURI, 0, NULL}
+static TParserStateActionItem actionTPS_InURLPathStart[] = {
+	{NULL, 0, A_NEXT, TPS_InURLPath, 0, NULL}
 };
 
-static TParserStateActionItem actionTPS_InURI[] = {
-	{p_isEOF, 0, A_BINGO, TPS_Base, URI, NULL},
-	{p_iseqC, '"', A_BINGO, TPS_Base, URI, NULL},
-	{p_iseqC, '\'', A_BINGO, TPS_Base, URI, NULL},
-	{p_isnotspace, 0, A_NEXT, TPS_InURI, 0, NULL},
-	{NULL, 0, A_BINGO, TPS_Base, URI, NULL}
+static TParserStateActionItem actionTPS_InURLPath[] = {
+	{p_isEOF, 0, A_BINGO, TPS_Base, URLPATH, NULL},
+	{p_iseqC, '"', A_BINGO, TPS_Base, URLPATH, NULL},
+	{p_iseqC, '\'', A_BINGO, TPS_Base, URLPATH, NULL},
+	{p_isnotspace, 0, A_NEXT, TPS_InURLPath, 0, NULL},
+	{NULL, 0, A_BINGO, TPS_Base, URLPATH, NULL}
 };
 
 static TParserStateActionItem actionTPS_InFURL[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_isURI, 0, A_BINGO | A_CLRALL, TPS_Base, URL_T, SpecialFURL},
+	{p_isURLPath, 0, A_BINGO | A_CLRALL, TPS_Base, URL_T, SpecialFURL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -1344,9 +1344,9 @@ static const TParserStateAction Actions[] = {
 	{TPS_InPathSecond, actionTPS_InPathSecond},
 	{TPS_InFile, actionTPS_InFile},
 	{TPS_InFileNext, actionTPS_InFileNext},
-	{TPS_InURIFirst, actionTPS_InURIFirst},
-	{TPS_InURIStart, actionTPS_InURIStart},
-	{TPS_InURI, actionTPS_InURI},
+	{TPS_InURLPathFirst, actionTPS_InURLPathFirst},
+	{TPS_InURLPathStart, actionTPS_InURLPathStart},
+	{TPS_InURLPath, actionTPS_InURLPath},
 	{TPS_InFURL, actionTPS_InFURL},
 	{TPS_InProtocolFirst, actionTPS_InProtocolFirst},
 	{TPS_InProtocolSecond, actionTPS_InProtocolSecond},

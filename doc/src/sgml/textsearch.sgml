@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.27 2007/10/27 00:19:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.28 2007/10/27 16:01:08 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -1815,8 +1815,8 @@ LIMIT 10;
       <entry><literal>example.com</literal></entry>
      </row>
      <row>
-      <entry><literal>uri</></entry>
-      <entry>URI</entry>
+      <entry><literal>url_path</></entry>
+      <entry>URL path</entry>
       <entry><literal>/stuff/index.html</literal>, in the context of a URL</entry>
      </row>
      <row>
@@ -1907,7 +1907,7 @@ SELECT alias, description, token FROM ts_debug('http://example.com/stuff/index.h
  protocol | Protocol head | http://
  url      | URL           | example.com/stuff/index.html
  host     | Host          | example.com
- uri      | URI           | /stuff/index.html
+ url_path | URL path      | /stuff/index.html
 </programlisting>
   </para>
 
@@ -2632,7 +2632,7 @@ ALTER TEXT SEARCH CONFIGURATION pg
 
 <programlisting>
 ALTER TEXT SEARCH CONFIGURATION pg
-    DROP MAPPING FOR email, url, sfloat, uri, float;
+    DROP MAPPING FOR email, url, url_path, sfloat, float;
 </programlisting>
    </para>
 
@@ -2939,7 +2939,7 @@ SELECT * FROM ts_token_type('default');
     15 | numhword        | Hyphenated word, letters and digits
     16 | asciihword      | Hyphenated word, all ASCII
     17 | hword           | Hyphenated word, all letters
-    18 | uri             | URI
+    18 | url_path        | URL path
     19 | file            | File or path name
     20 | float           | Decimal notation
     21 | int             | Signed integer
@@ -3308,8 +3308,8 @@ Parser: "pg_catalog.default"
  numword         | simple
  sfloat          | simple
  uint            | simple
- uri             | simple
  url             | simple
+ url_path        | simple
  version         | simple
  word            | russian_stem
 </programlisting>
@@ -3398,8 +3398,8 @@ Parser: "pg_catalog.default"
  sfloat          | Scientific notation
  tag             | HTML tag
  uint            | Unsigned integer
- uri             | URI
  url             | URL
+ url_path        | URL path
  version         | Version number
  word            | Word, all letters
 (23 rows)

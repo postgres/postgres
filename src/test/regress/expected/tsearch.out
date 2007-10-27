@@ -227,7 +227,7 @@ SELECT * FROM ts_token_type('default');
     15 | numhword        | Hyphenated word, letters and digits
     16 | asciihword      | Hyphenated word, all ASCII
     17 | hword           | Hyphenated word, all letters
-    18 | uri             | URI
+    18 | url_path        | URL path
     19 | file            | File or path name
     20 | float           | Decimal notation
     21 | int             | Signed integer
