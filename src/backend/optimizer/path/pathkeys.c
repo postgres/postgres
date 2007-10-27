@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.85 2007/05/31 16:57:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.86 2007/10/27 05:45:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ static PathKey *make_pathkey_from_sortinfo(PlannerInfo *root,
 						   bool canonicalize);
 static Var *find_indexkey_var(PlannerInfo *root, RelOptInfo *rel,
 				  AttrNumber varattno);
+static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
 
 
 /****************************************************************************
@@ -1242,6 +1243,13 @@ make_inner_pathkeys_for_merge(PlannerInfo *root,
  * overoptimistic, since joinclauses that require different other relations
  * might never be usable at the same time, but trying to be exact is likely
  * to be more trouble than it's worth.
+ *
+ * To avoid doubling the number of mergejoin paths considered, we would like
+ * to consider only one of the two scan directions (ASC or DESC) as useful
+ * for merging for any given target column.  The choice is arbitrary unless
+ * one of the directions happens to match an ORDER BY key, in which case
+ * that direction should be preferred, in hopes of avoiding a final sort step.
+ * right_merge_direction() implements this heuristic.
  */
 int
 pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
@@ -1254,6 +1262,10 @@ pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
 		PathKey	   *pathkey = (PathKey *) lfirst(i);
 		bool		matched = false;
 		ListCell   *j;
+
+		/* If "wrong" direction, not useful for merging */
+		if (!right_merge_direction(root, pathkey))
+			break;
 
 		/*
 		 * First look into the EquivalenceClass of the pathkey, to see if
@@ -1299,6 +1311,38 @@ pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
 	}
 
 	return useful;
+}
+
+/*
+ * right_merge_direction
+ *		Check whether the pathkey embodies the preferred sort direction
+ *		for merging its target column.
+ */
+static bool
+right_merge_direction(PlannerInfo *root, PathKey *pathkey)
+{
+	ListCell   *l;
+
+	foreach(l, root->query_pathkeys)
+	{
+		PathKey	   *query_pathkey = (PathKey *) lfirst(l);
+
+		if (pathkey->pk_eclass == query_pathkey->pk_eclass &&
+			pathkey->pk_opfamily == query_pathkey->pk_opfamily)
+		{
+			/*
+			 * Found a matching query sort column.  Prefer this pathkey's
+			 * direction iff it matches.  Note that we ignore pk_nulls_first,
+			 * which means that a sort might be needed anyway ... but we
+			 * still want to prefer only one of the two possible directions,
+			 * and we might as well use this one.
+			 */
+			return (pathkey->pk_strategy == query_pathkey->pk_strategy);
+		}
+	}
+
+	/* If no matching ORDER BY request, prefer the ASC direction */
+	return (pathkey->pk_strategy == BTLessStrategyNumber);
 }
 
 /*
