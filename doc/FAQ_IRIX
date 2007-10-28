@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 IRIX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2006/12/06 15:45:31 $
+last updated:           $Date: 2007/10/28 22:30:21 $
 
 current maintainer:     Luis Amigo (lamigo@atc.unican.es)
 original author:        Luis Amigo (lamigo@atc.unican.es)
@@ -21,9 +21,10 @@ Section 1:      Installing PostgreSQL
 
 1.1)	What do I need to install PostgreSQL on IRIX?
 
-PostgreSQL 7.2 has been run on MIPS r8000, r10000(both ip25 and ip27)
+PostgreSQL has been run on MIPS r8000, r10000(both ip25 and ip27)
 and r12000(ip35) processors, running IRIX 6.5.5m, 6.5.12 and 6.5.13 with
-MIPSPro compilers version 7.30, 7.3.1.2m and 7.3. 
+MIPSPro compilers version 7.30, 7.3.1.2m and 7.3.  Newer versions can
+be expected to work too (but see compiler note below).
 
 Aside from the PostgreSQL source distribution, you will need GNU make
 (SGI's make will not do), and the MIPSPro full ANSI C compiler.
@@ -34,6 +35,11 @@ certain kinds of structures. This bug affects functions like
 inet_ntoa, inet_lnaof, inet_netof, inet_makeaddr and semctl.  It is
 supposed to be fixed by forcing code to link those functions with
 libgcc, but this has not been tested yet.
+
+It is known that version 7.4.1m of the MIPSPro compiler generates
+incorrect code.  (Symptom is "invalid primary checkpoint record"
+when trying to start the database.)  Version 7.4.4m is OK; the status
+of intermediate versions is uncertain.
 
 
 1.2)	Anything special about the build/install procedure?
