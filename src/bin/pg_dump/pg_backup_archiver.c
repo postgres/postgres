@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.147 2007/10/13 20:18:41 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.148 2007/10/28 21:55:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -799,8 +799,8 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	/* Setup the file */
 	fh = fopen(ropt->tocFile, PG_BINARY_R);
 	if (!fh)
-		die_horribly(AH, modulename, "could not open TOC file: %s\n",
-					 strerror(errno));
+		die_horribly(AH, modulename, "could not open TOC file \"%s\": %s\n",
+					 ropt->tocFile, strerror(errno));
 
 	while (fgets(buf, sizeof(buf), fh) != NULL)
 	{
@@ -957,7 +957,14 @@ SetOutput(ArchiveHandle *AH, char *filename, int compression)
 	}
 
 	if (!AH->OF)
-		die_horribly(AH, modulename, "could not open output file: %s\n", strerror(errno));
+	{
+		if (filename)
+			die_horribly(AH, modulename, "could not open output file \"%s\": %s\n",
+						 filename, strerror(errno));
+		else
+			die_horribly(AH, modulename, "could not open output file: %s\n",
+						 strerror(errno));
+	}
 
 	return sav;
 }
@@ -1512,12 +1519,17 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	{
 		wantClose = 1;
 		fh = fopen(AH->fSpec, PG_BINARY_R);
+		if (!fh)
+			die_horribly(AH, modulename, "could not open input file \"%s\": %s\n",
+						 AH->fSpec, strerror(errno));
 	}
 	else
+	{
 		fh = stdin;
-
-	if (!fh)
-		die_horribly(AH, modulename, "could not open input file: %s\n", strerror(errno));
+		if (!fh)
+			die_horribly(AH, modulename, "could not open input file: %s\n",
+						 strerror(errno));
+	}
 
 	cnt = fread(sig, 1, 5, fh);
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.93 2007/10/13 20:18:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.94 2007/10/28 21:55:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,8 +398,8 @@ main(int argc, char *argv[])
 		OPF = fopen(filename, PG_BINARY_W);
 		if (!OPF)
 		{
-			fprintf(stderr, _("%s: could not open the output file \"%s\"\n"),
-					progname, filename);
+			fprintf(stderr, _("%s: could not open the output file \"%s\": %s\n"),
+					progname, filename, strerror(errno));
 			exit(1);
 		}
 	}
@@ -1210,8 +1210,8 @@ dumpDatabases(PGconn *conn)
 			OPF = fopen(filename, PG_BINARY_A);
 			if (!OPF)
 			{
-				fprintf(stderr, _("%s: could not re-open the output file \"%s\"\n"),
-						progname, filename);
+				fprintf(stderr, _("%s: could not re-open the output file \"%s\": %s\n"),
+						progname, filename, strerror(errno));
 				exit(1);
 			}
 		}

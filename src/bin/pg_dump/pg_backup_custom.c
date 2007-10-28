@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.39 2007/08/06 01:38:14 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.40 2007/10/28 21:55:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,23 +169,38 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	if (AH->mode == archModeWrite)
 	{
 		if (AH->fSpec && strcmp(AH->fSpec, "") != 0)
+		{
 			AH->FH = fopen(AH->fSpec, PG_BINARY_W);
+			if (!AH->FH)
+				die_horribly(AH, modulename, "could not open output file \"%s\": %s\n",
+							 AH->fSpec, strerror(errno));
+		}
 		else
+		{
 			AH->FH = stdout;
-
-		if (!AH->FH)
-			die_horribly(AH, modulename, "could not open output file \"%s\": %s\n", AH->fSpec, strerror(errno));
+			if (!AH->FH)
+				die_horribly(AH, modulename, "could not open output file: %s\n",
+							 strerror(errno));
+		}
 
 		ctx->hasSeek = checkSeek(AH->FH);
 	}
 	else
 	{
 		if (AH->fSpec && strcmp(AH->fSpec, "") != 0)
+		{
 			AH->FH = fopen(AH->fSpec, PG_BINARY_R);
+			if (!AH->FH)
+				die_horribly(AH, modulename, "could not open input file \"%s\": %s\n",
+							 AH->fSpec, strerror(errno));
+		}
 		else
+		{
 			AH->FH = stdin;
-		if (!AH->FH)
-			die_horribly(AH, modulename, "could not open input file \"%s\": %s\n", AH->fSpec, strerror(errno));
+			if (!AH->FH)
+				die_horribly(AH, modulename, "could not open input file: %s\n",
+							 strerror(errno));
+		}
 
 		ctx->hasSeek = checkSeek(AH->FH);
 
