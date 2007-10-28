@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.98 2007/09/23 23:39:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.99 2007/10/28 19:08:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -326,19 +326,53 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 
 				if (inhAttrInd != -1)
 				{
+					AttrDefInfo *inhDef = parent->attrdefs[inhAttrInd];
+
 					foundAttr = true;
 					foundNotNull |= parent->notnull[inhAttrInd];
-					if (attrDef != NULL)		/* If we have a default, check
-												 * parent */
+					if (inhDef != NULL)
 					{
-						AttrDefInfo *inhDef;
-
-						inhDef = parent->attrdefs[inhAttrInd];
-						if (inhDef != NULL)
+						defaultsFound = true;
+						/*
+						 * If any parent has a default and the child doesn't,
+						 * we have to emit an explicit DEFAULT NULL clause
+						 * for the child, else the parent's default will win.
+						 */
+						if (attrDef == NULL)
 						{
-							defaultsFound = true;
-							defaultsMatch &= (strcmp(attrDef->adef_expr,
-													 inhDef->adef_expr) == 0);
+							attrDef = (AttrDefInfo *) malloc(sizeof(AttrDefInfo));
+							attrDef->dobj.objType = DO_ATTRDEF;
+							attrDef->dobj.catId.tableoid = 0;
+							attrDef->dobj.catId.oid = 0;
+							AssignDumpId(&attrDef->dobj);
+							attrDef->adtable = tbinfo;
+							attrDef->adnum = j + 1;
+							attrDef->adef_expr = strdup("NULL");
+
+							attrDef->dobj.name = strdup(tbinfo->dobj.name);
+							attrDef->dobj.namespace = tbinfo->dobj.namespace;
+
+							attrDef->dobj.dump = tbinfo->dobj.dump;
+
+							attrDef->separate = false;
+							addObjectDependency(&tbinfo->dobj,
+												attrDef->dobj.dumpId);
+
+							tbinfo->attrdefs[j] = attrDef;
+						}
+						if (strcmp(attrDef->adef_expr, inhDef->adef_expr) != 0)
+						{
+							defaultsMatch = false;
+							/*
+							 * Whenever there is a non-matching parent
+							 * default, add a dependency to force the parent
+							 * default to be dumped first, in case the
+							 * defaults end up being dumped as separate
+							 * commands.  Otherwise the parent default will
+							 * override the child's when it is applied.
+							 */
+							addObjectDependency(&attrDef->dobj,
+												inhDef->dobj.dumpId);
 						}
 					}
 				}
