@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.77 2007/10/26 21:50:10 mha Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.78 2007/10/29 11:25:42 mha Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -167,11 +167,17 @@
 #define SIGUSR2				31
 #endif
 
+/* 
+ * New versions of mingw have gettimeofday() and also declare 
+ * struct timezone to support it. 
+ */
+#ifndef HAVE_GETTIMEOFDAY
 struct timezone
 {
 	int			tz_minuteswest; /* Minutes west of GMT.  */
 	int			tz_dsttime;		/* Nonzero if DST is ever in effect.  */
 };
+#endif
 
 /* for setitimer in backend/port/win32/timer.c */
 #define ITIMER_REAL 0

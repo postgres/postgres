@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.113 2007/09/28 22:25:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.114 2007/10/29 11:25:42 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,8 +296,11 @@ extern FILE *pgwin32_fopen(const char *, const char *);
 extern long lrand48(void);
 extern void srand48(long seed);
 
+/* New versions of MingW have gettimeofday, old mingw and msvc don't */
+#ifndef HAVE_GETTIMEOFDAY
 /* Last parameter not used */
 extern int	gettimeofday(struct timeval * tp, struct timezone * tzp);
+#endif
 #else							/* !WIN32 */
 
 /*
