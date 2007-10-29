@@ -12,7 +12,7 @@
   <BODY bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Воскресенье 18 июня 15:33:25 EDT 2006</P>
+    <P>Дата последнего обновления: Пятница 26 октября 14:59:45 EDT 2007</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -22,10 +22,10 @@
     </P>
 
     <P>Самую свежую английскую версию документа можно найти на
-    <A href="http://www.postgresql.org/files/documentation/faqs/FAQ.html">http://www.PostgreSQL.org/files/documentation/faqs/FAQ.html</A>.</P>
+    <A href="http://www.postgresql.org/files/documentation/faqs/FAQ.html">http://www.postgresql.org/files/documentation/faqs/FAQ.html</A>.</P>
 
     <P>Ответы на вопросы специфичные для конкретных платформ можно найти на
-    <A href="http://www.postgresql.org/docs/faq/">http://www.PostgreSQL.org/docs/faq/</A>.</P>
+    <A href="http://www.postgresql.org/docs/faq/">http://www.postgresql.org/docs/faq/</A>.</P>
     <HR>
 
     <H2 align="center">Общие вопросы</H2>
@@ -44,7 +44,8 @@
      <A href="#item1.12">1.12</A>) Как мне отправить исправление или присоединится к команде разработчиков?<BR>
      <A href="#item1.13">1.13</A>) Как сравнить PostgreSQL с другими
     <SMALL>СУБД</SMALL>?<BR>
-    
+     <A href="#item1.14">1.14</A>) Будет ли PostgreSQL работать с последними изменениями, в разных страных,
+     касающимися дневного времени?<BR>
 
     <H2 align="center">Вопросы пользователей по клиентской части</H2>
      <A href="#item2.1">2.1</A>) Какие интерфейсы есть для PostgreSQL?<BR>
@@ -87,9 +88,9 @@
      <A href="#item4.8">4.8</A>) Как мне выполнить поиск регулярного выражения
      и поиск независимый от регистра букв поиск регулярного выражения?
      Как мне использовать индекс для поиска независимого от регистра букв?<BR>
-     <A href="#item4.9">4.9</A>) Как мне определить, что значение поля равно
-     <SMALL>NULL</SMALL> в каком-либо запросе? Могу я отсортировать поля
-     <SMALL>NULL</SMALL> или нет?<BR>
+     <A href="#item4.9">4.9</A>) Как мне определить, что значение поля в каком-либо
+     запросе равно <SMALL>NULL</SMALL>? Как мне соединить возможные
+     <SMALL>NULL</SMALL>? Могу я сортировать поля <SMALL>NULL</SMALL> или нет?<BR>
      <A href="#item4.10">4.10</A>) Каковы отличия между разными символьными
      типами?<BR>
      <A href="#item4.11.1">4.11.1</A>) Как мне создать поле serial/с-авто-увеличением?<BR>
@@ -117,7 +118,7 @@
      не существует", когда обращаютсь к временным таблицам в функциях PL/PgSQL?<BR>
      <A href="#item4.20">4.20</A>) Какие есть решения для репликации?<BR>
      <A href="#item4.21">4.21</A>) Почему имена таблицы и колонок не
-     распознаются в в моём запросе?<BR>
+     распознаются в в моём запросе? Почему не сохраняются заглавные буквы?<BR>
 
     <HR>
 
@@ -126,9 +127,9 @@
     <H3><A name="item1.1">1.1</A>) Что такое PostgreSQL? Как произносится это название?</H3>
 
     <P>PostgreSQL произносится <I>Post-Gres-Q-L (Пост-Грес-Кью-Эл)</I>,
-    также иногда говорят просто <I>Postgres</I>. Вы можете услышать как
-    это произносится с помощью аудиофайла, который доступен в
-    <A href="http://www.postgresql.org/files/postgresql.mp3">формате MP3</A>.
+    также говорят и просто <I>Postgres</I>, особенно при разговоре.
+    (Для особо любопытствующих как произносить "PostgreSQL", существует
+    <A href="http://www.postgresql.org/files/postgresql.mp3">аудио-файл</A>).
     </P>
 
     <P>PostgreSQL - это объектно-реляционная система управления базами
@@ -141,8 +142,8 @@
     по всему миру и связанная через Интернет. Разработка является
     общественным проектом и не управляется какой-либо компанией.
     Подробности смотрите в FAQ для разработчиков,
-    <A href="http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html">
-    http://www.PostgreSQL.org/files/documentation/faqs/FAQ_DEV.html</A>
+    <A href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">
+    http://www.postgresql.org/docs/faqs.FAQ_DEV.html</A>
     </P>
 
     <H3><A name="item1.2">1.2</A>) Кто управляет PostgreSQL?</H3>
@@ -168,7 +169,7 @@
 
     <P>Система Управления Базами Данных PostgreSQL</P>
 
-    <P>Portions copyright (c) 1996-2006, PostgreSQL Global Development
+    <P>Portions copyright (c) 1996-2007, PostgreSQL Global Development
     Group Portions Copyright (c) 1994-1996 Regents of the University of
     California</P>
 
@@ -201,7 +202,7 @@
     к моменту выхода данной версии.</P>
 
     <P>PostgreSQL также работает на операционных системах Microsoft
-    Windows, основанных на NT, таких как Win2000, WinXP и Win2003.
+    Windows, основанных на NT, таких как Win2000 SP4, WinXP и Win2003.
     Пакет инсталлятора доступен по адресу
     <A href="http://pgfoundry.org/projects/pginstaller">
     http://pgfoundry.org/projects/pginstaller</A>. Версии Windows,
@@ -218,12 +219,12 @@
 
     <P>Через браузер, используя <a href="http://www.postgresql.org/ftp/">
     http://www.postgresql.org/ftp/</a> и через ftp, используя
-    <A href="ftp://ftp.PostgreSQL.org/pub/">ftp://ftp.PostgreSQL.org/pub/</A>.</P>
+    <A href="ftp://ftp.PostgreSQL.org/pub/">ftp://ftp.postgresql.org/pub/</A>.</P>
 
 
     <H3><A name="item1.6">1.6</A>) Какая версия наиболее свежая?</H3>
 
-    <P>Последний выпуск PostgreSQL - это версия 8.1.4</P>
+    <P>Последний выпуск PostgreSQL - это версия 8.2.5</P>
 
     <P>Мы планируем выпускать новые старшие версии каждый год,
     а младшие версии каждые несколько месяцев.</P>
@@ -243,12 +244,13 @@
     подключиться, вы можете использовать в Unix вызов программы
     <code>irc -c '#postgresql' "$USER" irc.freenode.net</code> или
     любой другой IRC клиент. На этом же сервере существуют каналы на
-    испанском (<I>#postgresql-es</I>) и французском (<I>#postgresqlfr</I>)
-    языках. Также существует канал по PostgreSQL на сервере EFNet.</P>
+    испанском (<I>#postgresql-es</I>), французском (<I>#postgresqlfr</I>)
+    и бразильском (<I>#postgresql-br</I>) языках. Также существует канал
+    по PostgreSQL на сервере EFNet.</P>
 
     <P>Список коммерческой поддержки компаний доступен на
-    <A href="http://techdocs.postgresql.org/companies.php">
-    http://techdocs.postgresql.org/companies.php</A>.</P>
+    <A href="http://www.postgresql.org/support/professional_support">
+    http://www.postgresql.org/support/professional_support</A>.</P>
 
 
     <H3><A name="item1.8">1.8</A>) Как мне сообщить об ошибке?</H3>
@@ -259,7 +261,7 @@
     http://www.postgresql.org/support/submitbug</A>.
     Также проверьте наличие более свежей версии PostgreSQL на нашем
     FTP сайте <A href="ftp://ftp.postgresql.org/pub/">
-    ftp://ftp.PostgreSQL.org/pub/</A>.</P>
+    ftp://ftp.postgresql.org/pub/</A>.</P>
     
     <P>На ошибки, уведомление о которых были сделаны через специальную
     форму или отправленные в какой-либо список рассылки PostgreSQL,
@@ -337,7 +339,7 @@
     страницы электронного руководства man и некоторые маленькие тестовые
     примеры. Смотрите в каталог <I>/doc</I>. Вы также можете просматривать
     документацию в Интернет по адресу <A href="http://www.postgresql.org/docs">
-    http://www.PostgreSQL.org/docs</A>.</P>
+    http://www.postgresql.org/docs</A>.</P>
 
     <P>Существует две книги по PostgreSQL доступные по адресам <A href=
     "http://www.PostgreSQL.org/docs/books/awbook.html">http://www.PostgreSQL.org/docs/books/awbook.html</A>
@@ -345,9 +347,9 @@
     Есть несколько книг по PostgreSQL, которые можно купить.
     Одну из наиболее популярных написал Корри Дуглас (Korry Douglas).
     Список обзоров по этим книгам доступен по адресу
-    <a href="http://techdocs.postgresql.org/techdocs/bookreviews.php">http://techdocs.postgresql.org/techdocs/bookreviews.php</a>.
-    Кроме того, по адресу <a href="http://techdocs.postgresql.org">http://techdocs.PostgreSQL.org/</a>
-    вы можете найти коллекцию технических статей посвященных PostgreSQL.</P>
+    <a href="http://www.postgresql.org/docs/books/">http://www.postgresql.org/docs/books/</a>.
+    Кроме того, по адресу <a href="http://www.postgresql.org/docs/techdocs">http://www.postgresql.org/docs/techdocs</a>
+    вы можете найти коллекцию технических статей, посвещенных PostgreSQL.</P>
 
     <P>Клиент командной строки <I>psql</I> имеет несколько команд \d для
     отображения информации по типам, операторам, функциям, агрегатам и т.д. -
@@ -359,11 +361,7 @@
     <H3><A name="item1.11">1.11</A>) Как мне научиться <SMALL>SQL</SMALL>?</H3>
 
     <P>Во-первых, возьмите одну из книг по PostgreSQL, о которых говорилось
-    выше. Еще один учебник - это книга "Teach Yourself SQL in 21 Days,
-    Second Edition" (Освой самостоятельно SQL за 21 день, Вторая редакция)
-    на <A href="http://members.tripod.com/er4ebus/sql/index.htm">
-    http://members.tripod.com/er4ebus/sql/index.htm</A>.
-    Многим из наших пользователей нравится книга
+    выше. Многим из наших пользователей также нравится книга
     <I>The Practical SQL Handbook</I>,
     Bowman, Judith S., et al., Addison-Wesley. Другим нравится <I>The
     Complete Reference SQL</I>, Groff et al., McGraw-Hill.</P>
@@ -453,7 +451,14 @@
       </DD>
     </DL>
 
+    <H3><A name="item1.14">1.14</A>) Будет ли PostgreSQL работать с
+    последними изменениями, в разных страных, касающимися дневного времени?</H3>
 
+    <P>Изменения в сохранении дневного времени в США включены в PostgreSQL версии
+    8.0.[4+] и во все следующие выпуски, например в 8.1. Изменения по Канаде
+    и Западной Австралии включены в 8.0.[10+], 8.1.[6+] и все следующие
+    выпуски. Выпуски PostgreSQL до 8.0 используют информацию о сохранении
+    дневного времени из базы данных временных зон в операционной системе.</p>
     <HR>
 
     <H3 align="center">Вопросы пользователей по клиентской части</H3>
@@ -544,7 +549,7 @@
     
     <DD>Некоторые установки в <I>postgresql.conf</I> влияют на
     производительность. Подробный полный список установок см. в
-    <A href="http://www.postgresql.org/docs/current/static/runtime.html">
+    <A href="http://www.postgresql.org/docs/current/static/runtime-config.html">
     Administration Guide/Server Run-time Environment/Run-time Configuration</A>,
     а комментарии см. в <A href="http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html">
     http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html</A>
@@ -556,11 +561,12 @@
     <DT><B>Выбор "железа" - аппаратного обеспечения</B></DT>
     
     <DD>Влияние "железа" на производительность подробно описано в
-    <A href="http://momjian.us/main/writings/pgsql/hw_performance/index.html">
-    http://candle.pha.pa.us/main/writings/pgsql/hw_performance/index.html</A> и
     <A href="http://www.powerpostgresql.com/PerfList/">
-    http://www.powerpostgresql.com/PerfList/</A>.
-    <BR><BR>
+    http://www.powerpostgresql.com/PerfList/</A> и
+    <A href="http://momjian.us/main/writings/pgsql/hw_performance/index.html">
+    http://momjian.us/main/writings/pgsql/hw_performance/index.html</A>.
+    <BR>
+    <BR>
     </DD>
     </DL>
 
@@ -576,33 +582,19 @@
     <H3><A name="item3.5">3.5</A>) Почему я получаю сообщение <I>"Sorry, too
     many clients"</I> когда пытаюсь подключиться к базе?</H3>
 
-    <P>Вы достигли установленного по умолчанию ограничения на 100 сессий
-    подключения к базе данных. Вам необходимо увеличить для
-    <I>postmaster</I> лимит на количество конкурентных backend процессов,
+    <P>Вы достигли установленного по умолчанию ограничения в 100 сессий
+    подключения к базе данных. Вам необходимо увеличить лимит на количество
+    конкурентных backend процессов для вашего сервера БД,
     изменив значение <I>max_connections</I> в файле <I>postgresql.conf</I>
-    и перестартовать <I>postmaster</I>.</P>
+    и перестартовать сервер БД.</P>
      
 
     <H3><A name="item3.6">3.6</A>) Как выполнить обновление PostgreSQL?</H3>
     
-    <P>Между подвыпусками, разработчики PostgreSQL делают только исправления
-    ошибок. Таким образом обновление с версии 7.4.8 до 7.4.9 не требует
-    выполнения dump и restore; достаточно остановить сервер, установить
-    обновлённые файлы СУБД и запустить сервер.</P>
-    
-    <P>Все пользователи должны бы обновляться на наиболее свежую подверсию
-    как только она будет доступна. В то время как каждое обновление
-    подразумевает некоторый риск, подверсии PostgreSQL разрабытываются только
-    для исправления общих ошибок с минимальным риском.  Таким образом, ваш
-    риск связан только с самим обновлением.</P>
-    
-    
-    <P>При выходе очередного выпуска
-    (т.е. при обновлении например, с 7.3 на 7.4) часто меняется внутренний
-    формат системных таблиц и файлов данных. Эти изменения часто носят
-    сложный характер, так что мы не обслуживаем обратную
-    совместимость для файлов данных. В этих случаях для обновления базы
-    данных требуется выполнить dump/restore.</P>
+    <P>См. информацию об обновлении в <a
+    href="http://www.postgresql.org/support/versioning">http://www.postgresql.org/support/versioning</a>
+    и специальные инструкции в <a href="http://www.postgresql.org/docs/current/static/install-upgrading.html">
+    http://www.postgresql.org/docs/current/static/install-upgrading.html</a>.</P>
     
 
     <H3><A name="item3.7">3.7</A>) Какое компьютерное "железо" я должен
@@ -745,9 +737,9 @@
     которых целое число и текстовое описание. При этом длина текста,
     в среднем, составляет 20 байт. Размер простого файла составит 2.8 MB.
     Размер базы PostgreSQL, содержащей эти же данные составит приблизительно
-    5.6 MB из которых:</P>
+    5.2 MB из которых:</P>
 <PRE>
-    28 байт: на каждый заголовок строки в таблице (приблизительно)
+    24 байт: на каждый заголовок строки в таблице (приблизительно)
   + 24 байта: одно поле с целочисленным типом и одно текстовое поле
   +  4 байта: указатель на странице для всей табличной строки
    ----------------------------------------
@@ -756,14 +748,14 @@
    Размер страницы данных в PostgreSQL составляет 8192 байт (8 KB), так что:
 
    8192 байт на страницу
-   ---------------------   =  146 строк в таблице на страницу БД (округлённо)
-     56 байт на строку в таблице
+   ---------------------   =  158 строк в таблице на страницу БД (округлённо)
+     52 байт на строку в таблице
 
      100000 строк данных
-   ----------------------- =  685 страниц в БД (округлённо)
-   146 строк в таблице на страницу
+   ----------------------- =  633 страниц в БД (округлённо)
+   158 строк в таблице на страницу
 
-   685 страниц БД * 8192 байт на страницу = 5,611,520 байт (5.6 MB)
+   633 страниц БД * 8192 байт на страницу = 5,185,536 байт (5.2 MB)
 </PRE>
 
     <P>Индексы не требуют так много, но поскольку они создаются для
@@ -822,13 +814,10 @@
     <i>C</i>, потому что не существует возможности узнать следующий наибольший
     символ для не-C локали. Вы можете для таких случаев создать специальный
     индекс <CODE>text_pattern_ops</CODE> который работает только для
-    <SMALL>LIKE</SMALL> индексирования.</LI>
+    <SMALL>LIKE</SMALL> индексирования. Для поиска слов также можно
+    использовать полнотекстовый индекс.</LI>
     </UL>
     
-    <P>В выпусках до версии 8.0, индексы часто нельзя было использовать,
-    если типы данных точно не совпадали с индексными типами колонок. Это
-    особенно касалось int2, int8 и numeric индексов колонок.</P>
-
     <H3><A name="item4.7">4.7</A>) Как посмотреть на то, как оптимизатор выполняет
      мой запрос?</H3>
 
@@ -863,9 +852,9 @@
     только в определённом регистре, используйте ограничение
     <SMALL>CHECK</SMALL> или проверку через триггер.</P>
 
-    <H3><A name="item4.9">4.9</A>) Как мне определить, что значение поля равно
-    <SMALL>NULL</SMALL> в каком-либо запросе? Могу я отсортировать поля
-    <SMALL>NULL</SMALL> или нет?</H3>
+    <H3><A name="item4.9">4.9</A>)  Как мне определить, что значение поля в каком-либо
+     запросе равно <SMALL>NULL</SMALL>? Как мне соединить возможные
+     <SMALL>NULL</SMALL>? Могу я сортировать поля <SMALL>NULL</SMALL> или нет?</H3>
 
     <P>Вы просто сравниваете значение с <SMALL>IS NULL</SMALL> и
     <SMALL>IS NOT NULL</SMALL>, как здесь:</P>
@@ -873,6 +862,13 @@
    SELECT *
    FROM tab
    WHERE col IS NULL;
+</PRE>
+
+   <P>Чтобы соединить с возможными значениями <SMALL>NULL</SMALL>, используйте
+   <I>COALESCE()</I> как здесь:</P>
+<PRE>
+   SELECT COALESCE(col1, '') || COALESCE(col2, '')
+   FROM tab
 </PRE>
 
    <P>Чтобы отсортировать данные по значению <NULL> используйте модификаторы
@@ -967,37 +963,27 @@
     );
 </PRE>
 
+    <P>Автоматически созданная последовательность имеет имя вида
+    &lt;<I>таблица</I>&gt;_&lt;<I>колонка_serial</I>&gt;_<I>seq</I>, где
+    <I>таблица</I> и <I>колонка_serial</I> - это соответственно имена
+    таблицы и колонки с типом <SMALL>SERIAL</SMALL>.
     Смотрите подробности о последовательностях на странице руководства
-    посвященной <I>create_sequence</I>. 
+    посвященной <I>create_sequence</I>.</P>
 
     <H3><A name="item4.11.2">4.11.2</A>) Как мне получить значение при вставке
     <SMALL>SERIAL</SMALL>?</H3>
 
-    <P>Один из способов состоит в получении следующего значения
-    <SMALL>SERIAL</SMALL> из объекта sequence с помощью функции
-    <I>nextval()</I> <I>перед</I> вставкой и затем вставлять это значение
-    явно. Используйте таблицу-пример в <A href="#item4.11.1">4.11.1</A>, пример
-    в псевдоязыке покажет как это делается:</P>
+    <P>Простейший способ получить назначенное значение <SMALL>SERIAL</SMALL>
+    это использовать <SMALL>RETURNING</SMALL>.  Используя для примера таблицу в <A
+    href="#item4.11.1">4.11.1</A>, это может выглядеть так:</P>
+
 <PRE>
-    new_id = execute("SELECT nextval('person_id_seq')");
-    execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
+    INSERT INTO person (name) VALUES ('Blaise Pascal') RETURNING id;
 </PRE>
 
-    Затем вы должны также сохранить новое значение в переменной
-    <CODE>new_id</CODE> для его использования в других запросах (например
-    таких как внешний ключ для таблицы <CODE>person</CODE>). Заметим,
-    что имя автоматически созданного объекта <SMALL>SEQUENCE</SMALL> 
-    будет &lt;<I>table</I>&gt;_&lt;<I>serialcolumn</I>&gt;_<I>seq</I>,
-    где <I>table</I> и <I>serialcolumn</I> являются соответственно
-    именами вашей таблицы и вашей колонки <SMALL>SERIAL</SMALL>. 
-
-    <P>В качестве альтернативы, вы можете получить назначенное значение
-    <SMALL>SERIAL</SMALL> с помощью функции <I>currval()</I>
-    <I>после</I> проведения обычной операции вставки, например</P>
-<PRE>
-    execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
-    new_id = execute("SELECT currval('person_id_seq')");
-</PRE>
+    Вы также можете вызвать <I>nextval()</I> и использовать это значение в
+    <SMALL>INSERT</SMALL> или вызвать <I>currval()</I> <I>после</I>
+    <SMALL>INSERT</SMALL>.
 
 
     <H3><A name="item4.11.3">4.11.3</A>) Не может ли получиться так, что
@@ -1020,15 +1006,15 @@
     <H3><A name="item4.12">4.12</A>) Что такое <SMALL>OID</SMALL>? Что такое
     <SMALL>CTID</SMALL>?</H3>
 
-    <P>Каждая, создаваемая в PostgreSQL табличная строка, получает уникальный
-    индентификатор <SMALL>OID</SMALL> за исключением случая когда
-    использовалось <SMALL>WITHOUT OIDS</SMALL>. O<SMALL>ID</SMALL> - это
-    автоматически назначаемое уникальное 4-х байтовое целое число.
+    <P>Если таблица создана с <SMALL>WITH OIDS</SMALL>, то каждая строка
+    получает уникальный индентификатор <SMALL>OID</SMALL>. 
+    O<SMALL>ID</SMALL> - это автоматически назначаемое уникальное 4-х
+    байтовое целое число, которое уникально для всей установленной СУБД.
     Однако, после того как его значение превысит 4 миллиарда, значения
     O<SMALL>ID</SMALL> начинают дублироваться. PostgreSQL использует
     <SMALL>OID</SMALL> для связывания своих внутренних таблиц.</P>
 
-    <P>Для уникальных значений в колонках таблицы пользователя, лучшим
+    <P>Для уникального значения в строках таблицы пользователя, лучшим
     способом является использование <SMALL>SERIAL</SMALL> вместо
     O<SMALL>ID</SMALL>, потому что последовательности <SMALL>SERIAL</SMALL>
     уникальны только внутри таблицы и таким образом меньше подвержены
@@ -1047,7 +1033,7 @@
 
     <P>Предположительно у вас закончилась виртуальная память
     или что ваше ядро имеет маленький лимит на определенные ресурсы.
-    Попытайтесь перед запуском <I>postmaster</I> выполнить следующие
+    Попытайтесь перед запуском сервера БД выполнить следующие
     команды:</P>
 <PRE>
     ulimit -d 262144
@@ -1115,22 +1101,24 @@ CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
     <H3><A name="item4.18">4.18</A>) Как мне вернуть из функции несколько строк таблицы?</H3>
 
     <P>Вы можете легко использовать функции, возвращающие список,
-     <A href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
-     http://techdocs.postgresql.org/guides/SetReturningFunctions</A>.</P>
+     <A href="http://www.postgresql.org/docs/techdocs.17">
+     http://www.postgresql.org/docs/techdocs.17</A>.</P>
 
 
     <H3><A name="item4.19">4.19</A>) Почему я получаю ошибку "relation with OID ####
      не существует", когда обращаютсь к временным таблицам в функциях PL/PgSQL?</H3>
      
-    <P>PL/PgSQL кэширует сценарии функции и один из негативных эффектов этого
-    состоит в том, что если функция PL/PgSQL обращается к временной таблице
-    и эта таблица позднее удаляется и пересоздается, а функция затем вызывается
-    снова, то ее вызов приведет к ошибке, потому что скэшированное содержимое
-    функции содержит указатель на старую временную таблицу. Чтобы решить эту
-    проблему, используйте <SMALL>EXECUTE</SMALL> для доступа к временным
+    <P>В PostgreSQL до версии 8.3, PL/PgSQL кэширует сценарии функции и один из
+    негативных эффектов этого состоит в том, что если функция PL/PgSQL обращается
+    к временной таблице и эта таблица позднее удаляется и пересоздается, а функция
+    затем вызывается снова, то ее вызов приведет к ошибке, потому что скэшированное
+    содержимое функции содержит указатель на старую временную таблицу. Чтобы решить
+    эту проблему, используйте <SMALL>EXECUTE</SMALL> для доступа к временным
     таблицам в PL/PgSQL. Использование этого оператора заставит запрос
     перегенерироваться каждый раз.</P>
 
+    <P>В PostgreSQL 8.3 и позднее, этой проблемы нет.</p>
+    
 
     <H3><A name="item4.20">4.20</a>) Какие есть решения для репликации?</H3>
 
@@ -1142,7 +1130,7 @@ CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
     (slave) сервера могут производить только запросы
     чтения/<SMALL>SELECT</SMALL>.  Наиболее популярным решением для репликации
     master-slave в PostgreSQL является
-    <A href="http://gborg.postgresql.org/project/slony1/projdisplay.php">
+    <A href="http://main.slony.info/">
     Slony-I</A>.</P>
     
     <P>Репликация Multi-master позволяет выполнять запросы чтения/записи
@@ -1150,15 +1138,15 @@ CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
     также приводит к потере производительности, потому что необходима
     синхронизация изменений между несколькими серверами.  Наиболее
     популярным решением для такой репликации в PostgreSQL является
-    <A href="http://pgfoundry.org/projects/pgcluster/">Pgcluster</A>.
+    <A href="http://pgfoundry.org/projects/pgcluster/">PGcluster</A>.
     
     <H3><A name="item4.21">4.21</A>) Почему имена таблицы и колонок не
-    распознаются в в моём запросе?</H3>
+    распознаются в в моём запросе? Почему не сохраняются заглавные буквы?</H3>
     
-    <P>Наиболее часто это происходит из-за использования двойных кавычек в
+    <P>Наиболее часто имена нераспознаются из-за использования двойных кавычек в
     имени таблицы или колонки при создании таблицы. При использовании двойных
     кавычек, имя таблицы и колонки (которые называют идентификаторами)
-    сохраняются в <A href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-IDENTIFIERS">
+    сохраняются в <A href="http://www.postgresql.org/docs/current/static/sql-syntax.html#SQL-SYNTAX-IDENTIFIERS">
     регистро-зависимом виде</A>; это означает, что вы должны использовать
     двойные кавычки, когда указываете эти имена в запросе. Некоторые
     интерфейсы, такие как pgAdmin, во время создания таблицы добавляют
