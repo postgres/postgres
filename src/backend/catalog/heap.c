@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.324 2007/10/12 18:55:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.325 2007/10/29 19:40:39 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1721,6 +1721,21 @@ AddRelationRawConstraints(Relation rel,
 		expr = cookDefault(pstate, colDef->raw_default,
 						   atp->atttypid, atp->atttypmod,
 						   NameStr(atp->attname));
+
+		/*
+		 * If the expression is just a NULL constant, we do not bother
+		 * to make an explicit pg_attrdef entry, since the default behavior
+		 * is equivalent.
+		 *
+		 * Note a nonobvious property of this test: if the column is of a
+		 * domain type, what we'll get is not a bare null Const but a
+		 * CoerceToDomain expr, so we will not discard the default.  This is
+		 * critical because the column default needs to be retained to
+		 * override any default that the domain might have.
+		 */
+		if (expr == NULL ||
+			(IsA(expr, Const) && ((Const *) expr)->constisnull))
+			continue;
 
 		StoreAttrDefault(rel, colDef->attnum, nodeToString(expr));
 

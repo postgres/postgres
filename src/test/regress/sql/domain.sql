@@ -168,7 +168,13 @@ create table defaulttest
             , col7 ddef4 DEFAULT 8000
             , col8 ddef5
             );
-insert into defaulttest default values;
+insert into defaulttest(col4) values(0); -- fails, col5 defaults to null
+alter table defaulttest alter column col5 drop default;
+insert into defaulttest default values; -- succeeds, inserts domain default
+-- We used to treat SET DEFAULT NULL as equivalent to DROP DEFAULT; wrong
+alter table defaulttest alter column col5 set default null;
+insert into defaulttest(col4) values(0); -- fails
+alter table defaulttest alter column col5 drop default;
 insert into defaulttest default values;
 insert into defaulttest default values;
 

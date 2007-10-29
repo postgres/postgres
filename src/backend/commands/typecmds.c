@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.108 2007/09/29 17:18:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.109 2007/10/29 19:40:39 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -765,20 +765,40 @@ DefineDomain(CreateDomainStmt *stmt)
 											  domainName);
 
 					/*
-					 * Expression must be stored as a nodeToString result, but
-					 * we also require a valid textual representation (mainly
-					 * to make life easier for pg_dump).
+					 * If the expression is just a NULL constant, we treat
+					 * it like not having a default.
+					 *
+					 * Note that if the basetype is another domain, we'll see
+					 * a CoerceToDomain expr here and not discard the default.
+					 * This is critical because the domain default needs to be
+					 * retained to override any default that the base domain
+					 * might have.
 					 */
-					defaultValue =
-						deparse_expression(defaultExpr,
-										   deparse_context_for(domainName,
-															   InvalidOid),
-										   false, false);
-					defaultValueBin = nodeToString(defaultExpr);
+					if (defaultExpr == NULL ||
+						(IsA(defaultExpr, Const) &&
+						 ((Const *) defaultExpr)->constisnull))
+					{
+						defaultValue = NULL;
+						defaultValueBin = NULL;
+					}
+					else
+					{
+						/*
+						 * Expression must be stored as a nodeToString result,
+						 * but we also require a valid textual representation
+						 * (mainly to make life easier for pg_dump).
+						 */
+						defaultValue =
+							deparse_expression(defaultExpr,
+											   deparse_context_for(domainName,
+																   InvalidOid),
+											   false, false);
+						defaultValueBin = nodeToString(defaultExpr);
+					}
 				}
 				else
 				{
-					/* DEFAULT NULL is same as not having a default */
+					/* No default (can this still happen?) */
 					defaultValue = NULL;
 					defaultValueBin = NULL;
 				}
@@ -1443,7 +1463,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	MemSet(new_record_nulls, ' ', sizeof(new_record_nulls));
 	MemSet(new_record_repl, ' ', sizeof(new_record_repl));
 
-	/* Store the new default, if null then skip this step */
+	/* Store the new default into the tuple */
 	if (defaultRaw)
 	{
 		/* Create a dummy ParseState for transformExpr */
@@ -1459,30 +1479,46 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 								  NameStr(typTup->typname));
 
 		/*
-		 * Expression must be stored as a nodeToString result, but we also
-		 * require a valid textual representation (mainly to make life easier
-		 * for pg_dump).
+		 * If the expression is just a NULL constant, we treat the command
+		 * like ALTER ... DROP DEFAULT.  (But see note for same test in
+		 * DefineDomain.)
 		 */
-		defaultValue = deparse_expression(defaultExpr,
+		if (defaultExpr == NULL ||
+			(IsA(defaultExpr, Const) && ((Const *) defaultExpr)->constisnull))
+		{
+			/* Default is NULL, drop it */
+			new_record_nulls[Anum_pg_type_typdefaultbin - 1] = 'n';
+			new_record_repl[Anum_pg_type_typdefaultbin - 1] = 'r';
+			new_record_nulls[Anum_pg_type_typdefault - 1] = 'n';
+			new_record_repl[Anum_pg_type_typdefault - 1] = 'r';
+		}
+		else
+		{
+			/*
+			 * Expression must be stored as a nodeToString result, but we also
+			 * require a valid textual representation (mainly to make life
+			 * easier for pg_dump).
+			 */
+			defaultValue = deparse_expression(defaultExpr,
 								deparse_context_for(NameStr(typTup->typname),
 													InvalidOid),
 										  false, false);
 
-		/*
-		 * Form an updated tuple with the new default and write it back.
-		 */
-		new_record[Anum_pg_type_typdefaultbin - 1] = DirectFunctionCall1(textin,
-															 CStringGetDatum(
-												 nodeToString(defaultExpr)));
+			/*
+			 * Form an updated tuple with the new default and write it back.
+			 */
+			new_record[Anum_pg_type_typdefaultbin - 1] = DirectFunctionCall1(textin,
+								CStringGetDatum(nodeToString(defaultExpr)));
 
-		new_record_repl[Anum_pg_type_typdefaultbin - 1] = 'r';
-		new_record[Anum_pg_type_typdefault - 1] = DirectFunctionCall1(textin,
+			new_record_repl[Anum_pg_type_typdefaultbin - 1] = 'r';
+			new_record[Anum_pg_type_typdefault - 1] = DirectFunctionCall1(textin,
 											  CStringGetDatum(defaultValue));
-		new_record_repl[Anum_pg_type_typdefault - 1] = 'r';
+			new_record_repl[Anum_pg_type_typdefault - 1] = 'r';
+		}
 	}
 	else
-		/* Default is NULL, drop it */
 	{
+		/* ALTER ... DROP DEFAULT */
 		new_record_nulls[Anum_pg_type_typdefaultbin - 1] = 'n';
 		new_record_repl[Anum_pg_type_typdefaultbin - 1] = 'r';
 		new_record_nulls[Anum_pg_type_typdefault - 1] = 'n';

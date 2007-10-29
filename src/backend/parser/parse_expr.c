@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.221 2007/06/23 22:12:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.222 2007/10/29 19:40:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -604,6 +604,21 @@ transformParamRef(ParseState *pstate, ParamRef *pref)
 	param->paramtypmod = -1;
 
 	return (Node *) param;
+}
+
+/* Test whether an a_expr is a plain NULL constant or not */
+static bool
+exprIsNullConstant(Node *arg)
+{
+	if (arg && IsA(arg, A_Const))
+	{
+		A_Const *con = (A_Const *) arg;
+
+		if (con->val.type == T_Null &&
+			con->typename == NULL)
+			return true;
+	}
+	return false;
 }
 
 static Node *
