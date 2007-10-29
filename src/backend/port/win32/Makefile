@@ -4,7 +4,7 @@
 #    Makefile for backend/port/win32
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/port/win32/Makefile,v 1.10 2007/03/21 14:39:23 mha Exp $
+#    $PostgreSQL: pgsql/src/backend/port/win32/Makefile,v 1.11 2007/10/29 12:35:41 mha Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/port/win32
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = timer.o socket.o signal.o security.o
+OBJS = timer.o socket.o signal.o security.o mingwcompat.o
 
 all: SUBSYS.o
 
