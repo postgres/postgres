@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.28 2007/10/27 16:01:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.29 2007/10/29 01:55:11 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -1040,7 +1040,7 @@ ORDER BY rank DESC LIMIT 10;
 
    <para>
     <function>ts_headline</function> accepts a document along
-    with a query, and returns one or more ellipsis-separated excerpts from
+    with a query, and returns an excerpt from
     the document in which terms from the query are highlighted.  The
     configuration to be used to parse the document can be specified by
     <replaceable>config</replaceable>; if <replaceable>config</replaceable>
@@ -1094,24 +1094,27 @@ StartSel=&lt;b&gt;, StopSel=&lt;/b&gt;, MaxWords=35, MinWords=15, ShortWord=3, H
     For example:
 
 <programlisting>
-SELECT ts_headline('ts_headline accepts a document along
-with a query, and returns one or more ellipsis-separated excerpts from
-the document in which terms from the query are highlighted.',
-  to_tsquery('ellipsis &amp; term'));
-                            ts_headline                             
---------------------------------------------------------------------
- &lt;b&gt;ellipsis&lt;/b&gt;-separated excerpts from
- the document in which &lt;b&gt;terms&lt;/b&gt; from the query are highlighted.
+SELECT ts_headline('The most common type of search
+is to find all documents containing given query terms 
+and return them in order of their similarity to the
+query.', to_tsquery('query &amp; similarity'));
+                        ts_headline                         
+------------------------------------------------------------
+ given &lt;b&gt;query&lt;/b&gt; terms
+ and return them in order of their &lt;b&gt;similarity&lt;/b&gt; to the
+ &lt;b&gt;query&lt;/b&gt;.
 
-SELECT ts_headline('ts_headline accepts a document along
-with a query, and returns one or more ellipsis-separated excerpts from
-the document in which terms from the query are highlighted.',
-  to_tsquery('ellipsis &amp; term'),
+SELECT ts_headline('The most common type of search
+is to find all documents containing given query terms
+and return them in order of their similarity to the
+query.',
+  to_tsquery('query &amp; similarity'), 
   'StartSel = &lt;, StopSel = &gt;');
-                          ts_headline                          
----------------------------------------------------------------
- &lt;ellipsis&gt;-separated excerpts from
- the document in which &lt;terms&gt; from the query are highlighted.
+                      ts_headline                      
+-------------------------------------------------------
+ given &lt;query&gt; terms
+ and return them in order of their &lt;similarity&gt; to the
+ &lt;query&gt;.
 </programlisting>
    </para>
 
