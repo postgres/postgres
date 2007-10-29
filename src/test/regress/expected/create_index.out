@@ -389,7 +389,7 @@ INSERT INTO concur_heap VALUES ('b','x');
 ERROR:  duplicate key value violates unique constraint "concur_index2"
 -- check if constraint is enforced properly at build time
 CREATE UNIQUE INDEX CONCURRENTLY concur_index3 ON concur_heap(f2);
-ERROR:  could not create unique index
+ERROR:  could not create unique index "concur_index3"
 DETAIL:  Table contains duplicated values.
 -- test that expression indexes and partial indexes work concurrently
 CREATE INDEX CONCURRENTLY concur_index4 on concur_heap(f2) WHERE f1='a';

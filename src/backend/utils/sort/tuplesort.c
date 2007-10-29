@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.78 2007/09/01 18:47:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.79 2007/10/29 21:31:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2720,7 +2720,8 @@ comparetup_index(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	if (state->enforceUnique && !equal_hasnull && tuple1 != tuple2)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNIQUE_VIOLATION),
-				 errmsg("could not create unique index"),
+				 errmsg("could not create unique index \"%s\"",
+						RelationGetRelationName(state->indexRel)),
 				 errdetail("Table contains duplicated values.")));
 
 	/*
