@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.72 2007/06/15 20:56:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.73 2007/10/29 17:29:59 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -612,7 +612,7 @@ $$ LANGUAGE SQL;
 CREATE TYPE bug_status AS ENUM ('new', 'open', 'closed');
 
 CREATE TABLE bug (
-    serial id,
+    id serial,
     description text,
     status bug_status
 );

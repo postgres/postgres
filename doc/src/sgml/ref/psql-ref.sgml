@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.195 2007/09/14 14:31:22 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.196 2007/10/29 17:29:59 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1657,7 +1657,7 @@ lo_import 152801
           <para>
           You can specify an optional second argument, if it is provided it
           may be either <literal>on</literal> or <literal>off</literal>
-          which will enable or display the tuples only mode.  If the
+          which will enable or disable the tuples only mode.  If the
           second argument is not provided then we will toggle between tuples
           only and full display. Full display shows extra information such
           as column headers, titles, and various footers. In tuples only
