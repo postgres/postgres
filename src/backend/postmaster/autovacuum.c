@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.66 2007/10/26 20:45:10 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.67 2007/10/29 22:17:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2100,7 +2100,8 @@ next_worker:
 		/*
 		 * Save the relation name for a possible error message, to avoid a
 		 * catalog lookup in case of an error.  Note: they must live in a
-		 * long-lived memory context.
+		 * long-lived memory context because we call vacuum and analyze in
+		 * different transactions.
 		 */
 		datname = get_database_name(MyDatabaseId);
 		nspname = get_namespace_name(get_rel_namespace(tab->at_relid));
