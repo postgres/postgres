@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Oct 26 14:59:45 EDT 2007
+   Last updated: Mon Oct 29 13:22:07 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -378,7 +378,7 @@
    using Unix domain sockets or TCP/IP connections. Other machines will
    not be able to connect unless you modify listen_addresses in the
    postgresql.conf file, enable host-based authentication by modifying
-   the $PGDATA/pg_hba.conf file, and restart the server.
+   the $PGDATA/pg_hba.conf file, and restart the database server.
    
   3.3) How do I tune the database engine for better performance?
   
