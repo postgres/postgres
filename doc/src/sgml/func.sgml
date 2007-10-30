@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.405 2007/10/25 18:54:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.406 2007/10/30 19:06:56 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9016,7 +9016,9 @@ SELECT NULLIF(value, '(none)') ...
 
    <para>
     Note that <function>GREATEST</> and <function>LEAST</> are not in
-    the SQL standard, but are a common extension.
+    the SQL standard, but are a common extension.  Some other databases
+    make them return NULL if any argument is NULL, rather than only when
+    all are NULL.
    </para>
   </sect2>
  </sect1>
