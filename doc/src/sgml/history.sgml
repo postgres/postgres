@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.29 2006/10/23 18:10:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.30 2007/10/30 23:06:06 petere Exp $ -->
 
 <sect1 id="history">
  <title>A Brief History of <productname>PostgreSQL</productname></title>
@@ -193,6 +193,14 @@
    the same time, we set the version numbering to start at 6.0,
    putting the numbers back into the sequence originally begun by the
    Berkeley <productname>POSTGRES</productname> project.
+  </para>
+
+  <para>
+   Many people continue to refer to
+   <productname>PostgreSQL</productname> as <quote>Postgres</quote>
+   (now rarely in all capital letters) because of tradition or because
+   it is easier to pronounce.  This usage is widely accepted as a
+   nickname or alias.
   </para>
 
   <para>
