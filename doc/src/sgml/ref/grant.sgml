@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.66 2007/06/03 17:06:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.67 2007/10/30 19:43:30 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,34 +23,34 @@ PostgreSQL documentation
 GRANT { { SELECT | INSERT | UPDATE | DELETE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
     ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { { USAGE | SELECT | UPDATE }
     [,...] | ALL [ PRIVILEGES ] }
     ON SEQUENCE <replaceable class="PARAMETER">sequencename</replaceable> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>dbname</replaceable> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
     ON FUNCTION <replaceable>funcname</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON LANGUAGE <replaceable>langname</replaceable> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
     ON SCHEMA <replaceable>schemaname</replaceable> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { CREATE | ALL [ PRIVILEGES ] }
     ON TABLESPACE <replaceable>tablespacename</> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
-GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable class="PARAMETER">username</replaceable> [, ...] [ WITH ADMIN OPTION ]
+GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable class="PARAMETER">rolename</replaceable> [, ...] [ WITH ADMIN OPTION ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -405,18 +405,16 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
     to obtain information about existing privileges, for example:
 <programlisting>
 =&gt; \z mytable
-
-                        Access privileges for database "lusitania"
- Schema |  Name   | Type  |                     Access privileges
---------+---------+-------+-----------------------------------------------------------
- public | mytable | table | {miriam=arwdxt/miriam,=r/miriam,"group todos=arw/miriam"}
+                  Access privileges for database "lusitania"
+ Schema |  Name   | Type  |                 Access privileges                 
+--------+---------+-------+---------------------------------------------------
+ public | mytable | table | {miriam=arwdxt/miriam,=r/miriam,admin=arw/miriam}
 (1 row)
 </programlisting>
     The entries shown by <command>\z</command> are interpreted thus:
 <programlisting>
+      rolename=xxxx -- privileges granted to a role
               =xxxx -- privileges granted to PUBLIC
-         uname=xxxx -- privileges granted to a user
-   group gname=xxxx -- privileges granted to a group
 
                   r -- SELECT ("read")
                   w -- UPDATE ("write")
@@ -432,7 +430,7 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
              arwdxt -- ALL PRIVILEGES (for tables)
                   * -- grant option for preceding privilege
 
-              /yyyy -- user who granted this privilege
+              /yyyy -- role that granted this privilege
 </programlisting>
 
     The above example display would be seen by user <literal>miriam</> after
@@ -440,20 +438,20 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
 
 <programlisting>
 GRANT SELECT ON mytable TO PUBLIC;
-GRANT SELECT, UPDATE, INSERT ON mytable TO GROUP todos;
+GRANT SELECT, UPDATE, INSERT ON mytable TO admin;
 </programlisting>
    </para>
 
    <para>
-   If the <quote>Access privileges</> column is empty for a given object,
-it means the object has default privileges (that is, its privileges column
-is null).  Default privileges always include all privileges for the owner,
-and can include some privileges for <literal>PUBLIC</> depending on the
-object type, as explained above.  The first <command>GRANT</> or
-<command>REVOKE</> on an object
-will instantiate the default privileges (producing, for example,
-<literal>{miriam=arwdxt/miriam}</>) and then modify them per the
-specified request.
+    If the <quote>Access privileges</> column is empty for a given object,
+    it means the object has default privileges (that is, its privileges column
+    is null).  Default privileges always include all privileges for the owner,
+    and can include some privileges for <literal>PUBLIC</> depending on the
+    object type, as explained above.  The first <command>GRANT</> or
+    <command>REVOKE</> on an object
+    will instantiate the default privileges (producing, for example,
+    <literal>{miriam=arwdxt/miriam}</>) and then modify them per the
+    specified request.
    </para>
 
    <para>

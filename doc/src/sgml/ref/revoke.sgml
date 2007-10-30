@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.45 2007/10/10 21:38:51 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.46 2007/10/30 19:43:30 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,48 +24,48 @@ REVOKE [ GRANT OPTION FOR ]
     { { SELECT | INSERT | UPDATE | DELETE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
     ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
-    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { USAGE | SELECT | UPDATE }
     [,...] | ALL [ PRIVILEGES ] }
     ON SEQUENCE <replaceable class="PARAMETER">sequencename</replaceable> [, ...]
-    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>dbname</replaceable> [, ...]
-    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { EXECUTE | ALL [ PRIVILEGES ] }
     ON FUNCTION <replaceable>funcname</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) [, ...]
-    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON LANGUAGE <replaceable>langname</replaceable> [, ...]
-    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
     ON SCHEMA <replaceable>schemaname</replaceable> [, ...]
-    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { CREATE | ALL [ PRIVILEGES ] }
     ON TABLESPACE <replaceable>tablespacename</replaceable> [, ...]
-    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ ADMIN OPTION FOR ]
-    <replaceable class="PARAMETER">role</replaceable> [, ...] FROM <replaceable class="PARAMETER">username</replaceable> [, ...]
+    <replaceable class="PARAMETER">role</replaceable> [, ...] FROM <replaceable class="PARAMETER">rolename</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
@@ -107,7 +107,7 @@ REVOKE [ ADMIN OPTION FOR ]
    called dependent privileges. If the privilege or the grant option
    held by the first user is being revoked and dependent privileges
    exist, those dependent privileges are also revoked if
-   <literal>CASCADE</literal> is specified, else the revoke action
+   <literal>CASCADE</literal> is specified; if it is not, the revoke action
    will fail.  This recursive revocation only affects privileges that
    were granted through a chain of users that is traceable to the user
    that is the subject of this <literal>REVOKE</literal> command.
