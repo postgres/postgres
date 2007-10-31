@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Oct  8 22:31:36 EDT 2007
+Last updated:		Wed Oct 31 16:12:40 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1227,6 +1227,8 @@ Vacuum
   http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php
 
 * -Reduce XID consumption of read-only queries
+* Prevent long-lived temporary tables from causing frozen-Xid advancement
+   starvation
 * Auto-vacuum
 
 	o Use free-space map information to guide refilling
