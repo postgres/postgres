@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.381 2007/03/30 03:19:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.382 2007/11/01 19:06:01 tgl Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -478,9 +478,10 @@ psql: could not connect to server: No such file or directory
     relevant for <productname>PostgreSQL</>). Almost all modern
     operating systems provide these features, but not all of them have
     them turned on or sufficiently sized by default, especially systems
-    with BSD heritage. (For the <systemitem class="osname">Windows</>
-    port, <productname>PostgreSQL</> provides its own replacement 
-    implementation of these facilities.)
+    with BSD heritage. (On <systemitem class="osname">Windows</>,
+    <productname>PostgreSQL</> provides its own replacement 
+    implementation of these facilities, and so most of this section
+    can be disregarded.)
    </para>
 
    <para>
@@ -550,13 +551,13 @@ psql: could not connect to server: No such file or directory
        <row>
         <entry><varname>SEMMNI</></>
         <entry>Maximum number of semaphore identifiers (i.e., sets)</>
-        <entry>at least <literal>ceil(max_connections / 16)</literal></>
+        <entry>at least <literal>ceil((max_connections + autovacuum_max_workers) / 16)</literal></>
        </row>
 
        <row>
         <entry><varname>SEMMNS</></>
         <entry>Maximum number of semaphores system-wide</>
-        <entry><literal>ceil(max_connections / 16) * 17</literal> plus room for other applications</>
+        <entry><literal>ceil((max_connections + autovacuum_max_workers) / 16) * 17</literal> plus room for other applications</>
        </row>
 
        <row>
@@ -587,18 +588,16 @@ psql: could not connect to server: No such file or directory
     shared memory parameter is <varname>SHMMAX</>, the maximum size, in
     bytes, of a shared memory segment. If you get an error message from
     <function>shmget</> like <errorname>Invalid argument</>, it is
-    likely that this limit has been exceeded. The size of the required
+    likely that this limit has been exceeded.  The size of the required
     shared memory segment varies depending on several
     <productname>PostgreSQL</> configuration parameters, as shown in
-    <xref linkend="shared-memory-parameters">.
+    <xref linkend="shared-memory-parameters">.  (Any error message you might
+    get will include the exact size of the failed allocation request.)
     You can, as a temporary solution, lower some of those settings to
-    avoid the failure.  As a rough approximation, you can estimate the
-    required segment size as 500 kB plus the variable amounts shown in
-    the table.  (Any error message you might get will include the exact
-    size of the failed allocation request.)  While it is possible to get
+    avoid the failure.  While it is possible to get
     <productname>PostgreSQL</> to run with <varname>SHMMAX</> as small as
-    1 MB, you need at least 4 MB for acceptable performance, and desirable
-    settings are in the tens of megabytes.
+    2 MB, you need considerably more for acceptable performance.  Desirable
+    settings are in the tens to hundreds of megabytes.
    </para>
 
    <para>
@@ -620,17 +619,21 @@ psql: could not connect to server: No such file or directory
 
    <para>
     <productname>PostgreSQL</> uses one semaphore per allowed connection
-    (<xref linkend="guc-max-connections">), in sets of 16.  Each such set will
+    (<xref linkend="guc-max-connections">) and allowed autovacuum worker
+    process (<xref linkend="guc-autovacuum-max-workers">), in sets of 16.
+    Each such set will
     also contain a 17th semaphore which contains a <quote>magic
     number</quote>, to detect collision with semaphore sets used by
     other applications. The maximum number of semaphores in the system
     is set by <varname>SEMMNS</>, which consequently must be at least
-    as high as <varname>max_connections</> plus one extra for each 16
-    allowed connections (see the formula in <xref
+    as high as <varname>max_connections</> plus
+    <varname>autovacuum_max_workers</>, plus one extra for each 16
+    allowed connections plus workers (see the formula in <xref
     linkend="sysvipc-parameters">).  The parameter <varname>SEMMNI</>
     determines the limit on the number of semaphore sets that can
     exist on the system at one time.  Hence this parameter must be at
-    least <literal>ceil(max_connections / 16)</>. Lowering the number
+    least <literal>ceil((max_connections + autovacuum_max_workers) / 16)</>.
+    Lowering the number
     of allowed connections is a temporary workaround for failures,
     which are usually confusingly worded <errorname>No space
     left on device</>, from the function <function>semget</>.
@@ -675,7 +678,7 @@ psql: could not connect to server: No such file or directory
         sort of configuration commonly used for other databases such
         as <application>DB/2</application>.</para>
 
-       <para> It might , however, be necessary to modify the global
+       <para> It might, however, be necessary to modify the global
        <command>ulimit</command> information in
        <filename>/etc/security/limits</filename>, as the default hard
        limits for file sizes (<varname>fsize</varname>) and numbers of
@@ -865,8 +868,9 @@ options        SEMMAP=256
       <indexterm><primary>Linux</><secondary>IPC configuration</></>
       <listitem>
        <para>
-        The default settings are only suitable for small installations 
-        (the default maximum segment size is 32 MB). However, the remaining
+        The default maximum segment size is 32 MB, which is only adequate
+        for small <productname>PostgreSQL</productname> installations.
+        However, the remaining
         defaults are quite generously sized, and usually do not require
         changes. The maximum shared memory segment size can be changed via the 
         <command>sysctl</command> interface.  For example, to allow 128 MB, 
@@ -985,7 +989,7 @@ kern.sysv.shmall=1024
       <listitem>
        <para>
         At least in version 2.6, the default maximum size of a shared
-        memory segments is too low for <productname>PostgreSQL</>. The
+        memory segment is too low for <productname>PostgreSQL</>. The
         relevant settings can be changed in <filename>/etc/system</>,
         for example:
 <programlisting>
@@ -1051,24 +1055,29 @@ set semsys:seminfo_semmsl=32
      <thead>
       <row>
        <entry>Name</>
-       <entry>Approximate multiplier (bytes per increment)</>
+       <entry>Approximate multiplier (bytes per increment) as of 8.3</>
       </row>
      </thead>
 
      <tbody>
       <row>
        <entry><xref linkend="guc-max-connections"></>
-       <entry>400 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
+       <entry>1800 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
+      </row>
+
+      <row>
+       <entry><xref linkend="guc-autovacuum-max-workers"></>
+       <entry>1800 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
       </row>
 
       <row>
        <entry><xref linkend="guc-max-prepared-transactions"></>
-       <entry>600 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
+       <entry>770 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
       </row>
 
       <row>
        <entry><xref linkend="guc-shared-buffers"></>
-       <entry>8300 (assuming 8 kB <symbol>BLCKSZ</>)</entry>
+       <entry>8400 (assuming 8 kB <symbol>BLCKSZ</>)</entry>
       </row>
 
       <row>
@@ -1084,6 +1093,11 @@ set semsys:seminfo_semmsl=32
       <row>
        <entry><xref linkend="guc-max-fsm-pages"></>
        <entry>6</>
+      </row>
+
+      <row>
+       <entry>Fixed space requirements</>
+       <entry>770 kB</entry>
       </row>
      </tbody>
     </tgroup>
