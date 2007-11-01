@@ -1,10 +1,10 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/acronyms.sgml,v 1.1 2007/11/01 17:00:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/acronyms.sgml,v 1.2 2007/11/01 17:16:36 momjian Exp $ -->
 
-<appendix id="acronymns">
+<appendix id="acronyms">
  <title>Acronyms</title>
 
  <para>
-  This is a list of acronymns used in the documentation.
+  This is a list of acronyms used in the documentation.
 
   <variablelist>
 
@@ -693,8 +693,8 @@
     <term><acronym>UTF</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Unicode">Unicode
-      Transformation Format</ulink>
+      <ulink url="http://www.unicode.org/">Unicode Transformation
+      Format</ulink>
      </para>
     </listitem>
    </varlistentry>
