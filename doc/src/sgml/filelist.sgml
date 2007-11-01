@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.50 2007/08/21 21:08:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.51 2007/11/01 17:00:18 momjian Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -98,6 +98,7 @@
 <!entity features   SYSTEM "features.sgml">
 <!entity keywords   SYSTEM "keywords.sgml">
 <!entity release    SYSTEM "release.sgml">
+<!entity acronyms   SYSTEM "acronyms.sgml">
 
 <!entity features-supported   SYSTEM "features-supported.sgml">
 <!entity features-unsupported SYSTEM "features-unsupported.sgml">

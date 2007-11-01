@@ -1,0 +1,753 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/acronyms.sgml,v 1.1 2007/11/01 17:00:46 momjian Exp $ -->
+
+<appendix id="acronymns">
+ <title>Acronyms</title>
+
+ <para>
+  This is a list of acronymns used in the documentation.
+
+  <variablelist>
+
+   <varlistentry>
+    <term><acronym>ANSI</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/American_National_Standards_Institute">
+      American National Standards Institute</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>API</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/API">Application Programming Interface</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>ASCII</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Ascii">American Standard
+      Code for Information Interchange</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>BKI</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="bki">Backend Interface</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>CA</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Certificate_authority">Certificate Authority</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>CIDR</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing">Classless
+      Inter-Domain Routing</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>CPAN</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://www.cpan.org/">Comprehensive Perl Archive Network</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>CRL</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Certificate_revocation_list">Certificate
+      Revocation List</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>CSV</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Comma-separated_values">Comma
+      Separated Values</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>CVE</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://cve.mitre.org/">Common Vulnerabilities and Exposures</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>CVS</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Concurrent_Versions_System">Concurrent
+      Versions System</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>DBA</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Database_administrator">Database
+      Administrator</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>DBI</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://dbi.perl.org/">Database Interface (Perl)</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>DBMS</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Dbms">Database Management
+      System</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>DCL</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Data_Control_Language">Data
+      Control Language</ulink>, e.g. <command>GRANT</>,
+      <command>REVOKE</>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>DDL</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Data_Definition_Language">Data
+      Definition Language</ulink>, e.g. <command>CREATE TABLE</>,
+      <command>ALTER USER</>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>DML</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Data_Manipulation_Language">Data
+      Manipulation Language</ulink>, e.g INSERT, UPDATE, DELETE.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>DST</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Daylight_saving_time">Daylight
+      Saving Time</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>ECPG</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="ecpg">Embedded C for PostgreSQL</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>ESQL</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Embedded_SQL">Embedded
+      SQL</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>FAQ</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/FAQ">Frequently Asked
+      Questions</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>FSM</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="runtime-config-resource-fsm">Free Space Map</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>GEQO</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="geqo">Genetic Query Optimizer</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>GIN</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="GIN">Generalized Inverted Index</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>GiST</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="GiST">Generalized Search Tree</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>GMT</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/GMT">Greenwich Mean Time</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>GSSAPI</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Generic_Security_Services_Application_Program_Interface">Generic
+      Security Services Application Programming Interface</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>GUC</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="config-setting">Global User Configuration</link>,
+      e.g. <filename>postgresql.conf</>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>HBA</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="auth-pg-hba-conf">Host-Based Authentication</link>,
+      e.g. <filename>pg_hba.conf</>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>HOT</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://developer.postgresql.org/cvsweb.cgi/pgsql/src/backend/access/heap/README.HOT">Heap-Only
+      Tuples</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>IEC</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/International_Electrotechnical_Commission">International
+      Electrotechnical Commission</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>IEEE</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://standards.ieee.org/">Institute of Electrical and
+      Electronics Engineers</ulink>, e.g. IEEE Standard for Binary
+      Floating-Point Arithmetic (IEEE 754)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>IPC</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Inter-process_communication">Inter-Process
+      Communication</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>ISO</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://www.iso.org/iso/home.htm">International Standards
+      Organization</ulink>, e.g. ISO/IEC 9075 (SQL99 standard)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>ISSN</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Issn">International Standard
+      Serial Number</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>JDBC</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Java_Database_Connectivity">Java
+      Database Connectivity</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>LDAP</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol">Lightweight
+      Directory Access Protocol</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>MSVC</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Visual_C++"><productname>Microsoft
+      Visual C</productname></ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>MVCC</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="mvcc">Multi-Version Concurrency Control</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>NLS</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Internationalization_and_localization">National
+      Language Support</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>ODBC</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Open_Database_Connectivity">Open
+      Database Connectivity</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>OID</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="datatype-oid">Object Identifier</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>OLAP</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Olap">Online Analytical
+      Processing</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>OLTP</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/OLTP">Online Transaction
+      Processing</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>ORDBMS</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/ORDBMS">Object-Relational
+      Database Management System</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>PAM</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Pluggable_Authentication_Modules">Pluggable
+      Authentication Modules</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>PGSQL</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="postgres"><productname>PostgreSQL</></link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>PGXS</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="xfunc-c-pgxs"><productname>PostgreSQL</> Extension System</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>PID</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Process_identifier">Process Identifier</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>PITR</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="continuous-archiving">Point-In-Time
+      Recovery</link>, i.e. Continuous Archiving
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>PL</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="server-programming">Programming Languages (server-side)</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>POSIX</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/POSIX">Portable Operating
+      System Interface</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>RDBMS</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Relational_database_management_system">Relational
+      Database Management System</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>RFC</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Request_for_Comments">Request For
+      Comments</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>SGML</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/SGML">Standard Generalized
+      Markup Language</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>SPI</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="spi">Server Programming Interface</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>SQL</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/SQL">Structured Query Language</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>SRF</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="xfunc-c-return-set">Set-Returning Functions</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>SSH</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Secure_Shell">Secure
+      Shell</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>SSL</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Secure_Sockets_Layer">Secure Sockets Layer</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>SSPI</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://msdn2.microsoft.com/en-us/library/aa380493.aspx">Security
+      Support Provider Interface</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>SYSV</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/System_V">Unix System V</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>TCP/IP</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Transmission_Control_Protocol">Transmission
+      Control Protocol (TCP) / Internet Protocol (IP)</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>TID</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="datatype-oid">Tuple Identifier</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>TOAST</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="storage-toast">The Oversized-Attribute Storage Technique</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>TPC</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://www.tpc.org/">Transaction Processing
+      Performance Council</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>URL</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/URL">Uniform Resource
+      Locator</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>UTC</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Coordinated_Universal_Time">Coordinated
+      Universal Time</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>UTF</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Unicode">Unicode
+      Transformation Format</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>UTF8</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Utf8">Eight-Bit Unicode
+      Transformation Format</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>UUID</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/Uuid">Universally Unique
+      Identifier</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>WAL</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="wal">Write-Ahead Log</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>XID</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="datatype-oid">Transaction Identifier</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>XML</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="http://en.wikipedia.org/wiki/XML">Extensible Markup
+      Language</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </para>
+
+</appendix>
