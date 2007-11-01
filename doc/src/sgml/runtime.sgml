@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.374.2.1 2007/03/30 03:19:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.374.2.2 2007/11/01 19:11:31 tgl Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -593,7 +593,7 @@ psql: could not connect to server: No such file or directory
     <xref linkend="shared-memory-parameters">.
     You can, as a temporary solution, lower some of those settings to
     avoid the failure.  As a rough approximation, you can estimate the
-    required segment size as 500 kB plus the variable amounts shown in
+    required segment size as 700 kB plus the variable amounts shown in
     the table.  (Any error message you might get will include the exact
     size of the failed allocation request.)  While it is possible to get
     <productname>PostgreSQL</> to run with <varname>SHMMAX</> as small as
@@ -1058,12 +1058,12 @@ set semsys:seminfo_semmsl=32
      <tbody>
       <row>
        <entry><xref linkend="guc-max-connections"></>
-       <entry>400 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
+       <entry>1800 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
       </row>
 
       <row>
        <entry><xref linkend="guc-max-prepared-transactions"></>
-       <entry>600 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
+       <entry>700 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
       </row>
 
       <row>
