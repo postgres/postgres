@@ -1,10 +1,11 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/acronyms.sgml,v 1.2 2007/11/01 17:16:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/acronyms.sgml,v 1.3 2007/11/01 20:27:33 tgl Exp $ -->
 
 <appendix id="acronyms">
  <title>Acronyms</title>
 
  <para>
-  This is a list of acronyms used in the documentation.
+  This is a list of acronyms commonly used in the <productname>PostgreSQL</>
+  documentation and in discussions about <productname>PostgreSQL</>.
 
   <variablelist>
 
@@ -148,25 +149,13 @@
    </varlistentry>
 
    <varlistentry>
-    <term><acronym>DCL</acronym></term>
-    <listitem>
-     <para>
-      <ulink
-      url="http://en.wikipedia.org/wiki/Data_Control_Language">Data
-      Control Language</ulink>, e.g. <command>GRANT</>,
-      <command>REVOKE</>
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><acronym>DDL</acronym></term>
     <listitem>
      <para>
       <ulink
       url="http://en.wikipedia.org/wiki/Data_Definition_Language">Data
-      Definition Language</ulink>, e.g. <command>CREATE TABLE</>,
-      <command>ALTER USER</>
+      Definition Language</ulink>, SQL commands such as <command>CREATE
+      TABLE</>, <command>ALTER USER</>
      </para>
     </listitem>
    </varlistentry>
@@ -177,7 +166,8 @@
      <para>
       <ulink
       url="http://en.wikipedia.org/wiki/Data_Manipulation_Language">Data
-      Manipulation Language</ulink>, e.g INSERT, UPDATE, DELETE.
+      Manipulation Language</ulink>, SQL commands such as <command>INSERT</>,
+      <command>UPDATE</>, <command>DELETE</>
      </para>
     </listitem>
    </varlistentry>
@@ -282,8 +272,8 @@
     <term><acronym>GUC</acronym></term>
     <listitem>
      <para>
-      <link linkend="config-setting">Global User Configuration</link>,
-      e.g. <filename>postgresql.conf</>
+      <link linkend="config-setting">Grand Unified Configuration</link>,
+      the <productname>PostgreSQL</> subsystem that handles server configuration
      </para>
     </listitem>
    </varlistentry>
@@ -292,8 +282,7 @@
     <term><acronym>HBA</acronym></term>
     <listitem>
      <para>
-      <link linkend="auth-pg-hba-conf">Host-Based Authentication</link>,
-      e.g. <filename>pg_hba.conf</>
+      <link linkend="auth-pg-hba-conf">Host-Based Authentication</link>
      </para>
     </listitem>
    </varlistentry>
@@ -325,8 +314,7 @@
     <listitem>
      <para>
       <ulink url="http://standards.ieee.org/">Institute of Electrical and
-      Electronics Engineers</ulink>, e.g. IEEE Standard for Binary
-      Floating-Point Arithmetic (IEEE 754)
+      Electronics Engineers</ulink>
      </para>
     </listitem>
    </varlistentry>
@@ -347,7 +335,7 @@
     <listitem>
      <para>
       <ulink url="http://www.iso.org/iso/home.htm">International Standards
-      Organization</ulink>, e.g. ISO/IEC 9075 (SQL99 standard)
+      Organization</ulink>
      </para>
     </listitem>
    </varlistentry>
@@ -508,7 +496,7 @@
     <listitem>
      <para>
       <link linkend="continuous-archiving">Point-In-Time
-      Recovery</link>, i.e. Continuous Archiving
+      Recovery</link> (Continuous Archiving)
      </para>
     </listitem>
    </varlistentry>
@@ -586,7 +574,7 @@
     <term><acronym>SRF</acronym></term>
     <listitem>
      <para>
-      <link linkend="xfunc-c-return-set">Set-Returning Functions</link>
+      <link linkend="xfunc-c-return-set">Set-Returning Function</link>
      </para>
     </listitem>
    </varlistentry>
