@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.532 2007/10/25 02:50:26 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.533 2007/11/01 22:38:36 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -447,6 +447,18 @@ do it for earlier branch release files.
       default. <function>pg_tablespace_size()</function> requires
       <literal>CREATE</> permission in the tablespace, or is allowed if
       the tablespace is the default tablespace for the database.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Internal hashing functions are now more uniformly-distributed (Tom)
+     </para>
+
+     <para>
+      If application code was calling and storing hash values using
+      internal <productname>PostgreSQL</> hashing functions, the hash
+      values must be regenerated.
      </para>
     </listitem>
 
