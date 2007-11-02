@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.231 2007/05/21 17:57:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.232 2007/11/02 18:54:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2756,11 +2756,29 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 
 			if (em->em_is_const || em->em_is_child)
 				continue;
+
 			tle = tlist_member((Node *) em->em_expr, tlist);
 			if (tle)
 			{
 				pk_datatype = em->em_datatype;
 				break;			/* found expr already in tlist */
+			}
+
+			/*
+			 * We can also use it if the pathkey expression is a relabel
+			 * of the tlist entry.  This is needed for binary-compatible
+			 * cases (cf. make_pathkey_from_sortinfo).
+			 */
+			if (IsA(em->em_expr, RelabelType))
+			{
+				Expr	   *rtarg = ((RelabelType *) em->em_expr)->arg;
+
+				tle = tlist_member((Node *) rtarg, tlist);
+				if (tle)
+				{
+					pk_datatype = em->em_datatype;
+					break;			/* found expr already in tlist */
+				}
 			}
 		}
 		if (!tle)

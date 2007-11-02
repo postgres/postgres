@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.86 2007/10/27 05:45:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.87 2007/11/02 18:54:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,6 +277,30 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 		elog(ERROR, "could not find opfamilies for ordering operator %u",
 			 ordering_op);
 
+	/*
+	 * When dealing with binary-compatible opclasses, we have to ensure that
+	 * the exposed type of the expression tree matches the declared input
+	 * type of the opclass, except when that is a polymorphic type
+	 * (compare the behavior of parse_coerce.c).  This ensures that we can
+	 * correctly match the indexkey or sortclause expression to other
+	 * expressions we find in the query, because arguments of ordinary
+	 * operator expressions will be cast that way.  (We have to do this
+	 * for indexkeys because they are represented without any explicit
+	 * relabel in pg_index, and for sort clauses because the parser is
+	 * likewise cavalier about putting relabels on them.)
+	 */
+	if (exprType((Node *) expr) != opcintype &&
+		!IsPolymorphicType(opcintype))
+	{
+		/* Strip any existing RelabelType, and add a new one */
+		while (expr && IsA(expr, RelabelType))
+			expr = (Expr *) ((RelabelType *) expr)->arg;
+		expr = (Expr *) makeRelabelType(expr,
+										opcintype,
+										-1,
+										COERCE_DONTCARE);
+	}
+
 	/* Now find or create a matching EquivalenceClass */
 	eclass = get_eclass_for_sort_expr(root, expr, opcintype, opfamilies);
 
@@ -493,27 +517,6 @@ build_index_pathkeys(PlannerInfo *root,
 				elog(ERROR, "wrong number of index expressions");
 			indexkey = (Expr *) lfirst(indexprs_item);
 			indexprs_item = lnext(indexprs_item);
-		}
-
-		/*
-		 * When dealing with binary-compatible indexes, we have to ensure that
-		 * the exposed type of the expression tree matches the declared input
-		 * type of the opclass, except when that is a polymorphic type
-		 * (compare the behavior of parse_coerce.c).  This ensures that we can
-		 * correctly match the indexkey expression to expressions we find in
-		 * the query, because arguments of operators that could match the
-		 * index will be cast likewise.
-		 */
-		if (exprType((Node *) indexkey) != index->opcintype[i] &&
-			!IsPolymorphicType(index->opcintype[i]))
-		{
-			/* Strip any existing RelabelType, and add a new one */
-			while (indexkey && IsA(indexkey, RelabelType))
-				indexkey = (Expr *) ((RelabelType *) indexkey)->arg;
-			indexkey = (Expr *) makeRelabelType(indexkey,
-												index->opcintype[i],
-												-1,
-												COERCE_DONTCARE);
 		}
 
 		/* OK, make a canonical pathkey for this sort key */
