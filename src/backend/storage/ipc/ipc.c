@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.97 2007/07/25 19:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.98 2007/11/04 17:55:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,9 @@
 #include <sys/stat.h>
 
 #include "miscadmin.h"
+#ifdef PROFILE_PID_DIR
+#include "postmaster/autovacuum.h"
+#endif
 #include "storage/ipc.h"
 
 
@@ -126,6 +129,11 @@ proc_exit(int code)
 		 *	$PGDATA/gprof/8845/gmon.out
 		 *		...
 		 *
+		 * To avoid undesirable disk space bloat, autovacuum workers are
+		 * discriminated against: all their gmon.out files go into the same
+		 * subdirectory.  Without this, an installation that is "just sitting
+		 * there" nonetheless eats megabytes of disk space every few seconds.
+		 *
 		 * Note that we do this here instead of in an on_proc_exit() 
 		 * callback because we want to ensure that this code executes
 		 * last - we don't want to interfere with any other on_proc_exit()
@@ -133,7 +141,10 @@ proc_exit(int code)
 		 */
 		char gprofDirName[32];
 
-		snprintf(gprofDirName, 32, "gprof/%d", (int) getpid());
+		if (IsAutoVacuumWorkerProcess())
+			snprintf(gprofDirName, 32, "gprof/avworker");
+		else
+			snprintf(gprofDirName, 32, "gprof/%d", (int) getpid());
 	    
 		mkdir("gprof", 0777);
 		mkdir(gprofDirName, 0777);
