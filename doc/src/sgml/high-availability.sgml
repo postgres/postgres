@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.16 2007/02/01 21:02:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.17 2007/11/04 19:23:24 momjian Exp $ -->
 
 <chapter id="high-availability">
- <title>High Availability and Load Balancing</title>
+ <title>High Availability, Load Balancing, and Replication</title>
 
  <indexterm><primary>high availability</></>
  <indexterm><primary>failover</></>
@@ -45,7 +45,7 @@
  </para>
 
  <para>
-  Some failover and load balancing solutions are synchronous,
+  Some solutions are synchronous,
   meaning that a data-modifying transaction is not considered
   committed until all servers have committed the transaction.  This
   guarantees that a failover will not lose any data and that all
@@ -65,8 +65,8 @@
  </para>
 
  <para>
-  Performance must be considered in any failover or load balancing
-  choice.  There is usually a tradeoff between functionality and
+  Performance must be considered in any choice.  There is usually a
+  tradeoff between functionality and
   performance.  For example, a full synchronous solution over a slow
   network might cut performance by more than half, while an asynchronous
   one might have a minimal performance impact.
