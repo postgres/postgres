@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.382 2007/11/01 19:06:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.383 2007/11/04 21:48:03 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -159,6 +159,12 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    for the database cluster.  Normally this should be chosen to match the
    locale setting.  For details see <xref linkend="multibyte">.
   </para>
+
+  <para>
+   If using a non-local (network) file system, see <xref
+   linkend="manage-ag-tablespaces-nfs">.
+  </para>
+
  </sect1>
 
  <sect1 id="server-start">
