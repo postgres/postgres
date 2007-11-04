@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.220 2007/11/04 01:16:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.221 2007/11/04 21:25:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,6 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 	 * constraint.  Ugly, but necessary for loading old dump files.
 	 */
 	if (stmt->isconstraint && !OidIsValid(constraintOid) &&
-		stmt->constrrel != NULL &&
 		list_length(stmt->args) >= 6 &&
 		(list_length(stmt->args) % 2) == 0 &&
 		RI_FKey_trigger_type(funcoid) != RI_TRIGGER_NONE)
@@ -482,9 +481,69 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 {
 	static List *info_list = NIL;
 
+	char	   *constr_name;
+	char	   *fk_table_name;
+	char	   *pk_table_name;
+	char		fk_matchtype = FKCONSTR_MATCH_UNSPECIFIED;
+	List	   *fk_attrs = NIL;
+	List	   *pk_attrs = NIL;
+	StringInfoData buf;
 	bool		isupd;
 	OldTriggerInfo *info = NULL;
 	ListCell   *l;
+	int			i;
+
+	/* Parse out the trigger arguments */
+	constr_name = strVal(linitial(stmt->args));
+	fk_table_name = strVal(lsecond(stmt->args));
+	pk_table_name = strVal(lthird(stmt->args));
+	i = 0;
+	foreach(l, stmt->args)
+	{
+		Value *arg = (Value *) lfirst(l);
+
+		i++;
+		if (i < 4)				/* skip constraint and table names */
+			continue;
+		if (i == 4)				/* handle match type */
+		{
+			if (strcmp(strVal(arg), "FULL") == 0)
+				fk_matchtype = FKCONSTR_MATCH_FULL;
+			else
+				fk_matchtype = FKCONSTR_MATCH_UNSPECIFIED;
+			continue;
+		}
+		if (i % 2)
+			fk_attrs = lappend(fk_attrs, arg);
+		else
+			pk_attrs = lappend(pk_attrs, arg);
+	}
+
+	/* Prepare description of constraint for use in messages */
+	initStringInfo(&buf);
+	appendStringInfo(&buf, "FOREIGN KEY %s(",
+					 quote_identifier(fk_table_name));
+	i = 0;
+	foreach(l, fk_attrs)
+	{
+		Value *arg = (Value *) lfirst(l);
+
+		if (i++ > 0)
+			appendStringInfoChar(&buf, ',');
+		appendStringInfoString(&buf, quote_identifier(strVal(arg)));
+	}
+	appendStringInfo(&buf, ") REFERENCES %s(",
+					 quote_identifier(pk_table_name));
+	i = 0;
+	foreach(l, pk_attrs)
+	{
+		Value *arg = (Value *) lfirst(l);
+
+		if (i++ > 0)
+			appendStringInfoChar(&buf, ',');
+		appendStringInfoString(&buf, quote_identifier(strVal(arg)));
+	}
+	appendStringInfoChar(&buf, ')');
 
 	/* Identify class of trigger --- update, delete, or referencing-table */
 	switch (funcoid)
@@ -508,8 +567,8 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		default:
 			/* Ignore triggers on referencing table */
 			ereport(NOTICE,
-					(errmsg("ignoring incomplete foreign-key trigger group for constraint \"%s\" on table \"%s\"",
-							stmt->trigname, stmt->relation->relname)));
+					(errmsg("ignoring incomplete trigger group for constraint \"%s\" %s",
+							constr_name, buf.data)));
 			return;
 	}
 
@@ -527,8 +586,8 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		MemoryContext oldContext;
 
 		ereport(NOTICE,
-				(errmsg("ignoring incomplete foreign-key trigger group for constraint \"%s\" on table \"%s\"",
-						stmt->trigname, stmt->constrrel->relname)));
+				(errmsg("ignoring incomplete trigger group for constraint \"%s\" %s",
+						constr_name, buf.data)));
 		oldContext = MemoryContextSwitchTo(TopMemoryContext);
 		info = (OldTriggerInfo *) palloc(sizeof(OldTriggerInfo));
 		info->args = copyObject(stmt->args);
@@ -539,49 +598,36 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 	}
 	else
 	{
-		/* OK, we have a pair, so make the FK constraint */
+		/* OK, we have a pair, so make the FK constraint ALTER TABLE cmd */
 		AlterTableStmt *atstmt = makeNode(AlterTableStmt);
 		AlterTableCmd *atcmd = makeNode(AlterTableCmd);
 		FkConstraint *fkcon = makeNode(FkConstraint);
-		int		i;
 		Oid		updfunc,
 				delfunc;
 
 		ereport(NOTICE,
-				(errmsg("converting foreign-key trigger group into constraint \"%s\" on table \"%s\"",
-						stmt->trigname, stmt->constrrel->relname)));
-		atstmt->relation = stmt->constrrel;
+				(errmsg("converting trigger group into constraint \"%s\" %s",
+						constr_name, buf.data)));
+
+		if (stmt->constrrel)
+			atstmt->relation = stmt->constrrel;
+		else
+		{
+			/* Work around ancient pg_dump bug that omitted constrrel */
+			atstmt->relation = makeRangeVar(NULL, fk_table_name);
+		}
 		atstmt->cmds = list_make1(atcmd);
 		atstmt->relkind = OBJECT_TABLE;
 		atcmd->subtype = AT_AddConstraint;
 		atcmd->def = (Node *) fkcon;
-		if (strcmp(stmt->trigname, "<unnamed>") == 0)
+		if (strcmp(constr_name, "<unnamed>") == 0)
 			fkcon->constr_name = NULL;
 		else
-			fkcon->constr_name = stmt->trigname;
+			fkcon->constr_name = constr_name;
 		fkcon->pktable = stmt->relation;
-
-		i = 0;
-		foreach(l, stmt->args)
-		{
-			Value *arg = (Value *) lfirst(l);
-
-			i++;
-			if (i < 4)			/* ignore constraint and table names */
-				continue;
-			if (i == 4)			/* handle match type */
-			{
-				if (strcmp(strVal(arg), "FULL") == 0)
-					fkcon->fk_matchtype = FKCONSTR_MATCH_FULL;
-				else
-					fkcon->fk_matchtype = FKCONSTR_MATCH_UNSPECIFIED;
-				continue;
-			}
-			if (i % 2)
-				fkcon->fk_attrs = lappend(fkcon->fk_attrs, arg);
-			else
-				fkcon->pk_attrs = lappend(fkcon->pk_attrs, arg);
-		}
+		fkcon->fk_attrs = fk_attrs;
+		fkcon->pk_attrs = pk_attrs;
+		fkcon->fk_matchtype = fk_matchtype;
 
 		if (isupd)
 		{
@@ -638,6 +684,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		fkcon->deferrable = stmt->deferrable;
 		fkcon->initdeferred = stmt->initdeferred;
 
+		/* ... and execute it */
 		ProcessUtility((Node *) atstmt,
 					   NULL, NULL, false, None_Receiver, NULL);
 
