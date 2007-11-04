@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.295 2007/11/04 18:10:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.296 2007/11/04 18:53:39 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -973,7 +973,7 @@ su - postgres
        <term><option>--with-libxslt</option></term>
        <listitem>
         <para>
-         Build <filename>/contrib/xml2</> with libxslt.
+         Use libxslt when building <filename>/contrib/xml2</>.
          <filename>/contrib/xml2</> relies on this library to perform
          Stylesheet transformations of XML.
         </para>

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.533 2007/11/04 18:10:42 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.534 2007/11/04 18:53:39 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -600,8 +600,8 @@ AC_SUBST(with_libxml)
 #
 # XSLT
 #
-PGAC_ARG_BOOL(with, libxslt, no, [  --with-libxslt          build /contrib/xml2 with XSLT support],
-              [AC_DEFINE([USE_LIBXSLT], 1, [Define to 1 to build /contrib/xml2 with XSLT support. (--with-libxslt)])])
+PGAC_ARG_BOOL(with, libxslt, no, [  --with-libxslt          use XSLT support when building /contrib/xml2],
+              [AC_DEFINE([USE_LIBXSLT], 1, [Define to 1 to use XSLT support when building /contrib/xml2. (--with-libxslt)])])
 
 
 AC_SUBST(with_libxslt)
