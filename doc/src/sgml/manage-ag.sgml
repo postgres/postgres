@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.55 2007/11/04 19:43:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.56 2007/11/04 21:40:02 momjian Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -494,6 +494,32 @@ SELECT spcname FROM pg_tablespace;
    locations.  (If you do not, <literal>pg_dump</> will continue to show
    the old tablespace locations.)
   </para> 
+
+  <sect2 id="manage-ag-tablespaces-nfs">
+   <title>Network File Systems</title>
+
+   <indexterm zone="manage-ag-tablespaces-nfs">
+    <primary>Network File Systems</primary>
+   </indexterm>
+   <indexterm><primary><acronym>NFS</></><see>Network File Systems</></>
+   <indexterm><primary>Network Attached Storage (<acronym>NAS</>)</><see>Network File Systems</></>
+
+   <para>
+    Many installations create tablespace on network file systems.
+    Sometimes this is done directly via <acronym>NFS</>, or by using a
+    Network Attached Storage (<acronym>NAS</>) device that uses
+    <acronym>NFS</> internally.  <productname>PostgreSQL</> does nothing
+    special for <acronym>NFS</> file systems, meaning it assumes
+    <acronym>NFS</> behaves exactly like locally-connected drives.  If
+    client and server <acronym>NFS</> implementations have non-standard
+    semantics, this can cause reliability problems (see <ulink
+    url="http://www.time-travellers.org/shane/papers/NFS_considered_harmful.html"></ulink>).
+    Specifically, delayed (asynchonous) writes to the <acronym>NFS</>
+    server can cause reliability problems;   if possible, mount
+    <acronym>NFS</> file systems synchonously to avoid this.
+   </para>
+
+  </sect2>
 
  </sect1>
 </chapter>
