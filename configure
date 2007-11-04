@@ -898,7 +898,7 @@ Optional Packages:
   --with-libedit-preferred  prefer BSD Libedit over GNU Readline
   --with-ossp-uuid        build with OSSP UUID library for UUID generation
   --with-libxml           build with XML support
-  --with-libxslt          build with XSLT support
+  --with-libxslt          build /contrib/xml2 with XSLT support
   --with-system-tzdata=DIR  use system time zone data in DIR
   --without-zlib          do not use Zlib
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
