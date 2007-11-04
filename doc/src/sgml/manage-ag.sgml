@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.54 2007/06/03 17:05:52 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.55 2007/11/04 19:43:33 momjian Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -344,156 +344,156 @@ dropdb <replaceable class="parameter">dbname</replaceable>
    <primary>tablespace</primary>
   </indexterm>
 
-   <para>
-    Tablespaces in <productname>PostgreSQL</> allow database administrators to
-    define locations in the file system where the files representing
-    database objects can be stored. Once created, a tablespace can be referred
-    to by name when creating database objects.
-   </para>
+  <para>
+   Tablespaces in <productname>PostgreSQL</> allow database administrators to
+   define locations in the file system where the files representing
+   database objects can be stored. Once created, a tablespace can be referred
+   to by name when creating database objects.
+  </para>
 
-   <para>
-    By using tablespaces, an administrator can control the disk layout
-    of a <productname>PostgreSQL</> installation. This is useful in at
-    least two ways. First, if the partition or volume on which the
-    cluster was initialized runs out of space and cannot be extended,
-    a tablespace can be created on a different partition and used
-    until the system can be reconfigured.
-   </para>
+  <para>
+   By using tablespaces, an administrator can control the disk layout
+   of a <productname>PostgreSQL</> installation. This is useful in at
+   least two ways. First, if the partition or volume on which the
+   cluster was initialized runs out of space and cannot be extended,
+   a tablespace can be created on a different partition and used
+   until the system can be reconfigured.
+  </para>
 
-   <para>
-    Second, tablespaces allow an administrator to use knowledge of the
-    usage pattern of database objects to optimize performance. For
-    example, an index which is very heavily used can be placed on a
-    very fast, highly available disk, such as an expensive solid state
-    device. At the same time a table storing archived data which is
-    rarely used or not performance critical could be stored on a less
-    expensive, slower disk system.
-   </para>
+  <para>
+   Second, tablespaces allow an administrator to use knowledge of the
+   usage pattern of database objects to optimize performance. For
+   example, an index which is very heavily used can be placed on a
+   very fast, highly available disk, such as an expensive solid state
+   device. At the same time a table storing archived data which is
+   rarely used or not performance critical could be stored on a less
+   expensive, slower disk system.
+  </para>
 
-   <para>
-    To define a tablespace, use the <xref
-    linkend="sql-createtablespace" endterm="sql-createtablespace-title">
-    command, for example:<indexterm><primary>CREATE TABLESPACE</></>:
+  <para>
+   To define a tablespace, use the <xref
+   linkend="sql-createtablespace" endterm="sql-createtablespace-title">
+   command, for example:<indexterm><primary>CREATE TABLESPACE</></>:
 <programlisting>
 CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
 </programlisting>
-    The location must be an existing, empty directory that is owned by
-    the <productname>PostgreSQL</> system user.  All objects subsequently
-    created within the tablespace will be stored in files underneath this
-    directory.
-   </para>
+   The location must be an existing, empty directory that is owned by
+   the <productname>PostgreSQL</> system user.  All objects subsequently
+   created within the tablespace will be stored in files underneath this
+   directory.
+  </para>
 
-   <note>
-    <para>
-     There is usually not much point in making more than one
-     tablespace per logical file system, since you cannot control the location
-     of individual files within a logical file system.  However,
-     <productname>PostgreSQL</> does not enforce any such limitation, and
-     indeed it is not directly aware of the file system boundaries on your
-     system.  It just stores files in the directories you tell it to use.
-    </para>
-   </note>
-
+  <note>
    <para>
-    Creation of the tablespace itself must be done as a database superuser,
-    but after that you can allow ordinary database users to make use of it.
-    To do that, grant them the <literal>CREATE</> privilege on it.
+    There is usually not much point in making more than one
+    tablespace per logical file system, since you cannot control the location
+    of individual files within a logical file system.  However,
+    <productname>PostgreSQL</> does not enforce any such limitation, and
+    indeed it is not directly aware of the file system boundaries on your
+    system.  It just stores files in the directories you tell it to use.
    </para>
+  </note>
 
-   <para>
-    Tables, indexes, and entire databases can be assigned to
-    particular tablespaces. To do so, a user with the <literal>CREATE</>
-    privilege on a given tablespace must pass the tablespace name as a 
-    parameter to the relevant command. For example, the following creates 
-    a table in the tablespace <literal>space1</>:
+  <para>
+   Creation of the tablespace itself must be done as a database superuser,
+   but after that you can allow ordinary database users to make use of it.
+   To do that, grant them the <literal>CREATE</> privilege on it.
+  </para>
+
+  <para>
+   Tables, indexes, and entire databases can be assigned to
+   particular tablespaces. To do so, a user with the <literal>CREATE</>
+   privilege on a given tablespace must pass the tablespace name as a 
+   parameter to the relevant command. For example, the following creates 
+   a table in the tablespace <literal>space1</>:
 <programlisting>
 CREATE TABLE foo(i int) TABLESPACE space1;
 </programlisting>
-   </para>
+  </para>
 
-   <para>
-    Alternatively, use the <xref linkend="guc-default-tablespace"> parameter:
+  <para>
+   Alternatively, use the <xref linkend="guc-default-tablespace"> parameter:
 <programlisting>
 SET default_tablespace = space1;
 CREATE TABLE foo(i int);
 </programlisting>
-    When <varname>default_tablespace</> is set to anything but an empty
-    string, it supplies an implicit <literal>TABLESPACE</> clause for
-    <command>CREATE TABLE</> and <command>CREATE INDEX</> commands that
-    do not have an explicit one.
-   </para>
+   When <varname>default_tablespace</> is set to anything but an empty
+   string, it supplies an implicit <literal>TABLESPACE</> clause for
+   <command>CREATE TABLE</> and <command>CREATE INDEX</> commands that
+   do not have an explicit one.
+  </para>
 
-   <para>
-    There is also a <xref linkend="guc-temp-tablespaces"> parameter, which
-    determines the placement of temporary tables and indexes, as well as
-    temporary files that are used for purposes such as sorting large data
-    sets.  This can be a list of tablespace names, rather than only one,
-    so that the load associated with temporary objects can be spread over
-    multiple tablespaces.  A random member of the list is picked each time
-    a temporary object is to be created.
-   </para>
+  <para>
+   There is also a <xref linkend="guc-temp-tablespaces"> parameter, which
+   determines the placement of temporary tables and indexes, as well as
+   temporary files that are used for purposes such as sorting large data
+   sets.  This can be a list of tablespace names, rather than only one,
+   so that the load associated with temporary objects can be spread over
+   multiple tablespaces.  A random member of the list is picked each time
+   a temporary object is to be created.
+  </para>
 
-   <para>
-    The tablespace associated with a database is used to store the system
-    catalogs of that database.  Furthermore, it is the default tablespace
-    used for tables, indexes, and temporary files created within the database,
-    if no <literal>TABLESPACE</> clause is given and no other selection is
-    specified by <varname>default_tablespace</> or
-    <varname>temp_tablespaces</> (as appropriate).
-    If a database is created without specifying a tablespace for it,
-    it uses the same tablespace as the template database it is copied from.
-   </para>
+  <para>
+   The tablespace associated with a database is used to store the system
+   catalogs of that database.  Furthermore, it is the default tablespace
+   used for tables, indexes, and temporary files created within the database,
+   if no <literal>TABLESPACE</> clause is given and no other selection is
+   specified by <varname>default_tablespace</> or
+   <varname>temp_tablespaces</> (as appropriate).
+   If a database is created without specifying a tablespace for it,
+   it uses the same tablespace as the template database it is copied from.
+  </para>
 
-   <para>
-    Two tablespaces are automatically created by <literal>initdb</>. The
-    <literal>pg_global</> tablespace is used for shared system catalogs. The
-    <literal>pg_default</> tablespace is the default tablespace of the
-    <literal>template1</> and <literal>template0</> databases (and, therefore,
-    will be the default tablespace for other databases as well, unless
-    overridden by a <literal>TABLESPACE</> clause in <command>CREATE
-    DATABASE</>).
-   </para>
+  <para>
+   Two tablespaces are automatically created by <literal>initdb</>. The
+   <literal>pg_global</> tablespace is used for shared system catalogs. The
+   <literal>pg_default</> tablespace is the default tablespace of the
+   <literal>template1</> and <literal>template0</> databases (and, therefore,
+   will be the default tablespace for other databases as well, unless
+   overridden by a <literal>TABLESPACE</> clause in <command>CREATE
+   DATABASE</>).
+  </para>
 
-   <para>
-    Once created, a tablespace can be used from any database, provided
-    the requesting user has sufficient privilege. This means that a tablespace
-    cannot be dropped until all objects in all databases using the tablespace
-    have been removed.
-   </para>
+  <para>
+   Once created, a tablespace can be used from any database, provided
+   the requesting user has sufficient privilege. This means that a tablespace
+   cannot be dropped until all objects in all databases using the tablespace
+   have been removed.
+  </para>
 
-   <para>
-    To remove an empty tablespace, use the <xref
-    linkend="sql-droptablespace" endterm="sql-droptablespace-title">
-    command.
-   </para>
+  <para>
+   To remove an empty tablespace, use the <xref
+   linkend="sql-droptablespace" endterm="sql-droptablespace-title">
+   command.
+  </para>
 
-   <para>
-    To determine the set of existing tablespaces, examine the
-    <structname>pg_tablespace</> system catalog, for example
+  <para>
+   To determine the set of existing tablespaces, examine the
+   <structname>pg_tablespace</> system catalog, for example
 <synopsis>
 SELECT spcname FROM pg_tablespace;
 </synopsis>
-    The <xref linkend="app-psql"> program's <literal>\db</> meta-command
-    is also useful for listing the existing tablespaces.
-   </para>
+   The <xref linkend="app-psql"> program's <literal>\db</> meta-command
+   is also useful for listing the existing tablespaces.
+  </para>
 
-   <para>
-    <productname>PostgreSQL</> makes use of symbolic links
-    to simplify the implementation of tablespaces. This
-    means that tablespaces can be used <emphasis>only</> on systems
-    that support symbolic links.
-   </para>
+  <para>
+   <productname>PostgreSQL</> makes use of symbolic links
+   to simplify the implementation of tablespaces. This
+   means that tablespaces can be used <emphasis>only</> on systems
+   that support symbolic links.
+  </para>
 
-   <para>
-    The directory <filename>$PGDATA/pg_tblspc</> contains symbolic links that
-    point to each of the non-built-in tablespaces defined in the cluster.
-    Although not recommended, it is possible to adjust the tablespace
-    layout by hand by redefining these links.  Two warnings: do not do so
-    while the server is running; and after you restart the server,
-    update the <structname>pg_tablespace</> catalog to show the new
-    locations.  (If you do not, <literal>pg_dump</> will continue to show
-    the old tablespace locations.)
-   </para> 
+  <para>
+   The directory <filename>$PGDATA/pg_tblspc</> contains symbolic links that
+   point to each of the non-built-in tablespaces defined in the cluster.
+   Although not recommended, it is possible to adjust the tablespace
+   layout by hand by redefining these links.  Two warnings: do not do so
+   while the server is running; and after you restart the server,
+   update the <structname>pg_tablespace</> catalog to show the new
+   locations.  (If you do not, <literal>pg_dump</> will continue to show
+   the old tablespace locations.)
+  </para> 
 
  </sect1>
 </chapter>
