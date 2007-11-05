@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.534 2007/11/04 18:53:39 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.535 2007/11/05 17:43:20 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -569,7 +569,7 @@ PGAC_ARG_BOOL(with, libedit-preferred, no,
 #
 # OSSP UUID library
 #
-PGAC_ARG_BOOL(with, ossp-uuid, no, [  --with-ossp-uuid        build with OSSP UUID library for UUID generation])
+PGAC_ARG_BOOL(with, ossp-uuid, no, [  --with-ossp-uuid        use OSSP UUID library when building /contrib/uuid-ossp ])
 AC_SUBST(with_ossp_uuid)
 
 

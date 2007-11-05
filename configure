@@ -896,7 +896,7 @@ Optional Packages:
   --with-openssl          build with OpenSSL support
   --without-readline      do not use GNU Readline nor BSD Libedit for editing
   --with-libedit-preferred  prefer BSD Libedit over GNU Readline
-  --with-ossp-uuid        build with OSSP UUID library for UUID generation
+  --with-ossp-uuid        use OSSP UUID library when building /contrib/uuid-ossp
   --with-libxml           build with XML support
   --with-libxslt          use XSLT support when building /contrib/xml2
   --with-system-tzdata=DIR  use system time zone data in DIR

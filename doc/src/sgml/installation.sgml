@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.296 2007/11/04 18:53:39 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.297 2007/11/05 17:43:20 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -937,11 +937,10 @@ su - postgres
        <term><option>--with-ossp-uuid</option></term>
        <listitem>
         <para>
-         Build with the <ulink
-         url="http://www.ossp.org/pkg/lib/uuid/">OSSP UUID
-         library</ulink>.  This is necessary for the contrib module
-         <literal>uuid-ossp</literal> which provides functions to
-         generate UUIDs.<indexterm><primary>UUID</primary></indexterm>
+         Use the <ulink url="http://www.ossp.org/pkg/lib/uuid/">OSSP UUID
+         library</ulink> when building <filename>/contrib/uuid-ossp</>.
+         The library provides functions to generate
+         UUIDs.<indexterm><primary>UUID</primary></indexterm>
         </para>
        </listitem>
       </varlistentry>
