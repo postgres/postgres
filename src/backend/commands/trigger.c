@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.221 2007/11/04 21:25:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.222 2007/11/05 19:00:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,10 +222,10 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 		(list_length(stmt->args) % 2) == 0 &&
 		RI_FKey_trigger_type(funcoid) != RI_TRIGGER_NONE)
 	{
-		ConvertTriggerToFK(stmt, funcoid);
-
 		/* Keep lock on target rel until end of xact */
 		heap_close(rel, NoLock);
+
+		ConvertTriggerToFK(stmt, funcoid);
 
 		return InvalidOid;
 	}
@@ -462,24 +462,35 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
  *
  * The conversion is complex because a pre-7.3 foreign key involved three
  * separate triggers, which were reported separately in dumps.  While the
- * single trigger on the referencing table can be ignored, we need info
- * from both of the triggers on the referenced table to build the constraint
- * declaration.  Our approach is to save info from the first trigger seen
- * in a list in TopMemoryContext.  When we see the second trigger we can
- * create the FK constraint and remove the list entry.  We match triggers
- * together by comparing the trigger arguments (which include constraint
- * name, table and column names, so should be good enough).
+ * single trigger on the referencing table adds no new information, we need
+ * to know the trigger functions of both of the triggers on the referenced
+ * table to build the constraint declaration.  Also, due to lack of proper
+ * dependency checking pre-7.3, it is possible that the source database had
+ * an incomplete set of triggers resulting in an only partially enforced
+ * FK constraint.  (This would happen if one of the tables had been dropped
+ * and re-created, but only if the DB had been affected by a 7.0 pg_dump bug
+ * that caused loss of tgconstrrelid information.)  We choose to translate to
+ * an FK constraint only when we've seen all three triggers of a set.  This is
+ * implemented by storing unmatched items in a list in TopMemoryContext.
+ * We match triggers together by comparing the trigger arguments (which
+ * include constraint name, table and column names, so should be good enough).
  */
 typedef struct {
 	List	   *args;			/* list of (T_String) Values or NIL */
-	Oid			funcoid;		/* OID of trigger function */
-	bool		isupd;			/* is it the UPDATE trigger? */
+	Oid			funcoids[3];	/* OIDs of trigger functions */
+	/* The three function OIDs are stored in the order update, delete, child */
 } OldTriggerInfo;
 
 static void
 ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 {
 	static List *info_list = NIL;
+
+	static const char * const funcdescr[3] = {
+		gettext_noop("Found referenced table's UPDATE trigger."),
+		gettext_noop("Found referenced table's DELETE trigger."),
+		gettext_noop("Found referencing table's trigger.")
+	};
 
 	char	   *constr_name;
 	char	   *fk_table_name;
@@ -488,7 +499,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 	List	   *fk_attrs = NIL;
 	List	   *pk_attrs = NIL;
 	StringInfoData buf;
-	bool		isupd;
+	int			funcnum;
 	OldTriggerInfo *info = NULL;
 	ListCell   *l;
 	int			i;
@@ -548,73 +559,99 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 	/* Identify class of trigger --- update, delete, or referencing-table */
 	switch (funcoid)
 	{
-		case F_RI_FKEY_CASCADE_DEL:
-		case F_RI_FKEY_RESTRICT_DEL:
-		case F_RI_FKEY_SETNULL_DEL:
-		case F_RI_FKEY_SETDEFAULT_DEL:
-		case F_RI_FKEY_NOACTION_DEL:
-			isupd = false;
-			break;
-
 		case F_RI_FKEY_CASCADE_UPD:
 		case F_RI_FKEY_RESTRICT_UPD:
 		case F_RI_FKEY_SETNULL_UPD:
 		case F_RI_FKEY_SETDEFAULT_UPD:
 		case F_RI_FKEY_NOACTION_UPD:
-			isupd = true;
+			funcnum = 0;
+			break;
+
+		case F_RI_FKEY_CASCADE_DEL:
+		case F_RI_FKEY_RESTRICT_DEL:
+		case F_RI_FKEY_SETNULL_DEL:
+		case F_RI_FKEY_SETDEFAULT_DEL:
+		case F_RI_FKEY_NOACTION_DEL:
+			funcnum = 1;
 			break;
 
 		default:
-			/* Ignore triggers on referencing table */
-			ereport(NOTICE,
-					(errmsg("ignoring incomplete trigger group for constraint \"%s\" %s",
-							constr_name, buf.data)));
-			return;
+			funcnum = 2;
+			break;
 	}
 
 	/* See if we have a match to this trigger */
 	foreach(l, info_list)
 	{
 		info = (OldTriggerInfo *) lfirst(l);
-		if (info->isupd != isupd && equal(info->args, stmt->args))
+		if (info->funcoids[funcnum] == InvalidOid &&
+			equal(info->args, stmt->args))
+		{
+			info->funcoids[funcnum] = funcoid;
 			break;
+		}
 	}
 
 	if (l == NULL)
 	{
-		/* First trigger of pair, so save away what we need */
+		/* First trigger of set, so create a new list entry */
 		MemoryContext oldContext;
 
 		ereport(NOTICE,
 				(errmsg("ignoring incomplete trigger group for constraint \"%s\" %s",
-						constr_name, buf.data)));
+						constr_name, buf.data),
+				 errdetail(funcdescr[funcnum])));
 		oldContext = MemoryContextSwitchTo(TopMemoryContext);
-		info = (OldTriggerInfo *) palloc(sizeof(OldTriggerInfo));
+		info = (OldTriggerInfo *) palloc0(sizeof(OldTriggerInfo));
 		info->args = copyObject(stmt->args);
-		info->funcoid = funcoid;
-		info->isupd = isupd;
+		info->funcoids[funcnum] = funcoid;
 		info_list = lappend(info_list, info);
 		MemoryContextSwitchTo(oldContext);
 	}
+	else if (info->funcoids[0] == InvalidOid ||
+			 info->funcoids[1] == InvalidOid ||
+			 info->funcoids[2] == InvalidOid)
+	{
+		/* Second trigger of set */
+		ereport(NOTICE,
+				(errmsg("ignoring incomplete trigger group for constraint \"%s\" %s",
+						constr_name, buf.data),
+				 errdetail(funcdescr[funcnum])));
+	}
 	else
 	{
-		/* OK, we have a pair, so make the FK constraint ALTER TABLE cmd */
+		/* OK, we have a set, so make the FK constraint ALTER TABLE cmd */
 		AlterTableStmt *atstmt = makeNode(AlterTableStmt);
 		AlterTableCmd *atcmd = makeNode(AlterTableCmd);
 		FkConstraint *fkcon = makeNode(FkConstraint);
-		Oid		updfunc,
-				delfunc;
 
 		ereport(NOTICE,
 				(errmsg("converting trigger group into constraint \"%s\" %s",
-						constr_name, buf.data)));
-
-		if (stmt->constrrel)
-			atstmt->relation = stmt->constrrel;
+						constr_name, buf.data),
+				 errdetail(funcdescr[funcnum])));
+		if (funcnum == 2)
+		{
+			/* This trigger is on the FK table */
+			atstmt->relation = stmt->relation;
+			if (stmt->constrrel)
+				fkcon->pktable = stmt->constrrel;
+			else
+			{
+				/* Work around ancient pg_dump bug that omitted constrrel */
+				fkcon->pktable = makeRangeVar(NULL, pk_table_name);
+			}
+		}
 		else
 		{
-			/* Work around ancient pg_dump bug that omitted constrrel */
-			atstmt->relation = makeRangeVar(NULL, fk_table_name);
+			/* This trigger is on the PK table */
+			fkcon->pktable = stmt->relation;
+			if (stmt->constrrel)
+				atstmt->relation = stmt->constrrel;
+			else
+			{
+				/* Work around ancient pg_dump bug that omitted constrrel */
+				atstmt->relation = makeRangeVar(NULL, fk_table_name);
+			}
 		}
 		atstmt->cmds = list_make1(atcmd);
 		atstmt->relkind = OBJECT_TABLE;
@@ -624,22 +661,10 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 			fkcon->constr_name = NULL;
 		else
 			fkcon->constr_name = constr_name;
-		fkcon->pktable = stmt->relation;
 		fkcon->fk_attrs = fk_attrs;
 		fkcon->pk_attrs = pk_attrs;
 		fkcon->fk_matchtype = fk_matchtype;
-
-		if (isupd)
-		{
-			updfunc = funcoid;
-			delfunc = info->funcoid;
-		}
-		else
-		{
-			updfunc = info->funcoid;
-			delfunc = funcoid;
-		}
-		switch (updfunc)
+		switch (info->funcoids[0])
 		{
 			case F_RI_FKEY_NOACTION_UPD:
 				fkcon->fk_upd_action = FKCONSTR_ACTION_NOACTION;
@@ -660,7 +685,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 				/* can't get here because of earlier checks */
 				elog(ERROR, "confused about RI update function");
 		}
-		switch (delfunc)
+		switch (info->funcoids[1])
 		{
 			case F_RI_FKEY_NOACTION_DEL:
 				fkcon->fk_del_action = FKCONSTR_ACTION_NOACTION;
