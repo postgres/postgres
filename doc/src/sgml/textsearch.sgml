@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.29 2007/10/29 01:55:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.30 2007/11/05 15:55:53 mha Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -2060,7 +2060,7 @@ SELECT to_tsvector('english','in the list of stop words');
  'list':3 'stop':5 'word':6
 </programlisting>
 
-    The mising positions 1,2,4 are because of stop words.  Ranks
+    The missing positions 1,2,4 are because of stop words.  Ranks
     calculated for documents with and without stop words are quite different:
 
 <programlisting>
@@ -2542,7 +2542,7 @@ CREATE TEXT SEARCH DICTIONARY english_stem (
    <para>
     A <application>Snowball</> dictionary recognizes everything, whether
     or not it is able to simplify the word, so it should be placed
-    at the end of the dictionary list. It it useless to have it
+    at the end of the dictionary list. It is useless to have it
     before any other dictionary because a token will never pass through it to
     the next dictionary.
    </para>
