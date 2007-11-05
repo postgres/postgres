@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.152 2007/11/01 17:06:30 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.153 2007/11/05 17:35:38 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1318,7 +1318,9 @@ SET ENABLE_SEQSCAN TO OFF;
         In many situations, turning off <xref linkend="guc-synchronous-commit">
         for noncritical transactions can provide much of the potential
         performance benefit of turning off <varname>fsync</varname>, without
-        the attendant risks of data corruption.
+        the attendant risks of data corruption.  It can even be turned
+        off in a single multi-statement transaction using <command>SET
+        LOCAL synchronous_commit TO OFF;</>.
        </para>
 
        <para>
