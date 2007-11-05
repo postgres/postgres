@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.212 2007/11/05 12:02:20 darcy Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.213 2007/11/05 14:51:08 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3435,6 +3435,77 @@ SELECT to_tsquery('Fat:ab & Cats');
 
    </sect2>
 
+  </sect1>
+
+  <sect1 id="datatype-txid-snapshot">
+   <title>Transaction Snapshot Type</title>
+
+   <indexterm zone="datatype-txid-snapshot">
+    <primary>txid_snapshot</primary>
+   </indexterm>
+
+   <para>
+    The data type <type>txid_snapshot</type> stores info about transaction ID
+    visibility at a particular moment in time. The components are
+    described in <xref linkend="datatype-txid-snapshot-parts">.
+   </para>
+
+   <table id="datatype-txid-snapshot-parts">
+    <title>Snapshot components</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Name</entry>
+       <entry>Query Function</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+
+      <row>
+       <entry><type>xmin</type></entry>
+       <entry>txid_snapshot_xmin()</entry>
+       <entry>
+         Earliest transaction ID that is still active.  All earlier
+         transactions will either be committed and visible, or rolled
+         back and dead.
+       </entry>
+      </row>
+
+      <row>
+       <entry><type>xmax</type></entry>
+       <entry>txid_snapshot_xmax()</entry>
+       <entry>
+        Next unassigned txid.  All txids later than this one are
+        unassigned, and thus invisible.
+       </entry>
+      </row>
+
+      <row>
+       <entry><type>xip_list</type></entry>
+       <entry>txid_snapshot_xip()</entry>
+       <entry>
+        Active txids at the time of snapshot.  All of them are between
+        xmin and xmax.  A txid that is <literal>xmin &lt;= txid &lt;
+        xmax</literal> and not in this list is visible.
+       </entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    Snapshot's textual representation is <literal>[xmin]:[xmax]:[xip_list]</literal>
+    for example <literal>10:20:10,14,15</literal> means
+    <literal>xmin=10 xmax=20 xip_list=10,14,15</literal>.
+   </para>
+
+   <para>
+    Functions for getting and querying transaction ids and snapshots are
+    described in <xref linkend="functions-txid">.
+   </para>
   </sect1>
 
   <sect1 id="datatype-uuid">

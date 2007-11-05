@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.406 2007/10/30 19:06:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.407 2007/11/05 14:51:08 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11490,6 +11490,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     as well.
    </para>
 
+  </sect1>
+
+  <sect1 id="functions-txid">
+   <title>Transaction ID and Snapshot Functions</title>
+
    <indexterm>
     <primary>txid_current</primary>
    </indexterm>
@@ -11562,20 +11567,23 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </table>
 
    <para>
-    The internal transaction ID type (<type>xid</>) is 32 bits wide and so
-    it wraps around every 4 billion transactions.  However, these functions
-    export a 64-bit format that is extended with an <quote>epoch</> counter
-    so that it will not wrap around for the life of an installation.
+    The internal transaction ID type (<type>xid</>) is 32 bits wide and
+    so it wraps around every 4 billion transactions.  However, these
+    functions export a 64-bit format that is extended with an
+    <quote>epoch</> counter so that it will not wrap around for the life
+    of an installation.  The main use of these functions is to determine
+    which transactions were committed between two snapshots.
    </para>
+
   </sect1>
 
- <sect1 id="functions-admin">
-  <title>System Administration Functions</title>
+  <sect1 id="functions-admin">
+   <title>System Administration Functions</title>
 
-  <para>
-   <xref linkend="functions-admin-set-table"> shows the functions
-   available to query and alter run-time configuration parameters.
-  </para>
+   <para>
+    <xref linkend="functions-admin-set-table"> shows the functions
+    available to query and alter run-time configuration parameters.
+   </para>
 
    <table id="functions-admin-set-table">
     <title>Configuration Settings Functions</title>
