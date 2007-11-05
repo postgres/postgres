@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.211 2007/10/21 20:04:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.212 2007/11/05 12:02:20 darcy Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -834,14 +834,6 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
   <sect1 id="datatype-money">
    <title>Monetary Types</title>
 
-   <note>
-    <para>
-     The <type>money</type> type is deprecated. Use
-     <type>numeric</type> or <type>decimal</type> instead, in
-     combination with the <function>to_char</function> function.
-    </para>
-   </note>
-
    <para>
     The <type>money</type> type stores a currency amount with a fixed
     fractional precision; see <xref
@@ -850,6 +842,14 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
     floating-point literals, as well as <quote>typical</quote>
     currency formatting, such as <literal>'$1,000.00'</literal>.
     Output is generally in the latter form but depends on the locale.
+   </para>
+
+   <para>
+    Since the output of this data type is locale-sensitive, it may not
+    work to load <type>money</> data into a database that has a different
+    setting of <varname>lc_monetary</>.  To avoid problems, before
+    restoring a dump make sure <varname>lc_monetary</> has the same or
+    equivalent value as in the database that was dumped.
    </para>
 
     <table id="datatype-money-table">
