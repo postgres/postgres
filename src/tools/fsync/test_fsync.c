@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		if ((tmpfile = open(filename, O_RDWR)) == -1)
+		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("Cannot open output file.");
 		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
 			die("write failed");
@@ -90,14 +90,14 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		if ((tmpfile = open(filename, O_RDWR)) == -1)
+		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("Cannot open output file.");
 		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
 			die("write failed");
 		if (fsync(tmpfile) != 0)
 			die("fsync failed");
 		close(tmpfile);
-		if ((tmpfile = open(filename, O_RDWR)) == -1)
+		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("Cannot open output file.");
 		/* do nothing but the open/close the tests are consistent. */
 		close(tmpfile);
@@ -111,13 +111,13 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		if ((tmpfile = open(filename, O_RDWR)) == -1)
+		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("Cannot open output file.");
 		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
 			die("write failed");
 		close(tmpfile);
 		/* reopen file */
-		if ((tmpfile = open(filename, O_RDWR)) == -1)
+		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("Cannot open output file.");
 		if (fsync(tmpfile) != 0)
 			die("fsync failed");
@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 
 #ifdef OPEN_SYNC_FLAG
 	/* 16k o_sync write */
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG)) == -1)
+	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 	printf("\n");
 
 	/* 2*8k o_sync writes */
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG)) == -1)
+	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
@@ -169,7 +169,7 @@ main(int argc, char *argv[])
 
 #ifdef OPEN_DATASYNC_FLAG
 	/* open_dsync, write */
-	if ((tmpfile = open(filename, O_RDWR | O_DSYNC)) == -1)
+	if ((tmpfile = open(filename, O_RDWR | O_DSYNC, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 	printf("\n");
 #ifdef OPEN_SYNC_FLAG
 	/* open_fsync, write */
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG)) == -1)
+	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
@@ -200,7 +200,7 @@ main(int argc, char *argv[])
 
 #ifdef HAVE_FDATASYNC
 	/* write, fdatasync */
-	if ((tmpfile = open(filename, O_RDWR)) == -1)
+	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
@@ -219,7 +219,7 @@ main(int argc, char *argv[])
 	printf("\n");
 
 	/* write, fsync, close */
-	if ((tmpfile = open(filename, O_RDWR)) == -1)
+	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
@@ -239,7 +239,7 @@ main(int argc, char *argv[])
 
 #ifdef OPEN_DATASYNC_FLAG
 	/* open_dsync, write */
-	if ((tmpfile = open(filename, O_RDWR | O_DSYNC)) == -1)
+	if ((tmpfile = open(filename, O_RDWR | O_DSYNC, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
@@ -260,7 +260,7 @@ main(int argc, char *argv[])
 
 #ifdef OPEN_SYNC_FLAG
 	/* open_fsync, write */
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG)) == -1)
+	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
@@ -279,7 +279,7 @@ main(int argc, char *argv[])
 
 #ifdef HAVE_FDATASYNC
 	/* write, fdatasync */
-	if ((tmpfile = open(filename, O_RDWR)) == -1)
+	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
@@ -300,7 +300,7 @@ main(int argc, char *argv[])
 	printf("\n");
 
 	/* write, fsync, close */
-	if ((tmpfile = open(filename, O_RDWR)) == -1)
+	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
