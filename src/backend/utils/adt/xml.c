@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.49 2007/10/13 20:46:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.50 2007/11/05 22:23:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,10 @@
 #include "utils/xml.h"
 
 
+/* GUC variables */
+XmlBinaryType xmlbinary;
+XmlOptionType xmloption;
+
 #ifdef USE_LIBXML
 
 static StringInfo xml_err_buf = NULL;
@@ -103,11 +107,6 @@ static const char * map_sql_type_to_xml_name(Oid typeoid, int typmod);
 static const char * map_sql_typecoll_to_xmlschema_types(List *tupdesc_list);
 static const char * map_sql_type_to_xmlschema_type(Oid typeoid, int typmod);
 static void SPI_sql_row_to_xmlelement(int rownum, StringInfo result, char *tablename, bool nulls, bool tableforest, const char *targetns, bool top_level);
-
-
-XmlBinaryType xmlbinary;
-XmlOptionType xmloption;
-
 
 #define NO_XML_SUPPORT() \
 	ereport(ERROR, \
@@ -217,7 +216,8 @@ xml_out_internal(xmltype *x, pg_enc target_encoding)
 	}
 
 	xml_ereport_by_code(WARNING, ERRCODE_INTERNAL_ERROR,
-						"could not parse XML declaration in stored value", res_code);
+						"could not parse XML declaration in stored value",
+						res_code);
 #endif
 	return str;
 }
@@ -540,45 +540,84 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 {
 #ifdef USE_LIBXML
 	XmlExpr	   *xexpr = (XmlExpr *) xmlExpr->xprstate.expr;
+	xmltype	   *result;
+	List	   *named_arg_strings;
+	List	   *arg_strings;
 	int			i;
 	ListCell   *arg;
 	ListCell   *narg;
-	bool		isnull;
-	xmltype	   *result;
-	Datum		value;
-	char	   *str;
-
 	xmlBufferPtr buf;
 	xmlTextWriterPtr writer;
+
+	/*
+	 * We first evaluate all the arguments, then start up libxml and
+	 * create the result.  This avoids issues if one of the arguments
+	 * involves a call to some other function or subsystem that wants to use
+	 * libxml on its own terms.
+	 */
+	named_arg_strings = NIL;
+	i = 0;
+	foreach(arg, xmlExpr->named_args)
+	{
+		ExprState 	*e = (ExprState *) lfirst(arg);
+		Datum		value;
+		bool		isnull;
+		char	   *str;
+
+		value = ExecEvalExpr(e, econtext, &isnull, NULL);
+		if (isnull)
+			str = NULL;
+		else
+			str = OutputFunctionCall(&xmlExpr->named_outfuncs[i], value);
+		named_arg_strings = lappend(named_arg_strings, str);
+		i++;
+	}
+
+	arg_strings = NIL;
+	foreach(arg, xmlExpr->args)
+	{
+		ExprState 	*e = (ExprState *) lfirst(arg);
+		Datum		value;
+		bool		isnull;
+		char	   *str;
+
+		value = ExecEvalExpr(e, econtext, &isnull, NULL);
+		/* here we can just forget NULL elements immediately */
+		if (!isnull)
+		{
+			str = map_sql_value_to_xml_value(value,
+											 exprType((Node *) e->expr));
+			arg_strings = lappend(arg_strings, str);
+		}
+	}
+
+	/* now safe to run libxml */
+	xml_init();
 
 	buf = xmlBufferCreate();
 	writer = xmlNewTextWriterMemory(buf, 0);
 
 	xmlTextWriterStartElement(writer, (xmlChar *) xexpr->name);
 
-	i = 0;
-	forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
+	forboth(arg, named_arg_strings, narg, xexpr->arg_names)
 	{
-		ExprState 	*e = (ExprState *) lfirst(arg);
+		char	*str = (char *) lfirst(arg);
 		char	*argname = strVal(lfirst(narg));
 
-		value = ExecEvalExpr(e, econtext, &isnull, NULL);
-		if (!isnull)
+		if (str)
 		{
-			str = OutputFunctionCall(&xmlExpr->named_outfuncs[i], value);
-			xmlTextWriterWriteAttribute(writer, (xmlChar *) argname, (xmlChar *) str);
+			xmlTextWriterWriteAttribute(writer,
+										(xmlChar *) argname,
+										(xmlChar *) str);
 			pfree(str);
 		}
-		i++;
 	}
 
-	foreach(arg, xmlExpr->args)
+	foreach(arg, arg_strings)
 	{
-		ExprState 	*e = (ExprState *) lfirst(arg);
+		char	*str = (char *) lfirst(arg);
 
-		value = ExecEvalExpr(e, econtext, &isnull, NULL);
-		if (!isnull)
-			xmlTextWriterWriteRaw(writer, (xmlChar *) map_sql_value_to_xml_value(value, exprType((Node *) e->expr)));
+		xmlTextWriterWriteRaw(writer, (xmlChar *) str);
 	}
 
 	xmlTextWriterEndElement(writer);
@@ -586,6 +625,7 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 
 	result = xmlBuffer_to_xmltype(buf);
 	xmlBufferFree(buf);
+
 	return result;
 #else
 	NO_XML_SUPPORT();
@@ -733,9 +773,10 @@ xmlvalidate(PG_FUNCTION_ARGS)
 
 	xml_init();
 
-	/* We use a PG_TRY block to ensure libxml is cleaned up on error */
+	/* We use a PG_TRY block to ensure libxml parser is cleaned up on error */
 	PG_TRY();
 	{
+		xmlInitParser();
 		ctxt = xmlNewParserCtxt();
 		if (ctxt == NULL)
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
@@ -860,43 +901,64 @@ xml_is_document(xmltype *arg)
 #ifdef USE_LIBXML
 
 /*
- * Container for some init stuff (not good design!)
- * TODO xmlChar is utf8-char, make proper tuning (initdb with enc!=utf8 and check)
+ * Set up for use of libxml --- this should be called by each function that
+ * is about to use libxml facilities.
+ *
+ * TODO: xmlChar is utf8-char, make proper tuning (initdb with enc!=utf8 and
+ * check)
  */
 static void
 xml_init(void)
 {
-	/*
-	 * Currently, we have no pure UTF-8 support for internals -- check
-	 * if we can work.
-	 */
-	if (sizeof (char) != sizeof (xmlChar))
-		ereport(ERROR,
-				(errmsg("could not initialize XML library"),
-				 errdetail("libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u.",
-						   (int) sizeof(char), (int) sizeof(xmlChar))));
+	static bool first_time = true;
 
-	if (xml_err_buf == NULL)
+	if (first_time)
 	{
-		/* First time through: create error buffer in permanent context */
+		/* Stuff we need do only once per session */
 		MemoryContext oldcontext;
 
+		/*
+		 * Currently, we have no pure UTF-8 support for internals -- check
+		 * if we can work.
+		 */
+		if (sizeof(char) != sizeof(xmlChar))
+			ereport(ERROR,
+					(errmsg("could not initialize XML library"),
+					 errdetail("libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u.",
+							   (int) sizeof(char), (int) sizeof(xmlChar))));
+
+		/* create error buffer in permanent context */
 		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 		xml_err_buf = makeStringInfo();
 		MemoryContextSwitchTo(oldcontext);
+
+		/* Now that xml_err_buf exists, safe to call xml_errorHandler */
+		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
+
+		/* Set up memory allocation our way, too */
+		xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
+
+		/* Check library compatibility */
+		LIBXML_TEST_VERSION;
+
+		first_time = false;
 	}
 	else
 	{
 		/* Reset pre-existing buffer to empty */
+		Assert(xml_err_buf != NULL);
 		resetStringInfo(xml_err_buf);
+
+		/*
+		 * We re-establish the callback functions every time.  This makes it
+		 * safe for other subsystems (PL/Perl, say) to also use libxml with
+		 * their own callbacks ... so long as they likewise set up the
+		 * callbacks on every use.  It's cheap enough to not be worth
+		 * worrying about, anyway.
+		 */
+		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
+		xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
 	}
-	/* Now that xml_err_buf exists, safe to call xml_errorHandler */
-	xmlSetGenericErrorFunc(NULL, xml_errorHandler);
-
-	xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
-
-	xmlInitParser();
-	LIBXML_TEST_VERSION;
 }
 
 
@@ -1071,9 +1133,10 @@ print_xml_decl(StringInfo buf, const xmlChar *version, pg_enc encoding, int stan
 			appendStringInfo(buf, " version=\"%s\"", PG_XML_DEFAULT_VERSION);
 
 		if (encoding && encoding != PG_UTF8)
-			/* XXX might be useful to convert this to IANA names
-			 * (ISO-8859-1 instead of LATIN1 etc.); needs field
-			 * experience */
+			/*
+			 * XXX might be useful to convert this to IANA names
+			 * (ISO-8859-1 instead of LATIN1 etc.); needs field experience
+			 */
 			appendStringInfo(buf, " encoding=\"%s\"", pg_encoding_to_char(encoding));
 
 		if (standalone == 1)
@@ -1115,9 +1178,10 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace, xml
 
 	xml_init();
 
-	/* We use a PG_TRY block to ensure libxml is cleaned up on error */
+	/* We use a PG_TRY block to ensure libxml parser is cleaned up on error */
 	PG_TRY();
 	{
+		xmlInitParser();
 		ctxt = xmlNewParserCtxt();
 		if (ctxt == NULL)
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
@@ -1780,7 +1844,7 @@ schema_get_xml_visible_tables(Oid nspid)
 	StringInfoData query;
 
 	initStringInfo(&query);
-	appendStringInfo(&query, "SELECT oid FROM pg_class WHERE relnamespace = %u AND relkind IN ('r', 'v') AND has_table_privilege (oid, 'SELECT') ORDER BY relname;", nspid);
+	appendStringInfo(&query, "SELECT oid FROM pg_catalog.pg_class WHERE relnamespace = %u AND relkind IN ('r', 'v') AND pg_catalog.has_table_privilege (oid, 'SELECT') ORDER BY relname;", nspid);
 
 	return query_to_oid_list(query.data);
 }
@@ -1792,7 +1856,7 @@ schema_get_xml_visible_tables(Oid nspid)
  */
 #define XML_VISIBLE_SCHEMAS_EXCLUDE "nspname LIKE 'pg_%' ESCAPE '' OR nspname = 'information_schema'"
 
-#define XML_VISIBLE_SCHEMAS "SELECT oid FROM pg_namespace WHERE has_schema_privilege (oid, 'USAGE') AND NOT (" XML_VISIBLE_SCHEMAS_EXCLUDE ")"
+#define XML_VISIBLE_SCHEMAS "SELECT oid FROM pg_catalog.pg_namespace WHERE pg_catalog.has_schema_privilege (oid, 'USAGE') AND NOT (" XML_VISIBLE_SCHEMAS_EXCLUDE ")"
 
 
 static List *
@@ -1806,7 +1870,7 @@ static List *
 database_get_xml_visible_tables(void)
 {
 	/* At the moment there is no order required here. */
-	return query_to_oid_list("SELECT oid FROM pg_class WHERE relkind IN ('r', 'v') AND has_table_privilege (pg_class.oid, 'SELECT') AND relnamespace IN (" XML_VISIBLE_SCHEMAS ");");
+	return query_to_oid_list("SELECT oid FROM pg_catalog.pg_class WHERE relkind IN ('r', 'v') AND pg_catalog.has_table_privilege (pg_class.oid, 'SELECT') AND relnamespace IN (" XML_VISIBLE_SCHEMAS ");");
 }
 
 
@@ -2973,7 +3037,6 @@ SPI_sql_row_to_xmlelement(int rownum, StringInfo result, char *tablename, bool n
 		{
 			if (nulls)
 				appendStringInfo(result, "  <%s xsi:nil='true'/>\n", colname);
-
 		}
 		else
 			appendStringInfo(result, "  <%s>%s</%s>\n",
@@ -3170,10 +3233,12 @@ xpath(PG_FUNCTION_ARGS)
 
 	xml_init();
 
+	/* We use a PG_TRY block to ensure libxml parser is cleaned up on error */
 	PG_TRY();
 	{
+		xmlInitParser();
 		/*
-		 * redundant XML parsing (two parsings for the same value *
+		 * redundant XML parsing (two parsings for the same value
 		 * during one command execution are possible)
 		 */
 		ctxt = xmlNewParserCtxt();
