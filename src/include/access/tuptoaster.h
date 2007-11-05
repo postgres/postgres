@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.35 2007/04/06 04:21:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.36 2007/11/05 14:11:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,8 @@
  *
  * XXX while these can be modified without initdb, some thought needs to be
  * given to needs_toast_table() in toasting.c before unleashing random
- * changes.
+ * changes.  Also see LOBLKSIZE in large_object.h, which can *not* be
+ * changed without initdb.
  */
 #define TOAST_TUPLES_PER_PAGE	4
 
