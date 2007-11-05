@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.409 2007/11/05 16:57:23 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.410 2007/11/05 17:40:21 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11514,6 +11514,13 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     <primary>txid_visible_in_snapshot</primary>
    </indexterm>
 
+   <para>
+    The functions shown in <xref linkend="functions-txid-snapshot">
+    export server internal transaction information to user level.  The main
+    use of these functions is to determine which transactions were committed
+    between two snapshots.
+   </para>
+
    <table id="functions-txid-snapshot">
     <title>Transaction IDs and snapshots</title>
     <tgroup cols="3">
@@ -11557,27 +11564,22 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </table>
 
    <para>
-    The internal transaction ID type (<type>xid</>) is 32 bits wide and
-    so it wraps around every 4 billion transactions.  However, these
-    functions export a 64-bit format that is extended with an
-    <quote>epoch</> counter so that it will not wrap around for the life
-    of an installation.  The main use of these functions is to determine
-    which transactions were committed between two snapshots.
+    The internal transaction ID type (<type>xid</>) is 32 bits wide and so
+    it wraps around every 4 billion transactions.  However, these functions
+    export a 64-bit format that is extended with an <quote>epoch</> counter
+    so that it will not wrap around for the life of an installation.
+    The data type used by these functions, <type>txid_snapshot</type>,
+    stores information about transaction ID
+    visibility at a particular moment in time.  Its components are
+    described in <xref linkend="functions-txid-snapshot-parts">.
    </para>
 
-   <para>
-    The data type <type>txid_snapshot</type> stores info about transaction ID
-    visibility at a particular moment in time. The components are
-    described in <xref linkend="datatype-txid-snapshot-parts">.
-   </para>
-
-   <table id="datatype-txid-snapshot-parts">
+   <table id="functions-txid-snapshot-parts">
     <title>Snapshot components</title>
     <tgroup cols="2">
      <thead>
       <row>
        <entry>Name</entry>
-       <entry>Query Function</entry>
        <entry>Description</entry>
       </row>
      </thead>
@@ -11586,9 +11588,8 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
       <row>
        <entry><type>xmin</type></entry>
-       <entry>txid_snapshot_xmin()</entry>
        <entry>
-         Earliest transaction ID that is still active.  All earlier
+         Earliest transaction ID (txid) that is still active.  All earlier
          transactions will either be committed and visible, or rolled
          back and dead.
        </entry>
@@ -11596,20 +11597,20 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
       <row>
        <entry><type>xmax</type></entry>
-       <entry>txid_snapshot_xmax()</entry>
        <entry>
-        Next unassigned txid.  All txids later than this one are
-        unassigned, and thus invisible.
+        First as-yet-unassigned txid.  All txids later than this one are
+        not yet started as of the time of the snapshot, and thus invisible.
        </entry>
       </row>
 
       <row>
        <entry><type>xip_list</type></entry>
-       <entry>txid_snapshot_xip()</entry>
        <entry>
-        Active txids at the time of snapshot.  All of them are between
-        xmin and xmax.  A txid that is <literal>xmin &lt;= txid &lt;
-        xmax</literal> and not in this list is visible.
+        Active txids at the time of the snapshot.  All of them are between
+        <literal>xmin</> and <literal>xmax</>.  A txid that is
+        <literal>xmin &lt;= txid &lt; xmax</literal> and not in this list was
+        already completed at the time of the snapshot, and thus either visible
+        or dead according to its commit status.
        </entry>
       </row>
 
@@ -11618,11 +11619,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </table>
 
    <para>
-    Snapshot's textual representation is <literal>[xmin]:[xmax]:[xip_list]</literal>
-    for example <literal>10:20:10,14,15</literal> means
-    <literal>xmin=10 xmax=20 xip_list=10,14,15</literal>.
+    <type>txid_snapshot</>'s textual representation is
+    <literal><replaceable>xmin</>:<replaceable>xmax</>:<replaceable>xip_list</></literal>.
+    For example <literal>10:20:10,14,15</literal> means
+    <literal>xmin=10, xmax=20, xip_list=10, 14, 15</literal>.
    </para>
-
   </sect1>
 
   <sect1 id="functions-admin">
