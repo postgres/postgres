@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.408 2007/11/05 16:45:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.409 2007/11/05 16:57:23 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11489,11 +11489,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     databases within each cluster and their descriptions are stored globally
     as well.
    </para>
-
-  </sect1>
-
-  <sect1 id="functions-txid">
-   <title>Transaction ID and Snapshot Functions</title>
 
    <indexterm>
     <primary>txid_current</primary>
