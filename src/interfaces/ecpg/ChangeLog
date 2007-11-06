@@ -2264,6 +2264,10 @@ Wed, 03 Oct 2007 10:48:39 +0200
 Wed, 10 Oct 2007 08:31:44 +0200
 	
 	- Synced parser and keyword list.
+
+Tue, 06 Nov 2007 09:29:22 +0100
+
+	- Fixed two parser bugs.
 	- Set pgtypes library version to 3.0.
 	- Set compat library version to 3.0.
 	- Set ecpg library version to 6.0.
