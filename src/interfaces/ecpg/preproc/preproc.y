@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.21 2005/10/14 01:50:58 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.22 2007/11/06 08:33:32 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1660,6 +1660,10 @@ ConstraintAttributeSpec: ConstraintDeferrabilitySpec	{ $$ = $1; }
 				mmerror(PARSE_ERROR, ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
 
 			$$ = cat2_str($1, $2);
+		}
+		| /* EMPTY */
+		{
+			$$ = EMPTY;
 		}
 		;
 
