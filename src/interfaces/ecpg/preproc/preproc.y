@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.339.2.1 2007/03/27 03:25:35 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.339.2.2 2007/11/06 08:32:34 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1905,6 +1905,10 @@ ConstraintAttributeSpec: ConstraintDeferrabilitySpec	{ $$ = $1; }
 
 			$$ = cat2_str($1, $2);
 		}
+		| /* EMPTY */
+		{
+			$$ = EMPTY;
+		}
 		;
 
 ConstraintDeferrabilitySpec: NOT DEFERRABLE
@@ -3140,7 +3144,7 @@ DeleteStmt:  DELETE_P FROM relation_expr_opt_alias using_clause where_clause ret
 			{ $$ = cat_str(5, make_str("delete from"), $3, $4, $5, $6); }
 		;
 
-using_clause: USING from_list	{ cat2_str(make_str("using"), $2); }
+using_clause: USING from_list	{ $$ = cat2_str(make_str("using"), $2); }
 			| /* EMPTY */		{ $$ = EMPTY; }
 		;
 
