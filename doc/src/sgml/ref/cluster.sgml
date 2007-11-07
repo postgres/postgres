@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.43 2007/05/11 19:40:07 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.44 2007/11/07 14:07:53 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CLUSTER <replaceable class="PARAMETER">tablename</replaceable> <optional> USING <replaceable class="PARAMETER">indexname</replaceable> </optional>
+CLUSTER <replaceable class="PARAMETER">tablename</replaceable> [ USING <replaceable class="PARAMETER">indexname</replaceable> ]
 CLUSTER
 </synopsis>
  </refsynopsisdiv>
