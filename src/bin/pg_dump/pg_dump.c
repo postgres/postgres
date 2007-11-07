@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.473 2007/10/13 20:18:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.474 2007/11/07 13:11:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -463,19 +463,19 @@ main(int argc, char **argv)
 
 	if (dataOnly && schemaOnly)
 	{
-		write_msg(NULL, "options \"schema only\" (-s) and \"data only\" (-a) cannot be used together\n");
+		write_msg(NULL, "options -s/--schema-only and -a/--data-only cannot be used together\n");
 		exit(1);
 	}
 
 	if (dataOnly && outputClean)
 	{
-		write_msg(NULL, "options \"clean\" (-c) and \"data only\" (-a) cannot be used together\n");
+		write_msg(NULL, "options -c/--clean and -a/--data-only cannot be used together\n");
 		exit(1);
 	}
 
 	if (dumpInserts == true && oids == true)
 	{
-		write_msg(NULL, "INSERT (-d, -D) and OID (-o) options cannot be used together\n");
+		write_msg(NULL, "options -d/-D/--inserts/--column-inserts and -o/--oids cannot be used together\n");
 		write_msg(NULL, "(The INSERT command cannot set OIDs.)\n");
 		exit(1);
 	}
@@ -5524,7 +5524,7 @@ dumpEnumType(Archive *fout, TypeInfo *tinfo)
 	/* should be at least 1 value */
 	if (num == 0)
 	{
-		write_msg(NULL, "No rows found for enum");
+		write_msg(NULL, "no label definitions found for enum ID %u", tinfo->dobj.catId.oid);
 		exit_nicely();
 	}
 
