@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.28 2007/03/02 23:37:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.29 2007/11/07 13:12:21 petere Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -375,7 +375,9 @@ Hint:       the addendum
 
    <para>
     Detail and hint messages: Use complete sentences, and end each with
-    a period.  Capitalize the first word of sentences.
+    a period.  Capitalize the first word of sentences.  Put two spaces after
+    the period if another sentence follows (for English text; might be
+    inappropriate in other languages).
    </para>
 
    <para>
