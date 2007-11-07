@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.160 2007/10/16 18:02:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.161 2007/11/07 14:07:21 petere Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1339,7 +1339,7 @@ describeOneTableDetails(const char *schemaname,
 								printfPQExpBuffer(&buf, _("Rules:"));
 								break;
 							case 1:
-								printfPQExpBuffer(&buf, _("Disabled Rules:"));
+								printfPQExpBuffer(&buf, _("Disabled rules:"));
 								break;
 							case 2:
 								printfPQExpBuffer(&buf, _("Rules firing always:"));
@@ -1411,7 +1411,7 @@ describeOneTableDetails(const char *schemaname,
 								printfPQExpBuffer(&buf, _("Triggers:"));
 								break;
 							case 1:
-								printfPQExpBuffer(&buf, _("Disabled Triggers:"));
+								printfPQExpBuffer(&buf, _("Disabled triggers:"));
 								break;
 							case 2:
 								printfPQExpBuffer(&buf, _("Triggers firing always:"));
