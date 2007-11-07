@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.9 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.10 2007/11/07 12:24:23 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -167,7 +167,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
         privileges, but are not users in the usual sense of the word.
         If not specified,
         <literal>NOLOGIN</literal> is the default, except when
-        <command>CREATE ROLE</> is invoked through its alternate spelling
+        <command>CREATE ROLE</> is invoked through its alternative spelling
         <command>CREATE USER</>.
        </para>
       </listitem>

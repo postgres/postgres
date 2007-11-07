@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.94 2007/09/20 17:56:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.95 2007/11/07 12:24:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -406,7 +406,7 @@ do { \
 
 
 /*
- * MinimalTuple is an alternate representation that is used for transient
+ * MinimalTuple is an alternative representation that is used for transient
  * tuples inside the executor, in places where transaction status information
  * is not required, the tuple rowtype is known, and shaving off a few bytes
  * is worthwhile because we need to store many tuples.	The representation

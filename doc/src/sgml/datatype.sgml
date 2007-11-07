@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.214 2007/11/05 16:45:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.215 2007/11/07 12:24:23 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1180,7 +1180,7 @@ SELECT b, char_length(b) FROM test2;
     general, to escape an octet, it is converted into the three-digit
     octal number equivalent of its decimal octet value, and preceded
     by two backslashes.  <xref linkend="datatype-binary-sqlesc">
-    shows the characters that must be escaped, and gives the alternate
+    shows the characters that must be escaped, and gives the alternative
     escape sequences where applicable.
    </para>
 

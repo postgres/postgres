@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.37 2007/07/10 00:21:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.38 2007/11/07 12:24:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -776,7 +776,7 @@ AddAcl(PQExpBuffer aclbuf, const char *keyword)
  * schemavar: name of query variable to match against a schema-name pattern.
  * Can be NULL if no schema.
  * namevar: name of query variable to match against an object-name pattern.
- * altnamevar: NULL, or name of an alternate variable to match against name.
+ * altnamevar: NULL, or name of an alternative variable to match against name.
  * visibilityrule: clause to use if we want to restrict to visible objects
  * (for example, "pg_catalog.pg_table_is_visible(p.oid)").	Can be NULL.
  *

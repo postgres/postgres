@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.80 2007/05/18 01:20:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.81 2007/11/07 12:24:24 petere Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -151,7 +151,7 @@ char *SSLCipherSuites = NULL;
  *	unsecured connection without fully informing the user.
  *	Very uncool.
  *
- *	Alternately, the backend could attempt to load these files
+ *	Alternatively, the backend could attempt to load these files
  *	on startup if SSL is enabled - and refuse to start if any
  *	do not exist - but this would tend to piss off DBAs.
  *

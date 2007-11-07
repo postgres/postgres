@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.51 2007/02/01 19:10:24 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.52 2007/11/07 12:24:23 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -39,7 +39,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
 
   <para>
    The <productname>PostgreSQL</productname> rule system allows one to
-   define an alternate action to be performed on insertions, updates,
+   define an alternative action to be performed on insertions, updates,
    or deletions in database tables.  Roughly speaking, a rule causes
    additional commands to be executed when a given command on a given
    table is executed.  Alternatively, an <literal>INSTEAD</literal>

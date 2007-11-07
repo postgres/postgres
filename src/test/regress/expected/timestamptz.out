@@ -153,7 +153,7 @@ INSERT INTO TIMESTAMPTZ_TBL VALUES ('Feb 16 17:32:01 -0097');
 ERROR:  time zone displacement out of range: "Feb 16 17:32:01 -0097"
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Feb 16 17:32:01 5097 BC');
 ERROR:  timestamp out of range: "Feb 16 17:32:01 5097 BC"
--- Alternate field order that we've historically supported (sort of)
+-- Alternative field order that we've historically supported (sort of)
 -- with regular and POSIXy timezone specs
 SELECT 'Wed Jul 11 10:51:14 America/New_York 2001'::timestamptz;
          timestamptz          

@@ -196,7 +196,7 @@ that establishes an SSH tunnel when the program is launched:
   /usr/bin/ssh -1 -i $IDENTITY -n $HOST 'sleep 60' & \
 	/usr/bin/psql -h $HOST -p 5555 $1
 
-Alternately, the system could run a daemon that establishes and maintains
+Alternatively, the system could run a daemon that establishes and maintains
 the tunnel.  This is preferrable when multiple users need to establish
 similar tunnels to the same remote site.
 
