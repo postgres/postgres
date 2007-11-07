@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.60 2007/07/12 21:27:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.61 2007/11/07 13:23:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,9 +538,9 @@ PrintControlValues(bool guessed)
 	snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
 			 ControlFile.system_identifier);
 
-	printf(_("First log file ID for new XLOG:       %u\n"),
+	printf(_("First log file ID after reset:        %u\n"),
 		   newXlogId);
-	printf(_("First log file segment for new XLOG:  %u\n"),
+	printf(_("First log file segment after reset:   %u\n"),
 		   newXlogSeg);
 	printf(_("pg_control version number:            %u\n"),
 		   ControlFile.pg_control_version);
