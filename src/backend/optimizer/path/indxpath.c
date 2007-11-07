@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.222 2007/05/22 01:40:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.223 2007/11/07 22:37:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2668,6 +2668,7 @@ prefix_quals(Node *leftop, Oid opfamily,
 	Oid			datatype;
 	Oid			oproid;
 	Expr	   *expr;
+	FmgrInfo	ltproc;
 	Const	   *greaterstr;
 
 	Assert(pstatus != Pattern_Prefix_None);
@@ -2759,13 +2760,14 @@ prefix_quals(Node *leftop, Oid opfamily,
 	 * "x < greaterstr".
 	 *-------
 	 */
-	greaterstr = make_greater_string(prefix_const);
+	oproid = get_opfamily_member(opfamily, datatype, datatype,
+								 BTLessStrategyNumber);
+	if (oproid == InvalidOid)
+		elog(ERROR, "no < operator for opfamily %u", opfamily);
+	fmgr_info(get_opcode(oproid), &ltproc);
+	greaterstr = make_greater_string(prefix_const, &ltproc);
 	if (greaterstr)
 	{
-		oproid = get_opfamily_member(opfamily, datatype, datatype,
-									 BTLessStrategyNumber);
-		if (oproid == InvalidOid)
-			elog(ERROR, "no < operator for opfamily %u", opfamily);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) greaterstr);
 		result = lappend(result,

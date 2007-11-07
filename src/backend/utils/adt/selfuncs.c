@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.237 2007/11/07 21:00:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.238 2007/11/07 22:37:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4302,16 +4302,16 @@ prefix_selectivity(VariableStatData *vardata,
 	 *	"x < greaterstr".
 	 *-------
 	 */
-	greaterstrcon = make_greater_string(prefixcon);
+	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
+								 BTLessStrategyNumber);
+	if (cmpopr == InvalidOid)
+		elog(ERROR, "no < operator for opfamily %u", opfamily);
+	fmgr_info(get_opcode(cmpopr), &opproc);
+
+	greaterstrcon = make_greater_string(prefixcon, &opproc);
 	if (greaterstrcon)
 	{
 		Selectivity topsel;
-
-		cmpopr = get_opfamily_member(opfamily, vartype, vartype,
-									 BTLessStrategyNumber);
-		if (cmpopr == InvalidOid)
-			elog(ERROR, "no < operator for opfamily %u", opfamily);
-		fmgr_info(get_opcode(cmpopr), &opproc);
 
 		topsel = ineq_histogram_selectivity(vardata, &opproc, false,
 											greaterstrcon->constvalue,
@@ -4589,8 +4589,17 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
  * in the form of a Const pointer; else return NULL.
  *
  * The key requirement here is that given a prefix string, say "foo",
- * we must be able to generate another string "fop" that is greater
- * than all strings "foobar" starting with "foo".
+ * we must be able to generate another string "fop" that is greater than
+ * all strings "foobar" starting with "foo".  We can test that we have
+ * generated a string greater than the prefix string, but in non-C locales
+ * that is not a bulletproof guarantee that an extension of the string might
+ * not sort after it; an example is that "foo " is less than "foo!", but it
+ * is not clear that a "dictionary" sort ordering will consider "foo!" less
+ * than "foo bar".  Therefore, this function should be used only for
+ * estimation purposes when working in a non-C locale.
+ *
+ * The caller must provide the appropriate "less than" comparison function
+ * for testing the strings.
  *
  * If we max out the righthand byte, truncate off the last character
  * and start incrementing the next.  For example, if "z" were the last
@@ -4599,20 +4608,15 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
  *
  * This could be rather slow in the worst case, but in most cases we
  * won't have to try more than one or two strings before succeeding.
- *
- * NOTE: at present this assumes we are in the C locale, so that simple
- * bytewise comparison applies.  However, we might be in a multibyte
- * encoding such as UTF8, so we do have to watch out for generating
- * invalid encoding sequences.
  */
 Const *
-make_greater_string(const Const *str_const)
+make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 {
 	Oid			datatype = str_const->consttype;
 	char	   *workstr;
 	int			len;
 
-	/* Get the string and a modifiable copy */
+	/* Get a modifiable copy of the string in C-string format */
 	if (datatype == NAMEOID)
 	{
 		workstr = DatumGetCString(DirectFunctionCall1(nameout,
@@ -4660,8 +4664,18 @@ make_greater_string(const Const *str_const)
 			else
 				workstr_const = string_to_bytea_const(workstr, len);
 
-			pfree(workstr);
-			return workstr_const;
+			if (DatumGetBool(FunctionCall2(ltproc,
+										   str_const->constvalue,
+										   workstr_const->constvalue)))
+			{
+				/* Successfully made a string larger than the input */
+				pfree(workstr);
+				return workstr_const;
+			}
+
+			/* No good, release unusable value and try again */
+			pfree(DatumGetPointer(workstr_const->constvalue));
+			pfree(workstr_const);
 		}
 
 		/* restore last byte so we don't confuse pg_mbcliplen */
