@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.214.2.6 2007/08/31 23:35:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.214.2.7 2007/11/07 21:00:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -900,7 +900,7 @@ scalargtsel(PG_FUNCTION_ARGS)
  * patternsel			- Generic code for pattern-match selectivity.
  */
 static double
-patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
+patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
@@ -921,22 +921,39 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	double		result;
 
 	/*
+	 * If this is for a NOT LIKE or similar operator, get the corresponding
+	 * positive-match operator and work with that.  Set result to the
+	 * correct default estimate, too.
+	 */
+	if (negate)
+	{
+		operator = get_negator(operator);
+		if (!OidIsValid(operator))
+			elog(ERROR, "patternsel called for operator without a negator");
+		result = 1.0 - DEFAULT_MATCH_SEL;
+	}
+	else
+	{
+		result = DEFAULT_MATCH_SEL;
+	}
+
+	/*
 	 * If expression is not variable op constant, then punt and return a
 	 * default estimate.
 	 */
 	if (!get_restriction_variable(root, args, varRelid,
 								  &vardata, &other, &varonleft))
-		return DEFAULT_MATCH_SEL;
+		return result;
 	if (!varonleft || !IsA(other, Const))
 	{
 		ReleaseVariableStats(vardata);
-		return DEFAULT_MATCH_SEL;
+		return result;
 	}
 	variable = (Node *) linitial(args);
 
 	/*
 	 * If the constant is NULL, assume operator is strict and return zero, ie,
-	 * operator will never return TRUE.
+	 * operator will never return TRUE.  (It's zero even for a negator op.)
 	 */
 	if (((Const *) other)->constisnull)
 	{
@@ -955,7 +972,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	if (consttype != TEXTOID && consttype != BYTEAOID)
 	{
 		ReleaseVariableStats(vardata);
-		return DEFAULT_MATCH_SEL;
+		return result;
 	}
 
 	/*
@@ -990,7 +1007,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 			break;
 		default:
 			ReleaseVariableStats(vardata);
-			return DEFAULT_MATCH_SEL;
+			return result;
 	}
 
 	/* divide pattern into fixed prefix and remainder */
@@ -1019,7 +1036,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 				elog(ERROR, "unrecognized consttype: %u",
 					 prefix->consttype);
 				ReleaseVariableStats(vardata);
-				return DEFAULT_MATCH_SEL;
+				return result;
 		}
 		prefix = string_to_const(prefixstr, vartype);
 		pfree(prefixstr);
@@ -1126,7 +1143,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 
 	ReleaseVariableStats(vardata);
 
-	return result;
+	return negate ? (1.0 - result) : result;
 }
 
 /*
@@ -1135,7 +1152,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 Datum
 regexeqsel(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex));
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex, false));
 }
 
 /*
@@ -1144,7 +1161,7 @@ regexeqsel(PG_FUNCTION_ARGS)
 Datum
 icregexeqsel(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex_IC));
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex_IC, false));
 }
 
 /*
@@ -1153,7 +1170,7 @@ icregexeqsel(PG_FUNCTION_ARGS)
 Datum
 likesel(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like));
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like, false));
 }
 
 /*
@@ -1162,7 +1179,7 @@ likesel(PG_FUNCTION_ARGS)
 Datum
 iclikesel(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like_IC));
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like_IC, false));
 }
 
 /*
@@ -1171,11 +1188,7 @@ iclikesel(PG_FUNCTION_ARGS)
 Datum
 regexnesel(PG_FUNCTION_ARGS)
 {
-	double		result;
-
-	result = patternsel(fcinfo, Pattern_Type_Regex);
-	result = 1.0 - result;
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex, true));
 }
 
 /*
@@ -1184,11 +1197,7 @@ regexnesel(PG_FUNCTION_ARGS)
 Datum
 icregexnesel(PG_FUNCTION_ARGS)
 {
-	double		result;
-
-	result = patternsel(fcinfo, Pattern_Type_Regex_IC);
-	result = 1.0 - result;
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex_IC, true));
 }
 
 /*
@@ -1197,11 +1206,7 @@ icregexnesel(PG_FUNCTION_ARGS)
 Datum
 nlikesel(PG_FUNCTION_ARGS)
 {
-	double		result;
-
-	result = patternsel(fcinfo, Pattern_Type_Like);
-	result = 1.0 - result;
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like, true));
 }
 
 /*
@@ -1210,11 +1215,7 @@ nlikesel(PG_FUNCTION_ARGS)
 Datum
 icnlikesel(PG_FUNCTION_ARGS)
 {
-	double		result;
-
-	result = patternsel(fcinfo, Pattern_Type_Like_IC);
-	result = 1.0 - result;
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like_IC, true));
 }
 
 /*
@@ -2110,12 +2111,22 @@ scalargtjoinsel(PG_FUNCTION_ARGS)
 }
 
 /*
+ * patternjoinsel		- Generic code for pattern-match join selectivity.
+ */
+static double
+patternjoinsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
+{
+	/* For the moment we just punt. */
+	return negate ? (1.0 - DEFAULT_MATCH_SEL) : DEFAULT_MATCH_SEL;
+}
+
+/*
  *		regexeqjoinsel	- Join selectivity of regular-expression pattern match.
  */
 Datum
 regexeqjoinsel(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_FLOAT8(DEFAULT_MATCH_SEL);
+	PG_RETURN_FLOAT8(patternjoinsel(fcinfo, Pattern_Type_Regex, false));
 }
 
 /*
@@ -2124,7 +2135,7 @@ regexeqjoinsel(PG_FUNCTION_ARGS)
 Datum
 icregexeqjoinsel(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_FLOAT8(DEFAULT_MATCH_SEL);
+	PG_RETURN_FLOAT8(patternjoinsel(fcinfo, Pattern_Type_Regex_IC, false));
 }
 
 /*
@@ -2133,7 +2144,7 @@ icregexeqjoinsel(PG_FUNCTION_ARGS)
 Datum
 likejoinsel(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_FLOAT8(DEFAULT_MATCH_SEL);
+	PG_RETURN_FLOAT8(patternjoinsel(fcinfo, Pattern_Type_Like, false));
 }
 
 /*
@@ -2142,7 +2153,7 @@ likejoinsel(PG_FUNCTION_ARGS)
 Datum
 iclikejoinsel(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_FLOAT8(DEFAULT_MATCH_SEL);
+	PG_RETURN_FLOAT8(patternjoinsel(fcinfo, Pattern_Type_Like_IC, false));
 }
 
 /*
@@ -2151,11 +2162,7 @@ iclikejoinsel(PG_FUNCTION_ARGS)
 Datum
 regexnejoinsel(PG_FUNCTION_ARGS)
 {
-	float8		result;
-
-	result = DatumGetFloat8(regexeqjoinsel(fcinfo));
-	result = 1.0 - result;
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(patternjoinsel(fcinfo, Pattern_Type_Regex, true));
 }
 
 /*
@@ -2164,11 +2171,7 @@ regexnejoinsel(PG_FUNCTION_ARGS)
 Datum
 icregexnejoinsel(PG_FUNCTION_ARGS)
 {
-	float8		result;
-
-	result = DatumGetFloat8(icregexeqjoinsel(fcinfo));
-	result = 1.0 - result;
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(patternjoinsel(fcinfo, Pattern_Type_Regex_IC, true));
 }
 
 /*
@@ -2177,11 +2180,7 @@ icregexnejoinsel(PG_FUNCTION_ARGS)
 Datum
 nlikejoinsel(PG_FUNCTION_ARGS)
 {
-	float8		result;
-
-	result = DatumGetFloat8(likejoinsel(fcinfo));
-	result = 1.0 - result;
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(patternjoinsel(fcinfo, Pattern_Type_Like, true));
 }
 
 /*
@@ -2190,11 +2189,7 @@ nlikejoinsel(PG_FUNCTION_ARGS)
 Datum
 icnlikejoinsel(PG_FUNCTION_ARGS)
 {
-	float8		result;
-
-	result = DatumGetFloat8(iclikejoinsel(fcinfo));
-	result = 1.0 - result;
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(patternjoinsel(fcinfo, Pattern_Type_Like_IC, true));
 }
 
 /*
