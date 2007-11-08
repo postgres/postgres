@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.215 2007/11/07 12:24:23 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.216 2007/11/08 13:13:51 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3662,7 +3662,7 @@ SET xmloption TO { DOCUMENT | CONTENT };
    </para>
 
    <para>
-    The full-text search module Tsearch2 could also be used to speed
+    The text-search functionality in PostgreSQL could also be used to speed
     up full-document searches in XML data.  The necessary
     preprocessing support is, however, not available in the PostgreSQL
     distribution in this release.
