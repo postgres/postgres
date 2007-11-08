@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.51 2007/11/06 03:06:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.52 2007/11/08 13:12:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,8 +123,8 @@ static void SPI_sql_row_to_xmlelement(int rownum, StringInfo result,
 	ereport(ERROR, \
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
 			 errmsg("unsupported XML feature"), \
-			 errdetail("This functionality requires libxml support."), \
-			 errhint("You need to re-compile PostgreSQL using --with-libxml.")))
+			 errdetail("This functionality requires libxml."), \
+			 errhint("You need to rebuild PostgreSQL using --with-libxml.")))
 
 
 #define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
