@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.87 2007/11/02 18:54:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.88 2007/11/08 19:25:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,13 +292,14 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 	if (exprType((Node *) expr) != opcintype &&
 		!IsPolymorphicType(opcintype))
 	{
-		/* Strip any existing RelabelType, and add a new one */
+		/* Strip any existing RelabelType, and add a new one if needed */
 		while (expr && IsA(expr, RelabelType))
 			expr = (Expr *) ((RelabelType *) expr)->arg;
-		expr = (Expr *) makeRelabelType(expr,
-										opcintype,
-										-1,
-										COERCE_DONTCARE);
+		if (exprType((Node *) expr) != opcintype)
+			expr = (Expr *) makeRelabelType(expr,
+											opcintype,
+											-1,
+											COERCE_DONTCARE);
 	}
 
 	/* Now find or create a matching EquivalenceClass */

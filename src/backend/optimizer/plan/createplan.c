@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.232 2007/11/02 18:54:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.233 2007/11/08 19:25:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2738,7 +2738,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 		/*
 		 * We can sort by any non-constant expression listed in the pathkey's
 		 * EquivalenceClass.  For now, we take the first one that corresponds
-		 * to an available Var in the tlist. If there isn't any, use the first
+		 * to an available item in the tlist. If there isn't any, use the first
 		 * one that is an expression in the input's vars.  (The non-const
 		 * restriction only matters if the EC is below_outer_join; but if it
 		 * isn't, it won't contain consts anyway, else we'd have discarded
@@ -2766,24 +2766,21 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 
 			/*
 			 * We can also use it if the pathkey expression is a relabel
-			 * of the tlist entry.  This is needed for binary-compatible
-			 * cases (cf. make_pathkey_from_sortinfo).
+			 * of the tlist entry, or vice versa.  This is needed for
+			 * binary-compatible cases (cf. make_pathkey_from_sortinfo).
+			 * We prefer an exact match, though, so we do the basic
+			 * search first.
 			 */
-			if (IsA(em->em_expr, RelabelType))
+			tle = tlist_member_ignore_relabel((Node *) em->em_expr, tlist);
+			if (tle)
 			{
-				Expr	   *rtarg = ((RelabelType *) em->em_expr)->arg;
-
-				tle = tlist_member((Node *) rtarg, tlist);
-				if (tle)
-				{
-					pk_datatype = em->em_datatype;
-					break;			/* found expr already in tlist */
-				}
+				pk_datatype = em->em_datatype;
+				break;			/* found expr already in tlist */
 			}
 		}
 		if (!tle)
 		{
-			/* No matching Var; look for a computable expression */
+			/* No matching tlist item; look for a computable expression */
 			Expr   *sortexpr = NULL;
 
 			foreach(j, pathkey->pk_eclass->ec_members)
@@ -2798,7 +2795,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 				exprvars = pull_var_clause((Node *) sortexpr, false);
 				foreach(k, exprvars)
 				{
-					if (!tlist_member(lfirst(k), tlist))
+					if (!tlist_member_ignore_relabel(lfirst(k), tlist))
 						break;
 				}
 				list_free(exprvars);

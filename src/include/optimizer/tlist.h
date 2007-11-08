@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/tlist.h,v 1.45 2007/01/05 22:19:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/tlist.h,v 1.46 2007/11/08 19:25:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 
 extern TargetEntry *tlist_member(Node *node, List *targetlist);
+extern TargetEntry *tlist_member_ignore_relabel(Node *node, List *targetlist);
 
 extern List *flatten_tlist(List *tlist);
 extern List *add_to_flat_tlist(List *tlist, List *vars);
