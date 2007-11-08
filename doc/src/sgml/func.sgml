@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.410 2007/11/05 17:40:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.411 2007/11/08 13:13:28 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7997,7 +7997,7 @@ SELECT xmlconcat('<abc/>', '<bar>foo</bar>');
     </para>
 
     <para>
-     XML declarations, if present are combined as follows.  If all
+     XML declarations, if present, are combined as follows.  If all
      argument values have the same XML version declaration, that
      version is used in the result, else no version is used.  If all
      argument values have the standalone declaration value
@@ -8295,6 +8295,7 @@ SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'),
     Example:
 <screen><![CDATA[
 SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>', ARRAY[ARRAY['my', 'http://example.com']]);
+
  xpath  
 --------
  {test}
@@ -8324,7 +8325,7 @@ cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, t
    <para>
     <function>table_to_xml</function> maps the content of the named
     table, passed as parameter <parameter>tbl</parameter>.  The
-    <type>regclass</type> accepts strings identifying tables using the
+    <type>regclass</type> type accepts strings identifying tables using the
     usual notation, including optional schema qualifications and
     double quotes.  <function>query_to_xml</function> executes the
     query whose text is passed as parameter
