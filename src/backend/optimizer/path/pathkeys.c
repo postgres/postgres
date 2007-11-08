@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.88 2007/11/08 19:25:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.89 2007/11/08 21:49:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@ static bool pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys);
 static PathKey *make_pathkey_from_sortinfo(PlannerInfo *root,
 						   Expr *expr, Oid ordering_op,
 						   bool nulls_first,
+						   Index sortref,
 						   bool canonicalize);
 static Var *find_indexkey_var(PlannerInfo *root, RelOptInfo *rel,
 				  AttrNumber varattno);
@@ -233,6 +234,9 @@ canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
  *	  a PathKey.  If canonicalize = true, the result is a "canonical"
  *	  PathKey, otherwise not.  (But note it might be redundant anyway.)
  *
+ * If the PathKey is being generated from a SortClause, sortref should be
+ * the SortClause's SortGroupRef; otherwise zero.
+ *
  * canonicalize should always be TRUE after EquivalenceClass merging has
  * been performed, but FALSE if we haven't done EquivalenceClass merging yet.
  */
@@ -240,6 +244,7 @@ static PathKey *
 make_pathkey_from_sortinfo(PlannerInfo *root,
 						   Expr *expr, Oid ordering_op,
 						   bool nulls_first,
+						   Index sortref,
 						   bool canonicalize)
 {
 	Oid			opfamily,
@@ -303,7 +308,8 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 	}
 
 	/* Now find or create a matching EquivalenceClass */
-	eclass = get_eclass_for_sort_expr(root, expr, opcintype, opfamilies);
+	eclass = get_eclass_for_sort_expr(root, expr, opcintype, opfamilies,
+									  sortref);
 
 	/* And finally we can find or create a PathKey node */
 	if (canonicalize)
@@ -525,6 +531,7 @@ build_index_pathkeys(PlannerInfo *root,
 											  indexkey,
 											  sortop,
 											  nulls_first,
+											  0,
 											  true);
 
 		/* Add to list unless redundant */
@@ -597,102 +604,161 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 		PathKey	   *sub_pathkey = (PathKey *) lfirst(i);
 		EquivalenceClass *sub_eclass = sub_pathkey->pk_eclass;
 		PathKey	   *best_pathkey = NULL;
-		int			best_score = -1;
-		ListCell   *j;
 
-		/*
-		 * The sub_pathkey's EquivalenceClass could contain multiple elements
-		 * (representing knowledge that multiple items are effectively equal).
-		 * Each element might match none, one, or more of the output columns
-		 * that are visible to the outer query. This means we may have
-		 * multiple possible representations of the sub_pathkey in the context
-		 * of the outer query.  Ideally we would generate them all and put
-		 * them all into an EC of the outer query, thereby propagating
-		 * equality knowledge up to the outer query.  Right now we cannot do
-		 * so, because the outer query's EquivalenceClasses are already frozen
-		 * when this is called. Instead we prefer the one that has the highest
-		 * "score" (number of EC peers, plus one if it matches the outer
-		 * query_pathkeys). This is the most likely to be useful in the outer
-		 * query.
-		 */
-		foreach(j, sub_eclass->ec_members)
+		if (sub_eclass->ec_has_volatile)
 		{
-			EquivalenceMember *sub_member = (EquivalenceMember *) lfirst(j);
-			Expr	   *sub_expr = sub_member->em_expr;
-			Expr	   *rtarg;
-			ListCell   *k;
-
 			/*
-			 * We handle two cases: the sub_pathkey key can be either an exact
-			 * match for a targetlist entry, or a RelabelType of a targetlist
-			 * entry.  (The latter case is worth extra code because it arises
-			 * frequently in connection with varchar fields.)
+			 * If the sub_pathkey's EquivalenceClass is volatile, then it must
+			 * have come from an ORDER BY clause, and we have to match it to
+			 * that same targetlist entry.
 			 */
-			if (IsA(sub_expr, RelabelType))
-				rtarg = ((RelabelType *) sub_expr)->arg;
-			else
-				rtarg = NULL;
+			TargetEntry *tle;
 
-			foreach(k, sub_tlist)
+			if (sub_eclass->ec_sortref == 0)		/* can't happen */
+				elog(ERROR, "volatile EquivalenceClass has no sortref");
+			tle = get_sortgroupref_tle(sub_eclass->ec_sortref, sub_tlist);
+			Assert(tle);
+			/* resjunk items aren't visible to outer query */
+			if (!tle->resjunk)
 			{
-				TargetEntry *tle = (TargetEntry *) lfirst(k);
+				/* We can represent this sub_pathkey */
+				EquivalenceMember *sub_member;
 				Expr	   *outer_expr;
 				EquivalenceClass *outer_ec;
-				PathKey	   *outer_pk;
-				int			score;
 
-				/* resjunk items aren't visible to outer query */
-				if (tle->resjunk)
-					continue;
+				Assert(list_length(sub_eclass->ec_members) == 1);
+				sub_member = (EquivalenceMember *) linitial(sub_eclass->ec_members);
+				outer_expr = (Expr *)
+					makeVar(rel->relid,
+							tle->resno,
+							exprType((Node *) tle->expr),
+							exprTypmod((Node *) tle->expr),
+							0);
+				outer_ec =
+					get_eclass_for_sort_expr(root,
+											 outer_expr,
+											 sub_member->em_datatype,
+											 sub_eclass->ec_opfamilies,
+											 0);
+				best_pathkey =
+					make_canonical_pathkey(root,
+										   outer_ec,
+										   sub_pathkey->pk_opfamily,
+										   sub_pathkey->pk_strategy,
+										   sub_pathkey->pk_nulls_first);
+			}
+		}
+		else
+		{
+			/*
+			 * Otherwise, the sub_pathkey's EquivalenceClass could contain
+			 * multiple elements (representing knowledge that multiple items
+			 * are effectively equal).  Each element might match none, one, or
+			 * more of the output columns that are visible to the outer
+			 * query. This means we may have multiple possible representations
+			 * of the sub_pathkey in the context of the outer query.  Ideally
+			 * we would generate them all and put them all into an EC of the
+			 * outer query, thereby propagating equality knowledge up to the
+			 * outer query.  Right now we cannot do so, because the outer
+			 * query's EquivalenceClasses are already frozen when this is
+			 * called. Instead we prefer the one that has the highest "score"
+			 * (number of EC peers, plus one if it matches the outer
+			 * query_pathkeys). This is the most likely to be useful in the
+			 * outer query.
+			 */
+			int			best_score = -1;
+			ListCell   *j;
 
-				if (equal(tle->expr, sub_expr))
-				{
-					/* Exact match */
-					outer_expr = (Expr *)
-						makeVar(rel->relid,
-								tle->resno,
-								exprType((Node *) tle->expr),
-								exprTypmod((Node *) tle->expr),
-								0);
-				}
-				else if (rtarg && equal(tle->expr, rtarg))
-				{
-					/* Match after discarding RelabelType */
-					outer_expr = (Expr *)
-						makeVar(rel->relid,
-								tle->resno,
-								exprType((Node *) tle->expr),
-								exprTypmod((Node *) tle->expr),
-								0);
-					outer_expr = (Expr *)
-						makeRelabelType((Expr *) outer_expr,
-										((RelabelType *) sub_expr)->resulttype,
-									 ((RelabelType *) sub_expr)->resulttypmod,
-								   ((RelabelType *) sub_expr)->relabelformat);
-				}
-				else
-					continue;
+			foreach(j, sub_eclass->ec_members)
+			{
+				EquivalenceMember *sub_member = (EquivalenceMember *) lfirst(j);
+				Expr	   *sub_expr = sub_member->em_expr;
+				Expr	   *sub_stripped;
+				ListCell   *k;
 
-				/* Found a representation for this sub_pathkey */
-				outer_ec = get_eclass_for_sort_expr(root,
-													outer_expr,
-													sub_member->em_datatype,
-													sub_eclass->ec_opfamilies);
-				outer_pk = make_canonical_pathkey(root,
-												  outer_ec,
-												  sub_pathkey->pk_opfamily,
-												  sub_pathkey->pk_strategy,
-												  sub_pathkey->pk_nulls_first);
-				/* score = # of equivalence peers */
-				score = list_length(outer_ec->ec_members) - 1;
-				/* +1 if it matches the proper query_pathkeys item */
-				if (retvallen < outer_query_keys &&
-					list_nth(root->query_pathkeys, retvallen) == outer_pk)
-					score++;
-				if (score > best_score)
+				/*
+				 * We handle two cases: the sub_pathkey key can be either an
+				 * exact match for a targetlist entry, or it could match after
+				 * stripping RelabelType nodes.  (We need that case since
+				 * make_pathkey_from_sortinfo could add or remove RelabelType.)
+				 */
+				sub_stripped = sub_expr;
+				while (sub_stripped && IsA(sub_stripped, RelabelType))
+					sub_stripped = ((RelabelType *) sub_stripped)->arg;
+
+				foreach(k, sub_tlist)
 				{
-					best_pathkey = outer_pk;
-					best_score = score;
+					TargetEntry *tle = (TargetEntry *) lfirst(k);
+					Expr	   *outer_expr;
+					EquivalenceClass *outer_ec;
+					PathKey	   *outer_pk;
+					int			score;
+
+					/* resjunk items aren't visible to outer query */
+					if (tle->resjunk)
+						continue;
+
+					if (equal(tle->expr, sub_expr))
+					{
+						/* Exact match */
+						outer_expr = (Expr *)
+							makeVar(rel->relid,
+									tle->resno,
+									exprType((Node *) tle->expr),
+									exprTypmod((Node *) tle->expr),
+									0);
+					}
+					else
+					{
+						Expr	   *tle_stripped;
+
+						tle_stripped = tle->expr;
+						while (tle_stripped && IsA(tle_stripped, RelabelType))
+							tle_stripped = ((RelabelType *) tle_stripped)->arg;
+
+						if (equal(tle_stripped, sub_stripped))
+						{
+							/* Match after discarding RelabelType */
+							outer_expr = (Expr *)
+								makeVar(rel->relid,
+										tle->resno,
+										exprType((Node *) tle->expr),
+										exprTypmod((Node *) tle->expr),
+										0);
+							if (exprType((Node *) outer_expr) !=
+								exprType((Node *) sub_expr))
+								outer_expr = (Expr *)
+									makeRelabelType(outer_expr,
+													exprType((Node *) sub_expr),
+													-1,
+													COERCE_DONTCARE);
+						}
+						else
+							continue;
+					}
+
+					/* Found a representation for this sub_pathkey */
+					outer_ec = get_eclass_for_sort_expr(root,
+														outer_expr,
+														sub_member->em_datatype,
+														sub_eclass->ec_opfamilies,
+														0);
+					outer_pk = make_canonical_pathkey(root,
+													  outer_ec,
+													  sub_pathkey->pk_opfamily,
+													  sub_pathkey->pk_strategy,
+													  sub_pathkey->pk_nulls_first);
+					/* score = # of equivalence peers */
+					score = list_length(outer_ec->ec_members) - 1;
+					/* +1 if it matches the proper query_pathkeys item */
+					if (retvallen < outer_query_keys &&
+						list_nth(root->query_pathkeys, retvallen) == outer_pk)
+						score++;
+					if (score > best_score)
+					{
+						best_pathkey = outer_pk;
+						best_score = score;
+					}
 				}
 			}
 		}
@@ -795,6 +861,7 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
 											 sortkey,
 											 sortcl->sortop,
 											 sortcl->nulls_first,
+											 sortcl->tleSortGroupRef,
 											 canonicalize);
 
 		/* Canonical form eliminates redundant ordering keys */
@@ -843,12 +910,14 @@ cache_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
 			get_eclass_for_sort_expr(root,
 									 (Expr *) get_leftop(clause),
 									 lefttype,
-									 restrictinfo->mergeopfamilies);
+									 restrictinfo->mergeopfamilies,
+									 0);
 		restrictinfo->right_ec =
 			get_eclass_for_sort_expr(root,
 									 (Expr *) get_rightop(clause),
 									 righttype,
-									 restrictinfo->mergeopfamilies);
+									 restrictinfo->mergeopfamilies,
+									 0);
 	}
 	else
 		Assert(restrictinfo->right_ec != NULL);

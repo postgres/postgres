@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.315 2007/10/11 18:05:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.316 2007/11/08 21:49:47 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1405,6 +1405,7 @@ _outEquivalenceClass(StringInfo str, EquivalenceClass *node)
 	WRITE_BOOL_FIELD(ec_has_volatile);
 	WRITE_BOOL_FIELD(ec_below_outer_join);
 	WRITE_BOOL_FIELD(ec_broken);
+	WRITE_UINT_FIELD(ec_sortref);
 }
 
 static void

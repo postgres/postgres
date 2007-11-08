@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.233 2007/11/08 19:25:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.234 2007/11/08 21:49:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2730,103 +2730,124 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 	foreach(i, pathkeys)
 	{
 		PathKey	   *pathkey = (PathKey *) lfirst(i);
+		EquivalenceClass *ec = pathkey->pk_eclass;
 		TargetEntry *tle = NULL;
 		Oid			pk_datatype = InvalidOid;
 		Oid			sortop;
 		ListCell   *j;
 
-		/*
-		 * We can sort by any non-constant expression listed in the pathkey's
-		 * EquivalenceClass.  For now, we take the first one that corresponds
-		 * to an available item in the tlist. If there isn't any, use the first
-		 * one that is an expression in the input's vars.  (The non-const
-		 * restriction only matters if the EC is below_outer_join; but if it
-		 * isn't, it won't contain consts anyway, else we'd have discarded
-		 * the pathkey as redundant.)
-		 *
-		 * XXX if we have a choice, is there any way of figuring out which
-		 * might be cheapest to execute?  (For example, int4lt is likely much
-		 * cheaper to execute than numericlt, but both might appear in the
-		 * same equivalence class...)  Not clear that we ever will have an
-		 * interesting choice in practice, so it may not matter.
-		 */
-		foreach(j, pathkey->pk_eclass->ec_members)
+		if (ec->ec_has_volatile)
 		{
-			EquivalenceMember *em = (EquivalenceMember *) lfirst(j);
-
-			if (em->em_is_const || em->em_is_child)
-				continue;
-
-			tle = tlist_member((Node *) em->em_expr, tlist);
-			if (tle)
-			{
-				pk_datatype = em->em_datatype;
-				break;			/* found expr already in tlist */
-			}
-
 			/*
-			 * We can also use it if the pathkey expression is a relabel
-			 * of the tlist entry, or vice versa.  This is needed for
-			 * binary-compatible cases (cf. make_pathkey_from_sortinfo).
-			 * We prefer an exact match, though, so we do the basic
-			 * search first.
+			 * If the pathkey's EquivalenceClass is volatile, then it must
+			 * have come from an ORDER BY clause, and we have to match it to
+			 * that same targetlist entry.
 			 */
-			tle = tlist_member_ignore_relabel((Node *) em->em_expr, tlist);
-			if (tle)
-			{
-				pk_datatype = em->em_datatype;
-				break;			/* found expr already in tlist */
-			}
+			if (ec->ec_sortref == 0)		/* can't happen */
+				elog(ERROR, "volatile EquivalenceClass has no sortref");
+			tle = get_sortgroupref_tle(ec->ec_sortref, tlist);
+			Assert(tle);
+			Assert(list_length(ec->ec_members) == 1);
+			pk_datatype = ((EquivalenceMember *) linitial(ec->ec_members))->em_datatype;
 		}
-		if (!tle)
+		else
 		{
-			/* No matching tlist item; look for a computable expression */
-			Expr   *sortexpr = NULL;
-
-			foreach(j, pathkey->pk_eclass->ec_members)
+			/*
+			 * Otherwise, we can sort by any non-constant expression listed in
+			 * the pathkey's EquivalenceClass.  For now, we take the first one
+			 * that corresponds to an available item in the tlist.  If there
+			 * isn't any, use the first one that is an expression in the
+			 * input's vars.  (The non-const restriction only matters if the
+			 * EC is below_outer_join; but if it isn't, it won't contain
+			 * consts anyway, else we'd have discarded the pathkey as
+			 * redundant.)
+			 *
+			 * XXX if we have a choice, is there any way of figuring out which
+			 * might be cheapest to execute?  (For example, int4lt is likely
+			 * much cheaper to execute than numericlt, but both might appear
+			 * in the same equivalence class...)  Not clear that we ever will
+			 * have an interesting choice in practice, so it may not matter.
+			 */
+			foreach(j, ec->ec_members)
 			{
 				EquivalenceMember *em = (EquivalenceMember *) lfirst(j);
-				List	   *exprvars;
-				ListCell   *k;
 
 				if (em->em_is_const || em->em_is_child)
 					continue;
-				sortexpr = em->em_expr;
-				exprvars = pull_var_clause((Node *) sortexpr, false);
-				foreach(k, exprvars)
-				{
-					if (!tlist_member_ignore_relabel(lfirst(k), tlist))
-						break;
-				}
-				list_free(exprvars);
-				if (!k)
+
+				tle = tlist_member((Node *) em->em_expr, tlist);
+				if (tle)
 				{
 					pk_datatype = em->em_datatype;
-					break;		/* found usable expression */
+					break;			/* found expr already in tlist */
+				}
+
+				/*
+				 * We can also use it if the pathkey expression is a relabel
+				 * of the tlist entry, or vice versa.  This is needed for
+				 * binary-compatible cases (cf. make_pathkey_from_sortinfo).
+				 * We prefer an exact match, though, so we do the basic
+				 * search first.
+				 */
+				tle = tlist_member_ignore_relabel((Node *) em->em_expr, tlist);
+				if (tle)
+				{
+					pk_datatype = em->em_datatype;
+					break;			/* found expr already in tlist */
 				}
 			}
-			if (!j)
-				elog(ERROR, "could not find pathkey item to sort");
 
-			/*
-			 * Do we need to insert a Result node?
-			 */
-			if (!is_projection_capable_plan(lefttree))
+			if (!tle)
 			{
-				/* copy needed so we don't modify input's tlist below */
-				tlist = copyObject(tlist);
-				lefttree = (Plan *) make_result(root, tlist, NULL, lefttree);
-			}
+				/* No matching tlist item; look for a computable expression */
+				Expr   *sortexpr = NULL;
 
-			/*
-			 * Add resjunk entry to input's tlist
-			 */
-			tle = makeTargetEntry(sortexpr,
-								  list_length(tlist) + 1,
-								  NULL,
-								  true);
-			tlist = lappend(tlist, tle);
-			lefttree->targetlist = tlist;		/* just in case NIL before */
+				foreach(j, ec->ec_members)
+				{
+					EquivalenceMember *em = (EquivalenceMember *) lfirst(j);
+					List	   *exprvars;
+					ListCell   *k;
+
+					if (em->em_is_const || em->em_is_child)
+						continue;
+					sortexpr = em->em_expr;
+					exprvars = pull_var_clause((Node *) sortexpr, false);
+					foreach(k, exprvars)
+					{
+						if (!tlist_member_ignore_relabel(lfirst(k), tlist))
+							break;
+					}
+					list_free(exprvars);
+					if (!k)
+					{
+						pk_datatype = em->em_datatype;
+						break;		/* found usable expression */
+					}
+				}
+				if (!j)
+					elog(ERROR, "could not find pathkey item to sort");
+
+				/*
+				 * Do we need to insert a Result node?
+				 */
+				if (!is_projection_capable_plan(lefttree))
+				{
+					/* copy needed so we don't modify input's tlist below */
+					tlist = copyObject(tlist);
+					lefttree = (Plan *) make_result(root, tlist, NULL,
+													lefttree);
+				}
+
+				/*
+				 * Add resjunk entry to input's tlist
+				 */
+				tle = makeTargetEntry(sortexpr,
+									  list_length(tlist) + 1,
+									  NULL,
+									  true);
+				tlist = lappend(tlist, tle);
+				lefttree->targetlist = tlist;	/* just in case NIL before */
+			}
 		}
 
 		/*

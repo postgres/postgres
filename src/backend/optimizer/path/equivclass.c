@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.3 2007/07/07 20:46:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.4 2007/11/08 21:49:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,6 +294,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 		ec->ec_has_volatile = false;
 		ec->ec_below_outer_join = below_outer_join;
 		ec->ec_broken = false;
+		ec->ec_sortref = 0;
 		ec->ec_merged = NULL;
 		em1 = add_eq_member(ec, item1, item1_relids, false, item1_type);
 		em2 = add_eq_member(ec, item2, item2_relids, false, item2_type);
@@ -354,6 +355,9 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
  *	  class it is a member of; if none, build a new single-member
  *	  EquivalenceClass for it.
  *
+ * sortref is the SortGroupRef of the originating SortClause, if any,
+ * or zero if not.
+ *
  * This can be used safely both before and after EquivalenceClass merging;
  * since it never causes merging it does not invalidate any existing ECs
  * or PathKeys.
@@ -367,7 +371,8 @@ EquivalenceClass *
 get_eclass_for_sort_expr(PlannerInfo *root,
 						 Expr *expr,
 						 Oid expr_datatype,
-						 List *opfamilies)
+						 List *opfamilies,
+						 Index sortref)
 {
 	EquivalenceClass *newec;
 	EquivalenceMember *newem;
@@ -382,7 +387,9 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 		EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
 		ListCell   *lc2;
 
-		/* we allow matching to a volatile EC here */
+		/* Never match to a volatile EC */
+		if (cur_ec->ec_has_volatile)
+			continue;
 
 		if (!equal(opfamilies, cur_ec->ec_opfamilies))
 			continue;
@@ -423,6 +430,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	newec->ec_has_volatile = contain_volatile_functions((Node *) expr);
 	newec->ec_below_outer_join = false;
 	newec->ec_broken = false;
+	newec->ec_sortref = sortref;
 	newec->ec_merged = NULL;
 	newem = add_eq_member(newec, expr, pull_varnos((Node *) expr),
 						  false, expr_datatype);

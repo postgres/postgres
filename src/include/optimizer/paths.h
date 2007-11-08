@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.99 2007/09/26 18:51:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.100 2007/11/08 21:49:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,8 @@ extern void reconsider_outer_join_clauses(PlannerInfo *root);
 extern EquivalenceClass *get_eclass_for_sort_expr(PlannerInfo *root,
 						 Expr *expr,
 						 Oid expr_datatype,
-						 List *opfamilies);
+						 List *opfamilies,
+						 Index sortref);
 extern void generate_base_implied_equalities(PlannerInfo *root);
 extern List *generate_join_implied_equalities(PlannerInfo *root,
 											  RelOptInfo *joinrel,

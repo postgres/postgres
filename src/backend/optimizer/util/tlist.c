@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.75 2007/11/08 19:25:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.76 2007/11/08 21:49:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,6 +131,29 @@ add_to_flat_tlist(List *tlist, List *vars)
 	return tlist;
 }
 
+
+/*
+ * get_sortgroupref_tle
+ *		Find the targetlist entry matching the given SortGroupRef index,
+ *		and return it.
+ */
+TargetEntry *
+get_sortgroupref_tle(Index sortref, List *targetList)
+{
+	ListCell   *l;
+
+	foreach(l, targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (tle->ressortgroupref == sortref)
+			return tle;
+	}
+
+	elog(ERROR, "ORDER/GROUP BY expression not found in targetlist");
+	return NULL;				/* keep compiler quiet */
+}
+
 /*
  * get_sortgroupclause_tle
  *		Find the targetlist entry matching the given SortClause
@@ -143,19 +166,7 @@ TargetEntry *
 get_sortgroupclause_tle(SortClause *sortClause,
 						List *targetList)
 {
-	Index		refnumber = sortClause->tleSortGroupRef;
-	ListCell   *l;
-
-	foreach(l, targetList)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-
-		if (tle->ressortgroupref == refnumber)
-			return tle;
-	}
-
-	elog(ERROR, "ORDER/GROUP BY expression not found in targetlist");
-	return NULL;				/* keep compiler quiet */
+	return get_sortgroupref_tle(sortClause->tleSortGroupRef, targetList);
 }
 
 /*
