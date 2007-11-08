@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.286 2007/10/12 18:55:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.287 2007/11/08 23:22:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -41,6 +41,7 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
+#include "optimizer/var.h"
 #include "parser/parse_expr.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
@@ -723,6 +724,8 @@ index_create(Oid heapRelationId,
 		}
 		else
 		{
+			bool	have_simple_col = false;
+
 			/* Create auto dependencies on simply-referenced columns */
 			for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 			{
@@ -733,7 +736,28 @@ index_create(Oid heapRelationId,
 					referenced.objectSubId = indexInfo->ii_KeyAttrNumbers[i];
 
 					recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+
+					have_simple_col = true;
 				}
+			}
+
+			/*
+			 * It's possible for an index to not depend on any columns of
+			 * the table at all, in which case we need to give it a dependency
+			 * on the table as a whole; else it won't get dropped when the
+			 * table is dropped.  This edge case is not totally useless;
+			 * for example, a unique index on a constant expression can serve
+			 * to prevent a table from containing more than one row.
+			 */
+			if (!have_simple_col &&
+				!contain_vars_of_level((Node *) indexInfo->ii_Expressions, 0) &&
+				!contain_vars_of_level((Node *) indexInfo->ii_Predicate, 0))
+			{
+				referenced.classId = RelationRelationId;
+				referenced.objectId = heapRelationId;
+				referenced.objectSubId = 0;
+
+				recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 			}
 		}
 
