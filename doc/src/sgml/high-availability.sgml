@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.18 2007/11/08 19:16:30 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.19 2007/11/08 19:18:23 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -79,45 +79,45 @@
 
  <variablelist>
 
- <varlistentry>
-  <term>Shared Disk Failover</term>
-  <listitem>
+  <varlistentry>
+   <term>Shared Disk Failover</term>
+   <listitem>
 
-   <para>
-    Shared disk failover avoids synchronization overhead by having only one
-    copy of the database.  It uses a single disk array that is shared by
-    multiple servers.  If the main database server fails, the standby server
-    is able to mount and start the database as though it was recovering from
-    a database crash.  This allows rapid failover with no data loss.
-   </para>
+    <para>
+     Shared disk failover avoids synchronization overhead by having only one
+     copy of the database.  It uses a single disk array that is shared by
+     multiple servers.  If the main database server fails, the standby server
+     is able to mount and start the database as though it was recovering from
+     a database crash.  This allows rapid failover with no data loss.
+    </para>
 
-   <para>
-    Shared hardware functionality is common in network storage devices.
-    Using a network file system is also possible, though care must be
-    taken that the file system has full POSIX behavior (see <xref
-    linkend="creating-cluster-nfs">).  One significant limitation of this
-    method is that if the shared disk array fails or becomes corrupt, the
-    primary and standby servers are both nonfunctional.  Another issue is
-    that the standby server should never access the shared storage while
-    the primary server is running.
-   </para>
+    <para>
+     Shared hardware functionality is common in network storage devices.
+     Using a network file system is also possible, though care must be
+     taken that the file system has full POSIX behavior (see <xref
+     linkend="creating-cluster-nfs">).  One significant limitation of this
+     method is that if the shared disk array fails or becomes corrupt, the
+     primary and standby servers are both nonfunctional.  Another issue is
+     that the standby server should never access the shared storage while
+     the primary server is running.
+    </para>
 
-  </listitem>
- </varlistentry>
+   </listitem>
+  </varlistentry>
 
- <varlistentry>
-  <term>File System Replication</term>
-  <listitem>
+  <varlistentry>
+   <term>File System Replication</term>
+   <listitem>
 
-   <para>
-    A modified version of shared hardware functionality is file system
-    replication, where all changes to a file system are mirrored to a file
-    system residing on another computer.  The only restriction is that
-    the mirroring must be done in a way that ensures the standby server
-    has a consistent copy of the file system &mdash; specifically, writes
-    to the standby must be done in the same order as those on the master.
-    DRBD is a popular file system replication solution for Linux.
-   </para>
+    <para>
+     A modified version of shared hardware functionality is file system
+     replication, where all changes to a file system are mirrored to a file
+     system residing on another computer.  The only restriction is that
+     the mirroring must be done in a way that ensures the standby server
+     has a consistent copy of the file system &mdash; specifically, writes
+     to the standby must be done in the same order as those on the master.
+     DRBD is a popular file system replication solution for Linux.
+    </para>
 
 <!--
 https://forge.continuent.org/pipermail/sequoia/2006-November/004070.html
@@ -128,150 +128,150 @@ only committed once to disk and there is a distributed locking
 protocol to make nodes agree on a serializable transactional order.
 -->
 
-  </listitem>
- </varlistentry>
+   </listitem>
+  </varlistentry>
 
- <varlistentry>
-  <term>Warm Standby Using Point-In-Time Recovery (<acronym>PITR</>)</term>
-  <listitem>
+  <varlistentry>
+   <term>Warm Standby Using Point-In-Time Recovery (<acronym>PITR</>)</term>
+   <listitem>
 
-   <para>
-    A warm standby server (see <xref linkend="warm-standby">) can
-    be kept current by reading a stream of write-ahead log (WAL)
-    records.  If the main server fails, the warm standby contains
-    almost all of the data of the main server, and can be quickly
-    made the new master database server.  This is asynchronous and
-    can only be done for the entire database server.
-   </para>
-  </listitem>
- </varlistentry>
+    <para>
+     A warm standby server (see <xref linkend="warm-standby">) can
+     be kept current by reading a stream of write-ahead log (WAL)
+     records.  If the main server fails, the warm standby contains
+     almost all of the data of the main server, and can be quickly
+     made the new master database server.  This is asynchronous and
+     can only be done for the entire database server.
+    </para>
+   </listitem>
+  </varlistentry>
 
- <varlistentry>
-  <term>Master-Slave Replication</term>
-  <listitem>
+  <varlistentry>
+   <term>Master-Slave Replication</term>
+   <listitem>
 
-   <para>
-    A master-slave replication setup sends all data modification
-    queries to the master server.  The master server asynchronously
-    sends data changes to the slave server.  The slave can answer
-    read-only queries while the master server is running.  The
-    slave server is ideal for data warehouse queries.
-   </para>
+    <para>
+     A master-slave replication setup sends all data modification
+     queries to the master server.  The master server asynchronously
+     sends data changes to the slave server.  The slave can answer
+     read-only queries while the master server is running.  The
+     slave server is ideal for data warehouse queries.
+    </para>
 
-   <para>
-    Slony-I is an example of this type of replication, with per-table
-    granularity, and support for multiple slaves.  Because it
-    updates the slave server asynchronously (in batches), there is
-    possible data loss during fail over.
-   </para>
-  </listitem>
- </varlistentry>
+    <para>
+     Slony-I is an example of this type of replication, with per-table
+     granularity, and support for multiple slaves.  Because it
+     updates the slave server asynchronously (in batches), there is
+     possible data loss during fail over.
+    </para>
+   </listitem>
+  </varlistentry>
 
- <varlistentry>
-  <term>Statement-Based Replication Middleware</term>
-  <listitem>
+  <varlistentry>
+   <term>Statement-Based Replication Middleware</term>
+   <listitem>
 
-   <para>
-    With statement-based replication middleware, a program intercepts
-    every SQL query and sends it to one or all servers.  Each server
-    operates independently.  Read-write queries are sent to all servers,
-    while read-only queries can be sent to just one server, allowing
-    the read workload to be distributed.
-   </para>
+    <para>
+     With statement-based replication middleware, a program intercepts
+     every SQL query and sends it to one or all servers.  Each server
+     operates independently.  Read-write queries are sent to all servers,
+     while read-only queries can be sent to just one server, allowing
+     the read workload to be distributed.
+    </para>
 
-   <para>
-    If queries are simply broadcast unmodified, functions like
-    <function>random()</>, <function>CURRENT_TIMESTAMP</>, and
-    sequences would have different values on different servers.
-    This is because each server operates independently, and because
-    SQL queries are broadcast (and not actual modified rows).  If
-    this is unacceptable, either the middleware or the application
-    must query such values from a single server and then use those
-    values in write queries.  Also, care must be taken that all
-    transactions either commit or abort on all servers, perhaps
-    using two-phase commit (<xref linkend="sql-prepare-transaction"
-    endterm="sql-prepare-transaction-title"> and <xref
-    linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">.
-    Pgpool and Sequoia are an example of this type of replication.
-   </para>
-  </listitem>
- </varlistentry>
+    <para>
+     If queries are simply broadcast unmodified, functions like
+     <function>random()</>, <function>CURRENT_TIMESTAMP</>, and
+     sequences would have different values on different servers.
+     This is because each server operates independently, and because
+     SQL queries are broadcast (and not actual modified rows).  If
+     this is unacceptable, either the middleware or the application
+     must query such values from a single server and then use those
+     values in write queries.  Also, care must be taken that all
+     transactions either commit or abort on all servers, perhaps
+     using two-phase commit (<xref linkend="sql-prepare-transaction"
+     endterm="sql-prepare-transaction-title"> and <xref
+     linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">.
+     Pgpool and Sequoia are an example of this type of replication.
+    </para>
+   </listitem>
+  </varlistentry>
 
- <varlistentry>
-  <term>Asynchronous Multi-Master Replication</term>
-  <listitem>
+  <varlistentry>
+   <term>Asynchronous Multi-Master Replication</term>
+   <listitem>
 
-   <para>
-    For servers that are not regularly connected, like laptops or
-    remote servers, keeping data consistent among servers is a
-    challenge.  Using asynchronous multi-master replication, each
-    server works independently, and periodically communicates with
-    the other servers to identify conflicting transactions.  The
-    conflicts can be resolved by users or conflict resolution rules.
-   </para>
-  </listitem>
- </varlistentry>
+    <para>
+     For servers that are not regularly connected, like laptops or
+     remote servers, keeping data consistent among servers is a
+     challenge.  Using asynchronous multi-master replication, each
+     server works independently, and periodically communicates with
+     the other servers to identify conflicting transactions.  The
+     conflicts can be resolved by users or conflict resolution rules.
+    </para>
+   </listitem>
+  </varlistentry>
 
- <varlistentry>
-  <term>Synchronous Multi-Master Replication</term>
-  <listitem>
+  <varlistentry>
+   <term>Synchronous Multi-Master Replication</term>
+   <listitem>
 
-   <para>
-    In synchronous multi-master replication, each server can accept
-    write requests, and modified data is transmitted from the
-    original server to every other server before each transaction
-    commits.  Heavy write activity can cause excessive locking,
-    leading to poor performance.  In fact, write performance is
-    often worse than that of a single server.  Read requests can
-    be sent to any server.  Some implementations use shared disk
-    to reduce the communication overhead.  Synchronous multi-master
-    replication is best for mostly read workloads, though its big
-    advantage is that any server can accept write requests &mdash;
-    there is no need to partition workloads between master and
-    slave servers, and because the data changes are sent from one
-    server to another, there is no problem with non-deterministic
-    functions like <function>random()</>.
-   </para>
+    <para>
+     In synchronous multi-master replication, each server can accept
+     write requests, and modified data is transmitted from the
+     original server to every other server before each transaction
+     commits.  Heavy write activity can cause excessive locking,
+     leading to poor performance.  In fact, write performance is
+     often worse than that of a single server.  Read requests can
+     be sent to any server.  Some implementations use shared disk
+     to reduce the communication overhead.  Synchronous multi-master
+     replication is best for mostly read workloads, though its big
+     advantage is that any server can accept write requests &mdash;
+     there is no need to partition workloads between master and
+     slave servers, and because the data changes are sent from one
+     server to another, there is no problem with non-deterministic
+     functions like <function>random()</>.
+    </para>
 
-   <para>
-    <productname>PostgreSQL</> does not offer this type of replication,
-    though <productname>PostgreSQL</> two-phase commit (<xref
-    linkend="sql-prepare-transaction"
-    endterm="sql-prepare-transaction-title"> and <xref
-    linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">)
-    can be used to implement this in application code or middleware.
-   </para>
-  </listitem>
- </varlistentry>
+    <para>
+     <productname>PostgreSQL</> does not offer this type of replication,
+     though <productname>PostgreSQL</> two-phase commit (<xref
+     linkend="sql-prepare-transaction"
+     endterm="sql-prepare-transaction-title"> and <xref
+     linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">)
+     can be used to implement this in application code or middleware.
+    </para>
+   </listitem>
+  </varlistentry>
 
- <varlistentry>
-  <term>Data Partitioning</term>
-  <listitem>
+  <varlistentry>
+   <term>Data Partitioning</term>
+   <listitem>
 
-   <para>
-    Data partitioning splits tables into data sets.  Each set can
-    be modified by only one server.  For example, data can be
-    partitioned by offices, e.g. London and Paris, with a server
-    in each office.  If queries combining London and Paris data
-    are necessary, an application can query both servers, or
-    master/slave replication can be used to keep a read-only copy
-    of the other office's data on each server.
-   </para>
-  </listitem>
- </varlistentry>
+    <para>
+     Data partitioning splits tables into data sets.  Each set can
+     be modified by only one server.  For example, data can be
+     partitioned by offices, e.g. London and Paris, with a server
+     in each office.  If queries combining London and Paris data
+     are necessary, an application can query both servers, or
+     master/slave replication can be used to keep a read-only copy
+     of the other office's data on each server.
+    </para>
+   </listitem>
+  </varlistentry>
 
- <varlistentry>
-  <term>Commercial Solutions</term>
-  <listitem>
+  <varlistentry>
+   <term>Commercial Solutions</term>
+   <listitem>
 
-   <para>
-    Because <productname>PostgreSQL</> is open source and easily
-    extended, a number of companies have taken <productname>PostgreSQL</>
-    and created commercial closed-source solutions with unique
-    failover, replication, and load balancing capabilities.
-   </para>
-  </listitem>
- </varlistentry>
+    <para>
+     Because <productname>PostgreSQL</> is open source and easily
+     extended, a number of companies have taken <productname>PostgreSQL</>
+     and created commercial closed-source solutions with unique
+     failover, replication, and load balancing capabilities.
+    </para>
+   </listitem>
+  </varlistentry>
 
  </variablelist>
 
