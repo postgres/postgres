@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.21 2007/11/08 22:14:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.22 2007/11/09 16:36:04 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -193,7 +193,6 @@ protocol to make nodes agree on a serializable transactional order.
      endterm="sql-prepare-transaction-title"> and <xref
      linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">.
      Pgpool and Sequoia are an example of this type of replication. 
-     Also, this can be implemented using the PL/Proxy toolset.
     </para>
    </listitem>
   </varlistentry>
@@ -408,7 +407,7 @@ protocol to make nodes agree on a serializable transactional order.
   accomplished by splitting the data among servers and having each server
   execute its part of the query and return results to a central server
   where they are combined and returned to the user.  Pgpool-II has this
-  capability.
+  capability.  Also, this can be implemented using the PL/Proxy toolset.
  </para>
 
 </chapter>
