@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.153 2007/11/05 17:35:38 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.154 2007/11/09 17:31:07 mha Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -600,6 +600,21 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
+
+	 <varlistentry id="guc-krb-realm" xreflabel="krb_realm">
+	  <term><varname>krb_realm</varname> (<type>string</type>)</term>
+	  <indexterm>
+	   <primary><varname>krb_realm</> configuration parameter</primary>
+	  </indexterm>
+	  <listitem>
+	   <para>
+	    Sets the realm to match Kerberos, GSSAPI and SSPI usernames against.
+		See <xref linkend="kerberos-auth">, <xref linkend="gssapi-auth"> or
+		<xref linkend="sspi-auth"> for details. This parameter can only be
+		set at server start.
+       </para>
+	  </listitem>
+	 </varlistentry>
 
      <varlistentry id="guc-krb-server-keyfile" xreflabel="krb_server_keyfile">
       <term><varname>krb_server_keyfile</varname> (<type>string</type>)</term>

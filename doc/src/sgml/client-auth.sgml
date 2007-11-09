@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.101 2007/09/14 03:53:54 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.102 2007/11/09 17:31:07 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -773,10 +773,10 @@ local   db1,db2,@demodbs  all                         md5
    <para>
     Client principals must have their <productname>PostgreSQL</> database user
     name as their first component, for example
-    <literal>pgusername/otherstuff@realm</>. At present the realm of
-    the client is not checked by <productname>PostgreSQL</>; so if you
-    have cross-realm authentication enabled, then any principal in any
-    realm that can communicate with yours will be accepted.
+    <literal>pgusername@realm</>. By default, the realm of the client is
+	not checked by <productname>PostgreSQL</>. If you have cross-realm
+	authentication enabled and need to verify the realm, use the
+	<xref linkend="guc-krb-realm"> parameter.
    </para>
 
    <para>

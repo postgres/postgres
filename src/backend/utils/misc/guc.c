@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.423 2007/09/26 22:36:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.424 2007/11/09 17:31:07 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2041,6 +2041,16 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&Dynamic_library_path,
 		"$libdir", NULL, NULL
+	},
+
+	{
+		{"krb_realm", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Sets realm to match Kerberos and GSSAPI users against."),
+			NULL,
+			GUC_SUPERUSER_ONLY
+		},
+		&pg_krb_realm,
+		NULL, NULL, NULL
 	},
 
 	{

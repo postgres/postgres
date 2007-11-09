@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.156 2007/09/14 15:58:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.157 2007/11/09 17:31:07 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ char	   *pg_krb_server_keyfile;
 char	   *pg_krb_srvnam;
 bool		pg_krb_caseins_users;
 char	   *pg_krb_server_hostname = NULL;
+char	   *pg_krb_realm = NULL;
 
 #ifdef USE_PAM
 #ifdef HAVE_PAM_PAM_APPL_H
@@ -101,30 +102,6 @@ static int	CheckLDAPAuth(Port *port);
 #if !defined(__COM_ERR_H) && !defined(__COM_ERR_H__)
 #include <com_err.h>
 #endif
-
-/*
- * pg_an_to_ln -- return the local name corresponding to an authentication
- *				  name
- *
- * XXX Assumes that the first aname component is the user name.  This is NOT
- *	   necessarily so, since an aname can actually be something out of your
- *	   worst X.400 nightmare, like
- *		  ORGANIZATION=U. C. Berkeley/NAME=Paul M. Aoki@CS.BERKELEY.EDU
- *	   Note that the MIT an_to_ln code does the same thing if you don't
- *	   provide an aname mapping database...it may be a better idea to use
- *	   krb5_an_to_ln, except that it punts if multiple components are found,
- *	   and we can't afford to punt.
- */
-static char *
-pg_an_to_ln(char *aname)
-{
-	char	   *p;
-
-	if ((p = strchr(aname, '/')) || (p = strchr(aname, '@')))
-		*p = '\0';
-	return aname;
-}
-
 
 /*
  * Various krb5 state which is not connection specfic, and a flag to
@@ -216,6 +193,7 @@ pg_krb5_recvauth(Port *port)
 	krb5_auth_context auth_context = NULL;
 	krb5_ticket *ticket;
 	char	   *kusername;
+	char	   *cp;
 
 	if (get_role_line(port->user_name) == NULL)
 		return STATUS_ERROR;
@@ -240,8 +218,6 @@ pg_krb5_recvauth(Port *port)
 	 * The "client" structure comes out of the ticket and is therefore
 	 * authenticated.  Use it to check the username obtained from the
 	 * postmaster startup packet.
-	 *
-	 * I have no idea why this is considered necessary.
 	 */
 #if defined(HAVE_KRB5_TICKET_ENC_PART2)
 	retval = krb5_unparse_name(pg_krb5_context,
@@ -263,7 +239,42 @@ pg_krb5_recvauth(Port *port)
 		return STATUS_ERROR;
 	}
 
-	kusername = pg_an_to_ln(kusername);
+	cp = strchr(kusername, '@');
+	if (cp)
+	{
+		*cp = '\0';
+		cp++;
+
+		if (pg_krb_realm != NULL && strlen(pg_krb_realm))
+		{
+			/* Match realm against configured */
+			if (pg_krb_caseins_users)
+				ret = pg_strcasecmp(pg_krb_realm, cp);
+			else
+				ret = strcmp(pg_krb_realm, cp);
+
+			if (ret)
+			{
+				elog(DEBUG2,
+					 "krb5 realm (%s) and configured realm (%s) don't match",
+					 cp, pg_krb_realm);
+
+				krb5_free_ticket(pg_krb5_context, ticket);
+				krb5_auth_con_free(pg_krb5_context, auth_context);
+				return STATUS_ERROR;
+			}
+		}
+	}
+	else if (pg_krb_realm && strlen(pg_krb_realm))
+	{
+		elog(DEBUG2,
+			 "krb5 did not return realm but realm matching was requested");
+
+		krb5_free_ticket(pg_krb5_context, ticket);
+		krb5_auth_con_free(pg_krb5_context, auth_context);
+		return STATUS_ERROR;
+	}
+
 	if (pg_krb_caseins_users)
 		ret = pg_strncasecmp(port->user_name, kusername, SM_DATABASE_USER);
 	else
@@ -509,14 +520,42 @@ pg_GSS_recvauth(Port *port)
 					 maj_stat, min_stat);
 
 	/*
-	 * Compare the part of the username that comes before the @
-	 * sign only (ignore realm). The GSSAPI libraries won't have 
-	 * authenticated the user if he's from an invalid realm.
+	 * Split the username at the realm separator
 	 */
 	if (strchr(gbuf.value, '@'))
 	{
 		char *cp = strchr(gbuf.value, '@');
 		*cp = '\0';
+		cp++;
+
+		if (pg_krb_realm != NULL && strlen(pg_krb_realm))
+		{
+			/*
+			 * Match the realm part of the name first
+			 */
+			if (pg_krb_caseins_users)
+				ret = pg_strcasecmp(pg_krb_realm, cp);
+			else
+				ret = strcmp(pg_krb_realm, cp);
+
+			if (ret)
+			{
+				/* GSS realm does not match */
+				elog(DEBUG2,
+					 "GSSAPI realm (%s) and configured realm (%s) don't match",
+					 cp, pg_krb_realm);
+				gss_release_buffer(&lmin_s, &gbuf);
+				return STATUS_ERROR;
+			}
+		}
+	}
+	else if (pg_krb_realm && strlen(pg_krb_realm))
+	{
+		elog(DEBUG2,
+			 "GSSAPI did not return realm but realm matching was requested");
+
+		gss_release_buffer(&lmin_s, &gbuf);
+		return STATUS_ERROR;
 	}
 
 	if (pg_krb_caseins_users)
@@ -791,6 +830,21 @@ pg_SSPI_recvauth(Port *port)
 					(int) GetLastError())));
 
 	free(tokenuser);
+
+	/* 
+	 * Compare realm/domain if requested. In SSPI, always compare case insensitive.
+	 */
+	if (pg_krb_realm && strlen(pg_krb_realm))
+	{
+		if (pg_strcasecmp(pg_krb_realm, domainname))
+		{
+			elog(DEBUG2,
+				 "SSPI domain (%s) and configured domain (%s) don't match",
+				 domainname, pg_krb_realm);
+			
+			return STATUS_ERROR;
+		}
+	}
 
 	/*
 	 * We have the username (without domain/realm) in accountname, compare 

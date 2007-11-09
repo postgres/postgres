@@ -85,6 +85,7 @@
 #krb_server_hostname = ''		# empty string matches any keytab entry
 					# (change requires restart, kerberos only)
 #krb_caseins_users = off		# (change requires restart)
+#krb_realm = ''           		# (change requires restart)
 
 # - TCP Keepalives -
 # see 'man 7 tcp' for details
