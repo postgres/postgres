@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.238 2007/11/07 22:37:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.239 2007/11/09 20:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4586,7 +4586,10 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
 /*
  * Try to generate a string greater than the given string or any
  * string it is a prefix of.  If successful, return a palloc'd string
- * in the form of a Const pointer; else return NULL.
+ * in the form of a Const node; else return NULL.
+ *
+ * The caller must provide the appropriate "less than" comparison function
+ * for testing the strings.
  *
  * The key requirement here is that given a prefix string, say "foo",
  * we must be able to generate another string "fop" that is greater than
@@ -4595,11 +4598,13 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
  * that is not a bulletproof guarantee that an extension of the string might
  * not sort after it; an example is that "foo " is less than "foo!", but it
  * is not clear that a "dictionary" sort ordering will consider "foo!" less
- * than "foo bar".  Therefore, this function should be used only for
+ * than "foo bar".  CAUTION: Therefore, this function should be used only for
  * estimation purposes when working in a non-C locale.
  *
- * The caller must provide the appropriate "less than" comparison function
- * for testing the strings.
+ * To try to catch most cases where an extended string might otherwise sort
+ * before the result value, we determine which of the strings "Z", "z", "y",
+ * and "9" is seen as largest by the locale, and append that to the given
+ * prefix before trying to find a string that compares as larger.
  *
  * If we max out the righthand byte, truncate off the last character
  * and start incrementing the next.  For example, if "z" were the last
@@ -4615,13 +4620,22 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 	Oid			datatype = str_const->consttype;
 	char	   *workstr;
 	int			len;
+	Datum		cmpstr;
+	text	   *cmptxt = NULL;
 
-	/* Get a modifiable copy of the string in C-string format */
+	/*
+	 * Get a modifiable copy of the prefix string in C-string format,
+	 * and set up the string we will compare to as a Datum.  In C locale
+	 * this can just be the given prefix string, otherwise we need to add
+	 * a suffix.  Types NAME and BYTEA sort bytewise so they don't need
+	 * a suffix either.
+	 */
 	if (datatype == NAMEOID)
 	{
 		workstr = DatumGetCString(DirectFunctionCall1(nameout,
 													  str_const->constvalue));
 		len = strlen(workstr);
+		cmpstr = str_const->constvalue;
 	}
 	else if (datatype == BYTEAOID)
 	{
@@ -4632,12 +4646,41 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 		memcpy(workstr, VARDATA(bstr), len);
 		if ((Pointer) bstr != DatumGetPointer(str_const->constvalue))
 			pfree(bstr);
+		cmpstr = str_const->constvalue;
 	}
 	else
 	{
 		workstr = DatumGetCString(DirectFunctionCall1(textout,
 													  str_const->constvalue));
 		len = strlen(workstr);
+		if (lc_collate_is_c() || len == 0)
+			cmpstr = str_const->constvalue;
+		else
+		{
+			/* If first time through, determine the suffix to use */
+			static char suffixchar = 0;
+
+			if (!suffixchar)
+			{
+				char *best;
+
+				best = "Z";
+				if (varstr_cmp(best, 1, "z", 1) < 0)
+					best = "z";
+				if (varstr_cmp(best, 1, "y", 1) < 0)
+					best = "y";
+				if (varstr_cmp(best, 1, "9", 1) < 0)
+					best = "9";
+				suffixchar = *best;
+			}
+
+			/* And build the string to compare to */
+			cmptxt = (text *) palloc(VARHDRSZ + len + 1);
+			SET_VARSIZE(cmptxt, VARHDRSZ + len + 1);
+			memcpy(VARDATA(cmptxt), workstr, len);
+			*(VARDATA(cmptxt) + len) = suffixchar;
+			cmpstr = PointerGetDatum(cmptxt);
+		}
 	}
 
 	while (len > 0)
@@ -4665,10 +4708,12 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 				workstr_const = string_to_bytea_const(workstr, len);
 
 			if (DatumGetBool(FunctionCall2(ltproc,
-										   str_const->constvalue,
+										   cmpstr,
 										   workstr_const->constvalue)))
 			{
-				/* Successfully made a string larger than the input */
+				/* Successfully made a string larger than cmpstr */
+				if (cmptxt)
+					pfree(cmptxt);
 				pfree(workstr);
 				return workstr_const;
 			}
@@ -4695,6 +4740,8 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 	}
 
 	/* Failed... */
+	if (cmptxt)
+		pfree(cmptxt);
 	pfree(workstr);
 
 	return NULL;
