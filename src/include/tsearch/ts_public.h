@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.4 2007/09/07 15:09:56 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.5 2007/11/09 22:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ typedef struct
 } StopList;
 
 extern void readstoplist(const char *fname, StopList *s,
-						 char *(*wordop) (char *));
+						 char *(*wordop) (const char *));
 extern bool searchstoplist(StopList *s, char *key);
 
 /*

@@ -1,15 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * ts_locale.h
- *    helper utilities for tsearch
+ *		locale compatibility layer for tsearch
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.2 2007/08/25 00:03:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.3 2007/11/09 22:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #ifndef __TSLOCALE_H__
 #define __TSLOCALE_H__
 
@@ -34,55 +33,37 @@
 #define TS_USE_WIDE
 #endif
 
-#define TOUCHAR(x)	(*((unsigned char*)(x)))
+#define TOUCHAR(x)	(*((const unsigned char *) (x)))
 
 #ifdef TS_USE_WIDE
 
-extern size_t char2wchar(wchar_t *to, const char *from, size_t len);
+extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen);
+extern size_t char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen);
 
-#ifdef WIN32
+extern int	t_isdigit(const char *ptr);
+extern int	t_isspace(const char *ptr);
+extern int	t_isalpha(const char *ptr);
+extern int	t_isprint(const char *ptr);
 
-extern size_t wchar2char(char *to, const wchar_t *from, size_t len);
-#else							/* WIN32 */
+/* The second argument of t_iseq() must be a plain ASCII character */
+#define t_iseq(x,c)		(TOUCHAR(x) == (unsigned char) (c))
 
-/* correct wcstombs */
-#define wchar2char wcstombs
+#define COPYCHAR(d,s)	memcpy(d, s, pg_mblen(s))
 
-#endif   /* WIN32 */
+#else  /* not TS_USE_WIDE */
 
-#define t_isdigit(x)	( pg_mblen(x)==1 && isdigit( TOUCHAR(x) ) )
-#define t_isspace(x)	( pg_mblen(x)==1 && isspace( TOUCHAR(x) ) )
-extern int	_t_isalpha(const char *ptr);
+#define t_isdigit(x)	isdigit(TOUCHAR(x))
+#define t_isspace(x)	isspace(TOUCHAR(x))
+#define t_isalpha(x)	isalpha(TOUCHAR(x))
+#define t_isprint(x)	isprint(TOUCHAR(x))
+#define t_iseq(x,c)		(TOUCHAR(x) == (unsigned char) (c))
 
-#define t_isalpha(x)	( (pg_mblen(x)==1) ? isalpha( TOUCHAR(x) ) : _t_isalpha(x) )
-extern int	_t_isprint(const char *ptr);
+#define COPYCHAR(d,s)	(*((unsigned char *) (d)) = TOUCHAR(s))
 
-#define t_isprint(x)	( (pg_mblen(x)==1) ? isprint( TOUCHAR(x) ) : _t_isprint(x) )
-/*
- * t_iseq() should be called only for ASCII symbols
- */
-#define t_iseq(x,c) ( (pg_mblen(x)==1) ? ( TOUCHAR(x) == ((unsigned char)(c)) ) : false )
+#endif /* TS_USE_WIDE */
 
-#define COPYCHAR(d,s)	do {					\
-	int lll = pg_mblen( s );					\
-												\
-	while( lll-- )								\
-		TOUCHAR((d)+lll) = TOUCHAR((s)+lll);	\
-} while(0)
-
-#else							/* not def TS_USE_WIDE */
-
-#define t_isdigit(x)	isdigit( TOUCHAR(x) )
-#define t_isspace(x)	isspace( TOUCHAR(x) )
-#define t_isalpha(x)	isalpha( TOUCHAR(x) )
-#define t_isprint(x)	isprint( TOUCHAR(x) )
-#define t_iseq(x,c) ( TOUCHAR(x) == ((unsigned char)(c)) )
-
-#define COPYCHAR(d,s)	TOUCHAR(d) = TOUCHAR(s)
-#endif
-
-extern char *lowerstr(char *str);
-extern char *lowerstr_with_len(char *str, int len);
+extern char *lowerstr(const char *str);
+extern char *lowerstr_with_len(const char *str, int len);
 extern char *t_readline(FILE *fp);
 
 #endif   /* __TSLOCALE_H__ */

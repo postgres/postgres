@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.7 2007/10/27 19:03:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.8 2007/11/09 22:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,12 +294,12 @@ TParserInit(char *str, int len)
 	/*
 	 * Use wide char code only when max encoding length > 1.
 	 */
-
 	if (prs->charmaxlen > 1)
 	{
 		prs->usewide = true;
 		prs->wstr = (wchar_t *) palloc(sizeof(wchar_t) * (prs->lenstr + 1));
-		prs->lenwstr = char2wchar(prs->wstr, prs->str, prs->lenstr);
+		prs->lenwstr = char2wchar(prs->wstr, prs->lenstr + 1,
+								  prs->str, prs->lenstr);
 	}
 	else
 #endif

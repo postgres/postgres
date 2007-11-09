@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_utils.c,v 1.4 2007/09/04 02:16:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_utils.c,v 1.5 2007/11/09 22:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ comparestr(const void *a, const void *b)
  * or palloc a new version.
  */
 void
-readstoplist(const char *fname, StopList *s, char *(*wordop) (char *))
+readstoplist(const char *fname, StopList *s, char *(*wordop) (const char *))
 {
 	char	  **stop = NULL;
 
