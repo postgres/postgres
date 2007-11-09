@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/acronyms.sgml,v 1.3 2007/11/01 20:27:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/acronyms.sgml,v 1.4 2007/11/09 22:22:46 alvherre Exp $ -->
 
 <appendix id="acronyms">
  <title>Acronyms</title>
@@ -701,8 +701,7 @@
     <term><acronym>UUID</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Uuid">Universally Unique
-      Identifier</ulink>
+      <link linkend="datatype-uuid">Universally Unique Identifier</link>
      </para>
     </listitem>
    </varlistentry>
