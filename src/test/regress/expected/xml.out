@@ -180,9 +180,15 @@ SELECT xmlpi(name foo);
  <?foo?>
 (1 row)
 
-SELECT xmlpi(name xmlstuff);
+SELECT xmlpi(name xml);
 ERROR:  invalid XML processing instruction
-DETAIL:  XML processing instruction target name cannot start with "xml".
+DETAIL:  XML processing instruction target name cannot be "xml".
+SELECT xmlpi(name xmlstuff);
+    xmlpi     
+--------------
+ <?xmlstuff?>
+(1 row)
+
 SELECT xmlpi(name foo, 'bar');
     xmlpi    
 -------------
@@ -198,9 +204,21 @@ SELECT xmlpi(name foo, null);
  
 (1 row)
 
-SELECT xmlpi(name xmlstuff, null);
+SELECT xmlpi(name xml, null);
 ERROR:  invalid XML processing instruction
-DETAIL:  XML processing instruction target name cannot start with "xml".
+DETAIL:  XML processing instruction target name cannot be "xml".
+SELECT xmlpi(name xmlstuff, null);
+ xmlpi 
+-------
+ 
+(1 row)
+
+SELECT xmlpi(name "xml-stylesheet", 'href="mystyle.css" type="text/css"');
+                         xmlpi                         
+-------------------------------------------------------
+ <?xml-stylesheet href="mystyle.css" type="text/css"?>
+(1 row)
+
 SELECT xmlpi(name foo, '   bar');
     xmlpi    
 -------------

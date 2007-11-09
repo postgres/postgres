@@ -61,11 +61,14 @@ SELECT xmlparse(document '<abc>x</abc>');
 
 
 SELECT xmlpi(name foo);
+SELECT xmlpi(name xml);
 SELECT xmlpi(name xmlstuff);
 SELECT xmlpi(name foo, 'bar');
 SELECT xmlpi(name foo, 'in?>valid');
 SELECT xmlpi(name foo, null);
+SELECT xmlpi(name xml, null);
 SELECT xmlpi(name xmlstuff, null);
+SELECT xmlpi(name "xml-stylesheet", 'href="mystyle.css" type="text/css"');
 SELECT xmlpi(name foo, '   bar');
 
 
