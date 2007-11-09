@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.58 2007/07/25 04:19:09 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.59 2007/11/09 23:58:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,6 @@ is				{ return K_IS;				}
 log				{ return K_LOG;				}
 loop			{ return K_LOOP;			}
 move			{ return K_MOVE;			}
-next			{ return K_NEXT;			}
 no{space}+scroll { return K_NOSCROLL;		}
 not				{ return K_NOT;				}
 notice			{ return K_NOTICE;			}
@@ -151,7 +150,6 @@ null			{ return K_NULL;			}
 open			{ return K_OPEN;			}
 or				{ return K_OR;				}
 perform			{ return K_PERFORM;			}
-query			{ return K_QUERY;			}
 raise			{ return K_RAISE;			}
 rename			{ return K_RENAME;			}
 result_oid		{ return K_RESULT_OID;		}
