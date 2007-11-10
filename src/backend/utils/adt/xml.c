@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.54 2007/11/09 15:52:51 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.55 2007/11/10 18:51:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -998,7 +998,8 @@ xml_init(void)
 	while (xmlIsBlank_ch(*(p))) (p)++
 
 /* Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender */
-#define pg_xmlIsNameChar(c) \
+/* Beware of multiple evaluations of argument! */
+#define PG_XMLISNAMECHAR(c) \
 	(xmlIsBaseChar_ch(c) || xmlIsIdeographicQ(c) \
 			|| xmlIsDigit_ch(c) \
 			|| c == '.' || c == '-' || c == '_' || c == ':' \
@@ -1006,12 +1007,13 @@ xml_init(void)
 			|| xmlIsExtender_ch(c))
 
 static int
-parse_xml_decl(const xmlChar *str,size_t *lenp,
+parse_xml_decl(const xmlChar *str, size_t *lenp,
 			   xmlChar **version, xmlChar **encoding, int *standalone)
 {
 	const xmlChar *p;
 	const xmlChar *save_p;
 	size_t		len;
+	int			utf8char;
 	int			utf8len;
 
 	xml_init();
@@ -1028,8 +1030,10 @@ parse_xml_decl(const xmlChar *str,size_t *lenp,
 	if (xmlStrncmp(p, (xmlChar *)"<?xml", 5) != 0)
 		goto finished;
 
-	/* This means it's a PI like <?xml-stylesheet ...?>. */
-	if (pg_xmlIsNameChar(xmlGetUTF8Char(&p[5], &utf8len)))
+	/* if next char is name char, it's a PI like <?xml-stylesheet ...?> */
+	utf8len = strlen((const char *) (p+5));
+	utf8char = xmlGetUTF8Char(p+5, &utf8len);
+	if (PG_XMLISNAMECHAR(utf8char))
 		goto finished;
 
 	p += 5;
