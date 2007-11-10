@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.55 2007/11/10 18:51:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.56 2007/11/10 19:29:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2707,11 +2707,11 @@ map_sql_schema_to_xmlschema_types(Oid nspid, List *relid_list, bool nulls,
 
 		if (!tableforest)
 			appendStringInfo(&result,
-							 "    <xsd:element name=\"%s\" type=\"%s\" />\n",
+							 "    <xsd:element name=\"%s\" type=\"%s\"/>\n",
 							 xmltn, tabletypename);
 		else
 			appendStringInfo(&result,
-							 "    <xsd:element name=\"%s\" type=\"%s\" minOccurs=\"0\" maxOccurs=\"unbounded\" />\n",
+							 "    <xsd:element name=\"%s\" type=\"%s\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n",
 							 xmltn, tabletypename);
 	}
 
@@ -2773,7 +2773,7 @@ map_sql_catalog_to_xmlschema_types(List *nspid_list, bool nulls,
 																		NULL);
 
 		appendStringInfo(&result,
-						 "    <xsd:element name=\"%s\" type=\"%s\" />\n",
+						 "    <xsd:element name=\"%s\" type=\"%s\"/>\n",
 						 xmlsn, schematypename);
 	}
 
@@ -3111,7 +3111,7 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 					base_typeoid = getBaseTypeAndTypmod(typeoid, &base_typmod);
 
 					appendStringInfo(&result,
-									 "  <xsd:restriction base=\"%s\">\n",
+									 "  <xsd:restriction base=\"%s\"/>\n",
 									 map_sql_type_to_xml_name(base_typeoid, base_typmod));
 				}
 				break;
