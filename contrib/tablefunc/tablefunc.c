@@ -106,6 +106,18 @@ typedef struct
 		} \
 	} while (0)
 
+#define xpstrdup(tgtvar_, srcvar_) \
+	do { \
+		if (srcvar_) \
+			tgtvar_ = pstrdup(srcvar_); \
+		else \
+			tgtvar_ = NULL; \
+	} while (0)
+
+#define xstreq(tgtvar_, srcvar_) \
+	(((tgtvar_ == NULL) && (srcvar_ == NULL)) || \
+	 ((tgtvar_ != NULL) && (srcvar_ != NULL) && (strcmp(tgtvar_, srcvar_) == 0)))
+
 /* sign, 10 digits, '\0' */
 #define INT32_STRLEN	12
 
@@ -358,6 +370,7 @@ crosstab(PG_FUNCTION_ARGS)
 	crosstab_fctx *fctx;
 	int			i;
 	int			num_categories;
+	bool		firstpass = false;
 	MemoryContext oldcontext;
 
 	/* stuff done only on the first call of the function */
@@ -481,6 +494,7 @@ crosstab(PG_FUNCTION_ARGS)
 		funcctx->max_calls = proc;
 
 		MemoryContextSwitchTo(oldcontext);
+		firstpass = true;
 	}
 
 	/* stuff done on every call of the function */
@@ -512,7 +526,7 @@ crosstab(PG_FUNCTION_ARGS)
 		HeapTuple	tuple;
 		Datum		result;
 		char	  **values;
-		bool		allnulls = true;
+		bool		skip_tuple = false;
 
 		while (true)
 		{
@@ -543,35 +557,42 @@ crosstab(PG_FUNCTION_ARGS)
 
 				/*
 				 * If this is the first pass through the values for this
-				 * rowid set it, otherwise make sure it hasn't changed on
-				 * us. Also check to see if the rowid is the same as that
-				 * of the last tuple sent -- if so, skip this tuple
-				 * entirely
+				 * rowid, set the first column to rowid
 				 */
 				if (i == 0)
-					values[0] = pstrdup(rowid);
-
-				if ((rowid != NULL) && (strcmp(rowid, values[0]) == 0))
 				{
-					if ((lastrowid != NULL) && (strcmp(rowid, lastrowid) == 0))
-						break;
-					else if (allnulls == true)
-						allnulls = false;
+					xpstrdup(values[0], rowid);
 
 					/*
-					 * Get the next category item value, which is alway
+					 * Check to see if the rowid is the same as that of the last
+					 * tuple sent -- if so, skip this tuple entirely
+					 */
+					if (!firstpass && xstreq(lastrowid, rowid))
+					{
+						skip_tuple = true;
+						break;
+					}
+				}
+
+				/*
+				 * If rowid hasn't changed on us, continue building the
+				 * ouput tuple.
+				 */
+				if (xstreq(rowid, values[0]))
+				{
+					/*
+					 * Get the next category item value, which is always
 					 * attribute number three.
 					 *
-					 * Be careful to sssign the value to the array index
-					 * based on which category we are presently
-					 * processing.
+					 * Be careful to assign the value to the array index based
+					 * on which category we are presently processing.
 					 */
 					values[1 + i] = SPI_getvalue(spi_tuple, spi_tupdesc, 3);
 
 					/*
-					 * increment the counter since we consume a row for
-					 * each category, but not for last pass because the
-					 * API will do that for us
+					 * increment the counter since we consume a row for each
+					 * category, but not for last pass because the API will do
+					 * that for us
 					 */
 					if (i < (num_categories - 1))
 						call_cntr = ++funcctx->call_cntr;
@@ -579,33 +600,29 @@ crosstab(PG_FUNCTION_ARGS)
 				else
 				{
 					/*
-					 * We'll fill in NULLs for the missing values, but we
-					 * need to decrement the counter since this sql result
-					 * row doesn't belong to the current output tuple.
+					 * We'll fill in NULLs for the missing values, but we need
+					 * to decrement the counter since this sql result row
+					 * doesn't belong to the current output tuple.
 					 */
 					call_cntr = --funcctx->call_cntr;
 					break;
 				}
-
-				if (rowid != NULL)
-					xpfree(rowid);
+				xpfree(rowid);
 			}
+
+			/*
+			 * switch to memory context appropriate for multiple function
+			 * calls
+			 */
+			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 			xpfree(fctx->lastrowid);
+			xpstrdup(fctx->lastrowid, values[0]);
+			lastrowid = fctx->lastrowid;
 
-			if (values[0] != NULL)
-			{
-				/*
-				 * switch to memory context appropriate for multiple
-				 * function calls
-				 */
-				oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+			MemoryContextSwitchTo(oldcontext);
 
-				lastrowid = fctx->lastrowid = pstrdup(values[0]);
-				MemoryContextSwitchTo(oldcontext);
-			}
-
-			if (!allnulls)
+			if (!skip_tuple)
 			{
 				/* build the tuple */
 				tuple = BuildTupleFromCStrings(attinmeta, values);
@@ -624,8 +641,8 @@ crosstab(PG_FUNCTION_ARGS)
 			else
 			{
 				/*
-				 * Skipping this tuple entirely, but we need to advance
-				 * the counter like the API would if we had returned one.
+				 * Skipping this tuple entirely, but we need to advance the
+				 * counter like the API would if we had returned one.
 				 */
 				call_cntr = ++funcctx->call_cntr;
 
@@ -639,11 +656,14 @@ crosstab(PG_FUNCTION_ARGS)
 					SPI_finish();
 					SRF_RETURN_DONE(funcctx);
 				}
+
+				/* need to reset this before the next tuple is started */
+				skip_tuple = false;
 			}
 		}
 	}
 	else
-	/* do when there is no more left */
+		/* do when there is no more left */
 	{
 		/* release SPI related resources */
 		SPI_finish();
@@ -866,6 +886,7 @@ get_crosstab_tuplestore(char *sql,
 		int			ncols = spi_tupdesc->natts;
 		char	   *rowid;
 		char	   *lastrowid = NULL;
+		bool		firstpass = true;
 		int			i,
 					j;
 		int			result_ncols;
@@ -930,41 +951,36 @@ get_crosstab_tuplestore(char *sql,
 			/* get the rowid from the current sql result tuple */
 			rowid = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
 
-			/* if rowid is null, skip this tuple entirely */
-			if (rowid == NULL)
-				continue;
-
 			/*
 			 * if we're on a new output row, grab the column values up to
 			 * column N-2 now
 			 */
-			if ((lastrowid == NULL) || (strcmp(rowid, lastrowid) != 0))
+			if (firstpass || !xstreq(lastrowid, rowid))
 			{
 				/*
-				 * a new row means we need to flush the old one first,
-				 * unless we're on the very first row
+				 * a new row means we need to flush the old one first, unless
+				 * we're on the very first row
 				 */
-				if (lastrowid != NULL)
+				if (!firstpass)
 				{
-					/*
-					 * switch to appropriate context while storing the
-					 * tuple
-					 */
-					SPIcontext = MemoryContextSwitchTo(per_query_ctx);
-
 					/* rowid changed, flush the previous output row */
 					tuple = BuildTupleFromCStrings(attinmeta, values);
+
+					/* switch to appropriate context while storing the tuple */
+					SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 					tuplestore_puttuple(tupstore, tuple);
+					MemoryContextSwitchTo(SPIcontext);
+
 					for (j = 0; j < result_ncols; j++)
 						xpfree(values[j]);
-
-					/* now reset the context */
-					MemoryContextSwitchTo(SPIcontext);
 				}
 
 				values[0] = rowid;
 				for (j = 1; j < ncols - 2; j++)
 					values[j] = SPI_getvalue(spi_tuple, spi_tupdesc, j + 1);
+
+				/* we're no longer on the first pass */
+				firstpass = false;
 			}
 
 			/* look up the category and fill in the appropriate column */
@@ -980,7 +996,7 @@ get_crosstab_tuplestore(char *sql,
 			}
 
 			xpfree(lastrowid);
-			lastrowid = pstrdup(rowid);
+			xpstrdup(lastrowid, rowid);
 		}
 
 		/* switch to appropriate context while storing the tuple */
@@ -988,11 +1004,11 @@ get_crosstab_tuplestore(char *sql,
 
 		/* flush the last output row */
 		tuple = BuildTupleFromCStrings(attinmeta, values);
+
+		/* switch to appropriate context while storing the tuple */
+		SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 		tuplestore_puttuple(tupstore, tuple);
-
-		/* now reset the context */
 		MemoryContextSwitchTo(SPIcontext);
-
 	}
 
 	if (SPI_finish() != SPI_OK_FINISH)
