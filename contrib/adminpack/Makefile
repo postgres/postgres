@@ -1,10 +1,9 @@
-# $PostgreSQL: pgsql/contrib/adminpack/Makefile,v 1.5 2007/06/26 22:05:01 tgl Exp $
+# $PostgreSQL: pgsql/contrib/adminpack/Makefile,v 1.6 2007/11/10 23:59:50 momjian Exp $
 
 MODULE_big = adminpack
 PG_CPPFLAGS = -I$(libpq_srcdir)
 DATA_built = adminpack.sql
 DATA = uninstall_adminpack.sql
-DOCS = README.adminpack
 OBJS = adminpack.o
 
 ifdef USE_PGXS

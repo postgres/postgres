@@ -1,10 +1,9 @@
-# $PostgreSQL: pgsql/contrib/sslinfo/Makefile,v 1.9 2007/06/26 22:05:03 tgl Exp $
+# $PostgreSQL: pgsql/contrib/sslinfo/Makefile,v 1.10 2007/11/10 23:59:51 momjian Exp $
 
 MODULE_big = sslinfo
 OBJS = sslinfo.o
 DATA_built = sslinfo.sql
 DATA = uninstall_sslinfo.sql
-DOCS = README.sslinfo
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

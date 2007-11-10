@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/dblink/Makefile,v 1.14 2007/06/26 22:05:01 tgl Exp $
+# $PostgreSQL: pgsql/contrib/dblink/Makefile,v 1.15 2007/11/10 23:59:50 momjian Exp $
 
 MODULE_big = dblink
 PG_CPPFLAGS = -I$(libpq_srcdir)
@@ -7,7 +7,6 @@ SHLIB_LINK = $(libpq)
 
 DATA_built = dblink.sql 
 DATA = uninstall_dblink.sql 
-DOCS = README.dblink
 REGRESS = dblink
 
 

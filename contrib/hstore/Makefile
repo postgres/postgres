@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/hstore/Makefile,v 1.5 2007/03/14 14:21:52 teodor Exp $
+# $PostgreSQL: pgsql/contrib/hstore/Makefile,v 1.6 2007/11/10 23:59:51 momjian Exp $
 
 subdir = contrib/hstore
 top_builddir = ../..
@@ -9,7 +9,6 @@ OBJS = hstore_io.o hstore_op.o hstore_gist.o hstore_gin.o crc32.o
 
 DATA_built = hstore.sql
 DATA = uninstall_hstore.sql
-DOCS = README.hstore
 REGRESS = hstore
 
 include $(top_srcdir)/contrib/contrib-global.mk

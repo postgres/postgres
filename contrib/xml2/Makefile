@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/xml2/Makefile,v 1.10 2007/06/26 22:05:04 tgl Exp $
+# $PostgreSQL: pgsql/contrib/xml2/Makefile,v 1.11 2007/11/10 23:59:52 momjian Exp $
 
 MODULE_big = pgxml
 
@@ -10,7 +10,6 @@ SHLIB_LINK = -lxslt -lxml2
 
 DATA_built = pgxml.sql
 DATA = uninstall_pgxml.sql
-DOCS = README.xml2
 
 override CFLAGS += $(shell xml2-config --cflags)
 

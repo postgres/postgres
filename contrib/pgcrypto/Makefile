@@ -1,5 +1,5 @@
 #
-# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.26 2007/06/26 22:05:03 tgl Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.27 2007/11/10 23:59:51 momjian Exp $
 #
 
 INT_SRCS = md5.c sha1.c sha2.c internal.c internal-sha2.c blf.c rijndael.c \
@@ -26,7 +26,6 @@ SRCS		= pgcrypto.c px.c px-hmac.c px-crypt.c \
 
 MODULE_big	= pgcrypto
 OBJS		= $(SRCS:.c=.o)
-DOCS		= README.pgcrypto
 DATA_built	= pgcrypto.sql
 DATA		= uninstall_pgcrypto.sql
 EXTRA_CLEAN	= gen-rtab
