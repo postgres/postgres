@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.129 2007/06/26 22:05:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.130 2007/11/10 20:14:36 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -659,6 +659,22 @@ SELECT * FROM getfoo(1) AS t1;
      1 |        2 | Ed
 (2 rows)
 </screen>
+    </para>
+
+    <para>
+     It is also possible to return multiple rows with the columns defined by
+     output parameters, like this:
+
+<programlisting>
+CREATE FUNCTION sum_n_product_with_tab (x int, OUT sum int, OUT product int) RETURNS SETOF record AS $$
+    SELECT x + tab.y, x * tab.y FROM tab;
+$$ LANGUAGE SQL;
+</programlisting>
+
+     The key point here is that you must write <literal>RETURNS SETOF record</>
+     to indicate that the function returns multiple rows instead of just one.
+     If there is only one output parameter, write that parameter's type
+     instead of <type>record</>.
     </para>
 
     <para>
