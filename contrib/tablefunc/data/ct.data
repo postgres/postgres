@@ -12,3 +12,7 @@
 12	group2	test4	att1	val4
 13	group2	test4	att2	val5
 14	group2	test4	att3	val6
+15	group1	\N	att1	val9
+16	group1	\N	att2	val10
+17	group1	\N	att3	val11
+18	group1	\N	att4	val12

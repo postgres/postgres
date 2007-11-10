@@ -61,6 +61,11 @@ insert into cth values(DEFAULT,'test2','02 March 2003','temperature','53');
 insert into cth values(DEFAULT,'test2','02 March 2003','test_result','FAIL');
 insert into cth values(DEFAULT,'test2','02 March 2003','test_startdate','01 March 2003');
 insert into cth values(DEFAULT,'test2','02 March 2003','volts','3.1234');
+-- next group tests for NULL rowids
+insert into cth values(DEFAULT,NULL,'25 October 2007','temperature','57');
+insert into cth values(DEFAULT,NULL,'25 October 2007','test_result','PASS');
+insert into cth values(DEFAULT,NULL,'25 October 2007','test_startdate','24 October 2007');
+insert into cth values(DEFAULT,NULL,'25 October 2007','volts','1.41234');
 
 -- return attributes as plain text
 SELECT * FROM crosstab(
