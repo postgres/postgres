@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.22 2007/11/09 16:36:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.23 2007/11/10 19:14:02 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -94,7 +94,7 @@
     <para>
      Shared hardware functionality is common in network storage devices.
      Using a network file system is also possible, though care must be
-     taken that the file system has full POSIX behavior (see <xref
+     taken that the file system has full <acronym>POSIX</> behavior (see <xref
      linkend="creating-cluster-nfs">).  One significant limitation of this
      method is that if the shared disk array fails or becomes corrupt, the
      primary and standby servers are both nonfunctional.  Another issue is
@@ -116,7 +116,8 @@
      the mirroring must be done in a way that ensures the standby server
      has a consistent copy of the file system &mdash; specifically, writes
      to the standby must be done in the same order as those on the master.
-     DRBD is a popular file system replication solution for Linux.
+     <productname>DRBD</> is a popular file system replication solution
+     for Linux.
     </para>
 
 <!--
@@ -137,7 +138,7 @@ protocol to make nodes agree on a serializable transactional order.
 
     <para>
      A warm standby server (see <xref linkend="warm-standby">) can
-     be kept current by reading a stream of write-ahead log (WAL)
+     be kept current by reading a stream of write-ahead log (<acronym>WAL</>)
      records.  If the main server fails, the warm standby contains
      almost all of the data of the main server, and can be quickly
      made the new master database server.  This is asynchronous and
@@ -159,7 +160,7 @@ protocol to make nodes agree on a serializable transactional order.
     </para>
 
     <para>
-     Slony-I is an example of this type of replication, with per-table
+     <productname>Slony-I</> is an example of this type of replication, with per-table
      granularity, and support for multiple slaves.  Because it
      updates the slave server asynchronously (in batches), there is
      possible data loss during fail over.
@@ -192,7 +193,8 @@ protocol to make nodes agree on a serializable transactional order.
      using two-phase commit (<xref linkend="sql-prepare-transaction"
      endterm="sql-prepare-transaction-title"> and <xref
      linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">.
-     Pgpool and Sequoia are an example of this type of replication. 
+     <productname>Pgpool</> and <productname>Sequoia</> are examples of
+     this type of replication.
     </para>
    </listitem>
   </varlistentry>
@@ -245,22 +247,6 @@ protocol to make nodes agree on a serializable transactional order.
   </varlistentry>
 
   <varlistentry>
-   <term>Data Partitioning</term>
-   <listitem>
-
-    <para>
-     Data partitioning splits tables into data sets.  Each set can
-     be modified by only one server.  For example, data can be
-     partitioned by offices, e.g. London and Paris, with a server
-     in each office.  If queries combining London and Paris data
-     are necessary, an application can query both servers, or
-     master/slave replication can be used to keep a read-only copy
-     of the other office's data on each server.
-    </para>
-   </listitem>
-  </varlistentry>
-
-  <varlistentry>
    <term>Commercial Solutions</term>
    <listitem>
 
@@ -293,7 +279,6 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>Statement-Based Replication Middleware</entry>
      <entry>Asynchronous Multi-Master Replication</entry>
      <entry>Synchronous Multi-Master Replication</entry>
-     <entry>Data Partitioning</entry>
     </row>
    </thead>
 
@@ -302,7 +287,6 @@ protocol to make nodes agree on a serializable transactional order.
     <row>
      <entry>No special hardware required</entry>
      <entry align="center"></entry>
-     <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
@@ -320,7 +304,6 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
-     <entry align="center"></entry>
     </row>
 
     <row>
@@ -332,11 +315,10 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center"></entry>
      <entry align="center"></entry>
      <entry align="center"></entry>
-     <entry align="center"></entry>
     </row>
 
     <row>
-     <entry>Master server never locks others</entry>
+     <entry>No inter-server locking delay</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
@@ -344,7 +326,6 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
-     <entry align="center">&bull;</entry>
     </row>
 
     <row>
@@ -356,7 +337,6 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
      <entry align="center">&bull;</entry>
-     <entry align="center"></entry>
     </row>
 
     <row>
@@ -364,7 +344,6 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center"></entry>
      <entry align="center"></entry>
      <entry align="center"></entry>
-     <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
@@ -380,7 +359,6 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center"></entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
-     <entry align="center">&bull;</entry>
     </row>
 
     <row>
@@ -392,7 +370,6 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center"></entry>
      <entry align="center"></entry>
      <entry align="center">&bull;</entry>
-     <entry align="center">&bull;</entry>
     </row>
 
    </tbody>
@@ -400,14 +377,46 @@ protocol to make nodes agree on a serializable transactional order.
  </table>
 
  <para>
-  Many of the above solutions allow multiple servers to handle multiple
-  queries, but none allow a single query to use multiple servers to
-  complete faster.  Multi-server parallel query execution allows multiple
-  servers to work concurrently on a single query.  This is usually
-  accomplished by splitting the data among servers and having each server
-  execute its part of the query and return results to a central server
-  where they are combined and returned to the user.  Pgpool-II has this
-  capability.  Also, this can be implemented using the PL/Proxy toolset.
+  There are a few solutions that do not fit into the above categories:
  </para>
+
+ <variablelist>
+
+  <varlistentry>
+   <term>Data Partitioning</term>
+   <listitem>
+
+    <para>
+     Data partitioning splits tables into data sets.  Each set can
+     be modified by only one server.  For example, data can be
+     partitioned by offices, e.g. London and Paris, with a server
+     in each office.  If queries combining London and Paris data
+     are necessary, an application can query both servers, or
+     master/slave replication can be used to keep a read-only copy
+     of the other office's data on each server.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Multi-Server Parallel Query Execution</term>
+   <listitem>
+
+    <para>
+     Many of the above solutions allow multiple servers to handle multiple
+     queries, but none allow a single query to use multiple servers to
+     complete faster.  This allows multiple servers to work concurrently
+     on a single query.  This is usually accomplished by splitting the
+     data among servers and having each server execute its part of the
+     query and return results to a central server where they are combined
+     and returned to the user.  <productname>Pgpool-II</> has this
+     capability.  Also, this can be implemented using the
+     <productname>PL/Proxy</> toolset.
+    </para>
+
+   </listitem>
+  </varlistentry>
+
+ </variablelist>
 
 </chapter>
