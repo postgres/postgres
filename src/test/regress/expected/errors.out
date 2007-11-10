@@ -116,7 +116,7 @@ ERROR:  column "oid" of relation "stud_emp" already exists
  
 -- not in a xact 
 abort;
-WARNING:  there is no transaction in progress
+NOTICE:  there is no transaction in progress
 -- not in a xact 
 end;
 WARNING:  there is no transaction in progress
