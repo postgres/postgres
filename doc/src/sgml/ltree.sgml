@@ -1,0 +1,771 @@
+
+<sect1 id="ltree">
+ <title>ltree</title>
+ 
+ <indexterm zone="ltree">
+  <primary>ltree</primary>
+ </indexterm>
+
+ <para>
+  <literal>ltree</literal> is a PostgreSQL module that contains implementation 
+  of data types, indexed access methods and queries for data organized as a 
+  tree-like structures.
+ </para>
+
+ <sect2>
+  <title>Definitions</title>
+  <para>
+   A <emphasis>label</emphasis> of a node is a sequence of one or more words 
+   separated by blank character '_' and containing letters and digits ( for 
+   example, [a-zA-Z0-9] for C locale). The length of a label is limited by 256 
+   bytes.
+  </para>
+  <para>
+   Example: 'Countries', 'Personal_Services'
+  </para>
+  <para>
+   A <emphasis>label path</emphasis> of a node is a sequence of one or more 
+   dot-separated labels l1.l2...ln, represents path from root to the node. The 
+   length of a label path is limited by 65Kb, but size <= 2Kb is preferrable. 
+   We consider it's not a strict limitation (maximal size of label path for 
+   DMOZ catalogue - <ulink url="http://www.dmoz.org"></ulink>, is about 240 
+   bytes!)
+  </para>
+  <para>
+   Example: <literal>'Top.Countries.Europe.Russia'</literal>
+  </para>
+  <para>
+   We introduce several datatypes:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>ltree</literal> - is a datatype for label path.
+    </para>
+   </listitem> 
+   <listitem>
+    <para>
+     <literal>ltree[]</literal> - is a datatype for arrays of ltree.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>lquery</literal>
+     - is a path expression that has regular expression in the label path and
+     used for ltree matching. Star symbol (*) is used to specify any number of
+     labels (levels) and could be used at the beginning and the end of lquery,
+     for example, '*.Europe.*'.
+    </para>
+    <para>
+     The following quantifiers are recognized for '*' (like in Perl):
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>{n}    Match exactly n levels</para>
+     </listitem>
+     <listitem>
+      <para>{n,}   Match at least n levels</para>
+     </listitem>
+     <listitem>
+      <para>{n,m}  Match at least n but not more than m levels</para>
+     </listitem>
+     <listitem>
+      <para>{,m}   Match at maximum m levels (eq. to {0,m})</para>
+     </listitem>
+    </itemizedlist>
+    <para>
+     It is possible to use several modifiers at the end of a label:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>@     Do case-insensitive label matching</para>
+     </listitem>
+     <listitem>
+      <para>*     Do prefix matching for a label</para>
+     </listitem>
+     <listitem>
+      <para>%     Don't account word separator '_' in label matching, that is 
+                     'Russian%' would match 'Russian_nations', but not 'Russian'
+      </para>
+     </listitem>
+    </itemizedlist>
+   
+    <para>
+     <literal>lquery</literal> can contain logical '!' (NOT) at the beginning 
+     of the label and '|' (OR) to specify possible alternatives for label 
+     matching.
+    </para>
+    <para> 
+     Example of <literal>lquery</literal>:
+    </para>
+    <programlisting> 
+     Top.*{0,2}.sport*@.!football|tennis.Russ*|Spain
+     a)  b)     c)      d)               e)
+    </programlisting>
+    <para>
+    A label path should
+    </para>
+    <orderedlist numeration='loweralpha'>
+     <listitem>
+      <para>
+       begin from a node with label 'Top'
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       and following zero or 2 labels until
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       a node with label beginning from case-insensitive prefix 'sport'
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       following node with label not matched 'football' or 'tennis' and
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       end on node with label beginning from 'Russ' or strictly matched
+        'Spain'.
+      </para>
+     </listitem>
+    </orderedlist>
+
+   </listitem>
+
+   <listitem>
+    <para><literal>ltxtquery</literal>
+    - is a datatype for label searching (like type 'query' for full text
+    searching, see contrib/tsearch). It's possible to use modifiers @,%,* at
+    the end of word. The meaning of modifiers are the same as for lquery.
+    </para>
+    <para>
+     Example: <literal>'Europe & Russia*@ & !Transportation'</literal>
+    </para>
+    <para>
+     Search paths contain words 'Europe' and 'Russia*' (case-insensitive) and
+     not 'Transportation'. Notice, the order of words as they appear in label
+     path is not important !
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Operations</title>
+  <para>
+   The following operations are defined for type ltree:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal><,>,<=,>=,=, <></literal>
+     - Have their usual meanings. Comparison is doing in the order of direct
+     tree traversing, children of a node are sorted lexicographic.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree @> ltree</literal>
+      - returns TRUE if left argument is an ancestor of right argument (or
+      equal).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree <@ ltree </literal>
+     - returns TRUE if left argument is a descendant of right argument (or
+     equal).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree ~ lquery, lquery ~ ltree</literal>
+     - return TRUE if node represented by ltree satisfies lquery.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree ? lquery[], lquery ? ltree[]</literal>
+     - return TRUE if node represented by ltree satisfies at least one lquery
+       from array.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree @ ltxtquery, ltxtquery @ ltree</literal>
+     - return TRUE if node represented by ltree satisfies ltxtquery.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree || ltree, ltree || text, text || ltree</literal>
+     - return concatenated ltree.
+    </para>
+   </listitem>
+  </itemizedlist>
+  
+  <para>
+   Operations for arrays of ltree (<literal>ltree[]</literal>):
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>ltree[] @> ltree, ltree <@ ltree[]</literal>
+     - returns TRUE if array ltree[] contains an ancestor of ltree.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree @> ltree[], ltree[] <@ ltree</literal>
+     - returns TRUE if array ltree[] contains a descendant of ltree.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree[] ~ lquery, lquery ~ ltree[]</literal>
+     - returns TRUE if array ltree[] contains label paths matched lquery.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree[] ? lquery[], lquery[] ? ltree[]</literal>
+     - returns TRUE if array ltree[] contains label paths matched atleaset one
+       lquery from array.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree[] @ ltxtquery, ltxtquery @ ltree[]</literal>
+     - returns TRUE if array ltree[] contains label paths matched ltxtquery
+     (full text search).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree[] ?@> ltree, ltree ?<@ ltree[], ltree[] ?~ lquery, ltree[] ?@ ltxtquery</literal>
+
+     - returns first element of array ltree[] satisfies corresponding condition
+     and NULL in vice versa.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Remark</title>
+
+  <para>
+   Operations <literal>&lt;@</literal>, <literal>@&gt;</literal>, <literal>@</literal> and 
+   <literal>~</literal> have analogues - <literal>^&lt;@, ^@&gt;, ^@, ^~,</literal> which don't use
+   indices!
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Indices</title>
+  <para>
+   Various indices could be created to speed up execution of operations:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     B-tree index over ltree: <literal>&lt;, &lt;=, =, &gt;=, &gt;</literal>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     GiST index over ltree: <literal>&lt;, &lt;=, =, &gt;=, &gt;, @&gt;, &lt;@, @, ~, ?</literal>
+    </para>
+    <para>
+     Example:
+    </para>
+    <programlisting>
+     CREATE INDEX path_gist_idx ON test USING GIST (path);
+    </programlisting>
+   </listitem>
+   <listitem>
+    <para>GiST index over ltree[]:
+     <literal>ltree[]<@ ltree, ltree @> ltree[], @, ~, ?.</literal>
+    </para>
+    <para>
+     Example:
+    </para>
+    <programlisting>
+    CREATE INDEX path_gist_idx ON test USING GIST (array_path);
+    </programlisting>
+    <para>
+     Notices: This index is lossy.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Functions</title>
+  
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>ltree subltree(ltree, start, end)</literal>
+      returns subpath of ltree from start (inclusive) until the end.
+    </para>
+    <programlisting>
+        # select subltree('Top.Child1.Child2',1,2);
+        subltree
+        --------
+        Child1
+    </programlisting>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree subpath(ltree, OFFSET,LEN)</literal> and 
+     <literal>ltree subpath(ltree, OFFSET)</literal>
+      returns subpath of ltree from OFFSET (inclusive) with length LEN.
+      If OFFSET is negative returns subpath starts that far from the end 
+      of the path.  If LENGTH is omitted, returns everything to the end
+      of the path.  If LENGTH is negative, leaves that many labels off 
+      the end of the path.
+    </para>
+    <programlisting>
+        # select subpath('Top.Child1.Child2',1,2);
+        subpath
+        -------
+        Child1.Child2
+    
+        # select subpath('Top.Child1.Child2',-2,1);
+        subpath 
+        ---------
+        Child1
+    </programlisting>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>int4 nlevel(ltree)</literal> - returns level of the node.
+    </para>
+    <programlisting>
+        # select nlevel('Top.Child1.Child2');
+        nlevel 
+        --------
+          3
+    </programlisting>
+    <para>
+     Note, that arguments start, end, OFFSET, LEN have meaning of level of the
+     node !
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>int4 index(ltree,ltree)</literal> and 
+     <literal>int4 index(ltree,ltree,OFFSET)</literal>
+     returns number of level of the first occurence of second argument in first
+     one beginning from OFFSET. if OFFSET is negative, than search begins from |
+     OFFSET| levels from the end of the path.
+    </para>
+    <programlisting>
+     SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',3);
+      index
+     -------
+          6
+     SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-4);
+      index  
+     -------
+          9
+    </programlisting>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree text2ltree(text)</literal> and
+     <literal>text ltree2text(text)</literal> cast functions for ltree and text.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ltree lca(ltree,ltree,...) (up to 8 arguments)</literal> and
+     <literal>ltree lca(ltree[])</literal> Returns Lowest Common Ancestor (lca).
+    </para>
+    <programlisting>
+        # select lca('1.2.2.3','1.2.3.4.5.6');
+        lca 
+        -----
+         1.2
+        # select lca('{la.2.3,1.2.3.4.5.6}') is null;
+        ?column? 
+        ----------
+           f
+    </programlisting>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Installation</title>
+  <programlisting>
+  cd contrib/ltree
+  make
+  make install
+  make installcheck
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Example</title>
+  <programlisting>
+ createdb ltreetest
+ psql ltreetest < /usr/local/pgsql/share/contrib/ltree.sql
+ psql ltreetest < ltreetest.sql
+  </programlisting>
+
+  <para>
+Now, we have a database ltreetest populated with a data describing hierarchy
+shown below:
+  </para>
+
+  <programlisting>
+
+ 
+                            TOP
+                         /   |  \     
+                 Science Hobbies Collections  
+                     /       |              \
+            Astronomy   Amateurs_Astronomy Pictures
+               /  \                            |
+    Astrophysics  Cosmology                Astronomy
+                                            /  |    \
+                                     Galaxies Stars Astronauts
+  </programlisting>
+  <para>
+   Inheritance:
+  </para>
+
+  <programlisting>
+ltreetest=# select path from test where path <@ 'Top.Science';
+                path                
+------------------------------------
+ Top.Science
+ Top.Science.Astronomy
+ Top.Science.Astronomy.Astrophysics
+ Top.Science.Astronomy.Cosmology
+(4 rows)
+  </programlisting>
+  <para>
+   Matching:
+  </para>
+  <programlisting>
+ltreetest=# select path from test where path ~ '*.Astronomy.*';
+                     path                      
+-----------------------------------------------
+ Top.Science.Astronomy
+ Top.Science.Astronomy.Astrophysics
+ Top.Science.Astronomy.Cosmology
+ Top.Collections.Pictures.Astronomy
+ Top.Collections.Pictures.Astronomy.Stars
+ Top.Collections.Pictures.Astronomy.Galaxies
+ Top.Collections.Pictures.Astronomy.Astronauts
+(7 rows)
+ltreetest=# select path from test where path ~ '*.!pictures@.*.Astronomy.*';
+                path                
+------------------------------------
+ Top.Science.Astronomy
+ Top.Science.Astronomy.Astrophysics
+ Top.Science.Astronomy.Cosmology
+(3 rows)
+  </programlisting>
+  <para>
+   Full text search:
+  </para>
+  <programlisting>
+ltreetest=# select path from test where path @ 'Astro*% & !pictures@';
+                path                
+------------------------------------
+ Top.Science.Astronomy
+ Top.Science.Astronomy.Astrophysics
+ Top.Science.Astronomy.Cosmology
+ Top.Hobbies.Amateurs_Astronomy
+(4 rows)
+
+ltreetest=# select path from test where path @ 'Astro* & !pictures@';
+                path                
+------------------------------------
+ Top.Science.Astronomy
+ Top.Science.Astronomy.Astrophysics
+ Top.Science.Astronomy.Cosmology
+(3 rows)
+  </programlisting>
+  <para>
+   Using Functions:
+  </para>
+  <programlisting>
+ltreetest=# select subpath(path,0,2)||'Space'||subpath(path,2) from test where path <@ 'Top.Science.Astronomy';
+                 ?column?                 
+------------------------------------------
+ Top.Science.Space.Astronomy
+ Top.Science.Space.Astronomy.Astrophysics
+ Top.Science.Space.Astronomy.Cosmology
+(3 rows)
+We could create SQL-function:
+CREATE FUNCTION ins_label(ltree, int4, text) RETURNS ltree 
+AS 'select subpath($1,0,$2) || $3 || subpath($1,$2);'
+LANGUAGE SQL IMMUTABLE;
+  </programlisting>
+  <para>
+   and previous select could be rewritten as:
+  </para>
+
+  <programlisting>
+ltreetest=# select ins_label(path,2,'Space') from test where path <@ 'Top.Science.Astronomy';
+                ins_label                 
+------------------------------------------
+ Top.Science.Space.Astronomy
+ Top.Science.Space.Astronomy.Astrophysics
+ Top.Science.Space.Astronomy.Cosmology
+(3 rows)
+  </programlisting>
+
+  <para>
+   Or with another arguments:
+  </para>
+
+  <programlisting>
+CREATE FUNCTION ins_label(ltree, ltree, text) RETURNS ltree
+AS 'select subpath($1,0,nlevel($2)) || $3 || subpath($1,nlevel($2));'
+LANGUAGE SQL IMMUTABLE;
+
+ltreetest=# select ins_label(path,'Top.Science'::ltree,'Space') from test where path <@ 'Top.Science.Astronomy';
+                ins_label                 
+------------------------------------------
+ Top.Science.Space.Astronomy
+ Top.Science.Space.Astronomy.Astrophysics
+ Top.Science.Space.Astronomy.Cosmology
+(3 rows)
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Additional data</title>
+  <para>
+   To get more feeling from our ltree module you could download
+   dmozltree-eng.sql.gz (about 3Mb tar.gz archive containing 300,274 nodes),
+   available from 
+   <ulink url="http://www.sai.msu.su/~megera/postgres/gist/ltree/"></ulink>
+   dmozltree-eng.sql.gz, which is DMOZ catalogue, prepared for use with ltree.
+   Setup your test database (dmoz), load ltree module and issue command:
+  </para>
+  <programlisting>
+   zcat dmozltree-eng.sql.gz| psql dmoz
+  </programlisting>
+  <para>
+   Data will be loaded into database dmoz and all indices will be created.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Benchmarks</title>
+  <para>
+   All runs were performed on my IBM ThinkPad T21 (256 MB RAM, 750Mhz) using DMOZ
+   data, containing 300,274 nodes (see above for download link). We used some
+   basic queries typical for walking through catalog.
+  </para>
+
+  <sect3>
+   <title>Queries</title>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Q0: Count all rows (sort of base time for comparison)
+     </para>
+     <programlisting>
+     select count(*) from dmoz;
+      count  
+     --------
+      300274
+     (1 row)
+     </programlisting>
+    </listitem>
+    <listitem>
+     <para>
+      Q1: Get direct children (without inheritance)
+     </para>
+     <programlisting>
+     select path from dmoz where path ~ 'Top.Adult.Arts.Animation.*{1}';
+                    path                
+     -----------------------------------
+      Top.Adult.Arts.Animation.Cartoons
+      Top.Adult.Arts.Animation.Anime
+     (2 rows)
+     </programlisting>
+    </listitem>
+    <listitem>
+     <para>
+      Q2: The same as Q1 but with counting of successors
+     </para>
+     <programlisting>
+     select path as parentpath , (select count(*)-1 from dmoz where path <@
+     p.path) as count from dmoz p where path ~ 'Top.Adult.Arts.Animation.*{1}';
+                 parentpath             | count 
+     -----------------------------------+-------
+      Top.Adult.Arts.Animation.Cartoons |     2
+      Top.Adult.Arts.Animation.Anime    |    61
+     (2 rows)
+     </programlisting>
+    </listitem>
+    <listitem>
+     <para>
+      Q3: Get all parents
+     </para>
+     <programlisting>
+     select path from dmoz where path @> 'Top.Adult.Arts.Animation' order by
+     path asc;
+                path           
+     --------------------------
+      Top
+      Top.Adult
+      Top.Adult.Arts
+      Top.Adult.Arts.Animation
+     (4 rows)
+     </programlisting>
+    </listitem>
+    <listitem>
+     <para>
+      Q4: Get all parents with counting of children
+     </para>
+     <programlisting>
+     select path, (select count(*)-1 from dmoz where path <@ p.path) as count
+     from dmoz p where path @> 'Top.Adult.Arts.Animation' order by path asc;
+                path           | count  
+     --------------------------+--------
+      Top                      | 300273
+      Top.Adult                |   4913
+      Top.Adult.Arts           |    339
+      Top.Adult.Arts.Animation |     65
+     (4 rows)
+     </programlisting>
+    </listitem>
+    <listitem>
+     <para>
+      Q5: Get all children with levels
+     </para>
+     <programlisting>
+     select path, nlevel(path) - nlevel('Top.Adult.Arts.Animation') as level
+     from dmoz where path ~ 'Top.Adult.Arts.Animation.*{1,2}' order by path asc;
+                           path                      | level 
+     ------------------------------------------------+-------
+      Top.Adult.Arts.Animation.Anime                 |     1
+      Top.Adult.Arts.Animation.Anime.Fan_Works       |     2
+      Top.Adult.Arts.Animation.Anime.Games           |     2
+      Top.Adult.Arts.Animation.Anime.Genres          |     2
+      Top.Adult.Arts.Animation.Anime.Image_Galleries |     2
+      Top.Adult.Arts.Animation.Anime.Multimedia      |     2
+      Top.Adult.Arts.Animation.Anime.Resources       |     2
+      Top.Adult.Arts.Animation.Anime.Titles          |     2
+      Top.Adult.Arts.Animation.Cartoons              |     1
+      Top.Adult.Arts.Animation.Cartoons.AVS          |     2
+      Top.Adult.Arts.Animation.Cartoons.Members      |     2
+     (11 rows)
+     </programlisting>
+    </listitem>
+   </itemizedlist>
+  </sect3>
+
+  <sect3>
+   <title>Timings</title>
+   <programlisting>
++---------------------------------------------+
+|Query|Rows|Time (ms) index|Time (ms) no index|
+|-----+----+---------------+------------------|
+|   Q0|   1|             NA|           1453.44|
+|-----+----+---------------+------------------|
+|   Q1|   2|           0.49|           1001.54|
+|-----+----+---------------+------------------|
+|   Q2|   2|           1.48|           3009.39|
+|-----+----+---------------+------------------|
+|   Q3|   4|           0.55|            906.98|
+|-----+----+---------------+------------------|
+|   Q4|   4|       24385.07|           4951.91|
+|-----+----+---------------+------------------|
+|   Q5|  11|           0.85|           1003.23|
++---------------------------------------------+
+   </programlisting>
+   <para>
+    Timings without indices were obtained using operations which doesn't use
+    indices (see above)
+   </para>
+  </sect3>
+
+  <sect3>
+   <title>Remarks</title>
+   <para>
+    We didn't run full-scale tests, also we didn't present (yet) data for
+    operations with arrays of ltree (ltree[]) and full text searching. We'll
+    appreciate your input. So far, below some (rather obvious) results:
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Indices does help execution of queries
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Q4 performs bad because one needs to read almost all data from the HDD
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect3>
+ </sect2>
+ <sect2>
+  <title>Some Backgrounds</title>
+  <para>
+   The approach we use for ltree is much like one we used in our other GiST based
+   contrib modules (intarray, tsearch, tree, btree_gist, rtree_gist). Theoretical
+   background is available in papers referenced from our GiST development page
+   (<ulink url="http://www.sai.msu.su/~megera/postgres/gist"></ulink>).
+  </para>
+  <para>
+   A hierarchical data structure (tree) is a set of nodes. Each node has a
+   signature (LPS) of a fixed size, which is a hashed label path of that node.
+   Traversing a tree we could *certainly* prune branches if
+  </para>
+  <programlisting>
+   LQS (bitwise AND) LPS != LQS
+  </programlisting>
+  <para>
+   where LQS is a signature of lquery or ltxtquery, obtained in the same way as
+   LPS.
+  </para>
+  <programlisting>
+   ltree[]:
+  </programlisting>
+  <para>
+   For array of ltree LPS is a bitwise OR-ed signatures of *ALL* children
+   reachable from that node. Signatures are stored in RD-tree, implemented using
+   GiST, which provides indexed access.
+  </para>
+  <programlisting>
+   ltree:
+  </programlisting>
+  <para>
+   For ltree we store LPS in a B-tree, implemented using GiST. Each node entry is
+   represented by (left_bound, signature, right_bound), so that we could speedup
+   operations <literal><, <=, =, >=, ></literal> using left_bound, right_bound and prune branches of
+   a tree using signature.
+  </para>
+ </sect2>
+ <sect2>
+  <title>Authors</title>
+  <para>
+   All work was done by Teodor Sigaev (<email>teodor@stack.net</email>) and 
+   Oleg Bartunov (<email>oleg@sai.msu.su</email>). See 
+   <ulink url="http://www.sai.msu.su/~megera/postgres/gist"></ulink> for
+   additional information. Authors would like to thank Eugeny Rodichev for 
+   helpful discussions. Comments and bug reports are welcome.
+  </para>
+ </sect2>
+</sect1>
+

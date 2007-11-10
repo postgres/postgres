@@ -1,0 +1,56 @@
+<chapter id="contrib">
+ <title>Standard Modules</title>
+
+ <para>
+  This section contains information regarding the standard modules which
+  can be found in the <literal>contrib</literal> directory of the
+  PostgreSQL distribution. These are porting tools, analysis utilities,
+  and plug-in features that are not part of the core PostgreSQL system,
+  mainly because they address a limited audience or are too experimental
+  to be part of the main source tree.  This does not preclude their
+  usefulness.
+ </para>
+
+ <para>
+  Some modules supply new user-defined functions, operators, or types.  In 
+  these cases, you will need to run <literal>make</literal> and <literal>make
+  install</literal> in <literal>contrib/module</literal>. After you have 
+  installed the files you need to register the new entities in the database 
+  system by running the commands in the supplied .sql file.  For example,
+
+  <programlisting>
+   $ psql -d dbname -f module.sql
+  </programlisting>
+ </para>
+
+ &adminpack;
+ &btree-gist;
+ &chkpass;
+ &cube;
+ &dblink;
+ &earthdistance;
+ &fuzzystrmatch;
+ &hstore;
+ &intagg;
+ &intarray;
+ &isn;
+ &lo;
+ &ltree;
+ &oid2name;
+ &pageinspect;
+ &pgbench;
+ &buffercache;
+ &pgcrypto;
+ &freespacemap;
+ &pgrowlocks;
+ &standby;
+ &pgstattuple;
+ &trgm;
+ &seg;
+ &sslinfo;
+ &tablefunc;
+ &uuid-ossp;
+ &vacuumlo;
+ &xml2;
+</chapter>
+

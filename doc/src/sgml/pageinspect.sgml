@@ -1,0 +1,125 @@
+
+<sect1 id="pageinspect">
+ <title>pageinspect</title>
+ 
+ <indexterm zone="pageinspect">
+  <primary>pageinspect</primary>
+ </indexterm>
+
+ <para>
+  The functions in this module allow you to inspect the contents of data pages
+  at a low level, for debugging purposes.
+ </para>
+
+ <sect2>
+  <title>Functions included</title>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>get_raw_page</literal> reads one block of the named table and returns a copy as a
+     bytea field. This allows a single time-consistent copy of the block to be
+     made. Use of this functions is restricted to superusers.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>page_header</literal> shows fields which are common to all PostgreSQL heap and index
+     pages. Use of this function is restricted to superusers.
+    </para>
+    <para>
+     A page image obtained with <literal>get_raw_page</literal> should be passed as argument:
+    </para>
+    <programlisting>
+        test=# SELECT * FROM page_header(get_raw_page('pg_class',0));
+           lsn    | tli | flags | lower | upper | special | pagesize | version
+        ----------+-----+-------+-------+-------+---------+----------+---------
+         0/3C5614 |   1 |     1 |   216 |   256 |    8192 |     8192 |       4
+        (1 row)
+    </programlisting>
+    <para>
+     The returned columns correspond to the fields in the PageHeaderData-struct,
+     see src/include/storage/bufpage.h for more details.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>heap_page_items</literal> shows all line pointers on a heap page.  For those line
+     pointers that are in use, tuple headers are also shown. All tuples are
+     shown, whether or not the tuples were visible to an MVCC snapshot at the
+     time the raw page was copied. Use of this function is restricted to
+     superusers.
+    </para>
+    <para>
+     A heap page image obtained with <literal>get_raw_page</literal> should be passed as argument:
+    </para>
+    <programlisting>
+        test=# SELECT * FROM heap_page_items(get_raw_page('pg_class',0));
+    </programlisting>
+    <para>
+     See src/include/storage/itemid.h and src/include/access/htup.h for
+     explanations of the fields returned.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>bt_metap()</literal> returns information about the btree index metapage:
+    </para>
+    <programlisting>
+        test=> SELECT * FROM bt_metap('pg_cast_oid_index');
+        -[ RECORD 1 ]-----
+        magic     | 340322
+        version   | 2
+        root      | 1
+        level     | 0
+        fastroot  | 1
+        fastlevel | 0
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>bt_page_stats()</literal> shows information about single btree pages:
+    </para>
+    <programlisting>
+        test=> SELECT * FROM bt_page_stats('pg_cast_oid_index', 1);
+        -[ RECORD 1 ]-+-----
+        blkno         | 1
+        type          | l
+        live_items    | 256
+        dead_items    | 0
+        avg_item_size | 12
+        page_size     | 8192
+        free_size     | 4056
+        btpo_prev     | 0
+        btpo_next     | 0
+        btpo          | 0
+        btpo_flags    | 3
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>bt_page_items()</literal> returns information about specific items on btree pages:
+    </para>
+    <programlisting>
+        test=> SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
+         itemoffset |  ctid   | itemlen | nulls | vars |    data
+        ------------+---------+---------+-------+------+-------------
+                  1 | (0,1)   |      12 | f     | f    | 23 27 00 00
+                  2 | (0,2)   |      12 | f     | f    | 24 27 00 00
+                  3 | (0,3)   |      12 | f     | f    | 25 27 00 00
+                  4 | (0,4)   |      12 | f     | f    | 26 27 00 00
+                  5 | (0,5)   |      12 | f     | f    | 27 27 00 00
+                  6 | (0,6)   |      12 | f     | f    | 28 27 00 00
+                  7 | (0,7)   |      12 | f     | f    | 29 27 00 00
+                  8 | (0,8)   |      12 | f     | f    | 2a 27 00 00
+    </programlisting>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+

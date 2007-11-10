@@ -1,0 +1,249 @@
+
+<sect1 id="pgstandby">
+ <title>pg_standby</title>
+ 
+ <indexterm zone="pgstandby">
+  <primary>pgstandby</primary>
+ </indexterm>
+
+ <para>
+  <literal>pg_standby</literal> is a production-ready program that can be used 
+  to create a Warm Standby server. Other configuration is required as well, 
+  all of which is described in the main server manual.
+ </para>
+ <para>
+  The program is designed to be a wait-for <literal>restore_command</literal>, 
+  required to turn a normal archive recovery into a Warm Standby. Within the 
+  <literal>restore_command</literal> of the <literal>recovery.conf</literal> 
+  you could configure <literal>pg_standby</literal> in the following way:
+ </para>
+ <programlisting>
+   restore_command = 'pg_standby archiveDir %f %p'
+ </programlisting>
+ <para>
+  which would be sufficient to define that files will be restored from 
+  archiveDir. 
+ </para>
+
+ <para>
+  <literal>pg_standby</literal> features include:
+ </para>
+ <itemizedlist>
+  <listitem>
+   <para>
+    It is written in C. So it is very portable
+    and easy to install.
+   </para>
+  </listitem>
+  <listitem>
+   <para>
+   Supports copy or link from a directory (only)
+   </para>
+  </listitem>
+  <listitem>
+   <para>
+    Source easy to modify, with specifically designated
+    sections to modify for your own needs, allowing 
+    interfaces to be written for additional Backup Archive Restore
+    (BAR) systems
+   </para>
+  </listitem>
+  <listitem>
+   <para>
+    Already tested on Linux and Windows 
+   </para>
+  </listitem>
+ </itemizedlist>
+
+ <sect2>
+  <title>Usage</title>
+  <para>
+   <literal>pg_standby</literal> should be used within the 
+   <literal>restore_command</literal> of the <literal>recovery.conf</literal>
+   file. 
+  </para>
+  <para>
+   The basic usage should be like this:
+  </para>
+  <programlisting>
+   restore_command = 'pg_standby archiveDir %f %p'
+  </programlisting>
+  <para>
+   with the pg_standby command usage as
+  </para>
+  <programlisting>
+   pg_standby [OPTION]... [ARCHIVELOCATION] [NEXTWALFILE] [XLOGFILEPATH]
+  </programlisting>
+  <para>
+   When used within the <literal>restore_command</literal> the %f and %p macros
+   will provide the actual file and path required for the restore/recovery.
+  </para>
+
+  <table>
+   <title>Options</title>
+   <tgroup cols="2">
+    <tbody>
+     <row>
+      <entry>-c</entry>
+      <entry> use copy/cp command to restore WAL files from archive</entry>
+     </row>
+     <row>
+      <entry>-d</entry>
+      <entry>debug/logging option.</entry>
+     </row>
+     <row>
+      <entry>-k numfiles</entry>
+      <entry>
+       <para>
+        Cleanup files in the archive so that we maintain no more
+        than this many files in the archive. 
+       </para>
+       <para>
+        You should be wary against setting this number too low,
+        since this may mean you cannot restart the standby. This
+        is because the last restartpoint marked in the WAL files
+        may be many files in the past and can vary considerably.
+        This should be set to a value exceeding the number of WAL
+        files that can be recovered in 2*checkpoint_timeout seconds,
+        according to the value in the warm standby postgresql.conf.
+        It is wholly unrelated to the setting of checkpoint_segments
+        on either primary or standby.
+       </para>
+       <para>
+        If in doubt, use a large value or do not set a value at all.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry>-l</entry>
+      <entry>
+       <para>
+        use ln command to restore WAL files from archive
+        WAL files will remain in archive
+       </para>
+       <para>
+        Link is more efficient, but the default is copy to 
+        allow you to maintain the WAL archive for recovery
+        purposes as well as high-availability.
+       </para>
+       <para>
+        This option uses the Windows Vista command mklink
+        to provide a file-to-file symbolic link. -l will
+        not work on versions of Windows prior to Vista.
+        Use the -c option instead.
+        see <ulink url="http://en.wikipedia.org/wiki/NTFS_symbolic_link"></ulink>
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry>-r maxretries</entry>
+      <entry>
+       <para>
+        the maximum number of times to retry the restore command if it
+        fails. After each failure, we wait for sleeptime * num_retries
+        so that the wait time increases progressively, so by default
+        we will wait 5 secs, 10 secs then 15 secs before reporting
+        the failure back to the database server. This will be
+        interpreted as and end of recovery and the Standby will come
+        up fully as a result. <literal>Default=3</literal>
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry>-s sleeptime</entry>
+      <entry>
+       the number of seconds to sleep between testing to see
+       if the file to be restored is available in the archive yet.
+       The default setting is not necessarily recommended,
+       consult the main database server manual for discussion.
+       <literal>Default=5</literal>
+      </entry>
+     </row>
+     <row>
+      <entry>-t triggerfile</entry>
+      <entry>
+       the presence of the triggerfile will cause recovery to end
+       whether or not the next file is available
+       It is recommended that you use a structured filename to 
+       avoid confusion as to which server is being triggered
+       when multiple servers exist on same system.
+       e.g. /tmp/pgsql.trigger.5432
+      </entry>
+     </row>
+     <row>
+      <entry>-w maxwaittime</entry>
+      <entry>
+       the maximum number of seconds to wait for the next file,
+       after which recovery will end and the Standby will come up.
+       The default setting is not necessarily recommended,
+       consult the main database server manual for discussion.
+       <literal>Default=0</literal>
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <note>
+   <para>
+    <literal>--help</literal> is not supported since 
+    <literal>pg_standby</literal> is not intended for interactive use, except 
+    during development and testing.
+   </para>
+  </note>
+ </sect2>
+
+ <sect2>
+  <title>Examples</title>
+
+  <itemizedlist>
+   <listitem>
+    <para>Example on Linux</para>
+    <programlisting>
+archive_command = 'cp %p ../archive/%f'
+
+restore_command = 'pg_standby -l -d -k 255 -r 2 -s 2 -w 0 -t /tmp/pgsql.trigger.5442 $PWD/../archive %f %p 2>> standby.log' 
+    </programlisting>
+    <para>
+     which will
+    </para>
+    <itemizedlist>
+     <listitem><para>use a ln command to restore WAL files from archive</para></listitem>
+     <listitem><para>produce logfile output in standby.log</para></listitem>
+     <listitem><para>keep the last 255 full WAL files, plus the current one</para></listitem>
+     <listitem><para>sleep for 2 seconds between checks for next WAL file is full</para></listitem>
+     <listitem><para>never timeout if file not found</para></listitem>
+     <listitem><para>stop waiting when a trigger file called /tmp.pgsql.trigger.5442 appears</para></listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <para>
+     Example on Windows
+    </para>
+    <programlisting>
+archive_command = 'copy %p ..\\archive\\%f'
+    </programlisting>
+    <para>
+     Note that backslashes need to be doubled in the archive_command, but
+     *not* in the restore_command, in 8.2, 8.1, 8.0 on Windows.
+    </para>
+    <programlisting>
+restore_command = 'pg_standby -c -d -s 5 -w 0 -t C:\pgsql.trigger.5442
+ ..\archive %f %p 2>> standby.log'
+    </programlisting>
+    <para>
+     which will
+    </para>
+   <itemizedlist>
+     <listitem><para>use a copy command to restore WAL files from archive</para></listitem>
+     <listitem><para>produce logfile output in standby.log</para></listitem>
+     <listitem><para>sleep for 5 seconds between checks for next WAL file is full</para></listitem>
+     <listitem><para>never timeout if file not found</para></listitem>
+     <listitem><para>stop waiting when a trigger file called C:\pgsql.trigger.5442 appears</para></listitem>
+    </itemizedlist>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+ 
+</sect1>
+

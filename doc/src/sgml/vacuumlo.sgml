@@ -1,0 +1,74 @@
+<sect1 id="vacuumlo">
+ <title>vacuumlo</title>
+ 
+ <indexterm zone="vacuumlo">
+  <primary>vacuumlo</primary>
+ </indexterm>
+
+ <para>
+  This is a simple utility that will remove any orphaned large objects out of a
+  PostgreSQL database.  An orphaned LO is considered to be any LO whose OID
+  does not appear in any OID data column of the database.
+ </para>
+ <para>
+  If you use this, you may also be interested in the lo_manage trigger in
+  contrib/lo.  lo_manage is useful to try to avoid creating orphaned LOs
+  in the first place.
+ </para>
+ <para>
+  <note>
+   <para>
+    It was decided to place this in contrib as it needs further testing, but hopefully,
+    this (or a variant of it) would make it into the backend as a "vacuum lo"
+    command in a later release.
+   </para>
+  </note>
+ </para>
+
+ <sect2>
+  <title>Usage</title>
+  <programlisting>
+vacuumlo [options] database [database2 ... databasen]
+  </programlisting>
+  <para>
+   All databases named on the command line are processed.  Available options
+   include:
+  </para>
+  <programlisting>
+-v            Write a lot of progress messages
+-n            Don't remove large objects, just show what would be done
+-U username   Username to connect as
+-W            Prompt for password
+-h hostname   Database server host
+-p port       Database server port
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Method</title>
+  <para>
+   First, it builds a temporary table which contains all of the OIDs of the
+   large objects in that database.
+  </para>
+  <para>
+   It then scans through all columns in the database that are of type "oid"
+   or "lo", and removes matching entries from the temporary table.
+  </para>
+  <para>
+   The remaining entries in the temp table identify orphaned LOs.  These are
+   removed.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Author</title>
+  <para>
+   Peter Mount <email>peter@retep.org.uk</email>
+  </para>
+  <para>
+   <ulink url="http://www.retep.org.uk"></ulink>
+  </para>
+ </sect2>
+
+</sect1>
+

@@ -1,0 +1,436 @@
+<sect1 id="xml2">
+ <title>xml2: XML-handling functions</title>
+ 
+ <indexterm zone="xml2">
+  <primary>xml2</primary>
+ </indexterm>
+
+ <sect2>
+  <title>Deprecation notice</title>
+  <para>
+    From PostgreSQL 8.3 on, there is XML-related
+    functionality based on the SQL/XML standard in the core server.
+    That functionality covers XML syntax checking and XPath queries,
+    which is what this module does as well, and more, but the API is
+    not at all compatible.  It is planned that this module will be
+    removed in PostgreSQL 8.4 in favor of the newer standard API, so
+    you are encouraged to try converting your applications.  If you
+    find that some of the functionality of this module is not
+    available in an adequate form with the newer API, please explain
+    your issue to pgsql-hackers@postgresql.org so that the deficiency
+    can be addressed.
+  </para>
+ </sect2>
+  
+ <sect2>
+  <title>Description of functions</title>
+  <para>
+   The first set of functions are straightforward XML parsing and XPath queries:
+  </para>
+
+  <table>
+   <title>Functions</title>
+   <tgroup cols="2">
+    <tbody>
+     <row>
+      <entry>
+       <programlisting>
+        xml_is_well_formed(document) RETURNS bool
+       </programlisting>
+      </entry>
+      <entry>
+       <para>
+        This parses the document text in its parameter and returns true if the
+        document is well-formed XML.  (Note: before PostgreSQL 8.2, this function
+        was called xml_valid().  That is the wrong name since validity and
+        well-formedness have different meanings in XML.  The old name is still
+        available, but is deprecated and will be removed in 8.3.)
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry>
+       <programlisting>
+        xpath_string(document,query) RETURNS text
+        xpath_number(document,query) RETURNS float4
+        xpath_bool(document,query) RETURNS bool
+       </programlisting>
+      </entry>
+      <entry>
+       <para>
+        These functions evaluate the XPath query on the supplied document, and
+        cast the result to the specified type.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry>
+       <programlisting>
+        xpath_nodeset(document,query,toptag,itemtag) RETURNS text
+       </programlisting>
+      </entry>
+      <entry>
+       <para>
+       This evaluates query on document and wraps the result in XML tags. If
+       the result is multivalued, the output will look like:
+       </para>
+       <literal>
+        &lt;toptag>
+        &lt;itemtag>Value 1 which could be an XML fragment&lt;/itemtag>
+        &lt;itemtag>Value 2....&lt;/itemtag>
+        &lt;/toptag>
+       </literal>
+       <para>
+        If either toptag or itemtag is an empty string, the relevant tag is omitted.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry>
+       <programlisting>
+        xpath_nodeset(document,query) RETURNS
+       </programlisting>
+      </entry>
+      <entry>
+       <para>
+        Like xpath_nodeset(document,query,toptag,itemtag) but text omits both tags.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry>
+       <programlisting>
+        xpath_nodeset(document,query,itemtag) RETURNS
+       </programlisting>
+      </entry>
+      <entry>
+       <para>
+        Like xpath_nodeset(document,query,toptag,itemtag) but text omits toptag.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry>
+       <programlisting>
+        xpath_list(document,query,seperator) RETURNS text
+       </programlisting>
+      </entry>
+      <entry>
+       <para>
+        This function returns multiple values seperated by the specified
+        seperator, e.g. Value 1,Value 2,Value 3 if seperator=','.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry>
+       <programlisting>
+        xpath_list(document,query) RETURNS text
+       </programlisting>
+      </entry>
+      <entry>
+       This is a wrapper for the above function that uses ',' as the seperator.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect2>
+
+
+ <sect2>
+  <title><literal>xpath_table</literal></title>
+  <para>
+   This is a table function which evaluates a set of XPath queries on
+   each of a set of documents and returns the results as a table. The
+   primary key field from the original document table is returned as the
+   first column of the result so that the resultset from xpath_table can
+   be readily used in joins.
+  </para>
+  <para>
+   The function itself takes 5 arguments, all text.
+  </para>
+  <programlisting>
+   xpath_table(key,document,relation,xpaths,criteria)
+  </programlisting>
+  <table>
+   <title>Parameters</title>
+   <tgroup cols="2">
+    <tbody>
+     <row>
+      <entry><literal>key</literal></entry>
+      <entry>
+       <para>
+        the name of the "key" field - this is just a field to be used as
+        the first column of the output table i.e. it identifies the record from
+        which each output row came (see note below about multiple values).
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>document</literal></entry>
+      <entry>
+       <para>
+        the name of the field containing the XML document
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>relation</literal></entry>
+      <entry>
+       <para>
+        the name of the table or view containing the documents
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>xpaths</literal></entry>
+      <entry>
+       <para>
+        multiple xpath expressions separated by <literal>|</literal>
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>criteria</literal></entry>
+      <entry>
+       <para>
+        The contents of the where clause. This needs to be specified,
+        so use "true" or "1=1" here if you want to process all the rows in the
+        relation.
+       </para>
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   NB These parameters (except the XPath strings) are just substituted
+   into a plain SQL SELECT statement, so you have some flexibility - the
+   statement is
+  </para>
+
+  <para>
+   <literal>
+   SELECT &lt;key>,&lt;document> FROM &lt;relation> WHERE &lt;criteria>
+   </literal>
+  </para>
+
+  <para>
+   so those parameters can be *anything* valid in those particular
+   locations. The result from this SELECT needs to return exactly two
+   columns (which it will unless you try to list multiple fields for key
+   or document). Beware that this simplistic approach requires that you
+   validate any user-supplied values to avoid SQL injection attacks.
+  </para>
+ 
+  <para>
+   Using the function
+  </para>
+ 
+  <para>
+   The function has to be used in a FROM expression. This gives the following
+   form:
+  </para>
+ 
+  <programlisting>
+SELECT * FROM
+xpath_table('article_id', 
+	'article_xml',
+	'articles', 
+	'/article/author|/article/pages|/article/title',
+	'date_entered > ''2003-01-01'' ') 
+AS t(article_id integer, author text, page_count integer, title text);
+  </programlisting>
+
+  <para>
+   The AS clause defines the names and types of the columns in the
+   virtual table. If there are more XPath queries than result columns,
+   the extra queries will be ignored. If there are more result columns
+   than XPath queries, the extra columns will be NULL.
+  </para>
+
+  <para>
+   Note that I've said in this example that pages is an integer.  The
+   function deals internally with string representations, so when you say
+   you want an integer in the output, it will take the string
+   representation of the XPath result and use PostgreSQL input functions
+   to transform it into an integer (or whatever type the AS clause
+   requests). An error will result if it can't do this - for example if
+   the result is empty - so you may wish to just stick to 'text' as the
+   column type if you think your data has any problems.
+  </para>
+  <para>
+   The select statement doesn't need to use * alone - it can reference the
+   columns by name or join them to other tables. The function produces a
+   virtual table with which you can perform any operation you wish (e.g.
+   aggregation, joining, sorting etc). So we could also have:
+  </para>
+
+  <programlisting>
+SELECT t.title, p.fullname, p.email 
+FROM xpath_table('article_id','article_xml','articles',
+            '/article/title|/article/author/@id',
+            'xpath_string(article_xml,''/article/@date'') > ''2003-03-20'' ')
+            AS t(article_id integer, title text, author_id integer), 
+     tblPeopleInfo AS p 
+WHERE t.author_id = p.person_id;
+  </programlisting>
+
+  <para>
+   as a more complicated example. Of course, you could wrap all
+   of this in a view for convenience.
+  </para>
+  <sect3>
+   <title>Multivalued results</title>
+   <para>
+    The xpath_table function assumes that the results of each XPath query
+    might be multi-valued, so the number of rows returned by the function
+    may not be the same as the number of input documents. The first row
+    returned contains the first result from each query, the second row the
+    second result from each query. If one of the queries has fewer values
+    than the others, NULLs will be returned instead.
+   </para>
+   <para>
+    In some cases, a user will know that a given XPath query will return
+    only a single result (perhaps a unique document identifier) - if used
+    alongside an XPath query returning multiple results, the single-valued
+    result will appear only on the first row of the result. The solution
+    to this is to use the key field as part of a join against a simpler
+    XPath query. As an example:
+   </para>
+   
+   <para>
+    <literal>
+    CREATE TABLE test
+    (
+      id int4 NOT NULL,
+      xml text,
+      CONSTRAINT pk PRIMARY KEY (id)
+    ) 
+    WITHOUT OIDS;
+    
+    INSERT INTO test VALUES (1, '&lt;doc num="C1">
+    &lt;line num="L1">&lt;a>1&lt;/a>&lt;b>2&lt;/b>&lt;c>3&lt;/c>&lt;/line>
+    &lt;line num="L2">&lt;a>11&lt;/a>&lt;b>22&lt;/b>&lt;c>33&lt;/c>&lt;/line>
+    &lt;/doc>');
+    
+    INSERT INTO test VALUES (2, '&lt;doc num="C2">
+    &lt;line num="L1">&lt;a>111&lt;/a>&lt;b>222&lt;/b>&lt;c>333&lt;/c>&lt;/line>
+    &lt;line num="L2">&lt;a>111&lt;/a>&lt;b>222&lt;/b>&lt;c>333&lt;/c>&lt;/line>
+    &lt;/doc>');
+    </literal>
+   </para>
+  </sect3>
+   
+  <sect3>
+   <title>The query</title>
+   
+   <programlisting>
+   SELECT * FROM  xpath_table('id','xml','test', 
+   '/doc/@num|/doc/line/@num|/doc/line/a|/doc/line/b|/doc/line/c','1=1') 
+   AS t(id int4, doc_num varchar(10), line_num varchar(10), val1 int4, 
+   val2 int4, val3 int4)
+   WHERE id = 1 ORDER BY doc_num, line_num
+   </programlisting>
+   
+   <para>
+   Gives the result:
+   </para>
+   
+   <programlisting>
+    id | doc_num | line_num | val1 | val2 | val3
+   ----+---------+----------+------+------+------
+     1 | C1      | L1       |    1 |    2 |    3
+     1 |         | L2       |   11 |   22 |   33
+   </programlisting>
+   
+   <para>
+   To get doc_num on every line, the solution is to use two invocations
+   of xpath_table and join the results:
+   </para>
+   
+   <programlisting>
+   SELECT t.*,i.doc_num FROM 
+     xpath_table('id','xml','test',
+      '/doc/line/@num|/doc/line/a|/doc/line/b|/doc/line/c','1=1') 
+           AS t(id int4, line_num varchar(10), val1 int4, val2 int4, val3 int4),
+     xpath_table('id','xml','test','/doc/@num','1=1') 
+           AS i(id int4, doc_num varchar(10))
+   WHERE i.id=t.id AND i.id=1
+   ORDER BY doc_num, line_num;
+   </programlisting>
+   
+   <para>
+   which gives the desired result:
+   </para>
+   
+   <programlisting>
+    id | line_num | val1 | val2 | val3 | doc_num
+   ----+----------+------+------+------+---------
+     1 | L1       |    1 |    2 |    3 | C1
+     1 | L2       |   11 |   22 |   33 | C1
+   (2 rows)
+   </programlisting>
+  </sect3>
+ </sect2>
+   
+
+ <sect2>
+  <title>XSLT functions</title>
+  <para>
+   The following functions are available if libxslt is installed (this is
+   not currently detected automatically, so you will have to amend the
+   Makefile)
+  </para>
+
+  <sect3>
+   <title><literal>xslt_process</literal></title>
+   <programlisting>
+    xslt_process(document,stylesheet,paramlist) RETURNS text
+   </programlisting>
+
+   <para>
+    This function appplies the XSL stylesheet to the document and returns
+    the transformed result. The paramlist is a list of parameter
+    assignments to be used in the transformation, specified in the form
+    'a=1,b=2'. Note that this is also proof-of-concept code and the
+    parameter parsing is very simple-minded (e.g. parameter values cannot
+    contain commas!)
+   </para>
+   <para>
+    Also note that if either the document or stylesheet values do not
+    begin with a < then they will be treated as URLs and libxslt will
+    fetch them. It thus follows that you can use xslt_process as a means
+    to fetch the contents of URLs - you should be aware of the security
+    implications of this.
+   </para> 
+   <para>
+    There is also a two-parameter version of xslt_process which does not
+    pass any parameters to the transformation.
+   </para>
+  </sect3>
+ </sect2>
+
+ <sect2>
+  <title>Credits</title>
+  <para>
+   Development of this module was sponsored by Torchbox Ltd. (www.torchbox.com)
+   It has the same BSD licence as PostgreSQL.
+  </para>
+  <para>
+   This version of the XML functions provides both XPath querying and
+   XSLT functionality. There is also a new table function which allows
+   the straightforward return of multiple XML results. Note that the current code
+   doesn't take any particular care over character sets - this is
+   something that should be fixed at some point!
+  </para>
+  <para>
+   If you have any comments or suggestions, please do contact me at
+   <email>jgray@azuli.co.uk.</email> Unfortunately, this isn't my main job, so 
+   I can't guarantee a rapid response to your query!
+  </para>
+ </sect2>
+</sect1>
+

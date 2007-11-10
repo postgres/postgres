@@ -1,0 +1,158 @@
+
+<sect1 id="pgstattuple">
+ <title>pgstattuple</title>
+ 
+ <indexterm zone="pgstattuple">
+  <primary>pgstattuple</primary>
+ </indexterm>
+
+ <para>
+  <literal>pgstattuple</literal> modules provides various functions to obtain 
+  tuple statistics.
+ </para>
+
+ <sect2>
+  <title>Functions</title>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>pgstattuple()</literal> returns the relation length, percentage 
+     of the "dead" tuples of a relation and other info. This may help users to 
+     determine whether vacuum is necessary or not. Here is an example session:
+    </para>
+    <programlisting>
+test=> \x
+Expanded display is on.
+test=> SELECT * FROM pgstattuple('pg_catalog.pg_proc');
+-[ RECORD 1 ]------+-------
+table_len          | 458752
+tuple_count        | 1470
+tuple_len          | 438896
+tuple_percent      | 95.67
+dead_tuple_count   | 11
+dead_tuple_len     | 3157
+dead_tuple_percent | 0.69
+free_space         | 8932
+free_percent       | 1.95
+    </programlisting>
+    <para>
+     Here are explanations for each column:
+    </para>
+    
+    <table>
+     <title><literal>pgstattuple()</literal> column descriptions</title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>Column</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>table_len</entry>
+	<entry>physical relation length in bytes</entry>
+       </row>
+       <row>
+        <entry>tuple_count</entry>
+	<entry>number of live tuples</entry>
+       </row>
+       <row>
+        <entry>tuple_len</entry>
+	<entry>total tuples length in bytes</entry>
+       </row>
+       <row>
+        <entry>tuple_percent</entry>
+	<entry>live tuples in %</entry>
+       </row>
+       <row>
+        <entry>dead_tuple_len</entry>
+	<entry>total dead tuples length in bytes</entry>
+       </row>
+       <row>
+        <entry>dead_tuple_percent</entry>
+	<entry>dead tuples in %</entry>
+       </row>
+       <row>
+        <entry>free_space</entry>
+	<entry>free space in bytes</entry>
+       </row>
+       <row>
+        <entry>free_percent</entry>
+	<entry>free space in %</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    <para>
+     <note>
+      <para>
+       <literal>pgstattuple</literal> acquires only a read lock on the relation. So 
+       concurrent update may affect the result.
+      </para>
+     </note>
+     <note>
+      <para>
+       <literal>pgstattuple</literal> judges a tuple is "dead" if HeapTupleSatisfiesNow()
+       returns false.
+      </para>
+     </note>
+    </para>
+   </listitem>
+
+
+   <listitem>
+    <para>
+     <literal>pg_relpages()</literal> returns the number of pages in the relation.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>pgstatindex()</literal> returns an array showing the information about an index:
+    </para>
+    <programlisting>
+test=> \x
+Expanded display is on.
+test=> SELECT * FROM pgstatindex('pg_cast_oid_index');
+-[ RECORD 1 ]------+------
+version            | 2
+tree_level         | 0
+index_size         | 8192
+root_block_no      | 1
+internal_pages     | 0
+leaf_pages         | 1
+empty_pages        | 0
+deleted_pages      | 0
+avg_leaf_density   | 50.27
+leaf_fragmentation | 0
+    </programlisting>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Usage</title>
+  <para>
+   <literal>pgstattuple</literal> may be called as a relation function and is
+   defined as follows:
+  </para>
+  <programlisting>
+    CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS pgstattuple_type
+     AS 'MODULE_PATHNAME', 'pgstattuple'
+     LANGUAGE C STRICT;
+
+    CREATE OR REPLACE FUNCTION pgstattuple(oid) RETURNS pgstattuple_type
+     AS 'MODULE_PATHNAME', 'pgstattuplebyid'
+     LANGUAGE C STRICT;
+  </programlisting>
+  <para>
+   The argument is the relation name (optionally it may be qualified)
+   or the OID of the relation.  Note that pgstattuple only returns
+   one row.
+  </para>
+ </sect2>
+
+</sect1>
+

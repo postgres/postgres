@@ -1,37 +1,32 @@
-Pg_buffercache - Real time queries on the shared buffer cache.
---------------
+<sect1 id="buffercache">
+ <title>pg_buffercache</title>
+ 
+ <indexterm zone="buffercache">
+  <primary>pg_buffercache</primary>
+ </indexterm>
 
-  This module consists of a C function 'pg_buffercache_pages()' that returns 
-  a set of records, plus a view 'pg_buffercache' to wrapper the function.
-
-  The intent is to do for the buffercache what pg_locks does for locks, i.e -
-  ability to examine what is happening at any given time without having to 
-  restart or rebuild the server with debugging code added.
-
+ <para>
+  <literal>pg_buffercache</literal> module provides the means for examining 
+  what's happening to the buffercache at any given time without having to
+  restart or rebuild the server with debugging code added. The intent is to 
+  do for the buffercache what pg_locks does for locks.
+ </para>
+ <para>
+  This module consists of a C function <literal>pg_buffercache_pages()</literal> 
+  that returns a set of records, plus a view <literal>pg_buffercache</literal> 
+  to wrapper the function.
+ </para>
+ <para>
   By default public access is REVOKED from both of these, just in case there
   are security issues lurking.
+ </para>
 
-
-Installation
-------------
-
-  Build and install the main Postgresql source, then this contrib module:
-
-  $ cd contrib/pg_buffercache
-  $ gmake
-  $ gmake install
-
-
-  To register the functions:
-
-  $ psql -d <database> -f pg_buffercache.sql
-
-
-Notes
------
-
-  The definition of the columns exposed in the view is:
-
+ <sect2>
+  <title>Notes</title>
+  <para>
+   The definition of the columns exposed in the view is:
+  </para>
+  <programlisting>
        Column     |  references          | Description
   ----------------+----------------------+------------------------------------
    bufferid       |                      | Id, 1..shared_buffers.
@@ -41,23 +36,27 @@ Notes
    relblocknumber |                      | Offset of the page in the relation.
    isdirty        |                      | Is the page dirty?
    usagecount     |                      | Page LRU count
+  </programlisting>
+  <para>
+   There is one row for each buffer in the shared cache. Unused buffers are
+   shown with all fields null except bufferid.
+  </para>
+  <para>
+   Because the cache is shared by all the databases, there are pages from
+   relations not belonging to the current database.
+  </para>
+  <para>
+   When the pg_buffercache view is accessed, internal buffer manager locks are 
+   taken, and a copy of the buffer cache data is made for the view to display. 
+   This ensures that the view produces a consistent set of results, while not 
+   blocking normal buffer activity longer than necessary.  Nonetheless there 
+   could be some impact on database performance if this view is read often.
+  </para>
+ </sect2>
 
-  There is one row for each buffer in the shared cache. Unused buffers are
-  shown with all fields null except bufferid.
-
-  Because the cache is shared by all the databases, there are pages from
-  relations not belonging to the current database.
-
-  When the pg_buffercache view is accessed, internal buffer manager locks are 
-  taken, and a copy of the buffer cache data is made for the view to display. 
-  This ensures that the view produces a consistent set of results, while not 
-  blocking normal buffer activity longer than necessary.  Nonetheless there 
-  could be some impact on database performance if this view is read often.
-
-
-Sample output
--------------
-
+ <sect2>
+  <title>Sample output</title>
+  <programlisting>
   regression=# \d pg_buffercache;
        View "public.pg_buffercache"
        Column     |  Type    | Modifiers
@@ -98,18 +97,25 @@ Sample output
   (10 rows)
 
   regression=# 
+  </programlisting>
+ </sect2>
 
+ <sect2>
+  <title>Authors</title>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Mark Kirkwood <email>markir@paradise.net.nz</email>
+    </para>
+   </listitem>
+   <listitem>
+    <para>Design suggestions: Neil Conway <email>neilc@samurai.com</email></para>
+   </listitem>
+   <listitem>
+    <para>Debugging advice: Tom Lane <email>tgl@sss.pgh.pa.us</email></para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
 
-Author
-------
+</sect1>
 
-  * Mark Kirkwood <markir@paradise.net.nz>
-
-
-Help
-----
-
-  * Design suggestions : Neil Conway <neilc@samurai.com>
-  * Debugging advice : Tom Lane <tgl@sss.pgh.pa.us>
-
-  Thanks guys!

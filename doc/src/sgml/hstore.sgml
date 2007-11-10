@@ -1,0 +1,298 @@
+<sect1 id="hstore">
+ <title>hstore</title>
+ 
+ <indexterm zone="hstore">
+  <primary>hstore</primary>
+ </indexterm>
+
+ <para>
+  The <literal>hstore</literal> module is usefull for storing (key,value) pairs.
+  This module can be useful in different scenarios: case with many attributes
+  rarely searched, semistructural data or a lazy DBA.
+ </para>
+
+ <sect2>
+  <title>Operations</title>
+  <itemizedlist>
+   <listitem>
+    <para>
+      <literal>hstore -> text</literal> - get value , perl analogy $h{key} 
+    </para>
+    <programlisting>
+select 'a=>q, b=>g'->'a';
+  ?
+------
+  q
+    </programlisting>
+    <para>
+     Note the use of parenthesis in the select below, because priority of 'is' is 
+     higher than that of '->':
+    </para>
+    <programlisting>
+SELECT id FROM entrants WHERE (info->'education_period') IS NOT NULL;
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>hstore || hstore</literal> - concatenation, perl analogy %a=( %b, %c ); 
+    </para>
+    <programlisting>
+regression=# select 'a=>b'::hstore || 'c=>d'::hstore;
+      ?column?      
+--------------------
+ "a"=>"b", "c"=>"d"
+(1 row)
+    </programlisting>
+
+    <para>
+     but, notice
+    </para>
+
+    <programlisting>
+regression=# select 'a=>b'::hstore || 'a=>d'::hstore;
+ ?column? 
+----------
+ "a"=>"d"
+(1 row)
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>text => text</literal> - creates hstore type from two text strings 
+    </para>
+    <programlisting>
+select 'a'=>'b';
+  ?column?
+----------
+  "a"=>"b"
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+      <literal>hstore @> hstore</literal> - contains operation, check if left operand contains right. 
+    </para>
+    <programlisting>
+regression=# select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>c';
+ ?column? 
+----------
+ f
+(1 row)
+
+regression=# select 'a=>b, b=>1, c=>NULL'::hstore @> 'b=>1';
+ ?column? 
+----------
+ t
+(1 row)
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>hstore &lt;@ hstore</literal> - contained operation, check if 
+     left operand is contained in right
+    </para>
+    <para>
+     (Before PostgreSQL 8.2, the containment operators @&gt; and &lt;@ were
+     respectively called @ and ~.  These names are still available, but are
+     deprecated and will eventually be retired.  Notice that the old names
+     are reversed from the convention formerly followed by the core geometric
+     datatypes!)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Functions</title>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>akeys(hstore)</literal> - returns all keys from hstore as array 
+    </para>
+    <programlisting>
+regression=# select akeys('a=>1,b=>2');
+ akeys 
+-------
+ {a,b}
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>skeys(hstore)</literal> - returns all keys from hstore as strings 
+    </para>
+    <programlisting>
+regression=# select skeys('a=>1,b=>2');
+ skeys 
+-------
+ a
+ b
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>avals(hstore)</literal> - returns all values from hstore as array 
+    </para>
+    <programlisting>
+regression=# select avals('a=>1,b=>2');
+ avals 
+-------
+ {1,2}
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>svals(hstore)</literal> - returns all values from hstore as 
+     strings 
+    </para>
+    <programlisting>
+regression=# select svals('a=>1,b=>2');
+ svals 
+-------
+ 1
+ 2
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>delete (hstore,text)</literal> - delete (key,value) from hstore if 
+     key matches argument. 
+    </para>
+    <programlisting>
+regression=# select delete('a=>1,b=>2','b');
+  delete  
+----------
+ "a"=>"1"
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>each(hstore)</literal> - return (key, value) pairs 
+    </para>
+    <programlisting>
+regression=# select * from each('a=>1,b=>2');
+ key | value 
+-----+-------
+ a   | 1
+ b   | 2
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>exist (hstore,text)</literal>
+    </para>
+    <para>
+     <literal>hstore ? text</literal> - returns 'true if key is exists in hstore 
+     and false otherwise. 
+    </para>
+    <programlisting>
+regression=# select exist('a=>1','a'), 'a=>1' ? 'a';
+ exist | ?column? 
+-------+----------
+ t     | t
+    </programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>defined (hstore,text)</literal> - returns true if key is exists in 
+      hstore and its value is not NULL. 
+    </para>
+    <programlisting>
+regression=# select defined('a=>NULL','a');
+ defined 
+---------
+ f
+    </programlisting>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Indices</title>
+  <para>
+   Module provides index support for '@>' and '?' operations.
+  </para>
+  <programlisting>
+CREATE INDEX hidx ON testhstore USING GIST(h);
+CREATE INDEX hidx ON testhstore USING GIN(h);
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Examples</title>
+
+  <para>
+   Add a key:
+  </para>
+  <programlisting>
+UPDATE tt SET h=h||'c=>3';
+  </programlisting>
+  <para>
+   Delete a key:
+  </para>
+  <programlisting>
+UPDATE tt SET h=delete(h,'k1');
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Statistics</title>
+  <para>
+hstore type, because of its intrinsic liberality, could contain a lot of 
+different keys. Checking for valid keys is the task of application. 
+Examples below demonstrate several techniques how to check keys statistics.
+  </para>
+
+  <para>
+   Simple example
+  </para>
+  <programlisting>
+SELECT * FROM each('aaa=>bq, b=>NULL, ""=>1 ');
+  </programlisting>
+
+  <para>
+   Using table
+  </para>
+  <programlisting>
+SELECT (each(h)).key, (each(h)).value INTO stat FROM testhstore ;
+  </programlisting>
+
+  <para>Online stat</para>
+  <programlisting>
+SELECT key, count(*) FROM (SELECT (each(h)).key FROM testhstore) AS stat GROUP BY key ORDER BY count DESC, key;
+    key    | count 
+-----------+-------
+ line      |   883
+ query     |   207
+ pos       |   203
+ node      |   202
+ space     |   197
+ status    |   195
+ public    |   194
+ title     |   190
+ org       |   189
+...................
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Authors</title>
+  <para>
+   Oleg Bartunov <email>oleg@sai.msu.su</email>, Moscow, Moscow University, Russia
+  </para>
+  <para>
+   Teodor Sigaev <email>teodor@sigaev.ru</email>, Moscow, Delta-Soft Ltd.,Russia
+  </para>
+ </sect2>
+</sect1>
+

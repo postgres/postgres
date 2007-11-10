@@ -1,0 +1,32 @@
+<sect1>
+ <title>adminpack</title>
+ <para>
+  adminpack is a PostgreSQL standard module that implements a number of
+  support functions which pgAdmin and other administration and management tools
+  can use to provide additional functionality if installed on a server.
+ </para>
+
+ <sect2>
+  <title>Functions implemented</title>
+  <para>
+   Functions implemented by adminpack can only be run by a superuser. Here's a 
+   list of these functions:
+  </para>
+  <para>
+   <programlisting>
+    int8 pg_catalog.pg_file_write(fname text, data text, append bool)
+    bool pg_catalog.pg_file_rename(oldname text, newname text, archivname text)
+    bool pg_catalog.pg_file_rename(oldname text, newname text)
+    bool pg_catalog.pg_file_unlink(fname text)
+    setof record pg_catalog.pg_logdir_ls()
+
+    /* Renaming of existing backend functions for pgAdmin compatibility */
+    int8 pg_catalog.pg_file_read(fname text, data text, append bool)
+    bigint pg_catalog.pg_file_length(text)
+    int4 pg_catalog.pg_logfile_rotate()
+   </programlisting>
+  </para>
+ </sect2>
+
+</sect1>
+

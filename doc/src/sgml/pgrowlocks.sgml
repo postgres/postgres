@@ -1,0 +1,123 @@
+
+<sect1 id="pgrowlocks">
+ <title>pgrowlocks</title>
+ 
+ <indexterm zone="pgrowlocks">
+  <primary>pgrowlocks</primary>
+ </indexterm>
+
+ <para>
+  The <literal>pgrowlocks</literal> module provides a function to show row 
+  locking information for a specified table.
+ </para>
+
+ <sect2>
+  <title>Overview</title>
+  <programlisting>
+pgrowlocks(text) RETURNS pgrowlocks_type
+  </programlisting>
+  <para>
+   The parameter is a name of table. And <literal>pgrowlocks_type</literal> is 
+   defined as:
+  </para>
+  <programlisting>
+CREATE TYPE pgrowlocks_type AS (
+	locked_row TID,		-- row TID
+	lock_type TEXT,		-- lock type
+	locker XID,		-- locking XID
+	multi bool,		-- multi XID?
+	xids xid[],		-- multi XIDs
+	pids INTEGER[]		-- locker's process id
+);
+  </programlisting>
+
+  <table>
+   <title>pgrowlocks_type</title>
+   <tgroup cols="2">
+    <tbody>
+     <row>
+      <entry>locked_row</entry>
+      <entry>tuple ID(TID) of each locked rows</entry>
+     </row>
+     <row>
+      <entry>lock_type</entry>
+      <entry>"Shared" for shared lock, "Exclusive" for exclusive lock</entry>
+     </row>
+     <row>
+      <entry>locker</entry>
+      <entry>transaction ID of locker (Note 1)</entry>
+     </row>
+     <row>
+      <entry>multi</entry>
+      <entry>"t" if locker is a multi transaction, otherwise "f"</entry>
+     </row>
+     <row>
+      <entry>xids</entry>
+      <entry>XIDs of lockers (Note 2)</entry>
+     </row>
+     <row>
+      <entry>pids</entry>
+      <entry>process ids of locking backends</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   Note1: If the locker is multi transaction, it represents the multi ID.
+  </para>
+  <para>
+   Note2: If the locker is multi, multiple data are shown.
+  </para>
+
+  <para>
+   The calling sequence for <literal>pgrowlocks</literal> is as follows:
+   <literal>pgrowlocks</literal> grabs AccessShareLock for the target table and 
+   reads each row one by one to get the row locking information. You should
+   notice that:
+  </para>
+  <orderedlist>
+   <listitem>
+    <para>
+    if the table is exclusive locked by someone else, 
+    <literal>pgrowlocks</literal> will be blocked.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>pgrowlocks</literal> may show incorrect information if there's a 
+     new lock or a lock is freeed while its execution.
+    </para>
+   </listitem>
+  </orderedlist>
+  <para>
+   <literal>pgrowlocks</literal> does not show the contents of locked rows. If 
+   you want to take a look at the row contents at the same time, you could do
+   something like this:
+  </para>
+  <programlisting>
+SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p WHERE p.locked_ row = a.ctid;
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Example</title>
+  <para>
+   <literal>pgrowlocks</literal> returns the following data type:
+  </para>
+  <para>
+   Here is a sample execution of pgrowlocks:
+  </para>
+  <programlisting>
+test=# SELECT * FROM pgrowlocks('t1');
+ locked_row | lock_type | locker | multi |   xids    |     pids      
+------------+-----------+--------+-------+-----------+---------------
+      (0,1) | Shared    |     19 | t     | {804,805} | {29066,29068}
+      (0,2) | Shared    |     19 | t     | {804,805} | {29066,29068}
+      (0,3) | Exclusive |    804 | f     | {804}     | {29066}
+      (0,4) | Exclusive |    804 | f     | {804}     | {29066}
+(4 rows)
+  </programlisting>
+
+ </sect2>
+</sect1>
+

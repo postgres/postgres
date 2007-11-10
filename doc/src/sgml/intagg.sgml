@@ -1,0 +1,82 @@
+
+<sect1 id="intagg">
+ <title>intagg</title>
+ 
+ <indexterm zone="intagg">
+  <primary>intagg</primary>
+ </indexterm>
+
+ <para>
+  This section describes the <literal>intagg</literal> module which provides an integer aggregator and an enumerator.
+ </para>
+ <para>
+  Many database systems have the notion of a one to many table. Such a table usually sits between two indexed tables, as: 
+ </para>
+ <programlisting>
+CREATE TABLE one_to_many(left INT, right INT) ;
+ </programlisting>
+
+ <para>
+  And it is used like this:
+ </para>
+
+ <programlisting>
+  SELECT right.* from right JOIN one_to_many ON (right.id = one_to_many.right) 
+	WHERE  one_to_many.left = item;
+ </programlisting>
+
+ <para>
+  This will return all the items in the right hand table for an entry 
+  in the left hand table. This is a very common construct in SQL.
+ </para>
+
+ <para>
+  Now, this methodology can be cumbersome with a very large number of
+  entries in the one_to_many table. Depending on the order in which
+  data was entered, a join like this could result in an index scan
+  and a fetch for each right hand entry in the table for a particular
+  left hand entry. If you have a very dynamic system, there is not much you 
+  can do. However, if you have some data which is fairly static, you can
+  create a summary table with the aggregator.
+ </para>
+
+ <programlisting>
+CREATE TABLE summary as SELECT left, int_array_aggregate(right) 
+	AS right FROM one_to_many GROUP BY left;
+ </programlisting>
+
+ <para>
+  This will create a table with one row per left item, and an array
+  of right items. Now this is pretty useless without some way of using
+  the array, thats why there is an array enumerator.
+ </para>
+ <programlisting>
+SELECT left, int_array_enum(right) FROM summary WHERE left = item;
+ </programlisting>
+
+ <para>
+  The above query using int_array_enum, produces the same results as:
+ </para>
+ <programlisting>
+SELECT left, right FROM one_to_many WHERE left = item;
+ </programlisting>
+ 
+ <para>
+  The difference is that the query against the summary table has to get
+  only one row from the table, where as the query against "one_to_many"
+  must index scan and fetch a row for each entry.
+ </para>
+ <para>
+  On our system, an EXPLAIN shows a query with a cost of 8488 gets reduced
+  to a cost of 329. The query is a join between the one_to_many table,
+ </para>
+ <programlisting>
+SELECT right, count(right) FROM 
+(
+	SELECT left, int_array_enum(right) AS right FROM summary JOIN
+                (SELECT left FROM left_table WHERE left = item) AS lefts
+                 ON (summary.left = lefts.left ) 
+) AS list GROUP BY right ORDER BY count DESC ;
+ </programlisting>
+</sect1>
+

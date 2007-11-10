@@ -1,0 +1,164 @@
+
+<sect1 id="sslinfo">
+ <title>sslinfo</title>
+ 
+ <indexterm zone="sslinfo">
+  <primary>sslinfo</primary>
+ </indexterm>
+
+ <para>
+  This modules provides information about current SSL certificate for PostgreSQL.
+ </para>
+
+ <sect2>
+  <title>Notes</title>
+  <para>
+   This extension won't build unless your PostgreSQL server is configured
+   with --with-openssl.  Information provided with these functions would
+   be completely useless if you don't use SSL to connect to database.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Functions Description</title>
+  
+  <itemizedlist>
+   <listitem>
+    <programlisting>
+ssl_is_used() RETURNS boolean;
+    </programlisting>
+    <para>
+     Returns TRUE, if current connection to server uses SSL and FALSE
+     otherwise.
+    </para>
+   </listitem>
+
+   <listitem>
+    <programlisting>
+ssl_client_cert_present() RETURNS boolean
+    </programlisting>
+    <para>
+     Returns TRUE if current client have presented valid SSL client
+     certificate to the server and FALSE otherwise (e.g., no SSL,
+     certificate hadn't be requested by server).
+    </para>
+   </listitem>
+  
+   <listitem>
+    <programlisting>
+ssl_client_serial() RETURNS numeric
+    </programlisting>
+    <para>
+     Returns serial number of current client certificate.  The combination
+     of certificate serial number and certificate issuer is guaranteed to
+     uniquely identify certificate (but not its owner -- the owner ought to
+     regularily change his keys, and get new certificates from the issuer).
+    </para>
+    <para>
+     So, if you run you own CA and allow only certificates from this CA to
+     be accepted by server, the serial number is the most reliable (albeit
+     not very mnemonic) means to indentify user.
+    </para>
+   </listitem>
+
+   <listitem>
+    <programlisting>
+ssl_client_dn() RETURNS text
+    </programlisting>
+    <para>
+     Returns the full subject of current client certificate, converting
+     character data into the current database encoding.  It is assumed that
+     if you use non-Latin characters in the certificate names, your
+     database is able to represent these characters, too.  If your database
+     uses the SQL_ASCII encoding, non-Latin characters in the name will be
+     represented as UTF-8 sequences.
+    </para>
+    <para>
+     The result looks like '/CN=Somebody /C=Some country/O=Some organization'.
+    </para>
+   </listitem>
+ 
+   <listitem>
+    <programlisting>
+ssl_issuer_dn()
+    </programlisting>
+    <para>
+     Returns the full issuer name of the client certificate, converting
+     character data into current database encoding.
+    </para>
+    <para>
+     The combination of the return value of this function with the
+     certificate serial number uniquely identifies the certificate.
+    </para>
+    <para>
+     The result of this function is really useful only if you have more
+     than one trusted CA certificate in your server's root.crt file, or if
+     this CA has issued some intermediate certificate authority
+     certificates.
+    </para>
+   </listitem>
+ 
+   <listitem>
+    <programlisting>
+ssl_client_dn_field(fieldName text) RETURNS text
+    </programlisting>
+    <para>
+     This function returns the value of the specified field in the
+     certificate subject.  Field names are string constants that are
+     converted into ASN1 object identificators using the OpenSSL object
+     database.  The following values are acceptable:
+    </para>
+    <programlisting>
+commonName (alias CN)
+surname (alias SN)
+name
+givenName (alias GN)
+countryName (alias C) 
+localityName (alias L)
+stateOrProvinceName (alias ST)
+organizationName (alias O)
+organizationUnitName (alias OU)
+title
+description
+initials
+postalCode
+streetAddress
+generationQualifier
+description
+dnQualifier
+x500UniqueIdentifier
+pseudonim
+role
+emailAddress
+    </programlisting>
+    <para>	
+     All of these fields are optional, except commonName.  It depends
+     entirely on your CA policy which of them would be included and which
+     wouldn't.  The meaning of these fields, howeer, is strictly defined by
+     the X.500 and X.509 standards, so you cannot just assign arbitrary
+     meaning to them.
+    </para>
+   </listitem>
+ 
+   <listitem>
+    <programlisting>
+ssl_issuer_field(fieldName text) RETURNS text;
+    </programlisting>
+    <para>
+     Does same as ssl_client_dn_field, but for the certificate issuer
+     rather than the certificate subject.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Author</title>
+  <para>
+   Victor Wagner <email>vitus@cryptocom.ru</email>, Cryptocom LTD
+   E-Mail of Cryptocom OpenSSL development group: 
+   <email>openssl@cryptocom.ru</email>
+  </para>
+ </sect2>
+</sect1>
+

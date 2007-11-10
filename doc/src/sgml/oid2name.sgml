@@ -1,37 +1,70 @@
-This utility allows administrators to examine the file structure used by
-PostgreSQL.  To make use of it, you need to be familiar with the file
-structure, which is described in the "Database File Layout" chapter of
-the "Internals" section of the PostgreSQL documentation.
+<sect1 id="oid2name">
+ <title>oid2name</title>
+ 
+ <indexterm zone="oid2name">
+  <primary>oid2name</primary>
+ </indexterm>
 
-Oid2name connects to the database and extracts OID, filenode, and table
-name information.  You can also have it show database OIDs and tablespace
-OIDs.
-
-When displaying specific tables, you can select which tables to show by
-using -o, -f and -t.  The first switch takes an OID, the second takes
-a filenode, and the third takes a tablename (actually, it's a LIKE
-pattern, so you can use things like "foo%").  Note that you can use as many
-of these switches as you like, and the listing will include all objects
-matched by any of the switches.  Also note that these switches can only
-show objects in the database given in -d.
-
-If you don't give any of -o, -f or -t it will dump all the tables in the
-database given in -d.  If you don't give -d, it will show a database
-listing.  Alternatively you can give -s to get a tablespace listing.
-
-Additional switches:
-	-i	include indexes and sequences in the database listing.
-	-x	display more information about each object shown:
-		tablespace name, schema name, OID.
-	-S	also show system objects
-		(those in information_schema, pg_toast and pg_catalog schemas)
-	-q	don't display headers
-		(useful for scripting)
-
----------------------------------------------------------------------------
-
-Sample session:
-
+ <para>
+  This utility allows administrators to examine the file structure used by
+  PostgreSQL.  To make use of it, you need to be familiar with the file
+  structure, which is described in <xref linkend="storage">.
+ </para>
+ 
+ <sect2>
+  <title>Overview</title>
+  <para>
+   <literal>oid2name</literal> connects to the database and extracts OID, 
+   filenode, and table name information.  You can also have it show database 
+   OIDs and tablespace OIDs.
+  </para>
+  <para>
+   When displaying specific tables, you can select which tables to show by
+   using -o, -f and -t.  The first switch takes an OID, the second takes
+   a filenode, and the third takes a tablename (actually, it's a LIKE
+   pattern, so you can use things like "foo%").  Note that you can use as many
+   of these switches as you like, and the listing will include all objects
+   matched by any of the switches.  Also note that these switches can only
+   show objects in the database given in -d.
+  </para>
+  <para>
+   If you don't give any of -o, -f or -t it will dump all the tables in the
+   database given in -d.  If you don't give -d, it will show a database
+   listing.  Alternatively you can give -s to get a tablespace listing.
+  </para>
+  <table>
+   <title>Additional switches</title>
+   <tgroup cols="2">
+    <tbody>
+     <row>
+      <entry><literal>-i</literal></entry>
+      <entry>include indexes and sequences in the database listing.</entry>
+     </row>
+     <row>
+      <entry><literal>-x</literal></entry>
+      <entry>display more information about each object shown: tablespace name, 
+       schema name, OID.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-S</literal></entry>
+      <entry>also show system objects (those in information_schema, pg_toast 
+       and pg_catalog schemas)
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-q</literal></entry>
+      <entry>don't display headers(useful for scripting)</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect2>
+ 
+ <sect2>
+  <title>Examples</title>
+ 
+  <programlisting>
 $ oid2name
 All databases:
     Oid  Database Name  Tablespace
@@ -147,19 +180,26 @@ From database "alvherre":
     155156         foo
 
 $ # end of sample session.
+  </programlisting>
 
----------------------------------------------------------------------------
+  <para>
+   You can also get approximate size data for each object using psql.  For
+   example, 
+  </para>
+  <programlisting>
+   SELECT relpages, relfilenode, relname FROM pg_class ORDER BY relpages DESC;
+  </programlisting>
+  <para>
+   Each page is typically 8k.  Relpages is updated by VACUUM.
+  </para>
+ </sect2>
+ 
+ <sect2>
+  <title>Author</title>
+  <para>
+   b. palmer, <email>bpalmer@crimelabs.net</email>
+  </para>
+ </sect2>
 
-You can also get approximate size data for each object using psql.  For
-example,
+</sect1>
 
-SELECT relpages, relfilenode, relname FROM pg_class ORDER BY relpages DESC;
-
-Each page is typically 8k.  Relpages is updated by VACUUM.
-
----------------------------------------------------------------------------
-
-Mail me with any problems or additions you would like to see.  Clearing 
-house for the code will be at:  http://www.crimelabs.net
-
-b. palmer, bpalmer@crimelabs.net

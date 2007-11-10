@@ -1,0 +1,40 @@
+<sect1>
+ <!--
+ <indexterm zone="btree-gist">
+  <primary>btree-gist</primary>
+ </indexterm>
+ -->
+
+ <title>btree-gist</title>
+
+ <para>
+  btree-gist is a B-Tree implementation using GiST that supports the int2, int4,
+  int8, float4, float8 timestamp with/without time zone, time
+  with/without time zone, date, interval, oid, money, macaddr, char,
+  varchar/text, bytea, numeric, bit, varbit and inet/cidr types.
+ </para>
+
+ <sect2>
+  <title>Example usage</title>
+  <programlisting>
+   CREATE TABLE test (a int4);
+   -- create index
+   CREATE INDEX testidx ON test USING gist (a);
+   -- query
+   SELECT * FROM test WHERE a < 10;
+  </programlisting>
+ </sect2>
+ 
+ <sect2>
+  <title>Authors</title>
+  <para>
+   All work was done by Teodor Sigaev (<email>teodor@stack.net</email>) , 
+   Oleg Bartunov (<email>oleg@sai.msu.su</email>), Janko Richter 
+   (<email>jankorichter@yahoo.de</email>).  See 
+   <ulink url="http://www.sai.msu.su/~megera/postgres/gist"></ulink> for additional 
+   information.
+  </para>
+ </sect2>
+
+</sect1>
+

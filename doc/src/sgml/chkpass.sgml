@@ -1,0 +1,84 @@
+<sect1 id="chkpass">
+ <title>chkpass</title> 
+ 
+ <!--
+ <indexterm zone="chkpass">
+  <primary>chkpass</primary>
+ </indexterm>
+ -->
+ <para>
+  chkpass is a password type that is automatically checked and converted upon
+  entry.  It is stored encrypted.  To compare, simply compare against a clear
+  text password and the comparison function will encrypt it before comparing.
+  It also returns an error if the code determines that the password is easily
+  crackable.  This is currently a stub that does nothing.
+ </para>
+
+ <para>
+  Note that the chkpass data type is not indexable.
+  <!--
+  I haven't worried about making this type indexable.  I doubt that anyone
+  would ever need to sort a file in order of encrypted password.
+  -->
+ </para>
+
+ <para>
+  If you precede the string with a colon, the encryption and checking are
+  skipped so that you can enter existing passwords into the field.
+ </para>
+
+ <para>
+  On output, a colon is prepended.  This makes it possible to dump and reload
+  passwords without re-encrypting them.  If you want the password (encrypted)
+  without the colon then use the raw() function.  This allows you to use the
+  type with things like Apache's Auth_PostgreSQL module.
+ </para>
+
+ <para>
+  The encryption uses the standard Unix function crypt(), and so it suffers
+  from all the usual limitations of that function; notably that only the
+  first eight characters of a password are considered.
+ </para>
+
+ <para>
+  Here is some sample usage:
+ </para>
+
+ <programlisting>
+test=# create table test (p chkpass);
+CREATE TABLE
+test=# insert into test values ('hello');
+INSERT 0 1
+test=# select * from test;
+       p
+----------------
+ :dVGkpXdOrE3ko
+(1 row)
+
+test=# select raw(p) from test;
+      raw
+---------------
+ dVGkpXdOrE3ko
+(1 row)
+
+test=# select p = 'hello' from test;
+ ?column?
+----------
+ t
+(1 row)
+
+test=# select p = 'goodbye' from test;
+ ?column?
+----------
+ f
+(1 row)
+ </programlisting>
+
+ <sect2>
+  <title>Author</title>
+  <para>
+   D'Arcy J.M. Cain <email>darcy@druid.net</email>
+  </para>
+ </sect2>
+</sect1>
+

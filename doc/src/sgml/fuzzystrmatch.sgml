@@ -1,0 +1,122 @@
+
+<sect1 id="fuzzystrmatch">
+ <title>fuzzystrmatch</title>
+ 
+ <para>
+  This section describes the fuzzystrmatch module which provides different
+  functions to determine similarities and distance between strings.
+ </para>
+
+ <sect2>
+  <title>Soundex</title>
+  <para>
+   The Soundex system is a method of matching similar sounding names
+   (or any words) to the same code.  It was initially used by the
+   United States Census in 1880, 1900, and 1910, but it has little use
+   beyond English names (or the English pronunciation of names), and
+   it is not a linguistic tool.
+  </para>
+  <para>
+   When comparing two soundex values to determine similarity, the
+   difference function reports how close the match is on a scale
+   from zero to four, with zero being no match and four being an
+   exact match.
+  </para>
+  <para>
+   The following are some usage examples:
+  </para>
+  <programlisting>
+SELECT soundex('hello world!');
+
+SELECT soundex('Anne'), soundex('Ann'), difference('Anne', 'Ann');
+SELECT soundex('Anne'), soundex('Andrew'), difference('Anne', 'Andrew');
+SELECT soundex('Anne'), soundex('Margaret'), difference('Anne', 'Margaret');
+
+CREATE TABLE s (nm text);
+
+INSERT INTO s VALUES ('john');
+INSERT INTO s VALUES ('joan');
+INSERT INTO s VALUES ('wobbly');
+INSERT INTO s VALUES ('jack');
+
+SELECT * FROM s WHERE soundex(nm) = soundex('john');
+
+SELECT a.nm, b.nm FROM s a, s b WHERE soundex(a.nm) = soundex(b.nm) AND a.oid <> b.oid;
+
+CREATE FUNCTION text_sx_eq(text, text) RETURNS boolean AS
+'select soundex($1) = soundex($2)'
+LANGUAGE SQL;
+
+CREATE FUNCTION text_sx_lt(text, text) RETURNS boolean AS
+'select soundex($1) < soundex($2)'
+LANGUAGE SQL;
+
+CREATE FUNCTION text_sx_gt(text, text) RETURNS boolean AS
+'select soundex($1) > soundex($2)'
+LANGUAGE SQL;
+
+CREATE FUNCTION text_sx_le(text, text) RETURNS boolean AS
+'select soundex($1) <= soundex($2)'
+LANGUAGE SQL;
+
+CREATE FUNCTION text_sx_ge(text, text) RETURNS boolean AS
+'select soundex($1) >= soundex($2)'
+LANGUAGE SQL;
+
+CREATE FUNCTION text_sx_ne(text, text) RETURNS boolean AS
+'select soundex($1) <> soundex($2)'
+LANGUAGE SQL;
+
+DROP OPERATOR #= (text, text);
+
+CREATE OPERATOR #= (leftarg=text, rightarg=text, procedure=text_sx_eq, commutator = #=);
+
+SELECT * FROM s WHERE text_sx_eq(nm, 'john');
+
+SELECT * FROM s WHERE s.nm #= 'john';
+
+SELECT * FROM s WHERE difference(s.nm, 'john') > 2;
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>levenshtein</title>
+  <para>
+   This function calculates the levenshtein distance between two strings:
+  </para>
+  <programlisting>
+   int levenshtein(text source, text target)
+  </programlisting>
+  <para>
+   Both <literal>source</literal> and <literal>target</literal> can be any
+   NOT NULL string with a maximum of 255 characters.
+  </para>
+  <para>
+   Example:
+  </para>
+  <programlisting>
+   SELECT levenshtein('GUMBO','GAMBOL');
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>metaphone</title>
+  <para>
+   This function calculates and returns the metaphone code of an input string:
+  </para>
+  <programlisting>
+   text metahpone(text source, int max_output_length)
+  </programlisting>
+  <para>
+   <literal>source</literal> has to be a NOT NULL string with a maximum of
+   255 characters. <literal>max_output_length</literal> fixes the maximum
+   length of the output metaphone code; if longer, the output is truncated 
+   to this length.
+  </para>
+  <para>Example</para>
+  <programlisting>
+   SELECT metaphone('GUMBO',4);
+  </programlisting>
+ </sect2>
+
+</sect1>

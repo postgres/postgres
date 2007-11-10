@@ -1,0 +1,422 @@
+
+<sect1 id="pgbench">
+ <title>pgbench</title>
+ 
+ <indexterm zone="pgbench">
+  <primary>pgbench</primary>
+ </indexterm>
+
+ <para>
+  <literal>pgbench</literal> is a simple program to run a benchmark test. 
+  <literal>pgbench</literal> is a client application of PostgreSQL and runs 
+  with PostgreSQL only. It performs lots of small and simple transactions 
+  including SELECT/UPDATE/INSERT operations then calculates number of
+  transactions successfully completed within a second (transactions
+  per second, tps). Targeting data includes a table with at least 100k
+  tuples.
+ </para>
+ <para>
+  Example outputs from pgbench look like:
+ </para>
+ <programlisting>
+number of clients: 4
+number of transactions per client: 100
+number of processed transactions: 400/400
+tps = 19.875015(including connections establishing)
+tps = 20.098827(excluding connections establishing)
+ </programlisting>
+ <para> Similar program called "JDBCBench" already exists, but it requires
+  Java that may not be available on every platform. Moreover some
+  people concerned about the overhead of Java that might lead
+  inaccurate results. So I decided to write in pure C, and named
+  it "pgbench."
+ </para>
+
+ <para>
+  Features of pgbench:
+ </para>
+ <itemizedlist>
+  <listitem>
+   <para>
+    pgbench is written in C using libpq only. So it is very portable
+    and easy to install.
+   </para>
+  </listitem>
+  <listitem>
+   <para>
+    pgbench can simulate concurrent connections using asynchronous
+    capability of libpq. No threading is required.
+   </para>
+  </listitem>
+ </itemizedlist>
+
+ <sect2>
+  <title>Overview</title>
+  <orderedlist>
+   <listitem>
+    <para>(optional)Initialize database by:</para>
+    <programlisting>
+pgbench -i &lt;dbname&gt;
+    </programlisting>
+    <para>
+     where &lt;dbname&gt; is the name of database. pgbench uses four tables
+     accounts, branches, history and tellers. These tables will be
+     destroyed. Be very careful if you have tables having same
+     names. Default test data contains:
+    </para>
+    <programlisting>
+table		# of tuples
+-------------------------
+branches	1
+tellers		10
+accounts	100000
+history		0
+    </programlisting>
+    <para>
+     You can increase the number of tuples by using -s option. branches,
+     tellers and accounts tables are created with a fillfactor which is
+     set using -F option. See below.
+    </para>
+   </listitem>
+   <listitem>
+    <para>Run the benchmark test</para>
+    <programlisting>
+pgbench &lt;dbname&gt;
+    </programlisting>
+    <para>
+     The default configuration is:
+    </para>
+    <programlisting>
+     number of clients: 1
+     number of transactions per client: 10
+    </programlisting>
+   </listitem>
+  </orderedlist>
+
+  <table>
+   <title><literal>pgbench</literal> options</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Parameter</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>-h hostname</literal></entry>
+      <entry>
+       <para>
+        hostname where the backend is running. If this option
+        is omitted, pgbench will connect to the localhost via
+        Unix domain socket.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-p port</literal></entry>
+      <entry>
+       <para>
+        the port number that the backend is accepting. default is
+        libpq's default, usually 5432.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-c number_of_clients</literal></entry>
+      <entry>
+       <para>
+        Number of clients simulated. default is 1.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-t number_of_transactions</literal></entry>
+      <entry>
+       <para>
+        Number of transactions each client runs. default is 10.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-s scaling_factor</literal></entry>
+      <entry>
+       <para>
+        this should be used with -i (initialize) option.
+        number of tuples generated will be multiple of the
+        scaling factor. For example, -s 100 will imply 10M
+        (10,000,000) tuples in the accounts table.
+        default is 1.  
+       </para>
+       <para>
+        NOTE: scaling factor should be at least
+        as large as the largest number of clients you intend
+        to test; else you'll mostly be measuring update contention.
+        Regular (not initializing) runs using one of the
+        built-in tests will detect scale based on the number of
+        branches in the database.  For custom (-f) runs it can
+        be manually specified with this parameter.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-D varname=value</literal></entry>
+      <entry>
+       <para>
+        Define a variable. It can be refered to by a script
+        provided by using -f option. Multiple -D options are allowed.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-U login</literal></entry>
+      <entry>
+       <para>
+        Specify db user's login name if it is different from
+        the Unix login name.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-P password</literal></entry>
+      <entry>
+       <para>
+        Specify the db password. CAUTION: using this option
+        might be a security hole since ps command will
+        show the password. Use this for TESTING PURPOSE ONLY.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-n</literal></entry>
+      <entry>
+       <para>
+        No vacuuming and cleaning the history table prior to the
+        test is performed.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-v</literal></entry>
+      <entry>
+       <para>
+        Do vacuuming before testing. This will take some time.
+        With neither -n nor -v, pgbench will vacuum tellers and
+        branches tables only.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-S</literal></entry>
+      <entry>
+       <para>
+        Perform select only transactions instead of TPC-B.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-N</literal></entry>
+      <entry>
+       <para>
+        Do not update "branches" and "tellers". This will
+        avoid heavy update contention on branches and tellers,
+        while it will not make pgbench supporting TPC-B like
+        transactions.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-f filename</literal></entry>
+      <entry>
+       <para>
+        Read transaction script from file. Detailed
+        explanation will appear later.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-C</literal></entry>
+      <entry>
+       <para>
+        Establish connection for each transaction, rather than
+        doing it just once at beginning of pgbench in the normal
+        mode. This is useful to measure the connection overhead.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-l</literal></entry>
+      <entry>
+       <para>
+        Write the time taken by each transaction to a logfile,
+        with the name "pgbench_log.xxx", where xxx is the PID
+        of the pgbench process. The format of the log is:
+       </para>
+       <programlisting>
+        client_id transaction_no time file_no time-epoch time-us
+       </programlisting>
+       <para>
+        where time is measured in microseconds, , the file_no is
+        which test file was used (useful when multiple were
+        specified with -f), and time-epoch/time-us are a
+        UNIX epoch format timestamp followed by an offset
+        in microseconds (suitable for creating a ISO 8601
+        timestamp with a fraction of a second) of when
+        the transaction completed.
+       </para>
+       <para>
+        Here are example outputs:
+       </para>
+       <programlisting>
+ 0 199 2241 0 1175850568 995598
+ 0 200 2465 0 1175850568 998079
+ 0 201 2513 0 1175850569 608
+ 0 202 2038 0 1175850569 2663
+       </programlisting>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-F fillfactor</literal></entry>
+      <entry>
+       <para>
+        Create tables(accounts, tellers and branches) with the given
+        fillfactor. Default is 100.  This should be used with -i
+        (initialize) option.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-d</literal></entry>
+      <entry>
+       <para>
+        debug option.
+       </para>
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect2>
+
+ <sect2>
+  <title>What is the "transaction" actually performed in pgbench?</title>
+  <orderedlist>
+   <listitem><para><literal>begin;</literal></para></listitem>
+
+   <listitem><para><literal>update accounts set abalance = abalance + :delta where aid = :aid;</literal></para></listitem>
+
+   <listitem><para><literal>select abalance from accounts where aid = :aid;</literal></para></listitem>
+
+   <listitem><para><literal>update tellers set tbalance = tbalance + :delta where tid = :tid;</literal></para></listitem>
+
+   <listitem><para><literal>update branches set bbalance = bbalance + :delta where bid = :bid;</literal></para></listitem>
+
+   <listitem><para><literal>insert into history(tid,bid,aid,delta) values(:tid,:bid,:aid,:delta);</literal></para></listitem>
+
+   <listitem><para><literal>end;</literal></para></listitem>
+  </orderedlist>
+  <para>
+   If you specify -N, (4) and (5) aren't included in the transaction.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Script file</title>
+  <para>
+   <literal>pgbench</literal> has support for reading a transaction script 
+   from a specified file (<literal>-f</literal> option). This file should 
+   include SQL commands in each line. SQL command consists of multiple lines 
+   are not supported. Empty lines and lines begging with "--" will be ignored.
+  </para>
+  <para>
+   Multiple <literal>-f</literal> options are allowed. In this case each 
+   transaction is assigned randomly chosen script.
+  </para>
+  <para>
+   SQL commands can include "meta command" which begins with "\" (back
+   slash). A meta command takes some arguments separted by white
+   spaces. Currently following meta command is supported:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>\set name operand1 [ operator operand2 ]</literal>
+     - Sets the calculated value using "operand1" "operator"
+     "operand2" to variable "name". If "operator" and "operand2"
+     are omitted, the value of operand1 is set to variable "name". 
+    </para>
+    <para>
+     Example:
+    </para>
+    <programlisting>
+\set ntellers 10 * :scale
+    </programlisting>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>\setrandom name min max</literal>
+     - Assigns random integer to name between min and max
+    </para>
+    <para>
+     Example:
+    </para>
+    <programlisting>
+\setrandom aid 1 100000
+    </programlisting>
+   </listitem>
+   <listitem>
+    <para>
+     Variables can be referred to in SQL comands by adding ":" in front
+     of the varible name.
+    </para>
+    <para>
+     Example:
+    </para>
+    <programlisting>
+SELECT abalance FROM accounts WHERE aid = :aid
+    </programlisting>
+    <para>
+     Variables can also be defined by using -D option.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Examples</title>
+  <para>
+   Example, TPC-B like benchmark can be defined as follows(scaling
+   factor = 1):
+  </para>
+  <programlisting>
+\set nbranches :scale
+\set ntellers 10 * :scale
+\set naccounts 100000 * :scale
+\setrandom aid 1 :naccounts
+\setrandom bid 1 :nbranches
+\setrandom tid 1 :ntellers
+\setrandom delta 1 10000
+BEGIN
+UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid
+SELECT abalance FROM accounts WHERE aid = :aid
+UPDATE tellers SET tbalance = tbalance + :delta WHERE tid = :tid
+UPDATE branches SET bbalance = bbalance + :delta WHERE bid = :bid
+INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, 'now')
+END
+  </programlisting>
+  <para>
+   If you want to automatically set the scaling factor from the number of
+   tuples in branches table, use -s option and shell command like this:
+  </para>
+  <programlisting>
+pgbench -s $(psql -At -c "SELECT count(*) FROM branches") -f tpc_b.sql
+  </programlisting>
+  <para>
+   Notice that -f option does not execute vacuum and clearing history
+   table before starting benchmark.
+  </para>
+ </sect2>
+
+</sect1>
+
