@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.43 2007/11/10 14:07:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.44 2007/11/10 21:48:51 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -21,9 +21,11 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
   <cmdsynopsis>
+
    <command>pg_ctl</command>
    <arg choice="plain">start</arg>
    <arg>-w</arg>
+   <arg>-t <replaceable>seconds</replaceable></arg>
    <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
    <arg>-l <replaceable>filename</replaceable></arg>
@@ -31,9 +33,11 @@ PostgreSQL documentation
    <arg>-p <replaceable>path</replaceable></arg>
    <arg>-c</arg>
    <sbr>
+
    <command>pg_ctl</command>
    <arg choice="plain">stop</arg>
    <arg>-W</arg>
+   <arg>-t <replaceable>seconds</replaceable></arg>
    <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
    <arg>-m
@@ -44,9 +48,11 @@ PostgreSQL documentation
      </group>
    </arg>
    <sbr>
+
    <command>pg_ctl</command>
    <arg choice="plain">restart</arg>
    <arg>-w</arg>
+   <arg>-t <replaceable>seconds</replaceable></arg>
    <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
    <arg>-c</arg>
@@ -59,20 +65,24 @@ PostgreSQL documentation
    </arg>
    <arg>-o <replaceable>options</replaceable></arg>
    <sbr>
+
    <command>pg_ctl</command>
    <arg choice="plain">reload</arg>
    <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
    <sbr>
+
    <command>pg_ctl</command>
    <arg choice="plain">status</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
    <sbr>
+
    <command>pg_ctl</command>
    <arg choice="plain">kill</arg>
    <arg><replaceable>signal_name</replaceable></arg>
    <arg><replaceable>process_id</replaceable></arg>
    <sbr>
+
    <command>pg_ctl</command>
    <arg choice="plain">register</arg>
    <arg>-N <replaceable>servicename</replaceable></arg>
@@ -80,11 +90,14 @@ PostgreSQL documentation
    <arg>-P <replaceable>password</replaceable></arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
    <arg>-w</arg>
+   <arg>-t <replaceable>seconds</replaceable></arg>
    <arg>-o <replaceable>options</replaceable></arg>
    <sbr>
+
    <command>pg_ctl</command>
    <arg choice="plain">unregister</arg>
    <arg>-N <replaceable>servicename</replaceable></arg>
+
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -262,11 +275,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-t</option></term>
+      <listitem>
+       <para>
+        The number of seconds to wait when waiting for start or shutdown
+        to complete.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-w</option></term>
       <listitem>
        <para>
-        Wait for the start or shutdown to complete.  Times out after
-        60 seconds.  This is the default for shutdowns. A successful 
+        Wait for the start or shutdown to complete.  The default wait time
+        is 60 seconds.  This is the default option for shutdowns. A successful 
         shutdown is indicated by removal of the <acronym>PID</acronym> 
         file. For starting up, a successful <command>psql -l</command> 
         indicates success. <command>pg_ctl</command> will attempt to 
