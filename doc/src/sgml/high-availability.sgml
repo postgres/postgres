@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.23 2007/11/10 19:14:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.24 2007/11/10 19:19:36 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -405,12 +405,12 @@ protocol to make nodes agree on a serializable transactional order.
     <para>
      Many of the above solutions allow multiple servers to handle multiple
      queries, but none allow a single query to use multiple servers to
-     complete faster.  This allows multiple servers to work concurrently
-     on a single query.  This is usually accomplished by splitting the
-     data among servers and having each server execute its part of the
-     query and return results to a central server where they are combined
-     and returned to the user.  <productname>Pgpool-II</> has this
-     capability.  Also, this can be implemented using the
+     complete faster.  This solution allows multiple servers to work
+     concurrently on a single query.  It is usually accomplished by
+     splitting the data among servers and having each server execute its
+     part of the query and return results to a central server where they
+     are combined and returned to the user.  <productname>Pgpool-II</>
+     has this capability.  Also, this can be implemented using the
      <productname>PL/Proxy</> toolset.
     </para>
 
