@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.30 2007/11/05 15:55:53 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.31 2007/11/10 15:39:34 momjian Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -2258,20 +2258,17 @@ more sample word(s) : more indexed word(s)
    </para>
 
    <para>
-    Stop words recognized by the subdictionary are replaced by a <quote>stop
-    word placeholder</quote> to record their position. To illustrate this,
-    consider these phrases:
+    Specific stop words recognized by the subdictionary cannot be
+    specified;  instead use <literal>?</> to mark the location where any
+    stop word can appear.  For example, assuming that <literal>a</> and
+    <literal>the</> are stop words according to the subdictionary:
 
 <programlisting>
-a one the two : swsw
-the one a two : swsw2
+? one ? two : swsw
 </programlisting>
 
-    Assuming that <literal>a</> and <literal>the</> are stop words according
-    to the subdictionary, these two phrases are identical to the thesaurus:
-    they both look like <replaceable>stopword</> <literal>one</>
-    <replaceable>stopword</> <literal>two</>.  Input matching this pattern
-    will be replaced by <literal>swsw2</>, according to the tie-breaking rule.
+    matches <literal>a one the two</> and <literal>the one a two</>;
+    both would be replaced by <literal>swsw</>.
    </para>
 
    <para>
@@ -3573,6 +3570,12 @@ Parser: "pg_catalog.default"
     <para>
      Relocation of configuration from add-on tables into core system catalogs
      will break client queries that looked at the add-on tables.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Thesaurus files now use <literal>?</> for stop words.
     </para>
    </listitem>
 

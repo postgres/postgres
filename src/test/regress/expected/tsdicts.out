@@ -311,8 +311,8 @@ SELECT to_tsvector('thesaurus_tst', 'Supernovae star is very new star and usuall
 (1 row)
 
 SELECT to_tsvector('thesaurus_tst', 'Booking tickets is looking like a booking a tickets');
-                             to_tsvector                             
----------------------------------------------------------------------
- 'book':8 'card':3 'like':6 'look':5 'invit':2 'order':1 'ticket':10
+                      to_tsvector                      
+-------------------------------------------------------
+ 'card':3,10 'like':6 'look':5 'invit':2,9 'order':1,8
 (1 row)
 

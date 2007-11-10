@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.5 2007/11/09 01:32:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.6 2007/11/10 15:39:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,47 +412,48 @@ compileTheLexeme(DictThesaurus * d)
 	{
 		TSLexeme   *ptr;
 
-		ptr = (TSLexeme *) DatumGetPointer(FunctionCall4(&(d->subdict->lexize),
-									   PointerGetDatum(d->subdict->dictData),
-										  PointerGetDatum(d->wrds[i].lexeme),
-									Int32GetDatum(strlen(d->wrds[i].lexeme)),
-													 PointerGetDatum(NULL)));
-
-		if (!ptr)
-			elog(ERROR, "thesaurus word-sample \"%s\" isn't recognized by subdictionary (rule %d)",
-				 d->wrds[i].lexeme, d->wrds[i].entries->idsubst + 1);
-		else if (!(ptr->lexeme))
-		{
-			elog(NOTICE, "thesaurus word-sample \"%s\" is recognized as stop-word, assign any stop-word (rule %d)",
-				 d->wrds[i].lexeme, d->wrds[i].entries->idsubst + 1);
-
+		if (strcmp(d->wrds[i].lexeme, "?") == 0)	/* Is stop word marker? */
 			newwrds = addCompiledLexeme(newwrds, &nnw, &tnm, NULL, d->wrds[i].entries, 0);
-		}
 		else
 		{
-			while (ptr->lexeme)
+			ptr = (TSLexeme *) DatumGetPointer(FunctionCall4(&(d->subdict->lexize),
+										   PointerGetDatum(d->subdict->dictData),
+											  PointerGetDatum(d->wrds[i].lexeme),
+										Int32GetDatum(strlen(d->wrds[i].lexeme)),
+														 PointerGetDatum(NULL)));
+	
+			if (!ptr)
+				elog(ERROR, "thesaurus word-sample \"%s\" isn't recognized by subdictionary (rule %d)",
+					 d->wrds[i].lexeme, d->wrds[i].entries->idsubst + 1);
+			else if (!(ptr->lexeme))
+				elog(ERROR, "thesaurus word-sample \"%s\" is recognized as stop-word, use \"?\" for stop words instead (rule %d)",
+					 d->wrds[i].lexeme, d->wrds[i].entries->idsubst + 1);
+			else
 			{
-				TSLexeme   *remptr = ptr + 1;
-				int			tnvar = 1;
-				int			curvar = ptr->nvariant;
-
-				/* compute n words in one variant */
-				while (remptr->lexeme)
+				while (ptr->lexeme)
 				{
-					if (remptr->nvariant != (remptr - 1)->nvariant)
-						break;
-					tnvar++;
-					remptr++;
+					TSLexeme   *remptr = ptr + 1;
+					int			tnvar = 1;
+					int			curvar = ptr->nvariant;
+	
+					/* compute n words in one variant */
+					while (remptr->lexeme)
+					{
+						if (remptr->nvariant != (remptr - 1)->nvariant)
+							break;
+						tnvar++;
+						remptr++;
+					}
+	
+					remptr = ptr;
+					while (remptr->lexeme && remptr->nvariant == curvar)
+					{
+						newwrds = addCompiledLexeme(newwrds, &nnw, &tnm, remptr, d->wrds[i].entries, tnvar);
+						remptr++;
+					}
+	
+					ptr = remptr;
 				}
-
-				remptr = ptr;
-				while (remptr->lexeme && remptr->nvariant == curvar)
-				{
-					newwrds = addCompiledLexeme(newwrds, &nnw, &tnm, remptr, d->wrds[i].entries, tnvar);
-					remptr++;
-				}
-
-				ptr = remptr;
 			}
 		}
 
