@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.42 2007/11/10 04:52:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.43 2007/11/10 14:07:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -174,20 +174,21 @@ PostgreSQL documentation
  <refsect1 id="app-pg-ctl-options">
   <title>Options</title>
 
-    <varlistentry>
-     <term><option>-c</option></term>
-     <listitem>
-      <para>
-       Attempt to allow server crashes to produce core files, on platforms
-       where this available, by lifting any soft resource limit placed on 
-       them. 
-       This is useful in debugging or diagnosing problems by allowing a 
-       stack trace to be obtained from a failed server process.
-      </para>
-     </listitem>
-    </varlistentry>
-
     <variablelist>
+
+     <varlistentry>
+      <term><option>-c</option></term>
+      <listitem>
+       <para>
+        Attempt to allow server crashes to produce core files, on platforms
+        where this available, by lifting any soft resource limit placed on 
+        them. 
+        This is useful in debugging or diagnosing problems by allowing a 
+        stack trace to be obtained from a failed server process.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><option>-D <replaceable class="parameter">datadir</replaceable></option></term>
       <listitem>
