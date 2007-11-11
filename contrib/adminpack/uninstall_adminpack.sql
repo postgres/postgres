@@ -1,3 +1,6 @@
+-- Adjust this setting to control where the objects get dropped.
+SET search_path = public;
+
 DROP FUNCTION pg_catalog.pg_file_write(text, text, bool) ;
 DROP FUNCTION pg_catalog.pg_file_rename(text, text, text) ;
 DROP FUNCTION pg_catalog.pg_file_rename(text, text) ;

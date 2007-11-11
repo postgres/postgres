@@ -16,11 +16,17 @@
   these cases, you will need to run <literal>make</literal> and <literal>make
   install</literal> in <literal>contrib/module</literal>. After you have 
   installed the files you need to register the new entities in the database 
-  system by running the commands in the supplied .sql file.  For example,
+  system by running the commands in the supplied <literal>.sql</> file.
+  For example,
 
   <programlisting>
    $ psql -d dbname -f module.sql
   </programlisting>
+
+  You can modify the first command in the <literal>.sql</> file to control
+  the schema where the module is created.  During major upgrades, even
+  though the restored database might already have the desired module
+  functions, run the installation script again to add any new functions.
  </para>
 
  &adminpack;

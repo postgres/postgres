@@ -1,10 +1,10 @@
+-- Adjust this setting to control where the objects get dropped.
+SET search_path = public;
+
 --
 -- This removes the LO type
 -- It's used just for development
 --
-
--- Adjust this setting to control where the objects get created.
-SET search_path = public;
 
 -- drop the type and associated functions
 DROP TYPE lo CASCADE;

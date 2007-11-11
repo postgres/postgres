@@ -1,27 +1,16 @@
---
---	PostgreSQL code for CHKPASS.
---  Written by D'Arcy J.M. Cain
---  darcy@druid.net
---  http://www.druid.net/darcy/
--- 
---  $PostgreSQL: pgsql/contrib/chkpass/chkpass.sql.in,v 1.7 2007/09/29 23:32:42 tgl Exp $
---
---  best viewed with tabs set to 4
---
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
 
 --
 --	Input and output functions and the type itself:
 --
 
--- Adjust this setting to control where the objects get created.
-SET search_path = public;
-
-CREATE FUNCTION chkpass_in(cstring)
+CREATE OR REPLACE FUNCTION chkpass_in(cstring)
 	RETURNS chkpass
 	AS 'MODULE_PATHNAME'
 	LANGUAGE C STRICT;
 
-CREATE FUNCTION chkpass_out(chkpass)
+CREATE OR REPLACE FUNCTION chkpass_out(chkpass)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
 	LANGUAGE C STRICT;
@@ -33,7 +22,7 @@ CREATE TYPE chkpass (
 	output = chkpass_out
 );
 
-CREATE FUNCTION raw(chkpass)
+CREATE OR REPLACE FUNCTION raw(chkpass)
 	RETURNS text
 	AS 'MODULE_PATHNAME', 'chkpass_rout'
 	LANGUAGE C STRICT;
@@ -42,12 +31,12 @@ CREATE FUNCTION raw(chkpass)
 --	The various boolean tests:
 --
 
-CREATE FUNCTION eq(chkpass, text)
+CREATE OR REPLACE FUNCTION eq(chkpass, text)
 	RETURNS bool
 	AS 'MODULE_PATHNAME', 'chkpass_eq'
 	LANGUAGE C STRICT;
 
-CREATE FUNCTION ne(chkpass, text)
+CREATE OR REPLACE FUNCTION ne(chkpass, text)
 	RETURNS bool
 	AS 'MODULE_PATHNAME', 'chkpass_ne'
 	LANGUAGE C STRICT;

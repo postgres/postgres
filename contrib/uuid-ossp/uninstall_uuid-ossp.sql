@@ -1,5 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/uuid-ossp/uninstall_uuid-ossp.sql,v 1.1 2007/04/21 17:26:17 petere Exp $ */
-
+-- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
 
 DROP FUNCTION uuid_nil();

@@ -1,9 +1,9 @@
+-- Adjust this setting to control where the objects get dropped.
+SET search_path = public;
+
 --
 --	Drop the actual types (in cascade):
 --
----------------------------------------------------
-SET search_path = public;
-
 DROP TYPE ean13 CASCADE;
 DROP TYPE isbn13 CASCADE;
 DROP TYPE ismn13 CASCADE;

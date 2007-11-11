@@ -1,8 +1,8 @@
--- Create the user-defined type for N-dimensional boxes
--- 
-
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
+
+-- Create the user-defined type for N-dimensional boxes
+-- 
 
 CREATE OR REPLACE FUNCTION cube_in(cstring)
 RETURNS cube

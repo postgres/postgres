@@ -1,5 +1,4 @@
 -- Adjust this setting to control where the objects get created.
-BEGIN;
 SET search_path = public;
 
 
@@ -41,5 +40,3 @@ REVOKE ALL ON pg_freespacemap_pages FROM PUBLIC;
 
 REVOKE ALL ON FUNCTION pg_freespacemap_relations() FROM PUBLIC;
 REVOKE ALL ON pg_freespacemap_relations FROM PUBLIC;
-
-COMMIT;

@@ -1,4 +1,4 @@
--- Adjust this setting to control where the objects get created.
+-- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
 
 DROP FUNCTION get_raw_page(text, int4);

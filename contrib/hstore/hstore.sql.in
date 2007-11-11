@@ -1,15 +1,14 @@
+-- Adjust this setting to control where the objects get created.
 SET search_path = public;
-
-BEGIN;
 
 CREATE TYPE hstore;
 
-CREATE FUNCTION hstore_in(cstring)
+CREATE OR REPLACE FUNCTION hstore_in(cstring)
 RETURNS hstore
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 
-CREATE FUNCTION hstore_out(hstore)
+CREATE OR REPLACE FUNCTION hstore_out(hstore)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -21,7 +20,7 @@ CREATE TYPE hstore (
         STORAGE = extended
 );
 
-CREATE FUNCTION fetchval(hstore,text)
+CREATE OR REPLACE FUNCTION fetchval(hstore,text)
 RETURNS text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -32,12 +31,12 @@ CREATE OPERATOR -> (
 	PROCEDURE = fetchval
 );
 
-CREATE FUNCTION isexists(hstore,text)
+CREATE OR REPLACE FUNCTION isexists(hstore,text)
 RETURNS bool
 AS 'MODULE_PATHNAME','exists'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION exist(hstore,text)
+CREATE OR REPLACE FUNCTION exist(hstore,text)
 RETURNS bool
 AS 'MODULE_PATHNAME','exists'
 LANGUAGE C STRICT IMMUTABLE;
@@ -50,22 +49,22 @@ CREATE OPERATOR ? (
 	JOIN = contjoinsel
 );
 
-CREATE FUNCTION isdefined(hstore,text)
+CREATE OR REPLACE FUNCTION isdefined(hstore,text)
 RETURNS bool
 AS 'MODULE_PATHNAME','defined'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION defined(hstore,text)
+CREATE OR REPLACE FUNCTION defined(hstore,text)
 RETURNS bool
 AS 'MODULE_PATHNAME','defined'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION delete(hstore,text)
+CREATE OR REPLACE FUNCTION delete(hstore,text)
 RETURNS hstore
 AS 'MODULE_PATHNAME','delete'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION hs_concat(hstore,hstore)
+CREATE OR REPLACE FUNCTION hs_concat(hstore,hstore)
 RETURNS hstore
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -76,12 +75,12 @@ CREATE OPERATOR || (
 	PROCEDURE = hs_concat
 );
 
-CREATE FUNCTION hs_contains(hstore,hstore)
+CREATE OR REPLACE FUNCTION hs_contains(hstore,hstore)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION hs_contained(hstore,hstore)
+CREATE OR REPLACE FUNCTION hs_contained(hstore,hstore)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -123,7 +122,7 @@ CREATE OPERATOR ~ (
 	JOIN = contjoinsel
 );
 
-CREATE FUNCTION tconvert(text,text)
+CREATE OR REPLACE FUNCTION tconvert(text,text)
 RETURNS hstore
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -134,27 +133,27 @@ CREATE OPERATOR => (
 	PROCEDURE = tconvert
 );
 
-CREATE FUNCTION akeys(hstore)
+CREATE OR REPLACE FUNCTION akeys(hstore)
 RETURNS _text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION avals(hstore)
+CREATE OR REPLACE FUNCTION avals(hstore)
 RETURNS _text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION skeys(hstore)
+CREATE OR REPLACE FUNCTION skeys(hstore)
 RETURNS setof text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION svals(hstore)
+CREATE OR REPLACE FUNCTION svals(hstore)
 RETURNS setof text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION each(IN hs hstore,
+CREATE OR REPLACE FUNCTION each(IN hs hstore,
     OUT key text,
     OUT value text)
 RETURNS SETOF record
@@ -167,12 +166,12 @@ LANGUAGE C STRICT IMMUTABLE;
 
 CREATE TYPE ghstore;
 
-CREATE FUNCTION ghstore_in(cstring)
+CREATE OR REPLACE FUNCTION ghstore_in(cstring)
 RETURNS ghstore
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 
-CREATE FUNCTION ghstore_out(ghstore)
+CREATE OR REPLACE FUNCTION ghstore_out(ghstore)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -183,37 +182,37 @@ CREATE TYPE ghstore (
         OUTPUT = ghstore_out
 );
 
-CREATE FUNCTION ghstore_compress(internal)
+CREATE OR REPLACE FUNCTION ghstore_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION ghstore_decompress(internal)
+CREATE OR REPLACE FUNCTION ghstore_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION ghstore_penalty(internal,internal,internal)
+CREATE OR REPLACE FUNCTION ghstore_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION ghstore_picksplit(internal, internal)
+CREATE OR REPLACE FUNCTION ghstore_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION ghstore_union(internal, internal)
+CREATE OR REPLACE FUNCTION ghstore_union(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION ghstore_same(internal, internal, internal)
+CREATE OR REPLACE FUNCTION ghstore_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION ghstore_consistent(internal,internal,int4)
+CREATE OR REPLACE FUNCTION ghstore_consistent(internal,internal,int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -238,17 +237,17 @@ AS
 
 -- define the GIN support methods
 
-CREATE FUNCTION gin_extract_hstore(internal, internal)
+CREATE OR REPLACE FUNCTION gin_extract_hstore(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION gin_extract_hstore_query(internal, internal, int2)
+CREATE OR REPLACE FUNCTION gin_extract_hstore_query(internal, internal, int2)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION gin_consistent_hstore(internal, int2, internal)
+CREATE OR REPLACE FUNCTION gin_consistent_hstore(internal, int2, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -263,6 +262,3 @@ AS
 	FUNCTION        3       gin_extract_hstore_query(internal, internal, int2),
 	FUNCTION        4       gin_consistent_hstore(internal, int2, internal),
 STORAGE         text;
-
-
-END;

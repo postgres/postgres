@@ -1,16 +1,12 @@
--- $PostgreSQL: pgsql/contrib/dict_xsyn/dict_xsyn.sql.in,v 1.1 2007/10/15 21:36:50 tgl Exp $
-
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-BEGIN;
-
-CREATE FUNCTION dxsyn_init(internal)
+CREATE OR REPLACE FUNCTION dxsyn_init(internal)
         RETURNS internal
         AS 'MODULE_PATHNAME'
         LANGUAGE C STRICT;
 
-CREATE FUNCTION dxsyn_lexize(internal, internal, internal, internal)
+CREATE OR REPLACE FUNCTION dxsyn_lexize(internal, internal, internal, internal)
         RETURNS internal
         AS 'MODULE_PATHNAME'
         LANGUAGE C STRICT;
@@ -25,5 +21,3 @@ CREATE TEXT SEARCH DICTIONARY xsyn (
 );
 
 COMMENT ON TEXT SEARCH DICTIONARY xsyn IS 'eXtended synonym dictionary';
-
-END;

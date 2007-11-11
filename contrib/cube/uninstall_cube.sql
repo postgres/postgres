@@ -1,3 +1,4 @@
+-- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
 
 DROP OPERATOR CLASS gist_cube_ops USING gist;

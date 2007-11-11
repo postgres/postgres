@@ -1,4 +1,5 @@
-BEGIN;
+-- Adjust this setting to control where the objects get dropped.
+SET search_path = public;
 
 DROP OPERATOR CLASS gist_hstore_ops USING gist CASCADE;
 DROP OPERATOR CLASS gin_hstore_ops USING gin CASCADE;
@@ -41,5 +42,3 @@ DROP FUNCTION gin_extract_hstore_query(internal, internal, smallint);
 
 DROP TYPE hstore CASCADE;
 DROP TYPE ghstore CASCADE;
-
-COMMIT;

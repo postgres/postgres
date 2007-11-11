@@ -1,20 +1,17 @@
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
+
 --
 -- Create the user-defined type for the 1-D integer arrays (_int4)
 --
 
--- Adjust this setting to control where the operators, functions, and
--- opclasses get created.
-SET search_path = public;
-
-BEGIN;
-
 -- Query type
-CREATE FUNCTION bqarr_in(cstring)
+CREATE OR REPLACE FUNCTION bqarr_in(cstring)
 RETURNS query_int
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION bqarr_out(query_int)
+CREATE OR REPLACE FUNCTION bqarr_out(query_int)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -26,20 +23,20 @@ CREATE TYPE query_int (
 );
 
 --only for debug
-CREATE FUNCTION querytree(query_int)
+CREATE OR REPLACE FUNCTION querytree(query_int)
 RETURNS text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
 
-CREATE FUNCTION boolop(_int4, query_int)
+CREATE OR REPLACE FUNCTION boolop(_int4, query_int)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION boolop(_int4, query_int) IS 'boolean operation with array';
 
-CREATE FUNCTION rboolop(query_int, _int4)
+CREATE OR REPLACE FUNCTION rboolop(query_int, _int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -71,35 +68,35 @@ CREATE OPERATOR ~~ (
 
 -- Comparison methods
 
-CREATE FUNCTION _int_contains(_int4, _int4)
+CREATE OR REPLACE FUNCTION _int_contains(_int4, _int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION _int_contains(_int4, _int4) IS 'contains';
 
-CREATE FUNCTION _int_contained(_int4, _int4)
+CREATE OR REPLACE FUNCTION _int_contained(_int4, _int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION _int_contained(_int4, _int4) IS 'contained in';
 
-CREATE FUNCTION _int_overlap(_int4, _int4)
+CREATE OR REPLACE FUNCTION _int_overlap(_int4, _int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION _int_overlap(_int4, _int4) IS 'overlaps';
 
-CREATE FUNCTION _int_same(_int4, _int4)
+CREATE OR REPLACE FUNCTION _int_same(_int4, _int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION _int_same(_int4, _int4) IS 'same as';
 
-CREATE FUNCTION _int_different(_int4, _int4)
+CREATE OR REPLACE FUNCTION _int_different(_int4, _int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -108,12 +105,12 @@ COMMENT ON FUNCTION _int_different(_int4, _int4) IS 'different';
 
 -- support routines for indexing
 
-CREATE FUNCTION _int_union(_int4, _int4)
+CREATE OR REPLACE FUNCTION _int_union(_int4, _int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION _int_inter(_int4, _int4)
+CREATE OR REPLACE FUNCTION _int_inter(_int4, _int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -191,12 +188,12 @@ CREATE OPERATOR ~ (
 );
 
 --------------
-CREATE FUNCTION intset(int4)
+CREATE OR REPLACE FUNCTION intset(int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION icount(_int4)
+CREATE OR REPLACE FUNCTION icount(_int4)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -206,32 +203,32 @@ CREATE OPERATOR # (
 	PROCEDURE = icount
 );
 
-CREATE FUNCTION sort(_int4, text)
+CREATE OR REPLACE FUNCTION sort(_int4, text)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION sort(_int4)
+CREATE OR REPLACE FUNCTION sort(_int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION sort_asc(_int4)
+CREATE OR REPLACE FUNCTION sort_asc(_int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION sort_desc(_int4)
+CREATE OR REPLACE FUNCTION sort_desc(_int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION uniq(_int4)
+CREATE OR REPLACE FUNCTION uniq(_int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION idx(_int4, int4)
+CREATE OR REPLACE FUNCTION idx(_int4, int4)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -242,17 +239,17 @@ CREATE OPERATOR # (
 	PROCEDURE = idx
 );
 
-CREATE FUNCTION subarray(_int4, int4, int4)
+CREATE OR REPLACE FUNCTION subarray(_int4, int4, int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION subarray(_int4, int4)
+CREATE OR REPLACE FUNCTION subarray(_int4, int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION intarray_push_elem(_int4, int4)
+CREATE OR REPLACE FUNCTION intarray_push_elem(_int4, int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -263,7 +260,7 @@ CREATE OPERATOR + (
 	PROCEDURE = intarray_push_elem
 );
 
-CREATE FUNCTION intarray_push_array(_int4, _int4)
+CREATE OR REPLACE FUNCTION intarray_push_array(_int4, _int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -275,7 +272,7 @@ CREATE OPERATOR + (
 	PROCEDURE = intarray_push_array
 );
 
-CREATE FUNCTION intarray_del_elem(_int4, int4)
+CREATE OR REPLACE FUNCTION intarray_del_elem(_int4, int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -286,7 +283,7 @@ CREATE OPERATOR - (
 	PROCEDURE = intarray_del_elem
 );
 
-CREATE FUNCTION intset_union_elem(_int4, int4)
+CREATE OR REPLACE FUNCTION intset_union_elem(_int4, int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -304,7 +301,7 @@ CREATE OPERATOR | (
 	PROCEDURE = _int_union
 );
 
-CREATE FUNCTION intset_subtract(_int4, _int4)
+CREATE OR REPLACE FUNCTION intset_subtract(_int4, _int4)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -324,37 +321,37 @@ CREATE OPERATOR & (
 --------------
 
 -- define the GiST support methods
-CREATE FUNCTION g_int_consistent(internal,_int4,int4)
+CREATE OR REPLACE FUNCTION g_int_consistent(internal,_int4,int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION g_int_compress(internal)
+CREATE OR REPLACE FUNCTION g_int_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION g_int_decompress(internal)
+CREATE OR REPLACE FUNCTION g_int_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION g_int_penalty(internal,internal,internal)
+CREATE OR REPLACE FUNCTION g_int_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION g_int_picksplit(internal, internal)
+CREATE OR REPLACE FUNCTION g_int_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION g_int_union(internal, internal)
+CREATE OR REPLACE FUNCTION g_int_union(internal, internal)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION g_int_same(_int4, _int4, internal)
+CREATE OR REPLACE FUNCTION g_int_same(_int4, _int4, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -385,12 +382,12 @@ DEFAULT FOR TYPE _int4 USING gist AS
 ---------------------------------------------
 -- define the GiST support methods
 
-CREATE FUNCTION _intbig_in(cstring)
+CREATE OR REPLACE FUNCTION _intbig_in(cstring)
 RETURNS intbig_gkey
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION _intbig_out(intbig_gkey)
+CREATE OR REPLACE FUNCTION _intbig_out(intbig_gkey)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -401,37 +398,37 @@ CREATE TYPE intbig_gkey (
         OUTPUT = _intbig_out
 );
 
-CREATE FUNCTION g_intbig_consistent(internal,internal,int4)
+CREATE OR REPLACE FUNCTION g_intbig_consistent(internal,internal,int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION g_intbig_compress(internal)
+CREATE OR REPLACE FUNCTION g_intbig_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION g_intbig_decompress(internal)
+CREATE OR REPLACE FUNCTION g_intbig_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION g_intbig_penalty(internal,internal,internal)
+CREATE OR REPLACE FUNCTION g_intbig_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION g_intbig_picksplit(internal, internal)
+CREATE OR REPLACE FUNCTION g_intbig_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION g_intbig_union(internal, internal)
+CREATE OR REPLACE FUNCTION g_intbig_union(internal, internal)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION g_intbig_same(internal, internal, internal)
+CREATE OR REPLACE FUNCTION g_intbig_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -459,12 +456,12 @@ AS
 
 --GIN
 
-CREATE FUNCTION ginint4_queryextract(internal, internal, int2)
+CREATE OR REPLACE FUNCTION ginint4_queryextract(internal, internal, int2)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION ginint4_consistent(internal, int2, internal)
+CREATE OR REPLACE FUNCTION ginint4_consistent(internal, int2, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -484,5 +481,3 @@ AS
 	FUNCTION	3	ginint4_queryextract (internal, internal, int2),
 	FUNCTION	4	ginint4_consistent (internal, int2, internal),
 	STORAGE		int4;
-
-COMMIT;

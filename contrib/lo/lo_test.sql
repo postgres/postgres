@@ -1,3 +1,6 @@
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
+
 --
 -- This runs some common tests against the type
 --

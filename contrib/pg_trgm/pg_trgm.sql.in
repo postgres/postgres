@@ -1,29 +1,28 @@
+-- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-BEGIN;
-
-create function set_limit(float4)
-returns float4
+CREATE OR REPLACE FUNCTION set_limit(float4)
+RETURNS float4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-create function show_limit()
-returns float4
+CREATE OR REPLACE FUNCTION show_limit()
+RETURNS float4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-create function show_trgm(text)
-returns _text
+CREATE OR REPLACE FUNCTION show_trgm(text)
+RETURNS _text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-create function similarity(text,text)
-returns float4
+CREATE OR REPLACE FUNCTION similarity(text,text)
+RETURNS float4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-create function similarity_op(text,text)
-returns bool
+CREATE OR REPLACE FUNCTION similarity_op(text,text)
+RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
@@ -37,12 +36,12 @@ CREATE OPERATOR % (
 );
 
 -- gist key
-CREATE FUNCTION gtrgm_in(cstring)
+CREATE OR REPLACE FUNCTION gtrgm_in(cstring)
 RETURNS gtrgm
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 
-CREATE FUNCTION gtrgm_out(gtrgm)
+CREATE OR REPLACE FUNCTION gtrgm_out(gtrgm)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -54,37 +53,37 @@ CREATE TYPE gtrgm (
 );
 
 -- support functions for gist
-CREATE FUNCTION gtrgm_consistent(gtrgm,internal,int4)
+CREATE OR REPLACE FUNCTION gtrgm_consistent(gtrgm,internal,int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
  
-CREATE FUNCTION gtrgm_compress(internal)
+CREATE OR REPLACE FUNCTION gtrgm_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION gtrgm_decompress(internal)
+CREATE OR REPLACE FUNCTION gtrgm_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION gtrgm_penalty(internal,internal,internal)
+CREATE OR REPLACE FUNCTION gtrgm_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION gtrgm_picksplit(internal, internal)
+CREATE OR REPLACE FUNCTION gtrgm_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION gtrgm_union(bytea, internal)
+CREATE OR REPLACE FUNCTION gtrgm_union(bytea, internal)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION gtrgm_same(gtrgm, gtrgm, internal)
+CREATE OR REPLACE FUNCTION gtrgm_same(gtrgm, gtrgm, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -104,17 +103,17 @@ AS
         STORAGE         gtrgm;
 
 -- support functions for gin
-CREATE FUNCTION gin_extract_trgm(text, internal)
+CREATE OR REPLACE FUNCTION gin_extract_trgm(text, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION gin_extract_trgm(text, internal, internal)
+CREATE OR REPLACE FUNCTION gin_extract_trgm(text, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE FUNCTION gin_trgm_consistent(internal, internal, text)
+CREATE OR REPLACE FUNCTION gin_trgm_consistent(internal, internal, text)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -129,5 +128,3 @@ AS
         FUNCTION        3       gin_extract_trgm (text, internal, internal),
         FUNCTION        4       gin_trgm_consistent (internal, internal, text),
         STORAGE         int4;
-
-COMMIT;

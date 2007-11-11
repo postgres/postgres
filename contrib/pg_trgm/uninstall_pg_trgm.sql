@@ -1,6 +1,5 @@
+-- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
-
-BEGIN;
 
 DROP OPERATOR CLASS gist_trgm_ops USING gist;
 
@@ -39,5 +38,3 @@ DROP FUNCTION show_trgm(text);
 DROP FUNCTION show_limit();
 
 DROP FUNCTION set_limit(float4);
-
-COMMIT;

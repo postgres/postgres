@@ -1,3 +1,4 @@
+-- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
 DROP OPERATOR CLASS gin__int_ops USING gin;

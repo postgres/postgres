@@ -1,5 +1,4 @@
 -- Adjust this setting to control where the objects get created.
-BEGIN;
 SET search_path = public;
 
 -- Register the function.
@@ -17,5 +16,3 @@ CREATE VIEW pg_buffercache AS
 -- Don't want these to be available at public.
 REVOKE ALL ON FUNCTION pg_buffercache_pages() FROM PUBLIC;
 REVOKE ALL ON pg_buffercache FROM PUBLIC;
-
-COMMIT;

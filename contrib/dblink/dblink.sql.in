@@ -1,3 +1,6 @@
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
+
 -- dblink_connect now restricts non-superusers to password
 -- authenticated connections
 CREATE OR REPLACE FUNCTION dblink_connect (text)
