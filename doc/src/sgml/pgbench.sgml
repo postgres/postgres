@@ -65,12 +65,12 @@ pgbench -i &lt;dbname&gt;
      names. Default test data contains:
     </para>
     <programlisting>
-table		# of tuples
+table           # of tuples
 -------------------------
-branches	1
-tellers		10
-accounts	100000
-history		0
+branches        1
+tellers         10
+accounts        100000
+history         0
     </programlisting>
     <para>
      You can increase the number of tuples by using -s option. branches,

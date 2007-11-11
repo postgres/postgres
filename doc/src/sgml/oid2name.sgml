@@ -126,9 +126,9 @@ $ du [0-9]* |
 > do
 >   echo "$SIZE       `oid2name -q -d alvherre -i -f $FILENODE`"
 > done
-16 	   1155287  branches_pkey
-16 	   1155289  tellers_pkey
-17561 	   1155291  accounts_pkey
+16            1155287  branches_pkey
+16            1155289  tellers_pkey
+17561            1155291  accounts_pkey
 ...
 
 $ # same, but sort by size
@@ -136,9 +136,9 @@ $ du [0-9]* | sort -rn | while read SIZE FN
 > do
 >   echo "$SIZE   `oid2name -q -d alvherre -f $FN`"
 > done
-133466 	    155173    accounts
-17561 	   1155291  accounts_pkey
-1177 	     16717  pg_proc_proname_args_nsp_index
+133466             155173    accounts
+17561            1155291  accounts_pkey
+1177              16717  pg_proc_proname_args_nsp_index
 ...
 
 $ # If you want to see what's in tablespaces, use the pg_tblspc directory

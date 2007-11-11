@@ -46,41 +46,41 @@ free_percent       | 1.95
       <thead>
        <row>
         <entry>Column</entry>
-	<entry>Description</entry>
+        <entry>Description</entry>
        </row>
       </thead>
       <tbody>
        <row>
         <entry>table_len</entry>
-	<entry>physical relation length in bytes</entry>
+        <entry>physical relation length in bytes</entry>
        </row>
        <row>
         <entry>tuple_count</entry>
-	<entry>number of live tuples</entry>
+        <entry>number of live tuples</entry>
        </row>
        <row>
         <entry>tuple_len</entry>
-	<entry>total tuples length in bytes</entry>
+        <entry>total tuples length in bytes</entry>
        </row>
        <row>
         <entry>tuple_percent</entry>
-	<entry>live tuples in %</entry>
+        <entry>live tuples in %</entry>
        </row>
        <row>
         <entry>dead_tuple_len</entry>
-	<entry>total dead tuples length in bytes</entry>
+        <entry>total dead tuples length in bytes</entry>
        </row>
        <row>
         <entry>dead_tuple_percent</entry>
-	<entry>dead tuples in %</entry>
+        <entry>dead tuples in %</entry>
        </row>
        <row>
         <entry>free_space</entry>
-	<entry>free space in bytes</entry>
+        <entry>free space in bytes</entry>
        </row>
        <row>
         <entry>free_percent</entry>
-	<entry>free space in %</entry>
+        <entry>free space in %</entry>
        </row>
       </tbody>
      </tgroup>

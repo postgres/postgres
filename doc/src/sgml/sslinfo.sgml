@@ -131,7 +131,7 @@ pseudonim
 role
 emailAddress
     </programlisting>
-    <para>	
+    <para>
      All of these fields are optional, except commonName.  It depends
      entirely on your CA policy which of them would be included and which
      wouldn't.  The meaning of these fields, howeer, is strictly defined by

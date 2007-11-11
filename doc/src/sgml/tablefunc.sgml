@@ -65,8 +65,8 @@
       <entry>
        <literal>
         connectby(text relname, text keyid_fld, text parent_keyid_fld
-                [, text orderby_fld], text start_with, int max_depth
-		[, text branch_delim])
+        [, text orderby_fld], text start_with, int max_depth
+        [, text branch_delim])
        </literal>
       </entry>
       <entry>
@@ -561,7 +561,7 @@ AS
    <programlisting>
 connectby(text relname, text keyid_fld, text parent_keyid_fld
             [, text orderby_fld], text start_with, int max_depth
-						[, text branch_delim])
+            [, text branch_delim])
    </programlisting>
    <table>
     <title><literal>connectby</literal> parameters</title>
@@ -589,7 +589,7 @@ connectby(text relname, text keyid_fld, text parent_keyid_fld
        <entry><literal>orderby_fld</literal></entry>
        <entry>
         If optional ordering of siblings is desired: Name of the field to 
-	order siblings
+        order siblings
        </entry>
       </row>
       <row>

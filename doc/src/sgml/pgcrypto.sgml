@@ -956,7 +956,7 @@ md5              2345086         1 day              3 years
    </listitem>
    <listitem>
     <para>
-    <literal>none</literal>- data must be multiple of cipher block size.	
+    <literal>none</literal>- data must be multiple of cipher block size.
     </para>
    </listitem>
   </itemizedlist>

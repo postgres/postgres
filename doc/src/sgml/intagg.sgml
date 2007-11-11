@@ -22,7 +22,7 @@ CREATE TABLE one_to_many(left INT, right INT) ;
 
  <programlisting>
   SELECT right.* from right JOIN one_to_many ON (right.id = one_to_many.right) 
-	WHERE  one_to_many.left = item;
+        WHERE  one_to_many.left = item;
  </programlisting>
 
  <para>
@@ -42,7 +42,7 @@ CREATE TABLE one_to_many(left INT, right INT) ;
 
  <programlisting>
 CREATE TABLE summary as SELECT left, int_array_aggregate(right) 
-	AS right FROM one_to_many GROUP BY left;
+        AS right FROM one_to_many GROUP BY left;
  </programlisting>
 
  <para>
@@ -73,7 +73,7 @@ SELECT left, right FROM one_to_many WHERE left = item;
  <programlisting>
 SELECT right, count(right) FROM 
 (
-	SELECT left, int_array_enum(right) AS right FROM summary JOIN
+        SELECT left, int_array_enum(right) AS right FROM summary JOIN
                 (SELECT left FROM left_table WHERE left = item) AS lefts
                  ON (summary.left = lefts.left ) 
 ) AS list GROUP BY right ORDER BY count DESC ;

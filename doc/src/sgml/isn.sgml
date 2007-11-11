@@ -77,7 +77,7 @@
       <entry>
        <para>
         European Article Numbers. This type will always show the EAN13-display 
-	format. Te output function for this is <literal>ean13_out()</literal>
+        format. Te output function for this is <literal>ean13_out()</literal>
        </para>
       </entry>
      </row>
@@ -87,7 +87,7 @@
       <entry>
        <para>
         For International Standard Book Numbers to be displayed in 
-  	the new EAN13-display format.
+          the new EAN13-display format.
        </para>
       </entry>
      </row>
@@ -106,7 +106,7 @@
       <entry>
        <para>
         For International Standard Serial Numbers to be displayed in the new 
-	EAN13-display format.
+        EAN13-display format.
        </para>
       </entry>
      </row>
@@ -115,7 +115,7 @@
       <entry>
        <para>
         For International Standard Book Numbers to be displayed in the current 
-	short-display format.
+        short-display format.
        </para>
       </entry>
      </row>
@@ -124,7 +124,7 @@
       <entry>
        <para>
         For International Standard Music Numbers to be displayed in the 
-	current short-display format.
+        current short-display format.
        </para>
       </entry>
      </row>
@@ -447,7 +447,7 @@ INSERT INTO test VALUES('220500896?');
 INSERT INTO test VALUES('978055215372?');
 
 SELECT issn('3251231?');
-SELECT ismn('979047213542?');	
+SELECT ismn('979047213542?');
 
 --Using the weak mode:
 SELECT isn_weak(true);

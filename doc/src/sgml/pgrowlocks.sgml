@@ -22,12 +22,12 @@ pgrowlocks(text) RETURNS pgrowlocks_type
   </para>
   <programlisting>
 CREATE TYPE pgrowlocks_type AS (
-	locked_row TID,		-- row TID
-	lock_type TEXT,		-- lock type
-	locker XID,		-- locking XID
-	multi bool,		-- multi XID?
-	xids xid[],		-- multi XIDs
-	pids INTEGER[]		-- locker's process id
+        locked_row TID,         -- row TID
+        lock_type TEXT,         -- lock type
+        locker XID,             -- locking XID
+        multi bool,             -- multi XID?
+        xids xid[],             -- multi XIDs
+        pids INTEGER[]          -- locker's process id
 );
   </programlisting>
 

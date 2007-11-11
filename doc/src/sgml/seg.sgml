@@ -226,7 +226,7 @@ postgres=> select '10(+-)1'::seg as seg;
        I decided to stick to is as a range operator. This, and
        also the fact that the white space around the range operator
        is ignored, creates a parsing conflict with numeric constants 
-       starting with a	decimal point.
+       starting with a decimal point.
       </entry>
      </row>
     </tbody>
@@ -305,7 +305,7 @@ postgres=> select '10(+-)1'::seg as seg;
   <itemizedlist>
    <listitem>
     <programlisting>
-[a, b] << [c, d]	Is left of
+[a, b] << [c, d]        Is left of
     </programlisting>
     <para>
      The left operand, [a, b], occurs entirely to the left of the
@@ -315,64 +315,64 @@ postgres=> select '10(+-)1'::seg as seg;
    </listitem>
    <listitem>
     <programlisting>
-[a, b] >> [c, d]	Is right of
+[a, b] >> [c, d]        Is right of
     </programlisting>
     <para>
-	[a, b] is occurs entirely to the right of [c, d]. 
-	[a, b] >> [c, d] is true if a > d and false otherwise
+        [a, b] is occurs entirely to the right of [c, d]. 
+        [a, b] >> [c, d] is true if a > d and false otherwise
     </para>
    </listitem>
    <listitem>
     <programlisting>
-[a, b] &< [c, d]	Overlaps or is left of
+[a, b] &< [c, d]        Overlaps or is left of
     </programlisting>
     <para>
-	This might be better read as "does not extend to right of".
-	It is true when b <= d.
+        This might be better read as "does not extend to right of".
+        It is true when b <= d.
     </para>
    </listitem>
    <listitem>
     <programlisting>
-[a, b] &> [c, d]	Overlaps or is right of
+[a, b] &> [c, d]        Overlaps or is right of
     </programlisting>
     <para>
-	This might be better read as "does not extend to left of".
-	It is true when a >= c.
+        This might be better read as "does not extend to left of".
+        It is true when a >= c.
     </para>
    </listitem>
    <listitem>
     <programlisting>
-[a, b] = [c, d]		Same as
+[a, b] = [c, d]                Same as
     </programlisting>
     <para>
-	The segments [a, b] and [c, d] are identical, that is, a == b
-	and c == d
+        The segments [a, b] and [c, d] are identical, that is, a == b
+        and c == d
     </para>
    </listitem>
    <listitem>
     <programlisting>
-[a, b] && [c, d]	Overlaps
+[a, b] && [c, d]        Overlaps
     </programlisting>
     <para>
-	The segments [a, b] and [c, d] overlap.
+        The segments [a, b] and [c, d] overlap.
     </para>
    </listitem>
    <listitem>
     <programlisting>
-[a, b] @> [c, d]		Contains
+[a, b] @> [c, d]                Contains
     </programlisting>
     <para>
-	The segment [a, b] contains the segment [c, d], that is, 
-	a <= c and b >= d
+        The segment [a, b] contains the segment [c, d], that is, 
+        a <= c and b >= d
     </para>
    </listitem>
    <listitem>
     <programlisting>
-[a, b] <@ [c, d]		Contained in
+[a, b] <@ [c, d]                Contained in
     </programlisting>
     <para>
-	The segment [a, b] is contained in [c, d], that is, 
-	a >= c and b <= d
+        The segment [a, b] is contained in [c, d], that is, 
+        a >= c and b <= d
     </para>
    </listitem>
   </itemizedlist>
@@ -393,8 +393,8 @@ postgres=> select '10(+-)1'::seg as seg;
   </para>
 
   <programlisting>
-[a, b] < [c, d]		Less than
-[a, b] > [c, d]		Greater than
+[a, b] < [c, d]                Less than
+[a, b] > [c, d]                Greater than
   </programlisting>
   <para>
    These operators do not make a lot of sense for any practical

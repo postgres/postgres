@@ -108,20 +108,20 @@
 CREATE TABLE test_trgm (t text);
 CREATE INDEX trgm_idx ON test_trgm USING gist (t gist_trgm_ops);
   </programlisting>
-  <para>	
+  <para>
    At this point, you will have an index on the t text column that you
    can use for similarity searching. Example:
   </para>
   <programlisting>
 SELECT
-	t,
-	similarity(t, 'word') AS sml
+        t,
+        similarity(t, 'word') AS sml
 FROM
-	test_trgm
+        test_trgm
 WHERE
-	t % 'word'
+        t % 'word'
 ORDER BY
-	sml DESC, t;
+        sml DESC, t;
   </programlisting>
   <para>
    This will return all values in the text column that are sufficiently
@@ -143,7 +143,7 @@ ORDER BY
   </para>
   <programlisting>
 CREATE TABLE words AS SELECT word FROM 
-	stat('SELECT to_tsvector(''simple'', bodytext) FROM documents');
+        stat('SELECT to_tsvector(''simple'', bodytext) FROM documents');
   </programlisting>
   <para>
    Where 'documents' is a table that has a text field 'bodytext'
