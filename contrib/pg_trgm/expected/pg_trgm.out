@@ -1,7 +1,7 @@
 \set ECHO none
-psql:pg_trgm.sql:43: NOTICE:  type "gtrgm" is not yet defined
+psql:pg_trgm.sql:42: NOTICE:  type "gtrgm" is not yet defined
 DETAIL:  Creating a shell type definition.
-psql:pg_trgm.sql:48: NOTICE:  argument type gtrgm is only a shell
+psql:pg_trgm.sql:47: NOTICE:  argument type gtrgm is only a shell
 select show_trgm('');
  show_trgm 
 -----------
