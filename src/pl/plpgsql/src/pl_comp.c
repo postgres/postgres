@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.117 2007/07/16 17:01:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.118 2007/11/11 19:22:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1099,7 +1099,7 @@ plpgsql_parse_wordtype(char *word)
 {
 	PLpgSQL_nsitem *nse;
 	bool		old_nsstate;
-	Oid			typeOid;
+	HeapTuple	typeTup;
 	char	   *cp[2];
 	int			i;
 
@@ -1138,34 +1138,26 @@ plpgsql_parse_wordtype(char *word)
 
 	/*
 	 * Word wasn't found on the namestack. Try to find a data type with that
-	 * name, but ignore pg_type entries that are in fact class types.
+	 * name, but ignore shell types and complex types.
 	 */
-	typeOid = LookupTypeName(NULL, makeTypeName(cp[0]));
-	if (OidIsValid(typeOid))
+	typeTup = LookupTypeName(NULL, makeTypeName(cp[0]), NULL);
+	if (typeTup)
 	{
-		HeapTuple	typeTup;
+		Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
-		typeTup = SearchSysCache(TYPEOID,
-								 ObjectIdGetDatum(typeOid),
-								 0, 0, 0);
-		if (HeapTupleIsValid(typeTup))
+		if (!typeStruct->typisdefined ||
+			typeStruct->typrelid != InvalidOid)
 		{
-			Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-
-			if (!typeStruct->typisdefined ||
-				typeStruct->typrelid != InvalidOid)
-			{
-				ReleaseSysCache(typeTup);
-				pfree(cp[0]);
-				return T_ERROR;
-			}
-
-			plpgsql_yylval.dtype = build_datatype(typeTup, -1);
-
 			ReleaseSysCache(typeTup);
 			pfree(cp[0]);
-			return T_DTYPE;
+			return T_ERROR;
 		}
+
+		plpgsql_yylval.dtype = build_datatype(typeTup, -1);
+
+		ReleaseSysCache(typeTup);
+		pfree(cp[0]);
+		return T_DTYPE;
 	}
 
 	/*

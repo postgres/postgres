@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.4 2007/10/29 19:40:40 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.5 2007/11/11 19:22:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1955,7 +1955,7 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 	/*
 	 * All we really need to do here is verify that the type is valid.
 	 */
-	Type		ctype = typenameType(pstate, column->typename);
+	Type		ctype = typenameType(pstate, column->typename, NULL);
 
 	ReleaseSysCache(ctype);
 }

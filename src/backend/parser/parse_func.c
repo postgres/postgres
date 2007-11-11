@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.197 2007/06/06 23:00:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.198 2007/11/11 19:22:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "utils/syscache.h"
 
 
+static Oid	FuncNameAsType(List *funcname);
 static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
 					   Node *first_arg, int location);
 static void unknown_attribute(ParseState *pstate, Node *relref, char *attname,
@@ -752,12 +753,9 @@ func_get_detail(List *funcname,
 		 */
 		if (nargs == 1 && fargs != NIL)
 		{
-			Oid			targetType;
+			Oid			targetType = FuncNameAsType(funcname);
 
-			targetType = LookupTypeName(NULL,
-										makeTypeNameFromNameList(funcname));
-			if (OidIsValid(targetType) &&
-				!ISCOMPLEX(targetType))
+			if (OidIsValid(targetType))
 			{
 				Oid			sourceType = argtypes[0];
 				Node	   *arg1 = linitial(fargs);
@@ -986,6 +984,33 @@ make_fn_arguments(ParseState *pstate,
 }
 
 /*
+ * FuncNameAsType -
+ *	  convenience routine to see if a function name matches a type name
+ *
+ * Returns the OID of the matching type, or InvalidOid if none.  We ignore
+ * shell types and complex types.
+ */
+static Oid
+FuncNameAsType(List *funcname)
+{
+	Oid			result;
+	Type		typtup;
+
+	typtup = LookupTypeName(NULL, makeTypeNameFromNameList(funcname), NULL);
+	if (typtup == NULL)
+		return InvalidOid;
+
+	if (((Form_pg_type) GETSTRUCT(typtup))->typisdefined &&
+		!OidIsValid(typeTypeRelid(typtup)))
+		result = typeTypeId(typtup);
+	else
+		result = InvalidOid;
+
+	ReleaseSysCache(typtup);
+	return result;
+}
+
+/*
  * ParseComplexProjection -
  *	  handles function calls with a single argument that is of complex type.
  *	  If the function call is actually a column projection, return a suitably
@@ -1181,6 +1206,27 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 }
 
 /*
+ * LookupTypeNameOid
+ *		Convenience routine to look up a type, silently accepting shell types
+ */
+static Oid
+LookupTypeNameOid(const TypeName *typename)
+{
+	Oid			result;
+	Type		typtup;
+
+	typtup = LookupTypeName(NULL, typename, NULL);
+	if (typtup == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist",
+						TypeNameToString(typename))));
+	result = typeTypeId(typtup);
+	ReleaseSysCache(typtup);
+	return result;
+}
+
+/*
  * LookupFuncNameTypeNames
  *		Like LookupFuncName, but the argument types are specified by a
  *		list of TypeName nodes.
@@ -1205,14 +1251,7 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 	{
 		TypeName   *t = (TypeName *) lfirst(args_item);
 
-		argoids[i] = LookupTypeName(NULL, t);
-
-		if (!OidIsValid(argoids[i]))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("type \"%s\" does not exist",
-							TypeNameToString(t))));
-
+		argoids[i] = LookupTypeNameOid(t);
 		args_item = lnext(args_item);
 	}
 
@@ -1250,12 +1289,7 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 	{
 		TypeName   *t = (TypeName *) lfirst(lc);
 
-		argoids[i] = LookupTypeName(NULL, t);
-		if (!OidIsValid(argoids[i]))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("type \"%s\" does not exist",
-							TypeNameToString(t))));
+		argoids[i] = LookupTypeNameOid(t);
 		i++;
 	}
 

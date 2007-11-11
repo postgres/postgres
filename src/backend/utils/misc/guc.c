@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.424 2007/11/09 17:31:07 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.425 2007/11/11 19:22:49 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4872,11 +4872,13 @@ flatten_set_variable_args(const char *name, List *args)
 					 * to interval and back to normalize the value and account
 					 * for any typmod.
 					 */
+					Oid			typoid;
 					int32		typmod;
 					Datum		interval;
 					char	   *intervalout;
 
-					typmod = typenameTypeMod(NULL, arg->typename, INTERVALOID);
+					typoid = typenameTypeId(NULL, arg->typename, &typmod);
+					Assert(typoid == INTERVALOID);
 
 					interval =
 						DirectFunctionCall3(interval_in,

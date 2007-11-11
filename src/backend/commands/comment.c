@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.97 2007/08/21 01:11:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.98 2007/11/11 19:22:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -874,7 +874,7 @@ CommentType(List *typename, char *comment)
 
 	/* Find the type's oid */
 
-	oid = typenameTypeId(NULL, tname);
+	oid = typenameTypeId(NULL, tname, NULL);
 
 	/* Check object security */
 
@@ -1451,8 +1451,8 @@ CommentCast(List *qualname, List *arguments, char *comment)
 	targettype = (TypeName *) linitial(arguments);
 	Assert(IsA(targettype, TypeName));
 
-	sourcetypeid = typenameTypeId(NULL, sourcetype);
-	targettypeid = typenameTypeId(NULL, targettype);
+	sourcetypeid = typenameTypeId(NULL, sourcetype, NULL);
+	targettypeid = typenameTypeId(NULL, targettype, NULL);
 
 	tuple = SearchSysCache(CASTSOURCETARGET,
 						   ObjectIdGetDatum(sourcetypeid),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.120 2007/01/05 22:19:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.121 2007/11/11 19:22:48 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -534,8 +534,7 @@ BuildDescForRelation(List *schema)
 		attnum++;
 
 		attname = entry->colname;
-		atttypid = typenameTypeId(NULL, entry->typename);
-		atttypmod = typenameTypeMod(NULL, entry->typename, atttypid);
+		atttypid = typenameTypeId(NULL, entry->typename, &atttypmod);
 		attdim = list_length(entry->typename->arrayBounds);
 
 		if (entry->typename->setof)

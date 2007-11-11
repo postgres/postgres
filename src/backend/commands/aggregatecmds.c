@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.43 2007/04/02 03:49:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.44 2007/11/11 19:22:48 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -142,7 +142,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 		{
 			numArgs = 1;
 			aggArgTypes = (Oid *) palloc(sizeof(Oid));
-			aggArgTypes[0] = typenameTypeId(NULL, baseType);
+			aggArgTypes[0] = typenameTypeId(NULL, baseType, NULL);
 		}
 	}
 	else
@@ -164,7 +164,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 		{
 			TypeName   *curTypeName = (TypeName *) lfirst(lc);
 
-			aggArgTypes[i++] = typenameTypeId(NULL, curTypeName);
+			aggArgTypes[i++] = typenameTypeId(NULL, curTypeName, NULL);
 		}
 	}
 
@@ -175,7 +175,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	 * values of the transtype.  However, we can allow polymorphic transtype
 	 * in some cases (AggregateCreate will check).
 	 */
-	transTypeId = typenameTypeId(NULL, transType);
+	transTypeId = typenameTypeId(NULL, transType, NULL);
 	if (get_typtype(transTypeId) == TYPTYPE_PSEUDO &&
 		!IsPolymorphicType(transTypeId))
 		ereport(ERROR,

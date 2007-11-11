@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.85 2007/09/03 18:46:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.86 2007/11/11 19:22:48 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -76,12 +76,13 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 					Oid *prorettype_p, bool *returnsSet_p)
 {
 	Oid			rettype;
+	Type		typtup;
 
-	rettype = LookupTypeName(NULL, returnType);
+	typtup = LookupTypeName(NULL, returnType, NULL);
 
-	if (OidIsValid(rettype))
+	if (typtup)
 	{
-		if (!get_typisdefined(rettype))
+		if (!((Form_pg_type) GETSTRUCT(typtup))->typisdefined)
 		{
 			if (languageOid == SQLlanguageId)
 				ereport(ERROR,
@@ -94,6 +95,8 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 						 errmsg("return type %s is only a shell",
 								TypeNameToString(returnType))));
 		}
+		rettype = typeTypeId(typtup);
+		ReleaseSysCache(typtup);
 	}
 	else
 	{
@@ -113,6 +116,13 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("type \"%s\" does not exist", typnam)));
+
+		/* Reject if there's typmod decoration, too */
+		if (returnType->typmods != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("type modifier cannot be specified for shell type \"%s\"",
+							typnam)));
 
 		/* Otherwise, go ahead and make a shell type */
 		ereport(NOTICE,
@@ -175,11 +185,12 @@ examine_parameter_list(List *parameters, Oid languageOid,
 		FunctionParameter *fp = (FunctionParameter *) lfirst(x);
 		TypeName   *t = fp->argType;
 		Oid			toid;
+		Type		typtup;
 
-		toid = LookupTypeName(NULL, t);
-		if (OidIsValid(toid))
+		typtup = LookupTypeName(NULL, t, NULL);
+		if (typtup)
 		{
-			if (!get_typisdefined(toid))
+			if (!((Form_pg_type) GETSTRUCT(typtup))->typisdefined)
 			{
 				/* As above, hard error if language is SQL */
 				if (languageOid == SQLlanguageId)
@@ -193,6 +204,8 @@ examine_parameter_list(List *parameters, Oid languageOid,
 							 errmsg("argument type %s is only a shell",
 									TypeNameToString(t))));
 			}
+			toid = typeTypeId(typtup);
+			ReleaseSysCache(typtup);
 		}
 		else
 		{
@@ -200,6 +213,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("type %s does not exist",
 							TypeNameToString(t))));
+			toid = InvalidOid;	/* keep compiler quiet */
 		}
 
 		if (t->setof)
@@ -1341,8 +1355,8 @@ CreateCast(CreateCastStmt *stmt)
 	ObjectAddress myself,
 				referenced;
 
-	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype);
-	targettypeid = typenameTypeId(NULL, stmt->targettype);
+	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype, NULL);
+	targettypeid = typenameTypeId(NULL, stmt->targettype, NULL);
 
 	/* No pseudo-types allowed */
 	if (get_typtype(sourcetypeid) == TYPTYPE_PSEUDO)
@@ -1567,8 +1581,8 @@ DropCast(DropCastStmt *stmt)
 	ObjectAddress object;
 
 	/* when dropping a cast, the types must exist even if you use IF EXISTS */
-	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype);
-	targettypeid = typenameTypeId(NULL, stmt->targettype);
+	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype, NULL);
+	targettypeid = typenameTypeId(NULL, stmt->targettype, NULL);
 
 	tuple = SearchSysCache(CASTSOURCETARGET,
 						   ObjectIdGetDatum(sourcetypeid),

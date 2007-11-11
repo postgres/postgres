@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.234 2007/10/12 18:55:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.235 2007/11/11 19:22:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -899,8 +899,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 						(errmsg("merging multiple inherited definitions of column \"%s\"",
 								attributeName)));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
-				defTypeId = typenameTypeId(NULL, def->typename);
-				deftypmod = typenameTypeMod(NULL, def->typename, defTypeId);
+				defTypeId = typenameTypeId(NULL, def->typename, &deftypmod);
 				if (defTypeId != attribute->atttypid ||
 					deftypmod != attribute->atttypmod)
 					ereport(ERROR,
@@ -1044,10 +1043,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				   (errmsg("merging column \"%s\" with inherited definition",
 						   attributeName)));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
-				defTypeId = typenameTypeId(NULL, def->typename);
-				deftypmod = typenameTypeMod(NULL, def->typename, defTypeId);
-				newTypeId = typenameTypeId(NULL, newdef->typename);
-				newtypmod = typenameTypeMod(NULL, newdef->typename, newTypeId);
+				defTypeId = typenameTypeId(NULL, def->typename, &deftypmod);
+				newTypeId = typenameTypeId(NULL, newdef->typename, &newtypmod);
 				if (defTypeId != newTypeId || deftypmod != newtypmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -3018,8 +3015,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 			int32 	ctypmod;
 
 			/* Okay if child matches by type */
-			ctypeId = typenameTypeId(NULL, colDef->typename);
-			ctypmod = typenameTypeMod(NULL, colDef->typename, ctypeId);
+			ctypeId = typenameTypeId(NULL, colDef->typename, &ctypmod);
 			if (ctypeId != childatt->atttypid ||
 				ctypmod != childatt->atttypmod)
 				ereport(ERROR,
@@ -3074,10 +3070,9 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 						MaxHeapAttributeNumber)));
 	i = minattnum + 1;
 
-	typeTuple = typenameType(NULL, colDef->typename);
+	typeTuple = typenameType(NULL, colDef->typename, &typmod);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 	typeOid = HeapTupleGetOid(typeTuple);
-	typmod = typenameTypeMod(NULL, colDef->typename, typeOid);
 
 	/* make sure datatype is legal for a column */
 	CheckAttributeType(colDef->colname, typeOid);
@@ -4777,8 +4772,7 @@ ATPrepAlterColumnType(List **wqueue,
 						colName)));
 
 	/* Look up the target type */
-	targettype = typenameTypeId(NULL, typename);
-	targettypmod = typenameTypeMod(NULL, typename, targettype);
+	targettype = typenameTypeId(NULL, typename, &targettypmod);
 
 	/* make sure datatype is legal for a column */
 	CheckAttributeType(colName, targettype);
@@ -4905,10 +4899,9 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 						colName)));
 
 	/* Look up the target type (should not fail, since prep found it) */
-	typeTuple = typenameType(NULL, typename);
+	typeTuple = typenameType(NULL, typename, &targettypmod);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 	targettype = HeapTupleGetOid(typeTuple);
-	targettypmod = typenameTypeMod(NULL, typename, targettype);
 
 	/*
 	 * If there is a default expression for the column, get it and ensure we

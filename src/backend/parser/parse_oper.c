@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.95 2007/04/02 03:49:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.96 2007/11/11 19:22:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,12 +110,12 @@ LookupOperNameTypeNames(ParseState *pstate, List *opername,
 	if (oprleft == NULL)
 		leftoid = InvalidOid;
 	else
-		leftoid = typenameTypeId(pstate, oprleft);
+		leftoid = typenameTypeId(pstate, oprleft, NULL);
 
 	if (oprright == NULL)
 		rightoid = InvalidOid;
 	else
-		rightoid = typenameTypeId(pstate, oprright);
+		rightoid = typenameTypeId(pstate, oprright, NULL);
 
 	return LookupOperName(pstate, opername, leftoid, rightoid,
 						  noError, location);
