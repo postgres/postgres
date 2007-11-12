@@ -27,8 +27,8 @@
      <literal>int   icount(int[])</literal> - the number of elements in intarray
     </para>
     <programlisting>
-test=# select icount('{1,2,3}'::int[]);   
- icount 
+test=# select icount('{1,2,3}'::int[]);  
+ icount
 --------
       3
 (1 row)
@@ -41,7 +41,7 @@ test=# select icount('{1,2,3}'::int[]);
     </para>
     <programlisting>
 test=# select sort('{1,2,3}'::int[],'desc');
-  sort   
+  sort  
 ---------
  {3,2,1}
 (1 row)
@@ -56,7 +56,7 @@ test=# select sort('{1,2,3}'::int[],'desc');
 
    <listitem>
     <para>
-     <literal>int[] sort_asc(int[]),sort_desc(int[])</literal> - shortcuts for sort 
+     <literal>int[] sort_asc(int[]),sort_desc(int[])</literal> - shortcuts for sort
     </para>
    </listitem>
 
@@ -66,7 +66,7 @@ test=# select sort('{1,2,3}'::int[],'desc');
     </para>
     <programlisting>
 test=# select uniq(sort('{1,2,3,2,1}'::int[]));
-  uniq   
+  uniq  
 ---------
  {1,2,3}
 (1 row)
@@ -75,12 +75,12 @@ test=# select uniq(sort('{1,2,3,2,1}'::int[]));
 
    <listitem>
     <para>
-     <literal>int   idx(int[], int item)</literal> - returns index of first 
+     <literal>int   idx(int[], int item)</literal> - returns index of first
       intarray matching element to item, or '0' if matching failed.
     </para>
     <programlisting>
 test=# select idx('{1,2,3,2,1}'::int[],2);
- idx 
+ idx
 -----
    2
 (1 row)
@@ -89,12 +89,12 @@ test=# select idx('{1,2,3,2,1}'::int[],2);
 
    <listitem>
     <para>
-     <literal>int[] subarray(int[],int START [, int LEN])</literal> - returns 
-    part of intarray starting from element number START (from 1) and length LEN. 
+     <literal>int[] subarray(int[],int START [, int LEN])</literal> - returns
+    part of intarray starting from element number START (from 1) and length LEN.
     </para>
     <programlisting>
 test=# select subarray('{1,2,3,2,1}'::int[],2,3);
- subarray 
+ subarray
 ----------
  {2,3,2}
 (1 row)
@@ -107,7 +107,7 @@ test=# select subarray('{1,2,3,2,1}'::int[],2,3);
     </para>
     <programlisting>
 test=# select intset(1);
- intset 
+ intset
 --------
  {1}
 (1 row)
@@ -178,8 +178,8 @@ test=# select intset(1);
      <row>
       <entry><literal>int[] @@ query_int</literal></entry>
       <entry>
-       returns TRUE if array satisfies query (like 
-       <literal>'1&amp;(2|3)'</literal>) 
+       returns TRUE if array satisfies query (like
+       <literal>'1&amp;(2|3)'</literal>)
       </entry>
      </row>
 
@@ -212,7 +212,7 @@ CREATE unique index message_section_map_key2 ON message_section_map (sid, mid );
 CREATE INDEX message_rdtree_idx ON message USING GIST ( sections gist__int_ops);
 
 -- select some messages with section in 1 OR 2 - OVERLAP operator
-SELECT message.mid FROM message WHERE message.sections && '{1,2}';  
+SELECT message.mid FROM message WHERE message.sections && '{1,2}'; 
 
 -- select messages contains in sections 1 AND 2 - CONTAINS operator
 SELECT message.mid FROM message WHERE message.sections @> '{1,2}';
@@ -232,29 +232,29 @@ SELECT message.mid FROM message WHERE '{1,2}' <@ message.sections;
   2. psql TEST < ../_int.sql
   3. ./create_test.pl | psql TEST
   4. ./bench.pl - perl script to benchmark queries, supports OR, AND queries
-                  with/without RD-Tree. Run script without arguments to 
+                  with/without RD-Tree. Run script without arguments to
                   see availbale options.
 
      a)test without RD-Tree (OR)
        ./bench.pl -d TEST -c -s 1,2 -v
-     b)test with RD-Tree 
+     b)test with RD-Tree
        ./bench.pl -d TEST -c -s 1,2 -v -r
 
      BENCHMARKS:
-     
+    
      Size of table &lt;message>: 200000
-     Size of table &lt;message_section_map>: 269133 
-     
+     Size of table &lt;message_section_map>: 269133
+    
      Distribution of messages by sections:
-     
+    
      section 0: 74377 messages
      section 1: 16284 messages
      section 50: 1229 messages
      section 99: 683 messages
-     
+    
      old - without RD-Tree support,
      new - with RD-Tree
-     
+    
      +----------+---------------+----------------+
      |Search set|OR, time in sec|AND, time in sec|
      |          +-------+-------+--------+-------+
@@ -274,10 +274,10 @@ SELECT message.mid FROM message WHERE '{1,2}' <@ message.sections;
  <sect2>
   <title>Authors</title>
   <para>
-   All work was done by Teodor Sigaev (<email>teodor@stack.net</email>) and Oleg 
-   Bartunov (<email>oleg@sai.msu.su</email>). See 
-   <ulink url="http://www.sai.msu.su/~megera/postgres/gist"></ulink> for 
-   additional information. Andrey Oktyabrski did a great work on adding new 
+   All work was done by Teodor Sigaev (<email>teodor@stack.net</email>) and Oleg
+   Bartunov (<email>oleg@sai.msu.su</email>). See
+   <ulink url="http://www.sai.msu.su/~megera/postgres/gist"></ulink> for
+   additional information. Andrey Oktyabrski did a great work on adding new
    functions and operations.
   </para>
  </sect2>
