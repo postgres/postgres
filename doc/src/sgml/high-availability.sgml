@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.24 2007/11/10 19:19:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.25 2007/11/12 17:02:14 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -318,12 +318,12 @@ protocol to make nodes agree on a serializable transactional order.
     </row>
 
     <row>
-     <entry>No inter-server locking delay</entry>
+     <entry>No waiting for multiple servers</entry>
+     <entry align="center">&bull;</entry>
+     <entry align="center"></entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
-     <entry align="center">&bull;</entry>
-     <entry align="center">&bull;</entry>
-     <entry align="center">&bull;</entry>
+     <entry align="center"></entry>
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
     </row>
