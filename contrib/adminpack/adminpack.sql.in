@@ -1,6 +1,3 @@
--- Adjust this setting to control where the objects get created.
-SET search_path = public;
-
 /* ***********************************************
  * Administrative functions for PostgreSQL
  * *********************************************** */
@@ -19,7 +16,7 @@ LANGUAGE C VOLATILE;
 
 CREATE OR REPLACE FUNCTION pg_catalog.pg_file_rename(text, text)
 RETURNS bool
-AS 'SELECT pg_file_rename($1, $2, NULL); '
+AS 'SELECT pg_catalog.pg_file_rename($1, $2, NULL::pg_catalog.text);'
 LANGUAGE SQL VOLATILE STRICT;
 
 CREATE OR REPLACE FUNCTION pg_catalog.pg_file_unlink(text)
@@ -42,11 +39,10 @@ LANGUAGE INTERNAL VOLATILE STRICT;
 
 CREATE OR REPLACE FUNCTION pg_catalog.pg_file_length(text)
 RETURNS bigint
-AS 'SELECT size FROM pg_stat_file($1)'
+AS 'SELECT size FROM pg_catalog.pg_stat_file($1)'
 LANGUAGE SQL VOLATILE STRICT;
 
 CREATE OR REPLACE FUNCTION pg_catalog.pg_logfile_rotate()
 RETURNS int4
 AS 'pg_rotate_logfile'
 LANGUAGE INTERNAL VOLATILE STRICT;
-
