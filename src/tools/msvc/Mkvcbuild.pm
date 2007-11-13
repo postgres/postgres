@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.23 2007/10/13 23:22:46 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.24 2007/11/13 22:49:47 tgl Exp $
 #
 use Carp;
 use Win32;
@@ -468,9 +468,6 @@ sub GenerateContribSqlFiles
             my $in = "$d.in";
             my $out = "$d";
 
-            # tsearch2 uses inconsistent naming
-            $in = "tsearch.sql.in" if ($in eq "tsearch2.sql.in");
-            $in = "untsearch.sql.in" if ($in eq "uninstall_tsearch2.sql.in");
             if (Solution::IsNewer("contrib/$n/$out", "contrib/$n/$in"))
             {
                 print "Building $out from $in (contrib/$n)...\n";
