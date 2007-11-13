@@ -1,7 +1,7 @@
 #!/bin/sh
 # install - install a program, script, or datafile
 
-# $PostgreSQL: pgsql/config/install-sh,v 1.6 2007/11/13 18:15:01 momjian Exp $
+# $PostgreSQL: pgsql/config/install-sh,v 1.7 2007/11/13 18:50:54 momjian Exp $
 
 scriptversion=2005-02-02.21
 
@@ -59,7 +59,7 @@ chgrpprog="${CHGRPPROG-chgrp}"
 # Darwin normal strip removes symbols from shared libraries
 # that are later needed for dynamic linking, so use strip -x.
 # http://archives.postgresql.org/pgsql-hackers/2007-10/msg01470.php
-if test expr "`uname -a`" : 'Darwin' -ne 0
+if test `expr "\`uname -a\`" : 'Darwin'` -ne 0
 then	stripprog="${STRIPPROG-strip -x}"
 else	stripprog="${STRIPPROG-strip}"
 fi
