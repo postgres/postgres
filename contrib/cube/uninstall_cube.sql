@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/cube/uninstall_cube.sql,v 1.7 2007/11/13 04:24:27 momjian Exp $ */
+
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
 

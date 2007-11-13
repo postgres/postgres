@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/adminpack/uninstall_adminpack.sql,v 1.4 2007/11/13 04:24:27 momjian Exp $ */
+
 DROP FUNCTION pg_catalog.pg_file_write(text, text, bool) ;
 DROP FUNCTION pg_catalog.pg_file_rename(text, text, text) ;
 DROP FUNCTION pg_catalog.pg_file_rename(text, text) ;

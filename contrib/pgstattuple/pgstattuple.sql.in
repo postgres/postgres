@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.sql.in,v 1.15 2007/11/13 04:24:28 momjian Exp $ */
+
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
