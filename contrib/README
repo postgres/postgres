@@ -6,8 +6,9 @@ features that are not part of the core PostgreSQL system, mainly because
 they address a limited audience or are too experimental to be part of
 the main source tree.  This does not preclude their usefulness.
 
-Each subdirectory contains a README file with information about the
-module.  Most items can be built with `gmake all' and installed with
+User documentation for each module appears in the main SGML documentation.
+
+Most items can be built with `gmake all' and installed with
 `gmake install' in the usual fashion, after you have run the `configure'
 script in the top-level directory.  Some directories supply new
 user-defined functions, operators, or types.  In these cases, after you have
@@ -148,9 +149,9 @@ test_parser -
 	by Sergey Karpov <karpov@sao.ru>
 
 tsearch2 -
-	Full-text-index support using GiST
-	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov
-	<oleg@sai.msu.su>.
+	Compatibility package for the pre-8.3 implementation of text search.
+	Pavel Stehule <pavel.stehule@gmail.com>, based on code originally by
+	Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>.
 
 uuid-ossp -
 	UUID generation functions
