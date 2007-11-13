@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.28 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.29 2007/11/13 23:36:26 tgl Exp $ -->
 
 <chapter id="GiST">
 <title>GiST Indexes</title>
@@ -181,8 +181,9 @@
  <para>
   The <productname>PostgreSQL</productname> source distribution includes
   several examples of index methods implemented using
-  <acronym>GiST</acronym>.  The core system currently provides R-Tree
-  equivalent functionality for some of the built-in geometric data types
+  <acronym>GiST</acronym>.  The core system currently provides text search
+  support (indexing for <type>tsvector</> and <type>tsquery</>) as well as
+  R-Tree equivalent functionality for some of the built-in geometric data types
   (see <filename>src/backend/access/gist/gistproc.c</>).  The following
   <filename>contrib</> modules also contain <acronym>GiST</acronym>
   operator classes: 
@@ -200,6 +201,13 @@
    <term>cube</term>
    <listitem>
     <para>Indexing for multidimensional cubes</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>hstore</term>
+   <listitem>
+    <para>Module for storing (key, value) pairs</para>
    </listitem>
   </varlistentry>
 
@@ -228,13 +236,6 @@
    <term>seg</term>
    <listitem>
     <para>Indexing for <quote>float ranges</quote></para>
-   </listitem>
-  </varlistentry>
-
-  <varlistentry>
-   <term>tsearch2</term>
-   <listitem>
-    <para>Full text indexing</para>
    </listitem>
   </varlistentry>
  </variablelist>

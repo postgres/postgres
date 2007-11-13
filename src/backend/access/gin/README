@@ -48,7 +48,7 @@ Features
   * User-defined opclasses.  (The scheme is similar to GiST.)
   * Optimized index creation (Makes use of maintenance_work_mem to accumulate
     postings in memory.)
-  * Tsearch2 support via an opclass
+  * Text search support via an opclass
   * Soft upper limit on the returned results set using a GUC variable:
     gin_fuzzy_search_limit
 

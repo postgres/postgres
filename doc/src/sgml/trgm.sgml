@@ -131,24 +131,24 @@ ORDER BY
  </sect2>
 
  <sect2>
-  <title>Tsearch2 Integration</title>
+  <title>Text Search Integration</title>
   <para>
    Trigram matching is a very useful tool when used in conjunction
-   with a text index created by the Tsearch2 contrib module. (See
-   contrib/tsearch2)
+   with a full text index.
   </para>
   <para>
    The first step is to generate an auxiliary table containing all
-   the unique words in the Tsearch2 index:
+   the unique words in the documents:
   </para>
   <programlisting>
 CREATE TABLE words AS SELECT word FROM 
         stat('SELECT to_tsvector(''simple'', bodytext) FROM documents');
   </programlisting>
   <para>
-   Where 'documents' is a table that has a text field 'bodytext'
-   that TSearch2 is used to search.  The use of the 'simple' dictionary
-   with the to_tsvector function, instead of just using the already
+   where <structname>documents</> is a table that has a text field
+   <structfield>bodytext</> that we wish to search.  The use of the
+   <literal>simple</> configuration with the <function>to_tsvector</>
+   function, instead of just using the already
    existing vector is to avoid creating a list of already stemmed
    words.  This way, only the original, unstemmed words are added
    to the word list.
@@ -174,9 +174,9 @@ CREATE INDEX words_idx ON words USING gin(word gist_trgm_ops);
   <para>
    <note>
     <para>
-     Since the 'words' table has been generated as a separate,
+     Since the <structname>words</> table has been generated as a separate,
      static table, it will need to be periodically regenerated so that
-     it remains up to date with the word list in the Tsearch2 index.
+     it remains up to date with the document collection.
     </para>
    </note>
   </para>
@@ -185,12 +185,12 @@ CREATE INDEX words_idx ON words USING gin(word gist_trgm_ops);
  <sect2>
   <title>References</title>
   <para>
-   Tsearch2 Development Site
-   <ulink url="http://www.sai.msu.su/~megera/postgres/gist/tsearch/V2/"></ulink>
-  </para>
-  <para>
    GiST Development Site
    <ulink url="http://www.sai.msu.su/~megera/postgres/gist/"></ulink>
+  </para>
+  <para>
+   Tsearch2 Development Site
+   <ulink url="http://www.sai.msu.su/~megera/postgres/gist/tsearch/V2/"></ulink>
   </para>
  </sect2>
 

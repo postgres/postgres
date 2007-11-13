@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.11 2007/02/16 03:50:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.12 2007/11/13 23:36:26 tgl Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -232,13 +232,20 @@
 
  <para>
   The <productname>PostgreSQL</productname> source distribution includes
-  <acronym>GIN</acronym> classes for one-dimensional arrays of all internal
-  types.  The following
+  <acronym>GIN</acronym> operator classes for <type>tsvector</> and
+  for one-dimensional arrays of all internal types.  The following
   <filename>contrib</> modules also contain <acronym>GIN</acronym>
   operator classes:
  </para>
 
  <variablelist>
+  <varlistentry>
+   <term>hstore</term>
+   <listitem>
+    <para>Module for storing (key, value) pairs</para>
+   </listitem>
+  </varlistentry>
+
   <varlistentry>
    <term>intarray</term>
    <listitem>
@@ -247,11 +254,9 @@
   </varlistentry>
 
   <varlistentry>
-   <term>tsearch2</term>
+   <term>pg_trgm</term>
    <listitem>
-    <para>Support for inverted text indexing.  This is much faster for very
-     large, mostly-static sets of documents.
-    </para>
+    <para>Text similarity using trigram matching</para>
    </listitem>
   </varlistentry>
  </variablelist>

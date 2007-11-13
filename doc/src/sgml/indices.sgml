@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.71 2007/04/06 22:33:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.72 2007/11/13 23:36:26 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -235,8 +235,6 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
    (See <xref linkend="functions-geometry"> for the meaning of
    these operators.)
-   Also, an <literal>IS NULL</> condition on
-   an index column can be used with a GiST index.
    Many other GiST operator
    classes are available in the <literal>contrib</> collection or as separate
    projects.  For more information see <xref linkend="GiST">.
@@ -269,10 +267,9 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
    (See <xref linkend="functions-array"> for the meaning of
    these operators.)
-   GIN indexes cannot use <literal>IS NULL</> as a search condition.
-   Other GIN operator classes are available in the <literal>contrib</>
-   <literal>tsearch2</literal> and <literal>intarray</literal> modules.
-   For more information see <xref linkend="GIN">.
+   Many other GIN operator
+   classes are available in the <literal>contrib</> collection or as separate
+   projects.  For more information see <xref linkend="GIN">.
   </para>
  </sect1>
 
