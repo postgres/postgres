@@ -2,30 +2,29 @@
 SET search_path = public;
 
 CREATE OR REPLACE FUNCTION ssl_client_serial() RETURNS numeric
-AS 'MODULE_PATHNAME', 'ssl_client_serial';
-LANGUAGE C STRICT
+AS 'MODULE_PATHNAME', 'ssl_client_serial'
+LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION ssl_is_used() RETURNS boolean
-AS 'MODULE_PATHNAME', 'ssl_is_used';
-LANGUAGE C STRICT
+AS 'MODULE_PATHNAME', 'ssl_is_used'
+LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION ssl_client_cert_present() RETURNS boolean
-AS 'MODULE_PATHNAME', 'ssl_client_cert_present';
-LANGUAGE C STRICT
+AS 'MODULE_PATHNAME', 'ssl_client_cert_present'
+LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION ssl_client_dn_field(text) RETURNS text
-AS 'MODULE_PATHNAME', 'ssl_client_dn_field';
-LANGUAGE C STRICT
+AS 'MODULE_PATHNAME', 'ssl_client_dn_field'
+LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION ssl_issuer_field(text) RETURNS text
-AS 'MODULE_PATHNAME', 'ssl_issuer_field';
-LANGUAGE C STRICT
+AS 'MODULE_PATHNAME', 'ssl_issuer_field'
+LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION ssl_client_dn() RETURNS text
-AS 'MODULE_PATHNAME', 'ssl_client_dn';
-LANGUAGE C STRICT
+AS 'MODULE_PATHNAME', 'ssl_client_dn'
+LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION ssl_issuer_dn() RETURNS text
-AS 'MODULE_PATHNAME', 'ssl_issuer_dn';
-LANGUAGE C STRICT
-
+AS 'MODULE_PATHNAME', 'ssl_issuer_dn'
+LANGUAGE C STRICT;
