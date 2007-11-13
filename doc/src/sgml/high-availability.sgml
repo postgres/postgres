@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.26 2007/11/12 18:01:44 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.27 2007/11/13 18:44:20 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -74,7 +74,9 @@
 
  <para>
   The remainder of this section outlines various failover, replication,
-  and load balancing solutions.
+  and load balancing solutions.  A <ulink
+  url="http://www.postgres-r.org/documentation/terms">glossary</ulink> is
+  also available.
  </para>
 
  <variablelist>
