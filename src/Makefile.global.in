@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.239 2007/09/28 22:25:49 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.240 2007/11/13 00:13:19 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -228,6 +228,7 @@ DTRACEFLAGS = @DTRACEFLAGS@
 LIBS = @LIBS@
 LDAP_LIBS_FE = @LDAP_LIBS_FE@
 LDAP_LIBS_BE = @LDAP_LIBS_BE@
+OSSP_UUID_LIBS = @OSSP_UUID_LIBS@
 LD = @LD@
 with_gnu_ld = @with_gnu_ld@
 ld_R_works = @ld_R_works@
