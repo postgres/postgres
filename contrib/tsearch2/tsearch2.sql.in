@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.sql.in,v 1.1 2007/11/13 21:02:29 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.sql.in,v 1.2 2007/11/13 22:14:50 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -206,9 +206,9 @@ CREATE FUNCTION set_curcfg(text)
 
 CREATE FUNCTION show_curcfg()
 	RETURNS oid
-	as 'MODULE_PATHNAME', 'tsa_show_curcfg'
-	LANGUAGE C
-	RETURNS NULL ON NULL INPUT;
+	AS 'get_current_ts_config'
+	LANGUAGE INTERNAL
+	RETURNS NULL ON NULL INPUT STABLE;
 
 CREATE FUNCTION length(tsvector)
 	RETURNS int4

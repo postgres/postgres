@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.7 2007/10/23 01:44:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.8 2007/11/13 22:14:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,6 +193,8 @@ extern QTNode *QTNCopy(QTNode *in);
 extern void QTNClearFlags(QTNode *in, uint32 flags);
 extern bool QTNEq(QTNode * a, QTNode * b);
 extern TSQuerySign makeTSQuerySign(TSQuery a);
+extern QTNode *findsubquery(QTNode *root, QTNode *ex, QTNode *subs,
+							bool *isfind);
 
 /*
  * TSQuery GiST support

@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.1 2007/11/13 21:02:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.2 2007/11/13 22:14:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/namespace.h"
+#include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "fmgr.h"
 #include "tsearch/ts_utils.h"
@@ -77,13 +78,14 @@ Datum tsa_set_curprs_byname(PG_FUNCTION_ARGS);
 Datum tsa_parse_current(PG_FUNCTION_ARGS);
 Datum tsa_set_curcfg(PG_FUNCTION_ARGS);
 Datum tsa_set_curcfg_byname(PG_FUNCTION_ARGS);
-Datum tsa_show_curcfg(PG_FUNCTION_ARGS);
 Datum tsa_to_tsvector_name(PG_FUNCTION_ARGS);
 Datum tsa_to_tsquery_name(PG_FUNCTION_ARGS);
 Datum tsa_plainto_tsquery_name(PG_FUNCTION_ARGS);
 Datum tsa_headline_byname(PG_FUNCTION_ARGS);
 Datum tsa_ts_stat(PG_FUNCTION_ARGS);
 Datum tsa_tsearch2(PG_FUNCTION_ARGS);
+Datum tsa_rewrite_accum(PG_FUNCTION_ARGS);
+Datum tsa_rewrite_finish(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(tsa_lexize_byname);
 PG_FUNCTION_INFO_V1(tsa_lexize_bycurrent);
@@ -95,13 +97,14 @@ PG_FUNCTION_INFO_V1(tsa_set_curprs_byname);
 PG_FUNCTION_INFO_V1(tsa_parse_current);
 PG_FUNCTION_INFO_V1(tsa_set_curcfg);
 PG_FUNCTION_INFO_V1(tsa_set_curcfg_byname);
-PG_FUNCTION_INFO_V1(tsa_show_curcfg);
 PG_FUNCTION_INFO_V1(tsa_to_tsvector_name);
 PG_FUNCTION_INFO_V1(tsa_to_tsquery_name);
 PG_FUNCTION_INFO_V1(tsa_plainto_tsquery_name);
 PG_FUNCTION_INFO_V1(tsa_headline_byname);
 PG_FUNCTION_INFO_V1(tsa_ts_stat);
 PG_FUNCTION_INFO_V1(tsa_tsearch2);
+PG_FUNCTION_INFO_V1(tsa_rewrite_accum);
+PG_FUNCTION_INFO_V1(tsa_rewrite_finish);
 
 
 /*
@@ -137,9 +140,6 @@ UNSUPPORTED_FUNCTION(tsa_prsd_headline);
 
 UNSUPPORTED_FUNCTION(tsa_reset_tsearch);
 UNSUPPORTED_FUNCTION(tsa_get_covers);
-
-UNSUPPORTED_FUNCTION(tsa_rewrite_accum);
-UNSUPPORTED_FUNCTION(tsa_rewrite_finish);
 
 
 /*
@@ -275,6 +275,7 @@ tsa_set_curcfg_byname(PG_FUNCTION_ARGS)
 	char *name;
 
 	name = TextPGetCString(arg0);
+
 	set_config_option("default_text_search_config", name,
 					  PGC_USERSET,
 					  PGC_S_SESSION,
@@ -282,20 +283,6 @@ tsa_set_curcfg_byname(PG_FUNCTION_ARGS)
 					  true);
 
 	PG_RETURN_VOID();
-}
-
-/* show_curcfg() */
-Datum
-tsa_show_curcfg(PG_FUNCTION_ARGS)
-{
-	char *cfgname;
-	Oid config_oid;
-
-	cfgname = GetConfigOptionByName("default_text_search_config", NULL);
-	config_oid = DatumGetObjectId(DirectFunctionCall1(regconfigin,
-													  CStringGetDatum(cfgname)));
-
-	PG_RETURN_OID(config_oid);
 }
 
 /* to_tsvector(text, text) */
@@ -410,6 +397,136 @@ tsa_tsearch2(PG_FUNCTION_ARGS)
 
 	return tsvector_update_trigger_byid(fcinfo);
 }
+
+
+Datum
+tsa_rewrite_accum(PG_FUNCTION_ARGS)
+{
+	TSQuery		acc;
+	ArrayType  *qa;
+	TSQuery		q;
+	QTNode	   *qex = NULL,
+			   *subs = NULL,
+			   *acctree = NULL;
+	bool		isfind = false;
+	Datum	   *elemsp;
+	int			nelemsp;
+	MemoryContext aggcontext;
+	MemoryContext oldcontext;
+
+	aggcontext = ((AggState *) fcinfo->context)->aggcontext;
+
+	if (PG_ARGISNULL(0) || PG_GETARG_POINTER(0) == NULL)
+	{
+		acc = (TSQuery) MemoryContextAlloc(aggcontext, HDRSIZETQ);
+		SET_VARSIZE(acc, HDRSIZETQ);
+		acc->size = 0;
+	}
+	else
+		acc = PG_GETARG_TSQUERY(0);
+
+	if (PG_ARGISNULL(1) || PG_GETARG_POINTER(1) == NULL)
+		PG_RETURN_TSQUERY(acc);
+	else
+		qa = PG_GETARG_ARRAYTYPE_P_COPY(1);
+
+	if (ARR_NDIM(qa) != 1)
+		elog(ERROR, "array must be one-dimensional, not %d dimensions",
+			 ARR_NDIM(qa));
+	if (ArrayGetNItems(ARR_NDIM(qa), ARR_DIMS(qa)) != 3)
+		elog(ERROR, "array must have three elements");
+	if (ARR_ELEMTYPE(qa) != TSQUERYOID)
+		elog(ERROR, "array must contain tsquery elements");
+
+	deconstruct_array(qa, TSQUERYOID, -1, false, 'i', &elemsp, NULL, &nelemsp);
+
+	q = DatumGetTSQuery(elemsp[0]);
+	if (q->size == 0)
+	{
+		pfree(elemsp);
+		PG_RETURN_POINTER(acc);
+	}
+
+	if (!acc->size)
+	{
+		if (VARSIZE(acc) > HDRSIZETQ)
+		{
+			pfree(elemsp);
+			PG_RETURN_POINTER(acc);
+		}
+		else
+			acctree = QT2QTN(GETQUERY(q), GETOPERAND(q));
+	}
+	else
+		acctree = QT2QTN(GETQUERY(acc), GETOPERAND(acc));
+
+	QTNTernary(acctree);
+	QTNSort(acctree);
+
+	q = DatumGetTSQuery(elemsp[1]);
+	if (q->size == 0)
+	{
+		pfree(elemsp);
+		PG_RETURN_POINTER(acc);
+	}
+	qex = QT2QTN(GETQUERY(q), GETOPERAND(q));
+	QTNTernary(qex);
+	QTNSort(qex);
+
+	q = DatumGetTSQuery(elemsp[2]);
+	if (q->size)
+		subs = QT2QTN(GETQUERY(q), GETOPERAND(q));
+
+	acctree = findsubquery(acctree, qex, subs, &isfind);
+
+	if (isfind || !acc->size)
+	{
+		/* pfree( acc ); do not pfree(p), because nodeAgg.c will */
+		if (acctree)
+		{
+			QTNBinary(acctree);
+			oldcontext = MemoryContextSwitchTo(aggcontext);
+			acc = QTN2QT(acctree);
+			MemoryContextSwitchTo(oldcontext);
+		}
+		else
+		{
+			acc = (TSQuery) MemoryContextAlloc(aggcontext, HDRSIZETQ);
+			SET_VARSIZE(acc, HDRSIZETQ);
+			acc->size = 0;
+		}
+	}
+
+	pfree(elemsp);
+	QTNFree(qex);
+	QTNFree(subs);
+	QTNFree(acctree);
+
+	PG_RETURN_TSQUERY(acc);
+}
+
+Datum
+tsa_rewrite_finish(PG_FUNCTION_ARGS)
+{
+	TSQuery		acc = PG_GETARG_TSQUERY(0);
+	TSQuery		rewrited;
+
+	if (acc == NULL || PG_ARGISNULL(0) || acc->size == 0)
+	{
+		rewrited = (TSQuery) palloc(HDRSIZETQ);
+		SET_VARSIZE(rewrited, HDRSIZETQ);
+		rewrited->size = 0;
+	}
+	else
+	{
+		rewrited = (TSQuery) palloc(VARSIZE(acc));
+		memcpy(rewrited, acc, VARSIZE(acc));
+		pfree(acc);
+	}
+
+	PG_RETURN_POINTER(rewrited);
+}
+
 
 /*
  * Get Oid of current dictionary

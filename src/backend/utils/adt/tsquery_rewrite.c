@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.7 2007/10/24 03:30:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.8 2007/11/13 22:14:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,7 +233,7 @@ dropvoidsubtree(QTNode * root)
 	return root;
 }
 
-static QTNode *
+QTNode *
 findsubquery(QTNode *root, QTNode *ex, QTNode *subs, bool *isfind)
 {
 	bool		DidFind = false;
