@@ -7,9 +7,11 @@ SET search_path = public;
 --
 -- Turn off echoing so that expected file does not depend on
 -- contents of dblink.sql.
+SET client_min_messages = warning;
 \set ECHO none
 \i dblink.sql
 \set ECHO all
+RESET client_min_messages;
 
 CREATE TABLE foo(f1 int, f2 text, f3 text[], primary key (f1,f2));
 INSERT INTO foo VALUES (0,'a','{"a0","b0","c0"}');

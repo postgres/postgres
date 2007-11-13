@@ -1,6 +1,12 @@
+--
+-- first, define the datatype.  Turn off echoing so that expected file
+-- does not depend on contents of pg_tgrm.sql.
+--
+SET client_min_messages = warning;
 \set ECHO none
 \i pg_trgm.sql
 \set ECHO all
+RESET client_min_messages;
 
 select show_trgm('');
 select show_trgm('(*&^$@%@');
