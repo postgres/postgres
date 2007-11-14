@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.533 2007/11/01 22:38:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.534 2007/11/14 00:16:27 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -41,7 +41,7 @@ do it for earlier branch release files.
   <note>
    <title>Release date</title>
    <simpara>2007-12-??</simpara>
-   <para>CURRENT AS OF 2007-10-24</>
+   <para>CURRENT AS OF 2007-11-13</>
   </note>
 
   <sect2>
@@ -459,6 +459,21 @@ do it for earlier branch release files.
       If application code was calling and storing hash values using
       internal <productname>PostgreSQL</> hashing functions, the hash
       values must be regenerated.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>ALTER SEQUENCE</> no longer affects <function>currval()</>
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>ROLLBACK</> outside a mult-statement transaction now
+      issues a <literal>NOTICE</> instead of <literal>WARNING</> (Bruce)
+      (Tom)
      </para>
     </listitem>
 
@@ -995,6 +1010,12 @@ do it for earlier branch release files.
       <para>
        Allow <command>CREATE INDEX CONCURRENTLY</command> to ignore
        transactions in other databases (Simon)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add Kerberos realm specification, <varname>krb_realm</> (Magnus)
       </para>
      </listitem>
 
@@ -1854,6 +1875,17 @@ do it for earlier branch release files.
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       Add <application>pg_ctl</> timeout parameter (Bruce)
+      </para>
+
+      <para>
+       This controls how long <application>pg_ctl</> waits when waiting
+       for start or shutdown.
+      </para>
+     </listitem>
+
     </itemizedlist>
 
    </sect3>
@@ -2153,6 +2185,14 @@ do it for earlier branch release files.
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       Add <link linkend="acronyms">acronym</link> and <link
+       linkend="creating-cluster-nfs"><acronym>NFS</></> documentation
+       sections (Bruce)
+      </para>
+     </listitem>
+
     </itemizedlist>
 
    </sect3>
@@ -2160,6 +2200,14 @@ do it for earlier branch release files.
    <sect3>
     <title>Contrib Changes</title>
     <itemizedlist>
+
+     <listitem>
+      <para>
+       Move <filename>/contrib</> <filename>README</> content into the
+       main <productname>PostgresSQL</> documentation (Albert Cervera i
+       Areny)
+      </para>
+     </listitem>
 
      <listitem>
       <para>
