@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Oct 29 13:22:07 EDT 2007
+   Last updated: Tue Nov 13 22:37:19 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -345,8 +345,7 @@
    
    Some programming languages like PHP include an interface to
    PostgreSQL. Interfaces for languages like Perl, TCL, Python, and many
-   others are available at http://gborg.postgresql.org in the
-   Drivers/Interfaces section and via Internet search.
+   others are available at http://pgfoundry.org.
    
   2.2) What tools are available for using PostgreSQL with Web pages?
   
