@@ -24,13 +24,13 @@ Other language binding are available from a variety of contributing
 parties.
 
 PostgreSQL also has a great number of procedural languages available,
-a short but not complete list is below:
+a short, incomplete list is below:
 
 PL/pgSQL - included in PostgreSQL source distribution
 PL/Perl - included in PostgreSQL source distribution
 PL/PHP - http://projects.commandprompt.com/projects/public/plphp
 PL/Python - included in PostgreSQL source distribution
-PL/Java - http://gborg.postgresql.org/project/pljava/projdisplay.php
+PL/Java - http://pgfoundry.org/projects/pljava/
 PL/Tcl - included in PostgreSQL source distribution
 
 See the file INSTALL for instructions on how to build and install

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.18 2007/10/16 19:04:34 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.19 2007/11/14 01:58:18 tgl Exp $ -->
 
  <appendix id="external-projects">
   <title>External Projects</title>
@@ -22,20 +22,6 @@
    project that you would like to have hosted at PgFoundy, please feel free
    to create a new project.
   </para>
-
-  <note>
-   <para>
-    Many <productname>PostgreSQL</productname>-related projects are still
-    hosted at <ulink url="http://gborg.postgresql.org/">GBorg</>.  GBorg is
-    the original external community developer site, and while it is
-    currently closed to new projects in favor of PgFoundry, it still
-    contains many active and relevant projects. Other popular
-    <productname>PostgreSQL</productname>-related projects are hosted
-    independently, or on other project-hosting sites such as <ulink
-    url="http://sourceforge.net/">SourceForge.net</ulink>. You should search
-    the web if you don't find the project you are looking for.
-   </para>
-  </note>
 
  <sect1 id="external-interfaces">
   <title>Client Interfaces</title>
@@ -107,13 +93,6 @@
       <entry>C++</entry>
       <entry>New-style C++ interface</entry>
       <entry><ulink url="http://pqxx.org/">http://pqxx.org/</ulink></entry>
-     </row>
-
-     <row>
-      <entry>libpq++</entry>
-      <entry>C++</entry>
-      <entry>Old-style C++ interface</entry>
-      <entry><ulink url="http://gborg.postgresql.org/project/libpqpp/">http://gborg.postgresql.org/project/libpqpp/</ulink></entry>
      </row>
 
      <row>
