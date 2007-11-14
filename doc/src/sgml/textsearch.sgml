@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.34 2007/11/14 23:43:27 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.35 2007/11/14 23:48:55 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -538,15 +538,15 @@ CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', title || body))
     indexed when the other is <literal>NULL</>:
 
 <programlisting>
-ALTER TABLE pgweb ADD COLUMN textsearch_index tsvector;
-UPDATE pgweb SET textsearch_index =
+ALTER TABLE pgweb ADD COLUMN textsearchable_index_col tsvector;
+UPDATE pgweb SET textsearchable_index_col =
      to_tsvector('english', coalesce(title,'') || coalesce(body,''));
 </programlisting>
 
     Then we create a <acronym>GIN</acronym> index to speed up the search:
 
 <programlisting>
-CREATE INDEX textsearch_idx ON pgweb USING gin(textsearch_index);
+CREATE INDEX textsearch_idx ON pgweb USING gin(textsearchable_index_col);
 </programlisting>
 
     Now we are ready to perform a fast full text search:
@@ -554,7 +554,7 @@ CREATE INDEX textsearch_idx ON pgweb USING gin(textsearch_index);
 <programlisting>
 SELECT title
 FROM pgweb
-WHERE to_tsquery('create &amp; table') @@ textsearch_index
+WHERE textsearchable_index_col @@ to_tsquery('create &amp; table')
 ORDER BY last_mod_date DESC LIMIT 10;
 </programlisting>
    </para>
