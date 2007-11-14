@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.45 2007/10/04 15:37:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.46 2007/11/14 21:19:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -718,7 +718,7 @@ IsCheckpointOnSchedule(double progress)
 	recptr = GetInsertRecPtr();
 	elapsed_xlogs =
 		(((double) (int32) (recptr.xlogid - ckpt_start_recptr.xlogid)) * XLogSegsPerFile +
-		 ((double) (int32) (recptr.xrecoff - ckpt_start_recptr.xrecoff)) / XLogSegSize) /
+		 ((double) recptr.xrecoff - (double) ckpt_start_recptr.xrecoff) / XLogSegSize) /
 		CheckPointSegments;
 
 	if (progress < elapsed_xlogs)
