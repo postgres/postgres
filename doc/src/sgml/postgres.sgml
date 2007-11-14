@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.84 2007/11/10 23:30:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.85 2007/11/14 02:36:43 tgl Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
@@ -102,7 +102,6 @@
   &typeconv;
   &indices;
   &textsearch;
-  &contrib;
   &mvcc;
   &perform;
 
@@ -254,9 +253,10 @@
   &keywords;
   &features;
   &release;
+  &contrib;
+  &external-projects;
   &cvs;
   &docguide;
-  &external-projects;
   &acronyms;
 
  </part>
