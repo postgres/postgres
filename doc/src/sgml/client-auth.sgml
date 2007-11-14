@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.103 2007/11/09 23:52:08 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.104 2007/11/14 14:25:55 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -721,6 +721,15 @@ local   db1,db2,@demodbs  all                         md5
    <indexterm zone="kerberos-auth">
     <primary>Kerberos</primary>
    </indexterm>
+
+   <note>
+    <para>
+     Native Kerberos authentication has been deprecated and should be used
+     only for backward compatibility. New and upgraded installations are
+     encouraged to use the industry-standard <productname>GSSAPI</productname>
+     authentication (see <xref linkend="gssapi-auth">) instead.
+    </para>
+   </note>
 
    <para>
     <productname>Kerberos</productname> is an industry-standard secure
