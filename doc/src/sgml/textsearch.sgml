@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.31 2007/11/10 15:39:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.32 2007/11/14 03:26:24 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -3489,99 +3489,77 @@ Parser: "pg_catalog.default"
   <title>Migration from Pre-8.3 Text Search</title>
 
   <para>
-   This area needs lots of work.  Here is a quick list of known issues:
+   Applications that used the <filename>contrib/tsearch2</> add-on module
+   for text searching will need some adjustments to work with the
+   built-in features:
   </para>
 
-  <itemizedlist mark="bullet">
+  <itemizedlist>
    <listitem>
     <para>
-     The old contrib/tsearch2 objects <emphasis>must</> be removed from
-     the pg_dump output from a pre-8.3 database.  While many of them won't
-     load for lack of a tsearch2.so library, some do and cause problems.
-     We have a working perl script for doing this with a custom- or tar-format
-     backup, but there is a proposal to incorporate the functionality directly
-     into pg_restore.  Neither approach will help for pg_dumpall output.
+     Some functions have been renamed or had small adjustments in their
+     argument lists, and all of them are now in the <literal>pg_catalog</>
+     schema, whereas in a previous installation they would have been in
+     <literal>public</> or another non-system schema.  There is a new
+     version of <filename>contrib/tsearch2</> (see <xref linkend="tsearch2">)
+     that provides a compatibility layer to solve most problems in this
+     area.
     </para>
    </listitem>
 
    <listitem>
     <para>
-     The old dump may include schema-qualified references to the old
-     contrib/tsearch2 objects; for example <literal>public.tsvector</>
-     columns in table definitions.  These will fail since the objects
-     are now in the pg_catalog schema.  Given current pg_dump behavior
-     this will happen only for tables that are in a different schema
-     from the tsearch2 objects; which makes it more likely to bite
-     people who carefully put their tsearch2 objects in a
-     non-<literal>public</> schema.
-    </para>
-
-    <para>
-     Question: will restore-time failures of this type happen for
-     any objects other than the tsvector and tsquery datatypes?
-    </para>
-
-    <para>
-     The basic alternatives for fixing this seem to involve creating
-     a dummy linkage, such as a public.tsvector domain linking to the
-     base pg_catalog.tsvector type (which only helps for the datatypes);
-     or stripping the schema references out of the dump.  We could
-     just recommend that users do this manually, or try to provide
-     some tools to help.
+     The old <filename>contrib/tsearch2</> functions and other objects
+     <emphasis>must</> be suppressed when loading <application>pg_dump</>
+     output from a pre-8.3 database.  While many of them won't load anyway,
+     a few will and then cause problems.  One simple way to deal with this
+     is to load the new <filename>contrib/tsearch2</> module before restoring
+     the dump; then it will block the old objects from being loaded.
     </para>
    </listitem>
 
    <listitem>
     <para>
-     We have renamed the built-in tsvector update triggers, and changed
-     their arguments too.  This will result in CREATE TRIGGER commands
-     failing during load, which can be ignored, but users will need to
-     re-issue them with suitable argument adjustment.  We probably
-     can't automate that for them.  Also, the old tsearch2 trigger
-     function offered an option to invoke functions, which was removed
-     as being a security hole.  Users who were relying on that will need to
-     write custom trigger functions as a substitute.  I think all we
-     can do here is document what to do to fix it.
+     Text search configuration setup is completely different now.
+     Instead of manually inserting rows into configuration tables,
+     search is configured through the specialized SQL commands shown
+     earlier in this chapter.  There is not currently any automated
+     support for converting an existing custom configuration for 8.3;
+     you're on your own here.
     </para>
    </listitem>
 
    <listitem>
     <para>
-     We have renamed a number of other functions besides the triggers,
-     compared to the tsearch2 versions.  This seems unlikely to cause
-     any problems during dump/reload but it will require adjustments in
-     the bodies of stored procedures and in client application code.
-     Again, not much to do except document it.
-    </para>
-   </listitem>
+     Most types of dictionaries rely on some outside-the-database
+     configuration files.  These are largely compatible with pre-8.3
+     usage, but note the following differences:
 
-   <listitem>
-    <para>
-     Configuration setup is completely different now.  Can we provide
-     any automated assistance for translating an old custom setup?
-     It probably can't be 100% automatic in any case, so maybe documentation
-     is the best we can do here too.  Aside from the inside-the-database
-     differences, outside-the-database configuration files now have
-     prescribed location and extensions, which was not true before.
-    </para>
-   </listitem>
+     <itemizedlist  spacing="compact" mark="bullet">
+      <listitem>
+       <para>
+        Configuration files now must be placed in a single specified
+        directory (<filename>$SHAREDIR/tsearch_data</>), and must have
+        a specific extension depending on the type of file, as noted
+        previously in the descriptions of the various dictionary types.
+        This restriction was added to forestall security problems.
+       </para>
+      </listitem>
 
-   <listitem>
-    <para>
-     Relocation of configuration from add-on tables into core system catalogs
-     will break client queries that looked at the add-on tables.
-    </para>
-   </listitem>
+      <listitem>
+       <para>
+        Configuration files must be encoded in UTF-8 encoding,
+        regardless of what database encoding is used.
+       </para>
+      </listitem>
 
-   <listitem>
-    <para>
-     Thesaurus files now use <literal>?</> for stop words.
-    </para>
-   </listitem>
-
-   <listitem>
-    <para>
-     What else?
+      <listitem>
+       <para>
+        In thesaurus configuration files, stop words must be marked with
+        <literal>?</>.
+       </para>
+      </listitem>
+     </itemizedlist>
     </para>
    </listitem>
 
