@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.534 2007/11/14 00:16:27 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.535 2007/11/14 12:36:34 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -222,7 +222,7 @@ do it for earlier branch release files.
   </sect2>
 
   <sect2>
-   <title>Migration to version 8.3</title>
+   <title>Migration To Version 8.3</title>
 
    <para>
     A dump/restore using <application>pg_dump</application> is
@@ -2321,7 +2321,7 @@ do it for earlier branch release files.
   </para>
 
   <sect2>
-   <title>Migration to version 8.2.5</title>
+   <title>Migration To Version 8.2.5</title>
 
    <para>
     A dump/restore is not required for those running 8.2.X.
@@ -2497,7 +2497,7 @@ do it for earlier branch release files.
   </para>
 
   <sect2>
-   <title>Migration to version 8.2.4</title>
+   <title>Migration To Version 8.2.4</title>
 
    <para>
     A dump/restore is not required for those running 8.2.X.
@@ -2638,7 +2638,7 @@ do it for earlier branch release files.
   </para>
 
   <sect2>
-   <title>Migration to version 8.2.3</title>
+   <title>Migration To Version 8.2.3</title>
 
    <para>
     A dump/restore is not required for those running 8.2.X.
@@ -2683,7 +2683,7 @@ do it for earlier branch release files.
   </para>
 
   <sect2>
-   <title>Migration to version 8.2.2</title>
+   <title>Migration To Version 8.2.2</title>
 
    <para>
     A dump/restore is not required for those running 8.2.X.
@@ -2838,7 +2838,7 @@ do it for earlier branch release files.
   </para>
 
   <sect2>
-   <title>Migration to version 8.2.1</title>
+   <title>Migration To Version 8.2.1</title>
 
    <para>
     A dump/restore is not required for those running 8.2.
@@ -3081,7 +3081,7 @@ do it for earlier branch release files.
   </sect2>
 
   <sect2>
-   <title>Migration to version 8.2</title>
+   <title>Migration To Version 8.2</title>
 
    <para>
     A dump/restore using <application>pg_dump</application> is
@@ -5529,7 +5529,7 @@ do it for earlier branch release files.
   </para>
 
   <sect2>
-   <title>Migration to version 8.1.10</title>
+   <title>Migration To Version 8.1.10</title>
 
    <para>
     A dump/restore is not required for those running 8.1.X.
@@ -5649,7 +5649,7 @@ do it for earlier branch release files.
   </para>
 
   <sect2>
-   <title>Migration to version 8.1.9</title>
+   <title>Migration To Version 8.1.9</title>
 
    <para>
     A dump/restore is not required for those running 8.1.X.
@@ -5737,7 +5737,7 @@ do it for earlier branch release files.
   </para>
 
   <sect2>
-   <title>Migration to version 8.1.8</title>
+   <title>Migration To Version 8.1.8</title>
 
    <para>
     A dump/restore is not required for those running 8.1.X.
@@ -5778,7 +5778,7 @@ do it for earlier branch release files.
   </para>
 
   <sect2>
-   <title>Migration to version 8.1.7</title>
+   <title>Migration To Version 8.1.7</title>
 
    <para>
     A dump/restore is not required for those running 8.1.X.
@@ -5877,7 +5877,7 @@ do it for earlier branch release files.
   </para>
 
   <sect2>
-   <title>Migration to version 8.1.6</title>
+   <title>Migration To Version 8.1.6</title>
 
    <para>
     A dump/restore is not required for those running 8.1.X.
@@ -6025,7 +6025,7 @@ do it for earlier branch release files.
   </para>
 
   <sect2>
-   <title>Migration to version 8.1.5</title>
+   <title>Migration To Version 8.1.5</title>
 
    <para>
     A dump/restore is not required for those running 8.1.X.
@@ -6101,7 +6101,7 @@ compilers (Hiroshi Saito)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.1.4</title>
+   <title>Migration To Version 8.1.4</title>
 
    <para>
     A dump/restore is not required for those running 8.1.X.
@@ -6253,7 +6253,7 @@ documented (Tom)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.1.3</title>
+   <title>Migration To Version 8.1.3</title>
 
    <para>
     A dump/restore is not required for those running 8.1.X.
@@ -6372,7 +6372,7 @@ creation (Tom)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.1.2</title>
+   <title>Migration To Version 8.1.2</title>
 
    <para>
     A dump/restore is not required for those running 8.1.X.
@@ -6473,7 +6473,7 @@ what's actually returned by the query (Joe)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.1.1</title>
+   <title>Migration To Version 8.1.1</title>
 
    <para>
     A dump/restore is not required for those running 8.1.X.
@@ -6777,7 +6777,7 @@ DISTINCT query</para></listitem>
   </sect2>
 
   <sect2>
-   <title>Migration to version 8.1</title>
+   <title>Migration To Version 8.1</title>
 
    <para>
     A dump/restore using <application>pg_dump</application> is required
@@ -8685,7 +8685,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.14</title>
+   <title>Migration To Version 8.0.14</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -8792,7 +8792,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.13</title>
+   <title>Migration To Version 8.0.13</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -8866,7 +8866,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.12</title>
+   <title>Migration To Version 8.0.12</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -8907,7 +8907,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.11</title>
+   <title>Migration To Version 8.0.11</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -8975,7 +8975,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.10</title>
+   <title>Migration To Version 8.0.10</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -9092,7 +9092,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.9</title>
+   <title>Migration To Version 8.0.9</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -9147,7 +9147,7 @@ Wieland)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.8</title>
+   <title>Migration To Version 8.0.8</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -9258,7 +9258,7 @@ Fuhr)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.7</title>
+   <title>Migration To Version 8.0.7</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -9355,7 +9355,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.6</title>
+   <title>Migration To Version 8.0.6</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -9438,7 +9438,7 @@ what's actually returned by the query (Joe)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.5</title>
+   <title>Migration To Version 8.0.5</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -9518,7 +9518,7 @@ to subquery results</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.4</title>
+   <title>Migration To Version 8.0.4</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -9614,7 +9614,7 @@ code</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.3</title>
+   <title>Migration To Version 8.0.3</title>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
@@ -9731,7 +9731,7 @@ data types</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.2</title>
+   <title>Migration To Version 8.0.2</title>
 
    <para>
     A dump/restore is not required for those running 8.0.*.
@@ -9887,7 +9887,7 @@ addresses in <type>INET</> data types (Tom)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 8.0.1</title>
+   <title>Migration To Version 8.0.1</title>
 
    <para>
     A dump/restore is not required for those running 8.0.0.
@@ -10106,7 +10106,7 @@ typedefs (Michael)</para></listitem>
   </sect2>
 
   <sect2>
-   <title>Migration to version 8.0</title>
+   <title>Migration To Version 8.0</title>
 
    <para>
     A dump/restore using <application>pg_dump</application> is
@@ -12298,7 +12298,7 @@ typedefs (Michael)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.18</title>
+   <title>Migration To Version 7.4.18</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -12373,7 +12373,7 @@ typedefs (Michael)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.17</title>
+   <title>Migration To Version 7.4.17</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -12442,7 +12442,7 @@ typedefs (Michael)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.16</title>
+   <title>Migration To Version 7.4.16</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -12510,7 +12510,7 @@ typedefs (Michael)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.15</title>
+   <title>Migration To Version 7.4.15</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -12597,7 +12597,7 @@ typedefs (Michael)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.14</title>
+   <title>Migration To Version 7.4.14</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -12643,7 +12643,7 @@ ANYARRAY</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.13</title>
+   <title>Migration To Version 7.4.13</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -12747,7 +12747,7 @@ Fuhr)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.12</title>
+   <title>Migration To Version 7.4.12</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -12808,7 +12808,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.11</title>
+   <title>Migration To Version 7.4.11</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -12873,7 +12873,7 @@ what's actually returned by the query (Joe)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.10</title>
+   <title>Migration To Version 7.4.10</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -12924,7 +12924,7 @@ table has been dropped</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.9</title>
+   <title>Migration To Version 7.4.9</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -12992,7 +12992,7 @@ code</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.8</title>
+   <title>Migration To Version 7.4.8</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -13174,7 +13174,7 @@ holder of the lock released it within a very narrow window.
   </para>
 
   <sect2>
-   <title>Migration to version 7.4.7</title>
+   <title>Migration To Version 7.4.7</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.
@@ -13232,7 +13232,7 @@ GMT</para></listitem>
 
 
   <sect2>
-   <title>Migration to version 7.4.6</title>
+   <title>Migration To Version 7.4.6</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.
@@ -13302,7 +13302,7 @@ ECPG prepare statement</para></listitem>
 
 
   <sect2>
-   <title>Migration to version 7.4.5</title>
+   <title>Migration To Version 7.4.5</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.
@@ -13338,7 +13338,7 @@ still worth a re-release.  The bug does not exist in pre-7.4 releases.
 
 
   <sect2>
-   <title>Migration to version 7.4.4</title>
+   <title>Migration To Version 7.4.4</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.
@@ -13388,7 +13388,7 @@ aggregate plan</para></listitem>
 
 
   <sect2>
-   <title>Migration to version 7.4.3</title>
+   <title>Migration To Version 7.4.3</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.
@@ -13444,7 +13444,7 @@ names from outer query levels.
 
 
   <sect2>
-   <title>Migration to version 7.4.2</title>
+   <title>Migration To Version 7.4.2</title>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
@@ -13585,7 +13585,7 @@ inconveniences associated with the <literal>i/I</> problem.</para></listitem>
 
 
   <sect2>
-   <title>Migration to version 7.4.1</title>
+   <title>Migration To Version 7.4.1</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those
@@ -13965,7 +13965,7 @@ DROP SCHEMA information_schema CASCADE;
  </sect2>
 
  <sect2>
-  <title>Migration to version 7.4</title>
+  <title>Migration To Version 7.4</title>
 
   <para>
    A dump/restore using <application>pg_dump</application> is
@@ -15556,7 +15556,7 @@ DROP SCHEMA information_schema CASCADE;
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.20</title>
+   <title>Migration To Version 7.3.20</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
@@ -15618,7 +15618,7 @@ DROP SCHEMA information_schema CASCADE;
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.19</title>
+   <title>Migration To Version 7.3.19</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
@@ -15674,7 +15674,7 @@ DROP SCHEMA information_schema CASCADE;
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.18</title>
+   <title>Migration To Version 7.3.18</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
@@ -15735,7 +15735,7 @@ DROP SCHEMA information_schema CASCADE;
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.17</title>
+   <title>Migration To Version 7.3.17</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
@@ -15791,7 +15791,7 @@ DROP SCHEMA information_schema CASCADE;
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.16</title>
+   <title>Migration To Version 7.3.16</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
@@ -15834,7 +15834,7 @@ DROP SCHEMA information_schema CASCADE;
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.15</title>
+   <title>Migration To Version 7.3.15</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
@@ -15925,7 +15925,7 @@ Fuhr)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.14</title>
+   <title>Migration To Version 7.3.14</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
@@ -15982,7 +15982,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.13</title>
+   <title>Migration To Version 7.3.13</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
@@ -16044,7 +16044,7 @@ what's actually returned by the query (Joe)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.12</title>
+   <title>Migration To Version 7.3.12</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
@@ -16091,7 +16091,7 @@ table has been dropped</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.11</title>
+   <title>Migration To Version 7.3.11</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
@@ -16143,7 +16143,7 @@ the variable is of pass-by-reference type</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.10</title>
+   <title>Migration To Version 7.3.10</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
@@ -16269,7 +16269,7 @@ month-related formats</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.3.9</title>
+   <title>Migration To Version 7.3.9</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.
@@ -16325,7 +16325,7 @@ datestyles</para></listitem>
 
 
   <sect2>
-   <title>Migration to version 7.3.8</title>
+   <title>Migration To Version 7.3.8</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.
@@ -16375,7 +16375,7 @@ concern since there is no reason for non-developers to use this script anyway.
 
 
   <sect2>
-   <title>Migration to version 7.3.7</title>
+   <title>Migration To Version 7.3.7</title>
 
    <para>
     A dump/restore is not required for those running 7.3.X.
@@ -16415,7 +16415,7 @@ since <productname>PostgreSQL</productname> 7.1.
 
 
   <sect2>
-   <title>Migration to version 7.3.6</title>
+   <title>Migration To Version 7.3.6</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those
@@ -16480,7 +16480,7 @@ operations on bytea columns (Joe)</para></listitem>
 
 
   <sect2>
-   <title>Migration to version 7.3.5</title>
+   <title>Migration To Version 7.3.5</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those
@@ -16531,7 +16531,7 @@ operations on bytea columns (Joe)</para></listitem>
 
 
   <sect2>
-   <title>Migration to version 7.3.4</title>
+   <title>Migration To Version 7.3.4</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those
@@ -16570,7 +16570,7 @@ operations on bytea columns (Joe)</para></listitem>
  </para>
 
  <sect2>
-  <title>Migration to version 7.3.3</title>
+  <title>Migration To Version 7.3.3</title>
 
   <para>
    A dump/restore is <emphasis>not</emphasis> required for those
@@ -16681,7 +16681,7 @@ operations on bytea columns (Joe)</para></listitem>
 
 
  <sect2>
-  <title>Migration to version 7.3.2</title>
+  <title>Migration To Version 7.3.2</title>
 
   <para>
    A dump/restore is <emphasis>not</emphasis> required for those
@@ -16742,7 +16742,7 @@ operations on bytea columns (Joe)</para></listitem>
 
 
  <sect2>
-  <title>Migration to version 7.3.1</title>
+  <title>Migration To Version 7.3.1</title>
 
   <para>
    A dump/restore is <emphasis>not</emphasis> required for those
@@ -16911,7 +16911,7 @@ operations on bytea columns (Joe)</para></listitem>
  </sect2>
 
  <sect2>
-  <title>Migration to version 7.3</title>
+  <title>Migration To Version 7.3</title>
 
   <para>
    A dump/restore using <application>pg_dump</> is required for those
@@ -17428,7 +17428,7 @@ operations on bytea columns (Joe)</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.2.8</title>
+   <title>Migration To Version 7.2.8</title>
 
    <para>
     A dump/restore is not required for those running 7.2.X.
@@ -17479,7 +17479,7 @@ month-related formats</para></listitem>
   </para>
 
   <sect2>
-   <title>Migration to version 7.2.7</title>
+   <title>Migration To Version 7.2.7</title>
 
    <para>
     A dump/restore is not required for those running 7.2.X.
@@ -17527,7 +17527,7 @@ datestyles</para></listitem>
 
 
   <sect2>
-   <title>Migration to version 7.2.6</title>
+   <title>Migration To Version 7.2.6</title>
 
    <para>
     A dump/restore is not required for those running 7.2.X.
@@ -17578,7 +17578,7 @@ concern since there is no reason for non-developers to use this script anyway.
 
 
   <sect2>
-   <title>Migration to version 7.2.5</title>
+   <title>Migration To Version 7.2.5</title>
 
    <para>
     A dump/restore is not required for those running 7.2.X.
@@ -17621,7 +17621,7 @@ since <productname>PostgreSQL</productname> 7.1.
  </para>
 
  <sect2>
-  <title>Migration to version 7.2.4</title>
+  <title>Migration To Version 7.2.4</title>
 
   <para>
    A dump/restore is <emphasis>not</emphasis> required for those
@@ -17660,7 +17660,7 @@ since <productname>PostgreSQL</productname> 7.1.
  </para>
 
  <sect2>
-  <title>Migration to version 7.2.3</title>
+  <title>Migration To Version 7.2.3</title>
 
   <para>
    A dump/restore is <emphasis>not</emphasis> required for those
@@ -17696,7 +17696,7 @@ since <productname>PostgreSQL</productname> 7.1.
  </para>
 
  <sect2>
-  <title>Migration to version 7.2.2</title>
+  <title>Migration To Version 7.2.2</title>
 
   <para>
    A dump/restore is <emphasis>not</emphasis> required for those
@@ -17739,7 +17739,7 @@ since <productname>PostgreSQL</productname> 7.1.
  </para>
 
  <sect2>
-  <title>Migration to version 7.2.1</title>
+  <title>Migration To Version 7.2.1</title>
 
   <para>
    A dump/restore is <emphasis>not</emphasis> required for those
@@ -17870,7 +17870,7 @@ since <productname>PostgreSQL</productname> 7.1.
  </sect2>
 
  <sect2>
-  <title>Migration to version 7.2</title>
+  <title>Migration To Version 7.2</title>
 
   <para>
    A dump/restore using <command>pg_dump</command> is required for
@@ -18337,7 +18337,7 @@ since <productname>PostgreSQL</productname> 7.1.
   </note>
 
   <sect2>
-   <title>Migration to version 7.1.3</title>
+   <title>Migration To Version 7.1.3</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those running
@@ -18380,7 +18380,7 @@ Cygwin build (Jason Tishler)
 
 
   <sect2>
-   <title>Migration to version 7.1.2</title>
+   <title>Migration To Version 7.1.2</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those running
@@ -18418,7 +18418,7 @@ pg_dump cleanups
 
 
   <sect2>
-   <title>Migration to version 7.1.1</title>
+   <title>Migration To Version 7.1.1</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those running
@@ -18545,7 +18545,7 @@ Subqueries in FROM are now supported.
   </variablelist>
 
   <sect2>
-   <title>Migration to version 7.1</title>
+   <title>Migration To Version 7.1</title>
 
    <para>
        A dump/restore using pg_dump is required for those wishing to migrate
@@ -18763,7 +18763,7 @@ New FreeBSD tools ipc_check, start-scripts/freebsd
 
 
   <sect2>
-   <title>Migration to version 7.0.3</title>
+   <title>Migration To Version 7.0.3</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those running
@@ -18835,7 +18835,7 @@ Fix for crash of backend, on abort (Tom)
 
 
   <sect2>
-   <title>Migration to version 7.0.2</title>
+   <title>Migration To Version 7.0.2</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those running
@@ -18868,7 +18868,7 @@ Added documentation to tarball.
   </para>
 
   <sect2>
-   <title>Migration to version 7.0.1</title>
+   <title>Migration To Version 7.0.1</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those running
@@ -18988,7 +18988,7 @@ ecpg changes (Michael)
   </variablelist>
 
   <sect2>
-   <title>Migration to version 7.0</title>
+   <title>Migration To Version 7.0</title>
 
    <para>
     A dump/restore using <application>pg_dump</application>
@@ -19394,7 +19394,7 @@ New multibyte encodings
 
 
   <sect2>
-   <title>Migration to version 6.5.3</title>
+   <title>Migration To Version 6.5.3</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those running
@@ -19430,7 +19430,7 @@ Fix dumping rules on inherited tables
 
 
   <sect2>
-   <title>Migration to version 6.5.2</title>
+   <title>Migration To Version 6.5.2</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those running
@@ -19486,7 +19486,7 @@ Updated version of pgaccess 0.98
   </para>
 
   <sect2>
-   <title>Migration to version 6.5.1</title>
+   <title>Migration To Version 6.5.1</title>
 
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those running
@@ -19685,7 +19685,7 @@ Add Win1250 (Czech) support (Pavel Behal)
   </para>
 
   <sect2>
-   <title>Migration to version 6.5</title>
+   <title>Migration To Version 6.5</title>
 
    <para>
     A dump/restore using <application>pg_dump</application>
@@ -19942,7 +19942,7 @@ bug fix.
 
 
 <sect2>
-<title>Migration to version 6.4.2</title>
+<title>Migration To Version 6.4.2</title>
 
 <para>
 A dump/restore is <emphasis>not</emphasis> required for those running
@@ -19977,7 +19977,7 @@ problems reported by 6.4 users.
 
 
 <sect2>
-<title>Migration to version 6.4.1</title>
+<title>Migration To Version 6.4.1</title>
 
 <para>
 A dump/restore is <emphasis>not</emphasis> required for those running
@@ -20111,7 +20111,7 @@ been.
 </para>
 
 <sect2>
-<title>Migration to version 6.4</title>
+<title>Migration To Version 6.4</title>
 
 <para>
 A dump/restore using <application>pg_dump</application>
@@ -20607,7 +20607,7 @@ Better identify tcl and tk libs and includes(Bruce)
   </para>
 
   <sect2>
-   <title>Migration to version 6.3</title>
+   <title>Migration To Version 6.3</title>
 
    <para>
     A dump/restore using <application>pg_dump</application>
@@ -21127,7 +21127,7 @@ optimizer which uses <firstterm>genetic</firstterm>
 </para>
 
 <sect2>
-<title>Migration to version 6.1</title>
+<title>Migration To Version 6.1</title>
 
 <para>
 This migration requires a complete dump of the 6.0 database and a
