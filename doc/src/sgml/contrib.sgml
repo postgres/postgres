@@ -55,6 +55,7 @@
  &seg;
  &sslinfo;
  &tablefunc;
+ &tsearch2;
  &uuid-ossp;
  &vacuumlo;
  &xml2;
