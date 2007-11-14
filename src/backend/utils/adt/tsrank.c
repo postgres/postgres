@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.8 2007/09/20 18:10:57 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.9 2007/11/14 23:43:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,13 +25,14 @@ static float weights[] = {0.1f, 0.2f, 0.4f, 1.0f};
 
 #define wpos(wep)	( w[ WEP_GETWEIGHT(wep) ] )
 
-#define RANK_NO_NORM		0x00
+#define RANK_NO_NORM			0x00
 #define RANK_NORM_LOGLENGTH		0x01
-#define RANK_NORM_LENGTH	0x02
-#define RANK_NORM_EXTDIST	0x04
-#define RANK_NORM_UNIQ		0x08
-#define RANK_NORM_LOGUNIQ	0x10
-#define DEF_NORM_METHOD		RANK_NO_NORM
+#define RANK_NORM_LENGTH		0x02
+#define RANK_NORM_EXTDIST		0x04
+#define RANK_NORM_UNIQ			0x08
+#define RANK_NORM_LOGUNIQ		0x10
+#define RANK_NORM_RDIVRPLUS1	0x20
+#define DEF_NORM_METHOD			RANK_NO_NORM
 
 static float calc_rank_or(float *w, TSVector t, TSQuery q);
 static float calc_rank_and(float *w, TSVector t, TSQuery q);
@@ -348,11 +349,16 @@ calc_rank(float *w, TSVector t, TSQuery q, int4 method)
 			res /= (float) len;
 	}
 
+	/* RANK_NORM_EXTDIST not applicable */
+
 	if ((method & RANK_NORM_UNIQ) && t->size > 0)
 		res /= (float) (t->size);
 
 	if ((method & RANK_NORM_LOGUNIQ) && t->size > 0)
 		res /= log((double) (t->size + 1)) / log(2.0);
+
+	if (method & RANK_NORM_RDIVRPLUS1)
+		res /= (res + 1);
 
 	return res;
 }
@@ -762,7 +768,7 @@ calc_rank_cd(float4 *arrdata, TSVector txt, TSQuery query, int method)
 			Wdoc /= (double) len;
 	}
 
-	if ((method & RANK_NORM_EXTDIST) && SumDist > 0)
+	if ((method & RANK_NORM_EXTDIST) && NExtent > 0 && SumDist > 0)
 		Wdoc /= ((double) NExtent) / SumDist;
 
 	if ((method & RANK_NORM_UNIQ) && txt->size > 0)
@@ -770,6 +776,9 @@ calc_rank_cd(float4 *arrdata, TSVector txt, TSQuery query, int method)
 
 	if ((method & RANK_NORM_LOGUNIQ) && txt->size > 0)
 		Wdoc /= log((double) (txt->size + 1)) / log(2.0);
+
+	if (method & RANK_NORM_RDIVRPLUS1)
+		Wdoc /= (Wdoc + 1);
 
 	pfree(doc);
 

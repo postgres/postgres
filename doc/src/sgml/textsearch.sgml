@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.33 2007/11/14 18:36:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.34 2007/11/14 23:43:27 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -940,6 +940,7 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
      <listitem>
       <para>
        4 divides the rank by the mean harmonic distance between extents
+       (this is implemented only by <function>ts_rank_cd</>)
       </para>
      </listitem>
      <listitem>
@@ -953,17 +954,24 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
        of unique words in document
       </para>
      </listitem>
+     <listitem>
+      <para>
+       32 divides the rank by itself + 1
+      </para>
+     </listitem>
     </itemizedlist>
 
+    If more than one flag bit is specified, the transformations are
+    applied in the order listed.
    </para>
 
    <para>
     It is important to note that the ranking functions do not use any global
-    information so it is impossible to produce a fair normalization to 1% or
-    100%, as sometimes desired.  However, a simple technique like
-    <literal>rank/(rank+1)</literal> can be applied.  Of course, this is just
-    a cosmetic change, i.e., the ordering of the search results will not
-    change.
+    information, so it is impossible to produce a fair normalization to 1% or
+    100% as sometimes desired.  Normalization option 32
+    (<literal>rank/(rank+1)</literal>) can be applied to scale all ranks
+    into the range zero to one, but of course this is just a cosmetic change;
+    it will not affect the ordering of the search results.
    </para>
 
    <para>
@@ -991,7 +999,7 @@ ORDER BY rank DESC LIMIT 10;
     This is the same example using normalized ranking:
 
 <programlisting>
-SELECT title, ts_rank_cd(textsearch, query)/(ts_rank_cd(textsearch, query) + 1) AS rank
+SELECT title, ts_rank_cd(textsearch, query, 32 /* rank/(rank+1) */ ) AS rank
 FROM apod, to_tsquery('neutrino|(dark &amp; matter)') query
 WHERE  query @@ textsearch
 ORDER BY rank DESC LIMIT 10;
