@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.536 2007/11/14 14:06:54 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.537 2007/11/14 14:38:30 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -718,18 +718,18 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Support Security Service Provider Interface (<acronym>SSPI</>) for
-       authentication on Windows
-      </para>
-
-      <para>
-       This also adds support for the <acronym>GSSAPI</> authentication
-       <acronym>API</>.
+       authentication on Windows (Magnus)
       </para>
      </listitem>
 
      <listitem>
       <para>
        Support GSSAPI authentication (Henry Hotz, Magnus)
+      </para>
+
+      <para>
+       This should be used in place of the native Kerberos authentication
+       because it is an industry standard.
       </para>
      </listitem>
 
