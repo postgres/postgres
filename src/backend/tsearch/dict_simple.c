@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_simple.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_simple.c,v 1.4 2007/11/14 18:36:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 typedef struct
 {
 	StopList	stoplist;
+	bool		accept;
 } DictSimple;
 
 
@@ -31,8 +32,11 @@ dsimple_init(PG_FUNCTION_ARGS)
 {
 	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
 	DictSimple *d = (DictSimple *) palloc0(sizeof(DictSimple));
-	bool		stoploaded = false;
+	bool		stoploaded = false,
+				acceptloaded = false;
 	ListCell   *l;
+
+	d->accept = true;			/* default */
 
 	foreach(l, dictoptions)
 	{
@@ -46,6 +50,15 @@ dsimple_init(PG_FUNCTION_ARGS)
 						 errmsg("multiple StopWords parameters")));
 			readstoplist(defGetString(defel), &d->stoplist, lowerstr);
 			stoploaded = true;
+		}
+		else if (pg_strcasecmp("Accept", defel->defname) == 0)
+		{
+			if (acceptloaded)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("multiple Accept parameters")));
+			d->accept = defGetBoolean(defel);
+			acceptloaded = true;
 		}
 		else
 		{
@@ -66,14 +79,28 @@ dsimple_lexize(PG_FUNCTION_ARGS)
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	int32	   len = PG_GETARG_INT32(2);
 	char	   *txt;
-	TSLexeme   *res = palloc0(sizeof(TSLexeme) * 2);
+	TSLexeme   *res;
 
 	txt = lowerstr_with_len(in, len);
 
 	if (*txt == '\0' || searchstoplist(&(d->stoplist), txt))
+	{
+		/* reject as stopword */
 		pfree(txt);
-	else
+		res = palloc0(sizeof(TSLexeme) * 2);
+		PG_RETURN_POINTER(res);
+	}
+	else if (d->accept)
+	{
+		/* accept */
+		res = palloc0(sizeof(TSLexeme) * 2);
 		res[0].lexeme = txt;
-
-	PG_RETURN_POINTER(res);
+		PG_RETURN_POINTER(res);
+	}
+	else
+	{
+		/* report as unrecognized */
+		pfree(txt);
+		PG_RETURN_POINTER(NULL);
+	}
 }

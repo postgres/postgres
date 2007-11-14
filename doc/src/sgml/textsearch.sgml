@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.32 2007/11/14 03:26:24 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.33 2007/11/14 18:36:37 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -2093,9 +2093,11 @@ SELECT ts_rank_cd (to_tsvector('english','list stop words'), to_tsquery('list &a
    <para>
     The <literal>simple</> dictionary template operates by converting the
     input token to lower case and checking it against a file of stop words.
-    If it is found in the file then <literal>NULL</> is returned, causing
+    If it is found in the file then an empty array is returned, causing
     the token to be discarded.  If not, the lower-cased form of the word
-    is returned as the normalized lexeme.
+    is returned as the normalized lexeme.  Alternatively, the dictionary
+    can be configured to report non-stop-words as unrecognized, allowing
+    them to be passed on to the next dictionary in the list.
    </para>
 
    <para>
@@ -2136,6 +2138,35 @@ SELECT ts_lexize('public.simple_dict','The');
 -----------
  {}
 </programlisting>
+   </para>
+
+   <para>
+    We can also choose to return <literal>NULL</>, instead of the lower-cased
+    word, if it is not found in the stop words file.  This behavior is
+    selected by setting the dictionary's <literal>Accept</> parameter to
+    <literal>false</>.  Continuing the example:
+
+<programlisting>
+ALTER TEXT SEARCH DICTIONARY public.simple_dict ( Accept = false );
+
+SELECT ts_lexize('public.simple_dict','YeS');
+ ts_lexize
+-----------
+
+
+SELECT ts_lexize('public.simple_dict','The');
+ ts_lexize
+-----------
+ {}
+</programlisting>
+   </para>
+
+   <para>
+    With the default setting of <literal>Accept</> = <literal>true</>,
+    it is only useful to place a <literal>simple</> dictionary at the end
+    of a list of dictionaries, since it will never pass on any token to
+    a following dictionary.  Conversely, <literal>Accept</> = <literal>false</>
+    is only useful when there is at least one following dictionary.
    </para>
 
    <caution>
