@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.288 2007/11/15 21:14:32 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.289 2007/11/15 22:02:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4377,7 +4377,7 @@ readRecoveryCommandFile(void)
 		{
 			recoveryRestoreCommand = pstrdup(tok2);
 			ereport(LOG,
-					(errmsg("restore_command = \"%s\"",
+					(errmsg("restore_command = '%s'",
 							recoveryRestoreCommand)));
 		}
 		else if (strcmp(tok1, "recovery_target_timeline") == 0)
@@ -4435,7 +4435,7 @@ readRecoveryCommandFile(void)
 												ObjectIdGetDatum(InvalidOid),
 														Int32GetDatum(-1)));
 			ereport(LOG,
-					(errmsg("recovery_target_time = %s",
+					(errmsg("recovery_target_time = '%s'",
 							timestamptz_to_str(recoveryTargetTime))));
 		}
 		else if (strcmp(tok1, "recovery_target_inclusive") == 0)
@@ -4504,7 +4504,7 @@ readRecoveryCommandFile(void)
 			/* Timeline 1 does not have a history file, all else should */
 			if (rtli != 1 && !existsTimeLineHistory(rtli))
 				ereport(FATAL,
-						(errmsg("recovery_target_timeline %u does not exist",
+						(errmsg("recovery target timeline %u does not exist",
 								rtli)));
 			recoveryTargetTLI = rtli;
 		}
