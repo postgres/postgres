@@ -1,4 +1,4 @@
-# @(#)northamerica	8.18
+# @(#)northamerica	8.19
 # <pre>
 
 # also includes Central America and the Caribbean
@@ -2187,6 +2187,23 @@ Zone America/Costa_Rica	-5:36:20 -	LMT	1890		# San Jose
 # says Cuban clocks will advance at midnight on March 10.
 # For lack of better information, assume Cuba will use US rules,
 # except that it switches at midnight standard time as usual.
+#
+# From Steffen Thorsen (2007-10-25):
+# Carlos Alberto Fonseca Arauz informed me that Cuba will end DST one week 
+# earlier - on the last Sunday of October, just like in 2006.
+# 
+# He supplied these references:
+# 
+# http://www.prensalatina.com.mx/article.asp?ID=%7B4CC32C1B-A9F7-42FB-8A07-8631AFC923AF%7D&language=ES
+# http://actualidad.terra.es/sociedad/articulo/cuba_llama_ahorrar_energia_cambio_1957044.htm
+# 
+# From Alex Kryvenishev (2007-10-25):
+# Here is also article from Granma (Cuba):
+# 
+# [Regira] el Horario Normal desde el [proximo] domingo 28 de octubre
+# http://www.granma.cubaweb.cu/2007/10/24/nacional/artic07.html
+# 
+# http://www.worldtimezone.com/dst_news/dst_news_cuba03.html
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Cuba	1928	only	-	Jun	10	0:00	1:00	D
@@ -2218,9 +2235,8 @@ Rule	Cuba	1997	only	-	Oct	12	0:00s	0	S
 Rule	Cuba	1998	1999	-	Mar	lastSun	0:00s	1:00	D
 Rule	Cuba	1998	2003	-	Oct	lastSun	0:00s	0	S
 Rule	Cuba	2000	2006	-	Apr	Sun>=1	0:00s	1:00	D
-Rule	Cuba	2006	only	-	Oct	lastSun	0:00s	0	S
+Rule	Cuba	2006	max	-	Oct	lastSun	0:00s	0	S
 Rule	Cuba	2007	max	-	Mar	Sun>=8	0:00s	1:00	D
-Rule	Cuba	2007	max	-	Nov	Sun>=1	0:00s	0	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Havana	-5:29:28 -	LMT	1890
