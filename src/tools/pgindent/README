@@ -1,18 +1,20 @@
 This can format all PostgreSQL *.c and *.h files, but excludes *.y, and *.l
 files.
 
-1) Get the list of _current_ typedefs to be included in pgindent by
-running this on the pgsql/bin and pgsql/lib directories:
+To use pgindent:
+
+1) Build the source tree with _debug_ symbols and install
+
+2) Get the list of _current_ typedefs by running:
 
 	src/tools/find_typedef /usr/local/pgsql/bin /usr/local/pgsql/lib
 
-and update the list in pgindent.  This requires the binaries have
-_debug_  symbols.
+3) Add the typedef output to the pgindent script.
 
-2) Run 'gmake distclean' from the top of the source tree to remove any
+4) Run 'gmake distclean' from the top of the source tree to remove any
    derived C files.
 
-3) From the top directory, run:
+5) From the top of the source tree, run:
 
 	find . -name '*.[ch]' -type f -print |
 	egrep -v '/s_lock.h|/ecpg/test/expected/|/snowball/libstemmer/' |
