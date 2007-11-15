@@ -9,7 +9,10 @@ running this on the pgsql/bin and pgsql/lib directories:
 and update the list in pgindent.  This requires the binaries have
 _debug_  symbols.
 
-2) From the top directory, run:
+2) Run 'gmake distclean' from the top of the source tree to remove any
+   derived C files.
+
+3) From the top directory, run:
 
 	find . -name '*.[ch]' -type f -print |
 	egrep -v '/s_lock.h|/ecpg/test/expected/|/snowball/libstemmer/' |
