@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.86 2007/11/10 21:48:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.87 2007/11/15 18:37:23 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1465,22 +1465,22 @@ do_help(void)
 	printf(_("%s is a utility to start, stop, restart, reload configuration files,\n"
 			 "report the status of a PostgreSQL server, or signal a PostgreSQL process.\n\n"), progname);
 	printf(_("Usage:\n"));
-	printf(_("  %s start   [-w] [-t secs] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"), progname);
+	printf(_("  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"), progname);
-	printf(_("  %s restart [-w] [-t secs] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n                   [-o \"OPTIONS\"]\n"), progname);
+	printf(_("  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n                   [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s reload  [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PID\n"), progname);
 #if defined(WIN32) || defined(__CYGWIN__)
 	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
-			 "                    [-w] [-t timeout] [-o \"OPTIONS\"]\n"), progname);
+			 "                    [-w] [-t SECS] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s unregister [-N SERVICENAME]\n"), progname);
 #endif
 
 	printf(_("\nCommon options:\n"));
 	printf(_("  -D, --pgdata DATADIR   location of the database storage area\n"));
 	printf(_("  -s, --silent           only print errors, no informational messages\n"));
-	printf(_("  -t secs                seconds to wait when using -w option\n"));
+	printf(_("  -t SECS                seconds to wait when using -w option\n"));
 	printf(_("  -w                     wait until operation completes\n"));
 	printf(_("  -W                     do not wait until operation completes\n"));
 	printf(_("  --help                 show this help, then exit\n"));
