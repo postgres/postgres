@@ -1836,7 +1836,7 @@ msgstr ""
 
 #: pg_dumpall.c:511
 #, c-format
-msgid "  -l, --database=dbname    specify an alternate default database\n"
+msgid "  -l, --database=dbname    specify an alternative default database\n"
 msgstr "  -l, --database=dbname    varsayılan veritabanı adını belirt\n"
 
 #: pg_dumpall.c:516

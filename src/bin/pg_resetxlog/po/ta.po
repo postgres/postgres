@@ -1,0 +1,448 @@
+# translation of pg_resetxlog.po to தமிழ்
+# This file is put in the public domain.
+#
+# ஸ்ரீராமதாஸ் <shriramadhas@gmail.com>, 2007.
+# ஆமாச்சு <amachu@ubuntu.com>, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_resetxlog\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-09-22 03:20-0300\n"
+"PO-Revision-Date: 2007-11-11 09:38+0530\n"
+"Last-Translator: ஆமாச்சு <amachu@ubuntu.com>\n"
+"Language-Team: தமிழ் <https://lists.ubuntu.com/mailman/listinfo/ubuntu-l10n-tam>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#: pg_resetxlog.c:126
+#, c-format
+msgid "%s: invalid argument for option -e\n"
+msgstr "%s: தேர்வு -e க்குப் பொருந்தாத துப்பு\n"
+
+#: pg_resetxlog.c:127 pg_resetxlog.c:142 pg_resetxlog.c:157 pg_resetxlog.c:172
+#: pg_resetxlog.c:187 pg_resetxlog.c:202 pg_resetxlog.c:209 pg_resetxlog.c:216
+#: pg_resetxlog.c:222 pg_resetxlog.c:230
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "மேலும் தகவலுக்கு \"%s --help\" முயற்சிக்கவும்.\n"
+
+#: pg_resetxlog.c:132
+#, c-format
+msgid "%s: transaction ID epoch (-e) must not be -1\n"
+msgstr "%s: பரிமாற்றக் குறியீடு epoch (-e) -1 ஆக இருத்தலாகாது\n"
+
+#: pg_resetxlog.c:141
+#, c-format
+msgid "%s: invalid argument for option -x\n"
+msgstr "%s: தேர்வு -x க்குப் பொருந்தாத துப்பு\n"
+
+#: pg_resetxlog.c:147
+#, c-format
+msgid "%s: transaction ID (-x) must not be 0\n"
+msgstr "%s: (-x) பரிமாற்ற குறியீடு 0 வாக இருத்தல் ஆகாது\n"
+
+#: pg_resetxlog.c:156
+#, c-format
+msgid "%s: invalid argument for option -o\n"
+msgstr "%s: தேர்வு -o வுக்குப் பொருந்தாதத் துப்பு\n"
+
+#: pg_resetxlog.c:162
+#, c-format
+msgid "%s: OID (-o) must not be 0\n"
+msgstr "%s: OID (-o) 0 வாக இருத்தல் ஆகாது\n"
+
+#: pg_resetxlog.c:171
+#, c-format
+msgid "%s: invalid argument for option -m\n"
+msgstr "%s: தேர்வு -m க்குப் பொருந்தாத துப்பு\n"
+
+#: pg_resetxlog.c:177
+#, c-format
+msgid "%s: multitransaction ID (-m) must not be 0\n"
+msgstr "%s: பல்பரிமாற்ற குறியீடு (-m) 0 வாக இருத்தல் ஆகாது\n"
+
+#: pg_resetxlog.c:186
+#, c-format
+msgid "%s: invalid argument for option -O\n"
+msgstr "%s: தேர்வு -O க்குப் பொருந்தாத துப்பு\n"
+
+#: pg_resetxlog.c:192
+#, c-format
+msgid "%s: multitransaction offset (-O) must not be -1\n"
+msgstr "%s: பல்பரிமாற்ற ஆபுஃசெட்(-O) -1 ஆக இருக்கக் கூடாது\n"
+
+#: pg_resetxlog.c:201 pg_resetxlog.c:208 pg_resetxlog.c:215
+#, c-format
+msgid "%s: invalid argument for option -l\n"
+msgstr "%s: தேரவு -l க்கு பொருந்தாத துப்பு\n"
+
+#: pg_resetxlog.c:229
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: குறிப்பிடப்பட்ட அடைவில் தரவெதுவுமில்லை\n"
+
+#: pg_resetxlog.c:243
+#, c-format
+msgid "%s: cannot be executed by \"root\"\n"
+msgstr "%s: \"root\" ஆல் இயக்க இயலாது\n"
+
+#: pg_resetxlog.c:245
+#, c-format
+msgid "You must run %s as the PostgreSQL superuser.\n"
+msgstr "போஸ்டுகிரெஸ் முதன்மைப் பயனராக %s னை இயக்க வேண்டும்.\n"
+
+#: pg_resetxlog.c:255
+#, c-format
+msgid "%s: could not change directory to \"%s\": %s\n"
+msgstr "%s: அடைவினை \"%s\": க்கு மாற்ற இயலவில்லை %s\n"
+
+#: pg_resetxlog.c:270 pg_resetxlog.c:383
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "%s: \"%s\" கோப்பினை வாசிக்கும் பொருட்டுத் திறக்க இயலவில்லை: %s\n"
+
+#: pg_resetxlog.c:276
+#, c-format
+msgid ""
+"%s: lock file \"%s\" exists\n"
+"Is a server running?  If not, delete the lock file and try again.\n"
+msgstr ""
+"%s: சாற்றுக் கோப்பு \"%s\" இருக்கிறது\n"
+"வழங்கி இயக்கத்தில் உள்ளதா?  இல்லையெனில், சாற்றுக் கோப்பினை அகற்றிவிட்டு மீண்டும் முயற்சிக்கவும்.\n"
+
+#: pg_resetxlog.c:332
+#, c-format
+msgid ""
+"\n"
+"If these values seem acceptable, use -f to force reset.\n"
+msgstr ""
+"\n"
+"இம்மதிப்புகள் ஏற்புடையவையாகத் தோன்றிடின், கட்டாயம் மீளமைக்காயம்மைக்க -f பயன்படுத்தவும்ம்.\n"
+
+#: pg_resetxlog.c:344
+#, c-format
+msgid ""
+"The database server was not shut down cleanly.\n"
+"Resetting the transaction log might cause data to be lost.\n"
+"If you want to proceed anyway, use -f to force reset.\n"
+msgstr ""
+"தரவுக் கள வழங்கி முறையாக அணைக்கப் படவில்லை.\n"
+"பரிமாற்ற பதிவை மீளமைப்பது தரவினை கெடுத்துவிடலாம்.\n"
+"செய்து தான் ஆக வேண்டுமெனின் -f பயன்படுத்தி மீளமைக்கவும்.\n"
+
+#: pg_resetxlog.c:357
+#, c-format
+msgid "Transaction log reset\n"
+msgstr "பரிமாற்றப் பதிவினை மீளமைக்க\n"
+
+#: pg_resetxlog.c:386
+#, c-format
+msgid ""
+"If you are sure the data directory path is correct, execute\n"
+"  touch %s\n"
+"and try again.\n"
+msgstr ""
+"தரவு அடைவின் பாதை சரியென உறுதியாக இருந்தால், செயற்படுத்துக\n"
+"  தொடுக %s\n"
+"மற்றும் மீண்டும் முயற்சிக்க.\n"
+
+#: pg_resetxlog.c:399
+#, c-format
+msgid "%s: could not read file \"%s\": %s\n"
+msgstr "%s: \"%s\": கோப்பினை வாசிக்க இயலவில்லை: %s\n"
+
+#: pg_resetxlog.c:422
+#, c-format
+msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
+msgstr "%s: pg_control இருந்தாலும் செல்லாத CRC கொண்டுள்ளது; எச்சரிக்கையுடன் அடியெடுக்கவும்\n"
+
+#: pg_resetxlog.c:431
+#, c-format
+msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
+msgstr "%s: pg_control உடையப்பட்டோ அல்லது அறியப்படாத வெளியீடாகவோ உள்ளது; தவிர்க்கின்றோம்\n"
+
+#: pg_resetxlog.c:499
+#, c-format
+msgid "%s: invalid LC_COLLATE setting\n"
+msgstr "%s: செல்லத்தகாத LC_COLLATE அமைப்பு\n"
+
+#: pg_resetxlog.c:506
+#, c-format
+msgid "%s: invalid LC_CTYPE setting\n"
+msgstr "%s: செல்லத்தகாத LC_CTYPE அமைப்பு\n"
+
+#: pg_resetxlog.c:530
+#, c-format
+msgid ""
+"Guessed pg_control values:\n"
+"\n"
+msgstr ""
+"கணிக்கப்பெற்ற pg_control மதிப்புகள்:\n"
+"\n"
+
+#: pg_resetxlog.c:532
+#, c-format
+msgid ""
+"pg_control values:\n"
+"\n"
+msgstr ""
+"pg_control மதிப்புகள்:\n"
+"\n"
+
+#: pg_resetxlog.c:541
+#, c-format
+msgid "First log file ID for new XLOG:       %u\n"
+msgstr "புதிய XLOG க்கான முதற் பதிவுக் கோப்பின் குறியீடு:       %u\n"
+
+#: pg_resetxlog.c:543
+#, c-format
+msgid "First log file segment for new XLOG:  %u\n"
+msgstr "புதிய XLOG க்கான முதற் பதிவுக் கோப்பின் பகுதி:       %u\n"
+
+#: pg_resetxlog.c:545
+#, c-format
+msgid "pg_control version number:            %u\n"
+msgstr "pg_control வெளியீட்டு எண்:            %u\n"
+
+#: pg_resetxlog.c:547
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "காடலாக் வெளியீட்டு எண்:               %u\n"
+
+#: pg_resetxlog.c:549
+#, c-format
+msgid "Database system identifier:           %s\n"
+msgstr "தரவுக் கள அமைப்பு இனங்காட்டி்டி:           %s\n"
+
+#: pg_resetxlog.c:551
+#, c-format
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "அண்மைய சோதனை மையத்து TimeLineID:       %u\n"
+
+#: pg_resetxlog.c:553
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u/%u\n"
+msgstr "அண்மைய சோதனை மையத்து NextXID:          %u/%u\n"
+
+#: pg_resetxlog.c:556
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "அண்மைய சோதனை மையத்து NextOID:          %u\n"
+
+#: pg_resetxlog.c:558
+#, c-format
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "அண்மைய சோதனை மையத்து NextMultiXactId:  %u\n"
+
+#: pg_resetxlog.c:560
+#, c-format
+msgid "Latest checkpoint's NextMultiOffset:  %u\n"
+msgstr "அண்மைய சோதனை மையத்து NextMultiOffset:  %u\n"
+
+#: pg_resetxlog.c:562
+#, c-format
+msgid "Maximum data alignment:               %u\n"
+msgstr "அதிகப் பட்ச தரவு ஒழுங்கீடு:               %u\n"
+
+#: pg_resetxlog.c:565
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "தரவுக் கள பாக அளவு:                  %u\n"
+
+#: pg_resetxlog.c:567
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "பெரிய தொடர்புடைய பகுதியொன்றிலுள்ள பாகங்கள்: %u\n"
+
+#: pg_resetxlog.c:569
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "WAL பாக அளவு:                       %u\n"
+
+#: pg_resetxlog.c:571
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "பிரதி WAL பகுதிக்கான பைட்கள்:                %u\n"
+
+#: pg_resetxlog.c:573
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "இனங்காட்டிகளின் அதிக பட்ச நீளம்:        %u\n"
+
+#: pg_resetxlog.c:575
+#, c-format
+msgid "Maximum columns in an index:          %u\n"
+msgstr "அட்டவணையொன்றில் இருக்கத் தக்க அதிக பட்ச நெடுவரிசை:          %u\n"
+
+#: pg_resetxlog.c:577
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "TOAST சங்கின் அதிகபட்ச அளவு:        %u\n"
+
+#: pg_resetxlog.c:579
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "தேதி /நேர வகை சேமிப்பு:               %s\n"
+
+#: pg_resetxlog.c:580
+msgid "64-bit integers"
+msgstr "64-ஒரும எண்கள்"
+
+#: pg_resetxlog.c:580
+msgid "floating-point numbers"
+msgstr "புள்ளி எண்கள்"
+
+#: pg_resetxlog.c:581
+#, c-format
+msgid "Maximum length of locale name:        %u\n"
+msgstr "அகப் பெயருக்கான அதிகபட்ச நீளம்:        %u\n"
+
+#: pg_resetxlog.c:583
+#, c-format
+msgid "LC_COLLATE:                           %s\n"
+msgstr "LC_COLLATE:                           %s\n"
+
+#: pg_resetxlog.c:585
+#, c-format
+msgid "LC_CTYPE:                             %s\n"
+msgstr "LC_CTYPE:                             %s\n"
+
+#: pg_resetxlog.c:636
+#, c-format
+msgid ""
+"%s: internal error -- sizeof(ControlFileData) is too large ... fix "
+"PG_CONTROL_SIZE\n"
+msgstr ""
+"%s: உட்பிழை -- sizeof(ControlFileData) மிக அதிகமாக உள்ளது ... fix "
+"PG_CONTROL_SIZE\n"
+
+#: pg_resetxlog.c:651
+#, c-format
+msgid "%s: could not create pg_control file: %s\n"
+msgstr "%s: pg_control கோப்பினை உருவாக்க இயலவில்லை: %s\n"
+
+#: pg_resetxlog.c:662
+#, c-format
+msgid "%s: could not write pg_control file: %s\n"
+msgstr "%s: pg_control கோப்பினை இயற்ற இயலவில்லை: %s\n"
+
+#: pg_resetxlog.c:669 pg_resetxlog.c:918
+#, c-format
+msgid "%s: fsync error: %s\n"
+msgstr "%s: fsync பிழை: %s\n"
+
+#: pg_resetxlog.c:707 pg_resetxlog.c:781
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s: \"%s\" அடைவினைத் திறக்க இயலவில்லை: %s\n"
+
+#: pg_resetxlog.c:750 pg_resetxlog.c:814
+#, c-format
+msgid "%s: could not read from directory \"%s\": %s\n"
+msgstr "%s: \"%s\" அடைவிலிருந்து வாசிக்க இயலவில்லை: %s\n"
+
+#: pg_resetxlog.c:795
+#, c-format
+msgid "%s: could not delete file \"%s\": %s\n"
+msgstr "%s: \"%s\" கோப்பினை அகற்ற இயலவில்லை: %s\n"
+
+#: pg_resetxlog.c:885
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: \"%s\" திறக்க இயலவில்லை: %s\n"
+
+#: pg_resetxlog.c:896 pg_resetxlog.c:910
+#, c-format
+msgid "%s: could not write file \"%s\": %s\n"
+msgstr "%s: \"%s\" இயற்ற இயலவில்லை: %s\n"
+
+#: pg_resetxlog.c:929
+#, c-format
+msgid ""
+"%s resets the PostgreSQL transaction log.\n"
+"\n"
+msgstr ""
+"%s போஸ்டுகிரெஸ் பரிமாற்ற பதிவை மீட்டமைக்கும்.\n"
+"\n"
+
+#: pg_resetxlog.c:930
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... DATADIR\n"
+"\n"
+msgstr ""
+"பயனளவு:\n"
+"  %s [OPTION]... DATADIR\n"
+"\n"
+
+#: pg_resetxlog.c:931
+#, c-format
+msgid "Options:\n"
+msgstr "தேர்வுகள்:\n"
+
+#: pg_resetxlog.c:932
+#, c-format
+msgid "  -f              force update to be done\n"
+msgstr "  -f              புதுப்பித்தலை வலிந்து செய்க\n"
+
+#: pg_resetxlog.c:933
+#, c-format
+msgid ""
+"  -l TLI,FILE,SEG force minimum WAL starting location for new transaction "
+"log\n"
+msgstr "  -l TLI,FILE,SEG புதிய பரிமாற்றப் பதிவிற்கான குறைந்த பட்ச WAL துவக்க இருப்பிடத்தை வலிந்து செய்க.\n"
+
+#: pg_resetxlog.c:934
+#, c-format
+msgid "  -m XID          set next multitransaction ID\n"
+msgstr "  -m XID          அடுத்த பல்பரிமாற்ற குறியீட்டை அமைக்க\n"
+
+#: pg_resetxlog.c:935
+#, c-format
+msgid ""
+"  -n              no update, just show extracted control values (for "
+"testing)\n"
+msgstr "  -n              புதுப்பிக்க வேண்டாம், கொணரப்பட்ட நிர்வாக மதிப்புகளை காட்டுக (சோதனைக்காக)\n"
+
+#: pg_resetxlog.c:936
+#, c-format
+msgid "  -o OID          set next OID\n"
+msgstr "  -o OID          அடுத்த OID அமைக்க\n"
+
+#: pg_resetxlog.c:937
+#, c-format
+msgid "  -O OFFSET       set next multitransaction offset\n"
+msgstr "  -O OFFSET       அடுத்த பல்பரிமாற்ற ஆபுஃசெட்டை அமைக்க\n"
+
+#: pg_resetxlog.c:938
+#, c-format
+msgid "  -x XID          set next transaction ID\n"
+msgstr "  -x XID          அடுத்த பரிமாற்றக் குறியீட்டை அமைக்க\n"
+
+#: pg_resetxlog.c:939
+#, c-format
+msgid "  -e XIDEPOCH     set next transaction ID epoch\n"
+msgstr "  -e XIDEPOCH     அடுத்த பரிமாற்ற குறியீடு எபோக்கினை அமைக்க\n"
+
+#: pg_resetxlog.c:940
+#, c-format
+msgid "  --help          show this help, then exit\n"
+msgstr "  --help          இவ்வுதவியினைக் காட்டியபின் வெளிவருக\n"
+
+#: pg_resetxlog.c:941
+#, c-format
+msgid "  --version       output version information, then exit\n"
+msgstr "  --version       வெளியீட்டுத் தகவலை வெளியிட்டபின் வெளிவருக\n"
+
+#: pg_resetxlog.c:942
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"வழுக்களை <pgsql-bugs@postgresql.org> க்குத் தெரியப் படுத்துக.\n"
+

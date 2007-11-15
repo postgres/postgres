@@ -1,0 +1,619 @@
+# translation of pg_ctl.po to தமிழ்
+# This file is put in the public domain.
+#
+# ஆமாச்சு <amachu@ubuntu.com>, 2007.
+# ஸ்ரீராமதாஸ் <shriramadhas@gmail.com>, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_ctl\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-09-22 03:19-0300\n"
+"PO-Revision-Date: 2007-11-01 12:53+0530\n"
+"Last-Translator: ஸ்ரீராமதாஸ் <shriramadhas@gmail.com>\n"
+"Language-Team: தமிழ் <ubuntu-l10n-tam@lists.ubuntu.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+"X-Poedit-Language: Tamil\n"
+"X-Poedit-Country: ITALY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: pg_ctl.c:231
+#: pg_ctl.c:246
+#: pg_ctl.c:1716
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: நினைவுக்கு அப்பால்\n"
+
+#: pg_ctl.c:280
+#, c-format
+msgid "%s: could not open PID file \"%s\": %s\n"
+msgstr "%s: PID கோப்பினைத் திறக்க இயலவில்லை \"%s\": %s\n"
+
+#: pg_ctl.c:287
+#, c-format
+msgid "%s: invalid data in PID file \"%s\"\n"
+msgstr "%s: PID கோப்பிலுள்ளத் தரவு பொருத்தமற்றது \"%s\"\n"
+
+#: pg_ctl.c:538
+#, c-format
+msgid "%s: cannot set core size, disallowed by hard limit.\n"
+msgstr "%s: மைய அளவினை அமைக்க இயலவில்லை, வலிய வரையறையால் அனுமதிக்க முடியவில்லை.\n"
+
+#: pg_ctl.c:568
+#, c-format
+msgid "%s: could not read file \"%s\"\n"
+msgstr "%s: கோப்பினை வாசிக்க இயலவில்லை \"%s\"\n"
+
+#: pg_ctl.c:574
+#, c-format
+msgid "%s: option file \"%s\" must have exactly one line\n"
+msgstr "%s: தேர்வுகள் கோப்பு \"%s\" கட்டாயம் ஒரு வரி மாத்திரமே கொண்டிருக்க வேண்டும்\n"
+
+#: pg_ctl.c:617
+#, c-format
+msgid "%s: another server might be running; trying to start server anyway\n"
+msgstr "%s: மற்றொரு வழங்கி இயங்கிக் கொண்டிருக்கலாம்; ஆயினும் வழங்கியினைத் துவக்க முயந்சி மேற்கொள்ளப் படுகிறது\n"
+
+#: pg_ctl.c:644
+#, c-format
+msgid ""
+"The program \"postgres\" is needed by %s but was not found in the\n"
+"same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"%s க்கு \"postgres\" நிரல் அவசியம் தேவைப் படுகிறது ஆயினும் \"%s\" அடைவினுள் \n"
+" அது கிடைக்கவில்லை .\n"
+"தங்களின் நிறுவலைச் சரி பாார்க்கவும்.\n"
+
+#: pg_ctl.c:650
+#, c-format
+msgid ""
+"The program \"postgres\" was found by \"%s\"\n"
+"but was not the same version as %s.\n"
+"Check your installation.\n"
+msgstr ""
+"\"%s\" ஆல் \"postgres\" நிரல் கண்டெடுக்கப் பட்டது \n"
+"ஆனால் %s னை ஒத்த வெளியீடு அல்ல.\n"
+"தங்களின் நிறுவலைச் சரி பார்க்கவும்.\n"
+
+#: pg_ctl.c:667
+#, c-format
+msgid "%s: could not start server: exit code was %d\n"
+msgstr "%s: வழங்கியினைத் துவக்க இயலவில்லை: வெளியேற்றக் குறியீடு %d\n"
+
+#: pg_ctl.c:678
+#, c-format
+msgid ""
+"%s: could not start server\n"
+"Examine the log output.\n"
+msgstr ""
+"%s: வழங்கியினை துவங்க இயலவில்லை\n"
+"பதிவின் வெளியீட்டை ஆராயவும்.\n"
+
+#: pg_ctl.c:687
+msgid "waiting for server to start..."
+msgstr "வழங்கியின் துவக்கத்திற்காகக் காத்திருக்கப்படுகிறது..."
+
+#: pg_ctl.c:691
+#, c-format
+msgid "could not start server\n"
+msgstr "வழங்கியினைத் துவங்க இயலவில்லை\n"
+
+#: pg_ctl.c:696
+#: pg_ctl.c:762
+#: pg_ctl.c:835
+msgid " done\n"
+msgstr " முடிந்தது\n"
+
+#: pg_ctl.c:697
+msgid "server started\n"
+msgstr "வழங்கி துவங்கியது\n"
+
+#: pg_ctl.c:701
+msgid "server starting\n"
+msgstr "வழங்கி துவங்கப் படுகிறது\n"
+
+#: pg_ctl.c:715
+#: pg_ctl.c:783
+#: pg_ctl.c:857
+#, c-format
+msgid "%s: PID file \"%s\" does not exist\n"
+msgstr "%s: PID கோப்பு \"%s\" இல்லை\n"
+
+#: pg_ctl.c:716
+#: pg_ctl.c:785
+#: pg_ctl.c:858
+msgid "Is server running?\n"
+msgstr "வழங்கி பணி புரிகிறதா?\n"
+
+#: pg_ctl.c:722
+#, c-format
+msgid "%s: cannot stop server; single-user server is running (PID: %ld)\n"
+msgstr "%s: வழங்கியினை நிறுத்த இயலவில்லை; தனிப் பயனருக்கான வழங்கி இயங்குகிறது (PID: %ld)\n"
+
+#: pg_ctl.c:730
+#: pg_ctl.c:807
+#, c-format
+msgid "%s: could not send stop signal (PID: %ld): %s\n"
+msgstr "%s: நிறுத்துவதற்கான சமிக்ஞையை அனுப்ப இயலவில்லை (PID: %ld): %s\n"
+
+#: pg_ctl.c:737
+msgid "server shutting down\n"
+msgstr "வழங்கி நிறுத்தப் படுகிறது\n"
+
+#: pg_ctl.c:742
+#: pg_ctl.c:812
+msgid "waiting for server to shut down..."
+msgstr "வழங்கி நிற்கும் பொருட்டு காத்திருக்கப் படுகிறது..."
+
+#: pg_ctl.c:757
+#: pg_ctl.c:829
+msgid " failed\n"
+msgstr " தவறியது\n"
+
+#: pg_ctl.c:759
+#: pg_ctl.c:831
+#, c-format
+msgid "%s: server does not shut down\n"
+msgstr "%s: வழங்கி நிற்க வில்லை\n"
+
+#: pg_ctl.c:764
+#: pg_ctl.c:836
+#, c-format
+msgid "server stopped\n"
+msgstr "வழங்கி நின்றது\n"
+
+#: pg_ctl.c:786
+#: pg_ctl.c:842
+msgid "starting server anyway\n"
+msgstr "எவ்வழியானும் வழங்கித் துவங்கப் படுகிறது\n"
+
+#: pg_ctl.c:795
+#, c-format
+msgid "%s: cannot restart server; single-user server is running (PID: %ld)\n"
+msgstr "%s: வழங்கியை மீளத் துவங்க இயலவில்லை; தனிப் பயனருக்கான வழங்கி இயங்குகிறது (PID: %ld)\n"
+
+#: pg_ctl.c:798
+#: pg_ctl.c:867
+msgid "Please terminate the single-user server and try again.\n"
+msgstr "தனிப் பயனருக்கான வழங்கியினை நிறுத்திவிட்டு மீண்டும் முயற்சிக்கவும்.\n"
+
+#: pg_ctl.c:840
+#, c-format
+msgid "%s: old server process (PID: %ld) seems to be gone\n"
+msgstr "%s: வழங்கியின் பழைய செயல் (PID: %ld) பூர்த்தியானது போலத்தெரிகிறது\n"
+
+#: pg_ctl.c:864
+#, c-format
+msgid "%s: cannot reload server; single-user server is running (PID: %ld)\n"
+msgstr "%s: வழங்கியை மீளத் துவங்க இயலவில்லை; தனிப் பயனருக்கான வழங்கி இயங்கிக் கொண்டிருக்கிறது(PID: %ld)\n"
+
+#: pg_ctl.c:873
+#, c-format
+msgid "%s: could not send reload signal (PID: %ld): %s\n"
+msgstr "%s: மீளேற்ற சமிக்ஞையைத் அனுப்ப இயலவில்லை (PID: %ld): %s\n"
+
+#: pg_ctl.c:878
+msgid "server signaled\n"
+msgstr "வழங்கிக்கு சமிக்ஞைத் தரப் பட்டது\n"
+
+#: pg_ctl.c:922
+#, c-format
+msgid "%s: single-user server is running (PID: %ld)\n"
+msgstr "%s: தனிப்பயனருக்கான வழங்கி இயங்கிக் கொண்டிருக்கிறது (PID: %ld)\n"
+
+#: pg_ctl.c:934
+#, c-format
+msgid "%s: server is running (PID: %ld)\n"
+msgstr "%s: வழங்கி இயங்கிக்கொண்டிருக்கிறது (PID: %ld)\n"
+
+#: pg_ctl.c:945
+#, c-format
+msgid "%s: no server running\n"
+msgstr "%s: எந்த வழங்கியும் இயங்கவில்லை\n"
+
+#: pg_ctl.c:956
+#, c-format
+msgid "%s: could not send signal %d (PID: %ld): %s\n"
+msgstr "%s: சமிக்ஞையினை அனுப்ப இயலவில்லை %d (PID: %ld): %s\n"
+
+#: pg_ctl.c:990
+#, c-format
+msgid "%s: could not find own program executable\n"
+msgstr "%s: could not find own program executable\n"
+
+#: pg_ctl.c:999
+#, c-format
+msgid "%s: could not find postgres program executable\n"
+msgstr "%s: இயக்க வல்ல போஸ்ட்கிரெஸ் நிரல் கிடைக்கவில்லை\n"
+
+#: pg_ctl.c:1053
+#: pg_ctl.c:1085
+#, c-format
+msgid "%s: could not open service manager\n"
+msgstr "%s: சேவை மேளாலரைத் திறக்க இயலவில்லை\n"
+
+#: pg_ctl.c:1059
+#, c-format
+msgid "%s: service \"%s\" already registered\n"
+msgstr "%s: சேவை \"%s\" ஏறகனவே பதிவுச் செய்யப் பட்டுள்ளது\n"
+
+#: pg_ctl.c:1070
+#, c-format
+msgid "%s: could not register service \"%s\": error code %d\n"
+msgstr "%s: \"%s\" சேவையைப் பதிவுச் செய்ய இயலவில்லை. வழுக் குறி %d\n"
+
+#: pg_ctl.c:1091
+#, c-format
+msgid "%s: service \"%s\" not registered\n"
+msgstr "%s: \"%s\" சேவைப் பதிவுச் செய்யப் படவில்லை\n"
+
+#: pg_ctl.c:1098
+#, c-format
+msgid "%s: could not open service \"%s\": error code %d\n"
+msgstr "%s: \"%s\": சேவையைத் துவக்க இயலவில்லை. வழு குறி %d\n"
+
+#: pg_ctl.c:1105
+#, c-format
+msgid "%s: could not unregister service \"%s\": error code %d\n"
+msgstr "%s: சேவையைத் திரும்பப் பெற இயலவில்லை \"%s\": பிழை குறி %d\n"
+
+#: pg_ctl.c:1191
+msgid "Waiting for server startup...\n"
+msgstr "வழங்கித் துவங்குவதற்காகக் காத்திருக்கப் படுகிறது...\n"
+
+#: pg_ctl.c:1194
+msgid "Timed out waiting for server startup\n"
+msgstr "வழங்கி துவங்கக் காத்திருந்து காலாவதியானது\n"
+
+#: pg_ctl.c:1198
+msgid "Server started and accepting connections\n"
+msgstr "வழங்கித் துவங்கிற்று இணைப்புக்களைப் பெற்றுக் கொண்டிருக்கிறது\n"
+
+#: pg_ctl.c:1245
+#, c-format
+msgid "%s: could not start service \"%s\": error code %d\n"
+msgstr "%s: \"%s\": சேவையைத் துவக்க இயலவில்லை பிழை குறி %d\n"
+
+#: pg_ctl.c:1457
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "மேலும் தகவலறிய \"%s --help\" முயற்சி செய்யவும்.\n"
+
+#: pg_ctl.c:1465
+#, c-format
+msgid ""
+"%s is a utility to start, stop, restart, reload configuration files,\n"
+"report the status of a PostgreSQL server, or signal a PostgreSQL process.\n"
+"\n"
+msgstr ""
+"%s வடிவமைப்புக் கோப்புகளை துவக்க, நிறுத்த, மீளத்துவங்க, மீளேற்றுவதற்கானப் பயனபாடு\n"
+"போஸ்ட்கிரெஸ் வழங்கியொன்றின் நிலையினை அறியப் படுத்தவும் அல்லது போஸ்டகிரெஸ் பணியொன்றுக்கு சமிக்ஞைத் தரவும்.\n"
+"\n"
+
+#: pg_ctl.c:1467
+#, c-format
+msgid "Usage:\n"
+msgstr "பயன்பாடு:\n"
+
+#: pg_ctl.c:1468
+#, c-format
+msgid "  %s start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
+msgstr "  %s துவக்குக   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
+
+#: pg_ctl.c:1469
+#, c-format
+msgid "  %s stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
+msgstr "  %s நிறுத்துக    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
+
+#: pg_ctl.c:1470
+#, c-format
+msgid "  %s restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"
+msgstr "  %s மீளத்துவக்கு [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"
+
+#: pg_ctl.c:1471
+#, c-format
+msgid "  %s reload  [-D DATADIR] [-s]\n"
+msgstr "  %s மீளேற்றுக  [-D DATADIR] [-s]\n"
+
+#: pg_ctl.c:1472
+#, c-format
+msgid "  %s status  [-D DATADIR]\n"
+msgstr "  %s மீளேற்றுக  [-D DATADIR]\n"
+
+#: pg_ctl.c:1473
+#, c-format
+msgid "  %s kill    SIGNALNAME PID\n"
+msgstr "  %s கொல்க    SIGNALNAME PID\n"
+
+#: pg_ctl.c:1475
+#, c-format
+msgid ""
+"  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
+"                    [-w] [-o \"OPTIONS\"]\n"
+msgstr ""
+"  %s பதிவுசெய்க   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
+"                    [-w] [-o \"OPTIONS\"]\n"
+
+#: pg_ctl.c:1477
+#, c-format
+msgid "  %s unregister [-N SERVICENAME]\n"
+msgstr "  %s பதிவைத் திரும்பப் பெறுக [-N SERVICENAME]\n"
+
+#: pg_ctl.c:1480
+#, c-format
+msgid ""
+"\n"
+"Common options:\n"
+msgstr ""
+"\n"
+"பொதுவானத் தேர்வுகள்:\n"
+
+#: pg_ctl.c:1481
+#, c-format
+msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
+msgstr "  -D, --pgdata DATADIR   தரவுக் களன் காக்கப்படும் இடம்\n"
+
+#: pg_ctl.c:1482
+#, c-format
+msgid "  -s, --silent           only print errors, no informational messages\n"
+msgstr "  -s, --silent           அச்சுசார் பிழைகள் மாத்திரம், தகவல் குறிப்புகள் அல்ல\n"
+
+#: pg_ctl.c:1483
+#, c-format
+msgid "  -w                     wait until operation completes\n"
+msgstr "  -w                     செயல் பூரத்தியாகும் வரைக் காத்திரு\n"
+
+#: pg_ctl.c:1484
+#, c-format
+msgid "  -W                     do not wait until operation completes\n"
+msgstr "  -w                     செயல் பூரத்தியாகும் வரைக் காத்திருக்காதே\n"
+
+#: pg_ctl.c:1485
+#, c-format
+msgid "  --help                 show this help, then exit\n"
+msgstr "  --help                 இவ்வுதவியினைக் காட்டிவிட்டு வெளிவருக\n"
+
+#: pg_ctl.c:1486
+#, c-format
+msgid "  --version              output version information, then exit\n"
+msgstr "  --version              வெளியீட்டுத் தகவலை வெளியிட்டுவிட்டு வெளிவருக\n"
+
+#: pg_ctl.c:1487
+#, c-format
+msgid ""
+"(The default is to wait for shutdown, but not for start or restart.)\n"
+"\n"
+msgstr ""
+"(இயல்பிருப்பு நிறுத்துவதற்காகக் காத்திருப்பது. துவக்க அல்லது மீளத்துவங்க அல்ல)\n"
+"\n"
+
+#: pg_ctl.c:1488
+#, c-format
+msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
+msgstr "-D தேர்வினை விட்டுவிட்டால், சூழல் மாறி PGDATA பயன்படுத்தப்படும்.\n"
+
+#: pg_ctl.c:1490
+#, c-format
+msgid ""
+"\n"
+"Options for start or restart:\n"
+msgstr ""
+"\n"
+"துவங்க அல்லது மீளத் துவங்குவதற்கான தேர்வுகள்:\n"
+
+#: pg_ctl.c:1491
+#, c-format
+msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
+msgstr "  -l, --log FILENAME     FILENAME ற்கு வழங்கியின் பதிவினை இயற்றவும் (அல்லது சேர்க்கவும்)\n"
+
+#: pg_ctl.c:1492
+#, c-format
+msgid ""
+"  -o OPTIONS             command line options to pass to postgres\n"
+"                         (PostgreSQL server executable)\n"
+msgstr ""
+"  -o OPTIONS             போஸ்டகிரெஸுக்கு அனுப்ப உகந்த முனைய தேர்வுகள்\n"
+"                         (வழங்கியில் இயக்க வல்ல)\n"
+
+#: pg_ctl.c:1494
+#, c-format
+msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
+msgstr "  -p PATH-TO-POSTGRES    சாதாரணமாகத் தேவையில்லை\n"
+
+#: pg_ctl.c:1496
+#, c-format
+msgid "  -c, --core-files       allow postgres to produce core files\n"
+msgstr "  -c, --core-files       மூலக் கோப்புகளை உருவாக்க போஸ்டகிரெஸ்ஸினை அனுமதிக்கவும்\n"
+
+#: pg_ctl.c:1498
+#, c-format
+msgid "  -c, --core-files       not applicable on this platform\n"
+msgstr "  -c, --core-files       இக்கட்டமைப்புக்கு ஒவ்வாத\n"
+
+#: pg_ctl.c:1500
+#, c-format
+msgid ""
+"\n"
+"Options for stop or restart:\n"
+msgstr ""
+"\n"
+"துவக்க மீளத்துவக்குவதற்கான தேர்வுகள்:\n"
+
+#: pg_ctl.c:1501
+#, c-format
+msgid "  -m SHUTDOWN-MODE   can be \"smart\", \"fast\", or \"immediate\"\n"
+msgstr "  -m SHUTDOWN-MODE   \"விவேகமாக\", \"வேகமாக\", அல்லது \"உடனடியாக\" இருக்கலாம்\n"
+
+#: pg_ctl.c:1503
+#, c-format
+msgid ""
+"\n"
+"Shutdown modes are:\n"
+msgstr ""
+"\n"
+"நிறுத்தும் முறைகளாவன:\n"
+
+#: pg_ctl.c:1504
+#, c-format
+msgid "  smart       quit after all clients have disconnected\n"
+msgstr "  விவேக       வெளிவரவு. அனைத்து வாங்கிகளும் தொடர்பறிந்த பிறகு.\n"
+
+#: pg_ctl.c:1505
+#, c-format
+msgid "  fast        quit directly, with proper shutdown\n"
+msgstr "  வேக        வெளிவரவு, முறையான நிறுத்தத் துடன்\n"
+
+#: pg_ctl.c:1506
+#, c-format
+msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
+msgstr "  உடனடி   வெளிவரவு முழுமையான நிறுத்தமில்லாது; மீளத்துவங்கும் போது மீட்பதறகான முயற்சி மேற்கொள்ளப்படும்\n"
+
+#: pg_ctl.c:1508
+#, c-format
+msgid ""
+"\n"
+"Allowed signal names for kill:\n"
+msgstr ""
+"\n"
+"முடிப்பதற்கு அனுமதிக்கப்படும் சமிக்ஞை பெயர்கள்:\n"
+
+#: pg_ctl.c:1512
+#, c-format
+msgid ""
+"\n"
+"Options for register and unregister:\n"
+msgstr ""
+"\n"
+"பதிவு செய்ய மற்றும் விலகுவதற்கான தேர்வுகள்:\n"
+
+#: pg_ctl.c:1513
+#, c-format
+msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
+msgstr "  -N SERVICENAME  போஸ்ட்கிரெஸ் வழங்கியினை பதிவு செய்வதற்கானச் சேவைப் பெயர்\n"
+
+#: pg_ctl.c:1514
+#, c-format
+msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
+msgstr "  -P PASSWORD     போஸ்ட்கிரெஸ் வழங்கியினை பதிவு செய்வதற்கான கணக்கின் கடவுச் சொல்\n"
+
+#: pg_ctl.c:1515
+#, c-format
+msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
+msgstr "  -U USERNAME     போஸ்ட்கிரெஸ் வழங்கியினை பதிவு செய்வதற்கான கணக்கின் பயனர் பெயர்\n"
+
+#: pg_ctl.c:1518
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"வழுக்களை <pgsql-bugs@postgresql.org> க்குத் தெரியப் படுத்தவும்.\n"
+
+#: pg_ctl.c:1543
+#, c-format
+msgid "%s: unrecognized shutdown mode \"%s\"\n"
+msgstr "%s: இனங்கண்டுகொள்ள இயலாத நிறுத்தற் முறை \"%s\"\n"
+
+#: pg_ctl.c:1576
+#, c-format
+msgid "%s: unrecognized signal name \"%s\"\n"
+msgstr "%s: இனங்கண்டுகொள்ள இயலாத சமிக்ஞை பெயர் \"%s\"\n"
+
+#: pg_ctl.c:1640
+#, c-format
+msgid ""
+"%s: cannot be run as root\n"
+"Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
+"own the server process.\n"
+msgstr ""
+"%s: முதன்மைப் பயனராக இயக்க இயலாது\n"
+" வழங்கியின் பணிகளுக்கு உரிமையுள்ள (சலுகையற்ற) பயனராக (உ.ம்., \"su\")\n"
+"நுழையவும்.\n"
+
+#: pg_ctl.c:1746
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: ஏகப் பட்ட முனையத் துப்புகள் (முதலாவது \"%s\")\n"
+
+#: pg_ctl.c:1765
+#, c-format
+msgid "%s: missing arguments for kill mode\n"
+msgstr "%s: முடி முறைக்கானத் துப்புகள் இல்லை\n"
+
+#: pg_ctl.c:1783
+#, c-format
+msgid "%s: unrecognized operation mode \"%s\"\n"
+msgstr "%s: இனங்காண இயலாத செயல் முறை \"%s\"\n"
+
+#: pg_ctl.c:1793
+#, c-format
+msgid "%s: no operation specified\n"
+msgstr "%s: செயலெதுவும் குறிப்பிடப் படவில்லை\n"
+
+#: pg_ctl.c:1809
+#, c-format
+msgid "%s: no database directory specified and environment variable PGDATA unset\n"
+msgstr "%s: அமைவகற்று PGDATA சூழல் மாறியில் தரவுக் கள அடைவுக் குறிப்பிடப் படவில்லை\n"
+
+#: ../../port/exec.c:192
+#: ../../port/exec.c:306
+#: ../../port/exec.c:349
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "தற்போதைய அடைவினைக் இனங்கான இயலவில்லை: %s"
+
+#: ../../port/exec.c:211
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "செல்லாத இருமம் \"%s\""
+
+#: ../../port/exec.c:260
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "இருமத்தினை வாசிக்க இயலவில்லை \"%s\""
+
+#: ../../port/exec.c:267
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "இயக்கும்பொருட்டு \"%s\" னைக் கண்டெடுக்க இயலவில்லை"
+
+#: ../../port/exec.c:322
+#: ../../port/exec.c:358
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "அடைவினை \"%s\" க்கு மாற்ற இயலவில்லை"
+
+#: ../../port/exec.c:337
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "மாதிரி இணைப்பினை வாசிக்க இயலவில்லை \"%s\""
+
+#: ../../port/exec.c:583
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "சேய் பணி வெளிவரவுக் குறி %d யுடன் வெளுவந்தது"
+
+#: ../../port/exec.c:587
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "சேய் பணி விதிவிவக்கு 0x%X ஆல் தடைப்பட்டது"
+
+#: ../../port/exec.c:596
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "சேய் பணி %s சமிக்ஞையால் தடைப்பட்டது"
+
+#: ../../port/exec.c:599
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "சேய் பணி %d சமிக்ஞையால் தடைப்பட்டது"
+
+#: ../../port/exec.c:603
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "சேய் பணி இனந்தெரியா %d நிலையால் தடைப்பட்டது"
+

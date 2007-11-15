@@ -1821,7 +1821,7 @@ msgstr ""
 
 #: pg_dumpall.c:511
 #, c-format
-msgid "  -l, --database=dbname    specify an alternate default database\n"
+msgid "  -l, --database=dbname    specify an alternative default database\n"
 msgstr "  -l, --database=DB이름    기본 대체 데이터베이스 지정\n"
 
 #: pg_dumpall.c:516

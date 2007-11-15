@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-09-29 10:14-0300\n"
-"PO-Revision-Date: 2007-09-29 16:58+0100\n"
+"POT-Creation-Date: 2007-11-01 20:29-0300\n"
+"PO-Revision-Date: 2007-11-02 20:08+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -38,7 +38,7 @@ msgstr "%s: données invalides dans le fichier PID « %s »\n"
 
 #: pg_ctl.c:538
 #, c-format
-msgid "%s: cannot set core size, disallowed by hard limit\n"
+msgid "%s: cannot set core file size limit; disallowed by hard limit\n"
 msgstr "%s : n'a pas pu initialiser la taille des fichiers core, ceci est interdit par une limite en dur\n"
 
 #: pg_ctl.c:568

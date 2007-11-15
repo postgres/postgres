@@ -1,0 +1,267 @@
+# SOME DESCRIPTIVE TITLE.
+# This file is put in the public domain.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: போஸ்ட்கிரெஸ் தமிழாக்கக் குழு\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-09-22 03:19-0300\n"
+"PO-Revision-Date: 2007-10-18 23:36+0530\n"
+"Last-Translator: ஆமாச்சு <amachu@ubuntu.com>\n"
+"Language-Team: தமிழ் <ubuntu-l10n-tam@lists.ubuntu.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Tamil\n"
+"X-Poedit-Country: INDIA\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: pg_controldata.c:24
+#, c-format
+msgid ""
+"%s displays control information of a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s போஸ்டகிரெஸ் தரவுக் கள குழுமத்தின் நிர்வாகத் தகவலைக் காட்டும்.\n"
+"\n"
+
+#: pg_controldata.c:28
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION] [DATADIR]\n"
+"\n"
+"Options:\n"
+"  --help         show this help, then exit\n"
+"  --version      output version information, then exit\n"
+msgstr ""
+"பயன்பாடு:\n"
+"  %s [OPTION] [DATADIR]\n"
+"\n"
+"தேர்வுகள்:\n"
+"  --help         இவ்வுதவியினைக் காட்டிவிட்டு வெளிவரவும்\n"
+"  --version      வெளியீட்டு தகவலை வெளியிட்டு விட்டு வெளிவரவும்\n"
+
+#: pg_controldata.c:36
+#, c-format
+msgid ""
+"\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+" எந்த வொரு அடைவும் (DATADIR) குறிப்பிடாது இருந்தால், சூழல் மாறி PGDATA\n"
+" பயன் படுத்தப் படும்.\n"
+" \n"
+
+#: pg_controldata.c:38
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "வழுக்களை <pgsql-bugs@postgresql.org> க்குத் தெரியப் படுத்துக.\n"
+
+#: pg_controldata.c:48
+msgid "starting up"
+msgstr "துவக்கப் படுகிறது"
+
+#: pg_controldata.c:50
+msgid "shut down"
+msgstr "நிறுத்துக"
+
+#: pg_controldata.c:52
+msgid "shutting down"
+msgstr "நிறுத்தப் படுகிறது"
+
+#: pg_controldata.c:54
+msgid "in crash recovery"
+msgstr "நிலைகுலைவிலிருந்து மீட்கப் படுகிறது"
+
+#: pg_controldata.c:56
+msgid "in archive recovery"
+msgstr "பெட்டக மீட்பில்"
+
+#: pg_controldata.c:58
+msgid "in production"
+msgstr "நிகழ்வில்"
+
+#: pg_controldata.c:60
+msgid "unrecognized status code"
+msgstr "இனங்காண இயலாத நிலைக் குறியீடு"
+
+#: pg_controldata.c:102
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: தரவுக்கான அடைவு எதுவும் குறிப்பிடப் படவில்லை\n"
+
+#: pg_controldata.c:103
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "மேலும் விவரங்களுக்கு \"%s --help\" முயற்சி செய்யவும்\n"
+
+#: pg_controldata.c:111
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "\"%s\" கோப்பினை வாசிக்கும் %s பொருட்டு திறக்க இயலவில்லை%s\n"
+
+#: pg_controldata.c:118
+#, c-format
+msgid "%s: could not read file \"%s\": %s\n"
+msgstr "%s: \"%s\": %s கோப்பினை வாசிக்க இயலவில்லை\n"
+
+#: pg_controldata.c:132
+#, c-format
+msgid ""
+"WARNING: Calculated CRC checksum does not match value stored in file.\n"
+"Either the file is corrupt, or it has a different layout than this program\n"
+"is expecting.  The results below are untrustworthy.\n"
+"\n"
+msgstr ""
+"எச்சரிக்கை: CRC சோதனைக்கூட்டலின் மதிப்பு கோப்பில் சேமிக்கப் பட்ட மதிப்புடன் பொருந்தவில்லை.\n"
+" ஒன்று கோப்பு கெட்டுப் போயிருக்க வேண்டும், அல்லது இந்நிரல்\n"
+" எதிர்பார்ப்பதைக் காட்டிலும் வேறொரு வரைமுறையைக் கொண்டிருத்தல் வேண்டும். கீழ்காணும் முடிவுகளை நம்ப முடியவில்லை.\n"
+"\n"
+
+#: pg_controldata.c:152
+#, c-format
+msgid "pg_control version number:            %u\n"
+msgstr "pg_control வெளியீட்டு எண்:            %u\n"
+
+#: pg_controldata.c:154
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "காடலாக் வெளியீட்டு எண்:               %u\n"
+
+#: pg_controldata.c:156
+#, c-format
+msgid "Database system identifier:           %s\n"
+msgstr "தரவுத் தள அமைப்பின் அடையாளங்காட்டி:           %s\n"
+
+#: pg_controldata.c:158
+#, c-format
+msgid "Database cluster state:               %s\n"
+msgstr "தரவுக் கள கூட்டமைப்பின் நிலை:               %s\n"
+
+#: pg_controldata.c:160
+#, c-format
+msgid "pg_control last modified:             %s\n"
+msgstr "கடைசியாக மாற்றப் பட்ட pg_control:             %s\n"
+
+#: pg_controldata.c:162
+#, c-format
+msgid "Latest checkpoint location:           %X/%X\n"
+msgstr "நவீன சோதனை மையத்தின் இருப்பிடம்:           %X/%X\n"
+
+#: pg_controldata.c:165
+#, c-format
+msgid "Prior checkpoint location:            %X/%X\n"
+msgstr "முந்தைய சோதனை மையத்தின் இருப்பிடம்:            %X/%X\n"
+
+#: pg_controldata.c:168
+#, c-format
+msgid "Latest checkpoint's REDO location:    %X/%X\n"
+msgstr "நவீன மையத்தின் REDO இருப்பிடம்:    %X/%X\n"
+
+#: pg_controldata.c:171
+#, c-format
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "நவீன சோதனை மையத்தின் TimeLineID:       %u\n"
+
+#: pg_controldata.c:173
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u/%u\n"
+msgstr "நவீன சோதனை மையத்தின் NextXID:          %u/%u\n"
+
+#: pg_controldata.c:176
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "நவீன சோதனை மையத்தின் NextOID:          %u\n"
+
+#: pg_controldata.c:178
+#, c-format
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "நவீன சோதனை மையத்தின் NextMultiXactId:  %u\n"
+
+#: pg_controldata.c:180
+#, c-format
+msgid "Latest checkpoint's NextMultiOffset:  %u\n"
+msgstr "நவீன சோதனை மையத்தின் NextMultiOffset:  %u\n"
+
+#: pg_controldata.c:182
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "நவீன சோதனை மையத்தின் நேரம்:            %s\n"
+
+#: pg_controldata.c:184
+#, c-format
+msgid "Minimum recovery ending location:     %X/%X\n"
+msgstr "குறைந்த பட்ச மீட்பு முடிவின் இருப்பிடம்:     %X/%X\n"
+
+#: pg_controldata.c:187
+#, c-format
+msgid "Maximum data alignment:               %u\n"
+msgstr "அதிகபட்ச தரவு ஒழுங்கமைப்பு:               %u\n"
+
+#: pg_controldata.c:190
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "தரவுக் கள கட்டு அளவு:                %u\n"
+
+#: pg_controldata.c:192
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "பெரியத் தொடர்புடையக் கட்டு ஒன்றுக்கான கட்டு: %u\n"
+
+#: pg_controldata.c:194
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "WAL கட்டு அளவு:                        %u\n"
+
+#: pg_controldata.c:196
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "WAL பகுதியொன்றிறகானப் பைட்:   %u\n"
+
+#: pg_controldata.c:198
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "அடையாளங் காட்டிக்கான அதிகபட்ச நீளம்:        %u\n"
+
+#: pg_controldata.c:200
+#, c-format
+msgid "Maximum columns in an index:          %u\n"
+msgstr "அட்டவணைக்கான அதிகபட்ச நெடுவரிசைகள்:          %u\n"
+
+#: pg_controldata.c:202
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "TOAST அடர்த்தியின் அதிக பட்ச அளவு:         %u\n"
+
+#: pg_controldata.c:204
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "தேதி/நேர வகை சேமிப்பு:                 %s\n"
+
+#: pg_controldata.c:205
+msgid "64-bit integers"
+msgstr "64-இரும எண்கள்"
+
+#: pg_controldata.c:205
+msgid "floating-point numbers"
+msgstr "புள்ளி எண்கள்"
+
+#: pg_controldata.c:206
+#, c-format
+msgid "Maximum length of locale name:        %u\n"
+msgstr "அகப் பெயரின் அதிகப் படச அளவு:%u\n"
+
+#: pg_controldata.c:208
+#, c-format
+msgid "LC_COLLATE:                           %s\n"
+msgstr "LC_COLLATE:                           %s\n"
+
+#: pg_controldata.c:210
+#, c-format
+msgid "LC_CTYPE:                             %s\n"
+msgstr "LC_CTYPE:                             %s\n"
+
