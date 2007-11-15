@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.90 2006/12/27 23:03:52 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.91 2007/11/15 21:52:39 momjian Exp $
 
 # Known bugs:
 #
@@ -47,6 +47,7 @@ do
 	sed 's;\([} 	]\)else[ 	]*\(/\*.*[^\*][^/]\)$;\1else\
     \2;g' |
 	detab -t4 -qc |
+
 # work around bug where function that defines no local variables misindents
 # switch() case lines and line after #else.  Do not do for struct/enum.
 	awk '	BEGIN	{line1 = ""; line2 = ""}
@@ -69,6 +70,7 @@ do
 			if (NR >= 1)
 				print line1;
 		}' |
+
 # prevent indenting of code in 'extern "C"' blocks
 	awk '	BEGIN	{line1 = ""; line2 = ""; skips = 0}
 		{
@@ -103,8 +105,10 @@ do
 			if (NR >= 1 && skips <= 1)
 				print line1;
 		}' |
+
 # protect backslashes in DATA()
 	sed 's;^DATA(.*$;/*&*/;' |
+
 # protect wrapping in CATALOG()
 	sed 's;^CATALOG(.*$;/*&*/;' >/tmp/$$a
 
@@ -1878,30 +1882,37 @@ do
 -Tz_stream \
 -Tz_streamp \
 /tmp/$$a >/tmp/$$ 2>&1
+
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]
 	then	echo
 		echo "$FILE"
 		cat /tmp/$$
 	fi
 	cat /tmp/$$a |
+
 # restore DATA/CATALOG lines
 	sed 's;^/\*\(DATA(.*\)\*/$;\1;' |
 	sed 's;^/\*\(CATALOG(.*\)\*/$;\1;' |
+
 # remove tabs and retab with four spaces
 	detab -t8 -qc |
 	entab -t4 -qc |
 	sed 's;^/\* Open extern \"C\" \*/$;{;' |
 	sed 's;^/\* Close extern \"C\" \*/$;};' |
 	sed 's;/\*---X_X;/* ---;g' |
+
 # workaround indent bug for 'static'
 	sed 's;^static[ 	][ 	]*;static ;g' |
+
 # remove too much indenting after closing brace
 	sed 's;^}	[ 	]*;}	;' |
+
 # indent single-line after-'else' comment by only one tab
 	sed 's;\([} 	]\)else[ 	]*\(/\*.*\*/\)[ 	]*$;\1else	\2;g' |
+
 # pull in #endif comments
 	sed 's;^#endif[ 	][ 	]*/\*;#endif   /*;' |
-# work around #else indenting next line if #ifdef defines variables at top
+
 # work around misindenting of function with no variables defined
 	awk '
 	{
@@ -1912,10 +1923,13 @@ do
 		}
 		else 	print $0;
 	}' |
+
 # add space after comments that start on tab stops
 	sed 's;\([^ 	]\)\(/\*.*\*/\)$;\1	\2;' |
+
 # move trailing * in function return type
 	sed 's;^\([A-Za-z_][^ 	]*\)[ 	][ 	]*\*$;\1 *;' |
+
 # remove un-needed braces around single statements
 # Do not use because it uglifies PG_TRY/PG_CATCH blocks and probably
 # isn't needed for general use.
@@ -1945,6 +1959,7 @@ do
 #			if (NR >= 1 && skips <= 2)
 #				print line2;
 #		}' |
+
 # remove blank line between opening brace and block comment
 	awk '
 	{
@@ -1973,6 +1988,7 @@ do
 			if (NR >= 1 && skips <= 2)
 				print line2;
 		}' |
+
 # remove trailing blank lines, helps with adding blank before trailing #endif
 	awk '	BEGIN	{blank_lines = 0;}
 		{
@@ -1986,6 +2002,7 @@ do
 				print line1;
 			}
 		}' |
+
 # remove blank line before #else, #elif, and #endif
 	awk '	BEGIN	{line1 = ""; line2 = ""; skips = 0}
 		{
@@ -2010,6 +2027,7 @@ do
 			if (NR >= 1 && skips <= 1)
 				print line1;
 		}' |
+
 # add blank line before #endif if it is the last line in the file
 	awk '	BEGIN	{line1 = ""; line2 = ""}
 		{
@@ -2023,6 +2041,7 @@ do
 				printf "\n";
 			print line1;
 		}' |
+
 #  Move prototype names to the same line as return type.  Useful for ctags. 
 #  Indent should do this, but it does not.  It formats prototypes just
 #  like real functions.
@@ -2066,6 +2085,7 @@ do
 		}
 		else	print $0;
 	}' |
+
 # fix indenting of typedef caused by __cplusplus in libpq-fe.h
 	(
 		if echo "$FILE" | grep -q 'libpq-fe.h$'
