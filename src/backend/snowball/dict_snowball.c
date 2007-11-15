@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/snowball/dict_snowball.c,v 1.4 2007/11/15 21:14:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/snowball/dict_snowball.c,v 1.5 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ typedef struct stemmer_module
 	struct SN_env *(*create) (void);
 	void		(*close) (struct SN_env *);
 	int			(*stem) (struct SN_env *);
-}	stemmer_module;
+} stemmer_module;
 
 static const stemmer_module stemmer_modules[] =
 {
@@ -140,11 +140,11 @@ typedef struct DictSnowball
 	 * context, so we just remember CurrentMemoryContext
 	 */
 	MemoryContext dictCtx;
-}	DictSnowball;
+} DictSnowball;
 
 
 static void
-locate_stem_module(DictSnowball * d, char *lang)
+locate_stem_module(DictSnowball *d, char *lang)
 {
 	const stemmer_module *m;
 

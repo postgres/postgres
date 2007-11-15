@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.111 2007/11/15 21:14:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.112 2007/11/15 22:25:15 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -995,7 +995,7 @@ RemoveDomain(List *names, DropBehavior behavior, bool missing_ok)
  *		Registers a new enum.
  */
 void
-DefineEnum(CreateEnumStmt * stmt)
+DefineEnum(CreateEnumStmt *stmt)
 {
 	char	   *enumName;
 	char	   *enumArrayName;

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.547 2007/11/15 21:14:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.548 2007/11/15 22:25:16 momjian Exp $
  *
  * NOTES
  *
@@ -257,7 +257,7 @@ typedef enum
 	PM_SHUTDOWN,				/* waiting for bgwriter to do shutdown ckpt */
 	PM_WAIT_DEAD_END,			/* waiting for dead_end children to exit */
 	PM_NO_CHILDREN				/* all important children have exited */
-}	PMState;
+} PMState;
 
 static PMState pmState = PM_INIT;
 

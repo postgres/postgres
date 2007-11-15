@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.55 2007/11/15 21:14:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.56 2007/11/15 22:25:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -907,7 +907,7 @@ static const struct
 		"Australia/Perth"
 	},							/* (GMT+08:00) Perth */
 /*	{"W. Central Africa Standard Time", "W. Central Africa Daylight Time",
-	 *	 *	 *	 *	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
+	 *	 *	 *	 *	 *	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
 	 * G MT+01:00) West Central Africa */
 	{
 		"W. Europe Standard Time", "W. Europe Daylight Time",
@@ -1087,7 +1087,7 @@ typedef struct
 	/* tznameupper contains the all-upper-case name of the timezone */
 	char		tznameupper[TZ_STRLEN_MAX + 1];
 	pg_tz		tz;
-}	pg_tz_cache;
+} pg_tz_cache;
 
 static HTAB *timezone_cache = NULL;
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.69 2007/11/15 21:14:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.70 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,9 @@ typedef struct SnapshotData
 	 * specially by HeapTupleSatisfiesDirty.)
 	 *
 	 * An MVCC snapshot can never see the effects of XIDs >= xmax. It can see
-	 * the effects of all older XIDs except those listed in the snapshot.
-	 * xmin is stored as an optimization to avoid needing to search the XID
-	 * arrays for most tuples.
+	 * the effects of all older XIDs except those listed in the snapshot. xmin
+	 * is stored as an optimization to avoid needing to search the XID arrays
+	 * for most tuples.
 	 */
 	TransactionId xmin;			/* all XID < xmin are visible to me */
 	TransactionId xmax;			/* all XID >= xmax are invisible to me */

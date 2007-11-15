@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.13 2007/11/15 21:14:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.14 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,18 +57,18 @@ typedef struct
 {
 	void		(*callback) ();
 	void	   *arg;
-}	ScanQueryWalkerContext;
+} ScanQueryWalkerContext;
 
 typedef struct
 {
 	Oid			inval_relid;
 	CachedPlan *plan;
-}	InvalRelidContext;
+} InvalRelidContext;
 
 
 static List *cached_plans_list = NIL;
 
-static void StoreCachedPlan(CachedPlanSource * plansource, List *stmt_list,
+static void StoreCachedPlan(CachedPlanSource *plansource, List *stmt_list,
 				MemoryContext plan_context);
 static List *do_planning(List *querytrees, int cursorOptions);
 static void AcquireExecutorLocks(List *stmt_list, bool acquire);
@@ -78,12 +78,12 @@ static void UnlockRelid(Oid relid, LOCKMODE lockmode, void *arg);
 static void ScanQueryForRelids(Query *parsetree,
 				   void (*callback) (),
 				   void *arg);
-static bool ScanQueryWalker(Node *node, ScanQueryWalkerContext * context);
+static bool ScanQueryWalker(Node *node, ScanQueryWalkerContext *context);
 static bool rowmark_member(List *rowMarks, int rt_index);
 static bool plan_list_is_transient(List *stmt_list);
 static void PlanCacheCallback(Datum arg, Oid relid);
 static void InvalRelid(Oid relid, LOCKMODE lockmode,
-		   InvalRelidContext * context);
+		   InvalRelidContext *context);
 
 
 /*
@@ -284,7 +284,7 @@ FastCreateCachedPlan(Node *raw_parse_tree,
  * Common subroutine for CreateCachedPlan and RevalidateCachedPlan.
  */
 static void
-StoreCachedPlan(CachedPlanSource * plansource,
+StoreCachedPlan(CachedPlanSource *plansource,
 				List *stmt_list,
 				MemoryContext plan_context)
 {
@@ -350,7 +350,7 @@ StoreCachedPlan(CachedPlanSource * plansource,
  * still in use.
  */
 void
-DropCachedPlan(CachedPlanSource * plansource)
+DropCachedPlan(CachedPlanSource *plansource)
 {
 	/* Validity check that we were given a CachedPlanSource */
 	Assert(list_member_ptr(cached_plans_list, plansource));
@@ -393,7 +393,7 @@ DropCachedPlan(CachedPlanSource * plansource)
  * is used for that work.
  */
 CachedPlan *
-RevalidateCachedPlan(CachedPlanSource * plansource, bool useResOwner)
+RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 {
 	CachedPlan *plan;
 
@@ -591,7 +591,7 @@ do_planning(List *querytrees, int cursorOptions)
  * Portal.	Transient references should be protected by a resource owner.
  */
 void
-ReleaseCachedPlan(CachedPlan * plan, bool useResOwner)
+ReleaseCachedPlan(CachedPlan *plan, bool useResOwner)
 {
 	if (useResOwner)
 		ResourceOwnerForgetPlanCacheRef(CurrentResourceOwner, plan);
@@ -767,7 +767,7 @@ ScanQueryForRelids(Query *parsetree,
  * Walker to find sublink subqueries for ScanQueryForRelids
  */
 static bool
-ScanQueryWalker(Node *node, ScanQueryWalkerContext * context)
+ScanQueryWalker(Node *node, ScanQueryWalkerContext *context)
 {
 	if (node == NULL)
 		return false;
@@ -970,7 +970,7 @@ ResetPlanCache(void)
  * ScanQueryForRelids callback function for PlanCacheCallback
  */
 static void
-InvalRelid(Oid relid, LOCKMODE lockmode, InvalRelidContext * context)
+InvalRelid(Oid relid, LOCKMODE lockmode, InvalRelidContext *context)
 {
 	if (relid == context->inval_relid || context->inval_relid == InvalidOid)
 		context->plan->dead = true;

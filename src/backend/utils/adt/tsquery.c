@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.9 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.10 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ typedef enum
 	PT_OPR = 3,
 	PT_OPEN = 4,
 	PT_CLOSE = 5,
-}	ts_tokentype;
+} ts_tokentype;
 
 /*
  * get token from query string
@@ -390,7 +390,7 @@ makepol(TSQueryParserState state,
 }
 
 static void
-findoprnd_recurse(QueryItem * ptr, uint32 *pos, int nnodes)
+findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
@@ -435,7 +435,7 @@ findoprnd_recurse(QueryItem * ptr, uint32 *pos, int nnodes)
  * QueryItems must be in polish (prefix) notation.
  */
 static void
-findoprnd(QueryItem * ptr, int size)
+findoprnd(QueryItem *ptr, int size)
 {
 	uint32		pos;
 
@@ -576,7 +576,7 @@ typedef struct
 	char	   *cur;
 	char	   *op;
 	int			buflen;
-}	INFIX;
+} INFIX;
 
 /* Makes sure inf->buf is large enough for adding 'addsize' bytes */
 #define RESIZEBUF(inf, addsize) \
@@ -593,7 +593,7 @@ while( ( (inf)->cur - (inf)->buf ) + (addsize) + 1 >= (inf)->buflen ) \
  * infix (human-readable) view
  */
 static void
-infix(INFIX * in, bool first)
+infix(INFIX *in, bool first)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();

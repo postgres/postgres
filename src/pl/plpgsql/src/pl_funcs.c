@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.64 2007/11/15 21:14:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.65 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -486,7 +486,7 @@ static void dump_fors(PLpgSQL_stmt_fors *stmt);
 static void dump_exit(PLpgSQL_stmt_exit *stmt);
 static void dump_return(PLpgSQL_stmt_return *stmt);
 static void dump_return_next(PLpgSQL_stmt_return_next *stmt);
-static void dump_return_query(PLpgSQL_stmt_return_query * stmt);
+static void dump_return_query(PLpgSQL_stmt_return_query *stmt);
 static void dump_raise(PLpgSQL_stmt_raise *stmt);
 static void dump_execsql(PLpgSQL_stmt_execsql *stmt);
 static void dump_dynexecute(PLpgSQL_stmt_dynexecute *stmt);
@@ -885,7 +885,7 @@ dump_return_next(PLpgSQL_stmt_return_next *stmt)
 }
 
 static void
-dump_return_query(PLpgSQL_stmt_return_query * stmt)
+dump_return_query(PLpgSQL_stmt_return_query *stmt)
 {
 	dump_ind();
 	printf("RETURN QUERY ");

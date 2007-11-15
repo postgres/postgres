@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.5 2007/11/15 21:14:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.6 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,32 +26,32 @@
 #include "utils/lsyscache.h"
 
 
-static EquivalenceMember *add_eq_member(EquivalenceClass * ec,
+static EquivalenceMember *add_eq_member(EquivalenceClass *ec,
 			  Expr *expr, Relids relids,
 			  bool is_child, Oid datatype);
 static void generate_base_implied_equalities_const(PlannerInfo *root,
-									   EquivalenceClass * ec);
+									   EquivalenceClass *ec);
 static void generate_base_implied_equalities_no_const(PlannerInfo *root,
-										  EquivalenceClass * ec);
+										  EquivalenceClass *ec);
 static void generate_base_implied_equalities_broken(PlannerInfo *root,
-										EquivalenceClass * ec);
+										EquivalenceClass *ec);
 static List *generate_join_implied_equalities_normal(PlannerInfo *root,
-										EquivalenceClass * ec,
+										EquivalenceClass *ec,
 										RelOptInfo *joinrel,
 										RelOptInfo *outer_rel,
 										RelOptInfo *inner_rel);
 static List *generate_join_implied_equalities_broken(PlannerInfo *root,
-										EquivalenceClass * ec,
+										EquivalenceClass *ec,
 										RelOptInfo *joinrel,
 										RelOptInfo *outer_rel,
 										RelOptInfo *inner_rel);
-static Oid select_equality_operator(EquivalenceClass * ec,
+static Oid select_equality_operator(EquivalenceClass *ec,
 						 Oid lefttype, Oid righttype);
 static RestrictInfo *create_join_clause(PlannerInfo *root,
-				   EquivalenceClass * ec, Oid opno,
-				   EquivalenceMember * leftem,
-				   EquivalenceMember * rightem,
-				   EquivalenceClass * parent_ec);
+				   EquivalenceClass *ec, Oid opno,
+				   EquivalenceMember *leftem,
+				   EquivalenceMember *rightem,
+				   EquivalenceClass *parent_ec);
 static void reconsider_outer_join_clause(PlannerInfo *root,
 							 RestrictInfo *rinfo,
 							 bool outer_on_left);
@@ -313,7 +313,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
  * add_eq_member - build a new EquivalenceMember and add it to an EC
  */
 static EquivalenceMember *
-add_eq_member(EquivalenceClass * ec, Expr *expr, Relids relids,
+add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
 			  bool is_child, Oid datatype)
 {
 	EquivalenceMember *em = makeNode(EquivalenceMember);
@@ -554,7 +554,7 @@ generate_base_implied_equalities(PlannerInfo *root)
  */
 static void
 generate_base_implied_equalities_const(PlannerInfo *root,
-									   EquivalenceClass * ec)
+									   EquivalenceClass *ec)
 {
 	EquivalenceMember *const_em = NULL;
 	ListCell   *lc;
@@ -603,7 +603,7 @@ generate_base_implied_equalities_const(PlannerInfo *root,
  */
 static void
 generate_base_implied_equalities_no_const(PlannerInfo *root,
-										  EquivalenceClass * ec)
+										  EquivalenceClass *ec)
 {
 	EquivalenceMember **prev_ems;
 	ListCell   *lc;
@@ -685,7 +685,7 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
  */
 static void
 generate_base_implied_equalities_broken(PlannerInfo *root,
-										EquivalenceClass * ec)
+										EquivalenceClass *ec)
 {
 	ListCell   *lc;
 
@@ -775,7 +775,7 @@ generate_join_implied_equalities(PlannerInfo *root,
  */
 static List *
 generate_join_implied_equalities_normal(PlannerInfo *root,
-										EquivalenceClass * ec,
+										EquivalenceClass *ec,
 										RelOptInfo *joinrel,
 										RelOptInfo *outer_rel,
 										RelOptInfo *inner_rel)
@@ -944,7 +944,7 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
  */
 static List *
 generate_join_implied_equalities_broken(PlannerInfo *root,
-										EquivalenceClass * ec,
+										EquivalenceClass *ec,
 										RelOptInfo *joinrel,
 										RelOptInfo *outer_rel,
 										RelOptInfo *inner_rel)
@@ -973,7 +973,7 @@ generate_join_implied_equalities_broken(PlannerInfo *root,
  * Returns InvalidOid if no operator can be found for this datatype combination
  */
 static Oid
-select_equality_operator(EquivalenceClass * ec, Oid lefttype, Oid righttype)
+select_equality_operator(EquivalenceClass *ec, Oid lefttype, Oid righttype)
 {
 	ListCell   *lc;
 
@@ -1003,10 +1003,10 @@ select_equality_operator(EquivalenceClass * ec, Oid lefttype, Oid righttype)
  */
 static RestrictInfo *
 create_join_clause(PlannerInfo *root,
-				   EquivalenceClass * ec, Oid opno,
-				   EquivalenceMember * leftem,
-				   EquivalenceMember * rightem,
-				   EquivalenceClass * parent_ec)
+				   EquivalenceClass *ec, Oid opno,
+				   EquivalenceMember *leftem,
+				   EquivalenceMember *rightem,
+				   EquivalenceClass *parent_ec)
 {
 	RestrictInfo *rinfo;
 	ListCell   *lc;
@@ -1553,8 +1553,8 @@ find_eclass_clauses_for_index_join(PlannerInfo *root, RelOptInfo *rel,
 			/*
 			 * Found one, so try to generate a join clause.  This is like
 			 * generate_join_implied_equalities_normal, except simpler since
-			 * our only preference item is to pick a Var on the outer side.
-			 * We only need one join clause per index col.
+			 * our only preference item is to pick a Var on the outer side. We
+			 * only need one join clause per index col.
 			 */
 			foreach(lc3, cur_ec->ec_members)
 			{
@@ -1750,7 +1750,7 @@ has_relevant_eclass_joinclause(PlannerInfo *root, RelOptInfo *rel1)
  * from actually being generated.
  */
 bool
-eclass_useful_for_merging(EquivalenceClass * eclass,
+eclass_useful_for_merging(EquivalenceClass *eclass,
 						  RelOptInfo *rel)
 {
 	ListCell   *lc;

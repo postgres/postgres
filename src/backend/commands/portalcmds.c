@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.67 2007/11/15 21:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.68 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
  * utilityStmt field is set.
  */
 void
-PerformCursorOpen(PlannedStmt * stmt, ParamListInfo params,
+PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 				  const char *queryString, bool isTopLevel)
 {
 	DeclareCursorStmt *cstmt = (DeclareCursorStmt *) stmt->utilityStmt;

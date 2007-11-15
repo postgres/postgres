@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.476 2007/11/15 21:14:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.477 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,10 +120,10 @@ static int	disable_dollar_quoting = 0;
 
 
 static void help(const char *progname);
-static void expand_schema_name_patterns(SimpleStringList * patterns,
-							SimpleOidList * oids);
-static void expand_table_name_patterns(SimpleStringList * patterns,
-						   SimpleOidList * oids);
+static void expand_schema_name_patterns(SimpleStringList *patterns,
+							SimpleOidList *oids);
+static void expand_table_name_patterns(SimpleStringList *patterns,
+						   SimpleOidList *oids);
 static NamespaceInfo *findNamespace(Oid nsoid, Oid objoid);
 static void dumpTableData(Archive *fout, TableDataInfo *tdinfo);
 static void dumpComment(Archive *fout, const char *target,
@@ -145,7 +145,7 @@ static void dumpFunc(Archive *fout, FuncInfo *finfo);
 static void dumpCast(Archive *fout, CastInfo *cast);
 static void dumpOpr(Archive *fout, OprInfo *oprinfo);
 static void dumpOpclass(Archive *fout, OpclassInfo *opcinfo);
-static void dumpOpfamily(Archive *fout, OpfamilyInfo * opfinfo);
+static void dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo);
 static void dumpConversion(Archive *fout, ConvInfo *convinfo);
 static void dumpRule(Archive *fout, RuleInfo *rinfo);
 static void dumpAgg(Archive *fout, AggInfo *agginfo);
@@ -157,10 +157,10 @@ static void dumpSequence(Archive *fout, TableInfo *tbinfo);
 static void dumpIndex(Archive *fout, IndxInfo *indxinfo);
 static void dumpConstraint(Archive *fout, ConstraintInfo *coninfo);
 static void dumpTableConstraintComment(Archive *fout, ConstraintInfo *coninfo);
-static void dumpTSParser(Archive *fout, TSParserInfo * prsinfo);
-static void dumpTSDictionary(Archive *fout, TSDictInfo * dictinfo);
-static void dumpTSTemplate(Archive *fout, TSTemplateInfo * tmplinfo);
-static void dumpTSConfig(Archive *fout, TSConfigInfo * cfginfo);
+static void dumpTSParser(Archive *fout, TSParserInfo *prsinfo);
+static void dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo);
+static void dumpTSTemplate(Archive *fout, TSTemplateInfo *tmplinfo);
+static void dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo);
 
 static void dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 		const char *type, const char *name,
@@ -795,7 +795,7 @@ exit_nicely(void)
  * and append them to the given OID list.
  */
 static void
-expand_schema_name_patterns(SimpleStringList * patterns, SimpleOidList * oids)
+expand_schema_name_patterns(SimpleStringList *patterns, SimpleOidList *oids)
 {
 	PQExpBuffer query;
 	PGresult   *res;
@@ -846,7 +846,7 @@ expand_schema_name_patterns(SimpleStringList * patterns, SimpleOidList * oids)
  * and append them to the given OID list.
  */
 static void
-expand_table_name_patterns(SimpleStringList * patterns, SimpleOidList * oids)
+expand_table_name_patterns(SimpleStringList *patterns, SimpleOidList *oids)
 {
 	PQExpBuffer query;
 	PGresult   *res;
@@ -7590,7 +7590,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
  *	  write out a single operator family definition
  */
 static void
-dumpOpfamily(Archive *fout, OpfamilyInfo * opfinfo)
+dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 {
 	PQExpBuffer query;
 	PQExpBuffer q;
@@ -8219,7 +8219,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
  *	  write out a single text search parser
  */
 static void
-dumpTSParser(Archive *fout, TSParserInfo * prsinfo)
+dumpTSParser(Archive *fout, TSParserInfo *prsinfo)
 {
 	PQExpBuffer q;
 	PQExpBuffer delq;
@@ -8283,7 +8283,7 @@ dumpTSParser(Archive *fout, TSParserInfo * prsinfo)
  *	  write out a single text search dictionary
  */
 static void
-dumpTSDictionary(Archive *fout, TSDictInfo * dictinfo)
+dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo)
 {
 	PQExpBuffer q;
 	PQExpBuffer delq;
@@ -8373,7 +8373,7 @@ dumpTSDictionary(Archive *fout, TSDictInfo * dictinfo)
  *	  write out a single text search template
  */
 static void
-dumpTSTemplate(Archive *fout, TSTemplateInfo * tmplinfo)
+dumpTSTemplate(Archive *fout, TSTemplateInfo *tmplinfo)
 {
 	PQExpBuffer q;
 	PQExpBuffer delq;
@@ -8431,7 +8431,7 @@ dumpTSTemplate(Archive *fout, TSTemplateInfo * tmplinfo)
  *	  write out a single text search configuration
  */
 static void
-dumpTSConfig(Archive *fout, TSConfigInfo * cfginfo)
+dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 {
 	PQExpBuffer q;
 	PQExpBuffer delq;

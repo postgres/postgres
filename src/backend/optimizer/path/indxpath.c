@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.224 2007/11/15 21:14:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.225 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ typedef struct
 	List	   *quals;			/* the WHERE clauses it uses */
 	List	   *preds;			/* predicates of its partial index(es) */
 	Bitmapset  *clauseids;		/* quals+preds represented as a bitmapset */
-}	PathClauseUsage;
+} PathClauseUsage;
 
 
 static List *find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
@@ -774,8 +774,8 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 static int
 path_usage_comparator(const void *a, const void *b)
 {
-	PathClauseUsage *pa = *(PathClauseUsage * const *) a;
-	PathClauseUsage *pb = *(PathClauseUsage * const *) b;
+	PathClauseUsage *pa = *(PathClauseUsage *const *) a;
+	PathClauseUsage *pb = *(PathClauseUsage *const *) b;
 	Cost		acost;
 	Cost		bcost;
 	Selectivity aselec;
@@ -1569,7 +1569,7 @@ matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel, Relids outer_relids)
  * This is also exported for use by find_eclass_clauses_for_index_join.
  */
 bool
-eclass_matches_any_index(EquivalenceClass * ec, EquivalenceMember * em,
+eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
 						 RelOptInfo *rel)
 {
 	ListCell   *l;

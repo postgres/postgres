@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.9 2007/11/15 21:14:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.10 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,7 @@ typedef enum
 	TPS_InHyphenNumWordPart,
 	TPS_InHyphenUnsignedInt,
 	TPS_Null					/* last state (fake value) */
-}	TParserState;
+} TParserState;
 
 /* forward declaration */
 struct TParser;
@@ -207,7 +207,7 @@ typedef struct
 	TParserState tostate;
 	int			type;
 	TParserSpecial special;
-}	TParserStateActionItem;
+} TParserStateActionItem;
 
 /* Flag bits in TParserStateActionItem.flags */
 #define A_NEXT		0x0000
@@ -229,7 +229,7 @@ typedef struct TParserPosition
 	TParserState state;
 	struct TParserPosition *prev;
 	const TParserStateActionItem *pushedAtAction;
-}	TParserPosition;
+} TParserPosition;
 
 typedef struct TParser
 {
@@ -256,15 +256,15 @@ typedef struct TParser
 	int			lenbytetoken;
 	int			lenchartoken;
 	int			type;
-}	TParser;
+} TParser;
 
 
 /* forward decls here */
-static bool TParserGet(TParser * prs);
+static bool TParserGet(TParser *prs);
 
 
 static TParserPosition *
-newTParserPosition(TParserPosition * prev)
+newTParserPosition(TParserPosition *prev)
 {
 	TParserPosition *res = (TParserPosition *) palloc(sizeof(TParserPosition));
 
@@ -316,7 +316,7 @@ TParserInit(char *str, int len)
 }
 
 static void
-TParserClose(TParser * prs)
+TParserClose(TParser *prs)
 {
 	while (prs->state)
 	{
@@ -365,7 +365,7 @@ p_isnot##type(TParser *prs) {												\
 }
 
 static int
-p_isalnum(TParser * prs)
+p_isalnum(TParser *prs)
 {
 	Assert(prs->state);
 
@@ -391,13 +391,13 @@ p_isalnum(TParser * prs)
 	return isalnum(*(unsigned char *) (prs->str + prs->state->posbyte));
 }
 static int
-p_isnotalnum(TParser * prs)
+p_isnotalnum(TParser *prs)
 {
 	return !p_isalnum(prs);
 }
 
 static int
-p_isalpha(TParser * prs)
+p_isalpha(TParser *prs)
 {
 	Assert(prs->state);
 
@@ -424,7 +424,7 @@ p_isalpha(TParser * prs)
 }
 
 static int
-p_isnotalpha(TParser * prs)
+p_isnotalpha(TParser *prs)
 {
 	return !p_isalpha(prs);
 }
@@ -432,7 +432,7 @@ p_isnotalpha(TParser * prs)
 /* p_iseq should be used only for ascii symbols */
 
 static int
-p_iseq(TParser * prs, char c)
+p_iseq(TParser *prs, char c)
 {
 	Assert(prs->state);
 	return ((prs->state->charlen == 1 && *(prs->str + prs->state->posbyte) == c)) ? 1 : 0;
@@ -453,7 +453,7 @@ p_isnot##type(TParser *prs) {												\
 
 
 static int
-p_iseq(TParser * prs, char c)
+p_iseq(TParser *prs, char c)
 {
 	Assert(prs->state);
 	return (*(prs->str + prs->state->posbyte) == c) ? 1 : 0;
@@ -472,32 +472,32 @@ p_iswhat(upper)
 p_iswhat(xdigit)
 
 static int
-p_isEOF(TParser * prs)
+p_isEOF(TParser *prs)
 {
 	Assert(prs->state);
 	return (prs->state->posbyte == prs->lenstr || prs->state->charlen == 0) ? 1 : 0;
 }
 
 static int
-p_iseqC(TParser * prs)
+p_iseqC(TParser *prs)
 {
 	return p_iseq(prs, prs->c);
 }
 
 static int
-p_isneC(TParser * prs)
+p_isneC(TParser *prs)
 {
 	return !p_iseq(prs, prs->c);
 }
 
 static int
-p_isascii(TParser * prs)
+p_isascii(TParser *prs)
 {
 	return (prs->state->charlen == 1 && isascii((unsigned char) *(prs->str + prs->state->posbyte))) ? 1 : 0;
 }
 
 static int
-p_isasclet(TParser * prs)
+p_isasclet(TParser *prs)
 {
 	return (p_isascii(prs) && p_isalpha(prs)) ? 1 : 0;
 }
@@ -533,7 +533,7 @@ _make_compiler_happy(void)
 
 
 static void
-SpecialTags(TParser * prs)
+SpecialTags(TParser *prs)
 {
 	switch (prs->state->lenchartoken)
 	{
@@ -557,7 +557,7 @@ SpecialTags(TParser * prs)
 }
 
 static void
-SpecialFURL(TParser * prs)
+SpecialFURL(TParser *prs)
 {
 	prs->wanthost = true;
 	prs->state->posbyte -= prs->state->lenbytetoken;
@@ -565,14 +565,14 @@ SpecialFURL(TParser * prs)
 }
 
 static void
-SpecialHyphen(TParser * prs)
+SpecialHyphen(TParser *prs)
 {
 	prs->state->posbyte -= prs->state->lenbytetoken;
 	prs->state->poschar -= prs->state->lenchartoken;
 }
 
 static void
-SpecialVerVersion(TParser * prs)
+SpecialVerVersion(TParser *prs)
 {
 	prs->state->posbyte -= prs->state->lenbytetoken;
 	prs->state->poschar -= prs->state->lenchartoken;
@@ -581,7 +581,7 @@ SpecialVerVersion(TParser * prs)
 }
 
 static int
-p_isstophost(TParser * prs)
+p_isstophost(TParser *prs)
 {
 	if (prs->wanthost)
 	{
@@ -592,13 +592,13 @@ p_isstophost(TParser * prs)
 }
 
 static int
-p_isignore(TParser * prs)
+p_isignore(TParser *prs)
 {
 	return (prs->ignore) ? 1 : 0;
 }
 
 static int
-p_ishost(TParser * prs)
+p_ishost(TParser *prs)
 {
 	TParser    *tmpprs = TParserInit(prs->str + prs->state->posbyte, prs->lenstr - prs->state->posbyte);
 	int			res = 0;
@@ -618,7 +618,7 @@ p_ishost(TParser * prs)
 }
 
 static int
-p_isURLPath(TParser * prs)
+p_isURLPath(TParser *prs)
 {
 	TParser    *tmpprs = TParserInit(prs->str + prs->state->posbyte, prs->lenstr - prs->state->posbyte);
 	int			res = 0;
@@ -1244,7 +1244,7 @@ typedef struct
 #ifdef WPARSER_TRACE
 	const char *state_name;		/* only for debug printout */
 #endif
-}	TParserStateAction;
+} TParserStateAction;
 
 #ifdef WPARSER_TRACE
 #define TPARSERSTATEACTION(state) \
@@ -1338,7 +1338,7 @@ static const TParserStateAction Actions[] = {
 
 
 static bool
-TParserGet(TParser * prs)
+TParserGet(TParser *prs)
 {
 	const TParserStateActionItem *item = NULL;
 
@@ -1566,10 +1566,10 @@ typedef struct
 {
 	HeadlineWordEntry *words;
 	int			len;
-}	hlCheck;
+} hlCheck;
 
 static bool
-checkcondition_HL(void *checkval, QueryOperand * val)
+checkcondition_HL(void *checkval, QueryOperand *val)
 {
 	int			i;
 
@@ -1583,7 +1583,7 @@ checkcondition_HL(void *checkval, QueryOperand * val)
 
 
 static bool
-hlCover(HeadlineParsedText * prs, TSQuery query, int *p, int *q)
+hlCover(HeadlineParsedText *prs, TSQuery query, int *p, int *q)
 {
 	int			i,
 				j;

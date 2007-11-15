@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.6 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.7 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "miscadmin.h"
 
 QTNode *
-QT2QTN(QueryItem * in, char *operand)
+QT2QTN(QueryItem *in, char *operand)
 {
 	QTNode	   *node = (QTNode *) palloc0(sizeof(QTNode));
 
@@ -52,7 +52,7 @@ QT2QTN(QueryItem * in, char *operand)
 }
 
 void
-QTNFree(QTNode * in)
+QTNFree(QTNode *in)
 {
 	if (!in)
 		return;
@@ -84,7 +84,7 @@ QTNFree(QTNode * in)
 }
 
 int
-QTNodeCompare(QTNode * an, QTNode * bn)
+QTNodeCompare(QTNode *an, QTNode *bn)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
@@ -139,7 +139,7 @@ cmpQTN(const void *a, const void *b)
 }
 
 void
-QTNSort(QTNode * in)
+QTNSort(QTNode *in)
 {
 	int			i;
 
@@ -156,7 +156,7 @@ QTNSort(QTNode * in)
 }
 
 bool
-QTNEq(QTNode * a, QTNode * b)
+QTNEq(QTNode *a, QTNode *b)
 {
 	uint32		sign = a->sign & b->sign;
 
@@ -174,7 +174,7 @@ QTNEq(QTNode * a, QTNode * b)
  *	 b	c
  */
 void
-QTNTernary(QTNode * in)
+QTNTernary(QTNode *in)
 {
 	int			i;
 
@@ -217,7 +217,7 @@ QTNTernary(QTNode * in)
  * (Opposite of QTNTernary)
  */
 void
-QTNBinary(QTNode * in)
+QTNBinary(QTNode *in)
 {
 	int			i;
 
@@ -261,7 +261,7 @@ QTNBinary(QTNode * in)
  * terminators.
  */
 static void
-cntsize(QTNode * in, int *sumlen, int *nnode)
+cntsize(QTNode *in, int *sumlen, int *nnode)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
@@ -285,10 +285,10 @@ typedef struct
 	QueryItem  *curitem;
 	char	   *operand;
 	char	   *curoperand;
-}	QTN2QTState;
+} QTN2QTState;
 
 static void
-fillQT(QTN2QTState * state, QTNode * in)
+fillQT(QTN2QTState *state, QTNode *in)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
@@ -325,7 +325,7 @@ fillQT(QTN2QTState * state, QTNode * in)
 }
 
 TSQuery
-QTN2QT(QTNode * in)
+QTN2QT(QTNode *in)
 {
 	TSQuery		out;
 	int			len;
@@ -348,7 +348,7 @@ QTN2QT(QTNode * in)
 }
 
 QTNode *
-QTNCopy(QTNode * in)
+QTNCopy(QTNode *in)
 {
 	QTNode	   *out;
 
@@ -383,7 +383,7 @@ QTNCopy(QTNode * in)
 }
 
 void
-QTNClearFlags(QTNode * in, uint32 flags)
+QTNClearFlags(QTNode *in, uint32 flags)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();

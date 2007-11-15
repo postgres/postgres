@@ -343,7 +343,7 @@ typedef struct
 {
 	OffsetNumber pos;
 	float		cost;
-}	SPLITCOST;
+} SPLITCOST;
 
 static int
 comparecost(const void *a, const void *b)

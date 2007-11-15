@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.100 2007/11/15 21:14:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.101 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -916,7 +916,7 @@ strInArray(const char *pattern, char **arr, int arr_size)
  */
 
 void
-simple_oid_list_append(SimpleOidList * list, Oid val)
+simple_oid_list_append(SimpleOidList *list, Oid val)
 {
 	SimpleOidListCell *cell;
 
@@ -932,7 +932,7 @@ simple_oid_list_append(SimpleOidList * list, Oid val)
 }
 
 void
-simple_string_list_append(SimpleStringList * list, const char *val)
+simple_string_list_append(SimpleStringList *list, const char *val)
 {
 	SimpleStringListCell *cell;
 
@@ -950,7 +950,7 @@ simple_string_list_append(SimpleStringList * list, const char *val)
 }
 
 bool
-simple_oid_list_member(SimpleOidList * list, Oid val)
+simple_oid_list_member(SimpleOidList *list, Oid val)
 {
 	SimpleOidListCell *cell;
 
@@ -963,7 +963,7 @@ simple_oid_list_member(SimpleOidList * list, Oid val)
 }
 
 bool
-simple_string_list_member(SimpleStringList * list, const char *val)
+simple_string_list_member(SimpleStringList *list, const char *val)
 {
 	SimpleStringListCell *cell;
 

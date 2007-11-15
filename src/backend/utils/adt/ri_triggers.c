@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.98 2007/11/15 21:14:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.99 2007/11/15 22:25:16 momjian Exp $
  *
  * ----------
  */
@@ -108,7 +108,7 @@ typedef struct RI_ConstraintInfo
 												 * PK) */
 	Oid			ff_eq_oprs[RI_MAX_NUMKEYS];		/* equality operators (FK =
 												 * FK) */
-}	RI_ConstraintInfo;
+} RI_ConstraintInfo;
 
 
 /* ----------
@@ -150,7 +150,7 @@ typedef struct RI_CompareKey
 {
 	Oid			eq_opr;			/* the equality operator to apply */
 	Oid			typeid;			/* the data type to apply it to */
-}	RI_CompareKey;
+} RI_CompareKey;
 
 
 /* ----------
@@ -163,7 +163,7 @@ typedef struct RI_CompareHashEntry
 	bool		valid;			/* successfully initialized? */
 	FmgrInfo	eq_opr_finfo;	/* call info for equality fn */
 	FmgrInfo	cast_func_finfo;	/* in case we must coerce input */
-}	RI_CompareHashEntry;
+} RI_CompareHashEntry;
 
 
 /* ----------
@@ -188,23 +188,23 @@ static void ri_GenerateQual(StringInfo buf,
 static int ri_NullCheck(Relation rel, HeapTuple tup,
 			 RI_QueryKey *key, int pairidx);
 static void ri_BuildQueryKeyFull(RI_QueryKey *key,
-					 const RI_ConstraintInfo * riinfo,
+					 const RI_ConstraintInfo *riinfo,
 					 int32 constr_queryno);
 static void ri_BuildQueryKeyPkCheck(RI_QueryKey *key,
-						const RI_ConstraintInfo * riinfo,
+						const RI_ConstraintInfo *riinfo,
 						int32 constr_queryno);
 static bool ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
-			 const RI_ConstraintInfo * riinfo, bool rel_is_pk);
+			 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
 static bool ri_AllKeysUnequal(Relation rel, HeapTuple oldtup, HeapTuple newtup,
-				  const RI_ConstraintInfo * riinfo, bool rel_is_pk);
+				  const RI_ConstraintInfo *riinfo, bool rel_is_pk);
 static bool ri_OneKeyEqual(Relation rel, int column,
 			   HeapTuple oldtup, HeapTuple newtup,
-			   const RI_ConstraintInfo * riinfo, bool rel_is_pk);
+			   const RI_ConstraintInfo *riinfo, bool rel_is_pk);
 static bool ri_AttributesEqual(Oid eq_opr, Oid typeid,
 				   Datum oldvalue, Datum newvalue);
 static bool ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 				  HeapTuple old_row,
-				  const RI_ConstraintInfo * riinfo);
+				  const RI_ConstraintInfo *riinfo);
 
 static void ri_InitHashTables(void);
 static SPIPlanPtr ri_FetchPreparedPlan(RI_QueryKey *key);
@@ -213,7 +213,7 @@ static RI_CompareHashEntry *ri_HashCompareOp(Oid eq_opr, Oid typeid);
 
 static void ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname,
 				int tgkind);
-static void ri_FetchConstraintInfo(RI_ConstraintInfo * riinfo,
+static void ri_FetchConstraintInfo(RI_ConstraintInfo *riinfo,
 					   Trigger *trigger, Relation trig_rel, bool rel_is_pk);
 static SPIPlanPtr ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 			 RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel,
@@ -541,7 +541,7 @@ RI_FKey_check_upd(PG_FUNCTION_ARGS)
 static bool
 ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 				  HeapTuple old_row,
-				  const RI_ConstraintInfo * riinfo)
+				  const RI_ConstraintInfo *riinfo)
 {
 	SPIPlanPtr	qplan;
 	RI_QueryKey qkey;
@@ -2945,7 +2945,7 @@ ri_GenerateQual(StringInfo buf,
  * ----------
  */
 static void
-ri_BuildQueryKeyFull(RI_QueryKey *key, const RI_ConstraintInfo * riinfo,
+ri_BuildQueryKeyFull(RI_QueryKey *key, const RI_ConstraintInfo *riinfo,
 					 int32 constr_queryno)
 {
 	int			i;
@@ -3022,7 +3022,7 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
  * Fetch the pg_constraint entry for the FK constraint, and fill *riinfo
  */
 static void
-ri_FetchConstraintInfo(RI_ConstraintInfo * riinfo,
+ri_FetchConstraintInfo(RI_ConstraintInfo *riinfo,
 					   Trigger *trigger, Relation trig_rel, bool rel_is_pk)
 {
 	Oid			constraintOid = trigger->tgconstraint;
@@ -3486,7 +3486,7 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
  * ----------
  */
 static void
-ri_BuildQueryKeyPkCheck(RI_QueryKey *key, const RI_ConstraintInfo * riinfo,
+ri_BuildQueryKeyPkCheck(RI_QueryKey *key, const RI_ConstraintInfo *riinfo,
 						int32 constr_queryno)
 {
 	int			i;
@@ -3636,7 +3636,7 @@ ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan)
  */
 static bool
 ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
-			 const RI_ConstraintInfo * riinfo, bool rel_is_pk)
+			 const RI_ConstraintInfo *riinfo, bool rel_is_pk)
 {
 	TupleDesc	tupdesc = RelationGetDescr(rel);
 	const int16 *attnums;
@@ -3694,7 +3694,7 @@ ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
  */
 static bool
 ri_AllKeysUnequal(Relation rel, HeapTuple oldtup, HeapTuple newtup,
-				  const RI_ConstraintInfo * riinfo, bool rel_is_pk)
+				  const RI_ConstraintInfo *riinfo, bool rel_is_pk)
 {
 	TupleDesc	tupdesc = RelationGetDescr(rel);
 	const int16 *attnums;
@@ -3756,7 +3756,7 @@ ri_AllKeysUnequal(Relation rel, HeapTuple oldtup, HeapTuple newtup,
  */
 static bool
 ri_OneKeyEqual(Relation rel, int column, HeapTuple oldtup, HeapTuple newtup,
-			   const RI_ConstraintInfo * riinfo, bool rel_is_pk)
+			   const RI_ConstraintInfo *riinfo, bool rel_is_pk)
 {
 	TupleDesc	tupdesc = RelationGetDescr(rel);
 	const int16 *attnums;

@@ -40,7 +40,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/syncscan.c,v 1.2 2007/11/15 21:14:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/syncscan.c,v 1.3 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,21 +89,21 @@ typedef struct ss_scan_location_t
 {
 	RelFileNode relfilenode;	/* identity of a relation */
 	BlockNumber location;		/* last-reported location in the relation */
-}	ss_scan_location_t;
+} ss_scan_location_t;
 
 typedef struct ss_lru_item_t
 {
 	struct ss_lru_item_t *prev;
 	struct ss_lru_item_t *next;
 	ss_scan_location_t location;
-}	ss_lru_item_t;
+} ss_lru_item_t;
 
 typedef struct ss_scan_locations_t
 {
 	ss_lru_item_t *head;
 	ss_lru_item_t *tail;
 	ss_lru_item_t items[1];		/* SYNC_SCAN_NELEM items */
-}	ss_scan_locations_t;
+} ss_scan_locations_t;
 
 #define SizeOfScanLocations(N) offsetof(ss_scan_locations_t, items[N])
 

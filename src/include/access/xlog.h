@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.85 2007/11/15 21:14:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.86 2007/11/15 22:25:17 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -182,7 +182,7 @@ typedef struct CheckpointStatsData
 	int			ckpt_segs_added;	/* # of new xlog segments created */
 	int			ckpt_segs_removed;		/* # of xlog segments deleted */
 	int			ckpt_segs_recycled;		/* # of xlog segments recycled */
-}	CheckpointStatsData;
+} CheckpointStatsData;
 
 extern CheckpointStatsData CheckpointStats;
 

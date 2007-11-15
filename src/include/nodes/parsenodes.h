@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.355 2007/11/15 21:14:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.356 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,14 +34,14 @@ typedef enum SortByDir
 	SORTBY_ASC,
 	SORTBY_DESC,
 	SORTBY_USING				/* not allowed in CREATE INDEX ... */
-}	SortByDir;
+} SortByDir;
 
 typedef enum SortByNulls
 {
 	SORTBY_NULLS_DEFAULT,
 	SORTBY_NULLS_FIRST,
 	SORTBY_NULLS_LAST
-}	SortByNulls;
+} SortByNulls;
 
 
 /*
@@ -464,7 +464,7 @@ typedef struct XmlSerialize
 	XmlOptionType xmloption;
 	Node	   *expr;
 	TypeName   *typename;
-}	XmlSerialize;
+} XmlSerialize;
 
 
 /****************************************************************************
@@ -1065,7 +1065,7 @@ typedef enum
 	VAR_SET_MULTI,				/* special case for SET TRANSACTION ... */
 	VAR_RESET,					/* RESET var */
 	VAR_RESET_ALL				/* RESET ALL */
-}	VariableSetKind;
+} VariableSetKind;
 
 typedef struct VariableSetStmt
 {
@@ -1397,7 +1397,7 @@ typedef struct CreateOpFamilyStmt
 	NodeTag		type;
 	List	   *opfamilyname;	/* qualified name (list of Value strings) */
 	char	   *amname;			/* name of index AM opfamily is for */
-}	CreateOpFamilyStmt;
+} CreateOpFamilyStmt;
 
 /* ----------------------
  *		Alter Operator Family Statement
@@ -1410,7 +1410,7 @@ typedef struct AlterOpFamilyStmt
 	char	   *amname;			/* name of index AM opfamily is for */
 	bool		isDrop;			/* ADD or DROP the items? */
 	List	   *items;			/* List of CreateOpClassItem nodes */
-}	AlterOpFamilyStmt;
+} AlterOpFamilyStmt;
 
 /* ----------------------
  *		Drop Table|Sequence|View|Index|Type|Domain|Conversion|Schema Statement
@@ -1624,7 +1624,7 @@ typedef struct RemoveOpFamilyStmt
 	char	   *amname;			/* name of index AM opfamily is for */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 	bool		missing_ok;		/* skip error if missing? */
-}	RemoveOpFamilyStmt;
+} RemoveOpFamilyStmt;
 
 /* ----------------------
  *		Alter Object Rename Statement
@@ -1765,7 +1765,7 @@ typedef struct CreateEnumStmt
 	NodeTag		type;
 	List	   *typename;		/* qualified name (list of Value strings) */
 	List	   *vals;			/* enum values (list of Value strings) */
-}	CreateEnumStmt;
+} CreateEnumStmt;
 
 
 /* ----------------------
@@ -1892,13 +1892,13 @@ typedef enum DiscardMode
 	DISCARD_ALL,
 	DISCARD_PLANS,
 	DISCARD_TEMP
-}	DiscardMode;
+} DiscardMode;
 
 typedef struct DiscardStmt
 {
 	NodeTag		type;
 	DiscardMode target;
-}	DiscardStmt;
+} DiscardStmt;
 
 /* ----------------------
  *		LOCK Statement
@@ -2044,7 +2044,7 @@ typedef struct AlterTSDictionaryStmt
 	NodeTag		type;
 	List	   *dictname;		/* qualified name (list of Value strings) */
 	List	   *options;		/* List of DefElem nodes */
-}	AlterTSDictionaryStmt;
+} AlterTSDictionaryStmt;
 
 /*
  * TS Configuration stmts: DefineStmt, RenameStmt and DropStmt are default
@@ -2063,6 +2063,6 @@ typedef struct AlterTSConfigurationStmt
 	bool		override;		/* if true - remove old variant */
 	bool		replace;		/* if true - replace dictionary by another */
 	bool		missing_ok;		/* for DROP - skip error if missing? */
-}	AlterTSConfigurationStmt;
+} AlterTSConfigurationStmt;
 
 #endif   /* PARSENODES_H */

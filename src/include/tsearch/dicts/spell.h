@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.4 2007/11/15 21:14:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.5 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ typedef struct
 				compoundflag:4,
 				affix:19;
 	struct SPNode *node;
-}	SPNodeData;
+} SPNodeData;
 
 /*
  * Names of FF_ are correlated with Hunspell options in affix file
@@ -50,7 +50,7 @@ typedef struct SPNode
 {
 	uint32		length;
 	SPNodeData	data[1];
-}	SPNode;
+} SPNode;
 
 #define SPNHDRSZ	(offsetof(SPNode,data))
 
@@ -71,7 +71,7 @@ typedef struct spell_struct
 		}			d;
 	}			p;
 	char		word[1];		/* variable length, null-terminated */
-}	SPELL;
+} SPELL;
 
 #define SPELLHDRSZ	(offsetof(SPELL, word))
 
@@ -90,7 +90,7 @@ typedef struct aff_struct
 		regex_t		regex;
 		Regis		regis;
 	}			reg;
-}	AFFIX;
+} AFFIX;
 
 /*
  * affixes use dictionary flags too
@@ -114,14 +114,14 @@ typedef struct
 				naff:24;
 	AFFIX	  **aff;
 	struct AffixNode *node;
-}	AffixNodeData;
+} AffixNodeData;
 
 typedef struct AffixNode
 {
 	uint32		isvoid:1,
 				length:31;
 	AffixNodeData data[1];
-}	AffixNode;
+} AffixNode;
 
 #define ANHRDSZ		   (offsetof(AffixNode, data))
 
@@ -130,7 +130,7 @@ typedef struct
 	char	   *affix;
 	int			len;
 	bool		issuffix;
-}	CMPDAffix;
+} CMPDAffix;
 
 typedef struct
 {
@@ -158,12 +158,12 @@ typedef struct
 
 	unsigned char flagval[256];
 	bool		usecompound;
-}	IspellDict;
+} IspellDict;
 
-extern TSLexeme *NINormalizeWord(IspellDict * Conf, char *word);
-extern void NIImportAffixes(IspellDict * Conf, const char *filename);
-extern void NIImportDictionary(IspellDict * Conf, const char *filename);
-extern void NISortDictionary(IspellDict * Conf);
-extern void NISortAffixes(IspellDict * Conf);
+extern TSLexeme *NINormalizeWord(IspellDict *Conf, char *word);
+extern void NIImportAffixes(IspellDict *Conf, const char *filename);
+extern void NIImportDictionary(IspellDict *Conf, const char *filename);
+extern void NISortDictionary(IspellDict *Conf);
+extern void NISortAffixes(IspellDict *Conf);
 
 #endif

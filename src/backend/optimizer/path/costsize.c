@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.188 2007/11/15 21:14:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.189 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,12 +112,12 @@ typedef struct
 {
 	PlannerInfo *root;
 	QualCost	total;
-}	cost_qual_eval_context;
+} cost_qual_eval_context;
 
 static MergeScanSelCache *cached_scansel(PlannerInfo *root,
 			   RestrictInfo *rinfo,
-			   PathKey * pathkey);
-static bool cost_qual_eval_walker(Node *node, cost_qual_eval_context * context);
+			   PathKey *pathkey);
+static bool cost_qual_eval_walker(Node *node, cost_qual_eval_context *context);
 static Selectivity approx_selectivity(PlannerInfo *root, List *quals,
 				   JoinType jointype);
 static Selectivity join_in_selectivity(JoinPath *path, PlannerInfo *root);
@@ -1593,7 +1593,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
  * run mergejoinscansel() with caching
  */
 static MergeScanSelCache *
-cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey * pathkey)
+cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 {
 	MergeScanSelCache *cache;
 	ListCell   *lc;
@@ -1891,7 +1891,7 @@ cost_qual_eval_node(QualCost *cost, Node *qual, PlannerInfo *root)
 }
 
 static bool
-cost_qual_eval_walker(Node *node, cost_qual_eval_context * context)
+cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 {
 	if (node == NULL)
 		return false;

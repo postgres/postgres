@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.100 2007/11/15 21:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.101 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ typedef struct
 	List	   *searchPath;		/* the desired search path */
 	Oid			creationNamespace;		/* the desired creation namespace */
 	int			nestLevel;		/* subtransaction nesting level */
-}	OverrideStackEntry;
+} OverrideStackEntry;
 
 static List *overrideStack = NIL;
 
@@ -2266,7 +2266,7 @@ GetOverrideSearchPath(MemoryContext context)
  * search_path variable is ignored while an override is active.
  */
 void
-PushOverrideSearchPath(OverrideSearchPath * newpath)
+PushOverrideSearchPath(OverrideSearchPath *newpath)
 {
 	OverrideStackEntry *entry;
 	List	   *oidlist;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.10 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.11 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ cnt_length(TSVector t)
 }
 
 static int
-WordECompareQueryItem(char *eval, char *qval, WordEntry * ptr, QueryOperand * item)
+WordECompareQueryItem(char *eval, char *qval, WordEntry *ptr, QueryOperand *item)
 {
 	if (ptr->len == item->length)
 		return strncmp(
@@ -88,7 +88,7 @@ WordECompareQueryItem(char *eval, char *qval, WordEntry * ptr, QueryOperand * it
  * is the TSQuery containing 'item'. Returns NULL if not found.
  */
 static WordEntry *
-find_wordentry(TSVector t, TSQuery q, QueryOperand * item)
+find_wordentry(TSVector t, TSQuery q, QueryOperand *item)
 {
 	WordEntry  *StopLow = ARRPTR(t);
 	WordEntry  *StopHigh = (WordEntry *) STRPTR(t);
@@ -469,7 +469,7 @@ typedef struct
 	int16		nitem;
 	uint8		wclass;
 	int32		pos;
-}	DocRepresentation;
+} DocRepresentation;
 
 static int
 compareDocR(const void *va, const void *vb)
@@ -486,13 +486,13 @@ typedef struct
 {
 	TSQuery		query;
 	bool	   *operandexist;
-}	QueryRepresentation;
+} QueryRepresentation;
 
 #define QR_GET_OPERAND_EXISTS(q, v)		( (q)->operandexist[ ((QueryItem*)(v)) - GETQUERY((q)->query) ] )
 #define QR_SET_OPERAND_EXISTS(q, v)  QR_GET_OPERAND_EXISTS(q,v) = true
 
 static bool
-checkcondition_QueryOperand(void *checkval, QueryOperand * val)
+checkcondition_QueryOperand(void *checkval, QueryOperand *val)
 {
 	QueryRepresentation *qr = (QueryRepresentation *) checkval;
 
@@ -506,11 +506,11 @@ typedef struct
 	int			q;
 	DocRepresentation *begin;
 	DocRepresentation *end;
-}	Extention;
+} Extention;
 
 
 static bool
-Cover(DocRepresentation * doc, int len, QueryRepresentation * qr, Extention * ext)
+Cover(DocRepresentation *doc, int len, QueryRepresentation *qr, Extention *ext)
 {
 	DocRepresentation *ptr;
 	int			lastpos = ext->pos;
@@ -591,7 +591,7 @@ Cover(DocRepresentation * doc, int len, QueryRepresentation * qr, Extention * ex
 }
 
 static DocRepresentation *
-get_docrep(TSVector txt, QueryRepresentation * qr, int *doclen)
+get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 {
 	QueryItem  *item = GETQUERY(qr->query);
 	WordEntry  *entry;

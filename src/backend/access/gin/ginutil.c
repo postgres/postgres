@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.11 2007/11/15 21:14:31 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.12 2007/11/15 22:25:14 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -133,10 +133,10 @@ typedef struct
 {
 	FmgrInfo   *cmpDatumFunc;
 	bool	   *needUnique;
-}	cmpEntriesData;
+} cmpEntriesData;
 
 static int
-cmpEntries(const Datum *a, const Datum *b, cmpEntriesData * arg)
+cmpEntries(const Datum *a, const Datum *b, cmpEntriesData *arg)
 {
 	int			res = DatumGetInt32(FunctionCall2(arg->cmpDatumFunc,
 												  *a, *b));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.132 2007/11/15 21:49:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.133 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ typedef struct
 {
 	RelFileNode rnode;			/* the targeted relation */
 	BlockNumber segno;			/* which segment */
-}	PendingOperationTag;
+} PendingOperationTag;
 
 typedef uint16 CycleCtr;		/* can be any convenient integer size */
 
@@ -140,7 +140,7 @@ typedef struct
 {
 	RelFileNode rnode;			/* the dead relation to delete */
 	CycleCtr	cycle_ctr;		/* mdckpt_cycle_ctr when request was made */
-}	PendingUnlinkEntry;
+} PendingUnlinkEntry;
 
 static HTAB *pendingOpsTable = NULL;
 static List *pendingUnlinks = NIL;
@@ -154,7 +154,7 @@ typedef enum					/* behavior for mdopen & _mdfd_getseg */
 	EXTENSION_FAIL,				/* ereport if segment not present */
 	EXTENSION_RETURN_NULL,		/* return NULL if not present */
 	EXTENSION_CREATE			/* create new segments as needed */
-}	ExtensionBehavior;
+} ExtensionBehavior;
 
 /* local routines */
 static MdfdVec *mdopen(SMgrRelation reln, ExtensionBehavior behavior);
@@ -318,12 +318,12 @@ mdunlink(RelFileNode rnode, bool isRedo)
 	else
 	{
 		/* truncate(2) would be easier here, but Windows hasn't got it */
-		int		fd;
+		int			fd;
 
 		fd = BasicOpenFile(path, O_RDWR | PG_BINARY, 0);
 		if (fd >= 0)
 		{
-			int		save_errno;
+			int			save_errno;
 
 			ret = ftruncate(fd, 0);
 			save_errno = errno;

@@ -14,7 +14,7 @@
  *	Author: Jan Wieck, Afilias USA INC.
  *	64-bit txids: Marko Kreen, Skype Technologies
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/txid.c,v 1.2 2007/11/15 21:14:39 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/txid.c,v 1.3 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ typedef struct
 	txid		xmin;
 	txid		xmax;
 	txid		xip[1];			/* in-progress txids, xmin <= xip[i] < xmax */
-}	TxidSnapshot;
+} TxidSnapshot;
 
 #define TXID_SNAPSHOT_SIZE(nxip) \
 	(offsetof(TxidSnapshot, xip) + sizeof(txid) * (nxip))
@@ -77,14 +77,14 @@ typedef struct
 {
 	TransactionId last_xid;
 	uint32		epoch;
-}	TxidEpoch;
+} TxidEpoch;
 
 
 /*
  * Fetch epoch data from xact.c.
  */
 static void
-load_xid_epoch(TxidEpoch * state)
+load_xid_epoch(TxidEpoch *state)
 {
 	GetNextXidAndEpoch(&state->last_xid, &state->epoch);
 }
@@ -93,7 +93,7 @@ load_xid_epoch(TxidEpoch * state)
  * do a TransactionId -> txid conversion for an XID near the given epoch
  */
 static txid
-convert_xid(TransactionId xid, const TxidEpoch * state)
+convert_xid(TransactionId xid, const TxidEpoch *state)
 {
 #ifndef INT64_IS_BUSTED
 	uint64		epoch;
@@ -141,7 +141,7 @@ cmp_txid(const void *aa, const void *bb)
  * will not be used.
  */
 static void
-sort_snapshot(TxidSnapshot * snap)
+sort_snapshot(TxidSnapshot *snap)
 {
 	if (snap->nxip > 1)
 		qsort(snap->xip, snap->nxip, sizeof(txid), cmp_txid);
@@ -151,7 +151,7 @@ sort_snapshot(TxidSnapshot * snap)
  * check txid visibility.
  */
 static bool
-is_visible_txid(txid value, const TxidSnapshot * snap)
+is_visible_txid(txid value, const TxidSnapshot *snap)
 {
 	if (value < snap->xmin)
 		return true;

@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.68 2007/11/15 21:14:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.69 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ typedef struct avl_dbase
 	Oid			adl_datid;		/* hash key -- must be first */
 	TimestampTz adl_next_worker;
 	int			adl_score;
-}	avl_dbase;
+} avl_dbase;
 
 /* struct to keep track of databases in worker */
 typedef struct avw_dbase
@@ -153,14 +153,14 @@ typedef struct avw_dbase
 	char	   *adw_name;
 	TransactionId adw_frozenxid;
 	PgStat_StatDBEntry *adw_entry;
-}	avw_dbase;
+} avw_dbase;
 
 /* struct to keep track of tables to vacuum and/or analyze, in 1st pass */
 typedef struct av_relation
 {
 	Oid			ar_relid;
 	Oid			ar_toastrelid;
-}	av_relation;
+} av_relation;
 
 /* struct to keep track of tables to vacuum and/or analyze, after rechecking */
 typedef struct autovac_table
@@ -202,7 +202,7 @@ typedef struct WorkerInfoData
 	int			wi_cost_delay;
 	int			wi_cost_limit;
 	int			wi_cost_limit_base;
-}	WorkerInfoData;
+} WorkerInfoData;
 
 typedef struct WorkerInfoData *WorkerInfo;
 
@@ -240,7 +240,7 @@ typedef struct
 	SHMEM_OFFSET av_freeWorkers;
 	SHM_QUEUE	av_runningWorkers;
 	SHMEM_OFFSET av_startingWorker;
-}	AutoVacuumShmemStruct;
+} AutoVacuumShmemStruct;
 
 static AutoVacuumShmemStruct *AutoVacuumShmem;
 
@@ -2392,8 +2392,8 @@ table_recheck_autovac(Oid relid)
 		int			vac_cost_delay;
 
 		/*
-		 * Calculate the vacuum cost parameters and the minimum freeze age.
-		 * If there is a tuple in pg_autovacuum, use it; else, use the GUC
+		 * Calculate the vacuum cost parameters and the minimum freeze age. If
+		 * there is a tuple in pg_autovacuum, use it; else, use the GUC
 		 * defaults.  Note that the fields may contain "-1" (or indeed any
 		 * negative value), which means use the GUC defaults for each setting.
 		 * In cost_limit, the value 0 also means to use the value from

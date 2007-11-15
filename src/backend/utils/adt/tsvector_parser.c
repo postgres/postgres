@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_parser.c,v 1.3 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_parser.c,v 1.4 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ prssyntaxerror(TSVectorParseState state)
 bool
 gettoken_tsvector(TSVectorParseState state,
 				  char **strval, int *lenval,
-				  WordEntryPos ** pos_ptr, int *poslen,
+				  WordEntryPos **pos_ptr, int *poslen,
 				  char **endptr)
 {
 	int			oldstate = 0;

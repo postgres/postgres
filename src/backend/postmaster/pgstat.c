@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.167 2007/11/15 21:14:37 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.168 2007/11/15 22:25:16 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -134,7 +134,7 @@ typedef struct TabStatusArray
 	struct TabStatusArray *tsa_next;	/* link to next array, if any */
 	int			tsa_used;		/* # entries currently used */
 	PgStat_TableStatus tsa_entries[TABSTAT_QUANTUM];	/* per-table data */
-}	TabStatusArray;
+} TabStatusArray;
 
 static TabStatusArray *pgStatTabList = NULL;
 
@@ -150,7 +150,7 @@ typedef struct PgStat_SubXactStatus
 	int			nest_level;		/* subtransaction nest level */
 	struct PgStat_SubXactStatus *prev;	/* higher-level subxact if any */
 	PgStat_TableXactStatus *first;		/* head of list for this subxact */
-}	PgStat_SubXactStatus;
+} PgStat_SubXactStatus;
 
 static PgStat_SubXactStatus *pgStatXactStack = NULL;
 
@@ -164,7 +164,7 @@ typedef struct TwoPhasePgStatRecord
 	PgStat_Counter tuples_deleted;		/* tuples deleted in xact */
 	Oid			t_id;			/* table's OID */
 	bool		t_shared;		/* is it a shared catalog? */
-}	TwoPhasePgStatRecord;
+} TwoPhasePgStatRecord;
 
 /*
  * Info about current "snapshot" of stats file
@@ -221,7 +221,7 @@ static void pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len);
 static void pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len);
 static void pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len);
 static void pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len);
-static void pgstat_recv_bgwriter(PgStat_MsgBgWriter * msg, int len);
+static void pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len);
 
 
 /* ------------------------------------------------------------
@@ -1203,7 +1203,7 @@ get_tabstat_stack_level(int nest_level)
  * add_tabstat_xact_level - add a new (sub)transaction state record
  */
 static void
-add_tabstat_xact_level(PgStat_TableStatus * pgstat_info, int nest_level)
+add_tabstat_xact_level(PgStat_TableStatus *pgstat_info, int nest_level)
 {
 	PgStat_SubXactStatus *xact_state;
 	PgStat_TableXactStatus *trans;
@@ -2365,7 +2365,7 @@ PgstatCollectorMain(int argc, char *argv[])
 					break;
 
 				case PGSTAT_MTYPE_BGWRITER:
-					pgstat_recv_bgwriter((PgStat_MsgBgWriter *) & msg, len);
+					pgstat_recv_bgwriter((PgStat_MsgBgWriter *) &msg, len);
 					break;
 
 				default:
@@ -3160,7 +3160,7 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
  * ----------
  */
 static void
-pgstat_recv_bgwriter(PgStat_MsgBgWriter * msg, int len)
+pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 {
 	globalStats.timed_checkpoints += msg->m_timed_checkpoints;
 	globalStats.requested_checkpoints += msg->m_requested_checkpoints;

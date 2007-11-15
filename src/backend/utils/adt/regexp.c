@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.76 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.77 2007/11/15 22:25:16 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -48,7 +48,7 @@ typedef struct pg_re_flags
 {
 	int			cflags;			/* compile flags for Spencer's regex code */
 	bool		glob;			/* do it globally (for each occurrence) */
-}	pg_re_flags;
+} pg_re_flags;
 
 /* cross-call state for regexp_matches(), also regexp_split() */
 typedef struct regexp_matches_ctx
@@ -63,7 +63,7 @@ typedef struct regexp_matches_ctx
 	/* workspace for build_regexp_matches_result() */
 	Datum	   *elems;			/* has npatterns elements */
 	bool	   *nulls;			/* has npatterns elements */
-}	regexp_matches_ctx;
+} regexp_matches_ctx;
 
 /*
  * We cache precompiled regular expressions using a "self organizing list"
@@ -113,9 +113,9 @@ static regexp_matches_ctx *setup_regexp_matches(text *orig_str, text *pattern,
 					 bool force_glob,
 					 bool use_subpatterns,
 					 bool ignore_degenerate);
-static void cleanup_regexp_matches(regexp_matches_ctx * matchctx);
-static ArrayType *build_regexp_matches_result(regexp_matches_ctx * matchctx);
-static Datum build_regexp_split_result(regexp_matches_ctx * splitctx);
+static void cleanup_regexp_matches(regexp_matches_ctx *matchctx);
+static ArrayType *build_regexp_matches_result(regexp_matches_ctx *matchctx);
+static Datum build_regexp_split_result(regexp_matches_ctx *splitctx);
 
 
 /*
@@ -345,7 +345,7 @@ RE_compile_and_execute(text *text_re, char *dat, int dat_len,
  * don't want some have to reject them after the fact.
  */
 static void
-parse_re_flags(pg_re_flags * flags, text *opts)
+parse_re_flags(pg_re_flags *flags, text *opts)
 {
 	/* regex_flavor is always folded into the compile flags */
 	flags->cflags = regex_flavor;
@@ -981,7 +981,7 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
  * cleanup_regexp_matches - release memory of a regexp_matches_ctx
  */
 static void
-cleanup_regexp_matches(regexp_matches_ctx * matchctx)
+cleanup_regexp_matches(regexp_matches_ctx *matchctx)
 {
 	pfree(matchctx->orig_str);
 	pfree(matchctx->match_locs);
@@ -996,7 +996,7 @@ cleanup_regexp_matches(regexp_matches_ctx * matchctx)
  * build_regexp_matches_result - build output array for current match
  */
 static ArrayType *
-build_regexp_matches_result(regexp_matches_ctx * matchctx)
+build_regexp_matches_result(regexp_matches_ctx *matchctx)
 {
 	Datum	   *elems = matchctx->elems;
 	bool	   *nulls = matchctx->nulls;
@@ -1136,7 +1136,7 @@ regexp_split_to_array_no_flags(PG_FUNCTION_ARGS)
  * or the string after the last match when next_match == nmatches.
  */
 static Datum
-build_regexp_split_result(regexp_matches_ctx * splitctx)
+build_regexp_split_result(regexp_matches_ctx *splitctx)
 {
 	int			startpos;
 	int			endpos;

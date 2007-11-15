@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.224 2007/11/15 21:14:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.225 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,10 +56,10 @@ static Node *transformArrayExpr(ParseState *pstate, ArrayExpr *a);
 static Node *transformRowExpr(ParseState *pstate, RowExpr *r);
 static Node *transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c);
 static Node *transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m);
-static Node *transformXmlExpr(ParseState *pstate, XmlExpr * x);
-static Node *transformXmlSerialize(ParseState *pstate, XmlSerialize * xs);
+static Node *transformXmlExpr(ParseState *pstate, XmlExpr *x);
+static Node *transformXmlSerialize(ParseState *pstate, XmlSerialize *xs);
 static Node *transformBooleanTest(ParseState *pstate, BooleanTest *b);
-static Node *transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr * cexpr);
+static Node *transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformWholeRowRef(ParseState *pstate, char *schemaname,
 					 char *relname, int location);
@@ -1411,7 +1411,7 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 }
 
 static Node *
-transformXmlExpr(ParseState *pstate, XmlExpr * x)
+transformXmlExpr(ParseState *pstate, XmlExpr *x)
 {
 	XmlExpr    *newx = makeNode(XmlExpr);
 	ListCell   *lc;
@@ -1537,7 +1537,7 @@ transformXmlExpr(ParseState *pstate, XmlExpr * x)
 }
 
 static Node *
-transformXmlSerialize(ParseState *pstate, XmlSerialize * xs)
+transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 {
 	Oid			targetType;
 	int32		targetTypmod;
@@ -1608,7 +1608,7 @@ transformBooleanTest(ParseState *pstate, BooleanTest *b)
 }
 
 static Node *
-transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr * cexpr)
+transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 {
 	int			sublevels_up;
 

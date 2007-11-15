@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.6 2007/11/15 21:14:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.7 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,9 +46,9 @@
 #include "utils/syscache.h"
 
 
-static void MakeConfigurationMapping(AlterTSConfigurationStmt * stmt,
+static void MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 						 HeapTuple tup, Relation relMap);
-static void DropConfigurationMapping(AlterTSConfigurationStmt * stmt,
+static void DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
 						 HeapTuple tup, Relation relMap);
 
 
@@ -691,7 +691,7 @@ RemoveTSDictionaryById(Oid dictId)
  * ALTER TEXT SEARCH DICTIONARY
  */
 void
-AlterTSDictionary(AlterTSDictionaryStmt * stmt)
+AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 {
 	HeapTuple	tup,
 				newtup;
@@ -1632,7 +1632,7 @@ AlterTSConfigurationOwner(List *name, Oid newOwnerId)
  * ALTER TEXT SEARCH CONFIGURATION - main entry point
  */
 void
-AlterTSConfiguration(AlterTSConfigurationStmt * stmt)
+AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 {
 	HeapTuple	tup;
 	Relation	relMap;
@@ -1726,7 +1726,7 @@ getTokenTypes(Oid prsId, List *tokennames)
  * ALTER TEXT SEARCH CONFIGURATION ADD/ALTER MAPPING
  */
 static void
-MakeConfigurationMapping(AlterTSConfigurationStmt * stmt,
+MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 						 HeapTuple tup, Relation relMap)
 {
 	Oid			cfgId = HeapTupleGetOid(tup);
@@ -1888,7 +1888,7 @@ MakeConfigurationMapping(AlterTSConfigurationStmt * stmt,
  * ALTER TEXT SEARCH CONFIGURATION DROP MAPPING
  */
 static void
-DropConfigurationMapping(AlterTSConfigurationStmt * stmt,
+DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
 						 HeapTuple tup, Relation relMap)
 {
 	Oid			cfgId = HeapTupleGetOid(tup);
@@ -2031,7 +2031,7 @@ deserialize_deflist(Datum txt)
 		CS_INSQVALUE,
 		CS_INDQVALUE,
 		CS_INWVALUE
-	}			ds_state;
+	} ds_state;
 	ds_state	state = CS_WAITKEY;
 
 	workspace = (char *) palloc(len + 1);		/* certainly enough room */

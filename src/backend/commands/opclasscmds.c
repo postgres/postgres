@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.56 2007/11/15 21:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.57 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ typedef struct
 	Oid			lefttype;		/* lefttype */
 	Oid			righttype;		/* righttype */
 	bool		recheck;		/* oper recheck flag (unused for proc) */
-}	OpFamilyMember;
+} OpFamilyMember;
 
 
 static void AlterOpFamilyAdd(List *opfamilyname, Oid amoid, Oid opfamilyoid,
@@ -62,9 +62,9 @@ static void AlterOpFamilyDrop(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 				  int maxOpNumber, int maxProcNumber,
 				  List *items);
 static void processTypesSpec(List *args, Oid *lefttype, Oid *righttype);
-static void assignOperTypes(OpFamilyMember * member, Oid amoid, Oid typeoid);
-static void assignProcTypes(OpFamilyMember * member, Oid amoid, Oid typeoid);
-static void addFamilyMember(List **list, OpFamilyMember * member, bool isProc);
+static void assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid);
+static void assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid);
+static void addFamilyMember(List **list, OpFamilyMember *member, bool isProc);
 static void storeOperators(List *opfamilyname, Oid amoid,
 			   Oid opfamilyoid, Oid opclassoid,
 			   List *operators, bool isAdd);
@@ -646,7 +646,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
  *		Define a new index operator family.
  */
 void
-DefineOpFamily(CreateOpFamilyStmt * stmt)
+DefineOpFamily(CreateOpFamilyStmt *stmt)
 {
 	char	   *opfname;		/* name of opfamily we're creating */
 	Oid			amoid,			/* our AM's oid */
@@ -765,7 +765,7 @@ DefineOpFamily(CreateOpFamilyStmt * stmt)
  * different code paths.
  */
 void
-AlterOpFamily(AlterOpFamilyStmt * stmt)
+AlterOpFamily(AlterOpFamilyStmt *stmt)
 {
 	Oid			amoid,			/* our AM's oid */
 				opfamilyoid;	/* oid of opfamily */
@@ -1059,7 +1059,7 @@ processTypesSpec(List *args, Oid *lefttype, Oid *righttype)
  * and do any validity checking we can manage.
  */
 static void
-assignOperTypes(OpFamilyMember * member, Oid amoid, Oid typeoid)
+assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 {
 	Operator	optup;
 	Form_pg_operator opform;
@@ -1100,7 +1100,7 @@ assignOperTypes(OpFamilyMember * member, Oid amoid, Oid typeoid)
  * and do any validity checking we can manage.
  */
 static void
-assignProcTypes(OpFamilyMember * member, Oid amoid, Oid typeoid)
+assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 {
 	HeapTuple	proctup;
 	Form_pg_proc procform;
@@ -1181,7 +1181,7 @@ assignProcTypes(OpFamilyMember * member, Oid amoid, Oid typeoid)
  * duplicated strategy or proc number.
  */
 static void
-addFamilyMember(List **list, OpFamilyMember * member, bool isProc)
+addFamilyMember(List **list, OpFamilyMember *member, bool isProc)
 {
 	ListCell   *l;
 
@@ -1562,7 +1562,7 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
  *		Deletes an opfamily.
  */
 void
-RemoveOpFamily(RemoveOpFamilyStmt * stmt)
+RemoveOpFamily(RemoveOpFamilyStmt *stmt)
 {
 	Oid			amID,
 				opfID;

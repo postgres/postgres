@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.6 2007/11/15 21:14:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.7 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ cmpaffix(const void *s1, const void *s2)
 }
 
 static void
-NIAddSpell(IspellDict * Conf, const char *word, const char *flag)
+NIAddSpell(IspellDict *Conf, const char *word, const char *flag)
 {
 	if (Conf->nspell >= Conf->mspell)
 	{
@@ -192,7 +192,7 @@ NIAddSpell(IspellDict * Conf, const char *word, const char *flag)
  * Note caller must already have applied get_tsearch_config_filename
  */
 void
-NIImportDictionary(IspellDict * Conf, const char *filename)
+NIImportDictionary(IspellDict *Conf, const char *filename)
 {
 	FILE	   *dict;
 	char	   *line;
@@ -255,7 +255,7 @@ NIImportDictionary(IspellDict * Conf, const char *filename)
 
 
 static int
-FindWord(IspellDict * Conf, const char *word, int affixflag, int flag)
+FindWord(IspellDict *Conf, const char *word, int affixflag, int flag)
 {
 	SPNode	   *node = Conf->Dictionary;
 	SPNodeData *StopLow,
@@ -303,7 +303,7 @@ FindWord(IspellDict * Conf, const char *word, int affixflag, int flag)
 }
 
 static void
-NIAddAffix(IspellDict * Conf, int flag, char flagflags, const char *mask, const char *find, const char *repl, int type)
+NIAddAffix(IspellDict *Conf, int flag, char flagflags, const char *mask, const char *find, const char *repl, int type)
 {
 	AFFIX	   *Affix;
 
@@ -512,7 +512,7 @@ parse_affentry(char *str, char *mask, char *find, char *repl,
 }
 
 static void
-addFlagValue(IspellDict * Conf, char *s, uint32 val,
+addFlagValue(IspellDict *Conf, char *s, uint32 val,
 			 const char *filename, int lineno)
 {
 	while (*s && t_isspace(s))
@@ -535,7 +535,7 @@ addFlagValue(IspellDict * Conf, char *s, uint32 val,
 }
 
 static void
-NIImportOOAffixes(IspellDict * Conf, const char *filename)
+NIImportOOAffixes(IspellDict *Conf, const char *filename)
 {
 	char		type[BUFSIZ],
 			   *ptype = NULL;
@@ -702,7 +702,7 @@ nextline:
  * Note caller must already have applied get_tsearch_config_filename
  */
 void
-NIImportAffixes(IspellDict * Conf, const char *filename)
+NIImportAffixes(IspellDict *Conf, const char *filename)
 {
 	char	   *pstr = NULL;
 	char		mask[BUFSIZ];
@@ -842,7 +842,7 @@ nextline:
 }
 
 static int
-MergeAffix(IspellDict * Conf, int a1, int a2)
+MergeAffix(IspellDict *Conf, int a1, int a2)
 {
 	char	  **ptr;
 
@@ -865,7 +865,7 @@ MergeAffix(IspellDict * Conf, int a1, int a2)
 }
 
 static uint32
-makeCompoundFlags(IspellDict * Conf, int affix)
+makeCompoundFlags(IspellDict *Conf, int affix)
 {
 	uint32		flag = 0;
 	char	   *str = Conf->AffixData[affix];
@@ -880,7 +880,7 @@ makeCompoundFlags(IspellDict * Conf, int affix)
 }
 
 static SPNode *
-mkSPNode(IspellDict * Conf, int low, int high, int level)
+mkSPNode(IspellDict *Conf, int low, int high, int level)
 {
 	int			i;
 	int			nchar = 0;
@@ -960,7 +960,7 @@ mkSPNode(IspellDict * Conf, int low, int high, int level)
  * and affixes.
  */
 void
-NISortDictionary(IspellDict * Conf)
+NISortDictionary(IspellDict *Conf)
 {
 	int			i;
 	int			naffix = 0;
@@ -1011,7 +1011,7 @@ NISortDictionary(IspellDict * Conf)
 }
 
 static AffixNode *
-mkANode(IspellDict * Conf, int low, int high, int level, int type)
+mkANode(IspellDict *Conf, int low, int high, int level, int type)
 {
 	int			i;
 	int			nchar = 0;
@@ -1082,7 +1082,7 @@ mkANode(IspellDict * Conf, int low, int high, int level, int type)
 }
 
 static void
-mkVoidAffix(IspellDict * Conf, bool issuffix, int startsuffix)
+mkVoidAffix(IspellDict *Conf, bool issuffix, int startsuffix)
 {
 	int			i,
 				cnt = 0;
@@ -1125,7 +1125,7 @@ mkVoidAffix(IspellDict * Conf, bool issuffix, int startsuffix)
 }
 
 static bool
-isAffixInUse(IspellDict * Conf, char flag)
+isAffixInUse(IspellDict *Conf, char flag)
 {
 	int			i;
 
@@ -1137,7 +1137,7 @@ isAffixInUse(IspellDict * Conf, char flag)
 }
 
 void
-NISortAffixes(IspellDict * Conf)
+NISortAffixes(IspellDict *Conf)
 {
 	AFFIX	   *Affix;
 	size_t		i;
@@ -1187,12 +1187,12 @@ NISortAffixes(IspellDict * Conf)
 }
 
 static AffixNodeData *
-FindAffixes(AffixNode * node, const char *word, int wrdlen, int *level, int type)
+FindAffixes(AffixNode *node, const char *word, int wrdlen, int *level, int type)
 {
 	AffixNodeData *StopLow,
 			   *StopHigh,
 			   *StopMiddle;
-	uint8		symbol;
+	uint8 symbol;
 
 	if (node->isvoid)
 	{							/* search void affixes */
@@ -1209,6 +1209,7 @@ FindAffixes(AffixNode * node, const char *word, int wrdlen, int *level, int type
 		{
 			StopMiddle = StopLow + ((StopHigh - StopLow) >> 1);
 			symbol = GETWCHAR(word, wrdlen, *level, type);
+
 			if (StopMiddle->val == symbol)
 			{
 				(*level)++;
@@ -1229,7 +1230,7 @@ FindAffixes(AffixNode * node, const char *word, int wrdlen, int *level, int type
 }
 
 static char *
-CheckAffix(const char *word, size_t len, AFFIX * Affix, int flagflags, char *newword, int *baselen)
+CheckAffix(const char *word, size_t len, AFFIX *Affix, int flagflags, char *newword, int *baselen)
 {
 	/*
 	 * Check compound allow flags
@@ -1335,7 +1336,7 @@ addToResult(char **forms, char **cur, char *word)
 }
 
 static char **
-NormalizeSubWord(IspellDict * Conf, char *word, int flag)
+NormalizeSubWord(IspellDict *Conf, char *word, int flag)
 {
 	AffixNodeData *suffix = NULL,
 			   *prefix = NULL;
@@ -1449,10 +1450,10 @@ typedef struct SplitVar
 	int			nstem;
 	char	  **stem;
 	struct SplitVar *next;
-}	SplitVar;
+} SplitVar;
 
 static int
-CheckCompoundAffixes(CMPDAffix ** ptr, char *word, int len, bool CheckInPlace)
+CheckCompoundAffixes(CMPDAffix **ptr, char *word, int len, bool CheckInPlace)
 {
 	bool		issuffix;
 
@@ -1490,7 +1491,7 @@ CheckCompoundAffixes(CMPDAffix ** ptr, char *word, int len, bool CheckInPlace)
 }
 
 static SplitVar *
-CopyVar(SplitVar * s, int makedup)
+CopyVar(SplitVar *s, int makedup)
 {
 	SplitVar   *v = (SplitVar *) palloc(sizeof(SplitVar));
 
@@ -1511,7 +1512,7 @@ CopyVar(SplitVar * s, int makedup)
 
 
 static SplitVar *
-SplitToVariants(IspellDict * Conf, SPNode * snode, SplitVar * orig, char *word, int wordlen, int startpos, int minpos)
+SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int wordlen, int startpos, int minpos)
 {
 	SplitVar   *var = NULL;
 	SPNodeData *StopLow,
@@ -1660,7 +1661,7 @@ SplitToVariants(IspellDict * Conf, SPNode * snode, SplitVar * orig, char *word, 
 }
 
 TSLexeme *
-NINormalizeWord(IspellDict * Conf, char *word)
+NINormalizeWord(IspellDict *Conf, char *word)
 {
 	char	  **res;
 	TSLexeme   *lcur = NULL,

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.138 2007/11/15 21:14:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.139 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ typedef struct
 {
 	PlannerGlobal *glob;
 	int			rtoffset;
-}	fix_scan_expr_context;
+} fix_scan_expr_context;
 
 typedef struct
 {
@@ -54,29 +54,29 @@ typedef struct
 	indexed_tlist *inner_itlist;
 	Index		acceptable_rel;
 	int			rtoffset;
-}	fix_join_expr_context;
+} fix_join_expr_context;
 
 typedef struct
 {
 	PlannerGlobal *glob;
 	indexed_tlist *subplan_itlist;
 	int			rtoffset;
-}	fix_upper_expr_context;
+} fix_upper_expr_context;
 
 #define fix_scan_list(glob, lst, rtoffset) \
 	((List *) fix_scan_expr(glob, (Node *) (lst), rtoffset))
 
-static Plan *set_plan_refs(PlannerGlobal * glob, Plan *plan, int rtoffset);
-static Plan *set_subqueryscan_references(PlannerGlobal * glob,
+static Plan *set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset);
+static Plan *set_subqueryscan_references(PlannerGlobal *glob,
 							SubqueryScan *plan,
 							int rtoffset);
 static bool trivial_subqueryscan(SubqueryScan *plan);
-static Node *fix_scan_expr(PlannerGlobal * glob, Node *node, int rtoffset);
-static Node *fix_scan_expr_mutator(Node *node, fix_scan_expr_context * context);
-static void set_join_references(PlannerGlobal * glob, Join *join, int rtoffset);
-static void set_inner_join_references(PlannerGlobal * glob, Plan *inner_plan,
+static Node *fix_scan_expr(PlannerGlobal *glob, Node *node, int rtoffset);
+static Node *fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context);
+static void set_join_references(PlannerGlobal *glob, Join *join, int rtoffset);
+static void set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 						  indexed_tlist *outer_itlist);
-static void set_upper_references(PlannerGlobal * glob, Plan *plan, int rtoffset);
+static void set_upper_references(PlannerGlobal *glob, Plan *plan, int rtoffset);
 static void set_dummy_tlist_references(Plan *plan, int rtoffset);
 static indexed_tlist *build_tlist_index(List *tlist);
 static Var *search_indexed_tlist_for_var(Var *var,
@@ -86,19 +86,19 @@ static Var *search_indexed_tlist_for_var(Var *var,
 static Var *search_indexed_tlist_for_non_var(Node *node,
 								 indexed_tlist *itlist,
 								 Index newvarno);
-static List *fix_join_expr(PlannerGlobal * glob,
+static List *fix_join_expr(PlannerGlobal *glob,
 			  List *clauses,
 			  indexed_tlist *outer_itlist,
 			  indexed_tlist *inner_itlist,
 			  Index acceptable_rel, int rtoffset);
 static Node *fix_join_expr_mutator(Node *node,
-					  fix_join_expr_context * context);
-static Node *fix_upper_expr(PlannerGlobal * glob,
+					  fix_join_expr_context *context);
+static Node *fix_upper_expr(PlannerGlobal *glob,
 			   Node *node,
 			   indexed_tlist *subplan_itlist,
 			   int rtoffset);
 static Node *fix_upper_expr_mutator(Node *node,
-					   fix_upper_expr_context * context);
+					   fix_upper_expr_context *context);
 static bool fix_opfuncids_walker(Node *node, void *context);
 
 
@@ -160,7 +160,7 @@ static bool fix_opfuncids_walker(Node *node, void *context);
  * it's not so safe to assume that for expression tree nodes.
  */
 Plan *
-set_plan_references(PlannerGlobal * glob, Plan *plan, List *rtable)
+set_plan_references(PlannerGlobal *glob, Plan *plan, List *rtable)
 {
 	int			rtoffset = list_length(glob->finalrtable);
 	ListCell   *lc;
@@ -215,7 +215,7 @@ set_plan_references(PlannerGlobal * glob, Plan *plan, List *rtable)
  * set_plan_refs: recurse through the Plan nodes of a single subquery level
  */
 static Plan *
-set_plan_refs(PlannerGlobal * glob, Plan *plan, int rtoffset)
+set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 {
 	ListCell   *l;
 
@@ -473,7 +473,7 @@ set_plan_refs(PlannerGlobal * glob, Plan *plan, int rtoffset)
  * to do the normal processing on it.
  */
 static Plan *
-set_subqueryscan_references(PlannerGlobal * glob,
+set_subqueryscan_references(PlannerGlobal *glob,
 							SubqueryScan *plan,
 							int rtoffset)
 {
@@ -619,7 +619,7 @@ copyVar(Var *var)
  * and adding OIDs from regclass Const nodes into glob->relationOids.
  */
 static Node *
-fix_scan_expr(PlannerGlobal * glob, Node *node, int rtoffset)
+fix_scan_expr(PlannerGlobal *glob, Node *node, int rtoffset)
 {
 	fix_scan_expr_context context;
 
@@ -629,7 +629,7 @@ fix_scan_expr(PlannerGlobal * glob, Node *node, int rtoffset)
 }
 
 static Node *
-fix_scan_expr_mutator(Node *node, fix_scan_expr_context * context)
+fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 {
 	if (node == NULL)
 		return NULL;
@@ -700,7 +700,7 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context * context)
  * quals of the child indexscan.  set_inner_join_references does that.
  */
 static void
-set_join_references(PlannerGlobal * glob, Join *join, int rtoffset)
+set_join_references(PlannerGlobal *glob, Join *join, int rtoffset)
 {
 	Plan	   *outer_plan = join->plan.lefttree;
 	Plan	   *inner_plan = join->plan.righttree;
@@ -777,7 +777,7 @@ set_join_references(PlannerGlobal * glob, Join *join, int rtoffset)
  * recursion reaches the inner indexscan, and so we'd have done it twice.
  */
 static void
-set_inner_join_references(PlannerGlobal * glob, Plan *inner_plan,
+set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 						  indexed_tlist *outer_itlist)
 {
 	if (IsA(inner_plan, IndexScan))
@@ -969,7 +969,7 @@ set_inner_join_references(PlannerGlobal * glob, Plan *inner_plan,
  * the expression.
  */
 static void
-set_upper_references(PlannerGlobal * glob, Plan *plan, int rtoffset)
+set_upper_references(PlannerGlobal *glob, Plan *plan, int rtoffset)
 {
 	Plan	   *subplan = plan->lefttree;
 	indexed_tlist *subplan_itlist;
@@ -1254,7 +1254,7 @@ search_indexed_tlist_for_non_var(Node *node,
  * not modified.
  */
 static List *
-fix_join_expr(PlannerGlobal * glob,
+fix_join_expr(PlannerGlobal *glob,
 			  List *clauses,
 			  indexed_tlist *outer_itlist,
 			  indexed_tlist *inner_itlist,
@@ -1272,7 +1272,7 @@ fix_join_expr(PlannerGlobal * glob,
 }
 
 static Node *
-fix_join_expr_mutator(Node *node, fix_join_expr_context * context)
+fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 {
 	Var		   *newvar;
 
@@ -1385,7 +1385,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context * context)
  * The original tree is not modified.
  */
 static Node *
-fix_upper_expr(PlannerGlobal * glob,
+fix_upper_expr(PlannerGlobal *glob,
 			   Node *node,
 			   indexed_tlist *subplan_itlist,
 			   int rtoffset)
@@ -1399,7 +1399,7 @@ fix_upper_expr(PlannerGlobal * glob,
 }
 
 static Node *
-fix_upper_expr_mutator(Node *node, fix_upper_expr_context * context)
+fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 {
 	Var		   *newvar;
 
@@ -1479,7 +1479,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context * context)
  * they are not coming from a subplan.
  */
 List *
-set_returning_clause_references(PlannerGlobal * glob,
+set_returning_clause_references(PlannerGlobal *glob,
 								List *rlist,
 								Plan *topplan,
 								Index resultRelation)

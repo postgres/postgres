@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.160 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.161 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ typedef struct
 	pg_wchar   *wstr2;			/* note: these are palloc'd */
 	int			len1;			/* string lengths in logical characters */
 	int			len2;
-}	TextPositionState;
+} TextPositionState;
 
 #define DatumGetUnknownP(X)			((unknown *) PG_DETOAST_DATUM(X))
 #define DatumGetUnknownPCopy(X)		((unknown *) PG_DETOAST_DATUM_COPY(X))
@@ -60,9 +60,9 @@ typedef struct
 static int	text_cmp(text *arg1, text *arg2);
 static int32 text_length(Datum str);
 static int	text_position(text *t1, text *t2);
-static void text_position_setup(text *t1, text *t2, TextPositionState * state);
-static int	text_position_next(int start_pos, TextPositionState * state);
-static void text_position_cleanup(TextPositionState * state);
+static void text_position_setup(text *t1, text *t2, TextPositionState *state);
+static int	text_position_next(int start_pos, TextPositionState *state);
+static void text_position_cleanup(TextPositionState *state);
 static text *text_substring(Datum str,
 			   int32 start,
 			   int32 length,
@@ -807,7 +807,7 @@ text_position(text *t1, text *t2)
  */
 
 static void
-text_position_setup(text *t1, text *t2, TextPositionState * state)
+text_position_setup(text *t1, text *t2, TextPositionState *state)
 {
 	int			len1 = VARSIZE_ANY_EXHDR(t1);
 	int			len2 = VARSIZE_ANY_EXHDR(t2);
@@ -841,7 +841,7 @@ text_position_setup(text *t1, text *t2, TextPositionState * state)
 }
 
 static int
-text_position_next(int start_pos, TextPositionState * state)
+text_position_next(int start_pos, TextPositionState *state)
 {
 	int			pos = 0,
 				p,
@@ -899,7 +899,7 @@ text_position_next(int start_pos, TextPositionState * state)
 }
 
 static void
-text_position_cleanup(TextPositionState * state)
+text_position_cleanup(TextPositionState *state)
 {
 	if (state->use_wchar)
 	{

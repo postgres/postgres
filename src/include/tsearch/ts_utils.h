@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.9 2007/11/15 21:14:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.10 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ extern TSVectorParseState init_tsvector_parser(char *input,
 extern void reset_tsvector_parser(TSVectorParseState state, char *input);
 extern bool gettoken_tsvector(TSVectorParseState state,
 				  char **token, int *len,
-				  WordEntryPos ** pos, int *poslen,
+				  WordEntryPos **pos, int *poslen,
 				  char **endptr);
 extern void close_tsvector_parser(TSVectorParseState state);
 
@@ -76,7 +76,7 @@ typedef struct
 	}			pos;
 	char	   *word;
 	uint32		alen;
-}	ParsedWord;
+} ParsedWord;
 
 typedef struct
 {
@@ -84,9 +84,9 @@ typedef struct
 	int4		lenwords;
 	int4		curwords;
 	int4		pos;
-}	ParsedText;
+} ParsedText;
 
-extern void parsetext(Oid cfgId, ParsedText * prs, char *buf, int4 buflen);
+extern void parsetext(Oid cfgId, ParsedText *prs, char *buf, int4 buflen);
 
 /*
  * headline framework, flow in common to generate:
@@ -95,16 +95,16 @@ extern void parsetext(Oid cfgId, ParsedText * prs, char *buf, int4 buflen);
  *	3 generateHeadline to generate result text
  */
 
-extern void hlparsetext(Oid cfgId, HeadlineParsedText * prs, TSQuery query,
+extern void hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query,
 			char *buf, int4 buflen);
-extern text *generateHeadline(HeadlineParsedText * prs);
+extern text *generateHeadline(HeadlineParsedText *prs);
 
 /*
  * Common check function for tsvector @@ tsquery
  */
 
-extern bool TS_execute(QueryItem * curitem, void *checkval, bool calcnot,
-		   bool (*chkcond) (void *checkval, QueryOperand * val));
+extern bool TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
+		   bool (*chkcond) (void *checkval, QueryOperand *val));
 
 /*
  * Useful conversion macros
@@ -115,7 +115,7 @@ extern bool TS_execute(QueryItem * curitem, void *checkval, bool calcnot,
 /*
  * to_ts* - text transformation to tsvector, tsquery
  */
-extern TSVector make_tsvector(ParsedText * prs);
+extern TSVector make_tsvector(ParsedText *prs);
 
 extern Datum to_tsvector_byid(PG_FUNCTION_ARGS);
 extern Datum to_tsvector(PG_FUNCTION_ARGS);
@@ -162,8 +162,8 @@ extern Datum gin_ts_consistent(PG_FUNCTION_ARGS);
 /*
  * TSQuery Utilities
  */
-extern QueryItem *clean_NOT(QueryItem * ptr, int4 *len);
-extern QueryItem *clean_fakeval(QueryItem * ptr, int4 *len);
+extern QueryItem *clean_NOT(QueryItem *ptr, int4 *len);
+extern QueryItem *clean_fakeval(QueryItem *ptr, int4 *len);
 
 typedef struct QTNode
 {
@@ -173,7 +173,7 @@ typedef struct QTNode
 	char	   *word;
 	uint32		sign;
 	struct QTNode **child;
-}	QTNode;
+} QTNode;
 
 /* bits in QTNode.flags */
 #define QTN_NEEDFREE	0x01
@@ -185,18 +185,18 @@ typedef uint64 TSQuerySign;
 #define TSQS_SIGLEN  (sizeof(TSQuerySign)*BITS_PER_BYTE)
 
 
-extern QTNode *QT2QTN(QueryItem * in, char *operand);
-extern TSQuery QTN2QT(QTNode * in);
-extern void QTNFree(QTNode * in);
-extern void QTNSort(QTNode * in);
-extern void QTNTernary(QTNode * in);
-extern void QTNBinary(QTNode * in);
-extern int	QTNodeCompare(QTNode * an, QTNode * bn);
-extern QTNode *QTNCopy(QTNode * in);
-extern void QTNClearFlags(QTNode * in, uint32 flags);
-extern bool QTNEq(QTNode * a, QTNode * b);
+extern QTNode *QT2QTN(QueryItem *in, char *operand);
+extern TSQuery QTN2QT(QTNode *in);
+extern void QTNFree(QTNode *in);
+extern void QTNSort(QTNode *in);
+extern void QTNTernary(QTNode *in);
+extern void QTNBinary(QTNode *in);
+extern int	QTNodeCompare(QTNode *an, QTNode *bn);
+extern QTNode *QTNCopy(QTNode *in);
+extern void QTNClearFlags(QTNode *in, uint32 flags);
+extern bool QTNEq(QTNode *a, QTNode *b);
 extern TSQuerySign makeTSQuerySign(TSQuery a);
-extern QTNode *findsubquery(QTNode * root, QTNode * ex, QTNode * subs,
+extern QTNode *findsubquery(QTNode *root, QTNode *ex, QTNode *subs,
 			 bool *isfind);
 
 /*

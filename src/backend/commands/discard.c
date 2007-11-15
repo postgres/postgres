@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/discard.c,v 1.2 2007/11/15 21:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/discard.c,v 1.3 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ static void DiscardAll(bool isTopLevel);
  * DISCARD { ALL | TEMP | PLANS }
  */
 void
-DiscardCommand(DiscardStmt * stmt, bool isTopLevel)
+DiscardCommand(DiscardStmt *stmt, bool isTopLevel)
 {
 	switch (stmt->target)
 	{

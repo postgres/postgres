@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.25 2007/11/15 21:14:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.26 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ static void ResourceOwnerReleaseInternal(ResourceOwner owner,
 							 bool isCommit,
 							 bool isTopLevel);
 static void PrintRelCacheLeakWarning(Relation rel);
-static void PrintPlanCacheLeakWarning(CachedPlan * plan);
+static void PrintPlanCacheLeakWarning(CachedPlan *plan);
 static void PrintTupleDescLeakWarning(TupleDesc tupdesc);
 
 
@@ -811,7 +811,7 @@ ResourceOwnerEnlargePlanCacheRefs(ResourceOwner owner)
  * Caller must have previously done ResourceOwnerEnlargePlanCacheRefs()
  */
 void
-ResourceOwnerRememberPlanCacheRef(ResourceOwner owner, CachedPlan * plan)
+ResourceOwnerRememberPlanCacheRef(ResourceOwner owner, CachedPlan *plan)
 {
 	Assert(owner->nplanrefs < owner->maxplanrefs);
 	owner->planrefs[owner->nplanrefs] = plan;
@@ -822,7 +822,7 @@ ResourceOwnerRememberPlanCacheRef(ResourceOwner owner, CachedPlan * plan)
  * Forget that a plancache reference is owned by a ResourceOwner
  */
 void
-ResourceOwnerForgetPlanCacheRef(ResourceOwner owner, CachedPlan * plan)
+ResourceOwnerForgetPlanCacheRef(ResourceOwner owner, CachedPlan *plan)
 {
 	CachedPlan **planrefs = owner->planrefs;
 	int			np1 = owner->nplanrefs - 1;
@@ -849,7 +849,7 @@ ResourceOwnerForgetPlanCacheRef(ResourceOwner owner, CachedPlan * plan)
  * Debugging subroutine
  */
 static void
-PrintPlanCacheLeakWarning(CachedPlan * plan)
+PrintPlanCacheLeakWarning(CachedPlan *plan)
 {
 	elog(WARNING, "plancache reference leak: plan %p not closed", plan);
 }

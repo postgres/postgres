@@ -96,7 +96,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.8 2007/11/15 21:14:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.9 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ typedef struct RewriteStateData
 								 * them */
 	HTAB	   *rs_unresolved_tups;		/* unmatched A tuples */
 	HTAB	   *rs_old_new_tid_map;		/* unmatched B tuples */
-}	RewriteStateData;
+} RewriteStateData;
 
 /*
  * The lookup keys for the hash tables are tuple TID and xmin (we must check
@@ -141,7 +141,7 @@ typedef struct
 {
 	TransactionId xmin;			/* tuple xmin */
 	ItemPointerData tid;		/* tuple location in old heap */
-}	TidHashKey;
+} TidHashKey;
 
 /*
  * Entry structures for the hash tables
@@ -151,7 +151,7 @@ typedef struct
 	TidHashKey	key;			/* expected xmin/old location of B tuple */
 	ItemPointerData old_tid;	/* A's location in the old heap */
 	HeapTuple	tuple;			/* A's tuple contents */
-}	UnresolvedTupData;
+} UnresolvedTupData;
 
 typedef UnresolvedTupData *UnresolvedTup;
 
@@ -159,7 +159,7 @@ typedef struct
 {
 	TidHashKey	key;			/* actual xmin/old location of B tuple */
 	ItemPointerData new_tid;	/* where we put it in the new heap */
-}	OldToNewMappingData;
+} OldToNewMappingData;
 
 typedef OldToNewMappingData *OldToNewMapping;
 
@@ -425,8 +425,8 @@ rewrite_heap_tuple(RewriteState state,
 		 * If the tuple is the updated version of a row, and the prior version
 		 * wouldn't be DEAD yet, then we need to either resolve the prior
 		 * version (if it's waiting in rs_unresolved_tups), or make an entry
-		 * in rs_old_new_tid_map (so we can resolve it when we do see it).
-		 * The previous tuple's xmax would equal this one's xmin, so it's
+		 * in rs_old_new_tid_map (so we can resolve it when we do see it). The
+		 * previous tuple's xmax would equal this one's xmin, so it's
 		 * RECENTLY_DEAD if and only if the xmin is not before OldestXmin.
 		 */
 		if ((new_tuple->t_data->t_infomask & HEAP_UPDATED) &&

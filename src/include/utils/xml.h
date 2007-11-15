@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.20 2007/11/15 21:14:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.21 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,15 +61,15 @@ typedef enum
 	XML_STANDALONE_NO,
 	XML_STANDALONE_NO_VALUE,
 	XML_STANDALONE_OMITTED
-}	XmlStandaloneType;
+} XmlStandaloneType;
 
 extern xmltype *xmlconcat(List *args);
-extern xmltype *xmlelement(XmlExprState * xmlExpr, ExprContext *econtext);
+extern xmltype *xmlelement(XmlExprState *xmlExpr, ExprContext *econtext);
 extern xmltype *xmlparse(text *data, XmlOptionType xmloption, bool preserve_whitespace);
 extern xmltype *xmlpi(char *target, text *arg, bool arg_is_null, bool *result_is_null);
-extern xmltype *xmlroot(xmltype * data, text *version, int standalone);
-extern bool xml_is_document(xmltype * arg);
-extern text *xmltotext_with_xmloption(xmltype * data, XmlOptionType xmloption_arg);
+extern xmltype *xmlroot(xmltype *data, text *version, int standalone);
+extern bool xml_is_document(xmltype *arg);
+extern text *xmltotext_with_xmloption(xmltype *data, XmlOptionType xmloption_arg);
 
 extern char *map_sql_identifier_to_xml_name(char *ident, bool fully_escaped, bool escape_period);
 extern char *map_xml_name_to_sql_identifier(char *name);
@@ -79,7 +79,7 @@ typedef enum
 {
 	XMLBINARY_BASE64,
 	XMLBINARY_HEX
-}	XmlBinaryType;
+} XmlBinaryType;
 
 extern XmlBinaryType xmlbinary;
 

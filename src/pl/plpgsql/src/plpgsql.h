@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.92 2007/11/15 21:14:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.93 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -499,7 +499,7 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *query;
-}	PLpgSQL_stmt_return_query;
+} PLpgSQL_stmt_return_query;
 
 typedef struct
 {								/* RAISE statement			*/

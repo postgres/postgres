@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.9 2007/11/15 21:14:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.10 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ typedef struct CachedPlanSource
 	struct CachedPlan *plan;	/* link to plan, or NULL if not valid */
 	MemoryContext context;		/* context containing this CachedPlanSource */
 	struct CachedPlan *orig_plan;		/* link to plan owning my context */
-}	CachedPlanSource;
+} CachedPlanSource;
 
 /*
  * CachedPlan represents the portion of a cached plan that is discarded when
@@ -80,7 +80,7 @@ typedef struct CachedPlan
 	int			refcount;		/* count of live references to this struct */
 	int			generation;		/* counter, starting at 1, for replans */
 	MemoryContext context;		/* context containing this CachedPlan */
-}	CachedPlan;
+} CachedPlan;
 
 
 extern void InitPlanCache(void);
@@ -103,10 +103,10 @@ extern CachedPlanSource *FastCreateCachedPlan(Node *raw_parse_tree,
 					 bool fully_planned,
 					 bool fixed_result,
 					 MemoryContext context);
-extern void DropCachedPlan(CachedPlanSource * plansource);
-extern CachedPlan *RevalidateCachedPlan(CachedPlanSource * plansource,
+extern void DropCachedPlan(CachedPlanSource *plansource);
+extern CachedPlan *RevalidateCachedPlan(CachedPlanSource *plansource,
 					 bool useResOwner);
-extern void ReleaseCachedPlan(CachedPlan * plan, bool useResOwner);
+extern void ReleaseCachedPlan(CachedPlan *plan, bool useResOwner);
 extern TupleDesc PlanCacheComputeResultDesc(List *stmt_list);
 
 extern void ResetPlanCache(void);

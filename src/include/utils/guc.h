@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.87 2007/11/15 21:14:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.88 2007/11/15 22:25:17 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -106,7 +106,7 @@ typedef enum
 	GUC_ACTION_SET,				/* regular SET command */
 	GUC_ACTION_LOCAL,			/* SET LOCAL command */
 	GUC_ACTION_SAVE				/* function SET option */
-}	GucAction;
+} GucAction;
 
 #define GUC_QUALIFIER_SEPARATOR '.'
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.7 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.8 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ typedef struct
 	WordEntry	entry;			/* must be first! */
 	WordEntryPos *pos;
 	int			poslen;			/* number of elements in pos */
-}	WordEntryIN;
+} WordEntryIN;
 
 
 /* Compare two WordEntryPos values for qsort */
@@ -47,7 +47,7 @@ comparePos(const void *a, const void *b)
  * Returns new length.
  */
 static int
-uniquePos(WordEntryPos * a, int l)
+uniquePos(WordEntryPos *a, int l)
 {
 	WordEntryPos *ptr,
 			   *res;
@@ -100,7 +100,7 @@ compareentry(const void *va, const void *vb, void *arg)
  * *outbuflen receives the amount of space needed for strings and positions.
  */
 static int
-uniqueentry(WordEntryIN * a, int l, char *buf, int *outbuflen)
+uniqueentry(WordEntryIN *a, int l, char *buf, int *outbuflen)
 {
 	int			buflen;
 	WordEntryIN *ptr,
@@ -171,7 +171,7 @@ uniqueentry(WordEntryIN * a, int l, char *buf, int *outbuflen)
 }
 
 static int
-WordEntryCMP(WordEntry * a, WordEntry * b, char *buf)
+WordEntryCMP(WordEntry *a, WordEntry *b, char *buf)
 {
 	return compareentry(a, b, buf);
 }

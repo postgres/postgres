@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.6 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.7 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,10 +113,10 @@ typedef struct
 {
 	QueryItem  *frst;
 	bool	   *mapped_check;
-}	GinChkVal;
+} GinChkVal;
 
 static bool
-checkcondition_gin(void *checkval, QueryOperand * val)
+checkcondition_gin(void *checkval, QueryOperand *val)
 {
 	GinChkVal  *gcv = (GinChkVal *) checkval;
 

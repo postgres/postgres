@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.384 2007/11/15 21:14:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.385 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@
  * _copyPlannedStmt
  */
 static PlannedStmt *
-_copyPlannedStmt(PlannedStmt * from)
+_copyPlannedStmt(PlannedStmt *from)
 {
 	PlannedStmt *newnode = makeNode(PlannedStmt);
 
@@ -727,7 +727,7 @@ _copyRangeVar(RangeVar *from)
  * _copyIntoClause
  */
 static IntoClause *
-_copyIntoClause(IntoClause * from)
+_copyIntoClause(IntoClause *from)
 {
 	IntoClause *newnode = makeNode(IntoClause);
 
@@ -1026,7 +1026,7 @@ _copyRelabelType(RelabelType *from)
  * _copyCoerceViaIO
  */
 static CoerceViaIO *
-_copyCoerceViaIO(CoerceViaIO * from)
+_copyCoerceViaIO(CoerceViaIO *from)
 {
 	CoerceViaIO *newnode = makeNode(CoerceViaIO);
 
@@ -1041,7 +1041,7 @@ _copyCoerceViaIO(CoerceViaIO * from)
  * _copyArrayCoerceExpr
  */
 static ArrayCoerceExpr *
-_copyArrayCoerceExpr(ArrayCoerceExpr * from)
+_copyArrayCoerceExpr(ArrayCoerceExpr *from)
 {
 	ArrayCoerceExpr *newnode = makeNode(ArrayCoerceExpr);
 
@@ -1195,7 +1195,7 @@ _copyMinMaxExpr(MinMaxExpr *from)
  * _copyXmlExpr
  */
 static XmlExpr *
-_copyXmlExpr(XmlExpr * from)
+_copyXmlExpr(XmlExpr *from)
 {
 	XmlExpr    *newnode = makeNode(XmlExpr);
 
@@ -1304,7 +1304,7 @@ _copySetToDefault(SetToDefault *from)
  * _copyCurrentOfExpr
  */
 static CurrentOfExpr *
-_copyCurrentOfExpr(CurrentOfExpr * from)
+_copyCurrentOfExpr(CurrentOfExpr *from)
 {
 	CurrentOfExpr *newnode = makeNode(CurrentOfExpr);
 
@@ -1393,7 +1393,7 @@ _copyFromExpr(FromExpr *from)
  * _copyPathKey
  */
 static PathKey *
-_copyPathKey(PathKey * from)
+_copyPathKey(PathKey *from)
 {
 	PathKey    *newnode = makeNode(PathKey);
 
@@ -1833,7 +1833,7 @@ _copyLockingClause(LockingClause *from)
 }
 
 static XmlSerialize *
-_copyXmlSerialize(XmlSerialize * from)
+_copyXmlSerialize(XmlSerialize *from)
 {
 	XmlSerialize *newnode = makeNode(XmlSerialize);
 
@@ -2271,7 +2271,7 @@ _copyRemoveOpClassStmt(RemoveOpClassStmt *from)
 }
 
 static RemoveOpFamilyStmt *
-_copyRemoveOpFamilyStmt(RemoveOpFamilyStmt * from)
+_copyRemoveOpFamilyStmt(RemoveOpFamilyStmt *from)
 {
 	RemoveOpFamilyStmt *newnode = makeNode(RemoveOpFamilyStmt);
 
@@ -2398,7 +2398,7 @@ _copyCompositeTypeStmt(CompositeTypeStmt *from)
 }
 
 static CreateEnumStmt *
-_copyCreateEnumStmt(CreateEnumStmt * from)
+_copyCreateEnumStmt(CreateEnumStmt *from)
 {
 	CreateEnumStmt *newnode = makeNode(CreateEnumStmt);
 
@@ -2475,7 +2475,7 @@ _copyCreateOpClassItem(CreateOpClassItem *from)
 }
 
 static CreateOpFamilyStmt *
-_copyCreateOpFamilyStmt(CreateOpFamilyStmt * from)
+_copyCreateOpFamilyStmt(CreateOpFamilyStmt *from)
 {
 	CreateOpFamilyStmt *newnode = makeNode(CreateOpFamilyStmt);
 
@@ -2486,7 +2486,7 @@ _copyCreateOpFamilyStmt(CreateOpFamilyStmt * from)
 }
 
 static AlterOpFamilyStmt *
-_copyAlterOpFamilyStmt(AlterOpFamilyStmt * from)
+_copyAlterOpFamilyStmt(AlterOpFamilyStmt *from)
 {
 	AlterOpFamilyStmt *newnode = makeNode(AlterOpFamilyStmt);
 
@@ -2616,7 +2616,7 @@ _copyVariableShowStmt(VariableShowStmt *from)
 }
 
 static DiscardStmt *
-_copyDiscardStmt(DiscardStmt * from)
+_copyDiscardStmt(DiscardStmt *from)
 {
 	DiscardStmt *newnode = makeNode(DiscardStmt);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.126 2007/11/15 21:14:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.127 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ typedef struct process_sublinks_context
 {
 	PlannerInfo *root;
 	bool		isTopQual;
-}	process_sublinks_context;
+} process_sublinks_context;
 
 typedef struct finalize_primnode_context
 {
@@ -63,7 +63,7 @@ static bool subplan_is_hashable(SubLink *slink, SubPlan *node, Plan *plan);
 static bool hash_ok_operator(OpExpr *expr);
 static Node *replace_correlation_vars_mutator(Node *node, PlannerInfo *root);
 static Node *process_sublinks_mutator(Node *node,
-						 process_sublinks_context * context);
+						 process_sublinks_context *context);
 static Bitmapset *finalize_plan(PlannerInfo *root,
 			  Plan *plan,
 			  Bitmapset *outer_params,
@@ -865,7 +865,7 @@ SS_process_sublinks(PlannerInfo *root, Node *expr, bool isQual)
 }
 
 static Node *
-process_sublinks_mutator(Node *node, process_sublinks_context * context)
+process_sublinks_mutator(Node *node, process_sublinks_context *context)
 {
 	process_sublinks_context locContext;
 

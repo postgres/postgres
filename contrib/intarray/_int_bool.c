@@ -36,7 +36,7 @@ typedef struct NODE
 	int4		type;
 	int4		val;
 	struct NODE *next;
-}	NODE;
+} NODE;
 
 typedef struct
 {
@@ -226,7 +226,7 @@ typedef struct
 {
 	int4	   *arrb;
 	int4	   *arre;
-}	CHKVAL;
+} CHKVAL;
 
 /*
  * is there value 'val' in array or not ?
@@ -323,7 +323,7 @@ typedef struct
 {
 	ITEM	   *first;
 	bool	   *mapped_check;
-}	GinChkVal;
+} GinChkVal;
 
 static bool
 checkcondition_gin(void *checkval, ITEM * item)
@@ -506,7 +506,7 @@ typedef struct
 	char	   *buf;
 	char	   *cur;
 	int4		buflen;
-}	INFIX;
+} INFIX;
 
 #define RESIZEBUF(inf,addsize) while( ( (inf)->cur - (inf)->buf ) + (addsize) + 1 >= (inf)->buflen ) { \
 	int4 len = inf->cur - inf->buf; \
@@ -516,7 +516,7 @@ typedef struct
 }
 
 static void
-infix(INFIX * in, bool first)
+infix(INFIX *in, bool first)
 {
 	if (in->curpol->type == VAL)
 	{

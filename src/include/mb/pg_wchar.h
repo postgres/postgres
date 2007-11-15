@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.76 2007/11/15 21:14:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.77 2007/11/15 22:25:17 momjian Exp $
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
@@ -313,7 +313,7 @@ typedef struct
 	uint32		utf1;			/* UTF-8 code 1 */
 	uint32		utf2;			/* UTF-8 code 2 */
 	uint32		code;			/* local code */
-}	pg_utf_to_local_combined;
+} pg_utf_to_local_combined;
 
 /*
  * local code to UTF-8 conversion map(combined characters)
@@ -323,7 +323,7 @@ typedef struct
 	uint32		code;			/* local code */
 	uint32		utf1;			/* UTF-8 code 1 */
 	uint32		utf2;			/* UTF-8 code 2 */
-}	pg_local_to_utf_combined;
+} pg_local_to_utf_combined;
 
 
 /*
@@ -387,11 +387,11 @@ extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
 extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
 extern void LocalToUtf(const unsigned char *iso, unsigned char *utf,
-		   const pg_local_to_utf *map, const pg_local_to_utf_combined * cmap,
+		   const pg_local_to_utf *map, const pg_local_to_utf_combined *cmap,
 		   int size1, int size2, int encoding, int len);
 
 extern void UtfToLocal(const unsigned char *utf, unsigned char *iso,
-		   const pg_utf_to_local *map, const pg_utf_to_local_combined * cmap,
+		   const pg_utf_to_local *map, const pg_utf_to_local_combined *cmap,
 		   int size1, int size2, int encoding, int len);
 
 extern bool pg_verifymbstr(const char *mbstr, int len, bool noError);

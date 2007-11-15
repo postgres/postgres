@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.314 2007/11/15 21:14:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.315 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ _equalRangeVar(RangeVar *a, RangeVar *b)
 }
 
 static bool
-_equalIntoClause(IntoClause * a, IntoClause * b)
+_equalIntoClause(IntoClause *a, IntoClause *b)
 {
 	COMPARE_NODE_FIELD(rel);
 	COMPARE_NODE_FIELD(colNames);
@@ -360,7 +360,7 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 }
 
 static bool
-_equalCoerceViaIO(CoerceViaIO * a, CoerceViaIO * b)
+_equalCoerceViaIO(CoerceViaIO *a, CoerceViaIO *b)
 {
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_SCALAR_FIELD(resulttype);
@@ -378,7 +378,7 @@ _equalCoerceViaIO(CoerceViaIO * a, CoerceViaIO * b)
 }
 
 static bool
-_equalArrayCoerceExpr(ArrayCoerceExpr * a, ArrayCoerceExpr * b)
+_equalArrayCoerceExpr(ArrayCoerceExpr *a, ArrayCoerceExpr *b)
 {
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_SCALAR_FIELD(elemfuncid);
@@ -506,7 +506,7 @@ _equalMinMaxExpr(MinMaxExpr *a, MinMaxExpr *b)
 }
 
 static bool
-_equalXmlExpr(XmlExpr * a, XmlExpr * b)
+_equalXmlExpr(XmlExpr *a, XmlExpr *b)
 {
 	COMPARE_SCALAR_FIELD(op);
 	COMPARE_STRING_FIELD(name);
@@ -599,7 +599,7 @@ _equalSetToDefault(SetToDefault *a, SetToDefault *b)
 }
 
 static bool
-_equalCurrentOfExpr(CurrentOfExpr * a, CurrentOfExpr * b)
+_equalCurrentOfExpr(CurrentOfExpr *a, CurrentOfExpr *b)
 {
 	COMPARE_SCALAR_FIELD(cvarno);
 	COMPARE_STRING_FIELD(cursor_name);
@@ -660,7 +660,7 @@ _equalFromExpr(FromExpr *a, FromExpr *b)
  */
 
 static bool
-_equalPathKey(PathKey * a, PathKey * b)
+_equalPathKey(PathKey *a, PathKey *b)
 {
 	/*
 	 * This is normally used on non-canonicalized PathKeys, so must chase up
@@ -1112,7 +1112,7 @@ _equalRemoveOpClassStmt(RemoveOpClassStmt *a, RemoveOpClassStmt *b)
 }
 
 static bool
-_equalRemoveOpFamilyStmt(RemoveOpFamilyStmt * a, RemoveOpFamilyStmt * b)
+_equalRemoveOpFamilyStmt(RemoveOpFamilyStmt *a, RemoveOpFamilyStmt *b)
 {
 	COMPARE_NODE_FIELD(opfamilyname);
 	COMPARE_STRING_FIELD(amname);
@@ -1219,7 +1219,7 @@ _equalCompositeTypeStmt(CompositeTypeStmt *a, CompositeTypeStmt *b)
 }
 
 static bool
-_equalCreateEnumStmt(CreateEnumStmt * a, CreateEnumStmt * b)
+_equalCreateEnumStmt(CreateEnumStmt *a, CreateEnumStmt *b)
 {
 	COMPARE_NODE_FIELD(typename);
 	COMPARE_NODE_FIELD(vals);
@@ -1284,7 +1284,7 @@ _equalCreateOpClassItem(CreateOpClassItem *a, CreateOpClassItem *b)
 }
 
 static bool
-_equalCreateOpFamilyStmt(CreateOpFamilyStmt * a, CreateOpFamilyStmt * b)
+_equalCreateOpFamilyStmt(CreateOpFamilyStmt *a, CreateOpFamilyStmt *b)
 {
 	COMPARE_NODE_FIELD(opfamilyname);
 	COMPARE_STRING_FIELD(amname);
@@ -1293,7 +1293,7 @@ _equalCreateOpFamilyStmt(CreateOpFamilyStmt * a, CreateOpFamilyStmt * b)
 }
 
 static bool
-_equalAlterOpFamilyStmt(AlterOpFamilyStmt * a, AlterOpFamilyStmt * b)
+_equalAlterOpFamilyStmt(AlterOpFamilyStmt *a, AlterOpFamilyStmt *b)
 {
 	COMPARE_NODE_FIELD(opfamilyname);
 	COMPARE_STRING_FIELD(amname);
@@ -1401,7 +1401,7 @@ _equalVariableShowStmt(VariableShowStmt *a, VariableShowStmt *b)
 }
 
 static bool
-_equalDiscardStmt(DiscardStmt * a, DiscardStmt * b)
+_equalDiscardStmt(DiscardStmt *a, DiscardStmt *b)
 {
 	COMPARE_SCALAR_FIELD(target);
 
@@ -1893,7 +1893,7 @@ _equalFkConstraint(FkConstraint *a, FkConstraint *b)
 }
 
 static bool
-_equalXmlSerialize(XmlSerialize * a, XmlSerialize * b)
+_equalXmlSerialize(XmlSerialize *a, XmlSerialize *b)
 {
 	COMPARE_SCALAR_FIELD(xmloption);
 	COMPARE_NODE_FIELD(expr);

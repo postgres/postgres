@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.6 2007/11/15 21:14:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.7 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ typedef struct
 	int			lexid;
 	char	   *alias;
 	char	   *descr;
-}	LexDescr;
+} LexDescr;
 
 /*
  * Interface to headline generator
@@ -43,7 +43,7 @@ typedef struct
 				len:16;
 	char	   *word;
 	QueryOperand *item;
-}	HeadlineWordEntry;
+} HeadlineWordEntry;
 
 typedef struct
 {
@@ -54,7 +54,7 @@ typedef struct
 	char	   *stopsel;
 	int2		startsellen;
 	int2		stopsellen;
-}	HeadlineParsedText;
+} HeadlineParsedText;
 
 /*
  * Common useful things for tsearch subsystem
@@ -71,11 +71,11 @@ typedef struct
 {
 	int			len;
 	char	  **stop;
-}	StopList;
+} StopList;
 
-extern void readstoplist(const char *fname, StopList * s,
+extern void readstoplist(const char *fname, StopList *s,
 			 char *(*wordop) (const char *));
-extern bool searchstoplist(StopList * s, char *key);
+extern bool searchstoplist(StopList *s, char *key);
 
 /*
  * Interface with dictionaries
@@ -96,7 +96,7 @@ typedef struct
 
 	/* C-string */
 	char	   *lexeme;
-}	TSLexeme;
+} TSLexeme;
 
 #define TSL_ADDPOS		0x01
 
@@ -111,6 +111,6 @@ typedef struct
 	bool		getnext;		/* out: dict wants next lexeme */
 	void	   *private;		/* internal dict state between calls with
 								 * getnext == true */
-}	DictSubState;
+} DictSubState;
 
 #endif   /* _PG_TS_PUBLIC_H_ */

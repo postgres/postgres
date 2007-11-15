@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.200 2007/11/15 21:14:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.201 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ typedef struct SimpleEstateStackEntry
 	long int	xact_estate_simple_id;	/* ID for xact_eval_estate */
 	SubTransactionId xact_subxid;		/* ID for current subxact */
 	struct SimpleEstateStackEntry *next;		/* next stack entry up */
-}	SimpleEstateStackEntry;
+} SimpleEstateStackEntry;
 
 static SimpleEstateStackEntry *simple_estate_stack = NULL;
 static long int simple_estate_id_counter = 0;
@@ -106,7 +106,7 @@ static int exec_stmt_return(PLpgSQL_execstate *estate,
 static int exec_stmt_return_next(PLpgSQL_execstate *estate,
 					  PLpgSQL_stmt_return_next *stmt);
 static int exec_stmt_return_query(PLpgSQL_execstate *estate,
-					   PLpgSQL_stmt_return_query * stmt);
+					   PLpgSQL_stmt_return_query *stmt);
 static int exec_stmt_raise(PLpgSQL_execstate *estate,
 				PLpgSQL_stmt_raise *stmt);
 static int exec_stmt_execsql(PLpgSQL_execstate *estate,
@@ -2151,7 +2151,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
  */
 static int
 exec_stmt_return_query(PLpgSQL_execstate *estate,
-					   PLpgSQL_stmt_return_query * stmt)
+					   PLpgSQL_stmt_return_query *stmt)
 {
 	Portal		portal;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/regis.c,v 1.1 2007/08/21 01:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/regis.c,v 1.2 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ RS_isRegis(const char *str)
 #define RS_IN_WAIT	4
 
 static RegisNode *
-newRegisNode(RegisNode * prev, int len)
+newRegisNode(RegisNode *prev, int len)
 {
 	RegisNode  *ptr;
 
@@ -50,7 +50,7 @@ newRegisNode(RegisNode * prev, int len)
 }
 
 void
-RS_compile(Regis * r, bool issuffix, char *str)
+RS_compile(Regis *r, bool issuffix, char *str)
 {
 	int			len = strlen(str);
 	int			state = RS_IN_WAIT;
@@ -137,7 +137,7 @@ RS_compile(Regis * r, bool issuffix, char *str)
 }
 
 void
-RS_free(Regis * r)
+RS_free(Regis *r)
 {
 	RegisNode  *ptr = r->node,
 			   *tmp;
@@ -189,7 +189,7 @@ mb_strchr(char *str, char *c)
 
 
 bool
-RS_execute(Regis * r, char *str)
+RS_execute(Regis *r, char *str)
 {
 	RegisNode  *ptr = r->node;
 	char	   *c = str;

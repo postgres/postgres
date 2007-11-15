@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.137 2007/11/15 21:14:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.138 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,25 +69,25 @@ typedef struct SimpleOidListCell
 {
 	struct SimpleOidListCell *next;
 	Oid			val;
-}	SimpleOidListCell;
+} SimpleOidListCell;
 
 typedef struct SimpleOidList
 {
 	SimpleOidListCell *head;
 	SimpleOidListCell *tail;
-}	SimpleOidList;
+} SimpleOidList;
 
 typedef struct SimpleStringListCell
 {
 	struct SimpleStringListCell *next;
 	char		val[1];			/* VARIABLE LENGTH FIELD */
-}	SimpleStringListCell;
+} SimpleStringListCell;
 
 typedef struct SimpleStringList
 {
 	SimpleStringListCell *head;
 	SimpleStringListCell *tail;
-}	SimpleStringList;
+} SimpleStringList;
 
 /*
  * The data structures used to store system catalog information.  Every
@@ -219,7 +219,7 @@ typedef struct _opfamilyInfo
 {
 	DumpableObject dobj;
 	char	   *rolname;
-}	OpfamilyInfo;
+} OpfamilyInfo;
 
 typedef struct _convInfo
 {
@@ -391,7 +391,7 @@ typedef struct _prsInfo
 	Oid			prsend;
 	Oid			prsheadline;
 	Oid			prslextype;
-}	TSParserInfo;
+} TSParserInfo;
 
 typedef struct _dictInfo
 {
@@ -399,21 +399,21 @@ typedef struct _dictInfo
 	char	   *rolname;
 	Oid			dicttemplate;
 	char	   *dictinitoption;
-}	TSDictInfo;
+} TSDictInfo;
 
 typedef struct _tmplInfo
 {
 	DumpableObject dobj;
 	Oid			tmplinit;
 	Oid			tmpllexize;
-}	TSTemplateInfo;
+} TSTemplateInfo;
 
 typedef struct _cfgInfo
 {
 	DumpableObject dobj;
 	char	   *rolname;
 	Oid			cfgparser;
-}	TSConfigInfo;
+} TSConfigInfo;
 
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */
@@ -454,10 +454,10 @@ extern TypeInfo *findTypeByOid(Oid oid);
 extern FuncInfo *findFuncByOid(Oid oid);
 extern OprInfo *findOprByOid(Oid oid);
 
-extern void simple_oid_list_append(SimpleOidList * list, Oid val);
-extern void simple_string_list_append(SimpleStringList * list, const char *val);
-extern bool simple_oid_list_member(SimpleOidList * list, Oid val);
-extern bool simple_string_list_member(SimpleStringList * list, const char *val);
+extern void simple_oid_list_append(SimpleOidList *list, Oid val);
+extern void simple_string_list_append(SimpleStringList *list, const char *val);
+extern bool simple_oid_list_member(SimpleOidList *list, Oid val);
+extern bool simple_string_list_member(SimpleStringList *list, const char *val);
 
 extern char *pg_strdup(const char *string);
 extern void *pg_malloc(size_t size);

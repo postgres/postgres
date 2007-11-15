@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.57 2007/11/15 21:14:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.58 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,7 @@ xml_in(PG_FUNCTION_ARGS)
 
 
 static char *
-xml_out_internal(xmltype * x, pg_enc target_encoding)
+xml_out_internal(xmltype *x, pg_enc target_encoding)
 {
 	char	   *str;
 	size_t		len;
@@ -540,7 +540,7 @@ xmltotext(PG_FUNCTION_ARGS)
 
 
 text *
-xmltotext_with_xmloption(xmltype * data, XmlOptionType xmloption_arg)
+xmltotext_with_xmloption(xmltype *data, XmlOptionType xmloption_arg)
 {
 	if (xmloption_arg == XMLOPTION_DOCUMENT && !xml_is_document(data))
 		ereport(ERROR,
@@ -553,7 +553,7 @@ xmltotext_with_xmloption(xmltype * data, XmlOptionType xmloption_arg)
 
 
 xmltype *
-xmlelement(XmlExprState * xmlExpr, ExprContext *econtext)
+xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 {
 #ifdef USE_LIBXML
 	XmlExpr    *xexpr = (XmlExpr *) xmlExpr->xprstate.expr;
@@ -721,7 +721,7 @@ xmlpi(char *target, text *arg, bool arg_is_null, bool *result_is_null)
 
 
 xmltype *
-xmlroot(xmltype * data, text *version, int standalone)
+xmlroot(xmltype *data, text *version, int standalone)
 {
 #ifdef USE_LIBXML
 	char	   *str;
@@ -871,7 +871,7 @@ xmlvalidate(PG_FUNCTION_ARGS)
 
 
 bool
-xml_is_document(xmltype * arg)
+xml_is_document(xmltype *arg)
 {
 #ifdef USE_LIBXML
 	bool		result;

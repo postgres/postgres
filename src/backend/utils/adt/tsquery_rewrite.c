@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.9 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.10 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ addone(int *counters, int last, int total)
  * by returning either node or a copy of subs.
  */
 static QTNode *
-findeq(QTNode * node, QTNode * ex, QTNode * subs, bool *isfind)
+findeq(QTNode *node, QTNode *ex, QTNode *subs, bool *isfind)
 {
 
 	if ((node->sign & ex->sign) != ex->sign ||
@@ -174,7 +174,7 @@ findeq(QTNode * node, QTNode * ex, QTNode * subs, bool *isfind)
 }
 
 static QTNode *
-dofindsubquery(QTNode * root, QTNode * ex, QTNode * subs, bool *isfind)
+dofindsubquery(QTNode *root, QTNode *ex, QTNode *subs, bool *isfind)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
@@ -193,7 +193,7 @@ dofindsubquery(QTNode * root, QTNode * ex, QTNode * subs, bool *isfind)
 }
 
 static QTNode *
-dropvoidsubtree(QTNode * root)
+dropvoidsubtree(QTNode *root)
 {
 
 	if (!root)
@@ -233,7 +233,7 @@ dropvoidsubtree(QTNode * root)
 }
 
 QTNode *
-findsubquery(QTNode * root, QTNode * ex, QTNode * subs, bool *isfind)
+findsubquery(QTNode *root, QTNode *ex, QTNode *subs, bool *isfind)
 {
 	bool		DidFind = false;
 

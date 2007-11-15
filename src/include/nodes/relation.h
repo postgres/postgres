@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.149 2007/11/15 21:14:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.150 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ typedef struct PlannerGlobal
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
-}	PlannerGlobal;
+} PlannerGlobal;
 
 /* macro for fetching the Plan associated with a SubPlan node */
 #define planner_subplan_get_plan(root, subplan) \
@@ -477,7 +477,7 @@ typedef struct EquivalenceClass
 	bool		ec_broken;		/* failed to generate needed clauses? */
 	Index		ec_sortref;		/* originating sortclause label, or 0 */
 	struct EquivalenceClass *ec_merged; /* set if merged into another EC */
-}	EquivalenceClass;
+} EquivalenceClass;
 
 /*
  * EquivalenceMember - one member expression of an EquivalenceClass
@@ -503,7 +503,7 @@ typedef struct EquivalenceMember
 	bool		em_is_const;	/* expression is pseudoconstant? */
 	bool		em_is_child;	/* derived version for a child relation? */
 	Oid			em_datatype;	/* the "nominal type" used by the opfamily */
-}	EquivalenceMember;
+} EquivalenceMember;
 
 /*
  * PathKeys
@@ -530,7 +530,7 @@ typedef struct PathKey
 	Oid			pk_opfamily;	/* btree opfamily defining the ordering */
 	int			pk_strategy;	/* sort direction (ASC or DESC) */
 	bool		pk_nulls_first; /* do NULLs come before normal values? */
-}	PathKey;
+} PathKey;
 
 /*
  * Type "Path" is used as-is for sequential-scan paths.  For other
@@ -995,7 +995,7 @@ typedef struct MergeScanSelCache
 	/* Results */
 	Selectivity leftscansel;	/* scan fraction for clause left side */
 	Selectivity rightscansel;	/* scan fraction for clause right side */
-}	MergeScanSelCache;
+} MergeScanSelCache;
 
 /*
  * Inner indexscan info.

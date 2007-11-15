@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.4 2007/11/15 21:14:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.5 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,13 +31,13 @@ typedef struct ParsedLex
 	int			lenlemm;
 	bool		resfollow;
 	struct ParsedLex *next;
-}	ParsedLex;
+} ParsedLex;
 
 typedef struct ListParsedLex
 {
 	ParsedLex  *head;
 	ParsedLex  *tail;
-}	ListParsedLex;
+} ListParsedLex;
 
 typedef struct
 {
@@ -56,10 +56,10 @@ typedef struct
 
 	ParsedLex  *lastRes;
 	TSLexeme   *tmpRes;
-}	LexizeData;
+} LexizeData;
 
 static void
-LexizeInit(LexizeData * ld, TSConfigCacheEntry * cfg)
+LexizeInit(LexizeData *ld, TSConfigCacheEntry *cfg)
 {
 	ld->cfg = cfg;
 	ld->curDictId = InvalidOid;
@@ -71,7 +71,7 @@ LexizeInit(LexizeData * ld, TSConfigCacheEntry * cfg)
 }
 
 static void
-LPLAddTail(ListParsedLex * list, ParsedLex * newpl)
+LPLAddTail(ListParsedLex *list, ParsedLex *newpl)
 {
 	if (list->tail)
 	{
@@ -84,7 +84,7 @@ LPLAddTail(ListParsedLex * list, ParsedLex * newpl)
 }
 
 static ParsedLex *
-LPLRemoveHead(ListParsedLex * list)
+LPLRemoveHead(ListParsedLex *list)
 {
 	ParsedLex  *res = list->head;
 
@@ -98,7 +98,7 @@ LPLRemoveHead(ListParsedLex * list)
 }
 
 static void
-LexizeAddLemm(LexizeData * ld, int type, char *lemm, int lenlemm)
+LexizeAddLemm(LexizeData *ld, int type, char *lemm, int lenlemm)
 {
 	ParsedLex  *newpl = (ParsedLex *) palloc(sizeof(ParsedLex));
 
@@ -111,7 +111,7 @@ LexizeAddLemm(LexizeData * ld, int type, char *lemm, int lenlemm)
 }
 
 static void
-RemoveHead(LexizeData * ld)
+RemoveHead(LexizeData *ld)
 {
 	LPLAddTail(&ld->waste, LPLRemoveHead(&ld->towork));
 
@@ -119,7 +119,7 @@ RemoveHead(LexizeData * ld)
 }
 
 static void
-setCorrLex(LexizeData * ld, ParsedLex ** correspondLexem)
+setCorrLex(LexizeData *ld, ParsedLex **correspondLexem)
 {
 	if (correspondLexem)
 	{
@@ -141,7 +141,7 @@ setCorrLex(LexizeData * ld, ParsedLex ** correspondLexem)
 }
 
 static void
-moveToWaste(LexizeData * ld, ParsedLex * stop)
+moveToWaste(LexizeData *ld, ParsedLex *stop)
 {
 	bool		go = true;
 
@@ -157,7 +157,7 @@ moveToWaste(LexizeData * ld, ParsedLex * stop)
 }
 
 static void
-setNewTmpRes(LexizeData * ld, ParsedLex * lex, TSLexeme * res)
+setNewTmpRes(LexizeData *ld, ParsedLex *lex, TSLexeme *res)
 {
 	if (ld->tmpRes)
 	{
@@ -172,7 +172,7 @@ setNewTmpRes(LexizeData * ld, ParsedLex * lex, TSLexeme * res)
 }
 
 static TSLexeme *
-LexizeExec(LexizeData * ld, ParsedLex ** correspondLexem)
+LexizeExec(LexizeData *ld, ParsedLex **correspondLexem)
 {
 	int			i;
 	ListDictionary *map;
@@ -349,7 +349,7 @@ LexizeExec(LexizeData * ld, ParsedLex ** correspondLexem)
  * prs will be filled in.
  */
 void
-parsetext(Oid cfgId, ParsedText * prs, char *buf, int buflen)
+parsetext(Oid cfgId, ParsedText *prs, char *buf, int buflen)
 {
 	int			type,
 				lenlemm;
@@ -429,7 +429,7 @@ parsetext(Oid cfgId, ParsedText * prs, char *buf, int buflen)
  * Headline framework
  */
 static void
-hladdword(HeadlineParsedText * prs, char *buf, int buflen, int type)
+hladdword(HeadlineParsedText *prs, char *buf, int buflen, int type)
 {
 	while (prs->curwords >= prs->lenwords)
 	{
@@ -445,7 +445,7 @@ hladdword(HeadlineParsedText * prs, char *buf, int buflen, int type)
 }
 
 static void
-hlfinditem(HeadlineParsedText * prs, TSQuery query, char *buf, int buflen)
+hlfinditem(HeadlineParsedText *prs, TSQuery query, char *buf, int buflen)
 {
 	int			i;
 	QueryItem  *item = GETQUERY(query);
@@ -479,7 +479,7 @@ hlfinditem(HeadlineParsedText * prs, TSQuery query, char *buf, int buflen)
 }
 
 static void
-addHLParsedLex(HeadlineParsedText * prs, TSQuery query, ParsedLex * lexs, TSLexeme * norms)
+addHLParsedLex(HeadlineParsedText *prs, TSQuery query, ParsedLex *lexs, TSLexeme *norms)
 {
 	ParsedLex  *tmplexs;
 	TSLexeme   *ptr;
@@ -515,7 +515,7 @@ addHLParsedLex(HeadlineParsedText * prs, TSQuery query, ParsedLex * lexs, TSLexe
 }
 
 void
-hlparsetext(Oid cfgId, HeadlineParsedText * prs, TSQuery query, char *buf, int buflen)
+hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query, char *buf, int buflen)
 {
 	int			type,
 				lenlemm;
@@ -575,7 +575,7 @@ hlparsetext(Oid cfgId, HeadlineParsedText * prs, TSQuery query, char *buf, int b
 }
 
 text *
-generateHeadline(HeadlineParsedText * prs)
+generateHeadline(HeadlineParsedText *prs)
 {
 	text	   *out;
 	int			len = 128;

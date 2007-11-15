@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.224 2007/11/15 21:14:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.225 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
 static Datum ExecEvalMinMax(MinMaxExprState *minmaxExpr,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalXml(XmlExprState * xmlExpr, ExprContext *econtext,
+static Datum ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullIf(FuncExprState *nullIfExpr,
 			   ExprContext *econtext,
@@ -147,10 +147,10 @@ static Datum ExecEvalFieldStore(FieldStoreState *fstate,
 static Datum ExecEvalRelabelType(GenericExprState *exprstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalCoerceViaIO(CoerceViaIOState * iostate,
+static Datum ExecEvalCoerceViaIO(CoerceViaIOState *iostate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalArrayCoerceExpr(ArrayCoerceExprState * astate,
+static Datum ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 						ExprContext *econtext,
 						bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
@@ -2844,7 +2844,7 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalXml(XmlExprState * xmlExpr, ExprContext *econtext,
+ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone)
 {
 	XmlExpr    *xexpr = (XmlExpr *) xmlExpr->xprstate.expr;
@@ -3587,7 +3587,7 @@ ExecEvalRelabelType(GenericExprState *exprstate,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalCoerceViaIO(CoerceViaIOState * iostate,
+ExecEvalCoerceViaIO(CoerceViaIOState *iostate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone)
 {
@@ -3621,7 +3621,7 @@ ExecEvalCoerceViaIO(CoerceViaIOState * iostate,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalArrayCoerceExpr(ArrayCoerceExprState * astate,
+ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 						ExprContext *econtext,
 						bool *isNull, ExprDoneCond *isDone)
 {

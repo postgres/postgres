@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2007 PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.c,v 1.4 2007/11/15 21:14:31 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.c,v 1.5 2007/11/15 22:25:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ uuid_generate_v1mc(PG_FUNCTION_ARGS)
 
 
 static Datum
-uuid_generate_v35_internal(int mode, pg_uuid_t * ns, text *name)
+uuid_generate_v35_internal(int mode, pg_uuid_t *ns, text *name)
 {
 	uuid_t	   *ns_uuid;
 	Datum		result;

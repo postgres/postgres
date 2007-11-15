@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.8 2007/11/15 21:14:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.9 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ typedef struct
 				haspos:1,
 				len:11,			/* MAX 2Kb */
 				pos:20;			/* MAX 1Mb */
-}	WordEntry;
+} WordEntry;
 
 #define MAXSTRLEN ( (1<<11) - 1)
 #define MAXSTRPOS ( (1<<20) - 1)
@@ -47,7 +47,7 @@ typedef struct
 {
 	uint16		npos;
 	WordEntryPos pos[1];		/* var length */
-}	WordEntryPosVector;
+} WordEntryPosVector;
 
 
 #define WEP_GETWEIGHT(x)	( (x) >> 14 )
@@ -84,7 +84,7 @@ typedef struct
 	int32		size;
 	WordEntry	entries[1];		/* var size */
 	/* lexemes follow */
-}	TSVectorData;
+} TSVectorData;
 
 typedef TSVectorData *TSVector;
 
@@ -188,7 +188,7 @@ typedef struct
 	uint32
 				length:12,
 				distance:20;
-}	QueryOperand;
+} QueryOperand;
 
 
 /* Legal values for QueryOperator.operator */
@@ -203,7 +203,7 @@ typedef struct
 	uint32		left;			/* pointer to left operand. Right operand is
 								 * item + 1, left operand is placed
 								 * item+item->left */
-}	QueryOperator;
+} QueryOperator;
 
 /*
  * Note: TSQuery is 4-bytes aligned, so make sure there's no fields
@@ -214,7 +214,7 @@ typedef union
 	QueryItemType type;
 	QueryOperator operator;
 	QueryOperand operand;
-}	QueryItem;
+} QueryItem;
 
 /*
  * Storage:
@@ -226,7 +226,7 @@ typedef struct
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		size;			/* number of QueryItems */
 	char		data[1];
-}	TSQueryData;
+} TSQueryData;
 
 typedef TSQueryData *TSQuery;
 

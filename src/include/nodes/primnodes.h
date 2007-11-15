@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.134 2007/11/15 21:14:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.135 2007/11/15 22:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ typedef struct IntoClause
 	List	   *options;		/* options from WITH clause */
 	OnCommitAction onCommit;	/* what do we do at COMMIT? */
 	char	   *tableSpaceName; /* table space to use, or NULL */
-}	IntoClause;
+} IntoClause;
 
 
 /* ----------------------------------------------------------------
@@ -566,7 +566,7 @@ typedef struct CoerceViaIO
 	Oid			resulttype;		/* output type of coercion */
 	/* output typmod is not stored, but is presumed -1 */
 	CoercionForm coerceformat;	/* how to display this node */
-}	CoerceViaIO;
+} CoerceViaIO;
 
 /* ----------------
  * ArrayCoerceExpr
@@ -589,7 +589,7 @@ typedef struct ArrayCoerceExpr
 	int32		resulttypmod;	/* output typmod (also element typmod) */
 	bool		isExplicit;		/* conversion semantics flag to pass to func */
 	CoercionForm coerceformat;	/* how to display this node */
-}	ArrayCoerceExpr;
+} ArrayCoerceExpr;
 
 /* ----------------
  * ConvertRowtypeExpr
@@ -792,13 +792,13 @@ typedef enum XmlExprOp
 	IS_XMLROOT,					/* XMLROOT(xml, version, standalone) */
 	IS_XMLSERIALIZE,			/* XMLSERIALIZE(is_document, xmlval) */
 	IS_DOCUMENT					/* xmlval IS DOCUMENT */
-}	XmlExprOp;
+} XmlExprOp;
 
 typedef enum
 {
 	XMLOPTION_DOCUMENT,
 	XMLOPTION_CONTENT
-}	XmlOptionType;
+} XmlOptionType;
 
 typedef struct XmlExpr
 {
@@ -811,7 +811,7 @@ typedef struct XmlExpr
 	XmlOptionType xmloption;	/* DOCUMENT or CONTENT */
 	Oid			type;			/* target type for XMLSERIALIZE */
 	int32		typmod;
-}	XmlExpr;
+} XmlExpr;
 
 /*
  * NullIfExpr - a NULLIF expression
@@ -933,7 +933,7 @@ typedef struct CurrentOfExpr
 	Index		cvarno;			/* RT index of target relation */
 	char	   *cursor_name;	/* name of referenced cursor, or NULL */
 	int			cursor_param;	/* refcursor parameter number, or 0 */
-}	CurrentOfExpr;
+} CurrentOfExpr;
 
 /*--------------------
  * TargetEntry -

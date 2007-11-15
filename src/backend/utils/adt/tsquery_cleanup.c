@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.6 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.7 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,13 +24,13 @@ typedef struct NODE
 	struct NODE *left;
 	struct NODE *right;
 	QueryItem  *valnode;
-}	NODE;
+} NODE;
 
 /*
  * make query tree from plain view of query
  */
 static NODE *
-maketree(QueryItem * in)
+maketree(QueryItem *in)
 {
 	NODE	   *node = (NODE *) palloc(sizeof(NODE));
 
@@ -53,10 +53,10 @@ typedef struct
 	QueryItem  *ptr;
 	int			len;			/* allocated size of ptr */
 	int			cur;			/* number of elements in ptr */
-}	PLAINTREE;
+} PLAINTREE;
 
 static void
-plainnode(PLAINTREE * state, NODE * node)
+plainnode(PLAINTREE *state, NODE *node)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
@@ -91,7 +91,7 @@ plainnode(PLAINTREE * state, NODE * node)
  * make plain view of tree from a NODE-tree representation
  */
 static QueryItem *
-plaintree(NODE * root, int *len)
+plaintree(NODE *root, int *len)
 {
 	PLAINTREE	pl;
 
@@ -109,7 +109,7 @@ plaintree(NODE * root, int *len)
 }
 
 static void
-freetree(NODE * node)
+freetree(NODE *node)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
@@ -130,7 +130,7 @@ freetree(NODE * node)
  * Operator ! always return TRUE
  */
 static NODE *
-clean_NOT_intree(NODE * node)
+clean_NOT_intree(NODE *node)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
@@ -183,7 +183,7 @@ clean_NOT_intree(NODE * node)
 }
 
 QueryItem *
-clean_NOT(QueryItem * ptr, int *len)
+clean_NOT(QueryItem *ptr, int *len)
 {
 	NODE	   *root = maketree(ptr);
 
@@ -214,7 +214,7 @@ clean_NOT(QueryItem * ptr, int *len)
  * text (stopword)
  */
 static NODE *
-clean_fakeval_intree(NODE * node, char *result)
+clean_fakeval_intree(NODE *node, char *result)
 {
 	char		lresult = V_UNKNOWN,
 				rresult = V_UNKNOWN;
@@ -272,7 +272,7 @@ clean_fakeval_intree(NODE * node, char *result)
 }
 
 QueryItem *
-clean_fakeval(QueryItem * ptr, int *len)
+clean_fakeval(QueryItem *ptr, int *len)
 {
 	NODE	   *root = maketree(ptr);
 	char		result = V_UNKNOWN;

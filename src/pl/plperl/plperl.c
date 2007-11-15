@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.131 2007/11/15 21:14:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.132 2007/11/15 22:25:17 momjian Exp $
  *
  **********************************************************************/
 
@@ -63,7 +63,7 @@ typedef struct plperl_proc_entry
 	char		proc_name[NAMEDATALEN]; /* internal name, eg
 										 * __PLPerl_proc_39987 */
 	plperl_proc_desc *proc_data;
-}	plperl_proc_entry;
+} plperl_proc_entry;
 
 /*
  * The information we cache for the duration of a single call to a
@@ -98,7 +98,7 @@ typedef struct plperl_query_entry
 {
 	char		query_name[NAMEDATALEN];
 	plperl_query_desc *query_data;
-}	plperl_query_entry;
+} plperl_query_entry;
 
 /**********************************************************************
  * Global data
@@ -111,7 +111,7 @@ typedef enum
 	INTERP_TRUSTED,
 	INTERP_UNTRUSTED,
 	INTERP_BOTH
-}	InterpState;
+} InterpState;
 
 static InterpState interp_state = INTERP_NONE;
 static bool can_run_two = false;
@@ -2571,8 +2571,8 @@ hv_store_string(HV *hv, const char *key, SV *val)
 
 	/*
 	 * This seems nowhere documented, but under Perl 5.8.0 and up, hv_store()
-	 * recognizes a negative klen parameter as meaning a UTF-8 encoded key.
-	 * It does not appear that hashes track UTF-8-ness of keys at all in Perl
+	 * recognizes a negative klen parameter as meaning a UTF-8 encoded key. It
+	 * does not appear that hashes track UTF-8-ness of keys at all in Perl
 	 * 5.6.
 	 */
 #if PERL_BCDVERSION >= 0x5008000L

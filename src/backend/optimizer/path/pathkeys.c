@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.90 2007/11/15 21:14:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.91 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,12 +37,12 @@
 #define MUST_BE_REDUNDANT(eclass)  \
 	((eclass)->ec_has_const && !(eclass)->ec_below_outer_join)
 
-static PathKey *makePathKey(EquivalenceClass * eclass, Oid opfamily,
+static PathKey *makePathKey(EquivalenceClass *eclass, Oid opfamily,
 			int strategy, bool nulls_first);
 static PathKey *make_canonical_pathkey(PlannerInfo *root,
-					   EquivalenceClass * eclass, Oid opfamily,
+					   EquivalenceClass *eclass, Oid opfamily,
 					   int strategy, bool nulls_first);
-static bool pathkey_is_redundant(PathKey * new_pathkey, List *pathkeys);
+static bool pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys);
 static PathKey *make_pathkey_from_sortinfo(PlannerInfo *root,
 						   Expr *expr, Oid ordering_op,
 						   bool nulls_first,
@@ -50,7 +50,7 @@ static PathKey *make_pathkey_from_sortinfo(PlannerInfo *root,
 						   bool canonicalize);
 static Var *find_indexkey_var(PlannerInfo *root, RelOptInfo *rel,
 				  AttrNumber varattno);
-static bool right_merge_direction(PlannerInfo *root, PathKey * pathkey);
+static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
 
 
 /****************************************************************************
@@ -65,7 +65,7 @@ static bool right_merge_direction(PlannerInfo *root, PathKey * pathkey);
  * convenience routine to build the specified node.
  */
 static PathKey *
-makePathKey(EquivalenceClass * eclass, Oid opfamily,
+makePathKey(EquivalenceClass *eclass, Oid opfamily,
 			int strategy, bool nulls_first)
 {
 	PathKey    *pk = makeNode(PathKey);
@@ -89,7 +89,7 @@ makePathKey(EquivalenceClass * eclass, Oid opfamily,
  */
 static PathKey *
 make_canonical_pathkey(PlannerInfo *root,
-					   EquivalenceClass * eclass, Oid opfamily,
+					   EquivalenceClass *eclass, Oid opfamily,
 					   int strategy, bool nulls_first)
 {
 	PathKey    *pk;
@@ -155,7 +155,7 @@ make_canonical_pathkey(PlannerInfo *root,
  * pointer comparison is enough to decide whether canonical ECs are the same.
  */
 static bool
-pathkey_is_redundant(PathKey * new_pathkey, List *pathkeys)
+pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys)
 {
 	EquivalenceClass *new_ec = new_pathkey->pk_eclass;
 	ListCell   *lc;
@@ -1392,7 +1392,7 @@ pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
  *		for merging its target column.
  */
 static bool
-right_merge_direction(PlannerInfo *root, PathKey * pathkey)
+right_merge_direction(PlannerInfo *root, PathKey *pathkey)
 {
 	ListCell   *l;
 

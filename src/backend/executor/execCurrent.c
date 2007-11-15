@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.3 2007/11/15 21:14:34 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.4 2007/11/15 22:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
  * valid updatable scan of the specified table.
  */
 bool
-execCurrentOf(CurrentOfExpr * cexpr,
+execCurrentOf(CurrentOfExpr *cexpr,
 			  ExprContext *econtext,
 			  Oid table_oid,
 			  ItemPointer current_tid)

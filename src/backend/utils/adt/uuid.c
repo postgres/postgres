@@ -6,7 +6,7 @@
  * Copyright (c) 2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.5 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.6 2007/11/15 22:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,8 @@ struct pg_uuid_t
 	unsigned char data[UUID_LEN];
 };
 
-static void string_to_uuid(const char *source, pg_uuid_t * uuid);
-static int	uuid_internal_cmp(const pg_uuid_t * arg1, const pg_uuid_t * arg2);
+static void string_to_uuid(const char *source, pg_uuid_t *uuid);
+static int	uuid_internal_cmp(const pg_uuid_t *arg1, const pg_uuid_t *arg2);
 
 Datum
 uuid_in(PG_FUNCTION_ARGS)
@@ -80,7 +80,7 @@ uuid_out(PG_FUNCTION_ARGS)
  * two formats into the latter format before further processing.
  */
 static void
-string_to_uuid(const char *source, pg_uuid_t * uuid)
+string_to_uuid(const char *source, pg_uuid_t *uuid)
 {
 	char		hex_buf[32];	/* not NUL terminated */
 	int			i;
@@ -161,7 +161,7 @@ uuid_send(PG_FUNCTION_ARGS)
 
 /* internal uuid compare function */
 static int
-uuid_internal_cmp(const pg_uuid_t * arg1, const pg_uuid_t * arg2)
+uuid_internal_cmp(const pg_uuid_t *arg1, const pg_uuid_t *arg2)
 {
 	return memcmp(arg1->data, arg2->data, UUID_LEN);
 }

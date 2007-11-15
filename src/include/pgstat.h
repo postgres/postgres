@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.69 2007/11/15 21:14:42 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.70 2007/11/15 22:25:16 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -78,7 +78,7 @@ typedef struct PgStat_TableCounts
 
 	PgStat_Counter t_blocks_fetched;
 	PgStat_Counter t_blocks_hit;
-}	PgStat_TableCounts;
+} PgStat_TableCounts;
 
 
 /* ------------------------------------------------------------
@@ -108,7 +108,7 @@ typedef struct PgStat_TableStatus
 	bool		t_shared;		/* is it a shared catalog? */
 	struct PgStat_TableXactStatus *trans;		/* lowest subxact's counts */
 	PgStat_TableCounts t_counts;	/* event counts to be sent */
-}	PgStat_TableStatus;
+} PgStat_TableStatus;
 
 /* ----------
  * PgStat_TableXactStatus		Per-table, per-subtransaction status
@@ -124,7 +124,7 @@ typedef struct PgStat_TableXactStatus
 	PgStat_TableStatus *parent; /* per-table status */
 	/* structs of same subxact level are linked here: */
 	struct PgStat_TableXactStatus *next;		/* next of same subxact */
-}	PgStat_TableXactStatus;
+} PgStat_TableXactStatus;
 
 
 /* ------------------------------------------------------------
@@ -296,7 +296,7 @@ typedef struct PgStat_MsgBgWriter
 	PgStat_Counter m_maxwritten_clean;
 	PgStat_Counter m_buf_written_backend;
 	PgStat_Counter m_buf_alloc;
-}	PgStat_MsgBgWriter;
+} PgStat_MsgBgWriter;
 
 
 /* ----------
@@ -398,7 +398,7 @@ typedef struct PgStat_GlobalStats
 	PgStat_Counter maxwritten_clean;
 	PgStat_Counter buf_written_backend;
 	PgStat_Counter buf_alloc;
-}	PgStat_GlobalStats;
+} PgStat_GlobalStats;
 
 
 /* ----------
