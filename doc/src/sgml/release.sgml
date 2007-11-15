@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.537 2007/11/14 14:38:30 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.538 2007/11/15 17:09:40 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -243,7 +243,8 @@ do it for earlier branch release files.
      </para>
 
      <para>
-      XXX we need to provide a migration guide, at the very least
+      <filename>contrib/tsearch2</> now contains a compatibility
+      interface.
      </para>
     </listitem>
 
@@ -1034,9 +1035,10 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This features was previously in <filename>contrib/tsearch2</>.
-       It has been improved, moved into the server, and is now installed
-       by default.
+       This features was previously in <filename>contrib/tsearch2</>.  It
+       has been improved, moved into the server, and is now installed by
+       default.  <filename>contrib/tsearch2</> now contains a compatibility
+       interface.
       </para>
      </listitem>
 
