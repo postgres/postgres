@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.174 2007/09/06 17:31:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.175 2007/11/15 23:23:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ static Node *get_assignment_input(Node *node);
 static void rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation,
 				 List *attrnos);
 static void markQueryForLocking(Query *qry, Node *jtnode,
-								bool forUpdate, bool noWait);
+					bool forUpdate, bool noWait);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
@@ -1038,11 +1038,10 @@ matchLocks(CmdType event,
 		RewriteRule *oneLock = rulelocks->rules[i];
 
 		/*
-		 * Suppress ON INSERT/UPDATE/DELETE rules that are disabled
-		 * or configured to not fire during the current sessions
-		 * replication role. ON SELECT rules will always be applied
-		 * in order to keep views working even in LOCAL or REPLICA
-		 * role.
+		 * Suppress ON INSERT/UPDATE/DELETE rules that are disabled or
+		 * configured to not fire during the current sessions replication
+		 * role. ON SELECT rules will always be applied in order to keep views
+		 * working even in LOCAL or REPLICA role.
 		 */
 		if (oneLock->event != CMD_SELECT)
 		{
@@ -1052,7 +1051,7 @@ matchLocks(CmdType event,
 					oneLock->enabled == RULE_DISABLED)
 					continue;
 			}
-			else /* ORIGIN or LOCAL ROLE */
+			else	/*  ORIGIN or LOCAL ROLE */
 			{
 				if (oneLock->enabled == RULE_FIRES_ON_REPLICA ||
 					oneLock->enabled == RULE_DISABLED)
@@ -1695,22 +1694,22 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 				case CMD_INSERT:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot perform INSERT RETURNING on relation \"%s\"",
-								RelationGetRelationName(rt_entry_relation)),
+							 errmsg("cannot perform INSERT RETURNING on relation \"%s\"",
+								 RelationGetRelationName(rt_entry_relation)),
 							 errhint("You need an unconditional ON INSERT DO INSTEAD rule with a RETURNING clause.")));
 					break;
 				case CMD_UPDATE:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot perform UPDATE RETURNING on relation \"%s\"",
-								RelationGetRelationName(rt_entry_relation)),
+							 errmsg("cannot perform UPDATE RETURNING on relation \"%s\"",
+								 RelationGetRelationName(rt_entry_relation)),
 							 errhint("You need an unconditional ON UPDATE DO INSTEAD rule with a RETURNING clause.")));
 					break;
 				case CMD_DELETE:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot perform DELETE RETURNING on relation \"%s\"",
-								RelationGetRelationName(rt_entry_relation)),
+							 errmsg("cannot perform DELETE RETURNING on relation \"%s\"",
+								 RelationGetRelationName(rt_entry_relation)),
 							 errhint("You need an unconditional ON DELETE DO INSTEAD rule with a RETURNING clause.")));
 					break;
 				default:

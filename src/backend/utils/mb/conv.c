@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.63 2007/03/25 11:56:02 ishii Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.64 2007/11/15 23:23:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,7 +244,7 @@ mic2latin_with_table(const unsigned char *mic,
 static int
 compare1(const void *p1, const void *p2)
 {
-	uint32 v1,
+	uint32		v1,
 				v2;
 
 	v1 = *(uint32 *) p1;
@@ -259,7 +259,7 @@ compare1(const void *p1, const void *p2)
 static int
 compare2(const void *p1, const void *p2)
 {
-	uint32 v1,
+	uint32		v1,
 				v2;
 
 	v1 = *(uint32 *) p1;
@@ -274,10 +274,13 @@ compare2(const void *p1, const void *p2)
 static int
 compare3(const void *p1, const void *p2)
 {
-	uint32 s1, s2, d1, d2;
+	uint32		s1,
+				s2,
+				d1,
+				d2;
 
-	s1 = *(uint32 *)p1;
-	s2 = *((uint32 *)p1 + 1);
+	s1 = *(uint32 *) p1;
+	s2 = *((uint32 *) p1 + 1);
 	d1 = ((pg_utf_to_local_combined *) p2)->utf1;
 	d2 = ((pg_utf_to_local_combined *) p2)->utf2;
 	return (s1 > d1 || (s1 == d1 && s2 > d2)) ? 1 : ((s1 == d1 && s2 == d2) ? 0 : -1);
@@ -290,7 +293,7 @@ compare3(const void *p1, const void *p2)
 static int
 compare4(const void *p1, const void *p2)
 {
-	uint32 v1,
+	uint32		v1,
 				v2;
 
 	v1 = *(uint32 *) p1;
@@ -301,7 +304,8 @@ compare4(const void *p1, const void *p2)
 /*
  * convert 32bit wide character to mutibye stream pointed to by iso
  */
-static unsigned char *set_iso_code(unsigned char *iso,  uint32 code)
+static unsigned char *
+set_iso_code(unsigned char *iso, uint32 code)
 {
 	if (code & 0xff000000)
 		*iso++ = code >> 24;
@@ -330,12 +334,12 @@ static unsigned char *set_iso_code(unsigned char *iso,  uint32 code)
  */
 void
 UtfToLocal(const unsigned char *utf, unsigned char *iso,
-		   const pg_utf_to_local *map, const pg_utf_to_local_combined *cmap, 
+		   const pg_utf_to_local *map, const pg_utf_to_local_combined *cmap,
 		   int size1, int size2, int encoding, int len)
 {
-	uint32 iutf;
-	uint32 cutf[2];
-	uint32 code;
+	uint32		iutf;
+	uint32		cutf[2];
+	uint32		code;
 	pg_utf_to_local *p;
 	pg_utf_to_local_combined *cp;
 	int			l;
@@ -384,10 +388,10 @@ UtfToLocal(const unsigned char *utf, unsigned char *iso,
 		 */
 		if (cmap && len > l)
 		{
-			const unsigned char *utf_save  = utf;
-			int len_save = len;
-			int l_save = l;
-			
+			const unsigned char *utf_save = utf;
+			int			len_save = len;
+			int			l_save = l;
+
 			len -= l;
 
 			l = pg_utf_mblen(utf);
@@ -407,7 +411,7 @@ UtfToLocal(const unsigned char *utf, unsigned char *iso,
 								sizeof(pg_utf_to_local), compare1);
 					if (p == NULL)
 						report_untranslatable_char(PG_UTF8, encoding,
-											   (const char *) (utf_save - l_save), len_save);
+							   (const char *) (utf_save - l_save), len_save);
 					iso = set_iso_code(iso, p->code);
 				}
 
@@ -446,7 +450,7 @@ UtfToLocal(const unsigned char *utf, unsigned char *iso,
 							sizeof(pg_utf_to_local), compare1);
 				if (p == NULL)
 					report_untranslatable_char(PG_UTF8, encoding,
-											   (const char *) (utf_save - l_save), len_save);
+							   (const char *) (utf_save - l_save), len_save);
 				iso = set_iso_code(iso, p->code);
 
 				p = bsearch(&cutf[1], map, size1,
@@ -457,13 +461,13 @@ UtfToLocal(const unsigned char *utf, unsigned char *iso,
 				code = p->code;
 			}
 		}
-		else	/* no cmap or no remaining data */
+		else	/*  no cmap or no remaining data */
 		{
 			p = bsearch(&iutf, map, size1,
 						sizeof(pg_utf_to_local), compare1);
 			if (p == NULL)
 				report_untranslatable_char(PG_UTF8, encoding,
-											   (const char *) (utf - l), len);
+										   (const char *) (utf - l), len);
 			code = p->code;
 		}
 		iso = set_iso_code(iso, code);
@@ -491,7 +495,7 @@ UtfToLocal(const unsigned char *utf, unsigned char *iso,
  */
 void
 LocalToUtf(const unsigned char *iso, unsigned char *utf,
-		   const pg_local_to_utf *map, const pg_local_to_utf_combined *cmap, 
+		   const pg_local_to_utf *map, const pg_local_to_utf_combined *cmap,
 		   int size1, int size2, int encoding, int len)
 {
 	unsigned int iiso;
@@ -549,13 +553,13 @@ LocalToUtf(const unsigned char *iso, unsigned char *utf,
 		if (p == NULL)
 		{
 			/*
-			 * not found in the ordinary map. if there's a combined
-			 * character map, try with it
+			 * not found in the ordinary map. if there's a combined character
+			 * map, try with it
 			 */
 			if (cmap)
 			{
 				cp = bsearch(&iiso, cmap, size2,
-							sizeof(pg_local_to_utf_combined), compare4);
+							 sizeof(pg_local_to_utf_combined), compare4);
 
 				if (cp)
 				{

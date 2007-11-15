@@ -41,7 +41,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.41 2007/08/01 22:45:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.42 2007/11/15 23:23:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ SimpleLruShmemSize(int nslots, int nlsns)
 	sz += MAXALIGN(nslots * sizeof(LWLockId));	/* buffer_locks[] */
 
 	if (nlsns > 0)
-		sz += MAXALIGN(nslots * nlsns * sizeof(XLogRecPtr)); /* group_lsn[] */
+		sz += MAXALIGN(nslots * nlsns * sizeof(XLogRecPtr));	/* group_lsn[] */
 
 	return BUFFERALIGN(sz) + BLCKSZ * nslots;
 }
@@ -339,7 +339,7 @@ SimpleLruWaitIO(SlruCtl ctl, int slotno)
 			/* indeed, the I/O must have failed */
 			if (shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS)
 				shared->page_status[slotno] = SLRU_PAGE_EMPTY;
-			else				/* write_in_progress */
+			else	/*  write_in_progress */
 			{
 				shared->page_status[slotno] = SLRU_PAGE_VALID;
 				shared->page_dirty[slotno] = true;
@@ -669,21 +669,22 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 	int			fd = -1;
 
 	/*
-	 * Honor the write-WAL-before-data rule, if appropriate, so that we do
-	 * not write out data before associated WAL records.  This is the same
-	 * action performed during FlushBuffer() in the main buffer manager.
+	 * Honor the write-WAL-before-data rule, if appropriate, so that we do not
+	 * write out data before associated WAL records.  This is the same action
+	 * performed during FlushBuffer() in the main buffer manager.
 	 */
 	if (shared->group_lsn != NULL)
 	{
 		/*
-		 * We must determine the largest async-commit LSN for the page.
-		 * This is a bit tedious, but since this entire function is a slow
-		 * path anyway, it seems better to do this here than to maintain
-		 * a per-page LSN variable (which'd need an extra comparison in the
+		 * We must determine the largest async-commit LSN for the page. This
+		 * is a bit tedious, but since this entire function is a slow path
+		 * anyway, it seems better to do this here than to maintain a per-page
+		 * LSN variable (which'd need an extra comparison in the
 		 * transaction-commit path).
 		 */
 		XLogRecPtr	max_lsn;
-		int			lsnindex, lsnoff;
+		int			lsnindex,
+					lsnoff;
 
 		lsnindex = slotno * shared->lsn_groups_per_page;
 		max_lsn = shared->group_lsn[lsnindex++];
@@ -699,8 +700,8 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		{
 			/*
 			 * As noted above, elog(ERROR) is not acceptable here, so if
-			 * XLogFlush were to fail, we must PANIC.  This isn't much of
-			 * a restriction because XLogFlush is just about all critical
+			 * XLogFlush were to fail, we must PANIC.  This isn't much of a
+			 * restriction because XLogFlush is just about all critical
 			 * section anyway, but let's make sure.
 			 */
 			START_CRIT_SECTION();

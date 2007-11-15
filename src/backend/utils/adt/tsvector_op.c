@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.7 2007/10/24 03:30:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.8 2007/11/15 23:23:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,7 +254,7 @@ tsvector_setweight(PG_FUNCTION_ARGS)
 }
 
 static int
-compareEntry(char *ptra, WordEntry * a, char *ptrb, WordEntry * b)
+compareEntry(char *ptra, WordEntry *a, char *ptrb, WordEntry *b)
 {
 	if (a->len == b->len)
 	{
@@ -271,8 +271,8 @@ compareEntry(char *ptra, WordEntry * a, char *ptrb, WordEntry * b)
  * Return the number added (might be less than expected due to overflow)
  */
 static int4
-add_pos(TSVector src, WordEntry * srcptr,
-		TSVector dest, WordEntry * destptr,
+add_pos(TSVector src, WordEntry *srcptr,
+		TSVector dest, WordEntry *destptr,
 		int4 maxpos)
 {
 	uint16	   *clen = &_POSVECPTR(dest, destptr)->npos;
@@ -288,7 +288,7 @@ add_pos(TSVector src, WordEntry * srcptr,
 	startlen = *clen;
 	for (i = 0;
 		 i < slen && *clen < MAXNUMPOS &&
-			 (*clen == 0 || WEP_GETPOS(dpos[*clen - 1]) != MAXENTRYPOS - 1);
+		 (*clen == 0 || WEP_GETPOS(dpos[*clen - 1]) != MAXENTRYPOS - 1);
 		 i++)
 	{
 		WEP_SETWEIGHT(dpos[*clen], WEP_GETWEIGHT(spos[i]));
@@ -369,7 +369,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
 				memcpy(data + dataoff, _POSVECPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
 				dataoff += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
 			}
-				
+
 			ptr++;
 			ptr1++;
 			i1--;
@@ -415,7 +415,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
 					if (ptr2->haspos)
 						dataoff += add_pos(in2, ptr2, out, ptr, maxpos) * sizeof(WordEntryPos);
 				}
-				else			/* must have ptr2->haspos */
+				else	/*  must have ptr2->haspos */
 				{
 					int			addlen = add_pos(in2, ptr2, out, ptr, maxpos);
 
@@ -482,8 +482,8 @@ tsvector_concat(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Instead of checking each offset individually, we check for overflow
-	 * of pos fields once at the end.
+	 * Instead of checking each offset individually, we check for overflow of
+	 * pos fields once at the end.
 	 */
 	if (dataoff > MAXSTRPOS)
 		ereport(ERROR,
@@ -504,7 +504,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
  * compare 2 string values
  */
 static int4
-ValCompare(CHKVAL * chkval, WordEntry * ptr, QueryOperand * item)
+ValCompare(CHKVAL *chkval, WordEntry *ptr, QueryOperand *item)
 {
 	if (ptr->len == item->length)
 		return strncmp(
@@ -525,7 +525,7 @@ checkclass_str(CHKVAL *chkval, WordEntry *val, QueryOperand *item)
 	WordEntryPos *ptr;
 	uint16		len;
 
-	posvec = (WordEntryPosVector *) 
+	posvec = (WordEntryPosVector *)
 		(chkval->values + SHORTALIGN(val->pos + val->len));
 
 	len = posvec->npos;
@@ -544,9 +544,9 @@ checkclass_str(CHKVAL *chkval, WordEntry *val, QueryOperand *item)
  * is there value 'val' in array or not ?
  */
 static bool
-checkcondition_str(void *checkval, QueryOperand * val)
+checkcondition_str(void *checkval, QueryOperand *val)
 {
-	CHKVAL *chkval = (CHKVAL *) checkval;
+	CHKVAL	   *chkval = (CHKVAL *) checkval;
 	WordEntry  *StopLow = chkval->arrb;
 	WordEntry  *StopHigh = chkval->arre;
 	WordEntry  *StopMiddle;
@@ -580,8 +580,8 @@ checkcondition_str(void *checkval, QueryOperand * val)
  *
  */
 bool
-TS_execute(QueryItem * curitem, void *checkval, bool calcnot,
-		   bool (*chkcond) (void *checkval, QueryOperand * val))
+TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
+		   bool (*chkcond) (void *checkval, QueryOperand *val))
 {
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
@@ -589,7 +589,7 @@ TS_execute(QueryItem * curitem, void *checkval, bool calcnot,
 	if (curitem->type == QI_VAL)
 		return chkcond(checkval, (QueryOperand *) curitem);
 
-	switch(curitem->operator.oper)
+	switch (curitem->operator.oper)
 	{
 		case OP_NOT:
 			if (calcnot)
@@ -710,7 +710,7 @@ ts_match_tq(PG_FUNCTION_ARGS)
  * that have a weight equal to one of the weights in 'weight' bitmask.
  */
 static int
-check_weight(TSVector txt, WordEntry * wptr, int8 weight)
+check_weight(TSVector txt, WordEntry *wptr, int8 weight)
 {
 	int			len = POSDATALEN(txt, wptr);
 	int			num = 0;
@@ -726,7 +726,7 @@ check_weight(TSVector txt, WordEntry * wptr, int8 weight)
 }
 
 static WordEntry **
-SEI_realloc(WordEntry ** in, uint32 *len)
+SEI_realloc(WordEntry **in, uint32 *len)
 {
 	if (*len == 0 || in == NULL)
 	{
@@ -742,7 +742,7 @@ SEI_realloc(WordEntry ** in, uint32 *len)
 }
 
 static int
-compareStatWord(StatEntry * a, WordEntry * b, tsstat * stat, TSVector txt)
+compareStatWord(StatEntry *a, WordEntry *b, tsstat *stat, TSVector txt)
 {
 	if (a->len == b->len)
 		return strncmp(
@@ -754,7 +754,7 @@ compareStatWord(StatEntry * a, WordEntry * b, tsstat * stat, TSVector txt)
 }
 
 static tsstat *
-formstat(tsstat * stat, TSVector txt, WordEntry ** entry, uint32 len)
+formstat(tsstat *stat, TSVector txt, WordEntry **entry, uint32 len)
 {
 	tsstat	   *newstat;
 	uint32		totallen,
@@ -861,16 +861,16 @@ formstat(tsstat * stat, TSVector txt, WordEntry ** entry, uint32 len)
  * This is written like a custom aggregate function, because the
  * original plan was to do just that. Unfortunately, an aggregate function
  * can't return a set, so that plan was abandoned. If that limitation is
- * lifted in the future, ts_stat could be a real aggregate function so that 
+ * lifted in the future, ts_stat could be a real aggregate function so that
  * you could use it like this:
  *
- *   SELECT ts_stat(vector_column) FROM vector_table;
+ *	 SELECT ts_stat(vector_column) FROM vector_table;
  *
- *  where vector_column is a tsvector-type column in vector_table.
+ *	where vector_column is a tsvector-type column in vector_table.
  */
 
 static tsstat *
-ts_accum(tsstat * stat, Datum data)
+ts_accum(tsstat *stat, Datum data)
 {
 	tsstat	   *newstat;
 	TSVector	txt = DatumGetTSVector(data);
@@ -1012,7 +1012,7 @@ ts_accum(tsstat * stat, Datum data)
 
 static void
 ts_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
-				   tsstat * stat)
+				   tsstat *stat)
 {
 	TupleDesc	tupdesc;
 	MemoryContext oldcontext;
@@ -1232,11 +1232,11 @@ static bool
 istexttype(Oid typid)
 {
 	/* varchar(n) and char(n) are binary-compatible with text */
-	if (typid==TEXTOID || typid==VARCHAROID || typid==BPCHAROID)
+	if (typid == TEXTOID || typid == VARCHAROID || typid == BPCHAROID)
 		return true;
 	/* Allow domains over these types, too */
 	typid = getBaseType(typid);
-	if (typid==TEXTOID || typid==VARCHAROID || typid==BPCHAROID)
+	if (typid == TEXTOID || typid == VARCHAROID || typid == BPCHAROID)
 		return true;
 	return false;
 }
@@ -1280,7 +1280,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	Oid			cfgId;
 
 	/* Check call context */
-	if (!CALLED_AS_TRIGGER(fcinfo))	/* internal error */
+	if (!CALLED_AS_TRIGGER(fcinfo))		/* internal error */
 		elog(ERROR, "tsvector_update_trigger: not fired by trigger manager");
 
 	trigdata = (TriggerData *) fcinfo->context;
@@ -1318,7 +1318,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	/* Find the configuration to use */
 	if (config_column)
 	{
-		int		config_attr_num;
+		int			config_attr_num;
 
 		config_attr_num = SPI_fnumber(rel->rd_att, trigger->tgargs[1]);
 		if (config_attr_num == SPI_ERROR_NOATTRIBUTE)
@@ -1342,7 +1342,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	}
 	else
 	{
-		List	*names;
+		List	   *names;
 
 		names = stringToQualifiedNameList(trigger->tgargs[1]);
 		/* require a schema so that results are not search path dependent */

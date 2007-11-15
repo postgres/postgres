@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.93 2007/11/15 22:12:09 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.94 2007/11/15 23:23:44 momjian Exp $
 
 # Known bugs:
 #
@@ -33,22 +33,31 @@ fi
 for FILE
 do
 	cat "$FILE" |
-# convert // comments to /* */
+
+# Convert // comments to /* */
 	sed 's;^\([ 	]*\)//\(.*\)$;\1/* \2 */;g' |
+
 # Avoid bug that converts 'x =- 1' to 'x = -1'
 	sed 's;=- ;-= ;g' |
-# mark some comments for special treatment later
+
+# Mark some comments for special treatment later
 	sed 's;/\*  *---;/*---X_X;g' |
-# workaround for indent bug with 'else' handling
-# trim trailing space after single-line after-'else' comment
-# so next test can be done easily
-	sed 's;\([} 	]\)else[ 	]*\(/\*.*\*/\)[ 	]*$;\1else	\2;g' |
-# indent multi-line after-'else' comment so BSD indent will move it properly
-	sed 's;\([} 	]\)else[ 	]*\(/\*.*[^\*][^/]\)$;\1else\
+
+# 'else' followed by a single-line comment, followed by
+# a brace on the next line confuses BSD indent, so we push
+# the comment down to the next line, then later pull it
+# back up again.
+	sed 's;\([} 	]\)else[ 	]*\(/\*\)\(.*\*/\)[ 	]*$;\1else\
+    \2PGINDENT_MOVED\3;g' |
+
+# Indent multi-line after-'else' comment so BSD indent will move it properly.
+# We already moved down single-line comments above.  Check for '*' to make
+# sure we are not in a single-line comment that has other text on the line.
+	sed 's;\([} 	]\)else[ 	]*\(/\*[^\*]*\)[ 	]*$;\1else\
     \2;g' |
 	detab -t4 -qc |
 
-# work around bug where function that defines no local variables misindents
+# Work around bug where function that defines no local variables misindents
 # switch() case lines and line after #else.  Do not do for struct/enum.
 	awk '	BEGIN	{line1 = ""; line2 = ""}
 		{
@@ -71,7 +80,7 @@ do
 				print line1;
 		}' |
 
-# prevent indenting of code in 'extern "C"' blocks
+# Prevent indenting of code in 'extern "C"' blocks.
 	awk '	BEGIN	{line1 = ""; line2 = ""; skips = 0}
 		{
 			line2 = $0;
@@ -106,10 +115,10 @@ do
 				print line1;
 		}' |
 
-# protect backslashes in DATA()
+# Protect backslashes in DATA().
 	sed 's;^DATA(.*$;/*&*/;' |
 
-# protect wrapping in CATALOG()
+# Protect wrapping in CATALOG().
 	sed 's;^CATALOG(.*$;/*&*/;' >/tmp/$$a
 
 # We get the list of typedef's from /src/tools/find_typedef
@@ -2130,30 +2139,30 @@ do
 	fi
 	cat /tmp/$$a |
 
-# restore DATA/CATALOG lines
+# Restore DATA/CATALOG lines.
 	sed 's;^/\*\(DATA(.*\)\*/$;\1;' |
 	sed 's;^/\*\(CATALOG(.*\)\*/$;\1;' |
 
-# remove tabs and retab with four spaces
+# Remove tabs and retab with four spaces.
 	detab -t8 -qc |
 	entab -t4 -qc |
 	sed 's;^/\* Open extern \"C\" \*/$;{;' |
 	sed 's;^/\* Close extern \"C\" \*/$;};' |
 	sed 's;/\*---X_X;/* ---;g' |
 
-# workaround indent bug for 'static'
+# Workaround indent bug for 'static'.
 	sed 's;^static[ 	][ 	]*;static ;g' |
 
-# remove too much indenting after closing brace
+# Remove too much indenting after closing brace.
 	sed 's;^}	[ 	]*;}	;' |
 
-# indent single-line after-'else' comment by only one tab
+# Indent single-line after-'else' comment by only one tab.
 	sed 's;\([} 	]\)else[ 	]*\(/\*.*\*/\)[ 	]*$;\1else	\2;g' |
 
-# pull in #endif comments
+# Pull in #endif comments.
 	sed 's;^#endif[ 	][ 	]*/\*;#endif   /*;' |
 
-# work around misindenting of function with no variables defined
+# Work around misindenting of function with no variables defined.
 	awk '
 	{
 		if ($0 ~ /^[ 	]*int[ 	]*pgindent_func_no_var_fix;/)
@@ -2164,13 +2173,13 @@ do
 		else 	print $0;
 	}' |
 
-# add space after comments that start on tab stops
+# Add space after comments that start on tab stops.
 	sed 's;\([^ 	]\)\(/\*.*\*/\)$;\1	\2;' |
 
-# move trailing * in function return type
+# Move trailing * in function return type.
 	sed 's;^\([A-Za-z_][^ 	]*\)[ 	][ 	]*\*$;\1 *;' |
 
-# remove un-needed braces around single statements
+# Remove un-needed braces around single statements.
 # Do not use because it uglifies PG_TRY/PG_CATCH blocks and probably
 # isn't needed for general use.
 #	awk '
@@ -2200,7 +2209,7 @@ do
 #				print line2;
 #		}' |
 
-# remove blank line between opening brace and block comment
+# Remove blank line between opening brace and block comment.
 	awk '
 	{
 			line3 = $0;  
@@ -2229,7 +2238,33 @@ do
 				print line2;
 		}' |
 
-# remove trailing blank lines, helps with adding blank before trailing #endif
+# Pull up single-line comment after 'else' that was pulled down above
+	awk '
+		{
+			if (NR != 1)
+			{
+				if ($0 ~ "/\*PGINDENT_MOVED")
+				{
+					# remove tag
+					sub("PGINDENT_MOVED", "", $0);
+					# remove leading whitespace
+					sub("^[ 	]*", "", $0);
+					# add comment with single tab prefix
+					print prev_line"	"$0;
+					# throw away current line
+					getline;
+				}
+				else
+					print prev_line;
+			}
+			prev_line = $0;
+		}
+		END {
+			if (NR >= 1)
+				print prev_line;
+		}' |
+
+# Remove trailing blank lines, helps with adding blank before trailing #endif.
 	awk '	BEGIN	{blank_lines = 0;}
 		{
 			line1 = $0;
@@ -2243,7 +2278,7 @@ do
 			}
 		}' |
 
-# remove blank line before #else, #elif, and #endif
+# Remove blank line before #else, #elif, and #endif.
 	awk '	BEGIN	{line1 = ""; line2 = ""; skips = 0}
 		{
 			line2 = $0;
@@ -2268,7 +2303,7 @@ do
 				print line1;
 		}' |
 
-# add blank line before #endif if it is the last line in the file
+# Add blank line before #endif if it is the last line in the file.
 	awk '	BEGIN	{line1 = ""; line2 = ""}
 		{
 			line2 = $0;
@@ -2326,7 +2361,7 @@ do
 		else	print $0;
 	}' |
 
-# fix indenting of typedef caused by __cplusplus in libpq-fe.h
+# Fix indenting of typedef caused by __cplusplus in libpq-fe.h.
 	(
 		if echo "$FILE" | grep -q 'libpq-fe.h$'
 		then	sed 's/^[	]*typedef enum/typedef enum/'
