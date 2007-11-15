@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.538 2007/11/15 17:09:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.539 2007/11/15 20:10:32 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -250,17 +250,42 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Queries that previously automatically cast values to
-      <type>TEXT</type> might now need explicit casts (Peter, Tom)
+      Non-character values are no longer automatically cast to
+      <type>TEXT</> (Peter, Tom)
      </para>
 
      <para>
-      Data types other than <type>CHAR</> and <type>VARCHAR</> no
-      longer automatically cast to <type>TEXT</>, except in the
-      limited case of concatenation (<literal>||</>) where the other
-      input is textual. While this change will require additional
-      casts for some queries it also eliminates some unusual
-      behavior.
+      Previously, a function or operator that took a <type>TEXT</>
+      parameter used to automatically cast a non-<type>TEXT</> value to
+      <type>TEXT</> and call the function or operator (assuming there was
+      no other matching function or operator).  That no longer happens
+      and an explicit cast to <type>TEXT</> is now required.  For example,
+      these expressions now throw an error:
+
+<programlisting>
+substr(current_date, 1, 1);
+23 LIKE '%2%'
+5.4 ~ '6';
+</programlisting>
+
+      but these work because of the explicit casts:
+
+<programlisting>
+substr(current_date::text, 1, 1);
+23::text LIKE '%2%
+5.4::text ~ '6';
+</programlisting>
+     </para>
+
+     <para>
+      <type>CHAR</> and <type>VARCHAR</> still cast to <type>TEXT</>
+      automatically.  Concatenation (<literal>||</>) with non-<type>TEXT</>
+      types is still automatically cast, assuming one of the parameters
+      is textual.  While this change will require additional casts for
+      some queries, it also eliminates some unusual behavior.
+     </para>
+
+     <para>
      </para>
     </listitem>
 
@@ -1035,10 +1060,9 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This features was previously in <filename>contrib/tsearch2</>.  It
-       has been improved, moved into the server, and is now installed by
-       default.  <filename>contrib/tsearch2</> now contains a compatibility
-       interface.
+       Text search has been improved, moved into the server, and is now
+       installed by default.  <filename>contrib/tsearch2</> now contains
+       a compatibility interface.
       </para>
      </listitem>
 
