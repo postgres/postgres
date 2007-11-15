@@ -1,4 +1,4 @@
-# @(#)asia	8.12
+# @(#)asia	8.13
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -1771,7 +1771,31 @@ Rule	Syria	2006	only	-	Sep	22	0:00	0	-
 # For lack of better info, assume the rule changed to "last Friday in March"
 # this year.
 Rule	Syria	2007	max	-	Mar	lastFri	0:00	1:00	S
-Rule	Syria	2007	max	-	Oct	 1	0:00	0	-
+# From Jesper Norgard (2007-10-27):
+# The sister center ICARDA of my work CIMMYT is confirming that Syria DST will
+# not take place 1.st November at 0:00 o'clock but 1.st November at 24:00 or
+# rather Midnight between Thursday and Friday. This does make more sence than
+# having it between Wednesday and Thursday (two workdays in Syria) since the
+# weekend in Syria is not Saturday and Sunday, but Friday and Saturday. So now
+# it is implemented at midnight of the last workday before weekend...
+# 
+# From Steffen Thorsen (2007-10-27):
+# Jesper Norgaard Welen wrote:
+# 
+# > "Winter local time in Syria will be observed at midnight of Thursday 1
+# > November 2007, and the clock will be put back 1 hour."
+# 
+# I found confirmation on this in this gov.sy-article (Arabic):
+# http://wehda.alwehda.gov.sy/_print_veiw.asp?FileName=12521710520070926111247
+# 
+# which using Google's translate tools says:
+# Council of Ministers also approved the commencement of work on 
+# identifying the winter time as of Friday, 2/11/2007 where the 60th 
+# minute delay at midnight Thursday 1/11/2007.
+#
+# From Arthur David Olson (2007-10-30):
+# My best guess for the future is first Friday in November.
+Rule	Syria	2007	max	-	Nov	 Fri>=1	0:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Damascus	2:25:12 -	LMT	1920	# Dimashq
 			2:00	Syria	EE%sT
