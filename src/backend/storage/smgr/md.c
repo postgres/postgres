@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.129 2007/07/03 14:51:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.130 2007/11/15 20:36:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 /* special values for the segno arg to RememberFsyncRequest */
 #define FORGET_RELATION_FSYNC	(InvalidBlockNumber)
 #define FORGET_DATABASE_FSYNC	(InvalidBlockNumber-1)
+#define UNLINK_RELATION_REQUEST	(InvalidBlockNumber-2)
 
 /*
  * On Windows, we have to interpret EACCES as possibly meaning the same as
@@ -113,6 +114,10 @@ static MemoryContext MdCxt;		/* context for all md.c allocations */
  * table remembers the pending operations.	We use a hash table mostly as
  * a convenient way of eliminating duplicate requests.
  *
+ * We use a similar mechanism to remember no-longer-needed files that can
+ * be deleted after the next checkpoint, but we use a linked list instead of
+ * a hash table, because we don't expect there to be any duplicate requests.
+ *
  * (Regular backends do not track pending operations locally, but forward
  * them to the bgwriter.)
  */
@@ -131,9 +136,17 @@ typedef struct
 	CycleCtr	cycle_ctr;		/* mdsync_cycle_ctr when request was made */
 } PendingOperationEntry;
 
+typedef struct
+{
+	RelFileNode rnode;			/* the dead relation to delete */
+	CycleCtr cycle_ctr;			/* mdckpt_cycle_ctr when request was made */
+} PendingUnlinkEntry;
+
 static HTAB *pendingOpsTable = NULL;
+static List *pendingUnlinks = NIL;
 
 static CycleCtr mdsync_cycle_ctr = 0;
+static CycleCtr mdckpt_cycle_ctr = 0;
 
 
 typedef enum					/* behavior for mdopen & _mdfd_getseg */
@@ -146,6 +159,7 @@ typedef enum					/* behavior for mdopen & _mdfd_getseg */
 /* local routines */
 static MdfdVec *mdopen(SMgrRelation reln, ExtensionBehavior behavior);
 static void register_dirty_segment(SMgrRelation reln, MdfdVec *seg);
+static void register_unlink(RelFileNode rnode);
 static MdfdVec *_fdvec_alloc(void);
 
 #ifndef LET_OS_MANAGE_FILESIZE
@@ -188,6 +202,7 @@ mdinit(void)
 									  100L,
 									  &hash_ctl,
 								   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+		pendingUnlinks = NIL;
 	}
 }
 
@@ -254,14 +269,37 @@ mdcreate(SMgrRelation reln, bool isRedo)
  * Note that we're passed a RelFileNode --- by the time this is called,
  * there won't be an SMgrRelation hashtable entry anymore.
  *
+ * Actually, we don't unlink the first segment file of the relation, but
+ * just truncate it to zero length, and record a request to unlink it after
+ * the next checkpoint.  Additional segments can be unlinked immediately,
+ * however.  Leaving the empty file in place prevents that relfilenode
+ * number from being reused.  The scenario this protects us from is:
+ * 1. We delete a relation (and commit, and actually remove its file).
+ * 2. We create a new relation, which by chance gets the same relfilenode as
+ *    the just-deleted one (OIDs must've wrapped around for that to happen).
+ * 3. We crash before another checkpoint occurs.
+ * During replay, we would delete the file and then recreate it, which is fine
+ * if the contents of the file were repopulated by subsequent WAL entries.
+ * But if we didn't WAL-log insertions, but instead relied on fsyncing the
+ * file after populating it (as for instance CLUSTER and CREATE INDEX do),
+ * the contents of the file would be lost forever.  By leaving the empty file
+ * until after the next checkpoint, we prevent reassignment of the relfilenode
+ * number until it's safe, because relfilenode assignment skips over any
+ * existing file.
+ *
  * If isRedo is true, it's okay for the relation to be already gone.
- * Also, any failure should be reported as WARNING not ERROR, because
+ * Also, we should remove the file immediately instead of queuing a request
+ * for later, since during redo there's no possibility of creating a
+ * conflicting relation.
+ *
+ * Note: any failure should be reported as WARNING not ERROR, because
  * we are usually not in a transaction anymore when this is called.
  */
 void
 mdunlink(RelFileNode rnode, bool isRedo)
 {
 	char	   *path;
+	int ret;
 
 	/*
 	 * We have to clean out any pending fsync requests for the doomed relation,
@@ -271,8 +309,15 @@ mdunlink(RelFileNode rnode, bool isRedo)
 
 	path = relpath(rnode);
 
-	/* Delete the first segment, or only segment if not doing segmenting */
-	if (unlink(path) < 0)
+	/*
+	 * Delete or truncate the first segment, or only segment if not doing
+	 * segmenting
+	 */
+	if (isRedo)
+		ret = unlink(path);
+	else
+		ret = truncate(path, 0);
+	if (ret < 0)
 	{
 		if (!isRedo || errno != ENOENT)
 			ereport(WARNING,
@@ -316,6 +361,10 @@ mdunlink(RelFileNode rnode, bool isRedo)
 #endif
 
 	pfree(path);
+
+	/* Register request to unlink first segment later */
+	if (!isRedo)
+		register_unlink(rnode);
 }
 
 /*
@@ -1064,6 +1113,91 @@ mdsync(void)
 }
 
 /*
+ * mdpreckpt() -- Do pre-checkpoint work
+ *
+ * To distinguish unlink requests that arrived before this checkpoint
+ * started from those that arrived during the checkpoint, we use a cycle
+ * counter similar to the one we use for fsync requests. That cycle
+ * counter is incremented here.
+ *
+ * This must be called *before* the checkpoint REDO point is determined.
+ * That ensures that we won't delete files too soon.
+ *
+ * Note that we can't do anything here that depends on the assumption
+ * that the checkpoint will be completed.
+ */
+void
+mdpreckpt(void)
+{
+	ListCell *cell;
+
+	/*
+	 * In case the prior checkpoint wasn't completed, stamp all entries in
+	 * the list with the current cycle counter.  Anything that's in the
+	 * list at the start of checkpoint can surely be deleted after the
+	 * checkpoint is finished, regardless of when the request was made.
+	 */
+	foreach(cell, pendingUnlinks)
+	{
+		PendingUnlinkEntry *entry = (PendingUnlinkEntry *) lfirst(cell);
+
+		entry->cycle_ctr = mdckpt_cycle_ctr;
+	}
+
+	/*
+	 * Any unlink requests arriving after this point will be assigned the
+	 * next cycle counter, and won't be unlinked until next checkpoint.
+	 */
+	mdckpt_cycle_ctr++;
+}
+
+/*
+ * mdpostckpt() -- Do post-checkpoint work
+ *
+ * Remove any lingering files that can now be safely removed.
+ */
+void
+mdpostckpt(void)
+{
+	while (pendingUnlinks != NIL)
+	{
+		PendingUnlinkEntry *entry = (PendingUnlinkEntry *) linitial(pendingUnlinks);
+		char *path;
+
+		/*
+		 * New entries are appended to the end, so if the entry is new
+		 * we've reached the end of old entries.
+		 */
+		if (entry->cycle_ctr == mdsync_cycle_ctr)
+			break;
+
+		/* Else assert we haven't missed it */
+		Assert((CycleCtr) (entry->cycle_ctr + 1) == mdckpt_cycle_ctr);
+
+		/* Unlink the file */
+		path = relpath(entry->rnode);
+		if (unlink(path) < 0)
+		{
+			/*
+			 * ENOENT shouldn't happen either, but it doesn't really matter
+			 * because we would've deleted it now anyway.
+			 */
+			if (errno != ENOENT)
+				ereport(WARNING,
+						(errcode_for_file_access(),
+						 errmsg("could not remove relation %u/%u/%u: %m",
+								entry->rnode.spcNode,
+								entry->rnode.dbNode,
+								entry->rnode.relNode)));
+		}
+		pfree(path);
+
+		pendingUnlinks = list_delete_first(pendingUnlinks);
+		pfree(entry);
+	}
+}
+
+/*
  * register_dirty_segment() -- Mark a relation segment as needing fsync
  *
  * If there is a local pending-ops table, just make an entry in it for
@@ -1097,18 +1231,52 @@ register_dirty_segment(SMgrRelation reln, MdfdVec *seg)
 }
 
 /*
+ * register_unlink() -- Schedule a file to be deleted after next checkpoint
+ *
+ * As with register_dirty_segment, this could involve either a local or
+ * a remote pending-ops table.
+ */
+static void
+register_unlink(RelFileNode rnode)
+{
+	if (pendingOpsTable)
+	{
+		/* push it into local pending-ops table */
+		RememberFsyncRequest(rnode, UNLINK_RELATION_REQUEST);
+	}
+	else
+	{
+		/*
+		 * Notify the bgwriter about it.  If we fail to queue the request
+		 * message, we have to sleep and try again, because we can't simply
+		 * delete the file now.  Ugly, but hopefully won't happen often.
+		 *
+		 * XXX should we just leave the file orphaned instead?
+		 */
+		Assert(IsUnderPostmaster);
+		while (!ForwardFsyncRequest(rnode, UNLINK_RELATION_REQUEST))
+			pg_usleep(10000L);	/* 10 msec seems a good number */
+	}
+}
+
+/*
  * RememberFsyncRequest() -- callback from bgwriter side of fsync request
  *
- * We stuff the fsync request into the local hash table for execution
- * during the bgwriter's next checkpoint.
+ * We stuff most fsync requests into the local hash table for execution
+ * during the bgwriter's next checkpoint.  UNLINK requests go into a
+ * separate linked list, however, because they get processed separately.
  *
  * The range of possible segment numbers is way less than the range of
  * BlockNumber, so we can reserve high values of segno for special purposes.
- * We define two: FORGET_RELATION_FSYNC means to cancel pending fsyncs for
- * a relation, and FORGET_DATABASE_FSYNC means to cancel pending fsyncs for
- * a whole database.  (These are a tad slow because the hash table has to be
- * searched linearly, but it doesn't seem worth rethinking the table structure
- * for them.)
+ * We define three:
+ * - FORGET_RELATION_FSYNC means to cancel pending fsyncs for a relation
+ * - FORGET_DATABASE_FSYNC means to cancel pending fsyncs for a whole database
+ * - UNLINK_RELATION_REQUEST is a request to delete the file after the next
+ *   checkpoint.
+ *
+ * (Handling the FORGET_* requests is a tad slow because the hash table has
+ * to be searched linearly, but it doesn't seem worth rethinking the table
+ * structure for them.)
  */
 void
 RememberFsyncRequest(RelFileNode rnode, BlockNumber segno)
@@ -1146,6 +1314,20 @@ RememberFsyncRequest(RelFileNode rnode, BlockNumber segno)
 				entry->canceled = true;
 			}
 		}
+	}
+	else if (segno == UNLINK_RELATION_REQUEST)
+	{
+		/* Unlink request: put it in the linked list */
+		MemoryContext oldcxt = MemoryContextSwitchTo(MdCxt);
+		PendingUnlinkEntry *entry;
+
+		entry = palloc(sizeof(PendingUnlinkEntry));
+		entry->rnode = rnode;
+		entry->cycle_ctr = mdckpt_cycle_ctr;
+
+		pendingUnlinks = lappend(pendingUnlinks, entry);
+
+		MemoryContextSwitchTo(oldcxt);
 	}
 	else
 	{

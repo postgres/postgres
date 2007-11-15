@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.49 2007/08/01 22:45:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.50 2007/11/15 20:36:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@
 #include "commands/comment.h"
 #include "commands/tablespace.h"
 #include "miscadmin.h"
+#include "postmaster/bgwriter.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -460,13 +461,29 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	LWLockAcquire(TablespaceCreateLock, LW_EXCLUSIVE);
 
 	/*
-	 * Try to remove the physical infrastructure
+	 * Try to remove the physical infrastructure. 
 	 */
 	if (!remove_tablespace_directories(tablespaceoid, false))
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("tablespace \"%s\" is not empty",
-						tablespacename)));
+	{
+		/*
+		 * Not all files deleted?  However, there can be lingering empty files
+		 * in the directories, left behind by for example DROP TABLE, that
+		 * have been scheduled for deletion at next checkpoint (see comments
+		 * in mdunlink() for details).  We could just delete them immediately,
+		 * but we can't tell them apart from important data files that we
+		 * mustn't delete.  So instead, we force a checkpoint which will clean
+		 * out any lingering files, and try again.
+		 */
+		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
+		if (!remove_tablespace_directories(tablespaceoid, false))
+		{
+			/* Still not empty, the files must be important then */
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("tablespace \"%s\" is not empty",
+							tablespacename)));
+		}
+	}
 
 	/* Record the filesystem change in XLOG */
 	{

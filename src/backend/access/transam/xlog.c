@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.286 2007/10/12 19:39:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.287 2007/11/15 20:36:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@
 #include "storage/fd.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
+#include "storage/smgr.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
 #include "utils/pg_locale.h"
@@ -5663,6 +5664,14 @@ CreateCheckPoint(int flags)
 		UpdateControlFile();
 	}
 
+	/*
+	 * Let smgr prepare for checkpoint; this has to happen before we
+	 * determine the REDO pointer.  Note that smgr must not do anything
+	 * that'd have to be undone if we decide no checkpoint is needed.
+	 */
+	smgrpreckpt();
+
+	/* Begin filling in the checkpoint WAL record */
 	MemSet(&checkPoint, 0, sizeof(checkPoint));
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
 	checkPoint.time = time(NULL);
@@ -5885,6 +5894,11 @@ CreateCheckPoint(int flags)
 	 * have trouble while fooling with old log segments.
 	 */
 	END_CRIT_SECTION();
+
+	/*
+	 * Let smgr do post-checkpoint cleanup (eg, deleting old files).
+	 */
+	smgrpostckpt();
 
 	/*
 	 * Delete old log files (those no longer needed even for previous
