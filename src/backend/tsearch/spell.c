@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.5 2007/09/11 12:57:05 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.6 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 /*
  * Initialization requires a lot of memory that's not needed
- * after the initialization is done.  In init function, 
+ * after the initialization is done.  In init function,
  * CurrentMemoryContext is a long lived memory context associated
  * with the dictionary cache entry, so we use a temporary context
  * for the short-lived stuff.
@@ -35,8 +35,9 @@ static MemoryContext tmpCtx = NULL;
 static void
 checkTmpCtx(void)
 {
-	/* XXX: This assumes that CurrentMemoryContext doesn't have
-	 * any children other than the one we create here.
+	/*
+	 * XXX: This assumes that CurrentMemoryContext doesn't have any children
+	 * other than the one we create here.
 	 */
 	if (CurrentMemoryContext->firstchild == NULL)
 	{
@@ -206,7 +207,8 @@ NIImportDictionary(IspellDict * Conf, const char *filename)
 
 	while ((line = t_readline(dict)) != NULL)
 	{
-		char	   *s, *pstr;
+		char	   *s,
+				   *pstr;
 		const char *flag;
 
 		/* Extract flag from the line */
@@ -441,8 +443,8 @@ parse_affentry(char *str, char *mask, char *find, char *repl,
 			else if (!t_isspace(str))
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("syntax error at line %d of affix file \"%s\"",
-								lineno, filename)));
+					   errmsg("syntax error at line %d of affix file \"%s\"",
+							  lineno, filename)));
 		}
 		else if (state == PAE_INFIND)
 		{
@@ -459,8 +461,8 @@ parse_affentry(char *str, char *mask, char *find, char *repl,
 			else if (!t_isspace(str))
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("syntax error at line %d of affix file \"%s\"",
-								lineno, filename)));
+					   errmsg("syntax error at line %d of affix file \"%s\"",
+							  lineno, filename)));
 		}
 		else if (state == PAE_WAIT_REPL)
 		{
@@ -477,8 +479,8 @@ parse_affentry(char *str, char *mask, char *find, char *repl,
 			else if (!t_isspace(str))
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("syntax error at line %d of affix file \"%s\"",
-								lineno, filename)));
+					   errmsg("syntax error at line %d of affix file \"%s\"",
+							  lineno, filename)));
 		}
 		else if (state == PAE_INREPL)
 		{
@@ -495,8 +497,8 @@ parse_affentry(char *str, char *mask, char *find, char *repl,
 			else if (!t_isspace(str))
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("syntax error at line %d of affix file \"%s\"",
-								lineno, filename)));
+					   errmsg("syntax error at line %d of affix file \"%s\"",
+							  lineno, filename)));
 		}
 		else
 			elog(ERROR, "unknown state in parse_affentry: %d", state);
@@ -664,7 +666,7 @@ NIImportOOAffixes(IspellDict * Conf, const char *filename)
 			if ((ptr = strchr(prepl, '/')) != NULL)
 			{
 				*ptr = '\0';
-				ptr = repl + (ptr-prepl) + 1;
+				ptr = repl + (ptr - prepl) + 1;
 				while (*ptr)
 				{
 					aflg |= Conf->flagval[(unsigned int) *ptr];
@@ -685,7 +687,7 @@ NIImportOOAffixes(IspellDict * Conf, const char *filename)
 			pfree(pmask);
 		}
 
-	nextline:
+nextline:
 		pfree(recoded);
 	}
 
@@ -742,7 +744,8 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 			s = findchar(pstr, 'l');
 			if (s)
 			{
-				s = recoded + ( s-pstr ); /* we need non-lowercased string */
+				s = recoded + (s - pstr);		/* we need non-lowercased
+												 * string */
 				while (*s && !t_isspace(s))
 					s++;
 				while (*s && t_isspace(s))
@@ -773,7 +776,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 		}
 		if (STRNCMP(pstr, "flag") == 0)
 		{
-			s = recoded + 4; /* we need non-lowercased string */
+			s = recoded + 4;	/* we need non-lowercased string */
 			flagflags = 0;
 
 			while (*s && t_isspace(s))
@@ -831,7 +834,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 
 		NIAddAffix(Conf, flag, flagflags, mask, find, repl, suffixes ? FF_SUFFIX : FF_PREFIX);
 
-	nextline:
+nextline:
 		pfree(recoded);
 		pfree(pstr);
 	}
@@ -953,15 +956,15 @@ mkSPNode(IspellDict * Conf, int low, int high, int level)
 }
 
 /*
- * Builds the Conf->Dictionary tree and AffixData from the imported dictionary 
+ * Builds the Conf->Dictionary tree and AffixData from the imported dictionary
  * and affixes.
  */
 void
 NISortDictionary(IspellDict * Conf)
 {
-	int	i;
-	int	naffix = 0;
-	int	curaffix;
+	int			i;
+	int			naffix = 0;
+	int			curaffix;
 
 	checkTmpCtx();
 
@@ -979,9 +982,9 @@ NISortDictionary(IspellDict * Conf)
 	}
 
 	/*
-	 * Fill in Conf->AffixData with the affixes that were used
-	 * in the dictionary. Replace textual flag-field of Conf->Spell 
-	 * entries with indexes into Conf->AffixData array.
+	 * Fill in Conf->AffixData with the affixes that were used in the
+	 * dictionary. Replace textual flag-field of Conf->Spell entries with
+	 * indexes into Conf->AffixData array.
 	 */
 	Conf->AffixData = (char **) palloc0(naffix * sizeof(char *));
 
@@ -1446,7 +1449,7 @@ typedef struct SplitVar
 	int			nstem;
 	char	  **stem;
 	struct SplitVar *next;
-} SplitVar;
+}	SplitVar;
 
 static int
 CheckCompoundAffixes(CMPDAffix ** ptr, char *word, int len, bool CheckInPlace)

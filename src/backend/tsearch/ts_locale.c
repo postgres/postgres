@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.3 2007/11/09 22:37:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.4 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ wchar2char(char *to, const wchar_t *from, size_t tolen)
 		Assert(r <= tolen);
 
 		/* Microsoft counts the zero terminator in the result */
-		return r-1;
+		return r - 1;
 	}
 #endif   /* WIN32 */
 
@@ -59,7 +59,7 @@ wchar2char(char *to, const wchar_t *from, size_t tolen)
  * This has almost the API of mbstowcs(), except that *from need not be
  * null-terminated; instead, the number of input bytes is specified as
  * fromlen.  Also, we ereport() rather than returning -1 for invalid
- * input encoding.  tolen is the maximum number of wchar_t's to store at *to.
+ * input encoding.	tolen is the maximum number of wchar_t's to store at *to.
  * The output will be zero-terminated iff there is room.
  */
 size_t
@@ -87,7 +87,7 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen)
 		Assert(r <= tolen);
 
 		/* Microsoft counts the zero terminator in the result */
-		return r-1;
+		return r - 1;
 	}
 #endif   /* WIN32 */
 
@@ -183,7 +183,6 @@ t_isprint(const char *ptr)
 
 	return iswprint((wint_t) character[0]);
 }
-
 #endif   /* TS_USE_WIDE */
 
 
@@ -195,10 +194,10 @@ t_isprint(const char *ptr)
 char *
 t_readline(FILE *fp)
 {
-	int len;
-	char *recoded;
-	char buf[4096];		/* lines must not be longer than this */
-	
+	int			len;
+	char	   *recoded;
+	char		buf[4096];		/* lines must not be longer than this */
+
 	if (fgets(buf, sizeof(buf), fp) == NULL)
 		return NULL;
 
@@ -219,9 +218,8 @@ t_readline(FILE *fp)
 	if (recoded == buf)
 	{
 		/*
-		 * conversion didn't pstrdup, so we must.
-		 * We can use the length of the original string, because
-		 * no conversion was done.
+		 * conversion didn't pstrdup, so we must. We can use the length of the
+		 * original string, because no conversion was done.
 		 */
 		recoded = pnstrdup(recoded, len);
 	}
@@ -276,7 +274,7 @@ lowerstr_with_len(const char *str, int len)
 		 */
 		wptr = wstr = (wchar_t *) palloc(sizeof(wchar_t) * (len + 1));
 
-		wlen = char2wchar(wstr, len+1, str, len);
+		wlen = char2wchar(wstr, len + 1, str, len);
 		Assert(wlen <= len);
 
 		while (*wptr)

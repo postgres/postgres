@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.360 2007/10/24 20:55:36 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.361 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,19 +592,19 @@ vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
 	/*
 	 * We can always ignore processes running lazy vacuum.	This is because we
 	 * use these values only for deciding which tuples we must keep in the
-	 * tables.	Since lazy vacuum doesn't write its XID anywhere, it's
-	 * safe to ignore it.  In theory it could be problematic to ignore lazy
-	 * vacuums on a full vacuum, but keep in mind that only one vacuum process
-	 * can be working on a particular table at any time, and that each vacuum
-	 * is always an independent transaction.
+	 * tables.	Since lazy vacuum doesn't write its XID anywhere, it's safe to
+	 * ignore it.  In theory it could be problematic to ignore lazy vacuums on
+	 * a full vacuum, but keep in mind that only one vacuum process can be
+	 * working on a particular table at any time, and that each vacuum is
+	 * always an independent transaction.
 	 */
 	*oldestXmin = GetOldestXmin(sharedRel, true);
 
 	Assert(TransactionIdIsNormal(*oldestXmin));
 
 	/*
-	 * Determine the minimum freeze age to use: as specified by the caller,
-	 * or vacuum_freeze_min_age, but in any case not more than half
+	 * Determine the minimum freeze age to use: as specified by the caller, or
+	 * vacuum_freeze_min_age, but in any case not more than half
 	 * autovacuum_freeze_max_age, so that autovacuums to prevent XID
 	 * wraparound won't occur too frequently.
 	 */
@@ -623,8 +623,8 @@ vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
 
 	/*
 	 * If oldestXmin is very far back (in practice, more than
-	 * autovacuum_freeze_max_age / 2 XIDs old), complain and force a
-	 * minimum freeze age of zero.
+	 * autovacuum_freeze_max_age / 2 XIDs old), complain and force a minimum
+	 * freeze age of zero.
 	 */
 	safeLimit = ReadNewTransactionId() - autovacuum_freeze_max_age;
 	if (!TransactionIdIsNormal(safeLimit))
@@ -758,7 +758,7 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
  *		advance pg_database.datfrozenxid, also try to truncate pg_clog.
  *
  *		We violate transaction semantics here by overwriting the database's
- *		existing pg_database tuple with the new value.  This is reasonably
+ *		existing pg_database tuple with the new value.	This is reasonably
  *		safe since the new value is correct whether or not this transaction
  *		commits.  As with vac_update_relstats, this avoids leaving dead tuples
  *		behind after a VACUUM.
@@ -777,7 +777,7 @@ vac_update_datfrozenxid(void)
 	bool		dirty = false;
 
 	/*
-	 * Initialize the "min" calculation with RecentGlobalXmin.  Any
+	 * Initialize the "min" calculation with RecentGlobalXmin.	Any
 	 * not-yet-committed pg_class entries for new tables must have
 	 * relfrozenxid at least this high, because any other open xact must have
 	 * RecentXmin >= its PGPROC.xmin >= our RecentGlobalXmin; see
@@ -848,8 +848,7 @@ vac_update_datfrozenxid(void)
 
 	/*
 	 * If we were able to advance datfrozenxid, mark the flat-file copy of
-	 * pg_database for update at commit, and see if we can truncate
-	 * pg_clog.
+	 * pg_database for update at commit, and see if we can truncate pg_clog.
 	 */
 	if (dirty)
 	{
@@ -893,10 +892,10 @@ vac_truncate_clog(TransactionId frozenXID)
 	 * inserted by CREATE DATABASE.  Any such entry will have a copy of some
 	 * existing DB's datfrozenxid, and that source DB cannot be ours because
 	 * of the interlock against copying a DB containing an active backend.
-	 * Hence the new entry will not reduce the minimum.  Also, if two
-	 * VACUUMs concurrently modify the datfrozenxid's of different databases,
-	 * the worst possible outcome is that pg_clog is not truncated as
-	 * aggressively as it could be.
+	 * Hence the new entry will not reduce the minimum.  Also, if two VACUUMs
+	 * concurrently modify the datfrozenxid's of different databases, the
+	 * worst possible outcome is that pg_clog is not truncated as aggressively
+	 * as it could be.
 	 */
 	relation = heap_open(DatabaseRelationId, AccessShareLock);
 
@@ -989,13 +988,13 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 		 *
 		 * We can furthermore set the PROC_IN_VACUUM flag, which lets other
 		 * concurrent VACUUMs know that they can ignore this one while
-		 * determining their OldestXmin.  (The reason we don't set it
-		 * during a full VACUUM is exactly that we may have to run user-
-		 * defined functions for functional indexes, and we want to make sure
-		 * that if they use the snapshot set above, any tuples it requires
-		 * can't get removed from other tables.  An index function that
-		 * depends on the contents of other tables is arguably broken, but we
-		 * won't break it here by violating transaction semantics.)
+		 * determining their OldestXmin.  (The reason we don't set it during a
+		 * full VACUUM is exactly that we may have to run user- defined
+		 * functions for functional indexes, and we want to make sure that if
+		 * they use the snapshot set above, any tuples it requires can't get
+		 * removed from other tables.  An index function that depends on the
+		 * contents of other tables is arguably broken, but we won't break it
+		 * here by violating transaction semantics.)
 		 *
 		 * Note: this flag remains set until CommitTransaction or
 		 * AbortTransaction.  We don't want to clear it until we reset
@@ -1168,8 +1167,8 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 
 	/*
 	 * Flush any previous async-commit transactions.  This does not guarantee
-	 * that we will be able to set hint bits for tuples they inserted, but
-	 * it improves the probability, especially in simple sequential-commands
+	 * that we will be able to set hint bits for tuples they inserted, but it
+	 * improves the probability, especially in simple sequential-commands
 	 * cases.  See scan_heap() and repair_frag() for more about this.
 	 */
 	XLogAsyncCommitFlush();
@@ -1319,10 +1318,11 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		 * dirty.  To ensure that invalid data doesn't get written to disk, we
 		 * must take exclusive buffer lock wherever we potentially modify
 		 * pages.  In fact, we insist on cleanup lock so that we can safely
-		 * call heap_page_prune().  (This might be overkill, since the bgwriter
-		 * pays no attention to individual tuples, but on the other hand it's
-		 * unlikely that the bgwriter has this particular page pinned at this
-		 * instant.  So violating the coding rule would buy us little anyway.)
+		 * call heap_page_prune().	(This might be overkill, since the
+		 * bgwriter pays no attention to individual tuples, but on the other
+		 * hand it's unlikely that the bgwriter has this particular page
+		 * pinned at this instant.	So violating the coding rule would buy us
+		 * little anyway.)
 		 */
 		LockBufferForCleanup(buf);
 
@@ -1365,7 +1365,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			continue;
 		}
 
-		/* 
+		/*
 		 * Prune all HOT-update chains in this page.
 		 *
 		 * We use the redirect_move option so that redirecting line pointers
@@ -1377,8 +1377,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 										 true, false);
 
 		/*
-		 * Now scan the page to collect vacuumable items and check for
-		 * tuples requiring freezing.
+		 * Now scan the page to collect vacuumable items and check for tuples
+		 * requiring freezing.
 		 */
 		nfrozen = 0;
 		notup = true;
@@ -1393,9 +1393,9 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 			/*
 			 * Collect un-used items too - it's possible to have indexes
-			 * pointing here after crash.  (That's an ancient comment and
-			 * is likely obsolete with WAL, but we might as well continue
-			 * to check for such problems.)
+			 * pointing here after crash.  (That's an ancient comment and is
+			 * likely obsolete with WAL, but we might as well continue to
+			 * check for such problems.)
 			 */
 			if (!ItemIdIsUsed(itemid))
 			{
@@ -1406,9 +1406,9 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 			/*
 			 * DEAD item pointers are to be vacuumed normally; but we don't
-			 * count them in tups_vacuumed, else we'd be double-counting
-			 * (at least in the common case where heap_page_prune() just
-			 * freed up a non-HOT tuple).
+			 * count them in tups_vacuumed, else we'd be double-counting (at
+			 * least in the common case where heap_page_prune() just freed up
+			 * a non-HOT tuple).
 			 */
 			if (ItemIdIsDead(itemid))
 			{
@@ -1433,12 +1433,13 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 						!OidIsValid(HeapTupleGetOid(&tuple)))
 						elog(WARNING, "relation \"%s\" TID %u/%u: OID is invalid",
 							 relname, blkno, offnum);
+
 					/*
 					 * The shrinkage phase of VACUUM FULL requires that all
 					 * live tuples have XMIN_COMMITTED set --- see comments in
 					 * repair_frag()'s walk-along-page loop.  Use of async
 					 * commit may prevent HeapTupleSatisfiesVacuum from
-					 * setting the bit for a recently committed tuple.  Rather
+					 * setting the bit for a recently committed tuple.	Rather
 					 * than trying to handle this corner case, we just give up
 					 * and don't shrink.
 					 */
@@ -1448,30 +1449,31 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 						ereport(LOG,
 								(errmsg("relation \"%s\" TID %u/%u: XMIN_COMMITTED not set for transaction %u --- cannot shrink relation",
 										relname, blkno, offnum,
-										HeapTupleHeaderGetXmin(tuple.t_data))));
+									 HeapTupleHeaderGetXmin(tuple.t_data))));
 						do_shrinking = false;
 					}
 					break;
 				case HEAPTUPLE_DEAD:
+
 					/*
 					 * Ordinarily, DEAD tuples would have been removed by
 					 * heap_page_prune(), but it's possible that the tuple
 					 * state changed since heap_page_prune() looked.  In
 					 * particular an INSERT_IN_PROGRESS tuple could have
 					 * changed to DEAD if the inserter aborted.  So this
-					 * cannot be considered an error condition, though it
-					 * does suggest that someone released a lock early.
+					 * cannot be considered an error condition, though it does
+					 * suggest that someone released a lock early.
 					 *
 					 * If the tuple is HOT-updated then it must only be
 					 * removed by a prune operation; so we keep it as if it
 					 * were RECENTLY_DEAD, and abandon shrinking. (XXX is it
-					 * worth trying to make the shrinking code smart enough
-					 * to handle this?  It's an unusual corner case.)
+					 * worth trying to make the shrinking code smart enough to
+					 * handle this?  It's an unusual corner case.)
 					 *
 					 * DEAD heap-only tuples can safely be removed if they
 					 * aren't themselves HOT-updated, although this is a bit
-					 * inefficient since we'll uselessly try to remove
-					 * index entries for them.
+					 * inefficient since we'll uselessly try to remove index
+					 * entries for them.
 					 */
 					if (HeapTupleIsHotUpdated(&tuple))
 					{
@@ -1484,7 +1486,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					}
 					else
 					{
-						tupgone = true;		/* we can delete the tuple */
+						tupgone = true; /* we can delete the tuple */
+
 						/*
 						 * We need not require XMIN_COMMITTED or
 						 * XMAX_COMMITTED to be set, since we will remove the
@@ -1502,8 +1505,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					nkeep += 1;
 
 					/*
-					 * As with the LIVE case, shrinkage requires XMIN_COMMITTED
-					 * to be set.
+					 * As with the LIVE case, shrinkage requires
+					 * XMIN_COMMITTED to be set.
 					 */
 					if (do_shrinking &&
 						!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
@@ -1511,7 +1514,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 						ereport(LOG,
 								(errmsg("relation \"%s\" TID %u/%u: XMIN_COMMITTED not set for transaction %u --- cannot shrink relation",
 										relname, blkno, offnum,
-										HeapTupleHeaderGetXmin(tuple.t_data))));
+									 HeapTupleHeaderGetXmin(tuple.t_data))));
 						do_shrinking = false;
 					}
 
@@ -1542,15 +1545,15 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					 * This should not happen, since we hold exclusive lock on
 					 * the relation; shouldn't we raise an error?  (Actually,
 					 * it can happen in system catalogs, since we tend to
-					 * release write lock before commit there.)  As above,
-					 * we can't apply repair_frag() if the tuple state is
+					 * release write lock before commit there.)  As above, we
+					 * can't apply repair_frag() if the tuple state is
 					 * uncertain.
 					 */
 					if (do_shrinking)
 						ereport(LOG,
 								(errmsg("relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- cannot shrink relation",
 										relname, blkno, offnum,
-										HeapTupleHeaderGetXmin(tuple.t_data))));
+									 HeapTupleHeaderGetXmin(tuple.t_data))));
 					do_shrinking = false;
 					break;
 				case HEAPTUPLE_DELETE_IN_PROGRESS:
@@ -1559,15 +1562,15 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					 * This should not happen, since we hold exclusive lock on
 					 * the relation; shouldn't we raise an error?  (Actually,
 					 * it can happen in system catalogs, since we tend to
-					 * release write lock before commit there.)  As above,
-					 * we can't apply repair_frag() if the tuple state is
+					 * release write lock before commit there.)  As above, we
+					 * can't apply repair_frag() if the tuple state is
 					 * uncertain.
 					 */
 					if (do_shrinking)
 						ereport(LOG,
 								(errmsg("relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- cannot shrink relation",
 										relname, blkno, offnum,
-										HeapTupleHeaderGetXmax(tuple.t_data))));
+									 HeapTupleHeaderGetXmax(tuple.t_data))));
 					do_shrinking = false;
 					break;
 				default:
@@ -1615,8 +1618,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					max_tlen = tuple.t_len;
 
 				/*
-				 * Each non-removable tuple must be checked to see if it
-				 * needs freezing.
+				 * Each non-removable tuple must be checked to see if it needs
+				 * freezing.
 				 */
 				if (heap_freeze_tuple(tuple.t_data, FreezeLimit,
 									  InvalidBuffer))
@@ -1996,11 +1999,12 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					if (i >= vacpage->offsets_free)		/* not found */
 					{
 						vacpage->offsets[vacpage->offsets_free++] = offnum;
+
 						/*
 						 * If this is not a heap-only tuple, there must be an
 						 * index entry for this item which will be removed in
-						 * the index cleanup. Decrement the keep_indexed_tuples
-						 * count to remember this.
+						 * the index cleanup. Decrement the
+						 * keep_indexed_tuples count to remember this.
 						 */
 						if (!HeapTupleHeaderIsHeapOnly(tuple.t_data))
 							keep_indexed_tuples--;
@@ -2010,11 +2014,12 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				else
 				{
 					vacpage->offsets[vacpage->offsets_free++] = offnum;
+
 					/*
 					 * If this is not a heap-only tuple, there must be an
-					 * index entry for this item which will be removed in
-					 * the index cleanup. Decrement the keep_indexed_tuples
-					 * count to remember this.
+					 * index entry for this item which will be removed in the
+					 * index cleanup. Decrement the keep_indexed_tuples count
+					 * to remember this.
 					 */
 					if (!HeapTupleHeaderIsHeapOnly(tuple.t_data))
 						keep_indexed_tuples--;
@@ -2051,10 +2056,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 * Also, because we distinguish DEAD and RECENTLY_DEAD tuples
 			 * using OldestXmin, which is a rather coarse test, it is quite
 			 * possible to have an update chain in which a tuple we think is
-			 * RECENTLY_DEAD links forward to one that is definitely DEAD.
-			 * In such a case the RECENTLY_DEAD tuple must actually be dead,
-			 * but it seems too complicated to try to make VACUUM remove it.
-			 * We treat each contiguous set of RECENTLY_DEAD tuples as a
+			 * RECENTLY_DEAD links forward to one that is definitely DEAD. In
+			 * such a case the RECENTLY_DEAD tuple must actually be dead, but
+			 * it seems too complicated to try to make VACUUM remove it. We
+			 * treat each contiguous set of RECENTLY_DEAD tuples as a
 			 * separately movable chain, ignoring any intervening DEAD ones.
 			 */
 			if (((tuple.t_data->t_infomask & HEAP_UPDATED) &&
@@ -2096,11 +2101,11 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				 * If this tuple is in the begin/middle of the chain then we
 				 * have to move to the end of chain.  As with any t_ctid
 				 * chase, we have to verify that each new tuple is really the
-				 * descendant of the tuple we came from; however, here we
-				 * need even more than the normal amount of paranoia.
-				 * If t_ctid links forward to a tuple determined to be DEAD,
-				 * then depending on where that tuple is, it might already
-				 * have been removed, and perhaps even replaced by a MOVED_IN
+				 * descendant of the tuple we came from; however, here we need
+				 * even more than the normal amount of paranoia. If t_ctid
+				 * links forward to a tuple determined to be DEAD, then
+				 * depending on where that tuple is, it might already have
+				 * been removed, and perhaps even replaced by a MOVED_IN
 				 * tuple.  We don't want to include any DEAD tuples in the
 				 * chain, so we have to recheck HeapTupleSatisfiesVacuum.
 				 */
@@ -2116,7 +2121,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					OffsetNumber nextOffnum;
 					ItemId		nextItemid;
 					HeapTupleHeader nextTdata;
-					HTSV_Result	nextTstatus;
+					HTSV_Result nextTstatus;
 
 					nextTid = tp.t_data->t_ctid;
 					priorXmax = HeapTupleHeaderGetXmax(tp.t_data);
@@ -2148,10 +2153,11 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						ReleaseBuffer(nextBuf);
 						break;
 					}
+
 					/*
-					 * Must check for DEAD or MOVED_IN tuple, too.  This
-					 * could potentially update hint bits, so we'd better
-					 * hold the buffer content lock.
+					 * Must check for DEAD or MOVED_IN tuple, too.	This could
+					 * potentially update hint bits, so we'd better hold the
+					 * buffer content lock.
 					 */
 					LockBuffer(nextBuf, BUFFER_LOCK_SHARE);
 					nextTstatus = HeapTupleSatisfiesVacuum(nextTdata,
@@ -2266,7 +2272,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					}
 					tp.t_self = vtlp->this_tid;
 					Pbuf = ReadBufferWithStrategy(onerel,
-									ItemPointerGetBlockNumber(&(tp.t_self)),
+									 ItemPointerGetBlockNumber(&(tp.t_self)),
 												  vac_strategy);
 					Ppage = BufferGetPage(Pbuf);
 					Pitemid = PageGetItemId(Ppage,
@@ -2350,7 +2356,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					/* Get page to move from */
 					tuple.t_self = vtmove[ti].tid;
 					Cbuf = ReadBufferWithStrategy(onerel,
-								 ItemPointerGetBlockNumber(&(tuple.t_self)),
+								  ItemPointerGetBlockNumber(&(tuple.t_self)),
 												  vac_strategy);
 
 					/* Get page to move to */
@@ -2375,10 +2381,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 									 &ec, &Ctid, vtmove[ti].cleanVpd);
 
 					/*
-					 * If the tuple we are moving is a heap-only tuple,
-					 * this move will generate an additional index entry,
-					 * so increment the rel_indexed_tuples count.
-					 */ 
+					 * If the tuple we are moving is a heap-only tuple, this
+					 * move will generate an additional index entry, so
+					 * increment the rel_indexed_tuples count.
+					 */
 					if (HeapTupleHeaderIsHeapOnly(tuple.t_data))
 						vacrelstats->rel_indexed_tuples++;
 
@@ -2398,22 +2404,22 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						/*
 						 * When we move tuple chains, we may need to move
 						 * tuples from a block that we haven't yet scanned in
-						 * the outer walk-along-the-relation loop. Note that we
-						 * can't be moving a tuple from a block that we have
-						 * already scanned because if such a tuple exists, then
-						 * we must have moved the chain along with that tuple
-						 * when we scanned that block. IOW the test of
-						 * (Cbuf != buf) guarantees that the tuple we are
-						 * looking at right now is in a block which is yet to
-						 * be scanned.
+						 * the outer walk-along-the-relation loop. Note that
+						 * we can't be moving a tuple from a block that we
+						 * have already scanned because if such a tuple
+						 * exists, then we must have moved the chain along
+						 * with that tuple when we scanned that block. IOW the
+						 * test of (Cbuf != buf) guarantees that the tuple we
+						 * are looking at right now is in a block which is yet
+						 * to be scanned.
 						 *
 						 * We maintain two counters to correctly count the
 						 * moved-off tuples from blocks that are not yet
 						 * scanned (keep_tuples) and how many of them have
 						 * index pointers (keep_indexed_tuples).  The main
-						 * reason to track the latter is to help verify
-						 * that indexes have the expected number of entries
-						 * when all the dust settles.
+						 * reason to track the latter is to help verify that
+						 * indexes have the expected number of entries when
+						 * all the dust settles.
 						 */
 						if (!HeapTupleHeaderIsHeapOnly(tuple.t_data))
 							keep_indexed_tuples++;
@@ -2467,9 +2473,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 							 dst_buffer, dst_page, dst_vacpage, &ec);
 
 			/*
-			 * If the tuple we are moving is a heap-only tuple,
-			 * this move will generate an additional index entry,
-			 * so increment the rel_indexed_tuples count.
+			 * If the tuple we are moving is a heap-only tuple, this move will
+			 * generate an additional index entry, so increment the
+			 * rel_indexed_tuples count.
 			 */
 			if (HeapTupleHeaderIsHeapOnly(tuple.t_data))
 				vacrelstats->rel_indexed_tuples++;
@@ -2538,11 +2544,12 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					{
 						vacpage->offsets[vacpage->offsets_free++] = off;
 						Assert(keep_tuples > 0);
+
 						/*
 						 * If this is not a heap-only tuple, there must be an
 						 * index entry for this item which will be removed in
-						 * the index cleanup. Decrement the keep_indexed_tuples
-						 * count to remember this.
+						 * the index cleanup. Decrement the
+						 * keep_indexed_tuples count to remember this.
 						 */
 						if (!HeapTupleHeaderIsHeapOnly(htup))
 							keep_indexed_tuples--;
@@ -2594,14 +2601,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 * exclusive access to the relation.  However, that would require a
 		 * lot of extra code to close and re-open the relation, indexes, etc.
 		 * For now, a quick hack: record status of current transaction as
-		 * committed, and continue.  We force the commit to be synchronous
-		 * so that it's down to disk before we truncate.  (Note: tqual.c
-		 * knows that VACUUM FULL always uses sync commit, too.)  The
-		 * transaction continues to be shown as running in the ProcArray.
+		 * committed, and continue.  We force the commit to be synchronous so
+		 * that it's down to disk before we truncate.  (Note: tqual.c knows
+		 * that VACUUM FULL always uses sync commit, too.)	The transaction
+		 * continues to be shown as running in the ProcArray.
 		 *
-		 * XXX This desperately needs to be revisited.  Any failure after
-		 * this point will result in a PANIC "cannot abort transaction nnn,
-		 * it was already committed"!
+		 * XXX This desperately needs to be revisited.	Any failure after this
+		 * point will result in a PANIC "cannot abort transaction nnn, it was
+		 * already committed"!
 		 */
 		ForceSyncCommit();
 		(void) RecordTransactionCommit();

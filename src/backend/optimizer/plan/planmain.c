@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.103 2007/10/04 20:44:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.104 2007/11/15 21:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,9 +110,10 @@ query_planner(PlannerInfo *root, List *tlist,
 		*cheapest_path = (Path *)
 			create_result_path((List *) parse->jointree->quals);
 		*sorted_path = NULL;
+
 		/*
-		 * We still are required to canonicalize any pathkeys, in case
-		 * it's something like "SELECT 2+2 ORDER BY 1".
+		 * We still are required to canonicalize any pathkeys, in case it's
+		 * something like "SELECT 2+2 ORDER BY 1".
 		 */
 		root->canon_pathkeys = NIL;
 		root->query_pathkeys = canonicalize_pathkeys(root,
@@ -143,8 +144,8 @@ query_planner(PlannerInfo *root, List *tlist,
 	root->oj_info_list = NIL;
 
 	/*
-	 * Make a flattened version of the rangetable for faster access (this
-	 * is OK because the rangetable won't change any more).
+	 * Make a flattened version of the rangetable for faster access (this is
+	 * OK because the rangetable won't change any more).
 	 */
 	root->simple_rte_array = (RangeTblEntry **)
 		palloc0(root->simple_rel_array_size * sizeof(RangeTblEntry *));
@@ -198,8 +199,8 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * Examine the targetlist and qualifications, adding entries to baserel
 	 * targetlists for all referenced Vars.  Restrict and join clauses are
 	 * added to appropriate lists belonging to the mentioned relations.  We
-	 * also build EquivalenceClasses for provably equivalent expressions,
-	 * and form a target joinlist for make_one_rel() to work from.
+	 * also build EquivalenceClasses for provably equivalent expressions, and
+	 * form a target joinlist for make_one_rel() to work from.
 	 *
 	 * Note: all subplan nodes will have "flat" (var-only) tlists. This
 	 * implies that all expression evaluations are done at the root of the
@@ -227,14 +228,14 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * If we formed any equivalence classes, generate additional restriction
-	 * clauses as appropriate.  (Implied join clauses are formed on-the-fly
+	 * clauses as appropriate.	(Implied join clauses are formed on-the-fly
 	 * later.)
 	 */
 	generate_base_implied_equalities(root);
 
 	/*
 	 * We have completed merging equivalence sets, so it's now possible to
-	 * convert the requested query_pathkeys to canonical form.  Also
+	 * convert the requested query_pathkeys to canonical form.	Also
 	 * canonicalize the groupClause and sortClause pathkeys for use later.
 	 */
 	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);

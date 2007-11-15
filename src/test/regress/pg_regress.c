@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.37 2007/09/09 20:40:54 adunstan Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.38 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,10 +48,11 @@ typedef struct _resultmap
  * In non-temp_install mode, the only thing we need is the location of psql,
  * which we expect to find in psqldir, or in the PATH if psqldir isn't given.
  */
-char *bindir = PGBINDIR;
-char *libdir = LIBDIR;
-char *datadir = PGSHAREDIR;
-char *host_platform = HOST_TUPLE;
+char	   *bindir = PGBINDIR;
+char	   *libdir = LIBDIR;
+char	   *datadir = PGSHAREDIR;
+char	   *host_platform = HOST_TUPLE;
+
 #ifndef WIN32_ONLY_COMPILER
 static char *makeprog = MAKEPROG;
 #endif
@@ -66,10 +67,10 @@ const char *pretty_diff_opts = "-w -C3";
 
 /* options settable from command line */
 _stringlist *dblist = NULL;
-bool debug = false;
-char *inputdir = ".";
-char *outputdir = ".";
-char *psqldir = NULL;
+bool		debug = false;
+char	   *inputdir = ".";
+char	   *outputdir = ".";
+char	   *psqldir = NULL;
 static _stringlist *loadlanguage = NULL;
 static int	max_connections = 0;
 static char *encoding = NULL;
@@ -102,9 +103,9 @@ static int	fail_count = 0;
 static int	fail_ignore_count = 0;
 
 static bool
-directory_exists(const char *dir);
+			directory_exists(const char *dir);
 static void
-make_directory(const char *dir);
+			make_directory(const char *dir);
 
 static void
 header(const char *fmt,...)
@@ -123,7 +124,7 @@ psql_command(const char *database, const char *query,...)
 __attribute__((format(printf, 2, 3)));
 
 #ifdef WIN32
-typedef BOOL(WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
+typedef		BOOL(WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
 
 /* Windows API define missing from MingW headers */
 #define DISABLE_MAX_PRIVILEGE	0x1
@@ -133,23 +134,24 @@ typedef BOOL(WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_A
  * allow core files if possible.
  */
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
-static void 
+static void
 unlimit_core_size(void)
 {
 	struct rlimit lim;
-	getrlimit(RLIMIT_CORE,&lim);
+
+	getrlimit(RLIMIT_CORE, &lim);
 	if (lim.rlim_max == 0)
 	{
 		fprintf(stderr,
-				_("%s: cannot set core size,: disallowed by hard limit.\n"), 
+				_("%s: cannot set core size,: disallowed by hard limit.\n"),
 				progname);
 		return;
 	}
 	else if (lim.rlim_max == RLIM_INFINITY || lim.rlim_cur < lim.rlim_max)
 	{
 		lim.rlim_cur = lim.rlim_max;
-		setrlimit(RLIMIT_CORE,&lim);
-	}	
+		setrlimit(RLIMIT_CORE, &lim);
+	}
 }
 #endif
 
@@ -179,7 +181,7 @@ add_stringlist_item(_stringlist ** listhead, const char *str)
  * Free a stringlist.
  */
 static void
-free_stringlist(_stringlist **listhead) 
+free_stringlist(_stringlist ** listhead)
 {
 	if (listhead == NULL || *listhead == NULL)
 		return;
@@ -194,10 +196,11 @@ free_stringlist(_stringlist **listhead)
  * Split a delimited string into a stringlist
  */
 static void
-split_to_stringlist(const char *s, const char *delim, _stringlist **listhead)
+split_to_stringlist(const char *s, const char *delim, _stringlist ** listhead)
 {
-	char *sc = strdup(s);
-	char *token = strtok(sc, delim);
+	char	   *sc = strdup(s);
+	char	   *token = strtok(sc, delim);
+
 	while (token)
 	{
 		add_stringlist_item(listhead, token);
@@ -370,11 +373,11 @@ string_matches_pattern(const char *str, const char *pattern)
 void
 replace_string(char *string, char *replace, char *replacement)
 {
-	char *ptr;
+	char	   *ptr;
 
-	while ((ptr = strstr(string, replace)) != NULL) 
+	while ((ptr = strstr(string, replace)) != NULL)
 	{
-		char *dup = strdup(string);
+		char	   *dup = strdup(string);
 
 		strlcpy(string, dup, ptr - string + 1);
 		strcat(string, replacement);
@@ -392,27 +395,28 @@ replace_string(char *string, char *replace, char *replacement)
 static void
 convert_sourcefiles_in(char *source, char *dest, char *suffix)
 {
-	char	abs_srcdir[MAXPGPATH];
-	char	abs_builddir[MAXPGPATH];
-	char	testtablespace[MAXPGPATH];
-	char	indir[MAXPGPATH];
-	char  **name;
-	char  **names;
-	int		count = 0;
+	char		abs_srcdir[MAXPGPATH];
+	char		abs_builddir[MAXPGPATH];
+	char		testtablespace[MAXPGPATH];
+	char		indir[MAXPGPATH];
+	char	  **name;
+	char	  **names;
+	int			count = 0;
+
 #ifdef WIN32
-	char *c;
+	char	   *c;
 #endif
 
 	if (!getcwd(abs_builddir, sizeof(abs_builddir)))
 	{
 		fprintf(stderr, _("%s: could not get current directory: %s\n"),
-			progname, strerror(errno));
+				progname, strerror(errno));
 		exit_nicely(2);
 	}
 
 	/*
-	 * in a VPATH build, use the provided source directory; otherwise, use
-	 * the current directory.
+	 * in a VPATH build, use the provided source directory; otherwise, use the
+	 * current directory.
 	 */
 	if (srcdir)
 		strcpy(abs_srcdir, srcdir);
@@ -444,12 +448,12 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 	/* finally loop on each file and do the replacement */
 	for (name = names; *name; name++)
 	{
-		char	srcfile[MAXPGPATH];
-		char	destfile[MAXPGPATH];
-		char	prefix[MAXPGPATH];
-		FILE   *infile,
-			   *outfile;
-		char	line[1024];
+		char		srcfile[MAXPGPATH];
+		char		destfile[MAXPGPATH];
+		char		prefix[MAXPGPATH];
+		FILE	   *infile,
+				   *outfile;
+		char		line[1024];
 
 		/* reject filenames not finishing in ".source" */
 		if (strlen(*name) < 8)
@@ -475,7 +479,7 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 		if (!outfile)
 		{
 			fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
-				progname, destfile, strerror(errno));
+					progname, destfile, strerror(errno));
 			exit_nicely(2);
 		}
 		while (fgets(line, sizeof(line), infile))
@@ -500,16 +504,16 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 				progname, indir);
 		exit_nicely(2);
 	}
-	
-    pgfnames_cleanup(names);
+
+	pgfnames_cleanup(names);
 }
 
 /* Create the .sql and .out files from the .source files, if any */
 static void
 convert_sourcefiles(void)
 {
-	struct stat	st;
-	int		ret;
+	struct stat st;
+	int			ret;
 
 	ret = stat("input", &st);
 	if (ret == 0 && S_ISDIR(st.st_mode))
@@ -569,7 +573,7 @@ load_resultmap(void)
 		if (!file_type)
 		{
 			fprintf(stderr, _("incorrectly formatted resultmap entry: %s\n"),
-				buf);
+					buf);
 			exit_nicely(2);
 		}
 		*file_type++ = '\0';
@@ -615,9 +619,10 @@ load_resultmap(void)
  * Check in resultmap if we should be looking at a different file
  */
 static
-const char *get_expectfile(const char *testname, const char *file)
+const char *
+get_expectfile(const char *testname, const char *file)
 {
-	char *file_type;
+	char	   *file_type;
 	_resultmap *rm;
 
 	/*
@@ -762,7 +767,7 @@ initialize_environment(void)
 
 		/* psql will be installed into temp-install bindir */
 		psqldir = bindir;
-		
+
 		/*
 		 * Set up shared library paths to include the temp install.
 		 *
@@ -921,69 +926,69 @@ spawn_process(const char *cmdline)
 	return pid;
 #else
 	char	   *cmdline2;
-	BOOL b;
+	BOOL		b;
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
-	HANDLE origToken;
-	HANDLE restrictedToken;
+	HANDLE		origToken;
+	HANDLE		restrictedToken;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
 	SID_AND_ATTRIBUTES dropSids[2];
 	__CreateRestrictedToken _CreateRestrictedToken = NULL;
-	HANDLE Advapi32Handle;
+	HANDLE		Advapi32Handle;
 
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
-	
+
 	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
 	if (Advapi32Handle != NULL)
 	{
-      _CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
-   }
-   
-   if (_CreateRestrictedToken == NULL)
-   {
-      if (Advapi32Handle != NULL)
-      	FreeLibrary(Advapi32Handle);
-      fprintf(stderr, "ERROR: cannot create restricted tokens on this platform\n");
-      exit_nicely(2);
-   }
+		_CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
+	}
 
-   /* Open the current token to use as base for the restricted one */
-   if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
-   {
-      fprintf(stderr, "could not open process token: %lu\n", GetLastError());
-      exit_nicely(2);
-   }
+	if (_CreateRestrictedToken == NULL)
+	{
+		if (Advapi32Handle != NULL)
+			FreeLibrary(Advapi32Handle);
+		fprintf(stderr, "ERROR: cannot create restricted tokens on this platform\n");
+		exit_nicely(2);
+	}
+
+	/* Open the current token to use as base for the restricted one */
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
+	{
+		fprintf(stderr, "could not open process token: %lu\n", GetLastError());
+		exit_nicely(2);
+	}
 
 	/* Allocate list of SIDs to remove */
 	ZeroMemory(&dropSids, sizeof(dropSids));
 	if (!AllocateAndInitializeSid(&NtAuthority, 2,
-			SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &dropSids[0].Sid) ||
-		 !AllocateAndInitializeSid(&NtAuthority, 2,
-		   SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0, 0, &dropSids[1].Sid))
-   {
-      fprintf(stderr, "could not allocate SIDs: %lu\n", GetLastError());
-      exit_nicely(2);
-   }
-	
-	b = _CreateRestrictedToken(origToken,
-          DISABLE_MAX_PRIVILEGE,
-          sizeof(dropSids)/sizeof(dropSids[0]),
-          dropSids,
-          0, NULL,
-          0, NULL,
-          &restrictedToken);
+								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &dropSids[0].Sid) ||
+		!AllocateAndInitializeSid(&NtAuthority, 2,
+								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0, 0, &dropSids[1].Sid))
+	{
+		fprintf(stderr, "could not allocate SIDs: %lu\n", GetLastError());
+		exit_nicely(2);
+	}
 
-   FreeSid(dropSids[1].Sid);
-   FreeSid(dropSids[0].Sid);
-   CloseHandle(origToken);
-   FreeLibrary(Advapi32Handle);
-   
-   if (!b)
-   {
-      fprintf(stderr, "could not create restricted token: %lu\n", GetLastError());
-      exit_nicely(2);
-   }
+	b = _CreateRestrictedToken(origToken,
+							   DISABLE_MAX_PRIVILEGE,
+							   sizeof(dropSids) / sizeof(dropSids[0]),
+							   dropSids,
+							   0, NULL,
+							   0, NULL,
+							   &restrictedToken);
+
+	FreeSid(dropSids[1].Sid);
+	FreeSid(dropSids[0].Sid);
+	CloseHandle(origToken);
+	FreeLibrary(Advapi32Handle);
+
+	if (!b)
+	{
+		fprintf(stderr, "could not create restricted token: %lu\n", GetLastError());
+		exit_nicely(2);
+	}
 
 	cmdline2 = malloc(strlen(cmdline) + 8);
 	sprintf(cmdline2, "cmd /c %s", cmdline);
@@ -1088,16 +1093,17 @@ make_directory(const char *dir)
 static char *
 get_alternative_expectfile(const char *expectfile, int i)
 {
-	char *last_dot;
-	int ssize = strlen(expectfile) + 2 + 1;
-	char *tmp = (char *)malloc(ssize);
-	char *s = (char *)malloc(ssize);
+	char	   *last_dot;
+	int			ssize = strlen(expectfile) + 2 + 1;
+	char	   *tmp = (char *) malloc(ssize);
+	char	   *s = (char *) malloc(ssize);
+
 	strcpy(tmp, expectfile);
-	last_dot = strrchr(tmp,'.');
+	last_dot = strrchr(tmp, '.');
 	if (!last_dot)
 		return NULL;
 	*last_dot = '\0';
-	snprintf(s, ssize, "%s_%d.%s", tmp, i, last_dot+1);
+	snprintf(s, ssize, "%s_%d.%s", tmp, i, last_dot + 1);
 	free(tmp);
 	return s;
 }
@@ -1152,19 +1158,20 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	const char *platform_expectfile;
 
 	/*
-	 * We can pass either the resultsfile or the expectfile, they should
-	 * have the same type (filename.type) anyway.
+	 * We can pass either the resultsfile or the expectfile, they should have
+	 * the same type (filename.type) anyway.
 	 */
 	platform_expectfile = get_expectfile(testname, resultsfile);
 
 	strcpy(expectfile, default_expectfile);
-	if (platform_expectfile) 
+	if (platform_expectfile)
 	{
 		/*
 		 * Replace everything afer the last slash in expectfile with what the
 		 * platform_expectfile contains.
 		 */
-		char *p = strrchr(expectfile, '/');
+		char	   *p = strrchr(expectfile, '/');
+
 		if (p)
 			strcpy(++p, platform_expectfile);
 	}
@@ -1190,7 +1197,7 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 
 	for (i = 0; i <= 9; i++)
 	{
-		char *alt_expectfile;
+		char	   *alt_expectfile;
 
 		alt_expectfile = get_alternative_expectfile(expectfile, i);
 		if (!file_exists(alt_expectfile))
@@ -1351,9 +1358,9 @@ run_schedule(const char *schedule, test_function tfunc)
 	FILE	   *scf;
 	int			line_num = 0;
 
-	memset(resultfiles,0,sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
-	memset(expectfiles,0,sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
-	memset(tags,0,sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
+	memset(resultfiles, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
+	memset(expectfiles, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
+	memset(tags, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
 
 	scf = fopen(schedule, "r");
 	if (!scf)
@@ -1446,7 +1453,7 @@ run_schedule(const char *schedule, test_function tfunc)
 		if (num_tests == 1)
 		{
 			status(_("test %-20s ... "), tests[0]);
-			pids[0] = (tfunc)(tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
+			pids[0] = (tfunc) (tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
 			wait_for_tests(pids, NULL, 1);
 			/* status line is finished below */
 		}
@@ -1463,7 +1470,7 @@ run_schedule(const char *schedule, test_function tfunc)
 					wait_for_tests(pids + oldest, tests + oldest, i - oldest);
 					oldest = i;
 				}
-				pids[i] = (tfunc)(tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
+				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 			}
 			wait_for_tests(pids + oldest, tests + oldest, i - oldest);
 			status_end();
@@ -1473,7 +1480,7 @@ run_schedule(const char *schedule, test_function tfunc)
 			status(_("parallel group (%d tests): "), num_tests);
 			for (i = 0; i < num_tests; i++)
 			{
-				pids[i] = (tfunc)(tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
+				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 			}
 			wait_for_tests(pids, tests, num_tests);
 			status_end();
@@ -1482,8 +1489,10 @@ run_schedule(const char *schedule, test_function tfunc)
 		/* Check results for all tests */
 		for (i = 0; i < num_tests; i++)
 		{
-			_stringlist *rl, *el, *tl;
-			bool differ = false;
+			_stringlist *rl,
+					   *el,
+					   *tl;
+			bool		differ = false;
 
 			if (num_tests > 1)
 				status(_("     %-20s ... "), tests[i]);
@@ -1491,20 +1500,22 @@ run_schedule(const char *schedule, test_function tfunc)
 			/*
 			 * Advance over all three lists simultaneously.
 			 *
-			 * Compare resultfiles[j] with expectfiles[j] always.
-			 * Tags are optional but if there are tags, the tag list has the
-			 * same length as the other two lists.
+			 * Compare resultfiles[j] with expectfiles[j] always. Tags are
+			 * optional but if there are tags, the tag list has the same
+			 * length as the other two lists.
 			 */
 			for (rl = resultfiles[i], el = expectfiles[i], tl = tags[i];
-				rl != NULL; /* rl and el have the same length */
-				rl = rl->next, el = el->next)
+				 rl != NULL;	/* rl and el have the same length */
+				 rl = rl->next, el = el->next)
 			{
-				bool newdiff;
+				bool		newdiff;
+
 				if (tl)
-					tl = tl->next; /* tl has the same lengt has rl and el if it exists */
+					tl = tl->next;		/* tl has the same lengt has rl and el
+										 * if it exists */
 
 				newdiff = results_differ(tests[i], rl->str, el->str);
-				if (newdiff && tl) 
+				if (newdiff && tl)
 				{
 					printf("%s ", tl->str);
 				}
@@ -1558,30 +1569,34 @@ run_single_test(const char *test, test_function tfunc)
 	_stringlist *resultfiles = NULL;
 	_stringlist *expectfiles = NULL;
 	_stringlist *tags = NULL;
-	_stringlist *rl, *el, *tl;
+	_stringlist *rl,
+			   *el,
+			   *tl;
 	bool		differ = false;
 
 	status(_("test %-20s ... "), test);
-	pid = (tfunc)(test, &resultfiles, &expectfiles, &tags);
+	pid = (tfunc) (test, &resultfiles, &expectfiles, &tags);
 	wait_for_tests(&pid, NULL, 1);
 
 	/*
 	 * Advance over all three lists simultaneously.
 	 *
-	 * Compare resultfiles[j] with expectfiles[j] always.
-	 * Tags are optional but if there are tags, the tag list has the
-	 * same length as the other two lists.
+	 * Compare resultfiles[j] with expectfiles[j] always. Tags are optional
+	 * but if there are tags, the tag list has the same length as the other
+	 * two lists.
 	 */
 	for (rl = resultfiles, el = expectfiles, tl = tags;
-		rl != NULL; /* rl and el have the same length */
-		rl = rl->next, el = el->next)
+		 rl != NULL;			/* rl and el have the same length */
+		 rl = rl->next, el = el->next)
 	{
-		bool newdiff;
+		bool		newdiff;
+
 		if (tl)
-			tl = tl->next; /* tl has the same lengt has rl and el if it exists */
+			tl = tl->next;		/* tl has the same lengt has rl and el if it
+								 * exists */
 
 		newdiff = results_differ(test, rl->str, el->str);
-		if (newdiff && tl) 
+		if (newdiff && tl)
 		{
 			printf("%s ", tl->str);
 		}
@@ -1651,6 +1666,7 @@ static void
 create_database(const char *dbname)
 {
 	_stringlist *sl;
+
 	/*
 	 * We use template0 so that any installation-local cruft in template1 will
 	 * not mess up the tests.
@@ -1660,13 +1676,13 @@ create_database(const char *dbname)
 		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'", dbname, encoding);
 	else
 		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0", dbname);
-	psql_command(dbname, 
-		"ALTER DATABASE \"%s\" SET lc_messages TO 'C';"
-		"ALTER DATABASE \"%s\" SET lc_monetary TO 'C';"
-		"ALTER DATABASE \"%s\" SET lc_numeric TO 'C';"
-		"ALTER DATABASE \"%s\" SET lc_time TO 'C';"
-		"ALTER DATABASE \"%s\" SET timezone_abbreviations TO 'Default';",
-		dbname, dbname, dbname, dbname, dbname);
+	psql_command(dbname,
+				 "ALTER DATABASE \"%s\" SET lc_messages TO 'C';"
+				 "ALTER DATABASE \"%s\" SET lc_monetary TO 'C';"
+				 "ALTER DATABASE \"%s\" SET lc_numeric TO 'C';"
+				 "ALTER DATABASE \"%s\" SET lc_time TO 'C';"
+			"ALTER DATABASE \"%s\" SET timezone_abbreviations TO 'Default';",
+				 dbname, dbname, dbname, dbname, dbname);
 
 	/*
 	 * Install any requested procedural languages
@@ -1686,14 +1702,14 @@ drop_role_if_exists(const char *rolename)
 }
 
 static void
-create_role(const char *rolename, const _stringlist *granted_dbs)
+create_role(const char *rolename, const _stringlist * granted_dbs)
 {
 	header(_("creating role \"%s\""), rolename);
 	psql_command("postgres", "CREATE ROLE \"%s\" WITH LOGIN", rolename);
 	for (; granted_dbs != NULL; granted_dbs = granted_dbs->next)
 	{
 		psql_command("postgres", "GRANT ALL ON DATABASE \"%s\" TO \"%s\"",
-			granted_dbs->str, rolename);
+					 granted_dbs->str, rolename);
 	}
 }
 
@@ -1797,8 +1813,10 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				printf("pg_regress (PostgreSQL %s)\n", PG_VERSION);
 				exit_nicely(0);
 			case 1:
-				/* If a default database was specified, we need to remove it before we add
-				 * the specified one.
+
+				/*
+				 * If a default database was specified, we need to remove it
+				 * before we add the specified one.
 				 */
 				free_stringlist(&dblist);
 				split_to_stringlist(strdup(optarg), ", ", &dblist);
@@ -1944,9 +1962,9 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				 SYSTEMQUOTE "\"%s\" -C \"%s\" DESTDIR=\"%s/install\" install with_perl=no with_python=no > \"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
 				 makeprog, top_builddir, temp_install, outputdir);
 #else
-	   snprintf(buf, sizeof(buf),
-	          SYSTEMQUOTE "perl \"%s/src/tools/msvc/install.pl\" \"%s/install\" >\"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
-             top_builddir, temp_install, outputdir);
+		snprintf(buf, sizeof(buf),
+				 SYSTEMQUOTE "perl \"%s/src/tools/msvc/install.pl\" \"%s/install\" >\"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
+				 top_builddir, temp_install, outputdir);
 #endif
 		if (system(buf))
 		{
@@ -1971,24 +1989,24 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		/* add any extra config specified to the postgresql.conf */
 		if (temp_config != NULL)
 		{
-			FILE * extra_conf;
-			FILE * pg_conf;
-			char line_buf[1024];
+			FILE	   *extra_conf;
+			FILE	   *pg_conf;
+			char		line_buf[1024];
 
-			snprintf(buf, sizeof(buf),"%s/data/postgresql.conf", temp_install);
-			pg_conf = fopen(buf,"a");
+			snprintf(buf, sizeof(buf), "%s/data/postgresql.conf", temp_install);
+			pg_conf = fopen(buf, "a");
 			if (pg_conf == NULL)
 			{
 				fprintf(stderr, _("\n%s: could not open %s for adding extra config:\nError was %s\n"), progname, buf, strerror(errno));
-				exit_nicely(2);				
+				exit_nicely(2);
 			}
-			extra_conf = fopen(temp_config,"r");
+			extra_conf = fopen(temp_config, "r");
 			if (extra_conf == NULL)
 			{
 				fprintf(stderr, _("\n%s: could not open %s to read extra config:\nError was %s\n"), progname, buf, strerror(errno));
-				exit_nicely(2);				
+				exit_nicely(2);
 			}
-			while(fgets(line_buf, sizeof(line_buf),extra_conf) != NULL)
+			while (fgets(line_buf, sizeof(line_buf), extra_conf) != NULL)
 				fputs(line_buf, pg_conf);
 			fclose(extra_conf);
 			fclose(pg_conf);

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress_ecpg.c,v 1.2 2007/06/14 13:10:11 mha Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress_ecpg.c,v 1.3 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,13 +23,12 @@ static void
 ecpg_filter(const char *sourcefile, const char *outfile)
 {
 	/*
-	 * Create a filtered copy of sourcefile, replacing
-	 * #line x "./../bla/foo.h"
-	 * with
-	 * #line x "foo.h"
+	 * Create a filtered copy of sourcefile, replacing #line x
+	 * "./../bla/foo.h" with #line x "foo.h"
 	 */
-	FILE *s, *t;
-	char linebuf[LINEBUFSIZE];
+	FILE	   *s,
+			   *t;
+	char		linebuf[LINEBUFSIZE];
 
 	s = fopen(sourcefile, "r");
 	if (!s)
@@ -49,9 +48,10 @@ ecpg_filter(const char *sourcefile, const char *outfile)
 		/* check for "#line " in the beginning */
 		if (strstr(linebuf, "#line ") == linebuf)
 		{
-			char *p = strchr(linebuf, '"');
-			char *n;
-			int plen = 1;
+			char	   *p = strchr(linebuf, '"');
+			char	   *n;
+			int			plen = 1;
+
 			while (*p && (*(p + plen) == '.' || strchr(p + plen, '/') != NULL))
 			{
 				plen++;
@@ -60,8 +60,8 @@ ecpg_filter(const char *sourcefile, const char *outfile)
 			if (plen > 1)
 			{
 				n = (char *) malloc(plen);
-				strncpy(n, p+1, plen - 1);
-				n[plen-1] = '\0';
+				strncpy(n, p + 1, plen - 1);
+				n[plen - 1] = '\0';
 				replace_string(linebuf, n, "");
 			}
 		}
@@ -78,18 +78,21 @@ ecpg_filter(const char *sourcefile, const char *outfile)
 
 static PID_TYPE
 ecpg_start_test(const char *testname,
-				_stringlist **resultfiles,
-				_stringlist **expectfiles,
-				_stringlist **tags)
+				_stringlist ** resultfiles,
+				_stringlist ** expectfiles,
+				_stringlist ** tags)
 {
 	PID_TYPE	pid;
 	char		inprg[MAXPGPATH];
 	char		insource[MAXPGPATH];
-	char		*outfile_stdout, expectfile_stdout[MAXPGPATH];
-	char		*outfile_stderr, expectfile_stderr[MAXPGPATH];
-	char		*outfile_source, expectfile_source[MAXPGPATH];
+	char	   *outfile_stdout,
+				expectfile_stdout[MAXPGPATH];
+	char	   *outfile_stderr,
+				expectfile_stderr[MAXPGPATH];
+	char	   *outfile_source,
+				expectfile_source[MAXPGPATH];
 	char		cmd[MAXPGPATH * 3];
-	char		*testname_dash;
+	char	   *testname_dash;
 
 	snprintf(inprg, sizeof(inprg), "%s/%s", inputdir, testname);
 
@@ -161,11 +164,11 @@ ecpg_init(void)
 	/* no reason to set -w for ecpg checks, except for when on windows */
 	if (strstr(host_platform, "-win32") || strstr(host_platform, "-mingw32"))
 		basic_diff_opts = "-w";
-	else 
+	else
 		basic_diff_opts = "";
 	if (strstr(host_platform, "-win32") || strstr(host_platform, "-mingw32"))
 		pretty_diff_opts = "-C3 -w";
-	else 
+	else
 		pretty_diff_opts = "-C3";
 }
 
@@ -174,4 +177,3 @@ main(int argc, char *argv[])
 {
 	return regression_main(argc, argv, ecpg_init, ecpg_start_test);
 }
-

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.37 2007/10/24 20:55:36 alvherre Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.38 2007/11/15 21:14:32 momjian Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -397,15 +397,15 @@ LockGXact(const char *gid, Oid user)
 					 errhint("Must be superuser or the user that prepared the transaction.")));
 
 		/*
-		 * Note: it probably would be possible to allow committing from another
-		 * database; but at the moment NOTIFY is known not to work and there
-		 * may be some other issues as well.  Hence disallow until someone
-		 * gets motivated to make it work.
+		 * Note: it probably would be possible to allow committing from
+		 * another database; but at the moment NOTIFY is known not to work and
+		 * there may be some other issues as well.	Hence disallow until
+		 * someone gets motivated to make it work.
 		 */
 		if (MyDatabaseId != gxact->proc.databaseId)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("prepared transaction belongs to another database"),
+				  errmsg("prepared transaction belongs to another database"),
 					 errhint("Connect to the database where the transaction was prepared to finish it.")));
 
 		/* OK for me to lock it */
@@ -937,11 +937,11 @@ EndPrepare(GlobalTransaction gxact)
 	 * odds of a PANIC actually occurring should be very tiny given that we
 	 * were able to write the bogus CRC above.
 	 *
-	 * We have to set inCommit here, too; otherwise a checkpoint
-	 * starting immediately after the WAL record is inserted could complete
-	 * without fsync'ing our state file.  (This is essentially the same kind
-	 * of race condition as the COMMIT-to-clog-write case that
-	 * RecordTransactionCommit uses inCommit for; see notes there.)
+	 * We have to set inCommit here, too; otherwise a checkpoint starting
+	 * immediately after the WAL record is inserted could complete without
+	 * fsync'ing our state file.  (This is essentially the same kind of race
+	 * condition as the COMMIT-to-clog-write case that RecordTransactionCommit
+	 * uses inCommit for; see notes there.)
 	 *
 	 * We save the PREPARE record's location in the gxact for later use by
 	 * CheckPointTwoPhase.
@@ -985,8 +985,8 @@ EndPrepare(GlobalTransaction gxact)
 	MarkAsPrepared(gxact);
 
 	/*
-	 * Now we can mark ourselves as out of the commit critical section:
-	 * a checkpoint starting after this will certainly see the gxact as a
+	 * Now we can mark ourselves as out of the commit critical section: a
+	 * checkpoint starting after this will certainly see the gxact as a
 	 * candidate for fsyncing.
 	 */
 	MyProc->inCommit = false;
@@ -1272,8 +1272,8 @@ RemoveTwoPhaseFile(TransactionId xid, bool giveWarning)
 		if (errno != ENOENT || giveWarning)
 			ereport(WARNING,
 					(errcode_for_file_access(),
-					 errmsg("could not remove two-phase state file \"%s\": %m",
-							path)));
+				   errmsg("could not remove two-phase state file \"%s\": %m",
+						  path)));
 }
 
 /*
@@ -1500,8 +1500,8 @@ PrescanPreparedTransactions(void)
 			if (buf == NULL)
 			{
 				ereport(WARNING,
-						(errmsg("removing corrupt two-phase state file \"%s\"",
-								clde->d_name)));
+					  (errmsg("removing corrupt two-phase state file \"%s\"",
+							  clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
 				continue;
 			}
@@ -1511,8 +1511,8 @@ PrescanPreparedTransactions(void)
 			if (!TransactionIdEquals(hdr->xid, xid))
 			{
 				ereport(WARNING,
-						(errmsg("removing corrupt two-phase state file \"%s\"",
-								clde->d_name)));
+					  (errmsg("removing corrupt two-phase state file \"%s\"",
+							  clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
 				pfree(buf);
 				continue;
@@ -1599,8 +1599,8 @@ RecoverPreparedTransactions(void)
 			if (buf == NULL)
 			{
 				ereport(WARNING,
-						(errmsg("removing corrupt two-phase state file \"%s\"",
-								clde->d_name)));
+					  (errmsg("removing corrupt two-phase state file \"%s\"",
+							  clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
 				continue;
 			}
@@ -1711,9 +1711,9 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_PREPARED, rdata);
 
 	/*
-	 * We don't currently try to sleep before flush here ... nor is there
-	 * any support for async commit of a prepared xact (the very idea is
-	 * probably a contradiction)
+	 * We don't currently try to sleep before flush here ... nor is there any
+	 * support for async commit of a prepared xact (the very idea is probably
+	 * a contradiction)
 	 */
 
 	/* Flush XLOG to disk */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * pg_ts_dict.h
- * 	definition of dictionaries for tsearch
+ *	definition of dictionaries for tsearch
  *
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_ts_dict.h,v 1.1 2007/08/21 01:11:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_ts_dict.h,v 1.2 2007/11/15 21:14:43 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -29,7 +29,7 @@
  */
 
 /* ----------------
- *		pg_ts_dict definition.  cpp turns this into
+ *		pg_ts_dict definition.	cpp turns this into
  *		typedef struct FormData_pg_ts_dict
  * ----------------
  */
@@ -41,7 +41,7 @@ CATALOG(pg_ts_dict,3600)
 	Oid			dictnamespace;	/* name space */
 	Oid			dictowner;		/* owner */
 	Oid			dicttemplate;	/* dictionary's template */
-	text		dictinitoption;	/* options passed to dict_init() */
+	text		dictinitoption; /* options passed to dict_init() */
 } FormData_pg_ts_dict;
 
 typedef FormData_pg_ts_dict *Form_pg_ts_dict;

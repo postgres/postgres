@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.67 2007/10/13 20:18:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.68 2007/11/15 21:14:40 momjian Exp $
  */
 #include "postgres.h"
 
@@ -277,8 +277,8 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("out of memory"),
-				 errdetail("String of %d bytes is too long for encoding conversion.",
-						   len)));
+		 errdetail("String of %d bytes is too long for encoding conversion.",
+				   len)));
 
 	result = palloc(len * MAX_CONVERSION_GROWTH + 1);
 
@@ -305,12 +305,13 @@ pg_convert_to(PG_FUNCTION_ARGS)
 							namein, CStringGetDatum(DatabaseEncoding->name));
 	Datum		result;
 
-	/* pg_convert expects a bytea as its first argument. We're passing it
-	 * a text argument here, relying on the fact that they are both in fact
+	/*
+	 * pg_convert expects a bytea as its first argument. We're passing it a
+	 * text argument here, relying on the fact that they are both in fact
 	 * varlena types, and thus structurally identical.
 	 */
 	result = DirectFunctionCall3(
-				 pg_convert, string, src_encoding_name, dest_encoding_name);
+				  pg_convert, string, src_encoding_name, dest_encoding_name);
 
 	/* free memory allocated by namein */
 	pfree((void *) src_encoding_name);
@@ -333,13 +334,14 @@ pg_convert_from(PG_FUNCTION_ARGS)
 	Datum		result;
 
 	result = DirectFunctionCall3(
-				 pg_convert, string, src_encoding_name, dest_encoding_name);
+				  pg_convert, string, src_encoding_name, dest_encoding_name);
 
 	/* free memory allocated by namein */
 	pfree((void *) src_encoding_name);
 
-	/* pg_convert returns a bytea, which we in turn return as text, relying 
-	 * on the fact that they are both in fact varlena types, and thus 
+	/*
+	 * pg_convert returns a bytea, which we in turn return as text, relying on
+	 * the fact that they are both in fact varlena types, and thus
 	 * structurally identical. Although not all bytea values are valid text,
 	 * in this case it will be because we've told pg_convert to return one
 	 * that is valid as text in the current database encoding.
@@ -378,7 +380,7 @@ pg_convert(PG_FUNCTION_ARGS)
 
 	/* make sure that source string is valid and null terminated */
 	len = VARSIZE(string) - VARHDRSZ;
-	pg_verify_mbstr(src_encoding,VARDATA(string),len,false);
+	pg_verify_mbstr(src_encoding, VARDATA(string), len, false);
 	str = palloc(len + 1);
 	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
@@ -415,11 +417,11 @@ pg_convert(PG_FUNCTION_ARGS)
 Datum
 length_in_encoding(PG_FUNCTION_ARGS)
 {
-	bytea      *string = PG_GETARG_BYTEA_P(0);
+	bytea	   *string = PG_GETARG_BYTEA_P(0);
 	char	   *src_encoding_name = NameStr(*PG_GETARG_NAME(1));
 	int			src_encoding = pg_char_to_encoding(src_encoding_name);
-	int         len = VARSIZE(string) - VARHDRSZ;
-	int         retval;
+	int			len = VARSIZE(string) - VARHDRSZ;
+	int			retval;
 
 	if (src_encoding < 0)
 		ereport(ERROR,
@@ -429,7 +431,7 @@ length_in_encoding(PG_FUNCTION_ARGS)
 
 	retval = pg_verify_mbstr_len(src_encoding, VARDATA(string), len, false);
 	PG_RETURN_INT32(retval);
-	
+
 }
 
 /*
@@ -545,8 +547,8 @@ perform_default_encoding_conversion(const char *src, int len, bool is_client_to_
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("out of memory"),
-				 errdetail("String of %d bytes is too long for encoding conversion.",
-						   len)));
+		 errdetail("String of %d bytes is too long for encoding conversion.",
+				   len)));
 
 	result = palloc(len * MAX_CONVERSION_GROWTH + 1);
 

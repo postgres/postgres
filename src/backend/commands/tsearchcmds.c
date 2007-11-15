@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.5 2007/08/22 22:30:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.6 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,10 +46,10 @@
 #include "utils/syscache.h"
 
 
-static void MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
-									 HeapTuple tup, Relation relMap);
-static void DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
-									 HeapTuple tup, Relation relMap);
+static void MakeConfigurationMapping(AlterTSConfigurationStmt * stmt,
+						 HeapTuple tup, Relation relMap);
+static void DropConfigurationMapping(AlterTSConfigurationStmt * stmt,
+						 HeapTuple tup, Relation relMap);
 
 
 /* --------------------- TS Parser commands ------------------------ */
@@ -220,8 +220,8 @@ DefineTSParser(List *names, List *parameters)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("text search parser parameter \"%s\" not recognized",
-							defel->defname)));
+				 errmsg("text search parser parameter \"%s\" not recognized",
+						defel->defname)));
 	}
 
 	/*
@@ -366,7 +366,7 @@ RenameTSParser(List *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("text search parser \"%s\" already exists",
-				 newname)));
+						newname)));
 
 	namestrcpy(&(((Form_pg_ts_parser) GETSTRUCT(tup))->prsname), newname);
 	simple_heap_update(rel, &tup->t_self, tup);
@@ -421,10 +421,9 @@ verify_dictoptions(Oid tmplId, List *dictoptions)
 	/*
 	 * Suppress this test when running in a standalone backend.  This is a
 	 * hack to allow initdb to create prefab dictionaries that might not
-	 * actually be usable in template1's encoding (due to using external
-	 * files that can't be translated into template1's encoding).  We want
-	 * to create them anyway, since they might be usable later in other
-	 * databases.
+	 * actually be usable in template1's encoding (due to using external files
+	 * that can't be translated into template1's encoding).  We want to create
+	 * them anyway, since they might be usable later in other databases.
 	 */
 	if (!IsUnderPostmaster)
 		return;
@@ -445,14 +444,14 @@ verify_dictoptions(Oid tmplId, List *dictoptions)
 		if (dictoptions)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("text search template \"%s\" does not accept options",
-							NameStr(tform->tmplname))));
+				errmsg("text search template \"%s\" does not accept options",
+					   NameStr(tform->tmplname))));
 	}
 	else
 	{
 		/*
-		 * Copy the options just in case init method thinks it can scribble
-		 * on them ...
+		 * Copy the options just in case init method thinks it can scribble on
+		 * them ...
 		 */
 		dictoptions = copyObject(dictoptions);
 
@@ -793,8 +792,8 @@ AlterTSDictionary(AlterTSDictionaryStmt * stmt)
 
 	/*
 	 * NOTE: because we only support altering the options, not the template,
-	 * there is no need to update dependencies.  This might have to change
-	 * if the options ever reference inside-the-database objects.
+	 * there is no need to update dependencies.  This might have to change if
+	 * the options ever reference inside-the-database objects.
 	 */
 
 	heap_freetuple(newtup);
@@ -966,7 +965,7 @@ DefineTSTemplate(List *names, List *parameters)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to create text search templates")));
+			   errmsg("must be superuser to create text search templates")));
 
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(names, &tmplname);
@@ -1048,7 +1047,7 @@ RenameTSTemplate(List *oldname, const char *newname)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to rename text search templates")));
+			   errmsg("must be superuser to rename text search templates")));
 
 	rel = heap_open(TSTemplateRelationId, RowExclusiveLock);
 
@@ -1633,7 +1632,7 @@ AlterTSConfigurationOwner(List *name, Oid newOwnerId)
  * ALTER TEXT SEARCH CONFIGURATION - main entry point
  */
 void
-AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
+AlterTSConfiguration(AlterTSConfigurationStmt * stmt)
 {
 	HeapTuple	tup;
 	Relation	relMap;
@@ -1727,7 +1726,7 @@ getTokenTypes(Oid prsId, List *tokennames)
  * ALTER TEXT SEARCH CONFIGURATION ADD/ALTER MAPPING
  */
 static void
-MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
+MakeConfigurationMapping(AlterTSConfigurationStmt * stmt,
 						 HeapTuple tup, Relation relMap)
 {
 	Oid			cfgId = HeapTupleGetOid(tup);
@@ -1889,7 +1888,7 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
  * ALTER TEXT SEARCH CONFIGURATION DROP MAPPING
  */
 static void
-DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
+DropConfigurationMapping(AlterTSConfigurationStmt * stmt,
 						 HeapTuple tup, Relation relMap)
 {
 	Oid			cfgId = HeapTupleGetOid(tup);
@@ -1981,7 +1980,7 @@ serialize_deflist(List *deflist)
 		char	   *val = defGetString(defel);
 
 		appendStringInfo(&buf, "%s = ",
-					 quote_identifier(defel->defname));
+						 quote_identifier(defel->defname));
 		/* If backslashes appear, force E syntax to determine their handling */
 		if (strchr(val, '\\'))
 			appendStringInfoChar(&buf, ESCAPE_STRING_SYNTAX);
@@ -2014,7 +2013,7 @@ serialize_deflist(List *deflist)
 List *
 deserialize_deflist(Datum txt)
 {
-	text	   *in = DatumGetTextP(txt); /* in case it's toasted */
+	text	   *in = DatumGetTextP(txt);		/* in case it's toasted */
 	List	   *result = NIL;
 	int			len = VARSIZE(in) - VARHDRSZ;
 	char	   *ptr,
@@ -2022,7 +2021,8 @@ deserialize_deflist(Datum txt)
 			   *workspace,
 			   *wsptr = NULL,
 			   *startvalue = NULL;
-	typedef enum {
+	typedef enum
+	{
 		CS_WAITKEY,
 		CS_INKEY,
 		CS_INQKEY,
@@ -2031,7 +2031,7 @@ deserialize_deflist(Datum txt)
 		CS_INSQVALUE,
 		CS_INDQVALUE,
 		CS_INWVALUE
-	} ds_state;
+	}			ds_state;
 	ds_state	state = CS_WAITKEY;
 
 	workspace = (char *) palloc(len + 1);		/* certainly enough room */
@@ -2075,7 +2075,7 @@ deserialize_deflist(Datum txt)
 			case CS_INQKEY:
 				if (*ptr == '"')
 				{
-					if (ptr+1 < endptr && ptr[1] == '"')
+					if (ptr + 1 < endptr && ptr[1] == '"')
 					{
 						/* copy only one of the two quotes */
 						*wsptr++ = *ptr++;
@@ -2106,7 +2106,7 @@ deserialize_deflist(Datum txt)
 					startvalue = wsptr;
 					state = CS_INSQVALUE;
 				}
-				else if (*ptr == 'E' && ptr+1 < endptr && ptr[1] == '\'')
+				else if (*ptr == 'E' && ptr + 1 < endptr && ptr[1] == '\'')
 				{
 					ptr++;
 					startvalue = wsptr;
@@ -2127,7 +2127,7 @@ deserialize_deflist(Datum txt)
 			case CS_INSQVALUE:
 				if (*ptr == '\'')
 				{
-					if (ptr+1 < endptr && ptr[1] == '\'')
+					if (ptr + 1 < endptr && ptr[1] == '\'')
 					{
 						/* copy only one of the two quotes */
 						*wsptr++ = *ptr++;
@@ -2137,13 +2137,13 @@ deserialize_deflist(Datum txt)
 						*wsptr++ = '\0';
 						result = lappend(result,
 										 makeDefElem(pstrdup(workspace),
-													 (Node *) makeString(pstrdup(startvalue))));
+								  (Node *) makeString(pstrdup(startvalue))));
 						state = CS_WAITKEY;
 					}
 				}
 				else if (*ptr == '\\')
 				{
-					if (ptr+1 < endptr && ptr[1] == '\\')
+					if (ptr + 1 < endptr && ptr[1] == '\\')
 					{
 						/* copy only one of the two backslashes */
 						*wsptr++ = *ptr++;
@@ -2159,7 +2159,7 @@ deserialize_deflist(Datum txt)
 			case CS_INDQVALUE:
 				if (*ptr == '"')
 				{
-					if (ptr+1 < endptr && ptr[1] == '"')
+					if (ptr + 1 < endptr && ptr[1] == '"')
 					{
 						/* copy only one of the two quotes */
 						*wsptr++ = *ptr++;
@@ -2169,7 +2169,7 @@ deserialize_deflist(Datum txt)
 						*wsptr++ = '\0';
 						result = lappend(result,
 										 makeDefElem(pstrdup(workspace),
-													 (Node *) makeString(pstrdup(startvalue))));
+								  (Node *) makeString(pstrdup(startvalue))));
 						state = CS_WAITKEY;
 					}
 				}
@@ -2184,7 +2184,7 @@ deserialize_deflist(Datum txt)
 					*wsptr++ = '\0';
 					result = lappend(result,
 									 makeDefElem(pstrdup(workspace),
-												 (Node *) makeString(pstrdup(startvalue))));
+								  (Node *) makeString(pstrdup(startvalue))));
 					state = CS_WAITKEY;
 				}
 				else
@@ -2203,7 +2203,7 @@ deserialize_deflist(Datum txt)
 		*wsptr++ = '\0';
 		result = lappend(result,
 						 makeDefElem(pstrdup(workspace),
-									 (Node *) makeString(pstrdup(startvalue))));
+								  (Node *) makeString(pstrdup(startvalue))));
 	}
 	else if (state != CS_WAITKEY)
 		ereport(ERROR,

@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.187 2007/10/24 18:37:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.188 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,12 +112,12 @@ typedef struct
 {
 	PlannerInfo *root;
 	QualCost	total;
-} cost_qual_eval_context;
+}	cost_qual_eval_context;
 
 static MergeScanSelCache *cached_scansel(PlannerInfo *root,
-										 RestrictInfo *rinfo,
-										 PathKey *pathkey);
-static bool cost_qual_eval_walker(Node *node, cost_qual_eval_context *context);
+			   RestrictInfo *rinfo,
+			   PathKey * pathkey);
+static bool cost_qual_eval_walker(Node *node, cost_qual_eval_context * context);
 static Selectivity approx_selectivity(PlannerInfo *root, List *quals,
 				   JoinType jointype);
 static Selectivity join_in_selectivity(JoinPath *path, PlannerInfo *root);
@@ -303,15 +303,14 @@ cost_index(IndexPath *path, PlannerInfo *root,
 		max_IO_cost = (pages_fetched * random_page_cost) / num_scans;
 
 		/*
-		 * In the perfectly correlated case, the number of pages touched
-		 * by each scan is selectivity * table_size, and we can use the
-		 * Mackert and Lohman formula at the page level to estimate how
-		 * much work is saved by caching across scans.  We still assume
-		 * all the fetches are random, though, which is an overestimate
-		 * that's hard to correct for without double-counting the cache
-		 * effects.  (But in most cases where such a plan is actually
-		 * interesting, only one page would get fetched per scan anyway,
-		 * so it shouldn't matter much.)
+		 * In the perfectly correlated case, the number of pages touched by
+		 * each scan is selectivity * table_size, and we can use the Mackert
+		 * and Lohman formula at the page level to estimate how much work is
+		 * saved by caching across scans.  We still assume all the fetches are
+		 * random, though, which is an overestimate that's hard to correct for
+		 * without double-counting the cache effects.  (But in most cases
+		 * where such a plan is actually interesting, only one page would get
+		 * fetched per scan anyway, so it shouldn't matter much.)
 		 */
 		pages_fetched = ceil(indexSelectivity * (double) baserel->pages);
 
@@ -344,8 +343,8 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	}
 
 	/*
-	 * Now interpolate based on estimated index order correlation to get
-	 * total disk I/O cost for main table accesses.
+	 * Now interpolate based on estimated index order correlation to get total
+	 * disk I/O cost for main table accesses.
 	 */
 	csquared = indexCorrelation * indexCorrelation;
 
@@ -643,11 +642,12 @@ cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec)
 	{
 		*cost = ((IndexPath *) path)->indextotalcost;
 		*selec = ((IndexPath *) path)->indexselectivity;
+
 		/*
 		 * Charge a small amount per retrieved tuple to reflect the costs of
 		 * manipulating the bitmap.  This is mostly to make sure that a bitmap
-		 * scan doesn't look to be the same cost as an indexscan to retrieve
-		 * a single tuple.
+		 * scan doesn't look to be the same cost as an indexscan to retrieve a
+		 * single tuple.
 		 */
 		*cost += 0.1 * cpu_operator_cost * ((IndexPath *) path)->rows;
 	}
@@ -806,7 +806,7 @@ cost_tidscan(Path *path, PlannerInfo *root,
 
 	/*
 	 * We must force TID scan for WHERE CURRENT OF, because only nodeTidscan.c
-	 * understands how to do it correctly.  Therefore, honor enable_tidscan
+	 * understands how to do it correctly.	Therefore, honor enable_tidscan
 	 * only when CURRENT OF isn't present.  Also note that cost_qual_eval
 	 * counts a CurrentOfExpr as having startup cost disable_cost, which we
 	 * subtract off here; that's to prevent other plan types such as seqscan
@@ -1043,10 +1043,10 @@ cost_sort(Path *path, PlannerInfo *root,
 	else if (tuples > 2 * output_tuples || input_bytes > work_mem_bytes)
 	{
 		/*
-		 * We'll use a bounded heap-sort keeping just K tuples in memory,
-		 * for a total number of tuple comparisons of N log2 K; but the
-		 * constant factor is a bit higher than for quicksort.  Tweak it
-		 * so that the cost curve is continuous at the crossover point.
+		 * We'll use a bounded heap-sort keeping just K tuples in memory, for
+		 * a total number of tuple comparisons of N log2 K; but the constant
+		 * factor is a bit higher than for quicksort.  Tweak it so that the
+		 * cost curve is continuous at the crossover point.
 		 */
 		startup_cost += 2.0 * cpu_operator_cost * tuples * LOG2(2.0 * output_tuples);
 	}
@@ -1454,8 +1454,8 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 		RestrictInfo *firstclause = (RestrictInfo *) linitial(mergeclauses);
 		List	   *opathkeys;
 		List	   *ipathkeys;
-		PathKey	   *opathkey;
-		PathKey	   *ipathkey;
+		PathKey    *opathkey;
+		PathKey    *ipathkey;
 		MergeScanSelCache *cache;
 
 		/* Get the input pathkeys to determine the sort-order details */
@@ -1593,7 +1593,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
  * run mergejoinscansel() with caching
  */
 static MergeScanSelCache *
-cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
+cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey * pathkey)
 {
 	MergeScanSelCache *cache;
 	ListCell   *lc;
@@ -1787,8 +1787,8 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
 	 * If inner relation is too big then we will need to "batch" the join,
 	 * which implies writing and reading most of the tuples to disk an extra
 	 * time.  Charge seq_page_cost per page, since the I/O should be nice and
-	 * sequential.  Writing the inner rel counts as startup cost,
-	 * all the rest as run cost.
+	 * sequential.	Writing the inner rel counts as startup cost, all the rest
+	 * as run cost.
 	 */
 	if (numbatches > 1)
 	{
@@ -1891,16 +1891,16 @@ cost_qual_eval_node(QualCost *cost, Node *qual, PlannerInfo *root)
 }
 
 static bool
-cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
+cost_qual_eval_walker(Node *node, cost_qual_eval_context * context)
 {
 	if (node == NULL)
 		return false;
 
 	/*
 	 * RestrictInfo nodes contain an eval_cost field reserved for this
-	 * routine's use, so that it's not necessary to evaluate the qual
-	 * clause's cost more than once.  If the clause's cost hasn't been
-	 * computed yet, the field's startup value will contain -1.
+	 * routine's use, so that it's not necessary to evaluate the qual clause's
+	 * cost more than once.  If the clause's cost hasn't been computed yet,
+	 * the field's startup value will contain -1.
 	 */
 	if (IsA(node, RestrictInfo))
 	{
@@ -1913,14 +1913,16 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 			locContext.root = context->root;
 			locContext.total.startup = 0;
 			locContext.total.per_tuple = 0;
+
 			/*
-			 * For an OR clause, recurse into the marked-up tree so that
-			 * we set the eval_cost for contained RestrictInfos too.
+			 * For an OR clause, recurse into the marked-up tree so that we
+			 * set the eval_cost for contained RestrictInfos too.
 			 */
 			if (rinfo->orclause)
 				cost_qual_eval_walker((Node *) rinfo->orclause, &locContext);
 			else
 				cost_qual_eval_walker((Node *) rinfo->clause, &locContext);
+
 			/*
 			 * If the RestrictInfo is marked pseudoconstant, it will be tested
 			 * only once, so treat its cost as all startup cost.
@@ -1941,8 +1943,8 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 
 	/*
 	 * For each operator or function node in the given tree, we charge the
-	 * estimated execution cost given by pg_proc.procost (remember to
-	 * multiply this by cpu_operator_cost).
+	 * estimated execution cost given by pg_proc.procost (remember to multiply
+	 * this by cpu_operator_cost).
 	 *
 	 * Vars and Consts are charged zero, and so are boolean operators (AND,
 	 * OR, NOT). Simplistic, but a lot better than no model at all.
@@ -1951,7 +1953,7 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	 * evaluation of AND/OR?  Probably *not*, because that would make the
 	 * results depend on the clause ordering, and we are not in any position
 	 * to expect that the current ordering of the clauses is the one that's
-	 * going to end up being used.  (Is it worth applying order_qual_clauses
+	 * going to end up being used.	(Is it worth applying order_qual_clauses
 	 * much earlier in the planning process to fix this?)
 	 */
 	if (IsA(node, FuncExpr))
@@ -1984,9 +1986,9 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	else if (IsA(node, CoerceViaIO))
 	{
 		CoerceViaIO *iocoerce = (CoerceViaIO *) node;
-		Oid		iofunc;
-		Oid		typioparam;
-		bool	typisvarlena;
+		Oid			iofunc;
+		Oid			typioparam;
+		bool		typisvarlena;
 
 		/* check the result type's input function */
 		getTypeInputInfo(iocoerce->resulttype,
@@ -2014,7 +2016,7 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 
 		foreach(lc, rcexpr->opnos)
 		{
-			Oid		opid = lfirst_oid(lc);
+			Oid			opid = lfirst_oid(lc);
 
 			context->total.per_tuple += get_func_cost(get_opcode(opid)) *
 				cpu_operator_cost;
@@ -2069,7 +2071,7 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 		{
 			/*
 			 * Otherwise we will be rescanning the subplan output on each
-			 * evaluation.  We need to estimate how much of the output we will
+			 * evaluation.	We need to estimate how much of the output we will
 			 * actually need to scan.  NOTE: this logic should agree with
 			 * get_initplan_cost, below, and with the estimates used by
 			 * make_subplan() in plan/subselect.c.
@@ -2266,9 +2268,9 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 	 * double-counting them because they were not considered in estimating the
 	 * sizes of the component rels.
 	 *
-	 * For an outer join, we have to distinguish the selectivity of the
-	 * join's own clauses (JOIN/ON conditions) from any clauses that were
-	 * "pushed down".  For inner joins we just count them all as joinclauses.
+	 * For an outer join, we have to distinguish the selectivity of the join's
+	 * own clauses (JOIN/ON conditions) from any clauses that were "pushed
+	 * down".  For inner joins we just count them all as joinclauses.
 	 */
 	if (IS_OUTER_JOIN(jointype))
 	{
@@ -2316,7 +2318,7 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 	 *
 	 * If we are doing an outer join, take that into account: the joinqual
 	 * selectivity has to be clamped using the knowledge that the output must
-	 * be at least as large as the non-nullable input.  However, any
+	 * be at least as large as the non-nullable input.	However, any
 	 * pushed-down quals are applied after the outer join, so their
 	 * selectivity applies fully.
 	 *
@@ -2515,7 +2517,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 	if (rel->relid > 0)
 		rel_reloid = getrelid(rel->relid, root->parse->rtable);
 	else
-		rel_reloid = InvalidOid;			/* probably can't happen */
+		rel_reloid = InvalidOid;	/* probably can't happen */
 
 	foreach(tllist, rel->reltargetlist)
 	{

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.83 2007/11/07 12:24:24 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.84 2007/11/15 21:14:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ index_form_tuple(TupleDesc tupleDescriptor,
 		{
 			untoasted_values[i] =
 				PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
-													  DatumGetPointer(values[i])));
+												DatumGetPointer(values[i])));
 			untoasted_free[i] = true;
 		}
 
@@ -309,8 +309,8 @@ nocache_index_getattr(IndexTuple tup,
 
 		/*
 		 * Otherwise, check for non-fixed-length attrs up to and including
-		 * target.  If there aren't any, it's safe to cheaply initialize
-		 * the cached offsets for these attrs.
+		 * target.	If there aren't any, it's safe to cheaply initialize the
+		 * cached offsets for these attrs.
 		 */
 		if (IndexTupleHasVarwidths(tup))
 		{
@@ -371,8 +371,8 @@ nocache_index_getattr(IndexTuple tup,
 		int			i;
 
 		/*
-		 * Now we know that we have to walk the tuple CAREFULLY.  But we
-		 * still might be able to cache some offsets for next time.
+		 * Now we know that we have to walk the tuple CAREFULLY.  But we still
+		 * might be able to cache some offsets for next time.
 		 *
 		 * Note - This loop is a little tricky.  For each non-null attribute,
 		 * we have to first account for alignment padding before the attr,
@@ -381,12 +381,12 @@ nocache_index_getattr(IndexTuple tup,
 		 * attcacheoff until we reach either a null or a var-width attribute.
 		 */
 		off = 0;
-		for (i = 0; ; i++)			/* loop exit is at "break" */
+		for (i = 0;; i++)		/* loop exit is at "break" */
 		{
 			if (IndexTupleHasNulls(tup) && att_isnull(i, bp))
 			{
 				usecache = false;
-				continue;			/* this cannot be the target att */
+				continue;		/* this cannot be the target att */
 			}
 
 			/* If we know the next offset, we can skip the rest */
@@ -395,10 +395,10 @@ nocache_index_getattr(IndexTuple tup,
 			else if (att[i]->attlen == -1)
 			{
 				/*
-				 * We can only cache the offset for a varlena attribute
-				 * if the offset is already suitably aligned, so that there
-				 * would be no pad bytes in any case: then the offset will
-				 * be valid for either an aligned or unaligned value.
+				 * We can only cache the offset for a varlena attribute if the
+				 * offset is already suitably aligned, so that there would be
+				 * no pad bytes in any case: then the offset will be valid for
+				 * either an aligned or unaligned value.
 				 */
 				if (usecache &&
 					off == att_align_nominal(off, att[i]->attalign))

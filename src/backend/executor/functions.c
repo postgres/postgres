@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.118 2007/06/17 18:57:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.119 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ static execution_state *init_execution_state(List *queryTree_list,
 static void init_sql_fcache(FmgrInfo *finfo);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static TupleTableSlot *postquel_getnext(execution_state *es,
-										SQLFunctionCachePtr fcache);
+				 SQLFunctionCachePtr fcache);
 static void postquel_end(execution_state *es);
 static void postquel_sub_params(SQLFunctionCachePtr fcache,
 					FunctionCallInfo fcinfo);
@@ -251,16 +251,16 @@ init_sql_fcache(FmgrInfo *finfo)
 	queryTree_list = pg_parse_and_rewrite(fcache->src, argOidVect, nargs);
 
 	/*
-	 * Check that the function returns the type it claims to.  Although
-	 * in simple cases this was already done when the function was defined,
-	 * we have to recheck because database objects used in the function's
-	 * queries might have changed type.  We'd have to do it anyway if the
-	 * function had any polymorphic arguments.
+	 * Check that the function returns the type it claims to.  Although in
+	 * simple cases this was already done when the function was defined, we
+	 * have to recheck because database objects used in the function's queries
+	 * might have changed type.  We'd have to do it anyway if the function had
+	 * any polymorphic arguments.
 	 *
-	 * Note: we set fcache->returnsTuple according to whether we are
-	 * returning the whole tuple result or just a single column.  In the
-	 * latter case we clear returnsTuple because we need not act different
-	 * from the scalar result case, even if it's a rowtype column.
+	 * Note: we set fcache->returnsTuple according to whether we are returning
+	 * the whole tuple result or just a single column.	In the latter case we
+	 * clear returnsTuple because we need not act different from the scalar
+	 * result case, even if it's a rowtype column.
 	 *
 	 * In the returnsTuple case, check_sql_fn_retval will also construct a
 	 * JunkFilter we can use to coerce the returned rowtype to the desired
@@ -320,8 +320,8 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	if (es->qd->utilitystmt == NULL)
 	{
 		/*
-		 * Only set up to collect queued triggers if it's not a SELECT.
-		 * This isn't just an optimization, but is necessary in case a SELECT
+		 * Only set up to collect queued triggers if it's not a SELECT. This
+		 * isn't just an optimization, but is necessary in case a SELECT
 		 * returns multiple rows to caller --- we mustn't exit from the
 		 * function execution with a stacked AfterTrigger level still active.
 		 */
@@ -354,7 +354,7 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 							es->qd->utilitystmt),
 						   fcache->src,
 						   es->qd->params,
-						   false,				/* not top level */
+						   false,		/* not top level */
 						   es->qd->dest,
 						   NULL);
 			result = NULL;
@@ -907,7 +907,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	/*
 	 * If the last query isn't a SELECT, the return type must be VOID.
 	 *
-	 * Note: eventually replace this test with QueryReturnsTuples?  We'd need
+	 * Note: eventually replace this test with QueryReturnsTuples?	We'd need
 	 * a more general method of determining the output type, though.
 	 */
 	if (!(parse->commandType == CMD_SELECT &&
@@ -926,10 +926,9 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	/*
 	 * OK, it's a SELECT, so it must return something matching the declared
 	 * type.  (We used to insist that the declared type not be VOID in this
-	 * case, but that makes it hard to write a void function that exits
-	 * after calling another void function.  Instead, we insist that the
-	 * SELECT return void ... so void is treated as if it were a scalar type
-	 * below.)
+	 * case, but that makes it hard to write a void function that exits after
+	 * calling another void function.  Instead, we insist that the SELECT
+	 * return void ... so void is treated as if it were a scalar type below.)
 	 */
 
 	/*

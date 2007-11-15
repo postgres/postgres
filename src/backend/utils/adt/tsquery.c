@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.8 2007/10/21 22:29:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.9 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,18 +29,20 @@ struct TSQueryParserStateData
 	char	   *buffer;			/* entire string we are scanning */
 	char	   *buf;			/* current scan point */
 	int			state;
-	int			count;			/* nesting count, incremented by (, 
-								   decremented by ) */
+	int			count;			/* nesting count, incremented by (,
+								 * decremented by ) */
 
 	/* polish (prefix) notation in list, filled in by push* functions */
 	List	   *polstr;
 
-	/* Strings from operands are collected in op. curop is a pointer to
-	 * the end of used space of op. */
+	/*
+	 * Strings from operands are collected in op. curop is a pointer to the
+	 * end of used space of op.
+	 */
 	char	   *op;
 	char	   *curop;
-	int			lenop; /* allocated size of op */
-	int			sumlen; /* used size of op */
+	int			lenop;			/* allocated size of op */
+	int			sumlen;			/* used size of op */
 
 	/* state for value's parser */
 	TSVectorParseState valstate;
@@ -96,14 +98,15 @@ get_weight(char *buf, int16 *weight)
 /*
  * token types for parsing
  */
-typedef enum {
+typedef enum
+{
 	PT_END = 0,
 	PT_ERR = 1,
 	PT_VAL = 2,
 	PT_OPR = 3,
 	PT_OPEN = 4,
 	PT_CLOSE = 5,
-} ts_tokentype;
+}	ts_tokentype;
 
 /*
  * get token from query string
@@ -112,7 +115,7 @@ typedef enum {
  * *strval, *lenval and *weight are filled in when return value is PT_VAL
  */
 static ts_tokentype
-gettoken_query(TSQueryParserState state, 
+gettoken_query(TSQueryParserState state,
 			   int8 *operator,
 			   int *lenval, char **strval, int16 *weight)
 {
@@ -146,7 +149,10 @@ gettoken_query(TSQueryParserState state,
 				}
 				else if (!t_isspace(state->buf))
 				{
-					/* We rely on the tsvector parser to parse the value for us */
+					/*
+					 * We rely on the tsvector parser to parse the value for
+					 * us
+					 */
 					reset_tsvector_parser(state->valstate, state->buf);
 					if (gettoken_tsvector(state->valstate, strval, lenval, NULL, NULL, &state->buf))
 					{
@@ -215,7 +221,7 @@ pushOperator(TSQueryParserState state, int8 oper)
 	QueryOperator *tmp;
 
 	Assert(oper == OP_NOT || oper == OP_AND || oper == OP_OR);
-	
+
 	tmp = (QueryOperator *) palloc(sizeof(QueryOperator));
 	tmp->type = QI_OPR;
 	tmp->oper = oper;
@@ -275,7 +281,7 @@ pushValue(TSQueryParserState state, char *strval, int lenval, int2 weight)
 	/* append the value string to state.op, enlarging buffer if needed first */
 	while (state->curop - state->op + lenval + 1 >= state->lenop)
 	{
-		int	used = state->curop - state->op;
+		int			used = state->curop - state->op;
 
 		state->lenop *= 2;
 		state->op = (char *) repalloc((void *) state->op, state->lenop);
@@ -312,7 +318,7 @@ pushStop(TSQueryParserState state)
  * See parse_tsquery for explanation of pushval.
  */
 static void
-makepol(TSQueryParserState state, 
+makepol(TSQueryParserState state,
 		PushFunction pushval,
 		Datum opaque)
 {
@@ -345,7 +351,7 @@ makepol(TSQueryParserState state,
 					pushOperator(state, OP_OR);
 				else
 				{
-					if (lenstack == STACKDEPTH)			/* internal error */
+					if (lenstack == STACKDEPTH) /* internal error */
 						elog(ERROR, "tsquery stack too small");
 					opstack[lenstack] = operator;
 					lenstack++;
@@ -384,7 +390,7 @@ makepol(TSQueryParserState state,
 }
 
 static void
-findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes)
+findoprnd_recurse(QueryItem * ptr, uint32 *pos, int nnodes)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
@@ -393,14 +399,12 @@ findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes)
 		elog(ERROR, "malformed tsquery; operand not found");
 
 	if (ptr[*pos].type == QI_VAL ||
-		ptr[*pos].type == QI_VALSTOP) /* need to handle VALSTOP here,
-									   * they haven't been cleaned
-									   * away yet.
-									   */
+		ptr[*pos].type == QI_VALSTOP)	/* need to handle VALSTOP here, they
+										 * haven't been cleaned away yet. */
 	{
 		(*pos)++;
 	}
-	else 
+	else
 	{
 		Assert(ptr[*pos].type == QI_OPR);
 
@@ -412,8 +416,8 @@ findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes)
 		}
 		else
 		{
-			QueryOperator  *curitem = &ptr[*pos].operator;
-			int	tmp = *pos;
+			QueryOperator *curitem = &ptr[*pos].operator;
+			int			tmp = *pos;
 
 			Assert(curitem->oper == OP_AND || curitem->oper == OP_OR);
 
@@ -428,12 +432,12 @@ findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes)
 
 /*
  * Fills in the left-fields previously left unfilled. The input
- * QueryItems must be in polish (prefix) notation. 
+ * QueryItems must be in polish (prefix) notation.
  */
 static void
-findoprnd(QueryItem *ptr, int size)
+findoprnd(QueryItem * ptr, int size)
 {
-	uint32 pos;
+	uint32		pos;
 
 	pos = 0;
 	findoprnd_recurse(ptr, &pos, size);
@@ -451,14 +455,14 @@ findoprnd(QueryItem *ptr, int size)
  * with pushStop, otherwise the prefix notation representation will be broken,
  * having an operator with no operand.
  *
- * opaque is passed on to pushval as is, pushval can use it to store its 
+ * opaque is passed on to pushval as is, pushval can use it to store its
  * private state.
  *
  * The returned query might contain QI_STOPVAL nodes. The caller is responsible
  * for cleaning them up (with clean_fakeval)
  */
 TSQuery
-parse_tsquery(char *buf, 
+parse_tsquery(char *buf,
 			  PushFunction pushval,
 			  Datum opaque,
 			  bool isplain)
@@ -513,9 +517,9 @@ parse_tsquery(char *buf,
 	i = 0;
 	foreach(cell, state.polstr)
 	{
-		QueryItem *item = (QueryItem *) lfirst(cell);
+		QueryItem  *item = (QueryItem *) lfirst(cell);
 
-		switch(item->type)
+		switch (item->type)
 		{
 			case QI_VAL:
 				memcpy(&ptr[i], item, sizeof(QueryOperand));
@@ -572,7 +576,7 @@ typedef struct
 	char	   *cur;
 	char	   *op;
 	int			buflen;
-} INFIX;
+}	INFIX;
 
 /* Makes sure inf->buf is large enough for adding 'addsize' bytes */
 #define RESIZEBUF(inf, addsize) \
@@ -699,7 +703,7 @@ infix(INFIX * in, bool first)
 
 		/* print operator & right operand */
 		RESIZEBUF(in, 3 + (nrm.cur - nrm.buf));
-		switch(op)
+		switch (op)
 		{
 			case OP_OR:
 				sprintf(in->cur, " | %s", nrm.buf);
@@ -708,7 +712,7 @@ infix(INFIX * in, bool first)
 				sprintf(in->cur, " & %s", nrm.buf);
 				break;
 			default:
-				/* OP_NOT is handled in above if-branch*/
+				/* OP_NOT is handled in above if-branch */
 				elog(ERROR, "unexpected operator type %d", op);
 		}
 		in->cur = strchr(in->cur, '\0');
@@ -752,13 +756,13 @@ tsqueryout(PG_FUNCTION_ARGS)
  * Binary Input / Output functions. The binary format is as follows:
  *
  * uint32	 number of operators/operands in the query
- * 
+ *
  * Followed by the operators and operands, in prefix notation. For each
  * operand:
  *
  * uint8	type, QI_VAL
  * uint8	weight
- * 			operand text in client encoding, null-terminated
+ *			operand text in client encoding, null-terminated
  *
  * For each operator:
  * uint8	type, QI_OPR
@@ -779,7 +783,7 @@ tsquerysend(PG_FUNCTION_ARGS)
 	{
 		pq_sendint(&buf, item->type, sizeof(item->type));
 
-		switch(item->type)
+		switch (item->type)
 		{
 			case QI_VAL:
 				pq_sendint(&buf, item->operand.weight, sizeof(uint8));
@@ -832,12 +836,12 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 
 		if (item->type == QI_VAL)
 		{
-			size_t val_len; /* length after recoding to server encoding */
-			uint8 weight;
+			size_t		val_len;	/* length after recoding to server encoding */
+			uint8		weight;
 			const char *val;
-			pg_crc32 valcrc;
+			pg_crc32	valcrc;
 
-			weight 	 = (uint8) pq_getmsgint(buf, sizeof(uint8));
+			weight = (uint8) pq_getmsgint(buf, sizeof(uint8));
 			val = pq_getmsgstring(buf);
 			val_len = strlen(val);
 
@@ -848,7 +852,7 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 
 			if (val_len > MAXSTRLEN)
 				elog(ERROR, "invalid tsquery; operand too long");
-				
+
 			if (datalen > MAXSTRPOS)
 				elog(ERROR, "invalid tsquery; total operand length exceeded");
 
@@ -863,17 +867,18 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 			item->operand.length = val_len;
 			item->operand.distance = datalen;
 
-			/* 
+			/*
 			 * Operand strings are copied to the final struct after this loop;
 			 * here we just collect them to an array
 			 */
 			operands[i] = val;
 
 			datalen += val_len + 1;		/* + 1 for the '\0' terminator */
-		} 
+		}
 		else if (item->type == QI_OPR)
 		{
-			int8 oper;
+			int8		oper;
+
 			oper = (int8) pq_getmsgint(buf, sizeof(int8));
 			if (oper != OP_NOT && oper != OP_OR && oper != OP_AND)
 				elog(ERROR, "invalid tsquery; unknown operator type %d", (int) oper);
@@ -882,7 +887,7 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 
 			item->operator.oper = oper;
 		}
-		else 
+		else
 			elog(ERROR, "unknown tsquery node type %d", item->type);
 
 		item++;
@@ -893,9 +898,9 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 	item = GETQUERY(query);
 	ptr = GETOPERAND(query);
 
-	/* 
-	 * Fill in the left-pointers. Checks that the tree is well-formed
-	 * as a side-effect.
+	/*
+	 * Fill in the left-pointers. Checks that the tree is well-formed as a
+	 * side-effect.
 	 */
 	findoprnd(item, size);
 

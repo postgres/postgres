@@ -8,7 +8,7 @@
  * Copyright (c) 2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.2 2007/09/21 21:25:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.3 2007/11/15 21:14:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,8 @@
 
 PG_MODULE_MAGIC;
 
-Datum get_raw_page(PG_FUNCTION_ARGS);
-Datum page_header(PG_FUNCTION_ARGS);
+Datum		get_raw_page(PG_FUNCTION_ARGS);
+Datum		page_header(PG_FUNCTION_ARGS);
 
 /*
  * get_raw_page
@@ -43,9 +43,9 @@ get_raw_page(PG_FUNCTION_ARGS)
 	uint32		blkno = PG_GETARG_UINT32(1);
 
 	Relation	rel;
-	RangeVar	*relrv;
-	bytea		*raw_page;
-	char		*raw_page_data;
+	RangeVar   *relrv;
+	bytea	   *raw_page;
+	char	   *raw_page_data;
 	Buffer		buf;
 
 	if (!superuser())
@@ -61,12 +61,12 @@ get_raw_page(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot get raw page from view \"%s\"",
-							RelationGetRelationName(rel))));
+						RelationGetRelationName(rel))));
 	if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot get raw page from composite type \"%s\"",
-							RelationGetRelationName(rel))));
+						RelationGetRelationName(rel))));
 
 	if (blkno >= RelationGetNumberOfBlocks(rel))
 		elog(ERROR, "block number %u is out of range for relation \"%s\"",
@@ -125,13 +125,13 @@ page_header(PG_FUNCTION_ARGS)
 	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
 
 	/*
-	 * Check that enough data was supplied, so that we don't try to access 
-	 * fields outside the supplied buffer. 
+	 * Check that enough data was supplied, so that we don't try to access
+	 * fields outside the supplied buffer.
 	 */
-	if(raw_page_size < sizeof(PageHeaderData))
-		ereport(ERROR, 
-			 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			  errmsg("input page too small (%d bytes)", raw_page_size)));
+	if (raw_page_size < sizeof(PageHeaderData))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input page too small (%d bytes)", raw_page_size)));
 
 	page = (PageHeader) VARDATA(raw_page);
 
@@ -154,12 +154,12 @@ page_header(PG_FUNCTION_ARGS)
 	values[7] = UInt16GetDatum(PageGetPageLayoutVersion(page));
 	values[8] = TransactionIdGetDatum(page->pd_prune_xid);
 
-    /* Build and return the tuple. */
+	/* Build and return the tuple. */
 
 	memset(nulls, 0, sizeof(nulls));
 
-    tuple = heap_form_tuple(tupdesc, values, nulls);
-    result = HeapTupleGetDatum(tuple);
+	tuple = heap_form_tuple(tupdesc, values, nulls);
+	result = HeapTupleGetDatum(tuple);
 
 	PG_RETURN_DATUM(result);
 }

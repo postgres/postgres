@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.28 2007/10/15 15:11:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.29 2007/11/15 21:14:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ name_okay(const char *str)
  * so we can set or update the XID wrap limit.
  *
  * Also, if "startup" is true, we tell relcache.c to clear out the relcache
- * init file in each database.  That's a bit nonmodular, but scanning
+ * init file in each database.	That's a bit nonmodular, but scanning
  * pg_database twice during system startup seems too high a price for keeping
  * things better separated.
  */
@@ -223,8 +223,8 @@ write_database_file(Relation drel, bool startup)
 		datfrozenxid = dbform->datfrozenxid;
 
 		/*
-		 * Identify the oldest datfrozenxid.  This must match
-		 * the logic in vac_truncate_clog() in vacuum.c.
+		 * Identify the oldest datfrozenxid.  This must match the logic in
+		 * vac_truncate_clog() in vacuum.c.
 		 */
 		if (TransactionIdIsNormal(datfrozenxid))
 		{
@@ -261,7 +261,7 @@ write_database_file(Relation drel, bool startup)
 		 */
 		if (startup)
 		{
-			char *dbpath = GetDatabasePath(datoid, dattablespace);
+			char	   *dbpath = GetDatabasePath(datoid, dattablespace);
 
 			RelationCacheInitFileRemove(dbpath);
 			pfree(dbpath);
@@ -437,10 +437,10 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 		 * We can't use heap_getattr() here because during startup we will not
 		 * have any tupdesc for pg_authid.	Fortunately it's not too hard to
 		 * work around this.  rolpassword is the first possibly-null field so
-		 * we can compute its offset directly.  Note that this only works
+		 * we can compute its offset directly.	Note that this only works
 		 * reliably because the preceding field (rolconnlimit) is int4, and
-		 * therefore rolpassword is always 4-byte-aligned, and will be at
-		 * the same offset no matter whether it uses 1-byte or 4-byte header.
+		 * therefore rolpassword is always 4-byte-aligned, and will be at the
+		 * same offset no matter whether it uses 1-byte or 4-byte header.
 		 */
 		tp = (char *) tup + tup->t_hoff;
 		off = offsetof(FormData_pg_authid, rolpassword);
@@ -634,21 +634,21 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 	for (curr_role = 0; curr_role < total_roles; curr_role++)
 	{
 		auth_entry *arole = &auth_info[curr_role];
-			ListCell   *mem;
+		ListCell   *mem;
 
-			fputs_quote(arole->rolname, fp);
+		fputs_quote(arole->rolname, fp);
+		fputs(" ", fp);
+		fputs_quote(arole->rolpassword, fp);
+		fputs(" ", fp);
+		fputs_quote(arole->rolvaliduntil, fp);
+
+		foreach(mem, arole->member_of)
+		{
 			fputs(" ", fp);
-			fputs_quote(arole->rolpassword, fp);
-			fputs(" ", fp);
-			fputs_quote(arole->rolvaliduntil, fp);
+			fputs_quote((char *) lfirst(mem), fp);
+		}
 
-			foreach(mem, arole->member_of)
-			{
-				fputs(" ", fp);
-				fputs_quote((char *) lfirst(mem), fp);
-			}
-
-			fputs("\n", fp);
+		fputs("\n", fp);
 	}
 
 	if (FreeFile(fp))
@@ -845,10 +845,10 @@ AtEOXact_UpdateFlatFiles(bool isCommit)
 	SendPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE);
 
 	/*
-	 * Force synchronous commit, to minimize the window between changing
-	 * the flat files on-disk and marking the transaction committed.  It's
-	 * not great that there is any window at all, but definitely we don't
-	 * want to make it larger than necessary.
+	 * Force synchronous commit, to minimize the window between changing the
+	 * flat files on-disk and marking the transaction committed.  It's not
+	 * great that there is any window at all, but definitely we don't want to
+	 * make it larger than necessary.
 	 */
 	ForceSyncCommit();
 }

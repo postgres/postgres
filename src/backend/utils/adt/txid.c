@@ -14,7 +14,7 @@
  *	Author: Jan Wieck, Afilias USA INC.
  *	64-bit txids: Marko Kreen, Skype Technologies
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/txid.c,v 1.1 2007/10/13 23:06:26 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/txid.c,v 1.2 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,16 +57,15 @@ typedef struct
 	/*
 	 * 4-byte length hdr, should not be touched directly.
 	 *
-	 * Explicit embedding is ok as we want always correct
-	 * alignment anyway.
+	 * Explicit embedding is ok as we want always correct alignment anyway.
 	 */
-    int32       __varsz;
-	
-    uint32      nxip;		/* number of txids in xip array */
-    txid		xmin;
-    txid		xmax;
-    txid		xip[1];		/* in-progress txids, xmin <= xip[i] < xmax */
-}   TxidSnapshot;
+	int32		__varsz;
+
+	uint32		nxip;			/* number of txids in xip array */
+	txid		xmin;
+	txid		xmax;
+	txid		xip[1];			/* in-progress txids, xmin <= xip[i] < xmax */
+}	TxidSnapshot;
 
 #define TXID_SNAPSHOT_SIZE(nxip) \
 	(offsetof(TxidSnapshot, xip) + sizeof(txid) * (nxip))
@@ -76,8 +75,8 @@ typedef struct
  */
 typedef struct
 {
-	TransactionId	last_xid;
-	uint32			epoch;
+	TransactionId last_xid;
+	uint32		epoch;
 }	TxidEpoch;
 
 
@@ -85,7 +84,7 @@ typedef struct
  * Fetch epoch data from xact.c.
  */
 static void
-load_xid_epoch(TxidEpoch *state)
+load_xid_epoch(TxidEpoch * state)
 {
 	GetNextXidAndEpoch(&state->last_xid, &state->epoch);
 }
@@ -94,10 +93,10 @@ load_xid_epoch(TxidEpoch *state)
  * do a TransactionId -> txid conversion for an XID near the given epoch
  */
 static txid
-convert_xid(TransactionId xid, const TxidEpoch *state)
+convert_xid(TransactionId xid, const TxidEpoch * state)
 {
 #ifndef INT64_IS_BUSTED
-	uint64 epoch;
+	uint64		epoch;
 
 	/* return special xid's as-is */
 	if (!TransactionIdIsNormal(xid))
@@ -113,10 +112,10 @@ convert_xid(TransactionId xid, const TxidEpoch *state)
 		epoch++;
 
 	return (epoch << 32) | xid;
-#else /* INT64_IS_BUSTED */
+#else							/* INT64_IS_BUSTED */
 	/* we can't do anything with the epoch, so ignore it */
 	return (txid) xid & MAX_TXID;
-#endif /* INT64_IS_BUSTED */
+#endif   /* INT64_IS_BUSTED */
 }
 
 /*
@@ -125,8 +124,8 @@ convert_xid(TransactionId xid, const TxidEpoch *state)
 static int
 cmp_txid(const void *aa, const void *bb)
 {
-	txid	a = *(const txid *) aa;
-	txid	b = *(const txid *) bb;
+	txid		a = *(const txid *) aa;
+	txid		b = *(const txid *) bb;
 
 	if (a < b)
 		return -1;
@@ -142,7 +141,7 @@ cmp_txid(const void *aa, const void *bb)
  * will not be used.
  */
 static void
-sort_snapshot(TxidSnapshot *snap)
+sort_snapshot(TxidSnapshot * snap)
 {
 	if (snap->nxip > 1)
 		qsort(snap->xip, snap->nxip, sizeof(txid), cmp_txid);
@@ -152,7 +151,7 @@ sort_snapshot(TxidSnapshot *snap)
  * check txid visibility.
  */
 static bool
-is_visible_txid(txid value, const TxidSnapshot *snap)
+is_visible_txid(txid value, const TxidSnapshot * snap)
 {
 	if (value < snap->xmin)
 		return true;
@@ -161,7 +160,7 @@ is_visible_txid(txid value, const TxidSnapshot *snap)
 #ifdef USE_BSEARCH_IF_NXIP_GREATER
 	else if (snap->nxip > USE_BSEARCH_IF_NXIP_GREATER)
 	{
-		void *res;
+		void	   *res;
 
 		res = bsearch(&value, snap->xip, snap->nxip, sizeof(txid), cmp_txid);
 		/* if found, transaction is still in progress */
@@ -170,7 +169,7 @@ is_visible_txid(txid value, const TxidSnapshot *snap)
 #endif
 	else
 	{
-		uint32 i;
+		uint32		i;
 
 		for (i = 0; i < snap->nxip; i++)
 		{
@@ -189,32 +188,32 @@ static StringInfo
 buf_init(txid xmin, txid xmax)
 {
 	TxidSnapshot snap;
-	StringInfo buf;
+	StringInfo	buf;
 
 	snap.xmin = xmin;
 	snap.xmax = xmax;
 	snap.nxip = 0;
 
 	buf = makeStringInfo();
-	appendBinaryStringInfo(buf, (char *)&snap, TXID_SNAPSHOT_SIZE(0));
+	appendBinaryStringInfo(buf, (char *) &snap, TXID_SNAPSHOT_SIZE(0));
 	return buf;
 }
 
 static void
 buf_add_txid(StringInfo buf, txid xid)
 {
-	TxidSnapshot *snap = (TxidSnapshot *)buf->data;
+	TxidSnapshot *snap = (TxidSnapshot *) buf->data;
 
 	/* do this before possible realloc */
 	snap->nxip++;
 
-	appendBinaryStringInfo(buf, (char *)&xid, sizeof(xid));
+	appendBinaryStringInfo(buf, (char *) &xid, sizeof(xid));
 }
 
 static TxidSnapshot *
 buf_finalize(StringInfo buf)
 {
-	TxidSnapshot *snap = (TxidSnapshot *)buf->data;
+	TxidSnapshot *snap = (TxidSnapshot *) buf->data;
 
 	SET_VARSIZE(snap, buf->len);
 
@@ -233,13 +232,13 @@ buf_finalize(StringInfo buf)
 static txid
 str2txid(const char *s, const char **endp)
 {
-	txid val = 0;
-	txid cutoff = MAX_TXID / 10;
-	txid cutlim = MAX_TXID % 10;
+	txid		val = 0;
+	txid		cutoff = MAX_TXID / 10;
+	txid		cutlim = MAX_TXID % 10;
 
 	for (; *s; s++)
 	{
-		unsigned d;
+		unsigned	d;
 
 		if (*s < '0' || *s > '9')
 			break;
@@ -269,10 +268,11 @@ parse_snapshot(const char *str)
 {
 	txid		xmin;
 	txid		xmax;
-	txid		last_val = 0, val;
+	txid		last_val = 0,
+				val;
 	const char *str_start = str;
 	const char *endp;
-	StringInfo  buf;
+	StringInfo	buf;
 
 	xmin = str2txid(str, &endp);
 	if (*endp != ':')
@@ -301,7 +301,7 @@ parse_snapshot(const char *str)
 		/* require the input to be in order */
 		if (val < xmin || val >= xmax || val <= last_val)
 			goto bad_format;
-		
+
 		buf_add_txid(buf, val);
 		last_val = val;
 
@@ -334,8 +334,8 @@ bad_format:
 Datum
 txid_current(PG_FUNCTION_ARGS)
 {
-	txid val;
-	TxidEpoch state;
+	txid		val;
+	TxidEpoch	state;
 
 	load_xid_epoch(&state);
 
@@ -355,9 +355,11 @@ Datum
 txid_current_snapshot(PG_FUNCTION_ARGS)
 {
 	TxidSnapshot *snap;
-	uint32 nxip, i, size;
-	TxidEpoch state;
-	Snapshot cur;
+	uint32		nxip,
+				i,
+				size;
+	TxidEpoch	state;
+	Snapshot	cur;
 
 	cur = ActiveSnapshot;
 	if (cur == NULL)
@@ -408,9 +410,9 @@ txid_snapshot_in(PG_FUNCTION_ARGS)
 Datum
 txid_snapshot_out(PG_FUNCTION_ARGS)
 {
-	TxidSnapshot   *snap = (TxidSnapshot *) PG_GETARG_VARLENA_P(0);
-	StringInfoData	str;
-	uint32			i;
+	TxidSnapshot *snap = (TxidSnapshot *) PG_GETARG_VARLENA_P(0);
+	StringInfoData str;
+	uint32		i;
 
 	initStringInfo(&str);
 
@@ -437,14 +439,15 @@ txid_snapshot_out(PG_FUNCTION_ARGS)
 Datum
 txid_snapshot_recv(PG_FUNCTION_ARGS)
 {
-	StringInfo  buf = (StringInfo) PG_GETARG_POINTER(0);
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	TxidSnapshot *snap;
-	txid last = 0;
-	int nxip;
-	int i;
-	int avail;
-	int expect;
-	txid xmin, xmax;
+	txid		last = 0;
+	int			nxip;
+	int			i;
+	int			avail;
+	int			expect;
+	txid		xmin,
+				xmax;
 
 	/*
 	 * load nxip and check for nonsense.
@@ -470,7 +473,8 @@ txid_snapshot_recv(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < nxip; i++)
 	{
-		txid cur =  pq_getmsgint64(buf);
+		txid		cur = pq_getmsgint64(buf);
+
 		if (cur <= last || cur < xmin || cur >= xmax)
 			goto bad_format;
 		snap->xip[i] = cur;
@@ -480,7 +484,7 @@ txid_snapshot_recv(PG_FUNCTION_ARGS)
 
 bad_format:
 	elog(ERROR, "invalid snapshot data");
-	return (Datum)NULL;
+	return (Datum) NULL;
 }
 
 /*
@@ -493,9 +497,9 @@ bad_format:
 Datum
 txid_snapshot_send(PG_FUNCTION_ARGS)
 {
-	TxidSnapshot *snap = (TxidSnapshot *)PG_GETARG_VARLENA_P(0);
+	TxidSnapshot *snap = (TxidSnapshot *) PG_GETARG_VARLENA_P(0);
 	StringInfoData buf;
-	uint32 i;
+	uint32		i;
 
 	pq_begintypsend(&buf);
 	pq_sendint(&buf, snap->nxip, 4);
@@ -514,9 +518,9 @@ txid_snapshot_send(PG_FUNCTION_ARGS)
 Datum
 txid_visible_in_snapshot(PG_FUNCTION_ARGS)
 {
-	txid value = PG_GETARG_INT64(0);
+	txid		value = PG_GETARG_INT64(0);
 	TxidSnapshot *snap = (TxidSnapshot *) PG_GETARG_VARLENA_P(1);
-	
+
 	PG_RETURN_BOOL(is_visible_txid(value, snap));
 }
 
@@ -556,10 +560,11 @@ txid_snapshot_xip(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *fctx;
 	TxidSnapshot *snap;
-	txid value;
+	txid		value;
 
 	/* on first call initialize snap_state and get copy of snapshot */
-	if (SRF_IS_FIRSTCALL()) {
+	if (SRF_IS_FIRSTCALL())
+	{
 		TxidSnapshot *arg = (TxidSnapshot *) PG_GETARG_VARLENA_P(0);
 
 		fctx = SRF_FIRSTCALL_INIT();
@@ -574,10 +579,13 @@ txid_snapshot_xip(PG_FUNCTION_ARGS)
 	/* return values one-by-one */
 	fctx = SRF_PERCALL_SETUP();
 	snap = fctx->user_fctx;
-	if (fctx->call_cntr < snap->nxip) {
+	if (fctx->call_cntr < snap->nxip)
+	{
 		value = snap->xip[fctx->call_cntr];
 		SRF_RETURN_NEXT(fctx, Int64GetDatum(value));
-	} else {
+	}
+	else
+	{
 		SRF_RETURN_DONE(fctx);
 	}
 }

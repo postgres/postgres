@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.71 2007/09/20 17:56:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.72 2007/11/15 21:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ pull_varattnos_walker(Node *node, Bitmapset **varattnos)
 
 		Assert(var->varno == 1);
 		*varattnos = bms_add_member(*varattnos,
-						var->varattno - FirstLowInvalidHeapAttributeNumber);
+						 var->varattno - FirstLowInvalidHeapAttributeNumber);
 		return false;
 	}
 	/* Should not find a subquery or subplan */

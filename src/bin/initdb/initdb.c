@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.149 2007/10/25 20:22:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.150 2007/11/15 21:14:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ static void exit_nicely(void);
 static char *get_id(void);
 static char *get_encoding_id(char *encoding_name);
 static char *get_short_version(void);
-static int  check_data_dir(char *dir);
+static int	check_data_dir(char *dir);
 static bool mkdatadir(const char *subdir);
 static void set_input(char **dest, char *filename);
 static void check_input(char *path);
@@ -625,7 +625,7 @@ exit_nicely(void)
 		else if (found_existing_xlogdir)
 		{
 			fprintf(stderr,
-					_("%s: removing contents of transaction log directory \"%s\"\n"),
+			_("%s: removing contents of transaction log directory \"%s\"\n"),
 					progname, xlog_dir);
 			if (!rmtree(xlog_dir, false))
 				fprintf(stderr, _("%s: failed to remove contents of transaction log directory\n"),
@@ -642,7 +642,7 @@ exit_nicely(void)
 
 		if (made_new_xlogdir || found_existing_xlogdir)
 			fprintf(stderr,
-			  _("%s: transaction log directory \"%s\" not removed at user's request\n"),
+					_("%s: transaction log directory \"%s\" not removed at user's request\n"),
 					progname, xlog_dir);
 	}
 
@@ -723,8 +723,8 @@ get_encoding_id(char *encoding_name)
  */
 struct tsearch_config_match
 {
-	const char   *tsconfname;
-	const char   *langname;
+	const char *tsconfname;
+	const char *langname;
 };
 
 static const struct tsearch_config_match tsearch_config_languages[] =
@@ -775,8 +775,8 @@ find_matching_ts_config(const char *lc_type)
 			   *ptr;
 
 	/*
-	 * Convert lc_ctype to a language name by stripping everything after
-	 * an underscore.  Just for paranoia, we also stop at '.' or '@'.
+	 * Convert lc_ctype to a language name by stripping everything after an
+	 * underscore.	Just for paranoia, we also stop at '.' or '@'.
 	 */
 	if (lc_type == NULL)
 		langname = xstrdup("");
@@ -940,7 +940,7 @@ check_input(char *path)
 		if (errno == ENOENT)
 			fprintf(stderr,
 					_("%s: file \"%s\" does not exist\n"
-					  "This means you have a corrupted installation or identified\n"
+			   "This means you have a corrupted installation or identified\n"
 					  "the wrong directory with the invocation option -L.\n"),
 					progname, path);
 		else
@@ -1127,10 +1127,10 @@ test_config_settings(void)
 	n_buffers = test_buffs;
 	n_fsm_pages = FSM_FOR_BUFS(n_buffers);
 
-	if ((n_buffers * (BLCKSZ/1024)) % 1024 == 0)
-		printf("%dMB/%d\n", (n_buffers * (BLCKSZ/1024)) / 1024, n_fsm_pages);
+	if ((n_buffers * (BLCKSZ / 1024)) % 1024 == 0)
+		printf("%dMB/%d\n", (n_buffers * (BLCKSZ / 1024)) / 1024, n_fsm_pages);
 	else
-		printf("%dkB/%d\n", n_buffers * (BLCKSZ/1024), n_fsm_pages);
+		printf("%dkB/%d\n", n_buffers * (BLCKSZ / 1024), n_fsm_pages);
 }
 
 /*
@@ -1153,12 +1153,12 @@ setup_config(void)
 	snprintf(repltok, sizeof(repltok), "max_connections = %d", n_connections);
 	conflines = replace_token(conflines, "#max_connections = 100", repltok);
 
-	if ((n_buffers * (BLCKSZ/1024)) % 1024 == 0)
+	if ((n_buffers * (BLCKSZ / 1024)) % 1024 == 0)
 		snprintf(repltok, sizeof(repltok), "shared_buffers = %dMB",
-				 (n_buffers * (BLCKSZ/1024)) / 1024);
+				 (n_buffers * (BLCKSZ / 1024)) / 1024);
 	else
 		snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB",
-				 n_buffers * (BLCKSZ/1024));
+				 n_buffers * (BLCKSZ / 1024));
 	conflines = replace_token(conflines, "#shared_buffers = 32MB", repltok);
 
 	snprintf(repltok, sizeof(repltok), "max_fsm_pages = %d", n_fsm_pages);
@@ -1204,7 +1204,7 @@ setup_config(void)
 			 "default_text_search_config = 'pg_catalog.%s'",
 			 escape_quotes(default_text_search_config));
 	conflines = replace_token(conflines,
-						"#default_text_search_config = 'pg_catalog.simple'",
+						 "#default_text_search_config = 'pg_catalog.simple'",
 							  repltok);
 
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
@@ -1524,7 +1524,7 @@ static void
 setup_depend(void)
 {
 	PG_CMD_DECL;
-	const char	  **line;
+	const char **line;
 	static const char *pg_depend_setup[] = {
 		/*
 		 * Make PIN entries in pg_depend for all objects made so far in the
@@ -1534,8 +1534,8 @@ setup_depend(void)
 		 * dependencies seems hard.
 		 *
 		 * Note that we deliberately do not pin the system views, which
-		 * haven't been created yet.  Also, no conversions, databases,
-		 * or tablespaces are pinned.
+		 * haven't been created yet.  Also, no conversions, databases, or
+		 * tablespaces are pinned.
 		 *
 		 * First delete any already-made entries; PINs override all else, and
 		 * must be the only entries for their objects.
@@ -2104,7 +2104,7 @@ escape_quotes(const char *src)
 
 /* Hack to suppress a warning about %x from some versions of gcc */
 static inline size_t
-my_strftime(char *s, size_t max, const char *fmt, const struct tm *tm)
+my_strftime(char *s, size_t max, const char *fmt, const struct tm * tm)
 {
 	return strftime(s, max, fmt, tm);
 }
@@ -2351,7 +2351,7 @@ usage(const char *progname)
 			 "                            environment)\n"));
 	printf(_("  --no-locale               equivalent to --locale=C\n"));
 	printf(_("  -T, --text-search-config=CFG\n"
-			 "                            default text search configuration\n"));
+		 "                            default text search configuration\n"));
 	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
 	printf(_("  -A, --auth=METHOD         default authentication method for local connections\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
@@ -2790,7 +2790,7 @@ main(int argc, char *argv[])
 
 	if (strlen(encoding) == 0)
 	{
-		int		ctype_enc;
+		int			ctype_enc;
 
 		ctype_enc = pg_get_encoding_from_locale(lc_ctype);
 
@@ -2813,8 +2813,8 @@ main(int argc, char *argv[])
 					_("%s: locale %s requires unsupported encoding %s\n"),
 					progname, lc_ctype, pg_encoding_to_char(ctype_enc));
 			fprintf(stderr,
-					_("Encoding %s is not allowed as a server-side encoding.\n"
-					  "Rerun %s with a different locale selection.\n"),
+				  _("Encoding %s is not allowed as a server-side encoding.\n"
+					"Rerun %s with a different locale selection.\n"),
 					pg_encoding_to_char(ctype_enc), progname);
 			exit(1);
 		}
@@ -2827,8 +2827,8 @@ main(int argc, char *argv[])
 	}
 	else
 	{
-		int		user_enc;
-		int		ctype_enc;
+		int			user_enc;
+		int			ctype_enc;
 
 		encodingid = get_encoding_id(encoding);
 		user_enc = atoi(encodingid);
@@ -2839,24 +2839,25 @@ main(int argc, char *argv[])
 		if (!(ctype_enc == user_enc ||
 			  ctype_enc == PG_SQL_ASCII ||
 			  user_enc == PG_SQL_ASCII
-#ifdef WIN32			  
-			/*
-			 * On win32, if the encoding chosen is UTF8, all locales are OK 
-			 * (assuming the actual locale name passed the checks above). This
-			 * is because UTF8 is a pseudo-codepage, that we convert to UTF16
-			 * before doing any operations on, and UTF16 supports all locales.
-			 */
-			|| user_enc == PG_UTF8
+#ifdef WIN32
+
+		/*
+		 * On win32, if the encoding chosen is UTF8, all locales are OK
+		 * (assuming the actual locale name passed the checks above). This is
+		 * because UTF8 is a pseudo-codepage, that we convert to UTF16 before
+		 * doing any operations on, and UTF16 supports all locales.
+		 */
+			  || user_enc == PG_UTF8
 #endif
 			  ))
 		{
 			fprintf(stderr, _("%s: encoding mismatch\n"), progname);
 			fprintf(stderr,
-			_("The encoding you selected (%s) and the encoding that the\n"
+			   _("The encoding you selected (%s) and the encoding that the\n"
 			  "selected locale uses (%s) do not match.  This would lead to\n"
-			  "misbehavior in various character string processing functions.\n"
-			  "Rerun %s and either do not specify an encoding explicitly,\n"
-			  "or choose a matching combination.\n"),
+			"misbehavior in various character string processing functions.\n"
+			   "Rerun %s and either do not specify an encoding explicitly,\n"
+				 "or choose a matching combination.\n"),
 					pg_encoding_to_char(user_enc),
 					pg_encoding_to_char(ctype_enc),
 					progname);
@@ -2974,7 +2975,7 @@ main(int argc, char *argv[])
 	/* Create transaction log symlink, if required */
 	if (strcmp(xlog_dir, "") != 0)
 	{
-		char	*linkloc;
+		char	   *linkloc;
 
 		linkloc = (char *) pg_malloc(strlen(pg_data) + 8 + 2);
 		sprintf(linkloc, "%s/pg_xlog", pg_data);
@@ -3022,10 +3023,10 @@ main(int argc, char *argv[])
 				/* Present and not empty */
 				fprintf(stderr,
 						_("%s: directory \"%s\" exists but is not empty\n"
-						  "If you want to store the transaction log there, either\n"
+				   "If you want to store the transaction log there, either\n"
 						  "remove or empty the directory \"%s\".\n"),
 						progname, xlog_dir, xlog_dir);
-				exit(1);			/* no further message needed */
+				exit(1);		/* no further message needed */
 
 			default:
 				/* Trouble accessing directory */
@@ -3038,7 +3039,7 @@ main(int argc, char *argv[])
 		if (symlink(xlog_dir, linkloc) != 0)
 		{
 			fprintf(stderr, _("%s: could not create symbolic link \"%s\": %s\n"),
-						progname, linkloc, strerror(errno));
+					progname, linkloc, strerror(errno));
 			exit_nicely();
 		}
 #else

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.55 2007/11/11 19:22:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.56 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,33 +52,33 @@ typedef struct
 	Oid			lefttype;		/* lefttype */
 	Oid			righttype;		/* righttype */
 	bool		recheck;		/* oper recheck flag (unused for proc) */
-} OpFamilyMember;
+}	OpFamilyMember;
 
 
 static void AlterOpFamilyAdd(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 				 int maxOpNumber, int maxProcNumber,
 				 List *items);
 static void AlterOpFamilyDrop(List *opfamilyname, Oid amoid, Oid opfamilyoid,
-				 int maxOpNumber, int maxProcNumber,
-				 List *items);
+				  int maxOpNumber, int maxProcNumber,
+				  List *items);
 static void processTypesSpec(List *args, Oid *lefttype, Oid *righttype);
-static void assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid);
-static void assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid);
-static void addFamilyMember(List **list, OpFamilyMember *member, bool isProc);
+static void assignOperTypes(OpFamilyMember * member, Oid amoid, Oid typeoid);
+static void assignProcTypes(OpFamilyMember * member, Oid amoid, Oid typeoid);
+static void addFamilyMember(List **list, OpFamilyMember * member, bool isProc);
 static void storeOperators(List *opfamilyname, Oid amoid,
-						   Oid opfamilyoid, Oid opclassoid,
-						   List *operators, bool isAdd);
+			   Oid opfamilyoid, Oid opclassoid,
+			   List *operators, bool isAdd);
 static void storeProcedures(List *opfamilyname, Oid amoid,
-							Oid opfamilyoid, Oid opclassoid,
-							List *procedures, bool isAdd);
+				Oid opfamilyoid, Oid opclassoid,
+				List *procedures, bool isAdd);
 static void dropOperators(List *opfamilyname, Oid amoid, Oid opfamilyoid,
-						  List *operators);
+			  List *operators);
 static void dropProcedures(List *opfamilyname, Oid amoid, Oid opfamilyoid,
-						   List *procedures);
+			   List *procedures);
 static void AlterOpClassOwner_internal(Relation rel, HeapTuple tuple,
 						   Oid newOwnerId);
 static void AlterOpFamilyOwner_internal(Relation rel, HeapTuple tuple,
-						   Oid newOwnerId);
+							Oid newOwnerId);
 
 
 /*
@@ -111,7 +111,7 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname)
 	else
 	{
 		/* Unqualified opfamily name, so search the search path */
-		Oid		opfID = OpfamilynameGetOpfid(amID, opfname);
+		Oid			opfID = OpfamilynameGetOpfid(amID, opfname);
 
 		if (!OidIsValid(opfID))
 			return NULL;
@@ -151,7 +151,7 @@ OpClassCacheLookup(Oid amID, List *opclassname)
 	else
 	{
 		/* Unqualified opclass name, so search the search path */
-		Oid		opcID = OpclassnameGetOpcid(amID, opcname);
+		Oid			opcID = OpclassnameGetOpcid(amID, opcname);
 
 		if (!OidIsValid(opcID))
 			return NULL;
@@ -348,8 +348,9 @@ DefineOpClass(CreateOpClassStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-							NameListToString(stmt->opfamilyname), stmt->amname)));
+					   NameListToString(stmt->opfamilyname), stmt->amname)));
 		opfamilyoid = HeapTupleGetOid(tup);
+
 		/*
 		 * XXX given the superuser check above, there's no need for an
 		 * ownership check here
@@ -367,6 +368,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 		if (HeapTupleIsValid(tup))
 		{
 			opfamilyoid = HeapTupleGetOid(tup);
+
 			/*
 			 * XXX given the superuser check above, there's no need for an
 			 * ownership check here
@@ -597,7 +599,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					opclassoid, procedures, false);
 
 	/*
-	 * Create dependencies for the opclass proper.  Note: we do not create a
+	 * Create dependencies for the opclass proper.	Note: we do not create a
 	 * dependency link to the AM, because we don't currently support DROP
 	 * ACCESS METHOD.
 	 */
@@ -644,7 +646,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
  *		Define a new index operator family.
  */
 void
-DefineOpFamily(CreateOpFamilyStmt *stmt)
+DefineOpFamily(CreateOpFamilyStmt * stmt)
 {
 	char	   *opfname;		/* name of opfamily we're creating */
 	Oid			amoid,			/* our AM's oid */
@@ -686,8 +688,8 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 	ReleaseSysCache(tup);
 
 	/*
-	 * Currently, we require superuser privileges to create an opfamily.
-	 * See comments in DefineOpClass.
+	 * Currently, we require superuser privileges to create an opfamily. See
+	 * comments in DefineOpClass.
 	 *
 	 * XXX re-enable NOT_USED code sections below if you remove this test.
 	 */
@@ -763,7 +765,7 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
  * different code paths.
  */
 void
-AlterOpFamily(AlterOpFamilyStmt *stmt)
+AlterOpFamily(AlterOpFamilyStmt * stmt)
 {
 	Oid			amoid,			/* our AM's oid */
 				opfamilyoid;	/* oid of opfamily */
@@ -876,7 +878,7 @@ AlterOpFamilyAdd(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("operator argument types must be specified in ALTER OPERATOR FAMILY")));
-					operOid = InvalidOid; /* keep compiler quiet */
+					operOid = InvalidOid;		/* keep compiler quiet */
 				}
 
 #ifdef NOT_USED
@@ -932,7 +934,7 @@ AlterOpFamilyAdd(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 			case OPCLASS_ITEM_STORAGETYPE:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						   errmsg("STORAGE cannot be specified in ALTER OPERATOR FAMILY")));
+						 errmsg("STORAGE cannot be specified in ALTER OPERATOR FAMILY")));
 				break;
 			default:
 				elog(ERROR, "unrecognized item type: %d", item->itemtype);
@@ -1057,7 +1059,7 @@ processTypesSpec(List *args, Oid *lefttype, Oid *righttype)
  * and do any validity checking we can manage.
  */
 static void
-assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
+assignOperTypes(OpFamilyMember * member, Oid amoid, Oid typeoid)
 {
 	Operator	optup;
 	Form_pg_operator opform;
@@ -1098,7 +1100,7 @@ assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
  * and do any validity checking we can manage.
  */
 static void
-assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
+assignProcTypes(OpFamilyMember * member, Oid amoid, Oid typeoid)
 {
 	HeapTuple	proctup;
 	Form_pg_proc procform;
@@ -1156,10 +1158,10 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	else
 	{
 		/*
-		 * The default for GiST and GIN in CREATE OPERATOR CLASS is to use
-		 * the class' opcintype as lefttype and righttype.  In CREATE or
-		 * ALTER OPERATOR FAMILY, opcintype isn't available, so make the
-		 * user specify the types.
+		 * The default for GiST and GIN in CREATE OPERATOR CLASS is to use the
+		 * class' opcintype as lefttype and righttype.  In CREATE or ALTER
+		 * OPERATOR FAMILY, opcintype isn't available, so make the user
+		 * specify the types.
 		 */
 		if (!OidIsValid(member->lefttype))
 			member->lefttype = typeoid;
@@ -1179,7 +1181,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
  * duplicated strategy or proc number.
  */
 static void
-addFamilyMember(List **list, OpFamilyMember *member, bool isProc)
+addFamilyMember(List **list, OpFamilyMember * member, bool isProc)
 {
 	ListCell   *l;
 
@@ -1560,7 +1562,7 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
  *		Deletes an opfamily.
  */
 void
-RemoveOpFamily(RemoveOpFamilyStmt *stmt)
+RemoveOpFamily(RemoveOpFamilyStmt * stmt)
 {
 	Oid			amID,
 				opfID;
@@ -1589,11 +1591,11 @@ RemoveOpFamily(RemoveOpFamilyStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-						NameListToString(stmt->opfamilyname), stmt->amname)));
+					   NameListToString(stmt->opfamilyname), stmt->amname)));
 		else
 			ereport(NOTICE,
 					(errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-						NameListToString(stmt->opfamilyname), stmt->amname)));
+					   NameListToString(stmt->opfamilyname), stmt->amname)));
 		return;
 	}
 
@@ -2120,7 +2122,7 @@ AlterOpFamilyOwner(List *name, const char *access_method, Oid newOwnerId)
 }
 
 /*
- * The first parameter is pg_opfamily, opened and suitably locked.  The second
+ * The first parameter is pg_opfamily, opened and suitably locked.	The second
  * parameter is a copy of the tuple from pg_opfamily we want to modify.
  */
 static void

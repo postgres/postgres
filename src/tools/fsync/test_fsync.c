@@ -40,7 +40,8 @@ main(int argc, char *argv[])
 	int			tmpfile,
 				i,
 				loops = 1000;
-	char	   *full_buf = (char *) malloc(XLOG_SEG_SIZE), *buf;
+	char	   *full_buf = (char *) malloc(XLOG_SEG_SIZE),
+			   *buf;
 	char	   *filename = FSYNC_FILENAME;
 
 	if (argc > 2 && strcmp(argv[1], "-f") == 0)
@@ -65,7 +66,7 @@ main(int argc, char *argv[])
 		die("fsync failed");
 	close(tmpfile);
 
-	buf = (char *)TYPEALIGN(ALIGNOF_XLOG_BUFFER, full_buf);
+	buf = (char *) TYPEALIGN(ALIGNOF_XLOG_BUFFER, full_buf);
 
 	printf("Simple write timing:\n");
 	/* write only */
@@ -74,7 +75,7 @@ main(int argc, char *argv[])
 	{
 		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("Cannot open output file.");
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 		close(tmpfile);
 	}
@@ -92,7 +93,7 @@ main(int argc, char *argv[])
 	{
 		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("Cannot open output file.");
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 		if (fsync(tmpfile) != 0)
 			die("fsync failed");
@@ -113,7 +114,7 @@ main(int argc, char *argv[])
 	{
 		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("Cannot open output file.");
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 		close(tmpfile);
 		/* reopen file */
@@ -150,9 +151,9 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 	}
 	gettimeofday(&elapse_t, NULL);
@@ -173,7 +174,7 @@ main(int argc, char *argv[])
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -186,7 +187,7 @@ main(int argc, char *argv[])
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -205,7 +206,7 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 		fdatasync(tmpfile);
 	}
@@ -224,7 +225,7 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 		if (fsync(tmpfile) != 0)
 			die("fsync failed");
@@ -244,9 +245,9 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 	}
 	gettimeofday(&elapse_t, NULL);
@@ -265,9 +266,9 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 	}
 	gettimeofday(&elapse_t, NULL);
@@ -284,9 +285,9 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 		fdatasync(tmpfile);
 	}
@@ -305,9 +306,9 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
-		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 		if (fsync(tmpfile) != 0)
 			die("fsync failed");

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.35 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.36 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,10 +286,10 @@ CreateConstraintEntry(const char *constraintName,
 	if (foreignNKeys > 0)
 	{
 		/*
-		 * Register normal dependencies on the equality operators that
-		 * support a foreign-key constraint.  If the PK and FK types
-		 * are the same then all three operators for a column are the
-		 * same; otherwise they are different.
+		 * Register normal dependencies on the equality operators that support
+		 * a foreign-key constraint.  If the PK and FK types are the same then
+		 * all three operators for a column are the same; otherwise they are
+		 * different.
 		 */
 		ObjectAddress oprobject;
 

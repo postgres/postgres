@@ -14,19 +14,19 @@
  * CLOG page is initialized to zeroes.	Other writes of CLOG come from
  * recording of transaction commit or abort in xact.c, which generates its
  * own XLOG records for these events and will re-perform the status update
- * on redo; so we need make no additional XLOG entry here.  For synchronous
+ * on redo; so we need make no additional XLOG entry here.	For synchronous
  * transaction commits, the XLOG is guaranteed flushed through the XLOG commit
  * record before we are called to log a commit, so the WAL rule "write xlog
  * before data" is satisfied automatically.  However, for async commits we
  * must track the latest LSN affecting each CLOG page, so that we can flush
- * XLOG that far and satisfy the WAL rule.  We don't have to worry about this
+ * XLOG that far and satisfy the WAL rule.	We don't have to worry about this
  * for aborts (whether sync or async), since the post-crash assumption would
  * be that such transactions failed anyway.
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.44 2007/09/05 18:10:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.45 2007/11/15 21:14:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,8 +60,8 @@
 #define TransactionIdToBIndex(xid)	((xid) % (TransactionId) CLOG_XACTS_PER_BYTE)
 
 /* We store the latest async LSN for each group of transactions */
-#define CLOG_XACTS_PER_LSN_GROUP	32		/* keep this a power of 2 */
-#define CLOG_LSNS_PER_PAGE  (CLOG_XACTS_PER_PAGE / CLOG_XACTS_PER_LSN_GROUP)
+#define CLOG_XACTS_PER_LSN_GROUP	32	/* keep this a power of 2 */
+#define CLOG_LSNS_PER_PAGE	(CLOG_XACTS_PER_PAGE / CLOG_XACTS_PER_LSN_GROUP)
 
 #define GetLSNIndex(slotno, xid)	((slotno) * CLOG_LSNS_PER_PAGE + \
 	((xid) % (TransactionId) CLOG_XACTS_PER_PAGE) / CLOG_XACTS_PER_LSN_GROUP)
@@ -85,7 +85,7 @@ static void WriteTruncateXlogRec(int pageno);
  * Record the final state of a transaction in the commit log.
  *
  * lsn must be the WAL location of the commit record when recording an async
- * commit.  For a synchronous commit it can be InvalidXLogRecPtr, since the
+ * commit.	For a synchronous commit it can be InvalidXLogRecPtr, since the
  * caller guarantees the commit record is already flushed in that case.  It
  * should be InvalidXLogRecPtr for abort cases, too.
  *
@@ -159,7 +159,7 @@ TransactionIdSetStatus(TransactionId xid, XidStatus status, XLogRecPtr lsn)
  * an LSN that is late enough to be able to guarantee that if we flush up to
  * that LSN then we will have flushed the transaction's commit record to disk.
  * The result is not necessarily the exact LSN of the transaction's commit
- * record!  For example, for long-past transactions (those whose clog pages
+ * record!	For example, for long-past transactions (those whose clog pages
  * already migrated to disk), we'll return InvalidXLogRecPtr.  Also, because
  * we group transactions on the same clog page to conserve storage, we might
  * return the LSN of a later transaction that falls into the same group.
@@ -486,8 +486,8 @@ clog_redo(XLogRecPtr lsn, XLogRecord *record)
 		memcpy(&pageno, XLogRecGetData(record), sizeof(int));
 
 		/*
-		 * During XLOG replay, latest_page_number isn't set up yet; insert
-		 * a suitable value to bypass the sanity test in SimpleLruTruncate.
+		 * During XLOG replay, latest_page_number isn't set up yet; insert a
+		 * suitable value to bypass the sanity test in SimpleLruTruncate.
 		 */
 		ClogCtl->shared->latest_page_number = pageno;
 

@@ -12,7 +12,7 @@
  * safe to hold onto a pointer to the cache entry while doing things that
  * might result in recognizing a cache invalidation.  Beware however that
  * subsidiary information might be deleted and reallocated somewhere else
- * if a cache inval and reval happens!  This does not look like it will be
+ * if a cache inval and reval happens!	This does not look like it will be
  * a big problem as long as parser and dictionary methods do not attempt
  * any database access.
  *
@@ -20,7 +20,7 @@
  * Copyright (c) 2006-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.3 2007/09/10 00:57:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.4 2007/11/15 21:14:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,8 +143,8 @@ lookup_ts_parser_cache(Oid prsId)
 	if (entry == NULL || !entry->isvalid)
 	{
 		/*
-		 * If we didn't find one, we want to make one.
-		 * But first look up the object to be sure the OID is real.
+		 * If we didn't find one, we want to make one. But first look up the
+		 * object to be sure the OID is real.
 		 */
 		HeapTuple	tp;
 		Form_pg_ts_parser prs;
@@ -245,8 +245,8 @@ lookup_ts_dictionary_cache(Oid dictId)
 	if (entry == NULL || !entry->isvalid)
 	{
 		/*
-		 * If we didn't find one, we want to make one.
-		 * But first look up the object to be sure the OID is real.
+		 * If we didn't find one, we want to make one. But first look up the
+		 * object to be sure the OID is real.
 		 */
 		HeapTuple	tpdict,
 					tptmpl;
@@ -325,8 +325,8 @@ lookup_ts_dictionary_cache(Oid dictId)
 			MemoryContext oldcontext;
 
 			/*
-			 * Init method runs in dictionary's private memory context,
-			 * and we make sure the options are stored there too
+			 * Init method runs in dictionary's private memory context, and we
+			 * make sure the options are stored there too
 			 */
 			oldcontext = MemoryContextSwitchTo(entry->dictCtx);
 
@@ -340,7 +340,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 
 			entry->dictData =
 				DatumGetPointer(OidFunctionCall1(template->tmplinit,
-											PointerGetDatum(dictoptions)));
+											  PointerGetDatum(dictoptions)));
 
 			MemoryContextSwitchTo(oldcontext);
 		}
@@ -410,8 +410,8 @@ lookup_ts_config_cache(Oid cfgId)
 	if (entry == NULL || !entry->isvalid)
 	{
 		/*
-		 * If we didn't find one, we want to make one.
-		 * But first look up the object to be sure the OID is real.
+		 * If we didn't find one, we want to make one. But first look up the
+		 * object to be sure the OID is real.
 		 */
 		HeapTuple	tp;
 		Form_pg_ts_config cfg;
@@ -492,7 +492,7 @@ lookup_ts_config_cache(Oid cfgId)
 		while ((maptup = index_getnext(mapscan, ForwardScanDirection)) != NULL)
 		{
 			Form_pg_ts_config_map cfgmap = (Form_pg_ts_config_map) GETSTRUCT(maptup);
-			int		toktype = cfgmap->maptokentype;
+			int			toktype = cfgmap->maptokentype;
 
 			if (toktype <= 0 || toktype > MAXTOKENTYPE)
 				elog(ERROR, "maptokentype value %d is out of range", toktype);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.2 2007/04/02 22:14:17 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.3 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,32 +37,33 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	TupleDesc	tupDesc;
 	NameData	enumlabel;
 	Oid		   *oids;
-	int 		i, n;
+	int			i,
+				n;
 	Datum		values[Natts_pg_enum];
 	char		nulls[Natts_pg_enum];
 	ListCell   *lc;
-	HeapTuple tup;
+	HeapTuple	tup;
 
 	n = list_length(vals);
 
 	/*
-	 * XXX we do not bother to check the list of values for duplicates ---
-	 * if you have any, you'll get a less-than-friendly unique-index
-	 * violation.  Is it worth trying harder?
+	 * XXX we do not bother to check the list of values for duplicates --- if
+	 * you have any, you'll get a less-than-friendly unique-index violation.
+	 * Is it worth trying harder?
 	 */
 
 	pg_enum = heap_open(EnumRelationId, RowExclusiveLock);
 	tupDesc = pg_enum->rd_att;
 
 	/*
-	 * Allocate oids.  While this method does not absolutely guarantee
-	 * that we generate no duplicate oids (since we haven't entered each
-	 * oid into the table before allocating the next), trouble could only
-	 * occur if the oid counter wraps all the way around before we finish.
-	 * Which seems unlikely.
+	 * Allocate oids.  While this method does not absolutely guarantee that we
+	 * generate no duplicate oids (since we haven't entered each oid into the
+	 * table before allocating the next), trouble could only occur if the oid
+	 * counter wraps all the way around before we finish. Which seems
+	 * unlikely.
 	 */
 	oids = (Oid *) palloc(n * sizeof(Oid));
-	for(i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 	{
 		oids[i] = GetNewOid(pg_enum);
 	}
@@ -76,9 +77,9 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	i = 0;
 	foreach(lc, vals)
 	{
-		char *lab = strVal(lfirst(lc));
+		char	   *lab = strVal(lfirst(lc));
 
-		/* 
+		/*
 		 * labels are stored in a name field, for easier syscache lookup, so
 		 * check the length to make sure it's within range.
 		 */
@@ -86,9 +87,9 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 		if (strlen(lab) > (NAMEDATALEN - 1))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
-					 errmsg("invalid enum label \"%s\", must be %d characters or less",
-							lab,
-							NAMEDATALEN - 1)));
+			errmsg("invalid enum label \"%s\", must be %d characters or less",
+				   lab,
+				   NAMEDATALEN - 1)));
 
 
 		values[Anum_pg_enum_enumtypid - 1] = ObjectIdGetDatum(enumTypeOid);
@@ -148,8 +149,8 @@ EnumValuesDelete(Oid enumTypeOid)
 static int
 oid_cmp(const void *p1, const void *p2)
 {
-	Oid		v1 = *((const Oid *) p1);
-	Oid		v2 = *((const Oid *) p2);
+	Oid			v1 = *((const Oid *) p1);
+	Oid			v2 = *((const Oid *) p2);
 
 	if (v1 < v2)
 		return -1;

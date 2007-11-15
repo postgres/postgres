@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.155 2007/08/27 01:39:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.156 2007/11/15 21:14:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -112,9 +112,9 @@ DATA(insert OID =  96 ( "="		   PGNSP PGUID b t t	23	23	16	96 518 int4eq eqsel e
 DATA(insert OID =  97 ( "<"		   PGNSP PGUID b f f	23	23	16 521 525 int4lt scalarltsel scalarltjoinsel ));
 DATA(insert OID =  98 ( "="		   PGNSP PGUID b t t	25	25	16	98 531 texteq eqsel eqjoinsel ));
 
-DATA(insert OID = 349 (  "||"	   PGNSP PGUID b f f 2277 2283 2277	0 0 array_append   -	   -	 ));
-DATA(insert OID = 374 (  "||"	   PGNSP PGUID b f f 2283 2277 2277	0 0 array_prepend  -	   -	 ));
-DATA(insert OID = 375 (  "||"	   PGNSP PGUID b f f 2277 2277 2277	0 0 array_cat	   -	   -	 ));
+DATA(insert OID = 349 (  "||"	   PGNSP PGUID b f f 2277 2283 2277 0 0 array_append   -	   -	 ));
+DATA(insert OID = 374 (  "||"	   PGNSP PGUID b f f 2283 2277 2277 0 0 array_prepend  -	   -	 ));
+DATA(insert OID = 375 (  "||"	   PGNSP PGUID b f f 2277 2277 2277 0 0 array_cat	   -	   -	 ));
 
 DATA(insert OID = 352 (  "="	   PGNSP PGUID b f t	28	28	16 352	 0 xideq eqsel eqjoinsel ));
 DATA(insert OID = 353 (  "="	   PGNSP PGUID b f f	28	23	16	 0	 0 xideqint4 eqsel eqjoinsel ));
@@ -260,8 +260,8 @@ DATA(insert OID = 594 (  "*"	   PGNSP PGUID b f f 701 701 701 594	 0 float8mul -
 DATA(insert OID = 595 (  "@"	   PGNSP PGUID l f f	 0 701 701	 0	 0 float8abs - - ));
 DATA(insert OID = 596 (  "|/"	   PGNSP PGUID l f f	 0 701 701	 0	 0 dsqrt - - ));
 DATA(insert OID = 597 (  "||/"	   PGNSP PGUID l f f	 0 701 701	 0	 0 dcbrt - - ));
-DATA(insert OID = 1284 (  "|"	   PGNSP PGUID l f f	 0 704 702	 0   0 tintervalstart - - ));
-DATA(insert OID = 606 (  "<#>"	   PGNSP PGUID b f f 702 702 704	 0   0 mktinterval - - ));
+DATA(insert OID = 1284 (  "|"	   PGNSP PGUID l f f	 0 704 702	 0	 0 tintervalstart - - ));
+DATA(insert OID = 606 (  "<#>"	   PGNSP PGUID b f f 702 702 704	 0	 0 mktinterval - - ));
 
 DATA(insert OID = 607 (  "="	   PGNSP PGUID b t t	26	26	16 607 608 oideq eqsel eqjoinsel ));
 DATA(insert OID = 608 (  "<>"	   PGNSP PGUID b f f	26	26	16 608 607 oidne neqsel neqjoinsel ));
@@ -368,9 +368,9 @@ DATA(insert OID =  793 (  "<"	   PGNSP PGUID b f f	602  602	 16  794  0 path_n_l
 DATA(insert OID =  794 (  ">"	   PGNSP PGUID b f f	602  602	 16  793  0 path_n_gt - - ));
 DATA(insert OID =  795 (  "<="	   PGNSP PGUID b f f	602  602	 16  796  0 path_n_le - - ));
 DATA(insert OID =  796 (  ">="	   PGNSP PGUID b f f	602  602	 16  795  0 path_n_ge - - ));
-DATA(insert OID =  797 (  "#"	   PGNSP PGUID l f f	0    602	 23    0  0 path_npoints - - ));
+DATA(insert OID =  797 (  "#"	   PGNSP PGUID l f f	0	 602	 23    0  0 path_npoints - - ));
 DATA(insert OID =  798 (  "?#"	   PGNSP PGUID b f f	602  602	 16    0  0 path_inter - - ));
-DATA(insert OID =  799 (  "@-@"    PGNSP PGUID l f f	0    602	701    0  0 path_length - - ));
+DATA(insert OID =  799 (  "@-@"    PGNSP PGUID l f f	0	 602	701    0  0 path_length - - ));
 DATA(insert OID =  800 (  ">^"	   PGNSP PGUID b f f	603  603	 16    0  0 box_above_eq positionsel positionjoinsel ));
 DATA(insert OID =  801 (  "<^"	   PGNSP PGUID b f f	603  603	 16    0  0 box_below_eq positionsel positionjoinsel ));
 DATA(insert OID =  802 (  "?#"	   PGNSP PGUID b f f	603  603	 16    0  0 box_overlap areasel areajoinsel ));
@@ -498,12 +498,12 @@ DATA(insert OID = 1135 (  ">="		PGNSP PGUID b f f  701	700  16 1124 1132 float84
 
 
 /* LIKE hacks by Keith Parks. */
-DATA(insert OID = 1207 (  "~~"	  PGNSP PGUID b f f  19	25	16 0 1208 namelike likesel likejoinsel ));
+DATA(insert OID = 1207 (  "~~"	  PGNSP PGUID b f f  19 25	16 0 1208 namelike likesel likejoinsel ));
 #define OID_NAME_LIKE_OP		1207
-DATA(insert OID = 1208 (  "!~~"   PGNSP PGUID b f f  19	25	16 0 1207 namenlike nlikesel nlikejoinsel ));
-DATA(insert OID = 1209 (  "~~"	  PGNSP PGUID b f f  25	25	16 0 1210 textlike likesel likejoinsel ));
+DATA(insert OID = 1208 (  "!~~"   PGNSP PGUID b f f  19 25	16 0 1207 namenlike nlikesel nlikejoinsel ));
+DATA(insert OID = 1209 (  "~~"	  PGNSP PGUID b f f  25 25	16 0 1210 textlike likesel likejoinsel ));
 #define OID_TEXT_LIKE_OP		1209
-DATA(insert OID = 1210 (  "!~~"   PGNSP PGUID b f f  25	25	16 0 1209 textnlike nlikesel nlikejoinsel ));
+DATA(insert OID = 1210 (  "!~~"   PGNSP PGUID b f f  25 25	16 0 1209 textnlike nlikesel nlikejoinsel ));
 DATA(insert OID = 1211 (  "~~"	  PGNSP PGUID b f f  1042 25	16 0 1212 bpcharlike likesel likejoinsel ));
 #define OID_BPCHAR_LIKE_OP		1211
 DATA(insert OID = 1212 (  "!~~"   PGNSP PGUID b f f  1042 25	16 0 1211 bpcharnlike nlikesel nlikejoinsel ));
@@ -526,9 +526,9 @@ DATA(insert OID = 1322 (  "<"	   PGNSP PGUID b f f 1184 1184	 16 1324 1325 times
 DATA(insert OID = 1323 (  "<="	   PGNSP PGUID b f f 1184 1184	 16 1325 1324 timestamptz_le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1324 (  ">"	   PGNSP PGUID b f f 1184 1184	 16 1322 1323 timestamptz_gt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 1325 (  ">="	   PGNSP PGUID b f f 1184 1184	 16 1323 1322 timestamptz_ge scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1327 (  "+"	   PGNSP PGUID b f f 1184 1186 1184	 2554 0 timestamptz_pl_interval - - ));
-DATA(insert OID = 1328 (  "-"	   PGNSP PGUID b f f 1184 1184 1186	 0	0 timestamptz_mi - - ));
-DATA(insert OID = 1329 (  "-"	   PGNSP PGUID b f f 1184 1186 1184	 0	0 timestamptz_mi_interval - - ));
+DATA(insert OID = 1327 (  "+"	   PGNSP PGUID b f f 1184 1186 1184  2554 0 timestamptz_pl_interval - - ));
+DATA(insert OID = 1328 (  "-"	   PGNSP PGUID b f f 1184 1184 1186  0	0 timestamptz_mi - - ));
+DATA(insert OID = 1329 (  "-"	   PGNSP PGUID b f f 1184 1186 1184  0	0 timestamptz_mi_interval - - ));
 
 /* interval operators */
 DATA(insert OID = 1330 (  "="	   PGNSP PGUID b t t 1186 1186	 16 1330 1331 interval_eq eqsel eqjoinsel ));
@@ -542,15 +542,15 @@ DATA(insert OID = 1336 (  "-"	   PGNSP PGUID l f f	0 1186 1186    0	0 interval_u
 DATA(insert OID = 1337 (  "+"	   PGNSP PGUID b f f 1186 1186 1186 1337	0 interval_pl - - ));
 DATA(insert OID = 1338 (  "-"	   PGNSP PGUID b f f 1186 1186 1186    0	0 interval_mi - - ));
 
-DATA(insert OID = 1360 (  "+"	   PGNSP PGUID b f f 1082 1083 1114	1363 0 datetime_pl - - ));
-DATA(insert OID = 1361 (  "+"	   PGNSP PGUID b f f 1082 1266 1184	1366 0 datetimetz_pl - - ));
-DATA(insert OID = 1363 (  "+"	   PGNSP PGUID b f f 1083 1082 1114	1360 0 timedate_pl - - ));
-DATA(insert OID = 1366 (  "+"	   PGNSP PGUID b f f 1266 1082 1184	1361 0 timetzdate_pl - - ));
+DATA(insert OID = 1360 (  "+"	   PGNSP PGUID b f f 1082 1083 1114 1363 0 datetime_pl - - ));
+DATA(insert OID = 1361 (  "+"	   PGNSP PGUID b f f 1082 1266 1184 1366 0 datetimetz_pl - - ));
+DATA(insert OID = 1363 (  "+"	   PGNSP PGUID b f f 1083 1082 1114 1360 0 timedate_pl - - ));
+DATA(insert OID = 1366 (  "+"	   PGNSP PGUID b f f 1266 1082 1184 1361 0 timetzdate_pl - - ));
 
-DATA(insert OID = 1399 (  "-"	   PGNSP PGUID b f f 1083 1083 1186	 0	0 time_mi_time - - ));
+DATA(insert OID = 1399 (  "-"	   PGNSP PGUID b f f 1083 1083 1186  0	0 time_mi_time - - ));
 
 /* additional geometric operators - thomas 97/04/18 */
-DATA(insert OID = 1420 (  "@@"	  PGNSP PGUID l f f	 0	718 600   0    0 circle_center - - ));
+DATA(insert OID = 1420 (  "@@"	  PGNSP PGUID l f f  0	718 600   0    0 circle_center - - ));
 DATA(insert OID = 1500 (  "="	  PGNSP PGUID b f f  718	718 16 1500 1501 circle_eq eqsel eqjoinsel ));
 DATA(insert OID = 1501 (  "<>"	  PGNSP PGUID b f f  718	718 16 1501 1500 circle_ne neqsel neqjoinsel ));
 DATA(insert OID = 1502 (  "<"	  PGNSP PGUID b f f  718	718 16 1503 1505 circle_lt areasel areajoinsel ));
@@ -575,7 +575,7 @@ DATA(insert OID = 1518 (  "*"	  PGNSP PGUID b f f  718	600  718	  0    0 circle_
 DATA(insert OID = 1519 (  "/"	  PGNSP PGUID b f f  718	600  718	  0    0 circle_div_pt - - ));
 
 DATA(insert OID = 1520 (  "<->"   PGNSP PGUID b f f  718	718  701   1520    0 circle_distance - - ));
-DATA(insert OID = 1521 (  "#"	  PGNSP PGUID l f f	 0		604   23	  0    0 poly_npoints - - ));
+DATA(insert OID = 1521 (  "#"	  PGNSP PGUID l f f  0		604   23	  0    0 poly_npoints - - ));
 DATA(insert OID = 1522 (  "<->"   PGNSP PGUID b f f  600	718  701	  0    0 dist_pc - - ));
 DATA(insert OID = 1523 (  "<->"   PGNSP PGUID b f f  718	604  701	  0    0 dist_cpoly - - ));
 
@@ -585,8 +585,8 @@ DATA(insert OID = 1524 (  "<->"   PGNSP PGUID b f f  628	603  701	  0  0 dist_lb
 DATA(insert OID = 1525 (  "?#"	  PGNSP PGUID b f f  601	601 16 1525  0 lseg_intersect - - ));
 DATA(insert OID = 1526 (  "?||"   PGNSP PGUID b f f  601	601 16 1526  0 lseg_parallel - - ));
 DATA(insert OID = 1527 (  "?-|"   PGNSP PGUID b f f  601	601 16 1527  0 lseg_perp - - ));
-DATA(insert OID = 1528 (  "?-"	  PGNSP PGUID l f f	 0	601 16	  0  0 lseg_horizontal - - ));
-DATA(insert OID = 1529 (  "?|"	  PGNSP PGUID l f f	 0	601 16	  0  0 lseg_vertical - - ));
+DATA(insert OID = 1528 (  "?-"	  PGNSP PGUID l f f  0	601 16	  0  0 lseg_horizontal - - ));
+DATA(insert OID = 1529 (  "?|"	  PGNSP PGUID l f f  0	601 16	  0  0 lseg_vertical - - ));
 DATA(insert OID = 1535 (  "="	  PGNSP PGUID b f f  601	601 16 1535 1586 lseg_eq eqsel eqjoinsel ));
 DATA(insert OID = 1536 (  "#"	  PGNSP PGUID b f f  601	601  600 1536  0 lseg_interpt - - ));
 DATA(insert OID = 1537 (  "?#"	  PGNSP PGUID b f f  601	628 16	  0  0 inter_sl - - ));
@@ -622,8 +622,8 @@ DATA(insert OID = 1591 (  "@-@"   PGNSP PGUID l f f 0  601	701    0  0 lseg_leng
 DATA(insert OID = 1611 (  "?#"	  PGNSP PGUID b f f  628	628 16 1611  0 line_intersect - - ));
 DATA(insert OID = 1612 (  "?||"   PGNSP PGUID b f f  628	628 16 1612  0 line_parallel - - ));
 DATA(insert OID = 1613 (  "?-|"   PGNSP PGUID b f f  628	628 16 1613  0 line_perp - - ));
-DATA(insert OID = 1614 (  "?-"	  PGNSP PGUID l f f	 0	628 16	  0  0 line_horizontal - - ));
-DATA(insert OID = 1615 (  "?|"	  PGNSP PGUID l f f	 0	628 16	  0  0 line_vertical - - ));
+DATA(insert OID = 1614 (  "?-"	  PGNSP PGUID l f f  0	628 16	  0  0 line_horizontal - - ));
+DATA(insert OID = 1615 (  "?|"	  PGNSP PGUID l f f  0	628 16	  0  0 line_vertical - - ));
 DATA(insert OID = 1616 (  "="	  PGNSP PGUID b f f  628	628 16 1616  0 line_eq eqsel eqjoinsel ));
 DATA(insert OID = 1617 (  "#"	  PGNSP PGUID b f f  628	628  600 1617  0 line_interpt - - ));
 
@@ -661,12 +661,12 @@ DATA(insert OID = 2640 (  "-"	   PGNSP PGUID b f f	869 869  20 0 0 inetmi - - ))
 
 
 /* case-insensitive LIKE hacks */
-DATA(insert OID = 1625 (  "~~*"   PGNSP PGUID b f f  19	25	16 0 1626 nameiclike iclikesel iclikejoinsel ));
+DATA(insert OID = 1625 (  "~~*"   PGNSP PGUID b f f  19 25	16 0 1626 nameiclike iclikesel iclikejoinsel ));
 #define OID_NAME_ICLIKE_OP		1625
-DATA(insert OID = 1626 (  "!~~*"  PGNSP PGUID b f f  19	25	16 0 1625 nameicnlike icnlikesel icnlikejoinsel ));
-DATA(insert OID = 1627 (  "~~*"   PGNSP PGUID b f f  25	25	16 0 1628 texticlike iclikesel iclikejoinsel ));
+DATA(insert OID = 1626 (  "!~~*"  PGNSP PGUID b f f  19 25	16 0 1625 nameicnlike icnlikesel icnlikejoinsel ));
+DATA(insert OID = 1627 (  "~~*"   PGNSP PGUID b f f  25 25	16 0 1628 texticlike iclikesel iclikejoinsel ));
 #define OID_TEXT_ICLIKE_OP		1627
-DATA(insert OID = 1628 (  "!~~*"  PGNSP PGUID b f f  25	25	16 0 1627 texticnlike icnlikesel icnlikejoinsel ));
+DATA(insert OID = 1628 (  "!~~*"  PGNSP PGUID b f f  25 25	16 0 1627 texticnlike icnlikesel icnlikejoinsel ));
 DATA(insert OID = 1629 (  "~~*"   PGNSP PGUID b f f  1042 25	16 0 1630 bpchariclike iclikesel iclikejoinsel ));
 #define OID_BPCHAR_ICLIKE_OP	1629
 DATA(insert OID = 1630 (  "!~~*"  PGNSP PGUID b f f  1042 25	16 0 1629 bpcharicnlike icnlikesel icnlikejoinsel ));
@@ -693,18 +693,18 @@ DATA(insert OID = 1786 (  "<"	  PGNSP PGUID b f f 1560 1560 16 1787 1789 bitlt s
 DATA(insert OID = 1787 (  ">"	  PGNSP PGUID b f f 1560 1560 16 1786 1788 bitgt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 1788 (  "<="	  PGNSP PGUID b f f 1560 1560 16 1789 1787 bitle scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1789 (  ">="	  PGNSP PGUID b f f 1560 1560 16 1788 1786 bitge scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1791 (  "&"	  PGNSP PGUID b f f 1560 1560 1560 1791	 0 bitand - - ));
-DATA(insert OID = 1792 (  "|"	  PGNSP PGUID b f f 1560 1560 1560 1792	 0 bitor - - ));
-DATA(insert OID = 1793 (  "#"	  PGNSP PGUID b f f 1560 1560 1560 1793	 0 bitxor - - ));
+DATA(insert OID = 1791 (  "&"	  PGNSP PGUID b f f 1560 1560 1560 1791  0 bitand - - ));
+DATA(insert OID = 1792 (  "|"	  PGNSP PGUID b f f 1560 1560 1560 1792  0 bitor - - ));
+DATA(insert OID = 1793 (  "#"	  PGNSP PGUID b f f 1560 1560 1560 1793  0 bitxor - - ));
 DATA(insert OID = 1794 (  "~"	  PGNSP PGUID l f f    0 1560 1560	  0  0 bitnot - - ));
 DATA(insert OID = 1795 (  "<<"	  PGNSP PGUID b f f 1560   23 1560	  0  0 bitshiftleft - - ));
 DATA(insert OID = 1796 (  ">>"	  PGNSP PGUID b f f 1560   23 1560	  0  0 bitshiftright - - ));
 DATA(insert OID = 1797 (  "||"	  PGNSP PGUID b f f 1562 1562 1562	  0  0 bitcat - - ));
 
-DATA(insert OID = 1800 (  "+"	   PGNSP PGUID b f f 1083 1186 1083	 1849 0 time_pl_interval - - ));
-DATA(insert OID = 1801 (  "-"	   PGNSP PGUID b f f 1083 1186 1083	 0	0 time_mi_interval - - ));
-DATA(insert OID = 1802 (  "+"	   PGNSP PGUID b f f 1266 1186 1266	 2552 0 timetz_pl_interval - - ));
-DATA(insert OID = 1803 (  "-"	   PGNSP PGUID b f f 1266 1186 1266	 0	0 timetz_mi_interval - - ));
+DATA(insert OID = 1800 (  "+"	   PGNSP PGUID b f f 1083 1186 1083  1849 0 time_pl_interval - - ));
+DATA(insert OID = 1801 (  "-"	   PGNSP PGUID b f f 1083 1186 1083  0	0 time_mi_interval - - ));
+DATA(insert OID = 1802 (  "+"	   PGNSP PGUID b f f 1266 1186 1266  2552 0 timetz_pl_interval - - ));
+DATA(insert OID = 1803 (  "-"	   PGNSP PGUID b f f 1266 1186 1266  0	0 timetz_mi_interval - - ));
 
 DATA(insert OID = 1804 (  "="	  PGNSP PGUID b t f 1562 1562 16 1804 1805 varbiteq eqsel eqjoinsel ));
 DATA(insert OID = 1805 (  "<>"	  PGNSP PGUID b f f 1562 1562 16 1805 1804 varbitne neqsel neqjoinsel ));
@@ -713,7 +713,7 @@ DATA(insert OID = 1807 (  ">"	  PGNSP PGUID b f f 1562 1562 16 1806 1808 varbitg
 DATA(insert OID = 1808 (  "<="	  PGNSP PGUID b f f 1562 1562 16 1809 1807 varbitle scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1809 (  ">="	  PGNSP PGUID b f f 1562 1562 16 1808 1806 varbitge scalargtsel scalargtjoinsel ));
 
-DATA(insert OID = 1849 (  "+"	   PGNSP PGUID b f f 1186 1083 1083	 1800 0 interval_pl_time - - ));
+DATA(insert OID = 1849 (  "+"	   PGNSP PGUID b f f 1186 1083 1083  1800 0 interval_pl_time - - ));
 
 DATA(insert OID = 1862 ( "="	   PGNSP PGUID b t t	21	20	16 1868  1863 int28eq eqsel eqjoinsel ));
 DATA(insert OID = 1863 ( "<>"	   PGNSP PGUID b f f	21	20	16 1869  1862 int28ne neqsel neqjoinsel ));
@@ -767,7 +767,7 @@ DATA(insert OID = 1960 ( ">="	   PGNSP PGUID b f f 17 17	16 1958 1957 byteage sc
 DATA(insert OID = 2016 (  "~~"	   PGNSP PGUID b f f 17 17	16 0	2017 bytealike likesel likejoinsel ));
 #define OID_BYTEA_LIKE_OP		2016
 DATA(insert OID = 2017 (  "!~~"    PGNSP PGUID b f f 17 17	16 0	2016 byteanlike nlikesel nlikejoinsel ));
-DATA(insert OID = 2018 (  "||"	   PGNSP PGUID b f f 17 17	17 0	0    byteacat - - ));
+DATA(insert OID = 2018 (  "||"	   PGNSP PGUID b f f 17 17	17 0	0	 byteacat - - ));
 
 /* timestamp operators */
 DATA(insert OID = 2060 (  "="	   PGNSP PGUID b t t 1114 1114	 16 2060 2061 timestamp_eq eqsel eqjoinsel ));
@@ -776,9 +776,9 @@ DATA(insert OID = 2062 (  "<"	   PGNSP PGUID b f f 1114 1114	 16 2064 2065 times
 DATA(insert OID = 2063 (  "<="	   PGNSP PGUID b f f 1114 1114	 16 2065 2064 timestamp_le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 2064 (  ">"	   PGNSP PGUID b f f 1114 1114	 16 2062 2063 timestamp_gt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2065 (  ">="	   PGNSP PGUID b f f 1114 1114	 16 2063 2062 timestamp_ge scalargtsel scalargtjoinsel ));
-DATA(insert OID = 2066 (  "+"	   PGNSP PGUID b f f 1114 1186 1114	 2553 0 timestamp_pl_interval - - ));
-DATA(insert OID = 2067 (  "-"	   PGNSP PGUID b f f 1114 1114 1186	 0	0 timestamp_mi - - ));
-DATA(insert OID = 2068 (  "-"	   PGNSP PGUID b f f 1114 1186 1114	 0	0 timestamp_mi_interval - - ));
+DATA(insert OID = 2066 (  "+"	   PGNSP PGUID b f f 1114 1186 1114  2553 0 timestamp_pl_interval - - ));
+DATA(insert OID = 2067 (  "-"	   PGNSP PGUID b f f 1114 1114 1186  0	0 timestamp_mi - - ));
+DATA(insert OID = 2068 (  "-"	   PGNSP PGUID b f f 1114 1186 1114  0	0 timestamp_mi_interval - - ));
 
 /* character-by-character (not collation order) comparison operators for character types */
 
@@ -854,7 +854,7 @@ DATA(insert OID = 2551 (  "+"	   PGNSP PGUID b f f	1186 1082 1114 1076 0 interva
 DATA(insert OID = 2552 (  "+"	   PGNSP PGUID b f f	1186 1266 1266 1802 0 interval_pl_timetz - - ));
 DATA(insert OID = 2553 (  "+"	   PGNSP PGUID b f f	1186 1114 1114 2066 0 interval_pl_timestamp - - ));
 DATA(insert OID = 2554 (  "+"	   PGNSP PGUID b f f	1186 1184 1184 1327 0 interval_pl_timestamptz - - ));
-DATA(insert OID = 2555 (  "+"	   PGNSP PGUID b f f	23   1082 1082 1100 0 integer_pl_date - - ));
+DATA(insert OID = 2555 (  "+"	   PGNSP PGUID b f f	23	 1082 1082 1100 0 integer_pl_date - - ));
 
 /* new operators for Y-direction rtree opfamilies */
 DATA(insert OID = 2570 (  "<<|"    PGNSP PGUID b f f 603 603	16	 0	 0 box_below positionsel positionjoinsel ));
@@ -891,14 +891,14 @@ DATA(insert OID = 2869 (  "@"	   PGNSP PGUID b f f 600 604	 16  2870  0 pt_conta
 DATA(insert OID = 2870 (  "~"	   PGNSP PGUID b f f 604 600	 16  2869  0 poly_contain_pt - - ));
 DATA(insert OID = 2871 (  "@"	   PGNSP PGUID b f f 600 718	 16  2872  0 pt_contained_circle - - ));
 DATA(insert OID = 2872 (  "~"	   PGNSP PGUID b f f 718 600	 16  2871  0 circle_contain_pt - - ));
-DATA(insert OID = 2873 (  "@"	   PGNSP PGUID b f f 600 628 16	  0  0 on_pl - - ));
-DATA(insert OID = 2874 (  "@"	   PGNSP PGUID b f f 600 601 16	  0  0 on_ps - - ));
-DATA(insert OID = 2875 (  "@"	   PGNSP PGUID b f f 601 628 16	  0  0 on_sl - - ));
-DATA(insert OID = 2876 (  "@"	   PGNSP PGUID b f f 601 603 16	  0  0 on_sb - - ));
+DATA(insert OID = 2873 (  "@"	   PGNSP PGUID b f f 600 628 16   0  0 on_pl - - ));
+DATA(insert OID = 2874 (  "@"	   PGNSP PGUID b f f 600 601 16   0  0 on_ps - - ));
+DATA(insert OID = 2875 (  "@"	   PGNSP PGUID b f f 601 628 16   0  0 on_sl - - ));
+DATA(insert OID = 2876 (  "@"	   PGNSP PGUID b f f 601 603 16   0  0 on_sb - - ));
 DATA(insert OID = 2877 (  "~"	   PGNSP PGUID b f f 1034 1033	 16 0 0 aclcontains - - ));
 
-/* uuid operators */ 
-DATA(insert OID = 2972 (  "="      PGNSP PGUID b t t 2950 2950 16 2972 2973 uuid_eq eqsel eqjoinsel ));
+/* uuid operators */
+DATA(insert OID = 2972 (  "="	   PGNSP PGUID b t t 2950 2950 16 2972 2973 uuid_eq eqsel eqjoinsel ));
 DATA(insert OID = 2973 (  "<>"	   PGNSP PGUID b f f 2950 2950 16 2973 2972 uuid_ne neqsel neqjoinsel ));
 DATA(insert OID = 2974 (  "<"	   PGNSP PGUID b f f 2950 2950 16 2975 2977 uuid_lt scalarltsel scalarltjoinsel ));
 DATA(insert OID = 2975 (  ">"	   PGNSP PGUID b f f 2950 2950 16 2974 2976 uuid_gt scalargtsel scalargtjoinsel ));
@@ -916,30 +916,30 @@ DATA(insert OID = 3521 (  ">="	   PGNSP PGUID b f f 3500 3500 16 3520 3518 enum_
 /*
  * tsearch operations
  */
-DATA(insert OID = 3627 (  "<"      PGNSP PGUID b f f 3614    3614    16 3632 3631    tsvector_lt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 3628 (  "<="     PGNSP PGUID b f f 3614    3614    16 3631 3632    tsvector_le scalarltsel scalarltjoinsel ));
-DATA(insert OID = 3629 (  "="      PGNSP PGUID b t f 3614    3614    16 3629 3630    tsvector_eq eqsel eqjoinsel ));
-DATA(insert OID = 3630 (  "<>"     PGNSP PGUID b f f 3614    3614    16 3630 3629    tsvector_ne neqsel neqjoinsel ));
-DATA(insert OID = 3631 (  ">="     PGNSP PGUID b f f 3614    3614    16 3628 3627    tsvector_ge scalargtsel scalargtjoinsel ));
-DATA(insert OID = 3632 (  ">"      PGNSP PGUID b f f 3614    3614    16 3627 3628    tsvector_gt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 3633 (  "||"     PGNSP PGUID b f f 3614    3614    3614  0    0    tsvector_concat   -    -     ));
-DATA(insert OID = 3636 (  "@@"     PGNSP PGUID b f f 3614    3615    16 3637    0    ts_match_vq   contsel     contjoinsel   ));
-DATA(insert OID = 3637 (  "@@"     PGNSP PGUID b f f 3615    3614    16 3636    0    ts_match_qv   contsel     contjoinsel   ));
-DATA(insert OID = 3660 (  "@@@"    PGNSP PGUID b f f 3614    3615    16 3661    0    ts_match_vq   contsel     contjoinsel   ));
-DATA(insert OID = 3661 (  "@@@"    PGNSP PGUID b f f 3615    3614    16 3660    0    ts_match_qv   contsel     contjoinsel   ));
-DATA(insert OID = 3674 (  "<"      PGNSP PGUID b f f 3615    3615    16 3679 3678    tsquery_lt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 3675 (  "<="     PGNSP PGUID b f f 3615    3615    16 3678 3679    tsquery_le scalarltsel scalarltjoinsel ));
-DATA(insert OID = 3676 (  "="      PGNSP PGUID b t f 3615    3615    16 3676 3677    tsquery_eq eqsel eqjoinsel ));
-DATA(insert OID = 3677 (  "<>"     PGNSP PGUID b f f 3615    3615    16 3677 3676    tsquery_ne neqsel neqjoinsel ));
-DATA(insert OID = 3678 (  ">="     PGNSP PGUID b f f 3615    3615    16 3675 3674    tsquery_ge scalargtsel scalargtjoinsel ));
-DATA(insert OID = 3679 (  ">"      PGNSP PGUID b f f 3615    3615    16 3674 3675    tsquery_gt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 3680 (  "&&"     PGNSP PGUID b f f 3615    3615    3615  0    0    tsquery_and   -    -     ));
-DATA(insert OID = 3681 (  "||"     PGNSP PGUID b f f 3615    3615    3615  0    0    tsquery_or   -     -     ));
-DATA(insert OID = 3682 (  "!!"     PGNSP PGUID l f f 0       3615    3615  0    0    tsquery_not   -    -     ));
-DATA(insert OID = 3693 (  "@>"     PGNSP PGUID b f f 3615    3615    16 3694    0    tsq_mcontains  contsel    contjoinsel   ));
-DATA(insert OID = 3694 (  "<@"     PGNSP PGUID b f f 3615    3615    16 3693    0    tsq_mcontained contsel    contjoinsel   ));
-DATA(insert OID = 3762 (  "@@"     PGNSP PGUID b f f 25      25      16    0    0    ts_match_tt    contsel    contjoinsel   ));
-DATA(insert OID = 3763 (  "@@"     PGNSP PGUID b f f 25      3615    16    0    0    ts_match_tq    contsel    contjoinsel   ));
+DATA(insert OID = 3627 (  "<"	   PGNSP PGUID b f f 3614	 3614	 16 3632 3631	 tsvector_lt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3628 (  "<="	   PGNSP PGUID b f f 3614	 3614	 16 3631 3632	 tsvector_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3629 (  "="	   PGNSP PGUID b t f 3614	 3614	 16 3629 3630	 tsvector_eq eqsel eqjoinsel ));
+DATA(insert OID = 3630 (  "<>"	   PGNSP PGUID b f f 3614	 3614	 16 3630 3629	 tsvector_ne neqsel neqjoinsel ));
+DATA(insert OID = 3631 (  ">="	   PGNSP PGUID b f f 3614	 3614	 16 3628 3627	 tsvector_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3632 (  ">"	   PGNSP PGUID b f f 3614	 3614	 16 3627 3628	 tsvector_gt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3633 (  "||"	   PGNSP PGUID b f f 3614	 3614	 3614  0	0	 tsvector_concat   -	-	  ));
+DATA(insert OID = 3636 (  "@@"	   PGNSP PGUID b f f 3614	 3615	 16 3637	0	 ts_match_vq   contsel	   contjoinsel	 ));
+DATA(insert OID = 3637 (  "@@"	   PGNSP PGUID b f f 3615	 3614	 16 3636	0	 ts_match_qv   contsel	   contjoinsel	 ));
+DATA(insert OID = 3660 (  "@@@"    PGNSP PGUID b f f 3614	 3615	 16 3661	0	 ts_match_vq   contsel	   contjoinsel	 ));
+DATA(insert OID = 3661 (  "@@@"    PGNSP PGUID b f f 3615	 3614	 16 3660	0	 ts_match_qv   contsel	   contjoinsel	 ));
+DATA(insert OID = 3674 (  "<"	   PGNSP PGUID b f f 3615	 3615	 16 3679 3678	 tsquery_lt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3675 (  "<="	   PGNSP PGUID b f f 3615	 3615	 16 3678 3679	 tsquery_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3676 (  "="	   PGNSP PGUID b t f 3615	 3615	 16 3676 3677	 tsquery_eq eqsel eqjoinsel ));
+DATA(insert OID = 3677 (  "<>"	   PGNSP PGUID b f f 3615	 3615	 16 3677 3676	 tsquery_ne neqsel neqjoinsel ));
+DATA(insert OID = 3678 (  ">="	   PGNSP PGUID b f f 3615	 3615	 16 3675 3674	 tsquery_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3679 (  ">"	   PGNSP PGUID b f f 3615	 3615	 16 3674 3675	 tsquery_gt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3680 (  "&&"	   PGNSP PGUID b f f 3615	 3615	 3615  0	0	 tsquery_and   -	-	  ));
+DATA(insert OID = 3681 (  "||"	   PGNSP PGUID b f f 3615	 3615	 3615  0	0	 tsquery_or   -		-	  ));
+DATA(insert OID = 3682 (  "!!"	   PGNSP PGUID l f f 0		 3615	 3615  0	0	 tsquery_not   -	-	  ));
+DATA(insert OID = 3693 (  "@>"	   PGNSP PGUID b f f 3615	 3615	 16 3694	0	 tsq_mcontains	contsel    contjoinsel	 ));
+DATA(insert OID = 3694 (  "<@"	   PGNSP PGUID b f f 3615	 3615	 16 3693	0	 tsq_mcontained contsel    contjoinsel	 ));
+DATA(insert OID = 3762 (  "@@"	   PGNSP PGUID b f f 25		 25		 16    0	0	 ts_match_tt	contsel    contjoinsel	 ));
+DATA(insert OID = 3763 (  "@@"	   PGNSP PGUID b f f 25		 3615	 16    0	0	 ts_match_tq	contsel    contjoinsel	 ));
 
 
 /*

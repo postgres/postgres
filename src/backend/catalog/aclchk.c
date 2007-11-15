@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.141 2007/10/12 18:55:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.142 2007/11/15 21:14:32 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -2348,8 +2348,8 @@ pg_ts_config_ownercheck(Oid cfg_oid, Oid roleid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("text search configuration with OID %u does not exist",
-						cfg_oid)));
+			   errmsg("text search configuration with OID %u does not exist",
+					  cfg_oid)));
 
 	ownerId = ((Form_pg_ts_config) GETSTRUCT(tuple))->cfgowner;
 

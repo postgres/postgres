@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.81 2007/11/07 12:24:24 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.82 2007/11/15 21:14:35 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -95,7 +95,7 @@
 #if SSLEAY_VERSION_NUMBER >= 0x0907000L
 #include <openssl/conf.h>
 #endif
-#endif /* USE_SSL */
+#endif   /* USE_SSL */
 
 #include "libpq/libpq.h"
 #include "tcop/tcopprot.h"
@@ -130,8 +130,7 @@ static const char *SSLerrmessage(void);
 static SSL_CTX *SSL_context = NULL;
 
 /* GUC variable controlling SSL cipher list */
-char *SSLCipherSuites = NULL;
-
+char	   *SSLCipherSuites = NULL;
 #endif
 
 /* ------------------------------------------------------------ */
@@ -282,7 +281,7 @@ rloop:
 #ifdef WIN32
 				pgwin32_waitforsinglesocket(SSL_get_fd(port->ssl),
 											(err == SSL_ERROR_WANT_READ) ?
-								   FD_READ | FD_CLOSE : FD_WRITE | FD_CLOSE,
+									FD_READ | FD_CLOSE : FD_WRITE | FD_CLOSE,
 											INFINITE);
 #endif
 				goto rloop;
@@ -376,7 +375,7 @@ wloop:
 #ifdef WIN32
 				pgwin32_waitforsinglesocket(SSL_get_fd(port->ssl),
 											(err == SSL_ERROR_WANT_READ) ?
-								   FD_READ | FD_CLOSE : FD_WRITE | FD_CLOSE,
+									FD_READ | FD_CLOSE : FD_WRITE | FD_CLOSE,
 											INFINITE);
 #endif
 				goto wloop;
@@ -811,9 +810,9 @@ initialize_SSL(void)
 						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
 #else
 				ereport(LOG,
-						(errmsg("SSL certificate revocation list file \"%s\" ignored",
-								ROOT_CRL_FILE),
-				  errdetail("SSL library does not support certificate revocation lists.")));
+				(errmsg("SSL certificate revocation list file \"%s\" ignored",
+						ROOT_CRL_FILE),
+				 errdetail("SSL library does not support certificate revocation lists.")));
 #endif
 			else
 			{
@@ -821,7 +820,7 @@ initialize_SSL(void)
 				ereport(LOG,
 						(errmsg("SSL certificate revocation list file \"%s\" not found, skipping: %s",
 								ROOT_CRL_FILE, SSLerrmessage()),
-					 errdetail("Certificates will not be checked against revocation list.")));
+						 errdetail("Certificates will not be checked against revocation list.")));
 			}
 		}
 
@@ -889,7 +888,7 @@ aloop:
 #ifdef WIN32
 				pgwin32_waitforsinglesocket(SSL_get_fd(port->ssl),
 											(err == SSL_ERROR_WANT_READ) ?
-					   FD_READ | FD_CLOSE | FD_ACCEPT : FD_WRITE | FD_CLOSE,
+						FD_READ | FD_CLOSE | FD_ACCEPT : FD_WRITE | FD_CLOSE,
 											INFINITE);
 #endif
 				goto aloop;

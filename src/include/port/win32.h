@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.78 2007/10/29 11:25:42 mha Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.79 2007/11/15 21:14:44 momjian Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -6,7 +6,7 @@
 
 #define _WIN32_WINNT 0x0500
 /*
- * Always build with SSPI support. Keep it as a #define in case 
+ * Always build with SSPI support. Keep it as a #define in case
  * we want a switch to disable it sometime in the future.
  */
 #define ENABLE_SSPI 1
@@ -89,7 +89,7 @@
  *	Signal stuff
  *
  *	For WIN32, there is no wait() call so there are no wait() macros
- *	to interpret the return value of system().  Instead, system()
+ *	to interpret the return value of system().	Instead, system()
  *	return values < 0x100 are used for exit() termination, and higher
  *	values are used to indicated non-exit() termination, which is
  *	similar to a unix-style signal exit (think SIGSEGV ==
@@ -125,17 +125,17 @@
  *		example, the code for the all-too-familiar STATUS_ACCESS_VIOLATION is
  *		0xC0000005. A more complete set of exception codes can be found in
  *		NTSTATUS.H from the Windows NT DDK.
- *                                               
+ *
  *	Some day we might want to print descriptions for the most common
- *	exceptions, rather than printing an include file name.  We could use
+ *	exceptions, rather than printing an include file name.	We could use
  *	RtlNtStatusToDosError() and pass to FormatMessage(), which can print
  *	the text of error values, but MinGW does not support
  *	RtlNtStatusToDosError().
  */
-#define WIFEXITED(w)    (((w) & 0XFFFFFF00) == 0)
-#define WIFSIGNALED(w)  (!WIFEXITED(w))
-#define WEXITSTATUS(w)  (w)
-#define WTERMSIG(w)     (w)
+#define WIFEXITED(w)	(((w) & 0XFFFFFF00) == 0)
+#define WIFSIGNALED(w)	(!WIFEXITED(w))
+#define WEXITSTATUS(w)	(w)
+#define WTERMSIG(w)		(w)
 
 #define sigmask(sig) ( 1 << ((sig)-1) )
 
@@ -167,9 +167,9 @@
 #define SIGUSR2				31
 #endif
 
-/* 
- * New versions of mingw have gettimeofday() and also declare 
- * struct timezone to support it. 
+/*
+ * New versions of mingw have gettimeofday() and also declare
+ * struct timezone to support it.
  */
 #ifndef HAVE_GETTIMEOFDAY
 struct timezone

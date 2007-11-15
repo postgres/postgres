@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.16 2007/07/24 17:22:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.17 2007/11/15 21:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1109,7 +1109,7 @@ list_member_strip(List *list, Expr *datum)
 
 	foreach(cell, list)
 	{
-		Expr *elem = (Expr *) lfirst(cell);
+		Expr	   *elem = (Expr *) lfirst(cell);
 
 		if (elem && IsA(elem, RelabelType))
 			elem = ((RelabelType *) elem)->arg;
@@ -1342,7 +1342,8 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 	 *
 	 * We must find a btree opfamily that contains both operators, else the
 	 * implication can't be determined.  Also, the opfamily must contain a
-	 * suitable test operator taking the pred_const and clause_const datatypes.
+	 * suitable test operator taking the pred_const and clause_const
+	 * datatypes.
 	 *
 	 * If there are multiple matching opfamilies, assume we can use any one to
 	 * determine the logical relationship of the two operators and the correct
@@ -1354,8 +1355,8 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 								 0, 0, 0);
 
 	/*
-	 * If we couldn't find any opfamily containing the pred_op, perhaps it is a
-	 * <> operator.  See if it has a negator that is in an opfamily.
+	 * If we couldn't find any opfamily containing the pred_op, perhaps it is
+	 * a <> operator.  See if it has a negator that is in an opfamily.
 	 */
 	pred_op_negated = false;
 	if (catlist->n_members == 0)

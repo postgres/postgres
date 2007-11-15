@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.178 2007/09/11 00:06:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.179 2007/11/15 21:14:40 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -107,8 +107,8 @@ FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace)
 /*
  * FindMyDatabaseByOid
  *
- * As above, but the actual database Id is known.  Return its name and the 
- * tablespace OID.  Return TRUE if found, FALSE if not.  The same restrictions
+ * As above, but the actual database Id is known.  Return its name and the
+ * tablespace OID.	Return TRUE if found, FALSE if not.  The same restrictions
  * as FindMyDatabase apply.
  */
 static bool
@@ -320,7 +320,7 @@ BaseInit(void)
  *		Initialize POSTGRES.
  *
  * The database can be specified by name, using the in_dbname parameter, or by
- * OID, using the dboid parameter.  In the latter case, the computed database
+ * OID, using the dboid parameter.	In the latter case, the computed database
  * name is passed out to the caller as a palloc'ed string in out_dbname.
  *
  * In bootstrap mode no parameters are used.
@@ -361,9 +361,10 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	else
 	{
 		/*
-		 * Find tablespace of the database we're about to open. Since we're not
-		 * yet up and running we have to use one of the hackish FindMyDatabase
-		 * variants, which look in the flat-file copy of pg_database.
+		 * Find tablespace of the database we're about to open. Since we're
+		 * not yet up and running we have to use one of the hackish
+		 * FindMyDatabase variants, which look in the flat-file copy of
+		 * pg_database.
 		 *
 		 * If the in_dbname param is NULL, lookup database by OID.
 		 */

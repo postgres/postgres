@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.113 2007/04/11 20:47:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.114 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ typedef BTPageOpaqueData *BTPageOpaque;
 #define BTP_HAS_GARBAGE (1 << 6)	/* page has LP_DELETEd tuples */
 
 /*
- * The max allowed value of a cycle ID is a bit less than 64K.  This is
+ * The max allowed value of a cycle ID is a bit less than 64K.	This is
  * for convenience of pg_filedump and similar utilities: we want to use
  * the last 2 bytes of special space as an index type indicator, and
  * restricting cycle ID lets btree use that space for vacuum cycle IDs
@@ -270,7 +270,7 @@ typedef struct xl_btree_insert
  * Note: the four XLOG_BTREE_SPLIT xl_info codes all use this data record.
  * The _L and _R variants indicate whether the inserted tuple went into the
  * left or right split page (and thus, whether newitemoff and the new item
- * are stored or not).  The _ROOT variants indicate that we are splitting
+ * are stored or not).	The _ROOT variants indicate that we are splitting
  * the root page, and thus that a newroot record rather than an insert or
  * split record should follow.	Note that a split record never carries a
  * metapage update --- we'll do that in the parent-level update.
@@ -285,9 +285,9 @@ typedef struct xl_btree_split
 	OffsetNumber firstright;	/* first item moved to right page */
 
 	/*
-	 * If level > 0, BlockIdData downlink follows.  (We use BlockIdData
-	 * rather than BlockNumber for alignment reasons: SizeOfBtreeSplit
-	 * is only 16-bit aligned.)
+	 * If level > 0, BlockIdData downlink follows.	(We use BlockIdData rather
+	 * than BlockNumber for alignment reasons: SizeOfBtreeSplit is only 16-bit
+	 * aligned.)
 	 *
 	 * In the _L variants, next are OffsetNumber newitemoff and the new item.
 	 * (In the _R variants, the new item is one of the right page's tuples.)
@@ -355,7 +355,7 @@ typedef struct xl_btree_newroot
  *	The strategy numbers are chosen so that we can commute them by
  *	subtraction, thus:
  */
-#define BTCommuteStrategyNumber(strat)  (BTMaxStrategyNumber + 1 - (strat))
+#define BTCommuteStrategyNumber(strat)	(BTMaxStrategyNumber + 1 - (strat))
 
 /*
  *	When a new operator class is declared, we require that the user
@@ -484,7 +484,7 @@ typedef BTScanOpaqueData *BTScanOpaque;
 
 /*
  * We use some private sk_flags bits in preprocessed scan keys.  We're allowed
- * to use bits 16-31 (see skey.h).  The uppermost bits are copied from the
+ * to use bits 16-31 (see skey.h).	The uppermost bits are copied from the
  * index's indoption[] array entry for the index attribute.
  */
 #define SK_BT_REQFWD	0x00010000		/* required to continue forward scan */
@@ -533,8 +533,8 @@ extern void _bt_pageinit(Page page, Size size);
 extern bool _bt_page_recyclable(Page page);
 extern void _bt_delitems(Relation rel, Buffer buf,
 			 OffsetNumber *itemnos, int nitems);
-extern int	_bt_pagedel(Relation rel, Buffer buf,
-						BTStack stack, bool vacuum_full);
+extern int _bt_pagedel(Relation rel, Buffer buf,
+			BTStack stack, bool vacuum_full);
 
 /*
  * prototypes for functions in nbtsearch.c

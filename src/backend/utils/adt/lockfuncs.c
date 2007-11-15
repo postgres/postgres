@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.29 2007/09/05 18:10:48 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.30 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ VXIDGetDatum(BackendId bid, LocalTransactionId lxid)
 	 * The representation is "<bid>/<lxid>", decimal and unsigned decimal
 	 * respectively.  Note that elog.c also knows how to format a vxid.
 	 */
-	char vxidstr[32];
+	char		vxidstr[32];
 
 	snprintf(vxidstr, sizeof(vxidstr), "%d/%u", bid, lxid);
 

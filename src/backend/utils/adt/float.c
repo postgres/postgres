@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.151 2007/09/19 22:31:48 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.152 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,10 +251,11 @@ float4in(PG_FUNCTION_ARGS)
 #endif   /* HAVE_BUGGY_SOLARIS_STRTOD */
 
 #ifdef HAVE_BUGGY_IRIX_STRTOD
+
 	/*
-	 * In some IRIX versions, strtod() recognizes only "inf", so if the
-	 * input is "infinity" we have to skip over "inity".  Also, it may
-	 * return positive infinity for "-inf".
+	 * In some IRIX versions, strtod() recognizes only "inf", so if the input
+	 * is "infinity" we have to skip over "inity".	Also, it may return
+	 * positive infinity for "-inf".
 	 */
 	if (isinf(val))
 	{
@@ -274,7 +275,7 @@ float4in(PG_FUNCTION_ARGS)
 			endptr = num + 4;
 		}
 	}
-#endif /* HAVE_BUGGY_IRIX_STRTOD */
+#endif   /* HAVE_BUGGY_IRIX_STRTOD */
 
 	/* skip trailing whitespace */
 	while (*endptr != '\0' && isspace((unsigned char) *endptr))
@@ -443,10 +444,11 @@ float8in(PG_FUNCTION_ARGS)
 #endif   /* HAVE_BUGGY_SOLARIS_STRTOD */
 
 #ifdef HAVE_BUGGY_IRIX_STRTOD
+
 	/*
-	 * In some IRIX versions, strtod() recognizes only "inf", so if the
-	 * input is "infinity" we have to skip over "inity".  Also, it may
-	 * return positive infinity for "-inf".
+	 * In some IRIX versions, strtod() recognizes only "inf", so if the input
+	 * is "infinity" we have to skip over "inity".	Also, it may return
+	 * positive infinity for "-inf".
 	 */
 	if (isinf(val))
 	{
@@ -466,7 +468,7 @@ float8in(PG_FUNCTION_ARGS)
 			endptr = num + 4;
 		}
 	}
-#endif /* HAVE_BUGGY_IRIX_STRTOD */
+#endif   /* HAVE_BUGGY_IRIX_STRTOD */
 
 	/* skip trailing whitespace */
 	while (*endptr != '\0' && isspace((unsigned char) *endptr))
@@ -706,12 +708,13 @@ float4pl(PG_FUNCTION_ARGS)
 	float4		result;
 
 	result = arg1 + arg2;
+
 	/*
-	 *	There isn't any way to check for underflow of addition/subtraction
-	 *	because numbers near the underflow value have been already been
-	 *	to the point where we can't detect the that the two values
-	 *	were originally different, e.g. on x86, '1e-45'::float4 ==
-	 *	'2e-45'::float4 == 1.4013e-45.
+	 * There isn't any way to check for underflow of addition/subtraction
+	 * because numbers near the underflow value have been already been to the
+	 * point where we can't detect the that the two values were originally
+	 * different, e.g. on x86, '1e-45'::float4 == '2e-45'::float4 ==
+	 * 1.4013e-45.
 	 */
 	CHECKFLOATVAL(result, isinf(arg1) || isinf(arg2), true);
 	PG_RETURN_FLOAT4(result);
@@ -738,7 +741,7 @@ float4mul(PG_FUNCTION_ARGS)
 
 	result = arg1 * arg2;
 	CHECKFLOATVAL(result, isinf(arg1) || isinf(arg2),
-					arg1 == 0 || arg2 == 0);
+				  arg1 == 0 || arg2 == 0);
 	PG_RETURN_FLOAT4(result);
 }
 
@@ -803,7 +806,7 @@ float8mul(PG_FUNCTION_ARGS)
 	result = arg1 * arg2;
 
 	CHECKFLOATVAL(result, isinf(arg1) || isinf(arg2),
-					arg1 == 0 || arg2 == 0);
+				  arg1 == 0 || arg2 == 0);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1338,12 +1341,12 @@ dpow(PG_FUNCTION_ARGS)
 
 	/*
 	 * pow() sets errno only on some platforms, depending on whether it
-	 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, so we try to avoid
-	 * using errno.  However, some platform/CPU combinations return
-	 * errno == EDOM and result == Nan for negative arg1 and very large arg2
-	 * (they must be using something different from our floor() test to
-	 * decide it's invalid).  Other platforms (HPPA) return errno == ERANGE
-	 * and a large (HUGE_VAL) but finite result to signal overflow.
+	 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, so we try to avoid using
+	 * errno.  However, some platform/CPU combinations return errno == EDOM
+	 * and result == Nan for negative arg1 and very large arg2 (they must be
+	 * using something different from our floor() test to decide it's
+	 * invalid).  Other platforms (HPPA) return errno == ERANGE and a large
+	 * (HUGE_VAL) but finite result to signal overflow.
 	 */
 	errno = 0;
 	result = pow(arg1, arg2);
@@ -1359,7 +1362,7 @@ dpow(PG_FUNCTION_ARGS)
 	}
 	else if (errno == ERANGE && result != 0 && !isinf(result))
 		result = get_float8_infinity();
-	
+
 	CHECKFLOATVAL(result, isinf(arg1) || isinf(arg2), arg1 == 0);
 	PG_RETURN_FLOAT8(result);
 }
@@ -1453,8 +1456,8 @@ dacos(PG_FUNCTION_ARGS)
 	float8		result;
 
 	/*
-	 *	We use errno here because the trigonometric functions are cyclic
-	 *	and hard to check for underflow.
+	 * We use errno here because the trigonometric functions are cyclic and
+	 * hard to check for underflow.
 	 */
 	errno = 0;
 	result = acos(arg1);
@@ -1570,7 +1573,7 @@ dcot(PG_FUNCTION_ARGS)
 				 errmsg("input is out of range")));
 
 	result = 1.0 / result;
-	CHECKFLOATVAL(result, true /* cotan(pi/2) == inf */, true);
+	CHECKFLOATVAL(result, true /* cotan(pi/2) == inf */ , true);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1612,7 +1615,7 @@ dtan(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));
 
-	CHECKFLOATVAL(result, true /* tan(pi/2) == Inf */, true);
+	CHECKFLOATVAL(result, true /* tan(pi/2) == Inf */ , true);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1748,7 +1751,7 @@ float8_accum(PG_FUNCTION_ARGS)
 	CHECKFLOATVAL(sumX, isinf(transvalues[1]) || isinf(newval), true);
 	sumX2 += newval * newval;
 	CHECKFLOATVAL(sumX2, isinf(transvalues[2]) || isinf(newval), true);
-	
+
 	/*
 	 * If we're invoked by nodeAgg, we can cheat and modify our first
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
@@ -1783,6 +1786,7 @@ Datum
 float4_accum(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+
 	/* do computations as float8 */
 	float8		newval = PG_GETARG_FLOAT4(1);
 	float8	   *transvalues;
@@ -1800,7 +1804,7 @@ float4_accum(PG_FUNCTION_ARGS)
 	CHECKFLOATVAL(sumX, isinf(transvalues[1]) || isinf(newval), true);
 	sumX2 += newval * newval;
 	CHECKFLOATVAL(sumX2, isinf(transvalues[2]) || isinf(newval), true);
-	
+
 	/*
 	 * If we're invoked by nodeAgg, we can cheat and modify our first
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
@@ -2016,8 +2020,8 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 	CHECKFLOATVAL(sumY2, isinf(transvalues[4]) || isinf(newvalY), true);
 	sumXY += newvalX * newvalY;
 	CHECKFLOATVAL(sumXY, isinf(transvalues[5]) || isinf(newvalX) ||
-					isinf(newvalY), true);
-	
+				  isinf(newvalY), true);
+
 	/*
 	 * If we're invoked by nodeAgg, we can cheat and modify our first
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
@@ -2136,7 +2140,7 @@ float8_regr_sxy(PG_FUNCTION_ARGS)
 
 	numerator = N * sumXY - sumX * sumY;
 	CHECKFLOATVAL(numerator, isinf(sumXY) || isinf(sumX) ||
-					isinf(sumY), true);
+				  isinf(sumY), true);
 
 	/* A negative result is valid here */
 
@@ -2204,7 +2208,7 @@ float8_covar_pop(PG_FUNCTION_ARGS)
 
 	numerator = N * sumXY - sumX * sumY;
 	CHECKFLOATVAL(numerator, isinf(sumXY) || isinf(sumX) ||
-					isinf(sumY), true);
+				  isinf(sumY), true);
 
 	PG_RETURN_FLOAT8(numerator / (N * N));
 }
@@ -2232,7 +2236,7 @@ float8_covar_samp(PG_FUNCTION_ARGS)
 
 	numerator = N * sumXY - sumX * sumY;
 	CHECKFLOATVAL(numerator, isinf(sumXY) || isinf(sumX) ||
-					isinf(sumY), true);
+				  isinf(sumY), true);
 
 	PG_RETURN_FLOAT8(numerator / (N * (N - 1.0)));
 }
@@ -2270,7 +2274,7 @@ float8_corr(PG_FUNCTION_ARGS)
 	CHECKFLOATVAL(numeratorY, isinf(sumY2) || isinf(sumY), true);
 	numeratorXY = N * sumXY - sumX * sumY;
 	CHECKFLOATVAL(numeratorXY, isinf(sumXY) || isinf(sumX) ||
-					isinf(sumY), true);
+				  isinf(sumY), true);
 	if (numeratorX <= 0 || numeratorY <= 0)
 		PG_RETURN_NULL();
 
@@ -2310,7 +2314,7 @@ float8_regr_r2(PG_FUNCTION_ARGS)
 	CHECKFLOATVAL(numeratorY, isinf(sumY2) || isinf(sumY), true);
 	numeratorXY = N * sumXY - sumX * sumY;
 	CHECKFLOATVAL(numeratorXY, isinf(sumXY) || isinf(sumX) ||
-					isinf(sumY), true);
+				  isinf(sumY), true);
 	if (numeratorX <= 0)
 		PG_RETURN_NULL();
 	/* per spec, horizontal line produces 1.0 */
@@ -2349,7 +2353,7 @@ float8_regr_slope(PG_FUNCTION_ARGS)
 	CHECKFLOATVAL(numeratorX, isinf(sumX2) || isinf(sumX), true);
 	numeratorXY = N * sumXY - sumX * sumY;
 	CHECKFLOATVAL(numeratorXY, isinf(sumXY) || isinf(sumX) ||
-					isinf(sumY), true);
+				  isinf(sumY), true);
 	if (numeratorX <= 0)
 		PG_RETURN_NULL();
 
@@ -2384,7 +2388,7 @@ float8_regr_intercept(PG_FUNCTION_ARGS)
 	CHECKFLOATVAL(numeratorX, isinf(sumX2) || isinf(sumX), true);
 	numeratorXXY = sumY * sumX2 - sumX * sumXY;
 	CHECKFLOATVAL(numeratorXXY, isinf(sumY) || isinf(sumX2) ||
-					isinf(sumX) || isinf(sumXY), true);
+				  isinf(sumX) || isinf(sumXY), true);
 	if (numeratorX <= 0)
 		PG_RETURN_NULL();
 
@@ -2437,7 +2441,7 @@ float48mul(PG_FUNCTION_ARGS)
 
 	result = arg1 * arg2;
 	CHECKFLOATVAL(result, isinf(arg1) || isinf(arg2),
-					arg1 == 0 || arg2 == 0);
+				  arg1 == 0 || arg2 == 0);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -2500,7 +2504,7 @@ float84mul(PG_FUNCTION_ARGS)
 	result = arg1 * arg2;
 
 	CHECKFLOATVAL(result, isinf(arg1) || isinf(arg2),
-					arg1 == 0 || arg2 == 0);
+				  arg1 == 0 || arg2 == 0);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -2659,11 +2663,11 @@ float84ge(PG_FUNCTION_ARGS)
 Datum
 width_bucket_float8(PG_FUNCTION_ARGS)
 {
-	float8 		operand = PG_GETARG_FLOAT8(0);
-	float8 		bound1 	= PG_GETARG_FLOAT8(1);
-	float8 		bound2 	= PG_GETARG_FLOAT8(2);
-	int32 		count 	= PG_GETARG_INT32(3);
-	int32 		result;
+	float8		operand = PG_GETARG_FLOAT8(0);
+	float8		bound1 = PG_GETARG_FLOAT8(1);
+	float8		bound2 = PG_GETARG_FLOAT8(2);
+	int32		count = PG_GETARG_INT32(3);
+	int32		result;
 
 	if (count <= 0.0)
 		ereport(ERROR,
@@ -2673,7 +2677,7 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 	if (isnan(operand) || isnan(bound1) || isnan(bound2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-				 errmsg("operand, lower bound and upper bound cannot be NaN")));
+			  errmsg("operand, lower bound and upper bound cannot be NaN")));
 
 	/* Note that we allow "operand" to be infinite */
 	if (is_infinite(bound1) || is_infinite(bound2))
@@ -2718,7 +2722,7 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
 				 errmsg("lower bound cannot equal upper bound")));
-		result = 0;		/* keep the compiler quiet */
+		result = 0;				/* keep the compiler quiet */
 	}
 
 	PG_RETURN_INT32(result);

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * pg_ts_parser.h
- * 	definition of parsers for tsearch
+ *	definition of parsers for tsearch
  *
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_ts_parser.h,v 1.1 2007/08/21 01:11:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_ts_parser.h,v 1.2 2007/11/15 21:14:43 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki

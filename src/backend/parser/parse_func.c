@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.198 2007/11/11 19:22:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.199 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,9 +727,9 @@ func_get_detail(List *funcname,
 		 * This interpretation needs to be given higher priority than
 		 * interpretations involving a type coercion followed by a function
 		 * call, otherwise we can produce surprising results. For example, we
-		 * want "text(varchar)" to be interpreted as a simple coercion, not
-		 * as "text(name(varchar))" which the code below this point is
-		 * entirely capable of selecting.
+		 * want "text(varchar)" to be interpreted as a simple coercion, not as
+		 * "text(name(varchar))" which the code below this point is entirely
+		 * capable of selecting.
 		 *
 		 * We also treat a coercion of a previously-unknown-type literal
 		 * constant to a specific type this way.
@@ -738,8 +738,8 @@ func_get_detail(List *funcname,
 		 * cast implementation function to be named after the target type.
 		 * Thus the function will be found by normal lookup if appropriate.
 		 *
-		 * The reason we reject COERCION_PATH_ARRAYCOERCE is mainly that
-		 * you can't write "foo[] (something)" as a function call.  In theory
+		 * The reason we reject COERCION_PATH_ARRAYCOERCE is mainly that you
+		 * can't write "foo[] (something)" as a function call.  In theory
 		 * someone might want to invoke it as "_foo (something)" but we have
 		 * never supported that historically, so we can insist that people
 		 * write it as a normal cast instead.  Lack of historical support is
@@ -747,7 +747,7 @@ func_get_detail(List *funcname,
 		 *
 		 * NB: it's important that this code does not exceed what coerce_type
 		 * can do, because the caller will try to apply coerce_type if we
-		 * return FUNCDETAIL_COERCION.  If we return that result for something
+		 * return FUNCDETAIL_COERCION.	If we return that result for something
 		 * coerce_type can't handle, we'll cause infinite recursion between
 		 * this module and coerce_type!
 		 */

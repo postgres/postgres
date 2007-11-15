@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.140 2007/07/26 15:15:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.141 2007/11/15 21:14:38 momjian Exp $
  *
  * NOTES:
  *
@@ -855,16 +855,16 @@ OpenTemporaryFile(bool interXact)
 
 	/*
 	 * If some temp tablespace(s) have been given to us, try to use the next
-	 * one.  If a given tablespace can't be found, we silently fall back
-	 * to the database's default tablespace.
+	 * one.  If a given tablespace can't be found, we silently fall back to
+	 * the database's default tablespace.
 	 *
 	 * BUT: if the temp file is slated to outlive the current transaction,
-	 * force it into the database's default tablespace, so that it will
-	 * not pose a threat to possible tablespace drop attempts.
+	 * force it into the database's default tablespace, so that it will not
+	 * pose a threat to possible tablespace drop attempts.
 	 */
 	if (numTempTableSpaces > 0 && !interXact)
 	{
-		Oid		tblspcOid = GetNextTempTableSpace();
+		Oid			tblspcOid = GetNextTempTableSpace();
 
 		if (OidIsValid(tblspcOid))
 			file = OpenTemporaryFileInTablespace(tblspcOid, false);
@@ -872,7 +872,7 @@ OpenTemporaryFile(bool interXact)
 
 	/*
 	 * If not, or if tablespace is bad, create in database's default
-	 * tablespace.  MyDatabaseTableSpace should normally be set before we get
+	 * tablespace.	MyDatabaseTableSpace should normally be set before we get
 	 * here, but just in case it isn't, fall back to pg_default tablespace.
 	 */
 	if (file <= 0)
@@ -941,8 +941,8 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError)
 	if (file <= 0)
 	{
 		/*
-		 * We might need to create the tablespace's tempfile directory,
-		 * if no one has yet done so.
+		 * We might need to create the tablespace's tempfile directory, if no
+		 * one has yet done so.
 		 *
 		 * Don't check for error from mkdir; it could fail if someone else
 		 * just did the same thing.  If it doesn't work then we'll bomb out on
@@ -967,8 +967,8 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError)
 void
 FileClose(File file)
 {
-	Vfd			*vfdP;
-	struct stat	filestats;
+	Vfd		   *vfdP;
+	struct stat filestats;
 
 	Assert(FileIsValid(file));
 
@@ -1542,13 +1542,14 @@ SetTempTablespaces(Oid *tableSpaces, int numSpaces)
 	Assert(numSpaces >= 0);
 	tempTableSpaces = tableSpaces;
 	numTempTableSpaces = numSpaces;
+
 	/*
-	 * Select a random starting point in the list.  This is to minimize
-	 * conflicts between backends that are most likely sharing the same
-	 * list of temp tablespaces.  Note that if we create multiple temp
-	 * files in the same transaction, we'll advance circularly through
-	 * the list --- this ensures that large temporary sort files are
-	 * nicely spread across all available tablespaces.
+	 * Select a random starting point in the list.	This is to minimize
+	 * conflicts between backends that are most likely sharing the same list
+	 * of temp tablespaces.  Note that if we create multiple temp files in the
+	 * same transaction, we'll advance circularly through the list --- this
+	 * ensures that large temporary sort files are nicely spread across all
+	 * available tablespaces.
 	 */
 	if (numSpaces > 1)
 		nextTempTableSpace = random() % numSpaces;
@@ -1572,7 +1573,7 @@ TempTablespacesAreSet(void)
 /*
  * GetNextTempTableSpace
  *
- * Select the next temp tablespace to use.  A result of InvalidOid means
+ * Select the next temp tablespace to use.	A result of InvalidOid means
  * to use the current database's default tablespace.
  */
 Oid

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.223 2007/11/07 22:37:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.224 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 /*
  * DoneMatchingIndexKeys() - MACRO
  */
-#define DoneMatchingIndexKeys(families)	(families[0] == InvalidOid)
+#define DoneMatchingIndexKeys(families) (families[0] == InvalidOid)
 
 #define IsBooleanOpfamily(opfamily) \
 	((opfamily) == BOOL_BTREE_FAM_OID || (opfamily) == BOOL_HASH_FAM_OID)
@@ -52,7 +52,7 @@ typedef struct
 	List	   *quals;			/* the WHERE clauses it uses */
 	List	   *preds;			/* predicates of its partial index(es) */
 	Bitmapset  *clauseids;		/* quals+preds represented as a bitmapset */
-} PathClauseUsage;
+}	PathClauseUsage;
 
 
 static List *find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
@@ -70,7 +70,7 @@ static Cost bitmap_scan_cost_est(PlannerInfo *root, RelOptInfo *rel,
 static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel,
 					List *paths, RelOptInfo *outer_rel);
 static PathClauseUsage *classify_index_clause_usage(Path *path,
-													List **clauselist);
+							List **clauselist);
 static void find_indexpath_quals(Path *bitmapqual, List **quals, List **preds);
 static int	find_list_position(Node *node, List **nodelist);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
@@ -382,8 +382,8 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		}
 
 		/*
-		 * 4. If the index is ordered, a backwards scan might be
-		 * interesting.  Again, this is only interesting at top level.
+		 * 4. If the index is ordered, a backwards scan might be interesting.
+		 * Again, this is only interesting at top level.
 		 */
 		if (index_is_ordered && possibly_useful_pathkeys &&
 			istoplevel && outer_rel == NULL)
@@ -581,7 +581,8 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	List	   *clauselist;
 	List	   *bestpaths = NIL;
 	Cost		bestcost = 0;
-	int			i, j;
+	int			i,
+				j;
 	ListCell   *l;
 
 	Assert(npaths > 0);			/* else caller error */
@@ -592,40 +593,39 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	 * In theory we should consider every nonempty subset of the given paths.
 	 * In practice that seems like overkill, given the crude nature of the
 	 * estimates, not to mention the possible effects of higher-level AND and
-	 * OR clauses.  Moreover, it's completely impractical if there are a large
+	 * OR clauses.	Moreover, it's completely impractical if there are a large
 	 * number of paths, since the work would grow as O(2^N).
 	 *
-	 * As a heuristic, we first check for paths using exactly the same
-	 * sets of WHERE clauses + index predicate conditions, and reject all
-	 * but the cheapest-to-scan in any such group.  This primarily gets rid
-	 * of indexes that include the interesting columns but also irrelevant
-	 * columns.  (In situations where the DBA has gone overboard on creating
-	 * variant indexes, this can make for a very large reduction in the number
-	 * of paths considered further.)
+	 * As a heuristic, we first check for paths using exactly the same sets of
+	 * WHERE clauses + index predicate conditions, and reject all but the
+	 * cheapest-to-scan in any such group.	This primarily gets rid of indexes
+	 * that include the interesting columns but also irrelevant columns.  (In
+	 * situations where the DBA has gone overboard on creating variant
+	 * indexes, this can make for a very large reduction in the number of
+	 * paths considered further.)
 	 *
-	 * We then sort the surviving paths with the cheapest-to-scan first,
-	 * and for each path, consider using that path alone as the basis for
-	 * a bitmap scan.  Then we consider bitmap AND scans formed from that
-	 * path plus each subsequent (higher-cost) path, adding on a subsequent
-	 * path if it results in a reduction in the estimated total scan cost.
-	 * This means we consider about O(N^2) rather than O(2^N) path
-	 * combinations, which is quite tolerable, especially given than N is
-	 * usually reasonably small because of the prefiltering step.  The
-	 * cheapest of these is returned.
+	 * We then sort the surviving paths with the cheapest-to-scan first, and
+	 * for each path, consider using that path alone as the basis for a bitmap
+	 * scan.  Then we consider bitmap AND scans formed from that path plus
+	 * each subsequent (higher-cost) path, adding on a subsequent path if it
+	 * results in a reduction in the estimated total scan cost. This means we
+	 * consider about O(N^2) rather than O(2^N) path combinations, which is
+	 * quite tolerable, especially given than N is usually reasonably small
+	 * because of the prefiltering step.  The cheapest of these is returned.
 	 *
-	 * We will only consider AND combinations in which no two indexes use
-	 * the same WHERE clause.  This is a bit of a kluge: it's needed because
+	 * We will only consider AND combinations in which no two indexes use the
+	 * same WHERE clause.  This is a bit of a kluge: it's needed because
 	 * costsize.c and clausesel.c aren't very smart about redundant clauses.
 	 * They will usually double-count the redundant clauses, producing a
 	 * too-small selectivity that makes a redundant AND step look like it
-	 * reduces the total cost.  Perhaps someday that code will be smarter and
+	 * reduces the total cost.	Perhaps someday that code will be smarter and
 	 * we can remove this limitation.  (But note that this also defends
 	 * against flat-out duplicate input paths, which can happen because
 	 * best_inner_indexscan will find the same OR join clauses that
 	 * create_or_index_quals has pulled OR restriction clauses out of.)
 	 *
 	 * For the same reason, we reject AND combinations in which an index
-	 * predicate clause duplicates another clause.  Here we find it necessary
+	 * predicate clause duplicates another clause.	Here we find it necessary
 	 * to be even stricter: we'll reject a partial index if any of its
 	 * predicate clauses are implied by the set of WHERE clauses and predicate
 	 * clauses used so far.  This covers cases such as a condition "x = 42"
@@ -639,9 +639,9 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	 */
 
 	/*
-	 * Extract clause usage info and detect any paths that use exactly
-	 * the same set of clauses; keep only the cheapest-to-scan of any such
-	 * groups.  The surviving paths are put into an array for qsort'ing.
+	 * Extract clause usage info and detect any paths that use exactly the
+	 * same set of clauses; keep only the cheapest-to-scan of any such groups.
+	 * The surviving paths are put into an array for qsort'ing.
 	 */
 	pathinfoarray = (PathClauseUsage **)
 		palloc(npaths * sizeof(PathClauseUsage *));
@@ -649,7 +649,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	npaths = 0;
 	foreach(l, paths)
 	{
-		Path   *ipath = (Path *) lfirst(l);
+		Path	   *ipath = (Path *) lfirst(l);
 
 		pathinfo = classify_index_clause_usage(ipath, &clauselist);
 		for (i = 0; i < npaths; i++)
@@ -686,9 +686,9 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 		  path_usage_comparator);
 
 	/*
-	 * For each surviving index, consider it as an "AND group leader", and
-	 * see whether adding on any of the later indexes results in an AND path
-	 * with cheaper total cost than before.  Then take the cheapest AND group.
+	 * For each surviving index, consider it as an "AND group leader", and see
+	 * whether adding on any of the later indexes results in an AND path with
+	 * cheaper total cost than before.	Then take the cheapest AND group.
 	 */
 	for (i = 0; i < npaths; i++)
 	{
@@ -705,17 +705,17 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 		clauseidsofar = bms_copy(pathinfo->clauseids);
 		lastcell = list_head(paths);	/* for quick deletions */
 
-		for (j = i+1; j < npaths; j++)
+		for (j = i + 1; j < npaths; j++)
 		{
 			Cost		newcost;
 
 			pathinfo = pathinfoarray[j];
 			/* Check for redundancy */
 			if (bms_overlap(pathinfo->clauseids, clauseidsofar))
-				continue;			/* consider it redundant */
+				continue;		/* consider it redundant */
 			if (pathinfo->preds)
 			{
-				bool	redundant = false;
+				bool		redundant = false;
 
 				/* we check each predicate clause separately */
 				foreach(l, pathinfo->preds)
@@ -725,7 +725,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 					if (predicate_implied_by(list_make1(np), qualsofar))
 					{
 						redundant = true;
-						break;		/* out of inner foreach loop */
+						break;	/* out of inner foreach loop */
 					}
 				}
 				if (redundant)
@@ -766,7 +766,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	if (list_length(bestpaths) == 1)
-		return (Path *) linitial(bestpaths);		/* no need for AND */
+		return (Path *) linitial(bestpaths);	/* no need for AND */
 	return (Path *) create_bitmap_and_path(root, rel, bestpaths);
 }
 
@@ -774,8 +774,8 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 static int
 path_usage_comparator(const void *a, const void *b)
 {
-	PathClauseUsage *pa = *(PathClauseUsage *const *) a;
-	PathClauseUsage *pb = *(PathClauseUsage *const *) b;
+	PathClauseUsage *pa = *(PathClauseUsage * const *) a;
+	PathClauseUsage *pb = *(PathClauseUsage * const *) b;
 	Cost		acost;
 	Cost		bcost;
 	Selectivity aselec;
@@ -872,14 +872,14 @@ classify_index_clause_usage(Path *path, List **clauselist)
 	clauseids = NULL;
 	foreach(lc, result->quals)
 	{
-		Node   *node = (Node *) lfirst(lc);
+		Node	   *node = (Node *) lfirst(lc);
 
 		clauseids = bms_add_member(clauseids,
 								   find_list_position(node, clauselist));
 	}
 	foreach(lc, result->preds)
 	{
-		Node   *node = (Node *) lfirst(lc);
+		Node	   *node = (Node *) lfirst(lc);
 
 		clauseids = bms_add_member(clauseids,
 								   find_list_position(node, clauselist));
@@ -944,7 +944,7 @@ find_indexpath_quals(Path *bitmapqual, List **quals, List **preds)
 /*
  * find_list_position
  *		Return the given node's position (counting from 0) in the given
- *		list of nodes.  If it's not equal() to any existing list member,
+ *		list of nodes.	If it's not equal() to any existing list member,
  *		add it at the end, and return that position.
  */
 static int
@@ -956,7 +956,7 @@ find_list_position(Node *node, List **nodelist)
 	i = 0;
 	foreach(lc, *nodelist)
 	{
-		Node   *oldnode = (Node *) lfirst(lc);
+		Node	   *oldnode = (Node *) lfirst(lc);
 
 		if (equal(node, oldnode))
 			return i;
@@ -1218,7 +1218,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 	}
 	else if (index->amsearchnulls && IsA(clause, NullTest))
 	{
-		NullTest	*nt = (NullTest *) clause;
+		NullTest   *nt = (NullTest *) clause;
 
 		if (nt->nulltesttype == IS_NULL &&
 			match_index_to_operand((Node *) nt->arg, indexcol, index))
@@ -1315,12 +1315,12 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 	/*
 	 * We could do the matching on the basis of insisting that the opfamily
 	 * shown in the RowCompareExpr be the same as the index column's opfamily,
-	 * but that could fail in the presence of reverse-sort opfamilies: it'd
-	 * be a matter of chance whether RowCompareExpr had picked the forward
-	 * or reverse-sort family.  So look only at the operator, and match
-	 * if it is a member of the index's opfamily (after commutation, if the
-	 * indexkey is on the right).  We'll worry later about whether any
-	 * additional operators are matchable to the index.
+	 * but that could fail in the presence of reverse-sort opfamilies: it'd be
+	 * a matter of chance whether RowCompareExpr had picked the forward or
+	 * reverse-sort family.  So look only at the operator, and match if it is
+	 * a member of the index's opfamily (after commutation, if the indexkey is
+	 * on the right).  We'll worry later about whether any additional
+	 * operators are matchable to the index.
 	 */
 	leftop = (Node *) linitial(clause->largs);
 	rightop = (Node *) linitial(clause->rargs);
@@ -1421,8 +1421,8 @@ indexable_outerrelids(PlannerInfo *root, RelOptInfo *rel)
 	}
 
 	/*
-	 * We also have to look through the query's EquivalenceClasses to see
-	 * if any of them could generate indexable join conditions for this rel.
+	 * We also have to look through the query's EquivalenceClasses to see if
+	 * any of them could generate indexable join conditions for this rel.
 	 */
 	if (rel->has_eclass_joins)
 	{
@@ -1434,8 +1434,8 @@ indexable_outerrelids(PlannerInfo *root, RelOptInfo *rel)
 			ListCell   *lc2;
 
 			/*
-			 * Won't generate joinclauses if const or single-member (the latter
-			 * test covers the volatile case too)
+			 * Won't generate joinclauses if const or single-member (the
+			 * latter test covers the volatile case too)
 			 */
 			if (cur_ec->ec_has_const || list_length(cur_ec->ec_members) <= 1)
 				continue;
@@ -1569,7 +1569,7 @@ matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel, Relids outer_relids)
  * This is also exported for use by find_eclass_clauses_for_index_join.
  */
 bool
-eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
+eclass_matches_any_index(EquivalenceClass * ec, EquivalenceMember * em,
 						 RelOptInfo *rel)
 {
 	ListCell   *l;
@@ -1831,14 +1831,14 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * Also check to see if any EquivalenceClasses can produce a relevant
-	 * joinclause.  Since all such clauses are effectively pushed-down,
-	 * this doesn't apply to outer joins.
+	 * joinclause.	Since all such clauses are effectively pushed-down, this
+	 * doesn't apply to outer joins.
 	 */
 	if (!isouterjoin && rel->has_eclass_joins)
 		clause_list = list_concat(clause_list,
 								  find_eclass_clauses_for_index_join(root,
 																	 rel,
-															   outer_relids));
+															  outer_relids));
 
 	/* If no join clause was matched then forget it, per comments above */
 	if (clause_list == NIL)
@@ -2150,9 +2150,9 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 	 * want to apply.  (A hash index, for example, will not support ">=".)
 	 * Currently, only btree supports the operators we need.
 	 *
-	 * We insist on the opfamily being the specific one we expect, else we'd do
-	 * the wrong thing if someone were to make a reverse-sort opfamily with the
-	 * same operators.
+	 * We insist on the opfamily being the specific one we expect, else we'd
+	 * do the wrong thing if someone were to make a reverse-sort opfamily with
+	 * the same operators.
 	 */
 	switch (expr_op)
 	{
@@ -2260,7 +2260,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 			{
 				resultquals = list_concat(resultquals,
 										  expand_indexqual_opclause(rinfo,
-																  curFamily));
+																 curFamily));
 			}
 			else if (IsA(clause, ScalarArrayOpExpr))
 			{
@@ -2602,9 +2602,9 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 		righttypes_cell = list_head(righttypes);
 		foreach(opfamilies_cell, opfamilies)
 		{
-			Oid		opfam = lfirst_oid(opfamilies_cell);
-			Oid		lefttype = lfirst_oid(lefttypes_cell);
-			Oid		righttype = lfirst_oid(righttypes_cell);
+			Oid			opfam = lfirst_oid(opfamilies_cell);
+			Oid			lefttype = lfirst_oid(lefttypes_cell);
+			Oid			righttype = lfirst_oid(righttypes_cell);
 
 			expr_op = get_opfamily_member(opfam, lefttype, righttype,
 										  op_strategy);

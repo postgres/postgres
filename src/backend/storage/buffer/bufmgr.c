@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.226 2007/09/25 22:11:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.227 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,8 +77,8 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 
 static Buffer ReadBuffer_common(Relation reln, BlockNumber blockNum,
-								bool zeroPage,
-								BufferAccessStrategy strategy);
+				  bool zeroPage,
+				  BufferAccessStrategy strategy);
 static bool PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
 static void UnpinBuffer(volatile BufferDesc *buf, bool fixOwner);
@@ -90,8 +90,8 @@ static void TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
 				  int set_flag_bits);
 static void buffer_write_error_callback(void *arg);
 static volatile BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
-										BufferAccessStrategy strategy,
-										bool *foundPtr);
+			BufferAccessStrategy strategy,
+			bool *foundPtr);
 static void FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln);
 static void AtProcExit_Buffers(int code, Datum arg);
 
@@ -215,10 +215,10 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
 		 * This can happen because mdread doesn't complain about reads beyond
 		 * EOF (when zero_damaged_pages is ON) and so a previous attempt to
 		 * read a block beyond EOF could have left a "valid" zero-filled
-		 * buffer.  Unfortunately, we have also seen this case occurring
+		 * buffer.	Unfortunately, we have also seen this case occurring
 		 * because of buggy Linux kernels that sometimes return an
-		 * lseek(SEEK_END) result that doesn't account for a recent write.
-		 * In that situation, the pre-existing buffer would contain valid data
+		 * lseek(SEEK_END) result that doesn't account for a recent write. In
+		 * that situation, the pre-existing buffer would contain valid data
 		 * that we don't want to overwrite.  Since the legitimate case should
 		 * always have left a zero-filled buffer, complain if not PageIsNew.
 		 */
@@ -283,9 +283,9 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
 	}
 	else
 	{
-		/* 
-		 * Read in the page, unless the caller intends to overwrite it
-		 * and just wants us to allocate a buffer.
+		/*
+		 * Read in the page, unless the caller intends to overwrite it and
+		 * just wants us to allocate a buffer.
 		 */
 		if (zeroPage)
 			MemSet((char *) bufBlock, 0, BLCKSZ);
@@ -420,7 +420,7 @@ BufferAlloc(Relation reln,
 	/* Loop here in case we have to try another victim buffer */
 	for (;;)
 	{
-		bool lock_held;
+		bool		lock_held;
 
 		/*
 		 * Select a victim buffer.	The buffer is returned with its header
@@ -472,7 +472,7 @@ BufferAlloc(Relation reln,
 				 * If using a nondefault strategy, and writing the buffer
 				 * would require a WAL flush, let the strategy decide whether
 				 * to go ahead and write/reuse the buffer or to choose another
-				 * victim.  We need lock to inspect the page LSN, so this
+				 * victim.	We need lock to inspect the page LSN, so this
 				 * can't be done inside StrategyGetBuffer.
 				 */
 				if (strategy != NULL &&
@@ -630,8 +630,8 @@ BufferAlloc(Relation reln,
 	 *
 	 * Clearing BM_VALID here is necessary, clearing the dirtybits is just
 	 * paranoia.  We also reset the usage_count since any recency of use of
-	 * the old content is no longer relevant.  (The usage_count starts out
-	 * at 1 so that the buffer can survive one clock-sweep pass.)
+	 * the old content is no longer relevant.  (The usage_count starts out at
+	 * 1 so that the buffer can survive one clock-sweep pass.)
 	 */
 	buf->tag = newTag;
 	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR);
@@ -865,7 +865,7 @@ ReleaseAndReadBuffer(Buffer buffer,
  * when we first pin it; for other strategies we just make sure the usage_count
  * isn't zero.  (The idea of the latter is that we don't want synchronized
  * heap scans to inflate the count, but we need it to not be zero to discourage
- * other backends from stealing buffers from our ring.  As long as we cycle
+ * other backends from stealing buffers from our ring.	As long as we cycle
  * through the ring faster than the global clock-sweep cycles, buffers in
  * our ring won't be chosen as victims for replacement by other backends.)
  *
@@ -1016,9 +1016,8 @@ BufferSync(int flags)
 	 * have the flag set.
 	 *
 	 * Note that if we fail to write some buffer, we may leave buffers with
-	 * BM_CHECKPOINT_NEEDED still set.  This is OK since any such buffer
-	 * would certainly need to be written for the next checkpoint attempt,
-	 * too.
+	 * BM_CHECKPOINT_NEEDED still set.	This is OK since any such buffer would
+	 * certainly need to be written for the next checkpoint attempt, too.
 	 */
 	num_to_write = 0;
 	for (buf_id = 0; buf_id < NBuffers; buf_id++)
@@ -1045,11 +1044,11 @@ BufferSync(int flags)
 
 	/*
 	 * Loop over all buffers again, and write the ones (still) marked with
-	 * BM_CHECKPOINT_NEEDED.  In this loop, we start at the clock sweep
-	 * point since we might as well dump soon-to-be-recycled buffers first.
+	 * BM_CHECKPOINT_NEEDED.  In this loop, we start at the clock sweep point
+	 * since we might as well dump soon-to-be-recycled buffers first.
 	 *
-	 * Note that we don't read the buffer alloc count here --- that should
-	 * be left untouched till the next BgBufferSync() call.
+	 * Note that we don't read the buffer alloc count here --- that should be
+	 * left untouched till the next BgBufferSync() call.
 	 */
 	buf_id = StrategySyncStart(NULL, NULL);
 	num_to_scan = NBuffers;
@@ -1067,8 +1066,8 @@ BufferSync(int flags)
 		 * examine the bit here and the time SyncOneBuffer acquires lock,
 		 * someone else not only wrote the buffer but replaced it with another
 		 * page and dirtied it.  In that improbable case, SyncOneBuffer will
-		 * write the buffer though we didn't need to.  It doesn't seem
-		 * worth guarding against this, though.
+		 * write the buffer though we didn't need to.  It doesn't seem worth
+		 * guarding against this, though.
 		 */
 		if (bufHdr->flags & BM_CHECKPOINT_NEEDED)
 		{
@@ -1092,8 +1091,8 @@ BufferSync(int flags)
 					break;
 
 				/*
-				 * Perform normal bgwriter duties and sleep to throttle
-				 * our I/O rate.
+				 * Perform normal bgwriter duties and sleep to throttle our
+				 * I/O rate.
 				 */
 				CheckpointWriteDelay(flags,
 									 (double) num_written / num_to_write);
@@ -1105,8 +1104,8 @@ BufferSync(int flags)
 	}
 
 	/*
-	 * Update checkpoint statistics. As noted above, this doesn't
-	 * include buffers written by other backends or bgwriter scan.
+	 * Update checkpoint statistics. As noted above, this doesn't include
+	 * buffers written by other backends or bgwriter scan.
 	 */
 	CheckpointStats.ckpt_bufs_written += num_written;
 }
@@ -1128,7 +1127,7 @@ BgBufferSync(void)
 	 * Information saved between calls so we can determine the strategy
 	 * point's advance rate and avoid scanning already-cleaned buffers.
 	 */
-	static bool	saved_info_valid = false;
+	static bool saved_info_valid = false;
 	static int	prev_strategy_buf_id;
 	static uint32 prev_strategy_passes;
 	static int	next_to_clean;
@@ -1157,8 +1156,8 @@ BgBufferSync(void)
 	int			reusable_buffers;
 
 	/*
-	 * Find out where the freelist clock sweep currently is, and how
-	 * many buffer allocations have happened since our last call.
+	 * Find out where the freelist clock sweep currently is, and how many
+	 * buffer allocations have happened since our last call.
 	 */
 	strategy_buf_id = StrategySyncStart(&strategy_passes, &recent_alloc);
 
@@ -1166,9 +1165,9 @@ BgBufferSync(void)
 	BgWriterStats.m_buf_alloc += recent_alloc;
 
 	/*
-	 * If we're not running the LRU scan, just stop after doing the
-	 * stats stuff.  We mark the saved state invalid so that we can recover
-	 * sanely if LRU scan is turned back on later.
+	 * If we're not running the LRU scan, just stop after doing the stats
+	 * stuff.  We mark the saved state invalid so that we can recover sanely
+	 * if LRU scan is turned back on later.
 	 */
 	if (bgwriter_lru_maxpages <= 0)
 	{
@@ -1178,18 +1177,19 @@ BgBufferSync(void)
 
 	/*
 	 * Compute strategy_delta = how many buffers have been scanned by the
-	 * clock sweep since last time.  If first time through, assume none.
-	 * Then see if we are still ahead of the clock sweep, and if so, how many
-	 * buffers we could scan before we'd catch up with it and "lap" it.
-	 * Note: weird-looking coding of xxx_passes comparisons are to avoid
-	 * bogus behavior when the passes counts wrap around.
+	 * clock sweep since last time.  If first time through, assume none. Then
+	 * see if we are still ahead of the clock sweep, and if so, how many
+	 * buffers we could scan before we'd catch up with it and "lap" it. Note:
+	 * weird-looking coding of xxx_passes comparisons are to avoid bogus
+	 * behavior when the passes counts wrap around.
 	 */
 	if (saved_info_valid)
 	{
-		int32	passes_delta = strategy_passes - prev_strategy_passes;
+		int32		passes_delta = strategy_passes - prev_strategy_passes;
 
 		strategy_delta = strategy_buf_id - prev_strategy_buf_id;
-		strategy_delta += (long) passes_delta * NBuffers;
+		strategy_delta += (long) passes_delta *NBuffers;
+
 		Assert(strategy_delta >= 0);
 
 		if ((int32) (next_passes - strategy_passes) > 0)
@@ -1218,8 +1218,8 @@ BgBufferSync(void)
 		else
 		{
 			/*
-			 * We're behind, so skip forward to the strategy point
-			 * and start cleaning from there.
+			 * We're behind, so skip forward to the strategy point and start
+			 * cleaning from there.
 			 */
 #ifdef BGW_DEBUG
 			elog(DEBUG2, "bgwriter behind: bgw %u-%u strategy %u-%u delta=%ld",
@@ -1235,8 +1235,8 @@ BgBufferSync(void)
 	else
 	{
 		/*
-		 * Initializing at startup or after LRU scanning had been off.
-		 * Always start at the strategy point.
+		 * Initializing at startup or after LRU scanning had been off. Always
+		 * start at the strategy point.
 		 */
 #ifdef BGW_DEBUG
 		elog(DEBUG2, "bgwriter initializing: strategy %u-%u",
@@ -1254,8 +1254,8 @@ BgBufferSync(void)
 	saved_info_valid = true;
 
 	/*
-	 * Compute how many buffers had to be scanned for each new allocation,
-	 * ie, 1/density of reusable buffers, and track a moving average of that.
+	 * Compute how many buffers had to be scanned for each new allocation, ie,
+	 * 1/density of reusable buffers, and track a moving average of that.
 	 *
 	 * If the strategy point didn't move, we don't update the density estimate
 	 */
@@ -1268,16 +1268,16 @@ BgBufferSync(void)
 
 	/*
 	 * Estimate how many reusable buffers there are between the current
-	 * strategy point and where we've scanned ahead to, based on the
-	 * smoothed density estimate.
+	 * strategy point and where we've scanned ahead to, based on the smoothed
+	 * density estimate.
 	 */
 	bufs_ahead = NBuffers - bufs_to_lap;
 	reusable_buffers_est = (float) bufs_ahead / smoothed_density;
 
 	/*
-	 * Track a moving average of recent buffer allocations.  Here, rather
-	 * than a true average we want a fast-attack, slow-decline behavior:
-	 * we immediately follow any increase.
+	 * Track a moving average of recent buffer allocations.  Here, rather than
+	 * a true average we want a fast-attack, slow-decline behavior: we
+	 * immediately follow any increase.
 	 */
 	if (smoothed_alloc <= (float) recent_alloc)
 		smoothed_alloc = recent_alloc;
@@ -1291,12 +1291,12 @@ BgBufferSync(void)
 	/*
 	 * Even in cases where there's been little or no buffer allocation
 	 * activity, we want to make a small amount of progress through the buffer
-	 * cache so that as many reusable buffers as possible are clean
-	 * after an idle period.
+	 * cache so that as many reusable buffers as possible are clean after an
+	 * idle period.
 	 *
-	 * (scan_whole_pool_milliseconds / BgWriterDelay) computes how many
-	 * times the BGW will be called during the scan_whole_pool time;
-	 * slice the buffer pool into that many sections.
+	 * (scan_whole_pool_milliseconds / BgWriterDelay) computes how many times
+	 * the BGW will be called during the scan_whole_pool time; slice the
+	 * buffer pool into that many sections.
 	 */
 	min_scan_buffers = (int) (NBuffers / (scan_whole_pool_milliseconds / BgWriterDelay));
 
@@ -1311,9 +1311,9 @@ BgBufferSync(void)
 
 	/*
 	 * Now write out dirty reusable buffers, working forward from the
-	 * next_to_clean point, until we have lapped the strategy scan, or
-	 * cleaned enough buffers to match our estimate of the next cycle's
-	 * allocation requirements, or hit the bgwriter_lru_maxpages limit.
+	 * next_to_clean point, until we have lapped the strategy scan, or cleaned
+	 * enough buffers to match our estimate of the next cycle's allocation
+	 * requirements, or hit the bgwriter_lru_maxpages limit.
 	 */
 
 	/* Make sure we can handle the pin inside SyncOneBuffer */
@@ -1326,7 +1326,7 @@ BgBufferSync(void)
 	/* Execute the LRU scan */
 	while (num_to_scan > 0 && reusable_buffers < upcoming_alloc_est)
 	{
-		int		buffer_state = SyncOneBuffer(next_to_clean, true);
+		int			buffer_state = SyncOneBuffer(next_to_clean, true);
 
 		if (++next_to_clean >= NBuffers)
 		{
@@ -1361,11 +1361,11 @@ BgBufferSync(void)
 
 	/*
 	 * Consider the above scan as being like a new allocation scan.
-	 * Characterize its density and update the smoothed one based on it.
-	 * This effectively halves the moving average period in cases where
-	 * both the strategy and the background writer are doing some useful
-	 * scanning, which is helpful because a long memory isn't as desirable
-	 * on the density estimates.
+	 * Characterize its density and update the smoothed one based on it. This
+	 * effectively halves the moving average period in cases where both the
+	 * strategy and the background writer are doing some useful scanning,
+	 * which is helpful because a long memory isn't as desirable on the
+	 * density estimates.
 	 */
 	strategy_delta = bufs_to_lap - num_to_scan;
 	recent_alloc = reusable_buffers - reusable_buffers_est;
@@ -1402,7 +1402,7 @@ static int
 SyncOneBuffer(int buf_id, bool skip_recently_used)
 {
 	volatile BufferDesc *bufHdr = &BufferDescriptors[buf_id];
-	int		result = 0;
+	int			result = 0;
 
 	/*
 	 * Check whether buffer needs writing.
@@ -2312,7 +2312,7 @@ LockBufferForCleanup(Buffer buffer)
  *
  * We won't loop, but just check once to see if the pin count is OK.  If
  * not, return FALSE with no lock held.
- */ 
+ */
 bool
 ConditionalLockBufferForCleanup(Buffer buffer)
 {

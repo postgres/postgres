@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.96 2007/11/11 19:22:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.97 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -887,8 +887,8 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 
 	/*
 	 * enforce consistency with polymorphic argument and return types,
-	 * possibly adjusting return type or declared_arg_types (which will
-	 * be used as the cast destination by make_fn_arguments)
+	 * possibly adjusting return type or declared_arg_types (which will be
+	 * used as the cast destination by make_fn_arguments)
 	 */
 	rettype = enforce_generic_type_consistency(actual_arg_types,
 											   declared_arg_types,
@@ -997,8 +997,8 @@ make_op_expr(ParseState *pstate, Operator op,
 
 	/*
 	 * enforce consistency with polymorphic argument and return types,
-	 * possibly adjusting return type or declared_arg_types (which will
-	 * be used as the cast destination by make_fn_arguments)
+	 * possibly adjusting return type or declared_arg_types (which will be
+	 * used as the cast destination by make_fn_arguments)
 	 */
 	rettype = enforce_generic_type_consistency(actual_arg_types,
 											   declared_arg_types,

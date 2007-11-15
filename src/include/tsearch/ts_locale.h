@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.3 2007/11/09 22:37:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.4 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,8 +49,7 @@ extern int	t_isprint(const char *ptr);
 #define t_iseq(x,c)		(TOUCHAR(x) == (unsigned char) (c))
 
 #define COPYCHAR(d,s)	memcpy(d, s, pg_mblen(s))
-
-#else  /* not TS_USE_WIDE */
+#else							/* not TS_USE_WIDE */
 
 #define t_isdigit(x)	isdigit(TOUCHAR(x))
 #define t_isspace(x)	isspace(TOUCHAR(x))
@@ -59,8 +58,7 @@ extern int	t_isprint(const char *ptr);
 #define t_iseq(x,c)		(TOUCHAR(x) == (unsigned char) (c))
 
 #define COPYCHAR(d,s)	(*((unsigned char *) (d)) = TOUCHAR(s))
-
-#endif /* TS_USE_WIDE */
+#endif   /* TS_USE_WIDE */
 
 extern char *lowerstr(const char *str);
 extern char *lowerstr_with_len(const char *str, int len);

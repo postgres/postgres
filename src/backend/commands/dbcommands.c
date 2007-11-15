@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.202 2007/10/16 11:30:16 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.203 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,17 +260,17 @@ createdb(const CreatedbStmt *stmt)
 	 * Check whether encoding matches server locale settings.  We allow
 	 * mismatch in three cases:
 	 *
-	 * 1. ctype_encoding = SQL_ASCII, which means either that the locale
-	 * is C/POSIX which works with any encoding, or that we couldn't determine
+	 * 1. ctype_encoding = SQL_ASCII, which means either that the locale is
+	 * C/POSIX which works with any encoding, or that we couldn't determine
 	 * the locale's encoding and have to trust the user to get it right.
 	 *
-	 * 2. selected encoding is SQL_ASCII, but only if you're a superuser.
-	 * This is risky but we have historically allowed it --- notably, the
+	 * 2. selected encoding is SQL_ASCII, but only if you're a superuser. This
+	 * is risky but we have historically allowed it --- notably, the
 	 * regression tests require it.
 	 *
 	 * 3. selected encoding is UTF8 and platform is win32. This is because
-	 * UTF8 is a pseudo codepage that is supported in all locales since
-	 * it's converted to UTF16 before being used.
+	 * UTF8 is a pseudo codepage that is supported in all locales since it's
+	 * converted to UTF16 before being used.
 	 *
 	 * Note: if you change this policy, fix initdb to match.
 	 */
@@ -286,8 +286,8 @@ createdb(const CreatedbStmt *stmt)
 				(errmsg("encoding %s does not match server's locale %s",
 						pg_encoding_to_char(encoding),
 						setlocale(LC_CTYPE, NULL)),
-				 errdetail("The server's LC_CTYPE setting requires encoding %s.",
-						   pg_encoding_to_char(ctype_encoding))));
+			 errdetail("The server's LC_CTYPE setting requires encoding %s.",
+					   pg_encoding_to_char(ctype_encoding))));
 
 	/* Resolve default tablespace for new database */
 	if (dtablespacename && dtablespacename->arg)
@@ -313,7 +313,7 @@ createdb(const CreatedbStmt *stmt)
 		if (dst_deftablespace == GLOBALTABLESPACE_OID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("pg_global cannot be used as default tablespace")));
+				  errmsg("pg_global cannot be used as default tablespace")));
 
 		/*
 		 * If we are trying to change the default tablespace of the template,
@@ -375,12 +375,12 @@ createdb(const CreatedbStmt *stmt)
 	if (CheckOtherDBBackends(src_dboid))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("source database \"%s\" is being accessed by other users",
-						dbtemplate)));
+			errmsg("source database \"%s\" is being accessed by other users",
+				   dbtemplate)));
 
 	/*
-	 * Select an OID for the new database, checking that it doesn't have
-	 * a filename conflict with anything already existing in the tablespace
+	 * Select an OID for the new database, checking that it doesn't have a
+	 * filename conflict with anything already existing in the tablespace
 	 * directories.
 	 */
 	pg_database_rel = heap_open(DatabaseRelationId, RowExclusiveLock);
@@ -558,9 +558,9 @@ createdb(const CreatedbStmt *stmt)
 		/*
 		 * Set flag to update flat database file at commit.  Note: this also
 		 * forces synchronous commit, which minimizes the window between
-		 * creation of the database files and commital of the transaction.
-		 * If we crash before committing, we'll have a DB that's taking up
-		 * disk space but is not in pg_database, which is not good.
+		 * creation of the database files and commital of the transaction. If
+		 * we crash before committing, we'll have a DB that's taking up disk
+		 * space but is not in pg_database, which is not good.
 		 */
 		database_file_update_needed();
 	}
@@ -721,10 +721,10 @@ dropdb(const char *dbname, bool missing_ok)
 
 	/*
 	 * Set flag to update flat database file at commit.  Note: this also
-	 * forces synchronous commit, which minimizes the window between
-	 * removal of the database files and commital of the transaction.
-	 * If we crash before committing, we'll have a DB that's gone on disk
-	 * but still there according to pg_database, which is not good.
+	 * forces synchronous commit, which minimizes the window between removal
+	 * of the database files and commital of the transaction. If we crash
+	 * before committing, we'll have a DB that's gone on disk but still there
+	 * according to pg_database, which is not good.
 	 */
 	database_file_update_needed();
 }

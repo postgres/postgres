@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.47 2007/10/03 11:11:12 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.48 2007/11/15 21:14:45 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -11,9 +11,9 @@
 #include "sqlca.h"
 
 #ifdef ENABLE_THREAD_SAFETY
-static pthread_mutex_t	connections_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_key_t	actual_connection_key;
-static pthread_once_t	actual_connection_key_once = PTHREAD_ONCE_INIT;
+static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_key_t actual_connection_key;
+static pthread_once_t actual_connection_key_once = PTHREAD_ONCE_INIT;
 #endif
 static struct connection *actual_connection = NULL;
 static struct connection *all_connections = NULL;
@@ -272,7 +272,10 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 
 	ecpg_init_sqlca(sqlca);
 
-	/* clear auto_mem structure because some error handling functions might access it */
+	/*
+	 * clear auto_mem structure because some error handling functions might
+	 * access it
+	 */
 	ecpg_clear_auto_mem();
 
 	if (INFORMIX_MODE(compat))
@@ -305,7 +308,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	{
 		ecpg_free(dbname);
 		ecpg_log("ECPGconnect: connection identifier %s is already in use\n",
-				connection_name);
+				 connection_name);
 		return false;
 	}
 
@@ -458,11 +461,11 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	actual_connection = all_connections;
 
 	ecpg_log("ECPGconnect: opening database %s on %s port %s %s%s%s%s\n",
-			realname ? realname : "<DEFAULT>",
-			host ? host : "<DEFAULT>",
-			port ? (ecpg_internal_regression_mode ? "<REGRESSION_PORT>" : port) : "<DEFAULT>",
-			options ? "with options " : "", options ? options : "",
-			user ? "for user " : "", user ? user : "");
+			 realname ? realname : "<DEFAULT>",
+			 host ? host : "<DEFAULT>",
+			 port ? (ecpg_internal_regression_mode ? "<REGRESSION_PORT>" : port) : "<DEFAULT>",
+			 options ? "with options " : "", options ? options : "",
+			 user ? "for user " : "", user ? user : "");
 
 	this->connection = PQsetdbLogin(host, port, options, NULL, realname, user, passwd);
 
@@ -472,12 +475,12 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		const char *db = realname ? realname : "<DEFAULT>";
 
 		ecpg_log("ECPGconnect: could not open database %s on %s port %s %s%s%s%s in line %d\n\t%s\n",
-				db,
-				host ? host : "<DEFAULT>",
-				port ? (ecpg_internal_regression_mode ? "<REGRESSION_PORT>" : port) : "<DEFAULT>",
-				options ? "with options " : "", options ? options : "",
-				user ? "for user " : "", user ? user : "",
-				lineno, errmsg);
+				 db,
+				 host ? host : "<DEFAULT>",
+				 port ? (ecpg_internal_regression_mode ? "<REGRESSION_PORT>" : port) : "<DEFAULT>",
+				 options ? "with options " : "", options ? options : "",
+				 user ? "for user " : "", user ? user : "",
+				 lineno, errmsg);
 
 		ecpg_finish(this);
 #ifdef ENABLE_THREAD_SAFETY

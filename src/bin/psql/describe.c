@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.161 2007/11/07 14:07:21 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.162 2007/11/15 21:14:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -35,11 +35,11 @@ static bool add_tablespace_footer(char relkind, Oid tablespace, char **footers,
 					  int *count, PQExpBufferData buf, bool newline);
 static bool listTSParsersVerbose(const char *pattern);
 static bool describeOneTSParser(const char *oid, const char *nspname,
-								const char *prsname);
+					const char *prsname);
 static bool listTSConfigsVerbose(const char *pattern);
 static bool describeOneTSConfig(const char *oid, const char *nspname,
-								const char *cfgname,
-								const char *pnspname, const char *prsname);
+					const char *cfgname,
+					const char *pnspname, const char *prsname);
 
 
 /*----------------
@@ -70,20 +70,20 @@ describeAggregates(const char *pattern, bool verbose)
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname as \"%s\",\n"
 					  "  p.proname AS \"%s\",\n"
-					  "  pg_catalog.format_type(p.prorettype, NULL) AS \"%s\",\n" 
+				  "  pg_catalog.format_type(p.prorettype, NULL) AS \"%s\",\n"
 					  "  CASE WHEN p.pronargs = 0\n"
 					  "    THEN CAST('*' AS pg_catalog.text)\n"
 					  "    ELSE\n"
 					  "    pg_catalog.array_to_string(ARRAY(\n"
 					  "      SELECT\n"
-					  "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
+				 "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
 					  "      FROM\n"
 					  "        pg_catalog.generate_series(0, pg_catalog.array_upper(p.proargtypes, 1)) AS s(i)\n"
 					  "    ), ', ')\n"
 					  "  END AS \"%s\",\n"
-					  "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"\n"
+				 "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"\n"
 					  "FROM pg_catalog.pg_proc p\n"
-					  "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
+	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
 					  "WHERE p.proisagg\n",
 					  _("Schema"), _("Name"), _("Result data type"),
 					  _("Argument data types"), _("Description"));
@@ -1118,20 +1118,20 @@ describeOneTableDetails(const char *schemaname,
 			if (pset.sversion < 80300)
 			{
 				printfPQExpBuffer(&buf,
-							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true)), "
-							  "'O'::char AS ev_enabled\n"
-							  "FROM pg_catalog.pg_rewrite r\n"
-							  "WHERE r.ev_class = '%s' ORDER BY 1",
-							  oid);
+								  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true)), "
+								  "'O'::char AS ev_enabled\n"
+								  "FROM pg_catalog.pg_rewrite r\n"
+								  "WHERE r.ev_class = '%s' ORDER BY 1",
+								  oid);
 			}
 			else
 			{
 				printfPQExpBuffer(&buf,
-							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true)), "
-							  "ev_enabled\n"
-							  "FROM pg_catalog.pg_rewrite r\n"
-							  "WHERE r.ev_class = '%s' ORDER BY 1",
-							  oid);
+								  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true)), "
+								  "ev_enabled\n"
+								  "FROM pg_catalog.pg_rewrite r\n"
+								  "WHERE r.ev_class = '%s' ORDER BY 1",
+								  oid);
 			}
 			result3 = PSQLexec(buf.data, false);
 			if (!result3)
@@ -1149,7 +1149,7 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 					 "SELECT t.tgname, pg_catalog.pg_get_triggerdef(t.oid), "
-							"t.tgenabled\n"
+							  "t.tgenabled\n"
 							  "FROM pg_catalog.pg_trigger t\n"
 							  "WHERE t.tgrelid = '%s' "
 							  "AND t.tgconstraint = 0\n"
@@ -1297,8 +1297,8 @@ describeOneTableDetails(const char *schemaname,
 		/* print rules */
 		if (rule_count > 0)
 		{
-			bool	have_heading;
-			int		category;
+			bool		have_heading;
+			int			category;
 
 			for (category = 0; category < 4; category++)
 			{
@@ -1364,12 +1364,13 @@ describeOneTableDetails(const char *schemaname,
 		/* print triggers */
 		if (trigger_count > 0)
 		{
-			bool	have_heading;
-			int		category;
+			bool		have_heading;
+			int			category;
 
-			/* split the output into 4 different categories.
-			 * Enabled triggers, disabled triggers and the two
-			 * special ALWAYS and REPLICA configurations.
+			/*
+			 * split the output into 4 different categories. Enabled triggers,
+			 * disabled triggers and the two special ALWAYS and REPLICA
+			 * configurations.
 			 */
 			for (category = 0; category < 4; category++)
 			{
@@ -1386,18 +1387,22 @@ describeOneTableDetails(const char *schemaname,
 					list_trigger = false;
 					switch (category)
 					{
-						case 0:		if (*tgenabled == 'O' || *tgenabled == 't')
-										list_trigger = true;
-									break;
-						case 1:		if (*tgenabled == 'D' || *tgenabled == 'f')
-										list_trigger = true;
-									break;
-						case 2:		if (*tgenabled == 'A')
-										list_trigger = true;
-									break;
-						case 3:		if (*tgenabled == 'R')
-										list_trigger = true;
-									break;
+						case 0:
+							if (*tgenabled == 'O' || *tgenabled == 't')
+								list_trigger = true;
+							break;
+						case 1:
+							if (*tgenabled == 'D' || *tgenabled == 'f')
+								list_trigger = true;
+							break;
+						case 2:
+							if (*tgenabled == 'A')
+								list_trigger = true;
+							break;
+						case 3:
+							if (*tgenabled == 'R')
+								list_trigger = true;
+							break;
 					}
 					if (list_trigger == false)
 						continue;
@@ -1419,7 +1424,7 @@ describeOneTableDetails(const char *schemaname,
 							case 3:
 								printfPQExpBuffer(&buf, _("Triggers firing on replica only:"));
 								break;
-								
+
 						}
 						footers[count_footers++] = pg_strdup(buf.data);
 						have_heading = true;
@@ -1440,7 +1445,7 @@ describeOneTableDetails(const char *schemaname,
 		/* print inherits */
 		for (i = 0; i < inherits_count; i++)
 		{
-			const char   *s = _("Inherits");
+			const char *s = _("Inherits");
 
 			if (i == 0)
 				printfPQExpBuffer(&buf, "%s: %s", s, PQgetvalue(result6, i, 0));
@@ -1454,7 +1459,7 @@ describeOneTableDetails(const char *schemaname,
 
 		if (verbose)
 		{
-			const char   *s = _("Has OIDs");
+			const char *s = _("Has OIDs");
 
 			printfPQExpBuffer(&buf, "%s: %s", s,
 							  (tableinfo.hasoids ? _("yes") : _("no")));
@@ -1961,7 +1966,7 @@ listTSParsers(const char *pattern, bool verbose)
 					  "  p.prsname as \"%s\",\n"
 			"  pg_catalog.obj_description(p.oid, 'pg_ts_parser') as \"%s\"\n"
 					  "FROM pg_catalog.pg_ts_parser p \n"
-			"LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.prsnamespace\n",
+		   "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.prsnamespace\n",
 					  _("Schema"),
 					  _("Name"),
 					  _("Description")
@@ -2004,7 +2009,7 @@ listTSParsersVerbose(const char *pattern)
 					  "  n.nspname, \n"
 					  "  p.prsname \n"
 					  "FROM pg_catalog.pg_ts_parser p\n"
-			 "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.prsnamespace\n"
+			"LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.prsnamespace\n"
 		);
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
@@ -2068,13 +2073,13 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 	printfPQExpBuffer(&buf,
 					  "SELECT '%s' AS \"%s\", \n"
 					  "   p.prsstart::pg_catalog.regproc AS \"%s\", \n"
-					  "   pg_catalog.obj_description(p.prsstart, 'pg_proc') as \"%s\" \n"
+		  "   pg_catalog.obj_description(p.prsstart, 'pg_proc') as \"%s\" \n"
 					  " FROM pg_catalog.pg_ts_parser p \n"
 					  " WHERE p.oid = '%s' \n"
 					  "UNION ALL \n"
 					  "SELECT '%s', \n"
 					  "   p.prstoken::pg_catalog.regproc, \n"
-					  "   pg_catalog.obj_description(p.prstoken, 'pg_proc') \n"
+					"   pg_catalog.obj_description(p.prstoken, 'pg_proc') \n"
 					  " FROM pg_catalog.pg_ts_parser p \n"
 					  " WHERE p.oid = '%s' \n"
 					  "UNION ALL \n"
@@ -2086,13 +2091,13 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 					  "UNION ALL \n"
 					  "SELECT '%s', \n"
 					  "   p.prsheadline::pg_catalog.regproc, \n"
-					  "   pg_catalog.obj_description(p.prsheadline, 'pg_proc') \n"
+				 "   pg_catalog.obj_description(p.prsheadline, 'pg_proc') \n"
 					  " FROM pg_catalog.pg_ts_parser p \n"
 					  " WHERE p.oid = '%s' \n"
 					  "UNION ALL \n"
 					  "SELECT '%s', \n"
 					  "   p.prslextype::pg_catalog.regproc, \n"
-					  "   pg_catalog.obj_description(p.prslextype, 'pg_proc') \n"
+				  "   pg_catalog.obj_description(p.prslextype, 'pg_proc') \n"
 					  " FROM pg_catalog.pg_ts_parser p \n"
 					  " WHERE p.oid = '%s' \n",
 					  _("Start parse"),
@@ -2127,7 +2132,7 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 	printfPQExpBuffer(&buf,
 					  "SELECT t.alias as \"%s\", \n"
 					  "  t.description as \"%s\" \n"
-				   "FROM pg_catalog.ts_token_type( '%s'::pg_catalog.oid ) as t \n"
+			  "FROM pg_catalog.ts_token_type( '%s'::pg_catalog.oid ) as t \n"
 					  "ORDER BY 1;",
 					  _("Token name"),
 					  _("Description"),
@@ -2191,7 +2196,7 @@ listTSDictionaries(const char *pattern, bool verbose)
 					  _("Description"));
 
 	appendPQExpBuffer(&buf, "FROM pg_catalog.pg_ts_dict d\n"
-		"LEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.dictnamespace\n");
+		 "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.dictnamespace\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
 						  "n.nspname", "d.dictname", NULL,
@@ -2234,7 +2239,7 @@ listTSTemplates(const char *pattern, bool verbose)
 						  "  t.tmplname AS \"%s\",\n"
 						  "  t.tmplinit::pg_catalog.regproc AS \"%s\",\n"
 						  "  t.tmpllexize::pg_catalog.regproc AS \"%s\",\n"
-						  "  pg_catalog.obj_description(t.oid, 'pg_ts_template') AS \"%s\"\n",
+		 "  pg_catalog.obj_description(t.oid, 'pg_ts_template') AS \"%s\"\n",
 						  _("Schema"),
 						  _("Name"),
 						  _("Init"),
@@ -2245,13 +2250,13 @@ listTSTemplates(const char *pattern, bool verbose)
 						  "SELECT \n"
 						  "  n.nspname AS \"%s\",\n"
 						  "  t.tmplname AS \"%s\",\n"
-						  "  pg_catalog.obj_description(t.oid, 'pg_ts_template') AS \"%s\"\n",
+		 "  pg_catalog.obj_description(t.oid, 'pg_ts_template') AS \"%s\"\n",
 						  _("Schema"),
 						  _("Name"),
 						  _("Description"));
 
 	appendPQExpBuffer(&buf, "FROM pg_catalog.pg_ts_template t\n"
-		"LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.tmplnamespace\n");
+		 "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.tmplnamespace\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
 						  "n.nspname", "t.tmplname", NULL,
@@ -2339,7 +2344,7 @@ listTSConfigsVerbose(const char *pattern)
 					  "FROM pg_catalog.pg_ts_config c \n"
 	   "   LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace, \n"
 					  " pg_catalog.pg_ts_parser p \n"
-	 "   LEFT JOIN pg_catalog.pg_namespace np ON np.oid = p.prsnamespace \n"
+	  "   LEFT JOIN pg_catalog.pg_namespace np ON np.oid = p.prsnamespace \n"
 					  "WHERE  p.oid = c.cfgparser\n"
 		);
 
@@ -2413,13 +2418,13 @@ describeOneTSConfig(const char *oid, const char *nspname, const char *cfgname,
 					  "    pg_catalog.ts_token_type(c.cfgparser) AS t \n"
 					  "    WHERE t.tokid = m.maptokentype ) AS \"%s\", \n"
 					  "  pg_catalog.btrim( \n"
-					  "    ARRAY( SELECT mm.mapdict::pg_catalog.regdictionary \n"
+				  "    ARRAY( SELECT mm.mapdict::pg_catalog.regdictionary \n"
 					  "           FROM pg_catalog.pg_ts_config_map AS mm \n"
 					  "           WHERE mm.mapcfg = m.mapcfg AND mm.maptokentype = m.maptokentype \n"
 					  "           ORDER BY mapcfg, maptokentype, mapseqno \n"
 					  "    ) :: pg_catalog.text , \n"
 					  "  '{}') AS \"%s\" \n"
-					  "FROM pg_catalog.pg_ts_config AS c, pg_catalog.pg_ts_config_map AS m \n"
+	 "FROM pg_catalog.pg_ts_config AS c, pg_catalog.pg_ts_config_map AS m \n"
 					  "WHERE c.oid = '%s' AND m.mapcfg = c.oid \n"
 					  "GROUP BY m.mapcfg, m.maptokentype, c.cfgparser \n"
 					  "ORDER BY 1",

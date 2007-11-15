@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.45 2007/04/06 05:36:50 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.46 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,7 +318,7 @@ pq_sendfloat8(StringInfo buf, float8 f)
 	appendBinaryStringInfo(buf, (char *) &swap.h[1], 4);
 	appendBinaryStringInfo(buf, (char *) &swap.h[0], 4);
 #endif
-#else  /* INT64 works */
+#else							/* INT64 works */
 	union
 	{
 		float8		f;
@@ -552,7 +552,7 @@ pq_getmsgfloat8(StringInfo msg)
 	swap.h[0] = pq_getmsgint(msg, 4);
 #endif
 	return swap.f;
-#else  /* INT64 works */
+#else							/* INT64 works */
 	union
 	{
 		float8		f;

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2007 PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.c,v 1.3 2007/10/23 21:38:16 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.c,v 1.4 2007/11/15 21:14:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,17 +39,17 @@
 PG_MODULE_MAGIC;
 
 
-Datum uuid_nil(PG_FUNCTION_ARGS);
-Datum uuid_ns_dns(PG_FUNCTION_ARGS);
-Datum uuid_ns_url(PG_FUNCTION_ARGS);
-Datum uuid_ns_oid(PG_FUNCTION_ARGS);
-Datum uuid_ns_x500(PG_FUNCTION_ARGS);
+Datum		uuid_nil(PG_FUNCTION_ARGS);
+Datum		uuid_ns_dns(PG_FUNCTION_ARGS);
+Datum		uuid_ns_url(PG_FUNCTION_ARGS);
+Datum		uuid_ns_oid(PG_FUNCTION_ARGS);
+Datum		uuid_ns_x500(PG_FUNCTION_ARGS);
 
-Datum uuid_generate_v1(PG_FUNCTION_ARGS);
-Datum uuid_generate_v1mc(PG_FUNCTION_ARGS);
-Datum uuid_generate_v3(PG_FUNCTION_ARGS);
-Datum uuid_generate_v4(PG_FUNCTION_ARGS);
-Datum uuid_generate_v5(PG_FUNCTION_ARGS);
+Datum		uuid_generate_v1(PG_FUNCTION_ARGS);
+Datum		uuid_generate_v1mc(PG_FUNCTION_ARGS);
+Datum		uuid_generate_v3(PG_FUNCTION_ARGS);
+Datum		uuid_generate_v4(PG_FUNCTION_ARGS);
+Datum		uuid_generate_v5(PG_FUNCTION_ARGS);
 
 
 PG_FUNCTION_INFO_V1(uuid_nil);
@@ -66,11 +66,11 @@ PG_FUNCTION_INFO_V1(uuid_generate_v5);
 
 
 static char *
-uuid_to_string(const uuid_t *uuid)
+uuid_to_string(const uuid_t * uuid)
 {
-	char   *buf = palloc(UUID_LEN_STR + 1);
-	void   *ptr = buf;
-	size_t	len = UUID_LEN_STR + 1;
+	char	   *buf = palloc(UUID_LEN_STR + 1);
+	void	   *ptr = buf;
+	size_t		len = UUID_LEN_STR + 1;
 
 	uuid_export(uuid, UUID_FMT_STR, &ptr, &len);
 
@@ -79,7 +79,7 @@ uuid_to_string(const uuid_t *uuid)
 
 
 static void
-string_to_uuid(const char *str, uuid_t *uuid)
+string_to_uuid(const char *str, uuid_t * uuid)
 {
 	uuid_import(uuid, UUID_FMT_STR, str, UUID_LEN_STR + 1);
 }
@@ -88,8 +88,8 @@ string_to_uuid(const char *str, uuid_t *uuid)
 static Datum
 special_uuid_value(const char *name)
 {
-	uuid_t *uuid;
-	char   *str;
+	uuid_t	   *uuid;
+	char	   *str;
 
 	uuid_create(&uuid);
 	uuid_load(uuid, name);
@@ -136,10 +136,10 @@ uuid_ns_x500(PG_FUNCTION_ARGS)
 
 
 static Datum
-uuid_generate_internal(int mode, const uuid_t *ns, const char *name)
+uuid_generate_internal(int mode, const uuid_t * ns, const char *name)
 {
-	uuid_t *uuid;
-	char   *str;
+	uuid_t	   *uuid;
+	char	   *str;
 
 	uuid_create(&uuid);
 	uuid_make(uuid, mode, ns, name);
@@ -165,7 +165,7 @@ uuid_generate_v1mc(PG_FUNCTION_ARGS)
 
 
 static Datum
-uuid_generate_v35_internal(int mode, pg_uuid_t *ns, text *name)
+uuid_generate_v35_internal(int mode, pg_uuid_t * ns, text *name)
 {
 	uuid_t	   *ns_uuid;
 	Datum		result;
@@ -176,7 +176,7 @@ uuid_generate_v35_internal(int mode, pg_uuid_t *ns, text *name)
 
 	result = uuid_generate_internal(mode,
 									ns_uuid,
-									DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(name))));
+	   DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(name))));
 
 	uuid_destroy(ns_uuid);
 

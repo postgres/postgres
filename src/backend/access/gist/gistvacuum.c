@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.32 2007/09/20 17:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.33 2007/11/15 21:14:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ typedef struct
 	Relation	index;
 	MemoryContext opCtx;
 	GistBulkDeleteResult *result;
-	BufferAccessStrategy	strategy;
+	BufferAccessStrategy strategy;
 } GistVacuum;
 
 typedef struct

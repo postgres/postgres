@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.43 2007/09/30 11:38:48 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.44 2007/11/15 21:14:45 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -214,7 +214,7 @@ static datetkn datetktbl[] = {
 	{"irkst", DTZ, POS(36)},	/* Irkutsk Summer Time */
 	{"irkt", TZ, POS(32)},		/* Irkutsk Time */
 	{"irt", TZ, POS(14)},		/* Iran Time */
-	{"isodow", RESERV, DTK_ISODOW},	/* ISO day of week, Sunday == 7 */
+	{"isodow", RESERV, DTK_ISODOW},		/* ISO day of week, Sunday == 7 */
 #if 0
 	isst
 #endif
@@ -1816,7 +1816,7 @@ ParseDateTime(char *timestr, char *lowstr,
  */
 int
 DecodeDateTime(char **field, int *ftype, int nf,
-		  int *dtype, struct tm * tm, fsec_t *fsec, bool EuroDates)
+			   int *dtype, struct tm * tm, fsec_t *fsec, bool EuroDates)
 {
 	int			fmask = 0,
 				tmask,
@@ -1829,7 +1829,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			is2digits = FALSE;
 	int			bc = FALSE;
 	int			t = 0;
-	int			*tzp = &t;
+	int		   *tzp = &t;
 
 	/***
 	 * We'll insist on at least all of the date fields, but initialize the
@@ -2377,12 +2377,13 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		if (tm->tm_mday < 1 || tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 			return -1;
 
-		/* backend tried to find local timezone here 
-		 * but we don't use the result afterwards anyway
-		 * so we only check for this error:
-		 * daylight savings time modifier but no standard timezone? */
+		/*
+		 * backend tried to find local timezone here but we don't use the
+		 * result afterwards anyway so we only check for this error: daylight
+		 * savings time modifier but no standard timezone?
+		 */
 		if ((fmask & DTK_DATE_M) == DTK_DATE_M && tzp != NULL && !(fmask & DTK_M(TZ)) && (fmask & DTK_M(DTZMOD)))
-				return -1;
+			return -1;
 	}
 
 	return 0;

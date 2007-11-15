@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.146 2007/09/03 00:39:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.147 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ ProcedureCreate(const char *procedureName,
 
 	/*
 	 * Do not allow polymorphic return type unless at least one input argument
-	 * is polymorphic.  Also, do not allow return type INTERNAL unless at
+	 * is polymorphic.	Also, do not allow return type INTERNAL unless at
 	 * least one input argument is INTERNAL.
 	 */
 	for (i = 0; i < parameterCount; i++)

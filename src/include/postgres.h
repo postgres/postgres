@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.85 2007/10/01 16:25:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.86 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@
 
 /*
  * struct varatt_external is a "TOAST pointer", that is, the information
- * needed to fetch a stored-out-of-line Datum.  The data is compressed
+ * needed to fetch a stored-out-of-line Datum.	The data is compressed
  * if and only if va_extsize < va_rawsize - VARHDRSZ.  This struct must not
  * contain any padding, because we sometimes compare pointers using memcmp.
  *
@@ -67,10 +67,10 @@
  */
 struct varatt_external
 {
-	int32		va_rawsize;			/* Original data size (includes header) */
-	int32		va_extsize;			/* External saved size (doesn't) */
-	Oid			va_valueid;			/* Unique ID of value within TOAST table */
-	Oid			va_toastrelid;		/* RelID of TOAST table containing it */
+	int32		va_rawsize;		/* Original data size (includes header) */
+	int32		va_extsize;		/* External saved size (doesn't) */
+	Oid			va_valueid;		/* Unique ID of value within TOAST table */
+	Oid			va_toastrelid;	/* RelID of TOAST table containing it */
 };
 
 /*
@@ -84,51 +84,51 @@ struct varatt_external
  */
 typedef union
 {
-	struct							/* Normal varlena (4-byte length) */
+	struct						/* Normal varlena (4-byte length) */
 	{
-		uint32	va_header;
-		char	va_data[1];
-	} va_4byte;
-	struct							/* Compressed-in-line format */
+		uint32		va_header;
+		char		va_data[1];
+	}			va_4byte;
+	struct						/* Compressed-in-line format */
 	{
-		uint32	va_header;
-		uint32	va_rawsize;			/* Original data size (excludes header) */
-		char	va_data[1];			/* Compressed data */
-	} va_compressed;
-} varattrib_4b;
+		uint32		va_header;
+		uint32		va_rawsize; /* Original data size (excludes header) */
+		char		va_data[1]; /* Compressed data */
+	}			va_compressed;
+}	varattrib_4b;
 
 typedef struct
 {
 	uint8		va_header;
-	char		va_data[1];			/* Data begins here */
-} varattrib_1b;
+	char		va_data[1];		/* Data begins here */
+}	varattrib_1b;
 
 typedef struct
 {
-	uint8		va_header;			/* Always 0x80 or 0x01 */
-	uint8		va_len_1be;			/* Physical length of datum */
-	char		va_data[1];			/* Data (for now always a TOAST pointer) */
-} varattrib_1b_e;
+	uint8		va_header;		/* Always 0x80 or 0x01 */
+	uint8		va_len_1be;		/* Physical length of datum */
+	char		va_data[1];		/* Data (for now always a TOAST pointer) */
+}	varattrib_1b_e;
 
 /*
  * Bit layouts for varlena headers on big-endian machines:
  *
- * 00xxxxxx	4-byte length word, aligned, uncompressed data (up to 1G)
- * 01xxxxxx	4-byte length word, aligned, *compressed* data (up to 1G)
- * 10000000	1-byte length word, unaligned, TOAST pointer
- * 1xxxxxxx	1-byte length word, unaligned, uncompressed data (up to 126b)
+ * 00xxxxxx 4-byte length word, aligned, uncompressed data (up to 1G)
+ * 01xxxxxx 4-byte length word, aligned, *compressed* data (up to 1G)
+ * 10000000 1-byte length word, unaligned, TOAST pointer
+ * 1xxxxxxx 1-byte length word, unaligned, uncompressed data (up to 126b)
  *
  * Bit layouts for varlena headers on little-endian machines:
  *
- * xxxxxx00	4-byte length word, aligned, uncompressed data (up to 1G)
- * xxxxxx10	4-byte length word, aligned, *compressed* data (up to 1G)
- * 00000001	1-byte length word, unaligned, TOAST pointer
- * xxxxxxx1	1-byte length word, unaligned, uncompressed data (up to 126b)
+ * xxxxxx00 4-byte length word, aligned, uncompressed data (up to 1G)
+ * xxxxxx10 4-byte length word, aligned, *compressed* data (up to 1G)
+ * 00000001 1-byte length word, unaligned, TOAST pointer
+ * xxxxxxx1 1-byte length word, unaligned, uncompressed data (up to 126b)
  *
  * The "xxx" bits are the length field (which includes itself in all cases).
  * In the big-endian case we mask to extract the length, in the little-endian
  * case we shift.  Note that in both cases the flag bits are in the physically
- * first byte.  Also, it is not possible for a 1-byte length word to be zero;
+ * first byte.	Also, it is not possible for a 1-byte length word to be zero;
  * this lets us disambiguate alignment padding bytes from the start of an
  * unaligned datum.  (We now *require* pad bytes to be filled with zero!)
  */
@@ -174,8 +174,7 @@ typedef struct
 #define SET_VARSIZE_1B_E(PTR,len) \
 	(((varattrib_1b_e *) (PTR))->va_header = 0x80, \
 	 ((varattrib_1b_e *) (PTR))->va_len_1be = (len))
-
-#else  /* !WORDS_BIGENDIAN */
+#else							/* !WORDS_BIGENDIAN */
 
 #define VARATT_IS_4B(PTR) \
 	((((varattrib_1b *) (PTR))->va_header & 0x01) == 0x00)
@@ -207,8 +206,7 @@ typedef struct
 #define SET_VARSIZE_1B_E(PTR,len) \
 	(((varattrib_1b_e *) (PTR))->va_header = 0x01, \
 	 ((varattrib_1b_e *) (PTR))->va_len_1be = (len))
-
-#endif /* WORDS_BIGENDIAN */
+#endif   /* WORDS_BIGENDIAN */
 
 #define VARHDRSZ_SHORT			1
 #define VARATT_SHORT_MAX		0x7F
@@ -707,8 +705,8 @@ extern PGDLLIMPORT bool assert_enabled;
 #endif   /* USE_ASSERT_CHECKING */
 
 extern int ExceptionalCondition(const char *conditionName,
-								const char *errorType,
-								const char *fileName, int lineNumber);
+					 const char *errorType,
+					 const char *fileName, int lineNumber);
 
 /* ----------------------------------------------------------------
  *				Section 4: genbki macros used by catalog/pg_xxx.h files

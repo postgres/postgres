@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.234 2007/11/08 21:49:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.235 2007/11/15 21:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -723,8 +723,8 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		/*
 		 * Get the hashable equality operators for the Agg node to use.
 		 * Normally these are the same as the IN clause operators, but if
-		 * those are cross-type operators then the equality operators are
-		 * the ones for the IN clause operators' RHS datatype.
+		 * those are cross-type operators then the equality operators are the
+		 * ones for the IN clause operators' RHS datatype.
 		 */
 		groupOperators = (Oid *) palloc(numGroupCols * sizeof(Oid));
 		groupColPos = 0;
@@ -769,7 +769,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 			SortClause *sortcl;
 
 			sortop = get_ordering_op_for_equality_op(in_oper, false);
-			if (!OidIsValid(sortop))		/* shouldn't happen */
+			if (!OidIsValid(sortop))	/* shouldn't happen */
 				elog(ERROR, "could not find ordering operator for equality operator %u",
 					 in_oper);
 			tle = get_tle_by_resno(subplan->targetlist,
@@ -1530,8 +1530,8 @@ create_mergejoin_plan(PlannerInfo *root,
 	int			i;
 	EquivalenceClass *lastoeclass;
 	EquivalenceClass *lastieclass;
-	PathKey	   *opathkey;
-	PathKey	   *ipathkey;
+	PathKey    *opathkey;
+	PathKey    *ipathkey;
 	ListCell   *lc;
 	ListCell   *lop;
 	ListCell   *lip;
@@ -1603,8 +1603,8 @@ create_mergejoin_plan(PlannerInfo *root,
 	/*
 	 * If inner plan is a sort that is expected to spill to disk, add a
 	 * materialize node to shield it from the need to handle mark/restore.
-	 * This will allow it to perform the last merge pass on-the-fly, while
-	 * in most cases not requiring the materialize to spill to disk.
+	 * This will allow it to perform the last merge pass on-the-fly, while in
+	 * most cases not requiring the materialize to spill to disk.
 	 *
 	 * XXX really, Sort oughta do this for itself, probably, to avoid the
 	 * overhead of a separate plan node.
@@ -1645,7 +1645,7 @@ create_mergejoin_plan(PlannerInfo *root,
 	i = 0;
 	foreach(lc, best_path->path_mergeclauses)
 	{
-		RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lc);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 		EquivalenceClass *oeclass;
 		EquivalenceClass *ieclass;
 
@@ -1938,7 +1938,7 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 		}
 		else if (IsA(clause, NullTest))
 		{
-			NullTest *nt = (NullTest *) clause;
+			NullTest   *nt = (NullTest *) clause;
 
 			Assert(nt->nulltesttype == IS_NULL);
 			nt->arg = (Expr *) fix_indexqual_operand((Node *) nt->arg,
@@ -2139,9 +2139,9 @@ order_qual_clauses(PlannerInfo *root, List *clauses)
 {
 	typedef struct
 	{
-		Node   *clause;
-		Cost	cost;
-	} QualItem;
+		Node	   *clause;
+		Cost		cost;
+	}			QualItem;
 	int			nitems = list_length(clauses);
 	QualItem   *items;
 	ListCell   *lc;
@@ -2171,8 +2171,8 @@ order_qual_clauses(PlannerInfo *root, List *clauses)
 
 	/*
 	 * Sort.  We don't use qsort() because it's not guaranteed stable for
-	 * equal keys.  The expected number of entries is small enough that
-	 * a simple insertion sort should be good enough.
+	 * equal keys.	The expected number of entries is small enough that a
+	 * simple insertion sort should be good enough.
 	 */
 	for (i = 1; i < nitems; i++)
 	{
@@ -2182,9 +2182,9 @@ order_qual_clauses(PlannerInfo *root, List *clauses)
 		/* insert newitem into the already-sorted subarray */
 		for (j = i; j > 0; j--)
 		{
-			if (newitem.cost >= items[j-1].cost)
+			if (newitem.cost >= items[j - 1].cost)
 				break;
-			items[j] = items[j-1];
+			items[j] = items[j - 1];
 		}
 		items[j] = newitem;
 	}
@@ -2616,7 +2616,7 @@ make_mergejoin(List *tlist,
  * make_sort --- basic routine to build a Sort plan node
  *
  * Caller must have built the sortColIdx, sortOperators, and nullsFirst
- * arrays already.  limit_tuples is as for cost_sort (in particular, pass
+ * arrays already.	limit_tuples is as for cost_sort (in particular, pass
  * -1 if no limit)
  */
 static Sort *
@@ -2667,8 +2667,8 @@ add_sort_column(AttrNumber colIdx, Oid sortOp, bool nulls_first,
 	for (i = 0; i < numCols; i++)
 	{
 		/*
-		 * Note: we check sortOp because it's conceivable that "ORDER BY
-		 * foo USING <, foo USING <<<" is not redundant, if <<< distinguishes
+		 * Note: we check sortOp because it's conceivable that "ORDER BY foo
+		 * USING <, foo USING <<<" is not redundant, if <<< distinguishes
 		 * values that < considers equal.  We need not check nulls_first
 		 * however because a lower-order column with the same sortop but
 		 * opposite nulls direction is redundant.
@@ -2729,7 +2729,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 
 	foreach(i, pathkeys)
 	{
-		PathKey	   *pathkey = (PathKey *) lfirst(i);
+		PathKey    *pathkey = (PathKey *) lfirst(i);
 		EquivalenceClass *ec = pathkey->pk_eclass;
 		TargetEntry *tle = NULL;
 		Oid			pk_datatype = InvalidOid;
@@ -2743,7 +2743,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			 * have come from an ORDER BY clause, and we have to match it to
 			 * that same targetlist entry.
 			 */
-			if (ec->ec_sortref == 0)		/* can't happen */
+			if (ec->ec_sortref == 0)	/* can't happen */
 				elog(ERROR, "volatile EquivalenceClass has no sortref");
 			tle = get_sortgroupref_tle(ec->ec_sortref, tlist);
 			Assert(tle);
@@ -2755,7 +2755,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			/*
 			 * Otherwise, we can sort by any non-constant expression listed in
 			 * the pathkey's EquivalenceClass.  For now, we take the first one
-			 * that corresponds to an available item in the tlist.  If there
+			 * that corresponds to an available item in the tlist.	If there
 			 * isn't any, use the first one that is an expression in the
 			 * input's vars.  (The non-const restriction only matters if the
 			 * EC is below_outer_join; but if it isn't, it won't contain
@@ -2779,28 +2779,28 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 				if (tle)
 				{
 					pk_datatype = em->em_datatype;
-					break;			/* found expr already in tlist */
+					break;		/* found expr already in tlist */
 				}
 
 				/*
 				 * We can also use it if the pathkey expression is a relabel
 				 * of the tlist entry, or vice versa.  This is needed for
 				 * binary-compatible cases (cf. make_pathkey_from_sortinfo).
-				 * We prefer an exact match, though, so we do the basic
-				 * search first.
+				 * We prefer an exact match, though, so we do the basic search
+				 * first.
 				 */
 				tle = tlist_member_ignore_relabel((Node *) em->em_expr, tlist);
 				if (tle)
 				{
 					pk_datatype = em->em_datatype;
-					break;			/* found expr already in tlist */
+					break;		/* found expr already in tlist */
 				}
 			}
 
 			if (!tle)
 			{
 				/* No matching tlist item; look for a computable expression */
-				Expr   *sortexpr = NULL;
+				Expr	   *sortexpr = NULL;
 
 				foreach(j, ec->ec_members)
 				{
@@ -2821,7 +2821,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 					if (!k)
 					{
 						pk_datatype = em->em_datatype;
-						break;		/* found usable expression */
+						break;	/* found usable expression */
 					}
 				}
 				if (!j)
@@ -3172,7 +3172,7 @@ make_group(PlannerInfo *root,
 
 /*
  * distinctList is a list of SortClauses, identifying the targetlist items
- * that should be considered by the Unique filter.  The input path must
+ * that should be considered by the Unique filter.	The input path must
  * already be sorted accordingly.
  */
 Unique *
@@ -3221,7 +3221,7 @@ make_unique(Plan *lefttree, List *distinctList)
 
 		uniqColIdx[keyno] = tle->resno;
 		uniqOperators[keyno] = get_equality_op_for_ordering_op(sortcl->sortop);
-		if (!OidIsValid(uniqOperators[keyno]))		/* shouldn't happen */
+		if (!OidIsValid(uniqOperators[keyno]))	/* shouldn't happen */
 			elog(ERROR, "could not find equality operator for ordering operator %u",
 				 sortcl->sortop);
 		keyno++;
@@ -3287,7 +3287,7 @@ make_setop(SetOpCmd cmd, Plan *lefttree,
 
 		dupColIdx[keyno] = tle->resno;
 		dupOperators[keyno] = get_equality_op_for_ordering_op(sortcl->sortop);
-		if (!OidIsValid(dupOperators[keyno]))		/* shouldn't happen */
+		if (!OidIsValid(dupOperators[keyno]))	/* shouldn't happen */
 			elog(ERROR, "could not find equality operator for ordering operator %u",
 				 sortcl->sortop);
 		keyno++;

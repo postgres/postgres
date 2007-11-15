@@ -6,7 +6,7 @@
  * Copyright (c) 2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.4 2007/06/05 21:31:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.5 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,17 +24,17 @@
 /* pg_uuid_t is declared to be struct pg_uuid_t in uuid.h */
 struct pg_uuid_t
 {
-    unsigned char  data[UUID_LEN];
+	unsigned char data[UUID_LEN];
 };
 
-static void string_to_uuid(const char *source, pg_uuid_t *uuid);
-static int uuid_internal_cmp(const pg_uuid_t *arg1, const pg_uuid_t *arg2);
+static void string_to_uuid(const char *source, pg_uuid_t * uuid);
+static int	uuid_internal_cmp(const pg_uuid_t * arg1, const pg_uuid_t * arg2);
 
 Datum
 uuid_in(PG_FUNCTION_ARGS)
 {
-	char 		*uuid_str = PG_GETARG_CSTRING(0);
-	pg_uuid_t 	*uuid;
+	char	   *uuid_str = PG_GETARG_CSTRING(0);
+	pg_uuid_t  *uuid;
 
 	uuid = (pg_uuid_t *) palloc(sizeof(*uuid));
 	string_to_uuid(uuid_str, uuid);
@@ -44,22 +44,21 @@ uuid_in(PG_FUNCTION_ARGS)
 Datum
 uuid_out(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t 			*uuid = PG_GETARG_UUID_P(0);
+	pg_uuid_t  *uuid = PG_GETARG_UUID_P(0);
 	static const char hex_chars[] = "0123456789abcdef";
-	StringInfoData 		 buf;
-	int 				 i;
+	StringInfoData buf;
+	int			i;
 
 	initStringInfo(&buf);
 	for (i = 0; i < UUID_LEN; i++)
 	{
-		int hi;
-		int lo;
+		int			hi;
+		int			lo;
 
 		/*
 		 * We print uuid values as a string of 8, 4, 4, 4, and then 12
-		 * hexadecimal characters, with each group is separated by a
-		 * hyphen ("-"). Therefore, add the hyphens at the appropriate
-		 * places here.
+		 * hexadecimal characters, with each group is separated by a hyphen
+		 * ("-"). Therefore, add the hyphens at the appropriate places here.
 		 */
 		if (i == 4 || i == 6 || i == 8 || i == 10)
 			appendStringInfoChar(&buf, '-');
@@ -81,11 +80,11 @@ uuid_out(PG_FUNCTION_ARGS)
  * two formats into the latter format before further processing.
  */
 static void
-string_to_uuid(const char *source, pg_uuid_t *uuid)
+string_to_uuid(const char *source, pg_uuid_t * uuid)
 {
-	char 		hex_buf[32];	/* not NUL terminated */
-	int 		i;
-	int 		src_len;
+	char		hex_buf[32];	/* not NUL terminated */
+	int			i;
+	int			src_len;
 
 	src_len = strlen(source);
 	if (src_len != 32 && src_len != 36 && src_len != 38)
@@ -102,7 +101,7 @@ string_to_uuid(const char *source, pg_uuid_t *uuid)
 			if (str[0] != '{' || str[37] != '}')
 				goto syntax_error;
 
-			str++;	/* skip the first character */
+			str++;				/* skip the first character */
 		}
 
 		if (str[8] != '-' || str[13] != '-' ||
@@ -118,7 +117,7 @@ string_to_uuid(const char *source, pg_uuid_t *uuid)
 
 	for (i = 0; i < UUID_LEN; i++)
 	{
-		char str_buf[3];
+		char		str_buf[3];
 
 		memcpy(str_buf, &hex_buf[i * 2], 2);
 		if (!isxdigit((unsigned char) str_buf[0]) ||
@@ -132,17 +131,17 @@ string_to_uuid(const char *source, pg_uuid_t *uuid)
 	return;
 
 syntax_error:
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for uuid: \"%s\"",
-						source)));
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+			 errmsg("invalid input syntax for uuid: \"%s\"",
+					source)));
 }
 
 Datum
 uuid_recv(PG_FUNCTION_ARGS)
 {
-	StringInfo 	 buffer = (StringInfo) PG_GETARG_POINTER(0);
-	pg_uuid_t 	*uuid;
+	StringInfo	buffer = (StringInfo) PG_GETARG_POINTER(0);
+	pg_uuid_t  *uuid;
 
 	uuid = (pg_uuid_t *) palloc(UUID_LEN);
 	memcpy(uuid->data, pq_getmsgbytes(buffer, UUID_LEN), UUID_LEN);
@@ -152,8 +151,8 @@ uuid_recv(PG_FUNCTION_ARGS)
 Datum
 uuid_send(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t 				*uuid = PG_GETARG_UUID_P(0);
-	StringInfoData 		 buffer;
+	pg_uuid_t  *uuid = PG_GETARG_UUID_P(0);
+	StringInfoData buffer;
 
 	pq_begintypsend(&buffer);
 	pq_sendbytes(&buffer, (char *) uuid->data, UUID_LEN);
@@ -162,7 +161,7 @@ uuid_send(PG_FUNCTION_ARGS)
 
 /* internal uuid compare function */
 static int
-uuid_internal_cmp(const pg_uuid_t *arg1, const pg_uuid_t *arg2)
+uuid_internal_cmp(const pg_uuid_t * arg1, const pg_uuid_t * arg2)
 {
 	return memcmp(arg1->data, arg2->data, UUID_LEN);
 }
@@ -170,8 +169,8 @@ uuid_internal_cmp(const pg_uuid_t *arg1, const pg_uuid_t *arg2)
 Datum
 uuid_lt(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t 	*arg1 = PG_GETARG_UUID_P(0);
-	pg_uuid_t 	*arg2 = PG_GETARG_UUID_P(1);
+	pg_uuid_t  *arg1 = PG_GETARG_UUID_P(0);
+	pg_uuid_t  *arg2 = PG_GETARG_UUID_P(1);
 
 	PG_RETURN_BOOL(uuid_internal_cmp(arg1, arg2) < 0);
 }
@@ -179,8 +178,8 @@ uuid_lt(PG_FUNCTION_ARGS)
 Datum
 uuid_le(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t 	*arg1 = PG_GETARG_UUID_P(0);
-	pg_uuid_t 	*arg2 = PG_GETARG_UUID_P(1);
+	pg_uuid_t  *arg1 = PG_GETARG_UUID_P(0);
+	pg_uuid_t  *arg2 = PG_GETARG_UUID_P(1);
 
 	PG_RETURN_BOOL(uuid_internal_cmp(arg1, arg2) <= 0);
 }
@@ -188,8 +187,8 @@ uuid_le(PG_FUNCTION_ARGS)
 Datum
 uuid_eq(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t 	*arg1 = PG_GETARG_UUID_P(0);
-	pg_uuid_t 	*arg2 = PG_GETARG_UUID_P(1);
+	pg_uuid_t  *arg1 = PG_GETARG_UUID_P(0);
+	pg_uuid_t  *arg2 = PG_GETARG_UUID_P(1);
 
 	PG_RETURN_BOOL(uuid_internal_cmp(arg1, arg2) == 0);
 }
@@ -197,8 +196,8 @@ uuid_eq(PG_FUNCTION_ARGS)
 Datum
 uuid_ge(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t 	*arg1 = PG_GETARG_UUID_P(0);
-	pg_uuid_t 	*arg2 = PG_GETARG_UUID_P(1);
+	pg_uuid_t  *arg1 = PG_GETARG_UUID_P(0);
+	pg_uuid_t  *arg2 = PG_GETARG_UUID_P(1);
 
 	PG_RETURN_BOOL(uuid_internal_cmp(arg1, arg2) >= 0);
 }
@@ -206,8 +205,8 @@ uuid_ge(PG_FUNCTION_ARGS)
 Datum
 uuid_gt(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t 	*arg1 = PG_GETARG_UUID_P(0);
-	pg_uuid_t 	*arg2 = PG_GETARG_UUID_P(1);
+	pg_uuid_t  *arg1 = PG_GETARG_UUID_P(0);
+	pg_uuid_t  *arg2 = PG_GETARG_UUID_P(1);
 
 	PG_RETURN_BOOL(uuid_internal_cmp(arg1, arg2) > 0);
 }
@@ -215,8 +214,8 @@ uuid_gt(PG_FUNCTION_ARGS)
 Datum
 uuid_ne(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t 	*arg1 = PG_GETARG_UUID_P(0);
-	pg_uuid_t 	*arg2 = PG_GETARG_UUID_P(1);
+	pg_uuid_t  *arg1 = PG_GETARG_UUID_P(0);
+	pg_uuid_t  *arg2 = PG_GETARG_UUID_P(1);
 
 	PG_RETURN_BOOL(uuid_internal_cmp(arg1, arg2) != 0);
 }
@@ -225,8 +224,8 @@ uuid_ne(PG_FUNCTION_ARGS)
 Datum
 uuid_cmp(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t 	*arg1 = PG_GETARG_UUID_P(0);
-	pg_uuid_t 	*arg2 = PG_GETARG_UUID_P(1);
+	pg_uuid_t  *arg1 = PG_GETARG_UUID_P(0);
+	pg_uuid_t  *arg2 = PG_GETARG_UUID_P(1);
 
 	PG_RETURN_INT32(uuid_internal_cmp(arg1, arg2));
 }
@@ -235,6 +234,7 @@ uuid_cmp(PG_FUNCTION_ARGS)
 Datum
 uuid_hash(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t	*key = PG_GETARG_UUID_P(0);
+	pg_uuid_t  *key = PG_GETARG_UUID_P(0);
+
 	return hash_any(key->data, UUID_LEN);
 }

@@ -6,7 +6,7 @@
  * Copyright (c) 2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/dict_int/dict_int.c,v 1.1 2007/10/15 21:36:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/dict_int/dict_int.c,v 1.2 2007/11/15 21:14:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,24 +19,25 @@
 PG_MODULE_MAGIC;
 
 
-typedef struct {
-	int     maxlen;
-	bool    rejectlong;
-} DictInt;
+typedef struct
+{
+	int			maxlen;
+	bool		rejectlong;
+}	DictInt;
 
 
 PG_FUNCTION_INFO_V1(dintdict_init);
-Datum dintdict_init(PG_FUNCTION_ARGS);
+Datum		dintdict_init(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(dintdict_lexize);
-Datum dintdict_lexize(PG_FUNCTION_ARGS);
+Datum		dintdict_lexize(PG_FUNCTION_ARGS);
 
 Datum
 dintdict_init(PG_FUNCTION_ARGS)
 {
-	List		*dictoptions = (List *) PG_GETARG_POINTER(0);
-	DictInt 	*d;
-	ListCell	*l;
+	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
+	DictInt    *d;
+	ListCell   *l;
 
 	d = (DictInt *) palloc0(sizeof(DictInt));
 	d->maxlen = 6;
@@ -44,7 +45,7 @@ dintdict_init(PG_FUNCTION_ARGS)
 
 	foreach(l, dictoptions)
 	{
-		DefElem *defel = (DefElem *) lfirst(l);
+		DefElem    *defel = (DefElem *) lfirst(l);
 
 		if (pg_strcasecmp(defel->defname, "MAXLEN") == 0)
 		{
@@ -62,22 +63,22 @@ dintdict_init(PG_FUNCTION_ARGS)
 							defel->defname)));
 		}
 	}
-	
+
 	PG_RETURN_POINTER(d);
 }
 
 Datum
 dintdict_lexize(PG_FUNCTION_ARGS)
 {
-	DictInt *d = (DictInt*)PG_GETARG_POINTER(0);
-	char       *in = (char*)PG_GETARG_POINTER(1);
-	char *txt = pnstrdup(in, PG_GETARG_INT32(2));
-	TSLexeme *res=palloc(sizeof(TSLexeme)*2);
+	DictInt    *d = (DictInt *) PG_GETARG_POINTER(0);
+	char	   *in = (char *) PG_GETARG_POINTER(1);
+	char	   *txt = pnstrdup(in, PG_GETARG_INT32(2));
+	TSLexeme   *res = palloc(sizeof(TSLexeme) * 2);
 
 	res[1].lexeme = NULL;
-	if  (PG_GETARG_INT32(2) > d->maxlen)
+	if (PG_GETARG_INT32(2) > d->maxlen)
 	{
-		if ( d->rejectlong )
+		if (d->rejectlong)
 		{
 			/* reject by returning void array */
 			pfree(txt);

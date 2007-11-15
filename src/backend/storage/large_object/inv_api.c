@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.125 2007/06/12 19:46:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.126 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,10 +337,10 @@ inv_getsize(LargeObjectDesc *obj_desc)
 		bool		pfreeit;
 
 		found = true;
-		if (HeapTupleHasNulls(tuple))				/* paranoia */
+		if (HeapTupleHasNulls(tuple))	/* paranoia */
 			elog(ERROR, "null field found in pg_largeobject");
 		data = (Form_pg_largeobject) GETSTRUCT(tuple);
-		datafield = &(data->data);			/* see note at top of file */
+		datafield = &(data->data);		/* see note at top of file */
 		pfreeit = false;
 		if (VARATT_IS_EXTENDED(datafield))
 		{
@@ -443,7 +443,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		bytea	   *datafield;
 		bool		pfreeit;
 
-		if (HeapTupleHasNulls(tuple))				/* paranoia */
+		if (HeapTupleHasNulls(tuple))	/* paranoia */
 			elog(ERROR, "null field found in pg_largeobject");
 		data = (Form_pg_largeobject) GETSTRUCT(tuple);
 
@@ -468,7 +468,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			off = (int) (obj_desc->offset - pageoff);
 			Assert(off >= 0 && off < LOBLKSIZE);
 
-			datafield = &(data->data);			/* see note at top of file */
+			datafield = &(data->data);	/* see note at top of file */
 			pfreeit = false;
 			if (VARATT_IS_EXTENDED(datafield))
 			{
@@ -569,7 +569,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 		{
 			if ((oldtuple = index_getnext(sd, ForwardScanDirection)) != NULL)
 			{
-				if (HeapTupleHasNulls(oldtuple))			/* paranoia */
+				if (HeapTupleHasNulls(oldtuple))		/* paranoia */
 					elog(ERROR, "null field found in pg_largeobject");
 				olddata = (Form_pg_largeobject) GETSTRUCT(oldtuple);
 				Assert(olddata->pageno >= pageno);
@@ -700,16 +700,16 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 {
 	int32		pageno = (int32) (len / LOBLKSIZE);
 	int			off;
-	ScanKeyData	skey[2];
+	ScanKeyData skey[2];
 	IndexScanDesc sd;
 	HeapTuple	oldtuple;
-	Form_pg_largeobject	olddata;
+	Form_pg_largeobject olddata;
 	struct
 	{
 		bytea		hdr;
 		char		data[LOBLKSIZE];
 	}			workbuf;
-	char 	   *workb = VARDATA(&workbuf.hdr);
+	char	   *workb = VARDATA(&workbuf.hdr);
 	HeapTuple	newtup;
 	Datum		values[Natts_pg_largeobject];
 	char		nulls[Natts_pg_largeobject];
@@ -743,30 +743,30 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 						 obj_desc->snapshot, 2, skey);
 
 	/*
-	 * If possible, get the page the truncation point is in.
-	 * The truncation point may be beyond the end of the LO or
-	 * in a hole.
+	 * If possible, get the page the truncation point is in. The truncation
+	 * point may be beyond the end of the LO or in a hole.
 	 */
 	olddata = NULL;
 	if ((oldtuple = index_getnext(sd, ForwardScanDirection)) != NULL)
 	{
-		if (HeapTupleHasNulls(oldtuple))				/* paranoia */
+		if (HeapTupleHasNulls(oldtuple))		/* paranoia */
 			elog(ERROR, "null field found in pg_largeobject");
 		olddata = (Form_pg_largeobject) GETSTRUCT(oldtuple);
 		Assert(olddata->pageno >= pageno);
 	}
 
 	/*
-	 * If we found the page of the truncation point we need to
-	 * truncate the data in it.  Otherwise if we're in a hole,
-	 * we need to create a page to mark the end of data.
+	 * If we found the page of the truncation point we need to truncate the
+	 * data in it.	Otherwise if we're in a hole, we need to create a page to
+	 * mark the end of data.
 	 */
 	if (olddata != NULL && olddata->pageno == pageno)
 	{
 		/* First, load old data into workbuf */
-		bytea *datafield = &(olddata->data);	/* see note at top of file */
-		bool pfreeit = false;
-		int pagelen;
+		bytea	   *datafield = &(olddata->data);		/* see note at top of
+														 * file */
+		bool		pfreeit = false;
+		int			pagelen;
 
 		if (VARATT_IS_EXTENDED(datafield))
 		{
@@ -778,14 +778,14 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 		Assert(pagelen <= LOBLKSIZE);
 		memcpy(workb, VARDATA(datafield), pagelen);
 		if (pfreeit)
-				pfree(datafield);
+			pfree(datafield);
 
 		/*
 		 * Fill any hole
 		 */
 		off = len % LOBLKSIZE;
 		if (off > pagelen)
-				MemSet(workb + pagelen, 0, off - pagelen);
+			MemSet(workb + pagelen, 0, off - pagelen);
 
 		/* compute length of new page */
 		SET_VARSIZE(&workbuf.hdr, off + VARHDRSZ);
@@ -807,16 +807,15 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	else
 	{
 		/*
-		 * If the first page we found was after the truncation
-		 * point, we're in a hole that we'll fill, but we need to
-		 * delete the later page.
+		 * If the first page we found was after the truncation point, we're in
+		 * a hole that we'll fill, but we need to delete the later page.
 		 */
 		if (olddata != NULL && olddata->pageno > pageno)
 			simple_heap_delete(lo_heap_r, &oldtuple->t_self);
 
 		/*
 		 * Write a brand new page.
-		 * 
+		 *
 		 * Fill the hole up to the truncation point
 		 */
 		off = len % LOBLKSIZE;
@@ -826,7 +825,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 		/* compute length of new page */
 		SET_VARSIZE(&workbuf.hdr, off + VARHDRSZ);
 
-		/* 
+		/*
 		 * Form and insert new tuple
 		 */
 		memset(values, 0, sizeof(values));
@@ -851,11 +850,10 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	index_endscan(sd);
 
 	CatalogCloseIndexes(indstate);
-	
+
 	/*
 	 * Advance command counter so that tuple updates will be seen by later
 	 * large-object operations in this transaction.
 	 */
 	CommandCounterIncrement();
 }
-

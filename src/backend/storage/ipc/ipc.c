@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.98 2007/11/04 17:55:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.99 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,34 +118,31 @@ proc_exit(int code)
 #ifdef PROFILE_PID_DIR
 	{
 		/*
-		 * If we are profiling ourself then gprof's mcleanup() is about
-		 * to write out a profile to ./gmon.out.  Since mcleanup() always 
-		 * uses a fixed file name, each backend will overwrite earlier
-		 * profiles. To fix that, we create a separate subdirectory for
-		 * each backend (./gprof/pid) and 'cd' to that subdirectory before
-		 * we exit() - that forces mcleanup() to write each profile into
-		 * its own directory.  We end up with something like:
-		 *	$PGDATA/gprof/8829/gmon.out
-		 *	$PGDATA/gprof/8845/gmon.out
-		 *		...
+		 * If we are profiling ourself then gprof's mcleanup() is about to
+		 * write out a profile to ./gmon.out.  Since mcleanup() always uses a
+		 * fixed file name, each backend will overwrite earlier profiles. To
+		 * fix that, we create a separate subdirectory for each backend
+		 * (./gprof/pid) and 'cd' to that subdirectory before we exit() - that
+		 * forces mcleanup() to write each profile into its own directory.	We
+		 * end up with something like: $PGDATA/gprof/8829/gmon.out
+		 * $PGDATA/gprof/8845/gmon.out ...
 		 *
 		 * To avoid undesirable disk space bloat, autovacuum workers are
 		 * discriminated against: all their gmon.out files go into the same
 		 * subdirectory.  Without this, an installation that is "just sitting
 		 * there" nonetheless eats megabytes of disk space every few seconds.
 		 *
-		 * Note that we do this here instead of in an on_proc_exit() 
-		 * callback because we want to ensure that this code executes
-		 * last - we don't want to interfere with any other on_proc_exit()
-		 * callback.
+		 * Note that we do this here instead of in an on_proc_exit() callback
+		 * because we want to ensure that this code executes last - we don't
+		 * want to interfere with any other on_proc_exit() callback.
 		 */
-		char gprofDirName[32];
+		char		gprofDirName[32];
 
 		if (IsAutoVacuumWorkerProcess())
 			snprintf(gprofDirName, 32, "gprof/avworker");
 		else
 			snprintf(gprofDirName, 32, "gprof/%d", (int) getpid());
-	    
+
 		mkdir("gprof", 0777);
 		mkdir(gprofDirName, 0777);
 		chdir(gprofDirName);

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.71 2007/06/05 21:31:06 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.72 2007/11/15 21:14:39 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -29,7 +29,7 @@ static int	ip_addrsize(inet *inetptr);
 static inet *internal_inetpl(inet *ip, int64 addend);
 
 /*
- *	Access macros.  We use VARDATA_ANY so that we can process short-header
+ *	Access macros.	We use VARDATA_ANY so that we can process short-header
  *	varlena values without detoasting them.  This requires a trick:
  *	VARDATA_ANY assumes the varlena header is already filled in, which is
  *	not the case when constructing a new value (until SET_INET_VARSIZE is
@@ -1466,9 +1466,9 @@ inetmi(PG_FUNCTION_ARGS)
  * XXX This should go away someday!
  *
  * This is a kluge needed because we don't yet support zones in stored inet
- * values.  Since the result of getnameinfo() might include a zone spec,
+ * values.	Since the result of getnameinfo() might include a zone spec,
  * call this to remove it anywhere we want to feed getnameinfo's output to
- * network_in.  Beats failing entirely.
+ * network_in.	Beats failing entirely.
  *
  * An alternative approach would be to let network_in ignore %-parts for
  * itself, but that would mean we'd silently drop zone specs in user input,
@@ -1480,7 +1480,7 @@ clean_ipv6_addr(int addr_family, char *addr)
 #ifdef HAVE_IPV6
 	if (addr_family == AF_INET6)
 	{
-		char *pct = strchr(addr, '%');
+		char	   *pct = strchr(addr, '%');
 
 		if (pct)
 			*pct = '\0';

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.103 2007/08/21 01:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.104 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1207,7 +1207,7 @@ regdictionaryin(PG_FUNCTION_ARGS)
 		strspn(dict_name_or_oid, "0123456789") == strlen(dict_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										  CStringGetDatum(dict_name_or_oid)));
+										 CStringGetDatum(dict_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
@@ -1249,8 +1249,8 @@ regdictionaryout(PG_FUNCTION_ARGS)
 		char	   *nspname;
 
 		/*
-		 * Would this dictionary be found by regdictionaryin?
-		 * If not, qualify it.
+		 * Would this dictionary be found by regdictionaryin? If not, qualify
+		 * it.
 		 */
 		if (TSDictionaryIsVisible(dictid))
 			nspname = NULL;

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.76 2007/09/11 16:17:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.77 2007/11/15 21:14:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -946,7 +946,7 @@ hash_search_with_hash_value(HTAB *hashp,
 			 * to check cheaper conditions first.
 			 */
 			if (!IS_PARTITIONED(hctl) &&
-				hctl->nentries / (long) (hctl->max_bucket + 1) >= hctl->ffactor &&
+			hctl->nentries / (long) (hctl->max_bucket + 1) >= hctl->ffactor &&
 				!has_seq_scans(hashp))
 			{
 				/*
@@ -1397,7 +1397,7 @@ my_log2(long num)
 /************************* SEQ SCAN TRACKING ************************/
 
 /*
- * We track active hash_seq_search scans here.  The need for this mechanism
+ * We track active hash_seq_search scans here.	The need for this mechanism
  * comes from the fact that a scan will get confused if a bucket split occurs
  * while it's in progress: it might visit entries twice, or even miss some
  * entirely (if it's partway through the same bucket that splits).  Hence
@@ -1417,7 +1417,7 @@ my_log2(long num)
  *
  * This arrangement is reasonably robust if a transient hashtable is deleted
  * without notifying us.  The absolute worst case is we might inhibit splits
- * in another table created later at exactly the same address.  We will give
+ * in another table created later at exactly the same address.	We will give
  * a warning at transaction end for reference leaks, so any bugs leading to
  * lack of notification should be easy to catch.
  */
@@ -1445,7 +1445,7 @@ register_seq_scan(HTAB *hashp)
 static void
 deregister_seq_scan(HTAB *hashp)
 {
-	int		i;
+	int			i;
 
 	/* Search backward since it's most likely at the stack top */
 	for (i = num_seq_scans - 1; i >= 0; i--)
@@ -1466,7 +1466,7 @@ deregister_seq_scan(HTAB *hashp)
 static bool
 has_seq_scans(HTAB *hashp)
 {
-	int		i;
+	int			i;
 
 	for (i = 0; i < num_seq_scans; i++)
 	{
@@ -1491,7 +1491,7 @@ AtEOXact_HashTables(bool isCommit)
 	 */
 	if (isCommit)
 	{
-		int		i;
+		int			i;
 
 		for (i = 0; i < num_seq_scans; i++)
 		{
@@ -1506,7 +1506,7 @@ AtEOXact_HashTables(bool isCommit)
 void
 AtEOSubXact_HashTables(bool isCommit, int nestDepth)
 {
-	int		i;
+	int			i;
 
 	/*
 	 * Search backward to make cleanup easy.  Note we must check all entries,

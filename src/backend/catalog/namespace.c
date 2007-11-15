@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.99 2007/08/27 03:36:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.100 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,11 +75,11 @@
  *
  * The textual specification of search_path can include "$user" to refer to
  * the namespace named the same as the current user, if any.  (This is just
- * ignored if there is no such namespace.)  Also, it can include "pg_temp"
+ * ignored if there is no such namespace.)	Also, it can include "pg_temp"
  * to refer to the current backend's temp namespace.  This is usually also
  * ignorable if the temp namespace hasn't been set up, but there's a special
  * case: if "pg_temp" appears first then it should be the default creation
- * target.  We kluge this case a little bit so that the temp namespace isn't
+ * target.	We kluge this case a little bit so that the temp namespace isn't
  * set up until the first attempt to create something in it.  (The reason for
  * klugery is that we can't create the temp namespace outside a transaction,
  * but initial GUC processing of search_path happens outside a transaction.)
@@ -144,10 +144,10 @@ static bool baseSearchPathValid = true;
 
 typedef struct
 {
-	List	   *searchPath;				/* the desired search path */
+	List	   *searchPath;		/* the desired search path */
 	Oid			creationNamespace;		/* the desired creation namespace */
-	int			nestLevel;				/* subtransaction nesting level */
-} OverrideStackEntry;
+	int			nestLevel;		/* subtransaction nesting level */
+}	OverrideStackEntry;
 
 static List *overrideStack = NIL;
 
@@ -157,7 +157,7 @@ static List *overrideStack = NIL;
  * command is first executed).	Thereafter it's the OID of the temp namespace.
  *
  * myTempToastNamespace is the OID of the namespace for my temp tables' toast
- * tables.  It is set when myTempNamespace is, and is InvalidOid before that.
+ * tables.	It is set when myTempNamespace is, and is InvalidOid before that.
  *
  * myTempNamespaceSubID shows whether we've created the TEMP namespace in the
  * current subtransaction.	The flag propagates up the subtransaction tree,
@@ -241,10 +241,10 @@ RangeVarGetRelid(const RangeVar *relation, bool failOK)
 		if (relation->schemaname)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("temporary tables cannot specify a schema name")));
+				   errmsg("temporary tables cannot specify a schema name")));
 		if (OidIsValid(myTempNamespace))
 			relId = get_relname_relid(relation->relname, myTempNamespace);
-		else					/* this probably can't happen? */
+		else	/* this probably can't happen? */
 			relId = InvalidOid;
 	}
 	else if (relation->schemaname)
@@ -308,7 +308,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		if (newRelation->schemaname)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				  errmsg("temporary tables cannot specify a schema name")));
+				   errmsg("temporary tables cannot specify a schema name")));
 		/* Initialize temp namespace if first time through */
 		if (!OidIsValid(myTempNamespace))
 			InitTempTableNamespace();
@@ -619,8 +619,8 @@ FuncnameGetCandidates(List *names, int nargs)
 		else
 		{
 			/*
-			 * Consider only procs that are in the search path and are not
-			 * in the temp namespace.
+			 * Consider only procs that are in the search path and are not in
+			 * the temp namespace.
 			 */
 			ListCell   *nsp;
 
@@ -949,8 +949,8 @@ OpernameGetCandidates(List *names, char oprkind)
 		else
 		{
 			/*
-			 * Consider only opers that are in the search path and are not
-			 * in the temp namespace.
+			 * Consider only opers that are in the search path and are not in
+			 * the temp namespace.
 			 */
 			ListCell   *nsp;
 
@@ -1377,7 +1377,7 @@ TSParserGetPrsid(List *names, bool failOK)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;			/* do not look in temp namespace */
+				continue;		/* do not look in temp namespace */
 
 			prsoid = GetSysCacheOid(TSPARSERNAMENSP,
 									PointerGetDatum(parser_name),
@@ -1433,8 +1433,8 @@ TSParserIsVisible(Oid prsId)
 	{
 		/*
 		 * If it is in the path, it might still not be visible; it could be
-		 * hidden by another parser of the same name earlier in the path. So we
-		 * must do a slow check for conflicting parsers.
+		 * hidden by another parser of the same name earlier in the path. So
+		 * we must do a slow check for conflicting parsers.
 		 */
 		char	   *name = NameStr(form->prsname);
 		ListCell   *l;
@@ -1445,7 +1445,7 @@ TSParserIsVisible(Oid prsId)
 			Oid			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;			/* do not look in temp namespace */
+				continue;		/* do not look in temp namespace */
 
 			if (namespaceId == namespace)
 			{
@@ -1505,7 +1505,7 @@ TSDictionaryGetDictid(List *names, bool failOK)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;			/* do not look in temp namespace */
+				continue;		/* do not look in temp namespace */
 
 			dictoid = GetSysCacheOid(TSDICTNAMENSP,
 									 PointerGetDatum(dict_name),
@@ -1562,8 +1562,8 @@ TSDictionaryIsVisible(Oid dictId)
 	{
 		/*
 		 * If it is in the path, it might still not be visible; it could be
-		 * hidden by another dictionary of the same name earlier in the
-		 * path. So we must do a slow check for conflicting dictionaries.
+		 * hidden by another dictionary of the same name earlier in the path.
+		 * So we must do a slow check for conflicting dictionaries.
 		 */
 		char	   *name = NameStr(form->dictname);
 		ListCell   *l;
@@ -1574,7 +1574,7 @@ TSDictionaryIsVisible(Oid dictId)
 			Oid			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;			/* do not look in temp namespace */
+				continue;		/* do not look in temp namespace */
 
 			if (namespaceId == namespace)
 			{
@@ -1634,7 +1634,7 @@ TSTemplateGetTmplid(List *names, bool failOK)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;			/* do not look in temp namespace */
+				continue;		/* do not look in temp namespace */
 
 			tmploid = GetSysCacheOid(TSTEMPLATENAMENSP,
 									 PointerGetDatum(template_name),
@@ -1690,8 +1690,8 @@ TSTemplateIsVisible(Oid tmplId)
 	{
 		/*
 		 * If it is in the path, it might still not be visible; it could be
-		 * hidden by another template of the same name earlier in the path.
-		 * So we must do a slow check for conflicting templates.
+		 * hidden by another template of the same name earlier in the path. So
+		 * we must do a slow check for conflicting templates.
 		 */
 		char	   *name = NameStr(form->tmplname);
 		ListCell   *l;
@@ -1702,7 +1702,7 @@ TSTemplateIsVisible(Oid tmplId)
 			Oid			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;			/* do not look in temp namespace */
+				continue;		/* do not look in temp namespace */
 
 			if (namespaceId == namespace)
 			{
@@ -1762,7 +1762,7 @@ TSConfigGetCfgid(List *names, bool failOK)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;			/* do not look in temp namespace */
+				continue;		/* do not look in temp namespace */
 
 			cfgoid = GetSysCacheOid(TSCONFIGNAMENSP,
 									PointerGetDatum(config_name),
@@ -1785,7 +1785,7 @@ TSConfigGetCfgid(List *names, bool failOK)
 /*
  * TSConfigIsVisible
  *		Determine whether a text search configuration (identified by OID)
- *		is visible in the current search path.  Visible means "would be found
+ *		is visible in the current search path.	Visible means "would be found
  *		by searching for the unqualified text search configuration name".
  */
 bool
@@ -1831,7 +1831,7 @@ TSConfigIsVisible(Oid cfgid)
 			Oid			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;			/* do not look in temp namespace */
+				continue;		/* do not look in temp namespace */
 
 			if (namespaceId == namespace)
 			{
@@ -1925,11 +1925,12 @@ LookupExplicitNamespace(const char *nspname)
 	{
 		if (OidIsValid(myTempNamespace))
 			return myTempNamespace;
+
 		/*
-		 * Since this is used only for looking up existing objects, there
-		 * is no point in trying to initialize the temp namespace here;
-		 * and doing so might create problems for some callers.
-		 * Just fall through and give the "does not exist" error.
+		 * Since this is used only for looking up existing objects, there is
+		 * no point in trying to initialize the temp namespace here; and doing
+		 * so might create problems for some callers. Just fall through and
+		 * give the "does not exist" error.
 		 */
 	}
 
@@ -2166,7 +2167,7 @@ bool
 isTempOrToastNamespace(Oid namespaceId)
 {
 	if (OidIsValid(myTempNamespace) &&
-		(myTempNamespace == namespaceId || myTempToastNamespace == namespaceId))
+	 (myTempNamespace == namespaceId || myTempToastNamespace == namespaceId))
 		return true;
 	return false;
 }
@@ -2208,7 +2209,7 @@ isOtherTempNamespace(Oid namespaceId)
 
 /*
  * GetTempToastNamespace - get the OID of my temporary-toast-table namespace,
- * which must already be assigned.  (This is only used when creating a toast
+ * which must already be assigned.	(This is only used when creating a toast
  * table for a temp table, so we must have already done InitTempTableNamespace)
  */
 Oid
@@ -2265,7 +2266,7 @@ GetOverrideSearchPath(MemoryContext context)
  * search_path variable is ignored while an override is active.
  */
 void
-PushOverrideSearchPath(OverrideSearchPath *newpath)
+PushOverrideSearchPath(OverrideSearchPath * newpath)
 {
 	OverrideStackEntry *entry;
 	List	   *oidlist;
@@ -2315,7 +2316,7 @@ PushOverrideSearchPath(OverrideSearchPath *newpath)
 	/* And make it active. */
 	activeSearchPath = entry->searchPath;
 	activeCreationNamespace = entry->creationNamespace;
-	activeTempCreationPending = false;			/* XXX is this OK? */
+	activeTempCreationPending = false;	/* XXX is this OK? */
 
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -2349,7 +2350,7 @@ PopOverrideSearchPath(void)
 		entry = (OverrideStackEntry *) linitial(overrideStack);
 		activeSearchPath = entry->searchPath;
 		activeCreationNamespace = entry->creationNamespace;
-		activeTempCreationPending = false;			/* XXX is this OK? */
+		activeTempCreationPending = false;		/* XXX is this OK? */
 	}
 	else
 	{
@@ -2392,7 +2393,7 @@ FindConversionByName(List *name)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;			/* do not look in temp namespace */
+				continue;		/* do not look in temp namespace */
 
 			conoid = FindConversion(conversion_name, namespaceId);
 			if (OidIsValid(conoid))
@@ -2533,7 +2534,7 @@ recomputeNamespacePath(void)
 	}
 
 	/*
-	 * Remember the first member of the explicit list.  (Note: this is
+	 * Remember the first member of the explicit list.	(Note: this is
 	 * nominally wrong if temp_missing, but we need it anyway to distinguish
 	 * explicit from implicit mention of pg_catalog.)
 	 */
@@ -2696,7 +2697,7 @@ AtEOXact_Namespace(bool isCommit)
 		{
 			myTempNamespace = InvalidOid;
 			myTempToastNamespace = InvalidOid;
-			baseSearchPathValid = false;	/* need to rebuild list */
+			baseSearchPathValid = false;		/* need to rebuild list */
 		}
 		myTempNamespaceSubID = InvalidSubTransactionId;
 	}
@@ -2748,7 +2749,7 @@ AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 			/* TEMP namespace creation failed, so reset state */
 			myTempNamespace = InvalidOid;
 			myTempToastNamespace = InvalidOid;
-			baseSearchPathValid = false;	/* need to rebuild list */
+			baseSearchPathValid = false;		/* need to rebuild list */
 		}
 	}
 
@@ -2773,7 +2774,7 @@ AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 		entry = (OverrideStackEntry *) linitial(overrideStack);
 		activeSearchPath = entry->searchPath;
 		activeCreationNamespace = entry->creationNamespace;
-		activeTempCreationPending = false;			/* XXX is this OK? */
+		activeTempCreationPending = false;		/* XXX is this OK? */
 	}
 	else
 	{
@@ -2983,9 +2984,9 @@ fetch_search_path(bool includeImplicit)
 	recomputeNamespacePath();
 
 	/*
-	 * If the temp namespace should be first, force it to exist.  This is
-	 * so that callers can trust the result to reflect the actual default
-	 * creation namespace.  It's a bit bogus to do this here, since
+	 * If the temp namespace should be first, force it to exist.  This is so
+	 * that callers can trust the result to reflect the actual default
+	 * creation namespace.	It's a bit bogus to do this here, since
 	 * current_schema() is supposedly a stable function without side-effects,
 	 * but the alternatives seem worse.
 	 */

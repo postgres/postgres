@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.67 2007/09/12 22:10:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.68 2007/11/15 21:14:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,13 +383,12 @@ gistindex_keytest(IndexTuple tuple,
 			/*
 			 * On non-leaf page we can't conclude that child hasn't NULL
 			 * values because of assumption in GiST: uinon (VAL, NULL) is VAL
-			 * But if on non-leaf page key IS  NULL then all childs
-			 * has NULL.
+			 * But if on non-leaf page key IS  NULL then all childs has NULL.
 			 */
 
-			Assert( key->sk_flags & SK_SEARCHNULL );
+			Assert(key->sk_flags & SK_SEARCHNULL);
 
-			if ( GistPageIsLeaf(p) && !isNull )
+			if (GistPageIsLeaf(p) && !isNull)
 				return false;
 		}
 		else if (isNull)
@@ -404,12 +403,14 @@ gistindex_keytest(IndexTuple tuple,
 						   FALSE, isNull);
 
 			/*
-			 * Call the Consistent function to evaluate the test.  The arguments
-			 * are the index datum (as a GISTENTRY*), the comparison datum, and
-			 * the comparison operator's strategy number and subtype from pg_amop.
+			 * Call the Consistent function to evaluate the test.  The
+			 * arguments are the index datum (as a GISTENTRY*), the comparison
+			 * datum, and the comparison operator's strategy number and
+			 * subtype from pg_amop.
 			 *
-			 * (Presently there's no need to pass the subtype since it'll always
-			 * be zero, but might as well pass it for possible future use.)
+			 * (Presently there's no need to pass the subtype since it'll
+			 * always be zero, but might as well pass it for possible future
+			 * use.)
 			 */
 			test = FunctionCall4(&key->sk_func,
 								 PointerGetDatum(&de),

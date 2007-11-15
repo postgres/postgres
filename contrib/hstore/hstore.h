@@ -50,7 +50,7 @@ typedef struct
 int			comparePairs(const void *a, const void *b);
 int			uniquePairs(Pairs * a, int4 l, int4 *buflen);
 
-#define HStoreContainsStrategyNumber    7
-#define HStoreExistsStrategyNumber      9
+#define HStoreContainsStrategyNumber	7
+#define HStoreExistsStrategyNumber		9
 
 #endif

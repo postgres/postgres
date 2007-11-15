@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_parser.c,v 1.2 2007/10/21 22:29:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_parser.c,v 1.3 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,13 +29,13 @@
  */
 struct TSVectorParseStateData
 {
-	char   *prsbuf;				/* next input character */
-	char   *bufstart;			/* whole string (used only for errors) */
-	char   *word;				/* buffer to hold the current word */
-	int		len;				/* size in bytes allocated for 'word' */
-	int		eml;				/* max bytes per character */
-	bool	oprisdelim;			/* treat ! | * ( ) as delimiters? */
-	bool	is_tsquery;			/* say "tsquery" not "tsvector" in errors? */
+	char	   *prsbuf;			/* next input character */
+	char	   *bufstart;		/* whole string (used only for errors) */
+	char	   *word;			/* buffer to hold the current word */
+	int			len;			/* size in bytes allocated for 'word' */
+	int			eml;			/* max bytes per character */
+	bool		oprisdelim;		/* treat ! | * ( ) as delimiters? */
+	bool		is_tsquery;		/* say "tsquery" not "tsvector" in errors? */
 };
 
 
@@ -67,7 +67,7 @@ init_tsvector_parser(char *input, bool oprisdelim, bool is_tsquery)
 void
 reset_tsvector_parser(TSVectorParseState state, char *input)
 {
-	state->prsbuf = input;	
+	state->prsbuf = input;
 }
 
 /*
@@ -142,11 +142,11 @@ prssyntaxerror(TSVectorParseState state)
  * Get next token from string being parsed. Returns true if successful,
  * false if end of input string is reached.  On success, these output
  * parameters are filled in:
- * 
- * *strval 		pointer to token
- * *lenval 		length of *strval
+ *
+ * *strval		pointer to token
+ * *lenval		length of *strval
  * *pos_ptr		pointer to a palloc'd array of positions and weights
- * 				associated with the token. If the caller is not interested
+ *				associated with the token. If the caller is not interested
  *				in the information, NULL can be supplied. Otherwise
  *				the caller is responsible for pfreeing the array.
  * *poslen		number of elements in *pos_ptr
@@ -155,21 +155,22 @@ prssyntaxerror(TSVectorParseState state)
  * Pass NULL for unwanted output parameters.
  */
 bool
-gettoken_tsvector(TSVectorParseState state, 
+gettoken_tsvector(TSVectorParseState state,
 				  char **strval, int *lenval,
-				  WordEntryPos **pos_ptr, int *poslen,
+				  WordEntryPos ** pos_ptr, int *poslen,
 				  char **endptr)
 {
-	int	oldstate	= 0;
-	char *curpos	= state->word;
-	int	statecode	= WAITWORD;
+	int			oldstate = 0;
+	char	   *curpos = state->word;
+	int			statecode = WAITWORD;
 
-	/* pos is for collecting the comma delimited list of positions followed
-	 * by the actual token. 
+	/*
+	 * pos is for collecting the comma delimited list of positions followed by
+	 * the actual token.
 	 */
 	WordEntryPos *pos = NULL;
-	int npos		= 0; /* elements of pos used */
-	int posalen		= 0; /* allocated size of pos */
+	int			npos = 0;		/* elements of pos used */
+	int			posalen = 0;	/* allocated size of pos */
 
 	while (1)
 	{
@@ -357,7 +358,7 @@ gettoken_tsvector(TSVectorParseState state,
 			else if (!t_isdigit(state->prsbuf))
 				PRSSYNTAXERROR;
 		}
-		else					/* internal error */
+		else	/* internal error */
 			elog(ERROR, "internal error in gettoken_tsvector");
 
 		/* get next char */

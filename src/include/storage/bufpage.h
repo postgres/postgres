@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.75 2007/09/21 21:25:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.76 2007/11/15 21:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ typedef uint16 LocationIndex;
  * like a good idea).
  *
  * pd_prune_xid is a hint field that helps determine whether pruning will be
- * useful.  It is currently unused in index pages.
+ * useful.	It is currently unused in index pages.
  *
  * The page version number and page size are packed together into a single
  * uint16 field.  This is for historical reasons: before PostgreSQL 7.3,
@@ -132,7 +132,7 @@ typedef struct PageHeaderData
 	LocationIndex pd_upper;		/* offset to end of free space */
 	LocationIndex pd_special;	/* offset to start of special space */
 	uint16		pd_pagesize_version;
-	TransactionId pd_prune_xid;	/* oldest prunable XID, or zero if none */
+	TransactionId pd_prune_xid; /* oldest prunable XID, or zero if none */
 	ItemIdData	pd_linp[1];		/* beginning of line pointer array */
 } PageHeaderData;
 
@@ -150,10 +150,11 @@ typedef PageHeaderData *PageHeader;
  * page for its new tuple version; this suggests that a prune is needed.
  * Again, this is just a hint.
  */
-#define PD_HAS_FREE_LINES	0x0001	/* are there any unused line pointers? */
-#define PD_PAGE_FULL		0x0002	/* not enough free space for new tuple? */
+#define PD_HAS_FREE_LINES	0x0001		/* are there any unused line pointers? */
+#define PD_PAGE_FULL		0x0002		/* not enough free space for new
+										 * tuple? */
 
-#define PD_VALID_FLAG_BITS	0x0003	/* OR of all valid pd_flags bits */
+#define PD_VALID_FLAG_BITS	0x0003		/* OR of all valid pd_flags bits */
 
 /*
  * Page layout version number 0 is for pre-7.3 Postgres releases.

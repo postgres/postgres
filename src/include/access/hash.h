@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.82 2007/06/01 15:33:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.83 2007/11/15 21:14:42 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -275,24 +275,24 @@ extern void _hash_doinsert(Relation rel, IndexTuple itup);
 /* hashovfl.c */
 extern Buffer _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf);
 extern BlockNumber _hash_freeovflpage(Relation rel, Buffer ovflbuf,
-									  BufferAccessStrategy bstrategy);
+				   BufferAccessStrategy bstrategy);
 extern void _hash_initbitmap(Relation rel, HashMetaPage metap,
 				 BlockNumber blkno);
 extern void _hash_squeezebucket(Relation rel,
-								Bucket bucket, BlockNumber bucket_blkno,
-								BufferAccessStrategy bstrategy);
+					Bucket bucket, BlockNumber bucket_blkno,
+					BufferAccessStrategy bstrategy);
 
 /* hashpage.c */
 extern void _hash_getlock(Relation rel, BlockNumber whichlock, int access);
 extern bool _hash_try_getlock(Relation rel, BlockNumber whichlock, int access);
 extern void _hash_droplock(Relation rel, BlockNumber whichlock, int access);
 extern Buffer _hash_getbuf(Relation rel, BlockNumber blkno,
-						   int access, int flags);
+			 int access, int flags);
 extern Buffer _hash_getinitbuf(Relation rel, BlockNumber blkno);
 extern Buffer _hash_getnewbuf(Relation rel, BlockNumber blkno);
 extern Buffer _hash_getbuf_with_strategy(Relation rel, BlockNumber blkno,
-										 int access, int flags,
-										 BufferAccessStrategy bstrategy);
+						   int access, int flags,
+						   BufferAccessStrategy bstrategy);
 extern void _hash_relbuf(Relation rel, Buffer buf);
 extern void _hash_dropbuf(Relation rel, Buffer buf);
 extern void _hash_wrtbuf(Relation rel, Buffer buf);

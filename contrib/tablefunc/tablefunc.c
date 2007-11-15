@@ -552,8 +552,8 @@ crosstab(PG_FUNCTION_ARGS)
 					xpstrdup(values[0], rowid);
 
 					/*
-					 * Check to see if the rowid is the same as that of the last
-					 * tuple sent -- if so, skip this tuple entirely
+					 * Check to see if the rowid is the same as that of the
+					 * last tuple sent -- if so, skip this tuple entirely
 					 */
 					if (!firstpass && xstreq(lastrowid, rowid))
 					{
@@ -563,8 +563,8 @@ crosstab(PG_FUNCTION_ARGS)
 				}
 
 				/*
-				 * If rowid hasn't changed on us, continue building the
-				 * ouput tuple.
+				 * If rowid hasn't changed on us, continue building the ouput
+				 * tuple.
 				 */
 				if (xstreq(rowid, values[0]))
 				{

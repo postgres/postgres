@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * enum.c
- *    I/O functions, operators, aggregates etc for enum types
+ *	  I/O functions, operators, aggregates etc for enum types
  *
  * Copyright (c) 2006-2007, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/backend/utils/adt/enum.c,v 1.4 2007/09/04 16:41:42 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/enum.c,v 1.5 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,10 +32,10 @@ static int	enum_elem_cmp(const void *left, const void *right);
 Datum
 enum_in(PG_FUNCTION_ARGS)
 {
-	char *name = PG_GETARG_CSTRING(0);
-	Oid enumtypoid = PG_GETARG_OID(1);
-	Oid enumoid;
-	HeapTuple tup;
+	char	   *name = PG_GETARG_CSTRING(0);
+	Oid			enumtypoid = PG_GETARG_OID(1);
+	Oid			enumoid;
+	HeapTuple	tup;
 
 	/* must check length to prevent Assert failure within SearchSysCache */
 	if (strlen(name) >= NAMEDATALEN)
@@ -66,9 +66,9 @@ enum_in(PG_FUNCTION_ARGS)
 Datum
 enum_out(PG_FUNCTION_ARGS)
 {
-	Oid enumval = PG_GETARG_OID(0);
-	char *result;
-	HeapTuple tup;
+	Oid			enumval = PG_GETARG_OID(0);
+	char	   *result;
+	HeapTuple	tup;
 	Form_pg_enum en;
 
 	tup = SearchSysCache(ENUMOID,
@@ -92,12 +92,12 @@ enum_out(PG_FUNCTION_ARGS)
 Datum
 enum_recv(PG_FUNCTION_ARGS)
 {
-	StringInfo  buf = (StringInfo) PG_GETARG_POINTER(0);
-	Oid enumtypoid = PG_GETARG_OID(1);
-	Oid enumoid;
-	HeapTuple tup;
-	char       *name;
-	int         nbytes;
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	Oid			enumtypoid = PG_GETARG_OID(1);
+	Oid			enumoid;
+	HeapTuple	tup;
+	char	   *name;
+	int			nbytes;
 
 	name = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
@@ -132,9 +132,9 @@ enum_recv(PG_FUNCTION_ARGS)
 Datum
 enum_send(PG_FUNCTION_ARGS)
 {
-	Oid enumval = PG_GETARG_OID(0);
+	Oid			enumval = PG_GETARG_OID(0);
 	StringInfoData buf;
-	HeapTuple tup;
+	HeapTuple	tup;
 	Form_pg_enum en;
 
 	tup = SearchSysCache(ENUMOID,
@@ -160,8 +160,8 @@ enum_send(PG_FUNCTION_ARGS)
 Datum
 enum_lt(PG_FUNCTION_ARGS)
 {
-	Oid a = PG_GETARG_OID(0);
-	Oid b = PG_GETARG_OID(1);
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
 
 	PG_RETURN_BOOL(a < b);
 }
@@ -169,8 +169,8 @@ enum_lt(PG_FUNCTION_ARGS)
 Datum
 enum_le(PG_FUNCTION_ARGS)
 {
-	Oid a = PG_GETARG_OID(0);
-	Oid b = PG_GETARG_OID(1);
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
 
 	PG_RETURN_BOOL(a <= b);
 }
@@ -178,8 +178,8 @@ enum_le(PG_FUNCTION_ARGS)
 Datum
 enum_eq(PG_FUNCTION_ARGS)
 {
-	Oid a = PG_GETARG_OID(0);
-	Oid b = PG_GETARG_OID(1);
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
 
 	PG_RETURN_BOOL(a == b);
 }
@@ -187,8 +187,8 @@ enum_eq(PG_FUNCTION_ARGS)
 Datum
 enum_ne(PG_FUNCTION_ARGS)
 {
-	Oid a = PG_GETARG_OID(0);
-	Oid b = PG_GETARG_OID(1);
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
 
 	PG_RETURN_BOOL(a != b);
 }
@@ -196,8 +196,8 @@ enum_ne(PG_FUNCTION_ARGS)
 Datum
 enum_ge(PG_FUNCTION_ARGS)
 {
-	Oid a = PG_GETARG_OID(0);
-	Oid b = PG_GETARG_OID(1);
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
 
 	PG_RETURN_BOOL(a >= b);
 }
@@ -205,8 +205,8 @@ enum_ge(PG_FUNCTION_ARGS)
 Datum
 enum_gt(PG_FUNCTION_ARGS)
 {
-	Oid a = PG_GETARG_OID(0);
-	Oid b = PG_GETARG_OID(1);
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
 
 	PG_RETURN_BOOL(a > b);
 }
@@ -214,8 +214,8 @@ enum_gt(PG_FUNCTION_ARGS)
 Datum
 enum_smaller(PG_FUNCTION_ARGS)
 {
-	Oid a = PG_GETARG_OID(0);
-	Oid b = PG_GETARG_OID(1);
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
 
 	PG_RETURN_OID(a <= b ? a : b);
 }
@@ -223,8 +223,8 @@ enum_smaller(PG_FUNCTION_ARGS)
 Datum
 enum_larger(PG_FUNCTION_ARGS)
 {
-	Oid a = PG_GETARG_OID(0);
-	Oid b = PG_GETARG_OID(1);
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
 
 	PG_RETURN_OID(a >= b ? a : b);
 }
@@ -232,8 +232,8 @@ enum_larger(PG_FUNCTION_ARGS)
 Datum
 enum_cmp(PG_FUNCTION_ARGS)
 {
-	Oid a = PG_GETARG_OID(0);
-	Oid b = PG_GETARG_OID(1);
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
 
 	if (a > b)
 		PG_RETURN_INT32(1);
@@ -248,10 +248,11 @@ enum_cmp(PG_FUNCTION_ARGS)
 Datum
 enum_first(PG_FUNCTION_ARGS)
 {
-	Oid enumtypoid;
-	Oid min = InvalidOid;
-	CatCList *list;
-	int num, i;
+	Oid			enumtypoid;
+	Oid			min = InvalidOid;
+	CatCList   *list;
+	int			num,
+				i;
 
 	/*
 	 * We rely on being able to get the specific enum type from the calling
@@ -270,7 +271,8 @@ enum_first(PG_FUNCTION_ARGS)
 	num = list->n_members;
 	for (i = 0; i < num; i++)
 	{
-		Oid valoid = HeapTupleHeaderGetOid(list->members[i]->tuple.t_data);
+		Oid			valoid = HeapTupleHeaderGetOid(list->members[i]->tuple.t_data);
+
 		if (!OidIsValid(min) || valoid < min)
 			min = valoid;
 	}
@@ -287,10 +289,11 @@ enum_first(PG_FUNCTION_ARGS)
 Datum
 enum_last(PG_FUNCTION_ARGS)
 {
-	Oid enumtypoid;
-	Oid max = InvalidOid;
-	CatCList *list;
-	int num, i;
+	Oid			enumtypoid;
+	Oid			max = InvalidOid;
+	CatCList   *list;
+	int			num,
+				i;
 
 	/*
 	 * We rely on being able to get the specific enum type from the calling
@@ -309,7 +312,8 @@ enum_last(PG_FUNCTION_ARGS)
 	num = list->n_members;
 	for (i = 0; i < num; i++)
 	{
-		Oid valoid = HeapTupleHeaderGetOid(list->members[i]->tuple.t_data);
+		Oid			valoid = HeapTupleHeaderGetOid(list->members[i]->tuple.t_data);
+
 		if (!OidIsValid(max) || valoid > max)
 			max = valoid;
 	}
@@ -327,9 +331,9 @@ enum_last(PG_FUNCTION_ARGS)
 Datum
 enum_range_bounds(PG_FUNCTION_ARGS)
 {
-	Oid lower;
-	Oid upper;
-	Oid enumtypoid;
+	Oid			lower;
+	Oid			upper;
+	Oid			enumtypoid;
 
 	if (PG_ARGISNULL(0))
 		lower = InvalidOid;
@@ -358,7 +362,7 @@ enum_range_bounds(PG_FUNCTION_ARGS)
 Datum
 enum_range_all(PG_FUNCTION_ARGS)
 {
-	Oid enumtypoid;
+	Oid			enumtypoid;
 
 	/*
 	 * We rely on being able to get the specific enum type from the calling
@@ -378,10 +382,12 @@ enum_range_all(PG_FUNCTION_ARGS)
 static ArrayType *
 enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 {
-	ArrayType *result;
-	CatCList *list;
-	int total, i, j;
-	Datum *elems;
+	ArrayType  *result;
+	CatCList   *list;
+	int			total,
+				i,
+				j;
+	Datum	   *elems;
 
 	list = SearchSysCacheList(ENUMTYPOIDNAME, 1,
 							  ObjectIdGetDatum(enumtypoid),
@@ -393,7 +399,7 @@ enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 	j = 0;
 	for (i = 0; i < total; i++)
 	{
-		Oid val = HeapTupleGetOid(&(list->members[i]->tuple));
+		Oid			val = HeapTupleGetOid(&(list->members[i]->tuple));
 
 		if ((!OidIsValid(lower) || lower <= val) &&
 			(!OidIsValid(upper) || val <= upper))
@@ -418,8 +424,8 @@ enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 static int
 enum_elem_cmp(const void *left, const void *right)
 {
-	Oid l = DatumGetObjectId(*((const Datum *) left));
-	Oid r = DatumGetObjectId(*((const Datum *) right));
+	Oid			l = DatumGetObjectId(*((const Datum *) left));
+	Oid			r = DatumGetObjectId(*((const Datum *) right));
 
 	if (l < r)
 		return -1;

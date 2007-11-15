@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.114 2007/06/07 19:19:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.115 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,8 +271,8 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	hashtable->spaceAllowed = work_mem * 1024L;
 
 	/*
-	 * Get info about the hash functions to be used for each hash key.
-	 * Also remember whether the join operators are strict.
+	 * Get info about the hash functions to be used for each hash key. Also
+	 * remember whether the join operators are strict.
 	 */
 	nkeys = list_length(hashOperators);
 	hashtable->outer_hashfunctions =
@@ -423,8 +423,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 
 	/*
 	 * Both nbuckets and nbatch must be powers of 2 to make
-	 * ExecHashGetBucketAndBatch fast.  We already fixed nbatch; now inflate
-	 * nbuckets to the next larger power of 2.  We also force nbuckets to not
+	 * ExecHashGetBucketAndBatch fast.	We already fixed nbatch; now inflate
+	 * nbuckets to the next larger power of 2.	We also force nbuckets to not
 	 * be real small, by starting the search at 2^10.
 	 */
 	i = 10;
@@ -718,22 +718,22 @@ ExecHashGetHashValue(HashJoinTable hashtable,
 		/*
 		 * If the attribute is NULL, and the join operator is strict, then
 		 * this tuple cannot pass the join qual so we can reject it
-		 * immediately (unless we're scanning the outside of an outer join,
-		 * in which case we must not reject it).  Otherwise we act like the
+		 * immediately (unless we're scanning the outside of an outer join, in
+		 * which case we must not reject it).  Otherwise we act like the
 		 * hashcode of NULL is zero (this will support operators that act like
 		 * IS NOT DISTINCT, though not any more-random behavior).  We treat
 		 * the hash support function as strict even if the operator is not.
 		 *
 		 * Note: currently, all hashjoinable operators must be strict since
-		 * the hash index AM assumes that.  However, it takes so little
-		 * extra code here to allow non-strict that we may as well do it.
+		 * the hash index AM assumes that.	However, it takes so little extra
+		 * code here to allow non-strict that we may as well do it.
 		 */
 		if (isNull)
 		{
 			if (hashtable->hashStrict[i] && !keep_nulls)
 			{
 				MemoryContextSwitchTo(oldContext);
-				return false;							/* cannot match */
+				return false;	/* cannot match */
 			}
 			/* else, leave hashkey unmodified, equivalent to hashcode 0 */
 		}

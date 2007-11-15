@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.88 2007/05/21 17:57:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.89 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
  *
  *		Therefore, rather than directly executing the merge join clauses,
  *		we evaluate the left and right key expressions separately and then
- *		compare the columns one at a time (see MJCompare).  The planner
+ *		compare the columns one at a time (see MJCompare).	The planner
  *		passes us enough information about the sort ordering of the inputs
  *		to allow us to determine how to make the comparison.  We may use the
  *		appropriate btree comparison function, since Postgres' only notion
@@ -152,7 +152,7 @@ typedef struct MergeJoinClauseData
  * sort ordering for each merge key.  The mergejoinable operator is an
  * equality operator in this opfamily, and the two inputs are guaranteed to be
  * ordered in either increasing or decreasing (respectively) order according
- * to this opfamily, with nulls at the indicated end of the range.  This
+ * to this opfamily, with nulls at the indicated end of the range.	This
  * allows us to obtain the needed comparison function from the opfamily.
  */
 static MergeJoinClause
@@ -199,7 +199,7 @@ MJExamineQuals(List *mergeclauses,
 								   &op_lefttype,
 								   &op_righttype,
 								   &op_recheck);
-		if (op_strategy != BTEqualStrategyNumber)	/* should not happen */
+		if (op_strategy != BTEqualStrategyNumber)		/* should not happen */
 			elog(ERROR, "cannot merge using non-equality operator %u",
 				 qual->opno);
 		Assert(!op_recheck);	/* never true for btree */
@@ -209,7 +209,7 @@ MJExamineQuals(List *mergeclauses,
 									op_lefttype,
 									op_righttype,
 									BTORDER_PROC);
-		if (!RegProcedureIsValid(cmpproc))			/* should not happen */
+		if (!RegProcedureIsValid(cmpproc))		/* should not happen */
 			elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
 				 BTORDER_PROC, op_lefttype, op_righttype, opfamily);
 
@@ -227,7 +227,7 @@ MJExamineQuals(List *mergeclauses,
 			clause->reverse = false;
 		else if (opstrategy == BTGreaterStrategyNumber)
 			clause->reverse = true;
-		else					/* planner screwed up */
+		else	/* planner screwed up */
 			elog(ERROR, "unsupported mergejoin strategy %d", opstrategy);
 
 		clause->nulls_first = nulls_first;
@@ -354,21 +354,21 @@ MJCompare(MergeJoinState *mergestate)
 		{
 			if (clause->risnull)
 			{
-				nulleqnull = true;				/* NULL "=" NULL */
+				nulleqnull = true;		/* NULL "=" NULL */
 				continue;
 			}
 			if (clause->nulls_first)
-				result = -1;					/* NULL "<" NOT_NULL */
+				result = -1;	/* NULL "<" NOT_NULL */
 			else
-				result = 1;						/* NULL ">" NOT_NULL */
+				result = 1;		/* NULL ">" NOT_NULL */
 			break;
 		}
 		if (clause->risnull)
 		{
 			if (clause->nulls_first)
-				result = 1;						/* NOT_NULL ">" NULL */
+				result = 1;		/* NOT_NULL ">" NULL */
 			else
-				result = -1;					/* NOT_NULL "<" NULL */
+				result = -1;	/* NOT_NULL "<" NULL */
 			break;
 		}
 
@@ -384,7 +384,7 @@ MJCompare(MergeJoinState *mergestate)
 		fresult = FunctionCallInvoke(&fcinfo);
 		if (fcinfo.isnull)
 		{
-			nulleqnull = true;					/* treat like NULL = NULL */
+			nulleqnull = true;	/* treat like NULL = NULL */
 			continue;
 		}
 		result = DatumGetInt32(fresult);
@@ -1447,10 +1447,10 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 
 	/*
 	 * For certain types of inner child nodes, it is advantageous to issue
-	 * MARK every time we advance past an inner tuple we will never return
-	 * to.  For other types, MARK on a tuple we cannot return to is a waste
-	 * of cycles.  Detect which case applies and set mj_ExtraMarks if we
-	 * want to issue "unnecessary" MARK calls.
+	 * MARK every time we advance past an inner tuple we will never return to.
+	 * For other types, MARK on a tuple we cannot return to is a waste of
+	 * cycles.	Detect which case applies and set mj_ExtraMarks if we want to
+	 * issue "unnecessary" MARK calls.
 	 *
 	 * Currently, only Material wants the extra MARKs, and it will be helpful
 	 * only if eflags doesn't specify REWIND.

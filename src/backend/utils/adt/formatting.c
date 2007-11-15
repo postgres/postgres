@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.131 2007/08/04 01:26:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.132 2007/11/15 21:14:39 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2007, PostgreSQL Global Development Group
@@ -703,7 +703,7 @@ static const KeyWord DCH_keywords[] = {
 	{"HH24", 4, dch_time, DCH_HH24, TRUE},		/* H */
 	{"HH12", 4, dch_time, DCH_HH12, TRUE},
 	{"HH", 2, dch_time, DCH_HH, TRUE},
-	{"IDDD", 4, dch_date, DCH_IDDD, TRUE},	/* I */
+	{"IDDD", 4, dch_date, DCH_IDDD, TRUE},		/* I */
 	{"ID", 2, dch_date, DCH_ID, TRUE},
 	{"IW", 2, dch_date, DCH_IW, TRUE},
 	{"IYYY", 4, dch_date, DCH_IYYY, TRUE},
@@ -749,7 +749,7 @@ static const KeyWord DCH_keywords[] = {
 	{"hh24", 4, dch_time, DCH_HH24, TRUE},		/* h */
 	{"hh12", 4, dch_time, DCH_HH12, TRUE},
 	{"hh", 2, dch_time, DCH_HH, TRUE},
-	{"iddd", 4, dch_date, DCH_IDDD, TRUE},	/* i */
+	{"iddd", 4, dch_date, DCH_IDDD, TRUE},		/* i */
 	{"id", 2, dch_date, DCH_ID, TRUE},
 	{"iw", 2, dch_date, DCH_IW, TRUE},
 	{"iyyy", 4, dch_date, DCH_IYYY, TRUE},
@@ -1605,7 +1605,7 @@ localized_str_tolower(char *buff)
 
 	return buff;
 }
-#endif /* USE_WIDE_UPPER_LOWER */
+#endif   /* USE_WIDE_UPPER_LOWER */
 
 /* ----------
  * Sequential search with to upper/lower conversion
@@ -2383,7 +2383,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		case DCH_Day:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
-				sprintf(inout, "%*s", 0, localize_day_full(tm->tm_wday));		    
+				sprintf(inout, "%*s", 0, localize_day_full(tm->tm_wday));
 			else
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[tm->tm_wday]);
 			return strlen(p_inout);
@@ -2393,7 +2393,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			if (S_TM(suf))
 			{
 				strcpy(workbuff, localize_day_full(tm->tm_wday));
-				sprintf(inout, "%*s", 0, localized_str_tolower(workbuff));				
+				sprintf(inout, "%*s", 0, localized_str_tolower(workbuff));
 			}
 			else
 			{
@@ -2414,7 +2414,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				strcpy(inout, days_short[tm->tm_wday]);
 				str_toupper(inout);
 			}
-			
+
 			return strlen(p_inout);
 
 		case DCH_Dy:
@@ -2443,10 +2443,10 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		case DCH_IDDD:
 			if (is_to_char)
 			{
-				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 3, 
-					(arg == DCH_DDD) ? 
-					tm->tm_yday :
-					date2isoyearday(tm->tm_year, tm->tm_mon, tm->tm_mday));
+				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 3,
+						(arg == DCH_DDD) ?
+						tm->tm_yday :
+					  date2isoyearday(tm->tm_year, tm->tm_mon, tm->tm_mday));
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				return strlen(p_inout);
@@ -2573,9 +2573,9 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		case DCH_CC:
 			if (is_to_char)
 			{
-				if (is_interval)			/* straight calculation */
+				if (is_interval)	/* straight calculation */
 					i = tm->tm_year / 100;
-				else						/* century 21 starts in 2001 */
+				else	/* century 21 starts in 2001 */
 					i = (tm->tm_year - 1) / 100 + 1;
 				if (i <= 99 && i >= -99)
 					sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, i);
@@ -2645,7 +2645,8 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			}
 			else
 			{
-				int *field;
+				int		   *field;
+
 				field = (arg == DCH_YYYY) ? &tmfc->year : &tmfc->iyear;
 
 				if (S_FM(suf) || is_next_separator(node))
@@ -2680,7 +2681,8 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			}
 			else
 			{
-				int *field;
+				int		   *field;
+
 				field = (arg == DCH_YYY) ? &tmfc->year : &tmfc->iyear;
 
 				sscanf(inout, "%03d", field);
@@ -2715,7 +2717,8 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			}
 			else
 			{
-				int *field;
+				int		   *field;
+
 				field = (arg == DCH_YY) ? &tmfc->year : &tmfc->iyear;
 
 				sscanf(inout, "%02d", field);
@@ -2750,7 +2753,8 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			}
 			else
 			{
-				int *field;
+				int		   *field;
+
 				field = (arg == DCH_Y) ? &tmfc->year : &tmfc->iyear;
 
 				sscanf(inout, "%1d", field);
@@ -3064,7 +3068,7 @@ localize_month(int index)
 			m = _("Apr");
 			break;
 		case 4:
-			/*------ 
+			/*------
 			  translator: Translate this as the abbreviation of "May".
 			  In English, it is both the full month name and the
 			  abbreviation, so this hack is needed to distinguish
@@ -3481,17 +3485,17 @@ do_to_timestamp(text *date_txt, text *fmt,
 	}
 
 	/*
-	 * Only one year value is used.  If iyear (the ISO year) is defined, it takes precedence.  
-	 * Otherwise year (the Gregorian year) is used.
+	 * Only one year value is used.  If iyear (the ISO year) is defined, it
+	 * takes precedence. Otherwise year (the Gregorian year) is used.
 	 */
 	year = (tmfc.iyear) ? tmfc.iyear : tmfc.year;
 
 	if (year)
 	{
 		/*
-		 * If CC and YY (or Y) are provided, use YY as 2 low-order digits
-		 * for the year in the given century.  Keep in mind that the 21st
-		 * century runs from 2001-2100, not 2000-2099.
+		 * If CC and YY (or Y) are provided, use YY as 2 low-order digits for
+		 * the year in the given century.  Keep in mind that the 21st century
+		 * runs from 2001-2100, not 2000-2099.
 		 *
 		 * If a 4-digit year is provided, we use that and ignore CC.
 		 */
@@ -3525,15 +3529,16 @@ do_to_timestamp(text *date_txt, text *fmt,
 
 	if (tmfc.iw)
 	{
-		/* 
-		 * Since the user has employed the IW field, it is assumed that the value in tmfc.d 
-		 * is in ISO day-of-week form (1 = Monday), as set by the ID field.  Mixing IW and D 
-		 * will yield weird results.
+		/*
+		 * Since the user has employed the IW field, it is assumed that the
+		 * value in tmfc.d is in ISO day-of-week form (1 = Monday), as set by
+		 * the ID field.  Mixing IW and D will yield weird results.
 		 *
-		 * tmfc.iyear must have been set (e.g., with IYYY) for this to work properly (an ISO week
-		 * without an ISO year is meaningless).
+		 * tmfc.iyear must have been set (e.g., with IYYY) for this to work
+		 * properly (an ISO week without an ISO year is meaningless).
 		 *
-		 * If tmfc.d is not set, then the date is left at the beginning of the ISO week (Monday).
+		 * If tmfc.d is not set, then the date is left at the beginning of the
+		 * ISO week (Monday).
 		 */
 		if (tmfc.d)
 		{
@@ -3556,14 +3561,15 @@ do_to_timestamp(text *date_txt, text *fmt,
 	if (tmfc.ddd && (tm->tm_mon <= 1 || tm->tm_mday <= 1))
 	{
 		/*
-		 * If the iyear field is set, the value of ddd is taken to be an ISO day-of-year.
-		 * Otherwise, it is a Gregorian day-of-year.
-		 * Either way, since the month and day fields have not been set by some other means,
-		 * the value of ddd will be used to compute them.
+		 * If the iyear field is set, the value of ddd is taken to be an ISO
+		 * day-of-year. Otherwise, it is a Gregorian day-of-year. Either way,
+		 * since the month and day fields have not been set by some other
+		 * means, the value of ddd will be used to compute them.
 		 */
 		if (tmfc.iyear)
 		{
-			int j0;		/* zeroth day of the ISO year, in Julian */
+			int			j0;		/* zeroth day of the ISO year, in Julian */
+
 			j0 = isoweek2j(tmfc.iyear, 1) - 1;
 
 			j2date(j0 + tmfc.ddd, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
@@ -3580,7 +3586,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 			if (!tm->tm_year)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("cannot calculate day of year without year information")));
+						 errmsg("cannot calculate day of year without year information")));
 
 			y = ysum[isleap(tm->tm_year)];
 
@@ -3909,6 +3915,7 @@ NUM_prepare_locale(NUMProc *Np)
 		 */
 		if (lconv->decimal_point && *lconv->decimal_point)
 			Np->decimal = lconv->decimal_point;
+
 		else
 			Np->decimal = ".";
 
@@ -3917,10 +3924,10 @@ NUM_prepare_locale(NUMProc *Np)
 
 		/*
 		 * Number thousands separator
-		 * 
-		 * Some locales (e.g. broken glibc pt_BR), have a comma for
-		 * decimal, but "" for thousands_sep, so we might make the
-		 * thousands_sep comma too.  2007-02-12
+		 *
+		 * Some locales (e.g. broken glibc pt_BR), have a comma for decimal,
+		 * but "" for thousands_sep, so we might make the thousands_sep comma
+		 * too.  2007-02-12
 		 */
 		if (lconv->thousands_sep && *lconv->thousands_sep)
 			Np->L_thousands_sep = lconv->thousands_sep;
@@ -3943,6 +3950,7 @@ NUM_prepare_locale(NUMProc *Np)
 		Np->L_negative_sign = "-";
 		Np->L_positive_sign = "+";
 		Np->decimal = ".";
+
 		Np->L_thousands_sep = ",";
 		Np->L_currency_symbol = " ";
 	}
@@ -4809,7 +4817,7 @@ do { \
  */
 #define NUM_TOCHAR_finish \
 do { \
-	NUM_processor(format, &Num, VARDATA(result), numstr, plen, sign, true);	\
+	NUM_processor(format, &Num, VARDATA(result), numstr, plen, sign, true); \
 									\
 	if (shouldFree)					\
 		pfree(format);				\
@@ -4843,7 +4851,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 
 	len = VARSIZE(fmt) - VARHDRSZ;
 
-	if (len <= 0 || len >= INT_MAX/NUM_MAX_ITEM_SIZ)
+	if (len <= 0 || len >= INT_MAX / NUM_MAX_ITEM_SIZ)
 		PG_RETURN_NULL();
 
 	format = NUM_cache(len, &Num, VARDATA(fmt), &shouldFree);

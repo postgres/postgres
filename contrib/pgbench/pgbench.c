@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.73 2007/10/22 10:40:47 mha Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.74 2007/11/15 21:14:31 momjian Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -53,9 +53,9 @@ extern int	optind;
 
 /* max number of clients allowed */
 #ifdef FD_SETSIZE
-#define MAXCLIENTS 	(FD_SETSIZE - 10)
+#define MAXCLIENTS	(FD_SETSIZE - 10)
 #else
-#define MAXCLIENTS 	1024
+#define MAXCLIENTS	1024
 #endif
 
 int			nclients = 1;		/* default number of simulated clients */
@@ -201,7 +201,7 @@ getrand(int min, int max)
 
 /* call PQexec() and exit() on failure */
 static void
-executeStatement(PGconn *con, const char* sql)
+executeStatement(PGconn *con, const char *sql)
 {
 	PGresult   *res;
 
@@ -262,7 +262,7 @@ discard_response(CState * state)
 
 /* check to see if the SQL result was good */
 static int
-check(CState *state, PGresult *res, int n)
+check(CState * state, PGresult *res, int n)
 {
 	CState	   *st = &state[n];
 
@@ -275,7 +275,7 @@ check(CState *state, PGresult *res, int n)
 		default:
 			fprintf(stderr, "Client %d aborted in state %d: %s",
 					n, st->state, PQerrorMessage(st->con));
-			remains--;				/* I've aborted */
+			remains--;			/* I've aborted */
 			PQfinish(st->con);
 			st->con = NULL;
 			return (-1);
@@ -452,12 +452,12 @@ top:
 
 	if (st->sleeping)
 	{							/* are we sleeping? */
-		int				usec;
-		struct timeval	now;
+		int			usec;
+		struct timeval now;
 
 		gettimeofday(&now, NULL);
 		usec = (st->until.tv_sec - now.tv_sec) * 1000000 +
-				st->until.tv_usec - now.tv_usec;
+			st->until.tv_usec - now.tv_usec;
 		if (usec <= 0)
 			st->sleeping = 0;	/* Done sleeping, go ahead with next command */
 		else
@@ -798,11 +798,11 @@ init(void)
 		"drop table if exists accounts",
 		"create table accounts(aid int not null,bid int,abalance int,filler char(84)) with (fillfactor=%d)",
 		"drop table if exists history",
-		"create table history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"};
+	"create table history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"};
 	static char *DDLAFTERs[] = {
 		"alter table branches add primary key (bid)",
 		"alter table tellers add primary key (tid)",
-		"alter table accounts add primary key (aid)"};
+	"alter table accounts add primary key (aid)"};
 
 
 	char		sql[256];
@@ -821,7 +821,8 @@ init(void)
 			(strstr(DDLs[i], "create table tellers") == DDLs[i]) ||
 			(strstr(DDLs[i], "create table accounts") == DDLs[i]))
 		{
-			char ddl_stmt[128];
+			char		ddl_stmt[128];
+
 			snprintf(ddl_stmt, 128, DDLs[i], fillfactor);
 			executeStatement(con, ddl_stmt);
 			continue;
@@ -990,7 +991,7 @@ process_commands(char *buf)
 					pg_strcasecmp(my_commands->argv[2], "ms") != 0 &&
 					pg_strcasecmp(my_commands->argv[2], "s"))
 				{
-					fprintf(stderr, "%s: unknown time unit '%s' - must be us, ms or s\n", 
+					fprintf(stderr, "%s: unknown time unit '%s' - must be us, ms or s\n",
 							my_commands->argv[0], my_commands->argv[2]);
 					return NULL;
 				}
@@ -1204,7 +1205,7 @@ main(int argc, char **argv)
 	int			c;
 	int			is_init_mode = 0;		/* initialize mode? */
 	int			is_no_vacuum = 0;		/* no vacuum at all before testing? */
-	int			do_vacuum_accounts = 0;	/* do vacuum accounts before testing? */
+	int			do_vacuum_accounts = 0; /* do vacuum accounts before testing? */
 	int			debug = 0;		/* debug flag */
 	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT only,
 								 * 2: skip update of branches and tellers */
@@ -1308,7 +1309,7 @@ main(int argc, char **argv)
 					fprintf(stderr, "Use limit/ulimit to increase the limit before using pgbench.\n");
 					exit(1);
 				}
-#endif /* HAVE_GETRLIMIT */
+#endif   /* HAVE_GETRLIMIT */
 				break;
 			case 'C':
 				is_connect = 1;
@@ -1615,8 +1616,8 @@ main(int argc, char **argv)
 
 			if (state[i].sleeping)
 			{
-				int		this_usec;
-				int		sock = PQsocket(state[i].con);
+				int			this_usec;
+				int			sock = PQsocket(state[i].con);
 
 				if (min_usec < 0)
 				{
@@ -1625,7 +1626,7 @@ main(int argc, char **argv)
 				}
 
 				this_usec = (state[i].until.tv_sec - now.tv_sec) * 1000000 +
-							state[i].until.tv_usec - now.tv_usec;
+					state[i].until.tv_usec - now.tv_usec;
 
 				if (this_usec > 0 && (min_usec == 0 || this_usec < min_usec))
 					min_usec = this_usec;
@@ -1657,11 +1658,11 @@ main(int argc, char **argv)
 				timeout.tv_usec = min_usec % 1000000;
 
 				nsocks = select(maxsock + 1, &input_mask, (fd_set *) NULL,
-							  (fd_set *) NULL, &timeout);
+								(fd_set *) NULL, &timeout);
 			}
 			else
 				nsocks = select(maxsock + 1, &input_mask, (fd_set *) NULL,
-							  (fd_set *) NULL, (struct timeval *) NULL);
+								(fd_set *) NULL, (struct timeval *) NULL);
 			if (nsocks < 0)
 			{
 				if (errno == EINTR)

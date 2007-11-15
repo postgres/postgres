@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.148 2007/11/08 21:49:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.149 2007/11/15 21:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ typedef struct PlannerGlobal
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
-} PlannerGlobal;
+}	PlannerGlobal;
 
 /* macro for fetching the Plan associated with a SubPlan node */
 #define planner_subplan_get_plan(root, subplan) \
@@ -118,7 +118,7 @@ typedef struct PlannerInfo
 	 * rt_fetch(), which can be a bit slow once large inheritance sets have
 	 * been expanded.
 	 */
-	RangeTblEntry **simple_rte_array;			/* rangetable as an array */
+	RangeTblEntry **simple_rte_array;	/* rangetable as an array */
 
 	/*
 	 * join_rel_list is a list of all join-relation RelOptInfos we have
@@ -134,13 +134,13 @@ typedef struct PlannerInfo
 
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
-	List	   *returningLists;		/* list of lists of TargetEntry, or NIL */
+	List	   *returningLists; /* list of lists of TargetEntry, or NIL */
 
-	List	   *init_plans;				/* init subplans for query */
+	List	   *init_plans;		/* init subplans for query */
 
-	List	   *eq_classes;				/* list of active EquivalenceClasses */
+	List	   *eq_classes;		/* list of active EquivalenceClasses */
 
-	List	   *canon_pathkeys;			/* list of "canonical" PathKeys */
+	List	   *canon_pathkeys; /* list of "canonical" PathKeys */
 
 	List	   *left_join_clauses;		/* list of RestrictInfos for
 										 * mergejoinable outer join clauses
@@ -383,7 +383,7 @@ typedef struct RelOptInfo
  *		Zeroes in the indexkeys[] array indicate index columns that are
  *		expressions; there is one element in indexprs for each such column.
  *
- *		For an unordered index, the sortop arrays contains zeroes.  Note that
+ *		For an unordered index, the sortop arrays contains zeroes.	Note that
  *		fwdsortop[] and nulls_first[] describe the sort ordering of a forward
  *		indexscan; we can also consider a backward indexscan, which will
  *		generate sort order described by revsortop/!nulls_first.
@@ -444,7 +444,7 @@ typedef struct IndexOptInfo
  * us represent knowledge about different sort orderings being equivalent.
  * Since every PathKey must reference an EquivalenceClass, we will end up
  * with single-member EquivalenceClasses whenever a sort key expression has
- * not been equivalenced to anything else.  It is also possible that such an
+ * not been equivalenced to anything else.	It is also possible that such an
  * EquivalenceClass will contain a volatile expression ("ORDER BY random()"),
  * which is a case that can't arise otherwise since clauses containing
  * volatile functions are never considered mergejoinable.  We mark such
@@ -457,7 +457,7 @@ typedef struct IndexOptInfo
  * We allow equality clauses appearing below the nullable side of an outer join
  * to form EquivalenceClasses, but these have a slightly different meaning:
  * the included values might be all NULL rather than all the same non-null
- * values.  See src/backend/optimizer/README for more on that point.
+ * values.	See src/backend/optimizer/README for more on that point.
  *
  * NB: if ec_merged isn't NULL, this class has been merged into another, and
  * should be ignored in favor of using the pointed-to class.
@@ -466,18 +466,18 @@ typedef struct EquivalenceClass
 {
 	NodeTag		type;
 
-	List	   *ec_opfamilies;		/* btree operator family OIDs */
-	List	   *ec_members;			/* list of EquivalenceMembers */
-	List	   *ec_sources;			/* list of generating RestrictInfos */
-	List	   *ec_derives;			/* list of derived RestrictInfos */
-	Relids		ec_relids;			/* all relids appearing in ec_members */
-	bool		ec_has_const;		/* any pseudoconstants in ec_members? */
+	List	   *ec_opfamilies;	/* btree operator family OIDs */
+	List	   *ec_members;		/* list of EquivalenceMembers */
+	List	   *ec_sources;		/* list of generating RestrictInfos */
+	List	   *ec_derives;		/* list of derived RestrictInfos */
+	Relids		ec_relids;		/* all relids appearing in ec_members */
+	bool		ec_has_const;	/* any pseudoconstants in ec_members? */
 	bool		ec_has_volatile;	/* the (sole) member is a volatile expr */
 	bool		ec_below_outer_join;	/* equivalence applies below an OJ */
-	bool		ec_broken;			/* failed to generate needed clauses? */
-	Index		ec_sortref;			/* originating sortclause label, or 0 */
-	struct EquivalenceClass *ec_merged;		/* set if merged into another EC */
-} EquivalenceClass;
+	bool		ec_broken;		/* failed to generate needed clauses? */
+	Index		ec_sortref;		/* originating sortclause label, or 0 */
+	struct EquivalenceClass *ec_merged; /* set if merged into another EC */
+}	EquivalenceClass;
 
 /*
  * EquivalenceMember - one member expression of an EquivalenceClass
@@ -491,7 +491,7 @@ typedef struct EquivalenceClass
  *
  * em_datatype is usually the same as exprType(em_expr), but can be
  * different when dealing with a binary-compatible opfamily; in particular
- * anyarray_ops would never work without this.  Use em_datatype when
+ * anyarray_ops would never work without this.	Use em_datatype when
  * looking up a specific btree operator to work with this expression.
  */
 typedef struct EquivalenceMember
@@ -503,7 +503,7 @@ typedef struct EquivalenceMember
 	bool		em_is_const;	/* expression is pseudoconstant? */
 	bool		em_is_child;	/* derived version for a child relation? */
 	Oid			em_datatype;	/* the "nominal type" used by the opfamily */
-} EquivalenceMember;
+}	EquivalenceMember;
 
 /*
  * PathKeys
@@ -514,11 +514,11 @@ typedef struct EquivalenceMember
  * etc.  The value being sorted is represented by linking to an
  * EquivalenceClass containing that value and including pk_opfamily among its
  * ec_opfamilies.  This is a convenient method because it makes it trivial
- * to detect equivalent and closely-related orderings.  (See optimizer/README
+ * to detect equivalent and closely-related orderings.	(See optimizer/README
  * for more information.)
  *
  * Note: pk_strategy is either BTLessStrategyNumber (for ASC) or
- * BTGreaterStrategyNumber (for DESC).  We assume that all ordering-capable
+ * BTGreaterStrategyNumber (for DESC).	We assume that all ordering-capable
  * index types will use btree-compatible strategy numbers.
  */
 
@@ -527,10 +527,10 @@ typedef struct PathKey
 	NodeTag		type;
 
 	EquivalenceClass *pk_eclass;	/* the value that is ordered */
-	Oid			pk_opfamily;		/* btree opfamily defining the ordering */
-	int			pk_strategy;		/* sort direction (ASC or DESC) */
-	bool		pk_nulls_first;		/* do NULLs come before normal values? */
-} PathKey;
+	Oid			pk_opfamily;	/* btree opfamily defining the ordering */
+	int			pk_strategy;	/* sort direction (ASC or DESC) */
+	bool		pk_nulls_first; /* do NULLs come before normal values? */
+}	PathKey;
 
 /*
  * Type "Path" is used as-is for sequential-scan paths.  For other
@@ -873,7 +873,7 @@ typedef struct HashPath
  * that appeared elsewhere in the tree and were pushed down to the join rel
  * because they used no other rels.  That's what the is_pushed_down flag is
  * for; it tells us that a qual is not an OUTER JOIN qual for the set of base
- * rels listed in required_relids.  A clause that originally came from WHERE
+ * rels listed in required_relids.	A clause that originally came from WHERE
  * or an INNER JOIN condition will *always* have its is_pushed_down flag set.
  * It's possible for an OUTER JOIN clause to be marked is_pushed_down too,
  * if we decide that it can be pushed down into the nullable side of the join.
@@ -919,7 +919,7 @@ typedef struct HashPath
  *
  * When join clauses are generated from EquivalenceClasses, there may be
  * several equally valid ways to enforce join equivalence, of which we need
- * apply only one.  We mark clauses of this kind by setting parent_ec to
+ * apply only one.	We mark clauses of this kind by setting parent_ec to
  * point to the generating EquivalenceClass.  Multiple clauses with the same
  * parent_ec in the same join are redundant.
  */
@@ -963,8 +963,8 @@ typedef struct RestrictInfo
 
 	/* cache space for mergeclause processing; NULL if not yet set */
 	EquivalenceClass *left_ec;	/* EquivalenceClass containing lefthand */
-	EquivalenceClass *right_ec;	/* EquivalenceClass containing righthand */
-	EquivalenceMember *left_em;		/* EquivalenceMember for lefthand */
+	EquivalenceClass *right_ec; /* EquivalenceClass containing righthand */
+	EquivalenceMember *left_em; /* EquivalenceMember for lefthand */
 	EquivalenceMember *right_em;	/* EquivalenceMember for righthand */
 	List	   *scansel_cache;	/* list of MergeScanSelCache structs */
 
@@ -993,9 +993,9 @@ typedef struct MergeScanSelCache
 	int			strategy;		/* sort direction (ASC or DESC) */
 	bool		nulls_first;	/* do NULLs come before normal values? */
 	/* Results */
-	Selectivity	leftscansel;	/* scan fraction for clause left side */
-	Selectivity	rightscansel;	/* scan fraction for clause right side */
-} MergeScanSelCache;
+	Selectivity leftscansel;	/* scan fraction for clause left side */
+	Selectivity rightscansel;	/* scan fraction for clause right side */
+}	MergeScanSelCache;
 
 /*
  * Inner indexscan info.
@@ -1029,8 +1029,8 @@ typedef struct InnerIndexscanInfo
 	Relids		other_relids;	/* a set of relevant other relids */
 	bool		isouterjoin;	/* true if join is outer */
 	/* Best paths for this lookup key (NULL if no available indexscans): */
-	Path	   *cheapest_startup_innerpath;	/* cheapest startup cost */
-	Path	   *cheapest_total_innerpath;	/* cheapest total cost */
+	Path	   *cheapest_startup_innerpath;		/* cheapest startup cost */
+	Path	   *cheapest_total_innerpath;		/* cheapest total cost */
 } InnerIndexscanInfo;
 
 /*
@@ -1061,7 +1061,7 @@ typedef struct InnerIndexscanInfo
  * to be evaluated after this join is formed (because it references the RHS).
  * Any outer joins that have such a clause and this join in their RHS cannot
  * commute with this join, because that would leave noplace to check the
- * pushed-down clause.  (We don't track this for FULL JOINs, either.)
+ * pushed-down clause.	(We don't track this for FULL JOINs, either.)
  *
  * Note: OuterJoinInfo directly represents only LEFT JOIN and FULL JOIN;
  * RIGHT JOIN is handled by switching the inputs to make it a LEFT JOIN.
@@ -1078,7 +1078,7 @@ typedef struct OuterJoinInfo
 	Relids		syn_righthand;	/* base relids syntactically within RHS */
 	bool		is_full_join;	/* it's a FULL OUTER JOIN */
 	bool		lhs_strict;		/* joinclause is strict for some LHS rel */
-	bool		delay_upper_joins;	/* can't commute with upper RHS */
+	bool		delay_upper_joins;		/* can't commute with upper RHS */
 } OuterJoinInfo;
 
 /*

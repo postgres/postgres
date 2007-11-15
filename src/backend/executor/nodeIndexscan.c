@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.123 2007/05/31 20:45:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.124 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -529,9 +529,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	ExecAssignScanProjectionInfo(&indexstate->ss);
 
 	/*
-	 * If we are just doing EXPLAIN (ie, aren't going to run the plan),
-	 * stop here.  This allows an index-advisor plugin to EXPLAIN a plan
-	 * containing references to nonexistent indexes.
+	 * If we are just doing EXPLAIN (ie, aren't going to run the plan), stop
+	 * here.  This allows an index-advisor plugin to EXPLAIN a plan containing
+	 * references to nonexistent indexes.
 	 */
 	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
 		return indexstate;
@@ -981,7 +981,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 			if (leftop && IsA(leftop, RelabelType))
 				leftop = ((RelabelType *) leftop)->arg;
 
-			 Assert(leftop != NULL);
+			Assert(leftop != NULL);
 
 			if (!(IsA(leftop, Var) &&
 				  var_is_rel((Var *) leftop)))
@@ -994,8 +994,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 			 */
 			ScanKeyEntryInitialize(this_scan_key,
 								   SK_ISNULL | SK_SEARCHNULL,
-								   varattno,    /* attribute number to scan */
-								   strategy,    /* op's strategy */
+								   varattno,	/* attribute number to scan */
+								   strategy,	/* op's strategy */
 								   subtype,		/* strategy subtype */
 								   InvalidOid,	/* no reg proc for this */
 								   (Datum) 0);	/* constant */

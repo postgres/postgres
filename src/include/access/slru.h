@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.21 2007/08/01 22:45:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.22 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,8 +122,8 @@ extern Size SimpleLruShmemSize(int nslots, int nlsns);
 extern void SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 			  LWLockId ctllock, const char *subdir);
 extern int	SimpleLruZeroPage(SlruCtl ctl, int pageno);
-extern int	SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
-							  TransactionId xid);
+extern int SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
+				  TransactionId xid);
 extern int SimpleLruReadPage_ReadOnly(SlruCtl ctl, int pageno,
 						   TransactionId xid);
 extern void SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata);

@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.5 2007/11/11 19:22:49 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.6 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,13 +98,13 @@ static void transformTableConstraint(ParseState *pstate,
 						 Constraint *constraint);
 static void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 					 InhRelation *inhrelation);
-static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt, 
-							Relation parent_index, AttrNumber *attmap);
+static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
+						Relation parent_index, AttrNumber *attmap);
 static List *get_opclass(Oid opclass, Oid actual_datatype);
 static void transformIndexConstraints(ParseState *pstate,
 						  CreateStmtContext *cxt);
 static IndexStmt *transformIndexConstraint(Constraint *constraint,
-										   CreateStmtContext *cxt);
+						 CreateStmtContext *cxt);
 static void transformFKConstraints(ParseState *pstate,
 					   CreateStmtContext *cxt,
 					   bool skipValidation,
@@ -138,21 +138,21 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	ListCell   *elements;
 
 	/*
-	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This
-	 * is overkill, but easy.)
+	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This is
+	 * overkill, but easy.)
 	 */
 	stmt = (CreateStmt *) copyObject(stmt);
 
 	/*
 	 * If the target relation name isn't schema-qualified, make it so.  This
 	 * prevents some corner cases in which added-on rewritten commands might
-	 * think they should apply to other relations that have the same name
-	 * and are earlier in the search path.  "istemp" is equivalent to a
+	 * think they should apply to other relations that have the same name and
+	 * are earlier in the search path.	"istemp" is equivalent to a
 	 * specification of pg_temp, so no need for anything extra in that case.
 	 */
 	if (stmt->relation->schemaname == NULL && !stmt->relation->istemp)
 	{
-		Oid		namespaceid = RangeVarGetCreationNamespace(stmt->relation);
+		Oid			namespaceid = RangeVarGetCreationNamespace(stmt->relation);
 
 		stmt->relation->schemaname = get_namespace_name(namespaceid);
 	}
@@ -580,8 +580,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	}
 
 	/*
-	 * Insert the copied attributes into the cxt for the new table
-	 * definition.
+	 * Insert the copied attributes into the cxt for the new table definition.
 	 */
 	for (parent_attno = 1; parent_attno <= tupleDesc->natts;
 		 parent_attno++)
@@ -650,8 +649,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	}
 
 	/*
-	 * Copy CHECK constraints if requested, being careful to adjust
-	 * attribute numbers
+	 * Copy CHECK constraints if requested, being careful to adjust attribute
+	 * numbers
 	 */
 	if (including_constraints && tupleDesc->constr)
 	{
@@ -687,9 +686,9 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 		foreach(l, parent_indexes)
 		{
-			Oid        	 parent_index_oid = lfirst_oid(l);
-			Relation   	 parent_index;
-			IndexStmt  	*index_stmt;
+			Oid			parent_index_oid = lfirst_oid(l);
+			Relation	parent_index;
+			IndexStmt  *index_stmt;
 
 			parent_index = index_open(parent_index_oid, AccessShareLock);
 
@@ -723,25 +722,25 @@ static IndexStmt *
 generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 						AttrNumber *attmap)
 {
-	HeapTuple			 ht_idx;
-	HeapTuple			 ht_idxrel;
-	HeapTuple			 ht_am;
-	Form_pg_index 		 idxrec;
-	Form_pg_class 		 idxrelrec;
-	Form_pg_am			 amrec;
-	List	   			*indexprs = NIL;
-	ListCell   			*indexpr_item;
-	Oid					 indrelid;
-	Oid 				 source_relid;
-	int					 keyno;
-	Oid					 keycoltype;
-	Datum				 indclassDatum;
-	Datum				 indoptionDatum;
-	bool				 isnull;
-	oidvector  			*indclass;
-	int2vector 			*indoption;
-	IndexStmt  			*index;
-	Datum				 reloptions;
+	HeapTuple	ht_idx;
+	HeapTuple	ht_idxrel;
+	HeapTuple	ht_am;
+	Form_pg_index idxrec;
+	Form_pg_class idxrelrec;
+	Form_pg_am	amrec;
+	List	   *indexprs = NIL;
+	ListCell   *indexpr_item;
+	Oid			indrelid;
+	Oid			source_relid;
+	int			keyno;
+	Oid			keycoltype;
+	Datum		indclassDatum;
+	Datum		indoptionDatum;
+	bool		isnull;
+	oidvector  *indclass;
+	int2vector *indoption;
+	IndexStmt  *index;
+	Datum		reloptions;
 
 	source_relid = RelationGetRelid(source_idx);
 
@@ -825,7 +824,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 
 	for (keyno = 0; keyno < idxrec->indnatts; keyno++)
 	{
-		IndexElem	*iparam;
+		IndexElem  *iparam;
 		AttrNumber	attnum = idxrec->indkey.values[keyno];
 		int16		opt = indoption->values[keyno];
 
@@ -914,9 +913,9 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 static List *
 get_opclass(Oid opclass, Oid actual_datatype)
 {
-	HeapTuple			 ht_opc;
-	Form_pg_opclass 	 opc_rec;
-	List 				*result = NIL;
+	HeapTuple	ht_opc;
+	Form_pg_opclass opc_rec;
+	List	   *result = NIL;
 
 	ht_opc = SearchSysCache(CLAOID,
 							ObjectIdGetDatum(opclass),
@@ -928,8 +927,8 @@ get_opclass(Oid opclass, Oid actual_datatype)
 	if (!OidIsValid(actual_datatype) ||
 		GetDefaultOpClass(actual_datatype, opc_rec->opcmethod) != opclass)
 	{
-		char *nsp_name = get_namespace_name(opc_rec->opcnamespace);
-		char *opc_name = NameStr(opc_rec->opcname);
+		char	   *nsp_name = get_namespace_name(opc_rec->opcnamespace);
+		char	   *opc_name = NameStr(opc_rec->opcname);
 
 		result = list_make2(makeString(nsp_name), makeString(opc_name));
 	}
@@ -1038,9 +1037,9 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 static IndexStmt *
 transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 {
-	IndexStmt 	*index;
-	ListCell   	*keys;
-	IndexElem  	*iparam;
+	IndexStmt  *index;
+	ListCell   *keys;
+	IndexElem  *iparam;
 
 	Assert(constraint->contype == CONSTR_PRIMARY ||
 		   constraint->contype == CONSTR_UNIQUE);
@@ -1054,8 +1053,8 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		if (cxt->pkey != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("multiple primary keys for table \"%s\" are not allowed",
-							cxt->relation->relname)));
+			 errmsg("multiple primary keys for table \"%s\" are not allowed",
+					cxt->relation->relname)));
 		cxt->pkey = index;
 
 		/*
@@ -1068,7 +1067,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	if (constraint->name != NULL)
 		index->idxname = pstrdup(constraint->name);
 	else
-		index->idxname = NULL;		/* DefineIndex will choose name */
+		index->idxname = NULL;	/* DefineIndex will choose name */
 
 	index->relation = cxt->relation;
 	index->accessMethod = DEFAULT_INDEX_TYPE;
@@ -1079,10 +1078,10 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	index->concurrent = false;
 
 	/*
-	 * Make sure referenced keys exist.  If we are making a PRIMARY KEY
-	 * index, also make sure they are NOT NULL, if possible. (Although we
-	 * could leave it to DefineIndex to mark the columns NOT NULL, it's
-	 * more efficient to get it right the first time.)
+	 * Make sure referenced keys exist.  If we are making a PRIMARY KEY index,
+	 * also make sure they are NOT NULL, if possible. (Although we could leave
+	 * it to DefineIndex to mark the columns NOT NULL, it's more efficient to
+	 * get it right the first time.)
 	 */
 	foreach(keys, constraint->keys)
 	{
@@ -1110,9 +1109,9 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		else if (SystemAttributeByName(key, cxt->hasoids) != NULL)
 		{
 			/*
-			 * column will be a system column in the new table, so accept
-			 * it.	System columns can't ever be null, so no need to worry
-			 * about PRIMARY/NOT NULL constraint.
+			 * column will be a system column in the new table, so accept it.
+			 * System columns can't ever be null, so no need to worry about
+			 * PRIMARY/NOT NULL constraint.
 			 */
 			found = true;
 		}
@@ -1132,8 +1131,8 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 				if (rel->rd_rel->relkind != RELKIND_RELATION)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("inherited relation \"%s\" is not a table",
-									inh->relname)));
+						   errmsg("inherited relation \"%s\" is not a table",
+								  inh->relname)));
 				for (count = 0; count < rel->rd_att->natts; count++)
 				{
 					Form_pg_attribute inhattr = rel->rd_att->attrs[count];
@@ -1146,10 +1145,10 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 						found = true;
 
 						/*
-						 * We currently have no easy way to force an
-						 * inherited column to be NOT NULL at creation, if
-						 * its parent wasn't so already. We leave it to
-						 * DefineIndex to fix things up in this case.
+						 * We currently have no easy way to force an inherited
+						 * column to be NOT NULL at creation, if its parent
+						 * wasn't so already. We leave it to DefineIndex to
+						 * fix things up in this case.
 						 */
 						break;
 					}
@@ -1162,9 +1161,9 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 
 		/*
 		 * In the ALTER TABLE case, don't complain about index keys not
-		 * created in the command; they may well exist already.
-		 * DefineIndex will complain about them if not, and will also take
-		 * care of marking them NOT NULL.
+		 * created in the command; they may well exist already. DefineIndex
+		 * will complain about them if not, and will also take care of marking
+		 * them NOT NULL.
 		 */
 		if (!found && !cxt->isalter)
 			ereport(ERROR,
@@ -1186,8 +1185,8 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
-							 errmsg("column \"%s\" appears twice in unique constraint",
-									key)));
+					errmsg("column \"%s\" appears twice in unique constraint",
+						   key)));
 			}
 		}
 
@@ -1269,7 +1268,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
  * transformIndexStmt - parse analysis for CREATE INDEX
  *
  * Note: this is a no-op for an index not using either index expressions or
- * a predicate expression.  There are several code paths that create indexes
+ * a predicate expression.	There are several code paths that create indexes
  * without bothering to call this, because they know they don't have any
  * such expressions to deal with.
  */
@@ -1282,28 +1281,28 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 	ListCell   *l;
 
 	/*
-	 * We must not scribble on the passed-in IndexStmt, so copy it.  (This
-	 * is overkill, but easy.)
+	 * We must not scribble on the passed-in IndexStmt, so copy it.  (This is
+	 * overkill, but easy.)
 	 */
 	stmt = (IndexStmt *) copyObject(stmt);
 
 	/*
-	 * Open the parent table with appropriate locking.  We must do this
+	 * Open the parent table with appropriate locking.	We must do this
 	 * because addRangeTableEntry() would acquire only AccessShareLock,
-	 * leaving DefineIndex() needing to do a lock upgrade with consequent
-	 * risk of deadlock.  Make sure this stays in sync with the type of
-	 * lock DefineIndex() wants.
+	 * leaving DefineIndex() needing to do a lock upgrade with consequent risk
+	 * of deadlock.  Make sure this stays in sync with the type of lock
+	 * DefineIndex() wants.
 	 */
 	rel = heap_openrv(stmt->relation,
-				(stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock));
+				  (stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock));
 
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
 	/*
-	 * Put the parent table into the rtable so that the expressions can
-	 * refer to its fields without qualification.
+	 * Put the parent table into the rtable so that the expressions can refer
+	 * to its fields without qualification.
 	 */
 	rte = addRangeTableEntry(pstate, stmt->relation, NULL, false, true);
 
@@ -1432,7 +1431,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 
 	/* take care of the where clause */
 	*whereClause = transformWhereClause(pstate,
-										(Node *) copyObject(stmt->whereClause),
+									  (Node *) copyObject(stmt->whereClause),
 										"WHERE");
 
 	if (list_length(pstate->p_rtable) != 2)		/* naughty, naughty... */
@@ -1458,7 +1457,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 
 		nothing_qry->commandType = CMD_NOTHING;
 		nothing_qry->rtable = pstate->p_rtable;
-		nothing_qry->jointree = makeFromExpr(NIL, NULL); /* no join wanted */
+		nothing_qry->jointree = makeFromExpr(NIL, NULL);		/* no join wanted */
 
 		*actions = list_make1(nothing_qry);
 	}
@@ -1480,8 +1479,8 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 						has_new;
 
 			/*
-			 * Since outer ParseState isn't parent of inner, have to pass
-			 * down the query text by hand.
+			 * Since outer ParseState isn't parent of inner, have to pass down
+			 * the query text by hand.
 			 */
 			sub_pstate->p_sourcetext = queryString;
 
@@ -1650,17 +1649,17 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	AlterTableCmd *newcmd;
 
 	/*
-	 * We must not scribble on the passed-in AlterTableStmt, so copy it.
-	 * (This is overkill, but easy.)
+	 * We must not scribble on the passed-in AlterTableStmt, so copy it. (This
+	 * is overkill, but easy.)
 	 */
 	stmt = (AlterTableStmt *) copyObject(stmt);
 
 	/*
-	 * Acquire exclusive lock on the target relation, which will be held
-	 * until end of transaction.  This ensures any decisions we make here
-	 * based on the state of the relation will still be good at execution.
-	 * We must get exclusive lock now because execution will; taking a lower
-	 * grade lock now and trying to upgrade later risks deadlock.
+	 * Acquire exclusive lock on the target relation, which will be held until
+	 * end of transaction.	This ensures any decisions we make here based on
+	 * the state of the relation will still be good at execution. We must get
+	 * exclusive lock now because execution will; taking a lower grade lock
+	 * now and trying to upgrade later risks deadlock.
 	 */
 	rel = relation_openrv(stmt->relation, AccessExclusiveLock);
 

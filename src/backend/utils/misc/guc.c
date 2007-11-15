@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.425 2007/11/11 19:22:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.426 2007/11/15 21:14:41 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ static const char *assign_syslog_ident(const char *ident,
 static const char *assign_defaultxactisolevel(const char *newval, bool doit,
 						   GucSource source);
 static const char *assign_session_replication_role(const char *newval, bool doit,
-						   GucSource source);
+								GucSource source);
 static const char *assign_log_min_messages(const char *newval, bool doit,
 						GucSource source);
 static const char *assign_client_min_messages(const char *newval,
@@ -1052,14 +1052,14 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 
-    {
-        {"archive_mode", PGC_POSTMASTER, WAL_SETTINGS,
-            gettext_noop("Allows archiving of WAL files using archive_command."),
-            NULL
-        },
-        &XLogArchiveMode,
-        false, NULL, NULL
-    },
+	{
+		{"archive_mode", PGC_POSTMASTER, WAL_SETTINGS,
+			gettext_noop("Allows archiving of WAL files using archive_command."),
+			NULL
+		},
+		&XLogArchiveMode,
+		false, NULL, NULL
+	},
 
 	{
 		{"allow_system_table_mods", PGC_POSTMASTER, DEVELOPER_OPTIONS,
@@ -1181,7 +1181,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MS
 		},
 		&DeadlockTimeout,
-		1000, 1, INT_MAX/1000, NULL, NULL
+		1000, 1, INT_MAX / 1000, NULL, NULL
 	},
 
 	/*
@@ -1193,8 +1193,8 @@ static struct config_int ConfigureNamesInt[] =
 	 *
 	 * MaxBackends is limited to INT_MAX/4 because some places compute
 	 * 4*MaxBackends without any overflow check.  This check is made on
-	 * assign_maxconnections, since MaxBackends is computed as MaxConnections +
-	 * autovacuum_max_workers.
+	 * assign_maxconnections, since MaxBackends is computed as MaxConnections
+	 * + autovacuum_max_workers.
 	 *
 	 * Likewise we have to limit NBuffers to INT_MAX/2.
 	 */
@@ -2448,7 +2448,7 @@ static struct config_string ConfigureNamesString[] =
 		&SSLCipherSuites,
 		"ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH", NULL, NULL
 	},
-#endif /* USE_SSL */
+#endif   /* USE_SSL */
 
 	/* End-of-list marker */
 	{
@@ -2499,7 +2499,7 @@ static void ReportGUCOption(struct config_generic * record);
 static void ShowGUCConfigOption(const char *name, DestReceiver *dest);
 static void ShowAllGUCConfig(DestReceiver *dest);
 static char *_ShowOption(struct config_generic * record, bool use_units);
-static bool is_newvalue_equal(struct config_generic *record, const char *newvalue);
+static bool is_newvalue_equal(struct config_generic * record, const char *newvalue);
 
 
 /*
@@ -2630,7 +2630,7 @@ set_stack_value(struct config_generic * gconf, union config_var_value * val)
  * Support for discarding a no-longer-needed value in a stack entry
  */
 static void
-discard_stack_value(struct config_generic *gconf, union config_var_value *val)
+discard_stack_value(struct config_generic * gconf, union config_var_value * val)
 {
 	switch (gconf->vartype)
 	{
@@ -2806,8 +2806,8 @@ add_placeholder_variable(const char *name, int elevel)
 
 	/*
 	 * The char* is allocated at the end of the struct since we have no
-	 * 'static' place to point to.  Note that the current value, as well
-	 * as the boot and reset values, start out NULL.
+	 * 'static' place to point to.	Note that the current value, as well as
+	 * the boot and reset values, start out NULL.
 	 */
 	var->variable = (char **) (var + 1);
 
@@ -2969,8 +2969,8 @@ InitializeGUCOptions(void)
 	long		stack_rlimit;
 
 	/*
-	 * Before log_line_prefix could possibly receive a nonempty setting,
-	 * make sure that timezone processing is minimally alive (see elog.c).
+	 * Before log_line_prefix could possibly receive a nonempty setting, make
+	 * sure that timezone processing is minimally alive (see elog.c).
 	 */
 	pg_timezone_pre_initialize();
 
@@ -3094,7 +3094,7 @@ InitializeGUCOptions(void)
 
 	/*
 	 * For historical reasons, some GUC parameters can receive defaults from
-	 * environment variables.  Process those settings.  NB: if you add or
+	 * environment variables.  Process those settings.	NB: if you add or
 	 * remove anything here, see also ProcessConfigFile().
 	 */
 
@@ -3118,11 +3118,11 @@ InitializeGUCOptions(void)
 	stack_rlimit = get_stack_depth_rlimit();
 	if (stack_rlimit > 0)
 	{
-		int		new_limit = (stack_rlimit - STACK_DEPTH_SLOP) / 1024L;
+		int			new_limit = (stack_rlimit - STACK_DEPTH_SLOP) / 1024L;
 
 		if (new_limit > 100)
 		{
-			char	limbuf[16];
+			char		limbuf[16];
 
 			new_limit = Min(new_limit, 2048);
 			sprintf(limbuf, "%d", new_limit);
@@ -3470,9 +3470,9 @@ void
 AtStart_GUC(void)
 {
 	/*
-	 * The nest level should be 0 between transactions; if it isn't,
-	 * somebody didn't call AtEOXact_GUC, or called it with the wrong
-	 * nestLevel.  We throw a warning but make no other effort to clean up.
+	 * The nest level should be 0 between transactions; if it isn't, somebody
+	 * didn't call AtEOXact_GUC, or called it with the wrong nestLevel.  We
+	 * throw a warning but make no other effort to clean up.
 	 */
 	if (GUCNestLevel != 0)
 		elog(WARNING, "GUC nest level = %d at transaction start",
@@ -3482,7 +3482,7 @@ AtStart_GUC(void)
 
 /*
  * Enter a new nesting level for GUC values.  This is called at subtransaction
- * start and when entering a function that has proconfig settings.  NOTE that
+ * start and when entering a function that has proconfig settings.	NOTE that
  * we must not risk error here, else subtransaction start will be unhappy.
  */
 int
@@ -3520,9 +3520,9 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 		GucStack   *stack;
 
 		/*
-		 * Process and pop each stack entry within the nest level.  To
-		 * simplify fmgr_security_definer(), we allow failure exit from
-		 * a function-with-SET-options to be recovered at the surrounding
+		 * Process and pop each stack entry within the nest level.	To
+		 * simplify fmgr_security_definer(), we allow failure exit from a
+		 * function-with-SET-options to be recovered at the surrounding
 		 * transaction or subtransaction abort; so there could be more than
 		 * one stack entry to pop.
 		 */
@@ -3540,7 +3540,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 			 * stack entries to avoid leaking memory.  If we do set one of
 			 * those flags, unused fields will be cleaned up after restoring.
 			 */
-			if (!isCommit)			/* if abort, always restore prior value */
+			if (!isCommit)		/* if abort, always restore prior value */
 				restorePrior = true;
 			else if (stack->state == GUC_SAVE)
 				restorePrior = true;
@@ -3554,7 +3554,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 					/* we keep the current active value */
 					discard_stack_value(gconf, &stack->prior);
 				}
-				else		/* must be GUC_LOCAL */
+				else	/* must be GUC_LOCAL */
 					restorePrior = true;
 			}
 			else if (prev == NULL ||
@@ -3567,13 +3567,13 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 			else
 			{
 				/*
-				 * We have to merge this stack entry into prev.
-				 * See README for discussion of this bit.
+				 * We have to merge this stack entry into prev. See README for
+				 * discussion of this bit.
 				 */
 				switch (stack->state)
 				{
 					case GUC_SAVE:
-						Assert(false); /* can't get here */
+						Assert(false);	/* can't get here */
 
 					case GUC_SET:
 						/* next level always becomes SET */
@@ -3631,98 +3631,99 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 				switch (gconf->vartype)
 				{
 					case PGC_BOOL:
-					{
-						struct config_bool *conf = (struct config_bool *) gconf;
-						bool		newval = newvalue.boolval;
-
-						if (*conf->variable != newval)
 						{
-							if (conf->assign_hook)
-								if (!(*conf->assign_hook) (newval,
-														   true, PGC_S_OVERRIDE))
-									elog(LOG, "failed to commit %s",
-										 conf->gen.name);
-							*conf->variable = newval;
-							changed = true;
-						}
-						break;
-					}
-					case PGC_INT:
-					{
-						struct config_int *conf = (struct config_int *) gconf;
-						int			newval = newvalue.intval;
+							struct config_bool *conf = (struct config_bool *) gconf;
+							bool		newval = newvalue.boolval;
 
-						if (*conf->variable != newval)
-						{
-							if (conf->assign_hook)
-								if (!(*conf->assign_hook) (newval,
-														   true, PGC_S_OVERRIDE))
-									elog(LOG, "failed to commit %s",
-										 conf->gen.name);
-							*conf->variable = newval;
-							changed = true;
-						}
-						break;
-					}
-					case PGC_REAL:
-					{
-						struct config_real *conf = (struct config_real *) gconf;
-						double		newval = newvalue.realval;
-
-						if (*conf->variable != newval)
-						{
-							if (conf->assign_hook)
-								if (!(*conf->assign_hook) (newval,
-														   true, PGC_S_OVERRIDE))
-									elog(LOG, "failed to commit %s",
-										 conf->gen.name);
-							*conf->variable = newval;
-							changed = true;
-						}
-						break;
-					}
-					case PGC_STRING:
-					{
-						struct config_string *conf = (struct config_string *) gconf;
-						char	   *newval = newvalue.stringval;
-
-						if (*conf->variable != newval)
-						{
-							if (conf->assign_hook && newval)
+							if (*conf->variable != newval)
 							{
-								const char *newstr;
+								if (conf->assign_hook)
+									if (!(*conf->assign_hook) (newval,
+													   true, PGC_S_OVERRIDE))
+										elog(LOG, "failed to commit %s",
+											 conf->gen.name);
+								*conf->variable = newval;
+								changed = true;
+							}
+							break;
+						}
+					case PGC_INT:
+						{
+							struct config_int *conf = (struct config_int *) gconf;
+							int			newval = newvalue.intval;
 
-								newstr = (*conf->assign_hook) (newval, true,
-															   PGC_S_OVERRIDE);
-								if (newstr == NULL)
-									elog(LOG, "failed to commit %s",
-										 conf->gen.name);
-								else if (newstr != newval)
+							if (*conf->variable != newval)
+							{
+								if (conf->assign_hook)
+									if (!(*conf->assign_hook) (newval,
+													   true, PGC_S_OVERRIDE))
+										elog(LOG, "failed to commit %s",
+											 conf->gen.name);
+								*conf->variable = newval;
+								changed = true;
+							}
+							break;
+						}
+					case PGC_REAL:
+						{
+							struct config_real *conf = (struct config_real *) gconf;
+							double		newval = newvalue.realval;
+
+							if (*conf->variable != newval)
+							{
+								if (conf->assign_hook)
+									if (!(*conf->assign_hook) (newval,
+													   true, PGC_S_OVERRIDE))
+										elog(LOG, "failed to commit %s",
+											 conf->gen.name);
+								*conf->variable = newval;
+								changed = true;
+							}
+							break;
+						}
+					case PGC_STRING:
+						{
+							struct config_string *conf = (struct config_string *) gconf;
+							char	   *newval = newvalue.stringval;
+
+							if (*conf->variable != newval)
+							{
+								if (conf->assign_hook && newval)
 								{
-									/*
-									 * If newval should now be freed, it'll be
-									 * taken care of below.
-									 *
-									 * See notes in set_config_option about
-									 * casting
-									 */
-									newval = (char *) newstr;
+									const char *newstr;
+
+									newstr = (*conf->assign_hook) (newval, true,
+															 PGC_S_OVERRIDE);
+									if (newstr == NULL)
+										elog(LOG, "failed to commit %s",
+											 conf->gen.name);
+									else if (newstr != newval)
+									{
+										/*
+										 * If newval should now be freed,
+										 * it'll be taken care of below.
+										 *
+										 * See notes in set_config_option
+										 * about casting
+										 */
+										newval = (char *) newstr;
+									}
 								}
+
+								set_string_field(conf, conf->variable, newval);
+								changed = true;
 							}
 
-							set_string_field(conf, conf->variable, newval);
-							changed = true;
+							/*
+							 * Release stacked values if not used anymore. We
+							 * could use discard_stack_value() here, but since
+							 * we have type-specific code anyway, might as
+							 * well inline it.
+							 */
+							set_string_field(conf, &stack->prior.stringval, NULL);
+							set_string_field(conf, &stack->masked.stringval, NULL);
+							break;
 						}
-						/*
-						 * Release stacked values if not used anymore.
-						 * We could use discard_stack_value() here, but since
-						 * we have type-specific code anyway, might as well
-						 * inline it.
-						 */
-						set_string_field(conf, &stack->prior.stringval, NULL);
-						set_string_field(conf, &stack->masked.stringval, NULL);
-						break;
-					}
 				}
 
 				gconf->source = newsource;
@@ -3735,7 +3736,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 			/* Report new value if we changed it */
 			if (changed && (gconf->flags & GUC_REPORT))
 				ReportGUCOption(gconf);
-		} /* end of stack-popping loop */
+		}						/* end of stack-popping loop */
 
 		if (stack != NULL)
 			still_dirty = true;
@@ -4196,10 +4197,10 @@ set_config_option(const char *name, const char *value,
 	}
 
 	/*
-	 * If source is postgresql.conf, mark the found record with GUC_IS_IN_FILE.
-	 * This is for the convenience of ProcessConfigFile.  Note that we do it
-	 * even if changeVal is false, since ProcessConfigFile wants the marking
-	 * to occur during its testing pass.
+	 * If source is postgresql.conf, mark the found record with
+	 * GUC_IS_IN_FILE. This is for the convenience of ProcessConfigFile.  Note
+	 * that we do it even if changeVal is false, since ProcessConfigFile wants
+	 * the marking to occur during its testing pass.
 	 */
 	if (source == PGC_S_FILE)
 		record->status |= GUC_IS_IN_FILE;
@@ -4229,7 +4230,7 @@ set_config_option(const char *name, const char *value,
 				/*
 				 * We are reading a PGC_POSTMASTER var from postgresql.conf.
 				 * We can't change the setting, so give a warning if the DBA
-				 * tries to change it.  (Throwing an error would be more
+				 * tries to change it.	(Throwing an error would be more
 				 * consistent, but seems overly rigid.)
 				 */
 				if (changeVal && !is_newvalue_equal(record, value))
@@ -4304,10 +4305,10 @@ set_config_option(const char *name, const char *value,
 	}
 
 	/*
-	 * Should we set reset/stacked values?  (If so, the behavior is not
-	 * transactional.)  This is done either when we get a default
-	 * value from the database's/user's/client's default settings or
-	 * when we reset a value to its default.
+	 * Should we set reset/stacked values?	(If so, the behavior is not
+	 * transactional.)	This is done either when we get a default value from
+	 * the database's/user's/client's default settings or when we reset a
+	 * value to its default.
 	 */
 	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) &&
 		((value != NULL) || source == PGC_S_DEFAULT);
@@ -4414,8 +4415,8 @@ set_config_option(const char *name, const char *value,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("invalid value for parameter \"%s\": \"%s\"",
-										name, value),
+						 errmsg("invalid value for parameter \"%s\": \"%s\"",
+								name, value),
 								 hintmsg ? errhint(hintmsg) : 0));
 						return false;
 					}
@@ -4920,7 +4921,7 @@ flatten_set_variable_args(const char *name, List *args)
 void
 ExecSetVariableStmt(VariableSetStmt *stmt)
 {
-	GucAction action = stmt->is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET;
+	GucAction	action = stmt->is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET;
 
 	switch (stmt->kind)
 	{
@@ -4934,9 +4935,10 @@ ExecSetVariableStmt(VariableSetStmt *stmt)
 							  true);
 			break;
 		case VAR_SET_MULTI:
+
 			/*
-			 * Special case for special SQL syntax that effectively sets
-			 * more than one variable per statement.
+			 * Special case for special SQL syntax that effectively sets more
+			 * than one variable per statement.
 			 */
 			if (strcmp(stmt->name, "TRANSACTION") == 0)
 			{
@@ -5121,7 +5123,7 @@ init_custom_variable(const char *name,
  * variable into the GUC variable array, replacing any placeholder.
  */
 static void
-define_custom_variable(struct config_generic *variable)
+define_custom_variable(struct config_generic * variable)
 {
 	const char *name = variable->name;
 	const char **nameAddr = &name;
@@ -5153,8 +5155,8 @@ define_custom_variable(struct config_generic *variable)
 	pHolder = (struct config_string *) (*res);
 
 	/*
-	 * Replace the placeholder.
-	 * We aren't changing the name, so no re-sorting is necessary
+	 * Replace the placeholder. We aren't changing the name, so no re-sorting
+	 * is necessary
 	 */
 	*res = variable;
 
@@ -5900,7 +5902,7 @@ _ShowOption(struct config_generic * record, bool use_units)
  * effects of canonicalization of string values by assign_hooks.
  */
 static bool
-is_newvalue_equal(struct config_generic *record, const char *newvalue)
+is_newvalue_equal(struct config_generic * record, const char *newvalue)
 {
 	/* newvalue == NULL isn't supported */
 	Assert(newvalue != NULL);
@@ -6175,7 +6177,7 @@ ParseLongOption(const char *string, char **name, char **value)
 
 /*
  * Handle options fetched from pg_database.datconfig, pg_authid.rolconfig,
- * pg_proc.proconfig, etc.  Caller must specify proper context/source/action.
+ * pg_proc.proconfig, etc.	Caller must specify proper context/source/action.
  *
  * The array parameter must be an array of TEXT (it must not be NULL).
  */
@@ -6418,7 +6420,7 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 		if (pg_strcasecmp(tok, "stderr") == 0)
 			newlogdest |= LOG_DESTINATION_STDERR;
 		else if (pg_strcasecmp(tok, "csvlog") == 0)
-           newlogdest |= LOG_DESTINATION_CSVLOG;
+			newlogdest |= LOG_DESTINATION_CSVLOG;
 #ifdef HAVE_SYSLOG
 		else if (pg_strcasecmp(tok, "syslog") == 0)
 			newlogdest |= LOG_DESTINATION_SYSLOG;
@@ -6527,7 +6529,7 @@ assign_defaultxactisolevel(const char *newval, bool doit, GucSource source)
 static const char *
 assign_session_replication_role(const char *newval, bool doit, GucSource source)
 {
-	int		newrole;
+	int			newrole;
 
 	if (pg_strcasecmp(newval, "origin") == 0)
 		newrole = SESSION_REPLICATION_ROLE_ORIGIN;

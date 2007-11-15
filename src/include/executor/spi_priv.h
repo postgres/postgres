@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.29 2007/04/16 17:21:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.30 2007/11/15 21:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ typedef struct
  * For a saved plan, the _SPI_plan struct and the argument type array are in
  * the plancxt (which can be really small).  All the other subsidiary state
  * is in plancache entries identified by plancache_list (note: the list cells
- * themselves are in plancxt).  We rely on plancache.c to keep the cache
+ * themselves are in plancxt).	We rely on plancache.c to keep the cache
  * entries up-to-date as needed.  The plancxt is a child of CacheMemoryContext
  * since it should persist until explicitly destroyed.
  *
@@ -63,9 +63,9 @@ typedef struct _SPI_plan
 {
 	int			magic;			/* should equal _SPI_PLAN_MAGIC */
 	bool		saved;			/* saved or unsaved plan? */
-	List	   *plancache_list;	/* one CachedPlanSource per parsetree */
+	List	   *plancache_list; /* one CachedPlanSource per parsetree */
 	MemoryContext plancxt;		/* Context containing _SPI_plan and data */
-	int			cursor_options;	/* Cursor options used for planning */
+	int			cursor_options; /* Cursor options used for planning */
 	int			nargs;			/* number of plan arguments */
 	Oid		   *argtypes;		/* Argument types (NULL if nargs is 0) */
 } _SPI_plan;

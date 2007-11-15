@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.100 2007/08/21 01:11:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.101 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ DECLARE_UNIQUE_INDEX(pg_amop_fam_strat_index, 2653, on pg_amop using btree(amopf
 DECLARE_UNIQUE_INDEX(pg_amop_opr_fam_index, 2654, on pg_amop using btree(amopopr oid_ops, amopfamily oid_ops));
 #define AccessMethodOperatorIndexId  2654
 DECLARE_UNIQUE_INDEX(pg_amop_oid_index, 2756, on pg_amop using btree(oid oid_ops));
-#define AccessMethodOperatorOidIndexId  2756
+#define AccessMethodOperatorOidIndexId	2756
 
 DECLARE_UNIQUE_INDEX(pg_amproc_fam_proc_index, 2655, on pg_amproc using btree(amprocfamily oid_ops, amproclefttype oid_ops, amprocrighttype oid_ops, amprocnum int2_ops));
 #define AccessMethodProcedureIndexId  2655
@@ -147,7 +147,7 @@ DECLARE_UNIQUE_INDEX(pg_shdescription_o_c_index, 2397, on pg_shdescription using
 #define SharedDescriptionObjIndexId 2397
 
 DECLARE_UNIQUE_INDEX(pg_enum_oid_index, 3502, on pg_enum using btree(oid oid_ops));
-#define EnumOidIndexId  3502
+#define EnumOidIndexId	3502
 DECLARE_UNIQUE_INDEX(pg_enum_typid_label_index, 3503, on pg_enum using btree(enumtypid oid_ops, enumlabel name_ops));
 #define EnumTypIdLabelIndexId 3503
 
@@ -186,7 +186,7 @@ DECLARE_UNIQUE_INDEX(pg_operator_oprname_l_r_n_index, 2689, on pg_operator using
 DECLARE_UNIQUE_INDEX(pg_opfamily_am_name_nsp_index, 2754, on pg_opfamily using btree(opfmethod oid_ops, opfname name_ops, opfnamespace oid_ops));
 #define OpfamilyAmNameNspIndexId  2754
 DECLARE_UNIQUE_INDEX(pg_opfamily_oid_index, 2755, on pg_opfamily using btree(oid oid_ops));
-#define OpfamilyOidIndexId  2755
+#define OpfamilyOidIndexId	2755
 
 DECLARE_UNIQUE_INDEX(pg_pltemplate_name_index, 1137, on pg_pltemplate using btree(tmplname name_ops));
 #define PLTemplateNameIndexId  1137
@@ -225,27 +225,27 @@ DECLARE_UNIQUE_INDEX(pg_trigger_oid_index, 2702, on pg_trigger using btree(oid o
 #define TriggerOidIndexId  2702
 
 DECLARE_UNIQUE_INDEX(pg_ts_config_cfgname_index, 3608, on pg_ts_config using btree(cfgname name_ops, cfgnamespace oid_ops));
-#define	TSConfigNameNspIndexId	3608
+#define TSConfigNameNspIndexId	3608
 DECLARE_UNIQUE_INDEX(pg_ts_config_oid_index, 3712, on pg_ts_config using btree(oid oid_ops));
-#define	TSConfigOidIndexId	3712
+#define TSConfigOidIndexId	3712
 
 DECLARE_UNIQUE_INDEX(pg_ts_config_map_index, 3609, on pg_ts_config_map using btree(mapcfg oid_ops, maptokentype int4_ops, mapseqno int4_ops));
-#define	TSConfigMapIndexId	3609
+#define TSConfigMapIndexId	3609
 
 DECLARE_UNIQUE_INDEX(pg_ts_dict_dictname_index, 3604, on pg_ts_dict using btree(dictname name_ops, dictnamespace oid_ops));
-#define	TSDictionaryNameNspIndexId	3604
+#define TSDictionaryNameNspIndexId	3604
 DECLARE_UNIQUE_INDEX(pg_ts_dict_oid_index, 3605, on pg_ts_dict using btree(oid oid_ops));
-#define	TSDictionaryOidIndexId	3605
+#define TSDictionaryOidIndexId	3605
 
 DECLARE_UNIQUE_INDEX(pg_ts_parser_prsname_index, 3606, on pg_ts_parser using btree(prsname name_ops, prsnamespace oid_ops));
-#define	TSParserNameNspIndexId	3606
+#define TSParserNameNspIndexId	3606
 DECLARE_UNIQUE_INDEX(pg_ts_parser_oid_index, 3607, on pg_ts_parser using btree(oid oid_ops));
-#define	TSParserOidIndexId	3607
+#define TSParserOidIndexId	3607
 
 DECLARE_UNIQUE_INDEX(pg_ts_template_tmplname_index, 3766, on pg_ts_template using btree(tmplname name_ops, tmplnamespace oid_ops));
-#define	TSTemplateNameNspIndexId	3766
+#define TSTemplateNameNspIndexId	3766
 DECLARE_UNIQUE_INDEX(pg_ts_template_oid_index, 3767, on pg_ts_template using btree(oid oid_ops));
-#define	TSTemplateOidIndexId	3767
+#define TSTemplateOidIndexId	3767
 
 DECLARE_UNIQUE_INDEX(pg_type_oid_index, 2703, on pg_type using btree(oid oid_ops));
 #define TypeOidIndexId	2703

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.74 2007/08/12 20:39:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.75 2007/11/15 21:14:41 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -330,13 +330,13 @@ AllocSetContextCreate(MemoryContext parent,
 	context->nextBlockSize = initBlockSize;
 
 	/*
-	 * Compute the allocation chunk size limit for this context.  It can't
-	 * be more than ALLOC_CHUNK_LIMIT because of the fixed number of
-	 * freelists.  If maxBlockSize is small then requests exceeding the
-	 * maxBlockSize should be treated as large chunks, too.  We have to
-	 * have allocChunkLimit a power of two, because the requested and
-	 * actually-allocated sizes of any chunk must be on the same side of
-	 * the limit, else we get confused about whether the chunk is "big".
+	 * Compute the allocation chunk size limit for this context.  It can't be
+	 * more than ALLOC_CHUNK_LIMIT because of the fixed number of freelists.
+	 * If maxBlockSize is small then requests exceeding the maxBlockSize
+	 * should be treated as large chunks, too.	We have to have
+	 * allocChunkLimit a power of two, because the requested and
+	 * actually-allocated sizes of any chunk must be on the same side of the
+	 * limit, else we get confused about whether the chunk is "big".
 	 */
 	context->allocChunkLimit = ALLOC_CHUNK_LIMIT;
 	while (context->allocChunkLimit >
@@ -935,9 +935,9 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		 * Small-chunk case.  We just do this by brute force, ie, allocate a
 		 * new chunk and copy the data.  Since we know the existing data isn't
 		 * huge, this won't involve any great memcpy expense, so it's not
-		 * worth being smarter.  (At one time we tried to avoid memcpy when
-		 * it was possible to enlarge the chunk in-place, but that turns out
-		 * to misbehave unpleasantly for repeated cycles of
+		 * worth being smarter.  (At one time we tried to avoid memcpy when it
+		 * was possible to enlarge the chunk in-place, but that turns out to
+		 * misbehave unpleasantly for repeated cycles of
 		 * palloc/repalloc/pfree: the eventually freed chunks go into the
 		 * wrong freelist for the next initial palloc request, and so we leak
 		 * memory indefinitely.  See pgsql-hackers archives for 2007-08-11.)

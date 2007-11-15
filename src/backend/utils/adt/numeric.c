@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.106 2007/07/09 16:13:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.107 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,7 +472,7 @@ numeric_send(PG_FUNCTION_ARGS)
  *	scale of the attribute have to be applied on the value.
  */
 Datum
-numeric(PG_FUNCTION_ARGS)
+numeric		(PG_FUNCTION_ARGS)
 {
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	int32		typmod = PG_GETARG_INT32(1);
@@ -542,8 +542,8 @@ numeric(PG_FUNCTION_ARGS)
 Datum
 numerictypmodin(PG_FUNCTION_ARGS)
 {
-	ArrayType   *ta = PG_GETARG_ARRAYTYPE_P(0);
-	int32    	*tl;
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
+	int32	   *tl;
 	int			n;
 	int32		typmod;
 
@@ -559,8 +559,8 @@ numerictypmodin(PG_FUNCTION_ARGS)
 		if (tl[1] < 0 || tl[1] > tl[0])
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("NUMERIC scale %d must be between 0 and precision %d",
-							tl[1], tl[0])));
+				errmsg("NUMERIC scale %d must be between 0 and precision %d",
+					   tl[1], tl[0])));
 		typmod = ((tl[0] << 16) | tl[1]) + VARHDRSZ;
 	}
 	else if (n == 1)
@@ -577,7 +577,7 @@ numerictypmodin(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("invalid NUMERIC type modifier")));
+				 errmsg("invalid NUMERIC type modifier")));
 		typmod = 0;				/* keep compiler quiet */
 	}
 
@@ -587,8 +587,8 @@ numerictypmodin(PG_FUNCTION_ARGS)
 Datum
 numerictypmodout(PG_FUNCTION_ARGS)
 {
-	int32	typmod = PG_GETARG_INT32(0);
-	char   *res = (char *) palloc(64);
+	int32		typmod = PG_GETARG_INT32(0);
+	char	   *res = (char *) palloc(64);
 
 	if (typmod >= 0)
 		snprintf(res, 64, "(%d,%d)",
@@ -909,7 +909,7 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 		NUMERIC_IS_NAN(bound2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-				 errmsg("operand, lower bound and upper bound cannot be NaN")));
+			  errmsg("operand, lower bound and upper bound cannot be NaN")));
 
 	init_var(&result_var);
 	init_var(&count_var);
@@ -1154,29 +1154,28 @@ cmp_numerics(Numeric num1, Numeric num2)
 Datum
 hash_numeric(PG_FUNCTION_ARGS)
 {
-	Numeric 	key = PG_GETARG_NUMERIC(0);
-	Datum 		digit_hash;
-	Datum 		result;
-	int 		weight;
-	int 		start_offset;
-	int 		end_offset;
-	int 		i;
-	int 		hash_len;
+	Numeric		key = PG_GETARG_NUMERIC(0);
+	Datum		digit_hash;
+	Datum		result;
+	int			weight;
+	int			start_offset;
+	int			end_offset;
+	int			i;
+	int			hash_len;
 
 	/* If it's NaN, don't try to hash the rest of the fields */
 	if (NUMERIC_IS_NAN(key))
 		PG_RETURN_UINT32(0);
 
-	weight 		 = key->n_weight;
+	weight = key->n_weight;
 	start_offset = 0;
-	end_offset 	 = 0;
+	end_offset = 0;
 
 	/*
-	 * Omit any leading or trailing zeros from the input to the
-	 * hash. The numeric implementation *should* guarantee that
-	 * leading and trailing zeros are suppressed, but we're
-	 * paranoid. Note that we measure the starting and ending offsets
-	 * in units of NumericDigits, not bytes.
+	 * Omit any leading or trailing zeros from the input to the hash. The
+	 * numeric implementation *should* guarantee that leading and trailing
+	 * zeros are suppressed, but we're paranoid. Note that we measure the
+	 * starting and ending offsets in units of NumericDigits, not bytes.
 	 */
 	for (i = 0; i < NUMERIC_NDIGITS(key); i++)
 	{
@@ -1184,17 +1183,17 @@ hash_numeric(PG_FUNCTION_ARGS)
 			break;
 
 		start_offset++;
+
 		/*
-		 * The weight is effectively the # of digits before the
-		 * decimal point, so decrement it for each leading zero we
-		 * skip.
+		 * The weight is effectively the # of digits before the decimal point,
+		 * so decrement it for each leading zero we skip.
 		 */
 		weight--;
 	}
 
 	/*
-	 * If there are no non-zero digits, then the value of the number
-	 * is zero, regardless of any other fields.
+	 * If there are no non-zero digits, then the value of the number is zero,
+	 * regardless of any other fields.
 	 */
 	if (NUMERIC_NDIGITS(key) == start_offset)
 		PG_RETURN_UINT32(-1);
@@ -1211,14 +1210,14 @@ hash_numeric(PG_FUNCTION_ARGS)
 	Assert(start_offset + end_offset < NUMERIC_NDIGITS(key));
 
 	/*
-	 * Note that we don't hash on the Numeric's scale, since two
-	 * numerics can compare equal but have different scales. We also
-	 * don't hash on the sign, although we could: since a sign
-	 * difference implies inequality, this shouldn't affect correctness.
+	 * Note that we don't hash on the Numeric's scale, since two numerics can
+	 * compare equal but have different scales. We also don't hash on the
+	 * sign, although we could: since a sign difference implies inequality,
+	 * this shouldn't affect correctness.
 	 */
 	hash_len = NUMERIC_NDIGITS(key) - start_offset - end_offset;
 	digit_hash = hash_any((unsigned char *) (NUMERIC_DIGITS(key) + start_offset),
-                          hash_len * sizeof(NumericDigit));
+						  hash_len * sizeof(NumericDigit));
 
 	/* Mix in the weight, via XOR */
 	result = digit_hash ^ weight;
@@ -2436,9 +2435,9 @@ numeric_stddev_internal(ArrayType *transarray,
 	else
 	{
 		if (sample)
-			mul_var(&vN, &vNminus1, &vNminus1, 0);	/* N * (N - 1) */
+			mul_var(&vN, &vNminus1, &vNminus1, 0);		/* N * (N - 1) */
 		else
-			mul_var(&vN, &vN, &vNminus1, 0);		/* N * N */
+			mul_var(&vN, &vN, &vNminus1, 0);	/* N * N */
 		rscale = select_div_scale(&vsumX2, &vNminus1);
 		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);		/* variance */
 		if (!variance)

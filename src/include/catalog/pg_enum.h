@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2006-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_enum.h,v 1.1 2007/04/02 03:49:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_enum.h,v 1.2 2007/11/15 21:14:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -35,7 +35,7 @@
  *		typedef struct FormData_pg_enum
  * ----------------
  */
-#define EnumRelationId  3501
+#define EnumRelationId	3501
 
 CATALOG(pg_enum,3501)
 {

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.55 2007/09/27 21:01:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.56 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
  * checked for null inputs first, if necessary.
  *
  * pg_detoast_datum_packed() will return packed (1-byte header) datums
- * unmodified.  It will still expand an externally toasted or compressed datum.
+ * unmodified.	It will still expand an externally toasted or compressed datum.
  * The resulting datum can be accessed using VARSIZE_ANY() and VARDATA_ANY()
  * (beware of multiple evaluations in those macros!)
  *

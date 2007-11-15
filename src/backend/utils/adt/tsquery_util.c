@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.5 2007/10/23 01:44:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.6 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,13 +91,13 @@ QTNodeCompare(QTNode * an, QTNode * bn)
 
 	if (an->valnode->type != bn->valnode->type)
 		return (an->valnode->type > bn->valnode->type) ? -1 : 1;
-	
+
 	if (an->valnode->type == QI_OPR)
 	{
 		QueryOperator *ao = &an->valnode->operator;
 		QueryOperator *bo = &bn->valnode->operator;
 
-		if(ao->oper != bo->oper)
+		if (ao->oper != bo->oper)
 			return (ao->oper > bo->oper) ? -1 : 1;
 
 		if (an->nchild != bn->nchild)
@@ -169,9 +169,9 @@ QTNEq(QTNode * a, QTNode * b)
 /*
  * Remove unnecessary intermediate nodes. For example:
  *
- *  OR          OR
- * a  OR    -> a b c
- *   b  c      
+ *	OR			OR
+ * a  OR	-> a b c
+ *	 b	c
  */
 void
 QTNTernary(QTNode * in)
@@ -205,7 +205,7 @@ QTNTernary(QTNode * in)
 			memcpy(in->child + i, cc->child, cc->nchild * sizeof(QTNode *));
 			i += cc->nchild - 1;
 
-			if(cc->flags & QTN_NEEDFREE)
+			if (cc->flags & QTN_NEEDFREE)
 				pfree(cc->valnode);
 			pfree(cc);
 		}
@@ -285,10 +285,10 @@ typedef struct
 	QueryItem  *curitem;
 	char	   *operand;
 	char	   *curoperand;
-} QTN2QTState;
+}	QTN2QTState;
 
 static void
-fillQT(QTN2QTState *state, QTNode *in)
+fillQT(QTN2QTState * state, QTNode * in)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
@@ -325,7 +325,7 @@ fillQT(QTN2QTState *state, QTNode *in)
 }
 
 TSQuery
-QTN2QT(QTNode *in)
+QTN2QT(QTNode * in)
 {
 	TSQuery		out;
 	int			len;
@@ -348,7 +348,7 @@ QTN2QT(QTNode *in)
 }
 
 QTNode *
-QTNCopy(QTNode *in)
+QTNCopy(QTNode * in)
 {
 	QTNode	   *out;
 
@@ -383,7 +383,7 @@ QTNCopy(QTNode *in)
 }
 
 void
-QTNClearFlags(QTNode *in, uint32 flags)
+QTNClearFlags(QTNode * in, uint32 flags)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();

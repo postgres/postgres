@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.136 2007/10/13 20:18:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.137 2007/11/15 21:14:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1076,8 +1076,8 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 		printQuery(results, &my_popt, pset.queryFout, pset.logfile);
 
 		/*
-		 * Make sure to flush the output stream, so intermediate
-		 * results are visible to the client immediately.
+		 * Make sure to flush the output stream, so intermediate results are
+		 * visible to the client immediately.
 		 */
 		fflush(pset.queryFout);
 
@@ -1502,7 +1502,7 @@ expand_tilde(char **filename)
 		if (*(fn + 1) == '\0')
 			get_home_path(home);	/* ~ or ~/ only */
 		else if ((pw = getpwnam(fn + 1)) != NULL)
-			strlcpy(home, pw->pw_dir, sizeof(home));		/* ~user */
+			strlcpy(home, pw->pw_dir, sizeof(home));	/* ~user */
 
 		*p = oldp;
 		if (strlen(home) != 0)

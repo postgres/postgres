@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.71 2007/06/05 21:31:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.72 2007/11/15 21:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ typedef enum CoercionPathType
 	COERCION_PATH_RELABELTYPE,	/* binary-compatible cast, no function */
 	COERCION_PATH_ARRAYCOERCE,	/* need an ArrayCoerceExpr node */
 	COERCION_PATH_COERCEVIAIO	/* need a CoerceViaIO node */
-} CoercionPathType;
+}	CoercionPathType;
 
 
 extern bool IsBinaryCoercible(Oid srctype, Oid targettype);
@@ -67,8 +67,8 @@ extern Node *coerce_to_domain(Node *arg, Oid baseTypeId, int32 baseTypeMod,
 extern Node *coerce_to_boolean(ParseState *pstate, Node *node,
 				  const char *constructName);
 extern Node *coerce_to_specific_type(ParseState *pstate, Node *node,
-									 Oid targetTypeId,
-									 const char *constructName);
+						Oid targetTypeId,
+						const char *constructName);
 
 extern Oid	select_common_type(List *typeids, const char *context);
 extern Node *coerce_to_common_type(ParseState *pstate, Node *node,
@@ -87,10 +87,10 @@ extern Oid resolve_generic_type(Oid declared_type,
 					 Oid context_declared_type);
 
 extern CoercionPathType find_coercion_pathway(Oid targetTypeId,
-											  Oid sourceTypeId,
-											  CoercionContext ccontext,
-											  Oid *funcid);
+					  Oid sourceTypeId,
+					  CoercionContext ccontext,
+					  Oid *funcid);
 extern CoercionPathType find_typmod_coercion_function(Oid typeId,
-													  Oid *funcid);
+							  Oid *funcid);
 
 #endif   /* PARSE_COERCE_H */

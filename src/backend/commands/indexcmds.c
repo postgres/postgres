@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.166 2007/09/20 17:56:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.167 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,10 +396,9 @@ DefineIndex(RangeVar *heapRelation,
 	}
 
 	/*
-	 * Parse AM-specific options, convert to text array form,
-	 * validate.  The src_options introduced due to using indexes
-	 * via the "CREATE LIKE INCLUDING INDEXES" statement also need to
-	 * be merged here
+	 * Parse AM-specific options, convert to text array form, validate.  The
+	 * src_options introduced due to using indexes via the "CREATE LIKE
+	 * INCLUDING INDEXES" statement also need to be merged here
 	 */
 	if (src_options)
 		reloptions = unflatten_reloptions(src_options);
@@ -452,7 +451,7 @@ DefineIndex(RangeVar *heapRelation,
 	{
 		indexRelationId =
 			index_create(relationId, indexRelationName, indexRelationId,
-						 indexInfo, accessMethodId, tablespaceId, classObjectId,
+					  indexInfo, accessMethodId, tablespaceId, classObjectId,
 						 coloptions, reloptions, primary, isconstraint,
 						 allowSystemTableMods, skip_build, concurrent);
 
@@ -461,18 +460,18 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * For a concurrent build, we next insert the catalog entry and add
-	 * constraints.  We don't build the index just yet; we must first make
-	 * the catalog entry so that the new index is visible to updating
+	 * constraints.  We don't build the index just yet; we must first make the
+	 * catalog entry so that the new index is visible to updating
 	 * transactions.  That will prevent them from making incompatible HOT
 	 * updates.  The new index will be marked not indisready and not
 	 * indisvalid, so that no one else tries to either insert into it or use
-	 * it for queries.  We pass skip_build = true to prevent the build.
+	 * it for queries.	We pass skip_build = true to prevent the build.
 	 */
 	indexRelationId =
 		index_create(relationId, indexRelationName, indexRelationId,
 					 indexInfo, accessMethodId, tablespaceId, classObjectId,
 					 coloptions, reloptions, primary, isconstraint,
-				 	 allowSystemTableMods, true, concurrent);
+					 allowSystemTableMods, true, concurrent);
 
 	/*
 	 * We must commit our current transaction so that the index becomes
@@ -506,15 +505,15 @@ DefineIndex(RangeVar *heapRelation,
 	 * xacts that open the table for writing after this point; they will see
 	 * the new index when they open it.
 	 *
-	 * Note: the reason we use actual lock acquisition here, rather than
-	 * just checking the ProcArray and sleeping, is that deadlock is possible
-	 * if one of the transactions in question is blocked trying to acquire
-	 * an exclusive lock on our table.  The lock code will detect deadlock
-	 * and error out properly.
+	 * Note: the reason we use actual lock acquisition here, rather than just
+	 * checking the ProcArray and sleeping, is that deadlock is possible if
+	 * one of the transactions in question is blocked trying to acquire an
+	 * exclusive lock on our table.  The lock code will detect deadlock and
+	 * error out properly.
 	 *
 	 * Note: GetLockConflicts() never reports our own xid, hence we need not
-	 * check for that.  Also, prepared xacts are not reported, which is
-	 * fine since they certainly aren't going to do anything more.
+	 * check for that.	Also, prepared xacts are not reported, which is fine
+	 * since they certainly aren't going to do anything more.
 	 */
 	old_lockholders = GetLockConflicts(&heaplocktag, ShareLock);
 
@@ -530,15 +529,15 @@ DefineIndex(RangeVar *heapRelation,
 	 * indexes.  We have waited out all the existing transactions and any new
 	 * transaction will have the new index in its list, but the index is still
 	 * marked as "not-ready-for-inserts".  The index is consulted while
-	 * deciding HOT-safety though.  This arrangement ensures that no new HOT
+	 * deciding HOT-safety though.	This arrangement ensures that no new HOT
 	 * chains can be created where the new tuple and the old tuple in the
 	 * chain have different index keys.
 	 *
 	 * We now take a new snapshot, and build the index using all tuples that
-	 * are visible in this snapshot.  We can be sure that any HOT updates
-	 * to these tuples will be compatible with the index, since any updates
-	 * made by transactions that didn't know about the index are now committed
-	 * or rolled back.  Thus, each visible tuple is either the end of its
+	 * are visible in this snapshot.  We can be sure that any HOT updates to
+	 * these tuples will be compatible with the index, since any updates made
+	 * by transactions that didn't know about the index are now committed or
+	 * rolled back.  Thus, each visible tuple is either the end of its
 	 * HOT-chain or the extension of the chain is HOT-safe for this index.
 	 */
 
@@ -565,10 +564,9 @@ DefineIndex(RangeVar *heapRelation,
 	index_close(indexRelation, NoLock);
 
 	/*
-	 * Update the pg_index row to mark the index as ready for inserts.
-	 * Once we commit this transaction, any new transactions that
-	 * open the table must insert new entries into the index for insertions
-	 * and non-HOT updates.
+	 * Update the pg_index row to mark the index as ready for inserts. Once we
+	 * commit this transaction, any new transactions that open the table must
+	 * insert new entries into the index for insertions and non-HOT updates.
 	 */
 	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
@@ -611,8 +609,8 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * Now take the "reference snapshot" that will be used by validate_index()
-	 * to filter candidate tuples.  Beware!  There might still be snapshots
-	 * in use that treat some transaction as in-progress that our reference
+	 * to filter candidate tuples.	Beware!  There might still be snapshots in
+	 * use that treat some transaction as in-progress that our reference
 	 * snapshot treats as committed.  If such a recently-committed transaction
 	 * deleted tuples in the table, we will not include them in the index; yet
 	 * those transactions which see the deleting one as still-in-progress will
@@ -636,15 +634,15 @@ DefineIndex(RangeVar *heapRelation,
 	 * The index is now valid in the sense that it contains all currently
 	 * interesting tuples.	But since it might not contain tuples deleted just
 	 * before the reference snap was taken, we have to wait out any
-	 * transactions that might have older snapshots.  Obtain a list of
-	 * VXIDs of such transactions, and wait for them individually.
+	 * transactions that might have older snapshots.  Obtain a list of VXIDs
+	 * of such transactions, and wait for them individually.
 	 *
 	 * We can exclude any running transactions that have xmin >= the xmax of
 	 * our reference snapshot, since they are clearly not interested in any
 	 * missing older tuples.  Transactions in other DBs aren't a problem
-	 * either, since they'll never even be able to see this index.
-	 * Also, GetCurrentVirtualXIDs never reports our own vxid, so we
-	 * need not check for that.
+	 * either, since they'll never even be able to see this index. Also,
+	 * GetCurrentVirtualXIDs never reports our own vxid, so we need not check
+	 * for that.
 	 */
 	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax, false);
 
@@ -681,8 +679,8 @@ DefineIndex(RangeVar *heapRelation,
 	 * relcache entries for the index itself, but we should also send a
 	 * relcache inval on the parent table to force replanning of cached plans.
 	 * Otherwise existing sessions might fail to use the new index where it
-	 * would be useful.  (Note that our earlier commits did not create
-	 * reasons to replan; relcache flush on the index itself was sufficient.)
+	 * would be useful.  (Note that our earlier commits did not create reasons
+	 * to replan; relcache flush on the index itself was sufficient.)
 	 */
 	CacheInvalidateRelcacheByRelid(heaprelid.relId);
 
@@ -837,9 +835,9 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 										  accessMethodId);
 
 		/*
-		 * Set up the per-column options (indoption field).  For now, this
-		 * is zero for any un-ordered index, while ordered indexes have DESC
-		 * and NULLS FIRST/LAST options.
+		 * Set up the per-column options (indoption field).  For now, this is
+		 * zero for any un-ordered index, while ordered indexes have DESC and
+		 * NULLS FIRST/LAST options.
 		 */
 		colOptionP[attn] = 0;
 		if (amcanorder)

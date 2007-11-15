@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.13 2007/10/03 11:11:12 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.14 2007/11/15 21:14:45 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -96,6 +96,6 @@ ecpg_dynamic_type(Oid type)
 		case NUMERICOID:
 			return SQL3_NUMERIC;	/* numeric */
 		default:
-			return -(int)type;
+			return -(int) type;
 	}
 }

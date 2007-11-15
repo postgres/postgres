@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.153 2007/10/13 15:55:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.154 2007/11/15 21:14:40 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -149,13 +149,13 @@ get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
  * (This indicates that the operator is not a valid ordering operator.)
  *
  * Note: the operator could be registered in multiple families, for example
- * if someone were to build a "reverse sort" opfamily.  This would result in
+ * if someone were to build a "reverse sort" opfamily.	This would result in
  * uncertainty as to whether "ORDER BY USING op" would default to NULLS FIRST
  * or NULLS LAST, as well as inefficient planning due to failure to match up
  * pathkeys that should be the same.  So we want a determinate result here.
  * Because of the way the syscache search works, we'll use the interpretation
  * associated with the opfamily with smallest OID, which is probably
- * determinate enough.  Since there is no longer any particularly good reason
+ * determinate enough.	Since there is no longer any particularly good reason
  * to build reverse-sort opfamilies, it doesn't seem worth expending any
  * additional effort on ensuring consistency.
  */
@@ -238,7 +238,7 @@ get_compare_function_for_ordering_op(Oid opno, Oid *cmpfunc, bool *reverse)
 									 opcintype,
 									 opcintype,
 									 BTORDER_PROC);
-		if (!OidIsValid(*cmpfunc))				/* should not happen */
+		if (!OidIsValid(*cmpfunc))		/* should not happen */
 			elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
 				 BTORDER_PROC, opcintype, opcintype, opfamily);
 		*reverse = (strategy == BTGreaterStrategyNumber);
@@ -322,7 +322,7 @@ get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type)
 		if (aform->amopstrategy == BTEqualStrategyNumber)
 		{
 			/* Found a suitable opfamily, get matching ordering operator */
-			Oid		typid;
+			Oid			typid;
 
 			typid = use_lhs_type ? aform->amoplefttype : aform->amoprighttype;
 			result = get_opfamily_member(aform->amopfamily,
@@ -350,7 +350,7 @@ get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type)
  *
  * The planner currently uses simple equal() tests to compare the lists
  * returned by this function, which makes the list order relevant, though
- * strictly speaking it should not be.  Because of the way syscache list
+ * strictly speaking it should not be.	Because of the way syscache list
  * searches are handled, in normal operation the result will be sorted by OID
  * so everything works fine.  If running with system index usage disabled,
  * the result ordering is unspecified and hence the planner might fail to
@@ -445,6 +445,7 @@ get_compatible_hash_operators(Oid opno,
 				result = true;
 				break;
 			}
+
 			/*
 			 * Get the matching single-type operator(s).  Failure probably
 			 * shouldn't happen --- it implies a bogus opfamily --- but
@@ -2162,7 +2163,7 @@ type_is_rowtype(Oid typid)
 
 /*
  * type_is_enum
- *    Returns true if the given type is an enum type.
+ *	  Returns true if the given type is an enum type.
  */
 bool
 type_is_enum(Oid typid)
@@ -2239,7 +2240,7 @@ Oid
 get_array_type(Oid typid)
 {
 	HeapTuple	tp;
-	Oid result = InvalidOid;
+	Oid			result = InvalidOid;
 
 	tp = SearchSysCache(TYPEOID,
 						ObjectIdGetDatum(typid),
@@ -2444,7 +2445,7 @@ get_typmodout(Oid typid)
 	else
 		return InvalidOid;
 }
-#endif /* NOT_USED */
+#endif   /* NOT_USED */
 
 
 /*				---------- STATISTICS CACHE ----------					 */

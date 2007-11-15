@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.38 2007/08/22 08:20:58 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.39 2007/11/15 21:14:45 momjian Exp $ */
 
 #ifndef DT_H
 #define DT_H
@@ -310,24 +310,24 @@ do { \
 #define TIMESTAMP_IS_NOEND(j)	((j) == DT_NOEND)
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
 
-int DecodeTimeOnly(char **, int *, int, int *, struct tm *, fsec_t *, int *);
-int DecodeInterval(char **, int *, int, int *, struct tm *, fsec_t *);
-int DecodeTime(char *, int, int *, struct tm *, fsec_t *);
-int EncodeTimeOnly(struct tm *, fsec_t, int *, int, char *);
-int EncodeDateTime(struct tm *, fsec_t, int *, char **, int, char *, bool);
-int EncodeInterval(struct tm *, fsec_t, int, char *);
-int tm2timestamp(struct tm *, fsec_t, int *, timestamp *);
-int DecodeUnits(int field, char *lowtoken, int *val);
-bool CheckDateTokenTables(void);
-int EncodeDateOnly(struct tm *, int, char *, bool);
-void GetEpochTime(struct tm *);
-int ParseDateTime(char *, char *, char **, int *, int, int *, char **);
-int DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, bool);
-void j2date(int, int *, int *, int *);
-void GetCurrentDateTime(struct tm *);
-int date2j(int, int, int);
-void TrimTrailingZeros(char *);
-void dt2time(double, int *, int *, int *, fsec_t *);
+int			DecodeTimeOnly(char **, int *, int, int *, struct tm *, fsec_t *, int *);
+int			DecodeInterval(char **, int *, int, int *, struct tm *, fsec_t *);
+int			DecodeTime(char *, int, int *, struct tm *, fsec_t *);
+int			EncodeTimeOnly(struct tm *, fsec_t, int *, int, char *);
+int			EncodeDateTime(struct tm *, fsec_t, int *, char **, int, char *, bool);
+int			EncodeInterval(struct tm *, fsec_t, int, char *);
+int			tm2timestamp(struct tm *, fsec_t, int *, timestamp *);
+int			DecodeUnits(int field, char *lowtoken, int *val);
+bool		CheckDateTokenTables(void);
+int			EncodeDateOnly(struct tm *, int, char *, bool);
+void		GetEpochTime(struct tm *);
+int			ParseDateTime(char *, char *, char **, int *, int, int *, char **);
+int			DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, bool);
+void		j2date(int, int *, int *, int *);
+void		GetCurrentDateTime(struct tm *);
+int			date2j(int, int, int);
+void		TrimTrailingZeros(char *);
+void		dt2time(double, int *, int *, int *, fsec_t *);
 
 extern char *pgtypes_date_weekdays_short[];
 extern char *pgtypes_date_months[];

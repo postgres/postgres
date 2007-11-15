@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.105 2007/09/06 17:31:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.106 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -975,14 +975,14 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 			context->sublevels_up == 0)
 		{
 			/*
-			 * We get here if a WHERE CURRENT OF expression turns out to
-			 * apply to a view.  Someday we might be able to translate
-			 * the expression to apply to an underlying table of the view,
-			 * but right now it's not implemented.
+			 * We get here if a WHERE CURRENT OF expression turns out to apply
+			 * to a view.  Someday we might be able to translate the
+			 * expression to apply to an underlying table of the view, but
+			 * right now it's not implemented.
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("WHERE CURRENT OF on a view is not implemented")));
+				   errmsg("WHERE CURRENT OF on a view is not implemented")));
 		}
 		/* otherwise fall through to copy the expr normally */
 	}

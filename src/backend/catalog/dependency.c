@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.67 2007/08/21 01:11:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.68 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,29 +85,29 @@ typedef struct
  * See also getObjectClass().
  */
 static const Oid object_classes[MAX_OCLASS] = {
-	RelationRelationId,					/* OCLASS_CLASS */
-	ProcedureRelationId,				/* OCLASS_PROC */
-	TypeRelationId,						/* OCLASS_TYPE */
-	CastRelationId,						/* OCLASS_CAST */
-	ConstraintRelationId,				/* OCLASS_CONSTRAINT */
-	ConversionRelationId,				/* OCLASS_CONVERSION */
-	AttrDefaultRelationId,				/* OCLASS_DEFAULT */
-	LanguageRelationId,					/* OCLASS_LANGUAGE */
-	OperatorRelationId,					/* OCLASS_OPERATOR */
-	OperatorClassRelationId,			/* OCLASS_OPCLASS */
-	OperatorFamilyRelationId,			/* OCLASS_OPFAMILY */
+	RelationRelationId,			/* OCLASS_CLASS */
+	ProcedureRelationId,		/* OCLASS_PROC */
+	TypeRelationId,				/* OCLASS_TYPE */
+	CastRelationId,				/* OCLASS_CAST */
+	ConstraintRelationId,		/* OCLASS_CONSTRAINT */
+	ConversionRelationId,		/* OCLASS_CONVERSION */
+	AttrDefaultRelationId,		/* OCLASS_DEFAULT */
+	LanguageRelationId,			/* OCLASS_LANGUAGE */
+	OperatorRelationId,			/* OCLASS_OPERATOR */
+	OperatorClassRelationId,	/* OCLASS_OPCLASS */
+	OperatorFamilyRelationId,	/* OCLASS_OPFAMILY */
 	AccessMethodOperatorRelationId,		/* OCLASS_AMOP */
 	AccessMethodProcedureRelationId,	/* OCLASS_AMPROC */
-	RewriteRelationId,					/* OCLASS_REWRITE */
-	TriggerRelationId,					/* OCLASS_TRIGGER */
-	NamespaceRelationId,				/* OCLASS_SCHEMA */
-	TSParserRelationId,				 	/* OCLASS_TSPARSER */
-	TSDictionaryRelationId,				/* OCLASS_TSDICT */
-	TSTemplateRelationId,				/* OCLASS_TSTEMPLATE */
-	TSConfigRelationId,					/* OCLASS_TSCONFIG */
-	AuthIdRelationId,					/* OCLASS_ROLE */
-	DatabaseRelationId,					/* OCLASS_DATABASE */
-	TableSpaceRelationId				/* OCLASS_TBLSPACE */
+	RewriteRelationId,			/* OCLASS_REWRITE */
+	TriggerRelationId,			/* OCLASS_TRIGGER */
+	NamespaceRelationId,		/* OCLASS_SCHEMA */
+	TSParserRelationId,			/* OCLASS_TSPARSER */
+	TSDictionaryRelationId,		/* OCLASS_TSDICT */
+	TSTemplateRelationId,		/* OCLASS_TSTEMPLATE */
+	TSConfigRelationId,			/* OCLASS_TSCONFIG */
+	AuthIdRelationId,			/* OCLASS_ROLE */
+	DatabaseRelationId,			/* OCLASS_DATABASE */
+	TableSpaceRelationId		/* OCLASS_TBLSPACE */
 };
 
 
@@ -1012,7 +1012,7 @@ doDeletion(const ObjectAddress *object)
 			RemoveTSConfigurationById(object->objectId);
 			break;
 
-		/* OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE not handled */
+			/* OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE not handled */
 
 		default:
 			elog(ERROR, "unrecognized object class: %u",
@@ -2162,7 +2162,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search parser %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("text search parser %s"),
-					NameStr(((Form_pg_ts_parser) GETSTRUCT(tup))->prsname));
+					 NameStr(((Form_pg_ts_parser) GETSTRUCT(tup))->prsname));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -2178,7 +2178,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search dictionary %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("text search dictionary %s"),
-					NameStr(((Form_pg_ts_dict) GETSTRUCT(tup))->dictname));
+					  NameStr(((Form_pg_ts_dict) GETSTRUCT(tup))->dictname));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -2194,7 +2194,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search template %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("text search template %s"),
-					NameStr(((Form_pg_ts_template) GETSTRUCT(tup))->tmplname));
+				  NameStr(((Form_pg_ts_template) GETSTRUCT(tup))->tmplname));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -2210,7 +2210,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search configuration %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("text search configuration %s"),
-					NameStr(((Form_pg_ts_config) GETSTRUCT(tup))->cfgname));
+					 NameStr(((Form_pg_ts_config) GETSTRUCT(tup))->cfgname));
 				ReleaseSysCache(tup);
 				break;
 			}

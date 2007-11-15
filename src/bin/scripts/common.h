@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2003-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/bin/scripts/common.h,v 1.17 2007/04/09 18:21:22 mha Exp $
+ *	$PostgreSQL: pgsql/src/bin/scripts/common.h,v 1.18 2007/11/15 21:14:42 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -36,7 +36,7 @@ extern void executeCommand(PGconn *conn, const char *query,
 			   const char *progname, bool echo);
 
 extern bool executeMaintenanceCommand(PGconn *conn, const char *query,
-							   bool echo);
+						  bool echo);
 
 extern bool yesno_prompt(const char *question);
 

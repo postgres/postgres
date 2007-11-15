@@ -10,7 +10,7 @@
  *
  * The caller is responsible for creating the new heap, all catalog
  * changes, supplying the tuples to be written to the new heap, and
- * rebuilding indexes.  The caller must hold AccessExclusiveLock on the
+ * rebuilding indexes.	The caller must hold AccessExclusiveLock on the
  * target table, because we assume no one else is writing into it.
  *
  * To use the facility:
@@ -18,13 +18,13 @@
  * begin_heap_rewrite
  * while (fetch next tuple)
  * {
- *     if (tuple is dead)
- *         rewrite_heap_dead_tuple
- *     else
- *     {
- *         // do any transformations here if required
- *         rewrite_heap_tuple
- *     }
+ *	   if (tuple is dead)
+ *		   rewrite_heap_dead_tuple
+ *	   else
+ *	   {
+ *		   // do any transformations here if required
+ *		   rewrite_heap_tuple
+ *	   }
  * }
  * end_heap_rewrite
  *
@@ -43,7 +43,7 @@
  * to substitute the correct ctid instead.
  *
  * For each ctid reference from A -> B, we might encounter either A first
- * or B first.  (Note that a tuple in the middle of a chain is both A and B
+ * or B first.	(Note that a tuple in the middle of a chain is both A and B
  * of different pairs.)
  *
  * If we encounter A first, we'll store the tuple in the unresolved_tups
@@ -58,11 +58,11 @@
  * and can write A immediately with the correct ctid.
  *
  * Entries in the hash tables can be removed as soon as the later tuple
- * is encountered.  That helps to keep the memory usage down.  At the end,
+ * is encountered.	That helps to keep the memory usage down.  At the end,
  * both tables are usually empty; we should have encountered both A and B
  * of each pair.  However, it's possible for A to be RECENTLY_DEAD and B
  * entirely DEAD according to HeapTupleSatisfiesVacuum, because the test
- * for deadness using OldestXmin is not exact.  In such a case we might
+ * for deadness using OldestXmin is not exact.	In such a case we might
  * encounter B first, and skip it, and find A later.  Then A would be added
  * to unresolved_tups, and stay there until end of the rewrite.  Since
  * this case is very unusual, we don't worry about the memory usage.
@@ -78,7 +78,7 @@
  * of CLUSTERing on an unchanging key column, we'll see all the versions
  * of a given tuple together anyway, and so the peak memory usage is only
  * proportional to the number of RECENTLY_DEAD versions of a single row, not
- * in the whole table.  Note that if we do fail halfway through a CLUSTER,
+ * in the whole table.	Note that if we do fail halfway through a CLUSTER,
  * the old table is still valid, so failure is not catastrophic.
  *
  * We can't use the normal heap_insert function to insert into the new
@@ -96,7 +96,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.7 2007/09/20 17:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.8 2007/11/15 21:14:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,20 +116,20 @@
  */
 typedef struct RewriteStateData
 {
-	Relation		rs_new_rel;			/* destination heap */
-	Page			rs_buffer;			/* page currently being built */
-	BlockNumber		rs_blockno;			/* block where page will go */
-	bool			rs_buffer_valid;	/* T if any tuples in buffer */
-	bool			rs_use_wal;			/* must we WAL-log inserts? */
-	TransactionId	rs_oldest_xmin;		/* oldest xmin used by caller to
+	Relation	rs_new_rel;		/* destination heap */
+	Page		rs_buffer;		/* page currently being built */
+	BlockNumber rs_blockno;		/* block where page will go */
+	bool		rs_buffer_valid;	/* T if any tuples in buffer */
+	bool		rs_use_wal;		/* must we WAL-log inserts? */
+	TransactionId rs_oldest_xmin;		/* oldest xmin used by caller to
 										 * determine tuple visibility */
-	TransactionId	rs_freeze_xid;		/* Xid that will be used as freeze
-										 * cutoff point */
-	MemoryContext	rs_cxt;				/* for hash tables and entries and
-										 * tuples in them */
-	HTAB		   *rs_unresolved_tups;	/* unmatched A tuples */
-	HTAB		   *rs_old_new_tid_map;	/* unmatched B tuples */
-} RewriteStateData;
+	TransactionId rs_freeze_xid;/* Xid that will be used as freeze cutoff
+								 * point */
+	MemoryContext rs_cxt;		/* for hash tables and entries and tuples in
+								 * them */
+	HTAB	   *rs_unresolved_tups;		/* unmatched A tuples */
+	HTAB	   *rs_old_new_tid_map;		/* unmatched B tuples */
+}	RewriteStateData;
 
 /*
  * The lookup keys for the hash tables are tuple TID and xmin (we must check
@@ -139,27 +139,27 @@ typedef struct RewriteStateData
  */
 typedef struct
 {
-	TransactionId	xmin;		/* tuple xmin */
+	TransactionId xmin;			/* tuple xmin */
 	ItemPointerData tid;		/* tuple location in old heap */
-} TidHashKey;
+}	TidHashKey;
 
 /*
  * Entry structures for the hash tables
  */
 typedef struct
 {
-	TidHashKey		key;		/* expected xmin/old location of B tuple */
+	TidHashKey	key;			/* expected xmin/old location of B tuple */
 	ItemPointerData old_tid;	/* A's location in the old heap */
-	HeapTuple tuple;			/* A's tuple contents */
-} UnresolvedTupData;
+	HeapTuple	tuple;			/* A's tuple contents */
+}	UnresolvedTupData;
 
 typedef UnresolvedTupData *UnresolvedTup;
 
 typedef struct
 {
-	TidHashKey		key;		/* actual xmin/old location of B tuple */
+	TidHashKey	key;			/* actual xmin/old location of B tuple */
 	ItemPointerData new_tid;	/* where we put it in the new heap */
-} OldToNewMappingData;
+}	OldToNewMappingData;
 
 typedef OldToNewMappingData *OldToNewMapping;
 
@@ -189,8 +189,8 @@ begin_heap_rewrite(Relation new_heap, TransactionId oldest_xmin,
 	HASHCTL		hash_ctl;
 
 	/*
-	 * To ease cleanup, make a separate context that will contain
-	 * the RewriteState struct itself plus all subsidiary data.
+	 * To ease cleanup, make a separate context that will contain the
+	 * RewriteState struct itself plus all subsidiary data.
 	 */
 	rw_cxt = AllocSetContextCreate(CurrentMemoryContext,
 								   "Table rewrite",
@@ -221,7 +221,7 @@ begin_heap_rewrite(Relation new_heap, TransactionId oldest_xmin,
 
 	state->rs_unresolved_tups =
 		hash_create("Rewrite / Unresolved ctids",
-					128, /* arbitrary initial size */
+					128,		/* arbitrary initial size */
 					&hash_ctl,
 					HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
@@ -229,7 +229,7 @@ begin_heap_rewrite(Relation new_heap, TransactionId oldest_xmin,
 
 	state->rs_old_new_tid_map =
 		hash_create("Rewrite / Old to new tid map",
-					128, /* arbitrary initial size */
+					128,		/* arbitrary initial size */
 					&hash_ctl,
 					HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
@@ -250,8 +250,8 @@ end_heap_rewrite(RewriteState state)
 	UnresolvedTup unresolved;
 
 	/*
-	 * Write any remaining tuples in the UnresolvedTups table. If we have
-	 * any left, they should in fact be dead, but let's err on the safe side.
+	 * Write any remaining tuples in the UnresolvedTups table. If we have any
+	 * left, they should in fact be dead, but let's err on the safe side.
 	 *
 	 * XXX this really is a waste of code no?
 	 */
@@ -276,15 +276,15 @@ end_heap_rewrite(RewriteState state)
 	}
 
 	/*
-	 * If the rel isn't temp, must fsync before commit.  We use heap_sync
-	 * to ensure that the toast table gets fsync'd too.
+	 * If the rel isn't temp, must fsync before commit.  We use heap_sync to
+	 * ensure that the toast table gets fsync'd too.
 	 *
 	 * It's obvious that we must do this when not WAL-logging. It's less
-	 * obvious that we have to do it even if we did WAL-log the pages.
-	 * The reason is the same as in tablecmds.c's copy_relation_data():
-	 * we're writing data that's not in shared buffers, and so a CHECKPOINT
-	 * occurring during the rewriteheap operation won't have fsync'd data
-	 * we wrote before the checkpoint.
+	 * obvious that we have to do it even if we did WAL-log the pages. The
+	 * reason is the same as in tablecmds.c's copy_relation_data(): we're
+	 * writing data that's not in shared buffers, and so a CHECKPOINT
+	 * occurring during the rewriteheap operation won't have fsync'd data we
+	 * wrote before the checkpoint.
 	 */
 	if (!state->rs_new_rel->rd_istemp)
 		heap_sync(state->rs_new_rel);
@@ -310,17 +310,17 @@ rewrite_heap_tuple(RewriteState state,
 {
 	MemoryContext old_cxt;
 	ItemPointerData old_tid;
-	TidHashKey hashkey;
-	bool found;
-	bool free_new;
+	TidHashKey	hashkey;
+	bool		found;
+	bool		free_new;
 
 	old_cxt = MemoryContextSwitchTo(state->rs_cxt);
 
 	/*
 	 * Copy the original tuple's visibility information into new_tuple.
 	 *
-	 * XXX we might later need to copy some t_infomask2 bits, too?
-	 * Right now, we intentionally clear the HOT status bits.
+	 * XXX we might later need to copy some t_infomask2 bits, too? Right now,
+	 * we intentionally clear the HOT status bits.
 	 */
 	memcpy(&new_tuple->t_data->t_choice.t_heap,
 		   &old_tuple->t_data->t_choice.t_heap,
@@ -335,16 +335,16 @@ rewrite_heap_tuple(RewriteState state,
 	 * While we have our hands on the tuple, we may as well freeze any
 	 * very-old xmin or xmax, so that future VACUUM effort can be saved.
 	 *
-	 * Note we abuse heap_freeze_tuple() a bit here, since it's expecting
-	 * to be given a pointer to a tuple in a disk buffer.  It happens
-	 * though that we can get the right things to happen by passing
-	 * InvalidBuffer for the buffer.
+	 * Note we abuse heap_freeze_tuple() a bit here, since it's expecting to
+	 * be given a pointer to a tuple in a disk buffer.	It happens though that
+	 * we can get the right things to happen by passing InvalidBuffer for the
+	 * buffer.
 	 */
 	heap_freeze_tuple(new_tuple->t_data, state->rs_freeze_xid, InvalidBuffer);
 
 	/*
-	 * Invalid ctid means that ctid should point to the tuple itself.
-	 * We'll override it later if the tuple is part of an update chain.
+	 * Invalid ctid means that ctid should point to the tuple itself. We'll
+	 * override it later if the tuple is part of an update chain.
 	 */
 	ItemPointerSetInvalid(&new_tuple->t_data->t_ctid);
 
@@ -369,9 +369,9 @@ rewrite_heap_tuple(RewriteState state,
 		if (mapping != NULL)
 		{
 			/*
-			 * We've already copied the tuple that t_ctid points to, so we
-			 * can set the ctid of this tuple to point to the new location,
-			 * and insert it right away.
+			 * We've already copied the tuple that t_ctid points to, so we can
+			 * set the ctid of this tuple to point to the new location, and
+			 * insert it right away.
 			 */
 			new_tuple->t_data->t_ctid = mapping->new_tid;
 
@@ -405,10 +405,10 @@ rewrite_heap_tuple(RewriteState state,
 	}
 
 	/*
-	 * Now we will write the tuple, and then check to see if it is the
-	 * B tuple in any new or known pair.  When we resolve a known pair,
-	 * we will be able to write that pair's A tuple, and then we have to
-	 * check if it resolves some other pair.  Hence, we need a loop here.
+	 * Now we will write the tuple, and then check to see if it is the B tuple
+	 * in any new or known pair.  When we resolve a known pair, we will be
+	 * able to write that pair's A tuple, and then we have to check if it
+	 * resolves some other pair.  Hence, we need a loop here.
 	 */
 	old_tid = old_tuple->t_self;
 	free_new = false;
@@ -422,13 +422,12 @@ rewrite_heap_tuple(RewriteState state,
 		new_tid = new_tuple->t_self;
 
 		/*
-		 * If the tuple is the updated version of a row, and the prior
-		 * version wouldn't be DEAD yet, then we need to either resolve
-		 * the prior version (if it's waiting in rs_unresolved_tups),
-		 * or make an entry in rs_old_new_tid_map (so we can resolve it
-		 * when we do see it).  The previous tuple's xmax would equal this
-		 * one's xmin, so it's RECENTLY_DEAD if and only if the xmin is
-		 * not before OldestXmin.
+		 * If the tuple is the updated version of a row, and the prior version
+		 * wouldn't be DEAD yet, then we need to either resolve the prior
+		 * version (if it's waiting in rs_unresolved_tups), or make an entry
+		 * in rs_old_new_tid_map (so we can resolve it when we do see it).
+		 * The previous tuple's xmax would equal this one's xmin, so it's
+		 * RECENTLY_DEAD if and only if the xmin is not before OldestXmin.
 		 */
 		if ((new_tuple->t_data->t_infomask & HEAP_UPDATED) &&
 			!TransactionIdPrecedes(HeapTupleHeaderGetXmin(new_tuple->t_data),
@@ -449,9 +448,9 @@ rewrite_heap_tuple(RewriteState state,
 			if (unresolved != NULL)
 			{
 				/*
-				 * We have seen and memorized the previous tuple already.
-				 * Now that we know where we inserted the tuple its t_ctid
-				 * points to, fix its t_ctid and insert it to the new heap.
+				 * We have seen and memorized the previous tuple already. Now
+				 * that we know where we inserted the tuple its t_ctid points
+				 * to, fix its t_ctid and insert it to the new heap.
 				 */
 				if (free_new)
 					heap_freetuple(new_tuple);
@@ -461,8 +460,8 @@ rewrite_heap_tuple(RewriteState state,
 				new_tuple->t_data->t_ctid = new_tid;
 
 				/*
-				 * We don't need the hash entry anymore, but don't free
-				 * its tuple just yet.
+				 * We don't need the hash entry anymore, but don't free its
+				 * tuple just yet.
 				 */
 				hash_search(state->rs_unresolved_tups, &hashkey,
 							HASH_REMOVE, &found);
@@ -474,8 +473,8 @@ rewrite_heap_tuple(RewriteState state,
 			else
 			{
 				/*
-				 * Remember the new tid of this tuple. We'll use it to set
-				 * the ctid when we find the previous tuple in the chain.
+				 * Remember the new tid of this tuple. We'll use it to set the
+				 * ctid when we find the previous tuple in the chain.
 				 */
 				OldToNewMapping mapping;
 
@@ -506,22 +505,22 @@ rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 {
 	/*
 	 * If we have already seen an earlier tuple in the update chain that
-	 * points to this tuple, let's forget about that earlier tuple. It's
-	 * in fact dead as well, our simple xmax < OldestXmin test in
-	 * HeapTupleSatisfiesVacuum just wasn't enough to detect it. It
-	 * happens when xmin of a tuple is greater than xmax, which sounds
+	 * points to this tuple, let's forget about that earlier tuple. It's in
+	 * fact dead as well, our simple xmax < OldestXmin test in
+	 * HeapTupleSatisfiesVacuum just wasn't enough to detect it. It happens
+	 * when xmin of a tuple is greater than xmax, which sounds
 	 * counter-intuitive but is perfectly valid.
 	 *
-	 * We don't bother to try to detect the situation the other way
-	 * round, when we encounter the dead tuple first and then the
-	 * recently dead one that points to it. If that happens, we'll
-	 * have some unmatched entries in the UnresolvedTups hash table
-	 * at the end. That can happen anyway, because a vacuum might
-	 * have removed the dead tuple in the chain before us.
+	 * We don't bother to try to detect the situation the other way round,
+	 * when we encounter the dead tuple first and then the recently dead one
+	 * that points to it. If that happens, we'll have some unmatched entries
+	 * in the UnresolvedTups hash table at the end. That can happen anyway,
+	 * because a vacuum might have removed the dead tuple in the chain before
+	 * us.
 	 */
 	UnresolvedTup unresolved;
-	TidHashKey hashkey;
-	bool found;
+	TidHashKey	hashkey;
+	bool		found;
 
 	memset(&hashkey, 0, sizeof(hashkey));
 	hashkey.xmin = HeapTupleHeaderGetXmin(old_tuple->t_data);
@@ -541,7 +540,7 @@ rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 }
 
 /*
- * Insert a tuple to the new relation.  This has to track heap_insert
+ * Insert a tuple to the new relation.	This has to track heap_insert
  * and its subsidiary functions!
  *
  * t_self of the tuple is set to the new TID of the tuple. If t_ctid of the
@@ -551,11 +550,12 @@ rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 static void
 raw_heap_insert(RewriteState state, HeapTuple tup)
 {
-	Page			page = state->rs_buffer;
-	Size			pageFreeSpace, saveFreeSpace;
-	Size			len;
-	OffsetNumber	newoff;
-	HeapTuple		heaptup;
+	Page		page = state->rs_buffer;
+	Size		pageFreeSpace,
+				saveFreeSpace;
+	Size		len;
+	OffsetNumber newoff;
+	HeapTuple	heaptup;
 
 	/*
 	 * If the new tuple is too big for storage or contains already toasted
@@ -610,7 +610,8 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 			/*
 			 * Now write the page. We say isTemp = true even if it's not a
 			 * temp table, because there's no need for smgr to schedule an
-			 * fsync for this write; we'll do it ourselves in end_heap_rewrite.
+			 * fsync for this write; we'll do it ourselves in
+			 * end_heap_rewrite.
 			 */
 			RelationOpenSmgr(state->rs_new_rel);
 			smgrextend(state->rs_new_rel->rd_smgr, state->rs_blockno,
@@ -638,12 +639,12 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	ItemPointerSet(&(tup->t_self), state->rs_blockno, newoff);
 
 	/*
-	 * Insert the correct position into CTID of the stored tuple, too,
-	 * if the caller didn't supply a valid CTID.
+	 * Insert the correct position into CTID of the stored tuple, too, if the
+	 * caller didn't supply a valid CTID.
 	 */
-	if(!ItemPointerIsValid(&tup->t_data->t_ctid))
+	if (!ItemPointerIsValid(&tup->t_data->t_ctid))
 	{
-		ItemId			newitemid;
+		ItemId		newitemid;
 		HeapTupleHeader onpage_tup;
 
 		newitemid = PageGetItemId(page, newoff);

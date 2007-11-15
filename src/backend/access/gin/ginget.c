@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.8 2007/06/04 15:56:28 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.9 2007/11/15 21:14:31 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -23,29 +23,29 @@ findItemInPage(Page page, ItemPointer item, OffsetNumber *off)
 	OffsetNumber maxoff = GinPageGetOpaque(page)->maxoff;
 	int			res;
 
-	if ( GinPageGetOpaque(page)->flags & GIN_DELETED )
+	if (GinPageGetOpaque(page)->flags & GIN_DELETED)
 		/* page was deleted by concurrent  vacuum */
 		return false;
 
-	if ( *off > maxoff || *off == InvalidOffsetNumber )
+	if (*off > maxoff || *off == InvalidOffsetNumber)
 		res = -1;
 	else
 		res = compareItemPointers(item, (ItemPointer) GinDataPageGetItem(page, *off));
 
-	if ( res == 0 ) 
+	if (res == 0)
 	{
 		/* page isn't changed */
-		return true; 
-	} 
-	else if ( res > 0 ) 
+		return true;
+	}
+	else if (res > 0)
 	{
-		/* 
-		 * some items was added before our position, look further to find 
-		 * it or first greater 
+		/*
+		 * some items was added before our position, look further to find it
+		 * or first greater
 		 */
-	
+
 		(*off)++;
-		for (; *off <= maxoff; (*off)++) 
+		for (; *off <= maxoff; (*off)++)
 		{
 			res = compareItemPointers(item, (ItemPointer) GinDataPageGetItem(page, *off));
 
@@ -53,7 +53,7 @@ findItemInPage(Page page, ItemPointer item, OffsetNumber *off)
 				return true;
 
 			if (res < 0)
-			{	
+			{
 				(*off)--;
 				return true;
 			}
@@ -61,20 +61,20 @@ findItemInPage(Page page, ItemPointer item, OffsetNumber *off)
 	}
 	else
 	{
-		/* 
-		 * some items was deleted before our position, look from begining
-		 * to find it or first greater
+		/*
+		 * some items was deleted before our position, look from begining to
+		 * find it or first greater
 		 */
 
-		for(*off = FirstOffsetNumber; *off<= maxoff; (*off)++) 
+		for (*off = FirstOffsetNumber; *off <= maxoff; (*off)++)
 		{
 			res = compareItemPointers(item, (ItemPointer) GinDataPageGetItem(page, *off));
 
-			if ( res == 0 )
+			if (res == 0)
 				return true;
 
 			if (res < 0)
-			{	
+			{
 				(*off)--;
 				return true;
 			}
@@ -174,7 +174,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry, bool firs
 		page = BufferGetPage(entry->buffer);
 
 		/* try to find curItem in current buffer */
-		if ( findItemInPage(page, &entry->curItem, &entry->offset) )
+		if (findItemInPage(page, &entry->curItem, &entry->offset))
 			return;
 
 		/* walk to right */
@@ -186,13 +186,13 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry, bool firs
 			page = BufferGetPage(entry->buffer);
 
 			entry->offset = InvalidOffsetNumber;
-			if ( findItemInPage(page, &entry->curItem, &entry->offset) )
+			if (findItemInPage(page, &entry->curItem, &entry->offset))
 				return;
 		}
 
 		/*
-		 * curItem and any greated items was deleted by concurrent vacuum,
-		 * so we finished scan with currrent entry
+		 * curItem and any greated items was deleted by concurrent vacuum, so
+		 * we finished scan with currrent entry
 		 */
 	}
 }
@@ -221,10 +221,10 @@ startScanKey(Relation index, GinState *ginstate, GinScanKey key)
 		if (GinFuzzySearchLimit > 0)
 		{
 			/*
-			 * If all of keys more than threshold we will try to reduce result,
-			 * we hope (and only hope, for intersection operation of array our
-			 * supposition isn't true), that total result will not more than
-			 * minimal predictNumberResult.
+			 * If all of keys more than threshold we will try to reduce
+			 * result, we hope (and only hope, for intersection operation of
+			 * array our supposition isn't true), that total result will not
+			 * more than minimal predictNumberResult.
 			 */
 
 			for (i = 0; i < key->nentries; i++)

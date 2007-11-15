@@ -6,11 +6,11 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.75 2007/10/15 22:46:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.76 2007/11/15 21:14:43 momjian Exp $
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
- *		included by libpq client programs.  In particular, a libpq client
+ *		included by libpq client programs.	In particular, a libpq client
  *		should not assume that the encoding IDs used by the version of libpq
  *		it's linked to match up with the IDs declared here.
  *
@@ -161,7 +161,7 @@ typedef unsigned int pg_wchar;
  *
  * PG_SQL_ASCII is default encoding and must be = 0.
  *
- * XXX  We must avoid renumbering any backend encoding until libpq's major
+ * XXX	We must avoid renumbering any backend encoding until libpq's major
  * version number is increased beyond 5; it turns out that the backend
  * encoding IDs are effectively part of libpq's ABI as far as 8.2 initdb and
  * psql are concerned.
@@ -292,8 +292,8 @@ extern pg_wchar_tbl pg_wchar_table[];
  */
 typedef struct
 {
-	uint32 utf;			/* UTF-8 */
-	uint32 code;		/* local code */
+	uint32		utf;			/* UTF-8 */
+	uint32		code;			/* local code */
 } pg_utf_to_local;
 
 /*
@@ -301,8 +301,8 @@ typedef struct
  */
 typedef struct
 {
-	uint32 code;		/* local code */
-	uint32 utf;			/* UTF-8 */
+	uint32		code;			/* local code */
+	uint32		utf;			/* UTF-8 */
 } pg_local_to_utf;
 
 /*
@@ -310,20 +310,20 @@ typedef struct
  */
 typedef struct
 {
-	uint32 utf1;			/* UTF-8 code 1 */
-	uint32 utf2;			/* UTF-8 code 2 */
-	uint32 code;			/* local code */
-} pg_utf_to_local_combined;
+	uint32		utf1;			/* UTF-8 code 1 */
+	uint32		utf2;			/* UTF-8 code 2 */
+	uint32		code;			/* local code */
+}	pg_utf_to_local_combined;
 
 /*
  * local code to UTF-8 conversion map(combined characters)
  */
 typedef struct
 {
-	uint32 code;			/* local code */
-	uint32 utf1;			/* UTF-8 code 1 */
-	uint32 utf2;			/* UTF-8 code 2 */
-} pg_local_to_utf_combined;
+	uint32		code;			/* local code */
+	uint32		utf1;			/* UTF-8 code 1 */
+	uint32		utf2;			/* UTF-8 code 2 */
+}	pg_local_to_utf_combined;
 
 
 /*
@@ -342,8 +342,8 @@ extern pg_encname *pg_char_to_encname_struct(const char *name);
 
 extern int	pg_mb2wchar(const char *from, pg_wchar *to);
 extern int	pg_mb2wchar_with_len(const char *from, pg_wchar *to, int len);
-extern int	pg_encoding_mb2wchar_with_len(int encoding,
-									const char *from, pg_wchar *to, int len);
+extern int pg_encoding_mb2wchar_with_len(int encoding,
+							  const char *from, pg_wchar *to, int len);
 extern int	pg_char_and_wchar_strcmp(const char *s1, const pg_wchar *s2);
 extern int	pg_wchar_strncmp(const pg_wchar *s1, const pg_wchar *s2, size_t n);
 extern int	pg_char_and_wchar_strncmp(const char *s1, const pg_wchar *s2, size_t n);
@@ -387,18 +387,18 @@ extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
 extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
 extern void LocalToUtf(const unsigned char *iso, unsigned char *utf,
-					   const pg_local_to_utf *map, const pg_local_to_utf_combined *cmap,
-					   int size1, int size2, int encoding, int len);
+		   const pg_local_to_utf *map, const pg_local_to_utf_combined * cmap,
+		   int size1, int size2, int encoding, int len);
 
 extern void UtfToLocal(const unsigned char *utf, unsigned char *iso,
-					   const pg_utf_to_local *map, const pg_utf_to_local_combined *cmap,
-					   int size1, int size2, int encoding, int len);
+		   const pg_utf_to_local *map, const pg_utf_to_local_combined * cmap,
+		   int size1, int size2, int encoding, int len);
 
 extern bool pg_verifymbstr(const char *mbstr, int len, bool noError);
 extern bool pg_verify_mbstr(int encoding, const char *mbstr, int len,
 				bool noError);
 extern int pg_verify_mbstr_len(int encoding, const char *mbstr, int len,
-				bool noError);
+					bool noError);
 
 extern void report_invalid_encoding(int encoding, const char *mbstr, int len);
 extern void report_untranslatable_char(int src_encoding, int dest_encoding,

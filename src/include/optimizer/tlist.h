@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/tlist.h,v 1.47 2007/11/08 21:49:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/tlist.h,v 1.48 2007/11/15 21:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@ extern List *flatten_tlist(List *tlist);
 extern List *add_to_flat_tlist(List *tlist, List *vars);
 
 extern TargetEntry *get_sortgroupref_tle(Index sortref,
-						List *targetList);
+					 List *targetList);
 extern TargetEntry *get_sortgroupclause_tle(SortClause *sortClause,
 						List *targetList);
 extern Node *get_sortgroupclause_expr(SortClause *sortClause,

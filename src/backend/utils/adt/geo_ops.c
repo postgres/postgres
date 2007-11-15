@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.96 2007/03/05 23:29:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.97 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5085,7 +5085,8 @@ point_inside(Point *p, int npts, Point *plist)
 	int			i = 0;
 	double		x,
 				y;
-	int			cross, total_cross = 0;
+	int			cross,
+				total_cross = 0;
 
 	if (npts <= 0)
 		return 0;
@@ -5107,7 +5108,7 @@ point_inside(Point *p, int npts, Point *plist)
 		if ((cross = lseg_crossing(x, y, prev_x, prev_y)) == POINT_ON_POLYGON)
 			return 2;
 		total_cross += cross;
-		
+
 		prev_x = x;
 		prev_y = y;
 	}
@@ -5139,18 +5140,18 @@ lseg_crossing(double x, double y, double prev_x, double prev_y)
 	int			y_sign;
 
 	if (FPzero(y))
-	{	/* y == 0, on X axis */
-		if (FPzero(x))	/* (x,y) is (0,0)? */
+	{							/* y == 0, on X axis */
+		if (FPzero(x))			/* (x,y) is (0,0)? */
 			return POINT_ON_POLYGON;
 		else if (FPgt(x, 0))
-		{	/* x > 0 */
-			if (FPzero(prev_y))	/* y and prev_y are zero */
+		{						/* x > 0 */
+			if (FPzero(prev_y)) /* y and prev_y are zero */
 				/* prev_x > 0? */
 				return FPgt(prev_x, 0) ? 0 : POINT_ON_POLYGON;
 			return FPlt(prev_y, 0) ? 1 : -1;
 		}
 		else
-		{	/* x < 0, x not on positive X axis */
+		{						/* x < 0, x not on positive X axis */
 			if (FPzero(prev_y))
 				/* prev_x < 0? */
 				return FPlt(prev_x, 0) ? 0 : POINT_ON_POLYGON;
@@ -5158,7 +5159,7 @@ lseg_crossing(double x, double y, double prev_x, double prev_y)
 		}
 	}
 	else
-	{	/* y != 0 */
+	{							/* y != 0 */
 		/* compute y crossing direction from previous point */
 		y_sign = FPgt(y, 0) ? 1 : -1;
 
@@ -5167,9 +5168,9 @@ lseg_crossing(double x, double y, double prev_x, double prev_y)
 			return FPlt(prev_x, 0) ? 0 : y_sign;
 		else if (FPgt(y_sign * prev_y, 0))
 			/* both above or below X axis */
-			return 0;	/* same sign */
+			return 0;			/* same sign */
 		else
-		{	/* y and prev_y cross X-axis */
+		{						/* y and prev_y cross X-axis */
 			if (FPge(x, 0) && FPgt(prev_x, 0))
 				/* both non-negative so cross positive X-axis */
 				return 2 * y_sign;

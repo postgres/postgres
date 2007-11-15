@@ -275,13 +275,13 @@ tconvert(PG_FUNCTION_ARGS)
 	int			len;
 	HStore	   *out;
 
-	if ( PG_ARGISNULL(0) )
+	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
 	key = PG_GETARG_TEXT_P(0);
 
-	if ( PG_ARGISNULL(1) )
-		len = CALCDATASIZE(1, VARSIZE(key) );
+	if (PG_ARGISNULL(1))
+		len = CALCDATASIZE(1, VARSIZE(key));
 	else
 	{
 		val = PG_GETARG_TEXT_P(1);
@@ -292,7 +292,7 @@ tconvert(PG_FUNCTION_ARGS)
 	out->size = 1;
 
 	ARRPTR(out)->keylen = VARSIZE(key) - VARHDRSZ;
-	if ( PG_ARGISNULL(1) )
+	if (PG_ARGISNULL(1))
 	{
 		ARRPTR(out)->vallen = 0;
 		ARRPTR(out)->valisnull = true;
@@ -537,18 +537,18 @@ hs_contains(PG_FUNCTION_ARGS)
 
 		if (entry)
 		{
-			if ( te->valisnull || entry->valisnull )
+			if (te->valisnull || entry->valisnull)
 			{
-				if ( !(te->valisnull && entry->valisnull) )
+				if (!(te->valisnull && entry->valisnull))
 					res = false;
 			}
-			else if ( te->vallen != entry->vallen ||  
-										  strncmp(
-											 vv + entry->pos + entry->keylen,
-												  tv + te->pos + te->keylen,
-												  te->vallen) 
-										  )
-					res = false;
+			else if (te->vallen != entry->vallen ||
+					 strncmp(
+							 vv + entry->pos + entry->keylen,
+							 tv + te->pos + te->keylen,
+							 te->vallen)
+				)
+				res = false;
 		}
 		else
 			res = false;

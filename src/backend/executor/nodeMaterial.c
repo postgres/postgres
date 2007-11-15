@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.59 2007/05/21 17:57:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.60 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,10 +312,10 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 
 		/*
 		 * If subnode is to be rescanned then we forget previous stored
-		 * results; we have to re-read the subplan and re-store.  Also,
-		 * if we told tuplestore it needn't support rescan, we lose and
-		 * must re-read.  (This last should not happen in common cases;
-		 * else our caller lied by not passing EXEC_FLAG_REWIND to us.)
+		 * results; we have to re-read the subplan and re-store.  Also, if we
+		 * told tuplestore it needn't support rescan, we lose and must
+		 * re-read.  (This last should not happen in common cases; else our
+		 * caller lied by not passing EXEC_FLAG_REWIND to us.)
 		 *
 		 * Otherwise we can just rewind and rescan the stored output. The
 		 * state of the subnode does not change.

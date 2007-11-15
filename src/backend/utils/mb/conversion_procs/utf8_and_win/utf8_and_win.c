@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.10 2007/03/25 11:56:04 ishii Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.11 2007/11/15 21:14:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ win_to_utf8(PG_FUNCTION_ARGS)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR),
-			 errmsg("unexpected encoding ID %d for WIN character sets", encoding)));
+	  errmsg("unexpected encoding ID %d for WIN character sets", encoding)));
 
 	PG_RETURN_VOID();
 }
@@ -152,7 +152,7 @@ utf8_to_win(PG_FUNCTION_ARGS)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR),
-			 errmsg("unexpected encoding ID %d for WIN character sets", encoding)));
+	  errmsg("unexpected encoding ID %d for WIN character sets", encoding)));
 
 	PG_RETURN_VOID();
 }

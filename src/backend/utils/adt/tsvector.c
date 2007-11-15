@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.6 2007/10/23 00:51:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.7 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,15 +25,15 @@ typedef struct
 	WordEntry	entry;			/* must be first! */
 	WordEntryPos *pos;
 	int			poslen;			/* number of elements in pos */
-} WordEntryIN;
+}	WordEntryIN;
 
 
 /* Compare two WordEntryPos values for qsort */
 static int
 comparePos(const void *a, const void *b)
 {
-	int apos = WEP_GETPOS(*(const WordEntryPos *) a);
-	int bpos = WEP_GETPOS(*(const WordEntryPos *) b);
+	int			apos = WEP_GETPOS(*(const WordEntryPos *) a);
+	int			bpos = WEP_GETPOS(*(const WordEntryPos *) b);
 
 	if (apos == bpos)
 		return 0;
@@ -102,7 +102,7 @@ compareentry(const void *va, const void *vb, void *arg)
 static int
 uniqueentry(WordEntryIN * a, int l, char *buf, int *outbuflen)
 {
-	int		buflen;
+	int			buflen;
 	WordEntryIN *ptr,
 			   *res;
 
@@ -137,7 +137,7 @@ uniqueentry(WordEntryIN * a, int l, char *buf, int *outbuflen)
 			if (res->entry.haspos)
 			{
 				/* append ptr's positions to res's positions */
-				int	newlen = ptr->poslen + res->poslen;
+				int			newlen = ptr->poslen + res->poslen;
 
 				res->pos = (WordEntryPos *)
 					repalloc(res->pos, newlen * sizeof(WordEntryPos));
@@ -184,7 +184,7 @@ tsvectorin(PG_FUNCTION_ARGS)
 	TSVectorParseState state;
 	WordEntryIN *arr;
 	int			totallen;
-	int			arrlen;  /* allocated size of arr */
+	int			arrlen;			/* allocated size of arr */
 	WordEntry  *inarr;
 	int			len = 0;
 	TSVector	in;
@@ -197,17 +197,17 @@ tsvectorin(PG_FUNCTION_ARGS)
 	int			stroff;
 
 	/*
-	 * Tokens are appended to tmpbuf, cur is a pointer
-	 * to the end of used space in tmpbuf.
+	 * Tokens are appended to tmpbuf, cur is a pointer to the end of used
+	 * space in tmpbuf.
 	 */
 	char	   *tmpbuf;
 	char	   *cur;
-	int			buflen = 256; /* allocated size of tmpbuf */
+	int			buflen = 256;	/* allocated size of tmpbuf */
 
 	pg_verifymbstr(buf, strlen(buf), false);
 
 	state = init_tsvector_parser(buf, false, false);
-	
+
 	arrlen = 64;
 	arr = (WordEntryIN *) palloc(sizeof(WordEntryIN) * arrlen);
 	cur = tmpbuf = (char *) palloc(buflen);
@@ -219,7 +219,7 @@ tsvectorin(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("word is too long (%ld bytes, max %ld bytes)",
 							(long) toklen,
-							(long) (MAXSTRLEN-1))));
+							(long) (MAXSTRLEN - 1))));
 
 		if (cur - tmpbuf > MAXSTRPOS)
 			ereport(ERROR,
@@ -237,7 +237,7 @@ tsvectorin(PG_FUNCTION_ARGS)
 		}
 		while ((cur - tmpbuf) + toklen >= buflen)
 		{
-			int	dist = cur - tmpbuf;
+			int			dist = cur - tmpbuf;
 
 			buflen *= 2;
 			tmpbuf = (char *) repalloc((void *) tmpbuf, buflen);
@@ -394,11 +394,11 @@ tsvectorout(PG_FUNCTION_ARGS)
  * Binary Input / Output functions. The binary format is as follows:
  *
  * uint32	number of lexemes
- * 
+ *
  * for each lexeme:
  *		lexeme text in client encoding, null-terminated
- * 		uint16	number of positions
- * 		for each position:
+ *		uint16	number of positions
+ *		for each position:
  *			uint16 WordEntryPos
  */
 
@@ -416,10 +416,11 @@ tsvectorsend(PG_FUNCTION_ARGS)
 	pq_sendint(&buf, vec->size, sizeof(int32));
 	for (i = 0; i < vec->size; i++)
 	{
-		uint16 npos;
+		uint16		npos;
 
-		/* the strings in the TSVector array are not null-terminated, so 
-		 * we have to send the null-terminator separately
+		/*
+		 * the strings in the TSVector array are not null-terminated, so we
+		 * have to send the null-terminator separately
 		 */
 		pq_sendtext(&buf, STRPTR(vec) + weptr->pos, weptr->len);
 		pq_sendbyte(&buf, '\0');
@@ -427,7 +428,7 @@ tsvectorsend(PG_FUNCTION_ARGS)
 		npos = POSDATALEN(vec, weptr);
 		pq_sendint(&buf, npos, sizeof(uint16));
 
-		if(npos > 0)
+		if (npos > 0)
 		{
 			WordEntryPos *wepptr = POSDATAPTR(vec, weptr);
 
@@ -447,11 +448,11 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 	TSVector	vec;
 	int			i;
 	int32		nentries;
-	int			datalen; /* number of bytes used in the variable size area
-						  * after fixed size TSVector header and WordEntries
-						  */
+	int			datalen;		/* number of bytes used in the variable size
+								 * area after fixed size TSVector header and
+								 * WordEntries */
 	Size		hdrlen;
-	Size		len;  /* allocated size of vec */
+	Size		len;			/* allocated size of vec */
 
 	nentries = pq_getmsgint(buf, sizeof(int32));
 	if (nentries < 0 || nentries > (MaxAllocSize / sizeof(WordEntry)))
@@ -459,7 +460,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 
 	hdrlen = DATAHDRSIZE + sizeof(WordEntry) * nentries;
 
-	len = hdrlen * 2; /* times two to make room for lexemes */
+	len = hdrlen * 2;			/* times two to make room for lexemes */
 	vec = (TSVector) palloc0(len);
 	vec->size = nentries;
 
@@ -467,8 +468,8 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 	for (i = 0; i < nentries; i++)
 	{
 		const char *lexeme;
-		uint16 npos;
-		size_t lex_len;
+		uint16		npos;
+		size_t		lex_len;
 
 		lexeme = pq_getmsgstring(buf);
 		npos = (uint16) pq_getmsgint(buf, sizeof(uint16));
@@ -480,7 +481,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 			elog(ERROR, "invalid tsvector; lexeme too long");
 
 		if (datalen > MAXSTRPOS)
-			elog(ERROR, "invalid tsvector; maximum total lexeme length exceeded"); 
+			elog(ERROR, "invalid tsvector; maximum total lexeme length exceeded");
 
 		if (npos > MAXNUMPOS)
 			elog(ERROR, "unexpected number of positions");
@@ -518,8 +519,8 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 
 			/*
 			 * Pad to 2-byte alignment if necessary. Though we used palloc0
-			 * for the initial allocation, subsequent repalloc'd memory
-			 * areas are not initialized to zero.
+			 * for the initial allocation, subsequent repalloc'd memory areas
+			 * are not initialized to zero.
 			 */
 			if (datalen != SHORTALIGN(datalen))
 			{

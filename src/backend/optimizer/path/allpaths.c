@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.165 2007/09/26 18:51:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.166 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ join_search_hook_type join_search_hook = NULL;
 
 static void set_base_rel_pathlists(PlannerInfo *root);
 static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
-							 Index rti, RangeTblEntry *rte);
+				 Index rti, RangeTblEntry *rte);
 static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -312,10 +312,10 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * We have to copy the parent's targetlist and quals to the child,
-		 * with appropriate substitution of variables.  However, only the
+		 * with appropriate substitution of variables.	However, only the
 		 * baserestrictinfo quals are needed before we can check for
-		 * constraint exclusion; so do that first and then check to see
-		 * if we can disregard this child.
+		 * constraint exclusion; so do that first and then check to see if we
+		 * can disregard this child.
 		 */
 		childrel->baserestrictinfo = (List *)
 			adjust_appendrel_attrs((Node *) rel->baserestrictinfo,
@@ -325,8 +325,8 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		{
 			/*
 			 * This child need not be scanned, so we can omit it from the
-			 * appendrel.  Mark it with a dummy cheapest-path though, in
-			 * case best_appendrel_indexscan() looks at it later.
+			 * appendrel.  Mark it with a dummy cheapest-path though, in case
+			 * best_appendrel_indexscan() looks at it later.
 			 */
 			set_dummy_rel_pathlist(childrel);
 			continue;
@@ -709,7 +709,7 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
  * needed for these paths need have been instantiated.
  *
  * Note to plugin authors: the functions invoked during standard_join_search()
- * modify root->join_rel_list and root->join_rel_hash.  If you want to do more
+ * modify root->join_rel_list and root->join_rel_hash.	If you want to do more
  * than one join-order search, you'll probably need to save and restore the
  * original states of those data structures.  See geqo_eval() for an example.
  */

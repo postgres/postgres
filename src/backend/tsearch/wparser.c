@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser.c,v 1.4 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ typedef struct
 {
 	int			cur;
 	LexDescr   *list;
-} TSTokenTypeStorage;
+}	TSTokenTypeStorage;
 
 static void
 tt_setup_firstcall(FuncCallContext *funcctx, Oid prsid)
@@ -131,8 +131,8 @@ ts_token_type_byname(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		text	*prsname = PG_GETARG_TEXT_P(0);
-		Oid		prsId;
+		text	   *prsname = PG_GETARG_TEXT_P(0);
+		Oid			prsId;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		prsId = TSParserGetPrsid(textToQualifiedNameList(prsname), false);
@@ -150,14 +150,14 @@ typedef struct
 {
 	int			type;
 	char	   *lexeme;
-} LexemeEntry;
+}	LexemeEntry;
 
 typedef struct
 {
 	int			cur;
 	int			len;
 	LexemeEntry *list;
-} PrsStorage;
+}	PrsStorage;
 
 
 static void
@@ -181,7 +181,7 @@ prs_setup_firstcall(FuncCallContext *funcctx, Oid prsid, text *txt)
 
 	prsdata = (void *) DatumGetPointer(FunctionCall2(&prs->prsstart,
 											   PointerGetDatum(VARDATA(txt)),
-									   Int32GetDatum(VARSIZE(txt) - VARHDRSZ)));
+									Int32GetDatum(VARSIZE(txt) - VARHDRSZ)));
 
 	while ((type = DatumGetInt32(FunctionCall3(&prs->prstoken,
 											   PointerGetDatum(prsdata),
@@ -278,9 +278,9 @@ ts_parse_byname(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		text	*prsname = PG_GETARG_TEXT_P(0);
-		text	*txt = PG_GETARG_TEXT_P(1);
-		Oid		prsId;
+		text	   *prsname = PG_GETARG_TEXT_P(0);
+		text	   *txt = PG_GETARG_TEXT_P(1);
+		Oid			prsId;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		prsId = TSParserGetPrsid(textToQualifiedNameList(prsname), false);
@@ -351,7 +351,7 @@ Datum
 ts_headline(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall3(ts_headline_byid_opt,
-									ObjectIdGetDatum(getTSCurrentConfig(true)),
+								  ObjectIdGetDatum(getTSCurrentConfig(true)),
 										PG_GETARG_DATUM(0),
 										PG_GETARG_DATUM(1)));
 }
@@ -360,7 +360,7 @@ Datum
 ts_headline_opt(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall4(ts_headline_byid_opt,
-									ObjectIdGetDatum(getTSCurrentConfig(true)),
+								  ObjectIdGetDatum(getTSCurrentConfig(true)),
 										PG_GETARG_DATUM(0),
 										PG_GETARG_DATUM(1),
 										PG_GETARG_DATUM(2)));

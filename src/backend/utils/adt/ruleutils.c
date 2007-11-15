@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.264 2007/10/13 15:55:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.265 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,7 @@ static Node *get_rule_sortgroupclause(SortClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
 static char *get_variable(Var *var, int levelsup, bool showstar,
-						  deparse_context *context);
+			 deparse_context *context);
 static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
 static const char *get_simple_binary_op_name(OpExpr *expr);
@@ -173,10 +173,10 @@ static void get_func_expr(FuncExpr *expr, deparse_context *context,
 			  bool showimplicit);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
 static void get_coercion_expr(Node *arg, deparse_context *context,
-							  Oid resulttype, int32 resulttypmod,
-							  Node *parentNode);
+				  Oid resulttype, int32 resulttypmod,
+				  Node *parentNode);
 static void get_const_expr(Const *constval, deparse_context *context,
-						   bool showtype);
+			   bool showtype);
 static void get_sublink_expr(SubLink *sublink, deparse_context *context);
 static void get_from_clause(Query *query, const char *prefix,
 				deparse_context *context);
@@ -532,8 +532,8 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 		int			i;
 
 		val = DatumGetByteaP(fastgetattr(ht_trig,
-										Anum_pg_trigger_tgargs,
-										tgrel->rd_att, &isnull));
+										 Anum_pg_trigger_tgargs,
+										 tgrel->rd_att, &isnull));
 		if (isnull)
 			elog(ERROR, "tgargs is null for trigger %u", trigid);
 		p = (char *) VARDATA(val);
@@ -604,7 +604,7 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
 	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, colno,
-														 false, prettyFlags)));
+													   false, prettyFlags)));
 }
 
 /* Internal version that returns a palloc'd C string */
@@ -816,7 +816,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
 			tblspc = get_rel_tablespace(indexrelid);
 			if (OidIsValid(tblspc))
 				appendStringInfo(&buf, " TABLESPACE %s",
-								 quote_identifier(get_tablespace_name(tblspc)));
+							  quote_identifier(get_tablespace_name(tblspc)));
 		}
 
 		/*
@@ -1068,7 +1068,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 					tblspc = get_rel_tablespace(indexId);
 					if (OidIsValid(tblspc))
 						appendStringInfo(&buf, " USING INDEX TABLESPACE %s",
-										 quote_identifier(get_tablespace_name(tblspc)));
+							  quote_identifier(get_tablespace_name(tblspc)));
 				}
 
 				break;
@@ -1978,7 +1978,7 @@ get_select_query_def(Query *query, deparse_context *context,
 										 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
 			if (srt->sortop == typentry->lt_opr)
 			{
-				 /* ASC is default, so emit nothing for it */
+				/* ASC is default, so emit nothing for it */
 				if (srt->nulls_first)
 					appendStringInfo(buf, " NULLS FIRST");
 			}
@@ -2624,7 +2624,7 @@ get_utility_query_def(Query *query, deparse_context *context)
  * push_plan: set up deparse_namespace to recurse into the tlist of a subplan
  *
  * When expanding an OUTER or INNER reference, we must push new outer/inner
- * subplans in case the referenced expression itself uses OUTER/INNER.  We
+ * subplans in case the referenced expression itself uses OUTER/INNER.	We
  * modify the top stack entry in-place to avoid affecting levelsup issues
  * (although in a Plan tree there really shouldn't be any).
  *
@@ -2641,6 +2641,7 @@ push_plan(deparse_namespace *dpns, Plan *subplan)
 		dpns->outer_plan = (Plan *) linitial(((Append *) subplan)->appendplans);
 	else
 		dpns->outer_plan = outerPlan(subplan);
+
 	/*
 	 * For a SubqueryScan, pretend the subplan is INNER referent.  (We don't
 	 * use OUTER because that could someday conflict with the normal meaning.)
@@ -2697,8 +2698,8 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 	else if (var->varno == OUTER && dpns->outer_plan)
 	{
 		TargetEntry *tle;
-		Plan   *save_outer;
-		Plan   *save_inner;
+		Plan	   *save_outer;
+		Plan	   *save_inner;
 
 		tle = get_tle_by_resno(dpns->outer_plan->targetlist, var->varattno);
 		if (!tle)
@@ -2726,8 +2727,8 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 	else if (var->varno == INNER && dpns->inner_plan)
 	{
 		TargetEntry *tle;
-		Plan   *save_outer;
-		Plan   *save_inner;
+		Plan	   *save_outer;
+		Plan	   *save_inner;
 
 		tle = get_tle_by_resno(dpns->inner_plan->targetlist, var->varattno);
 		if (!tle)
@@ -2755,7 +2756,7 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 	else
 	{
 		elog(ERROR, "bogus varno: %d", var->varno);
-		return NULL;					/* keep compiler quiet */
+		return NULL;			/* keep compiler quiet */
 	}
 
 	/* Identify names to use */
@@ -2900,8 +2901,8 @@ get_name_for_var_field(Var *var, int fieldno,
 	else if (var->varno == OUTER && dpns->outer_plan)
 	{
 		TargetEntry *tle;
-		Plan   *save_outer;
-		Plan   *save_inner;
+		Plan	   *save_outer;
+		Plan	   *save_inner;
 		const char *result;
 
 		tle = get_tle_by_resno(dpns->outer_plan->targetlist, var->varattno);
@@ -2923,8 +2924,8 @@ get_name_for_var_field(Var *var, int fieldno,
 	else if (var->varno == INNER && dpns->inner_plan)
 	{
 		TargetEntry *tle;
-		Plan   *save_outer;
-		Plan   *save_inner;
+		Plan	   *save_outer;
+		Plan	   *save_inner;
 		const char *result;
 
 		tle = get_tle_by_resno(dpns->inner_plan->targetlist, var->varattno);
@@ -2946,7 +2947,7 @@ get_name_for_var_field(Var *var, int fieldno,
 	else
 	{
 		elog(ERROR, "bogus varno: %d", var->varno);
-		return NULL;					/* keep compiler quiet */
+		return NULL;			/* keep compiler quiet */
 	}
 
 	if (attnum == InvalidAttrNumber)
@@ -2958,9 +2959,9 @@ get_name_for_var_field(Var *var, int fieldno,
 	/*
 	 * This part has essentially the same logic as the parser's
 	 * expandRecordVariable() function, but we are dealing with a different
-	 * representation of the input context, and we only need one field name not
-	 * a TupleDesc.  Also, we need a special case for deparsing Plan trees,
-	 * because the subquery field has been removed from SUBQUERY RTEs.
+	 * representation of the input context, and we only need one field name
+	 * not a TupleDesc.  Also, we need a special case for deparsing Plan
+	 * trees, because the subquery field has been removed from SUBQUERY RTEs.
 	 */
 	expr = (Node *) var;		/* default if we can't drill down */
 
@@ -3020,13 +3021,13 @@ get_name_for_var_field(Var *var, int fieldno,
 					/*
 					 * We're deparsing a Plan tree so we don't have complete
 					 * RTE entries.  But the only place we'd see a Var
-					 * directly referencing a SUBQUERY RTE is in a SubqueryScan
-					 * plan node, and we can look into the child plan's tlist
-					 * instead.
+					 * directly referencing a SUBQUERY RTE is in a
+					 * SubqueryScan plan node, and we can look into the child
+					 * plan's tlist instead.
 					 */
 					TargetEntry *tle;
-					Plan   *save_outer;
-					Plan   *save_inner;
+					Plan	   *save_outer;
+					Plan	   *save_inner;
 					const char *result;
 
 					if (!dpns->inner_plan)
@@ -3298,7 +3299,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_RowExpr:	/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_MinMaxExpr:		/* own parentheses */
-				case T_XmlExpr:			/* own parentheses */
+				case T_XmlExpr:	/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
 				case T_Aggref:	/* own parentheses */
 				case T_CaseExpr:		/* other separators */
@@ -3347,7 +3348,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_RowExpr:	/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_MinMaxExpr:		/* own parentheses */
-				case T_XmlExpr:			/* own parentheses */
+				case T_XmlExpr:	/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
 				case T_Aggref:	/* own parentheses */
 				case T_CaseExpr:		/* other separators */
@@ -3970,8 +3971,8 @@ get_rule_expr(Node *node, deparse_context *context,
 
 		case T_XmlExpr:
 			{
-				XmlExpr *xexpr = (XmlExpr *) node;
-				bool	needcomma = false;
+				XmlExpr    *xexpr = (XmlExpr *) node;
+				bool		needcomma = false;
 				ListCell   *arg;
 				ListCell   *narg;
 				Const	   *con;
@@ -4026,8 +4027,8 @@ get_rule_expr(Node *node, deparse_context *context,
 					}
 					forboth(arg, xexpr->named_args, narg, xexpr->arg_names)
 					{
-						Node 	*e = (Node *) lfirst(arg);
-						char	*argname = strVal(lfirst(narg));
+						Node	   *e = (Node *) lfirst(arg);
+						char	   *argname = strVal(lfirst(narg));
 
 						if (needcomma)
 							appendStringInfoString(buf, ", ");
@@ -4064,7 +4065,7 @@ get_rule_expr(Node *node, deparse_context *context,
 							Assert(!con->constisnull);
 							if (DatumGetBool(con->constvalue))
 								appendStringInfoString(buf,
-													   " PRESERVE WHITESPACE");
+													 " PRESERVE WHITESPACE");
 							else
 								appendStringInfoString(buf,
 													   " STRIP WHITESPACE");
@@ -4086,22 +4087,22 @@ get_rule_expr(Node *node, deparse_context *context,
 							con = (Const *) lthird(xexpr->args);
 							Assert(IsA(con, Const));
 							if (con->constisnull)
-								/* suppress STANDALONE NO VALUE */ ;
+								 /* suppress STANDALONE NO VALUE */ ;
 							else
 							{
 								switch (DatumGetInt32(con->constvalue))
 								{
 									case XML_STANDALONE_YES:
 										appendStringInfoString(buf,
-															   ", STANDALONE YES");
+														 ", STANDALONE YES");
 										break;
 									case XML_STANDALONE_NO:
 										appendStringInfoString(buf,
-															   ", STANDALONE NO");
+														  ", STANDALONE NO");
 										break;
 									case XML_STANDALONE_NO_VALUE:
 										appendStringInfoString(buf,
-															   ", STANDALONE NO VALUE");
+													", STANDALONE NO VALUE");
 										break;
 									default:
 										break;
@@ -4116,7 +4117,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				}
 				if (xexpr->op == IS_XMLSERIALIZE)
 					appendStringInfo(buf, " AS %s", format_type_with_typemod(xexpr->type,
-																			 xexpr->typmod));
+															 xexpr->typmod));
 				if (xexpr->op == IS_DOCUMENT)
 					appendStringInfoString(buf, " IS DOCUMENT");
 				else
@@ -4435,11 +4436,11 @@ get_coercion_expr(Node *arg, deparse_context *context,
 
 	/*
 	 * Since parse_coerce.c doesn't immediately collapse application of
-	 * length-coercion functions to constants, what we'll typically see
-	 * in such cases is a Const with typmod -1 and a length-coercion
-	 * function right above it.  Avoid generating redundant output.
-	 * However, beware of suppressing casts when the user actually wrote
-	 * something like 'foo'::text::char(3).
+	 * length-coercion functions to constants, what we'll typically see in
+	 * such cases is a Const with typmod -1 and a length-coercion function
+	 * right above it.	Avoid generating redundant output. However, beware of
+	 * suppressing casts when the user actually wrote something like
+	 * 'foo'::text::char(3).
 	 */
 	if (arg && IsA(arg, Const) &&
 		((Const *) arg)->consttype == resulttype &&
@@ -4581,6 +4582,7 @@ get_const_expr(Const *constval, deparse_context *context, bool showtype)
 			needlabel = false;
 			break;
 		case NUMERICOID:
+
 			/*
 			 * Float-looking constants will be typed as numeric, but if
 			 * there's a specific typmod we need to show it.
@@ -5553,7 +5555,8 @@ unflatten_reloptions(char *reloptstring)
 
 	if (reloptstring)
 	{
-		Datum		sep, relopts;
+		Datum		sep,
+					relopts;
 
 		/*
 		 * We want to use text_to_array(reloptstring, ', ') --- but

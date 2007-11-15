@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.103 2007/08/10 03:16:04 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.104 2007/11/15 21:14:46 momjian Exp $
  *
  *********************************************************************
  */
@@ -28,6 +28,7 @@
  */
 #if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
 typedef int Py_ssize_t;
+
 #define PY_SSIZE_T_MAX INT_MAX
 #define PY_SSIZE_T_MIN INT_MIN
 #endif
@@ -1603,10 +1604,10 @@ static PyObject *
 PLyBool_FromString(const char *src)
 {
 	/*
-	 *	We would like to use Py_RETURN_TRUE and Py_RETURN_FALSE here for
-	 *	generating SQL from trigger functions, but those are only
-	 *	supported in Python >= 2.3, and we support older
-	 *	versions.  http://docs.python.org/api/boolObjects.html
+	 * We would like to use Py_RETURN_TRUE and Py_RETURN_FALSE here for
+	 * generating SQL from trigger functions, but those are only supported in
+	 * Python >= 2.3, and we support older versions.
+	 * http://docs.python.org/api/boolObjects.html
 	 */
 	if (src[0] == 't')
 		return PyBool_FromLong(1);
@@ -1730,8 +1731,8 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;
-		PyObject   * volatile value,
-				   * volatile so;
+		PyObject   *volatile value,
+				   *volatile so;
 
 		key = NameStr(desc->attrs[i]->attname);
 		value = so = NULL;
@@ -1819,8 +1820,8 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 	nulls = palloc(sizeof(char) * desc->natts);
 	for (i = 0; i < desc->natts; ++i)
 	{
-		PyObject   * volatile value,
-				   * volatile so;
+		PyObject   *volatile value,
+				   *volatile so;
 
 		value = so = NULL;
 		PG_TRY();
@@ -1890,8 +1891,8 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;
-		PyObject   * volatile value,
-				   * volatile so;
+		PyObject   *volatile value,
+				   *volatile so;
 
 		key = NameStr(desc->attrs[i]->attname);
 		value = so = NULL;
@@ -2020,13 +2021,13 @@ static PyMethodDef PLy_plan_methods[] = {
 };
 
 static PySequenceMethods PLy_result_as_sequence = {
-	PLy_result_length,		/* sq_length */
-	NULL,					/* sq_concat */
-	NULL,					/* sq_repeat */
-	PLy_result_item,		/* sq_item */
-	PLy_result_slice,		/* sq_slice */
-	PLy_result_ass_item,	/* sq_ass_item */
-	PLy_result_ass_slice,	/* sq_ass_slice */
+	PLy_result_length,			/* sq_length */
+	NULL,						/* sq_concat */
+	NULL,						/* sq_repeat */
+	PLy_result_item,			/* sq_item */
+	PLy_result_slice,			/* sq_slice */
+	PLy_result_ass_item,		/* sq_ass_item */
+	PLy_result_ass_slice,		/* sq_ass_slice */
 };
 
 static PyTypeObject PLy_ResultType = {
@@ -2327,26 +2328,26 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 				{
 					char	   *sptr;
 					HeapTuple	typeTup;
-					Oid         typeId;
-					int32       typmod;
+					Oid			typeId;
+					int32		typmod;
 					Form_pg_type typeStruct;
 
 					optr = PySequence_GetItem(list, i);
 					if (!PyString_Check(optr))
 						elog(ERROR, "Type names must be strings.");
 					sptr = PyString_AsString(optr);
-					
+
 					/********************************************************
-					 * Resolve argument type names and then look them up by 
-					 * oid in the system cache, and remember the required 
+					 * Resolve argument type names and then look them up by
+					 * oid in the system cache, and remember the required
 					 *information for input conversion.
-					 ********************************************************/ 
+					 ********************************************************/
 
 					parseTypeString(sptr, &typeId, &typmod);
- 
+
 					typeTup = SearchSysCache(TYPEOID,
 											 ObjectIdGetDatum(typeId),
-											 0,0,0);
+											 0, 0, 0);
 					if (!HeapTupleIsValid(typeTup))
 						elog(ERROR, "cache lookup failed for type %u", typeId);
 
@@ -2529,7 +2530,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	}
 	PG_CATCH();
 	{
-		int		k;
+		int			k;
 
 		MemoryContextSwitchTo(oldcontext);
 		PLy_error_in_progress = CopyErrorData();

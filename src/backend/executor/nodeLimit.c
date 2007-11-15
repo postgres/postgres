@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.31 2007/05/17 19:35:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.32 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,8 @@ ExecLimit(LimitState *node)
 			/*
 			 * First call for this node, so compute limit/offset. (We can't do
 			 * this any earlier, because parameters from upper nodes will not
-			 * be set during ExecInitLimit.)  This also sets position = 0
-			 * and changes the state to LIMIT_RESCAN.
+			 * be set during ExecInitLimit.)  This also sets position = 0 and
+			 * changes the state to LIMIT_RESCAN.
 			 */
 			recompute_limits(node);
 
@@ -295,17 +295,18 @@ recompute_limits(LimitState *node)
 	 *
 	 * This is a bit of a kluge, but we don't have any more-abstract way of
 	 * communicating between the two nodes; and it doesn't seem worth trying
-	 * to invent one without some more examples of special communication needs.
+	 * to invent one without some more examples of special communication
+	 * needs.
 	 *
 	 * Note: it is the responsibility of nodeSort.c to react properly to
-	 * changes of these parameters.  If we ever do redesign this, it'd be
-	 * a good idea to integrate this signaling with the parameter-change
+	 * changes of these parameters.  If we ever do redesign this, it'd be a
+	 * good idea to integrate this signaling with the parameter-change
 	 * mechanism.
 	 */
 	if (IsA(outerPlanState(node), SortState))
 	{
-		SortState *sortState = (SortState *) outerPlanState(node);
-		int64 tuples_needed = node->count + node->offset;
+		SortState  *sortState = (SortState *) outerPlanState(node);
+		int64		tuples_needed = node->count + node->offset;
 
 		/* negative test checks for overflow */
 		if (node->noCount || tuples_needed < 0)
@@ -412,9 +413,9 @@ void
 ExecReScanLimit(LimitState *node, ExprContext *exprCtxt)
 {
 	/*
-	 * Recompute limit/offset in case parameters changed, and reset the
-	 * state machine.  We must do this before rescanning our child node,
-	 * in case it's a Sort that we are passing the parameters down to.
+	 * Recompute limit/offset in case parameters changed, and reset the state
+	 * machine.  We must do this before rescanning our child node, in case
+	 * it's a Sort that we are passing the parameters down to.
 	 */
 	recompute_limits(node);
 

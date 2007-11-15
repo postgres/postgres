@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/typcache.h,v 1.14 2007/01/05 22:20:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/typcache.h,v 1.15 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ typedef struct TypeCacheEntry
 	 * information hasn't yet been requested.
 	 */
 	Oid			btree_opf;		/* the default btree opclass' family */
-	Oid			btree_opintype;	/* the default btree opclass' opcintype */
+	Oid			btree_opintype; /* the default btree opclass' opcintype */
 	Oid			hash_opf;		/* the default hash opclass' family */
 	Oid			hash_opintype;	/* the default hash opclass' opcintype */
 	Oid			eq_opr;			/* the equality operator */

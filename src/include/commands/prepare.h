@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.27 2007/04/16 18:21:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.28 2007/11/15 21:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ typedef struct
 {
 	/* dynahash.c requires key to be first field */
 	char		stmt_name[NAMEDATALEN];
-	CachedPlanSource *plansource;	/* the actual cached plan */
+	CachedPlanSource *plansource;		/* the actual cached plan */
 	bool		from_sql;		/* prepared via SQL, not FE/BE protocol? */
 	TimestampTz prepare_time;	/* the time when the stmt was prepared */
 } PreparedStatement;
@@ -41,8 +41,8 @@ extern void ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 			 DestReceiver *dest, char *completionTag);
 extern void DeallocateQuery(DeallocateStmt *stmt);
 extern void ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
-								const char *queryString,
-								ParamListInfo params, TupOutputState *tstate);
+					const char *queryString,
+					ParamListInfo params, TupOutputState *tstate);
 
 /* Low-level access to stored prepared statements */
 extern void StorePreparedStatement(const char *stmt_name,
@@ -60,6 +60,6 @@ extern void DropPreparedStatement(const char *stmt_name, bool showError);
 extern TupleDesc FetchPreparedStatementResultDesc(PreparedStatement *stmt);
 extern List *FetchPreparedStatementTargetList(PreparedStatement *stmt);
 
-void DropAllPreparedStatements(void);
+void		DropAllPreparedStatements(void);
 
 #endif   /* PREPARE_H */

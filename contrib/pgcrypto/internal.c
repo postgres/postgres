@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.26 2007/03/28 22:48:58 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.27 2007/11/15 21:14:31 momjian Exp $
  */
 
 #include "postgres.h"
@@ -251,7 +251,7 @@ struct int_ctx
 	uint8		iv[INT_MAX_IV];
 	union
 	{
-		BlowfishContext		bf;
+		BlowfishContext bf;
 		rijndael_ctx rj;
 	}			ctx;
 	unsigned	keylen;
@@ -426,7 +426,7 @@ bf_block_size(PX_Cipher * c)
 static unsigned
 bf_key_size(PX_Cipher * c)
 {
-	return 448/8;
+	return 448 / 8;
 }
 
 static unsigned

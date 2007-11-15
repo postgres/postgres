@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.75 2007/09/21 21:25:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.76 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,9 +177,9 @@ PageAddItem(Page page,
 		if (PageHasFreeLinePointers(phdr))
 		{
 			/*
-			 * Look for "recyclable" (unused) ItemId.  We check for no
-			 * storage as well, just to be paranoid --- unused items
-			 * should never have storage.
+			 * Look for "recyclable" (unused) ItemId.  We check for no storage
+			 * as well, just to be paranoid --- unused items should never have
+			 * storage.
 			 */
 			for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
 			{
@@ -510,12 +510,13 @@ PageGetExactFreeSpace(Page page)
 Size
 PageGetHeapFreeSpace(Page page)
 {
-	Size			space;
+	Size		space;
 
 	space = PageGetFreeSpace(page);
 	if (space > 0)
 	{
-		OffsetNumber	offnum, nline;
+		OffsetNumber offnum,
+					nline;
 
 		/*
 		 * Are there already MaxHeapTuplesPerPage line pointers in the page?
@@ -531,7 +532,7 @@ PageGetHeapFreeSpace(Page page)
 				 */
 				for (offnum = FirstOffsetNumber; offnum <= nline; offnum++)
 				{
-					ItemId	lp = PageGetItemId(page, offnum);
+					ItemId		lp = PageGetItemId(page, offnum);
 
 					if (!ItemIdIsUsed(lp))
 						break;
@@ -540,8 +541,8 @@ PageGetHeapFreeSpace(Page page)
 				if (offnum > nline)
 				{
 					/*
-					 * The hint is wrong, but we can't clear it here since
-					 * we don't have the ability to mark the page dirty.
+					 * The hint is wrong, but we can't clear it here since we
+					 * don't have the ability to mark the page dirty.
 					 */
 					space = 0;
 				}

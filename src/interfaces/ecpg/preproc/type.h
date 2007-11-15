@@ -25,7 +25,7 @@ struct ECPGtype
 		struct ECPGstruct_member *members;		/* A pointer to a list of
 												 * members. */
 	}			u;
-	int	lineno;
+	int			lineno;
 };
 
 /* Everything is malloced. */
@@ -97,9 +97,9 @@ struct su_symbol
 
 struct prep
 {
-	char	*name;
-	char 	*stmt;
-	char	*type;
+	char	   *name;
+	char	   *stmt;
+	char	   *type;
 };
 
 struct this_type

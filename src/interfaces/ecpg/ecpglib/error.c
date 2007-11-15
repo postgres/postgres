@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.18 2007/10/03 11:11:12 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.19 2007/11/15 21:14:45 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -189,7 +189,7 @@ ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat)
 		sqlca->sqlcode = ECPG_PGSQL;
 
 	ecpg_log("raising sqlstate %.*s (sqlcode: %d) in line %d, '%s'.\n",
-			sizeof(sqlca->sqlstate), sqlca->sqlstate, sqlca->sqlcode, line, sqlca->sqlerrm.sqlerrmc);
+			 sizeof(sqlca->sqlstate), sqlca->sqlstate, sqlca->sqlcode, line, sqlca->sqlerrm.sqlerrmc);
 
 	/* free all memory we have allocated for the user */
 	ECPGfree_auto_mem();
@@ -197,7 +197,7 @@ ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat)
 
 /* filter out all error codes */
 bool
-ecpg_check_PQresult(PGresult *results, int lineno, PGconn *connection, enum COMPAT_MODE compat) 
+ecpg_check_PQresult(PGresult *results, int lineno, PGconn *connection, enum COMPAT_MODE compat)
 {
 	if (results == NULL)
 	{
@@ -230,20 +230,20 @@ ecpg_check_PQresult(PGresult *results, int lineno, PGconn *connection, enum COMP
 			return (false);
 			break;
 		case PGRES_COPY_OUT:
-			return(true);
+			return (true);
 			break;
 		case PGRES_COPY_IN:
 			ecpg_log("ecpg_check_PQresult line %d: Got PGRES_COPY_IN ... tossing.\n", lineno);
 			PQendcopy(connection);
 			PQclear(results);
-			return(false);
+			return (false);
 			break;
 		default:
 			ecpg_log("ecpg_check_PQresult line %d: Got something else, postgres error.\n",
-					lineno);
+					 lineno);
 			ecpg_raise_backend(lineno, results, connection, compat);
 			PQclear(results);
-			return(false);
+			return (false);
 			break;
 	}
 }

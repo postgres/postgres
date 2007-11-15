@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.106 2007/09/21 18:24:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.107 2007/11/15 21:14:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,12 +95,12 @@ static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
  * buffer, so we can't use the LSN to interlock this; we have to just refrain
  * from setting the hint bit until some future re-examination of the tuple.
  *
- * We can always set hint bits when marking a transaction aborted.  (Some
+ * We can always set hint bits when marking a transaction aborted.	(Some
  * code in heapam.c relies on that!)
  *
  * Also, if we are cleaning up HEAP_MOVED_IN or HEAP_MOVED_OFF entries, then
  * we can always set the hint bits, since VACUUM FULL always uses synchronous
- * commits and doesn't move tuples that weren't previously hinted.  (This is
+ * commits and doesn't move tuples that weren't previously hinted.	(This is
  * not known by this subroutine, but is applied by its callers.)
  *
  * Normal commits may be asynchronous, so for those we need to get the LSN
@@ -116,7 +116,7 @@ SetHintBits(HeapTupleHeader tuple, Buffer buffer,
 	if (TransactionIdIsValid(xid))
 	{
 		/* NB: xid must be known committed here! */
-		XLogRecPtr  commitLSN = TransactionIdGetCommitLSN(xid);
+		XLogRecPtr	commitLSN = TransactionIdGetCommitLSN(xid);
 
 		if (XLogNeedsFlush(commitLSN))
 			return;				/* not flushed yet, so don't set hint */
@@ -1127,10 +1127,11 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
 						InvalidTransactionId);
 			return HEAPTUPLE_DEAD;
 		}
+
 		/*
 		 * At this point the xmin is known committed, but we might not have
-		 * been able to set the hint bit yet; so we can no longer Assert
-		 * that it's set.
+		 * been able to set the hint bit yet; so we can no longer Assert that
+		 * it's set.
 		 */
 	}
 
@@ -1146,8 +1147,8 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
 		/*
 		 * "Deleting" xact really only locked it, so the tuple is live in any
 		 * case.  However, we should make sure that either XMAX_COMMITTED or
-		 * XMAX_INVALID gets set once the xact is gone, to reduce the costs
-		 * of examining the tuple for future xacts.  Also, marking dead
+		 * XMAX_INVALID gets set once the xact is gone, to reduce the costs of
+		 * examining the tuple for future xacts.  Also, marking dead
 		 * MultiXacts as invalid here provides defense against MultiXactId
 		 * wraparound (see also comments in heap_freeze_tuple()).
 		 */
@@ -1198,10 +1199,11 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
 						InvalidTransactionId);
 			return HEAPTUPLE_LIVE;
 		}
+
 		/*
 		 * At this point the xmax is known committed, but we might not have
-		 * been able to set the hint bit yet; so we can no longer Assert
-		 * that it's set.
+		 * been able to set the hint bit yet; so we can no longer Assert that
+		 * it's set.
 		 */
 	}
 

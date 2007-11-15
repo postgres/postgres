@@ -166,7 +166,7 @@
  *
  * Copyright (c) 1999-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.27 2007/08/04 21:53:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.28 2007/11/15 21:14:39 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -222,7 +222,7 @@ static const PGLZ_Strategy strategy_default_data = {
 	10							/* Lower good match size by 10% at every
 								 * lookup loop iteration */
 };
-const PGLZ_Strategy * const PGLZ_strategy_default = &strategy_default_data;
+const PGLZ_Strategy *const PGLZ_strategy_default = &strategy_default_data;
 
 
 static const PGLZ_Strategy strategy_always_data = {
@@ -233,7 +233,7 @@ static const PGLZ_Strategy strategy_always_data = {
 								 * is found */
 	6							/* Look harder for a good match */
 };
-const PGLZ_Strategy * const PGLZ_strategy_always = &strategy_always_data;
+const PGLZ_Strategy *const PGLZ_strategy_always = &strategy_always_data;
 
 
 /* ----------
@@ -605,8 +605,8 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 	}
 
 	/*
-	 * Write out the last control byte and check that we haven't overrun
-	 * the output size allowed by the strategy.
+	 * Write out the last control byte and check that we haven't overrun the
+	 * output size allowed by the strategy.
 	 */
 	*ctrlp = ctrlb;
 	result_size = bp - bstart;
@@ -697,8 +697,8 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 
 	/*
 	 * Check we decompressed the right amount, else die.  This is a FATAL
-	 * condition if we tromped on more memory than expected (we assume we
-	 * have not tromped on shared memory, though, so need not PANIC).
+	 * condition if we tromped on more memory than expected (we assume we have
+	 * not tromped on shared memory, though, so need not PANIC).
 	 */
 	destsize = (char *) bp - dest;
 	if (destsize != source->rawsize)

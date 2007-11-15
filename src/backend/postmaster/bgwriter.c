@@ -2,7 +2,7 @@
  *
  * bgwriter.c
  *
- * The background writer (bgwriter) is new as of Postgres 8.0.  It attempts
+ * The background writer (bgwriter) is new as of Postgres 8.0.	It attempts
  * to keep regular backends from having to write out dirty shared buffers
  * (which they would only do when needing to free a shared buffer to read in
  * another page).  In the best scenario all writes from shared buffers will
@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.46 2007/11/14 21:19:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.47 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ typedef struct
 
 	int			ckpt_flags;		/* checkpoint flags, as defined in xlog.h */
 
-	uint32		num_backend_writes;	/* counts non-bgwriter buffer writes */
+	uint32		num_backend_writes;		/* counts non-bgwriter buffer writes */
 
 	int			num_requests;	/* current # of requests */
 	int			max_requests;	/* allocated array size */
@@ -202,9 +202,9 @@ BackgroundWriterMain(void)
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.  (bgwriter probably never has
-	 * any child processes, but for consistency we make all postmaster
-	 * child processes do this.)
+	 * can signal any child processes too.	(bgwriter probably never has any
+	 * child processes, but for consistency we make all postmaster child
+	 * processes do this.)
 	 */
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
@@ -402,10 +402,10 @@ BackgroundWriterMain(void)
 		}
 
 		/*
-		 * Force a checkpoint if too much time has elapsed since the
-		 * last one.  Note that we count a timed checkpoint in stats only
-		 * when this occurs without an external request, but we set the
-		 * CAUSE_TIME flag bit even if there is also an external request.
+		 * Force a checkpoint if too much time has elapsed since the last one.
+		 * Note that we count a timed checkpoint in stats only when this
+		 * occurs without an external request, but we set the CAUSE_TIME flag
+		 * bit even if there is also an external request.
 		 */
 		now = time(NULL);
 		elapsed_secs = now - last_checkpoint_time;
@@ -427,10 +427,9 @@ BackgroundWriterMain(void)
 			volatile BgWriterShmemStruct *bgs = BgWriterShmem;
 
 			/*
-			 * Atomically fetch the request flags to figure out what
-			 * kind of a checkpoint we should perform, and increase the 
-			 * started-counter to acknowledge that we've started
-			 * a new checkpoint.
+			 * Atomically fetch the request flags to figure out what kind of a
+			 * checkpoint we should perform, and increase the started-counter
+			 * to acknowledge that we've started a new checkpoint.
 			 */
 			SpinLockAcquire(&bgs->ckpt_lck);
 			flags |= bgs->ckpt_flags;
@@ -518,8 +517,8 @@ CheckArchiveTimeout(void)
 		return;
 
 	/*
-	 * Update local state ... note that last_xlog_switch_time is the
-	 * last time a switch was performed *or requested*.
+	 * Update local state ... note that last_xlog_switch_time is the last time
+	 * a switch was performed *or requested*.
 	 */
 	last_time = GetLastSegSwitchTime();
 
@@ -534,17 +533,17 @@ CheckArchiveTimeout(void)
 		switchpoint = RequestXLogSwitch();
 
 		/*
-		 * If the returned pointer points exactly to a segment
-		 * boundary, assume nothing happened.
+		 * If the returned pointer points exactly to a segment boundary,
+		 * assume nothing happened.
 		 */
 		if ((switchpoint.xrecoff % XLogSegSize) != 0)
 			ereport(DEBUG1,
-					(errmsg("transaction log switch forced (archive_timeout=%d)",
-							XLogArchiveTimeout)));
+				(errmsg("transaction log switch forced (archive_timeout=%d)",
+						XLogArchiveTimeout)));
 
 		/*
-		 * Update state in any case, so we don't retry constantly when
-		 * the system is idle.
+		 * Update state in any case, so we don't retry constantly when the
+		 * system is idle.
 		 */
 		last_xlog_switch_time = now;
 	}
@@ -577,14 +576,14 @@ BgWriterNap(void)
 	if (bgwriter_lru_maxpages > 0 || ckpt_active)
 		udelay = BgWriterDelay * 1000L;
 	else if (XLogArchiveTimeout > 0)
-		udelay = 1000000L;	/* One second */
+		udelay = 1000000L;		/* One second */
 	else
-		udelay = 10000000L; /* Ten seconds */
+		udelay = 10000000L;		/* Ten seconds */
 
 	while (udelay > 999999L)
 	{
 		if (got_SIGHUP || shutdown_requested ||
-			(ckpt_active ? ImmediateCheckpointRequested() : checkpoint_requested))
+		(ckpt_active ? ImmediateCheckpointRequested() : checkpoint_requested))
 			break;
 		pg_usleep(1000000L);
 		AbsorbFsyncRequests();
@@ -592,12 +591,12 @@ BgWriterNap(void)
 	}
 
 	if (!(got_SIGHUP || shutdown_requested ||
-		  (ckpt_active ? ImmediateCheckpointRequested() : checkpoint_requested)))
+	  (ckpt_active ? ImmediateCheckpointRequested() : checkpoint_requested)))
 		pg_usleep(udelay);
 }
 
 /*
- * Returns true if an immediate checkpoint request is pending.  (Note that
+ * Returns true if an immediate checkpoint request is pending.	(Note that
  * this does not check the *current* checkpoint's IMMEDIATE flag, but whether
  * there is one pending behind it.)
  */
@@ -635,7 +634,7 @@ ImmediateCheckpointRequested(void)
 void
 CheckpointWriteDelay(int flags, double progress)
 {
-	static int absorb_counter = WRITES_PER_ABSORB;
+	static int	absorb_counter = WRITES_PER_ABSORB;
 
 	/* Do nothing if checkpoint is being executed by non-bgwriter process */
 	if (!am_bg_writer)
@@ -687,7 +686,7 @@ static bool
 IsCheckpointOnSchedule(double progress)
 {
 	XLogRecPtr	recptr;
-	struct timeval	now;
+	struct timeval now;
 	double		elapsed_xlogs,
 				elapsed_time;
 
@@ -697,7 +696,7 @@ IsCheckpointOnSchedule(double progress)
 	progress *= CheckPointCompletionTarget;
 
 	/*
-	 * Check against the cached value first. Only do the more expensive 
+	 * Check against the cached value first. Only do the more expensive
 	 * calculations once we reach the target previously calculated. Since
 	 * neither time or WAL insert pointer moves backwards, a freshly
 	 * calculated value can only be greater than or equal to the cached value.
@@ -708,12 +707,12 @@ IsCheckpointOnSchedule(double progress)
 	/*
 	 * Check progress against WAL segments written and checkpoint_segments.
 	 *
-	 * We compare the current WAL insert location against the location 
+	 * We compare the current WAL insert location against the location
 	 * computed before calling CreateCheckPoint. The code in XLogInsert that
 	 * actually triggers a checkpoint when checkpoint_segments is exceeded
 	 * compares against RedoRecptr, so this is not completely accurate.
-	 * However, it's good enough for our purposes, we're only calculating
-	 * an estimate anyway.
+	 * However, it's good enough for our purposes, we're only calculating an
+	 * estimate anyway.
 	 */
 	recptr = GetInsertRecPtr();
 	elapsed_xlogs =
@@ -852,7 +851,7 @@ BgWriterShmemInit(void)
  * flags is a bitwise OR of the following:
  *	CHECKPOINT_IS_SHUTDOWN: checkpoint is for database shutdown.
  *	CHECKPOINT_IMMEDIATE: finish the checkpoint ASAP,
- *		ignoring checkpoint_completion_target parameter. 
+ *		ignoring checkpoint_completion_target parameter.
  *	CHECKPOINT_FORCE: force a checkpoint even if no XLOG activity has occured
  *		since the last one (implied by CHECKPOINT_IS_SHUTDOWN).
  *	CHECKPOINT_WAIT: wait for completion before returning (otherwise,
@@ -865,7 +864,8 @@ RequestCheckpoint(int flags)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile BgWriterShmemStruct *bgs = BgWriterShmem;
-	int old_failed, old_started;
+	int			old_failed,
+				old_started;
 
 	/*
 	 * If in a standalone backend, just do it ourselves.
@@ -873,9 +873,8 @@ RequestCheckpoint(int flags)
 	if (!IsPostmasterEnvironment)
 	{
 		/*
-		 * There's no point in doing slow checkpoints in a standalone
-		 * backend, because there's no other backends the checkpoint could
-		 * disrupt.
+		 * There's no point in doing slow checkpoints in a standalone backend,
+		 * because there's no other backends the checkpoint could disrupt.
 		 */
 		CreateCheckPoint(flags | CHECKPOINT_IMMEDIATE);
 
@@ -906,8 +905,8 @@ RequestCheckpoint(int flags)
 	SpinLockRelease(&bgs->ckpt_lck);
 
 	/*
-	 * Send signal to request checkpoint.  When not waiting, we
-	 * consider failure to send the signal to be nonfatal.
+	 * Send signal to request checkpoint.  When not waiting, we consider
+	 * failure to send the signal to be nonfatal.
 	 */
 	if (BgWriterShmem->bgwriter_pid == 0)
 		elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
@@ -922,18 +921,19 @@ RequestCheckpoint(int flags)
 	 */
 	if (flags & CHECKPOINT_WAIT)
 	{
-		int new_started, new_failed;
+		int			new_started,
+					new_failed;
 
 		/* Wait for a new checkpoint to start. */
-		for(;;)
+		for (;;)
 		{
 			SpinLockAcquire(&bgs->ckpt_lck);
 			new_started = bgs->ckpt_started;
 			SpinLockRelease(&bgs->ckpt_lck);
-			
+
 			if (new_started != old_started)
 				break;
-			
+
 			CHECK_FOR_INTERRUPTS();
 			pg_usleep(100000L);
 		}
@@ -941,9 +941,9 @@ RequestCheckpoint(int flags)
 		/*
 		 * We are waiting for ckpt_done >= new_started, in a modulo sense.
 		 */
-		for(;;)
+		for (;;)
 		{
-			int new_done;
+			int			new_done;
 
 			SpinLockAcquire(&bgs->ckpt_lck);
 			new_done = bgs->ckpt_done;

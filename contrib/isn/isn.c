@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.6 2007/06/05 21:31:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.7 2007/11/15 21:14:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,7 +506,7 @@ ean2UPC(char *isn)
  * Returns the ean13 value of the string.
  */
 static
-ean13
+			ean13
 str2ean(const char *num)
 {
 	ean13		ean = 0;		/* current ean */

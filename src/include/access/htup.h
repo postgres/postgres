@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.95 2007/11/07 12:24:24 petere Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.96 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@
  *
  * We store five "virtual" fields Xmin, Cmin, Xmax, Cmax, and Xvac in three
  * physical fields.  Xmin and Xmax are always really stored, but Cmin, Cmax
- * and Xvac share a field.  This works because we know that Cmin and Cmax
+ * and Xvac share a field.	This works because we know that Cmin and Cmax
  * are only interesting for the lifetime of the inserting and deleting
  * transaction respectively.  If a tuple is inserted and deleted in the same
  * transaction, we store a "combo" command id that can be mapped to the real
@@ -575,9 +575,9 @@ typedef HeapTupleData *HeapTuple;
  * When we insert 1st item on new page in INSERT/UPDATE
  * we can (and we do) restore entire page in redo
  */
-#define XLOG_HEAP_INIT_PAGE 	0x80
+#define XLOG_HEAP_INIT_PAGE		0x80
 /*
- * We ran out of opcodes, so heapam.c now has a second RmgrId.  These opcodes
+ * We ran out of opcodes, so heapam.c now has a second RmgrId.	These opcodes
  * are associated with RM_HEAP2_ID, but are not logically different from
  * the ones above associated with RM_HEAP_ID.  We apply XLOG_HEAP_OPMASK,
  * although currently XLOG_HEAP_INIT_PAGE is not used for any of these.
@@ -662,7 +662,7 @@ typedef struct xl_heap_update
  * should be interpreted as physically moving the "to" item pointer to the
  * "from" slot, rather than placing a redirection item in the "from" slot.
  * The moved pointers should be replaced by LP_UNUSED items (there will not
- * be explicit entries in the "now-unused" list for this).  Also, the
+ * be explicit entries in the "now-unused" list for this).	Also, the
  * HEAP_ONLY bit in the moved tuples must be turned off.
  */
 typedef struct xl_heap_clean
@@ -714,7 +714,7 @@ typedef struct xl_heap_freeze
 	BlockNumber block;
 	TransactionId cutoff_xid;
 	/* TUPLE OFFSET NUMBERS FOLLOW AT THE END */
-} xl_heap_freeze;
+}	xl_heap_freeze;
 
 #define SizeOfHeapFreeze (offsetof(xl_heap_freeze, cutoff_xid) + sizeof(TransactionId))
 
@@ -722,7 +722,7 @@ typedef struct xl_heap_freeze
 extern CommandId HeapTupleHeaderGetCmin(HeapTupleHeader tup);
 extern CommandId HeapTupleHeaderGetCmax(HeapTupleHeader tup);
 extern void HeapTupleHeaderAdjustCmax(HeapTupleHeader tup,
-									  CommandId *cmax,
-									  bool *iscombo);
+						  CommandId *cmax,
+						  bool *iscombo);
 
 #endif   /* HTUP_H */

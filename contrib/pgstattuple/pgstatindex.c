@@ -159,16 +159,17 @@ pgstatindex(PG_FUNCTION_ARGS)
 
 		else if (P_ISLEAF(opaque))
 		{
-			int max_avail;
-			max_avail = BLCKSZ - (BLCKSZ - ((PageHeader)page)->pd_special + SizeOfPageHeaderData);
+			int			max_avail;
+
+			max_avail = BLCKSZ - (BLCKSZ - ((PageHeader) page)->pd_special + SizeOfPageHeaderData);
 			indexStat.max_avail += max_avail;
 			indexStat.free_space += PageGetFreeSpace(page);
 
 			indexStat.leaf_pages++;
 
 			/*
-			 * If the next leaf is on an earlier block, it
-			 * means a fragmentation.
+			 * If the next leaf is on an earlier block, it means a
+			 * fragmentation.
 			 */
 			if (opaque->btpo_next != P_NONE && opaque->btpo_next < blkno)
 				indexStat.fragments++;

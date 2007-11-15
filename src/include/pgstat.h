@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.68 2007/09/25 20:03:38 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.69 2007/11/15 21:14:42 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -78,7 +78,7 @@ typedef struct PgStat_TableCounts
 
 	PgStat_Counter t_blocks_fetched;
 	PgStat_Counter t_blocks_hit;
-} PgStat_TableCounts;
+}	PgStat_TableCounts;
 
 
 /* ------------------------------------------------------------
@@ -92,7 +92,7 @@ typedef struct PgStat_TableCounts
  *
  * Most of the event counters are nontransactional, ie, we count events
  * in committed and aborted transactions alike.  For these, we just count
- * directly in the PgStat_TableStatus.  However, new_live_tuples and
+ * directly in the PgStat_TableStatus.	However, new_live_tuples and
  * new_dead_tuples must be derived from tuple insertion and deletion counts
  * with awareness of whether the transaction or subtransaction committed or
  * aborted.  Hence, we also keep a stack of per-(sub)transaction status
@@ -104,11 +104,11 @@ typedef struct PgStat_TableCounts
  */
 typedef struct PgStat_TableStatus
 {
-	Oid			t_id;				/* table's OID */
-	bool		t_shared;			/* is it a shared catalog? */
-	struct PgStat_TableXactStatus *trans;	/* lowest subxact's counts */
+	Oid			t_id;			/* table's OID */
+	bool		t_shared;		/* is it a shared catalog? */
+	struct PgStat_TableXactStatus *trans;		/* lowest subxact's counts */
 	PgStat_TableCounts t_counts;	/* event counts to be sent */
-} PgStat_TableStatus;
+}	PgStat_TableStatus;
 
 /* ----------
  * PgStat_TableXactStatus		Per-table, per-subtransaction status
@@ -116,15 +116,15 @@ typedef struct PgStat_TableStatus
  */
 typedef struct PgStat_TableXactStatus
 {
-	PgStat_Counter tuples_inserted;	/* tuples inserted in (sub)xact */
-	PgStat_Counter tuples_deleted;	/* tuples deleted in (sub)xact */
-	int			nest_level;			/* subtransaction nest level */
+	PgStat_Counter tuples_inserted;		/* tuples inserted in (sub)xact */
+	PgStat_Counter tuples_deleted;		/* tuples deleted in (sub)xact */
+	int			nest_level;		/* subtransaction nest level */
 	/* links to other structs for same relation: */
-	struct PgStat_TableXactStatus *upper;	/* next higher subxact if any */
-	PgStat_TableStatus *parent;				/* per-table status */
+	struct PgStat_TableXactStatus *upper;		/* next higher subxact if any */
+	PgStat_TableStatus *parent; /* per-table status */
 	/* structs of same subxact level are linked here: */
-	struct PgStat_TableXactStatus *next;	/* next of same subxact */
-} PgStat_TableXactStatus;
+	struct PgStat_TableXactStatus *next;		/* next of same subxact */
+}	PgStat_TableXactStatus;
 
 
 /* ------------------------------------------------------------
@@ -282,21 +282,21 @@ typedef struct PgStat_MsgAnalyze
 
 
 /* ----------
- * PgStat_MsgBgWriter           Sent by the bgwriter to update statistics.
+ * PgStat_MsgBgWriter			Sent by the bgwriter to update statistics.
  * ----------
  */
 typedef struct PgStat_MsgBgWriter
 {
 	PgStat_MsgHdr m_hdr;
 
-	PgStat_Counter  m_timed_checkpoints;
-	PgStat_Counter	m_requested_checkpoints;
-	PgStat_Counter	m_buf_written_checkpoints;
-	PgStat_Counter	m_buf_written_clean;
-	PgStat_Counter	m_maxwritten_clean;
-	PgStat_Counter  m_buf_written_backend;
-	PgStat_Counter  m_buf_alloc;
-} PgStat_MsgBgWriter;
+	PgStat_Counter m_timed_checkpoints;
+	PgStat_Counter m_requested_checkpoints;
+	PgStat_Counter m_buf_written_checkpoints;
+	PgStat_Counter m_buf_written_clean;
+	PgStat_Counter m_maxwritten_clean;
+	PgStat_Counter m_buf_written_backend;
+	PgStat_Counter m_buf_alloc;
+}	PgStat_MsgBgWriter;
 
 
 /* ----------
@@ -391,14 +391,14 @@ typedef struct PgStat_StatTabEntry
  */
 typedef struct PgStat_GlobalStats
 {
-	PgStat_Counter  timed_checkpoints;
-	PgStat_Counter  requested_checkpoints;
-	PgStat_Counter  buf_written_checkpoints;
-	PgStat_Counter  buf_written_clean;
-	PgStat_Counter  maxwritten_clean;
-	PgStat_Counter  buf_written_backend;
-	PgStat_Counter  buf_alloc;
-} PgStat_GlobalStats;
+	PgStat_Counter timed_checkpoints;
+	PgStat_Counter requested_checkpoints;
+	PgStat_Counter buf_written_checkpoints;
+	PgStat_Counter buf_written_clean;
+	PgStat_Counter maxwritten_clean;
+	PgStat_Counter buf_written_backend;
+	PgStat_Counter buf_alloc;
+}	PgStat_GlobalStats;
 
 
 /* ----------
@@ -475,6 +475,7 @@ extern void pgstat_init(void);
 extern int	pgstat_start(void);
 extern void pgstat_reset_all(void);
 extern void allow_immediate_pgstat_restart(void);
+
 #ifdef EXEC_BACKEND
 extern void PgstatCollectorMain(int argc, char *argv[]);
 #endif
@@ -559,9 +560,9 @@ extern void AtPrepare_PgStat(void);
 extern void PostPrepare_PgStat(void);
 
 extern void pgstat_twophase_postcommit(TransactionId xid, uint16 info,
-									   void *recdata, uint32 len);
+						   void *recdata, uint32 len);
 extern void pgstat_twophase_postabort(TransactionId xid, uint16 info,
-									  void *recdata, uint32 len);
+						  void *recdata, uint32 len);
 
 extern void pgstat_send_bgwriter(void);
 

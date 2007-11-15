@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.99 2007/10/03 15:12:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.100 2007/11/15 21:14:46 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -113,7 +113,7 @@
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #if (SSLEAY_VERSION_NUMBER >= 0x00907000L)
-#include <openssl/conf.h> 
+#include <openssl/conf.h>
 #endif
 #if (SSLEAY_VERSION_NUMBER >= 0x00907000L) && !defined(OPENSSL_NO_ENGINE)
 #include <openssl/engine.h>
@@ -588,11 +588,11 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 
 #ifndef WIN32
 	struct stat buf2;
-	FILE		*fp;
+	FILE	   *fp;
 #endif
 	char		fnbuf[MAXPGPATH];
-	BIO			*bio;
-	PGconn		*conn = (PGconn *) SSL_get_app_data(ssl);
+	BIO		   *bio;
+	PGconn	   *conn = (PGconn *) SSL_get_app_data(ssl);
 	char		sebuf[256];
 
 	if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
@@ -605,20 +605,20 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	/* read the user certificate */
 	snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_CERT_FILE);
 
-	/* 
-	 * OpenSSL <= 0.9.8 lacks error stack handling, which means it's likely
-	 * to report wrong error messages if access to the cert file fails.
-	 * Do our own check for the readability of the file to catch the
-	 * majority of such problems before OpenSSL gets involved.
+	/*
+	 * OpenSSL <= 0.9.8 lacks error stack handling, which means it's likely to
+	 * report wrong error messages if access to the cert file fails. Do our
+	 * own check for the readability of the file to catch the majority of such
+	 * problems before OpenSSL gets involved.
 	 */
 #ifndef HAVE_ERR_SET_MARK
 	{
-		FILE		*fp2;
+		FILE	   *fp2;
 
 		if ((fp2 = fopen(fnbuf, "r")) == NULL)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not open certificate file \"%s\": %s\n"),
+			   libpq_gettext("could not open certificate file \"%s\": %s\n"),
 							  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
 			return 0;
 		}
@@ -628,7 +628,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 
 	/* save OpenSSL error stack */
 	ERR_set_mark();
-	
+
 	if ((bio = BIO_new_file(fnbuf, "r")) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -657,15 +657,15 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	if (getenv("PGSSLKEY"))
 	{
 		/* read the user key from engine */
-		char	*engine_env = getenv("PGSSLKEY");
-		char	*engine_colon = strchr(engine_env, ':');
-		char	*engine_str;
-		ENGINE	*engine_ptr;
+		char	   *engine_env = getenv("PGSSLKEY");
+		char	   *engine_colon = strchr(engine_env, ':');
+		char	   *engine_str;
+		ENGINE	   *engine_ptr;
 
 		if (!engine_colon)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("invalid value of PGSSLKEY environment variable\n"));
+							  libpq_gettext("invalid value of PGSSLKEY environment variable\n"));
 			ERR_pop_to_mark();
 			return 0;
 		}
@@ -675,10 +675,10 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		engine_ptr = ENGINE_by_id(engine_str);
 		if (engine_ptr == NULL)
 		{
-			char	  *err = SSLerrmessage();
+			char	   *err = SSLerrmessage();
 
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("could not load SSL engine \"%s\": %s\n"),
+					 libpq_gettext("could not load SSL engine \"%s\": %s\n"),
 							  engine_str, err);
 			SSLerrfree(err);
 			free(engine_str);
@@ -690,10 +690,10 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 										NULL, NULL);
 		if (*pkey == NULL)
 		{
-			char	  *err = SSLerrmessage();
+			char	   *err = SSLerrmessage();
 
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("could not read private SSL key \"%s\" from engine \"%s\": %s\n"),
+							  libpq_gettext("could not read private SSL key \"%s\" from engine \"%s\": %s\n"),
 							  engine_colon + 1, engine_str, err);
 			SSLerrfree(err);
 			free(engine_str);
@@ -703,15 +703,15 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		free(engine_str);
 	}
 	else
-#endif /* use PGSSLKEY */
+#endif   /* use PGSSLKEY */
 	{
 		/* read the user key from file */
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_KEY_FILE);
 		if (stat(fnbuf, &buf) == -1)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							libpq_gettext("certificate present, but not private key file \"%s\"\n"),
-							fnbuf);
+							  libpq_gettext("certificate present, but not private key file \"%s\"\n"),
+							  fnbuf);
 			ERR_pop_to_mark();
 			return 0;
 		}
@@ -720,8 +720,8 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 			buf.st_uid != geteuid())
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("private key file \"%s\" has wrong permissions\n"),
-							fnbuf);
+			libpq_gettext("private key file \"%s\" has wrong permissions\n"),
+							  fnbuf);
 			ERR_pop_to_mark();
 			return 0;
 		}
@@ -730,8 +730,8 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		if ((bio = BIO_new_file(fnbuf, "r")) == NULL)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("could not open private key file \"%s\": %s\n"),
-							fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
+			   libpq_gettext("could not open private key file \"%s\": %s\n"),
+							  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
 			ERR_pop_to_mark();
 			return 0;
 		}
@@ -741,7 +741,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 			buf.st_dev != buf2.st_dev || buf.st_ino != buf2.st_ino)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							libpq_gettext("private key file \"%s\" changed during execution\n"), fnbuf);
+							  libpq_gettext("private key file \"%s\" changed during execution\n"), fnbuf);
 			ERR_pop_to_mark();
 			return 0;
 		}
@@ -752,8 +752,8 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 			char	   *err = SSLerrmessage();
 
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("could not read private key file \"%s\": %s\n"),
-							fnbuf, err);
+			   libpq_gettext("could not read private key file \"%s\": %s\n"),
+							  fnbuf, err);
 			SSLerrfree(err);
 
 			BIO_free(bio);
@@ -852,7 +852,7 @@ init_ssl_system(PGconn *conn)
 		{
 #if SSLEAY_VERSION_NUMBER >= 0x00907000L
 			OPENSSL_config(NULL);
-#endif			
+#endif
 			SSL_library_init();
 			SSL_load_error_strings();
 		}

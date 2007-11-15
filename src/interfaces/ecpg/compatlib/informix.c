@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.52 2007/10/03 13:20:19 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.53 2007/11/15 21:14:45 momjian Exp $ */
 
 #include <math.h>
 #include <ctype.h>
@@ -201,7 +201,7 @@ deccvasc(char *cp, int len, decimal *np)
 		}
 		else
 		{
-			int i = PGTYPESnumeric_to_decimal(result, np);
+			int			i = PGTYPESnumeric_to_decimal(result, np);
 
 			free(result);
 			if (i != 0)
@@ -700,7 +700,7 @@ initValue(long lng_val)
 	value.remaining = value.digits;
 
 	/* convert the long to string */
-	if ((value.val_string = (char *) malloc(value.digits + 1)) == NULL) 
+	if ((value.val_string = (char *) malloc(value.digits + 1)) == NULL)
 		return -1;
 	dig = value.val;
 	for (i = value.digits, j = 0; i > 0; i--, j++)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.2 2007/11/13 22:14:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.3 2007/11/15 21:14:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,8 @@
 
 PG_MODULE_MAGIC;
 
-static Oid current_dictionary_oid = InvalidOid;
-static Oid current_parser_oid = InvalidOid;
+static Oid	current_dictionary_oid = InvalidOid;
+static Oid	current_parser_oid = InvalidOid;
 
 /* insert given value at argument position 0 */
 #define INSERT_ARGUMENT0(argument, isnull)				\
@@ -65,27 +65,27 @@ static Oid current_parser_oid = InvalidOid;
 	}													\
 	PG_FUNCTION_INFO_V1(name)
 
-static Oid GetCurrentDict(void);
-static Oid GetCurrentParser(void);
+static Oid	GetCurrentDict(void);
+static Oid	GetCurrentParser(void);
 
-Datum tsa_lexize_byname(PG_FUNCTION_ARGS);
-Datum tsa_lexize_bycurrent(PG_FUNCTION_ARGS);
-Datum tsa_set_curdict(PG_FUNCTION_ARGS);
-Datum tsa_set_curdict_byname(PG_FUNCTION_ARGS);
-Datum tsa_token_type_current(PG_FUNCTION_ARGS);
-Datum tsa_set_curprs(PG_FUNCTION_ARGS);
-Datum tsa_set_curprs_byname(PG_FUNCTION_ARGS);
-Datum tsa_parse_current(PG_FUNCTION_ARGS);
-Datum tsa_set_curcfg(PG_FUNCTION_ARGS);
-Datum tsa_set_curcfg_byname(PG_FUNCTION_ARGS);
-Datum tsa_to_tsvector_name(PG_FUNCTION_ARGS);
-Datum tsa_to_tsquery_name(PG_FUNCTION_ARGS);
-Datum tsa_plainto_tsquery_name(PG_FUNCTION_ARGS);
-Datum tsa_headline_byname(PG_FUNCTION_ARGS);
-Datum tsa_ts_stat(PG_FUNCTION_ARGS);
-Datum tsa_tsearch2(PG_FUNCTION_ARGS);
-Datum tsa_rewrite_accum(PG_FUNCTION_ARGS);
-Datum tsa_rewrite_finish(PG_FUNCTION_ARGS);
+Datum		tsa_lexize_byname(PG_FUNCTION_ARGS);
+Datum		tsa_lexize_bycurrent(PG_FUNCTION_ARGS);
+Datum		tsa_set_curdict(PG_FUNCTION_ARGS);
+Datum		tsa_set_curdict_byname(PG_FUNCTION_ARGS);
+Datum		tsa_token_type_current(PG_FUNCTION_ARGS);
+Datum		tsa_set_curprs(PG_FUNCTION_ARGS);
+Datum		tsa_set_curprs_byname(PG_FUNCTION_ARGS);
+Datum		tsa_parse_current(PG_FUNCTION_ARGS);
+Datum		tsa_set_curcfg(PG_FUNCTION_ARGS);
+Datum		tsa_set_curcfg_byname(PG_FUNCTION_ARGS);
+Datum		tsa_to_tsvector_name(PG_FUNCTION_ARGS);
+Datum		tsa_to_tsquery_name(PG_FUNCTION_ARGS);
+Datum		tsa_plainto_tsquery_name(PG_FUNCTION_ARGS);
+Datum		tsa_headline_byname(PG_FUNCTION_ARGS);
+Datum		tsa_ts_stat(PG_FUNCTION_ARGS);
+Datum		tsa_tsearch2(PG_FUNCTION_ARGS);
+Datum		tsa_rewrite_accum(PG_FUNCTION_ARGS);
+Datum		tsa_rewrite_finish(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(tsa_lexize_byname);
 PG_FUNCTION_INFO_V1(tsa_lexize_bycurrent);
@@ -150,11 +150,11 @@ UNSUPPORTED_FUNCTION(tsa_get_covers);
 Datum
 tsa_lexize_byname(PG_FUNCTION_ARGS)
 {
-	text *dictname = PG_GETARG_TEXT_P(0);
-	Datum arg1 = PG_GETARG_DATUM(1);
+	text	   *dictname = PG_GETARG_TEXT_P(0);
+	Datum		arg1 = PG_GETARG_DATUM(1);
 
 	return DirectFunctionCall2(ts_lexize,
-							   ObjectIdGetDatum(TextGetObjectId(regdictionaryin, dictname)),
+				ObjectIdGetDatum(TextGetObjectId(regdictionaryin, dictname)),
 							   arg1);
 }
 
@@ -162,8 +162,8 @@ tsa_lexize_byname(PG_FUNCTION_ARGS)
 Datum
 tsa_lexize_bycurrent(PG_FUNCTION_ARGS)
 {
-	Datum arg0 = PG_GETARG_DATUM(0);
-	Oid id = GetCurrentDict();
+	Datum		arg0 = PG_GETARG_DATUM(0);
+	Oid			id = GetCurrentDict();
 
 	return DirectFunctionCall2(ts_lexize,
 							   ObjectIdGetDatum(id),
@@ -174,7 +174,7 @@ tsa_lexize_bycurrent(PG_FUNCTION_ARGS)
 Datum
 tsa_set_curdict(PG_FUNCTION_ARGS)
 {
-	Oid dict_oid = PG_GETARG_OID(0);
+	Oid			dict_oid = PG_GETARG_OID(0);
 
 	if (!SearchSysCacheExists(TSDICTOID,
 							  ObjectIdGetDatum(dict_oid),
@@ -191,8 +191,8 @@ tsa_set_curdict(PG_FUNCTION_ARGS)
 Datum
 tsa_set_curdict_byname(PG_FUNCTION_ARGS)
 {
-	text *name = PG_GETARG_TEXT_P(0);
-	Oid dict_oid;
+	text	   *name = PG_GETARG_TEXT_P(0);
+	Oid			dict_oid;
 
 	dict_oid = TSDictionaryGetDictid(stringToQualifiedNameList(TextPGetCString(name)), false);
 
@@ -213,7 +213,7 @@ tsa_token_type_current(PG_FUNCTION_ARGS)
 Datum
 tsa_set_curprs(PG_FUNCTION_ARGS)
 {
-	Oid parser_oid = PG_GETARG_OID(0);
+	Oid			parser_oid = PG_GETARG_OID(0);
 
 	if (!SearchSysCacheExists(TSPARSEROID,
 							  ObjectIdGetDatum(parser_oid),
@@ -230,8 +230,8 @@ tsa_set_curprs(PG_FUNCTION_ARGS)
 Datum
 tsa_set_curprs_byname(PG_FUNCTION_ARGS)
 {
-	text *name = PG_GETARG_TEXT_P(0);
-	Oid parser_oid;
+	text	   *name = PG_GETARG_TEXT_P(0);
+	Oid			parser_oid;
 
 	parser_oid = TSParserGetPrsid(stringToQualifiedNameList(TextPGetCString(name)), false);
 
@@ -252,12 +252,12 @@ tsa_parse_current(PG_FUNCTION_ARGS)
 Datum
 tsa_set_curcfg(PG_FUNCTION_ARGS)
 {
-	Oid arg0 = PG_GETARG_OID(0);
-	char *name;
+	Oid			arg0 = PG_GETARG_OID(0);
+	char	   *name;
 
 	name = DatumGetCString(DirectFunctionCall1(regconfigout,
 											   ObjectIdGetDatum(arg0)));
-				
+
 	set_config_option("default_text_search_config", name,
 					  PGC_USERSET,
 					  PGC_S_SESSION,
@@ -271,8 +271,8 @@ tsa_set_curcfg(PG_FUNCTION_ARGS)
 Datum
 tsa_set_curcfg_byname(PG_FUNCTION_ARGS)
 {
-	text *arg0 = PG_GETARG_TEXT_P(0);
-	char *name;
+	text	   *arg0 = PG_GETARG_TEXT_P(0);
+	char	   *name;
 
 	name = TextPGetCString(arg0);
 
@@ -289,9 +289,9 @@ tsa_set_curcfg_byname(PG_FUNCTION_ARGS)
 Datum
 tsa_to_tsvector_name(PG_FUNCTION_ARGS)
 {
-	text *cfgname = PG_GETARG_TEXT_P(0);
-	Datum arg1 = PG_GETARG_DATUM(1);
-	Oid config_oid;
+	text	   *cfgname = PG_GETARG_TEXT_P(0);
+	Datum		arg1 = PG_GETARG_DATUM(1);
+	Oid			config_oid;
 
 	config_oid = TextGetObjectId(regconfigin, cfgname);
 
@@ -303,9 +303,9 @@ tsa_to_tsvector_name(PG_FUNCTION_ARGS)
 Datum
 tsa_to_tsquery_name(PG_FUNCTION_ARGS)
 {
-	text *cfgname = PG_GETARG_TEXT_P(0);
-	Datum arg1 = PG_GETARG_DATUM(1);
-	Oid config_oid;
+	text	   *cfgname = PG_GETARG_TEXT_P(0);
+	Datum		arg1 = PG_GETARG_DATUM(1);
+	Oid			config_oid;
 
 	config_oid = TextGetObjectId(regconfigin, cfgname);
 
@@ -318,9 +318,9 @@ tsa_to_tsquery_name(PG_FUNCTION_ARGS)
 Datum
 tsa_plainto_tsquery_name(PG_FUNCTION_ARGS)
 {
-	text *cfgname = PG_GETARG_TEXT_P(0);
-	Datum arg1 = PG_GETARG_DATUM(1);
-	Oid config_oid;
+	text	   *cfgname = PG_GETARG_TEXT_P(0);
+	Datum		arg1 = PG_GETARG_DATUM(1);
+	Oid			config_oid;
 
 	config_oid = TextGetObjectId(regconfigin, cfgname);
 
@@ -332,22 +332,22 @@ tsa_plainto_tsquery_name(PG_FUNCTION_ARGS)
 Datum
 tsa_headline_byname(PG_FUNCTION_ARGS)
 {
-	Datum arg0 = PG_GETARG_DATUM(0);
-	Datum arg1 = PG_GETARG_DATUM(1);
-	Datum arg2 = PG_GETARG_DATUM(2);
-	Datum result;
-	Oid config_oid;
+	Datum		arg0 = PG_GETARG_DATUM(0);
+	Datum		arg1 = PG_GETARG_DATUM(1);
+	Datum		arg2 = PG_GETARG_DATUM(2);
+	Datum		result;
+	Oid			config_oid;
 
 	/* first parameter has to be converted to oid */
 	config_oid = DatumGetObjectId(DirectFunctionCall1(regconfigin,
-													  DirectFunctionCall1(textout, arg0)));
+										DirectFunctionCall1(textout, arg0)));
 
 	if (PG_NARGS() == 3)
 		result = DirectFunctionCall3(ts_headline_byid,
-									 ObjectIdGetDatum(config_oid), arg1, arg2);
+								   ObjectIdGetDatum(config_oid), arg1, arg2);
 	else
 	{
-		Datum arg3 = PG_GETARG_DATUM(3);
+		Datum		arg3 = PG_GETARG_DATUM(3);
 
 		result = DirectFunctionCall4(ts_headline_byid_opt,
 									 ObjectIdGetDatum(config_oid),
@@ -371,11 +371,11 @@ tsa_tsearch2(PG_FUNCTION_ARGS)
 {
 	TriggerData *trigdata;
 	Trigger    *trigger;
-	char **tgargs;
+	char	  **tgargs;
 	int			i;
 
 	/* Check call context */
-	if (!CALLED_AS_TRIGGER(fcinfo))	/* internal error */
+	if (!CALLED_AS_TRIGGER(fcinfo))		/* internal error */
 		elog(ERROR, "tsvector_update_trigger: not fired by trigger manager");
 
 	trigdata = (TriggerData *) fcinfo->context;
@@ -388,7 +388,7 @@ tsa_tsearch2(PG_FUNCTION_ARGS)
 	tgargs = (char **) palloc((trigger->tgnargs + 1) * sizeof(char *));
 	tgargs[0] = trigger->tgargs[0];
 	for (i = 1; i < trigger->tgnargs; i++)
-		tgargs[i+1] = trigger->tgargs[i];
+		tgargs[i + 1] = trigger->tgargs[i];
 
 	tgargs[1] = pstrdup(GetConfigOptionByName("default_text_search_config",
 											  NULL));

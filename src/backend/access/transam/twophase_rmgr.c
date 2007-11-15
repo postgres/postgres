@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/twophase_rmgr.c,v 1.5 2007/05/27 03:50:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/twophase_rmgr.c,v 1.6 2007/11/15 21:14:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ const TwoPhaseCallback twophase_postcommit_callbacks[TWOPHASE_RM_MAX_ID + 1] =
 	lock_twophase_postcommit,	/* Lock */
 	inval_twophase_postcommit,	/* Inval */
 	flatfile_twophase_postcommit,		/* flat file update */
-	notify_twophase_postcommit,	/* notify/listen */
+	notify_twophase_postcommit, /* notify/listen */
 	pgstat_twophase_postcommit	/* pgstat */
 };
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.151 2007/09/20 17:56:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.152 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -546,7 +546,7 @@ ExecGetResultType(PlanState *planstate)
  * the given tlist should be a list of ExprState nodes, not Expr nodes.
  *
  * inputDesc can be NULL, but if it is not, we check to see whether simple
- * Vars in the tlist match the descriptor.  It is important to provide
+ * Vars in the tlist match the descriptor.	It is important to provide
  * inputDesc for relation-scan plan nodes, as a cross check that the relation
  * hasn't been changed since the plan was made.  At higher levels of a plan,
  * there is no need to recheck.
@@ -573,7 +573,7 @@ ExecBuildProjectionInfo(List *targetList,
 	 * Determine whether the target list consists entirely of simple Var
 	 * references (ie, references to non-system attributes) that match the
 	 * input.  If so, we can use the simpler ExecVariableList instead of
-	 * ExecTargetList.  (Note: if there is a type mismatch then ExecEvalVar
+	 * ExecTargetList.	(Note: if there is a type mismatch then ExecEvalVar
 	 * will probably throw an error at runtime, but we leave that to it.)
 	 */
 	isVarList = true;

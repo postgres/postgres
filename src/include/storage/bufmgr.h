@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.108 2007/09/25 20:03:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.109 2007/11/15 21:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +22,11 @@ typedef void *Block;
 /* Possible arguments for GetAccessStrategy() */
 typedef enum BufferAccessStrategyType
 {
-	BAS_NORMAL,		/* Normal random access */
-	BAS_BULKREAD,	/* Large read-only scan (hint bit updates are ok) */
-	BAS_VACUUM		/* VACUUM */
-} BufferAccessStrategyType;
+	BAS_NORMAL,					/* Normal random access */
+	BAS_BULKREAD,				/* Large read-only scan (hint bit updates are
+								 * ok) */
+	BAS_VACUUM					/* VACUUM */
+}	BufferAccessStrategyType;
 
 /* in globals.c ... this duplicates miscadmin.h */
 extern PGDLLIMPORT int NBuffers;
@@ -118,7 +119,7 @@ extern PGDLLIMPORT int32 *LocalRefCount;
  */
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern Buffer ReadBufferWithStrategy(Relation reln, BlockNumber blockNum,
-									 BufferAccessStrategy strategy);
+					   BufferAccessStrategy strategy);
 extern Buffer ReadOrZeroBuffer(Relation reln, BlockNumber blockNum);
 extern void ReleaseBuffer(Buffer buffer);
 extern void UnlockReleaseBuffer(Buffer buffer);

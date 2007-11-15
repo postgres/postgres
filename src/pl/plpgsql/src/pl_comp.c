@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.118 2007/11/11 19:22:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.119 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,6 +174,7 @@ recheck:
 			 * storage (if not done already).
 			 */
 			delete_function(function);
+
 			/*
 			 * If the function isn't in active use then we can overwrite the
 			 * func struct with new data, allowing any other existing fn_extra
@@ -185,8 +186,8 @@ recheck:
 			 * what a corner case this is.)
 			 *
 			 * If we found the function struct via fn_extra then it's possible
-			 * a replacement has already been made, so go back and recheck
-			 * the hashtable.
+			 * a replacement has already been made, so go back and recheck the
+			 * hashtable.
 			 */
 			if (function->use_count != 0)
 			{
@@ -482,7 +483,7 @@ do_compile(FunctionCallInfo fcinfo,
 				{
 					if (rettypeid == ANYARRAYOID)
 						rettypeid = INT4ARRAYOID;
-					else		/* ANYELEMENT or ANYNONARRAY */
+					else	/* ANYELEMENT or ANYNONARRAY */
 						rettypeid = INT4OID;
 					/* XXX what could we use for ANYENUM? */
 				}
@@ -1890,7 +1891,7 @@ plpgsql_adddatum(PLpgSQL_datum *new)
  * last call.
  *
  * This is used around a DECLARE section to create a list of the VARs
- * that have to be initialized at block entry.  Note that VARs can also
+ * that have to be initialized at block entry.	Note that VARs can also
  * be created elsewhere than DECLARE, eg by a FOR-loop, but it is then
  * the responsibility of special-purpose code to initialize them.
  * ----------
@@ -2021,7 +2022,7 @@ plpgsql_resolve_polymorphic_argtypes(int numargs,
 			{
 				case ANYELEMENTOID:
 				case ANYNONARRAYOID:
-				case ANYENUMOID:				/* XXX dubious */
+				case ANYENUMOID:		/* XXX dubious */
 					argtypes[i] = INT4OID;
 					break;
 				case ANYARRAYOID:
@@ -2038,7 +2039,7 @@ plpgsql_resolve_polymorphic_argtypes(int numargs,
  * delete_function - clean up as much as possible of a stale function cache
  *
  * We can't release the PLpgSQL_function struct itself, because of the
- * possibility that there are fn_extra pointers to it.  We can release
+ * possibility that there are fn_extra pointers to it.	We can release
  * the subsidiary storage, but only if there are no active evaluations
  * in progress.  Otherwise we'll just leak that storage.  Since the
  * case would only occur if a pg_proc update is detected during a nested

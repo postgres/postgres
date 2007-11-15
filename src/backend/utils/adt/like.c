@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.71 2007/09/22 03:58:34 adunstan Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.72 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ static int	UTF8_MatchText(char *t, int tlen, char *p, int plen);
 
 static int	SB_IMatchText(char *t, int tlen, char *p, int plen);
 
-static int	GenericMatchText(char *s, int slen, char* p, int plen);
+static int	GenericMatchText(char *s, int slen, char *p, int plen);
 static int	Generic_Text_IC_like(text *str, text *pat);
 
 /*--------------------
@@ -116,13 +116,13 @@ wchareq(char *p1, char *p2)
 /* setup to compile like_match.c for UTF8 encoding, using fast NextChar */
 
 #define NextChar(p, plen) \
-	do { (p)++; (plen)--; } while ((plen) > 0 && (*(p) & 0xC0) == 0x80 ) 
+	do { (p)++; (plen)--; } while ((plen) > 0 && (*(p) & 0xC0) == 0x80 )
 #define MatchText	UTF8_MatchText
 
 #include "like_match.c"
 
 static inline int
-GenericMatchText(char *s, int slen, char* p, int plen)
+GenericMatchText(char *s, int slen, char *p, int plen)
 {
 	if (pg_database_encoding_max_length() == 1)
 		return SB_MatchText(s, slen, p, plen);
@@ -140,9 +140,10 @@ Generic_Text_IC_like(text *str, text *pat)
 	int			slen,
 				plen;
 
-	/* For efficiency reasons, in the single byte case we don't call
-	 * lower() on the pattern and text, but instead call to_lower on each
-	 * character.  In the multi-byte case we don't have much choice :-(
+	/*
+	 * For efficiency reasons, in the single byte case we don't call lower()
+	 * on the pattern and text, but instead call to_lower on each character.
+	 * In the multi-byte case we don't have much choice :-(
 	 */
 
 	if (pg_database_encoding_max_length() > 1)
@@ -312,7 +313,7 @@ nameiclike(PG_FUNCTION_ARGS)
 	text	   *strtext;
 
 	strtext = DatumGetTextP(DirectFunctionCall1(name_text,
-													NameGetDatum(str)));
+												NameGetDatum(str)));
 	result = (Generic_Text_IC_like(strtext, pat) == LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
@@ -327,7 +328,7 @@ nameicnlike(PG_FUNCTION_ARGS)
 	text	   *strtext;
 
 	strtext = DatumGetTextP(DirectFunctionCall1(name_text,
-													NameGetDatum(str)));
+												NameGetDatum(str)));
 	result = (Generic_Text_IC_like(strtext, pat) != LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
@@ -385,8 +386,7 @@ like_escape_bytea(PG_FUNCTION_ARGS)
 {
 	bytea	   *pat = PG_GETARG_BYTEA_PP(0);
 	bytea	   *esc = PG_GETARG_BYTEA_PP(1);
-	bytea	   *result = SB_do_like_escape((text *)pat, (text *)esc);
+	bytea	   *result = SB_do_like_escape((text *) pat, (text *) esc);
 
-	PG_RETURN_BYTEA_P((bytea *)result);
+	PG_RETURN_BYTEA_P((bytea *) result);
 }
-

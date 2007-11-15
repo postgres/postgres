@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.61 2007/11/07 13:23:20 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.62 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -342,7 +342,7 @@ main(int argc, char *argv[])
 	if (ControlFile.state != DB_SHUTDOWNED && !force)
 	{
 		printf(_("The database server was not shut down cleanly.\n"
-				 "Resetting the transaction log might cause data to be lost.\n"
+			   "Resetting the transaction log might cause data to be lost.\n"
 				 "If you want to proceed anyway, use -f to force reset.\n"));
 		exit(1);
 	}
@@ -689,17 +689,17 @@ FindEndOfXLOG(void)
 	struct dirent *xlde;
 
 	/*
-	 * Initialize the max() computation using the last checkpoint address
-	 * from old pg_control.  Note that for the moment we are working with
-	 * segment numbering according to the old xlog seg size.
+	 * Initialize the max() computation using the last checkpoint address from
+	 * old pg_control.	Note that for the moment we are working with segment
+	 * numbering according to the old xlog seg size.
 	 */
 	newXlogId = ControlFile.checkPointCopy.redo.xlogid;
 	newXlogSeg = ControlFile.checkPointCopy.redo.xrecoff / ControlFile.xlog_seg_size;
 
 	/*
-	 * Scan the pg_xlog directory to find existing WAL segment files.
-	 * We assume any present have been used; in most scenarios this should
-	 * be conservative, because of xlog.c's attempts to pre-create files.
+	 * Scan the pg_xlog directory to find existing WAL segment files. We
+	 * assume any present have been used; in most scenarios this should be
+	 * conservative, because of xlog.c's attempts to pre-create files.
 	 */
 	xldir = opendir(XLOGDIR);
 	if (xldir == NULL)
@@ -715,11 +715,12 @@ FindEndOfXLOG(void)
 		if (strlen(xlde->d_name) == 24 &&
 			strspn(xlde->d_name, "0123456789ABCDEF") == 24)
 		{
-			unsigned int	tli,
-							log,
-							seg;
+			unsigned int tli,
+						log,
+						seg;
 
 			sscanf(xlde->d_name, "%08X%08X%08X", &tli, &log, &seg);
+
 			/*
 			 * Note: we take the max of all files found, regardless of their
 			 * timelines.  Another possibility would be to ignore files of
@@ -754,8 +755,8 @@ FindEndOfXLOG(void)
 	closedir(xldir);
 
 	/*
-	 * Finally, convert to new xlog seg size, and advance by one to ensure
-	 * we are in virgin territory.
+	 * Finally, convert to new xlog seg size, and advance by one to ensure we
+	 * are in virgin territory.
 	 */
 	newXlogSeg *= ControlFile.xlog_seg_size;
 	newXlogSeg = (newXlogSeg + XLogSegSize - 1) / XLogSegSize;

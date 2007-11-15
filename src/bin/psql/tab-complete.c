@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.167 2007/09/14 04:25:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.168 2007/11/15 21:14:42 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -449,7 +449,8 @@ typedef struct
 	const char *name;
 	const char *query;			/* simple query, or NULL */
 	const SchemaQuery *squery;	/* schema query, or NULL */
-	const bool noshow;	/* NULL or true if this word should not show up after CREATE or DROP */
+	const bool	noshow;			/* NULL or true if this word should not show
+								 * up after CREATE or DROP */
 } pgsql_thing_t;
 
 static const pgsql_thing_t words_after_create[] = {
@@ -487,7 +488,7 @@ static const pgsql_thing_t words_after_create[] = {
 	{"UNIQUE", NULL, NULL},		/* for CREATE UNIQUE INDEX ... */
 	{"USER", Query_for_list_of_roles},
 	{"VIEW", NULL, &Query_for_list_of_views},
-	{NULL, NULL, NULL, false}			/* end of list */
+	{NULL, NULL, NULL, false}	/* end of list */
 };
 
 
@@ -563,7 +564,7 @@ psql_completion(char *text, int start, int end)
 	static const char *const backslash_commands[] = {
 		"\\a", "\\connect", "\\C", "\\cd", "\\copy", "\\copyright",
 		"\\d", "\\da", "\\db", "\\dc", "\\dC", "\\dd", "\\dD", "\\df",
-		"\\dF", "\\dFd", "\\dFp", "\\dFt", "\\dg", "\\di", "\\dl", 
+		"\\dF", "\\dFd", "\\dFp", "\\dFt", "\\dg", "\\di", "\\dl",
 		"\\dn", "\\do", "\\dp", "\\ds", "\\dS", "\\dt", "\\dT", "\\dv", "\\du",
 		"\\e", "\\echo", "\\encoding",
 		"\\f", "\\g", "\\h", "\\help", "\\H", "\\i", "\\l",
@@ -806,27 +807,30 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "ENABLE") == 0)
 	{
 		static const char *const list_ALTERENABLE[] =
-		{"ALWAYS","REPLICA","RULE", "TRIGGER", NULL};
+		{"ALWAYS", "REPLICA", "RULE", "TRIGGER", NULL};
+
 		COMPLETE_WITH_LIST(list_ALTERENABLE);
 	}
 	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
-			pg_strcasecmp(prev2_wd, "ENABLE") == 0 &&
-			(pg_strcasecmp(prev_wd, "REPLICA") == 0 ||
-			 pg_strcasecmp(prev_wd, "ALWAYS") == 0))
+			 pg_strcasecmp(prev2_wd, "ENABLE") == 0 &&
+			 (pg_strcasecmp(prev_wd, "REPLICA") == 0 ||
+			  pg_strcasecmp(prev_wd, "ALWAYS") == 0))
 	{
 		static const char *const list_ALTERENABLE2[] =
 		{"RULE", "TRIGGER", NULL};
+
 		COMPLETE_WITH_LIST(list_ALTERENABLE2);
 	}
-	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&	
+	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev_wd, "DISABLE") == 0)
 	{
 		static const char *const list_ALTERDISABLE[] =
 		{"RULE", "TRIGGER", NULL};
+
 		COMPLETE_WITH_LIST(list_ALTERDISABLE);
 	}
-		
+
 	/* If we have TABLE <sth> ALTER|RENAME, provide list of columns */
 	else if (pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
 			 (pg_strcasecmp(prev_wd, "ALTER") == 0 ||
@@ -938,13 +942,13 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev4_wd, "TEXT") == 0 &&
 			 pg_strcasecmp(prev3_wd, "SEARCH") == 0 &&
 			 (pg_strcasecmp(prev2_wd, "TEMPLATE") == 0 ||
-			 pg_strcasecmp(prev2_wd, "PARSER") == 0)) 
+			  pg_strcasecmp(prev2_wd, "PARSER") == 0))
 		COMPLETE_WITH_CONST("RENAME TO");
 
 	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev4_wd, "TEXT") == 0 &&
 			 pg_strcasecmp(prev3_wd, "SEARCH") == 0 &&
-			 pg_strcasecmp(prev2_wd, "DICTIONARY") == 0) 
+			 pg_strcasecmp(prev2_wd, "DICTIONARY") == 0)
 	{
 		static const char *const list_ALTERTEXTSEARCH2[] =
 		{"OWNER TO", "RENAME TO", NULL};
@@ -1026,15 +1030,15 @@ psql_completion(char *text, int start, int end)
 /* CLUSTER */
 
 	/*
-	 * If the previous word is CLUSTER and not without produce list of
-	 * tables
+	 * If the previous word is CLUSTER and not without produce list of tables
 	 */
 	else if (pg_strcasecmp(prev_wd, "CLUSTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "WITHOUT") != 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
 	/* If we have CLUSTER <sth>, then add "USING" */
 	else if (pg_strcasecmp(prev2_wd, "CLUSTER") == 0 &&
-			 pg_strcasecmp(prev_wd, "ON") != 0) {
+			 pg_strcasecmp(prev_wd, "ON") != 0)
+	{
 		COMPLETE_WITH_CONST("USING");
 	}
 
@@ -1063,8 +1067,8 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_COMMENT);
 	}
 	else if (pg_strcasecmp(prev4_wd, "COMMENT") == 0 &&
-			 pg_strcasecmp(prev3_wd, "ON") == 0  &&
-			 pg_strcasecmp(prev2_wd, "TEXT") == 0  &&
+			 pg_strcasecmp(prev3_wd, "ON") == 0 &&
+			 pg_strcasecmp(prev2_wd, "TEXT") == 0 &&
 			 pg_strcasecmp(prev_wd, "SEARCH") == 0)
 	{
 		static const char *const list_TRANS2[] =
@@ -1073,7 +1077,7 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_TRANS2);
 	}
 	else if ((pg_strcasecmp(prev4_wd, "COMMENT") == 0 &&
-			 pg_strcasecmp(prev3_wd, "ON") == 0) ||
+			  pg_strcasecmp(prev3_wd, "ON") == 0) ||
 			 (pg_strcasecmp(prev5_wd, "ON") == 0 &&
 			  pg_strcasecmp(prev4_wd, "TEXT") == 0 &&
 			  pg_strcasecmp(prev3_wd, "SEARCH") == 0))
@@ -1231,7 +1235,7 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev_wd, "TEMPORARY") == 0))
 	{
 		static const char *const list_TEMP[] =
-		{ "SEQUENCE", "TABLE", "VIEW", NULL };
+		{"SEQUENCE", "TABLE", "VIEW", NULL};
 
 		COMPLETE_WITH_LIST(list_TEMP);
 	}
@@ -1264,9 +1268,9 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_CREATETEXTSEARCH);
 	}
 	else if (pg_strcasecmp(prev4_wd, "TEXT") == 0 &&
-			pg_strcasecmp(prev3_wd, "SEARCH") == 0 &&
-			pg_strcasecmp(prev2_wd, "CONFIGURATION") == 0)
-	COMPLETE_WITH_CONST("(");
+			 pg_strcasecmp(prev3_wd, "SEARCH") == 0 &&
+			 pg_strcasecmp(prev2_wd, "CONFIGURATION") == 0)
+		COMPLETE_WITH_CONST("(");
 
 /* CREATE TRIGGER */
 	/* complete CREATE TRIGGER <name> with BEFORE,AFTER */
@@ -1413,14 +1417,14 @@ psql_completion(char *text, int start, int end)
 			 (pg_strcasecmp(prev4_wd, "DROP") == 0 &&
 			  pg_strcasecmp(prev3_wd, "AGGREGATE") == 0 &&
 			  prev_wd[strlen(prev_wd) - 1] == ')') ||
-			 (pg_strcasecmp(prev5_wd, "DROP") == 0  &&
+			 (pg_strcasecmp(prev5_wd, "DROP") == 0 &&
 			  pg_strcasecmp(prev4_wd, "TEXT") == 0 &&
 			  pg_strcasecmp(prev3_wd, "SEARCH") == 0 &&
-			 (pg_strcasecmp(prev2_wd, "CONFIGURATION") == 0 ||
-			  pg_strcasecmp(prev2_wd, "DICTIONARY") == 0 ||
-			  pg_strcasecmp(prev2_wd, "PARSER") == 0 ||
-			  pg_strcasecmp(prev2_wd, "TEMPLATE") == 0))
-			 )
+			  (pg_strcasecmp(prev2_wd, "CONFIGURATION") == 0 ||
+			   pg_strcasecmp(prev2_wd, "DICTIONARY") == 0 ||
+			   pg_strcasecmp(prev2_wd, "PARSER") == 0 ||
+			   pg_strcasecmp(prev2_wd, "TEMPLATE") == 0))
+		)
 	{
 		if ((pg_strcasecmp(prev3_wd, "DROP") == 0) && (pg_strcasecmp(prev2_wd, "FUNCTION") == 0))
 		{
@@ -1467,7 +1471,7 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	else if (pg_strcasecmp(prev3_wd, "DROP") == 0 &&
 			 pg_strcasecmp(prev2_wd, "TEXT") == 0 &&
-			  pg_strcasecmp(prev_wd, "SEARCH") == 0)
+			 pg_strcasecmp(prev_wd, "SEARCH") == 0)
 	{
 
 		static const char *const list_ALTERTEXTSEARCH[] =
@@ -1475,7 +1479,7 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_ALTERTEXTSEARCH);
 	}
-	
+
 /* EXPLAIN */
 
 	/*
@@ -2134,7 +2138,8 @@ psql_completion(char *text, int start, int end)
 static char *
 create_command_generator(const char *text, int state)
 {
-	static int list_index, string_length;
+	static int	list_index,
+				string_length;
 	const char *name;
 
 	/* If this is the first time for this completion, init some values */
@@ -2147,8 +2152,8 @@ create_command_generator(const char *text, int state)
 	/* find something that matches */
 	while ((name = words_after_create[list_index++].name))
 	{
-         	if ((pg_strncasecmp(name, text, string_length) == 0) && !words_after_create[list_index - 1].noshow)
-            		return pg_strdup(name);
+		if ((pg_strncasecmp(name, text, string_length) == 0) && !words_after_create[list_index - 1].noshow)
+			return pg_strdup(name);
 	}
 	/* if nothing matches, return NULL */
 	return NULL;
@@ -2163,7 +2168,8 @@ create_command_generator(const char *text, int state)
 static char *
 drop_command_generator(const char *text, int state)
 {
-	static int	list_index, string_length;
+	static int	list_index,
+				string_length;
 	const char *name;
 
 	if (state == 0)

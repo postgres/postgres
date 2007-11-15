@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.66 2007/10/24 23:27:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.67 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
  * utilityStmt field is set.
  */
 void
-PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
+PerformCursorOpen(PlannedStmt * stmt, ParamListInfo params,
 				  const char *queryString, bool isTopLevel)
 {
 	DeclareCursorStmt *cstmt = (DeclareCursorStmt *) stmt->utilityStmt;
@@ -102,7 +102,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	 *
 	 * If the user didn't specify a SCROLL type, allow or disallow scrolling
 	 * based on whether it would require any additional runtime overhead to do
-	 * so.  Also, we disallow scrolling for FOR UPDATE cursors.
+	 * so.	Also, we disallow scrolling for FOR UPDATE cursors.
 	 */
 	portal->cursorOptions = cstmt->options;
 	if (!(portal->cursorOptions & (CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL)))
@@ -369,8 +369,8 @@ PersistHoldablePortal(Portal portal)
 		 * to be at, but the tuplestore API doesn't support that. So we start
 		 * at the beginning of the tuplestore and iterate through it until we
 		 * reach where we need to be.  FIXME someday?  (Fortunately, the
-		 * typical case is that we're supposed to be at or near the start
-		 * of the result set, so this isn't as bad as it sounds.)
+		 * typical case is that we're supposed to be at or near the start of
+		 * the result set, so this isn't as bad as it sounds.)
 		 */
 		MemoryContextSwitchTo(portal->holdContext);
 
@@ -378,7 +378,7 @@ PersistHoldablePortal(Portal portal)
 		{
 			/* we can handle this case even if posOverflow */
 			while (tuplestore_advance(portal->holdStore, true))
-				/* continue */ ;
+				 /* continue */ ;
 		}
 		else
 		{

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.298 2007/09/20 17:56:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.299 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
 static void ExecCheckRTPerms(List *rangeTable);
 static void ExecCheckRTEPerms(RangeTblEntry *rte);
-static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
+static void ExecCheckXactReadOnly(PlannedStmt * plannedstmt);
 static void EvalPlanQualStart(evalPlanQual *epq, EState *estate,
 				  evalPlanQual *priorepq);
 static void EvalPlanQualStop(evalPlanQual *epq);
@@ -411,7 +411,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
  * Check that the query does not imply any writes to non-temp tables.
  */
 static void
-ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
+ExecCheckXactReadOnly(PlannedStmt * plannedstmt)
 {
 	ListCell   *l;
 
@@ -536,8 +536,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 	/*
 	 * Have to lock relations selected FOR UPDATE/FOR SHARE before we
-	 * initialize the plan tree, else we'd be doing a lock upgrade.
-	 * While we are at it, build the ExecRowMark list.
+	 * initialize the plan tree, else we'd be doing a lock upgrade. While we
+	 * are at it, build the ExecRowMark list.
 	 */
 	estate->es_rowMarks = NIL;
 	foreach(l, plannedstmt->rowMarks)
@@ -573,7 +573,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		/* Add slots for subplans and initplans */
 		foreach(l, plannedstmt->subplans)
 		{
-			Plan   *subplan = (Plan *) lfirst(l);
+			Plan	   *subplan = (Plan *) lfirst(l);
 
 			nSlots += ExecCountSlotsNode(subplan);
 		}
@@ -602,23 +602,22 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	estate->es_useEvalPlan = false;
 
 	/*
-	 * Initialize private state information for each SubPlan.  We must do
-	 * this before running ExecInitNode on the main query tree, since
+	 * Initialize private state information for each SubPlan.  We must do this
+	 * before running ExecInitNode on the main query tree, since
 	 * ExecInitSubPlan expects to be able to find these entries.
 	 */
 	Assert(estate->es_subplanstates == NIL);
 	i = 1;						/* subplan indices count from 1 */
 	foreach(l, plannedstmt->subplans)
 	{
-		Plan   *subplan = (Plan *) lfirst(l);
-		PlanState *subplanstate;
-		int		sp_eflags;
+		Plan	   *subplan = (Plan *) lfirst(l);
+		PlanState  *subplanstate;
+		int			sp_eflags;
 
 		/*
-		 * A subplan will never need to do BACKWARD scan nor MARK/RESTORE.
-		 * If it is a parameterless subplan (not initplan), we suggest that it
-		 * be prepared to handle REWIND efficiently; otherwise there is no
-		 * need.
+		 * A subplan will never need to do BACKWARD scan nor MARK/RESTORE. If
+		 * it is a parameterless subplan (not initplan), we suggest that it be
+		 * prepared to handle REWIND efficiently; otherwise there is no need.
 		 */
 		sp_eflags = eflags & EXEC_FLAG_EXPLAIN_ONLY;
 		if (bms_is_member(i, plannedstmt->rewindPlanIDs))
@@ -714,11 +713,12 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 					j = ExecInitJunkFilter(subplan->plan->targetlist,
 							resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
 								  ExecAllocTableSlot(estate->es_tupleTable));
+
 					/*
-					 * Since it must be UPDATE/DELETE, there had better be
-					 * a "ctid" junk attribute in the tlist ... but ctid could
-					 * be at a different resno for each result relation.
-					 * We look up the ctid resnos now and save them in the
+					 * Since it must be UPDATE/DELETE, there had better be a
+					 * "ctid" junk attribute in the tlist ... but ctid could
+					 * be at a different resno for each result relation. We
+					 * look up the ctid resnos now and save them in the
 					 * junkfilters.
 					 */
 					j->jf_junkAttNo = ExecFindJunkAttribute(j, "ctid");
@@ -813,7 +813,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			rliststate = (List *) ExecInitExpr((Expr *) rlist, planstate);
 			resultRelInfo->ri_projectReturning =
 				ExecBuildProjectionInfo(rliststate, econtext, slot,
-									   resultRelInfo->ri_RelationDesc->rd_att);
+									 resultRelInfo->ri_RelationDesc->rd_att);
 			resultRelInfo++;
 		}
 	}
@@ -843,8 +843,8 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  bool doInstrument)
 {
 	/*
-	 * Check valid relkind ... parser and/or planner should have noticed
-	 * this already, but let's make sure.
+	 * Check valid relkind ... parser and/or planner should have noticed this
+	 * already, but let's make sure.
 	 */
 	switch (resultRelationDesc->rd_rel->relkind)
 	{
@@ -928,7 +928,7 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
  * if so it doesn't matter which one we pick.)  However, it is sometimes
  * necessary to fire triggers on other relations; this happens mainly when an
  * RI update trigger queues additional triggers on other relations, which will
- * be processed in the context of the outer query.  For efficiency's sake,
+ * be processed in the context of the outer query.	For efficiency's sake,
  * we want to have a ResultRelInfo for those triggers too; that can avoid
  * repeated re-opening of the relation.  (It also provides a way for EXPLAIN
  * ANALYZE to report the runtimes of such triggers.)  So we make additional
@@ -964,15 +964,15 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 
 	/*
 	 * Open the target relation's relcache entry.  We assume that an
-	 * appropriate lock is still held by the backend from whenever the
-	 * trigger event got queued, so we need take no new lock here.
+	 * appropriate lock is still held by the backend from whenever the trigger
+	 * event got queued, so we need take no new lock here.
 	 */
 	rel = heap_open(relid, NoLock);
 
 	/*
-	 * Make the new entry in the right context.  Currently, we don't need
-	 * any index information in ResultRelInfos used only for triggers,
-	 * so tell initResultRelInfo it's a DELETE.
+	 * Make the new entry in the right context.  Currently, we don't need any
+	 * index information in ResultRelInfos used only for triggers, so tell
+	 * initResultRelInfo it's a DELETE.
 	 */
 	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 	rInfo = makeNode(ResultRelInfo);
@@ -1080,7 +1080,7 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	 */
 	foreach(l, estate->es_subplanstates)
 	{
-		PlanState *subplanstate = (PlanState *) lfirst(l);
+		PlanState  *subplanstate = (PlanState *) lfirst(l);
 
 		ExecEndNode(subplanstate);
 	}
@@ -2398,15 +2398,15 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 		ExecCreateTupleTable(estate->es_tupleTable->size);
 
 	/*
-	 * Initialize private state information for each SubPlan.  We must do
-	 * this before running ExecInitNode on the main query tree, since
+	 * Initialize private state information for each SubPlan.  We must do this
+	 * before running ExecInitNode on the main query tree, since
 	 * ExecInitSubPlan expects to be able to find these entries.
 	 */
 	Assert(epqstate->es_subplanstates == NIL);
 	foreach(l, estate->es_plannedstmt->subplans)
 	{
-		Plan   *subplan = (Plan *) lfirst(l);
-		PlanState *subplanstate;
+		Plan	   *subplan = (Plan *) lfirst(l);
+		PlanState  *subplanstate;
 
 		subplanstate = ExecInitNode(subplan, epqstate, 0);
 
@@ -2429,7 +2429,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
  *
  * This is a cut-down version of ExecutorEnd(); basically we want to do most
  * of the normal cleanup, but *not* close result relations (which we are
- * just sharing from the outer query).  We do, however, have to close any
+ * just sharing from the outer query).	We do, however, have to close any
  * trigger target relations that got opened, since those are not shared.
  */
 static void
@@ -2445,7 +2445,7 @@ EvalPlanQualStop(evalPlanQual *epq)
 
 	foreach(l, epqstate->es_subplanstates)
 	{
-		PlanState *subplanstate = (PlanState *) lfirst(l);
+		PlanState  *subplanstate = (PlanState *) lfirst(l);
 
 		ExecEndNode(subplanstate);
 	}

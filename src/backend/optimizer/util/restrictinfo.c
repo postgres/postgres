@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.53 2007/01/22 20:00:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.54 2007/11/15 21:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -534,7 +534,7 @@ extract_actual_join_clauses(List *restrictinfo_list,
  *
  * Given a list of RestrictInfo clauses that are to be applied in a join,
  * select the ones that are not redundant with any clause in the
- * reference_list.  This is used only for nestloop-with-inner-indexscan
+ * reference_list.	This is used only for nestloop-with-inner-indexscan
  * joins: any clauses being checked by the index should be removed from
  * the qpquals list.
  *

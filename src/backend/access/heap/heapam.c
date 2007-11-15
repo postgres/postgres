@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.244 2007/11/07 12:24:24 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.245 2007/11/15 21:14:32 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -60,9 +60,9 @@
 
 
 static HeapScanDesc heap_beginscan_internal(Relation relation,
-											Snapshot snapshot,
-											int nkeys, ScanKey key,
-											bool is_bitmapscan);
+						Snapshot snapshot,
+						int nkeys, ScanKey key,
+						bool is_bitmapscan);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
 		   ItemPointerData from, Buffer newbuf, HeapTuple newtup, bool move);
 static bool HeapSatisfiesHOTUpdate(Relation relation, Bitmapset *hot_attrs,
@@ -85,18 +85,18 @@ initscan(HeapScanDesc scan, ScanKey key)
 	 * Determine the number of blocks we have to scan.
 	 *
 	 * It is sufficient to do this once at scan start, since any tuples added
-	 * while the scan is in progress will be invisible to my snapshot
-	 * anyway.  (That is not true when using a non-MVCC snapshot.  However,
-	 * we couldn't guarantee to return tuples added after scan start anyway,
-	 * since they might go into pages we already scanned.  To guarantee
-	 * consistent results for a non-MVCC snapshot, the caller must hold some
-	 * higher-level lock that ensures the interesting tuple(s) won't change.)
+	 * while the scan is in progress will be invisible to my snapshot anyway.
+	 * (That is not true when using a non-MVCC snapshot.  However, we couldn't
+	 * guarantee to return tuples added after scan start anyway, since they
+	 * might go into pages we already scanned.	To guarantee consistent
+	 * results for a non-MVCC snapshot, the caller must hold some higher-level
+	 * lock that ensures the interesting tuple(s) won't change.)
 	 */
 	scan->rs_nblocks = RelationGetNumberOfBlocks(scan->rs_rd);
 
 	/*
 	 * If the table is large relative to NBuffers, use a bulk-read access
-	 * strategy and enable synchronized scanning (see syncscan.c).  Although
+	 * strategy and enable synchronized scanning (see syncscan.c).	Although
 	 * the thresholds for these features could be different, we make them the
 	 * same so that there are only two behaviors to tune rather than four.
 	 *
@@ -140,8 +140,8 @@ initscan(HeapScanDesc scan, ScanKey key)
 		memcpy(scan->rs_key, key, scan->rs_nkeys * sizeof(ScanKeyData));
 
 	/*
-	 * Currently, we don't have a stats counter for bitmap heap scans
-	 * (but the underlying bitmap index scans will be counted).
+	 * Currently, we don't have a stats counter for bitmap heap scans (but the
+	 * underlying bitmap index scans will be counted).
 	 */
 	if (!scan->rs_bitmapscan)
 		pgstat_count_heap_scan(scan->rs_rd);
@@ -283,7 +283,7 @@ heapgettup(HeapScanDesc scan,
 				tuple->t_data = NULL;
 				return;
 			}
-			page = scan->rs_startblock;			/* first page */
+			page = scan->rs_startblock; /* first page */
 			heapgetpage(scan, page);
 			lineoff = FirstOffsetNumber;		/* first offnum */
 			scan->rs_inited = true;
@@ -317,6 +317,7 @@ heapgettup(HeapScanDesc scan,
 				tuple->t_data = NULL;
 				return;
 			}
+
 			/*
 			 * Disable reporting to syncscan logic in a backwards scan; it's
 			 * not very likely anyone else is doing the same thing at the same
@@ -459,9 +460,9 @@ heapgettup(HeapScanDesc scan,
 			finished = (page == scan->rs_startblock);
 
 			/*
-			 * Report our new scan position for synchronization purposes.
-			 * We don't do that when moving backwards, however. That would
-			 * just mess up any other forward-moving scanners.
+			 * Report our new scan position for synchronization purposes. We
+			 * don't do that when moving backwards, however. That would just
+			 * mess up any other forward-moving scanners.
 			 *
 			 * Note: we do this before checking for end of scan so that the
 			 * final state of the position hint is back at the start of the
@@ -554,7 +555,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 				tuple->t_data = NULL;
 				return;
 			}
-			page = scan->rs_startblock;			/* first page */
+			page = scan->rs_startblock; /* first page */
 			heapgetpage(scan, page);
 			lineindex = 0;
 			scan->rs_inited = true;
@@ -585,6 +586,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 				tuple->t_data = NULL;
 				return;
 			}
+
 			/*
 			 * Disable reporting to syncscan logic in a backwards scan; it's
 			 * not very likely anyone else is doing the same thing at the same
@@ -719,9 +721,9 @@ heapgettup_pagemode(HeapScanDesc scan,
 			finished = (page == scan->rs_startblock);
 
 			/*
-			 * Report our new scan position for synchronization purposes.
-			 * We don't do that when moving backwards, however. That would
-			 * just mess up any other forward-moving scanners.
+			 * Report our new scan position for synchronization purposes. We
+			 * don't do that when moving backwards, however. That would just
+			 * mess up any other forward-moving scanners.
 			 *
 			 * Note: we do this before checking for end of scan so that the
 			 * final state of the position hint is back at the start of the
@@ -1057,7 +1059,7 @@ heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
  *		heap_beginscan	- begin relation scan
  *
  * heap_beginscan_bm is an alternative entry point for setting up a HeapScanDesc
- * for a bitmap heap scan.  Although that scan technology is really quite
+ * for a bitmap heap scan.	Although that scan technology is really quite
  * unlike a standard seqscan, there is just enough commonality to make it
  * worth using the same data structure.
  * ----------------
@@ -1423,10 +1425,10 @@ bool
 heap_hot_search_buffer(ItemPointer tid, Buffer buffer, Snapshot snapshot,
 					   bool *all_dead)
 {
-	Page dp = (Page) BufferGetPage(buffer);
+	Page		dp = (Page) BufferGetPage(buffer);
 	TransactionId prev_xmax = InvalidTransactionId;
 	OffsetNumber offnum;
-	bool at_chain_start;
+	bool		at_chain_start;
 
 	if (all_dead)
 		*all_dead = true;
@@ -1438,7 +1440,7 @@ heap_hot_search_buffer(ItemPointer tid, Buffer buffer, Snapshot snapshot,
 	/* Scan through possible multiple members of HOT-chain */
 	for (;;)
 	{
-		ItemId lp;
+		ItemId		lp;
 		HeapTupleData heapTuple;
 
 		/* check for bogus TID */
@@ -1472,7 +1474,8 @@ heap_hot_search_buffer(ItemPointer tid, Buffer buffer, Snapshot snapshot,
 			break;
 
 		/*
-		 * The xmin should match the previous xmax value, else chain is broken.
+		 * The xmin should match the previous xmax value, else chain is
+		 * broken.
 		 */
 		if (TransactionIdIsValid(prev_xmax) &&
 			!TransactionIdEquals(prev_xmax,
@@ -1499,8 +1502,8 @@ heap_hot_search_buffer(ItemPointer tid, Buffer buffer, Snapshot snapshot,
 			*all_dead = false;
 
 		/*
-		 * Check to see if HOT chain continues past this tuple; if so
-		 * fetch the next offnum and loop around.
+		 * Check to see if HOT chain continues past this tuple; if so fetch
+		 * the next offnum and loop around.
 		 */
 		if (HeapTupleIsHotUpdated(&heapTuple))
 		{
@@ -1511,7 +1514,7 @@ heap_hot_search_buffer(ItemPointer tid, Buffer buffer, Snapshot snapshot,
 			prev_xmax = HeapTupleHeaderGetXmax(heapTuple.t_data);
 		}
 		else
-			break;			/* end of chain */
+			break;				/* end of chain */
 	}
 
 	return false;
@@ -1528,8 +1531,8 @@ bool
 heap_hot_search(ItemPointer tid, Relation relation, Snapshot snapshot,
 				bool *all_dead)
 {
-	bool	result;
-	Buffer	buffer;
+	bool		result;
+	Buffer		buffer;
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
@@ -1665,7 +1668,7 @@ heap_get_latest_tid(Relation relation,
  *
  * This is called after we have waited for the XMAX transaction to terminate.
  * If the transaction aborted, we guarantee the XMAX_INVALID hint bit will
- * be set on exit.  If the transaction committed, we set the XMAX_COMMITTED
+ * be set on exit.	If the transaction committed, we set the XMAX_COMMITTED
  * hint bit if possible --- but beware that that may not yet be possible,
  * if the transaction committed asynchronously.  Hence callers should look
  * only at XMAX_INVALID.
@@ -2069,7 +2072,7 @@ l1:
 	/*
 	 * If this transaction commits, the tuple will become DEAD sooner or
 	 * later.  Set flag that this page is a candidate for pruning once our xid
-	 * falls below the OldestXmin horizon.  If the transaction finally aborts,
+	 * falls below the OldestXmin horizon.	If the transaction finally aborts,
 	 * the subsequent page pruning will be a no-op and the hint will be
 	 * cleared.
 	 */
@@ -2252,15 +2255,15 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 
 	/*
 	 * Fetch the list of attributes to be checked for HOT update.  This is
-	 * wasted effort if we fail to update or have to put the new tuple on
-	 * a different page.  But we must compute the list before obtaining
-	 * buffer lock --- in the worst case, if we are doing an update on one
-	 * of the relevant system catalogs, we could deadlock if we try to
-	 * fetch the list later.  In any case, the relcache caches the data
-	 * so this is usually pretty cheap.
+	 * wasted effort if we fail to update or have to put the new tuple on a
+	 * different page.	But we must compute the list before obtaining buffer
+	 * lock --- in the worst case, if we are doing an update on one of the
+	 * relevant system catalogs, we could deadlock if we try to fetch the list
+	 * later.  In any case, the relcache caches the data so this is usually
+	 * pretty cheap.
 	 *
-	 * Note that we get a copy here, so we need not worry about relcache
-	 * flush happening midway through.
+	 * Note that we get a copy here, so we need not worry about relcache flush
+	 * happening midway through.
 	 */
 	hot_attrs = RelationGetIndexAttrBitmap(relation);
 
@@ -2555,7 +2558,7 @@ l2:
 	{
 		/*
 		 * Since the new tuple is going into the same page, we might be able
-		 * to do a HOT update.  Check if any of the index columns have been
+		 * to do a HOT update.	Check if any of the index columns have been
 		 * changed.  If not, then HOT update is possible.
 		 */
 		if (HeapSatisfiesHOTUpdate(relation, hot_attrs, &oldtup, heaptup))
@@ -2573,14 +2576,14 @@ l2:
 	/*
 	 * If this transaction commits, the old tuple will become DEAD sooner or
 	 * later.  Set flag that this page is a candidate for pruning once our xid
-	 * falls below the OldestXmin horizon.  If the transaction finally aborts,
+	 * falls below the OldestXmin horizon.	If the transaction finally aborts,
 	 * the subsequent page pruning will be a no-op and the hint will be
 	 * cleared.
 	 *
-	 * XXX Should we set hint on newbuf as well?  If the transaction
-	 * aborts, there would be a prunable tuple in the newbuf; but for now
-	 * we choose not to optimize for aborts.  Note that heap_xlog_update
-	 * must be kept in sync if this decision changes.
+	 * XXX Should we set hint on newbuf as well?  If the transaction aborts,
+	 * there would be a prunable tuple in the newbuf; but for now we choose
+	 * not to optimize for aborts.	Note that heap_xlog_update must be kept in
+	 * sync if this decision changes.
 	 */
 	PageSetPrunable(dp, xid);
 
@@ -2695,22 +2698,24 @@ static bool
 heap_tuple_attr_equals(TupleDesc tupdesc, int attrnum,
 					   HeapTuple tup1, HeapTuple tup2)
 {
-	Datum value1, value2;
-	bool isnull1, isnull2;
+	Datum		value1,
+				value2;
+	bool		isnull1,
+				isnull2;
 	Form_pg_attribute att;
 
 	/*
 	 * If it's a whole-tuple reference, say "not equal".  It's not really
-	 * worth supporting this case, since it could only succeed after a
-	 * no-op update, which is hardly a case worth optimizing for.
+	 * worth supporting this case, since it could only succeed after a no-op
+	 * update, which is hardly a case worth optimizing for.
 	 */
 	if (attrnum == 0)
 		return false;
 
 	/*
-	 * Likewise, automatically say "not equal" for any system attribute
-	 * other than OID and tableOID; we cannot expect these to be consistent
-	 * in a HOT chain, or even to be set correctly yet in the new tuple.
+	 * Likewise, automatically say "not equal" for any system attribute other
+	 * than OID and tableOID; we cannot expect these to be consistent in a HOT
+	 * chain, or even to be set correctly yet in the new tuple.
 	 */
 	if (attrnum < 0)
 	{
@@ -2720,17 +2725,17 @@ heap_tuple_attr_equals(TupleDesc tupdesc, int attrnum,
 	}
 
 	/*
-	 * Extract the corresponding values.  XXX this is pretty inefficient
-	 * if there are many indexed columns.  Should HeapSatisfiesHOTUpdate
-	 * do a single heap_deform_tuple call on each tuple, instead?  But
-	 * that doesn't work for system columns ...
+	 * Extract the corresponding values.  XXX this is pretty inefficient if
+	 * there are many indexed columns.	Should HeapSatisfiesHOTUpdate do a
+	 * single heap_deform_tuple call on each tuple, instead?  But that doesn't
+	 * work for system columns ...
 	 */
 	value1 = heap_getattr(tup1, attrnum, tupdesc, &isnull1);
 	value2 = heap_getattr(tup2, attrnum, tupdesc, &isnull2);
 
 	/*
-	 * If one value is NULL and other is not, then they are certainly
-	 * not equal
+	 * If one value is NULL and other is not, then they are certainly not
+	 * equal
 	 */
 	if (isnull1 != isnull2)
 		return false;
@@ -2744,7 +2749,7 @@ heap_tuple_attr_equals(TupleDesc tupdesc, int attrnum,
 	/*
 	 * We do simple binary comparison of the two datums.  This may be overly
 	 * strict because there can be multiple binary representations for the
-	 * same logical value.  But we should be OK as long as there are no false
+	 * same logical value.	But we should be OK as long as there are no false
 	 * positives.  Using a type-specific equality operator is messy because
 	 * there could be multiple notions of equality in different operator
 	 * classes; furthermore, we cannot safely invoke user-defined functions
@@ -2758,7 +2763,7 @@ heap_tuple_attr_equals(TupleDesc tupdesc, int attrnum,
 	else
 	{
 		Assert(attrnum <= tupdesc->natts);
-		att	= tupdesc->attrs[attrnum - 1];
+		att = tupdesc->attrs[attrnum - 1];
 		return datumIsEqual(value1, value2, att->attbyval, att->attlen);
 	}
 }
@@ -2779,7 +2784,7 @@ static bool
 HeapSatisfiesHOTUpdate(Relation relation, Bitmapset *hot_attrs,
 					   HeapTuple oldtup, HeapTuple newtup)
 {
-	int attrnum;
+	int			attrnum;
 
 	while ((attrnum = bms_first_member(hot_attrs)) >= 0)
 	{
@@ -3094,15 +3099,15 @@ l3:
 	}
 
 	/*
-	 * We might already hold the desired lock (or stronger), possibly under
-	 * a different subtransaction of the current top transaction.  If so,
-	 * there is no need to change state or issue a WAL record.  We already
-	 * handled the case where this is true for xmax being a MultiXactId,
-	 * so now check for cases where it is a plain TransactionId.
+	 * We might already hold the desired lock (or stronger), possibly under a
+	 * different subtransaction of the current top transaction.  If so, there
+	 * is no need to change state or issue a WAL record.  We already handled
+	 * the case where this is true for xmax being a MultiXactId, so now check
+	 * for cases where it is a plain TransactionId.
 	 *
 	 * Note in particular that this covers the case where we already hold
-	 * exclusive lock on the tuple and the caller only wants shared lock.
-	 * It would certainly not do to give up the exclusive lock.
+	 * exclusive lock on the tuple and the caller only wants shared lock. It
+	 * would certainly not do to give up the exclusive lock.
 	 */
 	xmax = HeapTupleHeaderGetXmax(tuple->t_data);
 	old_infomask = tuple->t_data->t_infomask;
@@ -3179,8 +3184,8 @@ l3:
 			{
 				/*
 				 * If the XMAX is a valid TransactionId, then we need to
-				 * create a new MultiXactId that includes both the old
-				 * locker and our own TransactionId.
+				 * create a new MultiXactId that includes both the old locker
+				 * and our own TransactionId.
 				 */
 				xid = MultiXactIdCreate(xmax, xid);
 				new_infomask |= HEAP_XMAX_IS_MULTI;
@@ -3214,8 +3219,8 @@ l3:
 	/*
 	 * Store transaction information of xact locking the tuple.
 	 *
-	 * Note: Cmax is meaningless in this context, so don't set it; this
-	 * avoids possibly generating a useless combo CID.
+	 * Note: Cmax is meaningless in this context, so don't set it; this avoids
+	 * possibly generating a useless combo CID.
 	 */
 	tuple->t_data->t_infomask = new_infomask;
 	HeapTupleHeaderClearHotUpdated(tuple->t_data);
@@ -3425,6 +3430,7 @@ heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 			buf = InvalidBuffer;
 		}
 		HeapTupleHeaderSetXmin(tuple, FrozenTransactionId);
+
 		/*
 		 * Might as well fix the hint bits too; usually XMIN_COMMITTED will
 		 * already be set here, but there's a small chance not.
@@ -3437,9 +3443,9 @@ heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	/*
 	 * When we release shared lock, it's possible for someone else to change
 	 * xmax before we get the lock back, so repeat the check after acquiring
-	 * exclusive lock.  (We don't need this pushup for xmin, because only
-	 * VACUUM could be interested in changing an existing tuple's xmin,
-	 * and there's only one VACUUM allowed on a table at a time.)
+	 * exclusive lock.	(We don't need this pushup for xmin, because only
+	 * VACUUM could be interested in changing an existing tuple's xmin, and
+	 * there's only one VACUUM allowed on a table at a time.)
 	 */
 recheck_xmax:
 	if (!(tuple->t_infomask & HEAP_XMAX_IS_MULTI))
@@ -3454,13 +3460,14 @@ recheck_xmax:
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 				buf = InvalidBuffer;
-				goto recheck_xmax;			/* see comment above */
+				goto recheck_xmax;		/* see comment above */
 			}
 			HeapTupleHeaderSetXmax(tuple, InvalidTransactionId);
+
 			/*
-			 * The tuple might be marked either XMAX_INVALID or
-			 * XMAX_COMMITTED + LOCKED.  Normalize to INVALID just to be
-			 * sure no one gets confused.
+			 * The tuple might be marked either XMAX_INVALID or XMAX_COMMITTED
+			 * + LOCKED.  Normalize to INVALID just to be sure no one gets
+			 * confused.
 			 */
 			tuple->t_infomask &= ~HEAP_XMAX_COMMITTED;
 			tuple->t_infomask |= HEAP_XMAX_INVALID;
@@ -3506,8 +3513,9 @@ recheck_xvac:
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 				buf = InvalidBuffer;
-				goto recheck_xvac;			/* see comment above */
+				goto recheck_xvac;		/* see comment above */
 			}
+
 			/*
 			 * If a MOVED_OFF tuple is not dead, the xvac transaction must
 			 * have failed; whereas a non-dead MOVED_IN tuple must mean the
@@ -3517,9 +3525,10 @@ recheck_xvac:
 				HeapTupleHeaderSetXvac(tuple, InvalidTransactionId);
 			else
 				HeapTupleHeaderSetXvac(tuple, FrozenTransactionId);
+
 			/*
-			 * Might as well fix the hint bits too; usually XMIN_COMMITTED will
-			 * already be set here, but there's a small chance not.
+			 * Might as well fix the hint bits too; usually XMIN_COMMITTED
+			 * will already be set here, but there's a small chance not.
 			 */
 			Assert(!(tuple->t_infomask & HEAP_XMIN_INVALID));
 			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
@@ -3632,8 +3641,8 @@ log_heap_clean(Relation reln, Buffer buffer,
 	/*
 	 * The OffsetNumber arrays are not actually in the buffer, but we pretend
 	 * that they are.  When XLogInsert stores the whole buffer, the offset
-	 * arrays need not be stored too.  Note that even if all three arrays
-	 * are empty, we want to expose the buffer as a candidate for whole-page
+	 * arrays need not be stored too.  Note that even if all three arrays are
+	 * empty, we want to expose the buffer as a candidate for whole-page
 	 * storage, since this record type implies a defragmentation operation
 	 * even if no item pointers changed state.
 	 */
@@ -3686,7 +3695,7 @@ log_heap_clean(Relation reln, Buffer buffer,
 }
 
 /*
- * Perform XLogInsert for a heap-freeze operation.  Caller must already
+ * Perform XLogInsert for a heap-freeze operation.	Caller must already
  * have modified the buffer and marked it dirty.
  */
 XLogRecPtr
@@ -3711,9 +3720,9 @@ log_heap_freeze(Relation reln, Buffer buffer,
 	rdata[0].next = &(rdata[1]);
 
 	/*
-	 * The tuple-offsets array is not actually in the buffer, but pretend
-	 * that it is.	When XLogInsert stores the whole buffer, the offsets array
-	 * need not be stored too.
+	 * The tuple-offsets array is not actually in the buffer, but pretend that
+	 * it is.  When XLogInsert stores the whole buffer, the offsets array need
+	 * not be stored too.
 	 */
 	if (offcnt > 0)
 	{
@@ -3853,7 +3862,7 @@ log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from,
  * for writing the page to disk after calling this routine.
  *
  * Note: all current callers build pages in private memory and write them
- * directly to smgr, rather than using bufmgr.  Therefore there is no need
+ * directly to smgr, rather than using bufmgr.	Therefore there is no need
  * to pass a buffer ID to XLogInsert, nor to perform MarkBufferDirty within
  * the critical section.
  *
@@ -3905,9 +3914,9 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	Page		page;
 	OffsetNumber *offnum;
 	OffsetNumber *end;
-	int nredirected;
-	int ndead;
-	int i;
+	int			nredirected;
+	int			ndead;
+	int			i;
 
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
@@ -3934,12 +3943,12 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	{
 		OffsetNumber fromoff = *offnum++;
 		OffsetNumber tooff = *offnum++;
-		ItemId	fromlp = PageGetItemId(page, fromoff);
+		ItemId		fromlp = PageGetItemId(page, fromoff);
 
 		if (clean_move)
 		{
 			/* Physically move the "to" item to the "from" slot */
-			ItemId	tolp = PageGetItemId(page, tooff);
+			ItemId		tolp = PageGetItemId(page, tooff);
 			HeapTupleHeader htup;
 
 			*fromlp = *tolp;
@@ -3962,7 +3971,7 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	for (i = 0; i < ndead; i++)
 	{
 		OffsetNumber off = *offnum++;
-		ItemId	lp = PageGetItemId(page, off);
+		ItemId		lp = PageGetItemId(page, off);
 
 		ItemIdSetDead(lp);
 	}
@@ -3971,14 +3980,14 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	while (offnum < end)
 	{
 		OffsetNumber off = *offnum++;
-		ItemId	lp = PageGetItemId(page, off);
+		ItemId		lp = PageGetItemId(page, off);
 
 		ItemIdSetUnused(lp);
 	}
 
 	/*
-	 * Finally, repair any fragmentation, and update the page's hint bit
-	 * about whether it has free pointers.
+	 * Finally, repair any fragmentation, and update the page's hint bit about
+	 * whether it has free pointers.
 	 */
 	PageRepairFragmentation(page);
 
@@ -4617,7 +4626,7 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 	{
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
-		if (xl_info & XLOG_HEAP_INIT_PAGE) /* can this case happen? */
+		if (xl_info & XLOG_HEAP_INIT_PAGE)		/* can this case happen? */
 			appendStringInfo(buf, "hot_update(init): ");
 		else
 			appendStringInfo(buf, "hot_update: ");
@@ -4724,7 +4733,7 @@ heap_sync(Relation rel)
 	/* toast heap, if any */
 	if (OidIsValid(rel->rd_rel->reltoastrelid))
 	{
-		Relation		toastrel;
+		Relation	toastrel;
 
 		toastrel = heap_open(rel->rd_rel->reltoastrelid, AccessShareLock);
 		FlushRelationBuffers(toastrel);

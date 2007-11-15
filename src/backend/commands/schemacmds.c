@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.46 2007/06/23 22:12:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.47 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,17 +111,17 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	/*
 	 * Examine the list of commands embedded in the CREATE SCHEMA command, and
 	 * reorganize them into a sequentially executable order with no forward
-	 * references.	Note that the result is still a list of raw parsetrees
-	 * --- we cannot, in general, run parse analysis on one statement until
-	 * we have actually executed the prior ones.
+	 * references.	Note that the result is still a list of raw parsetrees ---
+	 * we cannot, in general, run parse analysis on one statement until we
+	 * have actually executed the prior ones.
 	 */
 	parsetree_list = transformCreateSchemaStmt(stmt);
 
 	/*
-	 * Execute each command contained in the CREATE SCHEMA.  Since the
-	 * grammar allows only utility commands in CREATE SCHEMA, there is
-	 * no need to pass them through parse_analyze() or the rewriter;
-	 * we can just hand them straight to ProcessUtility.
+	 * Execute each command contained in the CREATE SCHEMA.  Since the grammar
+	 * allows only utility commands in CREATE SCHEMA, there is no need to pass
+	 * them through parse_analyze() or the rewriter; we can just hand them
+	 * straight to ProcessUtility.
 	 */
 	foreach(parsetree_item, parsetree_list)
 	{
@@ -131,7 +131,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 		ProcessUtility(stmt,
 					   queryString,
 					   NULL,
-					   false,				/* not top level */
+					   false,	/* not top level */
 					   None_Receiver,
 					   NULL);
 		/* make sure later steps can see the object created here */

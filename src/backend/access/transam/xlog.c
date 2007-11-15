@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.287 2007/11/15 20:36:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.288 2007/11/15 21:14:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ bool		XLOG_DEBUG = false;
  * future XLOG segment as long as there aren't already XLOGfileslop future
  * segments; else we'll delete it.  This could be made a separate GUC
  * variable, but at present I think it's sufficient to hardwire it as
- * 2*CheckPointSegments+1.  Under normal conditions, a checkpoint will free
+ * 2*CheckPointSegments+1.	Under normal conditions, a checkpoint will free
  * no more than 2*CheckPointSegments log segments, and we want to recycle all
  * of them; the +1 allows boundary cases to happen without wasting a
  * delete/create-segment cycle.
@@ -287,7 +287,7 @@ typedef struct XLogCtlData
 	XLogwrtResult LogwrtResult;
 	uint32		ckptXidEpoch;	/* nextXID & epoch of latest checkpoint */
 	TransactionId ckptXid;
-	XLogRecPtr	asyncCommitLSN;	/* LSN of newest async commit */
+	XLogRecPtr	asyncCommitLSN; /* LSN of newest async commit */
 
 	/* Protected by WALWriteLock: */
 	XLogCtlWrite Write;
@@ -737,8 +737,8 @@ begin:;
 	 * full-block records into the non-full-block format.
 	 *
 	 * Note: we could just set the flag whenever !forcePageWrites, but
-	 * defining it like this leaves the info bit free for some potential
-	 * other use in records without any backup blocks.
+	 * defining it like this leaves the info bit free for some potential other
+	 * use in records without any backup blocks.
 	 */
 	if ((info & XLR_BKP_BLOCK_MASK) && !Insert->forcePageWrites)
 		info |= XLR_BKP_REMOVABLE;
@@ -1345,10 +1345,10 @@ static bool
 XLogCheckpointNeeded(void)
 {
 	/*
-	 * A straight computation of segment number could overflow 32
-	 * bits.  Rather than assuming we have working 64-bit
-	 * arithmetic, we compare the highest-order bits separately,
-	 * and force a checkpoint immediately when they change.
+	 * A straight computation of segment number could overflow 32 bits.
+	 * Rather than assuming we have working 64-bit arithmetic, we compare the
+	 * highest-order bits separately, and force a checkpoint immediately when
+	 * they change.
 	 */
 	uint32		old_segno,
 				new_segno;
@@ -1361,7 +1361,7 @@ XLogCheckpointNeeded(void)
 	new_segno = (openLogId % XLogSegSize) * XLogSegsPerFile + openLogSeg;
 	new_highbits = openLogId / XLogSegSize;
 	if (new_highbits != old_highbits ||
-		new_segno >= old_segno + (uint32) (CheckPointSegments-1))
+		new_segno >= old_segno + (uint32) (CheckPointSegments - 1))
 		return true;
 	return false;
 }
@@ -1558,9 +1558,9 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 				/*
 				 * Signal bgwriter to start a checkpoint if we've consumed too
 				 * much xlog since the last one.  For speed, we first check
-				 * using the local copy of RedoRecPtr, which might be
-				 * out of date; if it looks like a checkpoint is needed,
-				 * forcibly update RedoRecPtr and recheck.
+				 * using the local copy of RedoRecPtr, which might be out of
+				 * date; if it looks like a checkpoint is needed, forcibly
+				 * update RedoRecPtr and recheck.
 				 */
 				if (IsUnderPostmaster &&
 					XLogCheckpointNeeded())
@@ -1779,9 +1779,9 @@ XLogFlush(XLogRecPtr record)
  * We normally flush only completed blocks; but if there is nothing to do on
  * that basis, we check for unflushed async commits in the current incomplete
  * block, and flush through the latest one of those.  Thus, if async commits
- * are not being used, we will flush complete blocks only.  We can guarantee
+ * are not being used, we will flush complete blocks only.	We can guarantee
  * that async commits reach disk after at most three cycles; normally only
- * one or two.  (We allow XLogWrite to write "flexibly", meaning it can stop
+ * one or two.	(We allow XLogWrite to write "flexibly", meaning it can stop
  * at the end of the buffer ring; this makes a difference only with very high
  * load or long wal_writer_delay, but imposes one extra cycle for the worst
  * case for async commits.)
@@ -1861,6 +1861,7 @@ void
 XLogAsyncCommitFlush(void)
 {
 	XLogRecPtr	WriteRqstPtr;
+
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
 
@@ -2252,7 +2253,7 @@ InstallXLogFileSegment(uint32 *log, uint32 *seg, char *tmppath,
 				LWLockRelease(ControlFileLock);
 			return false;
 		}
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -2432,8 +2433,8 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	int			rc;
 	bool		signaled;
 	struct stat stat_buf;
-	uint32 		restartLog;
-	uint32 		restartSeg;
+	uint32		restartLog;
+	uint32		restartSeg;
 
 	/*
 	 * When doing archive recovery, we always prefer an archived log file even
@@ -2511,8 +2512,8 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 					sp++;
 					XLByteToSeg(ControlFile->checkPointCopy.redo,
 								restartLog, restartSeg);
-					XLogFileName(lastRestartPointFname, 
-								 ControlFile->checkPointCopy.ThisTimeLineID, 
+					XLogFileName(lastRestartPointFname,
+								 ControlFile->checkPointCopy.ThisTimeLineID,
 								 restartLog, restartSeg);
 					StrNCpy(dp, lastRestartPointFname, endp - dp);
 					dp += strlen(dp);
@@ -2594,17 +2595,17 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * incorrectly.  We have to assume the former.
 	 *
 	 * However, if the failure was due to any sort of signal, it's best to
-	 * punt and abort recovery.  (If we "return false" here, upper levels
-	 * will assume that recovery is complete and start up the database!)
-	 * It's essential to abort on child SIGINT and SIGQUIT, because per spec
+	 * punt and abort recovery.  (If we "return false" here, upper levels will
+	 * assume that recovery is complete and start up the database!) It's
+	 * essential to abort on child SIGINT and SIGQUIT, because per spec
 	 * system() ignores SIGINT and SIGQUIT while waiting; if we see one of
 	 * those it's a good bet we should have gotten it too.  Aborting on other
 	 * signals such as SIGTERM seems a good idea as well.
 	 *
-	 * Per the Single Unix Spec, shells report exit status > 128 when
-	 * a called command died on a signal.  Also, 126 and 127 are used to
-	 * report problems such as an unfindable command; treat those as fatal
-	 * errors too.
+	 * Per the Single Unix Spec, shells report exit status > 128 when a called
+	 * command died on a signal.  Also, 126 and 127 are used to report
+	 * problems such as an unfindable command; treat those as fatal errors
+	 * too.
 	 */
 	signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 125;
 
@@ -3981,8 +3982,8 @@ ReadControlFile(void)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with TOAST_MAX_CHUNK_SIZE %d,"
-						   " but the server was compiled with TOAST_MAX_CHUNK_SIZE %d.",
-						   ControlFile->toast_max_chunk_size, (int) TOAST_MAX_CHUNK_SIZE),
+				" but the server was compiled with TOAST_MAX_CHUNK_SIZE %d.",
+			  ControlFile->toast_max_chunk_size, (int) TOAST_MAX_CHUNK_SIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -4430,7 +4431,7 @@ readRecoveryCommandFile(void)
 			 */
 			recoveryTargetTime =
 				DatumGetTimestampTz(DirectFunctionCall3(timestamptz_in,
-												   CStringGetDatum(tok2),
+														CStringGetDatum(tok2),
 												ObjectIdGetDatum(InvalidOid),
 														Int32GetDatum(-1)));
 			ereport(LOG,
@@ -4629,7 +4630,7 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 {
 	bool		stopsHere;
 	uint8		record_info;
-	TimestampTz	recordXtime;
+	TimestampTz recordXtime;
 
 	/* We only consider stopping at COMMIT or ABORT records */
 	if (record->xl_rmid != RM_XACT_ID)
@@ -4781,11 +4782,11 @@ StartupXLOG(void)
 				(errmsg("database system was interrupted while in recovery at log time %s",
 						str_time(ControlFile->checkPointCopy.time)),
 				 errhint("If this has occurred more than once some data might be corrupted"
-				" and you might need to choose an earlier recovery target.")));
+			  " and you might need to choose an earlier recovery target.")));
 	else if (ControlFile->state == DB_IN_PRODUCTION)
 		ereport(LOG,
-				(errmsg("database system was interrupted; last known up at %s",
-						str_time(ControlFile->time))));
+			  (errmsg("database system was interrupted; last known up at %s",
+					  str_time(ControlFile->time))));
 
 	/* This is just to allow attaching to startup process with a debugger */
 #ifdef XLOG_REPLAY_DELAY
@@ -4879,9 +4880,9 @@ StartupXLOG(void)
 	wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
 
 	ereport(DEBUG1,
-	 (errmsg("redo record is at %X/%X; shutdown %s",
-			 checkPoint.redo.xlogid, checkPoint.redo.xrecoff,
-			 wasShutdown ? "TRUE" : "FALSE")));
+			(errmsg("redo record is at %X/%X; shutdown %s",
+					checkPoint.redo.xlogid, checkPoint.redo.xrecoff,
+					wasShutdown ? "TRUE" : "FALSE")));
 	ereport(DEBUG1,
 			(errmsg("next transaction ID: %u/%u; next OID: %u",
 					checkPoint.nextXidEpoch, checkPoint.nextXid,
@@ -4920,7 +4921,7 @@ StartupXLOG(void)
 	{
 		if (wasShutdown)
 			ereport(PANIC,
-				(errmsg("invalid redo record in shutdown checkpoint")));
+					(errmsg("invalid redo record in shutdown checkpoint")));
 		InRecovery = true;
 	}
 	else if (ControlFile->state != DB_SHUTDOWNED)
@@ -5045,7 +5046,7 @@ StartupXLOG(void)
 				 */
 				if (recoveryStopsHere(record, &recoveryApply))
 				{
-					reachedStopPoint = true;		/* see below */
+					reachedStopPoint = true;	/* see below */
 					recoveryContinue = false;
 					if (!recoveryApply)
 						break;
@@ -5087,8 +5088,8 @@ StartupXLOG(void)
 							ReadRecPtr.xlogid, ReadRecPtr.xrecoff)));
 			if (recoveryLastXTime)
 				ereport(LOG,
-						(errmsg("last completed transaction was at log time %s",
-								timestamptz_to_str(recoveryLastXTime))));
+					 (errmsg("last completed transaction was at log time %s",
+							 timestamptz_to_str(recoveryLastXTime))));
 			InRedo = false;
 		}
 		else
@@ -5116,7 +5117,7 @@ StartupXLOG(void)
 		if (reachedStopPoint)	/* stopped because of stop request */
 			ereport(FATAL,
 					(errmsg("requested recovery stop point is before end time of backup dump")));
-		else					/* ran off end of WAL */
+		else	/* ran off end of WAL */
 			ereport(FATAL,
 					(errmsg("WAL ends before end time of backup dump")));
 	}
@@ -5124,12 +5125,12 @@ StartupXLOG(void)
 	/*
 	 * Consider whether we need to assign a new timeline ID.
 	 *
-	 * If we are doing an archive recovery, we always assign a new ID.  This
-	 * handles a couple of issues.  If we stopped short of the end of WAL
+	 * If we are doing an archive recovery, we always assign a new ID.	This
+	 * handles a couple of issues.	If we stopped short of the end of WAL
 	 * during recovery, then we are clearly generating a new timeline and must
 	 * assign it a unique new ID.  Even if we ran to the end, modifying the
-	 * current last segment is problematic because it may result in trying
-	 * to overwrite an already-archived copy of that segment, and we encourage
+	 * current last segment is problematic because it may result in trying to
+	 * overwrite an already-archived copy of that segment, and we encourage
 	 * DBAs to make their archive_commands reject that.  We can dodge the
 	 * problem by making the new active segment have a new timeline ID.
 	 *
@@ -5472,7 +5473,7 @@ GetInsertRecPtr(void)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
-	XLogRecPtr recptr;
+	XLogRecPtr	recptr;
 
 	SpinLockAcquire(&xlogctl->info_lck);
 	recptr = xlogctl->LogwrtRqst.Write;
@@ -5576,8 +5577,12 @@ LogCheckpointStart(int flags)
 static void
 LogCheckpointEnd(void)
 {
-	long	write_secs, sync_secs, total_secs;
-	int		write_usecs, sync_usecs, total_usecs;
+	long		write_secs,
+				sync_secs,
+				total_secs;
+	int			write_usecs,
+				sync_usecs,
+				total_usecs;
 
 	CheckpointStats.ckpt_end_t = GetCurrentTimestamp();
 
@@ -5601,9 +5606,9 @@ LogCheckpointEnd(void)
 		 CheckpointStats.ckpt_segs_added,
 		 CheckpointStats.ckpt_segs_removed,
 		 CheckpointStats.ckpt_segs_recycled,
-		 write_secs, write_usecs/1000,
-		 sync_secs, sync_usecs/1000,
-		 total_secs, total_usecs/1000);
+		 write_secs, write_usecs / 1000,
+		 sync_secs, sync_usecs / 1000,
+		 total_secs, total_usecs / 1000);
 }
 
 /*
@@ -5665,9 +5670,9 @@ CreateCheckPoint(int flags)
 	}
 
 	/*
-	 * Let smgr prepare for checkpoint; this has to happen before we
-	 * determine the REDO pointer.  Note that smgr must not do anything
-	 * that'd have to be undone if we decide no checkpoint is needed.
+	 * Let smgr prepare for checkpoint; this has to happen before we determine
+	 * the REDO pointer.  Note that smgr must not do anything that'd have to
+	 * be undone if we decide no checkpoint is needed.
 	 */
 	smgrpreckpt();
 
@@ -5761,8 +5766,8 @@ CreateCheckPoint(int flags)
 	LWLockRelease(WALInsertLock);
 
 	/*
-	 * If enabled, log checkpoint start.  We postpone this until now
-	 * so as not to log anything if we decided to skip the checkpoint.
+	 * If enabled, log checkpoint start.  We postpone this until now so as not
+	 * to log anything if we decided to skip the checkpoint.
 	 */
 	if (log_checkpoints)
 		LogCheckpointStart(flags);
@@ -5782,11 +5787,11 @@ CreateCheckPoint(int flags)
 	 * checkpoint take a bit longer than to hold locks longer than necessary.
 	 * (In fact, the whole reason we have this issue is that xact.c does
 	 * commit record XLOG insertion and clog update as two separate steps
-	 * protected by different locks, but again that seems best on grounds
-	 * of minimizing lock contention.)
+	 * protected by different locks, but again that seems best on grounds of
+	 * minimizing lock contention.)
 	 *
-	 * A transaction that has not yet set inCommit when we look cannot be
-	 * at risk, since he's not inserted his commit record yet; and one that's
+	 * A transaction that has not yet set inCommit when we look cannot be at
+	 * risk, since he's not inserted his commit record yet; and one that's
 	 * already cleared it is not at risk either, since he's done fixing clog
 	 * and we will correctly flush the update below.  So we cannot miss any
 	 * xacts we need to wait for.
@@ -5794,8 +5799,9 @@ CreateCheckPoint(int flags)
 	nInCommit = GetTransactionsInCommit(&inCommitXids);
 	if (nInCommit > 0)
 	{
-		do {
-			pg_usleep(10000L);				/* wait for 10 msec */
+		do
+		{
+			pg_usleep(10000L);	/* wait for 10 msec */
 		} while (HaveTransactionsInCommit(inCommitXids, nInCommit));
 	}
 	pfree(inCommitXids);
@@ -5946,7 +5952,7 @@ CheckPointGuts(XLogRecPtr checkPointRedo, int flags)
 	CheckPointCLOG();
 	CheckPointSUBTRANS();
 	CheckPointMultiXact();
-	CheckPointBuffers(flags);		/* performs all required fsyncs */
+	CheckPointBuffers(flags);	/* performs all required fsyncs */
 	/* We deliberately delay 2PC checkpointing as long as possible */
 	CheckPointTwoPhase(checkPointRedo);
 }
@@ -6046,14 +6052,14 @@ XLogPutNextOid(Oid nextOid)
 	 * does.
 	 *
 	 * Note, however, that the above statement only covers state "within" the
-	 * database.  When we use a generated OID as a file or directory name,
-	 * we are in a sense violating the basic WAL rule, because that filesystem
+	 * database.  When we use a generated OID as a file or directory name, we
+	 * are in a sense violating the basic WAL rule, because that filesystem
 	 * change may reach disk before the NEXTOID WAL record does.  The impact
-	 * of this is that if a database crash occurs immediately afterward,
-	 * we might after restart re-generate the same OID and find that it
-	 * conflicts with the leftover file or directory.  But since for safety's
-	 * sake we always loop until finding a nonconflicting filename, this poses
-	 * no real problem in practice. See pgsql-hackers discussion 27-Sep-2006.
+	 * of this is that if a database crash occurs immediately afterward, we
+	 * might after restart re-generate the same OID and find that it conflicts
+	 * with the leftover file or directory.  But since for safety's sake we
+	 * always loop until finding a nonconflicting filename, this poses no real
+	 * problem in practice. See pgsql-hackers discussion 27-Sep-2006.
 	 */
 }
 
@@ -6673,7 +6679,7 @@ pg_switch_xlog(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to switch transaction log files"))));
+			 (errmsg("must be superuser to switch transaction log files"))));
 
 	switchpoint = RequestXLogSwitch();
 

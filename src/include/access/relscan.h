@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.57 2007/09/20 17:56:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.58 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,11 @@ typedef struct HeapScanDescData
 	int			rs_nkeys;		/* number of scan keys */
 	ScanKey		rs_key;			/* array of scan key descriptors */
 	bool		rs_bitmapscan;	/* true if this is really a bitmap scan */
-	bool		rs_pageatatime;	/* verify visibility page-at-a-time? */
+	bool		rs_pageatatime; /* verify visibility page-at-a-time? */
 
 	/* state set up at initscan time */
 	BlockNumber rs_nblocks;		/* number of blocks to scan */
-	BlockNumber	rs_startblock;	/* block # to start at */
+	BlockNumber rs_startblock;	/* block # to start at */
 	BufferAccessStrategy rs_strategy;	/* access strategy for reads */
 	bool		rs_syncscan;	/* report location to syncscan logic? */
 
@@ -82,7 +82,7 @@ typedef struct IndexScanDescData
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */
 	Buffer		xs_cbuf;		/* current heap buffer in scan, if any */
 	/* NB: if xs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
-	TransactionId xs_prev_xmax;	/* previous HOT chain member's XMAX, if any */
+	TransactionId xs_prev_xmax; /* previous HOT chain member's XMAX, if any */
 	OffsetNumber xs_next_hot;	/* next member of HOT chain, if any */
 	bool		xs_hot_dead;	/* T if all members of HOT chain are dead */
 } IndexScanDescData;

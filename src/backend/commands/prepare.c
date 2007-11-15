@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.78 2007/11/11 19:22:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.79 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ static HTAB *prepared_queries = NULL;
 
 static void InitQueryHashTable(void);
 static ParamListInfo EvaluateParams(PreparedStatement *pstmt, List *params,
-									const char *queryString, EState *estate);
+			   const char *queryString, EState *estate);
 static Datum build_regtype_array(Oid *param_types, int num_params);
 
 /*
@@ -101,8 +101,8 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 	 * passed in from above us will not be visible to it), allowing
 	 * information about unknown parameters to be deduced from context.
 	 *
-	 * Because parse analysis scribbles on the raw querytree, we must make
-	 * a copy to ensure we have a pristine raw tree to cache.  FIXME someday.
+	 * Because parse analysis scribbles on the raw querytree, we must make a
+	 * copy to ensure we have a pristine raw tree to cache.  FIXME someday.
 	 */
 	query = parse_analyze_varparams((Node *) copyObject(stmt->query),
 									queryString,
@@ -155,7 +155,7 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 						   CreateCommandTag((Node *) query),
 						   argtypes,
 						   nargs,
-						   0,				/* default cursor options */
+						   0,	/* default cursor options */
 						   plan_list,
 						   true);
 }
@@ -299,8 +299,8 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 	if (nparams != num_params)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("wrong number of parameters for prepared statement \"%s\"",
-						pstmt->stmt_name),
+		   errmsg("wrong number of parameters for prepared statement \"%s\"",
+				  pstmt->stmt_name),
 				 errdetail("Expected %d parameters but got %d.",
 						   num_params, nparams)));
 
@@ -309,8 +309,8 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 		return NULL;
 
 	/*
-	 * We have to run parse analysis for the expressions.  Since the
-	 * parser is not cool about scribbling on its input, copy first.
+	 * We have to run parse analysis for the expressions.  Since the parser is
+	 * not cool about scribbling on its input, copy first.
 	 */
 	params = (List *) copyObject(params);
 
@@ -334,7 +334,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 		if (pstate->p_hasAggs)
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("cannot use aggregate function in EXECUTE parameter")));
+			  errmsg("cannot use aggregate function in EXECUTE parameter")));
 
 		given_type_id = exprType(expr);
 
@@ -350,7 +350,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 							i + 1,
 							format_type_be(given_type_id),
 							format_type_be(expected_type_id)),
-					 errhint("You will need to rewrite or cast the expression.")));
+			   errhint("You will need to rewrite or cast the expression.")));
 
 		lfirst(l) = expr;
 		i++;
@@ -734,8 +734,8 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/*
-	 * build tupdesc for result tuples. This must match the definition of
-	 * the pg_prepared_statements view in system_views.sql
+	 * build tupdesc for result tuples. This must match the definition of the
+	 * pg_prepared_statements view in system_views.sql
 	 */
 	tupdesc = CreateTemplateTupleDesc(5, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
@@ -780,11 +780,11 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 				nulls[1] = true;
 			else
 				values[1] = DirectFunctionCall1(textin,
-						CStringGetDatum(prep_stmt->plansource->query_string));
+					   CStringGetDatum(prep_stmt->plansource->query_string));
 
 			values[2] = TimestampTzGetDatum(prep_stmt->prepare_time);
 			values[3] = build_regtype_array(prep_stmt->plansource->param_types,
-											prep_stmt->plansource->num_params);
+										  prep_stmt->plansource->num_params);
 			values[4] = BoolGetDatum(prep_stmt->from_sql);
 
 			tuple = heap_form_tuple(tupdesc, values, nulls);

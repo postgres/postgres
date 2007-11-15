@@ -33,7 +33,7 @@
  *
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.9 2007/04/06 05:36:50 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.10 2007/11/15 21:14:31 momjian Exp $
  */
 
 #include "postgres.h"
@@ -78,7 +78,7 @@
 	(x) = ((tmp & 0xffff0000ffff0000ULL) >> 16) | \
 		  ((tmp & 0x0000ffff0000ffffULL) << 16); \
 }
-#endif /* not bigendian */
+#endif   /* not bigendian */
 
 /*
  * Macro for incrementally adding the unsigned 64-bit integer n to the

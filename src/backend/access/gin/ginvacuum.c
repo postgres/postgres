@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.17 2007/09/20 17:56:30 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.18 2007/11/15 21:14:31 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -28,7 +28,7 @@ typedef struct
 	IndexBulkDeleteCallback callback;
 	void	   *callback_state;
 	GinState	ginstate;
-	BufferAccessStrategy	strategy;
+	BufferAccessStrategy strategy;
 } GinVacuumState;
 
 
@@ -160,14 +160,14 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 	/*
 	 * We should be sure that we don't concurrent with inserts, insert process
 	 * never release root page until end (but it can unlock it and lock
-	 * again). New scan can't start but previously started 
-	 * ones work concurrently.
+	 * again). New scan can't start but previously started ones work
+	 * concurrently.
 	 */
 
-	if ( isRoot ) 
+	if (isRoot)
 		LockBufferForCleanup(buffer);
 	else
-		LockBuffer(buffer, GIN_EXCLUSIVE); 
+		LockBuffer(buffer, GIN_EXCLUSIVE);
 
 	Assert(GinPageIsData(page));
 
@@ -240,8 +240,8 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 			  BlockNumber parentBlkno, OffsetNumber myoff, bool isParentRoot)
 {
 	Buffer		dBuffer = ReadBufferWithStrategy(gvs->index, deleteBlkno, gvs->strategy);
-	Buffer		lBuffer = (leftBlkno == InvalidBlockNumber) ? 
-							InvalidBuffer : ReadBufferWithStrategy(gvs->index, leftBlkno, gvs->strategy);
+	Buffer		lBuffer = (leftBlkno == InvalidBlockNumber) ?
+	InvalidBuffer : ReadBufferWithStrategy(gvs->index, leftBlkno, gvs->strategy);
 	Buffer		pBuffer = ReadBufferWithStrategy(gvs->index, parentBlkno, gvs->strategy);
 	Page		page,
 				parentPage;
@@ -268,17 +268,20 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 
 	parentPage = BufferGetPage(pBuffer);
 #ifdef USE_ASSERT_CHECKING
-	do {
-		PostingItem *tod=(PostingItem *) GinDataPageGetItem(parentPage, myoff);
-		Assert( PostingItemGetBlockNumber(tod) == deleteBlkno );
-	} while(0);
+	do
+	{
+		PostingItem *tod = (PostingItem *) GinDataPageGetItem(parentPage, myoff);
+
+		Assert(PostingItemGetBlockNumber(tod) == deleteBlkno);
+	} while (0);
 #endif
 	PageDeletePostingItem(parentPage, myoff);
 
 	page = BufferGetPage(dBuffer);
+
 	/*
-	 * we shouldn't change rightlink field to save 
-	 * workability of running search scan
+	 * we shouldn't change rightlink field to save workability of running
+	 * search scan
 	 */
 	GinPageGetOpaque(page)->flags = GIN_DELETED;
 
@@ -363,8 +366,8 @@ typedef struct DataPageDeleteStack
 	struct DataPageDeleteStack *child;
 	struct DataPageDeleteStack *parent;
 
-	BlockNumber blkno; /* current block number */
-	BlockNumber leftBlkno; /* rightest non-deleted page on left */
+	BlockNumber blkno;			/* current block number */
+	BlockNumber leftBlkno;		/* rightest non-deleted page on left */
 	bool		isRoot;
 } DataPageDeleteStack;
 

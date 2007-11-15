@@ -1,5 +1,5 @@
 /******************************************************************************
-  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.33 2007/06/05 21:31:03 tgl Exp $
+  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.34 2007/11/15 21:14:29 momjian Exp $
 
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
@@ -306,7 +306,7 @@ cube_subset(PG_FUNCTION_ARGS)
 		result->x[i + dim] = c->x[dx[i] + c->dim - 1];
 	}
 
-	PG_FREE_IF_COPY(c,0);
+	PG_FREE_IF_COPY(c, 0);
 	PG_RETURN_NDBOX(result);
 }
 
@@ -360,7 +360,7 @@ cube_out(PG_FUNCTION_ARGS)
 		appendStringInfoChar(&buf, ')');
 	}
 
-	PG_FREE_IF_COPY(cube,0);
+	PG_FREE_IF_COPY(cube, 0);
 	PG_RETURN_CSTRING(buf.data);
 }
 
@@ -381,20 +381,20 @@ g_cube_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	NDBOX	   *query = PG_GETARG_NDBOX(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-	bool 		res;
+	bool		res;
 
 	/*
 	 * if entry is not leaf, use g_cube_internal_consistent, else use
 	 * g_cube_leaf_consistent
 	 */
 	if (GIST_LEAF(entry))
-		res = g_cube_leaf_consistent( DatumGetNDBOX(entry->key),
-									  query, strategy);
+		res = g_cube_leaf_consistent(DatumGetNDBOX(entry->key),
+									 query, strategy);
 	else
-		res = g_cube_internal_consistent( DatumGetNDBOX(entry->key),
-										  query, strategy);
+		res = g_cube_internal_consistent(DatumGetNDBOX(entry->key),
+										 query, strategy);
 
-	PG_FREE_IF_COPY(query,1);
+	PG_FREE_IF_COPY(query, 1);
 	PG_RETURN_BOOL(res);
 }
 
@@ -451,14 +451,15 @@ Datum
 g_cube_decompress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	NDBOX		*key = DatumGetNDBOX(PG_DETOAST_DATUM(entry->key));
+	NDBOX	   *key = DatumGetNDBOX(PG_DETOAST_DATUM(entry->key));
 
 	if (key != DatumGetNDBOX(entry->key))
 	{
 		GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+
 		gistentryinit(*retval, PointerGetDatum(key),
-						entry->rel, entry->page,
-						entry->offset, FALSE);
+					  entry->rel, entry->page,
+					  entry->offset, FALSE);
 		PG_RETURN_POINTER(retval);
 	}
 	PG_RETURN_POINTER(entry);
@@ -479,8 +480,8 @@ g_cube_penalty(PG_FUNCTION_ARGS)
 	double		tmp1,
 				tmp2;
 
-	ud = cube_union_v0( DatumGetNDBOX(origentry->key),
-					    DatumGetNDBOX(newentry->key));
+	ud = cube_union_v0(DatumGetNDBOX(origentry->key),
+					   DatumGetNDBOX(newentry->key));
 	rt_cube_size(ud, &tmp1);
 	rt_cube_size(DatumGetNDBOX(origentry->key), &tmp2);
 	*result = (float) (tmp1 - tmp2);
@@ -812,12 +813,12 @@ cube_union(PG_FUNCTION_ARGS)
 {
 	NDBOX	   *a = PG_GETARG_NDBOX(0),
 			   *b = PG_GETARG_NDBOX(1);
-	NDBOX	   *res; 
+	NDBOX	   *res;
 
 	res = cube_union_v0(a, b);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_NDBOX(res);
 }
 
@@ -876,8 +877,9 @@ cube_inter(PG_FUNCTION_ARGS)
 								   a->x[i + a->dim]), result->x[i + a->dim]);
 	}
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
+
 	/*
 	 * Is it OK to return a non-null intersection for non-overlapping boxes?
 	 */
@@ -899,7 +901,7 @@ cube_size(PG_FUNCTION_ARGS)
 	for (i = 0, j = a->dim; i < a->dim; i++, j++)
 		result = result * Abs((a->x[j] - a->x[i]));
 
-	PG_FREE_IF_COPY(a,0);
+	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1011,8 +1013,8 @@ cube_cmp(PG_FUNCTION_ARGS)
 
 	res = cube_cmp_v0(a, b);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_INT32(res);
 }
 
@@ -1026,8 +1028,8 @@ cube_eq(PG_FUNCTION_ARGS)
 
 	res = cube_cmp_v0(a, b);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_BOOL(res == 0);
 }
 
@@ -1041,8 +1043,8 @@ cube_ne(PG_FUNCTION_ARGS)
 
 	res = cube_cmp_v0(a, b);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_BOOL(res != 0);
 }
 
@@ -1056,8 +1058,8 @@ cube_lt(PG_FUNCTION_ARGS)
 
 	res = cube_cmp_v0(a, b);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_BOOL(res < 0);
 }
 
@@ -1071,8 +1073,8 @@ cube_gt(PG_FUNCTION_ARGS)
 
 	res = cube_cmp_v0(a, b);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_BOOL(res > 0);
 }
 
@@ -1086,8 +1088,8 @@ cube_le(PG_FUNCTION_ARGS)
 
 	res = cube_cmp_v0(a, b);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_BOOL(res <= 0);
 }
 
@@ -1101,8 +1103,8 @@ cube_ge(PG_FUNCTION_ARGS)
 
 	res = cube_cmp_v0(a, b);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_BOOL(res >= 0);
 }
 
@@ -1157,8 +1159,8 @@ cube_contains(PG_FUNCTION_ARGS)
 
 	res = cube_contains_v0(a, b);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_BOOL(res);
 }
 
@@ -1173,8 +1175,8 @@ cube_contained(PG_FUNCTION_ARGS)
 
 	res = cube_contains_v0(b, a);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_BOOL(res);
 }
 
@@ -1234,8 +1236,8 @@ cube_overlap(PG_FUNCTION_ARGS)
 
 	res = cube_overlap_v0(a, b);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_BOOL(res);
 }
 
@@ -1281,8 +1283,8 @@ cube_distance(PG_FUNCTION_ARGS)
 		distance += d * d;
 	}
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_FLOAT8(sqrt(distance));
 }
 
@@ -1317,7 +1319,7 @@ cube_is_point(PG_FUNCTION_ARGS)
 			PG_RETURN_BOOL(FALSE);
 	}
 
-	PG_FREE_IF_COPY(a,0);
+	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_BOOL(TRUE);
 }
 
@@ -1331,7 +1333,7 @@ cube_dim(PG_FUNCTION_ARGS)
 	c = PG_GETARG_NDBOX(0);
 	dim = c->dim;
 
-	PG_FREE_IF_COPY(c,0);
+	PG_FREE_IF_COPY(c, 0);
 	PG_RETURN_INT32(c->dim);
 }
 
@@ -1350,7 +1352,7 @@ cube_ll_coord(PG_FUNCTION_ARGS)
 	if (c->dim >= n && n > 0)
 		result = Min(c->x[n - 1], c->x[c->dim + n - 1]);
 
-	PG_FREE_IF_COPY(c,0);
+	PG_FREE_IF_COPY(c, 0);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1369,7 +1371,7 @@ cube_ur_coord(PG_FUNCTION_ARGS)
 	if (c->dim >= n && n > 0)
 		result = Max(c->x[n - 1], c->x[c->dim + n - 1]);
 
-	PG_FREE_IF_COPY(c,0);
+	PG_FREE_IF_COPY(c, 0);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1384,7 +1386,7 @@ cube_enlarge(PG_FUNCTION_ARGS)
 				j,
 				k;
 	NDBOX	   *a;
-	double	    r;
+	double		r;
 	int4		n;
 
 	a = PG_GETARG_NDBOX(0);
@@ -1426,7 +1428,7 @@ cube_enlarge(PG_FUNCTION_ARGS)
 		result->x[j] = r;
 	}
 
-	PG_FREE_IF_COPY(a,0);
+	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_NDBOX(result);
 }
 
@@ -1490,7 +1492,7 @@ cube_c_f8(PG_FUNCTION_ARGS)
 	result->x[result->dim - 1] = x;
 	result->x[2 * result->dim - 1] = x;
 
-	PG_FREE_IF_COPY(c,0);
+	PG_FREE_IF_COPY(c, 0);
 	PG_RETURN_NDBOX(result);
 }
 
@@ -1521,6 +1523,6 @@ cube_c_f8_f8(PG_FUNCTION_ARGS)
 	result->x[result->dim - 1] = x1;
 	result->x[2 * result->dim - 1] = x2;
 
-	PG_FREE_IF_COPY(c,0);
+	PG_FREE_IF_COPY(c, 0);
 	PG_RETURN_NDBOX(result);
 }

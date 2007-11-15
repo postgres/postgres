@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.90 2007/09/08 20:31:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.91 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 
 typedef struct xl_xact_commit
 {
-	TimestampTz	xact_time;		/* time of commit */
+	TimestampTz xact_time;		/* time of commit */
 	int			nrels;			/* number of RelFileNodes */
 	int			nsubxacts;		/* number of subtransaction XIDs */
 	/* Array of RelFileNode(s) to drop at commit */
@@ -96,7 +96,7 @@ typedef struct xl_xact_commit
 
 typedef struct xl_xact_abort
 {
-	TimestampTz	xact_time;		/* time of abort */
+	TimestampTz xact_time;		/* time of abort */
 	int			nrels;			/* number of RelFileNodes */
 	int			nsubxacts;		/* number of subtransaction XIDs */
 	/* Array of RelFileNode(s) to drop at abort */

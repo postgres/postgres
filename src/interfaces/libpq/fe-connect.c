@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.352 2007/10/09 15:03:27 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.353 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,11 @@ static const PQconninfoOption PQconninfoOptions[] = {
 #endif
 
 #if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
-	/* GSSAPI and SSPI both enabled, give a way to override which is used by default */
+
+	/*
+	 * GSSAPI and SSPI both enabled, give a way to override which is used by
+	 * default
+	 */
 	{"gsslib", "PGGSSLIB", NULL, NULL,
 	"GSS-library", "", 7},		/* sizeof("gssapi") = 7 */
 #endif
@@ -584,36 +588,36 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	conn = makeEmptyPGconn();
 	if (conn == NULL)
 		return NULL;
-    /*
-     * If the dbName parameter contains '=', assume it's a conninfo
-     * string.
-     */
-    if (dbName && strchr(dbName,'='))
-    {
-        if (!connectOptions1(conn, dbName))
-            return conn;
-    }
-    else
-    {
-        /*
-         * Old-style path: first, parse an empty conninfo string in
-         * order to set up the same defaults that PQconnectdb() would use.
-         */
-        if (!connectOptions1(conn, ""))
-            return conn;
 
-        /* Insert dbName parameter value into struct */
-        if (dbName && dbName[0] != '\0')
-        {
-            if (conn->dbName)
-                free(conn->dbName);
-            conn->dbName = strdup(dbName);
-        }
-    }
+	/*
+	 * If the dbName parameter contains '=', assume it's a conninfo string.
+	 */
+	if (dbName && strchr(dbName, '='))
+	{
+		if (!connectOptions1(conn, dbName))
+			return conn;
+	}
+	else
+	{
+		/*
+		 * Old-style path: first, parse an empty conninfo string in order to
+		 * set up the same defaults that PQconnectdb() would use.
+		 */
+		if (!connectOptions1(conn, ""))
+			return conn;
 
-    /*
-     * Insert remaining parameters into struct, overriding defaults
-     * (as well as any conflicting data from dbName taken as a conninfo).
+		/* Insert dbName parameter value into struct */
+		if (dbName && dbName[0] != '\0')
+		{
+			if (conn->dbName)
+				free(conn->dbName);
+			conn->dbName = strdup(dbName);
+		}
+	}
+
+	/*
+	 * Insert remaining parameters into struct, overriding defaults (as well
+	 * as any conflicting data from dbName taken as a conninfo).
 	 */
 	if (pghost && pghost[0] != '\0')
 	{
@@ -1507,8 +1511,8 @@ keep_going:						/* We will come back to here until there is
 				/*
 				 * Try to validate message length before using it.
 				 * Authentication requests can't be very large, although GSS
-				 * auth requests may not be that small.  Errors can be
-				 * a little larger, but not huge.  If we see a large apparent
+				 * auth requests may not be that small.  Errors can be a
+				 * little larger, but not huge.  If we see a large apparent
 				 * length in an error, it means we're really talking to a
 				 * pre-3.0-protocol server; cope.
 				 */
@@ -1672,16 +1676,18 @@ keep_going:						/* We will come back to here until there is
 					}
 				}
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
+
 				/*
 				 * Continue GSSAPI/SSPI authentication
 				 */
 				if (areq == AUTH_REQ_GSS_CONT)
 				{
-					int llen = msgLength - 4;
+					int			llen = msgLength - 4;
+
 					/*
-					 * We can be called repeatedly for the same buffer.
-					 * Avoid re-allocating the buffer in this case - 
-					 * just re-use the old buffer.
+					 * We can be called repeatedly for the same buffer. Avoid
+					 * re-allocating the buffer in this case - just re-use the
+					 * old buffer.
 					 */
 					if (llen != conn->ginbuf.length)
 					{
@@ -2017,6 +2023,7 @@ freePGconn(PGconn *conn)
 #ifdef ENABLE_GSS
 	{
 		OM_uint32	min_s;
+
 		if (conn->gctx)
 			gss_delete_sec_context(&min_s, &conn->gctx, GSS_C_NO_BUFFER);
 		if (conn->gtarg_nam)
@@ -2542,7 +2549,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if (pg_strncasecmp(url, LDAP_URL, strlen(LDAP_URL)) != 0)
 	{
 		printfPQExpBuffer(errorMessage,
-		libpq_gettext("invalid LDAP URL \"%s\": scheme must be ldap://\n"), purl);
+						  libpq_gettext("invalid LDAP URL \"%s\": scheme must be ldap://\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2557,7 +2564,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if (p == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-				 "invalid LDAP URL \"%s\": missing distinguished name\n"), purl);
+			 "invalid LDAP URL \"%s\": missing distinguished name\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2568,7 +2575,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if ((p = strchr(dn, '?')) == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-			"invalid LDAP URL \"%s\": must have exactly one attribute\n"), purl);
+		"invalid LDAP URL \"%s\": must have exactly one attribute\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2589,7 +2596,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if ((p = strchr(scopestr, '?')) == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
 		printfPQExpBuffer(errorMessage,
-					libpq_gettext("invalid LDAP URL \"%s\": no filter\n"), purl);
+				libpq_gettext("invalid LDAP URL \"%s\": no filter\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2610,7 +2617,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		if (*portstr == '\0' || *endptr != '\0' || errno || lport < 0 || lport > 65535)
 		{
 			printfPQExpBuffer(errorMessage, libpq_gettext(
-						"invalid LDAP URL \"%s\": invalid port number\n"), purl);
+					"invalid LDAP URL \"%s\": invalid port number\n"), purl);
 			free(url);
 			return 3;
 		}
@@ -2621,7 +2628,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if (strchr(attrs[0], ',') != NULL)
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-			"invalid LDAP URL \"%s\": must have exactly one attribute\n"), purl);
+		"invalid LDAP URL \"%s\": must have exactly one attribute\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -3735,7 +3742,11 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 		return NULL;
 	}
 #else
-	/* On Win32, the directory is protected, so we don't have to check the file. */
+
+	/*
+	 * On Win32, the directory is protected, so we don't have to check the
+	 * file.
+	 */
 #endif
 
 	fp = fopen(pgpassfile, "r");

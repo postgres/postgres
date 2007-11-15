@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.8 2007/11/09 22:37:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.9 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,12 +49,12 @@
 #define FILEPATH		19
 #define DECIMAL			20
 #define SIGNEDINT		21
-#define UNSIGNEDINT 	22
+#define UNSIGNEDINT		22
 #define HTMLENTITY		23
 
 #define LASTNUM			23
 
-static const char * const tok_alias[] = {
+static const char *const tok_alias[] = {
 	"",
 	"asciiword",
 	"word",
@@ -81,7 +81,7 @@ static const char * const tok_alias[] = {
 	"entity"
 };
 
-static const char * const lex_descr[] = {
+static const char *const lex_descr[] = {
 	"",
 	"Word, all ASCII",
 	"Word, all letters",
@@ -189,7 +189,7 @@ typedef enum
 	TPS_InHyphenNumWordPart,
 	TPS_InHyphenUnsignedInt,
 	TPS_Null					/* last state (fake value) */
-} TParserState;
+}	TParserState;
 
 /* forward declaration */
 struct TParser;
@@ -207,7 +207,7 @@ typedef struct
 	TParserState tostate;
 	int			type;
 	TParserSpecial special;
-} TParserStateActionItem;
+}	TParserStateActionItem;
 
 /* Flag bits in TParserStateActionItem.flags */
 #define A_NEXT		0x0000
@@ -229,7 +229,7 @@ typedef struct TParserPosition
 	TParserState state;
 	struct TParserPosition *prev;
 	const TParserStateActionItem *pushedAtAction;
-} TParserPosition;
+}	TParserPosition;
 
 typedef struct TParser
 {
@@ -256,7 +256,7 @@ typedef struct TParser
 	int			lenbytetoken;
 	int			lenchartoken;
 	int			type;
-} TParser;
+}	TParser;
 
 
 /* forward decls here */
@@ -1239,12 +1239,12 @@ static const TParserStateActionItem actionTPS_InHyphenUnsignedInt[] = {
  */
 typedef struct
 {
-	const TParserStateActionItem *action;	/* the actual state info */
+	const TParserStateActionItem *action;		/* the actual state info */
 	TParserState state;			/* only for Assert crosscheck */
 #ifdef WPARSER_TRACE
 	const char *state_name;		/* only for debug printout */
 #endif
-} TParserStateAction;
+}	TParserStateAction;
 
 #ifdef WPARSER_TRACE
 #define TPARSERSTATEACTION(state) \
@@ -1566,7 +1566,7 @@ typedef struct
 {
 	HeadlineWordEntry *words;
 	int			len;
-} hlCheck;
+}	hlCheck;
 
 static bool
 checkcondition_HL(void *checkval, QueryOperand * val)

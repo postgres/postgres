@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.189 2007/10/13 23:06:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.190 2007/11/15 21:14:43 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -66,9 +66,9 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	bool		typbyval;
 
 	/*
-	 * typtype is 'b' for a base type, 'c' for a composite type (e.g.,
-	 * a table's rowtype), 'd' for a domain type, 'e' for an enum type,
-	 * or 'p' for a pseudo-type.  (Use the TYPTYPE macros below.)
+	 * typtype is 'b' for a base type, 'c' for a composite type (e.g., a
+	 * table's rowtype), 'd' for a domain type, 'e' for an enum type, or 'p'
+	 * for a pseudo-type.  (Use the TYPTYPE macros below.)
 	 *
 	 * If typtype is 'c', typrelid is the OID of the class' entry in pg_class.
 	 */
@@ -114,8 +114,8 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	/*
 	 * I/O functions for optional type modifiers.
 	 */
-	 regproc	typmodin;
-	 regproc	typmodout;
+	regproc		typmodin;
+	regproc		typmodout;
 
 	/*
 	 * Custom ANALYZE procedure for the datatype (0 selects the default).
@@ -137,7 +137,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	 * 'd' = DOUBLE alignment (8 bytes on many machines, but by no means all).
 	 *
 	 * See include/access/tupmacs.h for the macros that compute these
-	 * alignment requirements.  Note also that we allow the nominal alignment
+	 * alignment requirements.	Note also that we allow the nominal alignment
 	 * to be violated when storing "packed" varlenas; the TOAST mechanism
 	 * takes care of hiding that from most code.
 	 *
@@ -544,19 +544,19 @@ DATA(insert OID = 2210 ( _regclass	   PGNSP PGUID -1 f b t \054 0 2205 0 array_i
 DATA(insert OID = 2211 ( _regtype	   PGNSP PGUID -1 f b t \054 0 2206 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
 #define REGTYPEARRAYOID 2211
 
-/* uuid */ 
+/* uuid */
 DATA(insert OID = 2950 ( uuid			PGNSP PGUID 16 f b t \054 0 0 2951 uuid_in uuid_out uuid_recv uuid_send - - - c p f 0 -1 0 _null_ _null_ ));
 DESCR("UUID datatype");
 DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b t \054 0 2950 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
 
 /* text search */
-DATA(insert OID = 3614 ( tsvector		PGNSP PGUID -1 f b t \054 0	0 3643 tsvectorin tsvectorout tsvectorrecv tsvectorsend - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3614 ( tsvector		PGNSP PGUID -1 f b t \054 0 0 3643 tsvectorin tsvectorout tsvectorrecv tsvectorsend - - - i x f 0 -1 0 _null_ _null_ ));
 DESCR("text representation for text search");
 #define TSVECTOROID		3614
-DATA(insert OID = 3642 ( gtsvector		PGNSP PGUID -1 f b t \054 0	0 3644 gtsvectorin gtsvectorout - - - - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3642 ( gtsvector		PGNSP PGUID -1 f b t \054 0 0 3644 gtsvectorin gtsvectorout - - - - - i p f 0 -1 0 _null_ _null_ ));
 DESCR("GiST index internal text representation for text search");
 #define GTSVECTOROID	3642
-DATA(insert OID = 3615 ( tsquery		PGNSP PGUID -1 f b t \054 0	0 3645 tsqueryin tsqueryout tsqueryrecv tsquerysend - - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3615 ( tsquery		PGNSP PGUID -1 f b t \054 0 0 3645 tsqueryin tsqueryout tsqueryrecv tsquerysend - - - i p f 0 -1 0 _null_ _null_ ));
 DESCR("query representation for text search");
 #define TSQUERYOID		3615
 DATA(insert OID = 3734 ( regconfig		PGNSP PGUID 4 t b t \054 0 0 3735 regconfigin regconfigout regconfigrecv regconfigsend - - - i p f 0 -1 0 _null_ _null_ ));
@@ -566,15 +566,15 @@ DATA(insert OID = 3769 ( regdictionary	PGNSP PGUID 4 t b t \054 0 0 3770 regdict
 DESCR("registered text search dictionary");
 #define REGDICTIONARYOID	3769
 
-DATA(insert OID = 3643 ( _tsvector		PGNSP PGUID -1 f b t \054 0	3614 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 3644 ( _gtsvector		PGNSP PGUID -1 f b t \054 0	3642 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 3645 ( _tsquery		PGNSP PGUID -1 f b t \054 0	3615 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3643 ( _tsvector		PGNSP PGUID -1 f b t \054 0 3614 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3644 ( _gtsvector		PGNSP PGUID -1 f b t \054 0 3642 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3645 ( _tsquery		PGNSP PGUID -1 f b t \054 0 3615 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 3735 ( _regconfig		PGNSP PGUID -1 f b t \054 0 3734 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 3770 ( _regdictionary	PGNSP PGUID -1 f b t \054 0 3769 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3770 ( _regdictionary PGNSP PGUID -1 f b t \054 0 3769 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
 
 DATA(insert OID = 2970 ( txid_snapshot	PGNSP PGUID -1 f b t \054 0 0 2949 txid_snapshot_in txid_snapshot_out txid_snapshot_recv txid_snapshot_send - - - d x f 0 -1 0 _null_ _null_ ));
 DESCR("txid snapshot");
-DATA(insert OID = 2949 ( _txid_snapshot	PGNSP PGUID -1 f b t \054 0	2970 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2949 ( _txid_snapshot PGNSP PGUID -1 f b t \054 0 2970 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
 
 /*
  * pseudo-types
@@ -618,13 +618,13 @@ DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p t \054 0 0 0 anyenum_in any
 /*
  * macros
  */
-#define  TYPTYPE_BASE		'b'		/* base type (ordinary scalar type) */
-#define  TYPTYPE_COMPOSITE	'c'		/* composite (e.g., table's rowtype) */
-#define  TYPTYPE_DOMAIN		'd'		/* domain over another type */
-#define  TYPTYPE_ENUM		'e'		/* enumerated type */
-#define  TYPTYPE_PSEUDO		'p'		/* pseudo-type */
+#define  TYPTYPE_BASE		'b' /* base type (ordinary scalar type) */
+#define  TYPTYPE_COMPOSITE	'c' /* composite (e.g., table's rowtype) */
+#define  TYPTYPE_DOMAIN		'd' /* domain over another type */
+#define  TYPTYPE_ENUM		'e' /* enumerated type */
+#define  TYPTYPE_PSEUDO		'p' /* pseudo-type */
 
-/* Is a type OID a polymorphic pseudotype?  (Beware of multiple evaluation) */
+/* Is a type OID a polymorphic pseudotype?	(Beware of multiple evaluation) */
 #define IsPolymorphicType(typid)  \
 	((typid) == ANYELEMENTOID || \
 	 (typid) == ANYARRAYOID || \
@@ -673,8 +673,8 @@ extern void GenerateTypeDependencies(Oid typeNamespace,
 						 Oid outputProcedure,
 						 Oid receiveProcedure,
 						 Oid sendProcedure,
-		   				 Oid typmodinProcedure,
-		   				 Oid typmodoutProcedure,
+						 Oid typmodinProcedure,
+						 Oid typmodoutProcedure,
 						 Oid analyzeProcedure,
 						 Oid elementType,
 						 bool isImplicitArray,
@@ -683,11 +683,11 @@ extern void GenerateTypeDependencies(Oid typeNamespace,
 						 bool rebuild);
 
 extern void TypeRename(Oid typeOid, const char *newTypeName,
-					   Oid typeNamespace);
+		   Oid typeNamespace);
 
 extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
 
 extern bool moveArrayTypeName(Oid typeOid, const char *typeName,
-							  Oid typeNamespace);
+				  Oid typeNamespace);
 
 #endif   /* PG_TYPE_H */

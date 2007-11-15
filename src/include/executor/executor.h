@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.142 2007/08/15 21:39:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.143 2007/11/15 21:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,10 +73,10 @@ extern bool ExecMayReturnRawTuples(PlanState *node);
 /*
  * prototypes from functions in execCurrent.c
  */
-extern bool execCurrentOf(CurrentOfExpr *cexpr,
-						  ExprContext *econtext,
-						  Oid table_oid,
-						  ItemPointer current_tid);
+extern bool execCurrentOf(CurrentOfExpr * cexpr,
+			  ExprContext *econtext,
+			  Oid table_oid,
+			  ItemPointer current_tid);
 
 /*
  * prototypes from functions in execGrouping.c
@@ -109,9 +109,9 @@ extern TupleHashEntry LookupTupleHashEntry(TupleHashTable hashtable,
 					 TupleTableSlot *slot,
 					 bool *isnew);
 extern TupleHashEntry FindTupleHashEntry(TupleHashTable hashtable,
-										 TupleTableSlot *slot,
-										 FmgrInfo *eqfunctions,
-										 FmgrInfo *hashfunctions);
+				   TupleTableSlot *slot,
+				   FmgrInfo *eqfunctions,
+				   FmgrInfo *hashfunctions);
 
 /*
  * prototypes from functions in execJunk.c
@@ -122,9 +122,9 @@ extern JunkFilter *ExecInitJunkFilterConversion(List *targetList,
 							 TupleDesc cleanTupType,
 							 TupleTableSlot *slot);
 extern AttrNumber ExecFindJunkAttribute(JunkFilter *junkfilter,
-										const char *attrName);
+					  const char *attrName);
 extern Datum ExecGetJunkAttribute(TupleTableSlot *slot, AttrNumber attno,
-								  bool *isNull);
+					 bool *isNull);
 extern TupleTableSlot *ExecFilterJunk(JunkFilter *junkfilter,
 			   TupleTableSlot *slot);
 extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
@@ -271,7 +271,7 @@ extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
 						TupleTableSlot *slot,
 						TupleDesc inputDesc);
 extern void ExecAssignProjectionInfo(PlanState *planstate,
-									 TupleDesc inputDesc);
+						 TupleDesc inputDesc);
 extern void ExecFreeExprContext(PlanState *planstate);
 extern TupleDesc ExecGetScanType(ScanState *scanstate);
 extern void ExecAssignScanType(ScanState *scanstate, TupleDesc tupDesc);

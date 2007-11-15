@@ -28,7 +28,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.77 2007/08/21 01:11:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.78 2007/11/15 21:14:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -139,8 +139,8 @@ DATA(insert (	403		text_ops			PGNSP PGUID 1994   25 t 0 ));
 DATA(insert (	405		text_ops			PGNSP PGUID 1995   25 t 0 ));
 DATA(insert (	403		time_ops			PGNSP PGUID 1996 1083 t 0 ));
 DATA(insert (	405		time_ops			PGNSP PGUID 1997 1083 t 0 ));
-DATA(insert (	403		timestamptz_ops 	PGNSP PGUID  434 1184 t 0 ));
-DATA(insert (	405		timestamptz_ops 	PGNSP PGUID 1999 1184 t 0 ));
+DATA(insert (	403		timestamptz_ops		PGNSP PGUID  434 1184 t 0 ));
+DATA(insert (	405		timestamptz_ops		PGNSP PGUID 1999 1184 t 0 ));
 DATA(insert (	403		timetz_ops			PGNSP PGUID 2000 1266 t 0 ));
 DATA(insert (	405		timetz_ops			PGNSP PGUID 2001 1266 t 0 ));
 DATA(insert (	403		varbit_ops			PGNSP PGUID 2002 1562 t 0 ));

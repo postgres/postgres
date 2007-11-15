@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.86 2007/11/11 19:22:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.87 2007/11/15 21:14:33 momjian Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -56,7 +56,7 @@
 
 
 static void AlterFunctionOwner_internal(Relation rel, HeapTuple tup,
-										Oid newOwnerId);
+							Oid newOwnerId);
 
 
 /*
@@ -121,8 +121,8 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		if (returnType->typmods != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("type modifier cannot be specified for shell type \"%s\"",
-							typnam)));
+			errmsg("type modifier cannot be specified for shell type \"%s\"",
+				   typnam)));
 
 		/* Otherwise, go ahead and make a shell type */
 		ereport(NOTICE,
@@ -285,7 +285,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
  * FUNCTION and ALTER FUNCTION and return it via one of the out
  * parameters. Returns true if the passed option was recognized. If
  * the out parameter we were going to assign to points to non-NULL,
- * raise a duplicate-clause error.  (We don't try to detect duplicate
+ * raise a duplicate-clause error.	(We don't try to detect duplicate
  * SET parameters though --- if you're redundant, the last one wins.)
  */
 static bool
@@ -390,7 +390,7 @@ update_proconfig_value(ArrayType *a, List *set_items)
 
 			if (valuestr)
 				a = GUCArrayAdd(a, sstmt->name, valuestr);
-			else				/* RESET */
+			else	/* RESET */
 				a = GUCArrayDelete(a, sstmt->name);
 		}
 	}
@@ -1598,9 +1598,9 @@ DropCast(DropCastStmt *stmt)
 							TypeNameToString(stmt->targettype))));
 		else
 			ereport(NOTICE,
-					(errmsg("cast from type %s to type %s does not exist, skipping",
-							TypeNameToString(stmt->sourcetype),
-							TypeNameToString(stmt->targettype))));
+			 (errmsg("cast from type %s to type %s does not exist, skipping",
+					 TypeNameToString(stmt->sourcetype),
+					 TypeNameToString(stmt->targettype))));
 
 		return;
 	}

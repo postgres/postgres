@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.103 2007/04/26 23:24:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.104 2007/11/15 21:14:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ PortalListGetPrimaryStmt(List *stmts)
 
 	foreach(lc, stmts)
 	{
-		Node   *stmt = (Node *) lfirst(lc);
+		Node	   *stmt = (Node *) lfirst(lc);
 
 		if (IsA(stmt, PlannedStmt))
 		{
@@ -292,16 +292,16 @@ PortalDefineQuery(Portal portal,
 				  const char *sourceText,
 				  const char *commandTag,
 				  List *stmts,
-				  CachedPlan *cplan)
+				  CachedPlan * cplan)
 {
 	AssertArg(PortalIsValid(portal));
 	AssertState(portal->status == PORTAL_NEW);
 
 	Assert(commandTag != NULL || stmts == NIL);
 
-	portal->prepStmtName = prepStmtName ? 
+	portal->prepStmtName = prepStmtName ?
 		MemoryContextStrdup(PortalGetHeapMemory(portal), prepStmtName) : NULL;
-	portal->sourceText = sourceText ? 
+	portal->sourceText = sourceText ?
 		MemoryContextStrdup(PortalGetHeapMemory(portal), sourceText) : NULL;
 	portal->commandTag = commandTag;
 	portal->stmts = stmts;
@@ -468,7 +468,8 @@ PortalHashTableDeleteAll(void)
 	hash_seq_init(&status, PortalHashTable);
 	while ((hentry = hash_seq_search(&status)) != NULL)
 	{
-		Portal portal = hentry->portal;
+		Portal		portal = hentry->portal;
+
 		if (portal->status != PORTAL_ACTIVE)
 			PortalDrop(portal, false);
 	}
@@ -883,8 +884,8 @@ pg_cursor(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/*
-	 * build tupdesc for result tuples. This must match the definition of
-	 * the pg_cursors view in system_views.sql
+	 * build tupdesc for result tuples. This must match the definition of the
+	 * pg_cursors view in system_views.sql
 	 */
 	tupdesc = CreateTemplateTupleDesc(6, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",

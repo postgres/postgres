@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.5 2007/10/20 21:06:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.6 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ typedef struct
 {
 	QueryItem  *frst;
 	bool	   *mapped_check;
-} GinChkVal;
+}	GinChkVal;
 
 static bool
 checkcondition_gin(void *checkval, QueryOperand * val)
@@ -127,6 +127,7 @@ Datum
 gin_ts_consistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
+
 	/* StrategyNumber strategy = PG_GETARG_UINT16(1); */
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 	bool		res = FALSE;
@@ -141,8 +142,8 @@ gin_ts_consistent(PG_FUNCTION_ARGS)
 		/*
 		 * check-parameter array has one entry for each value (operand) in the
 		 * query. We expand that array into mapped_check, so that there's one
-		 * entry in mapped_check for every node in the query, including 
-		 * operators, to allow quick lookups in checkcondition_gin. Only the 
+		 * entry in mapped_check for every node in the query, including
+		 * operators, to allow quick lookups in checkcondition_gin. Only the
 		 * entries corresponding operands are actually used.
 		 */
 

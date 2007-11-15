@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.147 2007/09/20 17:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.148 2007/11/15 21:14:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,8 +360,8 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			ptr->block.blkno = BufferGetBlockNumber(ptr->buffer);
 
 			/*
-			 * fill page, we can do it because all these pages are new
-			 * (ie not linked in tree or masked by temp page
+			 * fill page, we can do it because all these pages are new (ie not
+			 * linked in tree or masked by temp page
 			 */
 			data = (char *) (ptr->list);
 			for (i = 0; i < ptr->block.num; i++)

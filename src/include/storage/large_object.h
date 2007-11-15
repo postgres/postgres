@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/large_object.h,v 1.37 2007/03/03 19:52:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/large_object.h,v 1.38 2007/11/15 21:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,6 @@ extern int	inv_seek(LargeObjectDesc *obj_desc, int offset, int whence);
 extern int	inv_tell(LargeObjectDesc *obj_desc);
 extern int	inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes);
 extern int	inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes);
-extern void	inv_truncate(LargeObjectDesc *obj_desc, int len);
+extern void inv_truncate(LargeObjectDesc *obj_desc, int len);
 
 #endif   /* LARGE_OBJECT_H */

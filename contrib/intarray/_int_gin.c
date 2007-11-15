@@ -57,16 +57,17 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 		}
 	}
 
-	if ( nentries == 0 )
+	if (nentries == 0)
 	{
-		switch( strategy )
+		switch (strategy)
 		{
 			case BooleanSearchStrategy:
 			case RTOverlapStrategyNumber:
-					*nentries = -1; /* nobody can be found */
-					break;
-			default:   /* require fullscan: GIN can't find void arrays */
-			break;
+				*nentries = -1; /* nobody can be found */
+				break;
+			default:			/* require fullscan: GIN can't find void
+								 * arrays */
+				break;
 		}
 	}
 

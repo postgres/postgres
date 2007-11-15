@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.250 2007/10/11 21:27:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.251 2007/11/15 21:14:36 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -576,7 +576,7 @@ expression_returns_set_walker(Node *node, void *context)
  *	  Estimate the number of rows in a set result.
  *
  * We use the product of the rowcount estimates of all the functions in
- * the given tree.  The result is 1 if there are no set-returning functions.
+ * the given tree.	The result is 1 if there are no set-returning functions.
  */
 double
 expression_returns_set_rows(Node *clause)
@@ -738,9 +738,9 @@ contain_mutable_functions_walker(Node *node, void *context)
 	else if (IsA(node, CoerceViaIO))
 	{
 		CoerceViaIO *expr = (CoerceViaIO *) node;
-		Oid		iofunc;
-		Oid		typioparam;
-		bool	typisvarlena;
+		Oid			iofunc;
+		Oid			typioparam;
+		bool		typisvarlena;
 
 		/* check the result type's input function */
 		getTypeInputInfo(expr->resulttype,
@@ -849,9 +849,9 @@ contain_volatile_functions_walker(Node *node, void *context)
 	else if (IsA(node, CoerceViaIO))
 	{
 		CoerceViaIO *expr = (CoerceViaIO *) node;
-		Oid		iofunc;
-		Oid		typioparam;
-		bool	typisvarlena;
+		Oid			iofunc;
+		Oid			typioparam;
+		bool		typisvarlena;
 
 		/* check the result type's input function */
 		getTypeInputInfo(expr->resulttype,
@@ -1065,13 +1065,13 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	else if (IsA(node, List))
 	{
 		/*
-		 * At top level, we are examining an implicit-AND list: if any of
-		 * the arms produces FALSE-or-NULL then the result is FALSE-or-NULL.
-		 * If not at top level, we are examining the arguments of a strict
+		 * At top level, we are examining an implicit-AND list: if any of the
+		 * arms produces FALSE-or-NULL then the result is FALSE-or-NULL. If
+		 * not at top level, we are examining the arguments of a strict
 		 * function: if any of them produce NULL then the result of the
 		 * function must be NULL.  So in both cases, the set of nonnullable
-		 * rels is the union of those found in the arms, and we pass down
-		 * the top_level flag unmodified.
+		 * rels is the union of those found in the arms, and we pass down the
+		 * top_level flag unmodified.
 		 */
 		foreach(l, (List *) node)
 		{
@@ -1115,15 +1115,17 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 														  top_level);
 					break;
 				}
+
 				/*
 				 * Below top level, even if one arm produces NULL, the result
 				 * could be FALSE (hence not NULL).  However, if *all* the
-				 * arms produce NULL then the result is NULL, so we can
-				 * take the intersection of the sets of nonnullable rels,
-				 * just as for OR.  Fall through to share code.
+				 * arms produce NULL then the result is NULL, so we can take
+				 * the intersection of the sets of nonnullable rels, just as
+				 * for OR.	Fall through to share code.
 				 */
 				/* FALL THRU */
 			case OR_EXPR:
+
 				/*
 				 * OR is strict if all of its arms are, so we can take the
 				 * intersection of the sets of nonnullable rels for each arm.
@@ -1135,13 +1137,14 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 
 					subresult = find_nonnullable_rels_walker(lfirst(l),
 															 top_level);
-					if (result == NULL)				/* first subresult? */
+					if (result == NULL) /* first subresult? */
 						result = subresult;
 					else
 						result = bms_int_members(result, subresult);
+
 					/*
-					 * If the intersection is empty, we can stop looking.
-					 * This also justifies the test for first-subresult above.
+					 * If the intersection is empty, we can stop looking. This
+					 * also justifies the test for first-subresult above.
 					 */
 					if (bms_is_empty(result))
 						break;
@@ -1669,7 +1672,7 @@ eval_const_expressions(Node *node)
 {
 	eval_const_expressions_context context;
 
-	context.boundParams = NULL;	/* don't use any bound params */
+	context.boundParams = NULL; /* don't use any bound params */
 	context.active_fns = NIL;	/* nothing being recursively simplified */
 	context.case_val = NULL;	/* no CASE being examined */
 	context.estimate = false;	/* safe transformations only */
@@ -1697,7 +1700,7 @@ estimate_expression_value(PlannerInfo *root, Node *node)
 {
 	eval_const_expressions_context context;
 
-	context.boundParams = root->glob->boundParams;	/* bound Params */
+	context.boundParams = root->glob->boundParams;		/* bound Params */
 	context.active_fns = NIL;	/* nothing being recursively simplified */
 	context.case_val = NULL;	/* no CASE being examined */
 	context.estimate = true;	/* unsafe transformations OK */
@@ -3015,11 +3018,11 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	newexpr = (Node *) ((TargetEntry *) linitial(querytree->targetList))->expr;
 
 	/*
-	 * Make sure the function (still) returns what it's declared to.  This will
-	 * raise an error if wrong, but that's okay since the function would fail
-	 * at runtime anyway.  Note we do not try this until we have verified that
-	 * no rewriting was needed; that's probably not important, but let's be
-	 * careful.
+	 * Make sure the function (still) returns what it's declared to.  This
+	 * will raise an error if wrong, but that's okay since the function would
+	 * fail at runtime anyway.	Note we do not try this until we have verified
+	 * that no rewriting was needed; that's probably not important, but let's
+	 * be careful.
 	 */
 	if (check_sql_fn_retval(funcid, result_type, list_make1(querytree), NULL))
 		goto fail;				/* reject whole-tuple-result cases */
@@ -3580,8 +3583,8 @@ expression_tree_walker(Node *node,
 			return walker(((MinMaxExpr *) node)->args, context);
 		case T_XmlExpr:
 			{
-				XmlExpr *xexpr = (XmlExpr *) node;
-				
+				XmlExpr    *xexpr = (XmlExpr *) node;
+
 				if (walker(xexpr->named_args, context))
 					return true;
 				/* we assume walker doesn't care about arg_names */
@@ -3853,15 +3856,15 @@ expression_tree_mutator(Node *node,
 
 	switch (nodeTag(node))
 	{
-		/*
-		 * Primitive node types with no expression subnodes.  Var and Const
-		 * are frequent enough to deserve special cases, the others we just
-		 * use copyObject for.
-		 */
+			/*
+			 * Primitive node types with no expression subnodes.  Var and
+			 * Const are frequent enough to deserve special cases, the others
+			 * we just use copyObject for.
+			 */
 		case T_Var:
 			{
-				Var	   *var = (Var *) node;
-				Var	   *newnode;
+				Var		   *var = (Var *) node;
+				Var		   *newnode;
 
 				FLATCOPY(newnode, var, Var);
 				return (Node *) newnode;
@@ -4130,8 +4133,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_XmlExpr:
 			{
-				XmlExpr *xexpr = (XmlExpr *) node;
-				XmlExpr *newnode;
+				XmlExpr    *xexpr = (XmlExpr *) node;
+				XmlExpr    *newnode;
 
 				FLATCOPY(newnode, xexpr, XmlExpr);
 				MUTATE(newnode->named_args, xexpr->named_args, List *);

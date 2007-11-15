@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.91 2007/07/25 04:19:09 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.92 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,12 +178,12 @@ typedef struct PLpgSQL_expr
 	Oid		   *plan_argtypes;
 	/* fields for "simple expression" fast-path execution: */
 	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
-	int			expr_simple_generation;	/* plancache generation we checked */
+	int			expr_simple_generation; /* plancache generation we checked */
 	Oid			expr_simple_type;		/* result type Oid, if simple */
 
 	/*
 	 * if expr is simple AND prepared in current eval_estate,
-	 * expr_simple_state is valid.  Test validity by seeing if expr_simple_id
+	 * expr_simple_state is valid.	Test validity by seeing if expr_simple_id
 	 * matches eval_estate_simple_id.
 	 */
 	ExprState  *expr_simple_state;
@@ -499,7 +499,7 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *query;
-} PLpgSQL_stmt_return_query;
+}	PLpgSQL_stmt_return_query;
 
 typedef struct
 {								/* RAISE statement			*/
@@ -631,9 +631,9 @@ typedef struct
 	SPITupleTable *eval_tuptable;
 	uint32		eval_processed;
 	Oid			eval_lastoid;
-	ExprContext *eval_econtext;	/* for executing simple expressions */
+	ExprContext *eval_econtext; /* for executing simple expressions */
 	EState	   *eval_estate;	/* EState containing eval_econtext */
-	long int	eval_estate_simple_id;		/* ID for eval_estate */
+	long int	eval_estate_simple_id;	/* ID for eval_estate */
 
 	/* status information for error context reporting */
 	PLpgSQL_function *err_func; /* current func */
@@ -760,7 +760,7 @@ extern HeapTuple plpgsql_exec_trigger(PLpgSQL_function *func,
 					 TriggerData *trigdata);
 extern void plpgsql_xact_cb(XactEvent event, void *arg);
 extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
-							   SubTransactionId parentSubid, void *arg);
+				   SubTransactionId parentSubid, void *arg);
 
 /* ----------
  * Functions for the dynamic string handling in pl_funcs.c

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.7 2007/10/24 02:24:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.8 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ typedef struct
 				haspos:1,
 				len:11,			/* MAX 2Kb */
 				pos:20;			/* MAX 1Mb */
-} WordEntry;
+}	WordEntry;
 
 #define MAXSTRLEN ( (1<<11) - 1)
 #define MAXSTRPOS ( (1<<20) - 1)
@@ -45,15 +45,15 @@ typedef uint16 WordEntryPos;
 
 typedef struct
 {
-	uint16 npos;
-	WordEntryPos pos[1]; /* var length */
-} WordEntryPosVector;
+	uint16		npos;
+	WordEntryPos pos[1];		/* var length */
+}	WordEntryPosVector;
 
 
 #define WEP_GETWEIGHT(x)	( (x) >> 14 )
 #define WEP_GETPOS(x)		( (x) & 0x3fff )
 
-#define WEP_SETWEIGHT(x,v)  ( (x) = ( (v) << 14 ) | ( (x) & 0x3fff ) )
+#define WEP_SETWEIGHT(x,v)	( (x) = ( (v) << 14 ) | ( (x) & 0x3fff ) )
 #define WEP_SETPOS(x,v)		( (x) = ( (x) & 0xc000 ) | ( (v) & 0x3fff ) )
 
 #define MAXENTRYPOS (1<<14)
@@ -70,7 +70,7 @@ typedef struct
  *							corresponding lexeme.
  * 4) Lexeme's storage:
  *	  lexeme (without null-terminator)
- *    if haspos is true:
+ *	  if haspos is true:
  *		padding byte if necessary to make the number of positions 2-byte aligned
  *		uint16		number of positions that follow.
  *		uint16[]	positions
@@ -82,9 +82,9 @@ typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int32		size;
-	WordEntry	entries[1]; /* var size */
+	WordEntry	entries[1];		/* var size */
 	/* lexemes follow */
-} TSVectorData;
+}	TSVectorData;
 
 typedef TSVectorData *TSVector;
 
@@ -95,7 +95,7 @@ typedef TSVectorData *TSVector;
 /* returns a pointer to the beginning of lexemes */
 #define STRPTR(x)	( (char *) &(x)->entries[x->size] )
 
-#define _POSVECPTR(x, e) 	((WordEntryPosVector *)(STRPTR(x) + SHORTALIGN((e)->pos + (e)->len)))
+#define _POSVECPTR(x, e)	((WordEntryPosVector *)(STRPTR(x) + SHORTALIGN((e)->pos + (e)->len)))
 #define POSDATALEN(x,e) ( ( (e)->haspos ) ? (_POSVECPTR(x,e)->npos) : 0 )
 #define POSDATAPTR(x,e) (_POSVECPTR(x,e)->pos)
 
@@ -165,46 +165,45 @@ typedef int8 QueryItemType;
 /* Valid values for QueryItemType: */
 #define QI_VAL 1
 #define QI_OPR 2
-#define QI_VALSTOP 3	/* This is only used in an intermediate stack representation in parse_tsquery. It's not a legal type elsewhere. */
+#define QI_VALSTOP 3			/* This is only used in an intermediate stack
+								 * representation in parse_tsquery. It's not a
+								 * legal type elsewhere. */
 
 /*
  * QueryItem is one node in tsquery - operator or operand.
  */
 typedef struct
 {
-	QueryItemType		type;	/* operand or kind of operator (ts_tokentype) */
-	uint8		weight;			/* weights of operand to search. It's a bitmask of allowed weights.
-								 * if it =0 then any weight are allowed.
-								 * Weights and bit map:
-								 * A: 1<<3
-								 * B: 1<<2
-								 * C: 1<<1
-								 * D: 1<<0
-								 */
-	int32	valcrc;				/* XXX: pg_crc32 would be a more appropriate data type, 
-								 * but we use comparisons to signed integers in the code. 
-								 * They would need to be changed as well. */
+	QueryItemType type;			/* operand or kind of operator (ts_tokentype) */
+	uint8		weight;			/* weights of operand to search. It's a
+								 * bitmask of allowed weights. if it =0 then
+								 * any weight are allowed. Weights and bit
+								 * map: A: 1<<3 B: 1<<2 C: 1<<1 D: 1<<0 */
+	int32		valcrc;			/* XXX: pg_crc32 would be a more appropriate
+								 * data type, but we use comparisons to signed
+								 * integers in the code. They would need to be
+								 * changed as well. */
 
 	/* pointer to text value of operand, must correlate with WordEntry */
 	uint32
 				length:12,
 				distance:20;
-} QueryOperand;
+}	QueryOperand;
 
 
 /* Legal values for QueryOperator.operator */
-#define	OP_NOT	1
-#define	OP_AND	2
-#define	OP_OR	3
+#define OP_NOT	1
+#define OP_AND	2
+#define OP_OR	3
 
-typedef struct 
+typedef struct
 {
-	QueryItemType	type;
-	int8		oper;		/* see above */
-	uint32		left;		/* pointer to left operand. Right operand is
-							 * item + 1, left operand is placed
-							 * item+item->left */
-} QueryOperator;
+	QueryItemType type;
+	int8		oper;			/* see above */
+	uint32		left;			/* pointer to left operand. Right operand is
+								 * item + 1, left operand is placed
+								 * item+item->left */
+}	QueryOperator;
 
 /*
  * Note: TSQuery is 4-bytes aligned, so make sure there's no fields
@@ -212,10 +211,10 @@ typedef struct
  */
 typedef union
 {
-	QueryItemType	type;
+	QueryItemType type;
 	QueryOperator operator;
 	QueryOperand operand;
-} QueryItem;
+}	QueryItem;
 
 /*
  * Storage:
@@ -227,7 +226,7 @@ typedef struct
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		size;			/* number of QueryItems */
 	char		data[1];
-} TSQueryData;
+}	TSQueryData;
 
 typedef TSQueryData *TSQuery;
 
@@ -236,7 +235,7 @@ typedef TSQueryData *TSQuery;
 /* Computes the size of header and all QueryItems. size is the number of
  * QueryItems, and lenofoperand is the total length of all operands
  */
-#define COMPUTESIZE(size, lenofoperand)	( HDRSIZETQ + (size) * sizeof(QueryItem) + (lenofoperand) )
+#define COMPUTESIZE(size, lenofoperand) ( HDRSIZETQ + (size) * sizeof(QueryItem) + (lenofoperand) )
 
 /* Returns a pointer to the first QueryItem in a TSVector */
 #define GETQUERY(x)  ((QueryItem*)( (char*)(x)+HDRSIZETQ ))

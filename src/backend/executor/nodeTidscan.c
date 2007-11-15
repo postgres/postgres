@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.56 2007/10/24 18:37:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.57 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@ TidListCreate(TidScanState *tidstate)
 			ItemPointerData cursor_tid;
 
 			if (execCurrentOf(cexpr, econtext,
-						  RelationGetRelid(tidstate->ss.ss_currentRelation),
+						   RelationGetRelid(tidstate->ss.ss_currentRelation),
 							  &cursor_tid))
 			{
 				if (numTids >= numAllocTids)
@@ -274,8 +274,8 @@ TidNext(TidScanState *node)
 
 		/*
 		 * XXX shouldn't we check here to make sure tuple matches TID list? In
-		 * runtime-key case this is not certain, is it?  However, in the
-		 * WHERE CURRENT OF case it might not match anyway ...
+		 * runtime-key case this is not certain, is it?  However, in the WHERE
+		 * CURRENT OF case it might not match anyway ...
 		 */
 
 		ExecStoreTuple(estate->es_evTuple[scanrelid - 1],
@@ -328,8 +328,8 @@ TidNext(TidScanState *node)
 
 		/*
 		 * For WHERE CURRENT OF, the tuple retrieved from the cursor might
-		 * since have been updated; if so, we should fetch the version that
-		 * is current according to our snapshot.
+		 * since have been updated; if so, we should fetch the version that is
+		 * current according to our snapshot.
 		 */
 		if (node->tss_isCurrentOf)
 			heap_get_latest_tid(heapRelation, snapshot, &tuple->t_self);

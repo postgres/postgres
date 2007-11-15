@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.182 2007/09/16 15:56:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.183 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,9 +60,9 @@ static TimestampTz timestamp2timestamptz(Timestamp timestamp);
 static int32
 anytimestamp_typmodin(bool istz, ArrayType *ta)
 {
-    int32    typmod;
-	int32    *tl;
-	int		n;
+	int32		typmod;
+	int32	   *tl;
+	int			n;
 
 	tl = ArrayGetIntegerTypmods(ta, &n);
 
@@ -84,11 +84,12 @@ anytimestamp_typmodin(bool istz, ArrayType *ta)
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("TIMESTAMP(%d)%s precision reduced to maximum allowed, %d",
-						*tl, (istz ? " WITH TIME ZONE" : ""),
-						MAX_TIMESTAMP_PRECISION)));
+		   errmsg("TIMESTAMP(%d)%s precision reduced to maximum allowed, %d",
+				  *tl, (istz ? " WITH TIME ZONE" : ""),
+				  MAX_TIMESTAMP_PRECISION)));
 		typmod = MAX_TIMESTAMP_PRECISION;
-	} else
+	}
+	else
 		typmod = *tl;
 
 	return typmod;
@@ -98,7 +99,7 @@ anytimestamp_typmodin(bool istz, ArrayType *ta)
 static char *
 anytimestamp_typmodout(bool istz, int32 typmod)
 {
-	char    *res = (char *) palloc(64);
+	char	   *res = (char *) palloc(64);
 	const char *tz = istz ? " with time zone" : " without time zone";
 
 	if (typmod >= 0)
@@ -272,7 +273,7 @@ timestamp_send(PG_FUNCTION_ARGS)
 Datum
 timestamptypmodin(PG_FUNCTION_ARGS)
 {
-	ArrayType    *ta = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
 
 	PG_RETURN_INT32(anytimestamp_typmodin(false, ta));
 }
@@ -280,7 +281,7 @@ timestamptypmodin(PG_FUNCTION_ARGS)
 Datum
 timestamptypmodout(PG_FUNCTION_ARGS)
 {
-	int32 typmod = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(0);
 
 	PG_RETURN_CSTRING(anytimestamp_typmodout(false, typmod));
 }
@@ -534,7 +535,7 @@ timestamptz_send(PG_FUNCTION_ARGS)
 Datum
 timestamptztypmodin(PG_FUNCTION_ARGS)
 {
-	ArrayType    *ta = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
 
 	PG_RETURN_INT32(anytimestamp_typmodin(true, ta));
 }
@@ -542,7 +543,7 @@ timestamptztypmodin(PG_FUNCTION_ARGS)
 Datum
 timestamptztypmodout(PG_FUNCTION_ARGS)
 {
-	int32 typmod = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(0);
 
 	PG_RETURN_CSTRING(anytimestamp_typmodout(true, typmod));
 }
@@ -714,16 +715,15 @@ interval_send(PG_FUNCTION_ARGS)
 Datum
 intervaltypmodin(PG_FUNCTION_ARGS)
 {
-	ArrayType	*ta = PG_GETARG_ARRAYTYPE_P(0);
-	int32    	*tl;
-    int    		n;
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
+	int32	   *tl;
+	int			n;
 	int32		typmod;
 
 	tl = ArrayGetIntegerTypmods(ta, &n);
 
 	/*
-	 * tl[0] - opt_interval
-	 * tl[1] - Iconst (optional)
+	 * tl[0] - opt_interval tl[1] - Iconst (optional)
 	 *
 	 * Note we must validate tl[0] even though it's normally guaranteed
 	 * correct by the grammar --- consider SELECT 'foo'::"interval"(1000).
@@ -768,13 +768,13 @@ intervaltypmodin(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("INTERVAL(%d) precision must not be negative",
-							 tl[1])));
+							tl[1])));
 		if (tl[1] > MAX_INTERVAL_PRECISION)
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("INTERVAL(%d) precision reduced to maximum allowed, %d",
-					tl[1], MAX_INTERVAL_PRECISION)));
+			  errmsg("INTERVAL(%d) precision reduced to maximum allowed, %d",
+					 tl[1], MAX_INTERVAL_PRECISION)));
 			typmod = INTERVAL_TYPMOD(MAX_INTERVAL_PRECISION, tl[0]);
 		}
 		else
@@ -784,7 +784,7 @@ intervaltypmodin(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("invalid INTERVAL type modifier")));
+				 errmsg("invalid INTERVAL type modifier")));
 		typmod = 0;				/* keep compiler quiet */
 	}
 
@@ -794,10 +794,10 @@ intervaltypmodin(PG_FUNCTION_ARGS)
 Datum
 intervaltypmodout(PG_FUNCTION_ARGS)
 {
-	int32 typmod = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(0);
 	char	   *res = (char *) palloc(64);
-	int         fields;
-	int         precision;
+	int			fields;
+	int			precision;
 	const char *fieldstr;
 
 	if (typmod < 0)
@@ -1305,13 +1305,13 @@ timestamptz_to_time_t(TimestampTz t)
  * Produce a C-string representation of a TimestampTz.
  *
  * This is mostly for use in emitting messages.  The primary difference
- * from timestamptz_out is that we force the output format to ISO.  Note
+ * from timestamptz_out is that we force the output format to ISO.	Note
  * also that the result is in a static buffer, not pstrdup'd.
  */
 const char *
 timestamptz_to_str(TimestampTz t)
 {
-	static char	buf[MAXDATELEN + 1];
+	static char buf[MAXDATELEN + 1];
 	int			tz;
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -1494,7 +1494,7 @@ recalc_t:
 	if ((Timestamp) utime == dt)
 	{
 		struct pg_tm *tx = pg_localtime(&utime,
-								  attimezone ? attimezone : session_timezone);
+								 attimezone ? attimezone : session_timezone);
 
 		tm->tm_year = tx->tm_year + 1900;
 		tm->tm_mon = tx->tm_mon + 1;
@@ -2129,17 +2129,17 @@ interval_hash(PG_FUNCTION_ARGS)
 	uint32		mhash;
 
 	/*
-	 * To avoid any problems with padding bytes in the struct,
-	 * we figure the field hashes separately and XOR them.  This also
-	 * provides a convenient framework for dealing with the fact that
-	 * the time field might be either double or int64.
+	 * To avoid any problems with padding bytes in the struct, we figure the
+	 * field hashes separately and XOR them.  This also provides a convenient
+	 * framework for dealing with the fact that the time field might be either
+	 * double or int64.
 	 */
 #ifdef HAVE_INT64_TIMESTAMP
 	thash = DatumGetUInt32(DirectFunctionCall1(hashint8,
 											   Int64GetDatumFast(key->time)));
 #else
 	thash = DatumGetUInt32(DirectFunctionCall1(hashfloat8,
-											   Float8GetDatumFast(key->time)));
+											 Float8GetDatumFast(key->time)));
 #endif
 	thash ^= DatumGetUInt32(hash_uint32(key->day));
 	/* Shift so "k days" and "k months" don't hash to the same thing */
@@ -3664,8 +3664,8 @@ interval_trunc(PG_FUNCTION_ARGS)
 
 /* isoweek2j()
  *
- * 	Return the Julian day which corresponds to the first day (Monday) of the given ISO 8601 year and week.
- * 	Julian days are used to convert between ISO week dates and Gregorian dates.
+ *	Return the Julian day which corresponds to the first day (Monday) of the given ISO 8601 year and week.
+ *	Julian days are used to convert between ISO week dates and Gregorian dates.
  */
 int
 isoweek2j(int year, int week)
@@ -3700,14 +3700,14 @@ isoweek2date(int woy, int *year, int *mon, int *mday)
 
 /* isoweekdate2date()
  *
- * 	Convert an ISO 8601 week date (ISO year, ISO week and day of week) into a Gregorian date.
- * 	Populates year, mon, and mday with the correct Gregorian values.
- * 	year must be passed in as the ISO year.
+ *	Convert an ISO 8601 week date (ISO year, ISO week and day of week) into a Gregorian date.
+ *	Populates year, mon, and mday with the correct Gregorian values.
+ *	year must be passed in as the ISO year.
  */
 void
 isoweekdate2date(int isoweek, int isowday, int *year, int *mon, int *mday)
 {
-	int jday;
+	int			jday;
 
 	jday = isoweek2j(*year, isoweek);
 	jday += isowday - 1;
@@ -3827,8 +3827,8 @@ date2isoyear(int year, int mon, int mday)
 
 /* date2isoyearday()
  *
- * 	Returns the ISO 8601 day-of-year, given a Gregorian year, month and day.
- * 	Possible return values are 1 through 371 (364 in non-leap years).
+ *	Returns the ISO 8601 day-of-year, given a Gregorian year, month and day.
+ *	Possible return values are 1 through 371 (364 in non-leap years).
  */
 int
 date2isoyearday(int year, int mon, int mday)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.112 2007/05/22 01:40:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.113 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +200,7 @@ sort_inner_and_outer(PlannerInfo *root,
 	 *
 	 * Actually, it's not quite true that every mergeclause ordering will
 	 * generate a different path order, because some of the clauses may be
-	 * partially redundant (refer to the same EquivalenceClasses).  Therefore,
+	 * partially redundant (refer to the same EquivalenceClasses).	Therefore,
 	 * what we do is convert the mergeclause list to a list of canonical
 	 * pathkeys, and then consider different orderings of the pathkeys.
 	 *
@@ -237,7 +237,7 @@ sort_inner_and_outer(PlannerInfo *root,
 							  list_delete_ptr(list_copy(all_pathkeys),
 											  front_pathkey));
 		else
-			outerkeys = all_pathkeys;		/* no work at first one... */
+			outerkeys = all_pathkeys;	/* no work at first one... */
 
 		/* Sort the mergeclauses into the corresponding ordering */
 		cur_mergeclauses = find_mergeclauses_for_pathkeys(root,

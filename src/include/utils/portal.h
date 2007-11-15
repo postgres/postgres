@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.75 2007/04/12 06:53:48 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.76 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,7 @@ extern void PortalDefineQuery(Portal portal,
 				  const char *sourceText,
 				  const char *commandTag,
 				  List *stmts,
-				  CachedPlan *cplan);
+				  CachedPlan * cplan);
 extern Node *PortalListGetPrimaryStmt(List *stmts);
 extern void PortalCreateHoldStore(Portal portal);
 extern void PortalHashTableDeleteAll(void);

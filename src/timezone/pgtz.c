@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.54 2007/08/25 20:29:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.55 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,8 @@ static pg_tz gmt_timezone_data;
 
 
 static bool scan_directory_ci(const char *dirname,
-							  const char *fname, int fnamelen,
-							  char *canonname, int canonnamelen);
+				  const char *fname, int fnamelen,
+				  char *canonname, int canonnamelen);
 static const char *identify_system_timezone(void);
 static pg_tz *get_pg_tz_for_zone(const char *tzname);
 static pg_tz *select_default_timezone(void);
@@ -100,7 +100,7 @@ pg_open_tzfile(const char *name, char *canonname)
 	for (;;)
 	{
 		const char *slashptr;
-		int		fnamelen;
+		int			fnamelen;
 
 		slashptr = strchr(fname, '/');
 		if (slashptr)
@@ -130,7 +130,7 @@ pg_open_tzfile(const char *name, char *canonname)
 
 /*
  * Scan specified directory for a case-insensitive match to fname
- * (of length fnamelen --- fname may not be null terminated!).  If found,
+ * (of length fnamelen --- fname may not be null terminated!).	If found,
  * copy the actual filename into canonname and return true.
  */
 static bool
@@ -153,7 +153,7 @@ scan_directory_ci(const char *dirname, const char *fname, int fnamelen,
 	while ((direntry = ReadDir(dirdesc, dirname)) != NULL)
 	{
 		/*
-		 * Ignore . and .., plus any other "hidden" files.  This is a security
+		 * Ignore . and .., plus any other "hidden" files.	This is a security
 		 * measure to prevent access to files outside the timezone directory.
 		 */
 		if (direntry->d_name[0] == '.')
@@ -907,7 +907,7 @@ static const struct
 		"Australia/Perth"
 	},							/* (GMT+08:00) Perth */
 /*	{"W. Central Africa Standard Time", "W. Central Africa Daylight Time",
-	 *	 *	 *	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
+	 *	 *	 *	 *	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
 	 * G MT+01:00) West Central Africa */
 	{
 		"W. Europe Standard Time", "W. Europe Daylight Time",
@@ -1087,7 +1087,7 @@ typedef struct
 	/* tznameupper contains the all-upper-case name of the timezone */
 	char		tznameupper[TZ_STRLEN_MAX + 1];
 	pg_tz		tz;
-} pg_tz_cache;
+}	pg_tz_cache;
 
 static HTAB *timezone_cache = NULL;
 
@@ -1135,8 +1135,8 @@ pg_tzset(const char *name)
 	/*
 	 * Upcase the given name to perform a case-insensitive hashtable search.
 	 * (We could alternatively downcase it, but we prefer upcase so that we
-	 * can get consistently upcased results from tzparse() in case the name
-	 * is a POSIX-style timezone spec.)
+	 * can get consistently upcased results from tzparse() in case the name is
+	 * a POSIX-style timezone spec.)
 	 */
 	p = uppername;
 	while (*name)
@@ -1209,7 +1209,7 @@ tz_acceptable(pg_tz *tz)
 
 
 /*
- * Get a pg_tz struct for the given timezone name.  Returns NULL if name
+ * Get a pg_tz struct for the given timezone name.	Returns NULL if name
  * is invalid or not an "acceptable" zone.
  */
 static pg_tz *
@@ -1267,18 +1267,17 @@ select_default_timezone(void)
  *
  * This is called before GUC variable initialization begins.  Its purpose
  * is to ensure that elog.c has a pgtz variable available to format timestamps
- * with, in case log_line_prefix is set to a value requiring that.  We cannot
+ * with, in case log_line_prefix is set to a value requiring that.	We cannot
  * set log_timezone yet.
  */
 void
 pg_timezone_pre_initialize(void)
 {
 	/*
-	 * We can't use tzload() because we may not know where PGSHAREDIR
-	 * is (in particular this is true in an EXEC_BACKEND subprocess).
-	 * Since this timezone variable will only be used for emergency
-	 * fallback purposes, it seems OK to just use the "lastditch" case
-	 * provided by tzparse().
+	 * We can't use tzload() because we may not know where PGSHAREDIR is (in
+	 * particular this is true in an EXEC_BACKEND subprocess). Since this
+	 * timezone variable will only be used for emergency fallback purposes, it
+	 * seems OK to just use the "lastditch" case provided by tzparse().
 	 */
 	if (tzparse("GMT", &gmt_timezone_data.state, TRUE) != 0)
 		elog(FATAL, "could not initialize GMT timezone");

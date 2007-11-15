@@ -3,7 +3,7 @@
  *
  *	Definitions for the builtin LZ compressor
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.15 2007/08/04 21:53:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.16 2007/11/15 21:14:45 momjian Exp $
  * ----------
  */
 
@@ -52,7 +52,7 @@ typedef struct PGLZ_Header
  *
  *		force_input_size	Minimum input data size to force compression
  *							even if the compression rate drops below
- *							min_comp_rate.  But in any case the output
+ *							min_comp_rate.	But in any case the output
  *							must be smaller than the input.  If that isn't
  *							the case, the compressor will throw away its
  *							output and copy the original, uncompressed data
@@ -108,8 +108,8 @@ typedef struct PGLZ_Strategy
  *									would be larger than input.
  * ----------
  */
-extern const PGLZ_Strategy * const PGLZ_strategy_default;
-extern const PGLZ_Strategy * const PGLZ_strategy_always;
+extern const PGLZ_Strategy *const PGLZ_strategy_default;
+extern const PGLZ_Strategy *const PGLZ_strategy_always;
 
 
 /* ----------
@@ -117,7 +117,7 @@ extern const PGLZ_Strategy * const PGLZ_strategy_always;
  * ----------
  */
 extern bool pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
-						  const PGLZ_Strategy *strategy);
+			  const PGLZ_Strategy *strategy);
 extern void pglz_decompress(const PGLZ_Header *source, char *dest);
 
 #endif   /* _PG_LZCOMPRESS_H_ */

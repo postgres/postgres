@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.38 2007/11/07 12:24:24 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.39 2007/11/15 21:14:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -455,8 +455,8 @@ buildACLCommands(const char *name, const char *type,
 	 * We still need some hacking though to cover the case where new default
 	 * public privileges are added in new versions: the REVOKE ALL will revoke
 	 * them, leading to behavior different from what the old version had,
-	 * which is generally not what's wanted.  So add back default privs if
-	 * the source database is too old to have had that particular priv.
+	 * which is generally not what's wanted.  So add back default privs if the
+	 * source database is too old to have had that particular priv.
 	 */
 	if (remoteVersion < 80200 && strcmp(type, "DATABASE") == 0)
 	{
@@ -822,9 +822,9 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 	 * contains "|", else the "^" and "$" will be bound into the first and
 	 * last alternatives which is not what we want.
 	 *
-	 * Note: the result of this pass is the actual regexp pattern(s) we want to
-	 * execute.  Quoting/escaping into SQL literal format will be done below
-	 * using appendStringLiteralConn().
+	 * Note: the result of this pass is the actual regexp pattern(s) we want
+	 * to execute.	Quoting/escaping into SQL literal format will be done
+	 * below using appendStringLiteralConn().
 	 */
 	appendPQExpBufferStr(&namebuf, "^(");
 
@@ -833,7 +833,7 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 
 	while (*cp)
 	{
-		char	ch = *cp;
+		char		ch = *cp;
 
 		if (ch == '"')
 		{
@@ -875,11 +875,11 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 		else if (ch == '$')
 		{
 			/*
-			 * Dollar is always quoted, whether inside quotes or not.
-			 * The reason is that it's allowed in SQL identifiers, so
-			 * there's a significant use-case for treating it literally,
-			 * while because we anchor the pattern automatically there is
-			 * no use-case for having it possess its regexp meaning.
+			 * Dollar is always quoted, whether inside quotes or not. The
+			 * reason is that it's allowed in SQL identifiers, so there's a
+			 * significant use-case for treating it literally, while because
+			 * we anchor the pattern automatically there is no use-case for
+			 * having it possess its regexp meaning.
 			 */
 			appendPQExpBufferStr(&namebuf, "\\$");
 			cp++;
@@ -908,8 +908,8 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 	}
 
 	/*
-	 * Now decide what we need to emit.  Note there will be a leading "^("
-	 * in the patterns in any case.
+	 * Now decide what we need to emit.  Note there will be a leading "^(" in
+	 * the patterns in any case.
 	 */
 	if (namebuf.len > 2)
 	{

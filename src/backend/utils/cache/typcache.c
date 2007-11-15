@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.25 2007/04/02 03:49:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.26 2007/11/15 21:14:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ lookup_type_cache(Oid type_id, int flags)
 				  TYPECACHE_BTREE_OPFAMILY)) &&
 		typentry->btree_opf == InvalidOid)
 	{
-		Oid		opclass;
+		Oid			opclass;
 
 		opclass = GetDefaultOpClass(type_id, BTREE_AM_OID);
 		if (OidIsValid(opclass))

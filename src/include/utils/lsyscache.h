@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.120 2007/10/13 15:55:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.121 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,28 +29,28 @@ typedef enum IOFuncSelector
 extern bool op_in_opfamily(Oid opno, Oid opfamily);
 extern int	get_op_opfamily_strategy(Oid opno, Oid opfamily);
 extern void get_op_opfamily_properties(Oid opno, Oid opfamily,
-						  int *strategy,
-						  Oid *lefttype,
-						  Oid *righttype,
-						  bool *recheck);
-extern Oid	get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
-								int16 strategy);
+						   int *strategy,
+						   Oid *lefttype,
+						   Oid *righttype,
+						   bool *recheck);
+extern Oid get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
+					int16 strategy);
 extern bool get_ordering_op_properties(Oid opno,
 						   Oid *opfamily, Oid *opcintype, int16 *strategy);
 extern bool get_compare_function_for_ordering_op(Oid opno,
-												 Oid *cmpfunc, bool *reverse);
+									 Oid *cmpfunc, bool *reverse);
 extern Oid	get_equality_op_for_ordering_op(Oid opno);
 extern Oid	get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type);
 extern List *get_mergejoin_opfamilies(Oid opno);
 extern bool get_compatible_hash_operators(Oid opno,
-										  Oid *lhs_opno, Oid *rhs_opno);
+							  Oid *lhs_opno, Oid *rhs_opno);
 extern bool get_op_hash_functions(Oid opno,
 					  RegProcedure *lhs_procno, RegProcedure *rhs_procno);
 extern void get_op_btree_interpretation(Oid opno,
 							List **opfamilies, List **opstrats);
 extern bool ops_in_same_btree_opfamily(Oid opno1, Oid opno2);
-extern Oid	get_opfamily_proc(Oid opfamily, Oid lefttype, Oid righttype,
-							  int16 procnum);
+extern Oid get_opfamily_proc(Oid opfamily, Oid lefttype, Oid righttype,
+				  int16 procnum);
 extern char *get_attname(Oid relid, AttrNumber attnum);
 extern char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 extern AttrNumber get_attnum(Oid relid, const char *attname);

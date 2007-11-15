@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.27 2007/10/03 16:03:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.28 2007/11/15 21:14:45 momjian Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -15,14 +15,14 @@
 #include "sqlca.h"
 #include "sql3types.h"
 
-static void descriptor_free(struct descriptor *desc);
+static void descriptor_free(struct descriptor * desc);
 
 /* We manage descriptors separately for each thread. */
 #ifdef ENABLE_THREAD_SAFETY
-static pthread_key_t	descriptor_key;
-static pthread_once_t	descriptor_once = PTHREAD_ONCE_INIT;
+static pthread_key_t descriptor_key;
+static pthread_once_t descriptor_once = PTHREAD_ONCE_INIT;
 
-static void descriptor_deallocate_all(struct descriptor *list);
+static void descriptor_deallocate_all(struct descriptor * list);
 
 static void
 descriptor_destructor(void *arg)
@@ -44,13 +44,13 @@ get_descriptors(void)
 }
 
 static void
-set_descriptors(struct descriptor *value)
+set_descriptors(struct descriptor * value)
 {
 	pthread_setspecific(descriptor_key, value);
 }
-
 #else
-static struct descriptor		*all_descriptors = NULL;
+static struct descriptor *all_descriptors = NULL;
+
 #define get_descriptors()		(all_descriptors)
 #define set_descriptors(value)	do { all_descriptors = (value); } while(0)
 #endif
@@ -60,6 +60,7 @@ static PGresult *
 ecpg_result_by_descriptor(int line, const char *name)
 {
 	struct descriptor *desc = ecpg_find_desc(line, name);
+
 	if (desc == NULL)
 		return NULL;
 	return desc->result;
@@ -381,7 +382,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 				if (arrsize > 0 && ntuples > arrsize)
 				{
 					ecpg_log("ECPGget_desc line %d: Incorrect number of matches: %d don't fit into array of %d\n",
-							lineno, ntuples, arrsize);
+							 lineno, ntuples, arrsize);
 					ecpg_raise(lineno, ECPG_TOO_MANY_MATCHES, ECPG_SQLSTATE_CARDINALITY_VIOLATION, NULL);
 					return false;
 				}
@@ -450,7 +451,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		if (data_var.ind_arrsize > 0 && ntuples > data_var.ind_arrsize)
 		{
 			ecpg_log("ECPGget_desc line %d: Incorrect number of matches (indicator): %d don't fit into array of %d\n",
-					lineno, ntuples, data_var.ind_arrsize);
+					 lineno, ntuples, data_var.ind_arrsize);
 			ecpg_raise(lineno, ECPG_TOO_MANY_MATCHES, ECPG_SQLSTATE_CARDINALITY_VIOLATION, NULL);
 			return false;
 		}
@@ -483,6 +484,7 @@ bool
 ECPGset_desc_header(int lineno, const char *desc_name, int count)
 {
 	struct descriptor *desc = ecpg_find_desc(lineno, desc_name);
+
 	if (desc == NULL)
 		return false;
 	desc->count = count;
@@ -556,7 +558,7 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 			var->varcharsize = 0;
 
 		var->next = NULL;
-		
+
 		switch (itemtype)
 		{
 			case ECPGd_data:
@@ -567,7 +569,8 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 						return false;
 					}
 
-					ecpg_free(desc_item->data); /* free() takes care of a potential NULL value */
+					ecpg_free(desc_item->data); /* free() takes care of a
+												 * potential NULL value */
 					desc_item->data = (char *) tobeinserted;
 					tobeinserted = NULL;
 					break;
@@ -611,7 +614,7 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 
 /* Free the descriptor and items in it. */
 static void
-descriptor_free(struct descriptor *desc)
+descriptor_free(struct descriptor * desc)
 {
 	struct descriptor_item *desc_item;
 
@@ -658,17 +661,17 @@ ECPGdeallocate_desc(int line, const char *name)
 
 /* Deallocate all descriptors in the list */
 static void
-descriptor_deallocate_all(struct descriptor *list)
+descriptor_deallocate_all(struct descriptor * list)
 {
 	while (list)
 	{
 		struct descriptor *next = list->next;
+
 		descriptor_free(list);
 		list = next;
 	}
 }
-
-#endif /* ENABLE_THREAD_SAFETY */
+#endif   /* ENABLE_THREAD_SAFETY */
 
 bool
 ECPGallocate_desc(int line, const char *name)
@@ -715,7 +718,7 @@ ecpg_find_desc(int line, const char *name)
 	}
 
 	ecpg_raise(line, ECPG_UNKNOWN_DESCRIPTOR, ECPG_SQLSTATE_INVALID_SQL_DESCRIPTOR_NAME, name);
-	return NULL;	/* not found */
+	return NULL;				/* not found */
 }
 
 bool

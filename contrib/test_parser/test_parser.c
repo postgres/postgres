@@ -6,7 +6,7 @@
  * Copyright (c) 2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/test_parser/test_parser.c,v 1.1 2007/10/15 21:36:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/test_parser/test_parser.c,v 1.2 2007/11/15 21:14:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,40 +22,44 @@ PG_MODULE_MAGIC;
  */
 
 /* self-defined type */
-typedef struct {
-	char *	buffer; /* text to parse */
-	int		len;	/* length of the text in buffer */
-	int		pos;	/* position of the parser */
-} ParserState;
+typedef struct
+{
+	char	   *buffer;			/* text to parse */
+	int			len;			/* length of the text in buffer */
+	int			pos;			/* position of the parser */
+}	ParserState;
 
 /* copy-paste from wparser.h of tsearch2 */
-typedef struct {
-	int		lexid;
-	char	*alias;
-	char	*descr;
-} LexDescr;
+typedef struct
+{
+	int			lexid;
+	char	   *alias;
+	char	   *descr;
+}	LexDescr;
 
 /*
  * prototypes
  */
 PG_FUNCTION_INFO_V1(testprs_start);
-Datum testprs_start(PG_FUNCTION_ARGS);
+Datum		testprs_start(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(testprs_getlexeme);
-Datum testprs_getlexeme(PG_FUNCTION_ARGS);
+Datum		testprs_getlexeme(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(testprs_end);
-Datum testprs_end(PG_FUNCTION_ARGS);
+Datum		testprs_end(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(testprs_lextype);
-Datum testprs_lextype(PG_FUNCTION_ARGS);
+Datum		testprs_lextype(PG_FUNCTION_ARGS);
 
 /*
  * functions
  */
-Datum testprs_start(PG_FUNCTION_ARGS)
+Datum
+testprs_start(PG_FUNCTION_ARGS)
 {
 	ParserState *pst = (ParserState *) palloc0(sizeof(ParserState));
+
 	pst->buffer = (char *) PG_GETARG_POINTER(0);
 	pst->len = PG_GETARG_INT32(1);
 	pst->pos = 0;
@@ -63,15 +67,16 @@ Datum testprs_start(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(pst);
 }
 
-Datum testprs_getlexeme(PG_FUNCTION_ARGS)
+Datum
+testprs_getlexeme(PG_FUNCTION_ARGS)
 {
-	ParserState *pst   = (ParserState *) PG_GETARG_POINTER(0);
-	char		**t	   = (char **) PG_GETARG_POINTER(1);
-	int			*tlen  = (int *) PG_GETARG_POINTER(2);
+	ParserState *pst = (ParserState *) PG_GETARG_POINTER(0);
+	char	  **t = (char **) PG_GETARG_POINTER(1);
+	int		   *tlen = (int *) PG_GETARG_POINTER(2);
 	int			type;
 
 	*tlen = pst->pos;
-	*t = pst->buffer +	pst->pos;
+	*t = pst->buffer + pst->pos;
 
 	if ((pst->buffer)[pst->pos] == ' ')
 	{
@@ -81,7 +86,9 @@ Datum testprs_getlexeme(PG_FUNCTION_ARGS)
 		while ((pst->buffer)[pst->pos] == ' ' &&
 			   pst->pos < pst->len)
 			(pst->pos)++;
-	} else {
+	}
+	else
+	{
 		/* word type */
 		type = 3;
 		/* go to the next white-space character */
@@ -94,28 +101,29 @@ Datum testprs_getlexeme(PG_FUNCTION_ARGS)
 
 	/* we are finished if (*tlen == 0) */
 	if (*tlen == 0)
-		type=0;
+		type = 0;
 
 	PG_RETURN_INT32(type);
 }
 
-Datum testprs_end(PG_FUNCTION_ARGS)
+Datum
+testprs_end(PG_FUNCTION_ARGS)
 {
 	ParserState *pst = (ParserState *) PG_GETARG_POINTER(0);
+
 	pfree(pst);
 	PG_RETURN_VOID();
 }
 
-Datum testprs_lextype(PG_FUNCTION_ARGS)
+Datum
+testprs_lextype(PG_FUNCTION_ARGS)
 {
 	/*
-	 * Remarks:
-	 * - we have to return the blanks for headline reason
-	 * - we use the same lexids like Teodor in the default
-	 * word parser; in this way we can reuse the headline
-	 * function of the default word parser.
+	 * Remarks: - we have to return the blanks for headline reason - we use
+	 * the same lexids like Teodor in the default word parser; in this way we
+	 * can reuse the headline function of the default word parser.
 	 */
-	LexDescr *descr = (LexDescr *) palloc(sizeof(LexDescr) * (2+1));
+	LexDescr   *descr = (LexDescr *) palloc(sizeof(LexDescr) * (2 + 1));
 
 	/* there are only two types in this parser */
 	descr[0].lexid = 3;

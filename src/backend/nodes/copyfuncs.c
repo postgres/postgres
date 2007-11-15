@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.383 2007/10/11 18:05:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.384 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,9 +68,9 @@
  * _copyPlannedStmt
  */
 static PlannedStmt *
-_copyPlannedStmt(PlannedStmt *from)
+_copyPlannedStmt(PlannedStmt * from)
 {
-	PlannedStmt	   *newnode = makeNode(PlannedStmt);
+	PlannedStmt *newnode = makeNode(PlannedStmt);
 
 	COPY_SCALAR_FIELD(commandType);
 	COPY_SCALAR_FIELD(canSetTag);
@@ -727,9 +727,9 @@ _copyRangeVar(RangeVar *from)
  * _copyIntoClause
  */
 static IntoClause *
-_copyIntoClause(IntoClause *from)
+_copyIntoClause(IntoClause * from)
 {
-	IntoClause   *newnode = makeNode(IntoClause);
+	IntoClause *newnode = makeNode(IntoClause);
 
 	COPY_NODE_FIELD(rel);
 	COPY_NODE_FIELD(colNames);
@@ -1026,9 +1026,9 @@ _copyRelabelType(RelabelType *from)
  * _copyCoerceViaIO
  */
 static CoerceViaIO *
-_copyCoerceViaIO(CoerceViaIO *from)
+_copyCoerceViaIO(CoerceViaIO * from)
 {
-	CoerceViaIO   *newnode = makeNode(CoerceViaIO);
+	CoerceViaIO *newnode = makeNode(CoerceViaIO);
 
 	COPY_NODE_FIELD(arg);
 	COPY_SCALAR_FIELD(resulttype);
@@ -1041,9 +1041,9 @@ _copyCoerceViaIO(CoerceViaIO *from)
  * _copyArrayCoerceExpr
  */
 static ArrayCoerceExpr *
-_copyArrayCoerceExpr(ArrayCoerceExpr *from)
+_copyArrayCoerceExpr(ArrayCoerceExpr * from)
 {
-	ArrayCoerceExpr   *newnode = makeNode(ArrayCoerceExpr);
+	ArrayCoerceExpr *newnode = makeNode(ArrayCoerceExpr);
 
 	COPY_NODE_FIELD(arg);
 	COPY_SCALAR_FIELD(elemfuncid);
@@ -1195,9 +1195,9 @@ _copyMinMaxExpr(MinMaxExpr *from)
  * _copyXmlExpr
  */
 static XmlExpr *
-_copyXmlExpr(XmlExpr *from)
+_copyXmlExpr(XmlExpr * from)
 {
-	XmlExpr *newnode = makeNode(XmlExpr);
+	XmlExpr    *newnode = makeNode(XmlExpr);
 
 	COPY_SCALAR_FIELD(op);
 	COPY_STRING_FIELD(name);
@@ -1304,7 +1304,7 @@ _copySetToDefault(SetToDefault *from)
  * _copyCurrentOfExpr
  */
 static CurrentOfExpr *
-_copyCurrentOfExpr(CurrentOfExpr *from)
+_copyCurrentOfExpr(CurrentOfExpr * from)
 {
 	CurrentOfExpr *newnode = makeNode(CurrentOfExpr);
 
@@ -1393,9 +1393,9 @@ _copyFromExpr(FromExpr *from)
  * _copyPathKey
  */
 static PathKey *
-_copyPathKey(PathKey *from)
+_copyPathKey(PathKey * from)
 {
-	PathKey *newnode = makeNode(PathKey);
+	PathKey    *newnode = makeNode(PathKey);
 
 	/* EquivalenceClasses are never moved, so just shallow-copy the pointer */
 	COPY_SCALAR_FIELD(pk_eclass);
@@ -1833,7 +1833,7 @@ _copyLockingClause(LockingClause *from)
 }
 
 static XmlSerialize *
-_copyXmlSerialize(XmlSerialize *from)
+_copyXmlSerialize(XmlSerialize * from)
 {
 	XmlSerialize *newnode = makeNode(XmlSerialize);
 
@@ -2271,7 +2271,7 @@ _copyRemoveOpClassStmt(RemoveOpClassStmt *from)
 }
 
 static RemoveOpFamilyStmt *
-_copyRemoveOpFamilyStmt(RemoveOpFamilyStmt *from)
+_copyRemoveOpFamilyStmt(RemoveOpFamilyStmt * from)
 {
 	RemoveOpFamilyStmt *newnode = makeNode(RemoveOpFamilyStmt);
 
@@ -2398,7 +2398,7 @@ _copyCompositeTypeStmt(CompositeTypeStmt *from)
 }
 
 static CreateEnumStmt *
-_copyCreateEnumStmt(CreateEnumStmt *from)
+_copyCreateEnumStmt(CreateEnumStmt * from)
 {
 	CreateEnumStmt *newnode = makeNode(CreateEnumStmt);
 
@@ -2475,7 +2475,7 @@ _copyCreateOpClassItem(CreateOpClassItem *from)
 }
 
 static CreateOpFamilyStmt *
-_copyCreateOpFamilyStmt(CreateOpFamilyStmt *from)
+_copyCreateOpFamilyStmt(CreateOpFamilyStmt * from)
 {
 	CreateOpFamilyStmt *newnode = makeNode(CreateOpFamilyStmt);
 
@@ -2486,7 +2486,7 @@ _copyCreateOpFamilyStmt(CreateOpFamilyStmt *from)
 }
 
 static AlterOpFamilyStmt *
-_copyAlterOpFamilyStmt(AlterOpFamilyStmt *from)
+_copyAlterOpFamilyStmt(AlterOpFamilyStmt * from)
 {
 	AlterOpFamilyStmt *newnode = makeNode(AlterOpFamilyStmt);
 
@@ -2616,7 +2616,7 @@ _copyVariableShowStmt(VariableShowStmt *from)
 }
 
 static DiscardStmt *
-_copyDiscardStmt(DiscardStmt *from)
+_copyDiscardStmt(DiscardStmt * from)
 {
 	DiscardStmt *newnode = makeNode(DiscardStmt);
 

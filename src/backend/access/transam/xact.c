@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.252 2007/11/10 14:36:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.253 2007/11/15 21:14:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,8 +274,8 @@ IsTransactionState(void)
 	TransactionState s = CurrentTransactionState;
 
 	/*
-	 * TRANS_DEFAULT and TRANS_ABORT are obviously unsafe states.  However,
-	 * we also reject the startup/shutdown states TRANS_START, TRANS_COMMIT,
+	 * TRANS_DEFAULT and TRANS_ABORT are obviously unsafe states.  However, we
+	 * also reject the startup/shutdown states TRANS_START, TRANS_COMMIT,
 	 * TRANS_PREPARE since it might be too soon or too late within those
 	 * transition states to do anything interesting.  Hence, the only "valid"
 	 * state is TRANS_INPROGRESS.
@@ -372,7 +372,7 @@ GetCurrentTransactionIdIfAny(void)
 static void
 AssignTransactionId(TransactionState s)
 {
-	bool isSubXact = (s->parent != NULL);
+	bool		isSubXact = (s->parent != NULL);
 	ResourceOwner currentOwner;
 
 	/* Assert that caller didn't screw up */
@@ -400,9 +400,9 @@ AssignTransactionId(TransactionState s)
 		SubTransSetParent(s->transactionId, s->parent->transactionId);
 
 	/*
-	 * Acquire lock on the transaction XID.  (We assume this cannot block.)
-	 * We have to ensure that the lock is assigned to the transaction's
-	 * own ResourceOwner.
+	 * Acquire lock on the transaction XID.  (We assume this cannot block.) We
+	 * have to ensure that the lock is assigned to the transaction's own
+	 * ResourceOwner.
 	 */
 	currentOwner = CurrentResourceOwner;
 	PG_TRY();
@@ -626,9 +626,9 @@ AtStart_Memory(void)
 	/*
 	 * If this is the first time through, create a private context for
 	 * AbortTransaction to work in.  By reserving some space now, we can
-	 * insulate AbortTransaction from out-of-memory scenarios.  Like
-	 * ErrorContext, we set it up with slow growth rate and a nonzero
-	 * minimum size, so that space will be reserved immediately.
+	 * insulate AbortTransaction from out-of-memory scenarios.	Like
+	 * ErrorContext, we set it up with slow growth rate and a nonzero minimum
+	 * size, so that space will be reserved immediately.
 	 */
 	if (TransactionAbortContext == NULL)
 		TransactionAbortContext =
@@ -749,7 +749,7 @@ AtSubStart_ResourceOwner(void)
  *	RecordTransactionCommit
  *
  * Returns latest XID among xact and its children, or InvalidTransactionId
- * if the xact has no XID.  (We compute that here just because it's easier.)
+ * if the xact has no XID.	(We compute that here just because it's easier.)
  *
  * This is exported only to support an ugly hack in VACUUM FULL.
  */
@@ -757,7 +757,7 @@ TransactionId
 RecordTransactionCommit(void)
 {
 	TransactionId xid = GetTopTransactionIdIfAny();
-	bool 		markXidCommitted = TransactionIdIsValid(xid);
+	bool		markXidCommitted = TransactionIdIsValid(xid);
 	TransactionId latestXid = InvalidTransactionId;
 	int			nrels;
 	RelFileNode *rels;
@@ -770,29 +770,29 @@ RecordTransactionCommit(void)
 	nchildren = xactGetCommittedChildren(&children);
 
 	/*
-	 * If we haven't been assigned an XID yet, we neither can, nor do we
-	 * want to write a COMMIT record.
+	 * If we haven't been assigned an XID yet, we neither can, nor do we want
+	 * to write a COMMIT record.
 	 */
 	if (!markXidCommitted)
 	{
 		/*
 		 * We expect that every smgrscheduleunlink is followed by a catalog
-		 * update, and hence XID assignment, so we shouldn't get here with
-		 * any pending deletes.  Use a real test not just an Assert to check
-		 * this, since it's a bit fragile.
+		 * update, and hence XID assignment, so we shouldn't get here with any
+		 * pending deletes.  Use a real test not just an Assert to check this,
+		 * since it's a bit fragile.
 		 */
 		if (nrels != 0)
 			elog(ERROR, "cannot commit a transaction that deleted files but has no xid");
 
 		/* Can't have child XIDs either; AssignTransactionId enforces this */
 		Assert(nchildren == 0);
-		
+
 		/*
 		 * If we didn't create XLOG entries, we're done here; otherwise we
-		 * should flush those entries the same as a commit record.  (An
+		 * should flush those entries the same as a commit record.	(An
 		 * example of a possible record that wouldn't cause an XID to be
-		 * assigned is a sequence advance record due to nextval() --- we
-		 * want to flush that to disk before reporting commit.)
+		 * assigned is a sequence advance record due to nextval() --- we want
+		 * to flush that to disk before reporting commit.)
 		 */
 		if (XactLastRecEnd.xrecoff == 0)
 			goto cleanup;
@@ -802,30 +802,29 @@ RecordTransactionCommit(void)
 		/*
 		 * Begin commit critical section and insert the commit XLOG record.
 		 */
-		XLogRecData 	rdata[3];
-		int				lastrdata = 0;
-		xl_xact_commit	xlrec;
+		XLogRecData rdata[3];
+		int			lastrdata = 0;
+		xl_xact_commit xlrec;
 
 		/* Tell bufmgr and smgr to prepare for commit */
 		BufmgrCommit();
 
 		/*
-		 * Mark ourselves as within our "commit critical section".  This
+		 * Mark ourselves as within our "commit critical section".	This
 		 * forces any concurrent checkpoint to wait until we've updated
-		 * pg_clog.  Without this, it is possible for the checkpoint to
-		 * set REDO after the XLOG record but fail to flush the pg_clog
-		 * update to disk, leading to loss of the transaction commit if
-		 * the system crashes a little later.
+		 * pg_clog.  Without this, it is possible for the checkpoint to set
+		 * REDO after the XLOG record but fail to flush the pg_clog update to
+		 * disk, leading to loss of the transaction commit if the system
+		 * crashes a little later.
 		 *
 		 * Note: we could, but don't bother to, set this flag in
-		 * RecordTransactionAbort.  That's because loss of a transaction
-		 * abort is noncritical; the presumption would be that it aborted,
-		 * anyway.
+		 * RecordTransactionAbort.	That's because loss of a transaction abort
+		 * is noncritical; the presumption would be that it aborted, anyway.
 		 *
-		 * It's safe to change the inCommit flag of our own backend
-		 * without holding the ProcArrayLock, since we're the only one
-		 * modifying it.  This makes checkpoint's determination of which
-		 * xacts are inCommit a bit fuzzy, but it doesn't matter.
+		 * It's safe to change the inCommit flag of our own backend without
+		 * holding the ProcArrayLock, since we're the only one modifying it.
+		 * This makes checkpoint's determination of which xacts are inCommit a
+		 * bit fuzzy, but it doesn't matter.
 		 */
 		START_CRIT_SECTION();
 		MyProc->inCommit = true;
@@ -864,7 +863,7 @@ RecordTransactionCommit(void)
 	 * Check if we want to commit asynchronously.  If the user has set
 	 * synchronous_commit = off, and we're not doing cleanup of any non-temp
 	 * rels nor committing any command that wanted to force sync commit, then
-	 * we can defer flushing XLOG.  (We must not allow asynchronous commit if
+	 * we can defer flushing XLOG.	(We must not allow asynchronous commit if
 	 * there are any non-temp tables to be deleted, because we might delete
 	 * the files before the COMMIT record is flushed to disk.  We do allow
 	 * asynchronous commit if all to-be-deleted tables are temporary though,
@@ -875,15 +874,14 @@ RecordTransactionCommit(void)
 		/*
 		 * Synchronous commit case.
 		 *
-		 * Sleep before flush! So we can flush more than one commit
-		 * records per single fsync.  (The idea is some other backend
-		 * may do the XLogFlush while we're sleeping.  This needs work
-		 * still, because on most Unixen, the minimum select() delay
-		 * is 10msec or more, which is way too long.)
+		 * Sleep before flush! So we can flush more than one commit records
+		 * per single fsync.  (The idea is some other backend may do the
+		 * XLogFlush while we're sleeping.  This needs work still, because on
+		 * most Unixen, the minimum select() delay is 10msec or more, which is
+		 * way too long.)
 		 *
-		 * We do not sleep if enableFsync is not turned on, nor if
-		 * there are fewer than CommitSiblings other backends with
-		 * active transactions.
+		 * We do not sleep if enableFsync is not turned on, nor if there are
+		 * fewer than CommitSiblings other backends with active transactions.
 		 */
 		if (CommitDelay > 0 && enableFsync &&
 			CountActiveBackends() >= CommitSiblings)
@@ -906,15 +904,15 @@ RecordTransactionCommit(void)
 		/*
 		 * Asynchronous commit case.
 		 *
-		 * Report the latest async commit LSN, so that
-		 * the WAL writer knows to flush this commit.
+		 * Report the latest async commit LSN, so that the WAL writer knows to
+		 * flush this commit.
 		 */
 		XLogSetAsyncCommitLSN(XactLastRecEnd);
 
 		/*
-		 * We must not immediately update the CLOG, since we didn't
-		 * flush the XLOG. Instead, we store the LSN up to which
-		 * the XLOG must be flushed before the CLOG may be updated.
+		 * We must not immediately update the CLOG, since we didn't flush the
+		 * XLOG. Instead, we store the LSN up to which the XLOG must be
+		 * flushed before the CLOG may be updated.
 		 */
 		if (markXidCommitted)
 		{
@@ -925,8 +923,8 @@ RecordTransactionCommit(void)
 	}
 
 	/*
-	 * If we entered a commit critical section, leave it now, and
-	 * let checkpoints proceed.
+	 * If we entered a commit critical section, leave it now, and let
+	 * checkpoints proceed.
 	 */
 	if (markXidCommitted)
 	{
@@ -1068,11 +1066,11 @@ RecordSubTransactionCommit(void)
 	 * We do not log the subcommit in XLOG; it doesn't matter until the
 	 * top-level transaction commits.
 	 *
-	 * We must mark the subtransaction subcommitted in the CLOG if
-	 * it had a valid XID assigned.  If it did not, nobody else will
-	 * ever know about the existence of this subxact.  We don't
-	 * have to deal with deletions scheduled for on-commit here, since
-	 * they'll be reassigned to our parent (who might still abort).
+	 * We must mark the subtransaction subcommitted in the CLOG if it had a
+	 * valid XID assigned.	If it did not, nobody else will ever know about
+	 * the existence of this subxact.  We don't have to deal with deletions
+	 * scheduled for on-commit here, since they'll be reassigned to our parent
+	 * (who might still abort).
 	 */
 	if (TransactionIdIsValid(xid))
 	{
@@ -1095,7 +1093,7 @@ RecordSubTransactionCommit(void)
  *	RecordTransactionAbort
  *
  * Returns latest XID among xact and its children, or InvalidTransactionId
- * if the xact has no XID.  (We compute that here just because it's easier.)
+ * if the xact has no XID.	(We compute that here just because it's easier.)
  */
 static TransactionId
 RecordTransactionAbort(bool isSubXact)
@@ -1106,15 +1104,15 @@ RecordTransactionAbort(bool isSubXact)
 	RelFileNode *rels;
 	int			nchildren;
 	TransactionId *children;
-	XLogRecData 	rdata[3];
-	int				lastrdata = 0;
-	xl_xact_abort	xlrec;
+	XLogRecData rdata[3];
+	int			lastrdata = 0;
+	xl_xact_abort xlrec;
 
 	/*
-	 * If we haven't been assigned an XID, nobody will care whether we
-	 * aborted or not.  Hence, we're done in that case.  It does not matter
-	 * if we have rels to delete (note that this routine is not responsible
-	 * for actually deleting 'em).  We cannot have any child XIDs, either.
+	 * If we haven't been assigned an XID, nobody will care whether we aborted
+	 * or not.	Hence, we're done in that case.  It does not matter if we have
+	 * rels to delete (note that this routine is not responsible for actually
+	 * deleting 'em).  We cannot have any child XIDs, either.
 	 */
 	if (!TransactionIdIsValid(xid))
 	{
@@ -1128,7 +1126,7 @@ RecordTransactionAbort(bool isSubXact)
 	 * We have a valid XID, so we should write an ABORT record for it.
 	 *
 	 * We do not flush XLOG to disk here, since the default assumption after a
-	 * crash would be that we aborted, anyway.  For the same reason, we don't
+	 * crash would be that we aborted, anyway.	For the same reason, we don't
 	 * need to worry about interlocking against checkpoint start.
 	 */
 
@@ -1189,10 +1187,10 @@ RecordTransactionAbort(bool isSubXact)
 	 * having flushed the ABORT record to disk, because in event of a crash
 	 * we'd be assumed to have aborted anyway.
 	 *
-	 * The ordering here isn't critical but it seems best to mark the
-	 * parent first.  This assures an atomic transition of all the
-	 * subtransactions to aborted state from the point of view of
-	 * concurrent TransactionIdDidAbort calls.
+	 * The ordering here isn't critical but it seems best to mark the parent
+	 * first.  This assures an atomic transition of all the subtransactions to
+	 * aborted state from the point of view of concurrent
+	 * TransactionIdDidAbort calls.
 	 */
 	TransactionIdAbort(xid);
 	TransactionIdAbortTree(nchildren, children);
@@ -1231,9 +1229,9 @@ static void
 AtAbort_Memory(void)
 {
 	/*
-	 * Switch into TransactionAbortContext, which should have some free
-	 * space even if nothing else does.  We'll work in this context until
-	 * we've finished cleaning up.
+	 * Switch into TransactionAbortContext, which should have some free space
+	 * even if nothing else does.  We'll work in this context until we've
+	 * finished cleaning up.
 	 *
 	 * It is barely possible to get here when we've not been able to create
 	 * TransactionAbortContext yet; if so use TopMemoryContext.
@@ -1438,7 +1436,7 @@ StartTransaction(void)
 	VirtualXactLockTableInsert(vxid);
 
 	/*
-	 * Advertise it in the proc array.  We assume assignment of
+	 * Advertise it in the proc array.	We assume assignment of
 	 * LocalTransactionID is atomic, and the backendId should be set already.
 	 */
 	Assert(MyProc->backendId == vxid.backendId);
@@ -1449,8 +1447,8 @@ StartTransaction(void)
 	/*
 	 * set transaction_timestamp() (a/k/a now()).  We want this to be the same
 	 * as the first command's statement_timestamp(), so don't do a fresh
-	 * GetCurrentTimestamp() call (which'd be expensive anyway).  Also,
-	 * mark xactStopTimestamp as unset.
+	 * GetCurrentTimestamp() call (which'd be expensive anyway).  Also, mark
+	 * xactStopTimestamp as unset.
 	 */
 	xactStartTimestamp = stmtStartTimestamp;
 	xactStopTimestamp = 0;
@@ -1576,8 +1574,8 @@ CommitTransaction(void)
 	PG_TRACE1(transaction__commit, MyProc->lxid);
 
 	/*
-	 * Let others know about no transaction in progress by me. Note that
-	 * this must be done _before_ releasing locks we hold and _after_
+	 * Let others know about no transaction in progress by me. Note that this
+	 * must be done _before_ releasing locks we hold and _after_
 	 * RecordTransactionCommit.
 	 */
 	ProcArrayEndTransaction(MyProc, latestXid);
@@ -2503,7 +2501,7 @@ AbortCurrentTransaction(void)
  *	inside a function or multi-query querystring.  (We will always fail if
  *	this is false, but it's convenient to centralize the check here instead of
  *	making callers do it.)
- *  stmtType: statement type name, for error messages.
+ *	stmtType: statement type name, for error messages.
  */
 void
 PreventTransactionChain(bool isTopLevel, const char *stmtType)

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.11 2007/09/07 17:04:26 teodor Exp $
+ *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.12 2007/11/15 21:14:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -394,20 +394,22 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 			ADDLIST(listT, unionT, posT, i);
 	}
 
-#define LIMIT_RATIO	0.1
+#define LIMIT_RATIO 0.1
 #define _IS_BADRATIO(x,y)	( (y) == 0 || (float)(x)/(float)(y) < LIMIT_RATIO )
 #define IS_BADRATIO(x,y) ( _IS_BADRATIO((x),(y)) || _IS_BADRATIO((y),(x)) )
 	/* bad disposition, try to split by centers of boxes  */
-	if ( IS_BADRATIO(posR, posL) && IS_BADRATIO(posT, posB) )
+	if (IS_BADRATIO(posR, posL) && IS_BADRATIO(posT, posB))
 	{
-		double	avgCenterX=0.0, avgCenterY=0.0;
-		double	CenterX, CenterY;
+		double		avgCenterX = 0.0,
+					avgCenterY = 0.0;
+		double		CenterX,
+					CenterY;
 
 		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 		{
 			cur = DatumGetBoxP(entryvec->vector[i].key);
-			avgCenterX +=  ((double)cur->high.x + (double)cur->low.x)/2.0;
-			avgCenterY +=  ((double)cur->high.y + (double)cur->low.y)/2.0;
+			avgCenterX += ((double) cur->high.x + (double) cur->low.x) / 2.0;
+			avgCenterY += ((double) cur->high.y + (double) cur->low.y) / 2.0;
 		}
 
 		avgCenterX /= maxoff;
@@ -417,11 +419,11 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 		{
 			cur = DatumGetBoxP(entryvec->vector[i].key);
-			
-			CenterX =  ((double)cur->high.x + (double)cur->low.x)/2.0;
-			CenterY =  ((double)cur->high.y + (double)cur->low.y)/2.0;
 
-			if (CenterX < avgCenterX) 
+			CenterX = ((double) cur->high.x + (double) cur->low.x) / 2.0;
+			CenterY = ((double) cur->high.y + (double) cur->low.y) / 2.0;
+
+			if (CenterX < avgCenterX)
 				ADDLIST(listL, unionL, posL, i);
 			else if (CenterX == avgCenterX)
 			{
@@ -442,7 +444,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 				else
 					ADDLIST(listB, unionB, posB, i);
 			}
-			else 
+			else
 				ADDLIST(listT, unionT, posT, i);
 		}
 	}

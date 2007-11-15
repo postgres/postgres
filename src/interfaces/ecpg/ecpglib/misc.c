@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.40 2007/10/03 11:11:12 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.41 2007/11/15 21:14:45 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -26,7 +26,7 @@
 #endif
 #endif
 
-bool ecpg_internal_regression_mode = false;
+bool		ecpg_internal_regression_mode = false;
 
 static struct sqlca_t sqlca_init =
 {
@@ -109,7 +109,7 @@ ecpg_init(const struct connection * con, const char *connection_name, const int 
 	if (con == NULL)
 	{
 		ecpg_raise(lineno, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
-				  connection_name ? connection_name : "NULL");
+				   connection_name ? connection_name : "NULL");
 		return (false);
 	}
 
@@ -120,7 +120,7 @@ ecpg_init(const struct connection * con, const char *connection_name, const int 
 static void
 ecpg_sqlca_key_destructor(void *arg)
 {
-	free(arg);				/* sqlca structure allocated in ECPGget_sqlca */
+	free(arg);					/* sqlca structure allocated in ECPGget_sqlca */
 }
 
 static void
@@ -219,10 +219,10 @@ ECPGdebug(int n, FILE *dbgs)
 	pthread_mutex_lock(&debug_init_mutex);
 #endif
 
-	if (n > 100) 
+	if (n > 100)
 	{
 		ecpg_internal_regression_mode = true;
-		simple_debug = n-100;
+		simple_debug = n - 100;
 	}
 	else
 		simple_debug = n;
@@ -420,18 +420,18 @@ win32_pthread_mutex(volatile pthread_mutex_t *mutex)
 {
 	if (mutex->handle == NULL)
 	{
-		while (InterlockedExchange((LONG *)&mutex->initlock, 1) == 1)
+		while (InterlockedExchange((LONG *) & mutex->initlock, 1) == 1)
 			Sleep(0);
 		if (mutex->handle == NULL)
 			mutex->handle = CreateMutex(NULL, FALSE, NULL);
-		InterlockedExchange((LONG *)&mutex->initlock, 0);
+		InterlockedExchange((LONG *) & mutex->initlock, 0);
 	}
 }
 
-static pthread_mutex_t	win32_pthread_once_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t win32_pthread_once_lock = PTHREAD_MUTEX_INITIALIZER;
 
 void
-win32_pthread_once(volatile pthread_once_t *once, void (*fn)(void))
+win32_pthread_once(volatile pthread_once_t *once, void (*fn) (void))
 {
 	if (!*once)
 	{
@@ -444,6 +444,6 @@ win32_pthread_once(volatile pthread_once_t *once, void (*fn)(void))
 		pthread_mutex_unlock(&win32_pthread_once_lock);
 	}
 }
+#endif   /* ENABLE_THREAD_SAFETY */
 
-#endif	/* ENABLE_THREAD_SAFETY */
-#endif	/* WIN32 */
+#endif   /* WIN32 */

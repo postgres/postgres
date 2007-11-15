@@ -8,17 +8,17 @@
  * information as possible, even if it's nonsense. That's because if a
  * page is corrupt, we don't know why and how exactly it is corrupt, so we
  * let the user to judge it.
- * 
+ *
  * These functions are restricted to superusers for the fear of introducing
- * security holes if the input checking isn't as water-tight as it should. 
- * You'd need to be superuser to obtain a raw page image anyway, so 
+ * security holes if the input checking isn't as water-tight as it should.
+ * You'd need to be superuser to obtain a raw page image anyway, so
  * there's hardly any use case for using these without superuser-rights
  * anyway.
  *
  * Copyright (c) 2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.2 2007/09/12 22:10:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.3 2007/11/15 21:14:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,10 +34,10 @@
 #include "utils/builtins.h"
 #include "miscadmin.h"
 
-Datum heap_page_items(PG_FUNCTION_ARGS);
+Datum		heap_page_items(PG_FUNCTION_ARGS);
 
 #define GET_TEXT(str_) \
-        DirectFunctionCall1(textin, CStringGetDatum(str_))
+		DirectFunctionCall1(textin, CStringGetDatum(str_))
 
 /*
  * bits_to_text
@@ -48,12 +48,12 @@ Datum heap_page_items(PG_FUNCTION_ARGS);
 static char *
 bits_to_text(bits8 *bits, int len)
 {
-	int i;
-	char *str;
+	int			i;
+	char	   *str;
 
 	str = palloc(len + 1);
-	
-	for(i = 0; i < len; i++)
+
+	for (i = 0; i < len; i++)
 		str[i] = (bits[(i / 8)] & (1 << (i % 8))) ? '1' : '0';
 
 	str[i] = '\0';
@@ -74,15 +74,15 @@ typedef struct heap_page_items_state
 	TupleDesc	tupd;
 	Page		page;
 	uint16		offset;
-} heap_page_items_state;
+}	heap_page_items_state;
 
 Datum
 heap_page_items(PG_FUNCTION_ARGS)
 {
-	bytea  *raw_page = PG_GETARG_BYTEA_P(0);
+	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	heap_page_items_state *inter_call_data = NULL;
 	FuncCallContext *fctx;
-	int		raw_page_size;
+	int			raw_page_size;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -96,10 +96,10 @@ heap_page_items(PG_FUNCTION_ARGS)
 		TupleDesc	tupdesc;
 		MemoryContext mctx;
 
-		if(raw_page_size < SizeOfPageHeaderData)
-			ereport(ERROR, 
+		if (raw_page_size < SizeOfPageHeaderData)
+			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("input page too small (%d bytes)", raw_page_size)));
+				  errmsg("input page too small (%d bytes)", raw_page_size)));
 
 		fctx = SRF_FIRSTCALL_INIT();
 		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
@@ -132,42 +132,42 @@ heap_page_items(PG_FUNCTION_ARGS)
 		ItemId		id;
 		Datum		values[13];
 		bool		nulls[13];
-		uint16 		lp_offset;
+		uint16		lp_offset;
 		uint16		lp_flags;
 		uint16		lp_len;
 
 		memset(nulls, 0, sizeof(nulls));
 
 		/* Extract information from the line pointer */
-		
+
 		id = PageGetItemId(page, inter_call_data->offset);
 
-		lp_offset	= ItemIdGetOffset(id);
-		lp_flags	= ItemIdGetFlags(id);
-		lp_len		= ItemIdGetLength(id);
+		lp_offset = ItemIdGetOffset(id);
+		lp_flags = ItemIdGetFlags(id);
+		lp_len = ItemIdGetLength(id);
 
 		values[0] = UInt16GetDatum(inter_call_data->offset);
 		values[1] = UInt16GetDatum(lp_offset);
 		values[2] = UInt16GetDatum(lp_flags);
 		values[3] = UInt16GetDatum(lp_len);
 
-		/* We do just enough validity checking to make sure we don't 
-		 * reference data outside the page passed to us. The page
-		 * could be corrupt in many other ways, but at least we won't 
-		 * crash.
+		/*
+		 * We do just enough validity checking to make sure we don't reference
+		 * data outside the page passed to us. The page could be corrupt in
+		 * many other ways, but at least we won't crash.
 		 */
 		if (ItemIdHasStorage(id) &&
 			lp_len >= sizeof(HeapTupleHeader) &&
 			lp_offset == MAXALIGN(lp_offset) &&
 			lp_offset + lp_len <= raw_page_size)
 		{
-			HeapTupleHeader	tuphdr;
-			int				bits_len;
+			HeapTupleHeader tuphdr;
+			int			bits_len;
 
 			/* Extract information from the tuple header */
 
 			tuphdr = (HeapTupleHeader) PageGetItem(page, id);
-		
+
 			values[4] = UInt32GetDatum(HeapTupleHeaderGetXmin(tuphdr));
 			values[5] = UInt32GetDatum(HeapTupleHeaderGetXmax(tuphdr));
 			values[6] = UInt32GetDatum(HeapTupleHeaderGetRawCommandId(tuphdr)); /* shared with xvac */
@@ -176,22 +176,23 @@ heap_page_items(PG_FUNCTION_ARGS)
 			values[9] = UInt16GetDatum(tuphdr->t_infomask);
 			values[10] = UInt8GetDatum(tuphdr->t_hoff);
 
-			/* We already checked that the item as is completely within
-			 * the raw page passed to us, with the length given in the line
+			/*
+			 * We already checked that the item as is completely within the
+			 * raw page passed to us, with the length given in the line
 			 * pointer.. Let's check that t_hoff doesn't point over lp_len,
 			 * before using it to access t_bits and oid.
 			 */
-			if (tuphdr->t_hoff >= sizeof(HeapTupleHeader) && 
+			if (tuphdr->t_hoff >= sizeof(HeapTupleHeader) &&
 				tuphdr->t_hoff <= lp_len)
 			{
 				if (tuphdr->t_infomask & HEAP_HASNULL)
 				{
-					bits_len = tuphdr->t_hoff - 
-						(((char *)tuphdr->t_bits) - ((char *)tuphdr));
+					bits_len = tuphdr->t_hoff -
+						(((char *) tuphdr->t_bits) -((char *) tuphdr));
 
 					values[11] = GET_TEXT(
-						bits_to_text(tuphdr->t_bits, bits_len * 8));
-				} 
+								 bits_to_text(tuphdr->t_bits, bits_len * 8));
+				}
 				else
 					nulls[11] = true;
 
@@ -208,17 +209,19 @@ heap_page_items(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			/* The line pointer is not used, or it's invalid. Set the rest of
-			 * the fields to NULL */
-			int i;
+			/*
+			 * The line pointer is not used, or it's invalid. Set the rest of
+			 * the fields to NULL
+			 */
+			int			i;
 
-			for(i = 4; i <= 12; i++)
+			for (i = 4; i <= 12; i++)
 				nulls[i] = true;
 		}
 
-        /* Build and return the result tuple. */
-        resultTuple = heap_form_tuple(inter_call_data->tupd, values, nulls);
-        result = HeapTupleGetDatum(resultTuple);
+		/* Build and return the result tuple. */
+		resultTuple = heap_form_tuple(inter_call_data->tupd, values, nulls);
+		result = HeapTupleGetDatum(resultTuple);
 
 		inter_call_data->offset++;
 

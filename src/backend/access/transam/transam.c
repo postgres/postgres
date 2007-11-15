@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.71 2007/09/08 20:31:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.72 2007/11/15 21:14:32 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -440,14 +440,14 @@ TransactionId
 TransactionIdLatest(TransactionId mainxid,
 					int nxids, const TransactionId *xids)
 {
-	TransactionId	result;
+	TransactionId result;
 
 	/*
-	 * In practice it is highly likely that the xids[] array is sorted, and
-	 * so we could save some cycles by just taking the last child XID, but
-	 * this probably isn't so performance-critical that it's worth depending
-	 * on that assumption.  But just to show we're not totally stupid, scan
-	 * the array back-to-front to avoid useless assignments.
+	 * In practice it is highly likely that the xids[] array is sorted, and so
+	 * we could save some cycles by just taking the last child XID, but this
+	 * probably isn't so performance-critical that it's worth depending on
+	 * that assumption.  But just to show we're not totally stupid, scan the
+	 * array back-to-front to avoid useless assignments.
 	 */
 	result = mainxid;
 	while (--nxids >= 0)

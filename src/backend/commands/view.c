@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.102 2007/08/27 03:36:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.103 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,6 +273,7 @@ DefineViewRules(Oid viewOid, Query *viewParse, bool replace)
 					   true,
 					   replace,
 					   list_make1(viewParse));
+
 	/*
 	 * Someday: automatic ON INSERT, etc
 	 */
@@ -356,8 +357,8 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	RangeVar   *view;
 
 	/*
-	 * Run parse analysis to convert the raw parse tree to a Query.  Note
-	 * this also acquires sufficient locks on the source table(s).
+	 * Run parse analysis to convert the raw parse tree to a Query.  Note this
+	 * also acquires sufficient locks on the source table(s).
 	 *
 	 * Since parse analysis scribbles on its input, copy the raw parse tree;
 	 * this ensures we don't corrupt a prepared statement, for example.
@@ -404,14 +405,14 @@ DefineView(ViewStmt *stmt, const char *queryString)
 
 	/*
 	 * If the user didn't explicitly ask for a temporary view, check whether
-	 * we need one implicitly.  We allow TEMP to be inserted automatically
-	 * as long as the CREATE command is consistent with that --- no explicit
+	 * we need one implicitly.	We allow TEMP to be inserted automatically as
+	 * long as the CREATE command is consistent with that --- no explicit
 	 * schema name.
 	 */
 	view = stmt->view;
 	if (!view->istemp && isViewOnTempTable(viewParse))
 	{
-		view = copyObject(view); /* don't corrupt original command */
+		view = copyObject(view);	/* don't corrupt original command */
 		view->istemp = true;
 		ereport(NOTICE,
 				(errmsg("view \"%s\" will be a temporary view",

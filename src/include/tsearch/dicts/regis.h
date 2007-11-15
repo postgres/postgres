@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/dicts/regis.h,v 1.1 2007/08/21 01:11:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/dicts/regis.h,v 1.2 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@ typedef struct RegisNode
 				unused:14;
 	struct RegisNode *next;
 	unsigned char data[1];
-} RegisNode;
+}	RegisNode;
 
 #define  RNHDRSZ	(offsetof(RegisNode,data))
 
@@ -36,7 +36,7 @@ typedef struct Regis
 				issuffix:1,
 				nchar:16,
 				unused:15;
-} Regis;
+}	Regis;
 
 bool		RS_isRegis(const char *str);
 

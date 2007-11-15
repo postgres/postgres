@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.196 2007/08/02 23:39:44 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.197 2007/11/15 21:14:42 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -23,7 +23,7 @@
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
 
-#include <time.h> /* for time_t */
+#include <time.h>				/* for time_t */
 
 
 #define PG_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"

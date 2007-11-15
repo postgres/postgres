@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.3 2007/09/11 12:57:05 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.4 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 
 /*
  * Max length of a flag name. Names longer than this will be truncated
- * to the maximum. 
+ * to the maximum.
  */
 #define MAXFLAGLEN 16
 
@@ -33,7 +33,7 @@ typedef struct
 				compoundflag:4,
 				affix:19;
 	struct SPNode *node;
-} SPNodeData;
+}	SPNodeData;
 
 /*
  * Names of FF_ are correlated with Hunspell options in affix file
@@ -50,7 +50,7 @@ typedef struct SPNode
 {
 	uint32		length;
 	SPNodeData	data[1];
-} SPNode;
+}	SPNode;
 
 #define SPNHDRSZ	(offsetof(SPNode,data))
 
@@ -60,8 +60,8 @@ typedef struct spell_struct
 	union
 	{
 		/*
-		 * flag is filled in by NIImportDictionary. After NISortDictionary,
-		 * d is valid and flag is invalid. 
+		 * flag is filled in by NIImportDictionary. After NISortDictionary, d
+		 * is valid and flag is invalid.
 		 */
 		char		flag[MAXFLAGLEN];
 		struct
@@ -70,8 +70,8 @@ typedef struct spell_struct
 			int			len;
 		}			d;
 	}			p;
-	char		word[1]; /* variable length, null-terminated */
-} SPELL;
+	char		word[1];		/* variable length, null-terminated */
+}	SPELL;
 
 #define SPELLHDRSZ	(offsetof(SPELL, word))
 
@@ -90,7 +90,7 @@ typedef struct aff_struct
 		regex_t		regex;
 		Regis		regis;
 	}			reg;
-} AFFIX;
+}	AFFIX;
 
 /*
  * affixes use dictionary flags too
@@ -114,14 +114,14 @@ typedef struct
 				naff:24;
 	AFFIX	  **aff;
 	struct AffixNode *node;
-} AffixNodeData;
+}	AffixNodeData;
 
 typedef struct AffixNode
 {
 	uint32		isvoid:1,
 				length:31;
 	AffixNodeData data[1];
-} AffixNode;
+}	AffixNode;
 
 #define ANHRDSZ		   (offsetof(AffixNode, data))
 
@@ -130,7 +130,7 @@ typedef struct
 	char	   *affix;
 	int			len;
 	bool		issuffix;
-} CMPDAffix;
+}	CMPDAffix;
 
 typedef struct
 {
@@ -139,12 +139,12 @@ typedef struct
 	AFFIX	   *Affix;
 
 	/*
-	 * Temporary array of all words in the dict file. Only used during 
+	 * Temporary array of all words in the dict file. Only used during
 	 * initialization
 	 */
 	SPELL	  **Spell;
-	int			nspell; /* number of valid entries in Spell array */
-	int			mspell; /* allocated length of Spell array */
+	int			nspell;			/* number of valid entries in Spell array */
+	int			mspell;			/* allocated length of Spell array */
 
 	AffixNode  *Suffix;
 	AffixNode  *Prefix;
@@ -158,7 +158,7 @@ typedef struct
 
 	unsigned char flagval[256];
 	bool		usecompound;
-} IspellDict;
+}	IspellDict;
 
 extern TSLexeme *NINormalizeWord(IspellDict * Conf, char *word);
 extern void NIImportAffixes(IspellDict * Conf, const char *filename);

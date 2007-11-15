@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.31 2007/09/26 22:36:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.32 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ PgArchiverMain(int argc, char *argv[])
 
 	MyProcPid = getpid();		/* reset MyProcPid */
 
-	MyStartTime = time(NULL);   /* record Start Time for logging */
+	MyStartTime = time(NULL);	/* record Start Time for logging */
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
@@ -360,7 +360,7 @@ pgarch_ArchiverCopyLoop(void)
 	if (!XLogArchiveCommandSet())
 	{
 		ereport(WARNING,
-				(errmsg("archive_mode enabled, yet archive_command is not set")));
+		   (errmsg("archive_mode enabled, yet archive_command is not set")));
 		/* can't do anything if no command ... */
 		return;
 	}
@@ -476,15 +476,15 @@ pgarch_archiveXlog(char *xlog)
 	{
 		/*
 		 * If either the shell itself, or a called command, died on a signal,
-		 * abort the archiver.  We do this because system() ignores SIGINT and
+		 * abort the archiver.	We do this because system() ignores SIGINT and
 		 * SIGQUIT while waiting; so a signal is very likely something that
-		 * should have interrupted us too.  If we overreact it's no big deal,
+		 * should have interrupted us too.	If we overreact it's no big deal,
 		 * the postmaster will just start the archiver again.
 		 *
-		 * Per the Single Unix Spec, shells report exit status > 128 when
-		 * a called command died on a signal.
+		 * Per the Single Unix Spec, shells report exit status > 128 when a
+		 * called command died on a signal.
 		 */
-		bool	signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 128;
+		bool		signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 128;
 
 		ereport(signaled ? FATAL : LOG,
 				(errmsg("archive command \"%s\" failed: return code %d",

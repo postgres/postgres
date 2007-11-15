@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.92 2007/11/11 19:22:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.93 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,13 +27,13 @@
 
 
 static int32 typenameTypeMod(ParseState *pstate, const TypeName *typename,
-							 Type typ);
+				Type typ);
 
 
 /*
  * LookupTypeName
  *		Given a TypeName object, lookup the pg_type syscache entry of the type.
- *		Returns NULL if no such type can be found.  If the type is found,
+ *		Returns NULL if no such type can be found.	If the type is found,
  *		the typmod value represented in the TypeName struct is computed and
  *		stored into *typmod_p.
  *
@@ -46,7 +46,7 @@ static int32 typenameTypeMod(ParseState *pstate, const TypeName *typename,
  *
  * typmod_p can be passed as NULL if the caller does not care to know the
  * typmod value, but the typmod decoration (if any) will be validated anyway,
- * except in the case where the type is not found.  Note that if the type is
+ * except in the case where the type is not found.	Note that if the type is
  * found but is a shell, and there is typmod decoration, an error will be
  * thrown --- this is intentional.
  *
@@ -252,15 +252,15 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 		return typename->typemod;
 
 	/*
-	 * Else, type had better accept typmods.  We give a special error
-	 * message for the shell-type case, since a shell couldn't possibly
-	 * have a typmodin function.
+	 * Else, type had better accept typmods.  We give a special error message
+	 * for the shell-type case, since a shell couldn't possibly have a
+	 * typmodin function.
 	 */
 	if (!((Form_pg_type) GETSTRUCT(typ))->typisdefined)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("type modifier cannot be specified for shell type \"%s\"",
-						TypeNameToString(typename)),
+			errmsg("type modifier cannot be specified for shell type \"%s\"",
+				   TypeNameToString(typename)),
 				 parser_errposition(pstate, typename->location)));
 
 	typmodin = ((Form_pg_type) GETSTRUCT(typ))->typmodin;
@@ -281,24 +281,24 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 	n = 0;
 	foreach(l, typename->typmods)
 	{
-		Node	*tm = (Node *) lfirst(l);
-		char	*cstr = NULL;
+		Node	   *tm = (Node *) lfirst(l);
+		char	   *cstr = NULL;
 
 		if (IsA(tm, A_Const))
 		{
-			A_Const	   *ac = (A_Const *) tm;
+			A_Const    *ac = (A_Const *) tm;
 
 			/*
-			 * The grammar hands back some integers with ::int4 attached,
-			 * so allow a cast decoration if it's an Integer value, but
-			 * not otherwise.
+			 * The grammar hands back some integers with ::int4 attached, so
+			 * allow a cast decoration if it's an Integer value, but not
+			 * otherwise.
 			 */
 			if (IsA(&ac->val, Integer))
 			{
 				cstr = (char *) palloc(32);
 				snprintf(cstr, 32, "%ld", (long) ac->val.val.ival);
 			}
-			else if (ac->typename == NULL)	/* no casts allowed */
+			else if (ac->typename == NULL)		/* no casts allowed */
 			{
 				/* otherwise we can just use the str field directly. */
 				cstr = ac->val.val.str;
@@ -306,7 +306,7 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 		}
 		else if (IsA(tm, ColumnRef))
 		{
-			ColumnRef   *cr = (ColumnRef *) tm;
+			ColumnRef  *cr = (ColumnRef *) tm;
 
 			if (list_length(cr->fields) == 1)
 				cstr = strVal(linitial(cr->fields));
@@ -314,7 +314,7 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 		if (!cstr)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("type modifiers must be simple constants or identifiers"),
+			errmsg("type modifiers must be simple constants or identifiers"),
 					 parser_errposition(pstate, typename->location)));
 		datums[n++] = CStringGetDatum(cstr);
 	}

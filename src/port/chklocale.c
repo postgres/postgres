@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.7 2007/10/25 12:29:17 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.8 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ static const struct encoding_match encoding_match_list[] = {
 	{PG_EUC_KR, "IBM-eucKR"},
 	{PG_EUC_KR, "deckorean"},
 	{PG_EUC_KR, "5601"},
-	{PG_EUC_KR, "CP51949"},	/* or 20949 ? */
+	{PG_EUC_KR, "CP51949"},		/* or 20949 ? */
 
 	{PG_EUC_TW, "EUC-TW"},
 	{PG_EUC_TW, "eucTW"},
@@ -154,7 +154,7 @@ static const struct encoding_match encoding_match_list[] = {
 	{PG_ISO_8859_8, "ISO-8859-8"},
 	{PG_ISO_8859_8, "ISO8859-8"},
 	{PG_ISO_8859_8, "iso88598"},
-    {PG_ISO_8859_8, "CP28598"},
+	{PG_ISO_8859_8, "CP28598"},
 
 	{PG_SJIS, "SJIS"},
 	{PG_SJIS, "PCK"},
@@ -193,8 +193,8 @@ win32_langinfo(const char *ctype)
 	int			ln;
 
 	/*
-	 * Locale format on Win32 is <Language>_<Country>.<CodePage> .
-	 * For example, English_USA.1252.
+	 * Locale format on Win32 is <Language>_<Country>.<CodePage> . For
+	 * example, English_USA.1252.
 	 */
 	codepage = strrchr(ctype, '.');
 	if (!codepage)
@@ -206,7 +206,7 @@ win32_langinfo(const char *ctype)
 
 	return r;
 }
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 #if (defined(HAVE_LANGINFO_H) && defined(CODESET)) || defined(WIN32)
 
@@ -234,17 +234,17 @@ pg_get_encoding_from_locale(const char *ctype)
 
 		save = setlocale(LC_CTYPE, NULL);
 		if (!save)
-			return PG_SQL_ASCII;		/* setlocale() broken? */
+			return PG_SQL_ASCII;	/* setlocale() broken? */
 		/* must copy result, or it might change after setlocale */
 		save = strdup(save);
 		if (!save)
-			return PG_SQL_ASCII;		/* out of memory; unlikely */
+			return PG_SQL_ASCII;	/* out of memory; unlikely */
 
 		name = setlocale(LC_CTYPE, ctype);
 		if (!name)
 		{
 			free(save);
-			return PG_SQL_ASCII;		/* bogus ctype passed in? */
+			return PG_SQL_ASCII;	/* bogus ctype passed in? */
 		}
 
 #ifndef WIN32
@@ -263,7 +263,7 @@ pg_get_encoding_from_locale(const char *ctype)
 		/* much easier... */
 		ctype = setlocale(LC_CTYPE, NULL);
 		if (!ctype)
-			return PG_SQL_ASCII;		/* setlocale() broken? */
+			return PG_SQL_ASCII;	/* setlocale() broken? */
 #ifndef WIN32
 		sys = nl_langinfo(CODESET);
 		if (sys)
@@ -274,7 +274,7 @@ pg_get_encoding_from_locale(const char *ctype)
 	}
 
 	if (!sys)
-		return PG_SQL_ASCII;		/* out of memory; unlikely */
+		return PG_SQL_ASCII;	/* out of memory; unlikely */
 
 	/* If locale is C or POSIX, we can allow all encodings */
 	if (pg_strcasecmp(ctype, "C") == 0 || pg_strcasecmp(ctype, "POSIX") == 0)
@@ -296,6 +296,7 @@ pg_get_encoding_from_locale(const char *ctype)
 	/* Special-case kluges for particular platforms go here */
 
 #ifdef __darwin__
+
 	/*
 	 * Current OS X has many locales that report an empty string for CODESET,
 	 * but they all seem to actually use UTF-8.
@@ -309,7 +310,7 @@ pg_get_encoding_from_locale(const char *ctype)
 
 	/*
 	 * We print a warning if we got a CODESET string but couldn't recognize
-	 * it.  This means we need another entry in the table.
+	 * it.	This means we need another entry in the table.
 	 */
 #ifdef FRONTEND
 	fprintf(stderr, _("could not determine encoding for locale \"%s\": codeset is \"%s\""),
@@ -320,14 +321,13 @@ pg_get_encoding_from_locale(const char *ctype)
 	ereport(WARNING,
 			(errmsg("could not determine encoding for locale \"%s\": codeset is \"%s\"",
 					ctype, sys),
-			 errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
+		   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
 #endif
 
 	free(sys);
 	return PG_SQL_ASCII;
 }
-
-#else /* (HAVE_LANGINFO_H && CODESET) || WIN32 */
+#else							/* (HAVE_LANGINFO_H && CODESET) || WIN32 */
 
 /*
  * stub if no platform support
@@ -338,4 +338,4 @@ pg_get_encoding_from_locale(const char *ctype)
 	return PG_SQL_ASCII;
 }
 
-#endif /* (HAVE_LANGINFO_H && CODESET) || WIN32 */
+#endif   /* (HAVE_LANGINFO_H && CODESET) || WIN32 */

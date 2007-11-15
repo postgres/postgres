@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.108 2007/10/26 20:45:10 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.109 2007/11/15 21:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ extern bool Debug_deadlocks;
 /*
  * Top-level transactions are identified by VirtualTransactionIDs comprising
  * the BackendId of the backend running the xact, plus a locally-assigned
- * LocalTransactionId.  These are guaranteed unique over the short term,
+ * LocalTransactionId.	These are guaranteed unique over the short term,
  * but will be reused after a database restart; hence they should never
  * be stored on disk.
  *
@@ -60,11 +60,12 @@ extern bool Debug_deadlocks;
 typedef struct
 {
 	BackendId	backendId;		/* determined at backend startup */
-	LocalTransactionId localTransactionId;	/* backend-local transaction id */
-} VirtualTransactionId;
+	LocalTransactionId localTransactionId;		/* backend-local transaction
+												 * id */
+}	VirtualTransactionId;
 
 #define InvalidLocalTransactionId		0
-#define LocalTransactionIdIsValid(lxid)	((lxid) != InvalidLocalTransactionId)
+#define LocalTransactionIdIsValid(lxid) ((lxid) != InvalidLocalTransactionId)
 #define VirtualTransactionIdIsValid(vxid) \
 	(((vxid).backendId != InvalidBackendId) && \
 	 LocalTransactionIdIsValid((vxid).localTransactionId))
@@ -171,7 +172,7 @@ typedef enum LockTagType
 	/* ID info for a tuple is PAGE info + OffsetNumber */
 	LOCKTAG_TRANSACTION,		/* transaction (for waiting for xact done) */
 	/* ID info for a transaction is its TransactionId */
-	LOCKTAG_VIRTUALTRANSACTION,	/* virtual transaction (ditto) */
+	LOCKTAG_VIRTUALTRANSACTION, /* virtual transaction (ditto) */
 	/* ID info for a virtual transaction is its VirtualTransactionId */
 	LOCKTAG_OBJECT,				/* non-relation database object */
 	/* ID info for an object is DB OID + CLASS OID + OBJECT OID + SUBID */
@@ -444,8 +445,8 @@ typedef enum
 	DS_SOFT_DEADLOCK,			/* deadlock avoided by queue rearrangement */
 	DS_HARD_DEADLOCK,			/* deadlock, no way out but ERROR */
 	DS_BLOCKED_BY_AUTOVACUUM	/* no deadlock; queue blocked by autovacuum
-								   worker */
-} DeadLockState;
+								 * worker */
+}	DeadLockState;
 
 
 /*
@@ -476,7 +477,7 @@ extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
 extern void LockReleaseCurrentOwner(void);
 extern void LockReassignCurrentOwner(void);
 extern VirtualTransactionId *GetLockConflicts(const LOCKTAG *locktag,
-											  LOCKMODE lockmode);
+				 LOCKMODE lockmode);
 extern void AtPrepare_Locks(void);
 extern void PostPrepare_Locks(TransactionId xid);
 extern int LockCheckConflicts(LockMethod lockMethodTable,

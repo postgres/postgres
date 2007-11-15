@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.196 2007/09/14 15:58:02 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.197 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,11 +183,11 @@ pq_close(int code, Datum arg)
 
 		if (MyProcPort->gss->cred != GSS_C_NO_CREDENTIAL)
 			gss_release_cred(&min_s, &MyProcPort->gss->cred);
-#endif /* ENABLE_GSS */
+#endif   /* ENABLE_GSS */
 		/* GSS and SSPI share the port->gss struct */
 
 		free(MyProcPort->gss);
-#endif /* ENABLE_GSS || ENABLE_SSPI */
+#endif   /* ENABLE_GSS || ENABLE_SSPI */
 
 		/* Cleanly shut down SSL layer */
 		secure_close(MyProcPort);
@@ -255,6 +255,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	struct addrinfo hint;
 	int			listen_index = 0;
 	int			added = 0;
+
 #if !defined(WIN32) || defined(IPV6_V6ONLY)
 	int			one = 1;
 #endif
@@ -356,14 +357,17 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		}
 
 #ifndef WIN32
+
 		/*
-		 * Without the SO_REUSEADDR flag, a new postmaster can't be started right away after
-		 * a stop or crash, giving "address already in use" error on TCP ports.
+		 * Without the SO_REUSEADDR flag, a new postmaster can't be started
+		 * right away after a stop or crash, giving "address already in use"
+		 * error on TCP ports.
 		 *
-		 * On win32, however, this behavior only happens if the SO_EXLUSIVEADDRUSE is set.
-		 * With SO_REUSEADDR, win32 allows multiple servers to listen on the same address,
-		 * resulting in unpredictable behavior. With no flags at all, win32 behaves as
-		 * Unix with SO_REUSEADDR.
+		 * On win32, however, this behavior only happens if the
+		 * SO_EXLUSIVEADDRUSE is set. With SO_REUSEADDR, win32 allows multiple
+		 * servers to listen on the same address, resulting in unpredictable
+		 * behavior. With no flags at all, win32 behaves as Unix with
+		 * SO_REUSEADDR.
 		 */
 		if (!IS_AF_UNIX(addr->ai_family))
 		{
@@ -577,6 +581,7 @@ StreamConnection(int server_fd, Port *port)
 		ereport(LOG,
 				(errcode_for_socket_access(),
 				 errmsg("could not accept new connection: %m")));
+
 		/*
 		 * If accept() fails then postmaster.c will still see the server
 		 * socket as read-ready, and will immediately try again.  To avoid

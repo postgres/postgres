@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.63 2007/08/02 23:39:45 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.64 2007/11/15 21:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,8 @@
 #include <gssapi.h>
 #else
 #include <gssapi/gssapi.h>
-#endif /* HAVE_GSSAPI_H */
-/* 
+#endif   /* HAVE_GSSAPI_H */
+/*
  * GSSAPI brings in headers that set a lot of things in the global namespace on win32,
  * that doesn't match the msvc build. It gives a bunch of compiler warnings that we ignore,
  * but also defines a symbol that simply does not exist. Undefine it again.
@@ -43,7 +43,7 @@
 #ifdef WIN32_ONLY_COMPILER
 #undef HAVE_GETADDRINFO
 #endif
-#endif /* ENABLE_GSS */
+#endif   /* ENABLE_GSS */
 
 #ifdef ENABLE_SSPI
 #define SECURITY_WIN32
@@ -54,12 +54,13 @@
 /*
  * Define a fake structure compatible with GSSAPI on Unix.
  */
-typedef struct {
-	void *value;
-	int length;
-} gss_buffer_desc;
+typedef struct
+{
+	void	   *value;
+	int			length;
+}	gss_buffer_desc;
 #endif
-#endif /* ENABLE_SSPI */
+#endif   /* ENABLE_SSPI */
 
 #include "libpq/hba.h"
 #include "libpq/pqcomm.h"
@@ -78,13 +79,13 @@ typedef enum CAC_state
 #if defined(ENABLE_GSS) | defined(ENABLE_SSPI)
 typedef struct
 {
-	gss_buffer_desc	outbuf;		/* GSSAPI output token buffer */
+	gss_buffer_desc outbuf;		/* GSSAPI output token buffer */
 #ifdef ENABLE_GSS
-	gss_cred_id_t	cred;		/* GSSAPI connection cred's */
-	gss_ctx_id_t	ctx;		/* GSSAPI connection context */
-	gss_name_t		name;		/* GSSAPI client name */
+	gss_cred_id_t cred;			/* GSSAPI connection cred's */
+	gss_ctx_id_t ctx;			/* GSSAPI connection context */
+	gss_name_t	name;			/* GSSAPI client name */
 #endif
-} pg_gssinfo;
+}	pg_gssinfo;
 #endif
 
 /*
@@ -146,10 +147,10 @@ typedef struct Port
 	int			keepalives_count;
 
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
+
 	/*
-	 * If GSSAPI is supported, store GSSAPI information.
-	 * Oterwise, store a NULL pointer to make sure offsets
-	 * in the struct remain the same.
+	 * If GSSAPI is supported, store GSSAPI information. Oterwise, store a
+	 * NULL pointer to make sure offsets in the struct remain the same.
 	 */
 	pg_gssinfo *gss;
 #else

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress_main.c,v 1.1 2007/06/12 11:07:34 mha Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress_main.c,v 1.2 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,9 @@
  */
 static PID_TYPE
 psql_start_test(const char *testname,
-				_stringlist **resultfiles,
-				_stringlist **expectfiles,
-				_stringlist **tags)
+				_stringlist ** resultfiles,
+				_stringlist ** expectfiles,
+				_stringlist ** tags)
 {
 	PID_TYPE	pid;
 	char		infile[MAXPGPATH];

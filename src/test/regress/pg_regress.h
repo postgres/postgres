@@ -4,7 +4,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.h,v 1.1 2007/06/12 11:07:34 mha Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.h,v 1.2 2007/11/15 21:14:46 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -26,11 +26,11 @@ typedef struct _stringlist
 	struct _stringlist *next;
 }	_stringlist;
 
-typedef PID_TYPE (*test_function)(const char *,
-				_stringlist **,
-				_stringlist **,
-				_stringlist **);
-typedef void (*init_function)(void);
+typedef PID_TYPE(*test_function) (const char *,
+						  _stringlist **,
+						  _stringlist **,
+						  _stringlist **);
+typedef void (*init_function) (void);
 
 extern char *bindir;
 extern char *libdir;
@@ -41,6 +41,7 @@ extern _stringlist *dblist;
 extern bool debug;
 extern char *inputdir;
 extern char *outputdir;
+
 /*
  * This should not be global but every module should be able to read command
  * line parameters.
@@ -51,9 +52,8 @@ extern const char *basic_diff_opts;
 extern const char *pretty_diff_opts;
 
 int regression_main(int argc, char *argv[],
-					init_function ifunc, test_function tfunc);
-void add_stringlist_item(_stringlist ** listhead, const char *str);
-PID_TYPE spawn_process(const char *cmdline);
-void exit_nicely(int code);
-void replace_string(char *string, char *replace, char *replacement);
-
+				init_function ifunc, test_function tfunc);
+void		add_stringlist_item(_stringlist ** listhead, const char *str);
+PID_TYPE	spawn_process(const char *cmdline);
+void		exit_nicely(int code);
+void		replace_string(char *string, char *replace, char *replacement);

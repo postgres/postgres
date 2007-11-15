@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.6 2007/11/10 15:39:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.7 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,20 +35,20 @@ typedef struct LexemeInfo
 	uint16		tnvariant;		/* total num lexemes in one variant */
 	struct LexemeInfo *nextentry;
 	struct LexemeInfo *nextvariant;
-} LexemeInfo;
+}	LexemeInfo;
 
 typedef struct
 {
 	char	   *lexeme;
 	LexemeInfo *entries;
-} TheLexeme;
+}	TheLexeme;
 
 typedef struct
 {
 	uint16		lastlexeme;		/* number lexemes to substitute */
 	uint16		reslen;
 	TSLexeme   *res;			/* prepared substituted result */
-} TheSubstitute;
+}	TheSubstitute;
 
 typedef struct
 {
@@ -66,7 +66,7 @@ typedef struct
 	 */
 	TheSubstitute *subst;
 	int			nsubst;
-} DictThesaurus;
+}	DictThesaurus;
 
 
 static void
@@ -412,16 +412,16 @@ compileTheLexeme(DictThesaurus * d)
 	{
 		TSLexeme   *ptr;
 
-		if (strcmp(d->wrds[i].lexeme, "?") == 0)	/* Is stop word marker? */
+		if (strcmp(d->wrds[i].lexeme, "?") == 0)		/* Is stop word marker? */
 			newwrds = addCompiledLexeme(newwrds, &nnw, &tnm, NULL, d->wrds[i].entries, 0);
 		else
 		{
 			ptr = (TSLexeme *) DatumGetPointer(FunctionCall4(&(d->subdict->lexize),
-										   PointerGetDatum(d->subdict->dictData),
-											  PointerGetDatum(d->wrds[i].lexeme),
-										Int32GetDatum(strlen(d->wrds[i].lexeme)),
-														 PointerGetDatum(NULL)));
-	
+									   PointerGetDatum(d->subdict->dictData),
+										  PointerGetDatum(d->wrds[i].lexeme),
+									Int32GetDatum(strlen(d->wrds[i].lexeme)),
+													 PointerGetDatum(NULL)));
+
 			if (!ptr)
 				elog(ERROR, "thesaurus word-sample \"%s\" isn't recognized by subdictionary (rule %d)",
 					 d->wrds[i].lexeme, d->wrds[i].entries->idsubst + 1);
@@ -435,7 +435,7 @@ compileTheLexeme(DictThesaurus * d)
 					TSLexeme   *remptr = ptr + 1;
 					int			tnvar = 1;
 					int			curvar = ptr->nvariant;
-	
+
 					/* compute n words in one variant */
 					while (remptr->lexeme)
 					{
@@ -444,14 +444,14 @@ compileTheLexeme(DictThesaurus * d)
 						tnvar++;
 						remptr++;
 					}
-	
+
 					remptr = ptr;
 					while (remptr->lexeme && remptr->nvariant == curvar)
 					{
 						newwrds = addCompiledLexeme(newwrds, &nnw, &tnm, remptr, d->wrds[i].entries, tnvar);
 						remptr++;
 					}
-	
+
 					ptr = remptr;
 				}
 			}
@@ -653,7 +653,8 @@ thesaurus_init(PG_FUNCTION_ARGS)
 static LexemeInfo *
 findTheLexeme(DictThesaurus * d, char *lexeme)
 {
-	TheLexeme	key, *res;
+	TheLexeme	key,
+			   *res;
 
 	if (d->nwrds == 0)
 		return NULL;

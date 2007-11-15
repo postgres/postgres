@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.31 2007/10/03 11:11:12 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.32 2007/11/15 21:14:45 momjian Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -53,7 +53,7 @@ struct statement
 	enum COMPAT_MODE compat;
 	bool		force_indicator;
 	enum ECPG_statement_type statement_type;
-	bool	questionmarks;
+	bool		questionmarks;
 	struct variable *inlist;
 	struct variable *outlist;
 };
@@ -115,8 +115,8 @@ struct variable
 void		ecpg_add_mem(void *ptr, int lineno);
 
 bool ecpg_get_data(const PGresult *, int, int, int, enum ECPGttype type,
-			 enum ECPGttype, char *, char *, long, long, long,
-			 enum ARRAY_TYPE, enum COMPAT_MODE, bool);
+			  enum ECPGttype, char *, char *, long, long, long,
+			  enum ARRAY_TYPE, enum COMPAT_MODE, bool);
 
 #ifdef ENABLE_THREAD_SAFETY
 void		ecpg_pthreads_init(void);
@@ -128,7 +128,7 @@ void		ecpg_free(void *);
 bool		ecpg_init(const struct connection *, const char *, const int);
 char	   *ecpg_strdup(const char *, int);
 const char *ecpg_type_name(enum ECPGttype);
-int ecpg_dynamic_type(Oid);
+int			ecpg_dynamic_type(Oid);
 void		ecpg_free_auto_mem(void);
 void		ecpg_clear_auto_mem(void);
 
@@ -137,17 +137,17 @@ struct descriptor *ecpggetdescp(int, char *);
 struct descriptor *ecpg_find_desc(int line, const char *name);
 
 bool ecpg_store_result(const PGresult *results, int act_field,
-				 const struct statement * stmt, struct variable * var);
-bool ecpg_store_input(const int, const bool, const struct variable *, const char **, bool);
+				  const struct statement * stmt, struct variable * var);
+bool		ecpg_store_input(const int, const bool, const struct variable *, const char **, bool);
 
-bool ecpg_check_PQresult(PGresult *, int, PGconn *, enum COMPAT_MODE);
-void ecpg_raise(int line, int code, const char *sqlstate, const char *str);
-void ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat);
-char *ecpg_prepared(const char *, struct connection *, int);
-bool ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *conn);
-void ecpg_log(const char *format,...);
-bool ecpg_auto_prepare(int, const char *, const int, char **, const char *);
-void ecpg_init_sqlca(struct sqlca_t * sqlca);
+bool		ecpg_check_PQresult(PGresult *, int, PGconn *, enum COMPAT_MODE);
+void		ecpg_raise(int line, int code, const char *sqlstate, const char *str);
+void		ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat);
+char	   *ecpg_prepared(const char *, struct connection *, int);
+bool		ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection * conn);
+void		ecpg_log(const char *format,...);
+bool		ecpg_auto_prepare(int, const char *, const int, char **, const char *);
+void		ecpg_init_sqlca(struct sqlca_t * sqlca);
 
 /* SQLSTATE values generated or processed by ecpglib (intentionally
  * not exported -- users should refer to the codes directly) */

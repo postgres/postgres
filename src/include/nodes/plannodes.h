@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.96 2007/10/11 18:05:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.97 2007/11/15 21:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ typedef struct PlannedStmt
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
 	int			nParamExec;		/* number of PARAM_EXEC Params used */
-} PlannedStmt;
+}	PlannedStmt;
 
 /* macro for fetching the Plan associated with a SubPlan node */
 #define exec_subplan_get_plan(plannedstmt, subplan) \
@@ -406,7 +406,7 @@ typedef struct NestLoop
  *
  * The expected ordering of each mergeable column is described by a btree
  * opfamily OID, a direction (BTLessStrategyNumber or BTGreaterStrategyNumber)
- * and a nulls-first flag.  Note that the two sides of each mergeclause may
+ * and a nulls-first flag.	Note that the two sides of each mergeclause may
  * be of different datatypes, but they are ordered the same way according to
  * the common opfamily.  The operator in each mergeclause must be an equality
  * operator of the indicated opfamily.
@@ -415,9 +415,9 @@ typedef struct NestLoop
 typedef struct MergeJoin
 {
 	Join		join;
-	List	   *mergeclauses;		/* mergeclauses as expression trees */
+	List	   *mergeclauses;	/* mergeclauses as expression trees */
 	/* these are arrays, but have the same length as the mergeclauses list: */
-	Oid		   *mergeFamilies;		/* per-clause OIDs of btree opfamilies */
+	Oid		   *mergeFamilies;	/* per-clause OIDs of btree opfamilies */
 	int		   *mergeStrategies;	/* per-clause ordering (ASC or DESC) */
 	bool	   *mergeNullsFirst;	/* per-clause nulls ordering */
 } MergeJoin;

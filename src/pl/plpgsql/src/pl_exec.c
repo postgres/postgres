@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.199 2007/07/25 04:19:08 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.200 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,24 +43,24 @@ static const char *const raise_skip_msg = "RAISE";
  * creates its own "eval_econtext" ExprContext within this estate for
  * per-evaluation workspace.  eval_econtext is freed at normal function exit,
  * and the EState is freed at transaction end (in case of error, we assume
- * that the abort mechanisms clean it all up).  In order to be sure
+ * that the abort mechanisms clean it all up).	In order to be sure
  * ExprContext callbacks are handled properly, each subtransaction has to have
- * its own such EState; hence we need a stack.  We use a simple counter to
+ * its own such EState; hence we need a stack.	We use a simple counter to
  * distinguish different instantiations of the EState, so that we can tell
  * whether we have a current copy of a prepared expression.
  *
  * This arrangement is a bit tedious to maintain, but it's worth the trouble
  * so that we don't have to re-prepare simple expressions on each trip through
- * a function.  (We assume the case to optimize is many repetitions of a
+ * a function.	(We assume the case to optimize is many repetitions of a
  * function within a transaction.)
  */
 typedef struct SimpleEstateStackEntry
 {
-	EState *xact_eval_estate;				/* EState for current xact level */
-	long int	xact_estate_simple_id;		/* ID for xact_eval_estate */
-	SubTransactionId xact_subxid;			/* ID for current subxact */
-	struct SimpleEstateStackEntry *next;	/* next stack entry up */
-} SimpleEstateStackEntry;
+	EState	   *xact_eval_estate;		/* EState for current xact level */
+	long int	xact_estate_simple_id;	/* ID for xact_eval_estate */
+	SubTransactionId xact_subxid;		/* ID for current subxact */
+	struct SimpleEstateStackEntry *next;		/* next stack entry up */
+}	SimpleEstateStackEntry;
 
 static SimpleEstateStackEntry *simple_estate_stack = NULL;
 static long int simple_estate_id_counter = 0;
@@ -106,7 +106,7 @@ static int exec_stmt_return(PLpgSQL_execstate *estate,
 static int exec_stmt_return_next(PLpgSQL_execstate *estate,
 					  PLpgSQL_stmt_return_next *stmt);
 static int exec_stmt_return_query(PLpgSQL_execstate *estate,
-					  PLpgSQL_stmt_return_query *stmt);
+					   PLpgSQL_stmt_return_query * stmt);
 static int exec_stmt_raise(PLpgSQL_execstate *estate,
 				PLpgSQL_stmt_raise *stmt);
 static int exec_stmt_execsql(PLpgSQL_execstate *estate,
@@ -732,15 +732,15 @@ plpgsql_exec_error_callback(void *arg)
 		 * message dictionary.
 		 *
 		 * If both err_text and err_stmt are set, use the err_text as
-		 * description, but report the err_stmt's line number.  When
-		 * err_stmt is not set, we're in function entry/exit, or some such
-		 * place not attached to a specific line number.
+		 * description, but report the err_stmt's line number.  When err_stmt
+		 * is not set, we're in function entry/exit, or some such place not
+		 * attached to a specific line number.
 		 */
 		if (estate->err_stmt != NULL)
 		{
 			/*
-			 * translator: last %s is a phrase such as "during statement
-			 * block local variable initialization"
+			 * translator: last %s is a phrase such as "during statement block
+			 * local variable initialization"
 			 */
 			errcontext("PL/pgSQL function \"%s\" line %d %s",
 					   estate->err_func->fn_name,
@@ -899,15 +899,15 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 					{
 						/*
 						 * If needed, give the datatype a chance to reject
-						 * NULLs, by assigning a NULL to the variable.
-						 * We claim the value is of type UNKNOWN, not the
-						 * var's datatype, else coercion will be skipped.
-						 * (Do this before the notnull check to be
-						 * consistent with exec_assign_value.)
+						 * NULLs, by assigning a NULL to the variable. We
+						 * claim the value is of type UNKNOWN, not the var's
+						 * datatype, else coercion will be skipped. (Do this
+						 * before the notnull check to be consistent with
+						 * exec_assign_value.)
 						 */
 						if (!var->datatype->typinput.fn_strict)
 						{
-							bool	valIsNull = true;
+							bool		valIsNull = true;
 
 							exec_assign_value(estate,
 											  (PLpgSQL_datum *) var,
@@ -991,9 +991,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 
 			/*
 			 * If the block ended with RETURN, we may need to copy the return
-			 * value out of the subtransaction eval_context.  This is currently
-			 * only needed for scalar result types --- rowtype values will
-			 * always exist in the function's own memory context.
+			 * value out of the subtransaction eval_context.  This is
+			 * currently only needed for scalar result types --- rowtype
+			 * values will always exist in the function's own memory context.
 			 */
 			if (rc == PLPGSQL_RC_RETURN &&
 				!estate->retisset &&
@@ -1590,7 +1590,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		if (step_value <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("BY value of FOR loop must be greater than zero")));
+				  errmsg("BY value of FOR loop must be greater than zero")));
 	}
 	else
 		step_value = 1;
@@ -2151,9 +2151,9 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
  */
 static int
 exec_stmt_return_query(PLpgSQL_execstate *estate,
-					   PLpgSQL_stmt_return_query *stmt)
+					   PLpgSQL_stmt_return_query * stmt)
 {
-	Portal 		portal;
+	Portal		portal;
 
 	if (!estate->retisset)
 		ereport(ERROR,
@@ -2168,12 +2168,12 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 	if (!compatible_tupdesc(estate->rettupdesc, portal->tupDesc))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("structure of query does not match function result type")));
+		  errmsg("structure of query does not match function result type")));
 
 	while (true)
 	{
-		MemoryContext 	old_cxt;
-		int 			i;
+		MemoryContext old_cxt;
+		int			i;
 
 		SPI_cursor_fetch(portal, true, 50);
 		if (SPI_processed == 0)
@@ -2182,7 +2182,8 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 		old_cxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
 		for (i = 0; i < SPI_processed; i++)
 		{
-			HeapTuple tuple = SPI_tuptable->vals[i];
+			HeapTuple	tuple = SPI_tuptable->vals[i];
+
 			tuplestore_puttuple(estate->tuple_store, tuple);
 		}
 		MemoryContextSwitchTo(old_cxt);
@@ -3198,7 +3199,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 
 /* ----------
  * exec_stmt_fetch			Fetch from a cursor into a target, or just
- *                          move the current position of the cursor
+ *							move the current position of the cursor
  * ----------
  */
 static int
@@ -3234,7 +3235,7 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 	/* Calculate position for FETCH_RELATIVE or FETCH_ABSOLUTE */
 	if (stmt->expr)
 	{
-		bool isnull;
+		bool		isnull;
 
 		/* XXX should be doing this in LONG not INT width */
 		how_many = exec_eval_integer(estate, stmt->expr, &isnull);
@@ -4153,11 +4154,10 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 		return false;
 
 	/*
-	 * Revalidate cached plan, so that we will notice if it became stale.
-	 * (We also need to hold a refcount while using the plan.)  Note that
-	 * even if replanning occurs, the length of plancache_list can't change,
-	 * since it is a property of the raw parsetree generated from the query
-	 * text.
+	 * Revalidate cached plan, so that we will notice if it became stale. (We
+	 * also need to hold a refcount while using the plan.)	Note that even if
+	 * replanning occurs, the length of plancache_list can't change, since it
+	 * is a property of the raw parsetree generated from the query text.
 	 */
 	Assert(list_length(expr->plan->plancache_list) == 1);
 	plansource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
@@ -4350,13 +4350,13 @@ exec_move_row(PLpgSQL_execstate *estate,
 	 * Row is a bit more complicated in that we assign the individual
 	 * attributes of the tuple to the variables the row points to.
 	 *
-	 * NOTE: this code used to demand row->nfields == HeapTupleHeaderGetNatts(tup->t_data,
-	 * but that's wrong.  The tuple might have more fields than we expected if
-	 * it's from an inheritance-child table of the current table, or it might
-	 * have fewer if the table has had columns added by ALTER TABLE. Ignore
-	 * extra columns and assume NULL for missing columns, the same as
-	 * heap_getattr would do.  We also have to skip over dropped columns in
-	 * either the source or destination.
+	 * NOTE: this code used to demand row->nfields ==
+	 * HeapTupleHeaderGetNatts(tup->t_data, but that's wrong.  The tuple might
+	 * have more fields than we expected if it's from an inheritance-child
+	 * table of the current table, or it might have fewer if the table has had
+	 * columns added by ALTER TABLE. Ignore extra columns and assume NULL for
+	 * missing columns, the same as heap_getattr would do.	We also have to
+	 * skip over dropped columns in either the source or destination.
 	 *
 	 * If we have no tuple data at all, we'll assign NULL to all columns of
 	 * the row variable.
@@ -4785,7 +4785,7 @@ exec_simple_check_node(Node *node)
 
 		case T_XmlExpr:
 			{
-				XmlExpr *expr = (XmlExpr *) node;
+				XmlExpr    *expr = (XmlExpr *) node;
 
 				if (!exec_simple_check_node((Node *) expr->named_args))
 					return FALSE;
@@ -4854,8 +4854,8 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	TargetEntry *tle;
 
 	/*
-	 * Initialize to "not simple", and remember the plan generation number
-	 * we last checked.  (If the query produces more or less than one parsetree
+	 * Initialize to "not simple", and remember the plan generation number we
+	 * last checked.  (If the query produces more or less than one parsetree
 	 * we just leave expr_simple_generation set to 0.)
 	 */
 	expr->expr_simple_expr = NULL;
@@ -5046,7 +5046,7 @@ plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 		simple_estate_stack->xact_subxid == mySubid)
 	{
 		SimpleEstateStackEntry *next;
-		
+
 		if (event == SUBXACT_EVENT_COMMIT_SUB)
 			FreeExecutorState(simple_estate_stack->xact_eval_estate);
 		next = simple_estate_stack->next;

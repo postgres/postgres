@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.61 2007/09/25 20:03:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.62 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,10 +36,10 @@ typedef struct
 	 */
 
 	/*
-	 * Statistics.  These counters should be wide enough that they can't
+	 * Statistics.	These counters should be wide enough that they can't
 	 * overflow during a single bgwriter cycle.
 	 */
-	uint32		completePasses;		/* Complete cycles of the clock sweep */
+	uint32		completePasses; /* Complete cycles of the clock sweep */
 	uint32		numBufferAllocs;	/* Buffers allocated since last reset */
 } BufferStrategyControl;
 
@@ -57,31 +57,33 @@ typedef struct BufferAccessStrategyData
 	BufferAccessStrategyType btype;
 	/* Number of elements in buffers[] array */
 	int			ring_size;
+
 	/*
 	 * Index of the "current" slot in the ring, ie, the one most recently
 	 * returned by GetBufferFromRing.
 	 */
 	int			current;
+
 	/*
-	 * True if the buffer just returned by StrategyGetBuffer had been in
-	 * the ring already.
+	 * True if the buffer just returned by StrategyGetBuffer had been in the
+	 * ring already.
 	 */
 	bool		current_was_in_ring;
 
 	/*
-	 * Array of buffer numbers.  InvalidBuffer (that is, zero) indicates
-	 * we have not yet selected a buffer for this ring slot.  For allocation
+	 * Array of buffer numbers.  InvalidBuffer (that is, zero) indicates we
+	 * have not yet selected a buffer for this ring slot.  For allocation
 	 * simplicity this is palloc'd together with the fixed fields of the
 	 * struct.
 	 */
-	Buffer		buffers[1];				/* VARIABLE SIZE ARRAY */
-} BufferAccessStrategyData;
+	Buffer		buffers[1];		/* VARIABLE SIZE ARRAY */
+}	BufferAccessStrategyData;
 
 
 /* Prototypes for internal functions */
 static volatile BufferDesc *GetBufferFromRing(BufferAccessStrategy strategy);
 static void AddBufferToRing(BufferAccessStrategy strategy,
-							volatile BufferDesc *buf);
+				volatile BufferDesc *buf);
 
 
 /*
@@ -108,8 +110,8 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 	int			trycounter;
 
 	/*
-	 * If given a strategy object, see whether it can select a buffer.
-	 * We assume strategy objects don't need the BufFreelistLock.
+	 * If given a strategy object, see whether it can select a buffer. We
+	 * assume strategy objects don't need the BufFreelistLock.
 	 */
 	if (strategy != NULL)
 	{
@@ -127,7 +129,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 
 	/*
 	 * We count buffer allocation requests so that the bgwriter can estimate
-	 * the rate of buffer consumption.  Note that buffers recycled by a
+	 * the rate of buffer consumption.	Note that buffers recycled by a
 	 * strategy object are intentionally not counted here.
 	 */
 	StrategyControl->numBufferAllocs++;
@@ -151,8 +153,8 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
 		 * it; discard it and retry.  (This can only happen if VACUUM put a
 		 * valid buffer in the freelist and then someone else used it before
-		 * we got to it.  It's probably impossible altogether as of 8.3,
-		 * but we'd better check anyway.)
+		 * we got to it.  It's probably impossible altogether as of 8.3, but
+		 * we'd better check anyway.)
 		 */
 		LockBufHdr(buf);
 		if (buf->refcount == 0 && buf->usage_count == 0)
@@ -246,7 +248,7 @@ StrategyFreeBuffer(volatile BufferDesc *buf)
  *
  * In addition, we return the completed-pass count (which is effectively
  * the higher-order bits of nextVictimBuffer) and the count of recent buffer
- * allocs if non-NULL pointers are passed.  The alloc count is reset after
+ * allocs if non-NULL pointers are passed.	The alloc count is reset after
  * being read.
  */
 int
@@ -363,12 +365,12 @@ BufferAccessStrategy
 GetAccessStrategy(BufferAccessStrategyType btype)
 {
 	BufferAccessStrategy strategy;
-	int		ring_size;
+	int			ring_size;
 
 	/*
-	 * Select ring size to use.  See buffer/README for rationales.
-	 * (Currently all cases are the same size, but keep this code
-	 * structure for flexibility.)
+	 * Select ring size to use.  See buffer/README for rationales. (Currently
+	 * all cases are the same size, but keep this code structure for
+	 * flexibility.)
 	 *
 	 * Note: if you change the ring size for BAS_BULKREAD, see also
 	 * SYNC_SCAN_REPORT_INTERVAL in access/heap/syncscan.c.
@@ -438,9 +440,9 @@ GetBufferFromRing(BufferAccessStrategy strategy)
 		strategy->current = 0;
 
 	/*
-	 * If the slot hasn't been filled yet, tell the caller to allocate
-	 * a new buffer with the normal allocation strategy.  He will then
-	 * fill this slot by calling AddBufferToRing with the new buffer.
+	 * If the slot hasn't been filled yet, tell the caller to allocate a new
+	 * buffer with the normal allocation strategy.	He will then fill this
+	 * slot by calling AddBufferToRing with the new buffer.
 	 */
 	bufnum = strategy->buffers[strategy->current];
 	if (bufnum == InvalidBuffer)
@@ -454,9 +456,9 @@ GetBufferFromRing(BufferAccessStrategy strategy)
 	 *
 	 * If usage_count is 0 or 1 then the buffer is fair game (we expect 1,
 	 * since our own previous usage of the ring element would have left it
-	 * there, but it might've been decremented by clock sweep since then).
-	 * A higher usage_count indicates someone else has touched the buffer,
-	 * so we shouldn't re-use it.
+	 * there, but it might've been decremented by clock sweep since then). A
+	 * higher usage_count indicates someone else has touched the buffer, so we
+	 * shouldn't re-use it.
 	 */
 	buf = &BufferDescriptors[bufnum - 1];
 	LockBufHdr(buf);
@@ -492,7 +494,7 @@ AddBufferToRing(BufferAccessStrategy strategy, volatile BufferDesc *buf)
  *
  * When a nondefault strategy is used, the buffer manager calls this function
  * when it turns out that the buffer selected by StrategyGetBuffer needs to
- * be written out and doing so would require flushing WAL too.  This gives us
+ * be written out and doing so would require flushing WAL too.	This gives us
  * a chance to choose a different victim.
  *
  * Returns true if buffer manager should ask for a new victim, and false
@@ -507,7 +509,7 @@ StrategyRejectBuffer(BufferAccessStrategy strategy, volatile BufferDesc *buf)
 
 	/* Don't muck with behavior of normal buffer-replacement strategy */
 	if (!strategy->current_was_in_ring ||
-		strategy->buffers[strategy->current] != BufferDescriptorGetBuffer(buf))
+	  strategy->buffers[strategy->current] != BufferDescriptorGetBuffer(buf))
 		return false;
 
 	/*

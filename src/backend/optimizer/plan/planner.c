@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.223 2007/10/11 18:05:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.224 2007/11/15 21:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,8 +174,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	Assert(list_length(glob->subplans) == list_length(glob->subrtables));
 	forboth(lp, glob->subplans, lr, glob->subrtables)
 	{
-		Plan   *subplan = (Plan *) lfirst(lp);
-		List   *subrtable = (List *) lfirst(lr);
+		Plan	   *subplan = (Plan *) lfirst(lp);
+		List	   *subrtable = (List *) lfirst(lr);
 
 		lfirst(lp) = set_plan_references(glob, subplan, subrtable);
 	}
@@ -229,7 +229,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
  *--------------------
  */
 Plan *
-subquery_planner(PlannerGlobal *glob, Query *parse,
+subquery_planner(PlannerGlobal * glob, Query *parse,
 				 Index level, double tuple_fraction,
 				 PlannerInfo **subroot)
 {
@@ -741,9 +741,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	{
 		tuple_fraction = preprocess_limit(root, tuple_fraction,
 										  &offset_est, &count_est);
+
 		/*
-		 * If we have a known LIMIT, and don't have an unknown OFFSET,
-		 * we can estimate the effects of using a bounded sort.
+		 * If we have a known LIMIT, and don't have an unknown OFFSET, we can
+		 * estimate the effects of using a bounded sort.
 		 */
 		if (count_est > 0 && offset_est >= 0)
 			limit_tuples = (double) count_est + (double) offset_est;
@@ -777,7 +778,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 */
 		current_pathkeys = make_pathkeys_for_sortclauses(root,
 														 set_sortclauses,
-													result_plan->targetlist,
+													 result_plan->targetlist,
 														 true);
 
 		/*
@@ -1446,7 +1447,7 @@ extract_grouping_ops(List *groupClause)
 		GroupClause *groupcl = (GroupClause *) lfirst(glitem);
 
 		groupOperators[colno] = get_equality_op_for_ordering_op(groupcl->sortop);
-		if (!OidIsValid(groupOperators[colno]))		/* shouldn't happen */
+		if (!OidIsValid(groupOperators[colno])) /* shouldn't happen */
 			elog(ERROR, "could not find equality operator for ordering operator %u",
 				 groupcl->sortop);
 		colno++;
@@ -1477,8 +1478,8 @@ choose_hashed_grouping(PlannerInfo *root,
 	/*
 	 * Check can't-do-it conditions, including whether the grouping operators
 	 * are hashjoinable.  (We assume hashing is OK if they are marked
-	 * oprcanhash.  If there isn't actually a supporting hash function,
-	 * the executor will complain at runtime.)
+	 * oprcanhash.	If there isn't actually a supporting hash function, the
+	 * executor will complain at runtime.)
 	 *
 	 * Executor doesn't support hashed aggregation with DISTINCT aggregates.
 	 * (Doing so would imply storing *all* the input values in the hash table,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.36 2007/11/05 14:11:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.37 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@
  *
  * NB: Changing TOAST_MAX_CHUNK_SIZE requires an initdb.
  */
-#define EXTERN_TUPLES_PER_PAGE	4				/* tweak only this */
+#define EXTERN_TUPLES_PER_PAGE	4		/* tweak only this */
 
 /* Note: sizeof(PageHeaderData) includes the first ItemId on the page */
 #define EXTERN_TUPLE_MAX_SIZE	\
@@ -93,8 +93,8 @@
  * ----------
  */
 extern HeapTuple toast_insert_or_update(Relation rel,
-										HeapTuple newtup, HeapTuple oldtup,
-										bool use_wal, bool use_fsm);
+					   HeapTuple newtup, HeapTuple oldtup,
+					   bool use_wal, bool use_fsm);
 
 /* ----------
  * toast_delete -
@@ -112,7 +112,7 @@ extern void toast_delete(Relation rel, HeapTuple oldtup);
  *		in compressed format.
  * ----------
  */
-extern struct varlena *heap_tuple_fetch_attr(struct varlena *attr);
+extern struct varlena *heap_tuple_fetch_attr(struct varlena * attr);
 
 /* ----------
  * heap_tuple_untoast_attr() -
@@ -121,7 +121,7 @@ extern struct varlena *heap_tuple_fetch_attr(struct varlena *attr);
  *		it as needed.
  * ----------
  */
-extern struct varlena *heap_tuple_untoast_attr(struct varlena *attr);
+extern struct varlena *heap_tuple_untoast_attr(struct varlena * attr);
 
 /* ----------
  * heap_tuple_untoast_attr_slice() -
@@ -130,7 +130,7 @@ extern struct varlena *heap_tuple_untoast_attr(struct varlena *attr);
  *		(Handles all cases for attribute storage)
  * ----------
  */
-extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena *attr,
+extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena * attr,
 							  int32 sliceoffset,
 							  int32 slicelength);
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_jis_2004/utf8_and_euc_jis_2004.c,v 1.1 2007/03/25 11:56:03 ishii Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_jis_2004/utf8_and_euc_jis_2004.c,v 1.2 2007/11/15 21:14:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ euc_jis_2004_to_utf8(PG_FUNCTION_ARGS)
 
 	LocalToUtf(src, dest, LUmapEUC_JIS_2004, LUmapEUC_JIS_2004_combined,
 			   sizeof(LUmapEUC_JIS_2004) / sizeof(pg_local_to_utf),
-			   sizeof(LUmapEUC_JIS_2004_combined) / sizeof(pg_local_to_utf_combined),
+	   sizeof(LUmapEUC_JIS_2004_combined) / sizeof(pg_local_to_utf_combined),
 			   PG_EUC_JIS_2004, len);
 
 	PG_RETURN_VOID();
@@ -69,7 +69,7 @@ utf8_to_euc_jis_2004(PG_FUNCTION_ARGS)
 
 	UtfToLocal(src, dest, ULmapEUC_JIS_2004, ULmapEUC_JIS_2004_combined,
 			   sizeof(ULmapEUC_JIS_2004) / sizeof(pg_utf_to_local),
-			   sizeof(ULmapEUC_JIS_2004_combined) / sizeof(pg_utf_to_local_combined),
+	   sizeof(ULmapEUC_JIS_2004_combined) / sizeof(pg_utf_to_local_combined),
 			   PG_EUC_JIS_2004, len);
 
 	PG_RETURN_VOID();

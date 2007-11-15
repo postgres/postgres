@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.196 2007/10/26 20:45:10 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.197 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,7 +207,7 @@ InitProcGlobal(void)
 	MemSet(AuxiliaryProcs, 0, NUM_AUXILIARY_PROCS * sizeof(PGPROC));
 	for (i = 0; i < NUM_AUXILIARY_PROCS; i++)
 	{
-		AuxiliaryProcs[i].pid = 0;	/* marks auxiliary proc as not in use */
+		AuxiliaryProcs[i].pid = 0;		/* marks auxiliary proc as not in use */
 		PGSemaphoreCreate(&(AuxiliaryProcs[i].sem));
 	}
 
@@ -362,7 +362,7 @@ InitProcessPhase2(void)
  *
  * Auxiliary processes are presently not expected to wait for real (lockmgr)
  * locks, so we need not set up the deadlock checker.  They are never added
- * to the ProcArray or the sinval messaging mechanism, either.  They also
+ * to the ProcArray or the sinval messaging mechanism, either.	They also
  * don't get a VXID assigned, since this is only useful when we actually
  * hold lockmgr locks.
  */
@@ -734,7 +734,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	LOCKMASK	myHeldLocks = MyProc->heldLocks;
 	bool		early_deadlock = false;
-	bool 		allow_autovacuum_cancel = true;
+	bool		allow_autovacuum_cancel = true;
 	int			myWaitStatus;
 	PGPROC	   *proc;
 	int			i;
@@ -889,18 +889,18 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 
 		/*
 		 * waitStatus could change from STATUS_WAITING to something else
-		 * asynchronously.  Read it just once per loop to prevent surprising
+		 * asynchronously.	Read it just once per loop to prevent surprising
 		 * behavior (such as missing log messages).
 		 */
 		myWaitStatus = MyProc->waitStatus;
 
 		/*
 		 * If we are not deadlocked, but are waiting on an autovacuum-induced
-		 * task, send a signal to interrupt it.  
+		 * task, send a signal to interrupt it.
 		 */
 		if (deadlock_state == DS_BLOCKED_BY_AUTOVACUUM && allow_autovacuum_cancel)
 		{
-			PGPROC	*autovac = GetBlockingAutoVacuumPgproc();
+			PGPROC	   *autovac = GetBlockingAutoVacuumPgproc();
 
 			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
@@ -912,7 +912,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				(autovac->vacuumFlags & PROC_IS_AUTOVACUUM) &&
 				!(autovac->vacuumFlags & PROC_VACUUM_FOR_WRAPAROUND))
 			{
-				int		pid = autovac->pid;
+				int			pid = autovac->pid;
 
 				elog(DEBUG2, "sending cancel to blocking autovacuum pid = %d",
 					 pid);
@@ -960,49 +960,50 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			if (deadlock_state == DS_SOFT_DEADLOCK)
 				ereport(LOG,
 						(errmsg("process %d avoided deadlock for %s on %s by rearranging queue order after %ld.%03d ms",
-								MyProcPid, modename, buf.data, msecs, usecs)));
+							  MyProcPid, modename, buf.data, msecs, usecs)));
 			else if (deadlock_state == DS_HARD_DEADLOCK)
 			{
 				/*
-				 * This message is a bit redundant with the error that will
-				 * be reported subsequently, but in some cases the error
-				 * report might not make it to the log (eg, if it's caught by
-				 * an exception handler), and we want to ensure all long-wait
+				 * This message is a bit redundant with the error that will be
+				 * reported subsequently, but in some cases the error report
+				 * might not make it to the log (eg, if it's caught by an
+				 * exception handler), and we want to ensure all long-wait
 				 * events get logged.
 				 */
 				ereport(LOG,
 						(errmsg("process %d detected deadlock while waiting for %s on %s after %ld.%03d ms",
-								MyProcPid, modename, buf.data, msecs, usecs)));
+							  MyProcPid, modename, buf.data, msecs, usecs)));
 			}
 
 			if (myWaitStatus == STATUS_WAITING)
 				ereport(LOG,
 						(errmsg("process %d still waiting for %s on %s after %ld.%03d ms",
-								MyProcPid, modename, buf.data, msecs, usecs)));
+							  MyProcPid, modename, buf.data, msecs, usecs)));
 			else if (myWaitStatus == STATUS_OK)
 				ereport(LOG,
-						(errmsg("process %d acquired %s on %s after %ld.%03d ms",
-								MyProcPid, modename, buf.data, msecs, usecs)));
+					(errmsg("process %d acquired %s on %s after %ld.%03d ms",
+							MyProcPid, modename, buf.data, msecs, usecs)));
 			else
 			{
 				Assert(myWaitStatus == STATUS_ERROR);
+
 				/*
 				 * Currently, the deadlock checker always kicks its own
-				 * process, which means that we'll only see STATUS_ERROR
-				 * when deadlock_state == DS_HARD_DEADLOCK, and there's no
-				 * need to print redundant messages.  But for completeness
-				 * and future-proofing, print a message if it looks like
-				 * someone else kicked us off the lock.
+				 * process, which means that we'll only see STATUS_ERROR when
+				 * deadlock_state == DS_HARD_DEADLOCK, and there's no need to
+				 * print redundant messages.  But for completeness and
+				 * future-proofing, print a message if it looks like someone
+				 * else kicked us off the lock.
 				 */
 				if (deadlock_state != DS_HARD_DEADLOCK)
 					ereport(LOG,
 							(errmsg("process %d failed to acquire %s on %s after %ld.%03d ms",
-									MyProcPid, modename, buf.data, msecs, usecs)));
+							  MyProcPid, modename, buf.data, msecs, usecs)));
 			}
 
 			/*
-			 * At this point we might still need to wait for the lock.
-			 * Reset state so we don't print the above messages again.
+			 * At this point we might still need to wait for the lock. Reset
+			 * state so we don't print the above messages again.
 			 */
 			deadlock_state = DS_NO_DEADLOCK;
 
@@ -1237,8 +1238,8 @@ CheckDeadLock(void)
 		/*
 		 * Unlock my semaphore so that the interrupted ProcSleep() call can
 		 * print the log message (we daren't do it here because we are inside
-		 * a signal handler).  It will then sleep again until someone
-		 * releases the lock.
+		 * a signal handler).  It will then sleep again until someone releases
+		 * the lock.
 		 *
 		 * If blocked by autovacuum, this wakeup will enable ProcSleep to send
 		 * the cancelling signal to the autovacuum worker.
@@ -1247,11 +1248,11 @@ CheckDeadLock(void)
 	}
 
 	/*
-	 * And release locks.  We do this in reverse order for two reasons:
-	 * (1) Anyone else who needs more than one of the locks will be trying
-	 * to lock them in increasing order; we don't want to release the other
-	 * process until it can get all the locks it needs.
-	 * (2) This avoids O(N^2) behavior inside LWLockRelease.
+	 * And release locks.  We do this in reverse order for two reasons: (1)
+	 * Anyone else who needs more than one of the locks will be trying to lock
+	 * them in increasing order; we don't want to release the other process
+	 * until it can get all the locks it needs. (2) This avoids O(N^2)
+	 * behavior inside LWLockRelease.
 	 */
 check_done:
 	for (i = NUM_LOCK_PARTITIONS; --i >= 0;)

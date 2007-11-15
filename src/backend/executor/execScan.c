@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.41 2007/02/02 00:07:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.42 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,13 +217,14 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 			return false;		/* out of order */
 		if (att_tup->attisdropped)
 			return false;		/* table contains dropped columns */
+
 		/*
-		 * Note: usually the Var's type should match the tupdesc exactly,
-		 * but in situations involving unions of columns that have different
+		 * Note: usually the Var's type should match the tupdesc exactly, but
+		 * in situations involving unions of columns that have different
 		 * typmods, the Var may have come from above the union and hence have
 		 * typmod -1.  This is a legitimate situation since the Var still
-		 * describes the column, just not as exactly as the tupdesc does.
-		 * We could change the planner to prevent it, but it'd then insert
+		 * describes the column, just not as exactly as the tupdesc does. We
+		 * could change the planner to prevent it, but it'd then insert
 		 * projection steps just to convert from specific typmod to typmod -1,
 		 * which is pretty silly.
 		 */

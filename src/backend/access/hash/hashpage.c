@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.70 2007/09/20 17:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.71 2007/11/15 21:14:32 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -37,7 +37,7 @@
 
 
 static bool _hash_alloc_buckets(Relation rel, BlockNumber firstblock,
-								uint32 nblocks);
+					uint32 nblocks);
 static void _hash_splitbucket(Relation rel, Buffer metabuf,
 				  Bucket obucket, Bucket nbucket,
 				  BlockNumber start_oblkno,
@@ -138,7 +138,7 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access, int flags)
  *
  *		This must be used only to fetch pages that are known to be before
  *		the index's filesystem EOF, but are to be filled from scratch.
- *		_hash_pageinit() is applied automatically.  Otherwise it has
+ *		_hash_pageinit() is applied automatically.	Otherwise it has
  *		effects similar to _hash_getbuf() with access = HASH_WRITE.
  *
  *		When this routine returns, a write lock is set on the
@@ -184,7 +184,7 @@ _hash_getinitbuf(Relation rel, BlockNumber blkno)
 Buffer
 _hash_getnewbuf(Relation rel, BlockNumber blkno)
 {
-	BlockNumber	nblocks = RelationGetNumberOfBlocks(rel);
+	BlockNumber nblocks = RelationGetNumberOfBlocks(rel);
 	Buffer		buf;
 
 	if (blkno == P_NEW)
@@ -354,10 +354,10 @@ _hash_metapinit(Relation rel)
 		ffactor = 10;
 
 	/*
-	 * We initialize the metapage, the first two bucket pages, and the
-	 * first bitmap page in sequence, using _hash_getnewbuf to cause
-	 * smgrextend() calls to occur.  This ensures that the smgr level
-	 * has the right idea of the physical index length.
+	 * We initialize the metapage, the first two bucket pages, and the first
+	 * bitmap page in sequence, using _hash_getnewbuf to cause smgrextend()
+	 * calls to occur.	This ensures that the smgr level has the right idea of
+	 * the physical index length.
 	 */
 	metabuf = _hash_getnewbuf(rel, HASH_METAPAGE);
 	pg = BufferGetPage(metabuf);
@@ -501,15 +501,16 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 		goto fail;
 
 	/*
-	 * Can't split anymore if maxbucket has reached its maximum possible value.
+	 * Can't split anymore if maxbucket has reached its maximum possible
+	 * value.
 	 *
 	 * Ideally we'd allow bucket numbers up to UINT_MAX-1 (no higher because
 	 * the calculation maxbucket+1 mustn't overflow).  Currently we restrict
 	 * to half that because of overflow looping in _hash_log2() and
 	 * insufficient space in hashm_spares[].  It's moot anyway because an
-	 * index with 2^32 buckets would certainly overflow BlockNumber and
-	 * hence _hash_alloc_buckets() would fail, but if we supported buckets
-	 * smaller than a disk block then this would be an independent constraint.
+	 * index with 2^32 buckets would certainly overflow BlockNumber and hence
+	 * _hash_alloc_buckets() would fail, but if we supported buckets smaller
+	 * than a disk block then this would be an independent constraint.
 	 */
 	if (metap->hashm_maxbucket >= (uint32) 0x7FFFFFFE)
 		goto fail;
@@ -536,10 +537,10 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	/*
 	 * Likewise lock the new bucket (should never fail).
 	 *
-	 * Note: it is safe to compute the new bucket's blkno here, even though
-	 * we may still need to update the BUCKET_TO_BLKNO mapping.  This is
-	 * because the current value of hashm_spares[hashm_ovflpoint] correctly
-	 * shows where we are going to put a new splitpoint's worth of buckets.
+	 * Note: it is safe to compute the new bucket's blkno here, even though we
+	 * may still need to update the BUCKET_TO_BLKNO mapping.  This is because
+	 * the current value of hashm_spares[hashm_ovflpoint] correctly shows
+	 * where we are going to put a new splitpoint's worth of buckets.
 	 */
 	start_nblkno = BUCKET_TO_BLKNO(metap, new_bucket);
 
@@ -557,11 +558,12 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	if (spare_ndx > metap->hashm_ovflpoint)
 	{
 		Assert(spare_ndx == metap->hashm_ovflpoint + 1);
+
 		/*
-		 * The number of buckets in the new splitpoint is equal to the
-		 * total number already in existence, i.e. new_bucket.  Currently
-		 * this maps one-to-one to blocks required, but someday we may need
-		 * a more complicated calculation here.
+		 * The number of buckets in the new splitpoint is equal to the total
+		 * number already in existence, i.e. new_bucket.  Currently this maps
+		 * one-to-one to blocks required, but someday we may need a more
+		 * complicated calculation here.
 		 */
 		if (!_hash_alloc_buckets(rel, start_nblkno, new_bucket))
 		{
@@ -673,14 +675,14 @@ fail:
 static bool
 _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 {
-	BlockNumber	lastblock;
+	BlockNumber lastblock;
 	char		zerobuf[BLCKSZ];
 
 	lastblock = firstblock + nblocks - 1;
 
 	/*
-	 * Check for overflow in block number calculation; if so, we cannot
-	 * extend the index anymore.
+	 * Check for overflow in block number calculation; if so, we cannot extend
+	 * the index anymore.
 	 */
 	if (lastblock < firstblock || lastblock == InvalidBlockNumber)
 		return false;

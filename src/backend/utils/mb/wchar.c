@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.65 2007/10/15 22:46:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.66 2007/11/15 21:14:40 momjian Exp $
  *
  */
 /* can be used in either frontend or backend */
@@ -1310,7 +1310,7 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{pg_euckr2wchar_with_len, pg_euckr_mblen, pg_euckr_dsplen, pg_euckr_verifier, 3},	/* 3; PG_EUC_KR */
 	{pg_euctw2wchar_with_len, pg_euctw_mblen, pg_euctw_dsplen, pg_euctw_verifier, 4},	/* 4; PG_EUC_TW */
 	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifier, 3},	/* 5; PG_EUC_JIS_2004 */
-	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, pg_utf8_verifier, 4},			/* 6; PG_UTF8 */
+	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, pg_utf8_verifier, 4},	/* 6; PG_UTF8 */
 	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, pg_mule_verifier, 4},		/* 7; PG_MULE_INTERNAL */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 8; PG_LATIN1 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 9; PG_LATIN2 */
@@ -1343,7 +1343,7 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{0, pg_gbk_mblen, pg_gbk_dsplen, pg_gbk_verifier, 2},		/* 36; PG_GBK */
 	{0, pg_uhc_mblen, pg_uhc_dsplen, pg_uhc_verifier, 2},		/* 37; PG_UHC */
 	{0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 4},	/* 38; PG_GB18030 */
-	{0, pg_johab_mblen, pg_johab_dsplen, pg_johab_verifier, 3},	/* 39; PG_JOHAB */
+	{0, pg_johab_mblen, pg_johab_dsplen, pg_johab_verifier, 3}, /* 39; PG_JOHAB */
 	{0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2}		/* 40; PG_SHIFT_JIS_2004 */
 };
 
@@ -1427,7 +1427,7 @@ pg_database_encoding_max_length(void)
 bool
 pg_verifymbstr(const char *mbstr, int len, bool noError)
 {
-	return 
+	return
 		pg_verify_mbstr_len(GetDatabaseEncoding(), mbstr, len, noError) >= 0;
 }
 
@@ -1441,22 +1441,22 @@ pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
 	return pg_verify_mbstr_len(encoding, mbstr, len, noError) >= 0;
 }
 
-/* 
+/*
  * Verify mbstr to make sure that it is validly encoded in the specified
  * encoding.
  *
  * mbstr is not necessarily zero terminated; length of mbstr is
  * specified by len.
  *
- * If OK, return length of string in the encoding.	
+ * If OK, return length of string in the encoding.
  * If a problem is found, return -1 when noError is
  * true; when noError is false, ereport() a descriptive message.
- */ 
+ */
 int
 pg_verify_mbstr_len(int encoding, const char *mbstr, int len, bool noError)
 {
 	mbverifier	mbverify;
-	int mb_len;
+	int			mb_len;
 
 	Assert(PG_VALID_ENCODING(encoding));
 
@@ -1476,7 +1476,7 @@ pg_verify_mbstr_len(int encoding, const char *mbstr, int len, bool noError)
 
 	/* fetch function pointer just once */
 	mbverify = pg_wchar_table[encoding].mbverify;
-	
+
 	mb_len = 0;
 
 	while (len > 0)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict.c,v 1.2 2007/10/19 22:01:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict.c,v 1.3 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ ts_lexize(PG_FUNCTION_ARGS)
 											 PointerGetDatum(dict->dictData),
 												PointerGetDatum(VARDATA(in)),
 									   Int32GetDatum(VARSIZE(in) - VARHDRSZ),
-												 PointerGetDatum(&dstate)));
+												  PointerGetDatum(&dstate)));
 
 	if (dstate.getnext)
 	{
@@ -49,7 +49,7 @@ ts_lexize(PG_FUNCTION_ARGS)
 											 PointerGetDatum(dict->dictData),
 												PointerGetDatum(VARDATA(in)),
 									   Int32GetDatum(VARSIZE(in) - VARHDRSZ),
-												 PointerGetDatum(&dstate)));
+												  PointerGetDatum(&dstate)));
 		if (ptr != NULL)
 			res = ptr;
 	}

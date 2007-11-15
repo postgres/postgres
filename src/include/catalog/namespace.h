@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.49 2007/08/21 01:11:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.50 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ typedef struct _FuncCandidateList
 	Oid			oid;			/* the function or operator's OID */
 	int			nargs;			/* number of arg types returned */
 	Oid			args[1];		/* arg types --- VARIABLE LENGTH ARRAY */
-} *FuncCandidateList;	/* VARIABLE LENGTH STRUCT */
+}	*FuncCandidateList;	/* VARIABLE LENGTH STRUCT */
 
 /*
  *	Structure for xxxOverrideSearchPath functions
@@ -40,7 +40,7 @@ typedef struct OverrideSearchPath
 	List	   *schemas;		/* OIDs of explicitly named schemas */
 	bool		addCatalog;		/* implicitly prepend pg_catalog? */
 	bool		addTemp;		/* implicitly prepend temp schema? */
-} OverrideSearchPath;
+}	OverrideSearchPath;
 
 
 extern Oid	RangeVarGetRelid(const RangeVar *relation, bool failOK);
@@ -99,7 +99,7 @@ extern Oid	GetTempToastNamespace(void);
 extern void ResetTempTableNamespace(void);
 
 extern OverrideSearchPath *GetOverrideSearchPath(MemoryContext context);
-extern void PushOverrideSearchPath(OverrideSearchPath *newpath);
+extern void PushOverrideSearchPath(OverrideSearchPath * newpath);
 extern void PopOverrideSearchPath(void);
 
 extern Oid	FindConversionByName(List *conname);

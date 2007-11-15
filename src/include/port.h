@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.114 2007/10/29 11:25:42 mha Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.115 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ extern int
 pg_sprintf(char *str, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 2, 3)));
-extern int	pg_vfprintf(FILE * stream, const char *fmt, va_list args);
+extern int	pg_vfprintf(FILE *stream, const char *fmt, va_list args);
 extern int
 pg_fprintf(FILE *stream, const char *fmt,...)
 /* This extension allows gcc to check the format string */
@@ -253,7 +253,6 @@ extern int	pgunlink(const char *path);
 
 #define rename(from, to)		pgrename(from, to)
 #define unlink(path)			pgunlink(path)
-
 #endif   /* defined(WIN32) || defined(__CYGWIN__) */
 
 /*
@@ -385,7 +384,7 @@ extern int pqGethostbyname(const char *name,
 				int *herrno);
 
 extern void pg_qsort(void *base, size_t nel, size_t elsize,
-					 int (*cmp) (const void *, const void *));
+		 int (*cmp) (const void *, const void *));
 
 #define qsort(a,b,c,d) pg_qsort(a,b,c,d)
 

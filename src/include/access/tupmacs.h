@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/tupmacs.h,v 1.33 2007/04/06 04:21:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/tupmacs.h,v 1.34 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@
 
 /*
  * att_align_datum aligns the given offset as needed for a datum of alignment
- * requirement attalign and typlen attlen.  attdatum is the Datum variable
+ * requirement attalign and typlen attlen.	attdatum is the Datum variable
  * we intend to pack into a tuple (it's only accessed if we are dealing with
  * a varlena type).  Note that this assumes the Datum will be stored as-is;
  * callers that are intending to convert non-short varlena datums to short
@@ -110,7 +110,7 @@
  * pointer; when accessing a varlena field we have to "peek" to see if we
  * are looking at a pad byte or the first byte of a 1-byte-header datum.
  * (A zero byte must be either a pad byte, or the first byte of a correctly
- * aligned 4-byte length word; in either case we can align safely.  A non-zero
+ * aligned 4-byte length word; in either case we can align safely.	A non-zero
  * byte must be either a 1-byte length word, or the first byte of a correctly
  * aligned 4-byte length word; in either case we need not align.)
  *
@@ -128,7 +128,7 @@
  * att_align_nominal aligns the given offset as needed for a datum of alignment
  * requirement attalign, ignoring any consideration of packed varlena datums.
  * There are three main use cases for using this macro directly:
- * 	* we know that the att in question is not varlena (attlen != -1);
+ *	* we know that the att in question is not varlena (attlen != -1);
  *	  in this case it is cheaper than the above macros and just as good.
  *	* we need to estimate alignment padding cost abstractly, ie without
  *	  reference to a real tuple.  We must assume the worst case that

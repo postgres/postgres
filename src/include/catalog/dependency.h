@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.30 2007/08/21 01:11:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.31 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,8 +181,8 @@ extern bool object_address_present(const ObjectAddress *object,
 					   ObjectAddresses *addrs);
 
 extern void record_object_address_dependencies(const ObjectAddress *depender,
-											   ObjectAddresses *referenced,
-											   DependencyType behavior);
+								   ObjectAddresses *referenced,
+								   DependencyType behavior);
 
 extern void free_object_addresses(ObjectAddresses *addrs);
 

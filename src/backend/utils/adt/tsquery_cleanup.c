@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.5 2007/09/20 23:27:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.6 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@ typedef struct NODE
 	struct NODE *left;
 	struct NODE *right;
 	QueryItem  *valnode;
-} NODE;
+}	NODE;
 
 /*
  * make query tree from plain view of query
@@ -51,9 +51,9 @@ maketree(QueryItem * in)
 typedef struct
 {
 	QueryItem  *ptr;
-	int		len; /* allocated size of ptr */
-	int		cur; /* number of elements in ptr */
-} PLAINTREE;
+	int			len;			/* allocated size of ptr */
+	int			cur;			/* number of elements in ptr */
+}	PLAINTREE;
 
 static void
 plainnode(PLAINTREE * state, NODE * node)
@@ -77,7 +77,7 @@ plainnode(PLAINTREE * state, NODE * node)
 	}
 	else
 	{
-		int	cur = state->cur;
+		int			cur = state->cur;
 
 		state->cur++;
 		plainnode(state, node->right);
@@ -157,7 +157,7 @@ clean_NOT_intree(NODE * node)
 	else
 	{
 		NODE	   *res = node;
-		
+
 		Assert(node->valnode->operator.oper == OP_AND);
 
 		node->left = clean_NOT_intree(node->left);
@@ -201,10 +201,13 @@ clean_NOT(QueryItem * ptr, int *len)
 /*
  * output values for result output parameter of clean_fakeval_intree
  */
-#define V_UNKNOWN	0 /* the expression can't be evaluated statically */
-#define V_TRUE		1 /* the expression is always true (not implemented) */
-#define V_FALSE		2 /* the expression is always false (not implemented) */
-#define V_STOP		3 /* the expression is a stop word */
+#define V_UNKNOWN	0			/* the expression can't be evaluated
+								 * statically */
+#define V_TRUE		1			/* the expression is always true (not
+								 * implemented) */
+#define V_FALSE		2			/* the expression is always false (not
+								 * implemented) */
+#define V_STOP		3			/* the expression is a stop word */
 
 /*
  * Clean query tree from values which is always in
@@ -221,8 +224,7 @@ clean_fakeval_intree(NODE * node, char *result)
 
 	if (node->valnode->type == QI_VAL)
 		return node;
-	else 
-	if (node->valnode->type == QI_VALSTOP)
+	else if (node->valnode->type == QI_VALSTOP)
 	{
 		pfree(node);
 		*result = V_STOP;

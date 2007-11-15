@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.3 2007/10/24 13:05:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.4 2007/11/15 21:14:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,21 +22,21 @@
 
 
 /* Local functions */
-static int	heap_prune_chain(Relation relation, Buffer buffer,
-							 OffsetNumber rootoffnum,
-							 TransactionId OldestXmin,
-							 OffsetNumber *redirected, int *nredirected,
-							 OffsetNumber *nowdead, int *ndead,
-							 OffsetNumber *nowunused, int *nunused,
-							 bool redirect_move);
+static int heap_prune_chain(Relation relation, Buffer buffer,
+				 OffsetNumber rootoffnum,
+				 TransactionId OldestXmin,
+				 OffsetNumber *redirected, int *nredirected,
+				 OffsetNumber *nowdead, int *ndead,
+				 OffsetNumber *nowunused, int *nunused,
+				 bool redirect_move);
 static void heap_prune_record_redirect(OffsetNumber *redirected,
-			int *nredirected,
-			OffsetNumber offnum,
-			OffsetNumber rdoffnum);
+						   int *nredirected,
+						   OffsetNumber offnum,
+						   OffsetNumber rdoffnum);
 static void heap_prune_record_dead(OffsetNumber *nowdead, int *ndead,
-			OffsetNumber offnum);
+					   OffsetNumber offnum);
 static void heap_prune_record_unused(OffsetNumber *nowunused, int *nunused,
-			OffsetNumber offnum);
+						 OffsetNumber offnum);
 
 
 /*
@@ -70,16 +70,16 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
 		return;
 
 	/*
-	 * We prune when a previous UPDATE failed to find enough space on the
-	 * page for a new tuple version, or when free space falls below the
-	 * relation's fill-factor target (but not less than 10%).
+	 * We prune when a previous UPDATE failed to find enough space on the page
+	 * for a new tuple version, or when free space falls below the relation's
+	 * fill-factor target (but not less than 10%).
 	 *
-	 * Checking free space here is questionable since we aren't holding
-	 * any lock on the buffer; in the worst case we could get a bogus
-	 * answer.  It's unlikely to be *seriously* wrong, though, since
-	 * reading either pd_lower or pd_upper is probably atomic.  Avoiding
-	 * taking a lock seems better than sometimes getting a wrong answer
-	 * in what is after all just a heuristic estimate.
+	 * Checking free space here is questionable since we aren't holding any
+	 * lock on the buffer; in the worst case we could get a bogus answer.
+	 * It's unlikely to be *seriously* wrong, though, since reading either
+	 * pd_lower or pd_upper is probably atomic.  Avoiding taking a lock seems
+	 * better than sometimes getting a wrong answer in what is after all just
+	 * a heuristic estimate.
 	 */
 	minfree = RelationGetTargetPageFreeSpace(relation,
 											 HEAP_DEFAULT_FILLFACTOR);
@@ -93,9 +93,9 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
 
 		/*
 		 * Now that we have buffer lock, get accurate information about the
-		 * page's free space, and recheck the heuristic about whether to prune.
-		 * (We needn't recheck PageIsPrunable, since no one else could have
-		 * pruned while we hold pin.)
+		 * page's free space, and recheck the heuristic about whether to
+		 * prune. (We needn't recheck PageIsPrunable, since no one else could
+		 * have pruned while we hold pin.)
 		 */
 		if (PageIsFull(dp) || PageGetHeapFreeSpace((Page) dp) < minfree)
 		{
@@ -119,7 +119,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
  *
  * If redirect_move is set, we remove redirecting line pointers by
  * updating the root line pointer to point directly to the first non-dead
- * tuple in the chain.  NOTE: eliminating the redirect changes the first
+ * tuple in the chain.	NOTE: eliminating the redirect changes the first
  * tuple's effective CTID, and is therefore unsafe except within VACUUM FULL.
  * The only reason we support this capability at all is that by using it,
  * VACUUM FULL need not cope with LP_REDIRECT items at all; which seems a
@@ -136,18 +136,18 @@ int
 heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 				bool redirect_move, bool report_stats)
 {
-	int				ndeleted = 0;
-	Page			page = BufferGetPage(buffer);
-	OffsetNumber 	offnum,
-					maxoff;
-	OffsetNumber	redirected[MaxHeapTuplesPerPage * 2];
-	OffsetNumber	nowdead[MaxHeapTuplesPerPage];
-	OffsetNumber	nowunused[MaxHeapTuplesPerPage];
-	int				nredirected = 0;
-	int				ndead = 0;
-	int				nunused = 0;
-	bool			page_was_full = false;
-	TransactionId	save_prune_xid;
+	int			ndeleted = 0;
+	Page		page = BufferGetPage(buffer);
+	OffsetNumber offnum,
+				maxoff;
+	OffsetNumber redirected[MaxHeapTuplesPerPage * 2];
+	OffsetNumber nowdead[MaxHeapTuplesPerPage];
+	OffsetNumber nowunused[MaxHeapTuplesPerPage];
+	int			nredirected = 0;
+	int			ndead = 0;
+	int			nunused = 0;
+	bool		page_was_full = false;
+	TransactionId save_prune_xid;
 
 	START_CRIT_SECTION();
 
@@ -159,7 +159,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	save_prune_xid = ((PageHeader) page)->pd_prune_xid;
 	PageClearPrunable(page);
 
-	/* 
+	/*
 	 * Also clear the "page is full" flag if it is set, since there's no point
 	 * in repeating the prune/defrag process until something else happens to
 	 * the page.
@@ -176,7 +176,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 		 offnum <= maxoff;
 		 offnum = OffsetNumberNext(offnum))
 	{
-		ItemId itemid = PageGetItemId(page, offnum);
+		ItemId		itemid = PageGetItemId(page, offnum);
 
 		/* Nothing to do if slot is empty or already dead */
 		if (!ItemIdIsUsed(itemid) || ItemIdIsDead(itemid))
@@ -233,9 +233,9 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	END_CRIT_SECTION();
 
 	/*
-	 * If requested, report the number of tuples reclaimed to pgstats.
-	 * This is ndeleted minus ndead, because we don't want to count a now-DEAD
-	 * root item as a deletion for this purpose.
+	 * If requested, report the number of tuples reclaimed to pgstats. This is
+	 * ndeleted minus ndead, because we don't want to count a now-DEAD root
+	 * item as a deletion for this purpose.
 	 */
 	if (report_stats && ndeleted > ndead)
 		pgstat_update_heap_dead_tuples(relation, ndeleted - ndead);
@@ -243,19 +243,17 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	/*
 	 * XXX Should we update the FSM information of this page ?
 	 *
-	 * There are two schools of thought here. We may not want to update
-	 * FSM information so that the page is not used for unrelated
-	 * UPDATEs/INSERTs and any free space in this page will remain
-	 * available for further UPDATEs in *this* page, thus improving
-	 * chances for doing HOT updates.
+	 * There are two schools of thought here. We may not want to update FSM
+	 * information so that the page is not used for unrelated UPDATEs/INSERTs
+	 * and any free space in this page will remain available for further
+	 * UPDATEs in *this* page, thus improving chances for doing HOT updates.
 	 *
-	 * But for a large table and where a page does not receive further
-	 * UPDATEs for a long time, we might waste this space by not
-	 * updating the FSM information. The relation may get extended and
-	 * fragmented further.
+	 * But for a large table and where a page does not receive further UPDATEs
+	 * for a long time, we might waste this space by not updating the FSM
+	 * information. The relation may get extended and fragmented further.
 	 *
-	 * One possibility is to leave "fillfactor" worth of space in this
-	 * page and update FSM with the remaining space.
+	 * One possibility is to leave "fillfactor" worth of space in this page
+	 * and update FSM with the remaining space.
 	 *
 	 * In any case, the current FSM implementation doesn't accept
 	 * one-page-at-a-time updates, so this is all academic for now.
@@ -298,17 +296,17 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 				 OffsetNumber *nowunused, int *nunused,
 				 bool redirect_move)
 {
-	int				ndeleted = 0;
-	Page			dp = (Page) BufferGetPage(buffer);
-	TransactionId	priorXmax = InvalidTransactionId;
-	ItemId			rootlp;
-	HeapTupleHeader	htup;
-	OffsetNumber	latestdead = InvalidOffsetNumber,
-					maxoff = PageGetMaxOffsetNumber(dp),
-					offnum;
-	OffsetNumber	chainitems[MaxHeapTuplesPerPage];
-	int				nchain = 0,
-					i;
+	int			ndeleted = 0;
+	Page		dp = (Page) BufferGetPage(buffer);
+	TransactionId priorXmax = InvalidTransactionId;
+	ItemId		rootlp;
+	HeapTupleHeader htup;
+	OffsetNumber latestdead = InvalidOffsetNumber,
+				maxoff = PageGetMaxOffsetNumber(dp),
+				offnum;
+	OffsetNumber chainitems[MaxHeapTuplesPerPage];
+	int			nchain = 0,
+				i;
 
 	rootlp = PageGetItemId(dp, rootoffnum);
 
@@ -321,14 +319,14 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		if (HeapTupleHeaderIsHeapOnly(htup))
 		{
 			/*
-			 * If the tuple is DEAD and doesn't chain to anything else, mark it
-			 * unused immediately.  (If it does chain, we can only remove it as
-			 * part of pruning its chain.)
+			 * If the tuple is DEAD and doesn't chain to anything else, mark
+			 * it unused immediately.  (If it does chain, we can only remove
+			 * it as part of pruning its chain.)
 			 *
 			 * We need this primarily to handle aborted HOT updates, that is,
-			 * XMIN_INVALID heap-only tuples.  Those might not be linked to
-			 * by any chain, since the parent tuple might be re-updated before
-			 * any pruning occurs.  So we have to be able to reap them
+			 * XMIN_INVALID heap-only tuples.  Those might not be linked to by
+			 * any chain, since the parent tuple might be re-updated before
+			 * any pruning occurs.	So we have to be able to reap them
 			 * separately from chain-pruning.
 			 *
 			 * Note that we might first arrive at a dead heap-only tuple
@@ -354,9 +352,9 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 	/* while not end of the chain */
 	for (;;)
 	{
-		ItemId			lp;
-		bool			tupdead,
-						recent_dead;
+		ItemId		lp;
+		bool		tupdead,
+					recent_dead;
 
 		/* Some sanity checks */
 		if (offnum < FirstOffsetNumber || offnum > maxoff)
@@ -368,9 +366,9 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 			break;
 
 		/*
-		 * If we are looking at the redirected root line pointer,
-		 * jump to the first normal tuple in the chain.  If we find
-		 * a redirect somewhere else, stop --- it must not be same chain.
+		 * If we are looking at the redirected root line pointer, jump to the
+		 * first normal tuple in the chain.  If we find a redirect somewhere
+		 * else, stop --- it must not be same chain.
 		 */
 		if (ItemIdIsRedirected(lp))
 		{
@@ -382,9 +380,9 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		}
 
 		/*
-		 * Likewise, a dead item pointer can't be part of the chain.
-		 * (We already eliminated the case of dead root tuple outside
-		 * this function.)
+		 * Likewise, a dead item pointer can't be part of the chain. (We
+		 * already eliminated the case of dead root tuple outside this
+		 * function.)
 		 */
 		if (ItemIdIsDead(lp))
 			break;
@@ -417,6 +415,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 
 			case HEAPTUPLE_RECENTLY_DEAD:
 				recent_dead = true;
+
 				/*
 				 * This tuple may soon become DEAD.  Update the hint field so
 				 * that the page is reconsidered for pruning in future.
@@ -425,6 +424,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 				break;
 
 			case HEAPTUPLE_DELETE_IN_PROGRESS:
+
 				/*
 				 * This tuple may soon become DEAD.  Update the hint field so
 				 * that the page is reconsidered for pruning in future.
@@ -434,11 +434,12 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 
 			case HEAPTUPLE_LIVE:
 			case HEAPTUPLE_INSERT_IN_PROGRESS:
+
 				/*
 				 * If we wanted to optimize for aborts, we might consider
 				 * marking the page prunable when we see INSERT_IN_PROGRESS.
-				 * But we don't.  See related decisions about when to mark
-				 * the page prunable in heapam.c.
+				 * But we don't.  See related decisions about when to mark the
+				 * page prunable in heapam.c.
 				 */
 				break;
 
@@ -486,12 +487,12 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		 * Mark as unused each intermediate item that we are able to remove
 		 * from the chain.
 		 *
-		 * When the previous item is the last dead tuple seen, we are at
-		 * the right candidate for redirection.
+		 * When the previous item is the last dead tuple seen, we are at the
+		 * right candidate for redirection.
 		 */
 		for (i = 1; (i < nchain) && (chainitems[i - 1] != latestdead); i++)
 		{
-			ItemId lp = PageGetItemId(dp, chainitems[i]);
+			ItemId		lp = PageGetItemId(dp, chainitems[i]);
 
 			ItemIdSetUnused(lp);
 			heap_prune_record_unused(nowunused, nunused, chainitems[i]);
@@ -499,17 +500,17 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		}
 
 		/*
-		 * If the root entry had been a normal tuple, we are deleting it,
-		 * so count it in the result.  But changing a redirect (even to
-		 * DEAD state) doesn't count.
+		 * If the root entry had been a normal tuple, we are deleting it, so
+		 * count it in the result.	But changing a redirect (even to DEAD
+		 * state) doesn't count.
 		 */
 		if (ItemIdIsNormal(rootlp))
 			ndeleted++;
 
 		/*
 		 * If the DEAD tuple is at the end of the chain, the entire chain is
-		 * dead and the root line pointer can be marked dead.  Otherwise
-		 * just redirect the root to the correct chain member.
+		 * dead and the root line pointer can be marked dead.  Otherwise just
+		 * redirect the root to the correct chain member.
 		 */
 		if (i >= nchain)
 		{
@@ -528,25 +529,25 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 	{
 		/*
 		 * We found a redirect item that doesn't point to a valid follow-on
-		 * item.  This can happen if the loop in heap_page_prune caused us
-		 * to visit the dead successor of a redirect item before visiting
-		 * the redirect item.  We can clean up by setting the redirect item
-		 * to DEAD state.
+		 * item.  This can happen if the loop in heap_page_prune caused us to
+		 * visit the dead successor of a redirect item before visiting the
+		 * redirect item.  We can clean up by setting the redirect item to
+		 * DEAD state.
 		 */
 		ItemIdSetDead(rootlp);
 		heap_prune_record_dead(nowdead, ndead, rootoffnum);
 	}
 
 	/*
-	 * If requested, eliminate LP_REDIRECT items by moving tuples.  Note that
+	 * If requested, eliminate LP_REDIRECT items by moving tuples.	Note that
 	 * if the root item is LP_REDIRECT and doesn't point to a valid follow-on
 	 * item, we already killed it above.
 	 */
 	if (redirect_move && ItemIdIsRedirected(rootlp))
 	{
 		OffsetNumber firstoffnum = ItemIdGetRedirect(rootlp);
-		ItemId firstlp = PageGetItemId(dp, firstoffnum);
-		HeapTupleData	firsttup;
+		ItemId		firstlp = PageGetItemId(dp, firstoffnum);
+		HeapTupleData firsttup;
 
 		Assert(ItemIdIsNormal(firstlp));
 		/* Set up firsttup to reference the tuple at its existing CTID */
@@ -558,15 +559,15 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		firsttup.t_tableOid = RelationGetRelid(relation);
 
 		/*
-		 * Mark the tuple for invalidation.  Needed because we're changing
-		 * its CTID.
+		 * Mark the tuple for invalidation.  Needed because we're changing its
+		 * CTID.
 		 */
 		CacheInvalidateHeapTuple(relation, &firsttup);
 
 		/*
-		 * Change heap-only status of the tuple because after the line
-		 * pointer manipulation, it's no longer a heap-only tuple, but is
-		 * directly pointed to by index entries.
+		 * Change heap-only status of the tuple because after the line pointer
+		 * manipulation, it's no longer a heap-only tuple, but is directly
+		 * pointed to by index entries.
 		 */
 		Assert(HeapTupleIsHeapOnly(&firsttup));
 		HeapTupleClearHeapOnly(&firsttup);
@@ -594,7 +595,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 /* Record newly-redirected item pointer */
 static void
 heap_prune_record_redirect(OffsetNumber *redirected, int *nredirected,
-			OffsetNumber offnum, OffsetNumber rdoffnum)
+						   OffsetNumber offnum, OffsetNumber rdoffnum)
 {
 	Assert(*nredirected < MaxHeapTuplesPerPage);
 	redirected[*nredirected * 2] = offnum;
@@ -641,17 +642,18 @@ heap_prune_record_unused(OffsetNumber *nowunused, int *nunused,
 void
 heap_get_root_tuples(Page page, OffsetNumber *root_offsets)
 {
-	OffsetNumber	offnum, maxoff;
+	OffsetNumber offnum,
+				maxoff;
 
 	MemSet(root_offsets, 0, MaxHeapTuplesPerPage * sizeof(OffsetNumber));
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	for (offnum = FirstOffsetNumber; offnum <= maxoff; offnum++)
 	{
-		ItemId			lp = PageGetItemId(page, offnum);
-		HeapTupleHeader	htup;
-		OffsetNumber	nextoffnum;
-		TransactionId	priorXmax;
+		ItemId		lp = PageGetItemId(page, offnum);
+		HeapTupleHeader htup;
+		OffsetNumber nextoffnum;
+		TransactionId priorXmax;
 
 		/* skip unused and dead items */
 		if (!ItemIdIsUsed(lp) || ItemIdIsDead(lp))

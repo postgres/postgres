@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.136 2007/09/26 01:10:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.137 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +49,9 @@ static void AdjustTimeForTypmod(TimeADT *time, int32 typmod);
 static int32
 anytime_typmodin(bool istz, ArrayType *ta)
 {
-	int32	typmod;
-	int32	*tl;
-	int		n;
+	int32		typmod;
+	int32	   *tl;
+	int			n;
 
 	tl = ArrayGetIntegerTypmods(ta, &n);
 
@@ -74,10 +74,11 @@ anytime_typmodin(bool istz, ArrayType *ta)
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("TIME(%d)%s precision reduced to maximum allowed, %d",
-						*tl, (istz ? " WITH TIME ZONE" : "" ),
+						*tl, (istz ? " WITH TIME ZONE" : ""),
 						MAX_TIME_PRECISION)));
 		typmod = MAX_TIME_PRECISION;
-	} else
+	}
+	else
 		typmod = *tl;
 
 	return typmod;
@@ -87,7 +88,7 @@ anytime_typmodin(bool istz, ArrayType *ta)
 static char *
 anytime_typmodout(bool istz, int32 typmod)
 {
-	char    *res = (char *) palloc(64);
+	char	   *res = (char *) palloc(64);
 	const char *tz = istz ? " with time zone" : " without time zone";
 
 	if (typmod >= 0)
@@ -339,7 +340,7 @@ date_mii(PG_FUNCTION_ARGS)
 static Timestamp
 date2timestamp(DateADT dateVal)
 {
-	Timestamp result;
+	Timestamp	result;
 
 #ifdef HAVE_INT64_TIMESTAMP
 	/* date is days since 2000, timestamp is microseconds since same... */
@@ -1045,7 +1046,7 @@ time_send(PG_FUNCTION_ARGS)
 Datum
 timetypmodin(PG_FUNCTION_ARGS)
 {
-	ArrayType *ta = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
 
 	PG_RETURN_INT32(anytime_typmodin(false, ta));
 }
@@ -1053,7 +1054,7 @@ timetypmodin(PG_FUNCTION_ARGS)
 Datum
 timetypmodout(PG_FUNCTION_ARGS)
 {
-	int32 typmod = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(0);
 
 	PG_RETURN_CSTRING(anytime_typmodout(false, typmod));
 }
@@ -1815,7 +1816,7 @@ timetz_send(PG_FUNCTION_ARGS)
 Datum
 timetztypmodin(PG_FUNCTION_ARGS)
 {
-	ArrayType *ta = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
 
 	PG_RETURN_INT32(anytime_typmodin(true, ta));
 }
@@ -1823,7 +1824,7 @@ timetztypmodin(PG_FUNCTION_ARGS)
 Datum
 timetztypmodout(PG_FUNCTION_ARGS)
 {
-	int32 typmod = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(0);
 
 	PG_RETURN_CSTRING(anytime_typmodout(true, typmod));
 }
@@ -1994,17 +1995,17 @@ timetz_hash(PG_FUNCTION_ARGS)
 	uint32		thash;
 
 	/*
-	 * To avoid any problems with padding bytes in the struct,
-	 * we figure the field hashes separately and XOR them.  This also
-	 * provides a convenient framework for dealing with the fact that
-	 * the time field might be either double or int64.
+	 * To avoid any problems with padding bytes in the struct, we figure the
+	 * field hashes separately and XOR them.  This also provides a convenient
+	 * framework for dealing with the fact that the time field might be either
+	 * double or int64.
 	 */
 #ifdef HAVE_INT64_TIMESTAMP
 	thash = DatumGetUInt32(DirectFunctionCall1(hashint8,
 											   Int64GetDatumFast(key->time)));
 #else
 	thash = DatumGetUInt32(DirectFunctionCall1(hashfloat8,
-											   Float8GetDatumFast(key->time)));
+											 Float8GetDatumFast(key->time)));
 #endif
 	thash ^= DatumGetUInt32(hash_uint32(key->zone));
 	PG_RETURN_UINT32(thash);

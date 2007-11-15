@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.73 2007/08/21 03:56:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.74 2007/11/15 21:14:38 momjian Exp $
  */
 
 #include "postgres.h"
@@ -783,7 +783,7 @@ Datum
 cash_words(PG_FUNCTION_ARGS)
 {
 	Cash		value = PG_GETARG_CASH(0);
-	uint64 val;
+	uint64		val;
 	char		buf[256];
 	char	   *p = buf;
 	Cash		m0;
@@ -808,13 +808,13 @@ cash_words(PG_FUNCTION_ARGS)
 	/* Now treat as unsigned, to avoid trouble at INT_MIN */
 	val = (uint64) value;
 
-	m0 = val % 100ll;				/* cents */
+	m0 = val % 100ll;			/* cents */
 	m1 = (val / 100ll) % 1000;	/* hundreds */
-	m2 = (val / 100000ll) % 1000; /* thousands */
-	m3 = val / 100000000ll % 1000;	/* millions */
+	m2 = (val / 100000ll) % 1000;		/* thousands */
+	m3 = val / 100000000ll % 1000;		/* millions */
 	m4 = val / 100000000000ll % 1000;	/* billions */
-	m5 = val / 100000000000000ll % 1000;	/* trillions */
-	m6 = val / 100000000000000000ll % 1000;	/* quadrillions */
+	m5 = val / 100000000000000ll % 1000;		/* trillions */
+	m6 = val / 100000000000000000ll % 1000;		/* quadrillions */
 
 	if (m6)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.93 2007/09/05 18:10:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.94 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,7 +518,7 @@ ConditionalXactLockTableWait(TransactionId xid)
 
 
 /*
- * 		VirtualXactLockTableInsert
+ *		VirtualXactLockTableInsert
  *
  * Insert a lock showing that the given virtual transaction ID is running ---
  * this is done at main transaction start when its VXID is assigned.
@@ -537,7 +537,7 @@ VirtualXactLockTableInsert(VirtualTransactionId vxid)
 }
 
 /*
- * 		VirtualXactLockTableWait
+ *		VirtualXactLockTableWait
  *
  * Waits until the lock on the given VXID is released, which shows that
  * the top-level transaction owning the VXID has ended.
@@ -557,7 +557,7 @@ VirtualXactLockTableWait(VirtualTransactionId vxid)
 }
 
 /*
- * 		ConditionalVirtualXactLockTableWait
+ *		ConditionalVirtualXactLockTableWait
  *
  * As above, but only lock if we can get the lock without blocking.
  * Returns TRUE if the lock was acquired.

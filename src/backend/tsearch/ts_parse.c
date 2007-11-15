@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.3 2007/09/07 15:09:55 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.4 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,13 +31,13 @@ typedef struct ParsedLex
 	int			lenlemm;
 	bool		resfollow;
 	struct ParsedLex *next;
-} ParsedLex;
+}	ParsedLex;
 
 typedef struct ListParsedLex
 {
 	ParsedLex  *head;
 	ParsedLex  *tail;
-} ListParsedLex;
+}	ListParsedLex;
 
 typedef struct
 {
@@ -56,7 +56,7 @@ typedef struct
 
 	ParsedLex  *lastRes;
 	TSLexeme   *tmpRes;
-} LexizeData;
+}	LexizeData;
 
 static void
 LexizeInit(LexizeData * ld, TSConfigCacheEntry * cfg)
@@ -462,7 +462,7 @@ hlfinditem(HeadlineParsedText * prs, TSQuery query, char *buf, int buflen)
 	{
 		if (item->type == QI_VAL &&
 			item->operand.length == buflen &&
-			strncmp(GETOPERAND(query) + item->operand.distance, buf, buflen) == 0)
+		strncmp(GETOPERAND(query) + item->operand.distance, buf, buflen) == 0)
 		{
 			if (word->item)
 			{

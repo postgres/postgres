@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.64 2007/09/05 18:10:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.65 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -394,7 +394,8 @@ GetNextLocalTransactionId(void)
 	LocalTransactionId result;
 
 	/* loop to avoid returning InvalidLocalTransactionId at wraparound */
-	do {
+	do
+	{
 		result = nextLocalTransactionId++;
 	} while (!LocalTransactionIdIsValid(result));
 

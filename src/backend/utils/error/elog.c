@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.197 2007/09/27 18:15:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.198 2007/11/15 21:14:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,9 +250,9 @@ errstart(int elevel, const char *filename, int lineno,
 
 		/*
 		 * If we recurse more than once, the problem might be something broken
-		 * in a context traceback routine.  Abandon them too.  We also
-		 * abandon attempting to print the error statement (which, if long,
-		 * could itself be the source of the recursive failure).
+		 * in a context traceback routine.	Abandon them too.  We also abandon
+		 * attempting to print the error statement (which, if long, could
+		 * itself be the source of the recursive failure).
 		 */
 		if (recursion_depth > 2)
 		{
@@ -1129,10 +1129,10 @@ pg_re_throw(void)
 		/*
 		 * If we get here, elog(ERROR) was thrown inside a PG_TRY block, which
 		 * we have now exited only to discover that there is no outer setjmp
-		 * handler to pass the error to.  Had the error been thrown outside the
-		 * block to begin with, we'd have promoted the error to FATAL, so the
-		 * correct behavior is to make it FATAL now; that is, emit it and then
-		 * call proc_exit.
+		 * handler to pass the error to.  Had the error been thrown outside
+		 * the block to begin with, we'd have promoted the error to FATAL, so
+		 * the correct behavior is to make it FATAL now; that is, emit it and
+		 * then call proc_exit.
 		 */
 		ErrorData  *edata = &errordata[errordata_stack_depth];
 
@@ -1497,7 +1497,7 @@ log_line_prefix(StringInfo buf)
 				}
 				break;
 			case 'c':
-				appendStringInfo(buf, "%lx.%x", (long)(MyStartTime),MyProcPid);
+				appendStringInfo(buf, "%lx.%x", (long) (MyStartTime), MyProcPid);
 				break;
 			case 'p':
 				appendStringInfo(buf, "%d", MyProcPid);
@@ -1517,14 +1517,14 @@ log_line_prefix(StringInfo buf)
 
 					/*
 					 * Normally we print log timestamps in log_timezone, but
-					 * during startup we could get here before that's set.
-					 * If so, fall back to gmt_timezone (which guc.c ensures
-					 * is set up before Log_line_prefix can become nonempty).
+					 * during startup we could get here before that's set. If
+					 * so, fall back to gmt_timezone (which guc.c ensures is
+					 * set up before Log_line_prefix can become nonempty).
 					 */
 					tz = log_timezone ? log_timezone : gmt_timezone;
 
 					pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
-								/* leave room for milliseconds... */
+					/* leave room for milliseconds... */
 								"%Y-%m-%d %H:%M:%S     %Z",
 								pg_localtime(&stamp_time, tz));
 
@@ -1618,25 +1618,25 @@ log_line_prefix(StringInfo buf)
  * We use the PostgreSQL defaults for CSV, i.e. quote = escape = '"'
  */
 
-static inline void 
-appendCSVLiteral(StringInfo buf, const char* data)
+static inline void
+appendCSVLiteral(StringInfo buf, const char *data)
 {
-  const char * p = data;
-  char c;
+	const char *p = data;
+	char		c;
 
-  appendStringInfoCharMacro(buf, '"');
-  while ( (c = *p++) != '\0' )
-  {
-      if (c == '"')
-          appendStringInfoCharMacro(buf, '"');
-      appendStringInfoCharMacro(buf, c);
-  }
-  appendStringInfoCharMacro(buf, '"');
+	appendStringInfoCharMacro(buf, '"');
+	while ((c = *p++) != '\0')
+	{
+		if (c == '"')
+			appendStringInfoCharMacro(buf, '"');
+		appendStringInfoCharMacro(buf, c);
+	}
+	appendStringInfoCharMacro(buf, '"');
 }
 
-/* 
- * Constructs the error message, depending on the Errordata it gets, 
- * in CSV (comma separated values) format. The COPY command 
+/*
+ * Constructs the error message, depending on the Errordata it gets,
+ * in CSV (comma separated values) format. The COPY command
  * can then be used to load the messages into a table.
  */
 static void
@@ -1645,42 +1645,43 @@ write_csvlog(ErrorData *edata)
 	StringInfoData msgbuf;
 	StringInfoData buf;
 
-    /* static counter for line numbers */
-    static long log_line_number = 0;
+	/* static counter for line numbers */
+	static long log_line_number = 0;
 
-    /* has counter been reset in current process? */
-    static int  log_my_pid = 0;
+	/* has counter been reset in current process? */
+	static int	log_my_pid = 0;
 
-    /*
-     * This is one of the few places where we'd rather not inherit a static
-     * variable's value from the postmaster.  But since we will, reset it when
-     * MyProcPid changes.
-     */
-    if (log_my_pid != MyProcPid)
-    {
-        log_line_number = 0;
-        log_my_pid = MyProcPid;
+	/*
+	 * This is one of the few places where we'd rather not inherit a static
+	 * variable's value from the postmaster.  But since we will, reset it when
+	 * MyProcPid changes.
+	 */
+	if (log_my_pid != MyProcPid)
+	{
+		log_line_number = 0;
+		log_my_pid = MyProcPid;
 		formatted_start_time[0] = '\0';
-    }
-    log_line_number++;
+	}
+	log_line_number++;
 
 	initStringInfo(&msgbuf);
 	initStringInfo(&buf);
 
-	/* 
-	 * The format of the log output in CSV format:
-	 * timestamp with milliseconds, username, databasename, session id,
-	 * host and port number, process id, process line number, command tag, 
-	 * session start time, virtual transaction id, regular transaction id,
-	 * error severity, sql state code, error message.
+	/*
+	 * The format of the log output in CSV format: timestamp with
+	 * milliseconds, username, databasename, session id, host and port number,
+	 * process id, process line number, command tag, session start time,
+	 * virtual transaction id, regular transaction id, error severity, sql
+	 * state code, error message.
 	 */
-  
+
 	/* timestamp_with_milliseconds */
-	/* 
-	 * Check if the timestamp is already calculated for the syslog message,
-	 * if it is, then no need to calculate it again, will use the same,
-	 * else get the current timestamp. This is done to put same timestamp
-	 * in both syslog and csvlog messages.
+
+	/*
+	 * Check if the timestamp is already calculated for the syslog message, if
+	 * it is, then no need to calculate it again, will use the same, else get
+	 * the current timestamp. This is done to put same timestamp in both
+	 * syslog and csvlog messages.
 	 */
 	if (formatted_log_time[0] == '\0')
 	{
@@ -1688,20 +1689,20 @@ write_csvlog(ErrorData *edata)
 		pg_time_t	stamp_time;
 		pg_tz	   *tz;
 		char		msbuf[8];
-		
+
 		gettimeofday(&tv, NULL);
 		stamp_time = (pg_time_t) tv.tv_sec;
-		
+
 		/*
-		 * Normally we print log timestamps in log_timezone, but
-		 * during startup we could get here before that's set.
-		 * If so, fall back to gmt_timezone (which guc.c ensures
-		 * is set up before Log_line_prefix can become nonempty).
+		 * Normally we print log timestamps in log_timezone, but during
+		 * startup we could get here before that's set. If so, fall back to
+		 * gmt_timezone (which guc.c ensures is set up before Log_line_prefix
+		 * can become nonempty).
 		 */
 		tz = log_timezone ? log_timezone : gmt_timezone;
-		
+
 		pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
-					/* leave room for milliseconds... */
+		/* leave room for milliseconds... */
 					"%Y-%m-%d %H:%M:%S     %Z",
 					pg_localtime(&stamp_time, tz));
 
@@ -1716,6 +1717,7 @@ write_csvlog(ErrorData *edata)
 	if (MyProcPort)
 	{
 		const char *username = MyProcPort->user_name;
+
 		if (username == NULL || *username == '\0')
 			username = _("[unknown]");
 
@@ -1730,7 +1732,7 @@ write_csvlog(ErrorData *edata)
 
 		if (dbname == NULL || *dbname == '\0')
 			dbname = _("[unknown]");
-		
+
 		appendCSVLiteral(&buf, dbname);
 	}
 	appendStringInfoChar(&buf, ',');
@@ -1761,7 +1763,7 @@ write_csvlog(ErrorData *edata)
 	if (MyProcPort)
 	{
 		const char *psdisp;
-		int         displen;
+		int			displen;
 
 		psdisp = get_ps_display(&displen);
 		appendStringInfo(&msgbuf, "%.*s", displen, psdisp);
@@ -1798,7 +1800,7 @@ write_csvlog(ErrorData *edata)
 
 	/* SQL state code */
 	appendStringInfo(&buf, "%s,", unpack_sql_state(edata->sqlerrcode));
- 
+
 	/* Error message and cursor position if any */
 	get_csv_error_message(&buf, edata);
 
@@ -1808,8 +1810,8 @@ write_csvlog(ErrorData *edata)
 	if (am_syslogger)
 		write_syslogger_file(buf.data, buf.len, LOG_DESTINATION_CSVLOG);
 	else
-		write_pipe_chunks(buf.data, buf.len, LOG_DESTINATION_CSVLOG); 
-	
+		write_pipe_chunks(buf.data, buf.len, LOG_DESTINATION_CSVLOG);
+
 	pfree(msgbuf.data);
 	pfree(buf.data);
 }
@@ -1821,16 +1823,16 @@ write_csvlog(ErrorData *edata)
 static void
 get_csv_error_message(StringInfo buf, ErrorData *edata)
 {
-	char *msg = edata->message ? edata->message : _("missing error text");
-	char c;
+	char	   *msg = edata->message ? edata->message : _("missing error text");
+	char		c;
 
 	appendStringInfoCharMacro(buf, '"');
 
-	while ( (c = *msg++) != '\0' )
+	while ((c = *msg++) != '\0')
 	{
-      if (c == '"')
-          appendStringInfoCharMacro(buf, '"');
-      appendStringInfoCharMacro(buf, c);
+		if (c == '"')
+			appendStringInfoCharMacro(buf, '"');
+		appendStringInfoCharMacro(buf, c);
 	}
 
 	if (edata->cursorpos > 0)
@@ -2010,13 +2012,14 @@ send_message_to_server_log(ErrorData *edata)
 	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == DestDebug)
 	{
 		/*
-		 * Use the chunking protocol if we know the syslogger should
-		 * be catching stderr output, and we are not ourselves the
-		 * syslogger.  Otherwise, just do a vanilla write to stderr.
+		 * Use the chunking protocol if we know the syslogger should be
+		 * catching stderr output, and we are not ourselves the syslogger.
+		 * Otherwise, just do a vanilla write to stderr.
 		 */
 		if (redirection_done && !am_syslogger)
 			write_pipe_chunks(buf.data, buf.len, LOG_DESTINATION_STDERR);
 #ifdef WIN32
+
 		/*
 		 * In a win32 service environment, there is no usable stderr. Capture
 		 * anything going there and write it to the eventlog instead.
@@ -2040,18 +2043,20 @@ send_message_to_server_log(ErrorData *edata)
 	{
 		if (redirection_done || am_syslogger)
 		{
-			/* send CSV data if it's safe to do so (syslogger doesn't need
-			 * the pipe). First get back the space in the message buffer.
+			/*
+			 * send CSV data if it's safe to do so (syslogger doesn't need the
+			 * pipe). First get back the space in the message buffer.
 			 */
 			pfree(buf.data);
 			write_csvlog(edata);
 		}
 		else
 		{
-			char * msg = _("Not safe to send CSV data\n");
-			write(fileno(stderr),msg,strlen(msg));
-			if ( ! (Log_destination & LOG_DESTINATION_STDERR) &&
-				 whereToSendOutput != DestDebug)
+			char	   *msg = _("Not safe to send CSV data\n");
+
+			write(fileno(stderr), msg, strlen(msg));
+			if (!(Log_destination & LOG_DESTINATION_STDERR) &&
+				whereToSendOutput != DestDebug)
 			{
 				/* write message to stderr unless we just sent it above */
 				write(fileno(stderr), buf.data, buf.len);
@@ -2073,7 +2078,7 @@ write_pipe_chunks(char *data, int len, int dest)
 {
 	PipeProtoChunk p;
 
-	int fd = fileno(stderr);
+	int			fd = fileno(stderr);
 
 	Assert(len > 0);
 
@@ -2325,9 +2330,9 @@ useful_strerror(int errnum)
 	if (str == NULL || *str == '\0')
 	{
 		snprintf(errorstr_buf, sizeof(errorstr_buf),
-				 /*------
-				   translator: This string will be truncated at 47
-				   characters expanded. */
+		/*------
+		  translator: This string will be truncated at 47
+		  characters expanded. */
 				 _("operating system error %d"), errnum);
 		str = errorstr_buf;
 	}

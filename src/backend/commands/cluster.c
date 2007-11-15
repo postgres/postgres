@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.164 2007/09/29 18:05:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.165 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ static List *get_tables_to_cluster(MemoryContext cluster_context);
  *
  * The single-relation case does not have any such overhead.
  *
- * We also allow a relation to be specified without index.  In that case,
+ * We also allow a relation to be specified without index.	In that case,
  * the indisclustered bit will be looked up, and an ERROR will be thrown
  * if there is no index with the bit set.
  *---------------------------------------------------------------------------
@@ -107,13 +107,13 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 						   RelationGetRelationName(rel));
 
 		/*
-		 * Reject clustering a remote temp table ... their local buffer manager
-		 * is not going to cope.
+		 * Reject clustering a remote temp table ... their local buffer
+		 * manager is not going to cope.
 		 */
 		if (isOtherTempNamespace(RelationGetNamespace(rel)))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot cluster temporary tables of other sessions")));
+			   errmsg("cannot cluster temporary tables of other sessions")));
 
 		if (stmt->indexname == NULL)
 		{
@@ -289,7 +289,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 		 * check in the "recheck" case is appropriate (which currently means
 		 * somebody is executing a database-wide CLUSTER), because there is
 		 * another check in cluster() which will stop any attempt to cluster
-		 * remote temp tables by name.  There is another check in
+		 * remote temp tables by name.	There is another check in
 		 * check_index_is_clusterable which is redundant, but we leave it for
 		 * extra safety.
 		 */
@@ -733,8 +733,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 
 	/*
 	 * compute xids used to freeze and weed out dead tuples.  We use -1
-	 * freeze_min_age to avoid having CLUSTER freeze tuples earlier than
-	 * a plain VACUUM would.
+	 * freeze_min_age to avoid having CLUSTER freeze tuples earlier than a
+	 * plain VACUUM would.
 	 */
 	vacuum_set_xid_limits(-1, OldHeap->rd_rel->relisshared,
 						  &OldestXmin, &FreezeXid);
@@ -745,8 +745,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	/*
 	 * Scan through the OldHeap in OldIndex order and copy each tuple into the
 	 * NewHeap.  To ensure we see recently-dead tuples that still need to be
-	 * copied, we scan with SnapshotAny and use HeapTupleSatisfiesVacuum
-	 * for the visibility test.
+	 * copied, we scan with SnapshotAny and use HeapTupleSatisfiesVacuum for
+	 * the visibility test.
 	 */
 	scan = index_beginscan(OldHeap, OldIndex,
 						   SnapshotAny, 0, (ScanKey) NULL);
@@ -774,31 +774,33 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 				isdead = false;
 				break;
 			case HEAPTUPLE_INSERT_IN_PROGRESS:
+
 				/*
-				 * We should not see this unless it's been inserted earlier
-				 * in our own transaction.
+				 * We should not see this unless it's been inserted earlier in
+				 * our own transaction.
 				 */
 				if (!TransactionIdIsCurrentTransactionId(
-					HeapTupleHeaderGetXmin(tuple->t_data)))
+									  HeapTupleHeaderGetXmin(tuple->t_data)))
 					elog(ERROR, "concurrent insert in progress");
 				/* treat as live */
 				isdead = false;
 				break;
 			case HEAPTUPLE_DELETE_IN_PROGRESS:
+
 				/*
-				 * We should not see this unless it's been deleted earlier
-				 * in our own transaction.
+				 * We should not see this unless it's been deleted earlier in
+				 * our own transaction.
 				 */
 				Assert(!(tuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI));
 				if (!TransactionIdIsCurrentTransactionId(
-					HeapTupleHeaderGetXmax(tuple->t_data)))
+									  HeapTupleHeaderGetXmax(tuple->t_data)))
 					elog(ERROR, "concurrent delete in progress");
 				/* treat as recently dead */
 				isdead = false;
 				break;
 			default:
 				elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
-				isdead = false;		/* keep compiler quiet */
+				isdead = false; /* keep compiler quiet */
 				break;
 		}
 

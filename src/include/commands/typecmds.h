@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/typecmds.h,v 1.19 2007/05/11 17:57:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/typecmds.h,v 1.20 2007/11/15 21:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@ extern void RemoveType(List *names, DropBehavior behavior, bool missing_ok);
 extern void RemoveTypeById(Oid typeOid);
 extern void DefineDomain(CreateDomainStmt *stmt);
 extern void RemoveDomain(List *names, DropBehavior behavior, bool missing_ok);
-extern void DefineEnum(CreateEnumStmt *stmt);
+extern void DefineEnum(CreateEnumStmt * stmt);
 extern Oid	DefineCompositeType(const RangeVar *typevar, List *coldeflist);
 
 extern void AlterDomainDefault(List *names, Node *defaultRaw);
@@ -37,10 +37,10 @@ extern List *GetDomainConstraints(Oid typeOid);
 
 extern void AlterTypeOwner(List *names, Oid newOwnerId);
 extern void AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
-								   bool hasDependEntry);
+					   bool hasDependEntry);
 extern void AlterTypeNamespace(List *names, const char *newschema);
 extern void AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
-									   bool isImplicitArray,
-									   bool errorOnTableType);
+						   bool isImplicitArray,
+						   bool errorOnTableType);
 
 #endif   /* TYPECMDS_H */

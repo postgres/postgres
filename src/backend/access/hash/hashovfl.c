@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.60 2007/09/20 17:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.61 2007/11/15 21:14:32 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -156,7 +156,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf)
 /*
  *	_hash_getovflpage()
  *
- *	Find an available overflow page and return it.  The returned buffer
+ *	Find an available overflow page and return it.	The returned buffer
  *	is pinned and write-locked, and has had _hash_pageinit() applied,
  *	but it is caller's responsibility to fill the special space.
  *
@@ -402,9 +402,9 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 	bucket = ovflopaque->hasho_bucket;
 
 	/*
-	 * Zero the page for debugging's sake; then write and release it.
-	 * (Note: if we failed to zero the page here, we'd have problems
-	 * with the Assert in _hash_pageinit() when the page is reused.)
+	 * Zero the page for debugging's sake; then write and release it. (Note:
+	 * if we failed to zero the page here, we'd have problems with the Assert
+	 * in _hash_pageinit() when the page is reused.)
 	 */
 	MemSet(ovflpage, 0, BufferGetPageSize(ovflbuf));
 	_hash_wrtbuf(rel, ovflbuf);
@@ -420,7 +420,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 		Buffer		prevbuf = _hash_getbuf_with_strategy(rel,
 														 prevblkno,
 														 HASH_WRITE,
-														 LH_BUCKET_PAGE | LH_OVERFLOW_PAGE,
+										   LH_BUCKET_PAGE | LH_OVERFLOW_PAGE,
 														 bstrategy);
 		Page		prevpage = BufferGetPage(prevbuf);
 		HashPageOpaque prevopaque = (HashPageOpaque) PageGetSpecialPointer(prevpage);

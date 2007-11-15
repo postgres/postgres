@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.90 2007/08/26 21:44:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.91 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,14 +259,14 @@ ExecScanSubPlan(SubPlanState *node,
 	 * ROWCOMPARE_SUBLINK.
 	 *
 	 * For EXPR_SUBLINK we require the subplan to produce no more than one
-	 * tuple, else an error is raised.  If zero tuples are produced, we return
+	 * tuple, else an error is raised.	If zero tuples are produced, we return
 	 * NULL.  Assuming we get a tuple, we just use its first column (there can
 	 * be only one non-junk column in this case).
 	 *
 	 * For ARRAY_SUBLINK we allow the subplan to produce any number of tuples,
 	 * and form an array of the first column's values.  Note in particular
-	 * that we produce a zero-element array if no tuples are produced (this
-	 * is a change from pre-8.3 behavior of returning NULL).
+	 * that we produce a zero-element array if no tuples are produced (this is
+	 * a change from pre-8.3 behavior of returning NULL).
 	 */
 	result = BoolGetDatum(subLinkType == ALL_SUBLINK);
 	*isNull = false;
@@ -859,17 +859,17 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 		slot = ExecAllocTableSlot(tupTable);
 		ExecSetSlotDescriptor(slot, tupDesc);
 		sstate->projLeft = ExecBuildProjectionInfo(lefttlist,
-												 NULL,
-												 slot,
-												 NULL);
+												   NULL,
+												   slot,
+												   NULL);
 
 		tupDesc = ExecTypeFromTL(rightptlist, false);
 		slot = ExecAllocTableSlot(tupTable);
 		ExecSetSlotDescriptor(slot, tupDesc);
 		sstate->projRight = ExecBuildProjectionInfo(righttlist,
-												  sstate->innerecontext,
-												  slot,
-												  NULL);
+													sstate->innerecontext,
+													slot,
+													NULL);
 	}
 
 	return sstate;
@@ -910,8 +910,8 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		elog(ERROR, "ANY/ALL subselect unsupported as initplan");
 
 	/*
-	 * By definition, an initplan has no parameters from our query level,
-	 * but it could have some from an outer level.  Rescan it if needed.
+	 * By definition, an initplan has no parameters from our query level, but
+	 * it could have some from an outer level.	Rescan it if needed.
 	 */
 	if (planstate->chgParam != NULL)
 		ExecReScan(planstate, NULL);

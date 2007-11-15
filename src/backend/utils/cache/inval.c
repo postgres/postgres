@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.80 2007/05/02 21:08:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.81 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,7 +592,7 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
 		 * This essentially means that only backends in this same database
 		 * will react to the relcache flush request.  This is in fact
 		 * appropriate, since only those backends could see our pg_attribute
-		 * change anyway.  It looks a bit ugly though.  (In practice, shared
+		 * change anyway.  It looks a bit ugly though.	(In practice, shared
 		 * relations can't have schema changes after bootstrap, so we should
 		 * never come here for a shared rel anyway.)
 		 */
@@ -604,7 +604,7 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
 
 		/*
 		 * When a pg_index row is updated, we should send out a relcache inval
-		 * for the index relation.  As above, we don't know the shared status
+		 * for the index relation.	As above, we don't know the shared status
 		 * of the index, but in practice it doesn't matter since indexes of
 		 * shared catalogs can't have such updates.
 		 */

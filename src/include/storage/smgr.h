@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.60 2007/11/15 20:36:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.61 2007/11/15 21:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,8 +76,8 @@ extern void smgrtruncate(SMgrRelation reln, BlockNumber nblocks,
 			 bool isTemp);
 extern void smgrimmedsync(SMgrRelation reln);
 extern void smgrDoPendingDeletes(bool isCommit);
-extern int	smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr,
-								  bool *haveNonTemp);
+extern int smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr,
+					  bool *haveNonTemp);
 extern void AtSubCommit_smgr(void);
 extern void AtSubAbort_smgr(void);
 extern void PostPrepare_smgr(void);

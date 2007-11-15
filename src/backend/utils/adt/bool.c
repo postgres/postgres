@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.40 2007/06/05 21:31:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.41 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,9 @@
 Datum
 boolin(PG_FUNCTION_ARGS)
 {
-	const char	*in_str = PG_GETARG_CSTRING(0);
-	const char 	*str;
-	size_t 		 len;
+	const char *in_str = PG_GETARG_CSTRING(0);
+	const char *str;
+	size_t		len;
 
 	/*
 	 * Skip leading and trailing whitespace
@@ -92,7 +92,7 @@ boolin(PG_FUNCTION_ARGS)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for type boolean: \"%s\"", in_str)));
+		   errmsg("invalid input syntax for type boolean: \"%s\"", in_str)));
 
 	/* not reached */
 	PG_RETURN_BOOL(false);
@@ -143,7 +143,7 @@ boolsend(PG_FUNCTION_ARGS)
 }
 
 /*
- *	    booltext			- cast function for bool => text
+ *		booltext			- cast function for bool => text
  *
  * We need this because it's different from the behavior of boolout();
  * this function follows the SQL-spec result (except for producing lower case)
@@ -151,8 +151,8 @@ boolsend(PG_FUNCTION_ARGS)
 Datum
 booltext(PG_FUNCTION_ARGS)
 {
-	bool 		 arg1 = PG_GETARG_BOOL(0);
-	char 		*str;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	char	   *str;
 
 	if (arg1)
 		str = "true";

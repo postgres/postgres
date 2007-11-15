@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.14 2007/08/29 17:24:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.15 2007/11/15 21:14:39 momjian Exp $
  *
  */
 
@@ -162,8 +162,9 @@ calculate_tablespace_size(Oid tblspcOid)
 	AclResult	aclresult;
 
 	/*
-	 * User must have CREATE privilege for target tablespace, either explicitly
-	 * granted or implicitly because it is default for current database.
+	 * User must have CREATE privilege for target tablespace, either
+	 * explicitly granted or implicitly because it is default for current
+	 * database.
 	 */
 	if (tblspcOid != MyDatabaseTableSpace)
 	{

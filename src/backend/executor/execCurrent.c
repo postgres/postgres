@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.2 2007/06/11 22:22:40 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.3 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
  * valid updatable scan of the specified table.
  */
 bool
-execCurrentOf(CurrentOfExpr *cexpr,
+execCurrentOf(CurrentOfExpr * cexpr,
 			  ExprContext *econtext,
 			  Oid table_oid,
 			  ItemPointer current_tid)
@@ -44,10 +44,10 @@ execCurrentOf(CurrentOfExpr *cexpr,
 	char	   *cursor_name;
 	char	   *table_name;
 	Portal		portal;
-	QueryDesc *queryDesc;
+	QueryDesc  *queryDesc;
 	ScanState  *scanstate;
-	bool	lisnull;
-	Oid		tuple_tableoid;
+	bool		lisnull;
+	Oid			tuple_tableoid;
 	ItemPointer tuple_tid;
 
 	/* Get the cursor name --- may have to look up a parameter reference */
@@ -85,24 +85,23 @@ execCurrentOf(CurrentOfExpr *cexpr,
 						cursor_name)));
 
 	/*
-	 * Dig through the cursor's plan to find the scan node.  Fail if it's
-	 * not there or buried underneath aggregation.
+	 * Dig through the cursor's plan to find the scan node.  Fail if it's not
+	 * there or buried underneath aggregation.
 	 */
 	scanstate = search_plan_tree(ExecGetActivePlanTree(queryDesc),
 								 table_oid);
 	if (!scanstate)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
-				 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
-						cursor_name, table_name)));
+		errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
+			   cursor_name, table_name)));
 
 	/*
-	 * The cursor must have a current result row: per the SQL spec, it's
-	 * an error if not.  We test this at the top level, rather than at
-	 * the scan node level, because in inheritance cases any one table
-	 * scan could easily not be on a row.  We want to return false, not
-	 * raise error, if the passed-in table OID is for one of the inactive
-	 * scans.
+	 * The cursor must have a current result row: per the SQL spec, it's an
+	 * error if not.  We test this at the top level, rather than at the scan
+	 * node level, because in inheritance cases any one table scan could
+	 * easily not be on a row.	We want to return false, not raise error, if
+	 * the passed-in table OID is for one of the inactive scans.
 	 */
 	if (portal->atStart || portal->atEnd)
 		ereport(ERROR,
@@ -182,37 +181,37 @@ search_plan_tree(PlanState *node, Oid table_oid)
 		case T_IndexScanState:
 		case T_BitmapHeapScanState:
 		case T_TidScanState:
-		{
-			ScanState *sstate = (ScanState *) node;
+			{
+				ScanState  *sstate = (ScanState *) node;
 
-			if (RelationGetRelid(sstate->ss_currentRelation) == table_oid)
-				return sstate;
-			break;
-		}
+				if (RelationGetRelid(sstate->ss_currentRelation) == table_oid)
+					return sstate;
+				break;
+			}
 
 			/*
 			 * For Append, we must look through the members; watch out for
 			 * multiple matches (possible if it was from UNION ALL)
 			 */
 		case T_AppendState:
-		{
-			AppendState *astate = (AppendState *) node;
-			ScanState *result = NULL;
-			int		i;
-
-			for (i = 0; i < astate->as_nplans; i++)
 			{
-				ScanState *elem = search_plan_tree(astate->appendplans[i],
-												   table_oid);
+				AppendState *astate = (AppendState *) node;
+				ScanState  *result = NULL;
+				int			i;
 
-				if (!elem)
-					continue;
-				if (result)
-					return NULL;				/* multiple matches */
-				result = elem;
+				for (i = 0; i < astate->as_nplans; i++)
+				{
+					ScanState  *elem = search_plan_tree(astate->appendplans[i],
+														table_oid);
+
+					if (!elem)
+						continue;
+					if (result)
+						return NULL;	/* multiple matches */
+					result = elem;
+				}
+				return result;
 			}
-			return result;
-		}
 
 			/*
 			 * Result and Limit can be descended through (these are safe

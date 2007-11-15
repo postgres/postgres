@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.125 2007/09/22 21:36:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.126 2007/11/15 21:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ typedef struct process_sublinks_context
 {
 	PlannerInfo *root;
 	bool		isTopQual;
-} process_sublinks_context;
+}	process_sublinks_context;
 
 typedef struct finalize_primnode_context
 {
@@ -54,16 +54,16 @@ typedef struct finalize_primnode_context
 
 
 static Node *convert_testexpr(PlannerInfo *root,
-							  Node *testexpr,
-							  int rtindex,
-							  List **righthandIds);
+				 Node *testexpr,
+				 int rtindex,
+				 List **righthandIds);
 static Node *convert_testexpr_mutator(Node *node,
 						 convert_testexpr_context *context);
 static bool subplan_is_hashable(SubLink *slink, SubPlan *node, Plan *plan);
 static bool hash_ok_operator(OpExpr *expr);
 static Node *replace_correlation_vars_mutator(Node *node, PlannerInfo *root);
 static Node *process_sublinks_mutator(Node *node,
-									  process_sublinks_context *context);
+						 process_sublinks_context * context);
 static Bitmapset *finalize_plan(PlannerInfo *root,
 			  Plan *plan,
 			  Bitmapset *outer_params,
@@ -88,13 +88,13 @@ replace_outer_var(PlannerInfo *root, Var *var)
 	abslevel = root->query_level - var->varlevelsup;
 
 	/*
-	 * If there's already a paramlist entry for this same Var, just use
-	 * it.	NOTE: in sufficiently complex querytrees, it is possible for the
-	 * same varno/abslevel to refer to different RTEs in different parts of
-	 * the parsetree, so that different fields might end up sharing the same
-	 * Param number.  As long as we check the vartype as well, I believe that
-	 * this sort of aliasing will cause no trouble. The correct field should
-	 * get stored into the Param slot at execution in each part of the tree.
+	 * If there's already a paramlist entry for this same Var, just use it.
+	 * NOTE: in sufficiently complex querytrees, it is possible for the same
+	 * varno/abslevel to refer to different RTEs in different parts of the
+	 * parsetree, so that different fields might end up sharing the same Param
+	 * number.	As long as we check the vartype as well, I believe that this
+	 * sort of aliasing will cause no trouble. The correct field should get
+	 * stored into the Param slot at execution in each part of the tree.
 	 *
 	 * We also need to demand a match on vartypmod.  This does not matter for
 	 * the Param itself, since those are not typmod-dependent, but it does
@@ -470,11 +470,10 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 
 	/*
 	 * A parameterless subplan (not initplan) should be prepared to handle
-	 * REWIND efficiently.  If it has direct parameters then there's no point
-	 * since it'll be reset on each scan anyway; and if it's an initplan
-	 * then there's no point since it won't get re-run without parameter
-	 * changes anyway.  The input of a hashed subplan doesn't need REWIND
-	 * either.
+	 * REWIND efficiently.	If it has direct parameters then there's no point
+	 * since it'll be reset on each scan anyway; and if it's an initplan then
+	 * there's no point since it won't get re-run without parameter changes
+	 * anyway.	The input of a hashed subplan doesn't need REWIND either.
 	 */
 	if (splan->parParam == NIL && !isInitPlan && !splan->useHashTable)
 		root->glob->rewindPlanIDs = bms_add_member(root->glob->rewindPlanIDs,
@@ -625,13 +624,12 @@ subplan_is_hashable(SubLink *slink, SubPlan *node, Plan *plan)
 		return false;
 
 	/*
-	 * The combining operators must be hashable and strict.
-	 * The need for hashability is obvious, since we want to use hashing.
-	 * Without strictness, behavior in the presence of nulls is too
-	 * unpredictable.  We actually must assume even more than plain
-	 * strictness: they can't yield NULL for non-null inputs, either
-	 * (see nodeSubplan.c).  However, hash indexes and hash joins assume
-	 * that too.
+	 * The combining operators must be hashable and strict. The need for
+	 * hashability is obvious, since we want to use hashing. Without
+	 * strictness, behavior in the presence of nulls is too unpredictable.	We
+	 * actually must assume even more than plain strictness: they can't yield
+	 * NULL for non-null inputs, either (see nodeSubplan.c).  However, hash
+	 * indexes and hash joins assume that too.
 	 */
 	if (IsA(slink->testexpr, OpExpr))
 	{
@@ -730,7 +728,7 @@ convert_IN_to_join(PlannerInfo *root, SubLink *sublink)
 		in_operators = NIL;
 		foreach(lc, ((BoolExpr *) sublink->testexpr)->args)
 		{
-			OpExpr *op = (OpExpr *) lfirst(lc);
+			OpExpr	   *op = (OpExpr *) lfirst(lc);
 
 			if (!IsA(op, OpExpr))		/* probably shouldn't happen */
 				return NULL;
@@ -867,7 +865,7 @@ SS_process_sublinks(PlannerInfo *root, Node *expr, bool isQual)
 }
 
 static Node *
-process_sublinks_mutator(Node *node, process_sublinks_context *context)
+process_sublinks_mutator(Node *node, process_sublinks_context * context)
 {
 	process_sublinks_context locContext;
 

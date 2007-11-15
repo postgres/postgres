@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.126 2007/07/23 18:59:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.127 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,12 +61,13 @@
 /*
  * Define a fake structure compatible with GSSAPI on Unix.
  */
-typedef struct {
-	void *value;
-	int length;
-} gss_buffer_desc;
+typedef struct
+{
+	void	   *value;
+	int			length;
+}	gss_buffer_desc;
 #endif
-#endif /* ENABLE_SSPI */
+#endif   /* ENABLE_SSPI */
 
 #ifdef USE_SSL
 #include <openssl/ssl.h>
@@ -262,7 +263,7 @@ typedef struct pgLobjfuncs
 	Oid			fn_lo_unlink;	/* OID of backend function lo_unlink	*/
 	Oid			fn_lo_lseek;	/* OID of backend function lo_lseek		*/
 	Oid			fn_lo_tell;		/* OID of backend function lo_tell		*/
-	Oid			fn_lo_truncate;	/* OID of backend function lo_truncate	*/
+	Oid			fn_lo_truncate; /* OID of backend function lo_truncate	*/
 	Oid			fn_lo_read;		/* OID of backend function LOread		*/
 	Oid			fn_lo_write;	/* OID of backend function LOwrite		*/
 } PGlobjfuncs;
@@ -322,7 +323,7 @@ struct pg_conn
 	SockAddr	raddr;			/* Remote address */
 	ProtocolVersion pversion;	/* FE/BE protocol version in use */
 	int			sversion;		/* server version, e.g. 70401 for 7.4.1 */
-	AuthRequest	areq;			/* auth type demanded by server */
+	AuthRequest areq;			/* auth type demanded by server */
 
 	/* Transient state needed while establishing connection */
 	struct addrinfo *addrlist;	/* list of possible backend addresses */
@@ -374,22 +375,24 @@ struct pg_conn
 #endif
 
 #ifdef ENABLE_GSS
-	gss_ctx_id_t	gctx;		/* GSS context */
-	gss_name_t		gtarg_nam;	/* GSS target name */
-	gss_buffer_desc	ginbuf;		/* GSS input token */
-	gss_buffer_desc	goutbuf;	/* GSS output token */
+	gss_ctx_id_t gctx;			/* GSS context */
+	gss_name_t	gtarg_nam;		/* GSS target name */
+	gss_buffer_desc ginbuf;		/* GSS input token */
+	gss_buffer_desc goutbuf;	/* GSS output token */
 #endif
 
 #ifdef ENABLE_SSPI
 #ifndef ENABLE_GSS
-	gss_buffer_desc	ginbuf;		/* GSS input token */
+	gss_buffer_desc ginbuf;		/* GSS input token */
 #else
-	char			*gsslib;	/* What GSS librart to use ("gssapi" or "sspi") */
+	char	   *gsslib;			/* What GSS librart to use ("gssapi" or
+								 * "sspi") */
 #endif
-	CredHandle		*sspicred;	/* SSPI credentials handle */
-	CtxtHandle		*sspictx;	/* SSPI context */
-	char			*sspitarget;/* SSPI target name */
-	int				usesspi;	/* Indicate if SSPI is in use on the connection */
+	CredHandle *sspicred;		/* SSPI credentials handle */
+	CtxtHandle *sspictx;		/* SSPI context */
+	char	   *sspitarget;		/* SSPI target name */
+	int			usesspi;		/* Indicate if SSPI is in use on the
+								 * connection */
 #endif
 
 

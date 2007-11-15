@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.71 2007/07/06 04:16:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.72 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,8 +307,8 @@ extern TimestampTz GetCurrentTimestamp(void);
 extern void TimestampDifference(TimestampTz start_time, TimestampTz stop_time,
 					long *secs, int *microsecs);
 extern bool TimestampDifferenceExceeds(TimestampTz start_time,
-									   TimestampTz stop_time,
-									   int msec);
+						   TimestampTz stop_time,
+						   int msec);
 
 extern TimestampTz time_t_to_timestamptz(time_t tm);
 extern time_t timestamptz_to_time_t(TimestampTz t);
@@ -332,8 +332,8 @@ extern int	timestamp_cmp_internal(Timestamp dt1, Timestamp dt2);
 #define timestamptz_cmp_internal(dt1,dt2)	timestamp_cmp_internal(dt1, dt2)
 
 extern int	isoweek2j(int year, int week);
-extern void	isoweek2date(int woy, int *year, int *mon, int *mday);
-extern void	isoweekdate2date(int isoweek, int isowday, int *year, int *mon, int *mday);
+extern void isoweek2date(int woy, int *year, int *mon, int *mday);
+extern void isoweekdate2date(int isoweek, int isowday, int *year, int *mon, int *mday);
 extern int	date2isoweek(int year, int mon, int mday);
 extern int	date2isoyear(int year, int mon, int mday);
 extern int	date2isoyearday(int year, int mon, int mday);

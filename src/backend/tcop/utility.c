@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.286 2007/09/03 18:46:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.287 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,9 +269,9 @@ CommandIsReadOnly(Node *parsetree)
 		{
 			case CMD_SELECT:
 				if (stmt->intoClause != NULL)
-					return false;	/* SELECT INTO */
+					return false;		/* SELECT INTO */
 				else if (stmt->rowMarks != NIL)
-					return false;	/* SELECT FOR UPDATE/SHARE */
+					return false;		/* SELECT FOR UPDATE/SHARE */
 				else
 					return true;
 			case CMD_UPDATE:
@@ -546,8 +546,8 @@ ProcessUtility(Node *parsetree,
 
 		case T_CreateStmt:
 			{
-				List		*stmts;
-				ListCell	*l;
+				List	   *stmts;
+				ListCell   *l;
 				Oid			relOid;
 
 				/* Run parse analysis ... */
@@ -557,7 +557,7 @@ ProcessUtility(Node *parsetree,
 				/* ... and do it */
 				foreach(l, stmts)
 				{
-					Node   *stmt = (Node *) lfirst(l);
+					Node	   *stmt = (Node *) lfirst(l);
 
 					if (IsA(stmt, CreateStmt))
 					{
@@ -746,8 +746,8 @@ ProcessUtility(Node *parsetree,
 
 		case T_AlterTableStmt:
 			{
-				List		*stmts;
-				ListCell	*l;
+				List	   *stmts;
+				ListCell   *l;
 
 				/* Run parse analysis ... */
 				stmts = transformAlterTableStmt((AlterTableStmt *) parsetree,
@@ -756,7 +756,7 @@ ProcessUtility(Node *parsetree,
 				/* ... and do it */
 				foreach(l, stmts)
 				{
-					Node   *stmt = (Node *) lfirst(l);
+					Node	   *stmt = (Node *) lfirst(l);
 
 					if (IsA(stmt, AlterTableStmt))
 					{
@@ -886,11 +886,11 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-		case T_CreateEnumStmt:			/* CREATE TYPE (enum) */
+		case T_CreateEnumStmt:	/* CREATE TYPE (enum) */
 			DefineEnum((CreateEnumStmt *) parsetree);
 			break;
 
-		case T_ViewStmt:				/* CREATE VIEW */
+		case T_ViewStmt:		/* CREATE VIEW */
 			DefineView((ViewStmt *) parsetree, queryString);
 			break;
 
@@ -1158,11 +1158,12 @@ ProcessUtility(Node *parsetree,
 						ReindexTable(stmt->relation);
 						break;
 					case OBJECT_DATABASE:
+
 						/*
-						 * This cannot run inside a user transaction block;
-						 * if we were inside a transaction, then its commit-
-						 * and start-transaction-command calls would not have
-						 * the intended effect!
+						 * This cannot run inside a user transaction block; if
+						 * we were inside a transaction, then its commit- and
+						 * start-transaction-command calls would not have the
+						 * intended effect!
 						 */
 						PreventTransactionChain(isTopLevel,
 												"REINDEX DATABASE");
@@ -1385,7 +1386,7 @@ CreateCommandTag(Node *parsetree)
 
 	switch (nodeTag(parsetree))
 	{
-		/* raw plannable queries */
+			/* raw plannable queries */
 		case T_InsertStmt:
 			tag = "INSERT";
 			break;
@@ -1402,7 +1403,7 @@ CreateCommandTag(Node *parsetree)
 			tag = "SELECT";
 			break;
 
-		/* utility statements --- same whether raw or cooked */
+			/* utility statements --- same whether raw or cooked */
 		case T_TransactionStmt:
 			{
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
@@ -1460,6 +1461,7 @@ CreateCommandTag(Node *parsetree)
 		case T_ClosePortalStmt:
 			{
 				ClosePortalStmt *stmt = (ClosePortalStmt *) parsetree;
+
 				if (stmt->portalname == NULL)
 					tag = "CLOSE CURSOR ALL";
 				else
@@ -1714,8 +1716,8 @@ CreateCommandTag(Node *parsetree)
 
 				/*
 				 * We might be supporting ALTER INDEX here, so set the
-				 * completion tag appropriately. Catch all other
-				 * possibilities with ALTER TABLE
+				 * completion tag appropriately. Catch all other possibilities
+				 * with ALTER TABLE
 				 */
 
 				if (stmt->relkind == OBJECT_INDEX)
@@ -2030,6 +2032,7 @@ CreateCommandTag(Node *parsetree)
 		case T_DeallocateStmt:
 			{
 				DeallocateStmt *stmt = (DeallocateStmt *) parsetree;
+
 				if (stmt->name == NULL)
 					tag = "DEALLOCATE ALL";
 				else
@@ -2037,7 +2040,7 @@ CreateCommandTag(Node *parsetree)
 			}
 			break;
 
-		/* already-planned queries */
+			/* already-planned queries */
 		case T_PlannedStmt:
 			{
 				PlannedStmt *stmt = (PlannedStmt *) parsetree;
@@ -2045,6 +2048,7 @@ CreateCommandTag(Node *parsetree)
 				switch (stmt->commandType)
 				{
 					case CMD_SELECT:
+
 						/*
 						 * We take a little extra care here so that the result
 						 * will be useful for complaints about read-only
@@ -2085,14 +2089,15 @@ CreateCommandTag(Node *parsetree)
 			}
 			break;
 
-		/* parsed-and-rewritten-but-not-planned queries */
+			/* parsed-and-rewritten-but-not-planned queries */
 		case T_Query:
 			{
-				Query *stmt = (Query *) parsetree;
+				Query	   *stmt = (Query *) parsetree;
 
 				switch (stmt->commandType)
 				{
 					case CMD_SELECT:
+
 						/*
 						 * We take a little extra care here so that the result
 						 * will be useful for complaints about read-only
@@ -2162,7 +2167,7 @@ GetCommandLogLevel(Node *parsetree)
 
 	switch (nodeTag(parsetree))
 	{
-		/* raw plannable queries */
+			/* raw plannable queries */
 		case T_InsertStmt:
 		case T_DeleteStmt:
 		case T_UpdateStmt:
@@ -2176,7 +2181,7 @@ GetCommandLogLevel(Node *parsetree)
 				lev = LOGSTMT_ALL;
 			break;
 
-		/* utility statements --- same whether raw or cooked */
+			/* utility statements --- same whether raw or cooked */
 		case T_TransactionStmt:
 			lev = LOGSTMT_ALL;
 			break;
@@ -2487,7 +2492,7 @@ GetCommandLogLevel(Node *parsetree)
 			lev = LOGSTMT_ALL;
 			break;
 
-		/* already-planned queries */
+			/* already-planned queries */
 		case T_PlannedStmt:
 			{
 				PlannedStmt *stmt = (PlannedStmt *) parsetree;
@@ -2516,10 +2521,10 @@ GetCommandLogLevel(Node *parsetree)
 			}
 			break;
 
-		/* parsed-and-rewritten-but-not-planned queries */
+			/* parsed-and-rewritten-but-not-planned queries */
 		case T_Query:
 			{
-				Query *stmt = (Query *) parsetree;
+				Query	   *stmt = (Query *) parsetree;
 
 				switch (stmt->commandType)
 				{

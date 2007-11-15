@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.75 2007/10/03 11:11:12 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.76 2007/11/15 21:14:45 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -101,7 +101,7 @@ ECPGmake_simple_type(enum ECPGttype type, char *size, int lineno)
 	ne->size = size;
 	ne->u.element = NULL;
 	ne->struct_sizeof = NULL;
-	ne->lineno = lineno; /* only needed for varchar */
+	ne->lineno = lineno;		/* only needed for varchar */
 
 	return ne;
 }
@@ -259,7 +259,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 
 					ECPGdump_a_simple(o, name,
 									  type->u.element->type,
-							type->u.element->size, type->size, NULL, prefix, type->lineno);
+									  type->u.element->size, type->size, NULL, prefix, type->lineno);
 
 					if (ind_type != NULL)
 					{
@@ -328,7 +328,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 	else
 	{
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
-		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize)+ sizeof(int) * CHAR_BIT * 10 / 3);
+		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
 
 		switch (type)
 		{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.85 2007/02/22 22:00:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.86 2007/11/15 21:14:35 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -413,7 +413,7 @@ print_pathkeys(List *pathkeys, List *rtable)
 	printf("(");
 	foreach(i, pathkeys)
 	{
-		PathKey	   *pathkey = (PathKey *) lfirst(i);
+		PathKey    *pathkey = (PathKey *) lfirst(i);
 		EquivalenceClass *eclass;
 		ListCell   *k;
 		bool		first = true;

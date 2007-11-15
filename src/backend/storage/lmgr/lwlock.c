@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.48 2007/01/05 22:19:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.49 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,8 +175,8 @@ NumLWLocks(void)
 
 	/*
 	 * Add any requested by loadable modules; for backwards-compatibility
-	 * reasons, allocate at least NUM_USER_DEFINED_LWLOCKS of them even
-	 * if there are no explicit requests.
+	 * reasons, allocate at least NUM_USER_DEFINED_LWLOCKS of them even if
+	 * there are no explicit requests.
 	 */
 	lock_addin_request_allowed = false;
 	numLocks += Max(lock_addin_request, NUM_USER_DEFINED_LWLOCKS);
@@ -191,7 +191,7 @@ NumLWLocks(void)
  *		a loadable module.
  *
  * This is only useful if called from the _PG_init hook of a library that
- * is loaded into the postmaster via shared_preload_libraries.  Once
+ * is loaded into the postmaster via shared_preload_libraries.	Once
  * shared memory has been allocated, calls will be ignored.  (We could
  * raise an error, but it seems better to make it a no-op, so that
  * libraries containing such calls can be reloaded if needed.)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.127 2007/09/20 17:56:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.128 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ extern Relation heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
 extern HeapScanDesc heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key);
 extern HeapScanDesc heap_beginscan_bm(Relation relation, Snapshot snapshot,
-			   int nkeys, ScanKey key);
+				  int nkeys, ScanKey key);
 extern void heap_rescan(HeapScanDesc scan, ScanKey key);
 extern void heap_endscan(HeapScanDesc scan);
 extern HeapTuple heap_getnext(HeapScanDesc scan, ScanDirection direction);
@@ -154,9 +154,9 @@ extern bool heap_release_fetch(Relation relation, Snapshot snapshot,
 				   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
 				   Relation stats_relation);
 extern bool heap_hot_search_buffer(ItemPointer tid, Buffer buffer,
-								   Snapshot snapshot, bool *all_dead);
+					   Snapshot snapshot, bool *all_dead);
 extern bool heap_hot_search(ItemPointer tid, Relation relation,
-							Snapshot snapshot, bool *all_dead);
+				Snapshot snapshot, bool *all_dead);
 
 extern void heap_get_latest_tid(Relation relation, Snapshot snapshot,
 					ItemPointer tid);
@@ -177,7 +177,7 @@ extern HTSU_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
 				LockTupleMode mode, bool nowait);
 extern void heap_inplace_update(Relation relation, HeapTuple tuple);
 extern bool heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
-							  Buffer buf);
+				  Buffer buf);
 
 extern Oid	simple_heap_insert(Relation relation, HeapTuple tup);
 extern void simple_heap_delete(Relation relation, ItemPointer tid);
@@ -203,8 +203,8 @@ extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
 			   OffsetNumber *nowunused, int nunused,
 			   bool redirect_move);
 extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
-								  TransactionId cutoff_xid,
-								  OffsetNumber *offsets, int offcnt);
+				TransactionId cutoff_xid,
+				OffsetNumber *offsets, int offcnt);
 extern XLogRecPtr log_newpage(RelFileNode *rnode, BlockNumber blk, Page page);
 
 /* in common/heaptuple.c */
@@ -251,10 +251,10 @@ extern HeapTuple heap_addheader(int natts, bool withoid,
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer,
-								TransactionId OldestXmin);
-extern int	heap_page_prune(Relation relation, Buffer buffer,
-							TransactionId OldestXmin,
-							bool redirect_move, bool report_stats);
+					TransactionId OldestXmin);
+extern int heap_page_prune(Relation relation, Buffer buffer,
+				TransactionId OldestXmin,
+				bool redirect_move, bool report_stats);
 extern void heap_get_root_tuples(Page page, OffsetNumber *root_offsets);
 
 /* in heap/syncscan.c */

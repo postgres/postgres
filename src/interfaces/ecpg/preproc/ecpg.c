@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.101 2007/08/29 13:58:13 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.102 2007/11/15 21:14:45 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -22,7 +22,7 @@ int			ret_value = 0,
 			regression_mode = false,
 			auto_prepare = false;
 
-char      *output_filename;
+char	   *output_filename;
 
 enum COMPAT_MODE compat = ECPG_COMPAT_PGSQL;
 
@@ -126,7 +126,7 @@ main(int argc, char *const argv[])
 		{"help", no_argument, NULL, ECPG_GETOPT_LONG_HELP},
 		{"version", no_argument, NULL, ECPG_GETOPT_LONG_VERSION},
 		{"regression", no_argument, NULL, ECPG_GETOPT_LONG_REGRESSION},
-		{ NULL, 0, NULL, 0}
+		{NULL, 0, NULL, 0}
 	};
 
 	int			fnr,
@@ -154,12 +154,14 @@ main(int argc, char *const argv[])
 			case ECPG_GETOPT_LONG_HELP:
 				help(progname);
 				exit(0);
-			/*
-			 *  -? is an alternative spelling of --help. However it is also
-			 *  returned by getopt_long for unknown options. We can distinguish
-			 *  both cases by means of the optopt variable which is set to 0 if
-			 *  it was really -? and not an unknown option character.
-			 */
+
+				/*
+				 * -? is an alternative spelling of --help. However it is also
+				 * returned by getopt_long for unknown options. We can
+				 * distinguish both cases by means of the optopt variable
+				 * which is set to 0 if it was really -? and not an unknown
+				 * option character.
+				 */
 			case '?':
 				if (optopt == 0)
 				{
@@ -177,7 +179,7 @@ main(int argc, char *const argv[])
 				else
 					yyout = fopen(output_filename, PG_BINARY_W);
 
-				if (yyout == NULL) 
+				if (yyout == NULL)
 				{
 					fprintf(stderr, "%s: could not open file \"%s\": %s\n",
 							progname, output_filename, strerror(errno));
@@ -280,7 +282,7 @@ main(int argc, char *const argv[])
 		/* after the options there must not be anything but filenames */
 		for (fnr = optind; fnr < argc; fnr++)
 		{
-			char *ptr2ext;
+			char	   *ptr2ext;
 
 			/* If argv[fnr] is "-" we have to read from stdin */
 			if (strcmp(argv[fnr], "-") == 0)
@@ -430,7 +432,7 @@ main(int argc, char *const argv[])
 
 				/* we need several includes */
 				/* but not if we are in header mode */
-				if (regression_mode) 
+				if (regression_mode)
 					fprintf(yyout, "/* Processed by ecpg (regression mode) */\n");
 				else
 					fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
@@ -446,7 +448,7 @@ main(int argc, char *const argv[])
 					fprintf(yyout, "/* End of automatic include section */\n");
 				}
 
-				if (regression_mode) 
+				if (regression_mode)
 					fprintf(yyout, "#define ECPGdebug(X,Y) ECPGdebug((X)+100,(Y))\n");
 
 				output_line_number();

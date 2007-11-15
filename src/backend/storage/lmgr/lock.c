@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.178 2007/09/05 18:10:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.179 2007/11/15 21:14:38 momjian Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -581,7 +581,7 @@ LockAcquire(const LOCKTAG *locktag,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-			errhint("You might need to increase max_locks_per_transaction.")));
+		  errhint("You might need to increase max_locks_per_transaction.")));
 	}
 	locallock->lock = lock;
 
@@ -647,7 +647,7 @@ LockAcquire(const LOCKTAG *locktag,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-			errhint("You might need to increase max_locks_per_transaction.")));
+		  errhint("You might need to increase max_locks_per_transaction.")));
 	}
 	locallock->proclock = proclock;
 
@@ -1716,9 +1716,9 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 		elog(ERROR, "unrecognized lock mode: %d", lockmode);
 
 	/*
-	 * Allocate memory to store results, and fill with InvalidVXID.  We
-	 * only need enough space for MaxBackends + a terminator, since
-	 * prepared xacts don't count.
+	 * Allocate memory to store results, and fill with InvalidVXID.  We only
+	 * need enough space for MaxBackends + a terminator, since prepared xacts
+	 * don't count.
 	 */
 	vxids = (VirtualTransactionId *)
 		palloc0(sizeof(VirtualTransactionId) * (MaxBackends + 1));
@@ -1771,8 +1771,8 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 
 				/*
 				 * If we see an invalid VXID, then either the xact has already
-				 * committed (or aborted), or it's a prepared xact.  In
-				 * either case we may ignore it.
+				 * committed (or aborted), or it's a prepared xact.  In either
+				 * case we may ignore it.
 				 */
 				if (VirtualTransactionIdIsValid(vxid))
 					vxids[count++] = vxid;
@@ -2150,11 +2150,11 @@ GetLockStatusData(void)
 	}
 
 	/*
-	 * And release locks.  We do this in reverse order for two reasons:
-	 * (1) Anyone else who needs more than one of the locks will be trying
-	 * to lock them in increasing order; we don't want to release the other
-	 * process until it can get all the locks it needs.
-	 * (2) This avoids O(N^2) behavior inside LWLockRelease.
+	 * And release locks.  We do this in reverse order for two reasons: (1)
+	 * Anyone else who needs more than one of the locks will be trying to lock
+	 * them in increasing order; we don't want to release the other process
+	 * until it can get all the locks it needs. (2) This avoids O(N^2)
+	 * behavior inside LWLockRelease.
 	 */
 	for (i = NUM_LOCK_PARTITIONS; --i >= 0;)
 		LWLockRelease(FirstLockMgrLock + i);
@@ -2308,7 +2308,7 @@ lock_twophase_recover(TransactionId xid, uint16 info,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-			errhint("You might need to increase max_locks_per_transaction.")));
+		  errhint("You might need to increase max_locks_per_transaction.")));
 	}
 
 	/*
@@ -2373,7 +2373,7 @@ lock_twophase_recover(TransactionId xid, uint16 info,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-			errhint("You might need to increase max_locks_per_transaction.")));
+		  errhint("You might need to increase max_locks_per_transaction.")));
 	}
 
 	/*

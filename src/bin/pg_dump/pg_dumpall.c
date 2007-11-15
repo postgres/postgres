@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.97 2007/11/15 19:35:26 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.98 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,25 +67,25 @@ static int	disable_triggers = 0;
 static int	use_setsessauth = 0;
 static int	server_version;
 
-static FILE	*OPF;
-static char	*filename = NULL;
+static FILE *OPF;
+static char *filename = NULL;
 
 int
 main(int argc, char *argv[])
 {
-	char		*pghost = NULL;
-	char		*pgport = NULL;
-	char		*pguser = NULL;
-	char		*pgdb = NULL;
+	char	   *pghost = NULL;
+	char	   *pgport = NULL;
+	char	   *pguser = NULL;
+	char	   *pgdb = NULL;
 	bool		force_password = false;
 	bool		data_only = false;
 	bool		globals_only = false;
 	bool		roles_only = false;
 	bool		tablespaces_only = false;
 	bool		schema_only = false;
-	PGconn		*conn;
+	PGconn	   *conn;
 	int			encoding;
-	const char	*std_strings;
+	const char *std_strings;
 	int			c,
 				ret;
 
@@ -186,7 +186,7 @@ main(int argc, char *argv[])
 			case 'D':
 				appendPQExpBuffer(pgdumpopts, " -%c", c);
 				break;
-				
+
 			case 'f':
 				filename = optarg;
 #ifndef WIN32
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 				ignoreVersion = true;
 				appendPQExpBuffer(pgdumpopts, " -i");
 				break;
-				
+
 			case 'l':
 				pgdb = optarg;
 				break;
@@ -236,7 +236,7 @@ main(int argc, char *argv[])
 				appendPQExpBuffer(pgdumpopts, " -p \"%s\"", pgport);
 #endif
 				break;
-				
+
 			case 'r':
 				roles_only = true;
 				break;
@@ -253,7 +253,7 @@ main(int argc, char *argv[])
 				appendPQExpBuffer(pgdumpopts, " -S \"%s\"", optarg);
 #endif
 				break;
-				
+
 			case 't':
 				tablespaces_only = true;
 				break;
@@ -325,7 +325,7 @@ main(int argc, char *argv[])
 				progname);
 		exit(1);
 	}
-	
+
 	/* Make sure the user hasn't specified a mix of globals-only options */
 	if (globals_only && roles_only)
 	{
@@ -335,7 +335,7 @@ main(int argc, char *argv[])
 				progname);
 		exit(1);
 	}
-	
+
 	if (globals_only && tablespaces_only)
 	{
 		fprintf(stderr, _("%s: options -g/--globals-only and -t/--tablespaces-only cannot be used together\n"),
@@ -344,7 +344,7 @@ main(int argc, char *argv[])
 				progname);
 		exit(1);
 	}
-	
+
 	if (roles_only && tablespaces_only)
 	{
 		fprintf(stderr, _("%s: options -r/--roles-only and -t/--tablespaces-only cannot be used together\n"),
@@ -363,8 +363,8 @@ main(int argc, char *argv[])
 	if (pgdb)
 	{
 		conn = connectDatabase(pgdb, pghost, pgport, pguser,
-								force_password, false);
-								
+							   force_password, false);
+
 		if (!conn)
 		{
 			fprintf(stderr, _("%s: could not connect to database \"%s\"\n"),
@@ -375,22 +375,22 @@ main(int argc, char *argv[])
 	else
 	{
 		conn = connectDatabase("postgres", pghost, pgport, pguser,
-						   force_password, false);
+							   force_password, false);
 		if (!conn)
 			conn = connectDatabase("template1", pghost, pgport, pguser,
-									force_password, true);
-				
+								   force_password, true);
+
 		if (!conn)
 		{
 			fprintf(stderr, _("%s: could not connect to databases \"postgres\" or \"template1\"\n"
-					  "Please specify an alternative database.\n"),
+							  "Please specify an alternative database.\n"),
 					progname);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 					progname);
 			exit(1);
 		}
 	}
-	
+
 	/*
 	 * Open the output file if required, otherwise use stdout
 	 */
@@ -426,7 +426,7 @@ main(int argc, char *argv[])
 	{
 		/* Replicate encoding and std_strings in output */
 		fprintf(OPF, "SET client_encoding = '%s';\n",
-			   pg_encoding_to_char(encoding));
+				pg_encoding_to_char(encoding));
 		fprintf(OPF, "SET standard_conforming_strings = %s;\n", std_strings);
 		if (strcmp(std_strings, "off") == 0)
 			fprintf(OPF, "SET escape_string_warning = 'off';\n");
@@ -464,7 +464,7 @@ main(int argc, char *argv[])
 	if (verbose)
 		dumpTimestamp("Completed on");
 	fprintf(OPF, "--\n-- PostgreSQL database cluster dump complete\n--\n\n");
-	
+
 	if (filename)
 		fclose(OPF);
 
@@ -730,7 +730,7 @@ dumpRoleMembership(PGconn *conn)
 		 */
 		if (!PQgetisnull(res, i, 3))
 		{
-			char	*grantor = PQgetvalue(res, i, 3);
+			char	   *grantor = PQgetvalue(res, i, 3);
 
 			fprintf(OPF, " GRANTED BY %s", fmtId(grantor));
 		}
@@ -1195,17 +1195,17 @@ dumpDatabases(PGconn *conn)
 			fprintf(stderr, _("%s: dumping database \"%s\"...\n"), progname, dbname);
 
 		fprintf(OPF, "\\connect %s\n\n", fmtId(dbname));
-		
+
 		if (filename)
 			fclose(OPF);
-			
+
 		ret = runPgDump(dbname);
 		if (ret != 0)
 		{
 			fprintf(stderr, _("%s: pg_dump failed on database \"%s\", exiting\n"), progname, dbname);
 			exit(1);
 		}
-		
+
 		if (filename)
 		{
 			OPF = fopen(filename, PG_BINARY_A);
@@ -1216,7 +1216,7 @@ dumpDatabases(PGconn *conn)
 				exit(1);
 			}
 		}
-		
+
 	}
 
 	PQclear(res);
@@ -1239,27 +1239,28 @@ runPgDump(const char *dbname)
 	 * Strangely enough, this is the only place we pass a database name on the
 	 * command line, except "postgres" which doesn't need quoting.
 	 *
-	 * If we have a filename, use the undocumented plain-append pg_dump format.
+	 * If we have a filename, use the undocumented plain-append pg_dump
+	 * format.
 	 */
 	if (filename)
 	{
 #ifndef WIN32
-	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fa '", SYSTEMQUOTE, pg_dump_bin,
+		appendPQExpBuffer(cmd, "%s\"%s\" %s -Fa '", SYSTEMQUOTE, pg_dump_bin,
 #else
-	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fa \"", SYSTEMQUOTE, pg_dump_bin,
+		appendPQExpBuffer(cmd, "%s\"%s\" %s -Fa \"", SYSTEMQUOTE, pg_dump_bin,
 #endif
-					  pgdumpopts->data);
+						  pgdumpopts->data);
 	}
 	else
 	{
 #ifndef WIN32
-	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp '", SYSTEMQUOTE, pg_dump_bin,
+		appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp '", SYSTEMQUOTE, pg_dump_bin,
 #else
-	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp \"", SYSTEMQUOTE, pg_dump_bin,
+		appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp \"", SYSTEMQUOTE, pg_dump_bin,
 #endif
-					  pgdumpopts->data);
-	}	
-					  
+						  pgdumpopts->data);
+	}
+
 
 	/* Shell quoting is not quite like SQL quoting, so can't use fmtId */
 	for (p = dbname; *p; p++)
@@ -1475,8 +1476,8 @@ dumpTimestamp(char *msg)
 	/*
 	 * We don't print the timezone on Win32, because the names are long and
 	 * localized, which means they may contain characters in various random
-	 * encodings; this has been seen to cause encoding errors when reading
-	 * the dump script.
+	 * encodings; this has been seen to cause encoding errors when reading the
+	 * dump script.
 	 */
 	if (strftime(buf, sizeof(buf),
 #ifndef WIN32

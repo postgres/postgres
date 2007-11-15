@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.124 2007/06/15 20:56:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.125 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,9 +27,9 @@
 static int32
 anychar_typmodin(ArrayType *ta, const char *typename)
 {
-	int32 	typmod;
-	int32	*tl;
-	int		n;
+	int32		typmod;
+	int32	   *tl;
+	int			n;
 
 	tl = ArrayGetIntegerTypmods(ta, &n);
 
@@ -53,9 +53,9 @@ anychar_typmodin(ArrayType *ta, const char *typename)
 						typename, MaxAttrSize)));
 
 	/*
-	 * For largely historical reasons, the typmod is VARHDRSZ plus the
-	 * number of characters; there is enough client-side code that knows
-	 * about that that we'd better not change it.
+	 * For largely historical reasons, the typmod is VARHDRSZ plus the number
+	 * of characters; there is enough client-side code that knows about that
+	 * that we'd better not change it.
 	 */
 	typmod = VARHDRSZ + *tl;
 
@@ -66,7 +66,7 @@ anychar_typmodin(ArrayType *ta, const char *typename)
 static char *
 anychar_typmodout(int32 typmod)
 {
-	char	*res = (char *) palloc(64);
+	char	   *res = (char *) palloc(64);
 
 	if (typmod > VARHDRSZ)
 		snprintf(res, 64, "(%d)", (int) (typmod - VARHDRSZ));
@@ -314,24 +314,24 @@ bpchar(PG_FUNCTION_ARGS)
 		len = maxmblen;
 
 		/*
-		 * At this point, maxlen is the necessary byte length,
-		 * not the number of CHARACTERS!
+		 * At this point, maxlen is the necessary byte length, not the number
+		 * of CHARACTERS!
 		 */
 		maxlen = len;
 	}
 	else
 	{
 		/*
-		 * At this point, maxlen is the necessary byte length,
-		 * not the number of CHARACTERS!
+		 * At this point, maxlen is the necessary byte length, not the number
+		 * of CHARACTERS!
 		 */
 		maxlen = len + (maxlen - charlen);
 	}
 
 	Assert(maxlen >= len);
 
-	result = palloc(maxlen+VARHDRSZ);
-	SET_VARSIZE(result, maxlen+VARHDRSZ);
+	result = palloc(maxlen + VARHDRSZ);
+	SET_VARSIZE(result, maxlen + VARHDRSZ);
 	r = VARDATA(result);
 
 	memcpy(r, s, len);
@@ -369,7 +369,7 @@ Datum
 bpchar_name(PG_FUNCTION_ARGS)
 {
 	BpChar	   *s = PG_GETARG_BPCHAR_PP(0);
-	char       *s_data;
+	char	   *s_data;
 	Name		result;
 	int			len;
 
@@ -422,7 +422,7 @@ name_bpchar(PG_FUNCTION_ARGS)
 Datum
 bpchartypmodin(PG_FUNCTION_ARGS)
 {
-	ArrayType	*ta = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
 
 	PG_RETURN_INT32(anychar_typmodin(ta, "char"));
 }
@@ -430,7 +430,7 @@ bpchartypmodin(PG_FUNCTION_ARGS)
 Datum
 bpchartypmodout(PG_FUNCTION_ARGS)
 {
-	int32 typmod = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(0);
 
 	PG_RETURN_CSTRING(anychar_typmodout(typmod));
 }
@@ -579,10 +579,11 @@ varchar(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	VarChar    *result;
-	int32		len, maxlen;
+	int32		len,
+				maxlen;
 	size_t		maxmblen;
 	int			i;
-	char 	   *s_data;
+	char	   *s_data;
 
 	len = VARSIZE_ANY_EXHDR(source);
 	s_data = VARDATA_ANY(source);
@@ -603,8 +604,8 @@ varchar(PG_FUNCTION_ARGS)
 			if (s_data[i] != ' ')
 				ereport(ERROR,
 						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-						 errmsg("value too long for type character varying(%d)",
-								maxlen)));
+					  errmsg("value too long for type character varying(%d)",
+							 maxlen)));
 	}
 
 	result = palloc(maxmblen + VARHDRSZ);
@@ -617,7 +618,7 @@ varchar(PG_FUNCTION_ARGS)
 Datum
 varchartypmodin(PG_FUNCTION_ARGS)
 {
-	ArrayType	*ta = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
 
 	PG_RETURN_INT32(anychar_typmodin(ta, "varchar"));
 }
@@ -625,7 +626,7 @@ varchartypmodin(PG_FUNCTION_ARGS)
 Datum
 varchartypmodout(PG_FUNCTION_ARGS)
 {
-	int32 typmod = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(0);
 
 	PG_RETURN_CSTRING(anychar_typmodout(typmod));
 }
@@ -671,7 +672,7 @@ bpcharlen(PG_FUNCTION_ARGS)
 Datum
 bpcharoctetlen(PG_FUNCTION_ARGS)
 {
-	Datum	   arg = PG_GETARG_DATUM(0);
+	Datum		arg = PG_GETARG_DATUM(0);
 
 	/* We need not detoast the input at all */
 	PG_RETURN_INT32(toast_raw_datum_size(arg) - VARHDRSZ);

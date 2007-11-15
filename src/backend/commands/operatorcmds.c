@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.37 2007/11/11 19:22:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.38 2007/11/15 21:14:33 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -65,7 +65,7 @@ DefineOperator(List *names, List *parameters)
 	Oid			oprNamespace;
 	AclResult	aclresult;
 	bool		canMerge = false;		/* operator merges */
-	bool		canHash = false;		/* operator hashes */
+	bool		canHash = false;	/* operator hashes */
 	List	   *functionName = NIL;		/* function for operator */
 	TypeName   *typeName1 = NULL;		/* first type name */
 	TypeName   *typeName2 = NULL;		/* second type name */

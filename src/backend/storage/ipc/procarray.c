@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.36 2007/10/24 20:55:36 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.37 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,9 +230,9 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 	if (TransactionIdIsValid(latestXid))
 	{
 		/*
-		 * We must lock ProcArrayLock while clearing proc->xid, so
-		 * that we do not exit the set of "running" transactions while
-		 * someone else is taking a snapshot.  See discussion in
+		 * We must lock ProcArrayLock while clearing proc->xid, so that we do
+		 * not exit the set of "running" transactions while someone else is
+		 * taking a snapshot.  See discussion in
 		 * src/backend/access/transam/README.
 		 */
 		Assert(TransactionIdIsValid(proc->xid));
@@ -244,7 +244,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		proc->xmin = InvalidTransactionId;
 		/* must be cleared with xid/xmin: */
 		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		proc->inCommit = false;			/* be sure this is cleared in abort */
+		proc->inCommit = false; /* be sure this is cleared in abort */
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
 		proc->subxids.nxids = 0;
@@ -260,9 +260,9 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 	else
 	{
 		/*
-		 * If we have no XID, we don't need to lock, since we won't
-		 * affect anyone else's calculation of a snapshot.  We might
-		 * change their estimate of global xmin, but that's OK.
+		 * If we have no XID, we don't need to lock, since we won't affect
+		 * anyone else's calculation of a snapshot.  We might change their
+		 * estimate of global xmin, but that's OK.
 		 */
 		Assert(!TransactionIdIsValid(proc->xid));
 
@@ -270,7 +270,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		proc->xmin = InvalidTransactionId;
 		/* must be cleared with xid/xmin: */
 		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		proc->inCommit = false;			/* be sure this is cleared in abort */
+		proc->inCommit = false; /* be sure this is cleared in abort */
 
 		Assert(proc->subxids.nxids == 0);
 		Assert(proc->subxids.overflowed == false);
@@ -291,8 +291,8 @@ ProcArrayClearTransaction(PGPROC *proc)
 {
 	/*
 	 * We can skip locking ProcArrayLock here, because this action does not
-	 * actually change anyone's view of the set of running XIDs: our entry
-	 * is duplicate with the gxact that has already been inserted into the
+	 * actually change anyone's view of the set of running XIDs: our entry is
+	 * duplicate with the gxact that has already been inserted into the
 	 * ProcArray.
 	 */
 	proc->xid = InvalidTransactionId;
@@ -343,9 +343,9 @@ TransactionIdIsInProgress(TransactionId xid)
 
 	/*
 	 * Don't bother checking a transaction older than RecentXmin; it could not
-	 * possibly still be running.  (Note: in particular, this guarantees
-	 * that we reject InvalidTransactionId, FrozenTransactionId, etc as
-	 * not running.)
+	 * possibly still be running.  (Note: in particular, this guarantees that
+	 * we reject InvalidTransactionId, FrozenTransactionId, etc as not
+	 * running.)
 	 */
 	if (TransactionIdPrecedes(xid, RecentXmin))
 	{
@@ -364,8 +364,8 @@ TransactionIdIsInProgress(TransactionId xid)
 	}
 
 	/*
-	 * If not first time through, get workspace to remember main XIDs in.
-	 * We malloc it permanently to avoid repeated palloc/pfree overhead.
+	 * If not first time through, get workspace to remember main XIDs in. We
+	 * malloc it permanently to avoid repeated palloc/pfree overhead.
 	 */
 	if (xids == NULL)
 	{
@@ -393,7 +393,7 @@ TransactionIdIsInProgress(TransactionId xid)
 	/* No shortcuts, gotta grovel through the array */
 	for (i = 0; i < arrayP->numProcs; i++)
 	{
-		volatile PGPROC	   *proc = arrayP->procs[i];
+		volatile PGPROC *proc = arrayP->procs[i];
 		TransactionId pxid;
 
 		/* Ignore my own proc --- dealt with it above */
@@ -477,8 +477,8 @@ TransactionIdIsInProgress(TransactionId xid)
 
 	/*
 	 * It isn't aborted, so check whether the transaction tree it belongs to
-	 * is still running (or, more precisely, whether it was running when
-	 * we held ProcArrayLock).
+	 * is still running (or, more precisely, whether it was running when we
+	 * held ProcArrayLock).
 	 */
 	topxid = SubTransGetTopmostTransaction(xid);
 	Assert(TransactionIdIsValid(topxid));
@@ -519,7 +519,7 @@ TransactionIdIsActive(TransactionId xid)
 
 	for (i = 0; i < arrayP->numProcs; i++)
 	{
-		volatile PGPROC	   *proc = arrayP->procs[i];
+		volatile PGPROC *proc = arrayP->procs[i];
 
 		/* Fetch xid just once - see GetNewTransactionId */
 		TransactionId pxid = proc->xid;
@@ -578,10 +578,10 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
 	/*
-	 * We initialize the MIN() calculation with latestCompletedXid + 1.
-	 * This is a lower bound for the XIDs that might appear in the ProcArray
-	 * later, and so protects us against overestimating the result due to
-	 * future additions.
+	 * We initialize the MIN() calculation with latestCompletedXid + 1. This
+	 * is a lower bound for the XIDs that might appear in the ProcArray later,
+	 * and so protects us against overestimating the result due to future
+	 * additions.
 	 */
 	result = ShmemVariableCache->latestCompletedXid;
 	Assert(TransactionIdIsNormal(result));
@@ -589,7 +589,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC *proc = arrayP->procs[index];
 
 		if (ignoreVacuum && (proc->vacuumFlags & PROC_IN_VACUUM))
 			continue;
@@ -608,8 +608,8 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 			 * Also consider the transaction's Xmin, if set.
 			 *
 			 * We must check both Xid and Xmin because a transaction might
-			 * have an Xmin but not (yet) an Xid; conversely, if it has
-			 * an Xid, that could determine some not-yet-set Xmin.
+			 * have an Xmin but not (yet) an Xid; conversely, if it has an
+			 * Xid, that could determine some not-yet-set Xmin.
 			 */
 			xid = proc->xmin;	/* Fetch just once */
 			if (TransactionIdIsNormal(xid) &&
@@ -718,13 +718,13 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	globalxmin = xmin = xmax;
 
 	/*
-	 * Spin over procArray checking xid, xmin, and subxids.  The goal is
-	 * to gather all active xids, find the lowest xmin, and try to record
+	 * Spin over procArray checking xid, xmin, and subxids.  The goal is to
+	 * gather all active xids, find the lowest xmin, and try to record
 	 * subxids.
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC *proc = arrayP->procs[index];
 		TransactionId xid;
 
 		/* Ignore procs running LAZY VACUUM */
@@ -742,7 +742,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 
 		/*
 		 * If the transaction has been assigned an xid < xmax we add it to the
-		 * snapshot, and update xmin if necessary.  There's no need to store
+		 * snapshot, and update xmin if necessary.	There's no need to store
 		 * XIDs >= xmax, since we'll treat them as running anyway.  We don't
 		 * bother to examine their subxids either.
 		 *
@@ -841,8 +841,8 @@ GetTransactionsInCommit(TransactionId **xids_p)
 {
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId *xids;
-	int	nxids;
-	int	index;
+	int			nxids;
+	int			index;
 
 	xids = (TransactionId *) palloc(arrayP->maxProcs * sizeof(TransactionId));
 	nxids = 0;
@@ -851,7 +851,8 @@ GetTransactionsInCommit(TransactionId **xids_p)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC *proc = arrayP->procs[index];
+
 		/* Fetch xid just once - see GetNewTransactionId */
 		TransactionId pxid = proc->xid;
 
@@ -877,21 +878,22 @@ GetTransactionsInCommit(TransactionId **xids_p)
 bool
 HaveTransactionsInCommit(TransactionId *xids, int nxids)
 {
-	bool result = false;
+	bool		result = false;
 	ProcArrayStruct *arrayP = procArray;
-	int	index;
+	int			index;
 
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC *proc = arrayP->procs[index];
+
 		/* Fetch xid just once - see GetNewTransactionId */
 		TransactionId pxid = proc->xid;
 
 		if (proc->inCommit && TransactionIdIsValid(pxid))
 		{
-			int		i;
+			int			i;
 
 			for (i = 0; i < nxids; i++)
 			{
@@ -956,7 +958,7 @@ BackendPidGetProc(int pid)
  * Only main transaction Ids are considered.  This function is mainly
  * useful for determining what backend owns a lock.
  *
- * Beware that not every xact has an XID assigned.  However, as long as you
+ * Beware that not every xact has an XID assigned.	However, as long as you
  * only call this using an XID found on disk, you're safe.
  */
 int
@@ -973,7 +975,7 @@ BackendXidGetPid(TransactionId xid)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC *proc = arrayP->procs[index];
 
 		if (proc->xid == xid)
 		{
@@ -1003,8 +1005,8 @@ IsBackendPid(int pid)
  * The array is palloc'd and is terminated with an invalid VXID.
  *
  * If limitXmin is not InvalidTransactionId, we skip any backends
- * with xmin >= limitXmin.  If allDbs is false, we skip backends attached
- * to other databases.  Also, our own process is always skipped.
+ * with xmin >= limitXmin.	If allDbs is false, we skip backends attached
+ * to other databases.	Also, our own process is always skipped.
  */
 VirtualTransactionId *
 GetCurrentVirtualXIDs(TransactionId limitXmin, bool allDbs)
@@ -1022,7 +1024,7 @@ GetCurrentVirtualXIDs(TransactionId limitXmin, bool allDbs)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC *proc = arrayP->procs[index];
 
 		if (proc == MyProc)
 			continue;
@@ -1080,7 +1082,7 @@ CountActiveBackends(void)
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC *proc = arrayP->procs[index];
 
 		if (proc == MyProc)
 			continue;			/* do not count myself */
@@ -1110,7 +1112,7 @@ CountDBBackends(Oid databaseid)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC *proc = arrayP->procs[index];
 
 		if (proc->pid == 0)
 			continue;			/* do not count prepared xacts */
@@ -1137,7 +1139,7 @@ CountUserBackends(Oid roleid)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC *proc = arrayP->procs[index];
 
 		if (proc->pid == 0)
 			continue;			/* do not count prepared xacts */
@@ -1189,7 +1191,7 @@ CheckOtherDBBackends(Oid databaseId)
 
 		for (index = 0; index < arrayP->numProcs; index++)
 		{
-			volatile PGPROC	   *proc = arrayP->procs[index];
+			volatile PGPROC *proc = arrayP->procs[index];
 
 			if (proc->databaseId != databaseId)
 				continue;
@@ -1201,16 +1203,17 @@ CheckOtherDBBackends(Oid databaseId)
 			if (proc->vacuumFlags & PROC_IS_AUTOVACUUM)
 			{
 				/* an autovacuum --- send it SIGTERM before sleeping */
-				int		autopid = proc->pid;
+				int			autopid = proc->pid;
 
 				/*
-				 * It's a bit awkward to release ProcArrayLock within the loop,
-				 * but we'd probably better do so before issuing kill().  We
-				 * have no idea what might block kill() inside the kernel...
+				 * It's a bit awkward to release ProcArrayLock within the
+				 * loop, but we'd probably better do so before issuing kill().
+				 * We have no idea what might block kill() inside the
+				 * kernel...
 				 */
 				LWLockRelease(ProcArrayLock);
 
-				(void) kill(autopid, SIGTERM);		/* ignore any error */
+				(void) kill(autopid, SIGTERM);	/* ignore any error */
 
 				break;
 			}
@@ -1225,14 +1228,14 @@ CheckOtherDBBackends(Oid databaseId)
 		if (!found)
 		{
 			LWLockRelease(ProcArrayLock);
-			return false;				/* no conflicting backends, so done */
+			return false;		/* no conflicting backends, so done */
 		}
 
 		/* else sleep and try again */
-		pg_usleep(100 * 1000L);			/* 100ms */
+		pg_usleep(100 * 1000L); /* 100ms */
 	}
 
-	return true;						/* timed out, still conflicts */
+	return true;				/* timed out, still conflicts */
 }
 
 

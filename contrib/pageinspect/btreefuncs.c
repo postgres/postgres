@@ -302,9 +302,9 @@ bt_page_items(PG_FUNCTION_ARGS)
 		buffer = ReadBuffer(rel, blkno);
 
 		/*
-		 * We copy the page into local storage to avoid holding pin on
-		 * the buffer longer than we must, and possibly failing to
-		 * release it at all if the calling query doesn't fetch all rows.
+		 * We copy the page into local storage to avoid holding pin on the
+		 * buffer longer than we must, and possibly failing to release it at
+		 * all if the calling query doesn't fetch all rows.
 		 */
 		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.99 2007/10/28 19:08:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.100 2007/11/15 21:14:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ static int	numCatalogIds = 0;
 
 /*
  * These variables are static to avoid the notational cruft of having to pass
- * them into findTableByOid() and friends.  For each of these arrays, we
+ * them into findTableByOid() and friends.	For each of these arrays, we
  * build a sorted-by-OID index array immediately after it's built, and then
  * we use binary search in findTableByOid() and friends.  (qsort'ing the base
  * arrays themselves would be simpler, but it doesn't work because pg_dump.c
@@ -66,7 +66,7 @@ static void flagInhTables(TableInfo *tbinfo, int numTables,
 static void flagInhAttrs(TableInfo *tbinfo, int numTables,
 			 InhInfo *inhinfo, int numInherits);
 static DumpableObject **buildIndexArray(void *objArray, int numObjs,
-										Size objSize);
+				Size objSize);
 static int	DOCatalogIdCompare(const void *p1, const void *p2);
 static void findParentsByOid(TableInfo *self,
 				 InhInfo *inhinfo, int numInherits);
@@ -333,10 +333,11 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 					if (inhDef != NULL)
 					{
 						defaultsFound = true;
+
 						/*
 						 * If any parent has a default and the child doesn't,
-						 * we have to emit an explicit DEFAULT NULL clause
-						 * for the child, else the parent's default will win.
+						 * we have to emit an explicit DEFAULT NULL clause for
+						 * the child, else the parent's default will win.
 						 */
 						if (attrDef == NULL)
 						{
@@ -363,6 +364,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 						if (strcmp(attrDef->adef_expr, inhDef->adef_expr) != 0)
 						{
 							defaultsMatch = false;
+
 							/*
 							 * Whenever there is a non-matching parent
 							 * default, add a dependency to force the parent
@@ -600,8 +602,8 @@ findObjectByOid(Oid oid, DumpableObject **indexArray, int numObjs)
 	DumpableObject **high;
 
 	/*
-	 * This is the same as findObjectByCatalogId except we assume we need
-	 * not look at table OID because the objects are all the same type.
+	 * This is the same as findObjectByCatalogId except we assume we need not
+	 * look at table OID because the objects are all the same type.
 	 *
 	 * We could use bsearch() here, but the notational cruft of calling
 	 * bsearch is nearly as bad as doing it ourselves; and the generalized
@@ -635,7 +637,7 @@ static DumpableObject **
 buildIndexArray(void *objArray, int numObjs, Size objSize)
 {
 	DumpableObject **ptrs;
-	int		i;
+	int			i;
 
 	ptrs = (DumpableObject **) malloc(numObjs * sizeof(DumpableObject *));
 	for (i = 0; i < numObjs; i++)
@@ -914,7 +916,7 @@ strInArray(const char *pattern, char **arr, int arr_size)
  */
 
 void
-simple_oid_list_append(SimpleOidList *list, Oid val)
+simple_oid_list_append(SimpleOidList * list, Oid val)
 {
 	SimpleOidListCell *cell;
 
@@ -930,7 +932,7 @@ simple_oid_list_append(SimpleOidList *list, Oid val)
 }
 
 void
-simple_string_list_append(SimpleStringList *list, const char *val)
+simple_string_list_append(SimpleStringList * list, const char *val)
 {
 	SimpleStringListCell *cell;
 
@@ -948,7 +950,7 @@ simple_string_list_append(SimpleStringList *list, const char *val)
 }
 
 bool
-simple_oid_list_member(SimpleOidList *list, Oid val)
+simple_oid_list_member(SimpleOidList * list, Oid val)
 {
 	SimpleOidListCell *cell;
 
@@ -961,7 +963,7 @@ simple_oid_list_member(SimpleOidList *list, Oid val)
 }
 
 bool
-simple_string_list_member(SimpleStringList *list, const char *val)
+simple_string_list_member(SimpleStringList * list, const char *val)
 {
 	SimpleStringListCell *cell;
 

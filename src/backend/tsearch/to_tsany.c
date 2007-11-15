@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.5 2007/10/23 00:51:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.6 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,8 @@ compareWORD(const void *a, const void *b)
 								  ((ParsedWord *) b)->len);
 
 		if (res == 0)
-		{	
-			if ( ((ParsedWord *) a)->pos.pos == ((ParsedWord *) b)->pos.pos )
+		{
+			if (((ParsedWord *) a)->pos.pos == ((ParsedWord *) b)->pos.pos)
 				return 0;
 
 			return (((ParsedWord *) a)->pos.pos > ((ParsedWord *) b)->pos.pos) ? 1 : -1;
@@ -72,7 +72,7 @@ uniqueWORD(ParsedWord * a, int4 l)
 	ptr = a + 1;
 
 	/*
-	 * Sort words with its positions 
+	 * Sort words with its positions
 	 */
 	qsort((void *) a, l, sizeof(ParsedWord), compareWORD);
 
@@ -108,13 +108,13 @@ uniqueWORD(ParsedWord * a, int4 l)
 		else
 		{
 			/*
-			 * The word already exists, so adjust position information.
-			 * But before we should check size of position's array, 
-			 * max allowed value for position and uniqueness of position 
+			 * The word already exists, so adjust position information. But
+			 * before we should check size of position's array, max allowed
+			 * value for position and uniqueness of position
 			 */
 			pfree(ptr->word);
 			if (res->pos.apos[0] < MAXNUMPOS - 1 && res->pos.apos[res->pos.apos[0]] != MAXENTRYPOS - 1 &&
-					res->pos.apos[res->pos.apos[0]] != LIMITPOS(ptr->pos.pos))
+				res->pos.apos[res->pos.apos[0]] != LIMITPOS(ptr->pos.pos))
 			{
 				if (res->pos.apos[0] + 1 >= res->alen)
 				{
@@ -138,7 +138,7 @@ uniqueWORD(ParsedWord * a, int4 l)
  * make value of tsvector, given parsed text
  */
 TSVector
-make_tsvector(ParsedText *prs)
+make_tsvector(ParsedText * prs)
 {
 	int			i,
 				j,
@@ -182,7 +182,7 @@ make_tsvector(ParsedText *prs)
 		pfree(prs->words[i].word);
 		if (prs->words[i].alen)
 		{
-			int k = prs->words[i].pos.apos[0];
+			int			k = prs->words[i].pos.apos[0];
 			WordEntryPos *wptr;
 
 			if (k > 0xFFFF)
@@ -265,7 +265,7 @@ to_tsvector(PG_FUNCTION_ARGS)
  * to the stack.
  *
  * All words belonging to the same variant are pushed as an ANDed list,
- * and different variants are ORred together. 
+ * and different variants are ORred together.
  */
 static void
 pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, int2 weight)
@@ -277,7 +277,8 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 				cntvar = 0,
 				cntpos = 0,
 				cnt = 0;
-	Oid cfg_id = DatumGetObjectId(opaque); /* the input is actually an Oid, not a pointer */
+	Oid			cfg_id = DatumGetObjectId(opaque);		/* the input is actually
+														 * an Oid, not a pointer */
 
 	prs.lenwords = 4;
 	prs.curwords = 0;

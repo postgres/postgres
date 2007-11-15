@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.79 2007/09/08 20:31:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.80 2007/11/15 21:14:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,9 +73,9 @@ GetNewTransactionId(bool isSubXact)
 		TransactionIdIsValid(ShmemVariableCache->xidVacLimit))
 	{
 		/*
-		 * To avoid swamping the postmaster with signals, we issue the
-		 * autovac request only once per 64K transaction starts.  This
-		 * still gives plenty of chances before we get into real trouble.
+		 * To avoid swamping the postmaster with signals, we issue the autovac
+		 * request only once per 64K transaction starts.  This still gives
+		 * plenty of chances before we get into real trouble.
 		 */
 		if (IsUnderPostmaster && (xid % 65536) == 0)
 			SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_LAUNCHER);
@@ -119,9 +119,9 @@ GetNewTransactionId(bool isSubXact)
 
 	/*
 	 * We must store the new XID into the shared ProcArray before releasing
-	 * XidGenLock.  This ensures that every active XID older than
-	 * latestCompletedXid is present in the ProcArray, which is essential
-	 * for correct OldestXmin tracking; see src/backend/access/transam/README.
+	 * XidGenLock.	This ensures that every active XID older than
+	 * latestCompletedXid is present in the ProcArray, which is essential for
+	 * correct OldestXmin tracking; see src/backend/access/transam/README.
 	 *
 	 * XXX by storing xid into MyProc without acquiring ProcArrayLock, we are
 	 * relying on fetch/store of an xid to be atomic, else other backends
@@ -249,18 +249,18 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 		xidWarnLimit -= FirstNormalTransactionId;
 
 	/*
-	 * We'll start trying to force autovacuums when oldest_datfrozenxid
-	 * gets to be more than autovacuum_freeze_max_age transactions old.
+	 * We'll start trying to force autovacuums when oldest_datfrozenxid gets
+	 * to be more than autovacuum_freeze_max_age transactions old.
 	 *
-	 * Note: guc.c ensures that autovacuum_freeze_max_age is in a sane
-	 * range, so that xidVacLimit will be well before xidWarnLimit.
+	 * Note: guc.c ensures that autovacuum_freeze_max_age is in a sane range,
+	 * so that xidVacLimit will be well before xidWarnLimit.
 	 *
 	 * Note: autovacuum_freeze_max_age is a PGC_POSTMASTER parameter so that
 	 * we don't have to worry about dealing with on-the-fly changes in its
 	 * value.  It doesn't look practical to update shared state from a GUC
 	 * assign hook (too many processes would try to execute the hook,
-	 * resulting in race conditions as well as crashes of those not
-	 * connected to shared memory).  Perhaps this can be improved someday.
+	 * resulting in race conditions as well as crashes of those not connected
+	 * to shared memory).  Perhaps this can be improved someday.
 	 */
 	xidVacLimit = oldest_datfrozenxid + autovacuum_freeze_max_age;
 	if (xidVacLimit < FirstNormalTransactionId)

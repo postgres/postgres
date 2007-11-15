@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.47 2007/04/02 03:49:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.48 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,7 +334,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 static char *
 printTypmod(const char *typname, int32 typmod, Oid typmodout)
 {
-	char	*res;
+	char	   *res;
 
 	/* Shouldn't be called if typmod is -1 */
 	Assert(typmod >= 0);
@@ -348,7 +348,7 @@ printTypmod(const char *typname, int32 typmod, Oid typmodout)
 	else
 	{
 		/* Use the type-specific typmodout procedure */
-		char *tmstr;
+		char	   *tmstr;
 
 		tmstr = DatumGetCString(OidFunctionCall1(typmodout,
 												 Int32GetDatum(typmod)));

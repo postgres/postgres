@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_ispell.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_ispell.c,v 1.4 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ typedef struct
 {
 	StopList	stoplist;
 	IspellDict	obj;
-} DictISpell;
+}	DictISpell;
 
 Datum
 dispell_init(PG_FUNCTION_ARGS)
@@ -51,8 +51,8 @@ dispell_init(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple DictFile parameters")));
 			NIImportDictionary(&(d->obj),
-							   get_tsearch_config_filename(defGetString(defel),
-														   "dict"));
+							 get_tsearch_config_filename(defGetString(defel),
+														 "dict"));
 			dictloaded = true;
 		}
 		else if (pg_strcasecmp(defel->defname, "AffFile") == 0)
@@ -112,7 +112,7 @@ dispell_lexize(PG_FUNCTION_ARGS)
 {
 	DictISpell *d = (DictISpell *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
-	int32	   len = PG_GETARG_INT32(2);
+	int32		len = PG_GETARG_INT32(2);
 	char	   *txt;
 	TSLexeme   *res;
 	TSLexeme   *ptr,

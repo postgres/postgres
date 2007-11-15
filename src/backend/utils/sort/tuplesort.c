@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.79 2007/10/29 21:31:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.80 2007/11/15 21:14:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,8 +246,8 @@ struct Tuplesortstate
 										int tapenum, unsigned int len);
 
 	/*
-	 * Function to reverse the sort direction from its current state.
-	 * (We could dispense with this if we wanted to enforce that all variants
+	 * Function to reverse the sort direction from its current state. (We
+	 * could dispense with this if we wanted to enforce that all variants
 	 * represent the sort key information alike.)
 	 */
 	void		(*reversedirection) (Tuplesortstate *state);
@@ -572,8 +572,8 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 
 	for (i = 0; i < nkeys; i++)
 	{
-		Oid		sortFunction;
-		bool	reverse;
+		Oid			sortFunction;
+		bool		reverse;
 
 		AssertArg(attNums[i] != 0);
 		AssertArg(sortOperators[i] != 0);
@@ -699,7 +699,7 @@ tuplesort_begin_datum(Oid datumType,
  *
  *	Advise tuplesort that at most the first N result tuples are required.
  *
- * Must be called before inserting any tuples.  (Actually, we could allow it
+ * Must be called before inserting any tuples.	(Actually, we could allow it
  * as long as the sort hasn't spilled to disk, but there seems no need for
  * delayed calls at the moment.)
  *
@@ -721,7 +721,7 @@ tuplesort_set_bound(Tuplesortstate *state, int64 bound)
 #endif
 
 	/* We want to be able to compute bound * 2, so limit the setting */
-	if (bound > (int64) (INT_MAX/2))
+	if (bound > (int64) (INT_MAX / 2))
 		return;
 
 	state->bounded = true;
@@ -927,16 +927,16 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 			state->memtuples[state->memtupcount++] = *tuple;
 
 			/*
-			 * Check if it's time to switch over to a bounded heapsort.
-			 * We do so if the input tuple count exceeds twice the desired
-			 * tuple count (this is a heuristic for where heapsort becomes
-			 * cheaper than a quicksort), or if we've just filled workMem
-			 * and have enough tuples to meet the bound.
+			 * Check if it's time to switch over to a bounded heapsort. We do
+			 * so if the input tuple count exceeds twice the desired tuple
+			 * count (this is a heuristic for where heapsort becomes cheaper
+			 * than a quicksort), or if we've just filled workMem and have
+			 * enough tuples to meet the bound.
 			 *
-			 * Note that once we enter TSS_BOUNDED state we will always try
-			 * to complete the sort that way.  In the worst case, if later
-			 * input tuples are larger than earlier ones, this might cause
-			 * us to exceed workMem significantly.
+			 * Note that once we enter TSS_BOUNDED state we will always try to
+			 * complete the sort that way.	In the worst case, if later input
+			 * tuples are larger than earlier ones, this might cause us to
+			 * exceed workMem significantly.
 			 */
 			if (state->bounded &&
 				(state->memtupcount > state->bound * 2 ||
@@ -970,14 +970,14 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 			break;
 
 		case TSS_BOUNDED:
+
 			/*
-			 * We don't want to grow the array here, so check whether the
-			 * new tuple can be discarded before putting it in.  This should
-			 * be a good speed optimization, too, since when there are many
-			 * more input tuples than the bound, most input tuples can be
-			 * discarded with just this one comparison.  Note that because
-			 * we currently have the sort direction reversed, we must check
-			 * for <= not >=.
+			 * We don't want to grow the array here, so check whether the new
+			 * tuple can be discarded before putting it in.  This should be a
+			 * good speed optimization, too, since when there are many more
+			 * input tuples than the bound, most input tuples can be discarded
+			 * with just this one comparison.  Note that because we currently
+			 * have the sort direction reversed, we must check for <= not >=.
 			 */
 			if (COMPARETUP(state, tuple, &state->memtuples[0]) <= 0)
 			{
@@ -1065,8 +1065,8 @@ tuplesort_performsort(Tuplesortstate *state)
 
 			/*
 			 * We were able to accumulate all the tuples required for output
-			 * in memory, using a heap to eliminate excess tuples.  Now we have
-			 * to transform the heap to a properly-sorted array.
+			 * in memory, using a heap to eliminate excess tuples.	Now we
+			 * have to transform the heap to a properly-sorted array.
 			 */
 			sort_bounded_heap(state);
 			state->current = 0;
@@ -1140,7 +1140,7 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 
 				/*
 				 * Complain if caller tries to retrieve more tuples than
-				 * originally asked for in a bounded sort.  This is because
+				 * originally asked for in a bounded sort.	This is because
 				 * returning EOF here might be the wrong thing.
 				 */
 				if (state->bounded && state->current >= state->bound)
@@ -2139,11 +2139,11 @@ tuplesort_explain(Tuplesortstate *state)
 	/*
 	 * Note: it might seem we should print both memory and disk usage for a
 	 * disk-based sort.  However, the current code doesn't track memory space
-	 * accurately once we have begun to return tuples to the caller (since
-	 * we don't account for pfree's the caller is expected to do), so we
-	 * cannot rely on availMem in a disk sort.  This does not seem worth the
-	 * overhead to fix.  Is it worth creating an API for the memory context
-	 * code to tell us how much is actually used in sortcontext?
+	 * accurately once we have begun to return tuples to the caller (since we
+	 * don't account for pfree's the caller is expected to do), so we cannot
+	 * rely on availMem in a disk sort.  This does not seem worth the overhead
+	 * to fix.	Is it worth creating an API for the memory context code to
+	 * tell us how much is actually used in sortcontext?
 	 */
 	if (state->tapeset)
 		spaceUsed = LogicalTapeSetBlocks(state->tapeset) * (BLCKSZ / 1024);
@@ -2209,8 +2209,8 @@ tuplesort_explain(Tuplesortstate *state)
 static void
 make_bounded_heap(Tuplesortstate *state)
 {
-	int		tupcount = state->memtupcount;
-	int		i;
+	int			tupcount = state->memtupcount;
+	int			i;
 
 	Assert(state->status == TSS_INITIAL);
 	Assert(state->bounded);
@@ -2220,10 +2220,10 @@ make_bounded_heap(Tuplesortstate *state)
 	REVERSEDIRECTION(state);
 
 	state->memtupcount = 0;		/* make the heap empty */
-	for (i=0; i<tupcount; i++)
+	for (i = 0; i < tupcount; i++)
 	{
 		if (state->memtupcount >= state->bound &&
-			COMPARETUP(state, &state->memtuples[i], &state->memtuples[0]) <= 0)
+		  COMPARETUP(state, &state->memtuples[i], &state->memtuples[0]) <= 0)
 		{
 			/* New tuple would just get thrown out, so skip it */
 			free_sort_tuple(state, &state->memtuples[i]);
@@ -2232,7 +2232,7 @@ make_bounded_heap(Tuplesortstate *state)
 		{
 			/* Insert next tuple into heap */
 			/* Must copy source tuple to avoid possible overwrite */
-			SortTuple stup = state->memtuples[i];
+			SortTuple	stup = state->memtuples[i];
 
 			tuplesort_heap_insert(state, &stup, 0, false);
 
@@ -2255,7 +2255,7 @@ make_bounded_heap(Tuplesortstate *state)
 static void
 sort_bounded_heap(Tuplesortstate *state)
 {
-	int		tupcount = state->memtupcount;
+	int			tupcount = state->memtupcount;
 
 	Assert(state->status == TSS_BOUNDED);
 	Assert(state->bounded);
@@ -2268,7 +2268,7 @@ sort_bounded_heap(Tuplesortstate *state)
 	 */
 	while (state->memtupcount > 1)
 	{
-		SortTuple stup = state->memtuples[0];
+		SortTuple	stup = state->memtuples[0];
 
 		/* this sifts-up the next-largest entry and decreases memtupcount */
 		tuplesort_heap_siftup(state, false);
@@ -2393,7 +2393,7 @@ markrunend(Tuplesortstate *state, int tapenum)
 
 
 /*
- * Set up for an external caller of ApplySortFunction.  This function
+ * Set up for an external caller of ApplySortFunction.	This function
  * basically just exists to localize knowledge of the encoding of sk_flags
  * used in this module.
  */
@@ -2403,7 +2403,7 @@ SelectSortFunction(Oid sortOperator,
 				   Oid *sortFunction,
 				   int *sortFlags)
 {
-	bool	reverse;
+	bool		reverse;
 
 	if (!get_compare_function_for_ordering_op(sortOperator,
 											  sortFunction, &reverse))

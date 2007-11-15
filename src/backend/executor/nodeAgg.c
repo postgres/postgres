@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.153 2007/08/08 18:07:05 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.154 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1363,8 +1363,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		/*
 		 * Get actual datatypes of the inputs.	These could be different from
-		 * the agg's declared input types, when the agg accepts ANY or
-		 * a polymorphic type.
+		 * the agg's declared input types, when the agg accepts ANY or a
+		 * polymorphic type.
 		 */
 		i = 0;
 		foreach(lc, aggref->args)
@@ -1647,9 +1647,9 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * node->numaggs);
 
 	/*
-	 * Release all temp storage. Note that with AGG_HASHED, the hash table
-	 * is allocated in a sub-context of the aggcontext. We're going to
-	 * rebuild the hash table from scratch, so we need to use
+	 * Release all temp storage. Note that with AGG_HASHED, the hash table is
+	 * allocated in a sub-context of the aggcontext. We're going to rebuild
+	 * the hash table from scratch, so we need to use
 	 * MemoryContextResetAndDeleteChildren() to avoid leaking the old hash
 	 * table's memory context header.
 	 */

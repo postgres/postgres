@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.183 2007/10/25 13:48:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.184 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,8 @@ static int	_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount);
 static void _SPI_error_callback(void *arg);
 
 static void _SPI_cursor_operation(Portal portal,
-								  FetchDirection direction, long count,
-								  DestReceiver *dest);
+					  FetchDirection direction, long count,
+					  DestReceiver *dest);
 
 static SPIPlanPtr _SPI_copy_plan(SPIPlanPtr plan, MemoryContext parentcxt);
 static SPIPlanPtr _SPI_save_plan(SPIPlanPtr plan);
@@ -910,7 +910,7 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 		oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 		/* sizeof(ParamListInfoData) includes the first array element */
 		paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-							  (plan->nargs - 1) *sizeof(ParamExternData));
+								 (plan->nargs - 1) *sizeof(ParamExternData));
 		paramLI->numParams = plan->nargs;
 
 		for (k = 0; k < plan->nargs; k++)
@@ -967,8 +967,8 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 					  cplan);
 
 	/*
-	 * Set up options for portal.  Default SCROLL type is chosen the same
-	 * way as PerformCursorOpen does it.
+	 * Set up options for portal.  Default SCROLL type is chosen the same way
+	 * as PerformCursorOpen does it.
 	 */
 	portal->cursorOptions = plan->cursor_options;
 	if (!(portal->cursorOptions & (CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL)))
@@ -983,9 +983,9 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 	}
 
 	/*
-	 * Disallow SCROLL with SELECT FOR UPDATE.  This is not redundant with
-	 * the check in transformDeclareCursorStmt because the cursor options
-	 * might not have come through there.
+	 * Disallow SCROLL with SELECT FOR UPDATE.	This is not redundant with the
+	 * check in transformDeclareCursorStmt because the cursor options might
+	 * not have come through there.
 	 */
 	if (portal->cursorOptions & CURSOR_OPT_SCROLL)
 	{
@@ -999,9 +999,9 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 	}
 
 	/*
-	 * If told to be read-only, we'd better check for read-only queries.
-	 * This can't be done earlier because we need to look at the finished,
-	 * planned queries.  (In particular, we don't want to do it between
+	 * If told to be read-only, we'd better check for read-only queries. This
+	 * can't be done earlier because we need to look at the finished, planned
+	 * queries.  (In particular, we don't want to do it between
 	 * RevalidateCachedPlan and PortalDefineQuery, because throwing an error
 	 * between those steps would result in leaking our plancache refcount.)
 	 */
@@ -1011,14 +1011,14 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 
 		foreach(lc, stmt_list)
 		{
-			Node   *pstmt = (Node *) lfirst(lc);
+			Node	   *pstmt = (Node *) lfirst(lc);
 
 			if (!CommandIsReadOnly(pstmt))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 /* translator: %s is a SQL statement name */
-						 errmsg("%s is not allowed in a non-volatile function",
-								CreateCommandTag(pstmt))));
+				/* translator: %s is a SQL statement name */
+					   errmsg("%s is not allowed in a non-volatile function",
+							  CreateCommandTag(pstmt))));
 		}
 	}
 
@@ -1396,8 +1396,8 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 	raw_parsetree_list = pg_parse_query(src);
 
 	/*
-	 * Do parse analysis and rule rewrite for each raw parsetree, then
-	 * cons up a phony plancache entry for each one.
+	 * Do parse analysis and rule rewrite for each raw parsetree, then cons up
+	 * a phony plancache entry for each one.
 	 */
 	plancache_list = NIL;
 
@@ -1416,9 +1416,9 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 		plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
 		cplan = (CachedPlan *) palloc0(sizeof(CachedPlan));
 
-	    plansource->raw_parse_tree = parsetree;
+		plansource->raw_parse_tree = parsetree;
 		/* cast-away-const here is a bit ugly, but there's no reason to copy */
-	    plansource->query_string = (char *) src;
+		plansource->query_string = (char *) src;
 		plansource->commandTag = CreateCommandTag(parsetree);
 		plansource->param_types = argtypes;
 		plansource->num_params = nargs;
@@ -1621,7 +1621,7 @@ _SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 					ProcessUtility(stmt,
 								   plansource->query_string,
 								   paramLI,
-								   false,				/* not top level */
+								   false,		/* not top level */
 								   dest,
 								   NULL);
 					/* Update "processed" if stmt returned tuples */
@@ -1713,7 +1713,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 	{
 		case CMD_SELECT:
 			Assert(queryDesc->plannedstmt->utilityStmt == NULL);
-			if (queryDesc->plannedstmt->intoClause)	/* select into table? */
+			if (queryDesc->plannedstmt->intoClause)		/* select into table? */
 				res = SPI_OK_SELINTO;
 			else if (queryDesc->dest->mydest != DestSPI)
 			{
@@ -1984,8 +1984,8 @@ _SPI_copy_plan(SPIPlanPtr plan, MemoryContext parentcxt)
 		newsource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
 		newcplan = (CachedPlan *) palloc0(sizeof(CachedPlan));
 
-	    newsource->raw_parse_tree = copyObject(plansource->raw_parse_tree);
-	    newsource->query_string = pstrdup(plansource->query_string);
+		newsource->raw_parse_tree = copyObject(plansource->raw_parse_tree);
+		newsource->query_string = pstrdup(plansource->query_string);
 		newsource->commandTag = plansource->commandTag;
 		newsource->param_types = newplan->argtypes;
 		newsource->num_params = newplan->nargs;

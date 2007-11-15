@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.50 2007/11/15 20:36:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.51 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	if (strchr(location, '\''))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
-			   errmsg("tablespace location cannot contain single quotes")));
+				 errmsg("tablespace location cannot contain single quotes")));
 
 	/*
 	 * Allowing relative paths seems risky
@@ -356,10 +356,10 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	}
 
 	/*
-	 * Force synchronous commit, to minimize the window between creating
-	 * the symlink on-disk and marking the transaction committed.  It's
-	 * not great that there is any window at all, but definitely we don't
-	 * want to make it larger than necessary.
+	 * Force synchronous commit, to minimize the window between creating the
+	 * symlink on-disk and marking the transaction committed.  It's not great
+	 * that there is any window at all, but definitely we don't want to make
+	 * it larger than necessary.
 	 */
 	ForceSyncCommit();
 
@@ -461,7 +461,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	LWLockAcquire(TablespaceCreateLock, LW_EXCLUSIVE);
 
 	/*
-	 * Try to remove the physical infrastructure. 
+	 * Try to remove the physical infrastructure.
 	 */
 	if (!remove_tablespace_directories(tablespaceoid, false))
 	{
@@ -469,7 +469,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		 * Not all files deleted?  However, there can be lingering empty files
 		 * in the directories, left behind by for example DROP TABLE, that
 		 * have been scheduled for deletion at next checkpoint (see comments
-		 * in mdunlink() for details).  We could just delete them immediately,
+		 * in mdunlink() for details).	We could just delete them immediately,
 		 * but we can't tell them apart from important data files that we
 		 * mustn't delete.  So instead, we force a checkpoint which will clean
 		 * out any lingering files, and try again.
@@ -506,10 +506,10 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	 */
 
 	/*
-	 * Force synchronous commit, to minimize the window between removing
-	 * the files on-disk and marking the transaction committed.  It's
-	 * not great that there is any window at all, but definitely we don't
-	 * want to make it larger than necessary.
+	 * Force synchronous commit, to minimize the window between removing the
+	 * files on-disk and marking the transaction committed.  It's not great
+	 * that there is any window at all, but definitely we don't want to make
+	 * it larger than necessary.
 	 */
 	ForceSyncCommit();
 
@@ -561,7 +561,7 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
 	 *
 	 * If redo is true then ENOENT is a likely outcome here, and we allow it
 	 * to pass without comment.  In normal operation we still allow it, but
-	 * with a warning.  This is because even though ProcessUtility disallows
+	 * with a warning.	This is because even though ProcessUtility disallows
 	 * DROP TABLESPACE in a transaction block, it's possible that a previous
 	 * DROP failed and rolled back after removing the tablespace directories
 	 * and symlink.  We want to allow a new DROP attempt to succeed at
@@ -1019,12 +1019,12 @@ assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
 		 * transaction, we'll leak a bit of TopTransactionContext memory.
 		 * Doesn't seem worth worrying about.
 		 */
-		Oid	   *tblSpcs;
-		int		numSpcs;
+		Oid		   *tblSpcs;
+		int			numSpcs;
 		ListCell   *l;
 
 		tblSpcs = (Oid *) MemoryContextAlloc(TopTransactionContext,
-									list_length(namelist) * sizeof(Oid));
+										list_length(namelist) * sizeof(Oid));
 		numSpcs = 0;
 		foreach(l, namelist)
 		{
@@ -1112,10 +1112,10 @@ PrepareTempTablespaces(void)
 		return;
 
 	/*
-	 * Can't do catalog access unless within a transaction.  This is just
-	 * a safety check in case this function is called by low-level code that
-	 * could conceivably execute outside a transaction.  Note that in such
-	 * a scenario, fd.c will fall back to using the current database's default
+	 * Can't do catalog access unless within a transaction.  This is just a
+	 * safety check in case this function is called by low-level code that
+	 * could conceivably execute outside a transaction.  Note that in such a
+	 * scenario, fd.c will fall back to using the current database's default
 	 * tablespace, which should always be OK.
 	 */
 	if (!IsTransactionState())
@@ -1136,7 +1136,7 @@ PrepareTempTablespaces(void)
 
 	/* Store tablespace OIDs in an array in TopTransactionContext */
 	tblSpcs = (Oid *) MemoryContextAlloc(TopTransactionContext,
-									list_length(namelist) * sizeof(Oid));
+										 list_length(namelist) * sizeof(Oid));
 	numSpcs = 0;
 	foreach(l, namelist)
 	{
@@ -1160,8 +1160,8 @@ PrepareTempTablespaces(void)
 		}
 
 		/*
-		 * Allow explicit specification of database's default tablespace
-		 * in temp_tablespaces without triggering permissions checks.
+		 * Allow explicit specification of database's default tablespace in
+		 * temp_tablespaces without triggering permissions checks.
 		 */
 		if (curoid == MyDatabaseTableSpace)
 		{
@@ -1241,8 +1241,8 @@ get_tablespace_name(Oid spc_oid)
 
 	/*
 	 * Search pg_tablespace.  We use a heapscan here even though there is an
-	 * index on oid, on the theory that pg_tablespace will usually have just
-	 * a few entries and so an indexed lookup is a waste of effort.
+	 * index on oid, on the theory that pg_tablespace will usually have just a
+	 * few entries and so an indexed lookup is a waste of effort.
 	 */
 	rel = heap_open(TableSpaceRelationId, AccessShareLock);
 

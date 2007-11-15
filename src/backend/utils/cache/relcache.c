@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.263 2007/09/20 17:56:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.264 2007/11/15 21:14:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -932,7 +932,7 @@ RelationInitIndexAccessInfo(Relation relation)
 	Datum		indoptionDatum;
 	bool		isnull;
 	oidvector  *indclass;
-	int2vector  *indoption;
+	int2vector *indoption;
 	MemoryContext indexcxt;
 	MemoryContext oldcontext;
 	int			natts;
@@ -1030,8 +1030,8 @@ RelationInitIndexAccessInfo(Relation relation)
 
 	/*
 	 * indclass cannot be referenced directly through the C struct, because it
-	 * comes after the variable-width indkey field.  Must extract the
-	 * datum the hard way...
+	 * comes after the variable-width indkey field.  Must extract the datum
+	 * the hard way...
 	 */
 	indclassDatum = fastgetattr(relation->rd_indextuple,
 								Anum_pg_index_indclass,
@@ -1041,9 +1041,9 @@ RelationInitIndexAccessInfo(Relation relation)
 	indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
 	/*
-	 * Fill the operator and support procedure OID arrays, as well as the
-	 * info about opfamilies and opclass input types.  (aminfo and
-	 * supportinfo are left as zeroes, and are filled on-the-fly when used)
+	 * Fill the operator and support procedure OID arrays, as well as the info
+	 * about opfamilies and opclass input types.  (aminfo and supportinfo are
+	 * left as zeroes, and are filled on-the-fly when used)
 	 */
 	IndexSupportInitialize(indclass,
 						   relation->rd_operator, relation->rd_support,
@@ -1655,8 +1655,8 @@ RelationReloadIndexInfo(Relation relation)
 							   ObjectIdGetDatum(RelationGetRelid(relation)),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "cache lookup failed for index %u",
-					 RelationGetRelid(relation));
+			elog(ERROR, "cache lookup failed for index %u",
+				 RelationGetRelid(relation));
 		index = (Form_pg_index) GETSTRUCT(tuple);
 
 		relation->rd_index->indisvalid = index->indisvalid;
@@ -2078,7 +2078,7 @@ AtEOXact_RelationCache(bool isCommit)
 	 * for us to do here, so we keep a static flag that gets set if there is
 	 * anything to do.	(Currently, this means either a relation is created in
 	 * the current xact, or one is given a new relfilenode, or an index list
-	 * is forced.)  For simplicity, the flag remains set till end of top-level
+	 * is forced.)	For simplicity, the flag remains set till end of top-level
 	 * transaction, even though we could clear it at subtransaction end in
 	 * some cases.
 	 */
@@ -2201,7 +2201,8 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 		}
 
 		/*
-		 * Likewise, update or drop any new-relfilenode-in-subtransaction hint.
+		 * Likewise, update or drop any new-relfilenode-in-subtransaction
+		 * hint.
 		 */
 		if (relation->rd_newRelfilenodeSubid == mySubid)
 		{
@@ -2228,7 +2229,7 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
  * RelationCacheMarkNewRelfilenode
  *
  *	Mark the rel as having been given a new relfilenode in the current
- *	(sub) transaction.  This is a hint that can be used to optimize
+ *	(sub) transaction.	This is a hint that can be used to optimize
  *	later operations on the rel in the same transaction.
  */
 void
@@ -3165,9 +3166,9 @@ RelationGetIndexPredicate(Relation relation)
 Bitmapset *
 RelationGetIndexAttrBitmap(Relation relation)
 {
-	Bitmapset	*indexattrs;
-	List		*indexoidlist;
-	ListCell	*l;
+	Bitmapset  *indexattrs;
+	List	   *indexoidlist;
+	ListCell   *l;
 	MemoryContext oldcxt;
 
 	/* Quick exit if we already computed the result. */
@@ -3196,7 +3197,7 @@ RelationGetIndexAttrBitmap(Relation relation)
 		Oid			indexOid = lfirst_oid(l);
 		Relation	indexDesc;
 		IndexInfo  *indexInfo;
-		int 		i;
+		int			i;
 
 		indexDesc = index_open(indexOid, AccessShareLock);
 
@@ -3206,11 +3207,11 @@ RelationGetIndexAttrBitmap(Relation relation)
 		/* Collect simple attribute references */
 		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		{
-			int attrnum = indexInfo->ii_KeyAttrNumbers[i];
+			int			attrnum = indexInfo->ii_KeyAttrNumbers[i];
 
 			if (attrnum != 0)
 				indexattrs = bms_add_member(indexattrs,
-						attrnum - FirstLowInvalidHeapAttributeNumber);
+							   attrnum - FirstLowInvalidHeapAttributeNumber);
 		}
 
 		/* Collect all attributes used in expressions, too */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.166 2007/06/23 22:12:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.167 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,8 +152,8 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 * Open target rel and grab suitable lock (which we will hold till end of
 	 * transaction).
 	 *
-	 * free_parsestate() will eventually do the corresponding
-	 * heap_close(), but *not* release the lock.
+	 * free_parsestate() will eventually do the corresponding heap_close(),
+	 * but *not* release the lock.
 	 */
 	pstate->p_target_relation = heap_openrv(relation, RowExclusiveLock);
 
@@ -1665,21 +1665,22 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 										  restype,
 										  restype,
 										  false);
+
 			/*
-			 * Verify it's a valid ordering operator, and determine
-			 * whether to consider it like ASC or DESC.
+			 * Verify it's a valid ordering operator, and determine whether to
+			 * consider it like ASC or DESC.
 			 */
 			if (!get_compare_function_for_ordering_op(sortop,
 													  &cmpfunc, &reverse))
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("operator %s is not a valid ordering operator",
-								strVal(llast(sortby_opname))),
+					   errmsg("operator %s is not a valid ordering operator",
+							  strVal(llast(sortby_opname))),
 						 errhint("Ordering operators must be \"<\" or \">\" members of btree operator families.")));
 			break;
 		default:
 			elog(ERROR, "unrecognized sortby_dir: %d", sortby_dir);
-			sortop = InvalidOid; /* keep compiler quiet */
+			sortop = InvalidOid;	/* keep compiler quiet */
 			reverse = false;
 			break;
 	}

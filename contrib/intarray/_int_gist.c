@@ -233,10 +233,11 @@ g_int_decompress(PG_FUNCTION_ARGS)
 	CHECKARRVALID(in);
 	if (ARRISVOID(in))
 	{
-		if (in != (ArrayType *) DatumGetPointer(entry->key)) {
+		if (in != (ArrayType *) DatumGetPointer(entry->key))
+		{
 			retval = palloc(sizeof(GISTENTRY));
 			gistentryinit(*retval, PointerGetDatum(in),
-				entry->rel, entry->page, entry->offset, FALSE);
+						  entry->rel, entry->page, entry->offset, FALSE);
 			PG_RETURN_POINTER(retval);
 		}
 

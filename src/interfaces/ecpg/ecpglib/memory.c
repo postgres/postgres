@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.11 2007/10/03 11:11:12 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.12 2007/11/15 21:14:45 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -69,8 +69,8 @@ struct auto_mem
 };
 
 #ifdef ENABLE_THREAD_SAFETY
-static pthread_key_t	auto_mem_key;
-static pthread_once_t	auto_mem_once = PTHREAD_ONCE_INIT;
+static pthread_key_t auto_mem_key;
+static pthread_once_t auto_mem_once = PTHREAD_ONCE_INIT;
 
 static void
 auto_mem_destructor(void *arg)
@@ -92,13 +92,13 @@ get_auto_allocs(void)
 }
 
 static void
-set_auto_allocs(struct auto_mem *am)
+set_auto_allocs(struct auto_mem * am)
 {
 	pthread_setspecific(auto_mem_key, am);
 }
-
 #else
-static struct auto_mem	*auto_allocs = NULL;
+static struct auto_mem *auto_allocs = NULL;
+
 #define get_auto_allocs()		(auto_allocs)
 #define set_auto_allocs(am)		do { auto_allocs = (am); } while(0)
 #endif
@@ -124,10 +124,11 @@ ECPGfree_auto_mem(void)
 		do
 		{
 			struct auto_mem *act = am;
+
 			am = am->next;
 			ecpg_free(act->pointer);
 			ecpg_free(act);
-		} while(am);
+		} while (am);
 		set_auto_allocs(NULL);
 	}
 }
@@ -143,9 +144,10 @@ ecpg_clear_auto_mem(void)
 		do
 		{
 			struct auto_mem *act = am;
+
 			am = am->next;
 			ecpg_free(act);
-		} while(am);
+		} while (am);
 		set_auto_allocs(NULL);
 	}
 }

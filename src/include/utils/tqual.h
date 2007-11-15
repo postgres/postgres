@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.68 2007/08/14 17:35:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.69 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,20 +28,21 @@
 typedef struct SnapshotData *Snapshot;
 
 typedef bool (*SnapshotSatisfiesFunc) (HeapTupleHeader tuple,
-									   Snapshot snapshot, Buffer buffer);
+										   Snapshot snapshot, Buffer buffer);
 
 typedef struct SnapshotData
 {
 	SnapshotSatisfiesFunc satisfies;	/* tuple test function */
+
 	/*
-	 * The remaining fields are used only for MVCC snapshots, and are
-	 * normally just zeroes in special snapshots.  (But xmin and xmax
-	 * are used specially by HeapTupleSatisfiesDirty.)
+	 * The remaining fields are used only for MVCC snapshots, and are normally
+	 * just zeroes in special snapshots.  (But xmin and xmax are used
+	 * specially by HeapTupleSatisfiesDirty.)
 	 *
-	 * An MVCC snapshot can never see the effects of XIDs >= xmax.
-	 * It can see the effects of all older XIDs except those listed in
-	 * the snapshot.  xmin is stored as an optimization to avoid needing
-	 * to search the XID arrays for most tuples.
+	 * An MVCC snapshot can never see the effects of XIDs >= xmax. It can see
+	 * the effects of all older XIDs except those listed in the snapshot.
+	 * xmin is stored as an optimization to avoid needing to search the XID
+	 * arrays for most tuples.
 	 */
 	TransactionId xmin;			/* all XID < xmin are visible to me */
 	TransactionId xmax;			/* all XID >= xmax are invisible to me */
@@ -121,23 +122,23 @@ typedef enum
 	HEAPTUPLE_DEAD,				/* tuple is dead and deletable */
 	HEAPTUPLE_LIVE,				/* tuple is live (committed, no deleter) */
 	HEAPTUPLE_RECENTLY_DEAD,	/* tuple is dead, but not deletable yet */
-	HEAPTUPLE_INSERT_IN_PROGRESS,	/* inserting xact is still in progress */
+	HEAPTUPLE_INSERT_IN_PROGRESS,		/* inserting xact is still in progress */
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 
 /* These are the "satisfies" test routines for the various snapshot types */
 extern bool HeapTupleSatisfiesMVCC(HeapTupleHeader tuple,
-								   Snapshot snapshot, Buffer buffer);
+					   Snapshot snapshot, Buffer buffer);
 extern bool HeapTupleSatisfiesNow(HeapTupleHeader tuple,
-								  Snapshot snapshot, Buffer buffer);
+					  Snapshot snapshot, Buffer buffer);
 extern bool HeapTupleSatisfiesSelf(HeapTupleHeader tuple,
-								   Snapshot snapshot, Buffer buffer);
+					   Snapshot snapshot, Buffer buffer);
 extern bool HeapTupleSatisfiesAny(HeapTupleHeader tuple,
-								  Snapshot snapshot, Buffer buffer);
+					  Snapshot snapshot, Buffer buffer);
 extern bool HeapTupleSatisfiesToast(HeapTupleHeader tuple,
-									Snapshot snapshot, Buffer buffer);
+						Snapshot snapshot, Buffer buffer);
 extern bool HeapTupleSatisfiesDirty(HeapTupleHeader tuple,
-									Snapshot snapshot, Buffer buffer);
+						Snapshot snapshot, Buffer buffer);
 
 /* Special "satisfies" routines with different APIs */
 extern HTSU_Result HeapTupleSatisfiesUpdate(HeapTupleHeader tuple,
@@ -146,7 +147,7 @@ extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
 						 TransactionId OldestXmin, Buffer buffer);
 
 extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,
-								 uint16 infomask, TransactionId xid);
+					 uint16 infomask, TransactionId xid);
 
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);

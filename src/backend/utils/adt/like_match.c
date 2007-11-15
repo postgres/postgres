@@ -11,7 +11,7 @@
  *
  * Before the inclusion, we need to define following macros:
  *
- * NextChar 
+ * NextChar
  * MatchText - to name of function wanted
  * do_like_escape - name of function if wanted - needs CHAREQ and CopyAdvChar
  * MATCH_LOWER - define iff using to_lower on text chars
@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.18 2007/09/22 03:58:34 adunstan Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.19 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,11 +84,11 @@ MatchText(char *t, int tlen, char *p, int plen)
 		return LIKE_TRUE;
 
 	/*
-	 * In this loop, we advance by char when matching wildcards (and thus
-	 * on recursive entry to this function we are properly char-synced). On
-	 * other occasions it is safe to advance by byte, as the text and pattern
-	 * will be in lockstep. This allows us to perform all comparisons  between
-	 * the text and pattern on a byte by byte basis, even for multi-byte
+	 * In this loop, we advance by char when matching wildcards (and thus on
+	 * recursive entry to this function we are properly char-synced). On other
+	 * occasions it is safe to advance by byte, as the text and pattern will
+	 * be in lockstep. This allows us to perform all comparisons  between the
+	 * text and pattern on a byte by byte basis, even for multi-byte
 	 * encodings.
 	 */
 
@@ -98,15 +98,15 @@ MatchText(char *t, int tlen, char *p, int plen)
 		{
 			/* Next byte must match literally, whatever it is */
 			NextByte(p, plen);
-			if ((plen <= 0) || *p != *t )
+			if ((plen <= 0) || *p != *t)
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
 		{
 			/*
-			 * % processing is essentially a search for a match for what 
-			 * follows the %, plus a recursive match of the remainder.
-			 * We succeed if and only if both conditions are met.
+			 * % processing is essentially a search for a match for what
+			 * follows the %, plus a recursive match of the remainder. We
+			 * succeed if and only if both conditions are met.
 			 */
 
 			/* %% is the same as % according to the SQL standard */
@@ -141,9 +141,9 @@ MatchText(char *t, int tlen, char *p, int plen)
 				while (tlen > 0)
 				{
 					int			matched = MatchText(t, tlen, p, plen);
-						
+
 					if (matched != LIKE_FALSE)
-							return matched; /* TRUE or ABORT */
+						return matched; /* TRUE or ABORT */
 
 					NextChar(t, tlen);
 				}
@@ -151,7 +151,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 			else
 			{
 
-				char firstpat = TCHAR(*p) ;
+				char		firstpat = TCHAR(*p);
 
 				if (*p == '\\')
 				{
@@ -169,9 +169,9 @@ MatchText(char *t, int tlen, char *p, int plen)
 					if (TCHAR(*t) == firstpat)
 					{
 						int			matched = MatchText(t, tlen, p, plen);
-						
+
 						if (matched != LIKE_FALSE)
-							return matched; /* TRUE or ABORT */
+							return matched;		/* TRUE or ABORT */
 					}
 
 					NextChar(t, tlen);
@@ -199,17 +199,16 @@ MatchText(char *t, int tlen, char *p, int plen)
 			 */
 			return LIKE_FALSE;
 		}
+
 		/*
 		 * It is safe to use NextByte instead of NextChar here, even for
-		 * multi-byte character sets, because we are not following 
-		 * immediately after a wildcard character.
-		 * If we are in the middle of a multibyte character, we must 
-		 * already have matched at least one byte of the character from 
-		 * both text and pattern; so we cannot get out-of-sync
-		 * on character boundaries.  And we know that no backend-legal 
-		 * encoding allows ASCII characters such as '%' to appear as 
-		 * non-first bytes of characters, so we won't mistakenly detect 
-		 * a new wildcard.
+		 * multi-byte character sets, because we are not following immediately
+		 * after a wildcard character. If we are in the middle of a multibyte
+		 * character, we must already have matched at least one byte of the
+		 * character from both text and pattern; so we cannot get out-of-sync
+		 * on character boundaries.  And we know that no backend-legal
+		 * encoding allows ASCII characters such as '%' to appear as non-first
+		 * bytes of characters, so we won't mistakenly detect a new wildcard.
 		 */
 		NextByte(t, tlen);
 		NextByte(p, plen);
@@ -332,7 +331,7 @@ do_like_escape(text *pat, text *esc)
 
 	return result;
 }
-#endif /* do_like_escape */
+#endif   /* do_like_escape */
 
 #ifdef CHAREQ
 #undef CHAREQ
@@ -350,4 +349,5 @@ do_like_escape(text *pat, text *esc)
 
 #ifdef MATCH_LOWER
 #undef MATCH_LOWER
+
 #endif

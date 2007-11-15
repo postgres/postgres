@@ -4,7 +4,7 @@
  *	  heap scan synchronization support
  *
  * When multiple backends run a sequential scan on the same table, we try
- * to keep them synchronized to reduce the overall I/O needed.  The goal is
+ * to keep them synchronized to reduce the overall I/O needed.	The goal is
  * to read each page into shared buffer cache only once, and let all backends
  * that take part in the shared scan process the page before it falls out of
  * the cache.
@@ -26,7 +26,7 @@
  * don't want such queries to slow down others.
  *
  * There can realistically only be a few large sequential scans on different
- * tables in progress at any time.  Therefore we just keep the scan positions
+ * tables in progress at any time.	Therefore we just keep the scan positions
  * in a small LRU list which we scan every time we need to look up or update a
  * scan position.  The whole mechanism is only applied for tables exceeding
  * a threshold size (but that is not the concern of this module).
@@ -40,7 +40,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/syncscan.c,v 1.1 2007/06/08 18:23:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/syncscan.c,v 1.2 2007/11/15 21:14:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@
 
 /* GUC variables */
 #ifdef TRACE_SYNCSCAN
-bool	trace_syncscan = false;
+bool		trace_syncscan = false;
 #endif
 
 
@@ -89,21 +89,21 @@ typedef struct ss_scan_location_t
 {
 	RelFileNode relfilenode;	/* identity of a relation */
 	BlockNumber location;		/* last-reported location in the relation */
-} ss_scan_location_t;
+}	ss_scan_location_t;
 
 typedef struct ss_lru_item_t
 {
-	struct ss_lru_item_t	*prev;
-	struct ss_lru_item_t	*next;
-	ss_scan_location_t		location;
-} ss_lru_item_t;
+	struct ss_lru_item_t *prev;
+	struct ss_lru_item_t *next;
+	ss_scan_location_t location;
+}	ss_lru_item_t;
 
 typedef struct ss_scan_locations_t
 {
-	ss_lru_item_t		*head;
-	ss_lru_item_t		*tail;
-	ss_lru_item_t		items[1]; /* SYNC_SCAN_NELEM items */
-} ss_scan_locations_t;
+	ss_lru_item_t *head;
+	ss_lru_item_t *tail;
+	ss_lru_item_t items[1];		/* SYNC_SCAN_NELEM items */
+}	ss_scan_locations_t;
 
 #define SizeOfScanLocations(N) offsetof(ss_scan_locations_t, items[N])
 
@@ -112,7 +112,7 @@ static ss_scan_locations_t *scan_locations;
 
 /* prototypes for internal functions */
 static BlockNumber ss_search(RelFileNode relfilenode,
-							 BlockNumber location, bool set);
+		  BlockNumber location, bool set);
 
 
 /*
@@ -130,8 +130,8 @@ SyncScanShmemSize(void)
 void
 SyncScanShmemInit(void)
 {
-	int i;
-	bool found;
+	int			i;
+	bool		found;
 
 	scan_locations = (ss_scan_locations_t *)
 		ShmemInitStruct("Sync Scan Locations List",
@@ -186,20 +186,20 @@ SyncScanShmemInit(void)
 static BlockNumber
 ss_search(RelFileNode relfilenode, BlockNumber location, bool set)
 {
-	ss_lru_item_t	*item;
+	ss_lru_item_t *item;
 
 	item = scan_locations->head;
 	for (;;)
 	{
-		bool match;
+		bool		match;
 
 		match = RelFileNodeEquals(item->location.relfilenode, relfilenode);
 
 		if (match || item->next == NULL)
 		{
 			/*
-			 * If we reached the end of list and no match was found,
-			 * take over the last entry
+			 * If we reached the end of list and no match was found, take over
+			 * the last entry
 			 */
 			if (!match)
 			{
@@ -242,7 +242,7 @@ ss_search(RelFileNode relfilenode, BlockNumber location, bool set)
  * relation, or 0 if no valid location is found.
  *
  * We expect the caller has just done RelationGetNumberOfBlocks(), and
- * so that number is passed in rather than computing it again.  The result
+ * so that number is passed in rather than computing it again.	The result
  * is guaranteed less than relnblocks (assuming that's > 0).
  */
 BlockNumber
@@ -257,8 +257,8 @@ ss_get_location(Relation rel, BlockNumber relnblocks)
 	/*
 	 * If the location is not a valid block number for this scan, start at 0.
 	 *
-	 * This can happen if for instance a VACUUM truncated the table
-	 * since the location was saved.
+	 * This can happen if for instance a VACUUM truncated the table since the
+	 * location was saved.
 	 */
 	if (startloc >= relnblocks)
 		startloc = 0;
@@ -294,12 +294,12 @@ ss_report_location(Relation rel, BlockNumber location)
 #endif
 
 	/*
-	 * To reduce lock contention, only report scan progress every N pages.
-	 * For the same reason, don't block if the lock isn't immediately
-	 * available.  Missing a few updates isn't critical, it just means that a
-	 * new scan that wants to join the pack will start a little bit behind the
-	 * head of the scan.  Hopefully the pages are still in OS cache and the
-	 * scan catches up quickly.
+	 * To reduce lock contention, only report scan progress every N pages. For
+	 * the same reason, don't block if the lock isn't immediately available.
+	 * Missing a few updates isn't critical, it just means that a new scan
+	 * that wants to join the pack will start a little bit behind the head of
+	 * the scan.  Hopefully the pages are still in OS cache and the scan
+	 * catches up quickly.
 	 */
 	if ((location % SYNC_SCAN_REPORT_INTERVAL) == 0)
 	{

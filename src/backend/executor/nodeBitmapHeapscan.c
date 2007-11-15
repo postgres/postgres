@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.20 2007/09/20 17:56:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.21 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 		 * tbmres; but we have to follow any HOT chain starting at each such
 		 * offset.
 		 */
-		int curslot;
+		int			curslot;
 
 		for (curslot = 0; curslot < tbmres->ntuples; curslot++)
 		{

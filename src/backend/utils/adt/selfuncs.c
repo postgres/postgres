@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.239 2007/11/09 20:10:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.240 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -923,8 +923,8 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 
 	/*
 	 * If this is for a NOT LIKE or similar operator, get the corresponding
-	 * positive-match operator and work with that.  Set result to the
-	 * correct default estimate, too.
+	 * positive-match operator and work with that.	Set result to the correct
+	 * default estimate, too.
 	 */
 	if (negate)
 	{
@@ -1396,7 +1396,7 @@ nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
 	 * be taken at face value, since it's very likely being used to select the
 	 * outer-side rows that don't have a match, and thus its selectivity has
 	 * nothing whatever to do with the statistics of the original table
-	 * column.  We do not have nearly enough context here to determine its
+	 * column.	We do not have nearly enough context here to determine its
 	 * true selectivity, so for the moment punt and guess at 0.5.  Eventually
 	 * the planner should be made to provide enough info about the clause's
 	 * context to let us do better.
@@ -1539,7 +1539,7 @@ scalararraysel(PlannerInfo *root,
 	/* get nominal (after relabeling) element type of rightop */
 	nominal_element_type = get_element_type(exprType(rightop));
 	if (!OidIsValid(nominal_element_type))
-		return (Selectivity) 0.5;			/* probably shouldn't happen */
+		return (Selectivity) 0.5;		/* probably shouldn't happen */
 
 	/* look through any binary-compatible relabeling of rightop */
 	rightop = strip_array_coercion(rightop);
@@ -2228,8 +2228,8 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	Assert(!op_recheck);
 
 	/*
-	 * Look up the various operators we need.  If we don't find them all,
-	 * it probably means the opfamily is broken, but we cope anyway.
+	 * Look up the various operators we need.  If we don't find them all, it
+	 * probably means the opfamily is broken, but we cope anyway.
 	 */
 	switch (strategy)
 	{
@@ -2274,7 +2274,7 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	/*
 	 * Now, the fraction of the left variable that will be scanned is the
 	 * fraction that's <= the right-side maximum value.  But only believe
-	 * non-default estimates, else stick with our 1.0.  Also, if the sort
+	 * non-default estimates, else stick with our 1.0.	Also, if the sort
 	 * order is nulls-first, we're going to have to read over any nulls too.
 	 */
 	selec = scalarineqsel(root, leop, false, &leftvar,
@@ -3151,12 +3151,14 @@ convert_string_datum(Datum value, Oid typid)
 		 * out of a paper bag?
 		 *
 		 * XXX: strxfrm doesn't support UTF-8 encoding on Win32, it can return
-		 * bogus data or set an error. This is not really a problem unless it 
-		 * crashes since it will only give an estimation error and nothing fatal.
+		 * bogus data or set an error. This is not really a problem unless it
+		 * crashes since it will only give an estimation error and nothing
+		 * fatal.
 		 */
 #if _MSC_VER == 1400			/* VS.Net 2005 */
 
 		/*
+		 *
 		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx
 		 * ?FeedbackID=99694
 		 */
@@ -3169,9 +3171,10 @@ convert_string_datum(Datum value, Oid typid)
 		xfrmlen = strxfrm(NULL, val, 0);
 #endif
 #ifdef WIN32
+
 		/*
-		 * On Windows, strxfrm returns INT_MAX when an error occurs. Instead of
-		 * trying to allocate this much memory (and fail), just return the
+		 * On Windows, strxfrm returns INT_MAX when an error occurs. Instead
+		 * of trying to allocate this much memory (and fail), just return the
 		 * original string unmodified as if we were in the C locale.
 		 */
 		if (xfrmlen == INT_MAX)
@@ -4081,9 +4084,9 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 
 	/*
 	 * If '|' is present in pattern, then there may be multiple alternatives
-	 * for the start of the string.  (There are cases where this isn't so,
-	 * for instance if the '|' is inside parens, but detecting that reliably
-	 * is too hard.)
+	 * for the start of the string.  (There are cases where this isn't so, for
+	 * instance if the '|' is inside parens, but detecting that reliably is
+	 * too hard.)
 	 */
 	if (strchr(patt + pos, '|') != NULL)
 	{
@@ -4101,7 +4104,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 
 	/*
 	 * We special-case the syntax '^(...)$' because psql uses it.  But beware:
-	 * in BRE mode these parentheses are just ordinary characters.  Also,
+	 * in BRE mode these parentheses are just ordinary characters.	Also,
 	 * sequences beginning "(?" are not what they seem, unless they're "(?:".
 	 * (We should recognize that, too, because of similar_escape().)
 	 *
@@ -4171,10 +4174,10 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 		/*
 		 * Normally, backslash quotes the next character.  But in AREs,
 		 * backslash followed by alphanumeric is an escape, not a quoted
-		 * character.  Must treat it as having multiple possible matches.
-		 * In BREs, \( is a parenthesis, so don't trust that either.
-		 * Note: since only ASCII alphanumerics are escapes, we don't have
-		 * to be paranoid about multibyte here.
+		 * character.  Must treat it as having multiple possible matches. In
+		 * BREs, \( is a parenthesis, so don't trust that either. Note: since
+		 * only ASCII alphanumerics are escapes, we don't have to be paranoid
+		 * about multibyte here.
 		 */
 		if (patt[pos] == '\\')
 		{
@@ -4598,7 +4601,7 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
  * that is not a bulletproof guarantee that an extension of the string might
  * not sort after it; an example is that "foo " is less than "foo!", but it
  * is not clear that a "dictionary" sort ordering will consider "foo!" less
- * than "foo bar".  CAUTION: Therefore, this function should be used only for
+ * than "foo bar".	CAUTION: Therefore, this function should be used only for
  * estimation purposes when working in a non-C locale.
  *
  * To try to catch most cases where an extended string might otherwise sort
@@ -4624,11 +4627,10 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 	text	   *cmptxt = NULL;
 
 	/*
-	 * Get a modifiable copy of the prefix string in C-string format,
-	 * and set up the string we will compare to as a Datum.  In C locale
-	 * this can just be the given prefix string, otherwise we need to add
-	 * a suffix.  Types NAME and BYTEA sort bytewise so they don't need
-	 * a suffix either.
+	 * Get a modifiable copy of the prefix string in C-string format, and set
+	 * up the string we will compare to as a Datum.  In C locale this can just
+	 * be the given prefix string, otherwise we need to add a suffix.  Types
+	 * NAME and BYTEA sort bytewise so they don't need a suffix either.
 	 */
 	if (datatype == NAMEOID)
 	{
@@ -4662,7 +4664,7 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 
 			if (!suffixchar)
 			{
-				char *best;
+				char	   *best;
 
 				best = "Z";
 				if (varstr_cmp(best, 1, "z", 1) < 0)
@@ -4859,8 +4861,8 @@ genericcostestimate(PlannerInfo *root,
 
 		foreach(l, index->indpred)
 		{
-			Node   *predQual = (Node *) lfirst(l);
-			List   *oneQual = list_make1(predQual);
+			Node	   *predQual = (Node *) lfirst(l);
+			List	   *oneQual = list_make1(predQual);
 
 			if (!predicate_implied_by(oneQual, indexQuals))
 				predExtraQuals = list_concat(predExtraQuals, oneQual);
@@ -5018,7 +5020,7 @@ genericcostestimate(PlannerInfo *root,
 	 * evaluated once at the start of the scan to reduce them to runtime keys
 	 * to pass to the index AM (see nodeIndexscan.c).  We model the per-tuple
 	 * CPU costs as cpu_index_tuple_cost plus one cpu_operator_cost per
-	 * indexqual operator.  Because we have numIndexTuples as a per-scan
+	 * indexqual operator.	Because we have numIndexTuples as a per-scan
 	 * number, we have to multiply by num_sa_scans to get the correct result
 	 * for ScalarArrayOpExpr cases.
 	 *
@@ -5038,17 +5040,17 @@ genericcostestimate(PlannerInfo *root,
 	*indexTotalCost += numIndexTuples * num_sa_scans * (cpu_index_tuple_cost + qual_op_cost);
 
 	/*
-	 * We also add a CPU-cost component to represent the general costs of 
-	 * starting an indexscan, such as analysis of btree index keys and
-	 * initial tree descent.  This is estimated at 100x cpu_operator_cost,
-	 * which is a bit arbitrary but seems the right order of magnitude.
-	 * (As noted above, we don't charge any I/O for touching upper tree
-	 * levels, but charging nothing at all has been found too optimistic.)
+	 * We also add a CPU-cost component to represent the general costs of
+	 * starting an indexscan, such as analysis of btree index keys and initial
+	 * tree descent.  This is estimated at 100x cpu_operator_cost, which is a
+	 * bit arbitrary but seems the right order of magnitude. (As noted above,
+	 * we don't charge any I/O for touching upper tree levels, but charging
+	 * nothing at all has been found too optimistic.)
 	 *
-	 * Although this is startup cost with respect to any one scan, we add
-	 * it to the "total" cost component because it's only very interesting
-	 * in the many-ScalarArrayOpExpr-scan case, and there it will be paid
-	 * over the life of the scan node.
+	 * Although this is startup cost with respect to any one scan, we add it
+	 * to the "total" cost component because it's only very interesting in the
+	 * many-ScalarArrayOpExpr-scan case, and there it will be paid over the
+	 * life of the scan node.
 	 */
 	*indexTotalCost += num_sa_scans * 100.0 * cpu_operator_cost;
 
@@ -5198,7 +5200,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 		{
 			op_strategy = get_op_opfamily_strategy(clause_op,
 												   index->opfamily[indexcol]);
-			Assert(op_strategy != 0);		/* not a member of opfamily?? */
+			Assert(op_strategy != 0);	/* not a member of opfamily?? */
 			if (op_strategy == BTEqualStrategyNumber)
 				eqQualHere = true;
 		}
@@ -5234,10 +5236,11 @@ btcostestimate(PG_FUNCTION_ARGS)
 												  index->rel->relid,
 												  JOIN_INNER);
 		numIndexTuples = btreeSelectivity * index->rel->tuples;
+
 		/*
 		 * As in genericcostestimate(), we have to adjust for any
-		 * ScalarArrayOpExpr quals included in indexBoundQuals, and then
-		 * round to integer.
+		 * ScalarArrayOpExpr quals included in indexBoundQuals, and then round
+		 * to integer.
 		 */
 		numIndexTuples = rint(numIndexTuples / num_sa_scans);
 	}
@@ -5313,9 +5316,9 @@ btcostestimate(PG_FUNCTION_ARGS)
 			varCorrelation = numbers[0];
 
 			if (index->ncolumns > 1)
-				*indexCorrelation = - varCorrelation * 0.75;
+				*indexCorrelation = -varCorrelation * 0.75;
 			else
-				*indexCorrelation = - varCorrelation;
+				*indexCorrelation = -varCorrelation;
 
 			free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
 		}
@@ -5374,7 +5377,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
-	
+
 	genericcostestimate(root, index, indexQuals, outer_rel, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);

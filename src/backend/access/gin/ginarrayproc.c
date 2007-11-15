@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.10 2007/08/21 01:11:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.11 2007/11/15 21:14:31 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -60,17 +60,18 @@ ginarrayextract(PG_FUNCTION_ARGS)
 					  elmlen, elmbyval, elmalign,
 					  &entries, NULL, (int *) nentries);
 
-	if ( *nentries == 0 && PG_NARGS() == 3 )
+	if (*nentries == 0 && PG_NARGS() == 3)
 	{
-		switch( PG_GETARG_UINT16(2) ) /* StrategyNumber */
+		switch (PG_GETARG_UINT16(2))	/* StrategyNumber */
 		{
 			case GinOverlapStrategy:
-					*nentries = -1; /* nobody can be found */
-					break;
+				*nentries = -1; /* nobody can be found */
+				break;
 			case GinContainsStrategy:
 			case GinContainedStrategy:
 			case GinEqualStrategy:
-			default:	/* require fullscan: GIN can't find void arrays */
+			default:			/* require fullscan: GIN can't find void
+								 * arrays */
 				break;
 		}
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.101 2007/11/07 12:24:24 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.102 2007/11/15 21:14:33 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -868,7 +868,7 @@ makeOperatorDependencies(HeapTuple tuple)
 	 * operators oprcom and oprnegate. We would not want to delete this
 	 * operator if those go away, but only reset the link fields; which is not
 	 * a function that the dependency code can presently handle.  (Something
-	 * could perhaps be done with objectSubId though.)  For now, it's okay to
+	 * could perhaps be done with objectSubId though.)	For now, it's okay to
 	 * let those links dangle if a referenced operator is removed.
 	 */
 

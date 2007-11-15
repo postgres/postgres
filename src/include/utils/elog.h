@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.88 2007/08/19 01:41:25 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.89 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,7 +291,7 @@ extern int	Log_destination;
 #define LOG_DESTINATION_STDERR	 1
 #define LOG_DESTINATION_SYSLOG	 2
 #define LOG_DESTINATION_EVENTLOG 4
-#define LOG_DESTINATION_CSVLOG   8
+#define LOG_DESTINATION_CSVLOG	 8
 
 /* Other exported functions */
 extern void DebugFileOpen(void);

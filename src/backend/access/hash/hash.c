@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.96 2007/09/12 22:10:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.97 2007/11/15 21:14:32 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -548,7 +548,7 @@ loop_top:
 			vacuum_delay_point();
 
 			buf = _hash_getbuf_with_strategy(rel, blkno, HASH_WRITE,
-											 LH_BUCKET_PAGE | LH_OVERFLOW_PAGE,
+										   LH_BUCKET_PAGE | LH_OVERFLOW_PAGE,
 											 info->strategy);
 			page = BufferGetPage(buf);
 			opaque = (HashPageOpaque) PageGetSpecialPointer(page);

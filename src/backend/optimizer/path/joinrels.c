@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.88 2007/10/26 18:10:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.89 2007/11/15 21:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -346,8 +346,8 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	ListCell   *l;
 
 	/*
-	 * Ensure *jointype_p is set on failure return.  This is just to
-	 * suppress uninitialized-variable warnings from overly anal compilers.
+	 * Ensure *jointype_p is set on failure return.  This is just to suppress
+	 * uninitialized-variable warnings from overly anal compilers.
 	 */
 	*jointype_p = JOIN_INNER;
 
@@ -398,14 +398,14 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			bms_is_subset(ojinfo->min_righthand, rel2->relids))
 		{
 			if (jointype != JOIN_INNER)
-				return false;			/* invalid join path */
+				return false;	/* invalid join path */
 			jointype = ojinfo->is_full_join ? JOIN_FULL : JOIN_LEFT;
 		}
 		else if (bms_is_subset(ojinfo->min_lefthand, rel2->relids) &&
 				 bms_is_subset(ojinfo->min_righthand, rel1->relids))
 		{
 			if (jointype != JOIN_INNER)
-				return false;			/* invalid join path */
+				return false;	/* invalid join path */
 			jointype = ojinfo->is_full_join ? JOIN_FULL : JOIN_RIGHT;
 		}
 		else
@@ -520,7 +520,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		else if (bms_equal(ininfo->righthand, rel2->relids))
 			jointype = JOIN_UNIQUE_INNER;
 		else
-			return false;			/* invalid join path */
+			return false;		/* invalid join path */
 	}
 
 	/* Join is valid */
@@ -666,9 +666,9 @@ have_join_order_restriction(PlannerInfo *root,
 	ListCell   *l;
 
 	/*
-	 * It's possible that the rels correspond to the left and right sides
-	 * of a degenerate outer join, that is, one with no joinclause mentioning
-	 * the non-nullable side; in which case we should force the join to occur.
+	 * It's possible that the rels correspond to the left and right sides of a
+	 * degenerate outer join, that is, one with no joinclause mentioning the
+	 * non-nullable side; in which case we should force the join to occur.
 	 *
 	 * Also, the two rels could represent a clauseless join that has to be
 	 * completed to build up the LHS or RHS of an outer join.
@@ -696,9 +696,9 @@ have_join_order_restriction(PlannerInfo *root,
 		}
 
 		/*
-		 * Might we need to join these rels to complete the RHS?  We have
-		 * to use "overlap" tests since either rel might include a lower OJ
-		 * that has been proven to commute with this one.
+		 * Might we need to join these rels to complete the RHS?  We have to
+		 * use "overlap" tests since either rel might include a lower OJ that
+		 * has been proven to commute with this one.
 		 */
 		if (bms_overlap(ojinfo->min_righthand, rel1->relids) &&
 			bms_overlap(ojinfo->min_righthand, rel2->relids))
@@ -761,13 +761,13 @@ have_join_order_restriction(PlannerInfo *root,
 	}
 
 	/*
-	 * We do not force the join to occur if either input rel can legally
-	 * be joined to anything else using joinclauses.  This essentially
-	 * means that clauseless bushy joins are put off as long as possible.
-	 * The reason is that when there is a join order restriction high up
-	 * in the join tree (that is, with many rels inside the LHS or RHS),
-	 * we would otherwise expend lots of effort considering very stupid
-	 * join combinations within its LHS or RHS.
+	 * We do not force the join to occur if either input rel can legally be
+	 * joined to anything else using joinclauses.  This essentially means that
+	 * clauseless bushy joins are put off as long as possible. The reason is
+	 * that when there is a join order restriction high up in the join tree
+	 * (that is, with many rels inside the LHS or RHS), we would otherwise
+	 * expend lots of effort considering very stupid join combinations within
+	 * its LHS or RHS.
 	 */
 	if (result)
 	{
@@ -787,7 +787,7 @@ have_join_order_restriction(PlannerInfo *root,
  *
  * Essentially, this tests whether have_join_order_restriction() could
  * succeed with this rel and some other one.  It's OK if we sometimes
- * say "true" incorrectly.  (Therefore, we don't bother with the relatively
+ * say "true" incorrectly.	(Therefore, we don't bother with the relatively
  * expensive has_legal_joinclause test.)
  */
 static bool

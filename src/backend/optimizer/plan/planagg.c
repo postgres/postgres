@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.33 2007/10/13 00:58:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.34 2007/11/15 21:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,9 +298,9 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 	info->notnulltest = (Expr *) ntest;
 
 	/*
-	 * Build list of existing restriction clauses plus the notnull test.
-	 * We cheat a bit by not bothering with a RestrictInfo node for the
-	 * notnull test --- predicate_implied_by() won't care.
+	 * Build list of existing restriction clauses plus the notnull test. We
+	 * cheat a bit by not bothering with a RestrictInfo node for the notnull
+	 * test --- predicate_implied_by() won't care.
 	 */
 	allquals = list_concat(list_make1(ntest), rel->baserestrictinfo);
 
@@ -320,9 +320,9 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 			continue;
 
 		/*
-		 * Ignore partial indexes that do not match the query --- unless
-		 * their predicates can be proven from the baserestrict list plus
-		 * the IS NOT NULL test.  In that case we can use them.
+		 * Ignore partial indexes that do not match the query --- unless their
+		 * predicates can be proven from the baserestrict list plus the IS NOT
+		 * NULL test.  In that case we can use them.
 		 */
 		if (index->indpred != NIL && !index->predOK &&
 			!predicate_implied_by(index->indpred, allquals))
@@ -434,7 +434,7 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 static ScanDirection
 match_agg_to_index_col(MinMaxAggInfo *info, IndexOptInfo *index, int indexcol)
 {
-	ScanDirection	result;
+	ScanDirection result;
 
 	/* Check for operator match first (cheaper) */
 	if (info->aggsortop == index->fwdsortop[indexcol])
@@ -519,8 +519,8 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	 * have stuck a gating Result atop that, if there were any pseudoconstant
 	 * quals.
 	 *
-	 * We can skip adding the NOT NULL qual if it's redundant with either
-	 * an already-given WHERE condition, or a clause of the index predicate.
+	 * We can skip adding the NOT NULL qual if it's redundant with either an
+	 * already-given WHERE condition, or a clause of the index predicate.
 	 */
 	plan = create_plan(&subroot, (Path *) info->path);
 

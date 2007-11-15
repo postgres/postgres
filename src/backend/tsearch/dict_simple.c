@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_simple.c,v 1.4 2007/11/14 18:36:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_simple.c,v 1.5 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@ typedef struct
 {
 	StopList	stoplist;
 	bool		accept;
-} DictSimple;
+}	DictSimple;
 
 
 Datum
@@ -64,8 +64,8 @@ dsimple_init(PG_FUNCTION_ARGS)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unrecognized simple dictionary parameter: \"%s\"",
-							defel->defname)));
+				   errmsg("unrecognized simple dictionary parameter: \"%s\"",
+						  defel->defname)));
 		}
 	}
 
@@ -77,7 +77,7 @@ dsimple_lexize(PG_FUNCTION_ARGS)
 {
 	DictSimple *d = (DictSimple *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
-	int32	   len = PG_GETARG_INT32(2);
+	int32		len = PG_GETARG_INT32(2);
 	char	   *txt;
 	TSLexeme   *res;
 

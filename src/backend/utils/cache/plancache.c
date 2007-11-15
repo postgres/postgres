@@ -15,7 +15,7 @@
  * the tables they depend on.  When (and if) the next demand for a cached
  * plan occurs, the query will be replanned.  Note that this could result
  * in an error, for example if a column referenced by the query is no
- * longer present.  The creator of a cached plan can specify whether it
+ * longer present.	The creator of a cached plan can specify whether it
  * is allowable for the query to change output tupdesc on replan (this
  * could happen with "SELECT *" for example) --- if so, it's up to the
  * caller to notice changes and cope with them.
@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.12 2007/10/11 18:05:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.13 2007/11/15 21:14:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,35 +55,35 @@
 
 typedef struct
 {
-	void (*callback) ();
+	void		(*callback) ();
 	void	   *arg;
-} ScanQueryWalkerContext;
+}	ScanQueryWalkerContext;
 
 typedef struct
 {
 	Oid			inval_relid;
 	CachedPlan *plan;
-} InvalRelidContext;
+}	InvalRelidContext;
 
 
 static List *cached_plans_list = NIL;
 
-static void StoreCachedPlan(CachedPlanSource *plansource, List *stmt_list,
-							MemoryContext plan_context);
+static void StoreCachedPlan(CachedPlanSource * plansource, List *stmt_list,
+				MemoryContext plan_context);
 static List *do_planning(List *querytrees, int cursorOptions);
 static void AcquireExecutorLocks(List *stmt_list, bool acquire);
 static void AcquirePlannerLocks(List *stmt_list, bool acquire);
 static void LockRelid(Oid relid, LOCKMODE lockmode, void *arg);
 static void UnlockRelid(Oid relid, LOCKMODE lockmode, void *arg);
 static void ScanQueryForRelids(Query *parsetree,
-							   void (*callback) (),
-							   void *arg);
-static bool ScanQueryWalker(Node *node, ScanQueryWalkerContext *context);
+				   void (*callback) (),
+				   void *arg);
+static bool ScanQueryWalker(Node *node, ScanQueryWalkerContext * context);
 static bool rowmark_member(List *rowMarks, int rt_index);
 static bool plan_list_is_transient(List *stmt_list);
 static void PlanCacheCallback(Datum arg, Oid relid);
 static void InvalRelid(Oid relid, LOCKMODE lockmode,
-					   InvalRelidContext *context);
+		   InvalRelidContext * context);
 
 
 /*
@@ -153,7 +153,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 	plansource = (CachedPlanSource *) palloc(sizeof(CachedPlanSource));
 	plansource->raw_parse_tree = copyObject(raw_parse_tree);
 	plansource->query_string = query_string ? pstrdup(query_string) : NULL;
-	plansource->commandTag = commandTag;			/* no copying needed */
+	plansource->commandTag = commandTag;		/* no copying needed */
 	if (num_params > 0)
 	{
 		plansource->param_types = (Oid *) palloc(num_params * sizeof(Oid));
@@ -166,7 +166,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
 	plansource->search_path = search_path;
-	plansource->generation = 0;			/* StoreCachedPlan will increment */
+	plansource->generation = 0; /* StoreCachedPlan will increment */
 	plansource->resultDesc = PlanCacheComputeResultDesc(stmt_list);
 	plansource->plan = NULL;
 	plansource->context = source_context;
@@ -200,7 +200,7 @@ CreateCachedPlan(Node *raw_parse_tree,
  * avoids extra copy steps during plan construction.  If the query ever does
  * need replanning, we'll generate a separate new CachedPlan at that time, but
  * the CachedPlanSource and the initial CachedPlan share the caller-provided
- * context and go away together when neither is needed any longer.  (Because
+ * context and go away together when neither is needed any longer.	(Because
  * the parser and planner generate extra cruft in addition to their real
  * output, this approach means that the context probably contains a bunch of
  * useless junk as well as the useful trees.  Hence, this method is a
@@ -241,14 +241,14 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 	plansource = (CachedPlanSource *) palloc(sizeof(CachedPlanSource));
 	plansource->raw_parse_tree = raw_parse_tree;
 	plansource->query_string = query_string;
-	plansource->commandTag = commandTag;			/* no copying needed */
+	plansource->commandTag = commandTag;		/* no copying needed */
 	plansource->param_types = param_types;
 	plansource->num_params = num_params;
 	plansource->cursor_options = cursor_options;
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
 	plansource->search_path = search_path;
-	plansource->generation = 0;			/* StoreCachedPlan will increment */
+	plansource->generation = 0; /* StoreCachedPlan will increment */
 	plansource->resultDesc = PlanCacheComputeResultDesc(stmt_list);
 	plansource->plan = NULL;
 	plansource->context = context;
@@ -284,7 +284,7 @@ FastCreateCachedPlan(Node *raw_parse_tree,
  * Common subroutine for CreateCachedPlan and RevalidateCachedPlan.
  */
 static void
-StoreCachedPlan(CachedPlanSource *plansource,
+StoreCachedPlan(CachedPlanSource * plansource,
 				List *stmt_list,
 				MemoryContext plan_context)
 {
@@ -295,8 +295,8 @@ StoreCachedPlan(CachedPlanSource *plansource,
 	{
 		/*
 		 * Make a dedicated memory context for the CachedPlan and its
-		 * subsidiary data.  It's probably not going to be large, but
-		 * just in case, use the default maxsize parameter.
+		 * subsidiary data.  It's probably not going to be large, but just in
+		 * case, use the default maxsize parameter.
 		 */
 		plan_context = AllocSetContextCreate(CacheMemoryContext,
 											 "CachedPlan",
@@ -345,12 +345,12 @@ StoreCachedPlan(CachedPlanSource *plansource,
  * DropCachedPlan: destroy a cached plan.
  *
  * Actually this only destroys the CachedPlanSource: the referenced CachedPlan
- * is released, but not destroyed until its refcount goes to zero.  That
+ * is released, but not destroyed until its refcount goes to zero.	That
  * handles the situation where DropCachedPlan is called while the plan is
  * still in use.
  */
 void
-DropCachedPlan(CachedPlanSource *plansource)
+DropCachedPlan(CachedPlanSource * plansource)
 {
 	/* Validity check that we were given a CachedPlanSource */
 	Assert(list_member_ptr(cached_plans_list, plansource));
@@ -393,7 +393,7 @@ DropCachedPlan(CachedPlanSource *plansource)
  * is used for that work.
  */
 CachedPlan *
-RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
+RevalidateCachedPlan(CachedPlanSource * plansource, bool useResOwner)
 {
 	CachedPlan *plan;
 
@@ -402,9 +402,8 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 
 	/*
 	 * If the plan currently appears valid, acquire locks on the referenced
-	 * objects; then check again.  We need to do it this way to cover the
-	 * race condition that an invalidation message arrives before we get
-	 * the lock.
+	 * objects; then check again.  We need to do it this way to cover the race
+	 * condition that an invalidation message arrives before we get the lock.
 	 */
 	plan = plansource->plan;
 	if (plan && !plan->dead)
@@ -430,8 +429,8 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 			plan->dead = true;
 
 		/*
-		 * By now, if any invalidation has happened, PlanCacheCallback
-		 * will have marked the plan dead.
+		 * By now, if any invalidation has happened, PlanCacheCallback will
+		 * have marked the plan dead.
 		 */
 		if (plan->dead)
 		{
@@ -458,8 +457,8 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 	 */
 	if (!plan)
 	{
-		List   *slist;
-		TupleDesc resultDesc;
+		List	   *slist;
+		TupleDesc	resultDesc;
 
 		/*
 		 * Restore the search_path that was in use when the plan was made.
@@ -486,7 +485,7 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 		}
 
 		/*
-		 * Check or update the result tupdesc.  XXX should we use a weaker
+		 * Check or update the result tupdesc.	XXX should we use a weaker
 		 * condition than equalTupleDescs() here?
 		 */
 		resultDesc = PlanCacheComputeResultDesc(slist);
@@ -550,12 +549,12 @@ do_planning(List *querytrees, int cursorOptions)
 	/*
 	 * If a snapshot is already set (the normal case), we can just use that
 	 * for planning.  But if it isn't, we have to tell pg_plan_queries to make
-	 * a snap if it needs one.  In that case we should arrange to reset
+	 * a snap if it needs one.	In that case we should arrange to reset
 	 * ActiveSnapshot afterward, to ensure that RevalidateCachedPlan has no
-	 * caller-visible effects on the snapshot.  Having to replan is an unusual
+	 * caller-visible effects on the snapshot.	Having to replan is an unusual
 	 * case, and it seems a really bad idea for RevalidateCachedPlan to affect
-	 * the snapshot only in unusual cases.  (Besides, the snap might have
-	 * been created in a short-lived context.)
+	 * the snapshot only in unusual cases.	(Besides, the snap might have been
+	 * created in a short-lived context.)
 	 */
 	if (ActiveSnapshot != NULL)
 		stmt_list = pg_plan_queries(querytrees, cursorOptions, NULL, false);
@@ -589,10 +588,10 @@ do_planning(List *querytrees, int cursorOptions)
  *
  * Note: useResOwner = false is used for releasing references that are in
  * persistent data structures, such as the parent CachedPlanSource or a
- * Portal.  Transient references should be protected by a resource owner.
+ * Portal.	Transient references should be protected by a resource owner.
  */
 void
-ReleaseCachedPlan(CachedPlan *plan, bool useResOwner)
+ReleaseCachedPlan(CachedPlan * plan, bool useResOwner)
 {
 	if (useResOwner)
 		ResourceOwnerForgetPlanCacheRef(CurrentResourceOwner, plan);
@@ -633,10 +632,10 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 				continue;
 
 			/*
-			 * Acquire the appropriate type of lock on each relation OID.
-			 * Note that we don't actually try to open the rel, and hence
-			 * will not fail if it's been dropped entirely --- we'll just
-			 * transiently acquire a non-conflicting lock.
+			 * Acquire the appropriate type of lock on each relation OID. Note
+			 * that we don't actually try to open the rel, and hence will not
+			 * fail if it's been dropped entirely --- we'll just transiently
+			 * acquire a non-conflicting lock.
 			 */
 			if (list_member_int(plannedstmt->resultRelations, rt_index))
 				lockmode = RowExclusiveLock;
@@ -719,6 +718,7 @@ ScanQueryForRelids(Query *parsetree,
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
+
 				/*
 				 * Determine the lock type required for this RTE.
 				 */
@@ -767,7 +767,7 @@ ScanQueryForRelids(Query *parsetree,
  * Walker to find sublink subqueries for ScanQueryForRelids
  */
 static bool
-ScanQueryWalker(Node *node, ScanQueryWalkerContext *context)
+ScanQueryWalker(Node *node, ScanQueryWalkerContext * context)
 {
 	if (node == NULL)
 		return false;
@@ -782,8 +782,8 @@ ScanQueryWalker(Node *node, ScanQueryWalkerContext *context)
 	}
 
 	/*
-	 * Do NOT recurse into Query nodes, because ScanQueryForRelids
-	 * already processed subselects of subselects for us.
+	 * Do NOT recurse into Query nodes, because ScanQueryForRelids already
+	 * processed subselects of subselects for us.
 	 */
 	return expression_tree_walker(node, ScanQueryWalker,
 								  (void *) context);
@@ -818,20 +818,20 @@ plan_list_is_transient(List *stmt_list)
 	foreach(lc, stmt_list)
 	{
 		PlannedStmt *plannedstmt = (PlannedStmt *) lfirst(lc);
-		
+
 		if (!IsA(plannedstmt, PlannedStmt))
 			continue;			/* Ignore utility statements */
 
 		if (plannedstmt->transientPlan)
 			return true;
-	}	
+	}
 
 	return false;
 }
 
 /*
  * PlanCacheComputeResultDesc: given a list of either fully-planned statements
- * or Queries, determine the result tupledesc it will produce.  Returns NULL
+ * or Queries, determine the result tupledesc it will produce.	Returns NULL
  * if the execution will not return tuples.
  *
  * Note: the result is created or copied into current memory context.
@@ -924,22 +924,22 @@ PlanCacheCallback(Datum arg, Oid relid)
 
 				Assert(!IsA(plannedstmt, Query));
 				if (!IsA(plannedstmt, PlannedStmt))
-					continue;			/* Ignore utility statements */
+					continue;	/* Ignore utility statements */
 				if ((relid == InvalidOid) ? plannedstmt->relationOids != NIL :
 					list_member_oid(plannedstmt->relationOids, relid))
 				{
 					/* Invalidate the plan! */
 					plan->dead = true;
-					break;			/* out of stmt_list scan */
+					break;		/* out of stmt_list scan */
 				}
 			}
 		}
 		else
 		{
 			/*
-			 * For not-fully-planned entries we use ScanQueryForRelids,
-			 * since a recursive traversal is needed.  The callback API
-			 * is a bit tedious but avoids duplication of coding.
+			 * For not-fully-planned entries we use ScanQueryForRelids, since
+			 * a recursive traversal is needed.  The callback API is a bit
+			 * tedious but avoids duplication of coding.
 			 */
 			InvalRelidContext context;
 
@@ -970,7 +970,7 @@ ResetPlanCache(void)
  * ScanQueryForRelids callback function for PlanCacheCallback
  */
 static void
-InvalRelid(Oid relid, LOCKMODE lockmode, InvalRelidContext *context)
+InvalRelid(Oid relid, LOCKMODE lockmode, InvalRelidContext * context)
 {
 	if (relid == context->inval_relid || context->inval_relid == InvalidOid)
 		context->plan->dead = true;

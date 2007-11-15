@@ -13,7 +13,7 @@
  * We are willing to use at most maintenance_work_mem memory space to keep
  * track of dead tuples.  We initially allocate an array of TIDs of that size,
  * with an upper limit that depends on table size (this limit ensures we don't
- * allocate a huge area uselessly for vacuuming small tables).  If the array
+ * allocate a huge area uselessly for vacuuming small tables).	If the array
  * threatens to overflow, we suspend the heap scan phase and perform a pass of
  * index cleanup and page compaction, then resume the heap scan with an empty
  * TID array.
@@ -38,7 +38,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.101 2007/09/26 20:16:28 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.102 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	int			nindexes;
 	BlockNumber possibly_freeable;
 	PGRUsage	ru0;
-	TimestampTz	starttime = 0;
+	TimestampTz starttime = 0;
 
 	pg_rusage_init(&ru0);
 
@@ -212,10 +212,10 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				(errmsg("relation \"%s.%s\" contains more than \"max_fsm_pages\" pages with useful free space",
 						get_namespace_name(RelationGetNamespace(onerel)),
 						RelationGetRelationName(onerel)),
-				 errhint((vacrelstats->tot_free_pages > vacrelstats->rel_pages * 0.20 ?
-							/* Only suggest VACUUM FULL if 20% free */
-							"Consider using VACUUM FULL on this relation or increasing the configuration parameter \"max_fsm_pages\"." :
-							"Consider increasing the configuration parameter \"max_fsm_pages\"."))));
+		errhint((vacrelstats->tot_free_pages > vacrelstats->rel_pages * 0.20 ?
+		/* Only suggest VACUUM FULL if 20% free */
+				 "Consider using VACUUM FULL on this relation or increasing the configuration parameter \"max_fsm_pages\"." :
+				 "Consider increasing the configuration parameter \"max_fsm_pages\"."))));
 
 	/* Update statistics in pg_class */
 	vac_update_relstats(RelationGetRelid(onerel),
@@ -243,8 +243,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 							get_namespace_name(RelationGetNamespace(onerel)),
 							RelationGetRelationName(onerel),
 							vacrelstats->num_index_scans,
-							vacrelstats->pages_removed, vacrelstats->rel_pages,
-							vacrelstats->tuples_deleted, vacrelstats->rel_tuples, 
+						  vacrelstats->pages_removed, vacrelstats->rel_pages,
+						vacrelstats->tuples_deleted, vacrelstats->rel_tuples,
 							pg_rusage_show(&ru0))));
 	}
 }
@@ -350,9 +350,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 * page that someone has just added to the relation and not yet
 			 * been able to initialize (see RelationGetBufferForTuple). To
 			 * protect against that, release the buffer lock, grab the
-			 * relation extension lock momentarily, and re-lock the buffer.
-			 * If the page is still uninitialized by then, it must be left
-			 * over from a crashed backend, and we can initialize it.
+			 * relation extension lock momentarily, and re-lock the buffer. If
+			 * the page is still uninitialized by then, it must be left over
+			 * from a crashed backend, and we can initialize it.
 			 *
 			 * We don't really need the relation lock when this is a new or
 			 * temp relation, but it's probably not worth the code space to
@@ -389,7 +389,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			continue;
 		}
 
-		/* 
+		/*
 		 * Prune all HOT-update chains in this page.
 		 *
 		 * We count tuples removed by the pruning step as removed by VACUUM.
@@ -398,8 +398,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 										 false, false);
 
 		/*
-		 * Now scan the page to collect vacuumable items and check for
-		 * tuples requiring freezing.
+		 * Now scan the page to collect vacuumable items and check for tuples
+		 * requiring freezing.
 		 */
 		nfrozen = 0;
 		hastup = false;
@@ -421,19 +421,19 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			}
 
 			/* Redirect items mustn't be touched */
- 			if (ItemIdIsRedirected(itemid))
- 			{
+			if (ItemIdIsRedirected(itemid))
+			{
 				hastup = true;	/* this page won't be truncatable */
- 				continue;
- 			}
+				continue;
+			}
 
- 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
+			ItemPointerSet(&(tuple.t_self), blkno, offnum);
 
 			/*
 			 * DEAD item pointers are to be vacuumed normally; but we don't
-			 * count them in tups_vacuumed, else we'd be double-counting
-			 * (at least in the common case where heap_page_prune() just
-			 * freed up a non-HOT tuple).
+			 * count them in tups_vacuumed, else we'd be double-counting (at
+			 * least in the common case where heap_page_prune() just freed up
+			 * a non-HOT tuple).
 			 */
 			if (ItemIdIsDead(itemid))
 			{
@@ -451,6 +451,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin, buf))
 			{
 				case HEAPTUPLE_DEAD:
+
 					/*
 					 * Ordinarily, DEAD tuples would have been removed by
 					 * heap_page_prune(), but it's possible that the tuple
@@ -460,17 +461,17 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					 * cannot be considered an error condition.
 					 *
 					 * If the tuple is HOT-updated then it must only be
-					 * removed by a prune operation; so we keep it just as
-					 * if it were RECENTLY_DEAD.  Also, if it's a heap-only
-					 * tuple, we choose to keep it, because it'll be a
-					 * lot cheaper to get rid of it in the next pruning pass
-					 * than to treat it like an indexed tuple.
+					 * removed by a prune operation; so we keep it just as if
+					 * it were RECENTLY_DEAD.  Also, if it's a heap-only
+					 * tuple, we choose to keep it, because it'll be a lot
+					 * cheaper to get rid of it in the next pruning pass than
+					 * to treat it like an indexed tuple.
 					 */
 					if (HeapTupleIsHotUpdated(&tuple) ||
 						HeapTupleIsHeapOnly(&tuple))
 						nkeep += 1;
 					else
-						tupgone = true;		/* we can delete the tuple */
+						tupgone = true; /* we can delete the tuple */
 					break;
 				case HEAPTUPLE_LIVE:
 					/* Tuple is good --- but let's do some validity checks */
@@ -509,8 +510,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				hastup = true;
 
 				/*
-				 * Each non-removable tuple must be checked to see if it
-				 * needs freezing.  Note we already have exclusive buffer lock.
+				 * Each non-removable tuple must be checked to see if it needs
+				 * freezing.  Note we already have exclusive buffer lock.
 				 */
 				if (heap_freeze_tuple(tuple.t_data, FreezeLimit,
 									  InvalidBuffer))
@@ -864,11 +865,11 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	RelationTruncate(onerel, new_rel_pages);
 
 	/*
-	 * Note: once we have truncated, we *must* keep the exclusive lock
-	 * until commit.  The sinval message that will be sent at commit
-	 * (as a result of vac_update_relstats()) must be received by other
-	 * backends, to cause them to reset their rd_targblock values, before
-	 * they can safely access the table again.
+	 * Note: once we have truncated, we *must* keep the exclusive lock until
+	 * commit.	The sinval message that will be sent at commit (as a result of
+	 * vac_update_relstats()) must be received by other backends, to cause
+	 * them to reset their rd_targblock values, before they can safely access
+	 * the table again.
 	 */
 
 	/*
@@ -933,9 +934,8 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 
 		/*
 		 * We don't insert a vacuum delay point here, because we have an
-		 * exclusive lock on the table which we want to hold for as short
-		 * a time as possible.  We still need to check for interrupts
-		 * however.
+		 * exclusive lock on the table which we want to hold for as short a
+		 * time as possible.  We still need to check for interrupts however.
 		 */
 		CHECK_FOR_INTERRUPTS();
 

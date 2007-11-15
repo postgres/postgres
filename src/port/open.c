@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.20 2007/04/13 10:30:30 mha Exp $
+ * $PostgreSQL: pgsql/src/port/open.c,v 1.21 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ openFlagsToCreateFileFlags(int openFlags)
 {
 	switch (openFlags & (O_CREAT | O_TRUNC | O_EXCL))
 	{
-		/* O_EXCL is meaningless without O_CREAT */
+			/* O_EXCL is meaningless without O_CREAT */
 		case 0:
 		case O_EXCL:
 			return OPEN_EXISTING;
@@ -33,7 +33,7 @@ openFlagsToCreateFileFlags(int openFlags)
 		case O_CREAT:
 			return OPEN_ALWAYS;
 
-		/* O_EXCL is meaningless without O_CREAT */
+			/* O_EXCL is meaningless without O_CREAT */
 		case O_TRUNC:
 		case O_TRUNC | O_EXCL:
 			return TRUNCATE_EXISTING;
@@ -41,7 +41,7 @@ openFlagsToCreateFileFlags(int openFlags)
 		case O_CREAT | O_TRUNC:
 			return CREATE_ALWAYS;
 
-		/* O_TRUNC is meaningless with O_CREAT */
+			/* O_TRUNC is meaningless with O_CREAT */
 		case O_CREAT | O_EXCL:
 		case O_CREAT | O_TRUNC | O_EXCL:
 			return CREATE_NEW;
@@ -85,7 +85,7 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 			  ((fileFlags & _O_SHORT_LIVED) ? FILE_ATTRIBUTE_TEMPORARY : 0) |
 				((fileFlags & O_TEMPORARY) ? FILE_FLAG_DELETE_ON_CLOSE : 0) |
 					  ((fileFlags & O_DIRECT) ? FILE_FLAG_NO_BUFFERING : 0) |
-					  ((fileFlags & O_DSYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
+						((fileFlags & O_DSYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
 						NULL)) == INVALID_HANDLE_VALUE)
 	{
 		switch (GetLastError())

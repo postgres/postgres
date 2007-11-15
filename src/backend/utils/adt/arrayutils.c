@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayutils.c,v 1.24 2007/06/15 20:56:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayutils.c,v 1.25 2007/11/15 21:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,7 +193,7 @@ mda_next_tuple(int n, int *curr, const int *span)
 
 /*
  * ArrayGetIntegerTypmods: verify that argument is a 1-D cstring array,
- * and get the contents converted to integers.  Returns a palloc'd array
+ * and get the contents converted to integers.	Returns a palloc'd array
  * and places the length at *n.
  */
 int32 *

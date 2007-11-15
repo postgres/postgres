@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.84 2007/09/26 22:36:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.85 2007/11/15 21:14:42 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -146,7 +146,7 @@ extern const char XLOG_sync_method_default[];
 extern bool log_checkpoints;
 
 #define XLogArchivingActive()	(XLogArchiveMode)
-#define XLogArchiveCommandSet()	(XLogArchiveCommand[0] != '\0')
+#define XLogArchiveCommandSet() (XLogArchiveCommand[0] != '\0')
 
 #ifdef WAL_DEBUG
 extern bool XLOG_DEBUG;
@@ -159,30 +159,30 @@ extern bool XLOG_DEBUG;
  */
 
 /* These directly affect the behavior of CreateCheckPoint and subsidiaries */
-#define CHECKPOINT_IS_SHUTDOWN	0x0001		/* Checkpoint is for shutdown */
-#define CHECKPOINT_IMMEDIATE	0x0002		/* Do it without delays */
-#define CHECKPOINT_FORCE		0x0004		/* Force even if no activity */
+#define CHECKPOINT_IS_SHUTDOWN	0x0001	/* Checkpoint is for shutdown */
+#define CHECKPOINT_IMMEDIATE	0x0002	/* Do it without delays */
+#define CHECKPOINT_FORCE		0x0004	/* Force even if no activity */
 /* These are important to RequestCheckpoint */
-#define CHECKPOINT_WAIT			0x0008		/* Wait for completion */
+#define CHECKPOINT_WAIT			0x0008	/* Wait for completion */
 /* These indicate the cause of a checkpoint request */
-#define CHECKPOINT_CAUSE_XLOG	0x0010		/* XLOG consumption */
-#define CHECKPOINT_CAUSE_TIME	0x0020		/* Elapsed time */
+#define CHECKPOINT_CAUSE_XLOG	0x0010	/* XLOG consumption */
+#define CHECKPOINT_CAUSE_TIME	0x0020	/* Elapsed time */
 
 /* Checkpoint statistics */
 typedef struct CheckpointStatsData
 {
-	TimestampTz ckpt_start_t;		/* start of checkpoint */
-	TimestampTz ckpt_write_t;		/* start of flushing buffers */
-	TimestampTz ckpt_sync_t;		/* start of fsyncs */
+	TimestampTz ckpt_start_t;	/* start of checkpoint */
+	TimestampTz ckpt_write_t;	/* start of flushing buffers */
+	TimestampTz ckpt_sync_t;	/* start of fsyncs */
 	TimestampTz ckpt_sync_end_t;	/* end of fsyncs */
-	TimestampTz ckpt_end_t;			/* end of checkpoint */
+	TimestampTz ckpt_end_t;		/* end of checkpoint */
 
-	int			ckpt_bufs_written;	/* # of buffers written */
+	int			ckpt_bufs_written;		/* # of buffers written */
 
 	int			ckpt_segs_added;	/* # of new xlog segments created */
-	int			ckpt_segs_removed;	/* # of xlog segments deleted */
-	int			ckpt_segs_recycled;	/* # of xlog segments recycled */
-} CheckpointStatsData;
+	int			ckpt_segs_removed;		/* # of xlog segments deleted */
+	int			ckpt_segs_recycled;		/* # of xlog segments recycled */
+}	CheckpointStatsData;
 
 extern CheckpointStatsData CheckpointStats;
 

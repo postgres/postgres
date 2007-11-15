@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.25 2007/09/05 18:10:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.26 2007/11/15 21:14:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,9 +380,9 @@ MultiXactIdIsRunning(MultiXactId multi)
 	}
 
 	/*
-	 * Checking for myself is cheap compared to looking in shared memory,
-	 * so first do the equivalent of MultiXactIdIsCurrent().  This is not
-	 * needed for correctness, it's just a fast path.
+	 * Checking for myself is cheap compared to looking in shared memory, so
+	 * first do the equivalent of MultiXactIdIsCurrent().  This is not needed
+	 * for correctness, it's just a fast path.
 	 */
 	for (i = 0; i < nmembers; i++)
 	{

@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.65 2007/08/27 01:24:50 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.66 2007/11/15 21:14:29 momjian Exp $
  * Copyright (c) 2001-2007, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -256,10 +256,10 @@ dblink_connect(PG_FUNCTION_ARGS)
 				pfree(rconn);
 
 			ereport(ERROR,
-					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
-					 errmsg("password is required"),
-					 errdetail("Non-superuser cannot connect if the server does not request a password."),
-					 errhint("Target server's authentication method must be changed.")));
+				  (errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+				   errmsg("password is required"),
+				   errdetail("Non-superuser cannot connect if the server does not request a password."),
+				   errhint("Target server's authentication method must be changed.")));
 		}
 	}
 

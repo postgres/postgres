@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.110 2007/09/11 00:06:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.111 2007/11/15 21:14:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ typedef struct
 	/* fn_oid is the hash key and so must be first! */
 	Oid			fn_oid;			/* OID of an external C function */
 	TransactionId fn_xmin;		/* for checking up-to-dateness */
-	ItemPointerData	fn_tid;
+	ItemPointerData fn_tid;
 	PGFunction	user_fn;		/* the function's address */
 	const Pg_finfo_record *inforec;		/* address of its info record */
 } CFuncHashTabEntry;
@@ -835,7 +835,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 
 
 /*
- * Support for security-definer and proconfig-using functions.  We support
+ * Support for security-definer and proconfig-using functions.	We support
  * both of these features using the same call handler, because they are
  * often used together and it would be inefficient (as well as notationally
  * messy) to have two levels of call handler involved.
@@ -850,11 +850,11 @@ struct fmgr_security_definer_cache
 /*
  * Function handler for security-definer/proconfig functions.  We extract the
  * OID of the actual function and do a fmgr lookup again.  Then we fetch the
- * pg_proc row and copy the owner ID and proconfig fields.  (All this info
+ * pg_proc row and copy the owner ID and proconfig fields.	(All this info
  * is cached for the duration of the current query.)  To execute a call,
  * we temporarily replace the flinfo with the cached/looked-up one, while
  * keeping the outer fcinfo (which contains all the actual arguments, etc.)
- * intact.  This is not re-entrant, but then the fcinfo itself can't be used
+ * intact.	This is not re-entrant, but then the fcinfo itself can't be used
  * re-entrantly anyway.
  */
 static Datum
@@ -2204,8 +2204,8 @@ get_call_expr_argtype(Node *expr, int argnum)
 
 	/*
 	 * special hack for ScalarArrayOpExpr and ArrayCoerceExpr: what the
-	 * underlying function will actually get passed is the element type of
-	 * the array.
+	 * underlying function will actually get passed is the element type of the
+	 * array.
 	 */
 	if (IsA(expr, ScalarArrayOpExpr) &&
 		argnum == 1)

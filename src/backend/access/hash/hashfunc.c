@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.53 2007/09/21 22:52:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.54 2007/11/15 21:14:32 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -103,8 +103,8 @@ hashfloat4(PG_FUNCTION_ARGS)
 	 * To support cross-type hashing of float8 and float4, we want to return
 	 * the same hash value hashfloat8 would produce for an equal float8 value.
 	 * So, widen the value to float8 and hash that.  (We must do this rather
-	 * than have hashfloat8 try to narrow its value to float4; that could
-	 * fail on overflow.)
+	 * than have hashfloat8 try to narrow its value to float4; that could fail
+	 * on overflow.)
 	 */
 	key8 = key;
 

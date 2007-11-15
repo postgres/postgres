@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.116 2007/11/07 12:24:24 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.117 2007/11/15 21:14:46 momjian Exp $
  *
  **********************************************************************/
 
@@ -184,7 +184,7 @@ static void pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 static ClientData
 pltcl_InitNotifier(void)
 {
-	static int fakeThreadKey;	/* To give valid address for ClientData */
+	static int	fakeThreadKey;	/* To give valid address for ClientData */
 
 	return (ClientData) &(fakeThreadKey);
 }
@@ -225,8 +225,7 @@ pltcl_WaitForEvent(Tcl_Time *timePtr)
 {
 	return 0;
 }
-
-#endif /* HAVE_TCL_VERSION(8,2) */
+#endif   /* HAVE_TCL_VERSION(8,2) */
 
 
 /*
@@ -264,20 +263,21 @@ _PG_init(void)
 #endif
 
 #if HAVE_TCL_VERSION(8,4)
+
 	/*
 	 * Override the functions in the Notifier subsystem.  See comments above.
 	 */
 	{
 		Tcl_NotifierProcs notifier;
 
-		notifier.setTimerProc          = pltcl_SetTimer;
-		notifier.waitForEventProc      = pltcl_WaitForEvent;
+		notifier.setTimerProc = pltcl_SetTimer;
+		notifier.waitForEventProc = pltcl_WaitForEvent;
 		notifier.createFileHandlerProc = pltcl_CreateFileHandler;
 		notifier.deleteFileHandlerProc = pltcl_DeleteFileHandler;
-		notifier.initNotifierProc      = pltcl_InitNotifier;
-		notifier.finalizeNotifierProc  = pltcl_FinalizeNotifier;
-		notifier.alertNotifierProc     = pltcl_AlertNotifier;
-		notifier.serviceModeHookProc   = pltcl_ServiceModeHook;
+		notifier.initNotifierProc = pltcl_InitNotifier;
+		notifier.finalizeNotifierProc = pltcl_FinalizeNotifier;
+		notifier.alertNotifierProc = pltcl_AlertNotifier;
+		notifier.serviceModeHookProc = pltcl_ServiceModeHook;
 		Tcl_SetNotifier(&notifier);
 	}
 #endif
@@ -1048,7 +1048,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		prodesc = (pltcl_proc_desc *) Tcl_GetHashValue(hashent);
 
 		uptodate = (prodesc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
-				ItemPointerEquals(&prodesc->fn_tid, &procTup->t_self));
+					ItemPointerEquals(&prodesc->fn_tid, &procTup->t_self));
 
 		if (!uptodate)
 		{
@@ -1909,8 +1909,10 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		 ************************************************************/
 		for (i = 0; i < nargs; i++)
 		{
-			Oid         typId, typInput, typIOParam;
-            int32       typmod;
+			Oid			typId,
+						typInput,
+						typIOParam;
+			int32		typmod;
 
 			parseTypeString(args[i], &typId, &typmod);
 

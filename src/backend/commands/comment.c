@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.98 2007/11/11 19:22:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.99 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1493,7 +1493,7 @@ CommentTSParser(List *qualname, char *comment)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to comment on text search parser")));
+			  errmsg("must be superuser to comment on text search parser")));
 
 	CreateComments(prsId, TSParserRelationId, 0, comment);
 }
@@ -1522,7 +1522,7 @@ CommentTSTemplate(List *qualname, char *comment)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to comment on text search template")));
+			errmsg("must be superuser to comment on text search template")));
 
 	CreateComments(tmplId, TSTemplateRelationId, 0, comment);
 }

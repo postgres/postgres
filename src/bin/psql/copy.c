@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.75 2007/03/16 13:41:21 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.76 2007/11/15 21:14:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -38,13 +38,13 @@
  * The documented syntax is:
  *	\copy tablename [(columnlist)] from|to filename
  *	  [ with ] [ binary ] [ oids ] [ delimiter [as] char ] [ null [as] string ]
- *    [ csv  [ header ] [ quote [ AS ] string ]  escape [as] string 
- *      [ force not null column [, ...] | force quote column [, ...] ] ]
+ *	  [ csv  [ header ] [ quote [ AS ] string ]  escape [as] string
+ *		[ force not null column [, ...] | force quote column [, ...] ] ]
  *
  *	\copy ( select stmt ) to filename
  *	  [ with ] [ binary ] [ delimiter [as] char ] [ null [as] string ]
- *    [ csv  [ header ] [ quote [ AS ] string ]  escape [as] string 
- *      [ force quote column [, ...] ] ]
+ *	  [ csv  [ header ] [ quote [ AS ] string ]  escape [as] string
+ *		[ force quote column [, ...] ] ]
  *
  * Force quote only applies for copy to; force not null only applies for
  * copy from.
@@ -555,8 +555,8 @@ do_copy(const char *args)
 	PQclear(result);
 
 	/*
-	 * Make sure we have pumped libpq dry of results; else it may still be
-	 * in ASYNC_BUSY state, leading to false readings in, eg, get_prompt().
+	 * Make sure we have pumped libpq dry of results; else it may still be in
+	 * ASYNC_BUSY state, leading to false readings in, eg, get_prompt().
 	 */
 	while ((result = PQgetResult(pset.db)) != NULL)
 	{

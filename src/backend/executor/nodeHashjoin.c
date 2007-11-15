@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.91 2007/06/07 19:19:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.92 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -569,7 +569,7 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 			econtext->ecxt_outertuple = slot;
 			if (ExecHashGetHashValue(hashtable, econtext,
 									 hjstate->hj_OuterHashKeys,
-									 true, /* outer tuple */
+									 true,		/* outer tuple */
 									 (hjstate->js.jointype == JOIN_LEFT),
 									 hashvalue))
 			{
@@ -580,8 +580,8 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 			}
 
 			/*
-			 * That tuple couldn't match because of a NULL, so discard it
-			 * and continue with the next one.
+			 * That tuple couldn't match because of a NULL, so discard it and
+			 * continue with the next one.
 			 */
 			slot = ExecProcNode(outerNode);
 		}

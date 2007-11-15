@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.99 2007/09/20 17:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.100 2007/11/15 21:14:32 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -379,7 +379,7 @@ index_markpos(IndexScanDesc scan)
  * returnable tuple in each HOT chain, and so restoring the prior state at the
  * granularity of the index AM is sufficient.  Since the only current user
  * of mark/restore functionality is nodeMergejoin.c, this effectively means
- * that merge-join plans only work for MVCC snapshots.  This could be fixed
+ * that merge-join plans only work for MVCC snapshots.	This could be fixed
  * if necessary, but for now it seems unimportant.
  * ----------------
  */
@@ -413,7 +413,7 @@ HeapTuple
 index_getnext(IndexScanDesc scan, ScanDirection direction)
 {
 	HeapTuple	heapTuple = &scan->xs_ctup;
-	ItemPointer	tid = &heapTuple->t_self;
+	ItemPointer tid = &heapTuple->t_self;
 	FmgrInfo   *procedure;
 
 	SCAN_CHECKS;
@@ -429,14 +429,14 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	for (;;)
 	{
 		OffsetNumber offnum;
-		bool at_chain_start;
-		Page dp;
+		bool		at_chain_start;
+		Page		dp;
 
 		if (scan->xs_next_hot != InvalidOffsetNumber)
 		{
 			/*
-			 * We are resuming scan of a HOT chain after having returned
-			 * an earlier member.  Must still hold pin on current heap page.
+			 * We are resuming scan of a HOT chain after having returned an
+			 * earlier member.	Must still hold pin on current heap page.
 			 */
 			Assert(BufferIsValid(scan->xs_cbuf));
 			Assert(ItemPointerGetBlockNumber(tid) ==
@@ -506,7 +506,7 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		/* Scan through possible multiple members of HOT-chain */
 		for (;;)
 		{
-			ItemId lp;
+			ItemId		lp;
 			ItemPointer ctid;
 
 			/* check for bogus TID */
@@ -532,8 +532,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			}
 
 			/*
-			 * We must initialize all of *heapTuple (ie, scan->xs_ctup)
-			 * since it is returned to the executor on success.
+			 * We must initialize all of *heapTuple (ie, scan->xs_ctup) since
+			 * it is returned to the executor on success.
 			 */
 			heapTuple->t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 			heapTuple->t_len = ItemIdGetLength(lp);
@@ -544,20 +544,21 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			/*
 			 * Shouldn't see a HEAP_ONLY tuple at chain start.  (This test
 			 * should be unnecessary, since the chain root can't be removed
-			 * while we have pin on the index entry, but let's make it anyway.)
+			 * while we have pin on the index entry, but let's make it
+			 * anyway.)
 			 */
 			if (at_chain_start && HeapTupleIsHeapOnly(heapTuple))
 				break;
 
 			/*
 			 * The xmin should match the previous xmax value, else chain is
-			 * broken.  (Note: this test is not optional because it protects
-			 * us against the case where the prior chain member's xmax
-			 * aborted since we looked at it.)
+			 * broken.	(Note: this test is not optional because it protects
+			 * us against the case where the prior chain member's xmax aborted
+			 * since we looked at it.)
 			 */
 			if (TransactionIdIsValid(scan->xs_prev_xmax) &&
 				!TransactionIdEquals(scan->xs_prev_xmax,
-								 HeapTupleHeaderGetXmin(heapTuple->t_data)))
+								  HeapTupleHeaderGetXmin(heapTuple->t_data)))
 				break;
 
 			/* If it's visible per the snapshot, we must return it */
@@ -565,10 +566,10 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 											 scan->xs_cbuf))
 			{
 				/*
-				 * If the snapshot is MVCC, we know that it could accept
-				 * at most one member of the HOT chain, so we can skip
-				 * examining any more members.  Otherwise, check for
-				 * continuation of the HOT-chain, and set state for next time.
+				 * If the snapshot is MVCC, we know that it could accept at
+				 * most one member of the HOT chain, so we can skip examining
+				 * any more members.  Otherwise, check for continuation of the
+				 * HOT-chain, and set state for next time.
 				 */
 				if (IsMVCCSnapshot(scan->xs_snapshot))
 					scan->xs_next_hot = InvalidOffsetNumber;
@@ -615,7 +616,7 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			}
 			else
 				break;			/* end of chain */
-		} /* loop over a single HOT chain */
+		}						/* loop over a single HOT chain */
 
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
 
@@ -788,7 +789,7 @@ index_vacuum_cleanup(IndexVacuumInfo *info,
  *		particular indexed attribute are those with both types equal to
  *		the index opclass' opcintype (note that this is subtly different
  *		from the indexed attribute's own type: it may be a binary-compatible
- *		type instead).  Only the default functions are stored in relcache
+ *		type instead).	Only the default functions are stored in relcache
  *		entries --- access methods can use the syscache to look up non-default
  *		functions.
  *
@@ -822,7 +823,7 @@ index_getprocid(Relation irel,
  *		index_getprocinfo
  *
  *		This routine allows index AMs to keep fmgr lookup info for
- *		support procs in the relcache.  As above, only the "default"
+ *		support procs in the relcache.	As above, only the "default"
  *		functions for any particular indexed attribute are cached.
  *
  * Note: the return value points into cached data that will be lost during

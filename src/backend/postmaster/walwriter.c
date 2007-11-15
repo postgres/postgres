@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/walwriter.c,v 1.2 2007/09/11 17:15:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/walwriter.c,v 1.3 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,9 +92,9 @@ WalWriterMain(void)
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.  (walwriter probably never has
-	 * any child processes, but for consistency we make all postmaster
-	 * child processes do this.)
+	 * can signal any child processes too.	(walwriter probably never has any
+	 * child processes, but for consistency we make all postmaster child
+	 * processes do this.)
 	 */
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
@@ -107,14 +107,14 @@ WalWriterMain(void)
 	 * We have no particular use for SIGINT at the moment, but seems
 	 * reasonable to treat like SIGTERM.
 	 */
-	pqsignal(SIGHUP, WalSigHupHandler);	/* set flag to read config file */
+	pqsignal(SIGHUP, WalSigHupHandler); /* set flag to read config file */
 	pqsignal(SIGINT, WalShutdownHandler);		/* request shutdown */
 	pqsignal(SIGTERM, WalShutdownHandler);		/* request shutdown */
-	pqsignal(SIGQUIT, wal_quickdie);		/* hard crash time */
+	pqsignal(SIGQUIT, wal_quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, SIG_IGN); /* reserve for sinval */
-	pqsignal(SIGUSR2, SIG_IGN);	/* not used */
+	pqsignal(SIGUSR2, SIG_IGN); /* not used */
 
 	/*
 	 * Reset some signals that are accepted by postmaster but not here
@@ -133,8 +133,8 @@ WalWriterMain(void)
 #endif
 
 	/*
-	 * Create a resource owner to keep track of our resources (not clear
-	 * that we need this, but may as well have one).
+	 * Create a resource owner to keep track of our resources (not clear that
+	 * we need this, but may as well have one).
 	 */
 	CurrentResourceOwner = ResourceOwnerCreate(NULL, "Wal Writer");
 

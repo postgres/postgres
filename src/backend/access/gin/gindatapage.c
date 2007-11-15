@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.7 2007/06/04 15:56:28 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.8 2007/11/15 21:14:31 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -358,7 +358,7 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prda
 	static XLogRecData rdata[3];
 	int			sizeofitem = GinSizeOfItem(page);
 	static ginxlogInsert data;
-	int 		cnt=0;
+	int			cnt = 0;
 
 	*prdata = rdata;
 	Assert(GinPageIsData(page));
@@ -373,14 +373,14 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prda
 	data.isData = TRUE;
 	data.isLeaf = GinPageIsLeaf(page) ? TRUE : FALSE;
 
-	/* 
-	 * Prevent full page write if child's split occurs. That is needed
-	 * to remove incomplete splits while replaying WAL
-	 * 
-	 * data.updateBlkno contains new block number (of newly created right page)
-	 * for recently splited page.
+	/*
+	 * Prevent full page write if child's split occurs. That is needed to
+	 * remove incomplete splits while replaying WAL
+	 *
+	 * data.updateBlkno contains new block number (of newly created right
+	 * page) for recently splited page.
 	 */
-	if ( data.updateBlkno == InvalidBlockNumber ) 
+	if (data.updateBlkno == InvalidBlockNumber)
 	{
 		rdata[0].buffer = buf;
 		rdata[0].buffer_std = FALSE;
@@ -393,7 +393,7 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prda
 	rdata[cnt].buffer = InvalidBuffer;
 	rdata[cnt].data = (char *) &data;
 	rdata[cnt].len = sizeof(ginxlogInsert);
-	rdata[cnt].next = &rdata[cnt+1];
+	rdata[cnt].next = &rdata[cnt + 1];
 	cnt++;
 
 	rdata[cnt].buffer = InvalidBuffer;

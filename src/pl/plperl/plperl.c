@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.130 2007/10/05 17:06:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.131 2007/11/15 21:14:46 momjian Exp $
  *
  **********************************************************************/
 
@@ -60,9 +60,10 @@ typedef struct plperl_proc_desc
 
 typedef struct plperl_proc_entry
 {
-	char proc_name[NAMEDATALEN]; /* internal name, eg __PLPerl_proc_39987 */
+	char		proc_name[NAMEDATALEN]; /* internal name, eg
+										 * __PLPerl_proc_39987 */
 	plperl_proc_desc *proc_data;
-} plperl_proc_entry;
+}	plperl_proc_entry;
 
 /*
  * The information we cache for the duration of a single call to a
@@ -91,13 +92,13 @@ typedef struct plperl_query_desc
 	Oid		   *argtypioparams;
 } plperl_query_desc;
 
-/* hash table entry for query desc  */
+/* hash table entry for query desc	*/
 
 typedef struct plperl_query_entry
 {
-	char query_name[NAMEDATALEN];
+	char		query_name[NAMEDATALEN];
 	plperl_query_desc *query_data;
-} plperl_query_entry;
+}	plperl_query_entry;
 
 /**********************************************************************
  * Global data
@@ -110,7 +111,7 @@ typedef enum
 	INTERP_TRUSTED,
 	INTERP_UNTRUSTED,
 	INTERP_BOTH
-} InterpState;
+}	InterpState;
 
 static InterpState interp_state = INTERP_NONE;
 static bool can_run_two = false;
@@ -120,8 +121,8 @@ static PerlInterpreter *plperl_trusted_interp = NULL;
 static PerlInterpreter *plperl_untrusted_interp = NULL;
 static PerlInterpreter *plperl_held_interp = NULL;
 static bool trusted_context;
-static HTAB  *plperl_proc_hash = NULL;
-static HTAB  *plperl_query_hash = NULL;
+static HTAB *plperl_proc_hash = NULL;
+static HTAB *plperl_query_hash = NULL;
 
 static bool plperl_use_strict = false;
 
@@ -177,7 +178,7 @@ _PG_init(void)
 {
 	/* Be sure we do initialization only once (should be redundant now) */
 	static bool inited = false;
-    HASHCTL     hash_ctl;
+	HASHCTL		hash_ctl;
 
 	if (inited)
 		return;
@@ -287,8 +288,8 @@ _PG_init(void)
 
 #define TEST_FOR_MULTI \
 	"use Config; " \
-	"$Config{usemultiplicity} eq 'define' or "  \
-    "($Config{usethreads} eq 'define' " \
+	"$Config{usemultiplicity} eq 'define' or "	\
+	"($Config{usethreads} eq 'define' " \
 	" and $Config{useithreads} eq 'define')"
 
 
@@ -356,7 +357,7 @@ check_interp(bool trusted)
 
 
 static void
-restore_context (bool old_context)
+restore_context(bool old_context)
 {
 	if (trusted_context != old_context)
 	{
@@ -429,9 +430,9 @@ plperl_init_interp(void)
 
 	if (interp_state == INTERP_NONE)
 	{
-		SV *res;
+		SV		   *res;
 
-		res = eval_pv(TEST_FOR_MULTI,TRUE);
+		res = eval_pv(TEST_FOR_MULTI, TRUE);
 		can_run_two = SvIV(res);
 		interp_state = INTERP_HELD;
 	}
@@ -1152,7 +1153,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 	ReturnSetInfo *rsi;
 	SV		   *array_ret = NULL;
-	bool       oldcontext = trusted_context;
+	bool		oldcontext = trusted_context;
 
 	/*
 	 * Create the call_data beforing connecting to SPI, so that it is not
@@ -1307,7 +1308,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 	SV		   *svTD;
 	HV		   *hvTD;
-	bool       oldcontext = trusted_context;
+	bool		oldcontext = trusted_context;
 
 	/*
 	 * Create the call_data beforing connecting to SPI, so that it is not
@@ -1410,8 +1411,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	plperl_proc_desc *prodesc = NULL;
 	int			i;
 	plperl_proc_entry *hash_entry;
-	bool found;
-	bool oldcontext = trusted_context;
+	bool		found;
+	bool		oldcontext = trusted_context;
 
 	/* We'll need the pg_proc tuple in any case... */
 	procTup = SearchSysCache(PROCOID,
@@ -1447,7 +1448,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		 * function's pg_proc entry without changing its OID.
 		 ************************************************************/
 		uptodate = (prodesc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
-				ItemPointerEquals(&prodesc->fn_tid, &procTup->t_self));
+					ItemPointerEquals(&prodesc->fn_tid, &procTup->t_self));
 
 		if (!uptodate)
 		{
@@ -1558,7 +1559,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			prodesc->result_oid = procStruct->prorettype;
 			prodesc->fn_retisset = procStruct->proretset;
 			prodesc->fn_retistuple = (procStruct->prorettype == RECORDOID ||
-									  typeStruct->typtype == TYPTYPE_COMPOSITE);
+								   typeStruct->typtype == TYPTYPE_COMPOSITE);
 
 			prodesc->fn_retisarray =
 				(typeStruct->typlen == -1 && typeStruct->typelem);
@@ -2109,7 +2110,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 {
 	plperl_query_desc *qdesc;
 	plperl_query_entry *hash_entry;
-	bool        found;
+	bool		found;
 	void	   *plan;
 	int			i;
 
@@ -2139,8 +2140,10 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 		 ************************************************************/
 		for (i = 0; i < argc; i++)
 		{
-			Oid         typId, typInput, typIOParam;
-            int32       typmod;
+			Oid			typId,
+						typInput,
+						typIOParam;
+			int32		typmod;
 
 			parseTypeString(SvPV(argv[i], PL_na), &typId, &typmod);
 
@@ -2223,7 +2226,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 	 ************************************************************/
 
 	hash_entry = hash_search(plperl_query_hash, qdesc->qname,
-							 HASH_ENTER,&found);
+							 HASH_ENTER, &found);
 	hash_entry->query_data = qdesc;
 
 	return newSVstring(qdesc->qname);
@@ -2260,7 +2263,7 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		 ************************************************************/
 
 		hash_entry = hash_search(plperl_query_hash, query,
-										 HASH_FIND,NULL);
+								 HASH_FIND, NULL);
 		if (hash_entry == NULL)
 			elog(ERROR, "spi_exec_prepared: Invalid prepared query passed");
 
@@ -2401,7 +2404,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		 * Fetch the saved plan descriptor, see if it's o.k.
 		 ************************************************************/
 		hash_entry = hash_search(plperl_query_hash, query,
-										 HASH_FIND,NULL);
+								 HASH_FIND, NULL);
 		if (hash_entry == NULL)
 			elog(ERROR, "spi_exec_prepared: Invalid prepared query passed");
 
@@ -2515,7 +2518,7 @@ plperl_spi_freeplan(char *query)
 	plperl_query_entry *hash_entry;
 
 	hash_entry = hash_search(plperl_query_hash, query,
-										 HASH_FIND,NULL);
+							 HASH_FIND, NULL);
 	if (hash_entry == NULL)
 		elog(ERROR, "spi_exec_prepared: Invalid prepared query passed");
 
@@ -2544,7 +2547,7 @@ plperl_spi_freeplan(char *query)
  * Create a new SV from a string assumed to be in the current database's
  * encoding.
  */
-static SV *
+static SV  *
 newSVstring(const char *str)
 {
 	SV		   *sv;
@@ -2564,13 +2567,13 @@ newSVstring(const char *str)
 static SV **
 hv_store_string(HV *hv, const char *key, SV *val)
 {
-	int32	klen = strlen(key);
+	int32		klen = strlen(key);
 
 	/*
-	 * This seems nowhere documented, but under Perl 5.8.0 and up,
-	 * hv_store() recognizes a negative klen parameter as meaning
-	 * a UTF-8 encoded key.  It does not appear that hashes track
-	 * UTF-8-ness of keys at all in Perl 5.6.
+	 * This seems nowhere documented, but under Perl 5.8.0 and up, hv_store()
+	 * recognizes a negative klen parameter as meaning a UTF-8 encoded key.
+	 * It does not appear that hashes track UTF-8-ness of keys at all in Perl
+	 * 5.6.
 	 */
 #if PERL_BCDVERSION >= 0x5008000L
 	if (GetDatabaseEncoding() == PG_UTF8)
@@ -2586,7 +2589,7 @@ hv_store_string(HV *hv, const char *key, SV *val)
 static SV **
 hv_fetch_string(HV *hv, const char *key)
 {
-	int32	klen = strlen(key);
+	int32		klen = strlen(key);
 
 	/* See notes in hv_store_string */
 #if PERL_BCDVERSION >= 0x5008000L

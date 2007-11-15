@@ -38,7 +38,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.34 2007/08/02 17:48:52 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.35 2007/11/15 21:14:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,11 +261,11 @@ Tuplestorestate *
 tuplestore_begin_heap(bool randomAccess, bool interXact, int maxKBytes)
 {
 	Tuplestorestate *state;
-	int		eflags;
+	int			eflags;
 
 	/*
-	 * This interpretation of the meaning of randomAccess is compatible
-	 * with the pre-8.3 behavior of tuplestores.
+	 * This interpretation of the meaning of randomAccess is compatible with
+	 * the pre-8.3 behavior of tuplestores.
 	 */
 	eflags = randomAccess ?
 		(EXEC_FLAG_BACKWARD | EXEC_FLAG_REWIND | EXEC_FLAG_MARK) :
@@ -288,7 +288,7 @@ tuplestore_begin_heap(bool randomAccess, bool interXact, int maxKBytes)
  * into the tuplestore.
  *
  * eflags is a bitmask following the meanings used for executor node
- * startup flags (see executor.h).  tuplestore pays attention to these bits:
+ * startup flags (see executor.h).	tuplestore pays attention to these bits:
  *		EXEC_FLAG_REWIND		need rewind to start
  *		EXEC_FLAG_BACKWARD		need backward fetch
  *		EXEC_FLAG_MARK			need mark/restore
@@ -723,10 +723,11 @@ tuplestore_markpos(Tuplestorestate *state)
 	{
 		case TSS_INMEM:
 			state->markpos_current = state->current;
+
 			/*
 			 * We can truncate the tuplestore if neither backward scan nor
-			 * rewind capability are required by the caller.  There will
-			 * never be a need to back up past the mark point.
+			 * rewind capability are required by the caller.  There will never
+			 * be a need to back up past the mark point.
 			 *
 			 * Note: you might think we could remove all the tuples before
 			 * "current", since that one is the next to be returned.  However,
@@ -826,10 +827,10 @@ tuplestore_trim(Tuplestorestate *state, int ntuples)
 	}
 
 	/*
-	 * Slide the array down and readjust pointers.  This may look pretty
+	 * Slide the array down and readjust pointers.	This may look pretty
 	 * stupid, but we expect that there will usually not be very many
-	 * tuple-pointers to move, so this isn't that expensive; and it keeps
-	 * a lot of other logic simple.
+	 * tuple-pointers to move, so this isn't that expensive; and it keeps a
+	 * lot of other logic simple.
 	 *
 	 * In fact, in the current usage for merge joins, it's demonstrable that
 	 * there will always be exactly one non-removed tuple; so optimize that
@@ -896,7 +897,7 @@ writetup_heap(Tuplestorestate *state, void *tup)
 
 	if (BufFileWrite(state->myfile, (void *) tuple, tuplen) != (size_t) tuplen)
 		elog(ERROR, "write failed");
-	if (state->eflags & EXEC_FLAG_BACKWARD)	/* need trailing length word? */
+	if (state->eflags & EXEC_FLAG_BACKWARD)		/* need trailing length word? */
 		if (BufFileWrite(state->myfile, (void *) &tuplen,
 						 sizeof(tuplen)) != sizeof(tuplen))
 			elog(ERROR, "write failed");
@@ -917,7 +918,7 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	if (BufFileRead(state->myfile, (void *) ((char *) tuple + sizeof(int)),
 					len - sizeof(int)) != (size_t) (len - sizeof(int)))
 		elog(ERROR, "unexpected end of data");
-	if (state->eflags & EXEC_FLAG_BACKWARD)	/* need trailing length word? */
+	if (state->eflags & EXEC_FLAG_BACKWARD)		/* need trailing length word? */
 		if (BufFileRead(state->myfile, (void *) &tuplen,
 						sizeof(tuplen)) != sizeof(tuplen))
 			elog(ERROR, "unexpected end of data");

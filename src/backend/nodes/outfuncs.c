@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.316 2007/11/08 21:49:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.317 2007/11/15 21:14:35 momjian Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -235,7 +235,7 @@ _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
  */
 
 static void
-_outPlannedStmt(StringInfo str, PlannedStmt *node)
+_outPlannedStmt(StringInfo str, PlannedStmt * node)
 {
 	WRITE_NODE_TYPE("PLANNEDSTMT");
 
@@ -656,7 +656,7 @@ _outRangeVar(StringInfo str, RangeVar *node)
 }
 
 static void
-_outIntoClause(StringInfo str, IntoClause *node)
+_outIntoClause(StringInfo str, IntoClause * node)
 {
 	WRITE_NODE_TYPE("INTOCLAUSE");
 
@@ -872,7 +872,7 @@ _outRelabelType(StringInfo str, RelabelType *node)
 }
 
 static void
-_outCoerceViaIO(StringInfo str, CoerceViaIO *node)
+_outCoerceViaIO(StringInfo str, CoerceViaIO * node)
 {
 	WRITE_NODE_TYPE("COERCEVIAIO");
 
@@ -882,7 +882,7 @@ _outCoerceViaIO(StringInfo str, CoerceViaIO *node)
 }
 
 static void
-_outArrayCoerceExpr(StringInfo str, ArrayCoerceExpr *node)
+_outArrayCoerceExpr(StringInfo str, ArrayCoerceExpr * node)
 {
 	WRITE_NODE_TYPE("ARRAYCOERCEEXPR");
 
@@ -986,10 +986,10 @@ _outMinMaxExpr(StringInfo str, MinMaxExpr *node)
 }
 
 static void
-_outXmlExpr(StringInfo str, XmlExpr *node)
+_outXmlExpr(StringInfo str, XmlExpr * node)
 {
 	WRITE_NODE_TYPE("XMLEXPR");
-	
+
 	WRITE_ENUM_FIELD(op, XmlExprOp);
 	WRITE_STRING_FIELD(name);
 	WRITE_NODE_FIELD(named_args);
@@ -1060,7 +1060,7 @@ _outSetToDefault(StringInfo str, SetToDefault *node)
 }
 
 static void
-_outCurrentOfExpr(StringInfo str, CurrentOfExpr *node)
+_outCurrentOfExpr(StringInfo str, CurrentOfExpr * node)
 {
 	WRITE_NODE_TYPE("CURRENTOFEXPR");
 
@@ -1291,7 +1291,7 @@ _outHashPath(StringInfo str, HashPath *node)
 }
 
 static void
-_outPlannerGlobal(StringInfo str, PlannerGlobal *node)
+_outPlannerGlobal(StringInfo str, PlannerGlobal * node)
 {
 	WRITE_NODE_TYPE("PLANNERGLOBAL");
 
@@ -1385,7 +1385,7 @@ _outIndexOptInfo(StringInfo str, IndexOptInfo *node)
 }
 
 static void
-_outEquivalenceClass(StringInfo str, EquivalenceClass *node)
+_outEquivalenceClass(StringInfo str, EquivalenceClass * node)
 {
 	/*
 	 * To simplify reading, we just chase up to the topmost merged EC and
@@ -1409,7 +1409,7 @@ _outEquivalenceClass(StringInfo str, EquivalenceClass *node)
 }
 
 static void
-_outEquivalenceMember(StringInfo str, EquivalenceMember *node)
+_outEquivalenceMember(StringInfo str, EquivalenceMember * node)
 {
 	WRITE_NODE_TYPE("EQUIVALENCEMEMBER");
 
@@ -1421,7 +1421,7 @@ _outEquivalenceMember(StringInfo str, EquivalenceMember *node)
 }
 
 static void
-_outPathKey(StringInfo str, PathKey *node)
+_outPathKey(StringInfo str, PathKey * node)
 {
 	WRITE_NODE_TYPE("PATHKEY");
 
@@ -1627,7 +1627,7 @@ _outLockingClause(StringInfo str, LockingClause *node)
 }
 
 static void
-_outXmlSerialize(StringInfo str, XmlSerialize *node)
+_outXmlSerialize(StringInfo str, XmlSerialize * node)
 {
 	WRITE_NODE_TYPE("XMLSERIALIZE");
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.28 2007/09/25 16:29:34 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.29 2007/11/15 21:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ int			optreset;
 #endif
 
 static PGcancel *volatile cancelConn = NULL;
+
 #ifdef WIN32
 static CRITICAL_SECTION cancelConnLock;
 #endif
@@ -360,7 +361,6 @@ setup_cancel_handler(void)
 {
 	pqsignal(SIGINT, handle_sigint);
 }
-
 #else							/* WIN32 */
 
 /*
@@ -403,4 +403,3 @@ setup_cancel_handler(void)
 }
 
 #endif   /* WIN32 */
-

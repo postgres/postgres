@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.82 2007/08/21 01:11:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.83 2007/11/15 21:14:42 momjian Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -165,7 +165,7 @@ DATA(insert (	1989   26 26 5 f  610	403 ));
 
 DATA(insert (	2789   27 27 1 f 2799	403 ));
 DATA(insert (	2789   27 27 2 f 2801	403 ));
-DATA(insert (	2789   27 27 3 f 387 	403 ));
+DATA(insert (	2789   27 27 3 f 387	403 ));
 DATA(insert (	2789   27 27 4 f 2802	403 ));
 DATA(insert (	2789   27 27 5 f 2800	403 ));
 
@@ -184,29 +184,29 @@ DATA(insert (	1991   30 30 5 f  646	403 ));
  */
 
 /* default operators float4 */
-DATA(insert (	1970   700 700 1 f  622 403 ));
-DATA(insert (	1970   700 700 2 f  624 403 ));
-DATA(insert (	1970   700 700 3 f  620 403 ));
-DATA(insert (	1970   700 700 4 f  625 403 ));
-DATA(insert (	1970   700 700 5 f  623 403 ));
+DATA(insert (	1970   700 700 1 f	622 403 ));
+DATA(insert (	1970   700 700 2 f	624 403 ));
+DATA(insert (	1970   700 700 3 f	620 403 ));
+DATA(insert (	1970   700 700 4 f	625 403 ));
+DATA(insert (	1970   700 700 5 f	623 403 ));
 /* crosstype operators float48 */
-DATA(insert (	1970   700 701 1 f  1122 403 ));
-DATA(insert (	1970   700 701 2 f  1124 403 ));
-DATA(insert (	1970   700 701 3 f  1120 403 ));
-DATA(insert (	1970   700 701 4 f  1125 403 ));
-DATA(insert (	1970   700 701 5 f  1123 403 ));
+DATA(insert (	1970   700 701 1 f	1122 403 ));
+DATA(insert (	1970   700 701 2 f	1124 403 ));
+DATA(insert (	1970   700 701 3 f	1120 403 ));
+DATA(insert (	1970   700 701 4 f	1125 403 ));
+DATA(insert (	1970   700 701 5 f	1123 403 ));
 /* default operators float8 */
-DATA(insert (	1970   701 701 1 f  672 403 ));
-DATA(insert (	1970   701 701 2 f  673 403 ));
-DATA(insert (	1970   701 701 3 f  670 403 ));
-DATA(insert (	1970   701 701 4 f  675 403 ));
-DATA(insert (	1970   701 701 5 f  674 403 ));
+DATA(insert (	1970   701 701 1 f	672 403 ));
+DATA(insert (	1970   701 701 2 f	673 403 ));
+DATA(insert (	1970   701 701 3 f	670 403 ));
+DATA(insert (	1970   701 701 4 f	675 403 ));
+DATA(insert (	1970   701 701 5 f	674 403 ));
 /* crosstype operators float84 */
-DATA(insert (	1970   701 700 1 f  1132 403 ));
-DATA(insert (	1970   701 700 2 f  1134 403 ));
-DATA(insert (	1970   701 700 3 f  1130 403 ));
-DATA(insert (	1970   701 700 4 f  1135 403 ));
-DATA(insert (	1970   701 700 5 f  1133 403 ));
+DATA(insert (	1970   701 700 1 f	1132 403 ));
+DATA(insert (	1970   701 700 2 f	1134 403 ));
+DATA(insert (	1970   701 700 3 f	1130 403 ));
+DATA(insert (	1970   701 700 4 f	1135 403 ));
+DATA(insert (	1970   701 700 5 f	1133 403 ));
 
 /*
  *	btree char_ops
@@ -214,7 +214,7 @@ DATA(insert (	1970   701 700 5 f  1133 403 ));
 
 DATA(insert (	429   18 18 1 f  631	403 ));
 DATA(insert (	429   18 18 2 f  632	403 ));
-DATA(insert (	429   18 18 3 f	92	403 ));
+DATA(insert (	429   18 18 3 f 92	403 ));
 DATA(insert (	429   18 18 4 f  634	403 ));
 DATA(insert (	429   18 18 5 f  633	403 ));
 
@@ -361,21 +361,21 @@ DATA(insert (	1982   1186 1186 5 f 1334	403 ));
  *	btree macaddr
  */
 
-DATA(insert (	1984   829 829 1 f 1222	403 ));
-DATA(insert (	1984   829 829 2 f 1223	403 ));
-DATA(insert (	1984   829 829 3 f 1220	403 ));
-DATA(insert (	1984   829 829 4 f 1225	403 ));
-DATA(insert (	1984   829 829 5 f 1224	403 ));
+DATA(insert (	1984   829 829 1 f 1222 403 ));
+DATA(insert (	1984   829 829 2 f 1223 403 ));
+DATA(insert (	1984   829 829 3 f 1220 403 ));
+DATA(insert (	1984   829 829 4 f 1225 403 ));
+DATA(insert (	1984   829 829 5 f 1224 403 ));
 
 /*
  *	btree network
  */
 
-DATA(insert (	1974   869 869 1 f 1203	403 ));
-DATA(insert (	1974   869 869 2 f 1204	403 ));
-DATA(insert (	1974   869 869 3 f 1201	403 ));
-DATA(insert (	1974   869 869 4 f 1206	403 ));
-DATA(insert (	1974   869 869 5 f 1205	403 ));
+DATA(insert (	1974   869 869 1 f 1203 403 ));
+DATA(insert (	1974   869 869 2 f 1204 403 ));
+DATA(insert (	1974   869 869 3 f 1201 403 ));
+DATA(insert (	1974   869 869 4 f 1206 403 ));
+DATA(insert (	1974   869 869 5 f 1205 403 ));
 
 /*
  *	btree numeric
@@ -391,11 +391,11 @@ DATA(insert (	1988   1700 1700 5 f 1756	403 ));
  *	btree bool
  */
 
-DATA(insert (	424   16 16 1 f	58	403 ));
+DATA(insert (	424   16 16 1 f 58	403 ));
 DATA(insert (	424   16 16 2 f 1694	403 ));
-DATA(insert (	424   16 16 3 f	91	403 ));
+DATA(insert (	424   16 16 3 f 91	403 ));
 DATA(insert (	424   16 16 4 f 1695	403 ));
-DATA(insert (	424   16 16 5 f	59	403 ));
+DATA(insert (	424   16 16 5 f 59	403 ));
 
 /*
  *	btree bit
@@ -451,31 +451,31 @@ DATA(insert (	2098   19 19 5 f 2336	403 ));
  *	btree money_ops
  */
 
-DATA(insert (	2099   790 790 1 f  902	403 ));
-DATA(insert (	2099   790 790 2 f  904	403 ));
-DATA(insert (	2099   790 790 3 f  900	403 ));
-DATA(insert (	2099   790 790 4 f  905	403 ));
-DATA(insert (	2099   790 790 5 f  903	403 ));
+DATA(insert (	2099   790 790 1 f	902 403 ));
+DATA(insert (	2099   790 790 2 f	904 403 ));
+DATA(insert (	2099   790 790 3 f	900 403 ));
+DATA(insert (	2099   790 790 4 f	905 403 ));
+DATA(insert (	2099   790 790 5 f	903 403 ));
 
 /*
  *	btree reltime_ops
  */
 
-DATA(insert (	2233   703 703 1 f  568	403 ));
-DATA(insert (	2233   703 703 2 f  570	403 ));
-DATA(insert (	2233   703 703 3 f  566	403 ));
-DATA(insert (	2233   703 703 4 f  571	403 ));
-DATA(insert (	2233   703 703 5 f  569	403 ));
+DATA(insert (	2233   703 703 1 f	568 403 ));
+DATA(insert (	2233   703 703 2 f	570 403 ));
+DATA(insert (	2233   703 703 3 f	566 403 ));
+DATA(insert (	2233   703 703 4 f	571 403 ));
+DATA(insert (	2233   703 703 5 f	569 403 ));
 
 /*
  *	btree tinterval_ops
  */
 
-DATA(insert (	2234   704 704 1 f  813	403 ));
-DATA(insert (	2234   704 704 2 f  815	403 ));
-DATA(insert (	2234   704 704 3 f  811	403 ));
-DATA(insert (	2234   704 704 4 f  816	403 ));
-DATA(insert (	2234   704 704 5 f  814	403 ));
+DATA(insert (	2234   704 704 1 f	813 403 ));
+DATA(insert (	2234   704 704 2 f	815 403 ));
+DATA(insert (	2234   704 704 3 f	811 403 ));
+DATA(insert (	2234   704 704 4 f	816 403 ));
+DATA(insert (	2234   704 704 5 f	814 403 ));
 
 /*
  *	btree array_ops
@@ -487,11 +487,11 @@ DATA(insert (	397   2277 2277 3 f 1070	403 ));
 DATA(insert (	397   2277 2277 4 f 1075	403 ));
 DATA(insert (	397   2277 2277 5 f 1073	403 ));
 
-/* 
- * btree uuid_ops 
+/*
+ * btree uuid_ops
  */
- 
-DATA(insert (	2968  2950 2950 1 f	2974	403 ));
+
+DATA(insert (	2968  2950 2950 1 f 2974	403 ));
 DATA(insert (	2968  2950 2950 2 f 2976	403 ));
 DATA(insert (	2968  2950 2950 3 f 2972	403 ));
 DATA(insert (	2968  2950 2950 4 f 2977	403 ));
@@ -504,30 +504,30 @@ DATA(insert (	2968  2950 2950 5 f 2975	403 ));
 /* bpchar_ops */
 DATA(insert (	427   1042 1042 1 f 1054	405 ));
 /* char_ops */
-DATA(insert (	431   18 18 1 f	92	405 ));
+DATA(insert (	431   18 18 1 f 92	405 ));
 /* date_ops */
 DATA(insert (	435   1082 1082 1 f 1093	405 ));
 /* float_ops */
-DATA(insert (	1971   700 700 1 f  620	405 ));
-DATA(insert (	1971   701 701 1 f  670	405 ));
-DATA(insert (	1971   700 701 1 f 1120	405 ));
-DATA(insert (	1971   701 700 1 f 1130	405 ));
+DATA(insert (	1971   700 700 1 f	620 405 ));
+DATA(insert (	1971   701 701 1 f	670 405 ));
+DATA(insert (	1971   700 701 1 f 1120 405 ));
+DATA(insert (	1971   701 700 1 f 1130 405 ));
 /* network_ops */
-DATA(insert (	1975   869 869 1 f 1201	405 ));
+DATA(insert (	1975   869 869 1 f 1201 405 ));
 /* integer_ops */
 DATA(insert (	1977   21 21 1 f	94	405 ));
 DATA(insert (	1977   23 23 1 f	96	405 ));
-DATA(insert (	1977   20 20 1 f	410	405 ));
-DATA(insert (	1977   21 23 1 f	532	405 ));
-DATA(insert (	1977   21 20 1 f   1862	405 ));
-DATA(insert (	1977   23 21 1 f	533	405 ));
+DATA(insert (	1977   20 20 1 f	410 405 ));
+DATA(insert (	1977   21 23 1 f	532 405 ));
+DATA(insert (	1977   21 20 1 f   1862 405 ));
+DATA(insert (	1977   23 21 1 f	533 405 ));
 DATA(insert (	1977   23 20 1 f	15	405 ));
-DATA(insert (	1977   20 21 1 f   1868	405 ));
-DATA(insert (	1977   20 23 1 f	416	405 ));
+DATA(insert (	1977   20 21 1 f   1868 405 ));
+DATA(insert (	1977   20 23 1 f	416 405 ));
 /* interval_ops */
 DATA(insert (	1983   1186 1186 1 f 1330	405 ));
 /* macaddr_ops */
-DATA(insert (	1985   829 829 1 f 1220	405 ));
+DATA(insert (	1985   829 829 1 f 1220 405 ));
 /* name_ops */
 DATA(insert (	1987   19 19 1 f	93	405 ));
 /* oid_ops */
@@ -555,9 +555,9 @@ DATA(insert (	2225   28 28 1 f  352	405 ));
 /* cid_ops */
 DATA(insert (	2226   29 29 1 f  385	405 ));
 /* abstime_ops */
-DATA(insert (	2227   702 702 1 f  560	405 ));
+DATA(insert (	2227   702 702 1 f	560 405 ));
 /* reltime_ops */
-DATA(insert (	2228   703 703 1 f  566	405 ));
+DATA(insert (	2228   703 703 1 f	566 405 ));
 /* text_pattern_ops */
 DATA(insert (	2229   25 25 1 f 2316	405 ));
 /* bpchar_pattern_ops */
@@ -566,7 +566,7 @@ DATA(insert (	2231   1042 1042 1 f 2328	405 ));
 DATA(insert (	2232   19 19 1 f 2334	405 ));
 /* aclitem_ops */
 DATA(insert (	2235   1033 1033 1 f  974	405 ));
-/* uuid_ops */ 
+/* uuid_ops */
 DATA(insert (	2969   2950 2950 1 f 2972 405 ));
 /* numeric_ops */
 DATA(insert (	1998   1700 1700 1 f 1752 405 ));
@@ -576,81 +576,81 @@ DATA(insert (	1998   1700 1700 1 f 1752 405 ));
  *	gist box_ops
  */
 
-DATA(insert (	2593   603 603 1  f	493	783 ));
-DATA(insert (	2593   603 603 2  f	494	783 ));
-DATA(insert (	2593   603 603 3  f	500	783 ));
-DATA(insert (	2593   603 603 4  f	495	783 ));
-DATA(insert (	2593   603 603 5  f	496	783 ));
-DATA(insert (	2593   603 603 6  f	499	783 ));
-DATA(insert (	2593   603 603 7  f	498	783 ));
-DATA(insert (	2593   603 603 8  f	497	783 ));
-DATA(insert (	2593   603 603 9  f	2571	783 ));
-DATA(insert (	2593   603 603 10 f	2570	783 ));
-DATA(insert (	2593   603 603 11 f	2573	783 ));
-DATA(insert (	2593   603 603 12 f	2572	783 ));
-DATA(insert (	2593   603 603 13 f	2863	783 ));
-DATA(insert (	2593   603 603 14 f	2862	783 ));
+DATA(insert (	2593   603 603 1  f 493 783 ));
+DATA(insert (	2593   603 603 2  f 494 783 ));
+DATA(insert (	2593   603 603 3  f 500 783 ));
+DATA(insert (	2593   603 603 4  f 495 783 ));
+DATA(insert (	2593   603 603 5  f 496 783 ));
+DATA(insert (	2593   603 603 6  f 499 783 ));
+DATA(insert (	2593   603 603 7  f 498 783 ));
+DATA(insert (	2593   603 603 8  f 497 783 ));
+DATA(insert (	2593   603 603 9  f 2571	783 ));
+DATA(insert (	2593   603 603 10 f 2570	783 ));
+DATA(insert (	2593   603 603 11 f 2573	783 ));
+DATA(insert (	2593   603 603 12 f 2572	783 ));
+DATA(insert (	2593   603 603 13 f 2863	783 ));
+DATA(insert (	2593   603 603 14 f 2862	783 ));
 
 /*
  *	gist poly_ops (supports polygons)
  */
 
-DATA(insert (	2594   604 604 1  t	485	783 ));
-DATA(insert (	2594   604 604 2  t	486	783 ));
-DATA(insert (	2594   604 604 3  t	492	783 ));
-DATA(insert (	2594   604 604 4  t	487	783 ));
-DATA(insert (	2594   604 604 5  t	488	783 ));
-DATA(insert (	2594   604 604 6  t	491	783 ));
-DATA(insert (	2594   604 604 7  t	490	783 ));
-DATA(insert (	2594   604 604 8  t	489	783 ));
-DATA(insert (	2594   604 604 9  t	2575	783 ));
-DATA(insert (	2594   604 604 10 t	2574	783 ));
-DATA(insert (	2594   604 604 11 t	2577	783 ));
-DATA(insert (	2594   604 604 12 t	2576	783 ));
-DATA(insert (	2594   604 604 13 t	2861	783 ));
-DATA(insert (	2594   604 604 14 t	2860	783 ));
+DATA(insert (	2594   604 604 1  t 485 783 ));
+DATA(insert (	2594   604 604 2  t 486 783 ));
+DATA(insert (	2594   604 604 3  t 492 783 ));
+DATA(insert (	2594   604 604 4  t 487 783 ));
+DATA(insert (	2594   604 604 5  t 488 783 ));
+DATA(insert (	2594   604 604 6  t 491 783 ));
+DATA(insert (	2594   604 604 7  t 490 783 ));
+DATA(insert (	2594   604 604 8  t 489 783 ));
+DATA(insert (	2594   604 604 9  t 2575	783 ));
+DATA(insert (	2594   604 604 10 t 2574	783 ));
+DATA(insert (	2594   604 604 11 t 2577	783 ));
+DATA(insert (	2594   604 604 12 t 2576	783 ));
+DATA(insert (	2594   604 604 13 t 2861	783 ));
+DATA(insert (	2594   604 604 14 t 2860	783 ));
 
 /*
  *	gist circle_ops
  */
 
-DATA(insert (	2595   718 718 1  t	1506	783 ));
-DATA(insert (	2595   718 718 2  t	1507	783 ));
-DATA(insert (	2595   718 718 3  t	1513	783 ));
-DATA(insert (	2595   718 718 4  t	1508	783 ));
-DATA(insert (	2595   718 718 5  t	1509	783 ));
-DATA(insert (	2595   718 718 6  t	1512	783 ));
-DATA(insert (	2595   718 718 7  t	1511	783 ));
-DATA(insert (	2595   718 718 8  t	1510	783 ));
-DATA(insert (	2595   718 718 9  t	2589	783 ));
-DATA(insert (	2595   718 718 10 t	1515	783 ));
-DATA(insert (	2595   718 718 11 t	1514	783 ));
-DATA(insert (	2595   718 718 12 t	2590	783 ));
-DATA(insert (	2595   718 718 13 t	2865	783 ));
-DATA(insert (	2595   718 718 14 t	2864	783 ));
+DATA(insert (	2595   718 718 1  t 1506	783 ));
+DATA(insert (	2595   718 718 2  t 1507	783 ));
+DATA(insert (	2595   718 718 3  t 1513	783 ));
+DATA(insert (	2595   718 718 4  t 1508	783 ));
+DATA(insert (	2595   718 718 5  t 1509	783 ));
+DATA(insert (	2595   718 718 6  t 1512	783 ));
+DATA(insert (	2595   718 718 7  t 1511	783 ));
+DATA(insert (	2595   718 718 8  t 1510	783 ));
+DATA(insert (	2595   718 718 9  t 2589	783 ));
+DATA(insert (	2595   718 718 10 t 1515	783 ));
+DATA(insert (	2595   718 718 11 t 1514	783 ));
+DATA(insert (	2595   718 718 12 t 2590	783 ));
+DATA(insert (	2595   718 718 13 t 2865	783 ));
+DATA(insert (	2595   718 718 14 t 2864	783 ));
 
 /*
  * gin array_ops (these anyarray operators are used with all the opclasses
  * of the family)
  */
-DATA(insert (	2745   2277 2277 1  f	2750	2742 ));
-DATA(insert (	2745   2277 2277 2  f	2751	2742 ));
-DATA(insert (	2745   2277 2277 3  t	2752	2742 ));
-DATA(insert (	2745   2277 2277 4  t	1070	2742 ));
+DATA(insert (	2745   2277 2277 1	f	2750	2742 ));
+DATA(insert (	2745   2277 2277 2	f	2751	2742 ));
+DATA(insert (	2745   2277 2277 3	t	2752	2742 ));
+DATA(insert (	2745   2277 2277 4	t	1070	2742 ));
 
 /*
  * btree enum_ops
  */
-DATA(insert (   3522   3500 3500 1  f	3518	403 ));
-DATA(insert (   3522   3500 3500 2  f	3520	403 ));
-DATA(insert (   3522   3500 3500 3  f	3516	403 ));
-DATA(insert (   3522   3500 3500 4  f	3521	403 ));
-DATA(insert (   3522   3500 3500 5  f	3519	403 ));
+DATA(insert (	3522   3500 3500 1	f	3518	403 ));
+DATA(insert (	3522   3500 3500 2	f	3520	403 ));
+DATA(insert (	3522   3500 3500 3	f	3516	403 ));
+DATA(insert (	3522   3500 3500 4	f	3521	403 ));
+DATA(insert (	3522   3500 3500 5	f	3519	403 ));
 
 /*
  * hash enum_ops
  */
-DATA(insert (   3523   3500 3500 1  f	3516	405 ));
+DATA(insert (	3523   3500 3500 1	f	3516	405 ));
 
 /*
  * btree tsvector_ops
@@ -664,13 +664,13 @@ DATA(insert (	3626   3614 3614 5 f   3632 403 ));
 /*
  * GiST tsvector_ops
  */
-DATA(insert (	3655   3614 3615 1  t  3636 783 ));
+DATA(insert (	3655   3614 3615 1	t  3636 783 ));
 
 /*
- * GIN tsvector_ops 
+ * GIN tsvector_ops
  */
-DATA(insert (	3659   3614 3615 1  f  3636 2742 ));
-DATA(insert (	3659   3614 3615 2  t  3660 2742 ));
+DATA(insert (	3659   3614 3615 1	f  3636 2742 ));
+DATA(insert (	3659   3614 3615 2	t  3660 2742 ));
 
 /*
  * btree tsquery_ops
@@ -684,7 +684,7 @@ DATA(insert (	3683   3615 3615 5 f   3679 403 ));
 /*
  * GiST tsquery_ops
  */
-DATA(insert (	3702   3615 3615 7  t  3693 783 ));
-DATA(insert (	3702   3615 3615 8  t  3694 783 ));
+DATA(insert (	3702   3615 3615 7	t  3693 783 ));
+DATA(insert (	3702   3615 3615 8	t  3694 783 ));
 
 #endif   /* PG_AMOP_H */

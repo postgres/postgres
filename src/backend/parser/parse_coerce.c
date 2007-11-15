@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.157 2007/09/06 17:31:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.158 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,10 +37,10 @@ static Node *coerce_type_typmod(Node *node,
 				   bool hideInputCoercion);
 static void hide_coercion_node(Node *node);
 static Node *build_coercion_expression(Node *node,
-									   CoercionPathType pathtype,
-									   Oid funcId,
-									   Oid targetTypeId, int32 targetTypMod,
-									   CoercionForm cformat, bool isExplicit);
+						  CoercionPathType pathtype,
+						  Oid funcId,
+						  Oid targetTypeId, int32 targetTypMod,
+						  CoercionForm cformat, bool isExplicit);
 static Node *coerce_record_to_complex(ParseState *pstate, Node *node,
 						 Oid targetTypeId,
 						 CoercionContext ccontext,
@@ -142,7 +142,7 @@ coerce_type(ParseState *pstate, Node *node,
 		 *
 		 * Note: by returning the unmodified node here, we are saying that
 		 * it's OK to treat an UNKNOWN constant as a valid input for a
-		 * function accepting ANY, ANYELEMENT, or ANYNONARRAY.  This should be
+		 * function accepting ANY, ANYELEMENT, or ANYNONARRAY.	This should be
 		 * all right, since an UNKNOWN value is still a perfectly valid Datum.
 		 * However an UNKNOWN value is definitely *not* an array, and so we
 		 * mustn't accept it for ANYARRAY.  (Instead, we will call anyarray_in
@@ -271,12 +271,13 @@ coerce_type(ParseState *pstate, Node *node,
 		}
 
 		param->paramtype = targetTypeId;
+
 		/*
 		 * Note: it is tempting here to set the Param's paramtypmod to
 		 * targetTypeMod, but that is probably unwise because we have no
-		 * infrastructure that enforces that the value delivered for a
-		 * Param will match any particular typmod.  Leaving it -1 ensures
-		 * that a run-time length check/coercion will occur if needed.
+		 * infrastructure that enforces that the value delivered for a Param
+		 * will match any particular typmod.  Leaving it -1 ensures that a
+		 * run-time length check/coercion will occur if needed.
 		 */
 		param->paramtypmod = -1;
 
@@ -720,10 +721,11 @@ build_coercion_expression(Node *node,
 		acoerce->arg = (Expr *) node;
 		acoerce->elemfuncid = funcId;
 		acoerce->resulttype = targetTypeId;
+
 		/*
 		 * Label the output as having a particular typmod only if we are
-		 * really invoking a length-coercion function, ie one with more
-		 * than one argument.
+		 * really invoking a length-coercion function, ie one with more than
+		 * one argument.
 		 */
 		acoerce->resulttypmod = (nargs >= 2) ? targetTypMod : -1;
 		acoerce->isExplicit = isExplicit;
@@ -934,10 +936,10 @@ coerce_to_specific_type(ParseState *pstate, Node *node,
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 			/* translator: first %s is name of a SQL construct, eg LIMIT */
-				   errmsg("argument of %s must be type %s, not type %s",
-						  constructName,
-						  format_type_be(targetTypeId),
-						  format_type_be(inputTypeId))));
+					 errmsg("argument of %s must be type %s, not type %s",
+							constructName,
+							format_type_be(targetTypeId),
+							format_type_be(inputTypeId))));
 	}
 
 	if (expression_returns_set(node))
@@ -1304,7 +1306,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 
 	/*
 	 * Fast Track: if none of the arguments are polymorphic, return the
-	 * unmodified rettype.  We assume it can't be polymorphic either.
+	 * unmodified rettype.	We assume it can't be polymorphic either.
 	 */
 	if (!have_generics)
 		return rettype;
@@ -1359,8 +1361,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 		if (type_is_array(elem_typeid))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("type matched to anynonarray is an array type: %s",
-							format_type_be(elem_typeid))));
+				   errmsg("type matched to anynonarray is an array type: %s",
+						  format_type_be(elem_typeid))));
 	}
 
 	if (have_anyenum)
@@ -1921,13 +1923,12 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		/*
 		 * If we still haven't found a possibility, consider automatic casting
 		 * using I/O functions.  We allow assignment casts to textual types
-		 * and explicit casts from textual types to be handled this way.
-		 * (The CoerceViaIO mechanism is a lot more general than that, but
-		 * this is all we want to allow in the absence of a pg_cast entry.)
-		 * It would probably be better to insist on explicit casts in both
-		 * directions, but this is a compromise to preserve something of the
-		 * pre-8.3 behavior that many types had implicit (yipes!) casts to
-		 * text.
+		 * and explicit casts from textual types to be handled this way. (The
+		 * CoerceViaIO mechanism is a lot more general than that, but this is
+		 * all we want to allow in the absence of a pg_cast entry.) It would
+		 * probably be better to insist on explicit casts in both directions,
+		 * but this is a compromise to preserve something of the pre-8.3
+		 * behavior that many types had implicit (yipes!) casts to text.
 		 */
 		if (result == COERCION_PATH_NONE)
 		{

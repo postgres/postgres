@@ -5,7 +5,7 @@
  * Copyright (c) 2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jis_2004_and_shift_jis_2004/euc_jis_2004_and_shift_jis_2004.c,v 1.1 2007/03/25 11:56:02 ishii Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jis_2004_and_shift_jis_2004/euc_jis_2004_and_shift_jis_2004.c,v 1.2 2007/11/15 21:14:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
 {
 	int			c1,
 				ku,
-		ten;
+				ten;
 	int			l;
 
 	while (len > 0)
@@ -104,7 +104,7 @@ euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
 		{
 			*p++ = euc[1];
 		}
-		else if (c1 == SS3 && l == 3)		/* JIS X 0213 plane 2? */
+		else if (c1 == SS3 && l == 3)	/* JIS X 0213 plane 2? */
 		{
 			ku = euc[1] - 0xa0;
 			ten = euc[2] - 0xa0;
@@ -146,7 +146,7 @@ euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
 				*p++ = ten + 0x9e;
 		}
 
-		else if (l == 2)	/* JIS X 0213 plane 1? */
+		else if (l == 2)		/* JIS X 0213 plane 1? */
 		{
 			ku = c1 - 0xa0;
 			ten = euc[1] - 0xa0;
@@ -187,26 +187,29 @@ euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
  * *ku = 0: "ku" = even
  * *ku = 1: "ku" = odd
  */
-static int get_ten(int b, int *ku)
+static int
+get_ten(int b, int *ku)
 {
-	int ten;
+	int			ten;
 
 	if (b >= 0x40 && b <= 0x7e)
 	{
 		ten = b - 0x3f;
 		*ku = 1;
-	} else if (b >= 0x80 && b <= 0x9e)
+	}
+	else if (b >= 0x80 && b <= 0x9e)
 	{
 		ten = b - 0x40;
 		*ku = 1;
-	} else if (b >= 0x9f && b <= 0xfc)
+	}
+	else if (b >= 0x9f && b <= 0xfc)
 	{
 		ten = b - 0x9e;
 		*ku = 0;
 	}
 	else
 	{
-		ten = -1;		/* error */
+		ten = -1;				/* error */
 	}
 	return ten;
 }
@@ -219,8 +222,10 @@ static void
 shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len)
 {
 	int			c1,
-		c2;
-	int			ku, ten, kubun;
+				c2;
+	int			ku,
+				ten,
+				kubun;
 	int			plane;
 	int			l;
 
@@ -281,7 +286,8 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 											(const char *) sjis, len);
 				ku -= kubun;
 			}
-			else if (c1 >= 0xf0 && c1 <= 0xf3)	/* plane 2 1,3,4,5,8,12,13,14,15 ku */
+			else if (c1 >= 0xf0 && c1 <= 0xf3)	/* plane 2
+												 * 1,3,4,5,8,12,13,14,15 ku */
 			{
 				plane = 2;
 				ten = get_ten(c2, &kubun);
@@ -291,16 +297,16 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 				switch (c1)
 				{
 					case 0xf0:
-						ku = kubun == 0? 8: 1;						
+						ku = kubun == 0 ? 8 : 1;
 						break;
 					case 0xf1:
-						ku = kubun == 0? 4: 3;
+						ku = kubun == 0 ? 4 : 3;
 						break;
 					case 0xf2:
-						ku = kubun == 0? 12: 5;
+						ku = kubun == 0 ? 12 : 5;
 						break;
 					default:
-						ku = kubun == 0? 14: 13;
+						ku = kubun == 0 ? 14 : 13;
 						break;
 				}
 			}

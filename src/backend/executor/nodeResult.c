@@ -38,7 +38,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.40 2007/02/22 23:44:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.41 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,8 +133,8 @@ ExecResult(ResultState *node)
 				return NULL;
 
 			/*
-			 * prepare to compute projection expressions, which will expect
-			 * to access the input tuples as varno OUTER.
+			 * prepare to compute projection expressions, which will expect to
+			 * access the input tuples as varno OUTER.
 			 */
 			econtext->ecxt_outertuple = outerTupleSlot;
 		}
@@ -308,9 +308,9 @@ ExecReScanResult(ResultState *node, ExprContext *exprCtxt)
 
 	/*
 	 * If chgParam of subnode is not null then plan will be re-scanned by
-	 * first ExecProcNode.  However, if caller is passing us an exprCtxt
-	 * then forcibly rescan the subnode now, so that we can pass the
-	 * exprCtxt down to the subnode (needed for gated indexscan).
+	 * first ExecProcNode.	However, if caller is passing us an exprCtxt then
+	 * forcibly rescan the subnode now, so that we can pass the exprCtxt down
+	 * to the subnode (needed for gated indexscan).
 	 */
 	if (node->ps.lefttree &&
 		(node->ps.lefttree->chgParam == NULL || exprCtxt != NULL))

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.102 2007/09/20 17:56:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.103 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,17 +130,17 @@ typedef struct RelationData
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =
 								 * valid, 2 = temporarily forced */
 	SubTransactionId rd_createSubid;	/* rel was created in current xact */
-	SubTransactionId rd_newRelfilenodeSubid;	/* new relfilenode assigned
-												 * in current xact */
+	SubTransactionId rd_newRelfilenodeSubid;	/* new relfilenode assigned in
+												 * current xact */
 
 	/*
 	 * rd_createSubid is the ID of the highest subtransaction the rel has
 	 * survived into; or zero if the rel was not created in the current top
 	 * transaction.  This should be relied on only for optimization purposes;
 	 * it is possible for new-ness to be "forgotten" (eg, after CLUSTER).
-	 * Likewise, rd_newRelfilenodeSubid is the ID of the highest subtransaction
-	 * the relfilenode change has survived into, or zero if not changed in
-	 * the current transaction (or we have forgotten changing it).
+	 * Likewise, rd_newRelfilenodeSubid is the ID of the highest
+	 * subtransaction the relfilenode change has survived into, or zero if not
+	 * changed in the current transaction (or we have forgotten changing it).
 	 */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	TupleDesc	rd_att;			/* tuple descriptor */
@@ -171,8 +171,8 @@ typedef struct RelationData
 	 *
 	 * Note: only default operators and support procs for each opclass are
 	 * cached, namely those with lefttype and righttype equal to the opclass's
-	 * opcintype.  The arrays are indexed by strategy or support number,
-	 * which is a sufficient identifier given that restriction.
+	 * opcintype.  The arrays are indexed by strategy or support number, which
+	 * is a sufficient identifier given that restriction.
 	 *
 	 * Note: rd_amcache is available for index AMs to cache private data about
 	 * an index.  This must be just a cache since it may get reset at any time
@@ -194,7 +194,7 @@ typedef struct RelationData
 	void	   *rd_amcache;		/* available for use by index AM */
 
 	/* use "struct" here to avoid needing to include pgstat.h: */
-	struct PgStat_TableStatus *pgstat_info;	/* statistics collection area */
+	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
 } RelationData;
 
 typedef RelationData *Relation;

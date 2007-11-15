@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.110 2007/10/24 20:55:36 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.111 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 				totaldeadrows;
 	HeapTuple  *rows;
 	PGRUsage	ru0;
-	TimestampTz	starttime = 0;
+	TimestampTz starttime = 0;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -1346,7 +1346,7 @@ typedef struct
 	FmgrInfo   *cmpFn;
 	int			cmpFlags;
 	int		   *tupnoLink;
-} CompareScalarsContext;
+}	CompareScalarsContext;
 
 
 static void compute_minimal_stats(VacAttrStatsP stats,

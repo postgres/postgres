@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.85 2007/02/16 00:14:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.86 2007/11/15 21:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,8 +254,8 @@ desirable_join(PlannerInfo *root,
 			   RelOptInfo *outer_rel, RelOptInfo *inner_rel)
 {
 	/*
-	 * Join if there is an applicable join clause, or if there is a join
-	 * order restriction forcing these rels to be joined.
+	 * Join if there is an applicable join clause, or if there is a join order
+	 * restriction forcing these rels to be joined.
 	 */
 	if (have_relevant_joinclause(root, outer_rel, inner_rel) ||
 		have_join_order_restriction(root, outer_rel, inner_rel))

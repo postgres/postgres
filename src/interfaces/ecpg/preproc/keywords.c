@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.83 2007/10/10 06:33:17 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.84 2007/11/15 21:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -474,4 +474,3 @@ ScanKeywordLookup(char *text)
 
 	return DoLookup(word, &ScanECPGKeywords[0], endof(ScanECPGKeywords) - 1);
 }
-

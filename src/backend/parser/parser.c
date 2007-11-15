@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.71 2007/01/09 02:14:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.72 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,8 @@
 
 List	   *parsetree;			/* result of parsing is left here */
 
-static bool have_lookahead;			/* is lookahead info valid? */
-static int	lookahead_token;		/* one-token lookahead */
+static bool have_lookahead;		/* is lookahead info valid? */
+static int	lookahead_token;	/* one-token lookahead */
 static YYSTYPE lookahead_yylval;	/* yylval for lookahead token */
 static YYLTYPE lookahead_yylloc;	/* yylloc for lookahead token */
 
@@ -98,6 +98,7 @@ filtered_base_yylex(void)
 	switch (cur_token)
 	{
 		case NULLS_P:
+
 			/*
 			 * NULLS FIRST and NULLS LAST must be reduced to one token
 			 */
@@ -126,6 +127,7 @@ filtered_base_yylex(void)
 			break;
 
 		case WITH:
+
 			/*
 			 * WITH CASCADED, LOCAL, or CHECK must be reduced to one token
 			 *

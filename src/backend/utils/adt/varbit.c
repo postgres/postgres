@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.55 2007/08/21 02:40:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.56 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,9 @@
 static int32
 anybit_typmodin(ArrayType *ta, const char *typename)
 {
-	int32    typmod;
-	int32	*tl;
-	int		n;
+	int32		typmod;
+	int32	   *tl;
+	int			n;
 
 	tl = ArrayGetIntegerTypmods(ta, &n);
 
@@ -63,7 +63,7 @@ anybit_typmodin(ArrayType *ta, const char *typename)
 static char *
 anybit_typmodout(int32 typmod)
 {
-	char    *res = (char *) palloc(64);
+	char	   *res = (char *) palloc(64);
 
 	if (typmod >= 0)
 		snprintf(res, 64, "(%d)", typmod);
@@ -380,7 +380,7 @@ bit(PG_FUNCTION_ARGS)
 Datum
 bittypmodin(PG_FUNCTION_ARGS)
 {
-	ArrayType    *ta = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
 
 	PG_RETURN_INT32(anybit_typmodin(ta, "bit"));
 }
@@ -388,7 +388,7 @@ bittypmodin(PG_FUNCTION_ARGS)
 Datum
 bittypmodout(PG_FUNCTION_ARGS)
 {
-	int32 typmod = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(0);
 
 	PG_RETURN_CSTRING(anybit_typmodout(typmod));
 }
@@ -680,7 +680,7 @@ varbit(PG_FUNCTION_ARGS)
 Datum
 varbittypmodin(PG_FUNCTION_ARGS)
 {
-	ArrayType    *ta = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
 
 	PG_RETURN_INT32(anybit_typmodin(ta, "varbit"));
 }
@@ -688,7 +688,7 @@ varbittypmodin(PG_FUNCTION_ARGS)
 Datum
 varbittypmodout(PG_FUNCTION_ARGS)
 {
-	int32 typmod = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(0);
 
 	PG_RETURN_CSTRING(anybit_typmodout(typmod));
 }

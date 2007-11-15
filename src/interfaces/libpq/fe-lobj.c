@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.62 2007/03/03 19:52:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.63 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ lo_close(PGconn *conn, int fd)
 
 /*
  * lo_truncate
- *    truncates an existing large object to the given size
+ *	  truncates an existing large object to the given size
  *
  * returns 0 upon success
  * returns -1 upon failure
@@ -147,14 +147,14 @@ lo_truncate(PGconn *conn, int fd, size_t len)
 	if (conn->lobjfuncs->fn_lo_truncate == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			  libpq_gettext("cannot determine OID of function lo_truncate\n"));
+			libpq_gettext("cannot determine OID of function lo_truncate\n"));
 		return -1;
 	}
 
 	argv[0].isint = 1;
 	argv[0].len = 4;
 	argv[0].u.integer = fd;
-	
+
 	argv[1].isint = 1;
 	argv[1].len = 4;
 	argv[1].u.integer = len;

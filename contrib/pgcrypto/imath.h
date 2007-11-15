@@ -26,7 +26,7 @@
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
  */
-/* $PostgreSQL: pgsql/contrib/pgcrypto/imath.h,v 1.5 2006/10/04 00:29:46 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/pgcrypto/imath.h,v 1.6 2007/11/15 21:14:31 momjian Exp $ */
 
 #ifndef IMATH_H_
 #define IMATH_H_
@@ -115,11 +115,12 @@ mp_result	mp_int_mul(mp_int a, mp_int b, mp_int c);	/* c = a * b */
 mp_result	mp_int_mul_value(mp_int a, int value, mp_int c);
 mp_result	mp_int_mul_pow2(mp_int a, int p2, mp_int c);
 mp_result	mp_int_sqr(mp_int a, mp_int c);		/* c = a * a */
+
 mp_result
-mp_int_div(mp_int a, mp_int b,	/* q = a / b */
+mp_int_div(mp_int a, mp_int b,			/* q = a / b */
 		   mp_int q, mp_int r); /* r = a % b */
 mp_result
-mp_int_div_value(mp_int a, int value,	/* q = a / value */
+mp_int_div_value(mp_int a, int value,			/* q = a / value */
 				 mp_int q, int *r);		/* r = a % value */
 mp_result
 mp_int_div_pow2(mp_int a, int p2,		/* q = a / 2^p2  */

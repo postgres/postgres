@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.76 2007/11/08 21:49:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.77 2007/11/15 21:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ tlist_member_ignore_relabel(Node *node, List *targetlist)
 	foreach(temp, targetlist)
 	{
 		TargetEntry *tlentry = (TargetEntry *) lfirst(temp);
-		Expr   *tlexpr = tlentry->expr;
+		Expr	   *tlexpr = tlentry->expr;
 
 		while (tlexpr && IsA(tlexpr, RelabelType))
 			tlexpr = ((RelabelType *) tlexpr)->arg;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.113 2007/05/12 00:54:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.114 2007/11/15 21:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	values[i++] = ObjectIdGetDatum(GetUserId());		/* typowner */
 	values[i++] = Int16GetDatum(sizeof(int4));	/* typlen */
 	values[i++] = BoolGetDatum(true);	/* typbyval */
-	values[i++] = CharGetDatum(TYPTYPE_PSEUDO);	/* typtype */
+	values[i++] = CharGetDatum(TYPTYPE_PSEUDO); /* typtype */
 	values[i++] = BoolGetDatum(false);	/* typisdefined */
 	values[i++] = CharGetDatum(DEFAULT_TYPDELIM);		/* typdelim */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typrelid */
@@ -255,13 +255,13 @@ TypeCreate(Oid newTypeOid,
 	values[i++] = CharGetDatum(typDelim);		/* typdelim */
 	values[i++] = ObjectIdGetDatum(relationOid);		/* typrelid */
 	values[i++] = ObjectIdGetDatum(elementType);		/* typelem */
-	values[i++] = ObjectIdGetDatum(arrayType);			/* typarray */
+	values[i++] = ObjectIdGetDatum(arrayType);	/* typarray */
 	values[i++] = ObjectIdGetDatum(inputProcedure);		/* typinput */
 	values[i++] = ObjectIdGetDatum(outputProcedure);	/* typoutput */
 	values[i++] = ObjectIdGetDatum(receiveProcedure);	/* typreceive */
 	values[i++] = ObjectIdGetDatum(sendProcedure);		/* typsend */
 	values[i++] = ObjectIdGetDatum(typmodinProcedure);	/* typmodin */
-	values[i++] = ObjectIdGetDatum(typmodoutProcedure);	/* typmodout */
+	values[i++] = ObjectIdGetDatum(typmodoutProcedure); /* typmodout */
 	values[i++] = ObjectIdGetDatum(analyzeProcedure);	/* typanalyze */
 	values[i++] = CharGetDatum(alignment);		/* typalign */
 	values[i++] = CharGetDatum(storage);		/* typstorage */
@@ -397,8 +397,8 @@ TypeCreate(Oid newTypeOid,
 void
 GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typeObjectId,
-						 Oid relationOid,	/* only for relation rowtypes */
-						 char relationKind,	/* ditto */
+						 Oid relationOid,		/* only for relation rowtypes */
+						 char relationKind,		/* ditto */
 						 Oid owner,
 						 Oid inputProcedure,
 						 Oid outputProcedure,
@@ -534,7 +534,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 		referenced.objectId = elementType;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced,
-					isImplicitArray ? DEPENDENCY_INTERNAL : DEPENDENCY_NORMAL);
+				  isImplicitArray ? DEPENDENCY_INTERNAL : DEPENDENCY_NORMAL);
 	}
 
 	/* Normal dependency from a domain to its base type. */
@@ -604,7 +604,7 @@ TypeRename(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 	/* If the type has an array type, recurse to handle that */
 	if (OidIsValid(arrayOid))
 	{
-		char   *arrname = makeArrayTypeName(newTypeName, typeNamespace);
+		char	   *arrname = makeArrayTypeName(newTypeName, typeNamespace);
 
 		TypeRename(arrayOid, arrname, typeNamespace);
 		pfree(arrname);
@@ -622,12 +622,12 @@ char *
 makeArrayTypeName(const char *typeName, Oid typeNamespace)
 {
 	char	   *arr;
-	int        i;
+	int			i;
 	Relation	pg_type_desc;
 
 	/*
-	 * The idea is to prepend underscores as needed until we make a name
-	 * that doesn't collide with anything...
+	 * The idea is to prepend underscores as needed until we make a name that
+	 * doesn't collide with anything...
 	 */
 	arr = palloc(NAMEDATALEN);
 
@@ -647,10 +647,10 @@ makeArrayTypeName(const char *typeName, Oid typeNamespace)
 
 	heap_close(pg_type_desc, AccessShareLock);
 
-	if (i >= NAMEDATALEN-1)
+	if (i >= NAMEDATALEN - 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("could not form array type name for type \"%s\"", 
+				 errmsg("could not form array type name for type \"%s\"",
 						typeName)));
 
 	return arr;
@@ -698,10 +698,10 @@ moveArrayTypeName(Oid typeOid, const char *typeName, Oid typeNamespace)
 		return false;
 
 	/*
-	 * OK, use makeArrayTypeName to pick an unused modification of the
-	 * name.  Note that since makeArrayTypeName is an iterative process,
-	 * this will produce a name that it might have produced the first time,
-	 * had the conflicting type we are about to create already existed.
+	 * OK, use makeArrayTypeName to pick an unused modification of the name.
+	 * Note that since makeArrayTypeName is an iterative process, this will
+	 * produce a name that it might have produced the first time, had the
+	 * conflicting type we are about to create already existed.
 	 */
 	newname = makeArrayTypeName(typeName, typeNamespace);
 

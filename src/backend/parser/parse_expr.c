@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.223 2007/11/11 19:22:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.224 2007/11/15 21:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,10 +56,10 @@ static Node *transformArrayExpr(ParseState *pstate, ArrayExpr *a);
 static Node *transformRowExpr(ParseState *pstate, RowExpr *r);
 static Node *transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c);
 static Node *transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m);
-static Node *transformXmlExpr(ParseState *pstate, XmlExpr *x);
-static Node *transformXmlSerialize(ParseState *pstate, XmlSerialize *xs);
+static Node *transformXmlExpr(ParseState *pstate, XmlExpr * x);
+static Node *transformXmlSerialize(ParseState *pstate, XmlSerialize * xs);
 static Node *transformBooleanTest(ParseState *pstate, BooleanTest *b);
-static Node *transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr);
+static Node *transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr * cexpr);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformWholeRowRef(ParseState *pstate, char *schemaname,
 					 char *relname, int location);
@@ -545,7 +545,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 static Oid *
 find_param_type(ParseState *pstate, int paramno)
 {
-	Oid	   *result;
+	Oid		   *result;
 
 	/*
 	 * Find topmost ParseState, which is where paramtype info lives.
@@ -612,7 +612,7 @@ exprIsNullConstant(Node *arg)
 {
 	if (arg && IsA(arg, A_Const))
 	{
-		A_Const *con = (A_Const *) arg;
+		A_Const    *con = (A_Const *) arg;
 
 		if (con->val.type == T_Null &&
 			con->typename == NULL)
@@ -1411,10 +1411,10 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 }
 
 static Node *
-transformXmlExpr(ParseState *pstate, XmlExpr *x)
+transformXmlExpr(ParseState *pstate, XmlExpr * x)
 {
-	XmlExpr *newx = makeNode(XmlExpr);
-	ListCell	*lc;
+	XmlExpr    *newx = makeNode(XmlExpr);
+	ListCell   *lc;
 	int			i;
 
 	newx->op = x->op;
@@ -1424,7 +1424,7 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 		newx->name = NULL;
 
 	/*
-	 * gram.y built the named args as a list of ResTarget.  Transform each,
+	 * gram.y built the named args as a list of ResTarget.	Transform each,
 	 * and break the names out as a separate list.
 	 */
 	newx->named_args = NIL;
@@ -1432,9 +1432,9 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 
 	foreach(lc, x->named_args)
 	{
-		ResTarget 	*r = (ResTarget *) lfirst(lc);
-		Node 		*expr;
-		char 		*argname;
+		ResTarget  *r = (ResTarget *) lfirst(lc);
+		Node	   *expr;
+		char	   *argname;
 
 		Assert(IsA(r, ResTarget));
 
@@ -1450,7 +1450,7 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 x->op == IS_XMLELEMENT
-					 ? errmsg("unnamed XML attribute value must be a column reference")
+			? errmsg("unnamed XML attribute value must be a column reference")
 					 : errmsg("unnamed XML element value must be a column reference")));
 			argname = NULL;		/* keep compiler quiet */
 		}
@@ -1465,7 +1465,7 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 	{
 		foreach(lc, newx->arg_names)
 		{
-			ListCell	*lc2;
+			ListCell   *lc2;
 
 			for_each_cell(lc2, lnext(lc))
 			{
@@ -1537,16 +1537,16 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 }
 
 static Node *
-transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
+transformXmlSerialize(ParseState *pstate, XmlSerialize * xs)
 {
 	Oid			targetType;
 	int32		targetTypmod;
-	XmlExpr	   *xexpr;
+	XmlExpr    *xexpr;
 
 	xexpr = makeNode(XmlExpr);
 	xexpr->op = IS_XMLSERIALIZE;
 	xexpr->args = list_make1(coerce_to_specific_type(pstate,
-													 transformExpr(pstate, xs->expr),
+											 transformExpr(pstate, xs->expr),
 													 XMLOID,
 													 "XMLSERIALIZE"));
 
@@ -1558,13 +1558,13 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 	xexpr->typmod = targetTypmod;
 
 	/*
-	 * The actual target type is determined this way.  SQL allows char
-	 * and varchar as target types.  We allow anything that can be
-	 * cast implicitly from text.  This way, user-defined text-like
-	 * data types automatically fit in.
+	 * The actual target type is determined this way.  SQL allows char and
+	 * varchar as target types.  We allow anything that can be cast implicitly
+	 * from text.  This way, user-defined text-like data types automatically
+	 * fit in.
 	 */
 	return (Node *) coerce_to_target_type(pstate, (Node *) xexpr, TEXTOID, targetType, targetTypmod,
-										  COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
+									COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 }
 
 static Node *
@@ -1608,9 +1608,9 @@ transformBooleanTest(ParseState *pstate, BooleanTest *b)
 }
 
 static Node *
-transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
+transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr * cexpr)
 {
-	int		sublevels_up;
+	int			sublevels_up;
 
 	/* CURRENT OF can only appear at top level of UPDATE/DELETE */
 	Assert(pstate->p_target_rangetblentry != NULL);
@@ -1851,7 +1851,7 @@ exprType(Node *expr)
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("could not find array type for data type %s",
-											format_type_be(subplan->firstColType))));
+									format_type_be(subplan->firstColType))));
 					}
 				}
 				else
@@ -2153,8 +2153,8 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 		*coercedTypmod = -1;	/* default result on failure */
 
 	/*
-	 * Scalar-type length coercions are FuncExprs, array-type length
-	 * coercions are ArrayCoerceExprs
+	 * Scalar-type length coercions are FuncExprs, array-type length coercions
+	 * are ArrayCoerceExprs
 	 */
 	if (expr && IsA(expr, FuncExpr))
 	{
@@ -2336,9 +2336,9 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 
 	/*
 	 * Now we must determine which row comparison semantics (= <> < <= > >=)
-	 * apply to this set of operators.	We look for btree opfamilies containing
-	 * the operators, and see which interpretations (strategy numbers) exist
-	 * for each operator.
+	 * apply to this set of operators.	We look for btree opfamilies
+	 * containing the operators, and see which interpretations (strategy
+	 * numbers) exist for each operator.
 	 */
 	opfamily_lists = (List **) palloc(nopers * sizeof(List *));
 	opstrat_lists = (List **) palloc(nopers * sizeof(List *));
@@ -2421,7 +2421,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		}
 		if (OidIsValid(opfamily))
 			opfamilies = lappend_oid(opfamilies, opfamily);
-		else					/* should not happen */
+		else	/* should not happen */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("could not determine interpretation of row comparison operator %s",

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.132 2007/09/25 16:29:34 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.133 2007/11/15 21:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,8 +139,8 @@ pg_krb5_init(PQExpBuffer errorMessage, struct krb5_info * info)
 	if (retval)
 	{
 		printfPQExpBuffer(errorMessage,
-				 "pg_krb5_init: krb5_init_context: %s\n",
-				 error_message(retval));
+						  "pg_krb5_init: krb5_init_context: %s\n",
+						  error_message(retval));
 		return STATUS_ERROR;
 	}
 
@@ -148,8 +148,8 @@ pg_krb5_init(PQExpBuffer errorMessage, struct krb5_info * info)
 	if (retval)
 	{
 		printfPQExpBuffer(errorMessage,
-				 "pg_krb5_init: krb5_cc_default: %s\n",
-				 error_message(retval));
+						  "pg_krb5_init: krb5_cc_default: %s\n",
+						  error_message(retval));
 		krb5_free_context(info->pg_krb5_context);
 		return STATUS_ERROR;
 	}
@@ -159,8 +159,8 @@ pg_krb5_init(PQExpBuffer errorMessage, struct krb5_info * info)
 	if (retval)
 	{
 		printfPQExpBuffer(errorMessage,
-				 "pg_krb5_init: krb5_cc_get_principal: %s\n",
-				 error_message(retval));
+						  "pg_krb5_init: krb5_cc_get_principal: %s\n",
+						  error_message(retval));
 		krb5_cc_close(info->pg_krb5_context, info->pg_krb5_ccache);
 		krb5_free_context(info->pg_krb5_context);
 		return STATUS_ERROR;
@@ -170,8 +170,8 @@ pg_krb5_init(PQExpBuffer errorMessage, struct krb5_info * info)
 	if (retval)
 	{
 		printfPQExpBuffer(errorMessage,
-				 "pg_krb5_init: krb5_unparse_name: %s\n",
-				 error_message(retval));
+						  "pg_krb5_init: krb5_unparse_name: %s\n",
+						  error_message(retval));
 		krb5_free_principal(info->pg_krb5_context, info->pg_krb5_client);
 		krb5_cc_close(info->pg_krb5_context, info->pg_krb5_ccache);
 		krb5_free_context(info->pg_krb5_context);
@@ -235,7 +235,7 @@ pg_krb5_sendauth(PGconn *conn)
 	if (!conn->pghost)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				 "pg_krb5_sendauth: hostname must be specified for Kerberos authentication\n");
+						  "pg_krb5_sendauth: hostname must be specified for Kerberos authentication\n");
 		return STATUS_ERROR;
 	}
 
@@ -243,14 +243,14 @@ pg_krb5_sendauth(PGconn *conn)
 	if (ret != STATUS_OK)
 		return ret;
 
-	retval = krb5_sname_to_principal(info.pg_krb5_context, conn->pghost, 
+	retval = krb5_sname_to_principal(info.pg_krb5_context, conn->pghost,
 									 conn->krbsrvname,
 									 KRB5_NT_SRV_HST, &server);
 	if (retval)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				 "pg_krb5_sendauth: krb5_sname_to_principal: %s\n",
-				 error_message(retval));
+						  "pg_krb5_sendauth: krb5_sname_to_principal: %s\n",
+						  error_message(retval));
 		pg_krb5_destroy(&info);
 		return STATUS_ERROR;
 	}
@@ -265,14 +265,14 @@ pg_krb5_sendauth(PGconn *conn)
 		char		sebuf[256];
 
 		printfPQExpBuffer(&conn->errorMessage,
-				 libpq_gettext("could not set socket to blocking mode: %s\n"), pqStrerror(errno, sebuf, sizeof(sebuf)));
+						  libpq_gettext("could not set socket to blocking mode: %s\n"), pqStrerror(errno, sebuf, sizeof(sebuf)));
 		krb5_free_principal(info.pg_krb5_context, server);
 		pg_krb5_destroy(&info);
 		return STATUS_ERROR;
 	}
 
 	retval = krb5_sendauth(info.pg_krb5_context, &auth_context,
-						   (krb5_pointer) & conn->sock, (char *) conn->krbsrvname,
+					  (krb5_pointer) & conn->sock, (char *) conn->krbsrvname,
 						   info.pg_krb5_client, server,
 						   AP_OPTS_MUTUAL_REQUIRED,
 						   NULL, 0,		/* no creds, use ccache instead */
@@ -284,12 +284,12 @@ pg_krb5_sendauth(PGconn *conn)
 #if defined(HAVE_KRB5_ERROR_TEXT_DATA)
 			printfPQExpBuffer(&conn->errorMessage,
 				  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
-					 (int) err_ret->text.length, err_ret->text.data);
+							  (int) err_ret->text.length, err_ret->text.data);
 #elif defined(HAVE_KRB5_ERROR_E_DATA)
 			printfPQExpBuffer(&conn->errorMessage,
 				  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
-					 (int) err_ret->e_data->length,
-					 (const char *) err_ret->e_data->data);
+							  (int) err_ret->e_data->length,
+							  (const char *) err_ret->e_data->data);
 #else
 #error "bogus configuration"
 #endif
@@ -297,7 +297,7 @@ pg_krb5_sendauth(PGconn *conn)
 		else
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-					 "krb5_sendauth: %s\n", error_message(retval));
+							  "krb5_sendauth: %s\n", error_message(retval));
 		}
 
 		if (err_ret)
@@ -314,7 +314,7 @@ pg_krb5_sendauth(PGconn *conn)
 
 		printfPQExpBuffer(&conn->errorMessage,
 		libpq_gettext("could not restore non-blocking mode on socket: %s\n"),
-				 pqStrerror(errno, sebuf, sizeof(sebuf)));
+						  pqStrerror(errno, sebuf, sizeof(sebuf)));
 		ret = STATUS_ERROR;
 	}
 	pg_krb5_destroy(&info);
@@ -335,7 +335,7 @@ pg_krb5_sendauth(PGconn *conn)
  * from src/athena/auth/krb5/src/lib/gssapi/generic/gssapi_generic.c
  */
 static const gss_OID_desc GSS_C_NT_HOSTBASED_SERVICE_desc =
- {10, (void *)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x04"};
+{10, (void *) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x04"};
 static GSS_DLLIMP gss_OID GSS_C_NT_HOSTBASED_SERVICE = &GSS_C_NT_HOSTBASED_SERVICE_desc;
 #endif
 
@@ -345,22 +345,23 @@ static GSS_DLLIMP gss_OID GSS_C_NT_HOSTBASED_SERVICE = &GSS_C_NT_HOSTBASED_SERVI
  */
 static void
 pg_GSS_error_int(char *mprefix, char *msg, int msglen,
-                 OM_uint32 stat, int type)
+				 OM_uint32 stat, int type)
 {
-	int				curlen = 0;
-	OM_uint32		lmaj_s, lmin_s;
-	gss_buffer_desc	lmsg;
-	OM_uint32		msg_ctx = 0;
+	int			curlen = 0;
+	OM_uint32	lmaj_s,
+				lmin_s;
+	gss_buffer_desc lmsg;
+	OM_uint32	msg_ctx = 0;
 
-	do 
+	do
 	{
-		lmaj_s = gss_display_status(&lmin_s, stat, type, 
-				GSS_C_NO_OID, &msg_ctx, &lmsg);
+		lmaj_s = gss_display_status(&lmin_s, stat, type,
+									GSS_C_NO_OID, &msg_ctx, &lmsg);
 
 		if (curlen < msglen)
 		{
 			snprintf(msg + curlen, msglen - curlen, "%s: %s\n",
-					mprefix, (char *)lmsg.value);
+					 mprefix, (char *) lmsg.value);
 			curlen += lmsg.length;
 		}
 		gss_release_buffer(&lmin_s, &lmsg);
@@ -373,42 +374,44 @@ pg_GSS_error_int(char *mprefix, char *msg, int msglen,
  */
 static void
 pg_GSS_error(char *mprefix, PGconn *conn,
-	OM_uint32 maj_stat, OM_uint32 min_stat)
+			 OM_uint32 maj_stat, OM_uint32 min_stat)
 {
-	int mlen;
+	int			mlen;
 
 	/* Fetch major error codes */
-	pg_GSS_error_int(mprefix, conn->errorMessage.data, 
-		conn->errorMessage.maxlen, maj_stat, GSS_C_GSS_CODE);
+	pg_GSS_error_int(mprefix, conn->errorMessage.data,
+					 conn->errorMessage.maxlen, maj_stat, GSS_C_GSS_CODE);
 	mlen = strlen(conn->errorMessage.data);
 
 	/* If there is room left, try to add the minor codes as well */
 	if (mlen < conn->errorMessage.maxlen - 1)
-		pg_GSS_error_int(mprefix, conn->errorMessage.data + mlen, 
+		pg_GSS_error_int(mprefix, conn->errorMessage.data + mlen,
 				conn->errorMessage.maxlen - mlen, min_stat, GSS_C_MECH_CODE);
 }
 
-/* 
+/*
  * Continue GSS authentication with next token as needed.
  */
 static int
 pg_GSS_continue(PGconn *conn)
 {
-	OM_uint32	maj_stat, min_stat, lmin_s;
+	OM_uint32	maj_stat,
+				min_stat,
+				lmin_s;
 
 	maj_stat = gss_init_sec_context(&min_stat,
-			GSS_C_NO_CREDENTIAL,
-			&conn->gctx,
-			conn->gtarg_nam,
-			GSS_C_NO_OID,
-			GSS_C_MUTUAL_FLAG,
-			0,
-			GSS_C_NO_CHANNEL_BINDINGS,
-			(conn->gctx==GSS_C_NO_CONTEXT)?GSS_C_NO_BUFFER:&conn->ginbuf,
-			NULL,
-			&conn->goutbuf,
-			NULL,
-			NULL);
+									GSS_C_NO_CREDENTIAL,
+									&conn->gctx,
+									conn->gtarg_nam,
+									GSS_C_NO_OID,
+									GSS_C_MUTUAL_FLAG,
+									0,
+									GSS_C_NO_CHANNEL_BINDINGS,
+		  (conn->gctx == GSS_C_NO_CONTEXT) ? GSS_C_NO_BUFFER : &conn->ginbuf,
+									NULL,
+									&conn->goutbuf,
+									NULL,
+									NULL);
 
 	if (conn->gctx != GSS_C_NO_CONTEXT)
 	{
@@ -420,13 +423,13 @@ pg_GSS_continue(PGconn *conn)
 	if (conn->goutbuf.length != 0)
 	{
 		/*
-		 * GSS generated data to send to the server. We don't care if it's
-		 * the first or subsequent packet, just send the same kind of
-		 * password packet.
+		 * GSS generated data to send to the server. We don't care if it's the
+		 * first or subsequent packet, just send the same kind of password
+		 * packet.
 		 */
 		if (pqPacketSend(conn, 'p',
-					conn->goutbuf.value, conn->goutbuf.length)
-				!= STATUS_OK)
+						 conn->goutbuf.value, conn->goutbuf.length)
+			!= STATUS_OK)
 		{
 			gss_release_buffer(&lmin_s, &conn->goutbuf);
 			return STATUS_ERROR;
@@ -437,8 +440,8 @@ pg_GSS_continue(PGconn *conn)
 	if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
 	{
 		pg_GSS_error(libpq_gettext("GSSAPI continuation error"),
-				conn,
-				maj_stat, min_stat);
+					 conn,
+					 maj_stat, min_stat);
 		gss_release_name(&lmin_s, &conn->gtarg_nam);
 		if (conn->gctx)
 			gss_delete_sec_context(&lmin_s, &conn->gctx, GSS_C_NO_BUFFER);
@@ -451,54 +454,55 @@ pg_GSS_continue(PGconn *conn)
 	return STATUS_OK;
 }
 
-/* 
+/*
  * Send initial GSS authentication token
  */
 static int
 pg_GSS_startup(PGconn *conn)
 {
-	OM_uint32	maj_stat, min_stat;
+	OM_uint32	maj_stat,
+				min_stat;
 	int			maxlen;
-	gss_buffer_desc	temp_gbuf;
+	gss_buffer_desc temp_gbuf;
 
 	if (conn->gctx)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("duplicate GSS authentication request\n"));
+					libpq_gettext("duplicate GSS authentication request\n"));
 		return STATUS_ERROR;
 	}
 
 	/*
-	 * Import service principal name so the proper ticket can be
-	 * acquired by the GSSAPI system.
+	 * Import service principal name so the proper ticket can be acquired by
+	 * the GSSAPI system.
 	 */
 	maxlen = NI_MAXHOST + strlen(conn->krbsrvname) + 2;
-	temp_gbuf.value = (char*)malloc(maxlen);
-	snprintf(temp_gbuf.value, maxlen, "%s@%s", 
-			conn->krbsrvname, conn->pghost);
+	temp_gbuf.value = (char *) malloc(maxlen);
+	snprintf(temp_gbuf.value, maxlen, "%s@%s",
+			 conn->krbsrvname, conn->pghost);
 	temp_gbuf.length = strlen(temp_gbuf.value);
 
 	maj_stat = gss_import_name(&min_stat, &temp_gbuf,
-			GSS_C_NT_HOSTBASED_SERVICE, &conn->gtarg_nam);
+							   GSS_C_NT_HOSTBASED_SERVICE, &conn->gtarg_nam);
 	free(temp_gbuf.value);
 
 	if (maj_stat != GSS_S_COMPLETE)
 	{
-		pg_GSS_error(libpq_gettext("GSSAPI name import error"), 
-				conn,
-				maj_stat, min_stat);
+		pg_GSS_error(libpq_gettext("GSSAPI name import error"),
+					 conn,
+					 maj_stat, min_stat);
 		return STATUS_ERROR;
 	}
 
 	/*
-	 * Initial packet is the same as a continuation packet with
-	 * no initial context.
+	 * Initial packet is the same as a continuation packet with no initial
+	 * context.
 	 */
 	conn->gctx = GSS_C_NO_CONTEXT;
 
 	return pg_GSS_continue(conn);
 }
-#endif /* ENABLE_GSS */
+#endif   /* ENABLE_GSS */
 
 
 #ifdef ENABLE_SSPI
@@ -509,30 +513,30 @@ pg_GSS_startup(PGconn *conn)
 static void
 pg_SSPI_error(PGconn *conn, char *mprefix, SECURITY_STATUS r)
 {
-	char sysmsg[256];
+	char		sysmsg[256];
 
 	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0,
 					  sysmsg, sizeof(sysmsg), NULL) == 0)
 		printfPQExpBuffer(&conn->errorMessage, "%s: sspi error %x",
-						  mprefix, (unsigned int)r);
+						  mprefix, (unsigned int) r);
 	else
 		printfPQExpBuffer(&conn->errorMessage, "%s: %s (%x)",
-						  mprefix, sysmsg, (unsigned int)r);
+						  mprefix, sysmsg, (unsigned int) r);
 }
 
-/* 
+/*
  * Continue SSPI authentication with next token as needed.
  */
 static int
 pg_SSPI_continue(PGconn *conn)
 {
-	SECURITY_STATUS	r;
-	CtxtHandle		newContext;
-	ULONG			contextAttr;
-	SecBufferDesc	inbuf;
-	SecBufferDesc	outbuf;
-	SecBuffer		OutBuffers[1];
-	SecBuffer		InBuffers[1];
+	SECURITY_STATUS r;
+	CtxtHandle	newContext;
+	ULONG		contextAttr;
+	SecBufferDesc inbuf;
+	SecBufferDesc outbuf;
+	SecBuffer	OutBuffers[1];
+	SecBuffer	InBuffers[1];
 
 	if (conn->sspictx != NULL)
 	{
@@ -556,18 +560,18 @@ pg_SSPI_continue(PGconn *conn)
 	outbuf.ulVersion = SECBUFFER_VERSION;
 
 	r = InitializeSecurityContext(conn->sspicred,
-		conn->sspictx,
-		conn->sspitarget,
-		ISC_REQ_ALLOCATE_MEMORY,
-		0,
-		SECURITY_NETWORK_DREP,
-		(conn->sspictx == NULL)?NULL:&inbuf,
-		0,
-		&newContext,
-		&outbuf,
-		&contextAttr,
-		NULL);
-	
+								  conn->sspictx,
+								  conn->sspitarget,
+								  ISC_REQ_ALLOCATE_MEMORY,
+								  0,
+								  SECURITY_NETWORK_DREP,
+								  (conn->sspictx == NULL) ? NULL : &inbuf,
+								  0,
+								  &newContext,
+								  &outbuf,
+								  &contextAttr,
+								  NULL);
+
 	if (r != SEC_E_OK && r != SEC_I_CONTINUE_NEEDED)
 	{
 		pg_SSPI_error(conn, libpq_gettext("SSPI continuation error"), r);
@@ -589,8 +593,8 @@ pg_SSPI_continue(PGconn *conn)
 	else
 	{
 		/*
-		 * On subsequent runs when we had data to send, free buffers that contained
-		 * this data.
+		 * On subsequent runs when we had data to send, free buffers that
+		 * contained this data.
 		 */
 		free(conn->ginbuf.value);
 		conn->ginbuf.value = NULL;
@@ -598,23 +602,24 @@ pg_SSPI_continue(PGconn *conn)
 	}
 
 	/*
-	 * If SSPI returned any data to be sent to the server (as it normally would),
-	 * send this data as a password packet.
+	 * If SSPI returned any data to be sent to the server (as it normally
+	 * would), send this data as a password packet.
 	 */
 	if (outbuf.cBuffers > 0)
 	{
 		if (outbuf.cBuffers != 1)
 		{
 			/*
-			 * This should never happen, at least not for Kerberos authentication. Keep check
-			 * in case it shows up with other authentication methods later.
+			 * This should never happen, at least not for Kerberos
+			 * authentication. Keep check in case it shows up with other
+			 * authentication methods later.
 			 */
 			printfPQExpBuffer(&conn->errorMessage, "SSPI returned invalid number of output buffers\n");
 			return STATUS_ERROR;
 		}
 
 		if (pqPacketSend(conn, 'p',
-			outbuf.pBuffers[0].pvBuffer, outbuf.pBuffers[0].cbBuffer))
+				   outbuf.pBuffers[0].pvBuffer, outbuf.pBuffers[0].cbBuffer))
 		{
 			FreeContextBuffer(outbuf.pBuffers[0].pvBuffer);
 			return STATUS_ERROR;
@@ -626,7 +631,7 @@ pg_SSPI_continue(PGconn *conn)
 	return STATUS_OK;
 }
 
-/* 
+/*
  * Send initial SSPI authentication token.
  * If use_negotiate is 0, use kerberos authentication package which is
  * compatible with Unix. If use_negotiate is 1, use the negotiate package
@@ -635,8 +640,8 @@ pg_SSPI_continue(PGconn *conn)
 static int
 pg_SSPI_startup(PGconn *conn, int use_negotiate)
 {
-	SECURITY_STATUS	r;
-	TimeStamp		expire;
+	SECURITY_STATUS r;
+	TimeStamp	expire;
 
 	conn->sspictx = NULL;
 
@@ -650,7 +655,7 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 		return STATUS_ERROR;
 	}
 
-	r = AcquireCredentialsHandle(NULL, use_negotiate?"negotiate":"kerberos", SECPKG_CRED_OUTBOUND, NULL, NULL, NULL, NULL, conn->sspicred, &expire);
+	r = AcquireCredentialsHandle(NULL, use_negotiate ? "negotiate" : "kerberos", SECPKG_CRED_OUTBOUND, NULL, NULL, NULL, NULL, conn->sspicred, &expire);
 	if (r != SEC_E_OK)
 	{
 		pg_SSPI_error(conn, "acquire credentials failed", r);
@@ -660,16 +665,16 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 	}
 
 	/*
-	 * Compute target principal name. SSPI has a different format from GSSAPI, but
-	 * not more complex. We can skip the @REALM part, because Windows will fill that
-	 * in for us automatically.
+	 * Compute target principal name. SSPI has a different format from GSSAPI,
+	 * but not more complex. We can skip the @REALM part, because Windows will
+	 * fill that in for us automatically.
 	 */
 	if (conn->pghost == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage, libpq_gettext("host name must be specified\n"));
 		return STATUS_ERROR;
 	}
-	conn->sspitarget = malloc(strlen(conn->krbsrvname)+strlen(conn->pghost)+2);
+	conn->sspitarget = malloc(strlen(conn->krbsrvname) + strlen(conn->pghost) + 2);
 	if (!conn->sspitarget)
 	{
 		printfPQExpBuffer(&conn->errorMessage, libpq_gettext("out of memory\n"));
@@ -685,7 +690,7 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 
 	return pg_SSPI_continue(conn);
 }
-#endif /* ENABLE_SSPI */
+#endif   /* ENABLE_SSPI */
 
 /*
  * Respond to AUTH_REQ_SCM_CREDS challenge.
@@ -738,14 +743,14 @@ pg_local_sendauth(PGconn *conn)
 		char		sebuf[256];
 
 		printfPQExpBuffer(&conn->errorMessage,
-				 "pg_local_sendauth: sendmsg: %s\n",
-				 pqStrerror(errno, sebuf, sizeof(sebuf)));
+						  "pg_local_sendauth: sendmsg: %s\n",
+						  pqStrerror(errno, sebuf, sizeof(sebuf)));
 		return STATUS_ERROR;
 	}
 	return STATUS_OK;
 #else
 	printfPQExpBuffer(&conn->errorMessage,
-			 libpq_gettext("SCM_CRED authentication method not supported\n"));
+			libpq_gettext("SCM_CRED authentication method not supported\n"));
 	return STATUS_ERROR;
 #endif
 }
@@ -850,14 +855,17 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 		case AUTH_REQ_GSS:
 			{
-				int r;
+				int			r;
+
 				pglock_thread();
+
 				/*
 				 * If we have both GSS and SSPI support compiled in, use SSPI
-				 * support by default. This is overridable by a connection string parameter.
-				 * Note that when using SSPI we still leave the negotiate parameter off,
-				 * since we want SSPI to use the GSSAPI kerberos protocol. For actual
-				 * SSPI negotiate protocol, we use AUTH_REQ_SSPI.
+				 * support by default. This is overridable by a connection
+				 * string parameter. Note that when using SSPI we still leave
+				 * the negotiate parameter off, since we want SSPI to use the
+				 * GSSAPI kerberos protocol. For actual SSPI negotiate
+				 * protocol, we use AUTH_REQ_SSPI.
 				 */
 #if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
 				if (conn->gsslib && (pg_strcasecmp(conn->gsslib, "gssapi") == 0))
@@ -881,7 +889,8 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 
 		case AUTH_REQ_GSS_CONT:
 			{
-				int r;
+				int			r;
+
 				pglock_thread();
 #if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
 				if (conn->usesspi)
@@ -902,21 +911,21 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 				pgunlock_thread();
 			}
 			break;
-
 #else
 		case AUTH_REQ_GSS:
 		case AUTH_REQ_GSS_CONT:
 			printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("GSSAPI authentication not supported\n"));
+					 libpq_gettext("GSSAPI authentication not supported\n"));
 			return STATUS_ERROR;
 #endif
 
 #ifdef ENABLE_SSPI
 		case AUTH_REQ_SSPI:
-			/* 
+
+			/*
 			 * SSPI has it's own startup message so libpq can decide which
-			 * method to use. Indicate to pg_SSPI_startup that we want
-			 * SSPI negotiation instead of Kerberos.
+			 * method to use. Indicate to pg_SSPI_startup that we want SSPI
+			 * negotiation instead of Kerberos.
 			 */
 			pglock_thread();
 			if (pg_SSPI_startup(conn, 1) != STATUS_OK)
@@ -930,7 +939,7 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 #else
 		case AUTH_REQ_SSPI:
 			printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("SSPI authentication not supported\n"));
+					   libpq_gettext("SSPI authentication not supported\n"));
 			return STATUS_ERROR;
 #endif
 
@@ -938,10 +947,10 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 		case AUTH_REQ_MD5:
 		case AUTH_REQ_CRYPT:
 		case AUTH_REQ_PASSWORD:
-			if (conn->pgpass == NULL || *conn->pgpass== '\0')
+			if (conn->pgpass == NULL || *conn->pgpass == '\0')
 			{
 				printfPQExpBuffer(&conn->errorMessage,
-								PQnoPasswordSupplied);
+								  PQnoPasswordSupplied);
 				return STATUS_ERROR;
 			}
 			if (pg_password_sendauth(conn, conn->pgpass, areq) != STATUS_OK)

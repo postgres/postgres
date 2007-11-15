@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/joininfo.h,v 1.34 2007/01/20 20:45:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/joininfo.h,v 1.35 2007/11/15 21:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 
 extern bool have_relevant_joinclause(PlannerInfo *root,
-									 RelOptInfo *rel1, RelOptInfo *rel2);
+						 RelOptInfo *rel1, RelOptInfo *rel2);
 
 extern void add_join_clause_to_rels(PlannerInfo *root,
 						RestrictInfo *restrictinfo,

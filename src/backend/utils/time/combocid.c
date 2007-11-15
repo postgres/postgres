@@ -15,7 +15,7 @@
  * this module.
  *
  * To allow reusing existing combo cids, we also keep a hash table that
- * maps cmin,cmax pairs to combo cids.  This keeps the data structure size
+ * maps cmin,cmax pairs to combo cids.	This keeps the data structure size
  * reasonable in most cases, since the number of unique pairs used by any
  * one transaction is likely to be small.
  *
@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/combocid.c,v 1.1 2007/02/09 03:35:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/combocid.c,v 1.2 2007/11/15 21:14:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,17 +54,17 @@ static HTAB *comboHash = NULL;
 /* Key and entry structures for the hash table */
 typedef struct
 {
-	CommandId cmin;
-	CommandId cmax;
-} ComboCidKeyData;
+	CommandId	cmin;
+	CommandId	cmax;
+}	ComboCidKeyData;
 
 typedef ComboCidKeyData *ComboCidKey;
 
 typedef struct
 {
 	ComboCidKeyData key;
-	CommandId combocid;
-} ComboCidEntryData;
+	CommandId	combocid;
+}	ComboCidEntryData;
 
 typedef ComboCidEntryData *ComboCidEntry;
 
@@ -77,8 +77,8 @@ typedef ComboCidEntryData *ComboCidEntry;
  * To convert a combo cid to cmin and cmax, you do a simple array lookup.
  */
 static ComboCidKey comboCids = NULL;
-static int usedComboCids = 0;			/* number of elements in comboCids */
-static int sizeComboCids = 0;			/* allocated size of array */
+static int	usedComboCids = 0;	/* number of elements in comboCids */
+static int	sizeComboCids = 0;	/* allocated size of array */
 
 /* Initial size of the array */
 #define CCID_ARRAY_SIZE			100
@@ -102,7 +102,7 @@ static CommandId GetRealCmax(CommandId combocid);
 CommandId
 HeapTupleHeaderGetCmin(HeapTupleHeader tup)
 {
-	CommandId cid = HeapTupleHeaderGetRawCommandId(tup);
+	CommandId	cid = HeapTupleHeaderGetRawCommandId(tup);
 
 	Assert(!(tup->t_infomask & HEAP_MOVED));
 	Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tup)));
@@ -116,7 +116,7 @@ HeapTupleHeaderGetCmin(HeapTupleHeader tup)
 CommandId
 HeapTupleHeaderGetCmax(HeapTupleHeader tup)
 {
-	CommandId cid = HeapTupleHeaderGetRawCommandId(tup);
+	CommandId	cid = HeapTupleHeaderGetRawCommandId(tup);
 
 	/* We do not store cmax when locking a tuple */
 	Assert(!(tup->t_infomask & (HEAP_MOVED | HEAP_IS_LOCKED)));
@@ -155,7 +155,7 @@ HeapTupleHeaderAdjustCmax(HeapTupleHeader tup,
 	if (!(tup->t_infomask & HEAP_XMIN_COMMITTED) &&
 		TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tup)))
 	{
-		CommandId cmin = HeapTupleHeaderGetRawCommandId(tup);
+		CommandId	cmin = HeapTupleHeaderGetRawCommandId(tup);
 
 		*cmax = GetComboCommandId(cmin, *cmax);
 		*iscombo = true;
@@ -174,8 +174,8 @@ void
 AtEOXact_ComboCid(void)
 {
 	/*
-	 * Don't bother to pfree. These are allocated in TopTransactionContext,
-	 * so they're going to go away at the end of transaction anyway.
+	 * Don't bother to pfree. These are allocated in TopTransactionContext, so
+	 * they're going to go away at the end of transaction anyway.
 	 */
 	comboHash = NULL;
 
@@ -195,18 +195,18 @@ AtEOXact_ComboCid(void)
 static CommandId
 GetComboCommandId(CommandId cmin, CommandId cmax)
 {
-	CommandId combocid;
+	CommandId	combocid;
 	ComboCidKeyData key;
 	ComboCidEntry entry;
-	bool found;
+	bool		found;
 
 	/*
-	 * Create the hash table and array the first time we need to use
-	 * combo cids in the transaction.
+	 * Create the hash table and array the first time we need to use combo
+	 * cids in the transaction.
 	 */
 	if (comboHash == NULL)
 	{
-		HASHCTL hash_ctl;
+		HASHCTL		hash_ctl;
 
 		memset(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(ComboCidKeyData);
@@ -243,13 +243,13 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 	}
 
 	/*
-	 * We have to create a new combo cid. Check that there's room
-	 * for it in the array, and grow it if there isn't.
+	 * We have to create a new combo cid. Check that there's room for it in
+	 * the array, and grow it if there isn't.
 	 */
 	if (usedComboCids >= sizeComboCids)
 	{
 		/* We need to grow the array */
-		int		newsize = sizeComboCids * 2;
+		int			newsize = sizeComboCids * 2;
 
 		comboCids = (ComboCidKeyData *)
 			repalloc(comboCids, sizeof(ComboCidKeyData) * newsize);

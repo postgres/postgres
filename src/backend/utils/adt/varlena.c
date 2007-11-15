@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.159 2007/09/22 04:40:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.160 2007/11/15 21:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ typedef struct
 	pg_wchar   *wstr2;			/* note: these are palloc'd */
 	int			len1;			/* string lengths in logical characters */
 	int			len2;
-} TextPositionState;
+}	TextPositionState;
 
 #define DatumGetUnknownP(X)			((unknown *) PG_DETOAST_DATUM(X))
 #define DatumGetUnknownPCopy(X)		((unknown *) PG_DETOAST_DATUM_COPY(X))
@@ -60,9 +60,9 @@ typedef struct
 static int	text_cmp(text *arg1, text *arg2);
 static int32 text_length(Datum str);
 static int	text_position(text *t1, text *t2);
-static void text_position_setup(text *t1, text *t2, TextPositionState *state);
-static int	text_position_next(int start_pos, TextPositionState *state);
-static void text_position_cleanup(TextPositionState *state);
+static void text_position_setup(text *t1, text *t2, TextPositionState * state);
+static int	text_position_next(int start_pos, TextPositionState * state);
+static void text_position_cleanup(TextPositionState * state);
 static text *text_substring(Datum str,
 			   int32 start,
 			   int32 length,
@@ -414,7 +414,7 @@ text_length(Datum str)
 	{
 		text	   *t = DatumGetTextPP(str);
 
-		PG_RETURN_INT32(pg_mbstrlen_with_len(VARDATA_ANY(t), 
+		PG_RETURN_INT32(pg_mbstrlen_with_len(VARDATA_ANY(t),
 											 VARSIZE_ANY_EXHDR(t)));
 	}
 }
@@ -680,8 +680,8 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		}
 
 		/*
-		 * If we're working with an untoasted source, no need to do an
-		 * extra copying step.
+		 * If we're working with an untoasted source, no need to do an extra
+		 * copying step.
 		 */
 		if (VARATT_IS_COMPRESSED(str) || VARATT_IS_EXTERNAL(str))
 			slice = DatumGetTextPSlice(str, slice_start, slice_size);
@@ -807,7 +807,7 @@ text_position(text *t1, text *t2)
  */
 
 static void
-text_position_setup(text *t1, text *t2, TextPositionState *state)
+text_position_setup(text *t1, text *t2, TextPositionState * state)
 {
 	int			len1 = VARSIZE_ANY_EXHDR(t1);
 	int			len2 = VARSIZE_ANY_EXHDR(t2);
@@ -841,7 +841,7 @@ text_position_setup(text *t1, text *t2, TextPositionState *state)
 }
 
 static int
-text_position_next(int start_pos, TextPositionState *state)
+text_position_next(int start_pos, TextPositionState * state)
 {
 	int			pos = 0,
 				p,
@@ -899,7 +899,7 @@ text_position_next(int start_pos, TextPositionState *state)
 }
 
 static void
-text_position_cleanup(TextPositionState *state)
+text_position_cleanup(TextPositionState * state)
 {
 	if (state->use_wchar)
 	{
@@ -1064,7 +1064,7 @@ text_cmp(text *arg1, text *arg2)
 
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
-	
+
 	return varstr_cmp(a1p, len1, a2p, len2);
 }
 
@@ -2219,7 +2219,7 @@ check_replace_text_has_escape_char(const text *replace_text)
  * appendStringInfoRegexpSubstr
  *
  * Append replace_text to str, substituting regexp back references for
- * \n escapes.  start_ptr is the start of the match in the source string,
+ * \n escapes.	start_ptr is the start of the match in the source string,
  * at logical character position data_pos.
  */
 static void
@@ -2302,8 +2302,8 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 		if (so != -1 && eo != -1)
 		{
 			/*
-			 * Copy the text that is back reference of regexp.	Note so and
-			 * eo are counted in characters not bytes.
+			 * Copy the text that is back reference of regexp.	Note so and eo
+			 * are counted in characters not bytes.
 			 */
 			char	   *chunk_start;
 			int			chunk_len;
@@ -2386,8 +2386,8 @@ replace_text_regexp(text *src_text, void *regexp,
 		}
 
 		/*
-		 * Copy the text to the left of the match position.  Note we are
-		 * given character not byte indexes.
+		 * Copy the text to the left of the match position.  Note we are given
+		 * character not byte indexes.
 		 */
 		if (pmatch[0].rm_so - data_pos > 0)
 		{
@@ -2396,9 +2396,10 @@ replace_text_regexp(text *src_text, void *regexp,
 			chunk_len = charlen_to_bytelen(start_ptr,
 										   pmatch[0].rm_so - data_pos);
 			appendBinaryStringInfo(&buf, start_ptr, chunk_len);
+
 			/*
-			 * Advance start_ptr over that text, to avoid multiple rescans
-			 * of it if the replace_text contains multiple back-references.
+			 * Advance start_ptr over that text, to avoid multiple rescans of
+			 * it if the replace_text contains multiple back-references.
 			 */
 			start_ptr += chunk_len;
 			data_pos = pmatch[0].rm_so;

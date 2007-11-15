@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.51 2007/04/06 22:33:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.52 2007/11/15 21:14:42 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -40,9 +40,9 @@ CATALOG(pg_am,2601)
 {
 	NameData	amname;			/* access method name */
 	int2		amstrategies;	/* total number of strategies (operators) by
-								 * which we can traverse/search this AM.
-								 * Zero if AM does not have a fixed set of
-								 * strategy assignments. */
+								 * which we can traverse/search this AM. Zero
+								 * if AM does not have a fixed set of strategy
+								 * assignments. */
 	int2		amsupport;		/* total number of support functions that this
 								 * AM uses */
 	bool		amcanorder;		/* does AM support ordered scan results? */

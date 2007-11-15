@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.369 2007/10/25 13:48:57 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.370 2007/11/15 21:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ static List *transformReturningList(ParseState *pstate, List *returningList);
 static Query *transformDeclareCursorStmt(ParseState *pstate,
 						   DeclareCursorStmt *stmt);
 static Query *transformExplainStmt(ParseState *pstate,
-						   ExplainStmt *stmt);
+					 ExplainStmt *stmt);
 static void transformLockingClause(Query *qry, LockingClause *lc);
 static bool check_parameter_resolution_walker(Node *node,
 								check_parameter_resolution_context *context);
@@ -77,7 +77,7 @@ static bool check_parameter_resolution_walker(Node *node,
  * Optionally, information about $n parameter types can be supplied.
  * References to $n indexes not defined by paramTypes[] are disallowed.
  *
- * The result is a Query node.  Optimizable statements require considerable
+ * The result is a Query node.	Optimizable statements require considerable
  * transformation, while utility-type statements are simply hung off
  * a dummy CMD_UTILITY Query node.
  */
@@ -1565,7 +1565,7 @@ transformReturningList(ParseState *pstate, List *returningList)
 	if (list_length(pstate->p_rtable) != length_rtable)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		 errmsg("RETURNING cannot contain references to other relations")));
+		  errmsg("RETURNING cannot contain references to other relations")));
 
 	/* mark column origins */
 	markTargetListOrigins(pstate, rlist);
@@ -1620,21 +1620,21 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_HOLD))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("DECLARE CURSOR WITH HOLD ... FOR UPDATE/SHARE is not supported"),
+				 errmsg("DECLARE CURSOR WITH HOLD ... FOR UPDATE/SHARE is not supported"),
 				 errdetail("Holdable cursors must be READ ONLY.")));
 
 	/* FOR UPDATE and SCROLL are not compatible */
 	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_SCROLL))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("DECLARE SCROLL CURSOR ... FOR UPDATE/SHARE is not supported"),
+		errmsg("DECLARE SCROLL CURSOR ... FOR UPDATE/SHARE is not supported"),
 				 errdetail("Scrollable cursors must be READ ONLY.")));
 
 	/* FOR UPDATE and INSENSITIVE are not compatible */
 	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_INSENSITIVE))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("DECLARE INSENSITIVE CURSOR ... FOR UPDATE/SHARE is not supported"),
+				 errmsg("DECLARE INSENSITIVE CURSOR ... FOR UPDATE/SHARE is not supported"),
 				 errdetail("Insensitive cursors must be READ ONLY.")));
 
 	/* We won't need the raw querytree any more */

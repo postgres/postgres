@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.92 2007/02/19 02:23:11 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.93 2007/11/15 21:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,12 +337,13 @@ ExecSupportsMarkRestore(NodeTag plantype)
 			return true;
 
 		case T_Result:
+
 			/*
-			 * T_Result only supports mark/restore if it has a child plan
-			 * that does, so we do not have enough information to give a
-			 * really correct answer.  However, for current uses it's
-			 * enough to always say "false", because this routine is not
-			 * asked about gating Result plans, only base-case Results.
+			 * T_Result only supports mark/restore if it has a child plan that
+			 * does, so we do not have enough information to give a really
+			 * correct answer.	However, for current uses it's enough to
+			 * always say "false", because this routine is not asked about
+			 * gating Result plans, only base-case Results.
 			 */
 			return false;
 
