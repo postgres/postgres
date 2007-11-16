@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.540 2007/11/16 06:28:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.541 2007/11/16 16:12:14 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -2216,6 +2216,13 @@ substr(current_date::text, 1, 1);
        Add <link linkend="acronyms">acronym</link> and <link
        linkend="creating-cluster-nfs">NFS</link> documentation
        sections (Bruce)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       "Postgres" is now documented as an accepted alias for
+       "PostgreSQL" (Peter)
       </para>
      </listitem>
 
