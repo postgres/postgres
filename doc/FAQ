@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Nov 13 22:39:46 EST 2007
+   Last updated: Fri Nov 16 10:50:15 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -14,7 +14,7 @@
    
                              General Questions
                                       
-   1.1) What is PostgreSQL? How is it pronounced?
+   1.1) What is PostgreSQL? How is it pronounced? What is Postgres?
    1.2) Who controls PostgreSQL?
    1.3) What is the copyright of PostgreSQL?
    1.4) What platforms does PostgreSQL support?
@@ -89,9 +89,8 @@
                                       
   1.1) What is PostgreSQL? How is it pronounced?
   
-   PostgreSQL is pronounced Post-Gres-Q-L, but can also be referred to as
-   simply Postgres, particularly in conversation. (For those curious
-   about how to say "PostgreSQL", an audio file is available.)
+   PostgreSQL is pronounced Post-Gres-Q-L. (For those curious about how
+   to say "PostgreSQL", an audio file is available.)
    
    PostgreSQL is an object-relational database system that has the
    features of traditional commercial database systems with enhancements
@@ -103,6 +102,11 @@
    Internet. It is a community project and is not controlled by any
    company. To get involved, see the developer's FAQ at
    http://www.postgresql.org/docs/faqs.FAQ_DEV.html
+   
+   Postgres is a widely-used nickname for the PostgreSQL database. It was
+   the original name of the project at Berkeley and is strongly preferred
+   over other nicknames. If you find 'PostgreSQL' hard to pronounce, call
+   it 'Postgres' instead.
    
   1.2) Who controls PostgreSQL?
   
