@@ -519,7 +519,7 @@ tsvector_out(PG_FUNCTION_ARGS)
 		j = ptr->len;
 		while (j--)
 		{
-			if (*curin == '\'')
+			if (*curin == '\'' || *curin == '\\')
 			{
 				int4		pos = curout - outbuf;
 

@@ -65,6 +65,9 @@ SELECT '1&(2&(4&(5|!6)))'::tsquery;
 SELECT '1&(''2''&('' 4''&(\\|5 | ''6 \\'' !|&'')))'::tsquery;
 SELECT '''the wether'':dc & '' sKies '':BC & a:d b:a';
 
+SELECT tsvector_in(tsvector_out('\'\\\\as\' ab\\c ab\\\\c AB\\\\\c ab\\\\\\\\c'::tsvector)), tsquery_in(tsquery_out('\'\\\\as\''::tsquery));
+SELECT '\'\\\\as\' ab\\c ab\\\\c AB\\\\\c ab\\\\\\\\c'::tsvector, '\'\\\\as\''::tsquery;
+
 select lexize('simple', 'ASD56 hsdkf');
 select lexize('en_stem', 'SKIES Problems identity');
 

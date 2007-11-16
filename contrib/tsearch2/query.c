@@ -680,7 +680,7 @@ infix(INFIX * in, bool first)
 		in->cur++;
 		while (*op)
 		{
-			if (*op == '\'')
+			if (*op == '\'' || *op == '\\')
 			{
 				*(in->cur) = '\\';
 				in->cur++;
