@@ -1,7 +1,7 @@
 /*
  * GiST support for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.21 2007/11/16 00:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.22 2007/11/16 01:12:24 momjian Exp $
  */
 
 #include "ltree.h"
@@ -136,8 +136,8 @@ ltree_same(PG_FUNCTION_ARGS)
 		{
 			LOOPBYTE
 			{
-				 if (sa[i] != sb[i])
-				 {
+				if (sa[i] != sb[i])
+				{
 					*result = false;
 					break;
 				}
@@ -202,7 +202,7 @@ ltree_union(PG_FUNCTION_ARGS)
 				BITVECP		sc = LTG_SIGN(cur);
 
 				LOOPBYTE
-					 ((unsigned char *) base)[i] |= sc[i];
+					((unsigned char *) base)[i] |= sc[i];
 			}
 
 			curtree = LTG_LNODE(cur);
@@ -347,7 +347,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 					BITVECP		sc = LTG_SIGN(lu);
 
 					LOOPBYTE
-						 ((unsigned char *) ls)[i] |= sc[i];
+						((unsigned char *) ls)[i] |= sc[i];
 				}
 			}
 		}
@@ -368,7 +368,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 					BITVECP		sc = LTG_SIGN(lu);
 
 					LOOPBYTE
-						 ((unsigned char *) rs)[i] |= sc[i];
+						((unsigned char *) rs)[i] |= sc[i];
 				}
 			}
 		}

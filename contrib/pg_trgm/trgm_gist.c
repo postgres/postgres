@@ -115,8 +115,8 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 
 		LOOPBYTE
 		{
-			 if ((sign[i] & 0xff) != 0xff)
-				 PG_RETURN_POINTER(retval);
+			if ((sign[i] & 0xff) != 0xff)
+				PG_RETURN_POINTER(retval);
 		}
 
 		len = CALCGTSIZE(SIGNKEY | ALLISTRUE, 0);
@@ -137,7 +137,7 @@ gtrgm_decompress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
-	text *key;
+	text	   *key;
 
 	key = DatumGetTextP(entry->key);
 
@@ -212,7 +212,7 @@ unionkey(BITVECP sbase, TRGM * add)
 			return 1;
 
 		LOOPBYTE
-			 sbase[i] |= sadd[i];
+			sbase[i] |= sadd[i];
 	}
 	else
 	{
@@ -327,7 +327,7 @@ sizebitvec(BITVECP sign)
 				i;
 
 	LOOPBYTE
-		 size += number_of_ones[(unsigned char) sign[i]];
+		size += number_of_ones[(unsigned char) sign[i]];
 	return size;
 }
 
@@ -394,10 +394,10 @@ typedef struct
 {
 	bool		allistrue;
 	BITVEC		sign;
-}	CACHESIGN;
+} CACHESIGN;
 
 static void
-fillcache(CACHESIGN * item, TRGM * key)
+fillcache(CACHESIGN *item, TRGM * key)
 {
 	item->allistrue = false;
 	if (ISARRKEY(key))
@@ -413,7 +413,7 @@ typedef struct
 {
 	OffsetNumber pos;
 	int4		cost;
-}	SPLITCOST;
+} SPLITCOST;
 
 static int
 comparecost(const void *a, const void *b)
@@ -426,7 +426,7 @@ comparecost(const void *a, const void *b)
 
 
 static int
-hemdistcache(CACHESIGN * a, CACHESIGN * b)
+hemdistcache(CACHESIGN *a, CACHESIGN *b)
 {
 	if (a->allistrue)
 	{

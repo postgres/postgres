@@ -146,8 +146,8 @@ ghstore_compress(PG_FUNCTION_ARGS)
 
 		LOOPBYTE
 		{
-			 if ((sign[i] & 0xff) != 0xff)
-				 PG_RETURN_POINTER(retval);
+			if ((sign[i] & 0xff) != 0xff)
+				PG_RETURN_POINTER(retval);
 		}
 
 		res = (GISTTYPE *) palloc(CALCGTSIZE(ALLISTRUE));
@@ -169,7 +169,7 @@ ghstore_decompress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
-	HStore *key;
+	HStore	   *key;
 
 	key = (HStore *) PG_DETOAST_DATUM(entry->key);
 
@@ -273,7 +273,7 @@ unionkey(BITVECP sbase, GISTTYPE * add)
 	if (ISALLTRUE(add))
 		return 1;
 	LOOPBYTE
-		 sbase[i] |= sadd[i];
+		sbase[i] |= sadd[i];
 	return 0;
 }
 
@@ -328,7 +328,7 @@ typedef struct
 {
 	OffsetNumber pos;
 	int4		cost;
-}	SPLITCOST;
+} SPLITCOST;
 
 static int
 comparecost(const void *a, const void *b)
@@ -470,7 +470,7 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 			{
 				ptr = GETSIGN(_j);
 				LOOPBYTE
-					 union_l[i] |= ptr[i];
+					union_l[i] |= ptr[i];
 			}
 			*left++ = j;
 			v->spl_nleft++;
@@ -486,7 +486,7 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 			{
 				ptr = GETSIGN(_j);
 				LOOPBYTE
-					 union_r[i] |= ptr[i];
+					union_r[i] |= ptr[i];
 			}
 			*right++ = j;
 			v->spl_nright++;
@@ -516,7 +516,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 
 	sign = GETSIGN(entry);
 
-	if ( strategy == HStoreContainsStrategyNumber || strategy == 13 /* hack for old strats */ )
+	if (strategy == HStoreContainsStrategyNumber || strategy == 13 /* hack for old strats */ )
 	{
 		HStore	   *query = PG_GETARG_HS(1);
 		HEntry	   *qe = ARRPTR(query);
@@ -540,10 +540,10 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 			qe++;
 		}
 	}
-	else if ( strategy == HStoreExistsStrategyNumber )
+	else if (strategy == HStoreExistsStrategyNumber)
 	{
-		text	*query = PG_GETARG_TEXT_P(1);
-		int		crc = crc32_sz( VARDATA(query), VARSIZE(query)-VARHDRSZ );
+		text	   *query = PG_GETARG_TEXT_P(1);
+		int			crc = crc32_sz(VARDATA(query), VARSIZE(query) - VARHDRSZ);
 
 		res = (GETBIT(sign, HASHVAL(crc))) ? true : false;
 	}
