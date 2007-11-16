@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.12 2007/11/13 23:36:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.13 2007/11/16 03:23:07 tgl Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -162,6 +162,17 @@
   </varlistentry>
 
   <varlistentry>
+   <term><xref linkend="guc-maintenance-work-mem"></term>
+   <listitem>
+    <para>
+     Build time for a <acronym>GIN</acronym> index is very sensitive to
+     the <varname>maintenance_work_mem</> setting; it doesn't pay to
+     skimp on work memory during index creation.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
    <term><xref linkend="guc-gin-fuzzy-search-limit"></term>
    <listitem>
     <para>
@@ -177,8 +188,8 @@
     </para>
     <para>
      To facilitate controlled execution of such queries
-     <acronym>GIN</acronym> has a configurable soft upper limit on the size
-     of the returned set, the
+     <acronym>GIN</acronym> has a configurable soft upper limit on the
+     number of rows returned, the
      <varname>gin_fuzzy_search_limit</varname> configuration parameter.
      It is set to 0 (meaning no limit) by default.
      If a non-zero limit is set, then the returned set is a subset of

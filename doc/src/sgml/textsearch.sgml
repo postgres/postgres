@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.35 2007/11/14 23:48:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.36 2007/11/16 03:23:07 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -3254,6 +3254,13 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@ to_tsquery('supernovae');
    good for dynamic data and fast if the number of unique words (lexemes) is
    under 100,000, while <acronym>GIN</acronym> indexes will handle 100,000+
    lexemes better but are slower to update.
+  </para>
+
+  <para>
+   Note that <acronym>GIN</acronym> index build time can often be improved
+   by increasing <xref linkend="guc-maintenance-work-mem">, while
+   <acronym>GiST</acronym> index build time is not sensitive to that
+   parameter.
   </para>
 
   <para>
