@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.14 2007/11/15 21:14:42 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.15 2007/11/16 21:50:06 tgl Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -453,7 +453,7 @@ typedef struct
 	uint32		maxdepth;
 	EntryAccumulator **stack;
 	uint32		stackpos;
-	uint32		allocatedMemory;
+	long		allocatedMemory;
 
 	uint32		length;
 	EntryAccumulator *entryallocator;
