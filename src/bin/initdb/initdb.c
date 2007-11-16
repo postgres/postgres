@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.150 2007/11/15 21:14:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.151 2007/11/16 21:47:32 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -938,26 +938,31 @@ check_input(char *path)
 	if (stat(path, &statbuf) != 0)
 	{
 		if (errno == ENOENT)
+		{
 			fprintf(stderr,
-					_("%s: file \"%s\" does not exist\n"
-			   "This means you have a corrupted installation or identified\n"
-					  "the wrong directory with the invocation option -L.\n"),
-					progname, path);
+					_("%s: file \"%s\" does not exist\n"), progname, path);
+			fprintf(stderr,
+					_("This might mean you have a corrupted installation or identified\n"
+					  "the wrong directory with the invocation option -L.\n"));
+		}
 		else
+		{
 			fprintf(stderr,
-					_("%s: could not access file \"%s\": %s\n"
-					  "This might mean you have a corrupted installation or identified\n"
-					  "the wrong directory with the invocation option -L.\n"),
-					progname, path, strerror(errno));
+					_("%s: could not access file \"%s\": %s\n"), progname, path,
+					  strerror(errno));
+			fprintf(stderr,
+					_("This might mean you have a corrupted installation or identified\n"
+					  "the wrong directory with the invocation option -L.\n"));
+		}
 		exit(1);
 	}
 	if (!S_ISREG(statbuf.st_mode))
 	{
 		fprintf(stderr,
-				_("%s: file \"%s\" is not a regular file\n"
-			   "This means you have a corrupted installation or identified\n"
-				  "the wrong directory with the invocation option -L.\n"),
-				progname, path);
+				_("%s: file \"%s\" is not a regular file\n"), progname, path);
+		fprintf(stderr,
+				_("This might mean you have a corrupted installation or identified\n"
+				  "the wrong directory with the invocation option -L.\n"));
 		exit(1);
 	}
 }
@@ -2958,11 +2963,13 @@ main(int argc, char *argv[])
 		case 2:
 			/* Present and not empty */
 			fprintf(stderr,
-					_("%s: directory \"%s\" exists but is not empty\n"
-					  "If you want to create a new database system, either remove or empty\n"
+					_("%s: directory \"%s\" exists but is not empty\n"),
+					progname, pg_data);
+			fprintf(stderr,
+					_("If you want to create a new database system, either remove or empty\n"
 					  "the directory \"%s\" or run %s\n"
 					  "with an argument other than \"%s\".\n"),
-					progname, pg_data, pg_data, progname, pg_data);
+					pg_data, progname, pg_data);
 			exit(1);			/* no further message needed */
 
 		default:
@@ -3022,10 +3029,12 @@ main(int argc, char *argv[])
 			case 2:
 				/* Present and not empty */
 				fprintf(stderr,
-						_("%s: directory \"%s\" exists but is not empty\n"
-				   "If you want to store the transaction log there, either\n"
+						_("%s: directory \"%s\" exists but is not empty\n"),
+						progname, xlog_dir);
+				fprintf(stderr,
+						_("If you want to store the transaction log there, either\n"
 						  "remove or empty the directory \"%s\".\n"),
-						progname, xlog_dir, xlog_dir);
+						xlog_dir);
 				exit(1);		/* no further message needed */
 
 			default:
