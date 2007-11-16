@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.541 2007/11/16 16:12:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.542 2007/11/16 17:22:21 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -2190,7 +2190,7 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Fix <acronym>PGXS</> so extensions can be built against Postgres
+       Fix <acronym>PGXS</> so extensions can be built against PostgreSQL
        installations whose <application>pg_config</> program does not
        appear first in the <varname>PATH</> (Tom)
       </para>
@@ -2237,7 +2237,7 @@ substr(current_date::text, 1, 1);
      <listitem>
       <para>
        Move <filename>/contrib</> <filename>README</> content into the
-       main <productname>PostgresSQL</> documentation (Albert Cervera i
+       main <productname>PostgreSQL</> documentation (Albert Cervera i
        Areny)
       </para>
      </listitem>
@@ -2331,7 +2331,7 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       The new XML support in core Postgres supersedes this module.
+       The new XML support in core PostgreSQL supersedes this module.
       </para>
      </listitem>
 
