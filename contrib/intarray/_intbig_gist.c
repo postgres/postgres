@@ -125,13 +125,14 @@ g_intbig_same(PG_FUNCTION_ARGS)
 					sb = GETSIGN(b);
 
 		*result = true;
-		LOOPBYTE(
-				 if (sa[i] != sb[i])
-				 {
-			*result = false;
-			break;
+		LOOPBYTE
+		{
+			if (sa[i] != sb[i])
+			{
+				*result = false;
+				break;
+			}
 		}
-		);
 	}
 	PG_RETURN_POINTER(result);
 }
@@ -185,10 +186,11 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 		BITVECP		sign = GETSIGN(DatumGetPointer(entry->key));
 		GISTTYPE   *res;
 
-		LOOPBYTE(
-				 if ((sign[i] & 0xff) != 0xff)
-				 PG_RETURN_POINTER(entry);
-		);
+		LOOPBYTE
+		{
+			if ((sign[i] & 0xff) != 0xff)
+				PG_RETURN_POINTER(entry);
+		}
 
 		res = (GISTTYPE *) palloc(CALCGTSIZE(ALLISTRUE));
 		SET_VARSIZE(res, CALCGTSIZE(ALLISTRUE));
@@ -212,9 +214,8 @@ sizebitvec(BITVECP sign)
 	int4		size = 0,
 				i;
 
-	LOOPBYTE(
-			 size += number_of_ones[(unsigned char) sign[i]];
-	);
+	LOOPBYTE
+		size += number_of_ones[(unsigned char) sign[i]];
 	return size;
 }
 
@@ -225,10 +226,11 @@ hemdistsign(BITVECP a, BITVECP b)
 				diff,
 				dist = 0;
 
-	LOOPBYTE(
-			 diff = (unsigned char) (a[i] ^ b[i]);
-	dist += number_of_ones[diff];
-	);
+	LOOPBYTE
+	{
+		diff = (unsigned char) (a[i] ^ b[i]);
+		dist += number_of_ones[diff];
+	}
 	return dist;
 }
 
@@ -262,9 +264,8 @@ unionkey(BITVECP sbase, GISTTYPE * add)
 
 	if (ISALLTRUE(add))
 		return 1;
-	LOOPBYTE(
-			 sbase[i] |= sadd[i];
-	);
+	LOOPBYTE
+		sbase[i] |= sadd[i];
 	return 0;
 }
 
@@ -458,9 +459,8 @@ g_intbig_picksplit(PG_FUNCTION_ARGS)
 			else
 			{
 				ptr = GETSIGN(_j);
-				LOOPBYTE(
-						 union_l[i] |= ptr[i];
-				);
+				LOOPBYTE
+					union_l[i] |= ptr[i];
 			}
 			*left++ = j;
 			v->spl_nleft++;
@@ -475,9 +475,8 @@ g_intbig_picksplit(PG_FUNCTION_ARGS)
 			else
 			{
 				ptr = GETSIGN(_j);
-				LOOPBYTE(
-						 union_r[i] |= ptr[i];
-				);
+				LOOPBYTE
+					union_r[i] |= ptr[i];
 			}
 			*right++ = j;
 			v->spl_nright++;
@@ -548,13 +547,14 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 				de = GETSIGN((GISTTYPE *) DatumGetPointer(entry->key));
 				dq = qp;
 				retval = true;
-				LOOPBYTE(
-						 if (de[i] != dq[i])
-						 {
-					retval = false;
-					break;
+				LOOPBYTE
+				{
+					if (de[i] != dq[i])
+					{
+						retval = false;
+						break;
+					}
 				}
-				);
 
 			}
 			else
@@ -588,14 +588,14 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 				de = GETSIGN((GISTTYPE *) DatumGetPointer(entry->key));
 				dq = qp;
 				retval = true;
-				LOOPBYTE(
-						 if (de[i] & ~dq[i])
-						 {
-					retval = false;
-					break;
+				LOOPBYTE
+				{
+					if (de[i] & ~dq[i])
+					{
+						retval = false;
+						break;
+					}
 				}
-				);
-
 			}
 			else
 				retval = _intbig_overlap((GISTTYPE *) DatumGetPointer(entry->key), query);

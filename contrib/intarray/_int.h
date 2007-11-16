@@ -66,10 +66,8 @@
 typedef char BITVEC[SIGLEN];
 typedef char *BITVECP;
 
-#define LOOPBYTE(a) \
-		for(i=0;i<SIGLEN;i++) {\
-				a;\
-		}
+#define LOOPBYTE \
+			for(i=0;i<SIGLEN;i++)
 
 /* beware of multiple evaluation of arguments to these macros! */
 #define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITS_PER_BYTE ) ) )

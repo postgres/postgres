@@ -1,7 +1,7 @@
 /*
  * GiST support for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.20 2007/02/28 22:44:38 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.21 2007/11/16 00:13:02 momjian Exp $
  */
 
 #include "ltree.h"
@@ -133,13 +133,16 @@ ltree_same(PG_FUNCTION_ARGS)
 
 		*result = true;
 		if (!LTG_ISALLTRUE(a))
-			LOOPBYTE(
-					 if (sa[i] != sb[i])
-					 {
-				*result = false;
-				break;
+		{
+			LOOPBYTE
+			{
+				 if (sa[i] != sb[i])
+				 {
+					*result = false;
+					break;
+				}
 			}
-		);
+		}
 	}
 
 	PG_RETURN_POINTER(result);
@@ -198,9 +201,8 @@ ltree_union(PG_FUNCTION_ARGS)
 			{
 				BITVECP		sc = LTG_SIGN(cur);
 
-				LOOPBYTE(
-						 ((unsigned char *) base)[i] |= sc[i];
-				);
+				LOOPBYTE
+					 ((unsigned char *) base)[i] |= sc[i];
 			}
 
 			curtree = LTG_LNODE(cur);
@@ -215,13 +217,14 @@ ltree_union(PG_FUNCTION_ARGS)
 	if (isalltrue == false)
 	{
 		isalltrue = true;
-		LOOPBYTE(
-				 if (((unsigned char *) base)[i] != 0xff)
-				 {
-			isalltrue = false;
-			break;
+		LOOPBYTE
+		{
+			if (((unsigned char *) base)[i] != 0xff)
+			{
+				isalltrue = false;
+				break;
+			}
 		}
-		);
 	}
 
 	isleqr = (left == right || ISEQ(left, right)) ? true : false;
@@ -343,9 +346,8 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 				{
 					BITVECP		sc = LTG_SIGN(lu);
 
-					LOOPBYTE(
-							 ((unsigned char *) ls)[i] |= sc[i];
-					);
+					LOOPBYTE
+						 ((unsigned char *) ls)[i] |= sc[i];
 				}
 			}
 		}
@@ -365,9 +367,8 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 				{
 					BITVECP		sc = LTG_SIGN(lu);
 
-					LOOPBYTE(
-							 ((unsigned char *) rs)[i] |= sc[i];
-					);
+					LOOPBYTE
+						 ((unsigned char *) rs)[i] |= sc[i];
 				}
 			}
 		}
@@ -376,25 +377,27 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 	if (lisat == false)
 	{
 		lisat = true;
-		LOOPBYTE(
-				 if (((unsigned char *) ls)[i] != 0xff)
-				 {
-			lisat = false;
-			break;
+		LOOPBYTE
+		{
+			if (((unsigned char *) ls)[i] != 0xff)
+			{
+				lisat = false;
+				break;
+			}
 		}
-		);
 	}
 
 	if (risat == false)
 	{
 		risat = true;
-		LOOPBYTE(
-				 if (((unsigned char *) rs)[i] != 0xff)
-				 {
-			risat = false;
-			break;
+		LOOPBYTE
+		{
+			if (((unsigned char *) rs)[i] != 0xff)
+			{
+				risat = false;
+				break;
+			}
 		}
-		);
 	}
 
 	lu_l = LTG_GETLNODE(GETENTRY(entryvec, array[FirstOffsetNumber].index));

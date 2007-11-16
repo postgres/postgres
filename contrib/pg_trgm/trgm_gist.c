@@ -113,10 +113,11 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 		TRGM	   *res;
 		BITVECP		sign = GETSIGN(DatumGetPointer(entry->key));
 
-		LOOPBYTE(
-				 if ((sign[i] & 0xff) != 0xff)
+		LOOPBYTE
+		{
+			 if ((sign[i] & 0xff) != 0xff)
 				 PG_RETURN_POINTER(retval);
-		);
+		}
 
 		len = CALCGTSIZE(SIGNKEY | ALLISTRUE, 0);
 		res = (TRGM *) palloc(len);
@@ -210,9 +211,8 @@ unionkey(BITVECP sbase, TRGM * add)
 		if (ISALLTRUE(add))
 			return 1;
 
-		LOOPBYTE(
-				 sbase[i] |= sadd[i];
-		);
+		LOOPBYTE
+			 sbase[i] |= sadd[i];
 	}
 	else
 	{
@@ -284,13 +284,14 @@ gtrgm_same(PG_FUNCTION_ARGS)
 						sb = GETSIGN(b);
 
 			*result = true;
-			LOOPBYTE(
-					 if (sa[i] != sb[i])
-					 {
-				*result = false;
-				break;
+			LOOPBYTE
+			{
+				if (sa[i] != sb[i])
+				{
+					*result = false;
+					break;
+				}
 			}
-			);
 		}
 	}
 	else
@@ -325,9 +326,8 @@ sizebitvec(BITVECP sign)
 	int4		size = 0,
 				i;
 
-	LOOPBYTE(
-			 size += number_of_ones[(unsigned char) sign[i]];
-	);
+	LOOPBYTE
+		 size += number_of_ones[(unsigned char) sign[i]];
 	return size;
 }
 
@@ -338,10 +338,11 @@ hemdistsign(BITVECP a, BITVECP b)
 				diff,
 				dist = 0;
 
-	LOOPBYTE(
-			 diff = (unsigned char) (a[i] ^ b[i]);
-	dist += number_of_ones[diff];
-	);
+	LOOPBYTE
+	{
+		diff = (unsigned char) (a[i] ^ b[i]);
+		dist += number_of_ones[diff];
+	}
 	return dist;
 }
 
@@ -594,9 +595,8 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 			else
 			{
 				ptr = cache[j].sign;
-				LOOPBYTE(
-						 union_l[i] |= ptr[i];
-				);
+				LOOPBYTE
+					union_l[i] |= ptr[i];
 			}
 			*left++ = j;
 			v->spl_nleft++;
@@ -611,9 +611,8 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 			else
 			{
 				ptr = cache[j].sign;
-				LOOPBYTE(
-						 union_r[i] |= ptr[i];
-				);
+				LOOPBYTE
+					union_r[i] |= ptr[i];
 			}
 			*right++ = j;
 			v->spl_nright++;

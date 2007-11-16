@@ -49,10 +49,8 @@ typedef struct
 typedef char BITVEC[SIGLEN];
 typedef char *BITVECP;
 
-#define LOOPBYTE(a) \
-				for(i=0;i<SIGLEN;i++) {\
-								a;\
-				}
+#define LOOPBYTE \
+			for(i=0;i<SIGLEN;i++)
 
 #define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITBYTE ) ) )
 #define GETBITBYTE(x,i) ( ((char)(x)) >> i & 0x01 )

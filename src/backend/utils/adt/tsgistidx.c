@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.4 2007/09/11 08:46:29 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.5 2007/11/16 00:13:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,10 +30,8 @@
 typedef char BITVEC[SIGLEN];
 typedef char *BITVECP;
 
-#define LOOPBYTE(a) \
-	for(i=0;i<SIGLEN;i++) {\
-		a;\
-}
+#define LOOPBYTE \
+			for(i=0;i<SIGLEN;i++)
 
 #define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITS_PER_BYTE ) ) )
 #define GETBITBYTE(x,i) ( ((char)(x)) >> (i) & 0x01 )
@@ -252,10 +250,11 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 		SignTSVector *res;
 		BITVECP		sign = GETSIGN(DatumGetPointer(entry->key));
 
-		LOOPBYTE(
-				 if ((sign[i] & 0xff) != 0xff)
+		LOOPBYTE
+		{
+			 if ((sign[i] & 0xff) != 0xff)
 				 PG_RETURN_POINTER(retval);
-		);
+		}
 
 		len = CALCGTSIZE(SIGNKEY | ALLISTRUE, 0);
 		res = (SignTSVector *) palloc(len);
@@ -376,9 +375,8 @@ unionkey(BITVECP sbase, SignTSVector * add)
 		if (ISALLTRUE(add))
 			return 1;
 
-		LOOPBYTE(
-				 sbase[i] |= sadd[i];
-		);
+		LOOPBYTE
+			sbase[i] |= sadd[i];
 	}
 	else
 	{
@@ -446,13 +444,14 @@ gtsvector_same(PG_FUNCTION_ARGS)
 						sb = GETSIGN(b);
 
 			*result = true;
-			LOOPBYTE(
-					 if (sa[i] != sb[i])
-					 {
-				*result = false;
-				break;
+			LOOPBYTE
+			{
+				if (sa[i] != sb[i])
+				{
+					*result = false;
+					break;
+				}
 			}
-			);
 		}
 	}
 	else
@@ -487,9 +486,8 @@ sizebitvec(BITVECP sign)
 	int4		size = 0,
 				i;
 
-	LOOPBYTE(
-			 size += number_of_ones[(unsigned char) sign[i]];
-	);
+	LOOPBYTE
+		 size += number_of_ones[(unsigned char) sign[i]];
 	return size;
 }
 
@@ -500,10 +498,11 @@ hemdistsign(BITVECP a, BITVECP b)
 				diff,
 				dist = 0;
 
-	LOOPBYTE(
-			 diff = (unsigned char) (a[i] ^ b[i]);
-	dist += number_of_ones[diff];
-	);
+	LOOPBYTE
+	{
+		diff = (unsigned char) (a[i] ^ b[i]);
+		dist += number_of_ones[diff];
+	}
 	return dist;
 }
 
@@ -760,9 +759,8 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 			else
 			{
 				ptr = cache[j].sign;
-				LOOPBYTE(
-						 union_l[i] |= ptr[i];
-				);
+				LOOPBYTE
+					union_l[i] |= ptr[i];
 			}
 			*left++ = j;
 			v->spl_nleft++;
@@ -777,9 +775,8 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 			else
 			{
 				ptr = cache[j].sign;
-				LOOPBYTE(
-						 union_r[i] |= ptr[i];
-				);
+				LOOPBYTE
+					union_r[i] |= ptr[i];
 			}
 			*right++ = j;
 			v->spl_nright++;

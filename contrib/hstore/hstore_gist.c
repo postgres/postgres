@@ -16,15 +16,11 @@ typedef char *BITVECP;
 #define SIGPTR(x)  ( (BITVECP) ARR_DATA_PTR(x) )
 
 
-#define LOOPBYTE(a) \
-		for(i=0;i<SIGLEN;i++) {\
-				a;\
-		}
+#define LOOPBYTE \
+			for(i=0;i<SIGLEN;i++)
 
-#define LOOPBIT(a) \
-		for(i=0;i<SIGLENBIT;i++) {\
-				a;\
-		}
+#define LOOPBIT \
+			for(i=0;i<SIGLENBIT;i++)
 
 /* beware of multiple evaluation of arguments to these macros! */
 #define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITBYTE ) ) )
@@ -148,10 +144,11 @@ ghstore_compress(PG_FUNCTION_ARGS)
 		GISTTYPE   *res;
 		BITVECP		sign = GETSIGN(DatumGetPointer(entry->key));
 
-		LOOPBYTE(
-				 if ((sign[i] & 0xff) != 0xff)
+		LOOPBYTE
+		{
+			 if ((sign[i] & 0xff) != 0xff)
 				 PG_RETURN_POINTER(retval);
-		);
+		}
 
 		res = (GISTTYPE *) palloc(CALCGTSIZE(ALLISTRUE));
 		SET_VARSIZE(res, CALCGTSIZE(ALLISTRUE));
@@ -211,13 +208,14 @@ ghstore_same(PG_FUNCTION_ARGS)
 					sb = GETSIGN(b);
 
 		*result = true;
-		LOOPBYTE(
-				 if (sa[i] != sb[i])
-				 {
-			*result = false;
-			break;
+		LOOPBYTE
+		{
+			if (sa[i] != sb[i])
+			{
+				*result = false;
+				break;
+			}
 		}
-		);
 	}
 	PG_RETURN_POINTER(result);
 }
@@ -228,10 +226,11 @@ sizebitvec(BITVECP sign)
 	int4		size = 0,
 				i;
 
-	LOOPBYTE(
-			 size += SUMBIT(sign);
-	sign = (BITVECP) (((char *) sign) + 1);
-	);
+	LOOPBYTE
+	{
+		size += SUMBIT(sign);
+		sign = (BITVECP) (((char *) sign) + 1);
+	}
 	return size;
 }
 
@@ -241,10 +240,11 @@ hemdistsign(BITVECP a, BITVECP b)
 	int			i,
 				dist = 0;
 
-	LOOPBIT(
-			if (GETBIT(a, i) != GETBIT(b, i))
+	LOOPBIT
+	{
+		if (GETBIT(a, i) != GETBIT(b, i))
 			dist++;
-	);
+	}
 	return dist;
 }
 
@@ -272,9 +272,8 @@ unionkey(BITVECP sbase, GISTTYPE * add)
 
 	if (ISALLTRUE(add))
 		return 1;
-	LOOPBYTE(
-			 sbase[i] |= sadd[i];
-	);
+	LOOPBYTE
+		 sbase[i] |= sadd[i];
 	return 0;
 }
 
@@ -470,9 +469,8 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 			else
 			{
 				ptr = GETSIGN(_j);
-				LOOPBYTE(
-						 union_l[i] |= ptr[i];
-				);
+				LOOPBYTE
+					 union_l[i] |= ptr[i];
 			}
 			*left++ = j;
 			v->spl_nleft++;
@@ -487,9 +485,8 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 			else
 			{
 				ptr = GETSIGN(_j);
-				LOOPBYTE(
-						 union_r[i] |= ptr[i];
-				);
+				LOOPBYTE
+					 union_r[i] |= ptr[i];
 			}
 			*right++ = j;
 			v->spl_nright++;

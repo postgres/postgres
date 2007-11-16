@@ -118,10 +118,11 @@ _ltree_compress(PG_FUNCTION_ARGS)
 
 		BITVECP		sign = LTG_SIGN(DatumGetPointer(entry->key));
 
-		ALOOPBYTE(
-				  if ((sign[i] & 0xff) != 0xff)
-				  PG_RETURN_POINTER(retval);
-		);
+		ALOOPBYTE
+		{
+			if ((sign[i] & 0xff) != 0xff)
+				PG_RETURN_POINTER(retval);
+		}
 		len = LTG_HDRSIZE;
 		key = (ltree_gist *) palloc(len);
 		SET_VARSIZE(key, len);
@@ -155,13 +156,14 @@ _ltree_same(PG_FUNCTION_ARGS)
 					sb = LTG_SIGN(b);
 
 		*result = true;
-		ALOOPBYTE(
-				  if (sa[i] != sb[i])
-				  {
-			*result = false;
-			break;
+		ALOOPBYTE
+		{
+			if (sa[i] != sb[i])
+			{
+				*result = false;
+				break;
+			}
 		}
-		);
 	}
 	PG_RETURN_POINTER(result);
 }
@@ -175,9 +177,8 @@ unionkey(BITVECP sbase, ltree_gist * add)
 	if (LTG_ISALLTRUE(add))
 		return 1;
 
-	ALOOPBYTE(
-			  sbase[i] |= sadd[i];
-	);
+	ALOOPBYTE
+		sbase[i] |= sadd[i];
 	return 0;
 }
 
@@ -219,9 +220,8 @@ sizebitvec(BITVECP sign)
 	int4		size = 0,
 				i;
 
-	ALOOPBYTE(
-			  size += number_of_ones[(unsigned char) sign[i]];
-	);
+	ALOOPBYTE
+		size += number_of_ones[(unsigned char) sign[i]];
 	return size;
 }
 
@@ -232,10 +232,11 @@ hemdistsign(BITVECP a, BITVECP b)
 				diff,
 				dist = 0;
 
-	ALOOPBYTE(
-			  diff = (unsigned char) (a[i] ^ b[i]);
-	dist += number_of_ones[diff];
-	);
+	ALOOPBYTE
+	{
+		diff = (unsigned char) (a[i] ^ b[i]);
+		dist += number_of_ones[diff];
+	}
 	return dist;
 }
 
@@ -410,9 +411,8 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 			else
 			{
 				ptr = LTG_SIGN(_j);
-				ALOOPBYTE(
-						  union_l[i] |= ptr[i];
-				);
+				ALOOPBYTE
+					union_l[i] |= ptr[i];
 			}
 			*left++ = j;
 			v->spl_nleft++;
@@ -427,9 +427,8 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 			else
 			{
 				ptr = LTG_SIGN(_j);
-				ALOOPBYTE(
-						  union_r[i] |= ptr[i];
-				);
+				ALOOPBYTE
+					union_r[i] |= ptr[i];
 			}
 			*right++ = j;
 			v->spl_nright++;
