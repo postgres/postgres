@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.223 2007/11/15 23:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.224 2007/11/16 01:51:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1638,7 +1638,7 @@ ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 				trigger->tgenabled == TRIGGER_DISABLED)
 				continue;
 		}
-		else	/*  ORIGIN or LOCAL role */
+		else	/* ORIGIN or LOCAL role */
 		{
 			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
 				trigger->tgenabled == TRIGGER_DISABLED)
@@ -1697,7 +1697,7 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 				trigger->tgenabled == TRIGGER_DISABLED)
 				continue;
 		}
-		else	/*  ORIGIN or LOCAL role */
+		else	/* ORIGIN or LOCAL role */
 		{
 			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
 				trigger->tgenabled == TRIGGER_DISABLED)
@@ -1769,7 +1769,7 @@ ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 				trigger->tgenabled == TRIGGER_DISABLED)
 				continue;
 		}
-		else	/*  ORIGIN or LOCAL role */
+		else	/* ORIGIN or LOCAL role */
 		{
 			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
 				trigger->tgenabled == TRIGGER_DISABLED)
@@ -1835,7 +1835,7 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 				trigger->tgenabled == TRIGGER_DISABLED)
 				continue;
 		}
-		else	/*  ORIGIN or LOCAL role */
+		else	/* ORIGIN or LOCAL role */
 		{
 			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
 				trigger->tgenabled == TRIGGER_DISABLED)
@@ -1920,7 +1920,7 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 				trigger->tgenabled == TRIGGER_DISABLED)
 				continue;
 		}
-		else	/*  ORIGIN or LOCAL role */
+		else	/* ORIGIN or LOCAL role */
 		{
 			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
 				trigger->tgenabled == TRIGGER_DISABLED)
@@ -1991,7 +1991,7 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 				trigger->tgenabled == TRIGGER_DISABLED)
 				continue;
 		}
-		else	/*  ORIGIN or LOCAL role */
+		else	/* ORIGIN or LOCAL role */
 		{
 			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
 				trigger->tgenabled == TRIGGER_DISABLED)
@@ -3616,7 +3616,7 @@ AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 				trigger->tgenabled == TRIGGER_DISABLED)
 				continue;
 		}
-		else	/*  ORIGIN or LOCAL role */
+		else	/* ORIGIN or LOCAL role */
 		{
 			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
 				trigger->tgenabled == TRIGGER_DISABLED)
