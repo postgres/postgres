@@ -67,6 +67,8 @@ SELECT '1&(2&(4&(5|!6)))'::tsquery;
 SELECT E'1&(''2''&('' 4''&(\\|5 | ''6 \\'' !|&'')))'::tsquery;
 SELECT '''the wether'':dc & '' sKies '':BC & a:d b:a';
 
+SELECT tsvector_in(tsvector_out($$'\\as' ab\c ab\\c AB\\\c ab\\\\c$$::tsvector)), tsquery_in(tsquery_out($$'\\as'$$::tsquery));
+
 select 'a' < 'b & c'::tsquery;
 select 'a' > 'b & c'::tsquery;
 select 'a | f' < 'b & c'::tsquery;

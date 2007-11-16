@@ -765,6 +765,11 @@ infix(INFIX * in, bool first)
 				*(in->cur) = '\'';
 				in->cur++;
 			}
+			else if (t_iseq(op, '\\'))
+			{
+				*(in->cur) = '\\';
+				in->cur++;
+			}
 			COPYCHAR(in->cur, op);
 
 			clen = pg_mblen(op);

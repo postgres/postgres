@@ -550,6 +550,14 @@ tsvector_out(PG_FUNCTION_ARGS)
 				curout = outbuf + pos;
 				*curout++ = '\'';
 			}
+			else if (t_iseq(curin, '\\'))
+			{
+				int4		pos = curout - outbuf;
+
+				outbuf = (char *) repalloc((void *) outbuf, ++lenbuf);
+				curout = outbuf + pos;
+				*curout++ = '\\';
+			}
 			while (len--)
 				*curout++ = *curin++;
 		}
