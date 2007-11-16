@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Nov 16 10:50:15 EST 2007
+   Last updated: Fri Nov 16 10:53:50 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -103,10 +103,10 @@
    company. To get involved, see the developer's FAQ at
    http://www.postgresql.org/docs/faqs.FAQ_DEV.html
    
-   Postgres is a widely-used nickname for the PostgreSQL database. It was
-   the original name of the project at Berkeley and is strongly preferred
-   over other nicknames. If you find 'PostgreSQL' hard to pronounce, call
-   it 'Postgres' instead.
+   Postgres is a widely-used nickname for PostgreSQL. It was the original
+   name of the project at Berkeley and is strongly preferred over other
+   nicknames. If you find 'PostgreSQL' hard to pronounce, call it
+   'Postgres' instead.
    
   1.2) Who controls PostgreSQL?
   
