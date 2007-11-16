@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/uninstall_tsearch2.sql,v 1.1 2007/11/13 21:02:29 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/uninstall_tsearch2.sql,v 1.2 2007/11/16 00:34:54 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public, pg_catalog;
@@ -34,6 +34,7 @@ DROP FUNCTION snb_en_init(internal);
 DROP FUNCTION snb_lexize(internal,internal,int4);
 DROP FUNCTION snb_ru_init_koi8(internal);
 DROP FUNCTION snb_ru_init_utf8(internal);
+DROP FUNCTION snb_ru_init(internal);
 DROP FUNCTION spell_init(internal);
 DROP FUNCTION spell_lexize(internal,internal,int4);
 DROP FUNCTION syn_init(internal);

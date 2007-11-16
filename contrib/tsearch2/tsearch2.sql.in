@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.sql.in,v 1.2 2007/11/13 22:14:50 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.sql.in,v 1.3 2007/11/16 00:34:54 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -72,6 +72,11 @@ CREATE FUNCTION snb_ru_init_koi8(internal)
 CREATE FUNCTION snb_ru_init_utf8(internal)
 	RETURNS internal
 	as 'MODULE_PATHNAME', 'tsa_snb_ru_init_utf8'
+	LANGUAGE C;
+
+CREATE FUNCTION snb_ru_init(internal)
+	RETURNS internal
+	as 'MODULE_PATHNAME', 'tsa_snb_ru_init'
 	LANGUAGE C;
 
 CREATE FUNCTION spell_init(internal)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.3 2007/11/15 21:14:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.4 2007/11/16 00:34:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,6 +122,7 @@ UNSUPPORTED_FUNCTION(tsa_snb_en_init);
 UNSUPPORTED_FUNCTION(tsa_snb_lexize);
 UNSUPPORTED_FUNCTION(tsa_snb_ru_init_koi8);
 UNSUPPORTED_FUNCTION(tsa_snb_ru_init_utf8);
+UNSUPPORTED_FUNCTION(tsa_snb_ru_init);
 
 UNSUPPORTED_FUNCTION(tsa_spell_init);
 UNSUPPORTED_FUNCTION(tsa_spell_lexize);
