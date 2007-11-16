@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.48 2007/11/15 22:25:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.49 2007/11/16 19:53:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,6 +273,8 @@ btree_xlog_split(bool onleft, bool isroot,
 	OffsetNumber newitemoff = 0;
 	Item		newitem = NULL;
 	Size		newitemsz = 0;
+	Item		left_hikey = NULL;
+	Size		left_hikeysz = 0;
 
 	reln = XLogOpenRelation(xlrec->node);
 
@@ -289,6 +291,17 @@ btree_xlog_split(bool onleft, bool isroot,
 		datalen -= sizeof(BlockIdData);
 
 		forget_matching_split(xlrec->node, downlink, false);
+
+		/* Extract left hikey and its size (still assuming 16-bit alignment) */
+		if (!(record->xl_info & XLR_BKP_BLOCK_1))
+		{
+			/* We assume 16-bit alignment is enough for IndexTupleSize */
+			left_hikey = (Item) datapos;
+			left_hikeysz = MAXALIGN(IndexTupleSize(left_hikey));
+
+			datapos += left_hikeysz;
+			datalen -= left_hikeysz;
+		}
 	}
 
 	/* Extract newitem and newitemoff, if present */
@@ -302,17 +315,13 @@ btree_xlog_split(bool onleft, bool isroot,
 
 	if (onleft && !(record->xl_info & XLR_BKP_BLOCK_1))
 	{
-		IndexTupleData itupdata;
-
 		/*
-		 * We need to copy the tuple header to apply IndexTupleDSize, because
-		 * of alignment considerations.  However, we assume that PageAddItem
-		 * doesn't care about the alignment of the newitem pointer it's given.
+		 * We assume that 16-bit alignment is enough to apply IndexTupleSize
+		 * (since it's fetching from a uint16 field) and also enough for
+		 * PageAddItem to insert the tuple.
 		 */
-		newitem = datapos;
-		memcpy(&itupdata, datapos, sizeof(IndexTupleData));
-		newitemsz = IndexTupleDSize(itupdata);
-		newitemsz = MAXALIGN(newitemsz);
+		newitem = (Item) datapos;
+		newitemsz = MAXALIGN(IndexTupleSize(newitem));
 		datapos += newitemsz;
 		datalen -= newitemsz;
 	}
@@ -332,6 +341,18 @@ btree_xlog_split(bool onleft, bool isroot,
 	ropaque->btpo_cycleid = 0;
 
 	_bt_restore_page(rpage, datapos, datalen);
+
+	/*
+	 * On leaf level, the high key of the left page is equal to the
+	 * first key on the right page.
+	 */
+	if (xlrec->level == 0)
+	{
+		ItemId		hiItemId = PageGetItemId(rpage, P_FIRSTDATAKEY(ropaque));
+
+		left_hikey = PageGetItem(rpage, hiItemId);
+		left_hikeysz = ItemIdGetLength(hiItemId);
+	}
 
 	PageSetLSN(rpage, lsn);
 	PageSetTLI(rpage, ThisTimeLineID);
@@ -360,8 +381,6 @@ btree_xlog_split(bool onleft, bool isroot,
 				OffsetNumber maxoff = PageGetMaxOffsetNumber(lpage);
 				OffsetNumber deletable[MaxOffsetNumber];
 				int			ndeletable = 0;
-				ItemId		hiItemId;
-				Item		hiItem;
 
 				/*
 				 * Remove the items from the left page that were copied to the
@@ -394,11 +413,8 @@ btree_xlog_split(bool onleft, bool isroot,
 						elog(PANIC, "failed to add new item to left page after split");
 				}
 
-				/* Set high key equal to the first key on the right page */
-				hiItemId = PageGetItemId(rpage, P_FIRSTDATAKEY(ropaque));
-				hiItem = PageGetItem(rpage, hiItemId);
-
-				if (PageAddItem(lpage, hiItem, ItemIdGetLength(hiItemId),
+				/* Set high key */
+				if (PageAddItem(lpage, left_hikey, left_hikeysz,
 								P_HIKEY, false, false) == InvalidOffsetNumber)
 					elog(PANIC, "failed to add high key to left page after split");
 

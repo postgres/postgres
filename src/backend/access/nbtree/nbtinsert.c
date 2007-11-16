@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.161 2007/11/15 21:14:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.162 2007/11/16 19:53:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,13 +371,13 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
  *		removing any LP_DEAD tuples.
  *
  *		On entry, *buf and *offsetptr point to the first legal position
- *		where the new tuple could be inserted. The caller should hold an
- *		exclusive lock on *buf. *offsetptr can also be set to
- *		InvalidOffsetNumber, in which case the function will search the right
- *		location within the page if needed. On exit, they point to the chosen
- *		insert location. If findinsertloc decided to move right, the lock and
- *		pin on the original page will be released and the new page returned to
- *		the caller is exclusively locked instead.
+ *		where the new tuple could be inserted.  The caller should hold an
+ *		exclusive lock on *buf.  *offsetptr can also be set to
+ *		InvalidOffsetNumber, in which case the function will search for the
+ *		right location within the page if needed.  On exit, they point to the
+ *		chosen insert location.  If _bt_findinsertloc decides to move right,
+ *		the lock and pin on the original page will be released and the new
+ *		page returned to the caller is exclusively locked instead.
  *
  *		newtup is the new tuple we're inserting, and scankey is an insertion
  *		type scan key for it.
@@ -421,8 +421,6 @@ _bt_findinsertloc(Relation rel,
 		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
 				"Consider a function index of an MD5 hash of the value, "
 				"or use full text indexing.")));
-
-
 
 	/*----------
 	 * If we will need to split the page to put the item on this page,
@@ -1004,7 +1002,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		xl_btree_split xlrec;
 		uint8		xlinfo;
 		XLogRecPtr	recptr;
-		XLogRecData rdata[6];
+		XLogRecData rdata[7];
 		XLogRecData *lastrdata;
 
 		xlrec.node = rel->rd_node;
@@ -1020,15 +1018,32 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 		lastrdata = &rdata[0];
 
-		/* Log downlink on non-leaf pages. */
 		if (ropaque->btpo.level > 0)
 		{
+			/* Log downlink on non-leaf pages */
 			lastrdata->next = lastrdata + 1;
 			lastrdata++;
 
 			lastrdata->data = (char *) &newitem->t_tid.ip_blkid;
 			lastrdata->len = sizeof(BlockIdData);
 			lastrdata->buffer = InvalidBuffer;
+
+			/*
+			 * We must also log the left page's high key, because the right
+			 * page's leftmost key is suppressed on non-leaf levels.  Show it
+			 * as belonging to the left page buffer, so that it is not stored
+			 * if XLogInsert decides it needs a full-page image of the left
+			 * page.
+			 */
+			lastrdata->next = lastrdata + 1;
+			lastrdata++;
+
+			itemid = PageGetItemId(origpage, P_HIKEY);
+			item = (IndexTuple) PageGetItem(origpage, itemid);
+			lastrdata->data = (char *) item;
+			lastrdata->len = MAXALIGN(IndexTupleSize(item));
+			lastrdata->buffer = buf;	/* backup block 1 */
+			lastrdata->buffer_std = true;
 		}
 
 		/*
@@ -1057,7 +1072,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 			lastrdata->buffer = buf;	/* backup block 1 */
 			lastrdata->buffer_std = true;
 		}
-		else
+		else if (ropaque->btpo.level == 0)
 		{
 			/*
 			 * Although we don't need to WAL-log the new item, we still need
