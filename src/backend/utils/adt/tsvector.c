@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.8 2007/11/15 22:25:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.9 2007/11/16 15:05:59 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,6 +345,8 @@ tsvectorout(PG_FUNCTION_ARGS)
 
 			if (t_iseq(curin, '\''))
 				*curout++ = '\'';
+			else if (t_iseq(curin, '\\'))
+				*curout++ = '\\';
 
 			while (len--)
 				*curout++ = *curin++;

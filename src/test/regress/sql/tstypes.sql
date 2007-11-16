@@ -10,6 +10,8 @@ SELECT E'''1 \\''2'''::tsvector;
 SELECT E'''1 \\''2''3'::tsvector;
 SELECT E'''1 \\''2'' 3'::tsvector;
 SELECT E'''1 \\''2'' '' 3'' 4 '::tsvector;
+SELECT $$'\\as' ab\c ab\\c AB\\\c ab\\\\c$$::tsvector;
+SELECT tsvectorin(tsvectorout($$'\\as' ab\c ab\\c AB\\\c ab\\\\c$$::tsvector));
 SELECT '''w'':4A,3B,2C,1D,5 a:8';
 SELECT 'a:3A b:2a'::tsvector || 'ba:1234 a:1B';
 SELECT setweight('w:12B w:13* w:12,5,6 a:1,3* a:3 w asd:1dc asd zxc:81,567,222A'::tsvector, 'c');
@@ -55,6 +57,7 @@ SELECT '1&2&4&5&6'::tsquery;
 SELECT '1&(2&(4&(5|6)))'::tsquery;
 SELECT '1&(2&(4&(5|!6)))'::tsquery;
 SELECT E'1&(''2''&('' 4''&(\\|5 | ''6 \\'' !|&'')))'::tsquery;
+SELECT $$'\\as'$$::tsquery;
 
 SELECT 'a' < 'b & c'::tsquery as "true";
 SELECT 'a' > 'b & c'::tsquery as "false";

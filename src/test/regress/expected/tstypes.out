@@ -59,6 +59,18 @@ SELECT E'''1 \\''2'' '' 3'' 4 '::tsvector;
  '4' ' 3' '1 ''2'
 (1 row)
 
+SELECT $$'\\as' ab\c ab\\c AB\\\c ab\\\\c$$::tsvector;
+                tsvector                
+----------------------------------------
+ '\\as' 'abc' 'AB\\c' 'ab\\c' 'ab\\\\c'
+(1 row)
+
+SELECT tsvectorin(tsvectorout($$'\\as' ab\c ab\\c AB\\\c ab\\\\c$$::tsvector));
+               tsvectorin               
+----------------------------------------
+ '\\as' 'abc' 'AB\\c' 'ab\\c' 'ab\\\\c'
+(1 row)
+
 SELECT '''w'':4A,3B,2C,1D,5 a:8';
        ?column?        
 -----------------------
@@ -316,6 +328,12 @@ SELECT E'1&(''2''&('' 4''&(\\|5 | ''6 \\'' !|&'')))'::tsquery;
                  tsquery                  
 ------------------------------------------
  '1' & '2' & ' 4' & ( '|5' | '6 '' !|&' )
+(1 row)
+
+SELECT $$'\\as'$$::tsquery;
+ tsquery 
+---------
+ '\\as'
 (1 row)
 
 SELECT 'a' < 'b & c'::tsquery as "true";

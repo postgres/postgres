@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.10 2007/11/15 22:25:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.11 2007/11/16 15:05:59 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -612,6 +612,11 @@ infix(INFIX *in, bool first)
 			if (t_iseq(op, '\''))
 			{
 				*(in->cur) = '\'';
+				in->cur++;
+			}
+			else if (t_iseq(op, '\\'))
+			{
+				*(in->cur) = '\\';
 				in->cur++;
 			}
 			COPYCHAR(in->cur, op);
