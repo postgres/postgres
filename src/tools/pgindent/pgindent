@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.94 2007/11/15 23:23:44 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.95 2007/11/16 01:11:04 momjian Exp $
 
 # Known bugs:
 #
@@ -46,9 +46,10 @@ do
 # 'else' followed by a single-line comment, followed by
 # a brace on the next line confuses BSD indent, so we push
 # the comment down to the next line, then later pull it
-# back up again.
+# back up again.  Add space before PGMV or indent will add
+# it for us.
 	sed 's;\([} 	]\)else[ 	]*\(/\*\)\(.*\*/\)[ 	]*$;\1else\
-    \2PGINDENT_MOVED\3;g' |
+    \2 PGMV\3;g' |
 
 # Indent multi-line after-'else' comment so BSD indent will move it properly.
 # We already moved down single-line comments above.  Check for '*' to make
@@ -2243,10 +2244,10 @@ do
 		{
 			if (NR != 1)
 			{
-				if ($0 ~ "/\*PGINDENT_MOVED")
+				if ($0 ~ "/\* PGMV")
 				{
 					# remove tag
-					sub("PGINDENT_MOVED", "", $0);
+					sub(" PGMV", "", $0);
 					# remove leading whitespace
 					sub("^[ 	]*", "", $0);
 					# add comment with single tab prefix
