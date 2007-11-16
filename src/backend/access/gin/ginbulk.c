@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.9 2007/02/01 04:16:08 neilc Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.10 2007/11/16 21:55:59 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -16,6 +16,7 @@
 
 #include "access/gin.h"
 #include "utils/datum.h"
+#include "utils/memutils.h"
 
 
 #define DEF_NENTRY	2048
@@ -38,7 +39,7 @@ EAAllocate(BuildAccumulator *accum)
 	if (accum->entryallocator == NULL || accum->length >= DEF_NENTRY)
 	{
 		accum->entryallocator = palloc(sizeof(EntryAccumulator) * DEF_NENTRY);
-		accum->allocatedMemory += sizeof(EntryAccumulator) * DEF_NENTRY;
+		accum->allocatedMemory += GetMemoryChunkSpace(accum->entryallocator);
 		accum->length = 0;
 	}
 
@@ -55,10 +56,11 @@ ginInsertData(BuildAccumulator *accum, EntryAccumulator *entry, ItemPointer heap
 {
 	if (entry->number >= entry->length)
 	{
-		accum->allocatedMemory += sizeof(ItemPointerData) * entry->length;
+		accum->allocatedMemory -= GetMemoryChunkSpace(entry->list);
 		entry->length *= 2;
 		entry->list = (ItemPointerData *) repalloc(entry->list,
 									sizeof(ItemPointerData) * entry->length);
+		accum->allocatedMemory += GetMemoryChunkSpace(entry->list);
 	}
 
 	if (entry->shouldSort == FALSE)
@@ -95,10 +97,10 @@ getDatumCopy(BuildAccumulator *accum, Datum value)
 		realSize = datumGetSize(value, false, att[0]->attlen);
 
 		s = (char *) palloc(realSize);
+		accum->allocatedMemory += GetMemoryChunkSpace(s);
+
 		memcpy(s, DatumGetPointer(value), realSize);
 		res = PointerGetDatum(s);
-
-		accum->allocatedMemory += realSize;
 	}
 	return res;
 }
@@ -143,8 +145,8 @@ ginInsertEntry(BuildAccumulator *accum, ItemPointer heapptr, Datum entry)
 		ea->number = 1;
 		ea->shouldSort = FALSE;
 		ea->list = (ItemPointerData *) palloc(sizeof(ItemPointerData) * DEF_NPTR);
+		accum->allocatedMemory += GetMemoryChunkSpace(ea->list);
 		ea->list[0] = *heapptr;
-		accum->allocatedMemory += sizeof(ItemPointerData) * DEF_NPTR;
 
 		if (pea == NULL)
 			accum->entries = ea;
@@ -270,11 +272,11 @@ ginGetEntry(BuildAccumulator *accum, Datum *value, uint32 *n)
 	EntryAccumulator *entry;
 	ItemPointerData *list;
 
-
 	if (accum->stack == NULL)
 	{
 		/* first call */
 		accum->stack = palloc0(sizeof(EntryAccumulator *) * (accum->maxdepth + 1));
+		accum->allocatedMemory += GetMemoryChunkSpace(accum->stack);
 		entry = accum->entries;
 
 		if (entry == NULL)
@@ -295,6 +297,7 @@ ginGetEntry(BuildAccumulator *accum, Datum *value, uint32 *n)
 	}
 	else
 	{
+		accum->allocatedMemory -= GetMemoryChunkSpace(accum->stack[accum->stackpos]->list);
 		pfree(accum->stack[accum->stackpos]->list);
 		accum->stack[accum->stackpos]->list = NULL;
 		entry = walkTree(accum);

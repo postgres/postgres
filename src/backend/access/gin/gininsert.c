@@ -8,16 +8,18 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.9 2007/06/05 12:47:49 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.10 2007/11/16 21:55:59 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
 #include "access/genam.h"
 #include "access/gin.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "utils/memutils.h"
+
 
 typedef struct
 {
@@ -132,8 +134,7 @@ addItemPointersToTuple(Relation index, GinState *ginstate, GinBtreeStack *stack,
 }
 
 /*
- * Inserts only one entry to the index, but it can adds more that 1
- * ItemPointer.
+ * Inserts only one entry to the index, but it can add more than 1 ItemPointer.
  */
 static void
 ginEntryInsert(Relation index, GinState *ginstate, Datum value, ItemPointerData *items, uint32 nitem, bool isBuild)
@@ -198,7 +199,7 @@ ginEntryInsert(Relation index, GinState *ginstate, Datum value, ItemPointerData 
 
 /*
  * Saves indexed value in memory accumulator during index creation
- * Function isn't use during normal insert
+ * Function isn't used during normal insert
  */
 static uint32
 ginHeapTupleBulkInsert(GinBuildState *buildstate, Datum value, ItemPointer heapptr)
@@ -226,7 +227,6 @@ static void
 ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 				 bool *isnull, bool tupleIsAlive, void *state)
 {
-
 	GinBuildState *buildstate = (GinBuildState *) state;
 	MemoryContext oldCtx;
 
@@ -237,11 +237,8 @@ ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 
 	buildstate->indtuples += ginHeapTupleBulkInsert(buildstate, *values, &htup->t_self);
 
-	/*
-	 * we use only half maintenance_work_mem, because there is some leaks
-	 * during insertion and extract values
-	 */
-	if (buildstate->accum.allocatedMemory >= maintenance_work_mem * 1024L / 2L)
+	/* If we've maxed out our available memory, dump everything to the index */
+	if (buildstate->accum.allocatedMemory >= maintenance_work_mem * 1024L)
 	{
 		ItemPointerData *list;
 		Datum		entry;
