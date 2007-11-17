@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.542 2007/11/16 17:22:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.543 2007/11/17 15:17:16 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -26,7 +26,7 @@ non-ASCII characters            convert to HTML4 entity (&) escapes
 wrap long lines
 
 For new features, add links to the documentation sections.  Use </link>
-so that perl can remove it so HISTORY.html can be created with no
+so that Perl can remove it so HISTORY.html can be created with no
 links to the main documentation.  This was added only in 8.2, so don't
 do it for earlier branch release files.
 
@@ -257,10 +257,9 @@ do it for earlier branch release files.
      <para>
       Previously, a function or operator that took a <type>TEXT</>
       parameter used to automatically cast a non-<type>TEXT</> value to
-      <type>TEXT</> and call the function or operator (assuming there was
-      no other matching function or operator).  That no longer happens
-      and an explicit cast to <type>TEXT</> is now required.  For example,
-      these expressions now throw an error:
+      <type>TEXT</> and call the function or operator, if needed.  This
+      no longer happens and an explicit cast to <type>TEXT</> is now
+      required.  For example, these expressions now throw an error:
 
 <programlisting>
 substr(current_date, 1, 1);
@@ -281,8 +280,7 @@ substr(current_date::text, 1, 1);
       <type>CHAR</> and <type>VARCHAR</> still cast to <type>TEXT</>
       automatically.  Concatenation (<literal>||</>) with non-<type>TEXT</>
       types is still automatically cast, assuming one of the parameters
-      is textual.  While this change will require additional casts for
-      some queries, it also eliminates some unusual behavior.
+      is textual.  This change was made to reduce unexpected behavior.
      </para>
 
      <para>
@@ -497,7 +495,7 @@ substr(current_date::text, 1, 1);
 
     <listitem>
      <para>
-      <command>ROLLBACK</> outside a mult-statement transaction now
+      <command>ROLLBACK</> outside a multi-statement transaction now
       issues a <literal>NOTICE</> instead of <literal>WARNING</> (Bruce)
       (Tom)
      </para>
@@ -1087,7 +1085,7 @@ substr(current_date::text, 1, 1);
        <literal>ASC</>/<literal>DESC</> specifiers could not fully use
        an index. Now an index can be fully used in such cases if the
        index was created with matching
-       <literal>ASC</>/<literal>DESC</> specifictions.
+       <literal>ASC</>/<literal>DESC</> specifications.
       </para>
      </listitem>
 
