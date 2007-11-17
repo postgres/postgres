@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.543 2007/11/17 15:17:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.544 2007/11/17 21:13:42 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -160,13 +160,13 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Asynchronous commit delays writes to WAL for committed transactions
+      Asynchronous commit delays writes to WAL during transaction commit
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Distributed checkpoints prevent I/O spikes during checkpoints
+       Distributed checkpoints prevent checkpoint I/O spikes
      </para>
     </listitem>
 
@@ -192,8 +192,8 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Prevent large sequential scans from forcing out more frequently
-      used cached pages
+      Prevent large sequential scans from forcing out more frequently used
+      cached pages
      </para>
     </listitem>
 
@@ -212,7 +212,7 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Reduce need for vacuum by using pseudo-transaction ids in
+      Reduce need for vacuum by using non-persistent transaction ids for
       read-only transactions
      </para>
     </listitem>
@@ -238,36 +238,16 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      <filename>contrib/tsearch2</> features have been moved into
-       the core server, with some minor syntax changes
-     </para>
-
-     <para>
-      <filename>contrib/tsearch2</> now contains a compatibility
-      interface.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       Non-character values are no longer automatically cast to
       <type>TEXT</> (Peter, Tom)
      </para>
 
      <para>
       Previously, a function or operator that took a <type>TEXT</>
-      parameter used to automatically cast a non-<type>TEXT</> value to
-      <type>TEXT</> and call the function or operator, if needed.  This
-      no longer happens and an explicit cast to <type>TEXT</> is now
-      required.  For example, these expressions now throw an error:
-
-<programlisting>
-substr(current_date, 1, 1);
-23 LIKE '%2%'
-5.4 ~ '6';
-</programlisting>
-
-      but these work because of the explicit casts:
+      parameter automatically cast a non-<type>TEXT</> value to
+      <type>TEXT</>, if needed.  This no longer happens and an explicit
+      cast to <type>TEXT</> is now required.  For example, these
+      expressions now require a cast to TEXT:
 
 <programlisting>
 substr(current_date::text, 1, 1);
@@ -284,6 +264,18 @@ substr(current_date::text, 1, 1);
      </para>
 
      <para>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+       Full text search features from <filename>contrib/tsearch2</> have
+       been moved into the core server, with some minor syntax changes
+     </para>
+
+     <para>
+      <filename>contrib/tsearch2</> now contains a compatibility
+      interface.
      </para>
     </listitem>
 
@@ -333,7 +325,7 @@ substr(current_date::text, 1, 1);
      <para>
       <literal>ORDER BY ... USING</> <replaceable>operator</> now must
       use a less-than or greater-than <replaceable>operator</> that is
-      defined in a btree operator class (???)
+      defined in a btree operator class
      </para>
 
      <para>
@@ -351,19 +343,19 @@ substr(current_date::text, 1, 1);
       The old naming convention is still honored when possible, but
       client code should no longer depending on it. Application code
       should use the new <literal>pg_type.typarray</literal> column to
-      determine the array data type.
+      determine the array's data type.
      </para>
     </listitem>
 
     <listitem>
      <para>
       <command>SET LOCAL</command> changes now persist until
-      the end of the top-most transaction, unless rolled back (Tom)
+      the end of the outer-most transaction, unless rolled back (Tom)
      </para>
 
      <para>
-      Previously <command>SET LOCAL</command>'s effects reverted
-      during subtransaction commit and <command>RELEASE</>.
+      Previously <command>SET LOCAL</command>'s effects were lost
+      after subtransaction commit or <command>RELEASE</>.
      </para>
     </listitem>
 
@@ -374,7 +366,7 @@ substr(current_date::text, 1, 1);
      </para>
 
      <para>
-      For example, <literal>BEGIN; DROP DATABASE; COMMIT</> will now be
+      For example, <literal>"BEGIN; DROP DATABASE; COMMIT"</> will now be
       rejected even if submitted as a single query message.
      </para>
     </listitem>
@@ -399,11 +391,11 @@ substr(current_date::text, 1, 1);
      </para>
 
      <para>
-      In UTF8-encoded databases the argument is now processed as a Unicode
-      code point. In other multi-byte encodings the argument must designate
-      a 7-bit ASCII character, or an error is raised. Zero also causes an
-      error. <function>ascii()</function> has been adjusted as well to
-      match this behavior.
+      In UTF8-encoded databases the <function>chr()</function> argument is
+      now processed as a Unicode code point. In other multi-byte encodings
+      <function>chr()</function>'s argument must designate a 7-bit ASCII
+      character. Zero is no longer a valid parameter.
+      <function>ascii()</function> has been adjusted similarly.
      </para>
     </listitem>
 
@@ -425,7 +417,7 @@ substr(current_date::text, 1, 1);
        <para>
         <function>convert_from(bytea, name)</function> returns
         <type>TEXT</> &mdash; converts the first argument from the named
-        encoding to the database encoding.
+        encoding to the database encoding
        </para>
       </listitem>
 
@@ -433,7 +425,7 @@ substr(current_date::text, 1, 1);
        <para>
         <function>convert_to(text, name)</function> returns
         <type>BYTEA</> &mdash; converts the first argument from the
-        database encoding to the named encoding.
+        database encoding to the named encoding
        </para>
       </listitem>
 
@@ -441,7 +433,7 @@ substr(current_date::text, 1, 1);
        <para>
         <function>length(bytea, name)</function> returns
         <type>INTEGER</> &mdash; gives the length of the first
-        argument in characters in the named encoding.
+        argument in characters in the named encoding
        </para>
       </listitem>
      </itemizedlist>
@@ -496,8 +488,7 @@ substr(current_date::text, 1, 1);
     <listitem>
      <para>
       <command>ROLLBACK</> outside a multi-statement transaction now
-      issues a <literal>NOTICE</> instead of <literal>WARNING</> (Bruce)
-      (Tom)
+      issues <literal>NOTICE</> instead of <literal>WARNING</> (Bruce)
      </para>
     </listitem>
 
@@ -508,10 +499,10 @@ substr(current_date::text, 1, 1);
      </para>
 
      <para>
-      The new <function>SET_VARSIZE()</> macro <emphasis>must</> be
-      used to set the length of generated values. Also, it might be
-      necessary to expand (<quote>de-TOAST</quote>) input values in
-      additional places.
+      The new <function>SET_VARSIZE()</> macro <emphasis>must</> be used
+      to set the length of generated <type>varlena</> values. Also, it
+      might be necessary to expand (<quote>de-TOAST</quote>) input values
+      in more cases.
      </para>
     </listitem>
 
@@ -533,36 +524,36 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Asynchronous commit delays writes to WAL for committed transactions
+       Asynchronous commit delays writes to WAL during transaction commit
        (Simon)
       </para>
 
       <para>
        This feature dramatically increases performance for data-modifying
-       queries. The disadvantage is that because on-disk changes are
+       queries. The disadvantage is that because disk writes are
        delayed, if the operating system crashes before data is written to
-       the disk, committed data will be lost. This is useful only for
+       the disk, committed data will be lost. This feature is useful for
        applications that can accept some data loss.  Unlike
        <varname>fsync</varname>, asynchronous commit does not risk database
-       corruption; the worst case is that after an operating system crash
-       the last few reportedly-committed transactions will be missing. 
-       This feature is enabled turning <varname>synchronous_commit</>
+       consistency; the worst case is that after an operating system crash
+       the last few reportedly-committed transactions might be missing.
+       This feature is enabled by turning <varname>synchronous_commit</>
        <literal>off</> and setting <varname>wal_writer_delay</>.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Distributed checkpoints prevent I/O spikes during
-       checkpoints (Itagaki Takahiro and Heikki Linnakangas)
+       Distributed checkpoints prevent checkpoint I/O spikes (Itagaki
+       Takahiro and Heikki Linnakangas)
       </para>
 
       <para>
-       Previously all modified buffers were forced to disk at
-       checkpoint time, causing an I/O spike and decreasing server
-       performance. This new capability spreads checkpoint activity out
-       between checkpoints, reducing peak I/O usage. (User-requested
-       and shutdown checkpoints are still immediately written to disk.)
+       Previously all modified buffers were forced to disk during
+       checkpoints, causing an I/O spike and decreasing server performance.
+       This new capability spreads disk writes out between checkpoints,
+       reducing peak I/O usage. (User-requested and shutdown checkpoints
+       are still written immediately to disk.)
       </para>
      </listitem>
 
@@ -573,14 +564,14 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       To allow high concurrency <command>UPDATE</> creates a new tuple,
-       rather than replacing the old tuple. Previously only
+       To allow high concurrency <command>UPDATE</>, creates a new tuple
+       rather than overwriting the old tuple. Previously only
        <command>VACUUM</> could reuse space taken by old tuples. With
        <acronym>HOT</> dead tuple space can be reused at the time of
        <command>UPDATE</> or <command>INSERT</>.  This allows for more
        consistent performance.  <acronym>HOT</> even allows deleted row
-       space reuse.  <acronym>HOT</> space reuse is not possible if
-       <command>UPDATE</> changes indexed columns.
+       space reuse.  <acronym>HOT</> space reuse is not possible for
+       <command>UPDATE</>s that change indexed columns.
       </para>
      </listitem>
 
@@ -602,24 +593,24 @@ substr(current_date::text, 1, 1);
 
       <para>
        Variable-length data types with data values less then 128 bytes
-       will see a decrease of 3-6 bytes. For example, two
-       <type>CHAR(1)</type> fields now take 4 bytes instead of 16. Rows
+       will see a storage decrease of 3-6 bytes. For example, two
+       <type>CHAR(1)</type> fields now use 4 bytes instead of 16. Rows
        are also 4 bytes shorter.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Reduce need for vacuum by using pseudo-transaction ids in
+       Reduce need for vacuum by using non-persistent transaction ids for
        read-only transactions (Florian Pflug)
       </para>
 
       <para>
-       Pseudo-transaction ids do not increment the global transaction
-       counter. Therefore, they do not add to the need for vacuum to
-       read all database rows to prevent problems with transaction id
-       wrap-around. Other transaction performance improvements were also
-       made that should improve concurrency.
+       Non-persistent transaction ids do not increment the global
+       transaction counter. Therefore, they do not add to the need for
+       vacuum to read all database rows to prevent problems with
+       transaction id wrap-around. Other transaction performance
+       improvements were also made that should improve concurrency.
       </para>
      </listitem>
 
@@ -637,10 +628,12 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       Unless WAL archiving is enabled, it is possible to just
-       <function>fsync()</> the table at the end of the command,
-       increasing performance. Additional WAL efficiencies were also
-       made.
+       Unless WAL archiving is enabled, the system now avoids WAL writes
+       for <command>CLUSTER</command> and just <function>fsync()</>s the
+       table at the end of the command.  It also does the same for
+       <command>COPY</command> if the table was created in the same
+       transaction.  Additional WAL efficiencies for these commands were
+       also made.
       </para>
      </listitem>
 
@@ -659,9 +652,9 @@ substr(current_date::text, 1, 1);
 
       <para>
        This is accomplished by starting the new sequential scan in the
-       middle of the table (where the other sequential scan is already
+       middle of the table (where another sequential scan is already
        in-progress) and wrapping around to the beginning to finish.  This
-       may affect the order of returned rows in a non-<literal>ORDER BY</>
+       can affect the order of returned rows in a non-<literal>ORDER BY</>
        query.
       </para>
      </listitem>
@@ -675,7 +668,7 @@ substr(current_date::text, 1, 1);
       <para>
        This is done by sequentially scanning the table and using a filter
        to save the few requested rows, rather than sorting the entire
-       table.  This is used if there is no matching index.
+       table.  This is useful if there is no matching index.
       </para>
      </listitem>
 
@@ -701,26 +694,26 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Support multiple concurrent autovacuum processes (Alvaro, Itagaki
-       Takahiro)
-      </para>
-
-      <para>
-       This allows multiple vacuums to run concurrently, meaning
-       vacuuming of a large table will not prevent smaller tables from
-       being vacuumed at the same time. Autovacuum is now considered
-       mature and thus enabled by default. Several autovacuum
-       default parameter values were also updated.
+       Autovacuum is now enabled by default (Alvaro)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Autovacuum is now enabled by default (Alvaro)
+       Support multiple concurrent autovacuum processes (Alvaro, Itagaki
+       Takahiro)
       </para>
 
       <para>
-       Also, autovacuum now reports its activity start time in
+       This allows multiple vacuums to run concurrently.  This prevents
+       vacuuming of a large table from delaying the vacumming of smaller
+       tables.  Several autovacuum parameter defaults were also modified.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Autovacuum now reports its activity start time in
        <literal>pg_stat_activity</literal> (Tom)
       </para>
      </listitem>
@@ -752,8 +745,8 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       This should be used in place of the native Kerberos authentication
-       because it is an industry standard.
+       This should be preferred to native Kerberos authentication because
+       GSSAPI is an industry standard.
       </para>
      </listitem>
 
@@ -783,14 +776,14 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       JOHAB cannot safely be used as a server-side encoding.
+       JOHAB is not safe as a server-side encoding.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow logfile creation in CSV format (Arul Shaji, Greg Smith,
-       Andrew Dunstan)
+       Allow server log output in comma-separated value (CSV) format (Arul
+       Shaji, Greg Smith, Andrew Dunstan)
       </para>
 
       <para>
@@ -801,21 +794,21 @@ substr(current_date::text, 1, 1);
      <listitem>
       <para>
        Add <varname>log_autovacuum_min_duration</varname> parameter to
-       support configurable logging of autovacuum actions (Simon, Alvaro)
+       support configurable logging of autovacuum activity (Simon, Alvaro)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <varname>log_lock_waits</varname> parameter to log long wait
-       times (Simon)
+       Add <varname>log_lock_waits</varname> parameter to log lock waiting
+       (Simon)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <varname>log_temp_files</varname> parameter to log usage of
-       temporary files (Bill Moran)
+       Add <varname>log_temp_files</varname> parameter to log temporary
+       file usage (Bill Moran)
       </para>
      </listitem>
 
@@ -828,16 +821,21 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       <varname>log_line_prefix</varname> escapes <literal>%s</literal>
-       and <literal>%c</literal> can now be used in all processes
-       (Andrew)
+       <varname>log_line_prefix</varname> now supports
+       <literal>%s</literal> and <literal>%c</literal> escapes in all
+       processes (Andrew)
+      </para>
+
+      <para>
+       Previously these escapes worked only for user sessions, not for
+       database helper processes.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Use our own timezone support for formatting timestamps displayed in
-       the server log (Tom)
+       Use PostgreSQL-supplied timezone support for formatting timestamps
+       displayed in the server log (Tom)
       </para>
 
       <para>
@@ -868,10 +866,10 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       Previously setting <varname>archive_command</> to an empty
-       string turned off archiving. Now <varname>archive_mode</> turns
-       archiving on and off. This is useful for stopping archiving
-       temporarily.
+       Previously setting <varname>archive_command</> to an empty string
+       turned off archiving. Now <varname>archive_mode</> turns archiving
+       on and off, independent of <varname>archive_command</>. This is
+       useful for stopping archiving temporarily.
       </para>
      </listitem>
 
@@ -892,8 +890,8 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Add <varname>log_restartpoints</varname> archive recovery option
-       to emit a log message at each recovery restart point (Simon)
+       Add <varname>log_restartpoints</varname> to control logging of
+       every point-in-time recovery restart point (Simon)
       </para>
      </listitem>
 
@@ -912,19 +910,19 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       This parameters allows a list of tablespaces to be specified
-       which enables spreading the I/O load across multiple
-       tablespaces. A random tablespace is chosen each time a temporary
-       object is created. Temporary files are not stored in
-       per-database <filename>pgsql_tmp/</filename> directories anymore
-       but in per-tablespace directories.
+       This parameters supports a list of tablespaces to be used.  This
+       enables spreading the I/O load across multiple tablespaces. A random
+       tablespace is chosen each time a temporary object is created.
+       Temporary files are no longer stored in per-database
+       <filename>pgsql_tmp/</filename> directories but in per-tablespace
+       directories.
       </para>
      </listitem>
 
      <listitem>
       <para>
        New system view <literal>pg_stat_bgwriter</literal> displays
-       statistics about the background writer activity (Magnus)
+       statistics about background writer activity (Magnus)
       </para>
      </listitem>
 
@@ -937,7 +935,7 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Add an <literal>xact_start</literal> column to
+       Add an <literal>xact_start</literal> (transaction start time) column to
        <literal>pg_stat_activity</literal> (Neil)
       </para>
 
@@ -960,8 +958,8 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       We now always start the collector process, unless prevented by a
-       problem with setting up the stats UDP socket.
+       We now always start the collector process, unless <acronym>UDP</>
+       socket creation fails.
       </para>
      </listitem>
 
@@ -979,8 +977,9 @@ substr(current_date::text, 1, 1);
      <listitem>
       <para>
        Merge <varname>stats_block_level</> and <varname>stats_row_level</>
-       parameters into a single parameter <varname>track_counts</>,
-       which controls all messages sent to the collector process (Tom)
+       parameters into a single parameter <varname>track_counts</>, which
+       controls all messages sent to the statistics collector process
+       (Tom)
       </para>
      </listitem>
 
@@ -999,7 +998,7 @@ substr(current_date::text, 1, 1);
 
       <para>
        Previously, dropping (or attempting to drop) a user who owned many
-       objects could result in extremely large <literal>NOTICE</literal> or
+       objects could result in large <literal>NOTICE</literal> or
        <literal>ERROR</literal> messages listing all these objects; this
        caused problems for some client applications.  The length of the
        list is now limited, although a full list is still sent to the
@@ -1014,11 +1013,11 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       This allows low-level code to recognize that these tables are
-       temporary, which enables various optimizations such as not
-       WAL-logging changes and using local rather than shared buffers
-       for access. This also fixes a bug where backends unexpectedly
-       held open file references to temporary tables.
+       This allows low-level code to recognize these tables as temporary,
+       which enables various optimizations such as not WAL-logging changes
+       and using local rather than shared buffers for access. This also
+       fixes a bug where backends unexpectedly held open file references
+       to temporary tables.
       </para>
      </listitem>
 
@@ -1026,7 +1025,7 @@ substr(current_date::text, 1, 1);
       <para>
        Fix problem that a constant flow of new connection requests could
        indefinitely delay the postmaster from completing a shutdown or
-       crash restart (Tom)
+       a crash restart (Tom)
       </para>
      </listitem>
 
@@ -1039,7 +1038,7 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Add Kerberos realm specification, <varname>krb_realm</> (Magnus)
+       Add a Kerberos realm parameter, <varname>krb_realm</> (Magnus)
       </para>
      </listitem>
 
