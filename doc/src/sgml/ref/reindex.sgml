@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.36 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.37 2007/11/18 18:42:03 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -231,9 +231,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
    subsequent <command>CREATE INDEX</> locks out writes but not reads; since
    the index is not there, no read will attempt to use it, meaning that there
    will be no blocking but reads might be forced into expensive sequential
-   scans.  Another important point is that the drop/create approach
-   invalidates any cached query plans that use the index, while
-   <command>REINDEX</> does not.
+   scans.
   </para>
 
   <para>
