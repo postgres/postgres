@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.155 2007/11/09 23:52:08 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.156 2007/11/19 02:26:10 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3724,7 +3724,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         member of the list each time a temporary object is to be created;
         except that within a transaction, successively created temporary
         objects are placed in successive tablespaces from the list.
-        If any element of the list is an empty string,
+        If the selected element of the list is an empty string,
         <productname>PostgreSQL</> will automatically use the default
         tablespace of the current database instead.
        </para>
@@ -3737,6 +3737,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         ignored, as are tablespaces for which the user lacks
         <literal>CREATE</> privilege.  In particular, this rule applies when
         using a value set in <filename>postgresql.conf</>.
+       </para>
+
+       <para>
+        The default value is an empty string, which results in all temporary
+        objects being created in the default tablespace of the current
+        database.
        </para>
 
        <para>
