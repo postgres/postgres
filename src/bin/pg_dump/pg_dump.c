@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.478 2007/11/19 18:44:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.479 2007/11/19 23:48:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1530,7 +1530,7 @@ dumpDatabase(Archive *AH)
 		if (comment && strlen(comment))
 		{
 			resetPQExpBuffer(dbQry);
-			/* This will fail when loaded into a database with a different name. */
+			/* Generates warning when loaded into a differently-named database.*/
 			appendPQExpBuffer(dbQry, "COMMENT ON DATABASE %s IS ", fmtId(datname));
 			appendStringLiteralAH(dbQry, comment, AH);
 			appendPQExpBuffer(dbQry, ";\n");
