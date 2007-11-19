@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Oct 31 16:12:40 EDT 2007
+Last updated:		Mon Nov 19 13:42:03 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -898,7 +898,8 @@ Clients
 	o Allow pg_dump --clean to drop roles that own objects or have
 	  privileges
 	o -Add -f to pg_dumpall
-
+	o Allow COMMENT ON dbname to work when loading into a database
+	  with a different name
 
 * ecpg
 
