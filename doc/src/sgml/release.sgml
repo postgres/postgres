@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.544 2007/11/17 21:13:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.545 2007/11/19 03:47:14 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -48,44 +48,43 @@ do it for earlier branch release files.
    <title>Overview</title>
 
    <para>
-    This release represents a major leap forward for
-    <productname>PostgreSQL</> by adding significant new functionality
-    and performance enhancements. This was made possible by a growing
+    With significant new functionality and performance enhancements,
+    this release represents a major leap forward for
+    <productname>PostgreSQL</>. This was made possible by a growing
     community that has dramatically accelerated the pace of
-    development. This release adds the follow major capabilities:
+    development. This release adds the following major features:
    </para>
 
    <itemizedlist>
 
     <listitem>
      <para>
-      Full text search now fully integrated into the core database
-      system
+      Full text search is integrated into the core database system
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Support the SQL/XML standard, including new operators and an
+      Support for the SQL/XML standard, including new operators and an
       <type>XML</type> data type
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Support for enumerated data types (<type>ENUM</type>)
+      Enumerated data types (<type>ENUM</type>)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add Universally Unique Identifier (<type>UUID</>) data type
+      Arrays of composite types
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Support arrays of composite types
+      Universally Unique Identifier (<type>UUID</>) data type
      </para>
     </listitem>
 
@@ -97,7 +96,7 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Support updatable cursors
+      Updatable cursors
      </para>
     </listitem>
 
@@ -116,7 +115,7 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Automatically invalidate cached function code when table
+      Automatically re-plan cached queries when table
       definitions change or statistics are updated
      </para>
     </listitem>
@@ -143,15 +142,15 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Allow the backend database server to be compiled with
-      <productname>Microsoft Visual C++</>
+      Allow the whole <productname>PostgreSQL</> distribution to be compiled
+      with <productname>Microsoft Visual C++</>
      </para>
     </listitem>
 
    </itemizedlist>
 
    <para>
-    Major performance improvements are listed below. Fortunately, most of
+    Major performance improvements are listed below.  Most of
     these enhancements are automatic and do not require user changes or
     tuning:
    </para>
@@ -186,34 +185,34 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Reduce per-field and per-row storage requirements
+      Using non-persistent transaction IDs for
+      read-only transactions reduces overhead
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Prevent large sequential scans from forcing out more frequently used
+      Per-field and per-row storage overhead have been reduced
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Large sequential scans no longer force out frequently used
       cached pages
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow large sequential scans to use cached pages from other
+      Large sequential scans can share disk reads with other
       concurrent sequential scans
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow <literal>ORDER BY ... LIMIT</> to be done without sorting
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Reduce need for vacuum by using non-persistent transaction ids for
-      read-only transactions
+      <literal>ORDER BY ... LIMIT</> can be done without sorting
      </para>
     </listitem>
 
@@ -238,32 +237,53 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Non-character values are no longer automatically cast to
+      Non-character data types are no longer automatically cast to
       <type>TEXT</> (Peter, Tom)
      </para>
 
      <para>
-      Previously, a function or operator that took a <type>TEXT</>
-      parameter automatically cast a non-<type>TEXT</> value to
-      <type>TEXT</>, if needed.  This no longer happens and an explicit
-      cast to <type>TEXT</> is now required.  For example, these
-      expressions now require a cast to TEXT:
+      Previously, if a non-character value was supplied to an operator or
+      function that requires <type>text</> input, it was automatically
+      cast to <type>text</>, for most (though not all) built-in data types.
+      This no longer happens: an explicit cast to <type>text</> is now
+      required for all non-character-string types.  For example, these
+      expressions formerly worked:
 
 <programlisting>
-substr(current_date::text, 1, 1);
-23::text LIKE '%2%
-5.4::text ~ '6';
+substr(current_date, 1, 4)
+23 LIKE '2%'
 </programlisting>
+
+      but will now draw <quote>function does not exist</> and <quote>operator
+      does not exist</> errors respectively.  Use an explicit cast instead:
+
+<programlisting>
+substr(current_date::text, 1, 4)
+23::text LIKE '2%'
+</programlisting>
+
+      (Of course, you can use the more verbose <literal>CAST()</> syntax too.)
+      The reason for the change is that these automatic casts too often caused
+      surprising behavior.  An example is that in previous releases, this
+      expression was accepted but did not do what was expected:
+
+<programlisting>
+current_date &lt; 2017-11-17
+</programlisting>
+
+      This is actually comparing a date to an integer, which should be
+      (and now is) rejected &mdash; but in the presence of automatic
+      casts both sides were cast to <type>text</> and a textual comparison
+      was done, because the <literal>text &lt; text</> operator was able
+      to match the expression when no other <literal>&lt;</> operator could.
      </para>
 
      <para>
-      <type>CHAR</> and <type>VARCHAR</> still cast to <type>TEXT</>
-      automatically.  Concatenation (<literal>||</>) with non-<type>TEXT</>
-      types is still automatically cast, assuming one of the parameters
-      is textual.  This change was made to reduce unexpected behavior.
-     </para>
-
-     <para>
+      Types <type>char(<replaceable>n</>)</type> and
+      <type>varchar(<replaceable>n</>)</type> still cast to <type>text</>
+      automatically.  Also, automatic casting to <type>text</> still works for
+      inputs to the concatenation (<literal>||</>) operator, so long as least
+      one input is a character-string type.
      </para>
     </listitem>
 
@@ -308,14 +328,14 @@ substr(current_date::text, 1, 1);
      </para>
 
      <para>
-      Previously commenting out a value kept the value unchanged until
-      the next server restart.
+      Previously, commenting out an entry left the parameter's value unchanged
+      until the next server restart.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      <literal>ARRAY(SELECT ...)</literal>, where <command>SELECT</>
+      <literal>ARRAY(SELECT ...)</literal>, where the <command>SELECT</>
       returns no rows, now returns an empty array, rather than NULL
       (Tom)
      </para>
@@ -323,39 +343,40 @@ substr(current_date::text, 1, 1);
 
     <listitem>
      <para>
-      <literal>ORDER BY ... USING</> <replaceable>operator</> now must
+      <literal>ORDER BY ... USING</> <replaceable>operator</> must now
       use a less-than or greater-than <replaceable>operator</> that is
       defined in a btree operator class
      </para>
 
      <para>
-      This restriction was added to prevent unexpected results.
+      This restriction was added to prevent inconsistent results.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      The array name for a base data type is no longer always the data
-      type name with an underscore prefix
+      The array type name for a base data type is no longer always the base
+      type's name with an underscore prefix
      </para>
 
      <para>
       The old naming convention is still honored when possible, but
-      client code should no longer depending on it. Application code
-      should use the new <literal>pg_type.typarray</literal> column to
-      determine the array's data type.
+      application code should no longer depend on it. Instead
+      use the new <literal>pg_type.typarray</literal> column to
+      identify the array data type associated with a given type.
      </para>
     </listitem>
 
     <listitem>
      <para>
       <command>SET LOCAL</command> changes now persist until
-      the end of the outer-most transaction, unless rolled back (Tom)
+      the end of the outermost transaction, unless rolled back (Tom)
      </para>
 
      <para>
       Previously <command>SET LOCAL</command>'s effects were lost
-      after subtransaction commit or <command>RELEASE</>.
+      after subtransaction commit (<command>RELEASE SAVEPOINT</>
+      or exit from a PL/pgSQL exception block).
      </para>
     </listitem>
 
@@ -391,11 +412,11 @@ substr(current_date::text, 1, 1);
      </para>
 
      <para>
-      In UTF8-encoded databases the <function>chr()</function> argument is
-      now processed as a Unicode code point. In other multi-byte encodings
+      In UTF8-encoded databases the argument of <function>chr()</function> is
+      now treated as a Unicode code point. In other multi-byte encodings
       <function>chr()</function>'s argument must designate a 7-bit ASCII
-      character. Zero is no longer a valid parameter.
-      <function>ascii()</function> has been adjusted similarly.
+      character.  Zero is no longer accepted.
+      <function>ascii()</function> has been adjusted to match.
      </para>
     </listitem>
 
@@ -407,16 +428,16 @@ substr(current_date::text, 1, 1);
 
      <para>
       The two argument form of <function>convert()</function> has been
-      removed. The three argument form now takes a <type>BYTEA</type>
-      first argument and returns a <type>BYTEA</type>. To cover this
-      loss three new functions were added:
+      removed. The three argument form now takes a <type>bytea</type>
+      first argument and returns a <type>bytea</type>. To cover the
+      loss of functionality, three new functions have been added:
      </para>
 
      <itemizedlist>
       <listitem>
        <para>
         <function>convert_from(bytea, name)</function> returns
-        <type>TEXT</> &mdash; converts the first argument from the named
+        <type>text</> &mdash; converts the first argument from the named
         encoding to the database encoding
        </para>
       </listitem>
@@ -424,7 +445,7 @@ substr(current_date::text, 1, 1);
       <listitem>
        <para>
         <function>convert_to(text, name)</function> returns
-        <type>BYTEA</> &mdash; converts the first argument from the
+        <type>bytea</> &mdash; converts the first argument from the
         database encoding to the named encoding
        </para>
       </listitem>
@@ -432,7 +453,7 @@ substr(current_date::text, 1, 1);
       <listitem>
        <para>
         <function>length(bytea, name)</function> returns
-        <type>INTEGER</> &mdash; gives the length of the first
+        <type>integer</> &mdash; gives the length of the first
         argument in characters in the named encoding
        </para>
       </listitem>
@@ -446,8 +467,7 @@ substr(current_date::text, 1, 1);
      </para>
 
      <para>
-      Its behavior did not match the SQL standard and could not be
-      implemented in this release.
+      Its behavior did not match the SQL standard.
      </para>
     </listitem>
 
@@ -472,7 +492,7 @@ substr(current_date::text, 1, 1);
      </para>
 
      <para>
-      If application code was calling and storing hash values using
+      If application code was computing and storing hash values using
       internal <productname>PostgreSQL</> hashing functions, the hash
       values must be regenerated.
      </para>
@@ -487,15 +507,15 @@ substr(current_date::text, 1, 1);
 
     <listitem>
      <para>
-      <command>ROLLBACK</> outside a multi-statement transaction now
+      <command>ROLLBACK</> outside a transaction block now
       issues <literal>NOTICE</> instead of <literal>WARNING</> (Bruce)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add C macros for handling variable-length data values (Greg
-      Stark, Tom)
+      C-code conventions for handling variable-length data values
+      have changed (Greg Stark, Tom)
      </para>
 
      <para>
@@ -529,16 +549,19 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       This feature dramatically increases performance for data-modifying
-       queries. The disadvantage is that because disk writes are
+       This feature dramatically increases performance for short data-modifying
+       transactions. The disadvantage is that because disk writes are
        delayed, if the operating system crashes before data is written to
        the disk, committed data will be lost. This feature is useful for
-       applications that can accept some data loss.  Unlike
-       <varname>fsync</varname>, asynchronous commit does not risk database
-       consistency; the worst case is that after an operating system crash
-       the last few reportedly-committed transactions might be missing.
-       This feature is enabled by turning <varname>synchronous_commit</>
-       <literal>off</> and setting <varname>wal_writer_delay</>.
+       applications that can accept some data loss.  Unlike turning off
+       <varname>fsync</varname>, asynchronous commit does not put database
+       consistency at risk; the worst case is that after a database or system
+       crash the last few reportedly-committed transactions might be missing.
+       This feature is enabled by turning off <varname>synchronous_commit</>
+       (which can be done per-session or per-transaction, if some transactions
+       are critical and others are not).
+       <varname>wal_writer_delay</> can be adjusted to control the maximum
+       delay before transactions actually reach disk.
       </para>
      </listitem>
 
@@ -549,11 +572,12 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       Previously all modified buffers were forced to disk during
-       checkpoints, causing an I/O spike and decreasing server performance.
-       This new capability spreads disk writes out between checkpoints,
+       Previously all modified buffers were forced to disk as quickly as
+       possible during a
+       checkpoint, causing an I/O spike that decreased server performance.
+       This new approach spreads out disk writes during checkpoints,
        reducing peak I/O usage. (User-requested and shutdown checkpoints
-       are still written immediately to disk.)
+       are still written as quickly as possible.)
       </para>
      </listitem>
 
@@ -564,14 +588,13 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       To allow high concurrency <command>UPDATE</>, creates a new tuple
-       rather than overwriting the old tuple. Previously only
-       <command>VACUUM</> could reuse space taken by old tuples. With
-       <acronym>HOT</> dead tuple space can be reused at the time of
+       <command>UPDATE</>s and <command>DELETE</>s leave dead tuples behind,
+       as do failed <command>INSERT</>s.  Previously only
+       <command>VACUUM</> could reclaim space taken by dead tuples. With
+       <acronym>HOT</> dead tuple space can be reclaimed at the time of
        <command>UPDATE</> or <command>INSERT</>.  This allows for more
-       consistent performance.  <acronym>HOT</> even allows deleted row
-       space reuse.  <acronym>HOT</> space reuse is not possible for
-       <command>UPDATE</>s that change indexed columns.
+       consistent performance.  Also, <acronym>HOT</> avoids making duplicate
+       index entries when an <command>UPDATE</> changes no indexed columns.
       </para>
      </listitem>
 
@@ -582,34 +605,37 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       This basically makes the background writer self-tuning.
+       This greatly reduces the need for manual tuning of the background
+       writer.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Reduce per-field and per-row storage requirements (Greg Stark)
+       Per-field and per-row storage overhead have been reduced
+       (Greg Stark, Heikki Linnakangas)
       </para>
 
       <para>
-       Variable-length data types with data values less then 128 bytes
-       will see a storage decrease of 3-6 bytes. For example, two
-       <type>CHAR(1)</type> fields now use 4 bytes instead of 16. Rows
-       are also 4 bytes shorter.
+       Variable-length data types with data values less than 128 bytes long
+       will see a storage decrease of 3 to 6 bytes. For example, two adjacent
+       <type>char(1)</type> fields now use 4 bytes instead of 16. Row headers
+       are also 4 bytes shorter than before.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Reduce need for vacuum by using non-persistent transaction ids for
+       Reduce overhead by using non-persistent transaction IDs for
        read-only transactions (Florian Pflug)
       </para>
 
       <para>
-       Non-persistent transaction ids do not increment the global
-       transaction counter. Therefore, they do not add to the need for
-       vacuum to read all database rows to prevent problems with
-       transaction id wrap-around. Other transaction performance
+       Non-persistent transaction IDs do not increment the global
+       transaction counter. Therefore, they reduce the load on
+       <structname>pg_clog</> and increase the time between forced
+       vacuums to prevent transaction ID wraparound.
+       Other performance
        improvements were also made that should improve concurrency.
       </para>
      </listitem>
@@ -632,8 +658,7 @@ substr(current_date::text, 1, 1);
        for <command>CLUSTER</command> and just <function>fsync()</>s the
        table at the end of the command.  It also does the same for
        <command>COPY</command> if the table was created in the same
-       transaction.  Additional WAL efficiencies for these commands were
-       also made.
+       transaction.
       </para>
      </listitem>
 
@@ -654,8 +679,8 @@ substr(current_date::text, 1, 1);
        This is accomplished by starting the new sequential scan in the
        middle of the table (where another sequential scan is already
        in-progress) and wrapping around to the beginning to finish.  This
-       can affect the order of returned rows in a non-<literal>ORDER BY</>
-       query.
+       can affect the order of returned rows in a query that does not
+       specify <literal>ORDER BY</>.
       </para>
      </listitem>
 
@@ -666,15 +691,23 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       This is done by sequentially scanning the table and using a filter
-       to save the few requested rows, rather than sorting the entire
-       table.  This is useful if there is no matching index.
+       This is done by sequentially scanning the table and tracking just
+       the <quote>top N</> candidate rows, rather than performing a
+       full sort of the entire table.  This is useful when there is no
+       matching index and the <literal>LIMIT</> is not large.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Reduce overhead of populating the statistics tables (Tom)
+       Put a rate limit on messages sent to the statistics
+       collector by backends
+       (Tom)
+      </para>
+
+      <para>
+       This reduces overhead for short transactions, but may sometimes
+       increase the delay before statistics are tallied.
       </para>
      </listitem>
 
@@ -696,6 +729,12 @@ substr(current_date::text, 1, 1);
       <para>
        Autovacuum is now enabled by default (Alvaro)
       </para>
+
+      <para>
+       Several changes were made to eliminate disadvantages of having
+       autovacuum enabled, thereby justifying the change in default.
+       Several other autovacuum parameter defaults were also modified.
+      </para>
      </listitem>
 
      <listitem>
@@ -706,8 +745,7 @@ substr(current_date::text, 1, 1);
 
       <para>
        This allows multiple vacuums to run concurrently.  This prevents
-       vacuuming of a large table from delaying the vacumming of smaller
-       tables.  Several autovacuum parameter defaults were also modified.
+       vacuuming of a large table from delaying vacuuming of smaller tables.
       </para>
      </listitem>
 
@@ -720,7 +758,7 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Automatically invalidate cached function code when table
+       Automatically re-plan cached queries when table
        definitions change or statistics are updated (Tom)
       </para>
 
@@ -728,7 +766,7 @@ substr(current_date::text, 1, 1);
        Previously PL/PgSQL functions that referenced temporary tables
        would fail if the temporary table was dropped and recreated
        between function invocations, unless <literal>EXECUTE</> was
-       used.
+       used.  This improvement fixes that problem and many related issues.
       </para>
      </listitem>
 
@@ -787,7 +825,8 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       The CSV file can be loaded into a database table for analysis.
+       CSV-format log files can be loaded into a database table for subsequent
+       analysis.
       </para>
      </listitem>
 
@@ -828,7 +867,7 @@ substr(current_date::text, 1, 1);
 
       <para>
        Previously these escapes worked only for user sessions, not for
-       database helper processes.
+       background database processes.
       </para>
      </listitem>
 
@@ -842,7 +881,7 @@ substr(current_date::text, 1, 1);
        This avoids Windows-specific problems with localized time zone
        names that are in the wrong encoding. There is a new
        <varname>log_timezone</> parameter that controls the timezone
-       used in log messages, independent of the client-visible
+       used in log messages, independently of the client-visible
        <varname>timezone</> parameter.
       </para>
      </listitem>
@@ -868,22 +907,21 @@ substr(current_date::text, 1, 1);
       <para>
        Previously setting <varname>archive_command</> to an empty string
        turned off archiving. Now <varname>archive_mode</> turns archiving
-       on and off, independent of <varname>archive_command</>. This is
+       on and off, independently of <varname>archive_command</>. This is
        useful for stopping archiving temporarily.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Improve ability to create warm standby servers using archiving
-       (Simon)
+       Reduce WAL workspace needed by warm standby servers (Simon)
       </para>
      
       <para>
-       Allow the warm standby server to pass the earliest needed WAL
-       file to the recovery script to allow automatic removal of
-       unneeded WAL files. This is done using
-       <varname>restore_command</varname> <literal>%r</> in
+       This change allows a warm standby server to identify the earliest
+       still-needed WAL file to the recovery script, allowing automatic removal
+       of no-longer-needed WAL files.  This is done using <literal>%r</> in
+       the <varname>restore_command</varname> parameter of
        <filename>recovery.conf</filename>.
       </para>
      </listitem>
@@ -891,7 +929,7 @@ substr(current_date::text, 1, 1);
      <listitem>
       <para>
        Add <varname>log_restartpoints</varname> to control logging of
-       every point-in-time recovery restart point (Simon)
+       point-in-time recovery restart points (Simon)
       </para>
      </listitem>
 
@@ -910,7 +948,7 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       This parameters supports a list of tablespaces to be used.  This
+       This parameter defines a list of tablespaces to be used.  This
        enables spreading the I/O load across multiple tablespaces. A random
        tablespace is chosen each time a temporary object is created.
        Temporary files are no longer stored in per-database
@@ -1001,14 +1039,14 @@ substr(current_date::text, 1, 1);
        objects could result in large <literal>NOTICE</literal> or
        <literal>ERROR</literal> messages listing all these objects; this
        caused problems for some client applications.  The length of the
-       list is now limited, although a full list is still sent to the
+       message is now limited, although a full list is still sent to the
        server log.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Place temporary table TOAST tables in a special schemas named
+       Place temporary tables' TOAST tables in special schemas named
        <literal>pg_toast_temp_<replaceable>nnn</></literal> (Tom)
       </para>
 
@@ -1016,8 +1054,8 @@ substr(current_date::text, 1, 1);
        This allows low-level code to recognize these tables as temporary,
        which enables various optimizations such as not WAL-logging changes
        and using local rather than shared buffers for access. This also
-       fixes a bug where backends unexpectedly held open file references
-       to temporary tables.
+       fixes a bug wherein backends unexpectedly held open file references
+       to temporary TOAST tables.
       </para>
      </listitem>
 
@@ -1052,12 +1090,12 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Full text search now fully integrated into the core database
+       Full text search is integrated into the core database
        system (Teodor, Oleg)
       </para>
 
       <para>
-       Text search has been improved, moved into the server, and is now
+       Text search has been improved, moved into the core code, and is now
        installed by default.  <filename>contrib/tsearch2</> now contains
        a compatibility interface.
       </para>
@@ -1075,8 +1113,8 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Allow ascending/descending (<literal>ASC</>/<literal>DESC</>)
-       control during index creation (Teodor, Tom)
+       Allow per-column ascending/descending (<literal>ASC</>/<literal>DESC</>)
+       ordering options for indexes (Teodor, Tom)
       </para>
 
       <para>
@@ -1085,6 +1123,13 @@ substr(current_date::text, 1, 1);
        an index. Now an index can be fully used in such cases if the
        index was created with matching
        <literal>ASC</>/<literal>DESC</> specifications.
+       <literal>NULL</> sort order within an index can be controlled, too.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <literal>col IS NULL</> to use an index (Teodor)
       </para>
      </listitem>
 
@@ -1115,16 +1160,11 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       XXX? bjm These new casts are assignment-only in the to-string direction,
-       explicit-only in the other, and therefore should create no
-       surprising behavior.  Remove a bunch of thereby-obsoleted
-       datatype-specific casting functions.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow <literal>col IS NULL</> to use an index (Teodor)
+       These new casts are assignment-only in the to-string direction,
+       explicit-only in the other direction, and therefore should create no
+       surprising behavior.  Various
+       datatype-specific casting functions that were equivalent to this
+       behavior were removed.
       </para>
      </listitem>
 
@@ -1137,9 +1177,9 @@ substr(current_date::text, 1, 1);
        This allows hash joins, hash indexes, hashed subplans, and hash
        aggregation to be used in situations involving cross-data-type
        comparisons, if the data types have compatible hash functions.
-       Current cross-data-type hashing support exists for
-       <type>SMALLINT</type>/<type>INTEGER</type>/<type>BIGINT</type>,
-       and for <type>FLOAT4</type>/<type>FLOAT8</type>.
+       Currently, cross-data-type hashing support exists for
+       <type>smallint</type>/<type>integer</type>/<type>bigint</type>,
+       and for <type>float4</type>/<type>float8</type>.
       </para>
      </listitem>
 
@@ -1157,7 +1197,7 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Improve performance when planning large inheritance trees when
+       Improve performance when planning large inheritance trees in which
        most tables are excluded by constraints (Tom)
       </para>
      </listitem>
@@ -1184,12 +1224,13 @@ substr(current_date::text, 1, 1);
      <listitem>
 
       <para>
-       Support arrays of composite types (David Fetter, Andrew, Tom)
+       Arrays of composite types (David Fetter, Andrew, Tom)
       </para>
 
       <para>
-       Arrays of rowtypes of regular tables and views are now
-       supported, but not for system catalogs, sequences, or TOAST
+       In addition to arrays of explicitly-declared composite types,
+       arrays of the rowtypes of regular tables and views are now
+       supported, except for rowtypes of system catalogs, sequences, and TOAST
        tables.
       </para>
 
@@ -1217,8 +1258,8 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       This allows simple control of the estimated cost of a function
-       call and control over the estimated number of rows returned by a
+       This allows simple control over the estimated cost of a function
+       call and over the estimated number of rows returned by a
        set-returning function.
       </para>
      </listitem>
@@ -1226,7 +1267,7 @@ substr(current_date::text, 1, 1);
      <listitem>
       <para>
        Allow triggers and rules to be deactivated in groups using a
-       session variable, for replication purposes (Jan)
+       configuration parameter, for replication purposes (Jan)
       </para>
 
       <para>
@@ -1234,11 +1275,6 @@ substr(current_date::text, 1, 1);
        rules as a group without modifying the system catalogs directly.
        The behavior is controlled by <command>ALTER TABLE</> and a new
        parameter <varname>session_replication_role</varname>.
-     </para>
-
-      <para>
-       <application>psql</application>'s <literal>\d</literal> command
-       and <application>pg_dump</application> have been enhanced
       </para>
      </listitem>
 
@@ -1248,10 +1284,9 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       This allows a user type to take a modifier when
-       being created, e.g. <type>SSNUM(7)</>.  Previously only
-       predefined system data types would allow this, e.g.
-       <type>CHAR(4)</>.
+       This allows a user-defined type to take a modifier, as in
+       <type>ssnum(7)</>.  Previously only
+       predefined system data types could have modifiers.
       </para>
      </listitem>
 
@@ -1259,6 +1294,11 @@ substr(current_date::text, 1, 1);
       <para>
        Foreign keys now must match indexable conditions for
        cross-data-type references (Tom)
+      </para>
+
+      <para>
+       This improves semantic consistency and helps avoid
+       performance problems.
       </para>
      </listitem>
 
@@ -1337,13 +1377,13 @@ substr(current_date::text, 1, 1);
       <para>
        Formerly, <command>CLUSTER</command> would discard all tuples
        that were committed dead, even if there were still transactions
-       that should be able to see them under the visibility rules.
+       that should be able to see them under the MVCC visibility rules.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add new syntax for <command>CLUSTER</command>: <literal>CLUSTER
+       Add new <command>CLUSTER</command> syntax: <literal>CLUSTER
        <replaceable>table</> USING <replaceable>index</></literal>
        (Holger Schurig)
      </para>
@@ -1356,14 +1396,21 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Fix <command>EXPLAIN</command> so it can show more complex plans (Tom)
+       Fix <command>EXPLAIN</command> so it can show more complex plans
+       accurately (Tom)
+      </para>
+
+      <para>
+       References to subplan outputs are now always shown correctly,
+       instead of using <literal>?column<replaceable>N</>?</literal>
+       when things got too complicated.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Make CREATE/DROP/RENAME DATABASE wait briefly for other backends
-       to exit before failing (Tom)
+       Make <command>CREATE/DROP/RENAME DATABASE</> wait briefly for
+       conflicting backends to exit before failing (Tom)
       </para>
 
       <para>
@@ -1393,19 +1440,20 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Support the SQL/XML standard, including new operators and an
+       Support for the SQL/XML standard, including new operators and an
        <type>XML</type> data type (Nikolay Samokhvalov, Peter)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Support for enumerated data types (<type>ENUM</type>) (Tom Dunstan)
+       Enumerated data types (<type>ENUM</type>) (Tom Dunstan)
       </para>
 
       <para>
-       This is accomplished by creating a new data type with an
-       <literal>ENUM</> clause, e.g.
+       This feature provides convenient support for fields that have a
+       small, fixed set of allowed values.  An example of creating an
+       <literal>ENUM</> type is
        <literal>CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy')</>.
       </para>
      </listitem>
@@ -1440,8 +1488,8 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       These functions provide access to the regex groups,
-       <literal>\(.*\)</> , and allows splitting a string on a POSIX
+       These functions provide extraction of regexp subexpressions
+       and allow splitting a string using a POSIX
        regular expression.
       </para>
      </listitem>
@@ -1455,8 +1503,8 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Implement <function>width_bucket()</function> for the float8 data
-       type (Neil)
+       Implement <function>width_bucket()</function> for the <type>float8</>
+       data type (Neil)
       </para>
      </listitem>
 
@@ -1484,7 +1532,7 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       This is the day of the week, with Sunday as seven.
+       This returns the day of the week, with Sunday as seven.
        (<literal>dow</> returns Sunday as zero.)
       </para>
      </listitem>
@@ -1492,7 +1540,7 @@ substr(current_date::text, 1, 1);
      <listitem>
       <para>
        Add <literal>ID</> (ISO day of week) and <literal>IDDD</> (ISO
-       day of year) format types for <function>to_char()</>,
+       day of year) format codes for <function>to_char()</>,
        <function>to_date()</> and <function>to_timestamp()</> (Brendan
        Jurd)
       </para>
@@ -1501,18 +1549,20 @@ substr(current_date::text, 1, 1);
      <listitem>
       <para>
        Make <function>to_timestamp()</> and <function>to_date()</>
-       assume <quote>TM</quote> (trim) for potentially variable-width
-       fields (Bruce)
+       assume <literal>TM</literal> (trim) option for potentially
+       variable-width fields (Bruce)
       </para>
 
       <para>
-       This matches Oracle behavior.
+       This matches <productname>Oracle</>'s behavior.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Fix off-by-one conversion in to_date()/to_timestamp() 'D' fields
+       Fix off-by-one conversion in
+       <function>to_date()</function>/<function>to_timestamp()</function>
+       <literal>D</> fields
        (Bruce)
       </para>
      </listitem>
@@ -1544,7 +1594,7 @@ substr(current_date::text, 1, 1);
 
       <para>
        This allows hash indexes and hash-based plans to be used with
-       <type>NUMERIC</type>.
+       <type>NUMERIC</type> columns.
       </para>
      </listitem>
 
@@ -1552,14 +1602,14 @@ substr(current_date::text, 1, 1);
       <para>
        Improve efficiency of
        <literal>LIKE</literal>/<literal>ILIKE</literal>, especially for
-       multi-byte character sets like UTF8 (Andrew, Itagaki Takahiro)
+       multi-byte character sets like UTF-8 (Andrew, Itagaki Takahiro)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow leading and trailing whitespace for <type>BOOLEAN</type>
-       values (Neil)
+       Allow leading and trailing whitespace during input of
+       <type>boolean</type> values (Neil)
       </para>
      </listitem>
 
@@ -1572,8 +1622,8 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Add several <function>txid_*()</function> functions to query the
-       transaction ids used by the current session (Jan)
+       Add several <function>txid_*()</function> functions to query
+       active transaction IDs (Jan)
       </para>
 
       <para>
@@ -1591,14 +1641,14 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Add scrollable cursor support by adding directional control to
-       PL/PgSQL's <command>FETCH</command> (Pavel Stehule)
+       Add scrollable cursor support, including directional control in
+       <command>FETCH</command> (Pavel Stehule)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add support for <literal>IN</literal> as an alternative to
+       Allow <literal>IN</literal> as an alternative to
        <literal>FROM</literal> in PL/PgSQL's <command>FETCH</command>
        statement, for consistency with the backend's
        <command>FETCH</command> command (Pavel Stehule)
@@ -1619,16 +1669,16 @@ substr(current_date::text, 1, 1);
 
       <para>
        This adds convenient syntax for PL/PgSQL set-returning functions
-       that want to return the result of a query, rather than using
-       <command>RETURN NEXT</command>. <command>RETURN QUERY</command>
-       is more efficient too.
+       that want to return the result of a query.  <command>RETURN QUERY</>
+       is easier and more efficient than a loop
+       around <command>RETURN NEXT</command>. 
       </para>
      </listitem>
 
      <listitem>
       <para>
        Allow function parameter names to be qualified with the
-       function's name(Tom)
+       function's name (Tom)
       </para>
 
       <para>
@@ -1775,7 +1825,7 @@ substr(current_date::text, 1, 1);
      <listitem>
       <para>
        Allow <literal>\pset</literal>, <literal>\t</literal>, and
-       <literal>\x</literal> to use <literal>on</>/<literal>off</>,
+       <literal>\x</literal> to specify <literal>on</> or <literal>off</>,
        rather than just toggling (Chad Wagner)
       </para>
      </listitem>
@@ -1864,15 +1914,17 @@ substr(current_date::text, 1, 1);
      <listitem>
       <para>
        In <application>initdb</>, allow the location of the
-       <filename>pg_xlog</filename> directory location to be specified
+       <filename>pg_xlog</filename> directory to be specified
        (Euler Taveira de Oliveira)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Enable core dump generation in <application>pg_regress</> and
-       <application>pg_ctl</>, if possible (Andrew)
+       Enable server core dump generation in <application>pg_regress</> and
+       provide an option to do so in <application>pg_ctl</>, where
+       supported by the operating system
+       (Andrew)
       </para>
      </listitem>
 
@@ -1887,7 +1939,7 @@ substr(current_date::text, 1, 1);
      <listitem>
       <para>
        Suppress command tag output for <application>createdb</>,
-       <application>createuser</>, <application>dropdb</>,
+       <application>createuser</>, <application>dropdb</>, and
        <application>dropuser</> (Peter)
       </para>
 
@@ -1904,8 +1956,8 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       This controls how long <application>pg_ctl</> waits when waiting
-       for start or shutdown.
+       This controls how long <application>pg_ctl</> will wait when waiting
+       for server startup or shutdown.
       </para>
      </listitem>
 
@@ -1958,8 +2010,11 @@ substr(current_date::text, 1, 1);
       </para>
 
       <para>
-       If this returns true and the connection failed a client
-       application should prompt the user for a password.
+       If this returns true after a connection attempt fails, a client
+       application should prompt the user for a password.  In the past
+       applications have had to check for a specific error message
+       string to decide whether a password is needed; that approach
+       is now deprecated.
       </para>
      </listitem>
 
@@ -1995,8 +2050,7 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Have ecpg libraries exporting only API symbols (Michael)
-       Win32 only?  XXX
+       Make ecpg libraries export only intended API symbols (Michael)
       </para>
      </listitem>
 
@@ -2010,22 +2064,22 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Allow the backend database server to be compiled with
-       <productname>Microsoft Visual C++</> (Magnus and others)
+       Allow the whole <productname>PostgreSQL</> distribution to be compiled
+       with <productname>Microsoft Visual C++</> (Magnus and others)
       </para>
 
       <para>
-        Windows executables made with Visual C++ might have better
-        stability and performance than those made with other tool sets.
-        Development and debugging tools familiar to Windows developers
-        will also work.  The client-only C++ build scripts have been
-        removed.
+       This allows Windows-based developers to use familiar development
+       and debugging tools.
+       Windows executables made with Visual C++ might also have better
+       stability and performance than those made with other tool sets.
+       The client-only Visual C++ build scripts have been removed.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow regression tests to be started by an <literal>admin</>
+       Allow regression tests to be started by an administrative
        user (Magnus)
       </para>
      </listitem>
@@ -2047,8 +2101,8 @@ substr(current_date::text, 1, 1);
      <listitem>
       <para>
        Rename macro <literal>DLLIMPORT</> to <literal>PGDLLIMPORT</> to
-       avoid conflicting with third party includes (like TCL) that
-       define DLLIMPORT (Magnus)
+       avoid conflicting with third party includes (like Tcl) that
+       define <literal>DLLIMPORT</> (Magnus)
       </para>
      </listitem>
 
@@ -2104,7 +2158,7 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Create <quote>operator families</quote> improve planning of
+       Create <quote>operator families</quote> to improve planning of
        queries involving cross-data-type comparisons (Tom)
       </para>
      </listitem>
@@ -2248,8 +2302,8 @@ substr(current_date::text, 1, 1);
 
      <listitem>
       <para>
-       Add <filename>/contrib/pg_standby</filename> module for warm standby
-       operation (Simon)
+       Add <filename>/contrib/pg_standby</filename> module for controlling
+       warm standby operation (Simon)
       </para>
      </listitem>
 
