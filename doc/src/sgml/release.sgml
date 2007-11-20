@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.545 2007/11/19 03:47:14 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.546 2007/11/20 01:13:00 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -165,7 +165,7 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-       Distributed checkpoints prevent checkpoint I/O spikes
+      Distributed checkpoints prevent checkpoint I/O spikes
      </para>
     </listitem>
 
@@ -185,14 +185,14 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Using non-persistent transaction IDs for
-      read-only transactions reduces overhead
+      Using non-persistent transaction IDs for read-only transactions
+      reduces overhead
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Per-field and per-row storage overhead have been reduced
+      Per-field and per-row storage overhead has been reduced
      </para>
     </listitem>
 
@@ -626,8 +626,8 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Reduce overhead by using non-persistent transaction IDs for
-       read-only transactions (Florian Pflug)
+       Using non-persistent transaction IDs for read-only transactions
+       reduces overhead (Florian Pflug)
       </para>
 
       <para>
@@ -664,14 +664,14 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Prevent large sequential scans from forcing out more frequently
-       used cached pages (Simon, Heikki, Tom)
+       Large sequential scans no longer force out frequently used
+       cached pages (Simon, Heikki, Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow large sequential scans to use cached pages from other
+       Large sequential scans can share disk reads with other
        concurrent sequential scans (Jeff Davis)
       </para>
 
@@ -686,7 +686,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Allow <literal>ORDER BY ... LIMIT</> to be done without sorting
+       <literal>ORDER BY ... LIMIT</> can be done without sorting
        (Greg Stark)
       </para>
 
@@ -706,7 +706,7 @@ current_date &lt; 2017-11-17
       </para>
 
       <para>
-       This reduces overhead for short transactions, but may sometimes
+       This reduces overhead for short transactions, but might sometimes
        increase the delay before statistics are tallied.
       </para>
      </listitem>
@@ -1135,7 +1135,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Support updatable cursors (Arul Shaji, Tom)
+       Updatable cursors (Arul Shaji, Tom)
       </para>
 
       <para>
@@ -1156,7 +1156,7 @@ current_date &lt; 2017-11-17
        Create a general mechanism that supports casts to and from the
        standard string types (<type>TEXT</type>, <type>VARCHAR</type>,
        <type>CHAR</type>) for <emphasis>every</emphasis> datatype, by
-       invoking the datatype's I/O functions (Tom)
+       invoking the datatype's I/O functions (Tom)  XXX examples?
       </para>
 
       <para>
@@ -1179,7 +1179,8 @@ current_date &lt; 2017-11-17
        comparisons, if the data types have compatible hash functions.
        Currently, cross-data-type hashing support exists for
        <type>smallint</type>/<type>integer</type>/<type>bigint</type>,
-       and for <type>float4</type>/<type>float8</type>.
+       and for <type>float4</type>/<type>float8</type>.  XXX how do you do
+       hash aggregate two different data types
       </para>
      </listitem>
 
@@ -1197,8 +1198,8 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Improve performance when planning large inheritance trees in which
-       most tables are excluded by constraints (Tom)
+       Improve performance when planning large inheritance trees in
+       cases where most tables are excluded by constraints (Tom)
       </para>
      </listitem>
 
@@ -1253,14 +1254,15 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Add <literal>COST</literal> and <literal>ROWS</literal> options to
-       <command>CREATE/ALTER FUNCTION</command> (Tom)
+       <command>CREATE/ALTER FUNCTION</command> now supports
+       <literal>COST</literal> and <literal>ROWS</literal> options (Tom)
       </para>
 
       <para>
-       This allows simple control over the estimated cost of a function
-       call and over the estimated number of rows returned by a
-       set-returning function.
+       <literal>COST</literal> allows specification of the cost of a
+       function call.  <literal>ROWS</literal> allows specification of
+       the average number or rows returned by a set-returning function.
+       These values are used by the optimizer in choosing the best plan.
       </para>
      </listitem>
 
@@ -1284,7 +1286,7 @@ current_date &lt; 2017-11-17
       </para>
 
       <para>
-       This allows a user-defined type to take a modifier, as in
+       This allows a user-defined type to take a modifier, like
        <type>ssnum(7)</>.  Previously only
        predefined system data types could have modifiers.
       </para>
@@ -1312,12 +1314,12 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Non-superuser database owners now have privileges to add trusted
-       procedural languages in their databases by default (Jeremy Drake)
+       Non-superuser database owners now are able to add trusted procedural
+       languages to their databases by default (Jeremy Drake)
       </para>
 
       <para>
-       While this is reasonably safe, some administrators may wish to
+       While this is reasonably safe, some administrators might wish to
        revoke the privilege. It is controlled by
        <structname>pg_pltemplate</>.<structfield>tmpldbacreate</>.
       </para>
@@ -1377,7 +1379,7 @@ current_date &lt; 2017-11-17
       <para>
        Formerly, <command>CLUSTER</command> would discard all tuples
        that were committed dead, even if there were still transactions
-       that should be able to see them under the MVCC visibility rules.
+       that should be able to see them under MVCC visibility rules.
       </para>
      </listitem>
 
@@ -1396,14 +1398,14 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Fix <command>EXPLAIN</command> so it can show more complex plans
-       accurately (Tom)
+       Fix <command>EXPLAIN</command> so it can show complex plans
+       more accurately (Tom)
       </para>
 
       <para>
        References to subplan outputs are now always shown correctly,
        instead of using <literal>?column<replaceable>N</>?</literal>
-       when things got too complicated.
+       for complicated cases.
       </para>
      </listitem>
 
@@ -1425,7 +1427,7 @@ current_date &lt; 2017-11-17
       </para>
 
       <para>
-       Formerly, these commands accepted <quote>schema.relation</> but
+       Formerly, these commands accepted <literal>schema.relation</> but
        ignored the schema part, which was confusing.
       </para>
      </listitem>
@@ -1460,7 +1462,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Add Universally Unique Identifier (<type>UUID</>) data type (Gevik
+       Universally Unique Identifier (<type>UUID</>) data type (Gevik
        Babakhani, Neil)
       </para>
 
@@ -1482,22 +1484,23 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Add new regexp functions <function>regexp_matches()</function>,
+       Add new regular expression functions
+       <function>regexp_matches()</function>,
        <function>regexp_split_to_array()</function>, and
        <function>regexp_split_to_table()</function> (Jeremy Drake, Neil)
       </para>
 
       <para>
-       These functions provide extraction of regexp subexpressions
-       and allow splitting a string using a POSIX
-       regular expression.
+       These functions provide extraction of regular expression
+       subexpressions and allow splitting a string using a POSIX regular
+       expression.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <function>lo_truncate()</function> function for large object
-       truncation (Kris Jurka)
+       Add <function>lo_truncate()</function> for large object truncation
+       (Kris Jurka)
       </para>
      </listitem>
 
@@ -1516,12 +1519,11 @@ current_date &lt; 2017-11-17
       </para>
 
       <para>
-       The first request for statistics in a transaction takes a
-       statistics snapshot that doesn't change during the transaction.
-       This function allows the snapshot to be discarded and a new
-       snapshot loaded during the next statistics query. This is
-       particularly useful for PL/PgSQL functions which are confined to
-       a single transaction.
+       The first request for statistics in a transaction takes a statistics
+       snapshot that does not change during the transaction.  This function
+       allows the snapshot to be discarded and a new snapshot loaded during
+       the next statistics query. This is particularly useful for PL/PgSQL
+       functions which are confined to a single transaction.
       </para>
      </listitem>
 
@@ -1541,7 +1543,7 @@ current_date &lt; 2017-11-17
       <para>
        Add <literal>ID</> (ISO day of week) and <literal>IDDD</> (ISO
        day of year) format codes for <function>to_char()</>,
-       <function>to_date()</> and <function>to_timestamp()</> (Brendan
+       <function>to_date()</>, and <function>to_timestamp()</> (Brendan
        Jurd)
       </para>
      </listitem>
@@ -1560,17 +1562,16 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Fix off-by-one conversion in
+       Fix off-by-one conversion error in
        <function>to_date()</function>/<function>to_timestamp()</function>
-       <literal>D</> fields
-       (Bruce)
+       <literal>D</> (non-ISO day of week) fields (Bruce)
       </para>
      </listitem>
 
      <listitem>
       <para>
        Fix <type>float4</type>/<type>float8</type> to handle
-       <literal>Infinity</> and <literal>NAN</> (not a number)
+       <literal>Infinity</> and <literal>NAN</> (Not A Number)
        consistently (Bruce)
       </para>
 
@@ -1712,24 +1713,32 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>PL/Perl Server-Side Language Changes</title>
+    <title>Changes to Other Server-Side Languages</title>
     <itemizedlist>
 
      <listitem>
       <para>
-       Allow type-name arguments to <function>spi_prepare()</function> to
+       Allow type-name arguments to PL/Perl
+       <function>spi_prepare()</function> to be data type aliases in
+       addition to names in <literal>pg_type</literal> (Andrew)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow type-name arguments to PL/Python 
+       <function>plpy.prepare()</function> to be data type aliases in
+       addition to names in <literal>pg_type</literal> (Andrew)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow type-name arguments to PL/Tcl <function>spi_prepare</> to 
        be data type aliases in addition to names in
        <literal>pg_type</literal> (Andrew)
       </para>
      </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
-    <title>PL/Python Server-Side Language Changes</title>
-    <itemizedlist>
 
      <listitem>
       <para>
@@ -1739,38 +1748,14 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Allow type-name arguments to <function>plpy.prepare()</function> to
-       be data type aliases in addition to names in
-       <literal>pg_type</literal> (Andrew)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Support a true boolean type in compatible Python versions
+       Support a true PL/Python boolean type in compatible Python versions
        (Python 2.3 and later) (Marko Kreen)
       </para>
      </listitem>
 
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
-    <title>PL/Tcl Server-Side Language Changes</title>
-    <itemizedlist>
-
      <listitem>
       <para>
-       Allow type-name arguments to <function>spi_prepare</> to 
-       be data type aliases in addition to names in
-       <literal>pg_type</literal> (Andrew)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Fix problems with thread-enabled <filename>libtcl</> spawning
+       Fix PL/Tcl problems with thread-enabled <filename>libtcl</> spawning
        multiple threads within the backend (Steve Marshall, Paul Bayer,
        Doug Knight)
       </para>
@@ -1797,6 +1782,13 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
+       In <literal>\d</literal> patterns, always match <literal>$</literal>
+       literally (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Show aggregate return types in <literal>\da</literal> output
        (Greg Sabino Mullane)
       </para>
@@ -1806,13 +1798,6 @@ current_date &lt; 2017-11-17
       <para>
        Add the function's volatility to the output of
        <literal>\df+</literal> (Neil)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       In <literal>\d</literal> patterns, always match <literal>$</literal>
-       literally (Tom)
       </para>
      </listitem>
 
@@ -1899,7 +1884,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Improve performance when a database has many thousands of objects (Tom)
+       Improve performance when a database has thousands of objects (Tom)
       </para>
      </listitem>
 
@@ -1921,10 +1906,15 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Enable server core dump generation in <application>pg_regress</> and
-       provide an option to do so in <application>pg_ctl</>, where
-       supported by the operating system
-       (Andrew)
+       Enable server core dump generation in <application>pg_regress</>
+       on supported operating systems (Andrew)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add <application>pg_ctl</> <literal> option to control generation
+       of core dumps (Andrew)
       </para>
      </listitem>
 
@@ -2010,11 +2000,11 @@ current_date &lt; 2017-11-17
       </para>
 
       <para>
-       If this returns true after a connection attempt fails, a client
+       If this returns true after a failed connection attempt, a client
        application should prompt the user for a password.  In the past
-       applications have had to check for a specific error message
-       string to decide whether a password is needed; that approach
-       is now deprecated.
+       applications have had to check for a specific error messages to
+       decide whether a password is needed; that approach is now
+       deprecated.
       </para>
      </listitem>
 
@@ -2050,7 +2040,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Make ecpg libraries export only intended API symbols (Michael)
+       Make ecpg libraries export only necessary API symbols (Michael)
       </para>
      </listitem>
 
@@ -2086,7 +2076,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Add native shared memory implementation for Windows (Magnus)
+       Add native shared memory implementation (Magnus)
       </para>
      </listitem>
 
@@ -2211,7 +2201,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Create hooks to let a loadable plugin monitor (or even replace) the
+       Create hooks to let an external plugin monitor (or even replace) the
        planner and create plans for hypothetical situations (Gurjeet
        Singh, Tom)
       </para>
