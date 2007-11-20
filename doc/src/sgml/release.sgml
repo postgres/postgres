@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.551 2007/11/20 05:00:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.552 2007/11/20 05:16:31 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1472,7 +1472,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>Data Types and Functions</title>
+    <title>Data Types</title>
     <itemizedlist>
 
      <listitem>
@@ -1516,6 +1516,34 @@ current_date &lt; 2017-11-17
        values.
       </para>
      </listitem>
+
+     <listitem>
+      <para>
+       Fix <type>float4</type>/<type>float8</type> to handle
+       <literal>Infinity</> and <literal>NAN</> (Not A Number)
+       consistently (Bruce)
+      </para>
+
+      <para>
+       The code formerly was not consistent about distinguishing
+       <literal>Infinity</> from overflow conditions.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow leading and trailing whitespace during input of
+       <type>boolean</type> values (Neil)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Functions</title>
+    <itemizedlist>
 
      <listitem>
       <para>
@@ -1605,19 +1633,6 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Fix <type>float4</type>/<type>float8</type> to handle
-       <literal>Infinity</> and <literal>NAN</> (Not A Number)
-       consistently (Bruce)
-      </para>
-
-      <para>
-       The code formerly was not consistent about distinguishing
-       <literal>Infinity</> from overflow conditions.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        Make <function>setseed()</function> return void, rather than a
        useless integer value (Neil)
       </para>
@@ -1639,13 +1654,6 @@ current_date &lt; 2017-11-17
        Improve efficiency of
        <literal>LIKE</literal>/<literal>ILIKE</literal>, especially for
        multi-byte character sets like UTF-8 (Andrew, Itagaki Takahiro)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow leading and trailing whitespace during input of
-       <type>boolean</type> values (Neil)
       </para>
      </listitem>
 
