@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.547 2007/11/20 01:19:30 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.548 2007/11/20 01:42:37 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -722,7 +722,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>Server Changes</title>
+    <title>General Server Changes</title>
     <itemizedlist>
 
      <listitem>
@@ -751,13 +751,6 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Autovacuum now reports its activity start time in
-       <literal>pg_stat_activity</literal> (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        Automatically re-plan cached queries when table
        definitions change or statistics are updated (Tom)
       </para>
@@ -772,32 +765,64 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Support Security Service Provider Interface (<acronym>SSPI</>) for
-       authentication on Windows (Magnus)
+       Add a <varname>temp_tablespaces</varname> parameter to control
+       the tablespaces for temporary tables and files (Jaime Casanova,
+       Albert Cervera, Bernd Helmle)
+      </para>
+
+      <para>
+       This parameter defines a list of tablespaces to be used.  This
+       enables spreading the I/O load across multiple tablespaces. A random
+       tablespace is chosen each time a temporary object is created.
+       Temporary files are no longer stored in per-database
+       <filename>pgsql_tmp/</filename> directories but in per-tablespace
+       directories.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Support GSSAPI authentication (Henry Hotz, Magnus)
+       Limit the amount of information reported when a user is dropped
+       (Alvaro)
       </para>
 
       <para>
-       This should be preferred to native Kerberos authentication because
-       GSSAPI is an industry standard.
+       Previously, dropping (or attempting to drop) a user who owned many
+       objects could result in large <literal>NOTICE</literal> or
+       <literal>ERROR</literal> messages listing all these objects; this
+       caused problems for some client applications.  The length of the
+       message is now limited, although a full list is still sent to the
+       server log.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Support a global SSL configuration file (Victor Wagner)
+       Place temporary tables' TOAST tables in special schemas named
+       <literal>pg_toast_temp_<replaceable>nnn</></literal> (Tom)
+      </para>
+
+      <para>
+       This allows low-level code to recognize these tables as temporary,
+       which enables various optimizations such as not WAL-logging changes
+       and using local rather than shared buffers for access. This also
+       fixes a bug wherein backends unexpectedly held open file references
+       to temporary TOAST tables.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <varname>ssl_ciphers</> parameter to control accepted SSL ciphers
-       (Victor Wagner)
+       Fix problem that a constant flow of new connection requests could
+       indefinitely delay the postmaster from completing a shutdown or
+       a crash restart (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <command>CREATE INDEX CONCURRENTLY</command> to ignore
+       transactions in other databases (Simon)
       </para>
      </listitem>
 
@@ -815,6 +840,21 @@ current_date &lt; 2017-11-17
 
       <para>
        JOHAB is not safe as a server-side encoding.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Server Monitoring</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Autovacuum now reports its activity start time in
+       <literal>pg_stat_activity</literal> (Tom)
       </para>
      </listitem>
 
@@ -888,46 +928,6 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Change the timestamps recorded in transaction WAL records from
-       time_t to TimestampTz representation (Tom)
-      </para>
-
-      <para>
-       This provides sub-second resolution in WAL, which can be useful for
-       point-in-time recovery.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       New boolean configuration parameter, <varname>archive_mode</>,
-       controls archiving (Simon)
-      </para>
-
-      <para>
-       Previously setting <varname>archive_command</> to an empty string
-       turned off archiving. Now <varname>archive_mode</> turns archiving
-       on and off, independently of <varname>archive_command</>. This is
-       useful for stopping archiving temporarily.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Reduce WAL workspace needed by warm standby servers (Simon)
-      </para>
-     
-      <para>
-       This change allows a warm standby server to identify the earliest
-       still-needed WAL file to the recovery script, allowing automatic removal
-       of no-longer-needed WAL files.  This is done using <literal>%r</> in
-       the <varname>restore_command</varname> parameter of
-       <filename>recovery.conf</filename>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        Add <varname>log_restartpoints</varname> to control logging of
        point-in-time recovery restart points (Simon)
       </para>
@@ -937,23 +937,6 @@ current_date &lt; 2017-11-17
       <para>
        Last transaction end time is now logged at end of recovery and at
        each logged restart point (Simon)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add a <varname>temp_tablespaces</varname> parameter to control
-       the tablespaces for temporary tables and files (Jaime Casanova,
-       Albert Cervera, Bernd Helmle)
-      </para>
-
-      <para>
-       This parameter defines a list of tablespaces to be used.  This
-       enables spreading the I/O load across multiple tablespaces. A random
-       tablespace is chosen each time a temporary object is created.
-       Temporary files are no longer stored in per-database
-       <filename>pgsql_tmp/</filename> directories but in per-tablespace
-       directories.
       </para>
      </listitem>
 
@@ -1028,55 +1011,96 @@ current_date &lt; 2017-11-17
       </para>
      </listitem>
 
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Authentication Changes</title>
+    <itemizedlist>
+
      <listitem>
       <para>
-       Limit the amount of information reported when a user is dropped
-       (Alvaro)
-      </para>
-
-      <para>
-       Previously, dropping (or attempting to drop) a user who owned many
-       objects could result in large <literal>NOTICE</literal> or
-       <literal>ERROR</literal> messages listing all these objects; this
-       caused problems for some client applications.  The length of the
-       message is now limited, although a full list is still sent to the
-       server log.
+       Support Security Service Provider Interface (<acronym>SSPI</>) for
+       authentication on Windows (Magnus)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Place temporary tables' TOAST tables in special schemas named
-       <literal>pg_toast_temp_<replaceable>nnn</></literal> (Tom)
+       Support GSSAPI authentication (Henry Hotz, Magnus)
       </para>
 
       <para>
-       This allows low-level code to recognize these tables as temporary,
-       which enables various optimizations such as not WAL-logging changes
-       and using local rather than shared buffers for access. This also
-       fixes a bug wherein backends unexpectedly held open file references
-       to temporary TOAST tables.
+       This should be preferred to native Kerberos authentication because
+       GSSAPI is an industry standard.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Fix problem that a constant flow of new connection requests could
-       indefinitely delay the postmaster from completing a shutdown or
-       a crash restart (Tom)
+       Support a global SSL configuration file (Victor Wagner)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <command>CREATE INDEX CONCURRENTLY</command> to ignore
-       transactions in other databases (Simon)
+       Add <varname>ssl_ciphers</> parameter to control accepted SSL ciphers
+       (Victor Wagner)
       </para>
      </listitem>
 
      <listitem>
       <para>
        Add a Kerberos realm parameter, <varname>krb_realm</> (Magnus)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>WAL and Continuous Archiving Changes</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Change the timestamps recorded in transaction WAL records from
+       time_t to TimestampTz representation (Tom)
+      </para>
+
+      <para>
+       This provides sub-second resolution in WAL, which can be useful for
+       point-in-time recovery.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Reduce WAL disk space needed by warm standby servers (Simon)
+      </para>
+     
+      <para>
+       This change allows a warm standby server to pass the name of the earliest
+       still-needed WAL file to the recovery script, allowing automatic removal
+       of no-longer-needed WAL files.  This is done using <literal>%r</> in
+       the <varname>restore_command</varname> parameter of
+       <filename>recovery.conf</filename>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       New boolean configuration parameter, <varname>archive_mode</>,
+       controls archiving (Simon)
+      </para>
+
+      <para>
+       Previously setting <varname>archive_command</> to an empty string
+       turned off archiving. Now <varname>archive_mode</> turns archiving
+       on and off, independently of <varname>archive_command</>. This is
+       useful for stopping archiving temporarily.
       </para>
      </listitem>
 
