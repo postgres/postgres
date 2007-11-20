@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.553 2007/11/20 05:23:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.554 2007/11/20 17:10:25 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -232,376 +232,390 @@ do it for earlier branch release files.
     Observe the following incompatibilities:
    </para>
 
-   <itemizedlist>
+   <sect3>
+    <title>General</title>
+    <itemizedlist>
 
-    <listitem>
-     <para>
-      Non-character data types are no longer automatically cast to
-      <type>TEXT</> (Peter, Tom)
-     </para>
+     <listitem>
+      <para>
+       Non-character data types are no longer automatically cast to
+       <type>TEXT</> (Peter, Tom)
+      </para>
 
-     <para>
-      Previously, if a non-character value was supplied to an operator or
-      function that requires <type>text</> input, it was automatically
-      cast to <type>text</>, for most (though not all) built-in data types.
-      This no longer happens: an explicit cast to <type>text</> is now
-      required for all non-character-string types.  For example, these
-      expressions formerly worked:
+      <para>
+       Previously, if a non-character value was supplied to an operator or
+       function that requires <type>text</> input, it was automatically
+       cast to <type>text</>, for most (though not all) built-in data types.
+       This no longer happens: an explicit cast to <type>text</> is now
+       required for all non-character-string types.  For example, these
+       expressions formerly worked:
 
 <programlisting>
 substr(current_date, 1, 4)
 23 LIKE '2%'
 </programlisting>
 
-      but will now draw <quote>function does not exist</> and <quote>operator
-      does not exist</> errors respectively.  Use an explicit cast instead:
+       but will now draw <quote>function does not exist</> and <quote>operator
+       does not exist</> errors respectively.  Use an explicit cast instead:
 
 <programlisting>
 substr(current_date::text, 1, 4)
 23::text LIKE '2%'
 </programlisting>
 
-      (Of course, you can use the more verbose <literal>CAST()</> syntax too.)
-      The reason for the change is that these automatic casts too often caused
-      surprising behavior.  An example is that in previous releases, this
-      expression was accepted but did not do what was expected:
+       (Of course, you can use the more verbose <literal>CAST()</> syntax too.)
+       The reason for the change is that these automatic casts too often caused
+       surprising behavior.  An example is that in previous releases, this
+       expression was accepted but did not do what was expected:
 
 <programlisting>
 current_date &lt; 2017-11-17
 </programlisting>
 
-      This is actually comparing a date to an integer, which should be
-      (and now is) rejected &mdash; but in the presence of automatic
-      casts both sides were cast to <type>text</> and a textual comparison
-      was done, because the <literal>text &lt; text</> operator was able
-      to match the expression when no other <literal>&lt;</> operator could.
-     </para>
+       This is actually comparing a date to an integer, which should be
+       (and now is) rejected &mdash; but in the presence of automatic
+       casts both sides were cast to <type>text</> and a textual comparison
+       was done, because the <literal>text &lt; text</> operator was able
+       to match the expression when no other <literal>&lt;</> operator could.
+      </para>
 
-     <para>
-      Types <type>char(<replaceable>n</>)</type> and
-      <type>varchar(<replaceable>n</>)</type> still cast to <type>text</>
-      automatically.  Also, automatic casting to <type>text</> still works for
-      inputs to the concatenation (<literal>||</>) operator, so long as least
-      one input is a character-string type.
-     </para>
-    </listitem>
+      <para>
+       Types <type>char(<replaceable>n</>)</type> and
+       <type>varchar(<replaceable>n</>)</type> still cast to <type>text</>
+       automatically.  Also, automatic casting to <type>text</> still works for
+       inputs to the concatenation (<literal>||</>) operator, so long as least
+       one input is a character-string type.
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-       Full text search features from <filename>contrib/tsearch2</> have
-       been moved into the core server, with some minor syntax changes
-     </para>
+     <listitem>
+      <para>
+        Full text search features from <filename>contrib/tsearch2</> have
+        been moved into the core server, with some minor syntax changes
+      </para>
 
-     <para>
-      <filename>contrib/tsearch2</> now contains a compatibility
-      interface.
-     </para>
-    </listitem>
+      <para>
+       <filename>contrib/tsearch2</> now contains a compatibility
+       interface.
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-      Numerous changes in administrative server parameters
-     </para>
+     <listitem>
+      <para>
+       <literal>ARRAY(SELECT ...)</literal>, where the <command>SELECT</>
+       returns no rows, now returns an empty array, rather than NULL
+       (Tom)
+      </para>
+     </listitem>
 
-     <para>
-      <varname>bgwriter_lru_percent</>,
-      <varname>bgwriter_all_percent</>,
-      <varname>bgwriter_all_maxpages</>,
-      <varname>stats_start_collector</>, and
-      <varname>stats_reset_on_server_start</> are removed.
-      <varname>redirect_stderr</> is renamed to
-      <varname>logging_collector</>. 
-      <varname>stats_command_string</> is renamed to
-      <varname>track_activities</>.
-      <varname>stats_block_level</> and <varname>stats_row_level</>
-      are merged into <varname>track_counts</>.
-      A new boolean configuration parameter, <varname>archive_mode</>,
-      controls archiving. Autovacuum's default settings have changed.
-     </para>
-    </listitem>
+     <listitem>
+      <para>
+       The array type name for a base data type is no longer always the base
+       type's name with an underscore prefix
+      </para>
 
-    <listitem>
-     <para>
-      Commenting out a parameter in <filename>postgresql.conf</> now
-      causes it to revert to its default value (Joachim Wieland)
-     </para>
+      <para>
+       The old naming convention is still honored when possible, but
+       application code should no longer depend on it. Instead
+       use the new <literal>pg_type.typarray</literal> column to
+       identify the array data type associated with a given type.
+      </para>
+     </listitem>
 
-     <para>
-      Previously, commenting out an entry left the parameter's value unchanged
-      until the next server restart.
-     </para>
-    </listitem>
+     <listitem>
+      <para>
+       <literal>ORDER BY ... USING</> <replaceable>operator</> must now
+       use a less-than or greater-than <replaceable>operator</> that is
+       defined in a btree operator class
+      </para>
 
-    <listitem>
-     <para>
-      <literal>ARRAY(SELECT ...)</literal>, where the <command>SELECT</>
-      returns no rows, now returns an empty array, rather than NULL
-      (Tom)
-     </para>
-    </listitem>
+      <para>
+       This restriction was added to prevent inconsistent results.
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-      <literal>ORDER BY ... USING</> <replaceable>operator</> must now
-      use a less-than or greater-than <replaceable>operator</> that is
-      defined in a btree operator class
-     </para>
+     <listitem>
+      <para>
+       <command>SET LOCAL</command> changes now persist until
+       the end of the outermost transaction, unless rolled back (Tom)
+      </para>
 
-     <para>
-      This restriction was added to prevent inconsistent results.
-     </para>
-    </listitem>
+      <para>
+       Previously <command>SET LOCAL</command>'s effects were lost
+       after subtransaction commit (<command>RELEASE SAVEPOINT</>
+       or exit from a PL/pgSQL exception block).
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-      The array type name for a base data type is no longer always the base
-      type's name with an underscore prefix
-     </para>
+     <listitem>
+      <para>
+       Commands rejected in transaction blocks are now also rejected in
+       multiple-statement query strings (Tom)
+      </para>
 
-     <para>
-      The old naming convention is still honored when possible, but
-      application code should no longer depend on it. Instead
-      use the new <literal>pg_type.typarray</literal> column to
-      identify the array data type associated with a given type.
-     </para>
-    </listitem>
+      <para>
+       For example, <literal>"BEGIN; DROP DATABASE; COMMIT"</> will now be
+       rejected even if submitted as a single query message.
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-      <command>SET LOCAL</command> changes now persist until
-      the end of the outermost transaction, unless rolled back (Tom)
-     </para>
+     <listitem>
+      <para>
+       <command>ROLLBACK</> outside a transaction block now
+       issues <literal>NOTICE</> instead of <literal>WARNING</> (Bruce)
+      </para>
+     </listitem>
 
-     <para>
-      Previously <command>SET LOCAL</command>'s effects were lost
-      after subtransaction commit (<command>RELEASE SAVEPOINT</>
-      or exit from a PL/pgSQL exception block).
-     </para>
-    </listitem>
+     <listitem>
+      <para>
+       Prevent <command>NOTIFY</command>/<command>LISTEN</command>/<command>UNLISTEN</command>
+       from accepting schema-qualified names (Bruce)
+      </para>
 
-    <listitem>
-     <para>
-      Commands rejected in transaction blocks are now also rejected in
-      multiple-statement query strings (Tom)
-     </para>
+      <para>
+       Formerly, these commands accepted <literal>schema.relation</> but
+       ignored the schema part, which was confusing.
+      </para>
+     </listitem>
 
-     <para>
-      For example, <literal>"BEGIN; DROP DATABASE; COMMIT"</> will now be
-      rejected even if submitted as a single query message.
-     </para>
-    </listitem>
+     <listitem>
+      <para>
+       <command>ALTER SEQUENCE</> no longer affects <function>currval()</>
+       (Tom)
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-      <command>ROLLBACK</> outside a transaction block now
-      issues <literal>NOTICE</> instead of <literal>WARNING</> (Bruce)
-     </para>
-    </listitem>
+     <listitem>
+      <para>
+       Foreign keys now must match indexable conditions for
+       cross-data-type references (Tom)
+      </para>
 
-    <listitem>
-     <para>
-      Prevent <command>NOTIFY</command>/<command>LISTEN</command>/<command>UNLISTEN</command>
-      from accepting schema-qualified names (Bruce)
-     </para>
+      <para>
+       This improves semantic consistency and helps avoid
+       performance problems.
+      </para>
+     </listitem>
 
-     <para>
-      Formerly, these commands accepted <literal>schema.relation</> but
-      ignored the schema part, which was confusing.
-     </para>
-    </listitem>
+     <listitem>
+      <para>
+       Restrict object size functions to users who have reasonable
+       permissions to view such information (Tom)
+      </para>
 
-    <listitem>
-     <para>
-      Restrict object size functions to users who have reasonable
-      permissions to view such information (Tom)
-     </para>
+      <para>
+       For example, <function>pg_database_size()</function> now requires
+       <literal>CONNECT</> permission, which is granted to everyone by
+       default. <function>pg_tablespace_size()</function> requires
+       <literal>CREATE</> permission in the tablespace, or is allowed if
+       the tablespace is the default tablespace for the database.
+      </para>
+     </listitem>
 
-     <para>
-      For example, <function>pg_database_size()</function> now requires
-      <literal>CONNECT</> permission, which is granted to everyone by
-      default. <function>pg_tablespace_size()</function> requires
-      <literal>CREATE</> permission in the tablespace, or is allowed if
-      the tablespace is the default tablespace for the database.
-     </para>
-    </listitem>
+     <listitem>
+      <para>
+       Remove the undocumented <literal>!!=</> (not in) operator (Tom)
+      </para>
 
-    <listitem>
-     <para>
-      Internal hashing functions are now more uniformly-distributed (Tom)
-     </para>
+      <para>
+       <literal>NOT IN (SELECT ...)</literal> is the proper way to
+       perform this operation.
+      </para>
+     </listitem>
 
-     <para>
-      If application code was computing and storing hash values using
-      internal <productname>PostgreSQL</> hashing functions, the hash
-      values must be regenerated.
-     </para>
-    </listitem>
+     <listitem>
+      <para>
+       Internal hashing functions are now more uniformly-distributed (Tom)
+      </para>
 
-    <listitem>
-     <para>
-      <command>ALTER SEQUENCE</> no longer affects <function>currval()</>
-      (Tom)
-     </para>
-    </listitem>
+      <para>
+       If application code was computing and storing hash values using
+       internal <productname>PostgreSQL</> hashing functions, the hash
+       values must be regenerated.
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-      Foreign keys now must match indexable conditions for
-      cross-data-type references (Tom)
-     </para>
+     <listitem>
+      <para>
+       C-code conventions for handling variable-length data values
+       have changed (Greg Stark, Tom)
+      </para>
 
-     <para>
-      This improves semantic consistency and helps avoid
-      performance problems.
-     </para>
-    </listitem>
+      <para>
+       The new <function>SET_VARSIZE()</> macro <emphasis>must</> be used
+       to set the length of generated <type>varlena</> values. Also, it
+       might be necessary to expand (<quote>de-TOAST</quote>) input values
+       in more cases.
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-      Remove the undocumented <literal>!!=</> (not in) operator (Tom)
-     </para>
+    </itemizedlist>
 
-     <para>
-      <literal>NOT IN (SELECT ...)</literal> is the proper way to
-      perform this operation.
-     </para>
-    </listitem>
+    </sect3>
 
-    <listitem>
-     <para>
-      Remove <varname>stats_start_collector</varname> parameter (Tom)
-     </para>
+    <sect3>
+     <title>Configuration Parameters</title>
 
-     <para>
-      We now always start the collector process, unless <acronym>UDP</>
-      socket creation fails.
-     </para>
-    </listitem>
+    <itemizedlist>
 
-    <listitem>
-     <para>
-      Remove <varname>stats_reset_on_server_start</varname> parameter (Tom)
-     </para>
+     <listitem>
+      <para>
+       Numerous changes in administrative server parameters
+      </para>
 
-     <para>
-      This was removed because <function>pg_stat_reset()</function>
-      can be used for this purpose.
-     </para>
-    </listitem>
+      <para>
+       <varname>bgwriter_lru_percent</>,
+       <varname>bgwriter_all_percent</>,
+       <varname>bgwriter_all_maxpages</>,
+       <varname>stats_start_collector</>, and
+       <varname>stats_reset_on_server_start</> are removed.
+       <varname>redirect_stderr</> is renamed to
+       <varname>logging_collector</>. 
+       <varname>stats_command_string</> is renamed to
+       <varname>track_activities</>.
+       <varname>stats_block_level</> and <varname>stats_row_level</>
+       are merged into <varname>track_counts</>.
+       A new boolean configuration parameter, <varname>archive_mode</>,
+       controls archiving. Autovacuum's default settings have changed.
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-      C-code conventions for handling variable-length data values
-      have changed (Greg Stark, Tom)
-     </para>
+     <listitem>
+      <para>
+       Remove <varname>stats_start_collector</varname> parameter (Tom)
+      </para>
 
-     <para>
-      The new <function>SET_VARSIZE()</> macro <emphasis>must</> be used
-      to set the length of generated <type>varlena</> values. Also, it
-      might be necessary to expand (<quote>de-TOAST</quote>) input values
-      in more cases.
-     </para>
-    </listitem>
+      <para>
+       We now always start the collector process, unless <acronym>UDP</>
+       socket creation fails.
+      </para>
+     </listitem>
 
-   </itemizedlist>
+     <listitem>
+      <para>
+       Remove <varname>stats_reset_on_server_start</varname> parameter (Tom)
+      </para>
+
+      <para>
+       This was removed because <function>pg_stat_reset()</function>
+       can be used for this purpose.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Commenting out a parameter in <filename>postgresql.conf</> now
+       causes it to revert to its default value (Joachim Wieland)
+      </para>
+
+      <para>
+       Previously, commenting out an entry left the parameter's value unchanged
+       until the next server restart.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+    </sect3>
 
 
-   <para>
-    The following incompatibilities relate to character encodings:
-   </para>
+    <sect3>
+     <title>Character Encodings</title>
 
-   <itemizedlist>
+    <itemizedlist>
 
-    <listitem>
-     <para>
-      Add more checks for invalidly-encoded data (Andrew)
-     </para>
+     <listitem>
+      <para>
+       Add more checks for invalidly-encoded data (Andrew)
+      </para>
 
-     <para>
-      This change plugs some holes that existed in literal backslash
-      escape string processing and <command>COPY</command> escape
-      processing. Now the de-escaped string is rechecked to see if the
-      result created an invalid multi-byte character.
-     </para>
-    </listitem>
+      <para>
+       This change plugs some holes that existed in literal backslash
+       escape string processing and <command>COPY</command> escape
+       processing. Now the de-escaped string is rechecked to see if the
+       result created an invalid multi-byte character.
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-      Ensure that <function>chr()</function> cannot create
-      invalidly-encoded values (Andrew)
-     </para>
+     <listitem>
+      <para>
+       Ensure that <function>chr()</function> cannot create
+       invalidly-encoded values (Andrew)
+      </para>
 
-     <para>
-      In UTF8-encoded databases the argument of <function>chr()</function> is
-      now treated as a Unicode code point. In other multi-byte encodings
-      <function>chr()</function>'s argument must designate a 7-bit ASCII
-      character.  Zero is no longer accepted.
-      <function>ascii()</function> has been adjusted to match.
-     </para>
-    </listitem>
+      <para>
+       In UTF8-encoded databases the argument of <function>chr()</function> is
+       now treated as a Unicode code point. In other multi-byte encodings
+       <function>chr()</function>'s argument must designate a 7-bit ASCII
+       character.  Zero is no longer accepted.
+       <function>ascii()</function> has been adjusted to match.
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-      Adjust <function>convert()</function> behavior to ensure encoding
-      validity (Andrew)
-     </para>
+     <listitem>
+      <para>
+       Adjust <function>convert()</function> behavior to ensure encoding
+       validity (Andrew)
+      </para>
 
-     <para>
-      The two argument form of <function>convert()</function> has been
-      removed. The three argument form now takes a <type>bytea</type>
-      first argument and returns a <type>bytea</type>. To cover the
-      loss of functionality, three new functions have been added:
-     </para>
+      <para>
+       The two argument form of <function>convert()</function> has been
+       removed. The three argument form now takes a <type>bytea</type>
+       first argument and returns a <type>bytea</type>. To cover the
+       loss of functionality, three new functions have been added:
+      </para>
 
-     <itemizedlist>
-      <listitem>
-       <para>
-        <function>convert_from(bytea, name)</function> returns
-        <type>text</> &mdash; converts the first argument from the named
-        encoding to the database encoding
-       </para>
-      </listitem>
+      <itemizedlist>
+       <listitem>
+        <para>
+         <function>convert_from(bytea, name)</function> returns
+         <type>text</> &mdash; converts the first argument from the named
+         encoding to the database encoding
+        </para>
+       </listitem>
 
-      <listitem>
-       <para>
-        <function>convert_to(text, name)</function> returns
-        <type>bytea</> &mdash; converts the first argument from the
-        database encoding to the named encoding
-       </para>
-      </listitem>
+       <listitem>
+        <para>
+         <function>convert_to(text, name)</function> returns
+         <type>bytea</> &mdash; converts the first argument from the
+         database encoding to the named encoding
+        </para>
+       </listitem>
 
-      <listitem>
-       <para>
-        <function>length(bytea, name)</function> returns
-        <type>integer</> &mdash; gives the length of the first
-        argument in characters in the named encoding
-       </para>
-      </listitem>
-     </itemizedlist>
-    </listitem>
+       <listitem>
+        <para>
+         <function>length(bytea, name)</function> returns
+         <type>integer</> &mdash; gives the length of the first
+         argument in characters in the named encoding
+        </para>
+       </listitem>
+      </itemizedlist>
+     </listitem>
 
-    <listitem>
-     <para>
-      Remove <literal>convert(argument USING conversion_name)</literal>
-      (Andrew)
-     </para>
+     <listitem>
+      <para>
+       Remove <literal>convert(argument USING conversion_name)</literal>
+       (Andrew)
+      </para>
 
-     <para>
-      Its behavior did not match the SQL standard.
-     </para>
-    </listitem>
+      <para>
+       Its behavior did not match the SQL standard.
+      </para>
+     </listitem>
 
-    <listitem>
-     <para>
-      Make JOHAB encoding client-only (Tatsuo)
-     </para>
+     <listitem>
+      <para>
+       Make JOHAB encoding client-only (Tatsuo)
+      </para>
 
-     <para>
-      JOHAB is not safe as a server-side encoding.
-     </para>
-    </listitem>
+      <para>
+       JOHAB is not safe as a server-side encoding.
+      </para>
+     </listitem>
 
-   </itemizedlist>
+    </itemizedlist>
+
+   </sect3>
 
   </sect2>
 
@@ -888,6 +902,14 @@ current_date &lt; 2017-11-17
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       Change server startup log message from <quote>database system is
+       ready</quote> to <quote>database system is ready to accept
+       connections</quote>
+      </para>
+     </listitem>
+
     </itemizedlist>
 
    </sect3>
@@ -1031,6 +1053,13 @@ current_date &lt; 2017-11-17
       <para>
        Rename <varname>stats_command_string</varname> parameter to
        <varname>track_activities</varname> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix pgstats counting of live and dead tuples to recognize that
+       committed and aborted transactions have different effects (Tom)
       </para>
      </listitem>
 
@@ -2128,16 +2157,8 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>Source Code</title>
+    <title>Server Programming Interface (<acronym>SPI</>)</title>
     <itemizedlist>
-
-     <listitem>
-      <para>
-       Rename macro <literal>DLLIMPORT</> to <literal>PGDLLIMPORT</> to
-       avoid conflicting with third party includes (like Tcl) that
-       define <literal>DLLIMPORT</> (Magnus)
-      </para>
-     </listitem>
 
      <listitem>
       <para>
@@ -2174,6 +2195,14 @@ current_date &lt; 2017-11-17
       </para>
      </listitem>
 
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Build Options</title>
+    <itemizedlist>
+
      <listitem>
       <para>
        Add <application>configure</> <literal>--enable-profiling</>
@@ -2191,8 +2220,9 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Create <quote>operator families</quote> to improve planning of
-       queries involving cross-data-type comparisons (Tom)
+       Fix <acronym>PGXS</> so extensions can be built against PostgreSQL
+       installations whose <application>pg_config</> program does not
+       appear first in the <varname>PATH</> (Tom)
       </para>
      </listitem>
 
@@ -2200,6 +2230,29 @@ current_date &lt; 2017-11-17
       <para>
        Support <command>gmake draft</command> when building the
        <acronym>SGML</> documentation (Bruce)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Source Code</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Rename macro <literal>DLLIMPORT</> to <literal>PGDLLIMPORT</> to
+       avoid conflicting with third party includes (like Tcl) that
+       define <literal>DLLIMPORT</> (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Create <quote>operator families</quote> to improve planning of
+       queries involving cross-data-type comparisons (Tom)
       </para>
      </listitem>
 
@@ -2220,25 +2273,10 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Change server startup log message from <quote>database system is
-       ready</quote> to <quote>database system is ready to accept
-       connections</quote>
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        Provide <function>strlcpy()</function> and
        <function>strlcat()</function> on all platforms, and replace
        error-prone uses of <function>strncpy()</function>,
        <function>strncat()</function>, etc (Peter)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Fix pgstats counting of live and dead tuples to recognize that
-       committed and aborted transactions have different effects (Tom)
       </para>
      </listitem>
 
@@ -2266,17 +2304,9 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Have <function>quote_identifier()</function> and
-       <application>pg_dump</application> not quote keywords that are
+       <function>quote_identifier()</function> and
+       <application>pg_dump</application> no longer quote keywords that are
        unreserved according to the grammar (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Fix <acronym>PGXS</> so extensions can be built against PostgreSQL
-       installations whose <application>pg_config</> program does not
-       appear first in the <varname>PATH</> (Tom)
       </para>
      </listitem>
 
