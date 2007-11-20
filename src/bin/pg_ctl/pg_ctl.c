@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.89 2007/11/15 21:14:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.90 2007/11/20 19:24:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,10 +77,11 @@ typedef enum
 	RUN_AS_SERVICE_COMMAND
 } CtlCommand;
 
+#define DEFAULT_WAIT	60
 
 static bool do_wait = false;
 static bool wait_set = false;
-static int	wait_seconds = 60;
+static int	wait_seconds = DEFAULT_WAIT;
 static bool silent_mode = false;
 static ShutdownMode shutdown_mode = SMART_MODE;
 static int	sig = SIGTERM;		/* default */
@@ -1031,6 +1032,10 @@ pgwin32_CommandLine(bool registration)
 	if (registration && do_wait)
 		strcat(cmdLine, " -w");
 
+	if (registration && wait_seconds != DEFAULT_WAIT)
+		/* concatenate */
+		sprintf(cmdLine + strlen(cmdLine), " -t %d", wait_seconds);
+
 	if (post_opts)
 	{
 		strcat(cmdLine, " ");
@@ -1472,7 +1477,8 @@ do_help(void)
 	printf(_("Usage:\n"));
 	printf(_("  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"), progname);
-	printf(_("  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n                   [-o \"OPTIONS\"]\n"), progname);
+	printf(_("  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
+		 "                 [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s reload  [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PID\n"), progname);
