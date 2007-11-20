@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.549 2007/11/20 03:34:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.550 2007/11/20 04:00:27 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -396,6 +396,18 @@ current_date &lt; 2017-11-17
      <para>
       <command>ROLLBACK</> outside a transaction block now
       issues <literal>NOTICE</> instead of <literal>WARNING</> (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent <command>NOTIFY</command>/<command>LISTEN</command>/<command>UNLISTEN</command>
+      from accepting schema-qualified names (Bruce)
+     </para>
+
+     <para>
+      Formerly, these commands accepted <literal>schema.relation</> but
+      ignored the schema part, which was confusing.
      </para>
     </listitem>
 
@@ -1387,6 +1399,13 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
+       Allow <command>CREATE INDEX CONCURRENTLY</command> to ignore
+       transactions in other databases (Simon)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Make <command>CLUSTER</command> MVCC-safe (Heikki Linnakangas)
       </para>
 
@@ -1425,13 +1444,6 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Allow <command>CREATE INDEX CONCURRENTLY</command> to ignore
-       transactions in other databases (Simon)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        Make <command>CREATE/DROP/RENAME DATABASE</> wait briefly for
        conflicting backends to exit before failing (Tom)
       </para>
@@ -1454,18 +1466,6 @@ current_date &lt; 2017-11-17
        caused problems for some client applications.  The length of the
        message is now limited, although a full list is still sent to the
        server log.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Prevent <command>NOTIFY</command>/<command>LISTEN</command>/<command>UNLISTEN</command>
-       from accepting schema-qualified names (Bruce)
-      </para>
-
-      <para>
-       Formerly, these commands accepted <literal>schema.relation</> but
-       ignored the schema part, which was confusing.
       </para>
      </listitem>
 
@@ -1833,7 +1833,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Add the function's volatility to the output of
+       Add the function's volatility status to the output of
        <literal>\df+</literal> (Neil)
       </para>
      </listitem>
@@ -1950,6 +1950,17 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
+       Add <application>pg_ctl</> timeout parameter (Bruce)
+      </para>
+
+      <para>
+       This controls how long <application>pg_ctl</> will wait when waiting
+       for server startup or shutdown.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Add <application>pg_ctl</> option to control generation
        of core dumps (Andrew)
       </para>
@@ -1974,17 +1985,6 @@ current_date &lt; 2017-11-17
        The <literal>--quiet</> option is ignored and will be removed in 8.4.
        Progress messages when acting on all databases now go to stdout
        instead of stderr because they are not actually errors.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add <application>pg_ctl</> timeout parameter (Bruce)
-      </para>
-
-      <para>
-       This controls how long <application>pg_ctl</> will wait when waiting
-       for server startup or shutdown.
       </para>
      </listitem>
 
@@ -2055,11 +2055,11 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Major rewrite to use V3 frontend/backend protocol (Michael)
+       Use V3 frontend/backend protocol (Michael)
       </para>
 
       <para>
-       This adds server-side prepared statements.
+       This adds support for server-side prepared statements.
       </para>
      </listitem>
 
