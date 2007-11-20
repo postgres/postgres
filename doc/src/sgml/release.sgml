@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.546 2007/11/20 01:13:00 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.547 2007/11/20 01:19:30 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1913,7 +1913,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Add <application>pg_ctl</> <literal> option to control generation
+       Add <application>pg_ctl</> option to control generation
        of core dumps (Andrew)
       </para>
      </listitem>
