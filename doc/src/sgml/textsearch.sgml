@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.37 2007/11/20 02:25:22 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.38 2007/11/20 15:58:52 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -2973,7 +2973,7 @@ SELECT * FROM ts_token_type('default');
     10 | hword_part      | Hyphenated word part, all letters
     11 | hword_asciipart | Hyphenated word part, all ASCII
     12 | blank           | Space symbols
-    13 | tag             | HTML tag
+    13 | tag             | XML tag
     14 | protocol        | Protocol head
     15 | numhword        | Hyphenated word, letters and digits
     16 | asciihword      | Hyphenated word, all ASCII
@@ -2983,7 +2983,7 @@ SELECT * FROM ts_token_type('default');
     20 | float           | Decimal notation
     21 | int             | Signed integer
     22 | uint            | Unsigned integer
-    23 | entity          | HTML entity
+    23 | entity          | XML entity
 </programlisting>
    </para>
 
@@ -3429,7 +3429,7 @@ Parser: "pg_catalog.default"
  asciiword       | Word, all ASCII
  blank           | Space symbols
  email           | Email address
- entity          | HTML entity
+ entity          | XML entity
  file            | File or path name
  float           | Decimal notation
  host            | Host
@@ -3442,7 +3442,7 @@ Parser: "pg_catalog.default"
  numword         | Word, letters and digits
  protocol        | Protocol head
  sfloat          | Scientific notation
- tag             | HTML tag
+ tag             | XML tag
  uint            | Unsigned integer
  url             | URL
  url_path        | URL path
