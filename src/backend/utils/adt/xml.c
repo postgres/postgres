@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.58 2007/11/15 22:25:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.59 2007/11/20 23:14:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1109,12 +1109,14 @@ parse_xml_decl(const xmlChar * str, size_t *lenp,
 			return XML_ERR_STANDALONE_VALUE;
 		p += 1;
 		SKIP_XML_SPACE(p);
-		if (xmlStrncmp(p, (xmlChar *) "'yes'", 5) == 0 || xmlStrncmp(p, (xmlChar *) "\"yes\"", 5) == 0)
+		if (xmlStrncmp(p, (xmlChar *) "'yes'", 5) == 0 ||
+			xmlStrncmp(p, (xmlChar *) "\"yes\"", 5) == 0)
 		{
 			*standalone = 1;
 			p += 5;
 		}
-		else if (xmlStrncmp(p, (xmlChar *) "'no'", 4) == 0 || xmlStrncmp(p, (xmlChar *) "\"no\"", 4) == 0)
+		else if (xmlStrncmp(p, (xmlChar *) "'no'", 4) == 0 ||
+				 xmlStrncmp(p, (xmlChar *) "\"no\"", 4) == 0)
 		{
 			*standalone = 0;
 			p += 4;
@@ -3305,6 +3307,8 @@ xpath(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("empty XPath expression")));
 
+	xml_init();
+
 	/*
 	 * To handle both documents and fragments, regardless of the fact whether
 	 * the XML datum has a single root (XML well-formedness), we wrap the XML
@@ -3324,20 +3328,22 @@ xpath(PG_FUNCTION_ARGS)
 						"could not parse XML data");
 
 		++i;
-		string = xmlStrncatNew((xmlChar *) "<x>",
-							   (xmlChar *) datastr + i, len - i);
+
+		datastr += i;
+		len -= i;
 	}
-	else
-		string = xmlStrncatNew((xmlChar *) "<x>",
-							   (xmlChar *) datastr, len);
 
-	string = xmlStrncat(string, (xmlChar *) "</x>", 5);
+	string = (xmlChar *) palloc((len + 8) * sizeof(xmlChar));
+	memcpy(string, "<x>", 3);
+	memcpy(string + 3, datastr, len);
+	memcpy(string + 3 + len, "</x>", 5);
 	len += 7;
-	xpath_expr = xmlStrncatNew((xmlChar *) "/x",
-							(xmlChar *) VARDATA(xpath_expr_text), xpath_len);
-	xpath_len += 2;
 
-	xml_init();
+	xpath_expr = (xmlChar *) palloc((xpath_len + 3) * sizeof(xmlChar));
+	memcpy(xpath_expr, "/x", 2);
+	memcpy(xpath_expr + 2, VARDATA(xpath_expr_text), xpath_len);
+	xpath_expr[xpath_len + 2] = '\0';
+	xpath_len += 2;
 
 	/* We use a PG_TRY block to ensure libxml parser is cleaned up on error */
 	PG_TRY();
