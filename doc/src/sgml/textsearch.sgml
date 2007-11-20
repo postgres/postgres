@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.36 2007/11/16 03:23:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.37 2007/11/20 02:25:22 adunstan Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -1862,12 +1862,12 @@ LIMIT 10;
      </row>
      <row>
       <entry><literal>tag</></entry>
-      <entry>HTML tag</entry>
-      <entry><literal>&lt;A HREF="dictionaries.html"&gt;</literal></entry>
+      <entry>XML tag</entry>
+      <entry><literal>&lt;a href="dictionaries.html"&gt;</literal></entry>
      </row>
      <row>
       <entry><literal>entity</></entry>
-      <entry>HTML entity</entry>
+      <entry>XML entity</entry>
       <entry><literal>&amp;amp;</literal></entry>
      </row>
      <row>

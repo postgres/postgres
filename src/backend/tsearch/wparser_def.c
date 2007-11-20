@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.10 2007/11/15 22:25:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.11 2007/11/20 02:25:22 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@
 #define DECIMAL			20
 #define SIGNEDINT		21
 #define UNSIGNEDINT		22
-#define HTMLENTITY		23
+#define XMLENTITY		23
 
 #define LASTNUM			23
 
@@ -95,7 +95,7 @@ static const char *const lex_descr[] = {
 	"Hyphenated word part, all letters",
 	"Hyphenated word part, all ASCII",
 	"Space symbols",
-	"HTML tag",
+	"XML tag",
 	"Protocol head",
 	"Hyphenated word, letters and digits",
 	"Hyphenated word, all ASCII",
@@ -105,7 +105,7 @@ static const char *const lex_descr[] = {
 	"Decimal notation",
 	"Signed integer",
 	"Unsigned integer",
-	"HTML entity"
+	"XML entity"
 };
 
 
@@ -132,11 +132,13 @@ typedef enum
 	TPS_InMantissaFirst,
 	TPS_InMantissaSign,
 	TPS_InMantissa,
-	TPS_InHTMLEntityFirst,
-	TPS_InHTMLEntity,
-	TPS_InHTMLEntityNumFirst,
-	TPS_InHTMLEntityNum,
-	TPS_InHTMLEntityEnd,
+	TPS_InXMLEntityFirst,
+	TPS_InXMLEntity,
+	TPS_InXMLEntityNumFirst,
+	TPS_InXMLEntityNum,
+	TPS_InXMLEntityHexNumFirst,
+	TPS_InXMLEntityHexNum,
+	TPS_InXMLEntityEnd,
 	TPS_InTagFirst,
 	TPS_InXMLBegin,
 	TPS_InTagCloseFirst,
@@ -653,7 +655,7 @@ static const TParserStateActionItem actionTPS_Base[] = {
 	{p_isdigit, 0, A_NEXT, TPS_InUnsignedInt, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InSignedIntFirst, 0, NULL},
 	{p_iseqC, '+', A_PUSH, TPS_InSignedIntFirst, 0, NULL},
-	{p_iseqC, '&', A_PUSH, TPS_InHTMLEntityFirst, 0, NULL},
+	{p_iseqC, '&', A_PUSH, TPS_InXMLEntityFirst, 0, NULL},
 	{p_iseqC, '~', A_PUSH, TPS_InFileTwiddle, 0, NULL},
 	{p_iseqC, '/', A_PUSH, TPS_InFileFirst, 0, NULL},
 	{p_iseqC, '.', A_PUSH, TPS_InPathFirstFirst, 0, NULL},
@@ -811,35 +813,56 @@ static const TParserStateActionItem actionTPS_InMantissa[] = {
 	{NULL, 0, A_BINGO, TPS_Base, SCIENTIFIC, NULL}
 };
 
-static const TParserStateActionItem actionTPS_InHTMLEntityFirst[] = {
+static const TParserStateActionItem actionTPS_InXMLEntityFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_iseqC, '#', A_NEXT, TPS_InHTMLEntityNumFirst, 0, NULL},
-	{p_isasclet, 0, A_NEXT, TPS_InHTMLEntity, 0, NULL},
+	{p_iseqC, '#', A_NEXT, TPS_InXMLEntityNumFirst, 0, NULL},
+	{p_isasclet, 0, A_NEXT, TPS_InXMLEntity, 0, NULL},
+	{p_iseqC, ':', A_NEXT, TPS_InXMLEntity, 0, NULL},
+	{p_iseqC, '_', A_NEXT, TPS_InXMLEntity, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
-static const TParserStateActionItem actionTPS_InHTMLEntity[] = {
+static const TParserStateActionItem actionTPS_InXMLEntity[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_isasclet, 0, A_NEXT, TPS_InHTMLEntity, 0, NULL},
-	{p_iseqC, ';', A_NEXT, TPS_InHTMLEntityEnd, 0, NULL},
+	{p_isalnum, 0, A_NEXT, TPS_InXMLEntity, 0, NULL},
+	{p_iseqC, ':', A_NEXT, TPS_InXMLEntity, 0, NULL},
+	{p_iseqC, '_', A_NEXT, TPS_InXMLEntity, 0, NULL},
+	{p_iseqC, ':', A_NEXT, TPS_InXMLEntity, 0, NULL},
+	{p_iseqC, '.', A_NEXT, TPS_InXMLEntity, 0, NULL},
+	{p_iseqC, '-', A_NEXT, TPS_InXMLEntity, 0, NULL},
+	{p_iseqC, ';', A_NEXT, TPS_InXMLEntityEnd, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
-static const TParserStateActionItem actionTPS_InHTMLEntityNumFirst[] = {
+static const TParserStateActionItem actionTPS_InXMLEntityNumFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHTMLEntityNum, 0, NULL},
+	{p_iseqC, 'x', A_NEXT, TPS_InXMLEntityHexNumFirst, 0, NULL},
+	{p_isdigit, 0, A_NEXT, TPS_InXMLEntityNum, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
-static const TParserStateActionItem actionTPS_InHTMLEntityNum[] = {
+static const TParserStateActionItem actionTPS_InXMLEntityHexNumFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_isdigit, 0, A_NEXT, TPS_InHTMLEntityNum, 0, NULL},
-	{p_iseqC, ';', A_NEXT, TPS_InHTMLEntityEnd, 0, NULL},
+	{p_isxdigit, 0, A_NEXT, TPS_InXMLEntityHexNum, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
-static const TParserStateActionItem actionTPS_InHTMLEntityEnd[] = {
-	{NULL, 0, A_BINGO | A_CLEAR, TPS_Base, HTMLENTITY, NULL}
+static const TParserStateActionItem actionTPS_InXMLEntityNum[] = {
+	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
+	{p_isdigit, 0, A_NEXT, TPS_InXMLEntityNum, 0, NULL},
+	{p_iseqC, ';', A_NEXT, TPS_InXMLEntityEnd, 0, NULL},
+	{NULL, 0, A_POP, TPS_Null, 0, NULL}
+};
+
+static const TParserStateActionItem actionTPS_InXMLEntityHexNum[] = {
+	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
+	{p_isxdigit, 0, A_NEXT, TPS_InXMLEntityHexNum, 0, NULL},
+	{p_iseqC, ';', A_NEXT, TPS_InXMLEntityEnd, 0, NULL},
+	{NULL, 0, A_POP, TPS_Null, 0, NULL}
+};
+
+static const TParserStateActionItem actionTPS_InXMLEntityEnd[] = {
+	{NULL, 0, A_BINGO | A_CLEAR, TPS_Base, XMLENTITY, NULL}
 };
 
 static const TParserStateActionItem actionTPS_InTagFirst[] = {
@@ -854,8 +877,8 @@ static const TParserStateActionItem actionTPS_InTagFirst[] = {
 static const TParserStateActionItem actionTPS_InXMLBegin[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
 	/* <?xml ... */
+    /* XXX do we wants states for the m and l ?  Right now this accepts <?xZ */
 	{p_iseqC, 'x', A_NEXT, TPS_InTag, 0, NULL},
-	{p_iseqC, 'X', A_NEXT, TPS_InTag, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -1278,11 +1301,13 @@ static const TParserStateAction Actions[] = {
 	TPARSERSTATEACTION(TPS_InMantissaFirst),
 	TPARSERSTATEACTION(TPS_InMantissaSign),
 	TPARSERSTATEACTION(TPS_InMantissa),
-	TPARSERSTATEACTION(TPS_InHTMLEntityFirst),
-	TPARSERSTATEACTION(TPS_InHTMLEntity),
-	TPARSERSTATEACTION(TPS_InHTMLEntityNumFirst),
-	TPARSERSTATEACTION(TPS_InHTMLEntityNum),
-	TPARSERSTATEACTION(TPS_InHTMLEntityEnd),
+	TPARSERSTATEACTION(TPS_InXMLEntityFirst),
+	TPARSERSTATEACTION(TPS_InXMLEntity),
+	TPARSERSTATEACTION(TPS_InXMLEntityNumFirst),
+	TPARSERSTATEACTION(TPS_InXMLEntityNum),
+	TPARSERSTATEACTION(TPS_InXMLEntityHexNumFirst),
+	TPARSERSTATEACTION(TPS_InXMLEntityHexNum),
+	TPARSERSTATEACTION(TPS_InXMLEntityEnd),
 	TPARSERSTATEACTION(TPS_InTagFirst),
 	TPARSERSTATEACTION(TPS_InXMLBegin),
 	TPARSERSTATEACTION(TPS_InTagCloseFirst),
@@ -1556,9 +1581,9 @@ prsd_end(PG_FUNCTION_ARGS)
 #define COMPLEXTOKEN(x) ( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
 #define ENDPUNCTOKEN(x) ( (x)==SPACE )
 
-#define TS_IDIGNORE(x) ( (x)==TAG_T || (x)==PROTOCOL || (x)==SPACE || (x)==HTMLENTITY )
+#define TS_IDIGNORE(x) ( (x)==TAG_T || (x)==PROTOCOL || (x)==SPACE || (x)==XMLENTITY )
 #define HLIDIGNORE(x) ( (x)==URL_T || (x)==TAG_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
-#define HTMLHLIDIGNORE(x) ( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
+#define XMLHLIDIGNORE(x) ( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
 #define NONWORDTOKEN(x) ( (x)==SPACE || HLIDIGNORE(x) )
 #define NOENDTOKEN(x)	( NONWORDTOKEN(x) || (x)==SCIENTIFIC || (x)==VERSIONNUMBER || (x)==DECIMAL || (x)==SIGNEDINT || (x)==UNSIGNEDINT || TS_IDIGNORE(x) )
 
@@ -1839,7 +1864,7 @@ prsd_headline(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			if (HTMLHLIDIGNORE(prs->words[i].type))
+			if (XMLHLIDIGNORE(prs->words[i].type))
 				prs->words[i].replace = 1;
 		}
 

@@ -222,7 +222,7 @@ SELECT * FROM ts_token_type('default');
     10 | hword_part      | Hyphenated word part, all letters
     11 | hword_asciipart | Hyphenated word part, all ASCII
     12 | blank           | Space symbols
-    13 | tag             | HTML tag
+    13 | tag             | XML tag
     14 | protocol        | Protocol head
     15 | numhword        | Hyphenated word, letters and digits
     16 | asciihword      | Hyphenated word, all ASCII
@@ -232,7 +232,7 @@ SELECT * FROM ts_token_type('default');
     20 | float           | Decimal notation
     21 | int             | Signed integer
     22 | uint            | Unsigned integer
-    23 | entity          | HTML entity
+    23 | entity          | XML entity
 (23 rows)
 
 SELECT * FROM ts_parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
