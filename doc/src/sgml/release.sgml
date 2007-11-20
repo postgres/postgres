@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.550 2007/11/20 04:00:27 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.551 2007/11/20 05:00:24 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -186,7 +186,7 @@ do it for earlier branch release files.
     <listitem>
      <para>
       Using non-persistent transaction IDs for read-only transactions
-      reduces overhead
+      reduces overhead and <command>VACUUM</> requirements
      </para>
     </listitem>
 
@@ -205,8 +205,7 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Large sequential scans can share disk reads with other
-      concurrent sequential scans
+      Concurrent large sequential scans can now share disk reads
      </para>
     </listitem>
 
@@ -704,7 +703,7 @@ current_date &lt; 2017-11-17
      <listitem>
       <para>
        Using non-persistent transaction IDs for read-only transactions
-       reduces overhead (Florian Pflug)
+       reduces overhead and <command>VACUUM</> requirements (Florian Pflug)
       </para>
 
       <para>
@@ -748,8 +747,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Large sequential scans can share disk reads with other
-       concurrent sequential scans (Jeff Davis)
+       Concurrent large sequential scans can now share disk reads (Jeff Davis)
       </para>
 
       <para>
@@ -2314,7 +2312,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Move <filename>/contrib</> <filename>README</> content into the
+       Move <filename>contrib</> <filename>README</> content into the
        main <productname>PostgreSQL</> documentation (Albert Cervera i
        Areny)
       </para>
@@ -2322,21 +2320,21 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Add <filename>/contrib/pageinspect</filename> module for low-level
+       Add <filename>contrib/pageinspect</filename> module for low-level
        page inspection (Simon, Heikki)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <filename>/contrib/pg_standby</filename> module for controlling
+       Add <filename>contrib/pg_standby</filename> module for controlling
        warm standby operation (Simon)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <filename>/contrib/uuid-ossp</filename> module for generating
+       Add <filename>contrib/uuid-ossp</filename> module for generating
        <type>UUID</> values using the OSSP UUID library (Peter)
       </para>
 
@@ -2382,7 +2380,7 @@ current_date &lt; 2017-11-17
      <listitem>
       <para>
        Update OS/X startup scripts in
-       <filename>/contrib/start-scripts</filename> (Mark Cotner, David
+       <filename>contrib/start-scripts</filename> (Mark Cotner, David
        Fetter)
       </para>
      </listitem>
