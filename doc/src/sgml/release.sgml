@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.548 2007/11/20 01:42:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.549 2007/11/20 03:34:14 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -394,6 +394,115 @@ current_date &lt; 2017-11-17
 
     <listitem>
      <para>
+      <command>ROLLBACK</> outside a transaction block now
+      issues <literal>NOTICE</> instead of <literal>WARNING</> (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Restrict object size functions to users who have reasonable
+      permissions to view such information (Tom)
+     </para>
+
+     <para>
+      For example, <function>pg_database_size()</function> now requires
+      <literal>CONNECT</> permission, which is granted to everyone by
+      default. <function>pg_tablespace_size()</function> requires
+      <literal>CREATE</> permission in the tablespace, or is allowed if
+      the tablespace is the default tablespace for the database.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Internal hashing functions are now more uniformly-distributed (Tom)
+     </para>
+
+     <para>
+      If application code was computing and storing hash values using
+      internal <productname>PostgreSQL</> hashing functions, the hash
+      values must be regenerated.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>ALTER SEQUENCE</> no longer affects <function>currval()</>
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Foreign keys now must match indexable conditions for
+      cross-data-type references (Tom)
+     </para>
+
+     <para>
+      This improves semantic consistency and helps avoid
+      performance problems.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove the undocumented <literal>!!=</> (not in) operator (Tom)
+     </para>
+
+     <para>
+      <literal>NOT IN (SELECT ...)</literal> is the proper way to
+      perform this operation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove <varname>stats_start_collector</varname> parameter (Tom)
+     </para>
+
+     <para>
+      We now always start the collector process, unless <acronym>UDP</>
+      socket creation fails.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove <varname>stats_reset_on_server_start</varname> parameter (Tom)
+     </para>
+
+     <para>
+      This was removed because <function>pg_stat_reset()</function>
+      can be used for this purpose.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      C-code conventions for handling variable-length data values
+      have changed (Greg Stark, Tom)
+     </para>
+
+     <para>
+      The new <function>SET_VARSIZE()</> macro <emphasis>must</> be used
+      to set the length of generated <type>varlena</> values. Also, it
+      might be necessary to expand (<quote>de-TOAST</quote>) input values
+      in more cases.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+
+   <para>
+    The following incompatibilities relate to character encodings:
+   </para>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
       Add more checks for invalidly-encoded data (Andrew)
      </para>
 
@@ -473,60 +582,16 @@ current_date &lt; 2017-11-17
 
     <listitem>
      <para>
-      Restrict object size functions to users who have reasonable
-      permissions to view such information (Tom)
+      Make JOHAB encoding client-only (Tatsuo)
      </para>
 
      <para>
-      For example, <function>pg_database_size()</function> now requires
-      <literal>CONNECT</> permission, which is granted to everyone by
-      default. <function>pg_tablespace_size()</function> requires
-      <literal>CREATE</> permission in the tablespace, or is allowed if
-      the tablespace is the default tablespace for the database.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Internal hashing functions are now more uniformly-distributed (Tom)
-     </para>
-
-     <para>
-      If application code was computing and storing hash values using
-      internal <productname>PostgreSQL</> hashing functions, the hash
-      values must be regenerated.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <command>ALTER SEQUENCE</> no longer affects <function>currval()</>
-      (Tom)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <command>ROLLBACK</> outside a transaction block now
-      issues <literal>NOTICE</> instead of <literal>WARNING</> (Bruce)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      C-code conventions for handling variable-length data values
-      have changed (Greg Stark, Tom)
-     </para>
-
-     <para>
-      The new <function>SET_VARSIZE()</> macro <emphasis>must</> be used
-      to set the length of generated <type>varlena</> values. Also, it
-      might be necessary to expand (<quote>de-TOAST</quote>) input values
-      in more cases.
+      JOHAB is not safe as a server-side encoding.
      </para>
     </listitem>
 
    </itemizedlist>
+
   </sect2>
 
   <sect2>
@@ -539,7 +604,7 @@ current_date &lt; 2017-11-17
    </para>
 
    <sect3>
-    <title>Performance Improvements</title>
+    <title>Performance</title>
     <itemizedlist>
 
      <listitem>
@@ -722,7 +787,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>General Server Changes</title>
+    <title>Server</title>
     <itemizedlist>
 
      <listitem>
@@ -782,22 +847,6 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Limit the amount of information reported when a user is dropped
-       (Alvaro)
-      </para>
-
-      <para>
-       Previously, dropping (or attempting to drop) a user who owned many
-       objects could result in large <literal>NOTICE</literal> or
-       <literal>ERROR</literal> messages listing all these objects; this
-       caused problems for some client applications.  The length of the
-       message is now limited, although a full list is still sent to the
-       server log.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        Place temporary tables' TOAST tables in special schemas named
        <literal>pg_toast_temp_<replaceable>nnn</></literal> (Tom)
       </para>
@@ -821,25 +870,11 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Allow <command>CREATE INDEX CONCURRENTLY</command> to ignore
-       transactions in other databases (Simon)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add new encodings EUC_JIS_2004 and SHIFT_JIS_2004, along with new
-       conversions between EUC_JIS_2004, SHIFT_JIS_2004 and UTF-8 (Tatsuo)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Make JOHAB encoding client-only (Tatsuo)
+       Add new encodings EUC_JIS_2004 and SHIFT_JIS_2004 (Tatsuo)
       </para>
 
       <para>
-       JOHAB is not safe as a server-side encoding.
+       These new encodings can be converted to and from UTF-8.
       </para>
      </listitem>
 
@@ -848,27 +883,8 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>Server Monitoring</title>
+    <title>Monitoring</title>
     <itemizedlist>
-
-     <listitem>
-      <para>
-       Autovacuum now reports its activity start time in
-       <literal>pg_stat_activity</literal> (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow server log output in comma-separated value (CSV) format (Arul
-       Shaji, Greg Smith, Andrew Dunstan)
-      </para>
-
-      <para>
-       CSV-format log files can be loaded into a database table for subsequent
-       analysis.
-      </para>
-     </listitem>
 
      <listitem>
       <para>
@@ -913,6 +929,39 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
+       Add <varname>log_restartpoints</varname> to control logging of
+       point-in-time recovery restart points (Simon)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Last transaction end time is now logged at end of recovery and at
+       each logged restart point (Simon)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Autovacuum now reports its activity start time in
+       <literal>pg_stat_activity</literal> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow server log output in comma-separated value (CSV) format (Arul
+       Shaji, Greg Smith, Andrew Dunstan)
+      </para>
+
+      <para>
+       CSV-format log files can be loaded into a database table for subsequent
+       analysis.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Use PostgreSQL-supplied timezone support for formatting timestamps
        displayed in the server log (Tom)
       </para>
@@ -923,20 +972,6 @@ current_date &lt; 2017-11-17
        <varname>log_timezone</> parameter that controls the timezone
        used in log messages, independently of the client-visible
        <varname>timezone</> parameter.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add <varname>log_restartpoints</varname> to control logging of
-       point-in-time recovery restart points (Simon)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Last transaction end time is now logged at end of recovery and at
-       each logged restart point (Simon)
       </para>
      </listitem>
 
@@ -975,28 +1010,6 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Remove <varname>stats_start_collector</varname> parameter (Tom)
-      </para>
-
-      <para>
-       We now always start the collector process, unless <acronym>UDP</>
-       socket creation fails.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Remove <varname>stats_reset_on_server_start</varname> parameter (Tom)
-      </para>
-
-      <para>
-       This was removed because <function>pg_stat_reset()</function>
-       can be used for this purpose.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        Merge <varname>stats_block_level</> and <varname>stats_row_level</>
        parameters into a single parameter <varname>track_counts</>, which
        controls all messages sent to the statistics collector process
@@ -1016,7 +1029,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>Authentication Changes</title>
+    <title>Authentication</title>
     <itemizedlist>
 
      <listitem>
@@ -1061,7 +1074,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>WAL and Continuous Archiving Changes</title>
+    <title>Write-Ahead Log (<acronym>WAL</>) and Continuous Archiving</title>
     <itemizedlist>
 
      <listitem>
@@ -1109,7 +1122,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>Query Changes</title>
+    <title>Queries</title>
     <itemizedlist>
 
      <listitem>
@@ -1227,23 +1240,12 @@ current_date &lt; 2017-11-17
       </para>
      </listitem>
 
-     <listitem>
-      <para>
-       Remove the undocumented <literal>!!=</> (not in) operator (Tom)
-      </para>
-
-      <para>
-       <literal>NOT IN (SELECT ...)</literal> is the proper way to
-       perform this operation.
-      </para>
-     </listitem>
-
     </itemizedlist>
 
    </sect3>
 
    <sect3>
-    <title>Object Manipulation Changes</title>
+    <title>Object Manipulation</title>
     <itemizedlist>
 
      <listitem>
@@ -1316,24 +1318,12 @@ current_date &lt; 2017-11-17
       </para>
      </listitem>
 
-     <listitem>
-      <para>
-       Foreign keys now must match indexable conditions for
-       cross-data-type references (Tom)
-      </para>
-
-      <para>
-       This improves semantic consistency and helps avoid
-       performance problems.
-      </para>
-     </listitem>
-
     </itemizedlist>
 
    </sect3>
 
    <sect3>
-    <title>Utility Command Changes</title>
+    <title>Utility Commands</title>
     <itemizedlist>
 
      <listitem>
@@ -1435,12 +1425,35 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
+       Allow <command>CREATE INDEX CONCURRENTLY</command> to ignore
+       transactions in other databases (Simon)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Make <command>CREATE/DROP/RENAME DATABASE</> wait briefly for
        conflicting backends to exit before failing (Tom)
       </para>
 
       <para>
        This increases the likelihood that these commands will succeed.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Limit the amount of information reported when a user is dropped
+       (Alvaro)
+      </para>
+
+      <para>
+       Previously, dropping (or attempting to drop) a user who owned many
+       objects could result in large <literal>NOTICE</literal> or
+       <literal>ERROR</literal> messages listing all these objects; this
+       caused problems for some client applications.  The length of the
+       message is now limited, although a full list is still sent to the
+       server log.
       </para>
      </listitem>
 
@@ -1461,7 +1474,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>Data Type and Function Changes</title>
+    <title>Data Types and Functions</title>
     <itemizedlist>
 
      <listitem>
@@ -1661,7 +1674,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>PL/PgSQL Server-Side Language Changes</title>
+    <title>PL/PgSQL Server-Side Language</title>
     <itemizedlist>
 
      <listitem>
@@ -1737,7 +1750,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>Changes to Other Server-Side Languages</title>
+    <title>Other Server-Side Languages</title>
     <itemizedlist>
 
      <listitem>
@@ -1794,7 +1807,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title><link linkend="APP-PSQL"><application>psql</></link> Changes</title>
+    <title><link linkend="APP-PSQL"><application>psql</></link></title>
     <itemizedlist>
 
      <listitem>
@@ -1869,7 +1882,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title><link linkend="APP-PGDUMP"><application>pg_dump</></link> Changes</title>
+    <title><link linkend="APP-PGDUMP"><application>pg_dump</></link></title>
     <itemizedlist>
 
      <listitem>
@@ -1917,7 +1930,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>Other Client Application Changes</title>
+    <title>Other Client Applications</title>
     <itemizedlist>
 
      <listitem>
@@ -1980,7 +1993,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title><link linkend="libpq"><application>libpq</></link> Changes</title>
+    <title><link linkend="libpq"><application>libpq</></link></title>
     <itemizedlist>
 
      <listitem>
@@ -2037,7 +2050,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title><link linkend="ecpg"><application>ecpg</></link> Changes</title>
+    <title><link linkend="ecpg"><application>ecpg</></link></title>
     <itemizedlist>
 
      <listitem>
@@ -2109,7 +2122,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>Source Code Changes</title>
+    <title>Source Code</title>
     <itemizedlist>
 
      <listitem>
@@ -2296,7 +2309,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>Contrib Changes</title>
+    <title>Contrib</title>
     <itemizedlist>
 
      <listitem>
