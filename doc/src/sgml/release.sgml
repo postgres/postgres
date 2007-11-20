@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.552 2007/11/20 05:16:31 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.553 2007/11/20 05:23:20 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -2355,14 +2355,15 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Allow <application>pgbench</> to set the fillfactor (Pavan Deolasee)
+       Allow <application>contrib/pgbench</> to set the fillfactor (Pavan
+       Deolasee)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add timestamps to <application>pgbench</> <literal>-l</> (Greg
-       Smith)
+       Add timestamps to <application>contrib/pgbench</> <literal>-l</>
+       (Greg Smith)
       </para>
      </listitem>
 
@@ -2375,13 +2376,13 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Add GIN support for <filename>hstore</> (Teodor)
+       Add GIN support for <filename>contrib/hstore</> (Teodor)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add GIN support for <filename>pg_trgm</> (Guillaume Smet, Teodor)
+       Add GIN support for <filename>contrib/pg_trgm</> (Guillaume Smet, Teodor)
       </para>
      </listitem>
 
