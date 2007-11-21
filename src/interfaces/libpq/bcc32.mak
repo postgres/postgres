@@ -137,10 +137,13 @@ LIB32_OBJS= \
 	"$(INTDIR)\pthread-win32.obj"
 
 
-config: ..\..\include\pg_config.h pg_config_paths.h
+config: ..\..\include\pg_config.h ..\..\include\pg_config_os.h pg_config_paths.h
 
 ..\..\include\pg_config.h: ..\..\include\pg_config.h.win32
 	copy ..\..\include\pg_config.h.win32 ..\..\include\pg_config.h
+
+..\..\include\pg_config_os.h: ..\..\include\port\win32.h
+	copy ..\..\include\port\win32.h ..\..\include\pg_config_os.h
 
 # Have to use \# so # isn't treated as a comment, but MSVC doesn't like this
 pg_config_paths.h: bcc32.mak
