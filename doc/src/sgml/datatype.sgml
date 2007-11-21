@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.216 2007/11/08 13:13:51 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.217 2007/11/21 04:01:37 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3282,7 +3282,7 @@ SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector;
 
      (As the example shows, the sorting is first by length and then
      alphabetically, but that detail is seldom important.)  To represent
-     lexemes containing whitespace, surround them with quotes:
+     lexemes containing whitespace or punctuation, surround them with quotes:
 
 <programlisting>
 SELECT $$the lexeme '    ' contains spaces$$::tsvector;
@@ -3293,7 +3293,7 @@ SELECT $$the lexeme '    ' contains spaces$$::tsvector;
 
      (We use dollar-quoted string literals in this example and the next one,
      to avoid confusing matters by having to double quote marks within the
-     literals.)  Embedded quotes can be handled by doubling them:
+     literals.)  Embedded quotes and backslashes must be doubled:
 
 <programlisting>
 SELECT $$the lexeme 'Joe''s' contains a quote$$::tsvector;
