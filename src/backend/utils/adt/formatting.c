@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.134 2007/11/21 22:28:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.135 2007/11/22 15:10:05 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2007, PostgreSQL Global Development Group
@@ -3925,10 +3925,11 @@ NUM_prepare_locale(NUMProc *Np)
 		 * Number thousands separator
 		 *
 		 * Some locales (e.g. broken glibc pt_BR), have a comma for decimal,
-		 * but "" for thousands_sep, so we set the thousands_sep too. 2007-02-12
+		 * but "" for thousands_sep, so we set the thousands_sep too.
 		 */
 		if (lconv->thousands_sep && *lconv->thousands_sep)
 			Np->L_thousands_sep = lconv->thousands_sep;
+		/* Make sure thousands separator doesn't match decimal point symbol. */
 		else if (strcmp(Np->decimal, ",") != 0)
 			Np->L_thousands_sep = ",";
 		else
