@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.251 2007/11/15 21:14:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.252 2007/11/22 19:09:23 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -715,7 +715,8 @@ contain_mutable_functions_walker(Node *node, void *context)
 	{
 		OpExpr	   *expr = (OpExpr *) node;
 
-		if (op_volatile(expr->opno) != PROVOLATILE_IMMUTABLE)
+		set_opfuncid(expr);
+		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
 			return true;
 		/* else fall through to check args */
 	}
@@ -723,7 +724,8 @@ contain_mutable_functions_walker(Node *node, void *context)
 	{
 		DistinctExpr *expr = (DistinctExpr *) node;
 
-		if (op_volatile(expr->opno) != PROVOLATILE_IMMUTABLE)
+		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
+		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
 			return true;
 		/* else fall through to check args */
 	}
@@ -731,7 +733,8 @@ contain_mutable_functions_walker(Node *node, void *context)
 	{
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
 
-		if (op_volatile(expr->opno) != PROVOLATILE_IMMUTABLE)
+		set_sa_opfuncid(expr);
+		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
 			return true;
 		/* else fall through to check args */
 	}
@@ -767,7 +770,8 @@ contain_mutable_functions_walker(Node *node, void *context)
 	{
 		NullIfExpr *expr = (NullIfExpr *) node;
 
-		if (op_volatile(expr->opno) != PROVOLATILE_IMMUTABLE)
+		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
+		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
 			return true;
 		/* else fall through to check args */
 	}
@@ -826,7 +830,8 @@ contain_volatile_functions_walker(Node *node, void *context)
 	{
 		OpExpr	   *expr = (OpExpr *) node;
 
-		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
+		set_opfuncid(expr);
+		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
 			return true;
 		/* else fall through to check args */
 	}
@@ -834,7 +839,8 @@ contain_volatile_functions_walker(Node *node, void *context)
 	{
 		DistinctExpr *expr = (DistinctExpr *) node;
 
-		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
+		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
+		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
 			return true;
 		/* else fall through to check args */
 	}
@@ -842,7 +848,8 @@ contain_volatile_functions_walker(Node *node, void *context)
 	{
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
 
-		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
+		set_sa_opfuncid(expr);
+		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
 			return true;
 		/* else fall through to check args */
 	}
@@ -878,7 +885,8 @@ contain_volatile_functions_walker(Node *node, void *context)
 	{
 		NullIfExpr *expr = (NullIfExpr *) node;
 
-		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
+		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
+		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
 			return true;
 		/* else fall through to check args */
 	}
@@ -951,7 +959,8 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	{
 		OpExpr	   *expr = (OpExpr *) node;
 
-		if (!op_strict(expr->opno))
+		set_opfuncid(expr);
+		if (!func_strict(expr->opfuncid))
 			return true;
 		/* else fall through to check args */
 	}
@@ -1091,7 +1100,8 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	{
 		OpExpr	   *expr = (OpExpr *) node;
 
-		if (op_strict(expr->opno))
+		set_opfuncid(expr);
+		if (func_strict(expr->opfuncid))
 			result = find_nonnullable_rels_walker((Node *) expr->args, false);
 	}
 	else if (IsA(node, ScalarArrayOpExpr))
@@ -1228,7 +1238,8 @@ is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK)
 	Node	   *rightop;
 
 	/* The contained operator must be strict. */
-	if (!op_strict(expr->opno))
+	set_sa_opfuncid(expr);
+	if (!func_strict(expr->opfuncid))
 		return false;
 	/* If ANY and falseOK, that's all we need to check. */
 	if (expr->useOr && falseOK)
