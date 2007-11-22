@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.6 2007/01/05 22:20:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.7 2007/11/22 17:47:28 tgl Exp $
  */
 
 #ifndef PL_PERL_H
@@ -36,6 +36,11 @@
 #ifndef pTHX_
 #define pTHX_
 #define pTHX void
+#endif
+
+/* perl may have a different width of "bool", don't buy it */
+#ifdef bool
+#undef bool
 #endif
 
 /* routines from spi_internal.c */
