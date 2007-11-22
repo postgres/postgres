@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.554 2007/11/20 17:10:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.555 2007/11/22 15:04:52 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -2230,6 +2230,11 @@ current_date &lt; 2017-11-17
       <para>
        Support <command>gmake draft</command> when building the
        <acronym>SGML</> documentation (Bruce)
+      </para>
+
+      <para>
+       Documentions builds will now build indexes by default, unless
+       <literal>draft</> is used.
       </para>
      </listitem>
 
