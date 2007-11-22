@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.93 2007/11/22 15:10:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.94 2007/11/22 17:51:39 momjian Exp $
  *
  * Note: we include postgres.h not postgres_fe.h so that we can include
  * catalog/pg_type.h, and thereby have access to INT4OID and similar macros.
@@ -2037,6 +2037,8 @@ setDecimalLocale(void)
 		grouping = strdup(extlconv->grouping);
 	else
 		grouping = "3";			/* most common */
+
+	/* similar code exists in formatting.c */
 	if (*extlconv->thousands_sep)
 		thousands_sep = strdup(extlconv->thousands_sep);
 	/* Make sure thousands separator doesn't match decimal point symbol. */

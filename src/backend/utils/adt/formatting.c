@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.135 2007/11/22 15:10:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.136 2007/11/22 17:51:39 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2007, PostgreSQL Global Development Group
@@ -3926,6 +3926,7 @@ NUM_prepare_locale(NUMProc *Np)
 		 *
 		 * Some locales (e.g. broken glibc pt_BR), have a comma for decimal,
 		 * but "" for thousands_sep, so we set the thousands_sep too.
+		 * http://archives.postgresql.org/pgsql-hackers/2007-11/msg00772.php
 		 */
 		if (lconv->thousands_sep && *lconv->thousands_sep)
 			Np->L_thousands_sep = lconv->thousands_sep;
