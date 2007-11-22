@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.97 2007/11/15 21:14:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.98 2007/11/22 19:40:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -939,7 +939,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	/* and build the expression node */
 	result = makeNode(ScalarArrayOpExpr);
 	result->opno = oprid(tup);
-	result->opfuncid = InvalidOid;
+	result->opfuncid = opform->oprcode;
 	result->useOr = useOr;
 	result->args = args;
 
@@ -1011,7 +1011,7 @@ make_op_expr(ParseState *pstate, Operator op,
 	/* and build the expression node */
 	result = makeNode(OpExpr);
 	result->opno = oprid(op);
-	result->opfuncid = InvalidOid;
+	result->opfuncid = opform->oprcode;
 	result->opresulttype = rettype;
 	result->opretset = get_func_retset(opform->oprcode);
 	result->args = args;
