@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/page.sgml,v 1.15 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/page.sgml,v 1.15.2.1 2007/11/23 00:39:59 ishii Exp $
 -->
 
 <chapter id="page">
@@ -59,7 +59,7 @@ free space pointers.</entry>
 </row>
 
 <row>
-<entry>ItemPointerData</entry>
+<entry>ItemIdData</entry>
 <entry>Array of (offset,length) pairs pointing to the actual items.</entry>
 </row>
 
