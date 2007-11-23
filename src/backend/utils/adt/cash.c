@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.74 2007/11/15 21:14:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.75 2007/11/23 19:54:39 momjian Exp $
  */
 
 #include "postgres.h"
@@ -83,7 +83,6 @@ num_word(Cash value)
 		else
 			sprintf(buf, "%s hundred %s %s",
 					small[value / 100], big[tu / 10], small[tu % 10]);
-
 	}
 	else
 	{
@@ -185,7 +184,6 @@ cash_in(PG_FUNCTION_ARGS)
 	{
 		sgn = -1;
 		s++;
-
 	}
 	else if (*s == psymbol)
 		s++;
@@ -221,12 +219,8 @@ cash_in(PG_FUNCTION_ARGS)
 			seen_dot = 1;
 
 		}
-		/* "thousands" separator? then skip... */
-		else if (*s == ssymbol)
-		{
-
-		}
-		else
+		/* not "thousands" separator? */
+		else if (*s != ssymbol)
 		{
 			/* round off */
 			if (isdigit((unsigned char) *s) && *s >= '5')
@@ -275,10 +269,10 @@ cash_out(PG_FUNCTION_ARGS)
 	int			minus = 0;
 	int			count = LAST_DIGIT;
 	int			point_pos;
-	int			comma_position = 0;
+	int			ssymbol_position = 0;
 	int			points,
 				mon_group;
-	char		comma;
+	char		ssymbol;
 	const char *csymbol,
 			   *nsymbol;
 	char		dsymbol;
@@ -299,7 +293,7 @@ cash_out(PG_FUNCTION_ARGS)
 	if (mon_group <= 0 || mon_group > 6)
 		mon_group = 3;
 
-	comma = ((*lconvert->mon_thousands_sep != '\0') ? *lconvert->mon_thousands_sep : ',');
+	ssymbol = ((*lconvert->mon_thousands_sep != '\0') ? *lconvert->mon_thousands_sep : ',');
 	convention = lconvert->n_sign_posn;
 	dsymbol = ((*lconvert->mon_decimal_point != '\0') ? *lconvert->mon_decimal_point : '.');
 	csymbol = ((*lconvert->currency_symbol != '\0') ? lconvert->currency_symbol : "$");
@@ -308,10 +302,10 @@ cash_out(PG_FUNCTION_ARGS)
 	point_pos = LAST_DIGIT - points;
 
 	/* allow more than three decimal points and separate them */
-	if (comma)
+	if (ssymbol)
 	{
 		point_pos -= (points - 1) / mon_group;
-		comma_position = point_pos % (mon_group + 1);
+		ssymbol_position = point_pos % (mon_group + 1);
 	}
 
 	/* we work with positive amounts and add the minus sign at the end */
@@ -329,8 +323,8 @@ cash_out(PG_FUNCTION_ARGS)
 	{
 		if (points && count == point_pos)
 			buf[count--] = dsymbol;
-		else if (comma && count % (mon_group + 1) == comma_position)
-			buf[count--] = comma;
+		else if (ssymbol && count % (mon_group + 1) == ssymbol_position)
+			buf[count--] = ssymbol;
 
 		buf[count--] = ((uint64) value % 10) + '0';
 		value = ((uint64) value) / 10;
