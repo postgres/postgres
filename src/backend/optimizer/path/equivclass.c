@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.6 2007/11/15 22:25:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.7 2007/11/23 19:57:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,6 +559,25 @@ generate_base_implied_equalities_const(PlannerInfo *root,
 	EquivalenceMember *const_em = NULL;
 	ListCell   *lc;
 
+	/*
+	 * In the trivial case where we just had one "var = const" clause,
+	 * push the original clause back into the main planner machinery.  There
+	 * is nothing to be gained by doing it differently, and we save the
+	 * effort to re-build and re-analyze an equality clause that will be
+	 * exactly equivalent to the old one.
+	 */
+	if (list_length(ec->ec_members) == 2 &&
+		list_length(ec->ec_sources) == 1)
+	{
+		RestrictInfo *restrictinfo = (RestrictInfo *) linitial(ec->ec_sources);
+
+		if (bms_membership(restrictinfo->required_relids) != BMS_MULTIPLE)
+		{
+			distribute_restrictinfo_to_rels(root, restrictinfo);
+			return;
+		}
+	}
+
 	/* Find the constant member to use */
 	foreach(lc, ec->ec_members)
 	{
@@ -1047,7 +1066,8 @@ create_join_clause(PlannerInfo *root,
 	rinfo = build_implied_join_equality(opno,
 										leftem->em_expr,
 										rightem->em_expr,
-										ec->ec_relids);
+										bms_union(leftem->em_relids,
+												  rightem->em_relids));
 
 	/* Mark the clause as redundant, or not */
 	rinfo->parent_ec = parent_ec;
@@ -1165,6 +1185,7 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 	Oid			left_type,
 				right_type,
 				inner_datatype;
+	Relids		inner_relids;
 	ListCell   *lc1;
 
 	/* Extract needed info from the clause */
@@ -1176,12 +1197,14 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 		outervar = (Expr *) get_leftop(rinfo->clause);
 		innervar = (Expr *) get_rightop(rinfo->clause);
 		inner_datatype = right_type;
+		inner_relids = rinfo->right_relids;
 	}
 	else
 	{
 		outervar = (Expr *) get_rightop(rinfo->clause);
 		innervar = (Expr *) get_leftop(rinfo->clause);
 		inner_datatype = left_type;
+		inner_relids = rinfo->left_relids;
 	}
 
 	/* Scan EquivalenceClasses for a match to outervar */
@@ -1237,7 +1260,7 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 			newrinfo = build_implied_join_equality(eq_op,
 												   innervar,
 												   cur_em->em_expr,
-												   cur_ec->ec_relids);
+												   inner_relids);
 			if (process_equivalence(root, newrinfo, true))
 				match = true;
 		}
@@ -1268,6 +1291,8 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 	Expr	   *rightvar;
 	Oid			left_type,
 				right_type;
+	Relids		left_relids,
+				right_relids;
 	ListCell   *lc1;
 
 	/* Extract needed info from the clause */
@@ -1276,6 +1301,8 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 	rightvar = (Expr *) get_rightop(rinfo->clause);
 	op_input_types(((OpExpr *) rinfo->clause)->opno,
 				   &left_type, &right_type);
+	left_relids = rinfo->left_relids;
+	right_relids = rinfo->right_relids;
 
 	foreach(lc1, root->eq_classes)
 	{
@@ -1357,7 +1384,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 				newrinfo = build_implied_join_equality(eq_op,
 													   leftvar,
 													   cur_em->em_expr,
-													   cur_ec->ec_relids);
+													   left_relids);
 				if (process_equivalence(root, newrinfo, true))
 					matchleft = true;
 			}
@@ -1369,7 +1396,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 				newrinfo = build_implied_join_equality(eq_op,
 													   rightvar,
 													   cur_em->em_expr,
-													   cur_ec->ec_relids);
+													   right_relids);
 				if (process_equivalence(root, newrinfo, true))
 					matchright = true;
 			}
