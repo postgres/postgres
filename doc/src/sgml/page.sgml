@@ -55,7 +55,7 @@ free space pointers.</entry>
 </row>
 
 <row>
-<entry>ItemPointerData</entry>
+<entry>ItemIdData</entry>
 <entry>Array of (offset,length) pairs pointing to the actual items.</entry>
 </row>
 
