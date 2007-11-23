@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Mon Nov 19 19:18:31 EST 2007
+Last updated:           Fri Nov 23 11:37:47 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1096,9 +1096,14 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php">http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php</a>
 </p>
   </li><li>-<em>Reduce XID consumption of read-only queries</em>
-  </li><li>Prevent long-lived temporary tables from causing frozen-Xid advancement
+  </li><li>Prevent long-lived temporary tables from causing frozen-xid advancement
    starvation
-  </li><li>Auto-vacuum
+</li></ul>
+<p>   The problem is that autovacuum cannot vacuum them to set frozen xids;<br/>
+   only the session that created them can do that.
+</p>
+<ul>
+  <li>Auto-vacuum
   <ul>
     <li>Use free-space map information to guide refilling
     </li><li>%Issue log message to suggest VACUUM FULL if a table is nearly
