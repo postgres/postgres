@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.13 2006/11/25 22:55:59 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.13.2.1 2007/11/23 00:28:25 ishii Exp $ -->
 
 <chapter id="storage">
 
@@ -396,7 +396,7 @@ free space pointers.</entry>
 </row>
 
 <row>
-<entry>ItemPointerData</entry>
+<entry>ItemIdData</entry>
 <entry>Array of (offset,length) pairs pointing to the actual items.
 4 bytes per item.</entry>
 </row>
