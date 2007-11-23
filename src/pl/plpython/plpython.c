@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.41.2.3 2006/02/20 20:10:45 neilc Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.41.2.4 2007/11/23 01:48:08 alvherre Exp $
  *
  *********************************************************************
  */
@@ -55,6 +55,7 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "fmgr.h"
+#include "lib/stringinfo.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
@@ -208,7 +209,6 @@ static char *PLy_procedure_name(PLyProcedure *);
 /* some utility functions
  */
 static void *PLy_malloc(size_t);
-static void *PLy_realloc(void *, size_t);
 static void PLy_free(void *);
 
 /* sub handlers for functions and triggers
@@ -2604,8 +2604,6 @@ PLy_procedure_name(PLyProcedure * proc)
  */
 
 static char *PLy_traceback(int *);
-static char *PLy_vprintf(const char *fmt, va_list ap);
-static char *PLy_printf(const char *fmt,...);
 
 void
 PLy_exception_set(PyObject * exc, const char *fmt,...)
@@ -2624,18 +2622,27 @@ void
 PLy_elog(int elevel, const char *fmt,...)
 {
 	DECLARE_EXC();
-	va_list		ap;
-	char	   *xmsg,
-			   *emsg;
+	char	   *xmsg;
+	StringInfoData emsg;
 	int			xlevel;
 
 	enter();
 
 	xmsg = PLy_traceback(&xlevel);
 
-	va_start(ap, fmt);
-	emsg = PLy_vprintf(fmt, ap);
-	va_end(ap);
+	initStringInfo(&emsg);
+	for (;;)
+	{
+		va_list         ap;
+		bool            success;
+
+		va_start(ap, fmt);
+		success = appendStringInfoVA(&emsg, fmt, ap);
+		va_end(ap);
+		if (success)
+			break;
+		enlargeStringInfo(&emsg, emsg.maxlen);
+	}
 
 	SAVE_EXC();
 	if (TRAP_EXC())
@@ -2647,19 +2654,19 @@ PLy_elog(int elevel, const char *fmt,...)
 		 * elog called siglongjmp. cleanup, restore and reraise
 		 */
 		PLy_restart_in_progress += 1;
-		PLy_free(emsg);
+		pfree(emsg.data);
 		if (xmsg)
-			PLy_free(xmsg);
+			pfree(xmsg);
 		RERAISE_EXC();
 	}
 
 	ereport(elevel,
-			(errmsg("plpython: %s", emsg),
+			(errmsg("plpython: %s", emsg.data),
 			 (xmsg) ? errdetail("%s", xmsg) : 0));
 
-	PLy_free(emsg);
+	pfree(emsg.data);
 	if (xmsg)
-		PLy_free(xmsg);
+		pfree(xmsg);
 
 	leave();
 
@@ -2675,8 +2682,8 @@ PLy_traceback(int *xlevel)
 	PyObject   *eob,
 			   *vob = NULL;
 	char	   *vstr,
-			   *estr,
-			   *xstr = NULL;
+			   *estr;
+	StringInfoData xstr;
 
 	enter();
 
@@ -2710,7 +2717,8 @@ PLy_traceback(int *xlevel)
 	 * NULL here -- would an Assert() be more appropriate?
 	 */
 	estr = eob ? PyString_AsString(eob) : "Unknown Exception";
-	xstr = PLy_printf("%s: %s", estr, vstr);
+	initStringInfo(&xstr);
+	appendStringInfo(&xstr, "%s: %s", estr, vstr);
 
 	Py_DECREF(eob);
 	Py_XDECREF(vob);
@@ -2729,49 +2737,7 @@ PLy_traceback(int *xlevel)
 	Py_DECREF(e);
 	leave();
 
-	return xstr;
-}
-
-char *
-PLy_printf(const char *fmt,...)
-{
-	va_list		ap;
-	char	   *emsg;
-
-	va_start(ap, fmt);
-	emsg = PLy_vprintf(fmt, ap);
-	va_end(ap);
-	return emsg;
-}
-
-char *
-PLy_vprintf(const char *fmt, va_list ap)
-{
-	size_t		blen;
-	int			bchar,
-				tries = 2;
-	char	   *buf;
-
-	blen = strlen(fmt) * 2;
-	if (blen < 256)
-		blen = 256;
-	buf = PLy_malloc(blen * sizeof(char));
-
-	while (1)
-	{
-		bchar = vsnprintf(buf, blen, fmt, ap);
-		if ((bchar > 0) && (bchar < blen))
-			return buf;
-		if (tries-- <= 0)
-			break;
-		if (blen > 0)
-			blen = bchar + 1;
-		else
-			blen *= 2;
-		buf = PLy_realloc(buf, blen);
-	}
-	PLy_free(buf);
-	return NULL;
+	return xstr.data;
 }
 
 /* python module code
@@ -2791,18 +2757,6 @@ PLy_malloc(size_t bytes)
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 	return ptr;
-}
-
-void *
-PLy_realloc(void *optr, size_t bytes)
-{
-	void	   *nptr = realloc(optr, bytes);
-
-	if (nptr == NULL)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-	return nptr;
 }
 
 /* define this away
