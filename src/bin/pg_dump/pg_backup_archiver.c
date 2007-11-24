@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.149 2007/11/15 21:14:41 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.150 2007/11/24 17:45:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,6 +245,21 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				_selectOutputSchema(AH, te->namespace);
 				/* Drop it */
 				ahprintf(AH, "%s", te->dropStmt);
+				if (strcmp(te->desc, "SCHEMA") == 0)
+				{
+					/*
+					 * If we dropped a schema, we know we are going to be
+					 * creating one later so don't remember the current one
+					 * so we try later. The previous 'search_path' setting
+					 * might have failed because the schema didn't exist
+					 * (and now it certainly doesn't exist), so force
+					 * search_path to be set as part of the next operation
+					 * and it might succeed.
+					 */
+					if (AH->currSchema)
+						free(AH->currSchema);
+					AH->currSchema = strdup("");
+				}
 			}
 		}
 	}
