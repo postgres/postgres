@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/test/regress/serial_schedule,v 1.42 2007/10/13 23:06:27 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/serial_schedule,v 1.43 2007/11/24 20:41:35 tgl Exp $
 # This should probably be in an order similar to parallel_schedule.
 test: boolean
 test: char
@@ -16,6 +16,7 @@ test: numeric
 test: txid
 test: uuid
 test: enum
+test: money
 test: strings
 test: numerology
 test: point
