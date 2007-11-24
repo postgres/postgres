@@ -626,6 +626,7 @@ SELECT user_relns() AS user_relns
  log_table
  lseg_tbl
  main_table
+ money_data
  num_data
  num_exp_add
  num_exp_div
@@ -666,7 +667,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(100 rows)
+(101 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

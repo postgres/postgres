@@ -1,5 +1,5 @@
 # ----------
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.45 2007/10/13 23:06:27 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.46 2007/11/24 19:49:23 darcy Exp $
 #
 # By convention, we put no more than twenty tests in any one parallel group;
 # this limits the number of connections needed to run the tests.
@@ -8,7 +8,7 @@
 # ----------
 # The first group of parallel tests
 # ----------
-test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeric txid uuid enum
+test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeric txid uuid enum money
 
 # Depends on things setup during char, varchar and text
 test: strings

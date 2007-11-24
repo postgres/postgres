@@ -1,0 +1,187 @@
+--
+-- MONEY
+--
+CREATE TABLE money_data (m money);
+INSERT INTO money_data VALUES ('123');
+SELECT * FROM money_data;
+    m    
+---------
+ $123.00
+(1 row)
+
+SELECT m + '123' FROM money_data;
+ ?column? 
+----------
+  $246.00
+(1 row)
+
+SELECT m + '123.45' FROM money_data;
+ ?column? 
+----------
+  $246.45
+(1 row)
+
+SELECT m - '123.45' FROM money_data;
+ ?column? 
+----------
+   -$0.45
+(1 row)
+
+SELECT m * 2 FROM money_data;
+ ?column? 
+----------
+  $246.00
+(1 row)
+
+SELECT m / 2 FROM money_data;
+ ?column? 
+----------
+   $61.50
+(1 row)
+
+-- All true
+SELECT m = '$123.00' FROM money_data;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT m != '$124.00' FROM money_data;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT m <= '$123.00' FROM money_data;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT m >= '$123.00' FROM money_data;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT m < '$124.00' FROM money_data;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT m > '$122.00' FROM money_data;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- All false
+SELECT m = '$123.01' FROM money_data;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT m != '$123.00' FROM money_data;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT m <= '$122.99' FROM money_data;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT m >= '$123.01' FROM money_data;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT m > '$124.00' FROM money_data;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT m < '$122.00' FROM money_data;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT cashlarger(m, '$124.00') FROM money_data;
+ cashlarger 
+------------
+    $124.00
+(1 row)
+
+SELECT cashsmaller(m, '$124.00') FROM money_data;
+ cashsmaller 
+-------------
+     $123.00
+(1 row)
+
+SELECT cash_words(m) FROM money_data;
+                   cash_words                    
+-------------------------------------------------
+ One hundred twenty three dollars and zero cents
+(1 row)
+
+SELECT cash_words(m + '1.23') FROM money_data;
+                       cash_words                       
+--------------------------------------------------------
+ One hundred twenty four dollars and twenty three cents
+(1 row)
+
+DELETE FROM money_data;
+INSERT INTO money_data VALUES ('$123.45');
+SELECT * FROM money_data;
+    m    
+---------
+ $123.45
+(1 row)
+
+DELETE FROM money_data;
+INSERT INTO money_data VALUES ('$123.451');
+SELECT * FROM money_data;
+    m    
+---------
+ $123.45
+(1 row)
+
+DELETE FROM money_data;
+INSERT INTO money_data VALUES ('$123.454');
+SELECT * FROM money_data;
+    m    
+---------
+ $123.45
+(1 row)
+
+DELETE FROM money_data;
+INSERT INTO money_data VALUES ('$123.455');
+SELECT * FROM money_data;
+    m    
+---------
+ $123.46
+(1 row)
+
+DELETE FROM money_data;
+INSERT INTO money_data VALUES ('$123.456');
+SELECT * FROM money_data;
+    m    
+---------
+ $123.46
+(1 row)
+
+DELETE FROM money_data;
+INSERT INTO money_data VALUES ('$123.459');
+SELECT * FROM money_data;
+    m    
+---------
+ $123.46
+(1 row)
+
