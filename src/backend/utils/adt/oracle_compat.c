@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.74 2007/11/15 21:14:39 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.75 2007/11/24 21:16:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,7 @@ win32_utf8_texttowcs(const text *txt)
 		r = MultiByteToWideChar(CP_UTF8, 0, VARDATA_ANY(txt), nbytes,
 								result, nbytes);
 
-		if (!r)					/* assume it's NO_UNICODE_TRANSLATION */
+		if (r <= 0)				/* assume it's NO_UNICODE_TRANSLATION */
 		{
 			/* see notes above about error reporting */
 			pg_verifymbstr(VARDATA_ANY(txt), nbytes, false);
@@ -198,6 +198,7 @@ win32_utf8_texttowcs(const text *txt)
 		}
 	}
 
+	/* Append trailing null wchar (MultiByteToWideChar won't have) */
 	Assert(r <= nbytes);
 	result[r] = 0;
 
@@ -212,8 +213,9 @@ win32_utf8_wcstotext(const wchar_t *str)
 	int			nbytes;
 	int			r;
 
+	/* Compute size of output string (this *will* include trailing null) */
 	nbytes = WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL);
-	if (nbytes == 0)			/* shouldn't happen */
+	if (nbytes <= 0)			/* shouldn't happen */
 		ereport(ERROR,
 				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
 				 errmsg("UTF-16 to UTF-8 translation failed: %lu",
@@ -223,7 +225,7 @@ win32_utf8_wcstotext(const wchar_t *str)
 
 	r = WideCharToMultiByte(CP_UTF8, 0, str, -1, VARDATA(result), nbytes,
 							NULL, NULL);
-	if (r == 0)					/* shouldn't happen */
+	if (r != nbytes)			/* shouldn't happen */
 		ereport(ERROR,
 				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
 				 errmsg("UTF-16 to UTF-8 translation failed: %lu",
