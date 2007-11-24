@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.87 2007/08/31 23:35:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.88 2007/11/24 19:08:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,14 @@ clauselist_selectivity(PlannerInfo *root,
 	Selectivity s1 = 1.0;
 	RangeQueryClause *rqlist = NULL;
 	ListCell   *l;
+
+	/*
+	 * If there's exactly one clause, then no use in trying to match up
+	 * pairs, so just go directly to clause_selectivity().
+	 */
+	if (list_length(clauses) == 1)
+		return clause_selectivity(root, (Node *) linitial(clauses),
+								  varRelid, jointype);
 
 	/*
 	 * Initial scan over clauses.  Anything that doesn't look like a potential
