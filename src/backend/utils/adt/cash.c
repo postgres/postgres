@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.76 2007/11/24 15:28:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.77 2007/11/24 16:18:48 momjian Exp $
  */
 
 #include "postgres.h"
@@ -337,9 +337,13 @@ cash_out(PG_FUNCTION_ARGS)
 	strncpy((buf + count - strlen(csymbol) + 1), csymbol, strlen(csymbol));
 	count -= strlen(csymbol) - 1;
 
-	/* XXX What does this do?  It seems to duplicate the last character. */
+	/*
+	 *	If points == 0 and the number of digits % mon_group == 0,
+	 *	the code above adds a trailing ssymbol on the far right,
+	 *	so remove it.
+	 */
 	if (buf[LAST_DIGIT] == ssymbol)
-		buf[LAST_DIGIT] = buf[LAST_PAREN];
+		buf[LAST_DIGIT] = '\0';
 
 	/* see if we need to signify negative amount */
 	if (minus)
