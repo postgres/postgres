@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.139 2007/11/15 22:25:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.140 2007/11/24 00:39:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@ static Plan *set_subqueryscan_references(PlannerGlobal *glob,
 static bool trivial_subqueryscan(SubqueryScan *plan);
 static Node *fix_scan_expr(PlannerGlobal *glob, Node *node, int rtoffset);
 static Node *fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context);
+static bool fix_scan_expr_walker(Node *node, fix_scan_expr_context *context);
 static void set_join_references(PlannerGlobal *glob, Join *join, int rtoffset);
 static void set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 						  indexed_tlist *outer_itlist);
@@ -625,7 +626,23 @@ fix_scan_expr(PlannerGlobal *glob, Node *node, int rtoffset)
 
 	context.glob = glob;
 	context.rtoffset = rtoffset;
-	return fix_scan_expr_mutator(node, &context);
+
+	if (rtoffset != 0)
+	{
+		return fix_scan_expr_mutator(node, &context);
+	}
+	else
+	{
+		/*
+		 * If rtoffset == 0, we don't need to change any Vars, which makes
+		 * it OK to just scribble on the input node tree instead of copying
+		 * (since the only change, filling in any unset opfuncid fields,
+		 * is harmless).  This saves just enough cycles to be noticeable on
+		 * trivial queries.
+		 */
+		(void) fix_scan_expr_walker(node, &context);
+		return node;
+	}
 }
 
 static Node *
@@ -685,6 +702,34 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 	}
 	return expression_tree_mutator(node, fix_scan_expr_mutator,
 								   (void *) context);
+}
+
+static bool
+fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, OpExpr))
+		set_opfuncid((OpExpr *) node);
+	else if (IsA(node, DistinctExpr))
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
+	else if (IsA(node, NullIfExpr))
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
+	else if (IsA(node, ScalarArrayOpExpr))
+		set_sa_opfuncid((ScalarArrayOpExpr *) node);
+	else if (IsA(node, Const))
+	{
+		Const	   *con = (Const *) node;
+
+		/* Check for regclass reference */
+		if (con->consttype == REGCLASSOID && !con->constisnull)
+			context->glob->relationOids =
+				lappend_oid(context->glob->relationOids,
+							DatumGetObjectId(con->constvalue));
+		return false;
+	}
+	return expression_tree_walker(node, fix_scan_expr_walker,
+								  (void *) context);
 }
 
 /*
