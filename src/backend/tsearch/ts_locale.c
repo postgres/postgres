@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.4 2007/11/15 21:14:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.5 2007/11/24 21:20:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
  * wchar2char --- convert wide characters to multibyte format
  *
  * This has the same API as the standard wcstombs() function; in particular,
- * tolen is the maximum number of bytes to store at *to, and *from should be
+ * tolen is the maximum number of bytes to store at *to, and *from must be
  * zero-terminated.  The output will be zero-terminated iff there is room.
  */
 size_t
@@ -73,21 +73,28 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen)
 	{
 		int			r;
 
-		r = MultiByteToWideChar(CP_UTF8, 0, from, fromlen, to, tolen);
-
-		if (r <= 0)
+		/* stupid Microsloth API does not work for zero-length input */
+		if (fromlen == 0)
+			r = 0;
+		else
 		{
-			pg_verifymbstr(from, fromlen, false);
-			ereport(ERROR,
-					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-					 errmsg("invalid multibyte character for locale"),
-					 errhint("The server's LC_CTYPE locale is probably incompatible with the database encoding.")));
+			r = MultiByteToWideChar(CP_UTF8, 0, from, fromlen, to, tolen - 1);
+
+			if (r <= 0)
+			{
+				/* see notes in oracle_compat.c about error reporting */
+				pg_verifymbstr(from, fromlen, false);
+				ereport(ERROR,
+						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+						 errmsg("invalid multibyte character for locale"),
+						 errhint("The server's LC_CTYPE locale is probably incompatible with the database encoding.")));
+			}
 		}
 
-		Assert(r <= tolen);
+		Assert(r < tolen);
+		to[r] = 0;
 
-		/* Microsoft counts the zero terminator in the result */
-		return r - 1;
+		return r;
 	}
 #endif   /* WIN32 */
 
