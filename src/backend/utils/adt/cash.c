@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.75 2007/11/23 19:54:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.76 2007/11/24 15:28:02 momjian Exp $
  */
 
 #include "postgres.h"
@@ -148,7 +148,11 @@ cash_in(PG_FUNCTION_ARGS)
 		fpoint = 2;				/* best guess in this case, I think */
 
 	dsymbol = ((*lconvert->mon_decimal_point != '\0') ? *lconvert->mon_decimal_point : '.');
-	ssymbol = ((*lconvert->mon_thousands_sep != '\0') ? *lconvert->mon_thousands_sep : ',');
+	if (*lconvert->mon_thousands_sep != '\0')
+		ssymbol = *lconvert->mon_thousands_sep;
+	else
+		/* ssymbol should not equal dsymbol */
+		ssymbol = (dsymbol != ',') ? ',' : '.';
 	csymbol = ((*lconvert->currency_symbol != '\0') ? lconvert->currency_symbol : "$");
 	psymbol = ((*lconvert->positive_sign != '\0') ? *lconvert->positive_sign : '+');
 	nsymbol = ((*lconvert->negative_sign != '\0') ? lconvert->negative_sign : "-");
@@ -293,20 +297,20 @@ cash_out(PG_FUNCTION_ARGS)
 	if (mon_group <= 0 || mon_group > 6)
 		mon_group = 3;
 
-	ssymbol = ((*lconvert->mon_thousands_sep != '\0') ? *lconvert->mon_thousands_sep : ',');
 	convention = lconvert->n_sign_posn;
 	dsymbol = ((*lconvert->mon_decimal_point != '\0') ? *lconvert->mon_decimal_point : '.');
+	if (*lconvert->mon_thousands_sep != '\0')
+		ssymbol = *lconvert->mon_thousands_sep;
+	else
+		/* ssymbol should not equal dsymbol */
+		ssymbol = (dsymbol != ',') ? ',' : '.';
 	csymbol = ((*lconvert->currency_symbol != '\0') ? lconvert->currency_symbol : "$");
 	nsymbol = ((*lconvert->negative_sign != '\0') ? lconvert->negative_sign : "-");
 
 	point_pos = LAST_DIGIT - points;
 
-	/* allow more than three decimal points and separate them */
-	if (ssymbol)
-	{
-		point_pos -= (points - 1) / mon_group;
-		ssymbol_position = point_pos % (mon_group + 1);
-	}
+	point_pos -= (points - 1) / mon_group;
+	ssymbol_position = point_pos % (mon_group + 1);
 
 	/* we work with positive amounts and add the minus sign at the end */
 	if (value < 0)
@@ -333,7 +337,8 @@ cash_out(PG_FUNCTION_ARGS)
 	strncpy((buf + count - strlen(csymbol) + 1), csymbol, strlen(csymbol));
 	count -= strlen(csymbol) - 1;
 
-	if (buf[LAST_DIGIT] == ',')
+	/* XXX What does this do?  It seems to duplicate the last character. */
+	if (buf[LAST_DIGIT] == ssymbol)
 		buf[LAST_DIGIT] = buf[LAST_PAREN];
 
 	/* see if we need to signify negative amount */
