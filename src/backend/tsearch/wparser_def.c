@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.11 2007/11/20 02:25:22 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.12 2007/11/25 15:37:11 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -827,7 +827,6 @@ static const TParserStateActionItem actionTPS_InXMLEntity[] = {
 	{p_isalnum, 0, A_NEXT, TPS_InXMLEntity, 0, NULL},
 	{p_iseqC, ':', A_NEXT, TPS_InXMLEntity, 0, NULL},
 	{p_iseqC, '_', A_NEXT, TPS_InXMLEntity, 0, NULL},
-	{p_iseqC, ':', A_NEXT, TPS_InXMLEntity, 0, NULL},
 	{p_iseqC, '.', A_NEXT, TPS_InXMLEntity, 0, NULL},
 	{p_iseqC, '-', A_NEXT, TPS_InXMLEntity, 0, NULL},
 	{p_iseqC, ';', A_NEXT, TPS_InXMLEntityEnd, 0, NULL},
@@ -871,6 +870,8 @@ static const TParserStateActionItem actionTPS_InTagFirst[] = {
 	{p_iseqC, '!', A_PUSH, TPS_InCommentFirst, 0, NULL},
 	{p_iseqC, '?', A_PUSH, TPS_InXMLBegin, 0, NULL},
 	{p_isasclet, 0, A_PUSH, TPS_InTagName, 0, NULL},
+	{p_iseqC, ':', A_PUSH, TPS_InTagName, 0, NULL},
+	{p_iseqC, '_', A_PUSH, TPS_InTagName, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -894,7 +895,11 @@ static const TParserStateActionItem actionTPS_InTagName[] = {
 	{p_iseqC, '/', A_NEXT, TPS_InTagBeginEnd, 0, NULL},
 	{p_iseqC, '>', A_NEXT, TPS_InTagEnd, 0, SpecialTags},
 	{p_isspace, 0, A_NEXT, TPS_InTag, 0, SpecialTags},
-	{p_isasclet, 0, A_NEXT, TPS_Null, 0, NULL},
+	{p_isalnum, 0, A_NEXT, TPS_Null, 0, NULL},
+	{p_iseqC, ':', A_NEXT, TPS_Null, 0, NULL},
+	{p_iseqC, '_', A_NEXT, TPS_Null, 0, NULL},
+	{p_iseqC, '.', A_NEXT, TPS_Null, 0, NULL},
+	{p_iseqC, '-', A_NEXT, TPS_Null, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
