@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.101 2007/11/15 22:25:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.102 2007/11/25 02:09:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2643,7 +2643,7 @@ InitTempTableNamespace(void)
 	}
 
 	/*
-	 * If the corresponding temp-table namespace doesn't exist yet, create it.
+	 * If the corresponding toast-table namespace doesn't exist yet, create it.
 	 * (We assume there is no need to clean it out if it does exist, since
 	 * dropping a parent table should make its toast table go away.)
 	 */
