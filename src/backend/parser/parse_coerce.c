@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.158 2007/11/15 21:14:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.159 2007/11/26 16:46:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -958,7 +958,7 @@ coerce_to_specific_type(ParseState *pstate, Node *node,
  *		This is used for determining the output type of CASE and UNION
  *		constructs.
  *
- * typeids is a nonempty list of type OIDs.  Note that earlier items
+ * 'typeids' is a nonempty list of type OIDs.  Note that earlier items
  * in the list will be preferred if there is doubt.
  * 'context' is a phrase to use in the error message if we fail to select
  * a usable type.
@@ -971,7 +971,28 @@ select_common_type(List *typeids, const char *context)
 	ListCell   *type_item;
 
 	Assert(typeids != NIL);
-	ptype = getBaseType(linitial_oid(typeids));
+	ptype = linitial_oid(typeids);
+
+	/*
+	 * If all input types are valid and exactly the same, just pick that type.
+	 * This is the only way that we will resolve the result as being a domain
+	 * type; otherwise domains are smashed to their base types for comparison.
+	 */
+	if (ptype != UNKNOWNOID)
+	{
+		for_each_cell(type_item, lnext(list_head(typeids)))
+		{
+			Oid		ntype = lfirst_oid(type_item);
+
+			if (ntype != ptype)
+				break;
+		}
+		if (type_item == NULL)			/* got to the end of the list? */
+			return ptype;
+	}
+
+	/* Nope, so set up for the full algorithm */
+	ptype = getBaseType(ptype);
 	pcategory = TypeCategory(ptype);
 
 	for_each_cell(type_item, lnext(list_head(typeids)))
@@ -979,11 +1000,11 @@ select_common_type(List *typeids, const char *context)
 		Oid			ntype = getBaseType(lfirst_oid(type_item));
 
 		/* move on to next one if no new information... */
-		if ((ntype != InvalidOid) && (ntype != UNKNOWNOID) && (ntype != ptype))
+		if (ntype != UNKNOWNOID && ntype != ptype)
 		{
-			if ((ptype == InvalidOid) || ptype == UNKNOWNOID)
+			if (ptype == UNKNOWNOID)
 			{
-				/* so far, only nulls so take anything... */
+				/* so far, only unknowns so take anything... */
 				ptype = ntype;
 				pcategory = TypeCategory(ptype);
 			}

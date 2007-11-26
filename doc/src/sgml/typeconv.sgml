@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.52 2007/06/05 21:31:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.53 2007/11/26 16:46:50 tgl Exp $ -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>
@@ -845,9 +845,17 @@ and Related Constructs</title>
 
 <step performance="required">
 <para>
+If all inputs are of the same type, and it is not <type>unknown</type>,
+resolve as that type.  Otherwise, replace any domain types in the list with
+their underlying base types.
+</para>
+</step>
+
+<step performance="required">
+<para>
 If all inputs are of type <type>unknown</type>, resolve as type
 <type>text</type> (the preferred type of the string category).
-Otherwise, ignore the <type>unknown</type> inputs while choosing the result type.
+Otherwise, the <type>unknown</type> inputs will be ignored.
 </para>
 </step>
 
@@ -860,14 +868,23 @@ If the non-unknown inputs are not all of the same type category, fail.
 <step performance="required">
 <para>
 Choose the first non-unknown input type which is a preferred type in
-that category or allows all the non-unknown inputs to be implicitly
-converted to it.
+that category, if there is one.
 </para>
 </step>
 
 <step performance="required">
 <para>
-Convert all inputs to the selected type.
+Otherwise, choose the last non-unknown input type that allows all the
+preceding non-unknown inputs to be implicitly converted to it.  (There
+always is such a type, since at least the first type in the list must
+satisfy this condition.)
+</para>
+</step>
+
+<step performance="required">
+<para>
+Convert all inputs to the selected type.  Fail if there is not a
+conversion from a given input to the selected type.
 </para>
 </step>
 </procedure>
