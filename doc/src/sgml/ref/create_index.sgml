@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.65 2007/09/20 17:56:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.66 2007/11/26 21:36:33 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -33,7 +33,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
 
   <para>
    <command>CREATE INDEX</command> constructs an index <replaceable
-   class="parameter">index_name</replaceable> on the specified table.
+   class="parameter">name</replaceable> on the specified table.
    Indexes are primarily used to enhance database performance (though
    inappropriate use can result in slower performance).
   </para>
