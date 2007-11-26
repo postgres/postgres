@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Fri Nov 23 11:37:47 EST 2007
+Last updated:           Mon Nov 26 18:31:05 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -165,14 +165,7 @@ first.  There is also a developer's wiki at<br/>
 <h1><a name="section_4">Data Types</a></h1>
 
 <ul>
-  <li>-<em>Make 64-bit version of the MONEY data type</em>
-  </li><li>Add locale-aware MONEY type, and support multiple currencies
-<p>  <a href="http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php">http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php</a>
-  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg01181.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg01181.php</a>
-</p>
-  </li><li>MONEY dumps in a locale-specific format making it difficult to
-  restore to a system with a different locale
-  </li><li>Change NUMERIC to enforce the maximum precision
+  <li>Change NUMERIC to enforce the maximum precision
   </li><li>Reduce storage space for small NUMERICs
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-02/msg01331.php">http://archives.postgresql.org/pgsql-hackers/2007-02/msg01331.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2007-02/msg00505.php">http://archives.postgresql.org/pgsql-patches/2007-02/msg00505.php</a>
@@ -303,6 +296,19 @@ first.  There is also a developer's wiki at<br/>
       </li><li>Add API for 64-bit large object access
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2005-09/msg00781.php">http://archives.postgresql.org/pgsql-hackers/2005-09/msg00781.php</a>
 </p>
+    </li></ul>
+    </li><li>MONEY data type
+    <ul>
+      <li>-<em>Make 64-bit version of the MONEY data type</em>
+      <ul>
+        <li>Add locale-aware MONEY type, and support multiple currencies
+<p>          <a href="http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php">http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php</a>
+          <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg01181.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg01181.php</a>
+</p>
+        </li><li>MONEY dumps in a locale-specific format making it difficult to
+          restore to a system with a different locale
+        </li><li>Allow MONEY to be cast to/from other numeric data types
+      </li></ul>
     </li></ul>
   </li></ul>
 </li></ul>

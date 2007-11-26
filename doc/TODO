@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri Nov 23 11:37:47 EST 2007
+Last updated:		Mon Nov 26 18:31:05 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -178,14 +178,6 @@ Monitoring
 Data Types
 ==========
 
-* -Make 64-bit version of the MONEY data type
-* Add locale-aware MONEY type, and support multiple currencies
-
-  http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php
-  http://archives.postgresql.org/pgsql-hackers/2007-03/msg01181.php
-
-* MONEY dumps in a locale-specific format making it difficult to
-  restore to a system with a different locale
 * Change NUMERIC to enforce the maximum precision
 * Reduce storage space for small NUMERICs
 
@@ -335,6 +327,18 @@ Data Types
 	o Add API for 64-bit large object access
 
 	  http://archives.postgresql.org/pgsql-hackers/2005-09/msg00781.php
+
+* MONEY data type
+
+	o -Make 64-bit version of the MONEY data type
+	* Add locale-aware MONEY type, and support multiple currencies
+
+	  http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php
+	  http://archives.postgresql.org/pgsql-hackers/2007-03/msg01181.php
+
+	* MONEY dumps in a locale-specific format making it difficult to
+	  restore to a system with a different locale
+	* Allow MONEY to be cast to/from other numeric data types
 
 
 Functions
