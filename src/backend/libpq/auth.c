@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.159 2007/11/15 21:14:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.160 2007/11/27 12:17:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -607,7 +607,7 @@ pg_SSPI_error(int severity, char *errmsg, SECURITY_STATUS r)
 	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0, sysmsg, sizeof(sysmsg), NULL) == 0)
 		ereport(severity,
 				(errmsg_internal("%s", errmsg),
-				 errdetail("sspi error %x", (unsigned int) r)));
+				 errdetail("SSPI error %x", (unsigned int) r)));
 	else
 		ereport(severity,
 				(errmsg_internal("%s", errmsg),
