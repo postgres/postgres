@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.38 2007/11/15 21:14:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.39 2007/11/27 19:13:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,6 +399,8 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 	char		abs_builddir[MAXPGPATH];
 	char		testtablespace[MAXPGPATH];
 	char		indir[MAXPGPATH];
+	struct stat	st;
+	int			ret;
 	char	  **name;
 	char	  **names;
 	int			count = 0;
@@ -419,11 +421,23 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 	 * current directory.
 	 */
 	if (srcdir)
-		strcpy(abs_srcdir, srcdir);
+		strlcpy(abs_srcdir, srcdir, MAXPGPATH);
 	else
-		strcpy(abs_srcdir, abs_builddir);
+		strlcpy(abs_srcdir, abs_builddir, MAXPGPATH);
 
 	snprintf(indir, MAXPGPATH, "%s/%s", abs_srcdir, source);
+
+	/* Check that indir actually exists and is a directory */
+	ret = stat(indir, &st);
+	if (ret != 0 || !S_ISDIR(st.st_mode))
+	{
+		/*
+		 * No warning, to avoid noise in tests that do not have
+		 * these directories; for example, ecpg, contrib and src/pl.
+		 */
+		return;
+	}
+
 	names = pgfnames(indir);
 	if (!names)
 		/* Error logged in pgfnames */
@@ -512,16 +526,8 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 static void
 convert_sourcefiles(void)
 {
-	struct stat st;
-	int			ret;
-
-	ret = stat("input", &st);
-	if (ret == 0 && S_ISDIR(st.st_mode))
-		convert_sourcefiles_in("input", "sql", "sql");
-
-	ret = stat("output", &st);
-	if (ret == 0 && S_ISDIR(st.st_mode))
-		convert_sourcefiles_in("output", "expected", "out");
+	convert_sourcefiles_in("input", "sql", "sql");
+	convert_sourcefiles_in("output", "expected", "out");
 }
 
 /*
