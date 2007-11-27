@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.411 2007/11/08 13:13:28 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.412 2007/11/27 18:29:11 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1514,7 +1514,7 @@
       </row>
 
       <row>
-       <entry><literal><function>quote_ident</function>(<parameter>string</parameter>)</literal></entry>
+       <entry><literal><function>quote_ident</function>(<parameter>string</parameter> <type>text</type>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
         Return the given string suitably quoted to be used as an identifier
@@ -1528,7 +1528,7 @@
       </row>
 
       <row>
-       <entry><literal><function>quote_literal</function>(<parameter>string</parameter>)</literal></entry>
+       <entry><literal><function>quote_literal</function>(<parameter>string</parameter> <type>text</type>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
         Return the given string suitably quoted to be used as a string literal
@@ -1537,6 +1537,17 @@
        </entry>
        <entry><literal>quote_literal('O\'Reilly')</literal></entry>
        <entry><literal>'O''Reilly'</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal><function>quote_literal</function>(<parameter>value</parameter> <type>anyelement</type>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Coerce the given value to text and then quote it as a literal.
+        Embedded single-quotes and backslashes are properly doubled.
+       </entry>
+       <entry><literal>quote_literal(42.5)</literal></entry>
+       <entry><literal>'42.5'</literal></entry>
       </row>
 
       <row>
