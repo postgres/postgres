@@ -238,6 +238,10 @@ WHERE c.castfunc = p.oid AND
 -- As of 8.2, this finds the cast from cidr to inet, because that is a
 -- trivial binary coercion while the other way goes through inet_to_cidr().
 
+-- As of 8.3, this finds the casts from xml to text, varchar, and bpchar,
+-- because those are binary-compatible while the reverse goes through
+-- texttoxml(), which does an XML syntax check.
+
 SELECT *
 FROM pg_cast c
 WHERE c.castfunc = 0 AND

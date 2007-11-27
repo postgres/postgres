@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.60 2007/11/25 12:08:11 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.61 2007/11/27 12:21:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -535,7 +535,8 @@ xmltotext(PG_FUNCTION_ARGS)
 {
 	xmltype    *data = PG_GETARG_XML_P(0);
 
-	PG_RETURN_TEXT_P(xmltotext_with_xmloption(data, xmloption));
+	/* It's actually binary compatible. */
+	return (text *) data;
 }
 
 
