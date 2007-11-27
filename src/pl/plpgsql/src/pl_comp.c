@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.119 2007/11/15 21:14:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.120 2007/11/27 19:58:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -787,7 +787,7 @@ plpgsql_compile_error_callback(void *arg)
  * ----------
  */
 int
-plpgsql_parse_word(char *word)
+plpgsql_parse_word(const char *word)
 {
 	PLpgSQL_nsitem *nse;
 	char	   *cp[1];
@@ -797,6 +797,7 @@ plpgsql_parse_word(char *word)
 
 	/*
 	 * Recognize tg_argv when compiling triggers
+	 * (XXX this sucks, it should be a regular variable in the namestack)
 	 */
 	if (plpgsql_curr_compile->fn_functype == T_TRIGGER)
 	{
@@ -825,15 +826,13 @@ plpgsql_parse_word(char *word)
 	/*
 	 * Do a lookup on the compiler's namestack
 	 */
-	nse = plpgsql_ns_lookup(cp[0], NULL);
+	nse = plpgsql_ns_lookup(cp[0], NULL, NULL, NULL);
+	pfree(cp[0]);
+
 	if (nse != NULL)
 	{
-		pfree(cp[0]);
 		switch (nse->itemtype)
 		{
-			case PLPGSQL_NSTYPE_LABEL:
-				return T_LABEL;
-
 			case PLPGSQL_NSTYPE_VAR:
 				plpgsql_yylval.scalar = plpgsql_Datums[nse->itemno];
 				return T_SCALAR;
@@ -855,7 +854,6 @@ plpgsql_parse_word(char *word)
 	 * Nothing found - up to now it's a word without any special meaning for
 	 * us.
 	 */
-	pfree(cp[0]);
 	return T_WORD;
 }
 
@@ -866,18 +864,19 @@ plpgsql_parse_word(char *word)
  * ----------
  */
 int
-plpgsql_parse_dblword(char *word)
+plpgsql_parse_dblword(const char *word)
 {
 	PLpgSQL_nsitem *ns;
 	char	   *cp[2];
+	int			nnames;
 
 	/* Do case conversion and word separation */
 	plpgsql_convert_ident(word, cp, 2);
 
 	/*
-	 * Lookup the first word
+	 * Do a lookup on the compiler's namestack
 	 */
-	ns = plpgsql_ns_lookup(cp[0], NULL);
+	ns = plpgsql_ns_lookup(cp[0], cp[1], NULL, &nnames);
 	if (ns == NULL)
 	{
 		pfree(cp[0]);
@@ -887,39 +886,15 @@ plpgsql_parse_dblword(char *word)
 
 	switch (ns->itemtype)
 	{
-		case PLPGSQL_NSTYPE_LABEL:
-
-			/*
-			 * First word is a label, so second word could be a variable,
-			 * record or row in that bodies namestack. Anything else could
-			 * only be something in a query given to the SPI manager and
-			 * T_ERROR will get eaten up by the collector routines.
-			 */
-			ns = plpgsql_ns_lookup(cp[1], cp[0]);
+		case PLPGSQL_NSTYPE_VAR:
+			/* Block-qualified reference to scalar variable. */
+			plpgsql_yylval.scalar = plpgsql_Datums[ns->itemno];
 			pfree(cp[0]);
 			pfree(cp[1]);
-			if (ns == NULL)
-				return T_ERROR;
-			switch (ns->itemtype)
-			{
-				case PLPGSQL_NSTYPE_VAR:
-					plpgsql_yylval.scalar = plpgsql_Datums[ns->itemno];
-					return T_SCALAR;
-
-				case PLPGSQL_NSTYPE_REC:
-					plpgsql_yylval.rec = (PLpgSQL_rec *) (plpgsql_Datums[ns->itemno]);
-					return T_RECORD;
-
-				case PLPGSQL_NSTYPE_ROW:
-					plpgsql_yylval.row = (PLpgSQL_row *) (plpgsql_Datums[ns->itemno]);
-					return T_ROW;
-
-				default:
-					return T_ERROR;
-			}
-			break;
+			return T_SCALAR;
 
 		case PLPGSQL_NSTYPE_REC:
+			if (nnames == 1)
 			{
 				/*
 				 * First word is a record name, so second word must be a field
@@ -940,8 +915,17 @@ plpgsql_parse_dblword(char *word)
 				pfree(cp[1]);
 				return T_SCALAR;
 			}
+			else
+			{
+				/* Block-qualified reference to record variable. */
+				plpgsql_yylval.rec = (PLpgSQL_rec *) (plpgsql_Datums[ns->itemno]);
+				pfree(cp[0]);
+				pfree(cp[1]);
+				return T_RECORD;
+			}
 
 		case PLPGSQL_NSTYPE_ROW:
+			if (nnames == 1)
 			{
 				/*
 				 * First word is a row name, so second word must be a field in
@@ -967,6 +951,14 @@ plpgsql_parse_dblword(char *word)
 						 errmsg("row \"%s\" has no field \"%s\"",
 								cp[0], cp[1])));
 			}
+			else
+			{
+				/* Block-qualified reference to row variable. */
+				plpgsql_yylval.row = (PLpgSQL_row *) (plpgsql_Datums[ns->itemno]);
+				pfree(cp[0]);
+				pfree(cp[1]);
+				return T_ROW;
+			}
 
 		default:
 			break;
@@ -984,38 +976,21 @@ plpgsql_parse_dblword(char *word)
  * ----------
  */
 int
-plpgsql_parse_tripword(char *word)
+plpgsql_parse_tripword(const char *word)
 {
 	PLpgSQL_nsitem *ns;
 	char	   *cp[3];
+	int			nnames;
 
 	/* Do case conversion and word separation */
 	plpgsql_convert_ident(word, cp, 3);
 
 	/*
-	 * Lookup the first word - it must be a label
+	 * Do a lookup on the compiler's namestack.
+	 * Must find a qualified reference.
 	 */
-	ns = plpgsql_ns_lookup(cp[0], NULL);
-	if (ns == NULL)
-	{
-		pfree(cp[0]);
-		pfree(cp[1]);
-		pfree(cp[2]);
-		return T_ERROR;
-	}
-	if (ns->itemtype != PLPGSQL_NSTYPE_LABEL)
-	{
-		pfree(cp[0]);
-		pfree(cp[1]);
-		pfree(cp[2]);
-		return T_ERROR;
-	}
-
-	/*
-	 * First word is a label, so second word could be a record or row
-	 */
-	ns = plpgsql_ns_lookup(cp[1], cp[0]);
-	if (ns == NULL)
+	ns = plpgsql_ns_lookup(cp[0], cp[1], cp[2], &nnames);
+	if (ns == NULL || nnames != 2)
 	{
 		pfree(cp[0]);
 		pfree(cp[1]);
@@ -1028,7 +1003,7 @@ plpgsql_parse_tripword(char *word)
 		case PLPGSQL_NSTYPE_REC:
 			{
 				/*
-				 * This word is a record name, so third word must be a field
+				 * words 1/2 are a record name, so third word must be a field
 				 * in this record.
 				 */
 				PLpgSQL_recfield *new;
@@ -1052,7 +1027,7 @@ plpgsql_parse_tripword(char *word)
 		case PLPGSQL_NSTYPE_ROW:
 			{
 				/*
-				 * This word is a row name, so third word must be a field in
+				 * words 1/2 are a row name, so third word must be a field in
 				 * this row.
 				 */
 				PLpgSQL_row *row;
@@ -1114,11 +1089,10 @@ plpgsql_parse_wordtype(char *word)
 	pfree(cp[1]);
 
 	/*
-	 * Do a lookup on the compiler's namestack. But ensure it moves up to the
-	 * toplevel.
+	 * Do a lookup on the compiler's namestack.  Ensure we scan all levels.
 	 */
 	old_nsstate = plpgsql_ns_setlocal(false);
-	nse = plpgsql_ns_lookup(cp[0], NULL);
+	nse = plpgsql_ns_lookup(cp[0], NULL, NULL, NULL);
 	plpgsql_ns_setlocal(old_nsstate);
 
 	if (nse != NULL)
@@ -1200,32 +1174,21 @@ plpgsql_parse_dblwordtype(char *word)
 	word[i] = '.';
 	plpgsql_convert_ident(word, cp, 3);
 	word[i] = '%';
+	pfree(cp[2]);
 
 	/*
-	 * Lookup the first word
+	 * Do a lookup on the compiler's namestack.  Ensure we scan all levels.
+	 * We don't need to check number of names matched, because we will only
+	 * consider scalar variables.
 	 */
-	nse = plpgsql_ns_lookup(cp[0], NULL);
+	old_nsstate = plpgsql_ns_setlocal(false);
+	nse = plpgsql_ns_lookup(cp[0], cp[1], NULL, NULL);
+	plpgsql_ns_setlocal(old_nsstate);
 
-	/*
-	 * If this is a label lookup the second word in that label's namestack
-	 * level
-	 */
-	if (nse != NULL)
+	if (nse != NULL && nse->itemtype == PLPGSQL_NSTYPE_VAR)
 	{
-		if (nse->itemtype == PLPGSQL_NSTYPE_LABEL)
-		{
-			old_nsstate = plpgsql_ns_setlocal(false);
-			nse = plpgsql_ns_lookup(cp[1], cp[0]);
-			plpgsql_ns_setlocal(old_nsstate);
-
-			if (nse != NULL && nse->itemtype == PLPGSQL_NSTYPE_VAR)
-			{
-				plpgsql_yylval.dtype = ((PLpgSQL_var *) (plpgsql_Datums[nse->itemno]))->datatype;
-				result = T_DTYPE;
-			}
-		}
-
-		/* Return T_ERROR if not found, otherwise T_DTYPE */
+		plpgsql_yylval.dtype = ((PLpgSQL_var *) (plpgsql_Datums[nse->itemno]))->datatype;
+		result = T_DTYPE;
 		goto done;
 	}
 
@@ -1291,8 +1254,6 @@ done:
  * plpgsql_parse_tripwordtype		Same lookup for word.word.word%TYPE
  * ----------
  */
-#define TYPE_JUNK_LEN	5
-
 int
 plpgsql_parse_tripwordtype(char *word)
 {
@@ -1302,10 +1263,7 @@ plpgsql_parse_tripwordtype(char *word)
 	HeapTuple	typetup = NULL;
 	Form_pg_class classStruct;
 	Form_pg_attribute attrStruct;
-	char	   *cp[2];
-	char	   *colname[1];
-	int			qualified_att_len;
-	int			numdots = 0;
+	char	   *cp[4];
 	int			i;
 	RangeVar   *relvar;
 	MemoryContext oldCxt;
@@ -1315,27 +1273,15 @@ plpgsql_parse_tripwordtype(char *word)
 	oldCxt = MemoryContextSwitchTo(compile_tmp_cxt);
 
 	/* Do case conversion and word separation */
-	qualified_att_len = strlen(word) - TYPE_JUNK_LEN;
-	Assert(word[qualified_att_len] == '%');
+	/* We convert %type to .type momentarily to keep converter happy */
+	i = strlen(word) - 5;
+	Assert(word[i] == '%');
+	word[i] = '.';
+	plpgsql_convert_ident(word, cp, 4);
+	word[i] = '%';
+	pfree(cp[3]);
 
-	for (i = 0; i < qualified_att_len; i++)
-	{
-		if (word[i] == '.' && ++numdots == 2)
-			break;
-	}
-
-	cp[0] = (char *) palloc((i + 1) * sizeof(char));
-	memcpy(cp[0], word, i * sizeof(char));
-	cp[0][i] = '\0';
-
-	/*
-	 * qualified_att_len - one based position + 1 (null terminator)
-	 */
-	cp[1] = (char *) palloc((qualified_att_len - i) * sizeof(char));
-	memcpy(cp[1], &word[i + 1], (qualified_att_len - i - 1) * sizeof(char));
-	cp[1][qualified_att_len - i - 1] = '\0';
-
-	relvar = makeRangeVarFromNameList(stringToQualifiedNameList(cp[0]));
+	relvar = makeRangeVar(cp[0], cp[1]);
 	classOid = RangeVarGetRelid(relvar, true);
 	if (!OidIsValid(classOid))
 		goto done;
@@ -1359,8 +1305,7 @@ plpgsql_parse_tripwordtype(char *word)
 	/*
 	 * Fetch the named table field and its type
 	 */
-	plpgsql_convert_ident(cp[1], colname, 1);
-	attrtup = SearchSysCacheAttName(classOid, colname[0]);
+	attrtup = SearchSysCacheAttName(classOid, cp[2]);
 	if (!HeapTupleIsValid(attrtup))
 		goto done;
 	attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
@@ -1436,13 +1381,11 @@ plpgsql_parse_wordrowtype(char *word)
  *			So word must be a namespace qualified table name.
  * ----------
  */
-#define ROWTYPE_JUNK_LEN	8
-
 int
 plpgsql_parse_dblwordrowtype(char *word)
 {
 	Oid			classOid;
-	char	   *cp;
+	char	   *cp[3];
 	int			i;
 	RangeVar   *relvar;
 	MemoryContext oldCxt;
@@ -1452,19 +1395,19 @@ plpgsql_parse_dblwordrowtype(char *word)
 
 	/* Do case conversion and word separation */
 	/* We convert %rowtype to .rowtype momentarily to keep converter happy */
-	i = strlen(word) - ROWTYPE_JUNK_LEN;
+	i = strlen(word) - 8;
 	Assert(word[i] == '%');
-	word[i] = '\0';
-	cp = pstrdup(word);
+	word[i] = '.';
+	plpgsql_convert_ident(word, cp, 3);
 	word[i] = '%';
 
 	/* Lookup the relation */
-	relvar = makeRangeVarFromNameList(stringToQualifiedNameList(cp));
+	relvar = makeRangeVar(cp[0], cp[1]);
 	classOid = RangeVarGetRelid(relvar, true);
 	if (!OidIsValid(classOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation \"%s\" does not exist", cp)));
+				 errmsg("relation \"%s.%s\" does not exist", cp[0], cp[1])));
 
 	/* Build and return the row type struct */
 	plpgsql_yylval.dtype = plpgsql_build_datatype(get_rel_type_id(classOid),

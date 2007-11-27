@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.93 2007/11/15 22:25:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.94 2007/11/27 19:58:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,7 +473,7 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	bool		is_exit;		/* Is this an exit or a continue? */
-	char	   *label;
+	char	   *label;			/* NULL if it's an unlabelled EXIT/CONTINUE */
 	PLpgSQL_expr *cond;
 } PLpgSQL_stmt_exit;
 
@@ -723,9 +723,9 @@ extern PLpgSQL_plugin **plugin_ptr;
  */
 extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo,
 				bool forValidator);
-extern int	plpgsql_parse_word(char *word);
-extern int	plpgsql_parse_dblword(char *word);
-extern int	plpgsql_parse_tripword(char *word);
+extern int	plpgsql_parse_word(const char *word);
+extern int	plpgsql_parse_dblword(const char *word);
+extern int	plpgsql_parse_tripword(const char *word);
 extern int	plpgsql_parse_wordtype(char *word);
 extern int	plpgsql_parse_dblwordtype(char *word);
 extern int	plpgsql_parse_tripwordtype(char *word);
@@ -773,7 +773,7 @@ extern void plpgsql_dstring_append_char(PLpgSQL_dstring *ds, char c);
 extern char *plpgsql_dstring_get(PLpgSQL_dstring *ds);
 
 /* ----------
- * Functions for the namestack handling in pl_funcs.c
+ * Functions for namestack handling in pl_funcs.c
  * ----------
  */
 extern void plpgsql_ns_init(void);
@@ -781,7 +781,9 @@ extern bool plpgsql_ns_setlocal(bool flag);
 extern void plpgsql_ns_push(const char *label);
 extern void plpgsql_ns_pop(void);
 extern void plpgsql_ns_additem(int itemtype, int itemno, const char *name);
-extern PLpgSQL_nsitem *plpgsql_ns_lookup(const char *name, const char *nsname);
+extern PLpgSQL_nsitem *plpgsql_ns_lookup(const char *name1, const char *name2,
+										 const char *name3, int *names_used);
+extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(const char *name);
 extern void plpgsql_ns_rename(char *oldname, char *newname);
 
 /* ----------

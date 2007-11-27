@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.106 2007/11/09 23:58:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.107 2007/11/27 19:58:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@ static PLpgSQL_row		*make_scalar_list1(const char *initial_name,
 										   int lineno);
 static	void			 check_sql_expr(const char *stmt);
 static	void			 plpgsql_sql_error_callback(void *arg);
+static	char			*check_label(const char *yytxt);
 static	void			 check_labels(const char *start_label,
 									  const char *end_label);
 
@@ -214,7 +215,6 @@ static	void			 check_labels(const char *start_label,
 %token	T_ROW
 %token	T_RECORD
 %token	T_DTYPE
-%token	T_LABEL
 %token	T_WORD
 %token	T_ERROR
 
@@ -505,7 +505,8 @@ decl_aliasitem	: T_WORD
 							yyerror("only positional parameters can be aliased");
 
 						plpgsql_ns_setlocal(false);
-						nsi = plpgsql_ns_lookup(name, NULL);
+
+						nsi = plpgsql_ns_lookup(name, NULL, NULL, NULL);
 						if (nsi == NULL)
 						{
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
@@ -1642,20 +1643,28 @@ opt_block_label	:
 					}
 				;
 
+/*
+ * need all the options because scanner will have tried to resolve as variable
+ */
 opt_label	:
 					{
 						$$ = NULL;
 					}
-				| T_LABEL
-					{
-						char *label_name;
-						plpgsql_convert_ident(yytext, &label_name, 1);
-						$$ = label_name;
-					}
 				| T_WORD
 					{
-						/* just to give a better error than "syntax error" */
-						yyerror("no such label");
+						$$ = check_label(yytext);
+					}
+				| T_SCALAR
+					{
+						$$ = check_label(yytext);
+					}
+				| T_RECORD
+					{
+						$$ = check_label(yytext);
+					}
+				| T_ROW
+					{
+						$$ = check_label(yytext);
 					}
 				;
 
@@ -2482,6 +2491,17 @@ plpgsql_sql_error_callback(void *arg)
 	internalerrquery(sql_stmt);
 	internalerrposition(geterrposition());
 	errposition(0);
+}
+
+static char *
+check_label(const char *yytxt)
+{
+	char	   *label_name;
+
+	plpgsql_convert_ident(yytxt, &label_name, 1);
+	if (plpgsql_ns_lookup_label(label_name) == NULL)
+		yyerror("no such label");
+	return label_name;
 }
 
 static void

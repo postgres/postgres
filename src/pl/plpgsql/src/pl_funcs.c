@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.65 2007/11/15 22:25:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.66 2007/11/27 19:58:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,9 +126,15 @@ plpgsql_ns_init(void)
 
 
 /* ----------
- * plpgsql_ns_setlocal			Tell plpgsql_ns_lookup to or to
- *					not look into the current level
- *					only.
+ * plpgsql_ns_setlocal			Tell plpgsql_ns_lookup whether to
+ *					look into the current level only.
+ *
+ * This is a crock, but in the current design we need it because scan.l
+ * initiates name lookup, and the scanner does not know whether we are
+ * examining a name being declared in a DECLARE section.  For that case
+ * we only want to know if there is a conflicting name earlier in the
+ * same DECLARE section.  So the grammar must temporarily set local mode
+ * before scanning decl_varnames.
  * ----------
  */
 bool
@@ -219,59 +225,98 @@ plpgsql_ns_additem(int itemtype, int itemno, const char *name)
 
 
 /* ----------
- * plpgsql_ns_lookup			Lookup for a word in the namestack
+ * plpgsql_ns_lookup			Lookup an identifier in the namestack
+ *
+ * Note that this only searches for variables, not labels.
+ *
+ * name1 must be non-NULL.  Pass NULL for name2 and/or name3 if parsing a name
+ * with fewer than three components.
+ *
+ * If names_used isn't NULL, *names_used receives the number of names
+ * matched: 0 if no match, 1 if name1 matched an unqualified variable name,
+ * 2 if name1 and name2 matched a block label + variable name.
+ *
+ * Note that name3 is never directly matched to anything.  However, if it
+ * isn't NULL, we will disregard qualified matches to scalar variables.
+ * Similarly, if name2 isn't NULL, we disregard unqualified matches to
+ * scalar variables.
  * ----------
  */
 PLpgSQL_nsitem *
-plpgsql_ns_lookup(const char *name, const char *label)
+plpgsql_ns_lookup(const char *name1, const char *name2, const char *name3,
+				  int *names_used)
 {
 	PLpgSQL_ns *ns;
 	int			i;
 
-	/*
-	 * If a label is specified, lookup only in that
-	 */
-	if (label != NULL)
+	/* Scan each level of the namestack */
+	for (ns = ns_current; ns != NULL; ns = ns->upper)
 	{
-		for (ns = ns_current; ns != NULL; ns = ns->upper)
+		/* Check for unqualified match to variable name */
+		for (i = 1; i < ns->items_used; i++)
 		{
-			if (strcmp(ns->items[0]->name, label) == 0)
+			PLpgSQL_nsitem *nsitem = ns->items[i];
+
+			if (strcmp(nsitem->name, name1) == 0)
 			{
-				for (i = 1; i < ns->items_used; i++)
+				if (name2 == NULL ||
+					nsitem->itemtype != PLPGSQL_NSTYPE_VAR)
 				{
-					if (strcmp(ns->items[i]->name, name) == 0)
-						return ns->items[i];
+					if (names_used)
+						*names_used = 1;
+					return nsitem;
 				}
-				return NULL;	/* name not found in specified label */
 			}
 		}
-		return NULL;			/* label not found */
+
+		/* Check for qualified match to variable name */
+		if (name2 != NULL &&
+			strcmp(ns->items[0]->name, name1) == 0)
+		{
+			for (i = 1; i < ns->items_used; i++)
+			{
+				PLpgSQL_nsitem *nsitem = ns->items[i];
+
+				if (strcmp(nsitem->name, name2) == 0)
+				{
+					if (name3 == NULL ||
+						nsitem->itemtype != PLPGSQL_NSTYPE_VAR)
+					{
+						if (names_used)
+							*names_used = 2;
+						return nsitem;
+					}
+				}
+			}
+		}
+
+		if (ns_localmode)
+			break;				/* do not look into upper levels */
 	}
 
-	/*
-	 * No label given, lookup for visible labels ignoring localmode
-	 */
+	/* This is just to suppress possibly-uninitialized-variable warnings */
+	if (names_used)
+		*names_used = 0;
+	return NULL;				/* No match found */
+}
+
+
+/* ----------
+ * plpgsql_ns_lookup_label		Lookup a label in the namestack
+ * ----------
+ */
+PLpgSQL_nsitem *
+plpgsql_ns_lookup_label(const char *name)
+{
+	PLpgSQL_ns *ns;
+
 	for (ns = ns_current; ns != NULL; ns = ns->upper)
 	{
 		if (strcmp(ns->items[0]->name, name) == 0)
 			return ns->items[0];
 	}
 
-	/*
-	 * Finally lookup name in the namestack
-	 */
-	for (ns = ns_current; ns != NULL; ns = ns->upper)
-	{
-		for (i = 1; i < ns->items_used; i++)
-		{
-			if (strcmp(ns->items[i]->name, name) == 0)
-				return ns->items[i];
-		}
-		if (ns_localmode)
-			return NULL;		/* name not found in current namespace */
-	}
-
-	return NULL;
+	return NULL;				/* label not found */
 }
 
 
@@ -846,8 +891,9 @@ static void
 dump_exit(PLpgSQL_stmt_exit *stmt)
 {
 	dump_ind();
-	printf("%s label='%s'",
-		   stmt->is_exit ? "EXIT" : "CONTINUE", stmt->label);
+	printf("%s", stmt->is_exit ? "EXIT" : "CONTINUE");
+	if (stmt->label != NULL)
+		printf(" label='%s'", stmt->label);
 	if (stmt->cond != NULL)
 	{
 		printf(" WHEN ");
