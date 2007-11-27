@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.217 2007/11/21 04:01:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.218 2007/11/27 05:49:58 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -842,6 +842,14 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
     floating-point literals, as well as <quote>typical</quote>
     currency formatting, such as <literal>'$1,000.00'</literal>.
     Output is generally in the latter form but depends on the locale.
+    Non-quoted numeric values can be converted to <type>money</type> by
+    casting the numeric value to <type>text</type> and then
+    <type>money</type>:
+<programlisting>
+SELECT 1234::text::money;
+</programlisting>
+    There is no simple way of doing the reverse;  casting a <type>money</type> value to a
+    numeric type.
    </para>
 
    <para>
