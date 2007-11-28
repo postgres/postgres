@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.101 2007/06/08 20:26:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.102 2007/11/28 15:42:31 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -698,7 +698,7 @@ SELECT name FROM distributors ORDER BY code;
     assumed by default.  Alternatively, a specific ordering operator
     name can be specified in the <literal>USING</> clause.
     An ordering operator must be a less-than or greater-than
-    member of some btree operator family.
+    member of some B-tree operator family.
     <literal>ASC</> is usually equivalent to <literal>USING &lt;</> and
     <literal>DESC</> is usually equivalent to <literal>USING &gt;</>.
     (But the creator of a user-defined data type can define exactly what the

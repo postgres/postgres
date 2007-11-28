@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.42 2007/02/06 04:38:31 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.43 2007/11/28 15:42:31 petere Exp $ -->
 
  <sect1 id="xoper">
   <title>User-Defined Operators</title>
@@ -340,7 +340,7 @@ table1.column1 OP table2.column2
      some form of equality.  In most cases it is only practical to support
      hashing for operators that take the same data type on both sides.
      However, sometimes it is possible to design compatible hash functions
-     for two or more datatypes; that is, functions that will generate the
+     for two or more data types; that is, functions that will generate the
      same hash codes for <quote>equal</> values, even though the values
      have different representations.  For example, it's fairly simple
      to arrange this property when hashing integers of different widths.
@@ -378,8 +378,8 @@ table1.column1 OP table2.column2
      if they are different) that appears in the same operator family.
      If this is not the case, planner errors might occur when the operator
      is used.  Also, it is a good idea (but not strictly required) for
-     a hash operator family that supports multiple datatypes to provide
-     equality operators for every combination of the datatypes; this
+     a hash operator family that supports multiple data types to provide
+     equality operators for every combination of the data types; this
      allows better optimization.
     </para>
 
@@ -450,8 +450,8 @@ table1.column1 OP table2.column2
      if they are different) that appears in the same operator family.
      If this is not the case, planner errors might occur when the operator
      is used.  Also, it is a good idea (but not strictly required) for
-     a btree operator family that supports multiple datatypes to provide
-     equality operators for every combination of the datatypes; this
+     a btree operator family that supports multiple data types to provide
+     equality operators for every combination of the data types; this
      allows better optimization.
     </para>
 

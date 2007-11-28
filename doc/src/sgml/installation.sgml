@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.297 2007/11/05 17:43:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.298 2007/11/28 15:42:31 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1308,7 +1308,7 @@ su - postgres
        <term><envar>TCLSH</envar></term>
        <listitem>
         <para>
-         Full path to the Tcl interpreter.  This wil be used to
+         Full path to the Tcl interpreter.  This will be used to
          determine the dependencies for building PL/Tcl.
         </para>
        </listitem>

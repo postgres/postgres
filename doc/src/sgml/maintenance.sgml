@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.84 2007/10/07 01:16:42 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.85 2007/11/28 15:42:31 petere Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -115,7 +115,7 @@
     <command>UPDATE</> or <command>DELETE</> of a row does not
     immediately remove the old version of the row.
     This approach is necessary to gain the benefits of multiversion
-    concurrency control (see <xref linkend="mvcc">): the row version
+    concurrency control (see <xref linkend="mvcc">): the row versions
     must not be deleted while it is still potentially visible to other
     transactions. But eventually, an outdated or deleted row version is no
     longer of interest to any transaction. The space it occupies must be
@@ -486,7 +486,7 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
 
    <para>
     Beginning in <productname>PostgreSQL</productname> 8.3, autovacuum has a
-    multi-process architecture: there is a daemon process, called the
+    multiprocess architecture:  There is a daemon process, called the
     <firstterm>autovacuum launcher</firstterm>, which is in charge of starting
     an <firstterm>autovacuum worker</firstterm> process on each database every
     <xref linkend="guc-autovacuum-naptime"> seconds. On each run, the worker

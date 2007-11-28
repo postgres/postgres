@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.157 2007/11/28 05:01:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.158 2007/11/28 15:42:30 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -608,7 +608,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Sets the realm to match Kerberos, GSSAPI and SSPI usernames against.
+        Sets the realm to match Kerberos, GSSAPI and SSPI user names against.
         See <xref linkend="kerberos-auth">, <xref linkend="gssapi-auth"> or
         <xref linkend="sspi-auth"> for details. This parameter can only be
         set at server start.
@@ -3166,12 +3166,11 @@ local0.*    /var/log/postgresql
         Including <literal>csvlog</> in the <varname>log_destination</> list 
         provides a convenient way to import log files into a database table. 
         This option emits log lines in comma-separated-value format,
-        with these columns: timestamp with milliseconds, username, database
-        name, session id, host:port number, process id, per-process line
-        number, command tag, session start time, virtual transaction id,
+        with these columns: timestamp with milliseconds, user name, database
+        name, session ID, host:port number, process ID, per-process line
+        number, command tag, session start time, virtual transaction ID,
         regular transaction id, error severity, SQL state code, error message.
         Here is a sample table definition for storing CSV-format log output:
-       </para>
 
 <programlisting>
 CREATE TABLE postgres_log
@@ -3193,15 +3192,16 @@ CREATE TABLE postgres_log
   PRIMARY KEY (session_id, process_line_num)
 );
 </programlisting>
+       </para>
 
        <para>
         To import a log file into this table, use the <command>COPY FROM</>
         command:
-       </para>
 
 <programlisting>
 COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 </programlisting>
+       </para>
 
        <para>
        There are a few things you need to do to simplify importing CSV log
@@ -3221,7 +3221,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <listitem>
            <para>
             Set <varname>log_rotation_size</varname> to 0 to disable 
-            size-based log rotation, as it makes the log filename difficult 
+            size-based log rotation, as it makes the log file name difficult 
             to predict. 
            </para>
         </listitem>

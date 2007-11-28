@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.246 2007/09/26 08:45:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.247 2007/11/28 15:42:31 petere Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -4976,7 +4976,7 @@ defaultNoticeProcessor(void *arg, const char *message)
    used.  (Therefore, put more-specific entries first when you are using
    wildcards.) If an entry needs to contain <literal>:</literal> or
    <literal>\</literal>, escape this character with <literal>\</literal>.
-   A host name of <literal>localhost</> matches both TCP (hostname
+   A host name of <literal>localhost</> matches both TCP (host name
    <literal>localhost</>) and Unix domain socket (<literal>pghost</> empty
    or the default socket directory) connections coming from the local
    machine.

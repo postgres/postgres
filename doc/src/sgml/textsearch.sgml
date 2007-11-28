@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.38 2007/11/20 15:58:52 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.39 2007/11/28 15:42:31 petere Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -32,7 +32,7 @@
    Textual search operators have existed in databases for years.
    <productname>PostgreSQL</productname> has
    <literal>~</literal>, <literal>~*</literal>, <literal>LIKE</literal>, and
-   <literal>ILIKE</literal> operators for textual datatypes, but they lack
+   <literal>ILIKE</literal> operators for textual data types, but they lack
    many essential properties required by modern information systems:
   </para>
 
@@ -132,7 +132,7 @@
 
    <listitem>
     <para>
-     Map synonyms to a single word using <application>ispell</>.
+     Map synonyms to a single word using <application>Ispell</>.
     </para>
    </listitem>
 
@@ -145,7 +145,7 @@
    <listitem>
     <para>
      Map different variations of a word to a canonical form using
-     an <application>ispell</> dictionary.
+     an <application>Ispell</> dictionary.
     </para>
    </listitem>
 
@@ -725,7 +725,7 @@ UPDATE tt SET ti =
    <para>
     <function>to_tsquery</function> creates a <type>tsquery</> value from
     <replaceable>querytext</replaceable>, which must consist of single tokens
-    separated by the boolean operators <literal>&amp;</literal> (AND),
+    separated by the Boolean operators <literal>&amp;</literal> (AND),
     <literal>|</literal> (OR) and <literal>!</literal> (NOT).  These operators
     can be grouped using parentheses.  In other words, the input to
     <function>to_tsquery</function> must already follow the general rules for
@@ -783,7 +783,7 @@ SELECT to_tsquery('''supernovae stars'' &amp; !crab');
     <function>plainto_tsquery</> transforms unformatted text
     <replaceable>querytext</replaceable> to <type>tsquery</type>.
     The text is parsed and normalized much as for <function>to_tsvector</>,
-    then the <literal>&amp;</literal> (AND) boolean operator is inserted
+    then the <literal>&amp;</literal> (AND) Boolean operator is inserted
     between surviving words.
    </para>
 
@@ -798,7 +798,7 @@ SELECT to_tsquery('''supernovae stars'' &amp; !crab');
 </programlisting>
 
     Note that <function>plainto_tsquery</> cannot
-    recognize either boolean operators or weight labels in its input:
+    recognize either Boolean operators or weight labels in its input:
 
 <programlisting>
 SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
@@ -1085,7 +1085,7 @@ ORDER BY rank DESC LIMIT 10;
      </listitem>
      <listitem>
       <para>
-       <literal>HighlightAll</literal>: boolean flag;  if
+       <literal>HighlightAll</literal>: Boolean flag;  if
        <literal>true</literal> the whole document will be highlighted.
       </para>
      </listitem>
@@ -1131,7 +1131,7 @@ query.',
     <type>tsvector</type> summary, so it can be slow and should be used with
     care.  A typical mistake is to call <function>ts_headline</function> for
     <emphasis>every</emphasis> matching document when only ten documents are
-    to be shown. <acronym>SQL</acronym> subselects can help; here is an
+    to be shown. <acronym>SQL</acronym> subqueries can help; here is an
     example:
 
 <programlisting>
@@ -1945,7 +1945,7 @@ SELECT alias, description, token FROM ts_debug('http://example.com/stuff/index.h
 
     <listitem>
      <para>
-      Linguistic - ispell dictionaries try to reduce input words to a
+      Linguistic - Ispell dictionaries try to reduce input words to a
       normalized form; stemmer dictionaries remove word endings
      </para>
     </listitem>
@@ -2395,7 +2395,7 @@ crab nebulae : crab
 </programlisting>
 
     Below we create a dictionary and bind some token types to
-    an astronomical thesaurus and english stemmer:
+    an astronomical thesaurus and English stemmer:
 
 <programlisting>
 CREATE TEXT SEARCH DICTIONARY thesaurus_astro (
@@ -2610,7 +2610,7 @@ CREATE TEXT SEARCH DICTIONARY english_stem (
     Several predefined text search configurations are available, and
     you can create custom configurations easily.  To facilitate management
     of text search objects, a set of <acronym>SQL</acronym> commands
-    is available, and there are several psql commands that display information
+    is available, and there are several <application>psql</application> commands that display information
     about text search objects (<xref linkend="textsearch-psql">).
    </para>
 
@@ -2644,7 +2644,7 @@ CREATE TEXT SEARCH DICTIONARY pg_dict (
 );
 </programlisting>
 
-    Next we register the <productname>ispell</> dictionary
+    Next we register the <productname>Ispell</> dictionary
     <literal>english_ispell</literal>, which has its own configuration files:
 
 <programlisting>
@@ -2834,7 +2834,7 @@ SELECT * FROM ts_debug('english','a fat  cat sat on a mat - it ate a fat rats');
   <para>
    For a more extensive demonstration, we
    first create a <literal>public.english</literal> configuration and
-   ispell dictionary for the English language:
+   Ispell dictionary for the English language:
   </para>
 
 <programlisting>

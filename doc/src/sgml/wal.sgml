@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.45 2007/08/01 22:45:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.46 2007/11/28 15:42:31 petere Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -162,7 +162,7 @@
    <firstterm>Asynchronous commit</> is an option that allows transactions
    to complete more quickly, at the cost that the most recent transactions may
    be lost if the database should crash.  In many applications this is an
-   acceptable tradeoff.
+   acceptable trade-off.
   </para>
 
   <para>
@@ -210,7 +210,7 @@
   <para>
    The user can select the commit mode of each transaction, so that
    it is possible to have both synchronous and asynchronous commit
-   transactions running concurrently.  This allows flexible tradeoffs
+   transactions running concurrently.  This allows flexible trade-offs
    between performance and certainty of transaction durability.
    The commit mode is controlled by the user-settable parameter
    <xref linkend="guc-synchronous-commit">, which can be changed in any of
@@ -223,7 +223,7 @@
    Certain utility commands, for instance <command>DROP TABLE</>, are
    forced to commit synchronously regardless of the setting of
    <varname>synchronous_commit</varname>.  This is to ensure consistency
-   between the server's filesystem and the logical state of the database.
+   between the server's file system and the logical state of the database.
    The commands supporting two-phase commit, such as <command>PREPARE
    TRANSACTION</>, are also always synchronous.
   </para>
@@ -234,11 +234,11 @@
    <acronym>WAL</acronym> records,
    then changes made during that transaction <emphasis>will</> be lost.
    The duration of the
-   risk window is limited because a background process (the <quote>wal
+   risk window is limited because a background process (the <quote>WAL
    writer</>) flushes unwritten <acronym>WAL</acronym> records to disk
    every <xref linkend="guc-wal-writer-delay"> milliseconds.
    The actual maximum duration of the risk window is three times
-   <varname>wal_writer_delay</varname> because the wal writer is
+   <varname>wal_writer_delay</varname> because the WAL writer is
    designed to favor writing whole pages at a time during busy periods.
   </para>
 

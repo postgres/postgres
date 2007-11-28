@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.76 2007/06/20 23:11:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.77 2007/11/28 15:42:31 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2793,7 +2793,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
       range tests for range partitioning, as illustrated in the preceding
       examples.  A good rule of thumb is that partitioning constraints should
       contain only comparisons of the partitioning column(s) to constants
-      using btree-indexable operators.
+      using B-tree-indexable operators.
      </para>
     </listitem>
 

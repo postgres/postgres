@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.97 2007/05/17 23:36:04 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.98 2007/11/28 15:42:31 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -214,7 +214,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       of course the integrity of the constraint cannot be guaranteed if the
       triggers are not executed.
       The trigger firing mechanism is also affected by the configuration
-      variable <xref linkend="guc-session-replication-role">. Simply ENABLEd
+      variable <xref linkend="guc-session-replication-role">. Simply enabled
       triggers will fire when the replication role is <quote>origin</>
       (the default) or <quote>local</>. Triggers configured <literal>ENABLE REPLICA</literal>
       will only fire if the session is in <quote>replica</> mode and triggers 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.31 2007/06/11 01:16:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.32 2007/11/28 15:42:31 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -150,7 +150,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ]
       from this cursor.  The cursor must be a simple (non-join, non-aggregate)
       query on the <command>DELETE</>'s target table.
       Note that <literal>WHERE CURRENT OF</> cannot be
-      specified together with a boolean condition.
+      specified together with a Boolean condition.
      </para>
     </listitem>
    </varlistentry>

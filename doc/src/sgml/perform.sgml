@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.66 2007/10/22 21:34:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.67 2007/11/28 15:42:31 petere Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -738,10 +738,10 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <xref linkend="guc-from-collapse-limit"> and <xref
    linkend="guc-join-collapse-limit">
    are similarly named because they do almost the same thing: one controls
-   when the planner will <quote>flatten out</> subselects, and the
+   when the planner will <quote>flatten out</> subqueries, and the
    other controls when it will flatten out explicit joins.  Typically
    you would either set <varname>join_collapse_limit</> equal to
-   <varname>from_collapse_limit</> (so that explicit joins and subselects
+   <varname>from_collapse_limit</> (so that explicit joins and subqueries
    act similarly) or set <varname>join_collapse_limit</> to 1 (if you want
    to control join order with explicit joins).  But you might set them
    differently if you are trying to fine-tune the trade-off between planning

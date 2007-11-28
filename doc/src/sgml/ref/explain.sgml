@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.40 2007/04/12 22:39:21 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.41 2007/11/28 15:42:31 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -160,7 +160,7 @@ ROLLBACK;
   </para>
 
   <para>
-   In order to measure the runtime cost of each node in the execution
+   In order to measure the run-time cost of each node in the execution
    plan, the current implementation of <command>EXPLAIN
    ANALYZE</command> can add considerable profiling overhead to query
    execution. As a result, running <command>EXPLAIN ANALYZE</command>

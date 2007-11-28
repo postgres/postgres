@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.41 2007/08/03 10:47:10 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.42 2007/11/28 15:42:31 petere Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -82,7 +82,7 @@
      <term><productname>ActiveState Perl</productname></term>
      <listitem><para>
       ActiveState Perl is required to run the build generation scripts. MinGW
-      or Cygwin perl will not work. It must also be present in the PATH.
+      or Cygwin Perl will not work. It must also be present in the PATH.
       Binaries can be downloaded from
       <ulink url="http://www.activestate.com"></>.
      </para></listitem>
@@ -209,7 +209,7 @@
     </userinput>
    </screen>
    To change the default build configuration to debug, put the following
-   in the buildenv.bat file:
+   in the <filename>buildenv.bat</filename> file:
    <screen>
     <userinput>
      set CONFIG=Debug
@@ -261,8 +261,8 @@
   <para>
    To run the regression tests, make sure you have completed the build of all
    required parts first. Also, make sure that the DLLs required to load all
-   parts of the system (such as the perl and python DLLs for the procedural
-   languages) are present in the system PATH. If they are not, set it through
+   parts of the system (such as the Perl and Python DLLs for the procedural
+   languages) are present in the system path. If they are not, set it through
    the <filename>buildenv.bat</filename> file. To run the tests, run one of
    the following commands from the <filename>src\tools\msvc</filename>
    directory:
@@ -282,7 +282,7 @@
    </screen>
 
    To change the schedule used (default is the parallel), append it to the
-   commandline like:
+   command line like:
    <screen>
     <userinput>
      vcregress check serial
@@ -321,7 +321,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>DocBook DSSL 1.79</term>
+     <term>DocBook DSSSL 1.79</term>
      <listitem><para>
       Download from
       <ulink url="http://sourceforge.net/project/downloading.php?groupname=docbook&amp;filename=docbook-dsssl-1.79.zip"></>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.413 2007/11/28 05:13:41 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.414 2007/11/28 15:42:31 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1313,7 +1313,7 @@
        <entry>
         <acronym>ASCII</acronym> code of the first character of the
         argument.  For <acronym>UTF8</acronym> returns the Unicode code
-        point of the character.  For other multi-byte encodings. the
+        point of the character.  For other multibyte encodings. the
         argument must be a strictly <acronym>ASCII</acronym> character.
        </entry>
        <entry><literal>ascii('x')</literal></entry>
@@ -1338,7 +1338,7 @@
        <entry><type>text</type></entry>
        <entry>
         Character with the given code. For <acronym>UTF8</acronym> the
-        argument is treated as a Unicode code point. For other multi-byte
+        argument is treated as a Unicode code point. For other multibyte
         encodings the argument must designate a strictly
         <acronym>ASCII</acronym> character.
        </entry>
@@ -1359,7 +1359,7 @@
         <parameter>src_encoding</parameter>. The
         <parameter>string</parameter> must be valid in this encoding.
         Conversions can be defined by <command>CREATE CONVERSION</command>.  
-        Also there are some pre-defined conversions. See <xref
+        Also there are some predefined conversions. See <xref
         linkend="conversion-names"> for available conversions.
        </entry>
        <entry><literal>convert('text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
@@ -6823,7 +6823,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    <para>
     Notice that except for the two-argument form of <function>enum_range</>,
     these functions disregard the specific value passed to them; they care
-    only about its declared datatype.  Either NULL or a specific value of
+    only about its declared data type.  Either null or a specific value of
     the type can be passed, with the same result.  It is more common to
     apply these functions to a table column or function argument than to
     a hardwired type name as suggested by the examples.
@@ -8381,7 +8381,7 @@ cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, t
 ...
 ]]></screen>
 
-    If no table name is avaible, that is, when mapping a query or a
+    If no table name is available, that is, when mapping a query or a
     cursor, the string <literal>table</literal> is used in the first
     format, <literal>row</literal> in the second format.
    </para>

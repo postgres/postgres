@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.54 2007/09/25 20:03:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.55 2007/11/28 15:42:31 petere Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -236,7 +236,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>One row only, showing cluster-wide statistics from the
       background writer: number of scheduled checkpoints, requested
       checkpoints, buffers written by checkpoints and cleaning scans,
-      and the number of times the bgwriter stopped a cleaning scan
+      and the number of times the background writer stopped a cleaning scan
       because it had written too many buffers.  Also includes
       statistics about the shared buffer pool, including buffers written
       by backends (that is, not by the background writer) and total buffers
@@ -777,7 +777,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_timed_checkpoints</function>()</literal></entry>
        <entry><type>bigint</type></entry>
        <entry>
-        The number of times the bgwriter has started timed checkpoints
+        The number of times the background writer has started timed checkpoints
         (because the <varname>checkpoint_timeout</varname> time has expired)
        </entry>
      </row>
@@ -786,7 +786,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_requested_checkpoints</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of times the bgwriter has started checkpoints based
+       The number of times the background writer has started checkpoints based
        on requests from backends because the <varname>checkpoint_segments</varname>
        has been exceeded or because the <command>CHECKPOINT</command>
        command has been issued
@@ -797,7 +797,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_buf_written_checkpoints</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of buffers written by the bgwriter during checkpoints
+       The number of buffers written by the background writer during checkpoints
       </entry>
      </row>
 
@@ -805,7 +805,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_buf_written_clean</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of buffers written by the bgwriter for routine cleaning of
+       The number of buffers written by the background writer for routine cleaning of
        dirty pages
       </entry>
      </row>
@@ -814,7 +814,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_maxwritten_clean</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of times the bgwriter has stopped its cleaning scan because
+       The number of times the background writer has stopped its cleaning scan because
        it has written more buffers than specified in the
        <varname>bgwriter_lru_maxpages</varname> parameter
       </entry>
@@ -1180,7 +1180,7 @@ provider postgresql {
 
   <para>
    You should take care that the data types specified for the probe arguments
-   match the datatypes of the variables used in the <literal>PG_TRACE</>
+   match the data types of the variables used in the <literal>PG_TRACE</>
    macro. This is not checked at compile time. You can check that your newly
    added trace point is available by recompiling, then running the new binary,
    and as root, executing a DTrace command such as:

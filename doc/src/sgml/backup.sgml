@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.107 2007/10/16 19:44:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.108 2007/11/28 15:42:30 petere Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1034,7 +1034,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
         (The path name is relative to the working directory of the server,
         i.e., the cluster's data directory.)
         Any <literal>%r</> is replaced by the name of the file containing the
-        last valid restartpoint. That is the earliest file that must be kept
+        last valid restart point. That is the earliest file that must be kept
         to allow a restore to be restartable, so this information can be used
         to truncate the archive to just the minimum required to support
         restart of the current restore. <literal>%r</> would only be used in a
@@ -1479,7 +1479,7 @@ if (!triggered)
    <para>
     The size of the WAL archive can be minimized by using the <literal>%r</>
     option of the <varname>restore_command</>. This option specifies the
-    last archive filename that needs to be kept to allow the recovery to
+    last archive file name that needs to be kept to allow the recovery to
     restart correctly. This can be used to truncate the archive once
     files are no longer required, if the archive is writable from the
     standby server.
