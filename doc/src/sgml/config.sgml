@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.156 2007/11/19 02:26:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.157 2007/11/28 05:01:24 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -962,7 +962,16 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      </variablelist>
+
+     <note>
+      <para>
+       See the <xref linkend="sql-vacuum" endterm="sql-vacuum-title">
+       command for information on setting this parameter.
+      </para>
+     </note>
+
      </sect2>
+
      <sect2 id="runtime-config-resource-kernel">
      <title>Kernel Resource Usage</title>
      <variablelist>
