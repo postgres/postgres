@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.412 2007/11/27 18:29:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.413 2007/11/28 05:13:41 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10720,6 +10720,18 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
    <indexterm>
     <primary>search path</primary>
     <secondary>current</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>current_database</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>current_schema</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>current_user</primary>
    </indexterm>
 
    <para>
