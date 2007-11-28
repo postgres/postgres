@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.sql.in,v 1.3 2007/11/16 00:34:54 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.sql.in,v 1.4 2007/11/28 19:33:04 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -552,8 +552,8 @@ AS
         OPERATOR        2       @@@ (tsvector, tsquery) RECHECK,
         FUNCTION        1       bttextcmp(text, text),
         FUNCTION        2       gin_extract_tsvector(tsvector,internal),
-        FUNCTION        3       gin_extract_query(internal,internal,smallint),
-        FUNCTION        4       gin_ts_consistent(internal,smallint,internal),
+        FUNCTION        3       gin_extract_tsquery(tsquery,internal,smallint),
+        FUNCTION        4       gin_tsquery_consistent(internal,smallint,tsquery),
         STORAGE         text;
 
 CREATE OPERATOR CLASS tsvector_ops

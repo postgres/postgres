@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.10 2007/11/15 22:25:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.11 2007/11/28 19:33:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,8 +148,8 @@ extern Datum gtsvectorout(PG_FUNCTION_ARGS);
  */
 
 extern Datum gin_extract_tsvector(PG_FUNCTION_ARGS);
-extern Datum gin_extract_query(PG_FUNCTION_ARGS);
-extern Datum gin_ts_consistent(PG_FUNCTION_ARGS);
+extern Datum gin_extract_tsquery(PG_FUNCTION_ARGS);
+extern Datum gin_tsquery_consistent(PG_FUNCTION_ARGS);
 
 /*
  * Possible strategy numbers for indexes

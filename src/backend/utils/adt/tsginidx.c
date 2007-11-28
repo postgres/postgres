@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.7 2007/11/15 22:25:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.8 2007/11/28 19:33:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ gin_extract_tsvector(PG_FUNCTION_ARGS)
 }
 
 Datum
-gin_extract_query(PG_FUNCTION_ARGS)
+gin_extract_tsquery(PG_FUNCTION_ARGS)
 {
 	TSQuery		query = PG_GETARG_TSQUERY(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
@@ -124,10 +124,9 @@ checkcondition_gin(void *checkval, QueryOperand *val)
 }
 
 Datum
-gin_ts_consistent(PG_FUNCTION_ARGS)
+gin_tsquery_consistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
-
 	/* StrategyNumber strategy = PG_GETARG_UINT16(1); */
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 	bool		res = FALSE;
