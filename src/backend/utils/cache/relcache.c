@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.264 2007/11/15 21:14:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.265 2007/11/28 20:44:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1133,9 +1133,13 @@ IndexSupportInitialize(oidvector *indclass,
  * numbers is passed in, rather than being looked up, mainly because the
  * caller will have it already.
  *
- * XXX There isn't any provision for flushing the cache.  However, there
- * isn't any provision for flushing relcache entries when opclass info
- * changes, either :-(
+ * Note there is no provision for flushing the cache.  This is OK at the
+ * moment because there is no way to ALTER any interesting properties of an
+ * existing opclass --- all you can do is drop it, which will result in
+ * a useless but harmless dead entry in the cache.  To support altering
+ * opclass membership (not the same as opfamily membership!), we'd need to
+ * be able to flush this cache as well as the contents of relcache entries
+ * for indexes.
  */
 static OpClassCacheEnt *
 LookupOpclassInfo(Oid operatorClassOid,
@@ -1170,34 +1174,50 @@ LookupOpclassInfo(Oid operatorClassOid,
 											   (void *) &operatorClassOid,
 											   HASH_ENTER, &found);
 
-	if (found && opcentry->valid)
+	if (!found)
 	{
-		/* Already made an entry for it */
+		/* Need to allocate memory for new entry */
+		opcentry->valid = false;	/* until known OK */
+		opcentry->numStrats = numStrats;
+		opcentry->numSupport = numSupport;
+
+		if (numStrats > 0)
+			opcentry->operatorOids = (Oid *)
+				MemoryContextAllocZero(CacheMemoryContext,
+									   numStrats * sizeof(Oid));
+		else
+			opcentry->operatorOids = NULL;
+
+		if (numSupport > 0)
+			opcentry->supportProcs = (RegProcedure *)
+				MemoryContextAllocZero(CacheMemoryContext,
+									   numSupport * sizeof(RegProcedure));
+		else
+			opcentry->supportProcs = NULL;
+	}
+	else
+	{
 		Assert(numStrats == opcentry->numStrats);
 		Assert(numSupport == opcentry->numSupport);
-		return opcentry;
 	}
 
-	/* Need to fill in new entry */
-	opcentry->valid = false;	/* until known OK */
-	opcentry->numStrats = numStrats;
-	opcentry->numSupport = numSupport;
+	/*
+	 * When testing for cache-flush hazards, we intentionally disable the
+	 * operator class cache and force reloading of the info on each call.
+	 * This is helpful because we want to test the case where a cache flush
+	 * occurs while we are loading the info, and it's very hard to provoke
+	 * that if this happens only once per opclass per backend.
+	 */
+#if defined(CLOBBER_CACHE_ALWAYS)
+	opcentry->valid = false;
+#endif
 
-	if (numStrats > 0)
-		opcentry->operatorOids = (Oid *)
-			MemoryContextAllocZero(CacheMemoryContext,
-								   numStrats * sizeof(Oid));
-	else
-		opcentry->operatorOids = NULL;
-
-	if (numSupport > 0)
-		opcentry->supportProcs = (RegProcedure *)
-			MemoryContextAllocZero(CacheMemoryContext,
-								   numSupport * sizeof(RegProcedure));
-	else
-		opcentry->supportProcs = NULL;
+	if (opcentry->valid)
+		return opcentry;
 
 	/*
+	 * Need to fill in new entry.
+	 *
 	 * To avoid infinite recursion during startup, force heap scans if we're
 	 * looking up info for the opclasses used by the indexes we would like to
 	 * reference here.
