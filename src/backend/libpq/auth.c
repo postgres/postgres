@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.160 2007/11/27 12:17:27 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.161 2007/11/28 13:30:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -524,7 +524,7 @@ pg_GSS_recvauth(Port *port)
 	maj_stat = gss_display_name(&min_stat, port->gss->name, &gbuf, NULL);
 	if (maj_stat != GSS_S_COMPLETE)
 		pg_GSS_error(ERROR,
-					 gettext_noop("retreiving GSS user name failed"),
+					 gettext_noop("retrieving GSS user name failed"),
 					 maj_stat, min_stat);
 
 	/*
