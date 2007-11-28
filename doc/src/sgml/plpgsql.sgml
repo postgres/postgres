@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.120 2007/11/28 20:56:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.121 2007/11/28 21:47:39 momjian Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -132,11 +132,11 @@
     </para>
 
     <para>
-     <application>PL/pgSQL</> functions can also be declared to return a
-     group of values, either as a single row, or a group of rows, like a
-     table.  Such a function generates its output by executing
-     <command>RETURN NEXT</> for each desired element of the result set,
-     or by using <command>RETURN QUERY</> to output the result of
+     <application>PL/pgSQL</> functions can also be declared to return
+     a <quote>set</> (or table) of any data type that can be returned as
+     a single instance.  Such a function generates its output by executing
+     <command>RETURN NEXT</> for each desired element of the result
+     set, or by using <command>RETURN QUERY</> to output the result of
      evaluating a query.
     </para>
 
