@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.108 2007/11/28 15:42:30 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.109 2007/11/28 22:35:54 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -641,9 +641,21 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
    <para>
     Also, you can force a segment switch manually with
     <function>pg_switch_xlog</>, if you want to ensure that a
-    just-finished transaction is archived immediately.  Other utility
+    just-finished transaction is archived as soon as possible.  Other utility
     functions related to WAL management are listed in <xref
     linkend="functions-admin-backup-table">.
+   </para>
+
+   <para>
+    When <varname>archive_mode</> is <literal>off</> some SQL commands
+    are optimized to avoid WAL logging, as described in <xref
+    linkend="populate-pitr">. If archiving were turned on during execution
+    of one of these statements, WAL would not contain enough information
+    for archive recovery.  (Crash recovery is unaffected.)  For
+    this reason, <varname>archive_mode</> can only be changed at server
+    start.  (<varname>archive_command</> can be changed with a
+    configuration file reload, and setting it to <literal>''</> does
+    prevent archiving.)
    </para>
   </sect2>
 
@@ -973,14 +985,24 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
    <para>
     Normally, recovery will proceed through all available WAL segments,
     thereby restoring the database to the current point in time (or as
-    close as we can get given the available WAL segments).  But if you want
-    to recover to some previous point in time (say, right before the junior
-    DBA dropped your main transaction table), just specify the required
-    stopping point in <filename>recovery.conf</>.  You can specify the stop
-    point, known as the <quote>recovery target</>, either by date/time or
-    by completion of a specific transaction ID.  As of this writing only
-    the date/time option is very usable, since there are no tools to help
-    you identify with any accuracy which transaction ID to use.
+    close as we can get given the available WAL segments).  So a normal
+    recovery will end with a "file not found" message, the exact text
+    of the error message depending upon your choice of 
+    <varname>restore_command</>.  You may also see an error message
+    at the start of recovery for a file named something like
+    <filename>00000001.history</>.  This is also normal and does not
+    indicate a problem in simple recovery situations. See 
+    <xref linkend="backup-timelines"> for discussion.
+   </para>
+
+   <para>
+    If you want to recover to some previous point in time (say, right before
+    the junior DBA dropped your main transaction table), just specify the 
+    required stopping point in <filename>recovery.conf</>.  You can specify 
+    the stop point, known as the <quote>recovery target</>, either by 
+    date/time or by completion of a specific transaction ID.  As of this 
+    writing only the date/time option is very usable, since there are no tools 
+    to help you identify with any accuracy which transaction ID to use.
    </para>
 
    <note>
@@ -1214,6 +1236,92 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    </para>
   </sect2>
 
+  <sect2 id="backup-tips">
+   <title>Tips and Examples</title>
+
+   <para>
+    Some examples of configuring Continuous Archiving are given here.
+   </para>
+
+    <sect3 id="backup-standalone">
+     <title>Recovery Settings</title>
+
+     <para>
+      It is possible to use the existing backup facilities to produce
+      standalone hot backups. These are backups that cannot be used for
+      point-in-time recovery, yet are much faster to backup and restore
+      than <application>pg_dump</>.
+     </para>
+
+     <para>
+      To configure standalone backups you should use a switch file. If the
+      file exists then archives are made, otherwise archiving is ignored.
+<programlisting>
+archive_command = 'test -f /var/lib/pgsql/backup_in_progress &amp;&amp; cp -i %p /var/lib/pgsql/archive/%f &lt;/dev/null'
+</programlisting>
+      Backup can then be taken using a script like the following:
+<programlisting>
+touch /var/lib/pgsql/backup_in_progress
+psql -c "select pg_start_backup('hot_backup');"
+tar -cvf /var/lib/pgsql/backup.tar /var/lib/pgsql/data/
+psql -c "select pg_stop_backup();"
+sleep 20
+rm /var/lib/pgsql/backup_in_progress
+tar -rvf /var/lib/pgsql/backup.tar /var/lib/pgsql/archive/
+</programlisting>
+      The switch file <filename>/var/lib/pgsql/backup_in_progress</> is
+      created first, allowing archiving to start prior to the backup.
+      After the backup the switch file is removed. Archived WAL files are
+      then added to the backup so that both base backup and all required
+      WAL files are part of the same <application>tar</> file.
+     </para>
+    </sect3>
+
+    <sect3 id="backup-scripts">
+     <title><varname>archive_command</varname> scripts</title>
+
+     <para>
+      Many people choose to use scripts to define their 
+      <varname>archive_command</varname>, so that their
+      <filename>postgresql.conf</> looks very simple:
+<programlisting>
+archive_command = 'local_backup_script.sh'
+</programlisting>
+      This allows all complexity to be managed within the script, which
+      can be written in a popular scripting language such as
+      <application>bash</> or <application>perl</>.  Statements echoed to
+      <literal>stderr</> will appear in the database server log, allowing
+      complex configurations to be easily diagnosed if they fail.
+     </para>
+     <para>
+      Example of how scripts might be used include:
+      <itemizedlist>
+       <listitem>
+        <para>
+         Copying data to a secure off-site data storage provider
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Batching WAL files so they are transferred every three hours, rather than
+         one at a time as they fill
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Interfacing with other backup and recovery software
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Interfacing with monitoring software to report errors directly
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </sect3>
+  </sect2>
+
   <sect2 id="continuous-archiving-caveats">
    <title>Caveats</title>
 
@@ -1435,7 +1543,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
     Pseudocode for a suitable <varname>restore_command</> is:
 <programlisting>
 triggered = false;
-while (!NextWALFileReady() && !triggered)
+while (!NextWALFileReady() &amp;&amp; !triggered)
 {
     sleep(100000L);         /* wait for ~0.1 sec */
     if (CheckForExternalTrigger())
