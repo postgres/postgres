@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.8 2007/11/15 22:25:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.9 2007/11/28 04:24:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -570,7 +570,7 @@ compileTheSubstitute(DictThesaurus *d)
 			}
 			else if (lexized)
 			{
-				elog(NOTICE, "thesaurus word \"%s\" in substitution is a stop-word, ignored (rule %d)", inptr->lexeme, i + 1);
+				elog(ERROR, "thesaurus word \"%s\" in substitution is a stop-word (rule %d)", inptr->lexeme, i + 1);
 			}
 			else
 			{
