@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.27 2007/11/13 18:44:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.28 2007/11/28 10:10:14 petere Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -270,7 +270,7 @@ protocol to make nodes agree on a serializable transactional order.
 
  <table id="high-availability-matrix">
   <title>High Availability, Load Balancing, and Replication Feature Matrix</title>
-  <tgroup cols="9">
+  <tgroup cols="8">
    <thead>
     <row>
      <entry>Feature</entry>
