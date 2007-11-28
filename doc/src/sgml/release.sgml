@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.555 2007/11/22 15:04:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.556 2007/11/28 11:03:50 petere Exp $ -->
 <!--
 
 Typical markup:
@@ -1507,7 +1507,7 @@ current_date &lt; 2017-11-17
      <listitem>
       <para>
        Support for the SQL/XML standard, including new operators and an
-       <type>XML</type> data type (Nikolay Samokhvalov, Peter)
+       <type>XML</type> data type (Nikolay Samokhvalov, Pavel Stehule, Peter)
       </para>
      </listitem>
 
