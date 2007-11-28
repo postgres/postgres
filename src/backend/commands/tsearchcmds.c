@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.7 2007/11/15 22:25:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.8 2007/11/28 21:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,8 @@ get_ts_parser_func(DefElem *defel, int attnum)
 			break;
 		default:
 			/* should not be here */
-			elog(ERROR, "unknown attribute for text search parser: %d", attnum);
+			elog(ERROR, "unrecognized attribute for text search parser: %d",
+				 attnum);
 			nargs = 0;			/* keep compiler quiet */
 	}
 
@@ -895,7 +896,7 @@ get_ts_template_func(DefElem *defel, int attnum)
 			break;
 		default:
 			/* should not be here */
-			elog(ERROR, "unknown attribute for text search template: %d",
+			elog(ERROR, "unrecognized attribute for text search template: %d",
 				 attnum);
 			nargs = 0;			/* keep compiler quiet */
 	}

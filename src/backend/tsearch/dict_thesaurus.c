@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.9 2007/11/28 04:24:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.10 2007/11/28 21:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,11 +423,18 @@ compileTheLexeme(DictThesaurus *d)
 													 PointerGetDatum(NULL)));
 
 			if (!ptr)
-				elog(ERROR, "thesaurus word-sample \"%s\" isn't recognized by subdictionary (rule %d)",
-					 d->wrds[i].lexeme, d->wrds[i].entries->idsubst + 1);
+				ereport(ERROR,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("thesaurus sample word \"%s\" isn't recognized by subdictionary (rule %d)",
+								d->wrds[i].lexeme,
+								d->wrds[i].entries->idsubst + 1)));
 			else if (!(ptr->lexeme))
-				elog(ERROR, "thesaurus word-sample \"%s\" is recognized as stop-word, use \"?\" for stop words instead (rule %d)",
-					 d->wrds[i].lexeme, d->wrds[i].entries->idsubst + 1);
+				ereport(ERROR,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("thesaurus sample word \"%s\" is a stop word (rule %d)",
+								d->wrds[i].lexeme,
+								d->wrds[i].entries->idsubst + 1),
+						 errhint("Use \"?\" to represent a stop word within a sample phrase.")));
 			else
 			{
 				while (ptr->lexeme)
@@ -570,11 +577,17 @@ compileTheSubstitute(DictThesaurus *d)
 			}
 			else if (lexized)
 			{
-				elog(ERROR, "thesaurus word \"%s\" in substitution is a stop-word (rule %d)", inptr->lexeme, i + 1);
+				ereport(ERROR,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("thesaurus substitute word \"%s\" is a stop word (rule %d)",
+								inptr->lexeme, i + 1)));
 			}
 			else
 			{
-				elog(ERROR, "thesaurus word \"%s\" in substitution isn't recognized (rule %d)", inptr->lexeme, i + 1);
+				ereport(ERROR,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("thesaurus substitute word \"%s\" isn't recognized by subdictionary (rule %d)",
+								inptr->lexeme, i + 1)));
 			}
 
 			if (inptr->lexeme)
@@ -583,7 +596,10 @@ compileTheSubstitute(DictThesaurus *d)
 		}
 
 		if (outptr == d->subst[i].res)
-			elog(ERROR, "all words in thesaurus substitution are stop words (rule %d)", i + 1);
+			ereport(ERROR,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("thesaurus substitute phrase is empty (rule %d)",
+							i + 1)));
 
 		d->subst[i].reslen = outptr - d->subst[i].res;
 
@@ -794,7 +810,7 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 	uint16		curpos = 0;
 	bool		moreres = false;
 
-	if (PG_NARGS() < 4 || dstate == NULL)
+	if (PG_NARGS() != 4 || dstate == NULL)
 		elog(ERROR, "forbidden call of thesaurus or nested call");
 
 	if (dstate->isend)

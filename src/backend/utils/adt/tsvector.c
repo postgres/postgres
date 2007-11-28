@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.9 2007/11/16 15:05:59 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.10 2007/11/28 21:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,13 +480,13 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 
 		lex_len = strlen(lexeme);
 		if (lex_len < 0 || lex_len > MAXSTRLEN)
-			elog(ERROR, "invalid tsvector; lexeme too long");
+			elog(ERROR, "invalid tsvector: lexeme too long");
 
 		if (datalen > MAXSTRPOS)
-			elog(ERROR, "invalid tsvector; maximum total lexeme length exceeded");
+			elog(ERROR, "invalid tsvector: maximum total lexeme length exceeded");
 
 		if (npos > MAXNUMPOS)
-			elog(ERROR, "unexpected number of positions");
+			elog(ERROR, "unexpected number of tsvector positions");
 
 		/*
 		 * Looks valid. Fill the WordEntry struct, and copy lexeme.

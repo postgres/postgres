@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.7 2007/11/15 22:25:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.8 2007/11/28 21:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,7 +281,8 @@ clean_fakeval(QueryItem *ptr, int *len)
 	resroot = clean_fakeval_intree(root, &result);
 	if (result != V_UNKNOWN)
 	{
-		elog(NOTICE, "query contains only stopword(s) or doesn't contain lexeme(s), ignored");
+		ereport(NOTICE,
+				(errmsg("query contains only stopword(s) or doesn't contain lexeme(s), ignored")));
 		*len = 0;
 		return NULL;
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.7 2007/11/15 22:25:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.8 2007/11/28 21:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -501,7 +501,7 @@ parse_affentry(char *str, char *mask, char *find, char *repl,
 							  lineno, filename)));
 		}
 		else
-			elog(ERROR, "unknown state in parse_affentry: %d", state);
+			elog(ERROR, "unrecognized state in parse_affentry: %d", state);
 
 		str += pg_mblen(str);
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.11 2007/11/16 15:05:59 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.12 2007/11/28 21:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,12 +237,12 @@ pushValue_internal(TSQueryParserState state, pg_crc32 valcrc, int distance, int 
 
 	if (distance >= MAXSTRPOS)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("value is too big in tsquery: \"%s\"",
 						state->buffer)));
 	if (lenval >= MAXSTRLEN)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("operand is too long in tsquery: \"%s\"",
 						state->buffer)));
 
@@ -269,7 +269,7 @@ pushValue(TSQueryParserState state, char *strval, int lenval, int2 weight)
 
 	if (lenval >= MAXSTRLEN)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("word is too long in tsquery: \"%s\"",
 						state->buffer)));
 
@@ -396,7 +396,7 @@ findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes)
 	check_stack_depth();
 
 	if (*pos >= nnodes)
-		elog(ERROR, "malformed tsquery; operand not found");
+		elog(ERROR, "malformed tsquery: operand not found");
 
 	if (ptr[*pos].type == QI_VAL ||
 		ptr[*pos].type == QI_VALSTOP)	/* need to handle VALSTOP here, they
@@ -443,7 +443,7 @@ findoprnd(QueryItem *ptr, int size)
 	findoprnd_recurse(ptr, &pos, size);
 
 	if (pos != size)
-		elog(ERROR, "malformed tsquery; extra nodes");
+		elog(ERROR, "malformed tsquery: extra nodes");
 }
 
 
@@ -531,7 +531,7 @@ parse_tsquery(char *buf,
 				memcpy(&ptr[i], item, sizeof(QueryOperator));
 				break;
 			default:
-				elog(ERROR, "unknown QueryItem type %d", item->type);
+				elog(ERROR, "unrecognized QueryItem type: %d", item->type);
 		}
 		i++;
 	}
@@ -718,7 +718,7 @@ infix(INFIX *in, bool first)
 				break;
 			default:
 				/* OP_NOT is handled in above if-branch */
-				elog(ERROR, "unexpected operator type %d", op);
+				elog(ERROR, "unrecognized operator type: %d", op);
 		}
 		in->cur = strchr(in->cur, '\0');
 		pfree(nrm.buf);
@@ -798,7 +798,7 @@ tsquerysend(PG_FUNCTION_ARGS)
 				pq_sendint(&buf, item->operator.oper, sizeof(item->operator.oper));
 				break;
 			default:
-				elog(ERROR, "unknown tsquery node type %d", item->type);
+				elog(ERROR, "unrecognized tsquery node type: %d", item->type);
 		}
 		item++;
 	}
@@ -853,13 +853,13 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 			/* Sanity checks */
 
 			if (weight > 0xF)
-				elog(ERROR, "invalid tsquery; invalid weight bitmap");
+				elog(ERROR, "invalid tsquery: invalid weight bitmap");
 
 			if (val_len > MAXSTRLEN)
-				elog(ERROR, "invalid tsquery; operand too long");
+				elog(ERROR, "invalid tsquery: operand too long");
 
 			if (datalen > MAXSTRPOS)
-				elog(ERROR, "invalid tsquery; total operand length exceeded");
+				elog(ERROR, "invalid tsquery: total operand length exceeded");
 
 			/* Looks valid. */
 
@@ -886,14 +886,15 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 
 			oper = (int8) pq_getmsgint(buf, sizeof(int8));
 			if (oper != OP_NOT && oper != OP_OR && oper != OP_AND)
-				elog(ERROR, "invalid tsquery; unknown operator type %d", (int) oper);
+				elog(ERROR, "invalid tsquery: unrecognized operator type %d",
+					 (int) oper);
 			if (i == size - 1)
 				elog(ERROR, "invalid pointer to right operand");
 
 			item->operator.oper = oper;
 		}
 		else
-			elog(ERROR, "unknown tsquery node type %d", item->type);
+			elog(ERROR, "unrecognized tsquery node type: %d", item->type);
 
 		item++;
 	}

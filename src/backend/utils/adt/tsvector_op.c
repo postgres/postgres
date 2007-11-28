@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.9 2007/11/16 01:51:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.10 2007/11/28 21:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,9 +226,9 @@ tsvector_setweight(PG_FUNCTION_ARGS)
 		case 'd':
 			w = 0;
 			break;
-			/* internal error */
 		default:
-			elog(ERROR, "unrecognized weight");
+			/* internal error */
+			elog(ERROR, "unrecognized weight: %d", cw);
 	}
 
 	out = (TSVector) palloc(VARSIZE(in));
@@ -609,7 +609,7 @@ TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
 				return TS_execute(curitem + 1, checkval, calcnot, chkcond);
 
 		default:
-			elog(ERROR, "unknown operator %d", curitem->operator.oper);
+			elog(ERROR, "unrecognized operator: %d", curitem->operator.oper);
 	}
 
 	/* not reachable, but keep compiler quiet */
