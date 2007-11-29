@@ -1,7 +1,7 @@
 # German message translation file for pg_config
 # Peter Eisentraut <peter_e@gmx.net>, 2004 - 2007.
 #
-# pgtranslation Id: pg_config.po,v 1.6 2007/09/25 16:24:04 petere Exp $
+# pgtranslation Id: pg_config.po,v 1.7 2007/11/07 14:08:59 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -279,7 +279,7 @@ msgstr "Kindprozess hat mit Code %d beendet"
 #: ../../port/exec.c:587
 #, c-format
 msgid "child process was terminated by exception 0x%X"
-msgstr "Kindprozess wurde von Ausnahme 0x%X beendet"
+msgstr "Kindprozess wurde durch Ausnahme 0x%X beendet"
 
 #: ../../port/exec.c:596
 #, c-format

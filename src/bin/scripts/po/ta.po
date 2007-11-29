@@ -1,0 +1,841 @@
+# translation of pgscripts.po to தமிழ்
+# This file is put in the public domain.
+#
+# ஆமாச்சு <amachu@ubuntu.com>, 2007.
+# ஸ்ரீராமதாஸ் <shriramadhas@gmail.com>, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: pgscripts\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-09-22 03:23-0300\n"
+"PO-Revision-Date: 2007-11-20 11:52+0530\n"
+"Last-Translator: ஸ்ரீராமதாஸ் <shriramadhas@gmail.com>\n"
+"Language-Team: தமிழ் <ubuntu-l10n-tam@lists.ubuntu.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#: createdb.c:101 createdb.c:120 createlang.c:85 createlang.c:106
+#: createlang.c:154 createuser.c:156 createuser.c:171 dropdb.c:83 dropdb.c:92
+#: dropdb.c:100 droplang.c:96 droplang.c:117 droplang.c:166 dropuser.c:83
+#: dropuser.c:98 clusterdb.c:95 clusterdb.c:110 vacuumdb.c:112 vacuumdb.c:127
+#: reindexdb.c:110 reindexdb.c:124
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "மேலும் விவரமறிய \"%s --help\" முயற்சிக்கவும்.\n"
+
+#: createdb.c:118 createlang.c:104 createuser.c:169 dropdb.c:98 droplang.c:115
+#: dropuser.c:96 clusterdb.c:108 vacuumdb.c:125 reindexdb.c:123
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: அளவுக்கதிக முனைய-வரி துப்புகள்க முதலாவதுs \"%s\")\n"
+
+#: createdb.c:128
+#, c-format
+msgid "%s: \"%s\" is not a valid encoding name\n"
+msgstr "%s: \"%s\" செல்லத்தகாத எழுத்துருவாக்க முறை\n"
+
+#: createdb.c:168
+#, c-format
+msgid "%s: database creation failed: %s"
+msgstr "%s: தரவுக் கள உருவாக்கம் தோல்வி: %s"
+
+#: createdb.c:191
+#, c-format
+msgid "%s: comment creation failed (database was created): %s"
+msgstr "%s: கரு (database was created): %s"
+
+#: createdb.c:208
+#, c-format
+msgid ""
+"%s creates a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s போஸ்ட்கிரெஸ் தரவுக் களனொன்றை உருவாக்கும்.\n"
+"\n"
+
+#: createdb.c:209 createlang.c:206 createuser.c:307 dropdb.c:140
+#: droplang.c:323 dropuser.c:139 clusterdb.c:225 vacuumdb.c:251
+#: reindexdb.c:309
+#, c-format
+msgid "Usage:\n"
+msgstr "பயனளவு:\n"
+
+#: createdb.c:210
+#, c-format
+msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+msgstr "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+
+#: createdb.c:211 createlang.c:208 createuser.c:309 dropdb.c:142
+#: droplang.c:325 dropuser.c:141 clusterdb.c:227 vacuumdb.c:253
+#: reindexdb.c:311
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"தேர்வுகள்:\n"
+
+#: createdb.c:212
+#, c-format
+msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
+msgstr "  -D, --tablespace=TABLESPACE  தரவுக் களனுக்கான இயல்பிருப்பு அட்டவணை இடம்\n"
+
+#: createdb.c:213
+#, c-format
+msgid "  -E, --encoding=ENCODING      encoding for the database\n"
+msgstr "  -E, --encoding=ENCODING      தரவுக்களனுக்கான எழுத்துருவாக்கம்\n"
+
+#: createdb.c:214
+#, c-format
+msgid "  -O, --owner=OWNER            database user to own the new database\n"
+msgstr "  -O, --owner=OWNER            புதிய தரவுக் களனுக்கு உரிமையுள்ள தரவுக் களப் பயனர்\n"
+
+#: createdb.c:215
+#, c-format
+msgid "  -T, --template=TEMPLATE      template database to copy\n"
+msgstr "  -T, --template=TEMPLATE      நகலெடுப்பதற்கான தரவுக்கள வார்ப்பு\n"
+
+#: createdb.c:216
+#, c-format
+msgid "  -e, --echo                   show the commands being sent to the server\n"
+msgstr "  -e, --echo                   வழங்கிக்கு அனுப்பப் படும் ஆணைகளைக் காட்டுக\n"
+
+#: createdb.c:217
+#, c-format
+msgid "  --help                       show this help, then exit\n"
+msgstr "  --help                       உதவியைக் காட்டியபின், வெளிவருக\n"
+
+#: createdb.c:218
+#, c-format
+msgid "  --version                    output version information, then exit\n"
+msgstr "  --version                    வெளியீட்டுத் தகவலைக் காட்டியபின், வெளிவருக\n"
+
+#: createdb.c:219 createuser.c:328 clusterdb.c:235 vacuumdb.c:264
+#: reindexdb.c:321
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"இணைப்புத் தேர்வுகள்:\n"
+
+#: createdb.c:220
+#, c-format
+msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME          தரவுக் கள வழங்கி தருநர் அல்லது சாக்கெட் அடைவு\n"
+
+#: createdb.c:221
+#, c-format
+msgid "  -p, --port=PORT              database server port\n"
+msgstr "  -p, --port=PORT              தரவுக் கள வழங்கி துறை\n"
+
+#: createdb.c:222
+#, c-format
+msgid "  -U, --username=USERNAME      user name to connect as\n"
+msgstr "  -U, --username=USERNAME      தொடர்பு கொள்ளும் பயனர் பெயர்\n"
+
+#: createdb.c:223
+#, c-format
+msgid "  -W, --password               prompt for password\n"
+msgstr "  -W, --password               கடவுச்சொல் கோருக\n"
+
+#: createdb.c:224
+#, c-format
+msgid ""
+"\n"
+"By default, a database with the same name as the current user is created.\n"
+msgstr ""
+"\n"
+"இயல்பாக, தற்போதைய பயனரின் பெயரினையேக் கொண்டு தரவுக் களன் உருவாக்கப்படும்.\n"
+
+#: createdb.c:225 createlang.c:218 createuser.c:335 dropdb.c:151
+#: droplang.c:335 dropuser.c:150 clusterdb.c:241 vacuumdb.c:270
+#: reindexdb.c:327
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"வழுக்களை <pgsql-bugs@postgresql.org> க்குத் தெரியப்படுத்தவும்.\n"
+
+#: createlang.c:135 droplang.c:146
+msgid "Name"
+msgstr "பெயர்"
+
+#: createlang.c:135 droplang.c:146
+msgid "yes"
+msgstr "ஆம்"
+
+#: createlang.c:135 droplang.c:146
+msgid "no"
+msgstr "இல்லை"
+
+#: createlang.c:135 droplang.c:146
+msgid "Trusted?"
+msgstr "நம்பத்தக்கதா?"
+
+#: createlang.c:144 droplang.c:155
+msgid "Procedural Languages"
+msgstr "முறையான மொழிகள்"
+
+#: createlang.c:153 droplang.c:164
+#, c-format
+msgid "%s: missing required argument language name\n"
+msgstr "%s: தேவையான மொழிப் பெயர் துப்பு விடுபட்டுள்ளது\n"
+
+#: createlang.c:175
+#, c-format
+msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
+msgstr "%s: \"%s\" மொழி ஏற்கனவே தரவுக் களத்தில் விடுபட்டுள்ளது \"%s\"\n"
+
+#: createlang.c:189
+#, c-format
+msgid "%s: language installation failed: %s"
+msgstr "%s: நிறுவல் மொழிக்ககான ளம்: %s"
+
+#: createlang.c:205
+#, c-format
+msgid ""
+"%s installs a procedural language into a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s முறைசார் மொழியொன்றை போஸ்டுகிரெஸ் தரவுக்களத்தினுள் நிறுவும்.\n"
+"\n"
+
+#: createlang.c:207 droplang.c:324
+#, c-format
+msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
+msgstr "  %s [OPTION]... LANGNAME [DBNAME]\n"
+
+#: createlang.c:209
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to install language in\n"
+msgstr "  -d, --dbname=DBNAME       தரவுக் களன் நிறுவப் பட வேண்டிய மொழி\n"
+
+#: createlang.c:210 createuser.c:325 dropdb.c:143 droplang.c:327
+#: dropuser.c:142 clusterdb.c:231 reindexdb.c:317
+#, c-format
+msgid "  -e, --echo                show the commands being sent to the server\n"
+msgstr "  -e, --echo                வழங்கிக்கு இடப்படும் ஆணைகளைக் காட்டும்\n"
+
+#: createlang.c:211 droplang.c:328
+#, c-format
+msgid "  -l, --list                show a list of currently installed languages\n"
+msgstr "  -l, --list                தற்சமயம் நிறுவப்பட்ட மொழிகளின் பட்டியலைக் காட்டுக\n"
+
+#: createlang.c:212 createuser.c:329 dropdb.c:145 droplang.c:329
+#: dropuser.c:144 clusterdb.c:236 vacuumdb.c:265 reindexdb.c:322
+#, c-format
+msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME       தரவுக் கள வழங்கி தருநர் அல்லது சாக்கெட் அடைவு\n"
+
+#: createlang.c:213 createuser.c:330 dropdb.c:146 droplang.c:330
+#: dropuser.c:145 clusterdb.c:237 vacuumdb.c:266 reindexdb.c:323
+#, c-format
+msgid "  -p, --port=PORT           database server port\n"
+msgstr "  -p, --port=PORT           தரவுக் கள வழங்கி துறை\n"
+
+#: createlang.c:214 dropdb.c:147 droplang.c:331 clusterdb.c:238 vacuumdb.c:267
+#: reindexdb.c:324
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as\n"
+msgstr "  -U, --username=USERNAME   இணைப்பிற்கான பயனரின் பெயர்\n"
+
+#: createlang.c:215 dropdb.c:148 droplang.c:332 clusterdb.c:239 vacuumdb.c:268
+#: reindexdb.c:325
+#, c-format
+msgid "  -W, --password            prompt for password\n"
+msgstr "  -W, --password            கடவுச் சொல்லினைக் கோருக\n"
+
+#: createlang.c:216 createuser.c:326 dropdb.c:149 droplang.c:333
+#: dropuser.c:148 clusterdb.c:233 reindexdb.c:319
+#, c-format
+msgid "  --help                    show this help, then exit\n"
+msgstr "  --help                    இவ்வுதவியினைக் காட்டியதும், வெளிவருக\n"
+
+#: createlang.c:217 createuser.c:327 dropdb.c:150 droplang.c:334
+#: dropuser.c:149 clusterdb.c:234 reindexdb.c:320
+#, c-format
+msgid "  --version                 output version information, then exit\n"
+msgstr "  --version                 வெளியீட்டு விவரங்களை வெளியிட்டபின், வெளிவரவும்\n"
+
+#: createuser.c:176
+msgid "Enter name of role to add: "
+msgstr "சேர்க்கப் படவேண்டிய பொறுப்பின் பெயரினைக் காட்டுக: "
+
+#: createuser.c:183
+msgid "Enter password for new role: "
+msgstr "புதியப் பொறுப்பிற்கானகானக் கடவுச் சொல்லினைக் காட்டுக:"
+
+#: createuser.c:184
+msgid "Enter it again: "
+msgstr "மீண்டும் உள்ளிடவும்:"
+
+#: createuser.c:187
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "கடவுச் சொற்கள் பொருந்தவில்லை.\n"
+
+#: createuser.c:196
+msgid "Shall the new role be a superuser?"
+msgstr "மூதன்மைப் பயனராக புதிய பொறுப்பு இருக்கலாமா?"
+
+#: createuser.c:211
+msgid "Shall the new role be allowed to create databases?"
+msgstr "தரவுக் களத்தினை உருவாக்க புதிய பொறுப்பினை அனுமதிக்கலாமா?"
+
+#: createuser.c:219
+msgid "Shall the new role be allowed to create more new roles?"
+msgstr "புதிய பொறுப்பிற்கு புதிய பொறுப்புக்களை உருவாக்க அனுமதி வழங்கலாமா?"
+
+#: createuser.c:252
+#, c-format
+msgid "Password encryption failed.\n"
+msgstr "கடவுச் சொல் உருதிரிப்பு தவறியது.\n"
+
+#: createuser.c:291
+#, c-format
+msgid "%s: creation of new role failed: %s"
+msgstr "%s: புதிய பொறுப்பை உருவாக்க இயலவில்லை: %s"
+
+#: createuser.c:306
+#, c-format
+msgid ""
+"%s creates a new PostgreSQL role.\n"
+"\n"
+msgstr ""
+"%s போஸ்டுகிரெஸ்ஸின் புதிய பொறுப்பினை உருவாக்கும்.\n"
+"\n"
+
+#: createuser.c:308 dropuser.c:140
+#, c-format
+msgid "  %s [OPTION]... [ROLENAME]\n"
+msgstr "  %s [OPTION]... [ROLENAME]\n"
+
+#: createuser.c:310
+#, c-format
+msgid "  -s, --superuser           role will be superuser\n"
+msgstr "  -s, --superuser           பொறுப்பு முதன்மைப் பயனாக இருக்கும்\n"
+
+#: createuser.c:311
+#, c-format
+msgid "  -S, --no-superuser        role will not be superuser\n"
+msgstr "  -S, --no-superuser        பொறுப்பு முதன்மைப் பயனருக்கானதாக இராது\n"
+
+#: createuser.c:312
+#, c-format
+msgid "  -d, --createdb            role can create new databases\n"
+msgstr "  -d, --createdb            பொறுப்பாளர் தரவுக் களன்களை உருவாக்க இயலாதும்\n"
+
+#: createuser.c:313
+#, c-format
+msgid "  -D, --no-createdb         role cannot create databases\n"
+msgstr "  -D, --no-createdb         இப்பொறுப்புடையவர் தரவுக் களன்களை உருவாக்க இயலாது \n"
+
+#: createuser.c:314
+#, c-format
+msgid "  -r, --createrole          role can create new roles\n"
+msgstr "  -r, --createrole          இப்பொறுப்பு புதிய பொறுப்புகளை உருவாக்கலாம்\n"
+
+#: createuser.c:315
+#, c-format
+msgid "  -R, --no-createrole       role cannot create roles\n"
+msgstr "  -R, --no-createrole       இப்பொறுப்பு புதிய பொறுப்புகளை உருவாக்க இயலாது\n"
+
+#: createuser.c:316
+#, c-format
+msgid "  -l, --login               role can login (default)\n"
+msgstr "  -l, --login               இப்பொறுப்பால் நுழைய இயலும் (இயல்பிருப்பு)\n"
+
+#: createuser.c:317
+#, c-format
+msgid "  -L, --no-login            role cannot login\n"
+msgstr "  -L, --no-login            இப்பொறுப்பால் நுழைய இயலாது\n"
+
+#: createuser.c:318
+#, c-format
+msgid ""
+"  -i, --inherit             role inherits privileges of roles it is a\n"
+"                            member of (default)\n"
+msgstr ""
+"  -i, --inherit             தான் அங்கத்தினராய் உள்ள பொறுப்புகளின்\n"
+"                            சலுகைகளை இப்பொறுப்பு பெறும் (இயல்பிருப்பு)\n"
+
+#: createuser.c:320
+#, c-format
+msgid "  -I, --no-inherit          role does not inherit privileges\n"
+msgstr "  -I, --no-inherit          இப்பொறுப்பு சலுகைகளை ஏற்காது\n"
+
+#: createuser.c:321
+#, c-format
+msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
+msgstr "  -c, --connection-limit=N  பொறுப்புக்கான தொடர்பு எல்லை (இயல்பு: எல்லை இல்லை)\n"
+
+#: createuser.c:322
+#, c-format
+msgid "  -P, --pwprompt            assign a password to new role\n"
+msgstr "  -P, --pwprompt            புதியப் பொறுப்பிற்கு கடவுச் சொல்லொன்றினைத் தரவும்\n"
+
+#: createuser.c:323
+#, c-format
+msgid "  -E, --encrypted           encrypt stored password\n"
+msgstr "  -E, --encrypted           சேமிக்கப் பட்ட கடவுச்சொல்லின் உருதிரிக்கவும்\n"
+
+#: createuser.c:324
+#, c-format
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
+msgstr "  -N, --unencrypted           சேமிக்கப் பட்ட கடவுச்சொல்லின் உருதிரிக்க வேண்டா\n"
+
+#: createuser.c:331
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgstr "  -U, --username=USERNAME   இணைப்புக்கான பயனர் பெயர் (உருவாக்கத்துக்கானது அல்ல)\n"
+
+#: createuser.c:332 dropuser.c:147
+#, c-format
+msgid "  -W, --password            prompt for password to connect\n"
+msgstr "  -W, --password            இணைக்கும் பொருுட்டு கடவுச் சொல் கோரவும்\n"
+
+#: createuser.c:333
+#, c-format
+msgid ""
+"\n"
+"If one of -s, -S, -d, -D, -r, -R and ROLENAME is not specified, you will\n"
+"be prompted interactively.\n"
+msgstr ""
+"\n"
+"-s, -S, -d, -D, -r, -R மற்றும் ROLENAME ல் ஏதேனும் ஒன்று தரப் படவில்லையென்றாலும், தாங்கள்\n"
+"தரக் கோரப்படுவீர்கள்.\n"
+
+#: dropdb.c:91
+#, c-format
+msgid "%s: missing required argument database name\n"
+msgstr "%s: தரவுக் கள பெயருக்குத் தேவையான துப்பு விடுபட்டுள்ளது\n"
+
+#: dropdb.c:106
+#, c-format
+msgid "Database \"%s\" will be permanently removed.\n"
+msgstr "தரவுக் களன் \"%s\" நிரந்தரமாக அகற்றப் படும்.\n"
+
+#: dropdb.c:107 dropuser.c:108
+msgid "Are you sure?"
+msgstr "உறுதியாக?"
+
+#: dropdb.c:124
+#, c-format
+msgid "%s: database removal failed: %s"
+msgstr "%s: தரவுக் களத்தை அகற்ற இயலவில்லை : %s"
+
+#: dropdb.c:139
+#, c-format
+msgid ""
+"%s removes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s போஸ்டுகிரெஸ் தரவுக் களனை அகற்றும்.\n"
+"\n"
+
+#: dropdb.c:141
+#, c-format
+msgid "  %s [OPTION]... DBNAME\n"
+msgstr "  %s [OPTION]... DBNAME\n"
+
+#: dropdb.c:144 dropuser.c:143
+#, c-format
+msgid "  -i, --interactive         prompt before deleting anything\n"
+msgstr "  -i, --interactive         எதையும் அகற்றும் முன் எச்சரிக்கவும்\n"
+
+#: droplang.c:194
+#, c-format
+msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
+msgstr "%s: மொழி \"%s\" தரவுக் களத்தில் நிறுவப்படவில்லை \"%s\"\n"
+
+#: droplang.c:214
+#, c-format
+msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
+msgstr "%s: ஆயினும் %s மொழிக்கான செயற்பாடுகள் விண்டப் பட்டுள்ளன \"%s\"; மொழி அகற்றப் படவி்வில்லை\n"
+
+#: droplang.c:307
+#, c-format
+msgid "%s: language removal failed: %s"
+msgstr "%s: மொழியை அகற்றுவதில் சிக்கல்: %s"
+
+#: droplang.c:322
+#, c-format
+msgid ""
+"%s removes a procedural language from a database.\n"
+"\n"
+msgstr ""
+"%s முறை சார் மொழியொன்று தரவுக் களத்திலிருந்து அகற்றப் படும்.\n"
+"\n"
+
+#: droplang.c:326
+#, c-format
+msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
+msgstr "  -d, --dbname=DBNAME       அகற்றப்பட வேண்டிய மொழி இருக்கும் தரவுக் களன்\n"
+
+#: dropuser.c:103
+msgid "Enter name of role to drop: "
+msgstr "விலக்கப் படவேண்டிய பொறுப்பினை இடுக: "
+
+#: dropuser.c:107
+#, c-format
+msgid "Role \"%s\" will be permanently removed.\n"
+msgstr "பொறுப்பு \"%s\" நிரந்தரமாக அகற்றப்படும்.\n"
+
+#: dropuser.c:123
+#, c-format
+msgid "%s: removal of role \"%s\" failed: %s"
+msgstr "%s: பொறுப்பினை \"%s\" அகற்ற இயலவில்லை: %s"
+
+#: dropuser.c:138
+#, c-format
+msgid ""
+"%s removes a PostgreSQL role.\n"
+"\n"
+msgstr ""
+"%s ஒரு போஸ்டுகிரெஸ் பொறுப்பினை அகற்றிவிடும்.\n"
+"\n"
+
+#: dropuser.c:146
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr "  -U, --username=USERNAME   இணைப்பதறகான பயனர் பெயர் (விலக்குவதற்கானது அல்ல)\n"
+
+#: clusterdb.c:120
+#, c-format
+msgid "%s: cannot cluster all databases and a specific one at the same time\n"
+msgstr "%s: அனைத்துத் தரவுக் களன்களோடு குறிப்பிட்ட ஒன்றை ஒரே நேரத்தில் கூட்டமைக்க இயலாது\n"
+
+#: clusterdb.c:126
+#, c-format
+msgid "%s: cannot cluster a specific table in all databases\n"
+msgstr "%s: குறிப்பிட்ட அட்டவணையொன்றை அனைத்து தரவுக் களன்களிலும் கூட்டமைக்க இயலாது\n"
+
+#: clusterdb.c:176
+#, c-format
+msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: அட்வணை \"%s\" யினை \"%s\" தரவுக்பளத்தில் கூட்டமைக்க இயலவில்லை: %s"
+
+#: clusterdb.c:179
+#, c-format
+msgid "%s: clustering of database \"%s\" failed: %s"
+msgstr "%s: \"%s\" தரவுக் களனை கூட்டமைக்க இயலவில்லை: %s"
+
+#: clusterdb.c:208
+#, c-format
+msgid "%s: clustering database \"%s\"\n"
+msgstr "%s: \"%s\" தரவுக் களன் கூட்டமைக்கப்படுகிறது\n"
+
+#: clusterdb.c:224
+#, c-format
+msgid ""
+"%s clusters all previously clustered tables in a database.\n"
+"\n"
+msgstr ""
+"%s தரவுக் களத்தில் முன்னரே கூட்டமைக்கப்பட்ட அட்டவணைகளை கூட்டமைக்கும்.\n"
+"\n"
+
+#: clusterdb.c:226 vacuumdb.c:252 reindexdb.c:310
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [OPTION]... [DBNAME]\n"
+
+#: clusterdb.c:228
+#, c-format
+msgid "  -a, --all                 cluster all databases\n"
+msgstr "  -a, --all                 அனைத்து தரவுக் களன்களையும் கூட்டமைக்கும்ும்\n"
+
+#: clusterdb.c:229
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to cluster\n"
+msgstr "  -d, --dbname=DBNAME       கூட்டமைக்கப்பட வேண்டிய தரவுக் களன்\n"
+
+#: clusterdb.c:230
+#, c-format
+msgid "  -t, --table=TABLE         cluster specific table only\n"
+msgstr "  -t, --table=TABLE         குறிப்பிட்ட அட்டவணையை மாத்திரம் கூட்டமை\n"
+
+#: clusterdb.c:232 reindexdb.c:318
+#, c-format
+msgid "  -q, --quiet               don't write any messages\n"
+msgstr "  -q, --quiet               எந்தத் தகவலையும் எழுத வேண்டாம்\n"
+
+#: clusterdb.c:240
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command CLUSTER for details.\n"
+msgstr ""
+"\n"
+"மேலும் விவரங்களக்கு SQL ஆணை CLUSTER ன் விளக்கத்தினை வாசிக்கவும்ails.\n"
+
+#: vacuumdb.c:137
+#, c-format
+msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
+msgstr "%s: அனைத்துக் தரவுக் களன்களையும் குறிப்பிட்ட ஒன்றையும் ஒரே நேரத்தில் காலி செய்ய இயலாது\n"
+
+#: vacuumdb.c:143
+#, c-format
+msgid "%s: cannot vacuum a specific table in all databases\n"
+msgstr "%s: குறிப்பிட்ட அட்டவணையை அனைத்து தரவுக் களன்களிலும் காலி செய்ய இயலாது\n"
+
+#: vacuumdb.c:201
+#, c-format
+msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: அட்டவணை \"%s\" னைக் தரவுக் களன் \"%s\" ல் காலி செய்ய இயலவில்லை: %s"
+
+#: vacuumdb.c:204
+#, c-format
+msgid "%s: vacuuming of database \"%s\" failed: %s"
+msgstr "%s: \"%s\" தரவுக் களனைக் காலி செய்ய இயலவில்லை: %s"
+
+#: vacuumdb.c:234
+#, c-format
+msgid "%s: vacuuming database \"%s\"\n"
+msgstr "%s: \"%s\" தரவுக் களன் காலிசெய்யப் படுகிறது\n"
+
+#: vacuumdb.c:250
+#, c-format
+msgid ""
+"%s cleans and analyzes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s போஸ்டுகிரெஸ் தரவுக் களனொன்றை துடைத்து ஆராயும்.\n"
+"\n"
+
+#: vacuumdb.c:254
+#, c-format
+msgid "  -a, --all                       vacuum all databases\n"
+msgstr "  -a, --all                       அனைத்து தரவுக் களனையும் காலி செய்யும்\n"
+
+#: vacuumdb.c:255
+#, c-format
+msgid "  -d, --dbname=DBNAME             database to vacuum\n"
+msgstr "  -d, --dbname=DBNAME             காலி செய்யப் பட் வேண்டிய தரவுக் களன்\n"
+
+#: vacuumdb.c:256
+#, c-format
+msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
+msgstr "  -t, --table='TABLE[(COLUMNS)]'  குறிப்பிட்டு காலியாக்கப் படவேண்டிய அட்டவணைகள் மட்டும்\n"
+
+#: vacuumdb.c:257
+#, c-format
+msgid "  -f, --full                      do full vacuuming\n"
+msgstr "  -f, --full                      முழுமையாக காலி செய்க\n"
+
+#: vacuumdb.c:258
+#, c-format
+msgid "  -z, --analyze                   update optimizer hints\n"
+msgstr "  -z, --analyze                   திறமேம்பாட்டு குறிப்புகளை புதுப்பி\n"
+
+#: vacuumdb.c:259
+#, c-format
+msgid ""
+"  -e, --echo                      show the commands being sent to the "
+"server\n"
+msgstr "  -e, --echo                      வழங்கிக்கு அனுப்ப் படவேண்டிய ஆணைகளைக் காட்டுக\n"
+
+#: vacuumdb.c:260
+#, c-format
+msgid "  -q, --quiet                     don't write any messages\n"
+msgstr "  -q, --quiet                     தகவல் எதையும் எழுத வேண்டாம்\n"
+
+#: vacuumdb.c:261
+#, c-format
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   அதிக வெளியீட்டினை இயற்றவும்\n"
+
+#: vacuumdb.c:262
+#, c-format
+msgid "  --help                          show this help, then exit\n"
+msgstr "  --help                          இவ்வுதவியினைக் காட்டியபின் வெளிவருக\n"
+
+#: vacuumdb.c:263
+#, c-format
+msgid "  --version                       output version information, then exit\n"
+msgstr "  --version                       வெளியீட்டு விவரங்களைக் காட்டியபின் வெளிவரவும்\n"
+
+#: vacuumdb.c:269
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command VACUUM for details.\n"
+msgstr ""
+"\n"
+"மேலும் விவரங்களுக்கு SQL ஆணை VACUUM ன் விளக்கத்தினை வாசிக்கவும்.\n"
+
+#: reindexdb.c:134
+#, c-format
+msgid "%s: cannot reindex all databases and a specific one at the same time\n"
+msgstr ""
+"%s: அனைத்து தரவுக் களன்களையும் ் குறிப்பிட்ட ஒன்றையும் ஒரே நேரத்தில"
+" மீள்வரிசைப் படுத்த இயலாது\n"
+
+#: reindexdb.c:139
+#, c-format
+msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
+msgstr "%s: அனைத்து தரவுக் களன்களையும் அமைப்பின் காடலாகுகளையும் ஒரே நேரத்தில் மீள்வரிசைப் படுத்த இயலாது\n"
+
+#: reindexdb.c:144
+#, c-format
+msgid "%s: cannot reindex a specific table in all databases\n"
+msgstr "%s: குறிப்பிட்ட அட்டவணையினைமஅனைத்து தரவுக் களன்களிலும்ல் மீள்வரிசைப் படுத்த இயலாது\n"
+
+#: reindexdb.c:149
+#, c-format
+msgid "%s: cannot reindex a specific index in all databases\n"
+msgstr "%s: வரிசையொன்றினை அனைத்து தரவுக் களன்களிலும் மீள்வரிசைப் படுத்த இயலாது\n"
+
+#: reindexdb.c:160
+#, c-format
+msgid "%s: cannot reindex a specific table and system catalogs at the same time\n"
+msgstr "%s: ஒரே நேரத்தில் குறிப்பிட்ட அட்டவணையினையும் அமைப்பு காடலாகுகளையும் மீள்வரிசைப் படுத்த இயலாது\n"
+
+#: reindexdb.c:165
+#, c-format
+msgid "%s: cannot reindex a specific index and system catalogs at the same time\n"
+msgstr "%s: ஒரே நேரத்தில் குறிப்பிட்ட வரிசையினையும் அமைப்பு காடலாகுகளையும் மீள்வரிசைப் படுத்த இயலாது\n"
+
+#: reindexdb.c:234
+#, c-format
+msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: அட்டவணை \"%s\" யினை தரவுக் களன் \"%s\" ல் மீள் வரிசைப் படுத்த இயலவில்லை: %s"
+
+#: reindexdb.c:237
+#, c-format
+msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: வரிசை \"%s\" யினை தரவுக்களன் \"%s\" ல் மீள்வரிசைப் படுத்த இயலவில்லை: %s"
+
+#: reindexdb.c:240
+#, c-format
+msgid "%s: reindexing of database \"%s\" failed: %s"
+msgstr "%s: தரவுக்களன் \"%s\" னை மீள்வரிசையிட இயலவில்லை: %s"
+
+#: reindexdb.c:269
+#, c-format
+msgid "%s: reindexing database \"%s\"\n"
+msgstr "%s: தரவுக்களன் \"%s\" மீள்வரிசையிடப் படுகிறது \n"
+
+#: reindexdb.c:296
+#, c-format
+msgid "%s: reindexing of system catalogs failed: %s"
+msgstr "%s: அமைப்பு காடலாகுகளை மீளவரிசையிட இயலவில்லை: %s"
+
+#: reindexdb.c:308
+#, c-format
+msgid ""
+"%s reindexes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s போஸ்டுகிரெஸ் தரவுக் களனொன்றை மீள்வரிசையிடுறோம்.\n"
+"\n"
+
+#: reindexdb.c:312
+#, c-format
+msgid "  -a, --all                 reindex all databases\n"
+msgstr "  -a, --all                 அனைத்து தரவுக்களன்களையும் மீள்வரிசைப் படுத்தும்\n"
+
+#: reindexdb.c:313
+#, c-format
+msgid "  -s, --system              reindex system catalogs\n"
+msgstr "  -s, --system              அமைப்பு காடலாகுகளை மீள்வரிசைப் படுத்தும்\n"
+
+#: reindexdb.c:314
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to reindex\n"
+msgstr "  -d, --dbname=DBNAME       மீள்வரிசையிடப் படவேண்டிய தரவுக்களன்\n"
+
+#: reindexdb.c:315
+#, c-format
+msgid "  -t, --table=TABLE         reindex specific table only\n"
+msgstr "  -t, --table=TABLE         குறிப்பிட்ட அட்டவணையை மாத்திரம் மீள்வரிசையிடுக\n"
+
+#: reindexdb.c:316
+#, c-format
+msgid "  -i, --index=INDEX         recreate specific index only\n"
+msgstr "  -i, --index=INDEX         குறிப்பிட்ட வரிசையை மட்டும் மீளுருவாக்குக\n"
+
+#: reindexdb.c:326
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command REINDEX for details.\n"
+msgstr ""
+"\n"
+"விவரங்களுக்கு SQL ஆணை REINDEX விளக்கத்தினை வாசிக்கவும்.\n"
+
+#: common.c:48
+#, c-format
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: தற்போதைய பயனர் குறித்த விவரங்களை பெற இயலவில்லை: %s\n"
+
+#: common.c:59
+#, c-format
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: தற்போதைய பயனர் பெயரைப் பெற இயலவில்லை: %s\n"
+
+#: common.c:106 common.c:130
+msgid "Password: "
+msgstr "கடவுச்சொல்:"
+
+#: common.c:119
+#, c-format
+msgid "%s: could not connect to database %s\n"
+msgstr "%s: தரவுக் களனுடன் இணைக்க இயலவில்லை %s\n"
+
+#: common.c:141
+#, c-format
+msgid "%s: could not connect to database %s: %s"
+msgstr "%s: தரவுக் களனுடன் இணைக்க இயலவில்லை %s: %s"
+
+#: common.c:165 common.c:193
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "%s: கோரிக்கை தவறியது: %s"
+
+#: common.c:167 common.c:195
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "%s: கோரிக்கையாவது: %s\n"
+
+#. translator: abbreviation for "yes"
+#: common.c:237
+msgid "y"
+msgstr "ஆம்"
+
+#. translator: abbreviation for "no"
+#: common.c:239
+msgid "n"
+msgstr "இல்லை"
+
+#: common.c:250
+#, c-format
+msgid "%s (%s/%s) "
+msgstr "%s (%s/%s) "
+
+#: common.c:271
+#, c-format
+msgid "Please answer \"%s\" or \"%s\".\n"
+msgstr "பதிலிடுக \"%s\" அல்லது \"%s\".\n"
+
+#: common.c:350 common.c:384
+#, c-format
+msgid "Cancel request sent\n"
+msgstr "அனுப்பப் பட்ட கோரிக்கையை இரத்துக\n"
+
+#: common.c:352
+#, c-format
+msgid "Could not send cancel request: %s\n"
+msgstr "இரத்துக்கான கோரிக்கையை அனுப்ப இயலவில்லை: %s\n"
+
+#: common.c:386
+#, c-format
+msgid "Could not send cancel request: %s"
+msgstr "இரத்துக்கான கோரிக்கையை அனுப்ப அயலவில்லை: %s"
+

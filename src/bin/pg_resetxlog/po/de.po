@@ -1,7 +1,7 @@
 # German message translation file for pg_resetxlog
 # Peter Eisentraut <peter_e@gmx.net>, 2002 - 2007.
 #
-# pgtranslation Id: pg_resetxlog.po,v 1.6 2007/05/31 14:04:40 petere Exp $
+# pgtranslation Id: pg_resetxlog.po,v 1.7 2007/11/08 10:53:47 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-29 02:18-0300\n"
-"PO-Revision-Date: 2007-05-30 17:48+0200\n"
+"POT-Creation-Date: 2007-11-07 19:30-0400\n"
+"PO-Revision-Date: 2007-11-08 11:47+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -160,12 +160,15 @@ msgstr "%s: konnte Datei »%s« nicht lesen: %s\n"
 #: pg_resetxlog.c:422
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
-msgstr "%s: pg_control existiert, aber mit ungültiger CRC; mit Vorsicht fortfahren\n"
+msgstr ""
+"%s: pg_control existiert, aber mit ungültiger CRC; mit Vorsicht fortfahren\n"
 
 #: pg_resetxlog.c:431
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
-msgstr "%s: pg_control existiert, aber ist kaputt oder hat unbekannte Version; wird ignoriert\n"
+msgstr ""
+"%s: pg_control existiert, aber ist kaputt oder hat unbekannte Version; wird "
+"ignoriert\n"
 
 #: pg_resetxlog.c:499
 #, c-format
@@ -196,99 +199,99 @@ msgstr ""
 "\n"
 
 #: pg_resetxlog.c:541
-#, fuzzy, c-format
-msgid "First log file ID for new XLOG:       %u\n"
-msgstr "Aktuelle Logdatei-ID:                    %u\n"
+#, c-format
+msgid "First log file ID after reset:        %u\n"
+msgstr "Erste Logdatei-ID nach Zurücksetzen:      %u\n"
 
 #: pg_resetxlog.c:543
-#, fuzzy, c-format
-msgid "First log file segment for new XLOG:  %u\n"
-msgstr "Nächstes Logdatei-Segment:               %u\n"
+#, c-format
+msgid "First log file segment after reset:   %u\n"
+msgstr "Erstes Logdateisegment nach Zurücksetzen: %u\n"
 
 #: pg_resetxlog.c:545
 #, c-format
 msgid "pg_control version number:            %u\n"
-msgstr "pg_control-Versionsnummer:               %u\n"
+msgstr "pg_control-Versionsnummer:                %u\n"
 
 #: pg_resetxlog.c:547
 #, c-format
 msgid "Catalog version number:               %u\n"
-msgstr "Katalogversionsnummer:                   %u\n"
+msgstr "Katalogversionsnummer:                    %u\n"
 
 #: pg_resetxlog.c:549
 #, c-format
 msgid "Database system identifier:           %s\n"
-msgstr "Datenbanksystemidentifikation:           %s\n"
+msgstr "Datenbanksystemidentifikation:            %s\n"
 
 #: pg_resetxlog.c:551
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
-msgstr "TimeLineID des letzten Checkpoints:      %u\n"
+msgstr "TimeLineID des letzten Checkpoints:       %u\n"
 
 #: pg_resetxlog.c:553
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "NextXID des letzten Checkpoints:         %u/%u\n"
+msgstr "NextXID des letzten Checkpoints:          %u/%u\n"
 
 #: pg_resetxlog.c:556
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "NextOID des letzten Checkpoints:         %u\n"
+msgstr "NextOID des letzten Checkpoints:          %u\n"
 
 #: pg_resetxlog.c:558
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "NextMultiXactId des letzten Checkpoints: %u\n"
+msgstr "NextMultiXactId des letzten Checkpoints:  %u\n"
 
 #: pg_resetxlog.c:560
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "NextMultiOffset des letzten Checkpoints: %u\n"
+msgstr "NextMultiOffset des letzten Checkpoints:  %u\n"
 
 #: pg_resetxlog.c:562
 #, c-format
 msgid "Maximum data alignment:               %u\n"
-msgstr "Maximale Datenausrichtung (Alignment):   %u\n"
+msgstr "Maximale Datenausrichtung (Alignment):    %u\n"
 
 #: pg_resetxlog.c:565
 #, c-format
 msgid "Database block size:                  %u\n"
-msgstr "Datenbankblockgröße:                     %u\n"
+msgstr "Datenbankblockgröße:                      %u\n"
 
 #: pg_resetxlog.c:567
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "Blöcke pro Segment:                      %u\n"
+msgstr "Blöcke pro Segment:                       %u\n"
 
 #: pg_resetxlog.c:569
 #, c-format
 msgid "WAL block size:                       %u\n"
-msgstr "WAL-Blockgröße:                          %u\n"
+msgstr "WAL-Blockgröße:                           %u\n"
 
 #: pg_resetxlog.c:571
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
-msgstr "Bytes pro WAL-Segment:                   %u\n"
+msgstr "Bytes pro WAL-Segment:                    %u\n"
 
 #: pg_resetxlog.c:573
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
-msgstr "Maximale Bezeichnerlänge:                %u\n"
+msgstr "Maximale Bezeichnerlänge:                 %u\n"
 
 #: pg_resetxlog.c:575
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
-msgstr "Maximale Spalten in einem Index:         %u\n"
+msgstr "Maximale Spalten in einem Index:          %u\n"
 
 #: pg_resetxlog.c:577
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
-msgstr "Maximale Größe eines Stücks TOAST:       %u\n"
+msgstr "Maximale Größe eines Stücks TOAST:        %u\n"
 
 #: pg_resetxlog.c:579
 #, c-format
 msgid "Date/time type storage:               %s\n"
-msgstr "Speicherung von Datum/Zeit-Typen:        %s\n"
+msgstr "Speicherung von Datum/Zeit-Typen:         %s\n"
 
 #: pg_resetxlog.c:580
 msgid "64-bit integers"
@@ -301,17 +304,17 @@ msgstr "Gleitkommazahlen"
 #: pg_resetxlog.c:581
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
-msgstr "Maximallänge eines Locale-Namens:        %u\n"
+msgstr "Maximallänge eines Locale-Namens:         %u\n"
 
 #: pg_resetxlog.c:583
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
-msgstr "LC_COLLATE:                              %s\n"
+msgstr "LC_COLLATE:                               %s\n"
 
 #: pg_resetxlog.c:585
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
-msgstr "LC_CTYPE:                                %s\n"
+msgstr "LC_CTYPE:                                 %s\n"
 
 #: pg_resetxlog.c:636
 #, c-format

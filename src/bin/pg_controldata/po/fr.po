@@ -2,7 +2,7 @@
 # translation of pg_controldata-fr.po to
 # French message translation file for pg_controldata
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.13 2007/10/27 00:13:42 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.14 2007/11/29 08:50:34 petere Exp $
 #
 # Use these quotes: « %s »
 # Loïc Hennequin <loic.hennequin@wanadoo.fr>, 2002.
@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: pg_controldata\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-06-07 07:16-0300\n"
-"PO-Revision-Date: 2007-06-07 18:08+0100\n"
+"PO-Revision-Date: 2007-11-22 13:32+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -27,7 +27,8 @@ msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s affiche les informations de contrôle du cluster de base de données PostgreSQL.\n"
+"%s affiche les informations de contrôle du cluster de base de données\n"
+"PostgreSQL.\n"
 "\n"
 
 #: pg_controldata.c:28
@@ -79,11 +80,11 @@ msgstr "arrêt en cours"
 
 #: pg_controldata.c:54
 msgid "in crash recovery"
-msgstr "restauration en cours (crash)"
+msgstr "restauration en cours (suite à un arrêt brutal)"
 
 #: pg_controldata.c:56
 msgid "in archive recovery"
-msgstr "restauration en cours (archive)"
+msgstr "restauration en cours (à partir des archives)"
 
 #: pg_controldata.c:58
 msgid "in production"
@@ -121,7 +122,8 @@ msgid ""
 "is expecting.  The results below are untrustworthy.\n"
 "\n"
 msgstr ""
-"WARNING: Les CRC de contrôle calculés ne correspondent pas aux valeurs stockées dans le fichier.\n"
+"ATTENTION : Les sommes de contrôle (CRC) calculés ne correspondent pas aux\n"
+"valeurs stockées dans le fichier.\n"
 "Soit le fichier est corrompu, soit son organisation diffère de celle attendue par le programme.\n"
 "Les résultats ci-dessous ne sont pas dignes de confiance.\n"
 "\n"
@@ -239,7 +241,7 @@ msgstr "Nombre maximum de colonnes d'un index:            %u\n"
 #: pg_controldata.c:202
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
-msgstr "Longueur maximale d'un morceau TOAST : %u\n"
+msgstr "Longueur maximale d'un morceau TOAST :            %u\n"
 
 #: pg_controldata.c:204
 #, c-format

@@ -2,7 +2,7 @@
 # translation of pg_config-fr.po to
 # French message translation file for pg_config
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.8 2007/10/27 00:13:42 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.9 2007/11/29 08:50:34 petere Exp $
 #
 # Use these quotes: « %s »
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: pg_config\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-06-07 07:16-0300\n"
-"PO-Revision-Date: 2007-06-07 18:07+0100\n"
+"PO-Revision-Date: 2007-11-22 13:18+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -84,12 +84,16 @@ msgstr ""
 #: pg_config.c:406
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
-msgstr "  --pkgincludedir       affiche l'emplacement des autres fichiers d'en-tête C\n"
+msgstr ""
+"  --pkgincludedir       affiche l'emplacement des autres fichiers d'en-tête\n"
+"                        C\n"
 
 #: pg_config.c:407
 #, c-format
 msgid "  --includedir-server   show location of C header files for the server\n"
-msgstr "  --includedir-server   affiche l'emplacement des fichiers d'en-tête C du serveur\n"
+msgstr ""
+"  --includedir-server   affiche l'emplacement des fichiers d'en-tête C du\n"
+"                        serveur\n"
 
 #: pg_config.c:408
 #, c-format
@@ -99,12 +103,16 @@ msgstr "  --libdir              affiche l'emplacement des bibliothèques\n"
 #: pg_config.c:409
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  --pkglibdir           affiche l'emplacement des modules chargeables dynamiquement\n"
+msgstr ""
+"  --pkglibdir           affiche l'emplacement des modules chargeables\n"
+"                        dynamiquement\n"
 
 #: pg_config.c:410
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
-msgstr "  --localedir           affiche l'emplacement des fichiers de support de la locale\n"
+msgstr ""
+"  --localedir           affiche l'emplacement des fichiers de support de la\n"
+"                        locale\n"
 
 #: pg_config.c:411
 #, c-format
@@ -114,12 +122,16 @@ msgstr "  --mandir              affiche l'emplacement des pages man\n"
 #: pg_config.c:412
 #, c-format
 msgid "  --sharedir            show location of architecture-independent support files\n"
-msgstr "  --sharedir            affiche l'emplacement des fichiers de support indépendants de l'architecture\n"
+msgstr ""
+"  --sharedir            affiche l'emplacement des fichiers de support\n"
+"                        indépendants de l'architecture\n"
 
 #: pg_config.c:413
 #, c-format
 msgid "  --sysconfdir          show location of system-wide configuration files\n"
-msgstr "  --sysconfdir          affiche l'emplacement des fichiers de configuration globaux du système\n"
+msgstr ""
+"  --sysconfdir          affiche l'emplacement des fichiers de configuration\n"
+"                        globaux du système\n"
 
 #: pg_config.c:414
 #, c-format
@@ -138,37 +150,51 @@ msgstr ""
 #: pg_config.c:417
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
-msgstr "  --cc                  affiche la valeur de CC utilisée à la construction de PostgreSQL\n"
+msgstr ""
+"  --cc                  affiche la valeur de CC utilisée lors de la\n"
+"                        construction de PostgreSQL\n"
 
 #: pg_config.c:418
 #, c-format
 msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
-msgstr "  --cppflags            affiche la valeur de CPPFLAGS utilisée à la construction de PostgreSQL\n"
+msgstr ""
+"  --cppflags            affiche la valeur de CPPFLAGS utilisée lors de la\n"
+"                        construction de PostgreSQL\n"
 
 #: pg_config.c:419
 #, c-format
 msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
-msgstr "  --cflags              affiche la valeur de CFLAGS utilisée à la construction de PostgreSQL\n"
+msgstr ""
+"  --cflags              affiche la valeur de CFLAGS utilisée lors de la\n"
+"                        construction de PostgreSQL\n"
 
 #: pg_config.c:420
 #, c-format
 msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
-msgstr "  --cflags_sl           affiche la valeur de CFLAGS_SL utilisée à la construction de PostgreSQL\n"
+msgstr ""
+"  --cflags_sl           affiche la valeur de CFLAGS_SL utilisée lors de la\n"
+"                        construction de PostgreSQL\n"
 
 #: pg_config.c:421
 #, c-format
 msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
-msgstr "  --ldflags             affiche la valeur de LDFLAGS utilisée à pour construction de PostgreSQL\n"
+msgstr ""
+"  --ldflags             affiche la valeur de LDFLAGS utilisée à lors de la\n"
+"                        construction de PostgreSQL\n"
 
 #: pg_config.c:422
 #, c-format
 msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
-msgstr "  --ldflags_sl          affiche la valeur de LDFLAGS_SL utilisée à la construction de PostgreSQL\n"
+msgstr ""
+"  --ldflags_sl          affiche la valeur de LDFLAGS_SL utilisée lors de la\n"
+"                        construction de PostgreSQL\n"
 
 #: pg_config.c:423
 #, c-format
 msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
-msgstr "  --libs                affiche la valeur de LIBS utilisée à la construction de PostgreSQL\n"
+msgstr ""
+"  --libs                affiche la valeur de LIBS utilisée lors de la\n"
+"                        construction de PostgreSQL\n"
 
 #: pg_config.c:424
 #, c-format
@@ -221,7 +247,7 @@ msgstr "n'a pas pu identifier le répertoire courant : %s"
 #: ../../port/exec.c:211
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "binaire invalide « %s »"
+msgstr "binaire « %s » invalide"
 
 #: ../../port/exec.c:260
 #, c-format
@@ -262,7 +288,7 @@ msgstr "le processus fils a été terminé par le signal %s"
 #: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by signal %d"
-msgstr "le processus fils a été terminé avec le signal %d"
+msgstr "le processus fils a été terminé par le signal %d"
 
 #: ../../port/exec.c:603
 #, c-format
