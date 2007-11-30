@@ -124,6 +124,8 @@ execute p1;
 drop schema s1 cascade;
 drop schema s2 cascade;
 
+reset search_path;
+
 -- Check that invalidation deals with regclass constants
 
 create temp sequence seq;
@@ -137,3 +139,20 @@ drop sequence seq;
 create temp sequence seq;
 
 execute p2;
+
+-- Check DDL via SPI, immediately followed by SPI plan re-use
+-- (bug in original coding)
+
+create function cachebug() returns void as $$
+declare r int;
+begin
+  drop table if exists temptable cascade;
+  create temp table temptable as select * from generate_series(1,3) as f1;
+  create temp view vv as select * from temptable;
+  for r in select * from vv loop
+    raise notice '%', r;
+  end loop;
+end$$ language plpgsql;
+
+select cachebug();
+select cachebug();

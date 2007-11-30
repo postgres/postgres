@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.184 2007/11/15 21:14:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.185 2007/11/30 18:38:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1375,14 +1375,6 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 	int			cursor_options = plan->cursor_options;
 
 	/*
-	 * Increment CommandCounter to see changes made by now.  We must do this
-	 * to be sure of seeing any schema changes made by a just-preceding SPI
-	 * command.  (But we don't bother advancing the snapshot, since the
-	 * planner generally operates under SnapshotNow rules anyway.)
-	 */
-	CommandCounterIncrement();
-
-	/*
 	 * Setup error traceback support for ereport()
 	 */
 	spierrcontext.callback = _SPI_error_callback;
@@ -1662,6 +1654,14 @@ _SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 			if (cplan)
 				ReleaseCachedPlan(cplan, true);
 			cplan = NULL;
+
+			/*
+			 * If not read-only mode, advance the command counter after the
+			 * last command.  This ensures that its effects are visible, in
+			 * case it was DDL that would affect the next CachedPlanSource.
+			 */
+			if (!read_only)
+				CommandCounterIncrement();
 		}
 
 fail:
