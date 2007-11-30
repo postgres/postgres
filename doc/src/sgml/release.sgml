@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.556 2007/11/28 11:03:50 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.557 2007/11/30 03:27:48 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -41,7 +41,7 @@ do it for earlier branch release files.
   <note>
    <title>Release date</title>
    <simpara>2007-12-??</simpara>
-   <para>CURRENT AS OF 2007-11-13</>
+   <para>CURRENT AS OF 2007-11-29</>
   </note>
 
   <sect2>
@@ -446,6 +446,14 @@ current_date &lt; 2017-11-17
        to set the length of generated <type>varlena</> values. Also, it
        might be necessary to expand (<quote>de-TOAST</quote>) input values
        in more cases.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Continuous archiving no longer reports each successful archive
+       operation to the server logs unless <literal>DEBUG</> level is used
+       (Simon)
       </para>
      </listitem>
 
