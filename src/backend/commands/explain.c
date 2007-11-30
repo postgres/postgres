@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.167 2007/11/15 22:25:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.168 2007/11/30 21:22:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,7 +233,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	 * EXPLAIN can be invoked, I think it's OK, because the active snapshot
 	 * shouldn't be shared with anything else anyway.)
 	 */
-	ActiveSnapshot->curcid = GetCurrentCommandId();
+	ActiveSnapshot->curcid = GetCurrentCommandId(false);
 
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(plannedstmt,

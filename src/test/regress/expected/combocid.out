@@ -4,66 +4,16 @@
 CREATE TEMP TABLE combocidtest (foobar int);
 BEGIN;
 -- a few dummy ops to push up the CommandId counter
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest VALUES (1);
 INSERT INTO combocidtest VALUES (2);
 SELECT ctid,cmin,* FROM combocidtest;
@@ -79,8 +29,8 @@ UPDATE combocidtest SET foobar = foobar + 10;
 SELECT ctid,cmin,* FROM combocidtest;
  ctid  | cmin | foobar 
 -------+------+--------
- (0,3) |   13 |     11
- (0,4) |   13 |     12
+ (0,3) |   12 |     11
+ (0,4) |   12 |     12
 (2 rows)
 
 ROLLBACK TO s1;
@@ -109,8 +59,8 @@ DELETE FROM combocidtest;
 FETCH ALL FROM c;
  ctid  | cmin | foobar 
 -------+------+--------
- (0,1) |    2 |      1
- (0,2) |    2 |      2
+ (0,1) |    1 |      1
+ (0,2) |    1 |      2
  (0,5) |    0 |    333
 (3 rows)
 
@@ -118,79 +68,29 @@ ROLLBACK;
 SELECT ctid,cmin,* FROM combocidtest;
  ctid  | cmin | foobar 
 -------+------+--------
- (0,1) |    2 |      1
- (0,2) |    2 |      2
+ (0,1) |    1 |      1
+ (0,2) |    1 |      2
 (2 rows)
 
 -- check behavior with locked tuples
 BEGIN;
 -- a few dummy ops to push up the CommandId counter
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
-SELECT 1;
- ?column? 
-----------
-        1
-(1 row)
-
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest VALUES (444);
 SELECT ctid,cmin,* FROM combocidtest;
  ctid  | cmin | foobar 
 -------+------+--------
- (0,1) |    2 |      1
- (0,2) |    2 |      2
+ (0,1) |    1 |      1
+ (0,2) |    1 |      2
  (0,6) |   10 |    444
 (3 rows)
 
@@ -199,16 +99,16 @@ SAVEPOINT s1;
 SELECT ctid,cmin,* FROM combocidtest FOR UPDATE;
  ctid  | cmin | foobar 
 -------+------+--------
- (0,1) |    2 |      1
- (0,2) |    2 |      2
+ (0,1) |    1 |      1
+ (0,2) |    1 |      2
  (0,6) |   10 |    444
 (3 rows)
 
 SELECT ctid,cmin,* FROM combocidtest;
  ctid  | cmin | foobar 
 -------+------+--------
- (0,1) |    2 |      1
- (0,2) |    2 |      2
+ (0,1) |    1 |      1
+ (0,2) |    1 |      2
  (0,6) |   10 |    444
 (3 rows)
 
@@ -217,17 +117,17 @@ UPDATE combocidtest SET foobar = foobar + 10;
 SELECT ctid,cmin,* FROM combocidtest;
  ctid  | cmin | foobar 
 -------+------+--------
- (0,7) |   14 |     11
- (0,8) |   14 |     12
- (0,9) |   14 |    454
+ (0,7) |   12 |     11
+ (0,8) |   12 |     12
+ (0,9) |   12 |    454
 (3 rows)
 
 ROLLBACK TO s1;
 SELECT ctid,cmin,* FROM combocidtest;
  ctid  | cmin | foobar 
 -------+------+--------
- (0,1) |   14 |      1
- (0,2) |   14 |      2
+ (0,1) |   12 |      1
+ (0,2) |   12 |      2
  (0,6) |    0 |    444
 (3 rows)
 
@@ -235,8 +135,8 @@ COMMIT;
 SELECT ctid,cmin,* FROM combocidtest;
  ctid  | cmin | foobar 
 -------+------+--------
- (0,1) |   14 |      1
- (0,2) |   14 |      2
+ (0,1) |   12 |      1
+ (0,2) |   12 |      2
  (0,6) |    0 |    444
 (3 rows)
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.288 2007/11/15 21:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.289 2007/11/30 21:22:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1033,7 +1033,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		 * which COPY can be invoked, I think it's OK, because the active
 		 * snapshot shouldn't be shared with anything else anyway.)
 		 */
-		ActiveSnapshot->curcid = GetCurrentCommandId();
+		ActiveSnapshot->curcid = GetCurrentCommandId(false);
 
 		/* Create dest receiver for COPY OUT */
 		dest = CreateDestReceiver(DestCopyOut, NULL);
@@ -1637,7 +1637,7 @@ CopyFrom(CopyState cstate)
 	ExprContext *econtext;		/* used for ExecEvalExpr for default atts */
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ErrorContextCallback errcontext;
-	CommandId	mycid = GetCurrentCommandId();
+	CommandId	mycid = GetCurrentCommandId(true);
 	bool		use_wal = true; /* by default, use WAL logging */
 	bool		use_fsm = true; /* by default, use FSM for free space */
 

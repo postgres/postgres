@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.81 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.82 2007/11/30 21:22:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,6 +403,14 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 								   dbId, relId);
 
 	/*
+	 * Most of the time, relcache invalidation is associated with system
+	 * catalog updates, but there are a few cases where it isn't.  Quick
+	 * hack to ensure that the next CommandCounterIncrement() will think
+	 * that we need to do CommandEndInvalidationMessages().
+	 */
+	(void) GetCurrentCommandId(true);
+
+	/*
 	 * If the relation being invalidated is one of those cached in the
 	 * relcache init file, mark that we need to zap that file at commit.
 	 */
@@ -420,6 +428,11 @@ RegisterSmgrInvalidation(RelFileNode rnode)
 {
 	AddSmgrInvalidationMessage(&transInvalInfo->CurrentCmdInvalidMsgs,
 							   rnode);
+
+	/*
+	 * As above, just in case there is not an associated catalog change.
+	 */
+	(void) GetCurrentCommandId(true);
 }
 
 /*

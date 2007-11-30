@@ -6,16 +6,16 @@ CREATE TEMP TABLE combocidtest (foobar int);
 BEGIN;
 
 -- a few dummy ops to push up the CommandId counter
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
 
 INSERT INTO combocidtest VALUES (1);
 INSERT INTO combocidtest VALUES (2);
@@ -58,16 +58,16 @@ SELECT ctid,cmin,* FROM combocidtest;
 BEGIN;
 
 -- a few dummy ops to push up the CommandId counter
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
-SELECT 1;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
+INSERT INTO combocidtest SELECT 1 LIMIT 0;
 
 INSERT INTO combocidtest VALUES (444);
 

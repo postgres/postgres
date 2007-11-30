@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.185 2007/11/30 18:38:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.186 2007/11/30 21:22:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1593,7 +1593,7 @@ _SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 					 */
 					ActiveSnapshot = CopySnapshot(snapshot);
 					if (!read_only)
-						ActiveSnapshot->curcid = GetCurrentCommandId();
+						ActiveSnapshot->curcid = GetCurrentCommandId(false);
 				}
 
 				if (IsA(stmt, PlannedStmt) &&

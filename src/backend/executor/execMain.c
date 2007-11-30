@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.300 2007/11/15 22:25:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.301 2007/11/30 21:22:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,6 +159,30 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 	if (queryDesc->plannedstmt->nParamExec > 0)
 		estate->es_param_exec_vals = (ParamExecData *)
 			palloc0(queryDesc->plannedstmt->nParamExec * sizeof(ParamExecData));
+
+	/*
+	 * If non-read-only query, set the command ID to mark output tuples with
+	 */
+	switch (queryDesc->operation)
+	{
+		case CMD_SELECT:
+			/* SELECT INTO and SELECT FOR UPDATE/SHARE need to mark tuples */
+			if (queryDesc->plannedstmt->intoClause != NULL ||
+				queryDesc->plannedstmt->rowMarks != NIL)
+				estate->es_output_cid = GetCurrentCommandId(true);
+			break;
+
+		case CMD_INSERT:
+		case CMD_DELETE:
+		case CMD_UPDATE:
+			estate->es_output_cid = GetCurrentCommandId(true);
+			break;
+
+		default:
+			elog(ERROR, "unrecognized operation code: %d",
+				 (int) queryDesc->operation);
+			break;
+	}
 
 	/*
 	 * Copy other important information into the EState
@@ -1285,7 +1309,7 @@ lnext:	;
 
 					test = heap_lock_tuple(erm->relation, &tuple, &buffer,
 										   &update_ctid, &update_xmax,
-										   estate->es_snapshot->curcid,
+										   estate->es_output_cid,
 										   lockmode, erm->noWait);
 					ReleaseBuffer(buffer);
 					switch (test)
@@ -1309,8 +1333,7 @@ lnext:	;
 								newSlot = EvalPlanQual(estate,
 													   erm->rti,
 													   &update_ctid,
-													   update_xmax,
-												estate->es_snapshot->curcid);
+													   update_xmax);
 								if (!TupIsNull(newSlot))
 								{
 									slot = planSlot = newSlot;
@@ -1503,7 +1526,7 @@ ExecInsert(TupleTableSlot *slot,
 	 * t_self field.
 	 */
 	newId = heap_insert(resultRelationDesc, tuple,
-						estate->es_snapshot->curcid,
+						estate->es_output_cid,
 						true, true);
 
 	IncrAppended();
@@ -1557,8 +1580,7 @@ ExecDelete(ItemPointer tupleid,
 	{
 		bool		dodelete;
 
-		dodelete = ExecBRDeleteTriggers(estate, resultRelInfo, tupleid,
-										estate->es_snapshot->curcid);
+		dodelete = ExecBRDeleteTriggers(estate, resultRelInfo, tupleid);
 
 		if (!dodelete)			/* "do nothing" */
 			return;
@@ -1575,7 +1597,7 @@ ExecDelete(ItemPointer tupleid,
 ldelete:;
 	result = heap_delete(resultRelationDesc, tupleid,
 						 &update_ctid, &update_xmax,
-						 estate->es_snapshot->curcid,
+						 estate->es_output_cid,
 						 estate->es_crosscheck_snapshot,
 						 true /* wait for commit */ );
 	switch (result)
@@ -1599,8 +1621,7 @@ ldelete:;
 				epqslot = EvalPlanQual(estate,
 									   resultRelInfo->ri_RangeTableIndex,
 									   &update_ctid,
-									   update_xmax,
-									   estate->es_snapshot->curcid);
+									   update_xmax);
 				if (!TupIsNull(epqslot))
 				{
 					*tupleid = update_ctid;
@@ -1708,8 +1729,7 @@ ExecUpdate(TupleTableSlot *slot,
 		HeapTuple	newtuple;
 
 		newtuple = ExecBRUpdateTriggers(estate, resultRelInfo,
-										tupleid, tuple,
-										estate->es_snapshot->curcid);
+										tupleid, tuple);
 
 		if (newtuple == NULL)	/* "do nothing" */
 			return;
@@ -1755,7 +1775,7 @@ lreplace:;
 	 */
 	result = heap_update(resultRelationDesc, tupleid, tuple,
 						 &update_ctid, &update_xmax,
-						 estate->es_snapshot->curcid,
+						 estate->es_output_cid,
 						 estate->es_crosscheck_snapshot,
 						 true /* wait for commit */ );
 	switch (result)
@@ -1779,8 +1799,7 @@ lreplace:;
 				epqslot = EvalPlanQual(estate,
 									   resultRelInfo->ri_RangeTableIndex,
 									   &update_ctid,
-									   update_xmax,
-									   estate->es_snapshot->curcid);
+									   update_xmax);
 				if (!TupIsNull(epqslot))
 				{
 					*tupleid = update_ctid;
@@ -1973,7 +1992,6 @@ ExecProcessReturning(ProjectionInfo *projectReturning,
  *	rti - rangetable index of table containing tuple
  *	*tid - t_ctid from the outdated tuple (ie, next updated version)
  *	priorXmax - t_xmax from the outdated tuple
- *	curCid - command ID of current command of my transaction
  *
  * *tid is also an output parameter: it's modified to hold the TID of the
  * latest version of the tuple (note this may be changed even on failure)
@@ -1983,7 +2001,7 @@ ExecProcessReturning(ProjectionInfo *projectReturning,
  */
 TupleTableSlot *
 EvalPlanQual(EState *estate, Index rti,
-			 ItemPointer tid, TransactionId priorXmax, CommandId curCid)
+			 ItemPointer tid, TransactionId priorXmax)
 {
 	evalPlanQual *epq;
 	EState	   *epqstate;
@@ -2063,17 +2081,17 @@ EvalPlanQual(EState *estate, Index rti,
 
 			/*
 			 * If tuple was inserted by our own transaction, we have to check
-			 * cmin against curCid: cmin >= curCid means our command cannot
-			 * see the tuple, so we should ignore it.  Without this we are
-			 * open to the "Halloween problem" of indefinitely re-updating the
-			 * same tuple.	(We need not check cmax because
+			 * cmin against es_output_cid: cmin >= current CID means our
+			 * command cannot see the tuple, so we should ignore it.  Without
+			 * this we are open to the "Halloween problem" of indefinitely
+			 * re-updating the same tuple. (We need not check cmax because
 			 * HeapTupleSatisfiesDirty will consider a tuple deleted by our
 			 * transaction dead, regardless of cmax.)  We just checked that
 			 * priorXmax == xmin, so we can test that variable instead of
 			 * doing HeapTupleHeaderGetXmin again.
 			 */
 			if (TransactionIdIsCurrentTransactionId(priorXmax) &&
-				HeapTupleHeaderGetCmin(tuple.t_data) >= curCid)
+				HeapTupleHeaderGetCmin(tuple.t_data) >= estate->es_output_cid)
 			{
 				ReleaseBuffer(buffer);
 				return NULL;
@@ -2360,6 +2378,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	epqstate->es_snapshot = estate->es_snapshot;
 	epqstate->es_crosscheck_snapshot = estate->es_crosscheck_snapshot;
 	epqstate->es_range_table = estate->es_range_table;
+	epqstate->es_output_cid = estate->es_output_cid;
 	epqstate->es_result_relations = estate->es_result_relations;
 	epqstate->es_num_result_relations = estate->es_num_result_relations;
 	epqstate->es_result_relation_info = estate->es_result_relation_info;
@@ -2718,7 +2737,7 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 
 	heap_insert(estate->es_into_relation_descriptor,
 				tuple,
-				estate->es_snapshot->curcid,
+				estate->es_output_cid,
 				estate->es_into_relation_use_wal,
 				false);			/* never any point in using FSM */
 

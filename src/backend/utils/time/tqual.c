@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.107 2007/11/15 21:14:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.108 2007/11/30 21:22:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -382,7 +382,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
 		}
 		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple)))
 		{
-			if (HeapTupleHeaderGetCmin(tuple) >= GetCurrentCommandId())
+			if (HeapTupleHeaderGetCmin(tuple) >= GetCurrentCommandId(false))
 				return false;	/* inserted after scan started */
 
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
@@ -401,7 +401,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
 				return true;
 			}
 
-			if (HeapTupleHeaderGetCmax(tuple) >= GetCurrentCommandId())
+			if (HeapTupleHeaderGetCmax(tuple) >= GetCurrentCommandId(false))
 				return true;	/* deleted after scan started */
 			else
 				return false;	/* deleted before scan started */
@@ -443,7 +443,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
 	{
 		if (tuple->t_infomask & HEAP_IS_LOCKED)
 			return true;
-		if (HeapTupleHeaderGetCmax(tuple) >= GetCurrentCommandId())
+		if (HeapTupleHeaderGetCmax(tuple) >= GetCurrentCommandId(false))
 			return true;		/* deleted after scan started */
 		else
 			return false;		/* deleted before scan started */

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.253 2007/11/15 21:14:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.254 2007/11/30 21:22:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,6 +161,7 @@ static TransactionState CurrentTransactionState = &TopTransactionStateData;
  */
 static SubTransactionId currentSubTransactionId;
 static CommandId currentCommandId;
+static bool currentCommandIdUsed;
 
 /*
  * xactStartTimestamp is the value of transaction_timestamp().
@@ -435,11 +436,18 @@ GetCurrentSubTransactionId(void)
 
 /*
  *	GetCurrentCommandId
+ *
+ * "used" must be TRUE if the caller intends to use the command ID to mark
+ * inserted/updated/deleted tuples.  FALSE means the ID is being fetched
+ * for read-only purposes (ie, as a snapshot validity cutoff).  See
+ * CommandCounterIncrement() for discussion.
  */
 CommandId
-GetCurrentCommandId(void)
+GetCurrentCommandId(bool used)
 {
 	/* this is global to a transaction, not subtransaction-local */
+	if (used)
+		currentCommandIdUsed = true;
 	return currentCommandId;
 }
 
@@ -566,25 +574,50 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 void
 CommandCounterIncrement(void)
 {
-	currentCommandId += 1;
-	if (currentCommandId == FirstCommandId)		/* check for overflow */
+	/*
+	 * If the current value of the command counter hasn't been "used" to
+	 * mark tuples, we need not increment it, since there's no need to
+	 * distinguish a read-only command from others.  This helps postpone
+	 * command counter overflow, and keeps no-op CommandCounterIncrement
+	 * operations cheap.
+	 */
+	if (currentCommandIdUsed)
 	{
-		currentCommandId -= 1;
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+		currentCommandId += 1;
+		if (currentCommandId == FirstCommandId)	/* check for overflow */
+		{
+			currentCommandId -= 1;
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 		  errmsg("cannot have more than 2^32-1 commands in a transaction")));
+		}
+		currentCommandIdUsed = false;
+
+		/* Propagate new command ID into static snapshots, if set */
+		if (SerializableSnapshot)
+			SerializableSnapshot->curcid = currentCommandId;
+		if (LatestSnapshot)
+			LatestSnapshot->curcid = currentCommandId;
+
+		/*
+		 * Make any catalog changes done by the just-completed command
+		 * visible in the local syscache.  We obviously don't need to do
+		 * this after a read-only command.  (But see hacks in inval.c
+		 * to make real sure we don't think a command that queued inval
+		 * messages was read-only.)
+		 */
+		AtCommit_LocalCache();
 	}
 
-	/* Propagate new command ID into static snapshots, if set */
-	if (SerializableSnapshot)
-		SerializableSnapshot->curcid = currentCommandId;
-	if (LatestSnapshot)
-		LatestSnapshot->curcid = currentCommandId;
-
 	/*
-	 * make cache changes visible to me.
+	 * Make any other backends' catalog changes visible to me.
+	 *
+	 * XXX this is probably in the wrong place: CommandCounterIncrement
+	 * should be purely a local operation, most likely.  However fooling
+	 * with this will affect asynchronous cross-backend interactions,
+	 * which doesn't seem like a wise thing to do in late beta, so save
+	 * improving this for another day - tgl 2007-11-30
 	 */
-	AtCommit_LocalCache();
 	AtStart_Cache();
 }
 
@@ -1416,6 +1449,7 @@ StartTransaction(void)
 	s->subTransactionId = TopSubTransactionId;
 	currentSubTransactionId = TopSubTransactionId;
 	currentCommandId = FirstCommandId;
+	currentCommandIdUsed = false;
 
 	/*
 	 * must initialize resource-management stuff first
@@ -4007,13 +4041,14 @@ ShowTransactionStateRec(TransactionState s)
 
 	/* use ereport to suppress computation if msg will not be printed */
 	ereport(DEBUG3,
-			(errmsg_internal("name: %s; blockState: %13s; state: %7s, xid/subid/cid: %u/%u/%u, nestlvl: %d, children: %s",
+			(errmsg_internal("name: %s; blockState: %13s; state: %7s, xid/subid/cid: %u/%u/%u%s, nestlvl: %d, children: %s",
 							 PointerIsValid(s->name) ? s->name : "unnamed",
 							 BlockStateAsString(s->blockState),
 							 TransStateAsString(s->state),
 							 (unsigned int) s->transactionId,
 							 (unsigned int) s->subTransactionId,
 							 (unsigned int) currentCommandId,
+							 currentCommandIdUsed ? " (used)" : "",
 							 s->nestingLevel,
 							 nodeToString(s->childXids))));
 }

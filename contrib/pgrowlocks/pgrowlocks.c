@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.7 2007/08/28 22:59:30 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.8 2007/11/30 21:22:53 tgl Exp $
  *
  * Copyright (c) 2005-2006	Tatsuo Ishii
  *
@@ -117,8 +117,9 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		/* must hold a buffer lock to call HeapTupleSatisfiesUpdate */
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		if (HeapTupleSatisfiesUpdate(tuple->t_data, GetCurrentCommandId(), scan->rs_cbuf)
-			== HeapTupleBeingUpdated)
+		if (HeapTupleSatisfiesUpdate(tuple->t_data,
+									 GetCurrentCommandId(false),
+									 scan->rs_cbuf) == HeapTupleBeingUpdated)
 		{
 
 			char	  **values;
