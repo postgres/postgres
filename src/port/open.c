@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.17 2006/10/04 00:30:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/open.c,v 1.17.2.1 2007/11/30 11:16:46 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,22 +85,7 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 						((fileFlags & O_DSYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
 						NULL)) == INVALID_HANDLE_VALUE)
 	{
-		switch (GetLastError())
-		{
-				/* EMFILE, ENFILE should not occur from CreateFile. */
-			case ERROR_PATH_NOT_FOUND:
-			case ERROR_FILE_NOT_FOUND:
-				errno = ENOENT;
-				break;
-			case ERROR_FILE_EXISTS:
-				errno = EEXIST;
-				break;
-			case ERROR_ACCESS_DENIED:
-				errno = EACCES;
-				break;
-			default:
-				errno = EINVAL;
-		}
+		_dosmaperr(GetLastError());
 		return -1;
 	}
 
