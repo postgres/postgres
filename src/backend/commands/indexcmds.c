@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.167 2007/11/15 21:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.168 2007/12/01 23:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,8 +80,6 @@ static bool relationHasPrimaryKey(Relation rel);
  *		to index on.
  * 'predicate': the partial-index condition, or NULL if none.
  * 'options': reloptions from WITH (in list-of-DefElem form).
- * 'src_options': reloptions from the source index, if this is a cloned
- *		index produced by CREATE TABLE LIKE ... INCLUDING INDEXES
  * 'unique': make the index enforce uniqueness.
  * 'primary': mark the index as a primary key in the catalogs.
  * 'isconstraint': index is for a PRIMARY KEY or UNIQUE constraint,
@@ -103,7 +101,6 @@ DefineIndex(RangeVar *heapRelation,
 			List *attributeList,
 			Expr *predicate,
 			List *options,
-			char *src_options,
 			bool unique,
 			bool primary,
 			bool isconstraint,
@@ -396,16 +393,9 @@ DefineIndex(RangeVar *heapRelation,
 	}
 
 	/*
-	 * Parse AM-specific options, convert to text array form, validate.  The
-	 * src_options introduced due to using indexes via the "CREATE LIKE
-	 * INCLUDING INDEXES" statement also need to be merged here
+	 * Parse AM-specific options, convert to text array form, validate.
 	 */
-	if (src_options)
-		reloptions = unflatten_reloptions(src_options);
-	else
-		reloptions = (Datum) 0;
-
-	reloptions = transformRelOptions(reloptions, options, false, false);
+	reloptions = transformRelOptions((Datum) 0, options, false, false);
 
 	(void) index_reloptions(amoptions, reloptions, true);
 

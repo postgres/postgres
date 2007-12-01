@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.6 2007/11/15 21:14:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.7 2007/12/01 23:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/reloptions.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
+#include "nodes/makefuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
@@ -144,6 +145,50 @@ transformRelOptions(Datum oldOptions, List *defList,
 		result = makeArrayResult(astate, CurrentMemoryContext);
 	else
 		result = (Datum) 0;
+
+	return result;
+}
+
+
+/*
+ * Convert the text-array format of reloptions into a List of DefElem.
+ * This is the inverse of transformRelOptions().
+ */
+List *
+untransformRelOptions(Datum options)
+{
+	List	   *result = NIL;
+	ArrayType  *array;
+	Datum	   *optiondatums;
+	int			noptions;
+	int			i;
+
+	/* Nothing to do if no options */
+	if (options == (Datum) 0)
+		return result;
+
+	array = DatumGetArrayTypeP(options);
+
+	Assert(ARR_ELEMTYPE(array) == TEXTOID);
+
+	deconstruct_array(array, TEXTOID, -1, false, 'i',
+					  &optiondatums, NULL, &noptions);
+
+	for (i = 0; i < noptions; i++)
+	{
+		char	   *s;
+		char	   *p;
+		Node	   *val = NULL;
+
+		s = DatumGetCString(DirectFunctionCall1(textout, optiondatums[i]));
+		p = strchr(s, '=');
+		if (p)
+		{
+			*p++ = '\0';
+			val = (Node *) makeString(pstrdup(p));
+		}
+		result = lappend(result, makeDefElem(pstrdup(s), val));
+	}
 
 	return result;
 }

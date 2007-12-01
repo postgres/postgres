@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.31 2007/11/15 21:14:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.32 2007/12/01 23:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,6 +206,10 @@ extern long changeDependencyFor(Oid classId, Oid objectId,
 extern bool sequenceIsOwned(Oid seqId, Oid *tableId, int32 *colId);
 
 extern void markSequenceUnowned(Oid seqId);
+
+extern Oid	get_constraint_index(Oid constraintId);
+
+extern Oid	get_index_constraint(Oid indexId);
 
 /* in pg_shdepend.c */
 

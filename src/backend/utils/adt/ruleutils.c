@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.265 2007/11/15 21:14:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.266 2007/12/01 23:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,6 @@ static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags);
 static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
 				   int prettyFlags);
-static Oid	get_constraint_index(Oid constraintId);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
@@ -195,6 +194,7 @@ static char *generate_relation_name(Oid relid);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
+static char *flatten_reloptions(Oid relid);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
 
@@ -1381,68 +1381,6 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_NULL();
-}
-
-
-/*
- * get_constraint_index
- *		Given the OID of a unique or primary-key constraint, return the
- *		OID of the underlying unique index.
- *
- * Return InvalidOid if the index couldn't be found; this suggests the
- * given OID is bogus, but we leave it to caller to decide what to do.
- */
-static Oid
-get_constraint_index(Oid constraintId)
-{
-	Oid			indexId = InvalidOid;
-	Relation	depRel;
-	ScanKeyData key[3];
-	SysScanDesc scan;
-	HeapTuple	tup;
-
-	/* Search the dependency table for the dependent index */
-	depRel = heap_open(DependRelationId, AccessShareLock);
-
-	ScanKeyInit(&key[0],
-				Anum_pg_depend_refclassid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(ConstraintRelationId));
-	ScanKeyInit(&key[1],
-				Anum_pg_depend_refobjid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(constraintId));
-	ScanKeyInit(&key[2],
-				Anum_pg_depend_refobjsubid,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(0));
-
-	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
-							  SnapshotNow, 3, key);
-
-	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-	{
-		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
-
-		/*
-		 * We assume any internal dependency of an index on the constraint
-		 * must be what we are looking for.  (The relkind test is just
-		 * paranoia; there shouldn't be any such dependencies otherwise.)
-		 */
-		if (deprec->classid == RelationRelationId &&
-			deprec->objsubid == 0 &&
-			deprec->deptype == DEPENDENCY_INTERNAL &&
-			get_rel_relkind(deprec->objid) == RELKIND_INDEX)
-		{
-			indexId = deprec->objid;
-			break;
-		}
-	}
-
-	systable_endscan(scan);
-	heap_close(depRel, AccessShareLock);
-
-	return indexId;
 }
 
 
@@ -5507,7 +5445,7 @@ string_to_text(char *str)
 /*
  * Generate a C string representing a relation's reloptions, or NULL if none.
  */
-char *
+static char *
 flatten_reloptions(Oid relid)
 {
 	char	   *result = NULL;
@@ -5540,35 +5478,6 @@ flatten_reloptions(Oid relid)
 	}
 
 	ReleaseSysCache(tuple);
-
-	return result;
-}
-
-/*
- * Generate an Array Datum representing a relation's reloptions using
- * a C string
- */
-Datum
-unflatten_reloptions(char *reloptstring)
-{
-	Datum		result = (Datum) 0;
-
-	if (reloptstring)
-	{
-		Datum		sep,
-					relopts;
-
-		/*
-		 * We want to use text_to_array(reloptstring, ', ') --- but
-		 * DirectFunctionCall2(text_to_array) does not work, because
-		 * text_to_array() relies on fcinfo to be valid.  So use
-		 * OidFunctionCall2.
-		 */
-		sep = DirectFunctionCall1(textin, CStringGetDatum(", "));
-		relopts = DirectFunctionCall1(textin, CStringGetDatum(reloptstring));
-
-		result = OidFunctionCall2(F_TEXT_TO_ARRAY, relopts, sep);
-	}
 
 	return result;
 }

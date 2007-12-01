@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.24 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.25 2007/12/01 23:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,11 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "miscadmin.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 
 
 static bool isObjectPinned(const ObjectAddress *object, Relation rel);
@@ -261,6 +263,62 @@ changeDependencyFor(Oid classId, Oid objectId,
 }
 
 /*
+ * isObjectPinned()
+ *
+ * Test if an object is required for basic database functionality.
+ * Caller must already have opened pg_depend.
+ *
+ * The passed subId, if any, is ignored; we assume that only whole objects
+ * are pinned (and that this implies pinning their components).
+ */
+static bool
+isObjectPinned(const ObjectAddress *object, Relation rel)
+{
+	bool		ret = false;
+	SysScanDesc scan;
+	HeapTuple	tup;
+	ScanKeyData key[2];
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->classId));
+
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->objectId));
+
+	scan = systable_beginscan(rel, DependReferenceIndexId, true,
+							  SnapshotNow, 2, key);
+
+	/*
+	 * Since we won't generate additional pg_depend entries for pinned
+	 * objects, there can be at most one entry referencing a pinned object.
+	 * Hence, it's sufficient to look at the first returned tuple; we don't
+	 * need to loop.
+	 */
+	tup = systable_getnext(scan);
+	if (HeapTupleIsValid(tup))
+	{
+		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
+
+		if (foundDep->deptype == DEPENDENCY_PIN)
+			ret = true;
+	}
+
+	systable_endscan(scan);
+
+	return ret;
+}
+
+
+/*
+ * Various special-purpose lookups and manipulations of pg_depend.
+ */
+
+
+/*
  * Detect whether a sequence is marked as "owned" by a column
  *
  * An ownership marker is an AUTO dependency from the sequence to the
@@ -359,52 +417,120 @@ markSequenceUnowned(Oid seqId)
 	heap_close(depRel, RowExclusiveLock);
 }
 
+
 /*
- * isObjectPinned()
+ * get_constraint_index
+ *		Given the OID of a unique or primary-key constraint, return the
+ *		OID of the underlying unique index.
  *
- * Test if an object is required for basic database functionality.
- * Caller must already have opened pg_depend.
- *
- * The passed subId, if any, is ignored; we assume that only whole objects
- * are pinned (and that this implies pinning their components).
+ * Return InvalidOid if the index couldn't be found; this suggests the
+ * given OID is bogus, but we leave it to caller to decide what to do.
  */
-static bool
-isObjectPinned(const ObjectAddress *object, Relation rel)
+Oid
+get_constraint_index(Oid constraintId)
 {
-	bool		ret = false;
+	Oid			indexId = InvalidOid;
+	Relation	depRel;
+	ScanKeyData key[3];
 	SysScanDesc scan;
 	HeapTuple	tup;
-	ScanKeyData key[2];
+
+	/* Search the dependency table for the dependent index */
+	depRel = heap_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object->classId));
-
+				ObjectIdGetDatum(ConstraintRelationId));
 	ScanKeyInit(&key[1],
 				Anum_pg_depend_refobjid,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object->objectId));
+				ObjectIdGetDatum(constraintId));
+	ScanKeyInit(&key[2],
+				Anum_pg_depend_refobjsubid,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(0));
 
-	scan = systable_beginscan(rel, DependReferenceIndexId, true,
-							  SnapshotNow, 2, key);
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+							  SnapshotNow, 3, key);
 
-	/*
-	 * Since we won't generate additional pg_depend entries for pinned
-	 * objects, there can be at most one entry referencing a pinned object.
-	 * Hence, it's sufficient to look at the first returned tuple; we don't
-	 * need to loop.
-	 */
-	tup = systable_getnext(scan);
-	if (HeapTupleIsValid(tup))
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
-		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
+		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
 
-		if (foundDep->deptype == DEPENDENCY_PIN)
-			ret = true;
+		/*
+		 * We assume any internal dependency of an index on the constraint
+		 * must be what we are looking for.  (The relkind test is just
+		 * paranoia; there shouldn't be any such dependencies otherwise.)
+		 */
+		if (deprec->classid == RelationRelationId &&
+			deprec->objsubid == 0 &&
+			deprec->deptype == DEPENDENCY_INTERNAL &&
+			get_rel_relkind(deprec->objid) == RELKIND_INDEX)
+		{
+			indexId = deprec->objid;
+			break;
+		}
 	}
 
 	systable_endscan(scan);
+	heap_close(depRel, AccessShareLock);
 
-	return ret;
+	return indexId;
+}
+
+/*
+ * get_index_constraint
+ *		Given the OID of an index, return the OID of the owning unique or
+ *		primary-key constraint, or InvalidOid if no such constraint.
+ */
+Oid
+get_index_constraint(Oid indexId)
+{
+	Oid			constraintId = InvalidOid;
+	Relation	depRel;
+	ScanKeyData key[3];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	/* Search the dependency table for the index */
+	depRel = heap_open(DependRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationRelationId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(indexId));
+	ScanKeyInit(&key[2],
+				Anum_pg_depend_objsubid,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(0));
+
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+							  SnapshotNow, 3, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
+
+		/*
+		 * We assume any internal dependency on a constraint
+		 * must be what we are looking for.
+		 */
+		if (deprec->refclassid == ConstraintRelationId &&
+			deprec->refobjsubid == 0 &&
+			deprec->deptype == DEPENDENCY_INTERNAL)
+		{
+			constraintId = deprec->refobjid;
+			break;
+		}
+	}
+
+	systable_endscan(scan);
+	heap_close(depRel, AccessShareLock);
+
+	return constraintId;
 }
