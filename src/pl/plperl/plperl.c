@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.94.2.7 2007/11/22 17:47:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.94.2.8 2007/12/01 15:39:49 adunstan Exp $
  *
  **********************************************************************/
 
@@ -150,6 +150,8 @@ static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc);
 static void plperl_init_shared_libs(pTHX);
 static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
+static SV  *plperl_create_sub(char *s, bool trusted);
+static SV  *plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo);
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -396,6 +398,52 @@ plperl_safe_init(void)
 	else
 	{
 		eval_pv(SAFE_OK, FALSE);
+		if (GetDatabaseEncoding() == PG_UTF8)
+		{
+
+			/* 
+			 * Fill in just enough information to set up this perl
+			 * function in the safe container and call it.
+			 * For some reason not entirely clear, it prevents errors that
+			 * can arise from the regex code later trying to load
+			 * utf8 modules.
+			 */
+
+			plperl_proc_desc desc;			
+			FunctionCallInfoData fcinfo;
+			FmgrInfo outfunc;
+			HeapTuple   typeTup;
+			Form_pg_type typeStruct;
+			SV *ret;
+			SV *func;
+
+			/* make sure we don't call ourselves recursively */
+			plperl_safe_init_done = true;
+
+			/* compile the function */
+			func = plperl_create_sub(
+				"return shift =~ /\\xa9/i ? 'true' : 'false' ;",
+				true);
+
+
+			/* set up to call the function with a single text argument 'a' */
+			desc.reference = func;
+			desc.nargs = 1;
+			desc.arg_is_rowtype[0] = false;
+			fcinfo.argnull[0] = false;
+			fcinfo.arg[0] = 
+				DatumGetTextP(DirectFunctionCall1(textin, 
+												  CStringGetDatum("a")));
+			typeTup = SearchSysCache(TYPEOID,
+									 TEXTOID,
+									 0, 0, 0);
+			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+			fmgr_info(typeStruct->typoutput,&(desc.arg_out_func[0]));
+			ReleaseSysCache(typeTup);
+			
+			/* and make the call */
+			ret = plperl_call_perl_func(&desc,&fcinfo);
+		}
 	}
 
 	plperl_safe_init_done = true;
