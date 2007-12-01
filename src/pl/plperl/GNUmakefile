@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.32 2007/12/01 15:20:34 adunstan Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.33 2007/12/01 15:30:09 adunstan Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -27,7 +27,6 @@ override CFLAGS += -Wno-comment
 endif
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -I$(perl_archlibexp)/CORE
-override CFLAGS += -fPIC
 
 rpathdir = $(perl_archlibexp)/CORE
 
