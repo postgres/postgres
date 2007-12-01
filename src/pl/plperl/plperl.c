@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.133 2007/12/01 15:20:34 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.134 2007/12/01 17:58:42 tgl Exp $
  *
  **********************************************************************/
 
@@ -23,6 +23,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
+#include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -508,7 +509,6 @@ plperl_safe_init(void)
 		eval_pv(SAFE_OK, FALSE);
 		if (GetDatabaseEncoding() == PG_UTF8)
 		{
-
 			/* 
 			 * Fill in just enough information to set up this perl
 			 * function in the safe container and call it.
@@ -516,12 +516,8 @@ plperl_safe_init(void)
 			 * can arise from the regex code later trying to load
 			 * utf8 modules.
 			 */
-
 			plperl_proc_desc desc;			
 			FunctionCallInfoData fcinfo;
-			FmgrInfo outfunc;
-			HeapTuple   typeTup;
-			Form_pg_type typeStruct;
 			SV *ret;
 			SV *func;
 
@@ -529,29 +525,21 @@ plperl_safe_init(void)
 			plperl_safe_init_done = true;
 
 			/* compile the function */
-			func = plperl_create_sub(
-				"utf8fix",
-				"return shift =~ /\\xa9/i ? 'true' : 'false' ;",
-				true);
-
+			func = plperl_create_sub("utf8fix",
+							 "return shift =~ /\\xa9/i ? 'true' : 'false' ;",
+									 true);
 
 			/* set up to call the function with a single text argument 'a' */
 			desc.reference = func;
 			desc.nargs = 1;
 			desc.arg_is_rowtype[0] = false;
+			fmgr_info(F_TEXTOUT, &(desc.arg_out_func[0]));
+
+			fcinfo.arg[0] = DirectFunctionCall1(textin, CStringGetDatum("a"));
 			fcinfo.argnull[0] = false;
-			fcinfo.arg[0] = 
-				DatumGetTextP(DirectFunctionCall1(textin, 
-												  CStringGetDatum("a")));
-			typeTup = SearchSysCache(TYPEOID,
-									 TEXTOID,
-									 0, 0, 0);
-			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-			fmgr_info(typeStruct->typoutput,&(desc.arg_out_func[0]));
-			ReleaseSysCache(typeTup);
 			
 			/* and make the call */
-			ret = plperl_call_perl_func(&desc,&fcinfo);
+			ret = plperl_call_perl_func(&desc, &fcinfo);
 		}
 	}
 
