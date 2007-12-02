@@ -2,7 +2,7 @@
  <title>pg_trgm</title>
  
  <indexterm zone="pgtrgm">
-  <primary>pgtrgm</primary>
+  <primary>pg_trgm</primary>
  </indexterm>
 
  <para>
@@ -211,4 +211,3 @@ CREATE INDEX words_idx ON words USING gin(word gist_trgm_ops);
  </sect2>
 
 </sect1>
-

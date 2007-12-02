@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.56 2007/01/31 20:56:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.57 2007/12/02 22:33:20 tgl Exp $ -->
 
  <appendix id="datetime-appendix">
   <title>Date/Time Support</title>
@@ -20,7 +20,7 @@
    dates and times.
   </para>
 
-  <sect1>
+  <sect1 id="datetime-input-rules">
    <title>Date/Time Input Interpretation</title>
 
    <para>

@@ -1,12 +1,12 @@
 <sect1 id="pgfreespacemap">
- <title>pgfreespacemap</title>
+ <title>pg_freespacemap</title>
  
  <indexterm zone="pgfreespacemap">
-  <primary>pgfreespacemap</primary>
+  <primary>pg_freespacemap</primary>
  </indexterm>
 
  <para>
-  This modules provides the means for examining the free space map (FSM). It
+  This module provides a means for examining the free space map (FSM). It
   consists of two C functions: <literal>pg_freespacemap_relations()</literal> 
   and <literal>pg_freespacemap_pages()</literal> that return a set 
   of records, plus two views <literal>pg_freespacemap_relations</literal> and 
@@ -240,4 +240,3 @@ regression=# SELECT c.relname, p.relblocknumber, p.bytes
   </para>
  </sect2>
 </sect1>
-

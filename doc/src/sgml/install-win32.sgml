@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.42 2007/11/28 15:42:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.43 2007/12/02 22:33:20 tgl Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -40,7 +40,7 @@
   <productname>Windows 98</productname>.
  </para>
 
- <sect1>
+ <sect1 id="install-win32-full">
   <title>Building with <productname>Visual C++ 2005</productname></title>
 
  <para>
@@ -354,7 +354,7 @@
 
  </sect1>
 
- <sect1>
+ <sect1 id="install-win32-libpq">
   <title>Building <application>libpq</application> with
   <productname>Visual C++</productname> or
   <productname>Borland C++</productname></title>

@@ -1,5 +1,10 @@
-<sect1>
+<sect1 id="adminpack">
  <title>adminpack</title>
+ 
+ <indexterm zone="adminpack">
+  <primary>adminpack</primary>
+ </indexterm>
+
  <para>
   adminpack is a PostgreSQL standard module that implements a number of
   support functions which pgAdmin and other administration and management tools
@@ -29,4 +34,3 @@
  </sect2>
 
 </sect1>
-

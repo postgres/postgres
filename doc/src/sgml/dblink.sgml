@@ -1,14 +1,16 @@
-<!-- <reference> -->
 <sect1 id="dblink">
  <title>dblink</title>
+ 
+ <indexterm zone="dblink">
+  <primary>dblink</primary>
+ </indexterm>
+
  <para>
-  dblink is a contrib module which allows connections with
+  <literal>dblink</> is a module which allows connections with
   other databases.
  </para>
 
- <!-- dblink_connect -->
-
- <refentry>
+ <refentry id="CONTRIB-DBLINK-CONNECT">
   <refnamediv>
    <refname>dblink_connect</refname>
    <refpurpose>opens a persistent connection to a remote database</refpurpose>
@@ -68,8 +70,7 @@
   </refsect1>
  </refentry> 
 
- <!-- dblink_disconnect -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-DISCONNECT">
   <refnamediv>
    <refname>dblink_disconnect</refname>
    <refpurpose>closes a persistent connection to a remote database</refpurpose>
@@ -117,8 +118,7 @@
   </refsect1>
  </refentry> 
 
- <!-- dblink_open -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-OPEN">
   <refnamediv>
    <refname>dblink_open</refname>
    <refpurpose>opens a cursor on a remote database</refpurpose>
@@ -211,8 +211,7 @@
   </refsect1>
  </refentry>
 
- <!-- dblink_fetch -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-FETCH">
   <refnamediv>
    <refname>dblink_fetch</refname>
    <refpurpose>returns a set from an open cursor on a remote database</refpurpose>
@@ -327,8 +326,7 @@
   </refsect1>
  </refentry>
 
- <!-- dblink_close -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-CLOSE">
   <refnamediv>
    <refname>dblink_close</refname>
    <refpurpose>closes a cursor on a remote database</refpurpose>
@@ -425,8 +423,7 @@
   </refsect1>
  </refentry>
 
- <!-- dblink_exec -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-EXEC">
   <refnamediv>
    <refname>dblink_exec</refname>
    <refpurpose>executes an UPDATE/INSERT/DELETE on a remote database</refpurpose>
@@ -527,8 +524,7 @@
   </refsect1>
  </refentry>
 
- <!-- dblink_current_query -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-CURRENT-QUERY">
   <refnamediv>
    <refname>dblink_current_query</refname>
    <refpurpose>returns the current query string</refpurpose>
@@ -567,8 +563,7 @@
   </refsect1>
  </refentry>
 
- <!-- dblink_get_pkey -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-GET-PKEY">
   <refnamediv>
    <refname>dblink_get_pkey</refname>
    <refpurpose>returns the position and field names of a relation's 
@@ -618,8 +613,7 @@
   </refsect1>
  </refentry>
 
- <!-- dblink_build_sql_insert -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-BUILD-SQL-INSERT">
   <refnamediv>
    <refname>dblink_build_sql_insert</refname>
    <refpurpose>
@@ -695,8 +689,7 @@
   </refsect1>
  </refentry>
 
- <!-- dblink_build_sql_delete -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-BUILD-SQL-DELETE">
   <refnamediv>
    <refname>dblink_build_sql_delete</refname>
    <refpurpose>builds a delete statement using supplied values for selection
@@ -770,8 +763,7 @@
   </refsect1>
  </refentry> 
 
- <!-- dblink_build_sql_update -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-BUILD-SQL-UPDATE">
   <refnamediv>
    <refname>dblink_build_sql_update</refname>
    <refpurpose>builds an update statement using a local tuple, replacing
@@ -846,8 +838,7 @@
   </refsect1>
  </refentry>
 
- <!-- dblink_get_connections -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-GET-CONNECTIONS">
   <refnamediv>
    <refname>dblink_get_connections</refname>
    <refpurpose>returns a text array of all active named dblink connections</refpurpose>
@@ -881,8 +872,7 @@
   </refsect1>
  </refentry> 
 
- <!-- dblinkd_is_busy -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-IS-BUSY">
   <refnamediv>
    <refname>dblink_is_busy</refname>
    <refpurpose>checks to see if named connection is busy with an async query</refpurpose>
@@ -922,8 +912,7 @@
   </refsect1>
  </refentry>
 
- <!-- dblink_cancel_query -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-CANCEL-QUERY">
   <refnamediv>
    <refname>dblink_cancel_query</refname>
    <refpurpose>cancels any active query on the named connection</refpurpose>
@@ -961,8 +950,7 @@
   </refsect1>
  </refentry>
 
- <!-- dblink_error_message -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-ERROR-MESSAGE">
   <refnamediv>
    <refname>dblink_error_message</refname>
    <refpurpose>gets last error message on the named connection</refpurpose>
@@ -1000,8 +988,7 @@
   </refsect1>
  </refentry> 
 
- <!-- dblink -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK">
   <refnamediv>
    <refname>dblink</refname>
    <refpurpose>returns a set from a remote database</refpurpose>
@@ -1146,8 +1133,7 @@
   </refsect1>
  </refentry>
 
- <!-- dblink_send_query -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-SEND-QUERY">
   <refnamediv>
    <refname>dblink_send_query</refname>
    <refpurpose>sends an async query to a remote database</refpurpose>
@@ -1192,14 +1178,13 @@
     <literal>
      SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
      SELECT * FROM 
-      dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 < 3') AS t1;
+      dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3') AS t1;
     </literal>
    </para>
   </refsect1>
  </refentry> 
 
- <!-- dblink_get_result -->
- <refentry>
+ <refentry id="CONTRIB-DBLINK-GET-RESULT">
   <refnamediv>
    <refname>dblink_get_result</refname>
    <refpurpose>gets an async query result</refpurpose>
@@ -1259,7 +1244,7 @@
  (1 row)
  
  contrib_regression=#   SELECT * from
- contrib_regression-#    dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
+ contrib_regression-#    dblink_send_query('dtest1', 'select * from foo where f1 &lt; 3') as t1;
   t1
  ----
    1
@@ -1279,7 +1264,7 @@
  (0 rows)
  
  contrib_regression=#   SELECT * from
-    dblink_send_query('dtest1', 'select * from foo where f1 < 3; select * from foo where f1 > 6') as t1;
+    dblink_send_query('dtest1', 'select * from foo where f1 &lt; 3; select * from foo where f1 &gt; 6') as t1;
   t1
  ----
    1

@@ -1,14 +1,12 @@
-<sect1>
- <!--
+<sect1 id="btree-gist">
+ <title>btree_gist</title>
+ 
  <indexterm zone="btree-gist">
-  <primary>btree-gist</primary>
+  <primary>btree_gist</primary>
  </indexterm>
- -->
-
- <title>btree-gist</title>
 
  <para>
-  btree-gist is a B-Tree implementation using GiST that supports the int2, int4,
+  btree_gist is a B-Tree implementation using GiST that supports the int2, int4,
   int8, float4, float8 timestamp with/without time zone, time
   with/without time zone, date, interval, oid, money, macaddr, char,
   varchar/text, bytea, numeric, bit, varbit and inet/cidr types.
@@ -37,4 +35,3 @@
  </sect2>
 
 </sect1>
-

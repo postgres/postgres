@@ -1,12 +1,12 @@
-<sect1 id="buffercache">
+<sect1 id="pgbuffercache">
  <title>pg_buffercache</title>
  
- <indexterm zone="buffercache">
+ <indexterm zone="pgbuffercache">
   <primary>pg_buffercache</primary>
  </indexterm>
 
  <para>
-  <literal>pg_buffercache</literal> module provides the means for examining 
+  The <literal>pg_buffercache</literal> module provides a means for examining
   what's happening to the buffercache at any given time without having to
   restart or rebuild the server with debugging code added. The intent is to 
   do for the buffercache what pg_locks does for locks.
@@ -118,4 +118,3 @@
  </sect2>
 
 </sect1>
-

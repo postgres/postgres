@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.54 2007/12/02 21:13:34 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.55 2007/12/02 22:33:20 tgl Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -109,13 +109,13 @@
 <!entity oid2name        SYSTEM "oid2name.sgml">
 <!entity pageinspect     SYSTEM "pageinspect.sgml">
 <!entity pgbench         SYSTEM "pgbench.sgml">
-<!entity buffercache     SYSTEM "buffercache.sgml">
+<!entity pgbuffercache   SYSTEM "pgbuffercache.sgml">
 <!entity pgcrypto        SYSTEM "pgcrypto.sgml">
-<!entity freespacemap    SYSTEM "freespacemap.sgml">
+<!entity pgfreespacemap  SYSTEM "pgfreespacemap.sgml">
 <!entity pgrowlocks      SYSTEM "pgrowlocks.sgml">
-<!entity standby         SYSTEM "standby.sgml">
+<!entity pgstandby       SYSTEM "pgstandby.sgml">
 <!entity pgstattuple     SYSTEM "pgstattuple.sgml">
-<!entity trgm            SYSTEM "trgm.sgml">
+<!entity pgtrgm          SYSTEM "pgtrgm.sgml">
 <!entity seg             SYSTEM "seg.sgml">
 <!entity sslinfo         SYSTEM "sslinfo.sgml">
 <!entity tablefunc       SYSTEM "tablefunc.sgml">
