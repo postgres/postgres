@@ -1,0 +1,78 @@
+<sect1 id="dict-xsyn">
+ <title>dict_xsyn</title>
+ 
+ <indexterm zone="dict-xsyn">
+  <primary>dict_xsyn</primary>
+ </indexterm>
+
+ <para>
+  The Extended Synonym Dictionary module replaces words with groups of their
+  synonyms, and so makes it possible to search for a word using any of its
+  synonyms.
+ </para>
+
+ <sect2>
+  <title>Configuration</title>
+  <para>
+   A <literal>dict_xsyn</> dictionary accepts the following options:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     KEEPORIG controls whether the original word is included, or only its
+     synonyms. Default is 'true'.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     RULES is the base name of the file containing the list of synonyms.
+     This file must be in $(prefix)/share/tsearch_data/, and its name must
+     end in ".rules" (which is not included in the RULES parameter).
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   The rules file has the following format:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Each line represents a group of synonyms for a single word, which is
+     given first on the line. Synonyms are separated by whitespace:
+    </para>
+    <programlisting>
+word syn1 syn2 syn3
+    </programlisting>
+   </listitem>
+   <listitem>
+    <para>
+     Sharp ('#') sign is a comment delimiter. It may appear at any position
+     inside the line.  The rest of the line will be skipped.
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   Look at xsyn_sample.rules, which is installed in $(prefix)/share/tsearch_data/,
+   for an example.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Usage</title>
+  <programlisting>
+mydb=# SELECT ts_lexize('xsyn','word');
+ts_lexize
+----------------
+{word,syn1,syn2,syn3)
+  </programlisting>
+  <para>
+   Change dictionary options:
+  </para>
+  <programlisting>
+mydb# ALTER TEXT SEARCH DICTIONARY xsyn (KEEPORIG=false);
+ALTER TEXT SEARCH DICTIONARY
+  </programlisting>
+ </sect2>
+
+</sect1>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.53 2007/11/14 01:09:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.54 2007/12/02 21:13:34 tgl Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -96,6 +96,8 @@
 <!entity chkpass         SYSTEM "chkpass.sgml">
 <!entity cube            SYSTEM "cube.sgml">
 <!entity dblink          SYSTEM "dblink.sgml">
+<!entity dict-int        SYSTEM "dict-int.sgml">
+<!entity dict-xsyn       SYSTEM "dict-xsyn.sgml">
 <!entity earthdistance   SYSTEM "earthdistance.sgml">
 <!entity fuzzystrmatch   SYSTEM "fuzzystrmatch.sgml">
 <!entity hstore          SYSTEM "hstore.sgml">

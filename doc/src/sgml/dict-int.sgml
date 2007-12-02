@@ -1,0 +1,78 @@
+<sect1 id="dict-int">
+ <title>dict_int</title>
+ 
+ <indexterm zone="dict-int">
+  <primary>dict_int</primary>
+ </indexterm>
+
+ <para>
+  The motivation for this example dictionary is to control the indexing of
+  integers (signed and unsigned), and, consequently, to minimize the number of
+  unique words which greatly affect the performance of searching.
+ </para>
+
+ <sect2>
+  <title>Configuration</title>
+  <para>
+   The dictionary accepts two options: 
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     The MAXLEN parameter specifies the maximum length (number of digits)
+     allowed in an integer word.  The default value is 6.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     The REJECTLONG parameter specifies if an overlength integer should be
+     truncated or ignored. If REJECTLONG=FALSE (default), the dictionary returns
+     the first MAXLEN digits of the integer. If REJECTLONG=TRUE, the
+     dictionary treats an overlength integer as a stop word, so that it will
+     not be indexed.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Usage</title>
+
+  <para>
+   Running the installation script creates a text search template
+   <literal>intdict_template</> and a dictionary <literal>intdict</>
+   based on it, with the default parameters.  You can alter the
+   parameters, for example
+
+<programlisting>
+mydb# ALTER TEXT SEARCH DICTIONARY intdict (MAXLEN = 4, REJECTLONG = true);
+ALTER TEXT SEARCH DICTIONARY
+</programlisting>
+
+   or create new dictionaries based on the template.
+  </para>
+
+  <para>
+   To test the dictionary, you can try
+
+<programlisting>
+mydb# select ts_lexize('intdict', '12345678');
+ ts_lexize
+-----------
+ {123456}
+</programlisting>
+
+   but real-world usage will involve including it in a text search
+   configuration as described in <xref linkend="textsearch">.
+   That might look like this:
+
+<programlisting>
+ALTER TEXT SEARCH CONFIGURATION english
+    ALTER MAPPING FOR int, uint WITH intdict;
+</programlisting>
+
+  </para>
+ </sect2>
+
+</sect1>
