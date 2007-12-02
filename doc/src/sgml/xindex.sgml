@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.60 2007/04/25 19:48:27 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.61 2007/12/02 04:36:40 tgl Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -893,6 +893,13 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
      any assumption about the behavior of operators with particular names.
     </para>
    </note>
+
+  <para>
+   Another important point is that an operator that
+   appears in a hash operator family is a candidate for hash joins,
+   hash aggregation, and related optimizations.  The hash operator family
+   is essential here since it identifies the hash function(s) to use.
+  </para>
  </sect2>
 
  <sect2 id="xindex-opclass-features">
@@ -950,7 +957,7 @@ CREATE OPERATOR CLASS polygon_ops
    is used.  In GIN, the <literal>STORAGE</> type identifies the type of
    the <quote>key</> values, which normally is different from the type
    of the indexed column &mdash; for example, an operator class for
-   integer array columns might have keys that are just integers.  The
+   integer-array columns might have keys that are just integers.  The
    GIN <function>extractValue</> and <function>extractQuery</> support
    routines are responsible for extracting keys from indexed values.
   </para>
