@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.77 2007/11/28 15:42:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.78 2007/12/02 19:20:32 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2383,8 +2383,8 @@ CHECK ( outletID BETWEEN 200 AND 300 )
 
       <listitem>
        <para>
-        Optionally, define a rule or trigger to redirect modifications
-        of the master table to the appropriate partition.
+        Optionally, define a trigger or rule to redirect data inserted into
+        the master table to the appropriate partition.
        </para>
       </listitem>
 
@@ -2443,16 +2443,16 @@ CREATE TABLE measurement (
         Next we create one partition for each active month:
 
 <programlisting>
-CREATE TABLE measurement_y2004m02 ( ) INHERITS (measurement);
-CREATE TABLE measurement_y2004m03 ( ) INHERITS (measurement);
+CREATE TABLE measurement_y2006m02 ( ) INHERITS (measurement);
+CREATE TABLE measurement_y2006m03 ( ) INHERITS (measurement);
 ...
-CREATE TABLE measurement_y2005m11 ( ) INHERITS (measurement);
-CREATE TABLE measurement_y2005m12 ( ) INHERITS (measurement);
-CREATE TABLE measurement_y2006m01 ( ) INHERITS (measurement);
+CREATE TABLE measurement_y2007m11 ( ) INHERITS (measurement);
+CREATE TABLE measurement_y2007m12 ( ) INHERITS (measurement);
+CREATE TABLE measurement_y2008m01 ( ) INHERITS (measurement);
 </programlisting>
 
         Each of the partitions are complete tables in their own right,
-        but they inherit their definition from the
+        but they inherit their definitions from the
         <structname>measurement</> table.
        </para>
 
@@ -2470,21 +2470,21 @@ CREATE TABLE measurement_y2006m01 ( ) INHERITS (measurement);
         table creation script becomes:
 
  <programlisting>
-CREATE TABLE measurement_y2004m02 (
-    CHECK ( logdate &gt;= DATE '2004-02-01' AND logdate &lt; DATE '2004-03-01' )
+CREATE TABLE measurement_y2006m02 (
+    CHECK ( logdate &gt;= DATE '2006-02-01' AND logdate &lt; DATE '2006-03-01' )
 ) INHERITS (measurement);
-CREATE TABLE measurement_y2004m03 (
-    CHECK ( logdate &gt;= DATE '2004-03-01' AND logdate &lt; DATE '2004-04-01' )
+CREATE TABLE measurement_y2006m03 (
+    CHECK ( logdate &gt;= DATE '2006-03-01' AND logdate &lt; DATE '2006-04-01' )
 ) INHERITS (measurement);
 ...
-CREATE TABLE measurement_y2005m11 (
-    CHECK ( logdate &gt;= DATE '2005-11-01' AND logdate &lt; DATE '2005-12-01' )
+CREATE TABLE measurement_y2007m11 (
+    CHECK ( logdate &gt;= DATE '2007-11-01' AND logdate &lt; DATE '2007-12-01' )
 ) INHERITS (measurement);
-CREATE TABLE measurement_y2005m12 (
-    CHECK ( logdate &gt;= DATE '2005-12-01' AND logdate &lt; DATE '2006-01-01' )
+CREATE TABLE measurement_y2007m12 (
+    CHECK ( logdate &gt;= DATE '2007-12-01' AND logdate &lt; DATE '2008-01-01' )
 ) INHERITS (measurement);
-CREATE TABLE measurement_y2006m01 (
-    CHECK ( logdate &gt;= DATE '2006-01-01' AND logdate &lt; DATE '2006-02-01' )
+CREATE TABLE measurement_y2008m01 (
+    CHECK ( logdate &gt;= DATE '2008-01-01' AND logdate &lt; DATE '2008-02-01' )
 ) INHERITS (measurement);
 </programlisting>
        </para>
@@ -2495,12 +2495,12 @@ CREATE TABLE measurement_y2006m01 (
         We probably need indexes on the key columns too:
 
  <programlisting>
-CREATE INDEX measurement_y2004m02_logdate ON measurement_y2004m02 (logdate);
-CREATE INDEX measurement_y2004m03_logdate ON measurement_y2004m03 (logdate);
+CREATE INDEX measurement_y2006m02_logdate ON measurement_y2006m02 (logdate);
+CREATE INDEX measurement_y2006m03_logdate ON measurement_y2006m03 (logdate);
 ...
-CREATE INDEX measurement_y2005m11_logdate ON measurement_y2005m11 (logdate);
-CREATE INDEX measurement_y2005m12_logdate ON measurement_y2005m12 (logdate);
-CREATE INDEX measurement_y2006m01_logdate ON measurement_y2006m01 (logdate);
+CREATE INDEX measurement_y2007m11_logdate ON measurement_y2007m11 (logdate);
+CREATE INDEX measurement_y2007m12_logdate ON measurement_y2007m12 (logdate);
+CREATE INDEX measurement_y2008m01_logdate ON measurement_y2008m01 (logdate);
 </programlisting>
 
         We choose not to add further indexes at this time.
@@ -2509,56 +2509,72 @@ CREATE INDEX measurement_y2006m01_logdate ON measurement_y2006m01 (logdate);
 
       <listitem>
        <para>
+        We want our application to be able to say <literal>INSERT INTO
+        measurement ...</> and have the data be redirected into the
+        appropriate partition table.  We can arrange that by attaching
+        a suitable trigger function to the master table.
         If data will be added only to the latest partition, we can
-        set up a very simple rule to insert data. We must
-        redefine this each month so that it always points to the
-        current partition:
+        use a very simple trigger function:
 
 <programlisting>
-CREATE OR REPLACE RULE measurement_current_partition AS
-ON INSERT TO measurement
-DO INSTEAD
-    INSERT INTO measurement_y2006m01 VALUES ( NEW.city_id,
-                                              NEW.logdate,
-                                              NEW.peaktemp,
-                                              NEW.unitsales );
+CREATE OR REPLACE FUNCTION measurement_insert_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO measurement_y2008m01 VALUES (NEW.*);
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
 </programlisting>
 
+        After creating the function, we create a trigger which
+        calls the trigger function:
+
+<programlisting>
+CREATE TRIGGER insert_measurement_trigger
+    BEFORE INSERT ON measurement
+    FOR EACH ROW EXECUTE PROCEDURE measurement_insert_trigger();
+</programlisting>
+
+        We must redefine the trigger function each month so that it always
+        points to the current partition.  The trigger definition does
+        not need to be updated, however.
+       </para>
+
+       <para>
         We might want to insert data and have the server automatically
         locate the partition into which the row should be added. We
-        could do this with a more complex set of rules as shown below:
+        could do this with a more complex trigger function, for example:
 
 <programlisting>
-CREATE RULE measurement_insert_y2004m02 AS
-ON INSERT TO measurement WHERE
-    ( logdate &gt;= DATE '2004-02-01' AND logdate &lt; DATE '2004-03-01' )
-DO INSTEAD
-    INSERT INTO measurement_y2004m02 VALUES ( NEW.city_id,
-                                              NEW.logdate,
-                                              NEW.peaktemp,
-                                              NEW.unitsales );
-...
-CREATE RULE measurement_insert_y2005m12 AS
-ON INSERT TO measurement WHERE
-    ( logdate &gt;= DATE '2005-12-01' AND logdate &lt; DATE '2006-01-01' )
-DO INSTEAD
-    INSERT INTO measurement_y2005m12 VALUES ( NEW.city_id,
-                                              NEW.logdate,
-                                              NEW.peaktemp,
-                                              NEW.unitsales );
-CREATE RULE measurement_insert_y2006m01 AS
-ON INSERT TO measurement WHERE
-    ( logdate &gt;= DATE '2006-01-01' AND logdate &lt; DATE '2006-02-01' )
-DO INSTEAD
-    INSERT INTO measurement_y2006m01 VALUES ( NEW.city_id,
-                                              NEW.logdate,
-                                              NEW.peaktemp,
-                                              NEW.unitsales );
+CREATE OR REPLACE FUNCTION measurement_insert_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF ( logdate &gt;= DATE '2006-02-01' AND logdate &lt; DATE '2006-03-01' ) THEN
+        INSERT INTO measurement_y2006m02 VALUES (NEW.*);
+    ELSIF ( logdate &gt;= DATE '2006-03-01' AND logdate &lt; DATE '2006-04-01' ) THEN
+        INSERT INTO measurement_y2006m03 VALUES (NEW.*);
+    ...
+    ELSIF ( logdate &gt;= DATE '2008-01-01' AND logdate &lt; DATE '2008-02-01' ) THEN
+        INSERT INTO measurement_y2008m01 VALUES (NEW.*);
+    ELSE
+        RAISE EXCEPTION 'Date out of range.  Fix the measurement_insert_trigger() function!';
+    END IF;
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
 </programlisting>
 
-        Note that the <literal>WHERE</literal> clause in each rule
-        exactly matches the <literal>CHECK</literal>
-        constraint for its partition.
+        The trigger definition is the same as before.
+        Note that each <literal>IF</literal> test must exactly match the
+        <literal>CHECK</literal> constraint for its partition.
+       </para>
+
+       <para>
+        While this function is more complex than the single-month case,
+        it doesn't need to be updated as often, since branches can be
+        added in advance of being needed.
        </para>
       </listitem>
      </orderedlist>
@@ -2571,24 +2587,6 @@ DO INSTEAD
      script that generates the required DDL automatically.
     </para>
 
-   <para>
-    Partitioning can also be arranged using a <literal>UNION ALL</literal>
-    view:
-
-<programlisting>
-CREATE VIEW measurement AS
-          SELECT * FROM measurement_y2004m02
-UNION ALL SELECT * FROM measurement_y2004m03
-...
-UNION ALL SELECT * FROM measurement_y2005m11
-UNION ALL SELECT * FROM measurement_y2005m12
-UNION ALL SELECT * FROM measurement_y2006m01;
-</programlisting>
-
-    However, the need to
-    recreate the view adds an extra step to adding and dropping
-    individual partitions of the data set.
-   </para>
    </sect2>
 
    <sect2 id="ddl-partitioning-managing-partitions">
@@ -2609,7 +2607,7 @@ UNION ALL SELECT * FROM measurement_y2006m01;
      The simplest option for removing old data is simply to drop the partition
      that is no longer necessary:
 <programlisting>
-DROP TABLE measurement_y2003m02;
+DROP TABLE measurement_y2006m02;
 </programlisting>
      This can very quickly delete millions of records because it doesn't have
      to individually delete every record.
@@ -2620,7 +2618,7 @@ DROP TABLE measurement_y2003m02;
      the partitioned table but retain access to it as a table in its own
      right:
 <programlisting>
-ALTER TABLE measurement_y2003m02 NO INHERIT measurement;
+ALTER TABLE measurement_y2006m02 NO INHERIT measurement;
 </programlisting>
      This allows further operations to be performed on the data before
      it is dropped. For example, this is often a useful time to back up
@@ -2636,8 +2634,8 @@ ALTER TABLE measurement_y2003m02 NO INHERIT measurement;
      were created above:
 
 <programlisting>
-CREATE TABLE measurement_y2006m02 (
-    CHECK ( logdate &gt;= DATE '2006-02-01' AND logdate &lt; DATE '2006-03-01' )
+CREATE TABLE measurement_y2008m02 (
+    CHECK ( logdate &gt;= DATE '2008-02-01' AND logdate &lt; DATE '2008-03-01' )
 ) INHERITS (measurement);
 </programlisting>
 
@@ -2647,13 +2645,13 @@ CREATE TABLE measurement_y2006m02 (
      transformed prior to it appearing in the partitioned table:
 
 <programlisting>
-CREATE TABLE measurement_y2006m02
+CREATE TABLE measurement_y2008m02
   (LIKE measurement INCLUDING DEFAULTS INCLUDING CONSTRAINTS);
-ALTER TABLE measurement_y2006m02 ADD CONSTRAINT y2006m02
-   CHECK ( logdate &gt;= DATE '2006-02-01' AND logdate &lt; DATE '2006-03-01' );
-\copy measurement_y2006m02 from 'measurement_y2006m02'
+ALTER TABLE measurement_y2008m02 ADD CONSTRAINT y2008m02
+   CHECK ( logdate &gt;= DATE '2008-02-01' AND logdate &lt; DATE '2008-03-01' );
+\copy measurement_y2008m02 from 'measurement_y2008m02'
 -- possibly some other data preparation work
-ALTER TABLE measurement_y2006m02 INHERIT measurement;
+ALTER TABLE measurement_y2008m02 INHERIT measurement;
 </programlisting>
     </para>
    </sect2>
@@ -2672,7 +2670,7 @@ ALTER TABLE measurement_y2006m02 INHERIT measurement;
 
 <programlisting>
 SET constraint_exclusion = on;
-SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
+SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
 </programlisting>
 
     Without constraint exclusion, the above query would scan each of
@@ -2691,23 +2689,23 @@ SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
 
 <programlisting>
 SET constraint_exclusion = off;
-EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
+EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
 
                                           QUERY PLAN
 -----------------------------------------------------------------------------------------------
  Aggregate  (cost=158.66..158.68 rows=1 width=0)
    -&gt;  Append  (cost=0.00..151.88 rows=2715 width=0)
          -&gt;  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2006-01-01'::date)
-         -&gt;  Seq Scan on measurement_y2004m02 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2006-01-01'::date)
-         -&gt;  Seq Scan on measurement_y2004m03 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2006-01-01'::date)
+               Filter: (logdate &gt;= '2008-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2006m02 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2008-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2006m03 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2008-01-01'::date)
 ...
-         -&gt;  Seq Scan on measurement_y2005m12 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2006-01-01'::date)
-         -&gt;  Seq Scan on measurement_y2006m01 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2006-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2007m12 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2008-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2008m01 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2008-01-01'::date)
 </programlisting>
 
     Some or all of the partitions might use index scans instead of
@@ -2718,15 +2716,15 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
 
 <programlisting>
 SET constraint_exclusion = on;
-EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
+EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
                                           QUERY PLAN
 -----------------------------------------------------------------------------------------------
  Aggregate  (cost=63.47..63.48 rows=1 width=0)
    -&gt;  Append  (cost=0.00..60.75 rows=1086 width=0)
          -&gt;  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2006-01-01'::date)
-         -&gt;  Seq Scan on measurement_y2006m01 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2006-01-01'::date)
+               Filter: (logdate &gt;= '2008-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2008m01 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2008-01-01'::date)
 </programlisting>
    </para>
 
@@ -2739,6 +2737,69 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
     a large part of the partition or just a small part.  An index will
     be helpful in the latter case but not the former.
    </para>
+
+   </sect2>
+
+   <sect2 id="ddl-partitioning-alternatives">
+   <title>Alternative Partitioning Methods</title>
+
+    <para>
+     A different approach to redirecting inserts into the appropriate
+     partition table is to set up rules, instead of a trigger, on the
+     master table.  For example:
+
+<programlisting>
+CREATE RULE measurement_insert_y2006m02 AS
+ON INSERT TO measurement WHERE
+    ( logdate &gt;= DATE '2006-02-01' AND logdate &lt; DATE '2006-03-01' )
+DO INSTEAD
+    INSERT INTO measurement_y2006m02 VALUES (NEW.*);
+...
+CREATE RULE measurement_insert_y2008m01 AS
+ON INSERT TO measurement WHERE
+    ( logdate &gt;= DATE '2008-01-01' AND logdate &lt; DATE '2008-02-01' )
+DO INSTEAD
+    INSERT INTO measurement_y2008m01 VALUES (NEW.*);
+</programlisting>
+
+     A rule has significantly more overhead than a trigger, but the overhead
+     is paid once per query rather than once per row, so this method might be
+     advantageous for bulk-insert situations.  In most cases, however, the
+     trigger method will offer better performance.
+    </para>
+
+    <para>
+     Be aware that <command>COPY</> ignores rules.  If you want to
+     use <command>COPY</> to insert data, you'll need to copy into the correct
+     partition table rather than into the master.  <command>COPY</> does fire
+     triggers, so you can use it normally if you use the trigger approach.
+    </para>
+
+    <para>
+     Another disadvantage of the rule approach is that there is no simple
+     way to force an error if the set of rules doesn't cover the insertion
+     date; the data will silently go into the master table instead.
+    </para>
+
+    <para>
+     Partitioning can also be arranged using a <literal>UNION ALL</literal>
+     view, instead of table inheritance.  For example,
+
+<programlisting>
+CREATE VIEW measurement AS
+          SELECT * FROM measurement_y2006m02
+UNION ALL SELECT * FROM measurement_y2006m03
+...
+UNION ALL SELECT * FROM measurement_y2007m11
+UNION ALL SELECT * FROM measurement_y2007m12
+UNION ALL SELECT * FROM measurement_y2008m01;
+</programlisting>
+
+     However, the need to recreate the view adds an extra step to adding and
+     dropping individual partitions of the data set.  In practice this
+     method has little to recommend it compared to using inheritance.
+    </para>
+
    </sect2>
 
    <sect2 id="ddl-partitioning-caveats">
@@ -2749,24 +2810,38 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
    <itemizedlist>
     <listitem>
      <para>
-      There is currently no way to verify that all of the
+      There is no automatic way to verify that all of the
       <literal>CHECK</literal> constraints are mutually
-      exclusive. Care is required by the database designer.
+      exclusive.  It is safer to create code that generates
+      partitions and creates and/or modifies associated objects than
+      to write each by hand.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      There is currently no simple way to specify that rows must not be
-      inserted into the master table. A <literal>CHECK (false)</literal>
-      constraint on the master table would be inherited by all child
-      tables, so that cannot be used for this purpose.  One possibility is
-      to set up an <literal>ON INSERT</> trigger on the master table that
-      always raises an error.  (Alternatively, such a trigger could be
-      used to redirect the data into the proper child table, instead of
-      using a set of rules as suggested above.)
+      The schemes shown here assume that the partition key column(s)
+      of a row never change, or at least do not change enough to require
+      it to move to another partition.  An <command>UPDATE</> that attempts
+      to do that will fail because of the <literal>CHECK</> constraints.
+      If you need to handle such cases, you can put suitable update triggers
+      on the partition tables, but it makes management of the structure
+      much more complicated.
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      If you are using manual <command>VACUUM</command> or
+      <command>ANALYZE</command> commands, don't forget that
+      you need to run them on each partition individually. A command like
+<programlisting>
+ANALYZE measurement;
+</programlisting>
+      will only process the master table.
+     </para>
+    </listitem>
+
    </itemizedlist>
    </para>
 
@@ -2801,18 +2876,9 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
      <para>
       All constraints on all partitions of the master table are examined
       during constraint exclusion, so large numbers of partitions are likely
-      to increase query planning time considerably.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Don't forget that you still need to run <command>ANALYZE</command>
-      on each partition individually. A command like:
-<programlisting>
-ANALYZE measurement;
-</programlisting>
-      will only process the master table.
+      to increase query planning time considerably.  Partitioning using
+      these techniques will work well with up to perhaps a hundred partitions;
+      don't try to use many thousands of partitions.
      </para>
     </listitem>
 
