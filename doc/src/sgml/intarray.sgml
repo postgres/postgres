@@ -131,15 +131,15 @@ test=# select intset(1);
     </thead>
     <tbody>
      <row>
-      <entry><literal>int[] && int[]</literal></entry>
+      <entry><literal>int[] &amp;&amp; int[]</literal></entry>
       <entry>overlap - returns TRUE if arrays have at least one common element</entry>
      </row>
      <row>
-      <entry><literal>int[] @> int[]</literal></entry>
+      <entry><literal>int[] @&gt; int[]</literal></entry>
       <entry>contains - returns TRUE if left array contains right array</entry>
      </row>
      <row>
-      <entry><literal>int[] <@ int[]</literal></entry>
+      <entry><literal>int[] &lt;@ int[]</literal></entry>
       <entry>contained - returns TRUE if left array is contained in right array</entry>
      </row>
      <row>
@@ -172,7 +172,7 @@ test=# select intset(1);
      </row>
 
      <row>
-      <entry><literal>int[] & int[]</literal></entry>
+      <entry><literal>int[] &amp; int[]</literal></entry>
       <entry>returns intersection of arrays</entry>
      </row>
 
@@ -192,7 +192,7 @@ test=# select intset(1);
    </tgroup>
   </table>
   <para>
-   (Before PostgreSQL 8.2, the containment operators @> and <@ were
+   (Before PostgreSQL 8.2, the containment operators @&gt; and &lt;@ were
    respectively called @ and ~.  These names are still available, but are
    deprecated and will eventually be retired.  Notice that the old names
    are reversed from the convention formerly followed by the core geometric
@@ -213,12 +213,12 @@ CREATE unique index message_section_map_key2 ON message_section_map (sid, mid );
 CREATE INDEX message_rdtree_idx ON message USING GIST ( sections gist__int_ops);
 
 -- select some messages with section in 1 OR 2 - OVERLAP operator
-SELECT message.mid FROM message WHERE message.sections && '{1,2}'; 
+SELECT message.mid FROM message WHERE message.sections &amp;&amp; '{1,2}'; 
 
 -- select messages contains in sections 1 AND 2 - CONTAINS operator
-SELECT message.mid FROM message WHERE message.sections @> '{1,2}';
+SELECT message.mid FROM message WHERE message.sections @&gt; '{1,2}';
 -- the same, CONTAINED operator
-SELECT message.mid FROM message WHERE '{1,2}' <@ message.sections;
+SELECT message.mid FROM message WHERE '{1,2}' &lt;@ message.sections;
   </programlisting>
  </sect2>
 
@@ -230,7 +230,7 @@ SELECT message.mid FROM message WHERE '{1,2}' <@ message.sections;
   <programlisting>
   cd ./bench
   1. createdb TEST
-  2. psql TEST < ../_int.sql
+  2. psql TEST &lt; ../_int.sql
   3. ./create_test.pl | psql TEST
   4. ./bench.pl - perl script to benchmark queries, supports OR, AND queries
                   with/without RD-Tree. Run script without arguments to

@@ -287,28 +287,28 @@ a = b                Same as
   </para>
 
   <programlisting>
-a && b                Overlaps
+a &amp;&amp; b                Overlaps
   </programlisting>
   <para>
    The cubements a and b overlap.
   </para>
 
   <programlisting>
-a @> b                Contains
+a @&gt; b                Contains
   </programlisting>
   <para>
    The cubement a contains the cubement b.
   </para>
 
   <programlisting>
-a <@ b                Contained in
+a &lt;@ b                Contained in
   </programlisting>
   <para>
    The cubement a is contained in b.
   </para>
 
   <para>
-   (Before PostgreSQL 8.2, the containment operators @> and <@ were
+   (Before PostgreSQL 8.2, the containment operators @&gt; and &lt;@ were
    respectively called @ and ~.  These names are still available, but are
    deprecated and will eventually be retired.  Notice that the old names
    are reversed from the convention formerly followed by the core geometric
@@ -326,8 +326,8 @@ a <@ b                Contained in
   </para>
 
   <programlisting>
-[a, b] < [c, d]                Less than
-[a, b] > [c, d]                Greater than
+[a, b] &lt; [c, d]                Less than
+[a, b] &gt; [c, d]                Greater than
   </programlisting>
  
   <para>
@@ -462,10 +462,10 @@ a <@ b                Contained in
        is useful for creating bounding boxes around a point for searching for
        nearby points. All defined dimensions are changed by the radius. If n
        is greater than the number of defined dimensions and the cube is being
-       increased (r >= 0) then 0 is used as the base for the extra coordinates.
+       increased (r &gt;= 0) then 0 is used as the base for the extra coordinates.
        LL coordinates are decreased by r and UR coordinates are increased by r. 
        If a LL coordinate is increased to larger than the corresponding UR 
-       coordinate (this can only happen when r < 0) than both coordinates are 
+       coordinate (this can only happen when r &lt; 0) than both coordinates are 
        set to their average. To make it harder for people to break things there 
        is an effective maximum on the dimension of cubes of 100. This is set 
        in cubedata.h if you need something bigger.

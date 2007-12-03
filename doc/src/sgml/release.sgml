@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.558 2007/12/02 03:47:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.559 2007/12/03 23:49:50 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -4833,7 +4833,7 @@ current_date &lt; 2017-11-17
       </para>
 
       <para>
-       The new operators are <literal>&</> (and), <literal>|</>
+       The new operators are <literal>&amp;</> (and), <literal>|</>
        (or), <literal>~</> (not), <type>inet</> <literal>+</> <type>int8</>,
        <type>inet</> <literal>-</> <type>int8</>, and
        <type>inet</> <literal>-</> <type>inet</>.
@@ -8879,8 +8879,8 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
      <listitem>
       <para>
-       Remove the <literal>&lt;&lt</>, <literal>&gt;&gt;</>,
-       <literal>&amp;&lt</>, and <literal>&amp;&gt;</> operators from
+       Remove the <literal>&lt;&lt;</>, <literal>&gt;&gt;</>,
+       <literal>&amp;&lt;</>, and <literal>&amp;&gt;</> operators from
        <filename>/contrib/cube</>
       </para>
       <para>
@@ -10248,7 +10248,7 @@ typedefs (Michael)</para></listitem>
      <listitem>
       <para>
        This is the first <productname>PostgreSQL</productname> release
-       to run natively on <trademark class=registered>Microsoft Windows</> as
+       to run natively on <trademark class="registered">Microsoft Windows</> as
        a server. It can run as a <productname>Windows</> service. This
        release supports NT-based Windows releases like
        <productname>Windows 2000 SP4</>, <productname>Windows XP</>, and
@@ -19187,7 +19187,7 @@ Copy pg_ident.conf.sample into /lib directory in install (Bruce)
 Add SJIS UDC (NEC selection IBM kanji) support (Eiji Tokuya)
 Fix too long syslog message (Tatsuo)
 Fix problem with quoted indexes that are too long (Tom)
-JDBC ResultSet.getTimestamp() fix (Gregory Krasnow & Floyd Marinescu)
+JDBC ResultSet.getTimestamp() fix (Gregory Krasnow &amp; Floyd Marinescu)
 ecpg changes (Michael)
     </programlisting>
    </para>
@@ -21039,7 +21039,7 @@ Source Tree Changes
 Add new html development tools, and flow chart in /tools/backend
 Fix for SCO compiles
 Stratus computer port Robert Gillies
-Added support for shlib for BSD44_derived & i386_solaris
+Added support for shlib for BSD44_derived &amp; i386_solaris
 Make configure more automated(Brook)
 Add script to check regression test results
 Break parser functions into smaller files, group together(Bruce)
@@ -21225,7 +21225,7 @@ Enhancements
 ------------
 Default genetic optimizer GEQO parameter is now 8(Bruce)
 Allow use parameters in target list having aggregates in functions(Vadim)
-Added JDBC driver as an interface(Adrian & Peter)
+Added JDBC driver as an interface(Adrian &amp; Peter)
 pg_password utility
 Return number of rows inserted/affected by INSERT/UPDATE/DELETE etc.(Vadim)
 Triggers implemented with CREATE TRIGGER (SQL3)(Vadim)
@@ -21236,7 +21236,7 @@ Include reserved words for string handling, outer joins, and unions(Thomas)
 Implement extended comments ("/* ... */") using exclusive states(Thomas)
 Add "//" single-line comments(Bruce)
 Remove some restrictions on characters in operator names(Thomas)
-DEFAULT and CONSTRAINT for tables implemented (SQL92)(Vadim & Thomas)
+DEFAULT and CONSTRAINT for tables implemented (SQL92)(Vadim &amp; Thomas)
 Add text concatenation operator and function (SQL92)(Thomas)
 Support WITH TIME ZONE syntax (SQL92)(Thomas)
 Support INTERVAL unit TO unit syntax (SQL92)(Thomas)
@@ -21258,7 +21258,7 @@ Replace distance operator "&lt;===&gt;" with "&lt;-&gt;"(Thomas)
 Replace "above" operator "!^" with "&gt;^" and "below" operator "!|" with "&lt;^"(Thomas)
 Add routines for text trimming on both ends, substring, and string position(Thomas)
 Added conversion routines circle(box) and poly(circle)(Thomas)
-Allow internal sorts to be stored in memory rather than in files(Bruce & Vadim)
+Allow internal sorts to be stored in memory rather than in files(Bruce &amp; Vadim)
 Allow functions and operators on internally-identical types to succeed(Bruce)
 Speed up backend start-up after profiling analysis(Bruce)
 Inline frequently called functions for performance(Bruce)
@@ -21291,7 +21291,7 @@ new interfaces directory(Marc)
 Replace fopen() calls with calls to fd.c functions(Bruce)
 Make functions static where possible(Bruce)
 enclose unused functions in #ifdef NOT_USED(Bruce)
-Remove call to difftime() in timestamp support to fix SunOS(Bruce & Thomas)
+Remove call to difftime() in timestamp support to fix SunOS(Bruce &amp; Thomas)
 Changes for Digital Unix
 Portability fix for pg_dumpall(Bruce)
 Rename pg_attribute.attnvals to attdispersion(Bruce)
@@ -21299,12 +21299,12 @@ Rename pg_attribute.attnvals to attdispersion(Bruce)
 "built-in" manual page now "pgbuiltin"(Bruce)
 "drop" manual page now "drop_table"(Bruce)
 Add "create_trigger", "drop_trigger" manual pages(Thomas)
-Add constraints regression test(Vadim & Thomas)
+Add constraints regression test(Vadim &amp; Thomas)
 Add comments syntax regression test(Thomas)
 Add PGINDENT and support program(Bruce)
 Massive commit to run PGINDENT on all *.c and *.h files(Bruce)
 Files moved to /src/tools directory(Bruce)
-SPI and Trigger programming guides (Vadim & D'Arcy)
+SPI and Trigger programming guides (Vadim &amp; D'Arcy)
 </programlisting>
 </para>
 </sect2>
@@ -21611,7 +21611,7 @@ Allow libpq to distinguish between text value '' and null(Bruce)
 Allow non-postgres users with createdb privs to destroydb's
 Allow restriction on who can create C functions(Bryan)
 Allow restriction on who can do backend COPY(Bryan)
-Can shrink tables, pg_time and pg_log(Vadim & Erich)
+Can shrink tables, pg_time and pg_log(Vadim &amp; Erich)
 Change debug level 2 to print queries only, changed debug heading layout(Bruce)
 Change default decimal constant representation from float4 to float8(Bruce)
 European date format now set when postmaster is started

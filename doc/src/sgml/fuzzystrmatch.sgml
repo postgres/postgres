@@ -41,30 +41,30 @@ INSERT INTO s VALUES ('jack');
 
 SELECT * FROM s WHERE soundex(nm) = soundex('john');
 
-SELECT a.nm, b.nm FROM s a, s b WHERE soundex(a.nm) = soundex(b.nm) AND a.oid <> b.oid;
+SELECT a.nm, b.nm FROM s a, s b WHERE soundex(a.nm) = soundex(b.nm) AND a.oid &lt;&gt; b.oid;
 
 CREATE FUNCTION text_sx_eq(text, text) RETURNS boolean AS
 'select soundex($1) = soundex($2)'
 LANGUAGE SQL;
 
 CREATE FUNCTION text_sx_lt(text, text) RETURNS boolean AS
-'select soundex($1) < soundex($2)'
+'select soundex($1) &lt; soundex($2)'
 LANGUAGE SQL;
 
 CREATE FUNCTION text_sx_gt(text, text) RETURNS boolean AS
-'select soundex($1) > soundex($2)'
+'select soundex($1) &gt; soundex($2)'
 LANGUAGE SQL;
 
 CREATE FUNCTION text_sx_le(text, text) RETURNS boolean AS
-'select soundex($1) <= soundex($2)'
+'select soundex($1) &lt;= soundex($2)'
 LANGUAGE SQL;
 
 CREATE FUNCTION text_sx_ge(text, text) RETURNS boolean AS
-'select soundex($1) >= soundex($2)'
+'select soundex($1) &gt;= soundex($2)'
 LANGUAGE SQL;
 
 CREATE FUNCTION text_sx_ne(text, text) RETURNS boolean AS
-'select soundex($1) <> soundex($2)'
+'select soundex($1) &lt;&gt; soundex($2)'
 LANGUAGE SQL;
 
 DROP OPERATOR #= (text, text);
@@ -75,7 +75,7 @@ SELECT * FROM s WHERE text_sx_eq(nm, 'john');
 
 SELECT * FROM s WHERE s.nm #= 'john';
 
-SELECT * FROM s WHERE difference(s.nm, 'john') > 2;
+SELECT * FROM s WHERE difference(s.nm, 'john') &gt; 2;
   </programlisting>
  </sect2>
 

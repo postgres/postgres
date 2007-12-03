@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.84 2007/11/07 12:24:23 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.85 2007/12/03 23:49:50 tgl Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -4695,7 +4695,7 @@ cc -o myprog prog1.o prog2.o ... -lecpg
 ECPG = ecpg
 
 %.c: %.pgc
-        $(ECPG) $<
+        $(ECPG) $&lt;
 </programlisting>
   </para>
 

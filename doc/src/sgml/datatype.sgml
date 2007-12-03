@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.220 2007/11/27 16:46:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.221 2007/12/03 23:49:50 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3440,10 +3440,10 @@ SELECT 'fat:ab &amp; cat'::tsquery;
      function is convenient for performing such normalization:
 
 <programlisting>
-SELECT to_tsquery('Fat:ab & Cats');
+SELECT to_tsquery('Fat:ab &amp; Cats');
     to_tsquery    
 ------------------
- 'fat':AB & 'cat'
+ 'fat':AB &amp; 'cat'
 </programlisting>
     </para>
 

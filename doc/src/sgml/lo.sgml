@@ -102,7 +102,7 @@
   </itemizedlist>
 
   <para>
-   As the ODBC driver needs a permanent lo type (& JDBC could be optimised to
+   As the ODBC driver needs a permanent lo type (&amp; JDBC could be optimised to
    use it if it's Oid is fixed), and as the above issues can only be fixed by
    some internal changes, I feel it should become a permanent built-in type.
   </para>

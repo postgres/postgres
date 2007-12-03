@@ -173,7 +173,7 @@ CREATE TYPE tablefunc_crosstab_N AS (
      e.g. the provided crosstab2 function produces a set something like:
     </para>
     <programlisting>
-                      <== values  columns ==>
+                      &lt;== values  columns ==&gt;
            row_name   category_1   category_2
            ---------+------------+------------
              row1        val1         val2
@@ -286,7 +286,7 @@ crosstab(text sql, int N)
     the example crosstab function produces a set something like:
    </para>
    <programlisting>
-            <== values  columns ==>
+            &lt;== values  columns ==&gt;
 row_name   category_1   category_2
  ---------+------------+------------
    row1        val1         val2
@@ -479,7 +479,7 @@ SELECT DISTINCT cat FROM foo;
     the example crosstab function produces a set something like:
    </para>
    <programlisting>
-                      <== values  columns ==>
+                      &lt;== values  columns ==&gt;
            row_name   extra   cat1   cat2   cat3   cat4
            ---------+-------+------+------+------+------
              row1     extra1  val1   val2          val4

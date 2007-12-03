@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.79 2007/12/03 04:59:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.80 2007/12/03 23:49:50 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2312,7 +2312,7 @@ VALUES ('New York', NULL, NULL, 'NY');
 
     <para>
      To set up a partitioned table, do the following:
-     <orderedlist spacing=compact>
+     <orderedlist spacing="compact">
       <listitem>
        <para>
         Create the <quote>master</quote> table, from which all of the
@@ -2430,7 +2430,7 @@ CREATE TABLE measurement (
     </para>
 
     <para>
-     <orderedlist spacing=compact>
+     <orderedlist spacing="compact">
       <listitem>
        <para>
         The master table is the <structname>measurement</> table, declared

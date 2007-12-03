@@ -19,7 +19,7 @@
    -- create index
    CREATE INDEX testidx ON test USING gist (a);
    -- query
-   SELECT * FROM test WHERE a < 10;
+   SELECT * FROM test WHERE a &lt; 10;
   </programlisting>
  </sect2>
  

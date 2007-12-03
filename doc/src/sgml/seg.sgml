@@ -72,7 +72,7 @@ test=> select '6.25 .. 6.50'::seg as "pH";
   <para>
    The external representation of an interval is formed using one or two
    floating point numbers joined by the range operator ('..' or '...'). 
-   Optional certainty indicators (<, > and ~) are ignored by the internal 
+   Optional certainty indicators (&lt;, &gt; and ~) are ignored by the internal 
    logics, but are retained in the data.
   </para>
   
@@ -82,35 +82,35 @@ test=> select '6.25 .. 6.50'::seg as "pH";
     <tbody>
      <row>
       <entry>rule 1</entry>
-      <entry>seg -> boundary PLUMIN deviation</entry>
+      <entry>seg -&gt; boundary PLUMIN deviation</entry>
      </row>
      <row>
       <entry>rule 2</entry>
-      <entry>seg -> boundary RANGE boundary</entry>
+      <entry>seg -&gt; boundary RANGE boundary</entry>
      </row>
      <row>
       <entry>rule 3</entry>
-      <entry>seg -> boundary RANGE</entry>
+      <entry>seg -&gt; boundary RANGE</entry>
      </row>
      <row>
       <entry>rule 4</entry>
-      <entry>seg -> RANGE boundary</entry>
+      <entry>seg -&gt; RANGE boundary</entry>
      </row>
      <row>
       <entry>rule 5</entry>
-      <entry>seg -> boundary</entry>
+      <entry>seg -&gt; boundary</entry>
      </row>
      <row>
       <entry>rule 6</entry>
-      <entry>boundary -> FLOAT</entry>
+      <entry>boundary -&gt; FLOAT</entry>
      </row>
      <row>
       <entry>rule 7</entry>
-      <entry>boundary -> EXTENSION FLOAT</entry>
+      <entry>boundary -&gt; EXTENSION FLOAT</entry>
      </row>
      <row>
       <entry>rule 8</entry>
-      <entry>deviation -> FLOAT</entry>
+      <entry>deviation -&gt; FLOAT</entry>
      </row>
     </tbody>
    </tgroup>
@@ -142,7 +142,7 @@ test=> select '6.25 .. 6.50'::seg as "pH";
      </row>
      <row>
       <entry>EXTENSION</entry>
-      <entry>[<>~]</entry>
+      <entry>[&lt;&gt;~]</entry>
      </row>
     </tbody>
    </tgroup>
@@ -169,16 +169,16 @@ test=> select '6.25 .. 6.50'::seg as "pH";
       </entry>
      </row> 
      <row>
-      <entry><5.0</entry>
+      <entry>&lt;5.0</entry>
       <entry>
-       (rules 5,7) -- creates a point at 5.0; '<' is ignored but 
+       (rules 5,7) -- creates a point at 5.0; '&lt;' is ignored but 
        is preserved as a comment
       </entry>
      </row>
      <row>
-      <entry>>5.0</entry>
+      <entry>&gt;5.0</entry>
       <entry>
-       (rules 5,7) -- creates a point at 5.0; '>' is ignored but
+       (rules 5,7) -- creates a point at 5.0; '&gt;' is ignored but
        is preserved as a comment
       </entry>
      </row>
@@ -305,39 +305,39 @@ postgres=> select '10(+-)1'::seg as seg;
   <itemizedlist>
    <listitem>
     <programlisting>
-[a, b] << [c, d]        Is left of
+[a, b] &lt;&lt; [c, d]        Is left of
     </programlisting>
     <para>
      The left operand, [a, b], occurs entirely to the left of the
      right operand, [c, d], on the axis (-inf, inf). It means,
-     [a, b] << [c, d] is true if b < c and false otherwise
+     [a, b] &lt;&lt; [c, d] is true if b &lt; c and false otherwise
     </para>
    </listitem>
    <listitem>
     <programlisting>
-[a, b] >> [c, d]        Is right of
+[a, b] &gt;&gt; [c, d]        Is right of
     </programlisting>
     <para>
         [a, b] is occurs entirely to the right of [c, d]. 
-        [a, b] >> [c, d] is true if a > d and false otherwise
+        [a, b] &gt;&gt; [c, d] is true if a &gt; d and false otherwise
     </para>
    </listitem>
    <listitem>
     <programlisting>
-[a, b] &< [c, d]        Overlaps or is left of
+[a, b] &amp;&lt; [c, d]        Overlaps or is left of
     </programlisting>
     <para>
         This might be better read as "does not extend to right of".
-        It is true when b <= d.
+        It is true when b &lt;= d.
     </para>
    </listitem>
    <listitem>
     <programlisting>
-[a, b] &> [c, d]        Overlaps or is right of
+[a, b] &amp;&gt; [c, d]        Overlaps or is right of
     </programlisting>
     <para>
         This might be better read as "does not extend to left of".
-        It is true when a >= c.
+        It is true when a &gt;= c.
     </para>
    </listitem>
    <listitem>
@@ -351,7 +351,7 @@ postgres=> select '10(+-)1'::seg as seg;
    </listitem>
    <listitem>
     <programlisting>
-[a, b] && [c, d]        Overlaps
+[a, b] &amp;&amp; [c, d]        Overlaps
     </programlisting>
     <para>
         The segments [a, b] and [c, d] overlap.
@@ -359,25 +359,25 @@ postgres=> select '10(+-)1'::seg as seg;
    </listitem>
    <listitem>
     <programlisting>
-[a, b] @> [c, d]                Contains
+[a, b] @&gt; [c, d]                Contains
     </programlisting>
     <para>
         The segment [a, b] contains the segment [c, d], that is, 
-        a <= c and b >= d
+        a &lt;= c and b &gt;= d
     </para>
    </listitem>
    <listitem>
     <programlisting>
-[a, b] <@ [c, d]                Contained in
+[a, b] &lt;@ [c, d]                Contained in
     </programlisting>
     <para>
         The segment [a, b] is contained in [c, d], that is, 
-        a >= c and b <= d
+        a &gt;= c and b &lt;= d
     </para>
    </listitem>
   </itemizedlist>
   <para>
-   (Before PostgreSQL 8.2, the containment operators @> and <@ were
+   (Before PostgreSQL 8.2, the containment operators @&gt; and &lt;@ were
    respectively called @ and ~.  These names are still available, but are
    deprecated and will eventually be retired.  Notice that the old names
    are reversed from the convention formerly followed by the core geometric
@@ -393,8 +393,8 @@ postgres=> select '10(+-)1'::seg as seg;
   </para>
 
   <programlisting>
-[a, b] < [c, d]                Less than
-[a, b] > [c, d]                Greater than
+[a, b] &lt; [c, d]                Less than
+[a, b] &gt; [c, d]                Greater than
   </programlisting>
   <para>
    These operators do not make a lot of sense for any practical

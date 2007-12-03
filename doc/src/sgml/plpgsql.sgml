@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.121 2007/11/28 21:47:39 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.122 2007/12/03 23:49:50 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -704,7 +704,7 @@ IF x &lt; y THEN ...
 </programlisting>
      what happens behind the scenes is
 <programlisting>
-PREPARE <replaceable>statement_name</>(integer, integer) AS SELECT $1 < $2;
+PREPARE <replaceable>statement_name</>(integer, integer) AS SELECT $1 &lt; $2;
 </programlisting>
      and then this prepared statement is <command>EXECUTE</>d for each
      execution of the <command>IF</> statement, with the current values

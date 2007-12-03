@@ -15,7 +15,7 @@
  <sect2>
   <title>Definitions</title>
   <para>
-   A <emphasis>label</emphasis> of a node is a sequence of one or more words 
+   A <firstterm>label</firstterm> of a node is a sequence of one or more words 
    separated by blank character '_' and containing letters and digits ( for 
    example, [a-zA-Z0-9] for C locale). The length of a label is limited by 256 
    bytes.
@@ -24,9 +24,9 @@
    Example: 'Countries', 'Personal_Services'
   </para>
   <para>
-   A <emphasis>label path</emphasis> of a node is a sequence of one or more 
+   A <firstterm>label path</firstterm> of a node is a sequence of one or more 
    dot-separated labels l1.l2...ln, represents path from root to the node. The 
-   length of a label path is limited by 65Kb, but size <= 2Kb is preferrable. 
+   length of a label path is limited by 65Kb, but size &lt;= 2Kb is preferrable. 
    We consider it's not a strict limitation (maximal size of label path for 
    DMOZ catalogue - <ulink url="http://www.dmoz.org"></ulink>, is about 240 
    bytes!)
@@ -85,7 +85,7 @@
      </listitem>
      <listitem>
       <para>%     Don't account word separator '_' in label matching, that is 
-                     'Russian%' would match 'Russian_nations', but not 'Russian'
+                  'Russian%' would match 'Russian_nations', but not 'Russian'
       </para>
      </listitem>
     </itemizedlist>
@@ -143,7 +143,7 @@
     the end of word. The meaning of modifiers are the same as for lquery.
     </para>
     <para>
-     Example: <literal>'Europe & Russia*@ & !Transportation'</literal>
+     Example: <literal>'Europe &amp; Russia*@ &amp; !Transportation'</literal>
     </para>
     <para>
      Search paths contain words 'Europe' and 'Russia*' (case-insensitive) and
@@ -164,21 +164,21 @@
   <itemizedlist>
    <listitem>
     <para>
-     <literal><,>,<=,>=,=, <></literal>
+     <literal>&lt;,&gt;,&lt;=,&gt;=,=, &lt;&gt;</literal>
      - Have their usual meanings. Comparison is doing in the order of direct
      tree traversing, children of a node are sorted lexicographic.
     </para>
    </listitem>
    <listitem>
     <para>
-     <literal>ltree @> ltree</literal>
+     <literal>ltree @&gt; ltree</literal>
       - returns TRUE if left argument is an ancestor of right argument (or
       equal).
     </para>
    </listitem>
    <listitem>
     <para>
-     <literal>ltree <@ ltree </literal>
+     <literal>ltree &lt;@ ltree </literal>
      - returns TRUE if left argument is a descendant of right argument (or
      equal).
     </para>
@@ -216,13 +216,13 @@
   <itemizedlist>
    <listitem>
     <para>
-     <literal>ltree[] @> ltree, ltree <@ ltree[]</literal>
+     <literal>ltree[] @&gt; ltree, ltree &lt;@ ltree[]</literal>
      - returns TRUE if array ltree[] contains an ancestor of ltree.
     </para>
    </listitem>
    <listitem>
     <para>
-     <literal>ltree @> ltree[], ltree[] <@ ltree</literal>
+     <literal>ltree @&gt; ltree[], ltree[] &lt;@ ltree</literal>
      - returns TRUE if array ltree[] contains a descendant of ltree.
     </para>
    </listitem>
@@ -248,7 +248,7 @@
    </listitem>
    <listitem>
     <para>
-     <literal>ltree[] ?@> ltree, ltree ?<@ ltree[], ltree[] ?~ lquery, ltree[] ?@ ltxtquery</literal>
+     <literal>ltree[] ?@&gt; ltree, ltree ?&lt;@ ltree[], ltree[] ?~ lquery, ltree[] ?@ ltxtquery</literal>
 
      - returns first element of array ltree[] satisfies corresponding condition
      and NULL in vice versa.
@@ -292,7 +292,7 @@
    </listitem>
    <listitem>
     <para>GiST index over ltree[]:
-     <literal>ltree[]<@ ltree, ltree @> ltree[], @, ~, ?.</literal>
+     <literal>ltree[]&lt;@ ltree, ltree @&gt; ltree[], @, ~, ?.</literal>
     </para>
     <para>
      Example:
@@ -418,8 +418,8 @@
   <title>Example</title>
   <programlisting>
  createdb ltreetest
- psql ltreetest < /usr/local/pgsql/share/contrib/ltree.sql
- psql ltreetest < ltreetest.sql
+ psql ltreetest &lt; /usr/local/pgsql/share/contrib/ltree.sql
+ psql ltreetest &lt; ltreetest.sql
   </programlisting>
 
   <para>
@@ -445,7 +445,7 @@ shown below:
   </para>
 
   <programlisting>
-ltreetest=# select path from test where path <@ 'Top.Science';
+ltreetest=# select path from test where path &lt;@ 'Top.Science';
                 path                
 ------------------------------------
  Top.Science
@@ -481,7 +481,7 @@ ltreetest=# select path from test where path ~ '*.!pictures@.*.Astronomy.*';
    Full text search:
   </para>
   <programlisting>
-ltreetest=# select path from test where path @ 'Astro*% & !pictures@';
+ltreetest=# select path from test where path @ 'Astro*% &amp; !pictures@';
                 path                
 ------------------------------------
  Top.Science.Astronomy
@@ -490,7 +490,7 @@ ltreetest=# select path from test where path @ 'Astro*% & !pictures@';
  Top.Hobbies.Amateurs_Astronomy
 (4 rows)
 
-ltreetest=# select path from test where path @ 'Astro* & !pictures@';
+ltreetest=# select path from test where path @ 'Astro* &amp; !pictures@';
                 path                
 ------------------------------------
  Top.Science.Astronomy
@@ -502,7 +502,7 @@ ltreetest=# select path from test where path @ 'Astro* & !pictures@';
    Using Functions:
   </para>
   <programlisting>
-ltreetest=# select subpath(path,0,2)||'Space'||subpath(path,2) from test where path <@ 'Top.Science.Astronomy';
+ltreetest=# select subpath(path,0,2)||'Space'||subpath(path,2) from test where path &lt;@ 'Top.Science.Astronomy';
                  ?column?                 
 ------------------------------------------
  Top.Science.Space.Astronomy
@@ -519,7 +519,7 @@ LANGUAGE SQL IMMUTABLE;
   </para>
 
   <programlisting>
-ltreetest=# select ins_label(path,2,'Space') from test where path <@ 'Top.Science.Astronomy';
+ltreetest=# select ins_label(path,2,'Space') from test where path &lt;@ 'Top.Science.Astronomy';
                 ins_label                 
 ------------------------------------------
  Top.Science.Space.Astronomy
@@ -537,7 +537,7 @@ CREATE FUNCTION ins_label(ltree, ltree, text) RETURNS ltree
 AS 'select subpath($1,0,nlevel($2)) || $3 || subpath($1,nlevel($2));'
 LANGUAGE SQL IMMUTABLE;
 
-ltreetest=# select ins_label(path,'Top.Science'::ltree,'Space') from test where path <@ 'Top.Science.Astronomy';
+ltreetest=# select ins_label(path,'Top.Science'::ltree,'Space') from test where path &lt;@ 'Top.Science.Astronomy';
                 ins_label                 
 ------------------------------------------
  Top.Science.Space.Astronomy
@@ -606,7 +606,7 @@ ltreetest=# select ins_label(path,'Top.Science'::ltree,'Space') from test where 
       Q2: The same as Q1 but with counting of successors
      </para>
      <programlisting>
-     select path as parentpath , (select count(*)-1 from dmoz where path <@
+     select path as parentpath , (select count(*)-1 from dmoz where path &lt;@
      p.path) as count from dmoz p where path ~ 'Top.Adult.Arts.Animation.*{1}';
                  parentpath             | count 
      -----------------------------------+-------
@@ -620,7 +620,7 @@ ltreetest=# select ins_label(path,'Top.Science'::ltree,'Space') from test where 
       Q3: Get all parents
      </para>
      <programlisting>
-     select path from dmoz where path @> 'Top.Adult.Arts.Animation' order by
+     select path from dmoz where path @&gt; 'Top.Adult.Arts.Animation' order by
      path asc;
                 path           
      --------------------------
@@ -636,8 +636,8 @@ ltreetest=# select ins_label(path,'Top.Science'::ltree,'Space') from test where 
       Q4: Get all parents with counting of children
      </para>
      <programlisting>
-     select path, (select count(*)-1 from dmoz where path <@ p.path) as count
-     from dmoz p where path @> 'Top.Adult.Arts.Animation' order by path asc;
+     select path, (select count(*)-1 from dmoz where path &lt;@ p.path) as count
+     from dmoz p where path @&gt; 'Top.Adult.Arts.Animation' order by path asc;
                 path           | count  
      --------------------------+--------
       Top                      | 300273
@@ -753,7 +753,7 @@ ltreetest=# select ins_label(path,'Top.Science'::ltree,'Space') from test where 
   <para>
    For ltree we store LPS in a B-tree, implemented using GiST. Each node entry is
    represented by (left_bound, signature, right_bound), so that we could speedup
-   operations <literal><, <=, =, >=, ></literal> using left_bound, right_bound and prune branches of
+   operations <literal>&lt;, &lt;=, =, &gt;=, &gt;</literal> using left_bound, right_bound and prune branches of
    a tree using signature.
   </para>
  </sect2>
@@ -768,4 +768,3 @@ ltreetest=# select ins_label(path,'Top.Science'::ltree,'Space') from test where 
   </para>
  </sect2>
 </sect1>
-

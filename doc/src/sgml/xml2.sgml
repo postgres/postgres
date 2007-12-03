@@ -401,7 +401,7 @@ WHERE t.author_id = p.person_id;
    </para>
    <para>
     Also note that if either the document or stylesheet values do not
-    begin with a < then they will be treated as URLs and libxslt will
+    begin with a &lt; then they will be treated as URLs and libxslt will
     fetch them. It thus follows that you can use xslt_process as a means
     to fetch the contents of URLs - you should be aware of the security
     implications of this.

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.16 2007/02/01 00:28:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.17 2007/12/03 23:49:50 tgl Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -135,7 +135,7 @@ INSERT INTO products (product_no, name, price) VALUES
 
   <para>
    To perform an update, you need three pieces of information:
-   <orderedlist spacing=compact>
+   <orderedlist spacing="compact">
     <listitem>
      <para>The name of the table and column to update,</para>
     </listitem>

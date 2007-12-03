@@ -114,7 +114,7 @@
      </entry>
     </row>
     <row>
-     <entry><literal><@></literal> operator</entry>
+     <entry><literal>&lt;@&gt;</literal> operator</entry>
      <entry>gives the distance in statute miles between
       two points on the Earth's surface. Coordinates are in degrees. Points are
       taken as (longitude, latitude) and not vice versa as longitude is closer 

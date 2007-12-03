@@ -244,52 +244,52 @@
   <itemizedlist>
    <listitem>
     <para>
-     ISBN13 -> EAN13
+     ISBN13 -&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISMN13 -> EAN13
+     ISMN13 -&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISSN13 -> EAN13
+     ISSN13 -&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISBN -> EAN13
+     ISBN -&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISMN -> EAN13
+     ISMN -&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISSN -> EAN13
+     ISSN -&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     UPC  -> EAN13
+     UPC  -&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISBN <-> ISBN13
+     ISBN &lt;-&gt; ISBN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISMN <-> ISMN13
+     ISMN &lt;-&gt; ISMN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISSN <-> ISSN13
+     ISSN &lt;-&gt; ISSN13
     </para>
    </listitem>
   </itemizedlist>

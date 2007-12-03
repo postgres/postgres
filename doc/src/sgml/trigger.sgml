@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.50 2007/02/14 01:58:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.51 2007/12/03 23:49:51 tgl Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -288,7 +288,7 @@ CALLED_AS_TRIGGER(fcinfo)
 </programlisting>
     which expands to:
 <programlisting>
-((fcinfo)-&gt;context != NULL && IsA((fcinfo)-&gt;context, TriggerData))
+((fcinfo)-&gt;context != NULL &amp;&amp; IsA((fcinfo)-&gt;context, TriggerData))
 </programlisting>
     If this returns true, then it is safe to cast
     <literal>fcinfo-&gt;context</> to type <literal>TriggerData
@@ -580,7 +580,7 @@ trigf(PG_FUNCTION_ARGS)
 
     /* check for null values */
     if (!TRIGGER_FIRED_BY_DELETE(trigdata-&gt;tg_event)
-        && TRIGGER_FIRED_BEFORE(trigdata-&gt;tg_event))
+        &amp;&amp; TRIGGER_FIRED_BEFORE(trigdata-&gt;tg_event))
         checknull = true;
 
     if (TRIGGER_FIRED_BEFORE(trigdata-&gt;tg_event))

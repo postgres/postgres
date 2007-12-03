@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.414 2007/11/28 15:42:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.415 2007/12/03 23:49:50 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7752,15 +7752,15 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><literal><function>to_tsquery</function>(<optional> <replaceable class="PARAMETER">config</> <type>regconfig</> , </optional> <replaceable class="PARAMETER">query</> <type>text</type>)</literal></entry>
         <entry><type>tsquery</type></entry>
         <entry>normalize words and convert to <type>tsquery</></entry>
-        <entry><literal>to_tsquery('english', 'The & Fat & Rats')</literal></entry>
-        <entry><literal>'fat' & 'rat'</literal></entry>
+        <entry><literal>to_tsquery('english', 'The &amp; Fat &amp; Rats')</literal></entry>
+        <entry><literal>'fat' &amp; 'rat'</literal></entry>
        </row>
        <row>
         <entry><literal><function>plainto_tsquery</function>(<optional> <replaceable class="PARAMETER">config</> <type>regconfig</> , </optional> <replaceable class="PARAMETER">query</> <type>text</type>)</literal></entry>
         <entry><type>tsquery</type></entry>
         <entry>produce <type>tsquery</> ignoring punctuation</entry>
         <entry><literal>plainto_tsquery('english', 'The Fat Rats')</literal></entry>
-        <entry><literal>'fat' & 'rat'</literal></entry>
+        <entry><literal>'fat' &amp; 'rat'</literal></entry>
        </row>
        <row>
         <entry><literal><function>numnode</function>(<type>tsquery</>)</literal></entry>
@@ -7773,7 +7773,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><literal><function>querytree</function>(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>)</literal></entry>
         <entry><type>text</type></entry>
         <entry>get indexable part of a <type>tsquery</></entry>
-        <entry><literal>querytree('foo & ! bar'::tsquery)</literal></entry>
+        <entry><literal>querytree('foo &amp; ! bar'::tsquery)</literal></entry>
         <entry><literal>'foo'</literal></entry>
        </row>
        <row>

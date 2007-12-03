@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.46 2007/02/21 03:27:31 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.47 2007/12/03 23:49:50 tgl Exp $ -->
 
  <chapter id="pltcl">
   <title>PL/Tcl - Tcl Procedural Language</title>
@@ -164,7 +164,7 @@ CREATE FUNCTION overpaid(employee) RETURNS boolean AS $$
     if {200000.0 &lt; $1(salary)} {
         return "t"
     }
-    if {$1(age) &lt; 30 && 100000.0 &lt; $1(salary)} {
+    if {$1(age) &lt; 30 &amp;&amp; 100000.0 &lt; $1(salary)} {
         return "t"
     }
     return "f"
