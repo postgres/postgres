@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.289 2007/11/30 21:22:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.290 2007/12/03 00:03:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3102,27 +3102,43 @@ CopyAttributeOutText(CopyState cstate, char *string)
 			}
 			else if ((unsigned char) c < (unsigned char) 0x20)
 			{
+				/*
+				 * \r and \n must be escaped, the others are traditional.
+				 * We prefer to dump these using the C-like notation, rather
+				 * than a backslash and the literal character, because it
+				 * makes the dump file a bit more proof against Microsoftish
+				 * data mangling.
+				 */
 				switch (c)
 				{
-						/*
-						 * \r and \n must be escaped, the others are
-						 * traditional
-						 */
 					case '\b':
+						c = 'b';
+						break;
 					case '\f':
+						c = 'f';
+						break;
 					case '\n':
+						c = 'n';
+						break;
 					case '\r':
+						c = 'r';
+						break;
 					case '\t':
+						c = 't';
+						break;
 					case '\v':
-						DUMPSOFAR();
-						CopySendChar(cstate, '\\');
-						start = ptr++;	/* we include char in next run */
+						c = 'v';
 						break;
 					default:
 						/* All ASCII control chars are length 1 */
 						ptr++;
-						break;
+						continue;		/* fall to end of loop */
 				}
+				/* if we get here, we need to convert the control char */
+				DUMPSOFAR();
+				CopySendChar(cstate, '\\');
+				CopySendChar(cstate, c);
+				start = ++ptr;			/* do not include char in next run */
 			}
 			else if (IS_HIGHBIT_SET(c))
 				ptr += pg_encoding_mblen(cstate->client_encoding, ptr);
@@ -3143,27 +3159,43 @@ CopyAttributeOutText(CopyState cstate, char *string)
 			}
 			else if ((unsigned char) c < (unsigned char) 0x20)
 			{
+				/*
+				 * \r and \n must be escaped, the others are traditional.
+				 * We prefer to dump these using the C-like notation, rather
+				 * than a backslash and the literal character, because it
+				 * makes the dump file a bit more proof against Microsoftish
+				 * data mangling.
+				 */
 				switch (c)
 				{
-						/*
-						 * \r and \n must be escaped, the others are
-						 * traditional
-						 */
 					case '\b':
+						c = 'b';
+						break;
 					case '\f':
+						c = 'f';
+						break;
 					case '\n':
+						c = 'n';
+						break;
 					case '\r':
+						c = 'r';
+						break;
 					case '\t':
+						c = 't';
+						break;
 					case '\v':
-						DUMPSOFAR();
-						CopySendChar(cstate, '\\');
-						start = ptr++;	/* we include char in next run */
+						c = 'v';
 						break;
 					default:
 						/* All ASCII control chars are length 1 */
 						ptr++;
-						break;
+						continue;		/* fall to end of loop */
 				}
+				/* if we get here, we need to convert the control char */
+				DUMPSOFAR();
+				CopySendChar(cstate, '\\');
+				CopySendChar(cstate, c);
+				start = ++ptr;			/* do not include char in next run */
 			}
 			else
 				ptr++;
