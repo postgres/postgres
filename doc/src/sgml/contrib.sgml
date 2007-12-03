@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib.sgml,v 1.6 2007/12/02 22:33:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib.sgml,v 1.7 2007/12/03 04:18:47 tgl Exp $ -->
 
 <appendix id="contrib">
  <title>Additional Supplied Modules</title>
@@ -103,8 +103,10 @@ psql -d dbname -f <replaceable>SHAREDIR</>/contrib/<replaceable>module</>.sql
  &pgstattuple;
  &pgtrgm;
  &seg;
+ &contrib-spi;
  &sslinfo;
  &tablefunc;
+ &test-parser;
  &tsearch2;
  &uuid-ossp;
  &vacuumlo;
