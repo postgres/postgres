@@ -380,6 +380,20 @@ SELECT abalance FROM accounts WHERE aid = :aid
      Variables can also be defined by using -D option.
     </para>
    </listitem>
+   <listitem>
+    <para>
+     <literal>\sleep num [us|ms|s]</> - Causes script execution to sleep for the
+     specified duration of microseconds (us), milliseconds (ms) or the default
+     seconds (s).
+    </para>
+    <para>
+     Example:
+    </para>
+    <programlisting>
+\setrandom millisec 1000 2500
+\sleep : millisec ms
+    </programlisting>
+   </listitem>
   </itemizedlist>
  </sect2>
 

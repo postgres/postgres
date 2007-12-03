@@ -353,6 +353,12 @@ a <@ b                Contained in
       </entry>
      </row>
      <row>
+      <entry><literal>cube(text)</literal></entry>
+      <entry>Takes text input and returns a cube. This is useful for making 
+      cubes from computed strings.
+      </entry>
+     </row>
+     <row>
       <entry><literal>cube(float8) returns cube</literal></entry>
       <entry>This makes a one dimensional cube with both coordinates the same.
        If the type of the argument is a numeric type other than float8 an

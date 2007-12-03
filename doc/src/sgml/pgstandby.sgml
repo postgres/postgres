@@ -6,9 +6,9 @@
  </indexterm>
 
  <para>
-  <literal>pg_standby</literal> is a production-ready program that can be used 
-  to create a Warm Standby server. Other configuration is required as well, 
-  all of which is described in the main server manual.
+  <literal>pg_standby</literal> allows the creation of a Warm Standby server. 
+  Other configuration is required as well, all of which is described in the 
+  main server manual.
  </para>
  <para>
   The program is designed to be a wait-for <literal>restore_command</literal>, 
@@ -17,7 +17,7 @@
   you could configure <literal>pg_standby</literal> in the following way:
  </para>
  <programlisting>
-   restore_command = 'pg_standby archiveDir %f %p'
+restore_command = 'pg_standby archiveDir %f %p %r'
  </programlisting>
  <para>
   which would be sufficient to define that files will be restored from 
@@ -71,11 +71,23 @@
    with the pg_standby command usage as
   </para>
   <programlisting>
-   pg_standby [OPTION]... [ARCHIVELOCATION] [NEXTWALFILE] [XLOGFILEPATH]
+   pg_standby [OPTION]... ARCHIVELOCATION NEXTWALFILE XLOGFILEPATH [RESTARTWALFILE]
   </programlisting>
   <para>
    When used within the <literal>restore_command</literal> the %f and %p macros
    will provide the actual file and path required for the restore/recovery.
+  </para>
+  <para>
+   <literal>pg_standby</literal> assumes that <literal>ARCHIVELOCATION</literal>
+   is a directory accessible by the server-owning user.
+  </para>
+  <para>
+   If <literal>RESTARTWALFILE</literal> is specified, typically by using the 
+   <literal>%r</literal> option, then all files prior to this file will be 
+   removed from <literal>ARCHIVELOCATION</literal>. This then minimises the 
+   number of files that need to be held, whilst at the same time maintaining 
+   restart capability. This capability additionally assumes that 
+   <literal>ARCHIVELOCATION</literal> directory is writable.
   </para>
 
   <table>
@@ -94,8 +106,11 @@
       <entry>-k numfiles</entry>
       <entry>
        <para>
-        Cleanup files in the archive so that we maintain no more
-        than this many files in the archive. 
+        Cleanup files in the archive so that we maintain no more than this 
+        many files in the archive. This parameter will be silently ignored if
+        <literal>RESTARTWALFILE</literal> is specified, since that
+        specification method is more accurate in determining the correct
+        cut-off point in archive.
        </para>
        <para>
         You should be wary against setting this number too low,
@@ -109,7 +124,15 @@
         on either primary or standby.
        </para>
        <para>
+        Setting <literal>numfiles</literal> to be zero will disable deletion
+        of files from <literal>ARCHIVELOCATION</literal>.
+       </para>
+       <para>
         If in doubt, use a large value or do not set a value at all.
+       </para>
+       <para>
+        If you specify neither <literal>RESTARTWALFILE</> nor <literal>-k</>,
+        then <literal>-k 0</> will be assumed, i.e. keep all files in archive.
        </para>
       </entry>
      </row>
@@ -121,9 +144,10 @@
         WAL files will remain in archive
        </para>
        <para>
-        Link is more efficient, but the default is copy to 
-        allow you to maintain the WAL archive for recovery
-        purposes as well as high-availability.
+        Link is more efficient, but the default is copy to allow you to 
+        maintain the WAL archive for recovery purposes as well as 
+        high-availability. The default setting is not necessarily recommended,
+        consult the main database server manual for discussion.
        </para>
        <para>
         This option uses the Windows Vista command mklink
@@ -144,7 +168,7 @@
         we will wait 5 secs, 10 secs then 15 secs before reporting
         the failure back to the database server. This will be
         interpreted as and end of recovery and the Standby will come
-        up fully as a result. <literal>Default=3</literal>
+        up fully as a result. <literal>Default=3 Min=0</literal>
        </para>
       </entry>
      </row>
@@ -155,7 +179,7 @@
        if the file to be restored is available in the archive yet.
        The default setting is not necessarily recommended,
        consult the main database server manual for discussion.
-       <literal>Default=5</literal>
+       <literal>Default=5, Min=1, Max=60</literal>
       </entry>
      </row>
      <row>
@@ -175,8 +199,9 @@
        the maximum number of seconds to wait for the next file,
        after which recovery will end and the Standby will come up.
        The default setting is not necessarily recommended,
-       consult the main database server manual for discussion.
-       <literal>Default=0</literal>
+       consult the main database server manual for discussion. A setting of
+       zero means wait forever.
+       <literal>Default=0, Min=0</literal>
       </entry>
      </row>
     </tbody>
@@ -189,6 +214,32 @@
     during development and testing.
    </para>
   </note>
+ </sect2>
+
+ <sect2>
+  <title>Supported versions</title>
+  <para>
+   <literal>pg_standby</literal> is designed to work with PostgreSQL 8.2 and
+   and later. It is currently compatible across minor changes between the way
+   8.3 and 8.2 operate.
+  </para>
+  <para>
+   PostgreSQL 8.3 provides the <literal>%r</literal> command line substitution,
+   designed to let <literal>pg_standby</literal> know the last file it needs to
+   keep. If the last parameter is omitted, no error is generated, allowing 
+   <literal>pg_standby</literal> to function correctly with PostgreSQL 8.2 
+   also. With PostgreSQL 8.2, the <literal>-k</literal> option must be used if 
+   archive cleanup is required. This option remains available in 8.3.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Additional design notes</title>
+  <para>
+   The use of a move command seems like it would be a good idea, but this would
+   prevent recovery from being restartable. Also, the last WAL file is always 
+   requested twice from the archive.
+  </para>
  </sect2>
 
  <sect2>
@@ -227,8 +278,7 @@ archive_command = 'copy %p ..\\archive\\%f'
      *not* in the restore_command, in 8.2, 8.1, 8.0 on Windows.
     </para>
     <programlisting>
-restore_command = 'pg_standby -c -d -s 5 -w 0 -t C:\pgsql.trigger.5442
- ..\archive %f %p 2>> standby.log'
+restore_command = 'pg_standby -c -d -s 5 -w 0 -t C:\pgsql.trigger.5442 ..\archive %f %p 2>> standby.log'
     </programlisting>
     <para>
      which will

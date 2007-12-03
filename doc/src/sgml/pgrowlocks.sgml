@@ -102,7 +102,7 @@ SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p WHERE p.locked_ row = a
  <sect2>
   <title>Example</title>
   <para>
-   <literal>pgrowlocks</literal> returns the following data type:
+   <literal>pgrowlocks</literal> returns the following columns:
   </para>
   <para>
    Here is a sample execution of pgrowlocks:
