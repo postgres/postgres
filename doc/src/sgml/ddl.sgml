@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.78 2007/12/02 19:20:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.79 2007/12/03 04:59:55 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2466,8 +2466,9 @@ CREATE TABLE measurement_y2008m01 ( ) INHERITS (measurement);
 
       <listitem>
        <para>
-        We must add non-overlapping table constraints, so that our
-        table creation script becomes:
+        We must provide non-overlapping table constraints.  Rather than
+        just creating the partition tables as above, the table creation
+        script should really be:
 
  <programlisting>
 CREATE TABLE measurement_y2006m02 (
@@ -2550,12 +2551,12 @@ CREATE TRIGGER insert_measurement_trigger
 CREATE OR REPLACE FUNCTION measurement_insert_trigger()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF ( logdate &gt;= DATE '2006-02-01' AND logdate &lt; DATE '2006-03-01' ) THEN
+    IF ( NEW.logdate &gt;= DATE '2006-02-01' AND NEW.logdate &lt; DATE '2006-03-01' ) THEN
         INSERT INTO measurement_y2006m02 VALUES (NEW.*);
-    ELSIF ( logdate &gt;= DATE '2006-03-01' AND logdate &lt; DATE '2006-04-01' ) THEN
+    ELSIF ( NEW.logdate &gt;= DATE '2006-03-01' AND NEW.logdate &lt; DATE '2006-04-01' ) THEN
         INSERT INTO measurement_y2006m03 VALUES (NEW.*);
     ...
-    ELSIF ( logdate &gt;= DATE '2008-01-01' AND logdate &lt; DATE '2008-02-01' ) THEN
+    ELSIF ( NEW.logdate &gt;= DATE '2008-01-01' AND NEW.logdate &lt; DATE '2008-02-01' ) THEN
         INSERT INTO measurement_y2008m01 VALUES (NEW.*);
     ELSE
         RAISE EXCEPTION 'Date out of range.  Fix the measurement_insert_trigger() function!';
@@ -2576,6 +2577,15 @@ LANGUAGE plpgsql;
         it doesn't need to be updated as often, since branches can be
         added in advance of being needed.
        </para>
+
+       <note>
+        <para>
+         In practice it might be best to check the newest partition first,
+         if most inserts go into that partition.  For simplicity we have
+         shown the trigger's tests in the same order as in other parts
+         of this example.
+        </para>
+       </note>
       </listitem>
      </orderedlist>
     </para>
