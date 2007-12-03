@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.34 2007/11/15 21:14:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.35 2007/12/03 22:37:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,7 +368,9 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 				RestrictInfo *rinfo = (RestrictInfo *) lfirst(ll);
 				int			strategy;
 
-				Assert(is_opclause(rinfo->clause));
+				/* Could be an IS_NULL test, if so ignore */
+				if (!is_opclause(rinfo->clause))
+					continue;
 				strategy =
 					get_op_opfamily_strategy(((OpExpr *) rinfo->clause)->opno,
 											 index->opfamily[prevcol]);
