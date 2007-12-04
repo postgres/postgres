@@ -53,12 +53,12 @@ dict_xsyn -
 	by Sergey Karpov <karpov@sao.ru>
 
 earthdistance -
-	Operator for computing earth distance between two points
-	by Hal Snyder <hal@vailsys.com>
+	Functions for computing distances between two points on Earth
+        by Bruno Wolff III <bruno@wolff.to> and Hal Snyder <hal@vailsys.com>
 
 fuzzystrmatch -
 	Levenshtein, metaphone, and soundex fuzzy string matching
-	by Joe Conway <mail@joeconway.com>, Joel Burton <jburton@scw.org>
+	by Joe Conway <mail@joeconway.com> and Joel Burton <jburton@scw.org>
 
 hstore -
 	Module for storing (key, value) pairs
