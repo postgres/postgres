@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.101 2007/10/07 00:32:11 alvherre Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.102 2007/12/05 10:06:08 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -36,9 +36,6 @@ endif
 ifndef SGMLSPL
 SGMLSPL = sgmlspl
 endif
-
-CONVERT = convert
-EPSTOPDF = epstopdf
 
 # docbook2man generates man pages from docbook refentry source code.
 D2MSCRIPT= $(D2MDIR)/docbook2man-spec.pl
@@ -182,18 +179,6 @@ JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/styl
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t fot -i output-print -o $@ $<
 
 
-# Graphics
-
-%.gif:
-	cp $(srcdir)/../graphics/$@ .
-
-%.eps: %.gif
-	$(CONVERT) $< eps:$@
-
-%.pdf: %.eps
-	$(EPSTOPDF) $<
-
-
 ##
 ## Semi-automatic generation of some text files.
 ##
@@ -290,11 +275,11 @@ check: postgres.sgml $(ALLSGML)
 
 clean distclean maintainer-clean:
 # HTML
-	rm -f HTML.manifest *.html *.gif
+	rm -f HTML.manifest *.html
 # man
 	rm -rf *.1 *.$(DEFAULTSECTION) man1 man$(DEFAULTSECTION) manpage.refs manpage.links manpage.log
 # print
-	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.eps *.fot
+	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.fot
 # index
 	rm -f HTML.index HTML.index.start $(GENERATED_SGML)
 # text
