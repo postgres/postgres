@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.415 2007/12/03 23:49:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.416 2007/12/06 17:47:25 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8612,6 +8612,12 @@ table2-mapping
         <entry><type>bigint</type></entry>
         <entry>Return value most recently obtained with
         <function>nextval</function> for specified sequence</entry>
+      </row>
+      <row>
+        <entry><literal><function>lastval</function>()</literal></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Return value most recently obtained with
+        <function>nextval</function> for any sequence</entry>
       </row>
       <row>
         <entry><literal><function>nextval</function>(<type>regclass</type>)</literal></entry>
