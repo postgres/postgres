@@ -1,6 +1,8 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/tsearch2.sgml,v 1.2 2007/12/06 04:12:10 tgl Exp $ -->
+
 <sect1 id="tsearch2">
  <title>tsearch2</title>
- 
+
  <indexterm zone="tsearch2">
   <primary>tsearch2</primary>
  </indexterm>

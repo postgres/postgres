@@ -1,33 +1,41 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dict-xsyn.sgml,v 1.2 2007/12/06 04:12:10 tgl Exp $ -->
+
 <sect1 id="dict-xsyn">
  <title>dict_xsyn</title>
- 
+
  <indexterm zone="dict-xsyn">
   <primary>dict_xsyn</primary>
  </indexterm>
 
  <para>
-  The Extended Synonym Dictionary module replaces words with groups of their
-  synonyms, and so makes it possible to search for a word using any of its
-  synonyms.
+  <filename>dict_xsyn</> (Extended Synonym Dictionary) is an example of an
+  add-on dictionary template for full-text search.  This dictionary type
+  replaces words with groups of their synonyms, and so makes it possible to
+  search for a word using any of its synonyms.
  </para>
 
  <sect2>
   <title>Configuration</title>
+
   <para>
    A <literal>dict_xsyn</> dictionary accepts the following options:
   </para>
   <itemizedlist>
    <listitem>
     <para>
-     KEEPORIG controls whether the original word is included, or only its
-     synonyms. Default is 'true'.
+     <literal>keeporig</> controls whether the original word is included (if
+     <literal>true</>), or only its synonyms (if <literal>false</>). Default
+     is <literal>true</>.
     </para>
    </listitem>
    <listitem>
     <para>
-     RULES is the base name of the file containing the list of synonyms.
-     This file must be in $(prefix)/share/tsearch_data/, and its name must
-     end in ".rules" (which is not included in the RULES parameter).
+     <literal>rules</> is the base name of the file containing the list of
+     synonyms.  This file must be stored in
+     <filename>$SHAREDIR/tsearch_data/</> (where <literal>$SHAREDIR</> means
+     the <productname>PostgreSQL</> installation's shared-data directory).
+     Its name must end in <literal>.rules</> (which is not to be included in
+     the <literal>rules</> parameter).
     </para>
    </listitem>
   </itemizedlist>
@@ -38,41 +46,63 @@
    <listitem>
     <para>
      Each line represents a group of synonyms for a single word, which is
-     given first on the line. Synonyms are separated by whitespace:
-    </para>
+     given first on the line. Synonyms are separated by whitespace, thus:
     <programlisting>
 word syn1 syn2 syn3
     </programlisting>
+    </para>
    </listitem>
    <listitem>
     <para>
-     Sharp ('#') sign is a comment delimiter. It may appear at any position
-     inside the line.  The rest of the line will be skipped.
+     The sharp (<literal>#</>) sign is a comment delimiter. It may appear at
+     any position in a line.  The rest of the line will be skipped.
     </para>
    </listitem>
   </itemizedlist>
 
   <para>
-   Look at xsyn_sample.rules, which is installed in $(prefix)/share/tsearch_data/,
-   for an example.
+   Look at <filename>xsyn_sample.rules</>, which is installed in
+   <filename>$SHAREDIR/tsearch_data/</>, for an example.
   </para>
  </sect2>
 
  <sect2>
   <title>Usage</title>
-  <programlisting>
-mydb=# SELECT ts_lexize('xsyn','word');
-ts_lexize
-----------------
-{word,syn1,syn2,syn3)
-  </programlisting>
+
   <para>
-   Change dictionary options:
-  </para>
-  <programlisting>
-mydb# ALTER TEXT SEARCH DICTIONARY xsyn (KEEPORIG=false);
+   Running the installation script creates a text search template
+   <literal>xsyn_template</> and a dictionary <literal>xsyn</>
+   based on it, with default parameters.  You can alter the
+   parameters, for example
+
+<programlisting>
+mydb# ALTER TEXT SEARCH DICTIONARY xsyn (RULES='my_rules', KEEPORIG=false);
 ALTER TEXT SEARCH DICTIONARY
-  </programlisting>
+</programlisting>
+
+   or create new dictionaries based on the template.
+  </para>
+
+  <para>
+   To test the dictionary, you can try
+
+<programlisting>
+mydb=# SELECT ts_lexize('xsyn', 'word');
+      ts_lexize
+-----------------------
+ {word,syn1,syn2,syn3}
+</programlisting>
+
+   but real-world usage will involve including it in a text search
+   configuration as described in <xref linkend="textsearch">.
+   That might look like this:
+
+<programlisting>
+ALTER TEXT SEARCH CONFIGURATION english
+    ALTER MAPPING FOR word, asciiword WITH xsyn, english_stem;
+</programlisting>
+
+  </para>
  </sect2>
 
 </sect1>

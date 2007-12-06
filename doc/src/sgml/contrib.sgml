@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib.sgml,v 1.7 2007/12/03 04:18:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib.sgml,v 1.8 2007/12/06 04:12:09 tgl Exp $ -->
 
 <appendix id="contrib">
  <title>Additional Supplied Modules</title>
@@ -44,7 +44,7 @@
  <para>
   Many modules supply new user-defined functions, operators, or types.
   To make use of one of these modules, after you have installed the code
-  you need to register the new objects in the database 
+  you need to register the new objects in the database
   system by running the SQL commands in the <literal>.sql</> file
   supplied by the module.  For example,
 
@@ -54,6 +54,7 @@ psql -d dbname -f <replaceable>SHAREDIR</>/contrib/<replaceable>module</>.sql
 
   Here, <replaceable>SHAREDIR</> means the installation's <quote>share</>
   directory (<literal>pg_config --sharedir</> will tell you what this is).
+  In most cases the script must be run by a database superuser.
  </para>
 
  <para>

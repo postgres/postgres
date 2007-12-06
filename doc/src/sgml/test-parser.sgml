@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/test-parser.sgml,v 1.1 2007/12/03 04:18:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/test-parser.sgml,v 1.2 2007/12/06 04:12:10 tgl Exp $ -->
 
 <sect1 id="test-parser">
  <title>test_parser</title>
@@ -8,15 +8,18 @@
  </indexterm>
 
  <para>
-  This is an example of a custom parser for full text search.
+  <filename>test_parser</> is an example of a custom parser for full-text
+  search.  It doesn't do anything especially useful, but can serve as
+  a starting point for developing your own parser.
  </para>
 
  <para>
-  It recognizes space-delimited words and returns just two token types:
+  <filename>test_parser</> recognizes words separated by white space,
+  and returns just two token types:
 
 <programlisting>
 mydb=# SELECT * FROM ts_token_type('testparser');
- tokid | alias |  description  
+ tokid | alias |  description
 -------+-------+---------------
      3 | word  | Word
     12 | blank | Space symbols
@@ -41,16 +44,16 @@ mydb=# SELECT * FROM ts_token_type('testparser');
 
 <programlisting>
 mydb=# SELECT * FROM ts_parse('testparser', 'That''s my first own parser');
- tokid | token  
+ tokid | token
 -------+--------
      3 | That's
-    12 |  
+    12 |
      3 | my
-    12 |  
+    12 |
      3 | first
-    12 |  
+    12 |
      3 | own
-    12 |  
+    12 |
      3 | parser
 </programlisting>
   </para>
@@ -68,14 +71,14 @@ mydb-#   ADD MAPPING FOR word WITH english_stem;
 ALTER TEXT SEARCH CONFIGURATION
 
 mydb=#  SELECT to_tsvector('testcfg', 'That''s my first own parser');
-          to_tsvector          
+          to_tsvector
 -------------------------------
  'that':1 'first':3 'parser':5
 (1 row)
 
 mydb=# SELECT ts_headline('testcfg', 'Supernovae stars are the brightest phenomena in galaxies',
 mydb(#                    to_tsquery('testcfg', 'star'));
-                           ts_headline                           
+                           ts_headline
 -----------------------------------------------------------------
  Supernovae &lt;b&gt;stars&lt;/b&gt; are the brightest phenomena in galaxies
 (1 row)

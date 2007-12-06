@@ -1,36 +1,43 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dict-int.sgml,v 1.2 2007/12/06 04:12:10 tgl Exp $ -->
+
 <sect1 id="dict-int">
  <title>dict_int</title>
- 
+
  <indexterm zone="dict-int">
   <primary>dict_int</primary>
  </indexterm>
 
  <para>
-  The motivation for this example dictionary is to control the indexing of
-  integers (signed and unsigned), and, consequently, to minimize the number of
-  unique words which greatly affect the performance of searching.
+  <filename>dict_int</> is an example of an add-on dictionary template
+  for full-text search.  The motivation for this example dictionary is to
+  control the indexing of integers (signed and unsigned), allowing such
+  numbers to be indexed while preventing excessive growth in the number of
+  unique words, which greatly affects the performance of searching.
  </para>
 
  <sect2>
   <title>Configuration</title>
+
   <para>
-   The dictionary accepts two options: 
+   The dictionary accepts two options:
   </para>
 
   <itemizedlist>
    <listitem>
     <para>
-     The MAXLEN parameter specifies the maximum length (number of digits)
-     allowed in an integer word.  The default value is 6.
+     The <literal>maxlen</> parameter specifies the maximum number of
+     digits allowed in an integer word.  The default value is 6.
     </para>
    </listitem>
    <listitem>
     <para>
-     The REJECTLONG parameter specifies if an overlength integer should be
-     truncated or ignored. If REJECTLONG=FALSE (default), the dictionary returns
-     the first MAXLEN digits of the integer. If REJECTLONG=TRUE, the
-     dictionary treats an overlength integer as a stop word, so that it will
-     not be indexed.
+     The <literal>rejectlong</> parameter specifies whether an overlength
+     integer should be truncated or ignored.  If <literal>rejectlong</> is
+     <literal>false</> (the default), the dictionary returns the first
+     <literal>maxlen</> digits of the integer. If <literal>rejectlong</> is
+     <literal>true</>, the dictionary treats an overlength integer as a stop
+     word, so that it will not be indexed.  Note that this also means that
+     such an integer cannot be searched for.
     </para>
    </listitem>
   </itemizedlist>

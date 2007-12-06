@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib-spi.sgml,v 1.1 2007/12/03 04:18:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib-spi.sgml,v 1.2 2007/12/06 04:12:09 tgl Exp $ -->
 
 <sect1 id="contrib-spi">
  <title>spi</title>
@@ -29,27 +29,28 @@
 
   <para>
    <function>check_primary_key()</> checks the referencing table.
-   To use, create a BEFORE INSERT OR UPDATE trigger using this
-   function on a table referencing another table. You are to specify
-   as trigger arguments: triggered table column names which correspond
-   to foreign key, referenced table name and column names in referenced
-   table which correspond to primary/unique key.  To handle multiple
-   foreign keys, create a trigger for each reference.
+   To use, create a <literal>BEFORE INSERT OR UPDATE</> trigger using this
+   function on a table referencing another table. Specify as the trigger
+   arguments: the referencing table's column name(s) which form the foreign
+   key, the referenced table name, and the column names in the referenced table
+   which form the primary/unique key.  To handle multiple foreign
+   keys, create a trigger for each reference.
   </para>
 
   <para>
    <function>check_foreign_key()</> checks the referenced table.
-   To use, create a BEFORE DELETE OR UPDATE trigger using this
-   function on a table referenced by other table(s). You are to specify
-   as trigger arguments: number of references for which the function has to
-   perform checking, action if referencing key found ('cascade' &mdash; to delete
-   corresponding foreign key, 'restrict' &mdash; to abort transaction if foreign keys
-   exist, 'setnull' &mdash; to set foreign key referencing primary/unique key
-   being deleted to null), triggered table column names which correspond
-   to primary/unique key, then referencing table name and column names
-   corresponding to foreign key (repeated for as many referencing tables/keys
-   as were specified by first argument).  Note that the primary/unique key
-   columns should be marked NOT NULL and should have a unique index.
+   To use, create a <literal>BEFORE DELETE OR UPDATE</> trigger using this
+   function on a table referenced by other table(s).  Specify as the trigger
+   arguments: the number of referencing tables for which the function has to
+   perform checking, the action if a referencing key is found
+   (<literal>cascade</> &mdash; to delete the referencing row,
+   <literal>restrict</> &mdash; to abort transaction if referencing keys
+   exist, <literal>setnull</> &mdash; to set referencing key fields to null),
+   the triggered table's column names which form the primary/unique key, then
+   the referencing table name and column names (repeated for as many
+   referencing tables as were specified by first argument).  Note that the
+   primary/unique key columns should be marked NOT NULL and should have a
+   unique index.
   </para>
 
   <para>
@@ -64,60 +65,65 @@
    Long ago, <productname>PostgreSQL</> had a built-in time travel feature
    that kept the insert and delete times for each tuple.  This can be
    emulated using these functions.  To use these functions,
-   you are to add to a table two columns of <type>abstime</> type to store
+   you must add to a table two columns of <type>abstime</> type to store
    the date when a tuple was inserted (start_date) and changed/deleted
    (stop_date):
 
 <programlisting>
 CREATE TABLE mytab (
         ...             ...
-        start_date      abstime default now(),
-        stop_date       abstime default 'infinity'
+        start_date      abstime,
+        stop_date       abstime
         ...             ...
 );
 </programlisting>
 
-   So, tuples being inserted with unspecified start_date/stop_date will get
-   the current time in start_date and <literal>infinity</> in
-   stop_date.
+   The columns can be named whatever you like, but in this discussion
+   we'll call them start_date and stop_date.
+  </para>
+
+  <para>
+   When a new row is inserted, start_date should normally be set to
+   current time, and stop_date to <literal>infinity</>.  The trigger
+   will automatically substitute these values if the inserted data
+   contains nulls in these columns.  Generally, inserting explicit
+   non-null data in these columns should only be done when re-loading
+   dumped data.
   </para>
 
   <para>
    Tuples with stop_date equal to <literal>infinity</> are <quote>valid
-   now</quote>: when trigger will be fired for UPDATE/DELETE of a tuple with
-   stop_date NOT equal to <literal>infinity</> then 
-   this tuple will not be changed/deleted!
+   now</quote>, and can be modified.  Tuples with a finite stop_date cannot
+   be modified anymore &mdash; the trigger will prevent it.  (If you need
+   to do that, you can turn off time travel as shown below.)
   </para>
 
   <para>
-   If stop_date is equal to <literal>infinity</> then on
-   update only the stop_date in the tuple being updated will be changed (to
-   current time) and a new tuple with new data (coming from SET ... in UPDATE)
-   will be inserted. Start_date in this new tuple will be set to current time
-   and stop_date to <literal>infinity</>.
+   For a modifiable row, on update only the stop_date in the tuple being
+   updated will be changed (to current time) and a new tuple with the modified
+   data will be inserted.  Start_date in this new tuple will be set to current
+   time and stop_date to <literal>infinity</>.
   </para>
 
   <para>
-   A delete does not actually remove the tuple but only set its stop_date
+   A delete does not actually remove the tuple but only sets its stop_date
    to current time.
   </para>
 
   <para>
    To query for tuples <quote>valid now</quote>, include
    <literal>stop_date = 'infinity'</> in the query's WHERE condition.
-   (You might wish to incorporate that in a view.)
-  </para>
-
-  <para>
-   You can't change start/stop date columns with UPDATE!
-   Use set_timetravel (below) if you need this.
+   (You might wish to incorporate that in a view.)  Similarly, you can
+   query for tuples valid at any past time with suitable conditions on
+   start_date and stop_date.
   </para>
 
   <para>
    <function>timetravel()</> is the general trigger function that supports
-   this behavior.  Create a BEFORE INSERT OR UPDATE OR DELETE trigger using this
-   function on each time-traveled table. You are to specify two trigger arguments:
-   name of start_date column and name of stop_date column in triggered table.
+   this behavior.  Create a <literal>BEFORE INSERT OR UPDATE OR DELETE</>
+   trigger using this function on each time-traveled table. Specify two
+   trigger arguments: the actual
+   names of the start_date and stop_date columns.
    Optionally, you can specify one to three more arguments, which must refer
    to columns of type <type>text</>.  The trigger will store the name of
    the current user into the first of these columns during INSERT, the
@@ -130,7 +136,9 @@ CREATE TABLE mytab (
    <literal>set_timetravel('mytab', 1)</> will turn TT ON for table mytab.
    <literal>set_timetravel('mytab', 0)</> will turn TT OFF for table mytab.
    In both cases the old status is reported.  While TT is off, you can modify
-   the start_date and stop_date columns freely.
+   the start_date and stop_date columns freely.  Note that the on/off status
+   is local to the current database session &mdash; fresh sessions will
+   always start out with TT ON for all tables.
   </para>
 
   <para>
@@ -156,9 +164,9 @@ CREATE TABLE mytab (
   </para>
 
   <para>
-   To use, create a BEFORE INSERT (or optionally BEFORE INSERT OR UPDATE)
-   trigger using this function. You are to specify
-   as trigger arguments: the name of the integer column to be modified,
+   To use, create a <literal>BEFORE INSERT</> (or optionally <literal>BEFORE
+   INSERT OR UPDATE</>) trigger using this function.  Specify two
+   trigger arguments: the name of the integer column to be modified,
    and the name of the sequence object that will supply values.
    (Actually, you can specify any number of pairs of such names, if
    you'd like to update more than one autoincrementing column.)
@@ -180,8 +188,8 @@ CREATE TABLE mytab (
   </para>
 
   <para>
-   To use, create a BEFORE INSERT and/or UPDATE
-   trigger using this function. You are to specify a single trigger
+   To use, create a <literal>BEFORE INSERT</> and/or <literal>UPDATE</>
+   trigger using this function.  Specify a single trigger
    argument: the name of the text column to be modified.
   </para>
 
@@ -201,8 +209,8 @@ CREATE TABLE mytab (
   </para>
 
   <para>
-   To use, create a BEFORE UPDATE
-   trigger using this function. You are to specify a single trigger
+   To use, create a <literal>BEFORE UPDATE</>
+   trigger using this function.  Specify a single trigger
    argument: the name of the <type>timestamp</> column to be modified.
   </para>
 

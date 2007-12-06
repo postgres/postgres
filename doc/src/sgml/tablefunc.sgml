@@ -1,81 +1,90 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/tablefunc.sgml,v 1.4 2007/12/06 04:12:10 tgl Exp $ -->
 
 <sect1 id="tablefunc">
  <title>tablefunc</title>
- 
+
  <indexterm zone="tablefunc">
   <primary>tablefunc</primary>
  </indexterm>
 
  <para>
-  <literal>tablefunc</literal> provides functions to convert query rows into fields.
+  The <filename>tablefunc</> module includes various functions that return
+  tables (that is, multiple rows).  These functions are useful both in their
+  own right and as examples of how to write C functions that return
+  multiple rows.
  </para>
+
  <sect2>
-  <title>Functions</title>
+  <title>Functions Provided</title>
+
   <table>
-   <title></title>
+   <title><filename>tablefunc</> functions</title>
    <tgroup cols="3">
     <thead>
      <row>
       <entry>Function</entry>
       <entry>Returns</entry>
-      <entry>Comments</entry>
+      <entry>Description</entry>
      </row>
     </thead>
     <tbody>
      <row>
+      <entry><function>normal_rand(int numvals, float8 mean, float8 stddev)</function></entry>
+      <entry><type>setof float8</></entry>
       <entry>
-       <literal>
-        normal_rand(int numvals, float8 mean, float8 stddev)
-       </literal>
-      </entry>
-      <entry>
-       returns a set of normally distributed float8 values
-      </entry>
-      <entry></entry>
-     </row>
-     <row>
-      <entry><literal>crosstabN(text sql)</literal></entry>
-      <entry>returns a set of row_name plus N category value columns</entry>
-      <entry>
-       crosstab2(), crosstab3(), and crosstab4() are defined for you,
-       but you can create additional crosstab functions per the instructions
-       in the documentation below.
+       Produces a set of normally distributed random values
       </entry>
      </row>
      <row>
-      <entry><literal>crosstab(text sql)</literal></entry>
-      <entry>returns a set of row_name plus N category value columns</entry>
+      <entry><function>crosstab(text sql)</function></entry>
+      <entry><type>setof record</></entry>
       <entry>
-       requires anonymous composite type syntax in the FROM clause. See
-       the instructions in the documentation below.
+       Produces a <quote>pivot table</> containing
+       row names plus <replaceable>N</> value columns, where
+       <replaceable>N</> is determined by the rowtype specified in the calling
+       query
       </entry>
      </row>
      <row>
-      <entry><literal>crosstab(text sql, N int)</literal></entry>
-      <entry></entry>
+      <entry><function>crosstab<replaceable>N</>(text sql)</function></entry>
+      <entry><type>setof table_crosstab_<replaceable>N</></></entry>
       <entry>
-       <para>obsolete version of crosstab()</para>
-       <para>
-        the argument N is now ignored, since the number of value columns
-        is always determined by the calling query
+       Produces a <quote>pivot table</> containing
+       row names plus <replaceable>N</> value columns.
+       <function>crosstab2</>, <function>crosstab3</>, and
+       <function>crosstab4</> are predefined, but you can create additional
+       <function>crosstab<replaceable>N</></> functions as described below
+      </entry>
+     </row>
+     <row>
+      <entry><function>crosstab(text source_sql, text category_sql)</function></entry>
+      <entry><type>setof record</></entry>
+      <entry>
+       Produces a <quote>pivot table</>
+       with the value columns specified by a second query
+      </entry>
+     </row>
+     <row>
+      <entry><function>crosstab(text sql, int N)</function></entry>
+      <entry><type>setof record</></entry>
+      <entry>
+       <para>Obsolete version of <function>crosstab(text)</>.
+        The parameter <replaceable>N</> is now ignored, since the number of
+        value columns is always determined by the calling query
        </para>
       </entry>
      </row>
      <row>
       <entry>
-       <literal>
+       <function>
         connectby(text relname, text keyid_fld, text parent_keyid_fld
-        [, text orderby_fld], text start_with, int max_depth
-        [, text branch_delim])
-       </literal>
+        [, text orderby_fld ], text start_with, int max_depth
+        [, text branch_delim ])
+       </function>
       </entry>
+      <entry><type>setof record</></entry>
       <entry>
-       returns keyid, parent_keyid, level, and an optional branch string
-       and an optional serial column for ordering siblings
-      </entry>
-      <entry>
-       requires anonymous composite type syntax in the FROM clause. See
-       the instructions in the documentation below.
+       Produces a representation of a hierarchical tree structure
       </entry>
      </row>
     </tbody>
@@ -83,26 +92,31 @@
   </table>
 
   <sect3>
-   <title><literal>normal_rand</literal></title>
+   <title><function>normal_rand</function></title>
+
     <programlisting>
-normal_rand(int numvals, float8 mean, float8 stddev) RETURNS SETOF float8
+normal_rand(int numvals, float8 mean, float8 stddev) returns setof float8
     </programlisting>
+
     <para>
-     Where <literal>numvals</literal> is the number of values to be returned
-     from the function. <literal>mean</literal> is the mean of the normal
-     distribution of values and <literal>stddev</literal> is the standard
+     <function>normal_rand</> produces a set of normally distributed random
+     values (Gaussian distribution).
+    </para>
+
+    <para>
+     <parameter>numvals</parameter> is the number of values to be returned
+     from the function. <parameter>mean</parameter> is the mean of the normal
+     distribution of values and <parameter>stddev</parameter> is the standard
      deviation of the normal distribution of values.
     </para>
+
     <para>
-     Returns a float8 set of random values normally distributed (Gaussian 
-     distribution).
+     For example, this call requests 1000 values with a mean of 5 and a
+     standard deviation of 3:
     </para>
-    <para>
-     Example:
-    </para>
+
     <programlisting>
-  test=# SELECT * FROM
-  test=# normal_rand(1000, 5, 3);
+test=# SELECT * FROM normal_rand(1000, 5, 3);
      normal_rand
 ----------------------
      1.56556322244898
@@ -118,150 +132,56 @@ normal_rand(int numvals, float8 mean, float8 stddev) RETURNS SETOF float8
      2.49639286969028
 (1000 rows)
     </programlisting>
-    <para>
-     Returns 1000 values with a mean of 5 and a standard deviation of 3.
-    </para>
   </sect3>
 
-
   <sect3>
-   <title><literal>crosstabN(text sql)</literal></title>
-    <programlisting>
-crosstabN(text sql)
-    </programlisting>
-    <para>
-     The <literal>sql</literal> parameter is a SQL statement which produces the
-     source set of data. The SQL statement must return one row_name column, one
-     category column, and one value column. <literal>row_name</literal> and 
-     value must be of type text. The function returns a set of 
-     <literal>row_name</literal> plus N category value columns.
-    </para>
-    <para>
-     Provided <literal>sql</literal> must produce a set something like:
-    </para>
-<programlisting>
-row_name    cat    value
----------+-------+-------
- row1      cat1    val1
- row1      cat2    val2
- row1      cat3    val3
- row1      cat4    val4
- row2      cat1    val5
- row2      cat2    val6
- row2      cat3    val7
- row2      cat4    val8
- </programlisting>
-    <para>
-     The returned value is a <literal>SETOF table_crosstab_N</literal>, which
-     is defined by:
-    </para>
-    <programlisting>
-CREATE TYPE tablefunc_crosstab_N AS (
-    row_name TEXT,
-    category_1 TEXT,
-    category_2 TEXT,
-        .
-        .
-        .
-    category_N TEXT
-);
-    </programlisting>
-    <para>
-     for the default installed functions, where N is 2, 3, or 4.
-    </para>
-    <para>
-     e.g. the provided crosstab2 function produces a set something like:
-    </para>
-    <programlisting>
-                      &lt;== values  columns ==&gt;
-           row_name   category_1   category_2
-           ---------+------------+------------
-             row1        val1         val2
-             row2        val5         val6
-    </programlisting>
-    <note>
-     <orderedlist>
-      <listitem><para>The sql result must be ordered by 1,2.</para></listitem>
-      <listitem>
-       <para>
-        The number of values columns depends on the tuple description
-        of the function's declared return type.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        Missing values (i.e. not enough adjacent rows of same row_name to
-        fill the number of result values columns) are filled in with nulls.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        Extra values (i.e. too many adjacent rows of same row_name to fill
-        the number of result values columns) are skipped.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        Rows with all nulls in the values columns are skipped.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        The installed defaults are for illustration purposes. You
-        can create your own return types and functions based on the
-        crosstab() function of the installed library.  See below for
-        details.
-       </para>
-      </listitem>
-     </orderedlist>
-    </note>
-    <para>
-     Example:
-    </para>
-    <programlisting>
-create table ct(id serial, rowclass text, rowid text, attribute text, value text);
-insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att1','val1');
-insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att2','val2');
-insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att3','val3');
-insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att4','val4');
-insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att1','val5');
-insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att2','val6');
-insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att3','val7');
-insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att4','val8');
+   <title><function>crosstab(text)</function></title>
 
-select * from crosstab3(
-  'select rowid, attribute, value
-   from ct
-   where rowclass = ''group1''
-   and (attribute = ''att2'' or attribute = ''att3'') order by 1,2;');
-
- row_name | category_1 | category_2 | category_3
-----------+------------+------------+------------
- test1    | val2       | val3       |
- test2    | val6       | val7       |
-(2 rows)
-    </programlisting>
-   </sect3>
-
-  <sect3>
-   <title><literal>crosstab(text)</literal></title>
    <programlisting>
 crosstab(text sql)
 crosstab(text sql, int N)
    </programlisting>
+
    <para>
-    The <literal>sql</literal> parameter is a SQL statement which produces the
-    source set of data. The SQL statement must return one 
-    <literal>row_name</literal> column, one <literal>category</literal> column,
-    and one <literal>value</literal> column.  <literal>N</literal> is an 
-    obsolete argument; ignored if supplied (formerly this had to match the 
-    number of category columns determined by the calling query).
+    The <function>crosstab</> function is used to produce <quote>pivot</>
+    displays, wherein data is listed across the page rather than down.
+    For example, we might have data like
+    <programlisting>
+row1    val11
+row1    val12
+row1    val13
+...
+row2    val21
+row2    val22
+row2    val23
+...
+    </programlisting>
+    which we wish to display like
+    <programlisting>
+row1    val11   val12   val13   ...
+row2    val21   val22   val23   ...
+...
+    </programlisting>
+    The <function>crosstab</> function takes a text parameter that is a SQL
+    query producing raw data formatted in the first way, and produces a table
+    formatted in the second way.
    </para>
+
    <para>
+    The <parameter>sql</parameter> parameter is a SQL statement that produces
+    the source set of data. This statement must return one
+    <structfield>row_name</structfield> column, one
+    <structfield>category</structfield> column, and one
+    <structfield>value</structfield> column.  <parameter>N</parameter> is an
+    obsolete parameter, ignored if supplied (formerly this had to match the
+    number of output value columns, but now that is determined by the
+    calling query).
    </para>
+
    <para>
-    e.g. provided sql must produce a set something like:
+    For example, the provided query might produce a set something like:
    </para>
+
 <programlisting>
  row_name    cat    value
 ----------+-------+-------
@@ -274,129 +194,81 @@ crosstab(text sql, int N)
   row2      cat3    val7
   row2      cat4    val8
 </programlisting>
+
    <para>
-    Returns a <literal>SETOF RECORD</literal>, which must be defined with a 
-    column definition in the FROM clause of the SELECT statement, e.g.:
+    The <function>crosstab</> function is declared to return <type>setof
+    record</type>, so the actual names and types of the output columns must be
+    defined in the <literal>FROM</> clause of the calling <command>SELECT</>
+    statement, for example:
    </para>
+
    <programlisting>
-    SELECT *
-    FROM crosstab(sql) AS ct(row_name text, category_1 text, category_2 text);
+    SELECT * FROM crosstab('...') AS ct(row_name text, category_1 text, category_2 text);
    </programlisting>
+
    <para>
-    the example crosstab function produces a set something like:
+    This example produces a set something like:
    </para>
+
    <programlisting>
-            &lt;== values  columns ==&gt;
+           &lt;== value  columns  ==&gt;
 row_name   category_1   category_2
  ---------+------------+------------
    row1        val1         val2
    row2        val5         val6
    </programlisting>
-   <para>
-    Note that it follows these rules:
-   </para>
-    <orderedlist>
-     <listitem><para>The sql result must be ordered by 1,2.</para></listitem>
-     <listitem>
-      <para>
-      The number of values columns is determined by the column definition
-      provided in the FROM clause.  The FROM clause must define one
-      row_name column (of the same datatype as the first result column
-      of the sql query) followed by N category columns (of the same
-      datatype as the third result column of the sql query).  You can
-      set up as many category columns as you wish.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-      Missing values (i.e. not enough adjacent rows of same row_name to
-      fill the number of result values columns) are filled in with nulls.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-      Extra values (i.e. too many adjacent rows of same row_name to fill
-      the number of result values columns) are skipped.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-      Rows with all nulls in the values columns are skipped.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-      You can avoid always having to write out a FROM clause that defines the
-      output columns by setting up a custom crosstab function that has
-      the desired output row type wired into its definition.
-      </para>
-     </listitem>
-    </orderedlist>
-    <para>
-     There are two ways you can set up a custom crosstab function:
-    </para>
-    <itemizedlist>
-     <listitem>
-      <para>
-       Create a composite type to define your return type, similar to the
-       examples in the installation script. Then define a unique function
-       name accepting one text parameter and returning setof your_type_name.
-       For example, if your source data produces row_names that are TEXT,
-       and values that are FLOAT8, and you want 5 category columns:
-      </para>
-      <programlisting>
-      CREATE TYPE my_crosstab_float8_5_cols AS (
-          row_name TEXT,
-          category_1 FLOAT8,
-          category_2 FLOAT8,
-          category_3 FLOAT8,
-          category_4 FLOAT8,
-          category_5 FLOAT8
-      );
 
-      CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(text)
-        RETURNS setof my_crosstab_float8_5_cols
-        AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
-      </programlisting>
-     </listitem>
-     <listitem>
-      <para>
-       Use OUT parameters to define the return type implicitly.
-       The same example could also be done this way:
-      </para>
-      <programlisting>
-      CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(IN text,
-          OUT row_name TEXT,
-          OUT category_1 FLOAT8,
-          OUT category_2 FLOAT8,
-          OUT category_3 FLOAT8,
-          OUT category_4 FLOAT8,
-          OUT category_5 FLOAT8)
-        RETURNS setof record
-        AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
-      </programlisting>
-     </listitem>
-    </itemizedlist>
-    <para>
-     Example:
-    </para>
-    <programlisting>
-CREATE TABLE ct(id SERIAL, rowclass TEXT, rowid TEXT, attribute TEXT, value TEXT);
-INSERT INTO ct(rowclass, rowid, attribute, value) VALUES('group1','test1','att1','val1');
-INSERT INTO ct(rowclass, rowid, attribute, value) VALUES('group1','test1','att2','val2');
-INSERT INTO ct(rowclass, rowid, attribute, value) VALUES('group1','test1','att3','val3');
-INSERT INTO ct(rowclass, rowid, attribute, value) VALUES('group1','test1','att4','val4');
-INSERT INTO ct(rowclass, rowid, attribute, value) VALUES('group1','test2','att1','val5');
-INSERT INTO ct(rowclass, rowid, attribute, value) VALUES('group1','test2','att2','val6');
-INSERT INTO ct(rowclass, rowid, attribute, value) VALUES('group1','test2','att3','val7');
-INSERT INTO ct(rowclass, rowid, attribute, value) VALUES('group1','test2','att4','val8');
+   <para>
+    The <literal>FROM</> clause must define the output as one
+    <structfield>row_name</> column (of the same datatype as the first result
+    column of the SQL query) followed by N <structfield>value</> columns
+    (all of the same datatype as the third result column of the SQL query).
+    You can set up as many output value columns as you wish.  The names of the
+    output columns are up to you.
+   </para>
+
+   <para>
+    The <function>crosstab</> function produces one output row for each
+    consecutive group of input rows with the same
+    <structfield>row_name</structfield> value.  It fills the output
+    <structfield>value</> columns, left to right, with the
+    <structfield>value</structfield> fields from these rows.  If there
+    are fewer rows in a group than there are output <structfield>value</>
+    columns, the extra output columns are filled with nulls; if there are
+    more rows, the extra input rows are skipped.
+   </para>
+
+   <para>
+    In practice the SQL query should always specify <literal>ORDER BY 1,2</>
+    to ensure that the input rows are properly ordered, that is, values with
+    the same <structfield>row_name</structfield> are brought together and
+    correctly ordered within the row.  Notice that <function>crosstab</>
+    itself does not pay any attention to the second column of the query
+    result; it's just there to be ordered by, to control the order in which
+    the third-column values appear across the page.
+   </para>
+
+   <para>
+    Here is a complete example:
+   </para>
+
+   <programlisting>
+CREATE TABLE ct(id SERIAL, rowid TEXT, attribute TEXT, value TEXT);
+INSERT INTO ct(rowid, attribute, value) VALUES('test1','att1','val1');
+INSERT INTO ct(rowid, attribute, value) VALUES('test1','att2','val2');
+INSERT INTO ct(rowid, attribute, value) VALUES('test1','att3','val3');
+INSERT INTO ct(rowid, attribute, value) VALUES('test1','att4','val4');
+INSERT INTO ct(rowid, attribute, value) VALUES('test2','att1','val5');
+INSERT INTO ct(rowid, attribute, value) VALUES('test2','att2','val6');
+INSERT INTO ct(rowid, attribute, value) VALUES('test2','att3','val7');
+INSERT INTO ct(rowid, attribute, value) VALUES('test2','att4','val8');
 
 SELECT *
 FROM crosstab(
   'select rowid, attribute, value
    from ct
-   where rowclass = ''group1''
-   and (attribute = ''att2'' or attribute = ''att3'') order by 1,2;', 3)
+   where attribute = ''att2'' or attribute = ''att3''
+   order by 1,2')
 AS ct(row_name text, category_1 text, category_2 text, category_3 text);
 
  row_name | category_1 | category_2 | category_3
@@ -404,41 +276,165 @@ AS ct(row_name text, category_1 text, category_2 text, category_3 text);
  test1    | val2       | val3       |
  test2    | val6       | val7       |
 (2 rows)
-    </programlisting>
+   </programlisting>
+
+   <para>
+    You can avoid always having to write out a <literal>FROM</> clause to
+    define the output columns, by setting up a custom crosstab function that
+    has the desired output row type wired into its definition.  This is
+    described in the next section.  Another possibility is to embed the
+    required <literal>FROM</> clause in a view definition.
+   </para>
 
   </sect3>
 
   <sect3>
-   <title><literal>crosstab(text, text)</literal></title>
+   <title><function>crosstab<replaceable>N</>(text)</function></title>
+
+    <programlisting>
+crosstab<replaceable>N</>(text sql)
+    </programlisting>
+
+    <para>
+     The <function>crosstab<replaceable>N</></> functions are examples of how
+     to set up custom wrappers for the general <function>crosstab</> function,
+     so that you need not write out column names and types in the calling
+     <command>SELECT</> query.  The <filename>tablefunc</> module includes
+     <function>crosstab2</>, <function>crosstab3</>, and
+     <function>crosstab4</>, whose output rowtypes are defined as
+    </para>
+
+    <programlisting>
+CREATE TYPE tablefunc_crosstab_N AS (
+    row_name TEXT,
+    category_1 TEXT,
+    category_2 TEXT,
+        .
+        .
+        .
+    category_N TEXT
+);
+    </programlisting>
+
+    <para>
+     Thus, these functions can be used directly when the input query produces
+     <structfield>row_name</> and <structfield>value</> columns of type
+     <type>text</>, and you want 2, 3, or 4 output values columns.
+     In all other ways they behave exactly as described above for the
+     general <function>crosstab</> function.
+    </para>
+
+    <para>
+     For instance, the example given in the previous section would also
+     work as
+    </para>
+
+    <programlisting>
+SELECT *
+FROM crosstab3(
+  'select rowid, attribute, value
+   from ct
+   where attribute = ''att2'' or attribute = ''att3''
+   order by 1,2');
+    </programlisting>
+
+    <para>
+     These functions are provided mostly for illustration purposes. You
+     can create your own return types and functions based on the
+     underlying <function>crosstab()</> function.  There are two ways
+     to do it:
+    </para>
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       Create a composite type describing the desired output columns,
+       similar to the examples in the installation script. Then define a
+       unique function name accepting one <type>text</> parameter and returning
+       <type>setof your_type_name</>, but linking to the same underlying
+       <function>crosstab</> C function.  For example, if your source data
+       produces row names that are <type>text</>, and values that are
+       <type>float8</>, and you want 5 value columns:
+      </para>
+
+      <programlisting>
+      CREATE TYPE my_crosstab_float8_5_cols AS (
+          my_row_name text,
+          my_category_1 float8,
+          my_category_2 float8,
+          my_category_3 float8,
+          my_category_4 float8,
+          my_category_5 float8
+      );
+
+      CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(text)
+        RETURNS setof my_crosstab_float8_5_cols
+        AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
+      </programlisting>
+     </listitem>
+
+     <listitem>
+      <para>
+       Use <literal>OUT</> parameters to define the return type implicitly.
+       The same example could also be done this way:
+      </para>
+
+      <programlisting>
+      CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(IN text,
+          OUT my_row_name text,
+          OUT my_category_1 float8,
+          OUT my_category_2 float8,
+          OUT my_category_3 float8,
+          OUT my_category_4 float8,
+          OUT my_category_5 float8)
+        RETURNS setof record
+        AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
+      </programlisting>
+     </listitem>
+    </itemizedlist>
+
+  </sect3>
+
+  <sect3>
+   <title><function>crosstab(text, text)</function></title>
+
    <programlisting>
 crosstab(text source_sql, text category_sql)
    </programlisting>
 
    <para>
-    Where <literal>source_sql</literal> is a SQL statement which produces the
-    source set of data. The SQL statement must return one 
-    <literal>row_name</literal> column, one <literal>category</literal> column,
-    and one <literal>value</literal> column. It may also have one or more 
-    <emphasis>extra</emphasis> columns.
+    The main limitation of the single-parameter form of <function>crosstab</>
+    is that it treats all values in a group alike, inserting each value into
+    the first available column.  If you want the value
+    columns to correspond to specific categories of data, and some groups
+    might not have data for some of the categories, that doesn't work well.
+    The two-parameter form of <function>crosstab</> handles this case by
+    providing an explicit list of the categories corresponding to the
+    output columns.
    </para>
+
    <para>
-    The <literal>row_name</literal> column must be first. The 
-    <literal>category</literal> and <literal>value</literal> columns must be 
-    the last two columns, in that order. <emphasis>extra</emphasis> columns must 
-    be columns 2 through (N - 2), where N is the total number of columns.
+    <parameter>source_sql</parameter> is a SQL statement that produces the
+    source set of data.  This statement must return one
+    <structfield>row_name</structfield> column, one
+    <structfield>category</structfield> column, and one
+    <structfield>value</structfield> column. It may also have one or more
+    <quote>extra</quote> columns.
+    The <structfield>row_name</structfield> column must be first. The
+    <structfield>category</structfield> and <structfield>value</structfield>
+    columns must be the last two columns, in that order.  Any columns between
+    <structfield>row_name</structfield> and
+    <structfield>category</structfield> are treated as <quote>extra</>.
+    The <quote>extra</quote> columns are expected to be the same for all rows
+    with the same <structfield>row_name</structfield> value.
    </para>
+
    <para>
-    The <emphasis>extra</emphasis> columns are assumed to be the same for all 
-    rows with the same <literal>row_name</literal>. The values returned are 
-    copied from the first row with a given <literal>row_name</literal> and 
-    subsequent values of these columns are ignored until 
-    <literal>row_name</literal> changes.
-   </para>
-   <para>
-    e.g. <literal>source_sql</literal> must produce a set something like:
+    For example, <parameter>source_sql</parameter> might produce a set
+    something like:
    </para>
    <programlisting>
- SELECT row_name, extra_col, cat, value FROM foo;
+ SELECT row_name, extra_col, cat, value FROM foo ORDER BY 1;
 
      row_name    extra_col   cat    value
     ----------+------------+-----+---------
@@ -452,14 +448,15 @@ crosstab(text source_sql, text category_sql)
    </programlisting>
 
    <para>
-    <literal>category_sql</literal> has to be a SQL statement which produces 
-    the distinct set of categories. The SQL statement must return one category 
-    column only.  <literal>category_sql</literal> must produce at least one 
-    result row or an error will be generated. <literal>category_sql</literal> 
-    must not produce duplicate categories or an error will be generated. e.g.:
+    <parameter>category_sql</parameter> is a SQL statement that produces
+    the set of categories. This statement must return only one column.
+    It must produce at least one row, or an error will be generated.
+    Also, it must not produce duplicate values, or an error will be
+    generated.  <parameter>category_sql</parameter> might be something like:
    </para>
+
    <programlisting>
-SELECT DISTINCT cat FROM foo;
+SELECT DISTINCT cat FROM foo ORDER BY 1;
     cat
   -------
     cat1
@@ -467,71 +464,114 @@ SELECT DISTINCT cat FROM foo;
     cat3
     cat4
    </programlisting>
+
    <para>
-    The function returns <literal>SETOF RECORD</literal>, which must be defined
-    with a column definition in the FROM clause of the SELECT statement, e.g.:
+    The <function>crosstab</> function is declared to return <type>setof
+    record</type>, so the actual names and types of the output columns must be
+    defined in the <literal>FROM</> clause of the calling <command>SELECT</>
+    statement, for example:
    </para>
+
    <programlisting>
-    SELECT * FROM crosstab(source_sql, cat_sql)
-    AS ct(row_name text, extra text, cat1 text, cat2 text, cat3 text, cat4 text);
+    SELECT * FROM crosstab('...', '...')
+      AS ct(row_name text, extra text, cat1 text, cat2 text, cat3 text, cat4 text);
    </programlisting>
+
    <para>
-    the example crosstab function produces a set something like:
+    This will produce a result something like:
    </para>
+
    <programlisting>
-                      &lt;== values  columns ==&gt;
+                              &lt;==  value  columns   ==&gt;
            row_name   extra   cat1   cat2   cat3   cat4
            ---------+-------+------+------+------+------
              row1     extra1  val1   val2          val4
              row2     extra2  val5   val6   val7   val8
    </programlisting>
+
    <para>
-    Note that it follows these rules:
+    The <literal>FROM</> clause must define the proper number of output
+    columns of the proper data types.  If there are <replaceable>N</>
+    columns in the <parameter>source_sql</> query's result, the first
+    <replaceable>N</>-2 of them must match up with the first
+    <replaceable>N</>-2 output columns.  The remaining output columns
+    must have the type of the last column of the <parameter>source_sql</>
+    query's result, and there must be exactly as many of them as there
+    are rows in the <parameter>category_sql</parameter> query's result.
    </para>
-   <orderedlist>
-    <listitem><para>source_sql must be ordered by row_name (column 1).</para></listitem>
-    <listitem>
-     <para>
-      The number of values columns is determined at run-time. The 
-      column definition provided in the FROM clause must provide for
-      the correct number of columns of the proper data types.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      Missing values (i.e. not enough adjacent rows of same row_name to
-      fill the number of result values columns) are filled in with nulls.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      Extra values (i.e. source rows with category not found in category_sql
-      result) are skipped.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      Rows with a null row_name column are skipped.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      You can create predefined functions to avoid having to write out
-      the result column names/types in each query.  See the examples
-      for crosstab(text).
-     </para>
-    </listitem>
-   </orderedlist>
+
+   <para>
+    The <function>crosstab</> function produces one output row for each
+    consecutive group of input rows with the same
+    <structfield>row_name</structfield> value.  The output
+    <structfield>row_name</structfield> column, plus any <quote>extra</>
+    columns, are copied from the first row of the group.  The output
+    <structfield>value</> columns are filled with the
+    <structfield>value</structfield> fields from rows having matching
+    <structfield>category</> values.  If a row's <structfield>category</>
+    does not match any output of the <parameter>category_sql</parameter>
+    query, its <structfield>value</structfield> is ignored.  Output
+    columns whose matching category is not present in any input row
+    of the group are filled with nulls.
+   </para>
+
+   <para>
+    In practice the <parameter>source_sql</parameter> query should always
+    specify <literal>ORDER BY 1</> to ensure that values with the same
+    <structfield>row_name</structfield> are brought together.  However,
+    ordering of the categories within a group is not important.
+    Also, it is essential to be sure that the order of the
+    <parameter>category_sql</parameter> query's output matches the specified
+    output column order.
+   </para>
+
+   <para>
+    Here are two complete examples:
+   </para>
 
    <programlisting>
-CREATE TABLE cth(id serial, rowid text, rowdt timestamp, attribute text, val text);
-INSERT INTO cth VALUES(DEFAULT,'test1','01 March 2003','temperature','42');
-INSERT INTO cth VALUES(DEFAULT,'test1','01 March 2003','test_result','PASS');
-INSERT INTO cth VALUES(DEFAULT,'test1','01 March 2003','volts','2.6987');
-INSERT INTO cth VALUES(DEFAULT,'test2','02 March 2003','temperature','53');
-INSERT INTO cth VALUES(DEFAULT,'test2','02 March 2003','test_result','FAIL');
-INSERT INTO cth VALUES(DEFAULT,'test2','02 March 2003','test_startdate','01 March 2003');
-INSERT INTO cth VALUES(DEFAULT,'test2','02 March 2003','volts','3.1234');
+create table sales(year int, month int, qty int);
+insert into sales values(2007, 1, 1000);
+insert into sales values(2007, 2, 1500);
+insert into sales values(2007, 7, 500);
+insert into sales values(2007, 11, 1500);
+insert into sales values(2007, 12, 2000);
+insert into sales values(2008, 1, 1000);
+
+select * from crosstab(
+  'select year, month, qty from sales order by 1',
+  'select m from generate_series(1,12) m'
+) as (
+  year int,
+  "Jan" int,
+  "Feb" int,
+  "Mar" int,
+  "Apr" int,
+  "May" int,
+  "Jun" int,
+  "Jul" int,
+  "Aug" int,
+  "Sep" int,
+  "Oct" int,
+  "Nov" int,
+  "Dec" int
+);
+ year | Jan  | Feb  | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov  | Dec
+------+------+------+-----+-----+-----+-----+-----+-----+-----+-----+------+------
+ 2007 | 1000 | 1500 |     |     |     |     | 500 |     |     |     | 1500 | 2000
+ 2008 | 1000 |      |     |     |     |     |     |     |     |     |      |
+(2 rows)
+   </programlisting>
+
+   <programlisting>
+CREATE TABLE cth(rowid text, rowdt timestamp, attribute text, val text);
+INSERT INTO cth VALUES('test1','01 March 2003','temperature','42');
+INSERT INTO cth VALUES('test1','01 March 2003','test_result','PASS');
+INSERT INTO cth VALUES('test1','01 March 2003','volts','2.6987');
+INSERT INTO cth VALUES('test2','02 March 2003','temperature','53');
+INSERT INTO cth VALUES('test2','02 March 2003','test_result','FAIL');
+INSERT INTO cth VALUES('test2','02 March 2003','test_startdate','01 March 2003');
+INSERT INTO cth VALUES('test2','02 March 2003','volts','3.1234');
 
 SELECT * FROM crosstab
 (
@@ -547,24 +587,41 @@ AS
        test_startdate timestamp,
        volts float8
 );
- rowid |          rowdt           | temperature | test_result |      test_startdate      | volts  
+ rowid |          rowdt           | temperature | test_result |      test_startdate      | volts
 -------+--------------------------+-------------+-------------+--------------------------+--------
  test1 | Sat Mar 01 00:00:00 2003 |          42 | PASS        |                          | 2.6987
  test2 | Sun Mar 02 00:00:00 2003 |          53 | FAIL        | Sat Mar 01 00:00:00 2003 | 3.1234
 (2 rows)
    </programlisting>
+
+   <para>
+    You can create predefined functions to avoid having to write out
+    the result column names and types in each query.  See the examples
+    in the previous section.  The underlying C function for this form
+    of <function>crosstab</> is named <literal>crosstab_hash</>.
+   </para>
+
   </sect3>
+
   <sect3>
-   <title>
-    <literal>connectby(text, text, text[, text], text, text, int[, text])</literal>
-   </title>
+   <title><function>connectby</function></title>
+
    <programlisting>
 connectby(text relname, text keyid_fld, text parent_keyid_fld
-            [, text orderby_fld], text start_with, int max_depth
-            [, text branch_delim])
+          [, text orderby_fld ], text start_with, int max_depth
+          [, text branch_delim ])
    </programlisting>
+
+   <para>
+    The <function>connectby</> function produces a display of hierarchical
+    data that is stored in a table.  The table must have a key field that
+    uniquely identifies rows, and a parent-key field that references the
+    parent (if any) of each row.  <function>connectby</> can display the
+    sub-tree descending from any row.
+   </para>
+
    <table>
-    <title><literal>connectby</literal> parameters</title>
+    <title><function>connectby</function> parameters</title>
     <tgroup cols="2">
      <thead>
       <row>
@@ -574,120 +631,108 @@ connectby(text relname, text keyid_fld, text parent_keyid_fld
      </thead>
      <tbody>
       <row>
-       <entry><literal>relname</literal></entry>
+       <entry><parameter>relname</parameter></entry>
        <entry>Name of the source relation</entry>
       </row>
       <row>
-       <entry><literal>keyid_fld</literal></entry>
+       <entry><parameter>keyid_fld</parameter></entry>
        <entry>Name of the key field</entry>
       </row>
       <row>
-       <entry><literal>parent_keyid_fld</literal></entry>
-       <entry>Name of the key_parent field</entry>
+       <entry><parameter>parent_keyid_fld</parameter></entry>
+       <entry>Name of the parent-key field</entry>
       </row>
       <row>
-       <entry><literal>orderby_fld</literal></entry>
-       <entry>
-        If optional ordering of siblings is desired: Name of the field to 
-        order siblings
-       </entry>
+       <entry><parameter>orderby_fld</parameter></entry>
+       <entry>Name of the field to order siblings by (optional)</entry>
       </row>
       <row>
-       <entry><literal>start_with</literal></entry>
-       <entry>
-        Root value of the tree input as a text value regardless of 
-        <literal>keyid_fld</literal>
-       </entry>
+       <entry><parameter>start_with</parameter></entry>
+       <entry>Key value of the row to start at</entry>
       </row>
       <row>
-       <entry><literal>max_depth</literal></entry>
-       <entry>
-        Zero (0) for unlimited depth, otherwise restrict level to this depth
-       </entry>
+       <entry><parameter>max_depth</parameter></entry>
+       <entry>Maximum depth to descend to, or zero for unlimited depth</entry>
       </row>
       <row>
-       <entry><literal>branch_delim</literal></entry>
-       <entry>
-         If optional branch value is desired, this string is used as the delimiter.
-         When not provided, a default value of '~' is used for internal 
-         recursion detection only, and no "branch" field is returned.
-       </entry>
+       <entry><parameter>branch_delim</parameter></entry>
+       <entry>String to separate keys with in branch output (optional)</entry>
       </row>
       </tbody>
      </tgroup>
     </table>
+
     <para>
-     The function returns <literal>SETOF RECORD</literal>, which must defined 
-     with a column definition in the FROM clause of the SELECT statement, e.g.:
+     The key and parent-key fields can be any data type, but they must be
+     the same type.  Note that the <parameter>start_with</> value must be
+     entered as a text string, regardless of the type of the key field.
     </para>
-    <programlisting>
-    SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0, '~')
-      AS t(keyid text, parent_keyid text, level int, branch text);
-    </programlisting>
+
     <para>
-     or 
+     The <function>connectby</> function is declared to return <type>setof
+     record</type>, so the actual names and types of the output columns must be
+     defined in the <literal>FROM</> clause of the calling <command>SELECT</>
+     statement, for example:
     </para>
-    <programlisting>
-    SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0)
-      AS t(keyid text, parent_keyid text, level int);
-    </programlisting>
-    <para>
-     or
-    </para>
+
     <programlisting>
     SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~')
       AS t(keyid text, parent_keyid text, level int, branch text, pos int);
     </programlisting>
+
     <para>
-     or
+     The first two output columns are used for the current row's key and
+     its parent row's key; they must match the type of the table's key field.
+     The third output column is the depth in the tree and must be of type
+     <type>integer</>.  If a <parameter>branch_delim</parameter> parameter was
+     given, the next output column is the branch display and must be of type
+     <type>text</>.  Finally, if an <parameter>orderby_fld</parameter>
+     parameter was given, the last output column is a serial number, and must
+     be of type <type>integer</>.
     </para>
-    <programlisting>
-    SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2', 0)
-      AS t(keyid text, parent_keyid text, level int, pos int);
-    </programlisting>
+
     <para>
-     Note that it follows these rules:
+     The <quote>branch</> output column shows the path of keys taken to
+     reach the current row.  The keys are separated by the specified
+     <parameter>branch_delim</parameter> string.  If no branch display is
+     wanted, omit both the <parameter>branch_delim</parameter> parameter
+     and the branch column in the output column list.
     </para>
-    <orderedlist>
-     <listitem><para>keyid and parent_keyid must be the same data type</para></listitem>
-     <listitem>
-      <para>
-      The column definition *must* include a third column of type INT4 for
-      the level value output
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-      If the branch field is not desired, omit both the branch_delim input
-      parameter *and* the branch field in the query column definition. Note
-      that when branch_delim is not provided, a default value of '~' is used
-      for branch_delim for internal recursion detection, even though the branch
-      field is not returned.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-      If the branch field is desired, it must be the fourth column in the query
-      column definition, and it must be type TEXT.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-      The parameters representing table and field names must include double
-      quotes if the names are mixed-case or contain special characters.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-      If sorting of siblings is desired, the orderby_fld input parameter *and*
-      a name for the resulting serial field (type INT32) in the query column
-      definition must be given.
-      </para>
-     </listitem>
-    </orderedlist>
+
     <para>
-     Example:
+     If the ordering of siblings of the same parent is important,
+     include the <parameter>orderby_fld</parameter> parameter to
+     specify which field to order siblings by.  This field can be of any
+     sortable data type.  The output column list must include a final
+     integer serial-number column, if and only if
+     <parameter>orderby_fld</parameter> is specified.
     </para>
+
+    <para>
+     The parameters representing table and field names are copied as-is
+     into the SQL queries that <function>connectby</> generates internally.
+     Therefore, include double quotes if the names are mixed-case or contain
+     special characters.  You may also need to schema-qualify the table name.
+    </para>
+
+    <para>
+     In large tables, performance will be poor unless there is an index on
+     the parent-key field.
+    </para>
+
+    <para>
+     It is important that the <parameter>branch_delim</parameter> string
+     not appear in any key values, else <function>connectby</> may incorrectly
+     report an infinite-recursion error.  Note that if
+     <parameter>branch_delim</parameter> is not provided, a default value
+     of <literal>~</> is used for recursion detection purposes.
+     <!-- That pretty well sucks.  FIXME -->
+    </para>
+
+    <para>
+     Here is an example:
+    </para>
+
     <programlisting>
 CREATE TABLE connectby_tree(keyid text, parent_keyid text, pos int);
 
@@ -701,7 +746,7 @@ INSERT INTO connectby_tree VALUES('row7','row3', 0);
 INSERT INTO connectby_tree VALUES('row8','row6', 0);
 INSERT INTO connectby_tree VALUES('row9','row5', 0);
 
--- with branch, without orderby_fld
+-- with branch, without orderby_fld (order of results is not guaranteed)
 SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0, '~')
  AS t(keyid text, parent_keyid text, level int, branch text);
  keyid | parent_keyid | level |       branch
@@ -714,7 +759,7 @@ SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0, '~
  row9  | row5         |     2 | row2~row5~row9
 (6 rows)
 
--- without branch, without orderby_fld
+-- without branch, without orderby_fld (order of results is not guaranteed)
 SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0)
  AS t(keyid text, parent_keyid text, level int);
  keyid | parent_keyid | level
@@ -729,8 +774,8 @@ SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0)
 
 -- with branch, with orderby_fld (notice that row5 comes before row4)
 SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~')
- AS t(keyid text, parent_keyid text, level int, branch text, pos int) ORDER BY t.pos;
- keyid | parent_keyid | level |       branch        | pos 
+ AS t(keyid text, parent_keyid text, level int, branch text, pos int);
+ keyid | parent_keyid | level |       branch        | pos
 -------+--------------+-------+---------------------+-----
  row2  |              |     0 | row2                |   1
  row5  | row2         |     1 | row2~row5           |   2
@@ -742,7 +787,7 @@ SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2'
 
 -- without branch, with orderby_fld (notice that row5 comes before row4)
 SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2', 0)
- AS t(keyid text, parent_keyid text, level int, pos int) ORDER BY t.pos;
+ AS t(keyid text, parent_keyid text, level int, pos int);
  keyid | parent_keyid | level | pos
 -------+--------------+-------+-----
  row2  |              |     0 |   1
@@ -754,12 +799,16 @@ SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2'
 (6 rows)
     </programlisting>
    </sect3>
+
  </sect2>
+
  <sect2>
   <title>Author</title>
+
   <para>
    Joe Conway
   </para>
- </sect2>
-</sect1>
 
+ </sect2>
+
+</sect1>

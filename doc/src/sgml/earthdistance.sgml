@@ -1,133 +1,191 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/earthdistance.sgml,v 1.3 2007/12/06 04:12:10 tgl Exp $ -->
+
 <sect1 id="earthdistance">
  <title>earthdistance</title>
- 
+
  <indexterm zone="earthdistance">
   <primary>earthdistance</primary>
  </indexterm>
 
  <para>
-  This module contains two different approaches to calculating
-  great circle distances on the surface of the Earth. The one described
-  first depends on the contrib/cube package (which MUST be installed before
-  earthdistance is installed). The second one is based on the point
-  datatype using latitude and longitude for the coordinates. The install
-  script makes the defined functions executable by anyone.
- </para>
- <para>
-  A spherical model of the Earth is used.
- </para>
- <para>
-  Data is stored in cubes that are points (both corners are the same) using 3
-  coordinates representing the distance from the center of the Earth.
- </para>
- <para>
-  The radius of the Earth is obtained from the earth() function. It is
-  given in meters. But by changing this one function you can change it
-  to use some other units or to use a different value of the radius
-  that you feel is more appropiate.
- </para>
- <para>
-  This package also has applications to astronomical databases as well.
-  Astronomers will probably want to change earth() to return a radius of
-  180/pi() so that distances are in degrees.
- </para>
- <para>
-  Functions are provided to allow for input in latitude and longitude (in
-  degrees), to allow for output of latitude and longitude, to calculate
-  the great circle distance between two points and to easily specify a
-  bounding box usable for index searches.
- </para>
- <para>
-  The functions are all 'sql' functions. If you want to make these functions
-  executable by other people you will also have to make the referenced
-  cube functions executable. cube(text), cube(float8), cube(cube,float8),
-  cube_distance(cube,cube), cube_ll_coord(cube,int) and
-  cube_enlarge(cube,float8,int) are used indirectly by the earth distance
-  functions. is_point(cube) and cube_dim(cube) are used in constraints for data
-  in domain earth. cube_ur_coord(cube,int) is used in the regression tests and
-  might be useful for looking at bounding box coordinates in user applications.
- </para>
- <para>
-  A domain of type cube named earth is defined.
-  There are constraints on it defined to make sure the cube is a point,
-  that it does not have more than 3 dimensions and that it is very near
-  the surface of a sphere centered about the origin with the radius of
-  the Earth.
- </para>
- <para> 
-  The following functions are provided:
+  The <filename>earthdistance</> module provides two different approaches to
+  calculating great circle distances on the surface of the Earth. The one
+  described first depends on the <filename>cube</> package (which
+  <emphasis>must</> be installed before <filename>earthdistance</> can be
+  installed). The second one is based on the built-in <type>point</> datatype,
+  using longitude and latitude for the coordinates.
  </para>
 
- <table id="earthdistance-functions">
-  <title>EarthDistance functions</title>
-  <tgroup cols="2">
-   <tbody>
-    <row>
-     <entry><literal>earth()</literal></entry>
-     <entry>returns the radius of the Earth in meters.</entry>
-    </row>
-    <row>
-     <entry><literal>sec_to_gc(float8)</literal></entry>
-     <entry>converts the normal straight line 
-   (secant) distance between between two points on the surface of the Earth 
-   to the great circle distance between them.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>gc_to_sec(float8)</literal></entry>
-     <entry>Converts the great circle distance 
-   between two points on the surface of the Earth to the normal straight line 
-   (secant) distance between them.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>ll_to_earth(float8, float8)</literal></entry>
-     <entry>Returns the location of a point on the surface of the Earth given 
-      its latitude (argument 1) and longitude (argument 2) in degrees.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>latitude(earth)</literal></entry>
-     <entry>Returns the latitude in degrees of a point on the surface of the 
-      Earth.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>longitude(earth)</literal></entry>
-     <entry>Returns the longitude in degrees of a point on the surface of the 
-      Earth.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>earth_distance(earth, earth)</literal></entry>
-     <entry>Returns the great circle distance between two points on the 
-      surface of the Earth.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>earth_box(earth, float8)</literal></entry>
-     <entry>Returns a box suitable for an indexed search using the cube @> 
-      operator for points within a given great circle distance of a location.
-      Some points in this box are further than the specified great circle 
-      distance from the location so a second check using earth_distance 
-      should be made at the same time.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>&lt;@&gt;</literal> operator</entry>
-     <entry>gives the distance in statute miles between
-      two points on the Earth's surface. Coordinates are in degrees. Points are
-      taken as (longitude, latitude) and not vice versa as longitude is closer 
-      to the intuitive idea of x-axis and latitude to y-axis.
-     </entry>
-    </row>
-   </tbody>
-  </tgroup>
- </table>
  <para>
-  One advantage of using cube representation over a point using latitude and
-  longitude for coordinates, is that you don't have to worry about special
-  conditions at +/- 180 degrees of longitude or near the poles.
+  In this module, the Earth is assumed to be perfectly spherical.
+  (If that's too inaccurate for you, you might want to look at the
+  <application><ulink url="http://www.postgis.org/">PostGIS</ulink></>
+  project.)
  </para>
+
+ <sect2>
+  <title>Cube-based earth distances</title>
+
+  <para>
+   Data is stored in cubes that are points (both corners are the same) using 3
+   coordinates representing the x, y, and z distance from the center of the
+   Earth.  A domain <type>earth</> over <type>cube</> is provided, which
+   includes constraint checks that the value meets these restrictions and
+   is reasonably close to the actual surface of the Earth.
+  </para>
+
+  <para>
+   The radius of the Earth is obtained from the <function>earth()</>
+   function. It is given in meters. But by changing this one function you can
+   change the module to use some other units, or to use a different value of
+   the radius that you feel is more appropiate.
+  </para>
+
+  <para>
+   This package has applications to astronomical databases as well.
+   Astronomers will probably want to change <function>earth()</> to return a
+   radius of <literal>180/pi()</> so that distances are in degrees.
+  </para>
+
+  <para>
+   Functions are provided to support input in latitude and longitude (in
+   degrees), to support output of latitude and longitude, to calculate
+   the great circle distance between two points and to easily specify a
+   bounding box usable for index searches.
+  </para>
+
+  <para>
+   The following functions are provided:
+  </para>
+
+  <table id="earthdistance-cube-functions">
+   <title>Cube-based earthdistance functions</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Returns</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><function>earth()</function></entry>
+      <entry><type>float8</type></entry>
+      <entry>Returns the assumed radius of the Earth.</entry>
+     </row>
+     <row>
+      <entry><function>sec_to_gc(float8)</function></entry>
+      <entry><type>float8</type></entry>
+      <entry>Converts the normal straight line
+       (secant) distance between between two points on the surface of the Earth
+       to the great circle distance between them.
+      </entry>
+     </row>
+     <row>
+      <entry><function>gc_to_sec(float8)</function></entry>
+      <entry><type>float8</type></entry>
+      <entry>Converts the great circle distance between two points on the
+       surface of the Earth to the normal straight line (secant) distance
+       between them.
+      </entry>
+     </row>
+     <row>
+      <entry><function>ll_to_earth(float8, float8)</function></entry>
+      <entry><type>earth</type></entry>
+      <entry>Returns the location of a point on the surface of the Earth given
+       its latitude (argument 1) and longitude (argument 2) in degrees.
+      </entry>
+     </row>
+     <row>
+      <entry><function>latitude(earth)</function></entry>
+      <entry><type>float8</type></entry>
+      <entry>Returns the latitude in degrees of a point on the surface of the
+       Earth.
+      </entry>
+     </row>
+     <row>
+      <entry><function>longitude(earth)</function></entry>
+      <entry><type>float8</type></entry>
+      <entry>Returns the longitude in degrees of a point on the surface of the
+       Earth.
+      </entry>
+     </row>
+     <row>
+      <entry><function>earth_distance(earth, earth)</function></entry>
+      <entry><type>float8</type></entry>
+      <entry>Returns the great circle distance between two points on the
+       surface of the Earth.
+      </entry>
+     </row>
+     <row>
+      <entry><function>earth_box(earth, float8)</function></entry>
+      <entry><type>cube</type></entry>
+      <entry>Returns a box suitable for an indexed search using the cube
+       <literal>@&gt;</>
+       operator for points within a given great circle distance of a location.
+       Some points in this box are further than the specified great circle
+       distance from the location, so a second check using
+       <function>earth_distance</> should be included in the query.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect2>
+
+ <sect2>
+  <title>Point-based earth distances</title>
+
+  <para>
+   The second part of the module relies on representing Earth locations as
+   values of type <type>point</>, in which the first component is taken to
+   represent longitude in degrees, and the second component is taken to
+   represent latitude in degrees.  Points are taken as (longitude, latitude)
+   and not vice versa because longitude is closer to the intuitive idea of
+   x-axis and latitude to y-axis.
+  </para>
+
+  <para>
+   A single operator is provided:
+  </para>
+
+  <table id="earthdistance-point-operators">
+   <title>Point-based earthdistance operators</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Operator</entry>
+      <entry>Returns</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><type>point</> <literal>&lt;@&gt;</literal> <type>point</></entry>
+      <entry><type>float8</type></entry>
+      <entry>Gives the distance in statute miles between
+       two points on the Earth's surface.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Note that unlike the <type>cube</>-based part of the module, units
+   are hardwired here: changing the <function>earth()</> function will
+   not affect the results of this operator.
+  </para>
+
+  <para>
+   One disadvantage of the longitude/latitude representation is that
+   you need to be careful about the edge conditions near the poles
+   and near +/- 180 degrees of longitude.  The <type>cube</>-based
+   representation avoids these discontinuities.
+  </para>
+
+ </sect2>
+
 </sect1>
-

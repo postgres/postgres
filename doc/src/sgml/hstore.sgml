@@ -1,229 +1,241 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.2 2007/12/06 04:12:10 tgl Exp $ -->
+
 <sect1 id="hstore">
  <title>hstore</title>
- 
+
  <indexterm zone="hstore">
   <primary>hstore</primary>
  </indexterm>
 
  <para>
-  The <literal>hstore</literal> module is usefull for storing (key,value) pairs.
-  This module can be useful in different scenarios: case with many attributes
-  rarely searched, semistructural data or a lazy DBA.
+  This module implements a data type <type>hstore</> for storing sets of
+  (key,value) pairs within a single <productname>PostgreSQL</> data field.
+  This can be useful in various scenarios, such as rows with many attributes
+  that are rarely examined, or semi-structured data.
  </para>
 
  <sect2>
-  <title>Operations</title>
-  <itemizedlist>
-   <listitem>
-    <para>
-      <literal>hstore -> text</literal> - get value , perl analogy $h{key} 
-    </para>
-    <programlisting>
-select 'a=>q, b=>g'->'a';
-  ?
-------
-  q
-    </programlisting>
-    <para>
-     Note the use of parenthesis in the select below, because priority of 'is' is 
-     higher than that of '->':
-    </para>
-    <programlisting>
-SELECT id FROM entrants WHERE (info->'education_period') IS NOT NULL;
-    </programlisting>
-   </listitem>
+  <title><type>hstore</> External Representation</title>
 
-   <listitem>
-    <para>
-     <literal>hstore || hstore</literal> - concatenation, perl analogy %a=( %b, %c ); 
-    </para>
-    <programlisting>
-regression=# select 'a=>b'::hstore || 'c=>d'::hstore;
-      ?column?      
---------------------
- "a"=>"b", "c"=>"d"
-(1 row)
-    </programlisting>
+  <para>
+   The text representation of an <type>hstore</> value includes zero
+   or more <replaceable>key</> <literal>=&gt;</> <replaceable>value</>
+   items, separated by commas.  For example:
 
-    <para>
-     but, notice
-    </para>
+   <programlisting>
+    k => v
+    foo => bar, baz => whatever
+    "1-a" => "anything at all"
+   </programlisting>
 
-    <programlisting>
-regression=# select 'a=>b'::hstore || 'a=>d'::hstore;
- ?column? 
-----------
- "a"=>"d"
-(1 row)
-    </programlisting>
-   </listitem>
+   The order of the items is not considered significant (and may not be
+   reproduced on output).  Whitespace between items or around the
+   <literal>=&gt;</> sign is ignored.  Use double quotes if a key or
+   value includes whitespace, comma, <literal>=</> or <literal>&gt;</>.
+   To include a double quote or a backslash in a key or value, precede
+   it with another backslash.  (Keep in mind that depending on the
+   setting of <varname>standard_conforming_strings</>, you may need to
+   double backslashes in SQL literal strings.)
+  </para>
 
-   <listitem>
-    <para>
-     <literal>text => text</literal> - creates hstore type from two text strings 
-    </para>
-    <programlisting>
-select 'a'=>'b';
-  ?column?
-----------
-  "a"=>"b"
-    </programlisting>
-   </listitem>
+  <para>
+   A value (but not a key) can be a SQL NULL.  This is represented as
 
-   <listitem>
-    <para>
-      <literal>hstore @> hstore</literal> - contains operation, check if left operand contains right. 
-    </para>
-    <programlisting>
-regression=# select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>c';
- ?column? 
-----------
- f
-(1 row)
+   <programlisting>
+    key => NULL
+   </programlisting>
 
-regression=# select 'a=>b, b=>1, c=>NULL'::hstore @> 'b=>1';
- ?column? 
-----------
- t
-(1 row)
-    </programlisting>
-   </listitem>
+   The <literal>NULL</> keyword is not case-sensitive.  Again, use
+   double quotes if you want the string <literal>null</> to be treated
+   as an ordinary data value.
+  </para>
 
-   <listitem>
-    <para>
-     <literal>hstore &lt;@ hstore</literal> - contained operation, check if 
-     left operand is contained in right
-    </para>
-    <para>
-     (Before PostgreSQL 8.2, the containment operators @&gt; and &lt;@ were
-     respectively called @ and ~.  These names are still available, but are
-     deprecated and will eventually be retired.  Notice that the old names
-     are reversed from the convention formerly followed by the core geometric
-     datatypes!)
-    </para>
-   </listitem>
-  </itemizedlist>
+  <para>
+   Currently, double quotes are always used to surround key and value
+   strings on output, even when this is not strictly necessary.
+  </para>
+
  </sect2>
 
  <sect2>
-  <title>Functions</title>
+  <title><type>hstore</> Operators and Functions</title>
 
-  <itemizedlist>
-   <listitem>
-    <para>
-     <literal>akeys(hstore)</literal> - returns all keys from hstore as array 
-    </para>
-    <programlisting>
-regression=# select akeys('a=>1,b=>2');
- akeys 
--------
- {a,b}
-    </programlisting>
-   </listitem>
+  <table id="hstore-op-table">
+   <title><type>hstore</> Operators</title>
 
-   <listitem>
-    <para>
-     <literal>skeys(hstore)</literal> - returns all keys from hstore as strings 
-    </para>
-    <programlisting>
-regression=# select skeys('a=>1,b=>2');
- skeys 
--------
- a
- b
-    </programlisting>
-   </listitem>
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Operator</entry>
+      <entry>Description</entry>
+      <entry>Example</entry>
+      <entry>Result</entry>
+     </row>
+    </thead>
 
-   <listitem>
-    <para>
-     <literal>avals(hstore)</literal> - returns all values from hstore as array 
-    </para>
-    <programlisting>
-regression=# select avals('a=>1,b=>2');
- avals 
--------
- {1,2}
-    </programlisting>
-   </listitem>
+    <tbody>
+     <row>
+      <entry><type>hstore</> <literal>-&gt;</> <type>text</></entry>
+      <entry>get value for key (null if not present)</entry>
+      <entry><literal>'a=&gt;x, b=&gt;y'::hstore -&gt; 'a'</literal></entry>
+      <entry><literal>x</literal></entry>
+     </row>
 
-   <listitem>
-    <para>
-     <literal>svals(hstore)</literal> - returns all values from hstore as 
-     strings 
-    </para>
-    <programlisting>
-regression=# select svals('a=>1,b=>2');
- svals 
--------
- 1
- 2
-    </programlisting>
-   </listitem>
+     <row>
+      <entry><type>text</> <literal>=&gt;</> <type>text</></entry>
+      <entry>make single-item <type>hstore</></entry>
+      <entry><literal>'a' =&gt; 'b'</literal></entry>
+      <entry><literal>"a"=&gt;"b"</literal></entry>
+     </row>
 
-   <listitem>
-    <para>
-     <literal>delete (hstore,text)</literal> - delete (key,value) from hstore if 
-     key matches argument. 
-    </para>
-    <programlisting>
-regression=# select delete('a=>1,b=>2','b');
-  delete  
-----------
- "a"=>"1"
-    </programlisting>
-   </listitem>
+     <row>
+      <entry><type>hstore</> <literal>||</> <type>hstore</></entry>
+      <entry>concatenation</entry>
+      <entry><literal>'a=&gt;b, c=&gt;d'::hstore || 'c=&gt;x, d=&gt;q'::hstore</literal></entry>
+      <entry><literal>"a"=&gt;"b", "c"=&gt;"x", "d"=&gt;"q"</literal></entry>
+     </row>
 
-   <listitem>
-    <para>
-     <literal>each(hstore)</literal> - return (key, value) pairs 
-    </para>
-    <programlisting>
-regression=# select * from each('a=>1,b=>2');
- key | value 
+     <row>
+      <entry><type>hstore</> <literal>?</> <type>text</></entry>
+      <entry>does <type>hstore</> contain key?</entry>
+      <entry><literal>'a=&gt;1'::hstore ? 'a'</literal></entry>
+      <entry><literal>t</literal></entry>
+     </row>
+
+     <row>
+      <entry><type>hstore</> <literal>@&gt;</> <type>hstore</></entry>
+      <entry>does left operand contain right?</entry>
+      <entry><literal>'a=&gt;b, b=&gt;1, c=&gt;NULL'::hstore @&gt; 'b=&gt;1'</literal></entry>
+      <entry><literal>t</literal></entry>
+     </row>
+
+     <row>
+      <entry><type>hstore</> <literal>&lt;@</> <type>hstore</></entry>
+      <entry>is left operand contained in right?</entry>
+      <entry><literal>'a=&gt;c'::hstore &lt;@ 'a=&gt;b, b=&gt;1, c=&gt;NULL'</literal></entry>
+      <entry><literal>f</literal></entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   (Before PostgreSQL 8.2, the containment operators @&gt; and &lt;@ were
+   respectively called @ and ~.  These names are still available, but are
+   deprecated and will eventually be retired.  Notice that the old names
+   are reversed from the convention formerly followed by the core geometric
+   datatypes!)
+  </para>
+
+  <table id="hstore-func-table">
+   <title><type>hstore</> Functions</title>
+
+   <tgroup cols="5">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+      <entry>Example</entry>
+      <entry>Result</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><function>akeys(hstore)</function></entry>
+      <entry><type>text[]</type></entry>
+      <entry>get <type>hstore</>'s keys as array</entry>
+      <entry><literal>akeys('a=&gt;1,b=&gt;2')</literal></entry>
+      <entry><literal>{a,b}</literal></entry>
+     </row>
+
+     <row>
+      <entry><function>skeys(hstore)</function></entry>
+      <entry><type>setof text</type></entry>
+      <entry>get <type>hstore</>'s keys as set</entry>
+      <entry><literal>skeys('a=&gt;1,b=&gt;2')</literal></entry>
+      <entry>
+<programlisting>
+a
+b
+</programlisting></entry>
+     </row>
+
+     <row>
+      <entry><function>avals(hstore)</function></entry>
+      <entry><type>text[]</type></entry>
+      <entry>get <type>hstore</>'s values as array</entry>
+      <entry><literal>avals('a=&gt;1,b=&gt;2')</literal></entry>
+      <entry><literal>{1,2}</literal></entry>
+     </row>
+
+     <row>
+      <entry><function>svals(hstore)</function></entry>
+      <entry><type>setof text</type></entry>
+      <entry>get <type>hstore</>'s values as set</entry>
+      <entry><literal>svals('a=&gt;1,b=&gt;2')</literal></entry>
+      <entry>
+<programlisting>
+1
+2
+</programlisting></entry>
+     </row>
+
+     <row>
+      <entry><function>each(hstore)</function></entry>
+      <entry><type>setof (key text, value text)</type></entry>
+      <entry>get <type>hstore</>'s keys and values as set</entry>
+      <entry><literal>select * from each('a=&gt;1,b=&gt;2')</literal></entry>
+      <entry>
+<programlisting>
+ key | value
 -----+-------
  a   | 1
  b   | 2
-    </programlisting>
-   </listitem>
+</programlisting></entry>
+     </row>
 
-   <listitem>
-    <para>
-     <literal>exist (hstore,text)</literal>
-    </para>
-    <para>
-     <literal>hstore ? text</literal> - returns 'true if key is exists in hstore 
-     and false otherwise. 
-    </para>
-    <programlisting>
-regression=# select exist('a=>1','a'), 'a=>1' ? 'a';
- exist | ?column? 
--------+----------
- t     | t
-    </programlisting>
-   </listitem>
+     <row>
+      <entry><function>exist(hstore,text)</function></entry>
+      <entry><type>boolean</type></entry>
+      <entry>does <type>hstore</> contain key?</entry>
+      <entry><literal>exist('a=&gt;1','a')</literal></entry>
+      <entry><literal>t</literal></entry>
+     </row>
 
-   <listitem>
-    <para>
-     <literal>defined (hstore,text)</literal> - returns true if key is exists in 
-      hstore and its value is not NULL. 
-    </para>
-    <programlisting>
-regression=# select defined('a=>NULL','a');
- defined 
----------
- f
-    </programlisting>
-   </listitem>
-  </itemizedlist>
+     <row>
+      <entry><function>defined(hstore,text)</function></entry>
+      <entry><type>boolean</type></entry>
+      <entry>does <type>hstore</> contain non-null value for key?</entry>
+      <entry><literal>defined('a=&gt;NULL','a')</literal></entry>
+      <entry><literal>f</literal></entry>
+     </row>
+
+     <row>
+      <entry><function>delete(hstore,text)</function></entry>
+      <entry><type>hstore</type></entry>
+      <entry>delete any item matching key</entry>
+      <entry><literal>delete('a=&gt;1,b=&gt;2','b')</literal></entry>
+      <entry><literal>"a"=>"1"</literal></entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
  </sect2>
 
  <sect2>
-  <title>Indices</title>
+  <title>Indexes</title>
+
   <para>
-   Module provides index support for '@>' and '?' operations.
+   <type>hstore</> has index support for <literal>@&gt;</> and <literal>?</>
+   operators.  You can use either GiST or GIN index types.  For example:
   </para>
   <programlisting>
 CREATE INDEX hidx ON testhstore USING GIST(h);
+
 CREATE INDEX hidx ON testhstore USING GIN(h);
   </programlisting>
  </sect2>
@@ -232,45 +244,53 @@ CREATE INDEX hidx ON testhstore USING GIN(h);
   <title>Examples</title>
 
   <para>
-   Add a key:
+   Add a key, or update an existing key with a new value:
   </para>
   <programlisting>
-UPDATE tt SET h=h||'c=>3';
+UPDATE tab SET h = h || ('c' => '3');
   </programlisting>
+
   <para>
    Delete a key:
   </para>
   <programlisting>
-UPDATE tt SET h=delete(h,'k1');
+UPDATE tab SET h = delete(h, 'k1');
   </programlisting>
  </sect2>
 
  <sect2>
   <title>Statistics</title>
+
   <para>
-hstore type, because of its intrinsic liberality, could contain a lot of 
-different keys. Checking for valid keys is the task of application. 
-Examples below demonstrate several techniques how to check keys statistics.
+   The <type>hstore</> type, because of its intrinsic liberality, could
+   contain a lot of different keys. Checking for valid keys is the task of the
+   application.  Examples below demonstrate several techniques for checking
+   keys and obtaining statistics.
   </para>
 
   <para>
-   Simple example
+   Simple example:
   </para>
   <programlisting>
-SELECT * FROM each('aaa=>bq, b=>NULL, ""=>1 ');
+SELECT * FROM each('aaa=>bq, b=>NULL, ""=>1');
   </programlisting>
 
   <para>
-   Using table
+   Using a table:
   </para>
   <programlisting>
-SELECT (each(h)).key, (each(h)).value INTO stat FROM testhstore ;
+SELECT (each(h)).key, (each(h)).value INTO stat FROM testhstore;
   </programlisting>
 
-  <para>Online stat</para>
+  <para>
+   Online statistics:
+  </para>
   <programlisting>
-SELECT key, count(*) FROM (SELECT (each(h)).key FROM testhstore) AS stat GROUP BY key ORDER BY count DESC, key;
-    key    | count 
+SELECT key, count(*) FROM
+  (SELECT (each(h)).key FROM testhstore) AS stat
+  GROUP BY key
+  ORDER BY count DESC, key;
+    key    | count
 -----------+-------
  line      |   883
  query     |   207
@@ -287,12 +307,14 @@ SELECT key, count(*) FROM (SELECT (each(h)).key FROM testhstore) AS stat GROUP B
 
  <sect2>
   <title>Authors</title>
+
   <para>
    Oleg Bartunov <email>oleg@sai.msu.su</email>, Moscow, Moscow University, Russia
   </para>
+
   <para>
-   Teodor Sigaev <email>teodor@sigaev.ru</email>, Moscow, Delta-Soft Ltd.,Russia
+   Teodor Sigaev <email>teodor@sigaev.ru</email>, Moscow, Delta-Soft Ltd., Russia
   </para>
  </sect2>
-</sect1>
 
+</sect1>

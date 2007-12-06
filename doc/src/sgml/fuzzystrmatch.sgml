@@ -1,30 +1,51 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/fuzzystrmatch.sgml,v 1.3 2007/12/06 04:12:10 tgl Exp $ -->
 
 <sect1 id="fuzzystrmatch">
  <title>fuzzystrmatch</title>
- 
+
+ <indexterm zone="fuzzystrmatch">
+  <primary>fuzzystrmatch</primary>
+ </indexterm>
+
  <para>
-  This section describes the fuzzystrmatch module which provides different
+  The <filename>fuzzystrmatch</> module provides several
   functions to determine similarities and distance between strings.
  </para>
 
  <sect2>
   <title>Soundex</title>
+
   <para>
-   The Soundex system is a method of matching similar sounding names
-   (or any words) to the same code.  It was initially used by the
-   United States Census in 1880, 1900, and 1910, but it has little use
-   beyond English names (or the English pronunciation of names), and
-   it is not a linguistic tool.
+   The Soundex system is a method of matching similar-sounding names
+   by converting them to the same code.  It was initially used by the
+   United States Census in 1880, 1900, and 1910.  Note that Soundex
+   is not very useful for non-English names.
   </para>
+
   <para>
-   When comparing two soundex values to determine similarity, the
-   difference function reports how close the match is on a scale
-   from zero to four, with zero being no match and four being an
-   exact match.
+   The <filename>fuzzystrmatch</> module provides two functions
+   for working with Soundex codes:
   </para>
+
+  <programlisting>
+   soundex(text) returns text
+   difference(text, text) returns int
+  </programlisting>
+
   <para>
-   The following are some usage examples:
+   The <function>soundex</> function converts a string to its Soundex code.
+   The <function>difference</> function converts two strings to their Soundex
+   codes and then reports the number of matching code positions.  Since
+   Soundex codes have four characters, the result ranges from zero to four,
+   with zero being no match and four being an exact match.  (Thus, the
+   function is misnamed &mdash; <function>similarity</> would have been
+   a better name.)
   </para>
+
+  <para>
+   Here are some usage examples:
+  </para>
+
   <programlisting>
 SELECT soundex('hello world!');
 
@@ -41,81 +62,106 @@ INSERT INTO s VALUES ('jack');
 
 SELECT * FROM s WHERE soundex(nm) = soundex('john');
 
-SELECT a.nm, b.nm FROM s a, s b WHERE soundex(a.nm) = soundex(b.nm) AND a.oid &lt;&gt; b.oid;
-
-CREATE FUNCTION text_sx_eq(text, text) RETURNS boolean AS
-'select soundex($1) = soundex($2)'
-LANGUAGE SQL;
-
-CREATE FUNCTION text_sx_lt(text, text) RETURNS boolean AS
-'select soundex($1) &lt; soundex($2)'
-LANGUAGE SQL;
-
-CREATE FUNCTION text_sx_gt(text, text) RETURNS boolean AS
-'select soundex($1) &gt; soundex($2)'
-LANGUAGE SQL;
-
-CREATE FUNCTION text_sx_le(text, text) RETURNS boolean AS
-'select soundex($1) &lt;= soundex($2)'
-LANGUAGE SQL;
-
-CREATE FUNCTION text_sx_ge(text, text) RETURNS boolean AS
-'select soundex($1) &gt;= soundex($2)'
-LANGUAGE SQL;
-
-CREATE FUNCTION text_sx_ne(text, text) RETURNS boolean AS
-'select soundex($1) &lt;&gt; soundex($2)'
-LANGUAGE SQL;
-
-DROP OPERATOR #= (text, text);
-
-CREATE OPERATOR #= (leftarg=text, rightarg=text, procedure=text_sx_eq, commutator = #=);
-
-SELECT * FROM s WHERE text_sx_eq(nm, 'john');
-
-SELECT * FROM s WHERE s.nm #= 'john';
-
 SELECT * FROM s WHERE difference(s.nm, 'john') &gt; 2;
   </programlisting>
  </sect2>
 
  <sect2>
-  <title>levenshtein</title>
+  <title>Levenshtein</title>
+
   <para>
-   This function calculates the levenshtein distance between two strings:
+   This function calculates the Levenshtein distance between two strings:
   </para>
+
   <programlisting>
-   int levenshtein(text source, text target)
+   levenshtein(text source, text target) returns int
   </programlisting>
+
   <para>
    Both <literal>source</literal> and <literal>target</literal> can be any
-   NOT NULL string with a maximum of 255 characters.
+   non-null string, with a maximum of 255 characters.
   </para>
+
   <para>
    Example:
   </para>
+
   <programlisting>
-   SELECT levenshtein('GUMBO','GAMBOL');
+test=# SELECT levenshtein('GUMBO', 'GAMBOL');
+ levenshtein
+-------------
+           2
+(1 row)
   </programlisting>
  </sect2>
 
  <sect2>
-  <title>metaphone</title>
+  <title>Metaphone</title>
+
   <para>
-   This function calculates and returns the metaphone code of an input string:
+   Metaphone, like Soundex, is based on the idea of constructing a
+   representative code for an input string.  Two strings are then
+   deemed similar if they have the same codes.
   </para>
-  <programlisting>
-   text metahpone(text source, int max_output_length)
-  </programlisting>
+
   <para>
-   <literal>source</literal> has to be a NOT NULL string with a maximum of
-   255 characters. <literal>max_output_length</literal> fixes the maximum
-   length of the output metaphone code; if longer, the output is truncated 
+   This function calculates the metaphone code of an input string:
+  </para>
+
+  <programlisting>
+   metaphone(text source, int max_output_length) returns text
+  </programlisting>
+
+  <para>
+   <literal>source</literal> has to be a non-null string with a maximum of
+   255 characters.  <literal>max_output_length</literal> sets the maximum
+   length of the output metaphone code; if longer, the output is truncated
    to this length.
   </para>
-  <para>Example</para>
+
+  <para>
+   Example:
+  </para>
+
   <programlisting>
-   SELECT metaphone('GUMBO',4);
+test=# SELECT metaphone('GUMBO', 4);
+ metaphone
+-----------
+ KM
+(1 row)
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Double Metaphone</title>
+
+  <para>
+   The Double Metaphone system computes two <quote>sounds like</> strings
+   for a given input string &mdash; a <quote>primary</> and an
+   <quote>alternate</>.  In most cases they are the same, but for non-English
+   names especially they can be a bit different, depending on pronunciation.
+   These functions compute the primary and alternate codes:
+  </para>
+
+  <programlisting>
+   dmetaphone(text source) returns text
+   dmetaphone_alt(text source) returns text
+  </programlisting>
+
+  <para>
+   There is no length limit on the input strings.
+  </para>
+
+  <para>
+   Example:
+  </para>
+
+  <programlisting>
+test=# select dmetaphone('gumbo');
+ dmetaphone
+------------
+ KMP
+(1 row)
   </programlisting>
  </sect2>
 

@@ -1,17 +1,45 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/chkpass.sgml,v 1.2 2007/12/06 04:12:09 tgl Exp $ -->
+
 <sect1 id="chkpass">
- <title>chkpass</title> 
- 
- <!--
+ <title>chkpass</title>
+
  <indexterm zone="chkpass">
   <primary>chkpass</primary>
  </indexterm>
- -->
+
  <para>
-  chkpass is a password type that is automatically checked and converted upon
-  entry.  It is stored encrypted.  To compare, simply compare against a clear
+  This module implements a data type <type>chkpass</> that is
+  designed for storing encrypted passwords.
+  Each password is automatically converted to encrypted form upon entry,
+  and is always stored encrypted.  To compare, simply compare against a clear
   text password and the comparison function will encrypt it before comparing.
-  It also returns an error if the code determines that the password is easily
-  crackable.  This is currently a stub that does nothing.
+ </para>
+
+ <para>
+  There are provisions in the code to report an error if the password is
+  determined to be easily crackable.  However, this is currently just
+  a stub that does nothing.
+ </para>
+
+ <para>
+  If you precede an input string with a colon, it is assumed to be an
+  already-encrypted password, and is stored without further encryption.
+  This allows entry of previously-encrypted passwords.
+ </para>
+
+ <para>
+  On output, a colon is prepended.  This makes it possible to dump and reload
+  passwords without re-encrypting them.  If you want the encrypted password
+  without the colon then use the <function>raw()</> function.
+  This allows you to use the
+  type with things like Apache's Auth_PostgreSQL module.
+ </para>
+
+ <para>
+  The encryption uses the standard Unix function <function>crypt()</>,
+  and so it suffers
+  from all the usual limitations of that function; notably that only the
+  first eight characters of a password are considered.
  </para>
 
  <para>
@@ -23,28 +51,10 @@
  </para>
 
  <para>
-  If you precede the string with a colon, the encryption and checking are
-  skipped so that you can enter existing passwords into the field.
+  Sample usage:
  </para>
 
- <para>
-  On output, a colon is prepended.  This makes it possible to dump and reload
-  passwords without re-encrypting them.  If you want the password (encrypted)
-  without the colon then use the raw() function.  This allows you to use the
-  type with things like Apache's Auth_PostgreSQL module.
- </para>
-
- <para>
-  The encryption uses the standard Unix function crypt(), and so it suffers
-  from all the usual limitations of that function; notably that only the
-  first eight characters of a password are considered.
- </para>
-
- <para>
-  Here is some sample usage:
- </para>
-
- <programlisting>
+<programlisting>
 test=# create table test (p chkpass);
 CREATE TABLE
 test=# insert into test values ('hello');
@@ -72,13 +82,14 @@ test=# select p = 'goodbye' from test;
 ----------
  f
 (1 row)
- </programlisting>
+</programlisting>
 
  <sect2>
   <title>Author</title>
+
   <para>
-   D'Arcy J.M. Cain <email>darcy@druid.net</email>
+   D'Arcy J.M. Cain (<email>darcy@druid.net</email>)
   </para>
  </sect2>
-</sect1>
 
+</sect1>

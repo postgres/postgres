@@ -1,13 +1,16 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.3 2007/12/06 04:12:09 tgl Exp $ -->
+
 <sect1 id="dblink">
  <title>dblink</title>
- 
+
  <indexterm zone="dblink">
   <primary>dblink</primary>
  </indexterm>
 
  <para>
-  <literal>dblink</> is a module which allows connections with
-  other databases.
+  <filename>dblink</> is a module which supports connections to
+  other <productname>PostgreSQL</> databases from within a database
+  session.
  </para>
 
  <refentry id="CONTRIB-DBLINK-CONNECT">
@@ -15,100 +18,199 @@
    <refname>dblink_connect</refname>
    <refpurpose>opens a persistent connection to a remote database</refpurpose>
   </refnamediv>
- 
+
   <refsynopsisdiv>
    <synopsis>
-    dblink_connect(text connstr)
-    dblink_connect(text connname, text connstr)
+    dblink_connect(text connstr) returns text
+    dblink_connect(text connname, text connstr) returns text
    </synopsis>
   </refsynopsisdiv>
- 
+
   <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname</title>
-    <para>
-     if 2 arguments ar given, the first is used as a name for a persistent
-     connection
-    </para>
-   </refsect2>
- 
-   <refsect2>
-    <title>connstr</title>
-    <para>
-     standard libpq format connection string,
-     e.g. "hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd"
-    </para>
-    <para>
-     if only one argument is given, the connection is unnamed; only one unnamed
-     connection can exist at a time
-    </para>
-   </refsect2>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_connect()</> establishes a connection to a remote
+    <productname>PostgreSQL</> database.  The server and database to
+    be contacted are identified through a standard <application>libpq</>
+    connection string.  Optionally, a name can be assigned to the
+    connection.  Multiple named connections can be open at once, but
+    only one unnamed connection is permitted at a time.  The connection
+    will persist until closed or until the database session is ended.
+   </para>
   </refsect1>
- 
+
   <refsect1>
-   <title>Outputs</title>
-   <para>Returns status = "OK"</para>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       The name to use for this connection; if omitted, an unnamed
+       connection is opened, replacing any existing unnamed connection.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>connstr</parameter></term>
+     <listitem>
+      <para>
+       <application>libpq</>-style connection info string, for example
+       <literal>hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres
+       password=mypasswd</>.
+       For details see <function>PQconnectdb</> in
+       <xref linkend="libpq-connect">.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </refsect1>
- 
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    Returns status, which is always <literal>OK</> (since any error
+    causes the function to throw an error instead of returning).
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Notes</title>
+
+   <para>
+    Only superusers may use <function>dblink_connect</> to create
+    non-password-authenticated connections.  If non-superusers need this
+    capability, use <function>dblink_connect_u</> instead.
+   </para>
+
+   <para>
+    It is unwise to choose connection names that contain equal signs,
+    as this opens a risk of confusion with connection info strings
+    in other <filename>dblink</> functions.
+   </para>
+  </refsect1>
+
   <refsect1>
    <title>Example</title>
+
    <programlisting>
  select dblink_connect('dbname=postgres');
   dblink_connect
  ----------------
   OK
  (1 row)
- 
- select dblink_connect('myconn','dbname=postgres');
+
+ select dblink_connect('myconn', 'dbname=postgres');
   dblink_connect
  ----------------
   OK
  (1 row)
    </programlisting>
   </refsect1>
- </refentry> 
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-CONNECT-U">
+  <refnamediv>
+   <refname>dblink_connect_u</refname>
+   <refpurpose>opens a persistent connection to a remote database, insecurely</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_connect_u(text connstr) returns text
+    dblink_connect_u(text connname, text connstr) returns text
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_connect_u()</> is identical to
+    <function>dblink_connect()</>, except that it will allow non-superusers
+    to connect using any authentication method.
+   </para>
+
+   <para>
+    If the remote server selects an authentication method that does not
+    involve a password, then impersonation and subsequent escalation of
+    privileges can occur, because the session will appear to have
+    originated from the user as which the local <productname>PostgreSQL</>
+    server runs.  Therefore, <function>dblink_connect_u()</> is initially
+    installed with all privileges revoked from <literal>PUBLIC</>,
+    making it un-callable except by superusers.  In some situations
+    it may be appropriate to grant <literal>EXECUTE</> permission for
+    <function>dblink_connect_u()</> to specific users who are considered
+    trustworthy, but this should be done with care.
+   </para>
+
+   <para>
+    For further details see <function>dblink_connect()</>.
+   </para>
+  </refsect1>
+ </refentry>
 
  <refentry id="CONTRIB-DBLINK-DISCONNECT">
   <refnamediv>
    <refname>dblink_disconnect</refname>
    <refpurpose>closes a persistent connection to a remote database</refpurpose>
   </refnamediv>
- 
+
   <refsynopsisdiv>
    <synopsis>
- dblink_disconnect()
- dblink_disconnect(text connname)
+    dblink_disconnect() returns text
+    dblink_disconnect(text connname) returns text
    </synopsis>
   </refsynopsisdiv>
- 
+
   <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname</title>
-    <para>
-     if an argument is given, it is used as a name for a persistent
-     connection to close; otherwiase the unnamed connection is closed
-    </para>
-   </refsect2>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_disconnect()</> closes a connection previously opened
+    by <function>dblink_connect()</>.  The form with no arguments closes
+    an unnamed connection.
+   </para>
   </refsect1>
- 
+
   <refsect1>
-   <title>Outputs</title>
-   <para>Returns status = "OK"</para>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       The name of a named connection to be closed.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </refsect1>
- 
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    Returns status, which is always <literal>OK</> (since any error
+    causes the function to throw an error instead of returning).
+   </para>
+  </refsect1>
+
   <refsect1>
    <title>Example</title>
+
    <programlisting>
  test=# select dblink_disconnect();
   dblink_disconnect
  -------------------
   OK
  (1 row)
- 
+
  select dblink_disconnect('myconn');
   dblink_disconnect
  -------------------
@@ -116,938 +218,156 @@
  (1 row)
    </programlisting>
   </refsect1>
- </refentry> 
-
- <refentry id="CONTRIB-DBLINK-OPEN">
-  <refnamediv>
-   <refname>dblink_open</refname>
-   <refpurpose>opens a cursor on a remote database</refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_open(text cursorname, text sql [, bool fail_on_error])
- dblink_open(text connname, text cursorname, text sql [, bool fail_on_error])
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname</title>
-    <para>
-     if three arguments are present, the first is taken as the specific
-     connection name to use; otherwise the unnamed connection is assumed
-    </para>
-   </refsect2>
- 
-   <refsect2>
-    <title>cursorname</title>
-    <para>
-     a reference name for the cursor
-    </para>
-   </refsect2>
- 
-   <refsect2>
-    <title>sql</title>
-    <para>
-     sql statement that you wish to execute on the remote host
-     e.g. "select * from pg_class"
-    </para>
-   </refsect2>
- 
-   <refsect2>
-    <title>fail_on_error</title>
-    <para>
-     If true (default when not present) then an ERROR thrown on the remote side
-     of the connection causes an ERROR to also be thrown locally. If false, the
-     remote ERROR is locally treated as a NOTICE, and the return value is set
-     to 'ERROR'.
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>Returns status = "OK"</para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Note</title>
-   <itemizedlist>
-    <listitem>
-     <para>
-      dblink_connect(text connstr) must be executed first
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      dblink_open starts an explicit transaction. If, after using dblink_open,
-      you use dblink_exec to change data, and then an error occurs or you use
-      dblink_disconnect without a dblink_close first, your change *will* be
-      lost. Also, using dblink_close explicitly ends the transaction and thus
-      effectively closes *all* open cursors.
-     </para>
-    </listitem>
-   </itemizedlist>
- 
-  </refsect1>
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
- test=# select dblink_connect('dbname=postgres');
-  dblink_connect
- ----------------
-  OK
- (1 row)
- 
- test=# select dblink_open('foo','select proname, prosrc from pg_proc');
-  dblink_open
- -------------
-  OK
- (1 row)
-   </programlisting>
-  </refsect1>
  </refentry>
-
- <refentry id="CONTRIB-DBLINK-FETCH">
-  <refnamediv>
-   <refname>dblink_fetch</refname>
-   <refpurpose>returns a set from an open cursor on a remote database</refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_fetch(text cursorname, int32 howmany [, bool fail_on_error])
- dblink_fetch(text connname, text cursorname, int32 howmany [, bool fail_on_error])
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname</title>
-    <para>
-     if three arguments are present, the first is taken as the specific
-     connection name to use; otherwise the unnamed connection is assumed
-    </para>
-   </refsect2>
- 
-   <refsect2>
-    <title>cursorname</title>
-    <para>
-     The reference name for the cursor
-    </para>
-   </refsect2>
- 
-   <refsect2>
-    <title>howmany</title>
-    <para>
-     Maximum number of rows to retrieve. The next howmany rows are fetched,
-     starting at the current cursor position, moving forward. Once the cursor
-     has positioned to the end, no more rows are produced.
-    </para>
-   </refsect2>
- 
-   <refsect2>
-    <title>fail_on_error</title>
-    <para>
-     If true (default when not present) then an ERROR thrown on the remote side
-     of the connection causes an ERROR to also be thrown locally. If false, the
-     remote ERROR is locally treated as a NOTICE, and no rows are returned.
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>Returns setof record</para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Note</title>
-   <para>
-    On a mismatch between the number of return fields as specified in the FROM
-    clause, and the actual number of fields returned by the remote cursor, an
-    ERROR will be thrown. In this event, the remote cursor is still advanced
-    by as many rows as it would have been if the ERROR had not occurred.
-   </para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
- test=# select dblink_connect('dbname=postgres');
-  dblink_connect
- ----------------
-  OK
- (1 row)
- 
- test=# select dblink_open('foo','select proname, prosrc from pg_proc where proname like ''bytea%''');
-  dblink_open
- -------------
-  OK
- (1 row)
- 
- test=# select * from dblink_fetch('foo',5) as (funcname name, source text);
-  funcname |  source
- ----------+----------
-  byteacat | byteacat
-  byteacmp | byteacmp
-  byteaeq  | byteaeq
-  byteage  | byteage
-  byteagt  | byteagt
- (5 rows)
- 
- test=# select * from dblink_fetch('foo',5) as (funcname name, source text);
-  funcname  |  source
- -----------+-----------
-  byteain   | byteain
-  byteale   | byteale
-  bytealike | bytealike
-  bytealt   | bytealt
-  byteane   | byteane
- (5 rows)
- 
- test=# select * from dblink_fetch('foo',5) as (funcname name, source text);
-   funcname  |   source
- ------------+------------
-  byteanlike | byteanlike
-  byteaout   | byteaout
- (2 rows)
- 
- test=# select * from dblink_fetch('foo',5) as (funcname name, source text);
-  funcname | source
- ----------+--------
- (0 rows)
-   </programlisting>
-  </refsect1>
- </refentry>
-
- <refentry id="CONTRIB-DBLINK-CLOSE">
-  <refnamediv>
-   <refname>dblink_close</refname>
-   <refpurpose>closes a cursor on a remote database</refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_close(text cursorname [, bool fail_on_error])
- dblink_close(text connname, text cursorname [, bool fail_on_error])
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname</title>
-    <para>
-     if two arguments are present, the first is taken as the specific
-     connection name to use; otherwise the unnamed connection is assumed
-    </para>
-   </refsect2>
- 
-   <refsect2>
-    <title>cursorname</title>
-    <para>
-     a reference name for the cursor
-    </para>
-   </refsect2>
- 
-   <refsect2>
-    <title>fail_on_error</title>
-    <para>
-     If true (default when not present) then an ERROR thrown on the remote side
-     of the connection causes an ERROR to also be thrown locally. If false, the
-     remote ERROR is locally treated as a NOTICE, and the return value is set
-     to 'ERROR'.
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>Returns status = "OK"</para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Note</title>
-   <para>
-   dblink_connect(text connstr) or dblink_connect(text connname, text connstr)
-   must be executed first.
-   </para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
- test=# select dblink_connect('dbname=postgres');
-  dblink_connect
- ----------------
-  OK
- (1 row)
- 
- test=# select dblink_open('foo','select proname, prosrc from pg_proc');
-  dblink_open
- -------------
-  OK
- (1 row)
- 
- test=# select dblink_close('foo');
-  dblink_close
- --------------
-  OK
- (1 row)
- 
- select dblink_connect('myconn','dbname=regression');
-  dblink_connect
- ----------------
-  OK
- (1 row)
- 
- select dblink_open('myconn','foo','select proname, prosrc from pg_proc');
-  dblink_open
- -------------
-  OK
- (1 row)
- 
- select dblink_close('myconn','foo');
-  dblink_close
- --------------
-  OK
- (1 row)
-   </programlisting>
-  </refsect1>
- </refentry>
-
- <refentry id="CONTRIB-DBLINK-EXEC">
-  <refnamediv>
-   <refname>dblink_exec</refname>
-   <refpurpose>executes an UPDATE/INSERT/DELETE on a remote database</refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_exec(text connstr, text sql [, bool fail_on_error])
- dblink_exec(text connname, text sql [, bool fail_on_error])
- dblink_exec(text sql [, bool fail_on_error])
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname/connstr</title>
-    <para>
-     If two arguments are present, the first is first assumed to be a specific
-     connection name to use. If the name is not found, the argument is then
-     assumed to be a valid connection string, of standard libpq format,
-     e.g.: "hostaddr=127.0.0.1 dbname=mydb user=postgres password=mypasswd"
- 
-     If only one argument is used, then the unnamed connection is used.
-    </para>
-   </refsect2>
-   
-   <refsect2>
-    <title>sql</title>
-    <para>
-     sql statement that you wish to execute on the remote host, e.g.:
-        insert into foo values(0,'a','{"a0","b0","c0"}');
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>fail_on_error</title>
-    <para>
-     If true (default when not present) then an ERROR thrown on the remote side
-     of the connection causes an ERROR to also be thrown locally. If false, the
-     remote ERROR is locally treated as a NOTICE, and the return value is set
-     to 'ERROR'.
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>Returns status of the command, or 'ERROR' if the command failed.</para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Notes</title>
-   <para>
-    dblink_open starts an explicit transaction. If, after using dblink_open,
-    you use dblink_exec to change data, and then an error occurs or you use
-    dblink_disconnect without a dblink_close first, your change *will* be
-    lost.
-   </para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
- select dblink_connect('dbname=dblink_test_slave');
-  dblink_connect
- ----------------
-  OK
- (1 row)
- 
- select dblink_exec('insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
-    dblink_exec
- -----------------
-  INSERT 943366 1
- (1 row)
- 
- select dblink_connect('myconn','dbname=regression');
-  dblink_connect
- ----------------
-  OK
- (1 row)
- 
- select dblink_exec('myconn','insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
-    dblink_exec
- ------------------
-  INSERT 6432584 1
- (1 row)
- 
- select dblink_exec('myconn','insert into pg_class values (''foo'')',false);
- NOTICE:  sql error
- DETAIL:  ERROR:  null value in column "relnamespace" violates not-null constraint
- 
-  dblink_exec
- -------------
-  ERROR
- (1 row)
-   </programlisting>
-  </refsect1>
- </refentry>
-
- <refentry id="CONTRIB-DBLINK-CURRENT-QUERY">
-  <refnamediv>
-   <refname>dblink_current_query</refname>
-   <refpurpose>returns the current query string</refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_current_query () RETURNS text
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>None</title>
-    <para>
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>Returns test -- a copy of the currenty executing query</para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
- test=# select dblink_current_query() from (select dblink('dbname=postgres','select oid, proname from pg_proc where proname = ''byteacat''') as f1) as t1;
-                                                                 dblink_current_query
- -----------------------------------------------------------------------------------------------------------------------------------------------------
-  select dblink_current_query() from (select dblink('dbname=postgres','select oid, proname from pg_proc where proname = ''byteacat''') as f1) as t1;
- (1 row)
-   </programlisting>
-  </refsect1>
- </refentry>
-
- <refentry id="CONTRIB-DBLINK-GET-PKEY">
-  <refnamediv>
-   <refname>dblink_get_pkey</refname>
-   <refpurpose>returns the position and field names of a relation's 
-    primary key fields
-   </refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_get_pkey(text relname) RETURNS setof dblink_pkey_results
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>relname</title>
-    <para>
-     any relation name; 
-     e.g. 'foobar'
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>
-    Returns setof dblink_pkey_results -- one row for each primary key field,
-    in order of position in the key. dblink_pkey_results is defined as follows:
-    CREATE TYPE dblink_pkey_results AS (position int4, colname text);
-   </para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
- test=# select * from dblink_get_pkey('foobar');
-  position | colname
- ----------+---------
-         1 | f1
-         2 | f2
-         3 | f3
-         4 | f4
-         5 | f5
-   </programlisting>
-  </refsect1>
- </refentry>
-
- <refentry id="CONTRIB-DBLINK-BUILD-SQL-INSERT">
-  <refnamediv>
-   <refname>dblink_build_sql_insert</refname>
-   <refpurpose>
-    builds an insert statement using a local tuple, replacing the
-    selection key field values with alternate supplied values
-   </refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_build_sql_insert(text relname
-                          ,int2vector primary_key_attnums
-                          ,int2 num_primary_key_atts
-                          ,_text src_pk_att_vals_array
-                          ,_text tgt_pk_att_vals_array) RETURNS text
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>relname</title>
-    <para>
-     any relation name;
-     e.g. 'foobar';
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>primary_key_attnums</title>
-    <para>
-     vector of primary key attnums (1 based, see pg_index.indkey);
-     e.g. '1 2'
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>num_primary_key_atts</title>
-    <para>
-     number of primary key attnums in the vector; e.g. 2
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>src_pk_att_vals_array</title>
-    <para>
-     array of primary key values, used to look up the local matching
-     tuple, the values of which are then used to construct the SQL
-     statement
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>tgt_pk_att_vals_array</title>
-    <para>
-     array of primary key values, used to replace the local tuple
-     values in the SQL statement
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>Returns text -- requested SQL statement</para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
- test=# select dblink_build_sql_insert('foo','1 2',2,'{"1", "a"}','{"1", "b''a"}');
-              dblink_build_sql_insert
- --------------------------------------------------
-  INSERT INTO foo(f1,f2,f3) VALUES('1','b''a','1')
- (1 row)
-   </programlisting>
-  </refsect1>
- </refentry>
-
- <refentry id="CONTRIB-DBLINK-BUILD-SQL-DELETE">
-  <refnamediv>
-   <refname>dblink_build_sql_delete</refname>
-   <refpurpose>builds a delete statement using supplied values for selection
-    key field values
-   </refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_build_sql_delete(text relname
-                          ,int2vector primary_key_attnums
-                          ,int2 num_primary_key_atts
-                          ,_text tgt_pk_att_vals_array) RETURNS text
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>relname</title>
-    <para>
-     any relation name;
-     e.g. 'foobar';
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>primary_key_attnums</title>
-    <para>
-     vector of primary key attnums (1 based, see pg_index.indkey);
-     e.g. '1 2'
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>num_primary_key_atts</title>
-    <para>
-     number of primary key attnums in the vector; e.g. 2
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>src_pk_att_vals_array</title>
-    <para>
-     array of primary key values, used to look up the local matching
-     tuple, the values of which are then used to construct the SQL
-     statement
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>tgt_pk_att_vals_array</title>
-    <para>
-     array of primary key values, used to replace the local tuple
-     values in the SQL statement
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>Returns text -- requested SQL statement</para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
- test=# select dblink_build_sql_delete('MyFoo','1 2',2,'{"1", "b"}');
-            dblink_build_sql_delete
- ---------------------------------------------
-  DELETE FROM "MyFoo" WHERE f1='1' AND f2='b'
- (1 row)
-   </programlisting>
-  </refsect1>
- </refentry> 
-
- <refentry id="CONTRIB-DBLINK-BUILD-SQL-UPDATE">
-  <refnamediv>
-   <refname>dblink_build_sql_update</refname>
-   <refpurpose>builds an update statement using a local tuple, replacing
-    the selection key field values with alternate supplied values
-   </refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_build_sql_update(text relname
-                          ,int2vector primary_key_attnums
-                          ,int2 num_primary_key_atts
-                          ,_text src_pk_att_vals_array
-                          ,_text tgt_pk_att_vals_array) RETURNS text
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>relname</title>
-    <para>
-     any relation name;
-     e.g. 'foobar';
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>primary_key_attnums</title>
-    <para>
-     vector of primary key attnums (1 based, see pg_index.indkey);
-     e.g. '1 2'
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>num_primary_key_atts</title>
-    <para>
-     number of primary key attnums in the vector; e.g. 2
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>src_pk_att_vals_array</title>
-    <para>
-     array of primary key values, used to look up the local matching
-     tuple, the values of which are then used to construct the SQL
-     statement
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>tgt_pk_att_vals_array</title>
-    <para>
-     array of primary key values, used to replace the local tuple
-     values in the SQL statement
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>Returns text -- requested SQL statement</para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
- test=# select dblink_build_sql_update('foo','1 2',2,'{"1", "a"}','{"1", "b"}');
-                    dblink_build_sql_update
- -------------------------------------------------------------
-  UPDATE foo SET f1='1',f2='b',f3='1' WHERE f1='1' AND f2='b'
- (1 row)
-   </programlisting>
-  </refsect1>
- </refentry>
-
- <refentry id="CONTRIB-DBLINK-GET-CONNECTIONS">
-  <refnamediv>
-   <refname>dblink_get_connections</refname>
-   <refpurpose>returns a text array of all active named dblink connections</refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_get_connections() RETURNS text[]
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>none</title>
-    <para></para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>Returns text array of all active named dblink connections</para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
-   SELECT dblink_get_connections();
-   </programlisting>
-  </refsect1>
- </refentry> 
-
- <refentry id="CONTRIB-DBLINK-IS-BUSY">
-  <refnamediv>
-   <refname>dblink_is_busy</refname>
-   <refpurpose>checks to see if named connection is busy with an async query</refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_is_busy(text connname) RETURNS int
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname</title>
-    <para>
-     The specific connection name to use
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>
-    Returns 1 if connection is busy, 0 if it is not busy.
-    If this function returns 0, it is guaranteed that dblink_get_result
-    will not block.
-   </para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
-   SELECT dblink_is_busy('dtest1');
-   </programlisting>
-  </refsect1>
- </refentry>
-
- <refentry id="CONTRIB-DBLINK-CANCEL-QUERY">
-  <refnamediv>
-   <refname>dblink_cancel_query</refname>
-   <refpurpose>cancels any active query on the named connection</refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_cancel_query(text connname) RETURNS text
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname</title>
-    <para>
-     The specific connection name to use.
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>
-    Returns "OK" on success, or an error message on failure.
-   </para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
-    SELECT dblink_cancel_query('dtest1');
-   </programlisting>
-  </refsect1>
- </refentry>
-
- <refentry id="CONTRIB-DBLINK-ERROR-MESSAGE">
-  <refnamediv>
-   <refname>dblink_error_message</refname>
-   <refpurpose>gets last error message on the named connection</refpurpose>
-  </refnamediv>
- 
-  <refsynopsisdiv>
-   <synopsis>
- dblink_error_message(text connname) RETURNS text
-   </synopsis>
-  </refsynopsisdiv>
- 
-  <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname</title>
-    <para>
-     The specific connection name to use.
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>
-    Returns last error message.
-   </para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Example</title>
-   <programlisting>
-    SELECT dblink_error_message('dtest1');
-   </programlisting>
-  </refsect1>
- </refentry> 
 
  <refentry id="CONTRIB-DBLINK">
   <refnamediv>
    <refname>dblink</refname>
-   <refpurpose>returns a set from a remote database</refpurpose>
+   <refpurpose>executes a query in a remote database</refpurpose>
   </refnamediv>
- 
+
   <refsynopsisdiv>
    <synopsis>
- dblink(text connstr, text sql [, bool fail_on_error])
- dblink(text connname, text sql [, bool fail_on_error])
- dblink(text sql [, bool fail_on_error])
+    dblink(text connname, text sql [, bool fail_on_error]) returns setof record
+    dblink(text connstr, text sql [, bool fail_on_error]) returns setof record
+    dblink(text sql [, bool fail_on_error]) returns setof record
    </synopsis>
   </refsynopsisdiv>
- 
+
   <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname/connstr</title>
-    <para>
-     If two arguments are present, the first is first assumed to be a specific
-     connection name to use. If the name is not found, the argument is then
-     assumed to be a valid connection string, of standard libpq format,
-     e.g.: "hostaddr=127.0.0.1 dbname=mydb user=postgres password=mypasswd"
- 
-     If only one argument is used, then the unnamed connection is used.
-    </para>
-   </refsect2>
- 
-   <refsect2>
-    <title>sql</title>
-    <para>
-     sql statement that you wish to execute on the remote host
-     e.g. "select * from pg_class"
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>fail_on_error</title>
-    <para>
-     If true (default when not present) then an ERROR thrown on the remote side
-     of the connection causes an ERROR to also be thrown locally. If false, the
-     remote ERROR is locally treated as a NOTICE, and no rows are returned.
-    </para>
-   </refsect2>
-   <refsect2>
-    <title></title>
-    <para>
-    </para>
-   </refsect2>
+   <title>Description</title>
+
+   <para>
+    <function>dblink</> executes a query (usually a <command>SELECT</>,
+    but it can be any SQL statement that returns rows) in a remote database.
+   </para>
+
+   <para>
+    When two <type>text</> arguments are given, the first one is first
+    looked up as a persistent connection's name; if found, the command
+    is executed on that connection.  If not found, the first argument
+    is treated as a connection info string as for <function>dblink_connect</>,
+    and the indicated connection is made just for the duration of this command.
+   </para>
   </refsect1>
- 
+
   <refsect1>
-   <title>Outputs</title>
-   <para>Returns setof record</para>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       Name of the connection to use; omit this parameter to use the
+       unnamed connection.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>connstr</parameter></term>
+     <listitem>
+      <para>
+       A connection info string, as previously described for
+       <function>dblink_connect</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>sql</parameter></term>
+     <listitem>
+      <para>
+       The SQL query that you wish to execute in the remote database,
+       for example <literal>select * from foo</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>fail_on_error</parameter></term>
+     <listitem>
+      <para>
+       If true (the default when omitted) then an error thrown on the
+       remote side of the connection causes an error to also be thrown
+       locally. If false, the remote error is locally reported as a NOTICE,
+       and the function returns no rows.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </refsect1>
- 
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    The function returns the row(s) produced by the query.  Since
+    <function>dblink</> can be used with any query, it is declared
+    to return <type>record</>, rather than specifying any particular
+    set of columns.  This means that you must specify the expected
+    set of columns in the calling query &mdash; otherwise
+    <productname>PostgreSQL</> would not know what to expect.
+    Here is an example:
+
+<programlisting>
+SELECT *
+    FROM dblink('dbname=mydb', 'select proname, prosrc from pg_proc')
+      AS t1(proname name, prosrc text)
+    WHERE proname LIKE 'bytea%';
+</programlisting>
+
+    The <quote>alias</> part of the <literal>FROM</> clause must
+    specify the column names and types that the function will return.
+    (Specifying column names in an alias is actually standard SQL
+    syntax, but specifying column types is a <productname>PostgreSQL</>
+    extension.)  This allows the system to understand what
+    <literal>*</> should expand to, and what <structname>proname</>
+    in the <literal>WHERE</> clause refers to, in advance of trying
+    to execute the function.  At runtime, an error will be thrown
+    if the actual query result from the remote database does not
+    have the same number of columns shown in the <literal>FROM</> clause.
+    The column names need not match, however, and <function>dblink</>
+    does not insist on exact type matches either.  It will succeed
+    so long as the returned data strings are valid input for the
+    column type declared in the <literal>FROM</> clause.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Notes</title>
+
+   <para>
+    <function>dblink</> fetches the entire remote query result before
+    returning any of it to the local system.  If the query is expected
+    to return a large number of rows, it's better to open it as a cursor
+    with <function>dblink_open</> and then fetch a manageable number
+    of rows at a time.
+   </para>
+
+   <para>
+    A convenient way to use <function>dblink</> with predetermined
+    queries is to create a view.
+    This allows the column type information to be buried in the view,
+    instead of having to spell it out in every query.  For example,
+
+    <programlisting>
+    create view myremote_pg_proc as
+      select *
+        from dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
+        as t1(proname name, prosrc text);
+
+    select * from myremote_pg_proc where proname like 'bytea%';
+    </programlisting>
+   </para>
+  </refsect1>
+
   <refsect1>
    <title>Example</title>
+
    <programlisting>
- select * from dblink('dbname=postgres','select proname, prosrc from pg_proc')
+ select * from dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
   as t1(proname name, prosrc text) where proname like 'bytea%';
    proname   |   prosrc
  ------------+------------
@@ -1064,13 +384,13 @@
   byteain    | byteain
   byteaout   | byteaout
  (12 rows)
- 
+
  select dblink_connect('dbname=postgres');
   dblink_connect
  ----------------
   OK
  (1 row)
- 
+
  select * from dblink('select proname, prosrc from pg_proc')
   as t1(proname name, prosrc text) where proname like 'bytea%';
    proname   |   prosrc
@@ -1088,14 +408,14 @@
   byteain    | byteain
   byteaout   | byteaout
  (12 rows)
- 
- select dblink_connect('myconn','dbname=regression');
+
+ select dblink_connect('myconn', 'dbname=regression');
   dblink_connect
  ----------------
   OK
  (1 row)
- 
- select * from dblink('myconn','select proname, prosrc from pg_proc')
+
+ select * from dblink('myconn', 'select proname, prosrc from pg_proc')
   as t1(proname name, prosrc text) where proname like 'bytea%';
    proname   |   prosrc
  ------------+------------
@@ -1115,20 +435,584 @@
   byteaout   | byteaout
  (14 rows)
    </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-EXEC">
+  <refnamediv>
+   <refname>dblink_exec</refname>
+   <refpurpose>executes a command in a remote database</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_exec(text connname, text sql [, bool fail_on_error]) returns text
+    dblink_exec(text connstr, text sql [, bool fail_on_error]) returns text
+    dblink_exec(text sql [, bool fail_on_error]) returns text
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
    <para>
-    A more convenient way to use dblink may be to create a view:
+    <function>dblink_exec</> executes a command (that is, any SQL statement
+    that doesn't return rows) in a remote database.
    </para>
+
+   <para>
+    When two <type>text</> arguments are given, the first one is first
+    looked up as a persistent connection's name; if found, the command
+    is executed on that connection.  If not found, the first argument
+    is treated as a connection info string as for <function>dblink_connect</>,
+    and the indicated connection is made just for the duration of this command.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       Name of the connection to use; omit this parameter to use the
+       unnamed connection.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>connstr</parameter></term>
+     <listitem>
+      <para>
+       A connection info string, as previously described for
+       <function>dblink_connect</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>sql</parameter></term>
+     <listitem>
+      <para>
+       The SQL command that you wish to execute in the remote database,
+       for example
+       <literal>insert into foo values(0,'a','{"a0","b0","c0"}')</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>fail_on_error</parameter></term>
+     <listitem>
+      <para>
+       If true (the default when omitted) then an error thrown on the
+       remote side of the connection causes an error to also be thrown
+       locally. If false, the remote error is locally reported as a NOTICE,
+       and the function's return value is set to <literal>ERROR</>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    Returns status, either the command's status string or <literal>ERROR</>.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
    <programlisting>
-    create view myremote_pg_proc as
-    select *
-    from dblink('dbname=postgres','select proname, prosrc from pg_proc')
-    as t1(proname name, prosrc text);
+ select dblink_connect('dbname=dblink_test_slave');
+  dblink_connect
+ ----------------
+  OK
+ (1 row)
+
+ select dblink_exec('insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
+    dblink_exec
+ -----------------
+  INSERT 943366 1
+ (1 row)
+
+ select dblink_connect('myconn', 'dbname=regression');
+  dblink_connect
+ ----------------
+  OK
+ (1 row)
+
+ select dblink_exec('myconn', 'insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
+    dblink_exec
+ ------------------
+  INSERT 6432584 1
+ (1 row)
+
+ select dblink_exec('myconn', 'insert into pg_class values (''foo'')',false);
+ NOTICE:  sql error
+ DETAIL:  ERROR:  null value in column "relnamespace" violates not-null constraint
+
+  dblink_exec
+ -------------
+  ERROR
+ (1 row)
    </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-OPEN">
+  <refnamediv>
+   <refname>dblink_open</refname>
+   <refpurpose>opens a cursor in a remote database</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_open(text cursorname, text sql [, bool fail_on_error]) returns text
+    dblink_open(text connname, text cursorname, text sql [, bool fail_on_error]) returns text
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
    <para>
-    Then you can simply write:
+    <function>dblink_open()</> opens a cursor in a remote database.
+    The cursor can subsequently be manipulated with
+    <function>dblink_fetch()</> and <function>dblink_close()</>.
    </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       Name of the connection to use; omit this parameter to use the
+       unnamed connection.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>cursorname</parameter></term>
+     <listitem>
+      <para>
+       The name to assign to this cursor.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>sql</parameter></term>
+     <listitem>
+      <para>
+       The <command>SELECT</> statement that you wish to execute in the remote
+       database, for example <literal>select * from pg_class</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>fail_on_error</parameter></term>
+     <listitem>
+      <para>
+       If true (the default when omitted) then an error thrown on the
+       remote side of the connection causes an error to also be thrown
+       locally. If false, the remote error is locally reported as a NOTICE,
+       and the function's return value is set to <literal>ERROR</>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    Returns status, either <literal>OK</> or <literal>ERROR</>.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Notes</title>
+
+   <para>
+    Since a cursor can only persist within a transaction,
+    <function>dblink_open</> starts an explicit transaction block
+    (<command>BEGIN</>) on the remote side, if the remote side was
+    not already within a transaction.  This transaction will be
+    closed again when the matching <function>dblink_close</> is
+    executed.  Note that if
+    you use <function>dblink_exec</> to change data between
+    <function>dblink_open</> and <function>dblink_close</>,
+    and then an error occurs or you use <function>dblink_disconnect</> before
+    <function>dblink_close</>, your change <emphasis>will be
+    lost</> because the transaction will be aborted.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
    <programlisting>
-    select * from myremote_pg_proc where proname like 'bytea%';
+ test=# select dblink_connect('dbname=postgres');
+  dblink_connect
+ ----------------
+  OK
+ (1 row)
+
+ test=# select dblink_open('foo', 'select proname, prosrc from pg_proc');
+  dblink_open
+ -------------
+  OK
+ (1 row)
+   </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-FETCH">
+  <refnamediv>
+   <refname>dblink_fetch</refname>
+   <refpurpose>returns rows from an open cursor in a remote database</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_fetch(text cursorname, int howmany [, bool fail_on_error]) returns setof record
+    dblink_fetch(text connname, text cursorname, int howmany [, bool fail_on_error]) returns setof record
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_fetch</> fetches rows from a cursor previously
+    established by <function>dblink_open</>.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       Name of the connection to use; omit this parameter to use the
+       unnamed connection.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>cursorname</parameter></term>
+     <listitem>
+      <para>
+       The name of the cursor to fetch from.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>howmany</parameter></term>
+     <listitem>
+      <para>
+       The maximum number of rows to retrieve. The next <parameter>howmany</>
+       rows are fetched, starting at the current cursor position, moving
+       forward. Once the cursor has reached its end, no more rows are produced.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>fail_on_error</parameter></term>
+     <listitem>
+      <para>
+       If true (the default when omitted) then an error thrown on the
+       remote side of the connection causes an error to also be thrown
+       locally. If false, the remote error is locally reported as a NOTICE,
+       and the function returns no rows.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    The function returns the row(s) fetched from the cursor.  To use this
+    function, you will need to specify the expected set of columns,
+    as previously discussed for <function>dblink</>.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Notes</title>
+
+   <para>
+    On a mismatch between the number of return columns specified in the
+    <literal>FROM</> clause, and the actual number of columns returned by the
+    remote cursor, an error will be thrown. In this event, the remote cursor
+    is still advanced by as many rows as it would have been if the error had
+    not occurred.  The same is true for any other error occurring in the local
+    query after the remote <command>FETCH</> has been done.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+ test=# select dblink_connect('dbname=postgres');
+  dblink_connect
+ ----------------
+  OK
+ (1 row)
+
+ test=# select dblink_open('foo', 'select proname, prosrc from pg_proc where proname like ''bytea%''');
+  dblink_open
+ -------------
+  OK
+ (1 row)
+
+ test=# select * from dblink_fetch('foo', 5) as (funcname name, source text);
+  funcname |  source
+ ----------+----------
+  byteacat | byteacat
+  byteacmp | byteacmp
+  byteaeq  | byteaeq
+  byteage  | byteage
+  byteagt  | byteagt
+ (5 rows)
+
+ test=# select * from dblink_fetch('foo', 5) as (funcname name, source text);
+  funcname  |  source
+ -----------+-----------
+  byteain   | byteain
+  byteale   | byteale
+  bytealike | bytealike
+  bytealt   | bytealt
+  byteane   | byteane
+ (5 rows)
+
+ test=# select * from dblink_fetch('foo', 5) as (funcname name, source text);
+   funcname  |   source
+ ------------+------------
+  byteanlike | byteanlike
+  byteaout   | byteaout
+ (2 rows)
+
+ test=# select * from dblink_fetch('foo', 5) as (funcname name, source text);
+  funcname | source
+ ----------+--------
+ (0 rows)
+   </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-CLOSE">
+  <refnamediv>
+   <refname>dblink_close</refname>
+   <refpurpose>closes a cursor in a remote database</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_close(text cursorname [, bool fail_on_error]) returns text
+    dblink_close(text connname, text cursorname [, bool fail_on_error]) returns text
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_close</> closes a cursor previously opened with
+    <function>dblink_open</>.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       Name of the connection to use; omit this parameter to use the
+       unnamed connection.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>cursorname</parameter></term>
+     <listitem>
+      <para>
+       The name of the cursor to close.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>fail_on_error</parameter></term>
+     <listitem>
+      <para>
+       If true (the default when omitted) then an error thrown on the
+       remote side of the connection causes an error to also be thrown
+       locally. If false, the remote error is locally reported as a NOTICE,
+       and the function's return value is set to <literal>ERROR</>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    Returns status, either <literal>OK</> or <literal>ERROR</>.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Notes</title>
+
+   <para>
+    If <function>dblink_open</> started an explicit transaction block,
+    and this is the last remaining open cursor in this connection,
+    <function>dblink_close</> will issue the matching <command>COMMIT</>.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+ test=# select dblink_connect('dbname=postgres');
+  dblink_connect
+ ----------------
+  OK
+ (1 row)
+
+ test=# select dblink_open('foo', 'select proname, prosrc from pg_proc');
+  dblink_open
+ -------------
+  OK
+ (1 row)
+
+ test=# select dblink_close('foo');
+  dblink_close
+ --------------
+  OK
+ (1 row)
+   </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-GET-CONNECTIONS">
+  <refnamediv>
+   <refname>dblink_get_connections</refname>
+   <refpurpose>returns the names of all open named dblink connections</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_get_connections() returns text[]
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_get_connections</> returns an array of the names
+    of all open named <filename>dblink</> connections.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>Returns a text array of connection names, or NULL if none.</para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+   SELECT dblink_get_connections();
+   </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-ERROR-MESSAGE">
+  <refnamediv>
+   <refname>dblink_error_message</refname>
+   <refpurpose>gets last error message on the named connection</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_error_message(text connname) returns text
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_error_message</> fetches the most recent remote
+    error message for a given connection.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       Name of the connection to use.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    Returns last error message, or an empty string if there has been
+    no error in this connection.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+    SELECT dblink_error_message('dtest1');
    </programlisting>
   </refsect1>
  </refentry>
@@ -1138,118 +1022,226 @@
    <refname>dblink_send_query</refname>
    <refpurpose>sends an async query to a remote database</refpurpose>
   </refnamediv>
- 
+
   <refsynopsisdiv>
    <synopsis>
-   dblink_send_query(text connname, text sql)
+    dblink_send_query(text connname, text sql) returns int
    </synopsis>
   </refsynopsisdiv>
- 
+
   <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname</title>
-    <para>
-     The specific connection name to use.
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>sql</title>
-    <para>
-     sql statement that you wish to execute on the remote host
-     e.g. "select * from pg_class"
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
+   <title>Description</title>
+
    <para>
-    Returns int. A return value of 1 if the query was successfully dispatched,
-    0 otherwise. If 1, results must be fetched by dblink_get_result(connname).
-    A running query may be cancelled by dblink_cancel_query(connname).
+    <function>dblink_send_query</> sends a query to be executed
+    asynchronously, that is, without immediately waiting for the result.
+    There must not be an async query already in progress on the
+    connection.
+   </para>
+
+   <para>
+    After successfully dispatching an async query, completion status
+    can be checked with <function>dblink_is_busy</>, and the results
+    are ultimately collected with <function>dblink_get_result</>.
+    It is also possible to attempt to cancel an active async query
+    using <function>dblink_cancel_query</>.
    </para>
   </refsect1>
- 
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       Name of the connection to use.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>sql</parameter></term>
+     <listitem>
+      <para>
+       The SQL statement that you wish to execute in the remote database,
+       for example <literal>select * from pg_class</>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    Returns 1 if the query was successfully dispatched, 0 otherwise.
+   </para>
+  </refsect1>
+
   <refsect1>
    <title>Example</title>
+
+   <programlisting>
+    SELECT dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3');
+   </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-IS-BUSY">
+  <refnamediv>
+   <refname>dblink_is_busy</refname>
+   <refpurpose>checks if connection is busy with an async query</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_is_busy(text connname) returns int
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
    <para>
-    <literal>
-     SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
-     SELECT * FROM 
-      dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3') AS t1;
-    </literal>
+    <function>dblink_is_busy</> tests whether an async query is in progress.
    </para>
   </refsect1>
- </refentry> 
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       Name of the connection to check.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    Returns 1 if connection is busy, 0 if it is not busy.
+    If this function returns 0, it is guaranteed that
+    <function>dblink_get_result</> will not block.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+    SELECT dblink_is_busy('dtest1');
+   </programlisting>
+  </refsect1>
+ </refentry>
 
  <refentry id="CONTRIB-DBLINK-GET-RESULT">
   <refnamediv>
    <refname>dblink_get_result</refname>
    <refpurpose>gets an async query result</refpurpose>
   </refnamediv>
- 
+
   <refsynopsisdiv>
    <synopsis>
- dblink_get_result(text connname [, bool fail_on_error])
+    dblink_get_result(text connname [, bool fail_on_error]) returns setof record
    </synopsis>
   </refsynopsisdiv>
- 
+
   <refsect1>
-   <title>Inputs</title>
- 
-   <refsect2>
-    <title>connname</title>
-    <para>
-     The specific connection name to use. An asynchronous query must
-     have already been sent using dblink_send_query()
-    </para>
-   </refsect2>
-   <refsect2>
-    <title>fail_on_error</title>
-    <para>
-     If true (default when not present) then an ERROR thrown on the remote side
-     of the connection causes an ERROR to also be thrown locally. If false, the
-     remote ERROR is locally treated as a NOTICE, and no rows are returned.
-    </para>
-   </refsect2>
-  </refsect1>
- 
-  <refsect1>
-   <title>Outputs</title>
-   <para>Returns setof record</para>
-  </refsect1>
- 
-  <refsect1>
-   <title>Notes</title>
+   <title>Description</title>
+
    <para>
-    Blocks until a result gets available.
- 
-    This function *must* be called if dblink_send_query returned
-    a 1, even on cancelled queries - otherwise the connection
-    can't be used anymore. It must be called once for each query
-    sent, and one additional time to obtain an empty set result,
-    prior to using the connection again.
+    <function>dblink_get_result</> collects the results of an
+    asynchronous query previously sent with <function>dblink_send_query</>.
+    If the query is not already completed, <function>dblink_get_result</>
+    will wait until it is.
    </para>
   </refsect1>
- 
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       Name of the connection to use.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>fail_on_error</parameter></term>
+     <listitem>
+      <para>
+       If true (the default when omitted) then an error thrown on the
+       remote side of the connection causes an error to also be thrown
+       locally. If false, the remote error is locally reported as a NOTICE,
+       and the function returns no rows.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    For an async query (that is, a SQL statement returning rows),
+    the function returns the row(s) produced by the query.  To use this
+    function, you will need to specify the expected set of columns,
+    as previously discussed for <function>dblink</>.
+   </para>
+
+   <para>
+    For an async command (that is, a SQL statement not returning rows),
+    the function returns a single row with a single text column containing
+    the command's status string.  It is still necessary to specify that
+    the result will have a single text column in the calling <literal>FROM</>
+    clause.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Notes</title>
+
+   <para>
+    This function <emphasis>must</> be called if
+    <function>dblink_send_query</> returned 1.
+    It must be called once for each query
+    sent, and one additional time to obtain an empty set result,
+    before the connection can be used again.
+   </para>
+  </refsect1>
+
   <refsect1>
    <title>Example</title>
+
    <programlisting>
  contrib_regression=#   SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
   dblink_connect
  ----------------
   OK
  (1 row)
- 
+
  contrib_regression=#   SELECT * from
  contrib_regression-#    dblink_send_query('dtest1', 'select * from foo where f1 &lt; 3') as t1;
   t1
  ----
    1
  (1 row)
- 
+
  contrib_regression=#   SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]);
   f1 | f2 |     f3
  ----+----+------------
@@ -1257,19 +1249,19 @@
    1 | b  | {a1,b1,c1}
    2 | c  | {a2,b2,c2}
  (3 rows)
- 
+
  contrib_regression=#   SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]);
   f1 | f2 | f3
  ----+----+----
  (0 rows)
- 
+
  contrib_regression=#   SELECT * from
     dblink_send_query('dtest1', 'select * from foo where f1 &lt; 3; select * from foo where f1 &gt; 6') as t1;
   t1
  ----
    1
  (1 row)
- 
+
  contrib_regression=#   SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]);
   f1 | f2 |     f3
  ----+----+------------
@@ -1277,7 +1269,7 @@
    1 | b  | {a1,b1,c1}
    2 | c  | {a2,b2,c2}
  (3 rows)
- 
+
  contrib_regression=#   SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]);
   f1 | f2 |      f3
  ----+----+---------------
@@ -1286,7 +1278,7 @@
    9 | j  | {a9,b9,c9}
   10 | k  | {a10,b10,c10}
  (4 rows)
- 
+
  contrib_regression=#   SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]);
   f1 | f2 | f3
  ----+----+----
@@ -1294,4 +1286,502 @@
    </programlisting>
   </refsect1>
  </refentry>
+
+ <refentry id="CONTRIB-DBLINK-CANCEL-QUERY">
+  <refnamediv>
+   <refname>dblink_cancel_query</refname>
+   <refpurpose>cancels any active query on the named connection</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_cancel_query(text connname) returns text
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_cancel_query</> attempts to cancel any query that
+    is in progress on the named connection.  Note that this is not
+    certain to succeed (since, for example, the remote query might
+    already have finished).  A cancel request simply improves the
+    odds that the query will fail soon.  You must still complete the
+    normal query protocol, for example by calling
+    <function>dblink_get_result</>.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       Name of the connection to use.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    Returns <literal>OK</> if the cancel request has been sent, or
+    the text of an error message on failure.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+    SELECT dblink_cancel_query('dtest1');
+   </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-CURRENT-QUERY">
+  <refnamediv>
+   <refname>dblink_current_query</refname>
+   <refpurpose>returns the current query string</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_current_query() returns text
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    Returns the currently executing interactive command string of the
+    local database session, or NULL if it can't be determined.  Note
+    that this function is not really related to <filename>dblink</>'s
+    other functionality.  It is provided since it is sometimes useful
+    in generating queries to be forwarded to remote databases.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>Returns a copy of the currently executing query string.</para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+test=# select dblink_current_query();
+      dblink_current_query
+--------------------------------
+ select dblink_current_query();
+(1 row)
+   </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-GET-PKEY">
+  <refnamediv>
+   <refname>dblink_get_pkey</refname>
+   <refpurpose>returns the positions and field names of a relation's
+    primary key fields
+   </refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_get_pkey(text relname) returns setof dblink_pkey_results
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_get_pkey</> provides information about the primary
+    key of a relation in the local database.  This is sometimes useful
+    in generating queries to be sent to remote databases.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>relname</parameter></term>
+     <listitem>
+      <para>
+       Name of a local relation, for example <literal>foo</> or
+       <literal>myschema.mytab</>.  Include double quotes if the
+       name is mixed-case or contains special characters, for
+       example <literal>"FooBar"</>; without quotes, the string
+       will be folded to lower case.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>
+    Returns one row for each primary key field, or no rows if the relation
+    has no primary key.  The result rowtype is defined as
+
+    <programlisting>
+CREATE TYPE dblink_pkey_results AS (position int, colname text);
+    </programlisting>
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+test=# create table foobar(f1 int, f2 int, f3 int,
+test(#   primary key(f1,f2,f3));
+CREATE TABLE
+test=# select * from dblink_get_pkey('foobar');
+ position | colname
+----------+---------
+        1 | f1
+        2 | f2
+        3 | f3
+(3 rows)
+   </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-BUILD-SQL-INSERT">
+  <refnamediv>
+   <refname>dblink_build_sql_insert</refname>
+   <refpurpose>
+    builds an INSERT statement using a local tuple, replacing the
+    primary key field values with alternative supplied values
+   </refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_build_sql_insert(text relname,
+                            int2vector primary_key_attnums,
+                            int2 num_primary_key_atts,
+                            text[] src_pk_att_vals_array,
+                            text[] tgt_pk_att_vals_array) returns text
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_build_sql_insert</> can be useful in doing selective
+    replication of a local table to a remote database.  It selects a row
+    from the local table based on primary key, and then builds a SQL
+    <command>INSERT</> command that will duplicate that row, but with
+    the primary key values replaced by the values in the last argument.
+    (To make an exact copy of the row, just specify the same values for
+    the last two arguments.)
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>relname</parameter></term>
+     <listitem>
+      <para>
+       Name of a local relation, for example <literal>foo</> or
+       <literal>myschema.mytab</>.  Include double quotes if the
+       name is mixed-case or contains special characters, for
+       example <literal>"FooBar"</>; without quotes, the string
+       will be folded to lower case.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>primary_key_attnums</parameter></term>
+     <listitem>
+      <para>
+       Attribute numbers (1-based) of the primary key fields,
+       for example <literal>1 2</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>num_primary_key_atts</parameter></term>
+     <listitem>
+      <para>
+       The number of primary key fields.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>src_pk_att_vals_array</parameter></term>
+     <listitem>
+      <para>
+       Values of the primary key fields to be used to look up the
+       local tuple.  Each field is represented in text form.
+       An error is thrown if there is no local row with these
+       primary key values.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>tgt_pk_att_vals_array</parameter></term>
+     <listitem>
+      <para>
+       Values of the primary key fields to be placed in the resulting
+       <command>INSERT</> command.  Each field is represented in text form.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>Returns the requested SQL statement as text.</para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+ test=# select dblink_build_sql_insert('foo', '1 2', 2, '{"1", "a"}', '{"1", "b''a"}');
+              dblink_build_sql_insert
+ --------------------------------------------------
+  INSERT INTO foo(f1,f2,f3) VALUES('1','b''a','1')
+ (1 row)
+   </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-BUILD-SQL-DELETE">
+  <refnamediv>
+   <refname>dblink_build_sql_delete</refname>
+   <refpurpose>builds a DELETE statement using supplied values for primary
+    key field values
+   </refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_build_sql_delete(text relname,
+                            int2vector primary_key_attnums,
+                            int2 num_primary_key_atts,
+                            text[] tgt_pk_att_vals_array) returns text
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_build_sql_delete</> can be useful in doing selective
+    replication of a local table to a remote database.  It builds a SQL
+    <command>DELETE</> command that will delete the row with the given
+    primary key values.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>relname</parameter></term>
+     <listitem>
+      <para>
+       Name of a local relation, for example <literal>foo</> or
+       <literal>myschema.mytab</>.  Include double quotes if the
+       name is mixed-case or contains special characters, for
+       example <literal>"FooBar"</>; without quotes, the string
+       will be folded to lower case.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>primary_key_attnums</parameter></term>
+     <listitem>
+      <para>
+       Attribute numbers (1-based) of the primary key fields,
+       for example <literal>1 2</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>num_primary_key_atts</parameter></term>
+     <listitem>
+      <para>
+       The number of primary key fields.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>tgt_pk_att_vals_array</parameter></term>
+     <listitem>
+      <para>
+       Values of the primary key fields to be used in the resulting
+       <command>DELETE</> command.  Each field is represented in text form.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>Returns the requested SQL statement as text.</para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+ test=# select dblink_build_sql_delete('"MyFoo"', '1 2', 2, '{"1", "b"}');
+            dblink_build_sql_delete
+ ---------------------------------------------
+  DELETE FROM "MyFoo" WHERE f1='1' AND f2='b'
+ (1 row)
+   </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-BUILD-SQL-UPDATE">
+  <refnamediv>
+   <refname>dblink_build_sql_update</refname>
+   <refpurpose>builds an UPDATE statement using a local tuple, replacing
+    the primary key field values with alternative supplied values
+   </refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_build_sql_update(text relname,
+                            int2vector primary_key_attnums,
+                            int2 num_primary_key_atts,
+                            text[] src_pk_att_vals_array,
+                            text[] tgt_pk_att_vals_array) returns text
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_build_sql_update</> can be useful in doing selective
+    replication of a local table to a remote database.  It selects a row
+    from the local table based on primary key, and then builds a SQL
+    <command>UPDATE</> command that will duplicate that row, but with
+    the primary key values replaced by the values in the last argument.
+    (To make an exact copy of the row, just specify the same values for
+    the last two arguments.)  The <command>UPDATE</> command always assigns
+    all fields of the row &mdash; the main difference between this and
+    <function>dblink_build_sql_insert</> is that it's assumed that
+    the target row already exists in the remote table.
+   </para>
+  </refsect1>
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>relname</parameter></term>
+     <listitem>
+      <para>
+       Name of a local relation, for example <literal>foo</> or
+       <literal>myschema.mytab</>.  Include double quotes if the
+       name is mixed-case or contains special characters, for
+       example <literal>"FooBar"</>; without quotes, the string
+       will be folded to lower case.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>primary_key_attnums</parameter></term>
+     <listitem>
+      <para>
+       Attribute numbers (1-based) of the primary key fields,
+       for example <literal>1 2</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>num_primary_key_atts</parameter></term>
+     <listitem>
+      <para>
+       The number of primary key fields.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>src_pk_att_vals_array</parameter></term>
+     <listitem>
+      <para>
+       Values of the primary key fields to be used to look up the
+       local tuple.  Each field is represented in text form.
+       An error is thrown if there is no local row with these
+       primary key values.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>tgt_pk_att_vals_array</parameter></term>
+     <listitem>
+      <para>
+       Values of the primary key fields to be placed in the resulting
+       <command>UPDATE</> command.  Each field is represented in text form.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+
+   <para>Returns the requested SQL statement as text.</para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+ test=# select dblink_build_sql_update('foo', '1 2', 2, '{"1", "a"}', '{"1", "b"}');
+                    dblink_build_sql_update
+ -------------------------------------------------------------
+  UPDATE foo SET f1='1',f2='b',f3='1' WHERE f1='1' AND f2='b'
+ (1 row)
+   </programlisting>
+  </refsect1>
+ </refentry>
+
 </sect1>
