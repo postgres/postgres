@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 our $config = {
-    asserts=>1,			# --enable-cassert
+    asserts=>0,			# --enable-cassert
     integer_datetimes=>0,   # --enable-integer-datetimes
     nls=>undef,				# --enable-nls=<path>
     tcl=>'c:\tcl',		# --with-tls=<path>
