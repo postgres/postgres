@@ -44,9 +44,9 @@
 
 PG_MODULE_MAGIC;
 
-static int	load_categories_hash(char *cats_sql, MemoryContext per_query_ctx);
+static HTAB *load_categories_hash(char *cats_sql, MemoryContext per_query_ctx);
 static Tuplestorestate *get_crosstab_tuplestore(char *sql,
-						int num_categories,
+						HTAB *crosstab_hash,
 						TupleDesc tupdesc,
 						MemoryContext per_query_ctx);
 static void validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial);
@@ -121,26 +121,23 @@ typedef struct
 /* sign, 10 digits, '\0' */
 #define INT32_STRLEN	12
 
-/* hash table support */
-static HTAB *crosstab_HashTable;
-
-/* The information we cache about loaded procedures */
+/* stored info for a crosstab category */
 typedef struct crosstab_cat_desc
 {
-	char	   *catname;
+	char	   *catname;		/* full category name */
 	int			attidx;			/* zero based */
 }	crosstab_cat_desc;
 
 #define MAX_CATNAME_LEN			NAMEDATALEN
 #define INIT_CATS				64
 
-#define crosstab_HashTableLookup(CATNAME, CATDESC) \
+#define crosstab_HashTableLookup(HASHTAB, CATNAME, CATDESC) \
 do { \
 	crosstab_HashEnt *hentry; char key[MAX_CATNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_CATNAME_LEN); \
 	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATNAME); \
-	hentry = (crosstab_HashEnt*) hash_search(crosstab_HashTable, \
+	hentry = (crosstab_HashEnt*) hash_search(HASHTAB, \
 										 key, HASH_FIND, NULL); \
 	if (hentry) \
 		CATDESC = hentry->catdesc; \
@@ -148,13 +145,13 @@ do { \
 		CATDESC = NULL; \
 } while(0)
 
-#define crosstab_HashTableInsert(CATDESC) \
+#define crosstab_HashTableInsert(HASHTAB, CATDESC) \
 do { \
 	crosstab_HashEnt *hentry; bool found; char key[MAX_CATNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_CATNAME_LEN); \
 	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATDESC->catname); \
-	hentry = (crosstab_HashEnt*) hash_search(crosstab_HashTable, \
+	hentry = (crosstab_HashEnt*) hash_search(HASHTAB, \
 										 key, HASH_ENTER, &found); \
 	if (found) \
 		ereport(ERROR, \
@@ -704,7 +701,7 @@ crosstab_hash(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
-	int			num_categories;
+	HTAB	   *crosstab_hash;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -737,14 +734,14 @@ crosstab_hash(PG_FUNCTION_ARGS)
 						"crosstab function are not compatible")));
 
 	/* load up the categories hash table */
-	num_categories = load_categories_hash(cats_sql, per_query_ctx);
+	crosstab_hash = load_categories_hash(cats_sql, per_query_ctx);
 
 	/* let the caller know we're sending back a tuplestore */
 	rsinfo->returnMode = SFRM_Materialize;
 
 	/* now go build it */
 	rsinfo->setResult = get_crosstab_tuplestore(sql,
-												num_categories,
+												crosstab_hash,
 												tupdesc,
 												per_query_ctx);
 
@@ -764,24 +761,29 @@ crosstab_hash(PG_FUNCTION_ARGS)
 /*
  * load up the categories hash table
  */
-static int
+static HTAB *
 load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 {
+	HTAB	   *crosstab_hash;
 	HASHCTL		ctl;
 	int			ret;
 	int			proc;
 	MemoryContext SPIcontext;
-	int			num_categories = 0;
 
 	/* initialize the category hash table */
+	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = MAX_CATNAME_LEN;
 	ctl.entrysize = sizeof(crosstab_HashEnt);
+	ctl.hcxt = per_query_ctx;
 
 	/*
 	 * use INIT_CATS, defined above as a guess of how many hash table entries
 	 * to create, initially
 	 */
-	crosstab_HashTable = hash_create("crosstab hash", INIT_CATS, &ctl, HASH_ELEM);
+	crosstab_hash = hash_create("crosstab hash",
+								INIT_CATS,
+								&ctl,
+								HASH_ELEM | HASH_CONTEXT);
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
@@ -790,7 +792,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 
 	/* Retrieve the category name rows */
 	ret = SPI_execute(cats_sql, true, 0);
-	num_categories = proc = SPI_processed;
+	proc = SPI_processed;
 
 	/* Check for qualifying tuples */
 	if ((ret == SPI_OK_SELECT) && (proc > 0))
@@ -828,7 +830,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 			catdesc->attidx = i;
 
 			/* Add the proc description block to the hashtable */
-			crosstab_HashTableInsert(catdesc);
+			crosstab_HashTableInsert(crosstab_hash, catdesc);
 
 			MemoryContextSwitchTo(SPIcontext);
 		}
@@ -838,7 +840,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 		/* internal error */
 		elog(ERROR, "load_categories_hash: SPI_finish() failed");
 
-	return num_categories;
+	return crosstab_hash;
 }
 
 /*
@@ -846,11 +848,12 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
  */
 static Tuplestorestate *
 get_crosstab_tuplestore(char *sql,
-						int num_categories,
+						HTAB *crosstab_hash,
 						TupleDesc tupdesc,
 						MemoryContext per_query_ctx)
 {
 	Tuplestorestate *tupstore;
+	int			num_categories = hash_get_num_entries(crosstab_hash);
 	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 	char	  **values;
 	HeapTuple	tuple;
@@ -978,7 +981,7 @@ get_crosstab_tuplestore(char *sql,
 
 			if (catname != NULL)
 			{
-				crosstab_HashTableLookup(catname, catdesc);
+				crosstab_HashTableLookup(crosstab_hash, catname, catdesc);
 
 				if (catdesc)
 					values[catdesc->attidx + ncols - 2] =
