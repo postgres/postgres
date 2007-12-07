@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.561 2007/12/07 17:42:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.562 2007/12/07 21:22:34 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -172,7 +172,7 @@ do it for earlier branch release files.
     <listitem>
      <para>
       Heap-Only Tuples (<acronym>HOT</>) accelerate space reuse for
-      <command>UPDATE</>s
+      most <command>UPDATE</>s
      </para>
     </listitem>
 
@@ -698,7 +698,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Heap-Only Tuples (<acronym>HOT</>) accelerate space reuse for
+       Heap-Only Tuples (<acronym>HOT</>) accelerate space reuse for most
        <command>UPDATE</>s (Pavan Deolasee, with ideas from many others)
       </para>
 
