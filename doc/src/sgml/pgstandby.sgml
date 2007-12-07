@@ -262,7 +262,7 @@ restore_command = 'pg_standby -l -d -k 255 -r 2 -s 2 -w 0 -t /tmp/pgsql.trigger.
      <listitem><para>keep the last 255 full WAL files, plus the current one</para></listitem>
      <listitem><para>sleep for 2 seconds between checks for next WAL file is full</para></listitem>
      <listitem><para>never timeout if file not found</para></listitem>
-     <listitem><para>stop waiting when a trigger file called /tmp.pgsql.trigger.5442 appears</para></listitem>
+     <listitem><para>stop waiting when a trigger file called /tmp/pgsql.trigger.5442 appears</para></listitem>
     </itemizedlist>
    </listitem>
 
