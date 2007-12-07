@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Nov 26 18:31:05 EST 2007
+Last updated:		Fri Dec  7 12:52:05 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -100,8 +100,6 @@ Administration
 
 * Configuration files
 
-	o -Allow commenting of variables in postgresql.conf to restore them
-	  to defaults
 	o Allow pg_hba.conf to specify host names along with IP addresses
 
 	  Host name lookup could occur when the postmaster reads the
@@ -142,8 +140,6 @@ Administration
 	  requires a tool that will call that function and connect to each
 	  database to find the objects in each database for that tablespace.
 
-	o -Add a GUC variable to control the tablespace for temporary objects
-	  and sort files
 	o Allow WAL replay of CREATE TABLESPACE to work when the directory
 	  structure on the recovery computer is different from the original
 
@@ -168,11 +164,6 @@ Administration
 	    http://archives.postgresql.org/pgsql-hackers/2006-12/msg00497.php
 
 
-Monitoring
-==========
-
-* -Allow server log information to be output as CSV format
-* -Add ability to monitor the use of temporary sort files
 
 
 Data Types
@@ -187,12 +178,6 @@ Data Types
 * Fix data types where equality comparison isn't intuitive, e.g. box
 * Allow user-defined types to specify a type modifier at table creation
   time
-* -Allow user-defined types to accept 'typmod' parameters
-
-  http://archives.postgresql.org/pgsql-hackers/2005-08/msg01142.php
-  http://archives.postgresql.org/pgsql-hackers/2005-09/msg00012.php
-  http://archives.postgresql.org/pgsql-hackers/2006-08/msg00149.php
-
 * Add support for public SYNONYMs
 
   http://archives.postgresql.org/pgsql-hackers/2006-03/msg00519.php
@@ -202,11 +187,6 @@ Data Types
   http://archives.postgresql.org/pgsql-hackers/2006-05/msg00072.php
   http://archives.postgresql.org/pgsql-hackers/2006-09/msg01681.php
 
-* -Add Globally/Universally Unique Identifier (GUID/UUID)
-
-  http://archives.postgresql.org/pgsql-patches/2006-09/msg00209.php
-  http://archives.postgresql.org/pgsql-general/2007-01/msg00853.php
-
 * Add support for SQL-standard GENERATED/IDENTITY columns
 
   http://archives.postgresql.org/pgsql-hackers/2006-07/msg00543.php
@@ -214,7 +194,6 @@ Data Types
   http://archives.postgresql.org/pgsql-hackers/2007-05/msg00344.php
   http://archives.postgresql.org/pgsql-patches/2007-05/msg00076.php
 
-* -Support a data type with specific enumerated values (ENUM)
 * Improve XML support
 
   http://developer.postgresql.org/index.php/XML_Support
@@ -308,7 +287,6 @@ Data Types
 
 	  http://archives.postgresql.org/pgsql-patches/2007-05/msg00114.php
 
-	o -Add support for arrays of complex types
 	o Allow single-byte header storage for array elements
 
 
@@ -330,7 +308,6 @@ Data Types
 
 * MONEY data type
 
-	o -Make 64-bit version of the MONEY data type
 	* Add locale-aware MONEY type, and support multiple currencies
 
 	  http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php
@@ -369,8 +346,6 @@ Functions
 	o to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') => 0:1:19:20
 	o to_char(INTERVAL '3 years 5 months','MM') => 41
 
-* -Add ISO day of week format 'ID' to to_char() where Monday = 1
-* -Add a field 'isoyear' to extract(), based on the ISO week
 * Implement inlining of set-returning functions defined in SQL
 * Allow SQL-language functions to return results from RETURNING queries
 
@@ -539,7 +514,6 @@ SQL Commands
 
 * Add NOVICE output level for helpful messages like automatic sequence/index
   creation
-* -Add RESET SESSION command to reset all session state
 * Add GUC to issue notice about statements that use unjoined tables
 * Allow EXPLAIN to identify tables that were skipped because of
   constraint_exclusion
@@ -652,7 +626,6 @@ SQL Commands
 
 * CLUSTER
 
-	o -Make CLUSTER preserve recently-dead tuples per MVCC requirements
 	o Automatically maintain clustering on a table
 
 	  This might require some background daemon to maintain clustering
@@ -671,8 +644,6 @@ SQL Commands
 
 	o %Add VERBOSE option to report tables as they are processed,
 	  like VACUUM VERBOSE
-	o -Add more logical syntax CLUSTER table USING index;
-	  support current syntax for backward compatibility
 
 
 * COPY
@@ -709,7 +680,6 @@ SQL Commands
 
 * CURSOR
 
-	o -Allow UPDATE/DELETE WHERE CURRENT OF cursor
 	o Prevent DROP TABLE from dropping a row referenced by its own open
 	  cursor?
 
@@ -784,7 +754,6 @@ SQL Commands
 		  http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php
 
 		o Add single-step debugging of functions
-		o -Add support for MOVE cursors
 		o Add support for SCROLL cursors
 		o Add support for WITH HOLD cursors
 		o Allow RETURN to return row or record functions
@@ -817,7 +786,6 @@ SQL Commands
 
 		  http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php
 
-		o -Allow PL/PythonU to return boolean rather than 1/0
 		o Allow data to be passed in native language formats, rather
 		  than only text
 
@@ -855,8 +823,6 @@ Clients
 	  http://archives.postgresql.org/pgsql-hackers/2004-11/msg00014.php
 	  http://archives.postgresql.org/pgsql-hackers/2004-11/msg00014.php
 
-	o -Allow psql \pset boolean variables to set to fixed values, rather
-	  than toggle
 	o Consistently display privilege information for all objects in psql
 	o Add auto-expanded mode so expanded output is used if the row
 	  length is wider than the screen width.
@@ -901,7 +867,6 @@ Clients
 	o Stop dumping CASCADE on DROP TYPE commands in clean mode
 	o Allow pg_dump --clean to drop roles that own objects or have
 	  privileges
-	o -Add -f to pg_dumpall
 	o Change pg_dump so that a comment on the dumped database is
 	  applied to the loaded database, even if the database has a
 	  different name.  This will require new backend syntax, perhaps
@@ -999,15 +964,6 @@ Triggers
 
 
 
-Dependency Checking
-===================
-
-* -Flush cached query plans when the dependent objects change or
-  when new ANALYZE statistics are available
-* -Track dependencies in function bodies and recompile/invalidate
-* -Invalidate prepared queries, like INSERT, when the table definition
-  is altered
-
 
 Indexes
 =======
@@ -1028,15 +984,12 @@ Indexes
   http://archives.postgresql.org/pgsql-patches/2005-07/msg00512.php
   http://archives.postgresql.org/pgsql-hackers/2006-12/msg01107.php
 
-* -Allow use of indexes to search for NULLs
 * Allow accurate statistics to be collected on indexes with more than
   one column or expression indexes, perhaps using per-index statistics
 
   http://archives.postgresql.org/pgsql-performance/2006-10/msg00222.php
   http://archives.postgresql.org/pgsql-hackers/2007-03/msg01131.php
 
-* -Allow the creation of indexes with mixed ascending/descending
-  specifiers
 * Consider compressing indexes by storing key values duplicated in
   several rows as a single index entry
 
@@ -1111,8 +1064,6 @@ Fsync
 
 * %Add an option to sync() before fsync()'ing checkpoint files
 * Add program to test if fsync has a delay compared to non-fsync
-* -Reduce checkpoint performance degredation by forcing data to disk
-  more evenly
 
 
 Cache Usage
@@ -1171,8 +1122,6 @@ Cache Usage
 	o Query execute plan
 	o Query results
 
-* -Allow sequential scans to take advantage of other concurrent
-  sequential scans, also called "Synchronised Scanning"
 * Consider increasing internal areas when shared buffers is increased
 
   http://archives.postgresql.org/pgsql-hackers/2005-10/msg01419.php
@@ -1227,14 +1176,10 @@ Vacuum
   in hopes that empty pages at the end can be truncated by VACUUM
 * Allow FSM page return free space based on table clustering, to assist
   in maintaining clustering?
-* -Consider shrinking expired tuples to just their headers
-* -Allow heap reuse of UPDATEd rows if no indexed columns are changed,
-  and old and new versions are on the same heap page
 * Improve dead row detection during multi-statement transactions usage
 
   http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php
 
-* -Reduce XID consumption of read-only queries
 * Prevent long-lived temporary tables from causing frozen-xid advancement
    starvation
 
@@ -1249,9 +1194,6 @@ Vacuum
 	o %Issue log message to suggest VACUUM FULL if a table is nearly
 	  empty?
 	o Consider logging activity either to the logs or a system view
-	o -Turn on by default
-	o -Allow multiple vacuums so large tables do not starve small
-	  tables
 	o Improve control of auto-vacuum
 
 	  http://archives.postgresql.org/pgsql-hackers/2006-12/msg00876.php
@@ -1344,8 +1286,6 @@ Write-Ahead Log
 
   http://archives.postgresql.org/pgsql-hackers/2007-03/msg01589.php
 
-* -Allow the pg_xlog directory location to be specified during initdb
-  with a symlink back to the /data location
 * Allow WAL information to recover corrupted pg_controldata
 
   http://archives.postgresql.org/pgsql-patches/2006-06/msg00025.php
@@ -1357,7 +1297,6 @@ Write-Ahead Log
   rotation to fsync again. One idea is to write the WAL to different
   offsets that might reduce the rotational delay.
 
-* -Allow buffered WAL writes and fsync
 * Allow WAL logging to be turned off for a table, but the table
   might be dropped or truncated during crash recovery [walcontrol]
 
@@ -1382,8 +1321,6 @@ Optimizer / Executor
 ====================
 
 * Improve selectivity functions for geometric operators
-* -Allow ORDER BY ... LIMIT # to select high/low value without sort or
-  index using a sequential scan for highest/lowest values
 * Precompile SQL functions to avoid overhead
 * Create utility to compute accurate random_page_cost value
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
@@ -1433,10 +1370,8 @@ Miscellaneous Performance
   could hit disk before WAL is written.
 
 * Add a script to ask system configuration questions and tune postgresql.conf
-* -Merge xmin/xmax/cmin/cmax back into three header fields
 * Consider ways of storing rows more compactly on disk
 
-	o -Support a smaller header for short variable-length fields
 	o Reduce the row header size?
 	o Consider reducing on-disk varlena length from four bytes to
 	  two because a heap row cannot be more than 64k in length
@@ -1511,18 +1446,12 @@ Source Code
 
   http://archives.postgresql.org/pgsql-docs/2006-12/msg00152.php
 
-* -Move NAMEDATALEN from postgres_ext.h to pg_config_manual.h
 * Consider making NAMEDATALEN more configurable in future releases
 * Update our code to handle 64-bit timezone files to match the zic
   source code, which now uses them
 * Have configure choose integer datetimes by default
 
   http://archives.postgresql.org/pgsql-patches/2007-05/msg00046.php
-
-* -Fix problem with excessive logging during SSL disconnection
-
-  http://archives.postgresql.org/pgsql-bugs/2006-12/msg00122.php
-  http://archives.postgresql.org/pgsql-bugs/2007-05/msg00065.php
 
 * Support scoped IPv6 addresses
 
@@ -1552,7 +1481,6 @@ Source Code
 
 	  http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php
 
-	o -Add long file support for binary pg_dump output
 
 
 * Wire Protocol Changes
