@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.241 2007/11/15 22:25:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.242 2007/12/08 21:05:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,8 +128,8 @@ static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
 static char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
-static bool get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
-					 Oid sortop, Datum *max);
+static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
+					 Oid sortop, Datum *min, Datum *max);
 static Selectivity prefix_selectivity(VariableStatData *vardata,
 				   Oid vartype, Oid opfamily, Const *prefixcon);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
@@ -2172,18 +2172,24 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  * we can estimate how much of the input will actually be read.  This
  * can have a considerable impact on the cost when using indexscans.
  *
+ * Also, we can estimate how much of each input has to be read before the
+ * first join pair is found, which will affect the join's startup time.
+ *
  * clause should be a clause already known to be mergejoinable.  opfamily,
  * strategy, and nulls_first specify the sort ordering being used.
  *
- * *leftscan is set to the fraction of the left-hand variable expected
- * to be scanned (0 to 1), and similarly *rightscan for the right-hand
- * variable.
+ * The outputs are:
+ *		*leftstart is set to the fraction of the left-hand variable expected
+ *		 to be scanned before the first join pair is found (0 to 1).
+ *		*leftend is set to the fraction of the left-hand variable expected
+ *		 to be scanned before the join terminates (0 to 1).
+ *		*rightstart, *rightend similarly for the right-hand variable.
  */
 void
 mergejoinscansel(PlannerInfo *root, Node *clause,
 				 Oid opfamily, int strategy, bool nulls_first,
-				 Selectivity *leftscan,
-				 Selectivity *rightscan)
+				 Selectivity *leftstart, Selectivity *leftend,
+				 Selectivity *rightstart, Selectivity *rightend)
 {
 	Node	   *left,
 			   *right;
@@ -2196,14 +2202,23 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	Oid			opno,
 				lsortop,
 				rsortop,
+				lstatop,
+				rstatop,
+				ltop,
 				leop,
+				revltop,
 				revleop;
-	Datum		leftmax,
+	bool		isgt;
+	Datum		leftmin,
+				leftmax,
+				rightmin,
 				rightmax;
 	double		selec;
 
 	/* Set default results if we can't figure anything out. */
-	*leftscan = *rightscan = 1.0;
+	/* XXX should default "start" fraction be a bit more than 0? */
+	*leftstart = *rightstart = 0.0;
+	*leftend = *rightend = 1.0;
 
 	/* Deconstruct the merge clause */
 	if (!is_opclause(clause))
@@ -2229,30 +2244,103 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 
 	/*
 	 * Look up the various operators we need.  If we don't find them all, it
-	 * probably means the opfamily is broken, but we cope anyway.
+	 * probably means the opfamily is broken, but we just fail silently.
+	 *
+	 * Note: we expect that pg_statistic histograms will be sorted by the
+	 * '<' operator, regardless of which sort direction we are considering.
 	 */
 	switch (strategy)
 	{
 		case BTLessStrategyNumber:
-			lsortop = get_opfamily_member(opfamily, op_lefttype, op_lefttype,
-										  BTLessStrategyNumber);
-			rsortop = get_opfamily_member(opfamily, op_righttype, op_righttype,
-										  BTLessStrategyNumber);
-			leop = get_opfamily_member(opfamily, op_lefttype, op_righttype,
-									   BTLessEqualStrategyNumber);
-			revleop = get_opfamily_member(opfamily, op_righttype, op_lefttype,
-										  BTLessEqualStrategyNumber);
+			isgt = false;
+			if (op_lefttype == op_righttype)
+			{
+				/* easy case */
+				ltop = get_opfamily_member(opfamily,
+										   op_lefttype, op_righttype,
+										   BTLessStrategyNumber);
+				leop = get_opfamily_member(opfamily,
+										   op_lefttype, op_righttype,
+										   BTLessEqualStrategyNumber);
+				lsortop = ltop;
+				rsortop = ltop;
+				lstatop = lsortop;
+				rstatop = rsortop;
+				revltop = ltop;
+				revleop = leop;
+			}
+			else
+			{
+				ltop = get_opfamily_member(opfamily,
+										   op_lefttype, op_righttype,
+										   BTLessStrategyNumber);
+				leop = get_opfamily_member(opfamily,
+										   op_lefttype, op_righttype,
+										   BTLessEqualStrategyNumber);
+				lsortop = get_opfamily_member(opfamily,
+											  op_lefttype, op_lefttype,
+											  BTLessStrategyNumber);
+				rsortop = get_opfamily_member(opfamily,
+											  op_righttype, op_righttype,
+											  BTLessStrategyNumber);
+				lstatop = lsortop;
+				rstatop = rsortop;
+				revltop = get_opfamily_member(opfamily,
+											  op_righttype, op_lefttype,
+											  BTLessStrategyNumber);
+				revleop = get_opfamily_member(opfamily,
+											  op_righttype, op_lefttype,
+											  BTLessEqualStrategyNumber);
+			}
 			break;
 		case BTGreaterStrategyNumber:
 			/* descending-order case */
-			lsortop = get_opfamily_member(opfamily, op_lefttype, op_lefttype,
-										  BTGreaterStrategyNumber);
-			rsortop = get_opfamily_member(opfamily, op_righttype, op_righttype,
-										  BTGreaterStrategyNumber);
-			leop = get_opfamily_member(opfamily, op_lefttype, op_righttype,
-									   BTGreaterEqualStrategyNumber);
-			revleop = get_opfamily_member(opfamily, op_righttype, op_lefttype,
-										  BTGreaterEqualStrategyNumber);
+			isgt = true;
+			if (op_lefttype == op_righttype)
+			{
+				/* easy case */
+				ltop = get_opfamily_member(opfamily,
+										   op_lefttype, op_righttype,
+										   BTGreaterStrategyNumber);
+				leop = get_opfamily_member(opfamily,
+										   op_lefttype, op_righttype,
+										   BTGreaterEqualStrategyNumber);
+				lsortop = ltop;
+				rsortop = ltop;
+				lstatop = get_opfamily_member(opfamily,
+											  op_lefttype, op_lefttype,
+											  BTLessStrategyNumber);
+				rstatop = lstatop;
+				revltop = ltop;
+				revleop = leop;
+			}
+			else
+			{
+				ltop = get_opfamily_member(opfamily,
+										   op_lefttype, op_righttype,
+										   BTGreaterStrategyNumber);
+				leop = get_opfamily_member(opfamily,
+										   op_lefttype, op_righttype,
+										   BTGreaterEqualStrategyNumber);
+				lsortop = get_opfamily_member(opfamily,
+											  op_lefttype, op_lefttype,
+											  BTGreaterStrategyNumber);
+				rsortop = get_opfamily_member(opfamily,
+											  op_righttype, op_righttype,
+											  BTGreaterStrategyNumber);
+				lstatop = get_opfamily_member(opfamily,
+											  op_lefttype, op_lefttype,
+											  BTLessStrategyNumber);
+				rstatop = get_opfamily_member(opfamily,
+											  op_righttype, op_righttype,
+											  BTLessStrategyNumber);
+				revltop = get_opfamily_member(opfamily,
+											  op_righttype, op_lefttype,
+											  BTGreaterStrategyNumber);
+				revleop = get_opfamily_member(opfamily,
+											  op_righttype, op_lefttype,
+											  BTGreaterEqualStrategyNumber);
+			}
 			break;
 		default:
 			goto fail;			/* shouldn't get here */
@@ -2260,66 +2348,133 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 
 	if (!OidIsValid(lsortop) ||
 		!OidIsValid(rsortop) ||
+		!OidIsValid(lstatop) ||
+		!OidIsValid(rstatop) ||
+		!OidIsValid(ltop) ||
 		!OidIsValid(leop) ||
+		!OidIsValid(revltop) ||
 		!OidIsValid(revleop))
 		goto fail;				/* insufficient info in catalogs */
 
-	/* Try to get maximum values of both inputs */
-	if (!get_variable_maximum(root, &leftvar, lsortop, &leftmax))
-		goto fail;				/* no max available from stats */
-
-	if (!get_variable_maximum(root, &rightvar, rsortop, &rightmax))
-		goto fail;				/* no max available from stats */
+	/* Try to get ranges of both inputs */
+	if (!isgt)
+	{
+		if (!get_variable_range(root, &leftvar, lstatop,
+								&leftmin, &leftmax))
+			goto fail;			/* no range available from stats */
+		if (!get_variable_range(root, &rightvar, rstatop,
+								&rightmin, &rightmax))
+			goto fail;			/* no range available from stats */
+	}
+	else
+	{
+		/* need to swap the max and min */
+		if (!get_variable_range(root, &leftvar, lstatop,
+								&leftmax, &leftmin))
+			goto fail;			/* no range available from stats */
+		if (!get_variable_range(root, &rightvar, rstatop,
+								&rightmax, &rightmin))
+			goto fail;			/* no range available from stats */
+	}
 
 	/*
 	 * Now, the fraction of the left variable that will be scanned is the
 	 * fraction that's <= the right-side maximum value.  But only believe
-	 * non-default estimates, else stick with our 1.0.	Also, if the sort
-	 * order is nulls-first, we're going to have to read over any nulls too.
+	 * non-default estimates, else stick with our 1.0.
 	 */
-	selec = scalarineqsel(root, leop, false, &leftvar,
+	selec = scalarineqsel(root, leop, isgt, &leftvar,
 						  rightmax, op_righttype);
 	if (selec != DEFAULT_INEQ_SEL)
-	{
-		if (nulls_first && HeapTupleIsValid(leftvar.statsTuple))
-		{
-			Form_pg_statistic stats;
-
-			stats = (Form_pg_statistic) GETSTRUCT(leftvar.statsTuple);
-			selec += stats->stanullfrac;
-			CLAMP_PROBABILITY(selec);
-		}
-		*leftscan = selec;
-	}
+		*leftend = selec;
 
 	/* And similarly for the right variable. */
-	selec = scalarineqsel(root, revleop, false, &rightvar,
+	selec = scalarineqsel(root, revleop, isgt, &rightvar,
 						  leftmax, op_lefttype);
 	if (selec != DEFAULT_INEQ_SEL)
-	{
-		if (nulls_first && HeapTupleIsValid(rightvar.statsTuple))
-		{
-			Form_pg_statistic stats;
-
-			stats = (Form_pg_statistic) GETSTRUCT(rightvar.statsTuple);
-			selec += stats->stanullfrac;
-			CLAMP_PROBABILITY(selec);
-		}
-		*rightscan = selec;
-	}
+		*rightend = selec;
 
 	/*
-	 * Only one of the two fractions can really be less than 1.0; believe the
-	 * smaller estimate and reset the other one to exactly 1.0.  If we get
-	 * exactly equal estimates (as can easily happen with self-joins), believe
-	 * neither.
+	 * Only one of the two "end" fractions can really be less than 1.0;
+	 * believe the smaller estimate and reset the other one to exactly 1.0.
+	 * If we get exactly equal estimates (as can easily happen with
+	 * self-joins), believe neither.
 	 */
-	if (*leftscan > *rightscan)
-		*leftscan = 1.0;
-	else if (*leftscan < *rightscan)
-		*rightscan = 1.0;
+	if (*leftend > *rightend)
+		*leftend = 1.0;
+	else if (*leftend < *rightend)
+		*rightend = 1.0;
 	else
-		*leftscan = *rightscan = 1.0;
+		*leftend = *rightend = 1.0;
+
+	/*
+	 * Also, the fraction of the left variable that will be scanned before
+	 * the first join pair is found is the fraction that's < the right-side
+	 * minimum value.  But only believe non-default estimates, else stick with
+	 * our own default.
+	 */
+	selec = scalarineqsel(root, ltop, isgt, &leftvar,
+						  rightmin, op_righttype);
+	if (selec != DEFAULT_INEQ_SEL)
+		*leftstart = selec;
+
+	/* And similarly for the right variable. */
+	selec = scalarineqsel(root, revltop, isgt, &rightvar,
+						  leftmin, op_lefttype);
+	if (selec != DEFAULT_INEQ_SEL)
+		*rightstart = selec;
+
+	/*
+	 * Only one of the two "start" fractions can really be more than zero;
+	 * believe the larger estimate and reset the other one to exactly 0.0.
+	 * If we get exactly equal estimates (as can easily happen with
+	 * self-joins), believe neither.
+	 */
+	if (*leftstart < *rightstart)
+		*leftstart = 0.0;
+	else if (*leftstart > *rightstart)
+		*rightstart = 0.0;
+	else
+		*leftstart = *rightstart = 0.0;
+
+	/*
+	 * If the sort order is nulls-first, we're going to have to skip over any
+	 * nulls too.  These would not have been counted by scalarineqsel, and
+	 * we can safely add in this fraction regardless of whether we believe
+	 * scalarineqsel's results or not.  But be sure to clamp the sum to 1.0!
+	 */
+	if (nulls_first)
+	{
+		Form_pg_statistic stats;
+
+		if (HeapTupleIsValid(leftvar.statsTuple))
+		{
+			stats = (Form_pg_statistic) GETSTRUCT(leftvar.statsTuple);
+			*leftstart += stats->stanullfrac;
+			CLAMP_PROBABILITY(*leftstart);
+			*leftend += stats->stanullfrac;
+			CLAMP_PROBABILITY(*leftend);
+		}
+		if (HeapTupleIsValid(rightvar.statsTuple))
+		{
+			stats = (Form_pg_statistic) GETSTRUCT(rightvar.statsTuple);
+			*rightstart += stats->stanullfrac;
+			CLAMP_PROBABILITY(*rightstart);
+			*rightend += stats->stanullfrac;
+			CLAMP_PROBABILITY(*rightend);
+		}
+	}
+
+	/* Disbelieve start >= end, just in case that can happen */
+	if (*leftstart >= *leftend)
+	{
+		*leftstart = 0.0;
+		*leftend = 1.0;
+	}
+	if (*rightstart >= *rightend)
+	{
+		*rightstart = 0.0;
+		*rightend = 1.0;
+	}
 
 fail:
 	ReleaseVariableStats(leftvar);
@@ -3778,20 +3933,21 @@ get_variable_numdistinct(VariableStatData *vardata)
 }
 
 /*
- * get_variable_maximum
- *		Estimate the maximum value of the specified variable.
- *		If successful, store value in *max and return TRUE.
+ * get_variable_range
+ *		Estimate the minimum and maximum value of the specified variable.
+ *		If successful, store values in *min and *max, and return TRUE.
  *		If no data available, return FALSE.
  *
- * sortop is the "<" comparison operator to use.  (To extract the
- * minimum instead of the maximum, just pass the ">" operator instead.)
+ * sortop is the "<" comparison operator to use.  This should generally
+ * be "<" not ">", as only the former is likely to be found in pg_statistic.
  */
 static bool
-get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
-					 Oid sortop, Datum *max)
+get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
+				   Datum *min, Datum *max)
 {
+	Datum		tmin = 0;
 	Datum		tmax = 0;
-	bool		have_max = false;
+	bool		have_data = false;
 	Form_pg_statistic stats;
 	int16		typLen;
 	bool		typByVal;
@@ -3809,7 +3965,7 @@ get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
 	get_typlenbyval(vardata->atttype, &typLen, &typByVal);
 
 	/*
-	 * If there is a histogram, grab the last or first value as appropriate.
+	 * If there is a histogram, grab the first and last values.
 	 *
 	 * If there is a histogram that is sorted with some other operator than
 	 * the one we want, fail --- this suggests that there is data we can't
@@ -3823,42 +3979,24 @@ get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
 	{
 		if (nvalues > 0)
 		{
+			tmin = datumCopy(values[0], typByVal, typLen);
 			tmax = datumCopy(values[nvalues - 1], typByVal, typLen);
-			have_max = true;
+			have_data = true;
 		}
 		free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
 	}
-	else
+	else if (get_attstatsslot(vardata->statsTuple,
+							  vardata->atttype, vardata->atttypmod,
+							  STATISTIC_KIND_HISTOGRAM, InvalidOid,
+							  &values, &nvalues,
+							  NULL, NULL))
 	{
-		Oid			rsortop = get_commutator(sortop);
-
-		if (OidIsValid(rsortop) &&
-			get_attstatsslot(vardata->statsTuple,
-							 vardata->atttype, vardata->atttypmod,
-							 STATISTIC_KIND_HISTOGRAM, rsortop,
-							 &values, &nvalues,
-							 NULL, NULL))
-		{
-			if (nvalues > 0)
-			{
-				tmax = datumCopy(values[0], typByVal, typLen);
-				have_max = true;
-			}
-			free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
-		}
-		else if (get_attstatsslot(vardata->statsTuple,
-								  vardata->atttype, vardata->atttypmod,
-								  STATISTIC_KIND_HISTOGRAM, InvalidOid,
-								  &values, &nvalues,
-								  NULL, NULL))
-		{
-			free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
-			return false;
-		}
+		free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
+		return false;
 	}
 
 	/*
-	 * If we have most-common-values info, look for a large MCV.  This is
+	 * If we have most-common-values info, look for extreme MCVs.  This is
 	 * needed even if we also have a histogram, since the histogram excludes
 	 * the MCVs.  However, usually the MCVs will not be the extreme values, so
 	 * avoid unnecessary data copying.
@@ -3869,31 +4007,41 @@ get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
 						 &values, &nvalues,
 						 NULL, NULL))
 	{
-		bool		large_mcv = false;
+		bool		tmin_is_mcv = false;
+		bool		tmax_is_mcv = false;
 		FmgrInfo	opproc;
 
 		fmgr_info(get_opcode(sortop), &opproc);
 
 		for (i = 0; i < nvalues; i++)
 		{
-			if (!have_max)
+			if (!have_data)
 			{
-				tmax = values[i];
-				large_mcv = have_max = true;
+				tmin = tmax = values[i];
+				tmin_is_mcv = tmax_is_mcv = have_data = true;
+				continue;
 			}
-			else if (DatumGetBool(FunctionCall2(&opproc, tmax, values[i])))
+			if (DatumGetBool(FunctionCall2(&opproc, values[i], tmin)))
+			{
+				tmin = values[i];
+				tmin_is_mcv = true;
+			}
+			if (DatumGetBool(FunctionCall2(&opproc, tmax, values[i])))
 			{
 				tmax = values[i];
-				large_mcv = true;
+				tmax_is_mcv = true;
 			}
 		}
-		if (large_mcv)
+		if (tmin_is_mcv)
+			tmin = datumCopy(tmin, typByVal, typLen);
+		if (tmax_is_mcv)
 			tmax = datumCopy(tmax, typByVal, typLen);
 		free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
 	}
 
+	*min = tmin;
 	*max = tmax;
-	return have_max;
+	return have_data;
 }
 
 

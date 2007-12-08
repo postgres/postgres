@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.189 2007/11/15 22:25:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.190 2007/12/08 21:05:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1372,12 +1372,16 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	double		outer_path_rows = PATH_ROWS(outer_path);
 	double		inner_path_rows = PATH_ROWS(inner_path);
 	double		outer_rows,
-				inner_rows;
+				inner_rows,
+				outer_skip_rows,
+				inner_skip_rows;
 	double		mergejointuples,
 				rescannedtuples;
 	double		rescanratio;
-	Selectivity outerscansel,
-				innerscansel;
+	Selectivity outerstartsel,
+				outerendsel,
+				innerstartsel,
+				innerendsel;
 	Selectivity joininfactor;
 	Path		sort_path;		/* dummy for result of cost_sort */
 
@@ -1444,10 +1448,12 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	 * A merge join will stop as soon as it exhausts either input stream
 	 * (unless it's an outer join, in which case the outer side has to be
 	 * scanned all the way anyway).  Estimate fraction of the left and right
-	 * inputs that will actually need to be scanned. We use only the first
-	 * (most significant) merge clause for this purpose.  Since
-	 * mergejoinscansel() is a fairly expensive computation, we cache the
-	 * results in the merge clause RestrictInfo.
+	 * inputs that will actually need to be scanned.  Likewise, we can
+	 * estimate the number of rows that will be skipped before the first
+	 * join pair is found, which should be factored into startup cost.
+	 * We use only the first (most significant) merge clause for this purpose.
+	 * Since mergejoinscansel() is a fairly expensive computation, we cache
+	 * the results in the merge clause RestrictInfo.
 	 */
 	if (mergeclauses && path->jpath.jointype != JOIN_FULL)
 	{
@@ -1478,37 +1484,61 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 						  outer_path->parent->relids))
 		{
 			/* left side of clause is outer */
-			outerscansel = cache->leftscansel;
-			innerscansel = cache->rightscansel;
+			outerstartsel = cache->leftstartsel;
+			outerendsel = cache->leftendsel;
+			innerstartsel = cache->rightstartsel;
+			innerendsel = cache->rightendsel;
 		}
 		else
 		{
 			/* left side of clause is inner */
-			outerscansel = cache->rightscansel;
-			innerscansel = cache->leftscansel;
+			outerstartsel = cache->rightstartsel;
+			outerendsel = cache->rightendsel;
+			innerstartsel = cache->leftstartsel;
+			innerendsel = cache->leftendsel;
 		}
 		if (path->jpath.jointype == JOIN_LEFT)
-			outerscansel = 1.0;
+		{
+			outerstartsel = 0.0;
+			outerendsel = 1.0;
+		}
 		else if (path->jpath.jointype == JOIN_RIGHT)
-			innerscansel = 1.0;
+		{
+			innerstartsel = 0.0;
+			innerendsel = 1.0;
+		}
 	}
 	else
 	{
 		/* cope with clauseless or full mergejoin */
-		outerscansel = innerscansel = 1.0;
+		outerstartsel = innerstartsel = 0.0;
+		outerendsel = innerendsel = 1.0;
 	}
 
-	/* convert selectivity to row count; must scan at least one row */
-	outer_rows = clamp_row_est(outer_path_rows * outerscansel);
-	inner_rows = clamp_row_est(inner_path_rows * innerscansel);
+	/*
+	 * Convert selectivities to row counts.  We force outer_rows and
+	 * inner_rows to be at least 1, but the skip_rows estimates can be zero.
+	 */
+	outer_skip_rows = rint(outer_path_rows * outerstartsel);
+	inner_skip_rows = rint(inner_path_rows * innerstartsel);
+	outer_rows = clamp_row_est(outer_path_rows * outerendsel);
+	inner_rows = clamp_row_est(inner_path_rows * innerendsel);
+
+	Assert(outer_skip_rows <= outer_rows);
+	Assert(inner_skip_rows <= inner_rows);
 
 	/*
 	 * Readjust scan selectivities to account for above rounding.  This is
 	 * normally an insignificant effect, but when there are only a few rows in
 	 * the inputs, failing to do this makes for a large percentage error.
 	 */
-	outerscansel = outer_rows / outer_path_rows;
-	innerscansel = inner_rows / inner_path_rows;
+	outerstartsel = outer_skip_rows / outer_path_rows;
+	innerstartsel = inner_skip_rows / inner_path_rows;
+	outerendsel = outer_rows / outer_path_rows;
+	innerendsel = inner_rows / inner_path_rows;
+
+	Assert(outerstartsel <= outerendsel);
+	Assert(innerstartsel <= innerendsel);
 
 	/* cost of source data */
 
@@ -1522,14 +1552,18 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 				  outer_path->parent->width,
 				  -1.0);
 		startup_cost += sort_path.startup_cost;
+		startup_cost += (sort_path.total_cost - sort_path.startup_cost)
+			* outerstartsel;
 		run_cost += (sort_path.total_cost - sort_path.startup_cost)
-			* outerscansel;
+			* (outerendsel - outerstartsel);
 	}
 	else
 	{
 		startup_cost += outer_path->startup_cost;
+		startup_cost += (outer_path->total_cost - outer_path->startup_cost)
+			* outerstartsel;
 		run_cost += (outer_path->total_cost - outer_path->startup_cost)
-			* outerscansel;
+			* (outerendsel - outerstartsel);
 	}
 
 	if (innersortkeys)			/* do we need to sort inner? */
@@ -1542,14 +1576,18 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 				  inner_path->parent->width,
 				  -1.0);
 		startup_cost += sort_path.startup_cost;
+		startup_cost += (sort_path.total_cost - sort_path.startup_cost)
+			* innerstartsel * rescanratio;
 		run_cost += (sort_path.total_cost - sort_path.startup_cost)
-			* innerscansel * rescanratio;
+			* (innerendsel - innerstartsel) * rescanratio;
 	}
 	else
 	{
 		startup_cost += inner_path->startup_cost;
+		startup_cost += (inner_path->total_cost - inner_path->startup_cost)
+			* innerstartsel * rescanratio;
 		run_cost += (inner_path->total_cost - inner_path->startup_cost)
-			* innerscansel * rescanratio;
+			* (innerendsel - innerstartsel) * rescanratio;
 	}
 
 	/* CPU costs */
@@ -1571,8 +1609,11 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	 * joininfactor.
 	 */
 	startup_cost += merge_qual_cost.startup;
+	startup_cost += merge_qual_cost.per_tuple *
+		(outer_skip_rows + inner_skip_rows * rescanratio);
 	run_cost += merge_qual_cost.per_tuple *
-		(outer_rows + inner_rows * rescanratio);
+		((outer_rows - outer_skip_rows) +
+		 (inner_rows - inner_skip_rows) * rescanratio);
 
 	/*
 	 * For each tuple that gets through the mergejoin proper, we charge
@@ -1597,8 +1638,10 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 {
 	MergeScanSelCache *cache;
 	ListCell   *lc;
-	Selectivity leftscansel,
-				rightscansel;
+	Selectivity leftstartsel,
+				leftendsel,
+				rightstartsel,
+				rightendsel;
 	MemoryContext oldcontext;
 
 	/* Do we have this result already? */
@@ -1617,8 +1660,10 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 					 pathkey->pk_opfamily,
 					 pathkey->pk_strategy,
 					 pathkey->pk_nulls_first,
-					 &leftscansel,
-					 &rightscansel);
+					 &leftstartsel,
+					 &leftendsel,
+					 &rightstartsel,
+					 &rightendsel);
 
 	/* Cache the result in suitably long-lived workspace */
 	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
@@ -1627,8 +1672,10 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 	cache->opfamily = pathkey->pk_opfamily;
 	cache->strategy = pathkey->pk_strategy;
 	cache->nulls_first = pathkey->pk_nulls_first;
-	cache->leftscansel = leftscansel;
-	cache->rightscansel = rightscansel;
+	cache->leftstartsel = leftstartsel;
+	cache->leftendsel = leftendsel;
+	cache->rightstartsel = rightstartsel;
+	cache->rightendsel = rightendsel;
 
 	rinfo->scansel_cache = lappend(rinfo->scansel_cache, cache);
 
