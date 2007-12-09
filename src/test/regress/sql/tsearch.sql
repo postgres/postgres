@@ -118,66 +118,78 @@ SELECT plainto_tsquery('english', 'foo bar') || plainto_tsquery('english', 'asd 
 SELECT plainto_tsquery('english', 'foo bar') || !!plainto_tsquery('english', 'asd fg');
 SELECT plainto_tsquery('english', 'foo bar') && 'asd | fg';
 
-SELECT ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
-A thousand years to trace
-The granite features of this cliff
-In crag and scarp and base.
-It took the sea an hour one night
-An hour of storm to place
-The sculpture of these granite seams,
-Upon a woman s face. E.  J.  Pratt  (1882 1964)
-'), to_tsquery('english', 'sea&thousand&years'));
+SELECT ts_rank_cd(to_tsvector('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+William Wordsworth (1770-1850)
+'), to_tsquery('english', 'paint&water'));
 
-SELECT ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
-A thousand years to trace
-The granite features of this cliff
-In crag and scarp and base.
-It took the sea an hour one night
-An hour of storm to place
-The sculpture of these granite seams,
-Upon a woman s face. E.  J.  Pratt  (1882 1964)
-'), to_tsquery('english', 'granite&sea'));
+SELECT ts_rank_cd(to_tsvector('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+William Wordsworth (1770-1850)
+'), to_tsquery('english', 'breath&motion&water'));
 
-SELECT ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
-A thousand years to trace
-The granite features of this cliff
-In crag and scarp and base.
-It took the sea an hour one night
-An hour of storm to place
-The sculpture of these granite seams,
-Upon a woman s face. E.  J.  Pratt  (1882 1964)
-'), to_tsquery('english', 'sea'));
+SELECT ts_rank_cd(to_tsvector('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+William Wordsworth (1770-1850)
+'), to_tsquery('english', 'ocean'));
 
 --headline tests
-SELECT ts_headline('english', 'Erosion It took the sea a thousand years,
-A thousand years to trace
-The granite features of this cliff
-In crag and scarp and base.
-It took the sea an hour one night
-An hour of storm to place
-The sculpture of these granite seams,
-Upon a woman s face. E.  J.  Pratt  (1882 1964)
-', to_tsquery('english', 'sea&thousand&years'));
+SELECT ts_headline('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+William Wordsworth (1770-1850)
+', to_tsquery('english', 'paint&water'));
 
-SELECT ts_headline('english', 'Erosion It took the sea a thousand years,
-A thousand years to trace
-The granite features of this cliff
-In crag and scarp and base.
-It took the sea an hour one night
-An hour of storm to place
-The sculpture of these granite seams,
-Upon a woman s face. E.  J.  Pratt  (1882 1964)
-', to_tsquery('english', 'granite&sea'));
+SELECT ts_headline('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+William Wordsworth (1770-1850)
+', to_tsquery('english', 'breath&motion&water'));
 
-SELECT ts_headline('english', 'Erosion It took the sea a thousand years,
-A thousand years to trace
-The granite features of this cliff
-In crag and scarp and base.
-It took the sea an hour one night
-An hour of storm to place
-The sculpture of these granite seams,
-Upon a woman s face. E.  J.  Pratt  (1882 1964)
-', to_tsquery('english', 'sea'));
+SELECT ts_headline('english', '
+Day after day, day after day,
+  We stuck, nor breath nor motion,
+As idle as a painted Ship
+  Upon a painted Ocean.
+Water, water, every where
+  And all the boards did shrink;
+Water, water, every where,
+  Nor any drop to drink.
+William Wordsworth (1770-1850)
+', to_tsquery('english', 'ocean'));
 
 SELECT ts_headline('english', '
 <html>
