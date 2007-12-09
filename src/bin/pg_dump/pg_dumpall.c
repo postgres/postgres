@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.98 2007/11/15 21:14:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.99 2007/12/09 19:01:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1336,7 +1336,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		}
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
-			PQconnectionUsedPassword(conn) &&
+			PQconnectionNeedsPassword(conn) &&
 			password == NULL &&
 			!feof(stdin))
 		{

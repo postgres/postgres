@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.247 2007/11/28 15:42:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.248 2007/12/09 19:01:40 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -1146,11 +1146,32 @@ typedef struct
     </varlistentry>
 
     <varlistentry>
+     <term><function>PQconnectionNeedsPassword</function><indexterm><primary>PQconnectionNeedsPassword</></></term>
+     <listitem>
+      <para>
+       Returns true (1) if the connection authentication method
+       required a password, but none was available.
+       Returns false (0) if not.
+
+       <synopsis>
+        int PQconnectionNeedsPassword(const PGconn *conn);
+       </synopsis>
+
+      </para>
+
+      <para>
+       This function can be applied after a failed connection attempt
+       to decide whether to prompt the user for a password.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><function>PQconnectionUsedPassword</function><indexterm><primary>PQconnectionUsedPassword</></></term>
      <listitem>
       <para>
        Returns true (1) if the connection authentication method
-       required a password to be supplied. Returns false (0) if not.
+       used a caller-supplied password. Returns false (0) if not.
 
        <synopsis>
         int PQconnectionUsedPassword(const PGconn *conn);
@@ -1159,9 +1180,10 @@ typedef struct
       </para>
 
       <para>
-       This function can be applied after either successful or failed
-       connection attempts.  In the case of failure, it can for example
-       be used to decide whether to prompt the user for a password.
+       This function detects whether a password supplied to the connection
+       function was actually used.  Passwords obtained from other
+       sources (such as the <filename>.pgpass</> file) are not considered
+       caller-supplied.
       </para>
      </listitem>
     </varlistentry>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.134 2007/12/04 13:02:53 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.135 2007/12/09 19:01:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -954,7 +954,8 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 		case AUTH_REQ_MD5:
 		case AUTH_REQ_CRYPT:
 		case AUTH_REQ_PASSWORD:
-			if (conn->pgpass == NULL || *conn->pgpass == '\0')
+			conn->password_needed = true;
+			if (conn->pgpass == NULL || conn->pgpass[0] == '\0')
 			{
 				printfPQExpBuffer(&conn->errorMessage,
 								  PQnoPasswordSupplied);

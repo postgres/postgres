@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.141 2007/07/08 19:07:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.142 2007/12/09 19:01:40 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 							   username, password);
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
-			PQconnectionUsedPassword(pset.db) &&
+			PQconnectionNeedsPassword(pset.db) &&
 			password == NULL &&
 			!feof(stdin))
 		{

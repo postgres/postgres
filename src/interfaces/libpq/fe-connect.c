@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.353 2007/11/15 21:14:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.354 2007/12/09 19:01:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,7 +232,7 @@ static PGconn *makeEmptyPGconn(void);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
-			   PQExpBuffer errorMessage);
+			   PQExpBuffer errorMessage, bool *password_from_string);
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
 static void defaultNoticeReceiver(void *arg, const PGresult *res);
@@ -376,7 +376,8 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	/*
 	 * Parse the conninfo string
 	 */
-	connOptions = conninfo_parse(conninfo, &conn->errorMessage);
+	connOptions = conninfo_parse(conninfo, &conn->errorMessage,
+								 &conn->pgpass_from_client);
 	if (connOptions == NULL)
 	{
 		conn->status = CONNECTION_BAD;
@@ -472,6 +473,7 @@ connectOptions2(PGconn *conn)
 										conn->dbName, conn->pguser);
 		if (conn->pgpass == NULL)
 			conn->pgpass = strdup(DefaultPassword);
+		conn->pgpass_from_client = false;
 	}
 
 	/*
@@ -555,10 +557,11 @@ PQconninfoOption *
 PQconndefaults(void)
 {
 	PQExpBufferData errorBuf;
+	bool		password_from_string;
 	PQconninfoOption *connOptions;
 
 	initPQExpBuffer(&errorBuf);
-	connOptions = conninfo_parse("", &errorBuf);
+	connOptions = conninfo_parse("", &errorBuf, &password_from_string);
 	termPQExpBuffer(&errorBuf);
 	return connOptions;
 }
@@ -659,6 +662,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pgpass)
 			free(conn->pgpass);
 		conn->pgpass = strdup(pwd);
+		conn->pgpass_from_client = true;
 	}
 
 	/*
@@ -1718,10 +1722,6 @@ keep_going:						/* We will come back to here until there is
 				 */
 				conn->inStart = conn->inCursor;
 
-				/* Save the authentication request type, if first one. */
-				if (conn->areq == AUTH_REQ_OK)
-					conn->areq = areq;
-
 				/* Respond to the request if necessary. */
 
 				/*
@@ -1924,7 +1924,7 @@ makeEmptyPGconn(void)
 	conn->std_strings = false;	/* unless server says differently */
 	conn->verbosity = PQERRORS_DEFAULT;
 	conn->sock = -1;
-	conn->areq = AUTH_REQ_OK;	/* until we receive something else */
+	conn->password_needed = false;
 #ifdef USE_SSL
 	conn->allow_ssl_try = true;
 	conn->wait_ssl_try = false;
@@ -3064,9 +3064,12 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
  * If successful, a malloc'd PQconninfoOption array is returned.
  * If not successful, NULL is returned and an error message is
  * left in errorMessage.
+ * *password_from_string is set TRUE if we got a password from the
+ * conninfo string, otherwise FALSE.
  */
 static PQconninfoOption *
-conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
+conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
+			   bool *password_from_string)
 {
 	char	   *pname;
 	char	   *pval;
@@ -3076,6 +3079,8 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 	char	   *cp2;
 	PQconninfoOption *options;
 	PQconninfoOption *option;
+
+	*password_from_string = false;			/* default result */
 
 	/* Make a working copy of PQconninfoOptions */
 	options = malloc(sizeof(PQconninfoOptions));
@@ -3233,6 +3238,12 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 			free(buf);
 			return NULL;
 		}
+
+		/*
+		 * Special handling for password
+		 */
+		if (strcmp(option->keyword, "password") == 0)
+			*password_from_string = (option->val[0] != '\0');
 	}
 
 	/* Done with the modifiable input string */
@@ -3476,13 +3487,23 @@ PQbackendPID(const PGconn *conn)
 }
 
 int
+PQconnectionNeedsPassword(const PGconn *conn)
+{
+	if (!conn)
+		return false;
+	if (conn->password_needed &&
+		(conn->pgpass == NULL || conn->pgpass[0] == '\0'))
+		return true;
+	else
+		return false;
+}
+
+int
 PQconnectionUsedPassword(const PGconn *conn)
 {
 	if (!conn)
 		return false;
-	if (conn->areq == AUTH_REQ_MD5 ||
-		conn->areq == AUTH_REQ_CRYPT ||
-		conn->areq == AUTH_REQ_PASSWORD)
+	if (conn->password_needed && conn->pgpass_from_client)
 		return true;
 	else
 		return false;

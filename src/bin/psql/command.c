@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.183 2007/11/15 21:14:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.184 2007/12/09 19:01:40 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1164,7 +1164,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		 * Connection attempt failed; either retry the connection attempt with
 		 * a new password, or give up.
 		 */
-		if (!password && PQconnectionUsedPassword(n_conn))
+		if (!password && PQconnectionNeedsPassword(n_conn))
 		{
 			PQfinish(n_conn);
 			password = prompt_for_password(user);

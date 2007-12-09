@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.90 2007/11/20 19:24:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.91 2007/12/09 19:01:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -492,7 +492,7 @@ test_postmaster_connection(bool do_checkpoint)
 	{
 		if ((conn = PQconnectdb(connstr)) != NULL &&
 			(PQstatus(conn) == CONNECTION_OK ||
-			 PQconnectionUsedPassword(conn)))
+			 PQconnectionNeedsPassword(conn)))
 		{
 			PQfinish(conn);
 			success = true;
