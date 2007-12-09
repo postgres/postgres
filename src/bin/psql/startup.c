@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.142 2007/12/09 19:01:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.143 2007/12/09 19:04:47 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -194,8 +194,8 @@ main(int argc, char *argv[])
 	else
 	{
 		password_prompt = malloc(strlen(_("Password for user %s: ")) - 2 +
-								 strlen(options.username) + 1);
-		sprintf(password_prompt, _("Password for user %s: "), options.username);
+								 strlen(username) + 1);
+		sprintf(password_prompt, _("Password for user %s: "), username);
 	}
 
 	if (pset.getPassword)
