@@ -488,7 +488,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 '), to_tsquery('english', 'paint&water'));
  ts_rank_cd 
 ------------
@@ -504,7 +504,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 '), to_tsquery('english', 'breath&motion&water'));
  ts_rank_cd 
 ------------
@@ -520,7 +520,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 '), to_tsquery('english', 'ocean'));
  ts_rank_cd 
 ------------
@@ -537,7 +537,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'paint&water'));
                ts_headline               
 -----------------------------------------
@@ -556,7 +556,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'breath&motion&water'));
            ts_headline            
 ----------------------------------
@@ -575,7 +575,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'ocean'));
            ts_headline            
 ----------------------------------

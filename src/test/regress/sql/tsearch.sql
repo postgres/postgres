@@ -127,7 +127,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 '), to_tsquery('english', 'paint&water'));
 
 SELECT ts_rank_cd(to_tsvector('english', '
@@ -139,7 +139,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 '), to_tsquery('english', 'breath&motion&water'));
 
 SELECT ts_rank_cd(to_tsvector('english', '
@@ -151,7 +151,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 '), to_tsquery('english', 'ocean'));
 
 --headline tests
@@ -164,7 +164,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'paint&water'));
 
 SELECT ts_headline('english', '
@@ -176,7 +176,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'breath&motion&water'));
 
 SELECT ts_headline('english', '
@@ -188,7 +188,7 @@ Water, water, every where
   And all the boards did shrink;
 Water, water, every where,
   Nor any drop to drink.
-William Wordsworth (1770-1850)
+S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'ocean'));
 
 SELECT ts_headline('english', '
