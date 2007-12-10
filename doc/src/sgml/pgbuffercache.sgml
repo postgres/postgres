@@ -1,85 +1,138 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbuffercache.sgml,v 2.2 2007/12/10 05:32:51 tgl Exp $ -->
+
 <sect1 id="pgbuffercache">
  <title>pg_buffercache</title>
- 
+
  <indexterm zone="pgbuffercache">
   <primary>pg_buffercache</primary>
  </indexterm>
 
  <para>
-  The <literal>pg_buffercache</literal> module provides a means for examining
-  what's happening to the buffercache at any given time without having to
-  restart or rebuild the server with debugging code added. The intent is to 
-  do for the buffercache what pg_locks does for locks.
+  The <filename>pg_buffercache</filename> module provides a means for
+  examining what's happening in the shared buffer cache in real time.
  </para>
+
  <para>
-  This module consists of a C function <literal>pg_buffercache_pages()</literal> 
-  that returns a set of records, plus a view <literal>pg_buffercache</literal> 
-  to wrapper the function.
+  The module provides a C function <function>pg_buffercache_pages</function>
+  that returns a set of records, plus a view
+  <structname>pg_buffercache</structname> that wraps the function for
+  convenient use.
  </para>
+
  <para>
-  By default public access is REVOKED from both of these, just in case there
+  By default public access is revoked from both of these, just in case there
   are security issues lurking.
  </para>
 
  <sect2>
-  <title>Notes</title>
+  <title>The <structname>pg_buffercache</structname> view</title>
+
   <para>
-   The definition of the columns exposed in the view is:
+   The definitions of the columns exposed by the view are:
   </para>
-  <programlisting>
-       Column     |  references          | Description
-  ----------------+----------------------+------------------------------------
-   bufferid       |                      | Id, 1..shared_buffers.
-   relfilenode    | pg_class.relfilenode | Refilenode of the relation.
-   reltablespace  | pg_tablespace.oid    | Tablespace oid of the relation.
-   reldatabase    | pg_database.oid      | Database for the relation.
-   relblocknumber |                      | Offset of the page in the relation.
-   isdirty        |                      | Is the page dirty?
-   usagecount     |                      | Page LRU count
-  </programlisting>
+
+  <table>
+   <title><structname>pg_buffercache</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+
+     <row>
+      <entry><structfield>bufferid</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>ID, in the range 1..<varname>shared_buffers</></entry>
+     </row>
+
+     <row>
+      <entry><structfield>relfilenode</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal>pg_class.relfilenode</literal></entry>
+      <entry>Relfilenode of the relation</entry>
+     </row>
+
+     <row>
+      <entry><structfield>reltablespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal>pg_tablespace.oid</literal></entry>
+      <entry>Tablespace OID of the relation</entry>
+     </row>
+
+     <row>
+      <entry><structfield>reldatabase</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal>pg_database.oid</literal></entry>
+      <entry>Database OID of the relation</entry>
+     </row>
+
+     <row>
+      <entry><structfield>relblocknumber</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Page number within the relation</entry>
+     </row>
+
+     <row>
+      <entry><structfield>isdirty</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>Is the page dirty?</entry>
+     </row>
+
+     <row>
+      <entry><structfield>usagecount</structfield></entry>
+      <entry><type>smallint</type></entry>
+      <entry></entry>
+      <entry>Page LRU count</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
   <para>
    There is one row for each buffer in the shared cache. Unused buffers are
-   shown with all fields null except bufferid.
+   shown with all fields null except <structfield>bufferid</>.  Shared system
+   catalogs are shown as belonging to database zero.
   </para>
+
   <para>
-   Because the cache is shared by all the databases, there are pages from
-   relations not belonging to the current database.
+   Because the cache is shared by all the databases, there will normally be
+   pages from relations not belonging to the current database.  This means
+   that there may not be matching join rows in <structname>pg_class</> for
+   some rows, or that there could even be incorrect joins.  If you are
+   trying to join against <structname>pg_class</>, it's a good idea to
+   restrict the join to rows having <structfield>reldatabase</> equal to
+   the current database's OID or zero.
   </para>
+
   <para>
-   When the pg_buffercache view is accessed, internal buffer manager locks are 
-   taken, and a copy of the buffer cache data is made for the view to display. 
-   This ensures that the view produces a consistent set of results, while not 
-   blocking normal buffer activity longer than necessary.  Nonetheless there 
+   When the <structname>pg_buffercache</> view is accessed, internal buffer
+   manager locks are taken for long enough to copy all the buffer state
+   data that the view will display.
+   This ensures that the view produces a consistent set of results, while not
+   blocking normal buffer activity longer than necessary.  Nonetheless there
    could be some impact on database performance if this view is read often.
   </para>
  </sect2>
 
  <sect2>
   <title>Sample output</title>
+
   <programlisting>
-  regression=# \d pg_buffercache;
-       View "public.pg_buffercache"
-       Column     |  Type    | Modifiers
-  ----------------+----------+-----------
-   bufferid       | integer  |
-   relfilenode    | oid      |
-   reltablespace  | oid      |
-   reldatabase    | oid      |
-   relblocknumber | bigint   |
-   isdirty        | boolean  |
-   usagecount     | smallint |
-
-  View definition:
-   SELECT p.bufferid, p.relfilenode, p.reltablespace, p.reldatabase, 
-          p.relblocknumber, p.isdirty, p.usagecount
-     FROM pg_buffercache_pages() p(bufferid integer, relfilenode oid, 
-     reltablespace oid, reldatabase oid, relblocknumber bigint, 
-     isdirty boolean, usagecount smallint);
-
   regression=# SELECT c.relname, count(*) AS buffers
-               FROM pg_class c INNER JOIN pg_buffercache b
-               ON b.relfilenode = c.relfilenode INNER JOIN pg_database d
-               ON (b.reldatabase = d.oid AND d.datname = current_database())
+               FROM pg_buffercache b INNER JOIN pg_class c
+               ON b.relfilenode = c.relfilenode AND
+                  b.reldatabase IN (0, (SELECT oid FROM pg_database
+                                        WHERE datname = current_database()))
                GROUP BY c.relname
                ORDER BY 2 DESC LIMIT 10;
                relname             | buffers
@@ -95,26 +148,23 @@
    pg_depend                       |      22
    pg_depend_reference_index       |      20
   (10 rows)
-
-  regression=# 
   </programlisting>
  </sect2>
 
  <sect2>
   <title>Authors</title>
-  <itemizedlist>
-   <listitem>
-    <para>
-     Mark Kirkwood <email>markir@paradise.net.nz</email>
-    </para>
-   </listitem>
-   <listitem>
-    <para>Design suggestions: Neil Conway <email>neilc@samurai.com</email></para>
-   </listitem>
-   <listitem>
-    <para>Debugging advice: Tom Lane <email>tgl@sss.pgh.pa.us</email></para>
-   </listitem>
-  </itemizedlist>
+
+  <para>
+   Mark Kirkwood <email>markir@paradise.net.nz</email>
+  </para>
+
+  <para>
+   Design suggestions: Neil Conway <email>neilc@samurai.com</email>
+  </para>
+
+  <para>
+   Debugging advice: Tom Lane <email>tgl@sss.pgh.pa.us</email>
+  </para>
  </sect2>
 
 </sect1>

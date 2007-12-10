@@ -1,70 +1,157 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.3 2007/12/10 05:32:51 tgl Exp $ -->
+
 <sect1 id="oid2name">
  <title>oid2name</title>
- 
+
  <indexterm zone="oid2name">
   <primary>oid2name</primary>
  </indexterm>
 
  <para>
-  This utility allows administrators to examine the file structure used by
-  PostgreSQL.  To make use of it, you need to be familiar with the file
-  structure, which is described in <xref linkend="storage">.
+  <application>oid2name</> is a utility program that helps administrators to
+  examine the file structure used by PostgreSQL.  To make use of it, you need
+  to be familiar with the database file structure, which is described in
+  <xref linkend="storage">.
  </para>
- 
+
+ <note>
+  <para>
+   The name <quote>oid2name</> is historical, and is actually rather
+   misleading, since most of the time when you use it, you will really
+   be concerned with tables' filenode numbers (which are the file names
+   visible in the database directories).  Be sure you understand the
+   difference between table OIDs and table filenodes!
+  </para>
+ </note>
+
  <sect2>
   <title>Overview</title>
+
   <para>
-   <literal>oid2name</literal> connects to the database and extracts OID, 
-   filenode, and table name information.  You can also have it show database 
-   OIDs and tablespace OIDs.
+   <application>oid2name</application> connects to a target database and
+   extracts OID, filenode, and/or table name information.  You can also have
+   it show database OIDs or tablespace OIDs.  The program is controlled by
+   a large number of command-line switches, as shown in
+   <xref linkend="oid2name-switches">.
   </para>
-  <para>
-   When displaying specific tables, you can select which tables to show by
-   using -o, -f and -t.  The first switch takes an OID, the second takes
-   a filenode, and the third takes a tablename (actually, it's a LIKE
-   pattern, so you can use things like "foo%").  Note that you can use as many
-   of these switches as you like, and the listing will include all objects
-   matched by any of the switches.  Also note that these switches can only
-   show objects in the database given in -d.
-  </para>
-  <para>
-   If you don't give any of -o, -f or -t it will dump all the tables in the
-   database given in -d.  If you don't give -d, it will show a database
-   listing.  Alternatively you can give -s to get a tablespace listing.
-  </para>
-  <table>
-   <title>Additional switches</title>
+
+  <table id="oid2name-switches">
+   <title><application>oid2name</> switches</title>
    <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Switch</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
     <tbody>
      <row>
-      <entry><literal>-i</literal></entry>
-      <entry>include indexes and sequences in the database listing.</entry>
+      <entry><literal>-o</literal> <replaceable>oid</></entry>
+      <entry>show info for table with OID <replaceable>oid</></entry>
      </row>
+
      <row>
-      <entry><literal>-x</literal></entry>
-      <entry>display more information about each object shown: tablespace name, 
-       schema name, OID.
-      </entry>
+      <entry><literal>-f</literal> <replaceable>filenode</></entry>
+      <entry>show info for table with filenode <replaceable>filenode</></entry>
      </row>
+
+     <row>
+      <entry><literal>-t</literal> <replaceable>tablename_pattern</></entry>
+      <entry>show info for table(s) matching <replaceable>tablename_pattern</></entry>
+     </row>
+
+     <row>
+      <entry><literal>-s</literal></entry>
+      <entry>show tablespace OIDs</entry>
+     </row>
+
      <row>
       <entry><literal>-S</literal></entry>
-      <entry>also show system objects (those in information_schema, pg_toast 
-       and pg_catalog schemas)
+      <entry>include system objects (those in
+       <literal>information_schema</literal>, <literal>pg_toast</literal>
+       and <literal>pg_catalog</literal> schemas)
       </entry>
      </row>
+
+     <row>
+      <entry><literal>-i</literal></entry>
+      <entry>include indexes and sequences in the listing</entry>
+     </row>
+
+     <row>
+      <entry><literal>-x</literal></entry>
+      <entry>display more information about each object shown: tablespace name,
+       schema name, and OID
+      </entry>
+     </row>
+
      <row>
       <entry><literal>-q</literal></entry>
-      <entry>don't display headers(useful for scripting)</entry>
+      <entry>omit headers (useful for scripting)</entry>
+     </row>
+
+     <row>
+      <entry><literal>-d</literal> <replaceable>database</></entry>
+      <entry>database to connect to</entry>
+     </row>
+
+     <row>
+      <entry><literal>-H</literal> <replaceable>host</></entry>
+      <entry>database server's host</entry>
+     </row>
+
+     <row>
+      <entry><literal>-p</literal> <replaceable>port</></entry>
+      <entry>database server's port</entry>
+     </row>
+
+     <row>
+      <entry><literal>-U</literal> <replaceable>username</></entry>
+      <entry>username to connect as</entry>
+     </row>
+
+     <row>
+      <entry><literal>-P</literal> <replaceable>password</></entry>
+      <entry>password (deprecated &mdash; putting this on the command line
+       is a security hazard)</entry>
      </row>
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   To display specific tables, select which tables to show by
+   using <literal>-o</>, <literal>-f</> and/or <literal>-t</>.
+   <literal>-o</> takes an OID,
+   <literal>-f</> takes a filenode,
+   and <literal>-t</> takes a tablename (actually, it's a LIKE
+   pattern, so you can use things like <literal>foo%</>).
+   You can use as many
+   of these switches as you like, and the listing will include all objects
+   matched by any of the switches.  But note that these switches can only
+   show objects in the database given by <literal>-d</>.
+  </para>
+
+  <para>
+   If you don't give any of <literal>-o</>, <literal>-f</> or <literal>-t</>,
+   but do give <literal>-d</>, it will list all tables in the database
+   named by <literal>-d</>.  In this mode, the <literal>-S</> and
+   <literal>-i</> switches control what gets listed.
+  </para>
+
+  <para>
+   If you don't give <literal>-d</> either, it will show a listing of database
+   OIDs.  Alternatively you can give <literal>-s</> to get a tablespace
+   listing.
+  </para>
  </sect2>
- 
+
  <sect2>
   <title>Examples</title>
- 
+
   <programlisting>
+$ # what's in this database server, anyway?
 $ oid2name
 All databases:
     Oid  Database Name  Tablespace
@@ -83,7 +170,8 @@ All tablespaces:
   155151         fastdisk
   155152          bigdisk
 
-$ cd $PGDATA/17228
+$ # OK, let's look into database alvherre
+$ cd $PGDATA/base/17228
 
 $ # get top 10 db objects in the default tablespace, ordered by size
 $ ls -lS * | head -10
@@ -98,6 +186,7 @@ $ ls -lS * | head -10
 -rw-------  1 alvherre alvherre    163840 sep 14 09:50 16699
 -rw-------  1 alvherre alvherre    122880 sep  6 17:51 16751
 
+$ # I wonder what file 155173 is ...
 $ oid2name -d alvherre -f 155173
 From database "alvherre":
   Filenode  Table Name
@@ -112,7 +201,7 @@ From database "alvherre":
     155173       accounts
    1155291  accounts_pkey
 
-$ # you can also mix the options, and have more details
+$ # you can mix the options, and get more details with -x
 $ oid2name -d alvherre -t accounts -f 1155291 -x
 From database "alvherre":
   Filenode     Table Name      Oid  Schema  Tablespace
@@ -157,7 +246,7 @@ $ ls -d 155151/*
 155151/17228/  155151/PG_VERSION
 
 $ # Oh, what was database 17228 again?
-$ oid2name   
+$ oid2name
 All databases:
     Oid  Database Name  Tablespace
 ----------------------------------
@@ -178,28 +267,25 @@ From database "alvherre":
   Filenode  Table Name
 ----------------------
     155156         foo
-
-$ # end of sample session.
   </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Limitations</title>
 
   <para>
-   You can also get approximate size data for each object using psql.  For
-   example, 
-  </para>
-  <programlisting>
-   SELECT relpages, relfilenode, relname FROM pg_class ORDER BY relpages DESC;
-  </programlisting>
-  <para>
-   Each page is typically 8k.  Relpages is updated by VACUUM.
+   <application>oid2name</> requires a running database server with
+   non-corrupt system catalogs.  It is therefore of only limited use
+   for recovering from catastrophic database corruption situations.
   </para>
  </sect2>
- 
+
  <sect2>
   <title>Author</title>
+
   <para>
-   b. palmer, <email>bpalmer@crimelabs.net</email>
+   B. Palmer <email>bpalmer@crimelabs.net</email>
   </para>
  </sect2>
 
 </sect1>
-

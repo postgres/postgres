@@ -1,429 +1,299 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/isn.sgml,v 1.4 2007/12/10 05:32:51 tgl Exp $ -->
+
 <sect1 id="isn">
  <title>isn</title>
- 
+
  <indexterm zone="isn">
   <primary>isn</primary>
  </indexterm>
 
  <para>
-  The <literal>isn</literal> module adds data types for the following 
-  international-standard namespaces: EAN13, UPC, ISBN (books), ISMN (music), 
-  and ISSN (serials). This module is inspired by Garrett A. Wollman's 
-  isbn_issn code.
+  The <filename>isn</filename> module provides data types for the following
+  international product numbering standards: EAN13, UPC, ISBN (books), ISMN
+  (music), and ISSN (serials).  Numbers are validated on input, and correctly
+  hyphenated on output.
  </para>
- <para>
-  This module validates, and automatically adds the correct 
-  hyphenations to the numbers. Also, it supports the new ISBN-13 
-  numbers to be used starting in January 2007.
- </para>
-
- <para>
-  Premises:
- </para>
-
- <orderedlist>
-  <listitem>
-   <para>ISBN13, ISMN13, ISSN13 numbers are all EAN13 numbers</para>
-  </listitem>
-  <listitem>
-   <para>EAN13 numbers aren't always ISBN13, ISMN13 or ISSN13 (some are)</para>
-  </listitem>
-  <listitem>
-   <para>some ISBN13 numbers can be displayed as ISBN</para>
-  </listitem>
-  <listitem>
-   <para>some ISMN13 numbers can be displayed as ISMN</para>
-  </listitem>
-  <listitem>
-   <para>some ISSN13 numbers can be displayed as ISSN</para>
-  </listitem>
-  <listitem>
-   <para>all UPC, ISBN, ISMN and ISSN can be represented as EAN13 numbers</para>
-  </listitem>
- </orderedlist>
-
- <note>
-  <para>
-   All types are internally represented as 64 bit integers, 
-   and internally all are consistently interchangeable.
-  </para>
- </note>
- <note>
-  <para>
-   We have two operator classes (for btree and for hash) so each data type
-   can be indexed for faster access.
-  </para>
- </note>
 
  <sect2>
   <title>Data types</title>
-  
-  <para>
-   We have the following data types:
-  </para>
 
   <table>
-   <title>Data types</title>
+   <title><filename>isn</filename> data types</title>
    <tgroup cols="2">
     <thead>
      <row>
-      <entry><para>Data type</para></entry>
-      <entry><para>Description</para></entry>
-     </row>
-    </thead>
-    <tbody>
-     <row>
-      <entry><para><literal>EAN13</literal></para></entry>
-      <entry>
-       <para>
-        European Article Numbers. This type will always show the EAN13-display 
-        format. Te output function for this is <literal>ean13_out()</literal>
-       </para>
-      </entry>
-     </row>
-
-     <row>
-      <entry><para><literal>ISBN13</literal></para></entry>
-      <entry>
-       <para>
-        For International Standard Book Numbers to be displayed in 
-          the new EAN13-display format.
-       </para>
-      </entry>
-     </row>
-
-     <row>
-      <entry><para><literal>ISMN13</literal></para></entry>
-      <entry>
-       <para>
-        For International Standard Music Numbers to be displayed in
-        the new EAN13-display format.
-       </para>
-      </entry>
-     </row>
-     <row>
-      <entry><para><literal>ISSN13</literal></para></entry>
-      <entry>
-       <para>
-        For International Standard Serial Numbers to be displayed in the new 
-        EAN13-display format.
-       </para>
-      </entry>
-     </row>
-     <row>
-      <entry><para><literal>ISBN</literal></para></entry>
-      <entry>
-       <para>
-        For International Standard Book Numbers to be displayed in the current 
-        short-display format.
-       </para>
-      </entry>
-     </row>
-     <row>
-      <entry><para><literal>ISMN</literal></para></entry>
-      <entry>
-       <para>
-        For International Standard Music Numbers to be displayed in the 
-        current short-display format.
-       </para>
-      </entry>
-     </row>
-     <row>
-      <entry><para><literal>ISSN</literal></para></entry>
-      <entry>
-       <para>
-        For International Standard Serial Numbers to be displayed in the 
-        current short-display format. These types will display the short 
-        version of the ISxN (ISxN 10) whenever it's possible, and it will 
-        show ISxN 13 when it's impossible to show the short version.  The 
-        output function to do this is <literal>isn_out()</literal>
-       </para>
-      </entry>
-     </row>
-     <row>
-      <entry><para><literal>UPC</literal></para></entry>
-      <entry>
-       <para>
-        For Universal Product Codes. UPC numbers are a subset of the EAN13 
-        numbers (they are basically EAN13 without the first '0' digit.)
-        The output function to do this is also <literal>isn_out()</literal>
-       </para>
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
-
-  <note>
-   <para>
-    <literal>EAN13</literal>, <literal>ISBN13</literal>, 
-    <literal>ISMN13</literal> and <literal>ISSN13</literal> types will always 
-    display the long version of the ISxN (EAN13). The output function to do 
-    this is <literal>ean13_out()</literal>.
-   </para>
-   <para>
-    The need for these types is just for displaying in different ways the same 
-    data: <literal>ISBN13</literal> is actually the same as 
-    <literal>ISBN</literal>, <literal>ISMN13=ISMN</literal> and 
-    <literal>ISSN13=ISSN</literal>.
-   </para>
-  </note>
- </sect2>
-
- <sect2>
-  <title>Input functions</title>
- 
-  <para>
-   We have the following input functions:
-  </para>
-
-  <table>
-   <title>Input functions</title>
-   <tgroup cols="2">
-    <thead>
-     <row>
-      <entry>Function</entry>
+      <entry>Data type</entry>
       <entry>Description</entry>
      </row>
     </thead>
+
     <tbody>
      <row>
-      <entry><para><literal>ean13_in()</literal></para></entry>
+      <entry><type>EAN13</type></entry>
       <entry>
-       <para>
-        To take a string and return an EAN13.
-       </para>
+       European Article Numbers, always displayed in the EAN13 display format
       </entry>
      </row>
 
      <row>
-      <entry><para><literal>isbn_in()</literal></para></entry>
+      <entry><type>ISBN13</type></entry>
       <entry>
-       <para>
-        To take a string and return valid ISBN or ISBN13 numbers.
-       </para>
+       International Standard Book Numbers to be displayed in
+       the new EAN13 display format
       </entry>
      </row>
 
      <row>
-      <entry><para><literal>ismn_in()</literal></para></entry>
+      <entry><type>ISMN13</type></entry>
       <entry>
-       <para>
-        To take a string and return valid ISMN or ISMN13 numbers.
-       </para>
-      </entry>
-     </row>
-
-     <row>
-      <entry><para><literal>issn_in()</literal></para></entry>
-      <entry>
-       <para>
-        To take a string and return valid ISSN or ISSN13 numbers.
-       </para>
+       International Standard Music Numbers to be displayed in
+       the new EAN13 display format
       </entry>
      </row>
      <row>
-      <entry><para><literal>upc_in()</literal></para></entry>
+      <entry><type>ISSN13</type></entry>
       <entry>
-       <para>
-        To take a string and return an UPC codes.
-       </para>
+       International Standard Serial Numbers to be displayed in the new
+       EAN13 display format
+      </entry>
+     </row>
+     <row>
+      <entry><type>ISBN</type></entry>
+      <entry>
+       International Standard Book Numbers to be displayed in the old
+       short display format
+      </entry>
+     </row>
+     <row>
+      <entry><type>ISMN</type></entry>
+      <entry>
+       International Standard Music Numbers to be displayed in the
+       old short display format
+      </entry>
+     </row>
+     <row>
+      <entry><type>ISSN</type></entry>
+      <entry>
+       International Standard Serial Numbers to be displayed in the
+       old short display format
+      </entry>
+     </row>
+     <row>
+      <entry><type>UPC</type></entry>
+      <entry>
+       Universal Product Codes
       </entry>
      </row>
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   Some notes:
+  </para>
+
+  <orderedlist>
+   <listitem>
+    <para>ISBN13, ISMN13, ISSN13 numbers are all EAN13 numbers.</para>
+   </listitem>
+   <listitem>
+    <para>EAN13 numbers aren't always ISBN13, ISMN13 or ISSN13 (some
+    are).</para>
+   </listitem>
+   <listitem>
+    <para>Some ISBN13 numbers can be displayed as ISBN.</para>
+   </listitem>
+   <listitem>
+    <para>Some ISMN13 numbers can be displayed as ISMN.</para>
+   </listitem>
+   <listitem>
+    <para>Some ISSN13 numbers can be displayed as ISSN.</para>
+   </listitem>
+   <listitem>
+    <para>UPC numbers are a subset of the EAN13 numbers (they are basically
+    EAN13 without the first <literal>0</> digit).</para>
+   </listitem>
+   <listitem>
+    <para>All UPC, ISBN, ISMN and ISSN numbers can be represented as EAN13
+    numbers.</para>
+   </listitem>
+  </orderedlist>
+
+  <para>
+   Internally, all these types use the same representation (a 64-bit
+   integer), and all are interchangeable.  Multiple types are provided
+   to control display formatting and to permit tighter validity checking
+   of input that is supposed to denote one particular type of number.
+  </para>
+
+  <para>
+   The <type>ISBN</>, <type>ISMN</>, and <type>ISSN</> types will display the
+   short version of the number (ISxN 10) whenever it's possible, and will show
+   ISxN 13 format for numbers that do not fit in the short version.
+   The <type>EAN13</type>, <type>ISBN13</type>, <type>ISMN13</type> and
+   <type>ISSN13</type> types will always display the long version of the ISxN
+   (EAN13).
+  </para>
  </sect2>
 
  <sect2>
   <title>Casts</title>
 
   <para>
-   We are able to cast from:
+   The <filename>isn</> module provides the following pairs of type casts:
   </para>
+
   <itemizedlist>
    <listitem>
     <para>
-     ISBN13 -&gt; EAN13
+     ISBN13 &lt;=&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISMN13 -&gt; EAN13
+     ISMN13 &lt;=&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISSN13 -&gt; EAN13
+     ISSN13 &lt;=&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISBN -&gt; EAN13
+     ISBN &lt;=&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISMN -&gt; EAN13
+     ISMN &lt;=&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISSN -&gt; EAN13
+     ISSN &lt;=&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     UPC  -&gt; EAN13
+     UPC  &lt;=&gt; EAN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISBN &lt;-&gt; ISBN13
+     ISBN &lt;=&gt; ISBN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISMN &lt;-&gt; ISMN13
+     ISMN &lt;=&gt; ISMN13
     </para>
    </listitem>
    <listitem>
     <para>
-     ISSN &lt;-&gt; ISSN13
-    </para>
-   </listitem>
-  </itemizedlist>
- </sect2>
-
- <sect2>
-  <title>C API</title>
-  <para>
-   The C API is implemented as:
-  </para>
-  <programlisting>
-   extern Datum isn_out(PG_FUNCTION_ARGS);
-   extern Datum ean13_out(PG_FUNCTION_ARGS);
-   extern Datum ean13_in(PG_FUNCTION_ARGS);
-   extern Datum isbn_in(PG_FUNCTION_ARGS);
-   extern Datum ismn_in(PG_FUNCTION_ARGS);
-   extern Datum issn_in(PG_FUNCTION_ARGS);
-   extern Datum upc_in(PG_FUNCTION_ARGS);
-  </programlisting>
-
-  <para>
-   On success:
-  </para>
-  <itemizedlist>
-   <listitem>
-    <para>
-     <literal>isn_out()</literal> takes any of our types and returns a string containing 
-  the shortes possible representation of the number.
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     <literal>ean13_out()</literal> takes any of our types and returns the 
-  EAN13 (long) representation of the number.
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     <literal>ean13_in()</literal> takes a string and return a EAN13. Which, as stated in (2) 
-  could or could not be any of our types, but it certainly is an EAN13 
-  number. Only if the string is a valid EAN13 number, otherwise it fails.
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     <literal>isbn_in()</literal> takes a string and return an ISBN/ISBN13. Only if the string
-  is really a ISBN/ISBN13, otherwise it fails.
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     <literal>ismn_in()</literal> takes a string and return an ISMN/ISMN13. Only if the string
-  is really a ISMN/ISMN13, otherwise it fails.
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     <literal>issn_in()</literal> takes a string and return an ISSN/ISSN13. Only if the string
-  is really a ISSN/ISSN13, otherwise it fails.
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     <literal>upc_in()</literal> takes a string and return an UPC. Only if the string is
-  really a UPC, otherwise it fails.
+     ISSN &lt;=&gt; ISSN13
     </para>
    </listitem>
   </itemizedlist>
 
   <para>
-   (on failure, the functions 'ereport' the error)
+   When casting from <type>EAN13</> to another type, there is a run-time
+   check that the value is within the domain of the other type, and an error
+   is thrown if not.  The other casts are simply relabelings that will
+   always succeed.
   </para>
  </sect2>
 
  <sect2>
-  <title>Testing functions</title>
+  <title>Functions and Operators</title>
+
+  <para>
+   The <filename>isn</> module provides the standard comparison operators,
+   plus btree and hash indexing support for all these datatypes.  In
+   addition there are several specialized functions.  In this table,
+   <type>isn</> means any one of the module's data types:
+  </para>
+
   <table>
-   <title>Testing functions</title>
-   <tgroup cols="2">
+   <title><filename>isn</> functions</title>
+   <tgroup cols="3">
     <thead>
      <row>
-      <entry><para>Function</para></entry>
-      <entry><para>Description</para></entry>
+      <entry>Function</entry>
+      <entry>Returns</entry>
+      <entry>Description</entry>
      </row>
     </thead>
+
     <tbody>
      <row>
-      <entry><para><literal>isn_weak(boolean)</literal></para></entry>
-      <entry><para>Sets the weak input mode.</para></entry>
+      <entry><function>isn_weak(boolean)</function></entry>
+      <entry><type>boolean</type></entry>
+      <entry>Sets the weak input mode (returns new setting)</entry>
      </row>
      <row>
-      <entry><para><literal>isn_weak()</literal></para></entry>
-      <entry><para>Gets the current status of the weak mode.</para></entry>
+      <entry><function>isn_weak()</function></entry>
+      <entry><type>boolean</type></entry>
+      <entry>Gets the current status of the weak mode</entry>
      </row>
      <row>
-      <entry><para><literal>make_valid()</literal></para></entry>
-      <entry><para>Validates an invalid number (deleting the invalid flag).</para></entry>
+      <entry><function>make_valid(isn)</function></entry>
+      <entry><type>isn</type></entry>
+      <entry>Validates an invalid number (clears the invalid flag)</entry>
      </row>
      <row>
-      <entry><para><literal>is_valid()</literal></para></entry>
-      <entry><para>Checks for the invalid flag prsence.</para></entry>
+      <entry><function>is_valid(isn)</function></entry>
+      <entry><type>boolean</type></entry>
+      <entry>Checks for the presence of the invalid flag</entry>
      </row>
     </tbody>
    </tgroup>
   </table>
 
   <para>
-   <literal>Weak</literal> mode is used to be able to insert invalid data to
-   a table. Invalid as in the check digit being wrong, not missing numbers.
+   <firstterm>Weak</firstterm> mode is used to be able to insert invalid data
+   into a table. Invalid means the check digit is wrong, not that there are
+   missing numbers.
   </para>
+
   <para>
    Why would you want to use the weak mode? Well, it could be that
    you have a huge collection of ISBN numbers, and that there are so many of
    them that for weird reasons some have the wrong check digit (perhaps the
-   numbers where scanned from a printed list and the OCR got the numbers wrong,
-   perhaps the numbers were manually captured... who knows.) Anyway, the thing
-   is you might want to clean the mess up, but you still want to be able to have
-   all the numbers in your database and maybe use an external tool to access
-   the invalid numbers in the database so you can verify the information and
-   validate it more easily; as selecting all the invalid numbers in the table.
+   numbers were scanned from a printed list and the OCR got the numbers wrong,
+   perhaps the numbers were manually captured... who knows). Anyway, the point
+   is you might want to clean the mess up, but you still want to be able to
+   have all the numbers in your database and maybe use an external tool to
+   locate the invalid numbers in the database so you can verify the
+   information and validate it more easily; so for example you'd want to
+   select all the invalid numbers in the table.
   </para>
+
   <para>
    When you insert invalid numbers in a table using the weak mode, the number
-   will be inserted with the corrected check digit, but it will be flagged 
-   with an exclamation mark ('!') at the end (i.e. 0-11-000322-5!)
+   will be inserted with the corrected check digit, but it will be displayed
+   with an exclamation mark (<literal>!</>) at the end, for example
+   <literal>0-11-000322-5!</>.  This invalid marker can be checked with
+   the <function>is_valid</> function and cleared with the
+   <function>make_valid</> function.
   </para>
+
   <para>
-   You can also force the insertion of invalid numbers even not in the weak mode,
-   appending the '!' character at the end of the number.
+   You can also force the insertion of invalid numbers even when not in the
+   weak mode, by appending the <literal>!</> character at the end of the
+   number.
+  </para>
+
+  <para>
+   Another special feature is that during input, you can write
+   <literal>?</> in place of the check digit, and the correct check digit
+   will be inserted automatically.
   </para>
  </sect2>
 
  <sect2>
   <title>Examples</title>
+
   <programlisting>
 --Using the types directly:
 SELECT isbn('978-0-393-04002-9');
@@ -431,18 +301,18 @@ SELECT isbn13('0901690546');
 SELECT issn('1436-4522');
 
 --Casting types:
--- note that you can only cast from ean13 to other type when the casted 
--- number would be valid in the realm of the casted type; 
--- thus, the following will NOT work: select isbn(ean13('0220356483481')); 
--- but these will: 
-SELECT upc(ean13('0220356483481')); 
-SELECT ean13(upc('220356483481')); 
+-- note that you can only cast from ean13 to another type when the
+-- number would be valid in the realm of the target type;
+-- thus, the following will NOT work: select isbn(ean13('0220356483481'));
+-- but these will:
+SELECT upc(ean13('0220356483481'));
+SELECT ean13(upc('220356483481'));
 
 --Create a table with a single column to hold ISBN numbers:
-CREATE TABLE test ( id isbn );
+CREATE TABLE test (id isbn);
 INSERT INTO test VALUES('9780393040029');
 
---Automatically calculating check digits (observe the '?'):
+--Automatically calculate check digits (observe the '?'):
 INSERT INTO test VALUES('220500896?');
 INSERT INTO test VALUES('978055215372?');
 
@@ -455,10 +325,10 @@ INSERT INTO test VALUES('978-0-11-000533-4');
 INSERT INTO test VALUES('9780141219307');
 INSERT INTO test VALUES('2-205-00876-X');
 SELECT isn_weak(false);
-  
+
 SELECT id FROM test WHERE NOT is_valid(id);
-UPDATE test SET id=make_valid(id) WHERE id = '2-205-00876-X!';
-  
+UPDATE test SET id = make_valid(id) WHERE id = '2-205-00876-X!';
+
 SELECT * FROM test;
 
 SELECT isbn13(id) FROM test;
@@ -467,8 +337,9 @@ SELECT isbn13(id) FROM test;
 
  <sect2>
   <title>Bibliography</title>
+
   <para>
-   The information to implement this module was collected through
+   The information to implement this module was collected from
    several sites, including:
   </para>
   <programlisting>
@@ -477,26 +348,33 @@ SELECT isbn13(id) FROM test;
    http://www.ismn-international.org/
    http://www.wikipedia.org/
   </programlisting>
+
   <para>
-   the prefixes used for hyphenation where also compiled from:
+   The prefixes used for hyphenation were also compiled from:
   </para>
   <programlisting>
    http://www.gs1.org/productssolutions/idkeys/support/prefix_list.html
    http://www.isbn-international.org/en/identifiers.html
    http://www.ismn-international.org/ranges.html
   </programlisting>
+
   <para>
    Care was taken during the creation of the algorithms and they
    were meticulously verified against the suggested algorithms
    in the official ISBN, ISMN, ISSN User Manuals.
   </para>
  </sect2>
- 
+
  <sect2>
   <title>Author</title>
   <para>
    Germán Méndez Bravo (Kronuz), 2004 - 2006
   </para>
- </sect2>
-</sect1>
 
+  <para>
+   This module was inspired by Garrett A. Wollman's
+   isbn_issn code.
+  </para>
+ </sect2>
+
+</sect1>
