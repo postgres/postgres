@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.47 2007/12/10 14:05:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.48 2007/12/10 14:51:10 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -57,11 +57,11 @@
    And finally, most disk drives have caches. Some are write-through
    while some are write-back, and the
    same concerns about data loss exist for write-back drive caches as
-   exist for disk controller caches.  Consumer-grade IDE drives are
+   exist for disk controller caches.  Consumer-grade IDE and SATA drives are
    particularly likely to have write-back caches that will not survive a
    power failure.  To check write caching on <productname>Linux</> use
    <command>hdparm -I</>;  it is enabled if there is a <literal>*</> next
-   to <literal>Write cache</>.  <command>hdparm -W</> can to turn off
+   to <literal>Write cache</>.  <command>hdparm -W</> to turn off
    write caching.  On <productname>FreeBSD</> use
    <application>atacontrol</>.  (For SCSI disks use <ulink
    url="http://sg.torque.net/sg/sdparm.html"><application>sdparm</></ulink>
