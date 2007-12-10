@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Nov 16 10:53:50 EST 2007</P>
+    <P>Last updated: Sun Dec  9 19:31:34 EST 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -127,7 +127,7 @@
 
     <H2 align="center">General Questions</H2>
 
-    <H3 id="item1.1">1.1) What is PostgreSQL? How is it pronounced?</H3>
+    <H3 id="item1.1">1.1) What is PostgreSQL? How is it pronounced? What is Postgres?</H3>
 
     <P>PostgreSQL is pronounced <I>Post-Gres-Q-L</I>.  (For those curious
     about how to say "PostgreSQL", an <a
@@ -1051,7 +1051,7 @@ length</TD></TR>
     does not exist" errors when accessing temporary tables in PL/PgSQL
     functions?</H3>
 
-    <P>In PostgreSQL versions < 8.3, PL/PgSQL caches function scripts, and
+    <P>In PostgreSQL versions &lt; 8.3, PL/PgSQL caches function scripts, and
     an unfortunate side effect is that if a PL/PgSQL function accesses a
     temporary table, and that table is later dropped and recreated, and
     the function called again, the function will fail because the cached
