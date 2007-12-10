@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.566 2007/12/10 22:14:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.567 2007/12/10 23:37:49 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -34,6 +34,37 @@ do it for earlier branch release files.
 
 <appendix id="release">
  <title>Release Notes</title>
+
+ <sect1 id="release-introduction">
+  <title>Introduction</title>
+
+  <para>
+   The release notes contain the significant changes in each PostgreSQL
+   release, with major features and migration issues often listed at the
+   top.  The release notes do not contain changes that affect only a few
+   users or changes that are internal and therefore not user-visible.  For
+   example, the optimizer is improved in almost every release, but the
+   improvements are usually observed by users as simply faster queries.
+  </para>
+
+  <para>
+   A complete list of changes for each release can be obtained by
+   viewing the <link linkend="cvs">CVS</> logs for each release.  The <ulink
+   url="http://archives.postgresql.org/pgsql-committers/">committers email
+   list</ulink> contains all source code changes as well.   There is also
+   a <ulink url="http://developer.postgresql.org/cvsweb.cgi/pgsql/">web
+   interface</ulink> that shows changes to specific files.
+   <!-- we need a file containing the CVS logs for each release, and something
+   like the SVN web interface that groups commits but has branches -->
+  </para>
+
+  <para>
+   The name appearing next to each item represents the major developer for
+   that item.  Of course all changes involve community discussion and patch
+   review so each item is truly a community effort.
+  </para>
+
+ </sect1>
 
  <sect1 id="release-8-3">
   <title>Release 8.3</title>
