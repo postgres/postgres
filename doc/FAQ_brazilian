@@ -1,7 +1,7 @@
 
                   Perguntas Frequentes (FAQ) sobre PostgreSQL
                                        
-   Última atualização: Sáb Out 14 19:08:19 EDT 2006
+   Última atualização: Sex Nov 16 10:53:50 EST 2007
    
    Mantenedor atual: Bruce Momjian (bruce@momjian.us)
    
@@ -18,7 +18,7 @@
    
                               Perguntas Gerais
                                       
-   1.1) O que é PostgreSQL? Como ele é pronunciado?
+   1.1) O que é PostgreSQL? Como ele é pronunciado? O que é Postgres?
    1.2) Quem controla o PostgreSQL?
    1.3) Qual é a licença do PostgreSQL?
    1.4) Quais plataformas o PostgreSQL pode ser executado?
@@ -33,6 +33,8 @@
    1.12) Como posso submeter uma correção (patch) ou me juntar a equipe
    de desenvolvimento?
    1.13) Como é o PostgreSQL comparado a outros SGBDs?
+   1.14) O PostgreSQL gerenciará as mudanças de horário devido ao horário
+   de verão em vários países?
    
                           Perguntas sobre Clientes
                                       
@@ -51,8 +53,8 @@
    3.4) Quais características de depuração estão disponíveis?
    3.5) Por que eu recebo "Sorry, too many clients" quando eu tento
    conectar?
-   3.6) Qual é o processo de atualização do PostgreSQL? 3.7) Que tipo de
-   hardware eu devo usar?
+   3.6) Qual é o processo de atualização do PostgreSQL?
+   3.7) Que tipo de hardware eu devo usar?
    
                            Perguntas Operacionais
                                       
@@ -74,7 +76,8 @@
    expressões regulares sem diferenciar mauúsculas de minúsculas? Como eu
    utilizo um índice para buscas sem distinguir maiúsculas de minúsculas?
    4.9) Em uma consulta, como eu detecto se um campo é NULL? Como eu
-   posso ordenar por um campo que é NULL ou não?
+   posso concatenar possíveis NULLs? Como eu posso ordenar por um campo
+   que é NULL ou não?
    4.10) Qual é a diferença entre os vários tipos de dado de caracteres?
    4.11.1) Como eu crio um campo serial/auto incremento?
    4.11.2) Como eu consigo o valor de um campo SERIAL?
@@ -95,16 +98,16 @@
    exist" ao acessar tabelas temporárias em funções PL/PgSQL?
    4.20) Quais soluções de replicação estão disponíveis?
    4.21) Por que os nomes de minhas tabelas e colunas não são
-   reconhecidos em minha consulta?
+   reconhecidos em minha consulta? Por que as maiúsculas não são
+   preservadas?
      _________________________________________________________________
    
                               Perguntas Gerais
                                       
-  1.1) O que é PostgreSQL? Como ele é pronunciado?
+  1.1) O que é PostgreSQL? Como ele é pronunciado? O que é Postgres?
   
-   PostgreSQL é pronunciado Post-Gres-Q-L, e é, às vezes, referido apenas
-   como Postgres. Um arquivo de áudio está disponível em formato MP3 para
-   aqueles que gostariam de ouvir a pronúncia.
+   PostgreSQL é pronunciado Post-Gres-Q-L. (Para os curiosos que querem
+   saber como se diz "PostgreSQL", um arquivo de áudio está disponível).
    
    O PostgreSQL é um sistema de banco de dados objeto-relacional que tem
    as características de sistemas de bancos de dados comerciais
@@ -116,8 +119,12 @@
    desenvolvedores voluntários (na sua maioria) espalhados pelo mundo e
    que se comunicam via Internet. É um projeto da comunidade e não é
    controlado por nenhuma empresa. Para se envolver, veja a FAQ do
-   desenvolvedor em
-   http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html
+   desenvolvedor em http://www.postgresql.org/docs/faqs.FAQ_DEV.html
+   
+   Postgres é um apelido para o PostgreSQL amplamente utilizado. Era o
+   nome original do projeto em Berkeley e dentre os outros apelidos é o
+   preferido. Se você acha 'PostgreSQL' difícil de pronunciar, diga
+   apenas 'Postgres'.
    
   1.2) Quem controla o PostgreSQL?
   
@@ -189,11 +196,11 @@
   1.5) Onde eu posso conseguir o PostgreSQL?
   
    Via navegador web, utilize http://www.postgresql.org/ftp/ e via ftp,
-   utilize ftp://ftp.PostgreSQL.org/pub/.
+   utilize ftp://ftp.postgresql.org/pub/.
    
   1.6) Qual é a última versão?
   
-   A última versão do PostgreSQL é a versão 8.1.5.
+   A última versão do PostgreSQL é a versão 8.2.5.
    
    Nós planejamos lançar versões novas a cada ano com versões corretivas
    em alguns meses.
@@ -220,14 +227,14 @@
    Visite o formulário que reporta bugs do PostgreSQL em
    http://www.postgresql.org/support/submitbug.
    
-   Verifique também o nosso ftp ftp://ftp.PostgreSQL.org/pub para ver se
+   Verifique também o nosso ftp ftp://ftp.postgresql.org/pub para ver se
    há uma versão mais recente do PostgreSQL.
    
    Bugs submetidos utilizando o formulário ou informado a qualquer lista
    de discussão do PostgreSQL tipicamente gera uma das seguintes
    respostas:
      * Não é um bug e o porquê
-     * É um bug conhecido e já está na lista de AFAZERES (TODO)
+     * É um bug conhecido e já está na lista de AFAZERES
      * O bug foi corrigido na versão atual
      * O bug foi corrigido mas não foi empacotado em um versão oficial
      * Um pedido foi feito para obter informações detalhadas:
@@ -239,48 +246,50 @@
      * O bug é novo. O seguinte pode ocorrer:
           + Uma correção é criada e será incluída na próxima versão
           + O bug não pode ser corrigido imediatamente e é adicionado a
-            lista de AFAZERES (TODO)
+            lista de AFAZERES
        
   1.9) Como eu posso saber quais são os bugs conhecidos ou funcionalidades
   ausentes?
   
    O PostgreSQL suporta um subconjunto extendido do SQL:2003. Veja nossa
-   lista de AFAZERES (TODO) que contém bugs conhecidos, funcionalidades
-   ausentes e planos futuros.
+   lista de AFAZERES que contém bugs conhecidos, funcionalidades ausentes
+   e planos futuros.
    
    Uma solicitação de funcionalidade geralmente resulta em uma das
    seguintes respostas:
-     * A funcionalidade já está na lista de AFAZERES (TODO)
+     * A funcionalidade já está na lista de AFAZERES
      * A funcionalidade não é desejável porque:
           + Ela duplica uma funcionalidade existente que já segue o
             padrão SQL
           + A funcionalidade aumentará a complexidade do código mas
             adicionará pouco benefício
           + A funcionalidade será insegura ou não-confiável
-     * A nova funcionalidade é adicionada a lista de AFAZERES (TODO)
+     * A nova funcionalidade é adicionada a lista de AFAZERES
        
    O PostgreSQL não utiliza sistema de acompanhamento de bugs porque nós
    achamos mais eficiente responder diretamente o e-mail e manter a lista
-   de AFAZERES (TODO) atualizada. Na prática, bugs não duram muito no
-   programa; e bugs que afetam uma grande quantidade de usuários são
-   corrigidos rapidamente. O único lugar para encontrar todas as
-   mudanças, melhorias e correções em uma versão do PostgreSQL é ler as
-   mensagens de log do CVS. Até mesmo as notas de lançamento não listam
-   todas as mudanças feitas no programa.
+   de AFAZERES atualizada. Na prática, bugs não duram muito no programa;
+   e bugs que afetam uma grande quantidade de usuários são corrigidos
+   rapidamente. O único lugar para encontrar todas as mudanças, melhorias
+   e correções em uma versão do PostgreSQL é ler as mensagens de log do
+   CVS. Até mesmo as notas de lançamento não listam todas as mudanças
+   feitas no programa.
    
   1.10) Que documentação está disponível?
   
    O PostgreSQL inclui vasta documentação, incluindo um manual extenso,
    páginas de manuais (man pages) e alguns exemplos teste. Veja o
    diretório /doc. Você também pode pesquisar os manuais online em
-   http://www.PostgreSQL.org/docs.
+   http://www.postgresql.org/docs.
    
    Há dois livros sobre PostgreSQL disponíveis online em
    http://www.postgresql.org/docs/books/awbook.html e
    http://www.commandprompt.com/ppbook/. Há uma lista de livros sobre
    PostgreSQL disponíveis para compra. Um dos mais populares é o do Korry
    Douglas. Uma lista de análise sobre os livros pode ser encontrada em
-   http://techdocs.PostgreSQL.org/techdocs/bookreviews.php.
+   http://www.postgresql.org/docs/books/. Há também uma coleção de
+   artigos técnicos sbore PostgreSQL em
+   http://www.postgresql.org/docs/techdocs/.
    
    O programa cliente de linha de comando psql tem alguns comandos \d
    para mostrar informações sobre tipos, operadores, funções, agregações,
@@ -291,11 +300,9 @@
   1.11) Como eu posso aprender SQL?
   
    Primeiro, considere os livros específicos sobre PostgreSQL mencionados
-   acima. Outro é o "Teach Yourself SQL in 21 Days, Second Edition" e
-   http://members.tripod.com/er4ebus/sql/index.htm. Muitos de nossos
-   usuários gostam do The Practical SQL Handbook, Bowman, Judith S., et
-   al., Addison-Wesley. Outros do The Complete Reference SQL, Groff et
-   al., McGraw-Hill.
+   acima. Muitos de nossos usuários gostam do The Practical SQL Handbook,
+   Bowman, Judith S., et al., Addison-Wesley. Outros do The Complete
+   Reference SQL, Groff et al., McGraw-Hill.
    
    Há também bons tutoriais disponíveis online:
      * http://www.intermedia.net/support/sql/sqltut.shtm
@@ -347,13 +354,23 @@
           manuais e o código fonte faz com que o suporte do PostgreSQL
           seja superior ao de outros SGBDs. Há suporte comercial por
           incidente disponíveis para aqueles que precisam de um. (Veja
-          seção 1.7 da FAQ.)
+          seção 1.7 da FAQ).
           
    Preço
           Nós somos livres para uso dele tanto comercial quanto não
           comercial. Você pode adicionar nosso código ao seu produto sem
           limitações, exceto aquelas descritas na nossa licença BSD
           mencionada acima.
+          
+  1.14) O PostgreSQL gerenciará mudanças no horário devido ao horário de verão
+  em vários países?
+  
+   Mudanças no horário de verão dos USA foram incluídas nas versões 8.0
+   .[4+] do PostgreSQL e em todas as versões grandes, i.e. 8.1. Mudanças
+   no Canadá e Austrália Oeste foram incluídas na 8.0.[10+], 8.1.[6+] e
+   em todas as versões grandes subsequentes. Versões do PostgreSQL
+   anteriores a 8.0 utilizam o banco de dados de zona horária do sistema
+   operacional para informações sobre horário de verão.
      _________________________________________________________________
    
                           Perguntas sobre Clientes
@@ -367,8 +384,7 @@
    
    Algumas linguagens de programação como PHP incluem uma interface para
    PostgreSQL. Interfaces para linguagens como Perl, TCL, Python e muitas
-   outras estão disponíveis em http://gborg.postgresql.org na seção de
-   Drivers/Interfaces ou via busca na Internet.
+   outras estão disponíveis em http://www.pgfoundry.org.
    
   2.2) Quais ferramentas estão disponíveis para utilizar o PostgreSQL com
   páginas Web?
@@ -450,29 +466,17 @@
    
   3.5) Por que eu recebo "Sorry, too many clients" quando eu tento conectar?
   
-   Você atingiu o limite padrão que é de 100 sessões. Você precisa
-   aumentar o limite do postmaster, que diz quantos processos servidor
+   Você atingiu o limite padrão de 100 sessões. Você precisa aumentar o
+   limite do servidor PostgreSQL, que diz quantos processos servidor
    concorrentes ele pode iniciar, alterando o valor max_connections no
    postgresql.conf e reiniciando o postmaster.
    
   3.6) Qual é o processo de atualização do PostgreSQL?
   
-   O time do PostgreSQL faz somente pequenas mudanças entre versões
-   corretivas, então atualizar da versão 7.4.8 para 7.4.9 não requer uma
-   exportação e uma importação; basta para o servidor de banco de dados,
-   instalar os binários atualizados e reiniciar o servidor.
-   
-   Todos os usuários devem atualizar para as versões corretivas mais
-   recentes assim que elas estiverem disponíveis. Enquanto cada
-   atualização tem algum risco, versões corretivas do PostgreSQL são
-   projetadas para corrigir somente bugs comuns com um risco mínimo. A
-   comunidade considera não atualizar mais perigoso do que atualizar.
-   
-   Versões novas (i.e. da 7.3 para 7.4) geralmente muda-se o formato
-   interno das tabelas de sistema e dos arquivo de dados. Essas mudanças
-   geralmente são complexas, então nós não mantemos compatibilidade para
-   os arquivos de dados. Uma exportação/importação de um banco de dados é
-   necessária para atualizações entre versões.
+   Veja http://www.postgresql.org/support/versioning para discussão geral
+   sobre atualizações e
+   http://www.postgresql.org/docs/current/static/install-upgrading.html
+   para instruções específicas.
    
   3.7) Que tipo de hardware eu devo usar?
   
@@ -585,24 +589,24 @@
    inteiro e uma descrição em cada linha. Suponha que o tamanho médio da
    descrição é de vinte bytes. O arquivo terá 2,8 MB. O tamanho do
    arquivo do banco de dados PostgreSQL que contém esses dados pode ser
-   estimado em 5,6 MB:
-    28 bytes: cada cabeçalho de registro (aproximadamente)
+   estimado em 5,2 MB:
+    24 bytes: cada cabeçalho de registro (aproximadamente)
     24 bytes: um campo int e um campo texto
    + 4 bytes: ponteiro na página para a tupla
    -------------------------------------------
-    56 bytes por registro
+    52 bytes por registro
 
    O tamanho de uma página de dados no PostgreSQL é 8192 bytes (8 KB), então:
 
    8192 bytes por página
-   ------------------------   =  146 registros por página do banco de dados (arredondado para baixo)
-     56 bytes por registro
+   ------------------------   =  158 registros por página do banco de dados (arredondado para baixo)
+     52 bytes por registro
 
    100000 registros de dados
-   ----------------------------  =  685 páginas do banco de dados (arredondadopara cima)
-      146 registros por página
+   ----------------------------  =  633 páginas do banco de dados (arredondadopara cima)
+      158 registros por página
 
-685 páginas do banco de dados * 8192 bytes por página  =  5.611.520 bytes (5,6MB)
+633 páginas do banco de dados * 8192 bytes por página  =  5.185.536 bytes (5,2MB)
 
    Índices não requerem muito espaço, mas contém dados que foram
    indexados, então eles podem ocupar algum espaço.
@@ -650,10 +654,12 @@
      * Busca que não diferenciam maiúsculas de minúsculas tais como ILIKE
        e ~* não utilizam índices. Em vez disso, utilize índice de
        expressão, que é descrito na seção 4.8.
-     * O idioma padrção C deve ser usando durante o initdb porque não é
+     * O idioma padrão C deve ser usando durante o initdb porque não é
        possível saber o próximo caracter em idiomas que não sejam o C.
        Você pode criar um índice especial text_pattern_ops para tais
-       casos que funcionam somente para indexação com LIKE.
+       casos que funcionam somente para indexação com LIKE. Também é
+       possível utilizar indexação de busca textual para buscas por
+       palavras.
        
    Em versões anteriores a 8.0, índices frequentemente não podem ser
    utilizados a menos que os tipos de dados correspondam aos tipos de
@@ -690,12 +696,17 @@
    utilize uma restrição CHECK ou um gatilho.
    
   4.9) Em uma consulta, como eu detecto se um campo é NULL? Como eu posso
-  ordenar por um campo que é NULL ou não?
+  concatenar possíveis NULLs? Como eu posso ordenar por um campo que é NULL ou
+  não?
   
    Você testa a coluna com IS NULL e IS NOT NULL, como a seguir:
    SELECT *
    FROM tab
    WHERE col IS NULL;
+
+   Para concatenar com possíveis NULLs, utilize COALESCE(), assim:
+   SELECT COALESCE(col1, '') || COALESCE(col2, '')
+   FROM tab
 
    Para ordenar pelo status NULL, utilize os modificadores IS NULL e IS
    NOT NULL na sua cláusula ORDER BY. Coisas que são verdadeiro serão
@@ -754,29 +765,22 @@
         nome TEXT
     );
 
-   Veja a página sobre create_sequence no manual para obter informações
-   adicionais sobre sequências.
+   Sequências automaticamente criadas são nomeadas como
+   <tabela>_<colunaserial>_seq, onde tabela e colunaserial são os nomes
+   da tabela e da coluna serial, respectivamente. Veja a página sobre
+   create_sequence no manual para obter informações adicionais sobre
+   sequências.
    
   4.11.2) Como eu consigo o valor de um campo SERIAL?
   
-   Uma abordagem é obter o próximo valor SERIAL de uma sequência com a
-   função nextval() antes de inserir e então inserir com o valor
-   explicitamente. Utilizando o exemplo da tabela em 4.11.1, um exemplo
-   em pseudo-linguagem se pareceria com isto:
-    novo_id = execute("SELECT nextval('pessoa_id_seq')");
-    execute("INSERT INTO pessoa (id, nome) VALUES (novo_id, 'Blaise Pascal')");
+   A maneira mais simples de obter o próximo valor SERIAL de uma
+   sequência é com RETURNING. Utilizando o exemplo da tabela em 4.11.1,
+   ele ficaria assim:
+    INSERT INTO pessoa (nome) VALUES ('Blaise Pascal') RETURNING id;
 
-   Você poderia então ter também o novo valor armazenado em novo_id para
-   utilizar em outras consultas (i.e., como uma chave estrangeira da
-   tabela pessoa). Note que o nome da SEQUENCE criada automaticamente
-   será <tabela>_<coluna>_seq, onde tabela e coluna são os nomes da
-   tabela e da coluna SERIAL, respectivamente.
+   Você também pode chamar nextval() e utilizar o valor no INSERT ou
+   chamar currval() após o INSERT.
    
-   Alternativamente, você poderia obter o valor SERIAL atribuído com a
-   função currval() depois de tê-lo inserido por padrão, i.e.,
-    execute("INSERT INTO pessoa (nome) VALUES ('Blaise Pascal')");
-    novo_id = execute("SELECT currval('pessoa_id_seq')");
-
   4.11.3) currval() não lida com condição de corrida com outros usuários?
   
    Não. currval() retorna o valor atual atribuido pela sua sessão, e não
@@ -791,14 +795,13 @@
    finalizada. Isso causa intervalos na numeração por causa de transações
    abortadas.
    
-  4.16) O que é um OID? O que é um CTID?
+  4.12) O que é um OID? O que é um CTID?
   
-   Cada registro que é criado no PostgreSQL recebe um OID único a menos
-   que seja criado com WITHOUT OIDS. OIDs são automaticamente atribuídos
-   como inteiros de 4 bytes que são únicos ao longo de toda instalação.
-   Contudo, eles são limitados em 4 bilhões, e então os OIDs começam a
-   ser duplicados. O PostgreSQL utiliza OIDs para ligar as tabelas do
-   sistema.
+   Se uma tabela é criada com WITH OIDS, cada registro recebe um OID
+   único. OIDs são automaticamente atribuídos como inteiros de 4 bytes
+   que são únicos ao longo de toda instalação. Contudo, eles são
+   limitados em 4 bilhões e, então, os OIDs começam a ser duplicados. O
+   PostgreSQL utiliza OIDs para ligar as tabelas do sistema.
    
    Para numerar registros nas tabelas do usuários, é melhor utilizar
    SERIAL ao invés de OIDs porque sequências SERIAL são únicas somente em
@@ -814,7 +817,7 @@
   
    Você provavelmente está sem memória virtual no seu sistema, ou o seu
    núcleo (kernel) tem um limite baixo para certos recursos. Tente isto
-   antes de iniciar o postmaster:
+   antes de iniciar o servidor PostgreSQL:
     ulimit -d 262144
     limit datasize 256m
 
@@ -834,7 +837,7 @@
    Utilize CURRENT_TIMESTAMP:
         CREATE TABLE teste (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP);
 
-  4.23) Como eu faço uma junção externa (outer join)?
+  4.16) Como eu faço uma junção externa (outer join)?
   
    PostgreSQL suporta junções externas utilizando a sintaxe padrão do
    SQL. Aqui temos dois exemplos:
@@ -852,7 +855,7 @@
    retornaria os registros combinados mais todos os registros não
    combinados de t1 e t2. A palavra OUTER é opcional e é assumida nas
    junções LEFT, RIGHT e FULL. Junções ordinárias são chamadas junções
-   naturais (INNER).
+   internas (INNER).
    
   4.17) Como eu faço consultas utilizando múltiplos bancos de dados?
   
@@ -869,18 +872,20 @@
   4.18) Como eu retorno múltiplos registros ou colunas de uma função?
   
    É fácil utilizando funções que retornam conjunto,
-   http://techdocs.postgresql.org/guides/SetReturningFunctions.
+   http://www.postgresql.org/docs/techdocs.17.
    
   4.19) Por que eu obtenho erros "relation with OID ###### does not exist" ao
   acessar tabelas temporárias em funções PL/PgSQL?
   
-   PL/PgSQL armazena o conteúdo da função, e o efeito indesejado é que se
-   uma função PL/PgSQL acessa uma tabela temporária, e aquela tabela é
-   removida e criada novamente, e a função é chamada novamente, a função
-   irá falhar porque o conteúdo armazenado da função ainda apontará para
-   a tabela temporária antiga. A solução é utilizar o EXECUTE para acesso
-   a tabelas temporárias no PL/PgSQL. Isto irá fazer com que a consulta
-   seja avaliada toda vez.
+   Em versões do PostgreSQL < 8.3, PL/PgSQL armazena o conteúdo da
+   função, e o efeito indesejado é que se uma função PL/PgSQL acessa uma
+   tabela temporária, e aquela tabela é removida e criada novamente, e a
+   função é chamada novamente, a função irá falhar porque o conteúdo
+   armazenado da função ainda apontará para a tabela temporária antiga. A
+   solução é utilizar o EXECUTE para acesso a tabelas temporárias no
+   PL/PgSQL. Isto irá fazer com que a consulta seja avaliada toda vez.
+   
+   Este problema não ocorre no PostgreSQL 8.3 ou superior.
    
   4.20) Quais soluções de replicação estão disponíveis?
   
@@ -895,22 +900,23 @@
    Replicação com múltiplos mestres permite que consultas leitura/escrita
    sejam enviadas para múltiplos computadores replicadores. Esta
    capacidade também tem um sério impacto na performance por causa da
-   necessidade de sincronizar as mudanças entre os servidores. Pgcluster
+   necessidade de sincronizar as mudanças entre os servidores. PGCluster
    é a solução mais popular disponível livremente para PostgreSQL.
    
    Há também soluções de replicação comerciais e baseadas em hardware
    disponíveis que suportam uma variedade de modelos de replicação.
    
   4.21) Por que os nomes de minhas tabelas e colunas não são reconhecidos em
-  minha consulta?
+  minha consulta? Por que as maiúsculas não são preservadas?
   
-   O caso mais comum é o uso de aspas ao redor dos nomes da tabela ou
-   coluna durante a criação da tabela. Ao utilizar aspas, nomes de tabela
-   e coluna (chamados de identificadores) são armazenados como
-   especificado, significando que você deve utilizar aspas quando se
-   referir aos nomes na consulta. Algumas interfaces, como pgAdmin,
-   automaticamente coloca aspas nos identificadores durante a criação da
-   tabela. Então, para identificadores serem reconhecidos, você deve:
+   A causa mais comum de nomes desconhecidos é o uso de aspas ao redor
+   dos nomes da tabela ou coluna durante a criação da tabela. Ao utilizar
+   aspas, nomes de tabela e coluna (chamados de identificadores) são
+   armazenados como especificado, significando que você deve utilizar
+   aspas quando se referir aos nomes na consulta. Algumas interfaces,
+   como pgAdmin, automaticamente colocam aspas nos identificadores
+   durante a criação da tabela. Então, para identificadores serem
+   reconhecidos, você deve:
      * Evitar colocar aspas no identificador ao criar tabelas
      * Utilizar somente caracteres minúsculos em identificadores
      * Colocar aspas em identificadores ao referenciá-los nas consultas
