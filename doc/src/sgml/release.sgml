@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.565 2007/12/10 01:48:54 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.566 2007/12/10 22:14:52 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1256,7 +1256,7 @@ current_date &lt; 2017-11-17
      <listitem>
       <para>
        Full text search is integrated into the core database
-       system (Teodor, Oleg)
+       system (Teodor, Oleg, Stefan Kaltenbrunner)
       </para>
 
       <para>
