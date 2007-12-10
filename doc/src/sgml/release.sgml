@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.564 2007/12/09 19:01:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.565 2007/12/10 01:48:54 alvherre Exp $ -->
 <!--
 
 Typical markup:
@@ -165,7 +165,8 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Smoothed checkpoints prevent checkpoint I/O spikes
+      Checkpoint writes can be spread over a longer time period to smooth
+      the I/O spike during each checkpoint
      </para>
     </listitem>
 
@@ -686,8 +687,9 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Smoothed checkpoints prevent checkpoint I/O spikes (Itagaki
-       Takahiro and Heikki Linnakangas)
+       Checkpoint writes can be spread over a longer time period to smooth
+       the I/O spike during each checkpoint (Itagaki Takahiro and Heikki
+       Linnakangas)
       </para>
 
       <para>
