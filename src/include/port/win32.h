@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.81 2007/11/24 01:55:26 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.82 2007/12/11 14:34:43 mha Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -44,6 +44,17 @@
 #define fsync(fd) _commit(fd)
 
 #define USES_WINSOCK
+
+/*
+ * Ensure that anyone building an extension is using a 32 bit time_t.
+ * On Mingw/Msys, that should always be the case, but MSVC++ defaults
+ * to 64 bits. We set that for our own build in the project files
+ */
+#ifdef WIN32_ONLY_COMPILER
+#ifndef _USE_32BIT_TIME_T
+#error "Postgres uses 32 bit time_t - add #define _USE_32BIT_TIME_T on Windows"
+#endif
+#endif
 
 /* defines for dynamic linking on Win32 platform */
 #if defined(WIN32) || defined(__CYGWIN__)
