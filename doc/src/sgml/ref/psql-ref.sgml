@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.196 2007/10/29 17:29:59 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.197 2007/12/11 19:01:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -358,24 +358,6 @@ PostgreSQL documentation
       Allows you to specify options to be placed within the
       <acronym>HTML</acronym> <sgmltag>table</sgmltag> tag. See
       <command>\pset</command> for details.
-      </para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry>
-      <term><option>-u</></term>
-      <listitem>
-      <para>
-      Forces <application>psql</application> to prompt for the user name and
-      password before connecting to the database.
-      </para>
-
-      <para>
-      This option is deprecated, as it is conceptually flawed.
-      (Prompting for a non-default user name and prompting for a
-      password because the server requires it are really two different
-      things.) You are encouraged to look at the <option>-U</option> and
-      <option>-W</option> options instead.
       </para>
       </listitem>
     </varlistentry>

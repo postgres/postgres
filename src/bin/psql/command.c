@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.184 2007/12/09 19:01:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.185 2007/12/11 19:01:06 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1081,8 +1081,9 @@ prompt_for_password(const char *username)
 	{
 		char	   *prompt_text;
 
-		prompt_text = malloc(strlen(username) + 32);
-		sprintf(prompt_text, "Password for user \"%s\": ", username);
+		prompt_text = malloc(strlen(username) + 100);
+		snprintf(prompt_text, strlen(username) + 100,
+				 _("Password for user %s: "), username);
 		result = simple_prompt(prompt_text, 100, false);
 		free(prompt_text);
 	}
