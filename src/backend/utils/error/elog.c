@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.198 2007/11/15 21:14:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.199 2007/12/11 15:19:05 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,6 @@ static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
 static void write_pipe_chunks(char *data, int len, int dest);
-static void get_csv_error_message(StringInfo buf, ErrorData *edata);
 static void write_csvlog(ErrorData *edata);
 
 /*
@@ -1612,17 +1611,20 @@ log_line_prefix(StringInfo buf)
 	}
 }
 
-
 /*
  * append a CSV'd version of a string to a StringInfo
  * We use the PostgreSQL defaults for CSV, i.e. quote = escape = '"'
+ * If it's NULL, append nothing.
  */
-
 static inline void
 appendCSVLiteral(StringInfo buf, const char *data)
 {
 	const char *p = data;
 	char		c;
+
+	/* avoid confusing an empty string with NULL */
+	if (p == NULL)
+		return;
 
 	appendStringInfoCharMacro(buf, '"');
 	while ((c = *p++) != '\0')
@@ -1635,15 +1637,14 @@ appendCSVLiteral(StringInfo buf, const char *data)
 }
 
 /*
- * Constructs the error message, depending on the Errordata it gets,
- * in CSV (comma separated values) format. The COPY command
- * can then be used to load the messages into a table.
+ * Constructs the error message, depending on the Errordata it gets, in a CSV
+ * format which is described in doc/src/sgml/config.sgml.
  */
 static void
 write_csvlog(ErrorData *edata)
 {
-	StringInfoData msgbuf;
 	StringInfoData buf;
+	bool	print_stmt = false;
 
 	/* static counter for line numbers */
 	static long log_line_number = 0;
@@ -1664,24 +1665,15 @@ write_csvlog(ErrorData *edata)
 	}
 	log_line_number++;
 
-	initStringInfo(&msgbuf);
 	initStringInfo(&buf);
 
-	/*
-	 * The format of the log output in CSV format: timestamp with
-	 * milliseconds, username, databasename, session id, host and port number,
-	 * process id, process line number, command tag, session start time,
-	 * virtual transaction id, regular transaction id, error severity, sql
-	 * state code, error message.
-	 */
-
-	/* timestamp_with_milliseconds */
 
 	/*
-	 * Check if the timestamp is already calculated for the syslog message, if
-	 * it is, then no need to calculate it again, will use the same, else get
-	 * the current timestamp. This is done to put same timestamp in both
-	 * syslog and csvlog messages.
+	 * timestamp with milliseconds
+	 *
+	 * Check if the timestamp is already calculated for the syslog message,
+	 * and use it if so.  Otherwise, get the current timestamp.  This is done
+	 * to put same timestamp in both syslog and csvlog messages.
 	 */
 	if (formatted_log_time[0] == '\0')
 	{
@@ -1715,38 +1707,26 @@ write_csvlog(ErrorData *edata)
 
 	/* username */
 	if (MyProcPort)
-	{
-		const char *username = MyProcPort->user_name;
-
-		if (username == NULL || *username == '\0')
-			username = _("[unknown]");
-
-		appendCSVLiteral(&buf, username);
-	}
+		appendCSVLiteral(&buf, MyProcPort->user_name);
 	appendStringInfoChar(&buf, ',');
 
-	/* databasename */
+	/* database name */
 	if (MyProcPort)
-	{
-		const char *dbname = MyProcPort->database_name;
-
-		if (dbname == NULL || *dbname == '\0')
-			dbname = _("[unknown]");
-
-		appendCSVLiteral(&buf, dbname);
-	}
+		appendCSVLiteral(&buf, MyProcPort->database_name);
 	appendStringInfoChar(&buf, ',');
 
 	/* session id */
 	appendStringInfo(&buf, "%lx.%x", (long) MyStartTime, MyProcPid);
 	appendStringInfoChar(&buf, ',');
 
-	/* Remote host and port (is it safe to not quote this?) */
+	/* Remote host and port */
 	if (MyProcPort && MyProcPort->remote_host)
 	{
+		appendStringInfoChar(&buf, '"');
 		appendStringInfo(&buf, "%s", MyProcPort->remote_host);
 		if (MyProcPort->remote_port && MyProcPort->remote_port[0] != '\0')
 			appendStringInfo(&buf, ":%s", MyProcPort->remote_port);
+		appendStringInfoChar(&buf, '"');
 	}
 	appendStringInfoChar(&buf, ',');
 
@@ -1762,13 +1742,17 @@ write_csvlog(ErrorData *edata)
 	/* PS display */
 	if (MyProcPort)
 	{
+		StringInfoData msgbuf;
 		const char *psdisp;
 		int			displen;
+
+		initStringInfo(&msgbuf);
 
 		psdisp = get_ps_display(&displen);
 		appendStringInfo(&msgbuf, "%.*s", displen, psdisp);
 		appendCSVLiteral(&buf, msgbuf.data);
-		resetStringInfo(&msgbuf);
+	
+		pfree(msgbuf.data);
 	}
 	appendStringInfoChar(&buf, ',');
 
@@ -1787,7 +1771,7 @@ write_csvlog(ErrorData *edata)
 
 	/* Virtual transaction id */
 	/* keep VXID format in sync with lockfuncs.c */
-	if (MyProc != NULL)
+	if (MyProc != NULL && MyProc->backendId != InvalidBackendId)
 		appendStringInfo(&buf, "%d/%u", MyProc->backendId, MyProc->lxid);
 	appendStringInfoChar(&buf, ',');
 
@@ -1796,13 +1780,67 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* Error severity */
-	appendStringInfo(&buf, "%s,", error_severity(edata->elevel));
+	appendStringInfo(&buf, "%s", error_severity(edata->elevel));
+	appendStringInfoChar(&buf, ',');
 
 	/* SQL state code */
-	appendStringInfo(&buf, "%s,", unpack_sql_state(edata->sqlerrcode));
+	appendStringInfo(&buf, "%s", unpack_sql_state(edata->sqlerrcode));
+	appendStringInfoChar(&buf, ',');
 
-	/* Error message and cursor position if any */
-	get_csv_error_message(&buf, edata);
+	/* errmessage */
+	appendCSVLiteral(&buf, edata->message);
+	appendStringInfoCharMacro(&buf, ',');
+
+	/* errdetail */
+	appendCSVLiteral(&buf, edata->detail);
+	appendStringInfoCharMacro(&buf, ',');
+
+	/* errhint */
+	appendCSVLiteral(&buf, edata->hint);
+	appendStringInfoCharMacro(&buf, ',');
+
+	/* internal query */
+	appendCSVLiteral(&buf, edata->internalquery);
+	appendStringInfoCharMacro(&buf, ',');
+
+	/* if printed internal query, print internal pos too */
+	if (edata->internalpos > 0 && edata->internalquery != NULL)
+		appendStringInfo(&buf, "%d", edata->internalpos);
+	appendStringInfoCharMacro(&buf, ',');
+
+	/* errcontext */
+	appendCSVLiteral(&buf, edata->context);
+	appendStringInfoCharMacro(&buf, ',');
+
+	/* user query --- only reported if not disabled by the caller */
+	if (is_log_level_output(edata->elevel, log_min_error_statement) &&
+		debug_query_string != NULL &&
+		!edata->hide_stmt)
+		print_stmt = true;
+	if (print_stmt)
+		appendCSVLiteral(&buf, debug_query_string);
+	appendStringInfoCharMacro(&buf, ',');
+	if (print_stmt && edata->cursorpos > 0)
+		appendStringInfo(&buf, "%d", edata->cursorpos);
+	appendStringInfoCharMacro(&buf, ',');
+
+	/* file error location */
+	if (Log_error_verbosity >= PGERROR_VERBOSE)
+	{
+		StringInfoData	msgbuf;
+
+		initStringInfo(&msgbuf);
+
+		if (edata->funcname && edata->filename)
+			appendStringInfo(&msgbuf, "%s, %s:%d",
+							 edata->funcname, edata->filename,
+							 edata->lineno);
+		else if (edata->filename)
+			appendStringInfo(&msgbuf, "%s:%d",
+							 edata->filename, edata->lineno);
+		appendCSVLiteral(&buf, msgbuf.data);
+		pfree(msgbuf.data);
+	}
 
 	appendStringInfoChar(&buf, '\n');
 
@@ -1812,37 +1850,7 @@ write_csvlog(ErrorData *edata)
 	else
 		write_pipe_chunks(buf.data, buf.len, LOG_DESTINATION_CSVLOG);
 
-	pfree(msgbuf.data);
 	pfree(buf.data);
-}
-
-/*
- * Appends the buffer with the error message and the cursor position, all
- * CSV escaped.
- */
-static void
-get_csv_error_message(StringInfo buf, ErrorData *edata)
-{
-	char	   *msg = edata->message ? edata->message : _("missing error text");
-	char		c;
-
-	appendStringInfoCharMacro(buf, '"');
-
-	while ((c = *msg++) != '\0')
-	{
-		if (c == '"')
-			appendStringInfoCharMacro(buf, '"');
-		appendStringInfoCharMacro(buf, c);
-	}
-
-	if (edata->cursorpos > 0)
-		appendStringInfo(buf, _(" at character %d"),
-						 edata->cursorpos);
-	else if (edata->internalpos > 0)
-		appendStringInfo(buf, _(" at character %d"),
-						 edata->internalpos);
-
-	appendStringInfoCharMacro(buf, '"');
 }
 
 /*

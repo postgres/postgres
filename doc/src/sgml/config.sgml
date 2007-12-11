@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.158 2007/11/28 15:42:30 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.159 2007/12/11 15:19:05 alvherre Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3169,7 +3169,13 @@ local0.*    /var/log/postgresql
         with these columns: timestamp with milliseconds, user name, database
         name, session ID, host:port number, process ID, per-process line
         number, command tag, session start time, virtual transaction ID,
-        regular transaction id, error severity, SQL state code, error message.
+        regular transaction id, error severity, SQL state code, error message,
+        error message detail, hint, internal query that led to the error (if
+        any), character count of the error position thereof, error context,
+        user query that led to the error (if any and enabled by
+        <varname>log_min_error_statement</>), character count of the error
+        position thereof, location of the error in the PostgreSQL source code
+        (if <varname>log_error_verbosity</> is set to <literal>verbose</>).
         Here is a sample table definition for storing CSV-format log output:
 
 <programlisting>
@@ -3189,6 +3195,14 @@ CREATE TABLE postgres_log
   error_severity text,
   sql_state_code text,
   message text,
+  detail text,
+  hint text,
+  internal_query text,
+  internal_query_pos integer,
+  context text,
+  query text,
+  query_pos integer,
+  location text,
   PRIMARY KEY (session_id, process_line_num)
 );
 </programlisting>
