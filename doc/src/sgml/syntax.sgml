@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.119 2007/06/05 21:31:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.120 2007/12/11 18:30:20 mha Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1748,7 +1748,7 @@ SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
 </programlisting>
     A <literal>CASE</> construct used in this fashion will defeat optimization
     attempts, so it should only be done when necessary.  (In this particular
-    example, it would doubtless be best to sidestep the problem by writing
+    example, it would be best to sidestep the problem by writing
     <literal>y &gt; 1.5*x</> instead.)
    </para>
   </sect2>
