@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.24 2007/10/13 20:18:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.25 2007/12/11 19:57:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,7 @@ help(const char *progname)
 	printf(_("  -h, --host=HOSTNAME          database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT              database server port\n"));
 	printf(_("  -U, --username=USERNAME      user name to connect as\n"));
-	printf(_("  -W, --password               prompt for password\n"));
+	printf(_("  -W, --password               force password prompt\n"));
 	printf(_("\nBy default, a database with the same name as the current user is created.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

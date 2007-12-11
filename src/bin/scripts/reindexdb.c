@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.11 2007/06/04 10:02:40 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.12 2007/12/11 19:57:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,7 +322,7 @@ help(const char *progname)
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
-	printf(_("  -W, --password            prompt for password\n"));
+	printf(_("  -W, --password            force password prompt\n"));
 	printf(_("\nRead the description of the SQL command REINDEX for details.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

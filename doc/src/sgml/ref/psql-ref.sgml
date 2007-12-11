@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.197 2007/12/11 19:01:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.198 2007/12/11 19:57:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -406,25 +406,24 @@ PostgreSQL documentation
       <term><option>--password</></term>
       <listitem>
       <para>
-      Forces <application>psql</application> to prompt for a
-      password before connecting to a database.  
+       Force <application>psql</application> to prompt for a
+       password before connecting to a database.  
       </para>
 
       <para>
-      <application>psql</application> should automatically prompt for a
-      password whenever the server requests password authentication.
-      However, currently password request detection is not totally
-      reliable, hence this option to force a prompt. If no password
-      prompt is issued and the server requires password authentication,
-      the connection attempt will fail.
+       This option is never essential, since <application>psql</application>
+       will automatically prompt for a password if the server demands
+       password authentication.  However, <application>psql</application>
+       will waste a connection attempt finding out that the server wants a
+       password.  In some cases it is worth typing <option>-W</> to avoid
+       the extra connection attempt.
       </para>
 
       <para>
-      This option will remain set for the entire session, even if you
-      change the database connection with the meta-command
-      <command>\connect</command>.
+       Note that this option will remain set for the entire session,
+       and so it affects uses of the meta-command
+       <command>\connect</command> as well as the initial connection attempt.
       </para>
-
       </listitem>
     </varlistentry>
 

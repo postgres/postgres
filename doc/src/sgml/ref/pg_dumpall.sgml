@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.68 2007/03/26 17:23:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.69 2007/12/11 19:57:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -59,7 +59,7 @@ PostgreSQL documentation
   <para>
   <application>pg_dumpall</application> needs to connect several
   times to the <productname>PostgreSQL</productname> server (once per
-  database).  If you use password authentication it is likely to ask for
+  database).  If you use password authentication it will ask for
   a password each time. It is convenient to have a
   <filename>~/.pgpass</> file in such cases. See <xref
   linkend="libpq-pgpass"> for more information.
@@ -367,7 +367,7 @@ PostgreSQL documentation
       <term>--username=<replaceable>username</replaceable></term>
       <listitem>
        <para>
-        Connect as the given user.
+        User name to connect as.
        </para>
       </listitem>
      </varlistentry>
@@ -377,8 +377,24 @@ PostgreSQL documentation
       <term>--password</term>
       <listitem>
        <para>
-        Force a password prompt.  This should happen automatically if
-        the server requires password authentication.
+        Force <application>pg_dumpall</application> to prompt for a
+        password before connecting to a database.  
+       </para>
+
+       <para>
+        This option is never essential, since
+        <application>pg_dumpall</application> will automatically prompt
+        for a password if the server demands password authentication.
+        However, <application>pg_dumpall</application> will waste a
+        connection attempt finding out that the server wants a password.
+        In some cases it is worth typing <option>-W</> to avoid the extra
+        connection attempt.
+       </para>
+
+       <para>
+        Note that the password prompt will occur again for each database
+        to be dumped.  Usually, it's better to set up a
+        <filename>~/.pgpass</> file than to rely on manual password entry.
        </para>
       </listitem>
      </varlistentry>

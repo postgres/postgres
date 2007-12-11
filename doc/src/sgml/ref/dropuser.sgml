@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.38 2007/06/21 10:43:09 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.39 2007/12/11 19:57:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -125,7 +125,7 @@ PostgreSQL documentation
       <term><option>--username <replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
-        User name to connect as (not the user name to drop)
+        User name to connect as (not the user name to drop).
        </para>
       </listitem>
      </varlistentry>
@@ -135,8 +135,18 @@ PostgreSQL documentation
       <term><option>--password</></term>
       <listitem>
        <para>
-        Force password prompt (to connect to the server, not for the
-        password of the user to be dropped).
+        Force <application>dropuser</application> to prompt for a
+        password before connecting to a database.  
+       </para>
+
+       <para>
+        This option is never essential, since
+        <application>dropuser</application> will automatically prompt
+        for a password if the server demands password authentication.
+        However, <application>dropuser</application> will waste a
+        connection attempt finding out that the server wants a password.
+        In some cases it is worth typing <option>-W</> to avoid the extra
+        connection attempt.
        </para>
       </listitem>
      </varlistentry>

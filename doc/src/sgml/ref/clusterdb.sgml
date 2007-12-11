@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.22 2007/06/04 10:02:40 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.23 2007/12/11 19:57:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -164,7 +164,18 @@ PostgreSQL documentation
       <term><option>--password</></term>
       <listitem>
        <para>
-        Force password prompt.
+        Force <application>clusterdb</application> to prompt for a
+        password before connecting to a database.  
+       </para>
+
+       <para>
+        This option is never essential, since
+        <application>clusterdb</application> will automatically prompt
+        for a password if the server demands password authentication.
+        However, <application>clusterdb</application> will waste a
+        connection attempt finding out that the server wants a password.
+        In some cases it is worth typing <option>-W</> to avoid the extra
+        connection attempt.
        </para>
       </listitem>
      </varlistentry>

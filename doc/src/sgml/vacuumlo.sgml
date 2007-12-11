@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/vacuumlo.sgml,v 1.2 2007/12/06 04:12:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/vacuumlo.sgml,v 1.3 2007/12/11 19:57:32 tgl Exp $ -->
 
 <sect1 id="vacuumlo">
  <title>vacuumlo</title>
@@ -38,42 +38,55 @@ vacuumlo [options] database [database2 ... databaseN]
    <varlistentry>
     <term><option>-v</option></term>
     <listitem>
-     <para>Write a lot of progress messages</para>
+     <para>Write a lot of progress messages.</para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term><option>-n</option></term>
     <listitem>
-     <para>Don't remove anything, just show what would be done</para>
+     <para>Don't remove anything, just show what would be done.</para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term><option>-U</option> <replaceable>username</></term>
     <listitem>
-     <para>Username to connect as</para>
+     <para>Username to connect as.</para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term><option>-W</option></term>
     <listitem>
-     <para>Force prompt for password (generally useless)</para>
+     <para>
+      Force <application>vacuumlo</application> to prompt for a
+      password before connecting to a database.  
+     </para>
+
+     <para>
+      This option is never essential, since
+      <application>vacuumlo</application> will automatically prompt
+      for a password if the server demands password authentication.
+      However, <application>vacuumlo</application> will waste a
+      connection attempt finding out that the server wants a password.
+      In some cases it is worth typing <option>-W</> to avoid the extra
+      connection attempt.
+     </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term><option>-h</option> <replaceable>hostname</></term>
     <listitem>
-     <para>Database server's host</para>
+     <para>Database server's host.</para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term><option>-p</option> <replaceable>port</></term>
     <listitem>
-     <para>Database server's port</para>
+     <para>Database server's port.</para>
     </listitem>
    </varlistentry>
   </variablelist>

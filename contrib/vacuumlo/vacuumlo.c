@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.34 2007/12/11 02:08:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.35 2007/12/11 19:57:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,7 +308,7 @@ usage(void)
 	fprintf(stdout, "  -v\t\tWrite a lot of progress messages\n");
 	fprintf(stdout, "  -n\t\tDon't remove large objects, just show what would be done\n");
 	fprintf(stdout, "  -U username\tUsername to connect as\n");
-	fprintf(stdout, "  -W\t\tPrompt for password\n");
+	fprintf(stdout, "  -W\t\tForce password prompt\n");
 	fprintf(stdout, "  -h hostname\tDatabase server host\n");
 	fprintf(stdout, "  -p port\tDatabase server port\n\n");
 }

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.71 2007/05/15 19:13:55 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.72 2007/12/11 19:57:32 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -458,7 +458,7 @@
       <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
-        Connect as the given user.
+        User name to connect as.
        </para>
       </listitem>
      </varlistentry>
@@ -468,8 +468,18 @@
       <term><option>--password</option></term>
       <listitem>
        <para>
-        Force a password prompt.  This should happen automatically if
-        the server requires password authentication.
+        Force <application>pg_restore</application> to prompt for a
+        password before connecting to a database.  
+       </para>
+
+       <para>
+        This option is never essential, since
+        <application>pg_restore</application> will automatically prompt
+        for a password if the server demands password authentication.
+        However, <application>pg_restore</application> will waste a
+        connection attempt finding out that the server wants a password.
+        In some cases it is worth typing <option>-W</> to avoid the extra
+        connection attempt.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.50 2007/06/21 12:20:10 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.51 2007/12/11 19:57:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -295,8 +295,19 @@ PostgreSQL documentation
       <term><option>--password</></term>
       <listitem>
        <para>
-        Force password prompt (to connect to the server, not for the
+        Force <application>createuser</application> to prompt for a
+        password (for connecting to the server, not for the
         password of the new user).
+       </para>
+
+       <para>
+        This option is never essential, since
+        <application>createuser</application> will automatically prompt
+        for a password if the server demands password authentication.
+        However, <application>createuser</application> will waste a
+        connection attempt finding out that the server wants a password.
+        In some cases it is worth typing <option>-W</> to avoid the extra
+        connection attempt.
        </para>
       </listitem>
      </varlistentry>

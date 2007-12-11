@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.46 2007/06/21 10:43:09 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.47 2007/12/11 19:57:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -183,7 +183,7 @@ PostgreSQL documentation
       <term><option>--username <replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
-        User name to connect as
+        User name to connect as.
        </para>
       </listitem>
      </varlistentry>
@@ -193,7 +193,18 @@ PostgreSQL documentation
       <term><option>--password</></term>
       <listitem>
        <para>
-        Force password prompt.
+        Force <application>createdb</application> to prompt for a
+        password before connecting to a database.  
+       </para>
+
+       <para>
+        This option is never essential, since
+        <application>createdb</application> will automatically prompt
+        for a password if the server demands password authentication.
+        However, <application>createdb</application> will waste a
+        connection attempt finding out that the server wants a password.
+        In some cases it is worth typing <option>-W</> to avoid the extra
+        connection attempt.
        </para>
       </listitem>
      </varlistentry>

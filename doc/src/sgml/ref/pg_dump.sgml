@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.97 2007/03/26 17:23:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.98 2007/12/11 19:57:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -647,7 +647,7 @@ PostgreSQL documentation
       <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
-        Connect as the given user.
+        User name to connect as.
        </para>
       </listitem>
      </varlistentry>
@@ -657,8 +657,18 @@ PostgreSQL documentation
       <term><option>--password</option></term>
       <listitem>
        <para>
-        Force a password prompt.  This should happen automatically if
-        the server requires password authentication.
+        Force <application>pg_dump</application> to prompt for a
+        password before connecting to a database.  
+       </para>
+
+       <para>
+        This option is never essential, since
+        <application>pg_dump</application> will automatically prompt
+        for a password if the server demands password authentication.
+        However, <application>pg_dump</application> will waste a
+        connection attempt finding out that the server wants a password.
+        In some cases it is worth typing <option>-W</> to avoid the extra
+        connection attempt.
        </para>
       </listitem>
      </varlistentry>

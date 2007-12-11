@@ -186,7 +186,18 @@ PostgreSQL documentation
       <term><option>--password</></term>
       <listitem>
        <para>
-        Force password prompt.
+        Force <application>reindexdb</application> to prompt for a
+        password before connecting to a database.  
+       </para>
+
+       <para>
+        This option is never essential, since
+        <application>reindexdb</application> will automatically prompt
+        for a password if the server demands password authentication.
+        However, <application>reindexdb</application> will waste a
+        connection attempt finding out that the server wants a password.
+        In some cases it is worth typing <option>-W</> to avoid the extra
+        connection attempt.
        </para>
       </listitem>
      </varlistentry>
