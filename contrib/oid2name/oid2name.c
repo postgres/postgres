@@ -4,7 +4,8 @@
  *
  * Originally by
  * B. Palmer, bpalmer@crimelabs.net 1-17-2001
- * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.32 2007/07/25 22:16:17 tgl Exp $
+ *
+ * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.33 2007/12/11 02:31:49 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -43,7 +44,6 @@ struct options
 	char	   *hostname;
 	char	   *port;
 	char	   *username;
-	char	   *password;
 };
 
 /* function prototypes */
@@ -76,10 +76,9 @@ get_opts(int argc, char **argv, struct options * my_opts)
 	my_opts->hostname = NULL;
 	my_opts->port = NULL;
 	my_opts->username = NULL;
-	my_opts->password = NULL;
 
 	/* get opts */
-	while ((c = getopt(argc, argv, "H:p:U:P:d:t:o:f:qSxish?")) != -1)
+	while ((c = getopt(argc, argv, "H:p:U:d:t:o:f:qSxish?")) != -1)
 	{
 		switch (c)
 		{
@@ -123,11 +122,6 @@ get_opts(int argc, char **argv, struct options * my_opts)
 				my_opts->username = mystrdup(optarg);
 				break;
 
-				/* password */
-			case 'P':
-				my_opts->password = mystrdup(optarg);
-				break;
-
 				/* display system tables */
 			case 'S':
 				my_opts->systables = true;
@@ -166,8 +160,6 @@ get_opts(int argc, char **argv, struct options * my_opts)
 					 "        -H host               connect to remote host\n"
 					"        -p port               host port to connect to\n"
 				   "        -U username           username to connect with\n"
-					  "        -P password           password for username\n"
-						"                              (see also $PGPASSWORD and ~/.pgpass)\n"
 					);
 				exit(1);
 				break;
@@ -275,22 +267,49 @@ PGconn *
 sql_conn(struct options * my_opts)
 {
 	PGconn	   *conn;
+	char	   *password = NULL;
+	bool		new_pass;
 
-	/* login */
-	conn = PQsetdbLogin(my_opts->hostname,
-						my_opts->port,
-						NULL,	/* options */
-						NULL,	/* tty */
-						my_opts->dbname,
-						my_opts->username,
-						my_opts->password);
-
-	/* deal with errors */
-	if (PQstatus(conn) != CONNECTION_OK)
+	/*
+	 * Start the connection.  Loop until we have a password if requested by
+	 * backend.
+	 */
+	do
 	{
-		fprintf(stderr, "%s: connection to database '%s' failed.\n", "oid2name", my_opts->dbname);
-		fprintf(stderr, "%s", PQerrorMessage(conn));
+		new_pass = false;
+		conn = PQsetdbLogin(my_opts->hostname,
+							my_opts->port,
+							NULL,	/* options */
+							NULL,	/* tty */
+							my_opts->dbname,
+							my_opts->username,
+							password);
+		if (!conn)
+		{
+			fprintf(stderr, "%s: could not connect to database %s\n",
+					"oid2name", my_opts->dbname);
+			exit(1);
+		}
 
+		if (PQstatus(conn) == CONNECTION_BAD &&
+			PQconnectionNeedsPassword(conn) &&
+			password == NULL &&
+			!feof(stdin))
+		{
+			PQfinish(conn);
+			password = simple_prompt("Password: ", 100, false);
+			new_pass = true;
+		}
+	} while (new_pass);
+
+	if (password)
+		free(password);
+
+	/* check to see that the backend connection was successfully made */
+	if (PQstatus(conn) == CONNECTION_BAD)
+	{
+		fprintf(stderr, "%s: could not connect to database %s: %s",
+				"oid2name", my_opts->dbname, PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
 	}

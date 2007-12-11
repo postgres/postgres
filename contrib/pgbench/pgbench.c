@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.74 2007/11/15 21:14:31 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.75 2007/12/11 02:31:49 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -94,7 +94,6 @@ char	   *pgport = "";
 char	   *pgoptions = NULL;
 char	   *pgtty = NULL;
 char	   *login = NULL;
-char	   *pwd = NULL;
 char	   *dbName;
 
 /* variable definitions */
@@ -188,8 +187,8 @@ static char *select_only = {
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-f filename][-l][-U login][-P password][-d][dbname]\n");
-	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor] [-F fillfactor] [-U login][-P password][-d][dbname]\n");
+	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-f filename][-l][-U login][-d][dbname]\n");
+	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor] [-F fillfactor] [-U login][-d][dbname]\n");
 }
 
 /* random number generator */
@@ -218,32 +217,50 @@ executeStatement(PGconn *con, const char *sql)
 static PGconn *
 doConnect(void)
 {
-	PGconn	   *con;
+	PGconn	   *conn;
+	static char *password = NULL;
+	bool		new_pass;
 
-	con = PQsetdbLogin(pghost, pgport, pgoptions, pgtty, dbName,
-					   login, pwd);
-	if (con == NULL)
+	/*
+	 * Start the connection.  Loop until we have a password if requested by
+	 * backend.
+	 */
+	do
 	{
-		fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
-		fprintf(stderr, "Memory allocatin problem?\n");
-		return (NULL);
+		new_pass = false;
+
+		conn = PQsetdbLogin(pghost, pgport, pgoptions, pgtty, dbName,
+							login, password);
+		if (!conn)
+		{
+			fprintf(stderr, "Connection to database \"%s\" failed\n",
+					dbName);
+			return NULL;
+		}
+
+		if (PQstatus(conn) == CONNECTION_BAD &&
+			PQconnectionNeedsPassword(conn) &&
+			password == NULL &&
+			!feof(stdin))
+		{
+			PQfinish(conn);
+			password = simple_prompt("Password: ", 100, false);
+			new_pass = true;
+		}
+	} while (new_pass);
+
+	/* check to see that the backend connection was successfully made */
+	if (PQstatus(conn) == CONNECTION_BAD)
+	{
+		fprintf(stderr, "Connection to database \"%s\" failed:\n%s",
+				dbName, PQerrorMessage(conn));
+		PQfinish(conn);
+		return NULL;
 	}
 
-	if (PQstatus(con) == CONNECTION_BAD)
-	{
-		fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
+	executeStatement(conn, "SET search_path = public");
 
-		if (PQerrorMessage(con))
-			fprintf(stderr, "%s", PQerrorMessage(con));
-		else
-			fprintf(stderr, "No explanation from the backend\n");
-
-		return (NULL);
-	}
-
-	executeStatement(con, "SET search_path = public");
-
-	return (con);
+	return conn;
 }
 
 /* throw away response from backend */
@@ -1258,7 +1275,7 @@ main(int argc, char **argv)
 
 	memset(state, 0, sizeof(*state));
 
-	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CNSlf:D:F:")) != -1)
+	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:CNSlf:D:F:")) != -1)
 	{
 		switch (c)
 		{
@@ -1332,9 +1349,6 @@ main(int argc, char **argv)
 				break;
 			case 'U':
 				login = optarg;
-				break;
-			case 'P':
-				pwd = optarg;
 				break;
 			case 'l':
 				use_log = true;
