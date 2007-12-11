@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.159 2007/12/11 15:19:05 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.160 2007/12/11 20:07:31 alvherre Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3001,7 +3001,7 @@ local0.*    /var/log/postgresql
             </row>
             <row>
              <entry><literal>%l</literal></entry>
-             <entry>Number of the log line for each process, starting at 1</entry>
+             <entry>Number of the log line for each session or process, starting at 1</entry>
              <entry>no</entry>
             </row>
             <row>
@@ -3167,7 +3167,7 @@ local0.*    /var/log/postgresql
         provides a convenient way to import log files into a database table. 
         This option emits log lines in comma-separated-value format,
         with these columns: timestamp with milliseconds, user name, database
-        name, session ID, host:port number, process ID, per-process line
+        name, process ID, host:port number, session ID, per-session or -process line
         number, command tag, session start time, virtual transaction ID,
         regular transaction id, error severity, SQL state code, error message,
         error message detail, hint, internal query that led to the error (if
@@ -3181,13 +3181,13 @@ local0.*    /var/log/postgresql
 <programlisting>
 CREATE TABLE postgres_log
 (
-  log_time timestamp with time zone,
+  log_time timestamp(3) with time zone,
   user_name text,
   database_name text,
-  session_id text,
-  connection_from text,
   process_id integer,
-  process_line_num bigint,
+  connection_from text,
+  session_id text,
+  session_line_num bigint,
   command_tag text,
   session_start_time timestamp with time zone,
   virtual_transaction_id text,
@@ -3203,7 +3203,7 @@ CREATE TABLE postgres_log
   query text,
   query_pos integer,
   location text,
-  PRIMARY KEY (session_id, process_line_num)
+  PRIMARY KEY (session_id, session_line_num)
 );
 </programlisting>
        </para>

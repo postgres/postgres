@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.199 2007/12/11 15:19:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.200 2007/12/11 20:07:31 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1667,7 +1667,6 @@ write_csvlog(ErrorData *edata)
 
 	initStringInfo(&buf);
 
-
 	/*
 	 * timestamp with milliseconds
 	 *
@@ -1715,8 +1714,9 @@ write_csvlog(ErrorData *edata)
 		appendCSVLiteral(&buf, MyProcPort->database_name);
 	appendStringInfoChar(&buf, ',');
 
-	/* session id */
-	appendStringInfo(&buf, "%lx.%x", (long) MyStartTime, MyProcPid);
+	/* Process id  */
+	if (MyProcPid != 0)
+		appendStringInfo(&buf, "%d", MyProcPid);
 	appendStringInfoChar(&buf, ',');
 
 	/* Remote host and port */
@@ -1730,9 +1730,8 @@ write_csvlog(ErrorData *edata)
 	}
 	appendStringInfoChar(&buf, ',');
 
-	/* Process id  */
-	if (MyProcPid != 0)
-		appendStringInfo(&buf, "%d", MyProcPid);
+	/* session id */
+	appendStringInfo(&buf, "%lx.%x", (long) MyStartTime, MyProcPid);
 	appendStringInfoChar(&buf, ',');
 
 	/* Line number */
