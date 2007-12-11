@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.33 2007/01/05 22:19:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.34 2007/12/11 02:08:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,32 +61,50 @@ vacuumlo(char *database, struct _param * param)
 	int			matched;
 	int			deleted;
 	int			i;
-	char	   *password = NULL;
+	static char *password = NULL;
+	bool		new_pass;
 
-	if (param->pg_prompt)
+	if (param->pg_prompt && password == NULL)
+		password = simple_prompt("Password: ", 100, false);
+
+	/*
+	 * Start the connection.  Loop until we have a password if requested by
+	 * backend.
+	 */
+	do
 	{
-		password = simple_prompt("Password: ", 32, 0);
-		if (!password)
-		{
-			fprintf(stderr, "failed to get password\n");
-			exit(1);
-		}
-	}
+		new_pass = false;
 
-	conn = PQsetdbLogin(param->pg_host,
-						param->pg_port,
-						NULL,
-						NULL,
-						database,
-						param->pg_user,
-						password
-		);
+		conn = PQsetdbLogin(param->pg_host,
+							param->pg_port,
+							NULL,
+							NULL,
+							database,
+							param->pg_user,
+							password);
+		if (!conn)
+		{
+			fprintf(stderr, "Connection to database \"%s\" failed\n",
+					database);
+			return -1;
+		}
+
+		if (PQstatus(conn) == CONNECTION_BAD &&
+			PQconnectionNeedsPassword(conn) &&
+			password == NULL &&
+			!feof(stdin))
+		{
+			PQfinish(conn);
+			password = simple_prompt("Password: ", 100, false);
+			new_pass = true;
+		}
+	} while (new_pass);
 
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "Connection to database '%s' failed:\n", database);
-		fprintf(stderr, "%s", PQerrorMessage(conn));
+		fprintf(stderr, "Connection to database \"%s\" failed:\n%s",
+				database, PQerrorMessage(conn));
 		PQfinish(conn);
 		return -1;
 	}
