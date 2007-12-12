@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.30 2007/07/21 04:02:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.31 2007/12/12 06:23:27 tgl Exp $ -->
 
  <chapter id="overview">
   <title>Overview of PostgreSQL Internals</title>
@@ -407,7 +407,7 @@
 
       <listitem>
        <para>
-        <firstterm>merge sort join</firstterm>: Each relation is sorted on the join
+        <firstterm>merge join</firstterm>: Each relation is sorted on the join
         attributes before the join starts. Then the two relations are
         scanned in parallel, and matching rows are combined to form
         join rows. This kind of join is more
