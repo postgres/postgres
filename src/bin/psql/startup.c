@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.144 2007/12/11 19:01:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.145 2007/12/12 21:41:47 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -140,6 +140,7 @@ main(int argc, char *argv[])
 	pset.cur_cmd_source = stdin;
 	pset.cur_cmd_interactive = false;
 
+	/* We rely on unmentioned fields of pset.popt to start out 0/false/NULL */
 	pset.popt.topt.format = PRINT_ALIGNED;
 	pset.popt.topt.border = 1;
 	pset.popt.topt.pager = 1;

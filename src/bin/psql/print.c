@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.94 2007/11/22 17:51:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.95 2007/12/12 21:41:47 tgl Exp $
  *
  * Note: we include postgres.h not postgres_fe.h so that we can include
  * catalog/pg_type.h, and thereby have access to INT4OID and similar macros.
@@ -1926,38 +1926,59 @@ printTable(const char *title,
 void
 printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *flog)
 {
+	int			ntuples;
 	int			nfields;
 	int			ncells;
 	const char **headers;
 	const char **cells;
 	char	  **footers;
 	char	   *align;
-	int			i;
+	int			i,
+				r,
+				c;
 
 	if (cancel_pressed)
 		return;
 
 	/* extract headers */
+	ntuples = PQntuples(result);
 	nfields = PQnfields(result);
 
 	headers = pg_local_calloc(nfields + 1, sizeof(*headers));
 
 	for (i = 0; i < nfields; i++)
+	{
 		headers[i] = (char *) mbvalidate((unsigned char *) PQfname(result, i),
 										 opt->topt.encoding);
+#ifdef ENABLE_NLS
+		if (opt->trans_headers)
+			headers[i] = _(headers[i]);
+#endif
+	}
 
 	/* set cells */
-	ncells = PQntuples(result) * nfields;
+	ncells = ntuples * nfields;
 	cells = pg_local_calloc(ncells + 1, sizeof(*cells));
 
-	for (i = 0; i < ncells; i++)
+	i = 0;
+	for (r = 0; r < ntuples; r++)
 	{
-		if (PQgetisnull(result, i / nfields, i % nfields))
-			cells[i] = opt->nullPrint ? opt->nullPrint : "";
-		else
-			cells[i] = (char *)
-				mbvalidate((unsigned char *) PQgetvalue(result, i / nfields, i % nfields),
-						   opt->topt.encoding);
+		for (c = 0; c < nfields; c++)
+		{
+			if (PQgetisnull(result, r, c))
+				cells[i] = opt->nullPrint ? opt->nullPrint : "";
+			else
+			{
+				cells[i] = (char *)
+					mbvalidate((unsigned char *) PQgetvalue(result, r, c),
+							   opt->topt.encoding);
+#ifdef ENABLE_NLS
+				if (opt->trans_columns && opt->trans_columns[c])
+					cells[i] = _(cells[i]);
+#endif
+			}
+			i++;
+		}
 	}
 
 	/* set footers */
@@ -1970,7 +1991,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 
 		footers = pg_local_calloc(2, sizeof(*footers));
 		footers[0] = pg_local_malloc(100);
-		total_records = opt->topt.prior_records + PQntuples(result);
+		total_records = opt->topt.prior_records + ntuples;
 		if (total_records == 1)
 			snprintf(footers[0], 100, _("(1 row)"));
 		else
@@ -2013,7 +2034,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 
 	free(headers);
 	free(cells);
-	if (footers)
+	if (footers && !opt->footers)
 	{
 		free(footers[0]);
 		free(footers);

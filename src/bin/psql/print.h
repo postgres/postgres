@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.33 2007/01/05 22:19:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.34 2007/12/12 21:41:47 tgl Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -67,7 +67,6 @@ void printTable(const char *title, const char *const * headers,
 		   const printTableOpt *opt, FILE *fout, FILE *flog);
 
 
-
 typedef struct _printQueryOpt
 {
 	printTableOpt topt;			/* the options above */
@@ -76,6 +75,8 @@ typedef struct _printQueryOpt
 	char	   *title;			/* override title */
 	char	  **footers;		/* override footer (default is "(xx rows)") */
 	bool		default_footer; /* print default footer if footers==NULL */
+	bool		trans_headers;	/* do gettext on column headers */
+	const bool *trans_columns;	/* trans_columns[i-1] => do gettext on col i */
 } printQueryOpt;
 
 /*
