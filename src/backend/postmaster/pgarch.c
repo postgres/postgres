@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.33 2007/11/24 21:37:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.34 2007/12/12 09:39:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,11 +484,35 @@ pgarch_archiveXlog(char *xlog)
 		 * Per the Single Unix Spec, shells report exit status > 128 when a
 		 * called command died on a signal.
 		 */
-		bool		signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 128;
+		int		lev = (WIFSIGNALED(rc) || WEXITSTATUS(rc) > 128) ? FATAL : LOG;
 
-		ereport(signaled ? FATAL : LOG,
-				(errmsg("archive command \"%s\" failed: return code %d",
-						xlogarchcmd, rc)));
+		if (WIFEXITED(rc))
+		{
+			ereport(lev,
+					(errmsg("archive command failed with exit code %d", WEXITSTATUS(rc)),
+					 errdetail("The failed archive command was: %s", xlogarchcmd)));
+		}
+		else if (WIFSIGNALED(rc))
+		{
+			ereport(lev, (
+#if defined(WIN32)
+						errmsg("archive command was terminated by exception 0x%X", WTERMSIG(rc)),
+						errhint("See C include file \"ntstatus.h\" for a description of the hexadecimal value."),
+#elif defined(HAVE_DECL_SYS_SIGLIST) && HAVE_DECL_SYS_SIGLIST
+						errmsg("archive command was terminated by signal %d: %s",
+							   WTERMSIG(rc),
+							   WTERMSIG(rc) < NSIG ? sys_siglist[WTERMSIG(rc)] : "(unknown)"),
+#else
+						errmsg("archive command was terminated by signal %d", WTERMSIG(exitstatus)),
+#endif
+						errdetail("The failed archive command was: %s", xlogarchcmd)));
+		}
+		else
+		{
+			ereport(lev,
+					(errmsg("archive command exited with unrecognized status %d", rc),
+					 errdetail("The failed archive command was: %s", xlogarchcmd)));
+		}
 
 		return false;
 	}
