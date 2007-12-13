@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.39 2007/11/28 15:42:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.40 2007/12/13 06:32:47 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -2376,7 +2376,7 @@ CREATE TEXT SEARCH DICTIONARY thesaurus_simple (
 
 <programlisting>
 ALTER TEXT SEARCH CONFIGURATION russian
-    ADD MAPPING FOR asciiword, asciihword, hword_asciipart WITH thesaurus_simple;
+    ALTER MAPPING FOR asciiword, asciihword, hword_asciipart WITH thesaurus_simple;
 </programlisting>
    </para>
 
@@ -2405,7 +2405,7 @@ CREATE TEXT SEARCH DICTIONARY thesaurus_astro (
 );
 
 ALTER TEXT SEARCH CONFIGURATION russian
-    ADD MAPPING FOR asciiword, asciihword, hword_asciipart WITH thesaurus_astro, english_stem;
+    ALTER MAPPING FOR asciiword, asciihword, hword_asciipart WITH thesaurus_astro, english_stem;
 </programlisting>
 
     Now we can see how it works.
