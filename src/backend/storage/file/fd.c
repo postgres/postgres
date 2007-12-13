@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.141 2007/11/15 21:14:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.142 2007/12/13 11:55:44 petere Exp $
  *
  * NOTES:
  *
@@ -1003,7 +1003,7 @@ FileClose(File file)
 			{
 				if (filestats.st_size >= log_temp_files)
 					ereport(LOG,
-							(errmsg("temp file: path \"%s\" size %lu",
+							(errmsg("temporary file: path \"%s\", size %lu",
 									vfdP->fileName,
 									(unsigned long) filestats.st_size)));
 			}
