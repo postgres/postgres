@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.416 2007/12/06 17:47:25 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.417 2007/12/13 13:22:05 alvherre Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1386,7 +1386,7 @@
         <literal><function>convert_to</function>(<parameter>string</parameter> <type>text</type>,
         <parameter>dest_encoding</parameter> <type>name</type>)</literal>
        </entry>
-       <entry><type>text</type></entry>
+       <entry><type>bytea</type></entry>
        <entry>
         Convert string to <parameter>dest_encoding</parameter>.
        </entry>
