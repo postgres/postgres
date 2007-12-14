@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.102 2007/12/05 10:06:08 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.103 2007/12/14 13:20:30 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -161,9 +161,15 @@ JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/styl
 	jadetex $<
 
 # PostScript from TeX
+postgres.ps:
+	$(error Use 'gmake postgres-US.ps' or 'gmake postgres-A4.ps')
+	
 %.ps: %.dvi
 	dvips -o $@ $<
 
+postgres.pdf:
+	$(error Use 'gmake postgres-US.pdf' or 'gmake postgres-A4.pdf')
+	
 %.pdf: %.tex-pdf
 	@rm -f $*.aux $*.log $*.out
 # multiple runs are necessary to create proper intra-document links
