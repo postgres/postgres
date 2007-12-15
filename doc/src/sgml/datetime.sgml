@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.57 2007/12/02 22:33:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.58 2007/12/15 01:18:33 tgl Exp $ -->
 
  <appendix id="datetime-appendix">
   <title>Date/Time Support</title>
@@ -470,20 +470,8 @@
   <title>History of Units</title>
 
   <para>
-   The Julian Date was invented by the French scholar
-   Joseph Justus Scaliger (1540-1609)
-   and probably takes its name from Scaliger's father,
-   the Italian scholar Julius Caesar Scaliger (1484-1558).
-   Astronomers have used the Julian period to assign a unique number to
-   every day since 1 January 4713 BC. This is the so-called Julian Date
-   (JD). JD 0 designates the 24 hours from noon UTC on 1 January 4713 BC
-   to noon UTC on 2 January 4713 BC.
-  </para>
-
-   <para>
-   The <quote>Julian Date</quote> is different from the <quote>Julian
-   Calendar</quote>.  The Julian calendar
-   was introduced by Julius Caesar in 45 BC. It was in common use
+   The Julian calendar was introduced by Julius Caesar in 45 BC.
+   It was in common use in the Western world
    until the year 1582, when countries started changing to the Gregorian
    calendar.  In the Julian calendar, the tropical year is
    approximated as 365 1/4 days = 365.25 days. This gives an error of
@@ -529,7 +517,7 @@
    4 October.
    This was observed in Italy, Poland, Portugal, and Spain. Other Catholic
    countries followed shortly after, but Protestant countries were
-   reluctant to change, and the Greek orthodox countries didn't change
+   reluctant to change, and the Greek Orthodox countries didn't change
    until the start of the 20th century.
 
    The reform was observed by Great Britain and Dominions (including what is
@@ -549,17 +537,17 @@ $ <userinput>cal 9 1752</userinput>
 </screen>
   </para>
 
-   <note>
-    <para>
-     The SQL standard states that <quote>Within the definition of a
-     <quote>datetime literal</quote>, the <quote>datetime
-     value</quote>s are constrained by the natural rules for dates and
-     times according to the Gregorian calendar</quote>.  Dates between
-     1752-09-03 and 1752-09-13, although eliminated in some countries
-     by Papal fiat, conform to <quote>natural rules</quote> and are
-     hence valid dates.
-    </para>
-   </note>
+  <para>
+   The SQL standard states that <quote>Within the definition of a
+   <quote>datetime literal</quote>, the <quote>datetime
+   value</quote>s are constrained by the natural rules for dates and
+   times according to the Gregorian calendar</quote>.  Dates between
+   1582-10-05 and 1582-10-14, although eliminated in some countries
+   by Papal fiat, conform to <quote>natural rules</quote> and are
+   hence valid dates.  <productname>PostgreSQL</> follows the SQL
+   standard's lead by counting dates exclusively in the Gregorian
+   calendar, even for years before that calendar was in use.
+  </para>
 
   <para>
    Different calendars have been developed in various parts of the
@@ -567,12 +555,38 @@ $ <userinput>cal 9 1752</userinput>
 
    For example,
    the beginnings of the Chinese calendar can be traced back to the 14th
-   century BC. Legend has it that the Emperor Huangdi invented the
+   century BC. Legend has it that the Emperor Huangdi invented that
    calendar in 2637 BC.
    
    The People's Republic of China uses the Gregorian calendar
    for civil purposes. The Chinese calendar is used for determining
    festivals.
   </para>
+
+  <para>
+   The <quote>Julian Date</quote> is unrelated to the <quote>Julian
+   calendar</quote>.  
+   The Julian Date system was invented by the French scholar
+   Joseph Justus Scaliger (1540-1609)
+   and probably takes its name from Scaliger's father,
+   the Italian scholar Julius Caesar Scaliger (1484-1558).
+   In the Julian Date system, each day has a sequential number, starting
+   from JD 0 (which is sometimes called <emphasis>the</> Julian Date).
+   JD 0 corresponds to 1 January 4713 BC in the Julian calendar, or
+   24 November 4714 BC in the Gregorian calendar.  Julian Date counting
+   is most often used by astronomers for labeling their nightly observations,
+   and therefore a date runs from noon UTC to the next noon UTC, rather than
+   from midnight to midnight: JD 0 designates the 24 hours from noon UTC on
+   1 January 4713 BC to noon UTC on 2 January 4713 BC.
+  </para>
+
+  <para>
+   Although <productname>PostgreSQL</> supports Julian Date notation for
+   input and output of dates (and also uses them for some internal datetime
+   calculations), it does not observe the nicety of having dates run from
+   noon to noon.  <productname>PostgreSQL</> treats a Julian Date as running
+   from midnight to midnight.
+  </para>
+
  </sect1>
 </appendix>
