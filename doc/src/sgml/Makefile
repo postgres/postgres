@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.104 2007/12/14 14:11:02 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.105 2007/12/15 10:28:21 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -162,13 +162,13 @@ JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/styl
 
 # PostScript from TeX
 postgres.ps:
-	$(error Use "$(MAKE) postgres-A4.ps" or "$(MAKE) postgres-US.ps")
+	$(error Invalid target;  use postgres-A4.ps or postgres-US.ps as targets)
 	
 %.ps: %.dvi
 	dvips -o $@ $<
 
 postgres.pdf:
-	$(error Use "$(MAKE) postgres-A4.pdf" or "$(MAKE) postgres-US.pdf")
+	$(error Invalid target;  use postgres-A4.pdf or postgres-US.pdf as targets)
 	
 %.pdf: %.tex-pdf
 	@rm -f $*.aux $*.log $*.out
