@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.109 2007/11/28 22:35:54 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.110 2007/12/15 15:41:02 adunstan Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1257,7 +1257,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
       To configure standalone backups you should use a switch file. If the
       file exists then archives are made, otherwise archiving is ignored.
 <programlisting>
-archive_command = 'test -f /var/lib/pgsql/backup_in_progress &amp;&amp; cp -i %p /var/lib/pgsql/archive/%f &lt;/dev/null'
+archive_command = 'if [ -f /var/lib/pgsql/backup_in_progress ]; then cp -i %p /var/lib/pgsql/archive/%f &lt;/dev/null ; fi'
 </programlisting>
       Backup can then be taken using a script like the following:
 <programlisting>
