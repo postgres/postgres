@@ -22,7 +22,7 @@ all: $(NAME)
 install: all install-lib
 
 pgevent.dll: $(OBJS) pgevent.def
-	dllwrap --def pgevent.def -o $(NAME) $(OBJS)
+	$(DLLWRAP) --def pgevent.def -o $(NAME) $(OBJS)
 
 pgmsgevent.o: pgmsgevent.rc win32ver.rc
 	windres pgmsgevent.rc -o pgmsgevent.o --include-dir=$(top_builddir)/src/include
