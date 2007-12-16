@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.570 2007/12/16 07:19:32 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.571 2007/12/16 13:05:30 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -204,7 +204,7 @@ do it for earlier branch release files.
     <listitem>
      <para>
       Heap-Only Tuples (<acronym>HOT</>) accelerate space reuse for
-      most <command>UPDATE</>s
+      most <command>UPDATE</>s and <command>DELETE</>s
      </para>
     </listitem>
 
@@ -736,7 +736,8 @@ current_date &lt; 2017-11-17
      <listitem>
       <para>
        Heap-Only Tuples (<acronym>HOT</>) accelerate space reuse for most
-       <command>UPDATE</>s (Pavan Deolasee, with ideas from many others)
+       <command>UPDATE</>s and <command>DELETE</>s (Pavan Deolasee, with
+       ideas from many others)
       </para>
 
       <para>
@@ -744,7 +745,7 @@ current_date &lt; 2017-11-17
        behind, as do failed <command>INSERT</>s.  Previously only
        <command>VACUUM</> could reclaim space taken by dead tuples. With
        <acronym>HOT</> dead tuple space can be reclaimed at the time of
-       <command>UPDATE</> or <command>INSERT</> if no changes are made to
+       <command>INSERT</> or <command>UPDATE</> if no changes are made to
        indexed columns.  This allows for more consistent performance.
        Also, <acronym>HOT</> avoids adding duplicate index entries.
       </para>
