@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.50 2007/12/16 14:03:32 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.51 2007/12/16 14:05:12 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -71,7 +71,7 @@
    Computer\Open\{select disk
    drive}\Properties\Hardware\Properties\Policies\Enable write caching on
    the disk</>.  Also on Windows, <literal>fsync</> and
-   <literal>fsync_writethrough</> never use write caching.
+   <literal>fsync_writethrough</> never do write caching.
   </para>
 
   <para>
