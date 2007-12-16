@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.386 2007/11/28 15:42:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.387 2007/12/16 10:17:13 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1350,7 +1350,8 @@ sysctl -w vm.overcommit_memory=2
   </para>
 
   <para>
-   Alternatively, you can send the signal directly using <command>kill</>.
+   Alternatively, you can send the signal directly using <command>kill</>
+   (or <command>pg_ctl kill TERM [process id]</> on <productname>Windows</>).
    The <acronym>PID</> of the <command>postgres</command> process can be
    found using the <command>ps</command> program, or from the file
    <filename>postmaster.pid</filename> in the data directory. For
