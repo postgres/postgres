@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Wed Dec 12 02:06:19 EST 2007
+Last updated:           Sun Dec 16 20:40:44 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1216,6 +1216,9 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Consider increasing NUM_CLOG_BUFFERS
   </li><li>Consider having the background writer update the transaction status
   hint bits before writing out the page
+<p>  Implementing this requires the background writer to have access to system
+  catalogs and the transaction status log.
+</p>
   </li><li>Allow user configuration of TOAST thresholds
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-02/msg00213.php">http://archives.postgresql.org/pgsql-hackers/2007-02/msg00213.php</a>
 </p>
