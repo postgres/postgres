@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.111 2007/12/17 04:30:05 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.112 2007/12/17 09:03:52 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1290,7 +1290,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
       <literal>on</>, and set up an <varname>archive_command</> that performs
       archiving only when a <quote>switch file</> exists.  For example:
 <programlisting>
-archive_command = 'if [ -f /var/lib/pgsql/backup_in_progress ]; then cp -i %p /var/lib/pgsql/archive/%f &lt;/dev/null ; fi'
+archive_command = 'test ! -f /var/lib/pgsql/backup_in_progress || cp -i %p /var/lib/pgsql/archive/%f &lt; /dev/null'
 </programlisting>
       This command will perform archiving when
       <filename>/var/lib/pgsql/backup_in_progress</> exists, and otherwise
