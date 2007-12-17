@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.389 2007/12/16 11:24:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.390 2007/12/17 13:48:31 alvherre Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1257,10 +1257,11 @@ Out of Memory: Killed process 12345 (postgres).
     On Linux 2.6 and later, an additional measure is to modify the
     kernel's behavior so that it will not <quote>overcommit</> memory.
     Although this setting will not prevent the OOM killer from
-    invoking altogether, it will lower the chances significantly and
+    being invoked altogether, it will lower the chances significantly and
     will therefore lead to more robust system behavior.  (It might also
-    cause fork() to fail when the machine appears to have available memory
-    because of other applications with careless memory allocation.) This
+    cause <function>fork()</> to fail when the machine appears to have
+	available memory but it is actually reserved
+    to other applications with careless memory allocation.) This
     is done by selecting strict overcommit mode via
     <command>sysctl</command>:
 <programlisting>
