@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.390 2007/12/17 13:48:31 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.391 2007/12/17 13:54:10 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1260,7 +1260,7 @@ Out of Memory: Killed process 12345 (postgres).
     being invoked altogether, it will lower the chances significantly and
     will therefore lead to more robust system behavior.  (It might also
     cause <function>fork()</> to fail when the machine appears to have
-	available memory but it is actually reserved
+    available memory but it is actually reserved
     to other applications with careless memory allocation.) This
     is done by selecting strict overcommit mode via
     <command>sysctl</command>:
