@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.391 2007/12/17 13:54:10 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.392 2007/12/17 14:00:52 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1351,11 +1351,8 @@ sysctl -w vm.overcommit_memory=2
   <para>
    The <xref linkend="app-pg-ctl"> program provides a convenient
    interface for sending these signals to shut down the server.
-  </para>
-
-  <para>
    Alternatively, you can send the signal directly using <command>kill</>
-   (or <command>pg_ctl kill TERM [process id]</> on <productname>Windows</>).
+   on non-Windows systems.
    The <acronym>PID</> of the <command>postgres</command> process can be
    found using the <command>ps</command> program, or from the file
    <filename>postmaster.pid</filename> in the data directory. For
