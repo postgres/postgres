@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.93 2006/06/26 12:32:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.93.2.1 2007/12/18 00:04:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1456,7 +1456,7 @@ path_recv(PG_FUNCTION_ARGS)
 
 	closed = pq_getmsgbyte(buf);
 	npts = pq_getmsgint(buf, sizeof(int32));
-	if (npts < 0 || npts >= (int32) ((INT_MAX - offsetof(PATH, p[0])) / sizeof(Point)))
+	if (npts <= 0 || npts >= (int32) ((INT_MAX - offsetof(PATH, p[0])) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 			 errmsg("invalid number of points in external \"path\" value")));
@@ -3484,7 +3484,7 @@ poly_recv(PG_FUNCTION_ARGS)
 	int			size;
 
 	npts = pq_getmsgint(buf, sizeof(int32));
-	if (npts < 0 || npts >= (int32) ((INT_MAX - offsetof(POLYGON, p[0])) / sizeof(Point)))
+	if (npts <= 0 || npts >= (int32) ((INT_MAX - offsetof(POLYGON, p[0])) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 		  errmsg("invalid number of points in external \"polygon\" value")));
