@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.43 2007/12/02 22:33:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.44 2007/12/19 12:29:36 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -58,12 +58,11 @@
   Before you build, edit the file <filename>config.pl</filename> to reflect the
   configuration options you want set, including the paths to libraries used.
   If you need to set any other environment variables, create a file called
-  <filename>buildenv.bat</filename> and put the required commands there. For
+  <filename>buildenv.pl</filename> and put the required commands there. For
   example, to add the path for bison when it's not in the PATH, create a file
   containing:
   <screen>
-   @ECHO OFF
-   SET PATH=%PATH%;c:\some\where\bison\bin
+   $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
   </screen>
  </para>
 
@@ -209,10 +208,10 @@
     </userinput>
    </screen>
    To change the default build configuration to debug, put the following
-   in the <filename>buildenv.bat</filename> file:
+   in the <filename>buildenv.pl</filename> file:
    <screen>
     <userinput>
-     set CONFIG=Debug
+     $ENV{CONFIG}="Debug";
     </userinput>
    </screen>
   </para>
@@ -263,7 +262,7 @@
    required parts first. Also, make sure that the DLLs required to load all
    parts of the system (such as the Perl and Python DLLs for the procedural
    languages) are present in the system path. If they are not, set it through
-   the <filename>buildenv.bat</filename> file. To run the tests, run one of
+   the <filename>buildenv.pl</filename> file. To run the tests, run one of
    the following commands from the <filename>src\tools\msvc</filename>
    directory:
    <screen>
@@ -339,11 +338,10 @@
      </para></listitem>
     </varlistentry>
    </variablelist>
-   Edit the <filename>buildenv.bat</filename> file, and add a variable for the
+   Edit the <filename>buildenv.pl</filename> file, and add a variable for the
    location of the root directory, for example:
    <screen>
-    @ECHO OFF
-    SET DOCROOT=c:\docbook
+    $ENV{DOCROOT}='c:\docbook';
    </screen>
    To build the documentation, run the command
    <filename>builddoc.bat</filename>. Note that this will actually run the

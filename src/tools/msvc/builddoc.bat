@@ -1,7 +1,7 @@
 @echo off
-REM Adjust path for your docbook installation in buildenv.bat
+REM Adjust path for your docbook installation in buildenv.pl
 
-REM $PostgreSQL: pgsql/src/tools/msvc/builddoc.bat,v 1.5 2007/03/17 14:01:01 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/builddoc.bat,v 1.6 2007/12/19 12:29:36 mha Exp $
 
 SETLOCAL
 SET STARTDIR=%CD%
@@ -10,7 +10,12 @@ SET DSSSL=docbook-dsssl-1.79
 
 IF EXIST ..\msvc IF EXIST ..\..\..\src cd ..\..\..
 IF NOT EXIST doc\src\sgml\version.sgml goto noversion
-IF EXIST src\tools\msvc\buildenv.bat CALL src\tools\msvc\buildenv.bat
+
+IF NOT EXIST src\tools\msvc\buildenv.pl goto nobuildenv
+perl -e "require 'src/tools/msvc/buildenv.pl'; while(($k,$v) = each %ENV) { print qq[\@SET $k=$v\n]; }" > bldenv.bat
+CALL bldenv.bat
+del bldenv.bat
+:nobuildenv 
 
 IF NOT EXIST %DOCROOT%\%OPENJADE% SET NF=OpenJade
 IF NOT EXIST %DOCROOT%\docbook SET NF=docbook

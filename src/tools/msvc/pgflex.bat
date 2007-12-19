@@ -1,7 +1,11 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/pgflex.bat,v 1.4 2007/03/17 14:01:01 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/pgflex.bat,v 1.5 2007/12/19 12:29:36 mha Exp $
 
-if exist src\tools\msvc\buildenv.bat call src\tools\msvc\buildenv.bat
+IF NOT EXIST src\tools\msvc\buildenv.pl goto nobuildenv
+perl -e "require 'src/tools/msvc/buildenv.pl'; while(($k,$v) = each %ENV) { print qq[\@SET $k=$v\n]; }" > bldenv.bat
+CALL bldenv.bat
+del bldenv.bat
+:nobuildenv 
 
 flex -V > NUL
 if errorlevel 1 goto noflex

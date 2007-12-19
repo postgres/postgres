@@ -1,7 +1,11 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/pgbison.bat,v 1.7 2007/07/07 07:43:21 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/pgbison.bat,v 1.8 2007/12/19 12:29:36 mha Exp $
 
-if exist src\tools\msvc\buildenv.bat call src\tools\msvc\buildenv.bat
+IF NOT EXIST src\tools\msvc\buildenv.pl goto nobuildenv
+perl -e "require 'src/tools/msvc/buildenv.pl'; while(($k,$v) = each %ENV) { print qq[\@SET $k=$v\n]; }" > bldenv.bat
+CALL bldenv.bat
+del bldenv.bat
+:nobuildenv 
 
 SET BV=
 for /F "tokens=4 usebackq" %%f in (`bison -V`) do if "!BV!"=="" SET BV=%%f
