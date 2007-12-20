@@ -6,14 +6,18 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.22 2007/11/30 11:16:43 mha Exp $
+ * $PostgreSQL: pgsql/src/port/open.c,v 1.23 2007/12/20 20:27:53 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifdef WIN32
 
-#include "c.h"
+#ifndef FRONTEND
+#include "postgres.h"
+#else
+#include "postgres_fe.h"
+#endif
 
 #include <windows.h>
 #include <fcntl.h>
@@ -58,8 +62,9 @@ int
 pgwin32_open(const char *fileName, int fileFlags,...)
 {
 	int			fd;
-	HANDLE		h;
+	HANDLE		h = INVALID_HANDLE_VALUE;
 	SECURITY_ATTRIBUTES sa;
+	int			loops = 0;
 
 	/* Check that we can handle the request */
 	assert((fileFlags & ((O_RDONLY | O_WRONLY | O_RDWR) | O_APPEND |
@@ -71,7 +76,7 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
 
-	if ((h = CreateFile(fileName,
+	while ((h = CreateFile(fileName,
 	/* cannot use O_RDONLY, as it == 0 */
 					  (fileFlags & O_RDWR) ? (GENERIC_WRITE | GENERIC_READ) :
 					 ((fileFlags & O_WRONLY) ? GENERIC_WRITE : GENERIC_READ),
@@ -88,7 +93,32 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 						((fileFlags & O_DSYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
 						NULL)) == INVALID_HANDLE_VALUE)
 	{
-		_dosmaperr(GetLastError());
+		/*
+		 * Sharing violation or locking error can indicate antivirus, backup
+		 * or similar software that's locking the file. Try again for 30 seconds
+		 * before giving up.
+		 */
+		DWORD err = GetLastError();
+		if (err == ERROR_SHARING_VIOLATION || 
+			err == ERROR_LOCK_VIOLATION)
+		{
+			pg_usleep(100000);
+			loops++;
+
+#ifndef FRONTEND
+			if (loops == 50)
+				ereport(LOG,
+				    (errmsg("could not open file \"%s\": %s", fileName, 
+					  (err == ERROR_SHARING_VIOLATION)?_("sharing violation"):_("lock violation")),
+					 errdetail("Continuing to retry for 30 seconds."),
+					 errhint("You may have antivirus, backup or similar software interfering with the database.")));
+#endif
+
+			if (loops < 300)
+				continue;
+		}
+
+		_dosmaperr(err);
 		return -1;
 	}
 
