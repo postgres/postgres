@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.418 2007/12/15 01:18:34 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.419 2007/12/21 03:37:18 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8127,7 +8127,7 @@ SELECT xmlelement(name foo, xmlattributes('xyz' as bar),
      <type>bytea</type>) will be represented in base64 or hex
      encoding, depending on the setting of the configuration parameter
      <xref linkend="guc-xmlbinary">.  The particular behavior for
-     individual data types is expected evolve in order to align the
+     individual data types is expected to evolve in order to align the
      SQL and PostgreSQL data types with the XML Schema specification,
      at which point a more precise description will appear.
     </para>
