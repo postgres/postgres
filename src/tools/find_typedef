@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/find_typedef,v 1.7 2007/12/21 14:20:36 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/find_typedef,v 1.8 2007/12/21 21:02:41 momjian Exp $
 
 # This script attempts to find all typedef's in the postgres binaries
 # by using 'nm' to report all typedef debugging symbols.
@@ -12,8 +12,23 @@
 # 
 # Ignore the nm errors about a file not being a binary file.
 #
-# Remember, debugging symbols are your friends.
+# It gets typedefs by reading "STABS":
 #
+#    http://www.informatik.uni-frankfurt.de/doc/texi/stabs_toc.html
+#
+#    objdump:
+#       -G, --stabs  Display (in raw form) any STABS info in the file
+#
+#       --stabs
+#         Display the contents of the .stab, .stab.index, and
+#         .stab.excl sections from an ELF file.  This is only
+#         useful on systems (such as Solaris  2.0)  in  which
+#         .stab debugging symbol-table entries are carried in
+#         an ELF section.  In most other file formats, debug-
+#         ging  symbol-table  entries  are  interleaved  with
+#         linkage symbols, and are visible in the --syms out-
+#         put.
+
 
 if [ "$#" -eq 0 -o ! -d "$1" ]
 then	echo "Usage:  $0 postgres_binary_directory [...]" 1>&2
@@ -23,10 +38,7 @@ fi
 for DIR
 do
 	objdump --stabs "$DIR"/* |
-	grep "LSYM" |
-	awk '{print $7}' |
-	grep ':t' |
-	sed 's/^\([^:]*\).*$/\1/' |
+	awk ' $2 == "LSYM" && $7 ~ /:[tT]/ {sub(":.*", "", $7); print $7}' |
 	grep -v ' ' # some typedefs have spaces, remove them
 done |
 sort |
