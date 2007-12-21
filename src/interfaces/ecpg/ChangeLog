@@ -2268,6 +2268,10 @@ Wed, 10 Oct 2007 08:31:44 +0200
 Tue, 06 Nov 2007 09:29:22 +0100
 
 	- Fixed two parser bugs.
+
+Fri, 21 Dec 2007 15:30:39 +0100
+
+	- Fixed a few minor glitches pointed out by splint.
 	- Set pgtypes library version to 3.0.
 	- Set compat library version to 3.0.
 	- Set ecpg library version to 6.0.

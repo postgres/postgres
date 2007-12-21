@@ -1,10 +1,10 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.42 2007/08/14 10:01:53 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.43 2007/12/21 14:33:20 meskes Exp $ */
 
 #include "postgres_fe.h"
 
 #include "extern.h"
 
-struct variable *allvariables = NULL;
+static struct variable *allvariables = NULL;
 
 struct variable *
 new_variable(const char *name, struct ECPGtype * type, int brace_level)

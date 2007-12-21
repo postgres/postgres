@@ -1,7 +1,7 @@
 /*
  * functions needed for descriptor handling
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.25 2007/02/07 00:52:35 petere Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.26 2007/12/21 14:33:20 meskes Exp $
  *
  * since descriptor might be either a string constant or a string var
  * we need to check for a constant if we expect a constant
@@ -15,7 +15,7 @@
  * assignment handling function (descriptor)
  */
 
-struct assignment *assignments;
+static struct assignment *assignments;
 
 void
 push_assignment(char *var, enum ECPGdtype value)
@@ -43,7 +43,7 @@ drop_assignments(void)
 }
 
 static void
-ECPGnumeric_lvalue(FILE *f, char *name)
+ECPGnumeric_lvalue(char *name)
 {
 	const struct variable *v = find_variable(name);
 
@@ -156,7 +156,7 @@ output_get_descr_header(char *desc_name)
 	for (results = assignments; results != NULL; results = results->next)
 	{
 		if (results->value == ECPGd_count)
-			ECPGnumeric_lvalue(yyout, results->variable);
+			ECPGnumeric_lvalue(results->variable);
 		else
 			mmerror(PARSE_ERROR, ET_WARNING, "unknown descriptor header item '%d'", results->value);
 	}
@@ -205,7 +205,7 @@ output_set_descr_header(char *desc_name)
 	for (results = assignments; results != NULL; results = results->next)
 	{
 		if (results->value == ECPGd_count)
-			ECPGnumeric_lvalue(yyout, results->variable);
+			ECPGnumeric_lvalue(results->variable);
 		else
 			mmerror(PARSE_ERROR, ET_WARNING, "unknown descriptor header item '%d'", results->value);
 	}
@@ -317,7 +317,7 @@ struct variable *
 descriptor_variable(const char *name, int input)
 {
 	static char descriptor_names[2][MAX_DESCRIPTOR_NAMELEN];
-	static const struct ECPGtype descriptor_type = {ECPGt_descriptor, NULL};
+	static const struct ECPGtype descriptor_type = {ECPGt_descriptor, NULL, NULL, {NULL}, 0};
 	static const struct variable varspace[2] = {
 		{descriptor_names[0], (struct ECPGtype *) & descriptor_type, 0, NULL},
 		{descriptor_names[1], (struct ECPGtype *) & descriptor_type, 0, NULL}
