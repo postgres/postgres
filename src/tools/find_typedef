@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/find_typedef,v 1.6 2006/03/11 04:38:41 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/find_typedef,v 1.7 2007/12/21 14:20:36 momjian Exp $
 
 # This script attempts to find all typedef's in the postgres binaries
 # by using 'nm' to report all typedef debugging symbols.
@@ -33,5 +33,4 @@ sort |
 uniq |
 # these are used both for typedefs and variable names
 # so do not include them
-egrep -v '^(date|interval|timestamp|ANY)$' |
-sed 's/\(.*\)/-T\1 \\/'
+egrep -v '^(date|interval|timestamp|ANY)$'
