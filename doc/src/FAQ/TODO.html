@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sun Dec 16 20:40:44 EST 2007
+Last updated:           Fri Dec 21 16:20:21 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1091,13 +1091,6 @@ first.  There is also a developer's wiki at<br/>
   Solaris) might benefit from threading.  Also explore the idea of
   a single session using multiple threads to execute a statement faster.
 </p>
-  </li><li>Experiment with multi-threaded backend better resource utilization
-<p>  This would allow a single query to make use of multiple CPU's or
-  multiple I/O channels simultaneously.  One idea is to create a
-  background reader that can pre-fetch sequential and index scan
-  pages needed by other backends.  This could be expanded to allow
-  concurrent reads from multiple devices in a partitioned table.
-</p>
   </li><li>Add connection pooling
 <p>  It is unclear if this should be done inside the backend code or done
   by something external like pgpool. The passing of file descriptors to
@@ -1230,6 +1223,13 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Consider reducing memory used for shared buffer reference count
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php</a>
+</p>
+  </li><li>Experiment with multi-threaded backend better resource utilization
+<p>  This would allow a single query to make use of multiple CPU's or
+  multiple I/O channels simultaneously.  One idea is to create a
+  background reader that can pre-fetch sequential and index scan
+  pages needed by other backends.  This could be expanded to allow
+  concurrent reads from multiple devices in a partitioned table.
 </p>
 </li></ul>
 <h1><a name="section_19">Source Code</a></h1>
