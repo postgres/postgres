@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.248 2007/12/09 19:01:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.249 2007/12/25 04:00:43 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -5151,16 +5151,33 @@ defaultNoticeProcessor(void *arg, const char *message)
   </para>
 
   <para>
-   If the server demands a client certificate,
+   To verify the server certificate is trustworthy, place certificates of
+   the certificate authorities (<acronym>CA</acronym>) you trust in the
+   file <filename>~/.postgresql/root.crt</> in the user's home directory.
+   (On Microsoft Windows the file is named
+   <filename>%APPDATA%\postgresql\root.crt</filename>.)
+   <application>libpq</application> will then verify that the server's
+   certificate is signed by one of the trusted certificate authorities.
+   The SSL connection will fail if the server does not present a trusted
+   certificate.  Certificate Revocation List (CRL) entries are also checked
+   if the file <filename>~/.postgresql/root.crl</filename> exists
+   (<filename>%APPDATA%\postgresql\root.crl</filename> on Microsoft
+   Windows).
+  </para>
+
+  <para>
+   If the server requests a trusted client certificate,
    <application>libpq</application> will send the certificate stored in
-   file <filename>~/.postgresql/postgresql.crt</> within the user's home
-   directory.  A matching private key file
-   <filename>~/.postgresql/postgresql.key</> must also be present, unless
-   the secret key for the certificate is stored in a hardware token, as
-   specified by <envar>PGSSLKEY</envar>.  (On Microsoft Windows these
-   files are named <filename>%APPDATA%\postgresql\postgresql.crt</filename>
-   and <filename>%APPDATA%\postgresql\postgresql.key</filename>.) The
-   private key file must not be world-readable.
+   file <filename>~/.postgresql/postgresql.crt</> in the user's home
+   directory.  The certificate must be signed by one of the certificate
+   authorities (<acronym>CA</acronym>) trusted by the server.  A matching
+   private key file <filename>~/.postgresql/postgresql.key</> must also
+   be present, unless the secret key for the certificate is stored in a
+   hardware token, as specified by <envar>PGSSLKEY</envar>.  (On Microsoft
+   Windows these files are named
+   <filename>%APPDATA%\postgresql\postgresql.crt</filename> and
+   <filename>%APPDATA%\postgresql\postgresql.key</filename>.) The private
+   key file must not be world-readable.
   </para>
 
   <para>
@@ -5176,27 +5193,12 @@ defaultNoticeProcessor(void *arg, const char *message)
   </para>
 
   <para>
-   If the file <filename>~/.postgresql/root.crt</> is present in the user's
-   home directory, <application>libpq</application> will use the
-   certificate list stored therein to verify the server's certificate.
-   (On Microsoft Windows the file is named
-   <filename>%APPDATA%\postgresql\root.crt</filename>.) The SSL connection
-   will fail if the server does not present a certificate; therefore, to
-   use this feature the server must have a <filename>server.crt</> file.
-   Certificate Revocation List (CRL) entries are also checked if the file
-   <filename>~/.postgresql/root.crl</filename> exists
-   (<filename>%APPDATA%\postgresql\root.crl</filename> on Microsoft
-   Windows).
-  </para>
-
-  <para>
    If you are using <acronym>SSL</> inside your application (in addition
    to inside <application>libpq</application>), you can use
    <function>PQinitSSL(int)</> to tell <application>libpq</application>
    that the <acronym>SSL</> library has already been initialized by your
    application.
   </para>
-
 
  </sect1>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.394 2007/12/23 03:10:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.395 2007/12/25 04:00:44 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1373,6 +1373,42 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   </important>
  </sect1>
 
+ <sect1 id="preventing-server-spoofing">
+  <title>Preventing Server Spoofing</title>
+
+  <indexterm zone="preventing-server-spoofing">
+   <primary>server spoofing</primary>
+  </indexterm>
+
+  <para>
+   While the server is running, it is not possible for a malicious user
+   to interfere with client/server communications.  However, when the
+   server is down it is possible for a local user to spoof the normal
+   server by starting their own server.  The spoof server could read
+   passwords and queries sent by clients, but could not return any data
+   because the <varname>PGDATA</> directory would still be secure because
+   of directory permissions. Spoofing is possible because any user can
+   start a database server; a client cannot identify an invalid server
+   unless it is specially configured.
+  </para>
+
+  <para>
+   The simplest way to prevent invalid servers for <literal>local</>
+   connections is to use a Unix domain socket directory (<xref
+   linkend="guc-unix-socket-directory">) that has write permission only
+   for a trusted local user.  This prevents a malicious user from creating
+   their own socket file in that directory.  For TCP connections the server
+   must accept only <literal>hostssl</> connections (<xref
+   linkend="auth-pg-hba-conf">) and have SSL
+   <filename>server.key</filename> (key) and
+   <filename>server.crt</filename> (certificate) files (<xref
+   linkend="ssl-tcp">). The TCP client must connect using
+   <literal>sslmode='require'</> (<xref linkend="libpq-connect">) and have
+   a <filename>~/.postgresql/root.crt</> SSL certificate (<xref
+   linkend="libpq-ssl">).
+  </para>
+ </sect1>
+  
  <sect1 id="encryption-options">
   <title>Encryption Options</title>
 
@@ -1545,30 +1581,12 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    <productname>PostgreSQL</> server can be started with
    <acronym>SSL</> enabled by setting the parameter
    <xref linkend="guc-ssl"> to <literal>on</> in
-   <filename>postgresql.conf</>. When
-   starting in <acronym>SSL</> mode, the server will look for the
-   files <filename>server.key</> and <filename>server.crt</> in the
-   data directory, which must contain the server private key
-   and certificate, respectively. These files must be set up correctly
-   before an <acronym>SSL</>-enabled server can start. If the private key is
-   protected with a passphrase, the server will prompt for the
-   passphrase and will not start until it has been entered.
-  </para>
-
-  <para>
-   The server will listen for both standard and <acronym>SSL</>
-   connections on the same TCP port, and will negotiate with any
-   connecting client on whether to use <acronym>SSL</>.  By default,
-   this is at the client's option; see <xref
-   linkend="auth-pg-hba-conf"> about how to set up the server to
-   require use of <acronym>SSL</> for some or all connections.
-  </para>
-
-  <para>
-   <productname>OpenSSL</productname> supports a wide range of ciphers
-   and authentication algorithms, whose strength varies significantly.
-   You can restrict the list of ciphers that can be used to connect to
-   your server by adjusting the <xref linkend="guc-ssl-ciphers"> parameter.
+   <filename>postgresql.conf</>.  The server will listen for both standard
+   and <acronym>SSL</> connections on the same TCP port, and will negotiate
+   with any connecting client on whether to use <acronym>SSL</>.  By
+   default, this is at the client's option; see <xref
+   linkend="auth-pg-hba-conf"> about how to set up the server to require
+   use of <acronym>SSL</> for some or all connections.
   </para>
 
   <para>
@@ -1581,61 +1599,87 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   </para>
 
   <para>
-   For details on how to create your server private key and certificate,
-   refer to the <productname>OpenSSL</> documentation. A
-   self-signed certificate can be used for testing, but a
-   certificate signed by a certificate authority (<acronym>CA</>)
-   (either one of the global
-   <acronym>CAs</> or a local one) should be used in production so the
-   client can verify the server's identity. To create a quick
-   self-signed certificate, use the following
-   <productname>OpenSSL</productname> command:
-<programlisting>
-openssl req -new -text -out server.req
-</programlisting>
-   Fill out the information that <application>openssl</> asks for. Make sure
-   you enter the local host name as <quote>Common Name</>; the challenge
-   password can be left blank. The program will generate a key that is
-   passphrase protected; it will not accept a passphrase that is less
-   than four characters long. To remove the passphrase (as you must if
-   you want automatic start-up of the server), run the commands:
-<programlisting>
-openssl rsa -in privkey.pem -out server.key
-rm privkey.pem
-</programlisting>
-   Enter the old passphrase to unlock the existing key. Now do:
-<programlisting>
-openssl req -x509 -in server.req -text -key server.key -out server.crt
-chmod og-rwx server.key
-</programlisting>
-   to turn the certificate into a self-signed certificate and to copy the
-   key and certificate to where the server will look for them.
+   <productname>OpenSSL</productname> supports a wide range of ciphers
+   and authentication algorithms, of varying strength.  While a list of
+   ciphers can be specified in the <productname>OpenSSL</productname>
+   configuration file, you can specify ciphers specifically for use by
+   the database server by modifying <xref linkend="guc-ssl-ciphers"> in
+   <filename>postgresql.conf</>.
   </para>
 
   <para>
-   If verification of client certificates is required, place the
-   certificates of the <acronym>CA</acronym>(s) you wish to check for in
-   the file <filename>root.crt</filename> in the data directory.  When
-   present, a client certificate will be requested from the client
-   during SSL connection startup, and it must have been signed by one of
-   the certificates present in <filename>root.crt</filename>.  (See <xref
-   linkend="libpq-ssl"> for a description of how to set up client
-   certificates.) Certificate Revocation List (CRL) entries are also
-   checked if the file <filename>root.crl</filename> exists.
+   To start in <acronym>SSL</> mode, the files <filename>server.crt</>
+   and <filename>server.key</> must exist in the server's data directory.
+   These files should contain the server certificate and private key,
+   respectively. If the private key is protected with a passphrase, the
+   server will prompt for the passphrase and will not start until it has
+   been entered.
   </para>
 
   <para>
-   When the <filename>root.crt</filename> file is not present, client
+   To require the client to supply a trusted certificate, place
+   certificates of the certificate authorities (<acronym>CA</acronym>)
+   you trust in the file <filename>root.crt</filename> in the data
+   directory.  A certificate will then be requested from the client during
+   SSL connection startup.  (See <xref linkend="libpq-ssl"> for a
+   description of how to set up client certificates.)  The server will
+   verify that the client's certificate is signed by one of the trusted
+   certificate authorities.  Certificate Revocation List (CRL) entries
+   are also checked if the file <filename>root.crl</filename> exists.
+  </para>
+
+  <para>
+   If the <filename>root.crt</filename> file is not present, client
    certificates will not be requested or checked.  In this mode, SSL
-   provides communication security but not authentication.
+   provides encrypted communication but not authentication.
   </para>
 
   <para>
    The files <filename>server.key</>, <filename>server.crt</>,
    <filename>root.crt</filename>, and <filename>root.crl</filename>
    are only examined during server start; so you must restart 
-   the server to make changes in them take effect.
+   the server for changes in them to take effect.
   </para>
+
+  <sect2 id="ssl-certificate">
+   <title>Creating a Self-Signed Certificate</title>
+
+   <para>
+    To create a quick self-signed certificate for the server, use the
+    following <productname>OpenSSL</productname> command:
+<programlisting>
+openssl req -new -text -out server.req
+</programlisting>
+    Fill out the information that <application>openssl</> asks for. Make sure
+    you enter the local host name as <quote>Common Name</>; the challenge
+    password can be left blank. The program will generate a key that is
+    passphrase protected; it will not accept a passphrase that is less
+    than four characters long. To remove the passphrase (as you must if
+    you want automatic start-up of the server), run the commands:
+<programlisting>
+openssl rsa -in privkey.pem -out server.key
+rm privkey.pem
+</programlisting>
+    Enter the old passphrase to unlock the existing key. Now do:
+<programlisting>
+openssl req -x509 -in server.req -text -key server.key -out server.crt
+chmod og-rwx server.key
+</programlisting>
+    to turn the certificate into a self-signed certificate and to copy
+    the key and certificate to where the server will look for them.
+    For more details on how to create your server private key and
+    certificate, refer to the <productname>OpenSSL</> documentation.
+   </para>
+
+   <para>
+    A self-signed certificate can be used for testing, but a certificate
+    signed by a certificate authority (<acronym>CA</>) (either one of the
+    global <acronym>CAs</> or a local one) should be used in production
+    so the client can verify the server's identity.
+   </para>
+
+  </sect2>
+
  </sect1>
 
  <sect1 id="ssh-tunnels">
