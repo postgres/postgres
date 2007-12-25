@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.395 2007/12/25 04:00:44 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.396 2007/12/25 06:15:34 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1641,7 +1641,49 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    the server for changes in them to take effect.
   </para>
 
-  <sect2 id="ssl-certificate">
+  <table id="ssl-file-usage">
+   <title>SSL Server File Usage</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>File</entry>
+      <entry>Contents</entry>
+      <entry>Effect</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry><filename>server.crt</></entry>
+      <entry>server certificate</entry>
+      <entry>requested by client</entry>
+     </row>
+
+     <row>
+      <entry><filename>server.key</></entry>
+      <entry>server private key</entry>
+      <entry>used to authenticate server certificate</entry>
+     </row>
+
+     <row>
+      <entry><filename>root.crt</></entry>
+      <entry>trusted certificate authorities</entry>
+      <entry>requests client certificate; checks certificate is
+      signed by a trusted certificate authority</entry>
+     </row>
+
+     <row>
+      <entry><filename>root.crl</></entry>
+      <entry>certificates revoked by certificate authorities</entry>
+      <entry>client certificate must not be on this list</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <sect2 id="ssl-certificate-creation">
    <title>Creating a Self-Signed Certificate</title>
 
    <para>

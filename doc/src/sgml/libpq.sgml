@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.249 2007/12/25 04:00:43 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.250 2007/12/25 06:15:34 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -5199,6 +5199,48 @@ defaultNoticeProcessor(void *arg, const char *message)
    that the <acronym>SSL</> library has already been initialized by your
    application.
   </para>
+
+  <table id="libpq-ssl-file-usage">
+   <title>SSL Client File Usage</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>File</entry>
+      <entry>Contents</entry>
+      <entry>Effect</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry><filename>~/.postgresql/postgresql.crt</></entry>
+      <entry>client certificate</entry>
+      <entry>requested by server</entry>
+     </row>
+
+     <row>
+      <entry><filename>~/.postgresql/postgresql.key</></entry>
+      <entry>client private key</entry>
+      <entry>used to authenticate client certificate</entry>
+     </row>
+
+     <row>
+      <entry><filename>~/.postgresql/root.crt</></entry>
+      <entry>trusted certificate authorities</entry>
+      <entry>requests server certificate; checks certificate is
+      signed by a trusted certificate authority</entry>
+     </row>
+
+     <row>
+      <entry><filename>~/.postgresql/root.crl</></entry>
+      <entry>certificates revoked by certificate authorities</entry>
+      <entry>server certificate must not be on this list</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
 
  </sect1>
 
