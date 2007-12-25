@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.396 2007/12/25 06:15:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.397 2007/12/25 17:06:52 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1663,7 +1663,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
      <row>
       <entry><filename>server.key</></entry>
       <entry>server private key</entry>
-      <entry>used to authenticate server certificate</entry>
+      <entry>proves server certificate sent by owner; does not indicate
+      certificate owner is trustworthy</entry>
      </row>
 
      <row>

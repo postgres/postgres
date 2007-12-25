@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.250 2007/12/25 06:15:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.251 2007/12/25 17:06:52 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -5222,7 +5222,8 @@ defaultNoticeProcessor(void *arg, const char *message)
      <row>
       <entry><filename>~/.postgresql/postgresql.key</></entry>
       <entry>client private key</entry>
-      <entry>used to authenticate client certificate</entry>
+      <entry>proves client certificate sent by owner; does not indicate
+      certificate owner is trustworthy</entry>
      </row>
 
      <row>
