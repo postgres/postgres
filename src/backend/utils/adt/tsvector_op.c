@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.10 2007/11/28 21:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.11 2007/12/27 13:02:48 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1324,7 +1324,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 		if (config_attr_num == SPI_ERROR_NOATTRIBUTE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("config column \"%s\" does not exist",
+					 errmsg("configuration column \"%s\" does not exist",
 							trigger->tgargs[1])));
 		if (SPI_gettypeid(rel->rd_att, config_attr_num) != REGCONFIGOID)
 			ereport(ERROR,
@@ -1336,7 +1336,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("config column \"%s\" must not be NULL",
+					 errmsg("configuration column \"%s\" must not be null",
 							trigger->tgargs[1])));
 		cfgId = DatumGetObjectId(datum);
 	}

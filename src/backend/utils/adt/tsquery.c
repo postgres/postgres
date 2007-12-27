@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.12 2007/11/28 21:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.13 2007/12/27 13:02:48 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,7 +498,7 @@ parse_tsquery(char *buf,
 	if (list_length(state.polstr) == 0)
 	{
 		ereport(NOTICE,
-				(errmsg("tsearch query doesn't contain lexeme(s): \"%s\"",
+				(errmsg("text-search query doesn't contain lexemes: \"%s\"",
 						state.buffer)));
 		query = (TSQuery) palloc(HDRSIZETQ);
 		SET_VARSIZE(query, HDRSIZETQ);
