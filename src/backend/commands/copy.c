@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.291 2007/12/27 16:45:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.292 2007/12/27 17:00:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2420,12 +2420,12 @@ CopyReadLineText(CopyState cstate)
 					if (cstate->eol_type == EOL_CRNL)
 						ereport(ERROR,
 								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg(!cstate->csv_mode ?
-									"literal carriage return found in data" :
-								   "unquoted carriage return found in data"),
-								 errhint(!cstate->csv_mode ?
-								"Use \"\\r\" to represent carriage return." :
-										 "Use quoted CSV field to represent carriage return.")));
+								 !cstate->csv_mode ?
+								 errmsg("literal carriage return found in data") :
+								 errmsg("unquoted carriage return found in data"),
+								 !cstate->csv_mode ?
+								 errhint("Use \"\\r\" to represent carriage return.") :
+								 errhint("Use quoted CSV field to represent carriage return.")));
 
 					/*
 					 * if we got here, it is the first line and we didn't find
@@ -2437,12 +2437,12 @@ CopyReadLineText(CopyState cstate)
 			else if (cstate->eol_type == EOL_NL)
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg(!cstate->csv_mode ?
-								"literal carriage return found in data" :
-								"unquoted carriage return found in data"),
-						 errhint(!cstate->csv_mode ?
-								 "Use \"\\r\" to represent carriage return." :
-					 "Use quoted CSV field to represent carriage return.")));
+						 !cstate->csv_mode ?
+						 errmsg("literal carriage return found in data") :
+						 errmsg("unquoted carriage return found in data"),
+						 !cstate->csv_mode ?
+						 errhint("Use \"\\r\" to represent carriage return.") :
+						 errhint("Use quoted CSV field to represent carriage return.")));
 			/* If reach here, we have found the line terminator */
 			break;
 		}
@@ -2453,12 +2453,12 @@ CopyReadLineText(CopyState cstate)
 			if (cstate->eol_type == EOL_CR || cstate->eol_type == EOL_CRNL)
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg(!cstate->csv_mode ?
-								"literal newline found in data" :
-								"unquoted newline found in data"),
-						 errhint(!cstate->csv_mode ?
-								 "Use \"\\n\" to represent newline." :
-							 "Use quoted CSV field to represent newline.")));
+						 !cstate->csv_mode ?
+						 errmsg("literal newline found in data") :
+						 errmsg("unquoted newline found in data"),
+						 !cstate->csv_mode ?
+						 errhint("Use \"\\n\" to represent newline.") :
+						 errhint("Use quoted CSV field to represent newline.")));
 			cstate->eol_type = EOL_NL;	/* in case not set yet */
 			/* If reach here, we have found the line terminator */
 			break;
