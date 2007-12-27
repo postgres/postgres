@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.290 2007/12/03 00:03:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.291 2007/12/27 16:45:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3094,13 +3094,7 @@ CopyAttributeOutText(CopyState cstate, char *string)
 		start = ptr;
 		while ((c = *ptr) != '\0')
 		{
-			if (c == '\\' || c == delimc)
-			{
-				DUMPSOFAR();
-				CopySendChar(cstate, '\\');
-				start = ptr++;	/* we include char in next run */
-			}
-			else if ((unsigned char) c < (unsigned char) 0x20)
+			if ((unsigned char) c < (unsigned char) 0x20)
 			{
 				/*
 				 * \r and \n must be escaped, the others are traditional.
@@ -3130,6 +3124,9 @@ CopyAttributeOutText(CopyState cstate, char *string)
 						c = 'v';
 						break;
 					default:
+						/* If it's the delimiter, must backslash it */
+						if (c == delimc)
+							break;
 						/* All ASCII control chars are length 1 */
 						ptr++;
 						continue;		/* fall to end of loop */
@@ -3139,6 +3136,12 @@ CopyAttributeOutText(CopyState cstate, char *string)
 				CopySendChar(cstate, '\\');
 				CopySendChar(cstate, c);
 				start = ++ptr;			/* do not include char in next run */
+			}
+			else if (c == '\\' || c == delimc)
+			{
+				DUMPSOFAR();
+				CopySendChar(cstate, '\\');
+				start = ptr++;	/* we include char in next run */
 			}
 			else if (IS_HIGHBIT_SET(c))
 				ptr += pg_encoding_mblen(cstate->client_encoding, ptr);
@@ -3151,13 +3154,7 @@ CopyAttributeOutText(CopyState cstate, char *string)
 		start = ptr;
 		while ((c = *ptr) != '\0')
 		{
-			if (c == '\\' || c == delimc)
-			{
-				DUMPSOFAR();
-				CopySendChar(cstate, '\\');
-				start = ptr++;	/* we include char in next run */
-			}
-			else if ((unsigned char) c < (unsigned char) 0x20)
+			if ((unsigned char) c < (unsigned char) 0x20)
 			{
 				/*
 				 * \r and \n must be escaped, the others are traditional.
@@ -3187,6 +3184,9 @@ CopyAttributeOutText(CopyState cstate, char *string)
 						c = 'v';
 						break;
 					default:
+						/* If it's the delimiter, must backslash it */
+						if (c == delimc)
+							break;
 						/* All ASCII control chars are length 1 */
 						ptr++;
 						continue;		/* fall to end of loop */
@@ -3196,6 +3196,12 @@ CopyAttributeOutText(CopyState cstate, char *string)
 				CopySendChar(cstate, '\\');
 				CopySendChar(cstate, c);
 				start = ++ptr;			/* do not include char in next run */
+			}
+			else if (c == '\\' || c == delimc)
+			{
+				DUMPSOFAR();
+				CopySendChar(cstate, '\\');
+				start = ptr++;	/* we include char in next run */
 			}
 			else
 				ptr++;
