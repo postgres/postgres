@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.67 2007/11/28 15:42:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.68 2007/12/28 21:03:31 tgl Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -8,7 +8,7 @@
   </indexterm>
 
   <para>
-   Query performance can be affected by many things. Some of these can 
+   Query performance can be affected by many things. Some of these can
    be manipulated by the user, while others are fundamental to the underlying
    design of the system.  This chapter provides some hints about understanding
    and tuning <productname>PostgreSQL</productname> performance.
@@ -138,7 +138,7 @@ EXPLAIN SELECT * FROM tenk1;
     Rows output is a little tricky because it is <emphasis>not</emphasis> the
     number of rows processed or scanned by the plan node.  It is usually less,
     reflecting the estimated selectivity of any <literal>WHERE</>-clause
-    conditions that are being 
+    conditions that are being
     applied at the node.  Ideally the top-level rows estimate will
     approximate the number of rows actually returned, updated, or deleted
     by the query.
@@ -469,8 +469,8 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t
    One component of the statistics is the total number of entries in
    each table and index, as well as the number of disk blocks occupied
    by each table and index.  This information is kept in the table
-   <link linkend="catalog-pg-class"><structname>pg_class</structname></link>, in
-   the columns <structfield>reltuples</structfield> and
+   <link linkend="catalog-pg-class"><structname>pg_class</structname></link>,
+   in the columns <structfield>reltuples</structfield> and
    <structfield>relpages</structfield>.  We can look at it with
    queries similar to this one:
 
@@ -493,7 +493,7 @@ SELECT relname, relkind, reltuples, relpages FROM pg_class WHERE relname LIKE 't
   </para>
 
   <para>
-   For efficiency reasons, <structfield>reltuples</structfield> 
+   For efficiency reasons, <structfield>reltuples</structfield>
    and <structfield>relpages</structfield> are not updated on-the-fly,
    and so they usually contain somewhat out-of-date values.
    They are updated by <command>VACUUM</>, <command>ANALYZE</>, and a
@@ -517,7 +517,8 @@ SELECT relname, relkind, reltuples, relpages FROM pg_class WHERE relname LIKE 't
    <firstterm>selectivity</> of <literal>WHERE</> clauses, that is,
    the fraction of rows that match each condition in the
    <literal>WHERE</> clause.  The information used for this task is
-   stored in the <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>
+   stored in the
+   <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>
    system catalog.  Entries in <structname>pg_statistic</structname>
    are updated by the <command>ANALYZE</> and <command>VACUUM
    ANALYZE</> commands, and are always approximate even when freshly
@@ -530,7 +531,8 @@ SELECT relname, relkind, reltuples, relpages FROM pg_class WHERE relname LIKE 't
 
   <para>
    Rather than look at <structname>pg_statistic</structname> directly,
-   it's better to look at its view <structname>pg_stats</structname>
+   it's better to look at its view
+   <link linkend="view-pg-stats"><structname>pg_stats</structname></link>
    when examining the statistics manually.  <structname>pg_stats</structname>
    is designed to be more easily readable.  Furthermore,
    <structname>pg_stats</structname> is readable by all, whereas
@@ -553,13 +555,8 @@ SELECT attname, n_distinct, most_common_vals FROM pg_stats WHERE tablename = 'ro
   </para>
 
   <para>
-   <structname>pg_stats</structname> is described in detail in
-   <xref linkend="view-pg-stats">.
-  </para>
-
-  <para>
-   The amount of information stored in <structname>pg_statistic</structname>,
-   in particular the maximum number of entries in the
+   The amount of information stored in <structname>pg_statistic</structname>
+   by <command>ANALYZE</>, in particular the maximum number of entries in the
    <structfield>most_common_vals</> and <structfield>histogram_bounds</>
    arrays for each column, can be set on a
    column-by-column basis using the <command>ALTER TABLE SET STATISTICS</>
@@ -570,7 +567,12 @@ SELECT attname, n_distinct, most_common_vals FROM pg_stats WHERE tablename = 'ro
    columns with irregular data distributions, at the price of consuming
    more space in <structname>pg_statistic</structname> and slightly more
    time to compute the estimates.  Conversely, a lower limit might be
-   appropriate for columns with simple data distributions.
+   sufficient for columns with simple data distributions.
+  </para>
+
+  <para>
+   Further details about the planner's use of statistics can be found in
+   <xref linkend="planner-stats-details">.
   </para>
 
  </sect1>
@@ -913,7 +915,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     are designed not to write WAL at all if <varname>archive_mode</varname>
     is off.  (They can guarantee crash safety more cheaply by doing an
     <function>fsync</> at the end than by writing WAL.)
-    This applies to the following commands: 
+    This applies to the following commands:
     <itemizedlist>
      <listitem>
       <para>
