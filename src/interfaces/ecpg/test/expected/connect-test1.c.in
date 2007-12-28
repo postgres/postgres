@@ -105,7 +105,7 @@ main(void)
 
 	strcpy(pw, "connectpw");
 	strcpy(db, "tcp:postgresql://localhost:@TEMP_PORT@/connectdb");
-	{ ECPGconnect(__LINE__, 0, db , "connectuser" , " $1 " , NULL, 0); }
+	{ ECPGconnect(__LINE__, 0, db , "connectuser" , pw , NULL, 0); }
 #line 52 "test1.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");}
