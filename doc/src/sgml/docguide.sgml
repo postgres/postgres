@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.71 2007/02/16 03:50:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.72 2007/12/28 11:13:55 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -649,8 +649,8 @@ string_vacancies.jadetex = 150000
 string_vacancies.pdfjadetex = 150000
 max_strings.jadetex = 300000
 max_strings.pdfjadetex = 300000
-save_size.jadetex = 10000
-save_size.pdfjadetex = 10000
+save_size.jadetex = 15000
+save_size.pdfjadetex = 15000
 </programlisting>
    </para>
   </sect2>
