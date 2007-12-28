@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.356 2007/12/21 14:33:20 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.357 2007/12/28 11:25:21 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -5114,7 +5114,7 @@ user_name: RoleId
 		{
 			if ($1[0] == '\"')
 				$$ = $1;
-			else if (strcmp($1, " ?") == 0) /* variable */
+			else if ($1[1] == '$') /* variable */
 			{
 				enum ECPGttype type = argsinsert->variable->type->type;
 
