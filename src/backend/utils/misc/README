@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.7 2007/09/11 00:06:42 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.8 2007/12/28 00:23:23 tgl Exp $
 
 
 GUC IMPLEMENTATION NOTES
@@ -28,16 +28,18 @@ function returns "true" then the assignment is completed; if it returns
 performed.  If "doit" is false then the function should simply check
 validity of newvalue and not change any derived state.  The "source" parameter
 indicates where the new value came from.  If it is >= PGC_S_INTERACTIVE,
-then we are performing an interactive assignment (e.g., a SET command).
-In such cases it is okay for the assign_hook to raise an error via ereport().
-If the function returns false for an interactive assignment then guc.c will
-report a generic "invalid value" error message.  (An internal ereport() in
-an assign_hook is only needed if you want to generate a specialized error
-message.)  But when source < PGC_S_INTERACTIVE, we are reading a
-non-interactive option source, such as postgresql.conf.  In this case the
-assign_hook should *not* ereport but should just return false if it doesn't
-like the newvalue.  (An ereport(LOG) call would be acceptable if you feel a
-need for a custom complaint in this situation.)
+then we are performing an interactive assignment (e.g., a SET command), and
+ereport(ERROR) is safe to do.  But when source < PGC_S_INTERACTIVE, we are
+reading a non-interactive option source, such as postgresql.conf.  In this
+case the assign_hook should *not* ereport but should just return false if it
+doesn't like the newvalue.
+
+If an assign_hook returns false then guc.c will report a generic "invalid
+value for option FOO" error message.  If you feel the need to provide a more
+specific error message, ereport() it using "GUC_complaint_elevel(source)"
+as the error level.  Note that this might return either ERROR or a lower level
+such as LOG, so the ereport call might or might not return.  If it does
+return, return false out of the assign_hook.
 
 For string variables, the signature for assign hooks is a bit different:
 	const char *assign_hook(const char *newvalue,

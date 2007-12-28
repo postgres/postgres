@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.427 2007/12/27 13:02:48 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.428 2007/12/28 00:23:23 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4157,7 +4157,7 @@ call_string_assign_hook(GucStringAssignHook assign_hook,
  * If there is an error (non-existing option, invalid value) then an
  * ereport(ERROR) is thrown *unless* this is called in a context where we
  * don't want to ereport (currently, startup or SIGHUP config file reread).
- * In that case we write a suitable error message via ereport(DEBUG) and
+ * In that case we write a suitable error message via ereport(LOG) and
  * return false. This is working around the deficiencies in the ereport
  * mechanism, so don't blame me.  In all other cases, the function
  * returns true, including cases where the input is valid but we chose
@@ -4180,7 +4180,7 @@ set_config_option(const char *name, const char *value,
 		 * To avoid cluttering the log, only the postmaster bleats loudly
 		 * about problems with the config file.
 		 */
-		elevel = IsUnderPostmaster ? DEBUG2 : LOG;
+		elevel = IsUnderPostmaster ? DEBUG3 : LOG;
 	}
 	else if (source == PGC_S_DATABASE || source == PGC_S_USER)
 		elevel = INFO;
@@ -4800,6 +4800,41 @@ IsSuperuserConfigOption(const char *name)
 	if (record == NULL)
 		return false;
 	return (record->context == PGC_SUSET);
+}
+
+
+/*
+ * GUC_complaint_elevel
+ *		Get the ereport error level to use in an assign_hook's error report.
+ *
+ * This should be used by assign hooks that want to emit a custom error
+ * report (in addition to the generic "invalid value for option FOO" that
+ * guc.c will provide).  Note that the result might be ERROR or a lower
+ * level, so the caller must be prepared for control to return from ereport,
+ * or not.  If control does return, return false/NULL from the hook function.
+ *
+ * At some point it'd be nice to replace this with a mechanism that allows
+ * the custom message to become the DETAIL line of guc.c's generic message.
+ */
+int
+GUC_complaint_elevel(GucSource source)
+{
+	int			elevel;
+
+	if (source == PGC_S_FILE)
+	{
+		/*
+		 * To avoid cluttering the log, only the postmaster bleats loudly
+		 * about problems with the config file.
+		 */
+		elevel = IsUnderPostmaster ? DEBUG3 : LOG;
+	}
+	else if (source < PGC_S_INTERACTIVE)
+		elevel = LOG;
+	else
+		elevel = ERROR;
+
+	return elevel;
 }
 
 
@@ -6406,9 +6441,8 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 		/* syntax error in list */
 		pfree(rawstring);
 		list_free(elemlist);
-		if (source >= PGC_S_INTERACTIVE)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		ereport(GUC_complaint_elevel(source),
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			errmsg("invalid list syntax for parameter \"log_destination\"")));
 		return NULL;
 	}
@@ -6431,9 +6465,8 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 #endif
 		else
 		{
-			if (source >= PGC_S_INTERACTIVE)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			ereport(GUC_complaint_elevel(source),
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				  errmsg("unrecognized \"log_destination\" key word: \"%s\"",
 						 tok)));
 			pfree(rawstring);
@@ -6719,10 +6752,9 @@ assign_phony_autocommit(bool newval, bool doit, GucSource source)
 {
 	if (!newval)
 	{
-		if (doit && source >= PGC_S_INTERACTIVE)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("SET AUTOCOMMIT TO OFF is no longer supported")));
+		ereport(GUC_complaint_elevel(source),
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SET AUTOCOMMIT TO OFF is no longer supported")));
 		return false;
 	}
 	return true;
@@ -6791,9 +6823,12 @@ assign_debug_assertions(bool newval, bool doit, GucSource source)
 {
 #ifndef USE_ASSERT_CHECKING
 	if (newval)
-		ereport(ERROR,
+	{
+		ereport(GUC_complaint_elevel(source),
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			   errmsg("assertion checking is not supported by this build")));
+		return false;
+	}
 #endif
 	return true;
 }
@@ -6803,9 +6838,12 @@ assign_ssl(bool newval, bool doit, GucSource source)
 {
 #ifndef USE_SSL
 	if (newval)
-		ereport(ERROR,
+	{
+		ereport(GUC_complaint_elevel(source),
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("SSL is not supported by this build")));
+		return false;
+	}
 #endif
 	return true;
 }
@@ -6815,12 +6853,11 @@ assign_stage_log_stats(bool newval, bool doit, GucSource source)
 {
 	if (newval && log_statement_stats)
 	{
-		if (source >= PGC_S_INTERACTIVE)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot enable parameter when \"log_statement_stats\" is true")));
+		ereport(GUC_complaint_elevel(source),
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot enable parameter when \"log_statement_stats\" is true")));
 		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-		else if (source != PGC_S_OVERRIDE)
+		if (source != PGC_S_OVERRIDE)
 			return false;
 	}
 	return true;
@@ -6832,14 +6869,13 @@ assign_log_stats(bool newval, bool doit, GucSource source)
 	if (newval &&
 		(log_parser_stats || log_planner_stats || log_executor_stats))
 	{
-		if (source >= PGC_S_INTERACTIVE)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot enable \"log_statement_stats\" when "
-							"\"log_parser_stats\", \"log_planner_stats\", "
-							"or \"log_executor_stats\" is true")));
+		ereport(GUC_complaint_elevel(source),
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot enable \"log_statement_stats\" when "
+						"\"log_parser_stats\", \"log_planner_stats\", "
+						"or \"log_executor_stats\" is true")));
 		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-		else if (source != PGC_S_OVERRIDE)
+		if (source != PGC_S_OVERRIDE)
 			return false;
 	}
 	return true;
@@ -6851,12 +6887,11 @@ assign_transaction_read_only(bool newval, bool doit, GucSource source)
 	/* Can't go to r/w mode inside a r/o transaction */
 	if (newval == false && XactReadOnly && IsSubTransaction())
 	{
-		if (source >= PGC_S_INTERACTIVE)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot set transaction read-write mode inside a read-only transaction")));
+		ereport(GUC_complaint_elevel(source),
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot set transaction read-write mode inside a read-only transaction")));
 		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-		else if (source != PGC_S_OVERRIDE)
+		if (source != PGC_S_OVERRIDE)
 			return false;
 	}
 	return true;
@@ -6934,7 +6969,7 @@ assign_timezone_abbreviations(const char *newval, bool doit, GucSource source)
 		 * and we use WARNING message level.
 		 */
 		if (source == PGC_S_FILE)
-			elevel = IsUnderPostmaster ? DEBUG2 : LOG;
+			elevel = IsUnderPostmaster ? DEBUG3 : LOG;
 		else
 			elevel = WARNING;
 		if (!load_tzoffsets(newval, doit, elevel))
