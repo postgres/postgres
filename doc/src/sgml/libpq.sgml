@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.251 2007/12/25 17:06:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.252 2007/12/28 16:21:08 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -5201,7 +5201,7 @@ defaultNoticeProcessor(void *arg, const char *message)
   </para>
 
   <table id="libpq-ssl-file-usage">
-   <title>SSL Client File Usage</title>
+   <title>Libpq/Client SSL File Usage</title>
    <tgroup cols="3">
     <thead>
      <row>
@@ -5229,8 +5229,8 @@ defaultNoticeProcessor(void *arg, const char *message)
      <row>
       <entry><filename>~/.postgresql/root.crt</></entry>
       <entry>trusted certificate authorities</entry>
-      <entry>requests server certificate; checks certificate is
-      signed by a trusted certificate authority</entry>
+      <entry>checks server certificate is signed by a trusted certificate
+      authority</entry>
      </row>
 
      <row>
