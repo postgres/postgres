@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.32 2006/12/15 16:50:07 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.33 2007/12/28 11:14:19 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -279,6 +279,10 @@
 
 (define %refentry-new-page%     #t)
 (define %refentry-keep%         #f)
+
+;; Disabled because of TeX problems
+;; (http://archives.postgresql.org/pgsql-docs/2007-12/msg00056.php)
+(define ($generate-book-lot-list$) '())
 
 ;; Indentation of verbatim environments.  (This should really be done
 ;; with start-indent in DSSSL.)
