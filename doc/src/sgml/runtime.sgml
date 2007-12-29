@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.398 2007/12/29 03:36:56 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.399 2007/12/29 03:44:34 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1604,7 +1604,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    ciphers can be specified in the <productname>OpenSSL</productname>
    configuration file, you can specify ciphers specifically for use by
    the database server by modifying <xref linkend="guc-ssl-ciphers"> in
-   <filename>postgresql.conf</>.  It is possible to allow authentication
+   <filename>postgresql	.conf</>.  It is possible to have authentication
    without the overhead of encryption by using <literal>NULL-SHA</> or
    <literal>NULL-MD5</> ciphers.  However, a man-in-the-middle could read
    and pass communications between client and server.
