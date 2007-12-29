@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Fri Nov 16 10:53:50 EST 2007
+原文最終更新日: Sun Dec 9 19:31:34 EST 2007
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at postgresql.jp)
@@ -24,7 +24,7 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at postgresql.jp)
 
                                  一般的な質問
 
-1.1) PostgreSQLとは何ですか？その呼び方は？ Postgresとは何？
+1.1) PostgreSQLとは何ですか？その呼び方は？ Postgresとは？
 1.2) 誰が PostgreSQL をコントロールしていますか？
 1.3) PostgreSQLの著作権はどうなってますか？
 1.4) PostgreSQLをサポートするプラットホームは？
@@ -103,7 +103,7 @@ with OID ##### does not exist" というエラーを受け取るのでしょうか？
 
                                  一般的な質問
 
-1.1) PostgreSQLとは何ですか？その呼び方は？ Postgresとは何？
+1.1) PostgreSQLとは何ですか？その呼び方は？ Postgresとは？
 
 PostgreSQLはPost-Gres-Q-L(ポスト・グレス・キュー・エル) と発音しますが、会話の
 中では単純に Postgres と呼ばれることもあります。（"PostgreSQL"をどう発音するか
@@ -448,8 +448,8 @@ PostgreSQL のインストールに含まれる物はCと組込み Cのインターフェースだけです。
 
 PHP のようないくつかのプログラミング言語は、 PostgreSQLのインターフェースを含ん
 でいます。Perl, TCL, Python, そして、そのほかの利用可能な言語のインターフェース
-は、 a href="http://pgfoundry.org">http://pgfoundry.org の Drivers/Interfaces
-の節の中とインターネットの検索でみつけられます。
+は、http://pgfoundry.org の Drivers/Interfaces の節の中とインターネットの検索で
+みつけられます。
 
 2.2) PostgreSQL を Web ページと連携させるにはどんなツールがありますか？
 
@@ -1037,7 +1037,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2007年11月30日
+  最終更新日:   2007年12月19日
   翻訳者:       桑村 潤 (Jun KUWAMURA <juk at postgresql.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
