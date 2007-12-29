@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.104 2007/11/14 14:25:55 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.105 2007/12/29 04:15:38 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -1079,11 +1079,10 @@ ldap[<replaceable>s</>]://<replaceable>servername</>[:<replaceable>port</>]/<rep
 
    <note>
     <para>
-     PAM does work authenticating against Unix system authentication
-     because the postgres server is started by a non-root user.  In order
-     to enable this functionality, the root user must provide additional
-     permissions to the postgres user (for reading
-     <filename>/etc/shadow</>).
+     If PAM is set up to read <filename>/etc/shadow</>, authentication
+     will fail because the PostgreSQL server is started by a non-root
+     user.  However, this is not an issue with LDAP or other authentication
+     methods.
     </para>
    </note>
   </sect2>
