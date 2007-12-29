@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.51 2007/12/16 14:05:12 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.52 2007/12/29 17:55:07 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -65,10 +65,14 @@
    write caching.  On <productname>FreeBSD</> use
    <application>atacontrol</>.  (For SCSI disks use <ulink
    url="http://sg.torque.net/sg/sdparm.html"><application>sdparm</></ulink>
-   to turn off <literal>WCE</>.)  On <productname>Windows</> if
-   <varname>wal_sync_method</> is <literal>open_datasync</> (the default),
-   write caching is disabled by unchecking <literal>My
-   Computer\Open\{select disk
+   to turn off <literal>WCE</>.)  On <productname>Solaris</> the disk
+   write cache is controlled by <ulink
+   url="http://www.sun.com/bigadmin/content/submitted/format_utility.jsp"><literal>format
+   -e</></ulink>. (The Solaris <acronym>ZFS</> file system is safe with
+   disk write-cache enabled because it issues its own disk cache flush
+   commands.)  On <productname>Windows</> if <varname>wal_sync_method</>
+   is <literal>open_datasync</> (the default), write caching is disabled
+   by unchecking <literal>My Computer\Open\{select disk
    drive}\Properties\Hardware\Properties\Policies\Enable write caching on
    the disk</>.  Also on Windows, <literal>fsync</> and
    <literal>fsync_writethrough</> never do write caching.
