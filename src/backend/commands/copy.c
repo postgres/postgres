@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.293 2007/12/27 18:28:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.294 2007/12/30 14:46:52 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -905,6 +905,11 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY quote must be a single ASCII character")));
+
+	if (cstate->csv_mode && cstate->delim[0] == cstate->quote[0])
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COPY delimiter and quote must be different")));
 
 	/* Check escape */
 	if (!cstate->csv_mode && cstate->escape != NULL)
