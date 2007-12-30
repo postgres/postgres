@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sat Dec 29 19:42:32 EST 2007
+Last updated:           Sat Dec 29 22:22:39 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -26,13 +26,7 @@ first.  There is also a developer's wiki at<br/>
 <h1><a name="section_2">Administration</a></h1>
 
 <ul>
-  <li>Allow major upgrades without dump/reload, perhaps using pg_upgrade
-  [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pg_upgrade">pg_upgrade</a>]
-  </li><li>Check for unreferenced table files created by transactions that were
-  in-progress when the server terminated abruptly
-<p>  <a href="http://archives.postgresql.org/pgsql-patches/2006-06/msg00096.php">http://archives.postgresql.org/pgsql-patches/2006-06/msg00096.php</a>
-</p>
-  </li><li>Allow administrators to safely terminate individual sessions either
+  <li>Allow administrators to safely terminate individual sessions either
   via an SQL function or SIGTERM
 <p>  Lock table corruption following SIGTERM of an individual backend
   has been reported in 8.0.  A possible cause was fixed in 8.1, but
@@ -41,15 +35,16 @@ first.  There is also a developer's wiki at<br/>
 </p>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg00174.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg00174.php</a>
 </p>
+  </li><li>Check for unreferenced table files created by transactions that were
+  in-progress when the server terminated abruptly
+<p>  <a href="http://archives.postgresql.org/pgsql-patches/2006-06/msg00096.php">http://archives.postgresql.org/pgsql-patches/2006-06/msg00096.php</a>
+</p>
   </li><li>Set proper permissions on non-system schemas during db creation
 <p>  Currently all schemas are owned by the super-user because they are copied
   from the template1 database.  However, since all objects are inherited
   from the template database, it is not clear that setting schemas to the db
   owner is correct.
 </p>
-  </li><li>Support table partitioning that allows a single table to be stored
-  in subtables that are partitioned based on the primary key or a WHERE
-  clause
   </li><li>Add function to report the time of the most recent server reload
   </li><li>Allow statistics collector information to be pulled from the collector
   process directly, rather than requiring the collector to write a
@@ -62,8 +57,8 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Simplify ability to create partitioned tables
 <p>  This would allow creation of partitioned tables without requiring
-  creation of rules for INSERT/UPDATE/DELETE, and constraints for
-  rapid partition selection.  Options could include range and hash
+  creation of triggers or rules for INSERT/UPDATE/DELETE, and constraints
+  for rapid partition selection.  Options could include range and hash
   partition selection.
 </p>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00375.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00375.php</a>
@@ -87,15 +82,6 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Allow SSL authentication/encryption over unix domain sockets
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-12/msg00924.php">http://archives.postgresql.org/pgsql-hackers/2007-12/msg00924.php</a>
 </p>
-  </li><li>Improve replication solutions
-  <ul>
-    <li>Load balancing
-<p>          You can use any of the master/slave replication servers to use a
-          standby server for data warehousing. To allow read/write queries to
-          multiple servers, you need multi-master replication like pgcluster.
-</p>
-    </li><li>Allow replication over unreliable or non-persistent links
-  </li></ul>
   </li><li>Configuration files
   <ul>
     <li>Allow pg_hba.conf to specify host names along with IP addresses
@@ -111,21 +97,21 @@ first.  There is also a developer's wiki at<br/>
     </li><li>Allow the server to be stopped/restarted via an SQL API
     </li><li>Issue a warning if a change-on-restart-only postgresql.conf value
           is modified  and the server config files are reloaded
-    </li><li>Mark change-on-restart-only values in postgresql.conf
   </li></ul>
   </li><li>Tablespaces
   <ul>
     <li>Allow a database in tablespace t1 with tables created in
           tablespace t2 to be used as a template for a new database created
           with default tablespace t2
-<p>          All objects in the default database tablespace must have default
-          tablespace specifications. This is because new databases are
-          created by copying directories. If you mix default tablespace
-          tables and tablespace-specified tables in the same directory,
-          creating a new database from such a mixed directory would create a
-          new database with tables that had incorrect explicit tablespaces.
-          To fix this would require modifying pg_class in the newly copied
-          database, which we don't currently do.
+<p>          Currently all objects in the default database tablespace must
+          have default tablespace specifications. This is because new
+          databases are created by copying directories. If you mix default
+          tablespace tables and tablespace-specified tables in the same
+          directory, creating a new database from such a mixed directory
+          would create a new database with tables that had incorrect
+          explicit tablespaces.  To fix this would require modifying
+          pg_class in the newly copied database, which we don't currently
+          do.
 </p>
     </li><li>Allow reporting of which objects are in which tablespaces
 <p>          This item is difficult because a tablespace can contain objects
@@ -143,13 +129,12 @@ first.  There is also a developer's wiki at<br/>
     <li>Allow a warm standby system to also allow read-only statements
             [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pitr">pitr</a>]
 <p>            This is useful for checking PITR recovery.
-</p>
-<p>            <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php</a>
+            <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php</a>
 </p>
     </li><li>%Create dump tool for write-ahead logs for use in determining
             transaction id for point-in-time recovery
     </li><li>Allow the PITR process to be debugged and data examined
-    </li><li>Allow recovery.conf to allow the same syntax as
+    </li><li>Allow recovery.conf to support the same syntax as
             postgresql.conf, including quoting
 <p>            <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg00497.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg00497.php</a>
 </p>
@@ -164,8 +149,6 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-patches/2007-02/msg00505.php">http://archives.postgresql.org/pgsql-patches/2007-02/msg00505.php</a>
 </p>
   </li><li>Fix data types where equality comparison isn't intuitive, e.g. box
-  </li><li>Allow user-defined types to specify a type modifier at table creation
-  time
   </li><li>Add support for public SYNONYMs
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-03/msg00519.php">http://archives.postgresql.org/pgsql-hackers/2006-03/msg00519.php</a>
 </p>
@@ -184,9 +167,6 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Consider placing all sequences in a single table, or create a system
   view
-  </li><li>Allow all data types to cast to and from TEXT
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-04/msg00017.php">http://archives.postgresql.org/pgsql-hackers/2007-04/msg00017.php</a>
-</p>
   </li><li>Dates and Times
   <ul>
     <li>Allow infinite dates and intervals just like infinite timestamps
@@ -249,9 +229,10 @@ first.  There is also a developer's wiki at<br/>
                   range of units supported, e.g. PostgreSQL supports '1 year 1
                   hour', while the SQL standard does not.
 </p>
-  </li><li>Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
-  </li><li>Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1 year' AS
-                  INTERVAL MONTH), and this should return '12 months'
+  </li><li>Add support for year-month syntax, INTERVAL '50-6' YEAR
+                  TO MONTH
+  </li><li>Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1
+                  year' AS INTERVAL MONTH), and this should return '12 months'
   </li><li>Round or truncate values to the requested precision, e.g.
                   INTERVAL '11 months' AS YEAR should return one or zero
   </li><li>Support precision, CREATE TABLE foo (a INTERVAL MONTH(3))
@@ -287,7 +268,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
       </li><li>MONEY dumps in a locale-specific format making it difficult to
           restore to a system with a different locale
-      </li><li>Allow MONEY to be cast to/from other numeric data types
+      </li><li>Allow MONEY to be easily cast to/from other numeric data types
     </li></ul>
   </li></ul>
 </li></ul>
@@ -302,7 +283,6 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Add missing parameter handling in to_char()
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-12/msg00948.php">http://archives.postgresql.org/pgsql-hackers/2005-12/msg00948.php</a>
 </p>
-  </li><li>Allow functions to have a schema search path specified at creation time
   </li><li>Allow substring/replace() to get/set bit values
   </li><li>Allow to_char() on interval values to accumulate the highest unit
   requested
@@ -384,10 +364,6 @@ first.  There is also a developer's wiki at<br/>
 </p>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg01696.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg01696.php</a>
 </p>
-  </li><li>Fix cases where invalid byte encodings are accepted by the database,
-  but throw an error on SELECT
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00767.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00767.php</a>
-</p>
 </li></ul>
 <h1><a name="section_6">Views / Rules</a></h1>
 
@@ -429,7 +405,7 @@ first.  There is also a developer's wiki at<br/>
   manually or automatically when statistics for execute parameters
   differ dramatically from those used during planning.
 </p>
-  </li><li>Improve logging of prepared statements recovered during startup
+  </li><li>Improve logging of prepared transactions recovered during startup
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php">http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php</a>
 </p>
   </li><li>Allow LISTEN/NOTIFY to store info in memory rather than tables?
@@ -465,7 +441,7 @@ first.  There is also a developer's wiki at<br/>
   constraint_exclusion
   </li><li>Allow EXPLAIN output to be more easily processed by scripts, perhaps XML
   </li><li>Enable standard_conforming_strings
-  </li><li>Make standard_conforming_strings the default in 8.4?
+  </li><li>Make standard_conforming_strings the default in 8.5?
 <p>  When this is done, backslash-quote should be prohibited in non-E''
   strings because of possible confusion over how such strings treat
   backslashes.  Basically, '' is always safe for a literal single
@@ -474,7 +450,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Simplify dropping roles that have objects in several databases
   </li><li>Allow COMMENT ON to accept an expression rather than just a string
-  </li><li>Allow the count returned by SELECT, etc to be to represent as an int64
+  </li><li>Allow the count returned by SELECT, etc to be represented as an int64
   to allow a higher range of values
   </li><li>Add SQL99 WITH clause to SELECT
   </li><li>Add SQL:2003 WITH RECURSIVE (hierarchical) queries to SELECT
@@ -500,12 +476,6 @@ first.  There is also a developer's wiki at<br/>
   <ul>
     <li>Allow CREATE TABLE AS to determine column lengths for complex
           expressions like SELECT col1 || col2
-    </li><li>Use more reliable method for CREATE DATABASE to get a consistent
-          copy of db?
-    </li><li>Fix transaction restriction checks for CREATE DATABASE and
-          other commands
-<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00133.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00133.php</a>
-</p>
     </li><li>Have WITH CONSTRAINTS also create constraint indexes
 <p>          <a href="http://archives.postgresql.org/pgsql-patches/2007-04/msg00149.php">http://archives.postgresql.org/pgsql-patches/2007-04/msg00149.php</a>
 </p>
@@ -588,7 +558,9 @@ first.  There is also a developer's wiki at<br/>
           be removed or have its heap and index files truncated.  One
           issue is that no other backend should be able to add to
           the table at the same time, which is something that is
-          currently allowed.
+          currently allowed.  This currently is done if the table is
+          created inside the same transaction block as the COPY because
+          no other backends can see the table.
 </p>
   </li></ul>
   </li><li>GRANT/REVOKE
@@ -619,16 +591,12 @@ first.  There is also a developer's wiki at<br/>
   <ul>
     <li>Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
           ANALYZE, and CLUSTER
-    </li><li>Add SET PATH for schemas?
-<p>          This is basically the same as SET search_path.
-</p>
   </li></ul>
   </li><li>Referential Integrity
   <ul>
     <li>Add MATCH PARTIAL referential integrity
     </li><li>Change foreign key constraint for array -&gt; element to mean element
           in array?
-    </li><li>Enforce referential integrity for system tables
     </li><li>Fix problem when cascading referential triggers make changes on
           cascaded tables, seeing the tables in an intermediate state
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php">http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php</a>
@@ -655,15 +623,6 @@ first.  There is also a developer's wiki at<br/>
 </p>
       </li><li>Allow function parameters to be passed by name,
                   get_employee_salary(12345 AS emp_id, 2001 AS tax_year)
-      </li><li>Add Oracle-style packages  (Pavel)
-<p>                  A package would be a schema with session-local variables,
-                  public/private functions, and initialization functions.  It
-                  is also possible to implement these capabilities
-                  in all schemas and not use a separate "packages"
-                  syntax at all.
-</p>
-<p>                  <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg00384.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg00384.php</a>
-</p>
       </li><li>Allow handling of %TYPE arrays, e.g. tab.col%TYPE[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?"></a>]
       </li><li>Allow listing of record column names, and access to
                   record columns via variables, e.g. columns := r.(*),
@@ -672,18 +631,8 @@ first.  There is also a developer's wiki at<br/>
                   <a href="http://archives.postgresql.org/pgsql-patches/2006-05/msg00302.php">http://archives.postgresql.org/pgsql-patches/2006-05/msg00302.php</a>
                   <a href="http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php">http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php</a>
 </p>
-      </li><li>Add single-step debugging of functions
       </li><li>Add support for SCROLL cursors
       </li><li>Add support for WITH HOLD cursors
-      </li><li>Allow RETURN to return row or record functions
-<p>                  <a href="http://archives.postgresql.org/pgsql-patches/2005-11/msg00045.php">http://archives.postgresql.org/pgsql-patches/2005-11/msg00045.php</a>
-                  <a href="http://archives.postgresql.org/pgsql-patches/2006-08/msg00397.php">http://archives.postgresql.org/pgsql-patches/2006-08/msg00397.php</a>
-                  <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg00388.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg00388.php</a>
-</p>
-      </li><li>Fix problems with RETURN NEXT on tables with
-                  dropped/added columns after function creation
-<p>                  <a href="http://archives.postgresql.org/pgsql-patches/2006-02/msg00165.php">http://archives.postgresql.org/pgsql-patches/2006-02/msg00165.php</a>
-</p>
       </li><li>Allow row and record variables to be set to NULL constants,
                   and allow NULL tests on such variables
 <p>                  Because a row is not scalar, do not allow assignment
@@ -721,9 +670,6 @@ first.  There is also a developer's wiki at<br/>
   allow pg_ctl to read and understand postgresql.conf to find the
   data_directory value.
 </p>
-  </li><li>Make consistent use of long/short command options --- pg_ctl needs
-  long ones, pg_config doesn't have short ones, postgres doesn't have
-  enough long ones, etc.
   </li><li>psql
   <ul>
     <li>Have psql show current values for a sequence
@@ -749,10 +695,6 @@ first.  There is also a developer's wiki at<br/>
           because setting the transaction isolation level must be the
           first statement of a transaction.
 </p>
-    </li><li>Consider parsing the -c string into individual queries so each
-          is run in its own transaction
-<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00291.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00291.php</a>
-</p>
     </li><li>Add a \set variable to control whether \s displays line numbers
 <p>          Another option is to add \# which lists line numbers, and
           allows command execution.
@@ -766,8 +708,6 @@ first.  There is also a developer's wiki at<br/>
     </li><li>%Add full object name to the tag field.  eg. for operators we need
           '=(integer, integer)', instead of just '='.
     </li><li>Add pg_dumpall custom format dumps?
-    </li><li>Remove unnecessary function pointer abstractions in pg_dump source
-          code
     </li><li>Allow selection of individual object(s) of all types, not just
           tables
     </li><li>In a selective dump, allow dumping of an object and all its
@@ -780,6 +720,8 @@ first.  There is also a developer's wiki at<br/>
           applied to the loaded database, even if the database has a
           different name.  This will require new backend syntax, perhaps
           COMMENT ON CURRENT DATABASE.
+    </li><li>Remove unnecessary function pointer abstractions in pg_dump source
+          code
   </li></ul>
   </li><li>ecpg
   <ul>
@@ -814,8 +756,7 @@ first.  There is also a developer's wiki at<br/>
           held on the server waiting for them to be requested by libpq.
           One complexity is that a statement like SELECT 1/col could error
           out mid-way through the result set.
-    <li>Fix SSL retry to avoid useless repeated connection attempts and
-          ensuing misleading error messages
+</p>
     </li><li>Consider disallowing multiple queries in PQexec() as an
           additional barrier to SQL injection attacks
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00184.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00184.php</a>
@@ -824,7 +765,7 @@ first.  There is also a developer's wiki at<br/>
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg01803.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg01803.php</a>
 </p>
   </li></ul>
-</p></ul>
+</li></ul>
 <h1><a name="section_9">Triggers</a></h1>
 
 <ul>
@@ -884,8 +825,6 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Consider compressing indexes by storing key values duplicated in
   several rows as a single index entry
-<p>  This is difficult because it requires datatype-specific knowledge.
-</p>
   </li><li>Add REINDEX CONCURRENTLY, like CREATE INDEX CONCURRENTLY
 <p>  This is difficult because you must upgrade to an exclusive table lock
   to replace the existing index file.  CREATE INDEX CONCURRENTLY does not
@@ -938,13 +877,11 @@ first.  There is also a developer's wiki at<br/>
 <h1><a name="section_11">Fsync</a></h1>
 
 <ul>
-  <li>Improve commit_delay handling to reduce fsync()
-  </li><li>Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
+  <li>Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
 <p>  Ideally this requires a separate test program that can be run
   at initdb time or optionally later.  Consider O_SYNC when
   O_DIRECT exists.
 </p>
-  </li><li>%Add an option to sync() before fsync()'ing checkpoint files
   </li><li>Add program to test if fsync has a delay compared to non-fsync
 </li></ul>
 <h1><a name="section_12">Cache Usage</a></h1>
@@ -1011,12 +948,6 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00024.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00024.php</a>
   <a href="http://archives.postgresql.org/pgsql-performance/2007-05/msg00296.php">http://archives.postgresql.org/pgsql-performance/2007-05/msg00296.php</a>
 </p>
-  </li><li>Reduce lock time during VACUUM FULL by moving tuples with read lock,
-  then write lock and truncate table
-<p>  Moved tuples are invisible to other backends so they don't require a
-  write lock. However, the read lock promotion to write lock could lead
-  to deadlock situations.
-</p>
   </li><li>Auto-fill the free space map by scanning the buffer cache or by
   checking pages written by the background writer
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-02/msg01125.php">http://archives.postgresql.org/pgsql-hackers/2006-02/msg01125.php</a>
@@ -1042,25 +973,18 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Improve dead row detection during multi-statement transactions usage
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php">http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php</a>
 </p>
-  </li><li>Prevent long-lived temporary tables from causing frozen-xid advancement
-   starvation
-</li></ul>
-<p>   The problem is that autovacuum cannot vacuum them to set frozen xids;<br/>
-   only the session that created them can do that.
-</p>
-<ul>
-  <li>Auto-vacuum
+  </li><li>Auto-vacuum
   <ul>
-    <li>Use free-space map information to guide refilling
-    </li><li>%Issue log message to suggest VACUUM FULL if a table is nearly
+    <li>%Issue log message to suggest VACUUM FULL if a table is nearly
           empty?
-    </li><li>Consider logging activity either to the logs or a system view
     </li><li>Improve control of auto-vacuum
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg00876.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg00876.php</a>
 </p>
     </li><li>Prevent long-lived temporary tables from causing frozen-xid
           advancement starvation
-<p>          <a href="http://archives.postgresql.org/pgsql-general/2007-06/msg01645.php">http://archives.postgresql.org/pgsql-general/2007-06/msg01645.php</a>
+<p>          The problem is that autovacuum cannot vacuum them to set frozen xids;
+          only the session that created them can do that.
+          <a href="http://archives.postgresql.org/pgsql-general/2007-06/msg01645.php">http://archives.postgresql.org/pgsql-general/2007-06/msg01645.php</a>
 </p>
   </li></ul>
 </li></ul>
@@ -1093,11 +1017,6 @@ first.  There is also a developer's wiki at<br/>
   database startup overhead, but a few operating systems (Win32,
   Solaris) might benefit from threading.  Also explore the idea of
   a single session using multiple threads to execute a statement faster.
-</p>
-  </li><li>Add connection pooling
-<p>  It is unclear if this should be done inside the backend code or done
-  by something external like pgpool. The passing of file descriptors to
-  existing backends is one of the difficulties with a backend approach.
 </p>
 </li></ul>
 <h1><a name="section_16">Write-Ahead Log</a></h1>
@@ -1224,9 +1143,6 @@ first.  There is also a developer's wiki at<br/>
 </p>
 <p>  <a href="http://archives.postgresql.org/pgsql-general/2007-02/msg00493.php">http://archives.postgresql.org/pgsql-general/2007-02/msg00493.php</a>
 </p>
-  </li><li>Consider reducing memory used for shared buffer reference count
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php</a>
-</p>
   </li><li>Experiment with multi-threaded backend better resource utilization
 <p>  This would allow a single query to make use of multiple CPU's or
   multiple I/O channels simultaneously.  One idea is to create a
@@ -1245,36 +1161,22 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Add optional CRC checksum to heap and index pages
   </li><li>Improve documentation to build only interfaces (Marc)
   </li><li>Remove or relicense modules that are not under the BSD license, if possible
-  </li><li>%Remove memory/file descriptor freeing before ereport(ERROR)
   </li><li>Acquire lock on a relation before building a relcache entry for it
-  </li><li>%Promote debug_query_string into a server-side function current_query()
   </li><li>Allow cross-compiling by generating the zic database on the target system
   </li><li>Improve NLS maintenance of libpgport messages linked onto applications
-  </li><li>Allow ecpg to work with MSVC and BCC
-  </li><li>Add xpath_array() to /contrib/xml2 to return results as an array
   </li><li>Clean up casting in /contrib/isn
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-11/msg00245.php">http://archives.postgresql.org/pgsql-hackers/2006-11/msg00245.php</a>
 </p>
-  </li><li>Allow building in directories containing spaces
-<p>  This is probably not possible because 'gmake' and other compiler tools
-  do not fully support quoting of paths with spaces.
-</p>
-  </li><li>Fix sgmltools so PDFs can be generated with bookmarks
   </li><li>Use UTF8 encoding for NLS messages so all server encodings can
   read them properly
   </li><li>Update Bonjour to work with newer cross-platform SDK
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg02238.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg02238.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2006-10/msg00048.php">http://archives.postgresql.org/pgsql-patches/2006-10/msg00048.php</a>
 </p>
-  </li><li>Split out libpq pgpass and environment documentation sections to make
-  it easier for non-developers to find
   </li><li>Consider detoasting keys before sorting
   </li><li>Consider GnuTLS if OpenSSL license becomes a problem
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php">http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg01213.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg01213.php</a>
-</p>
-  </li><li>Use strlcpy() rather than our StrNCpy() macro
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg02108.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg02108.php</a>
 </p>
   </li><li>Consider changing documentation format from SGML to XML
 <p>  <a href="http://archives.postgresql.org/pgsql-docs/2006-12/msg00152.php">http://archives.postgresql.org/pgsql-docs/2006-12/msg00152.php</a>
@@ -1302,8 +1204,6 @@ first.  There is also a developer's wiki at<br/>
           extra newline
     </li><li>Allow psql to use readline once non-US code pages work with
           backslashes
-    </li><li>Re-enable timezone output on log_line_prefix '%t' when a
-          shorter timezone string is available
     </li><li>Fix problem with shared memory on the Win32 Terminal Server
     </li><li>Improve signal handling
 <p>          <a href="http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php">http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php</a>
@@ -1327,18 +1227,18 @@ first.  There is also a developer's wiki at<br/>
   modification.
 </p>
   </li><li>Allow plug-in modules to emulate features from other databases
-  </li><li>Allow statements across databases or servers with transaction
-  semantics
-<p>  This can be done using dblink and two-phase commit.
+  </li><li>Add Oracle-style packages  (Pavel)
+</li></ul>
+<p>          A package would be a schema with session-local variables,<br/>
+          public/private functions, and initialization functions.  It<br/>
+          is also possible to implement these capabilities<br/>
+          in any schema and not use a separate "packages"<br/>
+          syntax at all.
 </p>
-  </li><li>Add the features of packages
-  <ul>
-    <li>Make private objects accessible only to objects in the same schema
-    </li><li>Allow current_schema.objname to access current schema objects
-    </li><li>Add session variables
-    </li><li>Allow nested schemas
-  </li></ul>
-  </li><li>Consider allowing control of upper/lower case folding of unquoted
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg00384.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg00384.php</a>
+</p>
+<ul>
+  <li>Consider allowing control of upper/lower case folding of unquoted
   identifiers
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php">http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg01527.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg01527.php</a>
@@ -1373,6 +1273,6 @@ first.  There is also a developer's wiki at<br/>
   to run in the same process address space as the client application
   would add too much complexity and failure cases.</p>
 </li></ul>
-</li></ul></li></ul>
+
 </body>
 </html>
