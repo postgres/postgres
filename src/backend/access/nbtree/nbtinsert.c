@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.162 2007/11/16 19:53:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.163 2007/12/31 04:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,7 +338,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 				if (!P_IGNORE(opaque))
 					break;
 				if (P_RIGHTMOST(opaque))
-					elog(ERROR, "fell off the end of \"%s\"",
+					elog(ERROR, "fell off the end of index \"%s\"",
 						 RelationGetRelationName(rel));
 			}
 			maxoff = PageGetMaxOffsetNumber(page);
@@ -492,7 +492,7 @@ _bt_findinsertloc(Relation rel,
 			if (!P_IGNORE(lpageop))
 				break;
 			if (P_RIGHTMOST(lpageop))
-				elog(ERROR, "fell off the end of \"%s\"",
+				elog(ERROR, "fell off the end of index \"%s\"",
 					 RelationGetRelationName(rel));
 		}
 		_bt_relbuf(rel, buf);
@@ -840,7 +840,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		item = (IndexTuple) PageGetItem(origpage, itemid);
 		if (PageAddItem(rightpage, (Item) item, itemsz, rightoff,
 						false, false) == InvalidOffsetNumber)
-			elog(PANIC, "failed to add hikey to the right sibling");
+			elog(PANIC, "failed to add hikey to the right sibling"
+				 " while splitting block %u of index \"%s\"",
+				 BufferGetBlockNumber(buf), RelationGetRelationName(rel));
 		rightoff = OffsetNumberNext(rightoff);
 	}
 
@@ -865,7 +867,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	}
 	if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
 					false, false) == InvalidOffsetNumber)
-		elog(PANIC, "failed to add hikey to the left sibling");
+		elog(PANIC, "failed to add hikey to the left sibling"
+			 " while splitting block %u of index \"%s\"",
+			 BufferGetBlockNumber(buf), RelationGetRelationName(rel));
 	leftoff = OffsetNumberNext(leftoff);
 
 	/*
@@ -942,7 +946,10 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		spage = BufferGetPage(sbuf);
 		sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
 		if (sopaque->btpo_prev != ropaque->btpo_prev)
-			elog(PANIC, "right sibling's left-link doesn't match");
+			elog(PANIC, "right sibling's left-link doesn't match: "
+				 "block %u links to %u instead of expected %u in index \"%s\"",
+				 ropaque->btpo_next, sopaque->btpo_prev, ropaque->btpo_prev,
+				 RelationGetRelationName(rel));
 
 		/*
 		 * Check to see if we can set the SPLIT_END flag in the right-hand
@@ -1305,7 +1312,7 @@ _bt_findsplitloc(Relation rel,
 	 * in case ...
 	 */
 	if (!state.have_split)
-		elog(ERROR, "could not find a feasible split point for \"%s\"",
+		elog(ERROR, "could not find a feasible split point for index \"%s\"",
 			 RelationGetRelationName(rel));
 
 	*newitemonleft = state.newitemonleft;
@@ -1509,7 +1516,7 @@ _bt_insert_parent(Relation rel,
 
 		/* Check for error only after writing children */
 		if (pbuf == InvalidBuffer)
-			elog(ERROR, "failed to re-find parent key in \"%s\" for split pages %u/%u",
+			elog(ERROR, "failed to re-find parent key in index \"%s\" for split pages %u/%u",
 				 RelationGetRelationName(rel), bknum, rbknum);
 
 		/* Recursively update the parent */
@@ -1717,7 +1724,9 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 */
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY,
 					false, false) == InvalidOffsetNumber)
-		elog(PANIC, "failed to add leftkey to new root page");
+		elog(PANIC, "failed to add leftkey to new root page"
+			 " while splitting block %u of index \"%s\"",
+			 BufferGetBlockNumber(lbuf), RelationGetRelationName(rel));
 	pfree(new_item);
 
 	/*
@@ -1735,7 +1744,9 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 */
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY,
 					false, false) == InvalidOffsetNumber)
-		elog(PANIC, "failed to add rightkey to new root page");
+		elog(PANIC, "failed to add rightkey to new root page"
+			 " while splitting block %u of index \"%s\"",
+			 BufferGetBlockNumber(lbuf), RelationGetRelationName(rel));
 	pfree(new_item);
 
 	MarkBufferDirty(rootbuf);
@@ -1822,7 +1833,7 @@ _bt_pgaddtup(Relation rel,
 
 	if (PageAddItem(page, (Item) itup, itemsize, itup_off,
 					false, false) == InvalidOffsetNumber)
-		elog(PANIC, "failed to add item to the %s for \"%s\"",
+		elog(PANIC, "failed to add item to the %s in index \"%s\"",
 			 where, RelationGetRelationName(rel));
 }
 

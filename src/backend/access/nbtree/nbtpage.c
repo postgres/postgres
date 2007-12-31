@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.104 2007/11/15 21:14:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.105 2007/12/31 04:52:05 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -293,14 +293,14 @@ _bt_getroot(Relation rel, int access)
 
 			/* it's dead, Jim.  step right one page */
 			if (P_RIGHTMOST(rootopaque))
-				elog(ERROR, "no live root page found in \"%s\"",
+				elog(ERROR, "no live root page found in index \"%s\"",
 					 RelationGetRelationName(rel));
 			rootblkno = rootopaque->btpo_next;
 		}
 
 		/* Note: can't check btpo.level on deleted pages */
 		if (rootopaque->btpo.level != rootlevel)
-			elog(ERROR, "root page %u of \"%s\" has level %u, expected %u",
+			elog(ERROR, "root page %u of index \"%s\" has level %u, expected %u",
 				 rootblkno, RelationGetRelationName(rel),
 				 rootopaque->btpo.level, rootlevel);
 	}
@@ -395,14 +395,14 @@ _bt_gettrueroot(Relation rel)
 
 		/* it's dead, Jim.  step right one page */
 		if (P_RIGHTMOST(rootopaque))
-			elog(ERROR, "no live root page found in \"%s\"",
+			elog(ERROR, "no live root page found in index \"%s\"",
 				 RelationGetRelationName(rel));
 		rootblkno = rootopaque->btpo_next;
 	}
 
 	/* Note: can't check btpo.level on deleted pages */
 	if (rootopaque->btpo.level != rootlevel)
-		elog(ERROR, "root page %u of \"%s\" has level %u, expected %u",
+		elog(ERROR, "root page %u of index \"%s\" has level %u, expected %u",
 			 rootblkno, RelationGetRelationName(rel),
 			 rootopaque->btpo.level, rootlevel);
 
@@ -761,7 +761,7 @@ _bt_parent_deletion_safe(Relation rel, BlockNumber target, BTStack stack)
 	ItemPointerSet(&(stack->bts_btentry.t_tid), target, P_HIKEY);
 	pbuf = _bt_getstackbuf(rel, stack, BT_READ);
 	if (pbuf == InvalidBuffer)
-		elog(ERROR, "failed to re-find parent key in \"%s\" for deletion target page %u",
+		elog(ERROR, "failed to re-find parent key in index \"%s\" for deletion target page %u",
 			 RelationGetRelationName(rel), target);
 	parent = stack->bts_blkno;
 	poffset = stack->bts_offset;
@@ -1019,7 +1019,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack, bool vacuum_full)
 		return 0;
 	}
 	if (opaque->btpo_prev != leftsib)
-		elog(ERROR, "left link changed unexpectedly in block %u of \"%s\"",
+		elog(ERROR, "left link changed unexpectedly in block %u of index \"%s\"",
 			 target, RelationGetRelationName(rel));
 
 	/*
@@ -1035,7 +1035,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack, bool vacuum_full)
 	ItemPointerSet(&(stack->bts_btentry.t_tid), target, P_HIKEY);
 	pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
 	if (pbuf == InvalidBuffer)
-		elog(ERROR, "failed to re-find parent key in \"%s\" for deletion target page %u",
+		elog(ERROR, "failed to re-find parent key in index \"%s\" for deletion target page %u",
 			 RelationGetRelationName(rel), target);
 	parent = stack->bts_blkno;
 	poffset = stack->bts_offset;
@@ -1056,7 +1056,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack, bool vacuum_full)
 		if (poffset == P_FIRSTDATAKEY(opaque))
 			parent_half_dead = true;
 		else
-			elog(ERROR, "failed to delete rightmost child %u of %u in \"%s\"",
+			elog(ERROR, "failed to delete rightmost child %u of block %u in index \"%s\"",
 				 target, parent, RelationGetRelationName(rel));
 	}
 	else
@@ -1138,7 +1138,8 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack, bool vacuum_full)
 		itemid = PageGetItemId(page, nextoffset);
 		itup = (IndexTuple) PageGetItem(page, itemid);
 		if (ItemPointerGetBlockNumber(&(itup->t_tid)) != rightsib)
-			elog(PANIC, "right sibling is not next child in \"%s\"",
+			elog(PANIC, "right sibling %u of block %u is not next child of %u in index \"%s\"",
+				 rightsib, target, BufferGetBlockNumber(pbuf),
 				 RelationGetRelationName(rel));
 		PageIndexTupleDelete(page, nextoffset);
 	}

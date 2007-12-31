@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.114 2007/11/15 21:14:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.115 2007/12/31 04:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +192,7 @@ _bt_moveright(Relation rel,
 	}
 
 	if (P_IGNORE(opaque))
-		elog(ERROR, "fell off the end of \"%s\"",
+		elog(ERROR, "fell off the end of index \"%s\"",
 			 RelationGetRelationName(rel));
 
 	return buf;
@@ -1282,7 +1282,7 @@ _bt_walk_left(Relation rel, Buffer buf)
 			for (;;)
 			{
 				if (P_RIGHTMOST(opaque))
-					elog(ERROR, "fell off the end of \"%s\"",
+					elog(ERROR, "fell off the end of index \"%s\"",
 						 RelationGetRelationName(rel));
 				blkno = opaque->btpo_next;
 				buf = _bt_relandgetbuf(rel, buf, blkno, BT_READ);
@@ -1305,8 +1305,8 @@ _bt_walk_left(Relation rel, Buffer buf)
 			 * into an infinite loop if there's anything wrong.
 			 */
 			if (opaque->btpo_prev == lblkno)
-				elog(ERROR, "could not find left sibling in \"%s\"",
-					 RelationGetRelationName(rel));
+				elog(ERROR, "could not find left sibling of block %u in index \"%s\"",
+					 obknum, RelationGetRelationName(rel));
 			/* Okay to try again with new lblkno value */
 		}
 	}
@@ -1364,7 +1364,7 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 		{
 			blkno = opaque->btpo_next;
 			if (blkno == P_NONE)
-				elog(ERROR, "fell off the end of \"%s\"",
+				elog(ERROR, "fell off the end of index \"%s\"",
 					 RelationGetRelationName(rel));
 			buf = _bt_relandgetbuf(rel, buf, blkno, BT_READ);
 			page = BufferGetPage(buf);
@@ -1375,7 +1375,8 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 		if (opaque->btpo.level == level)
 			break;
 		if (opaque->btpo.level < level)
-			elog(ERROR, "btree level %u not found", level);
+			elog(ERROR, "btree level %u not found in index \"%s\"",
+				 level, RelationGetRelationName(rel));
 
 		/* Descend to leftmost or rightmost child page */
 		if (rightmost)
