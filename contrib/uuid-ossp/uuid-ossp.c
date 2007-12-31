@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2007 PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.c,v 1.5 2007/11/15 22:25:14 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.c,v 1.6 2007/12/31 03:55:50 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,20 @@ PG_FUNCTION_INFO_V1(uuid_generate_v3);
 PG_FUNCTION_INFO_V1(uuid_generate_v4);
 PG_FUNCTION_INFO_V1(uuid_generate_v5);
 
+static void
+pguuid_complain(uuid_rc_t rc)
+{
+	char	*err = uuid_error(rc);
+
+	if (err != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("OSSP uuid library failure: %s", err)));
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("OSSP uuid library failure: error code %d", rc)));
+}
 
 static char *
 uuid_to_string(const uuid_t * uuid)
@@ -71,8 +85,11 @@ uuid_to_string(const uuid_t * uuid)
 	char	   *buf = palloc(UUID_LEN_STR + 1);
 	void	   *ptr = buf;
 	size_t		len = UUID_LEN_STR + 1;
+	uuid_rc_t	rc;
 
-	uuid_export(uuid, UUID_FMT_STR, &ptr, &len);
+	rc = uuid_export(uuid, UUID_FMT_STR, &ptr, &len);
+	if (rc != UUID_RC_OK)
+		pguuid_complain(rc);
 
 	return buf;
 }
@@ -81,7 +98,11 @@ uuid_to_string(const uuid_t * uuid)
 static void
 string_to_uuid(const char *str, uuid_t * uuid)
 {
-	uuid_import(uuid, UUID_FMT_STR, str, UUID_LEN_STR + 1);
+	uuid_rc_t	rc;
+
+	rc = uuid_import(uuid, UUID_FMT_STR, str, UUID_LEN_STR + 1);
+	if (rc != UUID_RC_OK)
+		pguuid_complain(rc);
 }
 
 
@@ -90,11 +111,18 @@ special_uuid_value(const char *name)
 {
 	uuid_t	   *uuid;
 	char	   *str;
+	uuid_rc_t	rc;
 
-	uuid_create(&uuid);
-	uuid_load(uuid, name);
+	rc = uuid_create(&uuid);
+	if (rc != UUID_RC_OK)
+		pguuid_complain(rc);
+	rc = uuid_load(uuid, name);
+	if (rc != UUID_RC_OK)
+		pguuid_complain(rc);
 	str = uuid_to_string(uuid);
-	uuid_destroy(uuid);
+	rc = uuid_destroy(uuid);
+	if (rc != UUID_RC_OK)
+		pguuid_complain(rc);
 
 	return DirectFunctionCall1(uuid_in, CStringGetDatum(str));
 }
@@ -140,11 +168,18 @@ uuid_generate_internal(int mode, const uuid_t * ns, const char *name)
 {
 	uuid_t	   *uuid;
 	char	   *str;
+	uuid_rc_t	rc;
 
-	uuid_create(&uuid);
-	uuid_make(uuid, mode, ns, name);
+	rc = uuid_create(&uuid);
+	if (rc != UUID_RC_OK)
+		pguuid_complain(rc);
+	rc = uuid_make(uuid, mode, ns, name);
+	if (rc != UUID_RC_OK)
+		pguuid_complain(rc);
 	str = uuid_to_string(uuid);
-	uuid_destroy(uuid);
+	rc = uuid_destroy(uuid);
+	if (rc != UUID_RC_OK)
+		pguuid_complain(rc);
 
 	return DirectFunctionCall1(uuid_in, CStringGetDatum(str));
 }
@@ -169,8 +204,11 @@ uuid_generate_v35_internal(int mode, pg_uuid_t *ns, text *name)
 {
 	uuid_t	   *ns_uuid;
 	Datum		result;
+	uuid_rc_t	rc;
 
-	uuid_create(&ns_uuid);
+	rc = uuid_create(&ns_uuid);
+	if (rc != UUID_RC_OK)
+		pguuid_complain(rc);
 	string_to_uuid(DatumGetCString(DirectFunctionCall1(uuid_out, UUIDPGetDatum(ns))),
 				   ns_uuid);
 
@@ -178,7 +216,9 @@ uuid_generate_v35_internal(int mode, pg_uuid_t *ns, text *name)
 									ns_uuid,
 	   DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(name))));
 
-	uuid_destroy(ns_uuid);
+	rc = uuid_destroy(ns_uuid);
+	if (rc != UUID_RC_OK)
+		pguuid_complain(rc);
 
 	return result;
 }
