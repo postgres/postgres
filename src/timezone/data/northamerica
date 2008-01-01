@@ -1,4 +1,4 @@
-# @(#)northamerica	8.19
+# @(#)northamerica	8.20
 # <pre>
 
 # also includes Central America and the Caribbean
@@ -2303,6 +2303,10 @@ Zone	America/Grenada	-4:07:00 -	LMT	1911 Jul	# St George's
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Guadeloupe	-4:06:08 -	LMT	1911 Jun 8	# Pointe a Pitre
 			-4:00	-	AST
+# St Barthelemy
+Link America/Guadeloupe	America/St_Barthelemy
+# St Martin (French part)
+Link America/Guadeloupe	America/Marigot
 
 # Guatemala
 #

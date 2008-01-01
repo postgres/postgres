@@ -1,4 +1,4 @@
-# @(#)zone.tab	8.11
+# @(#)zone.tab	8.13
 #
 # TZ zone descriptions
 #
@@ -77,6 +77,7 @@ BG	+4241+02319	Europe/Sofia
 BH	+2623+05035	Asia/Bahrain
 BI	-0323+02922	Africa/Bujumbura
 BJ	+0629+00237	Africa/Porto-Novo
+BL	+1753-06251	America/St_Barthelemy
 BM	+3217-06446	Atlantic/Bermuda
 BN	+0456+11455	Asia/Brunei
 BO	-1630-06809	America/La_Paz
@@ -250,6 +251,7 @@ MA	+3339-00735	Africa/Casablanca
 MC	+4342+00723	Europe/Monaco
 MD	+4700+02850	Europe/Chisinau
 ME	+4226+01916	Europe/Podgorica
+MF	+1804-06305	America/Marigot
 MG	-1855+04731	Indian/Antananarivo
 MH	+0709+17112	Pacific/Majuro	most locations
 MH	+0905+16720	Pacific/Kwajalein	Kwajalein
@@ -339,8 +341,7 @@ SE	+5920+01803	Europe/Stockholm
 SG	+0117+10351	Asia/Singapore
 SH	-1555-00542	Atlantic/St_Helena
 SI	+4603+01431	Europe/Ljubljana
-SJ	+7800+01600	Arctic/Longyearbyen	Svalbard
-SJ	+7059-00805	Atlantic/Jan_Mayen	Jan Mayen
+SJ	+7800+01600	Arctic/Longyearbyen
 SK	+4809+01707	Europe/Bratislava
 SL	+0830-01315	Africa/Freetown
 SM	+4355+01228	Europe/San_Marino
