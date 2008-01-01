@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.572 2008/01/01 15:14:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.573 2008/01/01 19:36:20 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -72,7 +72,7 @@ do it for earlier branch release files.
   <note>
    <title>Release date</title>
    <simpara>2008-01-??</simpara>
-   <para>CURRENT AS OF 2007-12-01</>
+   <para>CURRENT AS OF 2008-01-01</>
   </note>
 
   <sect2>
@@ -1698,6 +1698,13 @@ current_date &lt; 2017-11-17
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       Prevent <command>COPY</> from using digits and lowercase letters as
+       delimiters (Tom)
+      </para>
+     </listitem>
+
     </itemizedlist>
 
    </sect3>
@@ -2061,6 +2068,13 @@ current_date &lt; 2017-11-17
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       Remove <literal>-u</> option (this option has long been depricated)
+       (Tom)
+      </para>
+     </listitem>
+
     </itemizedlist>
 
    </sect3>
@@ -2106,6 +2120,13 @@ current_date &lt; 2017-11-17
      <listitem>
       <para>
        Improve performance when a database has thousands of objects (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Remove <literal>-u</> option (this option has long been depricated)
+       (Tom)
       </para>
      </listitem>
 
@@ -2515,6 +2536,13 @@ current_date &lt; 2017-11-17
       <para>
        "Postgres" is now documented as an accepted alias for
        "PostgreSQL" (Peter)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add documentation about preventing database server spoofing when
+       the server is down (Bruce
       </para>
      </listitem>
 
