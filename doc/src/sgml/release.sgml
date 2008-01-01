@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.573 2008/01/01 19:36:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.574 2008/01/01 19:41:14 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1465,6 +1465,43 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
+       Implement <command>CREATE TABLE LIKE ...  INCLUDING
+       INDEXES</command> (Trevor Hardcastle, Nikhil Sontakke, Neil)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <command>CREATE INDEX CONCURRENTLY</command> to ignore
+       transactions in other databases (Simon)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add <command>ALTER VIEW ... RENAME TO</command> and <command>ALTER
+       SEQUENCE ... RENAME TO</command> (David Fetter, Neil)
+      </para>
+
+      <para>
+       Previously this could only be done via <command>ALTER TABLE ...
+       RENAME TO</command>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make <command>CREATE/DROP/RENAME DATABASE</> wait briefly for
+       conflicting backends to exit before failing (Tom)
+      </para>
+
+      <para>
+       This increases the likelihood that these commands will succeed.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Allow triggers and rules to be deactivated in groups using a
        configuration parameter, for replication purposes (Jan)
       </para>
@@ -1539,32 +1576,6 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Add <command>ALTER VIEW ... RENAME TO</command> and <command>ALTER
-       SEQUENCE ... RENAME TO</command> (David Fetter, Neil)
-      </para>
-
-      <para>
-       Previously this could only be done via <command>ALTER TABLE ...
-       RENAME TO</command>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Implement <command>CREATE TABLE LIKE ...  INCLUDING
-       INDEXES</command> (Trevor Hardcastle, Nikhil Sontakke, Neil)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow <command>CREATE INDEX CONCURRENTLY</command> to ignore
-       transactions in other databases (Simon)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        Make <command>CLUSTER</command> MVCC-safe (Heikki Linnakangas)
       </para>
 
@@ -1598,17 +1609,6 @@ current_date &lt; 2017-11-17
        References to subplan outputs are now always shown correctly,
        instead of using <literal>?column<replaceable>N</>?</literal>
        for complicated cases.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Make <command>CREATE/DROP/RENAME DATABASE</> wait briefly for
-       conflicting backends to exit before failing (Tom)
-      </para>
-
-      <para>
-       This increases the likelihood that these commands will succeed.
       </para>
      </listitem>
 
