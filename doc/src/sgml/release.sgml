@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.571 2007/12/16 13:05:30 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.572 2008/01/01 15:14:37 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -71,7 +71,7 @@ do it for earlier branch release files.
 
   <note>
    <title>Release date</title>
-   <simpara>2007-01-??</simpara>
+   <simpara>2008-01-??</simpara>
    <para>CURRENT AS OF 2007-12-01</>
   </note>
 
