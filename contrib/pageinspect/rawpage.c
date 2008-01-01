@@ -5,10 +5,10 @@
  *
  * Access-method specific inspection functions are in separate files.
  *
- * Copyright (c) 2007, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.3 2007/11/15 21:14:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.4 2008/01/01 20:31:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

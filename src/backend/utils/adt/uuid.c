@@ -3,10 +3,10 @@
  * uuid.c
  *	  Functions for the built-in type "uuid".
  *
- * Copyright (c) 2007, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.6 2007/11/15 22:25:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.7 2008/01/01 20:31:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

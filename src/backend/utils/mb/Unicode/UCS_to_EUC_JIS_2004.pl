@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 #
-# Copyright (c) 2007, PostgreSQL Global Development Group
+# Copyright (c) 2007-2008, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_EUC_JIS_2004.pl,v 1.1 2007/03/25 11:56:02 ishii Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_EUC_JIS_2004.pl,v 1.2 2008/01/01 20:31:21 tgl Exp $
 #
 # Generate UTF-8 <--> EUC_JIS_2004 code conversion tables from
 # "euc-jis-2004-std.txt" (http://x0213.org)
