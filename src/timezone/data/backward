@@ -1,4 +1,4 @@
-# @(#)backward	8.3
+# @(#)backward	8.4
 
 # This file provides links between current names for time zones
 # and their old names.  Many names changed in late 1993.
@@ -30,6 +30,7 @@ Link	Asia/Thimphu		Asia/Thimbu
 Link	Asia/Makassar		Asia/Ujung_Pandang
 Link	Asia/Ulaanbaatar	Asia/Ulan_Bator
 Link	Atlantic/Faroe		Atlantic/Faeroe
+Link	Europe/Oslo		Atlantic/Jan_Mayen
 Link	Australia/Sydney	Australia/ACT
 Link	Australia/Sydney	Australia/Canberra
 Link	Australia/Lord_Howe	Australia/LHI
