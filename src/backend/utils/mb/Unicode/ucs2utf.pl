@@ -1,7 +1,7 @@
 #
-# Copyright (c) 2001-2007, PostgreSQL Global Development Group
+# Copyright (c) 2001-2008, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/ucs2utf.pl,v 1.3 2007/03/23 13:51:30 ishii Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/ucs2utf.pl,v 1.4 2008/01/01 19:45:53 momjian Exp $
 # convert UCS-4 to UTF-8
 #
 sub ucs2utf {

@@ -4,11 +4,11 @@
  *		Functions for handling locale-related info
  *
  *
- * Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.8 2007/11/15 21:14:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.9 2008/01/01 19:46:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

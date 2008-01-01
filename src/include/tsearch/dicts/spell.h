@@ -4,9 +4,9 @@
  *
  * Declarations for ISpell dictionary
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.5 2007/11/15 22:25:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.6 2008/01/01 19:45:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

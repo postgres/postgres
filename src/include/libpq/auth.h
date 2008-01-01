@@ -4,10 +4,10 @@
  *	  Definitions for network authentication routines
  *
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/auth.h,v 1.34 2007/11/09 17:31:07 mha Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/auth.h,v 1.35 2008/01/01 19:45:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

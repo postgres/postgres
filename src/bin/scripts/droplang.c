@@ -2,10 +2,10 @@
  *
  * droplang
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.25 2007/12/12 21:41:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.26 2008/01/01 19:45:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

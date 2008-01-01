@@ -4,10 +4,10 @@
  *	  definitions for executor state nodes
  *
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.182 2007/11/30 21:22:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.183 2008/01/01 19:45:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

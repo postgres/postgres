@@ -5,10 +5,10 @@
  *
  * This should be included _AFTER_ postgres.h and system include files
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.7 2007/11/22 17:47:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.8 2008/01/01 19:46:00 momjian Exp $
  */
 
 #ifndef PL_PERL_H

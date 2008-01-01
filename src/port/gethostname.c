@@ -3,11 +3,11 @@
  * gethostname.c
  *	  gethostname using uname
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/gethostname.c,v 1.9 2007/01/05 22:20:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/gethostname.c,v 1.10 2008/01/01 19:46:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

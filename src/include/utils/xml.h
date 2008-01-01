@@ -4,10 +4,10 @@
  *	  Declarations for XML data type support.
  *
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.21 2007/11/15 22:25:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.22 2008/01/01 19:45:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

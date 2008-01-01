@@ -4,10 +4,10 @@
  *	  POSTGRES lock manager definitions.
  *
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.59 2007/09/05 18:10:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.60 2008/01/01 19:45:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

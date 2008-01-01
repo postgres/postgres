@@ -4,10 +4,10 @@
  *	  prototypes for catalog/index.c.
  *
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.74 2007/05/16 17:28:20 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.75 2008/01/01 19:45:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

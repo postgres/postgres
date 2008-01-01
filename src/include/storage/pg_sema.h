@@ -10,10 +10,10 @@
  * be provided by each port.
  *
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/pg_sema.h,v 1.11 2007/01/05 22:19:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/pg_sema.h,v 1.12 2008/01/01 19:45:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

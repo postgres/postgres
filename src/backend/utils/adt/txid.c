@@ -10,11 +10,11 @@
  * via functions such as SubTransGetTopmostTransaction().
  *
  *
- *	Copyright (c) 2003-2007, PostgreSQL Global Development Group
+ *	Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *	Author: Jan Wieck, Afilias USA INC.
  *	64-bit txids: Marko Kreen, Skype Technologies
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/txid.c,v 1.3 2007/11/15 22:25:16 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/txid.c,v 1.4 2008/01/01 19:45:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

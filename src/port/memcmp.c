@@ -3,11 +3,11 @@
  * memcmp.c
  *	  compares memory bytes
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/memcmp.c,v 1.11 2007/01/05 22:20:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/memcmp.c,v 1.12 2008/01/01 19:46:00 momjian Exp $
  *
  * This file was taken from NetBSD and is used by SunOS because memcmp
  * on that platform does not properly compare negative bytes. The

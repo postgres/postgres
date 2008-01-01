@@ -5,8 +5,8 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.24 2007/02/13 18:00:35 momjian Exp $
- * Copyright (c) 2001-2007, PostgreSQL Global Development Group
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.25 2008/01/01 19:45:45 momjian Exp $
+ * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
  * levenshtein()

@@ -3,10 +3,10 @@
  * rewriteheap.h
  *	  Declarations for heap rewrite support functions
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/rewriteheap.h,v 1.3 2007/11/15 21:14:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/rewriteheap.h,v 1.4 2008/01/01 19:45:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

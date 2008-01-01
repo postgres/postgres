@@ -6,10 +6,10 @@
  * See also lsyscache.h, which provides convenience routines for
  * common cache-lookup operations.
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.70 2007/08/21 01:11:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.71 2008/01/01 19:45:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

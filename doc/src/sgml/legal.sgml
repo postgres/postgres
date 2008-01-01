@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/legal.sgml,v 1.22 2007/01/05 22:19:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/legal.sgml,v 1.23 2008/01/01 19:45:45 momjian Exp $ -->
 
 <copyright>
- <year>1996-2007</year>
+ <year>1996-2008</year>
  <holder>The PostgreSQL Global Development Group</holder>
 </copyright>
 
@@ -9,7 +9,7 @@
  <title>Legal Notice</title>
 
  <para>
-  <productname>PostgreSQL</productname> is Copyright &copy; 1996-2007
+  <productname>PostgreSQL</productname> is Copyright &copy; 1996-2008
   by the PostgreSQL Global Development Group and is distributed under
   the terms of the license of the University of California below.
  </para>

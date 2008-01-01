@@ -2,9 +2,9 @@
  *	common.h
  *		Common support routines for bin/scripts/
  *
- *	Copyright (c) 2003-2007, PostgreSQL Global Development Group
+ *	Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/bin/scripts/common.h,v 1.18 2007/11/15 21:14:42 momjian Exp $
+ *	$PostgreSQL: pgsql/src/bin/scripts/common.h,v 1.19 2008/01/01 19:45:56 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H

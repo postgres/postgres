@@ -4,10 +4,10 @@
  *	  POSTGRES memory context node definitions.
  *
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/memnodes.h,v 1.33 2007/08/07 06:25:14 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/memnodes.h,v 1.34 2008/01/01 19:45:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

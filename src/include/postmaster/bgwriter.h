@@ -3,9 +3,9 @@
  * bgwriter.h
  *	  Exports from postmaster/bgwriter.c.
  *
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/postmaster/bgwriter.h,v 1.10 2007/06/28 00:02:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/bgwriter.h,v 1.11 2008/01/01 19:45:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
