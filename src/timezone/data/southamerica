@@ -1,4 +1,4 @@
-# @(#)southamerica	8.12
+# @(#)southamerica	8.15
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -105,7 +105,11 @@ Rule	Arg	1989	1992	-	Oct	Sun>=15	0:00	1:00	S
 # which did not result in the switch of a time zone, as they stayed 9 hours
 # from the International Date Line.
 Rule	Arg	1999	only	-	Oct	Sun>=1	0:00	1:00	S
-Rule	Arg	2000	only	-	Mar	Sun>=1	0:00	0	-
+# From Paul Eggert (2007-12-28):
+# DST was set to expire on March 5, not March 3, but since it was converted
+# to standard time on March 3 it's more convenient for us to pretend that
+# it ended on March 3.
+Rule	Arg	2000	only	-	Mar	3	0:00	0	-
 #
 # From Peter Gradelski via Steffen Thorsen (2000-03-01):
 # We just checked with our Sao Paulo office and they say the government of
@@ -140,6 +144,30 @@ Rule	Arg	2000	only	-	Mar	Sun>=1	0:00	0	-
 # This kind of things had always been done this way in Argentina.
 # We are still -03:00 all year round in all of the country.
 #
+# From Steffen Thorsen (2007-12-21):
+# A user (Leonardo Chaim) reported that Argentina will adopt DST....
+# all of the country (all Zone-entries) are affected.  News reports like
+# http://www.lanacion.com.ar/opinion/nota.asp?nota_id=973037 indicate
+# that Argentina will use DST next year as well, from October to
+# March, although exact rules are not given.
+#
+# From Jesper Norgaard Welen (2007-12-26)
+# The last hurdle of Argentina DST is over, the proposal was approved in
+# the lower chamber too (Deputados) with a vote 192 for and 2 against.
+# By the way thanks to Mariano Absatz and Daniel Mario Vega for the link to
+# the original scanned proposal, where the dates and the zero hours are
+# clear and unambiguous...This is the article about final approval:
+# <a href="http://www.lanacion.com.ar/politica/nota.asp?nota_id=973996">
+# http://www.lanacion.com.ar/politica/nota.asp?nota_id=973996
+# </a>
+#
+# From Paul Eggert (2007-12-22):
+# For dates after mid-2008, the following rules are my guesses and
+# are quite possibly wrong, but are more likely than no DST at all.
+Rule	Arg	2007	only	-	Dec	30	0:00	1:00	S
+Rule	Arg	2008	max	-	Mar	Sun>=15	0:00	0	-
+Rule	Arg	2008	max	-	Oct	Sun>=1	0:00	1:00	S
+ 
 # From Mariano Absatz (2004-05-21):
 # Today it was officially published that the Province of Mendoza is changing
 # its timezone this winter... starting tomorrow night....
@@ -214,7 +242,7 @@ Zone America/Argentina/Buenos_Aires -3:53:48 - LMT 1894 Oct 31
 			-4:00	Arg	AR%sT	1969 Oct  5
 			-3:00	Arg	AR%sT	1999 Oct  3
 			-4:00	Arg	AR%sT	2000 Mar  3
-			-3:00	-	ART
+			-3:00	Arg	AR%sT
 #
 # Santa Fe (SF), Entre Rios (ER), Corrientes (CN), Misiones (MN), Chaco (CC),
 # Formosa (FM), Salta (SA), Santiago del Estero (SE), Cordoba (CB),
@@ -237,7 +265,7 @@ Zone America/Argentina/Cordoba -4:16:48 - LMT	1894 Oct 31
 			-4:00	-	WART	1991 Oct 20
 			-3:00	Arg	AR%sT	1999 Oct  3
 			-4:00	Arg	AR%sT	2000 Mar  3
-			-3:00	-	ART
+			-3:00	Arg	AR%sT
 #
 # Tucuman (TM)
 Zone America/Argentina/Tucuman -4:20:52 - LMT	1894 Oct 31
@@ -250,7 +278,7 @@ Zone America/Argentina/Tucuman -4:20:52 - LMT	1894 Oct 31
 			-4:00	Arg	AR%sT	2000 Mar  3
 			-3:00	-	ART	2004 Jun  1
 			-4:00	-	WART	2004 Jun 13
-			-3:00	-	ART
+			-3:00	Arg	AR%sT
 #
 # La Rioja (LR)
 Zone America/Argentina/La_Rioja -4:27:24 - LMT	1894 Oct 31
@@ -263,7 +291,7 @@ Zone America/Argentina/La_Rioja -4:27:24 - LMT	1894 Oct 31
 			-4:00	Arg	AR%sT	2000 Mar  3
 			-3:00	-	ART	2004 Jun  1
 			-4:00	-	WART	2004 Jun 20
-			-3:00	-	ART
+			-3:00	Arg	AR%sT
 #
 # San Juan (SJ)
 Zone America/Argentina/San_Juan -4:34:04 - LMT	1894 Oct 31
@@ -276,7 +304,7 @@ Zone America/Argentina/San_Juan -4:34:04 - LMT	1894 Oct 31
 			-4:00	Arg	AR%sT	2000 Mar  3
 			-3:00	-	ART	2004 May 31
 			-4:00	-	WART	2004 Jul 25
-			-3:00	-	ART
+			-3:00	Arg	AR%sT
 #
 # Jujuy (JY)
 Zone America/Argentina/Jujuy -4:21:12 -	LMT	1894 Oct 31
@@ -290,7 +318,7 @@ Zone America/Argentina/Jujuy -4:21:12 -	LMT	1894 Oct 31
 			-3:00	1:00	ARST	1992
 			-3:00	Arg	AR%sT	1999 Oct  3
 			-4:00	Arg	AR%sT	2000 Mar  3
-			-3:00	-	ART
+			-3:00	Arg	AR%sT
 #
 # Catamarca (CT), Chubut (CH)
 Zone America/Argentina/Catamarca -4:23:08 - LMT	1894 Oct 31
@@ -303,7 +331,7 @@ Zone America/Argentina/Catamarca -4:23:08 - LMT	1894 Oct 31
 			-4:00	Arg	AR%sT	2000 Mar  3
 			-3:00	-	ART	2004 Jun  1
 			-4:00	-	WART	2004 Jun 20
-			-3:00	-	ART
+			-3:00	Arg	AR%sT
 #
 # Mendoza (MZ)
 Zone America/Argentina/Mendoza -4:35:16 - LMT	1894 Oct 31
@@ -320,7 +348,7 @@ Zone America/Argentina/Mendoza -4:35:16 - LMT	1894 Oct 31
 			-4:00	Arg	AR%sT	2000 Mar  3
 			-3:00	-	ART	2004 May 23
 			-4:00	-	WART	2004 Sep 26
-			-3:00	-	ART
+			-3:00	Arg	AR%sT
 #
 # Santa Cruz (SC)
 Zone America/Argentina/Rio_Gallegos -4:36:52 - LMT 1894 Oct 31
@@ -331,7 +359,7 @@ Zone America/Argentina/Rio_Gallegos -4:36:52 - LMT 1894 Oct 31
 			-4:00	Arg	AR%sT	2000 Mar  3
 			-3:00	-	ART	2004 Jun  1
 			-4:00	-	WART	2004 Jun 20
-			-3:00	-	ART
+			-3:00	Arg	AR%sT
 #
 # Tierra del Fuego, Antartida e Islas del Atlantico Sur (TF)
 Zone America/Argentina/Ushuaia -4:33:12 - LMT 1894 Oct 31
@@ -342,7 +370,7 @@ Zone America/Argentina/Ushuaia -4:33:12 - LMT 1894 Oct 31
 			-4:00	Arg	AR%sT	2000 Mar  3
 			-3:00	-	ART	2004 May 30
 			-4:00	-	WART	2004 Jun 20
-			-3:00	-	ART
+			-3:00	Arg	AR%sT
 
 # Aruba
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -1107,19 +1135,17 @@ Zone America/Montevideo	-3:44:44 -	LMT	1898 Jun 28
 
 # Venezuela
 #
-# From Kiraz Janicke (2007-09-25), in
-# http://www.venezuelanalysis.com/analysis/2645:
-# The proposal ... involves turning the clock back half an hour from
-# +4.00 Greenwich Mean Time (GMT), to +4.30GMT, the time zone
-# Venezuela had until December 31, 1964, when the current time zone
-# was adopted. The change was due to take place on September 17 and
-# then on September 24, but has since been postponed until December
-# 31, to allow for compliance with international organizations, such
-# as the International Office of Weights and Measures.
+# From John Stainforth (2007-11-28):
+# ... the change for Venezuela originally expected for 2007-12-31 has
+# been brought forward to 2007-12-09.  The official announcement was
+# published today in the "Gaceta Oficial de la Republica Bolivariana
+# de Venezuela, numero 38.819" (official document for all laws or
+# resolution publication)
+# http://www.globovision.com/news.php?nid=72208
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Caracas	-4:27:44 -	LMT	1890
 			-4:27:40 -	CMT	1912 Feb 12 # Caracas Mean Time?
 			-4:30	-	VET	1965	     # Venezuela Time
-			-4:00	-	VET	2008
+			-4:00	-	VET	2007 Dec  9 03:00
 			-4:30	-	VET
