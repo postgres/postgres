@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.105 2007/11/23 01:46:34 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.106 2008/01/02 03:10:27 tgl Exp $
  *
  *********************************************************************
  */
@@ -79,7 +79,8 @@ typedef PyObject *(*PLyDatumToObFunc) (const char *);
 typedef struct PLyDatumToOb
 {
 	PLyDatumToObFunc func;
-	FmgrInfo	typfunc;
+	FmgrInfo	typfunc;		/* The type's output function */
+	Oid			typoid;			/* The OID of the type */
 	Oid			typioparam;
 	bool		typbyval;
 }	PLyDatumToOb;
@@ -212,6 +213,7 @@ static void PLy_elog(int, const char *,...);
 static char *PLy_traceback(int *);
 
 static void *PLy_malloc(size_t);
+static void *PLy_malloc0(size_t);
 static char *PLy_strdup(const char *);
 static void PLy_free(void *);
 
@@ -231,9 +233,8 @@ static PyObject *PLy_procedure_call(PLyProcedure *, char *, PyObject *);
 static PLyProcedure *PLy_procedure_get(FunctionCallInfo fcinfo,
 				  Oid tgreloid);
 
-static PLyProcedure *PLy_procedure_create(FunctionCallInfo fcinfo,
-					 Oid tgreloid,
-					 HeapTuple procTup, char *key);
+static PLyProcedure *PLy_procedure_create(HeapTuple procTup, Oid tgreloid,
+										  char *key);
 
 static void PLy_procedure_compile(PLyProcedure *, const char *);
 static char *PLy_procedure_munge_source(const char *, const char *);
@@ -1123,7 +1124,24 @@ PLy_procedure_get(FunctionCallInfo fcinfo, Oid tgreloid)
 	}
 
 	if (proc == NULL)
-		proc = PLy_procedure_create(fcinfo, tgreloid, procTup, key);
+		proc = PLy_procedure_create(procTup, tgreloid, key);
+
+	if (OidIsValid(tgreloid))
+	{
+		/*
+		 * Input/output conversion for trigger tuples.	Use the result
+		 * TypeInfo variable to store the tuple conversion info.  We
+		 * do this over again on each call to cover the possibility that
+		 * the relation's tupdesc changed since the trigger was last called.
+		 * PLy_input_tuple_funcs and PLy_output_tuple_funcs are responsible
+		 * for not doing repetitive work.
+		 */
+		TriggerData *tdata = (TriggerData *) fcinfo->context;
+
+		Assert(CALLED_AS_TRIGGER(fcinfo));
+		PLy_input_tuple_funcs(&(proc->result), tdata->tg_relation->rd_att);
+		PLy_output_tuple_funcs(&(proc->result), tdata->tg_relation->rd_att);
+	}
 
 	ReleaseSysCache(procTup);
 
@@ -1131,8 +1149,7 @@ PLy_procedure_get(FunctionCallInfo fcinfo, Oid tgreloid)
 }
 
 static PLyProcedure *
-PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
-					 HeapTuple procTup, char *key)
+PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 {
 	char		procName[NAMEDATALEN + 256];
 	Form_pg_proc procStruct;
@@ -1152,13 +1169,13 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 		rv = snprintf(procName, sizeof(procName),
 					  "__plpython_procedure_%s_%u_trigger_%u",
 					  NameStr(procStruct->proname),
-					  fcinfo->flinfo->fn_oid,
+					  HeapTupleGetOid(procTup),
 					  tgreloid);
 	else
 		rv = snprintf(procName, sizeof(procName),
 					  "__plpython_procedure_%s_%u",
 					  NameStr(procStruct->proname),
-					  fcinfo->flinfo->fn_oid);
+					  HeapTupleGetOid(procTup));
 	if (rv >= sizeof(procName) || rv < 0)
 		elog(ERROR, "procedure name would overrun buffer");
 
@@ -1186,7 +1203,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 		 * get information required for output conversion of the return value,
 		 * but only if this isn't a trigger.
 		 */
-		if (!CALLED_AS_TRIGGER(fcinfo))
+		if (!OidIsValid(tgreloid))
 		{
 			HeapTuple	rvTypeTup;
 			Form_pg_type rvTypeStruct;
@@ -1228,28 +1245,18 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 
 			ReleaseSysCache(rvTypeTup);
 		}
-		else
-		{
-			/*
-			 * input/output conversion for trigger tuples.	use the result
-			 * TypeInfo variable to store the tuple conversion info.
-			 */
-			TriggerData *tdata = (TriggerData *) fcinfo->context;
-
-			PLy_input_tuple_funcs(&(proc->result), tdata->tg_relation->rd_att);
-			PLy_output_tuple_funcs(&(proc->result), tdata->tg_relation->rd_att);
-		}
 
 		/*
 		 * now get information required for input conversion of the
 		 * procedure's arguments.
 		 */
-		proc->nargs = fcinfo->nargs;
+		proc->nargs = procStruct->pronargs;
 		if (proc->nargs)
 		{
 			argnames = SysCacheGetAttr(PROCOID, procTup, Anum_pg_proc_proargnames, &isnull);
 			if (!isnull)
 			{
+				/* XXX this code is WRONG if there are any output arguments */
 				deconstruct_array(DatumGetArrayTypeP(argnames), TEXTOID, -1, false, 'i',
 								  &elems, NULL, &nelems);
 				if (nelems != proc->nargs)
@@ -1260,7 +1267,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 				memset(proc->argnames, 0, sizeof(char *) * proc->nargs);
 			}
 		}
-		for (i = 0; i < fcinfo->nargs; i++)
+		for (i = 0; i < proc->nargs; i++)
 		{
 			HeapTuple	argTypeTup;
 			Form_pg_type argTypeStruct;
@@ -1453,10 +1460,15 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 
 	if (arg->is_rowtype == 0)
 		elog(ERROR, "PLyTypeInfo struct is initialized for a Datum");
-
 	arg->is_rowtype = 1;
-	arg->in.r.natts = desc->natts;
-	arg->in.r.atts = PLy_malloc(desc->natts * sizeof(PLyDatumToOb));
+
+	if (arg->in.r.natts != desc->natts)
+	{
+		if (arg->in.r.atts)
+			PLy_free(arg->in.r.atts);
+		arg->in.r.natts = desc->natts;
+		arg->in.r.atts = PLy_malloc0(desc->natts * sizeof(PLyDatumToOb));
+	}
 
 	for (i = 0; i < desc->natts; i++)
 	{
@@ -1464,6 +1476,9 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 
 		if (desc->attrs[i]->attisdropped)
 			continue;
+
+		if (arg->in.r.atts[i].typoid == desc->attrs[i]->atttypid)
+			continue;			/* already set up this entry */
 
 		typeTup = SearchSysCache(TYPEOID,
 								 ObjectIdGetDatum(desc->attrs[i]->atttypid),
@@ -1487,10 +1502,15 @@ PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 
 	if (arg->is_rowtype == 0)
 		elog(ERROR, "PLyTypeInfo struct is initialized for a Datum");
-
 	arg->is_rowtype = 1;
-	arg->out.r.natts = desc->natts;
-	arg->out.r.atts = PLy_malloc(desc->natts * sizeof(PLyDatumToOb));
+
+	if (arg->out.r.natts != desc->natts)
+	{
+		if (arg->out.r.atts)
+			PLy_free(arg->out.r.atts);
+		arg->out.r.natts = desc->natts;
+		arg->out.r.atts = PLy_malloc0(desc->natts * sizeof(PLyDatumToOb));
+	}
 
 	for (i = 0; i < desc->natts; i++)
 	{
@@ -1498,6 +1518,9 @@ PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 
 		if (desc->attrs[i]->attisdropped)
 			continue;
+
+		if (arg->out.r.atts[i].typoid == desc->attrs[i]->atttypid)
+			continue;			/* already set up this entry */
 
 		typeTup = SearchSysCache(TYPEOID,
 								 ObjectIdGetDatum(desc->attrs[i]->atttypid),
@@ -1548,6 +1571,7 @@ PLy_input_datum_func2(PLyDatumToOb * arg, Oid typeOid, HeapTuple typeTup)
 
 	/* Get the type's conversion information */
 	perm_fmgr_info(typeStruct->typoutput, &arg->typfunc);
+	arg->typoid = HeapTupleGetOid(typeTup);
 	arg->typioparam = getTypeIOParam(typeTup);
 	arg->typbyval = typeStruct->typbyval;
 
@@ -3012,6 +3036,15 @@ PLy_malloc(size_t bytes)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
+	return ptr;
+}
+
+static void *
+PLy_malloc0(size_t bytes)
+{
+	void	   *ptr = PLy_malloc(bytes);
+
+	MemSet(ptr, 0, bytes);
 	return ptr;
 }
 
