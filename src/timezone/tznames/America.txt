@@ -4,7 +4,7 @@
 #   a template for timezones you could need.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/America.txt,v 1.2 2006/07/25 13:49:21 tgl Exp $
+# $PostgreSQL: pgsql/src/timezone/tznames/America.txt,v 1.3 2008/01/02 21:42:00 tgl Exp $
 #
 
 # Acre time is sometimes called Acre Standard Time (AST) which leads to a
@@ -52,7 +52,18 @@ AMT    -14400    # Amazon Time
                  #     (America/Cuiaba)
                  #     (America/Manaus)
                  #     (America/Porto_Velho)
-ART    -10800    # Argentina Time (not in zic)
+ART    -10800    # Argentina Time
+                 #     (America/Argentina/Buenos_Aires)
+                 #     (America/Argentina/Cordoba)
+                 #     (America/Argentina/Tucuman)
+                 #     (America/Argentina/La_Rioja)
+                 #     (America/Argentina/San_Juan)
+                 #     (America/Argentina/Jujuy)
+                 #     (America/Argentina/Catamarca)
+                 #     (America/Argentina/Mendoza)
+                 #     (America/Argentina/Rio_Gallegos)
+                 #     (America/Argentina/Ushuaia)
+ARST    -7200 D  # Argentina Summer Time
 # CONFLICT! AST is not unique
 # Other timezones:
 #  - AST: Arabic Standard Time (Asia)
