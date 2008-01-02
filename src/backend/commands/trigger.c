@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.226 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.227 2008/01/02 23:34:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3478,28 +3478,29 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 }
 
 /* ----------
- * AfterTriggerCheckTruncate()
- *		Test deferred-trigger status to see if a TRUNCATE is OK.
+ * AfterTriggerPendingOnRel()
+ *		Test to see if there are any pending after-trigger events for rel.
  *
- * The argument is a list of OIDs of relations due to be truncated.
- * We raise error if there are any pending after-trigger events for them.
+ * This is used by TRUNCATE, CLUSTER, ALTER TABLE, etc to detect whether
+ * it is unsafe to perform major surgery on a relation.  Note that only
+ * local pending events are examined.  We assume that having exclusive lock
+ * on a rel guarantees there are no unserviced events in other backends ---
+ * but having a lock does not prevent there being such events in our own.
  *
  * In some scenarios it'd be reasonable to remove pending events (more
  * specifically, mark them DONE by the current subxact) but without a lot
  * of knowledge of the trigger semantics we can't do this in general.
  * ----------
  */
-void
-AfterTriggerCheckTruncate(List *relids)
+bool
+AfterTriggerPendingOnRel(Oid relid)
 {
 	AfterTriggerEvent event;
 	int			depth;
 
-	/*
-	 * Ignore call if we aren't in a transaction.  (Shouldn't happen?)
-	 */
+	/* No-op if we aren't in a transaction.  (Shouldn't happen?) */
 	if (afterTriggers == NULL)
-		return;
+		return false;
 
 	/* Scan queued events */
 	for (event = afterTriggers->events.head;
@@ -3509,21 +3510,18 @@ AfterTriggerCheckTruncate(List *relids)
 		/*
 		 * We can ignore completed events.	(Even if a DONE flag is rolled
 		 * back by subxact abort, it's OK because the effects of the TRUNCATE
-		 * must get rolled back too.)
+		 * or whatever must get rolled back too.)
 		 */
 		if (event->ate_event & AFTER_TRIGGER_DONE)
 			continue;
 
-		if (list_member_oid(relids, event->ate_relid))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot truncate table \"%s\" because it has pending trigger events",
-							get_rel_name(event->ate_relid))));
+		if (event->ate_relid == relid)
+			return true;
 	}
 
 	/*
 	 * Also scan events queued by incomplete queries.  This could only matter
-	 * if a TRUNCATE is executed by a function or trigger within an updating
+	 * if TRUNCATE/etc is executed by a function or trigger within an updating
 	 * query on the same relation, which is pretty perverse, but let's check.
 	 */
 	for (depth = 0; depth <= afterTriggers->query_depth; depth++)
@@ -3535,13 +3533,12 @@ AfterTriggerCheckTruncate(List *relids)
 			if (event->ate_event & AFTER_TRIGGER_DONE)
 				continue;
 
-			if (list_member_oid(relids, event->ate_relid))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot truncate table \"%s\" because it has pending trigger events",
-								get_rel_name(event->ate_relid))));
+			if (event->ate_relid == relid)
+				return true;
 		}
 	}
+
+	return false;
 }
 
 

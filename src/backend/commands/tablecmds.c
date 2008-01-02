@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.238 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.239 2008/01/02 23:34:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,6 +194,7 @@ static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
 							 Relation rel, Relation pkrel, Oid constraintOid);
 static void createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 						 Oid constraintOid);
+static void CheckTableNotInUse(Relation rel);
 static void ATController(Relation rel, List *cmds, bool recurse);
 static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		  bool recurse, bool recursing);
@@ -599,13 +600,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 #endif
 
 	/*
-	 * Also check for pending AFTER trigger events on the target relations. We
-	 * can't just leave those be, since they will try to fetch tuples that the
-	 * TRUNCATE removes.
-	 */
-	AfterTriggerCheckTruncate(relids);
-
-	/*
 	 * OK, truncate each table.
 	 */
 	foreach(cell, rels)
@@ -685,6 +679,17 @@ truncate_check_rel(Relation rel)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			  errmsg("cannot truncate temporary tables of other sessions")));
+
+	/*
+	 * Also check for pending AFTER trigger events on the relation.  We can't
+	 * just leave those be, since they will try to fetch tuples that the
+	 * TRUNCATE removes.
+	 */
+	if (AfterTriggerPendingOnRel(RelationGetRelid(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("cannot truncate table \"%s\" because it has pending trigger events",
+						RelationGetRelationName(rel))));
 }
 
 /*----------
@@ -1749,20 +1754,35 @@ void
 AlterTable(AlterTableStmt *stmt)
 {
 	Relation	rel = relation_openrv(stmt->relation, AccessExclusiveLock);
+
+	CheckTableNotInUse(rel);
+
+	ATController(rel, stmt->cmds, interpretInhOption(stmt->relation->inhOpt));
+}
+
+/*
+ * Disallow ALTER TABLE when the current backend has any open reference to
+ * it besides the one we just got (such as an open cursor or active plan);
+ * our AccessExclusiveLock doesn't protect us against stomping on our own
+ * foot, only other people's feet!
+ *
+ * Note: the only case known to cause serious trouble is ALTER COLUMN TYPE,
+ * and some changes are obviously pretty benign, so this could possibly be
+ * relaxed to only error out for certain types of alterations.  But the
+ * use-case for allowing any of these things is not obvious, so we won't
+ * work hard at it for now.
+ *
+ * We also reject ALTER TABLE if there are any pending AFTER trigger events
+ * for the rel.  This is certainly necessary for the rewriting variants of
+ * ALTER TABLE, because they don't preserve tuple TIDs and so the pending
+ * events would try to fetch the wrong tuples.  It might be overly cautious
+ * in other cases, but again it seems better to err on the side of paranoia.
+ */
+static void
+CheckTableNotInUse(Relation rel)
+{
 	int			expected_refcnt;
 
-	/*
-	 * Disallow ALTER TABLE when the current backend has any open reference to
-	 * it besides the one we just got (such as an open cursor or active plan);
-	 * our AccessExclusiveLock doesn't protect us against stomping on our own
-	 * foot, only other people's feet!
-	 *
-	 * Note: the only case known to cause serious trouble is ALTER COLUMN
-	 * TYPE, and some changes are obviously pretty benign, so this could
-	 * possibly be relaxed to only error out for certain types of alterations.
-	 * But the use-case for allowing any of these things is not obvious, so we
-	 * won't work hard at it for now.
-	 */
 	expected_refcnt = rel->rd_isnailed ? 2 : 1;
 	if (rel->rd_refcnt != expected_refcnt)
 		ereport(ERROR,
@@ -1770,7 +1790,11 @@ AlterTable(AlterTableStmt *stmt)
 				 errmsg("relation \"%s\" is being used by active queries in this session",
 						RelationGetRelationName(rel))));
 
-	ATController(rel, stmt->cmds, interpretInhOption(stmt->relation->inhOpt));
+	if (AfterTriggerPendingOnRel(RelationGetRelid(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("cannot alter table \"%s\" because it has pending trigger events",
+						RelationGetRelationName(rel))));
 }
 
 /*
@@ -1781,7 +1805,8 @@ AlterTable(AlterTableStmt *stmt)
  * We do not reject if the relation is already open, because it's quite
  * likely that one or more layers of caller have it open.  That means it
  * is unsafe to use this entry point for alterations that could break
- * existing query plans.
+ * existing query plans.  On the assumption it's not used for such, we
+ * don't have to reject pending AFTER triggers, either.
  */
 void
 AlterTableInternal(Oid relid, List *cmds, bool recurse)
@@ -2784,12 +2809,7 @@ ATSimpleRecursion(List **wqueue, Relation rel,
 			if (childrelid == relid)
 				continue;
 			childrel = relation_open(childrelid, AccessExclusiveLock);
-			/* check for child relation in use in this session */
-			if (childrel->rd_refcnt != 1)
-				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_IN_USE),
-						 errmsg("relation \"%s\" is being used by active queries in this session",
-								RelationGetRelationName(childrel))));
+			CheckTableNotInUse(childrel);
 			ATPrepCmd(wqueue, childrel, cmd, false, true);
 			relation_close(childrel, NoLock);
 		}
@@ -2821,12 +2841,7 @@ ATOneLevelRecursion(List **wqueue, Relation rel,
 		Relation	childrel;
 
 		childrel = relation_open(childrelid, AccessExclusiveLock);
-		/* check for child relation in use in this session */
-		if (childrel->rd_refcnt != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_IN_USE),
-					 errmsg("relation \"%s\" is being used by active queries in this session",
-							RelationGetRelationName(childrel))));
+		CheckTableNotInUse(childrel);
 		ATPrepCmd(wqueue, childrel, cmd, true, true);
 		relation_close(childrel, NoLock);
 	}
@@ -3655,12 +3670,7 @@ ATExecDropColumn(Relation rel, const char *colName,
 			Form_pg_attribute childatt;
 
 			childrel = heap_open(childrelid, AccessExclusiveLock);
-			/* check for child relation in use in this session */
-			if (childrel->rd_refcnt != 1)
-				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_IN_USE),
-						 errmsg("relation \"%s\" is being used by active queries in this session",
-								RelationGetRelationName(childrel))));
+			CheckTableNotInUse(childrel);
 
 			tuple = SearchSysCacheCopyAttName(childrelid, colName);
 			if (!HeapTupleIsValid(tuple))		/* shouldn't happen */

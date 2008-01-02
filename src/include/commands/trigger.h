@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.65 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.66 2008/01/02 23:34:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ extern void AfterTriggerEndXact(bool isCommit);
 extern void AfterTriggerBeginSubXact(void);
 extern void AfterTriggerEndSubXact(bool isCommit);
 extern void AfterTriggerSetState(ConstraintsSetStmt *stmt);
-extern void AfterTriggerCheckTruncate(List *relids);
+extern bool AfterTriggerPendingOnRel(Oid relid);
 
 
 /*
