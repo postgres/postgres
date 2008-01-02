@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.128.2.6 2004/09/18 15:28:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.128.2.7 2008/01/02 19:53:15 mha Exp $
 -->
 
  <chapter id="datatype">
@@ -2577,7 +2577,7 @@ SELECT * FROM test1 WHERE a;
     When sorting <type>inet</type> or <type>cidr</type> data types,
     IPv4 addresses will always sort before IPv6 addresses, including
     IPv4 addresses encapsulated or mapped into IPv6 addresses, such as
-    ::10.2.3.4 or ::ffff::10.4.3.2.
+    ::10.2.3.4 or ::ffff:10.4.3.2.
    </para>
 
 
