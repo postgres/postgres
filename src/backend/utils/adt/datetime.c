@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118.2.7 2005/12/01 17:57:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118.2.8 2008/01/02 22:05:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,8 +120,8 @@ static datetkn datetktbl[] = {
 #if 0
 	aqtst
 	aqtt
-	arst
 #endif
+	{"arst", DTZ, NEG(8)},		/* Argentina Summer Time */
 	{"art", TZ, NEG(12)},		/* Argentina Time */
 #if 0
 	ashst
