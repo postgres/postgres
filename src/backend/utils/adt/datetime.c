@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.160.2.3 2007/05/29 04:59:44 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.160.2.4 2008/01/02 22:05:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,8 +124,8 @@ static datetkn datetktbl[] = {
 #if 0
 	aqtst
 	aqtt
-	arst
 #endif
+	{"arst", DTZ, NEG(8)},		/* Argentina Summer Time */
 	{"art", TZ, NEG(12)},		/* Argentina Time */
 #if 0
 	ashst
