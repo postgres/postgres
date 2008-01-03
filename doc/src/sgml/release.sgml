@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.574 2008/01/01 19:41:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.575 2008/01/03 21:35:25 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -35,23 +35,22 @@ do it for earlier branch release files.
 <appendix id="release">
  <title>Release Notes</title>
 
- <sect1 id="release-introduction">
-  <title>Introduction</title>
-
   <para>
-   The release notes contain the significant changes in each PostgreSQL
-   release, with major features and migration issues often listed at the
-   top.  The release notes do not contain changes that affect only a few
-   users or changes that are internal and therefore not user-visible.  For
-   example, the optimizer is improved in almost every release, but the
-   improvements are usually observed by users as simply faster queries.
+   The release notes contain the significant changes in each
+   <productname>PostgreSQL</> release, with major features and migration
+   issues listed at the top.  The release notes do not contain changes
+   that affect only a few users or changes that are internal and therefore not
+   user-visible.  For example, the optimizer is improved in almost every
+   release, but the improvements are usually observed by users as simply
+   faster queries.
   </para>
 
   <para>
    A complete list of changes for each release can be obtained by
-   viewing the <link linkend="cvs">CVS</link> logs for each release.  The <ulink
-   url="http://archives.postgresql.org/pgsql-committers/">committers email
-   list</ulink> contains all source code changes as well.   There is also
+   viewing the <link linkend="cvs">CVS</link> logs for each release.
+   The <ulink
+   url="http://archives.postgresql.org/pgsql-committers/">pgsql-committers
+   email list</ulink> contains all source code changes as well.  There is also
    a <ulink url="http://developer.postgresql.org/cvsweb.cgi/pgsql/">web
    interface</ulink> that shows changes to specific files.
    <!-- we need a file containing the CVS logs for each release, and something
@@ -61,10 +60,8 @@ do it for earlier branch release files.
   <para>
    The name appearing next to each item represents the major developer for
    that item.  Of course all changes involve community discussion and patch
-   review so each item is truly a community effort.
+   review, so each item is truly a community effort.
   </para>
-
- </sect1>
 
  <sect1 id="release-8-3">
   <title>Release 8.3</title>
@@ -514,7 +511,7 @@ current_date &lt; 2017-11-17
        <varname>stats_start_collector</>, and
        <varname>stats_reset_on_server_start</> are removed.
        <varname>redirect_stderr</> is renamed to
-       <varname>logging_collector</>. 
+       <varname>logging_collector</>.
        <varname>stats_command_string</> is renamed to
        <varname>track_activities</>.
        <varname>stats_block_level</> and <varname>stats_row_level</>
@@ -1253,7 +1250,7 @@ current_date &lt; 2017-11-17
       <para>
        Reduce WAL disk space needed by warm standby servers (Simon)
       </para>
-     
+
       <para>
        This change allows a warm standby server to pass the name of the earliest
        still-needed WAL file to the recovery script, allowing automatic removal
@@ -1883,7 +1880,7 @@ current_date &lt; 2017-11-17
        This adds convenient syntax for PL/PgSQL set-returning functions
        that want to return the result of a query.  <command>RETURN QUERY</>
        is easier and more efficient than a loop
-       around <command>RETURN NEXT</command>. 
+       around <command>RETURN NEXT</command>.
       </para>
      </listitem>
 
@@ -1947,7 +1944,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Allow type-name arguments to PL/Python 
+       Allow type-name arguments to PL/Python
        <function>plpy.prepare()</function> to be data type aliases in
        addition to names found in <literal>pg_type</literal> (Andrew)
       </para>
@@ -1955,7 +1952,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Allow type-name arguments to PL/Tcl <function>spi_prepare</> to 
+       Allow type-name arguments to PL/Tcl <function>spi_prepare</> to
        be data type aliases in addition to names found in
        <literal>pg_type</literal> (Andrew)
       </para>
@@ -2070,7 +2067,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Remove <literal>-u</> option (this option has long been depricated)
+       Remove <literal>-u</> option (this option has long been deprecated)
        (Tom)
       </para>
      </listitem>
@@ -2125,7 +2122,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Remove <literal>-u</> option (this option has long been depricated)
+       Remove <literal>-u</> option (this option has long been deprecated)
        (Tom)
       </para>
      </listitem>
@@ -2542,7 +2539,7 @@ current_date &lt; 2017-11-17
      <listitem>
       <para>
        Add documentation about preventing database server spoofing when
-       the server is down (Bruce
+       the server is down (Bruce)
       </para>
      </listitem>
 
@@ -2669,6 +2666,295 @@ current_date &lt; 2017-11-17
     </itemizedlist>
 
    </sect3>
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-8-2-6">
+  <title>Release 8.2.6</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-01-07</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.2.5,
+   including fixes for significant security issues.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.2.6</title>
+
+   <para>
+    A dump/restore is not required for those running 8.2.X.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent functions in indexes from executing with the privileges of
+      the user running <command>VACUUM</>, <command>ANALYZE</>, etc (Tom)
+     </para>
+
+     <para>
+      Functions used in index expressions and partial-index
+      predicates are evaluated whenever a new table entry is made.  It has
+      long been understood that this poses a risk of trojan-horse code
+      execution if one modifies a table owned by an untrustworthy user.
+      (Note that triggers, defaults, check constraints, etc. pose the
+      same type of risk.)  But functions in indexes pose extra danger
+      because they will be executed by routine maintenance operations
+      such as <command>VACUUM FULL</>, which are commonly performed
+      automatically under a superuser account.  For example, a nefarious user
+      can execute code with superuser privileges by setting up a
+      trojan-horse index definition and waiting for the next routine vacuum.
+      The fix arranges for standard maintenance operations
+      (including <command>VACUUM</>, <command>ANALYZE</>, <command>REINDEX</>,
+      and <command>CLUSTER</>) to execute as the table owner rather than
+      the calling user, using the same privilege-switching mechanism already
+      used for <literal>SECURITY DEFINER</> functions.  To prevent bypassing
+      this security measure, execution of <command>SET SESSION
+      AUTHORIZATION</> and <command>SET ROLE</> is now forbidden within a
+      <literal>SECURITY DEFINER</> context.  (CVE-2007-6600)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Repair assorted bugs in the regular-expression package (Tom, Will Drewry)
+     </para>
+
+     <para>
+      Suitably crafted regular-expression patterns could cause crashes,
+      infinite or near-infinite looping, and/or massive memory consumption,
+      all of which pose denial-of-service hazards for applications that
+      accept regex search patterns from untrustworthy sources.
+      (CVE-2007-4769, CVE-2007-4772, CVE-2007-6067)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Require non-superusers who use <filename>/contrib/dblink</> to use only
+      password authentication, as a security measure (Joe)
+     </para>
+
+     <para>
+      The fix that appeared for this in 8.2.5 was incomplete, as it plugged
+      the hole for only some <filename>dblink</> functions.  (CVE-2007-6601,
+      CVE-2007-3278)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bugs in WAL replay for GIN indexes (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix GIN index build to work properly when
+      <varname>maintenance_work_mem</> is 4GB or more (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2007k
+      (in particular, recent Argentina changes) (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve planner's handling of LIKE/regex estimation in non-C locales
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planning-speed problem for deep outer-join nests, as well as
+      possible poor choice of join order (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner failure in some cases of <literal>WHERE false AND var IN
+      (SELECT ...)</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <command>CREATE TABLE ... SERIAL</> and
+      <command>ALTER SEQUENCE ... OWNED BY</> not change the
+      <function>currval()</> state of the sequence (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Preserve the tablespace and storage parameters of indexes that are
+      rebuilt by <command>ALTER TABLE ... ALTER COLUMN TYPE</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make archive recovery always start a new WAL timeline, rather than only
+      when a recovery stop time was used (Simon)
+     </para>
+
+     <para>
+      This avoids a corner-case risk of trying to overwrite an existing
+      archived copy of the last WAL segment, and seems simpler and cleaner
+      than the original definition.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <command>VACUUM</> not use all of <varname>maintenance_work_mem</>
+      when the table is too small for it to be useful (Alvaro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix potential crash in <function>translate()</> when using a multibyte
+      database encoding (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <function>corr()</> return the correct result for negative
+      correlation values (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix overflow in <literal>extract(epoch from interval)</> for intervals
+      exceeding 68 years (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Perl to not fail when a UTF-8 regular expression is used
+      in a trusted function (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Perl to cope when platform's Perl defines type <literal>bool</>
+      as <literal>int</> rather than <literal>char</> (Tom)
+     </para>
+
+     <para>
+      While this could theoretically happen anywhere, no standard build of
+      Perl did things this way ... until <productname>Mac OS X</> 10.5.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Python to work correctly with Python 2.5 on 64-bit machines
+      (Marko Kreen)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Python to not crash on long exception messages (Alvaro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</> to correctly handle inheritance child tables
+      that have default expressions different from their parent's (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>libpq</> crash when <varname>PGPASSFILE</> refers
+      to a file that is not a plain file (Martin Pitt)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <application>ecpg</> parser fixes (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <filename>contrib/pgcrypto</> defend against
+      <application>OpenSSL</> libraries that fail on keys longer than 128
+      bits; which is the case at least on some Solaris versions (Marko Kreen)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <filename>contrib/tablefunc</>'s <function>crosstab()</> handle
+      NULL rowid as a category in its own right, rather than crashing (Joe)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <type>tsvector</> and <type>tsquery</> output routines to
+      escape backslashes correctly (Teodor, Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash of <function>to_tsvector()</> on huge input strings (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Require a specific version of <productname>Autoconf</> to be used
+      when re-generating the <command>configure</> script (Peter)
+     </para>
+
+     <para>
+      This affects developers and packagers only.  The change was made
+      to prevent accidental use of untested combinations of
+      <productname>Autoconf</> and <productname>PostgreSQL</> versions.
+      You can remove the version check if you really want to use a
+      different <productname>Autoconf</> version, but it's
+      your responsibility whether the result works or not.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update <function>gettimeofday</> configuration check so that
+      <productname>PostgreSQL</> can be built on newer versions of
+      <productname>MinGW</> (Magnus)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
   </sect2>
  </sect1>
 
@@ -3111,7 +3397,7 @@ current_date &lt; 2017-11-17
       Fix incorrect permission check in
       <literal>information_schema.key_column_usage</> view (Tom)
      </para>
- 
+
      <para>
       The symptom is <quote>relation with OID nnnnn does not exist</> errors.
       To get this fix without using <command>initdb</>, use <command>CREATE OR
@@ -5876,6 +6162,256 @@ current_date &lt; 2017-11-17
     </itemizedlist>
 
    </sect3>
+
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-8-1-11">
+  <title>Release 8.1.11</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-01-07</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.1.10,
+   including fixes for significant security issues.
+  </para>
+
+  <para>
+   This is the last 8.1.X release for which the <productname>PostgreSQL</>
+   community will produce binary packages for <productname>Windows</>.
+   Windows users are encouraged to move to 8.2.X or later,
+   since there are Windows-specific fixes in 8.2.X that
+   are impractical to back-port.  8.1.X will continue to
+   be supported on other platforms.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.1.11</title>
+
+   <para>
+    A dump/restore is not required for those running 8.1.X.
+    However, if you are upgrading from a version earlier than 8.1.2,
+    see the release notes for 8.1.2.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent functions in indexes from executing with the privileges of
+      the user running <command>VACUUM</>, <command>ANALYZE</>, etc (Tom)
+     </para>
+
+     <para>
+      Functions used in index expressions and partial-index
+      predicates are evaluated whenever a new table entry is made.  It has
+      long been understood that this poses a risk of trojan-horse code
+      execution if one modifies a table owned by an untrustworthy user.
+      (Note that triggers, defaults, check constraints, etc. pose the
+      same type of risk.)  But functions in indexes pose extra danger
+      because they will be executed by routine maintenance operations
+      such as <command>VACUUM FULL</>, which are commonly performed
+      automatically under a superuser account.  For example, a nefarious user
+      can execute code with superuser privileges by setting up a
+      trojan-horse index definition and waiting for the next routine vacuum.
+      The fix arranges for standard maintenance operations
+      (including <command>VACUUM</>, <command>ANALYZE</>, <command>REINDEX</>,
+      and <command>CLUSTER</>) to execute as the table owner rather than
+      the calling user, using the same privilege-switching mechanism already
+      used for <literal>SECURITY DEFINER</> functions.  To prevent bypassing
+      this security measure, execution of <command>SET SESSION
+      AUTHORIZATION</> and <command>SET ROLE</> is now forbidden within a
+      <literal>SECURITY DEFINER</> context.  (CVE-2007-6600)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Repair assorted bugs in the regular-expression package (Tom, Will Drewry)
+     </para>
+
+     <para>
+      Suitably crafted regular-expression patterns could cause crashes,
+      infinite or near-infinite looping, and/or massive memory consumption,
+      all of which pose denial-of-service hazards for applications that
+      accept regex search patterns from untrustworthy sources.
+      (CVE-2007-4769, CVE-2007-4772, CVE-2007-6067)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Require non-superusers who use <filename>/contrib/dblink</> to use only
+      password authentication, as a security measure (Joe)
+     </para>
+
+     <para>
+      The fix that appeared for this in 8.1.10 was incomplete, as it plugged
+      the hole for only some <filename>dblink</> functions.  (CVE-2007-6601,
+      CVE-2007-3278)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2007k
+      (in particular, recent Argentina changes) (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve planner's handling of LIKE/regex estimation in non-C locales
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner failure in some cases of <literal>WHERE false AND var IN
+      (SELECT ...)</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Preserve the tablespace of indexes that are
+      rebuilt by <command>ALTER TABLE ... ALTER COLUMN TYPE</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make archive recovery always start a new WAL timeline, rather than only
+      when a recovery stop time was used (Simon)
+     </para>
+
+     <para>
+      This avoids a corner-case risk of trying to overwrite an existing
+      archived copy of the last WAL segment, and seems simpler and cleaner
+      than the original definition.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <command>VACUUM</> not use all of <varname>maintenance_work_mem</>
+      when the table is too small for it to be useful (Alvaro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix potential crash in <function>translate()</> when using a multibyte
+      database encoding (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix overflow in <literal>extract(epoch from interval)</> for intervals
+      exceeding 68 years (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Perl to not fail when a UTF-8 regular expression is used
+      in a trusted function (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Perl to cope when platform's Perl defines type <literal>bool</>
+      as <literal>int</> rather than <literal>char</> (Tom)
+     </para>
+
+     <para>
+      While this could theoretically happen anywhere, no standard build of
+      Perl did things this way ... until <productname>Mac OS X</> 10.5.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Python to not crash on long exception messages (Alvaro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</> to correctly handle inheritance child tables
+      that have default expressions different from their parent's (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>libpq</> crash when <varname>PGPASSFILE</> refers
+      to a file that is not a plain file (Martin Pitt)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <application>ecpg</> parser fixes (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <filename>contrib/pgcrypto</> defend against
+      <application>OpenSSL</> libraries that fail on keys longer than 128
+      bits; which is the case at least on some Solaris versions (Marko Kreen)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <filename>contrib/tablefunc</>'s <function>crosstab()</> handle
+      NULL rowid as a category in its own right, rather than crashing (Joe)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <type>tsvector</> and <type>tsquery</> output routines to
+      escape backslashes correctly (Teodor, Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash of <function>to_tsvector()</> on huge input strings (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Require a specific version of <productname>Autoconf</> to be used
+      when re-generating the <command>configure</> script (Peter)
+     </para>
+
+     <para>
+      This affects developers and packagers only.  The change was made
+      to prevent accidental use of untested combinations of
+      <productname>Autoconf</> and <productname>PostgreSQL</> versions.
+      You can remove the version check if you really want to use a
+      different <productname>Autoconf</> version, but it's
+      your responsibility whether the result works or not.
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
   </sect2>
  </sect1>
@@ -9032,6 +9568,220 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
     </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-8-0-15">
+  <title>Release 8.0.15</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-01-07</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.0.14,
+   including fixes for significant security issues.
+  </para>
+
+  <para>
+   This is the last 8.0.X release for which the <productname>PostgreSQL</>
+   community will produce binary packages for <productname>Windows</>.
+   Windows users are encouraged to move to 8.2.X or later,
+   since there are Windows-specific fixes in 8.2.X that
+   are impractical to back-port.  8.0.X will continue to
+   be supported on other platforms.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.0.15</title>
+
+   <para>
+    A dump/restore is not required for those running 8.0.X.  However,
+    if you are upgrading from a version earlier than 8.0.6, see the release
+    notes for 8.0.6.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent functions in indexes from executing with the privileges of
+      the user running <command>VACUUM</>, <command>ANALYZE</>, etc (Tom)
+     </para>
+
+     <para>
+      Functions used in index expressions and partial-index
+      predicates are evaluated whenever a new table entry is made.  It has
+      long been understood that this poses a risk of trojan-horse code
+      execution if one modifies a table owned by an untrustworthy user.
+      (Note that triggers, defaults, check constraints, etc. pose the
+      same type of risk.)  But functions in indexes pose extra danger
+      because they will be executed by routine maintenance operations
+      such as <command>VACUUM FULL</>, which are commonly performed
+      automatically under a superuser account.  For example, a nefarious user
+      can execute code with superuser privileges by setting up a
+      trojan-horse index definition and waiting for the next routine vacuum.
+      The fix arranges for standard maintenance operations
+      (including <command>VACUUM</>, <command>ANALYZE</>, <command>REINDEX</>,
+      and <command>CLUSTER</>) to execute as the table owner rather than
+      the calling user, using the same privilege-switching mechanism already
+      used for <literal>SECURITY DEFINER</> functions.  To prevent bypassing
+      this security measure, execution of <command>SET SESSION
+      AUTHORIZATION</> and <command>SET ROLE</> is now forbidden within a
+      <literal>SECURITY DEFINER</> context.  (CVE-2007-6600)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Repair assorted bugs in the regular-expression package (Tom, Will Drewry)
+     </para>
+
+     <para>
+      Suitably crafted regular-expression patterns could cause crashes,
+      infinite or near-infinite looping, and/or massive memory consumption,
+      all of which pose denial-of-service hazards for applications that
+      accept regex search patterns from untrustworthy sources.
+      (CVE-2007-4769, CVE-2007-4772, CVE-2007-6067)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Require non-superusers who use <filename>/contrib/dblink</> to use only
+      password authentication, as a security measure (Joe)
+     </para>
+
+     <para>
+      The fix that appeared for this in 8.0.14 was incomplete, as it plugged
+      the hole for only some <filename>dblink</> functions.  (CVE-2007-6601,
+      CVE-2007-3278)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2007k
+      (in particular, recent Argentina changes) (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner failure in some cases of <literal>WHERE false AND var IN
+      (SELECT ...)</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Preserve the tablespace of indexes that are
+      rebuilt by <command>ALTER TABLE ... ALTER COLUMN TYPE</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make archive recovery always start a new WAL timeline, rather than only
+      when a recovery stop time was used (Simon)
+     </para>
+
+     <para>
+      This avoids a corner-case risk of trying to overwrite an existing
+      archived copy of the last WAL segment, and seems simpler and cleaner
+      than the original definition.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <command>VACUUM</> not use all of <varname>maintenance_work_mem</>
+      when the table is too small for it to be useful (Alvaro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix potential crash in <function>translate()</> when using a multibyte
+      database encoding (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Perl to cope when platform's Perl defines type <literal>bool</>
+      as <literal>int</> rather than <literal>char</> (Tom)
+     </para>
+
+     <para>
+      While this could theoretically happen anywhere, no standard build of
+      Perl did things this way ... until <productname>Mac OS X</> 10.5.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Python to not crash on long exception messages (Alvaro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</> to correctly handle inheritance child tables
+      that have default expressions different from their parent's (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <application>ecpg</> parser fixes (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <filename>contrib/tablefunc</>'s <function>crosstab()</> handle
+      NULL rowid as a category in its own right, rather than crashing (Joe)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <type>tsvector</> and <type>tsquery</> output routines to
+      escape backslashes correctly (Teodor, Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash of <function>to_tsvector()</> on huge input strings (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Require a specific version of <productname>Autoconf</> to be used
+      when re-generating the <command>configure</> script (Peter)
+     </para>
+
+     <para>
+      This affects developers and packagers only.  The change was made
+      to prevent accidental use of untested combinations of
+      <productname>Autoconf</> and <productname>PostgreSQL</> versions.
+      You can remove the version check if you really want to use a
+      different <productname>Autoconf</> version, but it's
+      your responsibility whether the result works or not.
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
   </sect2>
  </sect1>
@@ -12649,6 +13399,158 @@ typedefs (Michael)</para></listitem>
   </sect2>
  </sect1>
 
+ <sect1 id="release-7-4-19">
+  <title>Release 7.4.19</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-01-07</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.18,
+   including fixes for significant security issues.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.19</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.  However,
+    if you are upgrading from a version earlier than 7.4.11, see the release
+    notes for 7.4.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent functions in indexes from executing with the privileges of
+      the user running <command>VACUUM</>, <command>ANALYZE</>, etc (Tom)
+     </para>
+
+     <para>
+      Functions used in index expressions and partial-index
+      predicates are evaluated whenever a new table entry is made.  It has
+      long been understood that this poses a risk of trojan-horse code
+      execution if one modifies a table owned by an untrustworthy user.
+      (Note that triggers, defaults, check constraints, etc. pose the
+      same type of risk.)  But functions in indexes pose extra danger
+      because they will be executed by routine maintenance operations
+      such as <command>VACUUM FULL</>, which are commonly performed
+      automatically under a superuser account.  For example, a nefarious user
+      can execute code with superuser privileges by setting up a
+      trojan-horse index definition and waiting for the next routine vacuum.
+      The fix arranges for standard maintenance operations
+      (including <command>VACUUM</>, <command>ANALYZE</>, <command>REINDEX</>,
+      and <command>CLUSTER</>) to execute as the table owner rather than
+      the calling user, using the same privilege-switching mechanism already
+      used for <literal>SECURITY DEFINER</> functions.  To prevent bypassing
+      this security measure, execution of <command>SET SESSION
+      AUTHORIZATION</> and <command>SET ROLE</> is now forbidden within a
+      <literal>SECURITY DEFINER</> context.  (CVE-2007-6600)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Repair assorted bugs in the regular-expression package (Tom, Will Drewry)
+     </para>
+
+     <para>
+      Suitably crafted regular-expression patterns could cause crashes,
+      infinite or near-infinite looping, and/or massive memory consumption,
+      all of which pose denial-of-service hazards for applications that
+      accept regex search patterns from untrustworthy sources.
+      (CVE-2007-4769, CVE-2007-4772, CVE-2007-6067)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Require non-superusers who use <filename>/contrib/dblink</> to use only
+      password authentication, as a security measure (Joe)
+     </para>
+
+     <para>
+      The fix that appeared for this in 7.4.18 was incomplete, as it plugged
+      the hole for only some <filename>dblink</> functions.  (CVE-2007-6601,
+      CVE-2007-3278)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner failure in some cases of <literal>WHERE false AND var IN
+      (SELECT ...)</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix potential crash in <function>translate()</> when using a multibyte
+      database encoding (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Python to not crash on long exception messages (Alvaro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <application>ecpg</> parser fixes (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <filename>contrib/tablefunc</>'s <function>crosstab()</> handle
+      NULL rowid as a category in its own right, rather than crashing (Joe)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <type>tsvector</> and <type>tsquery</> output routines to
+      escape backslashes correctly (Teodor, Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash of <function>to_tsvector()</> on huge input strings (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Require a specific version of <productname>Autoconf</> to be used
+      when re-generating the <command>configure</> script (Peter)
+     </para>
+
+     <para>
+      This affects developers and packagers only.  The change was made
+      to prevent accidental use of untested combinations of
+      <productname>Autoconf</> and <productname>PostgreSQL</> versions.
+      You can remove the version check if you really want to use a
+      different <productname>Autoconf</> version, but it's
+      your responsibility whether the result works or not.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-7-4-18">
   <title>Release 7.4.18</title>
 
@@ -15906,6 +16808,118 @@ DROP SCHEMA information_schema CASCADE;
  </sect3>
  </sect2>
 </sect1>
+
+ <sect1 id="release-7-3-21">
+  <title>Release 7.3.21</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-01-07</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.3.20,
+   including fixes for significant security issues.
+  </para>
+
+  <para>
+   This is expected to be the last <productname>PostgreSQL</> release
+   in the 7.3.X series.  Users are encouraged to update to a newer
+   release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.3.21</title>
+
+   <para>
+    A dump/restore is not required for those running 7.3.X.  However,
+    if you are upgrading from a version earlier than 7.3.13, see the release
+    notes for 7.3.13.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent functions in indexes from executing with the privileges of
+      the user running <command>VACUUM</>, <command>ANALYZE</>, etc (Tom)
+     </para>
+
+     <para>
+      Functions used in index expressions and partial-index
+      predicates are evaluated whenever a new table entry is made.  It has
+      long been understood that this poses a risk of trojan-horse code
+      execution if one modifies a table owned by an untrustworthy user.
+      (Note that triggers, defaults, check constraints, etc. pose the
+      same type of risk.)  But functions in indexes pose extra danger
+      because they will be executed by routine maintenance operations
+      such as <command>VACUUM FULL</>, which are commonly performed
+      automatically under a superuser account.  For example, a nefarious user
+      can execute code with superuser privileges by setting up a
+      trojan-horse index definition and waiting for the next routine vacuum.
+      The fix arranges for standard maintenance operations
+      (including <command>VACUUM</>, <command>ANALYZE</>, <command>REINDEX</>,
+      and <command>CLUSTER</>) to execute as the table owner rather than
+      the calling user, using the same privilege-switching mechanism already
+      used for <literal>SECURITY DEFINER</> functions.  To prevent bypassing
+      this security measure, execution of <command>SET SESSION
+      AUTHORIZATION</> and <command>SET ROLE</> is now forbidden within a
+      <literal>SECURITY DEFINER</> context.  (CVE-2007-6600)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Require non-superusers who use <filename>/contrib/dblink</> to use only
+      password authentication, as a security measure (Joe)
+     </para>
+
+     <para>
+      The fix that appeared for this in 7.3.20 was incomplete, as it plugged
+      the hole for only some <filename>dblink</> functions.  (CVE-2007-6601,
+      CVE-2007-3278)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix potential crash in <function>translate()</> when using a multibyte
+      database encoding (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <filename>contrib/tablefunc</>'s <function>crosstab()</> handle
+      NULL rowid as a category in its own right, rather than crashing (Joe)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Require a specific version of <productname>Autoconf</> to be used
+      when re-generating the <command>configure</> script (Peter)
+     </para>
+
+     <para>
+      This affects developers and packagers only.  The change was made
+      to prevent accidental use of untested combinations of
+      <productname>Autoconf</> and <productname>PostgreSQL</> versions.
+      You can remove the version check if you really want to use a
+      different <productname>Autoconf</> version, but it's
+      your responsibility whether the result works or not.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-7-3-20">
   <title>Release 7.3.20</title>
