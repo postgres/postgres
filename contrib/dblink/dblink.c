@@ -84,6 +84,7 @@ static HeapTuple get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 p
 static Oid	get_relid_from_relname(text *relname_text);
 static char *generate_relation_name(Oid relid);
 static char *connstr_strip_password(const char *connstr);
+static void dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr);
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -170,6 +171,7 @@ typedef struct remoteConnHashEnt
 			else \
 			{ \
 				connstr = conname_or_str; \
+				dblink_security_check(conn, rconn, connstr); \
 				conn = PQconnectdb(connstr); \
 				if (PQstatus(conn) == CONNECTION_BAD) \
 				{ \
@@ -224,27 +226,8 @@ dblink_connect(PG_FUNCTION_ARGS)
 	if (connname)
 		rconn = (remoteConn *) palloc(sizeof(remoteConn));
 
-	/* for non-superusers, check that server requires a password */
-	if (!superuser())
-	{
-		/* this attempt must fail */
-		conn = PQconnectdb(connstr_strip_password(connstr));
-
-		if (PQstatus(conn) == CONNECTION_OK)
-		{
-			PQfinish(conn);
-			if (rconn)
-				pfree(rconn);
-
-			ereport(ERROR,
-					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
-					 errmsg("password is required"),
-					 errdetail("Non-superuser cannot connect if the server does not request a password."),
-					 errhint("Target server's authentication method must be changed.")));
-		}
-		else
-			PQfinish(conn);
-	}
+	/* check password used if not superuser */
+	dblink_security_check(conn, rconn, connstr);
 	conn = PQconnectdb(connstr);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -2295,4 +2278,29 @@ connstr_strip_password(const char *connstr)
 	}
 
 	return result.data;
+}
+
+static void
+dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr)
+{
+	if (!superuser())
+	{
+		/* this attempt must fail */
+		conn = PQconnectdb(connstr_strip_password(connstr));
+
+		if (PQstatus(conn) == CONNECTION_OK)
+		{
+			PQfinish(conn);
+			if (rconn)
+				pfree(rconn);
+
+			ereport(ERROR,
+					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+					 errmsg("password is required"),
+					 errdetail("Non-superuser cannot connect if the server does not request a password."),
+					 errhint("Target server's authentication method must be changed.")));
+		}
+		else
+			PQfinish(conn);
+	}
 }
