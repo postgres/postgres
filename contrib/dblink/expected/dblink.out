@@ -724,6 +724,12 @@ SELECT dblink_get_connections();
  {dtest1,dtest2,dtest3}
 (1 row)
 
+SELECT dblink_is_busy('dtest1');
+ dblink_is_busy 
+----------------
+              0
+(1 row)
+
 SELECT dblink_disconnect('dtest1');
  dblink_disconnect 
 -------------------
@@ -757,4 +763,35 @@ SELECT * from result;
   9 | j  | {a9,b9,c9}
  10 | k  | {a10,b10,c10}
 (11 rows)
+
+SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+SELECT * from 
+ dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
+ t1 
+----
+  1
+(1 row)
+
+SELECT dblink_cancel_query('dtest1');
+ dblink_cancel_query 
+---------------------
+ OK
+(1 row)
+
+SELECT dblink_error_message('dtest1');
+ dblink_error_message 
+----------------------
+ OK
+(1 row)
+
+SELECT dblink_disconnect('dtest1');
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
 

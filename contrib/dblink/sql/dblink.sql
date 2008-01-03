@@ -344,9 +344,18 @@ UNION
 ORDER by f1;
 
 SELECT dblink_get_connections();
+SELECT dblink_is_busy('dtest1');
 
 SELECT dblink_disconnect('dtest1');
 SELECT dblink_disconnect('dtest2');
 SELECT dblink_disconnect('dtest3');
+
 SELECT * from result;
 
+SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
+SELECT * from 
+ dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
+
+SELECT dblink_cancel_query('dtest1');
+SELECT dblink_error_message('dtest1');
+SELECT dblink_disconnect('dtest1');

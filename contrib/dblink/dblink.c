@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.67 2008/01/01 19:45:45 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.68 2008/01/03 21:27:59 tgl Exp $
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -91,6 +91,7 @@ static int16 get_attnum_pk_pos(int2vector *pkattnums, int16 pknumatts, int16 key
 static HeapTuple get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals);
 static Oid	get_relid_from_relname(text *relname_text);
 static char *generate_relation_name(Oid relid);
+static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -187,8 +188,19 @@ typedef struct remoteConnHashEnt
 							 errmsg("could not establish connection"), \
 							 errdetail("%s", msg))); \
 				} \
+				dblink_security_check(conn, rconn); \
 				freeconn = true; \
 			} \
+	} while (0)
+
+#define DBLINK_GET_NAMED_CONN \
+	do { \
+			char *conname = GET_STR(PG_GETARG_TEXT_P(0)); \
+			rconn = getConnectionByName(conname); \
+			if(rconn) \
+				conn = rconn->conn; \
+			else \
+				DBLINK_CONN_NOT_AVAIL; \
 	} while (0)
 
 #define DBLINK_INIT \
@@ -247,21 +259,8 @@ dblink_connect(PG_FUNCTION_ARGS)
 				 errdetail("%s", msg)));
 	}
 
-	if (!superuser())
-	{
-		if (!PQconnectionUsedPassword(conn))
-		{
-			PQfinish(conn);
-			if (rconn)
-				pfree(rconn);
-
-			ereport(ERROR,
-				  (errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
-				   errmsg("password is required"),
-				   errdetail("Non-superuser cannot connect if the server does not request a password."),
-				   errhint("Target server's authentication method must be changed.")));
-		}
-	}
+	/* check password used if not superuser */
+	dblink_security_check(conn, rconn);
 
 	if (connname)
 	{
@@ -1047,17 +1046,11 @@ PG_FUNCTION_INFO_V1(dblink_is_busy);
 Datum
 dblink_is_busy(PG_FUNCTION_ARGS)
 {
-	char	   *msg;
 	PGconn	   *conn = NULL;
-	char	   *conname = NULL;
-	char	   *connstr = NULL;
 	remoteConn *rconn = NULL;
-	bool		freeconn = false;
 
 	DBLINK_INIT;
-	DBLINK_GET_CONN;
-	if (!conn)
-		DBLINK_CONN_NOT_AVAIL;
+	DBLINK_GET_NAMED_CONN;
 
 	PQconsumeInput(conn);
 	PG_RETURN_INT32(PQisBusy(conn));
@@ -1078,26 +1071,20 @@ PG_FUNCTION_INFO_V1(dblink_cancel_query);
 Datum
 dblink_cancel_query(PG_FUNCTION_ARGS)
 {
-	char	   *msg;
 	int			res = 0;
 	PGconn	   *conn = NULL;
-	char	   *conname = NULL;
-	char	   *connstr = NULL;
 	remoteConn *rconn = NULL;
-	bool		freeconn = false;
 	PGcancel   *cancel;
 	char		errbuf[256];
 
 	DBLINK_INIT;
-	DBLINK_GET_CONN;
-	if (!conn)
-		DBLINK_CONN_NOT_AVAIL;
+	DBLINK_GET_NAMED_CONN;
 	cancel = PQgetCancel(conn);
 
 	res = PQcancel(cancel, errbuf, 256);
 	PQfreeCancel(cancel);
 
-	if (res == 0)
+	if (res == 1)
 		PG_RETURN_TEXT_P(GET_TEXT("OK"));
 	else
 		PG_RETURN_TEXT_P(GET_TEXT(errbuf));
@@ -1120,18 +1107,13 @@ dblink_error_message(PG_FUNCTION_ARGS)
 {
 	char	   *msg;
 	PGconn	   *conn = NULL;
-	char	   *conname = NULL;
-	char	   *connstr = NULL;
 	remoteConn *rconn = NULL;
-	bool		freeconn = false;
 
 	DBLINK_INIT;
-	DBLINK_GET_CONN;
-	if (!conn)
-		DBLINK_CONN_NOT_AVAIL;
+	DBLINK_GET_NAMED_CONN;
 
 	msg = PQerrorMessage(conn);
-	if (!msg)
+	if (msg == NULL || msg[0] == '\0')
 		PG_RETURN_TEXT_P(GET_TEXT("OK"));
 	else
 		PG_RETURN_TEXT_P(GET_TEXT(msg));
@@ -2298,4 +2280,24 @@ deleteConnection(const char *name)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("undefined connection name")));
 
+}
+
+static void
+dblink_security_check(PGconn *conn, remoteConn *rconn)
+{
+	if (!superuser())
+	{
+		if (!PQconnectionUsedPassword(conn))
+		{
+			PQfinish(conn);
+			if (rconn)
+				pfree(rconn);
+
+			ereport(ERROR,
+				  (errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+				   errmsg("password is required"),
+				   errdetail("Non-superuser cannot connect if the server does not request a password."),
+				   errhint("Target server's authentication method must be changed.")));
+		}
+	}
 }
