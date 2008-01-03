@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.27 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.27.4.1 2008/01/03 21:25:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,9 +46,10 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	const char *owner_name;
 	AclId		owner_userid;
 	AclId		saved_userid;
+	bool		saved_secdefcxt;
 	AclResult	aclresult;
 
-	saved_userid = GetUserId();
+	GetUserIdAndContext(&saved_userid, &saved_secdefcxt);
 
 	/*
 	 * Figure out user identities.
@@ -71,7 +72,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		 * (This will revert to session user on error or at the end of
 		 * this routine.)
 		 */
-		SetUserId(owner_userid);
+		SetUserIdAndContext(owner_userid, true);
 	}
 	else
 	{
@@ -151,7 +152,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	PopSpecialNamespace(namespaceId);
 
 	/* Reset current user */
-	SetUserId(saved_userid);
+	SetUserIdAndContext(saved_userid, saved_secdefcxt);
 }
 
 

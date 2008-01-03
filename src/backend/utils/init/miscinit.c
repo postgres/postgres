@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.137.4.1 2005/03/18 03:49:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.137.4.2 2008/01/03 21:25:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,6 +260,9 @@ make_absolute_path(const char *path)
  * are implemented.  Conceptually there is a stack, whose bottom
  * is the session user.  You are yourself responsible to save and
  * restore the current user id if you need to change it.
+ *
+ * SecurityDefinerContext is TRUE if we are within a SECURITY DEFINER function
+ * or another context that temporarily changes CurrentUserId.
  * ----------------------------------------------------------------
  */
 static AclId AuthenticatedUserId = 0;
@@ -268,22 +271,19 @@ static AclId CurrentUserId = 0;
 
 static bool AuthenticatedUserIsSuperuser = false;
 
+static bool SecurityDefinerContext = false;
+
+
 /*
- * This function is relevant for all privilege checks.
+ * GetUserId - get the current effective user ID.
+ *
+ * Note: there's no SetUserId() anymore; use SetUserIdAndContext().
  */
 AclId
 GetUserId(void)
 {
 	AssertState(AclIdIsValid(CurrentUserId));
 	return CurrentUserId;
-}
-
-
-void
-SetUserId(AclId newid)
-{
-	AssertArg(AclIdIsValid(newid));
-	CurrentUserId = newid;
 }
 
 
@@ -298,17 +298,57 @@ GetSessionUserId(void)
 }
 
 
-void
+static void
 SetSessionUserId(AclId newid)
 {
+	AssertState(!SecurityDefinerContext);
 	AssertArg(AclIdIsValid(newid));
 	SessionUserId = newid;
-	/* Current user defaults to session user. */
-	if (!AclIdIsValid(CurrentUserId))
-		CurrentUserId = newid;
+	CurrentUserId = newid;
 }
 
 
+/*
+ * GetUserIdAndContext/SetUserIdAndContext - get/set the current user ID
+ * and the SecurityDefinerContext flag.
+ *
+ * Unlike GetUserId, GetUserIdAndContext does *not* Assert that the current
+ * value of CurrentUserId is valid; nor does SetUserIdAndContext require
+ * the new value to be valid.  In fact, these routines had better not
+ * ever throw any kind of error.  This is because they are used by
+ * StartTransaction and AbortTransaction to save/restore the settings,
+ * and during the first transaction within a backend, the value to be saved
+ * and perhaps restored is indeed invalid.  We have to be able to get
+ * through AbortTransaction without asserting in case InitPostgres fails.
+ */
+void
+GetUserIdAndContext(AclId *userid, bool *sec_def_context)
+{
+	*userid = CurrentUserId;
+	*sec_def_context = SecurityDefinerContext;
+}
+
+void
+SetUserIdAndContext(AclId userid, bool sec_def_context)
+{
+	CurrentUserId = userid;
+	SecurityDefinerContext = sec_def_context;
+}
+
+
+/*
+ * InSecurityDefinerContext - are we inside a SECURITY DEFINER context?
+ */
+bool
+InSecurityDefinerContext(void)
+{
+	return SecurityDefinerContext;
+}
+
+
+/*
+ * Initialize user identity during normal backend startup
+ */
 void
 InitializeSessionUserId(const char *username)
 {
@@ -403,7 +443,6 @@ SetSessionAuthorization(AclId userid, bool is_superuser)
 			  errmsg("permission denied to set session authorization")));
 
 	SetSessionUserId(userid);
-	SetUserId(userid);
 
 	SetConfigOption("is_superuser",
 					is_superuser ? "on" : "off",

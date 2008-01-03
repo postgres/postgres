@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.195.4.3 2007/05/30 21:02:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.195.4.4 2008/01/03 21:25:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,8 @@ typedef struct TransactionStateData
 												 * context */
 	ResourceOwner curTransactionOwner;	/* my query resources */
 	List	   *childXids;		/* subcommitted child XIDs */
-	AclId		currentUser;	/* subxact start current_user */
+	AclId		prevUser;		/* previous CurrentUserId setting */
+	bool		prevSecDefCxt;	/* previous SecurityDefinerContext setting */
 	bool		prevXactReadOnly;		/* entry-time xact r/o state */
 	struct TransactionStateData *parent;		/* back link to parent */
 } TransactionStateData;
@@ -149,7 +150,8 @@ static TransactionStateData TopTransactionStateData = {
 	NULL,						/* cur transaction context */
 	NULL,						/* cur transaction resource owner */
 	NIL,						/* subcommitted child Xids */
-	0,							/* entry-time current userid */
+	0,							/* previous CurrentUserId setting */
+	false,						/* previous SecurityDefinerContext setting */
 	false,						/* entry-time xact r/o state */
 	NULL						/* link to parent state block */
 };
@@ -1390,18 +1392,14 @@ StartTransaction(void)
 
 	/*
 	 * initialize current transaction state fields
+	 *
+	 * note: prevXactReadOnly is not used at the outermost level
 	 */
 	s->nestingLevel = 1;
 	s->childXids = NIL;
-
-	/*
-	 * You might expect to see "s->currentUser = GetUserId();" here, but
-	 * you won't because it doesn't work during startup; the userid isn't
-	 * set yet during a backend's first transaction start.  We only use
-	 * the currentUser field in sub-transaction state structs.
-	 *
-	 * prevXactReadOnly is also valid only in sub-transactions.
-	 */
+	GetUserIdAndContext(&s->prevUser, &s->prevSecDefCxt);
+	/* SecurityDefinerContext should never be set outside a transaction */
+	Assert(!s->prevSecDefCxt);
 
 	/*
 	 * initialize other subsystems for new transaction
@@ -1652,17 +1650,16 @@ AbortTransaction(void)
 	AtAbort_ResourceOwner();
 
 	/*
-	 * Reset user id which might have been changed transiently.  We cannot
-	 * use s->currentUser, but must get the session userid from
-	 * miscinit.c.
+	 * Reset user ID which might have been changed transiently.  We need this
+	 * to clean up in case control escaped out of a SECURITY DEFINER function
+	 * or other local change of CurrentUserId; therefore, the prior value
+	 * of SecurityDefinerContext also needs to be restored.
 	 *
-	 * (Note: it is not necessary to restore session authorization here
-	 * because that can only be changed via GUC, and GUC will take care of
-	 * rolling it back if need be.	However, an error within a SECURITY
-	 * DEFINER function could send control here with the wrong current
-	 * userid.)
+	 * (Note: it is not necessary to restore session authorization
+	 * setting here because that can only be changed via GUC, and GUC will
+	 * take care of rolling it back if need be.)
 	 */
-	SetUserId(GetSessionUserId());
+	SetUserIdAndContext(s->prevUser, s->prevSecDefCxt);
 
 	/*
 	 * do abort processing
@@ -3395,6 +3392,12 @@ AbortSubTransaction(void)
 	AtSubAbort_ResourceOwner();
 
 	/*
+	 * Reset user ID which might have been changed transiently.  (See notes
+	 * in AbortTransaction.)
+	 */
+	SetUserIdAndContext(s->prevUser, s->prevSecDefCxt);
+
+	/*
 	 * We can skip all this stuff if the subxact failed before creating
 	 * a ResourceOwner...
 	 */
@@ -3445,22 +3448,6 @@ AbortSubTransaction(void)
 						  s->parent->subTransactionId);
 		AtEOSubXact_HashTables(false, s->nestingLevel);
 	}
-
-	/*
-	 * Reset user id which might have been changed transiently.  Here we
-	 * want to restore to the userid that was current at subxact entry.
-	 * (As in AbortTransaction, we need not worry about the session
-	 * userid.)
-	 *
-	 * Must do this after AtEOXact_GUC to handle the case where we entered
-	 * the subxact inside a SECURITY DEFINER function (hence current and
-	 * session userids were different) and then session auth was changed
-	 * inside the subxact.	GUC will reset both current and session
-	 * userids to the entry-time session userid.  This is right in every
-	 * other scenario so it seems simplest to let GUC do that and fix it
-	 * here.
-	 */
-	SetUserId(s->currentUser);
 
 	/*
 	 * Restore the upper transaction's read-only state, too.  This should
@@ -3516,13 +3503,6 @@ PushTransaction(void)
 {
 	TransactionState p = CurrentTransactionState;
 	TransactionState s;
-	AclId	currentUser;
-
-	/*
-	 * At present, GetUserId cannot fail, but let's not assume that.  Get
-	 * the ID before entering the critical code sequence.
-	 */
-	currentUser = GetUserId();
 
 	/*
 	 * We keep subtransaction state nodes in TopTransactionContext.
@@ -3553,7 +3533,7 @@ PushTransaction(void)
 	s->savepointLevel = p->savepointLevel;
 	s->state = TRANS_DEFAULT;
 	s->blockState = TBLOCK_SUBBEGIN;
-	s->currentUser = currentUser;
+	GetUserIdAndContext(&s->prevUser, &s->prevSecDefCxt);
 	s->prevXactReadOnly = XactReadOnly;
 
 	CurrentTransactionState = s;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.80 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.80.4.1 2008/01/03 21:25:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,6 +110,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 				numrows;
 	double		totalrows;
 	HeapTuple  *rows;
+	AclId		save_userid;
+	bool		save_secdefcxt;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -198,6 +200,13 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 			(errmsg("analyzing \"%s.%s\"",
 					get_namespace_name(RelationGetNamespace(onerel)),
 					RelationGetRelationName(onerel))));
+
+	/*
+	 * Switch to the table owner's userid, so that any index functions are
+	 * run as that user.
+	 */
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
+	SetUserIdAndContext(onerel->rd_rel->relowner, true);
 
 	/*
 	 * Determine which columns to analyze
@@ -309,11 +318,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * Quit if no analyzable columns
 	 */
 	if (attr_cnt <= 0 && !analyzableindex)
-	{
-		vac_close_indexes(nindexes, Irel, AccessShareLock);
-		relation_close(onerel, AccessShareLock);
-		return;
-	}
+		goto cleanup;
 
 	/*
 	 * Determine how many rows we need to sample, using the worst case
@@ -426,6 +431,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		}
 	}
 
+	/* We skip to here if there were no analyzable columns */
+cleanup:
+
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);
 
@@ -435,6 +443,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * entries we made in pg_statistic.)
 	 */
 	relation_close(onerel, NoLock);
+
+	/* Restore userid */
+	SetUserIdAndContext(save_userid, save_secdefcxt);
 }
 
 /*

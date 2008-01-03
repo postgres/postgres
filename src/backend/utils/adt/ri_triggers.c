@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.76.4.2 2007/08/15 19:16:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.76.4.3 2008/01/03 21:25:00 tgl Exp $
  *
  * ----------
  */
@@ -3000,7 +3000,8 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 {
 	void	   *qplan;
 	Relation	query_rel;
-	AclId		save_uid;
+	AclId		save_userid;
+	bool		save_secdefcxt;
 
 	/*
 	 * The query is always run against the FK table except when this is an
@@ -3014,8 +3015,8 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 		query_rel = fk_rel;
 
 	/* Switch to proper UID to perform check as */
-	save_uid = GetUserId();
-	SetUserId(RelationGetForm(query_rel)->relowner);
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
+	SetUserIdAndContext(RelationGetForm(query_rel)->relowner, true);
 
 	/* Create the plan */
 	qplan = SPI_prepare(querystr, nargs, argtypes);
@@ -3024,7 +3025,7 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 		elog(ERROR, "SPI_prepare returned %d for %s", SPI_result, querystr);
 
 	/* Restore UID */
-	SetUserId(save_uid);
+	SetUserIdAndContext(save_userid, save_secdefcxt);
 
 	/* Save the plan if requested */
 	if (cache_plan)
@@ -3053,7 +3054,8 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 	Snapshot	crosscheck_snapshot;
 	int			limit;
 	int			spi_result;
-	AclId		save_uid;
+	AclId		save_userid;
+	bool		save_secdefcxt;
 	Datum		vals[RI_MAX_NUMKEYS * 2];
 	char		nulls[RI_MAX_NUMKEYS * 2];
 
@@ -3132,8 +3134,8 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 	limit = (expect_OK == SPI_OK_SELECT) ? 1 : 0;
 
 	/* Switch to proper UID to perform check as */
-	save_uid = GetUserId();
-	SetUserId(RelationGetForm(query_rel)->relowner);
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
+	SetUserIdAndContext(RelationGetForm(query_rel)->relowner, true);
 
 	/* Finally we can run the query. */
 	spi_result = SPI_execute_snapshot(qplan,
@@ -3142,7 +3144,7 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 									  false, false, limit);
 
 	/* Restore UID */
-	SetUserId(save_uid);
+	SetUserIdAndContext(save_userid, save_secdefcxt);
 
 	/* Check result */
 	if (spi_result < 0)

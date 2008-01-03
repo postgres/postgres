@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.174 2004/12/31 22:03:19 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.174.4.1 2008/01/03 21:25:00 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -233,9 +233,10 @@ extern void SetDatabasePath(const char *path);
 
 extern char *GetUserNameFromId(AclId userid);
 extern AclId GetUserId(void);
-extern void SetUserId(AclId userid);
 extern AclId GetSessionUserId(void);
-extern void SetSessionUserId(AclId userid);
+extern void GetUserIdAndContext(AclId *userid, bool *sec_def_context);
+extern void SetUserIdAndContext(AclId userid, bool sec_def_context);
+extern bool InSecurityDefinerContext(void);
 extern void InitializeSessionUserId(const char *username);
 extern void InitializeSessionUserIdStandalone(void);
 extern void SetSessionAuthorization(AclId userid, bool is_superuser);
