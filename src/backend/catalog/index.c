@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.274.2.1 2007/11/08 23:23:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.274.2.2 2008/01/03 21:23:45 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1291,6 +1291,8 @@ index_build(Relation heapRelation,
 {
 	RegProcedure procedure;
 	IndexBuildResult *stats;
+	Oid			save_userid;
+	bool		save_secdefcxt;
 
 	/*
 	 * sanity checks
@@ -1302,6 +1304,13 @@ index_build(Relation heapRelation,
 	Assert(RegProcedureIsValid(procedure));
 
 	/*
+	 * Switch to the table owner's userid, so that any index functions are
+	 * run as that user.
+	 */
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
+	SetUserIdAndContext(heapRelation->rd_rel->relowner, true);
+
+	/*
 	 * Call the access method's build procedure
 	 */
 	stats = (IndexBuildResult *)
@@ -1310,6 +1319,9 @@ index_build(Relation heapRelation,
 										 PointerGetDatum(indexRelation),
 										 PointerGetDatum(indexInfo)));
 	Assert(PointerIsValid(stats));
+
+	/* Restore userid */
+	SetUserIdAndContext(save_userid, save_secdefcxt);
 
 	/*
 	 * Update heap and index pg_class rows
@@ -1638,6 +1650,8 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	IndexInfo  *indexInfo;
 	IndexVacuumInfo ivinfo;
 	v_i_state	state;
+	Oid			save_userid;
+	bool		save_secdefcxt;
 
 	/* Open and lock the parent heap relation */
 	heapRelation = heap_open(heapId, ShareUpdateExclusiveLock);
@@ -1653,6 +1667,13 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 
 	/* mark build is concurrent just for consistency */
 	indexInfo->ii_Concurrent = true;
+
+	/*
+	 * Switch to the table owner's userid, so that any index functions are
+	 * run as that user.
+	 */
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
+	SetUserIdAndContext(heapRelation->rd_rel->relowner, true);
 
 	/*
 	 * Scan the index and gather up all the TIDs into a tuplesort object.
@@ -1689,6 +1710,9 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	elog(DEBUG2,
 		 "validate_index found %.0f heap tuples, %.0f index tuples; inserted %.0f missing tuples",
 		 state.htups, state.itups, state.tups_inserted);
+
+	/* Restore userid */
+	SetUserIdAndContext(save_userid, save_secdefcxt);
 
 	/* Close rels, but keep locks */
 	index_close(indexRelation, NoLock);
