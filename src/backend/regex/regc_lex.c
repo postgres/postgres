@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_lex.c,v 1.5 2005/10/15 02:49:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regc_lex.c,v 1.5.4.1 2008/01/03 20:48:49 tgl Exp $
  *
  */
 
@@ -846,7 +846,7 @@ lexescape(struct vars * v)
 			if (ISERR())
 				FAILW(REG_EESCAPE);
 			/* ugly heuristic (first test is "exactly 1 digit?") */
-			if (v->now - save == 0 || (int) c <= v->nsubexp)
+			if (v->now - save == 0 || ((int) c > 0 && (int) c <= v->nsubexp))
 			{
 				NOTE(REG_UBACKREF);
 				RETV(BACKREF, (chr) c);

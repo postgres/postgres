@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/include/regex/regerrs.h,v 1.3 2003/11/29 22:41:10 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regerrs.h,v 1.3.8.1 2008/01/03 20:48:49 tgl Exp $
  */
 
 {
@@ -72,4 +72,8 @@
 
 {
 	REG_BADOPT, "REG_BADOPT", "invalid embedded option"
+},
+
+{
+	REG_ETOOBIG, "REG_ETOOBIG", "nfa has too many states"
 },
