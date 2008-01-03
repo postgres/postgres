@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.135.2.4 2007/04/26 23:25:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.135.2.5 2008/01/03 21:25:58 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -214,6 +214,8 @@ static TransactionStateData CurrentTransactionStateData = {
 };
 
 TransactionState CurrentTransactionState = &CurrentTransactionStateData;
+
+static Oid	prevUser;			/* CurrentUserId at transaction start */
 
 /*
  * User-tweakable parameters
@@ -960,6 +962,7 @@ static void
 CommitTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
+	bool		prevSecDefCxt;
 
 	/*
 	 * check the current transaction state
@@ -982,6 +985,10 @@ CommitTransaction(void)
 	 * the abort processing
 	 */
 	s->state = TRANS_COMMIT;
+
+	GetUserIdAndContext(&prevUser, &prevSecDefCxt);
+	/* SecurityDefinerContext should never be set outside a transaction */
+	Assert(!prevSecDefCxt);
 
 	/*
 	 * Do pre-commit processing (most of this stuff requires database
@@ -1118,9 +1125,16 @@ AbortTransaction(void)
 	AtAbort_Memory();
 
 	/*
-	 * Reset user id which might have been changed transiently
+	 * Reset user ID which might have been changed transiently.  We need this
+	 * to clean up in case control escaped out of a SECURITY DEFINER function
+	 * or other local change of CurrentUserId; therefore, the prior value
+	 * of SecurityDefinerContext also needs to be restored.
+	 *
+	 * (Note: it is not necessary to restore session authorization
+	 * setting here because that can only be changed via GUC, and GUC will
+	 * take care of rolling it back if need be.)
 	 */
-	SetUserId(GetSessionUserId());
+	SetUserIdAndContext(prevUser, false);
 
 	/*
 	 * do abort processing

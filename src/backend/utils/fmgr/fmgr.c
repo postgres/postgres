@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.63 2002/10/04 17:19:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.63.2.1 2008/01/03 21:25:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -651,6 +651,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	FmgrInfo   *save_flinfo;
 	struct fmgr_security_definer_cache *fcache;
 	Oid			save_userid;
+	bool		save_secdefcxt;
 	HeapTuple	tuple;
 
 	if (!fcinfo->flinfo->fn_extra)
@@ -673,15 +674,17 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	else
 		fcache = fcinfo->flinfo->fn_extra;
 
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
+	SetUserIdAndContext(fcache->userid, true);
+
 	save_flinfo = fcinfo->flinfo;
 	fcinfo->flinfo = &fcache->flinfo;
 
-	save_userid = GetUserId();
-	SetUserId(fcache->userid);
 	result = FunctionCallInvoke(fcinfo);
-	SetUserId(save_userid);
 
 	fcinfo->flinfo = save_flinfo;
+
+	SetUserIdAndContext(save_userid, save_secdefcxt);
 
 	return result;
 }

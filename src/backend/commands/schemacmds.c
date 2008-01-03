@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.6 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.6.2.1 2008/01/03 21:25:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,9 +43,10 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	const char *owner_name;
 	Oid			owner_userid;
 	Oid			saved_userid;
+	bool		saved_secdefcxt;
 	AclResult	aclresult;
 
-	saved_userid = GetUserId();
+	GetUserIdAndContext(&saved_userid, &saved_secdefcxt);
 
 	/*
 	 * Figure out user identities.
@@ -68,7 +69,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		 * (This will revert to session user on error or at the end of
 		 * this routine.)
 		 */
-		SetUserId(owner_userid);
+		SetUserIdAndContext(owner_userid, true);
 	}
 	else
 /* not superuser */
@@ -143,7 +144,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	PopSpecialNamespace(namespaceId);
 
 	/* Reset current user */
-	SetUserId(saved_userid);
+	SetUserIdAndContext(saved_userid, saved_secdefcxt);
 }
 
 
