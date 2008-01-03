@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.112 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.113 2008/01/03 21:23:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -864,6 +864,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	struct fmgr_security_definer_cache *volatile fcache;
 	FmgrInfo   *save_flinfo;
 	Oid			save_userid;
+	bool		save_secdefcxt;
 	volatile int save_nestlevel;
 
 	if (!fcinfo->flinfo->fn_extra)
@@ -908,46 +909,50 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	else
 		fcache = fcinfo->flinfo->fn_extra;
 
-	save_flinfo = fcinfo->flinfo;
-	/* GetUserId is cheap enough that no harm in a wasted call */
-	save_userid = GetUserId();
+	/* GetUserIdAndContext is cheap enough that no harm in a wasted call */
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
 	if (fcache->proconfig)		/* Need a new GUC nesting level */
 		save_nestlevel = NewGUCNestLevel();
 	else
 		save_nestlevel = 0;		/* keep compiler quiet */
 
+	if (OidIsValid(fcache->userid))
+		SetUserIdAndContext(fcache->userid, true);
+
+	if (fcache->proconfig)
+	{
+		ProcessGUCArray(fcache->proconfig,
+						(superuser() ? PGC_SUSET : PGC_USERSET),
+						PGC_S_SESSION,
+						GUC_ACTION_SAVE);
+	}
+
+	/*
+	 * We don't need to restore GUC or userid settings on error, because the
+	 * ensuing xact or subxact abort will do that.  The PG_TRY block is only
+	 * needed to clean up the flinfo link.
+	 */
+	save_flinfo = fcinfo->flinfo;
+
 	PG_TRY();
 	{
 		fcinfo->flinfo = &fcache->flinfo;
-
-		if (OidIsValid(fcache->userid))
-			SetUserId(fcache->userid);
-
-		if (fcache->proconfig)
-		{
-			ProcessGUCArray(fcache->proconfig,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-							PGC_S_SESSION,
-							GUC_ACTION_SAVE);
-		}
 
 		result = FunctionCallInvoke(fcinfo);
 	}
 	PG_CATCH();
 	{
 		fcinfo->flinfo = save_flinfo;
-		/* We don't need to restore GUC settings, outer xact abort will */
-		if (OidIsValid(fcache->userid))
-			SetUserId(save_userid);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	fcinfo->flinfo = save_flinfo;
+
 	if (fcache->proconfig)
 		AtEOXact_GUC(true, save_nestlevel);
 	if (OidIsValid(fcache->userid))
-		SetUserId(save_userid);
+		SetUserIdAndContext(save_userid, save_secdefcxt);
 
 	return result;
 }

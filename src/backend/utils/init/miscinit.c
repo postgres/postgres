@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.165 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.166 2008/01/03 21:23:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,13 +264,15 @@ make_absolute_path(const char *path)
  * OuterUserId is the current user ID in effect at the "outer level" (outside
  * any transaction or function).  This is initially the same as SessionUserId,
  * but can be changed by SET ROLE to any role that SessionUserId is a
- * member of.  We store this mainly so that AtAbort_UserId knows what to
- * reset CurrentUserId to.
+ * member of.  (XXX rename to something like CurrentRoleId?)
  *
  * CurrentUserId is the current effective user ID; this is the one to use
  * for all normal permissions-checking purposes.  At outer level this will
  * be the same as OuterUserId, but it changes during calls to SECURITY
  * DEFINER functions, as well as locally in some specialized commands.
+ *
+ * SecurityDefinerContext is TRUE if we are within a SECURITY DEFINER function
+ * or another context that temporarily changes CurrentUserId.
  * ----------------------------------------------------------------
  */
 static Oid	AuthenticatedUserId = InvalidOid;
@@ -282,26 +284,22 @@ static Oid	CurrentUserId = InvalidOid;
 static bool AuthenticatedUserIsSuperuser = false;
 static bool SessionUserIsSuperuser = false;
 
+static bool SecurityDefinerContext = false;
+
 /* We also remember if a SET ROLE is currently active */
 static bool SetRoleIsActive = false;
 
 
 /*
- * GetUserId/SetUserId - get/set the current effective user ID.
+ * GetUserId - get the current effective user ID.
+ *
+ * Note: there's no SetUserId() anymore; use SetUserIdAndContext().
  */
 Oid
 GetUserId(void)
 {
 	AssertState(OidIsValid(CurrentUserId));
 	return CurrentUserId;
-}
-
-
-void
-SetUserId(Oid userid)
-{
-	AssertArg(OidIsValid(userid));
-	CurrentUserId = userid;
 }
 
 
@@ -319,6 +317,7 @@ GetOuterUserId(void)
 static void
 SetOuterUserId(Oid userid)
 {
+	AssertState(!SecurityDefinerContext);
 	AssertArg(OidIsValid(userid));
 	OuterUserId = userid;
 
@@ -341,6 +340,7 @@ GetSessionUserId(void)
 static void
 SetSessionUserId(Oid userid, bool is_superuser)
 {
+	AssertState(!SecurityDefinerContext);
 	AssertArg(OidIsValid(userid));
 	SessionUserId = userid;
 	SessionUserIsSuperuser = is_superuser;
@@ -349,6 +349,44 @@ SetSessionUserId(Oid userid, bool is_superuser)
 	/* We force the effective user IDs to match, too */
 	OuterUserId = userid;
 	CurrentUserId = userid;
+}
+
+
+/*
+ * GetUserIdAndContext/SetUserIdAndContext - get/set the current user ID
+ * and the SecurityDefinerContext flag.
+ *
+ * Unlike GetUserId, GetUserIdAndContext does *not* Assert that the current
+ * value of CurrentUserId is valid; nor does SetUserIdAndContext require
+ * the new value to be valid.  In fact, these routines had better not
+ * ever throw any kind of error.  This is because they are used by
+ * StartTransaction and AbortTransaction to save/restore the settings,
+ * and during the first transaction within a backend, the value to be saved
+ * and perhaps restored is indeed invalid.  We have to be able to get
+ * through AbortTransaction without asserting in case InitPostgres fails.
+ */
+void
+GetUserIdAndContext(Oid *userid, bool *sec_def_context)
+{
+	*userid = CurrentUserId;
+	*sec_def_context = SecurityDefinerContext;
+}
+
+void
+SetUserIdAndContext(Oid userid, bool sec_def_context)
+{
+	CurrentUserId = userid;
+	SecurityDefinerContext = sec_def_context;
+}
+
+
+/*
+ * InSecurityDefinerContext - are we inside a SECURITY DEFINER context?
+ */
+bool
+InSecurityDefinerContext(void)
+{
+	return SecurityDefinerContext;
 }
 
 
@@ -476,21 +514,6 @@ InitializeSessionUserIdStandalone(void)
 	AuthenticatedUserIsSuperuser = true;
 
 	SetSessionUserId(BOOTSTRAP_SUPERUSERID, true);
-}
-
-
-/*
- * Reset effective userid during AbortTransaction
- *
- * This is essentially SetUserId(GetOuterUserId()), but without the Asserts.
- * The reason is that if a backend's InitPostgres transaction fails (eg,
- * because an invalid user name was given), we have to be able to get through
- * AbortTransaction without asserting.
- */
-void
-AtAbort_UserId(void)
-{
-	CurrentUserId = OuterUserId;
 }
 
 

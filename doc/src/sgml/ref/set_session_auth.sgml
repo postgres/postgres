@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.16 2007/01/31 23:26:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.17 2008/01/03 21:23:15 tgl Exp $ -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
  <refmeta>
   <refentrytitle id="sql-set-session-authorization-title">SET SESSION AUTHORIZATION</refentrytitle>
@@ -27,7 +27,7 @@ RESET SESSION AUTHORIZATION
 
   <para>
    This command sets the session user identifier and the current user
-   identifier of the current SQL-session context to be <replaceable
+   identifier of the current SQL session to be <replaceable
    class="parameter">username</replaceable>.  The user name can be
    written as either an identifier or a string literal.  Using this
    command, it is possible, for example, to temporarily become an
@@ -38,7 +38,7 @@ RESET SESSION AUTHORIZATION
    The session user identifier is initially set to be the (possibly
    authenticated) user name provided by the client.  The current user
    identifier is normally equal to the session user identifier, but
-   might change temporarily in the context of <quote>setuid</quote>
+   might change temporarily in the context of <literal>SECURITY DEFINER</>
    functions and similar mechanisms; it can also be changed by
    <xref linkend="sql-set-role" endterm="sql-set-role-title">.
    The current user identifier is relevant for permission checking.
@@ -61,6 +61,15 @@ RESET SESSION AUTHORIZATION
    The <literal>DEFAULT</> and <literal>RESET</> forms reset the session
    and current user identifiers to be the originally authenticated user
    name.  These forms can be executed by any user.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <command>SET SESSION AUTHORIZATION</> cannot be used within a
+   <literal>SECURITY DEFINER</> function.
   </para>
  </refsect1>
 

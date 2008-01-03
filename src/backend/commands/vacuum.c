@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.362 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.363 2008/01/03 21:23:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -971,6 +971,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	Relation	onerel;
 	LockRelId	onerelid;
 	Oid			toast_relid;
+	Oid			save_userid;
+	bool		save_secdefcxt;
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
@@ -1101,12 +1103,23 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	toast_relid = onerel->rd_rel->reltoastrelid;
 
 	/*
+	 * Switch to the table owner's userid, so that any index functions are
+	 * run as that user.  (This is unnecessary, but harmless, for lazy
+	 * VACUUM.)
+	 */
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
+	SetUserIdAndContext(onerel->rd_rel->relowner, true);
+
+	/*
 	 * Do the actual work --- either FULL or "lazy" vacuum
 	 */
 	if (vacstmt->full)
 		full_vacuum_rel(onerel, vacstmt);
 	else
 		lazy_vacuum_rel(onerel, vacstmt, vac_strategy);
+
+	/* Restore userid */
+	SetUserIdAndContext(save_userid, save_secdefcxt);
 
 	/* all done with this class, but hold lock until commit */
 	relation_close(onerel, NoLock);

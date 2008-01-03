@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.113 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.114 2008/01/03 21:23:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	HeapTuple  *rows;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
+	Oid			save_userid;
+	bool		save_secdefcxt;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -202,6 +204,18 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 		return;
 	}
 
+	ereport(elevel,
+			(errmsg("analyzing \"%s.%s\"",
+					get_namespace_name(RelationGetNamespace(onerel)),
+					RelationGetRelationName(onerel))));
+
+	/*
+	 * Switch to the table owner's userid, so that any index functions are
+	 * run as that user.
+	 */
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
+	SetUserIdAndContext(onerel->rd_rel->relowner, true);
+
 	/* let others know what I'm doing */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 	MyProc->vacuumFlags |= PROC_IN_ANALYZE;
@@ -214,11 +228,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 		if (Log_autovacuum_min_duration > 0)
 			starttime = GetCurrentTimestamp();
 	}
-
-	ereport(elevel,
-			(errmsg("analyzing \"%s.%s\"",
-					get_namespace_name(RelationGetNamespace(onerel)),
-					RelationGetRelationName(onerel))));
 
 	/*
 	 * Determine which columns to analyze
@@ -344,9 +353,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 								  onerel->rd_rel->relisshared,
 								  0, 0);
 
-		vac_close_indexes(nindexes, Irel, AccessShareLock);
-		relation_close(onerel, ShareUpdateExclusiveLock);
-		return;
+		goto cleanup;
 	}
 
 	/*
@@ -466,6 +473,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 							  totalrows, totaldeadrows);
 	}
 
+	/* We skip to here if there were no analyzable columns */
+cleanup:
+
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);
 
@@ -498,6 +508,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 	MyProc->vacuumFlags &= ~PROC_IN_ANALYZE;
 	LWLockRelease(ProcArrayLock);
+
+	/* Restore userid */
+	SetUserIdAndContext(save_userid, save_secdefcxt);
 }
 
 /*
