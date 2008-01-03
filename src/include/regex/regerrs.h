@@ -1,5 +1,5 @@
 /*
- * $Id: regerrs.h,v 1.2 2003/08/04 00:43:32 momjian Exp $
+ * $Id: regerrs.h,v 1.2.4.1 2008/01/03 20:49:15 tgl Exp $
  */
 
 {
@@ -72,4 +72,8 @@
 
 {
 	REG_BADOPT, "REG_BADOPT", "invalid embedded option"
+},
+
+{
+	REG_ETOOBIG, "REG_ETOOBIG", "nfa has too many states"
 },
