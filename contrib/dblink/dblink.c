@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.60.2.1 2007/07/09 01:32:30 joe Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.60.2.2 2008/01/03 21:28:18 tgl Exp $
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -91,6 +91,7 @@ static HeapTuple get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 p
 static Oid	get_relid_from_relname(text *relname_text);
 static char *generate_relation_name(Oid relid);
 static char *connstr_strip_password(const char *connstr);
+static void dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr);
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -177,6 +178,7 @@ typedef struct remoteConnHashEnt
 			else \
 			{ \
 				connstr = conname_or_str; \
+				dblink_security_check(conn, rconn, connstr); \
 				conn = PQconnectdb(connstr); \
 				if (PQstatus(conn) == CONNECTION_BAD) \
 				{ \
@@ -189,6 +191,16 @@ typedef struct remoteConnHashEnt
 				} \
 				freeconn = true; \
 			} \
+	} while (0)
+
+#define DBLINK_GET_NAMED_CONN \
+	do { \
+			char *conname = GET_STR(PG_GETARG_TEXT_P(0)); \
+			rconn = getConnectionByName(conname); \
+			if(rconn) \
+				conn = rconn->conn; \
+			else \
+				DBLINK_CONN_NOT_AVAIL; \
 	} while (0)
 
 #define DBLINK_INIT \
@@ -231,27 +243,8 @@ dblink_connect(PG_FUNCTION_ARGS)
 	if (connname)
 		rconn = (remoteConn *) palloc(sizeof(remoteConn));
 
-	/* for non-superusers, check that server requires a password */
-	if (!superuser())
-	{
-		/* this attempt must fail */
-		conn = PQconnectdb(connstr_strip_password(connstr));
-
-		if (PQstatus(conn) == CONNECTION_OK)
-		{
-			PQfinish(conn);
-			if (rconn)
-				pfree(rconn);
-
-			ereport(ERROR,
-					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
-					 errmsg("password is required"),
-					 errdetail("Non-superuser cannot connect if the server does not request a password."),
-					 errhint("Target server's authentication method must be changed.")));
-		}
-		else
-			PQfinish(conn);
-	}
+	/* check password used if not superuser */
+	dblink_security_check(conn, rconn, connstr);
 	conn = PQconnectdb(connstr);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -1053,17 +1046,11 @@ PG_FUNCTION_INFO_V1(dblink_is_busy);
 Datum
 dblink_is_busy(PG_FUNCTION_ARGS)
 {
-	char	   *msg;
 	PGconn	   *conn = NULL;
-	char	   *conname = NULL;
-	char	   *connstr = NULL;
 	remoteConn *rconn = NULL;
-	bool		freeconn = false;
 
 	DBLINK_INIT;
-	DBLINK_GET_CONN;
-	if (!conn)
-		DBLINK_CONN_NOT_AVAIL;
+	DBLINK_GET_NAMED_CONN;
 
 	PQconsumeInput(conn);
 	PG_RETURN_INT32(PQisBusy(conn));
@@ -1084,26 +1071,20 @@ PG_FUNCTION_INFO_V1(dblink_cancel_query);
 Datum
 dblink_cancel_query(PG_FUNCTION_ARGS)
 {
-	char	   *msg;
 	int			res = 0;
 	PGconn	   *conn = NULL;
-	char	   *conname = NULL;
-	char	   *connstr = NULL;
 	remoteConn *rconn = NULL;
-	bool		freeconn = false;
 	PGcancel   *cancel;
 	char		errbuf[256];
 
 	DBLINK_INIT;
-	DBLINK_GET_CONN;
-	if (!conn)
-		DBLINK_CONN_NOT_AVAIL;
+	DBLINK_GET_NAMED_CONN;
 	cancel = PQgetCancel(conn);
 
 	res = PQcancel(cancel, errbuf, 256);
 	PQfreeCancel(cancel);
 
-	if (res == 0)
+	if (res == 1)
 		PG_RETURN_TEXT_P(GET_TEXT("OK"));
 	else
 		PG_RETURN_TEXT_P(GET_TEXT(errbuf));
@@ -1126,18 +1107,13 @@ dblink_error_message(PG_FUNCTION_ARGS)
 {
 	char	   *msg;
 	PGconn	   *conn = NULL;
-	char	   *conname = NULL;
-	char	   *connstr = NULL;
 	remoteConn *rconn = NULL;
-	bool		freeconn = false;
 
 	DBLINK_INIT;
-	DBLINK_GET_CONN;
-	if (!conn)
-		DBLINK_CONN_NOT_AVAIL;
+	DBLINK_GET_NAMED_CONN;
 
 	msg = PQerrorMessage(conn);
-	if (!msg)
+	if (msg == NULL || msg[0] == '\0')
 		PG_RETURN_TEXT_P(GET_TEXT("OK"));
 	else
 		PG_RETURN_TEXT_P(GET_TEXT(msg));
@@ -2427,4 +2403,29 @@ connstr_strip_password(const char *connstr)
 	}
 
 	return result.data;
+}
+
+static void
+dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr)
+{
+	if (!superuser())
+	{
+		/* this attempt must fail */
+		conn = PQconnectdb(connstr_strip_password(connstr));
+
+		if (PQstatus(conn) == CONNECTION_OK)
+		{
+			PQfinish(conn);
+			if (rconn)
+				pfree(rconn);
+
+			ereport(ERROR,
+					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+					 errmsg("password is required"),
+					 errdetail("Non-superuser cannot connect if the server does not request a password."),
+					 errhint("Target server's authentication method must be changed.")));
+		}
+		else
+			PQfinish(conn);
+	}
 }
