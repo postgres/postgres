@@ -28,6 +28,8 @@
  */
 #include "postgres.h"
 
+#include <ctype.h>
+
 #include "libpq-fe.h"
 
 #include "fmgr.h"
@@ -73,6 +75,7 @@ static void append_res_ptr(dblink_results * results);
 static void remove_res_ptr(dblink_results * results);
 static char *generate_relation_name(Oid relid);
 static char *connstr_strip_password(const char *connstr);
+static void dblink_security_check(PGconn *conn, const char *connstr);
 
 /* Global */
 List	   *res_id = NIL;
@@ -108,22 +111,10 @@ dblink_connect(PG_FUNCTION_ARGS)
 
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
-	/* for non-superusers, check that server requires a password */
-	if (!superuser())
-	{
-		/* this attempt must fail */
-		persistent_conn = PQconnectdb(connstr_strip_password(connstr));
-
-		if (PQstatus(persistent_conn) == CONNECTION_OK)
-		{
-			PQfinish(persistent_conn);
-			persistent_conn = NULL;
-			elog(ERROR, "Non-superuser cannot connect if the server does not request a password.");
-		}
-		else
-			PQfinish(persistent_conn);
-	}
+	/* check password used if not superuser */
+	dblink_security_check(persistent_conn, connstr);
 	persistent_conn = PQconnectdb(connstr);
+
 	MemoryContextSwitchTo(oldcontext);
 
 	if (PQstatus(persistent_conn) == CONNECTION_BAD)
@@ -468,6 +459,8 @@ dblink_record(PG_FUNCTION_ARGS)
 			connstr = GET_STR(PG_GETARG_TEXT_P(0));
 			sql = GET_STR(PG_GETARG_TEXT_P(1));
 
+			/* check password used if not superuser */
+			dblink_security_check(conn, connstr);
 			conn = PQconnectdb(connstr);
 			if (PQstatus(conn) == CONNECTION_BAD)
 			{
@@ -652,6 +645,8 @@ dblink_exec(PG_FUNCTION_ARGS)
 		connstr = GET_STR(PG_GETARG_TEXT_P(0));
 		sql = GET_STR(PG_GETARG_TEXT_P(1));
 
+		/* check password used if not superuser */
+		dblink_security_check(conn, connstr);
 		conn = PQconnectdb(connstr);
 		if (PQstatus(conn) == CONNECTION_BAD)
 		{
@@ -738,7 +733,8 @@ dblink(PG_FUNCTION_ARGS)
 
 	if (fcinfo->flinfo->fn_extra == NULL)
 	{
-
+		/* check password used if not superuser */
+		dblink_security_check(conn, optstr);
 		conn = PQconnectdb(optstr);
 		if (PQstatus(conn) == CONNECTION_BAD)
 		{
@@ -2175,4 +2171,23 @@ connstr_strip_password(const char *connstr)
 	}
 
 	return result.data;
+}
+
+static void
+dblink_security_check(PGconn *conn, const char *connstr)
+{
+	if (!superuser())
+	{
+		/* this attempt must fail */
+		conn = PQconnectdb(connstr_strip_password(connstr));
+
+		if (PQstatus(conn) == CONNECTION_OK)
+		{
+			PQfinish(conn);
+			conn = NULL;
+			elog(ERROR, "Non-superuser cannot connect if the server does not request a password.");
+		}
+		else
+			PQfinish(conn);
+	}
 }
