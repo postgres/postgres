@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.39 2005/06/14 20:42:52 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.39.2.1 2008/01/03 21:24:26 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -104,8 +104,7 @@ SHOW ALL
         <term><literal>IS_SUPERUSER</literal></term>
         <listitem>
          <para>
-          True if the current session authorization identifier has
-          superuser privileges.
+          True if the current role has superuser privileges.
          </para>
         </listitem>
        </varlistentry>

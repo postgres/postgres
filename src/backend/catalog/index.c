@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.261.2.3 2007/11/08 23:23:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.261.2.4 2008/01/03 21:24:26 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1361,6 +1361,8 @@ index_build(Relation heapRelation,
 			IndexInfo *indexInfo)
 {
 	RegProcedure procedure;
+	Oid			save_userid;
+	bool		save_secdefcxt;
 
 	/*
 	 * sanity checks
@@ -1372,12 +1374,22 @@ index_build(Relation heapRelation,
 	Assert(RegProcedureIsValid(procedure));
 
 	/*
+	 * Switch to the table owner's userid, so that any index functions are
+	 * run as that user.
+	 */
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
+	SetUserIdAndContext(heapRelation->rd_rel->relowner, true);
+
+	/*
 	 * Call the access method's build procedure
 	 */
 	OidFunctionCall3(procedure,
 					 PointerGetDatum(heapRelation),
 					 PointerGetDatum(indexRelation),
 					 PointerGetDatum(indexInfo));
+
+	/* Restore userid */
+	SetUserIdAndContext(save_userid, save_secdefcxt);
 }
 
 

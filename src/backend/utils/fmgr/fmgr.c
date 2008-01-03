@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.97.2.2 2007/07/31 15:50:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.97.2.3 2008/01/03 21:24:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -784,6 +784,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	FmgrInfo   *save_flinfo;
 	struct fmgr_security_definer_cache *volatile fcache;
 	Oid			save_userid;
+	bool		save_secdefcxt;
 	HeapTuple	tuple;
 
 	if (!fcinfo->flinfo->fn_extra)
@@ -809,26 +810,32 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	else
 		fcache = fcinfo->flinfo->fn_extra;
 
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
+	SetUserIdAndContext(fcache->userid, true);
+
+	/*
+	 * We don't need to restore the userid settings on error, because the
+	 * ensuing xact or subxact abort will do that.  The PG_TRY block is only
+	 * needed to clean up the flinfo link.
+	 */
 	save_flinfo = fcinfo->flinfo;
-	save_userid = GetUserId();
 
 	PG_TRY();
 	{
 		fcinfo->flinfo = &fcache->flinfo;
-		SetUserId(fcache->userid);
 
 		result = FunctionCallInvoke(fcinfo);
 	}
 	PG_CATCH();
 	{
 		fcinfo->flinfo = save_flinfo;
-		SetUserId(save_userid);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	fcinfo->flinfo = save_flinfo;
-	SetUserId(save_userid);
+
+	SetUserIdAndContext(save_userid, save_secdefcxt);
 
 	return result;
 }
