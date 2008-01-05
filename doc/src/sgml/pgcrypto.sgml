@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.3 2007/12/16 23:00:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.4 2008/01/05 13:17:00 petere Exp $ -->
 
 <sect1 id="pgcrypto">
  <title>pgcrypto</title>
@@ -390,7 +390,7 @@
   <title>PGP encryption functions</title>
 
   <para>
-   The functions here implement the encryption part of the OpenPGP (RFC2440)
+   The functions here implement the encryption part of the OpenPGP (RFC 2440)
    standard.  Supported are both symmetric-key and public-key encryption.
   </para>
 
@@ -689,7 +689,7 @@
    <para>
     Whether to convert <literal>\n</literal> into <literal>\r\n</literal> when
     encrypting and <literal>\r\n</literal> to <literal>\n</literal> when
-    decrypting.  RFC2440 specifies that text data should be stored using
+    decrypting.  RFC 2440 specifies that text data should be stored using
     <literal>\r\n</literal> line-feeds.  Use this to get fully RFC-compliant
     behavior.
    </para>
@@ -706,7 +706,7 @@
    <para>
     Do not protect data with SHA-1.  The only good reason to use this
     option is to achieve compatibility with ancient PGP products, predating
-    the addition of SHA-1 protected packets to RFC2440.
+    the addition of SHA-1 protected packets to RFC 2440.
     Recent gnupg.org and pgp.com software supports it fine.
    </para>
    <programlisting>
@@ -1179,7 +1179,7 @@
      <para>
       <ulink url="http://www.imc.org/draft-ietf-openpgp-rfc2440bis"></ulink>
      </para>
-     <para>New version of RFC2440.</para>
+     <para>New version of RFC 2440.</para>
     </listitem>
     <listitem>
      <para><ulink url="http://www.ietf.org/rfc/rfc1321.txt"></ulink></para>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.105 2007/12/29 04:15:38 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.106 2008/01/05 13:17:00 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -666,10 +666,10 @@ local   db1,db2,@demodbs  all                         md5
 
    <para>
     <productname>GSSAPI</productname> is an industry-standard protocol
-    for secure authentication defined in RFC2743. 
+    for secure authentication defined in RFC 2743. 
     <productname>PostgreSQL</productname> supports
     <productname>GSSAPI</productname> with <productname>Kerberos</productname>
-    authentication according to RFC1964. <productname>GSSAPI</productname>
+    authentication according to RFC 1964. <productname>GSSAPI</productname>
     provides automatic authentication (single sign-on) for systems
     that support it. The authentication itself is secure, but the
     data sent over the connection will be in clear unless
@@ -851,7 +851,7 @@ local   db1,db2,@demodbs  all                         md5
 
    <para>
     The <quote>Identification Protocol</quote> is described in
-    <citetitle>RFC 1413</citetitle>. Virtually every Unix-like
+    RFC 1413. Virtually every Unix-like
     operating system ships with an ident server that listens on TCP
     port 113 by default. The basic functionality of an ident server
     is to answer questions like <quote>What user initiated the
