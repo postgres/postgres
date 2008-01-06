@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.268 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.269 2008/01/06 01:03:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ static void get_coercion_expr(Node *arg, deparse_context *context,
 				  Oid resulttype, int32 resulttypmod,
 				  Node *parentNode);
 static void get_const_expr(Const *constval, deparse_context *context,
-			   bool showtype);
+			   int showtype);
 static void get_sublink_expr(SubLink *sublink, deparse_context *context);
 static void get_from_clause(Query *query, const char *prefix,
 				deparse_context *context);
@@ -2258,15 +2258,20 @@ get_rule_sortgroupclause(SortClause *srt, List *tlist, bool force_colno,
 	expr = (Node *) tle->expr;
 
 	/*
-	 * Use column-number form if requested by caller or if expression is a
-	 * constant --- a constant is ambiguous (and will be misinterpreted by
-	 * findTargetlistEntry()) if we dump it explicitly.
+	 * Use column-number form if requested by caller.  Otherwise, if
+	 * expression is a constant, force it to be dumped with an explicit
+	 * cast as decoration --- this is because a simple integer constant
+	 * is ambiguous (and will be misinterpreted by findTargetlistEntry())
+	 * if we dump it without any decoration.  Otherwise, just dump the
+	 * expression normally.
 	 */
-	if (force_colno || (expr && IsA(expr, Const)))
+	if (force_colno)
 	{
 		Assert(!tle->resjunk);
 		appendStringInfo(buf, "%d", tle->resno);
 	}
+	else if (expr && IsA(expr, Const))
+		get_const_expr((Const *) expr, context, 1);
 	else
 		get_rule_expr(expr, context, true);
 
@@ -3409,7 +3414,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			break;
 
 		case T_Const:
-			get_const_expr((Const *) node, context, true);
+			get_const_expr((Const *) node, context, 0);
 			break;
 
 		case T_Param:
@@ -4388,7 +4393,7 @@ get_coercion_expr(Node *arg, deparse_context *context,
 		((Const *) arg)->consttypmod == -1)
 	{
 		/* Show the constant without normal ::typename decoration */
-		get_const_expr((Const *) arg, context, false);
+		get_const_expr((Const *) arg, context, -1);
 	}
 	else
 	{
@@ -4407,13 +4412,13 @@ get_coercion_expr(Node *arg, deparse_context *context,
  *
  *	Make a string representation of a Const
  *
- * Note: if showtype is false, the Const is the direct argument of a coercion
- * operation with the same target type, and so we should suppress "::typename"
- * to avoid redundant output.
+ * showtype can be -1 to never show "::typename" decoration, or +1 to always
+ * show it, or 0 to show it only if the constant wouldn't be assumed to be
+ * the right type by default.
  * ----------
  */
 static void
-get_const_expr(Const *constval, deparse_context *context, bool showtype)
+get_const_expr(Const *constval, deparse_context *context, int showtype)
 {
 	StringInfo	buf = context->buf;
 	Oid			typoutput;
@@ -4430,7 +4435,7 @@ get_const_expr(Const *constval, deparse_context *context, bool showtype)
 		 * about type when reparsing.
 		 */
 		appendStringInfo(buf, "NULL");
-		if (showtype)
+		if (showtype >= 0)
 			appendStringInfo(buf, "::%s",
 							 format_type_with_typemod(constval->consttype,
 													  constval->consttypmod));
@@ -4506,13 +4511,15 @@ get_const_expr(Const *constval, deparse_context *context, bool showtype)
 
 	pfree(extval);
 
-	if (!showtype)
+	if (showtype < 0)
 		return;
 
 	/*
-	 * Append ::typename unless the constant will be implicitly typed as the
-	 * right type when it is read in.  XXX this code has to be kept in sync
-	 * with the behavior of the parser, especially make_const.
+	 * For showtype == 0, append ::typename unless the constant will be
+	 * implicitly typed as the right type when it is read in.
+	 *
+	 * XXX this code has to be kept in sync with the behavior of the parser,
+	 * especially make_const.
 	 */
 	switch (constval->consttype)
 	{
@@ -4534,7 +4541,7 @@ get_const_expr(Const *constval, deparse_context *context, bool showtype)
 			needlabel = true;
 			break;
 	}
-	if (needlabel)
+	if (needlabel || showtype > 0)
 		appendStringInfo(buf, "::%s",
 						 format_type_with_typemod(constval->consttype,
 												  constval->consttypmod));
