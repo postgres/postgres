@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.188.4.6 2007/10/13 15:56:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.188.4.7 2008/01/06 01:03:37 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -199,7 +199,8 @@ static void get_oper_expr(OpExpr *expr, deparse_context *context);
 static void get_func_expr(FuncExpr *expr, deparse_context *context,
 			  bool showimplicit);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
-static void get_const_expr(Const *constval, deparse_context *context);
+static void get_const_expr(Const *constval, deparse_context *context,
+						   int showtype);
 static void get_sublink_expr(SubLink *sublink, deparse_context *context);
 static void get_from_clause(Query *query, deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
@@ -2286,15 +2287,20 @@ get_rule_sortgroupclause(SortClause *srt, List *tlist, bool force_colno,
 	expr = (Node *) tle->expr;
 
 	/*
-	 * Use column-number form if requested by caller or if expression is a
-	 * constant --- a constant is ambiguous (and will be misinterpreted by
-	 * findTargetlistEntry()) if we dump it explicitly.
+	 * Use column-number form if requested by caller.  Otherwise, if
+	 * expression is a constant, force it to be dumped with an explicit
+	 * cast as decoration --- this is because a simple integer constant
+	 * is ambiguous (and will be misinterpreted by findTargetlistEntry())
+	 * if we dump it without any decoration.  Otherwise, just dump the
+	 * expression normally.
 	 */
-	if (force_colno || (expr && IsA(expr, Const)))
+	if (force_colno)
 	{
 		Assert(!tle->resdom->resjunk);
 		appendStringInfo(buf, "%d", tle->resdom->resno);
 	}
+	else if (expr && IsA(expr, Const))
+		get_const_expr((Const *) expr, context, 1);
 	else
 		get_rule_expr(expr, context, true);
 
@@ -3034,7 +3040,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			break;
 
 		case T_Const:
-			get_const_expr((Const *) node, context);
+			get_const_expr((Const *) node, context, 0);
 			break;
 
 		case T_Param:
@@ -3709,10 +3715,14 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
  * get_const_expr
  *
  *	Make a string representation of a Const
+ *
+ * showtype can be -1 to never show "::typename" decoration, or +1 to always
+ * show it, or 0 to show it only if the constant wouldn't be assumed to be
+ * the right type by default.
  * ----------
  */
 static void
-get_const_expr(Const *constval, deparse_context *context)
+get_const_expr(Const *constval, deparse_context *context, int showtype)
 {
 	StringInfo	buf = context->buf;
 	Oid			typoutput;
@@ -3729,8 +3739,11 @@ get_const_expr(Const *constval, deparse_context *context)
 		 * Always label the type of a NULL constant to prevent
 		 * misdecisions about type when reparsing.
 		 */
-		appendStringInfo(buf, "NULL::%s",
-					  format_type_with_typemod(constval->consttype, -1));
+		appendStringInfo(buf, "NULL");
+		if (showtype >= 0)
+			appendStringInfo(buf, "::%s",
+							 format_type_with_typemod(constval->consttype,
+													  -1));
 		return;
 	}
 
@@ -3812,10 +3825,15 @@ get_const_expr(Const *constval, deparse_context *context)
 
 	pfree(extval);
 
+	if (showtype < 0)
+		return;
+
 	/*
-	 * Append ::typename unless the constant will be implicitly typed as
-	 * the right type when it is read in.  XXX this code has to be kept in
-	 * sync with the behavior of the parser, especially make_const.
+	 * For showtype == 0, append ::typename unless the constant will be
+	 * implicitly typed as the right type when it is read in.
+	 *
+	 * XXX this code has to be kept in sync with the behavior of the parser,
+	 * especially make_const.
 	 */
 	switch (constval->consttype)
 	{
@@ -3833,7 +3851,7 @@ get_const_expr(Const *constval, deparse_context *context)
 			needlabel = true;
 			break;
 	}
-	if (needlabel)
+	if (needlabel || showtype > 0)
 		appendStringInfo(buf, "::%s",
 					  format_type_with_typemod(constval->consttype, -1));
 }
