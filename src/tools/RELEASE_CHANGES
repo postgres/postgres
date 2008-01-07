@@ -74,8 +74,8 @@ Creating Back-Branch Release Notes
 
 * Copy the SGML for each branch into release.sgml in CVS HEAD
 
-* Copy CVS HEAD release.sgml to each branch and trim off the top
-  part that doesn't apply for each branch
+* Use src/tools/major_release_split to create a release.sgml for
+  each branch and copy them to the branch's CVS
 
 
 ---------------------------------------------------------------------------
