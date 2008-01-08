@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.31 2008/01/01 19:45:52 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.32 2008/01/08 23:18:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, ' ', sizeof(nulls));
 
-		if (lock->tag.locktag_type <= LOCKTAG_ADVISORY)
+		if (lock->tag.locktag_type <= LOCKTAG_LAST_TYPE)
 			locktypename = LockTagTypeNames[lock->tag.locktag_type];
 		else
 		{
@@ -217,7 +217,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		values[0] = DirectFunctionCall1(textin,
 										CStringGetDatum(locktypename));
 
-		switch (lock->tag.locktag_type)
+		switch ((LockTagType) lock->tag.locktag_type)
 		{
 			case LOCKTAG_RELATION:
 			case LOCKTAG_RELATION_EXTEND:

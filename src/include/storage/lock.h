@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.111 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.112 2008/01/08 23:18:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,6 +185,8 @@ typedef enum LockTagType
 	LOCKTAG_USERLOCK,			/* reserved for old contrib/userlock code */
 	LOCKTAG_ADVISORY			/* advisory user locks */
 } LockTagType;
+
+#define LOCKTAG_LAST_TYPE	LOCKTAG_ADVISORY
 
 /*
  * The LOCKTAG struct is defined with malice aforethought to fit into 16

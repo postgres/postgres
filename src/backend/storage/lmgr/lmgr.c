@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.95 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.96 2008/01/08 23:18:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -672,7 +672,7 @@ UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 bool
 LockTagIsTemp(const LOCKTAG *tag)
 {
-	switch (tag->locktag_type)
+	switch ((LockTagType) tag->locktag_type)
 	{
 		case LOCKTAG_RELATION:
 		case LOCKTAG_RELATION_EXTEND:
@@ -686,6 +686,7 @@ LockTagIsTemp(const LOCKTAG *tag)
 				return true;
 			break;
 		case LOCKTAG_TRANSACTION:
+		case LOCKTAG_VIRTUALTRANSACTION:
 			/* there are no temp transactions */
 			break;
 		case LOCKTAG_OBJECT:
@@ -710,7 +711,7 @@ LockTagIsTemp(const LOCKTAG *tag)
 void
 DescribeLockTag(StringInfo buf, const LOCKTAG *tag)
 {
-	switch (tag->locktag_type)
+	switch ((LockTagType) tag->locktag_type)
 	{
 		case LOCKTAG_RELATION:
 			appendStringInfo(buf,
@@ -744,6 +745,12 @@ DescribeLockTag(StringInfo buf, const LOCKTAG *tag)
 							 _("transaction %u"),
 							 tag->locktag_field1);
 			break;
+		case LOCKTAG_VIRTUALTRANSACTION:
+			appendStringInfo(buf,
+							 _("virtual transaction %d/%u"),
+							 tag->locktag_field1,
+							 tag->locktag_field2);
+			break;
 		case LOCKTAG_OBJECT:
 			appendStringInfo(buf,
 							 _("object %u of class %u of database %u"),
@@ -770,7 +777,7 @@ DescribeLockTag(StringInfo buf, const LOCKTAG *tag)
 		default:
 			appendStringInfo(buf,
 							 _("unrecognized locktag type %d"),
-							 tag->locktag_type);
+							 (int) tag->locktag_type);
 			break;
 	}
 }
