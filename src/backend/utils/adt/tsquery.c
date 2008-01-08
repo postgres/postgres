@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.14 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.15 2008/01/08 01:04:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ typedef enum
 	PT_VAL = 2,
 	PT_OPR = 3,
 	PT_OPEN = 4,
-	PT_CLOSE = 5,
+	PT_CLOSE = 5
 } ts_tokentype;
 
 /*
