@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.252 2007/12/28 16:21:08 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.253 2008/01/08 18:07:38 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -5197,7 +5197,9 @@ defaultNoticeProcessor(void *arg, const char *message)
    to inside <application>libpq</application>), you can use
    <function>PQinitSSL(int)</> to tell <application>libpq</application>
    that the <acronym>SSL</> library has already been initialized by your
-   application.
+   application.  See <ulink
+   url="http://h71000.www7.hp.com/doc/83final/BA554_90007/ch04.html"></ulink>
+   for details on the SSL API.
   </para>
 
   <table id="libpq-ssl-file-usage">

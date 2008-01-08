@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.401 2007/12/29 04:59:27 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.402 2008/01/08 18:07:38 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1637,6 +1637,9 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    verify that the client's certificate is signed by one of the trusted
    certificate authorities.  Certificate Revocation List (CRL) entries
    are also checked if the file <filename>root.crl</filename> exists.
+   (See <ulink
+   url="http://h71000.www7.hp.com/DOC/83final/BA554_90007/ch04s02.html"></>
+   for diagrams showing SSL certificate usage.)
   </para>
 
   <para>
