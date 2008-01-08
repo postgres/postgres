@@ -1,11 +1,12 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.53 2007/11/15 21:14:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.54 2008/01/08 01:14:52 tgl Exp $ */
+
+#define POSTGRES_ECPG_INTERNAL
+#include "postgres_fe.h"
 
 #include <math.h>
 #include <ctype.h>
 #include <limits.h>
 
-#define POSTGRES_ECPG_INTERNAL
-#include "postgres_fe.h"
 #include <ecpgtype.h>
 #include <ecpg_informix.h>
 #include <pgtypes_error.h>
