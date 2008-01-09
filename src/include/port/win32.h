@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.82 2007/12/11 14:34:43 mha Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.83 2008/01/09 09:16:43 mha Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -50,7 +50,7 @@
  * On Mingw/Msys, that should always be the case, but MSVC++ defaults
  * to 64 bits. We set that for our own build in the project files
  */
-#ifdef WIN32_ONLY_COMPILER
+#if defined(WIN32_ONLY_COMPILER) && !defined(FRONTEND)
 #ifndef _USE_32BIT_TIME_T
 #error "Postgres uses 32 bit time_t - add #define _USE_32BIT_TIME_T on Windows"
 #endif
