@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.169 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.170 2008/01/09 21:52:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parsetree.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -630,11 +631,19 @@ DefineIndex(RangeVar *heapRelation,
 	 * We can exclude any running transactions that have xmin >= the xmax of
 	 * our reference snapshot, since they are clearly not interested in any
 	 * missing older tuples.  Transactions in other DBs aren't a problem
-	 * either, since they'll never even be able to see this index. Also,
-	 * GetCurrentVirtualXIDs never reports our own vxid, so we need not check
-	 * for that.
+	 * either, since they'll never even be able to see this index.
+	 *
+	 * We can also exclude autovacuum processes and processes running manual
+	 * lazy VACUUMs, because they won't be fazed by missing index entries
+	 * either.  (Manual ANALYZEs, however, can't be excluded because they
+	 * might be within transactions that are going to do arbitrary operations
+	 * later.)
+	 *
+	 * Also, GetCurrentVirtualXIDs never reports our own vxid, so we need not
+	 * check for that.
 	 */
-	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax, false);
+	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax, false,
+										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM);
 
 	while (VirtualTransactionIdIsValid(*old_snapshots))
 	{

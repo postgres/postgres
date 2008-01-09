@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.39 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.40 2008/01/09 21:52:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1006,10 +1006,12 @@ IsBackendPid(int pid)
  *
  * If limitXmin is not InvalidTransactionId, we skip any backends
  * with xmin >= limitXmin.	If allDbs is false, we skip backends attached
- * to other databases.	Also, our own process is always skipped.
+ * to other databases.  If excludeVacuum isn't zero, we skip processes for
+ * which (excludeVacuum & vacuumFlags) is not zero.  Also, our own process
+ * is always skipped.
  */
 VirtualTransactionId *
-GetCurrentVirtualXIDs(TransactionId limitXmin, bool allDbs)
+GetCurrentVirtualXIDs(TransactionId limitXmin, bool allDbs, int excludeVacuum)
 {
 	VirtualTransactionId *vxids;
 	ProcArrayStruct *arrayP = procArray;
@@ -1027,6 +1029,9 @@ GetCurrentVirtualXIDs(TransactionId limitXmin, bool allDbs)
 		volatile PGPROC *proc = arrayP->procs[index];
 
 		if (proc == MyProc)
+			continue;
+
+		if (excludeVacuum & proc->vacuumFlags)
 			continue;
 
 		if (allDbs || proc->databaseId == MyDatabaseId)
