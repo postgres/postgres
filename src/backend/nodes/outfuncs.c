@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.321 2008/01/07 21:33:10 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.322 2008/01/09 08:46:44 neilc Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -501,12 +501,23 @@ _outHashJoin(StringInfo str, HashJoin *node)
 static void
 _outAgg(StringInfo str, Agg *node)
 {
+	int i;
+
 	WRITE_NODE_TYPE("AGG");
 
 	_outPlanInfo(str, (Plan *) node);
 
 	WRITE_ENUM_FIELD(aggstrategy, AggStrategy);
 	WRITE_INT_FIELD(numCols);
+
+	appendStringInfo(str, " :grpColIdx");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %d", node->grpColIdx[i]);
+
+	appendStringInfo(str, " :grpOperators");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %u", node->grpOperators[i]);
+
 	WRITE_LONG_FIELD(numGroups);
 }
 
