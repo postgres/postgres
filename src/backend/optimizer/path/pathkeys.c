@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.79 2006/10/04 00:29:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.79.2.1 2008/01/09 20:50:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,15 +423,16 @@ sub_generate_join_implications(PlannerInfo *root,
 									 false);
 
 			/*
-			 * We can remove explicit tests of this outer-join qual, too,
-			 * since we now have tests forcing each of its sides to the same
-			 * value.
+			 * We used to think we could remove explicit tests of this
+			 * outer-join qual, too, since we now have tests forcing each of
+			 * its sides to the same value.  However, that fails in some
+			 * corner cases where lower outer joins could cause one of the
+			 * variables to go to NULL.  (BUG in 8.2 through 8.2.6.)
+			 * So now we just leave it in place, but mark it with selectivity
+			 * 1.0 so that we don't underestimate the join size output ---
+			 * it's mostly redundant with the constant constraints.
 			 */
-			process_implied_equality(root,
-									 leftop, rightop,
-									 rinfo->left_sortop, rinfo->right_sortop,
-									 rinfo->left_relids, rinfo->right_relids,
-									 true);
+			rinfo->this_selec = 1.0;
 
 			/*
 			 * And recurse to see if we can deduce anything from INNERVAR =
@@ -465,15 +466,16 @@ sub_generate_join_implications(PlannerInfo *root,
 									 false);
 
 			/*
-			 * We can remove explicit tests of this outer-join qual, too,
-			 * since we now have tests forcing each of its sides to the same
-			 * value.
+			 * We used to think we could remove explicit tests of this
+			 * outer-join qual, too, since we now have tests forcing each of
+			 * its sides to the same value.  However, that fails in some
+			 * corner cases where lower outer joins could cause one of the
+			 * variables to go to NULL.  (BUG in 8.2 through 8.2.6.)
+			 * So now we just leave it in place, but mark it with selectivity
+			 * 1.0 so that we don't underestimate the join size output ---
+			 * it's mostly redundant with the constant constraints.
 			 */
-			process_implied_equality(root,
-									 leftop, rightop,
-									 rinfo->left_sortop, rinfo->right_sortop,
-									 rinfo->left_relids, rinfo->right_relids,
-									 true);
+			rinfo->this_selec = 1.0;
 
 			/*
 			 * And recurse to see if we can deduce anything from INNERVAR =
@@ -542,25 +544,22 @@ sub_generate_join_implications(PlannerInfo *root,
 										 rinfo->right_sortop,
 										 rinfo->right_relids,
 										 false);
-				/* ... and remove COALESCE() = CONSTANT */
-				process_implied_const_eq(root, equi_key_set, relids,
-										 item1,
-										 sortop1,
-										 item1_relids,
-										 true);
 
 				/*
-				 * We can remove explicit tests of this outer-join qual, too,
-				 * since we now have tests forcing each of its sides to the
-				 * same value.
+				 * We used to think we could remove explicit tests of this
+				 * outer-join qual, too, since we now have tests forcing each
+				 * of its sides to the same value.  However, that fails in
+				 * some corner cases where lower outer joins could cause one
+				 * of the variables to go to NULL.  (BUG in 8.2 through
+				 * 8.2.6.)  So now we just leave it in place, but mark it with
+				 * selectivity 1.0 so that we don't underestimate the join
+				 * size output --- it's mostly redundant with the constant
+				 * constraints.
+				 *
+				 * Ideally we'd do that for the COALESCE() = CONSTANT rinfo,
+				 * too, but we don't have easy access to that here.
 				 */
-				process_implied_equality(root,
-										 leftop, rightop,
-										 rinfo->left_sortop,
-										 rinfo->right_sortop,
-										 rinfo->left_relids,
-										 rinfo->right_relids,
-										 true);
+				rinfo->this_selec = 1.0;
 
 				/*
 				 * And recurse to see if we can deduce anything from LEFTVAR =

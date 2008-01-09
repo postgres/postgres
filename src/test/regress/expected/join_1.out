@@ -2290,3 +2290,34 @@ from yy
      301 |         |          |          |        1
 (3 rows)
 
+--
+-- regression test for improper pushing of constants across outer-join clauses
+-- (as seen in early 8.2.x releases)
+--
+create temp table zt1 (f1 int primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "zt1_pkey" for table "zt1"
+create temp table zt2 (f2 int primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "zt2_pkey" for table "zt2"
+create temp table zt3 (f3 int primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "zt3_pkey" for table "zt3"
+insert into zt1 values(53);
+insert into zt2 values(53);
+select * from
+  zt2 left join zt3 on (f2 = f3)
+      left join zt1 on (f3 = f1)
+where f2 = 53;
+ f2 | f3 | f1 
+----+----+----
+ 53 |    |   
+(1 row)
+
+create temp view zv1 as select *,'dummy'::text AS junk from zt1;
+select * from
+  zt2 left join zt3 on (f2 = f3)
+      left join zv1 on (f3 = f1)
+where f2 = 53;
+ f2 | f3 | f1 | junk 
+----+----+----+------
+ 53 |    |    | 
+(1 row)
+
