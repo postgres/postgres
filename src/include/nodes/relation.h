@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.152 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.153 2008/01/09 20:42:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,6 +480,13 @@ typedef struct EquivalenceClass
 } EquivalenceClass;
 
 /*
+ * If an EC contains a const and isn't below-outer-join, any PathKey depending
+ * on it must be redundant, since there's only one possible value of the key.
+ */
+#define EC_MUST_BE_REDUNDANT(eclass)  \
+	((eclass)->ec_has_const && !(eclass)->ec_below_outer_join)
+
+/*
  * EquivalenceMember - one member expression of an EquivalenceClass
  *
  * em_is_child signifies that this element was built by transposing a member
@@ -856,17 +863,17 @@ typedef struct HashPath
  *
  * When dealing with outer joins we have to be very careful about pushing qual
  * clauses up and down the tree.  An outer join's own JOIN/ON conditions must
- * be evaluated exactly at that join node, and any quals appearing in WHERE or
- * in a JOIN above the outer join cannot be pushed down below the outer join.
- * Otherwise the outer join will produce wrong results because it will see the
- * wrong sets of input rows.  All quals are stored as RestrictInfo nodes
- * during planning, but there's a flag to indicate whether a qual has been
+ * be evaluated exactly at that join node, unless they are "degenerate"
+ * conditions that reference only Vars from the nullable side of the join.
+ * Quals appearing in WHERE or in a JOIN above the outer join cannot be pushed
+ * down below the outer join, if they reference any nullable Vars.
+ * RestrictInfo nodes contain a flag to indicate whether a qual has been
  * pushed down to a lower level than its original syntactic placement in the
  * join tree would suggest.  If an outer join prevents us from pushing a qual
  * down to its "natural" semantic level (the level associated with just the
  * base rels used in the qual) then we mark the qual with a "required_relids"
  * value including more than just the base rels it actually uses.  By
- * pretending that the qual references all the rels appearing in the outer
+ * pretending that the qual references all the rels required to form the outer
  * join, we prevent it from being evaluated below the outer join's joinrel.
  * When we do form the outer join's joinrel, we still need to distinguish
  * those quals that are actually in that join's JOIN/ON condition from those
@@ -878,11 +885,13 @@ typedef struct HashPath
  * It's possible for an OUTER JOIN clause to be marked is_pushed_down too,
  * if we decide that it can be pushed down into the nullable side of the join.
  * In that case it acts as a plain filter qual for wherever it gets evaluated.
+ * (In short, is_pushed_down is only false for non-degenerate outer join
+ * conditions.  Possibly we should rename it to reflect that meaning?)
  *
- * When application of a qual must be delayed by outer join, we also mark it
- * with outerjoin_delayed = true.  This isn't redundant with required_relids
- * because that might equal clause_relids whether or not it's an outer-join
- * clause.
+ * RestrictInfo nodes also contain an outerjoin_delayed flag, which is true
+ * if the clause's applicability must be delayed due to any outer joins
+ * appearing below its own syntactic level (ie, it references any Vars from
+ * the nullable side of any lower outer join).
  *
  * In general, the referenced clause might be arbitrarily complex.	The
  * kinds of clauses we can handle as indexscan quals, mergejoin clauses,
@@ -932,7 +941,7 @@ typedef struct RestrictInfo
 
 	bool		is_pushed_down; /* TRUE if clause was pushed down in level */
 
-	bool		outerjoin_delayed;		/* TRUE if delayed by outer join */
+	bool		outerjoin_delayed;	/* TRUE if delayed by lower outer join */
 
 	bool		can_join;		/* see comment above */
 

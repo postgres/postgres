@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.8 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.9 2008/01/09 20:42:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,10 +52,10 @@ static RestrictInfo *create_join_clause(PlannerInfo *root,
 				   EquivalenceMember *leftem,
 				   EquivalenceMember *rightem,
 				   EquivalenceClass *parent_ec);
-static void reconsider_outer_join_clause(PlannerInfo *root,
+static bool reconsider_outer_join_clause(PlannerInfo *root,
 							 RestrictInfo *rinfo,
 							 bool outer_on_left);
-static void reconsider_full_join_clause(PlannerInfo *root,
+static bool reconsider_full_join_clause(PlannerInfo *root,
 							RestrictInfo *rinfo);
 
 
@@ -1094,8 +1094,9 @@ create_join_clause(PlannerInfo *root,
 /*
  * reconsider_outer_join_clauses
  *	  Re-examine any outer-join clauses that were set aside by
- *	  distribute_qual_to_rels(), and either create EquivalenceClasses
- *	  to replace them or push them out into the regular join-clause lists.
+ *	  distribute_qual_to_rels(), and see if we can derive any
+ *	  EquivalenceClasses from them.  Then, if they were not made
+ *	  redundant, push them out into the regular join-clause lists.
  *
  * When we have mergejoinable clauses A = B that are outer-join clauses,
  * we can't blindly combine them with other clauses A = C to deduce B = C,
@@ -1112,8 +1113,8 @@ create_join_clause(PlannerInfo *root,
  * equivalence clause.)
  *
  * Note that the above rule does not work for full outer joins; nor is it
- * very interesting to consider cases where the equivalence clause involves
- * relations entirely outside the outer join, since such clauses couldn't
+ * very interesting to consider cases where the generated equivalence clause
+ * would involve relations outside the outer join, since such clauses couldn't
  * be pushed into the inner side's scan anyway.  So the restriction to
  * outervar = pseudoconstant is not really giving up anything.
  *
@@ -1141,57 +1142,161 @@ create_join_clause(PlannerInfo *root,
  * that could result in propagating constant restrictions from
  * INNERVAR to OUTERVAR, which would be very wrong.
  *
+ * It's possible that the INNERVAR is also an OUTERVAR for some other
+ * outer-join clause, in which case the process can be repeated.  So we repeat
+ * looping over the lists of clauses until no further deductions can be made.
+ * Whenever we do make a deduction, we remove the generating clause from the
+ * lists, since we don't want to make the same deduction twice.
+ *
  * If we don't find any match for a set-aside outer join clause, we must
  * throw it back into the regular joinclause processing by passing it to
- * distribute_restrictinfo_to_rels().
+ * distribute_restrictinfo_to_rels().  If we do generate a derived clause,
+ * however, the outer-join clause is redundant.  We still throw it back,
+ * because otherwise the join will be seen as a clauseless join and avoided
+ * during join order searching; but we mark it as redundant to keep from
+ * messing up the joinrel's size estimate.  (This behavior means that the
+ * API for this routine is uselessly complex: we could have just put all
+ * the clauses into the regular processing initially.  We keep it because
+ * someday we might want to do something else, such as inserting "dummy"
+ * joinclauses instead of real ones.)
+ *
+ * Outer join clauses that are marked outerjoin_delayed are special: this
+ * condition means that one or both VARs might go to null due to a lower
+ * outer join.  We can still push a constant through the clause, but only
+ * if its operator is strict; and we *have to* throw the clause back into
+ * regular joinclause processing.  By keeping the strict join clause,
+ * we ensure that any null-extended rows that are mistakenly generated due
+ * to suppressing rows not matching the constant will be rejected at the
+ * upper outer join.  (This doesn't work for full-join clauses.)
  */
 void
 reconsider_outer_join_clauses(PlannerInfo *root)
 {
-	ListCell   *lc;
+	bool		found;
+	ListCell   *cell;
+	ListCell   *prev;
+	ListCell   *next;
 
-	/* Process the LEFT JOIN clauses */
-	foreach(lc, root->left_join_clauses)
+	/* Outer loop repeats until we find no more deductions */
+	do
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+		found = false;
 
-		reconsider_outer_join_clause(root, rinfo, true);
+		/* Process the LEFT JOIN clauses */
+		prev = NULL;
+		for (cell = list_head(root->left_join_clauses); cell; cell = next)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(cell);
+
+			next = lnext(cell);
+			if (reconsider_outer_join_clause(root, rinfo, true))
+			{
+				found = true;
+				/* remove it from the list */
+				root->left_join_clauses =
+					list_delete_cell(root->left_join_clauses, cell, prev);
+				/* we throw it back anyway (see notes above) */
+				/* but the thrown-back clause has no extra selectivity */
+				rinfo->this_selec = 1.0;
+				distribute_restrictinfo_to_rels(root, rinfo);
+			}
+			else
+				prev = cell;
+		}
+
+		/* Process the RIGHT JOIN clauses */
+		prev = NULL;
+		for (cell = list_head(root->right_join_clauses); cell; cell = next)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(cell);
+
+			next = lnext(cell);
+			if (reconsider_outer_join_clause(root, rinfo, false))
+			{
+				found = true;
+				/* remove it from the list */
+				root->right_join_clauses =
+					list_delete_cell(root->right_join_clauses, cell, prev);
+				/* we throw it back anyway (see notes above) */
+				/* but the thrown-back clause has no extra selectivity */
+				rinfo->this_selec = 1.0;
+				distribute_restrictinfo_to_rels(root, rinfo);
+			}
+			else
+				prev = cell;
+		}
+
+		/* Process the FULL JOIN clauses */
+		prev = NULL;
+		for (cell = list_head(root->full_join_clauses); cell; cell = next)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(cell);
+
+			next = lnext(cell);
+			if (reconsider_full_join_clause(root, rinfo))
+			{
+				found = true;
+				/* remove it from the list */
+				root->full_join_clauses =
+					list_delete_cell(root->full_join_clauses, cell, prev);
+				/* we throw it back anyway (see notes above) */
+				/* but the thrown-back clause has no extra selectivity */
+				rinfo->this_selec = 1.0;
+				distribute_restrictinfo_to_rels(root, rinfo);
+			}
+			else
+				prev = cell;
+		}
+	} while (found);
+
+	/* Now, any remaining clauses have to be thrown back */
+	foreach(cell, root->left_join_clauses)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(cell);
+
+		distribute_restrictinfo_to_rels(root, rinfo);
 	}
-	/* And the RIGHT JOIN clauses */
-	foreach(lc, root->right_join_clauses)
+	foreach(cell, root->right_join_clauses)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(cell);
 
-		reconsider_outer_join_clause(root, rinfo, false);
+		distribute_restrictinfo_to_rels(root, rinfo);
 	}
-	/* And the FULL JOIN clauses */
-	foreach(lc, root->full_join_clauses)
+	foreach(cell, root->full_join_clauses)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(cell);
 
-		reconsider_full_join_clause(root, rinfo);
+		distribute_restrictinfo_to_rels(root, rinfo);
 	}
 }
 
 /*
  * reconsider_outer_join_clauses for a single LEFT/RIGHT JOIN clause
+ *
+ * Returns TRUE if we were able to propagate a constant through the clause.
  */
-static void
+static bool
 reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 							 bool outer_on_left)
 {
 	Expr	   *outervar,
 			   *innervar;
-	Oid			left_type,
+	Oid			opno,
+				left_type,
 				right_type,
 				inner_datatype;
 	Relids		inner_relids;
 	ListCell   *lc1;
 
-	/* Extract needed info from the clause */
 	Assert(is_opclause(rinfo->clause));
-	op_input_types(((OpExpr *) rinfo->clause)->opno,
-				   &left_type, &right_type);
+	opno = ((OpExpr *) rinfo->clause)->opno;
+
+	/* If clause is outerjoin_delayed, operator must be strict */
+	if (rinfo->outerjoin_delayed && !op_strict(opno))
+		return false;
+
+	/* Extract needed info from the clause */
+	op_input_types(opno, &left_type, &right_type);
 	if (outer_on_left)
 	{
 		outervar = (Expr *) get_leftop(rinfo->clause);
@@ -1266,41 +1371,46 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 		}
 
 		/*
-		 * If we were able to equate INNERVAR to any constant, we're done, and
-		 * we can throw away the outer-join clause as redundant.  Otherwise,
-		 * fall out of the search loop, since we know the OUTERVAR appears in
-		 * at most one EC.
+		 * If we were able to equate INNERVAR to any constant, report success.
+		 * Otherwise, fall out of the search loop, since we know the OUTERVAR
+		 * appears in at most one EC.
 		 */
 		if (match)
-			return;
+			return true;
 		else
 			break;
 	}
 
-	/* We did not find a match, so throw it back into regular processing */
-	distribute_restrictinfo_to_rels(root, rinfo);
+	return false;				/* failed to make any deduction */
 }
 
 /*
  * reconsider_outer_join_clauses for a single FULL JOIN clause
+ *
+ * Returns TRUE if we were able to propagate a constant through the clause.
  */
-static void
+static bool
 reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 {
 	Expr	   *leftvar;
 	Expr	   *rightvar;
-	Oid			left_type,
+	Oid			opno,
+				left_type,
 				right_type;
 	Relids		left_relids,
 				right_relids;
 	ListCell   *lc1;
 
+	/* Can't use an outerjoin_delayed clause here */
+	if (rinfo->outerjoin_delayed)
+		return false;
+
 	/* Extract needed info from the clause */
 	Assert(is_opclause(rinfo->clause));
+	opno = ((OpExpr *) rinfo->clause)->opno;
+	op_input_types(opno, &left_type, &right_type);
 	leftvar = (Expr *) get_leftop(rinfo->clause);
 	rightvar = (Expr *) get_rightop(rinfo->clause);
-	op_input_types(((OpExpr *) rinfo->clause)->opno,
-				   &left_type, &right_type);
 	left_relids = rinfo->left_relids;
 	right_relids = rinfo->right_relids;
 
@@ -1412,7 +1522,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 		if (matchleft && matchright)
 		{
 			cur_ec->ec_members = list_delete_ptr(cur_ec->ec_members, coal_em);
-			return;
+			return true;
 		}
 
 		/*
@@ -1423,8 +1533,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 		break;
 	}
 
-	/* We did not find a match, so throw it back into regular processing */
-	distribute_restrictinfo_to_rels(root, rinfo);
+	return false;				/* failed to make any deduction */
 }
 
 
@@ -1651,16 +1760,22 @@ have_relevant_eclass_joinclause(PlannerInfo *root,
 		ListCell   *lc2;
 
 		/*
-		 * Won't generate joinclauses if const or single-member (the latter
-		 * test covers the volatile case too)
+		 * Won't generate joinclauses if single-member (this test covers the
+		 * volatile case too)
 		 */
-		if (ec->ec_has_const || list_length(ec->ec_members) <= 1)
+		if (list_length(ec->ec_members) <= 1)
 			continue;
 
 		/*
 		 * Note we don't test ec_broken; if we did, we'd need a separate code
 		 * path to look through ec_sources.  Checking the members anyway is OK
 		 * as a possibly-overoptimistic heuristic.
+		 *
+		 * We don't test ec_has_const either, even though a const eclass
+		 * won't generate real join clauses.  This is because if we had
+		 * "WHERE a.x = b.y and a.x = 42", it is worth considering a join
+		 * between a and b, since the join result is likely to be small even
+		 * though it'll end up being an unqualified nestloop.
 		 */
 
 		/* Needn't scan if it couldn't contain members from each rel */
@@ -1674,8 +1789,8 @@ have_relevant_eclass_joinclause(PlannerInfo *root,
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
 
-			if (cur_em->em_is_child)
-				continue;		/* ignore children here */
+			if (cur_em->em_is_const || cur_em->em_is_child)
+				continue;		/* ignore consts and children here */
 			if (bms_is_subset(cur_em->em_relids, rel1->relids))
 			{
 				has_rel1 = true;
@@ -1719,16 +1834,22 @@ has_relevant_eclass_joinclause(PlannerInfo *root, RelOptInfo *rel1)
 		ListCell   *lc2;
 
 		/*
-		 * Won't generate joinclauses if const or single-member (the latter
-		 * test covers the volatile case too)
+		 * Won't generate joinclauses if single-member (this test covers the
+		 * volatile case too)
 		 */
-		if (ec->ec_has_const || list_length(ec->ec_members) <= 1)
+		if (list_length(ec->ec_members) <= 1)
 			continue;
 
 		/*
 		 * Note we don't test ec_broken; if we did, we'd need a separate code
 		 * path to look through ec_sources.  Checking the members anyway is OK
 		 * as a possibly-overoptimistic heuristic.
+		 *
+		 * We don't test ec_has_const either, even though a const eclass
+		 * won't generate real join clauses.  This is because if we had
+		 * "WHERE a.x = b.y and a.x = 42", it is worth considering a join
+		 * between a and b, since the join result is likely to be small even
+		 * though it'll end up being an unqualified nestloop.
 		 */
 
 		/* Needn't scan if it couldn't contain members from each rel */
@@ -1742,8 +1863,8 @@ has_relevant_eclass_joinclause(PlannerInfo *root, RelOptInfo *rel1)
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
 
-			if (cur_em->em_is_child)
-				continue;		/* ignore children here */
+			if (cur_em->em_is_const || cur_em->em_is_child)
+				continue;		/* ignore consts and children here */
 			if (bms_is_subset(cur_em->em_relids, rel1->relids))
 			{
 				has_rel1 = true;

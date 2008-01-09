@@ -462,3 +462,26 @@ from yy
      left join (SELECT * FROM yy where pkyy = 101) as yya ON yy.pkyy = yya.pkyy
      left join xx xxa on yya.pkxx = xxa.pkxx
      left join xx xxb on coalesce (xxa.pkxx, 1) = xxb.pkxx;
+
+--
+-- regression test for improper pushing of constants across outer-join clauses
+-- (as seen in early 8.2.x releases)
+--
+
+create temp table zt1 (f1 int primary key);
+create temp table zt2 (f2 int primary key);
+create temp table zt3 (f3 int primary key);
+insert into zt1 values(53);
+insert into zt2 values(53);
+
+select * from
+  zt2 left join zt3 on (f2 = f3)
+      left join zt1 on (f3 = f1)
+where f2 = 53;
+
+create temp view zv1 as select *,'dummy'::text AS junk from zt1;
+
+select * from
+  zt2 left join zt3 on (f2 = f3)
+      left join zv1 on (f3 = f1)
+where f2 = 53;

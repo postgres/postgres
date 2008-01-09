@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.114 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.115 2008/01/09 20:42:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,8 @@ static void hash_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 List *restrictlist, JoinType jointype);
 static Path *best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
 						 RelOptInfo *outer_rel, JoinType jointype);
-static List *select_mergejoin_clauses(RelOptInfo *joinrel,
+static List *select_mergejoin_clauses(PlannerInfo *root,
+						 RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
 						 RelOptInfo *innerrel,
 						 List *restrictlist,
@@ -69,7 +70,8 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * disable if it's a full join.
 	 */
 	if (enable_mergejoin || jointype == JOIN_FULL)
-		mergeclause_list = select_mergejoin_clauses(joinrel,
+		mergeclause_list = select_mergejoin_clauses(root,
+													joinrel,
 													outerrel,
 													innerrel,
 													restrictlist,
@@ -883,7 +885,8 @@ best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
  * currently of interest.
  */
 static List *
-select_mergejoin_clauses(RelOptInfo *joinrel,
+select_mergejoin_clauses(PlannerInfo *root,
+						 RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
 						 RelOptInfo *innerrel,
 						 List *restrictlist,
@@ -935,6 +938,35 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 		{
 			have_nonmergeable_joinclause = true;
 			continue;			/* no good for these input relations */
+		}
+
+		/*
+		 * Insist that each side have a non-redundant eclass.  This
+		 * restriction is needed because various bits of the planner expect
+		 * that each clause in a merge be associatable with some pathkey in a
+		 * canonical pathkey list, but redundant eclasses can't appear in
+		 * canonical sort orderings.  (XXX it might be worth relaxing this,
+		 * but not enough time to address it for 8.3.)
+		 *
+		 * Note: it would be bad if this condition failed for an otherwise
+		 * mergejoinable FULL JOIN clause, since that would result in
+		 * undesirable planner failure.  I believe that is not possible
+		 * however; a variable involved in a full join could only appear
+		 * in below_outer_join eclasses, which aren't considered redundant.
+		 *
+		 * This case *can* happen for left/right join clauses: the
+		 * outer-side variable could be equated to a constant.  Because we
+		 * will propagate that constant across the join clause, the loss of
+		 * ability to do a mergejoin is not really all that big a deal, and
+		 * so it's not clear that improving this is important.
+		 */
+		cache_mergeclause_eclasses(root, restrictinfo);
+
+		if (EC_MUST_BE_REDUNDANT(restrictinfo->left_ec) ||
+			EC_MUST_BE_REDUNDANT(restrictinfo->right_ec))
+		{
+			have_nonmergeable_joinclause = true;
+			continue;			/* can't handle redundant eclasses */
 		}
 
 		result_list = lappend(result_list, restrictinfo);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.137 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.138 2008/01/09 20:42:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -778,13 +778,13 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		if (ojscope)
 		{
 			/* clause is attached to outer join, eval it there */
-			relids = ojscope;
+			relids = bms_copy(ojscope);
 			/* mustn't use as gating qual, so don't mark pseudoconstant */
 		}
 		else
 		{
 			/* eval at original syntactic level */
-			relids = qualscope;
+			relids = bms_copy(qualscope);
 			if (!contain_volatile_functions(clause))
 			{
 				/* mark as gating qual */
@@ -849,12 +849,15 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 * We can't use such a clause to deduce equivalence (the left and
 		 * right sides might be unequal above the join because one of them has
 		 * gone to NULL) ... but we might be able to use it for more limited
-		 * deductions, if there are no lower outer joins that delay its
-		 * application.  If so, consider adding it to the lists of set-aside
-		 * clauses.
+		 * deductions, if it is mergejoinable.  So consider adding it to the
+		 * lists of set-aside outer-join clauses.
 		 */
+		is_pushed_down = false;
 		maybe_equivalence = false;
-		maybe_outer_join = !check_outerjoin_delay(root, &relids, false);
+		maybe_outer_join = true;
+
+		/* Check to see if must be delayed by lower outer join */
+		outerjoin_delayed = check_outerjoin_delay(root, &relids, false);
 
 		/*
 		 * Now force the qual to be evaluated exactly at the level of joining
@@ -868,8 +871,6 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 */
 		Assert(ojscope);
 		relids = ojscope;
-		is_pushed_down = false;
-		outerjoin_delayed = true;
 		Assert(!pseudoconstant);
 	}
 	else
@@ -880,7 +881,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 */
 		is_pushed_down = true;
 
-		/* Check to see if must be delayed by outer join */
+		/* Check to see if must be delayed by lower outer join */
 		outerjoin_delayed = check_outerjoin_delay(root, &relids, true);
 
 		if (outerjoin_delayed)
@@ -1052,8 +1053,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  * mentioning only C cannot be applied below the join to A.
  *
  * For a non-pushed-down qual, this isn't going to determine where we place the
- * qual, but we need to determine outerjoin_delayed anyway so we can decide
- * whether the qual is potentially useful for equivalence deductions.
+ * qual, but we need to determine outerjoin_delayed anyway for possible use
+ * in reconsider_outer_join_clauses().
  *
  * Lastly, a pushed-down qual that references the nullable side of any current
  * oj_info_list member and has to be evaluated above that OJ (because its

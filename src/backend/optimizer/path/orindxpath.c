@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.83 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.84 2008/01/09 20:42:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,16 +90,18 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 
 	/*
 	 * Find potentially interesting OR joinclauses.  Note we must ignore any
-	 * joinclauses that are marked outerjoin_delayed, because they cannot be
-	 * pushed down to the per-relation level due to outer-join rules. (XXX in
-	 * some cases it might be possible to allow this, but it would require
-	 * substantially more bookkeeping about where the clause came from.)
+	 * joinclauses that are marked outerjoin_delayed or !is_pushed_down,
+	 * because they cannot be pushed down to the per-relation level due to
+	 * outer-join rules.  (XXX in some cases it might be possible to allow
+	 * this, but it would require substantially more bookkeeping about where
+	 * the clause came from.)
 	 */
 	foreach(i, rel->joininfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
 
 		if (restriction_is_or_clause(rinfo) &&
+			rinfo->is_pushed_down &&
 			!rinfo->outerjoin_delayed)
 		{
 			/*
