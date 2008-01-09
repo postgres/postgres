@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/info.sgml,v 1.25 2007/05/21 15:11:12 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/info.sgml,v 1.26 2008/01/09 02:37:45 momjian Exp $ -->
 
 <sect1 id="resources">
  <title>Further Information</title>
@@ -14,16 +14,6 @@
      <para>
       The FAQ list <indexterm><primary>FAQ</></> contains
       continuously updated answers to frequently asked questions.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>READMEs</term>
-    <listitem>
-     <para>
-      <filename>README</filename> files are available for most
-      contributed packages.
      </para>
     </listitem>
    </varlistentry>
