@@ -1,7 +1,12 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.69 2007/12/03 13:40:11 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.70 2008/01/09 05:27:22 alvherre Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
+
+ <indexterm zone="protocol">
+  <primary>protocol</primary>
+  <secondary>frontend-backend</secondary>
+ </indexterm>
 
  <para>
   <productname>PostgreSQL</productname> uses a message-based protocol
