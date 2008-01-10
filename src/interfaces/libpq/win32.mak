@@ -111,6 +111,8 @@ CLEAN :
 	-@erase "$(OUTDIR)\libpq.res"
 	-@erase "$(OUTDIR)\$(OUTFILENAME).dll"
 	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.exp"
+	-@erase "$(OUTDIR)\$(OUTFILENAME).dll.manifest"
+	-@erase "$(OUTDIR)\*.idb"
 	-@erase pg_config_paths.h"
 
 
@@ -209,6 +211,10 @@ LINK32_OBJS= \
 	$(LINK32) @<<
 	$(LINK32_FLAGS) $(LINK32_OBJS)
 <<
+# Inclusion of manifest
+!IF "$(_NMAKE_VER)" != "6.00.9782.0"
+        mt -manifest $(OUTDIR)\$(OUTFILENAME).dll.manifest -outputresource:$(OUTDIR)\$(OUTFILENAME).dll;2
+!ENDIF
 
 "$(INTDIR)\getaddrinfo.obj" : ..\..\port\getaddrinfo.c
 	$(CPP) @<<
