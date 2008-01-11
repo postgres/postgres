@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.550 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.551 2008/01/11 00:54:09 tgl Exp $
  *
  * NOTES
  *
@@ -244,7 +244,7 @@ static bool FatalError = false; /* T if recovering from backend crash */
  * Notice that this state variable does not distinguish *why* we entered
  * PM_WAIT_BACKENDS or later states --- Shutdown and FatalError must be
  * consulted to find that out.	FatalError is never true in PM_RUN state, nor
- * in PM_SHUTDOWN state (because we don't enter that state when trying to
+ * in PM_SHUTDOWN states (because we don't enter those states when trying to
  * recover from a crash).  It can be true in PM_STARTUP state, because we
  * don't clear it until we've successfully recovered.
  */
@@ -255,6 +255,7 @@ typedef enum
 	PM_RUN,						/* normal "database is alive" state */
 	PM_WAIT_BACKENDS,			/* waiting for live backends to exit */
 	PM_SHUTDOWN,				/* waiting for bgwriter to do shutdown ckpt */
+	PM_SHUTDOWN_2,				/* waiting for archiver to finish */
 	PM_WAIT_DEAD_END,			/* waiting for dead_end children to exit */
 	PM_NO_CHILDREN				/* all important children have exited */
 } PMState;
@@ -1312,12 +1313,8 @@ ServerLoop(void)
 				start_autovac_launcher = false; /* signal processed */
 		}
 
-		/*
-		 * If we have lost the archiver, try to start a new one. We do this
-		 * even if we are shutting down, to allow archiver to take care of any
-		 * remaining WAL files.
-		 */
-		if (XLogArchivingActive() && PgArchPID == 0 && pmState >= PM_RUN)
+		/* If we have lost the archiver, try to start a new one */
+		if (XLogArchivingActive() && PgArchPID == 0 && pmState == PM_RUN)
 			PgArchPID = pgarch_start();
 
 		/* If we have lost the stats collector, try to start a new one */
@@ -2175,12 +2172,31 @@ reaper(SIGNAL_ARGS)
 				 * checkpoint.	(If for some reason it didn't, recovery will
 				 * occur on next postmaster start.)
 				 *
-				 * At this point we should have no normal children left (else
-				 * we'd not be in PM_SHUTDOWN state) but we might have
-				 * dead_end children.
+				 * At this point we should have no normal backend children
+				 * left (else we'd not be in PM_SHUTDOWN state) but we might
+				 * have dead_end children to wait for.
+				 *
+				 * If we have an archiver subprocess, tell it to do a last
+				 * archive cycle and quit; otherwise we can go directly to
+				 * PM_WAIT_DEAD_END state.
 				 */
 				Assert(Shutdown > NoShutdown);
-				pmState = PM_WAIT_DEAD_END;
+
+				if (PgArchPID != 0)
+				{
+					/* Waken archiver for the last time */
+					signal_child(PgArchPID, SIGUSR2);
+					pmState = PM_SHUTDOWN_2;
+				}
+				else
+					pmState = PM_WAIT_DEAD_END;
+
+				/*
+				 * We can also shut down the stats collector now; there's
+				 * nothing left for it to do.
+				 */
+				if (PgStatPID != 0)
+					signal_child(PgStatPID, SIGQUIT);
 			}
 			else
 			{
@@ -2227,7 +2243,8 @@ reaper(SIGNAL_ARGS)
 		/*
 		 * Was it the archiver?  If so, just try to start a new one; no need
 		 * to force reset of the rest of the system.  (If fail, we'll try
-		 * again in future cycles of the main loop.)
+		 * again in future cycles of the main loop.)  But if we were waiting
+		 * for it to shut down, advance to the next shutdown step.
 		 */
 		if (pid == PgArchPID)
 		{
@@ -2235,8 +2252,10 @@ reaper(SIGNAL_ARGS)
 			if (!EXIT_STATUS_0(exitstatus))
 				LogChildExit(LOG, _("archiver process"),
 							 pid, exitstatus);
-			if (XLogArchivingActive() && pmState >= PM_RUN)
+			if (XLogArchivingActive() && pmState == PM_RUN)
 				PgArchPID = pgarch_start();
+			else if (pmState == PM_SHUTDOWN_2)
+				pmState = PM_WAIT_DEAD_END;
 			continue;
 		}
 
@@ -2563,6 +2582,11 @@ PostmasterStateMachine(void)
 				 * change causes ServerLoop to stop creating new ones.
 				 */
 				pmState = PM_WAIT_DEAD_END;
+
+				/*
+				 * We already SIGQUIT'd the archiver and stats processes,
+				 * if any, when we entered FatalError state.
+				 */
 			}
 			else
 			{
@@ -2591,13 +2615,13 @@ PostmasterStateMachine(void)
 					 */
 					FatalError = true;
 					pmState = PM_WAIT_DEAD_END;
+
+					/* Kill the archiver and stats collector too */
+					if (PgArchPID != 0)
+						signal_child(PgArchPID, SIGQUIT);
+					if (PgStatPID != 0)
+						signal_child(PgStatPID, SIGQUIT);
 				}
-				/* Tell pgarch to shut down too; nothing left for it to do */
-				if (PgArchPID != 0)
-					signal_child(PgArchPID, SIGQUIT);
-				/* Tell pgstat to shut down too; nothing left for it to do */
-				if (PgStatPID != 0)
-					signal_child(PgStatPID, SIGQUIT);
 			}
 		}
 	}
@@ -2606,16 +2630,26 @@ PostmasterStateMachine(void)
 	{
 		/*
 		 * PM_WAIT_DEAD_END state ends when the BackendList is entirely empty
-		 * (ie, no dead_end children remain).
+		 * (ie, no dead_end children remain), and the archiver and stats
+		 * collector are gone too.
+		 *
+		 * The reason we wait for those two is to protect them against a new
+		 * postmaster starting conflicting subprocesses; this isn't an
+		 * ironclad protection, but it at least helps in the
+		 * shutdown-and-immediately-restart scenario.  Note that they have
+		 * already been sent appropriate shutdown signals, either during a
+		 * normal state transition leading up to PM_WAIT_DEAD_END, or during
+		 * FatalError processing.
 		 */
-		if (!DLGetHead(BackendList))
+		if (DLGetHead(BackendList) == NULL &&
+			PgArchPID == 0 && PgStatPID == 0)
 		{
 			/* These other guys should be dead already */
 			Assert(StartupPID == 0);
 			Assert(BgWriterPID == 0);
 			Assert(WalWriterPID == 0);
 			Assert(AutoVacPID == 0);
-			/* archiver, stats, and syslogger are not considered here */
+			/* syslogger is not considered here */
 			pmState = PM_NO_CHILDREN;
 		}
 	}
@@ -2628,14 +2662,9 @@ PostmasterStateMachine(void)
 	 * we got SIGTERM from init --- there may well not be time for recovery
 	 * before init decides to SIGKILL us.)
 	 *
-	 * Note: we do not wait around for exit of the archiver or stats
-	 * processes.  They've been sent SIGQUIT by this point (either when we
-	 * entered PM_SHUTDOWN state, or when we set FatalError, and at least one
-	 * of those must have happened by now).  In any case they contain logic to
-	 * commit hara-kiri if they notice the postmaster is gone.	Since they
-	 * aren't connected to shared memory, they pose no problem for shutdown.
-	 * The syslogger is not considered either, since it's intended to survive
-	 * till the postmaster exits.
+	 * Note that the syslogger continues to run.  It will exit when it sees
+	 * EOF on its input pipe, which happens when there are no more upstream
+	 * processes.
 	 */
 	if (Shutdown > NoShutdown && pmState == PM_NO_CHILDREN)
 	{
@@ -2652,10 +2681,8 @@ PostmasterStateMachine(void)
 	}
 
 	/*
-	 * If we need to recover from a crash, wait for all shmem-connected
-	 * children to exit, then reset shmem and StartupDataBase.	(We can ignore
-	 * the archiver and stats processes here since they are not connected to
-	 * shmem.)
+	 * If we need to recover from a crash, wait for all non-syslogger
+	 * children to exit, then reset shmem and StartupDataBase.
 	 */
 	if (FatalError && pmState == PM_NO_CHILDREN)
 	{
@@ -3782,7 +3809,7 @@ sigusr1_handler(SIGNAL_ARGS)
 	}
 
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_ARCHIVER) &&
-		PgArchPID != 0 && Shutdown <= SmartShutdown)
+		PgArchPID != 0)
 	{
 		/*
 		 * Send SIGUSR1 to archiver process, to wake it up and begin archiving
