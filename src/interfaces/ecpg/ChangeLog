@@ -2279,6 +2279,10 @@ Fri, 28 Dec 2007 12:15:38 +0100
 	  <itagaki.takahiro@oss.ntt.co.jp> to fix bug in connect statement if
 	  user name is a variable. 
 	- Also fixed test case that didn't detect this.
+
+Fri, 11 Jan 2008 16:16:24 +0100
+
+	- Fixed lexer to correctly parse C quotes.
 	- Set pgtypes library version to 3.0.
 	- Set compat library version to 3.0.
 	- Set ecpg library version to 6.0.

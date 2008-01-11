@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.157 2008/01/01 19:45:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.158 2008/01/11 15:19:16 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@ extern YYSTYPE yylval;
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 static char	   *dolqstart;      /* current $foo$ quote start string */
 static bool		escape_string_warning;
-static bool 	warn_on_first_escape;
 static YY_BUFFER_STATE scanbufhandle;
 static char *scanbuf;
 
@@ -47,7 +46,6 @@ static int		literalalloc;			/* current allocated buffer size */
 static void addlit(char *ytext, int yleng);
 static void addlitchar (unsigned char);
 static void parse_include (void);
-static void check_escape_warning(void);
 static bool ecpg_isspace(char ch);
 static bool isdefine(void);
 static bool isinformixdefine(void);
@@ -101,6 +99,7 @@ static struct _if_value
  *	<xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
  *	<xh> hexadecimal numeric string - thomas 1997-11-16
  *	<xq> standard quoted strings - thomas 1997-07-30
+ *	<xqc> standard quoted strings in C - michael
  *	<xe> extended quoted strings (support backslash escape sequences)
  *	<xn> national character quoted strings
  *  <xdolq> $foo$ quoted strings
@@ -114,6 +113,7 @@ static struct _if_value
 %x xe
 %x xn
 %x xq
+%x xqc
 %x xdolq
 %x xcond
 %x xskip
@@ -145,6 +145,7 @@ xch				0[xX][0-9A-Fa-f]*
  */
 xqstart			{quote}
 xqdouble		{quote}{quote}
+xqcquote		[\\]{quote}
 xqinside		[^']+
 
 /* $foo$ style quotes ("dollar quoting")
@@ -409,35 +410,31 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				/* National character.
 				 * Transfer it as-is to the backend.
 				 */
-				warn_on_first_escape = true;
-		        token_start = yytext;
+				token_start = yytext;
 				state_before = YYSTATE;
 				BEGIN(xn);
 				startlit();
 			}
 <C>{xqstart}	{
-				warn_on_first_escape = false;
 				token_start = yytext;
 				state_before = YYSTATE;
-				BEGIN(xq);
+				BEGIN(xqc);
 				startlit();
 			}
 <SQL>{xqstart}	{
-				warn_on_first_escape = true;
 				token_start = yytext;
 				state_before = YYSTATE;
 				BEGIN(xq);
 				startlit();
 			}
 <SQL>{xestart}	{
-				warn_on_first_escape = false;
 				token_start = yytext;
 				state_before = YYSTATE;
 				BEGIN(xe);
 				startlit();
 			}
-<xq>{quotestop} |
-<xq>{quotefail} {
+<xq,xqc>{quotestop} |
+<xq,xqc>{quotefail} {
 				yyless(1);
 				BEGIN(state_before);
 				yylval.str = mm_strdup(literalbuf);
@@ -457,27 +454,22 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				yylval.str = mm_strdup(literalbuf);
 				return NCONST;
 			}
-<xq,xe,xn>{xqdouble}		{ addlitchar('\''); }
-<xq,xn>{xqinside}		{ addlit(yytext, yyleng); }
+<xq,xe,xn>{xqdouble}	{ addlitchar('\''); }
+<xqc>{xqcquote}		{
+				addlitchar('\\');
+				addlitchar('\'');
+			}
+<xq,xqc,xn>{xqinside}	{ addlit(yytext, yyleng); }
 <xe>{xeinside}		{ addlit(yytext, yyleng); }
-<xe>{xeescape}  	{ 
-				check_escape_warning();
-				addlit(yytext, yyleng);
-			}
-<xe>{xeoctesc}		{ 
-				check_escape_warning();
-				addlit(yytext, yyleng);
-			}
-<xe>{xehexesc}		{ 
-				check_escape_warning();
-				addlit(yytext, yyleng);
-			}
-<xq,xe,xn>{quotecontinue}	{ /* ignore */ }
+<xe>{xeescape}  	{ addlit(yytext, yyleng); }
+<xe>{xeoctesc}		{ addlit(yytext, yyleng); }
+<xe>{xehexesc}		{ addlit(yytext, yyleng); }
+<xq,xqc,xe,xn>{quotecontinue}	{ /* ignore */ }
 <xe>.                   {
 			   /* This is only needed for \ just before EOF */
 			   addlitchar(yytext[0]);
 			}
-<xq,xe,xn><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated quoted string"); }
+<xq,xqc,xe,xn><<EOF>>	{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated quoted string"); }
 <SQL>{dolqfailed}	{
 				/* throw back all but the initial "$" */
 				yyless(1);
@@ -1282,14 +1274,6 @@ parse_include(void)
 	output_line_number();
 
   	BEGIN(C);
-}
-
-static void
-check_escape_warning(void)
-{
-	if (warn_on_first_escape && escape_string_warning)
-	       	mmerror (PARSE_ERROR, ET_WARNING, "nonstandard use of escape in a string literal");
-	warn_on_first_escape = false;   /* warn only once per string */
 }
 
 /*
