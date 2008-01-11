@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.100 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.101 2008/01/11 18:39:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1006,7 +1006,8 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	rettype = enforce_generic_type_consistency(actual_arg_types,
 											   declared_arg_types,
 											   2,
-											   opform->oprresult);
+											   opform->oprresult,
+											   false);
 
 	/*
 	 * Check that operator result is boolean
@@ -1116,7 +1117,8 @@ make_op_expr(ParseState *pstate, Operator op,
 	rettype = enforce_generic_type_consistency(actual_arg_types,
 											   declared_arg_types,
 											   nargs,
-											   opform->oprresult);
+											   opform->oprresult,
+											   false);
 
 	/* perform the necessary typecasting of arguments */
 	make_fn_arguments(pstate, args, actual_arg_types, declared_arg_types);

@@ -577,3 +577,39 @@ select q2, sql_if(q2 > 0, q2, q2 + 1) from int8_tbl;
  -4567890123456789 | -4567890123456788
 (5 rows)
 
+-- another kind of polymorphic aggregate
+create function add_group(grp anyarray, ad anyelement, size integer)
+  returns anyarray
+  as $$
+begin
+  if grp is null then
+    return array[ad];
+  end if;
+  if array_upper(grp, 1) < size then
+    return grp || ad;
+  end if;
+  return grp;
+end;
+$$
+  language plpgsql immutable;
+create aggregate build_group(anyelement, integer) (
+  SFUNC = add_group,
+  STYPE = anyarray
+);
+select build_group(q1,3) from int8_tbl;
+        build_group         
+----------------------------
+ {123,123,4567890123456789}
+(1 row)
+
+-- this should fail because stype isn't compatible with arg
+create aggregate build_group(int8, integer) (
+  SFUNC = add_group,
+  STYPE = int2[]
+);
+ERROR:  function add_group(smallint[], bigint, integer) does not exist
+-- but we can make a non-poly agg from a poly sfunc if types are OK
+create aggregate build_group(int8, integer) (
+  SFUNC = add_group,
+  STYPE = int8[]
+);

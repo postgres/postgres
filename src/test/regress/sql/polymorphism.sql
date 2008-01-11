@@ -390,3 +390,39 @@ select case when $1 then $2 else $3 end $$ language sql;
 select f1, sql_if(f1 > 0, bleat(f1), bleat(f1 + 1)) from int4_tbl;
 
 select q2, sql_if(q2 > 0, q2, q2 + 1) from int8_tbl;
+
+-- another kind of polymorphic aggregate
+
+create function add_group(grp anyarray, ad anyelement, size integer)
+  returns anyarray
+  as $$
+begin
+  if grp is null then
+    return array[ad];
+  end if;
+  if array_upper(grp, 1) < size then
+    return grp || ad;
+  end if;
+  return grp;
+end;
+$$
+  language plpgsql immutable;
+
+create aggregate build_group(anyelement, integer) (
+  SFUNC = add_group,
+  STYPE = anyarray
+);
+
+select build_group(q1,3) from int8_tbl;
+
+-- this should fail because stype isn't compatible with arg
+create aggregate build_group(int8, integer) (
+  SFUNC = add_group,
+  STYPE = int2[]
+);
+
+-- but we can make a non-poly agg from a poly sfunc if types are OK
+create aggregate build_group(int8, integer) (
+  SFUNC = add_group,
+  STYPE = int8[]
+);

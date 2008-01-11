@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.89 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.90 2008/01/11 18:39:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,7 +296,6 @@ lookup_agg_function(List *fnName,
 	FuncDetailCode fdresult;
 	AclResult	aclresult;
 	int			i;
-	bool		allPolyArgs = true;
 
 	/*
 	 * func_get_detail looks up the function in the catalogs, does
@@ -322,25 +321,15 @@ lookup_agg_function(List *fnName,
 						func_signature_string(fnName, nargs, input_types))));
 
 	/*
-	 * If the given type(s) are all polymorphic, there's nothing we can check.
-	 * Otherwise, enforce consistency, and possibly refine the result type.
+	 * If there are any polymorphic types involved, enforce consistency, and
+	 * possibly refine the result type.  It's OK if the result is still
+	 * polymorphic at this point, though.
 	 */
-	for (i = 0; i < nargs; i++)
-	{
-		if (!IsPolymorphicType(input_types[i]))
-		{
-			allPolyArgs = false;
-			break;
-		}
-	}
-
-	if (!allPolyArgs)
-	{
-		*rettype = enforce_generic_type_consistency(input_types,
-													true_oid_array,
-													nargs,
-													*rettype);
-	}
+	*rettype = enforce_generic_type_consistency(input_types,
+												true_oid_array,
+												nargs,
+												*rettype,
+												true);
 
 	/*
 	 * func_get_detail will find functions requiring run-time argument type

@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.155 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.156 2008/01/11 18:39:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1433,7 +1433,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			aggtranstype = enforce_generic_type_consistency(inputTypes,
 															declaredArgTypes,
 															agg_nargs,
-															aggtranstype);
+															aggtranstype,
+															false);
 			pfree(declaredArgTypes);
 		}
 

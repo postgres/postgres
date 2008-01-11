@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.74 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.75 2008/01/11 18:39:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,8 @@ extern bool check_generic_type_consistency(Oid *actual_arg_types,
 extern Oid enforce_generic_type_consistency(Oid *actual_arg_types,
 								 Oid *declared_arg_types,
 								 int nargs,
-								 Oid rettype);
+								 Oid rettype,
+								 bool allow_poly);
 extern Oid resolve_generic_type(Oid declared_type,
 					 Oid context_actual_type,
 					 Oid context_declared_type);
