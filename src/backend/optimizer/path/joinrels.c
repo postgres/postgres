@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.90 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.91 2008/01/11 04:02:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -838,33 +838,27 @@ has_join_restriction(PlannerInfo *root, RelOptInfo *rel)
  *		Detect whether the specified relation can legally be joined
  *		to any other rels using join clauses.
  *
- * We consider only joins to single other relations.  This is sufficient
- * to get a "true" result in most real queries, and an occasional erroneous
- * "false" will only cost a bit more planning time.  The reason for this
- * limitation is that considering joins to other joins would require proving
- * that the other join rel can legally be formed, which seems like too much
- * trouble for something that's only a heuristic to save planning time.
+ * We consider only joins to single other relations in the current
+ * initial_rels list.  This is sufficient to get a "true" result in most real
+ * queries, and an occasional erroneous "false" will only cost a bit more
+ * planning time.  The reason for this limitation is that considering joins to
+ * other joins would require proving that the other join rel can legally be
+ * formed, which seems like too much trouble for something that's only a
+ * heuristic to save planning time.  (Note: we must look at initial_rels
+ * and not all of the query, since when we are planning a sub-joinlist we
+ * may be forced to make clauseless joins within initial_rels even though
+ * there are join clauses linking to other parts of the query.)
  */
 static bool
 has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel)
 {
-	Index		rti;
+	ListCell   *lc;
 
-	for (rti = 1; rti < root->simple_rel_array_size; rti++)
+	foreach(lc, root->initial_rels)
 	{
-		RelOptInfo *rel2 = root->simple_rel_array[rti];
+		RelOptInfo *rel2 = (RelOptInfo *) lfirst(lc);
 
-		/* there may be empty slots corresponding to non-baserel RTEs */
-		if (rel2 == NULL)
-			continue;
-
-		Assert(rel2->relid == rti);		/* sanity check on array */
-
-		/* ignore RTEs that are "other rels" */
-		if (rel2->reloptkind != RELOPT_BASEREL)
-			continue;
-
-		/* ignore RTEs that are already in "rel" */
+		/* ignore rels that are already in "rel" */
 		if (bms_overlap(rel->relids, rel2->relids))
 			continue;
 

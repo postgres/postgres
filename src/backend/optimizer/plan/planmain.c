@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.105 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.106 2008/01/11 04:02:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,6 +142,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	root->right_join_clauses = NIL;
 	root->full_join_clauses = NIL;
 	root->oj_info_list = NIL;
+	root->initial_rels = NIL;
 
 	/*
 	 * Make a flattened version of the rangetable for faster access (this is

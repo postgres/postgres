@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.153 2008/01/09 20:42:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.154 2008/01/11 04:02:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,6 +164,8 @@ typedef struct PlannerInfo
 
 	List	   *group_pathkeys; /* groupClause pathkeys, if any */
 	List	   *sort_pathkeys;	/* sortClause pathkeys, if any */
+
+	List	   *initial_rels;	/* RelOptInfos we are now trying to join */
 
 	MemoryContext planner_cxt;	/* context holding PlannerInfo */
 
