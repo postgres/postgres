@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.128.2.4 2007/08/31 01:44:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.128.2.5 2008/01/11 04:02:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,9 @@ typedef struct PlannerInfo
 	bool		hasHavingQual;	/* true if havingQual was non-null */
 	bool		hasPseudoConstantQuals; /* true if any RestrictInfo has
 										 * pseudoconstant = true */
+
+	/* At the end to avoid breaking existing 8.2 add-ons */
+	List	   *initial_rels;	/* RelOptInfos we are now trying to join */
 } PlannerInfo;
 
 

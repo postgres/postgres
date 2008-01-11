@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.97.2.1 2007/10/04 20:44:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.97.2.2 2008/01/11 04:02:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,6 +122,7 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	root->right_join_clauses = NIL;
 	root->full_join_clauses = NIL;
 	root->oj_info_list = NIL;
+	root->initial_rels = NIL;
 
 	/*
 	 * Construct RelOptInfo nodes for all base relations in query, and

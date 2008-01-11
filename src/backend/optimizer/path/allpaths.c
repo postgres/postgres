@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.154.2.1 2007/01/28 18:50:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.154.2.2 2008/01/11 04:02:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -628,7 +628,12 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
 		/*
 		 * Consider the different orders in which we could join the rels,
 		 * using either GEQO or regular optimizer.
+		 *
+		 * We put the initial_rels list into a PlannerInfo field because
+		 * has_legal_joinclause() needs to look at it (ugly :-().
 		 */
+		root->initial_rels = initial_rels;
+
 		if (enable_geqo && levels_needed >= geqo_threshold)
 			return geqo(root, levels_needed, initial_rels);
 		else
