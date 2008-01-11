@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.89 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.90 2008/01/11 17:00:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -428,7 +428,7 @@ clause_selectivity(PlannerInfo *root,
 				   int varRelid,
 				   JoinType jointype)
 {
-	Selectivity s1 = 1.0;		/* default for any unhandled clause type */
+	Selectivity s1 = 0.5;		/* default for any unhandled clause type */
 	RestrictInfo *rinfo = NULL;
 	bool		cacheable = false;
 
@@ -450,7 +450,7 @@ clause_selectivity(PlannerInfo *root,
 		if (rinfo->pseudoconstant)
 		{
 			if (!IsA(rinfo->clause, Const))
-				return s1;
+				return (Selectivity) 1.0;
 		}
 
 		/*
@@ -517,9 +517,8 @@ clause_selectivity(PlannerInfo *root,
 			{
 				/*
 				 * XXX not smart about subquery references... any way to do
-				 * better?
+				 * better than default?
 				 */
-				s1 = 0.5;
 			}
 			else
 			{
@@ -560,8 +559,7 @@ clause_selectivity(PlannerInfo *root,
 		}
 		else
 		{
-			/* XXX any way to do better? */
-			s1 = (Selectivity) 0.5;
+			/* XXX any way to do better than default? */
 		}
 	}
 	else if (not_clause(clause))
@@ -601,7 +599,7 @@ clause_selectivity(PlannerInfo *root,
 			s1 = s1 + s2 - s1 * s2;
 		}
 	}
-	else if (is_opclause(clause))
+	else if (is_opclause(clause) || IsA(clause, DistinctExpr))
 	{
 		Oid			opno = ((OpExpr *) clause)->opno;
 		bool		is_join_clause;
@@ -642,6 +640,15 @@ clause_selectivity(PlannerInfo *root,
 										 ((OpExpr *) clause)->args,
 										 varRelid);
 		}
+
+		/*
+		 * DistinctExpr has the same representation as OpExpr, but the
+		 * contained operator is "=" not "<>", so we must negate the result.
+		 * This estimation method doesn't give the right behavior for nulls,
+		 * but it's better than doing nothing.
+		 */
+		if (IsA(clause, DistinctExpr))
+			s1 = 1.0 - s1;
 	}
 	else if (is_funcclause(clause))
 	{
@@ -652,6 +659,7 @@ clause_selectivity(PlannerInfo *root,
 		 */
 		s1 = (Selectivity) 0.3333333;
 	}
+#ifdef NOT_USED
 	else if (is_subplan(clause))
 	{
 		/*
@@ -659,11 +667,7 @@ clause_selectivity(PlannerInfo *root,
 		 */
 		s1 = (Selectivity) 0.5;
 	}
-	else if (IsA(clause, DistinctExpr))
-	{
-		/* can we do better? */
-		s1 = (Selectivity) 0.5;
-	}
+#endif
 	else if (IsA(clause, ScalarArrayOpExpr))
 	{
 		/* First, decide if it's a join clause, same as for OpExpr */
