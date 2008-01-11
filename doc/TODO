@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri Jan  4 10:58:16 EST 2008
+Last updated:		Fri Jan 11 11:49:17 EST 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -895,6 +895,9 @@ Triggers
 
   http://archives.postgresql.org/pgsql-general/2007-02/msg01466.php
 
+* Add ability to trigger on TRUNCATE
+
+  http://archives.postgresql.org/pgsql-sql/2008-01/msg00050.php
 
 
 
