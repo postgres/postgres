@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.222 2008/01/02 19:53:13 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.223 2008/01/12 21:51:36 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3330,7 +3330,7 @@ SELECT 'a:1 fat:2 cat:3 sat:4 on:5 a:6 mat:7 and:8 ate:9 a:10 fat:11 rat:12'::ts
      document.  Positional information can be used for
      <firstterm>proximity ranking</firstterm>.  Position values can
      range from 1 to 16383; larger numbers are silently clamped to 16383.
-     Duplicate position entries are discarded.
+     Duplicate positions for the same lexeme are discarded.
     </para>
 
     <para>
