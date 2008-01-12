@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.65 2008/01/12 10:38:32 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.66 2008/01/12 10:50:03 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2137,8 +2137,13 @@ query_to_xmlschema(PG_FUNCTION_ARGS)
 	Portal		portal;
 
 	SPI_connect();
-	plan = SPI_prepare(query, 0, NULL);
-	portal = SPI_cursor_open(NULL, plan, NULL, NULL, true);
+
+	if ((plan = SPI_prepare(query, 0, NULL)) == NULL)
+		elog(ERROR, "SPI_prepare(\"%s\") failed", query);
+
+	if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL, true)) == NULL)
+		elog(ERROR, "SPI_cursor_open(\"%s\") failed", query);
+
 	result = _SPI_strdup(map_sql_table_to_xmlschema(portal->tupDesc,
 													InvalidOid, nulls,
 													tableforest, targetns));
@@ -2209,8 +2214,13 @@ query_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 	Portal		portal;
 
 	SPI_connect();
-	plan = SPI_prepare(query, 0, NULL);
-	portal = SPI_cursor_open(NULL, plan, NULL, NULL, true);
+
+	if ((plan = SPI_prepare(query, 0, NULL)) == NULL)
+		elog(ERROR, "SPI_prepare(\"%s\") failed", query);
+
+	if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL, true)) == NULL)
+		elog(ERROR, "SPI_cursor_open(\"%s\") failed", query);
+
 	xmlschema = _SPI_strdup(map_sql_table_to_xmlschema(portal->tupDesc,
 								  InvalidOid, nulls, tableforest, targetns));
 	SPI_cursor_close(portal);
