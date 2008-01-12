@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.18 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.19 2008/01/12 00:11:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,6 @@ static Node *arrayexpr_next_fn(PredIterInfo info);
 static void arrayexpr_cleanup_fn(PredIterInfo info);
 static bool predicate_implied_by_simple_clause(Expr *predicate, Node *clause);
 static bool predicate_refuted_by_simple_clause(Expr *predicate, Node *clause);
-static bool is_null_contradicts(NullTest *ntest, Node *clause);
 static Node *extract_not_arg(Node *clause);
 static bool list_member_strip(List *list, Expr *datum);
 static bool btree_predicate_proof(Expr *predicate, Node *clause,
@@ -128,6 +127,14 @@ predicate_implied_by(List *predicate_list, List *restrictinfo_list)
  *
  * This is NOT the same as !(predicate_implied_by), though it is similar
  * in the technique and structure of the code.
+ *
+ * An important fine point is that truth of the clauses must imply that
+ * the predicate returns FALSE, not that it does not return TRUE.  This
+ * is normally used to try to refute CHECK constraints, and the only
+ * thing we can assume about a CHECK constraint is that it didn't return
+ * FALSE --- a NULL result isn't a violation per the SQL spec.  (Someday
+ * perhaps this code should be extended to support both "strong" and
+ * "weak" refutation, but for now we only need "strong".)
  *
  * The top-level List structure of each list corresponds to an AND list.
  * We assume that eval_const_expressions() has been applied and so there
@@ -408,10 +415,11 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
  *
  * In addition, if the predicate is a NOT-clause then we can use
  *	A R=> NOT B if:					A => B
- * while if the restriction clause is a NOT-clause then we can use
- *	NOT A R=> B if:					B => A
  * This works for several different SQL constructs that assert the non-truth
  * of their argument, ie NOT, IS FALSE, IS NOT TRUE, IS UNKNOWN.
+ * Unfortunately we *cannot* use
+ *	NOT A R=> B if:					B => A
+ * because this type of reasoning fails to prove that B doesn't yield NULL.
  *
  * Other comments are as for predicate_implied_by_recurse().
  *----------
@@ -595,13 +603,21 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 
 		case CLASS_ATOM:
 
+#ifdef NOT_USED
 			/*
 			 * If A is a NOT-clause, A R=> B if B => A's arg
+			 *
+			 * Unfortunately not: this would only prove that B is not-TRUE,
+			 * not that it's not NULL either.  Keep this code as a comment
+			 * because it would be useful if we ever had a need for the
+			 * weak form of refutation.
 			 */
 			not_arg = extract_not_arg(clause);
 			if (not_arg &&
 				predicate_implied_by_recurse(predicate, not_arg))
 				return true;
+#endif
+
 			switch (pclass)
 			{
 				case CLASS_AND:
@@ -990,9 +1006,11 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
  * When the predicate is of the form "foo IS NULL", we can conclude that
  * the predicate is refuted if the clause is a strict operator or function
  * that has "foo" as an input (see notes for implication case), or if the
- * clause is "foo IS NOT NULL".  Conversely a clause "foo IS NULL" refutes
- * predicates of those types.  (The motivation for covering these cases is
- * to support using IS NULL/IS NOT NULL as partition-defining constraints.)
+ * clause is "foo IS NOT NULL".  A clause "foo IS NULL" refutes a predicate
+ * "foo IS NOT NULL", but unfortunately does not refute strict predicates,
+ * because we are looking for strong refutation.  (The motivation for covering
+ * these cases is to support using IS NULL/IS NOT NULL as partition-defining
+ * constraints.)
  *
  * Finally, we may be able to deduce something using knowledge about btree
  * operator families; this is encapsulated in btree_predicate_proof().
@@ -1010,8 +1028,28 @@ predicate_refuted_by_simple_clause(Expr *predicate, Node *clause)
 	if (predicate && IsA(predicate, NullTest) &&
 		((NullTest *) predicate)->nulltesttype == IS_NULL)
 	{
-		if (is_null_contradicts((NullTest *) predicate, clause))
+		Expr	   *isnullarg = ((NullTest *) predicate)->arg;
+
+		/* row IS NULL does not act in the simple way we have in mind */
+		if (type_is_rowtype(exprType((Node *) isnullarg)))
+			return false;
+
+		/* Any strict op/func on foo refutes foo IS NULL */
+		if (is_opclause(clause) &&
+			list_member_strip(((OpExpr *) clause)->args, isnullarg) &&
+			op_strict(((OpExpr *) clause)->opno))
 			return true;
+		if (is_funcclause(clause) &&
+			list_member_strip(((FuncExpr *) clause)->args, isnullarg) &&
+			func_strict(((FuncExpr *) clause)->funcid))
+			return true;
+
+		/* foo IS NOT NULL refutes foo IS NULL */
+		if (clause && IsA(clause, NullTest) &&
+			((NullTest *) clause)->nulltesttype == IS_NOT_NULL &&
+			equal(((NullTest *) clause)->arg, isnullarg))
+			return true;
+
 		return false;			/* we can't succeed below... */
 	}
 
@@ -1019,47 +1057,23 @@ predicate_refuted_by_simple_clause(Expr *predicate, Node *clause)
 	if (clause && IsA(clause, NullTest) &&
 		((NullTest *) clause)->nulltesttype == IS_NULL)
 	{
-		if (is_null_contradicts((NullTest *) clause, (Node *) predicate))
+		Expr	   *isnullarg = ((NullTest *) clause)->arg;
+
+		/* row IS NULL does not act in the simple way we have in mind */
+		if (type_is_rowtype(exprType((Node *) isnullarg)))
+			return false;
+
+		/* foo IS NULL refutes foo IS NOT NULL */
+		if (predicate && IsA(predicate, NullTest) &&
+			((NullTest *) predicate)->nulltesttype == IS_NOT_NULL &&
+			equal(((NullTest *) predicate)->arg, isnullarg))
 			return true;
+
 		return false;			/* we can't succeed below... */
 	}
 
 	/* Else try btree operator knowledge */
 	return btree_predicate_proof(predicate, clause, true);
-}
-
-
-/*
- * Check whether a "foo IS NULL" test contradicts clause.  (We say
- * "contradicts" rather than "refutes" because the refutation goes
- * both ways.)
- */
-static bool
-is_null_contradicts(NullTest *ntest, Node *clause)
-{
-	Expr	   *isnullarg = ntest->arg;
-
-	/* row IS NULL does not act in the simple way we have in mind */
-	if (type_is_rowtype(exprType((Node *) isnullarg)))
-		return false;
-
-	/* foo IS NULL contradicts any strict op/func on foo */
-	if (is_opclause(clause) &&
-		list_member_strip(((OpExpr *) clause)->args, isnullarg) &&
-		op_strict(((OpExpr *) clause)->opno))
-		return true;
-	if (is_funcclause(clause) &&
-		list_member_strip(((FuncExpr *) clause)->args, isnullarg) &&
-		func_strict(((FuncExpr *) clause)->funcid))
-		return true;
-
-	/* foo IS NULL contradicts foo IS NOT NULL */
-	if (clause && IsA(clause, NullTest) &&
-		((NullTest *) clause)->nulltesttype == IS_NOT_NULL &&
-		equal(((NullTest *) clause)->arg, isnullarg))
-		return true;
-
-	return false;
 }
 
 

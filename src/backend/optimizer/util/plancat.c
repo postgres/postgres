@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.139 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.140 2008/01/12 00:11:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@ get_relation_info_hook_type get_relation_info_hook = NULL;
 
 static void estimate_rel_size(Relation rel, int32 *attr_widths,
 				  BlockNumber *pages, double *tuples);
-static List *get_relation_constraints(Oid relationObjectId, RelOptInfo *rel);
+static List *get_relation_constraints(Oid relationObjectId, RelOptInfo *rel,
+						 bool include_notnull);
 
 
 /*
@@ -453,12 +454,16 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
  * indicated by rel->relid.  This allows the expressions to be easily
  * compared to expressions taken from WHERE.
  *
+ * If include_notnull is true, "col IS NOT NULL" expressions are generated
+ * and added to the result for each column that's marked attnotnull.
+ *
  * Note: at present this is invoked at most once per relation per planner
  * run, and in many cases it won't be invoked at all, so there seems no
  * point in caching the data in RelOptInfo.
  */
 static List *
-get_relation_constraints(Oid relationObjectId, RelOptInfo *rel)
+get_relation_constraints(Oid relationObjectId, RelOptInfo *rel,
+						 bool include_notnull)
 {
 	List	   *result = NIL;
 	Index		varno = rel->relid;
@@ -512,6 +517,30 @@ get_relation_constraints(Oid relationObjectId, RelOptInfo *rel)
 			 */
 			result = list_concat(result,
 								 make_ands_implicit((Expr *) cexpr));
+		}
+
+		/* Add NOT NULL constraints in expression form, if requested */
+		if (include_notnull && constr->has_not_null)
+		{
+			int		natts = relation->rd_att->natts;
+
+			for (i = 1; i <= natts; i++)
+			{
+				Form_pg_attribute att = relation->rd_att->attrs[i - 1];
+
+				if (att->attnotnull && !att->attisdropped)
+				{
+					NullTest *ntest = makeNode(NullTest);
+
+					ntest->arg = (Expr *) makeVar(varno,
+												  i,
+												  att->atttypid,
+												  att->atttypmod,
+												  0);
+					ntest->nulltesttype = IS_NOT_NULL;
+					result = lappend(result, ntest);
+				}
+			}
 		}
 	}
 
@@ -567,8 +596,11 @@ relation_excluded_by_constraints(RelOptInfo *rel, RangeTblEntry *rte)
 	if (rte->rtekind != RTE_RELATION || rte->inh)
 		return false;
 
-	/* OK to fetch the constraint expressions */
-	constraint_pred = get_relation_constraints(rte->relid, rel);
+	/*
+	 * OK to fetch the constraint expressions.  Include "col IS NOT NULL"
+	 * expressions for attnotnull columns, in case we can refute those.
+	 */
+	constraint_pred = get_relation_constraints(rte->relid, rel, true);
 
 	/*
 	 * We do not currently enforce that CHECK constraints contain only
