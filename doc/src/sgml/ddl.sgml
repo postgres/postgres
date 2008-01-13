@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.80 2007/12/03 23:49:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.81 2008/01/13 17:58:54 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1034,12 +1034,14 @@ CREATE TABLE order_items (
    </para>
 
    <para>
-    Command
-    identifiers are also 32-bit quantities.  This creates a hard limit
+    Command identifiers are also 32-bit quantities.  This creates a hard limit
     of 2<superscript>32</> (4 billion) <acronym>SQL</acronym> commands
     within a single transaction.  In practice this limit is not a
     problem &mdash; note that the limit is on number of
     <acronym>SQL</acronym> commands, not number of rows processed.
+    Also, as of <productname>PostgreSQL</productname> 8.3, only commands
+    that actually modify the database contents will consume a command
+    identifier.
    </para>
  </sect1>
 
