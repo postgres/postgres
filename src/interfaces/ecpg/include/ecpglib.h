@@ -1,7 +1,7 @@
 /*
  * this is a small part of c.h since we don't want to leak all postgres
  * definitions into ecpg programs
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.73 2007/10/03 11:11:12 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.74 2008/01/13 11:53:16 meskes Exp $
  */
 
 #ifndef _ECPGLIB_H
@@ -43,7 +43,7 @@ bool		ECPGstatus(int, const char *);
 bool		ECPGsetcommit(int, const char *, const char *);
 bool		ECPGsetconn(int, const char *);
 bool		ECPGconnect(int, int, const char *, const char *, const char *, const char *, int);
-bool		ECPGdo(const int, const int, const int, const char *, const char, const enum ECPG_statement_type, const char *,...);
+bool		ECPGdo(const int, const int, const int, const char *, const bool, const int, const char *,...);
 bool		ECPGtrans(int, const char *, const char *);
 bool		ECPGdisconnect(int, const char *);
 bool		ECPGprepare(int, const char *, const int, const char *, const char *);

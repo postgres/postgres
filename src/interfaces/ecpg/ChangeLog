@@ -2283,6 +2283,11 @@ Fri, 28 Dec 2007 12:15:38 +0100
 Fri, 11 Jan 2008 16:16:24 +0100
 
 	- Fixed lexer to correctly parse C quotes.
+
+Sun, 13 Jan 2008 12:52:15 +0100
+
+	- Changed prototype for ECPGdo because some compilers don't like
+	  int/enum aliasing in there.
 	- Set pgtypes library version to 3.0.
 	- Set compat library version to 3.0.
 	- Set ecpg library version to 6.0.

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.73 2007/11/15 21:14:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.74 2008/01/13 11:53:16 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1430,7 +1430,7 @@ ecpg_execute(struct statement * stmt)
 }
 
 bool
-ECPGdo(const int lineno, const int compat, const int force_indicator, const char *connection_name, const bool questionmarks, const enum ECPG_statement_type st, const char *query,...)
+ECPGdo(const int lineno, const int compat, const int force_indicator, const char *connection_name, const bool questionmarks, const int st, const char *query,...)
 {
 	va_list		args;
 	struct statement *stmt;
@@ -1439,7 +1439,7 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 	char	   *oldlocale;
 	enum ECPGttype type;
 	struct variable **list;
-	enum ECPG_statement_type statement_type = st;
+	enum ECPG_statement_type statement_type = (enum ECPG_statement_type) st;
 	char	   *prepname;
 
 	if (!query)
