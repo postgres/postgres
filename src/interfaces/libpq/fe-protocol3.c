@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.31 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.32 2008/01/14 18:46:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1274,16 +1274,13 @@ getReadyForQuery(PGconn *conn)
 }
 
 /*
- * PQgetCopyData - read a row of data from the backend during COPY OUT
+ * getCopyDataMessage - fetch next CopyData message, process async messages
  *
- * If successful, sets *buffer to point to a malloc'd row of data, and
- * returns row length (always > 0) as result.
- * Returns 0 if no row available yet (only possible if async is true),
- * -1 if end of copy (consult PQgetResult), or -2 if error (consult
- * PQerrorMessage).
+ * Returns length word of CopyData message (> 0), or 0 if no complete
+ * message available, -1 if end of copy, -2 if error.
  */
-int
-pqGetCopyData3(PGconn *conn, char **buffer, int async)
+static int
+getCopyDataMessage(PGconn *conn)
 {
 	char		id;
 	int			msgLength;
@@ -1298,22 +1295,94 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 		 */
 		conn->inCursor = conn->inStart;
 		if (pqGetc(&id, conn))
-			goto nodata;
+			return 0;
 		if (pqGetInt(&msgLength, 4, conn))
-			goto nodata;
+			return 0;
+		if (msgLength < 4)
+		{
+			handleSyncLoss(conn, id, msgLength);
+			return -2;
+		}
 		avail = conn->inEnd - conn->inCursor;
 		if (avail < msgLength - 4)
-			goto nodata;
+			return 0;
 
 		/*
-		 * If it's anything except Copy Data, exit COPY_OUT mode and let
-		 * caller read status with PQgetResult().  The normal case is that
-		 * it's Copy Done, but we let parseInput read that.
+		 * If it's a legitimate async message type, process it.  (NOTIFY
+		 * messages are not currently possible here, but we handle them for
+		 * completeness.  NOTICE is definitely possible, and ParameterStatus
+		 * could probably be made to happen.)  Otherwise, if it's anything
+		 * except Copy Data, report end-of-copy.
 		 */
-		if (id != 'd')
+		switch (id)
 		{
-			conn->asyncStatus = PGASYNC_BUSY;
-			return -1;
+			case 'A':			/* NOTIFY */
+				if (getNotify(conn))
+					return 0;
+				break;
+			case 'N':			/* NOTICE */
+				if (pqGetErrorNotice3(conn, false))
+					return 0;
+				break;
+			case 'S':			/* ParameterStatus */
+				if (getParameterStatus(conn))
+					return 0;
+				break;
+			case 'd':			/* Copy Data, pass it back to caller */
+				return msgLength;
+			default:			/* treat as end of copy */
+				return -1;
+		}
+
+		/* Drop the processed message and loop around for another */
+		conn->inStart = conn->inCursor;
+	}
+}
+
+/*
+ * PQgetCopyData - read a row of data from the backend during COPY OUT
+ *
+ * If successful, sets *buffer to point to a malloc'd row of data, and
+ * returns row length (always > 0) as result.
+ * Returns 0 if no row available yet (only possible if async is true),
+ * -1 if end of copy (consult PQgetResult), or -2 if error (consult
+ * PQerrorMessage).
+ */
+int
+pqGetCopyData3(PGconn *conn, char **buffer, int async)
+{
+	int			msgLength;
+
+	for (;;)
+	{
+		/*
+		 * Collect the next input message.  To make life simpler for async
+		 * callers, we keep returning 0 until the next message is fully
+		 * available, even if it is not Copy Data.
+		 */
+		msgLength = getCopyDataMessage(conn);
+		if (msgLength < 0)
+		{
+			/*
+			 * On end-of-copy, exit COPY_OUT mode and let caller read status
+			 * with PQgetResult().  The normal case is that it's Copy Done,
+			 * but we let parseInput read that.  If error, we expect the
+			 * state was already changed.
+			 */
+			if (msgLength == -1)
+				conn->asyncStatus = PGASYNC_BUSY;
+			return msgLength;		/* end-of-copy or error */
+		}
+		if (msgLength == 0)
+		{
+			/* Don't block if async read requested */
+			if (async)
+				return 0;
+			/* Need to load more data */
+			if (pqWait(TRUE, FALSE, conn) ||
+				pqReadData(conn) < 0)
+				return -2;
+			continue;
 		}
 
 		/*
@@ -1341,16 +1410,6 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 
 		/* Empty, so drop it and loop around for another */
 		conn->inStart = conn->inCursor;
-		continue;
-
-nodata:
-		/* Don't block if async read requested */
-		if (async)
-			return 0;
-		/* Need to load more data */
-		if (pqWait(TRUE, FALSE, conn) ||
-			pqReadData(conn) < 0)
-			return -2;
 	}
 }
 
@@ -1413,7 +1472,6 @@ pqGetline3(PGconn *conn, char *s, int maxlen)
 int
 pqGetlineAsync3(PGconn *conn, char *buffer, int bufsize)
 {
-	char		id;
 	int			msgLength;
 	int			avail;
 
@@ -1424,22 +1482,13 @@ pqGetlineAsync3(PGconn *conn, char *buffer, int bufsize)
 	 * Recognize the next input message.  To make life simpler for async
 	 * callers, we keep returning 0 until the next message is fully available
 	 * even if it is not Copy Data.  This should keep PQendcopy from blocking.
+	 * (Note: unlike pqGetCopyData3, we do not change asyncStatus here.)
 	 */
-	conn->inCursor = conn->inStart;
-	if (pqGetc(&id, conn))
-		return 0;
-	if (pqGetInt(&msgLength, 4, conn))
-		return 0;
-	avail = conn->inEnd - conn->inCursor;
-	if (avail < msgLength - 4)
-		return 0;
-
-	/*
-	 * Cannot proceed unless it's a Copy Data message.  Anything else means
-	 * end of copy mode.
-	 */
-	if (id != 'd')
-		return -1;
+	msgLength = getCopyDataMessage(conn);
+	if (msgLength < 0)
+		return -1;				/* end-of-copy or error */
+	if (msgLength == 0)
+		return 0;				/* no data yet */
 
 	/*
 	 * Move data from libpq's buffer to the caller's.  In the case where a

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.70 2008/01/09 05:27:22 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.71 2008/01/14 18:46:17 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1039,9 +1039,16 @@
    <para>
     In the event of a backend-detected error during copy-out mode,
     the backend will issue an ErrorResponse message and revert to normal
-    processing.  The frontend should treat receipt of ErrorResponse (or
-    indeed any message type other than CopyData or CopyDone) as terminating
-    the copy-out mode.
+    processing.  The frontend should treat receipt of ErrorResponse as
+    terminating the copy-out mode.
+   </para>
+
+   <para>
+    It is possible for NoticeResponse messages to be interspersed between
+    CopyData messages; frontends must handle this case, and should be
+    prepared for other asynchronous message types as well (see <xref
+    linkend="protocol-async">).  Otherwise, any message type other than
+    CopyData or CopyDone may be treated as terminating copy-out mode.
    </para>
 
    <para>
