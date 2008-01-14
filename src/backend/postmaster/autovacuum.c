@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.70 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.71 2008/01/14 13:39:25 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2658,11 +2658,11 @@ autovac_report_activity(VacuumStmt *vacstmt, Oid relid)
 	/* Report the command and possible options */
 	if (vacstmt->vacuum)
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
-				 "VACUUM%s",
+				 "autovacuum: VACUUM%s",
 				 vacstmt->analyze ? " ANALYZE" : "");
 	else
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
-				 "ANALYZE");
+				 "autovacuum: ANALYZE");
 
 	/*
 	 * Report the qualified name of the relation.
