@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.68 2008/01/03 21:27:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.69 2008/01/14 02:49:47 tgl Exp $
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -38,8 +38,10 @@
 #include "fmgr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/tupdesc.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_type.h"
@@ -1662,14 +1664,17 @@ static char **
 get_pkey_attnames(Oid relid, int16 *numatts)
 {
 	Relation	indexRelation;
-	ScanKeyData entry;
-	HeapScanDesc scan;
+	ScanKeyData skey;
+	SysScanDesc scan;
 	HeapTuple	indexTuple;
 	int			i;
 	char	  **result = NULL;
 	Relation	rel;
 	TupleDesc	tupdesc;
 	AclResult	aclresult;
+
+	/* initialize numatts to 0 in case no primary key exists */
+	*numatts = 0;
 
 	/* open relation using relid, check permissions, get tupdesc */
 	rel = relation_open(relid, AccessShareLock);
@@ -1682,23 +1687,22 @@ get_pkey_attnames(Oid relid, int16 *numatts)
 
 	tupdesc = rel->rd_att;
 
-	/* initialize numatts to 0 in case no primary key exists */
-	*numatts = 0;
-
-	/* use relid to get all related indexes */
+	/* Prepare to scan pg_index for entries having indrelid = this rel. */
 	indexRelation = heap_open(IndexRelationId, AccessShareLock);
-	ScanKeyInit(&entry,
+	ScanKeyInit(&skey,
 				Anum_pg_index_indrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(relid));
-	scan = heap_beginscan(indexRelation, SnapshotNow, 1, &entry);
 
-	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	scan = systable_beginscan(indexRelation, IndexIndrelidIndexId, true,
+							  SnapshotNow, 1, &skey);
+
+	while (HeapTupleIsValid(indexTuple = systable_getnext(scan)))
 	{
 		Form_pg_index index = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		/* we're only interested if it is the primary key */
-		if (index->indisprimary == TRUE)
+		if (index->indisprimary)
 		{
 			*numatts = index->indnatts;
 			if (*numatts > 0)
@@ -1711,7 +1715,8 @@ get_pkey_attnames(Oid relid, int16 *numatts)
 			break;
 		}
 	}
-	heap_endscan(scan);
+
+	systable_endscan(scan);
 	heap_close(indexRelation, AccessShareLock);
 	relation_close(rel, AccessShareLock);
 
