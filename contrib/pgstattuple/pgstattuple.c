@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.31 2007/10/22 17:29:35 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.32 2008/01/14 02:53:31 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -255,7 +255,8 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 	Buffer		buffer;
 	pgstattuple_type stat = {0};
 
-	scan = heap_beginscan(rel, SnapshotAny, 0, NULL);
+	/* Disable syncscan because we assume we scan from block zero upwards */
+	scan = heap_beginscan_strat(rel, SnapshotAny, 0, NULL, true, false);
 
 	nblocks = scan->rs_nblocks; /* # blocks to be scanned */
 
