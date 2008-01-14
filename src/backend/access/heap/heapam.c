@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.247 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.248 2008/01/14 01:39:09 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -62,6 +62,7 @@
 static HeapScanDesc heap_beginscan_internal(Relation relation,
 						Snapshot snapshot,
 						int nkeys, ScanKey key,
+						bool allow_strat, bool allow_sync,
 						bool is_bitmapscan);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
 		   ItemPointerData from, Buffer newbuf, HeapTuple newtup, bool move);
@@ -81,6 +82,9 @@ static bool HeapSatisfiesHOTUpdate(Relation relation, Bitmapset *hot_attrs,
 static void
 initscan(HeapScanDesc scan, ScanKey key)
 {
+	bool		allow_strat;
+	bool		allow_sync;
+
 	/*
 	 * Determine the number of blocks we have to scan.
 	 *
@@ -99,25 +103,39 @@ initscan(HeapScanDesc scan, ScanKey key)
 	 * strategy and enable synchronized scanning (see syncscan.c).	Although
 	 * the thresholds for these features could be different, we make them the
 	 * same so that there are only two behaviors to tune rather than four.
+	 * (However, some callers need to be able to disable one or both of
+	 * these behaviors, independently of the size of the table.)
 	 *
 	 * During a rescan, don't make a new strategy object if we don't have to.
 	 */
-	if (!scan->rs_bitmapscan &&
-		!scan->rs_rd->rd_istemp &&
+	if (!scan->rs_rd->rd_istemp &&
 		scan->rs_nblocks > NBuffers / 4)
+	{
+		allow_strat = scan->rs_allow_strat;
+		allow_sync = scan->rs_allow_sync;
+	}
+	else
+		allow_strat = allow_sync = false;
+
+	if (allow_strat)
 	{
 		if (scan->rs_strategy == NULL)
 			scan->rs_strategy = GetAccessStrategy(BAS_BULKREAD);
-
-		scan->rs_syncscan = true;
-		scan->rs_startblock = ss_get_location(scan->rs_rd, scan->rs_nblocks);
 	}
 	else
 	{
 		if (scan->rs_strategy != NULL)
 			FreeAccessStrategy(scan->rs_strategy);
 		scan->rs_strategy = NULL;
+	}
 
+	if (allow_sync)
+	{
+		scan->rs_syncscan = true;
+		scan->rs_startblock = ss_get_location(scan->rs_rd, scan->rs_nblocks);
+	}
+	else
+	{
 		scan->rs_syncscan = false;
 		scan->rs_startblock = 0;
 	}
@@ -1058,29 +1076,47 @@ heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
 /* ----------------
  *		heap_beginscan	- begin relation scan
  *
- * heap_beginscan_bm is an alternative entry point for setting up a HeapScanDesc
- * for a bitmap heap scan.	Although that scan technology is really quite
- * unlike a standard seqscan, there is just enough commonality to make it
- * worth using the same data structure.
+ * heap_beginscan_strat offers an extended API that lets the caller control
+ * whether a nondefault buffer access strategy can be used, and whether
+ * syncscan can be chosen (possibly resulting in the scan not starting from
+ * block zero).  Both of these default to TRUE with plain heap_beginscan.
+ *
+ * heap_beginscan_bm is an alternative entry point for setting up a
+ * HeapScanDesc for a bitmap heap scan.  Although that scan technology is
+ * really quite unlike a standard seqscan, there is just enough commonality
+ * to make it worth using the same data structure.
  * ----------------
  */
 HeapScanDesc
 heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key)
 {
-	return heap_beginscan_internal(relation, snapshot, nkeys, key, false);
+	return heap_beginscan_internal(relation, snapshot, nkeys, key,
+								   true, true, false);
+}
+
+HeapScanDesc
+heap_beginscan_strat(Relation relation, Snapshot snapshot,
+					 int nkeys, ScanKey key,
+					 bool allow_strat, bool allow_sync)
+{
+	return heap_beginscan_internal(relation, snapshot, nkeys, key,
+								   allow_strat, allow_sync, false);
 }
 
 HeapScanDesc
 heap_beginscan_bm(Relation relation, Snapshot snapshot,
 				  int nkeys, ScanKey key)
 {
-	return heap_beginscan_internal(relation, snapshot, nkeys, key, true);
+	return heap_beginscan_internal(relation, snapshot, nkeys, key,
+								   false, false, true);
 }
 
 static HeapScanDesc
 heap_beginscan_internal(Relation relation, Snapshot snapshot,
-						int nkeys, ScanKey key, bool is_bitmapscan)
+						int nkeys, ScanKey key,
+						bool allow_strat, bool allow_sync,
+						bool is_bitmapscan)
 {
 	HeapScanDesc scan;
 
@@ -1103,6 +1139,8 @@ heap_beginscan_internal(Relation relation, Snapshot snapshot,
 	scan->rs_nkeys = nkeys;
 	scan->rs_bitmapscan = is_bitmapscan;
 	scan->rs_strategy = NULL;	/* set in initscan */
+	scan->rs_allow_strat = allow_strat;
+	scan->rs_allow_sync = allow_sync;
 
 	/*
 	 * we can use page-at-a-time mode if it's an MVCC-safe snapshot

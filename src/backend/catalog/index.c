@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.290 2008/01/03 21:23:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.291 2008/01/14 01:39:09 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2004,12 +2004,16 @@ validate_index_heapscan(Relation heapRelation,
 
 	/*
 	 * Prepare for scan of the base relation.  We need just those tuples
-	 * satisfying the passed-in reference snapshot.
+	 * satisfying the passed-in reference snapshot.  We must disable syncscan
+	 * here, because it's critical that we read from block zero forward to
+	 * match the sorted TIDs.
 	 */
-	scan = heap_beginscan(heapRelation, /* relation */
-						  snapshot,		/* seeself */
-						  0,	/* number of keys */
-						  NULL);	/* scan key */
+	scan = heap_beginscan_strat(heapRelation,	/* relation */
+								snapshot,		/* snapshot */
+								0,				/* number of keys */
+								NULL,			/* scan key */
+								true,			/* buffer access strategy OK */
+								false);			/* syncscan not OK */
 
 	/*
 	 * Scan all tuples matching the snapshot.

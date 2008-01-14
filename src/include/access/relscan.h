@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.59 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.60 2008/01/14 01:39:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,8 @@ typedef struct HeapScanDescData
 	ScanKey		rs_key;			/* array of scan key descriptors */
 	bool		rs_bitmapscan;	/* true if this is really a bitmap scan */
 	bool		rs_pageatatime; /* verify visibility page-at-a-time? */
+	bool		rs_allow_strat; /* allow or disallow use of access strategy */
+	bool		rs_allow_sync;	/* allow or disallow use of syncscan */
 
 	/* state set up at initscan time */
 	BlockNumber rs_nblocks;		/* number of blocks to scan */
