@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.357 2007/12/28 11:25:21 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.358 2008/01/14 09:43:42 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1288,7 +1288,10 @@ VariableShowStmt:  SHOW var_name ecpg_into
 		| SHOW SESSION AUTHORIZATION ecpg_into
 			{ $$ = make_str("show session authorization"); }
 		| SHOW ALL
-		   	{ mmerror(PARSE_ERROR, ET_ERROR, "SHOW ALL not implemented"); }
+		   	{
+				mmerror(PARSE_ERROR, ET_ERROR, "SHOW ALL not implemented");
+				$$ = EMPTY;
+			}
 		;
 
 VariableResetStmt:	RESET var_name
@@ -2300,22 +2303,22 @@ FetchStmt: FETCH fetch_direction from_in name ecpg_into
 			}
 		| FETCH from_in name ecpg_into
 			{
-		        add_additional_variables($3, false);
+				add_additional_variables($3, false);
 				$$ = cat_str(3, make_str("fetch"), $2, $3);
 			}
 		| FETCH name ecpg_into
 			{
-		        add_additional_variables($2, false);
+				add_additional_variables($2, false);
 				$$ = cat2_str(make_str("fetch"), $2);
 			}
 		| FETCH fetch_direction from_in name
 			{
-		        add_additional_variables($4, false);
+				add_additional_variables($4, false);
 				$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 			}
 		| FETCH fetch_direction name
 			{
-		        add_additional_variables($3, false);
+				add_additional_variables($3, false);
 				$$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3);
 			}
 		| FETCH from_in name
@@ -2325,7 +2328,7 @@ FetchStmt: FETCH fetch_direction from_in name ecpg_into
 			}
 		| FETCH name
 			{
-		        add_additional_variables($2, false);
+				add_additional_variables($2, false);
 				$$ = cat2_str(make_str("fetch"), $2);
 			}
 		| MOVE fetch_direction from_in name
@@ -2340,19 +2343,28 @@ fetch_direction:  NEXT			{ $$ = make_str("next"); }
 		| LAST_P		{ $$ = make_str("last"); }
 		| ABSOLUTE_P IntConst	{ 
 					  if ($2[1] == '$')
-					  	 mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable.\n");
+					  {
+					  	 mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable, ignoring it.\n");
+						 $$ = make_str("absolute");
+					  }
 					  else
 					  	$$ = cat2_str(make_str("absolute"), $2);
 					}
 		| RELATIVE_P IntConst	{ 
 		                          if ($2[1] == '$')
-						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable.\n");
+					  {
+						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable, ignoring it.\n");
+						$$ = make_str("relative");
+					  }
 					  else
 						$$ = cat2_str(make_str("relative"), $2);
 					}
 		| IntConst		{  
 		                          if ($1[1] == '$')
-						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable.\n");
+					  {
+						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variablei, ignoring it.\n");
+						$$ = EMPTY;
+					  }
 					  else
 						$$ = $1;
 					}
@@ -2360,7 +2372,10 @@ fetch_direction:  NEXT			{ $$ = make_str("next"); }
 		| FORWARD		{ $$ = make_str("forward"); }
 		| FORWARD IntConst	{  
 		                          if ($2[1] == '$')
-						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable.\n");
+					  {
+						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable, ignoring it.\n");
+						$$ = make_str("forward");
+					  }
 					  else
 						$$ = cat2_str(make_str("forward"), $2);
 					}
@@ -2368,14 +2383,17 @@ fetch_direction:  NEXT			{ $$ = make_str("next"); }
 		| BACKWARD		{ $$ = make_str("backward"); }
 		| BACKWARD IntConst	{  
 		                          if ($2[1] == '$')
-						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable.\n");
+					  {
+						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable, ignoring it.\n");
+						$$ = make_str("backward");
+					  }
 					  else
 						$$ = cat2_str(make_str("backward"), $2);
 					}
 		| BACKWARD ALL		{ $$ = make_str("backward all"); }
 		;
 
-from_in: IN_P			{ $$ = make_str("in"); }
+from_in: IN_P				{ $$ = make_str("in"); }
 		| FROM			{ $$ = make_str("from"); }
 		;
 
@@ -2744,7 +2762,10 @@ RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')' opt_drop_behavior
 		;
 
 oper_argtypes:	Typename
-			{ mmerror(PARSE_ERROR, ET_ERROR, "parser: argument type missing (use NONE for unary operators)"); }
+			{
+				mmerror(PARSE_ERROR, ET_ERROR, "parser: argument type missing (use NONE for unary operators)");
+				$$ = make_str("none");
+			}
 		| Typename ',' Typename
 			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		| NONE ',' Typename			/* left unary */
@@ -3665,7 +3686,10 @@ select_limit:	LIMIT select_limit_value OFFSET select_offset_value
 		| OFFSET select_offset_value
 		   { $$ = cat2_str(make_str("offset"), $2); }
 		| LIMIT select_limit_value ',' select_offset_value
-		   { mmerror(PARSE_ERROR, ET_WARNING, "No longer supported LIMIT #,# syntax passed to backend."); }
+		   {
+		   	mmerror(PARSE_ERROR, ET_WARNING, "No longer supported LIMIT #,# syntax passed to backend.");
+			$$ = cat_str(4, make_str("limit"), $2, make_str(","), $4);
+		   }
 		;
 
 opt_select_limit:	select_limit	{ $$ = $1; }
@@ -3757,25 +3781,28 @@ from_list:	from_list ',' table_ref { $$ = cat_str(3, $1, make_str(","), $3); }
 table_ref:	relation_expr
 			{ $$ = $1; }
 		| relation_expr alias_clause
-			{ $$= cat2_str($1, $2); }
+			{ $$ = cat2_str($1, $2); }
 		| func_table
 			{ $$ = $1; }
 		| func_table alias_clause
-		        { $$= cat2_str($1, $2); }
+		        { $$ = cat2_str($1, $2); }
 		| func_table AS '(' TableFuncElementList ')'
-			{ $$=cat_str(4, $1, make_str("as ("), $4, make_str(")")); }
+			{ $$ = cat_str(4, $1, make_str("as ("), $4, make_str(")")); }
 		| func_table AS ColId '(' TableFuncElementList ')'
-			{ $$=cat_str(6, $1, make_str("as"), $3, make_str("("), $5, make_str(")"));}
+			{ $$ = cat_str(6, $1, make_str("as"), $3, make_str("("), $5, make_str(")"));}
 		| func_table ColId '(' TableFuncElementList ')'
-			{ $$=cat_str(5, $1, $2, make_str("("), $4, make_str(")")); }
+			{ $$ = cat_str(5, $1, $2, make_str("("), $4, make_str(")")); }
 		| select_with_parens
-			{mmerror(PARSE_ERROR, ET_ERROR, "sub-SELECT in FROM must have an alias");}
+			{
+				mmerror(PARSE_ERROR, ET_ERROR, "sub-SELECT in FROM must have an alias");
+				$$ = $1;
+			}
 		| select_with_parens alias_clause
-			{ $$=cat2_str($1, $2); }
+			{ $$ = cat2_str($1, $2); }
 		| joined_table
 			{ $$ = $1; }
 		| '(' joined_table ')' alias_clause
-			{ $$=cat_str(4, make_str("("), $2, make_str(")"), $4); }
+			{ $$ = cat_str(4, make_str("("), $2, make_str(")"), $4); }
 		;
 
 /*
@@ -5159,6 +5186,7 @@ char_variable: cvariable
 						break;
 					default:
 						mmerror(PARSE_ERROR, ET_ERROR, "invalid datatype");
+						$$ = $1;
 						break;
 				}
 			}

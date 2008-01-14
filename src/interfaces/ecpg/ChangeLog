@@ -2288,6 +2288,11 @@ Sun, 13 Jan 2008 12:52:15 +0100
 
 	- Changed prototype for ECPGdo because some compilers don't like
 	  int/enum aliasing in there.
+
+Mon, 14 Jan 2008 10:42:23 +0100
+
+	- Set valid return values even in case of an error to prevent
+	  segfaults.
 	- Set pgtypes library version to 3.0.
 	- Set compat library version to 3.0.
 	- Set ecpg library version to 6.0.
