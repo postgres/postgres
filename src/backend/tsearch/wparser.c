@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser.c,v 1.6 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser.c,v 1.7 2008/01/15 17:16:01 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,6 +308,11 @@ ts_headline_byid_opt(PG_FUNCTION_ARGS)
 
 	cfg = lookup_ts_config_cache(PG_GETARG_OID(0));
 	prsobj = lookup_ts_parser_cache(cfg->prsId);
+
+	if ( !OidIsValid( prsobj->headlineOid ) )
+		ereport(ERROR, 
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Text parser doesn't support headline creation")));
 
 	memset(&prs, 0, sizeof(HeadlineParsedText));
 	prs.lenwords = 32;
