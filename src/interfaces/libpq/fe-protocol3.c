@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.32 2008/01/14 18:46:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.33 2008/01/15 22:18:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1310,9 +1310,8 @@ getCopyDataMessage(PGconn *conn)
 		/*
 		 * If it's a legitimate async message type, process it.  (NOTIFY
 		 * messages are not currently possible here, but we handle them for
-		 * completeness.  NOTICE is definitely possible, and ParameterStatus
-		 * could probably be made to happen.)  Otherwise, if it's anything
-		 * except Copy Data, report end-of-copy.
+		 * completeness.)  Otherwise, if it's anything except Copy Data,
+		 * report end-of-copy.
 		 */
 		switch (id)
 		{

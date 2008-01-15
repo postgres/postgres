@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.71 2008/01/14 18:46:17 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.72 2008/01/15 22:18:20 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1044,10 +1044,10 @@
    </para>
 
    <para>
-    It is possible for NoticeResponse messages to be interspersed between
-    CopyData messages; frontends must handle this case, and should be
-    prepared for other asynchronous message types as well (see <xref
-    linkend="protocol-async">).  Otherwise, any message type other than
+    It is possible for NoticeResponse and ParameterStatus messages to be
+    interspersed between CopyData messages; frontends must handle these cases,
+    and should be prepared for other asynchronous message types as well (see
+    <xref linkend="protocol-async">).  Otherwise, any message type other than
     CopyData or CopyDone may be treated as terminating copy-out mode.
    </para>
 
