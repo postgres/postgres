@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.67 2008/01/12 21:14:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68 2008/01/15 18:56:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,18 +24,30 @@
  */
 
 /*
- * Note on memory management: Via callbacks, libxml is told to use
- * palloc and friends for memory management.  Sometimes, libxml
- * allocates global structures in the hope that it can reuse them
- * later on, but if "later" is much later, the memory context
- * management of PostgreSQL will have blown those structures away
- * without telling libxml about it.  Therefore, it is important to
- * call xmlCleanupParser() or perhaps some other cleanup function
- * after using such functions, for example something from
- * libxml/parser.h or libxml/xmlsave.h.  Unfortunately, you cannot
- * readily tell from the API documentation when that happens, so
- * careful evaluation is necessary when introducing new libxml APIs
- * here.
+ * Notes on memory management:
+ *
+ * Via callbacks, libxml is told to use palloc and friends for memory
+ * management, within a context that we reset at transaction end (and also at
+ * subtransaction abort) to prevent memory leaks.  Resetting at transaction or
+ * subtransaction abort is necessary since we might have thrown a longjmp
+ * while some data structures were not linked from anywhere persistent.
+ * Resetting at transaction commit might not be necessary, but seems a good
+ * idea to forestall long-term leaks.
+ *
+ * Sometimes libxml allocates global structures in the hope that it can reuse
+ * them later on.  Therefore, before resetting LibxmlContext, we must tell
+ * libxml to discard any global data it has.  The libxml API documentation is
+ * not very good about specifying this, but for now we assume that
+ * xmlCleanupParser() will get rid of anything we need to worry about.
+ *
+ * We use palloc --- which will throw a longjmp on error --- for allocation
+ * callbacks that officially should act like malloc, ie, return NULL on
+ * out-of-memory.  This is a bit risky since there is a chance of leaving
+ * persistent libxml data structures in an inconsistent partially-constructed
+ * state, perhaps leading to crash in xmlCleanupParser().  However, as of
+ * early 2008 it is *known* that libxml can crash on out-of-memory due to
+ * inadequate checks for NULL returns, so this behavior seems the lesser
+ * of two evils.
  */
 
 #include "postgres.h"
@@ -80,8 +92,11 @@ XmlOptionType xmloption;
 #ifdef USE_LIBXML
 
 static StringInfo xml_err_buf = NULL;
+static MemoryContext LibxmlContext = NULL;
 
 static void xml_init(void);
+static void xml_memory_init(void);
+static void xml_memory_cleanup(void);
 static void *xml_palloc(size_t size);
 static void *xml_repalloc(void *ptr, size_t size);
 static void xml_pfree(void *ptr);
@@ -784,84 +799,53 @@ xmlvalidate(PG_FUNCTION_ARGS)
 	text	   *data = PG_GETARG_TEXT_P(0);
 	text	   *dtdOrUri = PG_GETARG_TEXT_P(1);
 	bool		result = false;
-	xmlParserCtxtPtr ctxt = NULL;
-	xmlDocPtr	doc = NULL;
-	xmlDtdPtr	dtd = NULL;
+	xmlParserCtxtPtr ctxt;
+	xmlDocPtr	doc;
+	xmlDtdPtr	dtd;
 
 	xml_init();
+	xmlInitParser();
+	ctxt = xmlNewParserCtxt();
+	if (ctxt == NULL)
+		xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+					"could not allocate parser context");
 
-	/* We use a PG_TRY block to ensure libxml parser is cleaned up on error */
-	PG_TRY();
-	{
-		xmlInitParser();
-		ctxt = xmlNewParserCtxt();
-		if (ctxt == NULL)
-			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not allocate parser context");
-
-		doc = xmlCtxtReadMemory(ctxt, (char *) VARDATA(data),
-								VARSIZE(data) - VARHDRSZ,
-								NULL, NULL, 0);
-		if (doc == NULL)
-			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-						"could not parse XML data");
+	doc = xmlCtxtReadMemory(ctxt, (char *) VARDATA(data),
+							VARSIZE(data) - VARHDRSZ,
+							NULL, NULL, 0);
+	if (doc == NULL)
+		xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+					"could not parse XML data");
 
 #if 0
-		uri = xmlCreateURI();
-		elog(NOTICE, "dtd - %s", dtdOrUri);
-		dtd = palloc(sizeof(xmlDtdPtr));
-		uri = xmlParseURI(dtdOrUri);
-		if (uri == NULL)
-			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"not implemented yet... (TODO)");
-		else
+	uri = xmlCreateURI();
+	elog(NOTICE, "dtd - %s", dtdOrUri);
+	dtd = palloc(sizeof(xmlDtdPtr));
+	uri = xmlParseURI(dtdOrUri);
+	if (uri == NULL)
+		xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+					"not implemented yet... (TODO)");
+	else
 #endif
-			dtd = xmlParseDTD(NULL, xml_text2xmlChar(dtdOrUri));
+		dtd = xmlParseDTD(NULL, xml_text2xmlChar(dtdOrUri));
 
-		if (dtd == NULL)
-			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-						"could not load DTD");
+	if (dtd == NULL)
+		xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+					"could not load DTD");
 
-		if (xmlValidateDtd(xmlNewValidCtxt(), doc, dtd) == 1)
-			result = true;
+	if (xmlValidateDtd(xmlNewValidCtxt(), doc, dtd) == 1)
+		result = true;
 
-		if (!result)
-			xml_ereport(NOTICE, ERRCODE_INVALID_XML_DOCUMENT,
-						"validation against DTD failed");
+	if (!result)
+		xml_ereport(NOTICE, ERRCODE_INVALID_XML_DOCUMENT,
+					"validation against DTD failed");
 
 #if 0
-		if (uri)
-			xmlFreeURI(uri);
-		uri = NULL;
+	xmlFreeURI(uri);
 #endif
-		if (dtd)
-			xmlFreeDtd(dtd);
-		dtd = NULL;
-		if (doc)
-			xmlFreeDoc(doc);
-		doc = NULL;
-		if (ctxt)
-			xmlFreeParserCtxt(ctxt);
-		ctxt = NULL;
-		xmlCleanupParser();
-	}
-	PG_CATCH();
-	{
-#if 0
-		if (uri)
-			xmlFreeURI(uri);
-#endif
-		if (dtd)
-			xmlFreeDtd(dtd);
-		if (doc)
-			xmlFreeDoc(doc);
-		if (ctxt)
-			xmlFreeParserCtxt(ctxt);
-		xmlCleanupParser();
-
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	xmlFreeDtd(dtd);
+	xmlFreeDoc(doc);
+	xmlFreeParserCtxt(ctxt);
 
 	PG_RETURN_BOOL(result);
 #else							/* not USE_LIBXML */
@@ -915,6 +899,19 @@ xml_is_document(xmltype *arg)
 }
 
 
+/*
+ * xml cleanup function for transaction end.  This is also called on
+ * subtransaction abort; see notes at top of file for rationale.
+ */
+void
+AtEOXact_xml(void)
+{
+#ifdef USE_LIBXML
+	xml_memory_cleanup();
+#endif
+}
+
+
 #ifdef USE_LIBXML
 
 /*
@@ -953,13 +950,10 @@ xml_init(void)
 		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
 
 		/* Set up memory allocation our way, too */
-		xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
+		xml_memory_init();
 
 		/* Check library compatibility */
 		LIBXML_TEST_VERSION;
-
-		/* The above calls xmlInitParser(); must clean up dangling pointers */
-		xmlCleanupParser();
 
 		first_time = false;
 	}
@@ -977,7 +971,7 @@ xml_init(void)
 		 * about, anyway.
 		 */
 		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
-		xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
+		xml_memory_init();
 	}
 }
 
@@ -1210,7 +1204,7 @@ print_xml_decl(StringInfo buf, const xmlChar * version,
  * Convert a C string to XML internal representation
  *
  * TODO maybe, libxml2's xmlreader is better? (do not construct DOM,
- * yet do not use SAX - see xml_reader.c)
+ * yet do not use SAX - see xmlreader.c)
  */
 static xmlDocPtr
 xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
@@ -1219,8 +1213,8 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 	int32		len;
 	xmlChar    *string;
 	xmlChar    *utf8string;
-	xmlParserCtxtPtr ctxt = NULL;
-	xmlDocPtr	doc = NULL;
+	xmlParserCtxtPtr ctxt;
+	xmlDocPtr	doc;
 
 	len = VARSIZE(data) - VARHDRSZ;		/* will be useful later */
 	string = xml_text2xmlChar(data);
@@ -1233,73 +1227,57 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 										   PG_UTF8);
 
 	xml_init();
+	xmlInitParser();
+	ctxt = xmlNewParserCtxt();
+	if (ctxt == NULL)
+		xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+					"could not allocate parser context");
 
-	/* We use a PG_TRY block to ensure libxml parser is cleaned up on error */
-	PG_TRY();
+	if (xmloption_arg == XMLOPTION_DOCUMENT)
 	{
-		xmlInitParser();
-		ctxt = xmlNewParserCtxt();
-		if (ctxt == NULL)
-			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not allocate parser context");
-
-		if (xmloption_arg == XMLOPTION_DOCUMENT)
-		{
-			/*
-			 * Note, that here we try to apply DTD defaults
-			 * (XML_PARSE_DTDATTR) according to SQL/XML:10.16.7.d: 'Default
-			 * valies defined by internal DTD are applied'. As for external
-			 * DTDs, we try to support them too, (see SQL/XML:10.16.7.e)
-			 */
-			doc = xmlCtxtReadDoc(ctxt, utf8string,
-								 NULL,
-								 "UTF-8",
-								 XML_PARSE_NOENT | XML_PARSE_DTDATTR
-						   | (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
-			if (doc == NULL)
-				xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-							"invalid XML document");
-		}
-		else
-		{
-			int			res_code;
-			size_t		count;
-			xmlChar    *version = NULL;
-			int			standalone = -1;
-
-			doc = xmlNewDoc(NULL);
-
-			res_code = parse_xml_decl(utf8string, &count, &version, NULL, &standalone);
-			if (res_code != 0)
-				xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_CONTENT,
-				   "invalid XML content: invalid XML declaration", res_code);
-
-			res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0, utf8string + count, NULL);
-			if (res_code != 0)
-				xml_ereport(ERROR, ERRCODE_INVALID_XML_CONTENT,
-							"invalid XML content");
-
-			doc->version = xmlStrdup(version);
-			doc->encoding = xmlStrdup((xmlChar *) "UTF-8");
-			doc->standalone = standalone;
-		}
-
-		if (ctxt)
-			xmlFreeParserCtxt(ctxt);
-		ctxt = NULL;
-		xmlCleanupParser();
+		/*
+		 * Note, that here we try to apply DTD defaults
+		 * (XML_PARSE_DTDATTR) according to SQL/XML:10.16.7.d: 'Default
+		 * values defined by internal DTD are applied'. As for external
+		 * DTDs, we try to support them too, (see SQL/XML:10.16.7.e)
+		 */
+		doc = xmlCtxtReadDoc(ctxt, utf8string,
+							 NULL,
+							 "UTF-8",
+							 XML_PARSE_NOENT | XML_PARSE_DTDATTR
+							 | (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
+		if (doc == NULL)
+			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+						"invalid XML document");
 	}
-	PG_CATCH();
+	else
 	{
-		if (doc)
-			xmlFreeDoc(doc);
-		if (ctxt)
-			xmlFreeParserCtxt(ctxt);
-		xmlCleanupParser();
+		int			res_code;
+		size_t		count;
+		xmlChar    *version = NULL;
+		int			standalone = -1;
 
-		PG_RE_THROW();
+		doc = xmlNewDoc(NULL);
+
+		res_code = parse_xml_decl(utf8string,
+								  &count, &version, NULL, &standalone);
+		if (res_code != 0)
+			xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_CONTENT,
+								"invalid XML content: invalid XML declaration",
+								res_code);
+
+		res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
+											   utf8string + count, NULL);
+		if (res_code != 0)
+			xml_ereport(ERROR, ERRCODE_INVALID_XML_CONTENT,
+						"invalid XML content");
+
+		doc->version = xmlStrdup(version);
+		doc->encoding = xmlStrdup((xmlChar *) "UTF-8");
+		doc->standalone = standalone;
 	}
-	PG_END_TRY();
+
+	xmlFreeParserCtxt(ctxt);
 
 	return doc;
 }
@@ -1323,12 +1301,49 @@ xml_text2xmlChar(text *in)
 
 
 /*
+ * Manage the special context used for all libxml allocations
+ */
+static void
+xml_memory_init(void)
+{
+	/*
+	 * Create memory context if not there already.  We make it a child of
+	 * TopMemoryContext, even though our current policy is that it doesn't
+	 * survive past transaction end, because we want to be really really
+	 * sure it doesn't go away before we've called xmlCleanupParser().
+	 */
+	if (LibxmlContext == NULL)
+		LibxmlContext = AllocSetContextCreate(TopMemoryContext,
+											  "LibxmlContext",
+											  ALLOCSET_DEFAULT_MINSIZE,
+											  ALLOCSET_DEFAULT_INITSIZE,
+											  ALLOCSET_DEFAULT_MAXSIZE);
+
+	/* Re-establish the callbacks even if already set */
+	xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
+}
+
+static void
+xml_memory_cleanup(void)
+{
+	if (LibxmlContext != NULL)
+	{
+		/* Give libxml a chance to clean up dangling pointers */
+		xmlCleanupParser();
+
+		/* And flush the context */
+		MemoryContextDelete(LibxmlContext);
+		LibxmlContext = NULL;
+	}
+}
+
+/*
  * Wrappers for memory management functions
  */
 static void *
 xml_palloc(size_t size)
 {
-	return palloc(size);
+	return MemoryContextAlloc(LibxmlContext, size);
 }
 
 
@@ -1349,7 +1364,7 @@ xml_pfree(void *ptr)
 static char *
 xml_pstrdup(const char *string)
 {
-	return pstrdup(string);
+	return MemoryContextStrdup(LibxmlContext, string);
 }
 
 
@@ -3262,11 +3277,11 @@ xpath(PG_FUNCTION_ARGS)
 	xmltype    *data = PG_GETARG_XML_P(1);
 	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
 	ArrayBuildState *astate = NULL;
-	xmlParserCtxtPtr ctxt = NULL;
-	xmlDocPtr	doc = NULL;
-	xmlXPathContextPtr xpathctx = NULL;
-	xmlXPathCompExprPtr xpathcomp = NULL;
-	xmlXPathObjectPtr xpathobj = NULL;
+	xmlParserCtxtPtr ctxt;
+	xmlDocPtr	doc;
+	xmlXPathContextPtr xpathctx;
+	xmlXPathCompExprPtr xpathcomp;
+	xmlXPathObjectPtr xpathobj;
 	char	   *datastr;
 	int32		len;
 	int32		xpath_len;
@@ -3363,114 +3378,89 @@ xpath(PG_FUNCTION_ARGS)
 	xpath_expr[xpath_len + 2] = '\0';
 	xpath_len += 2;
 
-	/* We use a PG_TRY block to ensure libxml parser is cleaned up on error */
-	PG_TRY();
+	xmlInitParser();
+
+	/*
+	 * redundant XML parsing (two parsings for the same value during one
+	 * command execution are possible)
+	 */
+	ctxt = xmlNewParserCtxt();
+	if (ctxt == NULL)
+		xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+					"could not allocate parser context");
+	doc = xmlCtxtReadMemory(ctxt, (char *) string, len, NULL, NULL, 0);
+	if (doc == NULL)
+		xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+					"could not parse XML data");
+	xpathctx = xmlXPathNewContext(doc);
+	if (xpathctx == NULL)
+		xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+					"could not allocate XPath context");
+	xpathctx->node = xmlDocGetRootElement(doc);
+	if (xpathctx->node == NULL)
+		xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+					"could not find root XML element");
+
+	/* register namespaces, if any */
+	if (ns_count > 0)
 	{
-		xmlInitParser();
-
-		/*
-		 * redundant XML parsing (two parsings for the same value during one
-		 * command execution are possible)
-		 */
-		ctxt = xmlNewParserCtxt();
-		if (ctxt == NULL)
-			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not allocate parser context");
-		doc = xmlCtxtReadMemory(ctxt, (char *) string, len, NULL, NULL, 0);
-		if (doc == NULL)
-			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-						"could not parse XML data");
-		xpathctx = xmlXPathNewContext(doc);
-		if (xpathctx == NULL)
-			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not allocate XPath context");
-		xpathctx->node = xmlDocGetRootElement(doc);
-		if (xpathctx->node == NULL)
-			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not find root XML element");
-
-		/* register namespaces, if any */
-		if (ns_count > 0)
+		for (i = 0; i < ns_count; i++)
 		{
-			for (i = 0; i < ns_count; i++)
-			{
-				char	   *ns_name;
-				char	   *ns_uri;
+			char	   *ns_name;
+			char	   *ns_uri;
 
-				if (ns_names_uris_nulls[i * 2] ||
-					ns_names_uris_nulls[i * 2 + 1])
-					ereport(ERROR,
-							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					  errmsg("neither namespace name nor URI may be null")));
-				ns_name = _textout(ns_names_uris[i * 2]);
-				ns_uri = _textout(ns_names_uris[i * 2 + 1]);
-				if (xmlXPathRegisterNs(xpathctx,
-									   (xmlChar *) ns_name,
-									   (xmlChar *) ns_uri) != 0)
-					ereport(ERROR,		/* is this an internal error??? */
-							(errmsg("could not register XML namespace with name \"%s\" and URI \"%s\"",
-									ns_name, ns_uri)));
-			}
+			if (ns_names_uris_nulls[i * 2] ||
+				ns_names_uris_nulls[i * 2 + 1])
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("neither namespace name nor URI may be null")));
+			ns_name = _textout(ns_names_uris[i * 2]);
+			ns_uri = _textout(ns_names_uris[i * 2 + 1]);
+			if (xmlXPathRegisterNs(xpathctx,
+								   (xmlChar *) ns_name,
+								   (xmlChar *) ns_uri) != 0)
+				ereport(ERROR,		/* is this an internal error??? */
+						(errmsg("could not register XML namespace with name \"%s\" and URI \"%s\"",
+								ns_name, ns_uri)));
 		}
-
-		xpathcomp = xmlXPathCompile(xpath_expr);
-		if (xpathcomp == NULL)	/* TODO: show proper XPath error details */
-			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"invalid XPath expression");
-
-		xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
-		if (xpathobj == NULL)	/* TODO: reason? */
-			ereport(ERROR,
-					(errmsg("could not create XPath object")));
-
-		xmlXPathFreeCompExpr(xpathcomp);
-		xpathcomp = NULL;
-
-		/* return empty array in cases when nothing is found */
-		if (xpathobj->nodesetval == NULL)
-			res_nitems = 0;
-		else
-			res_nitems = xpathobj->nodesetval->nodeNr;
-
-		if (res_nitems)
-			for (i = 0; i < xpathobj->nodesetval->nodeNr; i++)
-			{
-				Datum		elem;
-				bool		elemisnull = false;
-
-				elem = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i]));
-				astate = accumArrayResult(astate, elem,
-										  elemisnull, XMLOID,
-										  CurrentMemoryContext);
-			}
-
-		xmlXPathFreeObject(xpathobj);
-		xpathobj = NULL;
-		xmlXPathFreeContext(xpathctx);
-		xpathctx = NULL;
-		xmlFreeDoc(doc);
-		doc = NULL;
-		xmlFreeParserCtxt(ctxt);
-		ctxt = NULL;
-		xmlCleanupParser();
 	}
-	PG_CATCH();
+
+	xpathcomp = xmlXPathCompile(xpath_expr);
+	if (xpathcomp == NULL)	/* TODO: show proper XPath error details */
+		xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+					"invalid XPath expression");
+
+	xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
+	if (xpathobj == NULL)	/* TODO: reason? */
+		ereport(ERROR,
+				(errmsg("could not create XPath object")));
+
+	xmlXPathFreeCompExpr(xpathcomp);
+
+	/* return empty array in cases when nothing is found */
+	if (xpathobj->nodesetval == NULL)
+		res_nitems = 0;
+	else
+		res_nitems = xpathobj->nodesetval->nodeNr;
+
+	if (res_nitems)
 	{
-		if (xpathcomp)
-			xmlXPathFreeCompExpr(xpathcomp);
-		if (xpathobj)
-			xmlXPathFreeObject(xpathobj);
-		if (xpathctx)
-			xmlXPathFreeContext(xpathctx);
-		if (doc)
-			xmlFreeDoc(doc);
-		if (ctxt)
-			xmlFreeParserCtxt(ctxt);
-		xmlCleanupParser();
+		for (i = 0; i < xpathobj->nodesetval->nodeNr; i++)
+		{
+			Datum		elem;
+			bool		elemisnull = false;
 
-		PG_RE_THROW();
+			elem = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i]));
+			astate = accumArrayResult(astate, elem,
+									  elemisnull, XMLOID,
+									  CurrentMemoryContext);
+		}
 	}
-	PG_END_TRY();
+
+	xmlXPathFreeObject(xpathobj);
+	xmlXPathFreeContext(xpathctx);
+	xmlFreeDoc(doc);
+	xmlFreeParserCtxt(ctxt);
 
 	if (res_nitems == 0)
 		PG_RETURN_ARRAYTYPE_P(construct_empty_array(XMLOID));
