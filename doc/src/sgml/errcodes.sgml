@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.22 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.23 2008/01/15 01:36:53 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -539,6 +539,12 @@
 <entry><literal>22P05</literal></entry>
 <entry>UNTRANSLATABLE CHARACTER</entry>
 <entry>untranslatable_character</entry>
+</row>
+
+<row>
+<entry><literal>2200L</literal></entry>
+<entry>NOT AN XML DOCUMENT</entry>
+<entry>not_an_xml_document</entry>
 </row>
 
 <row>
