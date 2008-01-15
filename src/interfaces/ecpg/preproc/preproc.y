@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.358 2008/01/14 09:43:42 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.359 2008/01/15 10:31:47 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -566,7 +566,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	join_outer where_clause relation_expr sub_type arg_class
 %type  <str>	opt_column_list insert_rest InsertStmt param_name
 %type  <str>	columnList DeleteStmt UpdateStmt DeclareCursorStmt
-%type  <str>	NotifyStmt columnElem UnlistenStmt TableElement
+%type  <str>	NotifyStmt columnElem UnlistenStmt TableElement fetch_count
 %type  <str>	copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>	FetchStmt from_in CreateOpClassStmt returning_clause
 %type  <str>	ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose
@@ -2337,61 +2337,32 @@ FetchStmt: FETCH fetch_direction from_in name ecpg_into
 			{ $$ = cat2_str(make_str("move"), $2); }
 		;
 
-fetch_direction:  NEXT			{ $$ = make_str("next"); }
-		| PRIOR			{ $$ = make_str("prior"); }
-		| FIRST_P		{ $$ = make_str("first"); }
-		| LAST_P		{ $$ = make_str("last"); }
-		| ABSOLUTE_P IntConst	{ 
-					  if ($2[1] == '$')
-					  {
-					  	 mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable, ignoring it.\n");
-						 $$ = make_str("absolute");
-					  }
-					  else
-					  	$$ = cat2_str(make_str("absolute"), $2);
-					}
-		| RELATIVE_P IntConst	{ 
-		                          if ($2[1] == '$')
-					  {
-						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable, ignoring it.\n");
-						$$ = make_str("relative");
-					  }
-					  else
-						$$ = cat2_str(make_str("relative"), $2);
-					}
-		| IntConst		{  
-		                          if ($1[1] == '$')
-					  {
-						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variablei, ignoring it.\n");
-						$$ = EMPTY;
-					  }
-					  else
-						$$ = $1;
-					}
-		| ALL			{ $$ = make_str("all"); }
-		| FORWARD		{ $$ = make_str("forward"); }
-		| FORWARD IntConst	{  
-		                          if ($2[1] == '$')
-					  {
-						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable, ignoring it.\n");
-						$$ = make_str("forward");
-					  }
-					  else
-						$$ = cat2_str(make_str("forward"), $2);
-					}
-		| FORWARD ALL		{ $$ = make_str("forward all"); }
-		| BACKWARD		{ $$ = make_str("backward"); }
-		| BACKWARD IntConst	{  
-		                          if ($2[1] == '$')
-					  {
-						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable, ignoring it.\n");
-						$$ = make_str("backward");
-					  }
-					  else
-						$$ = cat2_str(make_str("backward"), $2);
-					}
-		| BACKWARD ALL		{ $$ = make_str("backward all"); }
+fetch_direction:  NEXT				{ $$ = make_str("next"); }
+		| PRIOR				{ $$ = make_str("prior"); }
+		| FIRST_P			{ $$ = make_str("first"); }
+		| LAST_P			{ $$ = make_str("last"); }
+		| ABSOLUTE_P fetch_count	{ $$ = cat2_str(make_str("absolute"), $2); }
+		| RELATIVE_P fetch_count	{ $$ = cat2_str(make_str("relative"), $2); }
+		| fetch_count			{ $$ = $1; }
+		| ALL				{ $$ = make_str("all"); }
+		| FORWARD			{ $$ = make_str("forward"); }
+		| FORWARD fetch_count		{ $$ = cat2_str(make_str("forward"), $2); }
+		| FORWARD ALL			{ $$ = make_str("forward all"); }
+		| BACKWARD			{ $$ = make_str("backward"); }
+		| BACKWARD fetch_count		{ $$ = cat2_str(make_str("backward"), $2); }
+		| BACKWARD ALL			{ $$ = make_str("backward all"); }
 		;
+
+fetch_count:	IntConst	{
+		                	if ($1[1] == '$')
+					{
+						/* a variable here has to be replaced on the client side, thus we have to use '?' here */
+						$$ = make_str("$0");
+						free($1);
+					}
+					else
+						$$ = $1;
+				}
 
 from_in: IN_P				{ $$ = make_str("in"); }
 		| FROM			{ $$ = make_str("from"); }

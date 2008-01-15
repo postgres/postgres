@@ -7,7 +7,7 @@ EXEC SQL INCLUDE ../regression;
 int main(int argc, char* argv[]) {
   EXEC SQL BEGIN DECLARE SECTION;
     char str[25];
-    int i; 
+    int i, count=1; 
   EXEC SQL END DECLARE SECTION;
 
   ECPGdebug(1, stderr);
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
   EXEC SQL WHENEVER NOT FOUND CONTINUE;
   EXEC SQL MOVE BACKWARD 2 IN C;
 
-  EXEC SQL FETCH 1 IN C INTO :i, :str;
+  EXEC SQL FETCH :count IN C INTO :i, :str;
   printf("%d: %s\n", i, str);
 
   EXEC SQL CLOSE C;

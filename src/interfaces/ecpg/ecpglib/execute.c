@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.74 2008/01/13 11:53:16 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.75 2008/01/15 10:31:47 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -128,8 +128,8 @@ next_insert(char *text, int pos, bool questionmarks)
 				int			i;
 
 				for (i = p + 1; isdigit(text[i]); i++);
-				if (!isalpha(text[i]) &&isascii(text[i]) &&text[i] != '_')
-					/* not dollar delimeted quote */
+				if (!isalpha(text[i]) && isascii(text[i]) && text[i] != '_')
+					/* not dollar delimited quote */
 					return p;
 			}
 			else if (questionmarks && text[p] == '?')
@@ -451,7 +451,7 @@ ecpg_store_result(const PGresult *results, int act_field,
 
 bool
 ecpg_store_input(const int lineno, const bool force_indicator, const struct variable * var,
-				 const char **tobeinserted_p, bool quote)
+				 char **tobeinserted_p, bool quote)
 {
 	char	   *mallocedval = NULL;
 	char	   *newcopy = NULL;
@@ -1046,6 +1046,39 @@ free_params(const char **paramValues, int nParams, bool print, int lineno)
 	ecpg_free(paramValues);
 }
 
+
+static bool
+insert_tobeinserted(int position, int ph_len, struct statement * stmt, char *tobeinserted)
+{
+	char	*newcopy;
+
+	if (!(newcopy = (char *) ecpg_alloc(strlen(stmt->command)
+										+ strlen(tobeinserted)
+										+ 1, stmt->lineno)))
+	{
+		ecpg_free(tobeinserted);
+		return false;
+	}
+
+	strcpy(newcopy, stmt->command);
+	strcpy(newcopy + position - 1, tobeinserted);
+
+	/*
+	 * The strange thing in the second argument is the rest of the
+	 * string from the old string
+	 */
+	strcat(newcopy,
+		   stmt->command
+		   + position
+		   + ph_len - 1);
+
+	ecpg_free(stmt->command);
+	stmt->command = newcopy;
+
+	ecpg_free((char *) tobeinserted);
+	return true;
+}
+
 static bool
 ecpg_execute(struct statement * stmt)
 {
@@ -1069,7 +1102,7 @@ ecpg_execute(struct statement * stmt)
 	var = stmt->inlist;
 	while (var)
 	{
-		const char *tobeinserted;
+		char *tobeinserted;
 		int			counter = 1;
 
 		tobeinserted = NULL;
@@ -1134,11 +1167,51 @@ ecpg_execute(struct statement * stmt)
 
 		/*
 		 * now tobeinserted points to an area that contains the next parameter
+		 * now find the positin in the string where it belongs
+		 */
+		if ((position = next_insert(stmt->command, position, stmt->questionmarks) + 1) == 0)
+		{
+			/*
+			 * We have an argument but we dont have the matched up
+			 * placeholder in the string
+			 */
+			ecpg_raise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS,
+					ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS,
+					   NULL);
+			free_params(paramValues, nParams, false, stmt->lineno);
+			return false;
+		}
+
+		/* 
 		 * if var->type=ECPGt_char_variable we have a dynamic cursor we have
 		 * to simulate a dynamic cursor because there is no backend
 		 * functionality for it
 		 */
-		if (var->type != ECPGt_char_variable)
+		if (var->type == ECPGt_char_variable)
+		{
+			int	ph_len = (stmt->command[position] == '?') ? strlen("?") : strlen("$1");
+
+			if (!insert_tobeinserted(position, ph_len, stmt, tobeinserted))
+			{
+				free_params(paramValues, nParams, false, stmt->lineno);
+				return false;
+			}
+			tobeinserted = NULL;
+		}
+		/*
+		 * if the placeholder is '$0' we have to replace it on the client side
+		 * this is for places we want to support variables at that are not supported in the backend
+		 */
+		else if (stmt->command[position] == '0' ) 
+		{
+			if (!insert_tobeinserted(position, 2, stmt, tobeinserted))
+			{
+				free_params(paramValues, nParams, false, stmt->lineno);
+				return false;
+			}
+			tobeinserted = NULL;
+		}
+		else
 		{
 			nParams++;
 			if (!(paramValues = (const char **) ecpg_realloc(paramValues, sizeof(const char *) * nParams, stmt->lineno)))
@@ -1149,107 +1222,28 @@ ecpg_execute(struct statement * stmt)
 
 			paramValues[nParams - 1] = tobeinserted;
 
-			if ((position = next_insert(stmt->command, position, stmt->questionmarks) + 1) == 0)
-			{
-				/*
-				 * We have an argument but we dont have the matched up
-				 * placeholder in the string
-				 */
-				ecpg_raise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS,
-						ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS,
-						   NULL);
-				free_params(paramValues, nParams, false, stmt->lineno);
-				return false;
-			}
-
 			/* let's see if this was an old style placeholder */
-			if (stmt->command[position - 1] == '?')
+			if (stmt->command[position] == '?')
 			{
 				/* yes, replace with new style */
 				int			buffersize = sizeof(int) * CHAR_BIT * 10 / 3;		/* a rough guess of the
 																				 * size we need */
-				char	   *buffer,
-						   *newcopy;
 
-				if (!(buffer = (char *) ecpg_alloc(buffersize, stmt->lineno)))
+				if (!(tobeinserted = (char *) ecpg_alloc(buffersize, stmt->lineno)))
 				{
 					free_params(paramValues, nParams, false, stmt->lineno);
 					return false;
 				}
 
-				snprintf(buffer, buffersize, "$%d", counter++);
+				snprintf(tobeinserted, buffersize, "$%d", counter++);
 
-				if (!(newcopy = (char *) ecpg_alloc(strlen(stmt->command) + strlen(buffer) + 1, stmt->lineno)))
+				if (!insert_tobeinserted(position, 2, stmt, tobeinserted))
 				{
 					free_params(paramValues, nParams, false, stmt->lineno);
-					ecpg_free(buffer);
 					return false;
 				}
-
-				strcpy(newcopy, stmt->command);
-
-				/* set positional parameter */
-				strcpy(newcopy + position - 1, buffer);
-
-				/*
-				 * The strange thing in the second argument is the rest of the
-				 * string from the old string
-				 */
-				strcat(newcopy,
-					   stmt->command
-					   + position + 1);
-				ecpg_free(buffer);
-				ecpg_free(stmt->command);
-				stmt->command = newcopy;
+				tobeinserted = NULL;
 			}
-		}
-		else
-		{
-			char	   *newcopy;
-
-			if (!(newcopy = (char *) ecpg_alloc(strlen(stmt->command)
-												+ strlen(tobeinserted)
-												+ 1, stmt->lineno)))
-			{
-				free_params(paramValues, nParams, false, stmt->lineno);
-				return false;
-			}
-
-			strcpy(newcopy, stmt->command);
-			if ((position = next_insert(stmt->command, position, stmt->questionmarks) + 1) == 0)
-			{
-				/*
-				 * We have an argument but we dont have the matched up string
-				 * in the string
-				 */
-				ecpg_raise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS,
-						ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS,
-						   NULL);
-				free_params(paramValues, nParams, false, stmt->lineno);
-				ecpg_free(newcopy);
-				return false;
-			}
-			else
-			{
-				int			ph_len = (stmt->command[position] == '?') ? strlen("?") : strlen("$1");
-
-				strcpy(newcopy + position - 1, tobeinserted);
-
-				/*
-				 * The strange thing in the second argument is the rest of the
-				 * string from the old string
-				 */
-				strcat(newcopy,
-					   stmt->command
-					   + position
-					   + ph_len - 1);
-			}
-
-			ecpg_free(stmt->command);
-			stmt->command = newcopy;
-
-			ecpg_free((char *) tobeinserted);
-			tobeinserted = NULL;
 		}
 
 		if (desc_counter == 0)

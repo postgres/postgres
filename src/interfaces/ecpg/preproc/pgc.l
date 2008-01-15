@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.158 2008/01/11 15:19:16 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.159 2008/01/15 10:31:47 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@ extern YYSTYPE yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 static char	   *dolqstart;      /* current $foo$ quote start string */
-static bool		escape_string_warning;
 static YY_BUFFER_STATE scanbufhandle;
 static char *scanbuf;
 
