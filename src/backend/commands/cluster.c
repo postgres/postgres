@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.167 2008/01/02 23:34:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.168 2008/01/15 21:20:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -750,6 +750,13 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	 */
 	vacuum_set_xid_limits(-1, OldHeap->rd_rel->relisshared,
 						  &OldestXmin, &FreezeXid);
+
+	/*
+	 * FreezeXid will become the table's new relfrozenxid, and that mustn't
+	 * go backwards, so take the max.
+	 */
+	if (TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
+		FreezeXid = OldHeap->rd_rel->relfrozenxid;
 
 	/* Initialize the rewrite operation */
 	rwstate = begin_heap_rewrite(NewHeap, OldestXmin, FreezeXid, use_wal);
