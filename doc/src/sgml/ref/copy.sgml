@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.80 2007/04/18 02:28:22 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.81 2008/01/16 22:07:04 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -354,6 +354,13 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
 
    <para>
+    Input data is interpreted according to the current client encoding,
+    and output data is encoded in the the current client encoding, even
+    if the data does not pass through the client but is read from or
+    written to a file.
+   </para>
+
+   <para>
     <command>COPY</command> stops operation at the first error. This
     should not lead to problems in the event of a <command>COPY
     TO</command>, but the target table will already have received
@@ -363,6 +370,7 @@ COPY <replaceable class="parameter">count</replaceable>
     happened well into a large copy operation. You might wish to invoke
     <command>VACUUM</command> to recover the wasted space.
    </para>
+
  </refsect1>
  
  <refsect1>
