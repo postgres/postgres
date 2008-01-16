@@ -66,7 +66,7 @@ ROTATESEC="604800"
 ################################################################################
 
 # The path that is to be used for the script
-PATH=/usr/local/pgsql/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+PATH="$prefix/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
 
 # What to use to start up the postmaster (we do NOT use pg_ctl for this,
 # as it adds no value and can cause the postmaster to misrecognize a stale
@@ -84,7 +84,6 @@ LOGUTIL="/usr/sbin/rotatelogs"
 StartService () {
     if [ "${POSTGRESQL:=-NO-}" = "-YES-" ]; then
         ConsoleMessage "Starting PostgreSQL database server"
-        cd /Users/postgres
         if [ "${ROTATELOGS}" = "1" ]; then
             sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' 2>&1 | ${LOGUTIL} '${PGLOG}' ${ROTATESEC} &"
         else
@@ -95,7 +94,6 @@ StartService () {
 
 StopService () {
     ConsoleMessage "Stopping PostgreSQL database server"
-    cd /Users/postgres
     sudo -u $PGUSER $PGCTL stop -D "$PGDATA" -s -m fast
 }
 
@@ -103,7 +101,6 @@ RestartService () {
     if [ "${POSTGRESQL:=-NO-}" = "-YES-" ]; then
         ConsoleMessage "Restarting PostgreSQL database server"
 	# should match StopService:
-        cd /Users/postgres
 	sudo -u $PGUSER $PGCTL stop -D "$PGDATA" -s -m fast
 	# should match StartService:
         if [ "${ROTATELOGS}" = "1" ]; then
