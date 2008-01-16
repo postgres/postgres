@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.9 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.10 2008/01/16 13:01:03 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1327,8 +1327,7 @@ addToResult(char **forms, char **cur, char *word)
 	if (forms == cur || strcmp(word, *(cur - 1)) != 0)
 	{
 		*cur = pstrdup(word);
-		cur++;
-		*cur = NULL;
+		*(cur+1) = NULL;
 		return 1;
 	}
 
@@ -1448,6 +1447,7 @@ NormalizeSubWord(IspellDict *Conf, char *word, int flag)
 typedef struct SplitVar
 {
 	int			nstem;
+	int			lenstem;
 	char	  **stem;
 	struct SplitVar *next;
 } SplitVar;
@@ -1495,21 +1495,38 @@ CopyVar(SplitVar *s, int makedup)
 {
 	SplitVar   *v = (SplitVar *) palloc(sizeof(SplitVar));
 
-	v->stem = (char **) palloc(sizeof(char *) * (MAX_NORM));
 	v->next = NULL;
 	if (s)
 	{
 		int			i;
 
+		v->lenstem = s->lenstem;
+		v->stem = (char **) palloc(sizeof(char *) * v->lenstem);
 		v->nstem = s->nstem;
 		for (i = 0; i < s->nstem; i++)
 			v->stem[i] = (makedup) ? pstrdup(s->stem[i]) : s->stem[i];
 	}
 	else
+	{
+		v->lenstem = 16;
+		v->stem = (char **) palloc(sizeof(char *) * v->lenstem);
 		v->nstem = 0;
+	}
 	return v;
 }
 
+static void
+AddStem(SplitVar *v, char *word)
+{
+	if ( v->nstem >= v->lenstem )
+	{
+		v->lenstem *= 2;
+		v->stem = (char **) repalloc(v->stem, sizeof(char *) * v->lenstem);
+	}
+
+	v->stem[v->nstem] = word;
+	v->nstem++;
+}
 
 static SplitVar *
 SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int wordlen, int startpos, int minpos)
@@ -1550,11 +1567,13 @@ SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int
 			if (level + lenaff - 1 <= minpos)
 				continue;
 
+			if ( lenaff >= MAXNORMLEN )
+				continue; /* skip too big value */
 			if (lenaff > 0)
 				memcpy(buf, word + startpos, lenaff);
 			buf[lenaff] = '\0';
 
-			if (level == FF_COMPOUNDBEGIN)
+			if (level == 0)
 				compoundflag = FF_COMPOUNDBEGIN;
 			else if (level == wordlen - 1)
 				compoundflag = FF_COMPOUNDLAST;
@@ -1572,8 +1591,7 @@ SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int
 
 				while (*sptr)
 				{
-					new->stem[new->nstem] = *sptr;
-					new->nstem++;
+					AddStem( new, *sptr ); 
 					sptr++;
 				}
 				pfree(subres);
@@ -1624,8 +1642,7 @@ SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int
 					if (wordlen == level + 1)
 					{
 						/* well, it was last word */
-						var->stem[var->nstem] = pnstrdup(word + startpos, wordlen - startpos);
-						var->nstem++;
+						AddStem( var, pnstrdup(word + startpos, wordlen - startpos) );
 						pfree(notprobed);
 						return var;
 					}
@@ -1639,8 +1656,7 @@ SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int
 						ptr->next = SplitToVariants(Conf, node, var, word, wordlen, startpos, level);
 						/* we can find next word */
 						level++;
-						var->stem[var->nstem] = pnstrdup(word + startpos, level - startpos);
-						var->nstem++;
+						AddStem( var, pnstrdup(word + startpos, level - startpos) );
 						node = Conf->Dictionary;
 						startpos = level;
 						continue;
@@ -1654,10 +1670,24 @@ SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int
 		level++;
 	}
 
-	var->stem[var->nstem] = pnstrdup(word + startpos, wordlen - startpos);
-	var->nstem++;
+	AddStem( var, pnstrdup(word + startpos, wordlen - startpos) );
 	pfree(notprobed);
 	return var;
+}
+
+static void
+addNorm( TSLexeme **lres, TSLexeme **lcur, char *word, int flags, uint16 NVariant)
+{
+	if ( *lres == NULL ) 
+		*lcur = *lres = (TSLexeme *) palloc(MAX_NORM * sizeof(TSLexeme));
+
+	if ( *lcur - *lres < MAX_NORM-1 ) { 
+		(*lcur)->lexeme = word;
+		(*lcur)->flags = flags;
+		(*lcur)->nvariant = NVariant;
+		(*lcur)++;
+		(*lcur)->lexeme = NULL;
+	}
 }
 
 TSLexeme *
@@ -1674,16 +1704,11 @@ NINormalizeWord(IspellDict *Conf, char *word)
 	{
 		char	  **ptr = res;
 
-		lcur = lres = (TSLexeme *) palloc(MAX_NORM * sizeof(TSLexeme));
-		while (*ptr)
+		while (*ptr && (lcur-lres) < MAX_NORM)
 		{
-			lcur->lexeme = *ptr;
-			lcur->flags = 0;
-			lcur->nvariant = NVariant++;
-			lcur++;
+			addNorm( &lres, &lcur, *ptr, 0, NVariant++);
 			ptr++;
 		}
-		lcur->lexeme = NULL;
 		pfree(res);
 	}
 
@@ -1704,28 +1729,18 @@ NINormalizeWord(IspellDict *Conf, char *word)
 				{
 					char	  **subptr = subres;
 
-					if (!lcur)
-						lcur = lres = (TSLexeme *) palloc(MAX_NORM * sizeof(TSLexeme));
-
 					while (*subptr)
 					{
 						for (i = 0; i < var->nstem - 1; i++)
 						{
-							lcur->lexeme = (subptr == subres) ? var->stem[i] : pstrdup(var->stem[i]);
-							lcur->flags = 0;
-							lcur->nvariant = NVariant;
-							lcur++;
+							addNorm( &lres, &lcur, (subptr == subres) ? var->stem[i] : pstrdup(var->stem[i]), 0, NVariant); 
 						}
 
-						lcur->lexeme = *subptr;
-						lcur->flags = 0;
-						lcur->nvariant = NVariant;
-						lcur++;
+						addNorm( &lres, &lcur, *subptr, 0, NVariant); 
 						subptr++;
 						NVariant++;
 					}
 
-					lcur->lexeme = NULL;
 					pfree(subres);
 					var->stem[0] = NULL;
 					pfree(var->stem[var->nstem - 1]);
