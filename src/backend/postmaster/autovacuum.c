@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.29 2006/11/21 20:59:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.29.2.1 2008/01/17 23:47:04 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -736,6 +736,9 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	 * If there is a tuple in pg_autovacuum, use it; else, use the GUC
 	 * defaults.  Note that the fields may contain "-1" (or indeed any
 	 * negative value), which means use the GUC defaults for each setting.
+	 *
+	 * Note: in cost_limit, 0 also means use the value from elsewhere,
+	 * because 0 is not a valid value for VacuumCostLimit.
 	 */
 	if (avForm != NULL)
 	{
@@ -755,9 +758,9 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 			Min(avForm->freeze_max_age, autovacuum_freeze_max_age) :
 			autovacuum_freeze_max_age;
 
-		vac_cost_limit = (avForm->vac_cost_limit >= 0) ?
+		vac_cost_limit = (avForm->vac_cost_limit > 0) ?
 			avForm->vac_cost_limit :
-			((autovacuum_vac_cost_limit >= 0) ?
+			((autovacuum_vac_cost_limit > 0) ?
 			 autovacuum_vac_cost_limit : VacuumCostLimit);
 
 		vac_cost_delay = (avForm->vac_cost_delay >= 0) ?
@@ -776,7 +779,7 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 		freeze_min_age = default_freeze_min_age;
 		freeze_max_age = autovacuum_freeze_max_age;
 
-		vac_cost_limit = (autovacuum_vac_cost_limit >= 0) ?
+		vac_cost_limit = (autovacuum_vac_cost_limit > 0) ?
 			autovacuum_vac_cost_limit : VacuumCostLimit;
 
 		vac_cost_delay = (autovacuum_vac_cost_delay >= 0) ?
