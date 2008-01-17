@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.5 2008/01/17 11:06:28 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.6 2008/01/17 14:34:45 mha Exp $ -->
 
 <sect1 id="pgcrypto">
  <title>pgcrypto</title>
@@ -659,7 +659,7 @@
 
    <para>
     Which compression algorithm to use.  Only available if
-    <productname>PostgreSQL<productname/> was built with zlib.
+    <productname>PostgreSQL</productname> was built with zlib.
    </para>
    <programlisting>
     Values:
