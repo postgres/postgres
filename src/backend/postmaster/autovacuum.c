@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.5.2.7 2007/01/14 20:18:30 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.5.2.8 2008/01/17 23:47:07 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -814,6 +814,10 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	 * If there is a tuple in pg_autovacuum, use it; else, use the GUC
 	 * defaults.  Note that the fields may contain "-1" (or indeed any
 	 * negative value), which means use the GUC defaults for each setting.
+	 *
+	 * Note: in cost_limit, 0 also means use the value from elsewhere, because
+	 * 0 is not a valid value for VacuumCostLimit.
+
 	 */
 	if (avForm != NULL)
 	{
@@ -827,9 +831,9 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 		anl_base_thresh = (avForm->anl_base_thresh >= 0) ?
 			avForm->anl_base_thresh : autovacuum_anl_thresh;
 
-		vac_cost_limit = (avForm->vac_cost_limit >= 0) ?
+		vac_cost_limit = (avForm->vac_cost_limit > 0) ?
 			avForm->vac_cost_limit :
-			((autovacuum_vac_cost_limit >= 0) ?
+			((autovacuum_vac_cost_limit > 0) ?
 			 autovacuum_vac_cost_limit : VacuumCostLimit);
 
 		vac_cost_delay = (avForm->vac_cost_delay >= 0) ?
@@ -845,7 +849,7 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 		anl_scale_factor = autovacuum_anl_scale;
 		anl_base_thresh = autovacuum_anl_thresh;
 
-		vac_cost_limit = (autovacuum_vac_cost_limit >= 0) ?
+		vac_cost_limit = (autovacuum_vac_cost_limit > 0) ?
 			autovacuum_vac_cost_limit : VacuumCostLimit;
 
 		vac_cost_delay = (autovacuum_vac_cost_delay >= 0) ?
