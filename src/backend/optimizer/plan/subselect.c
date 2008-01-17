@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.112.2.2 2007/07/18 21:41:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.112.2.3 2008/01/17 20:35:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,9 +73,7 @@ typedef struct PlannerParamItem
 
 typedef struct convert_testexpr_context
 {
-	int			rtindex;		/* RT index for Vars, or 0 for Params */
-	List	   *righthandIds;	/* accumulated list of Vars or Param IDs */
-	List	   *sub_tlist;		/* subselect targetlist (if given) */
+	List	   *subst_nodes;	/* Nodes to substitute for Params */
 } convert_testexpr_context;
 
 typedef struct finalize_primnode_context
@@ -85,10 +83,10 @@ typedef struct finalize_primnode_context
 } finalize_primnode_context;
 
 
+static List *generate_subquery_params(List *tlist, List **paramIds);
+static List *generate_subquery_vars(List *tlist, Index varno);
 static Node *convert_testexpr(Node *testexpr,
-				 int rtindex,
-				 List **righthandIds,
-				 List *sub_tlist);
+							  List *subst_nodes);
 static Node *convert_testexpr_mutator(Node *node,
 						 convert_testexpr_context *context);
 static bool subplan_is_hashable(SubLink *slink, SubPlan *node);
@@ -379,10 +377,12 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
 	else if (node->parParam == NIL && slink->subLinkType == ROWCOMPARE_SUBLINK)
 	{
 		/* Adjust the Params */
+		List	   *params;
+
+		params = generate_subquery_params(plan->targetlist,
+										  &node->paramIds);
 		result = convert_testexpr(testexpr,
-								  0,
-								  &node->paramIds,
-								  NIL);
+								  params);
 		node->setParam = list_copy(node->paramIds);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 
@@ -393,14 +393,15 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
 	}
 	else
 	{
+		List	   *params;
 		List	   *args;
 		ListCell   *l;
 
 		/* Adjust the Params */
+		params = generate_subquery_params(plan->targetlist,
+										  &node->paramIds);
 		node->testexpr = convert_testexpr(testexpr,
-										  0,
-										  &node->paramIds,
-										  NIL);
+										  params);
 
 		/*
 		 * We can't convert subplans of ALL_SUBLINK or ANY_SUBLINK types to
@@ -463,20 +464,74 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
 }
 
 /*
+ * generate_subquery_params: build a list of Params representing the output
+ * columns of a sublink's sub-select, given the sub-select's targetlist.
+ *
+ * We also return an integer list of the paramids of the Params.
+ */
+static List *
+generate_subquery_params(List *tlist, List **paramIds)
+{
+	List	   *result;
+	List	   *ids;
+	ListCell   *lc;
+
+	result = ids = NIL;
+	foreach(lc, tlist)
+	{
+		TargetEntry *tent = (TargetEntry *) lfirst(lc);
+		Param	   *param;
+
+		if (tent->resjunk)
+			continue;
+
+		param = generate_new_param(exprType((Node *) tent->expr),
+								   exprTypmod((Node *) tent->expr));
+		result = lappend(result, param);
+		ids = lappend_int(ids, param->paramid);
+	}
+
+	*paramIds = ids;
+	return result;
+}
+
+/*
+ * generate_subquery_vars: build a list of Vars representing the output
+ * columns of a sublink's sub-select, given the sub-select's targetlist.
+ * The Vars have the specified varno (RTE index).
+ */
+static List *
+generate_subquery_vars(List *tlist, Index varno)
+{
+	List	   *result;
+	ListCell   *lc;
+
+	result = NIL;
+	foreach(lc, tlist)
+	{
+		TargetEntry *tent = (TargetEntry *) lfirst(lc);
+		Var		   *var;
+
+		if (tent->resjunk)
+			continue;
+
+		var = makeVar(varno,
+					  tent->resno,
+					  exprType((Node *) tent->expr),
+					  exprTypmod((Node *) tent->expr),
+					  0);
+		result = lappend(result, var);
+	}
+
+	return result;
+}
+
+/*
  * convert_testexpr: convert the testexpr given by the parser into
  * actually executable form.  This entails replacing PARAM_SUBLINK Params
- * with Params or Vars representing the results of the sub-select:
- *
- * If rtindex is 0, we build Params to represent the sub-select outputs.
- * The paramids of the Params created are returned in the *righthandIds list.
- *
- * If rtindex is not 0, we build Vars using that rtindex as varno.	Copies
- * of the Var nodes are returned in *righthandIds (this is a bit of a type
- * cheat, but we can get away with it).
- *
- * The subquery targetlist need be supplied only if rtindex is not 0.
- * We consult it to extract the correct typmods for the created Vars.
- * (XXX this is a kluge that could go away if Params carried typmod.)
+ * with Params or Vars representing the results of the sub-select.  The
+ * nodes to be substituted are passed in as the List result from
+ * generate_subquery_params or generate_subquery_vars.
  *
  * The given testexpr has already been recursively processed by
  * process_sublinks_mutator.  Hence it can no longer contain any
@@ -485,19 +540,12 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
  */
 static Node *
 convert_testexpr(Node *testexpr,
-				 int rtindex,
-				 List **righthandIds,
-				 List *sub_tlist)
+				 List *subst_nodes)
 {
-	Node	   *result;
 	convert_testexpr_context context;
 
-	context.rtindex = rtindex;
-	context.righthandIds = NIL;
-	context.sub_tlist = sub_tlist;
-	result = convert_testexpr_mutator(testexpr, &context);
-	*righthandIds = context.righthandIds;
-	return result;
+	context.subst_nodes = subst_nodes;
+	return convert_testexpr_mutator(testexpr, &context);
 }
 
 static Node *
@@ -512,58 +560,17 @@ convert_testexpr_mutator(Node *node,
 
 		if (param->paramkind == PARAM_SUBLINK)
 		{
-			/*
-			 * We expect to encounter the Params in column-number sequence. We
-			 * could handle non-sequential order if necessary, but for now
-			 * there's no need.  (This is also a useful cross-check that we
-			 * aren't finding any unexpected Params.)
-			 */
-			if (param->paramid != list_length(context->righthandIds) + 1)
+			if (param->paramid <= 0 ||
+				param->paramid > list_length(context->subst_nodes))
 				elog(ERROR, "unexpected PARAM_SUBLINK ID: %d", param->paramid);
 
-			if (context->rtindex)
-			{
-				/* Make the Var node representing the subplan's result */
-				Var		   *newvar;
-
-				/*
-				 * XXX kluge: since Params don't carry typmod, we have to
-				 * look into the subquery targetlist to find out the right
-				 * typmod to assign to the Var.
-				 */
-				TargetEntry *ste = get_tle_by_resno(context->sub_tlist,
-													param->paramid);
-
-				if (ste == NULL || ste->resjunk)
-					elog(ERROR, "subquery output %d not found",
-						 param->paramid);
-				Assert(param->paramtype == exprType((Node *) ste->expr));
-
-				newvar = makeVar(context->rtindex,
-								 param->paramid,
-								 param->paramtype,
-								 exprTypmod((Node *) ste->expr),
-								 0);
-
-				/*
-				 * Copy it for caller.	NB: we need a copy to avoid having
-				 * doubly-linked substructure in the modified parse tree.
-				 */
-				context->righthandIds = lappend(context->righthandIds,
-												copyObject(newvar));
-				return (Node *) newvar;
-			}
-			else
-			{
-				/* Make the Param node representing the subplan's result */
-				Param	   *newparam;
-
-				newparam = generate_new_param(param->paramtype, -1);
-				/* Record its ID */
-				context->righthandIds = lappend_int(context->righthandIds,
-													newparam->paramid);
-				return (Node *) newparam;
-			}
+			/*
+			 * We copy the list item to avoid having doubly-linked
+			 * substructure in the modified parse tree.  This is probably
+			 * unnecessary when it's a Param, but be safe.
+			 */
+			return (Node *) copyObject(list_nth(context->subst_nodes,
+												param->paramid - 1));
 		}
 	}
 	return expression_tree_mutator(node,
@@ -766,17 +773,19 @@ convert_IN_to_join(PlannerInfo *root, SubLink *sublink)
 	ininfo = makeNode(InClauseInfo);
 	ininfo->lefthand = left_varnos;
 	ininfo->righthand = bms_make_singleton(rtindex);
-	root->in_info_list = lappend(root->in_info_list, ininfo);
 
 	/*
-	 * Build the result qual expression.  As a side effect,
 	 * ininfo->sub_targetlist is filled with a list of Vars representing the
 	 * subselect outputs.
 	 */
+	ininfo->sub_targetlist = generate_subquery_vars(subselect->targetList,
+													rtindex);
+
+	/* Add the completed node to the query's list */
+	root->in_info_list = lappend(root->in_info_list, ininfo);
+
 	return convert_testexpr(sublink->testexpr,
-							rtindex,
-							&ininfo->sub_targetlist,
-							subselect->targetList);
+							ininfo->sub_targetlist);
 }
 
 /*
