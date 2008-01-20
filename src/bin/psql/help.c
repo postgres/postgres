@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.121 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.122 2008/01/20 21:13:55 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -17,6 +17,14 @@
 #include <unistd.h>				/* for geteuid() */
 #else
 #include <win32.h>
+#endif
+
+#ifndef WIN32
+#include <sys/ioctl.h>			/* for ioctl() */
+#endif
+
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
 #endif
 
 #include "pqsignal.h"
@@ -147,15 +155,6 @@ usage(void)
  *
  * print out help for the backslash commands
  */
-
-#ifndef TIOCGWINSZ
-struct winsize
-{
-	int			ws_row;
-	int			ws_col;
-};
-#endif
-
 void
 slashUsage(unsigned short int pager)
 {
@@ -280,24 +279,46 @@ helpSQL(const char *topic, unsigned short int pager)
 
 	if (!topic || strlen(topic) == 0)
 	{
-		int			i;
-		int			items_per_column = (QL_HELP_COUNT + 2) / 3;
+		/* Print all the available command names */
+		int			screen_width;
+		int			ncolumns;
+		int			nrows;
 		FILE	   *output;
+		int			i;
+		int			j;
 
-		output = PageOutput(items_per_column + 1, pager);
+#ifdef TIOCGWINSZ
+		struct winsize screen_size;
+
+		if (ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1)
+			screen_width = 80;	/* ioctl failed, assume 80 */
+		else
+			screen_width = screen_size.ws_col;
+#else
+		screen_width = 80;		/* default assumption */
+#endif
+
+		ncolumns = (screen_width - 3) / (QL_MAX_CMD_LEN + 1);
+		ncolumns = Max(ncolumns, 1);
+		nrows = (QL_HELP_COUNT + (ncolumns - 1)) / ncolumns;
+
+		output = PageOutput(nrows + 1, pager);
 
 		fputs(_("Available help:\n"), output);
 
-		for (i = 0; i < items_per_column; i++)
+		for (i = 0; i < nrows; i++)
 		{
-			fprintf(output, "  %-26s%-26s",
-					VALUE_OR_NULL(QL_HELP[i].cmd),
-					VALUE_OR_NULL(QL_HELP[i + items_per_column].cmd));
-			if (i + 2 * items_per_column < QL_HELP_COUNT)
-				fprintf(output, "%-26s",
-						VALUE_OR_NULL(QL_HELP[i + 2 * items_per_column].cmd));
+			fprintf(output, "  ");
+			for (j = 0; j < ncolumns-1; j++)
+				fprintf(output, "%-*s",
+						QL_MAX_CMD_LEN + 1,
+						VALUE_OR_NULL(QL_HELP[i + j * nrows].cmd));
+			if (i + j * nrows < QL_HELP_COUNT)
+				fprintf(output, "%s",
+						VALUE_OR_NULL(QL_HELP[i + j * nrows].cmd));
 			fputc('\n', output);
 		}
+
 		/* Only close if we used the pager */
 		if (output != stdout)
 		{
@@ -317,7 +338,7 @@ helpSQL(const char *topic, unsigned short int pager)
 		size_t		len,
 					wordlen;
 		int			nl_count = 0;
-		char	   *ch;
+		const char *ch;
 
 		/* User gets two chances: exact match, then the first word */
 

@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2000-2008, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/psql/create_help.pl,v 1.16 2008/01/01 19:45:55 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/psql/create_help.pl,v 1.17 2008/01/20 21:13:55 tgl Exp $
 #################################################################
 
 #
@@ -51,20 +51,21 @@ print OUT
 #ifndef $define
 #define $define
 
-#define N_(x) (x) /* gettext noop */
+#define N_(x) (x)				/* gettext noop */
 
 struct _helpStruct
 {
-    char	   *cmd;	   /* the command name */
-    char	   *help;	   /* the help associated with it */
-    char	   *syntax;	   /* the syntax associated with it */
+	const char	   *cmd;		/* the command name */
+	const char	   *help;		/* the help associated with it */
+	const char	   *syntax;		/* the syntax associated with it */
 };
 
 
-static struct _helpStruct QL_HELP[] = {
+static const struct _helpStruct QL_HELP[] = {
 ";
 
 $count = 0;
+$maxlen = 0;
 
 foreach $file (sort readdir DIR) {
     local ($cmdname, $cmddesc, $cmdsynopsis);
@@ -113,7 +114,9 @@ foreach $file (sort readdir DIR) {
         $cmdsynopsis =~ s/\"/\\"/g;
 
 	print OUT "    { \"$cmdname\",\n      N_(\"$cmddesc\"),\n      N_(\"$cmdsynopsis\") },\n\n";
-        $count++;
+
+	$count++;
+	$maxlen = ($maxlen >= length $cmdname) ? $maxlen : length $cmdname;
     }
     else {
 	print STDERR "$0: parsing file '$file' failed (N='$cmdname' D='$cmddesc')\n";
@@ -125,7 +128,8 @@ print OUT "
 };
 
 
-#define QL_HELP_COUNT $count
+#define QL_HELP_COUNT	$count		/* number of help items */
+#define QL_MAX_CMD_LEN	$maxlen		/* largest strlen(cmd) */
 
 
 #endif /* $define */
