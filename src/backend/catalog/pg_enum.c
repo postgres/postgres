@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.4 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.5 2008/01/20 17:50:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,14 +83,12 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 		 * labels are stored in a name field, for easier syscache lookup, so
 		 * check the length to make sure it's within range.
 		 */
-
 		if (strlen(lab) > (NAMEDATALEN - 1))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
-			errmsg("invalid enum label \"%s\", must be %d characters or less",
-				   lab,
-				   NAMEDATALEN - 1)));
-
+					 errmsg("invalid enum label \"%s\"", lab),
+					 errdetail("Labels must be %d characters or less.",
+							   NAMEDATALEN - 1)));
 
 		values[Anum_pg_enum_enumtypid - 1] = ObjectIdGetDatum(enumTypeOid);
 		namestrcpy(&enumlabel, lab);
