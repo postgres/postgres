@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.35 2007/04/03 04:14:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.36 2008/01/21 11:17:46 petere Exp $
  */
 #include "postgres.h"
 
@@ -151,6 +151,11 @@ main(int argc, char *argv[])
 
 	printf(_("pg_control version number:            %u\n"),
 		   ControlFile.pg_control_version);
+	if (ControlFile.pg_control_version % 65536 == 0 && ControlFile.pg_control_version / 65536 != 0)
+		printf(_("WARNING: possible byte ordering mismatch\n"
+				 "The byte ordering used to store the pg_control file might not match the one\n"
+				 "used by this program.  In that case the results below would be incorrect, and\n"
+				 "the PostgreSQL installation would be incompatible with this data directory.\n"));
 	printf(_("Catalog version number:               %u\n"),
 		   ControlFile.catalog_version_no);
 	printf(_("Database system identifier:           %s\n"),
