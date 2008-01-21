@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/dicts/regis.h,v 1.4 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/dicts/regis.h,v 1.5 2008/01/21 02:46:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ typedef struct Regis
 
 bool		RS_isRegis(const char *str);
 
-void		RS_compile(Regis *r, bool issuffix, char *str);
+void		RS_compile(Regis *r, bool issuffix, const char *str);
 void		RS_free(Regis *r);
 
 /*returns true if matches */

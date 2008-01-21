@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.10 2008/01/16 13:01:03 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.11 2008/01/21 02:46:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,7 +333,7 @@ NIAddAffix(IspellDict *Conf, int flag, char flagflags, const char *mask, const c
 		Affix->issimple = 0;
 		Affix->isregis = 1;
 		RS_compile(&(Affix->reg.regis), (type == FF_SUFFIX) ? true : false,
-				   (char *) ((mask && *mask) ? mask : VoidString));
+				   (mask && *mask) ? mask : VoidString);
 	}
 	else
 	{

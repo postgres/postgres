@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/regis.c,v 1.3 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/regis.c,v 1.4 2008/01/21 02:46:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,26 +17,58 @@
 #include "tsearch/dicts/regis.h"
 #include "tsearch/ts_locale.h"
 
-bool
-RS_isRegis(const char *str)
-{
-	while (str && *str)
-	{
-		if (t_isalpha(str) ||
-			t_iseq(str, '[') ||
-			t_iseq(str, ']') ||
-			t_iseq(str, '^'))
-			str += pg_mblen(str);
-		else
-			return false;
-	}
-	return true;
-}
-
 #define RS_IN_ONEOF 1
 #define RS_IN_ONEOF_IN	2
 #define RS_IN_NONEOF	3
 #define RS_IN_WAIT	4
+
+
+/*
+ * Test whether a regex is of the subset supported here.
+ * Keep this in sync with RS_compile!
+ */
+bool
+RS_isRegis(const char *str)
+{
+	int			state = RS_IN_WAIT;
+	const char *c = str;
+
+	while (*c)
+	{
+		if (state == RS_IN_WAIT)
+		{
+			if (t_isalpha(c))
+				/* okay */ ;
+			else if (t_iseq(c, '['))
+				state = RS_IN_ONEOF;
+			else
+				return false;
+		}
+		else if (state == RS_IN_ONEOF)
+		{
+			if (t_iseq(c, '^'))
+				state = RS_IN_NONEOF;
+			else if (t_isalpha(c))
+				state = RS_IN_ONEOF_IN;
+			else
+				return false;
+		}
+		else if (state == RS_IN_ONEOF_IN || state == RS_IN_NONEOF)
+		{
+			if (t_isalpha(c))
+				/* okay */ ;
+			else if (t_iseq(c, ']'))
+				state = RS_IN_WAIT;
+			else
+				return false;
+		}
+		else
+			elog(ERROR, "internal error in RS_isRegis: state %d", state);
+		c += pg_mblen(c);
+	}
+
+	return (state == RS_IN_WAIT);
+}
 
 static RegisNode *
 newRegisNode(RegisNode *prev, int len)
@@ -50,11 +82,11 @@ newRegisNode(RegisNode *prev, int len)
 }
 
 void
-RS_compile(Regis *r, bool issuffix, char *str)
+RS_compile(Regis *r, bool issuffix, const char *str)
 {
 	int			len = strlen(str);
 	int			state = RS_IN_WAIT;
-	char	   *c = (char *) str;
+	const char *c = str;
 	RegisNode  *ptr = NULL;
 
 	memset(r, 0, sizeof(Regis));
@@ -83,11 +115,8 @@ RS_compile(Regis *r, bool issuffix, char *str)
 				ptr->type = RSF_ONEOF;
 				state = RS_IN_ONEOF;
 			}
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-						 errmsg("invalid regis pattern: \"%s\"",
-								str)));
+			else				/* shouldn't get here */
+				elog(ERROR, "invalid regis pattern: \"%s\"", str);
 		}
 		else if (state == RS_IN_ONEOF)
 		{
@@ -102,11 +131,8 @@ RS_compile(Regis *r, bool issuffix, char *str)
 				ptr->len = pg_mblen(c);
 				state = RS_IN_ONEOF_IN;
 			}
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-						 errmsg("invalid regis pattern: \"%s\"",
-								str)));
+			else				/* shouldn't get here */
+				elog(ERROR, "invalid regis pattern: \"%s\"", str);
 		}
 		else if (state == RS_IN_ONEOF_IN || state == RS_IN_NONEOF)
 		{
@@ -117,16 +143,16 @@ RS_compile(Regis *r, bool issuffix, char *str)
 			}
 			else if (t_iseq(c, ']'))
 				state = RS_IN_WAIT;
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-						 errmsg("invalid regis pattern: \"%s\"",
-								str)));
+			else				/* shouldn't get here */
+				elog(ERROR, "invalid regis pattern: \"%s\"", str);
 		}
 		else
 			elog(ERROR, "internal error in RS_compile: state %d", state);
 		c += pg_mblen(c);
 	}
+
+	if (state != RS_IN_WAIT)		/* shouldn't get here */
+		elog(ERROR, "invalid regis pattern: \"%s\"", str);
 
 	ptr = r->node;
 	while (ptr)
