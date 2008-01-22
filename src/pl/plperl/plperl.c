@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.134 2007/12/01 17:58:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.135 2008/01/22 20:17:37 adunstan Exp $
  *
  **********************************************************************/
 
@@ -272,8 +272,8 @@ _PG_init(void)
 	"sub ::mksafefunc {" \
 	"      my $ret = $PLContainer->reval(qq[sub { $_[0] $_[1] }]); " \
 	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }" \
-	"$PLContainer->permit('require'); $PLContainer->reval('use strict;');" \
-	"$PLContainer->deny('require');" \
+	"$PLContainer->permit(qw[require caller]); $PLContainer->reval('use strict;');" \
+	"$PLContainer->deny(qw[require caller]); " \
 	"sub ::mk_strict_safefunc {" \
 	"      my $ret = $PLContainer->reval(qq[sub { BEGIN { strict->import(); } $_[0] $_[1] }]); " \
 	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }"
