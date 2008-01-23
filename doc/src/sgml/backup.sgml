@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.112 2007/12/17 09:03:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.113 2008/01/23 20:21:37 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -64,7 +64,7 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
   </para>
 
   <para>
-   As any other <productname>PostgreSQL</> client application,
+   Like any other <productname>PostgreSQL</> client application,
    <application>pg_dump</> will by default connect with the database
    user name that is equal to the current operating system user name. To override
    this, either specify the <option>-U</option> option or set the
@@ -407,7 +407,7 @@ tar -cf backup.tar /usr/local/pgsql/data
    smaller than an SQL dump. On the contrary, it will most likely be
    larger. (<application>pg_dump</application> does not need to dump
    the contents of indexes for example, just the commands to recreate
-   them.)
+   them.)  However, taking a file system backup might be faster.
   </para>
  </sect1>
 
@@ -556,7 +556,13 @@ archive_command = 'cp -i %p /mnt/server/archivedir/%f &lt;/dev/null'
 </programlisting>
     which will copy archivable WAL segments to the directory
     <filename>/mnt/server/archivedir</>.  (This is an example, not a
-    recommendation, and might not work on all platforms.)
+    recommendation, and might not work on all platforms.)  After the
+    <literal>%p</> and <literal>%f</> parameters have been replaced,
+    the actual command executed might look like this:
+<programlisting>
+cp -i pg_xlog/00000001000000A900000065 /mnt/server/archivedir/00000001000000A900000065 &lt;/dev/null
+</programlisting>
+    A similar command will be generated for each new file to be archived.
    </para>
 
    <para>
