@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.120 2007/12/11 18:30:20 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.121 2008/01/23 19:51:29 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1740,15 +1740,15 @@ SELECT somefunc() OR true;
     used.  For example, this is an untrustworthy way of trying to
     avoid division by zero in a <literal>WHERE</> clause:
 <programlisting>
-SELECT ... WHERE x &lt;&gt; 0 AND y/x &gt; 1.5;
+SELECT ... WHERE x &gt; 0 AND y/x &gt; 1.5;
 </programlisting>
     But this is safe:
 <programlisting>
-SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
+SELECT ... WHERE CASE WHEN x &gt; 0 THEN y/x &gt; 1.5 ELSE false END;
 </programlisting>
     A <literal>CASE</> construct used in this fashion will defeat optimization
     attempts, so it should only be done when necessary.  (In this particular
-    example, it would be best to sidestep the problem by writing
+    example, it would be better to sidestep the problem by writing
     <literal>y &gt; 1.5*x</> instead.)
    </para>
   </sect2>
