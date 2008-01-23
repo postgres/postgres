@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.135 2008/01/22 20:17:37 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.136 2008/01/23 00:55:47 adunstan Exp $
  *
  **********************************************************************/
 
@@ -259,6 +259,13 @@ _PG_init(void)
 
 #define SAFE_MODULE \
 	"require Safe; $Safe::VERSION"
+
+/* 
+ * The temporary enabling of the caller opcode here is to work around a
+ * bug in perl 5.10, which unkindly changed the way its Safe.pm works, without
+ * notice. It is quite safe, as caller is informational only, and in any case
+ * we only enable it while we load the 'strict' module.
+ */
 
 #define SAFE_OK \
 	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');" \
