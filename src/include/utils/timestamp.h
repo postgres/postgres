@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.73 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.74 2008/01/23 21:26:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,7 @@ typedef double fsec_t;
 #define INTERVAL_RANGE(t) (((t) >> 16) & INTERVAL_RANGE_MASK)
 
 #ifdef HAVE_INT64_TIMESTAMP
-#define TimestampTzPlusMilliseconds(tz,ms) ((tz) + ((ms) * 1000))
+#define TimestampTzPlusMilliseconds(tz,ms) ((tz) + ((ms) * (int64) 1000))
 #else
 #define TimestampTzPlusMilliseconds(tz,ms) ((tz) + ((ms) / 1000.0))
 #endif
