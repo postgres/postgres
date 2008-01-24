@@ -1173,7 +1173,7 @@ ORDER BY col1
     5.2) PostgreSQL'e nasýl yeni tipler/fonksiyonlar ekleyebilirim?
     
    Çalýþmalarýnýzý pgsql-hackers e-posta listesine gönderiniz. Kodunuz
-   incelendikten sonra /contrib dizinine konacaktýr.
+   incelendikten sonra contrib dizinine konacaktýr.
    
     5.3) Bir tuple dondürmek icin bir C fonksiyonunu nasil yazarým?
     

@@ -7,7 +7,7 @@ To use pgindent:
 
 2) Install to /usr/local/pgsql
 
-3) Install all /contrib modules
+3) Install all contrib modules
 
 4) Save a list of typedefs by running:
 

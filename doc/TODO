@@ -272,11 +272,11 @@ Data Types
 
 * Binary Data
 
-	o Improve vacuum of large objects, like /contrib/vacuumlo?
+	o Improve vacuum of large objects, like contrib/vacuumlo?
 	o Add security checking for large objects
 	o Auto-delete large objects when referencing row is deleted
 
-          /contrib/lo offers this functionality.
+          contrib/lo offers this functionality.
 
 	o Allow read/write into TOAST values like large objects
 
@@ -1312,7 +1312,7 @@ Source Code
 ===========
 
 * Add use of 'const' for variables in source tree
-* Move some things from /contrib into main tree
+* Move some things from contrib into main tree
 * %Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
 * Add optional CRC checksum to heap and index pages
@@ -1321,7 +1321,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Allow cross-compiling by generating the zic database on the target system
 * Improve NLS maintenance of libpgport messages linked onto applications
-* Clean up casting in /contrib/isn
+* Clean up casting in contrib/isn
 
   http://archives.postgresql.org/pgsql-hackers/2006-11/msg00245.php
 

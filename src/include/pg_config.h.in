@@ -672,7 +672,7 @@
 /* Define to 1 to build with XML support. (--with-libxml) */
 #undef USE_LIBXML
 
-/* Define to 1 to use XSLT support when building /contrib/xml2.
+/* Define to 1 to use XSLT support when building contrib/xml2.
    (--with-libxslt) */
 #undef USE_LIBXSLT
 
