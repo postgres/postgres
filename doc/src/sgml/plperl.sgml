@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.66 2007/05/04 14:55:32 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.67 2008/01/25 15:28:35 adunstan Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -150,7 +150,7 @@ $$ LANGUAGE plperl;
 
 <programlisting>
     my $arg = shift;
-    $arg =~ s!\\(\d{3})!chr(oct($1))!ge;
+    $arg =~ s!\\(?:\\|(\d{3}))!$1 ? chr(oct($1)) : "\\"!ge;
 </programlisting>
 
   </para>
@@ -161,7 +161,7 @@ $$ LANGUAGE plperl;
    is how to escape binary data for a return value of type <type>bytea</>:
 
 <programlisting>
-    $retval =~ s!([^ -~])!sprintf("\\%03o",ord($1))!ge;
+    $retval =~ s!(\\|[^ -~])!sprintf("\\%03o",ord($1))!ge;
     return $retval;
 </programlisting>
 
