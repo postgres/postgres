@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.43 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.44 2008/01/25 20:42:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ static bool pipe_eof_seen = false;
 static FILE *syslogFile = NULL;
 static FILE *csvlogFile = NULL;
 static char *last_file_name = NULL;
-static char *last_csvfile_name = NULL;
+static char *last_csv_file_name = NULL;
 
 /*
  * Buffers for saving partial messages from different backends. We don't expect
@@ -345,12 +345,12 @@ SysLoggerMain(int argc, char *argv[])
 				rotation_requested = true;
 				size_rotation_for |= LOG_DESTINATION_STDERR;
 			}
-			if (csvlogFile != NULL && ftell(csvlogFile) >= Log_RotationSize * 1024L)
+			if (csvlogFile != NULL &&
+				ftell(csvlogFile) >= Log_RotationSize * 1024L)
 			{
 				rotation_requested = true;
 				size_rotation_for |= LOG_DESTINATION_CSVLOG;
 			}
-
 		}
 
 		if (rotation_requested)
@@ -1056,7 +1056,8 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 	if (time_based_rotation || (size_rotation_for & LOG_DESTINATION_STDERR))
 	{
 		if (Log_truncate_on_rotation && time_based_rotation &&
-			last_file_name != NULL && strcmp(filename, last_file_name) != 0)
+			last_file_name != NULL &&
+			strcmp(filename, last_file_name) != 0)
 			fh = fopen(filename, "w");
 		else
 			fh = fopen(filename, "a");
@@ -1084,6 +1085,8 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 				Log_RotationSize = 0;
 			}
 			pfree(filename);
+			if (csvfilename)
+				pfree(csvfilename);
 			return;
 		}
 
@@ -1107,20 +1110,16 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 		if (last_file_name != NULL)
 			pfree(last_file_name);
 		last_file_name = filename;
-
-
 	}
 
-	/* same as above, but for csv file. */
+	/* Same as above, but for csv file. */
 
-	if (csvlogFile != NULL && (
-							   time_based_rotation ||
-							   (size_rotation_for & LOG_DESTINATION_STDERR)))
+	if (csvlogFile != NULL &&
+		(time_based_rotation || (size_rotation_for & LOG_DESTINATION_CSVLOG)))
 	{
 		if (Log_truncate_on_rotation && time_based_rotation &&
-			last_csvfile_name != NULL &&
-			strcmp(csvfilename, last_csvfile_name) != 0)
-
+			last_csv_file_name != NULL &&
+			strcmp(csvfilename, last_csv_file_name) != 0)
 			fh = fopen(csvfilename, "w");
 		else
 			fh = fopen(csvfilename, "a");
@@ -1168,13 +1167,12 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 #endif
 
 		/* instead of pfree'ing filename, remember it for next time */
-		if (last_csvfile_name != NULL)
-			pfree(last_csvfile_name);
-		last_csvfile_name = filename;
+		if (last_csv_file_name != NULL)
+			pfree(last_csv_file_name);
+		last_csv_file_name = csvfilename;
 	}
 
 	set_next_rotation_time();
-
 }
 
 
