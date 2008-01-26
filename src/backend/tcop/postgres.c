@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.541 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.542 2008/01/26 19:55:08 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2449,10 +2449,9 @@ die(SIGNAL_ARGS)
 			/* bump holdoff count to make ProcessInterrupts() a no-op */
 			/* until we are done getting ready for it */
 			InterruptHoldoffCount++;
+			LockWaitCancel();	/* prevent CheckDeadLock from running */
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
-			/* Make sure CheckDeadLock won't run while shutting down... */
-			LockWaitCancel();
 			InterruptHoldoffCount--;
 			ProcessInterrupts();
 		}
@@ -2498,20 +2497,16 @@ StatementCancelHandler(SIGNAL_ARGS)
 		 * waiting for input, however.
 		 */
 		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
-			CritSectionCount == 0)
+			CritSectionCount == 0 && !DoingCommandRead)
 		{
 			/* bump holdoff count to make ProcessInterrupts() a no-op */
 			/* until we are done getting ready for it */
 			InterruptHoldoffCount++;
-			if (LockWaitCancel())
-			{
-				DisableNotifyInterrupt();
-				DisableCatchupInterrupt();
-				InterruptHoldoffCount--;
-				ProcessInterrupts();
-			}
-			else
-				InterruptHoldoffCount--;
+			LockWaitCancel();	/* prevent CheckDeadLock from running */
+			DisableNotifyInterrupt();
+			DisableCatchupInterrupt();
+			InterruptHoldoffCount--;
+			ProcessInterrupts();
 		}
 	}
 

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/posix_sema.c,v 1.19 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/posix_sema.c,v 1.20 2008/01/26 19:55:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,37 +241,10 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	int			errStatus;
 
 	/*
-	 * Note: if errStatus is -1 and errno == EINTR then it means we returned
-	 * from the operation prematurely because we were sent a signal.  So we
-	 * try and lock the semaphore again.
-	 *
-	 * Each time around the loop, we check for a cancel/die interrupt. We
-	 * assume that if such an interrupt comes in while we are waiting, it will
-	 * cause the sem_wait() call to exit with errno == EINTR, so that we will
-	 * be able to service the interrupt (if not in a critical section
-	 * already).
-	 *
-	 * Once we acquire the lock, we do NOT check for an interrupt before
-	 * returning.  The caller needs to be able to record ownership of the lock
-	 * before any interrupt can be accepted.
-	 *
-	 * There is a window of a few instructions between CHECK_FOR_INTERRUPTS
-	 * and entering the sem_wait() call.  If a cancel/die interrupt occurs in
-	 * that window, we would fail to notice it until after we acquire the lock
-	 * (or get another interrupt to escape the sem_wait()).  We can avoid this
-	 * problem by temporarily setting ImmediateInterruptOK to true before we
-	 * do CHECK_FOR_INTERRUPTS; then, a die() interrupt in this interval will
-	 * execute directly.  However, there is a huge pitfall: there is another
-	 * window of a few instructions after the sem_wait() before we are able to
-	 * reset ImmediateInterruptOK.	If an interrupt occurs then, we'll lose
-	 * control, which means that the lock has been acquired but our caller did
-	 * not get a chance to record the fact. Therefore, we only set
-	 * ImmediateInterruptOK if the caller tells us it's OK to do so, ie, the
-	 * caller does not need to record acquiring the lock.  (This is currently
-	 * true for lockmanager locks, since the process that granted us the lock
-	 * did all the necessary state updates. It's not true for Posix semaphores
-	 * used to implement LW locks or emulate spinlocks --- but the wait time
-	 * for such locks should not be very long, anyway.)
+	 * See notes in sysv_sema.c's implementation of PGSemaphoreLock.
+	 * Just as that code does for semop(), we handle both the case where
+	 * sem_wait() returns errno == EINTR after a signal, and the case
+	 * where it just keeps waiting.
 	 */
 	do
 	{
