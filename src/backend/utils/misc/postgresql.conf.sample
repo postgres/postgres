@@ -414,8 +414,8 @@
 #check_function_bodies = on
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
+#session_replication_role = 'origin'
 #statement_timeout = 0			# 0 is disabled
-#session_replication_role = "origin"
 #vacuum_freeze_min_age = 100000000
 #xmlbinary = 'base64'
 #xmloption = 'content'
