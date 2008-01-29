@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.355 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.356 2008/01/29 02:06:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1963,25 +1963,16 @@ makeEmptyPGconn(void)
 
 /*
  * freePGconn
- *	 - free the PGconn data structure
+ *	 - free an idle (closed) PGconn data structure
  *
- * When changing/adding to this function, see also closePGconn!
+ * NOTE: this should not overlap any functionality with closePGconn().
+ * Clearing/resetting of transient state belongs there; what we do here is
+ * release data that is to be held for the life of the PGconn structure.
+ * If a value ought to be cleared/freed during PQreset(), do it there not here.
  */
 static void
 freePGconn(PGconn *conn)
 {
-	PGnotify   *notify;
-	pgParameterStatus *pstatus;
-
-	if (!conn)
-		return;
-
-	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
-	if (conn->sock >= 0)
-	{
-		pqsecure_close(conn);
-		closesocket(conn->sock);
-	}
 	if (conn->pghost)
 		free(conn->pghost);
 	if (conn->pghostaddr)
@@ -2011,65 +2002,13 @@ freePGconn(PGconn *conn)
 	/* Note that conn->Pfdebug is not ours to close or free */
 	if (conn->last_query)
 		free(conn->last_query);
-	pg_freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
-	notify = conn->notifyHead;
-	while (notify != NULL)
-	{
-		PGnotify   *prev = notify;
-
-		notify = notify->next;
-		free(prev);
-	}
-#ifdef ENABLE_GSS
-	{
-		OM_uint32	min_s;
-
-		if (conn->gctx)
-			gss_delete_sec_context(&min_s, &conn->gctx, GSS_C_NO_BUFFER);
-		if (conn->gtarg_nam)
-			gss_release_name(&min_s, &conn->gtarg_nam);
-		if (conn->ginbuf.length)
-			gss_release_buffer(&min_s, &conn->ginbuf);
-		if (conn->goutbuf.length)
-			gss_release_buffer(&min_s, &conn->goutbuf);
-	}
-#endif
-#ifdef ENABLE_SSPI
-	{
-		if (conn->ginbuf.length)
-			free(conn->ginbuf.value);
-
-		if (conn->sspitarget)
-			free(conn->sspitarget);
-
-		if (conn->sspicred)
-		{
-			FreeCredentialsHandle(conn->sspicred);
-			free(conn->sspicred);
-		}
-		if (conn->sspictx)
-		{
-			DeleteSecurityContext(conn->sspictx);
-			free(conn->sspictx);
-		}
-	}
-#endif
-	pstatus = conn->pstatus;
-	while (pstatus != NULL)
-	{
-		pgParameterStatus *prev = pstatus;
-
-		pstatus = pstatus->next;
-		free(prev);
-	}
-	if (conn->lobjfuncs)
-		free(conn->lobjfuncs);
 	if (conn->inBuffer)
 		free(conn->inBuffer);
 	if (conn->outBuffer)
 		free(conn->outBuffer);
 	termPQExpBuffer(&conn->errorMessage);
 	termPQExpBuffer(&conn->workBuffer);
+
 	free(conn);
 
 #ifdef WIN32
@@ -2081,7 +2020,9 @@ freePGconn(PGconn *conn)
  * closePGconn
  *	 - properly close a connection to the backend
  *
- * Release all transient state, but NOT the connection parameters.
+ * This should reset or release all transient state, but NOT the connection
+ * parameters.  On exit, the PGconn should be in condition to start a fresh
+ * connection with the same parameters (see PQreset()).
  */
 static void
 closePGconn(PGconn *conn)
@@ -2105,9 +2046,10 @@ closePGconn(PGconn *conn)
 	}
 
 	/*
-	 * must reset the blocking status so a possible reconnect will work don't
-	 * call PQsetnonblocking() because it will fail if it's unable to flush
-	 * the connection.
+	 * Must reset the blocking status so a possible reconnect will work.
+	 *
+	 * Don't call PQsetnonblocking() because it will fail if it's unable to
+	 * flush the connection.
 	 */
 	conn->nonblocking = FALSE;
 
@@ -2135,7 +2077,7 @@ closePGconn(PGconn *conn)
 		notify = notify->next;
 		free(prev);
 	}
-	conn->notifyHead = NULL;
+	conn->notifyHead = conn->notifyTail = NULL;
 	pstatus = conn->pstatus;
 	while (pstatus != NULL)
 	{
@@ -2150,6 +2092,41 @@ closePGconn(PGconn *conn)
 	conn->lobjfuncs = NULL;
 	conn->inStart = conn->inCursor = conn->inEnd = 0;
 	conn->outCount = 0;
+#ifdef ENABLE_GSS
+	{
+		OM_uint32	min_s;
+
+		if (conn->gctx)
+			gss_delete_sec_context(&min_s, &conn->gctx, GSS_C_NO_BUFFER);
+		if (conn->gtarg_nam)
+			gss_release_name(&min_s, &conn->gtarg_nam);
+		if (conn->ginbuf.length)
+			gss_release_buffer(&min_s, &conn->ginbuf);
+		if (conn->goutbuf.length)
+			gss_release_buffer(&min_s, &conn->goutbuf);
+	}
+#endif
+#ifdef ENABLE_SSPI
+	if (conn->ginbuf.length)
+		free(conn->ginbuf.value);
+	conn->ginbuf.length = 0;
+	conn->ginbuf.value = NULL;
+	if (conn->sspitarget)
+		free(conn->sspitarget);
+	conn->sspitarget = NULL;
+	if (conn->sspicred)
+	{
+		FreeCredentialsHandle(conn->sspicred);
+		free(conn->sspicred);
+		conn->sspicred = NULL;
+	}
+	if (conn->sspictx)
+	{
+		DeleteSecurityContext(conn->sspictx);
+		free(conn->sspictx);
+		conn->sspictx = NULL;
+	}
+#endif
 }
 
 /*
