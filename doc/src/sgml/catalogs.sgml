@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.159 2007/10/01 21:10:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.160 2008/01/29 13:03:50 petere Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1400,7 +1400,7 @@
   </para>
 
   <table>
-   <title><structfield>pg_cast</> Columns</title>
+   <title><structname>pg_cast</> Columns</title>
 
    <tgroup cols=4>
     <thead>
