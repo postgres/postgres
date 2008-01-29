@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.101 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.102 2008/01/29 02:03:39 tgl Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -162,6 +162,50 @@ static bool pq_initssllib = true;
 static SSL_CTX *SSL_context = NULL;
 #endif
 
+/*
+ * Macros to handle disabling and then restoring the state of SIGPIPE handling.
+ * Note that DISABLE_SIGPIPE() must appear at the start of a block.
+ */
+
+#ifndef WIN32
+#ifdef ENABLE_THREAD_SAFETY
+
+#define DISABLE_SIGPIPE(failaction) \
+	sigset_t	osigmask; \
+	bool		sigpipe_pending; \
+	bool		got_epipe = false; \
+\
+	if (pq_block_sigpipe(&osigmask, &sigpipe_pending) < 0) \
+		failaction
+
+#define REMEMBER_EPIPE(cond) \
+	do { \
+		if (cond) \
+			got_epipe = true; \
+	} while (0)
+
+#define RESTORE_SIGPIPE() \
+	pq_reset_sigpipe(&osigmask, sigpipe_pending, got_epipe)
+
+#else	/* !ENABLE_THREAD_SAFETY */
+
+#define DISABLE_SIGPIPE(failaction) \
+	pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN)
+
+#define REMEMBER_EPIPE(cond)
+
+#define RESTORE_SIGPIPE() \
+	pqsignal(SIGPIPE, oldsighandler)
+
+#endif	/* ENABLE_THREAD_SAFETY */
+#else	/* WIN32 */
+
+#define DISABLE_SIGPIPE(failaction)
+#define REMEMBER_EPIPE(cond)
+#define RESTORE_SIGPIPE()
+
+#endif	/* WIN32 */
+
 /* ------------------------------------------------------------ */
 /*			 Procedures common to all secure sessions			*/
 /* ------------------------------------------------------------ */
@@ -268,6 +312,9 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 	{
 		int			err;
 
+		/* SSL_read can write to the socket, so we need to disable SIGPIPE */
+		DISABLE_SIGPIPE(return -1);
+
 rloop:
 		n = SSL_read(conn->ssl, ptr, len);
 		err = SSL_get_error(conn->ssl, n);
@@ -292,9 +339,12 @@ rloop:
 					char		sebuf[256];
 
 					if (n == -1)
+					{
+						REMEMBER_EPIPE(SOCK_ERRNO == EPIPE);
 						printfPQExpBuffer(&conn->errorMessage,
 									libpq_gettext("SSL SYSCALL error: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+					}
 					else
 					{
 						printfPQExpBuffer(&conn->errorMessage,
@@ -325,6 +375,8 @@ rloop:
 				n = -1;
 				break;
 		}
+
+		RESTORE_SIGPIPE();
 	}
 	else
 #endif
@@ -341,19 +393,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 {
 	ssize_t		n;
 
-#ifndef WIN32
-#ifdef ENABLE_THREAD_SAFETY
-	sigset_t	osigmask;
-	bool		sigpipe_pending;
-	bool		got_epipe = false;
-
-
-	if (pq_block_sigpipe(&osigmask, &sigpipe_pending) < 0)
-		return -1;
-#else
-	pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
-#endif   /* ENABLE_THREAD_SAFETY */
-#endif   /* WIN32 */
+	DISABLE_SIGPIPE(return -1);
 
 #ifdef USE_SSL
 	if (conn->ssl)
@@ -384,10 +424,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 
 					if (n == -1)
 					{
-#if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
-						if (SOCK_ERRNO == EPIPE)
-							got_epipe = true;
-#endif
+						REMEMBER_EPIPE(SOCK_ERRNO == EPIPE);
 						printfPQExpBuffer(&conn->errorMessage,
 									libpq_gettext("SSL SYSCALL error: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
@@ -426,19 +463,10 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 #endif
 	{
 		n = send(conn->sock, ptr, len, 0);
-#if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
-		if (n < 0 && SOCK_ERRNO == EPIPE)
-			got_epipe = true;
-#endif
+		REMEMBER_EPIPE(n < 0 && SOCK_ERRNO == EPIPE);
 	}
 
-#ifndef WIN32
-#ifdef ENABLE_THREAD_SAFETY
-	pq_reset_sigpipe(&osigmask, sigpipe_pending, got_epipe);
-#else
-	pqsignal(SIGPIPE, oldsighandler);
-#endif   /* ENABLE_THREAD_SAFETY */
-#endif   /* WIN32 */
+	RESTORE_SIGPIPE();
 
 	return n;
 }
@@ -1092,9 +1120,13 @@ close_SSL(PGconn *conn)
 {
 	if (conn->ssl)
 	{
+		DISABLE_SIGPIPE((void) 0);
 		SSL_shutdown(conn->ssl);
 		SSL_free(conn->ssl);
 		conn->ssl = NULL;
+		/* We have to assume we got EPIPE */
+		REMEMBER_EPIPE(true);
+		RESTORE_SIGPIPE();
 	}
 
 	if (conn->peer)
@@ -1166,6 +1198,7 @@ PQgetssl(PGconn *conn)
 	return NULL;
 }
 #endif   /* USE_SSL */
+
 
 #if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 
@@ -1251,4 +1284,4 @@ pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending, bool got_epipe)
 	SOCK_ERRNO_SET(save_errno);
 }
 
-#endif   /* ENABLE_THREAD_SAFETY */
+#endif   /* ENABLE_THREAD_SAFETY && !WIN32 */
