@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.481 2008/01/01 19:45:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.482 2008/01/30 18:35:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -553,6 +553,20 @@ main(int argc, char **argv)
 	do_sql_command(g_conn, "SET DATESTYLE = ISO");
 
 	/*
+	 * If supported, set extra_float_digits so that we can dump float data
+	 * exactly (given correctly implemented float I/O code, anyway)
+	 */
+	if (g_fout->remoteVersion >= 70400)
+		do_sql_command(g_conn, "SET extra_float_digits TO 2");
+
+	/*
+	 * If synchronized scanning is supported, disable it, to prevent
+	 * unpredictable changes in row ordering across a dump and reload.
+	 */
+	if (g_fout->remoteVersion >= 80300)
+		do_sql_command(g_conn, "SET synchronize_seqscans TO off");
+
+	/*
 	 * Start serializable transaction to dump consistent data.
 	 */
 	do_sql_command(g_conn, "BEGIN");
@@ -566,13 +580,6 @@ main(int argc, char **argv)
 		username_subquery = "SELECT usename FROM pg_catalog.pg_user WHERE usesysid =";
 	else
 		username_subquery = "SELECT usename FROM pg_user WHERE usesysid =";
-
-	/*
-	 * If supported, set extra_float_digits so that we can dump float data
-	 * exactly (given correctly implemented float I/O code, anyway)
-	 */
-	if (g_fout->remoteVersion >= 70400)
-		do_sql_command(g_conn, "SET extra_float_digits TO 2");
 
 	/* Find the last built-in OID, if needed */
 	if (g_fout->remoteVersion < 70300)

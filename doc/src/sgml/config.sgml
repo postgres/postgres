@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.162 2008/01/27 19:12:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.163 2008/01/30 18:35:55 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -4607,6 +4607,28 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         that the escape string syntax (<literal>E'...'</>) is supported.
         Escape string syntax should be used if an application desires
         backslashes to be treated as escape characters.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-synchronize-seqscans" xreflabel="synchronize_seqscans">
+      <term><varname>synchronize_seqscans</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>synchronize_seqscans</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        This allows sequential scans of large tables to synchronize with each
+        other, so that concurrent scans read the same block at about the
+        same time and hence share the I/O workload.  When this is enabled,
+        a scan might start in the middle of the table and then <quote>wrap
+        around</> the end to cover all rows, so as to synchronize with the
+        activity of scans already in progress.  This can result in
+        unpredictable changes in the row ordering returned by queries that
+        have no <literal>ORDER BY</> clause.  Setting this parameter to
+        <literal>off</> ensures the pre-8.3 behavior in which a sequential
+        scan always starts from the beginning of the table.  The default
+        is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
