@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.168 2008/01/15 21:20:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.169 2008/01/30 19:46:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "catalog/namespace.h"
 #include "catalog/toasting.h"
 #include "commands/cluster.h"
+#include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
@@ -459,15 +460,10 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 			   errmsg("cannot cluster temporary tables of other sessions")));
 
 	/*
-	 * Also check for pending AFTER trigger events on the relation.  We can't
-	 * just leave those be, since they will try to fetch tuples that the
-	 * CLUSTER has moved to new TIDs.
+	 * Also check for active uses of the relation in the current transaction,
+	 * including open scans and pending AFTER trigger events.
 	 */
-	if (AfterTriggerPendingOnRel(RelationGetRelid(OldHeap)))
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("cannot cluster table \"%s\" because it has pending trigger events",
-						RelationGetRelationName(OldHeap))));
+	CheckTableNotInUse(OldHeap, "CLUSTER");
 
 	/* Drop relcache refcnt on OldIndex, but keep lock */
 	index_close(OldIndex, NoLock);

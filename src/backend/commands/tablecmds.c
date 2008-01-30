@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.240 2008/01/17 18:56:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.241 2008/01/30 19:46:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,7 +194,6 @@ static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
 							 Relation rel, Relation pkrel, Oid constraintOid);
 static void createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 						 Oid constraintOid);
-static void CheckTableNotInUse(Relation rel);
 static void ATController(Relation rel, List *cmds, bool recurse);
 static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		  bool recurse, bool recursing);
@@ -681,15 +680,10 @@ truncate_check_rel(Relation rel)
 			  errmsg("cannot truncate temporary tables of other sessions")));
 
 	/*
-	 * Also check for pending AFTER trigger events on the relation.  We can't
-	 * just leave those be, since they will try to fetch tuples that the
-	 * TRUNCATE removes.
+	 * Also check for active uses of the relation in the current transaction,
+	 * including open scans and pending AFTER trigger events.
 	 */
-	if (AfterTriggerPendingOnRel(RelationGetRelid(rel)))
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("cannot truncate table \"%s\" because it has pending trigger events",
-						RelationGetRelationName(rel))));
+	CheckTableNotInUse(rel, "TRUNCATE");
 }
 
 /*----------
@@ -1729,6 +1723,55 @@ renamerel(Oid myrelid, const char *newrelname, ObjectType reltype)
 }
 
 /*
+ * Disallow ALTER TABLE (and similar commands) when the current backend has
+ * any open reference to the target table besides the one just acquired by
+ * the calling command; this implies there's an open cursor or active plan.
+ * We need this check because our AccessExclusiveLock doesn't protect us
+ * against stomping on our own foot, only other people's feet!
+ *
+ * For ALTER TABLE, the only case known to cause serious trouble is ALTER
+ * COLUMN TYPE, and some changes are obviously pretty benign, so this could
+ * possibly be relaxed to only error out for certain types of alterations.
+ * But the use-case for allowing any of these things is not obvious, so we
+ * won't work hard at it for now.
+ *
+ * We also reject these commands if there are any pending AFTER trigger events
+ * for the rel.  This is certainly necessary for the rewriting variants of
+ * ALTER TABLE, because they don't preserve tuple TIDs and so the pending
+ * events would try to fetch the wrong tuples.  It might be overly cautious
+ * in other cases, but again it seems better to err on the side of paranoia.
+ *
+ * REINDEX calls this with "rel" referencing the index to be rebuilt; here
+ * we are worried about active indexscans on the index.  The trigger-event
+ * check can be skipped, since we are doing no damage to the parent table.
+ *
+ * The statement name (eg, "ALTER TABLE") is passed for use in error messages.
+ */
+void
+CheckTableNotInUse(Relation rel, const char *stmt)
+{
+	int			expected_refcnt;
+
+	expected_refcnt = rel->rd_isnailed ? 2 : 1;
+	if (rel->rd_refcnt != expected_refcnt)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 /* translator: first %s is a SQL command, eg ALTER TABLE */
+				 errmsg("cannot %s \"%s\" because "
+						"it is being used by active queries in this session",
+						stmt, RelationGetRelationName(rel))));
+
+	if (rel->rd_rel->relkind != RELKIND_INDEX &&
+		AfterTriggerPendingOnRel(RelationGetRelid(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 /* translator: first %s is a SQL command, eg ALTER TABLE */
+				 errmsg("cannot %s \"%s\" because "
+						"it has pending trigger events",
+						stmt, RelationGetRelationName(rel))));
+}
+
+/*
  * AlterTable
  *		Execute ALTER TABLE, which can be a list of subcommands
  *
@@ -1766,46 +1809,9 @@ AlterTable(AlterTableStmt *stmt)
 {
 	Relation	rel = relation_openrv(stmt->relation, AccessExclusiveLock);
 
-	CheckTableNotInUse(rel);
+	CheckTableNotInUse(rel, "ALTER TABLE");
 
 	ATController(rel, stmt->cmds, interpretInhOption(stmt->relation->inhOpt));
-}
-
-/*
- * Disallow ALTER TABLE when the current backend has any open reference to
- * it besides the one we just got (such as an open cursor or active plan);
- * our AccessExclusiveLock doesn't protect us against stomping on our own
- * foot, only other people's feet!
- *
- * Note: the only case known to cause serious trouble is ALTER COLUMN TYPE,
- * and some changes are obviously pretty benign, so this could possibly be
- * relaxed to only error out for certain types of alterations.  But the
- * use-case for allowing any of these things is not obvious, so we won't
- * work hard at it for now.
- *
- * We also reject ALTER TABLE if there are any pending AFTER trigger events
- * for the rel.  This is certainly necessary for the rewriting variants of
- * ALTER TABLE, because they don't preserve tuple TIDs and so the pending
- * events would try to fetch the wrong tuples.  It might be overly cautious
- * in other cases, but again it seems better to err on the side of paranoia.
- */
-static void
-CheckTableNotInUse(Relation rel)
-{
-	int			expected_refcnt;
-
-	expected_refcnt = rel->rd_isnailed ? 2 : 1;
-	if (rel->rd_refcnt != expected_refcnt)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("relation \"%s\" is being used by active queries in this session",
-						RelationGetRelationName(rel))));
-
-	if (AfterTriggerPendingOnRel(RelationGetRelid(rel)))
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("cannot alter table \"%s\" because it has pending trigger events",
-						RelationGetRelationName(rel))));
 }
 
 /*
@@ -2820,7 +2826,7 @@ ATSimpleRecursion(List **wqueue, Relation rel,
 			if (childrelid == relid)
 				continue;
 			childrel = relation_open(childrelid, AccessExclusiveLock);
-			CheckTableNotInUse(childrel);
+			CheckTableNotInUse(childrel, "ALTER TABLE");
 			ATPrepCmd(wqueue, childrel, cmd, false, true);
 			relation_close(childrel, NoLock);
 		}
@@ -2852,7 +2858,7 @@ ATOneLevelRecursion(List **wqueue, Relation rel,
 		Relation	childrel;
 
 		childrel = relation_open(childrelid, AccessExclusiveLock);
-		CheckTableNotInUse(childrel);
+		CheckTableNotInUse(childrel, "ALTER TABLE");
 		ATPrepCmd(wqueue, childrel, cmd, true, true);
 		relation_close(childrel, NoLock);
 	}
@@ -3681,7 +3687,7 @@ ATExecDropColumn(Relation rel, const char *colName,
 			Form_pg_attribute childatt;
 
 			childrel = heap_open(childrelid, AccessExclusiveLock);
-			CheckTableNotInUse(childrel);
+			CheckTableNotInUse(childrel, "ALTER TABLE");
 
 			tuple = SearchSysCacheCopyAttName(childrelid, colName);
 			if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
