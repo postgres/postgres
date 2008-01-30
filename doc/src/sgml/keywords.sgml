@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.19 2006/12/30 21:21:52 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.20 2008/01/30 10:37:36 petere Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -208,7 +208,7 @@
    </row>
    <row>
     <entry><token>ALWAYS</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry></entry>
     <entry></entry>
@@ -343,6 +343,13 @@
     <entry><token>BACKWARD</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>BASE64</token></entry>
+    <entry></entry>
+    <entry>non-reserved</entry>
     <entry></entry>
     <entry></entry>
    </row>
@@ -795,6 +802,13 @@
     <entry>non-reserved</entry>
    </row>
    <row>
+    <entry><token>CONFIGURATION</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>CONNECT</token></entry>
     <entry></entry>
     <entry>reserved</entry>
@@ -865,6 +879,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>CONTENT</token></entry>
+    <entry>non-reserved</entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>CONTINUE</token></entry>
     <entry></entry>
     <entry>non-reserved</entry>
@@ -880,7 +901,7 @@
    </row>
    <row>
     <entry><token>CONVERT</token></entry>
-    <entry>non-reserved (cannot be function or type)</entry>
+    <entry></entry>
     <entry>reserved</entry>
     <entry>non-reserved</entry>
     <entry>reserved</entry>
@@ -905,6 +926,13 @@
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
+   </row>
+   <row>
+    <entry><token>COST</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>COUNT</token></entry>
@@ -985,7 +1013,7 @@
    </row>
    <row>
     <entry><token>CURRENT</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -1286,13 +1314,20 @@
    </row>
    <row>
     <entry><token>DICTIONARY</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry></entry>
     <entry>reserved</entry>
     <entry></entry>
    </row>
    <row>
     <entry><token>DISABLE</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>DISCARD</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
     <entry></entry>
@@ -1323,6 +1358,13 @@
     <entry><token>DO</token></entry>
     <entry>reserved</entry>
     <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>DOCUMENT</token></entry>
+    <entry>non-reserved</entry>
+    <entry>non-reserved</entry>
     <entry></entry>
     <entry></entry>
    </row>
@@ -1423,6 +1465,13 @@
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
+   </row>
+   <row>
+    <entry><token>ENUM</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>EQUALS</token></entry>
@@ -1542,6 +1591,13 @@
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
+   </row>
+   <row>
+    <entry><token>FAMILY</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>FETCH</token></entry>
@@ -1778,6 +1834,13 @@
     <entry><token>HEADER</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>HEX</token></entry>
+    <entry></entry>
+    <entry>non-reserved</entry>
     <entry></entry>
     <entry></entry>
    </row>
@@ -2293,6 +2356,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>MAPPING</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>MATCH</token></entry>
     <entry>non-reserved</entry>
     <entry>reserved</entry>
@@ -2455,7 +2525,7 @@
    </row>
    <row>
     <entry><token>NAME</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
@@ -2644,7 +2714,7 @@
    </row>
    <row>
     <entry><token>NULLS</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry></entry>
     <entry></entry>
@@ -2930,6 +3000,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>PARSER</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>PARTIAL</token></entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
@@ -2989,6 +3066,13 @@
     <entry><token>PLACING</token></entry>
     <entry>reserved</entry>
     <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>PLANS</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
     <entry></entry>
     <entry></entry>
    </row>
@@ -3301,6 +3385,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>REPLICA</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>RESET</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
@@ -3540,7 +3631,7 @@
    </row>
    <row>
     <entry><token>SEARCH</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry></entry>
@@ -3784,6 +3875,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>STANDALONE</token></entry>
+    <entry>non-reserved</entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>START</token></entry>
     <entry>non-reserved</entry>
     <entry>reserved</entry>
@@ -3857,6 +3955,13 @@
     <entry><token>STRICT</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>STRIP</token></entry>
+    <entry>non-reserved</entry>
+    <entry>non-reserved</entry>
     <entry></entry>
     <entry></entry>
    </row>
@@ -3998,6 +4103,13 @@
     <entry></entry>
     <entry></entry>
     <entry>reserved</entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>TEXT</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
     <entry></entry>
    </row>
    <row>
@@ -4366,7 +4478,7 @@
    </row>
    <row>
     <entry><token>VALUE</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -4421,6 +4533,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>VERSION</token></entry>
+    <entry>non-reserved</entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>VIEW</token></entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
@@ -4456,6 +4575,13 @@
     <entry>reserved</entry>
    </row>
    <row>
+    <entry><token>WHITESPACE</token></entry>
+    <entry>non-reserved</entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>WIDTH_BUCKET</token></entry>
     <entry></entry>
     <entry>reserved</entry>
@@ -4471,7 +4597,7 @@
    </row>
    <row>
     <entry><token>WITH</token></entry>
-    <entry>non-reserved</entry>
+    <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -4505,11 +4631,109 @@
     <entry>reserved</entry>
    </row>
    <row>
-    <entry><token>YEAR</token></entry>
+    <entry><token>XML</token></entry>
     <entry>non-reserved</entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLAGG</token></entry>
     <entry></entry>
     <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLATTRIBUTES</token></entry>
+    <entry>non-reserved (cannot be function or type)</entry>
     <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLBINARY</token></entry>
+    <entry></entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLCOMMENT</token></entry>
+    <entry></entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLCONCAT</token></entry>
+    <entry>non-reserved (cannot be function or type)</entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLELEMENT</token></entry>
+    <entry>non-reserved (cannot be function or type)</entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLFOREST</token></entry>
+    <entry>non-reserved (cannot be function or type)</entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLNAMESPACES</token></entry>
+    <entry></entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLPARSE</token></entry>
+    <entry>non-reserved (cannot be function or type)</entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLPI</token></entry>
+    <entry>non-reserved (cannot be function or type)</entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLROOT</token></entry>
+    <entry>non-reserved (cannot be function or type)</entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>XMLSERIALIZE</token></entry>
+    <entry>non-reserved (cannot be function or type)</entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>YEAR</token></entry>
+    <entry>non-reserved</entry>
+    <entry>reserved</entry>
+    <entry>reserved</entry>
+    <entry>reserved</entry>
+   </row>
+   <row>
+    <entry><token>YES</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>ZONE</token></entry>
