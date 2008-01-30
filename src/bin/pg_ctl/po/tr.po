@@ -1,12 +1,13 @@
 # translation of pg_ctl-tr.po to Turkish
-# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004, 2005, 2007.
+# Devrim GUNDUZ <devrim@CommandPrompt.com>, 2004, 2005, 2007.
 # Nicolai Tufar <ntufar@gmail.com>, 2004, 2005, 2007.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl-tr\n"
-"POT-Creation-Date: 2005-01-04 19:05+0000\n"
-"PO-Revision-Date: 2007-02-14 13:20+0200\n"
-"Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-11-28 18:16-0400\n"
+"PO-Revision-Date: 2007-12-05 10:49-0800\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -15,44 +16,44 @@ msgstr ""
 "X-Poedit-Language: Turkish\n"
 "X-Poedit-Country: TURKEY\n"
 
-#: pg_ctl.c:220
-#: pg_ctl.c:235
-#: pg_ctl.c:1661
+#: pg_ctl.c:232
+#: pg_ctl.c:247
+#: pg_ctl.c:1732
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: yetersiz bellek\n"
 
-#: pg_ctl.c:269
+#: pg_ctl.c:281
 #, c-format
 msgid "%s: could not open PID file \"%s\": %s\n"
 msgstr "%s: \"%s\" PID dosyası açılamadı: %s\n"
 
-#: pg_ctl.c:276
+#: pg_ctl.c:288
 #, c-format
 msgid "%s: invalid data in PID file \"%s\"\n"
 msgstr "%s: \"%s\" PID dosyasında geçersiz veri\n"
 
-#: pg_ctl.c:499
+#: pg_ctl.c:541
 #, c-format
-msgid "%s: cannot set core size, disallowed by hard limit.\n"
-msgstr "%s: core boyutu ayarlanma, hard limit tarafından sınırlanmış.\n"
+msgid "%s: cannot set core file size limit; disallowed by hard limit\n"
+msgstr "%s: core boyutu ayarlanamadı; hard limit tarafından sınırlanmış.\n"
 
-#: pg_ctl.c:525
-#, c-format
-msgid "%s: another server might be running; trying to start server anyway\n"
-msgstr "%s: başka bir sunucu çalışıyor olabilir; yine de başlatmaya çalışıyorum.\n"
-
-#: pg_ctl.c:543
+#: pg_ctl.c:571
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
 msgstr "%s: \"%s\" dosyası okunamadı\n"
 
-#: pg_ctl.c:549
+#: pg_ctl.c:577
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
 msgstr "%s: \"%s\" seçenek dosyası sadece 1 satır olmalıdır\n"
 
-#: pg_ctl.c:600
+#: pg_ctl.c:620
+#, c-format
+msgid "%s: another server might be running; trying to start server anyway\n"
+msgstr "%s: başka bir sunucu çalışıyor olabilir; yine de başlatmaya çalışılıyor.\n"
+
+#: pg_ctl.c:647
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
@@ -63,7 +64,7 @@ msgstr ""
 "\"%s\" ile aynı dizinde bulunamadı.\n"
 "Kurulumunuzu kontrol ediniz.\n"
 
-#: pg_ctl.c:606
+#: pg_ctl.c:653
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
@@ -74,12 +75,12 @@ msgstr ""
 "bulundu ancak %s ile aynı sürüm numarasına sahip değil.\n"
 "Kurulumunuzu kontrol ediniz.\n"
 
-#: pg_ctl.c:623
+#: pg_ctl.c:670
 #, c-format
 msgid "%s: could not start server: exit code was %d\n"
 msgstr "%s: sunucu başlatılamadı: çıkış kodu: %d\n"
 
-#: pg_ctl.c:634
+#: pg_ctl.c:681
 #, c-format
 msgid ""
 "%s: could not start server\n"
@@ -88,185 +89,197 @@ msgstr ""
 "%s: sunucu başlatılamadı\n"
 "Kayıt dosyasını inceleyiniz\n"
 
-#: pg_ctl.c:643
+#: pg_ctl.c:690
 msgid "waiting for server to start..."
 msgstr "sunucunun başlaması bekleniyor..."
 
-#: pg_ctl.c:647
+#: pg_ctl.c:694
 #, c-format
 msgid "could not start server\n"
 msgstr "sunucu başlatılamadı\n"
 
-#: pg_ctl.c:652
-#: pg_ctl.c:718
-#: pg_ctl.c:791
+#: pg_ctl.c:699
+#: pg_ctl.c:765
+#: pg_ctl.c:838
 msgid " done\n"
 msgstr " tamam\n"
 
-#: pg_ctl.c:653
+#: pg_ctl.c:700
 msgid "server started\n"
 msgstr "sunucu başlatıldı\n"
 
-#: pg_ctl.c:657
+#: pg_ctl.c:704
 msgid "server starting\n"
 msgstr "sunucu başlıyor\n"
 
-#: pg_ctl.c:671
-#: pg_ctl.c:739
-#: pg_ctl.c:813
+#: pg_ctl.c:718
+#: pg_ctl.c:786
+#: pg_ctl.c:860
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
 msgstr "%s: \"%s\" PID dosyası bulunamadı\n"
 
-#: pg_ctl.c:672
-#: pg_ctl.c:741
-#: pg_ctl.c:814
+#: pg_ctl.c:719
+#: pg_ctl.c:788
+#: pg_ctl.c:861
 msgid "Is server running?\n"
 msgstr "sunucu çalışıyor mu?\n"
 
-#: pg_ctl.c:678
+#: pg_ctl.c:725
 #, c-format
 msgid "%s: cannot stop server; single-user server is running (PID: %ld)\n"
 msgstr "%s: sunucu durdurulamadı; tek kullanıcılı sunucu çalışıyor (PID: %ld)\n"
 
-#: pg_ctl.c:686
-#: pg_ctl.c:763
+#: pg_ctl.c:733
+#: pg_ctl.c:810
 #, c-format
 msgid "%s: could not send stop signal (PID: %ld): %s\n"
 msgstr "%s:durdurma sinyali başarısız oldu (PID: %ld): %s\n"
 
-#: pg_ctl.c:693
+#: pg_ctl.c:740
 msgid "server shutting down\n"
 msgstr "sunucu kapatılıyor\n"
 
-#: pg_ctl.c:698
-#: pg_ctl.c:768
+#: pg_ctl.c:745
+#: pg_ctl.c:815
 msgid "waiting for server to shut down..."
 msgstr "sunucunun kapanması bekleniyor..."
 
-#: pg_ctl.c:713
-#: pg_ctl.c:785
+#: pg_ctl.c:760
+#: pg_ctl.c:832
 msgid " failed\n"
 msgstr " başarısız oldu\n"
 
-#: pg_ctl.c:715
-#: pg_ctl.c:787
+#: pg_ctl.c:762
+#: pg_ctl.c:834
 #, c-format
 msgid "%s: server does not shut down\n"
-msgstr "%s: sunucu kapanmaz\n"
+msgstr "%s: sunucu kapanmıyor\n"
 
-#: pg_ctl.c:720
-#: pg_ctl.c:792
+#: pg_ctl.c:767
+#: pg_ctl.c:839
 #, c-format
 msgid "server stopped\n"
 msgstr "sunucu durduruldu\n"
 
-#: pg_ctl.c:742
-#: pg_ctl.c:798
+#: pg_ctl.c:789
+#: pg_ctl.c:845
 msgid "starting server anyway\n"
 msgstr "sunucu yine de başlatılıyor\n"
 
-#: pg_ctl.c:751
+#: pg_ctl.c:798
 #, c-format
 msgid "%s: cannot restart server; single-user server is running (PID: %ld)\n"
 msgstr "%s: sunucu başlatılamadı; tek kullanıcılı sunucu çalışıyor (PID: %ld)\n"
 
-#: pg_ctl.c:754
-#: pg_ctl.c:823
+#: pg_ctl.c:801
+#: pg_ctl.c:870
 msgid "Please terminate the single-user server and try again.\n"
 msgstr "Lütfen tek kullanıcılı sunucuyu durdurun ve yeniden deneyin.\n"
 
-#: pg_ctl.c:796
+#: pg_ctl.c:843
 #, c-format
 msgid "%s: old server process (PID: %ld) seems to be gone\n"
 msgstr "%s: eski sunucu süreci (PID: %ld) kaybolmuştur\n"
 
-#: pg_ctl.c:820
+#: pg_ctl.c:867
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %ld)\n"
 msgstr "%s: sunucu yeniden yüklenemedi, tek kullanıcılı sunucu çalışıyor (PID: %ld)\n"
 
-#: pg_ctl.c:829
+#: pg_ctl.c:876
 #, c-format
 msgid "%s: could not send reload signal (PID: %ld): %s\n"
-msgstr "%s: reload sinyali gönderilemedi (PID: %ld): %s\n"
+msgstr "%s: yeniden yükleme sinyali gönderilemedi (PID: %ld): %s\n"
 
-#: pg_ctl.c:834
+#: pg_ctl.c:881
 msgid "server signaled\n"
 msgstr "sunucuya sinyal gönderildi\n"
 
-#: pg_ctl.c:878
+#: pg_ctl.c:925
 #, c-format
 msgid "%s: single-user server is running (PID: %ld)\n"
-msgstr "%s: sunucu, tek kulanıcı biçiminde çalışıyor (PID: %ld)\n"
+msgstr "%s: sunucu, tek kullanıcı biçiminde çalışıyor (PID: %ld)\n"
 
-#: pg_ctl.c:890
+#: pg_ctl.c:937
 #, c-format
 msgid "%s: server is running (PID: %ld)\n"
 msgstr "%s: sunucu çalışıyor (PID: %ld)\n"
 
-#: pg_ctl.c:901
+#: pg_ctl.c:948
 #, c-format
 msgid "%s: no server running\n"
 msgstr "%s: çalışan sunucu yok\n"
 
-#: pg_ctl.c:912
+#: pg_ctl.c:959
 #, c-format
 msgid "%s: could not send signal %d (PID: %ld): %s\n"
 msgstr "%s: %d reload sinyali gönderilemedi (PID: %ld): %s\n"
 
-#: pg_ctl.c:946
+#: pg_ctl.c:993
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s:Çalıştırılabilir dosya bulunamadı\n"
 
-#: pg_ctl.c:955
+#: pg_ctl.c:1002
 #, c-format
 msgid "%s: could not find postgres program executable\n"
 msgstr "%s: çalıştırılabilir postgres programı bulunamadı\n"
 
-#: pg_ctl.c:1009
-#: pg_ctl.c:1041
+#: pg_ctl.c:1060
+#: pg_ctl.c:1092
 #, c-format
 msgid "%s: could not open service manager\n"
 msgstr "%s: servis yöneticisi açılamadı\n"
 
-#: pg_ctl.c:1015
+#: pg_ctl.c:1066
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
 msgstr "%s: \"%s\" servisi daha önce kaydedilmiştir\n"
 
-#: pg_ctl.c:1026
+#: pg_ctl.c:1077
 #, c-format
 msgid "%s: could not register service \"%s\": error code %d\n"
 msgstr "%s: \"%s\" servisi kaydedilemedi: Hata kodu %d\n"
 
-#: pg_ctl.c:1047
+#: pg_ctl.c:1098
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
 msgstr "%s: \"%s\" servisi kayıtlı değil\n"
 
-#: pg_ctl.c:1054
+#: pg_ctl.c:1105
 #, c-format
 msgid "%s: could not open service \"%s\": error code %d\n"
 msgstr "%s: \"%s\" servisi açılamadı: Hata kodu %d\n"
 
-#: pg_ctl.c:1061
+#: pg_ctl.c:1112
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %d\n"
 msgstr "%s:  \"%s\" servisi kaydedilemedi: Hata kodu %d\n"
 
-#: pg_ctl.c:1190
+#: pg_ctl.c:1198
+msgid "Waiting for server startup...\n"
+msgstr "Sunucunun başlaması bekleniyor...\n"
+
+#: pg_ctl.c:1201
+msgid "Timed out waiting for server startup\n"
+msgstr "Sunucu başlarken zaman aşımı oldu\n"
+
+#: pg_ctl.c:1205
+msgid "Server started and accepting connections\n"
+msgstr "Sunucu başladı ve bağlantı kabul ediyor\n"
+
+#: pg_ctl.c:1255
 #, c-format
 msgid "%s: could not start service \"%s\": error code %d\n"
 msgstr "%s: \"%s\" servisi başlatılamadı: Hata kodu %d\n"
 
-#: pg_ctl.c:1402
+#: pg_ctl.c:1467
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Daha fazla bilgi için \"%s --help\" komutunu kullanabilirsiniz.\n"
 
-#: pg_ctl.c:1410
+#: pg_ctl.c:1475
 #, c-format
 msgid ""
 "%s is a utility to start, stop, restart, reload configuration files,\n"
@@ -277,54 +290,58 @@ msgstr ""
 "PostgreSQL sunucusunun durumunu bildirmek, ya da PostgreSQL sürecini öldürmek için bir yardımcı programdır\n"
 "\n"
 
-#: pg_ctl.c:1412
+#: pg_ctl.c:1477
 #, c-format
 msgid "Usage:\n"
 msgstr "Kullanımı:\n"
 
-#: pg_ctl.c:1413
+#: pg_ctl.c:1478
 #, c-format
-msgid "  %s start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-msgstr "  %s start   [-w] [-D VERİ_DİZİNİ] [-s] [-l DOSYA_ADI] [-o \"SEÇENEKLER\"]\n"
+msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
+msgstr "  %s start   [-w] [-t saniye] [-D VERİ_DİZİNİ] [-s] [-l DOSYA_ADI] [-o \"SEÇENEKLER\"]\n"
 
-#: pg_ctl.c:1414
+#: pg_ctl.c:1479
 #, c-format
-msgid "  %s stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-msgstr "  %s stop    [-W] [-D VERİ_DİZİNİ] [-s] [-m SHUTDOWN-MODE]\n"
+msgid "  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
+msgstr "  %s stop    [-W] [-t saniye] [-D veri dizini] [-s] [-m kapatma modu]\n"
 
-#: pg_ctl.c:1415
+#: pg_ctl.c:1480
 #, c-format
-msgid "  %s restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"
-msgstr "  %s restart [-w] [-D VERİ_DİZİNİ] [-s] [-m SHUTDOWN-MODE] [-o \"SEÇENEKLER\"]\n"
+msgid ""
+"  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
+"                 [-o \"OPTIONS\"]\n"
+msgstr "  %s restart [-w] [-t saniye] [-D veri dizini] [-s] [-m kapatma modu] [-o \"seçenekler\"]\n"
 
-#: pg_ctl.c:1416
+#: pg_ctl.c:1482
 #, c-format
 msgid "  %s reload  [-D DATADIR] [-s]\n"
 msgstr "  %s reload  [-D VERİ_DİZİNİ] [-s]\n"
 
-#: pg_ctl.c:1417
+#: pg_ctl.c:1483
 #, c-format
 msgid "  %s status  [-D DATADIR]\n"
 msgstr "  %s status  [-D VERİ_DİZİNİ]\n"
 
-#: pg_ctl.c:1418
+#: pg_ctl.c:1484
 #, c-format
 msgid "  %s kill    SIGNALNAME PID\n"
 msgstr "  %s kill    SİNYAL_ADI SÜREÇ_NUMARASI\n"
 
-#: pg_ctl.c:1420
+#: pg_ctl.c:1486
 #, c-format
 msgid ""
 "  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
-"                    [-w] [-o \"OPTIONS\"]\n"
-msgstr "  %s register   [-N servis adı] [-U kullanıcı adı] [-P şifre] [-D VERİ_DİZİNİ] [-w] [-o \"SEÇENEKLER\"]\n"
+"                    [-w] [-t SECS] [-o \"OPTIONS\"]\n"
+msgstr ""
+"  %s register   [-N servis adı] [-U kullanıcı adı] [-P şifre] [-D veri dizini]\n"
+"                    [-w] ]-t saniye] [-o \"seçenekler\"]\n"
 
-#: pg_ctl.c:1422
+#: pg_ctl.c:1488
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
 msgstr "  %s unregister [-N SERVİS_ADI]\n"
 
-#: pg_ctl.c:1425
+#: pg_ctl.c:1491
 #, c-format
 msgid ""
 "\n"
@@ -333,65 +350,70 @@ msgstr ""
 "\n"
 "Ortak seçenekler:\n"
 
-#: pg_ctl.c:1426
+#: pg_ctl.c:1492
 #, c-format
 msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
 msgstr "  -D, --pgdata VERİ_DİZİNİ   verinin tutulacağı alan\n"
 
-#: pg_ctl.c:1427
+#: pg_ctl.c:1493
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
 msgstr "  -s, --silent           sadece hataları yazar, hiç bir bilgi mesajı yazmaz\n"
 
-#: pg_ctl.c:1428
+#: pg_ctl.c:1494
+#, c-format
+msgid "  -t SECS                seconds to wait when using -w option\n"
+msgstr "  -t SECS                -w seçeneğini kullanırken beklenecek süre\n"
+
+#: pg_ctl.c:1495
 #, c-format
 msgid "  -w                     wait until operation completes\n"
 msgstr "  -w                     işlem bitene kadar bekle\n"
 
-#: pg_ctl.c:1429
+#: pg_ctl.c:1496
 #, c-format
 msgid "  -W                     do not wait until operation completes\n"
 msgstr "  -W                     işlem bitene kadar bekleme\n"
 
-#: pg_ctl.c:1430
+#: pg_ctl.c:1497
 #, c-format
 msgid "  --help                 show this help, then exit\n"
 msgstr "  --help                 Bu yardımı göster ve çık\n"
 
-#: pg_ctl.c:1431
+#: pg_ctl.c:1498
 #, c-format
 msgid "  --version              output version information, then exit\n"
 msgstr "  --version             sürüm numarasını yazar ve çıkar\n"
 
-#: pg_ctl.c:1432
+#: pg_ctl.c:1499
 #, c-format
 msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
 msgstr ""
-"(Ön tanımlı işlem kapanmak için beklemektir; ancak başlamak ya da yeniden başlamak değildir.)\n"
+"(Ön tanımlı işlem kapanmak için beklemektir;  başlamak ya da yeniden başlamak değildir.)\n"
 "\n"
 
-#: pg_ctl.c:1433
+#: pg_ctl.c:1500
 #, c-format
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
 msgstr "Eğer -D seçeneği gözardı edilirse, PGDATA çevresel değişkeni kullanılacaktır.\n"
 
-#: pg_ctl.c:1435
+#: pg_ctl.c:1502
 #, c-format
 msgid ""
 "\n"
 "Options for start or restart:\n"
 msgstr ""
 "\n"
-"Başlatmak ya da yeniden başlatmak için seçenekler:\n"
+"Başlamak ya da yeniden başlamak için seçenekler:\n"
 
-#: pg_ctl.c:1436
+#: pg_ctl.c:1503
 #, c-format
 msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
 msgstr "  -l, --log DOSYA_ADI      Sunucu loglarını DOSYA_ADI dosyasına yaz (ya da dosyanın sonuna ekle).\n"
 
-#: pg_ctl.c:1437
+#: pg_ctl.c:1504
 #, c-format
 msgid ""
 "  -o OPTIONS             command line options to pass to postgres\n"
@@ -400,22 +422,22 @@ msgstr ""
 "  -o SEÇENEKLER             postmaster'a geçilecek komut satırı seçenekleri\n"
 "                         (PostgreSQL sunucusu çalıştırılabilir dosyası)\n"
 
-#: pg_ctl.c:1439
+#: pg_ctl.c:1506
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
 msgstr "  -p PATH-TO-POSTGRES  normalde gerekli değildir\n"
 
-#: pg_ctl.c:1441
+#: pg_ctl.c:1508
 #, c-format
 msgid "  -c, --core-files       allow postgres to produce core files\n"
-msgstr "  -c, --core-files       postgresin core dosyları oluşturmasına izin ver\n"
+msgstr "  -c, --core-files       postgres'in core dosyaları oluşturmasına izin ver\n"
 
-#: pg_ctl.c:1443
+#: pg_ctl.c:1510
 #, c-format
 msgid "  -c, --core-files       not applicable on this platform\n"
 msgstr "  -c, --core-files       bu platformda uygulanmaz\n"
 
-#: pg_ctl.c:1445
+#: pg_ctl.c:1512
 #, c-format
 msgid ""
 "\n"
@@ -424,12 +446,12 @@ msgstr ""
 "\n"
 "Başlatmak ya da yeniden başlatmak için seçenekler:\n"
 
-#: pg_ctl.c:1446
+#: pg_ctl.c:1513
 #, c-format
 msgid "  -m SHUTDOWN-MODE   can be \"smart\", \"fast\", or \"immediate\"\n"
 msgstr "  -m KAPANMA-MODU   \"smart\", \"fast\", veya \"immediate\" olabilir\n"
 
-#: pg_ctl.c:1448
+#: pg_ctl.c:1515
 #, c-format
 msgid ""
 "\n"
@@ -438,22 +460,22 @@ msgstr ""
 "\n"
 "Kapatma modları:\n"
 
-#: pg_ctl.c:1449
+#: pg_ctl.c:1516
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
 msgstr "  smart       tüm istemciler bağlantılarını kestikten sonra dur\n"
 
-#: pg_ctl.c:1450
+#: pg_ctl.c:1517
 #, c-format
 msgid "  fast        quit directly, with proper shutdown\n"
 msgstr "  fast        düzgünce kapanmadan direk olarak dur\n"
 
-#: pg_ctl.c:1451
+#: pg_ctl.c:1518
 #, c-format
 msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
-msgstr "  immediate   tam bir kapanma gerçekleşmeden dur; yeniden başladığında recovery modunda açılır\n"
+msgstr "  immediate   tam bir kapanma gerçekleşmeden dur; yeniden başladığında kurtarma modunda açılır\n"
 
-#: pg_ctl.c:1453
+#: pg_ctl.c:1520
 #, c-format
 msgid ""
 "\n"
@@ -462,7 +484,7 @@ msgstr ""
 "\n"
 "kill için izin verilen sinyal adları:\n"
 
-#: pg_ctl.c:1457
+#: pg_ctl.c:1524
 #, c-format
 msgid ""
 "\n"
@@ -471,22 +493,22 @@ msgstr ""
 "\n"
 "Kaydetmek ya da kaydı silmek için seçenekler:\n"
 
-#: pg_ctl.c:1458
+#: pg_ctl.c:1525
 #, c-format
 msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
 msgstr "  -N SERVICENAME  PostgreSQL sunucusunu kaydedeceğiniz servis adı\n"
 
-#: pg_ctl.c:1459
+#: pg_ctl.c:1526
 #, c-format
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
 msgstr "  -P PASSWORD     PostgreSQL sunucusunu kaydetmek için hesabın şifresi\n"
 
-#: pg_ctl.c:1460
+#: pg_ctl.c:1527
 #, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
 msgstr "  -U USERNAME     PostgreSQL sunucusunu kaydetmek için gerekli kullanıcı adı\n"
 
-#: pg_ctl.c:1463
+#: pg_ctl.c:1530
 #, c-format
 msgid ""
 "\n"
@@ -495,17 +517,17 @@ msgstr ""
 "\n"
 "Hataları <pgsql-bugs@postgresql.org> adresine bildiriniz.\n"
 
-#: pg_ctl.c:1488
+#: pg_ctl.c:1555
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
 msgstr "%s: geçersiz kapanma modu \"%s\"\n"
 
-#: pg_ctl.c:1521
+#: pg_ctl.c:1588
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
 msgstr "%s: geçersiz sinyal adı \"%s\"\n"
 
-#: pg_ctl.c:1585
+#: pg_ctl.c:1653
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -516,27 +538,27 @@ msgstr ""
 "Lütfen  (yani \"su\" kullanarak) sunucu sürecine sahip olacak (yetkisiz) kullanıcı\n"
 "ile sisteme giriş yapınız.\n"
 
-#: pg_ctl.c:1691
+#: pg_ctl.c:1762
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: çok fazla komut satırı argümanı (ilki : \"%s\")\n"
 
-#: pg_ctl.c:1710
+#: pg_ctl.c:1781
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
 msgstr "%s: kill modu için eksik argümanlar\n"
 
-#: pg_ctl.c:1728
+#: pg_ctl.c:1799
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
 msgstr "%s: geçersiz işlem modu \"%s\"\n"
 
-#: pg_ctl.c:1738
+#: pg_ctl.c:1809
 #, c-format
 msgid "%s: no operation specified\n"
 msgstr "%s: hiçbir işlem belirtilmedi\n"
 
-#: pg_ctl.c:1754
+#: pg_ctl.c:1825
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: Hiçbir veritabanı dizini belirtilmemiş ve PGDATA çevresel değişkeni boş\n"

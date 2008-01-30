@@ -1,7 +1,7 @@
 # German message translation file for "scripts".
 # Peter Eisentraut <peter_e@gmx.net>, 2003 - 2007.
 #
-# pgtranslation Id: pgscripts.po,v 1.6 2007/09/25 16:24:04 petere Exp $
+# pgtranslation Id: pgscripts.po,v 1.7 2007/12/12 20:33:13 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,15 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-09-24 19:21-0300\n"
-"PO-Revision-Date: 2007-09-25 18:11+0200\n"
+"POT-Creation-Date: 2007-12-12 04:18-0400\n"
+"PO-Revision-Date: 2007-12-12 21:19+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: createdb.c:101 createdb.c:120 createlang.c:85 createlang.c:106
+#: createdb.c:99 createdb.c:118 createlang.c:85 createlang.c:106
 #: createlang.c:154 createuser.c:156 createuser.c:171 dropdb.c:83 dropdb.c:92
 #: dropdb.c:100 droplang.c:96 droplang.c:117 droplang.c:166 dropuser.c:83
 #: dropuser.c:98 clusterdb.c:95 clusterdb.c:110 vacuumdb.c:112 vacuumdb.c:127
@@ -26,29 +26,29 @@ msgstr ""
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
-#: createdb.c:118 createlang.c:104 createuser.c:169 dropdb.c:98 droplang.c:115
+#: createdb.c:116 createlang.c:104 createuser.c:169 dropdb.c:98 droplang.c:115
 #: dropuser.c:96 clusterdb.c:108 vacuumdb.c:125 reindexdb.c:123
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: zu viele Kommandozeilenargumente (das erste ist »%s«)\n"
 
-#: createdb.c:128
+#: createdb.c:126
 #, c-format
 msgid "%s: \"%s\" is not a valid encoding name\n"
 msgstr "%s: »%s« ist kein gültiger Kodierungsname\n"
 
-#: createdb.c:168
+#: createdb.c:166
 #, c-format
 msgid "%s: database creation failed: %s"
 msgstr "%s: Erzeugung der Datenbank ist fehlgeschlagen: %s"
 
-#: createdb.c:191
+#: createdb.c:189
 #, c-format
 msgid "%s: comment creation failed (database was created): %s"
 msgstr ""
 "%s: Erzeugung des Kommentars ist fehlgeschlagen (Datenbank wurde erzeugt): %s"
 
-#: createdb.c:208
+#: createdb.c:206
 #, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
@@ -57,19 +57,19 @@ msgstr ""
 "%s erzeugt eine PostgreSQL-Datenbank.\n"
 "\n"
 
-#: createdb.c:209 createlang.c:206 createuser.c:307 dropdb.c:140
+#: createdb.c:207 createlang.c:206 createuser.c:307 dropdb.c:140
 #: droplang.c:323 dropuser.c:139 clusterdb.c:225 vacuumdb.c:251
 #: reindexdb.c:309
 #, c-format
 msgid "Usage:\n"
 msgstr "Aufruf:\n"
 
-#: createdb.c:210
+#: createdb.c:208
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [OPTION]... [DBNAME] [BESCHREIBUNG]\n"
 
-#: createdb.c:211 createlang.c:208 createuser.c:309 dropdb.c:142
+#: createdb.c:209 createlang.c:208 createuser.c:309 dropdb.c:142
 #: droplang.c:325 dropuser.c:141 clusterdb.c:227 vacuumdb.c:253
 #: reindexdb.c:311
 #, c-format
@@ -80,27 +80,27 @@ msgstr ""
 "\n"
 "Optionen:\n"
 
-#: createdb.c:212
+#: createdb.c:210
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=TABLESPACE  Standard-Tablespace der Datenbank\n"
 
-#: createdb.c:213
+#: createdb.c:211
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  -E, --encoding=KODIERUNG     Kodierung für die Datenbank\n"
 
-#: createdb.c:214
+#: createdb.c:212
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr "  -O, --owner=EIGENTÜMER       Eigentümer der neuen Datenbank\n"
 
-#: createdb.c:215
+#: createdb.c:213
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=TEMPLATE      zu kopierende Template-Datenbank\n"
 
-#: createdb.c:216
+#: createdb.c:214
 #, c-format
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
@@ -108,18 +108,18 @@ msgstr ""
 "  -e, --echo                   zeige die Befehle, die an den Server\n"
 "                               gesendet werden\n"
 
-#: createdb.c:217
+#: createdb.c:215
 #, c-format
 msgid "  --help                       show this help, then exit\n"
 msgstr "  --help                       diese Hilfe anzeigen, dann beenden\n"
 
-#: createdb.c:218
+#: createdb.c:216
 #, c-format
 msgid "  --version                    output version information, then exit\n"
 msgstr ""
 "  --version                    Versionsinformationen anzeigen, dann beenden\n"
 
-#: createdb.c:219 createuser.c:328 clusterdb.c:235 vacuumdb.c:264
+#: createdb.c:217 createuser.c:328 clusterdb.c:235 vacuumdb.c:264
 #: reindexdb.c:321
 #, c-format
 msgid ""
@@ -129,7 +129,7 @@ msgstr ""
 "\n"
 "Verbindungsoptionen:\n"
 
-#: createdb.c:220
+#: createdb.c:218
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME          database server host or socket directory\n"
@@ -137,22 +137,22 @@ msgstr ""
 "  -h, --host=HOSTNAME          Name des Datenbankservers oder Socket-"
 "Verzeichnis\n"
 
-#: createdb.c:221
+#: createdb.c:219
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              Port des Datenbankservers\n"
 
-#: createdb.c:222
+#: createdb.c:220
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=NAME          Datenbankbenutzername\n"
 
-#: createdb.c:223
+#: createdb.c:221
 #, c-format
-msgid "  -W, --password               prompt for password\n"
-msgstr "  -W, --password               nach Passwort fragen\n"
+msgid "  -W, --password               force password prompt\n"
+msgstr "  -W, --password               Passwortfrage erzwingen\n"
 
-#: createdb.c:224
+#: createdb.c:222
 #, c-format
 msgid ""
 "\n"
@@ -162,7 +162,7 @@ msgstr ""
 "Wenn nichts anderes angegeben ist, dann wird eine Datenbank mit dem Namen\n"
 "des aktuellen Benutzers erzeugt.\n"
 
-#: createdb.c:225 createlang.c:218 createuser.c:335 dropdb.c:151
+#: createdb.c:223 createlang.c:218 createuser.c:335 dropdb.c:151
 #: droplang.c:335 dropuser.c:150 clusterdb.c:241 vacuumdb.c:270
 #: reindexdb.c:327
 #, c-format
@@ -265,11 +265,11 @@ msgstr "  -p, --port=PORT           Port des Datenbankservers\n"
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=NAME       Datenbankbenutzername\n"
 
-#: createlang.c:215 dropdb.c:148 droplang.c:332 clusterdb.c:239 vacuumdb.c:268
-#: reindexdb.c:325
+#: createlang.c:215 createuser.c:332 dropdb.c:148 droplang.c:332
+#: dropuser.c:147 clusterdb.c:239 vacuumdb.c:268 reindexdb.c:325
 #, c-format
-msgid "  -W, --password            prompt for password\n"
-msgstr "  -W, --password            nach Passwort fragen\n"
+msgid "  -W, --password            force password prompt\n"
+msgstr "  -W, --password            Passwortfrage erzwingen\n"
 
 #: createlang.c:216 createuser.c:326 dropdb.c:149 droplang.c:333
 #: dropuser.c:148 clusterdb.c:233 reindexdb.c:319
@@ -423,11 +423,6 @@ msgid ""
 msgstr ""
 "  -U, --username=BENUTZER   Datenbankbenutzername für die Verbindung\n"
 "                            (nicht der Name des neuen Benutzers)\n"
-
-#: createuser.c:332 dropuser.c:147
-#, c-format
-msgid "  -W, --password            prompt for password to connect\n"
-msgstr "  -W, --password            frage nach Passwort für Verbindung\n"
 
 #: createuser.c:333
 #, c-format
@@ -832,66 +827,66 @@ msgstr ""
 "Für weitere Informationen lesen Sie bitte die Beschreibung des\n"
 "SQL-Befehls REINDEX.\n"
 
-#: common.c:48
+#: common.c:49
 #, c-format
 msgid "%s: could not obtain information about current user: %s\n"
 msgstr "%s: konnte Informationen über aktuellen Benutzer nicht ermitteln: %s\n"
 
-#: common.c:59
+#: common.c:60
 #, c-format
 msgid "%s: could not get current user name: %s\n"
 msgstr "%s: konnte aktuellen Benutzernamen nicht ermitteln: %s\n"
 
-#: common.c:106 common.c:130
+#: common.c:107 common.c:131
 msgid "Password: "
 msgstr "Passwort: "
 
-#: common.c:119
+#: common.c:120
 #, c-format
 msgid "%s: could not connect to database %s\n"
 msgstr "%s: konnte nicht mit Datenbank %s verbinden\n"
 
-#: common.c:141
+#: common.c:142
 #, c-format
 msgid "%s: could not connect to database %s: %s"
 msgstr "%s: konnte nicht mit Datenbank %s verbinden: %s"
 
-#: common.c:165 common.c:193
+#: common.c:166 common.c:194
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: Anfrage fehlgeschlagen: %s"
 
-#: common.c:167 common.c:195
+#: common.c:168 common.c:196
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: Anfrage war: %s\n"
 
 #. translator: abbreviation for "yes"
-#: common.c:237
+#: common.c:238
 msgid "y"
 msgstr "j"
 
 #. translator: abbreviation for "no"
-#: common.c:239
+#: common.c:240
 msgid "n"
 msgstr "n"
 
-#: common.c:250
+#: common.c:251
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s) "
 
-#: common.c:271
+#: common.c:272
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Bitte antworten Sie »%s« oder »%s«.\n"
 
-#: common.c:350 common.c:384
+#: common.c:351 common.c:384
 #, c-format
 msgid "Cancel request sent\n"
 msgstr "Abbruchsanforderung gesendet\n"
 
-#: common.c:386
+#: common.c:353 common.c:386
 #, c-format
 msgid "Could not send cancel request: %s"
 msgstr "Konnte Abbruchsanforderung nicht senden: %s"

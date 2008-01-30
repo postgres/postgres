@@ -1,12 +1,12 @@
 # Spanish message translation file for pg_controldata
 #  Karim Mribti <karim@mribti.com>, 2002.
-#  Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2006
+#  Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2007
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata (PostgreSQL 8.2)\n"
+"Project-Id-Version: pg_controldata (PostgreSQL 8.3)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-30 09:40-0300\n"
+"POT-Creation-Date: 2007-11-29 19:36-0300\n"
 "PO-Revision-Date: 2002-08-30 18:23+0200\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
@@ -147,128 +147,118 @@ msgstr "Última modificación de pg_control:          %s\n"
 
 #: pg_controldata.c:162
 #, c-format
-msgid "Current log file ID:                  %u\n"
-msgstr "ID de archivo de registro actual:           %u\n"
-
-#: pg_controldata.c:164
-#, c-format
-msgid "Next log file segment:                %u\n"
-msgstr "Siguiente segmento de archivo de registro:  %u\n"
-
-#: pg_controldata.c:166
-#, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "Ubicación del último checkpoint:            %X/%X\n"
 
-#: pg_controldata.c:169
+#: pg_controldata.c:165
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "Ubicación del checkpoint anterior:          %X/%X\n"
 
-#: pg_controldata.c:172
+#: pg_controldata.c:168
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "Ubicación de REDO de último checkpoint:     %X/%X\n"
 
-#: pg_controldata.c:175
-#, c-format
-msgid "Latest checkpoint's UNDO location:    %X/%X\n"
-msgstr "Ubicación de UNDO de último checkpoint:     %X/%X\n"
-
-#: pg_controldata.c:178
+#: pg_controldata.c:171
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "TimeLineID del último checkpoint:           %u\n"
 
-#: pg_controldata.c:180
+#: pg_controldata.c:173
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
 msgstr "NextXID del checkpoint más reciente:        %u/%u\n"
 
-#: pg_controldata.c:183
+#: pg_controldata.c:176
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "NextOID de último checkpoint:               %u\n"
 
-#: pg_controldata.c:185
+#: pg_controldata.c:178
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "NextMultiXactId de último checkpoint:       %u\n"
 
-#: pg_controldata.c:187
+#: pg_controldata.c:180
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "NextMultiOffset de último checkpoint:       %u\n"
 
-#: pg_controldata.c:189
+#: pg_controldata.c:182
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Instante de último checkpoint:              %s\n"
 
-#: pg_controldata.c:191
+#: pg_controldata.c:184
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "Punto final mínimo de recuperación:         %X/%X\n"
 
-#: pg_controldata.c:194
+#: pg_controldata.c:187
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Alineamiento máximo de datos:               %u\n"
 
-#: pg_controldata.c:197
+#: pg_controldata.c:190
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Tamaño de bloque de la base de datos:       %u\n"
 
-#: pg_controldata.c:199
+#: pg_controldata.c:192
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Bloques por segmento en relación grande:    %u\n"
 
-#: pg_controldata.c:201
+#: pg_controldata.c:194
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Tamaño del bloque de WAL:                   %u\n"
 
-#: pg_controldata.c:203
+#: pg_controldata.c:196
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Bytes por segmento WAL:                     %u\n"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:198
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Máxima longitud de identificadores:         %u\n"
 
-#: pg_controldata.c:207
+#: pg_controldata.c:200
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Máximo número de columnas de un índice:     %u\n"
 
-#: pg_controldata.c:209
+#: pg_controldata.c:202
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "Longitud máxima de un trozo TOAST:          %u\n"
+
+#: pg_controldata.c:204
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Tipo de almacenamiento de horas y fechas:   %s\n"
 
-#: pg_controldata.c:210
+#: pg_controldata.c:205
 msgid "64-bit integers"
 msgstr "enteros de 64 bits"
 
-#: pg_controldata.c:210
+#: pg_controldata.c:205
 msgid "floating-point numbers"
 msgstr "números de punto flotante"
 
-#: pg_controldata.c:211
+#: pg_controldata.c:206
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "Longitud máxima de nombres de locale:       %u\n"
 
-#: pg_controldata.c:213
+#: pg_controldata.c:208
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                                 %s\n"
 
-#: pg_controldata.c:215
+#: pg_controldata.c:210
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                                   %s\n"

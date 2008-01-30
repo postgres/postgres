@@ -6,15 +6,21 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-11-06 19:11-0400\n"
-"PO-Revision-Date: 2006-11-07 12:00+0100\n"
-"Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
+"PO-Revision-Date: 2007-12-06 16:43+0100\n"
+"Last-Translator: Magnus Hagander <magnus@hagander.net>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pg_config.c:231 pg_config.c:247 pg_config.c:263 pg_config.c:279
-#: pg_config.c:295 pg_config.c:311 pg_config.c:327 pg_config.c:343
+#: pg_config.c:231
+#: pg_config.c:247
+#: pg_config.c:263
+#: pg_config.c:279
+#: pg_config.c:295
+#: pg_config.c:311
+#: pg_config.c:327
+#: pg_config.c:343
 #, c-format
 msgid "not recorded\n"
 msgstr "ej sparat\n"
@@ -75,10 +81,8 @@ msgstr "  --pkgincludedir       visa platsen för C-header-filer\n"
 
 #: pg_config.c:407
 #, c-format
-msgid ""
-"  --includedir-server   show location of C header files for the server\n"
-msgstr ""
-"  --includedir-server   visar platsen för C-header-filerna till servern\n"
+msgid "  --includedir-server   show location of C header files for the server\n"
+msgstr "  --includedir-server   visar platsen för C-header-filerna till servern\n"
 
 #: pg_config.c:408
 #, c-format
@@ -102,15 +106,12 @@ msgstr "  --mandir              visa platsen för manualsidor\n"
 
 #: pg_config.c:412
 #, c-format
-msgid ""
-"  --sharedir            show location of architecture-independent support "
-"files\n"
+msgid "  --sharedir            show location of architecture-independent support files\n"
 msgstr "  --sharedir            visa platsen för arkitekturoberoende filer\n"
 
 #: pg_config.c:413
 #, c-format
-msgid ""
-"  --sysconfdir          show location of system-wide configuration files\n"
+msgid "  --sysconfdir          show location of system-wide configuration files\n"
 msgstr "  --sysconfdir          visa platsen för systemkonfigurationsfiler\n"
 
 #: pg_config.c:414
@@ -130,58 +131,37 @@ msgstr ""
 #: pg_config.c:417
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
-msgstr ""
-"  --cc                  visa värdet på CC som användes när PostgreSQL "
-"byggdes\n"
+msgstr "  --cc                  visa värdet på CC som användes när PostgreSQL byggdes\n"
 
 #: pg_config.c:418
 #, c-format
-msgid ""
-"  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
-msgstr ""
-"  --cppflags            visa värdet på CPPFLAGS som användes när PostgreSQL "
-"byggdes\n"
+msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cppflags            visa värdet på CPPFLAGS som användes när PostgreSQL byggdes\n"
 
 #: pg_config.c:419
 #, c-format
-msgid ""
-"  --cflags              show CFLAGS value used when PostgreSQL was built\n"
-msgstr ""
-"  --cflags              visa värdet på CFLAGS som användes när PostgreSQL "
-"byggdes\n"
+msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cflags              visa värdet på CFLAGS som användes när PostgreSQL byggdes\n"
 
 #: pg_config.c:420
 #, c-format
-msgid ""
-"  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
-msgstr ""
-"  --cflags_sl           visa värdet på CFLAGS_SL som användes när PostgreSQL "
-"byggdes\n"
+msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --cflags_sl           visa värdet på CFLAGS_SL som användes när PostgreSQL byggdes\n"
 
 #: pg_config.c:421
 #, c-format
-msgid ""
-"  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
-msgstr ""
-"  --ldflags             visa värdet på LDFLAGS som användes när PostgreSQL "
-"byggdes\n"
+msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgstr "  --ldflags             visa värdet på LDFLAGS som användes när PostgreSQL byggdes\n"
 
 #: pg_config.c:422
 #, c-format
-msgid ""
-"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
-"built\n"
-msgstr ""
-"  --ldflags_sl          visa värdet på LDFLAGS_SL som användes när "
-"PostgreSQL byggdes\n"
+msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --ldflags_sl          visa värdet på LDFLAGS_SL som användes när PostgreSQL byggdes\n"
 
 #: pg_config.c:423
 #, c-format
-msgid ""
-"  --libs                show LIBS value used when PostgreSQL was built\n"
-msgstr ""
-"  --libs                visa värdet på LIBS som användes när PostgreSQL "
-"byggdes\n"
+msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr "  --libs                visa värdet på LIBS som användes när PostgreSQL byggdes\n"
 
 #: pg_config.c:424
 #, c-format
@@ -216,7 +196,7 @@ msgstr "Försök med \"%s --help\" för mer information.\n"
 
 #: pg_config.c:472
 #, c-format
-msgid "%s: could not find own executable\n"
+msgid "%s: could not find own program executable\n"
 msgstr "%s: kunde inte hitta min egen körbara fil\n"
 
 #: pg_config.c:495
@@ -224,47 +204,61 @@ msgstr "%s: kunde inte hitta min egen körbara fil\n"
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: ogiltigt argument: %s\n"
 
-#: ../../port/exec.c:191 ../../port/exec.c:305 ../../port/exec.c:348
+#: ../../port/exec.c:192
+#: ../../port/exec.c:306
+#: ../../port/exec.c:349
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "kunde inte identifiera aktuella katalogen: %s"
 
-#: ../../port/exec.c:210
+#: ../../port/exec.c:211
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "ogiltig binär \"%s\""
 
-#: ../../port/exec.c:259
+#: ../../port/exec.c:260
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "kunde inte läsa binär \"%s\""
 
-#: ../../port/exec.c:266
+#: ../../port/exec.c:267
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "kunde inte hitta en \"%s\" att köra"
 
-#: ../../port/exec.c:321 ../../port/exec.c:357
+#: ../../port/exec.c:322
+#: ../../port/exec.c:358
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "kunde inte byta katalog till \"%s\""
 
-#: ../../port/exec.c:336
+#: ../../port/exec.c:337
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "kunde inte läsa symbolisk länk \"%s\""
 
-#: ../../port/exec.c:582
+#: ../../port/exec.c:583
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "barnprocess avslutade med kod %d"
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:587
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "barnprocess terminerades av felkod 0x%X"
+
+#: ../../port/exec.c:596
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "barnprocess terminerades av signal %s"
+
+#: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "barnprocess terminerades av signal %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:603
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "barnprocess avslutade med okänd statuskod %d"
+

@@ -1,14 +1,14 @@
-# translation of pg_config-tr.po to 
 # translation of pg_config-tr.po to Turkish
-# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004, 2005, 2007.
+# Devrim GUNDUZ <devrim@CommandPrompt.com>, 2004, 2005, 2007.
 # Nicolai Tufar <ntufar@gmail.com>, 2005, 2007.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config-tr\n"
-"POT-Creation-Date: 2004-10-19 01:08+0100\n"
-"PO-Revision-Date: 2007-02-14 13:17+0200\n"
-"Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-11-28 18:16-0400\n"
+"PO-Revision-Date: 2007-12-05 10:37-0800\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -200,7 +200,7 @@ msgstr "Daha fazla bilgi için\"%s --help\" parametresini kullanabilirsiniz\n"
 
 #: pg_config.c:472
 #, c-format
-msgid "%s: could not find own executable\n"
+msgid "%s: could not find own program executable\n"
 msgstr "%s: çalıştırılabilir dosya bulunamadı\n"
 
 #: pg_config.c:495
@@ -244,25 +244,25 @@ msgstr "symbolic link \"%s\" okuma hatası"
 #: ../../port/exec.c:583
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "alt süreç %d çıkış koduyla sonuçlandırılmıştır"
+msgstr "alt süreç %d çıkış koduyla sonuçlandı"
 
 #: ../../port/exec.c:587
 #, c-format
 msgid "child process was terminated by exception 0x%X"
-msgstr "alt süreç 0x%X exception tarafından sonlandırılmıştır"
+msgstr "alt süreç 0x%X exception tarafından sonlandırıldı"
 
 #: ../../port/exec.c:596
 #, c-format
 msgid "child process was terminated by signal %s"
-msgstr "alt süreç %s sinyali tarafından sonlandırılmıştır"
+msgstr "alt süreç %s sinyali tarafından sonlandırıldı"
 
 #: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by signal %d"
-msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
+msgstr "alt süreç %d sinyali tarafından sonlandırıldı"
 
 #: ../../port/exec.c:603
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"
+msgstr "alt süreç %d bilinmeyen durumu ile sonlandırıldı"
 

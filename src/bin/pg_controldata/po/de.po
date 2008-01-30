@@ -1,7 +1,7 @@
 # German message translation file for pg_controldata
 # Peter Eisentraut <peter_e@gmx.net>, 2002 - 2007.
 #
-# pgtranslation Id: pg_controldata.po,v 1.8 2007/11/08 10:53:47 petere Exp $
+# pgtranslation Id: pg_controldata.po,v 1.9 2008/01/25 13:21:05 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-11-07 19:29-0400\n"
-"PO-Revision-Date: 2007-11-08 11:50+0100\n"
+"POT-Creation-Date: 2008-01-25 01:16-0400\n"
+"PO-Revision-Date: 2008-01-25 14:16+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -129,140 +129,155 @@ msgstr ""
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control-Versionsnummer:                %u\n"
 
-#: pg_controldata.c:154
+#: pg_controldata.c:155
+#, c-format
+msgid ""
+"WARNING: possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, "
+"and\n"
+"the PostgreSQL installation would be incompatible with this data directory.\n"
+msgstr ""
+"WARNUNG: möglicherweise falsche Byte-Reihenfolge\n"
+"Die Byte-Reihenfolge, die zur Speicherung der Datei pg_control verwendet wurde,\n"
+"stimmt möglicherweise nicht mit der von diesem Programm verwendeten überein. In\n"
+"diesem Fall wären die Ergebnisse unten falsch und die PostgreSQL-Installation\n"
+"wäre inkompatibel mit diesem Datenverzeichnis.\n"
+
+#: pg_controldata.c:159
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Katalogversionsnummer:                    %u\n"
 
-#: pg_controldata.c:156
+#: pg_controldata.c:161
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "Datenbanksystemidentifikation:            %s\n"
 
-#: pg_controldata.c:158
+#: pg_controldata.c:163
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "Datenbank-Cluster-Status:                 %s\n"
 
-#: pg_controldata.c:160
+#: pg_controldata.c:165
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "pg_control zuletzt geändert:              %s\n"
 
-#: pg_controldata.c:162
+#: pg_controldata.c:167
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "Position des letzten Checkpoints:         %X/%X\n"
 
-#: pg_controldata.c:165
+#: pg_controldata.c:170
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "Position des vorletzten Checkpoints:      %X/%X\n"
 
-#: pg_controldata.c:168
+#: pg_controldata.c:173
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "REDO-Position des letzten Checkpoints:    %X/%X\n"
 
-#: pg_controldata.c:171
+#: pg_controldata.c:176
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "TimeLineID des letzten Checkpoints:       %u\n"
 
-#: pg_controldata.c:173
+#: pg_controldata.c:178
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
 msgstr "NextXID des letzten Checkpoints:          %u/%u\n"
 
-#: pg_controldata.c:176
+#: pg_controldata.c:181
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "NextOID des letzten Checkpoints:          %u\n"
 
-#: pg_controldata.c:178
+#: pg_controldata.c:183
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "NextMultiXactId des letzten Checkpoints:  %u\n"
 
-#: pg_controldata.c:180
+#: pg_controldata.c:185
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "NextMultiOffset des letzten Checkpoints:  %u\n"
 
-#: pg_controldata.c:182
+#: pg_controldata.c:187
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Zeit des letzten Checkpoints:             %s\n"
 
-#: pg_controldata.c:184
+#: pg_controldata.c:189
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "Minimaler Wiederherstellungsendpunkt:     %X/%X\n"
 
-#: pg_controldata.c:187
+#: pg_controldata.c:192
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Maximale Datenausrichtung (Alignment):    %u\n"
 
-#: pg_controldata.c:190
+#: pg_controldata.c:195
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Datenbankblockgröße:                      %u\n"
 
-#: pg_controldata.c:192
+#: pg_controldata.c:197
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Blöcke pro Segment:                       %u\n"
 
-#: pg_controldata.c:194
+#: pg_controldata.c:199
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "WAL-Blockgröße:                           %u\n"
 
-#: pg_controldata.c:196
+#: pg_controldata.c:201
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Bytes pro WAL-Segment:                    %u\n"
 
-#: pg_controldata.c:198
+#: pg_controldata.c:203
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Maximale Bezeichnerlänge:                 %u\n"
 
-#: pg_controldata.c:200
+#: pg_controldata.c:205
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Maximale Spalten in einem Index:          %u\n"
 
-#: pg_controldata.c:202
+#: pg_controldata.c:207
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Maximale Größe eines Stücks TOAST:        %u\n"
 
-#: pg_controldata.c:204
+#: pg_controldata.c:209
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Speicherung von Datum/Zeit-Typen:         %s\n"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:210
 msgid "64-bit integers"
 msgstr "64-Bit-Ganzzahlen"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:210
 msgid "floating-point numbers"
 msgstr "Gleitkommazahlen"
 
-#: pg_controldata.c:206
+#: pg_controldata.c:211
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "Maximallänge eines Locale-Namens:         %u\n"
 
-#: pg_controldata.c:208
+#: pg_controldata.c:213
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                               %s\n"
 
-#: pg_controldata.c:210
+#: pg_controldata.c:215
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                                 %s\n"

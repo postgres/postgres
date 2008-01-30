@@ -1,11 +1,11 @@
 # "pg_config" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2004-2006.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2004-2008.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.2\n"
+"Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-23 23:49-0200\n"
+"POT-Creation-Date: 2008-01-29 14:35-0200\n"
 "PO-Revision-Date: 2005-10-04 22:15-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -97,7 +97,8 @@ msgstr ""
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
 msgstr ""
-"  --localedir           mostra local dos arquivos de suporte a idiomas\n"
+"  --localedir           mostra local dos arquivos de suporte a configurações "
+"regionais\n"
 
 #: pg_config.c:411
 #, c-format
@@ -189,7 +190,7 @@ msgstr ""
 msgid ""
 "  --libs                show LIBS value used when PostgreSQL was built\n"
 msgstr ""
-"  --libs              mostra valor de LIBS utilizado quando PostgreSQL foi "
+"  --libs                mostra valor de LIBS utilizado quando PostgreSQL foi "
 "construído\n"
 
 #: pg_config.c:424
@@ -225,55 +226,65 @@ msgstr "Tente \"%s --help\" para obter informações adicionais.\n"
 
 #: pg_config.c:472
 #, c-format
-msgid "%s: could not find own executable\n"
-msgstr "%s: não pôde encontrar o próprio executável\n"
+msgid "%s: could not find own program executable\n"
+msgstr "%s: não pôde encontrar executável\n"
 
 #: pg_config.c:495
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: argumento inválido: %s\n"
 
-#: ../../port/exec.c:191 ../../port/exec.c:305 ../../port/exec.c:348
+#: ../../port/exec.c:192 ../../port/exec.c:306 ../../port/exec.c:349
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "não pôde identificar diretório atual: %s"
 
-#: ../../port/exec.c:210
+#: ../../port/exec.c:211
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "binário \"%s\" é inválido"
 
-#: ../../port/exec.c:259
+#: ../../port/exec.c:260
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "não pôde ler o binário \"%s\""
 
-#: ../../port/exec.c:266
+#: ../../port/exec.c:267
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "não pôde encontrar o \"%s\" para executá-lo"
 
-#: ../../port/exec.c:321 ../../port/exec.c:357
+#: ../../port/exec.c:322 ../../port/exec.c:358
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "não pôde mudar diretório para \"%s\""
 
-#: ../../port/exec.c:336
+#: ../../port/exec.c:337
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "não pôde ler link simbólico \"%s\""
 
-#: ../../port/exec.c:582
+#: ../../port/exec.c:583
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "processo filho terminou com código de saída %d"
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:587
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "processo filho foi terminado pela exceção 0x%X"
+
+#: ../../port/exec.c:596
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "processo filho foi terminado pelo sinal %s"
+
+#: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "processo filho foi terminado pelo sinal %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:603
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "processo filho terminou com status desconhecido %d"

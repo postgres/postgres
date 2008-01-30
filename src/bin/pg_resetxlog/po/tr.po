@@ -1,12 +1,13 @@
 # translation of pg_resetxlog-tr.po to Turkish
-# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004, 2005, 2006, 2007.
+# Devrim GUNDUZ <devrim@CommandPrompt.com>, 2004, 2005, 2006, 2007.
 # Nicolai TUFAR <ntufar@gmail.com>, 2004, 2005, 2006, 2007.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog-tr\n"
-"POT-Creation-Date: 2005-04-02 07:13+0100\n"
-"PO-Revision-Date: 2007-04-12 14:07+0200\n"
-"Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-11-28 18:16-0400\n"
+"PO-Revision-Date: 2007-12-05 10:34-0800\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -203,13 +204,13 @@ msgstr ""
 
 #: pg_resetxlog.c:541
 #, c-format
-msgid "First log file ID for new XLOG:       %u\n"
-msgstr "Yeni XLOG için ilk log dosyası ID:       %u\n"
+msgid "First log file ID after reset:        %u\n"
+msgstr "Sıfırlamadan sonraki ilk kayıt dosyası ID'si:       %u\n"
 
 #: pg_resetxlog.c:543
 #, c-format
-msgid "First log file segment for new XLOG:  %u\n"
-msgstr "Yeni XLOG için ilk log segmenti:  %u\n"
+msgid "First log file segment after reset:   %u\n"
+msgstr "Sıfırlamadan sonraki ilk kayıt dosyası segmenti  %u\n"
 
 #: pg_resetxlog.c:545
 #, c-format
@@ -335,40 +336,40 @@ msgid "%s: could not write pg_control file: %s\n"
 msgstr "%s: pg_control dosyasına yazılamadı: %s\n"
 
 #: pg_resetxlog.c:669
-#: pg_resetxlog.c:918
+#: pg_resetxlog.c:919
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: fsync hatası: %s\n"
 
 #: pg_resetxlog.c:707
-#: pg_resetxlog.c:781
+#: pg_resetxlog.c:782
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s:  \"%s\" dizini açılamadı: %s\n"
 
-#: pg_resetxlog.c:750
-#: pg_resetxlog.c:814
+#: pg_resetxlog.c:751
+#: pg_resetxlog.c:815
 #, c-format
 msgid "%s: could not read from directory \"%s\": %s\n"
 msgstr "%s:  \"%s\" dizini okunamadı: %s\n"
 
-#: pg_resetxlog.c:795
+#: pg_resetxlog.c:796
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s:  \"%s\" dosyası silinemedi: %s\n"
 
-#: pg_resetxlog.c:885
+#: pg_resetxlog.c:886
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyası açılamadı: %s\n"
 
-#: pg_resetxlog.c:896
-#: pg_resetxlog.c:910
+#: pg_resetxlog.c:897
+#: pg_resetxlog.c:911
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyasına yazılamadı: %s\n"
 
-#: pg_resetxlog.c:929
+#: pg_resetxlog.c:930
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
@@ -377,7 +378,7 @@ msgstr ""
 "%s PostgreSQL transaction kayıt dosyasını sıfırlar.\n"
 "\n"
 
-#: pg_resetxlog.c:930
+#: pg_resetxlog.c:931
 #, c-format
 msgid ""
 "Usage:\n"
@@ -388,62 +389,62 @@ msgstr ""
 "  %s [SEÇENEK]... VERİ_DİZİNİ\n"
 "\n"
 
-#: pg_resetxlog.c:931
+#: pg_resetxlog.c:932
 #, c-format
 msgid "Options:\n"
 msgstr "Seçenekler:\n"
 
-#: pg_resetxlog.c:932
+#: pg_resetxlog.c:933
 #, c-format
 msgid "  -f              force update to be done\n"
-msgstr "  -f              güncellemenin yapılamsını zorla\n"
+msgstr "  -f              güncellemenin yapılmasını zorla\n"
 
-#: pg_resetxlog.c:933
+#: pg_resetxlog.c:934
 #, c-format
 msgid "  -l TLI,FILE,SEG force minimum WAL starting location for new transaction log\n"
 msgstr "  -l TLI,FILE,SEG   Yeni transaction kayıt dosyası için en düşük WAL başlama yerini belirt\n"
 
-#: pg_resetxlog.c:934
+#: pg_resetxlog.c:935
 #, c-format
 msgid "  -m XID          set next multitransaction ID\n"
 msgstr "  -x XID          sıradaki multitransaction ID'sini ayarla\n"
 
-#: pg_resetxlog.c:935
+#: pg_resetxlog.c:936
 #, c-format
 msgid "  -n              no update, just show extracted control values (for testing)\n"
 msgstr "  -n              bir şey değiştirmeden sadece çıkartılan kontrol değerleri göster (test için).\n"
 
-#: pg_resetxlog.c:936
+#: pg_resetxlog.c:937
 #, c-format
 msgid "  -o OID          set next OID\n"
 msgstr "  -o OID          sıradaki OID'i ayarla\n"
 
-#: pg_resetxlog.c:937
+#: pg_resetxlog.c:938
 #, c-format
 msgid "  -O OFFSET       set next multitransaction offset\n"
-msgstr "  -O OFFSET  sıradaki multitransaction offset ayarla\n"
+msgstr "  -O OFFSET  sıradaki multitransaction offseti ayarla\n"
 
-#: pg_resetxlog.c:938
+#: pg_resetxlog.c:939
 #, c-format
 msgid "  -x XID          set next transaction ID\n"
 msgstr "  -x XID          sıradaki transaction ID'sini ayarla\n"
 
-#: pg_resetxlog.c:939
+#: pg_resetxlog.c:940
 #, c-format
 msgid "  -e XIDEPOCH     set next transaction ID epoch\n"
 msgstr "  -e XIDEPOCH          sıradaki transaction ID epoch ayarla\n"
 
-#: pg_resetxlog.c:940
+#: pg_resetxlog.c:941
 #, c-format
 msgid "  --help          show this help, then exit\n"
 msgstr "  --help          bu yardımı göster ve çık\n"
 
-#: pg_resetxlog.c:941
+#: pg_resetxlog.c:942
 #, c-format
 msgid "  --version       output version information, then exit\n"
 msgstr "  --version       sürüm bilgisini göster ve çık\n"
 
-#: pg_resetxlog.c:942
+#: pg_resetxlog.c:943
 #, c-format
 msgid ""
 "\n"
