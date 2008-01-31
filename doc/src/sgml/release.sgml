@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.576 2008/01/18 00:13:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.577 2008/01/31 21:31:33 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -68,8 +68,7 @@ do it for earlier branch release files.
 
   <note>
    <title>Release date</title>
-   <simpara>2008-01-??</simpara>
-   <para>CURRENT AS OF 2008-01-17</>
+   <simpara>2008-02-04</simpara>
   </note>
 
   <sect2>
@@ -842,7 +841,8 @@ current_date &lt; 2017-11-17
        middle of the table (where another sequential scan is already
        in-progress) and wrapping around to the beginning to finish.  This
        can affect the order of returned rows in a query that does not
-       specify <literal>ORDER BY</>.
+       specify <literal>ORDER BY</>.  The <varname>synchronize_seqscans</>
+       configuration parameter can be used to disable this if necessary.
       </para>
      </listitem>
 
