@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.136 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.137 2008/01/31 18:58:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,14 +340,12 @@ static GSS_DLLIMP gss_OID GSS_C_NT_HOSTBASED_SERVICE = &GSS_C_NT_HOSTBASED_SERVI
 #endif
 
 /*
- * Fetch all errors of a specific type that fit into a buffer
- * and append them.
+ * Fetch all errors of a specific type and append to "str".
  */
 static void
-pg_GSS_error_int(char *mprefix, char *msg, int msglen,
+pg_GSS_error_int(PQExpBuffer str, const char *mprefix,
 				 OM_uint32 stat, int type)
 {
-	int			curlen = 0;
 	OM_uint32	lmaj_s,
 				lmin_s;
 	gss_buffer_desc lmsg;
@@ -357,36 +355,25 @@ pg_GSS_error_int(char *mprefix, char *msg, int msglen,
 	{
 		lmaj_s = gss_display_status(&lmin_s, stat, type,
 									GSS_C_NO_OID, &msg_ctx, &lmsg);
-
-		if (curlen < msglen)
-		{
-			snprintf(msg + curlen, msglen - curlen, "%s: %s\n",
-					 mprefix, (char *) lmsg.value);
-			curlen += lmsg.length;
-		}
+		appendPQExpBuffer(str, "%s: %s\n", mprefix, (char *) lmsg.value);
 		gss_release_buffer(&lmin_s, &lmsg);
 	} while (msg_ctx);
 }
 
 /*
- * GSSAPI errors contains two parts. Put as much as possible of
- * both parts into the string.
+ * GSSAPI errors contain two parts; put both into conn->errorMessage.
  */
 static void
-pg_GSS_error(char *mprefix, PGconn *conn,
+pg_GSS_error(const char *mprefix, PGconn *conn,
 			 OM_uint32 maj_stat, OM_uint32 min_stat)
 {
-	int			mlen;
+	resetPQExpBuffer(&conn->errorMessage);
 
 	/* Fetch major error codes */
-	pg_GSS_error_int(mprefix, conn->errorMessage.data,
-					 conn->errorMessage.maxlen, maj_stat, GSS_C_GSS_CODE);
-	mlen = strlen(conn->errorMessage.data);
+	pg_GSS_error_int(&conn->errorMessage, mprefix, maj_stat, GSS_C_GSS_CODE);
 
-	/* If there is room left, try to add the minor codes as well */
-	if (mlen < conn->errorMessage.maxlen - 1)
-		pg_GSS_error_int(mprefix, conn->errorMessage.data + mlen,
-				conn->errorMessage.maxlen - mlen, min_stat, GSS_C_MECH_CODE);
+	/* Add the minor codes as well */
+	pg_GSS_error_int(&conn->errorMessage, mprefix, min_stat, GSS_C_MECH_CODE);
 }
 
 /*
