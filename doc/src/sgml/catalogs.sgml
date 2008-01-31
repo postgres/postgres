@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.160 2008/01/29 13:03:50 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.161 2008/01/31 18:40:02 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1245,6 +1245,14 @@
    about the autovacuum daemon, see <xref linkend="autovacuum">.
   </para>
 
+  <note>
+   <para>
+    It is likely that <structname>pg_autovacuum</structname> will disappear
+    in a future release, with the information instead being kept in
+    <structname>pg_class</>.<structfield>reloptions</> entries.
+   </para>
+  </note>
+
   <table>
    <title><structname>pg_autovacuum</> Columns</title>
 
@@ -1270,7 +1278,8 @@
       <entry><structfield>enabled</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>If false, this table is never autovacuumed</entry>
+      <entry>If false, this table will not be autovacuumed, except
+       to prevent transaction ID wraparound</entry>
      </row>
 
      <row>
@@ -1352,7 +1361,9 @@
    to prevent transaction ID wraparound if the table's
    <structname>pg_class</>.<structfield>relfrozenxid</> field attains an age
    of more than <structfield>freeze_max_age</> transactions, whether the table
-   has been changed or not.  The system will launch autovacuum to perform
+   has been changed or not, even if
+   <structname>pg_autovacuum</>.<structfield>enabled</> is set to
+   <literal>false</> for it.  The system will launch autovacuum to perform
    such <command>VACUUM</>s even if autovacuum is otherwise disabled.
    See <xref linkend="vacuum-for-wraparound"> for more about wraparound
    prevention.
@@ -1364,12 +1375,15 @@
    be used for this particular value.  Observe that the
    <structfield>vac_cost_delay</> variable inherits its default value from the
    <xref linkend="guc-autovacuum-vacuum-cost-delay"> configuration parameter,
-   or from <xref linkend="guc-vacuum-cost-delay"> if the former is set to a negative
-   value.  The same applies to <structfield>vac_cost_limit</>.
+   or from <xref linkend="guc-vacuum-cost-delay"> if the former is set to a
+   negative value.  The same applies to <structfield>vac_cost_limit</>.
    Also, autovacuum will ignore attempts to set a per-table
-   <structfield>freeze_max_age</> larger than the system-wide setting (it can only be set
-   smaller), and the <structfield>freeze_min_age value</> will be limited to half the
-   system-wide <xref linkend="guc-autovacuum-freeze-max-age"> setting.
+   <structfield>freeze_max_age</> larger than the system-wide setting (it can
+   only be set smaller), and the <structfield>freeze_min_age</> value will be
+   limited to half the system-wide <xref
+   linkend="guc-autovacuum-freeze-max-age"> setting.  Note that while you
+   can set <structfield>freeze_max_age</> very small, or even zero, this
+   is usually unwise since it will force frequent vacuuming.
   </para>
 
  </sect1>
