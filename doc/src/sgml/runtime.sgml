@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.404 2008/01/31 17:22:43 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.405 2008/01/31 23:03:16 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1398,10 +1398,10 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    linkend="guc-unix-socket-directory">) that has write permission only
    for a trusted local user.  This prevents a malicious user from creating
    their own socket file in that directory.  If you are concerned that
-   some applications might still look in <filename>/tmp</> for the
-   socket file and hence be vulnerable to spoofing, create a symbolic link
-   during operating system startup in <filename>/tmp</> that points to
-   the relocated socket file.  You also might need to modify your
+   some applications might still reference <filename>/tmp</> for the
+   socket file and hence be vulnerable to spoofing, during operating system
+   startup create symbolic link <filename>/tmp/.s.PGSQL.5432</> that points
+   to the relocated socket file.  You also might need to modify your
    <filename>/tmp</> cleanup script to preserve the symbolic link.
   </para>
 
