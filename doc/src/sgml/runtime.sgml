@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.403 2008/01/24 06:23:32 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.404 2008/01/31 17:22:43 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1397,7 +1397,16 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    connections is to use a Unix domain socket directory (<xref
    linkend="guc-unix-socket-directory">) that has write permission only
    for a trusted local user.  This prevents a malicious user from creating
-   their own socket file in that directory.  For TCP connections the server
+   their own socket file in that directory.  If you are concerned that
+   some applications might still look in <filename>/tmp</> for the
+   socket file and hence be vulnerable to spoofing, create a symbolic link
+   during operating system startup in <filename>/tmp</> that points to
+   the relocated socket file.  You also might need to modify your
+   <filename>/tmp</> cleanup script to preserve the symbolic link.
+  </para>
+
+  <para>
+   For TCP connections the server
    must accept only <literal>hostssl</> connections (<xref
    linkend="auth-pg-hba-conf">) and have SSL
    <filename>server.key</filename> (key) and
