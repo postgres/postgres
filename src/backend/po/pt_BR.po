@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-01-29 15:41-0200\n"
+"POT-Creation-Date: 2008-01-31 00:27-0200\n"
 "PO-Revision-Date: 2005-11-02 10:41-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -154,35 +154,35 @@ msgstr "índice \"%s\" não é um índice hash"
 msgid "index \"%s\" has wrong hash version"
 msgstr "índice \"%s\" tem versão incorreta do hash"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:940
+#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:945
 #, c-format
 msgid "could not obtain lock on relation \"%s\""
 msgstr "não pôde obter bloqueio na relação \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:945
+#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:950
 #, c-format
 msgid "could not obtain lock on relation with OID %u"
 msgstr "não pôde obter bloqueio na relação com OID %u"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:1036
-#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:1064
+#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:1041
+#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:1069
 #: /a/pgsql/HEAD/pgtst/src/backend/catalog/aclchk.c:573
 #, c-format
 msgid "\"%s\" is an index"
 msgstr "\"%s\" é um índice"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:1041
-#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:1069
+#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:1046
+#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:1074
 #: /a/pgsql/HEAD/pgtst/src/backend/catalog/aclchk.c:580
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5454
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6541
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5460
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6547
 #, c-format
 msgid "\"%s\" is a composite type"
 msgstr "\"%s\" é um tipo composto"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:3026
-#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:3057
-#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:3092
+#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:3031
+#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:3062
+#: /a/pgsql/HEAD/pgtst/src/backend/access/heap/heapam.c:3097
 #, c-format
 msgid "could not obtain lock on row in relation \"%s\""
 msgstr "não pôde obter bloqueio no registro da relação \"%s\""
@@ -591,8 +591,8 @@ msgstr "não pôde criar arquivo \"%s\": %m"
 #: /a/pgsql/HEAD/pgtst/src/backend/postmaster/postmaster.c:3313
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/init/miscinit.c:1042
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/init/miscinit.c:1051
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6023
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6086
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6033
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6096
 #: /a/pgsql/HEAD/pgtst/src/backend/../port/copydir.c:148
 #, c-format
 msgid "could not write to file \"%s\": %m"
@@ -1761,8 +1761,8 @@ msgstr "esquema \"%s\" não existe"
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/comment.c:663
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/dbcommands.c:303
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/indexcmds.c:208
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:334
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5713
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:333
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5719
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/tablespace.c:412
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/tablespace.c:767
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/tablespace.c:834
@@ -1778,7 +1778,7 @@ msgstr "tablespace \"%s\" não existe"
 #: /a/pgsql/HEAD/pgtst/src/backend/catalog/aclchk.c:588
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/comment.c:507
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/sequence.c:920
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1665
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1659
 #: /a/pgsql/HEAD/pgtst/src/backend/tcop/utility.c:85
 #, c-format
 msgid "\"%s\" is not a sequence"
@@ -2252,9 +2252,9 @@ msgid "System catalog modifications are currently disallowed."
 msgstr "Modificações no catálogo do sistema estão atualmente desabilitadas."
 
 #: /a/pgsql/HEAD/pgtst/src/backend/catalog/heap.c:346
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:780
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1093
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3097
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:774
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1087
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3103
 #, c-format
 msgid "tables can have at most %d columns"
 msgstr "tabelas podem ter no máximo %d colunas"
@@ -2284,8 +2284,8 @@ msgid "column \"%s\" has pseudo-type %s"
 msgstr "coluna \"%s\" tem pseudo-tipo %s"
 
 #: /a/pgsql/HEAD/pgtst/src/backend/catalog/heap.c:814
-#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:566
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1691
+#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:568
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1685
 #, c-format
 msgid "relation \"%s\" already exists"
 msgstr "relação \"%s\" já existe"
@@ -2309,8 +2309,8 @@ msgstr ""
 "um nome que não conflite com outro tipo existente."
 
 #: /a/pgsql/HEAD/pgtst/src/backend/catalog/heap.c:853
-#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:560
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5847
+#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:562
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5853
 msgid "only shared relations can be placed in pg_global tablespace"
 msgstr ""
 "somente relações compartilhadas podem ser armazenadas na tablespace pg_global"
@@ -2333,7 +2333,7 @@ msgstr "não pode utilizar função de agregação na restrição de verificação"
 
 #: /a/pgsql/HEAD/pgtst/src/backend/catalog/heap.c:1811
 #: /a/pgsql/HEAD/pgtst/src/backend/catalog/pg_constraint.c:609
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3899
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3905
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "restrição \"%s\" para relação \"%s\" já existe"
@@ -2405,23 +2405,27 @@ msgid "Truncate table \"%s\" at the same time, or use TRUNCATE ... CASCADE."
 msgstr ""
 "Trunque a tabela \"%s\" ao mesmo tempo, ou utilize TRUNCATE ... CASCADE."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:523
+#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:525
 msgid "user-defined indexes on system catalog tables are not supported"
 msgstr ""
 "índices definidos pelo usuário nas tabelas de catálogo do sistema não são "
 "suportados"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:533
+#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:535
 msgid "concurrent index creation on system catalog tables is not supported"
 msgstr ""
 "criação de índices concorrentes nas tabelas de catálogo do sistema não são "
 "suportados"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:542
+#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:544
 msgid "shared indexes cannot be created after initdb"
 msgstr "índices compartilhados não podem ser criados depois do initdb"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:2236
+#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:2231
+msgid "cannot reindex temporary tables of other sessions"
+msgstr "não pode reindexar tabelas temporárias de outras sessões"
+
+#: /a/pgsql/HEAD/pgtst/src/backend/catalog/index.c:2253
 #, c-format
 msgid "shared index \"%s\" can only be reindexed in stand-alone mode"
 msgstr "índice compartilhado \"%s\" só pode ser reindexado no modo autônomo"
@@ -2823,8 +2827,8 @@ msgstr "não pôde construir nome de tipo array para tipo \"%s\""
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/indexcmds.c:170
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/indexcmds.c:1327
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/lockcmds.c:71
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:650
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2740
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:649
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2746
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/trigger.c:107
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/trigger.c:834
 #: /a/pgsql/HEAD/pgtst/src/backend/tcop/utility.c:79
@@ -2898,14 +2902,14 @@ msgstr "analisando \"%s.%s\""
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/comment.c:577
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/copy.c:3372
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/sequence.c:1235
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3280
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3372
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3419
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3515
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3576
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3642
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4777
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4910
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3286
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3378
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3425
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3521
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3582
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3648
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4783
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4916
 #: /a/pgsql/HEAD/pgtst/src/backend/parser/analyze.c:1507
 #: /a/pgsql/HEAD/pgtst/src/backend/parser/parse_relation.c:1597
 #: /a/pgsql/HEAD/pgtst/src/backend/parser/parse_relation.c:1652
@@ -2931,33 +2935,33 @@ msgstr ""
 "%.0f registros não vigentes; %d registros amostrados, %.0f registros totais "
 "estimados"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:117
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:459
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:118
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:460
 msgid "cannot cluster temporary tables of other sessions"
 msgstr "não pode agrupar tabelas temporárias de outras sessões"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:148
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:149
 #, c-format
 msgid "there is no previously clustered index for table \"%s\""
 msgstr "não há nenhum índice previamente agrupado na tabela \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:162
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5677
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:163
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5683
 #, c-format
 msgid "index \"%s\" for table \"%s\" does not exist"
 msgstr "índice \"%s\" na tabela \"%s\" não existe"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:366
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:367
 #, c-format
 msgid "\"%s\" is not an index for table \"%s\""
 msgstr "\"%s\" não é um índice na tabela \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:379
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:380
 #, c-format
 msgid "cannot cluster on partial index \"%s\""
 msgstr "não pode agrupar índice parcial \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:385
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:386
 #, c-format
 msgid ""
 "cannot cluster on index \"%s\" because access method does not support "
@@ -2966,7 +2970,7 @@ msgstr ""
 "não pode agrupar índice \"%s\" porque o método de acesso não suporta "
 "agrupamento"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:405
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:406
 #, c-format
 msgid ""
 "cannot cluster on index \"%s\" because access method does not handle null "
@@ -2975,7 +2979,7 @@ msgstr ""
 "não pode agrupar índice \"%s\" porque o método de acesso não manipula "
 "valores nulos"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:408
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:409
 #, c-format
 msgid ""
 "You might be able to work around this by marking column \"%s\" NOT NULL, or "
@@ -2986,13 +2990,13 @@ msgstr ""
 "ALTER TABLE ... SET WITHOUT CLUSTER para remover a especificação de "
 "agrupamento da tabela."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:410
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:411
 #, c-format
 msgid ""
 "You might be able to work around this by marking column \"%s\" NOT NULL."
 msgstr "Você pode corrigir isso fazendo a coluna \"%s\" ser NOT NULL."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:421
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:422
 #, c-format
 msgid ""
 "cannot cluster on expressional index \"%s\" because its index access method "
@@ -3001,24 +3005,18 @@ msgstr ""
 "não pode agrupar índice de expressão \"%s\" porque seu método de acesso ao "
 "índice não manipula valores nulos"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:436
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:437
 #, c-format
 msgid "cannot cluster on invalid index \"%s\""
 msgstr "não pode agrupar por índice inválido \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:449
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:450
 #, c-format
 msgid "\"%s\" is a system catalog"
 msgstr "\"%s\" é um catálogo do sistema"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/cluster.c:469
-#, c-format
-msgid "cannot cluster table \"%s\" because it has pending trigger events"
-msgstr ""
-"não pode agrupar tabela \"%s\" porque ela tem eventos de gatilho pendentes"
-
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/comment.c:521
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1671
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1665
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/view.c:162
 #: /a/pgsql/HEAD/pgtst/src/backend/tcop/utility.c:91
 #, c-format
@@ -3529,7 +3527,7 @@ msgstr "quantidade de campos do registro é %d, esperado %d"
 
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/copy.c:2163
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/init/miscinit.c:1002
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6154
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6164
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "não pôde ler do arquivo \"%s\": %m"
@@ -3607,7 +3605,7 @@ msgstr "formato de dado binário incorreto"
 
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/copy.c:3377
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/indexcmds.c:778
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1518
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1512
 #: /a/pgsql/HEAD/pgtst/src/backend/parser/parse_expr.c:418
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/adt/tsvector_op.c:1372
 #, c-format
@@ -3615,7 +3613,7 @@ msgid "column \"%s\" does not exist"
 msgstr "coluna \"%s\" não existe"
 
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/copy.c:3384
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:802
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:796
 #: /a/pgsql/HEAD/pgtst/src/backend/parser/parse_target.c:780
 #: /a/pgsql/HEAD/pgtst/src/backend/parser/parse_target.c:791
 #, c-format
@@ -3985,13 +3983,13 @@ msgid "function \"%s\" is already in schema \"%s\""
 msgstr "função \"%s\" já está no esquema \"%s\""
 
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/functioncmds.c:1708
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6569
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6575
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/typecmds.c:2592
 msgid "cannot move objects into or out of temporary schemas"
 msgstr "não pode mover objetos para ou de esquemas temporários"
 
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/functioncmds.c:1714
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6575
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6581
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/typecmds.c:2598
 msgid "cannot move objects into or out of TOAST schema"
 msgstr "não pode mover objetos para ou de esquema TOAST"
@@ -4492,9 +4490,10 @@ msgstr "setval: valor %s está fora do intervalo da sequência \"%s\" (%s..%s)"
 
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/sequence.c:903
 #: /a/pgsql/HEAD/pgtst/src/backend/lib/stringinfo.c:245
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:759
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:827
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1221
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:409
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:766
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:834
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1228
 #: /a/pgsql/HEAD/pgtst/src/backend/postmaster/postmaster.c:1771
 #: /a/pgsql/HEAD/pgtst/src/backend/postmaster/postmaster.c:1804
 #: /a/pgsql/HEAD/pgtst/src/backend/postmaster/postmaster.c:2794
@@ -4524,9 +4523,9 @@ msgstr "setval: valor %s está fora do intervalo da sequência \"%s\" (%s..%s)"
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/init/miscinit.c:242
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/mb/mbutils.c:279
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/mb/mbutils.c:543
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2517
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2530
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2543
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2527
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2540
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2553
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/mmgr/aset.c:360
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/mmgr/aset.c:539
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/mmgr/aset.c:714
@@ -4567,7 +4566,7 @@ msgid "Specify OWNED BY table.column or OWNED BY NONE."
 msgstr "Especifique OWNED BY tabela.coluna ou OWNED BY NONE."
 
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/sequence.c:1217
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3966
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3972
 #, c-format
 msgid "referenced relation \"%s\" is not a table"
 msgstr "relação referenciada \"%s\" não é uma tabela"
@@ -4580,22 +4579,22 @@ msgstr "sequência deve ter mesmo dono da tabela que ela está ligada"
 msgid "sequence must be in same schema as table it is linked to"
 msgstr "sequência deve estar no mesmo esquema da tabela que ela está ligada"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:304
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:303
 #: /a/pgsql/HEAD/pgtst/src/backend/executor/execMain.c:2563
 msgid "ON COMMIT can only be used on temporary tables"
 msgstr "ON COMMIT só pode ser utilizado em tabelas temporárias"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:581
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:580
 #, c-format
 msgid "truncate cascades to table \"%s\""
 msgstr "truncando em cascata tabela \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:661
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1464
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1654
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2752
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2781
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3978
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:660
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1458
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1648
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2758
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2787
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3984
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/trigger.c:113
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/trigger.c:840
 #: /a/pgsql/HEAD/pgtst/src/backend/tcop/utility.c:207
@@ -4604,52 +4603,46 @@ msgstr "truncando em cascata tabela \"%s\""
 msgid "permission denied: \"%s\" is a system catalog"
 msgstr "permissão negada: \"%s\" é um catálogo do sistema"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:671
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:670
 #, c-format
 msgid "cannot truncate system relation \"%s\""
 msgstr "não pode truncar relação do sistema \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:681
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:680
 msgid "cannot truncate temporary tables of other sessions"
 msgstr "não pode truncar tabelas temporárias de outras sessões"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:691
-#, c-format
-msgid "cannot truncate table \"%s\" because it has pending trigger events"
-msgstr ""
-"não pode truncar tabela \"%s\" porque ela tem eventos de gatilho pendentes"
-
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:827
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:821
 #: /a/pgsql/HEAD/pgtst/src/backend/parser/parse_utilcmd.c:539
 #: /a/pgsql/HEAD/pgtst/src/backend/parser/parse_utilcmd.c:1141
 #, c-format
 msgid "inherited relation \"%s\" is not a table"
 msgstr "relação herdada \"%s\" não é uma tabela"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:833
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6048
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:827
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6054
 #, c-format
 msgid "cannot inherit from temporary relation \"%s\""
 msgstr "não pode herdar de uma tabela temporária \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:850
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6076
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:844
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6082
 #, c-format
 msgid "relation \"%s\" would be inherited from more than once"
 msgstr "relação \"%s\" seria herdada de mais de uma vez"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:905
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:899
 #, c-format
 msgid "merging multiple inherited definitions of column \"%s\""
 msgstr "juntando múltiplas definições herdadas da coluna \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:913
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:907
 #, c-format
 msgid "inherited column \"%s\" has a type conflict"
 msgstr "coluna herdada \"%s\" tem um conflito de tipo"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:915
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1061
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:909
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1055
 #: /a/pgsql/HEAD/pgtst/src/backend/parser/parse_coerce.c:268
 #: /a/pgsql/HEAD/pgtst/src/backend/parser/parse_coerce.c:1311
 #: /a/pgsql/HEAD/pgtst/src/backend/parser/parse_coerce.c:1330
@@ -4659,26 +4652,26 @@ msgstr "coluna herdada \"%s\" tem um conflito de tipo"
 msgid "%s versus %s"
 msgstr "%s versus %s"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1051
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1045
 #, c-format
 msgid "merging column \"%s\" with inherited definition"
 msgstr "juntando coluna \"%s\" com definição herdada"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1059
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1053
 #, c-format
 msgid "column \"%s\" has a type conflict"
 msgstr "coluna \"%s\" tem um conflito de tipo"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1110
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1104
 #, c-format
 msgid "column \"%s\" inherits conflicting default values"
 msgstr "coluna \"%s\" herdou valores padrão conflitantes"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1112
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1106
 msgid "To resolve the conflict, specify a default explicitly."
 msgstr "Para resolver o conflito, especifique um padrão explicitamente."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1149
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1143
 #, c-format
 msgid ""
 "check constraint name \"%s\" appears multiple times but with different "
@@ -4687,185 +4680,190 @@ msgstr ""
 "nome da restrição de verificação \"%s\" aparece múltiplas vezes mas com "
 "diferentes expressões"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1508
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1502
 #, c-format
 msgid "inherited column \"%s\" must be renamed in child tables too"
 msgstr ""
 "coluna herdada \"%s\" deve ser renomeada nas tabelas descendentes também"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1526
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1520
 #, c-format
 msgid "cannot rename system column \"%s\""
 msgstr "não pode renomear coluna do sistema \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1536
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1530
 #, c-format
 msgid "cannot rename inherited column \"%s\""
 msgstr "não pode renomear coluna herdada \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1547
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3089
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1541
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3095
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already exists"
 msgstr "coluna \"%s\" da relação \"%s\" já existe"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1801
+#. translator: first %s is a SQL command, eg ALTER TABLE
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1760
 #, c-format
-msgid "relation \"%s\" is being used by active queries in this session"
-msgstr "relação \"%s\" está sendo utilizada por consultas ativas nessa sessão"
-
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1807
-#, c-format
-msgid "cannot alter table \"%s\" because it has pending trigger events"
+msgid ""
+"cannot %s \"%s\" because it is being used by active queries in this session"
 msgstr ""
-"não pode alterar tabela \"%s\" porque ela tem eventos de gatilho pendentes"
+"não pode executar %s \"%s\" porque ela está sendo utilizada por consultas "
+"ativas nessa sessão"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2299
+#. translator: first %s is a SQL command, eg ALTER TABLE
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:1769
+#, c-format
+msgid "cannot %s \"%s\" because it has pending trigger events"
+msgstr ""
+"não pode executar %s \"%s\" porque ela tem eventos de gatilho pendentes"
+
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2305
 #, c-format
 msgid "cannot rewrite system relation \"%s\""
 msgstr "não pode reescrever relação do sistema \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2309
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2315
 msgid "cannot rewrite temporary tables of other sessions"
 msgstr "não pode reescrever tabelas temporárias de outras sessões"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2637
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2643
 #, c-format
 msgid "column \"%s\" contains null values"
 msgstr "coluna \"%s\" contém valores nulos"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2651
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2657
 #, c-format
 msgid "check constraint \"%s\" is violated by some row"
 msgstr "restrição de verificação \"%s\" foi violada por algum registro"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2734
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2740
 #, c-format
 msgid "\"%s\" is not a table or view"
 msgstr "\"%s\" não é uma tabela ou visão"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2770
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3469
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2776
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3475
 #, c-format
 msgid "\"%s\" is not a table or index"
 msgstr "\"%s\" não é uma tabela ou índice"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2925
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2931
 #, c-format
 msgid "cannot alter table \"%s\" because column \"%s\".\"%s\" uses its rowtype"
 msgstr ""
 "não pode alterar tabela \"%s\" porque coluna \"%s\".\"%s\" utiliza seu tipo"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2932
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:2938
 #, c-format
 msgid "cannot alter type \"%s\" because column \"%s\".\"%s\" uses it"
 msgstr "não pode alterar tipo \"%s\" porque coluna \"%s\".\"%s\" utiliza-o"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3003
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3009
 msgid "column must be added to child tables too"
 msgstr "coluna deve ser adicionada as tabelas descendentes também"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3051
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6207
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3057
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6213
 #, c-format
 msgid "child table \"%s\" has different type for column \"%s\""
 msgstr "tabela descendente \"%s\" tem tipo diferente da coluna \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3063
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3069
 #, c-format
 msgid "merging definition of column \"%s\" for child \"%s\""
 msgstr "juntando definição da coluna \"%s\" para tabela descendente \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3289
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3381
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3426
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3522
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3583
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4786
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3295
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3387
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3432
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3528
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3589
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4792
 #, c-format
 msgid "cannot alter system column \"%s\""
 msgstr "não pode alterar coluna do sistema \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3325
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3331
 #, c-format
 msgid "column \"%s\" is in a primary key"
 msgstr "coluna \"%s\" está em uma chave primária"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3496
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3502
 #, c-format
 msgid "statistics target %d is too low"
 msgstr "valor da estatística %d é muito pequeno"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3504
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3510
 #, c-format
 msgid "lowering statistics target to %d"
 msgstr "diminuindo valor da estatística para %d"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3564
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3570
 #, c-format
 msgid "invalid storage type \"%s\""
 msgstr "tipo de armazenamento \"%s\" é inválido"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3595
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3601
 #, c-format
 msgid "column data type %s can only have storage PLAIN"
 msgstr "tipo de dado da coluna %s só pode ter armazenamento PLAIN"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3652
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3658
 #, c-format
 msgid "cannot drop system column \"%s\""
 msgstr "não pode remover coluna do sistema \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3659
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:3665
 #, c-format
 msgid "cannot drop inherited column \"%s\""
 msgstr "não pode remover coluna herdada \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4000
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4006
 msgid "cannot reference temporary table from permanent table constraint"
 msgstr ""
 "não pode referenciar tabela temporária a partir de uma restrição em uma "
 "tabela permanente"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4007
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4013
 msgid "cannot reference permanent table from temporary table constraint"
 msgstr ""
 "não pode referenciar tabela permanente a partir de uma restrição em uma "
 "tabela temporária"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4061
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4067
 msgid "number of referencing and referenced columns for foreign key disagree"
 msgstr ""
 "número de colunas que referenciam e são referenciadas em um chave "
 "estrangeira não correspondem"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4152
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4158
 #, c-format
 msgid "foreign key constraint \"%s\" cannot be implemented"
 msgstr "restrição de chave estrangeira \"%s\" não pode ser implementada"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4155
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4161
 #, c-format
 msgid "Key columns \"%s\" and \"%s\" are of incompatible types: %s and %s."
 msgstr "Colunas chave \"%s\" e \"%s\" são de tipos incompatíveis: %s e %s."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4246
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4252
 #, c-format
 msgid "column \"%s\" referenced in foreign key constraint does not exist"
 msgstr ""
 "coluna \"%s\" referenciada na restrição de chave estrangeira não existe"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4251
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4257
 #, c-format
 msgid "cannot have more than %d keys in a foreign key"
 msgstr "não pode ter mais do que %d chaves em uma chave estrangeira"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4324
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4330
 #, c-format
 msgid "there is no primary key for referenced table \"%s\""
 msgstr "não há chave primária na tabela referenciada \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4458
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4464
 #, c-format
 msgid ""
 "there is no unique constraint matching given keys for referenced table \"%s\""
@@ -4873,165 +4871,165 @@ msgstr ""
 "não há restrição de unicidade que corresponde com as colunas informadas na "
 "tabela referenciada \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4742
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4748
 #: /a/pgsql/HEAD/pgtst/src/backend/commands/trigger.c:3418
 #, c-format
 msgid "constraint \"%s\" does not exist"
 msgstr "restrição \"%s\" não existe"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4747
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4753
 #, c-format
 msgid "multiple constraints named \"%s\" were dropped"
 msgstr "restrições múltiplas chamadas \"%s\" foram removidas"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4793
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4799
 #, c-format
 msgid "cannot alter inherited column \"%s\""
 msgstr "não pode alterar coluna herdada \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4828
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4834
 msgid "transform expression must not return a set"
 msgstr "expressão de transformação não deve retornar um conjunto"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4834
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4840
 msgid "cannot use subquery in transform expression"
 msgstr "não pode utilizar subconsulta em expressão de transformação"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4838
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4844
 msgid "cannot use aggregate function in transform expression"
 msgstr "não pode utilizar função de agregação em expressão de transformação"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4855
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4861
 #, c-format
 msgid "column \"%s\" cannot be cast to type \"%s\""
 msgstr "coluna \"%s\" não pode ser convertida para tipo \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4881
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4887
 #, c-format
 msgid "type of inherited column \"%s\" must be changed in child tables too"
 msgstr ""
 "tipo de coluna herdada \"%s\" deve ser alterado nas tabelas descendentes "
 "também"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4920
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4926
 #, c-format
 msgid "cannot alter type of column \"%s\" twice"
 msgstr "não pode alterar tipo de coluna \"%s\" duas vezes"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4953
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:4959
 #, c-format
 msgid "default for column \"%s\" cannot be cast to type \"%s\""
 msgstr ""
 "valor padrão para coluna \"%s\" não pode ser convertido para tipo \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5079
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5085
 msgid "cannot alter type of a column used by a view or rule"
 msgstr "não pode alterar tipo de uma coluna utilizada por uma visão ou regra"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5080
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5086
 #, c-format
 msgid "%s depends on column \"%s\""
 msgstr "%s depende da coluna \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5424
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5430
 #, c-format
 msgid "cannot change owner of index \"%s\""
 msgstr "não pode mudar dono do índice \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5426
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5432
 msgid "Change the ownership of the index's table, instead."
 msgstr "Ao invés disso, mude o dono da tabela do índice."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5442
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5448
 #, c-format
 msgid "cannot change owner of sequence \"%s\""
 msgstr "não pode mudar dono da sequência \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5444
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6533
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5450
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6539
 #, c-format
 msgid "Sequence \"%s\" is linked to table \"%s\"."
 msgstr "Sequência \"%s\" está ligada a tabela \"%s\"."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5456
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6543
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5462
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6549
 msgid "Use ALTER TYPE instead."
 msgstr "Ao invés disso utilize ALTER TYPE."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5465
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6551
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5471
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6557
 #, c-format
 msgid "\"%s\" is not a table, view, or sequence"
 msgstr "\"%s\" não é uma tabela, visão ou sequência"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5724
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5730
 msgid "cannot have multiple SET TABLESPACE subcommands"
 msgstr "não pode ter múltiplos subcomandos SET TABLESPACE"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5777
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5783
 #, c-format
 msgid "\"%s\" is not a table, index, or TOAST table"
 msgstr "\"%s\" não é uma tabela, índice ou tabela TOAST"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5840
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5846
 #, c-format
 msgid "cannot move system relation \"%s\""
 msgstr "não pode mover relação do sistema \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5856
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:5862
 msgid "cannot move temporary tables of other sessions"
 msgstr "não pode mover tabelas temporárias de outras sessões"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6100
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6106
 msgid "circular inheritance not allowed"
 msgstr "herança circular não é permitida"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6101
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6107
 #, c-format
 msgid "\"%s\" is already a child of \"%s\"."
 msgstr "\"%s\" já é um descendente de \"%s\"."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6109
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6115
 #, c-format
 msgid "table \"%s\" without OIDs cannot inherit from table \"%s\" with OIDs"
 msgstr "tabela \"%s\" sem OIDs não pode herdar de tabela \"%s\" com OIDs"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6214
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6220
 #, c-format
 msgid "column \"%s\" in child table must be marked NOT NULL"
 msgstr "coluna \"%s\" na tabela descendente deve ser definida como NOT NULL"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6230
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6236
 #, c-format
 msgid "child table is missing column \"%s\""
 msgstr "tabela descendente está faltando coluna \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6322
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6328
 #, c-format
 msgid "child table is missing constraint \"%s\""
 msgstr "tabela descendente está faltando restrição \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6331
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6337
 #, c-format
 msgid "constraint definition for check constraint \"%s\" does not match"
 msgstr ""
 "definição de restrição para restrição de verificação \"%s\" não corresponde"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6412
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6418
 #, c-format
 msgid "relation \"%s\" is not a parent of relation \"%s\""
 msgstr "relação \"%s\" não é um ancestral da relação \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6532
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6538
 msgid "cannot move an owned sequence into another schema"
 msgstr "não pode mover uma sequência ligada para outro esquema"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6561
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6567
 #, c-format
 msgid "relation \"%s\" is already in schema \"%s\""
 msgstr "relação \"%s\" já está no esquema \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6626
+#: /a/pgsql/HEAD/pgtst/src/backend/commands/tablecmds.c:6632
 #, c-format
 msgid "relation \"%s\" already exists in schema \"%s\""
 msgstr "relação \"%s\" já existe no esquema \"%s\""
@@ -6475,238 +6473,238 @@ msgstr "Kerberos 5 não foi implementado neste servidor"
 msgid "%s: %s"
 msgstr "%s: %s"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:438
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:445
 #, c-format
 msgid "expected GSS response, got message type %d"
 msgstr "resposta do GSS esperada, recebeu tipo de mensagem %d"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:501
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:508
 msgid "accepting GSS security context failed"
 msgstr "aceitação do contexto de segurança do GSS falhou"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:527
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:534
 msgid "retrieving GSS user name failed"
 msgstr "recuperação do nome de usuário do GSS falhou"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:596
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:603
 msgid "GSSAPI not implemented on this server"
 msgstr "GSSAPI não foi implementado neste servidor"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:610
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:617
 #, c-format
 msgid "SSPI error %x"
 msgstr "erro de SSPI %x"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:614
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:621
 #, c-format
 msgid "%s (%x)"
 msgstr "%s (%x)"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:662
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:669
 msgid "could not acquire SSPI credentials handle"
 msgstr "não pôde receber manipulador de credenciais SSPI"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:679
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:686
 #, c-format
 msgid "expected SSPI response, got message type %d"
 msgstr "resposta do SSPI esperada, recebeu tipo de mensagem %d"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:751
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:758
 msgid "could not accept SSPI security context"
 msgstr "não pôde aceitar contexto de segurança do SSPI"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:807
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:814
 msgid "could not get security token from context"
 msgstr "não pôde obter elemento de segurança do contexto"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:880
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:887
 msgid "SSPI not implemented on this server"
 msgstr "SSPI não foi implementado neste servidor"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:919
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:926
 #, c-format
 msgid "authentication failed for user \"%s\": host rejected"
 msgstr "autenticação de usuário \"%s\" falhou: máquina rejeitada"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:922
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:929
 #, c-format
 msgid "Kerberos 5 authentication failed for user \"%s\""
 msgstr "autenticação do tipo Kerberos 5 falhou para usuário \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:925
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:932
 #, c-format
 msgid "GSSAPI authentication failed for user \"%s\""
 msgstr "autenticação do tipo GSSAPI falhou para usuário \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:928
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:935
 #, c-format
 msgid "SSPI authentication failed for user \"%s\""
 msgstr "autenticação do tipo SSPI falhou para usuário \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:931
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:938
 #, c-format
 msgid "\"trust\" authentication failed for user \"%s\""
 msgstr "autenticação do tipo \"trust\" falhou para usuário \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:934
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:941
 #, c-format
 msgid "Ident authentication failed for user \"%s\""
 msgstr "autenticação do tipo Ident falhou para usuário \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:939
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:946
 #, c-format
 msgid "password authentication failed for user \"%s\""
 msgstr "autenticação do tipo password falhou para usuário \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:943
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:950
 #, c-format
 msgid "PAM authentication failed for user \"%s\""
 msgstr "autenticação do tipo PAM falhou para usuário \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:948
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:955
 #, c-format
 msgid "LDAP authentication failed for user \"%s\""
 msgstr "autenticação do tipo LDAP falhou para usuário \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:952
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:959
 #, c-format
 msgid "authentication failed for user \"%s\": invalid authentication method"
 msgstr ""
 "autenticação falhou para usuário \"%s\": método de autenticação é inválido"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:981
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:988
 msgid "missing or erroneous pg_hba.conf file"
 msgstr "arquivo pg_hba.conf não foi encontrado ou está errado"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:982
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:989
 msgid "See server log for details."
 msgstr "Veja log do servidor para obter detalhes."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1010
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1017
 msgid "SSL on"
 msgstr "SSL habilitado"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1010
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1017
 msgid "SSL off"
 msgstr "SSL desabilitado"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1008
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1015
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s"
 msgstr ""
 "nenhuma entrada no pg_hba.conf para máquina \"%s\", usuário \"%s\", banco de "
 "dados \"%s\", %s"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1014
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1021
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\""
 msgstr ""
 "nenhuma entrada no pg_hba.conf para máquina \"%s\", usuário \"%s\", banco de "
 "dados \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1058
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1065
 #, c-format
 msgid "could not enable credential reception: %m"
 msgstr "não pôde habilitar recepção de credenciais: %m"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1169
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1176
 #, c-format
 msgid "error from underlying PAM layer: %s"
 msgstr "erro da biblioteca PAM: %s"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1174
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1181
 #, c-format
 msgid "unsupported PAM conversation %d/%s"
 msgstr "conversação PAM %d/%s não é suportada"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1206
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1213
 msgid "empty password returned by client"
 msgstr "senha vazia retornada pelo cliente"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1266
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1273
 #, c-format
 msgid "could not create PAM authenticator: %s"
 msgstr "não pôde criar autenticador PAM: %s"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1277
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1284
 #, c-format
 msgid "pam_set_item(PAM_USER) failed: %s"
 msgstr "pam_set_item(PAM_USER) falhou: %s"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1288
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1295
 #, c-format
 msgid "pam_set_item(PAM_CONV) failed: %s"
 msgstr "pam_set_item(PAM_CONV) falhou: %s"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1299
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1306
 #, c-format
 msgid "pam_authenticate failed: %s"
 msgstr "pam_authenticate falhou: %s"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1310
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1317
 #, c-format
 msgid "pam_acct_mgmt failed: %s"
 msgstr "pam_acct_mgmt falhou: %s"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1321
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1328
 #, c-format
 msgid "could not release PAM authenticator: %s"
 msgstr "não pôde liberar autenticador PAM: %s"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1352
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1359
 msgid "LDAP configuration URL not specified"
 msgstr "URL da configuração LDAP não foi especificada"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1398
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1405
 #, c-format
 msgid "invalid LDAP URL: \"%s\""
 msgstr "URL LDAP é inválida: \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1414
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1418
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1421
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1425
 #, c-format
 msgid "could not initialize LDAP: error code %d"
 msgstr "não pôde inicializar LDAP: código de erro %d"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1428
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1435
 #, c-format
 msgid "could not set LDAP protocol version: error code %d"
 msgstr "não pôde definir versão do protocolo LDAP: código de erro %d"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1457
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1464
 msgid "could not load wldap32.dll"
 msgstr "não pôde carregar wldap32.dll"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1465
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1472
 msgid "could not load function _ldap_start_tls_sA in wldap32.dll"
 msgstr "não pôde carregar função _ldap_start_tls_sA em wldap32.dll"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1466
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1473
 msgid "LDAP over SSL is not supported on this platform."
 msgstr "LDAP sobre SSL não é suportado nesta plataforma."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1481
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1488
 #, c-format
 msgid "could not start LDAP TLS session: error code %d"
 msgstr "não pôde iniciar sessão LDAP TLS: código de erro %d"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1496
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1503
 #, c-format
 msgid "LDAP login failed for user \"%s\" on server \"%s\": error code %d"
 msgstr ""
 "autenticação LDAP falhou para usuário \"%s\" no servidor \"%s\": código de "
 "erro %d"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1532
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1539
 #, c-format
 msgid "expected password response, got message type %d"
 msgstr "resposta da senha esperada, recebeu tipo de mensagem %d"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1560
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1567
 msgid "invalid password packet size"
 msgstr "tamanho do pacote de senha é inválido"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1564
+#: /a/pgsql/HEAD/pgtst/src/backend/libpq/auth.c:1571
 msgid "received password packet"
 msgstr "pacote de senha recebido"
 
@@ -13628,192 +13626,192 @@ msgstr ""
 msgid "unexpected encoding ID %d for WIN character sets"
 msgstr "ID de codificação %d é inesperado para conjuntos de caracteres WIN"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:317
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:318
 msgid "Ungrouped"
 msgstr "Desagrupado"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:319
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:320
 msgid "File Locations"
 msgstr "Locais de Arquivos"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:321
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:322
 msgid "Connections and Authentication"
 msgstr "Conexões e Autenticação"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:323
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:324
 msgid "Connections and Authentication / Connection Settings"
 msgstr "Conexões e Autenticação / Configurações sobre Conexão"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:325
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:326
 msgid "Connections and Authentication / Security and Authentication"
 msgstr "Conexões e Autenticação / Segurança e Autenticação"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:327
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:328
 msgid "Resource Usage"
 msgstr "Uso de Recursos"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:329
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:330
 msgid "Resource Usage / Memory"
 msgstr "Uso de Recursos / Memória"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:331
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:332
 msgid "Resource Usage / Free Space Map"
 msgstr "Uso de Recursos / Mapeamento de Espaço Livre"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:333
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:334
 msgid "Resource Usage / Kernel Resources"
 msgstr "Uso de Recursos / Recursos do Kernel"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:335
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:336
 msgid "Write-Ahead Log"
 msgstr "Log de Escrita Prévia"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:337
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:338
 msgid "Write-Ahead Log / Settings"
 msgstr "Log de Escrita Prévia / Configurações"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:339
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:340
 msgid "Write-Ahead Log / Checkpoints"
 msgstr "Log de Escrita Prévia / Pontos de Controle"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:341
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:342
 msgid "Query Tuning"
 msgstr "Ajuste de Consultas"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:343
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:344
 msgid "Query Tuning / Planner Method Configuration"
 msgstr "Ajuste de Consultas / Configuração dos Métodos do Planejador"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:345
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:346
 msgid "Query Tuning / Planner Cost Constants"
 msgstr "Ajuste de Consultas / Constantes de Custo do Planejador"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:347
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:348
 msgid "Query Tuning / Genetic Query Optimizer"
 msgstr "Ajuste de Consultas / Otimizador de Consultas Genéticas"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:349
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:350
 msgid "Query Tuning / Other Planner Options"
 msgstr "Ajuste de Consultas / Outras Opções do Planejador"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:351
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:352
 msgid "Reporting and Logging"
 msgstr "Relatório e Registro"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:353
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:354
 msgid "Reporting and Logging / Where to Log"
 msgstr "Relatório e Registro / Onde Registrar"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:355
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:356
 msgid "Reporting and Logging / When to Log"
 msgstr "Relatório e Registro / Quando Registrar"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:357
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:358
 msgid "Reporting and Logging / What to Log"
 msgstr "Relatório e Registro / O que Registrar"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:359
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:360
 msgid "Statistics"
 msgstr "Estatísticas"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:361
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:362
 msgid "Statistics / Monitoring"
 msgstr "Estatísticas / Monitoramento"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:363
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:364
 msgid "Statistics / Query and Index Statistics Collector"
 msgstr "Estatísticas / Coletor de Estatísticas de Consultas e Índices"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:365
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:366
 msgid "Autovacuum"
 msgstr "Limpeza Automática"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:367
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:368
 msgid "Client Connection Defaults"
 msgstr "Valores Padrão de Conexão"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:369
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:370
 msgid "Client Connection Defaults / Statement Behavior"
 msgstr "Valores Padrão de Conexão / Comportamento do Comando"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:371
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:372
 msgid "Client Connection Defaults / Locale and Formatting"
 msgstr "Valores Padrão de Conexão / Configuração Regional e Formatação"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:373
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:374
 msgid "Client Connection Defaults / Other Defaults"
 msgstr "Valores Padrão de Conexão / Outros Valores"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:375
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:376
 msgid "Lock Management"
 msgstr "Gerência de Bloqueio"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:377
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:378
 msgid "Version and Platform Compatibility"
 msgstr "Compatibilidade de Versão e Plataforma"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:379
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:380
 msgid "Version and Platform Compatibility / Previous PostgreSQL Versions"
 msgstr ""
 "Compatibilidade de Versão e Plataforma / Versões Anteriores do PostgreSQL"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:381
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:382
 msgid "Version and Platform Compatibility / Other Platforms and Clients"
 msgstr "Compatibilidade de Versão e Plataforma / Outras Plataformas e Clientes"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:383
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:384
 msgid "Preset Options"
 msgstr "Opções Pré-Definidas"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:385
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:386
 msgid "Customized Options"
 msgstr "Opções Customizadas"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:387
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:388
 msgid "Developer Options"
 msgstr "Opções para Desenvolvedores"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:440
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:441
 msgid "Enables the planner's use of sequential-scan plans."
 msgstr "Habilita o uso de planos de busca sequencial pelo planejador."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:448
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:449
 msgid "Enables the planner's use of index-scan plans."
 msgstr "Habilita o uso de planos de buscas por índices pelo planejador."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:456
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:457
 msgid "Enables the planner's use of bitmap-scan plans."
 msgstr "Habilita o uso de planos de buscas por bitmaps pelo planejador."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:464
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:465
 msgid "Enables the planner's use of TID scan plans."
 msgstr "Habilita o uso de planos de buscas por TID pelo planejador."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:472
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:473
 msgid "Enables the planner's use of explicit sort steps."
 msgstr "Habilita o uso de passos para ordenação explícita pelo planejador."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:480
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:481
 msgid "Enables the planner's use of hashed aggregation plans."
 msgstr "Habilita o uso de planos de agregação do tipo hash pelo planejador."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:488
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:489
 msgid "Enables the planner's use of nested-loop join plans."
 msgstr "Habilita o uso de planos de junção de laço aninhado do planejador."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:496
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:497
 msgid "Enables the planner's use of merge join plans."
 msgstr "Habilita o uso de planos de junção por mesclagem do planejador."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:504
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:505
 msgid "Enables the planner's use of hash join plans."
 msgstr "Habilita o uso de planos de junção hash do planejador."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:512
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:513
 msgid "Enables the planner to use constraints to optimize queries."
 msgstr "Habilita o planejador a usar retrições para otimizar consultas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:513
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:514
 msgid ""
 "Child table scans will be skipped if their constraints guarantee that no "
 "rows match the query."
@@ -13821,27 +13819,27 @@ msgstr ""
 "Buscas em tabelas descendentes serão ignoradas se suas restrições garantirem "
 "que nenhum registro corresponde a consulta."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:521
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:522
 msgid "Enables genetic query optimization."
 msgstr "Habilita a otimização de consultas genéticas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:522
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:523
 msgid "This algorithm attempts to do planning without exhaustive searching."
 msgstr "Esse algoritmo tenta fazer o planejamento sem busca exaustiva."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:531
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:532
 msgid "Shows whether the current user is a superuser."
 msgstr "Mostra se o usuário atual é um super-usuário."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:540
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:541
 msgid "Enables SSL connections."
 msgstr "Habilita conexões SSL."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:548
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:549
 msgid "Forces synchronization of updates to disk."
 msgstr "Força sincronização de atualizações com o disco."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:549
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:550
 msgid ""
 "The server will use the fsync() system call in several places to make sure "
 "that updates are physically written to disk. This insures that a database "
@@ -13853,15 +13851,15 @@ msgstr ""
 "assegura que o agrupamento de bancos de dados recuperará ao seu estado "
 "consistente após uma queda do sistema operacional ou de hardware."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:559
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:560
 msgid "Sets immediate fsync at commit."
 msgstr "Define execução imediata do fsync ao efetivar."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:567
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:568
 msgid "Continues processing past damaged page headers."
 msgstr "Continua processando cabeçalhos antigos de páginas danificadas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:568
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:569
 msgid ""
 "Detection of a damaged page header normally causes PostgreSQL to report an "
 "error, aborting the current transaction. Setting zero_damaged_pages to true "
@@ -13876,13 +13874,13 @@ msgstr ""
 "processamento. Esse comportamento destrói dados, especificadamente todos os "
 "registros da página danificada."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:580
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:581
 msgid "Writes full pages to WAL when first modified after a checkpoint."
 msgstr ""
 "Escreve páginas completas no WAL quando modificadas após um ponto de "
 "controle."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:581
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:582
 msgid ""
 "A page write in process during an operating system crash might be only "
 "partially written to disk.  During recovery, the row changes stored in WAL "
@@ -13895,11 +13893,11 @@ msgstr ""
 "opção escreve páginas quando modificadas após um ponto de controle no WAL "
 "possibilitando uma recuperação completa."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:592
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:593
 msgid "Runs the server silently."
 msgstr "Executa o servidor silenciosamente."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:593
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:594
 msgid ""
 "If this parameter is set, the server will automatically run in the "
 "background and any controlling terminals are dissociated."
@@ -13907,82 +13905,82 @@ msgstr ""
 "Se esse parâmetro está definido, o servidor executará automaticamente em "
 "segundo plano e qualquer terminal de controle é dissociado."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:601
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:602
 msgid "Logs each checkpoint."
 msgstr "Registra cada ponto de controle."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:609
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:610
 msgid "Logs each successful connection."
 msgstr "Registra cada conexão bem sucedida."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:617
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:618
 msgid "Logs end of a session, including duration."
 msgstr "Registra o fim da sessão, incluindo a duração."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:625
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:626
 msgid "Turns on various assertion checks."
 msgstr "Ativa várias verificações de asserção."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:626
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:627
 msgid "This is a debugging aid."
 msgstr "Esse é um auxílio na depuração."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:640
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:722
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:790
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:799
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:808
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:817
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1379
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1388
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:641
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:723
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:791
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:800
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:809
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:818
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1389
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1398
 msgid "No description available."
 msgstr "Nenhuma descrição disponível."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:649
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:650
 msgid "Logs the duration of each completed SQL statement."
 msgstr "Registra a duração de cada sentença SQL completa."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:657
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:658
 msgid "Prints the parse tree to the server log."
 msgstr "Escreve a árvore de análise para log do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:665
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:666
 msgid "Prints the parse tree after rewriting to server log."
 msgstr "Escreve a árvore de análise após reescrita no log do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:673
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:674
 msgid "Prints the execution plan to server log."
 msgstr "Escreve o plano de execução no log do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:681
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:682
 msgid "Indents parse and plan tree displays."
 msgstr "Identa exibição da árvore de análise e plano."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:689
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:690
 msgid "Writes parser performance statistics to the server log."
 msgstr "Escreve estatísticas de performance do analisador no log do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:697
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:698
 msgid "Writes planner performance statistics to the server log."
 msgstr "Escreve estatísticas de performance do planejador no log do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:705
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:706
 msgid "Writes executor performance statistics to the server log."
 msgstr "Escreve estatísticas de performance do executor no log do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:713
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:714
 msgid "Writes cumulative performance statistics to the server log."
 msgstr "Escreve estatísticas de performance acumulativas no log do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:733
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:734
 msgid "Uses the indented output format for EXPLAIN VERBOSE."
 msgstr "Utiliza o formato identado para EXPLAIN VERBOSE."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:742
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:743
 msgid "Collects information about executing commands."
 msgstr "Coleta informação sobre execução de comandos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:743
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:744
 msgid ""
 "Enables the collection of information on the currently executing command of "
 "each session, along with the time at which that command began execution."
@@ -13990,15 +13988,15 @@ msgstr ""
 "Habilita a coleta de informação do comando em execução de cada sessão, ao "
 "mesmo tempo que o comando inicia a execução."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:752
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:753
 msgid "Collects statistics on database activity."
 msgstr "Coleta estatísticas da atividade no banco de dados."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:761
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:762
 msgid "Updates the process title to show the active SQL command."
 msgstr "Atualiza o título do processo para mostrar o comando SQL ativo."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:762
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:763
 msgid ""
 "Enables updating of the process title every time a new SQL command is "
 "received by the server."
@@ -14006,23 +14004,23 @@ msgstr ""
 "Habilita a atualização do título do processo toda vez que um comando SQL "
 "novo é recebido pelo servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:770
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:771
 msgid "Starts the autovacuum subprocess."
 msgstr "Inicia o subprocesso de limpeza automática."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:779
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:780
 msgid "Generates debugging output for LISTEN and NOTIFY."
 msgstr "Gera saída de depuração para LISTEN e NOTIFY."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:828
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:829
 msgid "Logs long lock waits."
 msgstr "Registra esperas devido a bloqueios longos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:837
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:838
 msgid "Logs the host name in the connection logs."
 msgstr "Registra o nome da máquina nos logs de conexão."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:838
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:839
 msgid ""
 "By default, connection logs only show the IP address of the connecting host. "
 "If you want them to show the host name you can turn this on, but depending "
@@ -14034,15 +14032,15 @@ msgstr ""
 "habilitá-lo, mas dependendo da configuração de resolução do nome da máquina "
 "isso pode impor uma penalização de performance."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:848
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:849
 msgid "Causes subtables to be included by default in various commands."
 msgstr "Causa subtabelas serem incluídas por padrão em vários comandos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:856
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:857
 msgid "Encrypt passwords."
 msgstr "Criptografa senhas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:857
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:858
 msgid ""
 "When a password is specified in CREATE USER or ALTER USER without writing "
 "either ENCRYPTED or UNENCRYPTED, this parameter determines whether the "
@@ -14052,11 +14050,11 @@ msgstr ""
 "ENCRYPTED ou UNENCRYPTED, esse parâmetro determina se a senha será "
 "criptografada."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:866
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:867
 msgid "Treats \"expr=NULL\" as \"expr IS NULL\"."
 msgstr "Trata \"expr=NULL\" como \"expr IS NULL\"."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:867
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:868
 msgid ""
 "When turned on, expressions of the form expr = NULL (or NULL = expr) are "
 "treated as expr IS NULL, that is, they return true if expr evaluates to the "
@@ -14068,15 +14066,15 @@ msgstr ""
 "avaliada como nula, e falso caso contrário. O comportamento correto de expr "
 "= NULL é retornar sempre nulo (desconhecido)."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:878
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:879
 msgid "Enables per-database user names."
 msgstr "Habilita uso de nomes de usuário por banco de dados."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:887
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:888
 msgid "This parameter doesn't do anything."
 msgstr "Esse parâmetro não faz nada."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:888
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:889
 msgid ""
 "It's just here so that we won't choke on SET AUTOCOMMIT TO ON from 7.3-"
 "vintage clients."
@@ -14084,29 +14082,29 @@ msgstr ""
 "Isso está aqui para que não seja necessário SET AUTOCOMMIT TO ON em clientes "
 "7.3 e anteriores."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:896
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:897
 msgid "Sets the default read-only status of new transactions."
 msgstr "Define o status padrão como somente leitura para novas transações."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:904
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:905
 msgid "Sets the current transaction's read-only status."
 msgstr "Define o status da transação atual como somente leitura."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:913
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:914
 msgid "Automatically adds missing table references to FROM clauses."
 msgstr ""
 "Adiciona automaticamente referência a tabelas não encontradas nas cláusulas "
 "FROM."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:921
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:922
 msgid "Check function bodies during CREATE FUNCTION."
 msgstr "Verifica corpo da função durante CREATE FUNCTION."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:929
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:930
 msgid "Enable input of NULL elements in arrays."
 msgstr "Habilita entrada de elementos NULL em matrizes."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:930
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:931
 msgid ""
 "When turned on, unquoted NULL in an array input value means a null value; "
 "otherwise it is taken literally."
@@ -14114,43 +14112,43 @@ msgstr ""
 "Quando habilitado, NULL sem aspas em um valor de entrada de uma matriz "
 "significa o valor nulo; caso contrário ele é utilizado literalmente."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:939
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:940
 msgid "Create new tables with OIDs by default."
 msgstr "Cria novas tabelas com OIDs por padrão."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:947
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:948
 msgid ""
 "Start a subprocess to capture stderr output and/or csvlogs into log files."
 msgstr ""
 "Inicia um subprocesso para capturar saída stderr e/ou csvlogs em arquivos de "
 "log."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:955
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:956
 msgid "Truncate existing log files of same name during log rotation."
 msgstr ""
 "Trunca arquivos de log existentes com mesmo nome durante rotação de log."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:965
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:966
 msgid "Emit information about resource usage in sorting."
 msgstr "Produz informação sobre uso de recurso ao ordenar."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:978
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:979
 msgid "Generate debugging output for synchronized scanning."
 msgstr "Gera saída de depuração para busca sincronizada."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:992
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:993
 msgid "Enable bounded sorting using heap sort."
 msgstr "Habilita ordenação limitada utilizando ordenção de pilha."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1004
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1005
 msgid "Emit WAL-related debugging output."
 msgstr "Emite saída de depuração relacionada ao WAL."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1015
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1016
 msgid "Datetimes are integer based."
 msgstr "Datetimes são baseados em inteiros."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1029
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1030
 msgid ""
 "Sets whether Kerberos and GSSAPI user names should be treated as case-"
 "insensitive."
@@ -14158,30 +14156,34 @@ msgstr ""
 "Define se nomes de usuário do Kerberos e do GSSAPI devem ser tratados como "
 "não sensíveis a minúsculas/maiúsculas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1038
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1039
 msgid "Warn about backslash escapes in ordinary string literals."
 msgstr ""
 "Avisa sobre escapes de barra invertida em cadeias de caracteres ordinárias."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1047
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1048
 msgid "Causes '...' strings to treat backslashes literally."
 msgstr ""
 "Faz com que cadeias de caracteres '...' tratem barras invertidas "
 "literalmente."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1057
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1058
+msgid "Enable synchronized sequential scans."
+msgstr "Habilita buscas sequenciais sincronizadas."
+
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1067
 msgid "Allows archiving of WAL files using archive_command."
 msgstr "Permite arquivamento de arquivos do WAL utilizando archive_command."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1066
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1076
 msgid "Allows modifications of the structure of system tables."
 msgstr "Permite modificações da estrutura de tabelas do sistema."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1076
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1086
 msgid "Disables reading from system indexes."
 msgstr "Desabilita leitura dos índices do sistema."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1077
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1087
 msgid ""
 "It does not prevent updating the indexes, so it is safe to use.  The worst "
 "consequence is slowness."
@@ -14189,7 +14191,7 @@ msgstr ""
 "Ele não impede a atualização dos índices, então é seguro utilizá-lo. A pior "
 "consequência é lentidão."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1096
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1106
 msgid ""
 "Forces a switch to the next xlog file if a new file has not been started "
 "within N seconds."
@@ -14197,20 +14199,20 @@ msgstr ""
 "Força a rotação para o próximo arquivo de xlog se um novo arquivo não foi "
 "iniciado em N segundos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1106
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1116
 msgid "Waits N seconds on connection startup after authentication."
 msgstr "Espera N segundos após autenticação durante inicialização da conexão."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1107
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1458
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1117
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1468
 msgid "This allows attaching a debugger to the process."
 msgstr "Isso permite anexar um depurador ao processo."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1115
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1125
 msgid "Sets the default statistics target."
 msgstr "Define o alvo padrão de estatísticas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1116
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1126
 msgid ""
 "This applies to table columns that have not had a column-specific target set "
 "via ALTER TABLE SET STATISTICS."
@@ -14218,13 +14220,13 @@ msgstr ""
 "Isso se aplica a colunas de tabelas que não têm um alvo de colunas "
 "específico definido através de ALTER TABLE SET STATISTICS."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1124
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1134
 msgid "Sets the FROM-list size beyond which subqueries are not collapsed."
 msgstr ""
 "Define o tamanho da lista do FROM a partir do qual as subconsultas não "
 "entrarão em colapso."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1126
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1136
 msgid ""
 "The planner will merge subqueries into upper queries if the resulting FROM "
 "list would have no more than this many items."
@@ -14232,13 +14234,13 @@ msgstr ""
 "O planejador mesclará subconsultas em consultas de nível superior se a lista "
 "resultante do FROM for menor que essa quantidade de itens."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1135
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1145
 msgid "Sets the FROM-list size beyond which JOIN constructs are not flattened."
 msgstr ""
 "Define o tamanho da lista do FROM a partir do qual as construções JOIN não "
 "serão nivelados."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1137
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1147
 msgid ""
 "The planner will flatten explicit JOIN constructs into lists of FROM items "
 "whenever a list of no more than this many items would result."
@@ -14246,59 +14248,59 @@ msgstr ""
 "O planejador nivelará construções JOIN explícitas em listas de itens FROM "
 "sempre que a lista não tenha mais do que essa quantidade de itens."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1146
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1156
 msgid "Sets the threshold of FROM items beyond which GEQO is used."
 msgstr "Define o limite de itens do FROM a partir do qual o GEQO é utilizado."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1154
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1164
 msgid "GEQO: effort is used to set the default for other GEQO parameters."
 msgstr ""
 "GEQO: esforço é utilizado para definir o padrão para outros parâmetros GEQO."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1162
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1172
 msgid "GEQO: number of individuals in the population."
 msgstr "GEQO: número de indivíduos em uma população."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1163
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1171
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1173
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1181
 msgid "Zero selects a suitable default value."
 msgstr "Zero seleciona um valor padrão ideal."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1170
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1180
 msgid "GEQO: number of iterations of the algorithm."
 msgstr "GEQO: número de iterações do algoritmo."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1179
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1189
 msgid "Sets the time to wait on a lock before checking for deadlock."
 msgstr "Define o tempo para esperar um bloqueio antes de verificar um impasse."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1203
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1213
 msgid "Sets the maximum number of concurrent connections."
 msgstr "Define o número máximo de conexões concorrentes."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1212
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1222
 msgid "Sets the number of connection slots reserved for superusers."
 msgstr "Define o número de conexões reservadas para super-usuários."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1221
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1231
 msgid "Sets the number of shared memory buffers used by the server."
 msgstr ""
 "Define o número de buffers de memória compartilhada utilizados pelo servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1231
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1241
 msgid "Sets the maximum number of temporary buffers used by each session."
 msgstr ""
 "Define o número máximo de buffers temporários utilizados por cada sessão."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1241
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1251
 msgid "Sets the TCP port the server listens on."
 msgstr "Define a porta TCP que o servidor escutará."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1250
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1260
 msgid "Sets the access permissions of the Unix-domain socket."
 msgstr "Define as permissões de acesso do soquete de domínio Unix."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1251
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1261
 msgid ""
 "Unix-domain sockets use the usual Unix file system permission set. The "
 "parameter value is expected to be an numeric mode specification in the form "
@@ -14310,11 +14312,11 @@ msgstr ""
 "pelas chamadas de sistema chmod e umask. (Para utilizar formato octal "
 "habitual, o número deve começar com um 0 (zero).)"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1263
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1273
 msgid "Sets the maximum memory to be used for query workspaces."
 msgstr "Define o máximo de memória utilizada para operações da consulta."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1264
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1274
 msgid ""
 "This much memory can be used by each internal sort operation and hash table "
 "before switching to temporary disk files."
@@ -14322,73 +14324,73 @@ msgstr ""
 "Esta quantidade de memória pode ser utilizada por operação de ordenação "
 "interna e tabela hash antes de alternar para arquivos temporários no disco."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1275
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1285
 msgid "Sets the maximum memory to be used for maintenance operations."
 msgstr "Define o máximo de memória utilizada para operações de manutenção."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1276
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1286
 msgid "This includes operations such as VACUUM and CREATE INDEX."
 msgstr "Isso inclue operações tais como VACUUM e CREATE INDEX."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1285
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1295
 msgid "Sets the maximum stack depth, in kilobytes."
 msgstr "Define a profundidade máxima da pilha, em kilobytes."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1295
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1305
 msgid "Vacuum cost for a page found in the buffer cache."
 msgstr "Custo da limpeza por página encontrada na cache do buffer."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1304
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1314
 msgid "Vacuum cost for a page not found in the buffer cache."
 msgstr "Custo da limpeza por página não encontrada na cache do buffer."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1313
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1323
 msgid "Vacuum cost for a page dirtied by vacuum."
 msgstr "Custo da limpeza por página sujada pela limpeza."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1322
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1332
 msgid "Vacuum cost amount available before napping."
 msgstr "Quantidade de custo da limpeza disponível antes de adormecer."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1331
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1341
 msgid "Vacuum cost delay in milliseconds."
 msgstr "Atraso do custo da limpeza em milisegundos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1341
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1351
 msgid "Vacuum cost delay in milliseconds, for autovacuum."
 msgstr "Atraso do custo da limpeza em milisegundos, para autovacuum."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1351
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1361
 msgid "Vacuum cost amount available before napping, for autovacuum."
 msgstr ""
 "Quantidade de custo da limpeza disponível antes de adormecer, para "
 "autovacuum."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1360
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1370
 msgid ""
 "Sets the maximum number of simultaneously open files for each server process."
 msgstr ""
 "Define o número máximo de arquivos abertos simultaneamente por cada processo "
 "servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1369
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1379
 msgid "Sets the maximum number of simultaneously prepared transactions."
 msgstr "Define o número máximo de transações preparadas simultâneas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1399
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1409
 msgid "Sets the maximum allowed duration of any statement."
 msgstr "Define a duração máxima permitida de cada comando."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1400
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1410
 msgid "A value of 0 turns off the timeout."
 msgstr "Um valor 0 desabilita o tempo de espera."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1409
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1419
 msgid "Minimum age at which VACUUM should freeze a table row."
 msgstr ""
 "Identificador mínimo no qual o VACUUM deve congelar um registro da tabela."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1418
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1428
 msgid ""
 "Sets the maximum number of tables and indexes for which free space is "
 "tracked."
@@ -14396,17 +14398,17 @@ msgstr ""
 "Define o número máximo de tabelas e índices para qual espaço livre é "
 "registrado."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1426
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1436
 msgid "Sets the maximum number of disk pages for which free space is tracked."
 msgstr ""
 "Define o número máximo de páginas do disco para qual espaço livre é "
 "registrado."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1435
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1445
 msgid "Sets the maximum number of locks per transaction."
 msgstr "Define o número máximo de bloqueios por transação."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1436
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1446
 msgid ""
 "The shared lock table is sized on the assumption that at most "
 "max_locks_per_transaction * max_connections distinct objects will need to be "
@@ -14416,34 +14418,34 @@ msgstr ""
 "que max_locks_per_transaction * max_connections objetos distintos necessitam "
 "ser bloqueados simultaneamente."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1446
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1456
 msgid "Sets the maximum allowed time to complete client authentication."
 msgstr ""
 "Define o tempo máximo permitido para completar uma autenticação do cliente."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1457
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1467
 msgid "Waits N seconds on connection startup before authentication."
 msgstr "Espera N segundos após autenticação durante inicialização da conexão."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1467
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1477
 msgid ""
 "Sets the maximum distance in log segments between automatic WAL checkpoints."
 msgstr ""
 "Define a distância máxima em segmentos de log entre pontos de controle WAL "
 "automáticos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1476
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1486
 msgid "Sets the maximum time between automatic WAL checkpoints."
 msgstr "Define o tempo máximo entre pontos de controle WAL automáticos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1486
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1496
 msgid ""
 "Enables warnings if checkpoint segments are filled more frequently than this."
 msgstr ""
 "Habilita avisos caso segmentos dos pontos de controle estejam sendo "
 "preenchidos mais frequentemente do que esse."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1488
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1498
 msgid ""
 "Write a message to the server log if checkpoints caused by the filling of "
 "checkpoint segment files happens more frequently than this number of "
@@ -14453,17 +14455,17 @@ msgstr ""
 "preenchimento de arquivos de segmento dos pontos de controle acontece mais "
 "frequentemente do que esse número de segundos. Zero desabilita esse aviso."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1499
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1509
 msgid "Sets the number of disk-page buffers in shared memory for WAL."
 msgstr ""
 "Define o número de buffers de páginas do disco para WAL na memória "
 "compartilhada."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1509
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1519
 msgid "WAL writer sleep time between WAL flushes."
 msgstr "Tempo de adormecimento do escritor do WAL entre ciclos do WAL."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1519
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1529
 msgid ""
 "Sets the delay in microseconds between transaction commit and flushing WAL "
 "to disk."
@@ -14471,18 +14473,18 @@ msgstr ""
 "Define o atraso em microsegundos entre efetivar uma transação e escrever WAL "
 "no disco."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1529
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1539
 msgid ""
 "Sets the minimum concurrent open transactions before performing commit_delay."
 msgstr ""
 "Define o número mínimo de transações concorrentes abertas antes de esperar "
 "commit_delay."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1539
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1549
 msgid "Sets the number of digits displayed for floating-point values."
 msgstr "Define o número de dígitos mostrados para valores de ponto flutuante."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1540
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1550
 msgid ""
 "This affects real, double precision, and geometric data types. The parameter "
 "value is added to the standard number of digits (FLT_DIG or DBL_DIG as "
@@ -14492,16 +14494,16 @@ msgstr ""
 "parâmetro é formatado segundo padrão de dígitos (FLT_DIG ou DBL_DIG conforme "
 "adequado)."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1550
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1560
 msgid "Sets the minimum execution time above which statements will be logged."
 msgstr ""
 "Define o tempo mínimo de execução no qual os comandos serão registrados."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1552
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1562
 msgid "Zero prints all queries. -1 turns this feature off."
 msgstr "Zero registra todas as consultas. -1 desabilita essa funcionalidade."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1561
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1571
 msgid ""
 "Sets the minimum execution time above which autovacuum actions will be "
 "logged."
@@ -14509,65 +14511,65 @@ msgstr ""
 "Define o tempo mínimo de execução no qual as ações de limpeza automática "
 "serão registradas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1563
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1573
 msgid "Zero prints all actions. -1 turns autovacuum logging off."
 msgstr "Zero registra todas as ações. -1 desabilita essa funcionalidade."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1572
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1582
 msgid "Background writer sleep time between rounds."
 msgstr "Tempo de adormecimento do escritor em segundo plano entre ciclos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1582
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1592
 msgid "Background writer maximum number of LRU pages to flush per round."
 msgstr ""
 "Número máximo de páginas do LRU do escritor em segundo plano a serem "
 "escritas por ciclo."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1591
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1601
 msgid "Automatic log file rotation will occur after N minutes."
 msgstr "Rotação de arquivo de log automática ocorrerá após N minutos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1601
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1611
 msgid "Automatic log file rotation will occur after N kilobytes."
 msgstr "Rotação de arquivo de log automática ocorrerá após N kilobytes."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1611
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1621
 msgid "Shows the maximum number of function arguments."
 msgstr "Mostra o número máximo de argumentos da função."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1621
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1631
 msgid "Shows the maximum number of index keys."
 msgstr "Mostra o número máximo de chaves do índice."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1631
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1641
 msgid "Shows the maximum identifier length."
 msgstr "Mostra o tamanho máximo de identificador."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1641
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1651
 msgid "Shows the size of a disk block."
 msgstr "Mostra o tamanho de um bloco do disco."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1651
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1661
 msgid "Time to sleep between autovacuum runs."
 msgstr "Tempo de adormecimento entre execuções do autovacuum."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1660
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1670
 msgid "Minimum number of tuple updates or deletes prior to vacuum."
 msgstr "Número mínimo de atualizações ou exclusões de tuplas antes de limpar."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1668
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1678
 msgid "Minimum number of tuple inserts, updates or deletes prior to analyze."
 msgstr ""
 "Número mínimo de inserções, atualizações ou exclusões antes de analisar."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1677
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1687
 msgid ""
 "Age at which to autovacuum a table to prevent transaction ID wraparound."
 msgstr ""
 "Identificador para limpar automaticamente uma tabela para previnir "
 "reciclagem do ID de transação."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1686
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1696
 msgid ""
 "Sets the maximum number of simultaneously running autovacuum worker "
 "processes."
@@ -14575,25 +14577,25 @@ msgstr ""
 "Define o número máximo de processos autovacuum worker executados "
 "simultaneamente."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1695
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1705
 msgid "Time between issuing TCP keepalives."
 msgstr "Tempo entre envios de mantenha-se vivo (keepalive) do TCP."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1696
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1706
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1716
 msgid "A value of 0 uses the system default."
 msgstr "Um valor 0 utiliza o padrão do sistema."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1705
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1715
 msgid "Time between TCP keepalive retransmits."
 msgstr "Tempo entre retransmissões de mantenha-se vivo (keepalive) do TCP."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1715
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1725
 msgid "Maximum number of TCP keepalive retransmits."
 msgstr ""
 "Número máximo de retransmissões de mantenha-se vivo (keepalive) do TCP."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1716
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1726
 msgid ""
 "This controls the number of consecutive keepalive retransmits that can be "
 "lost before a connection is considered dead. A value of 0 uses the system "
@@ -14603,16 +14605,16 @@ msgstr ""
 "(keepalive) que podem ser perdidas antes que uma conexão seja considerada "
 "fechada. Um valor de 0 utiliza o padrão do sistema."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1726
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1736
 msgid "Sets the maximum allowed result for exact search by GIN."
 msgstr ""
 "Define o resultado máximo permitido por uma busca exata utilizando GIN."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1736
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1746
 msgid "Sets the planner's assumption about the size of the disk cache."
 msgstr "Define a suposição do planejador sobre o tamanho da cache do disco."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1737
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1747
 msgid ""
 "That is, the portion of the kernel's disk cache that will be used for "
 "PostgreSQL data files. This is measured in disk pages, which are normally 8 "
@@ -14622,30 +14624,30 @@ msgstr ""
 "do PostgreSQL. Isto é medido em páginas do disco, que são normalmente 8 kB "
 "cada."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1749
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1759
 msgid "Shows the server version as an integer."
 msgstr "Mostra a versão do servidor como um inteiro."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1759
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1769
 msgid "Log the use of temporary files larger than this number of kilobytes."
 msgstr ""
 "Registra o uso de arquivos temporários maiores do que este número de "
 "kilobytes."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1760
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1770
 msgid "Zero logs all files. The default is -1 (turning this feature off)."
 msgstr ""
 "Zero registra todos os arquivos. O padrão é -1 (desabilita essa "
 "funcionalidade)."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1778
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1788
 msgid ""
 "Sets the planner's estimate of the cost of a sequentially fetched disk page."
 msgstr ""
 "Define a estimativa do planejador do custo de busca sequencial de uma página "
 "no disco."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1787
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1797
 msgid ""
 "Sets the planner's estimate of the cost of a nonsequentially fetched disk "
 "page."
@@ -14653,13 +14655,13 @@ msgstr ""
 "Define a estimativa do planejador do custo de busca não sequencial de uma "
 "página no disco."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1796
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1806
 msgid "Sets the planner's estimate of the cost of processing each tuple (row)."
 msgstr ""
 "Define a estimativa do planejador do custo de processamento de cada tupla "
 "(registro)."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1805
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1815
 msgid ""
 "Sets the planner's estimate of the cost of processing each index entry "
 "during an index scan."
@@ -14667,7 +14669,7 @@ msgstr ""
 "Define a estimativa do planejador do custo de processamento de cada índice "
 "durante uma busca indexada."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1814
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1824
 msgid ""
 "Sets the planner's estimate of the cost of processing each operator or "
 "function call."
@@ -14675,21 +14677,21 @@ msgstr ""
 "Define a estimativa do planejador do custo de processamento de cada operador "
 "ou chamada de função."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1824
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1834
 msgid "GEQO: selective pressure within the population."
 msgstr "GEQO: pressão seletiva na população."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1834
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1844
 msgid "Background writer multiplier on average buffers to scan per round."
 msgstr ""
 "Multiplicador do escritor em segundo plano sobre a quantidade média de "
 "buffers a serem buscados por ciclo."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1843
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1853
 msgid "Sets the seed for random-number generation."
 msgstr "Define a semente para geração de números randômicos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1853
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1863
 msgid ""
 "Number of tuple updates or deletes prior to vacuum as a fraction of "
 "reltuples."
@@ -14697,7 +14699,7 @@ msgstr ""
 "Número de atualizações ou exclusões de tupla antes de limpar como uma fração "
 "de reltuples."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1861
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1871
 msgid ""
 "Number of tuple inserts, updates or deletes prior to analyze as a fraction "
 "of reltuples."
@@ -14705,7 +14707,7 @@ msgstr ""
 "Número de inserções, atualizações ou exclusões de tupla antes de analisar "
 "como uma fração de reltuples."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1870
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1880
 msgid ""
 "Time spent flushing dirty buffers during checkpoint, as fraction of "
 "checkpoint interval."
@@ -14713,29 +14715,29 @@ msgstr ""
 "Tempo gasto escrevendo buffers sujos durante o ponto de controle, como "
 "fração do intervalo de ponto de controle."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1888
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1898
 msgid "Sets the shell command that will be called to archive a WAL file."
 msgstr ""
 "Define um comando do interpretador de comandos (shell) que será chamado para "
 "arquivar um arquivo do WAL."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1897
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1907
 msgid "Sets whether \"\\'\" is allowed in string literals."
 msgstr "Define se \"\\'\" é permitido em cadeias de caracteres literais."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1898
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1908
 msgid "Valid values are ON, OFF, and SAFE_ENCODING."
 msgstr "Valores válidos são ON, OFF e SAFE_ENCODING."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1906
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1916
 msgid "Sets the client's character set encoding."
 msgstr "Define a codificação do conjunto de caracteres do cliente."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1916
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1926
 msgid "Sets the message levels that are sent to the client."
 msgstr "Define os níveis de mensagem que são enviadas ao cliente."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1917
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1927
 msgid ""
 "Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, LOG, NOTICE, "
 "WARNING, and ERROR. Each level includes all the levels that follow it. The "
@@ -14745,11 +14747,11 @@ msgstr ""
 "WARNING e ERROR. Cada nível inclui todos os níveis que o seguem. Quanto mais "
 "superior for o nível, menos mensagens são enviadas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1928
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1938
 msgid "Sets the message levels that are logged."
 msgstr "Define os níveis de mensagem que serão registrados."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1929
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1939
 msgid ""
 "Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE, "
 "WARNING, ERROR, LOG, FATAL, and PANIC. Each level includes all the levels "
@@ -14759,28 +14761,28 @@ msgstr ""
 "WARNING, ERROR, LOG, FATAL e PANIC. Cada nível inclui todos os níveis que o "
 "seguem."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1939
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1949
 msgid "Sets the verbosity of logged messages."
 msgstr "Define o detalhamento das mensagens registradas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1940
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1950
 msgid "Valid values are \"terse\", \"default\", and \"verbose\"."
 msgstr "Valores válidos são \"terse\", \"default\" e \"verbose\"."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1947
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1957
 msgid "Sets the type of statements logged."
 msgstr "Define os tipos de comandos registrados."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1948
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1958
 msgid "Valid values are \"none\", \"ddl\", \"mod\", and \"all\"."
 msgstr "Valores válidos são \"none\", \"ddl\", \"mod\" e \"all\"."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1956
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1966
 msgid ""
 "Causes all statements generating error at or above this level to be logged."
 msgstr "Registra todos os comandos que geram erro neste nível ou acima."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1957
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1967
 msgid ""
 "All SQL statements that cause an error of the specified level or a higher "
 "level are logged."
@@ -14788,47 +14790,47 @@ msgstr ""
 "Todos os comandos SQL que causarem um erro de um nível específico ou acima "
 "serão registrados."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1966
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1976
 msgid "Controls information prefixed to each log line."
 msgstr "Controla informação prefixada em cada linha do log."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1967
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1977
 msgid "If blank, no prefix is used."
 msgstr "Se estiver em branco, nenhum prefixo é utilizado."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1975
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1985
 msgid "Sets the time zone to use in log messages."
 msgstr "Define a zona horária a ser utilizada em mensagens de log."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1984
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1994
 msgid "Sets the display format for date and time values."
 msgstr "Define o formato de exibição para valores de data e hora."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1985
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1995
 msgid "Also controls interpretation of ambiguous date inputs."
 msgstr "Também controla interpretação de entrada de datas ambíguas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1995
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2005
 msgid "Sets the default tablespace to create tables and indexes in."
 msgstr "Define a tablespace padrão para criação de tabelas e índices."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:1996
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2006
 msgid "An empty string selects the database's default tablespace."
 msgstr ""
 "Uma cadeia de caracteres vazia seleciona a tablespace padrão do banco de "
 "dados."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2005
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2015
 msgid "Sets the tablespace(s) to use for temporary tables and sort files."
 msgstr ""
 "Define a(s) tablespace(s) a ser(em) utilizada(s) para tabelas temporárias e "
 "arquivos de ordenação."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2015
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2025
 msgid "Sets the transaction isolation level of each new transaction."
 msgstr "Define nível de isolamento de transação de cada nova transação."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2016
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2026
 msgid ""
 "Each SQL transaction has an isolation level, which can be either \"read "
 "uncommitted\", \"read committed\", \"repeatable read\", or \"serializable\"."
@@ -14836,19 +14838,19 @@ msgstr ""
 "Cada transação SQL tem um nível de isolamento, que pode ser \"read "
 "uncommitted\", \"read committed\", \"repeatable read\" ou \"serializable\"."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2025
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2035
 msgid "Sets the session's behavior for triggers and rewrite rules."
 msgstr "Define o comportamento de sessões para gatilhos e regras de reescrita."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2026
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2036
 msgid "Each session can be either \"origin\", \"replica\", or \"local\"."
 msgstr "Cada sessão pode ser \"origin\", \"replica\" ou \"local\"."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2035
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2045
 msgid "Sets the path for dynamically loadable modules."
 msgstr "Define o caminho para módulos carregáveis dinamicamente."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2036
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2046
 msgid ""
 "If a dynamically loadable module needs to be opened and the specified name "
 "does not have a directory component (i.e., the name does not contain a "
@@ -14858,99 +14860,99 @@ msgstr ""
 "especificado não tem um componente de diretório (i.e., o nome não contém uma "
 "barra), o sistema irá procurar o caminho para o arquivo especificado."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2048
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2058
 msgid "Sets realm to match Kerberos and GSSAPI users against."
 msgstr ""
 "Define o domínio (realm) que será verificado os usuários Kerberos e GSSAPI."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2058
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2068
 msgid "Sets the location of the Kerberos server key file."
 msgstr "Define o local do arquivo da chave do servidor Kerberos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2068
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2078
 msgid "Sets the name of the Kerberos service."
 msgstr "Define o nome do serviço Kerberos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2077
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2087
 msgid "Sets the hostname of the Kerberos server."
 msgstr "Define o nome de máquina do servidor Kerberos."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2086
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2096
 msgid "Sets the Bonjour broadcast service name."
 msgstr "Define o nome do serviço de difusão do Bonjour."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2097
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2107
 msgid "Shows the collation order locale."
 msgstr "Mostra a configuração regional utilizada na comparação ao ordenar."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2107
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2117
 msgid "Shows the character classification and case conversion locale."
 msgstr ""
 "Mostra a configuração regional de classificação de caracteres e conversão "
 "entre maiúsculas/minúsculas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2117
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2127
 msgid "Sets the language in which messages are displayed."
 msgstr "Define a língua na qual as mensagens são mostradas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2126
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2136
 msgid "Sets the locale for formatting monetary amounts."
 msgstr "Define a configuração regional para formato de moeda."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2135
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2145
 msgid "Sets the locale for formatting numbers."
 msgstr "Define a configuração regional para formato de número."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2144
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2154
 msgid "Sets the locale for formatting date and time values."
 msgstr "Define a configuração regional para formato de data e hora."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2153
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2163
 msgid "Lists shared libraries to preload into server."
 msgstr "Mostra bibliotecas compartilhadas a serem carregadas no servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2163
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2173
 msgid "Lists shared libraries to preload into each backend."
 msgstr ""
 "Mostra bibliotecas compartilhadas a serem carregadas em cdas processo "
 "servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2173
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2183
 msgid "Sets the regular expression \"flavor\"."
 msgstr "Define a expressão regular como \"flavor\"."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2174
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2184
 msgid "This can be set to advanced, extended, or basic."
 msgstr "Isso pode ser definido como advanced, extended ou basic."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2182
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2192
 msgid "Sets the schema search order for names that are not schema-qualified."
 msgstr ""
 "Define a ordem de busca em esquemas para nomes que não especificam um "
 "esquema."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2193
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2203
 msgid "Sets the server (database) character set encoding."
 msgstr ""
 "Define a codificação do conjunto de caracteres do servidor (banco de dados)."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2204
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2214
 msgid "Shows the server version."
 msgstr "Mostra a versão do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2215
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2225
 msgid "Sets the current role."
 msgstr "Define a role atual."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2226
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2236
 msgid "Sets the session user name."
 msgstr "Define o nome de usuário da sessão."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2236
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2246
 msgid "Sets the destination for server log output."
 msgstr "Define o destino do log do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2237
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2247
 msgid ""
 "Valid values are combinations of \"stderr\", \"syslog\", \"csvlog\", and "
 "\"eventlog\", depending on the platform."
@@ -14958,27 +14960,27 @@ msgstr ""
 "Valores válidos são combinações de \"stderr\", \"syslog\", \"csvlog\" e "
 "\"eventlog\", dependendo da plataforma."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2247
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2257
 msgid "Sets the destination directory for log files."
 msgstr "Define o diretório de destino dos arquivos de log."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2248
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2258
 msgid "Can be specified as relative to the data directory or as absolute path."
 msgstr ""
 "Pode ser especificado como caminho relativo ao diretório de dados ou como "
 "caminho absoluto."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2257
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2267
 msgid "Sets the file name pattern for log files."
 msgstr "Define o padrão de nome de arquivo para arquivos de log."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2268
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2278
 msgid "Sets the syslog \"facility\" to be used when syslog enabled."
 msgstr ""
 "Define o syslog \"facility\" a ser utilizado quando syslog estiver "
 "habilitado."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2269
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2279
 msgid ""
 "Valid values are LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, "
 "LOCAL7."
@@ -14986,78 +14988,78 @@ msgstr ""
 "Valores válidos são LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, "
 "LOCAL7."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2277
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2287
 msgid "Sets the program name used to identify PostgreSQL messages in syslog."
 msgstr ""
 "Define o nome do programa utilizado para identificar mensagens do PostgreSQL "
 "no syslog."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2288
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2298
 msgid "Sets the time zone for displaying and interpreting time stamps."
 msgstr "Define a zona horária para exibição e interpretação de timestamps."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2297
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2307
 msgid "Selects a file of time zone abbreviations."
 msgstr "Seleciona um arquivo de abreviações de zonas horárias."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2306
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2316
 msgid "Sets the current transaction's isolation level."
 msgstr "Define o nível de isolamento da transação atual."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2316
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2326
 msgid "Sets the owning group of the Unix-domain socket."
 msgstr "Define o grupo dono do soquete de domínio Unix."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2317
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2327
 msgid ""
 "The owning user of the socket is always the user that starts the server."
 msgstr "O usuário dono do soquete é sempre o usuário que inicia o servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2326
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2336
 msgid "Sets the directory where the Unix-domain socket will be created."
 msgstr "Define o diretório onde o soquete de domínio Unix será criado."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2336
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2346
 msgid "Sets the host name or IP address(es) to listen to."
 msgstr "Define o nome da máquina ou endereço(s) IP para escutar."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2346
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2356
 msgid "Selects the method used for forcing WAL updates to disk."
 msgstr "Seleciona o método utilizado para forçar atualizações do WAL no disco."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2355
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2365
 msgid "Sets the list of known custom variable classes."
 msgstr "Define a lista de classes de variáveis personalizadas conhecidas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2365
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2375
 msgid "Sets the server's data directory."
 msgstr "Define o diretório de dados do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2375
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2385
 msgid "Sets the server's main configuration file."
 msgstr "Define o arquivo de configuração principal do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2385
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2395
 msgid "Sets the server's \"hba\" configuration file."
 msgstr "Define o arquivo de configuração \"hba\" do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2395
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2405
 msgid "Sets the server's \"ident\" configuration file."
 msgstr "Define o arquivo de configuração \"ident\" do servidor."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2405
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2415
 msgid "Writes the postmaster PID to the specified file."
 msgstr "Escreve o PID do postmaster no arquivo especificado."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2415
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2425
 msgid "Sets how binary values are to be encoded in XML."
 msgstr "Define como valores binários serão codificados em XML."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2416
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2426
 msgid "Valid values are BASE64 and HEX."
 msgstr "Valores válidos são BASE64 e HEX."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2424
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2434
 msgid ""
 "Sets whether XML data in implicit parsing and serialization operations is to "
 "be considered as documents or content fragments."
@@ -15065,19 +15067,19 @@ msgstr ""
 "Define se dados XML em operações de análise ou serialização implícita serão "
 "considerados como documentos ou como fragmentos de conteúdo."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2426
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2436
 msgid "Valid values are DOCUMENT and CONTENT."
 msgstr "Valores válidos são DOCUMENT e CONTENT."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2434
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2444
 msgid "Sets default text search configuration."
 msgstr "Define a configuração de busca textual padrão."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2444
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:2454
 msgid "Sets the list of allowed SSL ciphers."
 msgstr "Define a lista de cifras SSL permitidas."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3176
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3186
 #, c-format
 msgid ""
 "%s does not know where to find the server configuration file.\n"
@@ -15088,12 +15090,12 @@ msgstr ""
 "Você deve especificar a opção --config-file ou -D ou definir uma variável de "
 "ambiente PGDATA.\n"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3195
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3205
 #, c-format
 msgid "%s cannot access the server configuration file \"%s\": %s\n"
 msgstr "%s não pode acessar o arquivo de configuração do servidor \"%s\": %s\n"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3215
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3225
 #, c-format
 msgid ""
 "%s does not know where to find the database system data.\n"
@@ -15104,7 +15106,7 @@ msgstr ""
 "Isto pode ser especificado como \"data_directory\" no \"%s\", pela opção -D "
 "ou definindo uma variável de ambiente PGDATA.\n"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3246
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3256
 #, c-format
 msgid ""
 "%s does not know where to find the \"hba\" configuration file.\n"
@@ -15115,7 +15117,7 @@ msgstr ""
 "Isto pode ser especificado como \"hba_file\" no \"%s\", pela opção -D ou "
 "definindo uma variável de ambiente PGDATA.\n"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3269
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3279
 #, c-format
 msgid ""
 "%s does not know where to find the \"ident\" configuration file.\n"
@@ -15126,39 +15128,39 @@ msgstr ""
 "Isto pode ser especificado como \"ident_file\" no \"%s\", pela opção -D ou "
 "definindo uma variável de ambiente PGDATA.\n"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3902
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4070
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3912
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4080
 msgid "Value exceeds integer range."
 msgstr "Valor excede intervalo de inteiros."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3925
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3935
 msgid "Valid units for this parameter are \"kB\", \"MB\", and \"GB\"."
 msgstr "Unidades válidas para este parâmetro são \"kB\", \"MB\" e \"GB\"."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3984
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:3994
 msgid ""
 "Valid units for this parameter are \"ms\", \"s\", \"min\", \"h\", and \"d\"."
 msgstr ""
 "Unidades válidas para este parâmetro são \"ms\", \"s\", \"min\", \"h\" e \"d"
 "\"."
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4195
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4718
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4762
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4879
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:5348
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:5489
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4205
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4728
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4772
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4889
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:5358
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:5499
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc-file.l:214
 #, c-format
 msgid "unrecognized configuration parameter \"%s\""
 msgstr "parâmetro de configuração desconhecido \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4222
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4232
 #, c-format
 msgid "parameter \"%s\" cannot be changed"
 msgstr "parâmetro \"%s\" não pode ser mudado"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4239
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4249
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc-file.l:261
 #, c-format
 msgid ""
@@ -15168,118 +15170,118 @@ msgstr ""
 "parâmetro \"%s\" não pode ser mudado depois que o servidor foi iniciado; "
 "mudança do arquivo de configuração foi ignorada"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4247
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4257
 #, c-format
 msgid "parameter \"%s\" cannot be changed after server start"
 msgstr ""
 "parâmetro \"%s\" não pode ser mudado depois que o servidor foi iniciado"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4257
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4267
 #, c-format
 msgid "parameter \"%s\" cannot be changed now"
 msgstr "parâmetro \"%s\" não pode ser mudado agora"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4287
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4297
 #, c-format
 msgid "parameter \"%s\" cannot be set after connection start"
 msgstr ""
 "parâmetro \"%s\" não pode ser definido depois que a conexão foi iniciada"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4297
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4307
 #, c-format
 msgid "permission denied to set parameter \"%s\""
 msgstr "permissão negada ao definir parâmetro \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4350
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4360
 #, c-format
 msgid "parameter \"%s\" requires a Boolean value"
 msgstr "parâmetro \"%s\" requer um valor booleano"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4368
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4445
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4378
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4455
 #, c-format
 msgid "invalid value for parameter \"%s\": %d"
 msgstr "valor é inválido para parâmetro \"%s\": %d"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4418
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4620
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4428
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4630
 #: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc-file.l:175
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "valor é inválido para parâmetro \"%s\": \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4427
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4437
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
 msgstr "%d está fora do intervalo válido para parâmetro \"%s\" (%d .. %d)"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4493
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4503
 #, c-format
 msgid "parameter \"%s\" requires a numeric value"
 msgstr "parâmetro \"%s\" requer um valor numérico"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4501
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4511
 #, c-format
 msgid "%g is outside the valid range for parameter \"%s\" (%g .. %g)"
 msgstr "%g está fora do intervalo válido para parâmetro \"%s\" (%g .. %g)"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4519
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4529
 #, c-format
 msgid "invalid value for parameter \"%s\": %g"
 msgstr "valor é inválido para parâmetro \"%s\": %g"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4722
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4766
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:5493
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4732
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4776
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:5503
 #, c-format
 msgid "must be superuser to examine \"%s\""
 msgstr "deve ser super-usuário para examinar \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4888
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:4898
 #, c-format
 msgid "SET %s takes only one argument"
 msgstr "SET %s só tem um argumento"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:5100
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:5110
 msgid "SET requires parameter name"
 msgstr "SET requer nome do parâmetro"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:5197
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:5207
 #, c-format
 msgid "attempt to redefine parameter \"%s\""
 msgstr "tentativa de redefinir parâmetro \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6265
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6275
 #, c-format
 msgid "could not parse setting for parameter \"%s\""
 msgstr "não pôde analisar definição para parâmetro \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6456
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6466
 msgid "invalid list syntax for parameter \"log_destination\""
 msgstr "sintaxe de lista é inválida para parâmetro \"log_destination\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6480
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6490
 #, c-format
 msgid "unrecognized \"log_destination\" key word: \"%s\""
 msgstr "palavra chave de \"log_destination\" desconhecida: \"%s\""
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6767
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6777
 msgid "SET AUTOCOMMIT TO OFF is no longer supported"
 msgstr "SET AUTOCOMMIT TO OFF não é mais suportado"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6839
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6849
 msgid "assertion checking is not supported by this build"
 msgstr "verificação de asserção não é suportada por essa construção"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6854
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6864
 msgid "SSL is not supported by this build"
 msgstr "histórico não é suportado por essa construção"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6868
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6878
 msgid "cannot enable parameter when \"log_statement_stats\" is true"
 msgstr "não pode habilitar parâmetro quando \"log_statement_stats\" é true"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6884
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6894
 msgid ""
 "cannot enable \"log_statement_stats\" when \"log_parser_stats\", "
 "\"log_planner_stats\", or \"log_executor_stats\" is true"
@@ -15287,7 +15289,7 @@ msgstr ""
 "não pode habilitar \"log_statement_stats\" quando \"log_parser_stats\", "
 "\"log_planner_stats\" ou \"log_executor_stats\" é true"
 
-#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6902
+#: /a/pgsql/HEAD/pgtst/src/backend/utils/misc/guc.c:6912
 msgid "cannot set transaction read-write mode inside a read-only transaction"
 msgstr ""
 "não pode definir modo leitura-escrita da transação dentro de uma transação "

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-01-29 14:35-0200\n"
+"POT-Creation-Date: 2008-01-31 00:19-0200\n"
 "PO-Revision-Date: 2005-11-02 10:30-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -4288,15 +4288,3 @@ msgstr "processo filho foi terminado pelo sinal %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "processo filho terminou com status desconhecido %d"
-
-#~ msgid "  -W              prompt for password (should happen automatically)"
-#~ msgstr "  -W              pergunta senha (pode ocorrer automaticamente)"
-
-#~ msgid "User name: "
-#~ msgstr "Nome do usuário: "
-
-#~ msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
-#~ msgstr "%s: Aviso: A opção -u está obsoleta. Use -U.\n"
-
-#~ msgid "(binary compatible)"
-#~ msgstr "(binariamente compatíveis)"

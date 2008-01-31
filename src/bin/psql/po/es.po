@@ -1,12 +1,16 @@
 # translation of psql.
-# (c) <alvherre@alvh.no-ip.org>, 2003-2007
+# (c) <alvherre@alvh.no-ip.org>, 2003-2008
 # (c) Diego A. Gil <diego@adminsa.com>, 2005
+#
+# pgtranslation Id: psql.po,v 1.7 2008/01/30 15:09:57 alvherre Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/es.po,v 1.16 2008/01/31 18:04:52 petere Exp $
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 8.3)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-01-15 19:18-0400\n"
-"PO-Revision-Date: 2005-10-19 10:58-0300\n"
+"PO-Revision-Date: 2008-01-30 12:08-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -880,7 +884,7 @@ msgstr "  \\dFt [PATRÓN]   listar plantillas de búsqueda en texto\n"
 msgid ""
 "  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"
 msgstr ""
-"  \\dFp [PATRÓN]   listar parsers de búsqueda en texto\n"
+"  \\dFp [PATRÓN]   listar analizadores de búsqueda en texto\n"
 "                  («+» para más detalles)\n"
 
 #: help.c:226
@@ -1675,12 +1679,12 @@ msgstr "Listado de esquemas"
 
 #: describe.c:2049
 msgid "List of text search parsers"
-msgstr "Listado de parsers de búsqueda en texto"
+msgstr "Listado de analizadores de búsqueda en texto"
 
 #: describe.c:2092
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
-msgstr "No se encontró ningún parser de búsqueda en texto llamado «%s».\n"
+msgstr "No se encontró ningún analizador de búsqueda en texto llamado «%s».\n"
 
 #: describe.c:2167
 msgid "Start parse"
@@ -1692,7 +1696,7 @@ msgstr "Método"
 
 #: describe.c:2172
 msgid "Get next token"
-msgstr "Obtener siguiente token"
+msgstr "Obtener siguiente elemento"
 
 #: describe.c:2174
 msgid "End parse"
@@ -1704,31 +1708,31 @@ msgstr "Obtener encabezado"
 
 #: describe.c:2178
 msgid "Get token types"
-msgstr "Obtener tipos de token"
+msgstr "Obtener tipos de elemento"
 
 #: describe.c:2188
 #, c-format
 msgid "Text search parser \"%s.%s\""
-msgstr "Parser de búsqueda en texto «%s.%s»"
+msgstr "Analizador de búsqueda en texto «%s.%s»"
 
 #: describe.c:2190
 #, c-format
 msgid "Text search parser \"%s\""
-msgstr "Parser de búsqueda en texto «%s»"
+msgstr "Analizador de búsqueda en texto «%s»"
 
 #: describe.c:2208
 msgid "Token name"
-msgstr "Nombre de token"
+msgstr "Nombre de elemento"
 
 #: describe.c:2219
 #, c-format
 msgid "Token types for parser \"%s.%s\""
-msgstr "Tipos de token para el parser «%s.%s»"
+msgstr "Tipos de elemento para el analizador «%s.%s»"
 
 #: describe.c:2221
 #, c-format
 msgid "Token types for parser \"%s\""
-msgstr "Tipos de token para el parser «%s»"
+msgstr "Tipos de elemento para el analizador «%s»"
 
 #: describe.c:2263
 msgid "Template"
@@ -1748,7 +1752,7 @@ msgstr "Inicializador"
 
 #: describe.c:2320
 msgid "Lexize"
-msgstr "Función lexize"
+msgstr "Fn. análisis léx."
 
 #: describe.c:2347
 msgid "List of text search templates"
@@ -1765,7 +1769,7 @@ msgstr "No se encontró una configuración de búsqueda en texto llamada «%s».\n"
 
 #: describe.c:2507
 msgid "Token"
-msgstr "Token"
+msgstr "Elemento"
 
 #: describe.c:2508
 msgid "Dictionaries"
@@ -1788,7 +1792,7 @@ msgid ""
 "Parser: \"%s.%s\""
 msgstr ""
 "\n"
-"Parser: «%s.%s»"
+"Analizador: «%s.%s»"
 
 #: describe.c:2529
 #, c-format
@@ -1797,7 +1801,7 @@ msgid ""
 "Parser: \"%s\""
 msgstr ""
 "\n"
-"Parser: «%s»"
+"Analizador: «%s»"
 
 #: sql_help.h:25 sql_help.h:469
 msgid "abort the current transaction"
@@ -2259,16 +2263,16 @@ msgid ""
 "ALTER TEXT SEARCH CONFIGURATION name OWNER TO newowner"
 msgstr ""
 "ALTER TEXT SEARCH CONFIGURATION nombre\n"
-"    ADD MAPPING FOR tipo_token [, ... ] WITH nombre_diccionario [, ... ]\n"
+"    ADD MAPPING FOR tipo_elemento [, ... ] WITH nombre_diccionario [, ... ]\n"
 "ALTER TEXT SEARCH CONFIGURATION nombre\n"
-"    ALTER MAPPING FOR tipo_token [, ... ] WITH nombre_diccionario [, ... ]\n"
+"    ALTER MAPPING FOR tipo_elemento [, ... ] WITH nombre_diccionario [, ... ]\n"
 "ALTER TEXT SEARCH CONFIGURATION nombre\n"
 "    ALTER MAPPING REPLACE diccionario WITH nuevo_diccionario\n"
 "ALTER TEXT SEARCH CONFIGURATION nombre\n"
-"    ALTER MAPPING FOR tipo_token [, ... ] REPLACE diccionario WITH "
+"    ALTER MAPPING FOR tipo_elemento [, ... ] REPLACE diccionario WITH "
 "nuevo_diccionario\n"
 "ALTER TEXT SEARCH CONFIGURATION nombre\n"
-"    DROP MAPPING [ IF EXISTS ] FOR tipo_token [, ... ]\n"
+"    DROP MAPPING [ IF EXISTS ] FOR tipo_elemento [, ... ]\n"
 "ALTER TEXT SEARCH CONFIGURATION nombre RENAME TO nuevo_nombre\n"
 "ALTER TEXT SEARCH CONFIGURATION nombre OWNER TO nuevo_dueño"
 
@@ -2292,7 +2296,7 @@ msgstr ""
 
 #: sql_help.h:105
 msgid "change the definition of a text search parser"
-msgstr "cambia la definición de un parser de búsqueda en texto"
+msgstr "cambia la definición de un analizador de búsqueda en texto"
 
 #: sql_help.h:106
 msgid "ALTER TEXT SEARCH PARSER name RENAME TO newname"
@@ -3125,7 +3129,7 @@ msgid ""
 ")"
 msgstr ""
 "CREATE TEXT SEARCH CONFIGURATION nombre (\n"
-"    PARSER = nombre_parser |\n"
+"    PARSER = nombre_analizador |\n"
 "    COPY = configuración_origen\n"
 ")"
 
@@ -3147,7 +3151,7 @@ msgstr ""
 
 #: sql_help.h:253
 msgid "define a new text search parser"
-msgstr "define un nuevo parser de búsqueda en texto"
+msgstr "define un nuevo analizador de búsqueda en texto"
 
 #: sql_help.h:254
 msgid ""
@@ -3161,7 +3165,7 @@ msgid ""
 msgstr ""
 "CREATE TEXT SEARCH PARSER nombre (\n"
 "    START = función_inicio ,\n"
-"    GETTOKEN = función_gettoken ,\n"
+"    GETTOKEN = función_obtener_elemento ,\n"
 "    END = función_término ,\n"
 "    LEXTYPES = funcion_lextypes\n"
 "    [, HEADLINE = función_headline ]\n"
@@ -3180,7 +3184,7 @@ msgid ""
 msgstr ""
 "CREATE TEXT SEARCH TEMPLATE nombre (\n"
 "    [ INIT = función_inicialización , ]\n"
-"    LEXIZE = función_lexize\n"
+"    LEXIZE = función_análisis_léxico\n"
 ")"
 
 #: sql_help.h:261
@@ -3539,7 +3543,7 @@ msgstr ""
 
 #: sql_help.h:377
 msgid "remove a text search parser"
-msgstr "elimina un parser de búsqueda en texto"
+msgstr "elimina un analizador de búsqueda en texto"
 
 #: sql_help.h:378
 msgid "DROP TEXT SEARCH PARSER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
