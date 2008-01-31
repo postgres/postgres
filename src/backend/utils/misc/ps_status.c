@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.33 2006/10/04 00:30:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.33.2.1 2008/01/31 09:21:22 mha Exp $
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -346,7 +346,7 @@ set_ps_display(const char *activity, bool force)
 		if (ident_handle != INVALID_HANDLE_VALUE)
 			CloseHandle(ident_handle);
 
-		sprintf(name, "pgident: %s", ps_buffer);
+		sprintf(name, "pgident(%d): %s", MyProcPid, ps_buffer);
 
 		ident_handle = CreateEvent(NULL, TRUE, FALSE, name);
 	}
