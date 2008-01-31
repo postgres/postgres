@@ -2,7 +2,7 @@ my @def;
 #
 # Script that generates a .DEF file for all objects in a directory
 # 
-# $PostgreSQL: pgsql/src/tools/msvc/gendef.pl,v 1.7 2008/01/31 03:26:14 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/gendef.pl,v 1.8 2008/01/31 16:30:24 adunstan Exp $
 #
 
 die "Usage: gendef.pl <modulepath>\n" unless ($ARGV[0] =~ /\\([^\\]+$)/);
@@ -27,7 +27,7 @@ while (<$ARGV[0]/*.obj>)
     {
         s/\(\)//g;
         my @pieces = split;
-        next unless $pieces[0] =~ /^[A-F0-9]{3}$/;
+        next unless $pieces[0] =~ /^[A-F0-9]{3,}$/;
         next unless $pieces[6];
         next if ($pieces[2] eq "UNDEF");
         next unless ($pieces[4] eq "External");
