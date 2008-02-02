@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.577 2008/01/31 21:31:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.578 2008/02/02 23:30:23 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -697,13 +697,14 @@ current_date &lt; 2017-11-17
 
       <para>
        This feature dramatically increases performance for short data-modifying
-       transactions. The disadvantage is that because disk writes are
-       delayed, if the operating system crashes before data is written to
-       the disk, committed data will be lost. This feature is useful for
+       transactions.  The disadvantage is that because disk writes are delayed,
+       if the database or operating system crashes before data is written to
+       the disk, committed data will be lost.  This feature is useful for
        applications that can accept some data loss.  Unlike turning off
-       <varname>fsync</varname>, asynchronous commit does not put database
-       consistency at risk; the worst case is that after a database or system
-       crash the last few reportedly-committed transactions might be missing.
+       <varname>fsync</varname>, using asynchronous commit does not put
+       database consistency at risk; the worst case is that after a crash the
+       last few reportedly-committed transactions might not be committed after
+       all.
        This feature is enabled by turning off <varname>synchronous_commit</>
        (which can be done per-session or per-transaction, if some transactions
        are critical and others are not).
