@@ -3,7 +3,7 @@ package Project;
 #
 # Package that encapsulates a Visual C++ project file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.15 2007/12/11 14:34:43 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.16 2008/02/05 14:17:23 mha Exp $
 #
 use Carp;
 use strict;
@@ -123,6 +123,11 @@ sub AddReference
 sub AddLibrary
 {
     my ($self, $lib, $dbgsuffix) = @_;
+    
+    if ($lib =~ m/\s/)
+    {
+    	$lib = '&quot;' . $lib . "&quot;";
+    }
 
     push @{$self->{libraries}}, $lib;
     if ($dbgsuffix)

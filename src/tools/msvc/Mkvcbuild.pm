@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.24 2007/11/13 22:49:47 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.25 2008/02/05 14:17:23 mha Exp $
 #
 use Carp;
 use Win32;
@@ -66,7 +66,9 @@ sub mkvcbuild
     $postgres->AddFiles('src\backend\bootstrap','bootscanner.l','bootparse.y');
     $postgres->AddFiles('src\backend\utils\misc','guc-file.l');
     $postgres->AddDefine('BUILDING_DLL');
-    $postgres->AddLibrary('wsock32.lib ws2_32.lib secur32.lib');
+    $postgres->AddLibrary('wsock32.lib');
+    $postgres->AddLibrary('ws2_32.lib');
+    $postgres->AddLibrary('secur32.lib');
     $postgres->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
     $postgres->FullExportDLL('postgres.lib');
 
@@ -179,7 +181,8 @@ sub mkvcbuild
     my $initdb = AddSimpleFrontend('initdb');
     $initdb->AddIncludeDir('src\interfaces\libpq');
     $initdb->AddDefine('FRONTEND');
-    $initdb->AddLibrary('wsock32.lib ws2_32.lib');
+    $initdb->AddLibrary('wsock32.lib');
+    $initdb->AddLibrary('ws2_32.lib');
 
     my $pgconfig = AddSimpleFrontend('pg_config');
 
