@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.44 2007/12/19 12:29:36 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.45 2008/02/06 15:13:25 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -238,7 +238,10 @@
    handle changed files. But if there have been large changes, you may need
    to clean the installation. To do this, simply run the
    <filename>clean.bat</filename> command, which will automatically clean out
-   all generated files.
+   all generated files. You can also run it with with the
+   <parameter>dist</parameter> parameter, in which case it will behave like
+   <userinput>make distclean</userinput> and remove the flex/bison output files
+   as well.
   </para>
 
   <para>
