@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.102 2008/01/25 04:46:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.103 2008/02/07 22:58:35 tgl Exp $
  *
  * ----------
  */
@@ -185,6 +185,7 @@ static void ri_GenerateQual(StringInfo buf,
 				const char *leftop, Oid leftoptype,
 				Oid opoid,
 				const char *rightop, Oid rightoptype);
+static void ri_add_cast_to(StringInfo buf, Oid typid);
 static int ri_NullCheck(Relation rel, HeapTuple tup,
 			 RI_QueryKey *key, int pairidx);
 static void ri_BuildQueryKeyFull(RI_QueryKey *key,
@@ -2893,8 +2894,10 @@ quoteRelationName(char *buffer, Relation rel)
  * The idea is to append " sep leftop op rightop" to buf.  The complexity
  * comes from needing to be sure that the parser will select the desired
  * operator.  We always name the operator using OPERATOR(schema.op) syntax
- * (readability isn't a big priority here).  We have to emit casts too,
- * if either input isn't already the input type of the operator.
+ * (readability isn't a big priority here), so as to avoid search-path
+ * uncertainties.  We have to emit casts too, if either input isn't already
+ * the input type of the operator; else we are at the mercy of the parser's
+ * heuristics for ambiguous-operator resolution.
  */
 static void
 ri_GenerateQual(StringInfo buf,
@@ -2921,14 +2924,46 @@ ri_GenerateQual(StringInfo buf,
 
 	appendStringInfo(buf, " %s %s", sep, leftop);
 	if (leftoptype != operform->oprleft)
-		appendStringInfo(buf, "::%s", format_type_be(operform->oprleft));
+		ri_add_cast_to(buf, operform->oprleft);
 	appendStringInfo(buf, " OPERATOR(%s.", quote_identifier(nspname));
 	appendStringInfoString(buf, oprname);
 	appendStringInfo(buf, ") %s", rightop);
 	if (rightoptype != operform->oprright)
-		appendStringInfo(buf, "::%s", format_type_be(operform->oprright));
+		ri_add_cast_to(buf, operform->oprright);
 
 	ReleaseSysCache(opertup);
+}
+
+/*
+ * Add a cast specification to buf.  We spell out the type name the hard way,
+ * intentionally not using format_type_be().  This is to avoid corner cases
+ * for CHARACTER, BIT, and perhaps other types, where specifying the type
+ * using SQL-standard syntax results in undesirable data truncation.  By
+ * doing it this way we can be certain that the cast will have default (-1)
+ * target typmod.
+ */
+static void
+ri_add_cast_to(StringInfo buf, Oid typid)
+{
+	HeapTuple	typetup;
+	Form_pg_type typform;
+	char	   *typname;
+	char	   *nspname;
+
+	typetup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(typid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(typetup))
+		elog(ERROR, "cache lookup failed for type %u", typid);
+	typform = (Form_pg_type) GETSTRUCT(typetup);
+
+	typname = NameStr(typform->typname);
+	nspname = get_namespace_name(typform->typnamespace);
+
+	appendStringInfo(buf, "::%s.%s",
+					 quote_identifier(nspname), quote_identifier(typname));
+
+	ReleaseSysCache(typetup);
 }
 
 /* ----------
