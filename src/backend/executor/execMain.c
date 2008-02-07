@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.302 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.303 2008/02/07 17:09:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2594,7 +2594,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	}
 
 	/* Check permissions except when using the database's default space */
-	if (OidIsValid(tablespaceId))
+	if (OidIsValid(tablespaceId) && tablespaceId != MyDatabaseTableSpace)
 	{
 		AclResult	aclresult;
 

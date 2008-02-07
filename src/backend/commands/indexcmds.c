@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.170 2008/01/09 21:52:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.171 2008/02/07 17:09:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,7 +215,7 @@ DefineIndex(RangeVar *heapRelation,
 	}
 
 	/* Check permissions except when using database's default */
-	if (OidIsValid(tablespaceId))
+	if (OidIsValid(tablespaceId) && tablespaceId != MyDatabaseTableSpace)
 	{
 		AclResult	aclresult;
 

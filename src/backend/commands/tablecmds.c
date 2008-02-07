@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.241 2008/01/30 19:46:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.242 2008/02/07 17:09:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,7 +340,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	}
 
 	/* Check permissions except when using database's default */
-	if (OidIsValid(tablespaceId))
+	if (OidIsValid(tablespaceId) && tablespaceId != MyDatabaseTableSpace)
 	{
 		AclResult	aclresult;
 

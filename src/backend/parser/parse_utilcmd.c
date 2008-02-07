@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.8 2008/01/01 19:45:51 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.9 2008/02/07 17:09:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -767,7 +767,10 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	index = makeNode(IndexStmt);
 	index->relation = cxt->relation;
 	index->accessMethod = pstrdup(NameStr(amrec->amname));
-	index->tableSpace = get_tablespace_name(source_idx->rd_node.spcNode);
+	if (OidIsValid(idxrelrec->reltablespace))
+		index->tableSpace = get_tablespace_name(idxrelrec->reltablespace);
+	else
+		index->tableSpace = NULL;
 	index->unique = idxrec->indisunique;
 	index->primary = idxrec->indisprimary;
 	index->concurrent = false;
