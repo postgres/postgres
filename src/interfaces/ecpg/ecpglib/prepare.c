@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.25 2007/11/15 22:25:17 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.26 2008/02/07 11:09:13 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -373,30 +373,26 @@ SearchStmtCache(const char *ecpgQuery)
  *	 OR  negative error code
  */
 static int
-ecpg_freeStmtCacheEntry(int entNo)		/* entry # to free			*/
+ecpg_freeStmtCacheEntry(int lineno, int compat, int entNo)		/* entry # to free */
 {
 	stmtCacheEntry *entry;
-	PGresult   *results;
-	char		deallocText[100];
 	struct connection *con;
+ 	struct prepared_statement *this, *prev;
 
 	entry = &stmtCacheEntries[entNo];
 	if (!entry->stmtID[0])		/* return if the entry isn't in use     */
 		return (0);
 
 	con = ecpg_get_connection(entry->connection);
-/* free the server resources for the statement											*/
-	ecpg_log("ecpg_freeStmtCacheEntry line %d: deallocate %s, cache entry #%d\n", entry->lineno, entry->stmtID, entNo);
-	sprintf(deallocText, "DEALLOCATE PREPARE %s", entry->stmtID);
-	results = PQexec(con->connection, deallocText);
 
-	if (!ecpg_check_PQresult(results, entry->lineno, con->connection, ECPG_COMPAT_PGSQL))
+	/* free the 'prepared_statement' list entry       */
+	this = find_prepared_statement(entry->stmtID, con, &prev);
+	if (this && !deallocate_one(lineno, compat, con, prev, this))
 		return (-1);
-	PQclear(results);
 
 	entry->stmtID[0] = '\0';
 
-/* free the memory used by the cache entry		*/
+	/* free the memory used by the cache entry		*/
 	if (entry->ecpgQuery)
 	{
 		ecpg_free(entry->ecpgQuery);
@@ -414,6 +410,7 @@ static int
 AddStmtToCache(int lineno,		/* line # of statement		*/
 			   char *stmtID,	/* statement ID				*/
 			   const char *connection,	/* connection				*/
+			   int compat, 			/* compatibility level */
 			   const char *ecpgQuery)	/* query					*/
 {
 	int			ix,
@@ -444,7 +441,7 @@ AddStmtToCache(int lineno,		/* line # of statement		*/
 		entNo = luEntNo;		/* re-use the 'least used' entry	*/
 
 /* 'entNo' is the entry to use - make sure its free										*/
-	if (ecpg_freeStmtCacheEntry(entNo) < 0)
+	if (ecpg_freeStmtCacheEntry(lineno, compat, entNo) < 0)
 		return (-1);
 
 /* add the query to the entry															*/
@@ -460,7 +457,7 @@ AddStmtToCache(int lineno,		/* line # of statement		*/
 
 /* handle cache and preparation of statments in auto-prepare mode */
 bool
-ecpg_auto_prepare(int lineno, const char *connection_name, const int questionmarks, char **name, const char *query)
+ecpg_auto_prepare(int lineno, const char *connection_name, int compat, const int questionmarks, char **name, const char *query)
 {
 	int			entNo;
 
@@ -483,7 +480,7 @@ ecpg_auto_prepare(int lineno, const char *connection_name, const int questionmar
 
 		if (!ECPGprepare(lineno, connection_name, questionmarks, ecpg_strdup(*name, lineno), query))
 			return (false);
-		if (AddStmtToCache(lineno, *name, connection_name, query) < 0)
+		if (AddStmtToCache(lineno, *name, connection_name, compat, query) < 0)
 			return (false);
 	}
 

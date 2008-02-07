@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.33 2008/01/15 10:31:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.34 2008/02/07 11:09:12 meskes Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -146,7 +146,7 @@ void		ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat);
 char	   *ecpg_prepared(const char *, struct connection *, int);
 bool		ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection * conn);
 void		ecpg_log(const char *format,...);
-bool		ecpg_auto_prepare(int, const char *, const int, char **, const char *);
+bool		ecpg_auto_prepare(int, const char *, int, const int, char **, const char *);
 void		ecpg_init_sqlca(struct sqlca_t * sqlca);
 
 /* SQLSTATE values generated or processed by ecpglib (intentionally

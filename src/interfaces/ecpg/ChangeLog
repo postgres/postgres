@@ -2301,3 +2301,10 @@ Tue, 15 Jan 2008 11:26:14 +0100
 	- Set compat library version to 3.0.
 	- Set ecpg library version to 6.0.
 	- Set ecpg version to 4.4.
+
+Wed, 06 Feb 2008 09:04:48 +0100
+
+	- Fixed segfault in ecpg when using an array element.
+	- Free all memory in auto-prepare mode.
+
+

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.75 2008/01/15 10:31:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.76 2008/02/07 11:09:12 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1489,7 +1489,7 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 	 */
 	if (statement_type == ECPGst_prepnormal)
 	{
-		if (!ecpg_auto_prepare(lineno, connection_name, questionmarks, &prepname, query))
+		if (!ecpg_auto_prepare(lineno, connection_name, compat, questionmarks, &prepname, query))
 			return (false);
 
 		/*
