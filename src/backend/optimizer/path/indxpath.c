@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.226 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.227 2008/02/07 17:53:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2619,9 +2619,9 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 						 op_strategy, lefttype, righttype, opfam);
 			}
 			new_ops = lappend_oid(new_ops, expr_op);
+			lefttypes_cell = lnext(lefttypes_cell);
+			righttypes_cell = lnext(righttypes_cell);
 		}
-		lefttypes_cell = lnext(lefttypes_cell);
-		righttypes_cell = lnext(righttypes_cell);
 	}
 
 	/* If we have more than one matching col, create a subset rowcompare */
