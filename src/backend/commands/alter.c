@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.26 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.27 2008/02/07 21:07:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,7 +216,7 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 			break;
 
 		case OBJECT_DATABASE:
-			AlterDatabaseOwner((char *) linitial(stmt->object), newowner);
+			AlterDatabaseOwner(strVal(linitial(stmt->object)), newowner);
 			break;
 
 		case OBJECT_FUNCTION:
@@ -224,7 +224,7 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 			break;
 
 		case OBJECT_LANGUAGE:
-			AlterLanguageOwner((char *) linitial(stmt->object), newowner);
+			AlterLanguageOwner(strVal(linitial(stmt->object)), newowner);
 			break;
 
 		case OBJECT_OPERATOR:
@@ -244,11 +244,11 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 			break;
 
 		case OBJECT_SCHEMA:
-			AlterSchemaOwner((char *) linitial(stmt->object), newowner);
+			AlterSchemaOwner(strVal(linitial(stmt->object)), newowner);
 			break;
 
 		case OBJECT_TABLESPACE:
-			AlterTableSpaceOwner((char *) linitial(stmt->object), newowner);
+			AlterTableSpaceOwner(strVal(linitial(stmt->object)), newowner);
 			break;
 
 		case OBJECT_TYPE:
