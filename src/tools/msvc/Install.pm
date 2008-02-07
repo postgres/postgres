@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.27 2008/02/07 13:49:00 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.28 2008/02/07 17:58:16 mha Exp $
 #
 use strict;
 use warnings;
@@ -476,7 +476,7 @@ sub GenerateNLSFiles
 
             EnsureDirectories($target, "share/locale/$lang", "share/locale/$lang/LC_MESSAGES");
             system(
-"$nlspath\\bin\\msgfmt -o $target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm.mo $_"
+"\"$nlspath\\bin\\msgfmt\" -o \"$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm.mo\" $_"
               )
               && croak("Could not run msgfmt on $dir\\$_");
             print ".";
