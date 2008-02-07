@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.387 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.388 2008/02/07 20:19:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2897,6 +2897,32 @@ _copyReassignOwnedStmt(ReassignOwnedStmt *from)
 	return newnode;
 }
 
+static AlterTSDictionaryStmt *
+_copyAlterTSDictionaryStmt(AlterTSDictionaryStmt *from)
+{
+	AlterTSDictionaryStmt *newnode = makeNode(AlterTSDictionaryStmt);
+
+	COPY_NODE_FIELD(dictname);
+	COPY_NODE_FIELD(options);
+
+	return newnode;
+}
+
+static AlterTSConfigurationStmt *
+_copyAlterTSConfigurationStmt(AlterTSConfigurationStmt *from)
+{
+	AlterTSConfigurationStmt *newnode = makeNode(AlterTSConfigurationStmt);
+
+	COPY_NODE_FIELD(cfgname);
+	COPY_NODE_FIELD(tokentype);
+	COPY_NODE_FIELD(dicts);
+	COPY_SCALAR_FIELD(override);
+	COPY_SCALAR_FIELD(replace);
+	COPY_SCALAR_FIELD(missing_ok);
+
+	return newnode;
+}
+
 /* ****************************************************************
  *					pg_list.h copy functions
  * ****************************************************************
@@ -3488,6 +3514,12 @@ copyObject(void *from)
 			break;
 		case T_ReassignOwnedStmt:
 			retval = _copyReassignOwnedStmt(from);
+			break;
+		case T_AlterTSDictionaryStmt:
+			retval = _copyAlterTSDictionaryStmt(from);
+			break;
+		case T_AlterTSConfigurationStmt:
+			retval = _copyAlterTSConfigurationStmt(from);
 			break;
 
 		case T_A_Expr:

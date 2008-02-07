@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.317 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.318 2008/02/07 20:19:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1638,6 +1638,29 @@ _equalReassignOwnedStmt(ReassignOwnedStmt *a, ReassignOwnedStmt *b)
 }
 
 static bool
+_equalAlterTSDictionaryStmt(AlterTSDictionaryStmt *a, AlterTSDictionaryStmt *b)
+{
+	COMPARE_NODE_FIELD(dictname);
+	COMPARE_NODE_FIELD(options);
+
+	return true;
+}
+
+static bool
+_equalAlterTSConfigurationStmt(AlterTSConfigurationStmt *a,
+							   AlterTSConfigurationStmt *b)
+{
+	COMPARE_NODE_FIELD(cfgname);
+	COMPARE_NODE_FIELD(tokentype);
+	COMPARE_NODE_FIELD(dicts);
+	COMPARE_SCALAR_FIELD(override);
+	COMPARE_SCALAR_FIELD(replace);
+	COMPARE_SCALAR_FIELD(missing_ok);
+
+	return true;
+}
+
+static bool
 _equalAExpr(A_Expr *a, A_Expr *b)
 {
 	COMPARE_SCALAR_FIELD(kind);
@@ -2415,9 +2438,14 @@ equal(void *a, void *b)
 		case T_DropOwnedStmt:
 			retval = _equalDropOwnedStmt(a, b);
 			break;
-
 		case T_ReassignOwnedStmt:
 			retval = _equalReassignOwnedStmt(a, b);
+			break;
+		case T_AlterTSDictionaryStmt:
+			retval = _equalAlterTSDictionaryStmt(a, b);
+			break;
+		case T_AlterTSConfigurationStmt:
+			retval = _equalAlterTSConfigurationStmt(a, b);
 			break;
 
 		case T_A_Expr:
