@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.72 2008/01/15 22:18:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.73 2008/02/08 18:18:05 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -238,8 +238,8 @@
     For all authentication methods except GSSAPI and SSPI, there is at most
     one request and one response. In some methods, no response
     at all is needed from the frontend, and so no authentication request
-    occurs. For GSSAPI and SSPI, multiple iterations of packets may be needed to 
-    complete the authentication.
+    occurs. For GSSAPI and SSPI, multiple exchanges of packets may be needed
+    to complete the authentication.
    </para>
 
    <para>
@@ -370,9 +370,9 @@
         or a previous AuthenticationGSSContinue). If the GSSAPI 
         or SSPI data in this message
         indicates more data is needed to complete the authentication,
-        the frontend must send this data as another PasswordMessage. If
-        GSSAPI authentication is completed by this message, the server
-        will also send AuthenticationOk to indicate successful authentication
+        the frontend must send that data as another PasswordMessage. If
+        GSSAPI or SSPI authentication is completed by this message, the server
+        will next send AuthenticationOk to indicate successful authentication
         or ErrorResponse to indicate failure.
        </para>
       </listitem>
@@ -1808,7 +1808,7 @@ AuthenticationGSSContinue (B)
 </term>
 <listitem>
 <para>
-                Specifies that this message contains GSSAPI data.
+                Specifies that this message contains GSSAPI or SSPI data.
 </para>
 </listitem>
 </varlistentry>
@@ -3514,7 +3514,10 @@ PasswordMessage (F)
 <listitem>
 <para>
                 Identifies the message as a password response. Note that
-                this is also used by GSSAPI response messages.
+                this is also used for GSSAPI and SSPI response messages
+                (which is really a design error, since the contained data
+                is not a null-terminated string in that case, but can be
+                arbitrary binary data).
 </para>
 </listitem>
 </varlistentry>
