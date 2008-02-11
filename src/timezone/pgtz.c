@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.57 2008/01/01 19:46:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.58 2008/02/11 19:55:11 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -610,7 +610,7 @@ static const struct
 	/*
 	 * This list was built from the contents of the registry at
 	 * HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time
-	 * Zones on Windows XP Professional SP1
+	 * Zones on Windows XP Professional SP2
 	 *
 	 * The zones have been matched to zic timezones by looking at the cities
 	 * listed in the win32 display name (in the comment here) in most cases.
@@ -635,6 +635,10 @@ static const struct
 		"Arabic Standard Time", "Arabic Daylight Time",
 		"Asia/Baghdad"
 	},							/* (GMT+03:00) Baghdad */
+	{
+		"Armenian Standard Time", "Armenian Daylight Time",
+		"Asia/Yerevan"
+	},							/* (GMT+04:00) Yerevan */
 	{
 		"Atlantic Standard Time", "Atlantic Daylight Time",
 		"Canada/Atlantic"
@@ -695,6 +699,11 @@ static const struct
 		"US/Central"
 	},							/* (GMT-06:00) Central Time (US & Canada) */
 	{
+		"Central Standard Time (Mexico)", "Central Daylight Time (Mexico)",
+		"America/Mexico_City"
+	},							/* (GMT-06:00) Guadalajara, Mexico City,
+								   Monterrey - New */
+	{
 		"China Standard Time", "China Daylight Time",
 		"Asia/Hong_Kong"
 	},							/* (GMT+08:00) Beijing, Chongqing, Hong Kong,
@@ -741,6 +750,10 @@ static const struct
 	},							/* (GMT+02:00) Helsinki, Kyiv, Riga, Sofia,
 								 * Tallinn, Vilnius */
 	{
+		"Georgian Standard Time", "Georgian Daylight Time",
+		"Asia/Tbilisi"
+	},							/* (GMT+03:00) Tbilisi */
+	{
 		"GMT Standard Time", "GMT Daylight Time",
 		"Europe/London"
 	},							/* (GMT) Greenwich Mean Time : Dublin,
@@ -775,6 +788,10 @@ static const struct
 		"Asia/Jerusalem"
 	},							/* (GMT+02:00) Jerusalem */
 	{
+		"Jordan Standard Time", "Jordan Daylight Time",
+		"Asia/Amman"
+	},							/* (GMT+02:00) Amman */
+	{
 		"Korea Standard Time", "Korea Daylight Time",
 		"Asia/Seoul"
 	},							/* (GMT+09:00) Seoul */
@@ -784,17 +801,30 @@ static const struct
 	},							/* (GMT-06:00) Guadalajara, Mexico City,
 								 * Monterrey */
 	{
-		"Mexico Standard Time", "Mexico Daylight Time",
-		"America/La_Paz"
+		"Mexico Standard Time 2", "Mexico Daylight Time 2",
+		"America/Chihuahua"
 	},							/* (GMT-07:00) Chihuahua, La Paz, Mazatlan */
 	{
 		"Mid-Atlantic Standard Time", "Mid-Atlantic Daylight Time",
 		"Atlantic/South_Georgia"
 	},							/* (GMT-02:00) Mid-Atlantic */
 	{
+		"Middle East Standard Time", "Middle East Daylight Time",
+		"Asia/Beirut"
+	},							/* (GMT+02:00) Beirut */
+	{
+		"Montevideo Standard Time", "Montevideo Daylight Time",
+		"America/Montevideo"
+	},							/* (GMT-03:00) Montevideo */
+	{
 		"Mountain Standard Time", "Mountain Daylight Time",
 		"US/Mountain"
 	},							/* (GMT-07:00) Mountain Time (US & Canada) */
+	{
+		"Mountain Standard Time (Mexico)", "Mountain Daylight Time (Mexico)",
+		"America/Chihuahua"
+	},							/* (GMT-07:00) Chihuahua, La Paz, 
+								   Mazatlan - New */
 	{
 		"Myanmar Standard Time", "Myanmar Daylight Time",
 		"Asia/Rangoon"
@@ -803,6 +833,10 @@ static const struct
 		"N. Central Asia Standard Time", "N. Central Asia Daylight Time",
 		"Asia/Almaty"
 	},							/* (GMT+06:00) Almaty, Novosibirsk */
+	{
+		"Namibia Standard Time", "Namibia Daylight Time",
+		"Africa/Windhoek"
+	},							/* (GMT+02:00) Windhoek */
 	{
 		"Nepal Standard Time", "Nepal Daylight Time",
 		"Asia/Katmandu"
@@ -832,6 +866,10 @@ static const struct
 		"US/Pacific"
 	},							/* (GMT-08:00) Pacific Time (US & Canada);
 								 * Tijuana */
+	{
+		"Pacific Standard Time (Mexico)", "Pacific Daylight Time (Mexico)",
+		"America/Tijuana"
+	},							/* (GMT-08:00) Tijuana, Baja California */
 	{
 		"Romance Standard Time", "Romance Daylight Time",
 		"Europe/Brussels"
