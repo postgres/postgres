@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.342.2.4 2008/01/03 21:23:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.342.2.5 2008/02/11 19:14:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1521,12 +1521,18 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		free_space += vacpage->free;
 
 		/*
-		 * Add the page to fraged_pages if it has a useful amount of free
-		 * space.  "Useful" means enough for a minimal-sized tuple. But we
-		 * don't know that accurately near the start of the relation, so add
-		 * pages unconditionally if they have >= BLCKSZ/10 free space.
+		 * Add the page to vacuum_pages if it requires reaping, and add it to
+		 * fraged_pages if it has a useful amount of free space.  "Useful"
+		 * means enough for a minimal-sized tuple.  But we don't know that
+		 * accurately near the start of the relation, so add pages
+		 * unconditionally if they have >= BLCKSZ/10 free space.  Also
+		 * forcibly add pages with no live tuples, to avoid confusing the
+		 * empty_end_pages logic.  (In the presence of unreasonably small
+		 * fillfactor, it seems possible that such pages might not pass
+		 * the free-space test, but they had better be in the list anyway.)
 		 */
-		do_frag = (vacpage->free >= min_tlen || vacpage->free >= BLCKSZ / 10);
+		do_frag = (vacpage->free >= min_tlen || vacpage->free >= BLCKSZ / 10 ||
+				   notup);
 
 		if (do_reap || do_frag)
 		{
@@ -1541,6 +1547,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		/*
 		 * Include the page in empty_end_pages if it will be empty after
 		 * vacuuming; this is to keep us from using it as a move destination.
+		 * Note that such pages are guaranteed to be in fraged_pages.
 		 */
 		if (notup)
 		{
