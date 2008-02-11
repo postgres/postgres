@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.363 2008/01/03 21:23:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.364 2008/02/11 19:14:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1659,12 +1659,18 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		free_space += vacpage->free;
 
 		/*
-		 * Add the page to fraged_pages if it has a useful amount of free
-		 * space.  "Useful" means enough for a minimal-sized tuple. But we
-		 * don't know that accurately near the start of the relation, so add
-		 * pages unconditionally if they have >= BLCKSZ/10 free space.
+		 * Add the page to vacuum_pages if it requires reaping, and add it to
+		 * fraged_pages if it has a useful amount of free space.  "Useful"
+		 * means enough for a minimal-sized tuple.  But we don't know that
+		 * accurately near the start of the relation, so add pages
+		 * unconditionally if they have >= BLCKSZ/10 free space.  Also
+		 * forcibly add pages with no live tuples, to avoid confusing the
+		 * empty_end_pages logic.  (In the presence of unreasonably small
+		 * fillfactor, it seems possible that such pages might not pass
+		 * the free-space test, but they had better be in the list anyway.)
 		 */
-		do_frag = (vacpage->free >= min_tlen || vacpage->free >= BLCKSZ / 10);
+		do_frag = (vacpage->free >= min_tlen || vacpage->free >= BLCKSZ / 10 ||
+				   notup);
 
 		if (do_reap || do_frag)
 		{
@@ -1679,6 +1685,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		/*
 		 * Include the page in empty_end_pages if it will be empty after
 		 * vacuuming; this is to keep us from using it as a move destination.
+		 * Note that such pages are guaranteed to be in fraged_pages.
 		 */
 		if (notup)
 		{
@@ -3725,7 +3732,19 @@ enough_space(VacPage vacpage, Size len)
 static Size
 PageGetFreeSpaceWithFillFactor(Relation relation, Page page)
 {
-	Size		freespace = PageGetHeapFreeSpace(page);
+	/*
+	 * It is correct to use PageGetExactFreeSpace() here, *not*
+	 * PageGetHeapFreeSpace().  This is because (a) we do our own, exact
+	 * accounting for whether line pointers must be added, and (b) we will
+	 * recycle any LP_DEAD line pointers before starting to add rows to a
+	 * page, but that may not have happened yet at the time this function is
+	 * applied to a page, which means PageGetHeapFreeSpace()'s protection
+	 * against too many line pointers on a page could fire incorrectly.  We do
+	 * not need that protection here: since VACUUM FULL always recycles all
+	 * dead line pointers first, it'd be physically impossible to insert more
+	 * than MaxHeapTuplesPerPage tuples anyway.
+	 */
+	Size		freespace = PageGetExactFreeSpace(page);
 	Size		targetfree;
 
 	targetfree = RelationGetTargetPageFreeSpace(relation,
