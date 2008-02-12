@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.187 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.188 2008/02/12 04:09:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -886,6 +886,10 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 	Assert(list_length(plan->plancache_list) == 1);
 	plansource = (CachedPlanSource *) linitial(plan->plancache_list);
 
+	/* Push the SPI stack */
+	if (_SPI_begin_call(false) < 0)
+		elog(ERROR, "SPI_cursor_open called while not connected");
+
 	/* Reset SPI result (note we deliberately don't touch lastoid) */
 	SPI_processed = 0;
 	SPI_tuptable = NULL;
@@ -1041,6 +1045,9 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 
 	Assert(portal->strategy != PORTAL_MULTI_QUERY);
 
+	/* Pop the SPI stack */
+	_SPI_end_call(false);
+
 	/* Return the created portal */
 	return portal;
 }
@@ -1180,8 +1187,16 @@ SPI_is_cursor_plan(SPIPlanPtr plan)
 	}
 
 	if (list_length(plan->plancache_list) != 1)
+	{
+		SPI_result = 0;
 		return false;			/* not exactly 1 pre-rewrite command */
+	}
 	plansource = (CachedPlanSource *) linitial(plan->plancache_list);
+
+	/* Need _SPI_begin_call in case replanning invokes SPI-using functions */
+	SPI_result = _SPI_begin_call(false);
+	if (SPI_result < 0)
+		return false;
 
 	if (plan->saved)
 	{
@@ -1189,6 +1204,9 @@ SPI_is_cursor_plan(SPIPlanPtr plan)
 		cplan = RevalidateCachedPlan(plansource, true);
 		ReleaseCachedPlan(cplan, true);
 	}
+
+	_SPI_end_call(false);
+	SPI_result = 0;
 
 	/* Does it return tuples? */
 	if (plansource->resultDesc)

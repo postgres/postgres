@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.59 2007/09/14 04:18:27 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.60 2008/02/12 04:09:44 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -1077,9 +1077,12 @@ bool SPI_is_cursor_plan(SPIPlanPtr <parameter>plan</parameter>)
   <title>Return Value</title>
   <para>
     <symbol>true</symbol> or <symbol>false</symbol> to indicate if the
-    <parameter>plan</parameter> can produce a cursor or not.
-    If the <parameter>plan</parameter> is <symbol>NULL</symbol> or invalid,
-    <varname>SPI_result</varname> is set to <symbol>SPI_ERROR_ARGUMENT</symbol>
+    <parameter>plan</parameter> can produce a cursor or not, with
+    <varname>SPI_result</varname> set to zero.
+    If it is not possible to determine the answer (for example,
+    if the <parameter>plan</parameter> is <symbol>NULL</symbol> or invalid,
+    or if called when not connected to SPI), then
+    <varname>SPI_result</varname> is set to a suitable error code
     and <symbol>false</symbol> is returned.
   </para>
  </refsect1>
@@ -1442,8 +1445,8 @@ Portal SPI_cursor_open(const char * <parameter>name</parameter>, SPIPlanPtr <par
   <title>Return Value</title>
 
   <para>
-   pointer to portal containing the cursor, or <symbol>NULL</symbol>
-   on error
+   Pointer to portal containing the cursor.  Note there is no error
+   return convention; any error will be reported via <function>elog</>.
   </para>
  </refsect1>
 </refentry>
