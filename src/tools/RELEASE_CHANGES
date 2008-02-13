@@ -48,15 +48,15 @@ For Major Releases
 	o add documenation for items
 
 * Documentation
-	document all new features
-	update help output from inside the programs
-	doc/src/sgml/ref manual pages
-	convert any literal "<" and ">" characters, use tools/find_gt_lt
+	o document all new features
+	o update help output from inside the programs
+	o doc/src/sgml/ref manual pages
+	o convert any literal "<" and ">" characters, use tools/find_gt_lt
 
 * Ports
-	update config.guess and config.sub at the start of beta
-	update ports list in doc/src/sgml/installation.sgml
-	update platform-specific FAQ's, if needed
+	o update config.guess and config.sub at the start of beta
+	o update ports list in doc/src/sgml/installation.sgml
+	o update platform-specific FAQ's, if needed
 
 * Update inet/cidr data types with newest Bind patches
 
