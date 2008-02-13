@@ -45,7 +45,7 @@ For Major Releases
 	o group items into categories
 	o select major features
 	o select incompatibilities
-	o add documenation for items
+	o add documentation for items
 
 * Documentation
 	o document all new features
@@ -113,6 +113,10 @@ The minor version number should be updated whenever the functionality of
 the library has changed, typically a change in source code between releases
 would mean an increase in the minor version number so long as it does not
 require a major version increase.
+
+Given that we make at least minor changes to our libraries in every major
+PostgreSQL version, we always bump all minor library version numbers at the
+start of each development cycle as a matter of policy.
 
 Minimizing Changes
 ==================
