@@ -35,7 +35,7 @@ For Major Releases
 ==================
 (in addition to the above)
 
-* Bump library versions, if appropriate (see below)
+* Bump minor library versions, major if appropriate (see below)
 	o src/interfaces/*/Makefile
 	o src/interfaces/*/*/Makefile
 
