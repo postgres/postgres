@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.223 2008/01/12 21:51:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.224 2008/02/13 22:46:55 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3544,7 +3544,7 @@ XMLPARSE ( { DOCUMENT | CONTENT } <replaceable>value</replaceable>)
 </synopsis>
     Examples:
 <programlisting><![CDATA[
-XMLPARSE (DOCUMENT '<?xml version="1.0"?><book><title>Manual</title><chapter>...</chapter><book>')
+XMLPARSE (DOCUMENT '<?xml version="1.0"?><book><title>Manual</title><chapter>...</chapter></book>')
 XMLPARSE (CONTENT 'abc<foo>bar</foo><bar>foo</bar>')
 ]]></programlisting>
     While this is the only way to convert character strings into XML
