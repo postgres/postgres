@@ -38,7 +38,6 @@ For Major Releases
 * Bump library versions, if appropriate (see below)
 	o src/interfaces/*/Makefile
 	o src/interfaces/*/*/Makefile
-	o update ecpg regression expected files for new library number
 
 * Release notes
 	o check that dashed items from the TODO list are complete
