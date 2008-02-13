@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.113 2008/01/23 20:21:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.114 2008/02/13 22:44:06 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1910,13 +1910,6 @@ pg_dumpall -p 5432 | psql -d postgres -p 6543
   </para>
 
   <para>
-   In practice you probably want to test your client
-   applications on the new setup before switching over completely.
-   This is another reason for setting up concurrent installations
-   of old and new versions.
-  </para>
-
-  <para>
    If you cannot or do not want to run two servers in parallel, you can
    do the backup step before installing the new version, bring down
    the server, move the old version out of the way, install the new
@@ -1955,5 +1948,68 @@ psql -f backup postgres
     moving an installation like this will not work.)
    </para>
   </note>
+
+  <para>
+   In practice you probably want to test your client applications on the
+   new version before switching over completely.  This is another reason
+   for setting up concurrent installations of old and new versions.  When
+   testing a <productname>PostgreSQL</> major upgrade, consider the
+   following categories of possible changes:
+  </para>
+
+  <variablelist>
+
+   <varlistentry>
+    <term>Administration</term>
+    <listitem>
+     <para>
+      The capabilities available for administrators to monitor and control
+      the server often change and improve in each major release.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>SQL</term>
+    <listitem>
+     <para>
+      Typically this includes new SQL command capabilities and not changes
+      in behavior, unless specifically mentioned in the release notes.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Library API</term>
+    <listitem>
+     <para>
+      Typically libraries like <application>libpq</> only add new
+      functionality, again unless mentioned in the release notes.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>System Catalogs</term>
+    <listitem>
+     <para>
+      System catalog changes usually only affect database management tools.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Server C-language API</term>
+    <listitem>
+     <para>
+      This involved changes in the backend function API, which is written
+      in the C programming language.  Such changes effect code that
+      references backend functions deep inside the server.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+
  </sect1>
 </chapter>
