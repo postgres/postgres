@@ -2307,4 +2307,7 @@ Wed, 06 Feb 2008 09:04:48 +0100
 	- Fixed segfault in ecpg when using an array element.
 	- Free all memory in auto-prepare mode.
 
+Thu, 14 Feb 2008 13:11:34 +0100
+
+	- Added SQLSTATE macro closing bug #3961.
 
