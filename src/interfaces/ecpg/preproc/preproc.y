@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.359 2008/01/15 10:31:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.360 2008/02/14 14:54:48 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -807,7 +807,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| DropUserStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| DropdbStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| ExplainStmt		{ output_statement($1, 0, ECPGst_normal); }
-		| ExecuteStmt		{ output_statement($1, 0, ECPGst_execute); }
+		| ExecuteStmt		{ output_statement($1, 1, ECPGst_execute); }
 		| FetchStmt		{ output_statement($1, 1, ECPGst_normal); }
 		| GrantStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| GrantRoleStmt		{ output_statement($1, 0, ECPGst_normal); }

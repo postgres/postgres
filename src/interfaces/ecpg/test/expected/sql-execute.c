@@ -254,23 +254,78 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 88 "execute.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdeallocate(__LINE__, 0, NULL, "f");
 #line 89 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 89 "execute.pgc"
+
+
+	sprintf (command, "select * from test where amount = $1");
+
+	{ ECPGprepare(__LINE__, NULL, 0, "f", command);
+#line 93 "execute.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 93 "execute.pgc"
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 1, "f", 
+	ECPGt_const,"2",(long)1,(long)1,strlen("2"), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
+	ECPGt_char,(name),(long)8,(long)8,(8)*sizeof(char), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
+	ECPGt_int,(amount),(long)1,(long)8,sizeof(int), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
+	ECPGt_char,(letter),(long)1,(long)8,(1)*sizeof(char), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
+#line 94 "execute.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 94 "execute.pgc"
+
+
+	for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
+	{
+		/* exec sql begin declare section */
+		    
+		   
+		
+#line 99 "execute.pgc"
+ char  n [ 8 ]    ,  l   = letter [ i ] [ 0 ] ;
+ 
+#line 100 "execute.pgc"
+ int  a   = amount [ i ] ;
+/* exec sql end declare section */
+#line 101 "execute.pgc"
+
+
+		strncpy(n, name[i], 8);
+		printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
+	}
+
+	{ ECPGdeallocate(__LINE__, 0, NULL, "f");
+#line 107 "execute.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 107 "execute.pgc"
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
+#line 108 "execute.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 108 "execute.pgc"
 
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 90 "execute.pgc"
+#line 109 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 90 "execute.pgc"
+#line 109 "execute.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 91 "execute.pgc"
+#line 110 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 91 "execute.pgc"
+#line 110 "execute.pgc"
 
 
 	return (0);

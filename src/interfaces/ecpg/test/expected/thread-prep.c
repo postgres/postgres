@@ -173,6 +173,9 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 52 "prep.pgc"
 
+if (sqlca.sqlcode == ECPG_NOT_FOUND) sqlprint();
+#line 52 "prep.pgc"
+
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 52 "prep.pgc"
 

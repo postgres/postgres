@@ -86,6 +86,25 @@ exec sql end declare section;
 	}
 
 	exec sql close CUR2;
+	exec sql deallocate f;
+
+	sprintf (command, "select * from test where amount = $1");
+
+	exec sql prepare f from :command;
+	exec sql execute f using 2 into :name, :amount, :letter;
+
+	for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
+	{
+		exec sql begin declare section;
+		char n[8], l = letter[i][0];
+		int a = amount[i];
+		exec sql end declare section;
+
+		strncpy(n, name[i], 8);
+		printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
+	}
+
+	exec sql deallocate f;
 	exec sql drop table test;
 	exec sql commit;
 	exec sql disconnect;
