@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_nfa.c,v 1.5 2008/01/03 20:47:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regc_nfa.c,v 1.6 2008/02/14 17:33:37 tgl Exp $
  *
  *
  * One or two things that technically ought to be in here
@@ -349,8 +349,6 @@ newarc(struct nfa * nfa,
 
 	if (COLORED(a) && nfa->parent == NULL)
 		colorchain(nfa->cm, a);
-
-	return;
 }
 
 /*
@@ -361,8 +359,6 @@ allocarc(struct nfa * nfa,
 		 struct state * s)
 {
 	struct arc *a;
-	struct arcbatch *new;
-	int			i;
 
 	/* shortcut */
 	if (s->free == NULL && s->noas < ABSIZE)
@@ -375,22 +371,25 @@ allocarc(struct nfa * nfa,
 	/* if none at hand, get more */
 	if (s->free == NULL)
 	{
-		new = (struct arcbatch *) MALLOC(sizeof(struct arcbatch));
-		if (new == NULL)
+		struct arcbatch *newAb;
+		int			i;
+
+		newAb = (struct arcbatch *) MALLOC(sizeof(struct arcbatch));
+		if (newAb == NULL)
 		{
 			NERR(REG_ESPACE);
 			return NULL;
 		}
-		new->next = s->oas.next;
-		s->oas.next = new;
+		newAb->next = s->oas.next;
+		s->oas.next = newAb;
 
 		for (i = 0; i < ABSIZE; i++)
 		{
-			new->a[i].type = 0;
-			new->a[i].freechain = &new->a[i + 1];
+			newAb->a[i].type = 0;
+			newAb->a[i].freechain = &newAb->a[i + 1];
 		}
-		new->a[ABSIZE - 1].freechain = NULL;
-		s->free = &new->a[0];
+		newAb->a[ABSIZE - 1].freechain = NULL;
+		s->free = &newAb->a[0];
 	}
 	assert(s->free != NULL);
 
@@ -495,20 +494,20 @@ cparc(struct nfa * nfa,
  */
 static void
 moveins(struct nfa * nfa,
-		struct state * old,
-		struct state * new)
+		struct state * oldState,
+		struct state * newState)
 {
 	struct arc *a;
 
-	assert(old != new);
+	assert(oldState != newState);
 
-	while ((a = old->ins) != NULL)
+	while ((a = oldState->ins) != NULL)
 	{
-		cparc(nfa, a, a->from, new);
+		cparc(nfa, a, a->from, newState);
 		freearc(nfa, a);
 	}
-	assert(old->nins == 0);
-	assert(old->ins == NULL);
+	assert(oldState->nins == 0);
+	assert(oldState->ins == NULL);
 }
 
 /*
@@ -516,15 +515,15 @@ moveins(struct nfa * nfa,
  */
 static void
 copyins(struct nfa * nfa,
-		struct state * old,
-		struct state * new)
+		struct state * oldState,
+		struct state * newState)
 {
 	struct arc *a;
 
-	assert(old != new);
+	assert(oldState != newState);
 
-	for (a = old->ins; a != NULL; a = a->inchain)
-		cparc(nfa, a, a->from, new);
+	for (a = oldState->ins; a != NULL; a = a->inchain)
+		cparc(nfa, a, a->from, newState);
 }
 
 /*
@@ -532,16 +531,16 @@ copyins(struct nfa * nfa,
  */
 static void
 moveouts(struct nfa * nfa,
-		 struct state * old,
-		 struct state * new)
+		 struct state * oldState,
+		 struct state * newState)
 {
 	struct arc *a;
 
-	assert(old != new);
+	assert(oldState != newState);
 
-	while ((a = old->outs) != NULL)
+	while ((a = oldState->outs) != NULL)
 	{
-		cparc(nfa, a, new, a->to);
+		cparc(nfa, a, newState, a->to);
 		freearc(nfa, a);
 	}
 }
@@ -551,15 +550,15 @@ moveouts(struct nfa * nfa,
  */
 static void
 copyouts(struct nfa * nfa,
-		 struct state * old,
-		 struct state * new)
+		 struct state * oldState,
+		 struct state * newState)
 {
 	struct arc *a;
 
-	assert(old != new);
+	assert(oldState != newState);
 
-	for (a = old->outs; a != NULL; a = a->outchain)
-		cparc(nfa, a, new, a->to);
+	for (a = oldState->outs; a != NULL; a = a->outchain)
+		cparc(nfa, a, newState, a->to);
 }
 
 /*

@@ -27,7 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/include/regex/regguts.h,v 1.6 2008/01/03 20:47:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regguts.h,v 1.7 2008/02/14 17:33:37 tgl Exp $
  */
 
 
@@ -181,7 +181,7 @@ union tree
 #define tcolor	colors.ccolor
 #define tptr	ptrs.pptr
 
-/* internal per-color structure for the color machinery */
+/* internal per-color descriptor structure for the color machinery */
 struct colordesc
 {
 	uchr		nchrs;			/* number of chars of this color */
@@ -228,11 +228,11 @@ struct colormap
 #endif
 
 
-
 /*
  * Interface definitions for locale-interface functions in locale.c.
- * Multi-character collating elements (MCCEs) cause most of the trouble.
  */
+
+/* Representation of a set of characters. */
 struct cvec
 {
 	int			nchrs;			/* number of chrs */
@@ -241,16 +241,8 @@ struct cvec
 	int			nranges;		/* number of ranges (chr pairs) */
 	int			rangespace;		/* number of chrs possible */
 	chr		   *ranges;			/* pointer to vector of chr pairs */
-	int			nmcces;			/* number of MCCEs */
-	int			mccespace;		/* number of MCCEs possible */
-	int			nmccechrs;		/* number of chrs used for MCCEs */
-	chr		   *mcces[1];		/* pointers to 0-terminated MCCEs */
-	/* and both batches of chrs are on the end */
+	/* both batches of chrs are on the end */
 };
-
-/* caution:  this value cannot be changed easily */
-#define MAXMCCE 2				/* length of longest MCCE */
-
 
 
 /*

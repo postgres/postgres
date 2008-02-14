@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.45 2007/10/06 16:05:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.46 2008/02/14 17:33:37 tgl Exp $
  *
  */
 
@@ -51,11 +51,9 @@ static void repeat(struct vars *, struct state *, struct state *, int, int);
 static void bracket(struct vars *, struct state *, struct state *);
 static void cbracket(struct vars *, struct state *, struct state *);
 static void brackpart(struct vars *, struct state *, struct state *);
-static chr *scanplain(struct vars *);
-static void leaders(struct vars *, struct cvec *);
+static const chr *scanplain(struct vars *);
 static void onechr(struct vars *, chr, struct state *, struct state *);
 static void dovec(struct vars *, struct cvec *, struct state *, struct state *);
-static celt nextleader(struct vars *, chr, chr);
 static void wordchrs(struct vars *);
 static struct subre *subre(struct vars *, int, int, struct state *, struct state *);
 static void freesubre(struct vars *, struct subre *);
@@ -74,12 +72,12 @@ static void rfree(regex_t *);
 static void dump(regex_t *, FILE *);
 static void dumpst(struct subre *, FILE *, int);
 static void stdump(struct subre *, FILE *, int);
-static char *stid(struct subre *, char *, size_t);
+static const char *stid(struct subre *, char *, size_t);
 #endif
 /* === regc_lex.c === */
 static void lexstart(struct vars *);
 static void prefixes(struct vars *);
-static void lexnest(struct vars *, chr *, chr *);
+static void lexnest(struct vars *, const chr *, const chr *);
 static void lexword(struct vars *);
 static int	next(struct vars *);
 static int	lexescape(struct vars *);
@@ -87,7 +85,7 @@ static chr	lexdigits(struct vars *, int, int, int);
 static int	brenext(struct vars *, chr);
 static void skip(struct vars *);
 static chr	newline(void);
-static chr	chrnamed(struct vars *, chr *, chr *, chr);
+static chr	chrnamed(struct vars *, const chr *, const chr *, chr);
 
 /* === regc_color.c === */
 static void initcm(struct vars *, struct colormap *);
@@ -105,7 +103,6 @@ static void subblock(struct vars *, chr, struct state *, struct state *);
 static void okcolors(struct nfa *, struct colormap *);
 static void colorchain(struct colormap *, struct arc *);
 static void uncolorchain(struct colormap *, struct arc *);
-static int	singleton(struct colormap *, chr c);
 static void rainbow(struct nfa *, struct colormap *, int, pcolor, struct state *, struct state *);
 static void colorcomplement(struct nfa *, struct colormap *, int, struct state *, struct state *, struct state *);
 
@@ -168,13 +165,11 @@ static void dumpcnfa(struct cnfa *, FILE *);
 static void dumpcstate(int, struct carc *, struct cnfa *, FILE *);
 #endif
 /* === regc_cvec.c === */
-static struct cvec *newcvec(int, int, int);
+static struct cvec *newcvec(int, int);
 static struct cvec *clearcvec(struct cvec *);
 static void addchr(struct cvec *, chr);
 static void addrange(struct cvec *, chr, chr);
-static void addmcce(struct cvec *, chr *, chr *);
-static int	haschr(struct cvec *, chr);
-static struct cvec *getcvec(struct vars *, int, int, int);
+static struct cvec *getcvec(struct vars *, int, int);
 static void freecvec(struct cvec *);
 
 /* === regc_locale.c === */
@@ -189,14 +184,11 @@ static int	pg_wc_ispunct(pg_wchar c);
 static int	pg_wc_isspace(pg_wchar c);
 static pg_wchar pg_wc_toupper(pg_wchar c);
 static pg_wchar pg_wc_tolower(pg_wchar c);
-static int	nmcces(struct vars *);
-static int	nleaders(struct vars *);
-static struct cvec *allmcces(struct vars *, struct cvec *);
-static celt element(struct vars *, chr *, chr *);
+static celt element(struct vars *, const chr *, const chr *);
 static struct cvec *range(struct vars *, celt, celt, int);
 static int	before(celt, celt);
 static struct cvec *eclass(struct vars *, celt, int);
-static struct cvec *cclass(struct vars *, chr *, chr *, int);
+static struct cvec *cclass(struct vars *, const chr *, const chr *, int);
 static struct cvec *allcases(struct vars *, chr);
 static int	cmp(const chr *, const chr *, size_t);
 static int	casecmp(const chr *, const chr *, size_t);
@@ -206,10 +198,10 @@ static int	casecmp(const chr *, const chr *, size_t);
 struct vars
 {
 	regex_t    *re;
-	chr		   *now;			/* scan pointer into string */
-	chr		   *stop;			/* end of string */
-	chr		   *savenow;		/* saved now and stop for "subroutine call" */
-	chr		   *savestop;
+	const chr  *now;			/* scan pointer into string */
+	const chr  *stop;			/* end of string */
+	const chr  *savenow;		/* saved now and stop for "subroutine call" */
+	const chr  *savestop;
 	int			err;			/* error code (0 if none) */
 	int			cflags;			/* copy of compile flags */
 	int			lasttype;		/* type of previous token */
@@ -230,10 +222,6 @@ struct vars
 	int			ntree;			/* number of tree nodes */
 	struct cvec *cv;			/* interface cvec */
 	struct cvec *cv2;			/* utility cvec */
-	struct cvec *mcces;			/* collating-element information */
-#define  ISCELEADER(v,c) ((v)->mcces != NULL && haschr((v)->mcces, (c)))
-	struct state *mccepbegin;	/* in nfa, start of MCCE prototypes */
-	struct state *mccepend;		/* in nfa, end of MCCE prototypes */
 	struct subre *lacons;		/* lookahead-constraint vector */
 	int			nlacons;		/* size of lacons */
 };
@@ -275,9 +263,8 @@ struct vars
 #define PREFER	'P'				/* length preference */
 
 /* is an arc colored, and hence on a color chain? */
-#define COLORED(a)	((a)->type == PLAIN || (a)->type == AHEAD || \
-							(a)->type == BEHIND)
-
+#define COLORED(a) \
+	((a)->type == PLAIN || (a)->type == AHEAD || (a)->type == BEHIND)
 
 
 /* static function list */
@@ -322,7 +309,7 @@ pg_regcomp(regex_t *re,
 
 	/* initial setup (after which freev() is callable) */
 	v->re = re;
-	v->now = (chr *) string;
+	v->now = string;
 	v->stop = v->now + len;
 	v->savenow = v->savestop = NULL;
 	v->err = 0;
@@ -341,7 +328,6 @@ pg_regcomp(regex_t *re,
 	v->treefree = NULL;
 	v->cv = NULL;
 	v->cv2 = NULL;
-	v->mcces = NULL;
 	v->lacons = NULL;
 	v->nlacons = 0;
 	re->re_magic = REMAGIC;
@@ -363,19 +349,9 @@ pg_regcomp(regex_t *re,
 	ZAPCNFA(g->search);
 	v->nfa = newnfa(v, v->cm, (struct nfa *) NULL);
 	CNOERR();
-	v->cv = newcvec(100, 20, 10);
+	v->cv = newcvec(100, 20);
 	if (v->cv == NULL)
 		return freev(v, REG_ESPACE);
-	i = nmcces(v);
-	if (i > 0)
-	{
-		v->mcces = newcvec(nleaders(v), 0, i);
-		CNOERR();
-		v->mcces = allmcces(v, v->mcces);
-		leaders(v, v->mcces);
-		addmcce(v->mcces, (chr *) NULL, (chr *) NULL);	/* dummy */
-	}
-	CNOERR();
 
 	/* parsing */
 	lexstart(v);				/* also handles prefixes */
@@ -525,8 +501,6 @@ freev(struct vars * v,
 		freecvec(v->cv);
 	if (v->cv2 != NULL)
 		freecvec(v->cv2);
-	if (v->mcces != NULL)
-		freecvec(v->mcces);
 	if (v->lacons != NULL)
 		freelacons(v->lacons, v->nlacons);
 	ERR(err);					/* nop if err==0 */
@@ -583,15 +557,14 @@ makesearch(struct vars * v,
 		for (b = s->ins; b != NULL; b = b->inchain)
 			if (b->from != pre)
 				break;
-		if (b != NULL)
-		{						/* must be split */
-			if (s->tmp == NULL)
-			{					/* if not already in the list */
-				/* (fixes bugs 505048, 230589, */
-				/* 840258, 504785) */
-				s->tmp = slist;
-				slist = s;
-			}
+		if (b != NULL && s->tmp == NULL)
+		{
+			/*
+			 * Must be split if not already in the list (fixes bugs 505048,
+			 * 230589, 840258, 504785).
+			 */
+			s->tmp = slist;
+			slist = s;
 		}
 	}
 
@@ -1338,13 +1311,6 @@ cbracket(struct vars * v,
 {
 	struct state *left = newstate(v->nfa);
 	struct state *right = newstate(v->nfa);
-	struct state *s;
-	struct arc *a;				/* arc from lp */
-	struct arc *ba;				/* arc from left, from bracket() */
-	struct arc *pa;				/* MCCE-prototype arc */
-	color		co;
-	chr		   *p;
-	int			i;
 
 	NOERR();
 	bracket(v, left, right);
@@ -1354,65 +1320,13 @@ cbracket(struct vars * v,
 
 	assert(lp->nouts == 0);		/* all outarcs will be ours */
 
-	/* easy part of complementing */
+	/*
+	 * Easy part of complementing, and all there is to do since the MCCE code
+	 * was removed.
+	 */
 	colorcomplement(v->nfa, v->cm, PLAIN, left, lp, rp);
 	NOERR();
-	if (v->mcces == NULL)
-	{							/* no MCCEs -- we're done */
-		dropstate(v->nfa, left);
-		assert(right->nins == 0);
-		freestate(v->nfa, right);
-		return;
-	}
-
-	/* but complementing gets messy in the presence of MCCEs... */
-	NOTE(REG_ULOCALE);
-	for (p = v->mcces->chrs, i = v->mcces->nchrs; i > 0; p++, i--)
-	{
-		co = GETCOLOR(v->cm, *p);
-		a = findarc(lp, PLAIN, co);
-		ba = findarc(left, PLAIN, co);
-		if (ba == NULL)
-		{
-			assert(a != NULL);
-			freearc(v->nfa, a);
-		}
-		else
-			assert(a == NULL);
-		s = newstate(v->nfa);
-		NOERR();
-		newarc(v->nfa, PLAIN, co, lp, s);
-		NOERR();
-		pa = findarc(v->mccepbegin, PLAIN, co);
-		assert(pa != NULL);
-		if (ba == NULL)
-		{						/* easy case, need all of them */
-			cloneouts(v->nfa, pa->to, s, rp, PLAIN);
-			newarc(v->nfa, '$', 1, s, rp);
-			newarc(v->nfa, '$', 0, s, rp);
-			colorcomplement(v->nfa, v->cm, AHEAD, pa->to, s, rp);
-		}
-		else
-		{						/* must be selective */
-			if (findarc(ba->to, '$', 1) == NULL)
-			{
-				newarc(v->nfa, '$', 1, s, rp);
-				newarc(v->nfa, '$', 0, s, rp);
-				colorcomplement(v->nfa, v->cm, AHEAD, pa->to,
-								s, rp);
-			}
-			for (pa = pa->to->outs; pa != NULL; pa = pa->outchain)
-				if (findarc(ba->to, PLAIN, pa->co) == NULL)
-					newarc(v->nfa, PLAIN, pa->co, s, rp);
-			if (s->nouts == 0)	/* limit of selectivity: none */
-				dropstate(v->nfa, s);	/* frees arc too */
-		}
-		NOERR();
-	}
-
-	delsub(v->nfa, left, right);
-	assert(left->nouts == 0);
-	freestate(v->nfa, left);
+	dropstate(v->nfa, left);
 	assert(right->nins == 0);
 	freestate(v->nfa, right);
 }
@@ -1428,8 +1342,8 @@ brackpart(struct vars * v,
 	celt		startc;
 	celt		endc;
 	struct cvec *cv;
-	chr		   *startp;
-	chr		   *endp;
+	const chr  *startp;
+	const chr  *endp;
 	chr			c[1];
 
 	/* parse something, get rid of special cases, take shortcuts */
@@ -1442,8 +1356,8 @@ brackpart(struct vars * v,
 		case PLAIN:
 			c[0] = v->nextvalue;
 			NEXT();
-			/* shortcut for ordinary chr (not range, not MCCE leader) */
-			if (!SEE(RANGE) && !ISCELEADER(v, c[0]))
+			/* shortcut for ordinary chr (not range) */
+			if (!SEE(RANGE))
 			{
 				onechr(v, c[0], lp, rp);
 				return;
@@ -1533,10 +1447,10 @@ brackpart(struct vars * v,
  * Certain bits of trickery in lex.c know that this code does not try
  * to look past the final bracket of the [. etc.
  */
-static chr *					/* just after end of sequence */
+static const chr *				/* just after end of sequence */
 scanplain(struct vars * v)
 {
-	chr		   *endp;
+	const chr  *endp;
 
 	assert(SEE(COLLEL) || SEE(ECLASS) || SEE(CCLASS));
 	NEXT();
@@ -1552,52 +1466,6 @@ scanplain(struct vars * v)
 	NEXT();
 
 	return endp;
-}
-
-/*
- * leaders - process a cvec of collating elements to also include leaders
- * Also gives all characters involved their own colors, which is almost
- * certainly necessary, and sets up little disconnected subNFA.
- */
-static void
-leaders(struct vars * v,
-		struct cvec * cv)
-{
-	int			mcce;
-	chr		   *p;
-	chr			leader;
-	struct state *s;
-	struct arc *a;
-
-	v->mccepbegin = newstate(v->nfa);
-	v->mccepend = newstate(v->nfa);
-	NOERR();
-
-	for (mcce = 0; mcce < cv->nmcces; mcce++)
-	{
-		p = cv->mcces[mcce];
-		leader = *p;
-		if (!haschr(cv, leader))
-		{
-			addchr(cv, leader);
-			s = newstate(v->nfa);
-			newarc(v->nfa, PLAIN, subcolor(v->cm, leader),
-				   v->mccepbegin, s);
-			okcolors(v->nfa, v->cm);
-		}
-		else
-		{
-			a = findarc(v->mccepbegin, PLAIN,
-						GETCOLOR(v->cm, leader));
-			assert(a != NULL);
-			s = a->to;
-			assert(s != v->mccepend);
-		}
-		p++;
-		assert(*p != 0 && *(p + 1) == 0);		/* only 2-char MCCEs for now */
-		newarc(v->nfa, PLAIN, subcolor(v->cm, *p), s, v->mccepend);
-		okcolors(v->nfa, v->cm);
-	}
 }
 
 /*
@@ -1622,7 +1490,6 @@ onechr(struct vars * v,
 
 /*
  * dovec - fill in arcs for each element of a cvec
- * This one has to handle the messy cases, like MCCEs and MCCE leaders.
  */
 static void
 dovec(struct vars * v,
@@ -1633,47 +1500,14 @@ dovec(struct vars * v,
 	chr			ch,
 				from,
 				to;
-	celt		ce;
-	chr		   *p;
+	const chr  *p;
 	int			i;
-	color		co;
-	struct cvec *leads;
-	struct arc *a;
-	struct arc *pa;				/* arc in prototype */
-	struct state *s;
-	struct state *ps;			/* state in prototype */
 
-	/* need a place to store leaders, if any */
-	if (nmcces(v) > 0)
-	{
-		assert(v->mcces != NULL);
-		if (v->cv2 == NULL || v->cv2->nchrs < v->mcces->nchrs)
-		{
-			if (v->cv2 != NULL)
-				free(v->cv2);
-			v->cv2 = newcvec(v->mcces->nchrs, 0, v->mcces->nmcces);
-			NOERR();
-			leads = v->cv2;
-		}
-		else
-			leads = clearcvec(v->cv2);
-	}
-	else
-		leads = NULL;
-
-	/* first, get the ordinary characters out of the way */
+	/* ordinary characters */
 	for (p = cv->chrs, i = cv->nchrs; i > 0; p++, i--)
 	{
 		ch = *p;
-		if (!ISCELEADER(v, ch))
-			newarc(v->nfa, PLAIN, subcolor(v->cm, ch), lp, rp);
-		else
-		{
-			assert(singleton(v->cm, ch));
-			assert(leads != NULL);
-			if (!haschr(leads, ch))
-				addchr(leads, ch);
-		}
+		newarc(v->nfa, PLAIN, subcolor(v->cm, ch), lp, rp);
 	}
 
 	/* and the ranges */
@@ -1681,103 +1515,9 @@ dovec(struct vars * v,
 	{
 		from = *p;
 		to = *(p + 1);
-		while (from <= to && (ce = nextleader(v, from, to)) != NOCELT)
-		{
-			if (from < ce)
-				subrange(v, from, ce - 1, lp, rp);
-			assert(singleton(v->cm, ce));
-			assert(leads != NULL);
-			if (!haschr(leads, ce))
-				addchr(leads, ce);
-			from = ce + 1;
-		}
 		if (from <= to)
 			subrange(v, from, to, lp, rp);
 	}
-
-	if ((leads == NULL || leads->nchrs == 0) && cv->nmcces == 0)
-		return;
-
-	/* deal with the MCCE leaders */
-	NOTE(REG_ULOCALE);
-	for (p = leads->chrs, i = leads->nchrs; i > 0; p++, i--)
-	{
-		co = GETCOLOR(v->cm, *p);
-		a = findarc(lp, PLAIN, co);
-		if (a != NULL)
-			s = a->to;
-		else
-		{
-			s = newstate(v->nfa);
-			NOERR();
-			newarc(v->nfa, PLAIN, co, lp, s);
-			NOERR();
-		}
-		pa = findarc(v->mccepbegin, PLAIN, co);
-		assert(pa != NULL);
-		ps = pa->to;
-		newarc(v->nfa, '$', 1, s, rp);
-		newarc(v->nfa, '$', 0, s, rp);
-		colorcomplement(v->nfa, v->cm, AHEAD, ps, s, rp);
-		NOERR();
-	}
-
-	/* and the MCCEs */
-	for (i = 0; i < cv->nmcces; i++)
-	{
-		p = cv->mcces[i];
-		assert(singleton(v->cm, *p));
-		if (!singleton(v->cm, *p))
-		{
-			ERR(REG_ASSERT);
-			return;
-		}
-		ch = *p++;
-		co = GETCOLOR(v->cm, ch);
-		a = findarc(lp, PLAIN, co);
-		if (a != NULL)
-			s = a->to;
-		else
-		{
-			s = newstate(v->nfa);
-			NOERR();
-			newarc(v->nfa, PLAIN, co, lp, s);
-			NOERR();
-		}
-		assert(*p != 0);		/* at least two chars */
-		assert(singleton(v->cm, *p));
-		ch = *p++;
-		co = GETCOLOR(v->cm, ch);
-		assert(*p == 0);		/* and only two, for now */
-		newarc(v->nfa, PLAIN, co, s, rp);
-		NOERR();
-	}
-}
-
-/*
- * nextleader - find next MCCE leader within range
- */
-static celt						/* NOCELT means none */
-nextleader(struct vars * v,
-		   chr from,
-		   chr to)
-{
-	int			i;
-	chr		   *p;
-	chr			ch;
-	celt		it = NOCELT;
-
-	if (v->mcces == NULL)
-		return it;
-
-	for (i = v->mcces->nchrs, p = v->mcces->chrs; i > 0; i--, p++)
-	{
-		ch = *p;
-		if (from <= ch && ch <= to)
-			if (it == NOCELT || ch < it)
-				it = ch;
-	}
-	return it;
 }
 
 /*
@@ -1825,9 +1565,8 @@ subre(struct vars * v,
 	  struct state * begin,
 	  struct state * end)
 {
-	struct subre *ret;
+	struct subre *ret = v->treefree;
 
-	ret = v->treefree;
 	if (ret != NULL)
 		v->treefree = ret->left;
 	else
@@ -1906,14 +1645,13 @@ static void
 optst(struct vars * v,
 	  struct subre * t)
 {
-	if (t == NULL)
-		return;
-
-	/* recurse through children */
-	if (t->left != NULL)
-		optst(v, t->left);
-	if (t->right != NULL)
-		optst(v, t->right);
+	/*
+	 * DGP (2007-11-13): I assume it was the programmer's intent to eventually
+	 * come back and add code to optimize subRE trees, but the routine coded
+	 * just spends effort traversing the tree and doing nothing. We can do
+	 * nothing with less effort.
+	 */
+	return;
 }
 
 /*
@@ -2207,8 +1945,8 @@ stdump(struct subre * t,
 	{
 		fprintf(f, "\n");
 		dumpcnfa(&t->cnfa, f);
-		fprintf(f, "\n");
 	}
+	fprintf(f, "\n");
 	if (t->left != NULL)
 		stdump(t->left, f, nfapresent);
 	if (t->right != NULL)
@@ -2218,7 +1956,7 @@ stdump(struct subre * t,
 /*
  * stid - identify a subtree node for dumping
  */
-static char *					/* points to buf or constant string */
+static const char *				/* points to buf or constant string */
 stid(struct subre * t,
 	 char *buf,
 	 size_t bufsize)

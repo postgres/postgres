@@ -28,8 +28,13 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_cvec.c,v 1.5 2005/10/15 02:49:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regc_cvec.c,v 1.6 2008/02/14 17:33:37 tgl Exp $
  *
+ */
+
+/*
+ * Notes:
+ * Only (selected) functions in _this_ file should treat chr* as non-constant.
  */
 
 /*
@@ -37,24 +42,17 @@
  */
 static struct cvec *
 newcvec(int nchrs,				/* to hold this many chrs... */
-		int nranges,			/* ... and this many ranges... */
-		int nmcces)				/* ... and this many MCCEs */
+		int nranges)			/* ... and this many ranges */
 {
-	size_t		n;
-	size_t		nc;
-	struct cvec *cv;
+	size_t		nc = (size_t) nchrs + (size_t) nranges * 2;
+	size_t		n = sizeof(struct cvec) + nc * sizeof(chr);
+	struct cvec *cv = (struct cvec *) MALLOC(n);
 
-	nc = (size_t) nchrs + (size_t) nmcces *(MAXMCCE + 1) + (size_t) nranges *2;
-
-	n = sizeof(struct cvec) + (size_t) (nmcces - 1) * sizeof(chr *)
-		+ nc * sizeof(chr);
-	cv = (struct cvec *) MALLOC(n);
 	if (cv == NULL)
 		return NULL;
 	cv->chrspace = nchrs;
-	cv->chrs = (chr *) &cv->mcces[nmcces];		/* chrs just after MCCE ptrs */
-	cv->mccespace = nmcces;
-	cv->ranges = cv->chrs + nchrs + nmcces * (MAXMCCE + 1);
+	cv->chrs = (chr *) (((char *) cv) + sizeof(struct cvec));
+	cv->ranges = cv->chrs + nchrs;
 	cv->rangespace = nranges;
 	return clearcvec(cv);
 }
@@ -66,17 +64,9 @@ newcvec(int nchrs,				/* to hold this many chrs... */
 static struct cvec *
 clearcvec(struct cvec * cv)
 {
-	int			i;
-
 	assert(cv != NULL);
 	cv->nchrs = 0;
-	assert(cv->chrs == (chr *) &cv->mcces[cv->mccespace]);
-	cv->nmcces = 0;
-	cv->nmccechrs = 0;
 	cv->nranges = 0;
-	for (i = 0; i < cv->mccespace; i++)
-		cv->mcces[i] = NULL;
-
 	return cv;
 }
 
@@ -87,7 +77,6 @@ static void
 addchr(struct cvec * cv,		/* character vector */
 	   chr c)					/* character to add */
 {
-	assert(cv->nchrs < cv->chrspace - cv->nmccechrs);
 	cv->chrs[cv->nchrs++] = (chr) c;
 }
 
@@ -106,72 +95,20 @@ addrange(struct cvec * cv,		/* character vector */
 }
 
 /*
- * addmcce - add an MCCE to a cvec
- */
-static void
-addmcce(struct cvec * cv,		/* character vector */
-		chr *startp,			/* beginning of text */
-		chr *endp)				/* just past end of text */
-{
-	int			len;
-	int			i;
-	chr		   *s;
-	chr		   *d;
-
-	if (startp == NULL && endp == NULL)
-		return;
-	len = endp - startp;
-	assert(len > 0);
-	assert(cv->nchrs + len < cv->chrspace - cv->nmccechrs);
-	assert(cv->nmcces < cv->mccespace);
-	d = &cv->chrs[cv->chrspace - cv->nmccechrs - len - 1];
-	cv->mcces[cv->nmcces++] = d;
-	for (s = startp, i = len; i > 0; s++, i--)
-		*d++ = *s;
-	*d++ = 0;					/* endmarker */
-	assert(d == &cv->chrs[cv->chrspace - cv->nmccechrs]);
-	cv->nmccechrs += len + 1;
-}
-
-/*
- * haschr - does a cvec contain this chr?
- */
-static int						/* predicate */
-haschr(struct cvec * cv,		/* character vector */
-	   chr c)					/* character to test for */
-{
-	int			i;
-	chr		   *p;
-
-	for (p = cv->chrs, i = cv->nchrs; i > 0; p++, i--)
-	{
-		if (*p == c)
-			return 1;
-	}
-	for (p = cv->ranges, i = cv->nranges; i > 0; p += 2, i--)
-	{
-		if ((*p <= c) && (c <= *(p + 1)))
-			return 1;
-	}
-	return 0;
-}
-
-/*
  * getcvec - get a cvec, remembering it as v->cv
  */
 static struct cvec *
 getcvec(struct vars * v,		/* context */
 		int nchrs,				/* to hold this many chrs... */
-		int nranges,			/* ... and this many ranges... */
-		int nmcces)				/* ... and this many MCCEs */
+		int nranges)			/* ... and this many ranges */
 {
 	if (v->cv != NULL && nchrs <= v->cv->chrspace &&
-		nranges <= v->cv->rangespace && nmcces <= v->cv->mccespace)
+		nranges <= v->cv->rangespace)
 		return clearcvec(v->cv);
 
 	if (v->cv != NULL)
 		freecvec(v->cv);
-	v->cv = newcvec(nchrs, nranges, nmcces);
+	v->cv = newcvec(nchrs, nranges);
 	if (v->cv == NULL)
 		ERR(REG_ESPACE);
 

@@ -47,15 +47,15 @@
  * permission to use and distribute the software in accordance with the
  * terms specified in this license.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_locale.c,v 1.8 2005/11/22 18:17:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regc_locale.c,v 1.9 2008/02/14 17:33:37 tgl Exp $
  */
 
 /* ASCII character-name table */
 
-static struct cname
+static const struct cname
 {
-	char	   *name;
-	char		code;
+	const char *name;
+	const char	code;
 }	cnames[] =
 
 {
@@ -424,45 +424,14 @@ pg_wc_tolower(pg_wchar c)
 
 
 /*
- * nmcces - how many distinct MCCEs are there?
- */
-static int
-nmcces(struct vars * v)
-{
-	/*
-	 * No multi-character collating elements defined at the moment.
-	 */
-	return 0;
-}
-
-/*
- * nleaders - how many chrs can be first chrs of MCCEs?
- */
-static int
-nleaders(struct vars * v)
-{
-	return 0;
-}
-
-/*
- * allmcces - return a cvec with all the MCCEs of the locale
- */
-static struct cvec *
-allmcces(struct vars * v,		/* context */
-		 struct cvec * cv)		/* this is supposed to have enough room */
-{
-	return clearcvec(cv);
-}
-
-/*
  * element - map collating-element name to celt
  */
 static celt
 element(struct vars * v,		/* context */
-		chr *startp,			/* points to start of name */
-		chr *endp)				/* points just past end of name */
+		const chr *startp,		/* points to start of name */
+		const chr *endp)		/* points just past end of name */
 {
-	struct cname *cn;
+	const struct cname *cn;
 	size_t		len;
 
 	/* generic:  one-chr names stand for themselves */
@@ -513,7 +482,7 @@ range(struct vars * v,			/* context */
 
 	if (!cases)
 	{							/* easy version */
-		cv = getcvec(v, 0, 1, 0);
+		cv = getcvec(v, 0, 1);
 		NOERRN();
 		addrange(cv, a, b);
 		return cv;
@@ -527,7 +496,7 @@ range(struct vars * v,			/* context */
 
 	nchrs = (b - a + 1) * 2 + 4;
 
-	cv = getcvec(v, nchrs, 0, 0);
+	cv = getcvec(v, nchrs, 0);
 	NOERRN();
 
 	for (c = a; c <= b; c++)
@@ -550,7 +519,6 @@ range(struct vars * v,			/* context */
 static int						/* predicate */
 before(celt x, celt y)
 {
-	/* trivial because no MCCEs */
 	if (x < y)
 		return 1;
 	return 0;
@@ -571,7 +539,7 @@ eclass(struct vars * v,			/* context */
 	/* crude fake equivalence class for testing */
 	if ((v->cflags & REG_FAKE) && c == 'x')
 	{
-		cv = getcvec(v, 4, 0, 0);
+		cv = getcvec(v, 4, 0);
 		addchr(cv, (chr) 'x');
 		addchr(cv, (chr) 'y');
 		if (cases)
@@ -585,7 +553,7 @@ eclass(struct vars * v,			/* context */
 	/* otherwise, none */
 	if (cases)
 		return allcases(v, c);
-	cv = getcvec(v, 1, 0, 0);
+	cv = getcvec(v, 1, 0);
 	assert(cv != NULL);
 	addchr(cv, (chr) c);
 	return cv;
@@ -598,13 +566,13 @@ eclass(struct vars * v,			/* context */
  */
 static struct cvec *
 cclass(struct vars * v,			/* context */
-	   chr *startp,				/* where the name starts */
-	   chr *endp,				/* just past the end of the name */
+	   const chr *startp,		/* where the name starts */
+	   const chr *endp,			/* just past the end of the name */
 	   int cases)				/* case-independent? */
 {
 	size_t		len;
 	struct cvec *cv = NULL;
-	char	  **namePtr;
+	const char **namePtr;
 	int			i,
 				index;
 
@@ -612,7 +580,7 @@ cclass(struct vars * v,			/* context */
 	 * The following arrays define the valid character class names.
 	 */
 
-	static char *classNames[] = {
+	static const char *classNames[] = {
 		"alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph",
 		"lower", "print", "punct", "space", "upper", "xdigit", NULL
 	};
@@ -662,7 +630,7 @@ cclass(struct vars * v,			/* context */
 	switch ((enum classes) index)
 	{
 		case CC_PRINT:
-			cv = getcvec(v, UCHAR_MAX, 0, 0);
+			cv = getcvec(v, UCHAR_MAX, 0);
 			if (cv)
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
@@ -673,7 +641,7 @@ cclass(struct vars * v,			/* context */
 			}
 			break;
 		case CC_ALNUM:
-			cv = getcvec(v, UCHAR_MAX, 0, 0);
+			cv = getcvec(v, UCHAR_MAX, 0);
 			if (cv)
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
@@ -684,7 +652,7 @@ cclass(struct vars * v,			/* context */
 			}
 			break;
 		case CC_ALPHA:
-			cv = getcvec(v, UCHAR_MAX, 0, 0);
+			cv = getcvec(v, UCHAR_MAX, 0);
 			if (cv)
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
@@ -695,27 +663,27 @@ cclass(struct vars * v,			/* context */
 			}
 			break;
 		case CC_ASCII:
-			cv = getcvec(v, 0, 1, 0);
+			cv = getcvec(v, 0, 1);
 			if (cv)
 				addrange(cv, 0, 0x7f);
 			break;
 		case CC_BLANK:
-			cv = getcvec(v, 2, 0, 0);
+			cv = getcvec(v, 2, 0);
 			addchr(cv, '\t');
 			addchr(cv, ' ');
 			break;
 		case CC_CNTRL:
-			cv = getcvec(v, 0, 2, 0);
+			cv = getcvec(v, 0, 2);
 			addrange(cv, 0x0, 0x1f);
 			addrange(cv, 0x7f, 0x9f);
 			break;
 		case CC_DIGIT:
-			cv = getcvec(v, 0, 1, 0);
+			cv = getcvec(v, 0, 1);
 			if (cv)
 				addrange(cv, (chr) '0', (chr) '9');
 			break;
 		case CC_PUNCT:
-			cv = getcvec(v, UCHAR_MAX, 0, 0);
+			cv = getcvec(v, UCHAR_MAX, 0);
 			if (cv)
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
@@ -726,7 +694,7 @@ cclass(struct vars * v,			/* context */
 			}
 			break;
 		case CC_XDIGIT:
-			cv = getcvec(v, 0, 3, 0);
+			cv = getcvec(v, 0, 3);
 			if (cv)
 			{
 				addrange(cv, '0', '9');
@@ -735,7 +703,7 @@ cclass(struct vars * v,			/* context */
 			}
 			break;
 		case CC_SPACE:
-			cv = getcvec(v, UCHAR_MAX, 0, 0);
+			cv = getcvec(v, UCHAR_MAX, 0);
 			if (cv)
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
@@ -746,7 +714,7 @@ cclass(struct vars * v,			/* context */
 			}
 			break;
 		case CC_LOWER:
-			cv = getcvec(v, UCHAR_MAX, 0, 0);
+			cv = getcvec(v, UCHAR_MAX, 0);
 			if (cv)
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
@@ -757,7 +725,7 @@ cclass(struct vars * v,			/* context */
 			}
 			break;
 		case CC_UPPER:
-			cv = getcvec(v, UCHAR_MAX, 0, 0);
+			cv = getcvec(v, UCHAR_MAX, 0);
 			if (cv)
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
@@ -768,7 +736,7 @@ cclass(struct vars * v,			/* context */
 			}
 			break;
 		case CC_GRAPH:
-			cv = getcvec(v, UCHAR_MAX, 0, 0);
+			cv = getcvec(v, UCHAR_MAX, 0);
 			if (cv)
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
@@ -802,7 +770,7 @@ allcases(struct vars * v,		/* context */
 	lc = pg_wc_tolower((chr) c);
 	uc = pg_wc_toupper((chr) c);
 
-	cv = getcvec(v, 2, 0, 0);
+	cv = getcvec(v, 2, 0);
 	addchr(cv, lc);
 	if (lc != uc)
 		addchr(cv, uc);
