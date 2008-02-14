@@ -1,6 +1,6 @@
 /*
  * This file contains stuff needed to be as compatible to Informix as possible.
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpg_informix.h,v 1.19 2008/02/14 12:22:36 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpg_informix.h,v 1.20 2008/02/14 12:27:26 meskes Exp $
  */
 #ifndef _ECPG_INFORMIX_H
 #define _ECPG_INFORMIX_H
@@ -81,11 +81,6 @@ extern int	dttoasc(timestamp *, char *);
 extern int	dttofmtasc(timestamp *, char *, int, char *);
 extern int	intoasc(interval *, char *);
 extern int	dtcvfmtasc(char *, char *, timestamp *);
-
-/* we also define Informix datatypes here */
-typedef timestamp dtime_t;
-typedef interval intrvl_t;
-typedef decimal dec_t;
 
 #ifdef __cplusplus
 }
