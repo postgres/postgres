@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.339.2.2 2007/11/06 08:32:34 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.339.2.3 2008/02/14 14:57:29 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -815,7 +815,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 		}
 		| ECPGExecute
 		{
-			output_statement($1, 0, connection);
+			output_statement($1, 1, connection);
 		}
 		| ECPGFree
 		{
