@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.159.2.1 2008/02/15 12:11:02 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.159.2.2 2008/02/15 16:28:47 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -743,11 +743,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <C>{identifier} 	{
 						const ScanKeyword		*keyword;
 							
-<<<<<<< pgc.l
-						if (!INFORMIX_MODE && !isdefine())
-=======
 						if (!isdefine())
->>>>>>> 1.162
 						{
 							keyword = ScanCKeywordLookup(yytext);
 							if (keyword != NULL)
