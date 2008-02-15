@@ -2313,3 +2313,7 @@ Thu, 14 Feb 2008 13:11:34 +0100
 	- EXECUTE can return NOT FOUND so it should be checked here too.
 	- Changed regression test accordingly.
 
+Fri, 15 Feb 2008 12:01:13 +0100
+
+	- Changed the way symbols are defined in C in INFORMIX mode.
+
