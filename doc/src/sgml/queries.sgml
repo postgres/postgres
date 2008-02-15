@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.44 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.45 2008/02/15 22:17:06 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -491,7 +491,7 @@ FROM <replaceable>table_reference</replaceable> AS <replaceable>alias</replaceab
 <synopsis>
 FROM <replaceable>table_reference</replaceable> <replaceable>alias</replaceable>
 </synopsis>
-     The <literal>AS</literal> key word is noise.
+     The <literal>AS</literal> key word is optional noise.
      <replaceable>alias</replaceable> can be any identifier.
     </para>
 
@@ -1040,11 +1040,30 @@ SELECT a AS value, b + c AS sum FROM ...
    </para>
 
    <para>
-    If no output column name is specified using <literal>AS</>, the system assigns a
-    default name.  For simple column references, this is the name of the
-    referenced column.  For function 
+    If no output column name is specified using <literal>AS</>,
+    the system assigns a default column name.  For simple column references,
+    this is the name of the referenced column.  For function 
     calls, this is the name of the function.  For complex expressions,
     the system will generate a generic name.
+   </para>
+
+   <para>
+    The <literal>AS</> keyword is optional, but only if the new column
+    name does not match any
+    <productname>PostgreSQL</productname> keyword (see <xref
+    linkend="sql-keywords-appendix">).  To avoid an accidental match to
+    a keyword, you can double-quote the column name.  For example,
+    <literal>VALUE</> is a keyword, so this does not work:
+<programlisting>
+SELECT a value, b + c AS sum FROM ...
+</programlisting>
+    but this does:
+<programlisting>
+SELECT a "value", b + c AS sum FROM ...
+</programlisting>
+    For protection against possible
+    future keyword additions, it is recommended that you always either
+    write <literal>AS</literal> or double-quote the output column name.
    </para>
 
    <note>

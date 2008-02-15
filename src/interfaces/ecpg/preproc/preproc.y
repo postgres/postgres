@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.360 2008/02/14 14:54:48 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.361 2008/02/15 22:17:06 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -521,8 +521,9 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %nonassoc	OVERLAPS
 %nonassoc	BETWEEN
 %nonassoc	IN_P
-%left		POSTFIXOP					/* dummy for postfix Op rules */
-%left		Op OPERATOR				/* multi-character ops and user-defined operators */
+%left		POSTFIXOP		/* dummy for postfix Op rules */
+%nonassoc	IDENT			/* to support target_el without AS */
+%left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
 %nonassoc	IS NULL_P TRUE_P FALSE_P UNKNOWN
@@ -4695,9 +4696,10 @@ target_list:  target_list ',' target_el
 			{ $$ = $1;	}
 		;
 
-/* AS is not optional because shift/red conflict with unary ops */
 target_el:	a_expr AS ColLabel
 			{ $$ = cat_str(3, $1, make_str("as"), $3); }
+		| a_expr IDENT
+			{ $$ = cat_str(3, $1, make_str("as"), $2); }
 		| a_expr
 			{ $$ = $1; }
 		| '*'

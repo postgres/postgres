@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.102 2007/11/28 15:42:31 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.103 2008/02/15 22:17:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replaceable> [, ...] ) ] ]
-    * | <replaceable class="parameter">expression</replaceable> [ AS <replaceable class="parameter">output_name</replaceable> ] [, ...]
+    * | <replaceable class="parameter">expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...]
     [ FROM <replaceable class="parameter">from_item</replaceable> [, ...] ]
     [ WHERE <replaceable class="parameter">condition</replaceable> ]
     [ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...] ]
@@ -477,23 +477,45 @@ HAVING <replaceable class="parameter">condition</replaceable>
     <literal>SELECT</> and <literal>FROM</>) specifies expressions
     that form the output rows of the <command>SELECT</command>
     statement.  The expressions can (and usually do) refer to columns
-    computed in the <literal>FROM</> clause.  Using the clause
-    <literal>AS <replaceable
-    class="parameter">output_name</replaceable></literal>, another
-    name can be specified for an output column.  This name is
-    primarily used to label the column for display.  It can also be
-    used to refer to the column's value in <literal>ORDER BY</> and
-    <literal>GROUP BY</> clauses, but not in the <literal>WHERE</> or
-    <literal>HAVING</> clauses; there you must write out the
-    expression instead.
+    computed in the <literal>FROM</> clause.
+   </para>
+
+   <para>
+    Just as in a table, every output column of a <command>SELECT</command>
+    has a name.  In a simple <command>SELECT</command> this name is just
+    used to label the column for display, but when the <command>SELECT</>
+    is a sub-query of a larger query, the name is seen by the larger query
+    as the column name of the virtual table produced by the sub-query.
+    To specify the name to use for an output column, write
+    <literal>AS</> <replaceable class="parameter">output_name</replaceable>
+    after the column's expression.  (You can omit <literal>AS</literal>,
+    but only if the desired output name does not match any
+    <productname>PostgreSQL</productname> keyword (see <xref
+    linkend="sql-keywords-appendix">).  For protection against possible
+    future keyword additions, it is recommended that you always either
+    write <literal>AS</literal> or double-quote the output name.)
+    If you do not specify a column name, a name is chosen automatically
+    by <productname>PostgreSQL</productname>.  If the column's expression
+    is a simple column reference then the chosen name is the same as that
+    column's name; in more complex cases a generated name looking like
+    <literal>?column<replaceable>N</>?</literal> is usually chosen.
+   </para>
+
+   <para>
+    An output column's name can be used to refer to the column's value in
+    <literal>ORDER BY</> and <literal>GROUP BY</> clauses, but not in the
+    <literal>WHERE</> or <literal>HAVING</> clauses; there you must write
+    out the expression instead.
    </para>
 
    <para>
     Instead of an expression, <literal>*</literal> can be written in
     the output list as a shorthand for all the columns of the selected
-    rows.  Also, one can write <literal><replaceable
+    rows.  Also, you can write <literal><replaceable
     class="parameter">table_name</replaceable>.*</literal> as a
-    shorthand for the columns coming from just that table.
+    shorthand for the columns coming from just that table.  In these
+    cases it is not possible to specify new names with <literal>AS</>;
+    the output column names will be the same as the table columns' names.
    </para>
   </refsect2>
   
@@ -661,17 +683,17 @@ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | 
 
    <para>
     The ordinal number refers to the ordinal (left-to-right) position
-    of the result column. This feature makes it possible to define an
+    of the output column. This feature makes it possible to define an
     ordering on the basis of a column that does not have a unique
     name.  This is never absolutely necessary because it is always
-    possible to assign a name to a result column using the
+    possible to assign a name to an output column using the
     <literal>AS</> clause.
    </para>
     
    <para>
     It is also possible to use arbitrary expressions in the
     <literal>ORDER BY</literal> clause, including columns that do not
-    appear in the <command>SELECT</command> result list.  Thus the
+    appear in the <command>SELECT</command> output list.  Thus the
     following statement is valid:
 <programlisting>
 SELECT name FROM distributors ORDER BY code;
@@ -684,8 +706,8 @@ SELECT name FROM distributors ORDER BY code;
 
    <para>
     If an <literal>ORDER BY</> expression is a simple name that
-    matches both a result column name and an input column name,
-    <literal>ORDER BY</> will interpret it as the result column name.
+    matches both an output column name and an input column name,
+    <literal>ORDER BY</> will interpret it as the output column name.
     This is the opposite of the choice that <literal>GROUP BY</> will
     make in the same situation.  This inconsistency is made to be
     compatible with the SQL standard.
@@ -1135,16 +1157,25 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
   </refsect2>
 
   <refsect2>
-   <title>The <literal>AS</literal> Key Word</title>
+   <title>Omitting the <literal>AS</literal> Key Word</title>
 
    <para>
-    In the SQL standard, the optional key word <literal>AS</> is just
-    noise and can be omitted without affecting the meaning.  The
-    <productname>PostgreSQL</productname> parser requires this key
-    word when renaming output columns because the type extensibility
-    features lead to parsing ambiguities without it.
-    <literal>AS</literal> is optional in <literal>FROM</literal>
-    items, however.
+    In the SQL standard, the optional key word <literal>AS</> can be
+    omitted before an output column name whenever the new column name
+    is a valid column name (that is, not the same as any reserved
+    keyword).  <productname>PostgreSQL</productname> is slightly more
+    restrictive: <literal>AS</> is required if the new column name
+    matches any keyword at all, reserved or not.  Recommended practice is
+    to use <literal>AS</> or double-quote output column names, to prevent
+    any possible conflict against future keyword additions.
+   </para>
+
+   <para>
+    In <literal>FROM</literal> items, both the standard and
+    <productname>PostgreSQL</productname> allow <literal>AS</> to
+    be omitted before an alias that is an unreserved keyword.  But
+    this is impractical for output column names, because of syntactic
+    ambiguities.
    </para>
   </refsect2>
 
@@ -1153,7 +1184,7 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
 
    <para>
     In the SQL-92 standard, an <literal>ORDER BY</literal> clause can
-    only use result column names or numbers, while a <literal>GROUP
+    only use output column names or numbers, while a <literal>GROUP
     BY</literal> clause can only use expressions based on input column
     names.  <productname>PostgreSQL</productname> extends each of
     these clauses to allow the other choice as well (but it uses the
@@ -1161,7 +1192,7 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     <productname>PostgreSQL</productname> also allows both clauses to
     specify arbitrary expressions.  Note that names appearing in an
     expression will always be taken as input-column names, not as
-    result-column names.
+    output-column names.
    </para>
 
    <para>

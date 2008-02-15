@@ -2337,9 +2337,9 @@ begin
     end loop;
     return 5;
 end;$$ language plpgsql;
-ERROR:  syntax error at or near "fought"
+ERROR:  syntax error at or near "the"
 LINE 1:  select I fought the law, the law won
-                  ^
+                         ^
 QUERY:   select I fought the law, the law won
 CONTEXT:  SQL statement in PL/PgSQL function "bad_sql2" near line 3
 -- a RETURN expression is mandatory, except for void-returning

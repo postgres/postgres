@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/insert.sgml,v 1.35 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/insert.sgml,v 1.36 2008/02/15 22:17:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
 <synopsis>
 INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ]
     { DEFAULT VALUES | VALUES ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) [, ...] | <replaceable class="PARAMETER">query</replaceable> }
-    [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ AS <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
+    [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 </synopsis>
  </refsynopsisdiv>
 

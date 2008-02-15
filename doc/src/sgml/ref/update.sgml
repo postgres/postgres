@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.45 2007/11/28 15:42:31 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.46 2008/02/15 22:17:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -25,7 +25,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
           ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) } [, ...]
     [ FROM <replaceable class="PARAMETER">fromlist</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
-    [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ AS <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
+    [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 </synopsis>
  </refsynopsisdiv>
 
