@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.168 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.169 2008/02/15 17:19:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1091,9 +1091,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 	qual = coerce_to_specific_type(pstate, qual, INT8OID, constructName);
 
 	/*
-	 * LIMIT can't refer to any vars or aggregates of the current query; we
-	 * don't allow subselects either (though that case would at least be
-	 * sensible)
+	 * LIMIT can't refer to any vars or aggregates of the current query
 	 */
 	if (contain_vars_of_level(qual, 0))
 	{
@@ -1109,14 +1107,6 @@ transformLimitClause(ParseState *pstate, Node *clause,
 				(errcode(ERRCODE_GROUPING_ERROR),
 		/* translator: %s is name of a SQL construct, eg LIMIT */
 				 errmsg("argument of %s must not contain aggregates",
-						constructName)));
-	}
-	if (contain_subplans(qual))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		/* translator: %s is name of a SQL construct, eg LIMIT */
-				 errmsg("argument of %s must not contain subqueries",
 						constructName)));
 	}
 
