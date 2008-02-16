@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.102 2008/01/29 02:03:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.103 2008/02/16 21:03:30 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -143,7 +143,7 @@
 #endif
 
 #ifdef NOT_USED
-static int	verify_peer(PGconn *);
+static int	verify_peer_name_matches_certificate(PGconn *);
 #endif
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static int	client_cert_cb(SSL *, X509 **, EVP_PKEY **);
@@ -498,18 +498,18 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
  *	Verify that common name resolves to peer.
  */
 static int
-verify_peer(PGconn *conn)
+verify_peer_name_matches_certificate(PGconn *conn)
 {
-	struct hostent *h = NULL;
-	struct sockaddr addr;
-	struct sockaddr_in *sin;
+	struct hostent *cn_hostentry = NULL;
+	struct sockaddr server_addr;
+	struct sockaddr_in *sin (struct sockaddr_in *) &server_addr;
 	ACCEPT_TYPE_ARG3 len;
 	char	  **s;
 	unsigned long l;
 
-	/* get the address on the other side of the socket */
-	len = sizeof(addr);
-	if (getpeername(conn->sock, &addr, &len) == -1)
+	/* Get the address on the other side of the socket. */
+	len = sizeof(server_addr);
+	if (getpeername(conn->sock, &server_addr, &len) == -1)
 	{
 		char		sebuf[256];
 
@@ -519,10 +519,14 @@ verify_peer(PGconn *conn)
 		return -1;
 	}
 
-	/* weird, but legal case */
-	if (addr.sa_family == AF_UNIX)
-		return 0;
+	if (server_addr.sa_family != AF_INET)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("unsupported protocol\n"));
+		return -1;
+	}
 
+	/* Get the IP addresses of the certificate's common name (CN) */
 	{
 		struct hostent hpstr;
 		char		buf[BUFSIZ];
@@ -534,11 +538,11 @@ verify_peer(PGconn *conn)
 		 * convert the pqGethostbyname() function call to use getaddrinfo().
 		 */
 		pqGethostbyname(conn->peer_cn, &hpstr, buf, sizeof(buf),
-						&h, &herrno);
+						&cn_hostentry, &herrno);
 	}
 
-	/* what do we know about the peer's common name? */
-	if (h == NULL)
+	/* Did we get an IP address? */
+	if (cn_hostentry == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 		  libpq_gettext("could not get information about host \"%s\": %s\n"),
@@ -546,53 +550,17 @@ verify_peer(PGconn *conn)
 		return -1;
 	}
 
-	/* does the address match? */
-	switch (addr.sa_family)
-	{
-		case AF_INET:
-			sin = (struct sockaddr_in *) & addr;
-			for (s = h->h_addr_list; *s != NULL; s++)
-			{
-				if (!memcmp(&sin->sin_addr.s_addr, *s, h->h_length))
-					return 0;
-			}
-			break;
-
-		default:
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("unsupported protocol\n"));
-			return -1;
-	}
-
-	/*
-	 * the prior test should be definitive, but in practice it sometimes
-	 * fails.  So we also check the aliases.
-	 */
-	for (s = h->h_aliases; *s != NULL; s++)
-	{
-		if (pg_strcasecmp(conn->peer_cn, *s) == 0)
+	/* Does one of the CN's IP addresses match the server's IP address? */
+	for (s = cn_hostentry->h_addr_list; *s != NULL; s++)
+		if (!memcmp(&sin->sin_addr.s_addr, *s, cn_hostentry->h_length))
 			return 0;
-	}
 
-	/* generate protocol-aware error message */
-	switch (addr.sa_family)
-	{
-		case AF_INET:
-			sin = (struct sockaddr_in *) & addr;
-			l = ntohl(sin->sin_addr.s_addr);
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext(
-											"server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"),
-						 conn->peer_cn, (l >> 24) % 0x100, (l >> 16) % 0x100,
-							  (l >> 8) % 0x100, l % 0x100);
-			break;
-		default:
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext(
-			 "server common name \"%s\" does not resolve to peer address\n"),
-							  conn->peer_cn);
-	}
-
+	l = ntohl(sin->sin_addr.s_addr);
+	printfPQExpBuffer(&conn->errorMessage,
+					  libpq_gettext(
+					    "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"),
+					  conn->peer_cn, (l >> 24) % 0x100, (l >> 16) % 0x100,
+					  (l >> 8) % 0x100, l % 0x100);
 	return -1;
 }
 #endif   /* NOT_USED */
@@ -1049,25 +1017,10 @@ open_client_SSL(PGconn *conn)
 		}
 	}
 
-	/* check the certificate chain of the server */
-
-#ifdef NOT_USED
-	/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
-
 	/*
-	 * this eliminates simple man-in-the-middle attacks and simple
-	 * impersonations
+	 * We already checked the server certificate in initialize_SSL()
+	 * using SSL_CTX_set_verify() if root.crt exists.
 	 */
-	r = SSL_get_verify_result(conn->ssl);
-	if (r != X509_V_OK)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("certificate could not be validated: %s\n"),
-						  X509_verify_cert_error_string(r));
-		close_SSL(conn);
-		return PGRES_POLLING_FAILED;
-	}
-#endif
 
 	/* pull out server distinguished and common names */
 	conn->peer = SSL_get_peer_certificate(conn->ssl);
@@ -1091,17 +1044,8 @@ open_client_SSL(PGconn *conn)
 							  NID_commonName, conn->peer_cn, SM_USER);
 	conn->peer_cn[SM_USER] = '\0';
 
-	/* verify that the common name resolves to peer */
-
 #ifdef NOT_USED
-	/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
-
-	/*
-	 * this is necessary to eliminate man-in-the-middle attacks and
-	 * impersonations where the attacker somehow learned the server's private
-	 * key
-	 */
-	if (verify_peer(conn) == -1)
+	if (verify_peer_name_matches_certificate(conn) == -1)
 	{
 		close_SSL(conn);
 		return PGRES_POLLING_FAILED;
