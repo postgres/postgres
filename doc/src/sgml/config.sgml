@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.164 2008/02/02 23:29:12 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.165 2008/02/16 21:11:32 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1638,6 +1638,9 @@ SET ENABLE_SEQSCAN TO OFF;
         30 seconds (<literal>30s</>).  Zero disables the warning.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
+        (Set it to a value greater than <varname>checkpoint_timeout</> to
+        log all checkpoints.  Of course, the warning suggesting increasing
+        <varname>checkpoint_segments</> should be ignored.)
        </para>
       </listitem>
      </varlistentry>
