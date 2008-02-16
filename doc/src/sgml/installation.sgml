@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.300 2008/01/31 20:29:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.301 2008/02/16 21:51:04 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1032,7 +1032,7 @@ su - postgres
         <para>
          <productname>PostgreSQL</> includes its own time zone database,
          which it requires for date and time operations.  This time zone
-         database is in fact compatible with the <quote>zic</> time zone
+         database is in fact compatible with the <quote>zoneinfo</> time zone
          database provided by many operating systems such as FreeBSD,
          Linux, and Solaris, so it would be redundant to install it again.
          When this option is used, the system-supplied time zone database

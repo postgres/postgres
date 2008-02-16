@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.224 2008/02/13 22:46:55 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.225 2008/02/16 21:51:04 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2187,11 +2187,11 @@ January 8 04:05:06 1999 PST
     world became somewhat standardized during the 1900's,
     but continue to be prone to arbitrary changes, particularly with
     respect to daylight-savings rules.
-    <productname>PostgreSQL</productname> currently supports daylight-savings
-    rules over the time period 1902 through 2038 (corresponding to the full
-    range of conventional Unix system time).  Times outside that range are
-    taken to be in <quote>standard time</> for the selected time zone, no
-    matter what part of the year they fall in.
+    <productname>PostgreSQL</productname> uses the widely-used
+    <literal>zoneinfo</> time zone database for information about
+    historical time zone rules.  For times in the future, the assumption
+    is that the latest known rules for a given time zone will
+    continue to be observed indefinitely far into the future.
    </para>
 
     <para>
@@ -2254,7 +2254,7 @@ January 8 04:05:06 1999 PST
         <literal>pg_timezone_names</literal> view (see <xref
         linkend="view-pg-timezone-names">).
         <productname>PostgreSQL</productname> uses the widely-used
-        <literal>zic</> time zone data for this purpose, so the same
+        <literal>zoneinfo</> time zone data for this purpose, so the same
         names are also recognized by much other software.
        </para>
       </listitem>
@@ -2287,7 +2287,7 @@ January 8 04:05:06 1999 PST
         be functionally equivalent to USA East Coast time.  When a
         daylight-savings zone name is present, it is assumed to be used
         according to the same daylight-savings transition rules used in the
-        <literal>zic</> time zone database's <filename>posixrules</> entry.
+        <literal>zoneinfo</> time zone database's <filename>posixrules</> entry.
         In a standard <productname>PostgreSQL</productname> installation,
         <filename>posixrules</> is the same as <literal>US/Eastern</>, so
         that POSIX-style time zone specifications follow USA daylight-savings

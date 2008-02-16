@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.58 2007/12/15 01:18:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.59 2008/02/16 21:51:04 tgl Exp $ -->
 
  <appendix id="datetime-appendix">
   <title>Date/Time Support</title>
@@ -430,7 +430,7 @@
     For reference purposes, a standard installation also contains files
     <filename>Africa.txt</>, <filename>America.txt</>, etc, containing
     information about every time zone abbreviation known to be in use
-    according to the <literal>zic</> timezone database.  The zone name
+    according to the <literal>zoneinfo</> timezone database.  The zone name
     definitions found in these files can be copied and pasted into a custom
     configuration file as needed.  Note that these files cannot be directly
     referenced as <literal>timezone_abbreviations</> settings, because of
