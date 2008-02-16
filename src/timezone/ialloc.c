@@ -1,9 +1,9 @@
 /*
  * This file is in the public domain, so clarified as of
- * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
+ * 2006-07-17 by Arthur David Olson.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/ialloc.c,v 1.9 2007/10/26 13:30:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/ialloc.c,v 1.10 2008/02/16 21:16:04 tgl Exp $
  */
 
 #include "postgres_fe.h"

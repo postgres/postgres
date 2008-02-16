@@ -114,6 +114,31 @@ INSERT INTO TIMESTAMPTZ_TBL VALUES ('19970710 173201 America/Does_not_exist');
 ERROR:  time zone "america/does_not_exist" not recognized
 SELECT '19970710 173201' AT TIME ZONE 'America/Does_not_exist';
 ERROR:  time zone "America/Does_not_exist" not recognized
+-- Daylight saving time for timestamps beyond 32-bit time_t range.
+SELECT '20500710 173201 Europe/Helsinki'::timestamptz; -- DST
+         timestamptz          
+------------------------------
+ Sun Jul 10 07:32:01 2050 PDT
+(1 row)
+
+SELECT '20500110 173201 Europe/Helsinki'::timestamptz; -- non-DST
+         timestamptz          
+------------------------------
+ Mon Jan 10 07:32:01 2050 PST
+(1 row)
+
+SELECT '205000-07-10 17:32:01 Europe/Helsinki'::timestamptz; -- DST
+          timestamptz           
+--------------------------------
+ Thu Jul 10 07:32:01 205000 PDT
+(1 row)
+
+SELECT '205000-01-10 17:32:01 Europe/Helsinki'::timestamptz; -- non-DST
+          timestamptz           
+--------------------------------
+ Fri Jan 10 07:32:01 205000 PST
+(1 row)
+
 -- Check date conversion and date arithmetic
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('1997-06-10 18:32:01 PDT');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Feb 10 17:32:01 1997');

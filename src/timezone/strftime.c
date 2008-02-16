@@ -7,7 +7,7 @@
  * duplicated in all such forms and that any documentation,
  * advertising materials, and other materials related to such
  * distribution and use acknowledge that the software was developed
- * by the University of California, Berkeley.  The name of the
+ * by the University of California, Berkeley. The name of the
  * University may not be used to endorse or promote products derived
  * from this software without specific prior written permission.
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
@@ -15,7 +15,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.11 2006/07/14 14:52:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.12 2008/02/16 21:16:04 tgl Exp $
  */
 
 #include "postgres.h"
@@ -92,6 +92,7 @@ static char *_add(const char *, char *, const char *);
 static char *_conv(int, const char *, char *, const char *);
 static char *_fmt(const char *, const struct pg_tm *, char *,
 	 const char *, int *);
+static char * _yconv(int, int, int, int, char *, const char *);
 
 #define IN_NONE 0
 #define IN_SOME 1
@@ -160,8 +161,8 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 					 * ...whereas now POSIX 1003.2 calls for something
 					 * completely different. (ado, 1993-05-24)
 					 */
-					pt = _conv((t->tm_year + TM_YEAR_BASE) / 100,
-							   "%02d", pt, ptlim);
+					pt = _yconv(t->tm_year, TM_YEAR_BASE, 1, 0,
+								pt, ptlim);
 					continue;
 				case 'c':
 					{
@@ -213,7 +214,7 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 					 * This used to be...  _conv(t->tm_hour % 12 ? t->tm_hour
 					 * % 12 : 12, 2, ' '); ...and has been changed to the
 					 * below to match SunOS 4.1.1 and Arnold Robbins' strftime
-					 * version 3.0.  That is, "%k" and "%l" have been swapped.
+					 * version 3.0. That is, "%k" and "%l" have been swapped.
 					 * (ado, 1993-05-24)
 					 */
 					pt = _conv(t->tm_hour, "%2d", pt, ptlim);
@@ -289,7 +290,7 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 				case 'G':		/* ISO 8601 year (four digits) */
 				case 'g':		/* ISO 8601 year (two digits) */
 /*
- * From Arnold Robbins' strftime version 3.0:  "the week number of the
+ * From Arnold Robbins' strftime version 3.0: "the week number of the
  * year (the first Monday as the first day of week 1) as a decimal number
  * (01-53)."
  * (ado, 1993-05-24)
@@ -302,17 +303,19 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
  * might also contain days from the previous year and the week before week
  * 01 of a year is the last week (52 or 53) of the previous year even if
  * it contains days from the new year. A week starts with Monday (day 1)
- * and ends with Sunday (day 7).  For example, the first week of the year
+ * and ends with Sunday (day 7). For example, the first week of the year
  * 1997 lasts from 1996-12-30 to 1997-01-05..."
  * (ado, 1996-01-02)
  */
 					{
 						int			year;
+						int			base;
 						int			yday;
 						int			wday;
 						int			w;
 
-						year = t->tm_year + TM_YEAR_BASE;
+						year = t->tm_year;
+						base = TM_YEAR_BASE;
 						yday = t->tm_yday;
 						wday = t->tm_wday;
 						for (;;)
@@ -321,7 +324,7 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 							int			bot;
 							int			top;
 
-							len = isleap(year) ?
+							len = isleap_sum(year, base) ?
 								DAYSPERLYEAR :
 								DAYSPERNYEAR;
 
@@ -342,7 +345,7 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 							top += len;
 							if (yday >= top)
 							{
-								++year;
+								++base;
 								w = 1;
 								break;
 							}
@@ -352,8 +355,8 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 										 DAYSPERWEEK);
 								break;
 							}
-							--year;
-							yday += isleap(year) ?
+							--base;
+							yday += isleap_sum(year, base) ?
 								DAYSPERLYEAR :
 								DAYSPERNYEAR;
 						}
@@ -363,11 +366,11 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 						else if (*format == 'g')
 						{
 							*warnp = IN_ALL;
-							pt = _conv(year % 100, "%02d",
+							pt = _yconv(year, base, 0, 1,
 									   pt, ptlim);
 						}
 						else
-							pt = _conv(year, "%04d",
+							pt = _yconv(year, base, 1, 1,
 									   pt, ptlim);
 					}
 					continue;
@@ -405,12 +408,12 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 					continue;
 				case 'y':
 					*warnp = IN_ALL;
-					pt = _conv((t->tm_year + TM_YEAR_BASE) % 100,
-							   "%02d", pt, ptlim);
+					pt = _yconv(t->tm_year, TM_YEAR_BASE, 0, 1,
+								pt, ptlim);
 					continue;
 				case 'Y':
-					pt = _conv(t->tm_year + TM_YEAR_BASE, "%04d",
-							   pt, ptlim);
+					pt = _yconv(t->tm_year, TM_YEAR_BASE, 1, 1,
+								pt, ptlim);
 					continue;
 				case 'Z':
 					if (t->tm_zone != NULL)
@@ -480,3 +483,43 @@ _add(const char *str, char *pt, const char *ptlim)
 		++pt;
 	return pt;
 }
+
+/*
+ * POSIX and the C Standard are unclear or inconsistent about
+ * what %C and %y do if the year is negative or exceeds 9999.
+ * Use the convention that %C concatenated with %y yields the
+ * same output as %Y, and that %Y contains at least 4 bytes,
+ * with more only if necessary.
+ */
+static char *
+_yconv(const int a, const int b, const int convert_top, 
+	   const int convert_yy, char *pt, const char * const ptlim)
+{
+	int    lead;
+	int    trail;
+ 
+#define DIVISOR       100
+	trail = a % DIVISOR + b % DIVISOR;
+	lead = a / DIVISOR + b / DIVISOR + trail / DIVISOR;
+	trail %= DIVISOR;
+	if (trail < 0 && lead > 0)
+	{
+		trail += DIVISOR;
+		--lead;
+	}
+	else if (lead < 0 && trail > 0)
+	{
+		trail -= DIVISOR;
+		++lead;
+	}
+	if (convert_top)
+	{
+		if (lead == 0 && trail < 0)
+			pt = _add("-0", pt, ptlim);
+		else    pt = _conv(lead, "%02d", pt, ptlim);
+	}
+	if (convert_yy)
+		pt = _conv(((trail < 0) ? -trail : trail), "%02d", pt, ptlim);
+	return pt;
+}
+ 

@@ -3,10 +3,10 @@
 
 /*
  * This file is in the public domain, so clarified as of
- * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
+ * 1996-06-05 by Arthur David Olson.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/private.h,v 1.11 2005/02/23 04:34:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/private.h,v 1.12 2008/02/16 21:16:04 tgl Exp $
  */
 
 /*
@@ -17,12 +17,13 @@
  * Thank you!
  */
 
-#include <limits.h>				/* for CHAR_BIT */
+#include <limits.h>				/* for CHAR_BIT et al. */
 #include <sys/wait.h>			/* for WIFEXITED and WEXITSTATUS */
 #include <unistd.h>				/* for F_OK and R_OK */
 
 #include "pgtime.h"
 
+#define GRANDPARENTED	"Local time zone must be set--see zic manual page"
 
 #ifndef WIFEXITED
 #define WIFEXITED(status)	(((status) & 0xff) == 0)
@@ -33,22 +34,6 @@
 
 /* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
-
-/*
- * SunOS 4.1.1 headers lack EXIT_SUCCESS.
- */
-
-#ifndef EXIT_SUCCESS
-#define EXIT_SUCCESS	0
-#endif   /* !defined EXIT_SUCCESS */
-
-/*
- * SunOS 4.1.1 headers lack EXIT_FAILURE.
- */
-
-#ifndef EXIT_FAILURE
-#define EXIT_FAILURE	1
-#endif   /* !defined EXIT_FAILURE */
 
 /*
  * SunOS 4.1.1 libraries lack remove.
@@ -70,7 +55,7 @@ extern char *imalloc(int n);
 extern void *irealloc(void *pointer, int size);
 extern void icfree(char *pointer);
 extern void ifree(char *pointer);
-extern char *scheck(const char *string, const char *format);
+extern const char *scheck(const char *string, const char *format);
 
 
 /*
@@ -93,6 +78,15 @@ extern char *scheck(const char *string, const char *format);
 #define TYPE_SIGNED(type) (((type) -1) < 0)
 #endif   /* !defined TYPE_SIGNED */
 
+/*
+ * Since the definition of TYPE_INTEGRAL contains floating point numbers,
+ * it cannot be used in preprocessor directives.
+ */
+
+#ifndef TYPE_INTEGRAL
+#define TYPE_INTEGRAL(type) (((type) 0.5) != 0.5)
+#endif /* !defined TYPE_INTEGRAL */
+
 #ifndef INT_STRLEN_MAXIMUM
 /*
  * 302 / 1000 is log10(2.0) rounded up.
@@ -106,6 +100,26 @@ extern char *scheck(const char *string, const char *format);
 
 #undef _
 #define _(msgid) (msgid)
+
+#ifndef YEARSPERREPEAT
+#define YEARSPERREPEAT          400     /* years before a Gregorian repeat */
+#endif /* !defined YEARSPERREPEAT */
+
+/*
+** The Gregorian year averages 365.2425 days, which is 31556952 seconds.
+*/
+
+#ifndef AVGSECSPERYEAR
+#define AVGSECSPERYEAR          31556952L
+#endif /* !defined AVGSECSPERYEAR */
+
+#ifndef SECSPERREPEAT
+#define SECSPERREPEAT           ((int64) YEARSPERREPEAT * (int64) AVGSECSPERYEAR)
+#endif /* !defined SECSPERREPEAT */
+
+#ifndef SECSPERREPEAT_BITS
+#define SECSPERREPEAT_BITS      34      /* ceil(log2(SECSPERREPEAT)) */
+#endif /* !defined SECSPERREPEAT_BITS */
 
 /*
  * UNIX was a registered trademark of The Open Group in 2003.

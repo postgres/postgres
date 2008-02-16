@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.58 2008/02/11 19:55:11 mha Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.59 2008/02/16 21:16:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,7 +287,7 @@ score_timezone(const char *tzname, struct tztry * tt)
 	 * Load timezone directly. Don't use pg_tzset, because we don't want all
 	 * timezones loaded in the cache at startup.
 	 */
-	if (tzload(tzname, NULL, &tz.state) != 0)
+	if (tzload(tzname, NULL, &tz.state, TRUE) != 0)
 	{
 		if (tzname[0] == ':' || tzparse(tzname, &tz.state, FALSE) != 0)
 		{
@@ -1191,7 +1191,7 @@ pg_tzset(const char *name)
 		return &tzp->tz;
 	}
 
-	if (tzload(uppername, canonname, &tzstate) != 0)
+	if (tzload(uppername, canonname, &tzstate, TRUE) != 0)
 	{
 		if (uppername[0] == ':' || tzparse(uppername, &tzstate, FALSE) != 0)
 		{
@@ -1463,7 +1463,8 @@ pg_tzenumerate_next(pg_tzenum *dir)
 		 * Load this timezone using tzload() not pg_tzset(), so we don't fill
 		 * the cache
 		 */
-		if (tzload(fullname + dir->baselen, dir->tz.TZname, &dir->tz.state) != 0)
+		if (tzload(fullname + dir->baselen, dir->tz.TZname, &dir->tz.state, 
+				   TRUE) != 0)
 		{
 			/* Zone could not be loaded, ignore it */
 			continue;
