@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.240 2007/11/13 00:13:19 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.241 2008/02/17 16:36:43 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -62,11 +62,12 @@ configure_args = @configure_args@
 
 ifndef PGXS
 
-# Note that prefix and exec_prefix aren't defined in a PGXS build;
+# Note that prefix, exec_prefix, and datarootdir aren't defined in a PGXS build;
 # makefiles may only use the derived variables such as bindir.
 
 prefix := @prefix@
 exec_prefix := @exec_prefix@
+datarootdir := @datarootdir@
 
 bindir := @bindir@
 
@@ -105,14 +106,13 @@ endif
 mandir := @mandir@
 
 docdir := @docdir@
-# docdir can be an empty string to signify --without-docdir
-ifneq (,$(docdir))
 ifeq "$(findstring pgsql, $(docdir))" ""
 ifeq "$(findstring postgres, $(docdir))" ""
 override docdir := $(docdir)/postgresql
 endif
 endif
-endif
+
+htmldir := @htmldir@
 
 localedir := @localedir@
 

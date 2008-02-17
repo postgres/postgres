@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.547 2008/02/13 03:40:38 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.548 2008/02/17 16:36:42 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -19,7 +19,7 @@ m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
 AC_INIT([PostgreSQL], [8.4devel], [pgsql-bugs@postgresql.org])
 
-m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.59], [], [m4_fatal([Autoconf version 2.59 is required.
+m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.61], [], [m4_fatal([Autoconf version 2.61 is required.
 Untested combinations of 'autoconf' and PostgreSQL versions are not
 recommended.  You can remove the check from 'configure.in' but it is then
 your responsibility whether the result works or not.])])
@@ -110,18 +110,6 @@ tas_file=dummy.s
 ##
 ## Command line options
 ##
-
-#
-# Installation directory for documentation
-#
-PGAC_ARG(with, docdir, [  --with-docdir=DIR       install the documentation in DIR [[PREFIX/doc]]
-  --without-docdir        do not install the documentation],
-         [AC_MSG_ERROR([option --with-docdir requires an argument])],
-         [docdir=],
-         [docdir=$withval],
-         [docdir='${prefix}/doc'])
-AC_SUBST(docdir)
-
 
 #
 # Add non-standard directories to the include path
@@ -1367,24 +1355,24 @@ AC_CHECK_SIZEOF([size_t])
 
 # Determine memory alignment requirements for the basic C data types.
 
-PGAC_CHECK_ALIGNOF(short)
-PGAC_CHECK_ALIGNOF(int)
-PGAC_CHECK_ALIGNOF(long)
+AC_CHECK_ALIGNOF(short)
+AC_CHECK_ALIGNOF(int)
+AC_CHECK_ALIGNOF(long)
 if test x"$HAVE_LONG_LONG_INT_64" = x"yes" ; then
-  PGAC_CHECK_ALIGNOF(long long int)
+  AC_CHECK_ALIGNOF(long long int)
 fi
-PGAC_CHECK_ALIGNOF(double)
+AC_CHECK_ALIGNOF(double)
 
 # Compute maximum alignment of any basic type.
 # We assume long's alignment is at least as strong as char, short, or int;
 # but we must check long long (if it exists) and double.
 
-MAX_ALIGNOF=$pgac_cv_alignof_long
-if test $MAX_ALIGNOF -lt $pgac_cv_alignof_double ; then
-  MAX_ALIGNOF=$pgac_cv_alignof_double
+MAX_ALIGNOF=$ac_cv_alignof_long
+if test $MAX_ALIGNOF -lt $ac_cv_alignof_double ; then
+  MAX_ALIGNOF=$ac_cv_alignof_double
 fi
-if test x"$HAVE_LONG_LONG_INT_64" = xyes && test $MAX_ALIGNOF -lt $pgac_cv_alignof_long_long_int ; then
-  MAX_ALIGNOF="$pgac_cv_alignof_long_long_int"
+if test x"$HAVE_LONG_LONG_INT_64" = xyes && test $MAX_ALIGNOF -lt $ac_cv_alignof_long_long_int ; then
+  MAX_ALIGNOF="$ac_cv_alignof_long_long_int"
 fi
 AC_DEFINE_UNQUOTED(MAXIMUM_ALIGNOF, $MAX_ALIGNOF, [Define as the maximum alignment requirement of any C data type.])
 

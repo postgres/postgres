@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.301 2008/02/16 21:51:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.302 2008/02/17 16:36:43 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -590,22 +590,10 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--datadir=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         Sets the directory for read-only data files used by the
-         installed programs. The default is
-         <filename><replaceable>PREFIX</>/share</>. Note that this has
-         nothing to do with where your database files will be placed.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><option>--sysconfdir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
-         The directory for various configuration files,
+         Sets the directory for various configuration files,
          <filename><replaceable>PREFIX</>/etc</> by default.
         </para>
        </listitem>
@@ -615,7 +603,7 @@ su - postgres
        <term><option>--libdir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
-         The location to install libraries and dynamically loadable
+         Sets the location to install libraries and dynamically loadable
          modules. The default is
          <filename><replaceable>EXEC-PREFIX</>/lib</>.
         </para>
@@ -626,8 +614,43 @@ su - postgres
        <term><option>--includedir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
-         The directory for installing C and C++ header files. The
+         Sets the directory for installing C and C++ header files. The
          default is <filename><replaceable>PREFIX</>/include</>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--datarootdir=<replaceable>DIRECTORY</></option></term>
+       <listitem>
+        <para>
+         Sets the root directory for various types of read-only data
+         files.  This only sets the default for some of the following
+         options.  The default is
+         <filename><replaceable>PREFIX</>/share</>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--datadir=<replaceable>DIRECTORY</></option></term>
+       <listitem>
+        <para>
+         Sets the directory for read-only data files used by the
+         installed programs. The default is
+         <filename><replaceable>DATAROOTDIR</></>. Note that this has
+         nothing to do with where your database files will be placed.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--localedir=<replaceable>DIRECTORY</></option></term>
+       <listitem>
+        <para>
+         Sets the directory for installing locale data, in particular
+         message translation catalog files.  The default is
+         <filename><replaceable>DATAROOTDIR</>/locale</>.
         </para>
        </listitem>
       </varlistentry>
@@ -639,23 +662,31 @@ su - postgres
          The man pages that come with <productname>PostgreSQL</> will be installed under
          this directory, in their respective
          <filename>man<replaceable>x</></> subdirectories.
-         The default is <filename><replaceable>PREFIX</>/man</>.
+         The default is <filename><replaceable>DATAROOTDIR</>/man</>.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-docdir=<replaceable>DIRECTORY</></option></term>
-       <term><option>--without-docdir</option></term>
+       <term><option>--docdir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
-         Documentation files, except <quote>man</> pages, will be
-         installed into this directory. The default is
-         <filename><replaceable>PREFIX</>/doc</>.  If the option
-         <option>--without-docdir</option> is specified, the
-         documentation will not be installed by <command>make
-         install</command>.  This is intended for packaging scripts
-         that have special methods for installing documentation.
+         Sets the root directory for installing documentation files,
+         except <quote>man</> pages.  This only sets the default for
+         the following options.  The default value for this option is
+         <filename><replaceable>DATAROOTDIR</>/doc/postgresql</>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--htmldir=<replaceable>DIRECTORY</></option></term>
+       <listitem>
+        <para>
+         The HTML-formatted documentation for
+         <productname>PostgreSQL</productname> will be installed under
+         this directory.  The default is
+         <filename><replaceable>DATAROOTDIR</></>.
         </para>
        </listitem>
       </varlistentry>

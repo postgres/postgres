@@ -12,19 +12,19 @@
 /* Define to the return type of 'accept' */
 #undef ACCEPT_TYPE_RETURN
 
-/* The alignment requirement of a `double'. */
+/* The normal alignment of `double', in bytes. */
 #undef ALIGNOF_DOUBLE
 
-/* The alignment requirement of a `int'. */
+/* The normal alignment of `int', in bytes. */
 #undef ALIGNOF_INT
 
-/* The alignment requirement of a `long'. */
+/* The normal alignment of `long', in bytes. */
 #undef ALIGNOF_LONG
 
-/* The alignment requirement of a `long long int'. */
+/* The normal alignment of `long long int', in bytes. */
 #undef ALIGNOF_LONG_LONG_INT
 
-/* The alignment requirement of a `short'. */
+/* The normal alignment of `short', in bytes. */
 #undef ALIGNOF_SHORT
 
 /* Define to the default TCP port number on which the server listens and to
@@ -637,10 +637,10 @@
    your system. */
 #undef PTHREAD_CREATE_JOINABLE
 
-/* The size of a `size_t', as computed by sizeof. */
+/* The size of `size_t', as computed by sizeof. */
 #undef SIZEOF_SIZE_T
 
-/* The size of a `unsigned long', as computed by sizeof. */
+/* The size of `unsigned long', as computed by sizeof. */
 #undef SIZEOF_UNSIGNED_LONG
 
 /* Define to 1 if you have the ANSI C header files. */
@@ -719,9 +719,11 @@
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
 
-/* Define as `__inline' if that's what the C compiler calls it, or to nothing
-   if it is not supported. */
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
 #undef inline
+#endif
 
 /* Define to empty if the C compiler does not understand signed types. */
 #undef signed
