@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.63 2008/01/01 19:45:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.64 2008/02/17 02:09:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -471,10 +471,10 @@ GuessControlValues(void)
 	ControlFile.checkPointCopy.nextOid = FirstBootstrapObjectId;
 	ControlFile.checkPointCopy.nextMulti = FirstMultiXactId;
 	ControlFile.checkPointCopy.nextMultiOffset = 0;
-	ControlFile.checkPointCopy.time = time(NULL);
+	ControlFile.checkPointCopy.time = (pg_time_t) time(NULL);
 
 	ControlFile.state = DB_SHUTDOWNED;
-	ControlFile.time = time(NULL);
+	ControlFile.time = (pg_time_t) time(NULL);
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
 
 	ControlFile.maxAlign = MAXIMUM_ALIGNOF;
@@ -603,10 +603,10 @@ RewriteControlFile(void)
 	ControlFile.checkPointCopy.redo.xlogid = newXlogId;
 	ControlFile.checkPointCopy.redo.xrecoff =
 		newXlogSeg * XLogSegSize + SizeOfXLogLongPHD;
-	ControlFile.checkPointCopy.time = time(NULL);
+	ControlFile.checkPointCopy.time = (pg_time_t) time(NULL);
 
 	ControlFile.state = DB_SHUTDOWNED;
-	ControlFile.time = time(NULL);
+	ControlFile.time = (pg_time_t) time(NULL);
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
 	ControlFile.prevCheckPoint.xlogid = 0;
 	ControlFile.prevCheckPoint.xrecoff = 0;

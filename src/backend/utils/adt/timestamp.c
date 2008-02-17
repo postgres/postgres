@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.184 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.185 2008/02/17 02:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1264,9 +1264,14 @@ TimestampDifferenceExceeds(TimestampTz start_time,
  *
  * We do not use time_t internally in Postgres, but this is provided for use
  * by functions that need to interpret, say, a stat(2) result.
+ *
+ * To avoid having the function's ABI vary depending on the width of time_t,
+ * we declare the argument as pg_time_t, which is cast-compatible with
+ * time_t but always 64 bits wide (unless the platform has no 64-bit type).
+ * This detail should be invisible to callers, at least at source code level.
  */
 TimestampTz
-time_t_to_timestamptz(time_t tm)
+time_t_to_timestamptz(pg_time_t tm)
 {
 	TimestampTz result;
 
@@ -1284,17 +1289,22 @@ time_t_to_timestamptz(time_t tm)
  * Convert a TimestampTz to time_t.
  *
  * This too is just marginally useful, but some places need it.
+ *
+ * To avoid having the function's ABI vary depending on the width of time_t,
+ * we declare the result as pg_time_t, which is cast-compatible with
+ * time_t but always 64 bits wide (unless the platform has no 64-bit type).
+ * This detail should be invisible to callers, at least at source code level.
  */
-time_t
+pg_time_t
 timestamptz_to_time_t(TimestampTz t)
 {
-	time_t		result;
+	pg_time_t	result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = (time_t) (t / USECS_PER_SEC +
+	result = (pg_time_t) (t / USECS_PER_SEC +
 				 ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
 #else
-	result = (time_t) (t +
+	result = (pg_time_t) (t +
 				 ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
 #endif
 

@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.36 2008/01/21 11:17:46 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.37 2008/02/17 02:09:29 tgl Exp $
  */
 #include "postgres.h"
 
@@ -69,6 +69,7 @@ main(int argc, char *argv[])
 	char		ControlFilePath[MAXPGPATH];
 	char	   *DataDir;
 	pg_crc32	crc;
+	time_t		time_tmp;
 	char		pgctime_str[128];
 	char		ckpttime_str[128];
 	char		sysident_str[32];
@@ -134,13 +135,20 @@ main(int argc, char *argv[])
 				 "is expecting.  The results below are untrustworthy.\n\n"));
 
 	/*
+	 * This slightly-chintzy coding will work as long as the control file
+	 * timestamps are within the range of time_t; that should be the case
+	 * in all foreseeable circumstances, so we don't bother importing the
+	 * backend's timezone library into pg_controldata.
+	 *
 	 * Use variable for format to suppress overly-anal-retentive gcc warning
 	 * about %c
 	 */
+	time_tmp = (time_t) ControlFile.time;
 	strftime(pgctime_str, sizeof(pgctime_str), strftime_fmt,
-			 localtime(&(ControlFile.time)));
+			 localtime(&time_tmp));
+	time_tmp = (time_t) ControlFile.checkPointCopy.time;
 	strftime(ckpttime_str, sizeof(ckpttime_str), strftime_fmt,
-			 localtime(&(ControlFile.checkPointCopy.time)));
+			 localtime(&time_tmp));
 
 	/*
 	 * Format system_identifier separately to keep platform-dependent format

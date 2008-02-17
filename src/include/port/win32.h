@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.83 2008/01/09 09:16:43 mha Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.84 2008/02/17 02:09:31 tgl Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -44,17 +44,6 @@
 #define fsync(fd) _commit(fd)
 
 #define USES_WINSOCK
-
-/*
- * Ensure that anyone building an extension is using a 32 bit time_t.
- * On Mingw/Msys, that should always be the case, but MSVC++ defaults
- * to 64 bits. We set that for our own build in the project files
- */
-#if defined(WIN32_ONLY_COMPILER) && !defined(FRONTEND)
-#ifndef _USE_32BIT_TIME_T
-#error "Postgres uses 32 bit time_t - add #define _USE_32BIT_TIME_T on Windows"
-#endif
-#endif
 
 /* defines for dynamic linking on Win32 platform */
 #if defined(WIN32) || defined(__CYGWIN__)
@@ -198,6 +187,7 @@ struct itimerval
 	struct timeval it_interval;
 	struct timeval it_value;
 };
+
 int			setitimer(int which, const struct itimerval * value, struct itimerval * ovalue);
 
 

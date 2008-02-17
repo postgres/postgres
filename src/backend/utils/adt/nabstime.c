@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.152 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.153 2008/02/17 02:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,8 @@ static void parsetinterval(char *i_string,
  * GetCurrentAbsoluteTime()
  *
  * Get the current system time (relative to Unix epoch).
+ *
+ * NB: this will overflow in 2038; it should be gone long before that.
  */
 AbsoluteTime
 GetCurrentAbsoluteTime(void)
@@ -1029,12 +1031,7 @@ tintervalrel(PG_FUNCTION_ARGS)
 Datum
 timenow(PG_FUNCTION_ARGS)
 {
-	time_t		sec;
-
-	if (time(&sec) < 0)
-		PG_RETURN_ABSOLUTETIME(INVALID_ABSTIME);
-
-	PG_RETURN_ABSOLUTETIME((AbsoluteTime) sec);
+	PG_RETURN_ABSOLUTETIME(GetCurrentAbsoluteTime());
 }
 
 /*

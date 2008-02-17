@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.138 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.139 2008/02/17 02:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -945,8 +945,10 @@ tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result)
 
 /* time2tm()
  * Convert time data type to POSIX time structure.
- * For dates within the system-supported time_t range, convert to the
- *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
+ *
+ * For dates within the range of pg_time_t, convert to the local time zone.
+ * If out of this range, leave as UTC (in practice that could only happen
+ * if pg_time_t is just 32 bits) - thomas 97/05/27
  */
 static int
 time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec)
@@ -2466,10 +2468,9 @@ timetz_zone(PG_FUNCTION_ARGS)
 	if (tzp)
 	{
 		/* Get the offset-from-GMT that is valid today for the selected zone */
-		pg_time_t	now;
+		pg_time_t	now = (pg_time_t) time(NULL);
 		struct pg_tm *tm;
 
-		now = time(NULL);
 		tm = pg_localtime(&now, tzp);
 		tz = -tm->tm_gmtoff;
 	}

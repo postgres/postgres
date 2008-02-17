@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.292 2008/01/21 11:17:46 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.293 2008/02/17 02:09:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,7 +271,7 @@ typedef struct XLogCtlWrite
 {
 	XLogwrtResult LogwrtResult; /* current value of LogwrtResult */
 	int			curridx;		/* cache index of next block to write */
-	time_t		lastSegSwitchTime;		/* time of last xlog segment switch */
+	pg_time_t	lastSegSwitchTime;		/* time of last xlog segment switch */
 } XLogCtlWrite;
 
 /*
@@ -1553,7 +1553,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 				if (XLogArchivingActive())
 					XLogArchiveNotifySeg(openLogId, openLogSeg);
 
-				Write->lastSegSwitchTime = time(NULL);
+				Write->lastSegSwitchTime = (pg_time_t) time(NULL);
 
 				/*
 				 * Signal bgwriter to start a checkpoint if we've consumed too
@@ -4217,7 +4217,7 @@ BootStrapXLOG(void)
 	checkPoint.nextOid = FirstBootstrapObjectId;
 	checkPoint.nextMulti = FirstMultiXactId;
 	checkPoint.nextMultiOffset = 0;
-	checkPoint.time = time(NULL);
+	checkPoint.time = (pg_time_t) time(NULL);
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
@@ -4972,7 +4972,7 @@ StartupXLOG(void)
 		ControlFile->checkPointCopy = checkPoint;
 		if (minRecoveryLoc.xlogid != 0 || minRecoveryLoc.xrecoff != 0)
 			ControlFile->minRecoveryPoint = minRecoveryLoc;
-		ControlFile->time = time(NULL);
+		ControlFile->time = (pg_time_t) time(NULL);
 		UpdateControlFile();
 
 		/*
@@ -5277,7 +5277,7 @@ StartupXLOG(void)
 	InRecovery = false;
 
 	ControlFile->state = DB_IN_PRODUCTION;
-	ControlFile->time = time(NULL);
+	ControlFile->time = (pg_time_t) time(NULL);
 	UpdateControlFile();
 
 	/* start the archive_timeout timer running */
@@ -5496,10 +5496,10 @@ GetInsertRecPtr(void)
 /*
  * Get the time of the last xlog segment switch
  */
-time_t
+pg_time_t
 GetLastSegSwitchTime(void)
 {
-	time_t		result;
+	pg_time_t	result;
 
 	/* Need WALWriteLock, but shared lock is sufficient */
 	LWLockAcquire(WALWriteLock, LW_SHARED);
@@ -5676,7 +5676,7 @@ CreateCheckPoint(int flags)
 	if (shutdown)
 	{
 		ControlFile->state = DB_SHUTDOWNING;
-		ControlFile->time = time(NULL);
+		ControlFile->time = (pg_time_t) time(NULL);
 		UpdateControlFile();
 	}
 
@@ -5690,7 +5690,7 @@ CreateCheckPoint(int flags)
 	/* Begin filling in the checkpoint WAL record */
 	MemSet(&checkPoint, 0, sizeof(checkPoint));
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
-	checkPoint.time = time(NULL);
+	checkPoint.time = (pg_time_t) time(NULL);
 
 	/*
 	 * We must hold WALInsertLock while examining insert state to determine
@@ -5891,7 +5891,7 @@ CreateCheckPoint(int flags)
 	ControlFile->prevCheckPoint = ControlFile->checkPoint;
 	ControlFile->checkPoint = ProcLastRecPtr;
 	ControlFile->checkPointCopy = checkPoint;
-	ControlFile->time = time(NULL);
+	ControlFile->time = (pg_time_t) time(NULL);
 	UpdateControlFile();
 	LWLockRelease(ControlFileLock);
 
@@ -5992,7 +5992,7 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	 * Checking true elapsed time keeps us from doing restartpoints too often
 	 * while rapidly scanning large amounts of WAL.
 	 */
-	elapsed_secs = time(NULL) - ControlFile->time;
+	elapsed_secs = (pg_time_t) time(NULL) - ControlFile->time;
 	if (elapsed_secs < CheckPointTimeout / 2)
 		return;
 
@@ -6028,7 +6028,7 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	ControlFile->prevCheckPoint = ControlFile->checkPoint;
 	ControlFile->checkPoint = ReadRecPtr;
 	ControlFile->checkPointCopy = *checkPoint;
-	ControlFile->time = time(NULL);
+	ControlFile->time = (pg_time_t) time(NULL);
 	UpdateControlFile();
 
 	ereport((recoveryLogRestartpoints ? LOG : DEBUG2),

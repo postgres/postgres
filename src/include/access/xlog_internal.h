@@ -11,15 +11,14 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.22 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.23 2008/02/17 02:09:30 tgl Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
 
-#include <time.h>
-
 #include "access/xlog.h"
 #include "fmgr.h"
+#include "pgtime.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
 
@@ -71,7 +70,7 @@ typedef struct XLogContRecord
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD062	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD063	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -242,7 +241,7 @@ extern const RmgrData RmgrTable[];
 /*
  * Exported to support xlog switching from bgwriter
  */
-extern time_t GetLastSegSwitchTime(void);
+extern pg_time_t GetLastSegSwitchTime(void);
 extern XLogRecPtr RequestXLogSwitch(void);
 
 /*
