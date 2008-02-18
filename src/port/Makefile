@@ -19,7 +19,7 @@
 # OBJS adds additional object files that are always compiled.
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/port/Makefile,v 1.35 2007/09/28 22:25:49 tgl Exp $
+#    $PostgreSQL: pgsql/src/port/Makefile,v 1.36 2008/02/18 14:51:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -84,6 +84,7 @@ pg_config_paths.h: $(top_builddir)/src/Makefile.global
 	echo "#define PKGLIBDIR \"$(pkglibdir)\"" >>$@
 	echo "#define LOCALEDIR \"$(localedir)\"" >>$@
 	echo "#define DOCDIR \"$(docdir)\"" >>$@
+	echo "#define HTMLDIR \"$(htmldir)\"" >>$@
 	echo "#define MANDIR \"$(mandir)\"" >>$@
 
 clean distclean maintainer-clean:
