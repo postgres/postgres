@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.103 2008/02/07 22:58:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.104 2008/02/18 23:00:32 tgl Exp $
  *
  * ----------
  */
@@ -67,13 +67,12 @@
 #define RI_PLAN_RESTRICT_UPD_CHECKREF	8
 #define RI_PLAN_SETNULL_DEL_DOUPDATE	9
 #define RI_PLAN_SETNULL_UPD_DOUPDATE	10
-#define RI_PLAN_KEYEQUAL_UPD			11
 
 #define MAX_QUOTED_NAME_LEN  (NAMEDATALEN*2+3)
 #define MAX_QUOTED_REL_NAME_LEN  (MAX_QUOTED_NAME_LEN*2)
 
 #define RIAttName(rel, attnum)	NameStr(*attnumAttName(rel, attnum))
-#define RIAttType(rel, attnum)	SPI_gettypeid(RelationGetDescr(rel), attnum)
+#define RIAttType(rel, attnum)	attnumTypeId(rel, attnum)
 
 #define RI_TRIGTYPE_INSERT 1
 #define RI_TRIGTYPE_UPDATE 2
@@ -2516,8 +2515,6 @@ RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
 						HeapTuple old_row, HeapTuple new_row)
 {
 	RI_ConstraintInfo riinfo;
-	Relation	fk_rel;
-	RI_QueryKey qkey;
 
 	/*
 	 * Get arguments.
@@ -2530,18 +2527,11 @@ RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
 	if (riinfo.nkeys == 0)
 		return true;
 
-	fk_rel = heap_open(riinfo.fk_relid, AccessShareLock);
-
 	switch (riinfo.confmatchtype)
 	{
 		case FKCONSTR_MATCH_UNSPECIFIED:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_KEYEQUAL_UPD);
-
-			heap_close(fk_rel, AccessShareLock);
-
-			/* Return if key's are equal */
+			/* Return true if keys are equal */
 			return ri_KeysEqual(pk_rel, old_row, new_row, &riinfo, true);
 
 			/* Handle MATCH PARTIAL set null delete. */
@@ -2570,8 +2560,6 @@ RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
 						HeapTuple old_row, HeapTuple new_row)
 {
 	RI_ConstraintInfo riinfo;
-	Relation	pk_rel;
-	RI_QueryKey qkey;
 
 	/*
 	 * Get arguments.
@@ -2584,17 +2572,11 @@ RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
 	if (riinfo.nkeys == 0)
 		return true;
 
-	pk_rel = heap_open(riinfo.pk_relid, AccessShareLock);
-
 	switch (riinfo.confmatchtype)
 	{
 		case FKCONSTR_MATCH_UNSPECIFIED:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_KEYEQUAL_UPD);
-			heap_close(pk_rel, AccessShareLock);
-
-			/* Return if key's are equal */
+			/* Return true if keys are equal */
 			return ri_KeysEqual(fk_rel, old_row, new_row, &riinfo, false);
 
 			/* Handle MATCH PARTIAL set null delete. */
