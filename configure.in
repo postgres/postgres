@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.548 2008/02/17 16:36:42 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.549 2008/02/18 21:46:22 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1080,7 +1080,7 @@ fi
 pgac_save_LIBS="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-AC_REPLACE_FUNCS([crypt fseeko getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul unsetenv])
+AC_REPLACE_FUNCS([crypt getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul unsetenv])
 
 LIBS="$pgac_save_LIBS"
 
@@ -1101,13 +1101,6 @@ if test x"$ac_cv_type_struct_option" = xyes ; then
 else
   AC_LIBOBJ(getopt_long)
 fi
-
-# BSD/OS & NetBSD use a custom fseeko/ftello built on fsetpos/fgetpos
-# We override the previous test that said fseeko/ftello didn't exist
-# OS tests are also done in include/c.h and port/fseeko.c
-case $host_os in bsdi*|netbsd*)
-ac_cv_func_fseeko=yes
-esac
 
 # Win32 support
 if test "$PORTNAME" = "win32"; then
@@ -1160,7 +1153,16 @@ AC_CHECK_FUNCS(atexit, [],
                [AC_CHECK_FUNCS(on_exit, [],
                [AC_MSG_ERROR([neither atexit() nor on_exit() found])])])
 
-AC_FUNC_FSEEKO
+AC_REPLACE_FUNCS(fseeko)
+case $host_os in
+	# BSD/OS & NetBSD use a custom fseeko/ftello built on fsetpos/fgetpos
+	bsdi*|netbsd*)
+		AC_DEFINE(HAVE_FSEEKO, 1, [Define to 1 because replacement version used.])
+		ac_cv_func_fseeko=yes;;
+	*)
+		AC_FUNC_FSEEKO;;
+esac
+
 
 #
 # Pthreads
