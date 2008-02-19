@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.549 2008/02/18 21:46:22 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.550 2008/02/19 00:46:43 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1080,7 +1080,7 @@ fi
 pgac_save_LIBS="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-AC_REPLACE_FUNCS([crypt getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul unsetenv])
+AC_REPLACE_FUNCS([crypt fseeko getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul unsetenv])
 
 LIBS="$pgac_save_LIBS"
 
@@ -1153,7 +1153,6 @@ AC_CHECK_FUNCS(atexit, [],
                [AC_CHECK_FUNCS(on_exit, [],
                [AC_MSG_ERROR([neither atexit() nor on_exit() found])])])
 
-AC_REPLACE_FUNCS(fseeko)
 case $host_os in
 	# BSD/OS & NetBSD use a custom fseeko/ftello built on fsetpos/fgetpos
 	bsdi*|netbsd*)
