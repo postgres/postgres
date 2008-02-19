@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.34 2007/10/03 13:43:24 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.35 2008/02/19 12:00:03 mha Exp $
 #
 use Carp;
 use strict;
@@ -260,6 +260,7 @@ EOF
 #define PKGLIBDIR "/lib"
 #define LOCALEDIR "/share/locale"
 #define DOCDIR "/doc"
+#define HTMLDIR "/doc"
 #define MANDIR "/man"
 EOF
         close(O);
