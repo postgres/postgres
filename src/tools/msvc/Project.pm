@@ -3,7 +3,7 @@ package Project;
 #
 # Package that encapsulates a Visual C++ project file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.17 2008/02/17 02:09:32 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.18 2008/02/19 16:15:14 mha Exp $
 #
 use Carp;
 use strict;
@@ -198,6 +198,9 @@ sub AddDir
         {
             next
               if $subdir eq "\$(top_builddir)/src/timezone"; #special case for non-standard include
+            next
+              if $reldir . "\\" . $subdir eq "src\\backend\\port\\darwin";
+
             $self->AddDir($reldir . "\\" . $subdir);
         }
     }
