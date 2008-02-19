@@ -15,7 +15,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.12 2008/02/16 21:16:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.13 2008/02/19 12:06:35 mha Exp $
  */
 
 #include "postgres.h"
@@ -92,7 +92,8 @@ static char *_add(const char *, char *, const char *);
 static char *_conv(int, const char *, char *, const char *);
 static char *_fmt(const char *, const struct pg_tm *, char *,
 	 const char *, int *);
-static char * _yconv(int, int, int, int, char *, const char *);
+static char * _yconv(const int, const int, const int, const int, 
+	 char *, const char * const);
 
 #define IN_NONE 0
 #define IN_SOME 1
