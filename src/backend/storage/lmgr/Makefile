@@ -4,7 +4,7 @@
 #    Makefile for storage/lmgr
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/storage/lmgr/Makefile,v 1.22 2007/01/20 17:16:13 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/storage/lmgr/Makefile,v 1.23 2008/02/19 10:30:08 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,10 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS = lmgr.o lock.o proc.o deadlock.o lwlock.o spin.o s_lock.o
 
-all: SUBSYS.o
-
-SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+include $(top_srcdir)/src/backend/common.mk
 
 ifdef TAS
 TASPATH = $(top_builddir)/src/backend/port/tas.o
@@ -31,4 +28,4 @@ check: s_lock_test
 	./s_lock_test
 
 clean distclean maintainer-clean: 
-	rm -f SUBSYS.o $(OBJS) s_lock_test
+	rm -f s_lock_test

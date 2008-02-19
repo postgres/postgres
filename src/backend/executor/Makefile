@@ -4,7 +4,7 @@
 #    Makefile for executor
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/executor/Makefile,v 1.26 2007/06/11 01:16:22 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/executor/Makefile,v 1.27 2008/02/19 10:30:07 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,10 +23,4 @@ OBJS = execAmi.o execCurrent.o execGrouping.o execJunk.o execMain.o \
        nodeValuesscan.o nodeLimit.o nodeGroup.o \
        nodeSubplan.o nodeSubqueryscan.o nodeTidscan.o tstoreReceiver.o spi.o
 
-all: SUBSYS.o
-
-SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
-
-clean: 
-	rm -f SUBSYS.o $(OBJS) 
+include $(top_srcdir)/src/backend/common.mk

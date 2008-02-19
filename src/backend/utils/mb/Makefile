@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/mb/Makefile,v 1.23 2007/01/20 17:16:13 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/mb/Makefile,v 1.24 2008/02/19 10:30:09 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,15 +13,8 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = encnames.o conv.o mbutils.o wchar.o wstrcmp.o wstrncmp.o
-DIRS = conversion_procs
 
-all install installdirs: SUBSYS.o
-
-uninstall distprep:
+include $(top_srcdir)/src/backend/common.mk
 
 clean distclean maintainer-clean:
-	rm -f SUBSYS.o $(OBJS)
-	@for dir in $(DIRS); do $(MAKE) -C $$dir $@; done
-
-SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) $@ $^
+	$(MAKE) -C conversion_procs $@

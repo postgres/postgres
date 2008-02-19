@@ -4,7 +4,7 @@
 #    Makefile for libpq subsystem (backend half of libpq interface)
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/libpq/Makefile,v 1.38 2007/01/20 17:16:11 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/libpq/Makefile,v 1.39 2008/02/19 10:30:07 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,11 +17,4 @@ include $(top_builddir)/src/Makefile.global
 OBJS = be-fsstubs.o be-secure.o auth.o crypt.o hba.o ip.o md5.o pqcomm.o \
        pqformat.o pqsignal.o
 
-
-all: SUBSYS.o
-
-SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
-
-clean: 
-	rm -f SUBSYS.o $(OBJS) 
+include $(top_srcdir)/src/backend/common.mk

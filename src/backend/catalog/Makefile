@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.65 2007/08/21 01:11:13 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.66 2008/02/19 10:30:07 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,10 +17,9 @@ OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
 
 BKIFILES = postgres.bki postgres.description postgres.shdescription
 
-all: SUBSYS.o $(BKIFILES)
+include $(top_srcdir)/src/backend/common.mk
 
-SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+all: $(BKIFILES)
 
 # Note: there are some undocumented dependencies on the ordering in which
 # the catalog header files are assembled into postgres.bki.  In particular,
@@ -67,4 +66,4 @@ uninstall-data:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)'/, $(BKIFILES) system_views.sql information_schema.sql sql_features.txt)
 
 clean:
-	rm -f SUBSYS.o $(OBJS) $(BKIFILES)
+	rm -f $(BKIFILES)
