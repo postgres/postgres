@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.61.2.3 2006/06/25 04:38:00 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.61.2.4 2008/02/20 22:18:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +35,6 @@ int			optreset;
 /* PID can be negative for standalone backend */
 typedef long pgpid_t;
 
-
-#define WHITESPACE "\f\n\r\t\v" /* as defined by isspace() */
 
 /* postmaster version ident string */
 #define PM_VERSIONSTR "postmaster (PostgreSQL) " PG_VERSION "\n"
@@ -374,32 +372,51 @@ test_postmaster_connection(void)
 	int			i;
 	char		portstr[32];
 	char	   *p;
+	char	   *q;
 
 	*portstr = '\0';
 
-	/* post_opts */
+	/*
+	 * Look in post_opts for a -p switch.
+	 *
+	 * This parsing code is not amazingly bright; it could for instance
+	 * get fooled if ' -p' occurs within a quoted argument value.  Given
+	 * that few people pass complicated settings in post_opts, it's
+	 * probably good enough.
+	 */
 	for (p = post_opts; *p;)
 	{
-		/* advance past whitespace/quoting */
-		while (isspace((unsigned char) *p) || *p == '\'' || *p == '"')
+		/* advance past whitespace */
+		while (isspace((unsigned char) *p))
 			p++;
 
-		if (strncmp(p, "-p", strlen("-p")) == 0)
+		if (strncmp(p, "-p", 2) == 0)
 		{
-			p += strlen("-p");
-			/* advance past whitespace/quoting */
+			p += 2;
+			/* advance past any whitespace/quoting */
 			while (isspace((unsigned char) *p) || *p == '\'' || *p == '"')
 				p++;
-			StrNCpy(portstr, p, Min(strcspn(p, "\"'" WHITESPACE) + 1,
-									sizeof(portstr)));
+			/* find end of value (not including any ending quote!) */
+			q = p;
+			while (*q &&
+				   !(isspace((unsigned char) *q) || *q == '\'' || *q == '"'))
+				q++;
+			/* and save the argument value */
+			StrNCpy(portstr, p, Min((q - p) + 1, sizeof(portstr)));
 			/* keep looking, maybe there is another -p */
+			p = q;
 		}
 		/* Advance to next whitespace */
 		while (*p && !isspace((unsigned char) *p))
 			p++;
 	}
 
-	/* config file */
+	/*
+	 * Search config file for a 'port' option.
+	 *
+	 * This parsing code isn't amazingly bright either, but it should be
+	 * okay for valid port settings.
+	 */
 	if (!*portstr)
 	{
 		char	  **optlines;
@@ -413,28 +430,35 @@ test_postmaster_connection(void)
 
 				while (isspace((unsigned char) *p))
 					p++;
-				if (strncmp(p, "port", strlen("port")) != 0)
+				if (strncmp(p, "port", 4) != 0)
 					continue;
-				p += strlen("port");
+				p += 4;
 				while (isspace((unsigned char) *p))
 					p++;
 				if (*p != '=')
 					continue;
 				p++;
-				while (isspace((unsigned char) *p))
+				/* advance past any whitespace/quoting */
+				while (isspace((unsigned char) *p) || *p == '\'' || *p == '"')
 					p++;
-				StrNCpy(portstr, p, Min(strcspn(p, "#" WHITESPACE) + 1,
-										sizeof(portstr)));
+				/* find end of value (not including any ending quote/comment!) */
+				q = p;
+				while (*q &&
+					   !(isspace((unsigned char) *q) ||
+						 *q == '\'' || *q == '"' || *q == '#'))
+					q++;
+				/* and save the argument value */
+				StrNCpy(portstr, p, Min((q - p) + 1, sizeof(portstr)));
 				/* keep looking, maybe there is another */
 			}
 		}
 	}
 
-	/* environment */
+	/* Check environment */
 	if (!*portstr && getenv("PGPORT") != NULL)
 		StrNCpy(portstr, getenv("PGPORT"), sizeof(portstr));
 
-	/* default */
+	/* Else use compiled-in default */
 	if (!*portstr)
 		snprintf(portstr, sizeof(portstr), "%d", DEF_PGPORT);
 
