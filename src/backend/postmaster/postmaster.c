@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.551 2008/01/11 00:54:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.552 2008/02/20 22:46:24 tgl Exp $
  *
  * NOTES
  *
@@ -665,7 +665,7 @@ PostmasterMain(int argc, char *argv[])
 
 #ifdef EXEC_BACKEND
 	/* Locate executable backend before we change working directory */
-	if (find_other_exec(argv[0], "postgres", PG_VERSIONSTR,
+	if (find_other_exec(argv[0], "postgres", PG_BACKEND_VERSIONSTR,
 						postgres_exec_path) < 0)
 		ereport(FATAL,
 				(errmsg("%s: could not locate matching postgres executable",
