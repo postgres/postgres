@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.71 2008/01/14 13:39:25 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.72 2008/02/20 14:01:45 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,7 +352,7 @@ StartAutoVacLauncher(void)
 	{
 		case -1:
 			ereport(LOG,
-					(errmsg("could not fork autovacuum process: %m")));
+					(errmsg("could not fork autovacuum launcher process: %m")));
 			return 0;
 
 #ifndef EXEC_BACKEND
@@ -1400,7 +1400,7 @@ StartAutoVacWorker(void)
 	{
 		case -1:
 			ereport(LOG,
-					(errmsg("could not fork autovacuum process: %m")));
+					(errmsg("could not fork autovacuum worker process: %m")));
 			return 0;
 
 #ifndef EXEC_BACKEND
