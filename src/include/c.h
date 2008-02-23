@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.222 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.223 2008/02/23 19:11:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,7 +410,7 @@ typedef struct
  */
 struct varlena
 {
-	int32		vl_len_;		/* Do not touch this field directly! */
+	char		vl_len_[4];		/* Do not touch this field directly! */
 	char		vl_dat[1];
 };
 

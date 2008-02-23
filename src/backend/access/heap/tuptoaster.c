@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.81 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.82 2008/02/23 19:11:45 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -65,7 +65,8 @@
 #define VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr) \
 do { \
 	varattrib_1b_e *attre = (varattrib_1b_e *) (attr); \
-	Assert(VARSIZE_ANY_EXHDR(attre) == sizeof(toast_pointer)); \
+	Assert(VARATT_IS_EXTERNAL(attre)); \
+	Assert(VARSIZE_EXTERNAL(attre) == sizeof(toast_pointer) + VARHDRSZ_EXTERNAL); \
 	memcpy(&(toast_pointer), VARDATA_EXTERNAL(attre), sizeof(toast_pointer)); \
 } while (0)
 

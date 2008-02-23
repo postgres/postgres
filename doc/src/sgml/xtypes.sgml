@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.29 2007/05/15 17:39:54 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.30 2008/02/23 19:11:45 tgl Exp $ -->
 
  <sect1 id="xtypes">
   <title>User-Defined Types</title>
@@ -219,7 +219,7 @@ CREATE TYPE complex (
   <productname>PostgreSQL</productname> automatically provides support
   for arrays of that
   type.<indexterm><primary>array</primary><secondary>of user-defined
-  type</secondary></indexterm> For historical reasons, the array type
+  type</secondary></indexterm>  The array type typically
   has the same name as the base type with the underscore character
   (<literal>_</>) prepended.
  </para>
@@ -240,15 +240,16 @@ CREATE TYPE complex (
   If the values of your data type vary in size (in internal form), you should
   make the data type <acronym>TOAST</>-able (see <xref
   linkend="storage-toast">). You should do this even if the data are always
-  too small to be compressed or stored externally because
-  <productname>Postgres</> can save space on small data using
-  <acronym>TOAST</> as well. 
+  too small to be compressed or stored externally, because
+  <acronym>TOAST</> can save space on small data too, by reducing header
+  overhead.
  </para>
 
  <para>
   To do this, the internal representation must follow the standard layout for
-  variable-length data: the first four bytes must be an <type>int32</type>
-  which is never accessed directly (customarily named <literal>vl_len_</>). You
+  variable-length data: the first four bytes must be a <type>char[4]</type>
+  field which is never accessed directly (customarily named
+  <structfield>vl_len_</>). You
   must use <function>SET_VARSIZE()</function> to store the size of the datum
   in this field and <function>VARSIZE()</function> to retrieve it. The C
   functions operating on the data type must always be careful to unpack any
@@ -265,11 +266,24 @@ CREATE TYPE complex (
   to avoid some of the overhead of <function>PG_DETOAST_DATUM</>. You can use
   <function>PG_DETOAST_DATUM_PACKED</> instead (customarily hidden by
   defining a <function>GETARG_DATATYPE_PP</> macro) and using the macros
-  <function>VARSIZE_ANY_EXHDR</> and <function>VARDATA_ANY</> macros.
+  <function>VARSIZE_ANY_EXHDR</> and <function>VARDATA_ANY</> to access
+  a potentially-packed datum.
   Again, the data returned by these macros is not aligned even if the data
   type definition specifies an alignment. If the alignment is important you
   must go through the regular <function>PG_DETOAST_DATUM</> interface.
  </para>
+
+ <note>
+  <para>
+   Older code frequently declares <structfield>vl_len_</> as an
+   <type>int32</> field instead of <type>char[4]</>.  This is OK as long as
+   the struct definition has other fields that have at least <type>int32</>
+   alignment.  But it is dangerous to use such a struct definition when
+   working with a potentially unaligned datum; the compiler may take it as
+   license to assume the datum actually is aligned, leading to core dumps on
+   architectures that are strict about alignment.
+  </para>
+ </note>
 
  <para>
   For further details see the description of the
