@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.551 2008/02/19 01:05:28 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.552 2008/02/24 05:21:54 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1095,8 +1095,13 @@ else
   AC_LIBOBJ(getaddrinfo)
 fi
 
-# similarly, use system's getopt_long() only if system provides struct option.
-if test x"$ac_cv_type_struct_option" = xyes ; then
+# Similarly, use system's getopt_long() only if system provides struct option.
+# Solaris' getopt() doesn't do what we want for long options, so always use
+# our versions on that platform.
+if test "$PORTNAME" = "solaris"; then
+  AC_LIBOBJ(getopt)
+  AC_LIBOBJ(getopt_long)
+elif test x"$ac_cv_type_struct_option" = xyes ; then
   AC_REPLACE_FUNCS([getopt_long])
 else
   AC_LIBOBJ(getopt_long)
