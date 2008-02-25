@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.186 2008/02/25 23:21:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.187 2008/02/25 23:36:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2138,23 +2138,29 @@ ValidateDate(int fmask, bool is2digits, bool bc, struct pg_tm * tm)
 {
 	if (fmask & DTK_M(YEAR))
 	{
-		/* there is no year zero in AD/BC notation; i.e. "1 BC" == year 0 */
 		if (bc)
 		{
-			if (tm->tm_year > 0)
-				tm->tm_year = -(tm->tm_year - 1);
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						 errmsg("inconsistent use of year %04d and \"BC\"",
-								tm->tm_year)));
+			/* there is no year zero in AD/BC notation */
+			if (tm->tm_year <= 0)
+				return DTERR_FIELD_OVERFLOW;
+			/* internally, we represent 1 BC as year zero, 2 BC as -1, etc */
+			tm->tm_year = -(tm->tm_year - 1);
 		}
 		else if (is2digits)
 		{
+			/* allow 2-digit input for 1970-2069 AD; 00 is allowed */
+			if (tm->tm_year < 0)				/* just paranoia */
+				return DTERR_FIELD_OVERFLOW;
 			if (tm->tm_year < 70)
 				tm->tm_year += 2000;
 			else if (tm->tm_year < 100)
 				tm->tm_year += 1900;
+		}
+		else
+		{
+			/* there is no year zero in AD/BC notation */
+			if (tm->tm_year <= 0)
+				return DTERR_FIELD_OVERFLOW;
 		}
 	}
 
