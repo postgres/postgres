@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.160.2.4 2008/01/02 22:05:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.160.2.5 2008/02/25 23:21:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,10 @@ static int DecodeTime(char *str, int fmask, int *tmask,
 static int	DecodeTimezone(char *str, int *tzp);
 static int	DecodePosixTimezone(char *str, int *tzp);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
-static int	DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm);
+static int	DecodeDate(char *str, int fmask, int *tmask, int *is2digits,
+					   struct pg_tm * tm);
+static int	ValidateDate(int fmask, int is2digits, int bc,
+						 struct pg_tm * tm);
 static void TrimTrailingZeros(char *str);
 
 
@@ -1099,7 +1102,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				}
 				else
 				{
-					dterr = DecodeDate(field[i], fmask, &tmask, tm);
+					dterr = DecodeDate(field[i], fmask,
+									   &tmask, &is2digits, tm);
 					if (dterr)
 						return dterr;
 				}
@@ -1311,7 +1315,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					/* Embedded decimal and no date yet? */
 					if (cp != NULL && !(fmask & DTK_DATE_M))
 					{
-						dterr = DecodeDate(field[i], fmask, &tmask, tm);
+						dterr = DecodeDate(field[i], fmask,
+										   &tmask, &is2digits, tm);
 						if (dterr)
 							return dterr;
 					}
@@ -1536,51 +1541,14 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		if (tmask & fmask)
 			return DTERR_BAD_FORMAT;
 		fmask |= tmask;
-	}
+	}				/* end loop over fields */
 
-	if (fmask & DTK_M(YEAR))
-	{
-		/* there is no year zero in AD/BC notation; i.e. "1 BC" == year 0 */
-		if (bc)
-		{
-			if (tm->tm_year > 0)
-				tm->tm_year = -(tm->tm_year - 1);
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						 errmsg("inconsistent use of year %04d and \"BC\"",
-								tm->tm_year)));
-		}
-		else if (is2digits)
-		{
-			if (tm->tm_year < 70)
-				tm->tm_year += 2000;
-			else if (tm->tm_year < 100)
-				tm->tm_year += 1900;
-		}
-	}
+	/* do final checking/adjustment of Y/M/D fields */
+	dterr = ValidateDate(fmask, is2digits, bc, tm);
+	if (dterr)
+		return dterr;
 
-	/* now that we have correct year, decode DOY */
-	if (fmask & DTK_M(DOY))
-	{
-		j2date(date2j(tm->tm_year, 1, 1) + tm->tm_yday - 1,
-			   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-	}
-
-	/* check for valid month */
-	if (fmask & DTK_M(MONTH))
-	{
-		if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
-			return DTERR_MD_FIELD_OVERFLOW;
-	}
-
-	/* minimal check for valid day */
-	if (fmask & DTK_M(DAY))
-	{
-		if (tm->tm_mday < 1 || tm->tm_mday > 31)
-			return DTERR_MD_FIELD_OVERFLOW;
-	}
-
+	/* handle AM/PM */
 	if (mer != HR24 && tm->tm_hour > 12)
 		return DTERR_FIELD_OVERFLOW;
 	if (mer == AM && tm->tm_hour == 12)
@@ -1597,14 +1565,6 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				return 1;
 			return DTERR_BAD_FORMAT;
 		}
-
-		/*
-		 * Check for valid day of month, now that we know for sure the month
-		 * and year.  Note we don't use MD_FIELD_OVERFLOW here, since it seems
-		 * unlikely that "Feb 29" is a YMD-order error.
-		 */
-		if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
-			return DTERR_FIELD_OVERFLOW;
 
 		/* timezone not specified? then find local timezone if possible */
 		if (tzp != NULL && !(fmask & DTK_M(TZ)))
@@ -1775,6 +1735,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	int			val;
 	int			dterr;
 	int			is2digits = FALSE;
+	int			bc = FALSE;
 	int			mer = HR24;
 
 	*dtype = DTK_TIME;
@@ -1805,7 +1766,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 				if (i == 0 && nf >= 2 &&
 					(ftype[nf - 1] == DTK_DATE || ftype[1] == DTK_TIME))
 				{
-					dterr = DecodeDate(field[i], fmask, &tmask, tm);
+					dterr = DecodeDate(field[i], fmask,
+									   &tmask, &is2digits, tm);
 					if (dterr)
 						return dterr;
 				}
@@ -2076,7 +2038,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						 */
 						if (i == 0 && nf >= 2 && ftype[nf - 1] == DTK_DATE)
 						{
-							dterr = DecodeDate(field[i], fmask, &tmask, tm);
+							dterr = DecodeDate(field[i], fmask,
+											   &tmask, &is2digits, tm);
 							if (dterr)
 								return dterr;
 						}
@@ -2205,6 +2168,10 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						mer = val;
 						break;
 
+					case ADBC:
+						bc = (val == BC);
+						break;
+
 					case UNITS:
 						tmask = 0;
 						ptype = val;
@@ -2240,8 +2207,14 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		if (tmask & fmask)
 			return DTERR_BAD_FORMAT;
 		fmask |= tmask;
-	}
+	}				/* end loop over fields */
 
+	/* do final checking/adjustment of Y/M/D fields */
+	dterr = ValidateDate(fmask, is2digits, bc, tm);
+	if (dterr)
+		return dterr;
+
+	/* handle AM/PM */
 	if (mer != HR24 && tm->tm_hour > 12)
 		return DTERR_FIELD_OVERFLOW;
 	if (mer == AM && tm->tm_hour == 12)
@@ -2300,10 +2273,15 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
  * Decode date string which includes delimiters.
  * Return 0 if okay, a DTERR code if not.
  *
- * Insist on a complete set of fields.
+ *	str: field to be parsed
+ *	fmask: bitmask for field types already seen
+ *	*tmask: receives bitmask for fields found here
+ *	*is2digits: set to TRUE if we find 2-digit year
+ *	*tm: field values are stored into appropriate members of this struct
  */
 static int
-DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
+DecodeDate(char *str, int fmask, int *tmask, int *is2digits,
+		   struct pg_tm * tm)
 {
 	fsec_t		fsec;
 	int			nf = 0;
@@ -2311,12 +2289,12 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
 				len;
 	int			dterr;
 	bool		haveTextMonth = FALSE;
-	int			bc = FALSE;
-	int			is2digits = FALSE;
 	int			type,
 				val,
 				dmask = 0;
 	char	   *field[MAXDATEFIELDS];
+
+	*tmask = 0;
 
 	/* parse this string... */
 	while (*str != '\0' && nf < MAXDATEFIELDS)
@@ -2343,14 +2321,6 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
 		nf++;
 	}
 
-#if 0
-	/* don't allow too many fields */
-	if (nf > 3)
-		return DTERR_BAD_FORMAT;
-#endif
-
-	*tmask = 0;
-
 	/* look first for text fields, since that will be unambiguous month */
 	for (i = 0; i < nf; i++)
 	{
@@ -2366,10 +2336,6 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
 				case MONTH:
 					tm->tm_mon = val;
 					haveTextMonth = TRUE;
-					break;
-
-				case ADBC:
-					bc = (val == BC);
 					break;
 
 				default:
@@ -2397,7 +2363,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
 
 		dterr = DecodeNumber(len, field[i], haveTextMonth, fmask,
 							 &dmask, tm,
-							 &fsec, &is2digits);
+							 &fsec, is2digits);
 		if (dterr)
 			return dterr;
 
@@ -2411,23 +2377,38 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
 	if ((fmask & ~(DTK_M(DOY) | DTK_M(TZ))) != DTK_DATE_M)
 		return DTERR_BAD_FORMAT;
 
-	/* there is no year zero in AD/BC notation; i.e. "1 BC" == year 0 */
-	if (bc)
+	/* validation of the field values must wait until ValidateDate() */
+
+	return 0;
+}
+
+/* ValidateDate()
+ * Check valid year/month/day values, handle BC and DOY cases
+ * Return 0 if okay, a DTERR code if not.
+ */
+static int
+ValidateDate(int fmask, int is2digits, int bc, struct pg_tm * tm)
+{
+	if (fmask & DTK_M(YEAR))
 	{
-		if (tm->tm_year > 0)
-			tm->tm_year = -(tm->tm_year - 1);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 errmsg("inconsistent use of year %04d and \"BC\"",
-							tm->tm_year)));
-	}
-	else if (is2digits)
-	{
-		if (tm->tm_year < 70)
-			tm->tm_year += 2000;
-		else if (tm->tm_year < 100)
-			tm->tm_year += 1900;
+		/* there is no year zero in AD/BC notation; i.e. "1 BC" == year 0 */
+		if (bc)
+		{
+			if (tm->tm_year > 0)
+				tm->tm_year = -(tm->tm_year - 1);
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+						 errmsg("inconsistent use of year %04d and \"BC\"",
+								tm->tm_year)));
+		}
+		else if (is2digits)
+		{
+			if (tm->tm_year < 70)
+				tm->tm_year += 2000;
+			else if (tm->tm_year < 100)
+				tm->tm_year += 1900;
+		}
 	}
 
 	/* now that we have correct year, decode DOY */
@@ -2438,16 +2419,29 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
 	}
 
 	/* check for valid month */
-	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
-		return DTERR_MD_FIELD_OVERFLOW;
+	if (fmask & DTK_M(MONTH))
+	{
+		if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
+			return DTERR_MD_FIELD_OVERFLOW;
+	}
 
-	/* check for valid day */
-	if (tm->tm_mday < 1 || tm->tm_mday > 31)
-		return DTERR_MD_FIELD_OVERFLOW;
+	/* minimal check for valid day */
+	if (fmask & DTK_M(DAY))
+	{
+		if (tm->tm_mday < 1 || tm->tm_mday > 31)
+			return DTERR_MD_FIELD_OVERFLOW;
+	}
 
-	/* We don't want to hint about DateStyle for Feb 29 */
-	if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
-		return DTERR_FIELD_OVERFLOW;
+	if ((fmask & DTK_DATE_M) == DTK_DATE_M)
+	{
+		/*
+		 * Check for valid day of month, now that we know for sure the month
+		 * and year.  Note we don't use MD_FIELD_OVERFLOW here, since it seems
+		 * unlikely that "Feb 29" is a YMD-order error.
+		 */
+		if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
+			return DTERR_FIELD_OVERFLOW;
+	}
 
 	return 0;
 }
