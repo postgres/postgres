@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.110 2008/02/26 06:41:23 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.111 2008/02/26 10:30:06 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -116,7 +116,7 @@ ifeq ($(PORTNAME), darwin)
   endif
   shlib			= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
   shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
-  BUILD.exports		= $(AWK) '/^[^#]/ {printf "_%s\n",$$1}' $< >$@
+  BUILD.exports		= $(AWK) '/^[^\#]/ {printf "_%s\n",$$1}' $< >$@
   ifneq (,$(SHLIB_EXPORTS))
     exported_symbols_list = -exported_symbols_list $(SHLIB_EXPORTS:%.txt=%.list)
   endif
