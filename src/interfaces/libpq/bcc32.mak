@@ -170,8 +170,8 @@ LINK32_FLAGS = -Gn -L$(BCB)\lib;$(INTDIR); -x -Tpd -v
 <<
 	implib -w "$(OUTDIR)\blibpqdll.lib" blibpqdll.def $@
 
-"$(INTDIR)\libpq.res" : "$(INTDIR)" libpq.rc
-	$(RSC) $(RSC_PROJ) libpq.rc
+"$(INTDIR)\libpq.res" : "$(INTDIR)" libpq-dist.rc
+	$(RSC) $(RSC_PROJ) libpq-dist.rc
 
 "$(OUTDIR)\blibpq.lib": $(LIB32_OBJS)
 	$(LIB32) $@ @<<

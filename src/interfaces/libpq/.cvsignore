@@ -1,4 +1,4 @@
 libpqdll.def
 libpqddll.def
 blibpqdll.def
-libpq.rc
+libpq-dist.rc
