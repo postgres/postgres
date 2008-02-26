@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/encode.c,v 1.20 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/encode.c,v 1.21 2008/02/26 02:54:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ struct pg_encoding
 	unsigned	(*decode) (const char *data, unsigned dlen, char *res);
 };
 
-static struct pg_encoding *pg_find_encoding(const char *name);
+static const struct pg_encoding *pg_find_encoding(const char *name);
 
 /*
  * SQL functions.
@@ -42,7 +42,7 @@ binary_encode(PG_FUNCTION_ARGS)
 	int			datalen,
 				resultlen,
 				res;
-	struct pg_encoding *enc;
+	const struct pg_encoding *enc;
 
 	datalen = VARSIZE(data) - VARHDRSZ;
 
@@ -78,7 +78,7 @@ binary_decode(PG_FUNCTION_ARGS)
 	int			datalen,
 				resultlen,
 				res;
-	struct pg_encoding *enc;
+	const struct pg_encoding *enc;
 
 	datalen = VARSIZE(data) - VARHDRSZ;
 
@@ -348,10 +348,13 @@ b64_dec_len(const char *src, unsigned srclen)
  * Minimally escape bytea to text.
  * De-escape text to bytea.
  *
- * Only two characters are escaped:
- * \0 (null) and \\ (backslash)
+ * We must escape zero bytes and high-bit-set bytes to avoid generating
+ * text that might be invalid in the current encoding, or that might
+ * change to something else if passed through an encoding conversion
+ * (leading to failing to de-escape to the original bytea value).
+ * Also of course backslash itself has to be escaped.
  *
- * De-escapes \\ and any \### octal
+ * De-escaping processes \\ and any \### octal
  */
 
 #define VAL(CH)			((CH) - '0')
@@ -366,16 +369,18 @@ esc_encode(const char *src, unsigned srclen, char *dst)
 
 	while (src < end)
 	{
-		if (*src == '\0')
+		unsigned char c = (unsigned char) *src;
+
+		if (c == '\0' || IS_HIGHBIT_SET(c))
 		{
 			rp[0] = '\\';
-			rp[1] = '0';
-			rp[2] = '0';
-			rp[3] = '0';
+			rp[1] = DIG(c >> 6);
+			rp[2] = DIG((c >> 3) & 7);
+			rp[3] = DIG(c & 7);
 			rp += 4;
 			len += 4;
 		}
-		else if (*src == '\\')
+		else if (c == '\\')
 		{
 			rp[0] = '\\';
 			rp[1] = '\\';
@@ -384,7 +389,7 @@ esc_encode(const char *src, unsigned srclen, char *dst)
 		}
 		else
 		{
-			*rp++ = *src;
+			*rp++ = c;
 			len++;
 		}
 
@@ -450,7 +455,7 @@ esc_enc_len(const char *src, unsigned srclen)
 
 	while (src < end)
 	{
-		if (*src == '\0')
+		if (*src == '\0' || IS_HIGHBIT_SET(*src))
 			len += 4;
 		else if (*src == '\\')
 			len += 2;
@@ -510,7 +515,7 @@ esc_dec_len(const char *src, unsigned srclen)
  * Common
  */
 
-static struct
+static const struct
 {
 	const char *name;
 	struct pg_encoding enc;
@@ -543,7 +548,7 @@ static struct
 	}
 };
 
-static struct pg_encoding *
+static const struct pg_encoding *
 pg_find_encoding(const char *name)
 {
 	int			i;
