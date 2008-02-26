@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.408 2008/02/26 16:07:16 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.409 2008/02/26 18:01:26 petere Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1823,6 +1823,10 @@ ssh -L 63333:foo.com:5432 joe@foo.com
 <programlisting>
 ssh -L 63333:db.foo.com:5432 joe@shell.foo.com
 </programlisting>
+   Note that this way the connection
+   from <literal>shell.foo.com</literal>
+   to <literal>db.foo.com</literal> will not be encrypted by the SSH
+   tunnel.
    SSH offers quite a few configuration possibilities when the network
    is restricted in various ways.  Please refer to the SSH
    documentation for details.
