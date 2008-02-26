@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.126 2008/02/25 17:55:42 petere Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.127 2008/02/26 14:42:27 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -137,7 +137,7 @@ $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
 
 
 utils/probes.o: utils/probes.d $(SUBDIROBJS)
-	$(DTRACE) $(DTRACEFLAGS) -G -s $^ -o $@
+	$(DTRACE) $(DTRACEFLAGS) -G -s $(call expand_subsys,$^) -o $@
 
 
 ##########################################################################
