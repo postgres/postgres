@@ -24,10 +24,7 @@ else
 endif
 
 
-EXPSUFF= .exp
-IMPSUFF= .imp
-
-POSTGRES_IMP= postgres$(IMPSUFF)
+POSTGRES_IMP= postgres.imp
 
 ifdef PGXS
 BE_DLLLIBS= -Wl,-bI:$(bindir)/postgres/$(POSTGRES_IMP)
@@ -37,10 +34,10 @@ endif
 
 MKLDEXPORT=$(top_srcdir)/src/backend/port/aix/mkldexport.sh
 
-%$(EXPSUFF): %.o
-	$(MKLDEXPORT) $*.o > $*$(EXPSUFF)
+%.exp: %.o
+	$(MKLDEXPORT) $^ >$@
 
-%$(DLSUFFIX): %.o %$(EXPSUFF)
-	$(CC) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $*.o -Wl,-bE:$*$(EXPSUFF) $(SHLIB_LINK)
+%$(DLSUFFIX): %.o %.exp
+	$(CC) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $*.o -Wl,-bE:$*.exp $(SHLIB_LINK)
 
 sqlmansect = 7

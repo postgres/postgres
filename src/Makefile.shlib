@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.111 2008/02/26 10:30:06 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.112 2008/02/26 10:45:24 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -99,6 +99,7 @@ soname = lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
 ifeq ($(PORTNAME), aix)
   shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
   haslibarule   = yes
+  exports_file		= lib$(NAME).exp
 endif
 
 ifeq ($(PORTNAME), darwin)
@@ -117,8 +118,9 @@ ifeq ($(PORTNAME), darwin)
   shlib			= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
   shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
   BUILD.exports		= $(AWK) '/^[^\#]/ {printf "_%s\n",$$1}' $< >$@
-  ifneq (,$(SHLIB_EXPORTS))
-    exported_symbols_list = -exported_symbols_list $(SHLIB_EXPORTS:%.txt=%.list)
+  exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
+  ifneq (,$(exports_file))
+    exported_symbols_list = -exported_symbols_list $(exports_file)
   endif
 endif
 
@@ -193,8 +195,9 @@ endif
 ifeq ($(PORTNAME), linux)
   LINK.shared		= $(COMPILER) -shared -Wl,-soname,$(soname)
   BUILD.exports		= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
-  ifneq (,$(SHLIB_EXPORTS))
-    LINK.shared		+= -Wl,--version-script=$(SHLIB_EXPORTS:%.txt=%.list)
+  exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
+  ifneq (,$(exports_file))
+    LINK.shared		+= -Wl,--version-script=$(exports_file)
   endif
 endif
 
@@ -284,8 +287,7 @@ endif #haslibarule
 
 ifeq ($(enable_shared), yes)
 
-ifneq ($(PORTNAME), win32)
-ifneq ($(PORTNAME), cygwin)
+ifeq (,$(filter cygwin win32,$(PORTNAME)))
 ifneq ($(PORTNAME), aix)
 
 # Normal case
@@ -321,46 +323,35 @@ else # PORTNAME == aix
 $(shlib) lib$(NAME).a: $(OBJS)
 	$(LINK.static) lib$(NAME).a $^
 	$(RANLIB) lib$(NAME).a
-	$(MKLDEXPORT) lib$(NAME).a > lib$(NAME)$(EXPSUFF)
-	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $(shlib) lib$(NAME).a -Wl,-bE:lib$(NAME)$(EXPSUFF) $(SHLIB_LINK)
+	$(MKLDEXPORT) lib$(NAME).a >$(exports_file)
+	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $(shlib) lib$(NAME).a -Wl,-bE:$(exports_file) $(SHLIB_LINK)
 	rm -f lib$(NAME).a
 	$(AR) $(AROPT) lib$(NAME).a $(shlib)
 
 endif # PORTNAME == aix
 
-else # PORTNAME == cygwin
+else # PORTNAME == cygwin || PORTNAME == win32
 
-# Cygwin case
-$(shlib) lib$(NAME).a: $(OBJS)
-ifndef DLL_DEFFILE
-	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $(NAME).def $(OBJS)
-	$(DLLWRAP) $(LDFLAGS_SL) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
-	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(NAME).def --output-lib lib$(NAME).a
-else
-	$(DLLWRAP) $(LDFLAGS_SL) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(DLL_DEFFILE) $(OBJS) $(SHLIB_LINK)
-	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib lib$(NAME).a
-endif
+# Cygwin or Win32 case
 
-endif # PORTNAME == cygwin
-
-else # PORTNAME == win32
-
-ifneq (,$(SHLIB_EXPORTS))
 DLL_DEFFILE = lib$(NAME)dll.def
+
+# If SHLIB_EXPORTS is set, the rules below will build a .def file from
+# that.  Else we build a temporary one here.
+ifeq (,$(SHLIB_EXPORTS))
+exports_file = $(DLL_DEFFILE)
+
+$(exports_file): $(OBJS)
+	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $@ $^
 endif
 
-# win32 case
-$(shlib) lib$(NAME).a: $(OBJS)
-ifndef DLL_DEFFILE
-	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $(NAME).def $(OBJS)
-	$(DLLWRAP) $(LDFLAGS_SL) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
-	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(NAME).def --output-lib lib$(NAME).a
-else
-	$(DLLWRAP) $(LDFLAGS_SL) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(DLL_DEFFILE) $(OBJS) $(SHLIB_LINK)
-	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib lib$(NAME).a
-endif
+$(shlib): $(OBJS) $(DLL_DEFFILE)
+	$(DLLWRAP) $(LDFLAGS_SL) -o $@ --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(DLL_DEFFILE) $(OBJS) $(SHLIB_LINK)
 
-endif # PORTNAME == win32
+lib$(NAME).a: $(shlib) $(DLL_DEFFILE)
+	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib $@
+
+endif # PORTNAME == cygwin || PORTNAME == win32
 
 endif # enable_shared
 
@@ -464,17 +455,7 @@ endif # enable_shared
 clean-lib:
 	rm -f lib$(NAME).a
 ifeq ($(enable_shared), yes)
-	rm -f $(shlib_bare) $(shlib_major) $(shlib) $(SHLIB_EXPORTS:%.txt=%.list)
-ifdef EXPSUFF
-	rm -f lib$(NAME)$(EXPSUFF)
-endif
-endif
-ifeq ($(PORTNAME), cygwin)
-	rm -f $(NAME).dll $(NAME).def
-endif
-
-ifeq ($(PORTNAME), win32)
-	rm -f $(NAME).dll $(NAME).def
+	rm -f $(shlib_bare) $(shlib_major) $(shlib) $(exports_file)
 endif
 
 ifneq (,$(SHLIB_EXPORTS))
