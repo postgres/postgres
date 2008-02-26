@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.160 2008/02/13 18:14:46 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.161 2008/02/26 06:41:24 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -42,7 +42,6 @@ endif
 
 ifeq ($(PORTNAME), win32)
 OBJS += win32.o pgsleep.o libpqrc.o
-DLL_DEFFILE=libpqdll.def
 
 libpqrc.o: libpq.rc
 	windres -i libpq.rc -o libpqrc.o
@@ -65,8 +64,9 @@ ifeq ($(PORTNAME), win32)
 SHLIB_LINK += -lshfolder -lwsock32 -lws2_32 -lsecur32 $(filter -leay32 -lssleay32 -lcomerr32 -lkrb5_32, $(LIBS))
 endif
 
+SHLIB_EXPORTS = exports.txt
 
-all: def-files $(srcdir)/libpq.rc all-lib
+all: $(srcdir)/libpq.rc all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
@@ -90,62 +90,7 @@ encnames.c wchar.c : % : $(backend_src)/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
 
 
-# We need several not-quite-identical variants of .DEF files to build libpq
-# DLLs for Windows.  These are made from the single source file exports.txt.
-# Since we can't assume that Windows boxes will have sed, the .DEF files are
-# always built and included in distribution tarballs.
-
-distprep: def-files $(srcdir)/libpq.rc
-
-.PHONY: def-files
-
-def-files: $(srcdir)/libpqdll.def $(srcdir)/libpqddll.def $(srcdir)/blibpqdll.def
-
-$(srcdir)/libpqdll.def: exports.txt
-	echo '; DEF file for MS VC++' > $@
-	echo 'LIBRARY LIBPQ' >> $@
-	echo 'EXPORTS' >> $@
-	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1@ \2/' < $< >> $@
-
-$(srcdir)/libpqddll.def: exports.txt
-	echo '; DEF file for MS VC++' > $@
-	echo 'LIBRARY LIBPQD' >> $@
-	echo 'EXPORTS' >> $@
-	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1@ \2/' < $< >> $@
-
-$(srcdir)/blibpqdll.def: exports.txt
-	echo '; DEF file for Borland C++ Builder' > $@
-	echo 'LIBRARY BLIBPQ' >> $@
-	echo 'EXPORTS' >> $@
-	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    _\1@ \2/' < $< >> $@
-	echo '' >> $@
-	echo '; Aliases for MS compatible names' >> $@
-	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1= _\1/' < $< | sed 's/ *$$//' >> $@
-
-# Where possible, restrict the symbols exported by the library to just the
-# official list, so as to avoid unintentional ABI changes.  On recent Darwin
-# this also quiets multiply-defined-symbol warnings in programs that use
-# libpgport along with libpq.
-
-ifeq ($(PORTNAME), darwin)
-$(shlib): exports.list
-
-exports.list: exports.txt
-	$(AWK) '/^[^#]/ {printf "_%s\n",$$1}' $< >$@
-
-exported_symbols_list = -exported_symbols_list exports.list
-endif
-
-ifeq ($(PORTNAME), linux)
-$(shlib): exports.list
-
-exports.list: exports.txt
-	echo '{ global:' >$@
-	$(AWK) '/^[^#]/ {printf "%s;\n",$$1}' $< >>$@
-	echo ' local: *; };' >>$@
-
-exported_symbols_list = -Wl,--version-script=exports.list
-endif
+distprep: $(srcdir)/libpq.rc
 
 # depend on Makefile.global to force rebuild on re-run of configure
 $(srcdir)/libpq.rc: libpq.rc.in $(top_builddir)/src/Makefile.global
@@ -169,9 +114,9 @@ uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(includedir)/libpq-fe.h' '$(DESTDIR)$(includedir_internal)/libpq-int.h' '$(DESTDIR)$(includedir_internal)/pqexpbuffer.h' '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
 clean distclean: clean-lib
-	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c inet_aton.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c md5.c ip.c encnames.c wchar.c win32error.c pgsleep.c pthread.h exports.list
+	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c inet_aton.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c md5.c ip.c encnames.c wchar.c win32error.c pgsleep.c pthread.h
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
 
-maintainer-clean: distclean
-	rm -f $(srcdir)/libpqdll.def $(srcdir)/libpqddll.def $(srcdir)/blibpqdll.def $(srcdir)/libpq.rc
+maintainer-clean: distclean maintainer-clean-lib
+	rm -f $(srcdir)/libpq.rc

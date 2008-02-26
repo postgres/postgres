@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.109 2007/02/20 22:45:57 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.110 2008/02/26 06:41:23 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,6 +24,8 @@
 # OBJS                  List of object files to include in library
 # SHLIB_LINK            If shared library relies on other libraries,
 #                       additional stuff to put in its link command
+# SHLIB_EXPORTS         (optional) Name of file containing list of symbols to
+#                       export
 # (If you want a patchlevel, include it in SO_MINOR_VERSION, e.g., "6.2".)
 #
 # Optional flags when building DLL's (only applicable to win32 and cygwin
@@ -31,8 +33,6 @@
 # DLLTOOL_DEFFLAGS      Additional flags when creating the dll .def file
 # DLLTOOL_LIBFLAGS      Additional flags when creating the lib<module>.a file
 # DLLWRAP_FLAGS         Additional flags to dllwrap
-# DLL_DEFFILE           Use pre-existing .def file instead of auto-generating
-#                       one with all exports in it (win32 only).
 #
 # The module Makefile must also include
 # $(top_builddir)/src/Makefile.global before including this file.
@@ -44,6 +44,7 @@
 # install-lib           install the libraries into $(libdir)
 # uninstall-lib         remove the libraries from $(libdir)
 # clean-lib             delete the static and shared libraries from the build dir
+# maintainer-clean-lib  delete .def files built for win32
 #
 # Since `all-lib' is the first rule in this file you probably want to
 # have the `all' target before including this file. In the most simple
@@ -115,6 +116,10 @@ ifeq ($(PORTNAME), darwin)
   endif
   shlib			= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
   shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
+  BUILD.exports		= $(AWK) '/^[^#]/ {printf "_%s\n",$$1}' $< >$@
+  ifneq (,$(SHLIB_EXPORTS))
+    exported_symbols_list = -exported_symbols_list $(SHLIB_EXPORTS:%.txt=%.list)
+  endif
 endif
 
 ifeq ($(PORTNAME), openbsd)
@@ -186,7 +191,11 @@ ifeq ($(PORTNAME), irix)
 endif
 
 ifeq ($(PORTNAME), linux)
-  LINK.shared		= $(COMPILER) -shared -Wl,-soname,$(soname) $(exported_symbols_list)
+  LINK.shared		= $(COMPILER) -shared -Wl,-soname,$(soname)
+  BUILD.exports		= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
+  ifneq (,$(SHLIB_EXPORTS))
+    LINK.shared		+= -Wl,--version-script=$(SHLIB_EXPORTS:%.txt=%.list)
+  endif
 endif
 
 ifeq ($(PORTNAME), solaris)
@@ -293,6 +302,19 @@ ifneq ($(shlib), $(shlib_bare))
 	$(LN_S) $(shlib) $(shlib_bare)
 endif
 
+# Where possible, restrict the symbols exported by the library to just the
+# official list, so as to avoid unintentional ABI changes.  On recent Darwin
+# this also quiets multiply-defined-symbol warnings in programs that use
+# libpgport along with libpq.
+ifneq (,$(SHLIB_EXPORTS))
+ifdef BUILD.exports
+$(shlib): $(SHLIB_EXPORTS:%.txt=%.list)
+
+$(SHLIB_EXPORTS:%.txt=%.list): %.list: %.txt
+	$(BUILD.exports)
+endif
+endif
+
 else # PORTNAME == aix
 
 # AIX case
@@ -303,7 +325,7 @@ $(shlib) lib$(NAME).a: $(OBJS)
 	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $(shlib) lib$(NAME).a -Wl,-bE:lib$(NAME)$(EXPSUFF) $(SHLIB_LINK)
 	rm -f lib$(NAME).a
 	$(AR) $(AROPT) lib$(NAME).a $(shlib)
-	
+
 endif # PORTNAME == aix
 
 else # PORTNAME == cygwin
@@ -323,6 +345,10 @@ endif # PORTNAME == cygwin
 
 else # PORTNAME == win32
 
+ifneq (,$(SHLIB_EXPORTS))
+DLL_DEFFILE = lib$(NAME)dll.def
+endif
+
 # win32 case
 $(shlib) lib$(NAME).a: $(OBJS)
 ifndef DLL_DEFFILE
@@ -337,6 +363,46 @@ endif
 endif # PORTNAME == win32
 
 endif # enable_shared
+
+
+# We need several not-quite-identical variants of .DEF files to build
+# DLLs for Windows.  These are made from the single source file
+# exports.txt.  Since we can't assume that Windows boxes will have
+# sed, the .DEF files are always built and included in distribution
+# tarballs.
+
+ifneq (,$(SHLIB_EXPORTS))
+all: def-files
+
+distprep: def-files
+
+.PHONY: def-files
+
+def-files: $(srcdir)/lib$(NAME)dll.def $(srcdir)/lib$(NAME)ddll.def $(srcdir)/blib$(NAME)dll.def
+
+UC_NAME = $(shell echo $(NAME) | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+
+$(srcdir)/lib$(NAME)dll.def: $(SHLIB_EXPORTS)
+	echo '; DEF file for MS VC++' >$@
+	echo 'LIBRARY LIB$(UC_NAME)' >>$@
+	echo 'EXPORTS' >>$@
+	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
+
+$(srcdir)/lib$(NAME)ddll.def: $(SHLIB_EXPORTS)
+	echo '; DEF file for MS VC++' >$@
+	echo 'LIBRARY LIB$(UC_NAME)D' >>$@
+	echo 'EXPORTS' >>$@
+	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
+
+$(srcdir)/blib$(NAME)dll.def: $(SHLIB_EXPORTS)
+	echo '; DEF file for Borland C++ Builder' >$@
+	echo 'LIBRARY BLIB$(UC_NAME)' >>$@
+	echo 'EXPORTS' >>$@
+	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    _\1@ \2/' $< >>$@
+	echo >>$@
+	echo '; Aliases for MS compatible names' >> $@
+	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1= _\1/' $< | sed 's/ *$$//' >>$@
+endif # SHLIB_EXPORTS
 
 
 ##
@@ -398,7 +464,7 @@ endif # enable_shared
 clean-lib:
 	rm -f lib$(NAME).a
 ifeq ($(enable_shared), yes)
-	rm -f $(shlib_bare) $(shlib_major) $(shlib)
+	rm -f $(shlib_bare) $(shlib_major) $(shlib) $(SHLIB_EXPORTS:%.txt=%.list)
 ifdef EXPSUFF
 	rm -f lib$(NAME)$(EXPSUFF)
 endif
@@ -409,4 +475,9 @@ endif
 
 ifeq ($(PORTNAME), win32)
 	rm -f $(NAME).dll $(NAME).def
+endif
+
+ifneq (,$(SHLIB_EXPORTS))
+maintainer-clean-lib:
+	rm -f $(srcdir)/lib$(NAME)dll.def $(srcdir)/lib$(NAME)ddll.def $(srcdir)/blib$(NAME)dll.def
 endif
