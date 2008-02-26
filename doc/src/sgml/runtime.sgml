@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.407 2008/01/31 23:31:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.408 2008/02/26 16:07:16 petere Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1771,33 +1771,61 @@ chmod og-rwx server.key
    <command>ssh</command> as some user. Then you can establish a secure
    tunnel with a command like this from the client machine:
 <programlisting>
-ssh -L 3333:foo.com:5432 joe@foo.com
+ssh -L 63333:localhost:5432 joe@foo.com
 </programlisting>
-   The first number in the <option>-L</option> argument, 3333, is the
-   port number of your end of the tunnel; it can be chosen freely. The
+   The first number in the <option>-L</option> argument, 63333, is the
+   port number of your end of the tunnel; it can be chosen freely.
+   (IANA reserves ports 49152 through 65535 for private use.)  The
    second number, 5432, is the remote end of the tunnel: the port
-   number your server is using. The name or IP address between
-   the port numbers is the host with the database server you are going
-   to connect to. In order to connect to the database server using
-   this tunnel, you connect to port 3333 on the local machine:
+   number your server is using. The name or IP address between the
+   port numbers is the host with the database server you are going to
+   connect to, as seen from the host you are logging in to, which
+   is <literal>foo.com</literal> in this example. In order to connect
+   to the database server using this tunnel, you connect to port 63333
+   on the local machine:
 <programlisting>
-psql -h localhost -p 3333 postgres
+psql -h localhost -p 63333 postgres
 </programlisting>
    To the database server it will then look as though you are really
-   user <literal>joe@foo.com</literal> and it will use whatever
-   authentication procedure was configured for connections from this
-   user and host.  Note that the server will not think the connection is
-   SSL-encrypted, since in fact it is not encrypted between the
+   user <literal>joe</literal> on host <literal>foo.com</literal>
+   connecting to <literal>localhost</literal> in that context, and it
+   will use whatever authentication procedure was configured for
+   connections from this user and host.  Note that the server will not
+   think the connection is SSL-encrypted, since in fact it is not
+   encrypted between the
    <application>SSH</application> server and the
    <productname>PostgreSQL</productname> server.  This should not pose any
    extra security risk as long as they are on the same machine.
   </para>
+
   <para>
    In order for the
    tunnel setup to succeed you must be allowed to connect via
    <command>ssh</command> as <literal>joe@foo.com</literal>, just
    as if you had attempted to use <command>ssh</command> to set up a
    terminal session.
+  </para>
+
+  <para>
+   You could also have set up the port forwarding as
+<programlisting>
+ssh -L 63333:foo.com:5432 joe@foo.com
+</programlisting>
+   but then the database server will see the connection as coming in
+   on its <literal>foo.com</literal> interface, which is not opened by
+   the default setting <literal>listen_addresses =
+   'localhost'</literal>.  This is usually not what you want.
+  </para>
+
+  <para>
+   If you have to <quote>hop</quote> to the database server via some
+   login host, one possible setup could look like this:
+<programlisting>
+ssh -L 63333:db.foo.com:5432 joe@shell.foo.com
+</programlisting>
+   SSH offers quite a few configuration possibilities when the network
+   is restricted in various ways.  Please refer to the SSH
+   documentation for details.
   </para>
 
   <tip>
