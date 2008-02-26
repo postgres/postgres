@@ -1,7 +1,7 @@
 #
 # Common make rules for backend
 #
-# $PostgreSQL: pgsql/src/backend/common.mk,v 1.3 2008/02/26 07:20:38 petere Exp $
+# $PostgreSQL: pgsql/src/backend/common.mk,v 1.4 2008/02/26 08:23:31 petere Exp $
 #
 
 # When including this file, set OBJS to the object files created in
@@ -26,7 +26,7 @@ endif
 SUBSYS.o: $(SUBDIROBJS) $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-objfiles.txt:: $(MAKEFILE_LIST)
+objfiles.txt:: $(MAKEFILE_LIST) | $(SUBDIROBJS) $(OBJS)
 	( $(if $(SUBDIROBJS),cat $(SUBDIROBJS); )echo $(addprefix $(subdir)/,$(OBJS)) ) >$@
 
 objfiles.txt:: $(SUBDIROBJS) $(OBJS)
