@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.112 2008/02/26 10:45:24 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.113 2008/02/26 14:26:16 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -363,13 +363,7 @@ endif # enable_shared
 # tarballs.
 
 ifneq (,$(SHLIB_EXPORTS))
-all: def-files
-
-distprep: def-files
-
-.PHONY: def-files
-
-def-files: $(srcdir)/lib$(NAME)dll.def $(srcdir)/lib$(NAME)ddll.def $(srcdir)/blib$(NAME)dll.def
+distprep: $(srcdir)/lib$(NAME)dll.def $(srcdir)/lib$(NAME)ddll.def $(srcdir)/blib$(NAME)dll.def
 
 UC_NAME = $(shell echo $(NAME) | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 
