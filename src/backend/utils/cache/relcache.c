@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.190 2003/09/25 06:58:05 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.190.2.1 2008/02/27 17:45:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2381,6 +2381,9 @@ RelationCacheInitializePhase2(void)
 			buildinfo.infotype = INFO_RELNAME; \
 			buildinfo.i.info_name = (indname); \
 			ird = RelationBuildDesc(buildinfo, NULL); \
+			if (ird == NULL) \
+				elog(PANIC, "could not open critical system index \"%s\"", \
+					 indname); \
 			ird->rd_isnailed = 1; \
 			RelationSetReferenceCount(ird, 1); \
 		} while (0)
