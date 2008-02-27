@@ -1,7 +1,7 @@
 #
 # Common make rules for backend
 #
-# $PostgreSQL: pgsql/src/backend/common.mk,v 1.4 2008/02/26 08:23:31 petere Exp $
+# $PostgreSQL: pgsql/src/backend/common.mk,v 1.5 2008/02/27 20:31:01 petere Exp $
 #
 
 # When including this file, set OBJS to the object files created in
@@ -33,7 +33,7 @@ objfiles.txt:: $(SUBDIROBJS) $(OBJS)
 	touch $@
 
 # make function to expand objfiles.txt contents
-expand_subsys = $(foreach file,$(filter %/objfiles.txt,$(1)),$(patsubst ../../src/backend/%,%,$(addprefix $(top_builddir)/,$(shell cat $(file))))) $(filter-out %/objfiles.txt,$(1))
+expand_subsys = $(foreach file,$(1),$(if $(filter %/objfiles.txt,$(file)),$(patsubst ../../src/backend/%,%,$(addprefix $(top_builddir)/,$(shell cat $(file)))),$(file)))
 
 # Parallel make trickery
 $(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
