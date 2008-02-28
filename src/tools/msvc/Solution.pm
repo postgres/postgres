@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.34 2007/10/03 13:43:24 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.34.2.1 2008/02/28 12:18:03 mha Exp $
 #
 use Carp;
 use strict;
@@ -113,6 +113,10 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
         print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
 
+        if ($self->{options}->{uuid})
+        {
+            print O "#define HAVE_UUID_H\n";
+        }
         if ($self->{options}->{xml})
         {
             print O "#define HAVE_LIBXML2\n";
@@ -450,6 +454,7 @@ sub GetFakeConfigure
     $cfg .= ' --with-ldap' if ($self->{options}->{ldap});
     $cfg .= ' --without-zlib' unless ($self->{options}->{zlib});
     $cfg .= ' --with-openssl' if ($self->{options}->{ssl});
+    $cfg .= ' --with-ossp-uuid' if ($self->{options}->{uuid});
     $cfg .= ' --with-libxml' if ($self->{options}->{xml});
     $cfg .= ' --with-libxslt' if ($self->{options}->{xslt});
     $cfg .= ' --with-krb5' if ($self->{options}->{krb5});
