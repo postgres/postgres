@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.25 2008/02/05 14:17:23 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.26 2008/02/28 12:17:59 mha Exp $
 #
 use Carp;
 use Win32;
@@ -31,7 +31,7 @@ my $contrib_extrasource = {
     'cube' => ['cubescan.l','cubeparse.y'],
     'seg' => ['segscan.l','segparse.y']
 };
-my @contrib_excludes = ('pgcrypto','uuid-ossp');
+my @contrib_excludes = ('pgcrypto');
 
 sub mkvcbuild
 {
@@ -245,6 +245,16 @@ sub mkvcbuild
     if (!$solution->{options}->{openssl})
     {
         push @contrib_excludes,'sslinfo';
+    }
+
+    if ($solution->{options}->{uuid})
+    {
+       $contrib_extraincludes->{'uuid-ossp'} = [ $solution->{options}->{uuid} . '\include' ];
+       $contrib_extralibs->{'uuid-ossp'} = [ $solution->{options}->{uuid} . '\lib\uuid.lib' ];
+    }
+	 else
+    {
+       push @contrib_excludes,'uuid-ossp';
     }
 
     # Pgcrypto makefile too complex to parse....
