@@ -1,7 +1,7 @@
 #
 # Common make rules for backend
 #
-# $PostgreSQL: pgsql/src/backend/common.mk,v 1.5 2008/02/27 20:31:01 petere Exp $
+# $PostgreSQL: pgsql/src/backend/common.mk,v 1.6 2008/02/29 10:34:51 petere Exp $
 #
 
 # When including this file, set OBJS to the object files created in
@@ -26,11 +26,9 @@ endif
 SUBSYS.o: $(SUBDIROBJS) $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-objfiles.txt:: $(MAKEFILE_LIST) | $(SUBDIROBJS) $(OBJS)
-	( $(if $(SUBDIROBJS),cat $(SUBDIROBJS); )echo $(addprefix $(subdir)/,$(OBJS)) ) >$@
-
-objfiles.txt:: $(SUBDIROBJS) $(OBJS)
-	touch $@
+objfiles.txt: Makefile $(SUBDIROBJS) $(OBJS)
+# Only rebuild the list if it does not exist or the Makefile has changed.
+	$(if $(filter $<,$?),( $(if $(SUBDIROBJS),cat $(SUBDIROBJS); )echo $(addprefix $(subdir)/,$(OBJS)) ) >$@,touch $@)
 
 # make function to expand objfiles.txt contents
 expand_subsys = $(foreach file,$(1),$(if $(filter %/objfiles.txt,$(file)),$(patsubst ../../src/backend/%,%,$(addprefix $(top_builddir)/,$(shell cat $(file)))),$(file)))
