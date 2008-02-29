@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.140 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.141 2008/02/29 20:58:33 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1030,9 +1030,7 @@ array_out(PG_FUNCTION_ARGS)
 				if (ch == '"' || ch == '\\')
 				{
 					needquote = true;
-#ifndef TCL_ARRAYS
 					overall_length += 1;
-#endif
 				}
 				else if (ch == '{' || ch == '}' || ch == typdelim ||
 						 isspace((unsigned char) ch))
@@ -1103,7 +1101,6 @@ array_out(PG_FUNCTION_ARGS)
 		if (needquotes[k])
 		{
 			APPENDCHAR('"');
-#ifndef TCL_ARRAYS
 			for (tmp = values[k]; *tmp; tmp++)
 			{
 				char		ch = *tmp;
@@ -1113,9 +1110,6 @@ array_out(PG_FUNCTION_ARGS)
 				*p++ = ch;
 			}
 			*p = '\0';
-#else
-			APPENDSTR(values[k]);
-#endif
 			APPENDCHAR('"');
 		}
 		else

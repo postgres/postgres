@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.27 2007/06/08 18:23:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.28 2008/02/29 20:58:33 alvherre Exp $
  *------------------------------------------------------------------------
  */
 
@@ -98,16 +98,6 @@
  * Number of spare LWLocks to allocate for user-defined add-on code.
  */
 #define NUM_USER_DEFINED_LWLOCKS	4
-
-/*
- * Define this to make libpgtcl's "pg_result -assign" command process
- * C-style backslash sequences in returned tuple data and convert
- * PostgreSQL array values into Tcl lists.	CAUTION: This conversion
- * is *wrong* unless you install the routines in
- * contrib/string/string_io to make the server produce C-style
- * backslash sequences in the first place.
- */
-/* #define TCL_ARRAYS */
 
 /*
  * Define this if you want psql to _always_ ask for a username and a
