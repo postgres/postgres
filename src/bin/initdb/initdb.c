@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.152 2008/01/01 19:45:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.152.2.1 2008/02/29 15:31:40 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2332,7 +2332,26 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo)
 		return 0;
 	}
 
-	return CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, 0, NULL, NULL, &si, processInfo);
+	if (!CreateProcessAsUser(restrictedToken,
+						NULL,
+						cmd,
+						NULL,
+						NULL,
+						TRUE,
+						CREATE_SUSPENDED,
+						NULL,
+						NULL,
+						&si,
+						processInfo))
+
+	{
+		fprintf(stderr, "CreateProcessAsUser failed: %lu\n", GetLastError());
+		return 0;
+	}
+
+	AddUserToDacl(processInfo->hProcess);
+
+	return ResumeThread(processInfo->hThread);
 }
 #endif
 
