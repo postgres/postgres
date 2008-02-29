@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat Feb 16 18:27:24 EST 2008
+Last updated:		Fri Feb 29 09:56:41 EST 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1403,7 +1403,7 @@ Exotic Features
   modification.
 
 * Allow plug-in modules to emulate features from other databases
-* Add Oracle-style packages  (Pavel)
+* Add features of Oracle-style packages  (Pavel)
 
   A package would be a schema with session-local variables,
   public/private functions, and initialization functions.  It
