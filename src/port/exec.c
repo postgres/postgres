@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.57 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.58 2008/02/29 15:31:33 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,9 @@ static int	validate_exec(const char *path);
 static int	resolve_symlinks(char *path);
 static char *pipe_read_line(char *cmd, char *line, int maxsize);
 
+#ifdef WIN32
+static BOOL GetUserSid(PSID * ppSidUser, HANDLE hToken);
+#endif
 
 /*
  * validate_exec -- validate "path" as an executable file
@@ -657,3 +660,217 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 		putenv(strdup(env_path));
 	}
 }
+
+#ifdef WIN32
+
+/*
+ * AddUserToDacl(HANDLE hProcess)
+ *
+ * This function adds the current user account to the default DACL
+ * which gets attached to the restricted token used when we create
+ * a restricted process.
+ *
+ * This is required because of some security changes in Windows
+ * that appeared in patches to XP/2K3 and in Vista/2008.
+ *
+ * On these machines, the Administrator account is not included in
+ * the default DACL - you just get Administrators + System. For
+ * regular users you get User + System. Because we strip Administrators
+ * when we create the restricted token, we are left with only System
+ * in the DACL which leads to access denied errors for later CreatePipe()
+ * and CreateProcess() calls when running as Administrator.
+ *
+ * This function fixes this problem by modifying the DACL of the
+ * specified process and explicitly re-adding the current user account.
+ * This is still secure because the Administrator account inherits it's
+ * privileges from the Administrators group - it doesn't have any of
+ * it's own.
+ */
+BOOL
+AddUserToDacl(HANDLE hProcess)
+{
+	int			i;
+	ACL_SIZE_INFORMATION asi;
+	ACCESS_ALLOWED_ACE *pace;
+	DWORD		dwNewAclSize;
+	DWORD		dwSize = 0;
+	DWORD		dwTokenInfoLength = 0;
+	DWORD		dwResult = 0;
+	HANDLE		hToken = NULL;
+	PACL		pacl = NULL;
+	PSID		psidUser = NULL;
+	TOKEN_DEFAULT_DACL tddNew;
+	TOKEN_DEFAULT_DACL *ptdd = NULL;
+	TOKEN_INFORMATION_CLASS tic = TokenDefaultDacl;
+	BOOL		ret = FALSE;
+
+	/* Get the token for the process */
+	if (!OpenProcessToken(hProcess, TOKEN_QUERY | TOKEN_ADJUST_DEFAULT, &hToken))
+	{
+		log_error("could not open process token: %ui", GetLastError());
+		goto cleanup;
+	}
+
+	/* Figure out the buffer size for the DACL info */
+	if (!GetTokenInformation(hToken, tic, (LPVOID) NULL, dwTokenInfoLength, &dwSize))
+	{
+		if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+		{
+			ptdd = (TOKEN_DEFAULT_DACL *) LocalAlloc(LPTR, dwSize);
+			if (ptdd == NULL)
+			{
+				log_error("could not allocate %i bytes of memory", dwSize);
+				goto cleanup;
+			}
+
+			if (!GetTokenInformation(hToken, tic, (LPVOID) ptdd, dwSize, &dwSize))
+			{
+				log_error("could not get token information: %ui", GetLastError());
+				goto cleanup;
+			}
+		}
+		else
+		{
+			log_error("could not get token information buffer size: %ui", GetLastError());
+			goto cleanup;
+		}
+	}
+
+	/* Get the ACL info */
+	if (!GetAclInformation(ptdd->DefaultDacl, (LPVOID) & asi,
+						   (DWORD) sizeof(ACL_SIZE_INFORMATION),
+						   AclSizeInformation))
+	{
+		log_error("could not get ACL information: %ui", GetLastError());
+		goto cleanup;
+	}
+
+	/* Get the SID for the current user. We need to add this to the ACL. */
+	if (!GetUserSid(&psidUser, hToken))
+	{
+		log_error("could not get user SID: %ui", GetLastError());
+		goto cleanup;
+	}
+
+	/* Figure out the size of the new ACL */
+	dwNewAclSize = asi.AclBytesInUse + sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(psidUser) - sizeof(DWORD);
+
+	/* Allocate the ACL buffer & initialize it */
+	pacl = (PACL) LocalAlloc(LPTR, dwNewAclSize);
+	if (pacl == NULL)
+	{
+		log_error("could not allocate %i bytes of memory", dwNewAclSize);
+		goto cleanup;
+	}
+
+	if (!InitializeAcl(pacl, dwNewAclSize, ACL_REVISION))
+	{
+		log_error("could not initialize ACL: %ui", GetLastError());
+		goto cleanup;
+	}
+
+	/* Loop through the existing ACEs, and build the new ACL */
+	for (i = 0; i < (int) asi.AceCount; i++)
+	{
+		if (!GetAce(ptdd->DefaultDacl, i, (LPVOID *) & pace))
+		{
+			log_error("could not get ACE: %ui", GetLastError());
+			goto cleanup;
+		}
+
+		if (!AddAce(pacl, ACL_REVISION, MAXDWORD, pace, ((PACE_HEADER) pace)->AceSize))
+		{
+			log_error("could not add ACE: %ui", GetLastError());
+			goto cleanup;
+		}
+	}
+
+	/* Add the new ACE for the current user */
+	if (!AddAccessAllowedAce(pacl, ACL_REVISION, GENERIC_ALL, psidUser))
+	{
+		log_error("could not add access allowed ACE: %ui", GetLastError());
+		goto cleanup;
+	}
+
+	/* Set the new DACL in the token */
+	tddNew.DefaultDacl = pacl;
+
+	if (!SetTokenInformation(hToken, tic, (LPVOID) & tddNew, dwNewAclSize))
+	{
+		log_error("could not set token information: %ui", GetLastError());
+		goto cleanup;
+	}
+
+	ret = TRUE;
+
+cleanup:
+	if (psidUser)
+		FreeSid(psidUser);
+
+	if (pacl)
+		LocalFree((HLOCAL) pacl);
+
+	if (ptdd)
+		LocalFree((HLOCAL) ptdd);
+
+	if (hToken)
+		CloseHandle(hToken);
+
+	return ret;
+}
+
+/*
+ * GetUserSid*PSID *ppSidUser, HANDLE hToken)
+ *
+ * Get the SID for the current user
+ */
+static BOOL
+GetUserSid(PSID * ppSidUser, HANDLE hToken)
+{
+	DWORD		dwLength;
+	DWORD		cbName = 250;
+	DWORD		cbDomainName = 250;
+	PTOKEN_USER pTokenUser = NULL;
+
+
+	if (!GetTokenInformation(hToken,
+							 TokenUser,
+							 pTokenUser,
+							 0,
+							 &dwLength))
+	{
+		if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+		{
+			pTokenUser = (PTOKEN_USER) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwLength);
+
+			if (pTokenUser == NULL)
+			{
+				log_error("could not allocate %ui bytes of memory", dwLength);
+				return FALSE;
+			}
+		}
+		else
+		{
+			log_error("could not get token information buffer size: %ui", GetLastError());
+			return FALSE;
+		}
+	}
+
+	if (!GetTokenInformation(hToken,
+							 TokenUser,
+							 pTokenUser,
+							 dwLength,
+							 &dwLength))
+	{
+		HeapFree(GetProcessHeap(), 0, pTokenUser);
+		pTokenUser = NULL;
+
+		log_error("could not get token information: %ui", GetLastError());
+		return FALSE;
+	}
+
+	*ppSidUser = pTokenUser->User.Sid;
+	return TRUE;
+}
+
+#endif
