@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.45 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.46 2008/02/29 02:49:39 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,17 @@ FunctionNext(FunctionScanState *node)
 		 * do it always.
 		 */
 		if (funcTupdesc)
+		{
 			tupledesc_match(node->tupdesc, funcTupdesc);
+
+			/*
+			 * If it is a dynamically-allocated TupleDesc, free it: it is
+			 * typically allocated in the EState's per-query context, so we
+			 * must avoid leaking it on rescan.
+			 */
+			if (funcTupdesc->tdrefcount == -1)
+				FreeTupleDesc(funcTupdesc);
+		}
 	}
 
 	/*

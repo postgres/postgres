@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.37 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.38 2008/02/29 02:49:39 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
@@ -63,13 +64,23 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		/*
 		 * First call
 		 */
-		ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+		ReturnSetInfo  *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+		MemoryContext	multi_call_ctx;
+
+		/*
+		 * Create a suitably long-lived context to hold cross-call data
+		 */
+		multi_call_ctx = AllocSetContextCreate(fcinfo->flinfo->fn_mcxt,
+											   "SRF multi-call context",
+											   ALLOCSET_SMALL_MINSIZE,
+											   ALLOCSET_SMALL_INITSIZE,
+											   ALLOCSET_SMALL_MAXSIZE);
 
 		/*
 		 * Allocate suitably long-lived space and zero it
 		 */
 		retval = (FuncCallContext *)
-			MemoryContextAllocZero(fcinfo->flinfo->fn_mcxt,
+			MemoryContextAllocZero(multi_call_ctx,
 								   sizeof(FuncCallContext));
 
 		/*
@@ -81,7 +92,7 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		retval->user_fctx = NULL;
 		retval->attinmeta = NULL;
 		retval->tuple_desc = NULL;
-		retval->multi_call_memory_ctx = fcinfo->flinfo->fn_mcxt;
+		retval->multi_call_memory_ctx = multi_call_ctx;
 
 		/*
 		 * save the pointer for cross-call use
@@ -168,13 +179,11 @@ shutdown_MultiFuncCall(Datum arg)
 	flinfo->fn_extra = NULL;
 
 	/*
-	 * Caller is responsible to free up memory for individual struct elements
-	 * other than att_in_funcinfo and elements.
+	 * Delete context that holds all multi-call data, including the
+	 * FuncCallContext itself
 	 */
-	if (funcctx->attinmeta != NULL)
-		pfree(funcctx->attinmeta);
-
-	pfree(funcctx);
+	MemoryContextSwitchTo(flinfo->fn_mcxt);
+	MemoryContextDelete(funcctx->multi_call_memory_ctx);
 }
 
 
