@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68 2008/01/15 18:56:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.69 2008/03/01 02:46:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -788,70 +788,19 @@ xmlroot(xmltype *data, text *version, int standalone)
 
 /*
  * Validate document (given as string) against DTD (given as external link)
- * TODO !!! use text instead of cstring for second arg
- * TODO allow passing DTD as a string value (not only as an URI)
- * TODO redesign (see comment with '!!!' below)
+ *
+ * This has been removed because it is a security hole: unprivileged users
+ * should not be able to use Postgres to fetch arbitrary external files,
+ * which unfortunately is exactly what libxml is willing to do with the DTD
+ * parameter.
  */
 Datum
 xmlvalidate(PG_FUNCTION_ARGS)
 {
-#ifdef USE_LIBXML
-	text	   *data = PG_GETARG_TEXT_P(0);
-	text	   *dtdOrUri = PG_GETARG_TEXT_P(1);
-	bool		result = false;
-	xmlParserCtxtPtr ctxt;
-	xmlDocPtr	doc;
-	xmlDtdPtr	dtd;
-
-	xml_init();
-	xmlInitParser();
-	ctxt = xmlNewParserCtxt();
-	if (ctxt == NULL)
-		xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
-					"could not allocate parser context");
-
-	doc = xmlCtxtReadMemory(ctxt, (char *) VARDATA(data),
-							VARSIZE(data) - VARHDRSZ,
-							NULL, NULL, 0);
-	if (doc == NULL)
-		xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-					"could not parse XML data");
-
-#if 0
-	uri = xmlCreateURI();
-	elog(NOTICE, "dtd - %s", dtdOrUri);
-	dtd = palloc(sizeof(xmlDtdPtr));
-	uri = xmlParseURI(dtdOrUri);
-	if (uri == NULL)
-		xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-					"not implemented yet... (TODO)");
-	else
-#endif
-		dtd = xmlParseDTD(NULL, xml_text2xmlChar(dtdOrUri));
-
-	if (dtd == NULL)
-		xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-					"could not load DTD");
-
-	if (xmlValidateDtd(xmlNewValidCtxt(), doc, dtd) == 1)
-		result = true;
-
-	if (!result)
-		xml_ereport(NOTICE, ERRCODE_INVALID_XML_DOCUMENT,
-					"validation against DTD failed");
-
-#if 0
-	xmlFreeURI(uri);
-#endif
-	xmlFreeDtd(dtd);
-	xmlFreeDoc(doc);
-	xmlFreeParserCtxt(ctxt);
-
-	PG_RETURN_BOOL(result);
-#else							/* not USE_LIBXML */
-	NO_XML_SUPPORT();
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("xmlvalidate is not implemented")));
 	return 0;
-#endif   /* not USE_LIBXML */
 }
 
 
