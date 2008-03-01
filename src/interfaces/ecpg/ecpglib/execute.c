@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.76 2008/02/07 11:09:12 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.77 2008/03/01 03:26:34 tgl Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -122,13 +122,15 @@ next_insert(char *text, int pos, bool questionmarks)
 			string = string ? false : true;
 		else if (!string)
 		{
-			if (text[p] == '$' && isdigit(text[p + 1]))
+			if (text[p] == '$' && isdigit((unsigned char) text[p + 1]))
 			{
 				/* this can be either a dollar quote or a variable */
 				int			i;
 
-				for (i = p + 1; isdigit(text[i]); i++);
-				if (!isalpha(text[i]) && isascii(text[i]) && text[i] != '_')
+				for (i = p + 1; isdigit((unsigned char) text[i]); i++)
+					/* empty loop body */ ;
+				if (!isalpha((unsigned char) text[i]) &&
+					isascii((unsigned char) text[i]) && text[i] != '_')
 					/* not dollar delimited quote */
 					return p;
 			}

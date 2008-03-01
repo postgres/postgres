@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.20 2008/01/01 19:45:52 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.21 2008/03/01 03:26:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@
  */
 
 #ifdef MATCH_LOWER
-#define TCHAR(t) tolower((t))
+#define TCHAR(t) ((char) tolower((unsigned char) (t)))
 #else
 #define TCHAR(t) (t)
 #endif

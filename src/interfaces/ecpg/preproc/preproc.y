@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.361 2008/02/15 22:17:06 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.362 2008/03/01 03:26:35 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -5847,7 +5847,7 @@ prepared_name: name	 	{
 						int i;
 
 						for (i = 0; i< strlen($1); i++)
-							$1[i] = tolower($1[i]);
+							$1[i] = tolower((unsigned char) $1[i]);
 
 						$$ = make3_str(make_str("\""), $1, make_str("\""));
 					}
