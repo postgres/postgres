@@ -4,7 +4,7 @@
 # timezone_abbreviations to 'Default'.  See the `Date/Time Support'
 # appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.4 2008/01/02 21:42:00 tgl Exp $
+# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.5 2008/03/02 00:10:22 tgl Exp $
 
 
 #################### AFRICA ####################
@@ -224,7 +224,7 @@ PYT    -14400    # Paraguay Time
                  #     (America/Asuncion)
 UYST    -7200 D  # Uruguay Summer Time (not in zic)
 UYT    -10800    # Uruguay Time (not in zic)
-VET    -14400    # Venezuela Time
+VET    -16200    # Venezuela Time (caution: this used to mean -14400)
                  #     (America/Caracas)
 WGST    -7200 D  # Western Greenland Summer Time
                  #     (America/Godthab)
