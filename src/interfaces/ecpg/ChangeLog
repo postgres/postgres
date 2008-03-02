@@ -2322,3 +2322,8 @@ Sun, 17 Feb 2008 18:45:39 +0100
 	- Removed duplicate include of ecpgtype.h.
 	- Changed INFORMIX mode symbol definition yet again because the old
 	  way didn't work on NetBSD.
+
+Sun, 02 Mar 2008 11:50:48 +0100
+
+	- Fixed bug that caused arrays of varchar to be output with incomplete
+	  name.

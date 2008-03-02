@@ -42,6 +42,7 @@ int main( int argc, char * argv[] )
         int     phone;
       } custs4;
       int r;
+      varchar onlyname[2][50];
     EXEC SQL end declare section;
 
     ECPGdebug(1, stderr);
@@ -80,6 +81,13 @@ int main( int argc, char * argv[] )
     printf("\ncusts4:\n");
     printf( "name  - %s\n", custs4.name.arr );
     printf( "phone - %d\n", custs4.phone );
+
+    EXEC SQL select c INTO :onlyname from customers limit 2;
+    printf("\nname:\n");
+    for (r = 0; r < 2; r++)
+    {
+	    printf( "name  - %s\n", onlyname[r].arr );
+    }
 
     EXEC SQL disconnect all;
 
