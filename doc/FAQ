@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Jan 31 21:55:29 EST 2008
+   Last updated: Mon Mar 3 10:55:13 EST 2008
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -29,6 +29,8 @@
    1.13) How does PostgreSQL compare to other DBMSs?
    1.14) Will PostgreSQL handle recent daylight saving time changes in
    various countries?
+   1.15) How do I unsubscribe from the PostgreSQL email lists? How do I
+   avoid receiving duplicate emails?
    
                            User Client Questions
                                       
@@ -336,6 +338,21 @@
    Australia changes are included in 8.0.[10+], 8.1.[6+], and all later
    major releases. PostgreSQL releases prior to 8.0 use the operating
    system's timezone database for daylight saving information.
+   
+  1.15) How do I unsubscribe from the PostgreSQL email lists? How do I avoid
+  receiving duplicate emails?
+  
+   The PostgreSQL Majordomo page allows subscribing or unsubscribing from
+   any of the PostgreSQL email lists. (You might need to have your
+   Majordomo password emailed to you to log in.)
+   
+   All PostgreSQL email lists are configured so a group reply goes to the
+   email list and the original email author. This is done so users
+   receive the quickest possible email replies. If you would prefer not
+   to receive duplicate email from the list in cases where you already
+   receive an email directly, check eliminatecc from the Majordomo Change
+   Settings page. You can also prevent yourself from receiving copies of
+   emails you post to the lists by unchecking selfcopy.
      _________________________________________________________________
    
                            User Client Questions
