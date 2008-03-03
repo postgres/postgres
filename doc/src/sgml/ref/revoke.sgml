@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.46 2007/10/30 19:43:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.47 2008/03/03 19:17:27 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -92,7 +92,10 @@ REVOKE [ ADMIN OPTION FOR ]
    <literal>PUBLIC</literal>.  Thus, for example, revoking <literal>SELECT</> privilege
    from <literal>PUBLIC</literal> does not necessarily mean that all roles
    have lost <literal>SELECT</> privilege on the object: those who have it granted
-   directly or via another role will still have it.
+   directly or via another role will still have it.  Similarly, revoking
+   <literal>SELECT</> from a user might not prevent that user from using
+   <literal>SELECT</> if <literal>PUBLIC</literal> or another membership
+   role still has <literal>SELECT</> rights.
   </para>
 
   <para>
