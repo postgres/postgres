@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Fri Feb 29 09:56:41 EST 2008
+Last updated:           Mon Mar  3 10:06:41 EST 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -166,6 +166,8 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Consider placing all sequences in a single table, or create a system
   view
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-03/msg00008.php">http://archives.postgresql.org/pgsql-hackers/2008-03/msg00008.php</a>
+</p>
   </li><li>Dates and Times
   <ul>
     <li>Allow infinite dates and intervals just like infinite timestamps
@@ -507,11 +509,14 @@ first.  There is also a developer's wiki at<br/>
   </li></ul>
   </li><li>ALTER
   <ul>
-    <li>%Have ALTER TABLE RENAME rename SERIAL sequence names
+    <li>Have ALTER TABLE RENAME rename SERIAL sequence names
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2008-03/msg00008.php">http://archives.postgresql.org/pgsql-hackers/2008-03/msg00008.php</a>
+</p>
     </li><li>Have ALTER SEQUENCE RENAME rename the sequence name stored
           in the sequence table
 <p>          <a href="http://archives.postgresql.org/pgsql-bugs/2007-09/msg00092.php">http://archives.postgresql.org/pgsql-bugs/2007-09/msg00092.php</a>
           <a href="http://archives.postgresql.org/pgsql-bugs/2007-10/msg00007.php">http://archives.postgresql.org/pgsql-bugs/2007-10/msg00007.php</a>
+          <a href="http://archives.postgresql.org/pgsql-hackers/2008-03/msg00008.php">http://archives.postgresql.org/pgsql-hackers/2008-03/msg00008.php</a>
 </p>
     </li><li>Add ALTER DOMAIN to modify the underlying data type
     </li><li>%Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME

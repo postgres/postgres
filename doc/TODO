@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri Feb 29 09:56:41 EST 2008
+Last updated:		Mon Mar  3 10:06:41 EST 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -183,6 +183,9 @@ Data Types
 
 * Consider placing all sequences in a single table, or create a system
   view
+
+  http://archives.postgresql.org/pgsql-hackers/2008-03/msg00008.php
+
 * Dates and Times
 
 	o Allow infinite dates and intervals just like infinite timestamps
@@ -570,12 +573,16 @@ SQL Commands
 
 * ALTER
 
-	o %Have ALTER TABLE RENAME rename SERIAL sequence names
+	o Have ALTER TABLE RENAME rename SERIAL sequence names
+
+	  http://archives.postgresql.org/pgsql-hackers/2008-03/msg00008.php
+
 	o Have ALTER SEQUENCE RENAME rename the sequence name stored
 	  in the sequence table
 
 	  http://archives.postgresql.org/pgsql-bugs/2007-09/msg00092.php
 	  http://archives.postgresql.org/pgsql-bugs/2007-10/msg00007.php
+	  http://archives.postgresql.org/pgsql-hackers/2008-03/msg00008.php
 
 	o Add ALTER DOMAIN to modify the underlying data type
 	o %Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
