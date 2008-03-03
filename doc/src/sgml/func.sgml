@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.420 2008/02/26 15:32:30 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.421 2008/03/03 17:11:13 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1340,7 +1340,8 @@
         Character with the given code. For <acronym>UTF8</acronym> the
         argument is treated as a Unicode code point. For other multibyte
         encodings the argument must designate a strictly
-        <acronym>ASCII</acronym> character.
+        <acronym>ASCII</acronym> character.  The NULL (0) character is not
+        allowed because text data types cannot reliably store such bytes.
        </entry>
        <entry><literal>chr(65)</literal></entry>
        <entry><literal>A</literal></entry>
