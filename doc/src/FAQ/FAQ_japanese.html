@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:	Mon Jan 14 15:39:06 EST 2008</p>
+<p>原文最終更新日:	Mon Mar  3 11:22:50 EST 2008</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -54,6 +54,7 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
 <a href="#item1.12">1.12</a>) パッチを提供したり、開発チーム参加するにはどうすればよいですか？<br />
 <a href="#item1.13">1.13</a>) 他の<small>DBMS</small>と比べてPostgreSQLはどうなのですか？<br />
 <a href="#item1.14">1.14</a>) PostgreSQLは国毎の最新の夏時間の変更を扱いますか？<br />
+<a href="#item1.15">1.15</a>) PostgreSQLのメーリングリストの購読をやめるにはどうすればよいですか？また、電子メールを重複して受け取らないようにするにはどうしますか？<br />
 
 <h2 align="center">ユーザ・クライアントの質問</h2>
 
@@ -108,6 +109,7 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
 
 <a href="#item5.1">5.1</a>) 日本語がうまく扱えないのはなぜですか？<br />
 <a href="#item5.2">5.2</a>) psql でWindowsからアクセスしたときに、日本語が文字化けするのですが？<br />
+<a href="#item5.3">5.3</a>) PostgreSQLで日本語の全文検索はできますか？<br />
 
 
 <hr />
@@ -198,7 +200,7 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
     <small><pre>
 	POSTGRESQL データベース管理システム
 
-	部分的著作権 (c) 1996-2007, PostgreSQL国際開発チーム
+	部分的著作権 (c) 1996-2008, PostgreSQL国際開発チーム
 	部分的著作権 (c) 1994-1996 カリフォルニア大学本校
 
 
@@ -234,17 +236,16 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
     <p>PostgreSQL は、Win2000 SP4, WinXP, そして、Win2003 など Microsoft
     Windows NTベースのオペレーティングシステムで、ネイティブに走ります。
     あらかじめパッケージにされたインストーラが<a href= 
-    "http://pgfoundry.org/projects/pginstaller">
-    http://pgfoundry.org/projects/pginstaller</a>
-    にあり、利用できます。MSDOSベースのWindowsのバージョン(Win95, Win98,
-    WinMe)では、Cygwinを使って PostgreSQL を走らせることができます。</p>
+    "http://www.postgresql.org/ftp/win32/">
+    http://www.postgresql.org/ftp/win32/</a>
+    からダウンロードできます。
+    MSDOSベースのWindowsのバージョン(Win95, Win98, WinMe)では、Cygwinを
+    使って PostgreSQL を走らせることができます。</p>
 
     <small><pre>
     [訳注
-	pgInstaller の入手はFTPミラーサイトの win32 ディレクトリからも可能です。
-	    http://www.postgresql.org/mirrors-ftp.html
-
-	詳しくは、次の Windows版に関するFAQの和訳をごらんください。
+	日本語での情報は、次の Windows版に関するFAQの和訳をごらんくださ
+    い（やや古いです）。
 	http://old.postgresql.jp/wg/jpugdoc/FAQ_windows.ja.html
     ]
     </pre></small>
@@ -267,7 +268,7 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
 
 <h4 id="item1.6">1.6</a>) 最新のリリースはどれですか？</h4>
 
-    <p>PostgreSQL の最新版はバージョン 8.2.6 です。</p>
+    <p>PostgreSQL の最新版はバージョン 8.3 です。</p>
     <p>我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを
     行なうことを計画しています。</p>
 
@@ -383,8 +384,8 @@ http://www.postgresql.org/docs/</a>でオンラインでも閲覧できます。
     <p><small><pre>
     [訳注:
 	JPUG 文書・書籍関連分科会で翻訳されたマニュアルもあります。
-		<a href="http://www.postgresql.jp/document/pg825doc/">
-	http://www.postgresql.jp/document/pg825doc/</a>
+		<a href="http://www.postgresql.jp/document/pg830doc/">
+	http://www.postgresql.jp/document/pg830doc/</a>
 	インプレスから、
 	<a href="http://home.impress.co.jp/reference/2108.htm">
 	PostgreSQLオフィシャルマニュアル</a>として出版されています。
@@ -471,16 +472,13 @@ http://www.postgresql.org/docs/</a>でオンラインでも閲覧できます。
 		<a href="http://www.postgresql.jp/PostgreSQL/references.html">
 http://www.postgresql.jp/PostgreSQL/references.html</a>
 	があります。
-	 近藤直文氏の「初心者向のＤＢ設計入門・ＳＱＬ入門参考書紹介」のコーナー
-		<a href="http://www.shonan.ne.jp/~nkon/ipsql/books_SQL.html">http://www.shonan.ne.jp/~nkon/ipsql/books_SQL.html</a>
-	があります(やや古い2000年版)。
 	 堀田倫英氏の「PostgreSQL日本語マニュアル」
 		<a href="http://www.net-newbie.com/">http://www.net-newbie.com/</a>
 	ではオンラインマニュアルの検索ができます。
 	 丸山不二夫氏のUNIX データベース入門
 		<a href="http://www.wakhok.ac.jp/DB/DB.html">http://www.wakhok.ac.jp/DB/DB.html</a>
 	もオンラインで読むことができます。
-	 Nikkei BP IT Pro にある石井達夫氏の <a href="http://itpro.nikkeibp.co.jp/members/ITPro/oss/20050514/160833/">PostgreSQL ウォッチ</a>
+	 Nikkei BP IT Pro にある石井達夫氏の <a href="http://itpro.nikkeibp.co.jp/article/COLUMN/20060120/227628/">PostgreSQL ウォッチ</a>
 	では毎回新しい情報をとりあげています。
     ]
     </pre></small></p>
@@ -560,6 +558,25 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
 <hr />
 
+<h3 id="item1.15">1.15)  PostgreSQLのメーリングリストの購読をやめるにはどうすればよいですか？また、電子メールを重複して受け取らないようにするにはどうしますか？
+</h3>
+
+    <p>PostgreSQLの<a
+    href="http://mail.postgresql.org/mj/mj_wwwusr/domain=postgresql.org?user=&amp;passw=&amp;func=login">Majordomo</a>
+    ページから、PostgreSQLに関する複数のメーリングリストの購読の開始と中止
+    ができるようになっています。（ログインするためにはMajaordomoから送ら
+    れる御本人のパスワードが必要になります。）</p>
+
+    <p>PostgreSQLnoすべてのメーリングリストでは、返信はメーリングリスト
+    と<i>かつ</i>元のメールの投稿者へ送られるように構成してあります。こ
+    れにり利用者は、もっとも迅速にメールへの返信を受けられるようになって
+    います。既に直接受け取っているメールを、リストから重複して受け取りた
+    くない場合は、Majordomo の<i>Change Settings</i>ページから、
+    <i>eliminatecc</i>をチェックします。また、<i>selfcopy</i>のチェック
+    をはずすことで、自分の送ったメールのコピーを受け取らないようにもでき
+    ます。</p>
+
+
 <h2 align="center">ユーザ・クライアントの質問</h2>
 
 
@@ -604,7 +621,15 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 <h4 id="item2.3">2.3</a>) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？</h4>
 
 
-    <p>商用とオープンソース開発者によるもの両方で、PostgreSQLには多くのGUIツールが利用可能で、詳細なリストは、<a href="http://www.postgresql.org/docs/techdocs.54">PostgreSQLコミュニティ文書</a> でごらんください。</p>
+    <p>商用とオープンソース開発者によるもの両方で、PostgreSQLには多くのGUIツールが利用可能で、詳細なリストは、<a href="http://www.postgresql.org/docs/techdocs">PostgreSQLコミュニティ文書</a> でごらんください。</p>
+
+    <p><small><pre>
+    [訳注:
+	pgAdmin3 はPostgreSQL標準GUI管理ツールで、Windows版(PostgreSQL
+	for Windows) に同梱されています。詳しい情報は、
+	<a href="http://www.pgadmin.org/">http://www.pgadmin.org/</a>にあります。
+    ]
+    </pre></small></p>
 
 <hr />
 
@@ -1287,6 +1312,17 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     際に文字化けがおきます。</p>
 
 
+<h3 id="item5.3">5.3</a>) PostgreSQLで日本語の全文検索はできますか？</h3>
+
+    <p>バージョン8.3では、<i>TSearch2</i>全文検索機能が本体に組み込まれ
+    ましたが、そのままでは日本語のインデックスを作る事が難しい状況です。
+    これを解決するために、Takahiro Itagaki氏によって、Mecabという形態素
+    解析プログラムを利用する日本語全文検索モジュール <a
+    href="http://textsearch-ja.projects.postgresql.org/index-ja.html">textsearch_ja</a>
+    が開発されました。TSearch2対応の製品をわずかに改修することで日本語対
+    応にきます。
+    </p>
+
 <hr />
 
 <h4 id="item-japanese">「日本語版について」</h4>
@@ -1294,7 +1330,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2008年1月17日
+  最終更新日:	2008年3月4日
   翻訳者:	桑村 潤 (<a href="mailto:juk at postgresql.jp">Jun KUWAMURA &lt;juk at postgresql.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):

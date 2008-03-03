@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Mon Jan 14 15:39:06 EST 2008
+原文最終更新日: Mon Mar 3 11:22:50 EST 2008
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at postgresql.jp)
@@ -38,6 +38,8 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at postgresql.jp)
 1.12) パッチを提供したり、開発チーム参加するにはどうすればよいですか？
 1.13) 他のDBMSと比べてPostgreSQLはどうなのですか？
 1.14) PostgreSQLは国毎の最新の夏時間の変更を扱いますか？
+1.15) PostgreSQLのメーリングリストの購読をやめるにはどうすればよいですか？また
+、電子メールを重複して受け取らないようにするにはどうしますか？
 
                           ユーザ・クライアントの質問
 
@@ -99,6 +101,7 @@ with OID ##### does not exist" というエラーを受け取るのでしょうか？
 
 5.1) 日本語がうまく扱えないのはなぜですか？
 5.2) psql でWindowsからアクセスしたときに、日本語が文字化けするのですが？
+5.3) PostgreSQLで日本語の全文検索はできますか？
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
                                  一般的な質問
@@ -173,7 +176,7 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
         POSTGRESQL データベース管理システム
 
-        部分的著作権 (c) 1996-2007, PostgreSQL国際開発チーム
+        部分的著作権 (c) 1996-2008, PostgreSQL国際開発チーム
         部分的著作権 (c) 1994-1996 カリフォルニア大学本校
 
 
@@ -207,15 +210,13 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 PostgreSQL は、Win2000 SP4, WinXP, そして、Win2003 など Microsoft Windows NTベ
 ースのオペレーティングシステムで、ネイティブに走ります。あらかじめパッケージに
-されたインストーラが http://pgfoundry.org/projects/pginstaller にあり、利用でき
-ます。MSDOSベースのWindowsのバージョン(Win95, Win98, WinMe)では、Cygwinを使って
-PostgreSQL を走らせることができます。
+されたインストーラが http://www.postgresql.org/ftp/win32/ からダウンロードでき
+ます。 MSDOSベースのWindowsのバージョン(Win95, Win98, WinMe)では、Cygwinを使っ
+て PostgreSQL を走らせることができます。
 
     [訳注
-        pgInstaller の入手はFTPミラーサイトの win32 ディレクトリからも可能です。
-            http://www.postgresql.org/mirrors-ftp.html
-
-        詳しくは、次の Windows版に関するFAQの和訳をごらんください。
+        日本語での情報は、次の Windows版に関するFAQの和訳をごらんくださ
+    い（やや古いです）。
         http://old.postgresql.jp/wg/jpugdoc/FAQ_windows.ja.html
     ]
 
@@ -232,7 +233,7 @@ ftp://ftp.postgresql.org/pub/ を使います。
 
 1.6) 最新のリリースはどれですか？
 
-PostgreSQL の最新版はバージョン 8.2.6 です。
+PostgreSQL の最新版はバージョン 8.3 です。
 
 我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを行なうことを計
 画しています。
@@ -314,7 +315,7 @@ PostgreSQLは拡張されたSQL:2003のサブセットをサポートします。我々のページの TODO
     [訳注:
         JPUG 文書・書籍関連分科会で翻訳されたマニュアルもあります。
 
-        http://www.postgresql.jp/document/pg825doc/
+        http://www.postgresql.jp/document/pg830doc/
         インプレスから、
 
         PostgreSQLオフィシャルマニュアルとして出版されています。
@@ -374,9 +375,6 @@ http://mysite.verizon.net/Graeme_Birchall/id1.html にあります。
 
 http://www.postgresql.jp/PostgreSQL/references.html
         があります。
-         近藤直文氏の「初心者向のＤＢ設計入門・ＳＱＬ入門参考書紹介」のコーナー
-                http://www.shonan.ne.jp/~nkon/ipsql/books_SQL.html
-        があります(やや古い2000年版)。
          堀田倫英氏の「PostgreSQL日本語マニュアル」
                 http://www.net-newbie.com/
         ではオンラインマニュアルの検索ができます。
@@ -437,6 +435,20 @@ http://www.postgresql.jp/PostgreSQL/references.html
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+1.15) PostgreSQLのメーリングリストの購読をやめるにはどうすればよいですか？また
+、電子メールを重複して受け取らないようにするにはどうしますか？
+
+PostgreSQLのMajordomo ページから、PostgreSQLに関する複数のメーリングリストの購
+読の開始と中止ができるようになっています。（ログインするためにはMajaordomoから
+送られる御本人のパスワードが必要になります。）
+
+PostgreSQLnoすべてのメーリングリストでは、返信はメーリングリストとかつ元のメー
+ルの投稿者へ送られるように構成してあります。これにり利用者は、もっとも迅速にメ
+ールへの返信を受けられるようになっています。既に直接受け取っているメールを、リ
+ストから重複して受け取りたくない場合は、Majordomo のChange Settingsページから、
+eliminateccをチェックします。また、selfcopyのチェックをはずすことで、自分の送っ
+たメールのコピーを受け取らないようにもできます。
+
                           ユーザ・クライアントの質問
 
 2.1) PostgreSQL にはどんなインターフェースが使えますか？
@@ -475,6 +487,13 @@ Web への拡張のためには、PHP(http://www.php.net/) が卓越したインターフェースとな
 
 商用とオープンソース開発者によるもの両方で、PostgreSQLには多くのGUIツールが利用
 可能で、詳細なリストは、PostgreSQLコミュニティ文書でごらんください。
+
+    [訳注:
+        pgAdmin3 はPostgreSQL標準GUI管理ツールで、Windows版(PostgreSQL
+        for Windows) に同梱されています。詳しい情報は、
+        http://www.pgadmin.org/にあります。
+    ]
+
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -981,16 +1000,16 @@ with OID ##### does not exist" というエラーを受け取るのでしょうか？
 
 マスタ／スレーブのレプリケーションは、読み／書きのクエリを受け取るシングルマス
 タが可能で、スレーブでは読み／SELECTの問い合わせだけを受け付けることができます
-。最も人気がある、フリーで利用できる、マスタ?スレーブのPostgreSQLレプリケーショ
-ンソリューションは、 Slony-I です。
+。最も人気がある、フリーで利用できる、マスタ−スレーブのPostgreSQLレプリケーシ
+ョンソリューションは、 Slony-I です。
 
-マルチ?マスタのレプリケーションは、読み／書きのクエリを受けとり、複数のレプリケ
-ートさせるコンピュータに送ることができます。この機能は、サーバ間の変更の同期が
-必要なため、性能に重大な衝撃を与えます。 PGCluster は、このようなソリューション
-としてPostgreSQLのためにフリーで利用できるものとして、最も人気があります。
+マルチ−マスタのレプリケーションは、読み／書きのクエリを受けとり、複数のレプリ
+ケートさせるコンピュータに送ることができます。この機能は、サーバ間の変更の同期
+が必要なため、性能に重大な衝撃を与えます。 PGCluster は、このようなソリューショ
+ンとしてPostgreSQLのためにフリーで利用できるものとして、最も人気があります。
 
-この他にも、商用やハードウェア?ベースのレプリケーションソリューションがいろいろ
-なレプリケーションモデルをサポートしています。
+この他にも、商用やハードウェア−ベースのレプリケーションソリューションがいろい
+ろなレプリケーションモデルをサポートしています。
 
 4.21)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大文
 字化(キャピタライズ)は温存されないのですか?
@@ -1030,6 +1049,14 @@ PostgreSQLデータベースのエンコーディングに使える日本語文字コードは EUC_JP か
 UTF-8(UNICODE) であるため、Shift-JIS表示のコマンドプロンプトからは、
 client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 
+5.3) PostgreSQLで日本語の全文検索はできますか？
+
+バージョン8.3では、TSearch2全文検索機能が本体に組み込まれましたが、そのままでは
+日本語のインデックスを作る事が難しい状況です。これを解決するために、Takahiro
+Itagaki氏によって、Mecabという形態素解析プログラムを利用する日本語全文検索モジ
+ュール textsearch_ja が開発されました。TSearch2対応の製品をわずかに改修すること
+で日本語対応にきます。
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 「日本語版について」
@@ -1037,7 +1064,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2008年1月17日
+  最終更新日:   2008年3月4日
   翻訳者:       桑村 潤 (Jun KUWAMURA <juk at postgresql.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1073,6 +1100,6 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
         http://www.linux.or.jp/JF/JFdocs/INDEX-database.html 「Linux JFプロジェクト」   http://www.linet.gr.jp/~juk/pgsql/ 「PostgreSQL Notes for Japanese」（翻訳者ページ）
 
   なお、この和訳に関するご意見・ご質問は(juk at postgresql.jp)までお寄せください。
-  （? メールアドレスの " at " は適切に直してください。半角の "@" です。）
+  （※ メールアドレスの " at " は適切に直してください。半角の "@" です。）
 ]
 
