@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Mar  3 10:06:41 EST 2008
+Last updated:		Mon Mar  3 13:45:12 EST 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -138,11 +138,13 @@ Administration
 	  o Allow a warm standby system to also allow read-only statements
 	    [pitr]
 
-	    This is useful for checking PITR recovery.
 	    http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php
 
 	  o %Create dump tool for write-ahead logs for use in determining
 	    transaction id for point-in-time recovery
+
+	    This is useful for checking PITR recovery.
+
 	  o Allow recovery.conf to support the same syntax as
 	    postgresql.conf, including quoting
 
@@ -979,7 +981,8 @@ Indexes
 
 
 * Hash
-  http://archives.postgresql.org/pgsql-hackers/2007-09/msg00051.php
+
+	  http://archives.postgresql.org/pgsql-hackers/2007-09/msg00051.php
 
 	o Pack hash index buckets onto disk pages more efficiently
 
@@ -1233,6 +1236,13 @@ Write-Ahead Log
   crash recovery.  Readers can continue accessing the table.  Such
   tables probably cannot have indexes.  One complexity is the handling
   of indexes on TOAST tables.
+
+* Speed WAL recovery by allowing more than one page to be prefetched
+
+  This involves having a separate process that can be told which pages
+  the recovery process will need in the near future.
+  http://archives.postgresql.org/pgsql-hackers/2008-02/msg01279.php
+
 
 
 Optimizer / Executor
