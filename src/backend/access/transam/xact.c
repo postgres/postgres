@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.257 2008/01/15 18:56:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.258 2008/03/04 19:54:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,13 @@ bool		XactSyncCommit = true;
 
 int			CommitDelay = 0;	/* precommit delay in microseconds */
 int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
+
+/*
+ * MyXactAccessedTempRel is set when a temporary relation is accessed.
+ * We don't allow PREPARE TRANSACTION in that case.  (This is global
+ * so that it can be set from heapam.c.)
+ */
+bool		MyXactAccessedTempRel = false;
 
 
 /*
@@ -1445,6 +1452,7 @@ StartTransaction(void)
 	XactIsoLevel = DefaultXactIsoLevel;
 	XactReadOnly = DefaultXactReadOnly;
 	forceSyncCommit = false;
+	MyXactAccessedTempRel = false;
 
 	/*
 	 * reinitialize within-transaction counters
@@ -1769,6 +1777,26 @@ PrepareTransaction(void)
 	AtEOXact_LargeObject(true);
 
 	/* NOTIFY and flatfiles will be handled below */
+
+	/*
+	 * Don't allow PREPARE TRANSACTION if we've accessed a temporary table
+	 * in this transaction.  Having the prepared xact hold locks on another
+	 * backend's temp table seems a bad idea --- for instance it would prevent
+	 * the backend from exiting.  There are other problems too, such as how
+	 * to clean up the source backend's local buffers and ON COMMIT state
+	 * if the prepared xact includes a DROP of a temp table.
+	 *
+	 * We must check this after executing any ON COMMIT actions, because
+	 * they might still access a temp relation.
+	 *
+	 * XXX In principle this could be relaxed to allow some useful special
+	 * cases, such as a temp table created and dropped all within the
+	 * transaction.  That seems to require much more bookkeeping though.
+	 */
+	if (MyXactAccessedTempRel)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot PREPARE a transaction that has operated on temporary tables")));
 
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();

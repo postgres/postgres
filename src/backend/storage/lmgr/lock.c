@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.181 2008/02/02 22:26:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.182 2008/03/04 19:54:06 tgl Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -37,7 +37,6 @@
 #include "access/twophase_rmgr.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "storage/lmgr.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
@@ -1870,12 +1869,6 @@ AtPrepare_Locks(void)
 			if (lockOwners[i].owner == NULL)
 				elog(ERROR, "cannot PREPARE when session locks exist");
 		}
-
-		/* Can't handle it if the lock is on a temporary object */
-		if (LockTagIsTemp(&locallock->tag.lock))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot PREPARE a transaction that has operated on temporary tables")));
 
 		/*
 		 * Create a 2PC record.

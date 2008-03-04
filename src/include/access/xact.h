@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.93 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.94 2008/03/04 19:54:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,9 @@ extern bool XactReadOnly;
 
 /* Asynchronous commits */
 extern bool XactSyncCommit;
+
+/* Kluge for 2PC support */
+extern bool MyXactAccessedTempRel;
 
 /*
  *	start- and end-of-transaction callbacks for dynamically loaded modules

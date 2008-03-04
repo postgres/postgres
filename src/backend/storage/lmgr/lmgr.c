@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.96 2008/01/08 23:18:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.97 2008/03/04 19:54:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,12 +19,10 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
-#include "catalog/namespace.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "utils/inval.h"
-#include "utils/lsyscache.h"
 
 
 /*
@@ -660,44 +658,6 @@ UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 					   objsubid);
 
 	LockRelease(&tag, lockmode, false);
-}
-
-
-/*
- * LockTagIsTemp
- *		Determine whether a locktag is for a lock on a temporary object
- *
- * We need this because 2PC cannot deal with temp objects
- */
-bool
-LockTagIsTemp(const LOCKTAG *tag)
-{
-	switch ((LockTagType) tag->locktag_type)
-	{
-		case LOCKTAG_RELATION:
-		case LOCKTAG_RELATION_EXTEND:
-		case LOCKTAG_PAGE:
-		case LOCKTAG_TUPLE:
-			/* check for lock on a temp relation */
-			/* field1 is dboid, field2 is reloid for all of these */
-			if ((Oid) tag->locktag_field1 == InvalidOid)
-				return false;	/* shared, so not temp */
-			if (isTempOrToastNamespace(get_rel_namespace((Oid) tag->locktag_field2)))
-				return true;
-			break;
-		case LOCKTAG_TRANSACTION:
-		case LOCKTAG_VIRTUALTRANSACTION:
-			/* there are no temp transactions */
-			break;
-		case LOCKTAG_OBJECT:
-			/* there are currently no non-table temp objects */
-			break;
-		case LOCKTAG_USERLOCK:
-		case LOCKTAG_ADVISORY:
-			/* assume these aren't temp */
-			break;
-	}
-	return false;				/* default case */
 }
 
 
