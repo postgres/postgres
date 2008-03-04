@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.56 2006/08/18 16:09:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.56.2.1 2008/03/04 19:54:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,5 @@ extern void LockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 				 LOCKMODE lockmode);
 extern void UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 				   LOCKMODE lockmode);
-
-/* Knowledge about which locktags describe temp objects */
-extern bool LockTagIsTemp(const LOCKTAG *tag);
 
 #endif   /* LMGR_H */
