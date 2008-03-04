@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Mar  3 20:33:10 EST 2008
+Last updated:		Mon Mar  3 20:38:32 EST 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -851,6 +851,7 @@ Clients
 	  This might require a pg_restore flag to indicate how many
 	  simultaneous operations should be performed.  Only pg_dump's
 	  -Fc format has the necessary dependency information.
+	  http://archives.postgresql.org/pgsql-hackers/2008-02/msg00963.php
 
 	o To better utilize resources, restore data, primary keys, and
  	  indexes for a single table before restoring the next table
