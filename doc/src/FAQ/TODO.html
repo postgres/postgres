@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Mon Mar  3 16:26:04 EST 2008
+Last updated:           Mon Mar  3 20:33:10 EST 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -727,7 +727,7 @@ first.  There is also a developer's wiki at<br/>
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg00255.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg00255.php</a>
 </p>
   </li></ul>
-  </li><li>pg_dump
+  </li><li>pg_dump / pg_restore
   <ul>
     <li>%Add dumping of comments on index columns and composite type columns
     </li><li>%Add full object name to the tag field.  eg. for operators we need
@@ -747,6 +747,36 @@ first.  There is also a developer's wiki at<br/>
           COMMENT ON CURRENT DATABASE.
     </li><li>Remove unnecessary function pointer abstractions in pg_dump source
           code
+    </li><li>Allow pg_dump to utilize multiple CPUs and I/O channels by dumping
+          multiple objects simultaneously
+<p>          The difficulty with this is getting multiple dump processes to
+          produce a single dump output file.
+          <a href="http://archives.postgresql.org/pgsql-hackers/2008-02/msg00205.php">http://archives.postgresql.org/pgsql-hackers/2008-02/msg00205.php</a>
+</p>
+    </li><li>Allow pg_restore to utilize multiple CPUs and I/O channels by
+          restoring multiple objects simultaneously
+<p>          This might require a pg_restore flag to indicate how many
+          simultaneous operations should be performed.  Only pg_dump's
+          -Fc format has the necessary dependency information.
+</p>
+    </li><li>To better utilize resources, restore data, primary keys, and
+          indexes for a single table before restoring the next table
+<p>          Hopefully this will allow the CPU-I/O load to be more uniform
+          for simultaneous restores.  The idea is to start data restores
+          for several objects, and once the first object is done, to move
+          on to its primary keys and indexes.  Over time, simultaneous
+          data loads and index builds will be running.
+</p>
+    </li><li>To better utilize resources, allow pg_restore to check foreign
+          keys simultaneously, where possible
+    </li><li>Allow pg_restore to create all indexes of a table
+          concurrently, via a single heap scan
+<p>          This requires a pg_dump -Fc file because that format contains
+          the required dependency information.
+          <a href="http://archives.postgresql.org/pgsql-general/2007-05/msg01274.php">http://archives.postgresql.org/pgsql-general/2007-05/msg01274.php</a>
+</p>
+    </li><li>Allow pg_restore to load different parts of the COPY data
+          simultaneously
   </li></ul>
   </li><li>ecpg
   <ul>
@@ -860,9 +890,7 @@ first.  There is also a developer's wiki at<br/>
   downtime.
 </p>
   </li><li>Allow multiple indexes to be created concurrently, ideally via a
-  single heap scan, and have a restore of a pg_dump somehow use it
-<p>  <a href="http://archives.postgresql.org/pgsql-general/2007-05/msg01274.php">http://archives.postgresql.org/pgsql-general/2007-05/msg01274.php</a>
-</p>
+  single heap scan, and have pg_restore use it
   </li><li>Inheritance
   <ul>
     <li>Allow inherited tables to inherit indexes, UNIQUE constraints,
