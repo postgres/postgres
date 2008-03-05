@@ -12,7 +12,7 @@ and functions.  This distribution also contains C language bindings.
 PostgreSQL has many language interfaces including some of the more
 common listed below:
 
-C++ - http://thaiopensource.org/development/libpqxx/
+C++ - http://pqxx.org/development/libpqxx/
 JDBC - http://jdbc.postgresql.org
 ODBC - http://odbc.postgresql.org
 Perl - http://search.cpan.org/~dbdpg/
