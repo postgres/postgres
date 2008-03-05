@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.166 2008/02/16 21:14:08 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.167 2008/03/05 16:59:10 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1584,9 +1584,10 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Maximum distance between automatic WAL checkpoints, in log
-        file segments (each segment is normally 16 megabytes). The
-        default is three segments.
+        Maximum number of log file segments between automatic WAL
+        checkpoints (each segment is normally 16 megabytes). The default
+        is three segments.  Increasing this parameter can increase the
+        amount of time needed for crash recovery.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
@@ -1602,6 +1603,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Maximum time between automatic WAL checkpoints, in
         seconds. The default is five minutes (<literal>5min</>).
+        Increasing this parameter can increase the amount of time needed
+        for crash recovery.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
