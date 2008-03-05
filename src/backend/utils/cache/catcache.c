@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.140 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.141 2008/03/05 17:01:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1781,12 +1781,12 @@ PrepareToInvalidateCacheTuple(Relation relation,
 
 	for (ccp = CacheHdr->ch_caches; ccp; ccp = ccp->cc_next)
 	{
+		if (ccp->cc_reloid != reloid)
+			continue;
+
 		/* Just in case cache hasn't finished initialization yet... */
 		if (ccp->cc_tupdesc == NULL)
 			CatalogCacheInitializeCache(ccp);
-
-		if (ccp->cc_reloid != reloid)
-			continue;
 
 		(*function) (ccp->id,
 					 CatalogCacheComputeTupleHashValue(ccp, tuple),
