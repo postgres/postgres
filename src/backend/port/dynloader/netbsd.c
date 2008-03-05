@@ -3,7 +3,7 @@
  * Portions Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
- * $PostgreSQL: pgsql/src/backend/port/dynloader/netbsd.c,v 1.19 2006/03/11 04:38:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/netbsd.c,v 1.19.2.1 2008/03/05 21:20:48 alvherre Exp $
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,7 +61,7 @@ BSD44_derived_dlerror(void)
 void *
 BSD44_derived_dlopen(const char *file, int num)
 {
-#if defined(__mips__)
+#if !defined(HAVE_DLOPEN)
 	snprintf(error_message, sizeof(error_message),
 			 "dlopen (%s) not supported", file);
 	return NULL;
@@ -78,7 +78,7 @@ BSD44_derived_dlopen(const char *file, int num)
 void *
 BSD44_derived_dlsym(void *handle, const char *name)
 {
-#if defined(__mips__)
+#if !defined(HAVE_DLOPEN)
 	snprintf(error_message, sizeof(error_message),
 			 "dlsym (%s) failed", name);
 	return NULL;
@@ -103,8 +103,7 @@ BSD44_derived_dlsym(void *handle, const char *name)
 void
 BSD44_derived_dlclose(void *handle)
 {
-#if defined(__mips__)
-#else
+#if defined(HAVE_DLOPEN)
 	dlclose(handle);
 #endif
 }
