@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.11 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.12 2008/03/05 15:50:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,7 +224,7 @@ tsvectorin(PG_FUNCTION_ARGS)
 		if (cur - tmpbuf > MAXSTRPOS)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("string is too long for tsvector")));
+				 	 errmsg("string is too long for tsvector (%d bytes, max %d bytes)", cur - tmpbuf, MAXSTRPOS)));
 
 		/*
 		 * Enlarge buffers if needed
@@ -273,7 +273,7 @@ tsvectorin(PG_FUNCTION_ARGS)
 	if (buflen > MAXSTRPOS)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("string is too long for tsvector")));
+				 errmsg("string is too long for tsvector (%d bytes, max %d bytes)", buflen, MAXSTRPOS)));
 
 	totallen = CALCDATASIZE(len, buflen);
 	in = (TSVector) palloc0(totallen);

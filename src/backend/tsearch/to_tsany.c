@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.8 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.9 2008/03/05 15:50:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,7 @@ make_tsvector(ParsedText *prs)
 	if (lenstr > MAXSTRPOS)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("string is too long for tsvector")));
+				 	errmsg("string is too long for tsvector (%d bytes, max %d bytes)", lenstr, MAXSTRPOS)));
 
 	totallen = CALCDATASIZE(prs->curwords, lenstr);
 	in = (TSVector) palloc0(totallen);
