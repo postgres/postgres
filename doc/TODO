@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Thu Mar  6 17:15:22 EST 2008
+Last updated:		Thu Mar  6 17:17:36 EST 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1033,6 +1033,7 @@ Indexes
   http://archives.postgresql.org/pgsql-hackers/2006-12/msg00341.php
   http://archives.postgresql.org/pgsql-hackers/2007-02/msg01264.php
   http://archives.postgresql.org/pgsql-hackers/2007-03/msg00465.php
+  http://archives.postgresql.org/pgsql-patches/2007-03/msg00163.php
 
 * Add REINDEX CONCURRENTLY, like CREATE INDEX CONCURRENTLY
 
