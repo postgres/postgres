@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Thu Mar  6 12:19:28 EST 2008
+Last updated:		Thu Mar  6 12:28:17 EST 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -838,6 +838,12 @@ Clients
 	  allows command execution.
 
 	  http://archives.postgresql.org/pgsql-hackers/2006-12/msg00255.php
+
+	o Prevent escape string warnings when object names have
+	  backslashes
+
+	  http://archives.postgresql.org/pgsql-hackers/2008-01/msg00227.php
+
 
 
 * pg_dump / pg_restore
