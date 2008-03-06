@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.302 2008/02/17 16:36:43 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.303 2008/03/06 21:37:33 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1144,14 +1144,15 @@ su - postgres
         <para>
          Enables <firstterm>assertion</> checks in the server, which test for
          many <quote>cannot happen</> conditions.  This is invaluable for
-         code development purposes, but the tests slow things down a little.
+         code development purposes, but the tests can slow down the
+         server significantly.
          Also, having the tests turned on won't necessarily enhance the
          stability of your server!  The assertion checks are not categorized
          for severity, and so what might be a relatively harmless bug will
          still lead to server restarts if it triggers an assertion
-         failure.  Currently, this option is not recommended for
-         production use, but you should have it on for development work
-         or when running a beta version.
+         failure.  This option is not recommended for production use, but
+         you should have it on for development work or when running a beta
+         version.
         </para>
        </listitem>
       </varlistentry>
