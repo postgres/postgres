@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.422 2008/03/03 18:09:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.423 2008/03/06 18:49:32 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -12378,7 +12378,8 @@ SELECT (pg_stat_file('filename')).modification;
    <para>
     <function>pg_advisory_lock</> locks an application-defined resource,
     which can be identified either by a single 64-bit key value or two
-    32-bit key values (note that these two key spaces do not overlap).  If
+    32-bit key values (note that these two key spaces do not overlap). 
+    The key type is specified in <literal>pg_locks.objid</>.  If
     another session already holds a lock on the same resource, the
     function will wait until the resource becomes available.  The lock
     is exclusive.  Multiple lock requests stack, so that if the same resource

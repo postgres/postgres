@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.161 2008/01/31 18:40:02 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.162 2008/03/06 18:49:32 momjian Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -5691,7 +5691,10 @@
       <entry>any OID column</entry>
       <entry>
        OID of the object within its system catalog, or NULL if the
-       object is not a general database object
+       object is not a general database object.
+       For advisory locks it is used to distinguish the two key
+       spaces (<literal>1</> for an int8 key, <literal>2</> for two
+       int4 keys).
       </entry>
      </row>
      <row>
