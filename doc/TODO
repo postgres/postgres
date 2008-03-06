@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Mar  5 11:07:13 EST 2008
+Last updated:		Wed Mar  5 22:15:29 EST 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -711,73 +711,75 @@ SQL Commands
 	  ANALYZE, and CLUSTER
 
 
-* Referential Integrity
 
-	o Add MATCH PARTIAL referential integrity
-	o Change foreign key constraint for array -> element to mean element
-	  in array?
-	o Fix problem when cascading referential triggers make changes on
-	  cascaded tables, seeing the tables in an intermediate state
+Referential Integrity
+=====================
 
-	  http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php
-	  http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php
+* Add MATCH PARTIAL referential integrity
+* Change foreign key constraint for array -> element to mean element
+  in array?
+* Fix problem when cascading referential triggers make changes on
+  cascaded tables, seeing the tables in an intermediate state
 
-	o Allow DEFERRABLE and end-of-statement UNIQUE constraints?
+  http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php
+  http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php
 
-	  This would allow UPDATE tab SET col = col + 1 to work if col has
-	  a unique index.  Currently, uniqueness checks are done while the
-	  command is being executed, rather than at the end of the statement
-	  or transaction.
+* Allow DEFERRABLE and end-of-statement UNIQUE constraints?
 
-	  http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html
-	  http://archives.postgresql.org/pgsql-hackers/2006-09/msg01458.php
+  This would allow UPDATE tab SET col = col + 1 to work if col has
+  a unique index.  Currently, uniqueness checks are done while the
+  command is being executed, rather than at the end of the statement
+  or transaction.
+  http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html
+  http://archives.postgresql.org/pgsql-hackers/2006-09/msg01458.php
 
 
-* Server-Side Languages
+Server-Side Languages
+=====================
 
-	o PL/pgSQL
-		o Fix RENAME to work on variables other than OLD/NEW
+* PL/pgSQL
+	o Fix RENAME to work on variables other than OLD/NEW
 
-		  http://archives.postgresql.org/pgsql-hackers/2002-03/msg00591.php
-		  http://archives.postgresql.org/pgsql-hackers/2007-01/msg01615.php
-		  http://archives.postgresql.org/pgsql-hackers/2007-01/msg01587.php
+	  http://archives.postgresql.org/pgsql-hackers/2002-03/msg00591.php
+	  http://archives.postgresql.org/pgsql-hackers/2007-01/msg01615.php
+	  http://archives.postgresql.org/pgsql-hackers/2007-01/msg01587.php
 
-		o Allow function parameters to be passed by name,
-		  get_employee_salary(12345 AS emp_id, 2001 AS tax_year)
-		o Allow handling of %TYPE arrays, e.g. tab.col%TYPE[]
-		o Allow listing of record column names, and access to
-		  record columns via variables, e.g. columns := r.(*),
-		  tval2 := r.(colname)
+	o Allow function parameters to be passed by name,
+	  get_employee_salary(12345 AS emp_id, 2001 AS tax_year)
+	o Allow handling of %TYPE arrays, e.g. tab.col%TYPE[]
+	o Allow listing of record column names, and access to
+	  record columns via variables, e.g. columns := r.(*),
+	  tval2 := r.(colname)
 
-		  http://archives.postgresql.org/pgsql-patches/2005-07/msg00458.php
-		  http://archives.postgresql.org/pgsql-patches/2006-05/msg00302.php
-		  http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php
+	  http://archives.postgresql.org/pgsql-patches/2005-07/msg00458.php
+	  http://archives.postgresql.org/pgsql-patches/2006-05/msg00302.php
+	  http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php
 
-		o Add support for SCROLL cursors
-		o Add support for WITH HOLD cursors
-		o Allow row and record variables to be set to NULL constants,
-		  and allow NULL tests on such variables
+	o Add support for SCROLL cursors
+	o Add support for WITH HOLD cursors
+	o Allow row and record variables to be set to NULL constants,
+	  and allow NULL tests on such variables
 
-		  Because a row is not scalar, do not allow assignment
-		  from NULL-valued scalars.
+	  Because a row is not scalar, do not allow assignment
+	  from NULL-valued scalars.
 
-		  http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php
+	  http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php
 
-	o Other
-		o Add table function support to pltcl, plpythonu
-		o Add support for polymorphic arguments and return types to
-		  languages other than PL/PgSQL
-		o Add capability to create and call PROCEDURES
-		o Add support for OUT and INOUT parameters to languages other
-		  than PL/PgSQL
-		o Add PL/PythonU tracebacks
+* Other
+	o Add table function support to pltcl, plpythonu
+	o Add support for polymorphic arguments and return types to
+	  languages other than PL/PgSQL
+	o Add capability to create and call PROCEDURES
+	o Add support for OUT and INOUT parameters to languages other
+	  than PL/PgSQL
+	o Add PL/PythonU tracebacks
 
-		  http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php
+	  http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php
 
-		o Allow data to be passed in native language formats, rather
-		  than only text
+	o Allow data to be passed in native language formats, rather
+	  than only text
 
-		  http://archives.postgresql.org/pgsql-hackers/2007-05/msg00289.php
+	  http://archives.postgresql.org/pgsql-hackers/2007-05/msg00289.php
 
 
 Clients

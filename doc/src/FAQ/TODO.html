@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Wed Mar  5 11:07:13 EST 2008
+Last updated:           Wed Mar  5 22:15:29 EST 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -623,74 +623,75 @@ first.  There is also a developer's wiki at<br/>
     <li>Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
           ANALYZE, and CLUSTER
   </li></ul>
-  </li><li>Referential Integrity
+</li></ul>
+<h1><a name="section_8">Referential Integrity</a></h1>
+
+<ul>
+  <li>Add MATCH PARTIAL referential integrity
+  </li><li>Change foreign key constraint for array -&gt; element to mean element
+  in array?
+  </li><li>Fix problem when cascading referential triggers make changes on
+  cascaded tables, seeing the tables in an intermediate state
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php">http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php">http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php</a>
+</p>
+  </li><li>Allow DEFERRABLE and end-of-statement UNIQUE constraints?
+<p>  This would allow UPDATE tab SET col = col + 1 to work if col has
+  a unique index.  Currently, uniqueness checks are done while the
+  command is being executed, rather than at the end of the statement
+  or transaction.
+  <a href="http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html">http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg01458.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg01458.php</a>
+</p>
+</li></ul>
+<h1><a name="section_9">Server-Side Languages</a></h1>
+
+<ul>
+  <li>PL/pgSQL
   <ul>
-    <li>Add MATCH PARTIAL referential integrity
-    </li><li>Change foreign key constraint for array -&gt; element to mean element
-          in array?
-    </li><li>Fix problem when cascading referential triggers make changes on
-          cascaded tables, seeing the tables in an intermediate state
-<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php">http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php</a>
-          <a href="http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php">http://archives.postgresql.org/pgsql-hackers/2005-09/msg00174.php</a>
+    <li>Fix RENAME to work on variables other than OLD/NEW
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2002-03/msg00591.php">http://archives.postgresql.org/pgsql-hackers/2002-03/msg00591.php</a>
+          <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg01615.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg01615.php</a>
+          <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg01587.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg01587.php</a>
 </p>
-    </li><li>Allow DEFERRABLE and end-of-statement UNIQUE constraints?
-<p>          This would allow UPDATE tab SET col = col + 1 to work if col has
-          a unique index.  Currently, uniqueness checks are done while the
-          command is being executed, rather than at the end of the statement
-          or transaction.
+    </li><li>Allow function parameters to be passed by name,
+          get_employee_salary(12345 AS emp_id, 2001 AS tax_year)
+    </li><li>Allow handling of %TYPE arrays, e.g. tab.col%TYPE[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?"></a>]
+    </li><li>Allow listing of record column names, and access to
+          record columns via variables, e.g. columns := r.(*),
+          tval2 := r.(colname)
+<p>          <a href="http://archives.postgresql.org/pgsql-patches/2005-07/msg00458.php">http://archives.postgresql.org/pgsql-patches/2005-07/msg00458.php</a>
+          <a href="http://archives.postgresql.org/pgsql-patches/2006-05/msg00302.php">http://archives.postgresql.org/pgsql-patches/2006-05/msg00302.php</a>
+          <a href="http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php">http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php</a>
 </p>
-<p>          <a href="http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html">http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html</a>
-          <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg01458.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg01458.php</a>
+    </li><li>Add support for SCROLL cursors
+    </li><li>Add support for WITH HOLD cursors
+    </li><li>Allow row and record variables to be set to NULL constants,
+          and allow NULL tests on such variables
+<p>          Because a row is not scalar, do not allow assignment
+          from NULL-valued scalars.
+</p>
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php</a>
 </p>
   </li></ul>
-  </li><li>Server-Side Languages
+  </li><li>Other
   <ul>
-    <li>PL/pgSQL
-    <ul>
-      <li>Fix RENAME to work on variables other than OLD/NEW
-<p>                  <a href="http://archives.postgresql.org/pgsql-hackers/2002-03/msg00591.php">http://archives.postgresql.org/pgsql-hackers/2002-03/msg00591.php</a>
-                  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg01615.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg01615.php</a>
-                  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg01587.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg01587.php</a>
+    <li>Add table function support to pltcl, plpythonu
+    </li><li>Add support for polymorphic arguments and return types to
+          languages other than PL/PgSQL
+    </li><li>Add capability to create and call PROCEDURES
+    </li><li>Add support for OUT and INOUT parameters to languages other
+          than PL/PgSQL
+    </li><li>Add PL/PythonU tracebacks
+<p>          <a href="http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php">http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php</a>
 </p>
-      </li><li>Allow function parameters to be passed by name,
-                  get_employee_salary(12345 AS emp_id, 2001 AS tax_year)
-      </li><li>Allow handling of %TYPE arrays, e.g. tab.col%TYPE[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?"></a>]
-      </li><li>Allow listing of record column names, and access to
-                  record columns via variables, e.g. columns := r.(*),
-                  tval2 := r.(colname)
-<p>                  <a href="http://archives.postgresql.org/pgsql-patches/2005-07/msg00458.php">http://archives.postgresql.org/pgsql-patches/2005-07/msg00458.php</a>
-                  <a href="http://archives.postgresql.org/pgsql-patches/2006-05/msg00302.php">http://archives.postgresql.org/pgsql-patches/2006-05/msg00302.php</a>
-                  <a href="http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php">http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php</a>
+    </li><li>Allow data to be passed in native language formats, rather
+          than only text
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-05/msg00289.php">http://archives.postgresql.org/pgsql-hackers/2007-05/msg00289.php</a>
 </p>
-      </li><li>Add support for SCROLL cursors
-      </li><li>Add support for WITH HOLD cursors
-      </li><li>Allow row and record variables to be set to NULL constants,
-                  and allow NULL tests on such variables
-<p>                  Because a row is not scalar, do not allow assignment
-                  from NULL-valued scalars.
-</p>
-<p>                  <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php</a>
-</p>
-    </li></ul>
-    </li><li>Other
-    <ul>
-      <li>Add table function support to pltcl, plpythonu
-      </li><li>Add support for polymorphic arguments and return types to
-                  languages other than PL/PgSQL
-      </li><li>Add capability to create and call PROCEDURES
-      </li><li>Add support for OUT and INOUT parameters to languages other
-                  than PL/PgSQL
-      </li><li>Add PL/PythonU tracebacks
-<p>                  <a href="http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php">http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php</a>
-</p>
-      </li><li>Allow data to be passed in native language formats, rather
-                  than only text
-<p>                  <a href="http://archives.postgresql.org/pgsql-hackers/2007-05/msg00289.php">http://archives.postgresql.org/pgsql-hackers/2007-05/msg00289.php</a>
-</p>
-    </li></ul>
   </li></ul>
 </li></ul>
-<h1><a name="section_8">Clients</a></h1>
+<h1><a name="section_10">Clients</a></h1>
 
 <ul>
   <li>Have pg_ctl look at PGHOST in case it is a socket directory?
@@ -821,7 +822,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li></ul>
 </li></ul>
-<h1><a name="section_9">Triggers</a></h1>
+<h1><a name="section_11">Triggers</a></h1>
 
 <ul>
   <li>Add deferred trigger queue file
@@ -859,7 +860,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-sql/2008-01/msg00050.php">http://archives.postgresql.org/pgsql-sql/2008-01/msg00050.php</a>
 </p>
 </li></ul>
-<h1><a name="section_10">Indexes</a></h1>
+<h1><a name="section_12">Indexes</a></h1>
 
 <ul>
   <li>Add UNIQUE capability to non-btree indexes
@@ -931,7 +932,7 @@ first.  There is also a developer's wiki at<br/>
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg01199.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg01199.php</a>
 </p>
 </li></ul>
-<h1><a name="section_11">Fsync</a></h1>
+<h1><a name="section_13">Fsync</a></h1>
 
 <ul>
   <li>Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
@@ -941,7 +942,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Add program to test if fsync has a delay compared to non-fsync
 </li></ul>
-<h1><a name="section_12">Cache Usage</a></h1>
+<h1><a name="section_14">Cache Usage</a></h1>
 
 <ul>
   <li>Speed up COUNT(*)
@@ -994,7 +995,7 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php</a>
 </p>
 </li></ul>
-<h1><a name="section_13">Vacuum</a></h1>
+<h1><a name="section_15">Vacuum</a></h1>
 
 <ul>
   <li>Improve speed with indexes
@@ -1045,7 +1046,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li></ul>
 </li></ul>
-<h1><a name="section_14">Locking</a></h1>
+<h1><a name="section_16">Locking</a></h1>
 
 <ul>
   <li>Fix priority ordering of read and write light-weight locks (Neil)
@@ -1071,7 +1072,7 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-committers/2008-01/msg00365.php">http://archives.postgresql.org/pgsql-committers/2008-01/msg00365.php</a>
 </p>
 </li></ul>
-<h1><a name="section_15">Startup Time Improvements</a></h1>
+<h1><a name="section_17">Startup Time Improvements</a></h1>
 
 <ul>
   <li>Experiment with multi-threaded backend for backend creation [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?thread">thread</a>]
@@ -1082,7 +1083,7 @@ first.  There is also a developer's wiki at<br/>
   a single session using multiple threads to execute a statement faster.
 </p>
 </li></ul>
-<h1><a name="section_16">Write-Ahead Log</a></h1>
+<h1><a name="section_18">Write-Ahead Log</a></h1>
 
 <ul>
   <li>Eliminate need to write full pages to WAL before page modification [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?wal">wal</a>]
@@ -1143,7 +1144,7 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-hackers/2008-02/msg01279.php">http://archives.postgresql.org/pgsql-hackers/2008-02/msg01279.php</a>
 </p>
 </li></ul>
-<h1><a name="section_17">Optimizer / Executor</a></h1>
+<h1><a name="section_19">Optimizer / Executor</a></h1>
 
 <ul>
   <li>Improve selectivity functions for geometric operators
@@ -1166,7 +1167,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00096.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00096.php</a>
 </p>
 </li></ul>
-<h1><a name="section_18">Miscellaneous Performance</a></h1>
+<h1><a name="section_20">Miscellaneous Performance</a></h1>
 
 <ul>
   <li>Do async I/O for faster random read-ahead of data
@@ -1219,7 +1220,7 @@ first.  There is also a developer's wiki at<br/>
   concurrent reads from multiple devices in a partitioned table.
 </p>
 </li></ul>
-<h1><a name="section_19">Source Code</a></h1>
+<h1><a name="section_21">Source Code</a></h1>
 
 <ul>
   <li>Add use of 'const' for variables in source tree
@@ -1286,7 +1287,7 @@ first.  There is also a developer's wiki at<br/>
           of result sets using new statement protocol
   </li></ul>
 </li></ul>
-<h1><a name="section_20">Exotic Features</a></h1>
+<h1><a name="section_22">Exotic Features</a></h1>
 
 <ul>
   <li>Add pre-parsing phase that converts non-ISO syntax to supported
@@ -1313,7 +1314,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-01/msg00893.php">http://archives.postgresql.org/pgsql-hackers/2008-01/msg00893.php</a>
 </p>
 </li></ul>
-<h1><a name="section_21">Features We Do <u>Not</u> Want</a></h1>
+<h1><a name="section_23">Features We Do <u>Not</u> Want</a></h1>
 
 <ul>
   <li>All backends running as threads in a single process (not wanted)
