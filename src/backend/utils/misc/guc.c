@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.432 2008/01/30 18:35:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.433 2008/03/06 16:31:42 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1841,7 +1841,7 @@ static struct config_real ConfigureNamesReal[] =
 
 	{
 		{"bgwriter_lru_multiplier", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer multiplier on average buffers to scan per round."),
+			gettext_noop("Multiple of the average buffer usage to free per round."),
 			NULL
 		},
 		&bgwriter_lru_multiplier,
