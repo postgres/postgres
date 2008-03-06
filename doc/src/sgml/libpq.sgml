@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.255 2008/01/31 23:31:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.256 2008/03/06 15:37:56 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -4415,6 +4415,56 @@ typedef struct {
   </para>
 
   <variablelist>
+   <varlistentry>
+    <term>
+     <function>PQclientEncoding</function>
+     <indexterm>
+      <primary>PQclientEncoding</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Returns the client encoding.
+      <synopsis>
+      int PQclientEncoding(const PGconn *<replaceable>conn</replaceable>);
+      </synopsis>
+
+      Note that it returns the encoding ID, not a symbolic string
+      such as <literal>EUC_JP</literal>. To convert an encoding ID to an encoding name, you
+      can use:
+
+<synopsis>
+char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>);
+</synopsis>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>PQsetClientEncoding</function>
+     <indexterm>
+      <primary>PQsetClientEncoding</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Sets the client encoding.
+      <synopsis>
+      int PQsetClientEncoding(PGconn *<replaceable>conn</replaceable>, const char *<replaceable>encoding</replaceable>);
+      </synopsis>
+
+      <replaceable>conn</replaceable> is a connection to the server,
+      and <replaceable>encoding</replaceable> is the encoding you want to
+      use. If the function successfully sets the encoding, it returns 0,
+      otherwise -1. The current encoding for this connection can be
+      determined by using <function>PQclientEncoding</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term>
      <function>PQsetErrorVerbosity</function>

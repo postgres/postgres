@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.84 2007/09/28 22:25:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.85 2008/03/06 15:37:56 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -1110,31 +1110,7 @@ $ <userinput>psql -l</userinput>
 
       <listitem>
        <para>
-        Using <application>libpq</> functions.
-        <command>\encoding</command> actually calls
-        <function>PQsetClientEncoding()</function> for its purpose.
-
-<synopsis>
-int PQsetClientEncoding(PGconn *<replaceable>conn</replaceable>, const char *<replaceable>encoding</replaceable>);
-</synopsis>
-
-        where <replaceable>conn</replaceable> is a connection to the server,
-        and <replaceable>encoding</replaceable> is the encoding you
-        want to use. If the function successfully sets the encoding, it returns 0,
-        otherwise -1. The current encoding for this connection can be determined by
-        using:
-
-<synopsis>
-int PQclientEncoding(const PGconn *<replaceable>conn</replaceable>);
-</synopsis>
-
-        Note that it returns the encoding ID, not a symbolic string
-        such as <literal>EUC_JP</literal>. To convert an encoding ID to an encoding name, you
-        can use:
-
-<synopsis>
-char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>);
-</synopsis>
+        <application>libpq</> (<xref linkend="libpq-control">) has functions to control the client encoding.
        </para>
       </listitem>
 
