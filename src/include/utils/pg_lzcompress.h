@@ -3,7 +3,7 @@
  *
  *	Definitions for the builtin LZ compressor
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.16 2007/11/15 21:14:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.17 2008/03/07 23:20:21 tgl Exp $
  * ----------
  */
 
@@ -14,7 +14,7 @@
 /* ----------
  * PGLZ_Header -
  *
- *		The information at the top of the compressed data.
+ *		The information at the start of the compressed data.
  * ----------
  */
 typedef struct PGLZ_Header
@@ -48,19 +48,17 @@ typedef struct PGLZ_Header
  *
  *		Some values that control the compression algorithm.
  *
- *		min_input_size		Minimum input data size to start compression.
+ *		min_input_size		Minimum input data size to consider compression.
  *
- *		force_input_size	Minimum input data size to force compression
- *							even if the compression rate drops below
- *							min_comp_rate.	But in any case the output
- *							must be smaller than the input.  If that isn't
- *							the case, the compressor will throw away its
- *							output and copy the original, uncompressed data
- *							to the output buffer.
+ *		max_input_size		Maximum input data size to consider compression.
  *
- *		min_comp_rate		Minimum compression rate (0-99%) to require for
- *							inputs smaller than force_input_size.  If not
- *							achieved, the output will be uncompressed.
+ *		min_comp_rate		Minimum compression rate (0-99%) to require.
+ *							Regardless of min_comp_rate, the output must be
+ *							smaller than the input, else we don't store
+ *							compressed.
+ *
+ *		first_success_by	Abandon compression if we find no compressible
+ *							data within the first this-many bytes.
  *
  *		match_size_good		The initial GOOD match size when starting history
  *							lookup. When looking up the history to find a
@@ -81,8 +79,9 @@ typedef struct PGLZ_Header
 typedef struct PGLZ_Strategy
 {
 	int32		min_input_size;
-	int32		force_input_size;
+	int32		max_input_size;
 	int32		min_comp_rate;
+	int32		first_success_by;
 	int32		match_size_good;
 	int32		match_size_drop;
 } PGLZ_Strategy;
@@ -91,21 +90,11 @@ typedef struct PGLZ_Strategy
 /* ----------
  * The standard strategies
  *
- *		PGLZ_strategy_default		Starts compression only if input is
- *									at least 256 bytes large. Stores output
- *									uncompressed if compression does not
- *									gain at least 20% size reducture but
- *									input does not exceed 6K. Stops history
- *									lookup if at least a 128 byte long
- *									match has been found.
+ *		PGLZ_strategy_default		Recommended default strategy for TOAST.
  *
- *									This is the default strategy if none
- *									is given to pglz_compress().
- *
- *		PGLZ_strategy_always		Starts compression on any infinitely
- *									small input and does fallback to
- *									uncompressed storage only if output
- *									would be larger than input.
+ *		PGLZ_strategy_always		Try to compress inputs of any length.
+ *									Fallback to uncompressed storage only if
+ *									output would be larger than input.
  * ----------
  */
 extern const PGLZ_Strategy *const PGLZ_strategy_default;
