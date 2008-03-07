@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.114 2008/02/13 22:44:06 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.115 2008/03/07 01:46:41 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1814,7 +1814,7 @@ if (!triggered)
    </para>
 
    <para>
-    If we take a backup of the standby server's files while it is following
+    If we take a backup of the standby server's data directory while it is processing
     logs shipped from the primary, we will be able to reload that data and
     restart the standby's recovery process from the last restart point.
     We no longer need to keep WAL files from before the restart point.
