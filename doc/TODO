@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri Mar  7 15:20:15 EST 2008
+Last updated:		Fri Mar  7 15:38:55 EST 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -836,6 +836,12 @@ Clients
   config directory but in the PGDATA directory.  The solution is to
   allow pg_ctl to read and understand postgresql.conf to find the
   data_directory value.
+
+* Add a function like pg_get_indexdef() that report more detailed index
+  information
+
+  http://archives.postgresql.org/pgsql-bugs/2007-12/msg00166.php
+
 
 * psql
 	o Have psql show current values for a sequence
