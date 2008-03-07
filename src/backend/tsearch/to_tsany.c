@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.8 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.8.2.1 2008/03/07 15:29:27 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,6 +350,18 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(query);
 	}
 	memcpy((void *) GETQUERY(query), (void *) res, len * sizeof(QueryItem));
+
+	if ( len != query->size ) {
+		char 		*oldoperand = GETOPERAND(query);
+		int4 lenoperand = VARSIZE(query) - (oldoperand - (char*)query);
+
+		Assert( len < query->size );
+
+		query->size = len;
+		memcpy((void *) GETOPERAND(query), oldoperand, VARSIZE(query) - (oldoperand - (char*)query) );
+		SET_VARSIZE(query, COMPUTESIZE( len, lenoperand )); 
+	}
+
 	pfree(res);
 	PG_RETURN_TSQUERY(query);
 }
@@ -388,6 +400,18 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(query);
 	}
 	memcpy((void *) GETQUERY(query), (void *) res, len * sizeof(QueryItem));
+
+	if ( len != query->size ) {
+		char 		*oldoperand = GETOPERAND(query);
+		int4 lenoperand = VARSIZE(query) - (oldoperand - (char*)query);
+
+		Assert( len < query->size );
+
+		query->size = len;
+		memcpy((void *) GETOPERAND(query), oldoperand, lenoperand );
+		SET_VARSIZE(query, COMPUTESIZE( len, lenoperand )); 
+	}
+
 	pfree(res);
 	PG_RETURN_POINTER(query);
 }

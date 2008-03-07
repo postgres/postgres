@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_op.c,v 1.3 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_op.c,v 1.3.2.1 2008/03/07 15:29:27 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,27 +141,14 @@ tsquery_not(PG_FUNCTION_ARGS)
 static int
 CompareTSQ(TSQuery a, TSQuery b)
 {
-	if (a->size != b->size)
-	{
-		return (a->size < b->size) ? -1 : 1;
-	}
-	else if (VARSIZE(a) != VARSIZE(b))
-	{
-		return (VARSIZE(a) < VARSIZE(b)) ? -1 : 1;
-	}
-	else
-	{
-		QTNode	   *an = QT2QTN(GETQUERY(a), GETOPERAND(a));
-		QTNode	   *bn = QT2QTN(GETQUERY(b), GETOPERAND(b));
-		int			res = QTNodeCompare(an, bn);
+	QTNode	   *an = QT2QTN(GETQUERY(a), GETOPERAND(a));
+	QTNode	   *bn = QT2QTN(GETQUERY(b), GETOPERAND(b));
+	int			res = QTNodeCompare(an, bn);
 
-		QTNFree(an);
-		QTNFree(bn);
+	QTNFree(an);
+	QTNFree(bn);
 
-		return res;
-	}
-
-	return 0;
+	return res;
 }
 
 Datum
