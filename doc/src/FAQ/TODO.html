@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Fri Mar  7 09:51:26 EST 2008
+Last updated:           Fri Mar  7 10:56:00 EST 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -766,6 +766,9 @@ first.  There is also a developer's wiki at<br/>
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-04/msg00424.php">http://archives.postgresql.org/pgsql-hackers/2007-04/msg00424.php</a>
 </p>
     </li><li>Have \d show child tables that inherit from the specified parent
+    </li><li>Have \l+ show database size, if permissions allow
+<p>          Ideally it will not generate an error for invalid permissions
+</p>
   </li></ul>
   </li><li>pg_dump / pg_restore
   <ul>
