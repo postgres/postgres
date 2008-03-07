@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Thu Mar  6 20:06:51 EST 2008
+Last updated:           Fri Mar  7 09:51:26 EST 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -509,6 +509,11 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Allow INSERT ... DELETE ... RETURNING, namely allow the DELETE ...
   RETURNING to supply values to the INSERT
   <a href="http://archives.postgresql.org/pgsql-hackers/2008-02/thrd2.php#00979">http://archives.postgresql.org/pgsql-hackers/2008-02/thrd2.php#00979</a>
+  </li><li>Add comments on system tables/columns using the information in
+  catalogs.sgml
+<p>  Ideally the information would be pulled from the SGML file
+  automatically.
+</p>
   </li><li>CREATE
   <ul>
     <li>Allow CREATE TABLE AS to determine column lengths for complex
