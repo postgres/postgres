@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.295 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.296 2008/03/08 01:16:26 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2913,7 +2913,6 @@ CopyReadAttributesCSV(CopyState cstate, int maxfields, char **fieldvals)
 	for (;;)
 	{
 		bool		found_delim = false;
-		bool		in_quote = false;
 		bool		saw_quote = false;
 		char	   *start_ptr;
 		char	   *end_ptr;
@@ -2929,71 +2928,86 @@ CopyReadAttributesCSV(CopyState cstate, int maxfields, char **fieldvals)
 		start_ptr = cur_ptr;
 		fieldvals[fieldno] = output_ptr;
 
-		/* Scan data for field */
+		/* Scan data for field,
+		 *
+		 * The loop starts in "not quote" mode and then toggles between 
+		 * that and "in quote" mode. 
+		 * The loop exits normally if it is in "not quote" mode and a
+		 * delimiter or line end is seen.
+		 */
 		for (;;)
 		{
 			char		c;
 
-			end_ptr = cur_ptr;
-			if (cur_ptr >= line_end_ptr)
-				break;
-			c = *cur_ptr++;
-			/* unquoted field delimiter */
-			if (c == delimc && !in_quote)
+			/* Not in quote */
+			for (;;)
 			{
-				found_delim = true;
-				break;
-			}
-			/* start of quoted field (or part of field) */
-			if (c == quotec && !in_quote)
-			{
-				saw_quote = true;
-				in_quote = true;
-				continue;
-			}
-			/* escape within a quoted field */
-			if (c == escapec && in_quote)
-			{
-				/*
-				 * peek at the next char if available, and escape it if it is
-				 * an escape char or a quote char
-				 */
-				if (cur_ptr < line_end_ptr)
+				end_ptr = cur_ptr;
+				if (cur_ptr >= line_end_ptr)
+					goto endfield;
+				c = *cur_ptr++;
+				/* unquoted field delimiter */
+				if (c == delimc)
 				{
-					char		nextc = *cur_ptr;
+					found_delim = true;
+					goto endfield;
+				}
+				/* start of quoted field (or part of field) */
+				if (c == quotec)
+				{
+					saw_quote = true;
+					break;
+				}
+				/* Add c to output string */
+				*output_ptr++ = c;
+			}
 
-					if (nextc == escapec || nextc == quotec)
+			/* In quote */
+			for (;;)
+			{
+				end_ptr = cur_ptr;
+				if (cur_ptr >= line_end_ptr)
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("unterminated CSV quoted field")));
+
+				c = *cur_ptr++;
+
+				/* escape within a quoted field */
+				if (c == escapec)
+				{
+					/*
+					 * peek at the next char if available, and escape it if it is
+					 * an escape char or a quote char
+					 */
+					if (cur_ptr < line_end_ptr)
 					{
-						*output_ptr++ = nextc;
-						cur_ptr++;
-						continue;
+						char		nextc = *cur_ptr;
+
+						if (nextc == escapec || nextc == quotec)
+						{
+							*output_ptr++ = nextc;
+							cur_ptr++;
+							continue;
+						}
 					}
 				}
-			}
+				/*
+				 * end of quoted field. Must do this test after testing for escape
+				 * in case quote char and escape char are the same (which is the
+				 * common case).
+				 */
+				if (c == quotec)
+					break;
 
-			/*
-			 * end of quoted field. Must do this test after testing for escape
-			 * in case quote char and escape char are the same (which is the
-			 * common case).
-			 */
-			if (c == quotec && in_quote)
-			{
-				in_quote = false;
-				continue;
+				/* Add c to output string */
+				*output_ptr++ = c;
 			}
-
-			/* Add c to output string */
-			*output_ptr++ = c;
 		}
+	endfield:
 
 		/* Terminate attribute value in output area */
 		*output_ptr++ = '\0';
-
-		/* Shouldn't still be in quote mode */
-		if (in_quote)
-			ereport(ERROR,
-					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-					 errmsg("unterminated CSV quoted field")));
 
 		/* Check whether raw input matched null marker */
 		input_len = end_ptr - start_ptr;
