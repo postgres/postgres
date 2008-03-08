@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.243 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.244 2008/03/08 22:41:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,12 @@
 #include "utils/syscache.h"
 
 
+static double var_eq_const(VariableStatData *vardata, Oid operator,
+			 Datum constval, bool constisnull,
+			 bool varonleft);
+static double var_eq_non_const(VariableStatData *vardata, Oid operator,
+				 Node *other,
+				 bool varonleft);
 static double ineq_histogram_selectivity(VariableStatData *vardata,
 						   FmgrInfo *opproc, bool isgt,
 						   Datum constval, Oid consttype);
@@ -156,10 +162,6 @@ eqsel(PG_FUNCTION_ARGS)
 	VariableStatData vardata;
 	Node	   *other;
 	bool		varonleft;
-	Datum	   *values;
-	int			nvalues;
-	float4	   *numbers;
-	int			nnumbers;
 	double		selec;
 
 	/*
@@ -171,148 +173,203 @@ eqsel(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(DEFAULT_EQ_SEL);
 
 	/*
-	 * If the something is a NULL constant, assume operator is strict and
+	 * We can do a lot better if the something is a constant.  (Note: the
+	 * Const might result from estimation rather than being a simple constant
+	 * in the query.)
+	 */
+	if (IsA(other, Const))
+		selec = var_eq_const(&vardata, operator,
+							 ((Const *) other)->constvalue,
+							 ((Const *) other)->constisnull,
+							 varonleft);
+	else
+		selec = var_eq_non_const(&vardata, operator, other,
+								 varonleft);
+
+	ReleaseVariableStats(vardata);
+
+	PG_RETURN_FLOAT8((float8) selec);
+}
+
+/*
+ * var_eq_const --- eqsel for var = const case
+ *
+ * This is split out so that some other estimation functions can use it.
+ */
+static double
+var_eq_const(VariableStatData *vardata, Oid operator,
+			 Datum constval, bool constisnull,
+			 bool varonleft)
+{
+	double		selec;
+
+	/*
+	 * If the constant is NULL, assume operator is strict and
 	 * return zero, ie, operator will never return TRUE.
 	 */
-	if (IsA(other, Const) &&
-		((Const *) other)->constisnull)
-	{
-		ReleaseVariableStats(vardata);
-		PG_RETURN_FLOAT8(0.0);
-	}
+	if (constisnull)
+		return 0.0;
 
-	if (HeapTupleIsValid(vardata.statsTuple))
+	if (HeapTupleIsValid(vardata->statsTuple))
 	{
 		Form_pg_statistic stats;
+		Datum	   *values;
+		int			nvalues;
+		float4	   *numbers;
+		int			nnumbers;
+		bool		match = false;
+		int			i;
 
-		stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
+		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
-		if (IsA(other, Const))
+		/*
+		 * Is the constant "=" to any of the column's most common values?
+		 * (Although the given operator may not really be "=", we will
+		 * assume that seeing whether it returns TRUE is an appropriate
+		 * test.  If you don't like this, maybe you shouldn't be using
+		 * eqsel for your operator...)
+		 */
+		if (get_attstatsslot(vardata->statsTuple,
+							 vardata->atttype, vardata->atttypmod,
+							 STATISTIC_KIND_MCV, InvalidOid,
+							 &values, &nvalues,
+							 &numbers, &nnumbers))
 		{
-			/* Variable is being compared to a known non-null constant */
-			Datum		constval = ((Const *) other)->constvalue;
-			bool		match = false;
-			int			i;
+			FmgrInfo	eqproc;
 
-			/*
-			 * Is the constant "=" to any of the column's most common values?
-			 * (Although the given operator may not really be "=", we will
-			 * assume that seeing whether it returns TRUE is an appropriate
-			 * test.  If you don't like this, maybe you shouldn't be using
-			 * eqsel for your operator...)
-			 */
-			if (get_attstatsslot(vardata.statsTuple,
-								 vardata.atttype, vardata.atttypmod,
-								 STATISTIC_KIND_MCV, InvalidOid,
-								 &values, &nvalues,
-								 &numbers, &nnumbers))
+			fmgr_info(get_opcode(operator), &eqproc);
+
+			for (i = 0; i < nvalues; i++)
 			{
-				FmgrInfo	eqproc;
-
-				fmgr_info(get_opcode(operator), &eqproc);
-
-				for (i = 0; i < nvalues; i++)
-				{
-					/* be careful to apply operator right way 'round */
-					if (varonleft)
-						match = DatumGetBool(FunctionCall2(&eqproc,
-														   values[i],
-														   constval));
-					else
-						match = DatumGetBool(FunctionCall2(&eqproc,
-														   constval,
-														   values[i]));
-					if (match)
-						break;
-				}
+				/* be careful to apply operator right way 'round */
+				if (varonleft)
+					match = DatumGetBool(FunctionCall2(&eqproc,
+													   values[i],
+													   constval));
+				else
+					match = DatumGetBool(FunctionCall2(&eqproc,
+													   constval,
+													   values[i]));
+				if (match)
+					break;
 			}
-			else
-			{
-				/* no most-common-value info available */
-				values = NULL;
-				numbers = NULL;
-				i = nvalues = nnumbers = 0;
-			}
-
-			if (match)
-			{
-				/*
-				 * Constant is "=" to this common value.  We know selectivity
-				 * exactly (or as exactly as ANALYZE could calculate it,
-				 * anyway).
-				 */
-				selec = numbers[i];
-			}
-			else
-			{
-				/*
-				 * Comparison is against a constant that is neither NULL nor
-				 * any of the common values.  Its selectivity cannot be more
-				 * than this:
-				 */
-				double		sumcommon = 0.0;
-				double		otherdistinct;
-
-				for (i = 0; i < nnumbers; i++)
-					sumcommon += numbers[i];
-				selec = 1.0 - sumcommon - stats->stanullfrac;
-				CLAMP_PROBABILITY(selec);
-
-				/*
-				 * and in fact it's probably a good deal less. We approximate
-				 * that all the not-common values share this remaining
-				 * fraction equally, so we divide by the number of other
-				 * distinct values.
-				 */
-				otherdistinct = get_variable_numdistinct(&vardata)
-					- nnumbers;
-				if (otherdistinct > 1)
-					selec /= otherdistinct;
-
-				/*
-				 * Another cross-check: selectivity shouldn't be estimated as
-				 * more than the least common "most common value".
-				 */
-				if (nnumbers > 0 && selec > numbers[nnumbers - 1])
-					selec = numbers[nnumbers - 1];
-			}
-
-			free_attstatsslot(vardata.atttype, values, nvalues,
-							  numbers, nnumbers);
 		}
 		else
 		{
-			double		ndistinct;
+			/* no most-common-value info available */
+			values = NULL;
+			numbers = NULL;
+			i = nvalues = nnumbers = 0;
+		}
+
+		if (match)
+		{
+			/*
+			 * Constant is "=" to this common value.  We know selectivity
+			 * exactly (or as exactly as ANALYZE could calculate it,
+			 * anyway).
+			 */
+			selec = numbers[i];
+		}
+		else
+		{
+			/*
+			 * Comparison is against a constant that is neither NULL nor
+			 * any of the common values.  Its selectivity cannot be more
+			 * than this:
+			 */
+			double		sumcommon = 0.0;
+			double		otherdistinct;
+
+			for (i = 0; i < nnumbers; i++)
+				sumcommon += numbers[i];
+			selec = 1.0 - sumcommon - stats->stanullfrac;
+			CLAMP_PROBABILITY(selec);
 
 			/*
-			 * Search is for a value that we do not know a priori, but we will
-			 * assume it is not NULL.  Estimate the selectivity as non-null
-			 * fraction divided by number of distinct values, so that we get a
-			 * result averaged over all possible values whether common or
-			 * uncommon.  (Essentially, we are assuming that the not-yet-known
-			 * comparison value is equally likely to be any of the possible
-			 * values, regardless of their frequency in the table.	Is that a
-			 * good idea?)
+			 * and in fact it's probably a good deal less. We approximate
+			 * that all the not-common values share this remaining
+			 * fraction equally, so we divide by the number of other
+			 * distinct values.
 			 */
-			selec = 1.0 - stats->stanullfrac;
-			ndistinct = get_variable_numdistinct(&vardata);
-			if (ndistinct > 1)
-				selec /= ndistinct;
+			otherdistinct = get_variable_numdistinct(vardata) - nnumbers;
+			if (otherdistinct > 1)
+				selec /= otherdistinct;
 
 			/*
-			 * Cross-check: selectivity should never be estimated as more than
-			 * the most common value's.
+			 * Another cross-check: selectivity shouldn't be estimated as
+			 * more than the least common "most common value".
 			 */
-			if (get_attstatsslot(vardata.statsTuple,
-								 vardata.atttype, vardata.atttypmod,
-								 STATISTIC_KIND_MCV, InvalidOid,
-								 NULL, NULL,
-								 &numbers, &nnumbers))
-			{
-				if (nnumbers > 0 && selec > numbers[0])
-					selec = numbers[0];
-				free_attstatsslot(vardata.atttype, NULL, 0, numbers, nnumbers);
-			}
+			if (nnumbers > 0 && selec > numbers[nnumbers - 1])
+				selec = numbers[nnumbers - 1];
+		}
+
+		free_attstatsslot(vardata->atttype, values, nvalues,
+						  numbers, nnumbers);
+	}
+	else
+	{
+		/*
+		 * No ANALYZE stats available, so make a guess using estimated number
+		 * of distinct values and assuming they are equally common. (The guess
+		 * is unlikely to be very good, but we do know a few special cases.)
+		 */
+		selec = 1.0 / get_variable_numdistinct(vardata);
+	}
+
+	/* result should be in range, but make sure... */
+	CLAMP_PROBABILITY(selec);
+
+	return selec;
+}
+
+/*
+ * var_eq_non_const --- eqsel for var = something-other-than-const case
+ */
+static double
+var_eq_non_const(VariableStatData *vardata, Oid operator,
+				 Node *other,
+				 bool varonleft)
+{
+	double		selec;
+
+	if (HeapTupleIsValid(vardata->statsTuple))
+	{
+		Form_pg_statistic stats;
+		double		ndistinct;
+		float4	   *numbers;
+		int			nnumbers;
+
+		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
+
+		/*
+		 * Search is for a value that we do not know a priori, but we will
+		 * assume it is not NULL.  Estimate the selectivity as non-null
+		 * fraction divided by number of distinct values, so that we get a
+		 * result averaged over all possible values whether common or
+		 * uncommon.  (Essentially, we are assuming that the not-yet-known
+		 * comparison value is equally likely to be any of the possible
+		 * values, regardless of their frequency in the table.	Is that a
+		 * good idea?)
+		 */
+		selec = 1.0 - stats->stanullfrac;
+		ndistinct = get_variable_numdistinct(vardata);
+		if (ndistinct > 1)
+			selec /= ndistinct;
+
+		/*
+		 * Cross-check: selectivity should never be estimated as more than
+		 * the most common value's.
+		 */
+		if (get_attstatsslot(vardata->statsTuple,
+							 vardata->atttype, vardata->atttypmod,
+							 STATISTIC_KIND_MCV, InvalidOid,
+							 NULL, NULL,
+							 &numbers, &nnumbers))
+		{
+			if (nnumbers > 0 && selec > numbers[0])
+				selec = numbers[0];
+			free_attstatsslot(vardata->atttype, NULL, 0, numbers, nnumbers);
 		}
 	}
 	else
@@ -322,15 +379,13 @@ eqsel(PG_FUNCTION_ARGS)
 		 * of distinct values and assuming they are equally common. (The guess
 		 * is unlikely to be very good, but we do know a few special cases.)
 		 */
-		selec = 1.0 / get_variable_numdistinct(&vardata);
+		selec = 1.0 / get_variable_numdistinct(vardata);
 	}
-
-	ReleaseVariableStats(vardata);
 
 	/* result should be in range, but make sure... */
 	CLAMP_PROBABILITY(selec);
 
-	PG_RETURN_FLOAT8((float8) selec);
+	return selec;
 }
 
 /*
@@ -1047,16 +1102,11 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		 */
 		Oid			eqopr = get_opfamily_member(opfamily, vartype, vartype,
 												BTEqualStrategyNumber);
-		List	   *eqargs;
 
 		if (eqopr == InvalidOid)
 			elog(ERROR, "no = operator for opfamily %u", opfamily);
-		eqargs = list_make2(variable, prefix);
-		result = DatumGetFloat8(DirectFunctionCall4(eqsel,
-													PointerGetDatum(root),
-													ObjectIdGetDatum(eqopr),
-													PointerGetDatum(eqargs),
-													Int32GetDatum(varRelid)));
+		result = var_eq_const(&vardata, eqopr, prefix->constvalue,
+							  false, true);
 	}
 	else
 	{
@@ -4430,6 +4480,7 @@ prefix_selectivity(VariableStatData *vardata,
 	Oid			cmpopr;
 	FmgrInfo	opproc;
 	Const	   *greaterstrcon;
+	Selectivity	eq_sel;
 
 	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
 								 BTGreaterEqualStrategyNumber);
@@ -4444,7 +4495,7 @@ prefix_selectivity(VariableStatData *vardata,
 	if (prefixsel <= 0.0)
 	{
 		/* No histogram is present ... return a suitable default estimate */
-		return 0.005;
+		return DEFAULT_MATCH_SEL;
 	}
 
 	/*-------
@@ -4452,16 +4503,16 @@ prefix_selectivity(VariableStatData *vardata,
 	 *	"x < greaterstr".
 	 *-------
 	 */
-	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
-								 BTLessStrategyNumber);
-	if (cmpopr == InvalidOid)
-		elog(ERROR, "no < operator for opfamily %u", opfamily);
-	fmgr_info(get_opcode(cmpopr), &opproc);
-
 	greaterstrcon = make_greater_string(prefixcon, &opproc);
 	if (greaterstrcon)
 	{
 		Selectivity topsel;
+
+		cmpopr = get_opfamily_member(opfamily, vartype, vartype,
+									 BTLessStrategyNumber);
+		if (cmpopr == InvalidOid)
+			elog(ERROR, "no < operator for opfamily %u", opfamily);
+		fmgr_info(get_opcode(cmpopr), &opproc);
 
 		topsel = ineq_histogram_selectivity(vardata, &opproc, false,
 											greaterstrcon->constvalue,
@@ -4477,15 +4528,29 @@ prefix_selectivity(VariableStatData *vardata,
 		 * doesn't count those anyway.
 		 */
 		prefixsel = topsel + prefixsel - 1.0;
-
-		/*
-		 * A zero or negative prefixsel should be converted into a small
-		 * positive value; we probably are dealing with a very tight range and
-		 * got a bogus result due to roundoff errors.
-		 */
-		if (prefixsel <= 0.0)
-			prefixsel = 1.0e-10;
 	}
+
+	/*
+	 * If the prefix is long then the two bounding values might be too
+	 * close together for the histogram to distinguish them usefully,
+	 * resulting in a zero estimate (plus or minus roundoff error).
+	 * To avoid returning a ridiculously small estimate, compute the
+	 * estimated selectivity for "variable = 'foo'", and clamp to that.
+	 * (Obviously, the resultant estimate should be at least that.)
+	 *
+	 * We apply this even if we couldn't make a greater string.  That case
+	 * suggests that the prefix is near the maximum possible, and thus
+	 * probably off the end of the histogram, and thus we probably got a
+	 * very small estimate from the >= condition; so we still need to clamp.
+	 */
+	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
+								 BTEqualStrategyNumber);
+	if (cmpopr == InvalidOid)
+		elog(ERROR, "no = operator for opfamily %u", opfamily);
+	eq_sel = var_eq_const(vardata, cmpopr, prefixcon->constvalue,
+						  false, true);
+
+	prefixsel = Max(prefixsel, eq_sel);
 
 	return prefixsel;
 }
