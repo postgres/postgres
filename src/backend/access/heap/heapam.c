@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.250 2008/03/04 19:54:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.251 2008/03/08 21:57:59 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -3967,11 +3967,13 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	Relation	reln;
 	Buffer		buffer;
 	Page		page;
-	OffsetNumber *offnum;
 	OffsetNumber *end;
+	OffsetNumber *redirected;
+	OffsetNumber *nowdead;
+	OffsetNumber *nowunused;
 	int			nredirected;
 	int			ndead;
-	int			i;
+	int			nunused;
 
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
@@ -3990,61 +3992,24 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 
 	nredirected = xlrec->nredirected;
 	ndead = xlrec->ndead;
-	offnum = (OffsetNumber *) ((char *) xlrec + SizeOfHeapClean);
 	end = (OffsetNumber *) ((char *) xlrec + record->xl_len);
+	redirected = (OffsetNumber *) ((char *) xlrec + SizeOfHeapClean);
+	nowdead = redirected + (nredirected * 2);
+	nowunused = nowdead + ndead;
+	nunused = (end - nowunused);
+	Assert(nunused >= 0);
 
-	/* Update all redirected or moved line pointers */
-	for (i = 0; i < nredirected; i++)
-	{
-		OffsetNumber fromoff = *offnum++;
-		OffsetNumber tooff = *offnum++;
-		ItemId		fromlp = PageGetItemId(page, fromoff);
-
-		if (clean_move)
-		{
-			/* Physically move the "to" item to the "from" slot */
-			ItemId		tolp = PageGetItemId(page, tooff);
-			HeapTupleHeader htup;
-
-			*fromlp = *tolp;
-			ItemIdSetUnused(tolp);
-
-			/* We also have to clear the tuple's heap-only bit */
-			Assert(ItemIdIsNormal(fromlp));
-			htup = (HeapTupleHeader) PageGetItem(page, fromlp);
-			Assert(HeapTupleHeaderIsHeapOnly(htup));
-			HeapTupleHeaderClearHeapOnly(htup);
-		}
-		else
-		{
-			/* Just insert a REDIRECT link at fromoff */
-			ItemIdSetRedirect(fromlp, tooff);
-		}
-	}
-
-	/* Update all now-dead line pointers */
-	for (i = 0; i < ndead; i++)
-	{
-		OffsetNumber off = *offnum++;
-		ItemId		lp = PageGetItemId(page, off);
-
-		ItemIdSetDead(lp);
-	}
-
-	/* Update all now-unused line pointers */
-	while (offnum < end)
-	{
-		OffsetNumber off = *offnum++;
-		ItemId		lp = PageGetItemId(page, off);
-
-		ItemIdSetUnused(lp);
-	}
+	/* Update all item pointers per the record, and repair fragmentation */
+	heap_page_prune_execute(reln, buffer,
+							redirected, nredirected,
+							nowdead, ndead,
+							nowunused, nunused,
+							clean_move);
 
 	/*
-	 * Finally, repair any fragmentation, and update the page's hint bit about
-	 * whether it has free pointers.
+	 * Note: we don't worry about updating the page's prunability hints.
+	 * At worst this will cause an extra prune cycle to occur soon.
 	 */
-	PageRepairFragmentation(page);
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
