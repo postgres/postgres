@@ -60,8 +60,7 @@
 #port = 5432				# (change requires restart)
 #max_connections = 100			# (change requires restart)
 # Note:  Increasing max_connections costs ~400 bytes of shared memory per 
-# connection slot, plus lock space (see max_locks_per_transaction).  You might
-# also need to raise shared_buffers to support more connections.
+# connection slot, plus lock space (see max_locks_per_transaction).
 #superuser_reserved_connections = 3	# (change requires restart)
 #unix_socket_directory = ''		# (change requires restart)
 #unix_socket_group = ''			# (change requires restart)
@@ -104,7 +103,7 @@
 
 # - Memory -
 
-#shared_buffers = 32MB			# min 128kB or max_connections*16kB
+#shared_buffers = 32MB			# min 128kB
 					# (change requires restart)
 #temp_buffers = 8MB			# min 800kB
 #max_prepared_transactions = 5		# can be 0 or more

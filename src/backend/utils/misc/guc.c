@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.433 2008/03/06 16:31:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.434 2008/03/09 04:56:28 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1195,16 +1195,10 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	/*
-	 * Note: There is some postprocessing done in PostmasterMain() to make
-	 * sure the buffers are at least twice the number of backends, so the
-	 * constraints here are partially unused. Similarly, the superuser
-	 * reserved number is checked to ensure it is less than the max backends
-	 * number.
-	 *
-	 * MaxBackends is limited to INT_MAX/4 because some places compute
-	 * 4*MaxBackends without any overflow check.  This check is made on
+	 * Note: MaxBackends is limited to INT_MAX/4 because some places compute
+	 * 4*MaxBackends without any overflow check.  This check is made in
 	 * assign_maxconnections, since MaxBackends is computed as MaxConnections
-	 * + autovacuum_max_workers.
+	 * plus autovacuum_max_workers.
 	 *
 	 * Likewise we have to limit NBuffers to INT_MAX/2.
 	 */

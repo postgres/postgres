@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.552 2008/02/20 22:46:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.553 2008/03/09 04:56:28 tgl Exp $
  *
  * NOTES
  *
@@ -688,16 +688,6 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Check for invalid combinations of GUC settings.
 	 */
-	if (NBuffers < 2 * MaxBackends || NBuffers < 16)
-	{
-		/*
-		 * Do not accept -B so small that backends are likely to starve for
-		 * lack of buffers.  The specific choices here are somewhat arbitrary.
-		 */
-		write_stderr("%s: the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16\n", progname);
-		ExitPostmaster(1);
-	}
-
 	if (ReservedBackends >= MaxBackends)
 	{
 		write_stderr("%s: superuser_reserved_connections must be less than max_connections\n", progname);
