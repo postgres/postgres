@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.244 2008/03/08 22:41:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.245 2008/03/09 00:32:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -567,16 +567,22 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
  * or not it has anything to do with the histogram sort operator.  We are
  * essentially using the histogram just as a representative sample.  However,
  * small histograms are unlikely to be all that representative, so the caller
- * should specify a minimum histogram size to use, and fall back on some
- * other approach if this routine fails.
+ * should be prepared to fall back on some other estimation approach when the
+ * histogram is missing or very small.  It may also be prudent to combine this
+ * approach with another one when the histogram is small.
  *
- * The caller also specifies n_skip, which causes us to ignore the first and
- * last n_skip histogram elements, on the grounds that they are outliers and
- * hence not very representative.  If in doubt, min_hist_size = 100 and
- * n_skip = 1 are reasonable values.
+ * If the actual histogram size is not at least min_hist_size, we won't bother
+ * to do the calculation at all.  Also, if the n_skip parameter is > 0, we
+ * ignore the first and last n_skip histogram elements, on the grounds that
+ * they are outliers and hence not very representative.  Typical values for
+ * these parameters are 10 and 1.
  *
  * The function result is the selectivity, or -1 if there is no histogram
  * or it's smaller than min_hist_size.
+ *
+ * The output parameter *hist_size receives the actual histogram size,
+ * or zero if no histogram.  Callers may use this number to decide how
+ * much faith to put in the function result.
  *
  * Note that the result disregards both the most-common-values (if any) and
  * null entries.  The caller is expected to combine this result with
@@ -586,7 +592,8 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 double
 histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 					  Datum constval, bool varonleft,
-					  int min_hist_size, int n_skip)
+					  int min_hist_size, int n_skip,
+					  int *hist_size)
 {
 	double		result;
 	Datum	   *values;
@@ -603,6 +610,7 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 						 &values, &nvalues,
 						 NULL, NULL))
 	{
+		*hist_size = nvalues;
 		if (nvalues >= min_hist_size)
 		{
 			int			nmatch = 0;
@@ -626,7 +634,10 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 		free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
 	}
 	else
+	{
+		*hist_size = 0;
 		result = -1;
+	}
 
 	return result;
 }
@@ -1117,13 +1128,16 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		 * selectivity of the fixed prefix and remainder of pattern
 		 * separately, then combine the two to get an estimate of the
 		 * selectivity for the part of the column population represented by
-		 * the histogram.  We then add up data for any most-common-values
-		 * values; these are not in the histogram population, and we can get
-		 * exact answers for them by applying the pattern operator, so there's
-		 * no reason to approximate.  (If the MCVs cover a significant part of
-		 * the total population, this gives us a big leg up in accuracy.)
+		 * the histogram.  (For small histograms, we combine these approaches.)
+		 *
+		 * We then add up data for any most-common-values values; these are
+		 * not in the histogram population, and we can get exact answers for
+		 * them by applying the pattern operator, so there's no reason to
+		 * approximate.  (If the MCVs cover a significant part of the total
+		 * population, this gives us a big leg up in accuracy.)
 		 */
 		Selectivity selec;
+		int			hist_size;
 		FmgrInfo	opproc;
 		double		nullfrac,
 					mcv_selec,
@@ -1133,10 +1147,12 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		fmgr_info(get_opcode(operator), &opproc);
 
 		selec = histogram_selectivity(&vardata, &opproc, constval, true,
-									  100, 1);
-		if (selec < 0)
+									  10, 1, &hist_size);
+
+		/* If not at least 100 entries, use the heuristic method */
+		if (hist_size < 100)
 		{
-			/* Nope, so fake it with the heuristic method */
+			Selectivity heursel;
 			Selectivity prefixsel;
 			Selectivity restsel;
 
@@ -1146,16 +1162,28 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 			else
 				prefixsel = 1.0;
 			restsel = pattern_selectivity(rest, ptype);
-			selec = prefixsel * restsel;
+			heursel = prefixsel * restsel;
+
+			if (selec < 0)			/* fewer than 10 histogram entries? */
+				selec = heursel;
+			else
+			{
+				/*
+				 * For histogram sizes from 10 to 100, we combine the
+				 * histogram and heuristic selectivities, putting increasingly
+				 * more trust in the histogram for larger sizes.
+				 */
+				double	hist_weight = hist_size / 100.0;
+
+				selec = selec * hist_weight + heursel * (1.0 - hist_weight);
+			}
 		}
-		else
-		{
-			/* Yes, but don't believe extremely small or large estimates. */
-			if (selec < 0.0001)
-				selec = 0.0001;
-			else if (selec > 0.9999)
-				selec = 0.9999;
-		}
+
+		/* In any case, don't believe extremely small or large estimates. */
+		if (selec < 0.0001)
+			selec = 0.0001;
+		else if (selec > 0.9999)
+			selec = 0.9999;
 
 		/*
 		 * If we have most-common-values info, add up the fractions of the MCV
