@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.41 2008/03/04 03:17:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.42 2008/03/10 03:01:28 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -2209,7 +2209,8 @@ SELECT ts_lexize('public.simple_dict','The');
     dictionary can be used to overcome linguistic problems, for example, to
     prevent an English stemmer dictionary from reducing the word 'Paris' to
     'pari'.  It is enough to have a <literal>Paris paris</literal> line in the
-    synonym dictionary and put it before the <literal>english_stem</> dictionary:
+    synonym dictionary and put it before the <literal>english_stem</>
+    dictionary.  For example:
 
 <programlisting>
 SELECT * FROM ts_debug('english', 'Paris');
@@ -2242,10 +2243,17 @@ SELECT * FROM ts_debug('english', 'Paris');
     <productname>PostgreSQL</> installation's shared-data directory).
     The file format is just one line
     per word to be substituted, with the word followed by its synonym,
-    separated by white space.  Blank lines and trailing spaces are ignored,
-    and upper case is folded to lower case.
+    separated by white space.  Blank lines and trailing spaces are ignored.
    </para>
 
+   <para>
+    The <literal>synonym</> template also has an optional parameter
+    <literal>CaseSensitive</>, which defaults to <literal>false</>.  When
+    <literal>CaseSensitive</> is <literal>false</>, words in the synonym file
+    are folded to lower case, as are input tokens.  When it is
+    <literal>true</>, words and tokens are not folded to lower case,
+    but are compared as-is.
+   </para>
   </sect2>
 
   <sect2 id="textsearch-thesaurus">

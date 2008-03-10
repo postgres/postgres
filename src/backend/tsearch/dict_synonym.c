@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.7 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.8 2008/03/10 03:01:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@ typedef struct
 {
 	int			len;			/* length of syn array */
 	Syn		   *syn;
+	bool		case_sensitive;
 } DictSyn;
 
 /*
@@ -77,6 +78,7 @@ dsynonym_init(PG_FUNCTION_ARGS)
 	DictSyn    *d;
 	ListCell   *l;
 	char	   *filename = NULL;
+	bool		case_sensitive = false;
 	FILE	   *fin;
 	char	   *starti,
 			   *starto,
@@ -90,6 +92,8 @@ dsynonym_init(PG_FUNCTION_ARGS)
 
 		if (pg_strcasecmp("Synonyms", defel->defname) == 0)
 			filename = defGetString(defel);
+		else if (pg_strcasecmp("CaseSensitive", defel->defname) == 0)
+			case_sensitive = defGetBoolean(defel);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -154,8 +158,16 @@ dsynonym_init(PG_FUNCTION_ARGS)
 			}
 		}
 
-		d->syn[cur].in = lowerstr(starti);
-		d->syn[cur].out = lowerstr(starto);
+		if (case_sensitive)
+		{
+			d->syn[cur].in = pstrdup(starti);
+			d->syn[cur].out = pstrdup(starto);
+		}
+		else
+		{
+			d->syn[cur].in = lowerstr(starti);
+			d->syn[cur].out = lowerstr(starto);
+		}
 
 		cur++;
 
@@ -167,6 +179,8 @@ skipline:
 
 	d->len = cur;
 	qsort(d->syn, d->len, sizeof(Syn), compareSyn);
+
+	d->case_sensitive = case_sensitive;
 
 	PG_RETURN_POINTER(d);
 }
@@ -185,7 +199,11 @@ dsynonym_lexize(PG_FUNCTION_ARGS)
 	if (len <= 0 || d->len <= 0)
 		PG_RETURN_POINTER(NULL);
 
-	key.in = lowerstr_with_len(in, len);
+	if (d->case_sensitive)
+		key.in = pnstrdup(in, len);
+	else
+		key.in = lowerstr_with_len(in, len);
+
 	key.out = NULL;
 
 	found = (Syn *) bsearch(&key, d->syn, d->len, sizeof(Syn), compareSyn);
