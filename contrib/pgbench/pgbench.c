@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.75 2007/12/11 02:31:49 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.76 2008/03/10 01:23:04 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -191,11 +191,15 @@ usage(void)
 	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor] [-F fillfactor] [-U login][-d][dbname]\n");
 }
 
-/* random number generator */
+/* random number generator: uniform distribution from min to max inclusive */
 static int
 getrand(int min, int max)
 {
-	return min + (int) (((max - min) * (double) random()) / MAX_RANDOM_VALUE + 0.5);
+	/*
+	 * Odd coding is so that min and max have approximately the same chance of
+	 * being selected as do numbers between them.
+	 */
+	return min + (int) (((max - min + 1) * (double) random()) / (MAX_RANDOM_VALUE + 1.0));
 }
 
 /* call PQexec() and exit() on failure */
