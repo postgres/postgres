@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.153 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.154 2008/03/10 12:39:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1684,8 +1684,12 @@ Datum
 setseed(PG_FUNCTION_ARGS)
 {
 	float8		seed = PG_GETARG_FLOAT8(0);
-	int			iseed = (int) (seed * MAX_RANDOM_VALUE);
+	int			iseed;
 
+	if (seed < -1 || seed > 1)
+		elog(ERROR, "setseed parameter %f out of range [-1,1]", seed);
+
+	iseed = (int) (seed * MAX_RANDOM_VALUE);
 	srandom((unsigned int) iseed);
 
 	PG_RETURN_VOID();

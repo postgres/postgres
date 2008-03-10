@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.435 2008/03/10 03:22:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.436 2008/03/10 12:39:23 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1849,7 +1849,7 @@ static struct config_real ConfigureNamesReal[] =
 			GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&phony_random_seed,
-		0.5, 0.0, 1.0, assign_random_seed, show_random_seed
+		0.0, -1.0, 1.0, assign_random_seed, show_random_seed
 	},
 
 	{

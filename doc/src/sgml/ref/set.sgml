@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.91 2007/09/11 00:06:41 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.92 2008/03/10 12:39:22 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -166,7 +166,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
       <para>
        Sets the internal seed for the random number generator (the
        function <function>random</function>).  Allowed values are
-       floating-point numbers between 0 and 1, which are then
+       floating-point numbers between -1 and 1, which are then
        multiplied by 2<superscript>31</>-1.
       </para>
 
