@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.92 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.93 2008/03/10 12:55:13 mha Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -42,7 +42,7 @@ typedef enum
 	LOGSTMT_ALL					/* log all statements */
 } LogStmtLevel;
 
-extern LogStmtLevel log_statement;
+extern int log_statement;
 
 extern List *pg_parse_and_rewrite(const char *query_string,
 					 Oid *paramTypes, int numParams);

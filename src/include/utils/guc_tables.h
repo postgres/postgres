@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.38 2008/01/01 19:45:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.39 2008/03/10 12:55:13 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,8 @@ enum config_type
 	PGC_BOOL,
 	PGC_INT,
 	PGC_REAL,
-	PGC_STRING
+	PGC_STRING,
+	PGC_ENUM
 };
 
 union config_var_value
@@ -33,6 +34,16 @@ union config_var_value
 	int			intval;
 	double		realval;
 	char	   *stringval;
+	int			enumval;
+};
+
+/*
+ * Enum values are made up of an array of name-value pairs
+ */
+struct config_enum_entry
+{
+	const char *name;
+	int			val;
 };
 
 /*
@@ -208,6 +219,19 @@ struct config_string
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	char	   *reset_val;
+};
+
+struct config_enum
+{
+	struct config_generic gen;
+	/* constant fields, must be set correctly in initial value: */
+	int		   *variable;
+	int			boot_val;
+	const struct config_enum_entry *options;
+	GucEnumAssignHook assign_hook;
+	GucShowHook show_hook;
+	/* variable fields, initialized at runtime: */
+	int			reset_val;
 };
 
 /* constant tables corresponding to enums above and in guc.h */

@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.201 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.202 2008/03/10 12:55:13 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ sigjmp_buf *PG_exception_stack = NULL;
 extern bool redirection_done;
 
 /* GUC parameters */
-PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
+int			Log_error_verbosity = PGERROR_VERBOSE;
 char	   *Log_line_prefix = NULL;		/* format for extra log line info */
 int			Log_destination = LOG_DESTINATION_STDERR;
 

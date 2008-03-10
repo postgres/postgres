@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.162 2008/03/06 18:49:32 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.163 2008/03/10 12:55:13 mha Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -6260,8 +6260,8 @@
      <row>
       <entry><structfield>vartype</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Parameter type (<literal>bool</>, <literal>integer</>,
-       <literal>real</>, or <literal>string</>)
+      <entry>Parameter type (<literal>bool</>, <literal>enum</>,
+       <literal>integer</>, <literal>real</>, or <literal>string</>)
       </entry>
      </row>
      <row>
@@ -6279,6 +6279,12 @@
       <entry><structfield>max_val</structfield></entry>
       <entry><type>text</type></entry>
       <entry>Maximum allowed value of the parameter (NULL for non-numeric
+      values)</entry>
+     </row>
+     <row>
+      <entry><structfield>enumvals</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>Allowed values in enum parameters (NULL for non-enum
       values)</entry>
      </row>
     </tbody>
