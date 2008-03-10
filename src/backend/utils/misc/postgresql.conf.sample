@@ -278,7 +278,7 @@
 					#   warning
 					#   error
 
-#log_min_messages = notice		# values in order of decreasing detail:
+#log_min_messages = warning		# values in order of decreasing detail:
 					#   debug5
 					#   debug4
 					#   debug3
