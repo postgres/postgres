@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.12 2008/03/05 15:50:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.13 2008/03/10 12:57:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,7 +224,8 @@ tsvectorin(PG_FUNCTION_ARGS)
 		if (cur - tmpbuf > MAXSTRPOS)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 	 errmsg("string is too long for tsvector (%d bytes, max %d bytes)", cur - tmpbuf, MAXSTRPOS)));
+				 	 errmsg("string is too long for tsvector (%ld bytes, max %ld bytes)",
+							(long) (cur - tmpbuf), (long) MAXSTRPOS)));
 
 		/*
 		 * Enlarge buffers if needed
