@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.29 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.30 2008/03/10 20:06:27 tgl Exp $
  *
  * NOTES:
  *
@@ -38,13 +38,12 @@
 #include "storage/buffile.h"
 
 /*
- * The maximum safe file size is presumed to be RELSEG_SIZE * BLCKSZ.
- * Note we adhere to this limit whether or not LET_OS_MANAGE_FILESIZE
- * is defined, although md.c ignores it when that symbol is defined.
- * The reason for doing this is that we'd like large temporary BufFiles
- * to be spread across multiple tablespaces when available.
+ * We break BufFiles into gigabyte-sized segments, whether or not
+ * USE_SEGMENTED_FILES is defined.  The reason is that we'd like large
+ * temporary BufFiles to be spread across multiple tablespaces when available.
  */
-#define MAX_PHYSICAL_FILESIZE  (RELSEG_SIZE * BLCKSZ)
+#define MAX_PHYSICAL_FILESIZE	0x40000000
+#define BUFFILE_SEG_SIZE		(MAX_PHYSICAL_FILESIZE / BLCKSZ)
 
 /*
  * This data structure represents a buffered file that consists of one or
@@ -56,7 +55,7 @@ struct BufFile
 	int			numFiles;		/* number of physical files in set */
 	/* all files except the last have length exactly MAX_PHYSICAL_FILESIZE */
 	File	   *files;			/* palloc'd array with numFiles entries */
-	long	   *offsets;		/* palloc'd array with numFiles entries */
+	off_t	   *offsets;		/* palloc'd array with numFiles entries */
 
 	/*
 	 * offsets[i] is the current seek position of files[i].  We use this to
@@ -72,7 +71,7 @@ struct BufFile
 	 * Position as seen by user of BufFile is (curFile, curOffset + pos).
 	 */
 	int			curFile;		/* file index (0..n) part of current pos */
-	int			curOffset;		/* offset part of current pos */
+	off_t		curOffset;		/* offset part of current pos */
 	int			pos;			/* next read/write position in buffer */
 	int			nbytes;			/* total # of valid bytes in buffer */
 	char		buffer[BLCKSZ];
@@ -97,7 +96,7 @@ makeBufFile(File firstfile)
 	file->numFiles = 1;
 	file->files = (File *) palloc(sizeof(File));
 	file->files[0] = firstfile;
-	file->offsets = (long *) palloc(sizeof(long));
+	file->offsets = (off_t *) palloc(sizeof(off_t));
 	file->offsets[0] = 0L;
 	file->isTemp = false;
 	file->isInterXact = false;
@@ -124,8 +123,8 @@ extendBufFile(BufFile *file)
 
 	file->files = (File *) repalloc(file->files,
 									(file->numFiles + 1) * sizeof(File));
-	file->offsets = (long *) repalloc(file->offsets,
-									  (file->numFiles + 1) * sizeof(long));
+	file->offsets = (off_t *) repalloc(file->offsets,
+									  (file->numFiles + 1) * sizeof(off_t));
 	file->files[file->numFiles] = pfile;
 	file->offsets[file->numFiles] = 0L;
 	file->numFiles++;
@@ -279,9 +278,9 @@ BufFileDumpBuffer(BufFile *file)
 		bytestowrite = file->nbytes - wpos;
 		if (file->isTemp)
 		{
-			long		availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
+			off_t		availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
 
-			if ((long) bytestowrite > availbytes)
+			if ((off_t) bytestowrite > availbytes)
 				bytestowrite = (int) availbytes;
 		}
 
@@ -451,10 +450,10 @@ BufFileFlush(BufFile *file)
  * impossible seek is attempted.
  */
 int
-BufFileSeek(BufFile *file, int fileno, long offset, int whence)
+BufFileSeek(BufFile *file, int fileno, off_t offset, int whence)
 {
 	int			newFile;
-	long		newOffset;
+	off_t		newOffset;
 
 	switch (whence)
 	{
@@ -469,7 +468,7 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 			/*
 			 * Relative seek considers only the signed offset, ignoring
 			 * fileno. Note that large offsets (> 1 gig) risk overflow in this
-			 * add...
+			 * add, unless we have 64-bit off_t.
 			 */
 			newFile = file->curFile;
 			newOffset = (file->curOffset + file->pos) + offset;
@@ -537,7 +536,7 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 }
 
 void
-BufFileTell(BufFile *file, int *fileno, long *offset)
+BufFileTell(BufFile *file, int *fileno, off_t *offset)
 {
 	*fileno = file->curFile;
 	*offset = file->curOffset + file->pos;
@@ -558,8 +557,8 @@ int
 BufFileSeekBlock(BufFile *file, long blknum)
 {
 	return BufFileSeek(file,
-					   (int) (blknum / RELSEG_SIZE),
-					   (blknum % RELSEG_SIZE) * BLCKSZ,
+					   (int) (blknum / BUFFILE_SEG_SIZE),
+					   (off_t) (blknum % BUFFILE_SEG_SIZE) * BLCKSZ,
 					   SEEK_SET);
 }
 
@@ -575,7 +574,7 @@ BufFileTellBlock(BufFile *file)
 	long		blknum;
 
 	blknum = (file->curOffset + file->pos) / BLCKSZ;
-	blknum += file->curFile * RELSEG_SIZE;
+	blknum += file->curFile * BUFFILE_SEG_SIZE;
 	return blknum;
 }
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.21 2007/11/23 00:24:12 ishii Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.22 2008/03/10 20:06:27 tgl Exp $ -->
 
 <chapter id="storage">
 
@@ -138,10 +138,14 @@ Avoid assuming that filenode and table OID are the same.
 </caution>
 
 <para>
-When a table or index exceeds 1 GB, it is divided into gigabyte-sized
+When a table or index exceeds 1 GB, it is normally divided into gigabyte-sized
 <firstterm>segments</>.  The first segment's file name is the same as the
 filenode; subsequent segments are named filenode.1, filenode.2, etc.
 This arrangement avoids problems on platforms that have file size limitations.
+(But if the platform does not have such a limitation, and
+<option>--disable-segmented-files</option> was specified when
+<productname>PostgreSQL</> was built, then each table or index is stored
+as a single file, without segmentation.)
 The contents of tables and indexes are discussed further in
 <xref linkend="storage-page-layout">.
 </para>

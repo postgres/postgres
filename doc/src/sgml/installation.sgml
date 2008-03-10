@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.303 2008/03/06 21:37:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.304 2008/03/10 20:06:27 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1021,6 +1021,20 @@ su - postgres
          <![%standalone-include[the documentation about datetime datatypes]]>
          <![%standalone-ignore[<xref linkend="datatype-datetime">]]>
          for more information).
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--disable-segmented-files</option></term>
+       <listitem>
+        <para>
+         Store large tables as single operating-system files, rather than
+         dividing them into 1GB segments as is the default.  This option
+         is ignored unless the operating system has <quote>largefile</>
+         support (which most do, nowadays).  It can be helpful to reduce
+         the number of file descriptors consumed when working with very
+         large tables.
         </para>
        </listitem>
       </varlistentry>

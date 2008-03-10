@@ -637,6 +637,9 @@
    your system. */
 #undef PTHREAD_CREATE_JOINABLE
 
+/* The size of `off_t', as computed by sizeof. */
+#undef SIZEOF_OFF_T
+
 /* The size of `size_t', as computed by sizeof. */
 #undef SIZEOF_SIZE_T
 
@@ -684,6 +687,9 @@
 
 /* Use replacement snprintf() functions. */
 #undef USE_REPL_SNPRINTF
+
+/* Define to split data files into 1GB segments. */
+#undef USE_SEGMENTED_FILES
 
 /* Define to build with (Open)SSL support. (--with-openssl) */
 #undef USE_SSL

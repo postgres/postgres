@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.143 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.144 2008/03/10 20:06:27 tgl Exp $
  *
  * NOTES:
  *
@@ -115,7 +115,7 @@ static int	max_safe_fds = 32;	/* default if not changed */
 
 #define FileIsNotOpen(file) (VfdCache[file].fd == VFD_CLOSED)
 
-#define FileUnknownPos (-1L)
+#define FileUnknownPos ((off_t) -1)
 
 /* these are the assigned bits in fdstate below: */
 #define FD_TEMPORARY		(1 << 0)	/* T = delete when closed */
@@ -123,13 +123,13 @@ static int	max_safe_fds = 32;	/* default if not changed */
 
 typedef struct vfd
 {
-	signed short fd;			/* current FD, or VFD_CLOSED if none */
+	int			fd;				/* current FD, or VFD_CLOSED if none */
 	unsigned short fdstate;		/* bitflags for VFD's state */
-	SubTransactionId create_subid;		/* for TEMPORARY fds, creating subxact */
+	SubTransactionId create_subid;	/* for TEMPORARY fds, creating subxact */
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
-	long		seekPos;		/* current logical file position */
+	off_t		seekPos;		/* current logical file position */
 	char	   *fileName;		/* name of file, or NULL for unused VFD */
 	/* NB: fileName is malloc'd, and must be free'd when closing the VFD */
 	int			fileFlags;		/* open(2) flags for (re)opening the file */
@@ -544,8 +544,8 @@ LruDelete(File file)
 	Delete(file);
 
 	/* save the seek position */
-	vfdP->seekPos = (long) lseek(vfdP->fd, 0L, SEEK_CUR);
-	Assert(vfdP->seekPos != -1L);
+	vfdP->seekPos = lseek(vfdP->fd, (off_t) 0, SEEK_CUR);
+	Assert(vfdP->seekPos != (off_t) -1);
 
 	/* close the file */
 	if (close(vfdP->fd))
@@ -616,12 +616,12 @@ LruInsert(File file)
 		}
 
 		/* seek to the right position */
-		if (vfdP->seekPos != 0L)
+		if (vfdP->seekPos != (off_t) 0)
 		{
-			long		returnValue;
+			off_t		returnValue;
 
-			returnValue = (long) lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
-			Assert(returnValue != -1L);
+			returnValue = lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
+			Assert(returnValue != (off_t) -1);
 		}
 	}
 
@@ -1027,9 +1027,10 @@ FileRead(File file, char *buffer, int amount)
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(LOG, "FileRead: %d (%s) %ld %d %p",
+	DO_DB(elog(LOG, "FileRead: %d (%s) " INT64_FORMAT " %d %p",
 			   file, VfdCache[file].fileName,
-			   VfdCache[file].seekPos, amount, buffer));
+			   (int64) VfdCache[file].seekPos,
+			   amount, buffer));
 
 	returnCode = FileAccess(file);
 	if (returnCode < 0)
@@ -1081,9 +1082,10 @@ FileWrite(File file, char *buffer, int amount)
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(LOG, "FileWrite: %d (%s) %ld %d %p",
+	DO_DB(elog(LOG, "FileWrite: %d (%s) " INT64_FORMAT " %d %p",
 			   file, VfdCache[file].fileName,
-			   VfdCache[file].seekPos, amount, buffer));
+			   (int64) VfdCache[file].seekPos,
+			   amount, buffer));
 
 	returnCode = FileAccess(file);
 	if (returnCode < 0)
@@ -1146,16 +1148,17 @@ FileSync(File file)
 	return pg_fsync(VfdCache[file].fd);
 }
 
-long
-FileSeek(File file, long offset, int whence)
+off_t
+FileSeek(File file, off_t offset, int whence)
 {
 	int			returnCode;
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(LOG, "FileSeek: %d (%s) %ld %ld %d",
+	DO_DB(elog(LOG, "FileSeek: %d (%s) " INT64_FORMAT " " INT64_FORMAT " %d",
 			   file, VfdCache[file].fileName,
-			   VfdCache[file].seekPos, offset, whence));
+			   (int64) VfdCache[file].seekPos,
+			   (int64) offset, whence));
 
 	if (FileIsNotOpen(file))
 	{
@@ -1163,7 +1166,8 @@ FileSeek(File file, long offset, int whence)
 		{
 			case SEEK_SET:
 				if (offset < 0)
-					elog(ERROR, "invalid seek offset: %ld", offset);
+					elog(ERROR, "invalid seek offset: " INT64_FORMAT,
+						 (int64) offset);
 				VfdCache[file].seekPos = offset;
 				break;
 			case SEEK_CUR:
@@ -1187,7 +1191,8 @@ FileSeek(File file, long offset, int whence)
 		{
 			case SEEK_SET:
 				if (offset < 0)
-					elog(ERROR, "invalid seek offset: %ld", offset);
+					elog(ERROR, "invalid seek offset: " INT64_FORMAT,
+						 (int64) offset);
 				if (VfdCache[file].seekPos != offset)
 					VfdCache[file].seekPos = lseek(VfdCache[file].fd,
 												   offset, whence);
@@ -1213,7 +1218,7 @@ FileSeek(File file, long offset, int whence)
  * XXX not actually used but here for completeness
  */
 #ifdef NOT_USED
-long
+off_t
 FileTell(File file)
 {
 	Assert(FileIsValid(file));
@@ -1224,7 +1229,7 @@ FileTell(File file)
 #endif
 
 int
-FileTruncate(File file, long offset)
+FileTruncate(File file, off_t offset)
 {
 	int			returnCode;
 
@@ -1237,7 +1242,7 @@ FileTruncate(File file, long offset)
 	if (returnCode < 0)
 		return returnCode;
 
-	returnCode = ftruncate(VfdCache[file].fd, (size_t) offset);
+	returnCode = ftruncate(VfdCache[file].fd, offset);
 	return returnCode;
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.135 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.136 2008/03/10 20:06:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,16 +89,16 @@
  *
  *	All MdfdVec objects are palloc'd in the MdCxt memory context.
  *
- *	Defining LET_OS_MANAGE_FILESIZE disables the segmentation logic,
- *	for use on machines that support large files.  Beware that that
- *	code has not been tested in a long time and is probably bit-rotted.
+ *	On platforms that support large files, USE_SEGMENTED_FILES can be
+ *	#undef'd to disable the segmentation logic.  In that case each
+ *	relation is a single operating-system file.
  */
 
 typedef struct _MdfdVec
 {
 	File		mdfd_vfd;		/* fd number in fd.c's pool */
 	BlockNumber mdfd_segno;		/* segment number, from 0 */
-#ifndef LET_OS_MANAGE_FILESIZE	/* for large relations */
+#ifdef USE_SEGMENTED_FILES
 	struct _MdfdVec *mdfd_chain;	/* next segment, or NULL */
 #endif
 } MdfdVec;
@@ -162,7 +162,7 @@ static void register_dirty_segment(SMgrRelation reln, MdfdVec *seg);
 static void register_unlink(RelFileNode rnode);
 static MdfdVec *_fdvec_alloc(void);
 
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 static MdfdVec *_mdfd_openseg(SMgrRelation reln, BlockNumber segno,
 			  int oflags);
 #endif
@@ -258,7 +258,7 @@ mdcreate(SMgrRelation reln, bool isRedo)
 
 	reln->md_fd->mdfd_vfd = fd;
 	reln->md_fd->mdfd_segno = 0;
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 	reln->md_fd->mdfd_chain = NULL;
 #endif
 }
@@ -344,7 +344,7 @@ mdunlink(RelFileNode rnode, bool isRedo)
 							rnode.relNode)));
 	}
 
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 	/* Delete the additional segments, if any */
 	else
 	{
@@ -395,7 +395,7 @@ mdunlink(RelFileNode rnode, bool isRedo)
 void
 mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 {
-	long		seekpos;
+	off_t		seekpos;
 	int			nbytes;
 	MdfdVec    *v;
 
@@ -420,11 +420,11 @@ mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 
 	v = _mdfd_getseg(reln, blocknum, isTemp, EXTENSION_CREATE);
 
-#ifndef LET_OS_MANAGE_FILESIZE
-	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
-	Assert(seekpos < BLCKSZ * RELSEG_SIZE);
+#ifdef USE_SEGMENTED_FILES
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 #else
-	seekpos = (long) (BLCKSZ * (blocknum));
+	seekpos = (off_t) BLCKSZ * blocknum;
 #endif
 
 	/*
@@ -469,7 +469,7 @@ mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 	if (!isTemp)
 		register_dirty_segment(reln, v);
 
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 	Assert(_mdnblocks(reln, v) <= ((BlockNumber) RELSEG_SIZE));
 #endif
 }
@@ -530,7 +530,7 @@ mdopen(SMgrRelation reln, ExtensionBehavior behavior)
 
 	mdfd->mdfd_vfd = fd;
 	mdfd->mdfd_segno = 0;
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 	mdfd->mdfd_chain = NULL;
 	Assert(_mdnblocks(reln, mdfd) <= ((BlockNumber) RELSEG_SIZE));
 #endif
@@ -552,7 +552,7 @@ mdclose(SMgrRelation reln)
 
 	reln->md_fd = NULL;			/* prevent dangling pointer after error */
 
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 	while (v != NULL)
 	{
 		MdfdVec    *ov = v;
@@ -577,17 +577,17 @@ mdclose(SMgrRelation reln)
 void
 mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 {
-	long		seekpos;
+	off_t		seekpos;
 	int			nbytes;
 	MdfdVec    *v;
 
 	v = _mdfd_getseg(reln, blocknum, false, EXTENSION_FAIL);
 
-#ifndef LET_OS_MANAGE_FILESIZE
-	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
-	Assert(seekpos < BLCKSZ * RELSEG_SIZE);
+#ifdef USE_SEGMENTED_FILES
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 #else
-	seekpos = (long) (BLCKSZ * (blocknum));
+	seekpos = (off_t) BLCKSZ * blocknum;
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
@@ -642,7 +642,7 @@ mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 void
 mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 {
-	long		seekpos;
+	off_t		seekpos;
 	int			nbytes;
 	MdfdVec    *v;
 
@@ -653,11 +653,11 @@ mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 
 	v = _mdfd_getseg(reln, blocknum, isTemp, EXTENSION_FAIL);
 
-#ifndef LET_OS_MANAGE_FILESIZE
-	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
-	Assert(seekpos < BLCKSZ * RELSEG_SIZE);
+#ifdef USE_SEGMENTED_FILES
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 #else
-	seekpos = (long) (BLCKSZ * (blocknum));
+	seekpos = (off_t) BLCKSZ * blocknum;
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
@@ -708,7 +708,7 @@ mdnblocks(SMgrRelation reln)
 {
 	MdfdVec    *v = mdopen(reln, EXTENSION_FAIL);
 
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 	BlockNumber nblocks;
 	BlockNumber segno = 0;
 
@@ -778,7 +778,7 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 	MdfdVec    *v;
 	BlockNumber curnblk;
 
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 	BlockNumber priorblocks;
 #endif
 
@@ -804,7 +804,7 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 
 	v = mdopen(reln, EXTENSION_FAIL);
 
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 	priorblocks = 0;
 	while (v != NULL)
 	{
@@ -843,7 +843,7 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 			 */
 			BlockNumber lastsegblocks = nblocks - priorblocks;
 
-			if (FileTruncate(v->mdfd_vfd, lastsegblocks * BLCKSZ) < 0)
+			if (FileTruncate(v->mdfd_vfd, (off_t) lastsegblocks * BLCKSZ) < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not truncate relation %u/%u/%u to %u blocks: %m",
@@ -867,7 +867,8 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 		priorblocks += RELSEG_SIZE;
 	}
 #else
-	if (FileTruncate(v->mdfd_vfd, nblocks * BLCKSZ) < 0)
+	/* For unsegmented files, it's a lot easier */
+	if (FileTruncate(v->mdfd_vfd, (off_t) nblocks * BLCKSZ) < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 			  errmsg("could not truncate relation %u/%u/%u to %u blocks: %m",
@@ -900,7 +901,7 @@ mdimmedsync(SMgrRelation reln)
 
 	v = mdopen(reln, EXTENSION_FAIL);
 
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 	while (v != NULL)
 	{
 		if (FileSync(v->mdfd_vfd) < 0)
@@ -917,8 +918,7 @@ mdimmedsync(SMgrRelation reln)
 	if (FileSync(v->mdfd_vfd) < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not fsync segment %u of relation %u/%u/%u: %m",
-						v->mdfd_segno,
+				 errmsg("could not fsync relation %u/%u/%u: %m",
 						reln->smgr_rnode.spcNode,
 						reln->smgr_rnode.dbNode,
 						reln->smgr_rnode.relNode)));
@@ -1453,7 +1453,7 @@ _fdvec_alloc(void)
 	return (MdfdVec *) MemoryContextAlloc(MdCxt, sizeof(MdfdVec));
 }
 
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 
 /*
  * Open the specified segment of the relation,
@@ -1499,7 +1499,7 @@ _mdfd_openseg(SMgrRelation reln, BlockNumber segno, int oflags)
 	/* all done */
 	return v;
 }
-#endif   /* LET_OS_MANAGE_FILESIZE */
+#endif   /* USE_SEGMENTED_FILES */
 
 /*
  *	_mdfd_getseg() -- Find the segment of the relation holding the
@@ -1515,7 +1515,7 @@ _mdfd_getseg(SMgrRelation reln, BlockNumber blkno, bool isTemp,
 {
 	MdfdVec    *v = mdopen(reln, behavior);
 
-#ifndef LET_OS_MANAGE_FILESIZE
+#ifdef USE_SEGMENTED_FILES
 	BlockNumber targetseg;
 	BlockNumber nextsegno;
 
@@ -1588,7 +1588,7 @@ _mdfd_getseg(SMgrRelation reln, BlockNumber blkno, bool isTemp,
 static BlockNumber
 _mdnblocks(SMgrRelation reln, MdfdVec *seg)
 {
-	long		len;
+	off_t		len;
 
 	len = FileSeek(seg->mdfd_vfd, 0L, SEEK_END);
 	if (len < 0)

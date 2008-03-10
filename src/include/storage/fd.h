@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.61 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.62 2008/03/10 20:06:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,8 @@ extern void FileClose(File file);
 extern int	FileRead(File file, char *buffer, int amount);
 extern int	FileWrite(File file, char *buffer, int amount);
 extern int	FileSync(File file);
-extern long FileSeek(File file, long offset, int whence);
-extern int	FileTruncate(File file, long offset);
+extern off_t FileSeek(File file, off_t offset, int whence);
+extern int	FileTruncate(File file, off_t offset);
 
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(const char *name, const char *mode);
