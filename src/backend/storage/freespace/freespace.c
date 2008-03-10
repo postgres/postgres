@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.59 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.60 2008/03/10 02:04:09 tgl Exp $
  *
  *
  * NOTES:
@@ -143,7 +143,7 @@ static bool lookup_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page,
 static void compact_fsm_storage(void);
 static void push_fsm_rels_after(FSMRelation *afterRel);
 static void pack_incoming_pages(FSMPageData *newLocation, int newPages,
-					PageFreeSpaceInfo *pageSpaces, int nPages);
+					FSMPageData *pageSpaces, int nPages);
 static void pack_existing_pages(FSMPageData *newLocation, int newPages,
 					FSMPageData *oldLocation, int oldPages);
 static int	fsm_calc_request(FSMRelation *fsmrel);
@@ -375,7 +375,7 @@ void
 RecordRelationFreeSpace(RelFileNode *rel,
 						BlockNumber interestingPages,
 						int nPages,
-						PageFreeSpaceInfo *pageSpaces)
+						FSMPageData *pageSpaces)
 {
 	FSMRelation *fsmrel;
 
@@ -415,14 +415,12 @@ RecordRelationFreeSpace(RelFileNode *rel,
 
 			for (i = 0; i < nPages; i++)
 			{
-				BlockNumber page = pageSpaces[i].blkno;
-				Size		avail = pageSpaces[i].avail;
+				BlockNumber page = FSMPageGetPageNum(&pageSpaces[i]);
 
 				/* Check caller provides sorted data */
-				if (i > 0 && page <= pageSpaces[i - 1].blkno)
+				if (i > 0 && page <= FSMPageGetPageNum(&pageSpaces[i - 1]))
 					elog(ERROR, "free-space data is not in page order");
-				FSMPageSetPageNum(newLocation, page);
-				FSMPageSetSpace(newLocation, avail);
+				*newLocation = pageSpaces[i];
 				newLocation++;
 			}
 			fsmrel->storedPages = nPages;
@@ -1534,7 +1532,7 @@ push_fsm_rels_after(FSMRelation *afterRel)
 
 static void
 pack_incoming_pages(FSMPageData *newLocation, int newPages,
-					PageFreeSpaceInfo *pageSpaces, int nPages)
+					FSMPageData *pageSpaces, int nPages)
 {
 	int			histogram[HISTOGRAM_BINS];
 	int			above,
@@ -1548,7 +1546,7 @@ pack_incoming_pages(FSMPageData *newLocation, int newPages,
 	MemSet(histogram, 0, sizeof(histogram));
 	for (i = 0; i < nPages; i++)
 	{
-		Size		avail = pageSpaces[i].avail;
+		Size		avail = FSMPageGetSpace(&pageSpaces[i]);
 
 		if (avail >= BLCKSZ)
 			elog(ERROR, "bogus freespace amount");
@@ -1572,18 +1570,17 @@ pack_incoming_pages(FSMPageData *newLocation, int newPages,
 	/* And copy the appropriate data */
 	for (i = 0; i < nPages; i++)
 	{
-		BlockNumber page = pageSpaces[i].blkno;
-		Size		avail = pageSpaces[i].avail;
+		BlockNumber	page = FSMPageGetPageNum(&pageSpaces[i]);
+		Size		avail = FSMPageGetSpace(&pageSpaces[i]);
 
 		/* Check caller provides sorted data */
-		if (i > 0 && page <= pageSpaces[i - 1].blkno)
+		if (i > 0 && page <= FSMPageGetPageNum(&pageSpaces[i - 1]))
 			elog(ERROR, "free-space data is not in page order");
 		/* Save this page? */
 		if (avail >= thresholdU ||
 			(avail >= thresholdL && (--binct >= 0)))
 		{
-			FSMPageSetPageNum(newLocation, page);
-			FSMPageSetSpace(newLocation, avail);
+			*newLocation = pageSpaces[i];
 			newLocation++;
 			newPages--;
 		}

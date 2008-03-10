@@ -38,7 +38,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.103 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.104 2008/03/10 02:04:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ typedef struct LVRelStats
 	bool		fs_is_heap;		/* are we using heap organization? */
 	int			num_free_pages; /* current # of entries */
 	int			max_free_pages; /* # slots allocated in array */
-	PageFreeSpaceInfo *free_pages;		/* array or heap of blkno/avail */
+	FSMPageData *free_pages;	/* array or heap of blkno/avail */
 	BlockNumber tot_free_pages; /* total pages with >= threshold space */
 	int			num_index_scans;
 } LVRelStats;
@@ -813,7 +813,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 {
 	BlockNumber old_rel_pages = vacrelstats->rel_pages;
 	BlockNumber new_rel_pages;
-	PageFreeSpaceInfo *pageSpaces;
+	FSMPageData *pageSpaces;
 	int			n;
 	int			i,
 				j;
@@ -881,7 +881,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	j = 0;
 	for (i = 0; i < n; i++)
 	{
-		if (pageSpaces[i].blkno < new_rel_pages)
+		if (FSMPageGetPageNum(&pageSpaces[i]) < new_rel_pages)
 		{
 			pageSpaces[j] = pageSpaces[i];
 			j++;
@@ -1028,7 +1028,7 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 		palloc(maxtuples * sizeof(ItemPointerData));
 
 	maxpages = MaxFSMPages;
-	maxpages = Min(maxpages, MaxAllocSize / sizeof(PageFreeSpaceInfo));
+	maxpages = Min(maxpages, MaxAllocSize / sizeof(FSMPageData));
 	/* No need to allocate more pages than the relation has blocks */
 	if (relblocks < (BlockNumber) maxpages)
 		maxpages = (int) relblocks;
@@ -1036,8 +1036,8 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 	vacrelstats->fs_is_heap = false;
 	vacrelstats->num_free_pages = 0;
 	vacrelstats->max_free_pages = maxpages;
-	vacrelstats->free_pages = (PageFreeSpaceInfo *)
-		palloc(maxpages * sizeof(PageFreeSpaceInfo));
+	vacrelstats->free_pages = (FSMPageData *)
+		palloc(maxpages * sizeof(FSMPageData));
 	vacrelstats->tot_free_pages = 0;
 }
 
@@ -1068,7 +1068,7 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 					   BlockNumber page,
 					   Size avail)
 {
-	PageFreeSpaceInfo *pageSpaces;
+	FSMPageData *pageSpaces;
 	int			n;
 
 	/*
@@ -1098,8 +1098,8 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 	/* If we haven't filled the array yet, just keep adding entries */
 	if (vacrelstats->num_free_pages < n)
 	{
-		pageSpaces[vacrelstats->num_free_pages].blkno = page;
-		pageSpaces[vacrelstats->num_free_pages].avail = avail;
+		FSMPageSetPageNum(&pageSpaces[vacrelstats->num_free_pages], page);
+		FSMPageSetSpace(&pageSpaces[vacrelstats->num_free_pages], avail);
 		vacrelstats->num_free_pages++;
 		return;
 	}
@@ -1127,8 +1127,8 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 
 		while (--l >= 0)
 		{
-			BlockNumber R = pageSpaces[l].blkno;
-			Size		K = pageSpaces[l].avail;
+			BlockNumber R = FSMPageGetPageNum(&pageSpaces[l]);
+			Size		K = FSMPageGetSpace(&pageSpaces[l]);
 			int			i;		/* i is where the "hole" is */
 
 			i = l;
@@ -1138,22 +1138,22 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 
 				if (j >= n)
 					break;
-				if (j + 1 < n && pageSpaces[j].avail > pageSpaces[j + 1].avail)
+				if (j + 1 < n && FSMPageGetSpace(&pageSpaces[j]) > FSMPageGetSpace(&pageSpaces[j + 1]))
 					j++;
-				if (K <= pageSpaces[j].avail)
+				if (K <= FSMPageGetSpace(&pageSpaces[j]))
 					break;
 				pageSpaces[i] = pageSpaces[j];
 				i = j;
 			}
-			pageSpaces[i].blkno = R;
-			pageSpaces[i].avail = K;
+			FSMPageSetPageNum(&pageSpaces[i], R);
+			FSMPageSetSpace(&pageSpaces[i], K);
 		}
 
 		vacrelstats->fs_is_heap = true;
 	}
 
 	/* If new page has more than zero'th entry, insert it into heap */
-	if (avail > pageSpaces[0].avail)
+	if (avail > FSMPageGetSpace(&pageSpaces[0]))
 	{
 		/*
 		 * Notionally, we replace the zero'th entry with the new data, and
@@ -1169,15 +1169,15 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 
 			if (j >= n)
 				break;
-			if (j + 1 < n && pageSpaces[j].avail > pageSpaces[j + 1].avail)
+			if (j + 1 < n && FSMPageGetSpace(&pageSpaces[j]) > FSMPageGetSpace(&pageSpaces[j + 1]))
 				j++;
-			if (avail <= pageSpaces[j].avail)
+			if (avail <= FSMPageGetSpace(&pageSpaces[j]))
 				break;
 			pageSpaces[i] = pageSpaces[j];
 			i = j;
 		}
-		pageSpaces[i].blkno = page;
-		pageSpaces[i].avail = avail;
+		FSMPageSetPageNum(&pageSpaces[i], page);
+		FSMPageSetSpace(&pageSpaces[i], avail);
 	}
 }
 
@@ -1210,14 +1210,14 @@ lazy_tid_reaped(ItemPointer itemptr, void *state)
 static void
 lazy_update_fsm(Relation onerel, LVRelStats *vacrelstats)
 {
-	PageFreeSpaceInfo *pageSpaces = vacrelstats->free_pages;
+	FSMPageData *pageSpaces = vacrelstats->free_pages;
 	int			nPages = vacrelstats->num_free_pages;
 
 	/*
 	 * Sort data into order, as required by RecordRelationFreeSpace.
 	 */
 	if (nPages > 1)
-		qsort(pageSpaces, nPages, sizeof(PageFreeSpaceInfo),
+		qsort(pageSpaces, nPages, sizeof(FSMPageData),
 			  vac_cmp_page_spaces);
 
 	RecordRelationFreeSpace(&onerel->rd_node, vacrelstats->tot_free_pages,
@@ -1257,12 +1257,14 @@ vac_cmp_itemptr(const void *left, const void *right)
 static int
 vac_cmp_page_spaces(const void *left, const void *right)
 {
-	PageFreeSpaceInfo *linfo = (PageFreeSpaceInfo *) left;
-	PageFreeSpaceInfo *rinfo = (PageFreeSpaceInfo *) right;
+	FSMPageData *linfo = (FSMPageData *) left;
+	FSMPageData *rinfo = (FSMPageData *) right;
+	BlockNumber	lblkno = FSMPageGetPageNum(linfo);
+	BlockNumber	rblkno = FSMPageGetPageNum(rinfo);
 
-	if (linfo->blkno < rinfo->blkno)
+	if (lblkno < rblkno)
 		return -1;
-	else if (linfo->blkno > rinfo->blkno)
+	else if (lblkno > rblkno)
 		return 1;
 	return 0;
 }

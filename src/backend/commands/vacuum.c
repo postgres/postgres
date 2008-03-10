@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.365 2008/02/20 14:31:35 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.366 2008/03/10 02:04:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3461,7 +3461,7 @@ vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 	int			nPages = fraged_pages->num_pages;
 	VacPage    *pagedesc = fraged_pages->pagedesc;
 	Size		threshold;
-	PageFreeSpaceInfo *pageSpaces;
+	FSMPageData *pageSpaces;
 	int			outPages;
 	int			i;
 
@@ -3477,8 +3477,7 @@ vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 	 */
 	threshold = GetAvgFSMRequestSize(&onerel->rd_node);
 
-	pageSpaces = (PageFreeSpaceInfo *)
-		palloc(nPages * sizeof(PageFreeSpaceInfo));
+	pageSpaces = (FSMPageData *) palloc(nPages * sizeof(FSMPageData));
 	outPages = 0;
 
 	for (i = 0; i < nPages; i++)
@@ -3493,8 +3492,8 @@ vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 
 		if (pagedesc[i]->free >= threshold)
 		{
-			pageSpaces[outPages].blkno = pagedesc[i]->blkno;
-			pageSpaces[outPages].avail = pagedesc[i]->free;
+			FSMPageSetPageNum(&pageSpaces[outPages], pagedesc[i]->blkno);
+			FSMPageSetSpace(&pageSpaces[outPages], pagedesc[i]->free);
 			outPages++;
 		}
 	}
