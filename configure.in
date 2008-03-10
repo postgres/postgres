@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.553 2008/03/10 20:06:27 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.554 2008/03/10 21:50:16 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -284,6 +284,8 @@ if test "$GCC" = yes -a "$ICC" = no; then
   PGAC_PROG_CC_CFLAGS_OPT([-Wendif-labels])
   # Disable strict-aliasing rules; needed for gcc 3.3+
   PGAC_PROG_CC_CFLAGS_OPT([-fno-strict-aliasing])
+  # Disable optimizations that assume no overflow; needed for gcc 4.3+
+  PGAC_PROG_CC_CFLAGS_OPT([-fwrapv])
 elif test "$ICC" = yes; then
   # Intel's compiler has a bug/misoptimization in checking for
   # division by NAN (NaN == 0), -mp1 fixes it, so add it to the CFLAGS.
