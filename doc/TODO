@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 11 10:25:42 EDT 2008
+Last updated:		Tue Mar 11 10:56:38 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -776,10 +776,10 @@ Referential Integrity
   http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html
   http://archives.postgresql.org/pgsql-hackers/2006-09/msg01458.php
 
-* Improve referential integrity checks
+* Optimize referential integrity checks
 
   http://archives.postgresql.org/pgsql-performance/2005-10/msg00458.php
-
+  http://archives.postgresql.org/pgsql-hackers/2007-04/msg00744.php
 
 
 Server-Side Languages
