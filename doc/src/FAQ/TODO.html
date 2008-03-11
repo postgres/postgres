@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue Mar 11 16:46:16 EDT 2008
+Last updated:           Tue Mar 11 17:06:02 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1284,7 +1284,31 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-05/msg00450.php">http://archives.postgresql.org/pgsql-hackers/2007-05/msg00450.php</a>
 </p>
 </li></ul>
-<h1><a name="section_20">Miscellaneous Performance</a></h1>
+<h1><a name="section_20">Background Writer</a></h1>
+
+<ul>
+  <li>Consider having the background writer update the transaction status
+  hint bits before writing out the page
+<p>  Implementing this requires the background writer to have access to system
+  catalogs and the transaction status log.
+</p>
+  </li><li>Consider adding buffers the background writer finds reusable to the
+  free list 
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php">http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php</a>
+</p>
+  </li><li>Automatically tune bgwriter_delay based on activity rather then using a
+  fixed interval
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php">http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php</a>
+</p>
+  </li><li>Consider wither increasing BM_MAX_USAGE_COUNT improves performance
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-06/msg01007.php">http://archives.postgresql.org/pgsql-hackers/2007-06/msg01007.php</a>
+</p>
+  </li><li>Test to see if calling PreallocXlogFiles() from the background writer
+  will help with WAL segment creation latency
+<p>  <a href="http://archives.postgresql.org/pgsql-patches/2007-06/msg00340.php">http://archives.postgresql.org/pgsql-patches/2007-06/msg00340.php</a>
+</p>
+</li></ul>
+<h1><a name="section_21">Miscellaneous Performance</a></h1>
 
 <ul>
   <li>Do async I/O for faster random read-ahead of data
@@ -1315,22 +1339,6 @@ first.  There is also a developer's wiki at<br/>
           two because a heap row cannot be more than 64k in length
   </li></ul>
   </li><li>Consider increasing NUM_CLOG_BUFFERS
-  </li><li>Consider having the background writer update the transaction status
-  hint bits before writing out the page
-<p>  Implementing this requires the background writer to have access to system
-  catalogs and the transaction status log.
-</p>
-  </li><li>Consider adding buffers the background writer finds reusable to the
-  free list 
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php">http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php</a>
-</p>
-  </li><li>Automatically tune bgwriter_delay based on activity rather then using a
-  fixed interval
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php">http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php</a>
-</p>
-  </li><li>Consider wither increasing BM_MAX_USAGE_COUNT improves performance
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-06/msg01007.php">http://archives.postgresql.org/pgsql-hackers/2007-06/msg01007.php</a>
-</p>
   </li><li>Allow user configuration of TOAST thresholds
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-02/msg00213.php">http://archives.postgresql.org/pgsql-hackers/2007-02/msg00213.php</a>
 </p>
@@ -1351,7 +1359,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-bugs/2008-02/msg00157.php">http://archives.postgresql.org/pgsql-bugs/2008-02/msg00157.php</a>
 </p>
 </li></ul>
-<h1><a name="section_21">Source Code</a></h1>
+<h1><a name="section_22">Source Code</a></h1>
 
 <ul>
   <li>Add use of 'const' for variables in source tree
@@ -1418,7 +1426,7 @@ first.  There is also a developer's wiki at<br/>
           of result sets using new statement protocol
   </li></ul>
 </li></ul>
-<h1><a name="section_22">Exotic Features</a></h1>
+<h1><a name="section_23">Exotic Features</a></h1>
 
 <ul>
   <li>Add pre-parsing phase that converts non-ISO syntax to supported
@@ -1445,7 +1453,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-01/msg00893.php">http://archives.postgresql.org/pgsql-hackers/2008-01/msg00893.php</a>
 </p>
 </li></ul>
-<h1><a name="section_23">Features We Do <u>Not</u> Want</a></h1>
+<h1><a name="section_24">Features We Do <u>Not</u> Want</a></h1>
 
 <ul>
   <li>All backends running as threads in a single process (not wanted)

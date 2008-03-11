@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 11 16:46:16 EDT 2008
+Last updated:		Tue Mar 11 17:06:02 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1474,6 +1474,36 @@ Optimizer / Executor
 
 
 
+Background Writer
+=================
+
+* Consider having the background writer update the transaction status
+  hint bits before writing out the page
+
+  Implementing this requires the background writer to have access to system
+  catalogs and the transaction status log.
+
+* Consider adding buffers the background writer finds reusable to the
+  free list 
+
+  http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php
+
+* Automatically tune bgwriter_delay based on activity rather then using a
+  fixed interval
+
+  http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php
+
+* Consider wither increasing BM_MAX_USAGE_COUNT improves performance
+
+  http://archives.postgresql.org/pgsql-hackers/2007-06/msg01007.php
+
+* Test to see if calling PreallocXlogFiles() from the background writer
+  will help with WAL segment creation latency
+
+  http://archives.postgresql.org/pgsql-patches/2007-06/msg00340.php
+
+
+
 Miscellaneous Performance
 =========================
 
@@ -1508,26 +1538,6 @@ Miscellaneous Performance
 	  two because a heap row cannot be more than 64k in length
 
 * Consider increasing NUM_CLOG_BUFFERS
-* Consider having the background writer update the transaction status
-  hint bits before writing out the page
-
-  Implementing this requires the background writer to have access to system
-  catalogs and the transaction status log.
-
-* Consider adding buffers the background writer finds reusable to the
-  free list 
-
-  http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php
-
-* Automatically tune bgwriter_delay based on activity rather then using a
-  fixed interval
-
-  http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php
-
-* Consider wither increasing BM_MAX_USAGE_COUNT improves performance
-
-  http://archives.postgresql.org/pgsql-hackers/2007-06/msg01007.php
-
 * Allow user configuration of TOAST thresholds
 
   http://archives.postgresql.org/pgsql-hackers/2007-02/msg00213.php
