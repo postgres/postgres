@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.77 2008/01/01 19:45:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.78 2008/03/11 23:30:56 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -274,6 +274,8 @@ parse_slash_copy(const char *args)
 				result->header = true;
 			else if (pg_strcasecmp(token, "delimiter") == 0)
 			{
+				if (result->delim)
+					goto error;
 				token = strtokx(NULL, whitespace, NULL, "'",
 								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
@@ -286,6 +288,8 @@ parse_slash_copy(const char *args)
 			}
 			else if (pg_strcasecmp(token, "null") == 0)
 			{
+				if (result->null)
+					goto error;
 				token = strtokx(NULL, whitespace, NULL, "'",
 								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
@@ -298,6 +302,8 @@ parse_slash_copy(const char *args)
 			}
 			else if (pg_strcasecmp(token, "quote") == 0)
 			{
+				if (result->quote)
+					goto error;
 				token = strtokx(NULL, whitespace, NULL, "'",
 								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
@@ -310,6 +316,8 @@ parse_slash_copy(const char *args)
 			}
 			else if (pg_strcasecmp(token, "escape") == 0)
 			{
+				if (result->escape)
+					goto error;
 				token = strtokx(NULL, whitespace, NULL, "'",
 								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
@@ -326,6 +334,8 @@ parse_slash_copy(const char *args)
 								0, false, false, pset.encoding);
 				if (pg_strcasecmp(token, "quote") == 0)
 				{
+					if (result->force_quote_list)
+						goto error;
 					/* handle column list */
 					fetch_next = false;
 					for (;;)
@@ -347,6 +357,8 @@ parse_slash_copy(const char *args)
 				}
 				else if (pg_strcasecmp(token, "not") == 0)
 				{
+					if (result->force_notnull_list)
+						goto error;
 					token = strtokx(NULL, whitespace, ",", "\"",
 									0, false, false, pset.encoding);
 					if (pg_strcasecmp(token, "null") != 0)
