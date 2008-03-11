@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue Mar 11 16:28:08 EDT 2008
+Last updated:           Tue Mar 11 16:46:16 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1320,12 +1320,16 @@ first.  There is also a developer's wiki at<br/>
 <p>  Implementing this requires the background writer to have access to system
   catalogs and the transaction status log.
 </p>
-  </li><li>Consider adding buffers the BGW finds reusable to the free list 
+  </li><li>Consider adding buffers the background writer finds reusable to the
+  free list 
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php">http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php</a>
 </p>
   </li><li>Automatically tune bgwriter_delay based on activity rather then using a
   fixed interval
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php">http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php</a>
+</p>
+  </li><li>Consider wither increasing BM_MAX_USAGE_COUNT improves performance
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-06/msg01007.php">http://archives.postgresql.org/pgsql-hackers/2007-06/msg01007.php</a>
 </p>
   </li><li>Allow user configuration of TOAST thresholds
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-02/msg00213.php">http://archives.postgresql.org/pgsql-hackers/2007-02/msg00213.php</a>
