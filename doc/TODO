@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 11 18:30:56 EDT 2008
+Last updated:		Tue Mar 11 18:47:23 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -732,6 +732,10 @@ SQL Commands
 	o Allow COPY FROM to create index entries in bulk
 
 	  http://archives.postgresql.org/pgsql-hackers/2008-02/msg00811.php
+
+	o Allow COPY in CSV mode to control whether "" is treated as NULL
+
+	  http://archives.postgresql.org/pgsql-hackers/2007-07/msg00905.php
 
 
 
