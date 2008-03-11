@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 11 16:04:51 EDT 2008
+Last updated:		Tue Mar 11 16:16:32 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -111,6 +111,10 @@ Administration
 	o Allow the server to be stopped/restarted via an SQL API
 	o Issue a warning if a change-on-restart-only postgresql.conf value
 	  is modified  and the server config files are reloaded
+	o Consider normalizing fractions in postgresql.conf, perhaps
+	  using '%'
+
+	  http://archives.postgresql.org/pgsql-hackers/2007-06/msg00550.php
 
 
 * Tablespaces
