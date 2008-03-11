@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 11 17:13:09 EDT 2008
+Last updated:		Tue Mar 11 17:24:58 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1618,6 +1618,10 @@ Source Code
 * Research use of signals and sleep wake ups
 
   http://archives.postgresql.org/pgsql-hackers/2007-07/msg00003.php
+
+* Add automated check for invalid C++ source code constructs
+
+  http://archives.postgresql.org/pgsql-patches/2007-07/msg00056.php
 
 
 * Win32
