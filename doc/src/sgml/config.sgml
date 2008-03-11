@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.170 2008/03/10 12:55:13 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.171 2008/03/11 15:39:23 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3876,6 +3876,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <literal>ERROR</> or lower, the statement that timed out will also be
         logged.  A value of zero (the default) turns off the 
         limitation.
+       </para>
+
+       <para>
+        Setting <varname>statement_timeout</> in
+        <filename>postgresql.conf</> is not recommended because it
+        affects all sessions, including autovacuum.
        </para>
       </listitem>
      </varlistentry>
