@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.40 2008/01/09 21:52:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.41 2008/03/11 20:20:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ static ProcArrayStruct *procArray;
 
 /* counters for XidCache measurement */
 static long xc_by_recent_xmin = 0;
+static long xc_by_known_xact = 0;
 static long xc_by_my_xact = 0;
 static long xc_by_latest_xid = 0;
 static long xc_by_main_xid = 0;
@@ -68,6 +69,7 @@ static long xc_no_overflow = 0;
 static long xc_slow_answer = 0;
 
 #define xc_by_recent_xmin_inc()		(xc_by_recent_xmin++)
+#define xc_by_known_xact_inc()		(xc_by_known_xact++)
 #define xc_by_my_xact_inc()			(xc_by_my_xact++)
 #define xc_by_latest_xid_inc()		(xc_by_latest_xid++)
 #define xc_by_main_xid_inc()		(xc_by_main_xid++)
@@ -79,6 +81,7 @@ static void DisplayXidCache(void);
 #else							/* !XIDCACHE_DEBUG */
 
 #define xc_by_recent_xmin_inc()		((void) 0)
+#define xc_by_known_xact_inc()		((void) 0)
 #define xc_by_my_xact_inc()			((void) 0)
 #define xc_by_latest_xid_inc()		((void) 0)
 #define xc_by_main_xid_inc()		((void) 0)
@@ -350,6 +353,17 @@ TransactionIdIsInProgress(TransactionId xid)
 	if (TransactionIdPrecedes(xid, RecentXmin))
 	{
 		xc_by_recent_xmin_inc();
+		return false;
+	}
+
+	/*
+	 * We may have just checked the status of this transaction, so if it is
+	 * already known to be completed, we can fall out without any access to
+	 * shared memory.
+	 */
+	if (TransactionIdIsKnownCompleted(xid))
+	{
+		xc_by_known_xact_inc();
 		return false;
 	}
 
@@ -1335,8 +1349,9 @@ static void
 DisplayXidCache(void)
 {
 	fprintf(stderr,
-			"XidCache: xmin: %ld, myxact: %ld, latest: %ld, mainxid: %ld, childxid: %ld, nooflo: %ld, slow: %ld\n",
+			"XidCache: xmin: %ld, known: %ld, myxact: %ld, latest: %ld, mainxid: %ld, childxid: %ld, nooflo: %ld, slow: %ld\n",
 			xc_by_recent_xmin,
+			xc_by_known_xact,
 			xc_by_my_xact,
 			xc_by_latest_xid,
 			xc_by_main_xid,
