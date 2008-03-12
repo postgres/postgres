@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.544 2008/03/10 12:55:13 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.545 2008/03/12 23:58:27 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -730,31 +730,49 @@ List *
 pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams,
 				bool needSnapshot)
 {
-	List	   *stmt_list = NIL;
-	ListCell   *query_list;
+	List	   * volatile stmt_list = NIL;
+	Snapshot	saveActiveSnapshot = ActiveSnapshot;
 
-	foreach(query_list, querytrees)
+	/* PG_TRY to ensure previous ActiveSnapshot is restored on error */
+	PG_TRY();
 	{
-		Query	   *query = (Query *) lfirst(query_list);
-		Node	   *stmt;
+		Snapshot	mySnapshot = NULL;
+		ListCell   *query_list;
 
-		if (query->commandType == CMD_UTILITY)
+		foreach(query_list, querytrees)
 		{
-			/* Utility commands have no plans. */
-			stmt = query->utilityStmt;
-		}
-		else
-		{
-			if (needSnapshot)
+			Query	   *query = (Query *) lfirst(query_list);
+			Node	   *stmt;
+
+			if (query->commandType == CMD_UTILITY)
 			{
-				ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
-				needSnapshot = false;
+				/* Utility commands have no plans. */
+				stmt = query->utilityStmt;
 			}
-			stmt = (Node *) pg_plan_query(query, cursorOptions, boundParams);
+			else
+			{
+				if (needSnapshot && mySnapshot == NULL)
+				{
+					mySnapshot = CopySnapshot(GetTransactionSnapshot());
+					ActiveSnapshot = mySnapshot;
+				}
+				stmt = (Node *) pg_plan_query(query, cursorOptions,
+											  boundParams);
+			}
+
+			stmt_list = lappend(stmt_list, stmt);
 		}
 
-		stmt_list = lappend(stmt_list, stmt);
+		if (mySnapshot)
+			FreeSnapshot(mySnapshot);
 	}
+	PG_CATCH();
+	{
+		ActiveSnapshot = saveActiveSnapshot;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	ActiveSnapshot = saveActiveSnapshot;
 
 	return stmt_list;
 }
