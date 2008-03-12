@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 11 21:02:58 EDT 2008
+Last updated:		Tue Mar 11 21:08:26 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1552,6 +1552,7 @@ Miscellaneous Performance
 * Consider increasing NUM_CLOG_BUFFERS
 
   http://archives.postgresql.org/pgsql-hackers/2007-08/msg00030.php
+  http://archives.postgresql.org/pgsql-performance/2007-08/msg00024.php
 
 * Allow user configuration of TOAST thresholds
 
