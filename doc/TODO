@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Mar 12 15:31:58 EDT 2008
+Last updated:		Wed Mar 12 15:41:18 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -218,6 +218,10 @@ Data Types
 * Consider a function-based API for '@@' full text searches
 
   http://archives.postgresql.org/pgsql-hackers/2007-11/msg00511.php
+
+* Consider a special data type for regular expressions
+
+  http://archives.postgresql.org/pgsql-hackers/2007-08/msg01067.php
 
 
 * Dates and Times
