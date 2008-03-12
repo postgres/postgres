@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.76 2008/03/10 01:23:04 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.77 2008/03/12 02:18:33 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -811,6 +811,16 @@ init(void)
 {
 	PGconn	   *con;
 	PGresult   *res;
+	/*
+	 * Note: TPC-B requires at least 100 bytes per row, and the "filler"
+	 * fields in these table declarations were intended to comply with that.
+	 * But because they default to NULLs, they don't actually take any
+	 * space.  We could fix that by giving them non-null default values.
+	 * However, that would completely break comparability of pgbench
+	 * results with prior versions.  Since pgbench has never pretended
+	 * to be fully TPC-B compliant anyway, we stick with the historical
+	 * behavior.
+	 */
 	static char *DDLs[] = {
 		"drop table if exists branches",
 		"create table branches(bid int not null,bbalance int,filler char(88)) with (fillfactor=%d)",
