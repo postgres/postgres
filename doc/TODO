@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 11 21:34:56 EDT 2008
+Last updated:		Tue Mar 11 21:40:05 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -184,6 +184,11 @@ Data Types
 
   http://archives.postgresql.org/pgsql-hackers/2006-05/msg00072.php
   http://archives.postgresql.org/pgsql-hackers/2006-09/msg01681.php
+
+* Allow domains to be cast
+
+  http://archives.postgresql.org/pgsql-hackers/2003-06/msg01206.php
+  http://archives.postgresql.org/pgsql-hackers/2007-08/msg00289.php
 
 * Add support for SQL-standard GENERATED/IDENTITY columns
 
