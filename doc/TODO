@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Mar 12 14:32:20 EDT 2008
+Last updated:		Wed Mar 12 14:33:47 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1669,6 +1669,11 @@ Source Code
 	o Allow psql to use readline once non-US code pages work with
 	  backslashes
 	o Fix problem with shared memory on the Win32 Terminal Server
+	o Diagnose problem where shared memory can sometimes not be
+	  attached by postmaster children
+
+	  http://archives.postgresql.org/pgsql-general/2007-08/msg01377.php
+
 	o Improve signal handling
 
 	  http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php
