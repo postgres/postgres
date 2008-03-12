@@ -215,10 +215,9 @@ Data Types
 
   http://archives.postgresql.org/pgsql-patches/2007-11/msg00081.php
 
-* Consider a simplified API for full text searches
+* Consider a function-based API for '@@' full text searches
 
   http://archives.postgresql.org/pgsql-hackers/2007-11/msg00511.php
-  http://archives.postgresql.org/pgsql-hackers/2007-08/msg01067.php
 
 
 * Dates and Times
