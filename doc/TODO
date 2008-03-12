@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Mar 12 16:19:40 EDT 2008
+Last updated:		Wed Mar 12 16:50:08 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -949,6 +949,9 @@ Clients
 
 	  Ideally it will not generate an error for invalid permissions
 
+	o Include the symbolic SQLSTATE name in verbose error reports
+
+	  http://archives.postgresql.org/pgsql-general/2007-09/msg00438.php
 
 
 * pg_dump / pg_restore
