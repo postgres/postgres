@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.579 2008/02/07 22:28:54 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.580 2008/03/13 23:47:49 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -62,6 +62,317 @@ do it for earlier branch release files.
    that item.  Of course all changes involve community discussion and patch
    review, so each item is truly a community effort.
   </para>
+
+ <sect1 id="release-8-3-1">
+  <title>Release 8.3.1</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-03-17</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.3.0.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.3.1</title>
+
+   <para>
+    A dump/restore is not required for those running 8.3.X.
+    However, you might need to <command>REINDEX</> indexes on textual
+    columns after updating, if you are affected by the Windows locale
+    issue described below.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix character string comparison for Windows locales that consider
+      different character combinations as equal (Tom)
+     </para>
+
+     <para>
+      This fix applies only on Windows and only when using UTF-8
+      database encoding.  The same fix was made for all other cases
+      over two years ago, but Windows with UTF-8 uses a separate code
+      path that was not updated.  If you are using a locale that
+      considers some non-identical strings as equal, you may need to
+      <command>REINDEX</> to fix existing indexes on textual columns.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Repair corner-case bugs in <command>VACUUM FULL</> (Tom)
+     </para>
+
+     <para>
+      A potential deadlock between concurrent <command>VACUUM FULL</>
+      operations on different system catalogs was introduced in 8.2.
+      This has now been corrected.  8.3 made this worse because the
+      deadlock could occur within a critical code section, making it
+      a PANIC rather than just ERROR condition.
+     </para>
+
+     <para>
+      Also, a <command>VACUUM FULL</> that failed partway through
+      vacuuming a system catalog could result in cache corruption in
+      concurrent database sessions.
+     </para>
+
+     <para>
+      Another <command>VACUUM FULL</> bug introduced in 8.3 could
+      result in a crash or out-of-memory report when dealing with
+      pages containing no live tuples.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix misbehavior of foreign key checks involving <type>character</>
+      or <type>bit</> columns (Tom)
+     </para>
+
+     <para>
+      If the referencing column were of a different but compatible type
+      (for instance <type>varchar</>), the constraint was enforced incorrectly.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid needless deadlock failures in no-op foreign-key checks (Stephan
+      Szabo, Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible core dump when re-planning a prepared query (Tom)
+     </para>
+
+     <para>
+      This bug affected only protocol-level prepare operations, not
+      SQL <command>PREPARE</>, and so tended to be seen only with
+      JDBC, DBI, and other client-side drivers that use prepared
+      statements heavily.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible failure when re-planning a query that calls an SPI-using
+      function (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix failure in row-wise comparisons involving columns of different
+      datatypes (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix longstanding <command>LISTEN</>/<command>NOTIFY</>
+      race condition (Tom)
+     </para>
+
+     <para>
+      In rare cases a session that had just executed a
+      <command>LISTEN</> might not get a notification, even though
+      one would be expected because the concurrent transaction executing
+      <command>NOTIFY</> was observed to commit later.
+     </para>
+
+     <para>
+      A side effect of the fix is that a transaction that has executed
+      a not-yet-committed <command>LISTEN</> command will not see any
+      row in <structname>pg_listener</> for the <command>LISTEN</>,
+      should it choose to look; formerly it would have.  This behavior
+      was never documented one way or the other, but it is possible that
+      some applications depend on the old behavior.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>LISTEN</> and <command>UNLISTEN</> within a
+      prepared transaction (Tom)
+     </para>
+
+     <para>
+      This was formerly allowed but trying to do it had various unpleasant 
+      consequences, notably that the originating backend could not exit
+      as long as an <command>UNLISTEN</> remained uncommitted.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow dropping a temporary table within a
+      prepared transaction (Heikki)
+     </para>
+
+     <para>
+      This was correctly disallowed by 8.1, but the check was inadvertently
+      broken in 8.2 and 8.3.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix rare crash when an error occurs during a query using a hash index
+      (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect comparison of <type>tsquery</> values (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect behavior of <literal>LIKE</> with non-ASCII characters
+      in single-byte encodings (Rolf Jentsch)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disable <function>xmlvalidate</> (Tom)
+     </para>
+
+     <para>
+      This function should have been removed before 8.3 release, but
+      was inadvertently left in the source code.  It poses a small
+      security risk since unprivileged users could use it to read the
+      first few characters of any file accessible to the server.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leaks in certain usages of set-returning functions (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <function>encode(<replaceable>bytea</>, 'escape')</> convert all
+      high-bit-set byte values into <literal>\</><replaceable>nnn</> octal
+      escape sequences (Tom)
+     </para>
+
+     <para>
+      This is necessary to avoid encoding problems when the database
+      encoding is multi-byte.  This change could pose compatibility issues
+      for applications that are expecting specific results from
+      <function>encode</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix input of datetime values for February 29 in years BC (Tom)
+     </para>
+
+     <para>
+      The former coding was mistaken about which years were leap years.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>unrecognized node type</> error in some variants of
+      <command>ALTER OWNER</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid tablespace permissions errors in <command>CREATE TABLE LIKE
+      INCLUDING INDEXES</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <structname>pg_stat_activity</>.<structfield>waiting</> flag
+      is cleared when a lock wait is aborted (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of process permissions on Windows Vista (Dave, Magnus)
+     </para>
+
+     <para>
+      In particular, this fix allows starting the server as the Administrator
+      user.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2008a
+      (in particular, recent Chile changes); adjust timezone abbreviation
+      <literal>VET</> (Venezuela) to mean UTC-4:30, not UTC-4:00 (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</> problems with arrays (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_ctl</> to correctly extract the postmaster's port
+      number from command-line options (Itagaki Takahiro, Tom)
+     </para>
+
+     <para>
+      Previously, <literal>pg_ctl start -w</> could try to contact the
+      postmaster on the wrong port, leading to bogus reports of startup
+      failure.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use <option>-fwrapv</> to defend against possible misoptimization
+      in recent <application>gcc</> versions (Tom)
+     </para>
+
+     <para>
+      This is known to be necessary when building <productname>PostgreSQL</>
+      with <application>gcc</> 4.3 or later.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Enable building <filename>contrib/uuid-ossp</> with MSVC (Hiroshi Saito)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-3">
   <title>Release 8.3</title>
@@ -2668,6 +2979,273 @@ current_date &lt; 2017-11-17
     </itemizedlist>
 
    </sect3>
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-8-2-7">
+  <title>Release 8.2.7</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-03-17</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.2.6.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.2.7</title>
+
+   <para>
+    A dump/restore is not required for those running 8.2.X.
+    However, you might need to <command>REINDEX</> indexes on textual
+    columns after updating, if you are affected by the Windows locale
+    issue described below.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix character string comparison for Windows locales that consider
+      different character combinations as equal (Tom)
+     </para>
+
+     <para>
+      This fix applies only on Windows and only when using UTF-8
+      database encoding.  The same fix was made for all other cases
+      over two years ago, but Windows with UTF-8 uses a separate code
+      path that was not updated.  If you are using a locale that
+      considers some non-identical strings as equal, you may need to
+      <command>REINDEX</> to fix existing indexes on textual columns.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Repair potential deadlock between concurrent <command>VACUUM FULL</>
+      operations on different system catalogs (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix longstanding <command>LISTEN</>/<command>NOTIFY</>
+      race condition (Tom)
+     </para>
+
+     <para>
+      In rare cases a session that had just executed a
+      <command>LISTEN</> might not get a notification, even though
+      one would be expected because the concurrent transaction executing
+      <command>NOTIFY</> was observed to commit later.
+     </para>
+
+     <para>
+      A side effect of the fix is that a transaction that has executed
+      a not-yet-committed <command>LISTEN</> command will not see any
+      row in <structname>pg_listener</> for the <command>LISTEN</>,
+      should it choose to look; formerly it would have.  This behavior
+      was never documented one way or the other, but it is possible that
+      some applications depend on the old behavior.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>LISTEN</> and <command>UNLISTEN</> within a
+      prepared transaction (Tom)
+     </para>
+
+     <para>
+      This was formerly allowed but trying to do it had various unpleasant 
+      consequences, notably that the originating backend could not exit
+      as long as an <command>UNLISTEN</> remained uncommitted.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow dropping a temporary table within a
+      prepared transaction (Heikki)
+     </para>
+
+     <para>
+      This was correctly disallowed by 8.1, but the check was inadvertently
+      broken in 8.2.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix rare crash when an error occurs during a query using a hash index
+      (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leaks in certain usages of set-returning functions (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix input of datetime values for February 29 in years BC (Tom)
+     </para>
+
+     <para>
+      The former coding was mistaken about which years were leap years.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>unrecognized node type</> error in some variants of
+      <command>ALTER OWNER</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <structname>pg_stat_activity</>.<structfield>waiting</> flag
+      is cleared when a lock wait is aborted (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of process permissions on Windows Vista (Dave, Magnus)
+     </para>
+
+     <para>
+      In particular, this fix allows starting the server as the Administrator
+      user.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2008a
+      (in particular, recent Chile changes); adjust timezone abbreviation
+      <literal>VET</> (Venezuela) to mean UTC-4:30, not UTC-4:00 (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_ctl</> to correctly extract the postmaster's port
+      number from command-line options (Itagaki Takahiro, Tom)
+     </para>
+
+     <para>
+      Previously, <literal>pg_ctl start -w</> could try to contact the
+      postmaster on the wrong port, leading to bogus reports of startup
+      failure.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use <option>-fwrapv</> to defend against possible misoptimization
+      in recent <application>gcc</> versions (Tom)
+     </para>
+
+     <para>
+      This is known to be necessary when building <productname>PostgreSQL</>
+      with <application>gcc</> 4.3 or later.
+     </para>
+    </listitem>
+
+
+    <listitem>
+     <para>
+      Correctly enforce <varname>statement_timeout</> values longer
+      than <literal>INT_MAX</> microseconds (about 35 minutes) (Tom)
+     </para>
+
+     <para>
+      This bug affects only builds with <option>--enable-integer-datetimes</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>unexpected PARAM_SUBLINK ID</> planner error when
+      constant-folding simplifies a sub-select (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix logical errors in constraint-exclusion handling of <literal>IS
+      NULL</> and <literal>NOT</> expressions (Tom)
+     </para>
+
+     <para>
+      The planner would sometimes exclude partitions that should not
+      have been excluded because of the possibility of NULL results.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix another cause of <quote>failed to build any N-way joins</>
+      planner errors (Tom)
+     </para>
+
+     <para>
+      This could happen in cases where a clauseless join needed to be
+      forced before a join clause could be exploited.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect constant propagation in outer-join planning (Tom)
+     </para>
+
+     <para>
+      The planner could sometimes incorrectly conclude that a variable
+      could be constrained to be equal to a constant, leading
+      to wrong query results.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix display of constant expressions in <literal>ORDER BY</>
+      and <literal>GROUP BY</> (Tom)
+     </para>
+
+     <para>
+      An explictly casted constant would be shown incorrectly.  This could
+      for example lead to corruption of a view definition during
+      dump and reload.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>libpq</> to handle NOTICE messages correctly
+      during COPY OUT (Tom)
+     </para>
+
+     <para>
+      This failure has only been observed to occur when a user-defined
+      datatype's output routine issues a NOTICE, but there is no
+      guaranteee it couldn't happen due to other causes.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
   </sect2>
  </sect1>
 
