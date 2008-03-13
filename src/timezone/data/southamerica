@@ -1,4 +1,4 @@
-# @(#)southamerica	8.15
+# @(#)southamerica	8.18
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -759,6 +759,26 @@ Zone America/Rio_Branco	-4:31:12 -	LMT	1914
 # America/Santiago.  The pre-1980 Pacific/Easter data are dubious,
 # but we have no other source.
 
+# From German Poo-Caaman~o (2008-03-03):
+# Due to drought, Chile extends Daylight Time in three weeks.  This
+# is one-time change (Saturday 3/29 at 24:00 for America/Santiago
+# and Saturday 3/29 at 22:00 for Pacific/Easter)
+# The Supreme Decree is located at 
+# <a href="http://www.shoa.cl/servicios/supremo316.pdf">
+# http://www.shoa.cl/servicios/supremo316.pdf
+# </a>
+# and the instructions for 2008 are located in:
+# <a href="http://www.horaoficial.cl/cambio.htm">
+# http://www.horaoficial.cl/cambio.htm
+# </a>.
+
+# From José Miguel Garrido (2008-03-05):
+# ...
+# You could see the announces of the change on 
+# <a href="http://www.shoa.cl/noticias/2008/04hora/hora.htm">
+# http://www.shoa.cl/noticias/2008/04hora/hora.htm
+# </a>.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Chile	1927	1932	-	Sep	 1	0:00	1:00	S
 Rule	Chile	1928	1932	-	Apr	 1	0:00	0	-
@@ -789,7 +809,11 @@ Rule	Chile	1998	only	-	Mar	Sun>=9	3:00u	0	-
 Rule	Chile	1998	only	-	Sep	27	4:00u	1:00	S
 Rule	Chile	1999	only	-	Apr	 4	3:00u	0	-
 Rule	Chile	1999	max	-	Oct	Sun>=9	4:00u	1:00	S
-Rule	Chile	2000	max	-	Mar	Sun>=9	3:00u	0	-
+Rule	Chile	2000	2007	-	Mar	Sun>=9	3:00u	0	-
+# N.B.: the end of March 29 in Chile is March 30 in Universal time,
+# which is used below in specifying the transition.
+Rule	Chile	2008	only	-	Mar	30	3:00u	0	-
+Rule	Chile	2009	max	-	Mar	Sun>=9	3:00u	0	-
 # IATA SSIM anomalies: (1992-02) says 1992-03-14;
 # (1996-09) says 1998-03-08.  Ignore these.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
