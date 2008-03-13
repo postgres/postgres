@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.7 2008/03/08 21:57:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.8 2008/03/13 18:00:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,14 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	 * much logic as possible out of the critical section, and also ensures
 	 * that WAL replay will work the same as the normal case.
 	 *
-	 * First, initialize the new pd_prune_xid value to zero (indicating no
+	 * First, inform inval.c that upcoming CacheInvalidateHeapTuple calls
+	 * are nontransactional.
+	 */
+	if (redirect_move)
+		BeginNonTransactionalInvalidation();
+
+	/*
+	 * Initialize the new pd_prune_xid value to zero (indicating no
 	 * prunable tuples).  If we find any tuples which may soon become
 	 * prunable, we will save the lowest relevant XID in new_prune_xid.
 	 * Also initialize the rest of our working state.
@@ -190,6 +197,18 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 									 &prstate,
 									 redirect_move);
 	}
+
+	/*
+	 * Send invalidation messages for any tuples we are about to move.
+	 * It is safe to do this now, even though we could theoretically still
+	 * fail before making the actual page update, because a useless cache
+	 * invalidation doesn't hurt anything.  Also, no one else can reload the
+	 * tuples while we have exclusive buffer lock, so it's not too early to
+	 * send the invals.  This avoids sending the invals while inside the
+	 * critical section, which is a good thing for robustness.
+	 */
+	if (redirect_move)
+		EndNonTransactionalInvalidation();
 
 	/* Any error while applying the changes is critical */
 	START_CRIT_SECTION();
@@ -587,16 +606,10 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 	/*
 	 * If we are going to implement a redirect by moving tuples, we have
 	 * to issue a cache invalidation against the redirection target tuple,
-	 * because its CTID will be effectively changed by the move.  It is
-	 * safe to do this now, even though we might fail before reaching the
-	 * actual page update, because a useless cache invalidation doesn't
-	 * hurt anything.  Furthermore we really really don't want to issue
-	 * the inval inside the critical section, since it has a nonzero
-	 * chance of causing an error (eg, due to running out of memory).
-	 *
-	 * XXX this is not really right because CacheInvalidateHeapTuple
-	 * expects transactional semantics, and our move isn't transactional.
-	 * FIXME!!
+	 * because its CTID will be effectively changed by the move.  Note that
+	 * CacheInvalidateHeapTuple only queues the request, it doesn't send it;
+	 * if we fail before reaching EndNonTransactionalInvalidation, nothing
+	 * happens and no harm is done.
 	 */
 	if (OffsetNumberIsValid(redirect_target))
 	{
