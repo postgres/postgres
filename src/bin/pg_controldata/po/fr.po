@@ -2,7 +2,7 @@
 # translation of pg_controldata-fr.po to
 # French message translation file for pg_controldata
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.12.2.2 2007/09/13 21:15:36 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.12.2.3 2008/03/14 04:51:30 petere Exp $
 #
 # Use these quotes: « %s »
 # Loïc Hennequin <loic.hennequin@wanadoo.fr>, 2002.
@@ -12,9 +12,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-16 01:15-0300\n"
-"PO-Revision-Date: 2006-12-18 19:38+0100\n"
-"Last-Translator: Stéphane Schildknecht\n"
+"POT-Creation-Date: 2008-01-31 22:16-0400\n"
+"PO-Revision-Date: 2008-02-08 17:35+0100\n"
+"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
@@ -27,7 +27,8 @@ msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s affiche les informations de contrôle du cluster de base de données PostgreSQL.\n"
+"%s affiche les informations de contrôle du cluster de base de données\n"
+" PostgreSQL.\n"
 "\n"
 
 #: pg_controldata.c:28
@@ -56,8 +57,8 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Si aucun répertoire (RÉP_DONNÉES) n'est indiqué, la variable\n"
-"d'environnement PGDATA est utilisée.\n"
+"Si aucun répertoire (RÉP_DONNÉES) n'est indiqué, la variable d'environnement\n"
+"PGDATA est utilisée.\n"
 "\n"
 
 #: pg_controldata.c:38
@@ -79,11 +80,11 @@ msgstr "arrêt en cours"
 
 #: pg_controldata.c:54
 msgid "in crash recovery"
-msgstr "restauration en cours (crash)"
+msgstr "restauration en cours (suite à un crash)"
 
 #: pg_controldata.c:56
 msgid "in archive recovery"
-msgstr "restauration en cours (archive)"
+msgstr "restauration en cours (à partir des archives)"
 
 #: pg_controldata.c:58
 msgid "in production"
@@ -121,8 +122,10 @@ msgid ""
 "is expecting.  The results below are untrustworthy.\n"
 "\n"
 msgstr ""
-"WARNING: Les CRC de contrôle calculés ne correspondent pas aux valeurs stockées dans le fichier.\n"
-"Soit le fichier est corrompu, soit son organisation diffère de celle attendue par le programme.\n"
+"ATTENTION : Les CRC de contrôle calculés ne correspondent pas aux valeurs\n"
+"stockées dans le fichier.\n"
+"Soit le fichier est corrompu, soit son organisation diffère de celle attendue\n"
+"par le programme.\n"
 "Les résultats ci-dessous ne sont pas dignes de confiance.\n"
 "\n"
 
@@ -144,7 +147,7 @@ msgstr "Identifiant du système de base de données :       %s\n"
 #: pg_controldata.c:158
 #, c-format
 msgid "Database cluster state:               %s\n"
-msgstr "Etat du cluster de base de données :              %s\n"
+msgstr "État du cluster de base de données :              %s\n"
 
 #: pg_controldata.c:160
 #, c-format
@@ -154,12 +157,12 @@ msgstr "Dernière modification de pg_control :             %s\n"
 #: pg_controldata.c:162
 #, c-format
 msgid "Current log file ID:                  %u\n"
-msgstr "ID du fichier journal courant :                   %u\n"
+msgstr "ID du journal de transaction courant :            %u\n"
 
 #: pg_controldata.c:164
 #, c-format
 msgid "Next log file segment:                %u\n"
-msgstr "Prochain segment de fichier journal :             %u\n"
+msgstr "Prochain segment de journal de transaction :      %u\n"
 
 #: pg_controldata.c:166
 #, c-format
@@ -179,7 +182,7 @@ msgstr "Dernier REDO (reprise) du point de contrôle :     %X/%X\n"
 #: pg_controldata.c:175
 #, c-format
 msgid "Latest checkpoint's UNDO location:    %X/%X\n"
-msgstr "Dernier UNDO ('annulation) du point de contrôle : %X/%X\n"
+msgstr "Dernier UNDO (annulation) du point de contrôle :  %X/%X\n"
 
 #: pg_controldata.c:178
 #, c-format
@@ -234,12 +237,12 @@ msgstr "Blocs par segment des relations volumineuses :    %u\n"
 #: pg_controldata.c:201
 #, c-format
 msgid "WAL block size:                       %u\n"
-msgstr "Taille de bloc du WAL :                           %u\n"
+msgstr "Taille de bloc des journaux de transaction :      %u\n"
 
 #: pg_controldata.c:203
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
-msgstr "Octets par segment WAL :                          %u\n"
+msgstr "Octets par journaux de transaction :              %u\n"
 
 #: pg_controldata.c:205
 #, c-format
@@ -277,6 +280,5 @@ msgstr "LC_COLLATE :                                      %s\n"
 #: pg_controldata.c:215
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
-msgstr "LC_CTYPE :                                        %s\n"
-
+msgstr "LC_CTYPE:                                         %s\n"
 

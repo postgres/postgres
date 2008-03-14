@@ -9,9 +9,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-16 01:15-0300\n"
-"PO-Revision-Date: 2006-12-19 19:02+0100\n"
-"Last-Translator: Stéphane Schildknecht\n"
+"POT-Creation-Date: 2008-01-31 22:16-0400\n"
+"PO-Revision-Date: 2008-02-08 17:54+0100\n"
+"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
@@ -102,7 +102,7 @@ msgstr "%s : ne peut pas être exécuté par « root »\n"
 #: pg_resetxlog.c:243
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
-msgstr "Vous devez lancer %s en tant que super-utilisateur PostgreSQL.\n"
+msgstr "Vous devez exécuter %s en tant que super-utilisateur PostgreSQL.\n"
 
 #: pg_resetxlog.c:253
 #, c-format
@@ -121,8 +121,8 @@ msgid ""
 "%s: lock file \"%s\" exists\n"
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
-"%s : le fichier de verrouillage « %s » existe\n"
-"Le serveur est-il démarré ? Sinon, supprimez le fichier de verrouillage et réessayez.\n"
+"%s : le verrou « %s » existe\n"
+"Le serveur est-il démarré ? Sinon, supprimez le verrou et réessayez.\n"
 
 #: pg_resetxlog.c:325
 #, c-format
@@ -131,7 +131,8 @@ msgid ""
 "If these values seem acceptable, use -f to force reset.\n"
 msgstr ""
 "\n"
-"Si ces valeurs semblent acceptables, utilisez -f pour forcer la réinitialisation.\n"
+"Si ces valeurs semblent acceptables, utilisez -f pour forcer la\n"
+"réinitialisation.\n"
 
 #: pg_resetxlog.c:337
 #, c-format
@@ -141,8 +142,10 @@ msgid ""
 "If you want to proceed anyway, use -f to force reset.\n"
 msgstr ""
 "Le serveur de bases de données n'a pas été arrêté proprement.\n"
-"Ré-initialiser le journal des transactions peut occasionner des pertes de données.\n"
-"Si vous souhaitez continuer malgré tout, utilisez -f pour forcer la ré-initialisation.\n"
+"Ré-initialiser le journal des transactions peut occasionner des pertes de\n"
+"données.\n"
+"Si vous souhaitez continuer malgré tout, utilisez -f pour forcer la\n"
+"ré-initialisation.\n"
 
 #: pg_resetxlog.c:350
 #, c-format
@@ -221,12 +224,12 @@ msgstr "Identifiant du système de base de données :       %s\n"
 #: pg_resetxlog.c:542
 #, c-format
 msgid "Current log file ID:                  %u\n"
-msgstr "Identifiant du fichier de transaction courant :   %u\n"
+msgstr "Identifiant du journal de transaction courant :   %u\n"
 
 #: pg_resetxlog.c:544
 #, c-format
 msgid "Next log file segment:                %u\n"
-msgstr "Prochain segment du journal :                     %u\n"
+msgstr "Prochain segment du journal de transaction :      %u\n"
 
 #: pg_resetxlog.c:546
 #, c-format
@@ -271,12 +274,12 @@ msgstr "Blocs par segment d'une relation volumineuse :    %u\n"
 #: pg_resetxlog.c:564
 #, c-format
 msgid "WAL block size:                       %u\n"
-msgstr "Taille du bloc des WAL :                          %u\n"
+msgstr "Taille du bloc des journaux de transaction :      %u\n"
 
 #: pg_resetxlog.c:566
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
-msgstr "Octets par segment :                              %u\n"
+msgstr "Octets par segment de journaux de transaction :   %u\n"
 
 #: pg_resetxlog.c:568
 #, c-format
@@ -319,7 +322,9 @@ msgstr "LC_CTYPE :                                        %s\n"
 #: pg_resetxlog.c:642
 #, c-format
 msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"
-msgstr "%s : erreur interne -- sizeof(ControlFileData) est trop important ... corrigez PG_CONTROL_SIZE\n"
+msgstr ""
+"%s : erreur interne -- sizeof(ControlFileData) est trop important...\n"
+"corrigez PG_CONTROL_SIZE\n"
 
 #: pg_resetxlog.c:657
 #, c-format
@@ -335,7 +340,7 @@ msgstr "%s : n'a pas pu écrire le fichier pg_control : %s\n"
 #: pg_resetxlog.c:833
 #, c-format
 msgid "%s: fsync error: %s\n"
-msgstr "%s : erreur fsync : %s\n"
+msgstr "%s : erreur de synchronisation (fsync) : %s\n"
 
 #: pg_resetxlog.c:696
 #, c-format
@@ -391,52 +396,56 @@ msgstr "Options :\n"
 #: pg_resetxlog.c:847
 #, c-format
 msgid "  -f              force update to be done\n"
-msgstr "  -f              force la mise à jour\n"
+msgstr "  -f               force la mise à jour\n"
 
 #: pg_resetxlog.c:848
 #, c-format
 msgid "  -l TLI,FILE,SEG force minimum WAL starting location for new transaction log\n"
-msgstr "  -l TLI,FILE,SEG force l'emplacement minimal de début des WAL du nouveau journal de transactions\n"
+msgstr ""
+"  -l TLI,FILE,SEG  force l'emplacement minimal de début du nouveau journal\n"
+"                   de transactions\n"
 
 #: pg_resetxlog.c:849
 #, c-format
 msgid "  -m XID          set next multitransaction ID\n"
-msgstr "  -m XID          fixe le prochain identifiant multi-transaction\n"
+msgstr "  -m XID           fixe le prochain identifiant multi-transaction\n"
 
 #: pg_resetxlog.c:850
 #, c-format
 msgid "  -n              no update, just show extracted control values (for testing)\n"
-msgstr "  -n              pas de mise à jour, affiche simplement les valeurs de contrôle extraites (pour test)\n"
+msgstr ""
+"  -n               pas de mise à jour, affiche simplement les valeurs de\n"
+"                   contrôle extraites (pour test)\n"
 
 #: pg_resetxlog.c:851
 #, c-format
 msgid "  -o OID          set next OID\n"
-msgstr "  -o OID          fixe le prochain OID\n"
+msgstr "  -o OID           initialise le prochain OID\n"
 
 #: pg_resetxlog.c:852
 #, c-format
 msgid "  -O OFFSET       set next multitransaction offset\n"
-msgstr "  -O DECALAGE     fixe le prochain décalage multi-transaction\n"
+msgstr "  -O DÉCALAGE      initialise le prochain décalage multi-transaction\n"
 
 #: pg_resetxlog.c:853
 #, c-format
 msgid "  -x XID          set next transaction ID\n"
-msgstr "  -x XID          fixe le prochain identifiant de transaction\n"
+msgstr "  -x XID           fixe le prochain identifiant de transaction\n"
 
 #: pg_resetxlog.c:854
 #, c-format
 msgid "  -e XIDEPOCH     set next transaction ID epoch\n"
-msgstr "  -x XIDEPOCH     fixe la valeur epoch du prochain identifiant de transaction\n"
+msgstr "  -e XIDEPOCH      fixe la valeur epoch du prochain identifiant de transaction\n"
 
 #: pg_resetxlog.c:855
 #, c-format
 msgid "  --help          show this help, then exit\n"
-msgstr "  --help          affiche cette aide puis quitte\n"
+msgstr "  --help           affiche cette aide puis quitte\n"
 
 #: pg_resetxlog.c:856
 #, c-format
 msgid "  --version       output version information, then exit\n"
-msgstr "  --version       affiche les informations de version puis quitte\n"
+msgstr "  --version        affiche les informations de version puis quitte\n"
 
 #: pg_resetxlog.c:857
 #, c-format

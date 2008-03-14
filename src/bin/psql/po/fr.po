@@ -3,7 +3,7 @@
 # translation of psql-fr.po to
 # French message translation file for psql
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.18.2.2 2007/09/13 21:15:36 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.18.2.3 2008/03/14 04:51:30 petere Exp $
 #
 # Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -13,9 +13,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-07 19:11-0400\n"
-"PO-Revision-Date: 2007-01-18 08:12+0100\n"
-"Last-Translator: Stéphane Schildknecht\n"
+"POT-Creation-Date: 2008-02-08 17:23-0400\n"
+"PO-Revision-Date: 2008-02-13 11:46+0100\n"
+"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
@@ -74,11 +74,11 @@ msgstr "Le tampon de requête est vide."
 
 #: command.c:647
 msgid "Enter new password: "
-msgstr "Saisir le nouveau mot de passe :"
+msgstr "Saisissez le nouveau mot de passe :"
 
 #: command.c:648
 msgid "Enter it again: "
-msgstr "Le saisir à nouveau :"
+msgstr "Saisissez-le à nouveau :"
 
 #: command.c:652
 #, c-format
@@ -135,8 +135,8 @@ msgstr "Chronométrage désactivé."
 #: command.c:1352
 #: command.c:1385
 #: common.c:160
-#: copy.c:553
-#: copy.c:605
+#: copy.c:549
+#: copy.c:613
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s : %s\n"
@@ -153,9 +153,9 @@ msgstr "Mot de passe : "
 #: common.c:834
 #: common.c:859
 #: common.c:932
-#: copy.c:676
-#: copy.c:721
-#: copy.c:850
+#: copy.c:684
+#: copy.c:729
+#: copy.c:858
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -177,7 +177,7 @@ msgstr "Vous êtes maintenant connecté à la base de données « %s »"
 #: command.c:1110
 #, c-format
 msgid " on host \"%s\""
-msgstr "sur l'hôte « %s »"
+msgstr " sur l'hôte « %s »"
 
 #: command.c:1113
 #, c-format
@@ -187,7 +187,7 @@ msgstr " sur le port « %s »"
 #: command.c:1116
 #, c-format
 msgid " as user \"%s\""
-msgstr "comme utilisateur « %s »"
+msgstr " comme utilisateur « %s »"
 
 #: command.c:1208
 #, c-format
@@ -201,7 +201,7 @@ msgstr "n'a pas pu démarrer /bin/sh\n"
 #: command.c:1247
 #, c-format
 msgid "cannot locate temporary directory: %s"
-msgstr "n'a pas pu localiser le répertoire temporaire : %s"
+msgstr "ne peut pas localiser le répertoire temporaire : %s"
 
 #: command.c:1274
 #, c-format
@@ -243,17 +243,17 @@ msgstr "L'affichage de la sortie numérique adaptée à la locale est désactivé."
 #: command.c:1514
 #, c-format
 msgid "Null display is \"%s\".\n"
-msgstr "L'affichage de null est « %s ».\n"
+msgstr "L'affichage de NULL est « %s ».\n"
 
 #: command.c:1526
 #, c-format
 msgid "Field separator is \"%s\".\n"
-msgstr "Le séparateur de champs est « %s ».\n"
+msgstr "Le séparateur de champ est « %s ».\n"
 
 #: command.c:1540
 #, c-format
 msgid "Record separator is <newline>."
-msgstr "Le séparateur d'enregistrements est <saut de ligne>."
+msgstr "Le séparateur d'enregistrements est <retour à la ligne>."
 
 #: command.c:1542
 #, c-format
@@ -262,11 +262,11 @@ msgstr "Le séparateur d'enregistrements est « %s ».\n"
 
 #: command.c:1553
 msgid "Showing only tuples."
-msgstr "Affichage des seuls tuples."
+msgstr "Affichage des tuples uniquement activé."
 
 #: command.c:1555
 msgid "Tuples only is off."
-msgstr "L'affichage des seuls tuples est désactivé."
+msgstr "Affichage des tuples uniquement désactivé."
 
 #: command.c:1571
 #, c-format
@@ -336,7 +336,7 @@ msgstr "La connexion au serveur a été perdue. Tentative de réinitialisation : "
 
 #: common.c:375
 msgid "Failed.\n"
-msgstr "Echec.\n"
+msgstr "Échec.\n"
 
 #: common.c:382
 msgid "Succeeded.\n"
@@ -357,7 +357,7 @@ msgid ""
 "**************************\n"
 "\n"
 msgstr ""
-"******** REQUETE *********\n"
+"******** REQUÊTE *********\n"
 "%s\n"
 "**************************\n"
 "\n"
@@ -365,7 +365,9 @@ msgstr ""
 #: common.c:581
 #, c-format
 msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
-msgstr "Notification asynchrone « %s » reçue en provenance du processus serveur de PID %d.\n"
+msgstr ""
+"Notification asynchrone « %s » reçue en provenance du processus serveur de\n"
+"PID %d.\n"
 
 #: common.c:799
 #, c-format
@@ -374,19 +376,21 @@ msgid ""
 "%s\n"
 "***(press return to proceed or enter x and return to cancel)********************\n"
 msgstr ""
-"***(Mode étape par étape: vérifiez la commande)*********************************\n"
+"***(Mode étape par étape: vérifiez la commande)****************************\n"
 "%s\n"
-"***(appuyez sur entrée pour l'exécuter ou tapez x puis entrée pour annuler)***\n"
+"***(appuyez sur entrée pour l'exécuter ou x puis entrée pour annuler)******\n"
 
 #: common.c:850
 #, c-format
 msgid "The server version (%d) does not support savepoints for ON_ERROR_ROLLBACK.\n"
-msgstr "La version du serveur (%d) ne supporte pas les points de retournement pour ON_ERROR_ROLLBACK.\n"
+msgstr ""
+"La version du serveur (%d) ne supporte pas les points de retournement pour\n"
+"ON_ERROR_ROLLBACK.\n"
 
 #: common.c:946
 #, c-format
 msgid "Time: %.3f ms\n"
-msgstr "Temps : %.3f ms\n"
+msgstr "Durée : %.3f ms\n"
 
 #: copy.c:126
 msgid "\\copy: arguments required\n"
@@ -401,45 +405,46 @@ msgstr "\\copy : erreur de syntaxe sur « %s »\n"
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy : erreur de syntaxe à la fin de la ligne\n"
 
-#: copy.c:564
+#: copy.c:560
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s : ne peut pas copier à partir de/vers un répertoire\n"
 
-#: copy.c:590
+#: copy.c:586
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy : %s"
 
-#: copy.c:594
+#: copy.c:590
+#: copy.c:604
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy : réponse inattendue (%d)\n"
 
-#: copy.c:651
-#: copy.c:661
+#: copy.c:659
+#: copy.c:669
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "n'a pas pu écrire les données du COPY : %s\n"
 
-#: copy.c:668
+#: copy.c:676
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "Échec du transfert de données COPY : %s"
 
-#: copy.c:716
+#: copy.c:724
 msgid "canceled by user"
 msgstr "annulé par l'utilisateur"
 
-#: copy.c:731
+#: copy.c:739
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
 msgstr ""
-"Entrez les données à copier suivies d'un saut de ligne.\n"
+"Saisissez les données à copier suivies d'un saut de ligne.\n"
 "Terminez avec un antislash et un point seuls sur une ligne."
 
-#: copy.c:843
+#: copy.c:851
 msgid "aborted because of read failure"
 msgstr "annulé du fait d'une erreur de lecture"
 
@@ -454,7 +459,7 @@ msgstr "désactivé"
 #: help.c:66
 #, c-format
 msgid "could not get current user name: %s\n"
-msgstr "n'a pas pu obtenir le nom d'utilisateur actuel : %s\n"
+msgstr "n'a pas pu obtenir le nom de l'utilisateur actuel : %s\n"
 
 #: help.c:79
 #, c-format
@@ -478,7 +483,9 @@ msgstr "Options générales :"
 #: help.c:89
 #, c-format
 msgid "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
-msgstr "  -d NOM_BASE     indique le nom de la base de données à laquelle se connecter (par défaut : %s)\n"
+msgstr ""
+"  -d NOM_BASE     indique le nom de la base de données à laquelle se\n"
+"                  connecter (par défaut : %s)\n"
 
 #: help.c:90
 msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
@@ -534,7 +541,9 @@ msgstr "  -E              affiche les requêtes engendrées par les commandes inte
 
 #: help.c:103
 msgid "  -q              run quietly (no messages, only query output)"
-msgstr "  -q              s'exécute silencieusement (pas de messages, uniquement le résultat des requêtes)"
+msgstr ""
+"  -q              s'exécute silencieusement (pas de messages, uniquement le\n"
+"                  résultat des requêtes)"
 
 #: help.c:104
 msgid "  -o FILENAME     send query results to file (or |pipe)"
@@ -542,11 +551,15 @@ msgstr "  -o FICHIER      écrit les résultats des requêtes dans un fichier (ou |
 
 #: help.c:105
 msgid "  -n              disable enhanced command line editing (readline)"
-msgstr "  -n              désactive l'édition avancée de la ligne de commande (readline)"
+msgstr ""
+"  -n              désactive l'édition avancée de la ligne de commande\n"
+"                  (readline)"
 
 #: help.c:106
 msgid "  -s              single-step mode (confirm each query)"
-msgstr "  -s              active le mode étape par étape (confirmation pour chaque requête)"
+msgstr ""
+"  -s              active le mode étape par étape (confirmation pour chaque\n"
+"                  requête)"
 
 #: help.c:107
 msgid "  -S              single-line mode (end of line terminates SQL command)"
@@ -554,7 +567,7 @@ msgstr "  -S              active le mode ligne par ligne (EOL termine la command
 
 #: help.c:108
 msgid "  -L FILENAME     send session log to file"
-msgstr "  -L NOMFICHIER   envoie les traces dans le fichier"
+msgstr "  -L FICHIER      envoie les traces dans le fichier"
 
 #: help.c:110
 msgid ""
@@ -566,7 +579,9 @@ msgstr ""
 
 #: help.c:111
 msgid "  -A              unaligned table output mode (-P format=unaligned)"
-msgstr "  -A              active le mode d'affichage non aligné des tables (-P format=unaligned)"
+msgstr ""
+"  -A              active le mode d'affichage non aligné des tables\n"
+"                  (-P format=unaligned)"
 
 #: help.c:112
 msgid "  -H              HTML table output mode (-P format=html)"
@@ -578,7 +593,9 @@ msgstr "  -t              affiche seulement les lignes (-P tuples_only)"
 
 #: help.c:114
 msgid "  -T TEXT         set HTML table tag attributes (width, border) (-P tableattr=)"
-msgstr "  -T TEXT         initialise les attributs des balises HTML de tableau (largeur, bordure) (-P tableattr=)"
+msgstr ""
+"  -T TEXTE        initialise les attributs des balises HTML de tableau\n"
+"                  (largeur, bordure) (-P tableattr=)"
 
 #: help.c:115
 msgid "  -x              turn on expanded table output (-P expanded)"
@@ -586,18 +603,22 @@ msgstr "  -x              active l'affichage étendu des tables (-P expanded)"
 
 #: help.c:116
 msgid "  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"
-msgstr "  -P VAR[=ARG]    initialise l'option d'impression VAR à ARG (voir la commande \\pset)"
+msgstr ""
+"  -P VAR[=ARG]    initialise l'option d'impression VAR à ARG (voir la\n"
+"                  commande \\pset)"
 
 #: help.c:117
 #, c-format
 msgid "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
-msgstr "  -F CHAINE       initialise le séparateur de champs (par défaut : « %s ») (-P fieldsep=)\n"
+msgstr ""
+"  -F CHAINE       initialise le séparateur de champs (par défaut : « %s »)\n"
+"                  (-P fieldsep=)\n"
 
 #: help.c:119
 msgid "  -R STRING       set record separator (default: newline) (-P recordsep=)"
 msgstr ""
-"  -R CHAINE       initialise le séparateur d'enregistrements (par défaut : saut\n"
-"                  de ligne) (-P recordsep=)"
+"  -R CHAINE       initialise le séparateur d'enregistrements (par défaut un\n"
+"                  saut de ligne) (-P recordsep=)"
 
 #: help.c:121
 msgid ""
@@ -621,16 +642,22 @@ msgstr "socket locale"
 #: help.c:128
 #, c-format
 msgid "  -p PORT         database server port (default: \"%s\")\n"
-msgstr "  -p PORT         port du serveur de la base de données (par défaut : « %s »)\n"
+msgstr ""
+"  -p PORT         port du serveur de la base de données (par défaut :\n"
+"                  « %s »)\n"
 
 #: help.c:134
 #, c-format
 msgid "  -U NAME         database user name (default: \"%s\")\n"
-msgstr "  -U NOM          nom d'utilisateur de la base de données (par défaut : « %s »)\n"
+msgstr ""
+"  -U NOM          nom d'utilisateur de la base de données (par défaut :\n"
+"                  « %s »)\n"
 
 #: help.c:135
 msgid "  -W              prompt for password (should happen automatically)"
-msgstr "  -W              active la demande du mot de passe (devrait survenir automatiquement)"
+msgstr ""
+"  -W              active la demande du mot de passe (devrait survenir\n"
+"                  automatiquement)"
 
 #: help.c:138
 msgid ""
@@ -642,8 +669,8 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
 "\n"
-"Pour en savoir davantage, tapez « \\? » (pour les commandes internes) ou\n"
-"« \\help » (pour les commandes SQL) dans psql, ou consultez la\n"
+"Pour en savoir davantage, saisissez « \\? » (pour les commandes internes) ou\n"
+"« \\help » (pour les commandes SQL) dans psql, ou encore consultez la\n"
 "section psql de la documentation de PostgreSQL.\n"
 "\n"
 "Rapportez les bogues à <pgsql-bugs@postgresql.org>."
@@ -660,36 +687,39 @@ msgid ""
 "                 connect to new database (currently \"%s\")\n"
 msgstr ""
 "  \\c[onnect] [NOM_BASE|- UTILISATEUR|- HOTE|- PORT|-]\n"
-"                    se connecter à une autre base de données (actuellement « %s »)\n"
+"                           se connecte à une autre base de données\n"
+"                           (actuellement « %s »)\n"
 
 #: help.c:176
 #, c-format
 msgid "  \\cd [DIR]      change the current working directory\n"
-msgstr "  \\cd [REPERTOIRE] changer de répertoire de travail\n"
+msgstr "  \\cd [REPERTOIRE]        change de répertoire de travail\n"
 
 #: help.c:177
 #, c-format
 msgid "  \\copyright     show PostgreSQL usage and distribution terms\n"
-msgstr "  \\copyright       afficher les conditions d'utilisation et de distribution de PostgreSQL\n"
+msgstr ""
+"  \\copyright              affiche les conditions d'utilisation et de\n"
+"                           distribution de PostgreSQL\n"
 
 #: help.c:178
 #, c-format
 msgid ""
 "  \\encoding [ENCODING]\n"
 "                 show or set client encoding\n"
-msgstr ""
-"  \\encoding [ENCODAGE]\n"
-"                    afficher ou initialiser l'encodage du client\n"
+msgstr "  \\encoding [ENCODAGE]    affiche ou initialise l'encodage du client\n"
 
 #: help.c:180
 #, c-format
 msgid "  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
-msgstr "  \\h [NOM]         aide-mémoire pour les commandes SQL, * pour toutes les commandes\n"
+msgstr ""
+"  \\h [NOM]                aide-mémoire pour les commandes SQL,\n"
+"                           * pour toutes les commandes\n"
 
 #: help.c:181
 #, c-format
 msgid "  \\q             quit psql\n"
-msgstr "  \\q               quitter psql\n"
+msgstr "  \\q                      quitte psql\n"
 
 #: help.c:182
 #, c-format
@@ -697,25 +727,25 @@ msgid ""
 "  \\set [NAME [VALUE]]\n"
 "                 set internal variable, or list all if no parameters\n"
 msgstr ""
-"  \\set [NOM [VALEUR]]\n"
-"                    initialiser une variable interne ou les afficher toutes en l'absence de paramètre\n"
+"  \\set [NOM [VALEUR]]     initialise une variable interne ou les affiche\n"
+"                           toutes en l'absence de paramètre\n"
 
 #: help.c:184
 #, c-format
 msgid "  \\timing        toggle timing of commands (currently %s)\n"
-msgstr ""
-"  \\timing          basculer l'activation du chronométrage des commandes\n"
-"                    (actuellement %s)\n"
+msgstr "  \\timing                 bascule l'activation du chronométrage des                           commandes (actuellement %s)\n"
 
 #: help.c:186
 #, c-format
 msgid "  \\unset NAME    unset (delete) internal variable\n"
-msgstr "  \\unset NOM       désactiver (supprimer) la variable interne\n"
+msgstr "  \\unset NOM              désactive (supprime) la variable interne\n"
 
 #: help.c:187
 #, c-format
 msgid "  \\! [COMMAND]   execute command in shell or start interactive shell\n"
-msgstr "  \\! [COMMANDE]    exécuter la commande dans un shell ou lancer un shell interactif\n"
+msgstr ""
+"  \\! [COMMANDE]           exécute la commande dans un shell ou lance un\n"
+"                           shell interactif\n"
 
 #: help.c:190
 #, c-format
@@ -725,34 +755,40 @@ msgstr "Tampon de requête\n"
 #: help.c:191
 #, c-format
 msgid "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
-msgstr "  \\e FICHIER       éditer le tampon de requête ou le fichier avec un éditeur externe\n"
+msgstr ""
+"  \\e [FICHIER]            édite le tampon de requête ou le fichier avec un\n"
+"                           éditeur externe\n"
 
 #: help.c:192
 #, c-format
 msgid "  \\g [FILE]      send query buffer to server (and results to file or |pipe)\n"
 msgstr ""
-"  \\g [FICHIER]     envoyer le tampon de requêtes au serveur (et les résultats au fichier\n"
-"                   ou |tube)\n"
+"  \\g [FICHIER]            envoie le tampon de requêtes au serveur (et les\n"
+"                           résultats au fichier ou |tube)\n"
 
 #: help.c:193
 #, c-format
 msgid "  \\p             show the contents of the query buffer\n"
-msgstr "  \\p               afficher le contenu du tampon de requête\n"
+msgstr "  \\p                      affiche le contenu du tampon de requête\n"
 
 #: help.c:194
 #, c-format
 msgid "  \\r             reset (clear) the query buffer\n"
-msgstr "  \\r               effacer le tampon de requêtes\n"
+msgstr "  \\r                      efface le tampon de requêtes\n"
 
 #: help.c:196
 #, c-format
 msgid "  \\s [FILE]      display history or save it to file\n"
-msgstr "  \\s [FICHIER]     afficher l'historique ou le sauvegarder dans un fichier\n"
+msgstr ""
+"  \\s [FICHIER]            affiche l'historique ou le sauvegarde dans un\n"
+"                           fichier\n"
 
 #: help.c:198
 #, c-format
 msgid "  \\w FILE        write query buffer to file\n"
-msgstr "  \\w [FICHIER]     écrire le contenu du tampon de requêtes dans un fichier\n"
+msgstr ""
+"  \\w [FICHIER]            écrit le contenu du tampon de requêtes dans un\n"
+"                           fichier\n"
 
 #: help.c:201
 #, c-format
@@ -762,17 +798,17 @@ msgstr "Entrée/Sortie\n"
 #: help.c:202
 #, c-format
 msgid "  \\echo [STRING] write string to standard output\n"
-msgstr "  \\echo [TEXTE]    écrire un texte sur la sortie standard\n"
+msgstr "  \\echo [TEXTE]           écrit un texte sur la sortie standard\n"
 
 #: help.c:203
 #, c-format
 msgid "  \\i FILE        execute commands from file\n"
-msgstr "  \\i FICHIER       exécuter les commandes du fichier\n"
+msgstr "  \\i FICHIER              exécute les commandes du fichier\n"
 
 #: help.c:204
 #, c-format
 msgid "  \\o [FILE]      send all query results to file or |pipe\n"
-msgstr "  \\o [FICHIER]     envoyer les résultats de la requête vers un fichier ou un |tube\n"
+msgstr "  \\o [FICHIER]            envoie les résultats de la requête vers un                           fichier ou un |tube\n"
 
 #: help.c:205
 #, c-format
@@ -780,18 +816,20 @@ msgid ""
 "  \\qecho [STRING]\n"
 "                 write string to query output stream (see \\o)\n"
 msgstr ""
-"  \\qecho [TEXTE]   écrire un texte sur la sortie des résultats des requêtes\n"
-"                    (voir \\o)\n"
+"  \\qecho [TEXTE]          écrit un texte sur la sortie des résultats des\n"
+"                           requêtes (voir \\o)\n"
 
 #: help.c:209
 #, c-format
 msgid "Informational\n"
-msgstr "Information\n"
+msgstr "Informations\n"
 
 #: help.c:210
 #, c-format
 msgid "  \\d [NAME]      describe table, index, sequence, or view\n"
-msgstr "  \\d [NOM]         afficher la description de la table, l'index, la séquence ou la vue\n"
+msgstr ""
+"  \\d [NOM]                affiche la description de la table, l'index, la\n"
+"                           séquence ou la vue\n"
 
 #: help.c:211
 #, c-format
@@ -799,92 +837,105 @@ msgid ""
 "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
 "                 list tables/indexes/sequences/views/system tables\n"
 msgstr ""
-"  \\d{t|i|s|v|S} [MODELE] (ajouter « + » pour plus de détails)\n"
-"                    afficher la liste des tables/index/séquences/vues/tables système\n"
+"  \\d{t|i|s|v|S} [MODÈLE]  (ajoutez « + » pour plus de détails)\n"
+"                           affiche la liste des tables, index, séquences,\n"
+"                           vues, tables système\n"
 
 #: help.c:213
 #, c-format
 msgid "  \\da [PATTERN]  list aggregate functions\n"
-msgstr "  \\da [MODELE]     afficher la liste des fonctions d'aggrégation\n"
+msgstr "  \\da [MODÈLE]            affiche la liste des fonctions d'agrégation\n"
 
 #: help.c:214
 #, c-format
 msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
-msgstr "  \\db [MODELE]     afficher la liste des tablespaces (ajouter « + » pour plus de détails)\n"
+msgstr ""
+"  \\db [MODÈLE]            affiche la liste des tablespaces (ajoutez « + »\n"
+"                           pour plus de détails)\n"
 
 #: help.c:215
 #, c-format
 msgid "  \\dc [PATTERN]  list conversions\n"
-msgstr "  \\dc [MODELE]     afficher la liste des conversions\n"
+msgstr "  \\dc [MODÈLE]            affiche la liste des conversions\n"
 
 #: help.c:216
 #, c-format
 msgid "  \\dC            list casts\n"
-msgstr "  \\dC              afficher la liste des transtypages\n"
+msgstr "  \\dC                     affiche la liste des transtypages\n"
 
 #: help.c:217
 #, c-format
 msgid "  \\dd [PATTERN]  show comment for object\n"
-msgstr "  \\dd [MODELE]     afficher les commentaires de l'objet\n"
+msgstr "  \\dd [MODÈLE]            affiche les commentaires de l'objet\n"
 
 #: help.c:218
 #, c-format
 msgid "  \\dD [PATTERN]  list domains\n"
-msgstr "  \\dD [MODELE]     afficher la liste des domaines\n"
+msgstr "  \\dD [MODÈLE]            affiche la liste des domaines\n"
 
 #: help.c:219
 #, c-format
 msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
-msgstr "  \\df [MODELE]     afficher la liste des fonctions (ajouter « + » pour plus de détails)\n"
+msgstr ""
+"  \\df [MODÈLE]            affiche la liste des fonctions (ajoutez « + »\n"
+"                           pour plus de détails)\n"
 
 #: help.c:220
 #, c-format
 msgid "  \\dg [PATTERN]  list groups\n"
-msgstr "  \\dg [MODELE]     afficher la liste des groupes\n"
+msgstr "  \\dg [MODÈLE]            affiche la liste des groupes\n"
 
 #: help.c:221
 #, c-format
 msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
-msgstr "  \\dn [MODELE]     afficher la liste des schémas (ajouter « + » pour plus de détails)\n"
+msgstr ""
+"  \\dn [MODÈLE]            affiche la liste des schémas (ajoutez « + » pour\n"
+"                           plus de détails)\n"
 
 #: help.c:222
 #, c-format
 msgid "  \\do [NAME]     list operators\n"
-msgstr "  \\do [MODELE]     afficher la liste des opérateurs\n"
+msgstr "  \\do [MODÈLE]            affiche la liste des opérateurs\n"
 
 #: help.c:223
 #, c-format
 msgid "  \\dl            list large objects, same as \\lo_list\n"
-msgstr "  \\dl              afficher la liste des objets volumineux, identique à \\lo_list\n"
+msgstr ""
+"  \\dl                     affiche la liste des « Large Objects », identique\n"
+"                           à \\lo_list\n"
 
 #: help.c:224
 #, c-format
 msgid "  \\dp [PATTERN]  list table, view, and sequence access privileges\n"
-msgstr "  \\dp [MODÈLE]     afficher la liste des privilèges d'accès aux tables, vues, séquences\n"
+msgstr ""
+"  \\dp [MODÈLE]            affiche la liste des droits d'accès aux tables,\n"
+"                           vues, séquences\n"
 
 #: help.c:225
 #, c-format
 msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
 msgstr ""
-"  \\dT [MODELE]     afficher la liste des types de données (ajouter « + » \n"
-"                    pour plus de détails)\n"
+"  \\dT [MODÈLE]            affiche la liste des types de données (ajoutez\n"
+"                           « + » pour plus de détails)\n"
 
 #: help.c:226
 #, c-format
 msgid "  \\du [PATTERN]  list users\n"
-msgstr "  \\du [MODELE]     afficher la liste des utilisateurs\n"
+msgstr "  \\du [MODÈLE]            affiche la liste des utilisateurs\n"
 
 #: help.c:227
 #, c-format
 msgid "  \\l             list all databases (add \"+\" for more detail)\n"
-msgstr "  \\l               afficher la liste des bases de données (ajouter « + » pour plus de détails)\n"
+msgstr ""
+"  \\l                      affiche la liste des bases de données (ajoutez\n"
+"                           « + » pour plus de détails)\n"
 
 #: help.c:228
 #, c-format
 msgid "  \\z [PATTERN]   list table, view, and sequence access privileges (same as \\dp)\n"
 msgstr ""
-"  \\z [MODÈLE]      afficher la liste des privilèges d'accès aux tables, vues et\n"
-"                    séquences (identique à \\dp)\n"
+"  \\z [MODÈLE]             affiche la liste des droits d'accès aux tables,\n"
+"                           vues et séquences (identique à \\dp)\n"
 
 #: help.c:231
 #, c-format
@@ -894,24 +945,28 @@ msgstr "Formatage\n"
 #: help.c:232
 #, c-format
 msgid "  \\a             toggle between unaligned and aligned output mode\n"
-msgstr "  \\a               basculer entre les modes de sortie alignée et non alignée\n"
+msgstr ""
+"  \\a                      bascule entre les modes de sortie alignée et non\n"
+"                           alignée\n"
 
 #: help.c:233
 #, c-format
 msgid "  \\C [STRING]    set table title, or unset if none\n"
-msgstr "  \\C [CHAINE]      initialiser le titre d'une table, ou le désactiver en l'absence d'argument\n"
+msgstr ""
+"  \\C [CHAINE]             initialise le titre d'une table, ou le désactive\n"
+"                           en l'absence d'argument\n"
 
 #: help.c:234
 #, c-format
 msgid "  \\f [STRING]    show or set field separator for unaligned query output\n"
 msgstr ""
-"  \\f [CHAINE]      afficher ou initialiser le séparateur de champ pour une sortie non\n"
-"                    alignée des requêtes\n"
+"  \\f [CHAINE]             affiche ou initialise le séparateur de champ pour\n"
+"                           une sortie non alignée des requêtes\n"
 
 #: help.c:235
 #, c-format
 msgid "  \\H             toggle HTML output mode (currently %s)\n"
-msgstr "  \\H               basculer le mode de sortie HTML (actuellement %s)\n"
+msgstr "  \\H                      bascule le mode de sortie HTML (actuellement %s)\n"
 
 #: help.c:237
 #, c-format
@@ -921,35 +976,38 @@ msgid ""
 "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
 "                 numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"
 msgstr ""
-"  \\pset NOM [VALEUR]\n"
-"                    rêgler l'affichage de la table\n"
-"                    (NOM := {format|border|expanded|fieldsep|footer|null|\n"
-"                    numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"
+"  \\pset NOM [VALEUR]      régler l'affichage de la table\n"
+"         (NOM := {format|border|expanded|fieldsep|footer|null|\n"
+"         numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"
 
 #: help.c:241
 #, c-format
 msgid "  \\t             show only rows (currently %s)\n"
-msgstr "  \\t               afficher uniquement les lignes (actuellement %s)\n"
+msgstr "  \\t                      affiche uniquement les lignes (actuellement %s)\n"
 
 #: help.c:243
 #, c-format
 msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
-msgstr "  \\T [CHAINE]      initialiser les attributs HTML de la balise <table>, ou l'annuler en l'absence d'argument\n"
+msgstr ""
+"  \\T [CHAINE]             initialise les attributs HTML de la balise\n"
+"                           <table>, ou l'annule en l'absence d'argument\n"
 
 #: help.c:244
 #, c-format
 msgid "  \\x             toggle expanded output (currently %s)\n"
-msgstr "  \\x               basculer l'affichage étendu (actuellement %s)\n"
+msgstr "  \\x                      bascule l'affichage étendu (actuellement %s)\n"
 
 #: help.c:248
 #, c-format
 msgid "Copy, Large Object\n"
-msgstr "Copie, objets volumineux\n"
+msgstr "Copie, « Large Objects »\n"
 
 #: help.c:249
 #, c-format
 msgid "  \\copy ...      perform SQL COPY with data stream to the client host\n"
-msgstr "  \\copy ...        exécuter SQL COPY avec le flux de données dirigé vers l'hôte client\n"
+msgstr ""
+"  \\copy ...               exécute SQL COPY avec le flux de données dirigé\n"
+"                           vers l'hôte client\n"
 
 #: help.c:250
 #, c-format
@@ -963,7 +1021,7 @@ msgstr ""
 "  \\lo_import FICHIER [COMMENTAIRE]\n"
 "  \\lo_list\n"
 "  \\lo_unlink OIDLOB\n"
-"                    opérations sur les objets volumineux\n"
+"                           opérations sur les « Large Objects »\n"
 
 #: help.c:283
 msgid "Available help:\n"
@@ -1026,15 +1084,15 @@ msgstr "%s : état de la transaction inconnu\n"
 #: describe.c:397
 #: describe.c:499
 #: describe.c:798
-#: describe.c:1459
-#: describe.c:1535
-#: describe.c:1778
+#: describe.c:1466
+#: describe.c:1542
+#: describe.c:1785
 msgid "Description"
 msgstr "Description"
 
 #: large_obj.c:260
 msgid "Large objects"
-msgstr "Objets volumineux"
+msgstr "« Large Objects »"
 
 #: mainloop.c:150
 #, c-format
@@ -1079,7 +1137,7 @@ msgstr "Mot de passe pour l'utilisateur %s : "
 #: startup.c:252
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
-msgstr "%s : n'a pas pu ouvrir le journal des traces « %s » : %s\n"
+msgstr "%s : n'a pas pu ouvrir le journal applicatif « %s » : %s\n"
 
 #: startup.c:333
 #, c-format
@@ -1124,8 +1182,10 @@ msgid ""
 "such as \\d, might not work properly.\n"
 "\n"
 msgstr ""
-"ATTENTION : vous êtes connecté sur un serveur dont la version majeure est %d.%d\n"
-"alors que votre client %s est en version majeure %d.%d. Certaines commandes avec antislashs, comme \\d, peuvent ne pas fonctionner correctement.\n"
+"ATTENTION : vous êtes connecté sur un serveur dont la version majeure est\n"
+"%d.%d alors que votre client %s est en version majeure %d.%d. Certaines\n"
+"commandes avec antislashs, comme \\d, peuvent ne pas fonctionner\n"
+"correctement.\n"
 "\n"
 
 #: startup.c:530
@@ -1152,12 +1212,12 @@ msgstr "Essayez l'option « %s --help » pour plus d'informations.\n"
 #: startup.c:643
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
-msgstr "%s : Attention : option supplémentaire « %s » ignorée\n"
+msgstr "%s : attention : option supplémentaire « %s » ignorée\n"
 
 #: startup.c:650
 #, c-format
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
-msgstr "%s : Attention : l'option -u est obsolète. Utilisez -U.\n"
+msgstr "%s : attention : l'option -u est obsolète. Utilisez -U.\n"
 
 #: startup.c:712
 msgid "contains support for command-line editing"
@@ -1181,8 +1241,9 @@ msgid ""
 "\n"
 msgstr ""
 "Attention : l'encodage console (%u) diffère de l'encodage Windows (%u).\n"
-"            Les caractères 8 bits peuvent ne pas fonctionner correctement. Voir la page\n"
-"            référence de psql « Notes aux utilisateurs de Windows » pour les détails.\n"
+"            Les caractères 8 bits peuvent ne pas fonctionner correctement.\n"
+"            Voir la page référence de psql, section « Notes aux utilisateurs\n"
+"            de Windows » pour les détails.\n"
 "\n"
 
 #: describe.c:79
@@ -1191,9 +1252,9 @@ msgstr ""
 #: describe.c:344
 #: describe.c:445
 #: describe.c:499
-#: describe.c:1523
-#: describe.c:1629
-#: describe.c:1678
+#: describe.c:1530
+#: describe.c:1636
+#: describe.c:1685
 msgid "Schema"
 msgstr "Schéma"
 
@@ -1205,10 +1266,10 @@ msgstr "Schéma"
 #: describe.c:386
 #: describe.c:445
 #: describe.c:499
-#: describe.c:1523
-#: describe.c:1630
-#: describe.c:1679
-#: describe.c:1772
+#: describe.c:1530
+#: describe.c:1637
+#: describe.c:1686
+#: describe.c:1779
 msgid "Name"
 msgstr "Nom"
 
@@ -1229,8 +1290,8 @@ msgstr "Cette version du serveur (%d) ne supporte pas les tablespaces.\n"
 #: describe.c:125
 #: describe.c:211
 #: describe.c:386
-#: describe.c:1525
-#: describe.c:1772
+#: describe.c:1532
+#: describe.c:1779
 msgid "Owner"
 msgstr "Propriétaire"
 
@@ -1240,9 +1301,9 @@ msgstr "Emplacement"
 
 #: describe.c:131
 #: describe.c:445
-#: describe.c:1778
+#: describe.c:1785
 msgid "Access privileges"
-msgstr "Privilèges d'accès"
+msgstr "Droits d'accès"
 
 #: describe.c:148
 msgid "List of tablespaces"
@@ -1254,7 +1315,7 @@ msgstr "Type de données du résultat"
 
 #: describe.c:211
 msgid "Language"
-msgstr "Langue"
+msgstr "Langage"
 
 #: describe.c:212
 msgid "Source code"
@@ -1306,33 +1367,33 @@ msgstr "Liste des bases de données"
 
 #: describe.c:445
 #: describe.c:575
-#: describe.c:1524
+#: describe.c:1531
 msgid "table"
 msgstr "table"
 
 #: describe.c:445
 #: describe.c:575
-#: describe.c:1524
+#: describe.c:1531
 msgid "view"
 msgstr "vue"
 
 #: describe.c:445
 #: describe.c:575
-#: describe.c:1524
+#: describe.c:1531
 msgid "sequence"
 msgstr "séquence"
 
 #: describe.c:445
 #: describe.c:785
-#: describe.c:1525
-#: describe.c:1631
+#: describe.c:1532
+#: describe.c:1638
 msgid "Type"
 msgstr "Type"
 
 #: describe.c:467
 #, c-format
 msgid "Access privileges for database \"%s\""
-msgstr "Privilèges d'accès pour la base de données « %s »"
+msgstr "Droits d'accès pour la base de données « %s »"
 
 #: describe.c:499
 msgid "Object"
@@ -1355,7 +1416,7 @@ msgid "data type"
 msgstr "type de données"
 
 #: describe.c:575
-#: describe.c:1524
+#: describe.c:1531
 msgid "index"
 msgstr "index"
 
@@ -1465,184 +1526,184 @@ msgstr ""
 "%s"
 
 #: describe.c:1029
-#: describe.c:1270
+#: describe.c:1277
 msgid "Rules:"
 msgstr "Règles :"
 
-#: describe.c:1184
+#: describe.c:1191
 msgid "Indexes:"
 msgstr "Index :"
 
-#: describe.c:1193
+#: describe.c:1200
 #, c-format
 msgid "    \"%s\""
 msgstr "    « %s »"
 
-#: describe.c:1240
+#: describe.c:1247
 msgid "Check constraints:"
 msgstr "Contraintes de vérification :"
 
-#: describe.c:1244
-#: describe.c:1259
+#: describe.c:1251
+#: describe.c:1266
 #, c-format
 msgid "    \"%s\" %s"
 msgstr "    « %s » %s"
 
-#: describe.c:1255
+#: describe.c:1262
 msgid "Foreign-key constraints:"
-msgstr "Contraintes de clés étrangères :"
+msgstr "Clés étrangères :"
 
-#: describe.c:1289
+#: describe.c:1296
 msgid "Triggers:"
 msgstr "Triggers :"
 
-#: describe.c:1311
+#: describe.c:1318
 msgid "Inherits"
 msgstr "Hérite de"
 
-#: describe.c:1325
+#: describe.c:1332
 msgid "Has OIDs"
 msgstr "Contient des OID"
 
-#: describe.c:1328
-#: describe.c:1451
-#: describe.c:1452
-#: describe.c:1453
-#: describe.c:1682
-#: describe.c:1739
+#: describe.c:1335
+#: describe.c:1458
+#: describe.c:1459
+#: describe.c:1460
+#: describe.c:1689
+#: describe.c:1746
 msgid "yes"
 msgstr "oui"
 
-#: describe.c:1328
-#: describe.c:1451
-#: describe.c:1452
-#: describe.c:1453
-#: describe.c:1683
-#: describe.c:1737
+#: describe.c:1335
+#: describe.c:1458
+#: describe.c:1459
+#: describe.c:1460
+#: describe.c:1690
+#: describe.c:1744
 msgid "no"
 msgstr "non"
 
-#: describe.c:1413
+#: describe.c:1420
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "Tablespace « %s »"
 
-#: describe.c:1413
+#: describe.c:1420
 #, c-format
 msgid "tablespace \"%s\""
 msgstr "tablespace « %s »"
 
-#: describe.c:1450
+#: describe.c:1457
 msgid "Role name"
 msgstr "Nom du rôle"
 
-#: describe.c:1451
+#: describe.c:1458
 msgid "Superuser"
-msgstr "Superutilisateur"
+msgstr "Super-utilisateur"
 
-#: describe.c:1452
+#: describe.c:1459
 msgid "Create role"
 msgstr "Créer un rôle"
 
-#: describe.c:1453
+#: describe.c:1460
 msgid "Create DB"
 msgstr "Créer une base"
 
-#: describe.c:1454
+#: describe.c:1461
 msgid "no limit"
 msgstr "sans limite"
 
-#: describe.c:1454
+#: describe.c:1461
 msgid "Connections"
 msgstr "Connexions"
 
-#: describe.c:1455
+#: describe.c:1462
 msgid "Member of"
 msgstr "Membre de"
 
-#: describe.c:1474
+#: describe.c:1481
 msgid "List of roles"
 msgstr "Liste des rôles"
 
-#: describe.c:1525
+#: describe.c:1532
 msgid "special"
 msgstr "spécial"
 
-#: describe.c:1530
+#: describe.c:1537
 msgid "Table"
 msgstr "Table"
 
-#: describe.c:1584
+#: describe.c:1591
 #, c-format
 msgid "No matching relations found.\n"
 msgstr "Aucune relation correspondante trouvée.\n"
 
-#: describe.c:1586
+#: describe.c:1593
 #, c-format
 msgid "No relations found.\n"
 msgstr "Aucune relation trouvée.\n"
 
-#: describe.c:1591
+#: describe.c:1598
 msgid "List of relations"
 msgstr "Liste des relations"
 
-#: describe.c:1632
+#: describe.c:1639
 msgid "Modifier"
 msgstr "Modificateur"
 
-#: describe.c:1633
+#: describe.c:1640
 msgid "Check"
 msgstr "Vérification"
 
-#: describe.c:1647
+#: describe.c:1654
 msgid "List of domains"
 msgstr "Liste des domaines"
 
-#: describe.c:1680
+#: describe.c:1687
 msgid "Source"
 msgstr "Source"
 
-#: describe.c:1681
+#: describe.c:1688
 msgid "Destination"
 msgstr "Destination"
 
-#: describe.c:1684
+#: describe.c:1691
 msgid "Default?"
 msgstr "Par défaut ?"
 
-#: describe.c:1698
+#: describe.c:1705
 msgid "List of conversions"
 msgstr "Liste des conversions"
 
-#: describe.c:1733
+#: describe.c:1740
 msgid "Source type"
 msgstr "Type source"
 
-#: describe.c:1734
+#: describe.c:1741
 msgid "Target type"
 msgstr "Type cible"
 
-#: describe.c:1735
+#: describe.c:1742
 msgid "(binary compatible)"
 msgstr "(compatible au niveau binaire)"
 
-#: describe.c:1736
+#: describe.c:1743
 msgid "Function"
 msgstr "Fonction"
 
-#: describe.c:1738
+#: describe.c:1745
 msgid "in assignment"
 msgstr "assigné"
 
-#: describe.c:1740
+#: describe.c:1747
 msgid "Implicit?"
 msgstr "Implicite ?"
 
-#: describe.c:1748
+#: describe.c:1755
 msgid "List of casts"
 msgstr "Liste des conversions explicites"
 
-#: describe.c:1798
+#: describe.c:1805
 msgid "List of schemas"
 msgstr "Liste des schémas"
 
@@ -1783,7 +1844,7 @@ msgstr ""
 
 #: sql_help.h:49
 msgid "change role name or membership"
-msgstr "modifier le nom d'un groupe ou la liste des ses membres"
+msgstr "modifier le nom d'un groupe ou la liste de ses membres"
 
 #: sql_help.h:50
 msgid ""
@@ -1815,7 +1876,7 @@ msgstr ""
 
 #: sql_help.h:57
 msgid "change the definition of a procedural language"
-msgstr "modifier la définition d'un langage procédural"
+msgstr "modifier la définition d'un langage de procédures"
 
 #: sql_help.h:58
 msgid "ALTER LANGUAGE name RENAME TO newname"
@@ -1830,8 +1891,10 @@ msgid ""
 "ALTER OPERATOR CLASS name USING index_method RENAME TO newname\n"
 "ALTER OPERATOR CLASS name USING index_method OWNER TO newowner"
 msgstr ""
-"ALTER OPERATOR CLASS nom USING méthode_indexation RENAME TO nouveau_nom\n"
-"ALTER OPERATOR CLASS nom USING méthode_indexation OWNER TO nouveau_propriétaire"
+"ALTER OPERATOR CLASS nom USING méthode_indexation\n"
+"  RENAME TO nouveau_nom\n"
+"ALTER OPERATOR CLASS nom USING méthode_indexation\n"
+"  OWNER TO nouveau_propriétaire"
 
 #: sql_help.h:65
 msgid "change the definition of an operator"
@@ -1839,7 +1902,9 @@ msgstr "modifier la définition d'un opérateur"
 
 #: sql_help.h:66
 msgid "ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO newowner"
-msgstr "ALTER OPERATOR nom ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO nouveau_propriétaire"
+msgstr ""
+"ALTER OPERATOR nom ( { lefttype | NONE } , { righttype | NONE } )\n"
+"  OWNER TO nouveau_propriétaire"
 
 #: sql_help.h:69
 #: sql_help.h:97
@@ -1911,7 +1976,8 @@ msgid ""
 "ALTER SEQUENCE name SET SCHEMA new_schema"
 msgstr ""
 "ALTER SEQUENCE nom [ INCREMENT [ BY ] incrément ]\n"
-"    [ MINVALUE valeur_min | NO MINVALUE ] [ MAXVALUE valeur_max | NO MAXVALUE ]\n"
+"    [ MINVALUE valeur_min | NO MINVALUE ]\n"
+"    [ MAXVALUE valeur_max | NO MAXVALUE ]\n"
 "    [ RESTART [ WITH ] début ] [ CACHE cache ] [ [ NO ] CYCLE ]\n"
 "    [ OWNED BY { table.colonne | NONE } ]\n"
 "ALTER SEQUENCE nom SET SCHEMA nouveau_schéma"
@@ -2086,7 +2152,8 @@ msgstr ""
 "\n"
 "où transaction_mode peut être :\n"
 "\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED\n"
+"                      | READ UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 
 #: sql_help.h:109
@@ -2188,7 +2255,7 @@ msgstr "COMMIT [ WORK | TRANSACTION ]"
 
 #: sql_help.h:129
 msgid "commit a transaction that was earlier prepared for two-phase commit"
-msgstr "valider une transaction précédemment préparée pour une validation en deux phases"
+msgstr "valider une transaction déjà préparée pour une validation en deux phases"
 
 #: sql_help.h:130
 msgid "COMMIT PREPARED transaction_id"
@@ -2318,7 +2385,7 @@ msgstr ""
 
 #: sql_help.h:145
 msgid "define a new constraint trigger"
-msgstr "définir une nouvelle contrainte de déclenchement"
+msgstr "définir une nouvelle contrainte trigger"
 
 #: sql_help.h:146
 msgid ""
@@ -2334,7 +2401,8 @@ msgstr ""
 "    AFTER événement [ OR ... ]\n"
 "    ON table\n"
 "    [ FROM table_référencée ]\n"
-"    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }\n"
+"    { NOT DEFERRABLE |\n"
+"      [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }\n"
 "    FOR EACH ROW\n"
 "    EXECUTE PROCEDURE nom_fonction ( arguments )"
 
@@ -2490,7 +2558,7 @@ msgstr ""
 
 #: sql_help.h:173
 msgid "define a new procedural language"
-msgstr "définir un nouveau langage procédural"
+msgstr "définir un nouveau langage de procédures"
 
 #: sql_help.h:174
 msgid ""
@@ -2514,8 +2582,10 @@ msgid ""
 "   | STORAGE storage_type\n"
 "  } [, ... ]"
 msgstr ""
-"CREATE OPERATOR CLASS nom [ DEFAULT ] FOR TYPE type_données USING méthode_indexation AS\n"
-"  {  OPERATOR numéro_stratégie nom_opérateur [ ( type_op, type_op ) ] [ RECHECK ]\n"
+"CREATE OPERATOR CLASS nom [ DEFAULT ] FOR TYPE type_données\n"
+"  USING méthode_indexation AS\n"
+"  {  OPERATOR numéro_stratégie nom_opérateur [ ( type_op, type_op ) ]\n"
+"     [ RECHECK ]\n"
 "   | FUNCTION numéro_support nom_fonction ( type_argument [, ...] )\n"
 "   | STORAGE type_stockage\n"
 "  } [, ... ]"
@@ -2600,7 +2670,8 @@ msgid ""
 msgstr ""
 "CREATE [ OR REPLACE ] RULE nom AS ON événement\n"
 "    TO table [ WHERE condition ]\n"
-"    DO [ ALSO | INSTEAD ] { NOTHING | commande | ( commande ; commande ... ) }"
+"    DO [ ALSO | INSTEAD ]\n"
+"    { NOTHING | commande | ( commande ; commande ... ) }"
 
 #: sql_help.h:193
 msgid "define a new schema"
@@ -2611,8 +2682,10 @@ msgid ""
 "CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element [ ... ] ]\n"
 "CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
 msgstr ""
-"CREATE SCHEMA nom_schema [ AUTHORIZATION nom_utilisateur ] [ element_schema [ ... ] ]\n"
-"CREATE SCHEMA AUTHORIZATION nom_utilisateur [ element_schema [ ... ] ]"
+"CREATE SCHEMA nom_schema\n"
+"  [ AUTHORIZATION nom_utilisateur ]\n"
+"  [ élément_schéma [ ... ] ]\n"
+"CREATE SCHEMA AUTHORIZATION nom_utilisateur [ élément_schéma [ ... ] ]"
 
 #: sql_help.h:197
 msgid "define a new sequence generator"
@@ -2625,8 +2698,10 @@ msgid ""
 "    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]\n"
 "    [ OWNED BY { table.column | NONE } ]"
 msgstr ""
-"CREATE [ TEMPORARY | TEMP ] SEQUENCE nom [ INCREMENT [ BY ] incrémentation ]\n"
-"    [ MINVALUE valeur_mini | NO MINVALUE ] [ MAXVALUE valeur_maxi | NO MAXVALUE ]\n"
+"CREATE [ TEMPORARY | TEMP ] SEQUENCE nom\n"
+"    [ INCREMENT [ BY ] incrémentation ]\n"
+"    [ MINVALUE valeur_mini | NO MINVALUE ]\n"
+"    [ MAXVALUE valeur_maxi | NO MAXVALUE ]\n"
 "    [ START [ WITH ] valeur_départ ] [ CACHE en_cache ] [ [ NO ] CYCLE ]\n"
 "    [ OWNED BY { table.colonne | NONE } ]"
 
@@ -2675,13 +2750,16 @@ msgid ""
 "[ USING INDEX TABLESPACE tablespace ]"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nom_table ( [\n"
-"  { nom_colonne type_données [ DEFAULT expr_par_défaut ] [ contrainte_colonne [ ... ] ]\n"
+"  { nom_colonne type_données [ DEFAULT expr_par_défaut ]\n"
+"    [ contrainte_colonne [ ... ] ]\n"
 "    | contrainte_table\n"
-"    | LIKE table_parent [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS } ] ... }\n"
+"    | LIKE table_parent\n"
+"      [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS } ] ... }\n"
 "    [, ... ]\n"
 "] )\n"
 "[ INHERITS ( table_parent [, ... ] ) ]\n"
-"[ WITH ( paramètre_stockage [= valeur] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]\n"
+"[ WITH ( paramètre_stockage [= valeur] [, ... ] )\n"
+"  | WITH OIDS | WITHOUT OIDS ]\n"
 "[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
 "[ TABLESPACE tablespace ]\n"
 "\n"
@@ -2693,7 +2771,8 @@ msgstr ""
 "  UNIQUE paramètres_index |\n"
 "  PRIMARY KEY paramètres_index |\n"
 "  CHECK (expression) |\n"
-"  REFERENCES table_référée [ ( colonne_referrée ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"  REFERENCES table_référée [ ( colonne_referrée ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
 "    [ ON DELETE action ] [ ON UPDATE action ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
 "\n"
@@ -2703,8 +2782,10 @@ msgstr ""
 "{ UNIQUE ( nom_colonne [, ... ] ) paramètres_index |\n"
 "  PRIMARY KEY ( nom_colonne [, ... ] ) paramètres_index |\n"
 "  CHECK ( expression ) |\n"
-"  FOREIGN KEY ( nom_colonne [, ... ] ) REFERENCES table_référée [ ( colonne_référée [, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON UPDATE action ] }\n"
+"  FOREIGN KEY ( nom_colonne [, ... ] ) REFERENCES table_référée\n"
+"    [ ( colonne_référée [, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"    [ ON DELETE action ] [ ON UPDATE action ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
 "\n"
 " les paramètres_index dans les contraintes UNIQUE et PRIMARY KEY sont :\n"
@@ -2728,7 +2809,8 @@ msgid ""
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nom_table\n"
 "    [ (nom_colonne [, ...] ) ]\n"
-"    [ WITH ( paramètre_stockage [= valeur] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]\n"
+"    [ WITH ( paramètre_stockage [= valeur] [, ... ] )\n"
+"      | WITH OIDS | WITHOUT OIDS ]\n"
 "    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
 "    [ TABLESPACE tablespace ]\n"
 "    AS requête"
@@ -2739,7 +2821,9 @@ msgstr "définir un nouveau tablespace"
 
 #: sql_help.h:210
 msgid "CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
-msgstr "CREATE TABLESPACE nom_espacelogique [ OWNER nom_utilisateur ] LOCATION 'répertoire'"
+msgstr ""
+"CREATE TABLESPACE nom_tablespace [ OWNER nom_utilisateur ]\n"
+"    LOCATION 'répertoire'"
 
 #: sql_help.h:213
 msgid "define a new trigger"
@@ -2790,7 +2874,7 @@ msgstr ""
 "    [ , RECEIVE = fonction_réception ]\n"
 "    [ , SEND = fonction_émission ]\n"
 "    [ , ANALYZE = fonction_analyze ]\n"
-"    [ , INTERNALLENGTH = { longueur_intervalle | VARIABLE } ]\n"
+"    [ , INTERNALLENGTH = { longueur_interne | VARIABLE } ]\n"
 "    [ , PASSEDBYVALUE ]\n"
 "    [ , ALIGNMENT = alignement ]\n"
 "    [ , STORAGE = stockage ]\n"
@@ -2852,7 +2936,8 @@ msgid ""
 "CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW name [ ( column_name [, ...] ) ]\n"
 "    AS query"
 msgstr ""
-"CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW nom [ ( nom_colonne [, ...] ) ]\n"
+"CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW nom\n"
+"    [ ( nom_colonne [, ...] ) ]\n"
 "    AS requête"
 
 #: sql_help.h:229
@@ -2942,7 +3027,8 @@ msgid ""
 "DROP FUNCTION [ IF EXISTS ] name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
 "    [ CASCADE | RESTRICT ]"
 msgstr ""
-"DROP FUNCTION [IF EXISTS ] nom ( [ [ mode_arg ] [ nom_arg ] type_arg [, ...] ] )\n"
+"DROP FUNCTION [IF EXISTS ] nom\n"
+"    ( [ [ mode_arg ] [ nom_arg ] type_arg [, ...] ] )\n"
 "    [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:265
@@ -2965,7 +3051,7 @@ msgstr "DROP INDEX [IF EXISTS ] nom [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:273
 msgid "remove a procedural language"
-msgstr "supprimer un langage procédural"
+msgstr "supprimer un langage de procédures"
 
 #: sql_help.h:274
 msgid "DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
@@ -2977,7 +3063,10 @@ msgstr "supprimer une classe d'opérateur"
 
 #: sql_help.h:278
 msgid "DROP OPERATOR CLASS [ IF EXISTS ] name USING index_method [ CASCADE | RESTRICT ]"
-msgstr "DROP OPERATOR CLASS [IF EXISTS ] nom USING méthode_indexage [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP OPERATOR CLASS [IF EXISTS ] nom\n"
+"    USING méthode_indexage\n"
+"    [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:281
 msgid "remove an operator"
@@ -2985,7 +3074,10 @@ msgstr "supprimer un opérateur"
 
 #: sql_help.h:282
 msgid "DROP OPERATOR [ IF EXISTS ] name ( { lefttype | NONE } , { righttype | NONE } ) [ CASCADE | RESTRICT ]"
-msgstr "DROP OPERATOR [IF EXISTS ] nom ( { type_gauche | NONE } , { type_droit | NONE } ) [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP OPERATOR [IF EXISTS ] nom\n"
+"    ( { type_gauche | NONE } , { type_droit | NONE } )\n"
+"    [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:285
 msgid "remove database objects owned by a database role"
@@ -3133,7 +3225,7 @@ msgstr ""
 
 #: sql_help.h:345
 msgid "define access privileges"
-msgstr "définir des privilèges d'accès"
+msgstr "définir des droits d'accès"
 
 #: sql_help.h:346
 msgid ""
@@ -3172,32 +3264,40 @@ msgstr ""
 "GRANT { { SELECT | INSERT | UPDATE | DELETE | REFERENCES | TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON [ TABLE ] nom_table [, ...]\n"
-"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...]\n"
+"    [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { { USAGE | SELECT | UPDATE }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON SEQUENCE nom_séquence [, ...]\n"
-"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...]\n"
+"    [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON DATABASE nom_base [, ...]\n"
-"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...]\n"
+"    [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION nom_fonction ( [ [ mode_arg ] [ nom_arg ] type_arg [, ...] ] ) [, ...]\n"
-"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    ON FUNCTION nom_fonction\n"
+"    ( [ [ mode_arg ] [ nom_arg ] type_arg [, ...] ] ) [, ...]\n"
+"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...]\n"
+"    [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
 "    ON LANGUAGE nom_langage [, ...]\n"
-"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...]\n"
+"    [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON SCHEMA nom_schéma [, ...]\n"
-"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...]\n"
+"    [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
 "    ON TABLESPACE nom_tablespace [, ...]\n"
-"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...]\n"
+"    [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT role [, ...] TO nom_utilisateur [, ...] [ WITH ADMIN OPTION ]"
 
@@ -3212,7 +3312,8 @@ msgid ""
 "    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 msgstr ""
 "INSERT INTO table [ ( colonne [, ...] ) ]\n"
-"    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | requête }\n"
+"    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...]\n"
+"      | requête }\n"
 "    [ RETURNING * | expression_sortie [ AS nom_sortie ] [, ...] ]"
 
 #: sql_help.h:353
@@ -3257,7 +3358,7 @@ msgstr "positionner un curseur"
 
 #: sql_help.h:366
 msgid "MOVE [ direction { FROM | IN } ] cursorname"
-msgstr "MOVE [ direction { FROM | IN } ] nom_de_curseur"
+msgstr "MOVE [ direction { FROM | IN } ] nom_curseur"
 
 #: sql_help.h:369
 msgid "generate a notification"
@@ -3321,7 +3422,7 @@ msgstr ""
 
 #: sql_help.h:397
 msgid "remove access privileges"
-msgstr "supprimer des privilèges d'accès"
+msgstr "supprimer des droits d'accès"
 
 #: sql_help.h:398
 msgid ""
@@ -3395,7 +3496,8 @@ msgstr ""
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION nom_fonction ( [ [ mode_arg ] [ nom_arg ] type_arg [, ...] ] ) [, ...]\n"
+"    ON FUNCTION nom_fonction\n"
+"      ( [ [ mode_arg ] [ nom_arg ] type_arg [, ...] ] ) [, ...]\n"
 "    FROM { nom_utilisateur | GROUP nom_groupe | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
@@ -3427,7 +3529,7 @@ msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
 #: sql_help.h:405
 msgid "cancel a transaction that was earlier prepared for two-phase commit"
-msgstr "annuler une transaction précédemment préparée pour une validation en deux phases"
+msgstr "annuler une transaction déjà préparée pour une validation en deux phases"
 
 #: sql_help.h:406
 msgid "ROLLBACK PREPARED transaction_id"
@@ -3491,7 +3593,8 @@ msgstr ""
 "\n"
 "    [ ONLY ] nom_table [ * ] [ [ AS ] alias [ ( alias_colonne [, ...] ) ] ]\n"
 "    ( select ) [ AS ] alias [ ( alias_colonne [, ...] ) ]\n"
-"    nom_fonction ( [ argument [, ...] ] ) [ AS ] alias [ ( alias_colonne [, ...] | définition_colonne [, ...] ) ]\n"
+"    nom_fonction ( [ argument [, ...] ] )\n"
+"        [ AS ] alias [ ( alias_colonne [, ...] | définition_colonne [, ...] ) ]\n"
 "    nom_fonction ( [ argument [, ...] ] ) AS ( définition_colonne [, ...] )\n"
 "    élément_from [ NATURAL ] type_jointure élément_from [ ON condition_jointure | USING ( colonne_jointure [, ...] ) ]"
 
@@ -3590,7 +3693,8 @@ msgstr ""
 "\n"
 "où mode_transaction peut être :\n"
 "\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ |\n"
+"                      READ COMMITTED | READ UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 
 #: sql_help.h:445
@@ -3618,7 +3722,8 @@ msgstr ""
 "\n"
 "où mode_transaction peut être :\n"
 "\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ |\n"
+"                      READ COMMITTED | READ UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 
 #: sql_help.h:453

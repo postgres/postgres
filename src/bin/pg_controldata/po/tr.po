@@ -4,9 +4,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata-tr\n"
-"POT-Creation-Date: 2004-10-18 07:08+0100\n"
-"PO-Revision-Date: 2007-04-05 12:51+0200\n"
-"Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-01-30 13:14-0400\n"
+"PO-Revision-Date: 2008-01-30 11:33-0800\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -147,119 +148,132 @@ msgstr "pg_control son düzenlenme tarihi:             %s\n"
 
 #: pg_controldata.c:162
 #, c-format
+msgid "Current log file ID:                  %u\n"
+msgstr "Şu andaki kayıt dosyası ID'si:                  %u\n"
+
+#: pg_controldata.c:164
+#, c-format
+msgid "Next log file segment:                %u\n"
+msgstr "Sonraki kayıt dosyası kesimi:                %u\n"
+
+#: pg_controldata.c:166
+#, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "En son checkpoint yeri:           %X/%X\n"
 
-#: pg_controldata.c:165
+#: pg_controldata.c:169
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "Önceki checkpoint yeri:            %X/%X\n"
 
-#: pg_controldata.c:168
+#: pg_controldata.c:172
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "En son checkpoint'in REDO yeri:    %X/%X\n"
 
-#: pg_controldata.c:171
+#: pg_controldata.c:175
+#, c-format
+msgid "Latest checkpoint's UNDO location:    %X/%X\n"
+msgstr "En son checkpoint'in UNDO yeri:    %X/%X\n"
+
+#: pg_controldata.c:178
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "En son checkpoint'in TimeLineID'si:       %u\n"
 
-#: pg_controldata.c:173
+#: pg_controldata.c:180
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
 msgstr "En son checkpoint'in NextXID'si:          %u/%u\n"
 
-#: pg_controldata.c:176
+#: pg_controldata.c:183
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "En son checkpoint'in NextOID'si:          %u\n"
 
-#: pg_controldata.c:178
+#: pg_controldata.c:185
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "En son checkpoint'in NextMultiXactId'si:          %u\n"
 
-#: pg_controldata.c:180
+#: pg_controldata.c:187
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "En son checkpoint'in NextMultiOffset'i:  %u\n"
 
-#: pg_controldata.c:182
+#: pg_controldata.c:189
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "En son checkpoint'in zamanı:            %s\n"
 
-#: pg_controldata.c:184
+#: pg_controldata.c:191
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "Minimum kurtarma sonlandırma yeri:     %X/%X\n"
 
-#: pg_controldata.c:187
+#: pg_controldata.c:194
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Azami veri hizalama:                %u\n"
 
-#: pg_controldata.c:190
+#: pg_controldata.c:197
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Veritabanı blok boyutu:                  %u\n"
 
-#: pg_controldata.c:192
+#: pg_controldata.c:199
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Büyük ilişkilerin parçası başına blok sayısı: %u\n"
 
-#: pg_controldata.c:194
+#: pg_controldata.c:201
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "WAL blok boyutu:                  %u\n"
 
-#: pg_controldata.c:196
+#: pg_controldata.c:203
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Her bir WAL parçası başına byte sayısı:                %u\n"
 
-#: pg_controldata.c:198
+#: pg_controldata.c:205
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Belirteçlerin en fazla uzunluğu:        %u\n"
 
-#: pg_controldata.c:200
+#: pg_controldata.c:207
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "İndekste en fazla kolon sayısı:        %u\n"
 
-#: pg_controldata.c:202
-#, c-format
-msgid "Maximum size of a TOAST chunk:        %u\n"
-msgstr "TOAST parçasının en yüksek boyutu:        %u\n"
-
-#: pg_controldata.c:204
+#: pg_controldata.c:209
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Tarih/zaman tipi saklanması:               %s\n"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:210
 msgid "64-bit integers"
 msgstr "64-bit tamsayı"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:210
 msgid "floating-point numbers"
 msgstr "kayan noktalı sayılar"
 
-#: pg_controldata.c:206
+#: pg_controldata.c:211
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "Yerel adının en fazla büyüklüğü:        %u\n"
 
-#: pg_controldata.c:208
+#: pg_controldata.c:213
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                           %s\n"
 
-#: pg_controldata.c:210
+#: pg_controldata.c:215
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"
+
+#~ msgid "Maximum size of a TOAST chunk:        %u\n"
+#~ msgstr "TOAST parçasının en yüksek boyutu:        %u\n"
 
