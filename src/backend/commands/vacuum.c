@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.366 2008/03/10 02:04:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.367 2008/03/14 17:25:58 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,8 @@ static BufferAccessStrategy vac_strategy;
 static List *get_rel_oids(List *relids, const RangeVar *vacrel,
 			 const char *stmttype);
 static void vac_truncate_clog(TransactionId frozenXID);
-static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind);
+static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
+					   bool for_wraparound);
 static void full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel,
 		  VacPageList vacuum_pages, VacPageList fraged_pages);
@@ -263,6 +264,9 @@ static Size PageGetFreeSpaceWithFillFactor(Relation relation, Page page);
  * relation OIDs to be processed, and vacstmt->relation is ignored.
  * (The non-NIL case is currently only used by autovacuum.)
  *
+ * for_wraparound is used by autovacuum to let us know when it's forcing
+ * a vacuum for wraparound, which should not be auto-cancelled.
+ *
  * bstrategy is normally given as NULL, but in autovacuum it can be passed
  * in to use the same buffer strategy object across multiple vacuum() calls.
  *
@@ -274,7 +278,7 @@ static Size PageGetFreeSpaceWithFillFactor(Relation relation, Page page);
  */
 void
 vacuum(VacuumStmt *vacstmt, List *relids,
-	   BufferAccessStrategy bstrategy, bool isTopLevel)
+	   BufferAccessStrategy bstrategy, bool for_wraparound, bool isTopLevel)
 {
 	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
 	volatile MemoryContext anl_context = NULL;
@@ -421,7 +425,7 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 			Oid			relid = lfirst_oid(cur);
 
 			if (vacstmt->vacuum)
-				vacuum_rel(relid, vacstmt, RELKIND_RELATION);
+				vacuum_rel(relid, vacstmt, RELKIND_RELATION, for_wraparound);
 
 			if (vacstmt->analyze)
 			{
@@ -966,7 +970,8 @@ vac_truncate_clog(TransactionId frozenXID)
  *		At entry and exit, we are not inside a transaction.
  */
 static void
-vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
+vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
+		   bool for_wraparound)
 {
 	LOCKMODE	lmode;
 	Relation	onerel;
@@ -999,6 +1004,10 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 		 * contents of other tables is arguably broken, but we won't break it
 		 * here by violating transaction semantics.)
 		 *
+		 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down
+		 * by autovacuum; it's used to avoid cancelling a vacuum that was
+		 * invoked in an emergency.
+		 *
 		 * Note: this flag remains set until CommitTransaction or
 		 * AbortTransaction.  We don't want to clear it until we reset
 		 * MyProc->xid/xmin, else OldestXmin might appear to go backwards,
@@ -1006,6 +1015,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 		 */
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 		MyProc->vacuumFlags |= PROC_IN_VACUUM;
+		if (for_wraparound)
+			MyProc->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
 		LWLockRelease(ProcArrayLock);
 	}
 
@@ -1147,7 +1158,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	 * totally unimportant for toast relations.
 	 */
 	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, vacstmt, RELKIND_TOASTVALUE);
+		vacuum_rel(toast_relid, vacstmt, RELKIND_TOASTVALUE, for_wraparound);
 
 	/*
 	 * Now release the session-level lock on the master table.
