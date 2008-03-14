@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.73 2008/03/14 17:25:58 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.74 2008/03/14 23:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2602,17 +2602,12 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 						  BufferAccessStrategy bstrategy)
 {
 	VacuumStmt	vacstmt;
+	List	   *relids;
 	MemoryContext old_cxt;
 
+	/* Set up command parameters --- use a local variable instead of palloc */
 	MemSet(&vacstmt, 0, sizeof(vacstmt));
 
-	/*
-	 * The list must survive transaction boundaries, so make sure we create it
-	 * in a long-lived context
-	 */
-	old_cxt = MemoryContextSwitchTo(AutovacMemCxt);
-
-	/* Set up command parameters */
 	vacstmt.type = T_VacuumStmt;
 	vacstmt.vacuum = dovacuum;
 	vacstmt.full = false;
@@ -2622,11 +2617,18 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 	vacstmt.relation = NULL;	/* not used since we pass a relids list */
 	vacstmt.va_cols = NIL;
 
+	/*
+	 * The list must survive transaction boundaries, so make sure we create it
+	 * in a long-lived context
+	 */
+	old_cxt = MemoryContextSwitchTo(AutovacMemCxt);
+	relids = list_make1_oid(relid);
+	MemoryContextSwitchTo(old_cxt);
+
 	/* Let pgstat know what we're doing */
 	autovac_report_activity(&vacstmt, relid);
 
-	vacuum(&vacstmt, list_make1_oid(relid), bstrategy, for_wraparound, true);
-	MemoryContextSwitchTo(old_cxt);
+	vacuum(&vacstmt, relids, bstrategy, for_wraparound, true);
 }
 
 /*
