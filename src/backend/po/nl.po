@@ -1,14 +1,14 @@
 # Dutch message translation file for postgres.
 # Gevik Babakhani <pgdev@xs4all.nl>, 2007.
 #
-# pgtranslation Id: postgres.po,v 1.3 2007/12/10 20:38:03 gevik Exp $
+# pgtranslation Id: postgres.po,v 1.4 2008/02/14 23:25:01 gevik Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-11-28 10:00-0400\n"
-"PO-Revision-Date: 2007-12-10 21:37+0100\n"
+"PO-Revision-Date: 2008-02-15 00:23+0100\n"
 "Last-Translator: Gevik Babakhani <pgdev@xs4all.nl>\n"
 "Language-Team: Gevik Babakhani <pgdev@xs4all.nl>\n"
 "MIME-Version: 1.0\n"
@@ -10753,67 +10753,67 @@ msgstr ""
 
 #: utils/adt/formatting.c:3011
 msgid "January"
-msgstr ""
+msgstr "januari"
 
 #: utils/adt/formatting.c:3014
 msgid "February"
-msgstr ""
+msgstr "februari"
 
 #: utils/adt/formatting.c:3017
 msgid "March"
-msgstr ""
+msgstr "maart"
 
 #: utils/adt/formatting.c:3020
 msgid "April"
-msgstr ""
+msgstr "april"
 
 #: utils/adt/formatting.c:3023
 msgid "May"
-msgstr ""
+msgstr "mei"
 
 #: utils/adt/formatting.c:3026
 msgid "June"
-msgstr ""
+msgstr "juni"
 
 #: utils/adt/formatting.c:3029
 msgid "July"
-msgstr ""
+msgstr "juli"
 
 #: utils/adt/formatting.c:3032
 msgid "August"
-msgstr ""
+msgstr "augustus"
 
 #: utils/adt/formatting.c:3035
 msgid "September"
-msgstr ""
+msgstr "september"
 
 #: utils/adt/formatting.c:3038
 msgid "October"
-msgstr ""
+msgstr "oktober"
 
 #: utils/adt/formatting.c:3041
 msgid "November"
-msgstr ""
+msgstr "november"
 
 #: utils/adt/formatting.c:3044
 msgid "December"
-msgstr ""
+msgstr "december"
 
 #: utils/adt/formatting.c:3059
 msgid "Jan"
-msgstr ""
+msgstr "jan."
 
 #: utils/adt/formatting.c:3062
 msgid "Feb"
-msgstr ""
+msgstr "feb."
 
 #: utils/adt/formatting.c:3065
 msgid "Mar"
-msgstr ""
+msgstr "mrt."
 
 #: utils/adt/formatting.c:3068
 msgid "Apr"
-msgstr ""
+msgstr "arp."
 
 #. translator: Translate this as the abbreviation of "May".
 #. In English, it is both the full month name and the
@@ -10822,91 +10822,91 @@ msgstr ""
 #. which will be stripped at run time.
 #: utils/adt/formatting.c:3077
 msgid "S:May"
-msgstr ""
+msgstr "S:mei."
 
 #: utils/adt/formatting.c:3080
 msgid "Jun"
-msgstr ""
+msgstr "jun."
 
 #: utils/adt/formatting.c:3083
 msgid "Jul"
-msgstr ""
+msgstr "jul."
 
 #: utils/adt/formatting.c:3086
 msgid "Aug"
-msgstr ""
+msgstr "aug."
 
 #: utils/adt/formatting.c:3089
 msgid "Sep"
-msgstr ""
+msgstr "sep."
 
 #: utils/adt/formatting.c:3092
 msgid "Oct"
-msgstr ""
+msgstr "okt."
 
 #: utils/adt/formatting.c:3095
 msgid "Nov"
-msgstr ""
+msgstr "nov."
 
 #: utils/adt/formatting.c:3098
 msgid "Dec"
-msgstr ""
+msgstr "dec."
 
 #: utils/adt/formatting.c:3113
 msgid "Sunday"
-msgstr ""
+msgstr "zondag"
 
 #: utils/adt/formatting.c:3116
 msgid "Monday"
-msgstr ""
+msgstr "maandag"
 
 #: utils/adt/formatting.c:3119
 msgid "Tuesday"
-msgstr ""
+msgstr "dinsdag"
 
 #: utils/adt/formatting.c:3122
 msgid "Wednesday"
-msgstr ""
+msgstr "woensdag"
 
 #: utils/adt/formatting.c:3125
 msgid "Thursday"
-msgstr ""
+msgstr "donderdag"
 
 #: utils/adt/formatting.c:3128
 msgid "Friday"
-msgstr ""
+msgstr "vrijdag"
 
 #: utils/adt/formatting.c:3131
 msgid "Saturday"
-msgstr ""
+msgstr "zaterdag"
 
 #: utils/adt/formatting.c:3146
 msgid "Sun"
-msgstr ""
+msgstr "Zo"
 
 #: utils/adt/formatting.c:3149
 msgid "Mon"
-msgstr ""
+msgstr "Ma"
 
 #: utils/adt/formatting.c:3152
 msgid "Tue"
-msgstr ""
+msgstr "Di"
 
 #: utils/adt/formatting.c:3155
 msgid "Wed"
-msgstr ""
+msgstr "Wo"
 
 #: utils/adt/formatting.c:3158
 msgid "Thu"
-msgstr ""
+msgstr "Do"
 
 #: utils/adt/formatting.c:3161
 msgid "Fri"
-msgstr ""
+msgstr "Vr"
 
 #: utils/adt/formatting.c:3164
 msgid "Sat"
-msgstr ""
+msgstr "Za"
 
 #: utils/adt/formatting.c:3458
 msgid "AM/PM hour must be between 1 and 12"

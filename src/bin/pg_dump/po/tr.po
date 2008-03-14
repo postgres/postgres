@@ -1018,7 +1018,7 @@ msgstr "TOC girişte hata %d; %u %u %s %s %s\n"
 #: pg_backup_archiver.c:1396
 #, c-format
 msgid "unexpected data offset flag %d\n"
-msgstr "neklenmeyen veri konum bayrağı %d\n"
+msgstr "beklenmeyen veri konum bayrağı %d\n"
 
 #: pg_backup_archiver.c:1409
 msgid "file offset in dump file is too large\n"
