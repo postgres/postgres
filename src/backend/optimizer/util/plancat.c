@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.140 2008/01/12 00:11:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.141 2008/03/15 20:46:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,6 @@ bool		constraint_exclusion = false;
 get_relation_info_hook_type get_relation_info_hook = NULL;
 
 
-static void estimate_rel_size(Relation rel, int32 *attr_widths,
-				  BlockNumber *pages, double *tuples);
 static List *get_relation_constraints(Oid relationObjectId, RelOptInfo *rel,
 						 bool include_notnull);
 
@@ -319,7 +317,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
  * relation's attr_width[] cache; we fill this in if we have need to compute
  * the attribute widths for estimation purposes.
  */
-static void
+void
 estimate_rel_size(Relation rel, int32 *attr_widths,
 				  BlockNumber *pages, double *tuples)
 {

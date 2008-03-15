@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/hash/README,v 1.6 2007/04/19 20:24:04 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/hash/README,v 1.7 2008/03/15 20:46:31 tgl Exp $
 
 This directory contains an implementation of hash indexing for Postgres.  Most
 of the core ideas are taken from Margo Seltzer and Ozan Yigit, A New Hashing
@@ -65,6 +65,11 @@ hashm_spares[N] <= hashm_spares[N+1], since the latter count includes the
 former.  The difference between the two represents the number of overflow
 pages appearing between the bucket page groups of splitpoints N and N+1.
 
+(Note: the above describes what happens when filling an initially minimally
+sized hash index.  In practice, we try to estimate the required index size
+and allocate a suitable number of splitpoints immediately, to avoid
+expensive re-splitting during initial index build.)
+
 When S splitpoints exist altogether, the array entries hashm_spares[0]
 through hashm_spares[S] are valid; hashm_spares[S] records the current
 total number of overflow pages.  New overflow pages are created as needed
@@ -101,9 +106,9 @@ includes the bitmap pages, which is the reason for saying that bitmap
 pages are a subset of the overflow pages.  It turns out in fact that each
 bitmap page's first bit represents itself --- this is not an essential
 property, but falls out of the fact that we only allocate another bitmap
-page when we really need one.  Bit number zero always corresponds to block
-number 3, which is the first bitmap page and is allocated during index
-creation.
+page when we really need one.  Bit number zero always corresponds to the
+first bitmap page, which is allocated during index creation just after all
+the initially created buckets.
 
 
 Lock definitions

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.72 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.73 2008/03/15 20:46:31 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -312,15 +312,17 @@ _hash_chgbufaccess(Relation rel,
 
 /*
  *	_hash_metapinit() -- Initialize the metadata page of a hash index,
- *				the two buckets that we begin with and the initial
- *				bitmap page.
+ *				the initial buckets, and the initial bitmap page.
+ *
+ * The initial number of buckets is dependent on num_tuples, an estimate
+ * of the number of tuples to be loaded into the index initially.
  *
  * We are fairly cavalier about locking here, since we know that no one else
  * could be accessing this index.  In particular the rule about not holding
  * multiple buffer locks is ignored.
  */
 void
-_hash_metapinit(Relation rel)
+_hash_metapinit(Relation rel, double num_tuples)
 {
 	HashMetaPage metap;
 	HashPageOpaque pageopaque;
@@ -330,7 +332,10 @@ _hash_metapinit(Relation rel)
 	int32		data_width;
 	int32		item_width;
 	int32		ffactor;
-	uint16		i;
+	double		dnumbuckets;
+	uint32		num_buckets;
+	uint32		log2_num_buckets;
+	uint32		i;
 
 	/* safety check */
 	if (RelationGetNumberOfBlocks(rel) != 0)
@@ -354,7 +359,26 @@ _hash_metapinit(Relation rel)
 		ffactor = 10;
 
 	/*
-	 * We initialize the metapage, the first two bucket pages, and the first
+	 * Choose the number of initial bucket pages to match the fill factor
+	 * given the estimated number of tuples.  We round up the result to the
+	 * next power of 2, however, and always force at least 2 bucket pages.
+	 * The upper limit is determined by considerations explained in
+	 * _hash_expandtable().
+	 */
+	dnumbuckets = num_tuples / ffactor;
+	if (dnumbuckets <= 2.0)
+		num_buckets = 2;
+	else if (dnumbuckets >= (double) 0x40000000)
+		num_buckets = 0x40000000;
+	else
+		num_buckets = ((uint32) 1) << _hash_log2((uint32) dnumbuckets);
+
+	log2_num_buckets = _hash_log2(num_buckets);
+	Assert(num_buckets == (((uint32) 1) << log2_num_buckets));
+	Assert(log2_num_buckets < HASH_MAX_SPLITPOINTS);
+
+	/*
+	 * We initialize the metapage, the first N bucket pages, and the first
 	 * bitmap page in sequence, using _hash_getnewbuf to cause smgrextend()
 	 * calls to occur.	This ensures that the smgr level has the right idea of
 	 * the physical index length.
@@ -398,23 +422,25 @@ _hash_metapinit(Relation rel)
 	metap->hashm_procid = index_getprocid(rel, 1, HASHPROC);
 
 	/*
-	 * We initialize the index with two buckets, 0 and 1, occupying physical
-	 * blocks 1 and 2.	The first freespace bitmap page is in block 3.
+	 * We initialize the index with N buckets, 0 .. N-1, occupying physical
+	 * blocks 1 to N.  The first freespace bitmap page is in block N+1.
+	 * Since N is a power of 2, we can set the masks this way:
 	 */
-	metap->hashm_maxbucket = metap->hashm_lowmask = 1;	/* nbuckets - 1 */
-	metap->hashm_highmask = 3;	/* (nbuckets << 1) - 1 */
+	metap->hashm_maxbucket = metap->hashm_lowmask = num_buckets - 1;
+	metap->hashm_highmask = (num_buckets << 1) - 1;
 
 	MemSet(metap->hashm_spares, 0, sizeof(metap->hashm_spares));
 	MemSet(metap->hashm_mapp, 0, sizeof(metap->hashm_mapp));
 
-	metap->hashm_spares[1] = 1; /* the first bitmap page is only spare */
-	metap->hashm_ovflpoint = 1;
+	/* Set up mapping for one spare page after the initial splitpoints */
+	metap->hashm_spares[log2_num_buckets] = 1;
+	metap->hashm_ovflpoint = log2_num_buckets;
 	metap->hashm_firstfree = 0;
 
 	/*
-	 * Initialize the first two buckets
+	 * Initialize the first N buckets
 	 */
-	for (i = 0; i <= 1; i++)
+	for (i = 0; i < num_buckets; i++)
 	{
 		buf = _hash_getnewbuf(rel, BUCKET_TO_BLKNO(metap, i));
 		pg = BufferGetPage(buf);
@@ -430,7 +456,7 @@ _hash_metapinit(Relation rel)
 	/*
 	 * Initialize first bitmap page
 	 */
-	_hash_initbitmap(rel, metap, 3);
+	_hash_initbitmap(rel, metap, num_buckets + 1);
 
 	/* all done */
 	_hash_wrtbuf(rel, metabuf);
@@ -511,6 +537,9 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	 * index with 2^32 buckets would certainly overflow BlockNumber and hence
 	 * _hash_alloc_buckets() would fail, but if we supported buckets smaller
 	 * than a disk block then this would be an independent constraint.
+	 *
+	 * If you change this, see also the maximum initial number of buckets
+	 * in _hash_metapinit().
 	 */
 	if (metap->hashm_maxbucket >= (uint32) 0x7FFFFFFE)
 		goto fail;
