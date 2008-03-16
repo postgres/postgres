@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.85 2008/03/15 20:46:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.86 2008/03/16 23:15:08 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -298,7 +298,7 @@ extern void _hash_dropbuf(Relation rel, Buffer buf);
 extern void _hash_wrtbuf(Relation rel, Buffer buf);
 extern void _hash_chgbufaccess(Relation rel, Buffer buf, int from_access,
 				   int to_access);
-extern void _hash_metapinit(Relation rel, double num_tuples);
+extern uint32 _hash_metapinit(Relation rel, double num_tuples);
 extern void _hash_pageinit(Page page, Size size);
 extern void _hash_expandtable(Relation rel, Buffer metabuf);
 
@@ -312,6 +312,14 @@ extern void ReleaseResources_hash(void);
 extern bool _hash_next(IndexScanDesc scan, ScanDirection dir);
 extern bool _hash_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
+
+/* hashsort.c */
+typedef struct HSpool HSpool;	/* opaque struct in hashsort.c */
+
+extern HSpool *_h_spoolinit(Relation index, uint32 num_buckets);
+extern void _h_spooldestroy(HSpool *hspool);
+extern void _h_spool(IndexTuple itup, HSpool *hspool);
+extern void _h_indexbuild(HSpool *hspool);
 
 /* hashutil.c */
 extern bool _hash_checkqual(IndexScanDesc scan, IndexTuple itup);

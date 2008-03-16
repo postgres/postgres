@@ -57,7 +57,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.114 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.115 2008/03/16 23:15:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,8 +158,8 @@ _bt_spoolinit(Relation index, bool isunique, bool isdead)
 	 * work_mem.
 	 */
 	btKbytes = isdead ? work_mem : maintenance_work_mem;
-	btspool->sortstate = tuplesort_begin_index(index, isunique,
-											   btKbytes, false);
+	btspool->sortstate = tuplesort_begin_index_btree(index, isunique,
+													 btKbytes, false);
 
 	return btspool;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.99 2008/03/15 20:46:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.100 2008/03/16 23:15:08 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -22,13 +22,15 @@
 #include "access/hash.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
+#include "optimizer/cost.h"
 #include "optimizer/plancat.h"
 
 
 /* Working state for hashbuild and its callback */
 typedef struct
 {
-	double		indtuples;
+	HSpool	   *spool;			/* NULL if not using spooling */
+	double		indtuples;		/* # tuples accepted into index */
 } HashBuildState;
 
 static void hashbuildCallback(Relation index,
@@ -51,6 +53,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	IndexBuildResult *result;
 	BlockNumber	relpages;
 	double		reltuples;
+	uint32		num_buckets;
 	HashBuildState buildstate;
 
 	/*
@@ -61,18 +64,42 @@ hashbuild(PG_FUNCTION_ARGS)
 		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
 
-	/* estimate the number of rows currently present in the table */
+	/* Estimate the number of rows currently present in the table */
 	estimate_rel_size(heap, NULL, &relpages, &reltuples);
 
-	/* initialize the hash index metadata page and initial buckets */
-	_hash_metapinit(index, reltuples);
+	/* Initialize the hash index metadata page and initial buckets */
+	num_buckets = _hash_metapinit(index, reltuples);
 
-	/* build the index */
+	/*
+	 * If we just insert the tuples into the index in scan order, then
+	 * (assuming their hash codes are pretty random) there will be no locality
+	 * of access to the index, and if the index is bigger than available RAM
+	 * then we'll thrash horribly.  To prevent that scenario, we can sort the
+	 * tuples by (expected) bucket number.  However, such a sort is useless
+	 * overhead when the index does fit in RAM.  We choose to sort if the
+	 * initial index size exceeds effective_cache_size.
+	 *
+	 * NOTE: this test will need adjustment if a bucket is ever different
+	 * from one page.
+	 */
+	if (num_buckets >= (uint32) effective_cache_size)
+		buildstate.spool = _h_spoolinit(index, num_buckets);
+	else
+		buildstate.spool = NULL;
+
+	/* prepare to build the index */
 	buildstate.indtuples = 0;
 
 	/* do the heap scan */
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo,
 								   hashbuildCallback, (void *) &buildstate);
+
+	if (buildstate.spool)
+	{
+		/* sort the tuples and insert them into the index */
+		_h_indexbuild(buildstate.spool);
+		_h_spooldestroy(buildstate.spool);
+	}
 
 	/*
 	 * Return statistics
@@ -110,7 +137,11 @@ hashbuildCallback(Relation index,
 		return;
 	}
 
-	_hash_doinsert(index, itup);
+	/* Either spool the tuple for sorting, or just put it into the index */
+	if (buildstate->spool)
+		_h_spool(itup, buildstate->spool);
+	else
+		_hash_doinsert(index, itup);
 
 	buildstate->indtuples += 1;
 

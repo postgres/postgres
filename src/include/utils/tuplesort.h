@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.28 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.29 2008/03/16 23:15:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,16 +41,24 @@ typedef struct Tuplesortstate Tuplesortstate;
  * rather than forming actual HeapTuples (which'd have to be converted to
  * MinimalTuples).
  *
- * Yet a third slightly different interface supports sorting bare Datums.
+ * The IndexTuple case is itself broken into two subcases, one for btree
+ * indexes and one for hash indexes; the latter variant actually sorts
+ * the tuples by hash code.  The API is the same except for the "begin"
+ * routine.
+ *
+ * Yet another slightly different interface supports sorting bare Datums.
  */
 
 extern Tuplesortstate *tuplesort_begin_heap(TupleDesc tupDesc,
 					 int nkeys, AttrNumber *attNums,
 					 Oid *sortOperators, bool *nullsFirstFlags,
 					 int workMem, bool randomAccess);
-extern Tuplesortstate *tuplesort_begin_index(Relation indexRel,
-					  bool enforceUnique,
-					  int workMem, bool randomAccess);
+extern Tuplesortstate *tuplesort_begin_index_btree(Relation indexRel,
+							bool enforceUnique,
+							int workMem, bool randomAccess);
+extern Tuplesortstate *tuplesort_begin_index_hash(Relation indexRel,
+							uint32 hash_mask,
+							int workMem, bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
 					  Oid sortOperator, bool nullsFirstFlag,
 					  int workMem, bool randomAccess);
