@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.66 2007/11/26 21:36:33 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.67 2008/03/16 23:57:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -32,7 +32,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
   <title>Description</title>
 
   <para>
-   <command>CREATE INDEX</command> constructs an index <replaceable
+   <command>CREATE INDEX</command> constructs an index named <replaceable
    class="parameter">name</replaceable> on the specified table.
    Indexes are primarily used to enhance database performance (though
    inappropriate use can result in slower performance).
@@ -431,6 +431,23 @@ Indexes:
    DESC</>.  The <literal>NULLS</> options are useful if you need to support
    <quote>nulls sort low</> behavior, rather than the default <quote>nulls
    sort high</>, in queries that depend on indexes to avoid sorting steps.
+  </para>
+
+  <para>
+   For most index methods, the speed of creating an index is
+   dependent on the setting of <xref linkend="guc-maintenance-work-mem">.
+   Larger values will reduce the time needed for index creation, so long
+   as you don't make it larger than the amount of memory really available,
+   which would drive the machine into swapping.  For hash indexes, the
+   value of <xref linkend="guc-effective-cache-size"> is also relevant to
+   index creation time: <productname>PostgreSQL</productname> will use one
+   of two different hash index creation methods depending on whether the
+   estimated index size is more or less than <varname>effective_cache_size</>.
+   For best results, make sure that this parameter is also set to something
+   reflective of available memory, and be careful that the sum of
+   <varname>maintenance_work_mem</> and <varname>effective_cache_size</> is
+   less than the machine's RAM less whatever space is needed by other
+   programs.
   </para>
 
   <para>
