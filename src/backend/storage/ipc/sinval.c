@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.83 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.84 2008/03/16 19:47:33 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,38 +48,6 @@ static volatile int catchupInterruptOccurred = 0;
 static void ProcessCatchupEvent(void);
 
 
-/****************************************************************************/
-/*	CreateSharedInvalidationState()		 Initialize SI buffer				*/
-/*																			*/
-/*	should be called only by the POSTMASTER									*/
-/****************************************************************************/
-void
-CreateSharedInvalidationState(void)
-{
-	/* SInvalLock must be initialized already, during LWLock init */
-	SIBufferInit();
-}
-
-/*
- * InitBackendSharedInvalidationState
- *		Initialize new backend's state info in buffer segment.
- */
-void
-InitBackendSharedInvalidationState(void)
-{
-	int			flag;
-
-	LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
-	flag = SIBackendInit(shmInvalBuffer);
-	LWLockRelease(SInvalLock);
-	if (flag < 0)				/* unexpected problem */
-		elog(FATAL, "shared cache invalidation initialization failed");
-	if (flag == 0)				/* expected problem: MaxBackends exceeded */
-		ereport(FATAL,
-				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
-				 errmsg("sorry, too many clients already")));
-}
-
 /*
  * SendSharedInvalidMessage
  *	Add a shared-cache-invalidation message to the global SI message queue.
@@ -89,9 +57,7 @@ SendSharedInvalidMessage(SharedInvalidationMessage *msg)
 {
 	bool		insertOK;
 
-	LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
-	insertOK = SIInsertDataEntry(shmInvalBuffer, msg);
-	LWLockRelease(SInvalLock);
+	insertOK = SIInsertDataEntry(msg);
 	if (!insertOK)
 		elog(DEBUG4, "SI buffer overflow");
 }
@@ -123,19 +89,7 @@ ReceiveSharedInvalidMessages(
 		 */
 		catchupInterruptOccurred = 0;
 
-		/*
-		 * We can run SIGetDataEntry in parallel with other backends running
-		 * SIGetDataEntry for themselves, since each instance will modify only
-		 * fields of its own backend's ProcState, and no instance will look at
-		 * fields of other backends' ProcStates.  We express this by grabbing
-		 * SInvalLock in shared mode.  Note that this is not exactly the
-		 * normal (read-only) interpretation of a shared lock! Look closely at
-		 * the interactions before allowing SInvalLock to be grabbed in shared
-		 * mode for any other reason!
-		 */
-		LWLockAcquire(SInvalLock, LW_SHARED);
-		getResult = SIGetDataEntry(shmInvalBuffer, MyBackendId, &data);
-		LWLockRelease(SInvalLock);
+		getResult = SIGetDataEntry(MyBackendId, &data);
 
 		if (getResult == 0)
 			break;				/* nothing more to do */
@@ -155,11 +109,7 @@ ReceiveSharedInvalidMessages(
 
 	/* If we got any messages, try to release dead messages */
 	if (gotMessage)
-	{
-		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
-		SIDelExpiredDataEntries(shmInvalBuffer);
-		LWLockRelease(SInvalLock);
-	}
+		SIDelExpiredDataEntries(false);
 }
 
 

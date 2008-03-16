@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.180 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.181 2008/03/16 19:47:34 alvherre Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -36,7 +36,7 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
-#include "storage/sinval.h"
+#include "storage/sinvaladt.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/flatfiles.h"
@@ -411,7 +411,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	MyBackendId = InvalidBackendId;
 
-	InitBackendSharedInvalidationState();
+	SharedInvalBackendInit();
 
 	if (MyBackendId > MaxBackends || MyBackendId <= 0)
 		elog(FATAL, "bad backend id: %d", MyBackendId);
