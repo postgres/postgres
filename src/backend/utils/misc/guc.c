@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.437 2008/03/10 12:55:13 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.438 2008/03/16 16:42:44 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -167,6 +167,14 @@ static const char *show_tcp_keepalives_interval(void);
 static const char *show_tcp_keepalives_count(void);
 static bool assign_autovacuum_max_workers(int newval, bool doit, GucSource source);
 static bool assign_maxconnections(int newval, bool doit, GucSource source);
+
+static const char *config_enum_lookup_value(struct config_enum *record, int val);
+static bool config_enum_lookup_name(struct config_enum *record, 
+									const char *value, int *retval);
+static char *config_enum_get_options(struct config_enum *record, 
+									 const char *prefix, const char *suffix);
+
+
 
 /*
  * Options for enum values defined in this module.
@@ -3134,8 +3142,9 @@ InitializeGUCOptions(void)
 					if (conf->assign_hook)
 						if (!(*conf->assign_hook) (conf->boot_val, true,
 												   PGC_S_DEFAULT))
-							elog(FATAL, "failed to initialize %s to %d",
-								 conf->gen.name, conf->boot_val);
+							elog(FATAL, "failed to initialize %s to %s",
+								 conf->gen.name, 
+								 config_enum_lookup_value(conf, conf->boot_val));
 					*conf->variable = conf->reset_val = conf->boot_val;
 					break;
 				}
@@ -4230,7 +4239,7 @@ config_enum_lookup_value(struct config_enum *record, int val)
  * Lookup the value for an enum option with the selected name
  * (case-insensitive).
  * If the enum option is found, sets the retval value and returns
- * true. If it's not found, return FALSE and don't touch retval.
+ * true. If it's not found, return FALSE and retval is set to 0.
  *
  */
 static bool
@@ -4243,7 +4252,7 @@ config_enum_lookup_name(struct config_enum *record, const char *value, int *retv
 	
 	while (entry && entry->name)
 	{
-		if (!pg_strcasecmp(value, entry->name))
+		if (pg_strcasecmp(value, entry->name) == 0)
 		{
 			*retval = entry->val;
 			return TRUE;
@@ -4255,10 +4264,10 @@ config_enum_lookup_name(struct config_enum *record, const char *value, int *retv
 
 
 /*
- * Returna list of all available options for an enum, separated
+ * Return a list of all available options for an enum, separated
  * by ", " (comma-space).
- * If prefix is gievn, it is added before the first enum value.
- * If suffix is given, it is added to the end of the string.
+ * If prefix is non-NULL, it is added before the first enum value.
+ * If suffix is non-NULL, it is added to the end of the string.
  */
 static char *
 config_enum_get_options(struct config_enum *record, const char *prefix, const char *suffix)
@@ -4895,8 +4904,9 @@ set_config_option(const char *name, const char *value,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("invalid value for parameter \"%s\": \"%d\"",
-										name, newval)));
+								 errmsg("invalid value for parameter \"%s\": \"%s\"",
+										name, 
+										config_enum_lookup_value(conf, newval))));
 						return false;
 					}
 
@@ -5587,6 +5597,30 @@ DefineCustomStringVariable(const char *name,
 	/* we could probably do without strdup, but keep it like normal case */
 	if (var->boot_val)
 		var->reset_val = guc_strdup(ERROR, var->boot_val);
+	var->assign_hook = assign_hook;
+	var->show_hook = show_hook;
+	define_custom_variable(&var->gen);
+}
+
+void
+DefineCustomEnumVariable(const char *name,
+						 const char *short_desc,
+						 const char *long_desc,
+						 int *valueAddr,
+						 const struct config_enum_entry *options,
+						 GucContext context,
+						 GucEnumAssignHook assign_hook,
+						 GucShowHook show_hook)
+{
+	struct config_enum *var;
+
+	var = (struct config_enum *)
+		init_custom_variable(name, short_desc, long_desc, context,
+							 PGC_ENUM, sizeof(struct config_enum));
+	var->variable = valueAddr;
+	var->boot_val = *valueAddr;
+	var->reset_val = *valueAddr;
+	var->options = options;
 	var->assign_hook = assign_hook;
 	var->show_hook = show_hook;
 	define_custom_variable(&var->gen);

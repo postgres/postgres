@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.91 2008/03/10 12:55:13 mha Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.92 2008/03/16 16:42:44 mha Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -92,6 +92,16 @@ typedef enum
 	PGC_S_TEST,					/* test per-database or per-user setting */
 	PGC_S_SESSION				/* SET command */
 } GucSource;
+
+/*
+ * Enum values are made up of an array of name-value pairs
+ */
+struct config_enum_entry
+{
+	const char *name;
+	int         val;
+};
+
 
 typedef const char *(*GucStringAssignHook) (const char *newval, bool doit, GucSource source);
 typedef bool (*GucBoolAssignHook) (bool newval, bool doit, GucSource source);
@@ -187,6 +197,16 @@ extern void DefineCustomStringVariable(
 						   char **valueAddr,
 						   GucContext context,
 						   GucStringAssignHook assign_hook,
+						   GucShowHook show_hook);
+
+extern void DefineCustomEnumVariable(
+						   const char *name,
+						   const char *short_desc,
+						   const char *long_desc,
+						   int *valueAddr,
+						   const struct config_enum_entry *options,
+						   GucContext context,
+						   GucEnumAssignHook assign_hook,
 						   GucShowHook show_hook);
 
 extern void EmitWarningsOnPlaceholders(const char *className);
