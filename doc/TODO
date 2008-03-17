@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sun Mar 16 21:46:33 EDT 2008
+Last updated:		Mon Mar 17 14:22:37 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -115,6 +115,11 @@ Administration
 	  using '%'
 
 	  http://archives.postgresql.org/pgsql-hackers/2007-06/msg00550.php
+
+	o Allow Kerberos to disable stripping of realms so we can
+	  check the username@realm against multiple realms
+
+	  http://archives.postgresql.org/pgsql-hackers/2007-11/msg00009.php
 
 
 * Tablespaces
