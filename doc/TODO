@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Mar 17 17:09:20 EDT 2008
+Last updated:		Mon Mar 17 17:45:06 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -154,20 +154,20 @@ Administration
 
 * Point-In-Time Recovery (PITR)
 
-	  o Allow a warm standby system to also allow read-only statements
-	    [pitr]
+	o Allow a warm standby system to also allow read-only statements
+	  [pitr]
 
-	    http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php
+	  http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php
 
-	  o %Create dump tool for write-ahead logs for use in determining
-	    transaction id for point-in-time recovery
+	o %Create dump tool for write-ahead logs for use in determining
+	  transaction id for point-in-time recovery
 
-	    This is useful for checking PITR recovery.
+	  This is useful for checking PITR recovery.
 
-	  o Allow recovery.conf to support the same syntax as
-	    postgresql.conf, including quoting
+	o Allow recovery.conf to support the same syntax as
+	  postgresql.conf, including quoting
 
-	    http://archives.postgresql.org/pgsql-hackers/2006-12/msg00497.php
+	  http://archives.postgresql.org/pgsql-hackers/2006-12/msg00497.php
 
 
 Data Types
