@@ -8,13 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.84 2008/03/16 19:47:33 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.85 2008/03/17 11:50:26 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
-#include <signal.h>
 
 #include "access/xact.h"
 #include "commands/async.h"
