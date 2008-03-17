@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.127 2008/02/26 14:42:27 petere Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.128 2008/03/17 19:44:40 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,8 +20,10 @@ SUBDIRS = access bootstrap catalog parser commands executor lib libpq \
 
 include $(srcdir)/common.mk
 
+ifeq ($(PORTNAME), solaris)
 ifeq ($(enable_dtrace), yes)
 LOCALOBJS += utils/probes.o
+endif
 endif
 
 OBJS = $(SUBDIROBJS) $(LOCALOBJS) $(top_builddir)/src/port/libpgport_srv.a
@@ -103,7 +105,7 @@ endif
 endif # aix
 
 # Update the commonly used headers before building the subdirectories
-$(SUBDIRS:%=%-recursive): $(top_builddir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h
+$(SUBDIRS:%=%-recursive): $(top_builddir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h $(top_builddir)/src/include/utils/probes.h
 
 
 # The postgres.o target is needed by the rule in Makefile.global that
@@ -122,6 +124,9 @@ $(srcdir)/parser/parse.h: parser/gram.y
 utils/fmgroids.h: utils/Gen_fmgrtab.sh $(top_srcdir)/src/include/catalog/pg_proc.h
 	$(MAKE) -C utils fmgroids.h
 
+utils/probes.h: utils/probes.d
+	$(MAKE) -C utils probes.h
+
 # Make symlinks for these headers in the include directory. That way
 # we can cut down on the -I options. Also, a symlink is automatically
 # up to date when we update the base file.
@@ -135,9 +140,15 @@ $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
 	cd $(dir $@) && rm -f $(notdir $@) && \
 	    $(LN_S) ../../../$(subdir)/utils/fmgroids.h .
 
+$(top_builddir)/src/include/utils/probes.h: utils/probes.h
+	cd $(dir $@) && rm -f $(notdir $@) && \
+	    $(LN_S) ../../../$(subdir)/utils/probes.h .
 
+
+ifeq ($(PORTNAME), solaris)
 utils/probes.o: utils/probes.d $(SUBDIROBJS)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $(call expand_subsys,$^) -o $@
+endif
 
 
 ##########################################################################

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.223 2008/02/23 19:11:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.224 2008/03/17 19:44:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,6 @@
 #include "pg_config_os.h"		/* must be before any system header files */
 #endif
 #include "postgres_ext.h"
-#include "pg_trace.h"
 
 #if _MSC_VER >= 1400
 #define errcode __msvc_errcode

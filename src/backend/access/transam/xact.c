@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.259 2008/03/17 02:18:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.260 2008/03/17 19:44:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
 #include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/xml.h"
+#include "pg_trace.h"
 
 
 /*
@@ -1547,7 +1548,7 @@ StartTransaction(void)
 	Assert(MyProc->backendId == vxid.backendId);
 	MyProc->lxid = vxid.localTransactionId;
 
-	PG_TRACE1(transaction__start, vxid.localTransactionId);
+	TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
 
 	/*
 	 * set transaction_timestamp() (a/k/a now()).  We want this to be the same
@@ -1674,7 +1675,7 @@ CommitTransaction(void)
 	 */
 	latestXid = RecordTransactionCommit();
 
-	PG_TRACE1(transaction__commit, MyProc->lxid);
+	TRACE_POSTGRESQL_TRANSACTION_COMMIT(MyProc->lxid);
 
 	/*
 	 * Let others know about no transaction in progress by me. Note that this
@@ -2084,7 +2085,7 @@ AbortTransaction(void)
 	 */
 	latestXid = RecordTransactionAbort(false);
 
-	PG_TRACE1(transaction__abort, MyProc->lxid);
+	TRACE_POSTGRESQL_TRANSACTION_ABORT(MyProc->lxid);
 
 	/*
 	 * Let others know about no transaction in progress by me. Note that this

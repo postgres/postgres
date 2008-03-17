@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.50 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.51 2008/03/17 19:44:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
+#include "pg_trace.h"
 
 
 /* We use the ShmemLock spinlock to protect LWLockAssign */
@@ -447,7 +448,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		block_counts[lockid]++;
 #endif
 
-		PG_TRACE2(lwlock__startwait, lockid, mode);
+		TRACE_POSTGRESQL_LWLOCK_STARTWAIT(lockid, mode);
 
 		for (;;)
 		{
@@ -458,7 +459,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 			extraWaits++;
 		}
 
-		PG_TRACE2(lwlock__endwait, lockid, mode);
+		TRACE_POSTGRESQL_LWLOCK_ENDWAIT(lockid, mode);
 
 		LOG_LWDEBUG("LWLockAcquire", lockid, "awakened");
 
@@ -469,7 +470,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 	/* We are done updating shared state of the lock itself. */
 	SpinLockRelease(&lock->mutex);
 
-	PG_TRACE2(lwlock__acquire, lockid, mode);
+	TRACE_POSTGRESQL_LWLOCK_ACQUIRE(lockid, mode);
 
 	/* Add lock to list of locks held by this backend */
 	held_lwlocks[num_held_lwlocks++] = lockid;
@@ -540,13 +541,13 @@ LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 		/* Failed to get lock, so release interrupt holdoff */
 		RESUME_INTERRUPTS();
 		LOG_LWDEBUG("LWLockConditionalAcquire", lockid, "failed");
-		PG_TRACE2(lwlock__condacquire__fail, lockid, mode);
+		TRACE_POSTGRESQL_LWLOCK_CONDACQUIRE_FAIL(lockid, mode);
 	}
 	else
 	{
 		/* Add lock to list of locks held by this backend */
 		held_lwlocks[num_held_lwlocks++] = lockid;
-		PG_TRACE2(lwlock__condacquire, lockid, mode);
+		TRACE_POSTGRESQL_LWLOCK_CONDACQUIRE(lockid, mode);
 	}
 
 	return !mustwait;
@@ -631,7 +632,7 @@ LWLockRelease(LWLockId lockid)
 	/* We are done updating shared state of the lock itself. */
 	SpinLockRelease(&lock->mutex);
 
-	PG_TRACE1(lwlock__release, lockid);
+	TRACE_POSTGRESQL_LWLOCK_RELEASE(lockid);
 
 	/*
 	 * Awaken any waiters I removed from the queue.
