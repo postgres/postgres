@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Mar 17 14:22:37 EDT 2008
+Last updated:		Mon Mar 17 17:09:20 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1140,6 +1140,7 @@ Indexes
   and expression indexes
   http://archives.postgresql.org/pgsql-general/2007-05/msg01228.php
   http://archives.postgresql.org/pgsql-general/2007-06/msg00542.php
+  http://archives.postgresql.org/pgsql-hackers/2008-01/msg01066.php
 
 * Consider compressing indexes by storing key values duplicated in
   several rows as a single index entry
