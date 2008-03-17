@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.258 2008/03/04 19:54:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.259 2008/03/17 02:18:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,9 @@ typedef struct TransactionStateData
 	int			gucNestLevel;	/* GUC context nesting depth */
 	MemoryContext curTransactionContext;		/* my xact-lifetime context */
 	ResourceOwner curTransactionOwner;	/* my query resources */
-	List	   *childXids;		/* subcommitted child XIDs */
+	TransactionId *childXids;	/* subcommitted child XIDs, in XID order */
+	int			nChildXids;		/* # of subcommitted child XIDs */
+	int			maxChildXids;	/* allocated size of childXids[] */
 	Oid			prevUser;		/* previous CurrentUserId setting */
 	bool		prevSecDefCxt;	/* previous SecurityDefinerContext setting */
 	bool		prevXactReadOnly;		/* entry-time xact r/o state */
@@ -156,7 +158,9 @@ static TransactionStateData TopTransactionStateData = {
 	0,							/* GUC context nesting depth */
 	NULL,						/* cur transaction context */
 	NULL,						/* cur transaction resource owner */
-	NIL,						/* subcommitted child Xids */
+	NULL,						/* subcommitted child Xids */
+	0,							/* # of subcommitted child Xids */
+	0,							/* allocated size of childXids[] */
 	InvalidOid,					/* previous CurrentUserId setting */
 	false,						/* previous SecurityDefinerContext setting */
 	false,						/* entry-time xact r/o state */
@@ -559,7 +563,7 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 	 */
 	for (s = CurrentTransactionState; s != NULL; s = s->parent)
 	{
-		ListCell   *cell;
+		int low, high;
 
 		if (s->state == TRANS_ABORT)
 			continue;
@@ -567,10 +571,22 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 			continue;			/* it can't have any child XIDs either */
 		if (TransactionIdEquals(xid, s->transactionId))
 			return true;
-		foreach(cell, s->childXids)
+		/* As the childXids array is ordered, we can use binary search */
+		low = 0;
+		high = s->nChildXids - 1;
+		while (low <= high)
 		{
-			if (TransactionIdEquals(xid, lfirst_xid(cell)))
+			int				middle;
+			TransactionId	probe;
+
+			middle = low + (high - low) / 2;
+			probe = s->childXids[middle];
+			if (TransactionIdEquals(probe, xid))
 				return true;
+			else if (TransactionIdPrecedes(probe, xid))
+				low = middle + 1;
+			else
+				high = middle - 1;
 		}
 	}
 
@@ -985,8 +1001,6 @@ cleanup:
 	/* Clean up local data */
 	if (rels)
 		pfree(rels);
-	if (children)
-		pfree(children);
 
 	return latestXid;
 }
@@ -1067,34 +1081,79 @@ static void
 AtSubCommit_childXids(void)
 {
 	TransactionState s = CurrentTransactionState;
-	MemoryContext old_cxt;
+	int			new_nChildXids;
 
 	Assert(s->parent != NULL);
 
 	/*
-	 * We keep the child-XID lists in TopTransactionContext; this avoids
-	 * setting up child-transaction contexts for what might be just a few
-	 * bytes of grandchild XIDs.
+	 * The parent childXids array will need to hold my XID and all my
+	 * childXids, in addition to the XIDs already there.
 	 */
-	old_cxt = MemoryContextSwitchTo(TopTransactionContext);
+	new_nChildXids = s->parent->nChildXids + s->nChildXids + 1;
 
-	s->parent->childXids = lappend_xid(s->parent->childXids,
-									   s->transactionId);
-
-	if (s->childXids != NIL)
+	/* Allocate or enlarge the parent array if necessary */
+	if (s->parent->maxChildXids < new_nChildXids)
 	{
-		s->parent->childXids = list_concat(s->parent->childXids,
-										   s->childXids);
+		int				new_maxChildXids;
+		TransactionId  *new_childXids;
 
 		/*
-		 * list_concat doesn't free the list header for the second list; do so
-		 * here to avoid memory leakage (kluge)
+		 * Make it 2x what's needed right now, to avoid having to enlarge it
+		 * repeatedly. But we can't go above MaxAllocSize.  (The latter
+		 * limit is what ensures that we don't need to worry about integer
+		 * overflow here or in the calculation of new_nChildXids.)
 		 */
-		pfree(s->childXids);
-		s->childXids = NIL;
+		new_maxChildXids = Min(new_nChildXids * 2,
+							   (int) (MaxAllocSize / sizeof(TransactionId)));
+
+		if (new_maxChildXids < new_nChildXids)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("maximum number of committed subtransactions (%d) exceeded",
+							(int) (MaxAllocSize / sizeof(TransactionId)))));
+
+		/*
+		 * We keep the child-XID arrays in TopTransactionContext; this avoids
+		 * setting up child-transaction contexts for what might be just a few
+		 * bytes of grandchild XIDs.
+		 */
+		if (s->parent->childXids == NULL)
+			new_childXids =
+				MemoryContextAlloc(TopTransactionContext, 
+								   new_maxChildXids * sizeof(TransactionId));
+		else
+			new_childXids = repalloc(s->parent->childXids, 
+									 new_maxChildXids * sizeof(TransactionId));
+
+		s->parent->childXids  = new_childXids;
+		s->parent->maxChildXids = new_maxChildXids;
 	}
 
-	MemoryContextSwitchTo(old_cxt);
+	/*
+	 * Copy all my XIDs to parent's array.
+	 *
+	 * Note: We rely on the fact that the XID of a child always follows that
+	 * of its parent.  By copying the XID of this subtransaction before the
+	 * XIDs of its children, we ensure that the array stays ordered.  Likewise,
+	 * all XIDs already in the array belong to subtransactions started and
+	 * subcommitted before us, so their XIDs must precede ours.
+	 */
+	s->parent->childXids[s->parent->nChildXids] = s->transactionId;
+
+	if (s->nChildXids > 0)
+		memcpy(&s->parent->childXids[s->parent->nChildXids + 1],
+			   s->childXids,
+			   s->nChildXids * sizeof(TransactionId));
+
+	s->parent->nChildXids = new_nChildXids;
+
+	/* Release child's array to avoid leakage */
+	if (s->childXids != NULL)
+		pfree(s->childXids);
+	/* We must reset these to avoid double-free if fail later in commit */
+	s->childXids = NULL;
+	s->nChildXids = 0;
+	s->maxChildXids = 0;
 }
 
 /*
@@ -1259,8 +1318,6 @@ RecordTransactionAbort(bool isSubXact)
 	/* And clean up local data */
 	if (rels)
 		pfree(rels);
-	if (children)
-		pfree(children);
 
 	return latestXid;
 }
@@ -1332,12 +1389,15 @@ AtSubAbort_childXids(void)
 	TransactionState s = CurrentTransactionState;
 
 	/*
-	 * We keep the child-XID lists in TopTransactionContext (see
-	 * AtSubCommit_childXids).	This means we'd better free the list
+	 * We keep the child-XID arrays in TopTransactionContext (see
+	 * AtSubCommit_childXids).	This means we'd better free the array
 	 * explicitly at abort to avoid leakage.
 	 */
-	list_free(s->childXids);
-	s->childXids = NIL;
+	if (s->childXids != NULL)
+		pfree(s->childXids);
+	s->childXids = NULL;
+	s->nChildXids = 0;
+	s->maxChildXids = 0;
 }
 
 /* ----------------------------------------------------------------
@@ -1506,7 +1566,9 @@ StartTransaction(void)
 	 */
 	s->nestingLevel = 1;
 	s->gucNestLevel = 1;
-	s->childXids = NIL;
+	s->childXids = NULL;
+	s->nChildXids = 0;
+	s->maxChildXids = 0;
 	GetUserIdAndContext(&s->prevUser, &s->prevSecDefCxt);
 	/* SecurityDefinerContext should never be set outside a transaction */
 	Assert(!s->prevSecDefCxt);
@@ -1702,7 +1764,9 @@ CommitTransaction(void)
 	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
 	s->gucNestLevel = 0;
-	s->childXids = NIL;
+	s->childXids = NULL;
+	s->nChildXids = 0;
+	s->maxChildXids = 0;
 
 	/*
 	 * done with commit processing, set current transaction state back to
@@ -1931,7 +1995,9 @@ PrepareTransaction(void)
 	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
 	s->gucNestLevel = 0;
-	s->childXids = NIL;
+	s->childXids = NULL;
+	s->nChildXids = 0;
+	s->maxChildXids = 0;
 
 	/*
 	 * done with 1st phase commit processing, set current transaction state
@@ -2101,7 +2167,9 @@ CleanupTransaction(void)
 	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
 	s->gucNestLevel = 0;
-	s->childXids = NIL;
+	s->childXids = NULL;
+	s->nChildXids = 0;
+	s->maxChildXids = 0;
 
 	/*
 	 * done with abort processing, set current transaction state back to
@@ -4051,6 +4119,19 @@ ShowTransactionState(const char *str)
 static void
 ShowTransactionStateRec(TransactionState s)
 {
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+
+	if (s->nChildXids > 0)
+	{
+		int i;
+
+		appendStringInfo(&buf, "%u", s->childXids[0]);
+		for (i = 1; i < s->nChildXids; i++)
+			appendStringInfo(&buf, " %u", s->childXids[i]);
+	}
+
 	if (s->parent)
 		ShowTransactionStateRec(s->parent);
 
@@ -4064,8 +4145,9 @@ ShowTransactionStateRec(TransactionState s)
 							 (unsigned int) s->subTransactionId,
 							 (unsigned int) currentCommandId,
 							 currentCommandIdUsed ? " (used)" : "",
-							 s->nestingLevel,
-							 nodeToString(s->childXids))));
+							 s->nestingLevel, buf.data)));
+
+	pfree(buf.data);
 }
 
 /*
@@ -4144,36 +4226,22 @@ TransStateAsString(TransState state)
  * xactGetCommittedChildren
  *
  * Gets the list of committed children of the current transaction.	The return
- * value is the number of child transactions.  *children is set to point to a
- * palloc'd array of TransactionIds.  If there are no subxacts, *children is
- * set to NULL.
+ * value is the number of child transactions.  *ptr is set to point to an
+ * array of TransactionIds.  The array is allocated in TopTransactionContext;
+ * the caller should *not* pfree() it (this is a change from pre-8.4 code!).
+ * If there are no subxacts, *ptr is set to NULL.
  */
 int
 xactGetCommittedChildren(TransactionId **ptr)
 {
 	TransactionState s = CurrentTransactionState;
-	int			nchildren;
-	TransactionId *children;
-	ListCell   *p;
 
-	nchildren = list_length(s->childXids);
-	if (nchildren == 0)
-	{
+	if (s->nChildXids == 0)
 		*ptr = NULL;
-		return 0;
-	}
+	else
+		*ptr = s->childXids;
 
-	children = (TransactionId *) palloc(nchildren * sizeof(TransactionId));
-	*ptr = children;
-
-	foreach(p, s->childXids)
-	{
-		TransactionId child = lfirst_xid(p);
-
-		*children++ = child;
-	}
-
-	return nchildren;
+	return s->nChildXids;
 }
 
 /*

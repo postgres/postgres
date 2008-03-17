@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.39 2008/01/01 19:45:48 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.40 2008/03/17 02:18:55 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -827,7 +827,6 @@ StartPrepare(GlobalTransaction gxact)
 		save_state_data(children, hdr.nsubxacts * sizeof(TransactionId));
 		/* While we have the child-xact data, stuff it in the gxact too */
 		GXactLoadSubxactData(gxact, hdr.nsubxacts, children);
-		pfree(children);
 	}
 	if (hdr.ncommitrels > 0)
 	{

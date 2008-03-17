@@ -26,16 +26,11 @@
  * (At the moment, ints and Oids are the same size, but they may not
  * always be so; try to be careful to maintain the distinction.)
  *
- * There is also limited support for lists of TransactionIds; since these
- * are used in only one or two places, we don't provide a full implementation,
- * but map them onto Oid lists.  This effectively assumes that TransactionId
- * is no wider than Oid and both are unsigned types.
- *
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.57 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.58 2008/03/17 02:18:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,12 +153,6 @@ extern int	list_length(List *l);
 #define list_make2_oid(x1,x2)		lcons_oid(x1, list_make1_oid(x2))
 #define list_make3_oid(x1,x2,x3)	lcons_oid(x1, list_make2_oid(x2, x3))
 #define list_make4_oid(x1,x2,x3,x4) lcons_oid(x1, list_make3_oid(x2, x3, x4))
-
-/*
- * Limited support for lists of TransactionIds, mapped onto lists of Oids
- */
-#define lfirst_xid(lc)				((TransactionId) lfirst_oid(lc))
-#define lappend_xid(list, datum)	lappend_oid(list, (Oid) (datum))
 
 /*
  * foreach -
