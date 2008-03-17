@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.82 2008/03/16 23:15:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.83 2008/03/17 03:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,6 +100,7 @@
 
 #include <limits.h>
 
+#include "access/genam.h"
 #include "access/hash.h"
 #include "access/heapam.h"
 #include "access/nbtree.h"
@@ -346,6 +347,7 @@ struct Tuplesortstate
 	bool		enforceUnique;	/* complain if we find duplicate tuples */
 
 	/* These are specific to the index_hash subcase: */
+	FmgrInfo   *hash_proc;		/* call info for the hash function */
 	uint32		hash_mask;		/* mask for sortable part of hash code */
 
 	/*
@@ -676,6 +678,14 @@ tuplesort_begin_index_hash(Relation indexRel,
 	state->reversedirection = reversedirection_index_hash;
 
 	state->indexRel = indexRel;
+
+	/*
+	 * We look up the index column's hash function just once, to avoid
+	 * chewing lots of cycles in repeated index_getprocinfo calls.  This
+	 * assumes that our caller holds the index relation open throughout the
+	 * sort, else the pointer obtained here might cease to be valid.
+	 */
+	state->hash_proc = index_getprocinfo(indexRel, 1, HASHPROC);
 	state->hash_mask = hash_mask;
 
 	MemoryContextSwitchTo(oldcontext);
@@ -2809,10 +2819,11 @@ comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 
 	/* Compute hash codes and mask off bits we don't want to sort by */
 	Assert(!a->isnull1);
+	hash1 = DatumGetUInt32(FunctionCall1(state->hash_proc, a->datum1))
+		& state->hash_mask;
 	Assert(!b->isnull1);
-
-	hash1 = _hash_datum2hashkey(state->indexRel, a->datum1) & state->hash_mask;
-	hash2 = _hash_datum2hashkey(state->indexRel, b->datum1) & state->hash_mask;
+	hash2 = DatumGetUInt32(FunctionCall1(state->hash_proc, b->datum1))
+		& state->hash_mask;
 
 	if (hash1 > hash2)
 		return 1;
