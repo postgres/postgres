@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.40 2008/03/16 16:42:44 mha Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.41 2008/03/17 17:45:09 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,5 +235,11 @@ extern const char *const GucSource_Names[];
 extern struct config_generic **get_guc_variables(void);
 
 extern void build_guc_variables(void);
+
+/* search in enum options */
+extern const char *config_enum_lookup_by_value(struct config_enum *record, int val);
+extern bool config_enum_lookup_by_name(struct config_enum *record,
+									  const char *value, int *retval);
+
 
 #endif   /* GUC_TABLES_H */

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.438 2008/03/16 16:42:44 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.439 2008/03/17 17:45:09 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -168,9 +168,6 @@ static const char *show_tcp_keepalives_count(void);
 static bool assign_autovacuum_max_workers(int newval, bool doit, GucSource source);
 static bool assign_maxconnections(int newval, bool doit, GucSource source);
 
-static const char *config_enum_lookup_value(struct config_enum *record, int val);
-static bool config_enum_lookup_name(struct config_enum *record, 
-									const char *value, int *retval);
 static char *config_enum_get_options(struct config_enum *record, 
 									 const char *prefix, const char *suffix);
 
@@ -3144,7 +3141,7 @@ InitializeGUCOptions(void)
 												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %s",
 								 conf->gen.name, 
-								 config_enum_lookup_value(conf, conf->boot_val));
+								 config_enum_lookup_by_value(conf, conf->boot_val));
 					*conf->variable = conf->reset_val = conf->boot_val;
 					break;
 				}
@@ -4219,8 +4216,8 @@ parse_real(const char *value, double *result)
  * The returned string is a pointer to static data and not
  * allocated for modification.
  */
-static const char *
-config_enum_lookup_value(struct config_enum *record, int val)
+const char *
+config_enum_lookup_by_value(struct config_enum *record, int val)
 {
 	const struct config_enum_entry *entry = record->options;
 	while (entry && entry->name)
@@ -4242,8 +4239,8 @@ config_enum_lookup_value(struct config_enum *record, int val)
  * true. If it's not found, return FALSE and retval is set to 0.
  *
  */
-static bool
-config_enum_lookup_name(struct config_enum *record, const char *value, int *retval)
+bool
+config_enum_lookup_by_name(struct config_enum *record, const char *value, int *retval)
 {
 	const struct config_enum_entry *entry = record->options;
 	
@@ -4876,7 +4873,7 @@ set_config_option(const char *name, const char *value,
 
 				if (value)
 				{
-					if (!config_enum_lookup_name(conf, value, &newval))
+					if (!config_enum_lookup_by_name(conf, value, &newval))
 					{
 						char *hintmsg = config_enum_get_options(conf, "Available values: ", ".");
 
@@ -4906,7 +4903,7 @@ set_config_option(const char *name, const char *value,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("invalid value for parameter \"%s\": \"%s\"",
 										name, 
-										config_enum_lookup_value(conf, newval))));
+										config_enum_lookup_by_value(conf, newval))));
 						return false;
 					}
 
@@ -5007,7 +5004,7 @@ GetConfigOption(const char *name)
 			return *((struct config_string *) record)->variable;
 
 		case PGC_ENUM:
-			return config_enum_lookup_value((struct config_enum *) record,
+			return config_enum_lookup_by_value((struct config_enum *) record,
 											*((struct config_enum *) record)->variable);
 	}
 	return NULL;
@@ -5055,7 +5052,7 @@ GetConfigOptionResetString(const char *name)
 			return ((struct config_string *) record)->reset_val;
 
 		case PGC_ENUM:
-			return config_enum_lookup_value((struct config_enum *) record,
+			return config_enum_lookup_by_value((struct config_enum *) record,
 										    ((struct config_enum *) record)->reset_val);
 	}
 	return NULL;
@@ -6265,7 +6262,7 @@ _ShowOption(struct config_generic * record, bool use_units)
 				if(conf->show_hook)
 					val = (*conf->show_hook) ();
 				else
-					val = config_enum_lookup_value(conf, *conf->variable);
+					val = config_enum_lookup_by_value(conf, *conf->variable);
 			}
 			break;
 
@@ -6331,7 +6328,7 @@ is_newvalue_equal(struct config_generic * record, const char *newvalue)
 				struct config_enum *conf = (struct config_enum *) record;
 				int			newval;
 
-				return config_enum_lookup_name(conf, newvalue, &newval)
+				return config_enum_lookup_by_name(conf, newvalue, &newval)
 					&& *conf->variable == newval;
 			}
 	}
@@ -6425,7 +6422,7 @@ write_nondefault_variables(GucContext context)
 					{
 						struct config_enum *conf = (struct config_enum *) gconf;
 						
-						fprintf(fp, "%s", config_enum_lookup_value(conf, *conf->variable));
+						fprintf(fp, "%s", config_enum_lookup_by_value(conf, *conf->variable));
 					}
 					break;
 			}
