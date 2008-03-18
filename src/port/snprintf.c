@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.34 2007/03/26 21:44:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.35 2008/03/18 01:49:44 tgl Exp $
  */
 
 #include "c.h"
@@ -565,7 +565,10 @@ nextch2:
 					{
 						precision = starval;
 						if (precision < 0)
+						{
 							precision = 0;
+							pointflag = 0;
+						}
 					}
 					else
 					{
@@ -590,7 +593,10 @@ nextch2:
 					{
 						precision = starval;
 						if (precision < 0)
+						{
 							precision = 0;
+							pointflag = 0;
+						}
 					}
 					else
 					{
