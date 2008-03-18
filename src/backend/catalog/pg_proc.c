@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.148 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.149 2008/03/18 22:04:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -601,7 +601,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 												  proc->proargtypes.values,
 												  proc->pronargs);
 			(void) check_sql_fn_retval(funcoid, proc->prorettype,
-									   querytree_list, NULL);
+									   querytree_list,
+									   false, NULL);
 		}
 		else
 			querytree_list = pg_parse_query(prosrc);

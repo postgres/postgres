@@ -5,6 +5,7 @@
  *
  * NOTE: the intended sequence for invoking these operations is
  *		pull_up_IN_clauses
+ *		inline_set_returning_functions
  *		pull_up_subqueries
  *		do expression preprocessing (including flattening JOIN alias vars)
  *		reduce_outer_joins
@@ -15,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.49 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.50 2008/03/18 22:04:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,6 +123,52 @@ pull_up_IN_clauses(PlannerInfo *root, Node *node)
 	}
 	/* Stop if not an AND */
 	return node;
+}
+
+/*
+ * inline_set_returning_functions
+ *		Attempt to "inline" set-returning functions in the FROM clause.
+ *
+ * If an RTE_FUNCTION rtable entry invokes a set-returning function that
+ * contains just a simple SELECT, we can convert the rtable entry to an
+ * RTE_SUBQUERY entry exposing the SELECT directly.  This is especially
+ * useful if the subquery can then be "pulled up" for further optimization,
+ * but we do it even if not, to reduce executor overhead.
+ *
+ * This has to be done before we have started to do any optimization of
+ * subqueries, else any such steps wouldn't get applied to subqueries
+ * obtained via inlining.  However, we do it after pull_up_IN_clauses
+ * so that we can inline any functions used in IN subselects.
+ *
+ * Like most of the planner, this feels free to scribble on its input data
+ * structure.
+ */
+void
+inline_set_returning_functions(PlannerInfo *root)
+{
+	ListCell   *rt;
+
+	foreach(rt, root->parse->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
+
+		if (rte->rtekind == RTE_FUNCTION)
+		{
+			Query  *funcquery;
+
+			/* Check safety of expansion, and expand if possible */
+			funcquery = inline_set_returning_function(root, rte->funcexpr);
+			if (funcquery)
+			{
+				/* Successful expansion, replace the rtable entry */
+				rte->rtekind = RTE_SUBQUERY;
+				rte->subquery = funcquery;
+				rte->funcexpr = NULL;
+				rte->funccoltypes = NIL;
+				rte->funccoltypmods = NIL;
+			}
+		}
+	}
 }
 
 /*
@@ -296,6 +343,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->query_level = root->query_level;
 	subroot->planner_cxt = CurrentMemoryContext;
 	subroot->init_plans = NIL;
+	subroot->eq_classes = NIL;
 	subroot->in_info_list = NIL;
 	subroot->append_rel_list = NIL;
 
@@ -306,6 +354,11 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	if (subquery->hasSubLinks)
 		subquery->jointree->quals = pull_up_IN_clauses(subroot,
 												  subquery->jointree->quals);
+
+	/*
+	 * Similarly, inline any set-returning functions in its rangetable.
+	 */
+	inline_set_returning_functions(subroot);
 
 	/*
 	 * Recursively pull up the subquery's subqueries, so that

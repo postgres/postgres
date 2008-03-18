@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.226 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.227 2008/03/18 22:04:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,12 +253,19 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	/*
 	 * Look for IN clauses at the top level of WHERE, and transform them into
 	 * joins.  Note that this step only handles IN clauses originally at top
-	 * level of WHERE; if we pull up any subqueries in the next step, their
-	 * INs are processed just before pulling them up.
+	 * level of WHERE; if we pull up any subqueries below, their INs are
+	 * processed just before pulling them up.
 	 */
 	if (parse->hasSubLinks)
 		parse->jointree->quals = pull_up_IN_clauses(root,
 													parse->jointree->quals);
+
+	/*
+	 * Scan the rangetable for set-returning functions, and inline them
+	 * if possible (producing subqueries that might get pulled up next).
+	 * Recursion issues here are handled in the same way as for IN clauses.
+	 */
+	inline_set_returning_functions(root);
 
 	/*
 	 * Check to see if any subqueries in the rangetable can be merged into

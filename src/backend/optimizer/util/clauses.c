@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.254 2008/01/11 18:39:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.255 2008/03/18 22:04:14 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -38,6 +38,7 @@
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
+#include "rewrite/rewriteManip.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -62,6 +63,13 @@ typedef struct
 	List	   *args;
 	int		   *usecounts;
 } substitute_actual_parameters_context;
+
+typedef struct
+{
+	int			nargs;
+	List	   *args;
+	int			sublevels_up;
+} substitute_actual_srf_parameters_context;
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool count_agg_clauses_walker(Node *node, AggClauseCounts *counts);
@@ -100,6 +108,10 @@ static Node *substitute_actual_parameters_mutator(Node *node,
 							  substitute_actual_parameters_context *context);
 static void sql_inline_error_callback(void *arg);
 static Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod);
+static Query *substitute_actual_srf_parameters(Query *expr,
+											   int nargs, List *args);
+static Node *substitute_actual_srf_parameters_mutator(Node *node,
+							substitute_actual_srf_parameters_context *context);
 
 
 /*****************************************************************************
@@ -3027,17 +3039,25 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		list_length(querytree->targetList) != 1)
 		goto fail;
 
-	newexpr = (Node *) ((TargetEntry *) linitial(querytree->targetList))->expr;
-
 	/*
 	 * Make sure the function (still) returns what it's declared to.  This
 	 * will raise an error if wrong, but that's okay since the function would
-	 * fail at runtime anyway.	Note we do not try this until we have verified
-	 * that no rewriting was needed; that's probably not important, but let's
-	 * be careful.
+	 * fail at runtime anyway.  Note that check_sql_fn_retval will also insert
+	 * a RelabelType if needed to make the tlist expression match the declared
+	 * type of the function.
+	 *
+	 * Note: we do not try this until we have verified that no rewriting was
+	 * needed; that's probably not important, but let's be careful.
 	 */
-	if (check_sql_fn_retval(funcid, result_type, list_make1(querytree), NULL))
+	if (check_sql_fn_retval(funcid, result_type, list_make1(querytree),
+							true, NULL))
 		goto fail;				/* reject whole-tuple-result cases */
+
+	/* Now we can grab the tlist expression */
+	newexpr = (Node *) ((TargetEntry *) linitial(querytree->targetList))->expr;
+
+	/* Assert that check_sql_fn_retval did the right thing */
+	Assert(exprType(newexpr) == result_type);
 
 	/*
 	 * Additional validity checks on the expression.  It mustn't return a set,
@@ -3121,21 +3141,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	newexpr = copyObject(newexpr);
 
 	MemoryContextDelete(mycxt);
-
-	/*
-	 * Since check_sql_fn_retval allows binary-compatibility cases, the
-	 * expression we now have might return some type that's only binary
-	 * compatible with the original expression result type.  To avoid
-	 * confusing matters, insert a RelabelType in such cases.
-	 */
-	if (exprType(newexpr) != result_type)
-	{
-		Assert(IsBinaryCoercible(exprType(newexpr), result_type));
-		newexpr = (Node *) makeRelabelType((Expr *) newexpr,
-										   result_type,
-										   -1,
-										   COERCE_IMPLICIT_CAST);
-	}
 
 	/*
 	 * Recursively try to simplify the modified expression.  Here we must add
@@ -3304,6 +3309,285 @@ evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod)
 	return (Expr *) makeConst(result_type, result_typmod, resultTypLen,
 							  const_val, const_is_null,
 							  resultTypByVal);
+}
+
+
+/*
+ * inline_set_returning_function
+ *		Attempt to "inline" a set-returning function in the FROM clause.
+ *
+ * "node" is the expression from an RTE_FUNCTION rangetable entry.  If it
+ * represents a call of a set-returning SQL function that can safely be
+ * inlined, expand the function and return the substitute Query structure.
+ * Otherwise, return NULL.
+ *
+ * This has a good deal of similarity to inline_function(), but that's
+ * for the non-set-returning case, and there are enough differences to
+ * justify separate functions.
+ */
+Query *
+inline_set_returning_function(PlannerInfo *root, Node *node)
+{
+	FuncExpr   *fexpr;
+	HeapTuple	func_tuple;
+	Form_pg_proc funcform;
+	Oid		   *argtypes;
+	char	   *src;
+	Datum		tmp;
+	bool		isNull;
+	MemoryContext oldcxt;
+	MemoryContext mycxt;
+	ErrorContextCallback sqlerrcontext;
+	List	   *raw_parsetree_list;
+	List	   *querytree_list;
+	Query	   *querytree;
+	int			i;
+
+	/*
+	 * It doesn't make a lot of sense for a SQL SRF to refer to itself
+	 * in its own FROM clause, since that must cause infinite recursion
+	 * at runtime.  It will cause this code to recurse too, so check
+	 * for stack overflow.  (There's no need to do more.)
+	 */
+	check_stack_depth();
+
+	/* Fail if FROM item isn't a simple FuncExpr */
+	if (node == NULL || !IsA(node, FuncExpr))
+		return NULL;
+	fexpr = (FuncExpr *) node;
+
+	/*
+	 * The function must be declared to return a set, else inlining would
+	 * change the results if the contained SELECT didn't return exactly
+	 * one row.
+	 */
+	if (!fexpr->funcretset)
+		return NULL;
+
+	/* Fail if function returns RECORD ... we don't have enough context */
+	if (fexpr->funcresulttype == RECORDOID)
+		return NULL;
+
+	/*
+	 * Refuse to inline if the arguments contain any volatile functions or
+	 * sub-selects.  Volatile functions are rejected because inlining may
+	 * result in the arguments being evaluated multiple times, risking a
+	 * change in behavior.  Sub-selects are rejected partly for implementation
+	 * reasons (pushing them down another level might change their behavior)
+	 * and partly because they're likely to be expensive and so multiple
+	 * evaluation would be bad.
+	 */
+	if (contain_volatile_functions((Node *) fexpr->args) ||
+		contain_subplans((Node *) fexpr->args))
+		return NULL;
+
+	/* Check permission to call function (fail later, if not) */
+	if (pg_proc_aclcheck(fexpr->funcid, GetUserId(), ACL_EXECUTE) != ACLCHECK_OK)
+		return NULL;
+
+	/*
+	 * OK, let's take a look at the function's pg_proc entry.
+	 */
+	func_tuple = SearchSysCache(PROCOID,
+								ObjectIdGetDatum(fexpr->funcid),
+								0, 0, 0);
+	if (!HeapTupleIsValid(func_tuple))
+		elog(ERROR, "cache lookup failed for function %u", fexpr->funcid);
+	funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+
+	/*
+	 * Forget it if the function is not SQL-language or has other showstopper
+	 * properties.  In particular it mustn't be declared STRICT, since we
+	 * couldn't enforce that.  It also mustn't be VOLATILE, because that is
+	 * supposed to cause it to be executed with its own snapshot, rather than
+	 * sharing the snapshot of the calling query.  (The nargs check is just
+	 * paranoia, ditto rechecking proretset.)
+	 */
+	if (funcform->prolang != SQLlanguageId ||
+		funcform->proisstrict ||
+		funcform->provolatile == PROVOLATILE_VOLATILE ||
+		funcform->prosecdef ||
+		!funcform->proretset ||
+		!heap_attisnull(func_tuple, Anum_pg_proc_proconfig) ||
+		funcform->pronargs != list_length(fexpr->args))
+	{
+		ReleaseSysCache(func_tuple);
+		return NULL;
+	}
+
+	/*
+	 * Setup error traceback support for ereport().  This is so that we can
+	 * finger the function that bad information came from.
+	 */
+	sqlerrcontext.callback = sql_inline_error_callback;
+	sqlerrcontext.arg = func_tuple;
+	sqlerrcontext.previous = error_context_stack;
+	error_context_stack = &sqlerrcontext;
+
+	/*
+	 * Make a temporary memory context, so that we don't leak all the stuff
+	 * that parsing might create.
+	 */
+	mycxt = AllocSetContextCreate(CurrentMemoryContext,
+								  "inline_set_returning_function",
+								  ALLOCSET_DEFAULT_MINSIZE,
+								  ALLOCSET_DEFAULT_INITSIZE,
+								  ALLOCSET_DEFAULT_MAXSIZE);
+	oldcxt = MemoryContextSwitchTo(mycxt);
+
+	/* Check for polymorphic arguments, and substitute actual arg types */
+	argtypes = (Oid *) palloc(funcform->pronargs * sizeof(Oid));
+	memcpy(argtypes, funcform->proargtypes.values,
+		   funcform->pronargs * sizeof(Oid));
+	for (i = 0; i < funcform->pronargs; i++)
+	{
+		if (IsPolymorphicType(argtypes[i]))
+		{
+			argtypes[i] = exprType((Node *) list_nth(fexpr->args, i));
+		}
+	}
+
+	/* Fetch and parse the function body */
+	tmp = SysCacheGetAttr(PROCOID,
+						  func_tuple,
+						  Anum_pg_proc_prosrc,
+						  &isNull);
+	if (isNull)
+		elog(ERROR, "null prosrc for function %u", fexpr->funcid);
+	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
+
+	/*
+	 * Parse, analyze, and rewrite (unlike inline_function(), we can't
+	 * skip rewriting here).  We can fail as soon as we find more than
+	 * one query, though.
+	 */
+	raw_parsetree_list = pg_parse_query(src);
+	if (list_length(raw_parsetree_list) != 1)
+		goto fail;
+
+	querytree_list = pg_analyze_and_rewrite(linitial(raw_parsetree_list), src,
+							  argtypes, funcform->pronargs);
+	if (list_length(querytree_list) != 1)
+		goto fail;
+	querytree = linitial(querytree_list);
+
+	/*
+	 * The single command must be a regular results-returning SELECT.
+	 */
+	if (!IsA(querytree, Query) ||
+		querytree->commandType != CMD_SELECT ||
+		querytree->utilityStmt ||
+		querytree->intoClause)
+		goto fail;
+
+	/*
+	 * Make sure the function (still) returns what it's declared to.  This
+	 * will raise an error if wrong, but that's okay since the function would
+	 * fail at runtime anyway.  Note that check_sql_fn_retval will also insert
+	 * RelabelType(s) if needed to make the tlist expression(s) match the
+	 * declared type of the function.
+	 *
+	 * If the function returns a composite type, don't inline unless the
+	 * check shows it's returning a whole tuple result; otherwise what
+	 * it's returning is a single composite column which is not what we need.
+	 */
+	if (!check_sql_fn_retval(fexpr->funcid, fexpr->funcresulttype,
+							 querytree_list,
+							 true, NULL) &&
+		get_typtype(fexpr->funcresulttype) == TYPTYPE_COMPOSITE)
+		goto fail;				/* reject not-whole-tuple-result cases */
+
+	/*
+	 * Looks good --- substitute parameters into the query.
+	 */
+	querytree = substitute_actual_srf_parameters(querytree,
+												 funcform->pronargs,
+												 fexpr->args);
+
+	/*
+	 * Copy the modified query out of the temporary memory context,
+	 * and clean up.
+	 */
+	MemoryContextSwitchTo(oldcxt);
+
+	querytree = copyObject(querytree);
+
+	MemoryContextDelete(mycxt);
+	error_context_stack = sqlerrcontext.previous;
+	ReleaseSysCache(func_tuple);
+
+	return querytree;
+
+	/* Here if func is not inlinable: release temp memory and return NULL */
+fail:
+	MemoryContextSwitchTo(oldcxt);
+	MemoryContextDelete(mycxt);
+	error_context_stack = sqlerrcontext.previous;
+	ReleaseSysCache(func_tuple);
+
+	return NULL;
+}
+
+/*
+ * Replace Param nodes by appropriate actual parameters
+ *
+ * This is just enough different from substitute_actual_parameters()
+ * that it needs its own code.
+ */
+static Query *
+substitute_actual_srf_parameters(Query *expr, int nargs, List *args)
+{
+	substitute_actual_srf_parameters_context context;
+
+	context.nargs = nargs;
+	context.args = args;
+	context.sublevels_up = 1;
+
+	return query_tree_mutator(expr,
+							  substitute_actual_srf_parameters_mutator,
+							  &context,
+							  0);
+}
+
+static Node *
+substitute_actual_srf_parameters_mutator(Node *node,
+							substitute_actual_srf_parameters_context *context)
+{
+	Node   *result;
+
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Query))
+	{
+		context->sublevels_up++;
+		result = (Node *) query_tree_mutator((Query *) node,
+									  substitute_actual_srf_parameters_mutator,
+											 (void *) context,
+											 0);
+		context->sublevels_up--;
+		return result;
+	}
+	if (IsA(node, Param))
+	{
+		Param	   *param = (Param *) node;
+
+		if (param->paramkind == PARAM_EXTERN)
+		{
+			if (param->paramid <= 0 || param->paramid > context->nargs)
+				elog(ERROR, "invalid paramid: %d", param->paramid);
+
+			/*
+			 * Since the parameter is being inserted into a subquery,
+			 * we must adjust levels.
+			 */
+			result = copyObject(list_nth(context->args, param->paramid - 1));
+			IncrementVarSublevelsUp(result, context->sublevels_up, 0);
+			return result;
+		}
+	}
+	return expression_tree_mutator(node,
+								   substitute_actual_srf_parameters_mutator,
+								   (void *) context);
 }
 
 
