@@ -2,7 +2,7 @@
 #
 # Makefile for src/backend/snowball
 #
-# $PostgreSQL: pgsql/src/backend/snowball/Makefile,v 1.4 2007/10/23 20:46:12 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/snowball/Makefile,v 1.5 2008/03/18 16:24:50 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -92,7 +92,8 @@ $(SQLSCRIPT): Makefile snowball_func.sql.in snowball.sql.in
 ifeq ($(enable_shared), yes)
 	echo '-- Language-specific snowball dictionaries' > $@
 	cat $(srcdir)/snowball_func.sql.in >> $@	
-	@set $(LANGUAGES) ; \
+	@set -e; \
+	set $(LANGUAGES) ; \
 	while [ "$$#" -gt 0 ] ; \
 	do \
 		lang=$$1; shift; \
@@ -120,7 +121,8 @@ ifeq ($(enable_shared), yes)
 	$(INSTALL_SHLIB) $(shlib) '$(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)'
 endif
 	$(INSTALL_DATA) $(SQLSCRIPT) '$(DESTDIR)$(datadir)'
-	@set $(LANGUAGES) ; \
+	@set -e; \
+	set $(LANGUAGES) ; \
 	while [ "$$#" -gt 0 ] ; \
 	do \
 		lang=$$1; shift; shift; \
@@ -135,7 +137,8 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)'
 	rm -f '$(DESTDIR)$(datadir)/$(SQLSCRIPT)'
-	@set $(LANGUAGES) ; \
+	@set -e; \
+	set $(LANGUAGES) ; \
 	while [ "$$#" -gt 0 ] ; \
 	do \
 		lang=$$1; shift; shift;  \

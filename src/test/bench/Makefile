@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/test/bench/Makefile,v 1.15 2008/01/01 19:46:00 momjian Exp $
+#    $PostgreSQL: pgsql/src/test/bench/Makefile,v 1.16 2008/03/18 16:24:50 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,9 +31,9 @@ create.sql: create.source
 bench.sql: 
 	x=1; \
 	for i in `ls query[0-9][0-9]`; do \
-	  echo "select $$x as x" >> bench.sql; \
-	  cat $$i >> bench.sql; \
-	  x=`expr $$x + 1`; \
+	  echo "select $$x as x" >> bench.sql && \
+	  cat $$i >> bench.sql && \
+	  x=`expr $$x + 1` || exit; \
 	done
 
 runtest: $(OUTFILES)

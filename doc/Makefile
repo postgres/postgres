@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/doc/Makefile,v 1.30 2008/02/17 16:36:42 petere Exp $
+# $PostgreSQL: pgsql/doc/Makefile,v 1.31 2008/03/18 16:24:50 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -90,10 +90,10 @@ endif
 
 uninstall:
 ifdef found_html
-	-rm -f $(addprefix $(DESTDIR)$(htmldir)/html/, $(shell gunzip -c $(srcdir)/postgres.tar.gz | tar tf -))
+	rm -f $(addprefix $(DESTDIR)$(htmldir)/html/, $(shell gunzip -c $(srcdir)/postgres.tar.gz | tar tf -))
 endif
 ifdef found_man
-	-rm -f $(addprefix $(DESTDIR)$(mandir)/, $(shell gunzip -c $(srcdir)/man.tar.gz | tar tf - | sed -e 's,man$(sqlmansect_dummy)/,man$(sqlmansectnum)/,' -e 's/.$(sqlmansect_dummy)$$/.$(sqlmansect)/'))
+	rm -f $(addprefix $(DESTDIR)$(mandir)/, $(shell gunzip -c $(srcdir)/man.tar.gz | tar tf - | sed -e 's,man$(sqlmansect_dummy)/,man$(sqlmansectnum)/,' -e 's/.$(sqlmansect_dummy)$$/.$(sqlmansect)/'))
 endif
 
 

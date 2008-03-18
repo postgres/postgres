@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.71 2008/01/01 19:46:00 momjian Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.72 2008/03/18 16:24:50 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -133,7 +133,7 @@ all-spi:
 # Tablespace setup
 .PHONY: tablespace-setup
 tablespace-setup:
-	-rm -rf ./testtablespace
+	rm -rf ./testtablespace
 	mkdir ./testtablespace
 
 ##

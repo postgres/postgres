@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/pl/Makefile,v 1.26 2007/06/01 19:38:07 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/Makefile,v 1.27 2008/03/18 16:24:50 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,11 +26,8 @@ ifeq ($(with_tcl), yes)
 DIRS += tcl
 endif
 
-all install installdirs uninstall distprep:
-	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit 1; done
-
-clean distclean maintainer-clean:
-	@for dir in $(DIRS); do $(MAKE) -C $$dir $@; done
+all install installdirs uninstall distprep clean distclean maintainer-clean:
+	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
 
 # We'd like check operations to run all the subtests before failing.
 check installcheck:

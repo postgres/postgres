@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/Makefile,v 1.42 2007/08/21 01:11:12 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile,v 1.43 2008/03/18 16:24:50 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -59,18 +59,18 @@ clean:
 	$(MAKE) -C test/thread $@
 
 distclean maintainer-clean:
-	-$(MAKE) -C port $@
-	-$(MAKE) -C timezone $@
-	-$(MAKE) -C backend $@
-	-$(MAKE) -C backend/snowball $@
-	-$(MAKE) -C include $@
-	-$(MAKE) -C interfaces $@
-	-$(MAKE) -C bin $@
-	-$(MAKE) -C pl $@
-	-$(MAKE) -C makefiles $@
-	-$(MAKE) -C test $@
-	-$(MAKE) -C tutorial NO_PGXS=1 $@
-	-$(MAKE) -C test/thread $@
+	$(MAKE) -C port $@
+	$(MAKE) -C timezone $@
+	$(MAKE) -C backend $@
+	$(MAKE) -C backend/snowball $@
+	$(MAKE) -C include $@
+	$(MAKE) -C interfaces $@
+	$(MAKE) -C bin $@
+	$(MAKE) -C pl $@
+	$(MAKE) -C makefiles $@
+	$(MAKE) -C test $@
+	$(MAKE) -C tutorial NO_PGXS=1 $@
+	$(MAKE) -C test/thread $@
 	rm -f Makefile.port Makefile.global
 
 
