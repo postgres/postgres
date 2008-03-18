@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue Mar 18 14:40:32 EDT 2008
+Last updated:           Tue Mar 18 19:32:48 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1312,8 +1312,9 @@ first.  There is also a developer's wiki at<br/>
   of indexes on TOAST tables.
 </p>
   </li><li>Speed WAL recovery by allowing more than one page to be prefetched
-<p>  This involves having a separate process that can be told which pages
-  the recovery process will need in the near future.
+<p>  This should be done utilizing the same infrastructure used for
+  prefetching in general to avoid introducing complex error-prone code
+  in WAL replay.
   <a href="http://archives.postgresql.org/pgsql-general/2007-12/msg00683.php">http://archives.postgresql.org/pgsql-general/2007-12/msg00683.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-12/msg00497.php">http://archives.postgresql.org/pgsql-hackers/2007-12/msg00497.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2008-02/msg01279.php">http://archives.postgresql.org/pgsql-hackers/2008-02/msg01279.php</a>
