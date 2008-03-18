@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 18 11:30:48 EDT 2008
+Last updated:		Tue Mar 18 14:40:32 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1654,6 +1654,13 @@ Miscellaneous Performance
   indexscan qualification for a third relation
 
   http://archives.postgresql.org/pgsql-performance/2007-12/msg00090.php
+
+* Consider not storing a NULL bitmap on disk if all the NULLs are
+  trailing
+
+  http://archives.postgresql.org/pgsql-hackers/2007-12/msg00624.php
+  http://archives.postgresql.org/pgsql-patches/2007-12/msg00109.php
+
 
 
 Source Code
