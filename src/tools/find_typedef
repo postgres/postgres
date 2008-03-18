@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/find_typedef,v 1.9 2008/03/18 22:45:11 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/find_typedef,v 1.10 2008/03/18 23:04:34 momjian Exp $
 
 # This script attempts to find all typedef's in the postgres binaries
 # by using 'nm' to report all typedef debugging symbols.
@@ -36,7 +36,7 @@ then	echo "Usage:  $0 postgres_binary_directory [...]" 1>&2
 fi
 
 for DIR
-do
+do	# if objdump -W is recognized, only one line of error should appear
 	if [ `objdump -W 2>&1 | wc -l` -eq 1 ]
 	then	# Linux
 		# unfortunately the Linux version doesn't show unreferenced typedefs
