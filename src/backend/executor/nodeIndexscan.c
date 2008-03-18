@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.125 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.126 2008/03/18 03:54:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,7 +352,13 @@ ExecIndexAdvanceArrayKeys(IndexArrayKeyInfo *arrayKeys, int numArrayKeys)
 	bool		found = false;
 	int			j;
 
-	for (j = 0; j < numArrayKeys; j++)
+	/*
+	 * Note we advance the rightmost array key most quickly, since it will
+	 * correspond to the lowest-order index column among the available
+	 * qualifications.  This is hypothesized to result in better locality
+	 * of access in the index.
+	 */
+	for (j = numArrayKeys - 1; j >= 0; j--)
 	{
 		ScanKey		scan_key = arrayKeys[j].scan_key;
 		int			next_elem = arrayKeys[j].next_elem;
