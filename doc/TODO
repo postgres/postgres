@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 18 19:32:48 EDT 2008
+Last updated:		Tue Mar 18 19:35:12 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1630,13 +1630,18 @@ Miscellaneous Performance
 
   http://archives.postgresql.org/pgsql-general/2007-02/msg00493.php
 
-* Experiment with multi-threaded backend better resource utilization
+* Experiment with multi-threaded backend better I/O utilization
 
-  This would allow a single query to make use of multiple CPU's or
-  multiple I/O channels simultaneously.  One idea is to create a
-  background reader that can pre-fetch sequential and index scan
-  pages needed by other backends.  This could be expanded to allow
-  concurrent reads from multiple devices in a partitioned table.
+  This would allow a single query to make use of multiple I/O channels
+  simultaneously.  One idea is to create a background reader that can
+  pre-fetch sequential and index scan pages needed by other backends.
+  This could be expanded to allow concurrent reads from multiple devices
+  in a partitioned table.
+
+* Experiment with multi-threaded backend better CPU utilization
+
+  This would allow several CPUs to be used for a single query, such as
+  for sorting or query execution.
 
 * Consider increasing the minimum allowed number of shared buffers
 
