@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.5 2007/12/11 02:31:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.6 2008/03/19 03:33:21 ishii Exp $ -->
 
 <sect1 id="pgbench">
  <title>pgbench</title>
@@ -171,6 +171,23 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <entry><literal>-t</literal> <replaceable>transactions</></entry>
       <entry>
        Number of transactions each client runs.  Default is 10.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-M</literal> <replaceable>querymode</></entry>
+      <entry>
+       Choose the query mode from the follows. default is simple.
+         <itemizedlist>
+          <listitem>
+           <para>simple: using simple query protocol.</para>
+          </listitem>
+          <listitem>
+           <para>extended: using extended protocol.</para>
+          </listitem>
+          <listitem>
+           <para>prepared: using extended protocol with prepared statements.</para>
+          </listitem>
+         </itemizedlist>
       </entry>
      </row>
      <row>

@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.78 2008/03/19 00:29:35 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.79 2008/03/19 03:33:21 ishii Exp $
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -112,6 +112,8 @@ typedef struct
 	char	   *value;			/* its value */
 }	Variable;
 
+#define MAX_FILES		128		/* max number of SQL script files allowed */
+
 /*
  * structures used in custom query mode
  */
@@ -131,6 +133,7 @@ typedef struct
 	int			nvariables;
 	struct timeval txn_begin;	/* used for measuring latencies */
 	int			use_file;		/* index in sql_files for this client */
+	bool		prepared[MAX_FILES];
 }	CState;
 
 /*
@@ -140,14 +143,23 @@ typedef struct
 #define META_COMMAND	2
 #define MAX_ARGS		10
 
+typedef enum QueryMode
+{
+	QUERY_SIMPLE,	/* simple query */
+	QUERY_EXTENDED,	/* extended query */
+	QUERY_PREPARED,	/* extended query with prepared statements */
+	NUM_QUERYMODE
+} QueryMode;
+
+static QueryMode	querymode = QUERY_SIMPLE;
+static const char *QUERYMODE[] = { "simple", "extended", "prepared" };
+
 typedef struct
 {
 	int			type;			/* command type (SQL_COMMAND or META_COMMAND) */
 	int			argc;			/* number of commands */
 	char	   *argv[MAX_ARGS]; /* command list */
 }	Command;
-
-#define MAX_FILES		128		/* max number of SQL script files allowed */
 
 Command   **sql_files[MAX_FILES];		/* SQL script files */
 int			num_files;			/* its number */
@@ -229,7 +241,7 @@ diffTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-f filename][-l][-U login][-d][dbname]\n");
+	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-M querymode][-f filename][-l][-U login][-d][dbname]\n");
 	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor] [-F fillfactor] [-U login][-d][dbname]\n");
 }
 
@@ -440,67 +452,103 @@ putVariable(CState * st, char *name, char *value)
 }
 
 static char *
+parseVariable(const char *sql, int *eaten)
+{
+	int		i = 0;
+	char   *name;
+
+	do
+	{
+		i++;
+	} while (isalnum((unsigned char) sql[i]) || sql[i] == '_');
+	if (i == 1)
+		return NULL;
+
+	name = malloc(i);
+	if (name == NULL)
+		return NULL;
+	memcpy(name, &sql[1], i - 1);
+	name[i - 1] = '\0';
+
+	*eaten = i;
+	return name;
+}
+
+static char *
+replaceVariable(char **sql, char *param, int len, char *value)
+{
+	int	valueln = strlen(value);
+
+	if (valueln > len)
+	{
+		char   *tmp;
+		size_t	offset = param - *sql;
+
+		tmp = realloc(*sql, strlen(*sql) - len + valueln + 1);
+		if (tmp == NULL)
+		{
+			free(*sql);
+			return NULL;
+		}
+		*sql = tmp;
+		param = *sql + offset;
+	}
+
+	if (valueln != len)
+		memmove(param + valueln, param + len, strlen(param + len) + 1);
+	strncpy(param, value, valueln);
+
+	return param + valueln;
+}
+
+static char *
 assignVariables(CState * st, char *sql)
 {
-	int			i,
-				j;
 	char	   *p,
 			   *name,
 			   *val;
-	void	   *tmp;
 
-	i = 0;
-	while ((p = strchr(&sql[i], ':')) != NULL)
+	p = sql;
+	while ((p = strchr(p, ':')) != NULL)
 	{
-		i = j = p - sql;
-		do
-		{
-			i++;
-		} while (isalnum((unsigned char) sql[i]) || sql[i] == '_');
-		if (i == j + 1)
-			continue;
+		int		eaten;
 
-		name = malloc(i - j);
+		name = parseVariable(p, &eaten);
 		if (name == NULL)
-			return NULL;
-		memcpy(name, &sql[j + 1], i - (j + 1));
-		name[i - (j + 1)] = '\0';
+		{
+			while (*p == ':') { p++; }
+			continue;
+		}
+
 		val = getVariable(st, name);
 		free(name);
 		if (val == NULL)
+		{
+			p++;
 			continue;
-
-		if (strlen(val) > i - j)
-		{
-			tmp = realloc(sql, strlen(sql) - (i - j) + strlen(val) + 1);
-			if (tmp == NULL)
-			{
-				free(sql);
-				return NULL;
-			}
-			sql = tmp;
 		}
 
-		if (strlen(val) != i - j)
-			memmove(&sql[j + strlen(val)], &sql[i], strlen(&sql[i]) + 1);
-
-		strncpy(&sql[j], val, strlen(val));
-
-		if (strlen(val) < i - j)
-		{
-			tmp = realloc(sql, strlen(sql) + 1);
-			if (tmp == NULL)
-			{
-				free(sql);
-				return NULL;
-			}
-			sql = tmp;
-		}
-
-		i = j + strlen(val);
+		if ((p = replaceVariable(&sql, p, eaten, val)) == NULL)
+			return NULL;
 	}
 
 	return sql;
+}
+
+static void
+getQueryParams(CState *st, const Command *command, const char **params)
+{
+	int		i;
+
+	for (i = 0; i < command->argc - 1; i++)
+		params[i] = getVariable(st, command->argv[i+1]);
+}
+
+#define MAX_PREPARE_NAME		32
+static void
+preparedStatementName(char *buffer, int file, int state)
+{
+	sprintf(buffer, "P%d_%d", file, state);
 }
 
 static void
@@ -628,29 +676,83 @@ top:
 
 	if (commands[st->state]->type == SQL_COMMAND)
 	{
-		char	   *sql;
+		const Command  *command = commands[st->state];
+		int				r;
 
-		if ((sql = strdup(commands[st->state]->argv[0])) == NULL
-			|| (sql = assignVariables(st, sql)) == NULL)
+		if (querymode == QUERY_SIMPLE)
 		{
-			fprintf(stderr, "out of memory\n");
-			st->ecnt++;
-			return;
-		}
+			char	   *sql;
 
-		if (debug)
-			fprintf(stderr, "client %d sending %s\n", n, sql);
-		if (PQsendQuery(st->con, sql) == 0)
+			if ((sql = strdup(command->argv[0])) == NULL
+				|| (sql = assignVariables(st, sql)) == NULL)
+			{
+				fprintf(stderr, "out of memory\n");
+				st->ecnt++;
+				return;
+			}
+
+			if (debug)
+				fprintf(stderr, "client %d sending %s\n", n, sql);
+			r = PQsendQuery(st->con, sql);
+			free(sql);
+		}
+		else if (querymode == QUERY_EXTENDED)
+		{
+			const char		 *sql = command->argv[0];
+			const char		 *params[MAX_ARGS];
+
+			getQueryParams(st, command, params);
+
+			if (debug)
+				fprintf(stderr, "client %d sending %s\n", n, sql);
+			r = PQsendQueryParams(st->con, sql, command->argc - 1,
+				NULL, params, NULL, NULL, 0);
+		}
+		else if (querymode == QUERY_PREPARED)
+		{
+			char		name[MAX_PREPARE_NAME];
+			const char *params[MAX_ARGS];
+
+			if (!st->prepared[st->use_file])
+			{
+				int		j;
+
+				for (j = 0; commands[j] != NULL; j++)
+				{
+					PGresult   *res;
+					char		name[MAX_PREPARE_NAME];
+
+					if (commands[j]->type != SQL_COMMAND)
+						continue;
+					preparedStatementName(name, st->use_file, j);
+					res = PQprepare(st->con, name,
+						commands[j]->argv[0], commands[j]->argc - 1, NULL);
+					if (PQresultStatus(res) != PGRES_COMMAND_OK)
+						fprintf(stderr, "%s", PQerrorMessage(st->con));
+					PQclear(res);
+				}
+				st->prepared[st->use_file] = true;
+			}
+
+			getQueryParams(st, command, params);
+			preparedStatementName(name, st->use_file, st->state);
+
+			if (debug)
+				fprintf(stderr, "client %d sending %s\n", n, name);
+			r = PQsendQueryPrepared(st->con, name, command->argc - 1,
+				params, NULL, NULL, 0);
+		}
+		else /* unknown sql mode */
+			r = 0;
+
+		if (r == 0)
 		{
 			if (debug)
-				fprintf(stderr, "PQsendQuery(%s)failed\n", sql);
+				fprintf(stderr, "client %d cannot send %s\n", n, command->argv[0]);
 			st->ecnt++;
 		}
 		else
-		{
 			st->listen = 1;		/* flags that should be listened */
-		}
-		free(sql);
 	}
 	else if (commands[st->state]->type == META_COMMAND)
 	{
@@ -984,6 +1086,52 @@ init(void)
 	PQfinish(con);
 }
 
+/*
+ * Parse the raw sql and replace :param to $n.
+ */
+static bool
+parseQuery(Command *cmd, const char *raw_sql)
+{
+	char	   *sql,
+			   *p;
+
+	sql = strdup(raw_sql);
+	if (sql == NULL)
+		return false;
+	cmd->argc = 1;
+
+	p = sql;
+	while ((p = strchr(p, ':')) != NULL)
+	{
+		char	var[12];
+		char   *name;
+		int		eaten;
+
+		name = parseVariable(p, &eaten);
+		if (name == NULL)
+		{
+			while (*p == ':') { p++; }
+			continue;
+		}
+
+		if (cmd->argc >= MAX_ARGS)
+		{
+			fprintf(stderr, "statement has too many arguments (maximum is %d): %s\n", MAX_ARGS - 1, raw_sql);
+			return false;
+		}
+
+		sprintf(var, "$%d", cmd->argc);
+		if ((p = replaceVariable(&sql, p, eaten, var)) == NULL)
+			return false;
+
+		cmd->argv[cmd->argc] = name;
+		cmd->argc++;
+	}
+
+	cmd->argv[0] = sql;
+	return true;
+}
+
 static Command *
 process_commands(char *buf)
 {
@@ -1090,10 +1238,21 @@ process_commands(char *buf)
 	{
 		my_commands->type = SQL_COMMAND;
 
-		if ((my_commands->argv[0] = strdup(p)) == NULL)
-			return NULL;
-
-		my_commands->argc++;
+		switch (querymode)
+		{
+			case QUERY_SIMPLE:
+				if ((my_commands->argv[0] = strdup(p)) == NULL)
+					return NULL;
+				my_commands->argc++;
+				break;
+			case QUERY_EXTENDED:
+			case QUERY_PREPARED:
+				if (!parseQuery(my_commands, p))
+					return NULL;
+				break;
+			default:
+				return NULL;
+		}
 	}
 
 	return my_commands;
@@ -1270,6 +1429,7 @@ printResults(
 
 	printf("transaction type: %s\n", s);
 	printf("scaling factor: %d\n", scale);
+	printf("query mode: %s\n", QUERYMODE[querymode]);
 	printf("number of clients: %d\n", nclients);
 	printf("number of transactions per client: %d\n", nxacts);
 	printf("number of transactions actually processed: %d/%d\n", normal_xacts, nxacts * nclients);
@@ -1335,7 +1495,7 @@ main(int argc, char **argv)
 
 	memset(state, 0, sizeof(*state));
 
-	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:CNSlf:D:F:")) != -1)
+	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:CNSlf:D:F:M:")) != -1)
 	{
 		switch (c)
 		{
@@ -1442,6 +1602,21 @@ main(int argc, char **argv)
 				if ((fillfactor < 10) || (fillfactor > 100))
 				{
 					fprintf(stderr, "invalid fillfactor: %d\n", fillfactor);
+					exit(1);
+				}
+				break;
+			case 'M':
+				if (num_files > 0)
+				{
+					fprintf(stderr, "querymode(-M) should be specifiled before transaction scripts(-f)\n");
+					exit(1);
+				}
+				for (querymode = 0; querymode < NUM_QUERYMODE; querymode++)
+					if (strcmp(optarg, QUERYMODE[querymode]) == 0)
+						break;
+				if (querymode >= NUM_QUERYMODE)
+				{
+					fprintf(stderr, "invalid querymode(-M): %s\n", optarg);
 					exit(1);
 				}
 				break;
