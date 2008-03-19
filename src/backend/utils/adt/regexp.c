@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.78 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.79 2008/03/19 02:40:37 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -576,8 +576,13 @@ textregexsubstr(PG_FUNCTION_ARGS)
 {
 	text	   *s = PG_GETARG_TEXT_PP(0);
 	text	   *p = PG_GETARG_TEXT_PP(1);
-	bool		match;
+	regex_t    *re;
 	regmatch_t	pmatch[2];
+	int			so,
+				eo;
+
+	/* Compile RE */
+	re = RE_compile_and_cache(p, regex_flavor);
 
 	/*
 	 * We pass two regmatch_t structs to get info about the overall match and
@@ -585,34 +590,37 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	 * is a parenthesized subexpression, we return what it matched; else
 	 * return what the whole regexp matched.
 	 */
-	match = RE_compile_and_execute(p,
-								   VARDATA_ANY(s),
-								   VARSIZE_ANY_EXHDR(s),
-								   regex_flavor,
-								   2, pmatch);
+	if (!RE_execute(re,
+					VARDATA_ANY(s), VARSIZE_ANY_EXHDR(s),
+					2, pmatch))
+		PG_RETURN_NULL();		/* definitely no match */
 
-	/* match? then return the substring matching the pattern */
-	if (match)
+	if (re->re_nsub > 0)
 	{
-		int			so,
-					eo;
-
+		/* has parenthesized subexpressions, use the first one */
 		so = pmatch[1].rm_so;
 		eo = pmatch[1].rm_eo;
-		if (so < 0 || eo < 0)
-		{
-			/* no parenthesized subexpression */
-			so = pmatch[0].rm_so;
-			eo = pmatch[0].rm_eo;
-		}
-
-		return DirectFunctionCall3(text_substr,
-								   PointerGetDatum(s),
-								   Int32GetDatum(so + 1),
-								   Int32GetDatum(eo - so));
+	}
+	else
+	{
+		/* no parenthesized subexpression, use whole match */
+		so = pmatch[0].rm_so;
+		eo = pmatch[0].rm_eo;
 	}
 
-	PG_RETURN_NULL();
+	/*
+	 * It is possible to have a match to the whole pattern but no match
+	 * for a subexpression; for example 'foo(bar)?' is considered to match
+	 * 'foo' but there is no subexpression match.  So this extra test for
+	 * match failure is not redundant.
+	 */
+	if (so < 0 || eo < 0)
+		PG_RETURN_NULL();
+
+	return DirectFunctionCall3(text_substr,
+							   PointerGetDatum(s),
+							   Int32GetDatum(so + 1),
+							   Int32GetDatum(eo - so));
 }
 
 /*
