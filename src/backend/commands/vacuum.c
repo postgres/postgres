@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.367 2008/03/14 17:25:58 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.368 2008/03/19 14:18:21 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,15 +482,6 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 		 * PostgresMain().
 		 */
 		StartTransactionCommand();
-
-		/*
-		 * Re-establish the transaction snapshot.  This is wasted effort when
-		 * we are called as a normal utility command, because the new
-		 * transaction will be dropped immediately by PostgresMain(); but it's
-		 * necessary if we are called from autovacuum because autovacuum might
-		 * continue on to do an ANALYZE-only call.
-		 */
-		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 	}
 
 	if (vacstmt->vacuum && !IsAutoVacuumWorkerProcess())
