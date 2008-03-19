@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.49.4.4 2007/01/03 22:39:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.49.4.5 2008/03/19 02:41:15 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -80,42 +80,31 @@ static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
 
 
 /*
- * RE_compile_and_execute - compile and execute a RE, caching if possible
+ * RE_compile_and_cache - compile a RE, caching if possible
  *
- * Returns TRUE on match, FALSE on no match
+ * Returns regex_t *
  *
  *	text_re --- the pattern, expressed as an *untoasted* TEXT object
- *	dat --- the data to match against (need not be null-terminated)
- *	dat_len --- the length of the data string
  *	cflags --- compile options for the pattern
- *	nmatch, pmatch	--- optional return area for match details
  *
- * Both pattern and data are given in the database encoding.  We internally
- * convert to array of pg_wchar which is what Spencer's regex package wants.
+ * Pattern is given in the database encoding.  We internally convert to
+ * array of pg_wchar which is what Spencer's regex package wants.
  */
-static bool
-RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
-					   int cflags, int nmatch, regmatch_t *pmatch)
+static regex_t *
+RE_compile_and_cache(text *text_re, int cflags)
 {
 	int			text_re_len = VARSIZE(text_re);
-	pg_wchar   *data;
-	size_t		data_len;
 	pg_wchar   *pattern;
 	size_t		pattern_len;
 	int			i;
 	int			regcomp_result;
-	int			regexec_result;
 	cached_re_str re_temp;
 	char		errMsg[100];
 
-	/* Convert data string to wide characters */
-	data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
-	data_len = pg_mb2wchar_with_len(dat, data, dat_len);
-
 	/*
 	 * Look for a match among previously compiled REs.	Since the data
-	 * structure is self-organizing with most-used entries at the front,
-	 * our search strategy can just be to scan from the front.
+	 * structure is self-organizing with most-used entries at the front, our
+	 * search strategy can just be to scan from the front.
 	 */
 	for (i = 0; i < num_res; i++)
 	{
@@ -133,28 +122,7 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 				re_array[0] = re_temp;
 			}
 
-			/* Perform RE match and return result */
-			regexec_result = pg_regexec(&re_array[0].cre_re,
-										data,
-										data_len,
-										NULL,	/* no details */
-										nmatch,
-										pmatch,
-										0);
-
-			pfree(data);
-
-			if (regexec_result != REG_OKAY && regexec_result != REG_NOMATCH)
-			{
-				/* re failed??? */
-				pg_regerror(regexec_result, &re_array[0].cre_re,
-							errMsg, sizeof(errMsg));
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-						 errmsg("regular expression failed: %s", errMsg)));
-			}
-
-			return (regexec_result == REG_OKAY);
+			return &re_array[0].cre_re;
 		}
 	}
 
@@ -165,7 +133,7 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 
 	/* Convert pattern string to wide characters */
 	pattern = (pg_wchar *) palloc((text_re_len - VARHDRSZ + 1) * sizeof(pg_wchar));
-	pattern_len = pg_mb2wchar_with_len((unsigned char *) VARDATA(text_re),
+	pattern_len = pg_mb2wchar_with_len(VARDATA(text_re),
 									   pattern,
 									   text_re_len - VARHDRSZ);
 
@@ -202,8 +170,8 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 	re_temp.cre_flags = cflags;
 
 	/*
-	 * Okay, we have a valid new item in re_temp; insert it into the
-	 * storage array.  Discard last entry if needed.
+	 * Okay, we have a valid new item in re_temp; insert it into the storage
+	 * array.  Discard last entry if needed.
 	 */
 	if (num_res >= MAX_CACHED_RES)
 	{
@@ -219,8 +187,37 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 	re_array[0] = re_temp;
 	num_res++;
 
+	return &re_array[0].cre_re;
+}
+
+/*
+ * RE_execute - execute a RE
+ *
+ * Returns TRUE on match, FALSE on no match
+ *
+ *	re --- the compiled pattern as returned by RE_compile_and_cache
+ *	dat --- the data to match against (need not be null-terminated)
+ *	dat_len --- the length of the data string
+ *	nmatch, pmatch	--- optional return area for match details
+ *
+ * Data is given in the database encoding.	We internally
+ * convert to array of pg_wchar which is what Spencer's regex package wants.
+ */
+static bool
+RE_execute(regex_t *re, char *dat, int dat_len,
+		   int nmatch, regmatch_t *pmatch)
+{
+	pg_wchar   *data;
+	size_t		data_len;
+	int			regexec_result;
+	char		errMsg[100];
+
+	/* Convert data string to wide characters */
+	data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
+	data_len = pg_mb2wchar_with_len(dat, data, dat_len);
+
 	/* Perform RE match and return result */
-	regexec_result = pg_regexec(&re_array[0].cre_re,
+	regexec_result = pg_regexec(re,
 								data,
 								data_len,
 								NULL,	/* no details */
@@ -233,14 +230,40 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 	if (regexec_result != REG_OKAY && regexec_result != REG_NOMATCH)
 	{
 		/* re failed??? */
-		pg_regerror(regexec_result, &re_array[0].cre_re,
-					errMsg, sizeof(errMsg));
+		pg_regerror(regexec_result, re, errMsg, sizeof(errMsg));
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 				 errmsg("regular expression failed: %s", errMsg)));
 	}
 
 	return (regexec_result == REG_OKAY);
+}
+
+/*
+ * RE_compile_and_execute - compile and execute a RE
+ *
+ * Returns TRUE on match, FALSE on no match
+ *
+ *	text_re --- the pattern, expressed as an *untoasted* TEXT object
+ *	dat --- the data to match against (need not be null-terminated)
+ *	dat_len --- the length of the data string
+ *	cflags --- compile options for the pattern
+ *	nmatch, pmatch	--- optional return area for match details
+ *
+ * Both pattern and data are given in the database encoding.  We internally
+ * convert to array of pg_wchar which is what Spencer's regex package wants.
+ */
+static bool
+RE_compile_and_execute(text *text_re, char *dat, int dat_len,
+					   int cflags, int nmatch, regmatch_t *pmatch)
+{
+	regex_t    *re;
+
+	/* Compile RE */
+	re = RE_compile_and_cache(text_re, cflags);
+
+	/* Perform RE match and return result */
+	return RE_execute(re, dat, dat_len, nmatch, pmatch);
 }
 
 
@@ -283,7 +306,7 @@ nameregexeq(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
-										  (unsigned char *) NameStr(*n),
+										  NameStr(*n),
 										  strlen(NameStr(*n)),
 										  regex_flavor,
 										  0, NULL));
@@ -296,7 +319,7 @@ nameregexne(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
-										   (unsigned char *) NameStr(*n),
+										   NameStr(*n),
 										   strlen(NameStr(*n)),
 										   regex_flavor,
 										   0, NULL));
@@ -309,7 +332,7 @@ textregexeq(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
-										  (unsigned char *) VARDATA(s),
+										  VARDATA(s),
 										  VARSIZE(s) - VARHDRSZ,
 										  regex_flavor,
 										  0, NULL));
@@ -322,7 +345,7 @@ textregexne(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
-										   (unsigned char *) VARDATA(s),
+										   VARDATA(s),
 										   VARSIZE(s) - VARHDRSZ,
 										   regex_flavor,
 										   0, NULL));
@@ -342,7 +365,7 @@ nameicregexeq(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
-										  (unsigned char *) NameStr(*n),
+										  NameStr(*n),
 										  strlen(NameStr(*n)),
 										  regex_flavor | REG_ICASE,
 										  0, NULL));
@@ -355,7 +378,7 @@ nameicregexne(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
-										   (unsigned char *) NameStr(*n),
+										   NameStr(*n),
 										   strlen(NameStr(*n)),
 										   regex_flavor | REG_ICASE,
 										   0, NULL));
@@ -368,7 +391,7 @@ texticregexeq(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
-										  (unsigned char *) VARDATA(s),
+										  VARDATA(s),
 										  VARSIZE(s) - VARHDRSZ,
 										  regex_flavor | REG_ICASE,
 										  0, NULL));
@@ -381,7 +404,7 @@ texticregexne(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
-										   (unsigned char *) VARDATA(s),
+										   VARDATA(s),
 										   VARSIZE(s) - VARHDRSZ,
 										   regex_flavor | REG_ICASE,
 										   0, NULL));
@@ -397,43 +420,51 @@ textregexsubstr(PG_FUNCTION_ARGS)
 {
 	text	   *s = PG_GETARG_TEXT_P(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
-	bool		match;
+	regex_t    *re;
 	regmatch_t	pmatch[2];
+	int			so,
+				eo;
+
+	/* Compile RE */
+	re = RE_compile_and_cache(p, regex_flavor);
 
 	/*
-	 * We pass two regmatch_t structs to get info about the overall match
-	 * and the match for the first parenthesized subexpression (if any).
-	 * If there is a parenthesized subexpression, we return what it
-	 * matched; else return what the whole regexp matched.
+	 * We pass two regmatch_t structs to get info about the overall match and
+	 * the match for the first parenthesized subexpression (if any). If there
+	 * is a parenthesized subexpression, we return what it matched; else
+	 * return what the whole regexp matched.
 	 */
-	match = RE_compile_and_execute(p,
-								   (unsigned char *) VARDATA(s),
-								   VARSIZE(s) - VARHDRSZ,
-								   regex_flavor,
-								   2, pmatch);
+	if (!RE_execute(re,
+					VARDATA(s), VARSIZE(s) - VARHDRSZ,
+					2, pmatch))
+		PG_RETURN_NULL();		/* definitely no match */
 
-	/* match? then return the substring matching the pattern */
-	if (match)
+	if (re->re_nsub > 0)
 	{
-		int			so,
-					eo;
-
+		/* has parenthesized subexpressions, use the first one */
 		so = pmatch[1].rm_so;
 		eo = pmatch[1].rm_eo;
-		if (so < 0 || eo < 0)
-		{
-			/* no parenthesized subexpression */
-			so = pmatch[0].rm_so;
-			eo = pmatch[0].rm_eo;
-		}
-
-		return (DirectFunctionCall3(text_substr,
-									PointerGetDatum(s),
-									Int32GetDatum(so + 1),
-									Int32GetDatum(eo - so)));
+	}
+	else
+	{
+		/* no parenthesized subexpression, use whole match */
+		so = pmatch[0].rm_so;
+		eo = pmatch[0].rm_eo;
 	}
 
-	PG_RETURN_NULL();
+	/*
+	 * It is possible to have a match to the whole pattern but no match
+	 * for a subexpression; for example 'foo(bar)?' is considered to match
+	 * 'foo' but there is no subexpression match.  So this extra test for
+	 * match failure is not redundant.
+	 */
+	if (so < 0 || eo < 0)
+		PG_RETURN_NULL();
+
+	return DirectFunctionCall3(text_substr,
+							   PointerGetDatum(s),
+							   Int32GetDatum(so + 1),
+							   Int32GetDatum(eo - so));
 }
 
 /* similar_escape()
@@ -446,7 +477,7 @@ similar_escape(PG_FUNCTION_ARGS)
 	text	   *pat_text;
 	text	   *esc_text;
 	text	   *result;
-	unsigned char *p,
+	char	   *p,
 			   *e,
 			   *r;
 	int			plen,
@@ -477,7 +508,7 @@ similar_escape(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 					 errmsg("invalid escape string"),
-			  errhint("Escape string must be empty or one character.")));
+				  errhint("Escape string must be empty or one character.")));
 	}
 
 	/*----------
@@ -513,7 +544,7 @@ similar_escape(PG_FUNCTION_ARGS)
 
 	while (plen > 0)
 	{
-		unsigned char pchar = *p;
+		char		pchar = *p;
 
 		if (afterescape)
 		{
@@ -552,7 +583,7 @@ similar_escape(PG_FUNCTION_ARGS)
 	*r++ = ')';
 	*r++ = '$';
 
-	VARATT_SIZEP(result) = r - ((unsigned char *) result);
+	VARATT_SIZEP(result) = r - ((char *) result);
 
 	PG_RETURN_TEXT_P(result);
 }
