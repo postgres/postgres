@@ -1,21 +1,30 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.77 2008/03/12 02:18:33 tgl Exp $
+ * pgbench.c
  *
- * pgbench: a simple benchmark program for PostgreSQL
- * written by Tatsuo Ishii
+ * A simple benchmark program for PostgreSQL
+ * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * Copyright (c) 2000-2007	Tatsuo Ishii
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.78 2008/03/19 00:29:35 ishii Exp $
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+ * ALL RIGHTS RESERVED;
  *
- * Permission to use, copy, modify, and distribute this software and
- * its documentation for any purpose and without fee is hereby
- * granted, provided that the above copyright notice appear in all
- * copies and that both that copyright notice and this permission
- * notice appear in supporting documentation, and that the name of the
- * author not be used in advertising or publicity pertaining to
- * distribution of the software without specific, written prior
- * permission. The author makes no representations about the
- * suitability of this software for any purpose.  It is provided "as
- * is" without express or implied warranty.
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose, without fee, and without a written agreement
+ * is hereby granted, provided that the above copyright notice and this
+ * paragraph and the following two paragraphs appear in all copies.
+ *
+ * IN NO EVENT SHALL THE AUTHOR OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+ * LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+ * DOCUMENTATION, EVEN IF THE AUTHOR OR DISTRIBUTORS HAVE BEEN ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * THE AUTHOR AND DISTRIBUTORS SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+ * ON AN "AS IS" BASIS, AND THE AUTHOR AND DISTRIBUTORS HAS NO OBLIGATIONS TO
+ * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ *
  */
 #include "postgres_fe.h"
 
@@ -183,6 +192,39 @@ static char *select_only = {
 	"\\setrandom aid 1 :naccounts\n"
 	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
 };
+
+/* Connection overhead time */
+static struct timeval conn_total_time = {0, 0};
+
+/* Calculate total time */
+static void
+addTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
+{
+	int sec = t1->tv_sec + t2->tv_sec;
+	int usec = t1->tv_usec + t2->tv_usec;
+	if (usec >= 1000000)
+	{
+		usec -= 1000000;
+		sec++;
+	}
+	result->tv_sec = sec;
+	result->tv_usec = usec;
+}
+
+/* Calculate time difference */
+static void
+diffTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
+{
+	int sec = t1->tv_sec - t2->tv_sec;
+	int usec = t1->tv_usec - t2->tv_usec;
+	if (usec < 0)
+	{
+		usec += 1000000;
+		sec--;
+	}
+	result->tv_sec = sec;
+	result->tv_usec = usec;
+}
 
 static void
 usage(void)
@@ -564,6 +606,9 @@ top:
 
 	if (st->con == NULL)
 	{
+		struct timeval t1, t2, t3;
+
+		gettimeofday(&t1, NULL);
 		if ((st->con = doConnect()) == NULL)
 		{
 			fprintf(stderr, "Client %d aborted in establishing connection.\n",
@@ -573,6 +618,9 @@ top:
 			st->con = NULL;
 			return;
 		}
+		gettimeofday(&t2, NULL);
+		diffTime(&t2, &t1, &t3);
+		addTime(&conn_total_time, &t3, &conn_total_time);
 	}
 
 	if (use_log && st->state == 0)
@@ -1193,8 +1241,7 @@ process_builtin(char *tb)
 static void
 printResults(
 			 int ttype, CState * state,
-			 struct timeval * tv1, struct timeval * tv2,
-			 struct timeval * tv3)
+			 struct timeval * start_time, struct timeval * end_time)
 {
 	double		t1,
 				t2;
@@ -1205,10 +1252,11 @@ printResults(
 	for (i = 0; i < nclients; i++)
 		normal_xacts += state[i].cnt;
 
-	t1 = (tv3->tv_sec - tv1->tv_sec) * 1000000.0 + (tv3->tv_usec - tv1->tv_usec);
+	t1 = (end_time->tv_sec - start_time->tv_sec) * 1000000.0 + (end_time->tv_usec - start_time->tv_usec);
 	t1 = normal_xacts * 1000000.0 / t1;
 
-	t2 = (tv3->tv_sec - tv2->tv_sec) * 1000000.0 + (tv3->tv_usec - tv2->tv_usec);
+	t2 = (end_time->tv_sec - start_time->tv_sec - conn_total_time.tv_sec) * 1000000.0 +
+		(end_time->tv_usec - start_time->tv_usec - conn_total_time.tv_usec);
 	t2 = normal_xacts * 1000000.0 / t2;
 
 	if (ttype == 0)
@@ -1244,10 +1292,8 @@ main(int argc, char **argv)
 
 	CState	   *state;			/* status of clients */
 
-	struct timeval tv1;			/* start up time */
-	struct timeval tv2;			/* after establishing all connections to the
-								 * backend */
-	struct timeval tv3;			/* end time */
+	struct timeval start_time;			/* start up time */
+	struct timeval end_time;			/* end time */
 
 	int			i;
 
@@ -1561,14 +1607,16 @@ main(int argc, char **argv)
 	PQfinish(con);
 
 	/* set random seed */
-	gettimeofday(&tv1, NULL);
-	srandom((unsigned int) tv1.tv_usec);
+	gettimeofday(&start_time, NULL);
+	srandom((unsigned int) start_time.tv_usec);
 
 	/* get start up time */
-	gettimeofday(&tv1, NULL);
+	gettimeofday(&start_time, NULL);
 
 	if (is_connect == 0)
 	{
+		struct timeval t, now;
+
 		/* make connections to the database */
 		for (i = 0; i < nclients; i++)
 		{
@@ -1576,10 +1624,11 @@ main(int argc, char **argv)
 			if ((state[i].con = doConnect()) == NULL)
 				exit(1);
 		}
+		/* time after connections set up */
+		gettimeofday(&now, NULL);
+		diffTime(&now, &start_time, &t);
+		addTime(&conn_total_time, &t, &conn_total_time);
 	}
-
-	/* time after connections set up */
-	gettimeofday(&tv2, NULL);
 
 	/* process bultin SQL scripts */
 	switch (ttype)
@@ -1627,8 +1676,8 @@ main(int argc, char **argv)
 		{						/* all done ? */
 			disconnect_all(state);
 			/* get end time */
-			gettimeofday(&tv3, NULL);
-			printResults(ttype, state, &tv1, &tv2, &tv3);
+			gettimeofday(&end_time, NULL);
+			printResults(ttype, state, &start_time, &end_time);
 			if (LOGFILE)
 				fclose(LOGFILE);
 			exit(0);
@@ -1728,7 +1777,7 @@ main(int argc, char **argv)
 
 			if (state[i].ecnt > prev_ecnt && commands[state[i].state]->type == META_COMMAND)
 			{
-				fprintf(stderr, "Client %d aborted in state %d. Execution meta-command failed.\n", i, state[i].state);
+				fprintf(stderr, "Client %d aborted in state %d. Execution of meta-command failed.\n", i, state[i].state);
 				remains--;		/* I've aborted */
 				PQfinish(state[i].con);
 				state[i].con = NULL;
