@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.607 2008/02/15 22:17:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.608 2008/03/19 18:38:30 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4732,6 +4732,14 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->renameType = OBJECT_TSCONFIGURATION;
 					n->object = $5;
 					n->newname = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER TYPE_P any_name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_TYPE;
+					n->object = $3;
+					n->newname = $6;
 					$$ = (Node *)n;
 				}
 		;

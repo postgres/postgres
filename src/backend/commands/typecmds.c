@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.113 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.114 2008/03/19 18:38:30 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -2337,6 +2337,76 @@ GetDomainConstraints(Oid typeOid)
 	}
 
 	return result;
+}
+
+
+/*
+ * Execute ALTER TYPE RENAME
+ */
+void
+RenameType(List *names, const char *newTypeName)
+{
+	TypeName   *typename;
+	Oid			typeOid;
+	Relation	rel;
+	HeapTuple	tup;
+	Form_pg_type typTup;
+
+	/* Make a TypeName so we can use standard type lookup machinery */
+	typename = makeTypeNameFromNameList(names);
+	typeOid = typenameTypeId(NULL, typename, NULL);
+
+	/* Look up the type in the type table */
+	rel = heap_open(TypeRelationId, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy(TYPEOID,
+							 ObjectIdGetDatum(typeOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for type %u", typeOid);
+	typTup = (Form_pg_type) GETSTRUCT(tup);
+
+	/* check permissions on type */
+	if (!pg_type_ownercheck(typeOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+					   format_type_be(typeOid));
+
+	/*
+	 * If it's a composite type, we need to check that it really is a
+	 * free-standing composite type, and not a table's rowtype. We
+	 * want people to use ALTER TABLE not ALTER TYPE for that case.
+	 */
+	if (typTup->typtype == TYPTYPE_COMPOSITE &&
+		get_rel_relkind(typTup->typrelid) != RELKIND_COMPOSITE_TYPE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("%s is a table's row type",
+						format_type_be(typeOid)),
+				 errhint("Use ALTER TABLE instead.")));
+
+	/* don't allow direct alteration of array types, either */
+	if (OidIsValid(typTup->typelem) &&
+		get_array_type(typTup->typelem) == typeOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot alter array type %s",
+						format_type_be(typeOid)),
+				 errhint("You can alter type %s, which will alter the array type as well.",
+						 format_type_be(typTup->typelem))));
+
+	/* 
+	 * If type is composite we need to rename associated pg_class entry too.
+	 * RenameRelationInternal will call RenameTypeInternal automatically.
+	 */
+	if (typTup->typtype == TYPTYPE_COMPOSITE)
+		RenameRelationInternal(typTup->typrelid, newTypeName,
+							   typTup->typnamespace);
+	else
+		RenameTypeInternal(typeOid, newTypeName,
+						   typTup->typnamespace);
+
+	/* Clean up */
+	heap_close(rel, RowExclusiveLock);
 }
 
 /*

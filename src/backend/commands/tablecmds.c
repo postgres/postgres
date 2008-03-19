@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.242 2008/02/07 17:09:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.243 2008/03/19 18:38:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1612,26 +1612,18 @@ renameatt(Oid myrelid,
 	relation_close(targetrelation, NoLock);		/* close rel but keep lock */
 }
 
+
 /*
- *		renamerel		- change the name of a relation
+ * Execute ALTER TABLE/INDEX/SEQUENCE/VIEW RENAME
  *
- *		XXX - When renaming sequences, we don't bother to modify the
- *			  sequence name that is stored within the sequence itself
- *			  (this would cause problems with MVCC). In the future,
- *			  the sequence name should probably be removed from the
- *			  sequence, AFAIK there's no need for it to be there.
+ * Caller has already done permissions checks.
  */
 void
-renamerel(Oid myrelid, const char *newrelname, ObjectType reltype)
+RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype)
 {
 	Relation	targetrelation;
-	Relation	relrelation;	/* for RELATION relation */
-	HeapTuple	reltup;
-	Form_pg_class relform;
 	Oid			namespaceId;
-	char	   *oldrelname;
 	char		relkind;
-	bool		relhastriggers;
 
 	/*
 	 * Grab an exclusive lock on the target table, index, sequence or view,
@@ -1639,20 +1631,13 @@ renamerel(Oid myrelid, const char *newrelname, ObjectType reltype)
 	 */
 	targetrelation = relation_open(myrelid, AccessExclusiveLock);
 
-	oldrelname = pstrdup(RelationGetRelationName(targetrelation));
 	namespaceId = RelationGetNamespace(targetrelation);
-
-	if (!allowSystemTableMods && IsSystemRelation(targetrelation))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied: \"%s\" is a system catalog",
-						RelationGetRelationName(targetrelation))));
+	relkind = targetrelation->rd_rel->relkind;
 
 	/*
 	 * For compatibility with prior releases, we don't complain if ALTER TABLE
 	 * or ALTER INDEX is used to rename a sequence or view.
 	 */
-	relkind = targetrelation->rd_rel->relkind;
 	if (reltype == OBJECT_SEQUENCE && relkind != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -1665,7 +1650,48 @@ renamerel(Oid myrelid, const char *newrelname, ObjectType reltype)
 				 errmsg("\"%s\" is not a view",
 						RelationGetRelationName(targetrelation))));
 
-	relhastriggers = (targetrelation->rd_rel->reltriggers > 0);
+	/*
+	 * Don't allow ALTER TABLE on composite types.
+	 * We want people to use ALTER TYPE for that.
+	 */
+	if (relkind == RELKIND_COMPOSITE_TYPE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is a composite type",
+						RelationGetRelationName(targetrelation)),
+				 errhint("Use ALTER TYPE instead.")));
+
+	/* Do the work */
+	RenameRelationInternal(myrelid, newrelname, namespaceId);
+
+	/*
+	 * Close rel, but keep exclusive lock!
+	 */
+	relation_close(targetrelation, NoLock);
+}
+
+/*
+ *		RenameRelationInternal - change the name of a relation
+ *
+ *		XXX - When renaming sequences, we don't bother to modify the
+ *			  sequence name that is stored within the sequence itself
+ *			  (this would cause problems with MVCC). In the future,
+ *			  the sequence name should probably be removed from the
+ *			  sequence, AFAIK there's no need for it to be there.
+ */
+void
+RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
+{
+	Relation	targetrelation;
+	Relation	relrelation;	/* for RELATION relation */
+	HeapTuple	reltup;
+	Form_pg_class relform;
+
+	/*
+	 * Grab an exclusive lock on the target table, index, sequence or
+	 * view, which we will NOT release until end of transaction.
+	 */
+	targetrelation = relation_open(myrelid, AccessExclusiveLock);
 
 	/*
 	 * Find relation's pg_class tuple, and make sure newrelname isn't in use.
@@ -1703,12 +1729,13 @@ renamerel(Oid myrelid, const char *newrelname, ObjectType reltype)
 	 * Also rename the associated type, if any.
 	 */
 	if (OidIsValid(targetrelation->rd_rel->reltype))
-		TypeRename(targetrelation->rd_rel->reltype, newrelname, namespaceId);
+		RenameTypeInternal(targetrelation->rd_rel->reltype,
+						   newrelname, namespaceId);
 
 	/*
 	 * Also rename the associated constraint, if any.
 	 */
-	if (relkind == RELKIND_INDEX)
+	if (targetrelation->rd_rel->relkind == RELKIND_INDEX)
 	{
 		Oid			constraintId = get_index_constraint(myrelid);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.37 2008/01/30 19:46:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.38 2008/03/19 18:38:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,13 @@ extern void renameatt(Oid myrelid,
 		  bool recurse,
 		  bool recursing);
 
-extern void renamerel(Oid myrelid,
+extern void RenameRelation(Oid myrelid,
 		  const char *newrelname,
 		  ObjectType reltype);
+
+extern void RenameRelationInternal(Oid myrelid,
+		  const char *newrelname,
+		  Oid namespaceId);
 
 extern void find_composite_type_dependencies(Oid typeOid,
 								 const char *origTblName,

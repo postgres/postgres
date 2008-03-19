@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_type.sgml,v 1.4 2006/09/16 00:30:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_type.sgml,v 1.5 2008/03/19 18:38:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,6 +24,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
   <synopsis>
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
   </synopsis>
@@ -34,8 +35,6 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replace
 
   <para>
    <command>ALTER TYPE</command> changes the definition of an existing type.
-   The only currently available capabilities are changing the owner and schema
-   of a type.
   </para>
 
   <para>
@@ -66,6 +65,15 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replace
      </varlistentry>
 
      <varlistentry>
+      <term><replaceable class="PARAMETER">new_name</replaceable></term>
+      <listitem>
+       <para>
+        The new name for the type.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><replaceable class="PARAMETER">new_owner</replaceable></term>
       <listitem>
        <para>
@@ -91,7 +99,14 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replace
   <title>Examples</title>
 
   <para> 
-   To change the owner of the user-defined type <literal>email</literal>
+   To rename a data type:
+   <programlisting>
+ALTER TYPE electronic_mail RENAME TO email;
+   </programlisting>
+  </para>
+
+  <para> 
+   To change the owner of the type <literal>email</literal>
    to <literal>joe</literal>:
    <programlisting>
 ALTER TYPE email OWNER TO joe;
@@ -99,7 +114,7 @@ ALTER TYPE email OWNER TO joe;
   </para>
 
   <para>
-   To change the schema of the user-defined type <literal>email</literal>
+   To change the schema of the type <literal>email</literal>
    to <literal>customers</literal>:
    <programlisting>
 ALTER TYPE email SET SCHEMA customers;
