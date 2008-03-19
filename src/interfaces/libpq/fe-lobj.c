@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.64 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.65 2008/03/19 00:39:33 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,8 @@
 
 static int	lo_initialize(PGconn *conn);
 
+static Oid
+lo_import_internal(PGconn *conn, const char *filename, const Oid oid);
 
 /*
  * lo_open
@@ -484,6 +486,27 @@ lo_unlink(PGconn *conn, Oid lobjId)
 Oid
 lo_import(PGconn *conn, const char *filename)
 {
+	return lo_import_internal(conn, filename, InvalidOid);
+}
+
+/*
+ * lo_import_with_oid -
+ *	  imports a file as an (inversion) large object.
+ *	  large object id can be specified.
+ *
+ * returns the oid of that object upon success,
+ * returns InvalidOid upon failure
+ */
+
+Oid
+lo_import_with_oid(PGconn *conn, const char *filename, Oid lobjId)
+{
+	return lo_import_internal(conn, filename, lobjId);
+}
+
+static Oid
+lo_import_internal(PGconn *conn, const char *filename, Oid oid)
+{
 	int			fd;
 	int			nbytes,
 				tmp;
@@ -507,10 +530,14 @@ lo_import(PGconn *conn, const char *filename)
 	/*
 	 * create an inversion object
 	 */
-	lobjOid = lo_creat(conn, INV_READ | INV_WRITE);
+	if (oid == InvalidOid)
+		lobjOid = lo_creat(conn, INV_READ | INV_WRITE);
+	else
+		lobjOid = lo_create(conn, oid);
+
 	if (lobjOid == InvalidOid)
 	{
-		/* we assume lo_creat() already set a suitable error message */
+		/* we assume lo_create() already set a suitable error message */
 		(void) close(fd);
 		return InvalidOid;
 	}

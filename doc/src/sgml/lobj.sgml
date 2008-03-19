@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.46 2007/03/14 00:15:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.47 2008/03/19 00:39:33 ishii Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -160,6 +160,28 @@ Oid lo_import(PGconn *conn, const char *filename);
      Note that the file is read by the client interface library, not by
      the server; so it must exist in the client file system and be readable
      by the client application.
+    </para>
+
+    <para>
+     The function
+<synopsis>
+Oid lo_import_with_oid(PGconn *conn, const char *filename, Oid lobjId);
+</synopsis>
+     <indexterm><primary>lo_import_with_oid</></>
+     also imports a new large object.  The OID to be assigned can be
+     specified by <replaceable class="parameter">lobjId</replaceable>;
+     if so, failure occurs if that OID is already in use for some large
+     object.  If <replaceable class="parameter">lobjId</replaceable>
+     is <symbol>InvalidOid</symbol> (zero) then <function>lo_import_with_oid</> assigns an unused
+     OID (this is the same behavior as <function>lo_import</>).
+     The return value is the OID that was assigned to the new large object,
+     or <symbol>InvalidOid</symbol> (zero) on failure.
+    </para>
+
+    <para>
+     <function>lo_import_with_oid</> is new as of <productname>PostgreSQL</productname>
+     8.4 and uses <function>lo_create</function> internally which is new in 8.1; if this function is run against 8.0 or before, it will
+     fail and return <symbol>InvalidOid</symbol>.
     </para>
    </sect2>
 
