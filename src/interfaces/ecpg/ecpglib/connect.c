@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.48 2007/11/15 21:14:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.49 2008/03/20 16:29:44 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -564,4 +564,14 @@ ECPGdisconnect(int lineno, const char *connection_name)
 #endif
 
 	return true;
+}
+
+PGconn* ECPGget_PGconn(const char *connection_name)
+{
+	struct connection * con;
+
+	con=ecpg_get_connection(connection_name);
+	if (con==NULL) return NULL;    
+
+	return con->connection;
 }
