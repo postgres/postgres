@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.45 2007/01/25 03:30:43 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.46 2008/03/20 17:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,7 @@ typedef struct _restoreOptions
 {
 	int			create;			/* Issue commands to create the database */
 	int			noOwner;		/* Don't try to match original object owner */
+	int			noTablespace;   /* Don't issue tablespace-related commands */
 	int			disable_triggers;		/* disable triggers during data-only
 										 * restore */
 	int			use_setsessauth;/* Use SET SESSION AUTHORIZATION commands

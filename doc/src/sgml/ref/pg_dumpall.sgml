@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.69 2007/12/11 19:57:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.70 2008/03/20 17:36:57 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -40,7 +40,8 @@ PostgreSQL documentation
    that are common to all databases.
    (<application>pg_dump</application> does not save these objects.)
    This currently includes information about database users and
-   groups, and access permissions that apply to databases as a whole.
+   groups, tablespaces, and properties such as access permissions
+   that apply to databases as a whole.
   </para>
 
   <para>
@@ -200,6 +201,18 @@ PostgreSQL documentation
         (or the same user that owns all of the objects in the script).
         To make a script that can be restored by any user, but will give
         that user ownership of all the objects, specify <option>-O</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-tablespaces</option></term>
+      <listitem>
+       <para>
+        Do not output commands to create tablespaces nor select tablespaces
+        for objects.
+        With this option, all objects will be created in whichever
+        tablespace is the default during restore.
        </para>
       </listitem>
      </varlistentry>

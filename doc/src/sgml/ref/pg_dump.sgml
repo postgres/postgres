@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.98 2007/12/11 19:57:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.99 2008/03/20 17:36:57 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -423,6 +423,23 @@ PostgreSQL documentation
        <para>
         This option is obsolete but still accepted for backwards
         compatibility.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-tablespaces</option></term>
+      <listitem>
+       <para>
+        Do not output commands to select tablespaces.
+        With this option, all objects will be created in whichever
+        tablespace is the default during restore.
+       </para>
+
+       <para>
+        This option is only meaningful for the plain-text format.  For
+        the archive formats, you can specify the option when you
+        call <command>pg_restore</command>.
        </para>
       </listitem>
      </varlistentry>

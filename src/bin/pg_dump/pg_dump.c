@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.482 2008/01/30 18:35:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.483 2008/03/20 17:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,9 +223,10 @@ main(int argc, char **argv)
 	int			outputCreate = 0;
 	bool		outputBlobs = false;
 	int			outputNoOwner = 0;
-	static int	use_setsessauth = 0;
-	static int	disable_triggers = 0;
 	char	   *outputSuperuser = NULL;
+	static int	disable_triggers = 0;
+	static int  outputNoTablespaces = 0;
+	static int	use_setsessauth = 0;
 
 	RestoreOptions *ropt;
 
@@ -266,6 +267,7 @@ main(int argc, char **argv)
 		 */
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
+		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 
 		{NULL, 0, NULL, 0}
@@ -417,6 +419,8 @@ main(int argc, char **argv)
 					disable_dollar_quoting = 1;
 				else if (strcmp(optarg, "disable-triggers") == 0)
 					disable_triggers = 1;
+				else if (strcmp(optarg, "no-tablespaces") == 0)
+					outputNoTablespaces = 1;
 				else if (strcmp(optarg, "use-set-session-authorization") == 0)
 					use_setsessauth = 1;
 				else
@@ -708,6 +712,7 @@ main(int argc, char **argv)
 		ropt->superuser = outputSuperuser;
 		ropt->create = outputCreate;
 		ropt->noOwner = outputNoOwner;
+		ropt->noTablespace = outputNoTablespaces;
 		ropt->disable_triggers = disable_triggers;
 		ropt->use_setsessauth = use_setsessauth;
 		ropt->dataOnly = dataOnly;
@@ -768,6 +773,7 @@ help(const char *progname)
 	printf(_("  -x, --no-privileges         do not dump privileges (grant/revoke)\n"));
 	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
+	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SESSION AUTHORIZATION commands instead of\n"
 	"                              ALTER OWNER commands to set ownership\n"));

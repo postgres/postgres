@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.85 2007/12/11 19:01:06 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.86 2008/03/20 17:36:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,9 +74,10 @@ main(int argc, char **argv)
 	char	   *inputFileSpec;
 	extern int	optind;
 	extern char *optarg;
-	static int	use_setsessauth = 0;
 	static int	disable_triggers = 0;
 	static int	no_data_for_failed_tables = 0;
+	static int  outputNoTablespaces = 0;
+	static int	use_setsessauth = 0;
 
 	struct option cmdopts[] = {
 		{"clean", 0, NULL, 'c'},
@@ -110,9 +111,10 @@ main(int argc, char **argv)
 		/*
 		 * the following options don't have an equivalent short option letter
 		 */
-		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
 		{"no-data-for-failed-tables", no_argument, &no_data_for_failed_tables, 1},
+		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
+		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -241,10 +243,14 @@ main(int argc, char **argv)
 
 			case 'X':
 				/* -X is a deprecated alternative to long options */
-				if (strcmp(optarg, "use-set-session-authorization") == 0)
-					use_setsessauth = 1;
-				else if (strcmp(optarg, "disable-triggers") == 0)
+				if (strcmp(optarg, "disable-triggers") == 0)
 					disable_triggers = 1;
+				else if (strcmp(optarg, "no-data-for-failed-tables") == 0)
+					no_data_for_failed_tables = 1;
+				else if (strcmp(optarg, "no-tablespaces") == 0)
+					outputNoTablespaces = 1;
+				else if (strcmp(optarg, "use-set-session-authorization") == 0)
+					use_setsessauth = 1;
 				else
 				{
 					fprintf(stderr,
@@ -290,8 +296,9 @@ main(int argc, char **argv)
 	}
 
 	opts->disable_triggers = disable_triggers;
-	opts->use_setsessauth = use_setsessauth;
 	opts->noDataForFailedTables = no_data_for_failed_tables;
+	opts->noTablespace = outputNoTablespaces;
+	opts->use_setsessauth = use_setsessauth;
 
 	if (opts->formatName)
 	{
@@ -395,12 +402,13 @@ usage(const char *progname)
 	printf(_("  -T, --trigger=NAME       restore named trigger\n"));
 	printf(_("  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"));
 	printf(_("  --disable-triggers       disable triggers during data-only restore\n"));
-	printf(_("  --use-set-session-authorization\n"
-			 "                           use SESSION AUTHORIZATION commands instead of\n"
-			 "                           OWNER TO commands\n"));
 	printf(_("  --no-data-for-failed-tables\n"
 			 "                           do not restore data of tables that could not be\n"
 			 "                           created\n"));
+	printf(_("  --no-tablespaces         do not dump tablespace assignments\n"));
+	printf(_("  --use-set-session-authorization\n"
+			 "                           use SESSION AUTHORIZATION commands instead of\n"
+			 "                           OWNER TO commands\n"));
 	printf(_("  -1, --single-transaction\n"
 			 "                           restore as a single transaction\n"));
 

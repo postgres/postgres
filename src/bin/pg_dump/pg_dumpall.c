@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.100 2008/01/01 19:45:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.101 2008/03/20 17:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,7 @@ static bool ignoreVersion = false;
 
 static int	disable_dollar_quoting = 0;
 static int	disable_triggers = 0;
+static int	no_tablespaces = 0;
 static int	use_setsessauth = 0;
 static int	server_version;
 
@@ -118,6 +119,7 @@ main(int argc, char *argv[])
 		 */
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
+		{"no-tablespaces", no_argument, &no_tablespaces, 1},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 
 		{NULL, 0, NULL, 0}
@@ -285,11 +287,13 @@ main(int argc, char *argv[])
 			case 'X':
 				/* -X is a deprecated alternative to long options */
 				if (strcmp(optarg, "disable-dollar-quoting") == 0)
-					appendPQExpBuffer(pgdumpopts, " --disable-dollar-quoting");
+					disable_dollar_quoting = 1;
 				else if (strcmp(optarg, "disable-triggers") == 0)
-					appendPQExpBuffer(pgdumpopts, " --disable-triggers");
+					disable_triggers = 1;
+				else if (strcmp(optarg, "no-tablespaces") == 0) 
+					no_tablespaces = 1;
 				else if (strcmp(optarg, "use-set-session-authorization") == 0)
-					 /* no-op, still allowed for compatibility */ ;
+					use_setsessauth = 1;
 				else
 				{
 					fprintf(stderr,
@@ -314,6 +318,8 @@ main(int argc, char *argv[])
 		appendPQExpBuffer(pgdumpopts, " --disable-dollar-quoting");
 	if (disable_triggers)
 		appendPQExpBuffer(pgdumpopts, " --disable-triggers");
+	if (no_tablespaces)
+		appendPQExpBuffer(pgdumpopts, " --no-tablespaces");
 	if (use_setsessauth)
 		appendPQExpBuffer(pgdumpopts, " --use-set-session-authorization");
 
@@ -444,7 +450,7 @@ main(int argc, char *argv[])
 				dumpGroups(conn);
 		}
 
-		if (!roles_only)
+		if (!roles_only && !no_tablespaces)
 		{
 			/* Dump tablespaces */
 			if (server_version >= 80000)
@@ -502,6 +508,7 @@ help(void)
 	printf(_("  --disable-dollar-quoting\n"
 			 "                           disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers       disable triggers during data-only restore\n"));
+	printf(_("  --no-tablespaces         do not dump tablespace assignments\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                           use SESSION AUTHORIZATION commands instead of\n"
 			 "                           OWNER TO commands\n"));
