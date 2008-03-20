@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.23 2007/11/15 21:14:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.24 2008/03/20 15:56:59 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -193,7 +193,18 @@ output_escaped_str(char *str, bool quoted)
 		else if (str[i] == '\n')
 			fputs("\\\n", yyout);
 		else if (str[i] == '\\')
-			fputs("\\\\", yyout);
+		{
+			int j = i;
+			
+			/* check whether this is a continuation line 
+			 * if it is, do not output anything because newlines are escaped anyway */
+
+			/* accept blanks after the '\' as some other compilers do too */
+			do { j++; } while (str[j] == ' ' || str[j] == '\t');
+
+			if ((str[j] != '\n') && (str[j] != '\r' || str[j + 1] != '\n')) /* not followed by a newline */
+				fputs("\\\\", yyout);
+		}
 		else if (str[i] == '\r' && str[i + 1] == '\n')
 		{
 			fputs("\\\r\n", yyout);
