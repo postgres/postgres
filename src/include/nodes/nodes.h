@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.205 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.206 2008/03/20 21:42:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,6 +324,7 @@ typedef enum NodeTag
 	T_FuncCall,
 	T_A_Indices,
 	T_A_Indirection,
+	T_A_ArrayExpr,
 	T_ResTarget,
 	T_TypeCast,
 	T_SortBy,

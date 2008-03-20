@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.226 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.227 2008/03/20 21:42:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,8 @@ static Node *transformAExprIn(ParseState *pstate, A_Expr *a);
 static Node *transformFuncCall(ParseState *pstate, FuncCall *fn);
 static Node *transformCaseExpr(ParseState *pstate, CaseExpr *c);
 static Node *transformSubLink(ParseState *pstate, SubLink *sublink);
-static Node *transformArrayExpr(ParseState *pstate, ArrayExpr *a);
+static Node *transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
+				   Oid array_type, Oid element_type, int32 typmod);
 static Node *transformRowExpr(ParseState *pstate, RowExpr *r);
 static Node *transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c);
 static Node *transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m);
@@ -142,11 +143,49 @@ transformExpr(ParseState *pstate, Node *expr)
 				break;
 			}
 
+		case T_A_ArrayExpr:
+			result = transformArrayExpr(pstate, (A_ArrayExpr *) expr,
+										InvalidOid, InvalidOid, -1);
+			break;
+
 		case T_TypeCast:
 			{
 				TypeCast   *tc = (TypeCast *) expr;
-				Node	   *arg = transformExpr(pstate, tc->arg);
+				Node	   *arg;
 
+				/*
+				 * If the subject of the typecast is an ARRAY[] construct
+				 * and the target type is an array type, we invoke
+				 * transformArrayExpr() directly so that we can pass down
+				 * the type information.  This avoids some cases where
+				 * transformArrayExpr() might not infer the correct type.
+				 */
+				if (IsA(tc->arg, A_ArrayExpr))
+				{
+					Oid			targetType;
+					Oid			elementType;
+					int32		targetTypmod;
+
+					targetType = typenameTypeId(pstate, tc->typename,
+												&targetTypmod);
+					elementType = get_element_type(targetType);
+					if (OidIsValid(elementType))
+					{
+						result = transformArrayExpr(pstate,
+													(A_ArrayExpr *) tc->arg,
+													targetType,
+													elementType,
+													targetTypmod);
+						break;
+					}
+
+					/*
+					 * Corner case: ARRAY[] cast to a non-array type.
+					 * Fall through to do it the standard way.
+					 */
+				}
+
+				arg = transformExpr(pstate, tc->arg);
 				result = typecast_expression(pstate, arg, tc->typename);
 				break;
 			}
@@ -203,10 +242,6 @@ transformExpr(ParseState *pstate, Node *expr)
 
 		case T_CaseExpr:
 			result = transformCaseExpr(pstate, (CaseExpr *) expr);
-			break;
-
-		case T_ArrayExpr:
-			result = transformArrayExpr(pstate, (ArrayExpr *) expr);
 			break;
 
 		case T_RowExpr:
@@ -1255,62 +1290,154 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	return result;
 }
 
+/*
+ * transformArrayExpr
+ *
+ * If the caller specifies the target type, the resulting array will
+ * be of exactly that type.  Otherwise we try to infer a common type
+ * for the elements using select_common_type().
+ */
 static Node *
-transformArrayExpr(ParseState *pstate, ArrayExpr *a)
+transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
+				   Oid array_type, Oid element_type, int32 typmod)
 {
 	ArrayExpr  *newa = makeNode(ArrayExpr);
 	List	   *newelems = NIL;
 	List	   *newcoercedelems = NIL;
 	List	   *typeids = NIL;
 	ListCell   *element;
-	Oid			array_type;
-	Oid			element_type;
+	Oid			coerce_type;
+	bool		coerce_hard;
 
-	/* Transform the element expressions */
+	/* 
+	 * Transform the element expressions 
+	 *
+	 * Assume that the array is one-dimensional unless we find an
+	 * array-type element expression.
+	 */ 
+	newa->multidims = false;
 	foreach(element, a->elements)
 	{
 		Node	   *e = (Node *) lfirst(element);
 		Node	   *newe;
+		Oid			newe_type;
 
-		newe = transformExpr(pstate, e);
+		/*
+		 * If an element is itself an A_ArrayExpr, recurse directly so that
+		 * we can pass down any target type we were given.
+		 */
+		if (IsA(e, A_ArrayExpr))
+		{
+			newe = transformArrayExpr(pstate,
+									  (A_ArrayExpr *) e,
+									  array_type,
+									  element_type,
+									  typmod);
+			newe_type = exprType(newe);
+			/* we certainly have an array here */
+			Assert(array_type == InvalidOid || array_type == newe_type);
+			newa->multidims = true;
+		}
+		else
+		{
+			newe = transformExpr(pstate, e);
+			newe_type = exprType(newe);
+			/*
+			 * Check for sub-array expressions, if we haven't already
+			 * found one.
+			 */
+			if (!newa->multidims && type_is_array(newe_type))
+				newa->multidims = true;
+		}
+
 		newelems = lappend(newelems, newe);
-		typeids = lappend_oid(typeids, exprType(newe));
+		typeids = lappend_oid(typeids, newe_type);
 	}
 
-	/* Select a common type for the elements */
-	element_type = select_common_type(typeids, "ARRAY");
+	/* 
+	 * Select a target type for the elements.
+	 *
+	 * If we haven't been given a target array type, we must try to deduce a
+	 * common type based on the types of the individual elements present.
+	 */
+	if (OidIsValid(array_type))
+	{
+		/* Caller must ensure array_type matches element_type */
+		Assert(OidIsValid(element_type));
+		coerce_type = (newa->multidims ? array_type : element_type);
+		coerce_hard = true;
+	}
+	else
+	{
+		/* Can't handle an empty array without a target type */
+		if (typeids == NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDETERMINATE_DATATYPE),
+					 errmsg("cannot determine type of empty array"),
+					 errhint("Explicitly cast to the desired type, "
+							 "for example ARRAY[]::integer[].")));
 
-	/* Coerce arguments to common type if necessary */
+		/* Select a common type for the elements */
+		coerce_type = select_common_type(typeids, "ARRAY");
+
+		if (newa->multidims)
+		{
+			array_type = coerce_type;
+			element_type = get_element_type(array_type);
+			if (!OidIsValid(element_type))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("could not find element type for data type %s",
+								format_type_be(array_type))));
+		}
+		else
+		{
+			element_type = coerce_type;
+			array_type = get_array_type(element_type);
+			if (!OidIsValid(array_type))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("could not find array type for data type %s",
+								format_type_be(element_type))));
+		}
+		coerce_hard = false;
+	}
+
+	/*
+	 * Coerce elements to target type 
+	 *
+	 * If the array has been explicitly cast, then the elements are in turn
+	 * explicitly coerced.
+	 *
+	 * If the array's type was merely derived from the common type of its
+	 * elements, then the elements are implicitly coerced to the common type.
+	 * This is consistent with other uses of select_common_type().
+	 */ 
 	foreach(element, newelems)
 	{
 		Node	   *e = (Node *) lfirst(element);
 		Node	   *newe;
 
-		newe = coerce_to_common_type(pstate, e,
-									 element_type,
-									 "ARRAY");
+		if (coerce_hard)
+		{
+			newe = coerce_to_target_type(pstate, e, 
+										 exprType(e),
+										 coerce_type, 
+										 typmod,
+										 COERCION_EXPLICIT,
+										 COERCE_EXPLICIT_CAST);
+			if (newe == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_CANNOT_COERCE),
+						 errmsg("cannot cast type %s to %s",
+								format_type_be(exprType(e)),
+								format_type_be(coerce_type))));
+		}
+		else
+			newe = coerce_to_common_type(pstate, e,
+										 coerce_type,
+										 "ARRAY");
 		newcoercedelems = lappend(newcoercedelems, newe);
-	}
-
-	/* Do we have an array type to use? */
-	array_type = get_array_type(element_type);
-	if (array_type != InvalidOid)
-	{
-		/* Elements are presumably of scalar type */
-		newa->multidims = false;
-	}
-	else
-	{
-		/* Must be nested array expressions */
-		newa->multidims = true;
-
-		array_type = element_type;
-		element_type = get_element_type(array_type);
-		if (!OidIsValid(element_type))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("could not find array type for data type %s",
-							format_type_be(array_type))));
 	}
 
 	newa->array_typeid = array_type;

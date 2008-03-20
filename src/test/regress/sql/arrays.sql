@@ -280,6 +280,7 @@ select E'{{1,2},\\{2,3}}'::text[];
 select '{{"1 2" x},{3}}'::text[];
 select '{}}'::text[];
 select '{ }}'::text[];
+select array[];
 -- none of the above should be accepted
 
 -- all of the following should be accepted
@@ -292,6 +293,7 @@ select '{
            0 second,
            @ 1 hour @ 42 minutes @ 20 seconds
          }'::interval[];
+select array[]::text[];
 -- all of the above should be accepted
 
 -- tests for array aggregates

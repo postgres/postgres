@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.359 2008/02/07 17:09:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.360 2008/03/20 21:42:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,9 +242,9 @@ typedef struct A_Const
  * TypeCast - a CAST expression
  *
  * NOTE: for mostly historical reasons, A_Const parsenodes contain
- * room for a TypeName; we only generate a separate TypeCast node if the
- * argument to be casted is not a constant.  In theory either representation
- * would work, but the combined representation saves a bit of code in many
+ * room for a TypeName, allowing a constant to be marked as being of a given
+ * type without a separate TypeCast node.  Either representation will work,
+ * but the combined representation saves a bit of code in many
  * productions in gram.y.
  */
 typedef struct TypeCast
@@ -303,6 +303,15 @@ typedef struct A_Indirection
 	Node	   *arg;			/* the thing being selected from */
 	List	   *indirection;	/* subscripts and/or field names */
 } A_Indirection;
+
+/*
+ * A_ArrayExpr - an ARRAY[] construct
+ */
+typedef struct A_ArrayExpr
+{
+	NodeTag		type;
+	List	   *elements;		/* array element expressions */
+} A_ArrayExpr;
 
 /*
  * ResTarget -

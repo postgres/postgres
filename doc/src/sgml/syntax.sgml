@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.121 2008/01/23 19:51:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.122 2008/03/20 21:42:47 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1305,7 +1305,7 @@ sqrt(2)
 
     where <replaceable>aggregate_name</replaceable> is a previously
     defined aggregate (possibly qualified with a schema name), and
-    <replaceable>expression</replaceable> is 
+    <replaceable>expression</replaceable> is
     any value expression that does not itself contain an aggregate
     expression.
    </para>
@@ -1335,7 +1335,7 @@ sqrt(2)
    <para>
     The predefined aggregate functions are described in <xref
     linkend="functions-aggregate">.  Other aggregate functions can be added
-    by the user. 
+    by the user.
    </para>
 
    <para>
@@ -1495,9 +1495,9 @@ SELECT name, (SELECT max(pop) FROM cities WHERE cities.state = states.name)
    <para>
     An array constructor is an expression that builds an
     array value from values for its member elements.  A simple array
-    constructor 
+    constructor
     consists of the key word <literal>ARRAY</literal>, a left square bracket
-    <literal>[</>, one or more expressions (separated by commas) for the
+    <literal>[</>, a list of expressions (separated by commas) for the
     array element values, and finally a right square bracket <literal>]</>.
     For example:
 <programlisting>
@@ -1507,9 +1507,22 @@ SELECT ARRAY[1,2,3+4];
  {1,2,7}
 (1 row)
 </programlisting>
-    The array element type is the common type of the member expressions,
+    By default,
+    the array element type is the common type of the member expressions,
     determined using the same rules as for <literal>UNION</> or
-    <literal>CASE</> constructs (see <xref linkend="typeconv-union-case">). 
+    <literal>CASE</> constructs (see <xref linkend="typeconv-union-case">).
+    You can override this by explicitly casting the array constructor to the
+    desired type, for example:
+<programlisting>
+SELECT ARRAY[1,2,22.7]::integer[];
+  array
+----------
+ {1,2,23}
+(1 row)
+</programlisting>
+    This has the same effect as casting each expression to the array
+    element type individually.
+    For more on casting, see <xref linkend="sql-syntax-type-casts">.
    </para>
 
    <para>
@@ -1534,6 +1547,8 @@ SELECT ARRAY[[1,2],[3,4]];
 
     Since multidimensional arrays must be rectangular, inner constructors
     at the same level must produce sub-arrays of identical dimensions.
+    Any cast applied to the outer <literal>ARRAY</> constructor propagates
+    automatically to all the inner constructors.
   </para>
 
   <para>
@@ -1549,6 +1564,19 @@ SELECT ARRAY[f1, f2, '{{9,10},{11,12}}'::int[]] FROM arr;
                      array
 ------------------------------------------------
  {{{1,2},{3,4}},{{5,6},{7,8}},{{9,10},{11,12}}}
+(1 row)
+</programlisting>
+  </para>
+
+  <para>
+   You can construct an empty array, but since it's impossible to have an
+   array with no type, you must explicitly cast your empty array to the
+   desired type.  For example:
+<programlisting>
+SELECT ARRAY[]::integer[];
+ array
+-------
+ {}
 (1 row)
 </programlisting>
   </para>

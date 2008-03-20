@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.608 2008/03/19 18:38:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.609 2008/03/20 21:42:48 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -107,6 +107,7 @@ static void insertSelectOptions(SelectStmt *stmt,
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n, int location);
 static void doNegateFloat(Value *v);
+static Node *makeAArrayExpr(List *elements);
 static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args);
 
 %}
@@ -8429,6 +8430,29 @@ expr_list:	a_expr
 				}
 		;
 
+type_list:	Typename								{ $$ = list_make1($1); }
+			| type_list ',' Typename				{ $$ = lappend($1, $3); }
+		;
+
+array_expr: '[' expr_list ']'
+				{
+					$$ = makeAArrayExpr($2);
+				}
+			| '[' array_expr_list ']'
+				{
+					$$ = makeAArrayExpr($2);
+				}
+			| '[' ']'
+				{
+					$$ = makeAArrayExpr(NIL);
+				}
+		;
+
+array_expr_list: array_expr							{ $$ = list_make1($1); }
+			| array_expr_list ',' array_expr		{ $$ = lappend($1, $3); }
+		;
+
+
 extract_list:
 			extract_arg FROM a_expr
 				{
@@ -8440,34 +8464,9 @@ extract_list:
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-type_list:	Typename								{ $$ = list_make1($1); }
-			| type_list ',' Typename				{ $$ = lappend($1, $3); }
-		;
-
-array_expr_list: array_expr
-				{	$$ = list_make1($1);		}
-			| array_expr_list ',' array_expr
-				{	$$ = lappend($1, $3);	}
-		;
-
-array_expr: '[' expr_list ']'
-				{
-					ArrayExpr *n = makeNode(ArrayExpr);
-					n->elements = $2;
-					$$ = (Node *)n;
-				}
-			| '[' array_expr_list ']'
-				{
-					ArrayExpr *n = makeNode(ArrayExpr);
-					n->elements = $2;
-					$$ = (Node *)n;
-				}
-		;
-
 /* Allow delimited string SCONST in extract_arg as an SQL extension.
  * - thomas 2001-04-12
  */
-
 extract_arg:
 			IDENT									{ $$ = $1; }
 			| YEAR_P								{ $$ = "year"; }
@@ -9502,13 +9501,6 @@ makeColumnRef(char *relname, List *indirection, int location)
 static Node *
 makeTypeCast(Node *arg, TypeName *typename)
 {
-	/*
-	 * Simply generate a TypeCast node.
-	 *
-	 * Earlier we would determine whether an A_Const would
-	 * be acceptable, however Domains require coerce_type()
-	 * to process them -- applying constraints as required.
-	 */
 	TypeCast *n = makeNode(TypeCast);
 	n->arg = arg;
 	n->typename = typename;
@@ -9582,7 +9574,7 @@ makeBoolAConst(bool state)
 {
 	A_Const *n = makeNode(A_Const);
 	n->val.type = T_String;
-	n->val.val.str = (state? "t": "f");
+	n->val.val.str = (state ? "t" : "f");
 	n->typename = SystemTypeName("bool");
 	return n;
 }
@@ -9763,15 +9755,6 @@ SystemTypeName(char *name)
 											   makeString(name)));
 }
 
-/* parser_init()
- * Initialize to parse one query string
- */
-void
-parser_init(void)
-{
-	QueryIsRule = FALSE;
-}
-
 /* doNegate()
  * Handle negation of a numeric constant.
  *
@@ -9828,6 +9811,15 @@ doNegateFloat(Value *v)
 }
 
 static Node *
+makeAArrayExpr(List *elements)
+{
+	A_ArrayExpr *n = makeNode(A_ArrayExpr);
+
+	n->elements = elements;
+	return (Node *) n;
+}
+
+static Node *
 makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 {
 	XmlExpr    *x = makeNode(XmlExpr);
@@ -9842,6 +9834,15 @@ makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	x->arg_names = NIL;
 	x->args = args;
 	return (Node *) x;
+}
+
+/* parser_init()
+ * Initialize to parse one query string
+ */
+void
+parser_init(void)
+{
+	QueryIsRule = FALSE;
 }
 
 /*
