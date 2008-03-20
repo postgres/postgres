@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.69 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.70 2008/03/20 20:05:56 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,6 +262,7 @@ PortalCleanup(Portal portal)
 				CurrentResourceOwner = portal->resowner;
 				/* we do not need AfterTriggerEndQuery() here */
 				ExecutorEnd(queryDesc);
+				FreeQueryDesc(queryDesc);
 			}
 			PG_CATCH();
 			{
@@ -362,6 +363,7 @@ PersistHoldablePortal(Portal portal)
 		portal->queryDesc = NULL;		/* prevent double shutdown */
 		/* we do not need AfterTriggerEndQuery() here */
 		ExecutorEnd(queryDesc);
+		FreeQueryDesc(queryDesc);
 
 		/*
 		 * Set the position in the result set: ideally, this could be

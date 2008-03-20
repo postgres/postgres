@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.188 2008/02/12 04:09:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.189 2008/03/20 20:05:56 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1541,7 +1541,6 @@ _SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 			{
 				Node	   *stmt = (Node *) lfirst(lc2);
 				bool		canSetTag;
-				QueryDesc  *qdesc;
 				DestReceiver *dest;
 
 				_SPI_current->processed = 0;
@@ -1617,6 +1616,8 @@ _SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 				if (IsA(stmt, PlannedStmt) &&
 					((PlannedStmt *) stmt)->utilityStmt == NULL)
 				{
+					QueryDesc  *qdesc;
+
 					qdesc = CreateQueryDesc((PlannedStmt *) stmt,
 											ActiveSnapshot,
 											crosscheck_snapshot,
@@ -1790,6 +1791,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 		AfterTriggerEndQuery(queryDesc->estate);
 
 	ExecutorEnd(queryDesc);
+	/* FreeQueryDesc is done by the caller */
 
 #ifdef SPI_EXECUTOR_STATS
 	if (ShowExecutorStats)
