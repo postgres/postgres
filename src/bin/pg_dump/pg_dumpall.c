@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.101 2008/03/20 17:36:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.102 2008/03/20 17:42:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1020,7 +1020,7 @@ dumpCreateDB(PGconn *conn)
 			 * would be to use 'SET default_tablespace' like we do in pg_dump
 			 * for setting non-default database locations.
 			 */
-			if (strcmp(dbtablespace, "pg_default") != 0)
+			if (strcmp(dbtablespace, "pg_default") != 0 && !no_tablespaces)
 				appendPQExpBuffer(buf, " TABLESPACE = %s",
 								  fmtId(dbtablespace));
 
