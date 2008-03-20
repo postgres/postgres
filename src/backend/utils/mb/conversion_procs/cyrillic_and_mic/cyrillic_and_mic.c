@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.16 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.17 2008/03/20 10:30:04 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,6 +301,12 @@ win866_to_win1251(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_WIN1251);
 	Assert(len >= 0);
 
+	/*
+	 * Note: There are a few characters like the "Numero" sign that exist in
+	 * all the other cyrillic encodings (win1251, ISO_8859-5 and cp866), but
+	 * not in KOI8R. As we use MULE_INTERNAL/KOI8R as an intermediary, we
+	 * will fail to convert those characters.
+	 */
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	win8662mic(src, buf, len);
 	mic2win1251(buf, dest, strlen((char *) buf));
@@ -321,6 +327,7 @@ win1251_to_win866(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_WIN866);
 	Assert(len >= 0);
 
+	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	win12512mic(src, buf, len);
 	mic2win866(buf, dest, strlen((char *) buf));
@@ -381,6 +388,7 @@ iso_to_win1251(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_WIN1251);
 	Assert(len >= 0);
 
+	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	iso2mic(src, buf, len);
 	mic2win1251(buf, dest, strlen((char *) buf));
@@ -401,6 +409,7 @@ win1251_to_iso(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_ISO_8859_5);
 	Assert(len >= 0);
 
+	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	win12512mic(src, buf, len);
 	mic2iso(buf, dest, strlen((char *) buf));
@@ -421,6 +430,7 @@ iso_to_win866(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_WIN866);
 	Assert(len >= 0);
 
+	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	iso2mic(src, buf, len);
 	mic2win866(buf, dest, strlen((char *) buf));
@@ -441,6 +451,7 @@ win866_to_iso(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_ISO_8859_5);
 	Assert(len >= 0);
 
+	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	win8662mic(src, buf, len);
 	mic2iso(buf, dest, strlen((char *) buf));
@@ -483,7 +494,7 @@ iso2mic(const unsigned char *l, unsigned char *p, int len)
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0xb3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0xe1, 0xe2, 0xf7, 0xe7, 0xe4, 0xe5, 0xf6, 0xfa,
 		0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf0,
@@ -493,7 +504,7 @@ iso2mic(const unsigned char *l, unsigned char *p, int len)
 		0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0,
 		0xd2, 0xd3, 0xd4, 0xd5, 0xc6, 0xc8, 0xc3, 0xde,
 		0xdb, 0xdd, 0xdf, 0xd9, 0xd8, 0xdc, 0xc0, 0xd1,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0xa3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
 
@@ -509,9 +520,9 @@ mic2iso(const unsigned char *mic, unsigned char *p, int len)
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0xf1, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0xa1, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0xee, 0xd0, 0xd1, 0xe6, 0xd4, 0xd5, 0xe4, 0xd3,
 		0xe5, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde,
