@@ -1,4 +1,7 @@
-$PostgreSQL: pgsql/src/backend/access/hash/README,v 1.7 2008/03/15 20:46:31 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/hash/README,v 1.8 2008/03/20 17:55:14 momjian Exp $
+
+Hash Indexing
+=============
 
 This directory contains an implementation of hash indexing for Postgres.  Most
 of the core ideas are taken from Margo Seltzer and Ozan Yigit, A New Hashing
@@ -30,7 +33,7 @@ in other buckets, but we never give them back to the operating system.
 There is no provision for reducing the number of buckets, either.
 
 
-Page addressing
+Page Addressing
 ---------------
 
 There are four kinds of pages in a hash index: the meta page (page zero),
@@ -111,7 +114,7 @@ first bitmap page, which is allocated during index creation just after all
 the initially created buckets.
 
 
-Lock definitions
+Lock Definitions
 ----------------
 
 We use both lmgr locks ("heavyweight" locks) and buffer context locks
@@ -166,7 +169,7 @@ be held at a time by any one process.  (The third restriction is probably
 stronger than necessary, but it makes the proof of no deadlock obvious.)
 
 
-Pseudocode algorithms
+Pseudocode Algorithms
 ---------------------
 
 The operations we need to support are: readers scanning the index for
@@ -324,7 +327,7 @@ The exclusive lock request could deadlock in some strange scenarios, but
 we can just error out without any great harm being done.
 
 
-Free space management
+Free Space Management
 ---------------------
 
 (Question: why is this so complicated?  Why not just have a linked list
@@ -429,7 +432,7 @@ All the freespace operations should be called while holding no buffer
 locks.  Since they need no lmgr locks, deadlock is not possible.
 
 
-Other notes
+Other Notes
 -----------
 
 All the shenanigans with locking prevent a split occurring while *another*

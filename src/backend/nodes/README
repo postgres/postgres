@@ -1,15 +1,12 @@
-*******************************************************************************
-*                                                                             *
-* EXPLANATION OF THE NODE STRUCTURES                                          *
-*    - Andrew Yu (11/94)                                                      *
-*                                                                             *
-* Copyright (c) 1994, Regents of the University of California                 *
-*                                                                             *
-* $PostgreSQL: pgsql/src/backend/nodes/README,v 1.2 2003/11/29 22:39:45 pgsql Exp $
-*                                                                             *
-*******************************************************************************
+$PostgreSQL: pgsql/src/backend/nodes/README,v 1.3 2008/03/20 17:55:14 momjian Exp $
 
-INTRODUCTION
+Node Structures
+===============
+
+Andrew Yu (11/94)
+
+Introduction
+------------
 
 The current node structures are plain old C structures. "Inheritance" is
 achieved by convention. No additional functions will be generated. Functions
@@ -36,7 +33,8 @@ FILES IN THIS DIRECTORY
 	memnodes.h	- memory nodes
 
 
-STEPS TO ADD A NODE
+Steps to Add a Node
+-------------------
 
 Suppose you wana define a node Foo:
 
@@ -51,7 +49,8 @@ Suppose you wana define a node Foo:
    bother writing a creator function in makefuncs.c)
 
 
-HISTORICAL NOTE
+Historical Note
+---------------
 
 Prior to the current simple C structure definitions, the Node structures 
 uses a pseudo-inheritance system which automatically generates creator and

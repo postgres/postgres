@@ -1,7 +1,7 @@
-$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.9 2008/03/16 16:42:44 mha Exp $
+$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.10 2008/03/20 17:55:15 momjian Exp $
 
-
-GUC IMPLEMENTATION NOTES
+Guc Implementation Notes
+========================
 
 The GUC (Grand Unified Configuration) module implements configuration
 variables of multiple types (currently boolean, enum, int, float, and string).
@@ -9,7 +9,8 @@ Variable settings can come from various places, with a priority ordering
 determining which setting is used.
 
 
-PER-VARIABLE HOOKS
+Per-Variable Hooks
+------------------
 
 Each variable known to GUC can optionally have an assign_hook and/or
 a show_hook to provide customized behavior.  Assign hooks are used to
@@ -69,7 +70,8 @@ This hook allows variable-specific computation of the value displayed
 by SHOW.
 
 
-SAVING/RESTORING GUC VARIABLE VALUES
+Saving/Restoring Guc Variable Values
+------------------------------------
 
 Prior values of configuration variables must be remembered in order to deal
 with several special cases: RESET (a/k/a SET TO DEFAULT), rollback of SET
@@ -208,7 +210,8 @@ with doit = false so that the value is validated, but no derived state is
 changed.
 
 
-STRING MEMORY HANDLING
+String Memory Handling
+----------------------
 
 String option values are allocated with strdup, not with the
 pstrdup/palloc mechanisms.  We would need to keep them in a permanent

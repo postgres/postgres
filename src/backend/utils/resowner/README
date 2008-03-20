@@ -1,6 +1,6 @@
-$PostgreSQL: pgsql/src/backend/utils/resowner/README,v 1.5 2007/03/13 00:33:42 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/resowner/README,v 1.6 2008/03/20 17:55:15 momjian Exp $
 
-Notes about resource owners
+Notes About Resource Owners
 ---------------------------
 
 ResourceOwner objects are a concept invented to simplify management of
@@ -39,7 +39,7 @@ because transactions may initiate operations that require resources (such
 as query parsing) when no associated Portal exists yet.
 
 
-API overview
+API Overview
 ------------
 
 The basic operations on a ResourceOwner are:

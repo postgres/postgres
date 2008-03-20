@@ -1,7 +1,7 @@
-$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.11 2007/05/29 04:19:35 neilc Exp $
+$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.12 2008/03/20 17:55:15 momjian Exp $
 
-Notes about memory allocation redesign
---------------------------------------
+Notes About Memory Allocation Redesign
+======================================
 
 Up through version 7.0, Postgres had serious problems with memory leakage
 during large queries that process a lot of pass-by-reference data.  There
@@ -53,7 +53,7 @@ that can be reset or deleted at strategic times within a query, such as
 after each tuple.
 
 
-Some notes about the palloc API versus standard C library
+Some Notes About the palloc API Versus Standard C Library
 ---------------------------------------------------------
 
 The behavior of palloc and friends is similar to the standard C library's
@@ -73,7 +73,7 @@ Similarly, repalloc allows realloc'ing to zero size.
 * pfree and repalloc do not accept a NULL pointer.  This is intentional.
 
 
-pfree/repalloc no longer depend on CurrentMemoryContext
+pfree/repalloc No Longer Depend On CurrentMemoryContext
 -------------------------------------------------------
 
 In this proposal, pfree() and repalloc() can be applied to any chunk
@@ -101,7 +101,7 @@ do".  So there'd still need to be a global variable specifying a suitable
 temporary-allocation context.  That might as well be CurrentMemoryContext.
 
 
-Additions to the memory-context mechanism
+Additions to the Memory-Context Mechanism
 -----------------------------------------
 
 If we are going to have more contexts, we need more mechanism for keeping
@@ -130,7 +130,7 @@ children of a given context, but don't reset or delete that context
 itself".
 
 
-Globally known contexts
+Globally Known Contexts
 -----------------------
 
 There will be several widely-known contexts that will typically be
@@ -214,7 +214,7 @@ if the backend has run out of memory otherwise.  This allows out-of-memory
 to be treated as a normal ERROR condition, not a FATAL error.
 
 
-Contexts for prepared statements and portals
+Contexts For Prepared Statements And Portals
 --------------------------------------------
 
 A prepared-statement object has an associated private context, in which
@@ -230,7 +230,7 @@ from prepared statements simply reference the prepared statements' trees,
 and won't actually need any storage allocated in their private contexts.
 
 
-Transient contexts during execution
+Transient Contexts During Execution
 -----------------------------------
 
 When creating a prepared statement, the parse and plan trees will be built
@@ -318,7 +318,7 @@ processing.  (Eventually we might have an even better solution from
 nested transactions, but this'll do fine for now.)
 
 
-Mechanisms to allow multiple types of contexts
+Mechanisms to Allow Multiple Types of Contexts
 ----------------------------------------------
 
 We may want several different types of memory contexts with different
@@ -389,7 +389,7 @@ compared to the existing code, so I think we're doing fine without
 squeezing out that last little bit ...
 
 
-More control over aset.c behavior
+More Control Over aset.c Behavior
 ---------------------------------
 
 Currently, aset.c allocates an 8K block upon the first allocation in
@@ -417,7 +417,7 @@ back to malloc() during reset, but just cleared.  This avoids malloc
 thrashing.
 
 
-Other notes
+Other Notes
 -----------
 
 The original version of this proposal suggested that functions returning

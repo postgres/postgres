@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/executor/README,v 1.5 2005/04/28 21:47:12 tgl Exp $
+$PostgreSQL: pgsql/src/backend/executor/README,v 1.6 2008/03/20 17:55:14 momjian Exp $
 
 The Postgres Executor
 ---------------------
@@ -137,7 +137,7 @@ be hidden inside function calls).  This case has a flow of control like
 		(a separate FreeExprContext call is not necessary)
 
 
-EvalPlanQual (READ COMMITTED update checking)
+EvalPlanQual (READ COMMITTED Update Checking)
 ---------------------------------------------
 
 For simple SELECTs, the executor need only pay attention to tuples that are

@@ -1,7 +1,7 @@
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.22 2007/10/26 20:45:10 alvherre Exp $
+$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.23 2008/03/20 17:55:15 momjian Exp $
 
-
-LOCKING OVERVIEW
+Locking Overview
+----------------
 
 Postgres uses three types of interprocess locks:
 
@@ -45,7 +45,8 @@ when the wait time might exceed a few seconds.
 The rest of this README file discusses the regular lock manager in detail.
 
 
-LOCK DATA STRUCTURES
+Lock Data Structures
+--------------------
 
 Lock methods describe the overall locking behavior.  Currently there are
 two lock methods: DEFAULT and USER.
@@ -187,7 +188,8 @@ procLink -
 ---------------------------------------------------------------------------
 
 
-LOCK MANAGER INTERNAL LOCKING
+Lock Manager Internal Locking
+-----------------------------
 
 Before PostgreSQL 8.2, all of the shared-memory data structures used by
 the lock manager were protected by a single LWLock, the LockMgrLock;
@@ -246,7 +248,8 @@ tradeoff: we could instead recalculate the partition number from the LOCKTAG
 when needed.
 
 
-THE DEADLOCK DETECTION ALGORITHM
+The Deadlock Detection Algorithm
+--------------------------------
 
 Since we allow user transactions to request locks in any order, deadlock
 is possible.  We use a deadlock detection/breaking algorithm that is
@@ -445,7 +448,8 @@ eventually lead to the discovery of the additional constraint B before C.)
 
 Got that?
 
-Miscellaneous notes:
+Miscellaneous Notes
+-------------------
 
 1. It is easily proven that no deadlock will be missed due to our
 asynchronous invocation of deadlock checking.  A deadlock cycle in the WFG
@@ -495,7 +499,8 @@ The caller can then send a cancellation signal.  This implements the
 principle that autovacuum has a low locking priority (eg it must not block
 DDL on the table).
 
-USER LOCKS
+User Locks
+----------
 
 User locks are handled totally on the application side as long term
 cooperative locks which extend beyond the normal transaction boundaries.

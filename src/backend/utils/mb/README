@@ -1,3 +1,8 @@
+$PostgreSQL: pgsql/src/backend/utils/mb/README,v 1.6 2008/03/20 17:55:15 momjian Exp $
+
+Encodings
+---------
+
 encnames.c:	public functions for both the backend and the frontend.
 conv.c:		static functions and a public table for code conversion
 wchar.c:	mostly static functions and a public table for mb string and

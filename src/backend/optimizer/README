@@ -1,5 +1,7 @@
-Summary
--------
+$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.42 2008/03/20 17:55:14 momjian Exp $
+
+Optimizer
+---------
 
 These directories take the Query structure returned by the parser, and
 generate a plan used by the executor.  The /plan directory generates the
@@ -180,7 +182,7 @@ to see which join style should be applied for a valid join, ie,
 JOIN_INNER, JOIN_LEFT, etc.)
 
 
-Valid OUTER JOIN optimizations
+Valid OUTER JOIN Optimizations
 ------------------------------
 
 The planner's treatment of outer join reordering is based on the following
@@ -236,7 +238,7 @@ set must be expanded to include the whole of the lower OJ, thereby
 preventing it from being formed before the lower OJ is.)
 
 
-Pulling up subqueries
+Pulling Up Subqueries
 ---------------------
 
 As we described above, a subquery appearing in the range table is planned

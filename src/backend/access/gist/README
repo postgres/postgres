@@ -1,4 +1,7 @@
-$PostgreSQL: pgsql/src/backend/access/gist/README,v 1.3 2005/09/16 14:40:54 teodor Exp $
+$PostgreSQL: pgsql/src/backend/access/gist/README,v 1.4 2008/03/20 17:55:14 momjian Exp $
+
+GiST Indexing
+=============
 
 This directory contains an implementation of GiST indexing for Postgres.
 
@@ -48,7 +51,8 @@ core and PostgreSQL WAL system. Moreover, we encountered (and solved)
 a problem of uncompleted insertions when recovering after crash, which
 was not touched in the paper.
 
-SEARCH ALGORITHM
+Search Algorithm
+----------------
 
 Function gettuple finds a tuple which satisfies the search
 predicate. It store their state and returns next tuple under
@@ -92,7 +96,8 @@ gettuple(search-pred)
 	end
 
 
-INSERT ALGORITHM
+Insert Algorithm
+----------------
 
 INSERT guarantees that the GiST tree remains balanced. User defined key method 
 Penalty is used for choosing a subtree to insert; method PickSplit is used for 

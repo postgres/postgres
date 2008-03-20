@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.9 2007/09/08 20:31:14 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.10 2008/03/20 17:55:14 momjian Exp $
 
 The Transaction System
 ----------------------
@@ -145,7 +145,7 @@ finishing of transactions and subtransactions.  For example, AtStart_Memory
 takes care of initializing the memory subsystem at main transaction start.
 
 
-Subtransaction handling
+Subtransaction Handling
 -----------------------
 
 Subtransactions are implemented using a stack of TransactionState structures,
@@ -187,7 +187,7 @@ Another difference is that BeginInternalSubtransaction is allowed when no
 explicit transaction block has been established, while DefineSavepoint is not.
 
 
-Transaction and subtransaction numbering
+Transaction and Subtransaction Numbering
 ----------------------------------------
 
 Transactions and subtransactions are assigned permanent XIDs only when/if
@@ -221,7 +221,7 @@ InvalidSubTransactionId.)  Note that subtransactions do not have their
 own VXIDs; they use the parent top transaction's VXID.
 
 
-Interlocking transaction begin, transaction end, and snapshots
+Interlocking Transaction Begin, Transaction End, and Snapshots
 --------------------------------------------------------------
 
 We try hard to minimize the amount of overhead and lock contention involved
@@ -375,7 +375,7 @@ for pg_clog are implemented in transam.c, while the low-level functions are in
 clog.c.  pg_subtrans is contained completely in subtrans.c.
 
 
-Write-Ahead Log coding
+Write-Ahead Log Coding
 ----------------------
 
 The WAL subsystem (also called XLOG in the code) exists to guarantee crash

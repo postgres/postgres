@@ -1,8 +1,9 @@
-$PostgreSQL: pgsql/src/backend/storage/ipc/README,v 1.4 2003/11/29 19:51:56 pgsql Exp $
-Mon Jul 18 11:09:22 PDT 1988  W.KLAS
+$PostgreSQL: pgsql/src/backend/storage/ipc/README,v 1.5 2008/03/20 17:55:15 momjian Exp $
 
-Cache invalidation synchronization routines:
+Cache Invalidation Synchronization Routines
 ===========================================
+
+Mon Jul 18 11:09:22 PDT 1988  W.KLAS
 
 The cache synchronization is done using a message queue. Every
 backend can register a message which then has to be read by

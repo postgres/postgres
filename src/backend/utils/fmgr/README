@@ -1,4 +1,9 @@
-Proposal for function-manager redesign			19-Nov-2000
+$PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.10 2008/03/20 17:55:15 momjian Exp $
+
+Function Manager
+================
+
+Proposal For Function-Manager Redesign			19-Nov-2000
 --------------------------------------
 
 We know that the existing mechanism for calling Postgres functions needs
@@ -25,7 +30,7 @@ written in the old style can be left in place indefinitely, to provide
 backward compatibility for user-written C functions.
 
 
-Changes in pg_proc (system data about a function)
+Changes In pg_proc (System Data About a Function)
 -------------------------------------------------
 
 A new column "proisstrict" will be added to the system pg_proc table.
@@ -45,7 +50,7 @@ more useful case for functions expressed in SQL or a PL language, but
 am open to arguments for the other choice.
 
 
-The new function-manager interface
+The New Function-Manager Interface
 ----------------------------------
 
 The core of the new design is revised data structures for representing
@@ -165,7 +170,7 @@ through a function pointer declared with exactly that signature, we
 should have no portability or optimization problems.
 
 
-Function coding conventions
+Function Coding Conventions
 ---------------------------
 
 As an example, int4 addition goes from old-style
@@ -277,7 +282,7 @@ fields of FunctionCallInfo, it should just do it.  I doubt that providing
 syntactic-sugar macros for these cases is useful.
 
 
-Call-site coding conventions
+Call-Site Coding Conventions
 ----------------------------
 
 There are many places in the system that call either a specific function
@@ -339,7 +344,7 @@ have to change in the first step of implementation, but they can
 continue to support the same external appearance.
 
 
-Support for TOAST-able data types
+Support for TOAST-Able Data Types
 ---------------------------------
 
 For TOAST-able data types, the PG_GETARG macro will deliver a de-TOASTed
@@ -372,7 +377,7 @@ context.  When and if the value is actually stored into a tuple, the
 tuple toaster will decide whether toasting is needed.
 
 
-Functions accepting or returning sets
+Functions Accepting or Returning Sets
 -------------------------------------
 
 [ this section revised 29-Aug-2002 for 7.3 ]
@@ -436,7 +441,7 @@ There is no support for functions accepting sets; instead, the function will
 be called multiple times, once for each element of the input set.
 
 
-Notes about function handlers
+Notes About Function Handlers
 -----------------------------
 
 Handlers for classes of functions should find life much easier and
@@ -458,7 +463,7 @@ in any case it is required to be a context at least as long-lived as the
 FmgrInfo itself.
 
 
-Telling the difference between old- and new-style functions
+Telling the Difference Between Old- and New-Style Functions
 -----------------------------------------------------------
 
 During the conversion process, we carried two different pg_language

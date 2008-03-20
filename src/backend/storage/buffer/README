@@ -1,6 +1,6 @@
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.12 2007/05/30 20:11:58 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.13 2008/03/20 17:55:15 momjian Exp $
 
-Notes about shared buffer access rules
+Notes About Shared Buffer Access Rules
 --------------------------------------
 
 There are two separate access control mechanisms for shared disk buffers:
@@ -92,7 +92,7 @@ for VACUUM's use, since we don't allow multiple VACUUMs concurrently on a
 single relation anyway.
 
 
-Buffer manager's internal locking
+Buffer Manager's Internal Locking
 ---------------------------------
 
 Before PostgreSQL 8.1, all operations of the shared buffer manager itself
@@ -152,7 +152,7 @@ we could use per-backend LWLocks instead (a buffer header would then contain
 a field to show which backend is doing its I/O).
 
 
-Normal buffer replacement strategy
+Normal Buffer Replacement Strategy
 ----------------------------------
 
 There is a "free list" of buffers that are prime candidates for replacement.
@@ -201,7 +201,7 @@ have to give up and try another buffer.  This however is not a concern
 of the basic select-a-victim-buffer algorithm.)
 
 
-Buffer ring replacement strategy
+Buffer Ring Replacement Strategy
 ---------------------------------
 
 When running a query that needs to access a large number of pages just once,
@@ -236,7 +236,7 @@ buffer, resulting in excessive WAL flushing.  Allowing VACUUM to update
 256KB between WAL flushes should be more efficient.
 
 
-Background writer's processing
+Background Writer's Processing
 ------------------------------
 
 The background writer is designed to write out pages that are likely to be

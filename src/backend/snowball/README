@@ -1,4 +1,6 @@
-Snowball-based stemming
+$PostgreSQL: pgsql/src/backend/snowball/README,v 1.2 2008/03/20 17:55:14 momjian Exp $
+
+Snowball-Based Stemming
 -----------------------
 
 This module uses the word stemming code developed by the Snowball project,

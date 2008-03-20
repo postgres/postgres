@@ -1,12 +1,16 @@
-Subselect notes from Vadim.
+$PostgreSQL: pgsql/src/backend/optimizer/plan/README,v 1.2 2008/03/20 17:55:14 momjian Exp $
 
+Subselects
+----------
+
+Vadim B. Mikheev
 
 
 From owner-pgsql-hackers@hub.org Fri Feb 13 09:01:19 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id JAA11576
 	for <maillist@candle.pha.pa.us>; Fri, 13 Feb 1998 09:01:17 -0500 (EST)
-Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id IAA09761 for <maillist@candle.pha.pa.us>; Fri, 13 Feb 1998 08:41:22 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id IAA09761 for <maillist@candle.pha.pa.us>; Fri, 13 Feb 1998 08:41:22 -0500 (EST)
 Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id IAA08135; Fri, 13 Feb 1998 08:40:17 -0500 (EST)
 Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Fri, 13 Feb 1998 08:38:42 -0500 (EST)
 Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id IAA06646 for pgsql-hackers-outgoing; Fri, 13 Feb 1998 08:38:35 -0500 (EST)
