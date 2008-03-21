@@ -1,3 +1,8 @@
+$PostgreSQL: pgsql/src/timezone/README,v 1.7 2008/03/21 13:23:29 momjian Exp $
+
+Timezone
+========
+
 This is a PostgreSQL adapted version of the timezone library from:
 
 	ftp://elsie.nci.nih.gov/pub/tzcode*.tar.gz

@@ -1,3 +1,8 @@
+$PostgreSQL: pgsql/src/tools/msvc/README,v 1.7 2008/03/21 13:23:29 momjian Exp $
+
+MSVC build
+==========
+
 This directory contains the tools required to build PostgreSQL using
 Microsoft Visual Studio 2005. This builds the whole backend, not just
 the libpq frontend library. For more information, see the documentation

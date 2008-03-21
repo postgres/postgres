@@ -1,3 +1,8 @@
+$PostgreSQL: pgsql/src/port/README,v 1.4 2008/03/21 13:23:29 momjian Exp $
+
+libpgport
+=========
+
 libpgport must have special behavior.  It supplies functions to both
 libraries and applications.  However, there are two complexities:
 

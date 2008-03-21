@@ -1,7 +1,7 @@
-# $PostgreSQL: pgsql/src/backend/storage/smgr/README,v 1.4 2008/03/20 17:55:15 momjian Exp $
+$PostgreSQL: pgsql/src/backend/storage/smgr/README,v 1.5 2008/03/21 13:23:28 momjian Exp $
 
 Storage Manager
----------------
+===============
 
 In the original Berkeley Postgres system, there were several storage managers,
 of which only the "magnetic disk" manager remains.  (At Berkeley there were

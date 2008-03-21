@@ -1,6 +1,7 @@
-$PostgreSQL: pgsql/src/tools/make_diff/README,v 1.3 2006/03/11 04:38:42 momjian Exp $
+$PostgreSQL: pgsql/src/tools/make_diff/README,v 1.4 2008/03/21 13:23:29 momjian Exp $
 
-Bruce Momjian <pgman@candle.pha.pa.us>
+scripts
+=======
 
 Here are some of the scripts I use to make development easier.
 
@@ -34,4 +35,6 @@ it processes appear on my screen.  It creates a nice patch for me of all
 the files I used with cporig.
 
 Finally, I remove my old copies with 'rmorig'.
+
+Bruce Momjian
 

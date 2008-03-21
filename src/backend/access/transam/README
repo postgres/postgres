@@ -1,7 +1,7 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.10 2008/03/20 17:55:14 momjian Exp $
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.11 2008/03/21 13:23:28 momjian Exp $
 
 The Transaction System
-----------------------
+======================
 
 PostgreSQL's transaction system is a three-layer system.  The bottom layer
 implements low-level transactions and subtransactions, on top of which rests

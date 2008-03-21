@@ -1,7 +1,7 @@
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.13 2008/03/20 17:55:15 momjian Exp $
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.14 2008/03/21 13:23:28 momjian Exp $
 
 Notes About Shared Buffer Access Rules
---------------------------------------
+======================================
 
 There are two separate access control mechanisms for shared disk buffers:
 reference counts (a/k/a pin counts) and buffer content locks.  (Actually,

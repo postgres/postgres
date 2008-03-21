@@ -1,9 +1,7 @@
-$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.2 2007/09/21 21:25:42 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.3 2008/03/21 13:23:27 momjian Exp $
 
-                           Heap Only Tuples (HOT)
-
-Introduction
-------------
+Heap Only Tuples (HOT)
+======================
 
 The Heap Only Tuple (HOT) feature eliminates redundant index entries and
 allows the re-use of space taken by DELETEd or obsoleted UPDATEd tuples

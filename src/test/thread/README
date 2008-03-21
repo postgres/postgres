@@ -1,3 +1,8 @@
+$PostgreSQL: pgsql/src/test/thread/README,v 1.2 2008/03/21 13:23:29 momjian Exp $
+
+Threading
+=========
+
 This program should be run by developers wishing to enable threading on
 new platforms.
 

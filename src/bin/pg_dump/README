@@ -1,3 +1,5 @@
+$PostgreSQL: pgsql/src/bin/pg_dump/README,v 1.7 2008/03/21 13:23:28 momjian Exp $
+
 Notes on pg_dump
 ================
 

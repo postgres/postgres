@@ -1,3 +1,8 @@
+$PostgreSQL: pgsql/src/tutorial/README,v 1.4 2008/03/21 13:23:29 momjian Exp $
+
+tutorial
+========
+
 This directory contains SQL tutorial scripts.  To look at them, first do a
 	% make
 to compile all the scripts and C files for the user-defined functions

@@ -1,3 +1,8 @@
+$PostgreSQL: pgsql/src/tools/fsync/README,v 1.4 2008/03/21 13:23:29 momjian Exp $
+
+fsync
+=====
+
 This program tests fsync.  The tests are described as part of the program output.
 
 	Usage:	test_fsync [-f filename] [loops]

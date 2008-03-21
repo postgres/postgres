@@ -1,3 +1,8 @@
+$PostgreSQL: pgsql/src/tools/pginclude/README,v 1.10 2008/03/21 13:23:29 momjian Exp $
+
+pginclude
+=========
+
 These utilities help clean up #include file usage.  They should be run
 in this order so that the include files have the proper includes before
 the C files are tested.
