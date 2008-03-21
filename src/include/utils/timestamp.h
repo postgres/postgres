@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.75 2008/02/17 02:09:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.76 2008/03/21 01:31:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,31 +25,42 @@
 
 /*
  * Timestamp represents absolute time.
+ *
  * Interval represents delta time. Keep track of months (and years), days,
- *	and time separately since the elapsed time spanned is unknown until
- *	instantiated relative to an absolute time.
+ * and hours/minutes/seconds separately since the elapsed time spanned is
+ * unknown until instantiated relative to an absolute time.
  *
  * Note that Postgres uses "time interval" to mean a bounded interval,
  * consisting of a beginning and ending time, not a time span - thomas 97/03/20
+ *
+ * We have two implementations, one that uses int64 values with units of
+ * microseconds, and one that uses double values with units of seconds.
+ *
+ * TimeOffset and fsec_t are convenience typedefs for temporary variables
+ * that are of different types in the two cases.  Do not use fsec_t in values
+ * stored on-disk, since it is not the same size in both implementations.
  */
 
 #ifdef HAVE_INT64_TIMESTAMP
+
 typedef int64 Timestamp;
 typedef int64 TimestampTz;
+typedef int64 TimeOffset;
+typedef int32 fsec_t;			/* fractional seconds (in microseconds) */
+
 #else
+
 typedef double Timestamp;
 typedef double TimestampTz;
+typedef double TimeOffset;
+typedef double fsec_t;			/* fractional seconds (in seconds) */
+
 #endif
 
 typedef struct
 {
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		time;			/* all time units other than days, months and
+	TimeOffset	time;			/* all time units other than days, months and
 								 * years */
-#else
-	double		time;			/* all time units other than days, months and
-								 * years */
-#endif
 	int32		day;			/* days, after time for alignment */
 	int32		month;			/* months and years, after time for alignment */
 } Interval;
@@ -106,17 +117,18 @@ typedef struct
 #define TimestampTzGetDatum(X) Int64GetDatum(X)
 #define IntervalPGetDatum(X) PointerGetDatum(X)
 
-#define PG_GETARG_TIMESTAMP(n) PG_GETARG_INT64(n)
-#define PG_GETARG_TIMESTAMPTZ(n) PG_GETARG_INT64(n)
+#define PG_GETARG_TIMESTAMP(n) DatumGetTimestamp(PG_GETARG_DATUM(n))
+#define PG_GETARG_TIMESTAMPTZ(n) DatumGetTimestampTz(PG_GETARG_DATUM(n))
 #define PG_GETARG_INTERVAL_P(n) DatumGetIntervalP(PG_GETARG_DATUM(n))
 
-#define PG_RETURN_TIMESTAMP(x) PG_RETURN_INT64(x)
-#define PG_RETURN_TIMESTAMPTZ(x) PG_RETURN_INT64(x)
+#define PG_RETURN_TIMESTAMP(x) return TimestampGetDatum(x)
+#define PG_RETURN_TIMESTAMPTZ(x) return TimestampTzGetDatum(x)
 #define PG_RETURN_INTERVAL_P(x) return IntervalPGetDatum(x)
 
 #define DT_NOBEGIN		(-INT64CONST(0x7fffffffffffffff) - 1)
 #define DT_NOEND		(INT64CONST(0x7fffffffffffffff))
-#else
+
+#else  /* !HAVE_INT64_TIMESTAMP */
 
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
 #define DatumGetTimestampTz(X)	((TimestampTz) DatumGetFloat8(X))
@@ -141,6 +153,7 @@ typedef struct
 #define DT_NOBEGIN		(-DBL_MAX)
 #define DT_NOEND		(DBL_MAX)
 #endif
+
 #endif   /* HAVE_INT64_TIMESTAMP */
 
 
@@ -153,14 +166,6 @@ typedef struct
 #define TIMESTAMP_IS_NOEND(j)	((j) == DT_NOEND)
 
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
-
-#ifdef HAVE_INT64_TIMESTAMP
-
-typedef int32 fsec_t;
-#else
-
-typedef double fsec_t;
-#endif
 
 /*
  *	Round off to MAX_TIMESTAMP_PRECISION decimal places.

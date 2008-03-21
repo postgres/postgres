@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.153 2008/02/17 02:09:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.154 2008/03/21 01:31:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -831,12 +831,7 @@ interval_reltime(PG_FUNCTION_ARGS)
 	int			year,
 				month,
 				day;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		span;
-#else
-	double		span;
-#endif
+	TimeOffset	span;
 
 	year = interval->month / MONTHS_PER_YEAR;
 	month = interval->month % MONTHS_PER_YEAR;

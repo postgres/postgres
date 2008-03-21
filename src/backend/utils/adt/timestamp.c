@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.185 2008/02/17 02:09:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.186 2008/03/21 01:31:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,11 +44,7 @@
 TimestampTz PgStartTime;
 
 
-#ifdef HAVE_INT64_TIMESTAMP
-static int64 time2t(const int hour, const int min, const int sec, const fsec_t fsec);
-#else
-static double time2t(const int hour, const int min, const int sec, const fsec_t fsec);
-#endif
+static TimeOffset time2t(const int hour, const int min, const int sec, const fsec_t fsec);
 static int	EncodeSpecialTimestamp(Timestamp dt, char *str);
 static Timestamp dt2local(Timestamp dt, int timezone);
 static void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
@@ -977,11 +973,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		}
 		else if (range == INTERVAL_MASK(MINUTE))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
-			int64		hour;
-#else
-			double		hour;
-#endif
+			TimeOffset	hour;
 
 			interval->month = 0;
 			interval->day = 0;
@@ -998,11 +990,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		}
 		else if (range == INTERVAL_MASK(SECOND))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
-			int64		minute;
-#else
-			double		minute;
-#endif
+			TimeOffset	minute;
 
 			interval->month = 0;
 			interval->day = 0;
@@ -1076,11 +1064,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		else if (range == (INTERVAL_MASK(MINUTE) |
 						   INTERVAL_MASK(SECOND)))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
-			int64		hour;
-#else
-			double		hour;
-#endif
+			TimeOffset	hour;
 
 			interval->month = 0;
 			interval->day = 0;
@@ -1342,11 +1326,7 @@ timestamptz_to_str(TimestampTz t)
 void
 dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		time;
-#else
-	double		time;
-#endif
+	TimeOffset	time;
 
 	time = jd;
 
@@ -1547,13 +1527,8 @@ recalc_t:
 int
 tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 {
-#ifdef HAVE_INT64_TIMESTAMP
-	int			date;
-	int64		time;
-#else
-	double		date,
-				time;
-#endif
+	TimeOffset	date;
+	TimeOffset	time;
 
 	/* Julian day routines are not correct for negative Julian days */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
@@ -1596,13 +1571,8 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 int
 interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 {
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		time;
-	int64		tfrac;
-#else
-	double		time;
-	double		tfrac;
-#endif
+	TimeOffset	time;
+	TimeOffset	tfrac;
 
 	tm->tm_year = span.month / MONTHS_PER_YEAR;
 	tm->tm_mon = span.month % MONTHS_PER_YEAR;
@@ -1658,19 +1628,15 @@ tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 	return 0;
 }
 
+static TimeOffset
+time2t(const int hour, const int min, const int sec, const fsec_t fsec)
+{
 #ifdef HAVE_INT64_TIMESTAMP
-static int64
-time2t(const int hour, const int min, const int sec, const fsec_t fsec)
-{
 	return (((((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec) * USECS_PER_SEC) + fsec;
-}	/* time2t() */
 #else
-static double
-time2t(const int hour, const int min, const int sec, const fsec_t fsec)
-{
 	return (((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec + fsec;
-}	/* time2t() */
 #endif
+}
 
 static Timestamp
 dt2local(Timestamp dt, int tz)
@@ -1681,7 +1647,7 @@ dt2local(Timestamp dt, int tz)
 	dt -= tz;
 #endif
 	return dt;
-}	/* dt2local() */
+}
 
 
 /*****************************************************************************
@@ -2042,13 +2008,8 @@ timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
 static int
 interval_cmp_internal(Interval *interval1, Interval *interval2)
 {
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		span1,
+	TimeOffset	span1,
 				span2;
-#else
-	double		span1,
-				span2;
-#endif
 
 	span1 = interval1->time;
 	span2 = interval2->time;
@@ -2387,12 +2348,7 @@ interval_justify_interval(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	Interval   *result;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		wholeday;
-#else
-	double		wholeday;
-#endif
+	TimeOffset	wholeday;
 	int32		wholemonth;
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -2459,12 +2415,7 @@ interval_justify_hours(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	Interval   *result;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		wholeday;
-#else
-	double		wholeday;
-#endif
+	TimeOffset	wholeday;
 
 	result = (Interval *) palloc(sizeof(Interval));
 	result->month = span->month;

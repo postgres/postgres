@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.139 2008/02/17 02:09:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.140 2008/03/21 01:31:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1838,9 +1838,9 @@ timetztypmodout(PG_FUNCTION_ARGS)
 static int
 timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp)
 {
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		trem = time->time;
+	TimeOffset	trem = time->time;
 
+#ifdef HAVE_INT64_TIMESTAMP
 	tm->tm_hour = trem / USECS_PER_HOUR;
 	trem -= tm->tm_hour * USECS_PER_HOUR;
 	tm->tm_min = trem / USECS_PER_MINUTE;
@@ -1848,8 +1848,6 @@ timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp)
 	tm->tm_sec = trem / USECS_PER_SEC;
 	*fsec = trem - tm->tm_sec * USECS_PER_SEC;
 #else
-	double		trem = time->time;
-
 recalc:
 	TMODULO(trem, tm->tm_hour, (double) SECS_PER_HOUR);
 	TMODULO(trem, tm->tm_min, (double) SECS_PER_MINUTE);
@@ -1895,17 +1893,14 @@ timetz_scale(PG_FUNCTION_ARGS)
 static int
 timetz_cmp_internal(TimeTzADT *time1, TimeTzADT *time2)
 {
-	/* Primary sort is by true (GMT-equivalent) time */
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		t1,
+	TimeOffset	t1,
 				t2;
 
+	/* Primary sort is by true (GMT-equivalent) time */
+#ifdef HAVE_INT64_TIMESTAMP
 	t1 = time1->time + (time1->zone * USECS_PER_SEC);
 	t2 = time2->time + (time2->zone * USECS_PER_SEC);
 #else
-	double		t1,
-				t2;
-
 	t1 = time1->time + time1->zone;
 	t2 = time2->time + time2->zone;
 #endif
