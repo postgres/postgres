@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.51 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.52 2008/03/21 21:08:31 tgl Exp $
  *
  *	Interface:
  *
@@ -26,6 +26,7 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "utils/memutils.h"
@@ -878,12 +879,14 @@ PrintLockQueue(LOCK *lock, const char *info)
 void
 DeadLockReport(void)
 {
-	StringInfoData buf;
-	StringInfoData buf2;
+	StringInfoData detailbuf;
+	StringInfoData contextbuf;
+	StringInfoData locktagbuf;
 	int			i;
 
-	initStringInfo(&buf);
-	initStringInfo(&buf2);
+	initStringInfo(&detailbuf);
+	initStringInfo(&contextbuf);
+	initStringInfo(&locktagbuf);
 
 	for (i = 0; i < nDeadlockDetails; i++)
 	{
@@ -896,26 +899,36 @@ DeadLockReport(void)
 		else
 			nextpid = deadlockDetails[0].pid;
 
+		/* reset locktagbuf to hold next object description */
+		resetStringInfo(&locktagbuf);
+
+		DescribeLockTag(&locktagbuf, &info->locktag);
+
 		if (i > 0)
-			appendStringInfoChar(&buf, '\n');
+			appendStringInfoChar(&detailbuf, '\n');
 
-		/* reset buf2 to hold next object description */
-		resetStringInfo(&buf2);
-
-		DescribeLockTag(&buf2, &info->locktag);
-
-		appendStringInfo(&buf,
+		appendStringInfo(&detailbuf,
 				  _("Process %d waits for %s on %s; blocked by process %d."),
 						 info->pid,
 						 GetLockmodeName(info->locktag.locktag_lockmethodid,
 										 info->lockmode),
-						 buf2.data,
+						 locktagbuf.data,
 						 nextpid);
+
+		if (i > 0)
+			appendStringInfoChar(&contextbuf, '\n');
+
+		appendStringInfo(&contextbuf,
+						 _("Process %d: %s"),
+						 info->pid,
+						 pgstat_get_backend_current_activity(info->pid));
 	}
+
 	ereport(ERROR,
 			(errcode(ERRCODE_T_R_DEADLOCK_DETECTED),
 			 errmsg("deadlock detected"),
-			 errdetail("%s", buf.data)));
+			 errdetail("%s", detailbuf.data),
+			 errcontext("%s", contextbuf.data)));
 }
 
 /*
