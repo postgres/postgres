@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.360 2008/03/20 21:42:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.361 2008/03/21 22:41:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,6 @@ typedef struct TypeName
 	NodeTag		type;
 	List	   *names;			/* qualified name (list of Value strings) */
 	Oid			typeid;			/* type identified by OID */
-	bool		timezone;		/* timezone specified? */
 	bool		setof;			/* is a set? */
 	bool		pct_type;		/* %TYPE specified? */
 	List	   *typmods;		/* type modifier expression(s) */
