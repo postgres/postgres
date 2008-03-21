@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstattuple.sgml,v 1.3 2007/12/10 05:32:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstattuple.sgml,v 1.4 2008/03/21 03:23:30 tgl Exp $ -->
 
 <sect1 id="pgstattuple">
  <title>pgstattuple</title>
@@ -190,37 +190,37 @@ leaf_fragmentation | 0
 
        <row>
         <entry><structfield>index_size</structfield></entry>
-        <entry><type>integer</type></entry>
+        <entry><type>bigint</type></entry>
         <entry>Total number of pages in index</entry>
        </row>
 
        <row>
         <entry><structfield>root_block_no</structfield></entry>
-        <entry><type>integer</type></entry>
+        <entry><type>bigint</type></entry>
         <entry>Location of root block</entry>
        </row>
 
        <row>
         <entry><structfield>internal_pages</structfield></entry>
-        <entry><type>integer</type></entry>
+        <entry><type>bigint</type></entry>
         <entry>Number of <quote>internal</> (upper-level) pages</entry>
        </row>
 
        <row>
         <entry><structfield>leaf_pages</structfield></entry>
-        <entry><type>integer</type></entry>
+        <entry><type>bigint</type></entry>
         <entry>Number of leaf pages</entry>
        </row>
 
        <row>
         <entry><structfield>empty_pages</structfield></entry>
-        <entry><type>integer</type></entry>
+        <entry><type>bigint</type></entry>
         <entry>Number of empty pages</entry>
        </row>
 
        <row>
         <entry><structfield>deleted_pages</structfield></entry>
-        <entry><type>integer</type></entry>
+        <entry><type>bigint</type></entry>
         <entry>Number of deleted pages</entry>
        </row>
 
@@ -250,7 +250,7 @@ leaf_fragmentation | 0
 
    <varlistentry>
     <term>
-     <function>pg_relpages(text) returns integer</>
+     <function>pg_relpages(text) returns bigint</>
     </term>
 
     <listitem>
@@ -264,10 +264,10 @@ leaf_fragmentation | 0
  </sect2>
 
  <sect2>
-  <title>Author</title>
+  <title>Authors</title>
 
   <para>
-   Tatsuo Ishii
+   Tatsuo Ishii and Satoshi Nagayasu
   </para>
  </sect2>
 
