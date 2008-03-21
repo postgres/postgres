@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.9 2008/02/07 17:09:51 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.10 2008/03/21 22:10:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,8 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 
 	/* Check for SERIAL pseudo-types */
 	is_serial = false;
-	if (list_length(column->typename->names) == 1)
+	if (list_length(column->typename->names) == 1 &&
+		!column->typename->pct_type)
 	{
 		char	   *typname = strVal(linitial(column->typename->names));
 
@@ -284,6 +285,16 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 			column->typename->names = NIL;
 			column->typename->typeid = INT8OID;
 		}
+
+		/*
+		 * We have to reject "serial[]" explicitly, because once we've
+		 * set typeid, LookupTypeName won't notice arrayBounds.  We don't
+		 * need any special coding for serial(typmod) though.
+		 */
+		if (is_serial && column->typename->arrayBounds != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("array of serial is not implemented")));
 	}
 
 	/* Do necessary work on the column type declaration */
