@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.36 2008/02/28 12:17:59 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.37 2008/03/21 02:50:02 adunstan Exp $
 #
 use Carp;
 use strict;
@@ -204,6 +204,12 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 " { 0, NULL, 0, false, false, NULL }\n};\n\nconst int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin)) - 1;\n";
         close(T);
     }
+
+    if (IsNewer('src\include\utils\probes.h','src\backend\utils\pg_trace.d'))
+    {
+		print "Generating probes.h...\n";
+		system('psed -f src\backend\utils\Gen_dummy_probes.sed src\backend\utils\probes.d > src\include\utils\probes.h'); 
+	}
 
     if (IsNewer('src\interfaces\libpq\libpq.rc','src\interfaces\libpq\libpq.rc.in'))
     {
