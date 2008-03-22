@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.47 2008/03/19 00:39:33 ishii Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.48 2008/03/22 01:55:14 ishii Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -421,6 +421,9 @@ SELECT lo_unlink(173454);  -- deletes large object with OID 173454
 
 INSERT INTO image (name, raster)
     VALUES ('beautiful image', lo_import('/etc/motd'));
+
+INSERT INTO image (name, raster)  -- same as above, but specify OID to use
+    VALUES ('beautiful image', lo_import('/etc/motd', 68583));
 
 SELECT lo_export(image.raster, '/tmp/motd') FROM image
     WHERE name = 'beautiful image';

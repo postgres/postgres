@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/be-fsstubs.h,v 1.30 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/be-fsstubs.h,v 1.31 2008/03/22 01:55:14 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
  * LO functions available via pg_proc entries
  */
 extern Datum lo_import(PG_FUNCTION_ARGS);
+extern Datum lo_import_with_oid(PG_FUNCTION_ARGS);
 extern Datum lo_export(PG_FUNCTION_ARGS);
 
 extern Datum lo_creat(PG_FUNCTION_ARGS);
