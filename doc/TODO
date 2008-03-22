@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri Mar 21 21:30:06 EDT 2008
+Last updated:		Fri Mar 21 21:44:38 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1661,6 +1661,10 @@ Miscellaneous Performance
   AcceptInvalidationMessages() call
 
   http://archives.postgresql.org/pgsql-committers/2007-11/msg00585.php
+
+* Improve performance of shared invalidation queue for multiple CPUs
+
+  http://archives.postgresql.org/pgsql-performance/2008-01/msg00023.php
 
 * Consider Cartesian joins when both relations are needed to form an
   indexscan qualification for a third relation

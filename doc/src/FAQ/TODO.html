@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Fri Mar 21 21:30:06 EDT 2008
+Last updated:           Fri Mar 21 21:44:38 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1440,6 +1440,9 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Consider if CommandCounterIncrement() can avoid its
   AcceptInvalidationMessages() call
 <p>  <a href="http://archives.postgresql.org/pgsql-committers/2007-11/msg00585.php">http://archives.postgresql.org/pgsql-committers/2007-11/msg00585.php</a>
+</p>
+  </li><li>Improve performance of shared invalidation queue for multiple CPUs
+<p>  <a href="http://archives.postgresql.org/pgsql-performance/2008-01/msg00023.php">http://archives.postgresql.org/pgsql-performance/2008-01/msg00023.php</a>
 </p>
   </li><li>Consider Cartesian joins when both relations are needed to form an
   indexscan qualification for a third relation
