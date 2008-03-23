@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat Mar 22 21:30:42 EDT 2008
+Last updated:		Sun Mar 23 08:36:50 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1807,7 +1807,7 @@ Source Code
 
 	  http://archives.postgresql.org/pgsql-hackers/2007-12/msg00455.php
 
-	o Support pgxs
+	o Support pgxs when using MSVC
 
 	o Fix MSVC NLS support, like for to_char()
 
