@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.308 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.309 2008/03/23 00:24:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -914,6 +914,7 @@ extern int32 type_maximum_size(Oid type_oid, int32 typemod);
 /* quote.c */
 extern Datum quote_ident(PG_FUNCTION_ARGS);
 extern Datum quote_literal(PG_FUNCTION_ARGS);
+extern Datum quote_nullable(PG_FUNCTION_ARGS);
 
 /* guc.c */
 extern Datum show_config_by_name(PG_FUNCTION_ARGS);

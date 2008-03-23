@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.424 2008/03/10 12:39:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.425 2008/03/23 00:24:19 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1263,6 +1263,9 @@
     <primary>quote_literal</primary>
    </indexterm>
    <indexterm>
+    <primary>quote_nullable</primary>
+   </indexterm>
+   <indexterm>
     <primary>repeat</primary>
    </indexterm>
    <indexterm>
@@ -1523,6 +1526,7 @@
         Quotes are added only if necessary (i.e., if the string contains
         non-identifier characters or would be case-folded).
         Embedded quotes are properly doubled.
+        See also <xref linkend="plpgsql-quote-literal-example">.
        </entry>
        <entry><literal>quote_ident('Foo bar')</literal></entry>
        <entry><literal>"Foo bar"</literal></entry>
@@ -1535,6 +1539,10 @@
         Return the given string suitably quoted to be used as a string literal
         in an <acronym>SQL</acronym> statement string.
         Embedded single-quotes and backslashes are properly doubled.
+        Note that <function>quote_literal</function> returns null on null
+        input; if the argument might be null,
+        <function>quote_nullable</function> is often more suitable.
+        See also <xref linkend="plpgsql-quote-literal-example">.
        </entry>
        <entry><literal>quote_literal('O\'Reilly')</literal></entry>
        <entry><literal>'O''Reilly'</literal></entry>
@@ -1548,6 +1556,32 @@
         Embedded single-quotes and backslashes are properly doubled.
        </entry>
        <entry><literal>quote_literal(42.5)</literal></entry>
+       <entry><literal>'42.5'</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal><function>quote_nullable</function>(<parameter>string</parameter> <type>text</type>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Return the given string suitably quoted to be used as a string literal
+        in an <acronym>SQL</acronym> statement string; or, if the argument
+        is null, return <literal>NULL</>.
+        Embedded single-quotes and backslashes are properly doubled.
+        See also <xref linkend="plpgsql-quote-literal-example">.
+       </entry>
+       <entry><literal>quote_nullable(NULL)</literal></entry>
+       <entry><literal>NULL</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal><function>quote_nullable</function>(<parameter>value</parameter> <type>anyelement</type>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Coerce the given value to text and then quote it as a literal;
+        or, if the argument is null, return <literal>NULL</>.
+        Embedded single-quotes and backslashes are properly doubled.
+       </entry>
+       <entry><literal>quote_nullable(42.5)</literal></entry>
        <entry><literal>'42.5'</literal></entry>
       </row>
 

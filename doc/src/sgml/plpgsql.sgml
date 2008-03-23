@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.123 2008/01/23 02:04:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.124 2008/03/23 00:24:19 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1066,6 +1066,24 @@ EXECUTE <replaceable class="command">command-string</replaceable> <optional> INT
     </para>
    </note>
 
+   <example id="plpgsql-quote-literal-example">
+   <title>Quoting values in dynamic queries</title>
+
+    <indexterm>
+     <primary>quote_ident</primary>
+     <secondary>use in PL/PgSQL</secondary>
+    </indexterm>
+
+    <indexterm>
+     <primary>quote_literal</primary>
+     <secondary>use in PL/PgSQL</secondary>
+    </indexterm>
+
+    <indexterm>
+     <primary>quote_nullable</primary>
+     <secondary>use in PL/PgSQL</secondary>
+    </indexterm>
+
     <para>
      When working with dynamic commands you will often have to handle escaping
      of single quotes.  The recommended method for quoting fixed text in your
@@ -1091,32 +1109,64 @@ EXECUTE 'UPDATE tbl SET '
 </programlisting>
     </para>
 
-    <indexterm>
-     <primary>quote_ident</primary>
-     <secondary>use in PL/PgSQL</secondary>
-    </indexterm>
-
-    <indexterm>
-     <primary>quote_literal</primary>
-     <secondary>use in PL/PgSQL</secondary>
-    </indexterm>
-
     <para>
      This example demonstrates the use of the
      <function>quote_ident</function> and
-     <function>quote_literal</function> functions.  For safety,
-     expressions containing column and table identifiers should be
-     passed to <function>quote_ident</function>.  Expressions containing
-     values that should be literal strings in the constructed command
-     should be passed to <function>quote_literal</function>.  Both
-     take the appropriate steps to return the input text enclosed in
-     double or single quotes respectively, with any embedded special
-     characters properly escaped.
+     <function>quote_literal</function> functions (see <xref
+     linkend="functions-string">).  For safety, expressions containing column
+     or table identifiers should be passed through
+     <function>quote_ident</function> before insertion in a dynamic query.
+     Expressions containing values that should be literal strings in the
+     constructed command should be passed through <function>quote_literal</>.
+     These functions take the appropriate steps to return the input text
+     enclosed in double or single quotes respectively, with any embedded
+     special characters properly escaped.
+    </para>
+
+    <para>
+     Because <function>quote_literal</function> is labelled
+     <literal>STRICT</literal>, it will always return null when called with a
+     null argument.  In the above example, if <literal>newvalue</> or
+     <literal>keyvalue</> were null, the entire dynamic query string would
+     become null, leading to an error from <command>EXECUTE</command>.
+     You can avoid this problem by using the <function>quote_nullable</>
+     function, which works the same as <function>quote_literal</> except that
+     when called with a null argument it returns the string <literal>NULL</>.
+     For example,
+<programlisting>
+EXECUTE 'UPDATE tbl SET '
+        || quote_ident(colname)
+        || ' = '
+        || quote_nullable(newvalue)
+        || ' WHERE key = '
+        || quote_nullable(keyvalue);
+</programlisting>
+     If you are dealing with values that might be null, you should usually
+     use <function>quote_nullable</> in place of <function>quote_literal</>.
+    </para>
+
+    <para>
+     As always, care must be taken to ensure that null values in a query do
+     not deliver unintended results.  For example the <literal>WHERE</> clause
+<programlisting>
+     'WHERE key = ' || quote_nullable(keyvalue)
+</programlisting> 
+     will never succeed if <literal>keyvalue</> is null, because the
+     result of using the equality operator <literal>=</> with a null operand
+     is always null.  If you wish null to work like an ordinary key value,
+     you would need to rewrite the above as
+<programlisting>
+     'WHERE key IS NOT DISTINCT FROM ' || quote_nullable(keyvalue)
+</programlisting>
+     (At present, <literal>IS NOT DISTINCT FROM</> is handled much less
+     efficiently than <literal>=</>, so don't do this unless you must.
+     See <xref linkend="functions-comparison"> for
+     more information on nulls and <literal>IS DISTINCT</>.)
     </para>
 
     <para>
      Note that dollar quoting is only useful for quoting fixed text.
-     It would be a very bad idea to try to do the above example as:
+     It would be a very bad idea to try to write this example as:
 <programlisting>
 EXECUTE 'UPDATE tbl SET '
         || quote_ident(colname)
@@ -1129,8 +1179,10 @@ EXECUTE 'UPDATE tbl SET '
      happened to contain <literal>$$</>.  The same objection would
      apply to any other dollar-quoting delimiter you might pick.
      So, to safely quote text that is not known in advance, you
-     <emphasis>must</> use <function>quote_literal</function>.
+     <emphasis>must</> use <function>quote_literal</>,
+     <function>quote_nullable</>, or <function>quote_ident</>, as appropriate.
     </para>
+   </example>
 
     <para>
      A much larger example of a dynamic command and
