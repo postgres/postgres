@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.61 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.62 2008/03/23 00:54:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,18 +124,17 @@ ExecMaterial(MaterialState *node)
 		}
 
 		/*
-		 * Append returned tuple to tuplestore.  NOTE: because the tuplestore
-		 * is certainly in EOF state, its read position will move forward over
-		 * the added tuple.  This is what we want.
+		 * Append a copy of the returned tuple to tuplestore.  NOTE: because
+		 * the tuplestore is certainly in EOF state, its read position will
+		 * move forward over the added tuple.  This is what we want.
 		 */
 		if (tuplestorestate)
 			tuplestore_puttupleslot(tuplestorestate, outerslot);
 
 		/*
-		 * And return a copy of the tuple.	(XXX couldn't we just return the
-		 * outerslot?)
+		 * We can just return the subplan's returned tuple, without copying.
 		 */
-		return ExecCopySlot(slot, outerslot);
+		return outerslot;
 	}
 
 	/*
