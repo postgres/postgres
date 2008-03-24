@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.69 2008/03/01 02:46:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.70 2008/03/24 19:12:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1401,25 +1401,25 @@ xml_ereport_by_code(int level, int sqlcode,
 	switch (code)
 	{
 		case XML_ERR_INVALID_CHAR:
-			det = "Invalid character value";
+			det = gettext_noop("Invalid character value.");
 			break;
 		case XML_ERR_SPACE_REQUIRED:
-			det = "Space required";
+			det = gettext_noop("Space required.");
 			break;
 		case XML_ERR_STANDALONE_VALUE:
-			det = "standalone accepts only 'yes' or 'no'";
+			det = gettext_noop("standalone accepts only 'yes' or 'no'.");
 			break;
 		case XML_ERR_VERSION_MISSING:
-			det = "Malformed declaration expecting version";
+			det = gettext_noop("Malformed declaration: missing version.");
 			break;
 		case XML_ERR_MISSING_ENCODING:
-			det = "Missing encoding in text declaration";
+			det = gettext_noop("Missing encoding in text declaration.");
 			break;
 		case XML_ERR_XMLDECL_NOT_FINISHED:
-			det = "Parsing XML declaration: '?>' expected";
+			det = gettext_noop("Parsing XML declaration: '?>' expected.");
 			break;
 		default:
-			det = "Unrecognized libxml error code: %d";
+			det = gettext_noop("Unrecognized libxml error code: %d.");
 			break;
 	}
 

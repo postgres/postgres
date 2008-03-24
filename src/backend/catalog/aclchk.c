@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.143 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.144 2008/03/24 19:12:49 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -246,7 +246,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 {
 	InternalGrant istmt;
 	ListCell   *cell;
-	char	   *errormsg;
+	const char *errormsg;
 	AclMode		all_privileges;
 
 	/*
@@ -294,31 +294,31 @@ ExecuteGrantStmt(GrantStmt *stmt)
 			 */
 		case ACL_OBJECT_RELATION:
 			all_privileges = ACL_ALL_RIGHTS_RELATION | ACL_ALL_RIGHTS_SEQUENCE;
-			errormsg = _("invalid privilege type %s for relation");
+			errormsg = gettext_noop("invalid privilege type %s for relation");
 			break;
 		case ACL_OBJECT_SEQUENCE:
 			all_privileges = ACL_ALL_RIGHTS_SEQUENCE;
-			errormsg = _("invalid privilege type %s for sequence");
+			errormsg = gettext_noop("invalid privilege type %s for sequence");
 			break;
 		case ACL_OBJECT_DATABASE:
 			all_privileges = ACL_ALL_RIGHTS_DATABASE;
-			errormsg = _("invalid privilege type %s for database");
+			errormsg = gettext_noop("invalid privilege type %s for database");
 			break;
 		case ACL_OBJECT_FUNCTION:
 			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
-			errormsg = _("invalid privilege type %s for function");
+			errormsg = gettext_noop("invalid privilege type %s for function");
 			break;
 		case ACL_OBJECT_LANGUAGE:
 			all_privileges = ACL_ALL_RIGHTS_LANGUAGE;
-			errormsg = _("invalid privilege type %s for language");
+			errormsg = gettext_noop("invalid privilege type %s for language");
 			break;
 		case ACL_OBJECT_NAMESPACE:
 			all_privileges = ACL_ALL_RIGHTS_NAMESPACE;
-			errormsg = _("invalid privilege type %s for schema");
+			errormsg = gettext_noop("invalid privilege type %s for schema");
 			break;
 		case ACL_OBJECT_TABLESPACE:
 			all_privileges = ACL_ALL_RIGHTS_TABLESPACE;
-			errormsg = _("invalid privilege type %s for tablespace");
+			errormsg = gettext_noop("invalid privilege type %s for tablespace");
 			break;
 		default:
 			/* keep compiler quiet */
@@ -351,8 +351,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 			if (priv & ~((AclMode) all_privileges))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-						 errmsg(errormsg,
-								privilege_to_string(priv))));
+						 errmsg(errormsg, privilege_to_string(priv))));
 
 			istmt.privileges |= priv;
 		}
