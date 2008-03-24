@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Mar 24 12:05:37 EDT 2008
+Last updated:		Mon Mar 24 12:11:17 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -53,6 +53,9 @@ Administration
 
 * Allow statistics last vacuum/analyze execution times to be displayed
   without requiring stats_row_level to be enabled
+
+  http://archives.postgresql.org/pgsql-docs/2007-04/msg00028.php
+
 * Allow log_min_messages to be specified on a per-module basis
 
   This would allow administrators to see more detailed information from
