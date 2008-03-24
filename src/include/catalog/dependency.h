@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.33 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.34 2008/03/24 19:47:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,7 +229,8 @@ extern void updateAclDependencies(Oid classId, Oid objectId,
 					  int noldmembers, Oid *oldmembers,
 					  int nnewmembers, Oid *newmembers);
 
-extern char *checkSharedDependencies(Oid classId, Oid objectId);
+extern bool checkSharedDependencies(Oid classId, Oid objectId,
+									char **detail_msg, char **detail_log_msg);
 
 extern void copyTemplateDependencies(Oid templateDbId, Oid newDbId);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.24 2008/03/24 19:12:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.25 2008/03/24 19:47:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -454,11 +454,14 @@ typedef struct
  * checkSharedDependencies
  *
  * Check whether there are shared dependency entries for a given shared
- * object.	Returns a string containing a newline-separated list of object
+ * object; return true if so.
+ *
+ * In addition, return a string containing a newline-separated list of object
  * descriptions that depend on the shared object, or NULL if none is found.
- * The size of the returned string is limited to about MAX_REPORTED_DEPS lines;
- * if there are more objects than that, the output is returned truncated at
- * that point while the full message is logged to the postmaster log.
+ * We actually return two such strings; the "detail" result is suitable for
+ * returning to the client as an errdetail() string, and is limited in size.
+ * The "detail_log" string is potentially much longer, and should be emitted
+ * to the server log only.
  *
  * We can find three different kinds of dependencies: dependencies on objects
  * of the current database; dependencies on shared objects; and dependencies
@@ -468,8 +471,9 @@ typedef struct
  *
  * If we find a SHARED_DEPENDENCY_PIN entry, we can error out early.
  */
-char *
-checkSharedDependencies(Oid classId, Oid objectId)
+bool
+checkSharedDependencies(Oid classId, Oid objectId,
+						char **detail_msg, char **detail_log_msg)
 {
 	Relation	sdepRel;
 	ScanKeyData key[2];
@@ -487,9 +491,7 @@ checkSharedDependencies(Oid classId, Oid objectId)
 	/*
 	 * We limit the number of dependencies reported to the client to
 	 * MAX_REPORTED_DEPS, since client software may not deal well with
-	 * enormous error strings.	The server log always gets a full report,
-	 * which is collected in a separate StringInfo if and only if we detect
-	 * that the client report is going to be truncated.
+	 * enormous error strings.	The server log always gets a full report.
 	 */
 #define MAX_REPORTED_DEPS 100
 
@@ -546,15 +548,9 @@ checkSharedDependencies(Oid classId, Oid objectId)
 									   sdepForm->deptype, 0);
 			}
 			else
-			{
 				numNotReportedDeps++;
-				/* initialize the server-only log line */
-				if (alldescs.len == 0)
-					appendBinaryStringInfo(&alldescs, descs.data, descs.len);
-
-				storeObjectDescription(&alldescs, LOCAL_OBJECT, &object,
-									   sdepForm->deptype, 0);
-			}
+			storeObjectDescription(&alldescs, LOCAL_OBJECT, &object,
+								   sdepForm->deptype, 0);
 		}
 		else if (sdepForm->dbid == InvalidOid)
 		{
@@ -565,15 +561,9 @@ checkSharedDependencies(Oid classId, Oid objectId)
 									   sdepForm->deptype, 0);
 			}
 			else
-			{
 				numNotReportedDeps++;
-				/* initialize the server-only log line */
-				if (alldescs.len == 0)
-					appendBinaryStringInfo(&alldescs, descs.data, descs.len);
-
-				storeObjectDescription(&alldescs, SHARED_OBJECT, &object,
-									   sdepForm->deptype, 0);
-			}
+			storeObjectDescription(&alldescs, SHARED_OBJECT, &object,
+								   sdepForm->deptype, 0);
 		}
 		else
 		{
@@ -612,9 +602,7 @@ checkSharedDependencies(Oid classId, Oid objectId)
 	heap_close(sdepRel, AccessShareLock);
 
 	/*
-	 * Report dependencies on remote databases.  If we're truncating the
-	 * output already, don't put a line per database, but a single one for all
-	 * of them.  Otherwise add as many as fit in MAX_REPORTED_DEPS.
+	 * Summarize dependencies in remote databases.
 	 */
 	foreach(cell, remDeps)
 	{
@@ -631,15 +619,9 @@ checkSharedDependencies(Oid classId, Oid objectId)
 								   SHARED_DEPENDENCY_INVALID, dep->count);
 		}
 		else
-		{
 			numNotReportedDbs++;
-			/* initialize the server-only log line */
-			if (alldescs.len == 0)
-				appendBinaryStringInfo(&alldescs, descs.data, descs.len);
-
-			storeObjectDescription(&alldescs, REMOTE_OBJECT, &object,
-								   SHARED_DEPENDENCY_INVALID, dep->count);
-		}
+		storeObjectDescription(&alldescs, REMOTE_OBJECT, &object,
+							   SHARED_DEPENDENCY_INVALID, dep->count);
 	}
 
 	list_free_deep(remDeps);
@@ -648,7 +630,8 @@ checkSharedDependencies(Oid classId, Oid objectId)
 	{
 		pfree(descs.data);
 		pfree(alldescs.data);
-		return NULL;
+		*detail_msg = *detail_log_msg = NULL;
+		return false;
 	}
 
 	if (numNotReportedDeps > 0)
@@ -660,22 +643,9 @@ checkSharedDependencies(Oid classId, Oid objectId)
 								   "(see server log for list)"),
 						 numNotReportedDbs);
 
-	if (numNotReportedDeps > 0 || numNotReportedDbs > 0)
-	{
-		ObjectAddress obj;
-
-		obj.classId = classId;
-		obj.objectId = objectId;
-		obj.objectSubId = 0;
-		ereport(LOG,
-				(errmsg("there are objects dependent on %s",
-						getObjectDescription(&obj)),
-				 errdetail("%s", alldescs.data)));
-	}
-
-	pfree(alldescs.data);
-
-	return descs.data;
+	*detail_msg = descs.data;
+	*detail_log_msg = alldescs.data;
+	return true;
 }
 
 /*
