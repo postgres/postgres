@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.115 2008/01/09 20:42:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.116 2008/03/24 21:53:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -837,11 +837,9 @@ best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * Check to see if child was rejected by constraint exclusion. If so,
-		 * it will have a cheapest_total_path that's an Append path with no
-		 * members (see set_plain_rel_pathlist).
+		 * it will have a cheapest_total_path that's a "dummy" path.
 		 */
-		if (IsA(childrel->cheapest_total_path, AppendPath) &&
-			((AppendPath *) childrel->cheapest_total_path)->subpaths == NIL)
+		if (IS_DUMMY_PATH(childrel->cheapest_total_path))
 			continue;			/* OK, we can ignore it */
 
 		/*

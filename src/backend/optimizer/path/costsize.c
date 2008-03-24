@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.191 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.192 2008/03/24 21:53:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1384,6 +1384,12 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 				innerendsel;
 	Selectivity joininfactor;
 	Path		sort_path;		/* dummy for result of cost_sort */
+
+	/* Protect some assumptions below that rowcounts aren't zero */
+	if (outer_path_rows <= 0)
+		outer_path_rows = 1;
+	if (inner_path_rows <= 0)
+		inner_path_rows = 1;
 
 	if (!enable_mergejoin)
 		startup_cost += disable_cost;

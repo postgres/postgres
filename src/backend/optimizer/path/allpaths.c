@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.168 2008/01/11 04:02:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.169 2008/03/24 21:53:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -428,7 +428,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
  *	  Build a dummy path for a relation that's been excluded by constraints
  *
  * Rather than inventing a special "dummy" path type, we represent this as an
- * AppendPath with no members.
+ * AppendPath with no members (see also IS_DUMMY_PATH macro).
  */
 static void
 set_dummy_rel_pathlist(RelOptInfo *rel)

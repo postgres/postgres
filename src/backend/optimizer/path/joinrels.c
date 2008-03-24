@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.91 2008/01/11 04:02:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.92 2008/03/24 21:53:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,8 @@ static List *make_rels_by_clauseless_joins(PlannerInfo *root,
 							  ListCell *other_rels);
 static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
 static bool has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel);
+static bool is_dummy_rel(RelOptInfo *rel);
+static void mark_dummy_join(RelOptInfo *rel);
 
 
 /*
@@ -571,35 +573,75 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 							 &restrictlist);
 
 	/*
-	 * Consider paths using each rel as both outer and inner.
+	 * If we've already proven this join is empty, we needn't consider
+	 * any more paths for it.
+	 */
+	if (is_dummy_rel(joinrel))
+	{
+		bms_free(joinrelids);
+		return joinrel;
+	}
+
+	/*
+	 * Consider paths using each rel as both outer and inner.  Depending
+	 * on the join type, a provably empty outer or inner rel might mean
+	 * the join is provably empty too; in which case throw away any
+	 * previously computed paths and mark the join as dummy.  (We do it
+	 * this way since it's conceivable that dummy-ness of a multi-element
+	 * join might only be noticeable for certain construction paths.)
 	 */
 	switch (jointype)
 	{
 		case JOIN_INNER:
+			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
+			{
+				mark_dummy_join(joinrel);
+				break;
+			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_INNER,
 								 restrictlist);
 			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_INNER,
 								 restrictlist);
 			break;
 		case JOIN_LEFT:
+			if (is_dummy_rel(rel1))
+			{
+				mark_dummy_join(joinrel);
+				break;
+			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_LEFT,
 								 restrictlist);
 			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_RIGHT,
 								 restrictlist);
 			break;
 		case JOIN_FULL:
+			if (is_dummy_rel(rel1) && is_dummy_rel(rel2))
+			{
+				mark_dummy_join(joinrel);
+				break;
+			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_FULL,
 								 restrictlist);
 			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_FULL,
 								 restrictlist);
 			break;
 		case JOIN_RIGHT:
+			if (is_dummy_rel(rel2))
+			{
+				mark_dummy_join(joinrel);
+				break;
+			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_RIGHT,
 								 restrictlist);
 			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_LEFT,
 								 restrictlist);
 			break;
 		case JOIN_IN:
+			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
+			{
+				mark_dummy_join(joinrel);
+				break;
+			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_IN,
 								 restrictlist);
 			/* REVERSE_IN isn't supported by joinpath.c */
@@ -609,6 +651,11 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 								 restrictlist);
 			break;
 		case JOIN_REVERSE_IN:
+			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
+			{
+				mark_dummy_join(joinrel);
+				break;
+			}
 			/* REVERSE_IN isn't supported by joinpath.c */
 			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_IN,
 								 restrictlist);
@@ -618,12 +665,22 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 								 restrictlist);
 			break;
 		case JOIN_UNIQUE_OUTER:
+			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
+			{
+				mark_dummy_join(joinrel);
+				break;
+			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_UNIQUE_OUTER,
 								 restrictlist);
 			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_UNIQUE_INNER,
 								 restrictlist);
 			break;
 		case JOIN_UNIQUE_INNER:
+			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
+			{
+				mark_dummy_join(joinrel);
+				break;
+			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_UNIQUE_INNER,
 								 restrictlist);
 			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_UNIQUE_OUTER,
@@ -882,4 +939,40 @@ has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel)
 	}
 
 	return false;
+}
+
+
+/*
+ * is_dummy_rel --- has relation been proven empty?
+ *
+ * If so, it will have a single path that is dummy.
+ */
+static bool
+is_dummy_rel(RelOptInfo *rel)
+{
+	return (rel->cheapest_total_path != NULL &&
+			IS_DUMMY_PATH(rel->cheapest_total_path));
+}
+
+/*
+ * Mark a joinrel as proven empty.
+ */
+static void
+mark_dummy_join(RelOptInfo *rel)
+{
+	/* Set dummy size estimate */
+	rel->rows = 0;
+
+	/* Evict any previously chosen paths */
+	rel->pathlist = NIL;
+
+	/* Set up the dummy path */
+	add_path(rel, (Path *) create_append_path(rel, NIL));
+
+	/*
+	 * Although set_cheapest will be done again later, we do it immediately
+	 * in order to keep is_dummy_rel as cheap as possible (ie, not have
+	 * to examine the pathlist).
+	 */
+	set_cheapest(rel);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.154 2008/01/11 04:02:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.155 2008/03/24 21:53:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -693,12 +693,17 @@ typedef struct TidPath
  *
  * Note: it is possible for "subpaths" to contain only one, or even no,
  * elements.  These cases are optimized during create_append_plan.
+ * In particular, an AppendPath with no subpaths is a "dummy" path that
+ * is created to represent the case that a relation is provably empty.
  */
 typedef struct AppendPath
 {
 	Path		path;
 	List	   *subpaths;		/* list of component Paths */
 } AppendPath;
+
+#define IS_DUMMY_PATH(p) \
+	(IsA((p), AppendPath) && ((AppendPath *) (p))->subpaths == NIL)
 
 /*
  * ResultPath represents use of a Result plan node to compute a variable-free
