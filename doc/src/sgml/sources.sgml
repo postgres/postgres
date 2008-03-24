@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.29 2007/11/07 13:12:21 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.30 2008/03/24 18:08:47 tgl Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -156,6 +156,17 @@ ereport(ERROR,
      information that seems inappropriate to put in the primary message.
      The message string is processed in just the same way as for
      <function>errmsg</>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <function>errdetail_log(const char *msg, ...)</function> is the same as
+     <function>errdetail</> except that this string goes only to the server
+     log, never to the client.  If both <function>errdetail</> and
+     <function>errdetail_log</> are used then one string goes to the client
+     and the other to the log.  This is useful for error details that are
+     too security-sensitive or too bulky to include in the report
+     sent to the client.
     </para>
    </listitem>
    <listitem>

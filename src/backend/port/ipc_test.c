@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.23 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.24 2008/03/24 18:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,6 +180,13 @@ errmsg_internal(const char *fmt,...)
 
 int
 errdetail(const char *fmt,...)
+{
+	fprintf(stderr, "DETAIL: %s\n", fmt);
+	return 0;					/* return value does not matter */
+}
+
+int
+errdetail_log(const char *fmt,...)
 {
 	fprintf(stderr, "DETAIL: %s\n", fmt);
 	return 0;					/* return value does not matter */

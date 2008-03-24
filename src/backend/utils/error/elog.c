@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.202 2008/03/10 12:55:13 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.203 2008/03/24 18:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -382,6 +382,8 @@ errfinish(int dummy,...)
 		pfree(edata->message);
 	if (edata->detail)
 		pfree(edata->detail);
+	if (edata->detail_log)
+		pfree(edata->detail_log);
 	if (edata->hint)
 		pfree(edata->hint);
 	if (edata->context)
@@ -701,6 +703,27 @@ errdetail(const char *fmt,...)
 
 
 /*
+ * errdetail_log --- add a detail_log error message text to the current error
+ */
+int
+errdetail_log(const char *fmt,...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(detail_log, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
  * errhint --- add a hint error message text to the current error
  */
 int
@@ -1010,6 +1033,8 @@ CopyErrorData(void)
 		newedata->message = pstrdup(newedata->message);
 	if (newedata->detail)
 		newedata->detail = pstrdup(newedata->detail);
+	if (newedata->detail_log)
+		newedata->detail_log = pstrdup(newedata->detail_log);
 	if (newedata->hint)
 		newedata->hint = pstrdup(newedata->hint);
 	if (newedata->context)
@@ -1033,6 +1058,8 @@ FreeErrorData(ErrorData *edata)
 		pfree(edata->message);
 	if (edata->detail)
 		pfree(edata->detail);
+	if (edata->detail_log)
+		pfree(edata->detail_log);
 	if (edata->hint)
 		pfree(edata->hint);
 	if (edata->context)
@@ -1103,6 +1130,8 @@ ReThrowError(ErrorData *edata)
 		newedata->message = pstrdup(newedata->message);
 	if (newedata->detail)
 		newedata->detail = pstrdup(newedata->detail);
+	if (newedata->detail_log)
+		newedata->detail_log = pstrdup(newedata->detail_log);
 	if (newedata->hint)
 		newedata->hint = pstrdup(newedata->hint);
 	if (newedata->context)
@@ -1790,8 +1819,11 @@ write_csvlog(ErrorData *edata)
 	appendCSVLiteral(&buf, edata->message);
 	appendStringInfoCharMacro(&buf, ',');
 
-	/* errdetail */
-	appendCSVLiteral(&buf, edata->detail);
+	/* errdetail or errdetail_log */
+	if (edata->detail_log)
+		appendCSVLiteral(&buf, edata->detail_log);
+	else
+		appendCSVLiteral(&buf, edata->detail);
 	appendStringInfoCharMacro(&buf, ',');
 
 	/* errhint */
@@ -1907,7 +1939,14 @@ send_message_to_server_log(ErrorData *edata)
 
 	if (Log_error_verbosity >= PGERROR_DEFAULT)
 	{
-		if (edata->detail)
+		if (edata->detail_log)
+		{
+			log_line_prefix(&buf);
+			appendStringInfoString(&buf, _("DETAIL:  "));
+			append_with_tabs(&buf, edata->detail_log);
+			appendStringInfoChar(&buf, '\n');
+		}
+		else if (edata->detail)
 		{
 			log_line_prefix(&buf);
 			appendStringInfoString(&buf, _("DETAIL:  "));
@@ -2156,6 +2195,8 @@ send_message_to_frontend(ErrorData *edata)
 			pq_sendbyte(&msgbuf, PG_DIAG_MESSAGE_DETAIL);
 			pq_sendstring(&msgbuf, edata->detail);
 		}
+
+		/* detail_log is intentionally not used here */
 
 		if (edata->hint)
 		{

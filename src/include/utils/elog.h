@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.91 2008/03/10 12:55:13 mha Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.92 2008/03/24 18:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,6 +121,12 @@ __attribute__((format(printf, 1, 2)));
 
 extern int
 errdetail(const char *fmt,...)
+/* This extension allows gcc to check the format string for consistency with
+   the supplied arguments. */
+__attribute__((format(printf, 1, 2)));
+
+extern int
+errdetail_log(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 2)));
@@ -258,6 +264,7 @@ typedef struct ErrorData
 	int			sqlerrcode;		/* encoded ERRSTATE */
 	char	   *message;		/* primary error message */
 	char	   *detail;			/* detail error message */
+	char	   *detail_log;		/* detail error message for server log only */
 	char	   *hint;			/* hint message */
 	char	   *context;		/* context message */
 	int			cursorpos;		/* cursor index into query string */
