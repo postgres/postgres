@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sun Mar 23 08:36:50 EDT 2008
+Last updated:           Mon Mar 24 10:16:57 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -920,8 +920,8 @@ first.  There is also a developer's wiki at<br/>
 <p>          Using psql to restore a pg_dump dump is also affected.
 </p>
     </li><li>Remove pre-7.3 pg_dump code that assumes pg_depend does not exit
-    </li><li>Allow pre/data/post files when dumping a single object, for
-          performance reasons
+    </li><li>Allow pre/data/post files when schema and data are dumped
+          separately, for performance reasons
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2008-02/msg00205.php">http://archives.postgresql.org/pgsql-hackers/2008-02/msg00205.php</a>
 </p>
   </li></ul>
