@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Mar 24 22:17:12 EDT 2008
+Last updated:		Mon Mar 24 22:23:38 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1881,6 +1881,10 @@ Source Code
 
 	  http://archives.postgresql.org/pgsql-hackers/2008-02/msg00485.php
 	  http://archives.postgresql.org/pgsql-patches/2008-02/msg00038.php
+
+	o Fix port/rint.c to be spec-compliant
+
+	  http://archives.postgresql.org/pgsql-hackers/2008-01/msg00808.php
 
 
 
