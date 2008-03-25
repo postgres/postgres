@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/exports.txt,v 1.4 2007/10/04 17:49:31 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/exports.txt,v 1.5 2008/03/25 12:45:25 meskes Exp $
 # Functions to be exported by ecpglib DLL
 ECPGallocate_desc                1
 ECPGconnect                      2
@@ -25,3 +25,4 @@ ECPGsetconn                      22
 ECPGstatus                       23
 ECPGtrans                        24
 sqlprint                         25
+ECPGget_PGconn			 26

@@ -2332,6 +2332,10 @@ Thu, 20 Mar 2008 16:54:27 +0100
 
 	- Changed statement escaping to not escape continuation line markers.
 	- Added ECPGget_PGconn() function to ecpglib, courtesy of Mike Aubury.
+
+Tue, 25 Mar 2008 13:42:26 +0100
+
+	- Should list ECPGget_PGconn in exports.txt.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.
