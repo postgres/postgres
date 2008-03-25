@@ -1596,6 +1596,8 @@ Write-Ahead Log
 * Be more aggressive about creating WAL files
 
   http://archives.postgresql.org/pgsql-hackers/2007-10/msg01325.php
+  http://archives.postgresql.org/pgsql-hackers/2004-07/msg01075.php
+  http://archives.postgresql.org/pgsql-hackers/2005-04/msg00556.php
 
 * Have resource managers report the duration of their status changes
 
