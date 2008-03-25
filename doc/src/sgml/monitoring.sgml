@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.55 2007/11/28 15:42:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.56 2008/03/25 22:50:27 neilc Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -947,26 +947,26 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
   </para>
 
   <para>
-   A number of trace points, often called probes, are already inserted
-   into the source code.  By default these probes are disabled, and
-   the user needs to explicitly tell the configure script to make the
-   probes available in <productname>PostgreSQL</productname>.
+   A number of probes or trace points are already inserted
+   into the source code.  By default these probes are not compiled into the
+   binary, and the user needs to explicitly tell the configure script to make
+   the probes available in <productname>PostgreSQL</productname>.
   </para>
 
   <para> 
-   Currently, only the DTrace utility is supported, which is only available
-   on Solaris Express and Solaris 10+. It is expected that DTrace will
-   be available in the future on FreeBSD and Mac OS X.
+   Currently, only the DTrace utility is supported, which is available
+   on Solaris Express, Solaris 10, and Mac OS X Leopard. It is expected that
+   DTrace will be available in the future on FreeBSD.
    Supporting other dynamic tracing utilities is theoretically possible by
-   changing the definitions for the <literal>PG_TRACE</> macros in
-   <filename>src/include/pg_trace.h</>.
+   changing the definitions for the macros in
+   <filename>src/include/utils/probes.h</>.
   </para>
 
   <sect2 id="compiling-for-trace">
    <title>Compiling for Dynamic Tracing</title>
 
   <para>
-   By default, trace points are disabled, so you will need to
+   By default, probes are not available, so you will need to
    explicitly tell the configure script to make the probes available
    in <productname>PostgreSQL</productname>. To include DTrace support
    specify <option>--enable-dtrace</> to configure.  See <xref
@@ -975,16 +975,16 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
   </sect2>
 
   <sect2 id="trace-points">
-   <title>Built-in Trace Points</title>
+   <title>Built-in Probes</title>
 
   <para>
-   A few standard trace points are provided in the source code
+   A few standard probes are provided in the source code
    (of course, more can be added as needed for a particular problem).
    These are shown in <xref linkend="trace-point-table">.
   </para>
 
  <table id="trace-point-table">
-  <title>Built-in Trace Points</title>
+  <title>Built-in Probes</title>
   <tgroup cols="3">
    <thead>
     <row>
@@ -996,67 +996,67 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
 
    <tbody>
     <row>
-     <entry>transaction__start</entry>
+     <entry>transaction-start</entry>
      <entry>(int transactionId)</entry>
      <entry>The start of a new transaction.</entry>
     </row>
     <row>
-     <entry>transaction__commit</entry>
+     <entry>transaction-commit</entry>
      <entry>(int transactionId)</entry>
      <entry>The successful completion of a transaction.</entry>
     </row>
     <row>
-     <entry>transaction__abort</entry>
+     <entry>transaction-abort</entry>
      <entry>(int transactionId)</entry>
      <entry>The unsuccessful completion of a transaction.</entry>
     </row>
              
     <row>
-     <entry>lwlock__acquire</entry>
+     <entry>lwlock-acquire</entry>
      <entry>(int lockid, int mode)</entry>
      <entry>An LWLock has been acquired.</entry>
     </row>
     <row>
-     <entry>lwlock__release</entry>
+     <entry>lwlock-release</entry>
      <entry>(int lockid, int mode)</entry>
      <entry>An LWLock has been released.</entry>
     </row>
     <row>
-     <entry>lwlock__startwait</entry>
+     <entry>lwlock-startwait</entry>
      <entry>(int lockid, int mode)</entry>
      <entry>An LWLock was not immediately available and a backend
        has begun to wait for the lock to become available.
      </entry>
     </row>    
     <row>
-     <entry>lwlock__endwait</entry>
+     <entry>lwlock-endwait</entry>
      <entry>(int lockid, int mode)</entry>
      <entry>A backend has been released from its wait for an LWLock.
      </entry>
     </row>
     <row>
-     <entry>lwlock__condacquire</entry>
+     <entry>lwlock-condacquire</entry>
      <entry>(int lockid, int mode)</entry>
      <entry>An LWLock was successfully acquired when the caller specified no
       waiting.
      </entry>
     </row> 
     <row>
-     <entry>lwlock__condacquire__fail</entry>
+     <entry>lwlock-condacquire-fail</entry>
      <entry>(int lockid, int mode)</entry>
      <entry>An LWLock was not successfully acquired when the caller specified
       no waiting.
      </entry>
     </row>
     <row>
-     <entry>lock__startwait</entry>
+     <entry>lock-startwait</entry>
      <entry>(int locktag_field2, int lockmode)</entry>
      <entry>A request for a heavyweight lock (lmgr lock) has begun to wait
       because the lock is not available.
      </entry>
     </row>
     <row>
-     <entry>lock__endwait</entry>
+     <entry>lock-endwait</entry>
      <entry>(int locktag_field2, int lockmode)</entry>
      <entry>A request for a heavyweight lock (lmgr lock) has finished waiting
       (i.e., has acquired the lock).
@@ -1068,7 +1068,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
   </sect2>
 
   <sect2 id="using-trace-points">
-   <title>Using Trace Points</title>
+   <title>Using Probes</title>
 
   <para>
    The example below shows a DTrace script for analyzing transaction
@@ -1096,11 +1096,9 @@ postgresql$1:::transaction-commit
       self->ts=0;
 }
 </programlisting>
-   Note how the double underline in trace point names needs to
-   be replaced by a hyphen when using D script.
    When executed, the example D script gives output such as:
 <screen>
-# ./txn_count.d `pgrep -n postgres`
+# ./txn_count.d `pgrep -n postgres` or ./txn_count.d &lt;PID&gt;
 ^C
 
 Start                                          71
@@ -1109,7 +1107,7 @@ Total time (ns)                        2312105013
 </screen>
   </para>
   <para>
-   You should remember that trace programs need to be carefully written and
+   You should remember that DTrace scripts need to be carefully written and
    debugged prior to their use, otherwise the trace information collected might
    be meaningless. In most cases where problems are found it is the 
    instrumentation that is at fault, not the underlying system. When 
@@ -1119,56 +1117,58 @@ Total time (ns)                        2312105013
   </sect2>
 
   <sect2 id="defining-trace-points">
-   <title>Defining Trace Points</title>
+   <title>Defining New Probes</title>
 
   <para>
-   New trace points can be defined within the code wherever the developer
-   desires, though this will require a recompilation.
+   New probes can be defined within the code wherever the developer
+   desires, though this will require a recompilation. Below are the steps
+   for inserting new probes:
   </para>
 
-  <para>
-   A trace point can be inserted by using one of the
-   trace macros. These are chosen according to how many variables will
-   be made available for inspection at that trace point. Tracing the
-   occurrence of an event can be achieved with a single line, using
-   just the trace point name, e.g.:
-<programlisting>
-PG_TRACE (my__new__trace__point);
-</programlisting>
-   More complex trace points can be provided with one or more variables
-   for inspection by the dynamic tracing utility by using the
-   <literal>PG_TRACE</><replaceable>n</> macro that corresponds to the number
-   of parameters after the trace point name:
-<programlisting>
-PG_TRACE3 (my__complex__event, varX, varY, varZ);
-</programlisting>
-   The definition of the transaction__start trace point is shown below:
-<programlisting>
-static void
-StartTransaction(void)
-{
-    ...
+  <procedure>
+   <step>
+    <para>
+     Decide on probe names and data to be made available through the probes
+    </para>
+   </step>
 
-    /*
-     * generate a new transaction id
-     */
-    s->transactionId = GetNewTransactionId(false);
+   <step>
+    <para>
+     Add the probe definitons to <filename>src/backend/src/utils/probes.d</>
+    </para>
+   </step>
 
-    XactLockTableInsert(s->transactionId);
+   <step>
+    <para>
+     Insert a one-line probe macros at the desired locations in the source code
+    </para>
+   </step>
+ 
+   <step>
+    <para>
+     Recompile and verify that the new probes are available
+    </para>
+   </step>
+  </procedure>
 
-    PG_TRACE1(transaction__start, s->transactionId);
+  <formalpara>
+   <title>Example:</title>
+   <para>
+    Here is an example of how you would add a probe to trace all new transactions by transaction ID.
+   </para>
+  </formalpara>
 
-    ...
-}    
-</programlisting>
-   Note how the transaction ID is made available to the dynamic tracing
-   utility.
-  </para>
+  <procedure>
+   <step>
+    <para>   
+     Name the probe transaction-start and give it a parameter of type integer (type of transaction ID) 
+    </para>
+   </step>
 
-  <para>
-   The dynamic tracing utility might require you to further define these trace
-   points.  For example, DTrace requires you to add new probes to the file
-   <filename>src/backend/utils/probes.d</> as shown here:
+   <step>
+    <para>
+     Add <quote>probe transaction__start(int);</quote> to
+     <filename>src/backend/src/utils/probes.d</>, and it should look like the following:
 <programlisting>
 provider postgresql {
       ...
@@ -1176,18 +1176,68 @@ provider postgresql {
       ...
  };
 </programlisting>
-  </para>
+     Note the use of the double underline in the probe name. In the DTrace
+     script, the double underline needs to be replaced with a hyphen.
+    </para>
 
-  <para>
-   You should take care that the data types specified for the probe arguments
-   match the data types of the variables used in the <literal>PG_TRACE</>
-   macro. This is not checked at compile time. You can check that your newly
-   added trace point is available by recompiling, then running the new binary,
-   and as root, executing a DTrace command such as:
+    <para>
+     You should take care that the data types specified for the probe arguments
+     match the data types of the variables used in the macro. Otherwise, you
+     will get compilation errors. 
+    </para>
+   </step>
+
+   <step>
+    <para>
+     At compile time, transaction__start is converted to a macro called
+     TRACE_POSTGRESQL_TRANSACTION_START, and it resides in
+     <filename>src/backend/src/utils/probes.h</>. Before recompiling, add
+     the single line macro to the appropriate location in the source code.
+     In this case, it looks like the following: 
+    </para>
+
+    <para>
 <programlisting>
-dtrace -l -n transaction-start
+static void
+StartTransaction(void)
+{
+    ...
+
+    /*
+     * Advertise it in the proc array.      We assume assignment of
+     * LocalTransactionID is atomic, and the backendId should be set already.
+     */
+    Assert(MyProc->backendId == vxid.backendId);
+    MyProc->lxid = vxid.localTransactionId;
+
+    TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
+
+    ...
+}    
 </programlisting>
-  </para>
+    Note how the transaction ID is made available to the dynamic tracing
+    utility.
+    </para>
+   </step>
+
+   <step>
+    <para>
+     After recompiling and running the new binary, check that your newly added
+     probe is available by executing the following DTrace command, and you
+     should see similar output.
+<screen>
+# dtrace -ln transaction-start
+   ID    PROVIDER          MODULE           FUNCTION NAME
+18705 postgresql49878     postgres     StartTransactionCommand transaction-start
+18755 postgresql49877     postgres     StartTransactionCommand transaction-start
+18805 postgresql49876     postgres     StartTransactionCommand transaction-start
+18855 postgresql49875     postgres     StartTransactionCommand transaction-start
+18986 postgresql49873     postgres     StartTransactionCommand transaction-start
+</screen>
+    </para>
+   </step>
+  </procedure>
+
   </sect2>
 
  </sect1>

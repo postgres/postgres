@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.304 2008/03/10 20:06:27 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.305 2008/03/25 22:50:27 neilc Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1193,8 +1193,8 @@ su - postgres
           <primary>DTrace</primary>
          </indexterm>
          Compiles with support for the dynamic tracing tool DTrace.
-         Operating system support for DTrace is currently only
-         available in Solaris.
+         Operating system support for DTrace is currently available in
+         Solaris and Mac OS X Leopard.
         </para>
 
         <para>
