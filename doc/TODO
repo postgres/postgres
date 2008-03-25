@@ -1907,7 +1907,7 @@ Source Code
 	  http://archives.postgresql.org/pgsql-hackers/2008-02/msg00485.php
 	  http://archives.postgresql.org/pgsql-patches/2008-02/msg00038.php
 
-	o Fix port/rint.c to be spec-compliant
+	o Find a correct rint() substitute on Windows
 
 	  http://archives.postgresql.org/pgsql-hackers/2008-01/msg00808.php
 
