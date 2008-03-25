@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Mar 24 22:47:43 EDT 2008
+Last updated:		Mon Mar 24 22:58:06 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -486,6 +486,11 @@ Functions
 * Have /contrib/dblink reuse unnamed connections
 
   http://archives.postgresql.org/pgsql-hackers/2007-10/msg00895.php
+
+* Add SQL-standard array_agg() and unnest() array functions
+
+  http://archives.postgresql.org/pgsql-hackers/2008-01/msg01017.php
+
 
 
 
