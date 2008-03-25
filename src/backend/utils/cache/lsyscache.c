@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.155 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.156 2008/03/25 22:42:44 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1971,8 +1971,7 @@ get_typdefault(Oid typid)
 	if (!isNull)
 	{
 		/* We have an expression default */
-		expr = stringToNode(DatumGetCString(DirectFunctionCall1(textout,
-																datum)));
+		expr = stringToNode(TextDatumGetCString(datum));
 	}
 	else
 	{
@@ -1987,8 +1986,7 @@ get_typdefault(Oid typid)
 			char	   *strDefaultVal;
 
 			/* Convert text datum to C string */
-			strDefaultVal = DatumGetCString(DirectFunctionCall1(textout,
-																datum));
+			strDefaultVal = TextDatumGetCString(datum);
 			/* Convert C string to a value of the given type */
 			datum = OidInputFunctionCall(type->typinput, strDefaultVal,
 										 getTypeIOParam(typeTuple), -1);

@@ -5,7 +5,7 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.h,v 1.16 2008/01/01 19:45:45 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.h,v 1.17 2008/03/25 22:42:41 tgl Exp $
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -69,8 +69,6 @@ extern Datum difference(PG_FUNCTION_ARGS);
 static void _soundex(const char *instr, char *outstr);
 
 #define SOUNDEX_LEN 4
-#define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
-#define _textout(str) DatumGetPointer(DirectFunctionCall1(textout, PointerGetDatum(str)))
 
 /*									ABCDEFGHIJKLMNOPQRSTUVWXYZ */
 static const char *soundex_table = "01230120022455012623010202";

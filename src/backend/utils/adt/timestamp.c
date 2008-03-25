@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.186 2008/03/21 01:31:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.187 2008/03/25 22:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3242,7 +3242,7 @@ timestamptz_age(PG_FUNCTION_ARGS)
 Datum
 timestamp_trunc(PG_FUNCTION_ARGS)
 {
-	text	   *units = PG_GETARG_TEXT_P(0);
+	text	   *units = PG_GETARG_TEXT_PP(0);
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
 	Timestamp	result;
 	int			type,
@@ -3255,8 +3255,8 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
 
-	lowunits = downcase_truncate_identifier(VARDATA(units),
-											VARSIZE(units) - VARHDRSZ,
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
+											VARSIZE_ANY_EXHDR(units),
 											false);
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -3374,7 +3374,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 Datum
 timestamptz_trunc(PG_FUNCTION_ARGS)
 {
-	text	   *units = PG_GETARG_TEXT_P(0);
+	text	   *units = PG_GETARG_TEXT_PP(0);
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
 	TimestampTz result;
 	int			tz;
@@ -3390,8 +3390,8 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
-	lowunits = downcase_truncate_identifier(VARDATA(units),
-											VARSIZE(units) - VARHDRSZ,
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
+											VARSIZE_ANY_EXHDR(units),
 											false);
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -3532,7 +3532,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 Datum
 interval_trunc(PG_FUNCTION_ARGS)
 {
-	text	   *units = PG_GETARG_TEXT_P(0);
+	text	   *units = PG_GETARG_TEXT_PP(0);
 	Interval   *interval = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
 	int			type,
@@ -3544,8 +3544,8 @@ interval_trunc(PG_FUNCTION_ARGS)
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	lowunits = downcase_truncate_identifier(VARDATA(units),
-											VARSIZE(units) - VARHDRSZ,
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
+											VARSIZE_ANY_EXHDR(units),
 											false);
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -3615,9 +3615,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("interval units \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))))));
-		*result = *interval;
+						lowunits)));
 	}
 
 	PG_RETURN_INTERVAL_P(result);
@@ -3803,7 +3801,7 @@ date2isoyearday(int year, int mon, int mday)
 Datum
 timestamp_part(PG_FUNCTION_ARGS)
 {
-	text	   *units = PG_GETARG_TEXT_P(0);
+	text	   *units = PG_GETARG_TEXT_PP(0);
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
 	float8		result;
 	int			type,
@@ -3819,8 +3817,8 @@ timestamp_part(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(result);
 	}
 
-	lowunits = downcase_truncate_identifier(VARDATA(units),
-											VARSIZE(units) - VARHDRSZ,
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
+											VARSIZE_ANY_EXHDR(units),
 											false);
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -4031,7 +4029,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 Datum
 timestamptz_part(PG_FUNCTION_ARGS)
 {
-	text	   *units = PG_GETARG_TEXT_P(0);
+	text	   *units = PG_GETARG_TEXT_PP(0);
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
 	float8		result;
 	int			tz;
@@ -4050,8 +4048,8 @@ timestamptz_part(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(result);
 	}
 
-	lowunits = downcase_truncate_identifier(VARDATA(units),
-											VARSIZE(units) - VARHDRSZ,
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
+											VARSIZE_ANY_EXHDR(units),
 											false);
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -4246,7 +4244,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 Datum
 interval_part(PG_FUNCTION_ARGS)
 {
-	text	   *units = PG_GETARG_TEXT_P(0);
+	text	   *units = PG_GETARG_TEXT_PP(0);
 	Interval   *interval = PG_GETARG_INTERVAL_P(1);
 	float8		result;
 	int			type,
@@ -4256,8 +4254,8 @@ interval_part(PG_FUNCTION_ARGS)
 	struct pg_tm tt,
 			   *tm = &tt;
 
-	lowunits = downcase_truncate_identifier(VARDATA(units),
-											VARSIZE(units) - VARHDRSZ,
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
+											VARSIZE_ANY_EXHDR(units),
 											false);
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -4337,8 +4335,7 @@ interval_part(PG_FUNCTION_ARGS)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("interval units \"%s\" not supported",
-								 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))))));
+									lowunits)));
 					result = 0;
 			}
 
@@ -4365,8 +4362,7 @@ interval_part(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("interval units \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))))));
+						lowunits)));
 		result = 0;
 	}
 
@@ -4385,13 +4381,12 @@ interval_part(PG_FUNCTION_ARGS)
 Datum
 timestamp_zone(PG_FUNCTION_ARGS)
 {
-	text	   *zone = PG_GETARG_TEXT_P(0);
+	text	   *zone = PG_GETARG_TEXT_PP(0);
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
 	TimestampTz result;
 	int			tz;
 	pg_tz	   *tzp;
 	char		tzname[TZ_STRLEN_MAX + 1];
-	int			len;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
@@ -4401,9 +4396,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	 * (to handle cases like "America/New_York"), and if that fails, we look
 	 * in the date token table (to handle cases like "EST").
 	 */
-	len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
-	memcpy(tzname, VARDATA(zone), len);
-	tzname[len] = '\0';
+	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
 	tzp = pg_tzset(tzname);
 	if (tzp)
 	{
@@ -4428,8 +4421,8 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		int			type,
 					val;
 
-		lowzone = downcase_truncate_identifier(VARDATA(zone),
-											   VARSIZE(zone) - VARHDRSZ,
+		lowzone = downcase_truncate_identifier(tzname,
+											   strlen(tzname),
 											   false);
 		type = DecodeSpecial(0, lowzone, &val);
 
@@ -4558,13 +4551,12 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 Datum
 timestamptz_zone(PG_FUNCTION_ARGS)
 {
-	text	   *zone = PG_GETARG_TEXT_P(0);
+	text	   *zone = PG_GETARG_TEXT_PP(0);
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
 	Timestamp	result;
 	int			tz;
 	pg_tz	   *tzp;
 	char		tzname[TZ_STRLEN_MAX + 1];
-	int			len;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
@@ -4574,9 +4566,7 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	 * (to handle cases like "America/New_York"), and if that fails, we look
 	 * in the date token table (to handle cases like "EST").
 	 */
-	len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
-	memcpy(tzname, VARDATA(zone), len);
-	tzname[len] = '\0';
+	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
 	tzp = pg_tzset(tzname);
 	if (tzp)
 	{
@@ -4600,8 +4590,8 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 		int			type,
 					val;
 
-		lowzone = downcase_truncate_identifier(VARDATA(zone),
-											   VARSIZE(zone) - VARHDRSZ,
+		lowzone = downcase_truncate_identifier(tzname,
+											   strlen(tzname),
 											   false);
 		type = DecodeSpecial(0, lowzone, &val);
 

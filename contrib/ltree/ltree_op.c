@@ -1,7 +1,7 @@
 /*
  * op function for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.17 2008/03/09 00:32:09 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.18 2008/03/25 22:42:41 tgl Exp $
  */
 
 #include "ltree.h"
@@ -314,19 +314,15 @@ Datum
 ltree_addtext(PG_FUNCTION_ARGS)
 {
 	ltree	   *a = PG_GETARG_LTREE(0);
-	text	   *b = PG_GETARG_TEXT_P(1);
+	text	   *b = PG_GETARG_TEXT_PP(1);
 	char	   *s;
 	ltree	   *r,
 			   *tmp;
 
-	s = (char *) palloc(VARSIZE(b) - VARHDRSZ + 1);
-	memcpy(s, VARDATA(b), VARSIZE(b) - VARHDRSZ);
-	s[VARSIZE(b) - VARHDRSZ] = '\0';
+	s = text_to_cstring(b);
 
-	tmp = (ltree *) DatumGetPointer(DirectFunctionCall1(
-														ltree_in,
-														PointerGetDatum(s)
-														));
+	tmp = (ltree *) DatumGetPointer(DirectFunctionCall1(ltree_in,
+														PointerGetDatum(s)));
 
 	pfree(s);
 
@@ -403,19 +399,15 @@ Datum
 ltree_textadd(PG_FUNCTION_ARGS)
 {
 	ltree	   *a = PG_GETARG_LTREE(1);
-	text	   *b = PG_GETARG_TEXT_P(0);
+	text	   *b = PG_GETARG_TEXT_PP(0);
 	char	   *s;
 	ltree	   *r,
 			   *tmp;
 
-	s = (char *) palloc(VARSIZE(b) - VARHDRSZ + 1);
-	memcpy(s, VARDATA(b), VARSIZE(b) - VARHDRSZ);
-	s[VARSIZE(b) - VARHDRSZ] = '\0';
+	s = text_to_cstring(b);
 
-	tmp = (ltree *) DatumGetPointer(DirectFunctionCall1(
-														ltree_in,
-														PointerGetDatum(s)
-														));
+	tmp = (ltree *) DatumGetPointer(DirectFunctionCall1(ltree_in,
+														PointerGetDatum(s)));
 
 	pfree(s);
 
@@ -517,17 +509,14 @@ lca(PG_FUNCTION_ARGS)
 Datum
 text2ltree(PG_FUNCTION_ARGS)
 {
-	text	   *in = PG_GETARG_TEXT_P(0);
-	char	   *s = (char *) palloc(VARSIZE(in) - VARHDRSZ + 1);
+	text	   *in = PG_GETARG_TEXT_PP(0);
+	char	   *s;
 	ltree	   *out;
 
-	memcpy(s, VARDATA(in), VARSIZE(in) - VARHDRSZ);
-	s[VARSIZE(in) - VARHDRSZ] = '\0';
+	s = text_to_cstring(in);
 
-	out = (ltree *) DatumGetPointer(DirectFunctionCall1(
-														ltree_in,
-														PointerGetDatum(s)
-														));
+	out = (ltree *) DatumGetPointer(DirectFunctionCall1(ltree_in,
+														PointerGetDatum(s)));
 	pfree(s);
 	PG_FREE_IF_COPY(in, 0);
 	PG_RETURN_POINTER(out);

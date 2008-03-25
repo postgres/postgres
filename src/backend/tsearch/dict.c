@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict.c,v 1.4 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict.c,v 1.5 2008/03/25 22:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ ts_lexize(PG_FUNCTION_ARGS)
 	ptr = res;
 	while (ptr->lexeme)
 	{
-		da[ptr - res] = DirectFunctionCall1(textin, CStringGetDatum(ptr->lexeme));
+		da[ptr - res] = CStringGetTextDatum(ptr->lexeme);
 		ptr++;
 	}
 

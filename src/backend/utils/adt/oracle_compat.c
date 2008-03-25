@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.77 2008/01/01 19:45:52 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.78 2008/03/25 22:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,9 +76,7 @@ texttowcs(const text *txt)
 				 errmsg("out of memory")));
 
 	/* Need a null-terminated version of the input */
-	workstr = (char *) palloc(nbytes + 1);
-	memcpy(workstr, VARDATA_ANY(txt), nbytes);
-	workstr[nbytes] = '\0';
+	workstr = text_to_cstring(txt);
 
 	/* Output workspace cannot have more codes than input bytes */
 	result = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
@@ -275,25 +273,16 @@ wstring_upper(char *str)
 	text	   *in_text;
 	text	   *out_text;
 	char	   *result;
-	int			nbytes = strlen(str);
 	int			i;
 
-	in_text = palloc(nbytes + VARHDRSZ);
-	memcpy(VARDATA(in_text), str, nbytes);
-	SET_VARSIZE(in_text, nbytes + VARHDRSZ);
-
+	in_text = cstring_to_text(str);
 	workspace = texttowcs(in_text);
 
 	for (i = 0; workspace[i] != 0; i++)
 		workspace[i] = towupper(workspace[i]);
 
 	out_text = wcstotext(workspace, i);
-
-	nbytes = VARSIZE(out_text) - VARHDRSZ;
-	result = palloc(nbytes + 1);
-	memcpy(result, VARDATA(out_text), nbytes);
-
-	result[nbytes] = '\0';
+	result = text_to_cstring(out_text);
 
 	pfree(workspace);
 	pfree(in_text);
@@ -309,25 +298,16 @@ wstring_lower(char *str)
 	text	   *in_text;
 	text	   *out_text;
 	char	   *result;
-	int			nbytes = strlen(str);
 	int			i;
 
-	in_text = palloc(nbytes + VARHDRSZ);
-	memcpy(VARDATA(in_text), str, nbytes);
-	SET_VARSIZE(in_text, nbytes + VARHDRSZ);
-
+	in_text = cstring_to_text(str);
 	workspace = texttowcs(in_text);
 
 	for (i = 0; workspace[i] != 0; i++)
 		workspace[i] = towlower(workspace[i]);
 
 	out_text = wcstotext(workspace, i);
-
-	nbytes = VARSIZE(out_text) - VARHDRSZ;
-	result = palloc(nbytes + 1);
-	memcpy(result, VARDATA(out_text), nbytes);
-
-	result[nbytes] = '\0';
+	result = text_to_cstring(out_text);
 
 	pfree(workspace);
 	pfree(in_text);
@@ -801,7 +781,6 @@ dotrim(const char *string, int stringlen,
 	   const char *set, int setlen,
 	   bool doltrim, bool dortrim)
 {
-	text	   *result;
 	int			i;
 
 	/* Nothing to do if either string or set is empty */
@@ -947,11 +926,7 @@ dotrim(const char *string, int stringlen,
 	}
 
 	/* Return selected portion of string */
-	result = (text *) palloc(VARHDRSZ + stringlen);
-	SET_VARSIZE(result, VARHDRSZ + stringlen);
-	memcpy(VARDATA(result), string, stringlen);
-
-	return result;
+	return cstring_to_text_with_len(string, stringlen);
 }
 
 /********************************************************************

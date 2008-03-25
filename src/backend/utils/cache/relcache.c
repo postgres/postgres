@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.267 2008/02/27 17:44:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.268 2008/03/25 22:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -642,7 +642,6 @@ RelationBuildRuleLock(Relation relation)
 		Form_pg_rewrite rewrite_form = (Form_pg_rewrite) GETSTRUCT(rewrite_tuple);
 		bool		isnull;
 		Datum		rule_datum;
-		text	   *rule_text;
 		char	   *rule_str;
 		RewriteRule *rule;
 
@@ -667,30 +666,22 @@ RelationBuildRuleLock(Relation relation)
 								  rewrite_tupdesc,
 								  &isnull);
 		Assert(!isnull);
-		rule_text = DatumGetTextP(rule_datum);
-		rule_str = DatumGetCString(DirectFunctionCall1(textout,
-												PointerGetDatum(rule_text)));
+		rule_str = TextDatumGetCString(rule_datum);
 		oldcxt = MemoryContextSwitchTo(rulescxt);
 		rule->actions = (List *) stringToNode(rule_str);
 		MemoryContextSwitchTo(oldcxt);
 		pfree(rule_str);
-		if ((Pointer) rule_text != DatumGetPointer(rule_datum))
-			pfree(rule_text);
 
 		rule_datum = heap_getattr(rewrite_tuple,
 								  Anum_pg_rewrite_ev_qual,
 								  rewrite_tupdesc,
 								  &isnull);
 		Assert(!isnull);
-		rule_text = DatumGetTextP(rule_datum);
-		rule_str = DatumGetCString(DirectFunctionCall1(textout,
-												PointerGetDatum(rule_text)));
+		rule_str = TextDatumGetCString(rule_datum);
 		oldcxt = MemoryContextSwitchTo(rulescxt);
 		rule->qual = (Node *) stringToNode(rule_str);
 		MemoryContextSwitchTo(oldcxt);
 		pfree(rule_str);
-		if ((Pointer) rule_text != DatumGetPointer(rule_datum))
-			pfree(rule_text);
 
 		/*
 		 * We want the rule's table references to be checked as though by the
@@ -2770,8 +2761,7 @@ AttrDefaultFetch(Relation relation)
 					 RelationGetRelationName(relation));
 			else
 				attrdef[i].adbin = MemoryContextStrdup(CacheMemoryContext,
-								 DatumGetCString(DirectFunctionCall1(textout,
-																	 val)));
+													TextDatumGetCString(val));
 			break;
 		}
 
@@ -2834,8 +2824,7 @@ CheckConstraintFetch(Relation relation)
 				 RelationGetRelationName(relation));
 
 		check[found].ccbin = MemoryContextStrdup(CacheMemoryContext,
-								 DatumGetCString(DirectFunctionCall1(textout,
-																	 val)));
+												 TextDatumGetCString(val));
 		found++;
 	}
 
@@ -3068,7 +3057,7 @@ RelationGetIndexExpressions(Relation relation)
 							  GetPgIndexDescriptor(),
 							  &isnull);
 	Assert(!isnull);
-	exprsString = DatumGetCString(DirectFunctionCall1(textout, exprsDatum));
+	exprsString = TextDatumGetCString(exprsDatum);
 	result = (List *) stringToNode(exprsString);
 	pfree(exprsString);
 
@@ -3135,7 +3124,7 @@ RelationGetIndexPredicate(Relation relation)
 							 GetPgIndexDescriptor(),
 							 &isnull);
 	Assert(!isnull);
-	predString = DatumGetCString(DirectFunctionCall1(textout, predDatum));
+	predString = TextDatumGetCString(predDatum);
 	result = (List *) stringToNode(predString);
 	pfree(predString);
 

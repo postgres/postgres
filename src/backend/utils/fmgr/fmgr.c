@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.113 2008/01/03 21:23:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.114 2008/03/25 22:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,8 +246,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 										  Anum_pg_proc_prosrc, &isnull);
 			if (isnull)
 				elog(ERROR, "null prosrc");
-			prosrc = DatumGetCString(DirectFunctionCall1(textout,
-														 prosrcdatum));
+			prosrc = TextDatumGetCString(prosrcdatum);
 			fbp = fmgr_lookupByName(prosrc);
 			if (fbp == NULL)
 				ereport(ERROR,
@@ -315,15 +314,13 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 									 Anum_pg_proc_prosrc, &isnull);
 		if (isnull)
 			elog(ERROR, "null prosrc for function %u", functionId);
-		prosrcstring = DatumGetCString(DirectFunctionCall1(textout,
-														   prosrcattr));
+		prosrcstring = TextDatumGetCString(prosrcattr);
 
 		probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
 									 Anum_pg_proc_probin, &isnull);
 		if (isnull)
 			elog(ERROR, "null probin for function %u", functionId);
-		probinstring = DatumGetCString(DirectFunctionCall1(textout,
-														   probinattr));
+		probinstring = TextDatumGetCString(probinattr);
 
 		/* Look up the function itself */
 		user_fn = load_external_function(probinstring, prosrcstring, true,

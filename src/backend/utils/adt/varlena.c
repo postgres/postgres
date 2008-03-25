@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.163 2008/03/13 18:31:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.164 2008/03/25 22:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,15 +48,6 @@ typedef struct
 #define PG_GETARG_UNKNOWN_P_COPY(n) DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
 
-#define PG_TEXTARG_GET_STR(arg_) \
-	DatumGetCString(DirectFunctionCall1(textout, PG_GETARG_DATUM(arg_)))
-#define PG_TEXT_GET_STR(textp_) \
-	DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp_)))
-#define PG_STR_GET_TEXT(str_) \
-	DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(str_)))
-#define TEXTLEN(textp) \
-	text_length(PointerGetDatum(textp))
-
 static int	text_cmp(text *arg1, text *arg2);
 static int32 text_length(Datum str);
 static int	text_position(text *t1, text *t2);
@@ -67,8 +58,105 @@ static text *text_substring(Datum str,
 			   int32 start,
 			   int32 length,
 			   bool length_not_specified);
-
 static void appendStringInfoText(StringInfo str, const text *t);
+
+
+/*****************************************************************************
+ *	 CONVERSION ROUTINES EXPORTED FOR USE BY C CODE							 *
+ *****************************************************************************/
+
+/*
+ * cstring_to_text
+ *
+ * Create a text value from a null-terminated C string.
+ *
+ * The new text value is freshly palloc'd with a full-size VARHDR.
+ */
+text *
+cstring_to_text(const char *s)
+{
+	return cstring_to_text_with_len(s, strlen(s));
+}
+
+/*
+ * cstring_to_text_with_len
+ *
+ * Same as cstring_to_text except the caller specifies the string length;
+ * the string need not be null_terminated.
+ */
+text *
+cstring_to_text_with_len(const char *s, int len)
+{
+	text	   *result = (text *) palloc(len + VARHDRSZ);
+
+	SET_VARSIZE(result, len + VARHDRSZ);
+	memcpy(VARDATA(result), s, len);
+
+	return result;
+}
+
+/*
+ * text_to_cstring
+ *
+ * Create a palloc'd, null-terminated C string from a text value.
+ *
+ * We support being passed a compressed or toasted text value.
+ * This is a bit bogus since such values shouldn't really be referred to as
+ * "text *", but it seems useful for robustness.  If we didn't handle that
+ * case here, we'd need another routine that did, anyway.
+ */
+char *
+text_to_cstring(const text *t)
+{
+	/* must cast away the const, unfortunately */
+	text	   *tunpacked = pg_detoast_datum_packed((struct varlena *) t);
+	int			len = VARSIZE_ANY_EXHDR(tunpacked);
+	char	   *result;
+
+	result = (char *) palloc(len + 1);
+	memcpy(result, VARDATA_ANY(tunpacked), len);
+	result[len] = '\0';
+
+	if (tunpacked != t)
+		pfree(tunpacked);
+	
+	return result;
+}
+
+/*
+ * text_to_cstring_buffer
+ *
+ * Copy a text value into a caller-supplied buffer of size dst_len.
+ *
+ * The text string is truncated if necessary to fit.  The result is
+ * guaranteed null-terminated (unless dst_len == 0).
+ *
+ * We support being passed a compressed or toasted text value.
+ * This is a bit bogus since such values shouldn't really be referred to as
+ * "text *", but it seems useful for robustness.  If we didn't handle that
+ * case here, we'd need another routine that did, anyway.
+ */
+void
+text_to_cstring_buffer(const text *src, char *dst, size_t dst_len)
+{
+	/* must cast away the const, unfortunately */
+	text	   *srcunpacked = pg_detoast_datum_packed((struct varlena *) src);
+	size_t		src_len = VARSIZE_ANY_EXHDR(srcunpacked);
+
+	if (dst_len > 0)
+	{
+		dst_len--;
+		if (dst_len >= src_len)
+			dst_len = src_len;
+		else					/* ensure truncation is encoding-safe */
+			dst_len = pg_mbcliplen(VARDATA_ANY(srcunpacked), src_len, dst_len);
+		memcpy(dst, VARDATA_ANY(srcunpacked), dst_len);
+		dst[dst_len] = '\0';
+	}
+
+	if (srcunpacked != src)
+		pfree(srcunpacked);
+}
 
 
 /*****************************************************************************
@@ -259,16 +347,8 @@ Datum
 textin(PG_FUNCTION_ARGS)
 {
 	char	   *inputText = PG_GETARG_CSTRING(0);
-	text	   *result;
-	int			len;
 
-	len = strlen(inputText);
-	result = (text *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(result, len + VARHDRSZ);
-
-	memcpy(VARDATA(result), inputText, len);
-
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(inputText));
 }
 
 /*
@@ -277,16 +357,9 @@ textin(PG_FUNCTION_ARGS)
 Datum
 textout(PG_FUNCTION_ARGS)
 {
-	text	   *t = PG_GETARG_TEXT_PP(0);
-	int			len;
-	char	   *result;
+	Datum		txt = PG_GETARG_DATUM(0);
 
-	len = VARSIZE_ANY_EXHDR(t);
-	result = (char *) palloc(len + 1);
-	memcpy(result, VARDATA_ANY(t), len);
-	result[len] = '\0';
-
-	PG_RETURN_CSTRING(result);
+	PG_RETURN_CSTRING(TextDatumGetCString(txt));
 }
 
 /*
@@ -302,9 +375,7 @@ textrecv(PG_FUNCTION_ARGS)
 
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
-	result = (text *) palloc(nbytes + VARHDRSZ);
-	SET_VARSIZE(result, nbytes + VARHDRSZ);
-	memcpy(VARDATA(result), str, nbytes);
+	result = cstring_to_text_with_len(str, nbytes);
 	pfree(str);
 	PG_RETURN_TEXT_P(result);
 }
@@ -600,7 +671,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			 * string.
 			 */
 			if (E < 1)
-				return PG_STR_GET_TEXT("");
+				return cstring_to_text("");
 
 			L1 = E - S1;
 		}
@@ -664,7 +735,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			 * string.
 			 */
 			if (E < 1)
-				return PG_STR_GET_TEXT("");
+				return cstring_to_text("");
 
 			/*
 			 * if E is past the end of the string, the tuple toaster will
@@ -693,7 +764,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		{
 			if (slice != (text *) DatumGetPointer(str))
 				pfree(slice);
-			return PG_STR_GET_TEXT("");
+			return cstring_to_text("");
 		}
 
 		/* Now we can get the actual length of the slice in MB characters */
@@ -708,7 +779,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		{
 			if (slice != (text *) DatumGetPointer(str))
 				pfree(slice);
-			return PG_STR_GET_TEXT("");
+			return cstring_to_text("");
 		}
 
 		/*
@@ -1759,16 +1830,8 @@ Datum
 name_text(PG_FUNCTION_ARGS)
 {
 	Name		s = PG_GETARG_NAME(0);
-	text	   *result;
-	int			len;
 
-	len = strlen(NameStr(*s));
-
-	result = palloc(VARHDRSZ + len);
-	SET_VARSIZE(result, VARHDRSZ + len);
-	memcpy(VARDATA(result), NameStr(*s), len);
-
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(NameStr(*s)));
 }
 
 
@@ -1790,8 +1853,7 @@ textToQualifiedNameList(text *textval)
 
 	/* Convert to C string (handles possible detoasting). */
 	/* Note we rely on being able to modify rawname below. */
-	rawname = DatumGetCString(DirectFunctionCall1(textout,
-												  PointerGetDatum(textval)));
+	rawname = text_to_cstring(textval);
 
 	if (!SplitIdentifierString(rawname, '.', &namelist))
 		ereport(ERROR,
@@ -2103,7 +2165,7 @@ byteacmp(PG_FUNCTION_ARGS)
  * appendStringInfoText
  *
  * Append a text to str.
- * Like appendStringInfoString(str, PG_TEXT_GET_STR(s)) but faster.
+ * Like appendStringInfoString(str, text_to_cstring(t)) but faster.
  */
 static void
 appendStringInfoText(StringInfo str, const text *t)
@@ -2191,7 +2253,7 @@ replace_text(PG_FUNCTION_ARGS)
 
 	text_position_cleanup(&state);
 
-	ret_text = PG_STR_GET_TEXT(str.data);
+	ret_text = cstring_to_text_with_len(str.data, str.len);
 	pfree(str.data);
 
 	PG_RETURN_TEXT_P(ret_text);
@@ -2458,7 +2520,7 @@ replace_text_regexp(text *src_text, void *regexp,
 		appendBinaryStringInfo(&buf, start_ptr, chunk_len);
 	}
 
-	ret_text = PG_STR_GET_TEXT(buf.data);
+	ret_text = cstring_to_text_with_len(buf.data, buf.len);
 	pfree(buf.data);
 	pfree(data);
 
@@ -2503,7 +2565,7 @@ split_text(PG_FUNCTION_ARGS)
 	if (inputstring_len < 1)
 	{
 		text_position_cleanup(&state);
-		PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
+		PG_RETURN_TEXT_P(cstring_to_text(""));
 	}
 
 	/* empty field separator */
@@ -2514,7 +2576,7 @@ split_text(PG_FUNCTION_ARGS)
 		if (fldnum == 1)
 			PG_RETURN_TEXT_P(inputstring);
 		else
-			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
+			PG_RETURN_TEXT_P(cstring_to_text(""));
 	}
 
 	/* identify bounds of first field */
@@ -2529,7 +2591,7 @@ split_text(PG_FUNCTION_ARGS)
 		if (fldnum == 1)
 			PG_RETURN_TEXT_P(inputstring);
 		else
-			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
+			PG_RETURN_TEXT_P(cstring_to_text(""));
 	}
 
 	while (end_posn > 0 && --fldnum > 0)
@@ -2551,7 +2613,7 @@ split_text(PG_FUNCTION_ARGS)
 										 -1,
 										 true);
 		else
-			result_text = PG_STR_GET_TEXT("");
+			result_text = cstring_to_text("");
 	}
 	else
 	{
@@ -2636,9 +2698,7 @@ text_to_array(PG_FUNCTION_ARGS)
 		}
 
 		/* must build a temp text datum to pass to accumArrayResult */
-		result_text = (text *) palloc(VARHDRSZ + chunk_len);
-		SET_VARSIZE(result_text, VARHDRSZ + chunk_len);
-		memcpy(VARDATA(result_text), start_ptr, chunk_len);
+		result_text = cstring_to_text_with_len(start_ptr, chunk_len);
 
 		/* stash away this field */
 		astate = accumArrayResult(astate,
@@ -2673,7 +2733,7 @@ Datum
 array_to_text(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
-	char	   *fldsep = PG_TEXTARG_GET_STR(1);
+	char	   *fldsep = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	int			nitems,
 			   *dims,
 				ndims;
@@ -2695,7 +2755,7 @@ array_to_text(PG_FUNCTION_ARGS)
 
 	/* if there are no elements, return an empty string */
 	if (nitems == 0)
-		PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
+		PG_RETURN_TEXT_P(cstring_to_text(""));
 
 	element_type = ARR_ELEMTYPE(v);
 	initStringInfo(&buf);
@@ -2773,7 +2833,7 @@ array_to_text(PG_FUNCTION_ARGS)
 		}
 	}
 
-	PG_RETURN_TEXT_P(PG_STR_GET_TEXT(buf.data));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(buf.data, buf.len));
 }
 
 #define HEXBASE 16
@@ -2785,7 +2845,6 @@ Datum
 to_hex32(PG_FUNCTION_ARGS)
 {
 	uint32		value = (uint32) PG_GETARG_INT32(0);
-	text	   *result_text;
 	char	   *ptr;
 	const char *digits = "0123456789abcdef";
 	char		buf[32];		/* bigger than needed, but reasonable */
@@ -2799,8 +2858,7 @@ to_hex32(PG_FUNCTION_ARGS)
 		value /= HEXBASE;
 	} while (ptr > buf && value);
 
-	result_text = PG_STR_GET_TEXT(ptr);
-	PG_RETURN_TEXT_P(result_text);
+	PG_RETURN_TEXT_P(cstring_to_text(ptr));
 }
 
 /*
@@ -2811,7 +2869,6 @@ Datum
 to_hex64(PG_FUNCTION_ARGS)
 {
 	uint64		value = (uint64) PG_GETARG_INT64(0);
-	text	   *result_text;
 	char	   *ptr;
 	const char *digits = "0123456789abcdef";
 	char		buf[32];		/* bigger than needed, but reasonable */
@@ -2825,8 +2882,7 @@ to_hex64(PG_FUNCTION_ARGS)
 		value /= HEXBASE;
 	} while (ptr > buf && value);
 
-	result_text = PG_STR_GET_TEXT(ptr);
-	PG_RETURN_TEXT_P(result_text);
+	PG_RETURN_TEXT_P(cstring_to_text(ptr));
 }
 
 /*
@@ -2842,7 +2898,6 @@ md5_text(PG_FUNCTION_ARGS)
 	text	   *in_text = PG_GETARG_TEXT_PP(0);
 	size_t		len;
 	char		hexsum[MD5_HASH_LEN + 1];
-	text	   *result_text;
 
 	/* Calculate the length of the buffer using varlena metadata */
 	len = VARSIZE_ANY_EXHDR(in_text);
@@ -2854,8 +2909,7 @@ md5_text(PG_FUNCTION_ARGS)
 				 errmsg("out of memory")));
 
 	/* convert to text and return it */
-	result_text = PG_STR_GET_TEXT(hexsum);
-	PG_RETURN_TEXT_P(result_text);
+	PG_RETURN_TEXT_P(cstring_to_text(hexsum));
 }
 
 /*
@@ -2868,7 +2922,6 @@ md5_bytea(PG_FUNCTION_ARGS)
 	bytea	   *in = PG_GETARG_BYTEA_PP(0);
 	size_t		len;
 	char		hexsum[MD5_HASH_LEN + 1];
-	text	   *result_text;
 
 	len = VARSIZE_ANY_EXHDR(in);
 	if (pg_md5_hash(VARDATA_ANY(in), len, hexsum) == false)
@@ -2876,8 +2929,7 @@ md5_bytea(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 
-	result_text = PG_STR_GET_TEXT(hexsum);
-	PG_RETURN_TEXT_P(result_text);
+	PG_RETURN_TEXT_P(cstring_to_text(hexsum));
 }
 
 /*

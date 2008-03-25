@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.8 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.9 2008/03/25 22:42:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,7 @@ untransformRelOptions(Datum options)
 		char	   *p;
 		Node	   *val = NULL;
 
-		s = DatumGetCString(DirectFunctionCall1(textout, optiondatums[i]));
+		s = TextDatumGetCString(optiondatums[i]);
 		p = strchr(s, '=');
 		if (p)
 		{
@@ -266,7 +266,7 @@ parseRelOptions(Datum options, int numkeywords, const char *const * keywords,
 			char	   *s;
 			char	   *p;
 
-			s = DatumGetCString(DirectFunctionCall1(textout, optiondatums[i]));
+			s = TextDatumGetCString(optiondatums[i]);
 			p = strchr(s, '=');
 			if (p)
 				*p = '\0';

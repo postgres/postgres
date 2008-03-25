@@ -95,8 +95,6 @@ typedef struct
 	char	   *lastrowid;		/* rowid of the last tuple sent */
 }	crosstab_fctx;
 
-#define GET_TEXT(cstrp) DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(cstrp)))
-#define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
 #define xpfree(var_) \
 	do { \
 		if (var_ != NULL) \
@@ -370,7 +368,7 @@ crosstab(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		char	   *sql = GET_STR(PG_GETARG_TEXT_P(0));
+		char	   *sql = text_to_cstring(PG_GETARG_TEXT_PP(0));
 		TupleDesc	tupdesc;
 		int			ret;
 		int			proc;
@@ -695,8 +693,8 @@ PG_FUNCTION_INFO_V1(crosstab_hash);
 Datum
 crosstab_hash(PG_FUNCTION_ARGS)
 {
-	char	   *sql = GET_STR(PG_GETARG_TEXT_P(0));
-	char	   *cats_sql = GET_STR(PG_GETARG_TEXT_P(1));
+	char	   *sql = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *cats_sql = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	MemoryContext per_query_ctx;
@@ -1052,10 +1050,10 @@ PG_FUNCTION_INFO_V1(connectby_text);
 Datum
 connectby_text(PG_FUNCTION_ARGS)
 {
-	char	   *relname = GET_STR(PG_GETARG_TEXT_P(0));
-	char	   *key_fld = GET_STR(PG_GETARG_TEXT_P(1));
-	char	   *parent_key_fld = GET_STR(PG_GETARG_TEXT_P(2));
-	char	   *start_with = GET_STR(PG_GETARG_TEXT_P(3));
+	char	   *relname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *key_fld = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	   *parent_key_fld = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	char	   *start_with = text_to_cstring(PG_GETARG_TEXT_PP(3));
 	int			max_depth = PG_GETARG_INT32(4);
 	char	   *branch_delim = NULL;
 	bool		show_branch = false;
@@ -1079,7 +1077,7 @@ connectby_text(PG_FUNCTION_ARGS)
 
 	if (fcinfo->nargs == 6)
 	{
-		branch_delim = GET_STR(PG_GETARG_TEXT_P(5));
+		branch_delim = text_to_cstring(PG_GETARG_TEXT_PP(5));
 		show_branch = true;
 	}
 	else
@@ -1129,11 +1127,11 @@ PG_FUNCTION_INFO_V1(connectby_text_serial);
 Datum
 connectby_text_serial(PG_FUNCTION_ARGS)
 {
-	char	   *relname = GET_STR(PG_GETARG_TEXT_P(0));
-	char	   *key_fld = GET_STR(PG_GETARG_TEXT_P(1));
-	char	   *parent_key_fld = GET_STR(PG_GETARG_TEXT_P(2));
-	char	   *orderby_fld = GET_STR(PG_GETARG_TEXT_P(3));
-	char	   *start_with = GET_STR(PG_GETARG_TEXT_P(4));
+	char	   *relname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *key_fld = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	   *parent_key_fld = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	char	   *orderby_fld = text_to_cstring(PG_GETARG_TEXT_PP(3));
+	char	   *start_with = text_to_cstring(PG_GETARG_TEXT_PP(4));
 	int			max_depth = PG_GETARG_INT32(5);
 	char	   *branch_delim = NULL;
 	bool		show_branch = false;
@@ -1158,7 +1156,7 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 
 	if (fcinfo->nargs == 7)
 	{
-		branch_delim = GET_STR(PG_GETARG_TEXT_P(6));
+		branch_delim = text_to_cstring(PG_GETARG_TEXT_PP(6));
 		show_branch = true;
 	}
 	else
@@ -1645,9 +1643,10 @@ quote_literal_cstr(char *rawstr)
 	text	   *result_text;
 	char	   *result;
 
-	rawstr_text = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(rawstr)));
-	result_text = DatumGetTextP(DirectFunctionCall1(quote_literal, PointerGetDatum(rawstr_text)));
-	result = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(result_text)));
+	rawstr_text = cstring_to_text(rawstr);
+	result_text = DatumGetTextP(DirectFunctionCall1(quote_literal,
+													PointerGetDatum(rawstr_text)));
+	result = text_to_cstring(result_text);
 
 	return result;
 }

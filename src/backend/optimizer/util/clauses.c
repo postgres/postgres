@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.255 2008/03/18 22:04:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.256 2008/03/25 22:42:43 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3002,7 +3002,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 						  &isNull);
 	if (isNull)
 		elog(ERROR, "null prosrc for function %u", funcid);
-	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
+	src = TextDatumGetCString(tmp);
 
 	/*
 	 * We just do parsing and parse analysis, not rewriting, because rewriting
@@ -3227,7 +3227,7 @@ sql_inline_error_callback(void *arg)
 							  &isnull);
 		if (isnull)
 			elog(ERROR, "null prosrc");
-		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+		prosrc = TextDatumGetCString(tmp);
 		errposition(0);
 		internalerrposition(syntaxerrposition);
 		internalerrquery(prosrc);
@@ -3454,7 +3454,7 @@ inline_set_returning_function(PlannerInfo *root, Node *node)
 						  &isNull);
 	if (isNull)
 		elog(ERROR, "null prosrc for function %u", fexpr->funcid);
-	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
+	src = TextDatumGetCString(tmp);
 
 	/*
 	 * Parse, analyze, and rewrite (unlike inline_function(), we can't

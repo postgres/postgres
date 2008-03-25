@@ -172,7 +172,7 @@ timetravel(PG_FUNCTION_ARGS)
 	}
 
 	/* create fields containing name */
-	newuser = DirectFunctionCall1(textin, CStringGetDatum(GetUserNameFromId(GetUserId())));
+	newuser = CStringGetTextDatum(GetUserNameFromId(GetUserId()));
 
 	nulltext = (Datum) NULL;
 

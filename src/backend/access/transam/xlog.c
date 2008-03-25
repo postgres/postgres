@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.294 2008/03/10 02:13:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.295 2008/03/25 22:42:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6380,7 +6380,6 @@ Datum
 pg_start_backup(PG_FUNCTION_ARGS)
 {
 	text	   *backupid = PG_GETARG_TEXT_P(0);
-	text	   *result;
 	char	   *backupidstr;
 	XLogRecPtr	checkpointloc;
 	XLogRecPtr	startpoint;
@@ -6410,8 +6409,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 				 errhint("archive_command must be defined before "
 						 "online backups can be made safely.")));
 
-	backupidstr = DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(backupid)));
+	backupidstr = text_to_cstring(backupid);
 
 	/*
 	 * Mark backup active in shared memory.  We must do full-page WAL writes
@@ -6531,9 +6529,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	 */
 	snprintf(xlogfilename, sizeof(xlogfilename), "%X/%X",
 			 startpoint.xlogid, startpoint.xrecoff);
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-											 CStringGetDatum(xlogfilename)));
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(xlogfilename));
 }
 
 /*
@@ -6547,7 +6543,6 @@ pg_start_backup(PG_FUNCTION_ARGS)
 Datum
 pg_stop_backup(PG_FUNCTION_ARGS)
 {
-	text	   *result;
 	XLogRecPtr	startpoint;
 	XLogRecPtr	stoppoint;
 	pg_time_t	stamp_time;
@@ -6669,9 +6664,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	 */
 	snprintf(stopxlogfilename, sizeof(stopxlogfilename), "%X/%X",
 			 stoppoint.xlogid, stoppoint.xrecoff);
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-										 CStringGetDatum(stopxlogfilename)));
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(stopxlogfilename));
 }
 
 /*
@@ -6680,7 +6673,6 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 Datum
 pg_switch_xlog(PG_FUNCTION_ARGS)
 {
-	text	   *result;
 	XLogRecPtr	switchpoint;
 	char		location[MAXFNAMELEN];
 
@@ -6696,9 +6688,7 @@ pg_switch_xlog(PG_FUNCTION_ARGS)
 	 */
 	snprintf(location, sizeof(location), "%X/%X",
 			 switchpoint.xlogid, switchpoint.xrecoff);
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-											   CStringGetDatum(location)));
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
 /*
@@ -6711,7 +6701,6 @@ pg_switch_xlog(PG_FUNCTION_ARGS)
 Datum
 pg_current_xlog_location(PG_FUNCTION_ARGS)
 {
-	text	   *result;
 	char		location[MAXFNAMELEN];
 
 	/* Make sure we have an up-to-date local LogwrtResult */
@@ -6726,10 +6715,7 @@ pg_current_xlog_location(PG_FUNCTION_ARGS)
 
 	snprintf(location, sizeof(location), "%X/%X",
 			 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff);
-
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-											   CStringGetDatum(location)));
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
 /*
@@ -6740,7 +6726,6 @@ pg_current_xlog_location(PG_FUNCTION_ARGS)
 Datum
 pg_current_xlog_insert_location(PG_FUNCTION_ARGS)
 {
-	text	   *result;
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	XLogRecPtr	current_recptr;
 	char		location[MAXFNAMELEN];
@@ -6754,10 +6739,7 @@ pg_current_xlog_insert_location(PG_FUNCTION_ARGS)
 
 	snprintf(location, sizeof(location), "%X/%X",
 			 current_recptr.xlogid, current_recptr.xrecoff);
-
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-											   CStringGetDatum(location)));
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
 /*
@@ -6789,8 +6771,7 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	/*
 	 * Read input and parse
 	 */
-	locationstr = DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(location)));
+	locationstr = text_to_cstring(location);
 
 	if (sscanf(locationstr, "%X/%X", &uxlogid, &uxrecoff) != 2)
 		ereport(ERROR,
@@ -6819,8 +6800,7 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	XLByteToPrevSeg(locationpoint, xlogid, xlogseg);
 	XLogFileName(xlogfilename, ThisTimeLineID, xlogid, xlogseg);
 
-	values[0] = DirectFunctionCall1(textin,
-									CStringGetDatum(xlogfilename));
+	values[0] = CStringGetTextDatum(xlogfilename);
 	isnull[0] = false;
 
 	/*
@@ -6849,7 +6829,6 @@ Datum
 pg_xlogfile_name(PG_FUNCTION_ARGS)
 {
 	text	   *location = PG_GETARG_TEXT_P(0);
-	text	   *result;
 	char	   *locationstr;
 	unsigned int uxlogid;
 	unsigned int uxrecoff;
@@ -6858,8 +6837,7 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 	XLogRecPtr	locationpoint;
 	char		xlogfilename[MAXFNAMELEN];
 
-	locationstr = DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(location)));
+	locationstr = text_to_cstring(location);
 
 	if (sscanf(locationstr, "%X/%X", &uxlogid, &uxrecoff) != 2)
 		ereport(ERROR,
@@ -6873,9 +6851,7 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 	XLByteToPrevSeg(locationpoint, xlogid, xlogseg);
 	XLogFileName(xlogfilename, ThisTimeLineID, xlogid, xlogseg);
 
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-											 CStringGetDatum(xlogfilename)));
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(xlogfilename));
 }
 
 /*

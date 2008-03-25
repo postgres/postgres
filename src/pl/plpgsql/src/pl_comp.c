@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.121 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.122 2008/03/25 22:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,7 @@ do_compile(FunctionCallInfo fcinfo,
 								  Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
 		elog(ERROR, "null prosrc");
-	proc_source = DatumGetCString(DirectFunctionCall1(textout, prosrcdatum));
+	proc_source = TextDatumGetCString(prosrcdatum);
 	plpgsql_scanner_init(proc_source, functype);
 
 	plpgsql_error_funcname = pstrdup(NameStr(procStruct->proname));

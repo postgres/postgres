@@ -8,7 +8,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.10 2008/01/01 19:45:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.11 2008/03/25 22:42:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "miscadmin.h"
 #include "postmaster/syslogger.h"
 #include "storage/fd.h"
+#include "utils/builtins.h"
 #include "utils/datetime.h"
 
 
@@ -68,11 +69,7 @@ typedef struct
 static char *
 convert_and_check_filename(text *arg, bool logAllowed)
 {
-	int			input_len = VARSIZE(arg) - VARHDRSZ;
-	char	   *filename = palloc(input_len + 1);
-
-	memcpy(filename, VARDATA(arg), input_len);
-	filename[input_len] = '\0';
+	char	   *filename = text_to_cstring(arg);
 
 	canonicalize_path(filename);	/* filename can change length here */
 

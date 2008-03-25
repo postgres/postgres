@@ -8,7 +8,7 @@
  * Copyright (c) 2007-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.4 2008/01/01 20:31:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.5 2008/03/25 22:42:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ page_header(PG_FUNCTION_ARGS)
 	lsn = PageGetLSN(page);
 	snprintf(lsnchar, sizeof(lsnchar), "%X/%X", lsn.xlogid, lsn.xrecoff);
 
-	values[0] = DirectFunctionCall1(textin, CStringGetDatum(lsnchar));
+	values[0] = CStringGetTextDatum(lsnchar);
 	values[1] = UInt16GetDatum(PageGetTLI(page));
 	values[2] = UInt16GetDatum(page->pd_flags);
 	values[3] = UInt16GetDatum(page->pd_lower);

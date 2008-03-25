@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.138 2008/03/22 22:32:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.139 2008/03/25 22:42:44 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -924,7 +924,7 @@ static int	seq_search(char *name, char **array, int type, int max, int *len);
 static void do_to_timestamp(text *date_txt, text *fmt,
 				struct pg_tm * tm, fsec_t *fsec);
 static char *fill_str(char *str, int c, int max);
-static FormatNode *NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree);
+static FormatNode *NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree);
 static char *int_to_roman(int number);
 static void NUM_prepare_locale(NUMProc *Np);
 static char *get_last_relevant_decnum(char *num);
@@ -2709,16 +2709,14 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
 	char	   *fmt_str,
 			   *result;
 	bool		incache;
-	int			fmt_len = VARSIZE(fmt) - VARHDRSZ;
-	int			reslen;
+	int			fmt_len;
 	text	   *res;
 
 	/*
 	 * Convert fmt to C string
 	 */
-	fmt_str = (char *) palloc(fmt_len + 1);
-	memcpy(fmt_str, VARDATA(fmt), fmt_len);
-	*(fmt_str + fmt_len) = '\0';
+	fmt_str = text_to_cstring(fmt);
+	fmt_len = strlen(fmt_str);
 
 	/*
 	 * Allocate workspace for result as C string
@@ -2779,10 +2777,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
 	pfree(fmt_str);
 
 	/* convert C-string result to TEXT format */
-	reslen = strlen(result);
-	res = (text *) palloc(reslen + VARHDRSZ);
-	memcpy(VARDATA(res), result, reslen);
-	SET_VARSIZE(res, reslen + VARHDRSZ);
+	res = cstring_to_text(result);
 
 	pfree(result);
 	return res;
@@ -3135,18 +3130,15 @@ do_to_timestamp(text *date_txt, text *fmt,
 	ZERO_tm(tm);
 	*fsec = 0;
 
-	fmt_len = VARSIZE(fmt) - VARHDRSZ;
+	fmt_len = VARSIZE_ANY_EXHDR(fmt);
 
 	if (fmt_len)
 	{
-		int			date_len;
 		char	   *fmt_str;
 		char	   *date_str;
 		bool		incache;
 
-		fmt_str = (char *) palloc(fmt_len + 1);
-		memcpy(fmt_str, VARDATA(fmt), fmt_len);
-		*(fmt_str + fmt_len) = '\0';
+		fmt_str = text_to_cstring(fmt);
 
 		/*
 		 * Allocate new memory if format picture is bigger than static cache
@@ -3195,13 +3187,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 		/* dump_node(format, fmt_len); */
 #endif
 
-		/*
-		 * Convert date to C string
-		 */
-		date_len = VARSIZE(date_txt) - VARHDRSZ;
-		date_str = (char *) palloc(date_len + 1);
-		memcpy(date_str, VARDATA(date_txt), date_len);
-		*(date_str + date_len) = '\0';
+		date_str = text_to_cstring(date_txt);
 
 		DCH_from_char(format, date_str, &tmfc);
 
@@ -3548,17 +3534,12 @@ NUM_cache_remove(NUMCacheEntry *ent)
  * ----------
  */
 static FormatNode *
-NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree)
+NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree)
 {
 	FormatNode *format = NULL;
 	char	   *str;
 
-	/*
-	 * Convert VARDATA() to string
-	 */
-	str = (char *) palloc(len + 1);
-	memcpy(str, pars_str, len);
-	*(str + len) = '\0';
+	str = text_to_cstring(pars_str);
 
 	/*
 	 * Allocate new memory if format picture is bigger than static cache and
@@ -4597,11 +4578,11 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
  */
 #define NUM_TOCHAR_prepare \
 do { \
-	len = VARSIZE(fmt) - VARHDRSZ;					\
+	len = VARSIZE_ANY_EXHDR(fmt); \
 	if (len <= 0 || len >= (INT_MAX-VARHDRSZ)/NUM_MAX_ITEM_SIZ)		\
-		return DirectFunctionCall1(textin, CStringGetDatum(""));	\
+		PG_RETURN_TEXT_P(cstring_to_text("")); \
 	result	= (text *) palloc0((len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ);	\
-	format	= NUM_cache(len, &Num, VARDATA(fmt), &shouldFree);		\
+	format	= NUM_cache(len, &Num, fmt, &shouldFree);		\
 } while (0)
 
 /* ----------
@@ -4647,7 +4628,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	if (len <= 0 || len >= INT_MAX / NUM_MAX_ITEM_SIZ)
 		PG_RETURN_NULL();
 
-	format = NUM_cache(len, &Num, VARDATA(fmt), &shouldFree);
+	format = NUM_cache(len, &Num, fmt, &shouldFree);
 
 	numstr = (char *) palloc((len * NUM_MAX_ITEM_SIZ) + 1);
 

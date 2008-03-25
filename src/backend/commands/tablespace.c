@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.53 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.54 2008/03/25 22:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,7 +282,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	values[Anum_pg_tablespace_spcowner - 1] =
 		ObjectIdGetDatum(ownerId);
 	values[Anum_pg_tablespace_spclocation - 1] =
-		DirectFunctionCall1(textin, CStringGetDatum(location));
+		CStringGetTextDatum(location);
 	nulls[Anum_pg_tablespace_spcacl - 1] = 'n';
 
 	tuple = heap_formtuple(rel->rd_att, values, nulls);

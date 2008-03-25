@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.117 2007/11/15 21:14:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.118 2008/03/25 22:42:46 tgl Exp $
  *
  **********************************************************************/
 
@@ -1298,8 +1298,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 									  Anum_pg_proc_prosrc, &isnull);
 		if (isnull)
 			elog(ERROR, "null prosrc");
-		proc_source = DatumGetCString(DirectFunctionCall1(textout,
-														  prosrcdatum));
+		proc_source = TextDatumGetCString(prosrcdatum);
 		UTF_BEGIN;
 		Tcl_DStringAppend(&proc_internal_body, UTF_E2U(proc_source), -1);
 		UTF_END;

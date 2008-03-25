@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.81 2008/03/25 19:26:53 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.82 2008/03/25 22:42:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -772,14 +772,12 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 
 			MemSet(nulls, 0, sizeof(nulls));
 
-			values[0] = DirectFunctionCall1(textin,
-									  CStringGetDatum(prep_stmt->stmt_name));
+			values[0] = CStringGetTextDatum(prep_stmt->stmt_name);
 
 			if (prep_stmt->plansource->query_string == NULL)
 				nulls[1] = true;
 			else
-				values[1] = DirectFunctionCall1(textin,
-					   CStringGetDatum(prep_stmt->plansource->query_string));
+				values[1] = CStringGetTextDatum(prep_stmt->plansource->query_string);
 
 			values[2] = TimestampTzGetDatum(prep_stmt->prepare_time);
 			values[3] = build_regtype_array(prep_stmt->plansource->param_types,

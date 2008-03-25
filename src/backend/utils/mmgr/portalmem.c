@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.107 2008/03/25 19:26:53 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.108 2008/03/25 22:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -923,12 +923,11 @@ pg_cursor(PG_FUNCTION_ARGS)
 
 		MemSet(nulls, 0, sizeof(nulls));
 
-		values[0] = DirectFunctionCall1(textin, CStringGetDatum(portal->name));
+		values[0] = CStringGetTextDatum(portal->name);
 		if (!portal->sourceText)
 			nulls[1] = true;
 		else
-			values[1] = DirectFunctionCall1(textin,
-										CStringGetDatum(portal->sourceText));
+			values[1] = CStringGetTextDatum(portal->sourceText);
 		values[2] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_HOLD);
 		values[3] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_BINARY);
 		values[4] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_SCROLL);

@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.106 2008/01/02 03:10:27 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.107 2008/03/25 22:42:45 tgl Exp $
  *
  *********************************************************************
  */
@@ -1298,7 +1298,7 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 
 			/* Fetch argument name */
 			if (proc->argnames)
-				proc->argnames[i] = PLy_strdup(DatumGetCString(DirectFunctionCall1(textout, elems[i])));
+				proc->argnames[i] = PLy_strdup(TextDatumGetCString(elems[i]));
 		}
 
 		/*
@@ -1308,8 +1308,7 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 									  Anum_pg_proc_prosrc, &isnull);
 		if (isnull)
 			elog(ERROR, "null prosrc");
-		procSource = DatumGetCString(DirectFunctionCall1(textout,
-														 prosrcdatum));
+		procSource = TextDatumGetCString(prosrcdatum);
 
 		PLy_procedure_compile(proc, procSource);
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.5 2008/01/01 19:45:49 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.6 2008/03/25 22:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,8 +150,7 @@ fetch_param_value(ExprContext *econtext, int paramId)
 		{
 			Assert(prm->ptype == REFCURSOROID);
 			/* We know that refcursor uses text's I/O routines */
-			return DatumGetCString(DirectFunctionCall1(textout,
-													   prm->value));
+			return TextDatumGetCString(prm->value);
 		}
 	}
 

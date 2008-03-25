@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.60 2008/02/12 04:09:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.61 2008/03/25 22:42:42 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -3343,8 +3343,7 @@ execq(text *sql, int cnt)
     int proc;
 
     /* Convert given text object to a C string */
-    command = DatumGetCString(DirectFunctionCall1(textout,
-                                                  PointerGetDatum(sql)));
+    command = text_to_cstring(sql);
 
     SPI_connect();
     

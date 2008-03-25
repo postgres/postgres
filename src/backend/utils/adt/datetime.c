@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.187 2008/02/25 23:36:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.188 2008/03/25 22:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3910,7 +3910,7 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 	for (p = (unsigned char *) buffer; *p; p++)
 		*p = pg_toupper(*p);
 
-	values[0] = DirectFunctionCall1(textin, CStringGetDatum(buffer));
+	values[0] = CStringGetTextDatum(buffer);
 
 	MemSet(&tm, 0, sizeof(struct pg_tm));
 	tm.tm_min = (-1) * FROMVAL(&timezonetktbl[*pindex]);
@@ -4020,11 +4020,8 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 
 	MemSet(nulls, 0, sizeof(nulls));
 
-	values[0] = DirectFunctionCall1(textin,
-								  CStringGetDatum(pg_get_timezone_name(tz)));
-
-	values[1] = DirectFunctionCall1(textin,
-									CStringGetDatum(tzn ? tzn : ""));
+	values[0] = CStringGetTextDatum(pg_get_timezone_name(tz));
+	values[1] = CStringGetTextDatum(tzn ? tzn : "");
 
 	MemSet(&itm, 0, sizeof(struct pg_tm));
 	itm.tm_sec = -tzoff;

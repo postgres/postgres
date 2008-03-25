@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.246 2008/03/17 17:13:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.247 2008/03/25 22:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1089,8 +1089,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		switch (prefix->consttype)
 		{
 			case TEXTOID:
-				prefixstr = DatumGetCString(DirectFunctionCall1(textout,
-														prefix->constvalue));
+				prefixstr = TextDatumGetCString(prefix->constvalue);
 				break;
 			case BYTEAOID:
 				prefixstr = DatumGetCString(DirectFunctionCall1(byteaout,
@@ -3339,15 +3338,8 @@ convert_string_datum(Datum value, Oid typid)
 		case BPCHAROID:
 		case VARCHAROID:
 		case TEXTOID:
-			{
-				char	   *str = (char *) VARDATA(DatumGetPointer(value));
-				int			strlength = VARSIZE(DatumGetPointer(value)) - VARHDRSZ;
-
-				val = (char *) palloc(strlength + 1);
-				memcpy(val, str, strlength);
-				val[strlength] = '\0';
-				break;
-			}
+			val = TextDatumGetCString(value);
+			break;
 		case NAMEOID:
 			{
 				NameData   *nm = (NameData *) DatumGetPointer(value);
@@ -4177,7 +4169,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 
 	if (typeid != BYTEAOID)
 	{
-		patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
+		patt = TextDatumGetCString(patt_const->constvalue);
 		pattlen = strlen(patt);
 	}
 	else
@@ -4282,7 +4274,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 		 errmsg("regular-expression matching not supported on type bytea")));
 
 	/* the right-hand const is type text for all of these */
-	patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
+	patt = TextDatumGetCString(patt_const->constvalue);
 
 	/*
 	 * Check for ARE director prefix.  It's worth our trouble to recognize
@@ -4618,7 +4610,7 @@ like_selectivity(Const *patt_const, bool case_insensitive)
 
 	if (typeid != BYTEAOID)
 	{
-		patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
+		patt = TextDatumGetCString(patt_const->constvalue);
 		pattlen = strlen(patt);
 	}
 	else
@@ -4777,7 +4769,7 @@ regex_selectivity(Const *patt_const, bool case_insensitive)
 		 errmsg("regular-expression matching not supported on type bytea")));
 
 	/* the right-hand const is type text for all of these */
-	patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
+	patt = TextDatumGetCString(patt_const->constvalue);
 	pattlen = strlen(patt);
 
 	/* If patt doesn't end with $, consider it to have a trailing wildcard */
@@ -4892,8 +4884,7 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 	}
 	else
 	{
-		workstr = DatumGetCString(DirectFunctionCall1(textout,
-													  str_const->constvalue));
+		workstr = TextDatumGetCString(str_const->constvalue);
 		len = strlen(workstr);
 		if (lc_collate_is_c() || len == 0)
 			cmpstr = str_const->constvalue;
@@ -5000,15 +4991,15 @@ string_to_datum(const char *str, Oid datatype)
 	Assert(str != NULL);
 
 	/*
-	 * We cheat a little by assuming that textin() will do for bpchar and
-	 * varchar constants too...
+	 * We cheat a little by assuming that CStringGetTextDatum() will do for
+	 * bpchar and varchar constants too...
 	 */
 	if (datatype == NAMEOID)
 		return DirectFunctionCall1(namein, CStringGetDatum(str));
 	else if (datatype == BYTEAOID)
 		return DirectFunctionCall1(byteain, CStringGetDatum(str));
 	else
-		return DirectFunctionCall1(textin, CStringGetDatum(str));
+		return CStringGetTextDatum(str);
 }
 
 /*

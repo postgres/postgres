@@ -18,7 +18,7 @@
  * Copyright (c) 2007-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.4 2008/01/01 20:31:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.5 2008/03/25 22:42:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,6 @@
 
 Datum		heap_page_items(PG_FUNCTION_ARGS);
 
-#define GET_TEXT(str_) \
-		DirectFunctionCall1(textin, CStringGetDatum(str_))
 
 /*
  * bits_to_text
@@ -190,8 +188,8 @@ heap_page_items(PG_FUNCTION_ARGS)
 					bits_len = tuphdr->t_hoff -
 						(((char *) tuphdr->t_bits) -((char *) tuphdr));
 
-					values[11] = GET_TEXT(
-								 bits_to_text(tuphdr->t_bits, bits_len * 8));
+					values[11] = CStringGetTextDatum(
+						bits_to_text(tuphdr->t_bits, bits_len * 8));
 				}
 				else
 					nulls[11] = true;

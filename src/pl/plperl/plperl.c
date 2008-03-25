@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.137 2008/03/25 19:26:53 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.138 2008/03/25 22:42:45 tgl Exp $
  *
  **********************************************************************/
 
@@ -542,7 +542,7 @@ plperl_safe_init(void)
 			desc.arg_is_rowtype[0] = false;
 			fmgr_info(F_TEXTOUT, &(desc.arg_out_func[0]));
 
-			fcinfo.arg[0] = DirectFunctionCall1(textin, CStringGetDatum("a"));
+			fcinfo.arg[0] = CStringGetTextDatum("a");
 			fcinfo.argnull[0] = false;
 			
 			/* and make the call */
@@ -1668,8 +1668,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 									  Anum_pg_proc_prosrc, &isnull);
 		if (isnull)
 			elog(ERROR, "null prosrc");
-		proc_source = DatumGetCString(DirectFunctionCall1(textout,
-														  prosrcdatum));
+		proc_source = TextDatumGetCString(prosrcdatum);
 
 		/************************************************************
 		 * Create the procedure in the interpreter

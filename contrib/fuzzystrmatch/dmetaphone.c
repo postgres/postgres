@@ -1,7 +1,7 @@
 /*
  * This is a port of the Double Metaphone algorithm for use in PostgreSQL.
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.11 2007/02/27 23:48:05 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.12 2008/03/25 22:42:41 tgl Exp $
  *
  * Double Metaphone computes 2 "sounds like" strings - a primary and an
  * alternate. In most cases they are the same, but for foreign names
@@ -101,7 +101,7 @@ The remaining code is authored by Andrew Dunstan <amdunstan@ncshp.org> and
 
 #include "postgres.h"
 
-#include "fmgr.h"
+#include "utils/builtins.h"
 
 /* turn off assertions for embedded function */
 #define NDEBUG
@@ -118,14 +118,12 @@ extern Datum dmetaphone(PG_FUNCTION_ARGS);
 extern Datum dmetaphone_alt(PG_FUNCTION_ARGS);
 
 /* prototype for the main function we got from the perl module */
-static void
-			DoubleMetaphone(char *, char **);
+static void DoubleMetaphone(char *, char **);
 
 #ifndef DMETAPHONE_MAIN
 
 /*
  * The PostgreSQL visible dmetaphone function.
- *
  */
 
 PG_FUNCTION_INFO_V1(dmetaphone);
@@ -133,47 +131,28 @@ PG_FUNCTION_INFO_V1(dmetaphone);
 Datum
 dmetaphone(PG_FUNCTION_ARGS)
 {
-	text	   *arg,
-			   *result;
-	int			alen,
-				rsize;
+	text	   *arg;
 	char	   *aptr,
 			   *codes[2],
-			   *code,
-			   *rptr;
+			   *code;
 
 #ifdef DMETAPHONE_NOSTRICT
 	if (PG_ARGISNULL(0))
-		PG_RETURNNULL();
+		PG_RETURN_NULL();
 #endif
 	arg = PG_GETARG_TEXT_P(0);
-	alen = VARSIZE(arg) - VARHDRSZ;
+	aptr = text_to_cstring(arg);
 
-	/*
-	 * Postgres' string values might not have trailing nuls. The VARSIZE will
-	 * not include the nul in any case so we copy things out and add a
-	 * trailing nul. When we copy back we ignore the nul (and we don't make
-	 * space for it).
-	 */
-
-	aptr = palloc(alen + 1);
-	memcpy(aptr, VARDATA(arg), alen);
-	aptr[alen] = 0;
 	DoubleMetaphone(aptr, codes);
 	code = codes[0];
 	if (!code)
 		code = "";
-	rsize = VARHDRSZ + strlen(code);
-	result = (text *) palloc(rsize);
-	rptr = VARDATA(result);
-	memcpy(rptr, code, rsize - VARHDRSZ);
-	SET_VARSIZE(result, rsize);
-	PG_RETURN_TEXT_P(result);
+
+	PG_RETURN_TEXT_P(cstring_to_text(code));
 }
 
 /*
  * The PostgreSQL visible dmetaphone_alt function.
- *
  */
 
 PG_FUNCTION_INFO_V1(dmetaphone_alt);
@@ -181,34 +160,24 @@ PG_FUNCTION_INFO_V1(dmetaphone_alt);
 Datum
 dmetaphone_alt(PG_FUNCTION_ARGS)
 {
-	text	   *arg,
-			   *result;
-	int			alen,
-				rsize;
+	text	   *arg;
 	char	   *aptr,
 			   *codes[2],
-			   *code,
-			   *rptr;
+			   *code;
 
 #ifdef DMETAPHONE_NOSTRICT
 	if (PG_ARGISNULL(0))
-		PG_RETURNNULL();
+		PG_RETURN_NULL();
 #endif
 	arg = PG_GETARG_TEXT_P(0);
-	alen = VARSIZE(arg) - VARHDRSZ;
-	aptr = palloc(alen + 1);
-	memcpy(aptr, VARDATA(arg), alen);
-	aptr[alen] = 0;
+	aptr = text_to_cstring(arg);
+
 	DoubleMetaphone(aptr, codes);
 	code = codes[1];
 	if (!code)
 		code = "";
-	rsize = VARHDRSZ + strlen(code);
-	result = (text *) palloc(rsize);
-	rptr = VARDATA(result);
-	memcpy(rptr, code, rsize - VARHDRSZ);
-	SET_VARSIZE(result, rsize);
-	PG_RETURN_TEXT_P(result);
+
+	PG_RETURN_TEXT_P(cstring_to_text(code));
 }
 
 

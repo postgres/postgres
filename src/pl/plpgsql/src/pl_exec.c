@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.203 2008/03/25 19:26:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.204 2008/03/25 22:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -532,11 +532,11 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_op_varno]);
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("INSERT"));
+		var->value = CStringGetTextDatum("INSERT");
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("UPDATE"));
+		var->value = CStringGetTextDatum("UPDATE");
 	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("DELETE"));
+		var->value = CStringGetTextDatum("DELETE");
 	else
 		elog(ERROR, "unrecognized trigger action: not INSERT, DELETE, or UPDATE");
 	var->isnull = false;
@@ -550,9 +550,9 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_when_varno]);
 	if (TRIGGER_FIRED_BEFORE(trigdata->tg_event))
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("BEFORE"));
+		var->value = CStringGetTextDatum("BEFORE");
 	else if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("AFTER"));
+		var->value = CStringGetTextDatum("AFTER");
 	else
 		elog(ERROR, "unrecognized trigger execution time: not BEFORE or AFTER");
 	var->isnull = false;
@@ -560,9 +560,9 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_level_varno]);
 	if (TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("ROW"));
+		var->value = CStringGetTextDatum("ROW");
 	else if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("STATEMENT"));
+		var->value = CStringGetTextDatum("STATEMENT");
 	else
 		elog(ERROR, "unrecognized trigger event type: not ROW or STATEMENT");
 	var->isnull = false;
@@ -611,8 +611,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	{
 		estate.trig_argv = palloc(sizeof(Datum) * estate.trig_nargs);
 		for (i = 0; i < trigdata->tg_trigger->tgnargs; i++)
-			estate.trig_argv[i] = DirectFunctionCall1(textin,
-						   CStringGetDatum(trigdata->tg_trigger->tgargs[i]));
+			estate.trig_argv[i] = CStringGetTextDatum(trigdata->tg_trigger->tgargs[i]);
 	}
 
 	estate.err_text = gettext_noop("during function entry");
@@ -1070,15 +1069,13 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 
 					state_var = (PLpgSQL_var *)
 						estate->datums[block->exceptions->sqlstate_varno];
-					state_var->value = DirectFunctionCall1(textin,
-					   CStringGetDatum(unpack_sql_state(edata->sqlerrcode)));
+					state_var->value = CStringGetTextDatum(unpack_sql_state(edata->sqlerrcode));
 					state_var->freeval = true;
 					state_var->isnull = false;
 
 					errm_var = (PLpgSQL_var *)
 						estate->datums[block->exceptions->sqlerrm_varno];
-					errm_var->value = DirectFunctionCall1(textin,
-											CStringGetDatum(edata->message));
+					errm_var->value = CStringGetTextDatum(edata->message);
 					errm_var->freeval = true;
 					errm_var->isnull = false;
 
@@ -3017,7 +3014,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 	curvar = (PLpgSQL_var *) (estate->datums[stmt->curvar]);
 	if (!curvar->isnull)
 	{
-		curname = DatumGetCString(DirectFunctionCall1(textout, curvar->value));
+		curname = TextDatumGetCString(curvar->value);
 		if (SPI_cursor_find(curname) != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_CURSOR),
@@ -3090,7 +3087,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		 * ----------
 		 */
 		free_var(curvar);
-		curvar->value = DirectFunctionCall1(textin, CStringGetDatum(portal->name));
+		curvar->value = CStringGetTextDatum(portal->name);
 		curvar->isnull = false;
 		curvar->freeval = true;
 
@@ -3188,7 +3185,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 	 * ----------
 	 */
 	free_var(curvar);
-	curvar->value = DirectFunctionCall1(textin, CStringGetDatum(portal->name));
+	curvar->value = CStringGetTextDatum(portal->name);
 	curvar->isnull = false;
 	curvar->freeval = true;
 
@@ -3222,7 +3219,7 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("cursor variable \"%s\" is NULL", curvar->refname)));
-	curname = DatumGetCString(DirectFunctionCall1(textout, curvar->value));
+	curname = TextDatumGetCString(curvar->value);
 
 	portal = SPI_cursor_find(curname);
 	if (portal == NULL)
@@ -3318,7 +3315,7 @@ exec_stmt_close(PLpgSQL_execstate *estate, PLpgSQL_stmt_close *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("cursor variable \"%s\" is NULL", curvar->refname)));
-	curname = DatumGetCString(DirectFunctionCall1(textout, curvar->value));
+	curname = TextDatumGetCString(curvar->value);
 
 	portal = SPI_cursor_find(curname);
 	if (portal == NULL)

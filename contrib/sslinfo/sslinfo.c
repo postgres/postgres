@@ -4,7 +4,7 @@
  * Written by Victor B. Wagner <vitus@cryptocom.ru>, Cryptocom LTD
  * This file is distributed under BSD-style license.
  *
- * $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.c,v 1.6 2007/02/27 23:48:06 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.c,v 1.7 2008/03/25 22:42:42 tgl Exp $
  */
 
 #include "postgres.h"
@@ -133,10 +133,7 @@ ASN1_STRING_to_text(ASN1_STRING *str)
 											size - 1,
 											PG_UTF8,
 											GetDatabaseEncoding());
-	outlen = strlen(dp);
-	result = palloc(VARHDRSZ + outlen);
-	memcpy(VARDATA(result), dp, outlen);
-	SET_VARSIZE(result, VARHDRSZ + outlen);
+	result = cstring_to_text(dp);
 
 	if (dp != sp)
 		pfree(dp);
@@ -161,21 +158,12 @@ ASN1_STRING_to_text(ASN1_STRING *str)
 Datum
 X509_NAME_field_to_text(X509_NAME *name, text *fieldName)
 {
-	char	   *sp;
 	char	   *string_fieldname;
-	char	   *dp;
-	size_t		name_len = VARSIZE(fieldName) - VARHDRSZ;
 	int			nid,
-				index,
-				i;
+				index;
 	ASN1_STRING *data;
 
-	string_fieldname = palloc(name_len + 1);
-	sp = VARDATA(fieldName);
-	dp = string_fieldname;
-	for (i = 0; i < name_len; i++)
-		*dp++ = *sp++;
-	*dp = '\0';
+	string_fieldname = text_to_cstring(fieldName);
 	nid = OBJ_txt2nid(string_fieldname);
 	if (nid == NID_undef)
 		ereport(ERROR,
@@ -281,10 +269,8 @@ X509_NAME_to_text(X509_NAME *name)
 				count = X509_NAME_entry_count(name);
 	X509_NAME_ENTRY *e;
 	ASN1_STRING *v;
-
 	const char *field_name;
-	size_t		size,
-				outlen;
+	size_t		size;
 	char	   *sp;
 	char	   *dp;
 	text	   *result;
@@ -314,10 +300,7 @@ X509_NAME_to_text(X509_NAME *name)
 											GetDatabaseEncoding());
 	BIO_free(membuf);
 
-	outlen = strlen(dp);
-	result = palloc(VARHDRSZ + outlen);
-	memcpy(VARDATA(result), dp, outlen);
-	SET_VARSIZE(result, VARHDRSZ + outlen);
+	result = cstring_to_text(dp);
 
 	/*
 	 * pg_do_encoding_conversion has annoying habit of returning source

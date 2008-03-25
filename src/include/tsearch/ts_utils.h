@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.12 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.13 2008/03/25 22:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,12 +105,6 @@ extern text *generateHeadline(HeadlineParsedText *prs);
 
 extern bool TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
 		   bool (*chkcond) (void *checkval, QueryOperand *val));
-
-/*
- * Useful conversion macros
- */
-#define TextPGetCString(t) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(t)))
-#define CStringGetTextP(c) DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(c)))
 
 /*
  * to_ts* - text transformation to tsvector, tsquery

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.88 2008/03/22 01:55:14 ishii Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.89 2008/03/25 22:42:43 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -47,6 +47,7 @@
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/large_object.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 
 
@@ -320,7 +321,7 @@ lowrite(PG_FUNCTION_ARGS)
 Datum
 lo_import(PG_FUNCTION_ARGS)
 {
-	text	   *filename = PG_GETARG_TEXT_P(0);
+	text	   *filename = PG_GETARG_TEXT_PP(0);
 
 	PG_RETURN_OID(lo_import_internal(filename, InvalidOid));
 }
@@ -332,7 +333,7 @@ lo_import(PG_FUNCTION_ARGS)
 Datum
 lo_import_with_oid(PG_FUNCTION_ARGS)
 {
-	text	   *filename = PG_GETARG_TEXT_P(0);
+	text	   *filename = PG_GETARG_TEXT_PP(0);
 	Oid		   oid = PG_GETARG_OID(1);
 
 	PG_RETURN_OID(lo_import_internal(filename, oid));
@@ -362,11 +363,7 @@ lo_import_internal(text *filename, Oid lobjOid)
 	/*
 	 * open the file to be read in
 	 */
-	nbytes = VARSIZE(filename) - VARHDRSZ;
-	if (nbytes >= MAXPGPATH)
-		nbytes = MAXPGPATH - 1;
-	memcpy(fnamebuf, VARDATA(filename), nbytes);
-	fnamebuf[nbytes] = '\0';
+	text_to_cstring_buffer(filename, fnamebuf, sizeof(fnamebuf));
 	fd = PathNameOpenFile(fnamebuf, O_RDONLY | PG_BINARY, 0666);
 	if (fd < 0)
 		ereport(ERROR,
@@ -410,7 +407,7 @@ Datum
 lo_export(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
-	text	   *filename = PG_GETARG_TEXT_P(1);
+	text	   *filename = PG_GETARG_TEXT_PP(1);
 	File		fd;
 	int			nbytes,
 				tmp;
@@ -441,11 +438,7 @@ lo_export(PG_FUNCTION_ARGS)
 	 * 022. This code used to drop it all the way to 0, but creating
 	 * world-writable export files doesn't seem wise.
 	 */
-	nbytes = VARSIZE(filename) - VARHDRSZ;
-	if (nbytes >= MAXPGPATH)
-		nbytes = MAXPGPATH - 1;
-	memcpy(fnamebuf, VARDATA(filename), nbytes);
-	fnamebuf[nbytes] = '\0';
+	text_to_cstring_buffer(filename, fnamebuf, sizeof(fnamebuf));
 	oumask = umask((mode_t) 0022);
 	fd = PathNameOpenFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY, 0666);
 	umask(oumask);

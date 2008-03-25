@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.70 2008/03/24 19:12:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.71 2008/03/25 22:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,10 +141,6 @@ static void SPI_sql_row_to_xmlelement(int rownum, StringInfo result,
 			 errhint("You need to rebuild PostgreSQL using --with-libxml.")))
 
 
-#define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
-#define _textout(x) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(x)))
-
-
 /* from SQL/XML:2003 section 4.7 */
 #define NAMESPACE_XSD "http://www.w3.org/2001/XMLSchema"
 #define NAMESPACE_XSI "http://www.w3.org/2001/XMLSchema-instance"
@@ -168,19 +164,22 @@ xmlChar_to_encoding(xmlChar * encoding_name)
 #endif
 
 
+/*
+ * xml_in uses a plain C string to VARDATA conversion, so for the time being
+ * we use the conversion function for the text datatype.
+ *
+ * This is only acceptable so long as xmltype and text use the same
+ * representation.
+ */
 Datum
 xml_in(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
 	char	   *s = PG_GETARG_CSTRING(0);
-	size_t		len;
 	xmltype    *vardata;
 	xmlDocPtr	doc;
 
-	len = strlen(s);
-	vardata = palloc(len + VARHDRSZ);
-	SET_VARSIZE(vardata, len + VARHDRSZ);
-	memcpy(VARDATA(vardata), s, len);
+	vardata = (xmltype *) cstring_to_text(s);
 
 	/*
 	 * Parse the data to check if it is well-formed XML data.  Assume that
@@ -200,6 +199,13 @@ xml_in(PG_FUNCTION_ARGS)
 #define PG_XML_DEFAULT_VERSION "1.0"
 
 
+/*
+ * xml_out_internal uses a plain VARDATA to C string conversion, so for the
+ * time being we use the conversion function for the text datatype.
+ *
+ * This is only acceptable so long as xmltype and text use the same
+ * representation.
+ */
 static char *
 xml_out_internal(xmltype *x, pg_enc target_encoding)
 {
@@ -213,10 +219,8 @@ xml_out_internal(xmltype *x, pg_enc target_encoding)
 	int			res_code;
 #endif
 
-	len = VARSIZE(x) - VARHDRSZ;
-	str = palloc(len + 1);
-	memcpy(str, VARDATA(x), len);
-	str[len] = '\0';
+	str = text_to_cstring((text *) x);
+	len = strlen(str);
 
 #ifdef USE_LIBXML
 	if ((res_code = parse_xml_decl((xmlChar *) str,
@@ -713,7 +717,7 @@ xmlpi(char *target, text *arg, bool arg_is_null, bool *result_is_null)
 	{
 		char	   *string;
 
-		string = _textout(arg);
+		string = text_to_cstring(arg);
 		if (strstr(string, "?>") != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
@@ -1930,7 +1934,7 @@ table_to_xml(PG_FUNCTION_ARGS)
 	Oid			relid = PG_GETARG_OID(0);
 	bool		nulls = PG_GETARG_BOOL(1);
 	bool		tableforest = PG_GETARG_BOOL(2);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(table_to_xml_internal(relid, NULL,
 														  nulls, tableforest,
@@ -1941,10 +1945,10 @@ table_to_xml(PG_FUNCTION_ARGS)
 Datum
 query_to_xml(PG_FUNCTION_ARGS)
 {
-	char	   *query = _textout(PG_GETARG_TEXT_P(0));
+	char	   *query = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	bool		nulls = PG_GETARG_BOOL(1);
 	bool		tableforest = PG_GETARG_BOOL(2);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(query_to_xml_internal(query, NULL,
 													NULL, nulls, tableforest,
@@ -1955,11 +1959,11 @@ query_to_xml(PG_FUNCTION_ARGS)
 Datum
 cursor_to_xml(PG_FUNCTION_ARGS)
 {
-	char	   *name = _textout(PG_GETARG_TEXT_P(0));
+	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int32		count = PG_GETARG_INT32(1);
 	bool		nulls = PG_GETARG_BOOL(2);
 	bool		tableforest = PG_GETARG_BOOL(3);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(4));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(4));
 
 	StringInfoData result;
 	Portal		portal;
@@ -2079,7 +2083,7 @@ table_to_xmlschema(PG_FUNCTION_ARGS)
 	Oid			relid = PG_GETARG_OID(0);
 	bool		nulls = PG_GETARG_BOOL(1);
 	bool		tableforest = PG_GETARG_BOOL(2);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 	const char *result;
 	Relation	rel;
 
@@ -2095,10 +2099,10 @@ table_to_xmlschema(PG_FUNCTION_ARGS)
 Datum
 query_to_xmlschema(PG_FUNCTION_ARGS)
 {
-	char	   *query = _textout(PG_GETARG_TEXT_P(0));
+	char	   *query = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	bool		nulls = PG_GETARG_BOOL(1);
 	bool		tableforest = PG_GETARG_BOOL(2);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 	const char *result;
 	SPIPlanPtr	plan;
 	Portal		portal;
@@ -2124,10 +2128,10 @@ query_to_xmlschema(PG_FUNCTION_ARGS)
 Datum
 cursor_to_xmlschema(PG_FUNCTION_ARGS)
 {
-	char	   *name = _textout(PG_GETARG_TEXT_P(0));
+	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	bool		nulls = PG_GETARG_BOOL(1);
 	bool		tableforest = PG_GETARG_BOOL(2);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 	const char *xmlschema;
 	Portal		portal;
 
@@ -2153,7 +2157,7 @@ table_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 	Oid			relid = PG_GETARG_OID(0);
 	bool		nulls = PG_GETARG_BOOL(1);
 	bool		tableforest = PG_GETARG_BOOL(2);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 	Relation	rel;
 	const char *xmlschema;
 
@@ -2171,10 +2175,10 @@ table_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 Datum
 query_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 {
-	char	   *query = _textout(PG_GETARG_TEXT_P(0));
+	char	   *query = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	bool		nulls = PG_GETARG_BOOL(1);
 	bool		tableforest = PG_GETARG_BOOL(2);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
 	const char *xmlschema;
 	SPIPlanPtr	plan;
@@ -2255,7 +2259,7 @@ schema_to_xml(PG_FUNCTION_ARGS)
 	Name		name = PG_GETARG_NAME(0);
 	bool		nulls = PG_GETARG_BOOL(1);
 	bool		tableforest = PG_GETARG_BOOL(2);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
 	char	   *schemaname;
 	Oid			nspid;
@@ -2346,7 +2350,7 @@ schema_to_xmlschema(PG_FUNCTION_ARGS)
 	Name		name = PG_GETARG_NAME(0);
 	bool		nulls = PG_GETARG_BOOL(1);
 	bool		tableforest = PG_GETARG_BOOL(2);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(schema_to_xmlschema_internal(NameStr(*name),
 											 nulls, tableforest, targetns)));
@@ -2359,7 +2363,7 @@ schema_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 	Name		name = PG_GETARG_NAME(0);
 	bool		nulls = PG_GETARG_BOOL(1);
 	bool		tableforest = PG_GETARG_BOOL(2);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 	char	   *schemaname;
 	Oid			nspid;
 	StringInfo	xmlschema;
@@ -2431,7 +2435,7 @@ database_to_xml(PG_FUNCTION_ARGS)
 {
 	bool		nulls = PG_GETARG_BOOL(0);
 	bool		tableforest = PG_GETARG_BOOL(1);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(2));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(2));
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(database_to_xml_internal(NULL, nulls,
 													tableforest, targetns)));
@@ -2486,7 +2490,7 @@ database_to_xmlschema(PG_FUNCTION_ARGS)
 {
 	bool		nulls = PG_GETARG_BOOL(0);
 	bool		tableforest = PG_GETARG_BOOL(1);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(2));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(2));
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(database_to_xmlschema_internal(nulls,
 													tableforest, targetns)));
@@ -2498,7 +2502,7 @@ database_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 {
 	bool		nulls = PG_GETARG_BOOL(0);
 	bool		tableforest = PG_GETARG_BOOL(1);
-	const char *targetns = _textout(PG_GETARG_TEXT_P(2));
+	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(2));
 	StringInfo	xmlschema;
 
 	xmlschema = database_to_xmlschema_internal(nulls, tableforest, targetns);
@@ -3198,7 +3202,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 	{
 		str = xmlXPathCastNodeToString(cur);
 		len = strlen((char *) str);
-		result = (text *) palloc(len + VARHDRSZ);
+		result = (xmltype *) palloc(len + VARHDRSZ);
 		SET_VARSIZE(result, len + VARHDRSZ);
 		memcpy(VARDATA(result), str, len);
 	}
@@ -3363,8 +3367,8 @@ xpath(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 						 errmsg("neither namespace name nor URI may be null")));
-			ns_name = _textout(ns_names_uris[i * 2]);
-			ns_uri = _textout(ns_names_uris[i * 2 + 1]);
+			ns_name = TextDatumGetCString(ns_names_uris[i * 2]);
+			ns_uri = TextDatumGetCString(ns_names_uris[i * 2 + 1]);
 			if (xmlXPathRegisterNs(xpathctx,
 								   (xmlChar *) ns_name,
 								   (xmlChar *) ns_uri) != 0)

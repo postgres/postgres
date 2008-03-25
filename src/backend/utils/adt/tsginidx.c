@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.9 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.10 2008/03/25 22:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "access/skey.h"
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
+#include "utils/builtins.h"
 
 
 Datum
@@ -35,11 +36,9 @@ gin_extract_tsvector(PG_FUNCTION_ARGS)
 
 		for (i = 0; i < vector->size; i++)
 		{
-			text	   *txt = (text *) palloc(VARHDRSZ + we->len);
+			text	   *txt;
 
-			SET_VARSIZE(txt, VARHDRSZ + we->len);
-			memcpy(VARDATA(txt), STRPTR(vector) + we->pos, we->len);
-
+			txt = cstring_to_text_with_len(STRPTR(vector) + we->pos, we->len);
 			entries[i] = PointerGetDatum(txt);
 
 			we++;
@@ -87,11 +86,8 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 				text	   *txt;
 				QueryOperand *val = &item[i].operand;
 
-				txt = (text *) palloc(VARHDRSZ + val->length);
-
-				SET_VARSIZE(txt, VARHDRSZ + val->length);
-				memcpy(VARDATA(txt), GETOPERAND(query) + val->distance, val->length);
-
+				txt = cstring_to_text_with_len(GETOPERAND(query) + val->distance,
+											   val->length);
 				entries[j++] = PointerGetDatum(txt);
 
 				if (strategy != TSearchWithClassStrategyNumber && val->weight != 0)

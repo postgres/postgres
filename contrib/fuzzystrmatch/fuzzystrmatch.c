@@ -5,7 +5,7 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.25 2008/01/01 19:45:45 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.26 2008/03/25 22:42:41 tgl Exp $
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -56,11 +56,11 @@ PG_FUNCTION_INFO_V1(levenshtein);
 Datum
 levenshtein(PG_FUNCTION_ARGS)
 {
-	char	   *str_s;
+	char	   *str_s = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char	   *str_t = TextDatumGetCString(PG_GETARG_DATUM(1));
+	int			cols = strlen(str_s) + 1;
+	int			rows = strlen(str_t) + 1;
 	char	   *str_s0;
-	char	   *str_t;
-	int			cols = 0;
-	int			rows = 0;
 	int		   *u_cells;
 	int		   *l_cells;
 	int		   *tmp;
@@ -68,16 +68,10 @@ levenshtein(PG_FUNCTION_ARGS)
 	int			j;
 
 	/*
-	 * Fetch the arguments. str_s is referred to as the "source" cols = length
-	 * of source + 1 to allow for the initialization column str_t is referred
-	 * to as the "target", rows = length of target + 1 rows = length of target
-	 * + 1 to allow for the initialization row
+	 * str_s is referred to as the "source", str_t is referred to as the
+	 * "target", cols = length of source + 1 to allow for the initialization
+	 * column, rows = length of target + 1 to allow for the initialization row
 	 */
-	str_s = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(PG_GETARG_TEXT_P(0))));
-	str_t = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(PG_GETARG_TEXT_P(1))));
-
-	cols = strlen(str_s) + 1;
-	rows = strlen(str_t) + 1;
 
 	/*
 	 * Restrict the length of the strings being compared to something
@@ -201,25 +195,19 @@ levenshtein(PG_FUNCTION_ARGS)
  * Returns number of characters requested
  * (suggested value is 4)
  */
-#define GET_TEXT(cstrp) DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(cstrp)))
-
 PG_FUNCTION_INFO_V1(metaphone);
 Datum
 metaphone(PG_FUNCTION_ARGS)
 {
+	char	   *str_i = TextDatumGetCString(PG_GETARG_DATUM(0));
+	size_t		str_i_len = strlen(str_i);
 	int			reqlen;
-	char	   *str_i;
-	size_t		str_i_len;
 	char	   *metaph;
-	text	   *result_text;
 	int			retval;
-
-	str_i = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(PG_GETARG_TEXT_P(0))));
-	str_i_len = strlen(str_i);
 
 	/* return an empty string if we receive one */
 	if (!(str_i_len > 0))
-		PG_RETURN_TEXT_P(GET_TEXT(""));
+		PG_RETURN_TEXT_P(cstring_to_text(""));
 
 	if (str_i_len > MAX_METAPHONE_STRLEN)
 		ereport(ERROR,
@@ -247,18 +235,12 @@ metaphone(PG_FUNCTION_ARGS)
 
 	retval = _metaphone(str_i, reqlen, &metaph);
 	if (retval == META_SUCCESS)
-	{
-		result_text = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(metaph)));
-		PG_RETURN_TEXT_P(result_text);
-	}
+		PG_RETURN_TEXT_P(cstring_to_text(metaph));
 	else
 	{
 		/* internal error */
 		elog(ERROR, "metaphone: failure");
-
-		/*
-		 * Keep the compiler quiet
-		 */
+		/* keep the compiler quiet */
 		PG_RETURN_NULL();
 	}
 }
@@ -695,11 +677,11 @@ soundex(PG_FUNCTION_ARGS)
 	char		outstr[SOUNDEX_LEN + 1];
 	char	   *arg;
 
-	arg = _textout(PG_GETARG_TEXT_P(0));
+	arg = text_to_cstring(PG_GETARG_TEXT_P(0));
 
 	_soundex(arg, outstr);
 
-	PG_RETURN_TEXT_P(_textin(outstr));
+	PG_RETURN_TEXT_P(cstring_to_text(outstr));
 }
 
 static void
@@ -761,8 +743,8 @@ difference(PG_FUNCTION_ARGS)
 	int			i,
 				result;
 
-	_soundex(_textout(PG_GETARG_TEXT_P(0)), sndx1);
-	_soundex(_textout(PG_GETARG_TEXT_P(1)), sndx2);
+	_soundex(text_to_cstring(PG_GETARG_TEXT_P(0)), sndx1);
+	_soundex(text_to_cstring(PG_GETARG_TEXT_P(1)), sndx2);
 
 	result = 0;
 	for (i = 0; i < SOUNDEX_LEN; i++)

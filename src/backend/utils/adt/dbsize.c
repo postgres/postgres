@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.16 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.17 2008/03/25 22:42:44 tgl Exp $
  *
  */
 
@@ -393,41 +393,39 @@ Datum
 pg_size_pretty(PG_FUNCTION_ARGS)
 {
 	int64		size = PG_GETARG_INT64(0);
-	char	   *result = palloc(50 + VARHDRSZ);
+	char		buf[64];
 	int64		limit = 10 * 1024;
 	int64		mult = 1;
 
 	if (size < limit * mult)
-		snprintf(VARDATA(result), 50, INT64_FORMAT " bytes", size);
+		snprintf(buf, sizeof(buf), INT64_FORMAT " bytes", size);
 	else
 	{
 		mult *= 1024;
 		if (size < limit * mult)
-			snprintf(VARDATA(result), 50, INT64_FORMAT " kB",
+			snprintf(buf, sizeof(buf), INT64_FORMAT " kB",
 					 (size + mult / 2) / mult);
 		else
 		{
 			mult *= 1024;
 			if (size < limit * mult)
-				snprintf(VARDATA(result), 50, INT64_FORMAT " MB",
+				snprintf(buf, sizeof(buf), INT64_FORMAT " MB",
 						 (size + mult / 2) / mult);
 			else
 			{
 				mult *= 1024;
 				if (size < limit * mult)
-					snprintf(VARDATA(result), 50, INT64_FORMAT " GB",
+					snprintf(buf, sizeof(buf), INT64_FORMAT " GB",
 							 (size + mult / 2) / mult);
 				else
 				{
 					mult *= 1024;
-					snprintf(VARDATA(result), 50, INT64_FORMAT " TB",
+					snprintf(buf, sizeof(buf), INT64_FORMAT " TB",
 							 (size + mult / 2) / mult);
 				}
 			}
 		}
 	}
 
-	SET_VARSIZE(result, strlen(VARDATA(result)) + VARHDRSZ);
-
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(buf));
 }

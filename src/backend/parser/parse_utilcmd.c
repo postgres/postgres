@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.10 2008/03/21 22:10:56 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.11 2008/03/25 22:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -811,7 +811,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	{
 		char	   *exprsString;
 
-		exprsString = DatumGetCString(DirectFunctionCall1(textout, datum));
+		exprsString = TextDatumGetCString(datum);
 		indexprs = (List *) stringToNode(exprsString);
 	}
 	else
@@ -904,7 +904,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 		char	   *pred_str;
 
 		/* Convert text string to node tree */
-		pred_str = DatumGetCString(DirectFunctionCall1(textout, datum));
+		pred_str = TextDatumGetCString(datum);
 		index->whereClause = (Node *) stringToNode(pred_str);
 		/* Adjust attribute numbers */
 		change_varattnos_of_a_node(index->whereClause, attmap);

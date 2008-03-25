@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.32 2008/01/08 23:18:51 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.33 2008/03/25 22:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ VXIDGetDatum(BackendId bid, LocalTransactionId lxid)
 
 	snprintf(vxidstr, sizeof(vxidstr), "%d/%u", bid, lxid);
 
-	return DirectFunctionCall1(textin, CStringGetDatum(vxidstr));
+	return CStringGetTextDatum(vxidstr);
 }
 
 
@@ -214,8 +214,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 					 (int) lock->tag.locktag_type);
 			locktypename = tnbuf;
 		}
-		values[0] = DirectFunctionCall1(textin,
-										CStringGetDatum(locktypename));
+		values[0] = CStringGetTextDatum(locktypename);
 
 		switch ((LockTagType) lock->tag.locktag_type)
 		{
@@ -297,9 +296,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			values[11] = Int32GetDatum(proc->pid);
 		else
 			nulls[11] = 'n';
-		values[12] = DirectFunctionCall1(textin,
-					  CStringGetDatum(GetLockmodeName(LOCK_LOCKMETHOD(*lock),
-													  mode)));
+		values[12] = CStringGetTextDatum(GetLockmodeName(LOCK_LOCKMETHOD(*lock), mode));
 		values[13] = BoolGetDatum(granted);
 
 		tuple = heap_formtuple(funcctx->tuple_desc, values, nulls);

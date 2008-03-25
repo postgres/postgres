@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.38 2008/02/29 02:49:39 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.39 2008/03/25 22:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -741,8 +741,7 @@ get_func_arg_info(HeapTuple procTup,
 			elog(ERROR, "proargnames must have the same number of elements as the function has arguments");
 		*p_argnames = (char **) palloc(sizeof(char *) * numargs);
 		for (i = 0; i < numargs; i++)
-			(*p_argnames)[i] = DatumGetCString(DirectFunctionCall1(textout,
-																   elems[i]));
+			(*p_argnames)[i] = TextDatumGetCString(elems[i]);
 	}
 
 	/* Get argument modes, if available */
@@ -855,8 +854,7 @@ get_func_result_name(Oid functionId)
 				result = NULL;
 				break;
 			}
-			result = DatumGetCString(DirectFunctionCall1(textout,
-														 argnames[i]));
+			result = TextDatumGetCString(argnames[i]);
 			if (result == NULL || result[0] == '\0')
 			{
 				/* Parameter is not named, so forget it */
@@ -1002,7 +1000,7 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 			   argmodes[i] == PROARGMODE_INOUT);
 		outargtypes[numoutargs] = argtypes[i];
 		if (argnames)
-			pname = DatumGetCString(DirectFunctionCall1(textout, argnames[i]));
+			pname = TextDatumGetCString(argnames[i]);
 		else
 			pname = NULL;
 		if (pname == NULL || pname[0] == '\0')

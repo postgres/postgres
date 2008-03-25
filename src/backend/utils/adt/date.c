@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.140 2008/03/21 01:31:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.141 2008/03/25 22:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1594,15 +1594,15 @@ time_mi_interval(PG_FUNCTION_ARGS)
 Datum
 time_part(PG_FUNCTION_ARGS)
 {
-	text	   *units = PG_GETARG_TEXT_P(0);
+	text	   *units = PG_GETARG_TEXT_PP(0);
 	TimeADT		time = PG_GETARG_TIMEADT(1);
 	float8		result;
 	int			type,
 				val;
 	char	   *lowunits;
 
-	lowunits = downcase_truncate_identifier(VARDATA(units),
-											VARSIZE(units) - VARHDRSZ,
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
+											VARSIZE_ANY_EXHDR(units),
 											false);
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -1666,9 +1666,7 @@ time_part(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("\"time\" units \"%s\" not recognized",
-								DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))))));
-
+								lowunits)));
 				result = 0;
 		}
 	}
@@ -1685,8 +1683,7 @@ time_part(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("\"time\" units \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))))));
+						lowunits)));
 		result = 0;
 	}
 
@@ -2323,15 +2320,15 @@ datetimetz_timestamptz(PG_FUNCTION_ARGS)
 Datum
 timetz_part(PG_FUNCTION_ARGS)
 {
-	text	   *units = PG_GETARG_TEXT_P(0);
+	text	   *units = PG_GETARG_TEXT_PP(0);
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
 	float8		result;
 	int			type,
 				val;
 	char	   *lowunits;
 
-	lowunits = downcase_truncate_identifier(VARDATA(units),
-											VARSIZE(units) - VARHDRSZ,
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
+											VARSIZE_ANY_EXHDR(units),
 											false);
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -2408,9 +2405,7 @@ timetz_part(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("\"time with time zone\" units \"%s\" not recognized",
-					   DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))))));
-
+					   lowunits)));
 				result = 0;
 		}
 	}
@@ -2427,9 +2422,7 @@ timetz_part(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("\"time with time zone\" units \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))))));
-
+						lowunits)));
 		result = 0;
 	}
 
@@ -2443,12 +2436,11 @@ timetz_part(PG_FUNCTION_ARGS)
 Datum
 timetz_zone(PG_FUNCTION_ARGS)
 {
-	text	   *zone = PG_GETARG_TEXT_P(0);
+	text	   *zone = PG_GETARG_TEXT_PP(0);
 	TimeTzADT  *t = PG_GETARG_TIMETZADT_P(1);
 	TimeTzADT  *result;
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
-	int			len;
 	pg_tz	   *tzp;
 
 	/*
@@ -2456,9 +2448,7 @@ timetz_zone(PG_FUNCTION_ARGS)
 	 * (to handle cases like "America/New_York"), and if that fails, we look
 	 * in the date token table (to handle cases like "EST").
 	 */
-	len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
-	memcpy(tzname, VARDATA(zone), len);
-	tzname[len] = '\0';
+	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
 	tzp = pg_tzset(tzname);
 	if (tzp)
 	{
@@ -2475,8 +2465,8 @@ timetz_zone(PG_FUNCTION_ARGS)
 		int			type,
 					val;
 
-		lowzone = downcase_truncate_identifier(VARDATA(zone),
-											   VARSIZE(zone) - VARHDRSZ,
+		lowzone = downcase_truncate_identifier(tzname,
+											   strlen(tzname),
 											   false);
 		type = DecodeSpecial(0, lowzone, &val);
 

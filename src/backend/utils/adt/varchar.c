@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.126 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.127 2008/03/25 22:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,21 +203,16 @@ bpcharin(PG_FUNCTION_ARGS)
 
 /*
  * Convert a CHARACTER value to a C string.
+ *
+ * Uses the text conversion functions, which is only appropriate if BpChar
+ * and text are equivalent types.
  */
 Datum
 bpcharout(PG_FUNCTION_ARGS)
 {
-	BpChar	   *s = PG_GETARG_BPCHAR_PP(0);
-	char	   *result;
-	int			len;
+	Datum		txt = PG_GETARG_DATUM(0);
 
-	/* copy and add null term */
-	len = VARSIZE_ANY_EXHDR(s);
-	result = (char *) palloc(len + 1);
-	memcpy(result, VARDATA_ANY(s), len);
-	result[len] = '\0';
-
-	PG_RETURN_CSTRING(result);
+	PG_RETURN_CSTRING(TextDatumGetCString(txt));
 }
 
 /*
@@ -403,19 +398,17 @@ bpchar_name(PG_FUNCTION_ARGS)
 
 /* name_bpchar()
  * Converts a NameData type to a bpchar type.
+ *
+ * Uses the text conversion functions, which is only appropriate if BpChar
+ * and text are equivalent types.
  */
 Datum
 name_bpchar(PG_FUNCTION_ARGS)
 {
 	Name		s = PG_GETARG_NAME(0);
 	BpChar	   *result;
-	int			len;
 
-	len = strlen(NameStr(*s));
-	result = (BpChar *) palloc(VARHDRSZ + len);
-	memcpy(VARDATA(result), NameStr(*s), len);
-	SET_VARSIZE(result, VARHDRSZ + len);
-
+	result = (BpChar *) cstring_to_text(NameStr(*s));
 	PG_RETURN_BPCHAR_P(result);
 }
 
@@ -454,6 +447,9 @@ bpchartypmodout(PG_FUNCTION_ARGS)
  *
  * If the input string is too long, raise an error, unless the extra
  * characters are spaces, in which case they're truncated.  (per SQL)
+ *
+ * Uses the C string to text conversion function, which is only appropriate
+ * if VarChar and text are equivalent types.
  */
 static VarChar *
 varchar_input(const char *s, size_t len, int32 atttypmod)
@@ -481,10 +477,7 @@ varchar_input(const char *s, size_t len, int32 atttypmod)
 		len = mbmaxlen;
 	}
 
-	result = (VarChar *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(result, len + VARHDRSZ);
-	memcpy(VARDATA(result), s, len);
-
+	result = (VarChar *) cstring_to_text_with_len(s, len);
 	return result;
 }
 
@@ -510,21 +503,16 @@ varcharin(PG_FUNCTION_ARGS)
 
 /*
  * Convert a VARCHAR value to a C string.
+ *
+ * Uses the text to C string conversion function, which is only appropriate
+ * if VarChar and text are equivalent types.
  */
 Datum
 varcharout(PG_FUNCTION_ARGS)
 {
-	VarChar    *s = PG_GETARG_VARCHAR_PP(0);
-	char	   *result;
-	int32		len;
+	Datum		txt = PG_GETARG_DATUM(0);
 
-	/* copy and add null term */
-	len = VARSIZE_ANY_EXHDR(s);
-	result = palloc(len + 1);
-	memcpy(result, VARDATA_ANY(s), len);
-	result[len] = '\0';
-
-	PG_RETURN_CSTRING(result);
+	PG_RETURN_CSTRING(TextDatumGetCString(txt));
 }
 
 /*

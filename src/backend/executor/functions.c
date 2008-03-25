@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.121 2008/03/18 22:04:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.122 2008/03/25 22:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,7 +244,7 @@ init_sql_fcache(FmgrInfo *finfo)
 						  &isNull);
 	if (isNull)
 		elog(ERROR, "null prosrc for function %u", foid);
-	fcache->src = DatumGetCString(DirectFunctionCall1(textout, tmp));
+	fcache->src = TextDatumGetCString(tmp);
 
 	/*
 	 * Parse and rewrite the queries in the function text.
@@ -777,7 +777,7 @@ sql_exec_error_callback(void *arg)
 							  &isnull);
 		if (isnull)
 			elog(ERROR, "null prosrc");
-		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+		prosrc = TextDatumGetCString(tmp);
 		errposition(0);
 		internalerrposition(syntaxerrposition);
 		internalerrquery(prosrc);

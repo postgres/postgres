@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.26 2007/02/27 23:48:06 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.27 2008/03/25 22:42:41 tgl Exp $
  */
 
 #include "postgres.h"
@@ -35,6 +35,7 @@
 
 #include "fmgr.h"
 #include "parser/scansup.h"
+#include "utils/builtins.h"
 
 #include "px.h"
 #include "px-crypt.h"
@@ -132,30 +133,20 @@ PG_FUNCTION_INFO_V1(pg_gen_salt);
 Datum
 pg_gen_salt(PG_FUNCTION_ARGS)
 {
-	text	   *arg0;
+	text	   *arg0 = PG_GETARG_TEXT_PP(0);
 	int			len;
-	text	   *res;
 	char		buf[PX_MAX_SALT_LEN + 1];
 
-	arg0 = PG_GETARG_TEXT_P(0);
-
-	len = VARSIZE(arg0) - VARHDRSZ;
-	len = len > PX_MAX_SALT_LEN ? PX_MAX_SALT_LEN : len;
-	memcpy(buf, VARDATA(arg0), len);
-	buf[len] = 0;
+	text_to_cstring_buffer(arg0, buf, sizeof(buf));
 	len = px_gen_salt(buf, buf, 0);
 	if (len < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("gen_salt: %s", px_strerror(len))));
 
-	res = (text *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(res, len + VARHDRSZ);
-	memcpy(VARDATA(res), buf, len);
-
 	PG_FREE_IF_COPY(arg0, 0);
 
-	PG_RETURN_TEXT_P(res);
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(buf, len));
 }
 
 /* SQL function: pg_gen_salt(text, int4) returns text */
@@ -164,32 +155,21 @@ PG_FUNCTION_INFO_V1(pg_gen_salt_rounds);
 Datum
 pg_gen_salt_rounds(PG_FUNCTION_ARGS)
 {
-	text	   *arg0;
-	int			rounds;
+	text	   *arg0 = PG_GETARG_TEXT_PP(0);
+	int			rounds = PG_GETARG_INT32(1);
 	int			len;
-	text	   *res;
 	char		buf[PX_MAX_SALT_LEN + 1];
 
-	arg0 = PG_GETARG_TEXT_P(0);
-	rounds = PG_GETARG_INT32(1);
-
-	len = VARSIZE(arg0) - VARHDRSZ;
-	len = len > PX_MAX_SALT_LEN ? PX_MAX_SALT_LEN : len;
-	memcpy(buf, VARDATA(arg0), len);
-	buf[len] = 0;
+	text_to_cstring_buffer(arg0, buf, sizeof(buf));
 	len = px_gen_salt(buf, buf, rounds);
 	if (len < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("gen_salt: %s", px_strerror(len))));
 
-	res = (text *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(res, len + VARHDRSZ);
-	memcpy(VARDATA(res), buf, len);
-
 	PG_FREE_IF_COPY(arg0, 0);
 
-	PG_RETURN_TEXT_P(res);
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(buf, len));
 }
 
 /* SQL function: pg_crypt(psw:text, salt:text) returns text */
@@ -198,30 +178,16 @@ PG_FUNCTION_INFO_V1(pg_crypt);
 Datum
 pg_crypt(PG_FUNCTION_ARGS)
 {
-	text	   *arg0;
-	text	   *arg1;
-	unsigned	len0,
-				len1,
-				clen;
+	text	   *arg0 = PG_GETARG_TEXT_PP(0);
+	text	   *arg1 = PG_GETARG_TEXT_PP(1);
 	char	   *buf0,
 			   *buf1,
 			   *cres,
 			   *resbuf;
 	text	   *res;
 
-	arg0 = PG_GETARG_TEXT_P(0);
-	arg1 = PG_GETARG_TEXT_P(1);
-	len0 = VARSIZE(arg0) - VARHDRSZ;
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-
-	buf0 = palloc(len0 + 1);
-	buf1 = palloc(len1 + 1);
-
-	memcpy(buf0, VARDATA(arg0), len0);
-	memcpy(buf1, VARDATA(arg1), len1);
-
-	buf0[len0] = '\0';
-	buf1[len1] = '\0';
+	buf0 = text_to_cstring(arg0);
+	buf1 = text_to_cstring(arg1);
 
 	resbuf = palloc0(PX_MAX_CRYPT);
 
@@ -235,11 +201,8 @@ pg_crypt(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
 				 errmsg("crypt(3) returned NULL")));
 
-	clen = strlen(cres);
+	res = cstring_to_text(cres);
 
-	res = (text *) palloc(clen + VARHDRSZ);
-	SET_VARSIZE(res, clen + VARHDRSZ);
-	memcpy(VARDATA(res), cres, clen);
 	pfree(resbuf);
 
 	PG_FREE_IF_COPY(arg0, 0);

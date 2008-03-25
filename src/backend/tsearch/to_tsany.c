@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.10 2008/03/07 14:30:20 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.11 2008/03/25 22:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,7 +337,7 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 	QueryItem  *res;
 	int4		len;
 
-	query = parse_tsquery(TextPGetCString(in), pushval_morph, ObjectIdGetDatum(cfgid), false);
+	query = parse_tsquery(text_to_cstring(in), pushval_morph, ObjectIdGetDatum(cfgid), false);
 
 	if (query->size == 0)
 		PG_RETURN_TSQUERY(query);
@@ -387,7 +387,7 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 	QueryItem  *res;
 	int4		len;
 
-	query = parse_tsquery(TextPGetCString(in), pushval_morph, ObjectIdGetDatum(cfgid), true);
+	query = parse_tsquery(text_to_cstring(in), pushval_morph, ObjectIdGetDatum(cfgid), true);
 
 	if (query->size == 0)
 		PG_RETURN_TSQUERY(query);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.15 2008/01/08 01:04:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.16 2008/03/25 22:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/pg_crc.h"
 
@@ -954,9 +955,7 @@ tsquerytree(PG_FUNCTION_ARGS)
 
 	if (!q)
 	{
-		res = (text *) palloc(1 + VARHDRSZ);
-		SET_VARSIZE(res, 1 + VARHDRSZ);
-		*((char *) VARDATA(res)) = 'T';
+		res = cstring_to_text("T");
 	}
 	else
 	{
@@ -966,14 +965,11 @@ tsquerytree(PG_FUNCTION_ARGS)
 		*(nrm.cur) = '\0';
 		nrm.op = GETOPERAND(query);
 		infix(&nrm, true);
-
-		res = (text *) palloc(nrm.cur - nrm.buf + VARHDRSZ);
-		SET_VARSIZE(res, nrm.cur - nrm.buf + VARHDRSZ);
-		strncpy(VARDATA(res), nrm.buf, nrm.cur - nrm.buf);
+		res = cstring_to_text_with_len(nrm.buf, nrm.cur - nrm.buf);
 		pfree(q);
 	}
 
 	PG_FREE_IF_COPY(query, 0);
 
-	PG_RETURN_POINTER(res);
+	PG_RETURN_TEXT_P(res);
 }

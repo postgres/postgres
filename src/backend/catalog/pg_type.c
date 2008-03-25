@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.116 2008/03/19 18:38:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.117 2008/03/25 22:42:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,8 +275,7 @@ TypeCreate(Oid newTypeOid,
 	 * course.
 	 */
 	if (defaultTypeBin)
-		values[i] = DirectFunctionCall1(textin,
-										CStringGetDatum(defaultTypeBin));
+		values[i] = CStringGetTextDatum(defaultTypeBin);
 	else
 		nulls[i] = 'n';
 	i++;						/* typdefaultbin */
@@ -285,8 +284,7 @@ TypeCreate(Oid newTypeOid,
 	 * initialize the default value for this type.
 	 */
 	if (defaultTypeValue)
-		values[i] = DirectFunctionCall1(textin,
-										CStringGetDatum(defaultTypeValue));
+		values[i] = CStringGetTextDatum(defaultTypeValue);
 	else
 		nulls[i] = 'n';
 	i++;						/* typdefault */

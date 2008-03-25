@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.90 2008/01/11 18:39:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.91 2008/03/25 22:42:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,8 +232,7 @@ AggregateCreate(const char *aggName,
 	values[Anum_pg_aggregate_aggsortop - 1] = ObjectIdGetDatum(sortop);
 	values[Anum_pg_aggregate_aggtranstype - 1] = ObjectIdGetDatum(aggTransType);
 	if (agginitval)
-		values[Anum_pg_aggregate_agginitval - 1] =
-			DirectFunctionCall1(textin, CStringGetDatum(agginitval));
+		values[Anum_pg_aggregate_agginitval - 1] = CStringGetTextDatum(agginitval);
 	else
 		nulls[Anum_pg_aggregate_agginitval - 1] = 'n';
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.179 2008/03/24 19:47:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.180 2008/03/25 22:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,14 +311,14 @@ CreateRole(CreateRoleStmt *stmt)
 	{
 		if (!encrypt_password || isMD5(password))
 			new_record[Anum_pg_authid_rolpassword - 1] =
-				DirectFunctionCall1(textin, CStringGetDatum(password));
+				CStringGetTextDatum(password);
 		else
 		{
 			if (!pg_md5_encrypt(password, stmt->role, strlen(stmt->role),
 								encrypted_password))
 				elog(ERROR, "password encryption failed");
 			new_record[Anum_pg_authid_rolpassword - 1] =
-				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
+				CStringGetTextDatum(encrypted_password);
 		}
 	}
 	else
@@ -639,14 +639,14 @@ AlterRole(AlterRoleStmt *stmt)
 	{
 		if (!encrypt_password || isMD5(password))
 			new_record[Anum_pg_authid_rolpassword - 1] =
-				DirectFunctionCall1(textin, CStringGetDatum(password));
+				CStringGetTextDatum(password);
 		else
 		{
 			if (!pg_md5_encrypt(password, stmt->role, strlen(stmt->role),
 								encrypted_password))
 				elog(ERROR, "password encryption failed");
 			new_record[Anum_pg_authid_rolpassword - 1] =
-				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
+				CStringGetTextDatum(encrypted_password);
 		}
 		new_record_repl[Anum_pg_authid_rolpassword - 1] = 'r';
 	}
@@ -1060,7 +1060,7 @@ RenameRole(const char *oldname, const char *newname)
 
 	datum = heap_getattr(oldtuple, Anum_pg_authid_rolpassword, dsc, &isnull);
 
-	if (!isnull && isMD5(DatumGetCString(DirectFunctionCall1(textout, datum))))
+	if (!isnull && isMD5(TextDatumGetCString(datum)))
 	{
 		/* MD5 uses the username as salt, so just clear it on a rename */
 		repl_repl[Anum_pg_authid_rolpassword - 1] = 'r';

@@ -22,12 +22,9 @@
 
 
 /* declarations to come from xpath.c */
-
 extern void elog_error(int level, char *explain, int force);
 extern void pgxml_parser_init();
 extern xmlChar *pgxml_texttoxmlchar(text *textstring);
-
-#define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
 
 /* local defs */
 static void parse_params(const char **params, text *paramstr);
@@ -76,7 +73,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	if (VARDATA(doct)[0] == '<')
 		doctree = xmlParseMemory((char *) VARDATA(doct), VARSIZE(doct) - VARHDRSZ);
 	else
-		doctree = xmlParseFile(GET_STR(doct));
+		doctree = xmlParseFile(text_to_cstring(doct));
 
 	if (doctree == NULL)
 	{
@@ -102,7 +99,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		stylesheet = xsltParseStylesheetDoc(ssdoc);
 	}
 	else
-		stylesheet = xsltParseStylesheetFile((xmlChar *) GET_STR(ssheet));
+		stylesheet = xsltParseStylesheetFile((xmlChar *) text_to_cstring(ssheet));
 
 
 	if (stylesheet == NULL)
@@ -145,7 +142,7 @@ parse_params(const char **params, text *paramstr)
 	char	   *nvsep = "=";
 	char	   *itsep = ",";
 
-	pstr = GET_STR(paramstr);
+	pstr = text_to_cstring(paramstr);
 
 	pos = pstr;
 

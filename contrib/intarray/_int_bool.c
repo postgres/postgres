@@ -765,9 +765,7 @@ querytree(PG_FUNCTION_ARGS)
 
 	if (len == 0)
 	{
-		res = (text *) palloc(1 + VARHDRSZ);
-		SET_VARSIZE(res, 1 + VARHDRSZ);
-		*((char *) VARDATA(res)) = 'T';
+		res = cstring_to_text("T");
 	}
 	else
 	{
@@ -776,12 +774,9 @@ querytree(PG_FUNCTION_ARGS)
 		nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);
 		*(nrm.cur) = '\0';
 		infix(&nrm, true);
-
-		res = (text *) palloc(nrm.cur - nrm.buf + VARHDRSZ);
-		SET_VARSIZE(res, nrm.cur - nrm.buf + VARHDRSZ);
-		memcpy(VARDATA(res), nrm.buf, nrm.cur - nrm.buf);
+		res = cstring_to_text_with_len(nrm.buf, nrm.cur - nrm.buf);
 	}
 	pfree(q);
 
-	PG_RETURN_POINTER(res);
+	PG_RETURN_TEXT_P(res);
 }

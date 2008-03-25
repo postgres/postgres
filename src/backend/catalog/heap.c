@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.327 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.328 2008/03/25 22:42:42 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1459,10 +1459,8 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 	 */
 	values[Anum_pg_attrdef_adrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_attrdef_adnum - 1] = attnum;
-	values[Anum_pg_attrdef_adbin - 1] = DirectFunctionCall1(textin,
-													 CStringGetDatum(adbin));
-	values[Anum_pg_attrdef_adsrc - 1] = DirectFunctionCall1(textin,
-													 CStringGetDatum(adsrc));
+	values[Anum_pg_attrdef_adbin - 1] = CStringGetTextDatum(adbin);
+	values[Anum_pg_attrdef_adsrc - 1] = CStringGetTextDatum(adsrc);
 
 	adrel = heap_open(AttrDefaultRelationId, RowExclusiveLock);
 

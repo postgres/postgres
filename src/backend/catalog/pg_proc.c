@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.149 2008/03/18 22:04:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.150 2008/03/25 22:42:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,10 +248,8 @@ ProcedureCreate(const char *procedureName,
 		values[Anum_pg_proc_proargnames - 1] = parameterNames;
 	else
 		nulls[Anum_pg_proc_proargnames - 1] = 'n';
-	values[Anum_pg_proc_prosrc - 1] = DirectFunctionCall1(textin,
-													CStringGetDatum(prosrc));
-	values[Anum_pg_proc_probin - 1] = DirectFunctionCall1(textin,
-													CStringGetDatum(probin));
+	values[Anum_pg_proc_prosrc - 1] = CStringGetTextDatum(prosrc);
+	values[Anum_pg_proc_probin - 1] = CStringGetTextDatum(probin);
 	if (proconfig != PointerGetDatum(NULL))
 		values[Anum_pg_proc_proconfig - 1] = proconfig;
 	else
@@ -449,7 +447,7 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
 		elog(ERROR, "null prosrc");
-	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+	prosrc = TextDatumGetCString(tmp);
 
 	if (fmgr_internal_function(prosrc) == InvalidOid)
 		ereport(ERROR,
@@ -499,12 +497,12 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
 		elog(ERROR, "null prosrc");
-	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+	prosrc = TextDatumGetCString(tmp);
 
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_probin, &isnull);
 	if (isnull)
 		elog(ERROR, "null probin");
-	probin = DatumGetCString(DirectFunctionCall1(textout, tmp));
+	probin = TextDatumGetCString(tmp);
 
 	(void) load_external_function(probin, prosrc, true, &libraryhandle);
 	(void) fetch_finfo_record(libraryhandle, prosrc);
@@ -576,7 +574,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		if (isnull)
 			elog(ERROR, "null prosrc");
 
-		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+		prosrc = TextDatumGetCString(tmp);
 
 		/*
 		 * Setup error traceback support for ereport().
@@ -631,7 +629,7 @@ sql_function_parse_error_callback(void *arg)
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
 		elog(ERROR, "null prosrc");
-	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+	prosrc = TextDatumGetCString(tmp);
 
 	if (!function_parse_error_transpose(prosrc))
 	{

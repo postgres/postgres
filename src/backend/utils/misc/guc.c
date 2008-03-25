@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.439 2008/03/17 17:45:09 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.440 2008/03/25 22:42:45 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5364,7 +5364,6 @@ set_config_by_name(PG_FUNCTION_ARGS)
 	char	   *value;
 	char	   *new_value;
 	bool		is_local;
-	text	   *result_text;
 
 	if (PG_ARGISNULL(0))
 		ereport(ERROR,
@@ -5372,13 +5371,13 @@ set_config_by_name(PG_FUNCTION_ARGS)
 				 errmsg("SET requires parameter name")));
 
 	/* Get the GUC variable name */
-	name = DatumGetCString(DirectFunctionCall1(textout, PG_GETARG_DATUM(0)));
+	name = TextDatumGetCString(PG_GETARG_DATUM(0));
 
 	/* Get the desired value or set to NULL for a reset request */
 	if (PG_ARGISNULL(1))
 		value = NULL;
 	else
-		value = DatumGetCString(DirectFunctionCall1(textout, PG_GETARG_DATUM(1)));
+		value = TextDatumGetCString(PG_GETARG_DATUM(1));
 
 	/*
 	 * Get the desired state of is_local. Default to false if provided value
@@ -5401,10 +5400,7 @@ set_config_by_name(PG_FUNCTION_ARGS)
 	new_value = GetConfigOptionByName(name, NULL);
 
 	/* Convert return string to text */
-	result_text = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(new_value)));
-
-	/* return it */
-	PG_RETURN_TEXT_P(result_text);
+	PG_RETURN_TEXT_P(cstring_to_text(new_value));
 }
 
 
@@ -5992,19 +5988,15 @@ show_config_by_name(PG_FUNCTION_ARGS)
 {
 	char	   *varname;
 	char	   *varval;
-	text	   *result_text;
 
 	/* Get the GUC variable name */
-	varname = DatumGetCString(DirectFunctionCall1(textout, PG_GETARG_DATUM(0)));
+	varname = TextDatumGetCString(PG_GETARG_DATUM(0));
 
 	/* Get the value */
 	varval = GetConfigOptionByName(varname, NULL);
 
 	/* Convert to text */
-	result_text = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(varval)));
-
-	/* return it */
-	PG_RETURN_TEXT_P(result_text);
+	PG_RETURN_TEXT_P(cstring_to_text(varval));
 }
 
 /*
@@ -6609,7 +6601,7 @@ ProcessGUCArray(ArrayType *array,
 		if (isnull)
 			continue;
 
-		s = DatumGetCString(DirectFunctionCall1(textout, d));
+		s = TextDatumGetCString(d);
 
 		ParseLongOption(s, &name, &value);
 		if (!value)
@@ -6657,7 +6649,7 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 
 	newval = palloc(strlen(name) + 1 + strlen(value) + 1);
 	sprintf(newval, "%s=%s", name, value);
-	datum = DirectFunctionCall1(textin, CStringGetDatum(newval));
+	datum = CStringGetTextDatum(newval);
 
 	if (array)
 	{
@@ -6684,7 +6676,7 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 						  &isnull);
 			if (isnull)
 				continue;
-			current = DatumGetCString(DirectFunctionCall1(textout, d));
+			current = TextDatumGetCString(d);
 			if (strncmp(current, newval, strlen(name) + 1) == 0)
 			{
 				index = i;
@@ -6754,7 +6746,7 @@ GUCArrayDelete(ArrayType *array, const char *name)
 					  &isnull);
 		if (isnull)
 			continue;
-		val = DatumGetCString(DirectFunctionCall1(textout, d));
+		val = TextDatumGetCString(d);
 
 		/* ignore entry if it's what we want to delete */
 		if (strncmp(val, name, strlen(name)) == 0

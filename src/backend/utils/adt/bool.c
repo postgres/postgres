@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.42 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.43 2008/03/25 22:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,14 +152,14 @@ Datum
 booltext(PG_FUNCTION_ARGS)
 {
 	bool		arg1 = PG_GETARG_BOOL(0);
-	char	   *str;
+	const char *str;
 
 	if (arg1)
 		str = "true";
 	else
 		str = "false";
 
-	PG_RETURN_DATUM(DirectFunctionCall1(textin, CStringGetDatum(str)));
+	PG_RETURN_TEXT_P(cstring_to_text(str));
 }
 
 

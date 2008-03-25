@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.309 2008/03/23 00:24:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.310 2008/03/25 22:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -617,6 +617,14 @@ extern Datum varchartypmodout(PG_FUNCTION_ARGS);
 extern Datum varchar(PG_FUNCTION_ARGS);
 
 /* varlena.c */
+extern text *cstring_to_text(const char *s);
+extern text *cstring_to_text_with_len(const char *s, int len);
+extern char *text_to_cstring(const text *t);
+extern void text_to_cstring_buffer(const text *src, char *dst, size_t dst_len);
+
+#define CStringGetTextDatum(s) PointerGetDatum(cstring_to_text(s))
+#define TextDatumGetCString(d) text_to_cstring((text *) DatumGetPointer(d))
+
 extern Datum textin(PG_FUNCTION_ARGS);
 extern Datum textout(PG_FUNCTION_ARGS);
 extern Datum textrecv(PG_FUNCTION_ARGS);

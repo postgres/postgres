@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $PostgreSQL: pgsql/contrib/chkpass/chkpass.c,v 1.19 2007/02/27 23:48:05 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/chkpass/chkpass.c,v 1.20 2008/03/25 22:42:41 tgl Exp $
  * best viewed with tabs set to 4
  */
 
@@ -17,6 +17,7 @@
 #endif
 
 #include "fmgr.h"
+#include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
 
@@ -124,15 +125,8 @@ Datum
 chkpass_rout(PG_FUNCTION_ARGS)
 {
 	chkpass    *password = (chkpass *) PG_GETARG_POINTER(0);
-	text	   *result;
-	int			slen;
 
-	slen = strlen(password->password);
-	result = (text *) palloc(VARHDRSZ + slen);
-	SET_VARSIZE(result, VARHDRSZ + slen);
-	memcpy(VARDATA(result), password->password, slen);
-
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(password->password));
 }
 
 
@@ -145,13 +139,10 @@ Datum
 chkpass_eq(PG_FUNCTION_ARGS)
 {
 	chkpass    *a1 = (chkpass *) PG_GETARG_POINTER(0);
-	text	   *a2 = (text *) PG_GETARG_TEXT_P(1);
-	char		str[10];
-	int			sz;
+	text	   *a2 = PG_GETARG_TEXT_PP(1);
+	char		str[9];
 
-	sz = Min(VARSIZE(a2) - VARHDRSZ, 8);
-	memcpy(str, VARDATA(a2), sz);
-	str[sz] = '\0';
+	text_to_cstring_buffer(a2, str, sizeof(str));
 	PG_RETURN_BOOL(strcmp(a1->password, crypt(str, a1->password)) == 0);
 }
 
@@ -160,12 +151,9 @@ Datum
 chkpass_ne(PG_FUNCTION_ARGS)
 {
 	chkpass    *a1 = (chkpass *) PG_GETARG_POINTER(0);
-	text	   *a2 = (text *) PG_GETARG_TEXT_P(1);
-	char		str[10];
-	int			sz;
+	text	   *a2 = PG_GETARG_TEXT_PP(1);
+	char		str[9];
 
-	sz = Min(VARSIZE(a2) - VARHDRSZ, 8);
-	memcpy(str, VARDATA(a2), sz);
-	str[sz] = '\0';
+	text_to_cstring_buffer(a2, str, sizeof(str));
 	PG_RETURN_BOOL(strcmp(a1->password, crypt(str, a1->password)) != 0);
 }

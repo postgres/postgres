@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2007-2008 PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.c,v 1.7 2008/01/01 20:31:21 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.c,v 1.8 2008/03/25 22:42:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,7 +214,7 @@ uuid_generate_v35_internal(int mode, pg_uuid_t *ns, text *name)
 
 	result = uuid_generate_internal(mode,
 									ns_uuid,
-	   DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(name))));
+									text_to_cstring(name));
 
 	rc = uuid_destroy(ns_uuid);
 	if (rc != UUID_RC_OK)

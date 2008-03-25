@@ -55,11 +55,6 @@ Datum		xpath_table(PG_FUNCTION_ARGS);
 char	   *errbuf;				/* per line error buffer */
 char	   *pgxml_errorMsg = NULL;		/* overall error message */
 
-/* Convenience macros */
-
-#define GET_TEXT(cstrp) DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(cstrp)))
-#define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
-
 #define ERRBUF_SIZE 200
 
 /* memory handling passthrough functions (e.g. palloc, pstrdup are
@@ -651,11 +646,11 @@ xpath_table(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 
 /* Function parameters */
-	char	   *pkeyfield = GET_STR(PG_GETARG_TEXT_P(0));
-	char	   *xmlfield = GET_STR(PG_GETARG_TEXT_P(1));
-	char	   *relname = GET_STR(PG_GETARG_TEXT_P(2));
-	char	   *xpathset = GET_STR(PG_GETARG_TEXT_P(3));
-	char	   *condition = GET_STR(PG_GETARG_TEXT_P(4));
+	char	   *pkeyfield = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *xmlfield = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	   *relname = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	char	   *xpathset = text_to_cstring(PG_GETARG_TEXT_PP(3));
+	char	   *condition = text_to_cstring(PG_GETARG_TEXT_PP(4));
 
 	char	  **values;
 	xmlChar   **xpaths;
