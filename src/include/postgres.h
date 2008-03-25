@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.75 2006/07/13 16:49:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.75.2.1 2008/03/25 19:31:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,13 +123,18 @@ typedef struct varattrib
  *
  *	sizeof(short) == 2
  *
- *	If your machine meets these requirements, Datums should also be checked
- *	to see if the positioning is correct.
+ * When a type narrower than Datum is stored in a Datum, we place it in the
+ * low-order bits and are careful that the DatumGetXXX macro for it discards
+ * the unused high-order bits (as opposed to, say, assuming they are zero).
+ * This is needed to support old-style user-defined functions, since depending
+ * on architecture and compiler, the return value of a function returning char
+ * or short may contain garbage when called as if it returned Datum.
  */
 
 typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 
 #define SIZEOF_DATUM SIZEOF_UNSIGNED_LONG
+
 typedef Datum *DatumPtr;
 
 #define GET_1_BYTE(datum)	(((Datum) (datum)) & 0x000000ff)
@@ -143,10 +148,11 @@ typedef Datum *DatumPtr;
  * DatumGetBool
  *		Returns boolean value of a datum.
  *
- * Note: any nonzero value will be considered TRUE.
+ * Note: any nonzero value will be considered TRUE, but we ignore bits to
+ * the left of the width of bool, per comment above.
  */
 
-#define DatumGetBool(X) ((bool) (((Datum) (X)) != 0))
+#define DatumGetBool(X) ((bool) (((bool) (X)) != 0))
 
 /*
  * BoolGetDatum
