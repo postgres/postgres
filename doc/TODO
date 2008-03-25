@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Mar 24 20:28:45 EDT 2008
+Last updated:		Mon Mar 24 20:42:17 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1573,6 +1573,12 @@ Write-Ahead Log
 * Have resource managers report the duration of their status changes
 
   http://archives.postgresql.org/pgsql-hackers/2007-10/msg01468.php
+
+* Move pgfoundry's xlogdump to /contrib and have it rely more closely
+  on the WAL backend code
+
+  http://archives.postgresql.org/pgsql-hackers/2007-11/msg00035.php
+
 
 
 
