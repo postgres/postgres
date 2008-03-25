@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Mar 24 22:23:38 EDT 2008
+Last updated:		Mon Mar 24 22:33:32 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1028,6 +1028,12 @@ Clients
 	o Include the symbolic SQLSTATE name in verbose error reports
 
 	  http://archives.postgresql.org/pgsql-general/2007-09/msg00438.php
+
+	o Improve display if enums
+
+	  http://archives.postgresql.org/pgsql-hackers/2008-01/msg00826.php
+
+
 
 
 * pg_dump / pg_restore
