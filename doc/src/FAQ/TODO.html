@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Mon Mar 24 22:58:06 EDT 2008
+Last updated:           Tue Mar 25 09:09:33 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -237,7 +237,7 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-10/msg00231.php">http://archives.postgresql.org/pgsql-hackers/2007-10/msg00231.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg00471.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg00471.php</a>
 </p>
-  </li><li>Add more cross-data-type operators
+  </li><li>Simplify integer cross-data-type operators
 <p>  <a href="http://archives.postgresql.org/pgsql-bugs/2008-01/msg00189.php">http://archives.postgresql.org/pgsql-bugs/2008-01/msg00189.php</a>
 </p>
   </li><li>Dates and Times
@@ -1379,6 +1379,8 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Be more aggressive about creating WAL files
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-10/msg01325.php">http://archives.postgresql.org/pgsql-hackers/2007-10/msg01325.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2004-07/msg01075.php">http://archives.postgresql.org/pgsql-hackers/2004-07/msg01075.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2005-04/msg00556.php">http://archives.postgresql.org/pgsql-hackers/2005-04/msg00556.php</a>
 </p>
   </li><li>Have resource managers report the duration of their status changes
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-10/msg01468.php">http://archives.postgresql.org/pgsql-hackers/2007-10/msg01468.php</a>
@@ -1631,7 +1633,7 @@ first.  There is also a developer's wiki at<br/>
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2008-02/msg00485.php">http://archives.postgresql.org/pgsql-hackers/2008-02/msg00485.php</a>
           <a href="http://archives.postgresql.org/pgsql-patches/2008-02/msg00038.php">http://archives.postgresql.org/pgsql-patches/2008-02/msg00038.php</a>
 </p>
-    </li><li>Fix port/rint.c to be spec-compliant
+    </li><li>Find a correct rint() substitute on Windows
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2008-01/msg00808.php">http://archives.postgresql.org/pgsql-hackers/2008-01/msg00808.php</a>
 </p>
   </li></ul>
