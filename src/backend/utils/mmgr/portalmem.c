@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.106 2008/01/01 19:45:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.107 2008/03/25 19:26:53 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -911,7 +911,6 @@ pg_cursor(PG_FUNCTION_ARGS)
 	while ((hentry = hash_seq_search(&hash_seq)) != NULL)
 	{
 		Portal		portal = hentry->portal;
-		HeapTuple	tuple;
 		Datum		values[6];
 		bool		nulls[6];
 
@@ -935,11 +934,9 @@ pg_cursor(PG_FUNCTION_ARGS)
 		values[4] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_SCROLL);
 		values[5] = TimestampTzGetDatum(portal->creation_time);
 
-		tuple = heap_form_tuple(tupdesc, values, nulls);
-
 		/* switch to appropriate context while storing the tuple */
 		MemoryContextSwitchTo(per_query_ctx);
-		tuplestore_puttuple(tupstore, tuple);
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
 	/* clean up and return the tuplestore */

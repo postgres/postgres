@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.202 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.203 2008/03/25 19:26:54 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2007,10 +2007,11 @@ static int
 exec_stmt_return_next(PLpgSQL_execstate *estate,
 					  PLpgSQL_stmt_return_next *stmt)
 {
-	TupleDesc	tupdesc;
-	int			natts;
-	HeapTuple	tuple;
-	bool		free_tuple = false;
+	TupleDesc		tupdesc;
+	int				natts;
+	MemoryContext	oldcxt;
+	HeapTuple		tuple = NULL;
+	bool			free_tuple = false;
 
 	if (!estate->retisset)
 		ereport(ERROR,
@@ -2048,9 +2049,10 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 												tupdesc->attrs[0]->atttypmod,
 													isNull);
 
-					tuple = heap_form_tuple(tupdesc, &retval, &isNull);
-
-					free_tuple = true;
+					oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
+					tuplestore_putvalues(estate->tuple_store, tupdesc,
+										 &retval, &isNull);
+					MemoryContextSwitchTo(oldcxt);
 				}
 				break;
 
@@ -2087,7 +2089,6 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 
 			default:
 				elog(ERROR, "unrecognized dtype: %d", retvar->dtype);
-				tuple = NULL;	/* keep compiler quiet */
 				break;
 		}
 	}
@@ -2114,9 +2115,10 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 										tupdesc->attrs[0]->atttypmod,
 										isNull);
 
-		tuple = heap_form_tuple(tupdesc, &retval, &isNull);
-
-		free_tuple = true;
+		oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
+		tuplestore_putvalues(estate->tuple_store, tupdesc,
+							 &retval, &isNull);
+		MemoryContextSwitchTo(oldcxt);
 
 		exec_eval_cleanup(estate);
 	}
@@ -2125,13 +2127,10 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("RETURN NEXT must have a parameter")));
-		tuple = NULL;			/* keep compiler quiet */
 	}
 
 	if (HeapTupleIsValid(tuple))
 	{
-		MemoryContext oldcxt;
-
 		oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
 		tuplestore_puttuple(estate->tuple_store, tuple);
 		MemoryContextSwitchTo(oldcxt);

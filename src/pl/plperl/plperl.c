@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.136 2008/01/23 00:55:47 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.137 2008/03/25 19:26:53 neilc Exp $
  *
  **********************************************************************/
 
@@ -1869,7 +1869,6 @@ plperl_return_next(SV *sv)
 	FunctionCallInfo fcinfo;
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
-	HeapTuple	tuple;
 
 	if (!sv)
 		return;
@@ -1944,8 +1943,15 @@ plperl_return_next(SV *sv)
 
 	if (prodesc->fn_retistuple)
 	{
+		HeapTuple tuple;
+
 		tuple = plperl_build_tuple_result((HV *) SvRV(sv),
 										  current_call_data->attinmeta);
+
+		/* Make sure to store the tuple in a long-lived memory context */
+		MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
+		tuplestore_puttuple(current_call_data->tuple_store, tuple);
+		MemoryContextSwitchTo(old_cxt);
 	}
 	else
 	{
@@ -1967,13 +1973,13 @@ plperl_return_next(SV *sv)
 			isNull = true;
 		}
 
-		tuple = heap_form_tuple(current_call_data->ret_tdesc, &ret, &isNull);
+		/* Make sure to store the tuple in a long-lived memory context */
+		MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
+		tuplestore_putvalues(current_call_data->tuple_store,
+							 current_call_data->ret_tdesc,
+							 &ret, &isNull);
+		MemoryContextSwitchTo(old_cxt);
 	}
-
-	/* Make sure to store the tuple in a long-lived memory context */
-	MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
-	tuplestore_puttuple(current_call_data->tuple_store, tuple);
-	MemoryContextSwitchTo(old_cxt);
 
 	MemoryContextReset(current_call_data->tmp_cxt);
 }

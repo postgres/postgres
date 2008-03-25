@@ -38,7 +38,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.37 2008/03/10 20:06:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.38 2008/03/25 19:26:53 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -366,8 +366,6 @@ tuplestore_puttupleslot(Tuplestorestate *state,
 /*
  * "Standard" case to copy from a HeapTuple.  This is actually now somewhat
  * deprecated, but not worth getting rid of in view of the number of callers.
- * (Consider adding something that takes a tupdesc+values/nulls arrays so
- * that we can use heap_form_minimal_tuple() and avoid a copy step.)
  */
 void
 tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple)
@@ -376,6 +374,22 @@ tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple)
 	 * Copy the tuple.	(Must do this even in WRITEFILE case.)
 	 */
 	tuple = COPYTUP(state, tuple);
+
+	tuplestore_puttuple_common(state, (void *) tuple);
+}
+
+/*
+ * Similar to tuplestore_puttuple(), but start from the values + nulls
+ * array. This avoids requiring that the caller construct a HeapTuple,
+ * saving a copy.
+ */
+void
+tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
+					 Datum *values, bool *isnull)
+{
+	MinimalTuple tuple;
+
+	tuple = heap_form_minimal_tuple(tdesc, values, isnull);
 
 	tuplestore_puttuple_common(state, (void *) tuple);
 }

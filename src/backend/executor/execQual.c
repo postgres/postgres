@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.226 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.227 2008/03/25 19:26:53 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1547,7 +1547,6 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	for (;;)
 	{
 		Datum		result;
-		HeapTuple	tuple;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -1649,15 +1648,15 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				 */
 				tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
 				tmptup.t_data = td;
-				tuple = &tmptup;
+
+				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+				tuplestore_puttuple(tupstore, &tmptup);
 			}
 			else
 			{
-				tuple = heap_form_tuple(tupdesc, &result, &fcinfo.isnull);
+				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+				tuplestore_putvalues(tupstore, tupdesc, &result, &fcinfo.isnull);
 			}
-
-			oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-			tuplestore_puttuple(tupstore, tuple);
 			MemoryContextSwitchTo(oldcontext);
 
 			/*
@@ -1702,15 +1701,13 @@ no_function_result:
 			int			natts = expectedDesc->natts;
 			Datum	   *nulldatums;
 			bool	   *nullflags;
-			HeapTuple	tuple;
 
 			MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 			nulldatums = (Datum *) palloc0(natts * sizeof(Datum));
 			nullflags = (bool *) palloc(natts * sizeof(bool));
 			memset(nullflags, true, natts * sizeof(bool));
-			tuple = heap_form_tuple(expectedDesc, nulldatums, nullflags);
 			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-			tuplestore_puttuple(tupstore, tuple);
+			tuplestore_putvalues(tupstore, expectedDesc, nulldatums, nullflags);
 		}
 	}
 

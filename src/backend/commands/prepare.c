@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.80 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.81 2008/03/25 19:26:53 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -764,7 +764,6 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 		hash_seq_init(&hash_seq, prepared_queries);
 		while ((prep_stmt = hash_seq_search(&hash_seq)) != NULL)
 		{
-			HeapTuple	tuple;
 			Datum		values[5];
 			bool		nulls[5];
 
@@ -787,11 +786,9 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 										  prep_stmt->plansource->num_params);
 			values[4] = BoolGetDatum(prep_stmt->from_sql);
 
-			tuple = heap_form_tuple(tupdesc, values, nulls);
-
 			/* switch to appropriate context while storing the tuple */
 			MemoryContextSwitchTo(per_query_ctx);
-			tuplestore_puttuple(tupstore, tuple);
+			tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 		}
 	}
 
