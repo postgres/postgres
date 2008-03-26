@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.63 2008/03/26 14:43:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.64 2008/03/26 16:34:47 tgl Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -259,8 +259,8 @@ SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
 (1 row)
 </programlisting>
 
-  To avoid confusion with slices, use slice syntax for all dimmension
-  references, e.g.  <literal>[1:2][1:1]</>, not <literal>[2][1:1]</>.
+  To avoid confusion with the non-slice case, it's best to use slice syntax
+  for all dimensions, e.g., <literal>[1:2][1:1]</>, not <literal>[2][1:1]</>.
  </para>
 
  <para>

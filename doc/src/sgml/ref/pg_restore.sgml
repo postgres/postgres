@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.73 2008/03/20 17:36:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.74 2008/03/26 16:34:47 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -200,7 +200,8 @@
       <term><option>--ignore-version</option></term>
       <listitem>
        <para>
-        Ignore database version checks.
+        Ignore version mismatch between
+        <application>pg_restore</application> and the database server.
        </para>
       </listitem>
      </varlistentry>
