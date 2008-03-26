@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.62 2007/06/07 14:49:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.63 2008/03/26 14:43:20 momjian Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -258,6 +258,9 @@ SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
  {{meeting,lunch},{training,presentation}}
 (1 row)
 </programlisting>
+
+  To avoid confusion with slices, use slice syntax for all dimmension
+  references, e.g.  <literal>[1:2][1:1]</>, not <literal>[2][1:1]</>.
  </para>
 
  <para>
@@ -275,7 +278,8 @@ SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
   any of the subscript expressions are null.  However, in other corner
   cases such as selecting an array slice that
   is completely outside the current array bounds, a slice expression
-  yields an empty (zero-dimensional) array instead of null.
+  yields an empty (zero-dimensional) array instead of null.  (This
+  does not match non-slice behavior and is done for historical reasons.)
   If the requested slice partially overlaps the array bounds, then it
   is silently reduced to just the overlapping region.
  </para>
