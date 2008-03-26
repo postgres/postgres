@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.368 2008/03/19 14:18:21 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.369 2008/03/26 16:20:47 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
 #include "utils/relcache.h"
+#include "utils/snapmgmt.h"
 #include "utils/syscache.h"
 #include "pgstat.h"
 

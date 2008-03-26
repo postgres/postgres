@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.22 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.23 2008/03/26 16:20:47 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "executor/nodeBitmapHeapscan.h"
 #include "pgstat.h"
 #include "utils/memutils.h"
+#include "utils/snapmgmt.h"
 
 
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);

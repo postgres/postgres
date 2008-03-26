@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.128 2008/03/01 19:26:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.129 2008/03/26 16:20:47 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include "storage/large_object.h"
 #include "utils/fmgroids.h"
 #include "utils/resowner.h"
+#include "utils/snapmgmt.h"
 
 
 /*

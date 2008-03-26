@@ -8,14 +8,14 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/large_object.h,v 1.39 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/large_object.h,v 1.40 2008/03/26 16:20:48 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LARGE_OBJECT_H
 #define LARGE_OBJECT_H
 
-#include "utils/tqual.h"
+#include "utils/snapshot.h"
 
 
 /*----------

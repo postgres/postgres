@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.73 2008/02/20 17:44:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.74 2008/03/26 16:20:46 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #include "storage/fd.h"
 #include "utils/fmgroids.h"
 #include "utils/relcache.h"
+#include "utils/tqual.h"
 
 
 #define OIDCHARS	10			/* max chars printed by %u */

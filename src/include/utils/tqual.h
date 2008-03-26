@@ -8,58 +8,15 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.71 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.72 2008/03/26 16:20:48 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TQUAL_H
 #define TQUAL_H
 
-#include "access/htup.h"
-#include "storage/buf.h"
+#include "utils/snapshot.h"
 
-
-/*
- * We use SnapshotData structures to represent both "regular" (MVCC)
- * snapshots and "special" snapshots that have non-MVCC semantics.
- * The specific semantics of a snapshot are encoded by the "satisfies"
- * function.
- */
-typedef struct SnapshotData *Snapshot;
-
-typedef bool (*SnapshotSatisfiesFunc) (HeapTupleHeader tuple,
-										   Snapshot snapshot, Buffer buffer);
-
-typedef struct SnapshotData
-{
-	SnapshotSatisfiesFunc satisfies;	/* tuple test function */
-
-	/*
-	 * The remaining fields are used only for MVCC snapshots, and are normally
-	 * just zeroes in special snapshots.  (But xmin and xmax are used
-	 * specially by HeapTupleSatisfiesDirty.)
-	 *
-	 * An MVCC snapshot can never see the effects of XIDs >= xmax. It can see
-	 * the effects of all older XIDs except those listed in the snapshot. xmin
-	 * is stored as an optimization to avoid needing to search the XID arrays
-	 * for most tuples.
-	 */
-	TransactionId xmin;			/* all XID < xmin are visible to me */
-	TransactionId xmax;			/* all XID >= xmax are invisible to me */
-	uint32		xcnt;			/* # of xact ids in xip[] */
-	TransactionId *xip;			/* array of xact IDs in progress */
-	/* note: all ids in xip[] satisfy xmin <= xip[i] < xmax */
-	int32		subxcnt;		/* # of xact ids in subxip[], -1 if overflow */
-	TransactionId *subxip;		/* array of subxact IDs in progress */
-
-	/*
-	 * note: all ids in subxip[] are >= xmin, but we don't bother filtering
-	 * out any that are >= xmax
-	 */
-	CommandId	curcid;			/* in my xact, CID < curcid are visible */
-} SnapshotData;
-
-#define InvalidSnapshot		((Snapshot) NULL)
 
 /* Static variables representing various special snapshot semantics */
 extern PGDLLIMPORT SnapshotData SnapshotNowData;
@@ -83,15 +40,6 @@ extern PGDLLIMPORT SnapshotData SnapshotToastData;
 /* This macro encodes the knowledge of which snapshots are MVCC-safe */
 #define IsMVCCSnapshot(snapshot)  \
 	((snapshot)->satisfies == HeapTupleSatisfiesMVCC)
-
-
-extern PGDLLIMPORT Snapshot SerializableSnapshot;
-extern PGDLLIMPORT Snapshot LatestSnapshot;
-extern PGDLLIMPORT Snapshot ActiveSnapshot;
-
-extern TransactionId TransactionXmin;
-extern TransactionId RecentXmin;
-extern TransactionId RecentGlobalXmin;
 
 /*
  * HeapTupleSatisfiesVisibility
@@ -148,14 +96,5 @@ extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
 
 extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,
 					 uint16 infomask, TransactionId xid);
-
-extern Snapshot GetTransactionSnapshot(void);
-extern Snapshot GetLatestSnapshot(void);
-extern Snapshot CopySnapshot(Snapshot snapshot);
-extern void FreeSnapshot(Snapshot snapshot);
-extern void FreeXactSnapshot(void);
-
-/* in procarray.c; declared here to avoid including tqual.h in procarray.h: */
-extern Snapshot GetSnapshotData(Snapshot snapshot, bool serializable);
 
 #endif   /* TQUAL_H */

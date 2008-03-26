@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.260 2008/03/17 19:44:41 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.261 2008/03/26 16:20:46 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
+#include "utils/snapmgmt.h"
 #include "utils/xml.h"
 #include "pg_trace.h"
 
