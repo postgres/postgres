@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.126 2008/03/26 16:20:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.127 2008/03/26 18:48:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
-#include "utils/snapmgmt.h"
+#include "utils/snapmgr.h"
 #include "mb/pg_wchar.h"
 
 /*

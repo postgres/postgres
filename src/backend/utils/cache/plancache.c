@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.16 2008/03/26 16:20:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.17 2008/03/26 18:48:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
-#include "utils/snapmgmt.h"
+#include "utils/snapmgr.h"
 
 
 typedef struct

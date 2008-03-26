@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.75 2008/03/26 16:20:46 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.76 2008/03/26 18:48:59 alvherre Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -22,7 +22,7 @@
 #include "access/clog.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
-#include "utils/snapmgmt.h"
+#include "utils/snapmgr.h"
 
 
 /*

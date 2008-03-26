@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.190 2008/03/26 16:20:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.191 2008/03/26 18:48:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include "executor/spi_priv.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/snapmgmt.h"
+#include "utils/snapmgr.h"
 #include "utils/typcache.h"
 
 

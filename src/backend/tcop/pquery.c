@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.121 2008/03/26 16:20:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.122 2008/03/26 18:48:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/memutils.h"
-#include "utils/snapmgmt.h"
+#include "utils/snapmgr.h"
 
 
 /*

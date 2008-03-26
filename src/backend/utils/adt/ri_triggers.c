@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.105 2008/03/26 16:20:47 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.106 2008/03/26 18:48:59 alvherre Exp $
  *
  * ----------
  */
@@ -41,7 +41,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/snapmgmt.h"
+#include "utils/snapmgr.h"
 
 
 /* ----------

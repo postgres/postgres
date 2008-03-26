@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.329 2008/03/26 16:20:46 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.330 2008/03/26 18:48:59 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -60,7 +60,7 @@
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/snapmgmt.h"
+#include "utils/snapmgr.h"
 
 
 static void AddNewRelationTuple(Relation pg_class_desc,

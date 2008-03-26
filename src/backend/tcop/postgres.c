@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.546 2008/03/26 16:20:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.547 2008/03/26 18:48:59 alvherre Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -66,7 +66,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
-#include "utils/snapmgmt.h"
+#include "utils/snapmgr.h"
 #include "mb/pg_wchar.h"
 
 #include "pgstat.h"
