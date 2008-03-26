@@ -806,11 +806,9 @@ xpath_table(PG_FUNCTION_ARGS)
 		xmlXPathCompExprPtr comppath;
 
 		/* Extract the row data as C Strings */
-
 		spi_tuple = tuptable->vals[i];
 		pkey = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
 		xmldoc = SPI_getvalue(spi_tuple, spi_tupdesc, 2);
-
 
 		/*
 		 * Clear the values array, so that not-well-formed documents return
@@ -825,11 +823,14 @@ xpath_table(PG_FUNCTION_ARGS)
 		values[0] = pkey;
 
 		/* Parse the document */
-		doctree = xmlParseMemory(xmldoc, strlen(xmldoc));
+		if (xmldoc)
+			doctree = xmlParseMemory(xmldoc, strlen(xmldoc));
+		else					/* treat NULL as not well-formed */
+			doctree = NULL;
 
 		if (doctree == NULL)
-		{						/* not well-formed, so output all-NULL tuple */
-
+		{
+			/* not well-formed, so output all-NULL tuple */
 			ret_tuple = BuildTupleFromCStrings(attinmeta, values);
 			oldcontext = MemoryContextSwitchTo(per_query_ctx);
 			tuplestore_puttuple(tupstore, ret_tuple);
@@ -921,8 +922,10 @@ xpath_table(PG_FUNCTION_ARGS)
 
 		xmlFreeDoc(doctree);
 
-		pfree(pkey);
-		pfree(xmldoc);
+		if (pkey)
+			pfree(pkey);
+		if (xmldoc)
+			pfree(xmldoc);
 	}
 
 	xmlCleanupParser();
