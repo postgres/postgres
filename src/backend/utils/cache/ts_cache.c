@@ -20,7 +20,7 @@
  * Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.5 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.6 2008/03/26 21:10:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 
 /*

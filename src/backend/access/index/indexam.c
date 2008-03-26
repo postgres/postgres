@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.103 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.104 2008/03/26 21:10:37 alvherre Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -68,6 +68,7 @@
 #include "pgstat.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
+#include "utils/tqual.h"
 
 
 /* ----------------------------------------------------------------

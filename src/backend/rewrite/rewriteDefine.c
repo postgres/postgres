@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.125 2008/03/25 22:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.126 2008/03/26 21:10:38 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,9 +29,10 @@
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/inval.h"
+#include "utils/tqual.h"
 
 
 static void checkRuleResultList(List *targetList, TupleDesc resultDesc,

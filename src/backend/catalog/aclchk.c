@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.144 2008/03/24 19:12:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.145 2008/03/26 21:10:37 alvherre Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -43,6 +43,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 
 static void ExecGrant_Relation(InternalGrant *grantStmt);

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.32 2008/01/14 02:53:31 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.33 2008/03/26 21:10:36 alvherre Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -32,6 +32,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/tqual.h"
 
 
 PG_MODULE_MAGIC;

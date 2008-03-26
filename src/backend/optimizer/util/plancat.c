@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.143 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.144 2008/03/26 21:10:38 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,9 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/transam.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_inherits.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
@@ -35,8 +37,7 @@
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-#include "catalog/catalog.h"
-#include "miscadmin.h"
+#include "utils/tqual.h"
 
 
 /* GUC parameter */

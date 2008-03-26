@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/snapshot.h,v 1.1 2008/03/26 16:20:48 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/utils/snapshot.h,v 1.2 2008/03/26 21:10:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,5 +58,18 @@ typedef struct SnapshotData
 	 */
 	CommandId	curcid;			/* in my xact, CID < curcid are visible */
 } SnapshotData;
+
+/*
+ * Result codes for HeapTupleSatisfiesUpdate.  This should really be in
+ * tqual.h, but we want to avoid including that file elsewhere.
+ */
+typedef enum
+{
+	HeapTupleMayBeUpdated,
+	HeapTupleInvisible,
+	HeapTupleSelfUpdated,
+	HeapTupleUpdated,
+	HeapTupleBeingUpdated
+} HTSU_Result;
 
 #endif /* SNAPSHOT_H */

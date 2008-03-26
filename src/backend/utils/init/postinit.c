@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.181 2008/03/16 19:47:34 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.182 2008/03/26 21:10:39 alvherre Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -45,6 +45,7 @@
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 
 static bool FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace);

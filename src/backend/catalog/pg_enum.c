@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.5 2008/01/20 17:50:41 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.6 2008/03/26 21:10:37 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/pg_enum.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/tqual.h"
 
 static int	oid_cmp(const void *p1, const void *p2);
 

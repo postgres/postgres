@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.25 2008/03/24 19:47:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.26 2008/03/26 21:10:37 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 
 typedef enum

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.72 2008/03/26 16:20:48 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.73 2008/03/26 21:10:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,16 +53,6 @@ extern PGDLLIMPORT SnapshotData SnapshotToastData;
  */
 #define HeapTupleSatisfiesVisibility(tuple, snapshot, buffer) \
 	((*(snapshot)->satisfies) ((tuple)->t_data, snapshot, buffer))
-
-/* Result codes for HeapTupleSatisfiesUpdate */
-typedef enum
-{
-	HeapTupleMayBeUpdated,
-	HeapTupleInvisible,
-	HeapTupleSelfUpdated,
-	HeapTupleUpdated,
-	HeapTupleBeingUpdated
-} HTSU_Result;
 
 /* Result codes for HeapTupleSatisfiesVacuum */
 typedef enum

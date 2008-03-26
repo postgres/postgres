@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.75 2008/03/19 21:14:20 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.76 2008/03/26 21:10:38 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,6 +97,7 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 
 /*

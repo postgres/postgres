@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.115 2008/02/20 14:31:35 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.116 2008/03/26 21:10:37 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "utils/pg_rusage.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
+#include "utils/tqual.h"
 
 
 /* Data structure for Algorithm S from Knuth 3.4.2 */

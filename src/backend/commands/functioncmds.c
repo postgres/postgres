@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.89 2008/03/25 22:42:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.90 2008/03/26 21:10:37 alvherre Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -53,6 +53,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 
 static void AlterFunctionOwner_internal(Relation rel, HeapTuple tup,
