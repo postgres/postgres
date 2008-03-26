@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 25 21:49:49 EDT 2008
+Last updated:		Tue Mar 25 22:39:41 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -944,8 +944,7 @@ Server-Side Languages
 
 	  http://archives.postgresql.org/pgsql-hackers/2007-07/msg00436.php
 
-	o Consider invalidating the cache or keeping seperate cached
-	  copies when search_path changes
+	o Consider keeping seperate cached copies when search_path changes
 
 	  http://archives.postgresql.org/pgsql-hackers/2008-01/msg01009.php
 
