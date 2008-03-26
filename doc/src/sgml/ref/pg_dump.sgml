@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.99 2008/03/20 17:36:57 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.100 2008/03/26 14:32:22 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -296,19 +296,18 @@ PostgreSQL documentation
       <term><option>--ignore-version</></term>
       <listitem>
        <para>
-        Ignore version mismatch between
+        Ignore incompatible version check between
         <application>pg_dump</application> and the database server.
        </para>
 
        <para>
-        <application>pg_dump</application> can dump from servers running
-        previous releases of <productname>PostgreSQL</>, but very old
-        versions are not supported anymore (currently, those prior to 7.0).
         Dumping from a server newer than <application>pg_dump</application>
-        is likely not to work at all.
-        Use this option if you need to override the version check (and
-        if <application>pg_dump</application> then fails, don't say
-        you weren't warned).
+        is likely fail and is disabled by default.
+        Also, while <application>pg_dump</application> can dump from servers running
+        previous releases of <productname>PostgreSQL</>, some very old
+        versions are not supported (currently, pre-7.0).
+        Use this option if you need to override the version check, but
+        be prepared for <application>pg_dump</application> to fail.
        </para>
       </listitem>
      </varlistentry>

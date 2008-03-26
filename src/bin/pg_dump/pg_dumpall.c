@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.102 2008/03/20 17:42:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.103 2008/03/26 14:32:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -488,8 +488,7 @@ help(void)
 
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -f, --file=FILENAME      output file name\n"));
-	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"
-			 "                           pg_dumpall version\n"));
+	printf(_("  -i, --ignore-version     ignore server version mismatch\n"));
 	printf(_("  --help                   show this help, then exit\n"));
 	printf(_("  --version                output version information, then exit\n"));
 	printf(_("\nOptions controlling the output content:\n"));
@@ -1399,10 +1398,11 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		fprintf(stderr, _("server version: %s; %s version: %s\n"),
 				remoteversion_str, progname, PG_VERSION);
 		if (ignoreVersion)
-			fprintf(stderr, _("proceeding despite version mismatch\n"));
+			fprintf(stderr, _("ignoring server version mismatch\n"));
 		else
 		{
-			fprintf(stderr, _("aborting because of version mismatch  (Use the -i option to proceed anyway.)\n"));
+			fprintf(stderr, _("aborting because of server version mismatch\n"
+				"Use the -i option to bypass server version check, but be prepared for failure.\n"));
 			exit(1);
 		}
 	}

@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.77 2007/12/09 19:01:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.78 2008/03/26 14:32:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,10 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 		write_msg(NULL, "server version: %s; %s version: %s\n",
 				  remoteversion_str, progname, PG_VERSION);
 		if (ignoreVersion)
-			write_msg(NULL, "proceeding despite version mismatch\n");
+			write_msg(NULL, "ignoring server version mismatch\n");
 		else
-			die_horribly(AH, NULL, "aborting because of version mismatch  (Use the -i option to proceed anyway.)\n");
+			die_horribly(AH, NULL, "aborting because of server version mismatch\n"
+			"Use the -i option to bypass server version check, but be prepared for failure.\n");
 	}
 }
 

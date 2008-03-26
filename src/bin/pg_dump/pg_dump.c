@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.483 2008/03/20 17:36:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.484 2008/03/26 14:32:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -745,8 +745,7 @@ help(const char *progname)
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -f, --file=FILENAME      output file name\n"));
 	printf(_("  -F, --format=c|t|p       output file format (custom, tar, plain text)\n"));
-	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"
-			 "                           pg_dump version\n"));
+	printf(_("  -i, --ignore-version     ignore server version mismatch\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
 	printf(_("  -Z, --compress=0-9       compression level for compressed formats\n"));
 	printf(_("  --help                   show this help, then exit\n"));
