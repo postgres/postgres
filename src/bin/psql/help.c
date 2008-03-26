@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.122 2008/01/20 21:13:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.123 2008/03/26 15:24:56 mha Exp $
  */
 #include "postgres_fe.h"
 
@@ -177,14 +177,16 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\encoding [ENCODING]\n"
 					  "                 show or set client encoding\n"));
 	fprintf(output, _("  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"));
+	fprintf(output, _("  \\prompt [TEXT] NAME\n"
+				 "                 prompt user to set internal variable\n"));
+	fprintf(output, _("  \\password [USERNAME]\n"
+				 "                 securely change the password for a user\n"));
 	fprintf(output, _("  \\q             quit psql\n"));
 	fprintf(output, _("  \\set [NAME [VALUE]]\n"
 					  "                 set internal variable, or list all if no parameters\n"));
 	fprintf(output, _("  \\timing        toggle timing of commands (currently %s)\n"),
 			ON(pset.timing));
 	fprintf(output, _("  \\unset NAME    unset (delete) internal variable\n"));
-	fprintf(output, _("  \\prompt [TEXT] NAME\n"
-				 "                 prompt user to set internal variable\n"));
 	fprintf(output, _("  \\! [COMMAND]   execute command in shell or start interactive shell\n"));
 	fprintf(output, "\n");
 
