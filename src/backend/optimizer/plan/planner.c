@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.227 2008/03/18 22:04:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.228 2008/03/27 19:06:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -950,6 +950,17 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * right tlist, and it has no sort order.
 			 */
 			current_pathkeys = NIL;
+			/*
+			 * In fact, since we don't optimize grouped aggregates, it
+			 * needs no sort order --- there must be exactly one output row,
+			 * and so any ORDER BY or DISTINCT attached to the query is
+			 * useless and can be dropped.  Aside from saving useless cycles,
+			 * this protects us against problems with matching the hacked-up
+			 * tlist entries to sort clauses.
+			 */
+			Assert(!parse->groupClause);
+			parse->sortClause = NULL;
+			parse->distinctClause = NULL;
 		}
 		else
 		{
