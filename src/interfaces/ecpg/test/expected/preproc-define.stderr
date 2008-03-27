@@ -1,6 +1,6 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
+[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute line 36: QUERY: create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )     with 0 parameter on connection regress1 
 [NO_PID]: sqlca: code: 0, state: 00000

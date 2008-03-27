@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.362 2008/03/01 03:26:35 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.363 2008/03/27 07:56:00 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -635,10 +635,10 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	connection_object opt_server opt_port c_stuff c_stuff_item
 %type  <str>	user_name opt_user char_variable ora_user ident opt_reference
 %type  <str>	var_type_declarations quoted_ident_stringvar ECPGKeywords_rest
-%type  <str>	db_prefix server opt_options opt_connection_name c_list
+%type  <str>	db_prefix server connect_options opt_options opt_connection_name c_list
 %type  <str>	ECPGSetConnection ECPGTypedef c_args ECPGKeywords ECPGCKeywords
 %type  <str>	enum_type civar civarind ECPGCursorStmt PreparableStmt
-%type  <str>	ECPGFree ECPGDeclare ECPGVar at enum_definition
+%type  <str>	ECPGFree ECPGDeclare ECPGVar at enum_definition opt_opt_value
 %type  <str>	struct_union_type s_struct_union vt_declarations execute_rest
 %type  <str>	var_declaration type_declaration single_vt_declaration
 %type  <str>	ECPGSetAutocommit on_off variable_declarations ECPGDescribe
@@ -5166,7 +5166,7 @@ char_variable: cvariable
 		}
 		;
 
-opt_options: Op ColId
+opt_options: Op connect_options
 		{
 			if (strlen($1) == 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "incomplete statement");
@@ -5179,6 +5179,27 @@ opt_options: Op ColId
 		| /*EMPTY*/ 	{ $$ = EMPTY; }
 		;
 
+connect_options:  ColId opt_opt_value 
+			{ $$ = make2_str($1, $2); }
+	| ColId opt_opt_value Op connect_options
+			{
+				if (strlen($3) == 0)
+					mmerror(PARSE_ERROR, ET_ERROR, "incomplete statement");
+
+				if (strcmp($3, "&") != 0)
+					mmerror(PARSE_ERROR, ET_ERROR, "unrecognised token '%s'", $3);
+
+				$$ = cat_str(3, make2_str($1, $2), $3, $4);
+			}
+	;
+
+opt_opt_value: /*EMPTY*/
+			{ $$ = EMPTY; }
+		| '=' Iconst
+			{ $$ = make2_str(make_str("="), $2); }
+		| '=' IDENT
+			{ $$ = make2_str(make_str("="), $2); }
+		;
 /*
  * Declare a prepared cursor. The syntax is different from the standard
  * declare statement, so we create a new rule.

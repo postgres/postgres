@@ -1,6 +1,6 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT> 
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute line 23: QUERY: alter user connectuser  encrypted password 'connectpw' with 0 parameter on connection main 
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -10,54 +10,53 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on localhost port <DEFAULT> 
+[NO_PID]: ECPGconnect: opening database connectdb on localhost port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <DEFAULT> for user connectdb
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <DEFAULT>  for user connectdb
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT> 
+[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT>  
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <REGRESSION_PORT> for user connectdb
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <REGRESSION_PORT>  for user connectdb
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT> 
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT>  
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database <DEFAULT> on <DEFAULT> port <REGRESSION_PORT> for user connectdb
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on <DEFAULT> port <REGRESSION_PORT>  for user connectdb
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT> for user connectuser
+[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT>  for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection connectdb closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database  on localhost port <REGRESSION_PORT> for user connectdb
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <REGRESSION_PORT>  for user connectdb
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection  closed.
+[NO_PID]: ecpg_finish: Connection (null) closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT> for user connectuser
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection connectdb closed.
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT> for user connectuser
+[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT>  for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection connectdb closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT> for user connectuser
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT>  for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection connectdb closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database nonexistant on localhost port <REGRESSION_PORT> for user connectuser
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT> with options connect_timeout=14 for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: could not open database nonexistant on localhost port <REGRESSION_PORT> for user connectuser in line 62
-	FATAL:  database "nonexistant" does not exist
+[NO_PID]: ecpg_finish: Connection connectdb closed.
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database nonexistant on localhost port <REGRESSION_PORT>  for user connectuser
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: could not open database: FATAL:  database "nonexistant" does not exist
 
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection nonexistant closed.
@@ -66,10 +65,9 @@
 [NO_PID]: sqlca: code: -402, state: 08001
 [NO_PID]: raising sqlcode -220 in line 63, 'No such connection CURRENT in line 63.'.
 [NO_PID]: sqlca: code: -220, state: 08003
-[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT> for user connectuser
+[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT>  for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: could not open database connectdb on localhost port <REGRESSION_PORT> for user connectuser in line 66
-	could not connect to server: Connection refused
+[NO_PID]: ECPGconnect: could not open database: could not connect to server: Connection refused
 	Is the server running on host "localhost" and accepting
 	TCP/IP connections on port 20?
 
@@ -78,5 +76,5 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode -402 in line 66, 'Could not connect to database connectdb in line 66.'.
 [NO_PID]: sqlca: code: -402, state: 08001
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT> for user connectuser
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT>  for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000

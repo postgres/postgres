@@ -118,7 +118,7 @@ main(void)
 #line 56 "test1.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost:@TEMP_PORT@/connectdb" , "connectuser" , NULL , NULL, 0); }
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost:@TEMP_PORT@/connectdb?connect_timeout=14" , "connectuser" , NULL , NULL, 0); }
 #line 58 "test1.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");}

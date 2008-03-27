@@ -55,7 +55,7 @@ exec sql end declare section;
 	exec sql connect to unix:postgresql://localhost:@TEMP_PORT@/connectdb user connectuser using "connectpw";
 	exec sql disconnect;
 
-	exec sql connect to unix:postgresql://localhost:@TEMP_PORT@/connectdb user connectuser;
+	exec sql connect to unix:postgresql://localhost:@TEMP_PORT@/connectdb?connect_timeout=14 user connectuser;
 	exec sql disconnect;
 
 	/* wrong db */

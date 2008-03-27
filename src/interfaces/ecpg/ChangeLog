@@ -2336,6 +2336,11 @@ Thu, 20 Mar 2008 16:54:27 +0100
 Tue, 25 Mar 2008 13:42:26 +0100
 
 	- Should list ECPGget_PGconn in exports.txt.
+
+Wed, 26 Mar 2008 17:02:08 +0100
+
+	- Moved from PQsetdbLogin to PQconnectDB.
+	- Correctly parse connect options.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.
