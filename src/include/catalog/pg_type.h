@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.192 2008/03/19 18:38:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.193 2008/03/27 03:57:34 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -19,14 +19,7 @@
 #ifndef PG_TYPE_H
 #define PG_TYPE_H
 
-#include "nodes/nodes.h"
-
-/* ----------------
- *		postgres.h contains the system type definitions and the
- *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
- *		can be read by both genbki.sh and the C compiler.
- * ----------------
- */
+#include "catalog/genbki.h"
 
 /* ----------------
  *		pg_type definition.  cpp turns this into
@@ -630,64 +623,5 @@ DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p t \054 0 0 0 anyenum_in any
 	 (typid) == ANYARRAYOID || \
 	 (typid) == ANYNONARRAYOID || \
 	 (typid) == ANYENUMOID)
-
-/*
- * prototypes for functions in pg_type.c
- */
-extern Oid	TypeShellMake(const char *typeName, Oid typeNamespace);
-
-extern Oid TypeCreate(Oid newTypeOid,
-		   const char *typeName,
-		   Oid typeNamespace,
-		   Oid relationOid,
-		   char relationKind,
-		   int16 internalSize,
-		   char typeType,
-		   char typDelim,
-		   Oid inputProcedure,
-		   Oid outputProcedure,
-		   Oid receiveProcedure,
-		   Oid sendProcedure,
-		   Oid typmodinProcedure,
-		   Oid typmodoutProcedure,
-		   Oid analyzeProcedure,
-		   Oid elementType,
-		   bool isImplicitArray,
-		   Oid arrayType,
-		   Oid baseType,
-		   const char *defaultTypeValue,
-		   char *defaultTypeBin,
-		   bool passedByValue,
-		   char alignment,
-		   char storage,
-		   int32 typeMod,
-		   int32 typNDims,
-		   bool typeNotNull);
-
-extern void GenerateTypeDependencies(Oid typeNamespace,
-						 Oid typeObjectId,
-						 Oid relationOid,
-						 char relationKind,
-						 Oid owner,
-						 Oid inputProcedure,
-						 Oid outputProcedure,
-						 Oid receiveProcedure,
-						 Oid sendProcedure,
-						 Oid typmodinProcedure,
-						 Oid typmodoutProcedure,
-						 Oid analyzeProcedure,
-						 Oid elementType,
-						 bool isImplicitArray,
-						 Oid baseType,
-						 Node *defaultExpr,
-						 bool rebuild);
-
-extern void RenameTypeInternal(Oid typeOid, const char *newTypeName,
-		   Oid typeNamespace);
-
-extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
-
-extern bool moveArrayTypeName(Oid typeOid, const char *typeName,
-				  Oid typeNamespace);
 
 #endif   /* PG_TYPE_H */

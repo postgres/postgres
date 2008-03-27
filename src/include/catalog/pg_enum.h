@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_enum.h,v 1.3 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_enum.h,v 1.4 2008/03/27 03:57:34 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -21,14 +21,8 @@
 #ifndef PG_ENUM_H
 #define PG_ENUM_H
 
+#include "catalog/genbki.h"
 #include "nodes/pg_list.h"
-
-/* ----------------
- *		postgres.h contains the system type definitions and the
- *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
- *		can be read by both genbki.sh and the C compiler.
- * ----------------
- */
 
 /* ----------------
  *		pg_enum definition.  cpp turns this into

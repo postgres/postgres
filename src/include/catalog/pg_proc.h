@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.484 2008/03/23 00:24:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.485 2008/03/27 03:57:34 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -23,12 +23,7 @@
 #ifndef PG_PROC_H
 #define PG_PROC_H
 
-/* ----------------
- *		postgres.h contains the system type definitions and the
- *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
- *		can be read by both genbki.sh and the C compiler.
- * ----------------
- */
+#include "catalog/genbki.h"
 
 /* ----------------
  *		pg_proc definition.  cpp turns this into
@@ -4442,32 +4437,5 @@ DESCR("is txid visible in snapshot?");
 #define PROARGMODE_IN		'i'
 #define PROARGMODE_OUT		'o'
 #define PROARGMODE_INOUT	'b'
-
-
-/*
- * prototypes for functions in pg_proc.c
- */
-extern Oid ProcedureCreate(const char *procedureName,
-				Oid procNamespace,
-				bool replace,
-				bool returnsSet,
-				Oid returnType,
-				Oid languageObjectId,
-				Oid languageValidator,
-				const char *prosrc,
-				const char *probin,
-				bool isAgg,
-				bool security_definer,
-				bool isStrict,
-				char volatility,
-				oidvector *parameterTypes,
-				Datum allParameterTypes,
-				Datum parameterModes,
-				Datum parameterNames,
-				Datum proconfig,
-				float4 procost,
-				float4 prorows);
-
-extern bool function_parse_error_transpose(const char *prosrc);
 
 #endif   /* PG_PROC_H */

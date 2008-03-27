@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.116 2008/03/26 21:10:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.117 2008/03/27 03:57:33 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -43,6 +43,7 @@
 #include "catalog/pg_enum.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_type_fn.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"

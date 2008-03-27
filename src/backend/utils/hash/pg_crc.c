@@ -19,12 +19,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.18 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.19 2008/03/27 03:57:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
 
+/* Use c.h so that this file can be built in either frontend or backend */
+#include "c.h"
 
 
 /*

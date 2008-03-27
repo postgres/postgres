@@ -28,7 +28,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.79 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.80 2008/03/27 03:57:34 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -39,12 +39,7 @@
 #ifndef PG_OPCLASS_H
 #define PG_OPCLASS_H
 
-/* ----------------
- *		postgres.h contains the system type definitions and the
- *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
- *		can be read by both genbki.sh and the C compiler.
- * ----------------
- */
+#include "catalog/genbki.h"
 
 /* ----------------
  *		pg_opclass definition.	cpp turns this into

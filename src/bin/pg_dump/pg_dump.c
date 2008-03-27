@@ -12,20 +12,14 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.484 2008/03/26 14:32:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.485 2008/03/27 03:57:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-/*
- * Although this is not a backend module, we must include postgres.h anyway
- * so that we can include a bunch of backend include files.  pg_dump has
- * never pretended to be very independent of the backend anyhow ...
- */
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #include <unistd.h>
-
 #include <ctype.h>
 #ifdef ENABLE_NLS
 #include <locale.h>
@@ -40,12 +34,12 @@
 int			optreset;
 #endif
 
+#include "access/attnum.h"
 #include "access/htup.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
-#include "commands/sequence.h"
 #include "libpq/libpq-fs.h"
 
 #include "pg_backup_archiver.h"

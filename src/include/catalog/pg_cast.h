@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.38 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.39 2008/03/27 03:57:34 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -21,6 +21,13 @@
 #ifndef PG_CAST_H
 #define PG_CAST_H
 
+#include "catalog/genbki.h"
+
+/* ----------------
+ *		pg_cast definition.  cpp turns this into
+ *		typedef struct FormData_pg_cast
+ * ----------------
+ */
 #define CastRelationId	2605
 
 CATALOG(pg_cast,2605)

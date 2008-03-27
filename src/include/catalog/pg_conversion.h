@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_conversion.h,v 1.20 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_conversion.h,v 1.21 2008/03/27 03:57:34 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -19,12 +19,7 @@
 #ifndef PG_CONVERSION_H
 #define PG_CONVERSION_H
 
-/* ----------------
- *		postgres.h contains the system type definitions and the
- *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
- *		can be read by both genbki.sh and the C compiler.
- * ----------------
- */
+#include "catalog/genbki.h"
 
 /* ----------------------------------------------------------------
  *		pg_conversion definition.
@@ -78,19 +73,5 @@ typedef FormData_pg_conversion *Form_pg_conversion;
  * initial contents of pg_conversion
  * ---------------
  */
-
-/*
- * prototypes for functions in pg_conversion.c
- */
-#include "nodes/parsenodes.h"
-
-extern Oid ConversionCreate(const char *conname, Oid connamespace,
-				 Oid conowner,
-				 int32 conforencoding, int32 contoencoding,
-				 Oid conproc, bool def);
-extern void ConversionDrop(Oid conversionOid, DropBehavior behavior);
-extern void RemoveConversionById(Oid conversionOid);
-extern Oid	FindConversion(const char *conname, Oid connamespace);
-extern Oid	FindDefaultConversion(Oid connamespace, int32 for_encoding, int32 to_encoding);
 
 #endif   /* PG_CONVERSION_H */

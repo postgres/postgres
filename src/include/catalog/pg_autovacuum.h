@@ -6,19 +6,14 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_autovacuum.h,v 1.8 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_autovacuum.h,v 1.9 2008/03/27 03:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PG_AUTOVACUUM_H
 #define PG_AUTOVACUUM_H
 
-/* ----------------
- *		postgres.h contains the system type definitions and the
- *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
- *		can be read by both genbki.sh and the C compiler.
- * ----------------
- */
+#include "catalog/genbki.h"
 
 /* ----------------
  *		pg_autovacuum definition.	cpp turns this into
@@ -26,6 +21,7 @@
  * ----------------
  */
 #define AutovacuumRelationId	1248
+
 CATALOG(pg_autovacuum,1248) BKI_WITHOUT_OIDS
 {
 	Oid			vacrelid;		/* OID of table */

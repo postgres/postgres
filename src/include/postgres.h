@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.88 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.89 2008/03/27 03:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
  *		1)		variable-length datatypes (TOAST support)
  *		2)		datum type + support macros
  *		3)		exception handling definitions
- *		4)		genbki macros used by catalog/pg_xxx.h files
  *
  *	 NOTES
  *
@@ -707,22 +706,5 @@ extern PGDLLIMPORT bool assert_enabled;
 extern int ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
 					 const char *fileName, int lineNumber);
-
-/* ----------------------------------------------------------------
- *				Section 4: genbki macros used by catalog/pg_xxx.h files
- * ----------------------------------------------------------------
- */
-#define CATALOG(name,oid)	typedef struct CppConcat(FormData_,name)
-
-#define BKI_BOOTSTRAP
-#define BKI_SHARED_RELATION
-#define BKI_WITHOUT_OIDS
-
-/* these need to expand into some harmless, repeatable declaration */
-#define DATA(x)   extern int no_such_variable
-#define DESCR(x)  extern int no_such_variable
-#define SHDESCR(x) extern int no_such_variable
-
-typedef int4 aclitem;			/* PHONY definition for catalog use only */
 
 #endif   /* POSTGRES_H */
