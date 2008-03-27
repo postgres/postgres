@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 25 22:39:41 EDT 2008
+Last updated:		Thu Mar 27 16:30:58 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1947,6 +1947,7 @@ Exotic Features
 
   http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php
   http://archives.postgresql.org/pgsql-hackers/2006-10/msg01527.php
+  http://archives.postgresql.org/pgsql-hackers/2008-03/msg00849.php
 
 * Add autonomous transactions
 
