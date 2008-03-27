@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.65 2007/08/21 21:08:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.66 2008/03/27 17:24:16 momjian Exp $ -->
 
 <part id="reference">
  <title>Reference</title>
@@ -211,7 +211,6 @@
   </partintro>
 
    &initdb;
-   &ipcclean;
    &pgControldata;
    &pgCtl;
    &pgResetxlog;
