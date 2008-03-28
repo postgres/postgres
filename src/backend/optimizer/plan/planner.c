@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.228 2008/03/27 19:06:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.229 2008/03/28 02:00:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -835,6 +835,21 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		MemSet(&agg_counts, 0, sizeof(AggClauseCounts));
 
+		/*
+		 * If the query involves ungrouped aggregation, then it can produce
+		 * at most one row, so we can ignore any ORDER BY or DISTINCT
+		 * request.  This isn't all that exciting as an optimization, but it
+		 * prevents a corner case when optimize_minmax_aggregates succeeds:
+		 * if ORDER BY or DISTINCT were present we'd try, and fail, to match
+		 * the EquivalenceClasses we're about to build with the modified
+		 * targetlist entries it will create.
+		 */
+		if (parse->hasAggs && parse->groupClause == NIL)
+		{
+			parse->sortClause = NIL;
+			parse->distinctClause = NIL;
+		}
+
 		/* Preprocess targetlist */
 		tlist = preprocess_targetlist(root, tlist);
 
@@ -950,17 +965,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * right tlist, and it has no sort order.
 			 */
 			current_pathkeys = NIL;
-			/*
-			 * In fact, since we don't optimize grouped aggregates, it
-			 * needs no sort order --- there must be exactly one output row,
-			 * and so any ORDER BY or DISTINCT attached to the query is
-			 * useless and can be dropped.  Aside from saving useless cycles,
-			 * this protects us against problems with matching the hacked-up
-			 * tlist entries to sort clauses.
-			 */
-			Assert(!parse->groupClause);
-			parse->sortClause = NULL;
-			parse->distinctClause = NULL;
 		}
 		else
 		{
