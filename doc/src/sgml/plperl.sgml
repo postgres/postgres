@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.67 2008/01/25 15:28:35 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.68 2008/03/28 00:21:55 tgl Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -17,12 +17,14 @@
    <ulink url="http://www.perl.com">Perl programming language</ulink>.
   </para>
 
-  <para> The usual advantage to using PL/Perl is that this allows use,
+  <para>
+   The main advantage to using PL/Perl is that this allows use,
    within stored functions, of the manyfold <quote>string
-    munging</quote> operators and functions available for Perl.  Parsing
+   munging</quote> operators and functions available for Perl.  Parsing
    complex strings might be easier using Perl than it is with the
-   string functions and control structures provided in PL/pgSQL.</para>
-  
+   string functions and control structures provided in PL/pgSQL.
+  </para>
+
   <para>
    To install PL/Perl in a particular database, use
    <literal>createlang plperl <replaceable>dbname</></literal>.
@@ -739,7 +741,8 @@ $$ LANGUAGE plperl;
      <term><literal>$_TD-&gt;{event}</literal></term>
      <listitem>
       <para>
-       Trigger event: <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>, or <literal>UNKNOWN</>
+       Trigger event: <literal>INSERT</>, <literal>UPDATE</>,
+       <literal>DELETE</>, <literal>TRUNCATE</>, or <literal>UNKNOWN</>
       </para>
      </listitem>
     </varlistentry>
@@ -822,14 +825,14 @@ $$ LANGUAGE plperl;
   </para>
 
   <para>
-   Triggers can return one of the following:
+   Row-level triggers can return one of the following:
 
    <variablelist>
     <varlistentry>
      <term><literal>return;</literal></term>
      <listitem>
       <para>
-       Execute the statement
+       Execute the operation
       </para>
      </listitem>
     </varlistentry>
@@ -838,7 +841,7 @@ $$ LANGUAGE plperl;
      <term><literal>"SKIP"</literal></term>
      <listitem>
       <para>
-       Don't execute the statement
+       Don't execute the operation
       </para>
      </listitem>
     </varlistentry>

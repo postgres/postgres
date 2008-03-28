@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.230 2008/03/26 21:10:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.231 2008/03/28 00:21:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,6 +178,18 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("multiple UPDATE events specified")));
 				TRIGGER_SETT_UPDATE(tgtype);
+				break;
+			case 't':
+				if (TRIGGER_FOR_TRUNCATE(tgtype))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("multiple TRUNCATE events specified")));
+				TRIGGER_SETT_TRUNCATE(tgtype);
+				/* Disallow ROW-level TRUNCATE triggers */
+				if (stmt->row)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("TRUNCATE FOR EACH ROW triggers are not supported")));
 				break;
 			default:
 				elog(ERROR, "unrecognized trigger event: %d",
@@ -1299,6 +1311,15 @@ InsertTrigger(TriggerDesc *trigdesc, Trigger *trigger, int indx)
 		(*tp)[n[TRIGGER_EVENT_UPDATE]] = indx;
 		(n[TRIGGER_EVENT_UPDATE])++;
 	}
+
+	if (TRIGGER_FOR_TRUNCATE(trigger->tgtype))
+	{
+		tp = &(t[TRIGGER_EVENT_TRUNCATE]);
+		if (*tp == NULL)
+			*tp = (int *) palloc(trigdesc->numtriggers * sizeof(int));
+		(*tp)[n[TRIGGER_EVENT_TRUNCATE]] = indx;
+		(n[TRIGGER_EVENT_TRUNCATE])++;
+	}
 }
 
 /*
@@ -2028,6 +2049,75 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 							  true, trigtuple, newtuple);
 		heap_freetuple(trigtuple);
 	}
+}
+
+void
+ExecBSTruncateTriggers(EState *estate, ResultRelInfo *relinfo)
+{
+	TriggerDesc *trigdesc;
+	int			ntrigs;
+	int		   *tgindx;
+	int			i;
+	TriggerData LocTriggerData;
+
+	trigdesc = relinfo->ri_TrigDesc;
+
+	if (trigdesc == NULL)
+		return;
+
+	ntrigs = trigdesc->n_before_statement[TRIGGER_EVENT_TRUNCATE];
+	tgindx = trigdesc->tg_before_statement[TRIGGER_EVENT_TRUNCATE];
+
+	if (ntrigs == 0)
+		return;
+
+	LocTriggerData.type = T_TriggerData;
+	LocTriggerData.tg_event = TRIGGER_EVENT_TRUNCATE |
+		TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
+	LocTriggerData.tg_trigtuple = NULL;
+	LocTriggerData.tg_newtuple = NULL;
+	LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
+	LocTriggerData.tg_newtuplebuf = InvalidBuffer;
+	for (i = 0; i < ntrigs; i++)
+	{
+		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
+		HeapTuple	newtuple;
+
+		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
+		else	/* ORIGIN or LOCAL role */
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
+		LocTriggerData.tg_trigger = trigger;
+		newtuple = ExecCallTriggerFunc(&LocTriggerData,
+									   tgindx[i],
+									   relinfo->ri_TrigFunctions,
+									   relinfo->ri_TrigInstrument,
+									   GetPerTupleMemoryContext(estate));
+
+		if (newtuple)
+			ereport(ERROR,
+		 			(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+		 		  errmsg("BEFORE STATEMENT trigger cannot return a value")));
+	}
+}
+
+void
+ExecASTruncateTriggers(EState *estate, ResultRelInfo *relinfo)
+{
+	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
+
+	if (trigdesc && trigdesc->n_after_statement[TRIGGER_EVENT_TRUNCATE] > 0)
+		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_TRUNCATE,
+							  false, NULL, NULL);
 }
 
 
@@ -3570,6 +3660,12 @@ AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 
 	if (afterTriggers == NULL)
 		elog(ERROR, "AfterTriggerSaveEvent() called outside of transaction");
+
+	/*
+	 * event is used both as a bitmask and an array offset,
+	 * so make sure we don't walk off the edge of our arrays
+	 */
+	Assert(event >= 0 && event < TRIGGER_NUM_EVENT_CLASSES);
 
 	/*
 	 * Get the CTID's of OLD and NEW

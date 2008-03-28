@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.47 2007/12/03 23:49:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.48 2008/03/28 00:21:55 tgl Exp $ -->
 
  <chapter id="pltcl">
   <title>PL/Tcl - Tcl Procedural Language</title>
@@ -569,7 +569,7 @@ SELECT 'doesn''t' AS ret
        <listitem>
         <para>
          The string <literal>BEFORE</> or <literal>AFTER</> depending on the
-         type of trigger call.
+         type of trigger event.
         </para>
        </listitem>
       </varlistentry>
@@ -579,7 +579,7 @@ SELECT 'doesn''t' AS ret
        <listitem>
         <para>
          The string <literal>ROW</> or <literal>STATEMENT</> depending on the
-         type of trigger call.
+         type of trigger event.
         </para>
        </listitem>
       </varlistentry>
@@ -588,8 +588,9 @@ SELECT 'doesn''t' AS ret
        <term><varname>$TG_op</varname></term>
        <listitem>
         <para>
-         The string <literal>INSERT</>, <literal>UPDATE</>, or
-         <literal>DELETE</> depending on the type of trigger call.
+         The string <literal>INSERT</>, <literal>UPDATE</>,
+         <literal>DELETE</>, or <literal>TRUNCATE</> depending on the type of
+         trigger event.
         </para>
        </listitem>
       </varlistentry>
@@ -602,6 +603,7 @@ SELECT 'doesn''t' AS ret
          row for <command>INSERT</> or <command>UPDATE</> actions, or
          empty for <command>DELETE</>.  The array is indexed by column
          name.  Columns that are null will not appear in the array.
+         This is not set for statement-level triggers.
         </para>
        </listitem>
       </varlistentry>
@@ -614,6 +616,7 @@ SELECT 'doesn''t' AS ret
          row for <command>UPDATE</> or <command>DELETE</> actions, or
          empty for <command>INSERT</>.  The array is indexed by column
          name.  Columns that are null will not appear in the array.
+         This is not set for statement-level triggers.
         </para>
        </listitem>
       </varlistentry>
@@ -644,6 +647,7 @@ SELECT 'doesn''t' AS ret
      only.) Needless to say that all this is only meaningful when the trigger
      is <literal>BEFORE</> and <command>FOR EACH ROW</>; otherwise the return value is ignored.
     </para>
+
     <para>
      Here's a little example trigger procedure that forces an integer value
      in a table to keep track of the number of updates that are performed on the

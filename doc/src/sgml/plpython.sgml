@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.38 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.39 2008/03/28 00:21:55 tgl Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -381,31 +381,34 @@ $$ LANGUAGE plpythonu;
 
   <para>
    When a function is used as a trigger, the dictionary
-   <literal>TD</literal> contains trigger-related values.  The trigger
-   rows are in <literal>TD["new"]</> and/or <literal>TD["old"]</>
-   depending on the trigger event.  <literal>TD["event"]</> contains
+   <literal>TD</literal> contains trigger-related values.
+   <literal>TD["event"]</> contains
    the event as a string (<literal>INSERT</>, <literal>UPDATE</>,
-   <literal>DELETE</>, or <literal>UNKNOWN</>).
+   <literal>DELETE</>, <literal>TRUNCATE</>, or <literal>UNKNOWN</>).
    <literal>TD["when"]</> contains one of <literal>BEFORE</>,
-   <literal>AFTER</>, and <literal>UNKNOWN</>.
+   <literal>AFTER</>, or <literal>UNKNOWN</>.
    <literal>TD["level"]</> contains one of <literal>ROW</>,
-   <literal>STATEMENT</>, and <literal>UNKNOWN</>.
+   <literal>STATEMENT</>, or <literal>UNKNOWN</>.
+   For a row-level trigger, the trigger
+   rows are in <literal>TD["new"]</> and/or <literal>TD["old"]</>
+   depending on the trigger event.
    <literal>TD["name"]</> contains the trigger name,
    <literal>TD["table_name"]</> contains the name of the table on which the trigger occurred,
    <literal>TD["table_schema"]</> contains the schema of the table on which the trigger occurred,
-   <literal>TD["name"]</> contains the trigger name, and
-   <literal>TD["relid"]</> contains the OID of the table on
+   and <literal>TD["relid"]</> contains the OID of the table on
    which the trigger occurred.  If the <command>CREATE TRIGGER</> command
    included arguments, they are available in <literal>TD["args"][0]</> to
-   <literal>TD["args"][(<replaceable>n</>-1)]</>.
+   <literal>TD["args"][<replaceable>n</>-1]</>.
   </para>
 
   <para>
-   If <literal>TD["when"]</literal> is <literal>BEFORE</>, you can
+   If <literal>TD["when"]</literal> is <literal>BEFORE</> and
+   <literal>TD["level"]</literal> is <literal>ROW</>, you can
    return <literal>None</literal> or <literal>"OK"</literal> from the
    Python function to indicate the row is unmodified,
    <literal>"SKIP"</> to abort the event, or <literal>"MODIFY"</> to
    indicate you've modified the row.
+   Otherwise the return value is ignored.
   </para>
  </sect1>
 

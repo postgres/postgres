@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.104 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.105 2008/03/28 00:21:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,9 +71,10 @@ typedef struct TriggerDesc
 	/*
 	 * Index data to identify which triggers are which.  Since each trigger
 	 * can appear in more than one class, for each class we provide a list of
-	 * integer indexes into the triggers array.
+	 * integer indexes into the triggers array.  The class codes are defined
+	 * by TRIGGER_EVENT_xxx macros in commands/trigger.h.
 	 */
-#define TRIGGER_NUM_EVENT_CLASSES  3
+#define TRIGGER_NUM_EVENT_CLASSES  4
 
 	uint16		n_before_statement[TRIGGER_NUM_EVENT_CLASSES];
 	uint16		n_before_row[TRIGGER_NUM_EVENT_CLASSES];

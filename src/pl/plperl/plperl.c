@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.138 2008/03/25 22:42:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.139 2008/03/28 00:21:56 tgl Exp $
  *
  **********************************************************************/
 
@@ -689,6 +689,8 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 												   tupdesc));
 		}
 	}
+	else if (TRIGGER_FIRED_BY_TRUNCATE(tdata->tg_event))
+		event = "TRUNCATE";
 	else
 		event = "UNKNOWN";
 
@@ -1394,6 +1396,8 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 			retval = (Datum) trigdata->tg_newtuple;
 		else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
+			retval = (Datum) trigdata->tg_trigtuple;
+		else if (TRIGGER_FIRED_BY_TRUNCATE(trigdata->tg_event))
 			retval = (Datum) trigdata->tg_trigtuple;
 		else
 			retval = (Datum) 0; /* can this happen? */

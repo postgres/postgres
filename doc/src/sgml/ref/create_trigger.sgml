@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.47 2007/02/01 19:10:24 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.48 2008/03/28 00:21:55 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -25,7 +25,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
     EXECUTE PROCEDURE <replaceable class="PARAMETER">funcname</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
 </synopsis>
  </refsynopsisdiv>
- 
+
  <refsect1>
   <title>Description</title>
 
@@ -66,6 +66,12 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
   </para>
 
   <para>
+   In addition, triggers may be defined to fire for a
+   <command>TRUNCATE</command>, though only
+   <literal>FOR EACH STATEMENT</literal>.
+  </para>
+
+  <para>
    If multiple triggers of the same kind are defined for the same event,
    they will be fired in alphabetical order by name.
   </para>
@@ -80,7 +86,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
    Refer to <xref linkend="triggers"> for more information about triggers.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -110,10 +116,10 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
     <term><replaceable class="parameter">event</replaceable></term>
     <listitem>
      <para>
-      One of <command>INSERT</command>, <command>UPDATE</command>, or
-      <command>DELETE</command>; this specifies the event that will
-      fire the trigger. Multiple events can be specified using
-      <literal>OR</literal>.
+      One of <command>INSERT</command>, <command>UPDATE</command>,
+      <command>DELETE</command>, or <command>TRUNCATE</command>;
+      this specifies the event that will fire the trigger. Multiple
+      events can be specified using <literal>OR</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -180,17 +186,17 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
   </para>
 
   <para>
+   Use <xref linkend="sql-droptrigger"
+   endterm="sql-droptrigger-title"> to remove a trigger.
+  </para>
+
+  <para>
    In <productname>PostgreSQL</productname> versions before 7.3, it was
    necessary to declare trigger functions as returning the placeholder
    type <type>opaque</>, rather than <type>trigger</>.  To support loading
    of old dump files, <command>CREATE TRIGGER</> will accept a function
    declared as returning <type>opaque</>, but it will issue a notice and
    change the function's declared return type to <type>trigger</>.
-  </para>
-
-  <para>
-   Use <xref linkend="sql-droptrigger"
-   endterm="sql-droptrigger-title"> to remove a trigger.
   </para>
  </refsect1>
 
@@ -204,7 +210,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
 
  <refsect1 id="SQL-CREATETRIGGER-compatibility">
   <title>Compatibility</title>
-  
+
   <para>
    The <command>CREATE TRIGGER</command> statement in
    <productname>PostgreSQL</productname> implements a subset of the
@@ -267,6 +273,12 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
    <literal>OR</literal> is a <productname>PostgreSQL</> extension of
    the SQL standard.
   </para>
+
+  <para>
+   The ability to fire triggers for <command>TRUNCATE</command> is a
+   <productname>PostgreSQL</> extension of the SQL standard.
+  </para>
+
  </refsect1>
 
  <refsect1>

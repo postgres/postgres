@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.118 2008/03/25 22:42:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.119 2008/03/28 00:21:56 tgl Exp $
  *
  **********************************************************************/
 
@@ -824,6 +824,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 				Tcl_DStringAppendElement(&tcl_cmd, "DELETE");
 			else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 				Tcl_DStringAppendElement(&tcl_cmd, "UPDATE");
+			else if (TRIGGER_FIRED_BY_TRUNCATE(trigdata->tg_event))
+				Tcl_DStringAppendElement(&tcl_cmd, "TRUNCATE");
 			else
 				elog(ERROR, "unrecognized OP tg_event: %u", trigdata->tg_event);
 

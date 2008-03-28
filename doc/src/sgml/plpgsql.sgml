@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.124 2008/03/23 00:24:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.125 2008/03/28 00:21:55 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -2785,9 +2785,9 @@ RAISE EXCEPTION 'Nonexistent ID --> %', user_id;
      <listitem>
       <para>
        Data type <type>text</type>; a string of
-       <literal>INSERT</literal>, <literal>UPDATE</literal>, or
-       <literal>DELETE</literal> telling for which operation the
-       trigger was fired.
+       <literal>INSERT</literal>, <literal>UPDATE</literal>,
+       <literal>DELETE</literal>, or <literal>TRUNCATE</>
+       telling for which operation the trigger was fired.
       </para>
      </listitem>
     </varlistentry>

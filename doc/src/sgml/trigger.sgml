@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.51 2007/12/03 23:49:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.52 2008/03/28 00:21:55 tgl Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -36,14 +36,15 @@
     performed.  Triggers can be defined to execute either before or after any
     <command>INSERT</command>, <command>UPDATE</command>, or
     <command>DELETE</command> operation, either once per modified row,
-    or once per <acronym>SQL</acronym> statement.
-    If a trigger event occurs, the trigger's function is called
-    at the appropriate time to handle the event.
+    or once per <acronym>SQL</acronym> statement.  Triggers can also fire
+    for <command>TRUNCATE</command> statements.  If a trigger event occurs,
+    the trigger's function is called at the appropriate time to handle the
+    event.
    </para>
 
    <para>
     The trigger function must be defined before the trigger itself can be
-    created.  The trigger function must be declared as a 
+    created.  The trigger function must be declared as a
     function taking no arguments and returning type <literal>trigger</>.
     (The trigger function receives its input through a specially-passed
     <structname>TriggerData</> structure, not in the form of ordinary function
@@ -69,7 +70,8 @@
     in the execution of any applicable per-statement triggers. These
     two types of triggers are sometimes called <firstterm>row-level</>
     triggers and <firstterm>statement-level</> triggers,
-    respectively.
+    respectively. Triggers on <command>TRUNCATE</command> may only be
+    defined at statement-level.
    </para>
 
    <para>
@@ -398,6 +400,15 @@ typedef struct TriggerData
            </para>
           </listitem>
          </varlistentry>
+
+         <varlistentry>
+          <term><literal>TRIGGER_FIRED_BY_TRUNCATE(tg_event)</literal></term>
+          <listitem>
+           <para>
+            Returns true if the trigger was fired by a <command>TRUNCATE</command> command.
+           </para>
+          </listitem>
+         </varlistentry>
         </variablelist>
        </para>
       </listitem>
@@ -630,10 +641,10 @@ CREATE FUNCTION trigf() RETURNS trigger
     AS '<replaceable>filename</>'
     LANGUAGE C;
 
-CREATE TRIGGER tbefore BEFORE INSERT OR UPDATE OR DELETE ON ttest 
+CREATE TRIGGER tbefore BEFORE INSERT OR UPDATE OR DELETE ON ttest
     FOR EACH ROW EXECUTE PROCEDURE trigf();
 
-CREATE TRIGGER tafter AFTER INSERT OR UPDATE OR DELETE ON ttest 
+CREATE TRIGGER tafter AFTER INSERT OR UPDATE OR DELETE ON ttest
     FOR EACH ROW EXECUTE PROCEDURE trigf();
 </programlisting>
    </para>

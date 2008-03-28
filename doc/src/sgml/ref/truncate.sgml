@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.24 2007/05/11 19:40:08 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.25 2008/03/28 00:21:55 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -36,7 +36,7 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
    operation. This is most useful on large tables.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -91,8 +91,16 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
   </para>
 
   <para>
-   <command>TRUNCATE</> will not run any <literal>ON DELETE</literal>
-   triggers that might exist for the tables.
+   <command>TRUNCATE</> will not fire any <literal>ON DELETE</literal>
+   triggers that might exist for the tables.  But it will fire
+   <literal>ON TRUNCATE</literal> triggers.
+   If <literal>ON TRUNCATE</> triggers are defined for any of
+   the tables, then all <literal>BEFORE TRUNCATE</literal> triggers are
+   fired before any truncation happens, and all <literal>AFTER
+   TRUNCATE</literal> triggers are fired after the last truncation is
+   performed.  The triggers will fire in the order that the tables are
+   to be processed (first those listed in the command, and then any
+   that were added due to cascading).
   </para>
 
   <warning>

@@ -145,3 +145,81 @@ NOTICE:  drop cascades to constraint trunc_e_a_fkey on table trunc_e
 NOTICE:  drop cascades to constraint trunc_b_a_fkey on table trunc_b
 NOTICE:  drop cascades to constraint trunc_e_b_fkey on table trunc_e
 NOTICE:  drop cascades to constraint trunc_d_a_fkey on table trunc_d
+-- Test ON TRUNCATE triggers
+CREATE TABLE trunc_trigger_test (f1 int, f2 text, f3 text);
+CREATE TABLE trunc_trigger_log (tgop text, tglevel text, tgwhen text,
+        tgargv text, tgtable name, rowcount bigint);
+CREATE FUNCTION trunctrigger() RETURNS trigger as $$
+declare c bigint;
+begin
+    execute 'select count(*) from ' || quote_ident(tg_table_name) into c;
+    insert into trunc_trigger_log values
+      (TG_OP, TG_LEVEL, TG_WHEN, TG_ARGV[0], tg_table_name, c);
+    return null;
+end;
+$$ LANGUAGE plpgsql;
+-- basic before trigger
+INSERT INTO trunc_trigger_test VALUES(1, 'foo', 'bar'), (2, 'baz', 'quux');
+CREATE TRIGGER t
+BEFORE TRUNCATE ON trunc_trigger_test
+FOR EACH STATEMENT 
+EXECUTE PROCEDURE trunctrigger('before trigger truncate');
+SELECT count(*) as "Row count in test table" FROM trunc_trigger_test;
+ Row count in test table 
+-------------------------
+                       2
+(1 row)
+
+SELECT * FROM trunc_trigger_log;
+ tgop | tglevel | tgwhen | tgargv | tgtable | rowcount 
+------+---------+--------+--------+---------+----------
+(0 rows)
+
+TRUNCATE trunc_trigger_test;
+SELECT count(*) as "Row count in test table" FROM trunc_trigger_test;
+ Row count in test table 
+-------------------------
+                       0
+(1 row)
+
+SELECT * FROM trunc_trigger_log;
+   tgop   |  tglevel  | tgwhen |         tgargv          |      tgtable       | rowcount 
+----------+-----------+--------+-------------------------+--------------------+----------
+ TRUNCATE | STATEMENT | BEFORE | before trigger truncate | trunc_trigger_test |        2
+(1 row)
+
+DROP TRIGGER t ON trunc_trigger_test;
+truncate trunc_trigger_log;
+-- same test with an after trigger
+INSERT INTO trunc_trigger_test VALUES(1, 'foo', 'bar'), (2, 'baz', 'quux');
+CREATE TRIGGER tt
+AFTER TRUNCATE ON trunc_trigger_test
+FOR EACH STATEMENT 
+EXECUTE PROCEDURE trunctrigger('after trigger truncate');
+SELECT count(*) as "Row count in test table" FROM trunc_trigger_test;
+ Row count in test table 
+-------------------------
+                       2
+(1 row)
+
+SELECT * FROM trunc_trigger_log;
+ tgop | tglevel | tgwhen | tgargv | tgtable | rowcount 
+------+---------+--------+--------+---------+----------
+(0 rows)
+
+TRUNCATE trunc_trigger_test;
+SELECT count(*) as "Row count in test table" FROM trunc_trigger_test;
+ Row count in test table 
+-------------------------
+                       0
+(1 row)
+
+SELECT * FROM trunc_trigger_log;
+   tgop   |  tglevel  | tgwhen |         tgargv         |      tgtable       | rowcount 
+----------+-----------+--------+------------------------+--------------------+----------
+ TRUNCATE | STATEMENT | AFTER  | after trigger truncate | trunc_trigger_test |        0
+(1 row)
+
+DROP TABLE trunc_trigger_test;
+DROP TABLE trunc_trigger_log;
+DROP FUNCTION trunctrigger();
