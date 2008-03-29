@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.229 2008/03/28 02:00:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.230 2008/03/29 00:15:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -834,21 +834,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		bool		use_hashed_grouping = false;
 
 		MemSet(&agg_counts, 0, sizeof(AggClauseCounts));
-
-		/*
-		 * If the query involves ungrouped aggregation, then it can produce
-		 * at most one row, so we can ignore any ORDER BY or DISTINCT
-		 * request.  This isn't all that exciting as an optimization, but it
-		 * prevents a corner case when optimize_minmax_aggregates succeeds:
-		 * if ORDER BY or DISTINCT were present we'd try, and fail, to match
-		 * the EquivalenceClasses we're about to build with the modified
-		 * targetlist entries it will create.
-		 */
-		if (parse->hasAggs && parse->groupClause == NIL)
-		{
-			parse->sortClause = NIL;
-			parse->distinctClause = NIL;
-		}
 
 		/* Preprocess targetlist */
 		tlist = preprocess_targetlist(root, tlist);
