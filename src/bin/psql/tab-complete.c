@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.169 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.170 2008/03/29 19:19:14 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -53,6 +53,7 @@
 #include "pqexpbuffer.h"
 #include "common.h"
 #include "settings.h"
+#include "stringutils.h"
 
 #ifdef HAVE_RL_FILENAME_COMPLETION_FUNCTION
 #define filename_completion_function rl_filename_completion_function
@@ -124,29 +125,70 @@ static int	completion_max_records;
  * Communication variables set by COMPLETE_WITH_FOO macros and then used by
  * the completion callback functions.  Ugly but there is no better way.
  */
-static const char *completion_charp;	/* to pass a string */
+static const char *completion_charp;			/* to pass a string */
 static const char *const * completion_charpp;	/* to pass a list of strings */
 static const char *completion_info_charp;		/* to pass a second string */
+static const char *completion_info_charp2;		/* to pass a third string */
 static const SchemaQuery *completion_squery;	/* to pass a SchemaQuery */
 
-/* A couple of macros to ease typing. You can use these to complete the given
-   string with
-   1) The results from a query you pass it. (Perhaps one of those below?)
-   2) The results from a schema query you pass it.
-   3) The items from a null-pointer-terminated list.
-   4) A string constant
-   5) The list of attributes to the given table.
-*/
+/*
+ * A few macros to ease typing. You can use these to complete the given
+ * string with
+ * 1) The results from a query you pass it. (Perhaps one of those below?)
+ * 2) The results from a schema query you pass it.
+ * 3) The items from a null-pointer-terminated list.
+ * 4) A string constant.
+ * 5) The list of attributes of the given table (possibly schema-qualified).
+ */
 #define COMPLETE_WITH_QUERY(query) \
-do { completion_charp = query; matches = completion_matches(text, complete_from_query); } while(0)
+do { \
+	completion_charp = query; \
+	matches = completion_matches(text, complete_from_query); \
+} while (0)
+
 #define COMPLETE_WITH_SCHEMA_QUERY(query, addon) \
-do { completion_squery = &(query); completion_charp = addon; matches = completion_matches(text, complete_from_schema_query); } while(0)
+do { \
+	completion_squery = &(query); \
+	completion_charp = addon; \
+	matches = completion_matches(text, complete_from_schema_query); \
+} while (0)
+
 #define COMPLETE_WITH_LIST(list) \
-do { completion_charpp = list; matches = completion_matches(text, complete_from_list); } while(0)
+do { \
+	completion_charpp = list; \
+	matches = completion_matches(text, complete_from_list); \
+} while (0)
+
 #define COMPLETE_WITH_CONST(string) \
-do { completion_charp = string; matches = completion_matches(text, complete_from_const); } while(0)
-#define COMPLETE_WITH_ATTR(table, addon) \
-do {completion_charp = Query_for_list_of_attributes addon; completion_info_charp = table; matches = completion_matches(text, complete_from_query); } while(0)
+do { \
+	completion_charp = string; \
+	matches = completion_matches(text, complete_from_const); \
+} while (0)
+
+#define COMPLETE_WITH_ATTR(relation, addon) \
+do { \
+	char   *_completion_schema; \
+	char   *_completion_table; \
+\
+	_completion_schema = strtokx(relation, " \t\n\r", ".", "\"", 0, \
+								 false, false, pset.encoding); \
+	(void) strtokx(NULL, " \t\n\r", ".", "\"", 0, \
+				   false, false, pset.encoding); \
+	_completion_table = strtokx(NULL, " \t\n\r", ".", "\"", 0, \
+								false, false, pset.encoding); \
+	if (_completion_table == NULL) \
+	{ \
+		completion_charp = Query_for_list_of_attributes  addon; \
+		completion_info_charp = relation; \
+	} \
+	else \
+	{ \
+		completion_charp = Query_for_list_of_attributes_with_schema  addon; \
+		completion_info_charp = _completion_table; \
+		completion_info_charp2 = _completion_schema; \
+	} \
+	matches = completion_matches(text, complete_from_query); \
+} while (0)
 
 /*
  * Assembly instructions for schema queries
@@ -308,11 +350,12 @@ static const SchemaQuery Query_for_list_of_views = {
 /*
  * Queries to get lists of names of various kinds of things, possibly
  * restricted to names matching a partially entered name.  In these queries,
- * %s will be replaced by the text entered so far (suitably escaped to
- * become a SQL literal string).  %d will be replaced by the length of the
- * string (in unescaped form).	A second %s, if present, will be replaced
- * by a suitably-escaped version of the string provided in
- * completion_info_charp.
+ * the first %s will be replaced by the text entered so far (suitably escaped
+ * to become a SQL literal string).  %d will be replaced by the length of the
+ * string (in unescaped form).	A second and third %s, if present, will be
+ * replaced by a suitably-escaped version of the string provided in
+ * completion_info_charp.  A fourth and fifth %s are similarly replaced by
+ * completion_info_charp2.
  *
  * Beware that the allowed sequences of %s and %d are determined by
  * _complete_from_query().
@@ -325,8 +368,22 @@ static const SchemaQuery Query_for_list_of_views = {
 "   AND a.attnum > 0 "\
 "   AND NOT a.attisdropped "\
 "   AND substring(pg_catalog.quote_ident(attname),1,%d)='%s' "\
-"   AND pg_catalog.quote_ident(relname)='%s' "\
+"   AND (pg_catalog.quote_ident(relname)='%s' "\
+"        OR '\"' || relname || '\"'='%s') "\
 "   AND pg_catalog.pg_table_is_visible(c.oid)"
+
+#define Query_for_list_of_attributes_with_schema \
+"SELECT pg_catalog.quote_ident(attname) "\
+"  FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+" WHERE c.oid = a.attrelid "\
+"   AND n.oid = c.relnamespace "\
+"   AND a.attnum > 0 "\
+"   AND NOT a.attisdropped "\
+"   AND substring(pg_catalog.quote_ident(attname),1,%d)='%s' "\
+"   AND (pg_catalog.quote_ident(relname)='%s' "\
+"        OR '\"' || relname || '\"' ='%s') "\
+"   AND (pg_catalog.quote_ident(nspname)='%s' "\
+"        OR '\"' || nspname || '\"' ='%s') "
 
 #define Query_for_list_of_template_databases \
 "SELECT pg_catalog.quote_ident(datname) FROM pg_catalog.pg_database "\
@@ -584,9 +641,10 @@ psql_completion(char *text, int start, int end)
 	completion_charp = NULL;
 	completion_charpp = NULL;
 	completion_info_charp = NULL;
+	completion_info_charp2 = NULL;
 
 	/*
-	 * Scan the input line before our current position for the last four
+	 * Scan the input line before our current position for the last five
 	 * words. According to those we'll make some smart decisions on what the
 	 * user is probably intending to type. TODO: Use strtokx() to do this.
 	 */
@@ -2225,8 +2283,9 @@ complete_from_schema_query(const char *text, int state)
    The query can be one of two kinds:
    - A simple query which must contain a %d and a %s, which will be replaced
    by the string length of the text and the text itself. The query may also
-   have another %s in it, which will be replaced by the value of
-   completion_info_charp.
+   have up to four more %s in it; the first two such will be replaced by the
+   value of completion_info_charp, the next two by the value of
+   completion_info_charp2.
 	 or:
    - A schema query used for completion of both schema and relation names;
    these are more complex and must contain in the following order:
@@ -2255,6 +2314,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		PQExpBufferData query_buffer;
 		char	   *e_text;
 		char	   *e_info_charp;
+		char	   *e_info_charp2;
 
 		list_index = 0;
 		string_length = strlen(text);
@@ -2278,6 +2338,18 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		}
 		else
 			e_info_charp = NULL;
+
+		if (completion_info_charp2)
+		{
+			size_t		charp_len;
+
+			charp_len = strlen(completion_info_charp2);
+			e_info_charp2 = pg_malloc(charp_len * 2 + 1);
+			PQescapeString(e_info_charp2, completion_info_charp2,
+						   charp_len);
+		}
+		else
+			e_info_charp2 = NULL;
 
 		initPQExpBuffer(&query_buffer);
 
@@ -2374,7 +2446,9 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		{
 			/* completion_charp is an sprintf-style format string */
 			appendPQExpBuffer(&query_buffer, completion_charp,
-							  string_length, e_text, e_info_charp);
+							  string_length, e_text,
+							  e_info_charp, e_info_charp,
+							  e_info_charp2, e_info_charp2);
 		}
 
 		/* Limit the number of records in the result */
@@ -2387,6 +2461,8 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		free(e_text);
 		if (e_info_charp)
 			free(e_info_charp);
+		if (e_info_charp2)
+			free(e_info_charp2);
 	}
 
 	/* Find something that matches */
