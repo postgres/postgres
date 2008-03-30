@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.554 2008/03/10 21:50:16 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.555 2008/03/30 04:08:14 neilc Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -128,10 +128,10 @@ PGAC_ARG_REQ(with, libs,      [  --with-libs=DIRS        alternative spelling of
 
 
 #
-# 64-bit integer date/time storage (--enable-integer-datetimes)
+# 64-bit integer date/time storage: enabled by default.
 #
 AC_MSG_CHECKING([whether to build with 64-bit integer date/time support])
-PGAC_ARG_BOOL(enable, integer-datetimes, no, [  --enable-integer-datetimes  enable 64-bit integer date/time support],
+PGAC_ARG_BOOL(enable, integer-datetimes, yes, [  --disable-integer-datetimes  disable 64-bit integer date/time support],
               [AC_DEFINE([USE_INTEGER_DATETIMES], 1,
                          [Define to 1 if you want 64-bit integer timestamp and interval support. (--enable-integer-datetimes)])])
 AC_MSG_RESULT([$enable_integer_datetimes])
@@ -1403,6 +1403,20 @@ AC_CHECK_TYPES([int8, uint8, int64, uint64], [], [],
 # We also check for sig_atomic_t, which *should* be defined per ANSI
 # C, but is missing on some old platforms.
 AC_CHECK_TYPES(sig_atomic_t, [], [], [#include <signal.h>])
+
+
+# If the user did not disable integer datetimes, check that
+# there is a working 64-bit integral type to use.
+if test x"$USE_INTEGER_DATETIMES" = x"yes" &&
+   test x"$HAVE_LONG_INT_64" = x"no" &&
+   test x"$HAVE_LONG_LONG_INT_64" = x"no" &&
+   test x"$HAVE_INT64" = x"no" ; then
+  AC_MSG_ERROR([
+Integer-based datetime support requires a 64-bit integer type,
+but no such type could be found. The --disable-integer-datetimes
+configure option can be used to disable integer-based storage
+of datetime values.])
+fi
 
 
 if test "$PORTNAME" != "win32"

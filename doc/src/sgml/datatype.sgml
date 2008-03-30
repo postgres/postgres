@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.225 2008/02/16 21:51:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.226 2008/03/30 04:08:14 neilc Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1408,7 +1408,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>8 bytes</entry>
         <entry>both date and time</entry>
         <entry>4713 BC</entry>
-        <entry>5874897 AD</entry>
+        <entry>294276 AD</entry>
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
@@ -1416,7 +1416,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>8 bytes</entry>
         <entry>both date and time, with time zone</entry>
         <entry>4713 BC</entry>
-        <entry>5874897 AD</entry>
+        <entry>294276 AD</entry>
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
@@ -1475,20 +1475,27 @@ SELECT b, char_length(b) FROM test2;
 
    <note>
    <para>
-    When <type>timestamp</> values are stored as double precision floating-point
-    numbers (currently the default), the effective limit of precision
-    might be less than 6. <type>timestamp</type> values are stored as seconds
-    before or after midnight 2000-01-01.  Microsecond precision is achieved for
-    dates within a few years of 2000-01-01, but the precision degrades for
-    dates further away.  When <type>timestamp</type> values are stored as
-    eight-byte integers (a compile-time
-    option), microsecond precision is available over the full range of
-    values. However eight-byte integer timestamps have a more limited range of
-    dates than shown above: from 4713 BC up to 294276 AD.  The same
-    compile-time option also determines whether <type>time</type> and
-    <type>interval</type> values are stored as floating-point or eight-byte
-    integers.  In the floating-point case, large <type>interval</type> values
-    degrade in precision as the size of the interval increases.
+    When <type>timestamp</> values are stored as eight-byte integers
+    (currently the default), microsecond precision is available over
+    the full range of values. When <type>timestamp</> values are
+    stored as double precision floating-point numbers instead (a
+    deprecated compile-time option), the effective limit of precision
+    might be less than 6. <type>timestamp</type> values are stored as
+    seconds before or after midnight 2000-01-01.  When
+    <type>timestamp</type> values are implemented using floating-point
+    numbers, microsecond precision is achieved for dates within a few
+    years of 2000-01-01, but the precision degrades for dates further
+    away. Note that using floating-point datetimes allows a larger
+    range of <type>timestamp</type> values to be represented than
+    shown above: from 4713 BC up to 5874897 AD.
+   </para>
+
+   <para>
+    The same compile-time option also determines whether
+    <type>time</type> and <type>interval</type> values are stored as
+    floating-point numbers or eight-byte integers.  In the
+    floating-point case, large <type>interval</type> values degrade in
+    precision as the size of the interval increases.
    </para>
    </note>
 
