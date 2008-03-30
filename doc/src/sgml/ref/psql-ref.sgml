@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.198 2007/12/11 19:57:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.199 2008/03/30 18:10:20 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1328,9 +1328,12 @@ Tue Oct 26 21:40:57 CEST 1999
         <term><literal>\l+</literal> (or <literal>\list+</literal>)</term>
         <listitem>
         <para>
-        List the names, owners, and character set encodings of all the databases in
-        the server. If <literal>+</literal> is appended to the command
-        name, database descriptions are also displayed.
+        List the names, owners, character set encodings, and access privileges
+        of all the databases in the server.
+        If <literal>+</literal> is appended to the command name, database
+        sizes, default tablespaces, and descriptions are also displayed.
+        (Size information is only available for databases that the current
+        user can connect to.)
         </para>
         </listitem>
       </varlistentry>
