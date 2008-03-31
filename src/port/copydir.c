@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.18 2006/07/18 22:36:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.18.2.1 2008/03/31 01:32:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,13 +80,13 @@ copydir(char *fromdir, char *todir, bool recurse)
 					(errcode_for_file_access(),
 					 errmsg("could not stat file \"%s\": %m", fromfile)));
 
-		if (fst.st_mode & S_IFDIR)
+		if (S_ISDIR(fst.st_mode))
 		{
 			/* recurse to handle subdirectories */
 			if (recurse)
 				copydir(fromfile, tofile, true);
 		}
-		else if (fst.st_mode & S_IFREG)
+		else if (S_ISREG(fst.st_mode))
 			copy_file(fromfile, tofile);
 	}
 
