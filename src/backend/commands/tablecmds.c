@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.249 2008/03/28 00:21:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.250 2008/03/31 03:34:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -662,8 +662,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 		heap_relid = RelationGetRelid(rel);
 		toast_relid = rel->rd_rel->reltoastrelid;
 
-		heap_close(rel, NoLock);
-
 		/*
 		 * The same for the toast table, if any.
 		 */
@@ -696,6 +694,14 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 	/* We can clean up the EState now */
 	FreeExecutorState(estate);
+
+	/* And close the rels (can't do this while EState still holds refs) */
+	foreach(cell, rels)
+	{
+		Relation	rel = (Relation) lfirst(cell);
+
+		heap_close(rel, NoLock);
+	}
 }
 
 /*
