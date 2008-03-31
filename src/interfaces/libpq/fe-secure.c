@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.103 2008/02/16 21:03:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.104 2008/03/31 02:43:14 tgl Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -703,7 +703,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	{
 		/* read the user key from file */
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_KEY_FILE);
-		if (stat(fnbuf, &buf) == -1)
+		if (stat(fnbuf, &buf) != 0)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("certificate present, but not private key file \"%s\"\n"),
@@ -712,11 +712,10 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 			return 0;
 		}
 #ifndef WIN32
-		if (!S_ISREG(buf.st_mode) || (buf.st_mode & 0077) ||
-			buf.st_uid != geteuid())
+		if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("private key file \"%s\" has wrong permissions\n"),
+			libpq_gettext("private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"),
 							  fnbuf);
 			ERR_pop_to_mark();
 			return 0;

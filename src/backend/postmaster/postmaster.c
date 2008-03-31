@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.553 2008/03/09 04:56:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.554 2008/03/31 02:43:14 tgl Exp $
  *
  * NOTES
  *
@@ -1052,6 +1052,13 @@ checkDataDir(void)
 				 errmsg("could not read permissions of directory \"%s\": %m",
 						DataDir)));
 	}
+
+	/* eventual chdir would fail anyway, but let's test ... */
+	if (!S_ISDIR(stat_buf.st_mode))
+		ereport(FATAL,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("specified data directory \"%s\" is not a directory",
+						DataDir)));
 
 	/*
 	 * Check that the directory belongs to my userid; if not, reject.

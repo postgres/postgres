@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.83 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.84 2008/03/31 02:43:14 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -735,7 +735,7 @@ initialize_SSL(void)
 				  errmsg("could not load server certificate file \"%s\": %s",
 						 SERVER_CERT_FILE, SSLerrmessage())));
 
-		if (stat(SERVER_PRIVATE_KEY_FILE, &buf) == -1)
+		if (stat(SERVER_PRIVATE_KEY_FILE, &buf) != 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
 					 errmsg("could not access private key file \"%s\": %m",
@@ -750,13 +750,12 @@ initialize_SSL(void)
 		 * directory permission check in postmaster.c)
 		 */
 #if !defined(WIN32) && !defined(__CYGWIN__)
-		if (!S_ISREG(buf.st_mode) || (buf.st_mode & (S_IRWXG | S_IRWXO)) ||
-			buf.st_uid != geteuid())
+		if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("unsafe permissions on private key file \"%s\"",
+					 errmsg("private key file \"%s\" has group or world access",
 							SERVER_PRIVATE_KEY_FILE),
-					 errdetail("File must be owned by the database user and must have no permissions for \"group\" or \"other\".")));
+					 errdetail("Permissions should be u=rw (0600) or less.")));
 #endif
 
 		if (!SSL_CTX_use_PrivateKey_file(SSL_context,

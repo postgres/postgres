@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.356 2008/01/29 02:06:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.357 2008/03/31 02:43:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3718,11 +3718,10 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	}
 
 	/* If password file cannot be opened, ignore it. */
-	if (stat(pgpassfile, &stat_buf) == -1)
+	if (stat(pgpassfile, &stat_buf) != 0)
 		return NULL;
 
 #ifndef WIN32
-
 	if (!S_ISREG(stat_buf.st_mode))
 	{
 		fprintf(stderr,
@@ -3735,7 +3734,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 	{
 		fprintf(stderr,
-				libpq_gettext("WARNING: password file \"%s\" has world or group read access; permission should be u=rw (0600)\n"),
+				libpq_gettext("WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"),
 				pgpassfile);
 		return NULL;
 	}
