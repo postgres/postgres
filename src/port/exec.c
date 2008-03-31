@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.58 2008/02/29 15:31:33 mha Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.59 2008/03/31 01:31:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,8 +80,8 @@ validate_exec(const char *path)
 #else
 	char		path_exe[MAXPGPATH + sizeof(".exe") - 1];
 #endif
-	int			is_r = 0;
-	int			is_x = 0;
+	int			is_r;
+	int			is_x;
 
 #ifdef WIN32
 	/* Win32 requires a .exe suffix for stat() */
@@ -103,7 +103,7 @@ validate_exec(const char *path)
 	if (stat(path, &buf) < 0)
 		return -1;
 
-	if ((buf.st_mode & S_IFMT) != S_IFREG)
+	if (!S_ISREG(buf.st_mode))
 		return -1;
 
 	/*
@@ -331,7 +331,7 @@ resolve_symlinks(char *path)
 			fname = path;
 
 		if (lstat(fname, &buf) < 0 ||
-			(buf.st_mode & S_IFMT) != S_IFLNK)
+			!S_ISLNK(buf.st_mode))
 			break;
 
 		rllen = readlink(fname, link_buf, sizeof(link_buf));

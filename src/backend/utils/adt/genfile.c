@@ -9,7 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.18 2008/03/25 22:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.19 2008/03/31 01:31:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,7 +198,7 @@ pg_stat_file(PG_FUNCTION_ARGS)
 	isnull[3] = true;
 	values[4] = TimestampTzGetDatum(time_t_to_timestamptz(fst.st_ctime));
 #endif
-	values[5] = BoolGetDatum(fst.st_mode & S_IFDIR);
+	values[5] = BoolGetDatum(S_ISDIR(fst.st_mode));
 
 	tuple = heap_form_tuple(tupdesc, values, isnull);
 

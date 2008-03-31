@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.17 2008/03/25 22:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.18 2008/03/31 01:31:43 tgl Exp $
  *
  */
 
@@ -209,7 +209,7 @@ calculate_tablespace_size(Oid tblspcOid)
 						 errmsg("could not stat file \"%s\": %m", pathname)));
 		}
 
-		if (fst.st_mode & S_IFDIR)
+		if (S_ISDIR(fst.st_mode))
 			totalsize += db_dir_size(pathname);
 
 		totalsize += fst.st_size;
