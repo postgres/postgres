@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/dbsize/dbsize.c,v 1.16 2005/01/01 05:43:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/dbsize/dbsize.c,v 1.16.4.1 2008/03/31 01:33:13 tgl Exp $
  *
  */
 
@@ -169,7 +169,7 @@ pg_tablespace_size(PG_FUNCTION_ARGS)
 					 errmsg("could not stat \"%s\": %m", pathname)));
 		totalsize += fst.st_size;
 
-		if (fst.st_mode & S_IFDIR)
+		if (S_ISDIR(fst.st_mode))
 		    totalsize += db_dir_size(pathname);
 	}
 
