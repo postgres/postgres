@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.36 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.37 2008/03/31 16:59:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,6 +186,18 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 													  &aggs_list);
 	hqual = replace_aggs_with_params_mutator(parse->havingQual,
 											 &aggs_list);
+
+	/*
+	 * We have to replace Aggrefs with Params in equivalence classes too,
+	 * else ORDER BY or DISTINCT on an optimized aggregate will fail.
+	 *
+	 * Note: at some point it might become necessary to mutate other
+	 * data structures too, such as the query's sortClause or distinctClause.
+	 * Right now, those won't be examined after this point.
+	 */
+	mutate_eclass_expressions(root,
+							  replace_aggs_with_params_mutator,
+							  &aggs_list);
 
 	/*
 	 * Generate the output plan --- basically just a Result

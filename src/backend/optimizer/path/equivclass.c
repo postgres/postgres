@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.9 2008/01/09 20:42:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.10 2008/03/31 16:59:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1633,6 +1633,44 @@ add_child_rel_equivalences(PlannerInfo *root,
 				(void) add_eq_member(cur_ec, child_expr, child_rel->relids,
 									 true, cur_em->em_datatype);
 			}
+		}
+	}
+}
+
+
+/*
+ * mutate_eclass_expressions
+ *	  Apply an expression tree mutator to all expressions stored in
+ *	  equivalence classes.
+ *
+ * This is a bit of a hack ... it's currently needed only by planagg.c,
+ * which needs to do a global search-and-replace of MIN/MAX Aggrefs
+ * after eclasses are already set up.  Without changing the eclasses too,
+ * subsequent matching of ORDER BY clauses would fail.
+ *
+ * Note that we assume the mutation won't affect relation membership or any
+ * other properties we keep track of (which is a bit bogus, but by the time
+ * planagg.c runs, it no longer matters).  Also we must be called in the
+ * main planner memory context.
+ */
+void
+mutate_eclass_expressions(PlannerInfo *root,
+						  Node *(*mutator) (),
+						  void *context)
+{
+	ListCell   *lc1;
+
+	foreach(lc1, root->eq_classes)
+	{
+		EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
+		ListCell   *lc2;
+
+		foreach(lc2, cur_ec->ec_members)
+		{
+			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
+
+			cur_em->em_expr = (Expr *)
+				mutator((Node *) cur_em->em_expr, context);
 		}
 	}
 }

@@ -217,3 +217,10 @@ select min(tenthous) from tenk1 where thousand = 33;
 -- check parameter propagation into an indexscan subquery
 select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
 from int4_tbl;
+
+-- check some cases that were handled incorrectly in 8.3.0
+select distinct max(unique2) from tenk1;
+select max(unique2) from tenk1 order by 1;
+select max(unique2) from tenk1 order by max(unique2);
+select max(unique2) from tenk1 order by max(unique2)+1;
+select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
