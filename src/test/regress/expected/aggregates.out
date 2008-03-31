@@ -484,3 +484,36 @@ from int4_tbl;
  -2147483647 |  0
 (5 rows)
 
+-- check some cases that were handled incorrectly in 8.3.0
+select distinct max(unique2) from tenk1;
+ max  
+------
+ 9999
+(1 row)
+
+select max(unique2) from tenk1 order by 1;
+ max  
+------
+ 9999
+(1 row)
+
+select max(unique2) from tenk1 order by max(unique2);
+ max  
+------
+ 9999
+(1 row)
+
+select max(unique2) from tenk1 order by max(unique2)+1;
+ max  
+------
+ 9999
+(1 row)
+
+select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
+ max  | g 
+------+---
+ 9999 | 3
+ 9999 | 2
+ 9999 | 1
+(3 rows)
+
