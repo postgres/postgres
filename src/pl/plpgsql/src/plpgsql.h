@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.95 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.96 2008/04/01 03:51:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -430,6 +430,7 @@ typedef struct
 	PLpgSQL_row *row;
 	PLpgSQL_expr *query;
 	List	   *body;			/* List of statements */
+	List	   *params;			/* USING expressions */
 } PLpgSQL_stmt_dynfors;
 
 
@@ -534,6 +535,7 @@ typedef struct
 	bool		strict;			/* INTO STRICT flag */
 	PLpgSQL_rec *rec;			/* INTO target, if record */
 	PLpgSQL_row *row;			/* INTO target, if row */
+	List	   *params;			/* USING expressions */
 } PLpgSQL_stmt_dynexecute;
 
 

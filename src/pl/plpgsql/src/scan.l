@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.60 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.61 2008/04/01 03:51:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,6 +161,7 @@ strict			{ return K_STRICT;	    	}
 then			{ return K_THEN;			}
 to				{ return K_TO;				}
 type			{ return K_TYPE;			}
+using			{ return K_USING;			}
 warning			{ return K_WARNING;			}
 when			{ return K_WHEN;			}
 while			{ return K_WHILE;			}
@@ -328,7 +329,7 @@ dump			{ return O_DUMP;			}
 			}
 <IN_DOLLARQUOTE>{dolqinside} { }
 <IN_DOLLARQUOTE>.	{ /* needed for $ inside the quoted text */ }
-<IN_DOLLARQUOTE><<EOF>>	{ 
+<IN_DOLLARQUOTE><<EOF>>	{
 				plpgsql_error_lineno = start_lineno;
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -502,7 +503,7 @@ plpgsql_scanner_finish(void)
  * scenarios there's no need to get the decoded value.)
  *
  * Note: we expect the literal to be the most recently lexed token.  This
- * would not work well if we supported multiple-token pushback or if 
+ * would not work well if we supported multiple-token pushback or if
  * plpgsql_yylex() wanted to read ahead beyond a T_STRING token.
  */
 char *

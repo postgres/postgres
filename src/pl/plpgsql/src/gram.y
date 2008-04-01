@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.108 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.109 2008/04/01 03:51:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,11 +21,15 @@
 
 static PLpgSQL_expr		*read_sql_construct(int until,
 											int until2,
+											int until3,
 											const char *expected,
 											const char *sqlstart,
 											bool isexpression,
 											bool valid_sql,
 											int *endtoken);
+static PLpgSQL_expr		*read_sql_expression2(int until, int until2,
+											  const char *expected,
+											  int *endtoken);
 static	PLpgSQL_expr	*read_sql_stmt(const char *sqlstart);
 static	PLpgSQL_type	*read_datatype(int tok);
 static	PLpgSQL_stmt	*make_execsql_stmt(const char *sqlstart, int lineno);
@@ -200,6 +204,7 @@ static	void			 check_labels(const char *start_label,
 %token	K_THEN
 %token	K_TO
 %token	K_TYPE
+%token	K_USING
 %token	K_WARNING
 %token	K_WHEN
 %token	K_WHILE
@@ -892,8 +897,11 @@ for_control		:
 						{
 							PLpgSQL_stmt_dynfors	*new;
 							PLpgSQL_expr			*expr;
+							int						term;
 
-							expr = plpgsql_read_expression(K_LOOP, "LOOP");
+							expr = read_sql_expression2(K_LOOP, K_USING,
+														"LOOP or USING",
+														&term);
 
 							new = palloc0(sizeof(PLpgSQL_stmt_dynfors));
 							new->cmd_type = PLPGSQL_STMT_DYNFORS;
@@ -920,6 +928,17 @@ for_control		:
 								yyerror("loop variable of loop over rows must be a record or row variable or list of scalar variables");
 							}
 							new->query = expr;
+
+							if (term == K_USING)
+							{
+								do
+								{
+									expr = read_sql_expression2(',', K_LOOP,
+																", or LOOP",
+																&term);
+									new->params = lappend(new->params, expr);
+								} while (term == ',');
+							}
 
 							$$ = (PLpgSQL_stmt *) new;
 						}
@@ -954,6 +973,7 @@ for_control		:
 							 */
 							expr1 = read_sql_construct(K_DOTDOT,
 													   K_LOOP,
+													   0,
 													   "LOOP",
 													   "SELECT ",
 													   true,
@@ -973,17 +993,14 @@ for_control		:
 								check_sql_expr(expr1->query);
 
 								/* Read and check the second one */
-								expr2 = read_sql_construct(K_LOOP,
-														   K_BY,
-														   "LOOP",
-														   "SELECT ",
-														   true,
-														   true,
-														   &tok);
+								expr2 = read_sql_expression2(K_LOOP, K_BY,
+															 "LOOP",
+															 &tok);
 
 								/* Get the BY clause if any */
 								if (tok == K_BY)
-									expr_by = plpgsql_read_expression(K_LOOP, "LOOP");
+									expr_by = plpgsql_read_expression(K_LOOP,
+																	  "LOOP");
 								else
 									expr_by = NULL;
 
@@ -1217,18 +1234,15 @@ stmt_raise		: K_RAISE lno raise_level raise_msg
 
 						if (tok == ',')
 						{
-							PLpgSQL_expr *expr;
-							int term;
-
-							for (;;)
+							do
 							{
-								expr = read_sql_construct(',', ';', ", or ;",
-														  "SELECT ",
-														  true, true, &term);
+								PLpgSQL_expr *expr;
+
+								expr = read_sql_expression2(',', ';',
+															", or ;",
+															&tok);
 								new->params = lappend(new->params, expr);
-								if (term == ';')
-									break;
-							}
+							} while (tok == ',');
 						}
 
 						$$ = (PLpgSQL_stmt *)new;
@@ -1307,7 +1321,8 @@ stmt_dynexecute : K_EXECUTE lno
 						PLpgSQL_expr *expr;
 						int endtoken;
 
-						expr = read_sql_construct(K_INTO, ';', "INTO|;",
+						expr = read_sql_construct(K_INTO, K_USING, ';',
+												  "INTO or USING or ;",
 												  "SELECT ",
 												  true, true, &endtoken);
 
@@ -1319,14 +1334,28 @@ stmt_dynexecute : K_EXECUTE lno
 						new->strict = false;
 						new->rec = NULL;
 						new->row = NULL;
+						new->params = NIL;
 
 						/* If we found "INTO", collect the argument */
 						if (endtoken == K_INTO)
 						{
 							new->into = true;
 							read_into_target(&new->rec, &new->row, &new->strict);
-							if (yylex() != ';')
+							endtoken = yylex();
+							if (endtoken != ';' && endtoken != K_USING)
 								yyerror("syntax error");
+						}
+
+						/* If we found "USING", collect the argument(s) */
+						if (endtoken == K_USING)
+						{
+							do
+							{
+								expr = read_sql_expression2(',', ';',
+															", or ;",
+															&endtoken);
+								new->params = lappend(new->params, expr);
+							} while (endtoken == ',');
 						}
 
 						$$ = (PLpgSQL_stmt *)new;
@@ -1485,7 +1514,7 @@ stmt_fetch		: K_FETCH lno opt_fetch_direction cursor_variable K_INTO
 						$$ = (PLpgSQL_stmt *)fetch;
 					}
 				;
-				
+
 stmt_move		: K_MOVE lno opt_fetch_direction cursor_variable ';'
 					{
 						PLpgSQL_stmt_fetch *fetch = $3;
@@ -1730,16 +1759,29 @@ assign_expr_param(int dno, int *params, int *nparams)
 }
 
 
+/* Convenience routine to read an expression with one possible terminator */
 PLpgSQL_expr *
 plpgsql_read_expression(int until, const char *expected)
 {
-	return read_sql_construct(until, 0, expected, "SELECT ", true, true, NULL);
+	return read_sql_construct(until, 0, 0, expected,
+							  "SELECT ", true, true, NULL);
 }
 
+/* Convenience routine to read an expression with two possible terminators */
+static PLpgSQL_expr *
+read_sql_expression2(int until, int until2, const char *expected,
+					 int *endtoken)
+{
+	return read_sql_construct(until, until2, 0, expected,
+							  "SELECT ", true, true, endtoken);
+}
+
+/* Convenience routine to read a SQL statement that must end with ';' */
 static PLpgSQL_expr *
 read_sql_stmt(const char *sqlstart)
 {
-	return read_sql_construct(';', 0, ";", sqlstart, false, true, NULL);
+	return read_sql_construct(';', 0, 0, ";",
+							  sqlstart, false, true, NULL);
 }
 
 /*
@@ -1747,16 +1789,18 @@ read_sql_stmt(const char *sqlstart)
  *
  * until:		token code for expected terminator
  * until2:		token code for alternate terminator (pass 0 if none)
+ * until3:		token code for another alternate terminator (pass 0 if none)
  * expected:	text to use in complaining that terminator was not found
  * sqlstart:	text to prefix to the accumulated SQL text
  * isexpression: whether to say we're reading an "expression" or a "statement"
  * valid_sql:   whether to check the syntax of the expr (prefixed with sqlstart)
  * endtoken:	if not NULL, ending token is stored at *endtoken
- *				(this is only interesting if until2 isn't zero)
+ *				(this is only interesting if until2 or until3 isn't zero)
  */
 static PLpgSQL_expr *
 read_sql_construct(int until,
 				   int until2,
+				   int until3,
 				   const char *expected,
 				   const char *sqlstart,
 				   bool isexpression,
@@ -1782,6 +1826,8 @@ read_sql_construct(int until,
 		if (tok == until && parenlevel == 0)
 			break;
 		if (tok == until2 && parenlevel == 0)
+			break;
+		if (tok == until3 && parenlevel == 0)
 			break;
 		if (tok == '(' || tok == '[')
 			parenlevel++;
@@ -2066,15 +2112,17 @@ read_fetch_direction(void)
 	else if (pg_strcasecmp(yytext, "absolute") == 0)
 	{
 		fetch->direction = FETCH_ABSOLUTE;
-		fetch->expr = read_sql_construct(K_FROM, K_IN, "FROM or IN",
-										 "SELECT ", true, true, NULL);
+		fetch->expr = read_sql_expression2(K_FROM, K_IN,
+										   "FROM or IN",
+										   NULL);
 		check_FROM = false;
 	}
 	else if (pg_strcasecmp(yytext, "relative") == 0)
 	{
 		fetch->direction = FETCH_RELATIVE;
-		fetch->expr = read_sql_construct(K_FROM, K_IN, "FROM or IN",
-										 "SELECT ", true, true, NULL);
+		fetch->expr = read_sql_expression2(K_FROM, K_IN,
+										   "FROM or IN",
+										   NULL);
 		check_FROM = false;
 	}
 	else if (pg_strcasecmp(yytext, "forward") == 0)
@@ -2088,8 +2136,9 @@ read_fetch_direction(void)
 	else if (tok != T_SCALAR)
 	{
 		plpgsql_push_back_token(tok);
-		fetch->expr = read_sql_construct(K_FROM, K_IN, "FROM or IN",
-										 "SELECT ", true, true, NULL);
+		fetch->expr = read_sql_expression2(K_FROM, K_IN,
+										   "FROM or IN",
+										   NULL);
 		check_FROM = false;
 	}
 	else
@@ -2233,7 +2282,7 @@ make_return_query_stmt(int lineno)
 	new = palloc0(sizeof(PLpgSQL_stmt_return_query));
 	new->cmd_type = PLPGSQL_STMT_RETURN_QUERY;
 	new->lineno = lineno;
-	new->query = read_sql_construct(';', 0, ")", "", false, true, NULL);
+	new->query = read_sql_stmt("");
 
 	return (PLpgSQL_stmt *) new;
 }

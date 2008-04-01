@@ -3128,3 +3128,26 @@ select * from ret_query2(8);
  c9f0f895fb98ab9159f51fd0297e236d |  8 | t
 (9 rows)
 
+-- test EXECUTE USING
+create function exc_using(int, text) returns int as $$
+declare i int;
+begin
+  for i in execute 'select * from generate_series(1,$1)' using $1+1 loop
+    raise notice '%', i;
+  end loop;
+  execute 'select $2 + $2*3 + length($1)' into i using $2,$1;
+  return i;
+end
+$$ language plpgsql;
+select exc_using(5, 'foobar');
+NOTICE:  1
+NOTICE:  2
+NOTICE:  3
+NOTICE:  4
+NOTICE:  5
+NOTICE:  6
+ exc_using 
+-----------
+        26
+(1 row)
+

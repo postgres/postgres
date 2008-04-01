@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.125 2008/03/28 00:21:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.126 2008/04/01 03:51:09 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1005,20 +1005,23 @@ END;
      <command>EXECUTE</command> statement is provided:
 
 <synopsis>
-EXECUTE <replaceable class="command">command-string</replaceable> <optional> INTO <optional>STRICT</optional> <replaceable>target</replaceable> </optional>;
+EXECUTE <replaceable class="command">command-string</replaceable> <optional> INTO <optional>STRICT</optional> <replaceable>target</replaceable> </optional> <optional> USING <replaceable>expression</replaceable> <optional>, ...</optional> </optional>;
 </synopsis>
 
      where <replaceable>command-string</replaceable> is an expression
      yielding a string (of type <type>text</type>) containing the
-     command to be executed and <replaceable>target</replaceable> is a
-     record variable, row variable, or a comma-separated list of
-     simple variables and record/row fields.
+     command to be executed.  The optional <replaceable>target</replaceable>
+     is a record variable, a row variable, or a comma-separated list of
+     simple variables and record/row fields, into which the results of
+     the command will be stored.  The optional <literal>USING</> expressions
+     supply values to be inserted into the command.
     </para>
 
     <para>
      No substitution of <application>PL/pgSQL</> variables is done on the
      computed command string.  Any required variable values must be inserted
-     in the command string as it is constructed.
+     in the command string as it is constructed; or you can use parameters
+     as described below.
     </para>
 
     <para>
@@ -1045,6 +1048,51 @@ EXECUTE <replaceable class="command">command-string</replaceable> <optional> INT
     <para>
      If the <literal>STRICT</> option is given, an error is reported
      unless the query produces exactly one row.
+    </para>
+    
+    <para>
+     The command string can use parameter values, which are referenced
+     in the command as <literal>$1</>, <literal>$2</>, etc.
+     These symbols refer to values supplied in the <literal>USING</>
+     clause.  This method is often preferable to inserting data values
+     into the command string as text: it avoids run-time overhead of
+     converting the values to text and back, and it is much less prone
+     to SQL-injection attacks since there is no need for quoting or escaping.
+     An example is:
+<programlisting>
+EXECUTE 'SELECT count(*) FROM mytable WHERE inserted_by = $1 AND inserted <= $2'
+   INTO c
+   USING checked_user, checked_date;
+</programlisting>
+
+     Note that parameter symbols can only be used for data values
+     &mdash; if you want to use dynamically determined table or column
+     names, you must insert them into the command string textually.
+     For example, if the preceding query needed to be done against a
+     dynamically selected table, you could do this:
+<programlisting>
+EXECUTE 'SELECT count(*) FROM '
+    || tabname::regclass
+    || ' WHERE inserted_by = $1 AND inserted <= $2'
+   INTO c
+   USING checked_user, checked_date;
+</programlisting>
+    </para>
+
+    <para>
+     An <command>EXECUTE</> with a simple constant command string and some
+     <literal>USING</> parameters, as in the first example above, is
+     functionally equivalent to just writing the command directly in 
+     <application>PL/pgSQL</application> and allowing replacement of 
+     <application>PL/pgSQL</application> variables to happen automatically.
+     The important difference is that <command>EXECUTE</> will re-plan
+     the command on each execution, generating a plan that is specific
+     to the current parameter values; whereas
+     <application>PL/pgSQL</application> normally creates a generic plan
+     and caches it for re-use.  In situations where the best plan depends
+     strongly on the parameter values, <command>EXECUTE</> can be
+     significantly faster; while when the plan is not sensitive to parameter
+     values, re-planning will be a waste.
     </para>
 
     <para>
@@ -1997,7 +2045,7 @@ $$ LANGUAGE plpgsql;
      rows:
 <synopsis>
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
-FOR <replaceable>target</replaceable> IN EXECUTE <replaceable>text_expression</replaceable> LOOP 
+FOR <replaceable>target</replaceable> IN EXECUTE <replaceable>text_expression</replaceable> <optional> USING <replaceable>expression</replaceable> <optional>, ...</optional> </optional> LOOP 
     <replaceable>statements</replaceable>
 END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
@@ -2006,6 +2054,8 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
      on each entry to the <literal>FOR</> loop.  This allows the programmer to
      choose the speed of a preplanned query or the flexibility of a dynamic
      query, just as with a plain <command>EXECUTE</command> statement.
+     As with <command>EXECUTE</command>, parameter values can be inserted
+     into the dynamic command via <literal>USING</>.
     </para>
    </sect2>
 
