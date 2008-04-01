@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.144 2008/03/26 21:10:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.145 2008/04/01 00:48:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@ bool		constraint_exclusion = false;
 get_relation_info_hook_type get_relation_info_hook = NULL;
 
 
-static List *get_relation_constraints(Oid relationObjectId, RelOptInfo *rel,
+static List *get_relation_constraints(PlannerInfo *root,
+						 Oid relationObjectId, RelOptInfo *rel,
 						 bool include_notnull);
 
 
@@ -462,7 +463,8 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
  * point in caching the data in RelOptInfo.
  */
 static List *
-get_relation_constraints(Oid relationObjectId, RelOptInfo *rel,
+get_relation_constraints(PlannerInfo *root,
+						 Oid relationObjectId, RelOptInfo *rel,
 						 bool include_notnull)
 {
 	List	   *result = NIL;
@@ -497,7 +499,7 @@ get_relation_constraints(Oid relationObjectId, RelOptInfo *rel,
 			 * stuff involving subqueries, however, since we don't allow any
 			 * in check constraints.)
 			 */
-			cexpr = eval_const_expressions(cexpr);
+			cexpr = eval_const_expressions(root, cexpr);
 
 			cexpr = (Node *) canonicalize_qual((Expr *) cexpr);
 
@@ -561,7 +563,8 @@ get_relation_constraints(Oid relationObjectId, RelOptInfo *rel,
  * it can be called before filling in other fields of the RelOptInfo.
  */
 bool
-relation_excluded_by_constraints(RelOptInfo *rel, RangeTblEntry *rte)
+relation_excluded_by_constraints(PlannerInfo *root,
+								 RelOptInfo *rel, RangeTblEntry *rte)
 {
 	List	   *safe_restrictions;
 	List	   *constraint_pred;
@@ -600,7 +603,7 @@ relation_excluded_by_constraints(RelOptInfo *rel, RangeTblEntry *rte)
 	 * OK to fetch the constraint expressions.  Include "col IS NOT NULL"
 	 * expressions for attnotnull columns, in case we can refute those.
 	 */
-	constraint_pred = get_relation_constraints(rte->relid, rel, true);
+	constraint_pred = get_relation_constraints(root, rte->relid, rel, true);
 
 	/*
 	 * We do not currently enforce that CHECK constraints contain only

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.269 2008/03/26 21:10:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.270 2008/04/01 00:48:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3068,7 +3068,7 @@ RelationGetIndexExpressions(Relation relation)
 	 * them to similarly-processed qual clauses, and may fail to detect valid
 	 * matches without this.  We don't bother with canonicalize_qual, however.
 	 */
-	result = (List *) eval_const_expressions((Node *) result);
+	result = (List *) eval_const_expressions(NULL, (Node *) result);
 
 	/*
 	 * Also mark any coercion format fields as "don't care", so that the
@@ -3138,7 +3138,7 @@ RelationGetIndexPredicate(Relation relation)
 	 * stuff involving subqueries, however, since we don't allow any in index
 	 * predicates.)
 	 */
-	result = (List *) eval_const_expressions((Node *) result);
+	result = (List *) eval_const_expressions(NULL, (Node *) result);
 
 	result = (List *) canonicalize_qual((Expr *) result);
 
