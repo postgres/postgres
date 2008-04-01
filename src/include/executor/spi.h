@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.65 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.66 2008/04/01 03:09:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,10 @@ extern int SPI_execute_snapshot(SPIPlanPtr plan,
 					 Snapshot snapshot,
 					 Snapshot crosscheck_snapshot,
 					 bool read_only, bool fire_triggers, long tcount);
+extern int	SPI_execute_with_args(const char *src,
+								  int nargs, Oid *argtypes,
+								  Datum *Values, const char *Nulls,
+								  bool read_only, long tcount);
 extern SPIPlanPtr SPI_prepare(const char *src, int nargs, Oid *argtypes);
 extern SPIPlanPtr SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
 				   int cursorOptions);
@@ -136,6 +140,11 @@ extern void SPI_freetuptable(SPITupleTable *tuptable);
 
 extern Portal SPI_cursor_open(const char *name, SPIPlanPtr plan,
 				Datum *Values, const char *Nulls, bool read_only);
+extern Portal SPI_cursor_open_with_args(const char *name,
+										const char *src,
+										int nargs, Oid *argtypes,
+										Datum *Values, const char *Nulls,
+										bool read_only, int cursorOptions);
 extern Portal SPI_cursor_find(const char *name);
 extern void SPI_cursor_fetch(Portal portal, bool forward, long count);
 extern void SPI_cursor_move(Portal portal, bool forward, long count);

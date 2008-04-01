@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.61 2008/03/25 22:42:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.62 2008/04/01 03:09:30 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -267,7 +267,7 @@ void SPI_pop(void)
   <title>Description</title>
 
   <para>
-   <function>SPI_pop</function> pops the previous environment from the 
+   <function>SPI_pop</function> pops the previous environment from the
    SPI call stack.  See <function>SPI_push</function>.
   </para>
  </refsect1>
@@ -371,7 +371,7 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar", false, 5);
    then you can use the
    global pointer <literal>SPITupleTable *SPI_tuptable</literal> to
    access the result rows.  Some utility commands (such as
-   <command>EXPLAIN</>) also return row sets, and <literal>SPI_tuptable</> 
+   <command>EXPLAIN</>) also return row sets, and <literal>SPI_tuptable</>
    will contain the result in these cases too.
   </para>
 
@@ -676,6 +676,150 @@ int SPI_exec(const char * <parameter>command</parameter>, long <parameter>count<
 
 <!-- *********************************************** -->
 
+<refentry id="spi-spi-execute-with-args">
+ <refmeta>
+  <refentrytitle>SPI_execute_with_args</refentrytitle>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_execute_with_args</refname>
+  <refpurpose>execute a command with out-of-line parameters</refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_execute_with_args</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+int SPI_execute_with_args(const char *<parameter>command</parameter>,
+                          int <parameter>nargs</parameter>, Oid *<parameter>argtypes</parameter>,
+                          Datum *<parameter>values</parameter>, const char *<parameter>nulls</parameter>,
+                          bool <parameter>read_only</parameter>, long <parameter>count</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_execute_with_args</function> executes a command that might
+   include references to externally supplied parameters.  The command text
+   refers to a parameter as <literal>$<replaceable>n</></literal>, and
+   the call specifies data types and values for each such symbol.
+   <parameter>read_only</parameter> and <parameter>count</parameter> have
+   the same interpretation as in <function>SPI_execute</function>.
+  </para>
+
+  <para>
+   The main advantage of this routine compared to
+   <function>SPI_execute</function> is that data values can be inserted
+   into the command without tedious quoting/escaping, and thus with much
+   less risk of SQL-injection attacks.
+  </para>
+
+  <para>
+   Similar results can be achieved with <function>SPI_prepare</> followed by
+   <function>SPI_execute_plan</function>; however, when using this function
+   the query plan is customized to the specific parameter values provided.
+   For one-time query execution, this function should be preferred.
+   If the same command is to be executed with many different parameters,
+   either method might be faster, depending on the cost of re-planning
+   versus the benefit of custom plans.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>const char * <parameter>command</parameter></literal></term>
+    <listitem>
+     <para>
+      command string
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>int <parameter>nargs</parameter></literal></term>
+    <listitem>
+     <para>
+      number of input parameters (<literal>$1</>, <literal>$2</>, etc.)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>Oid * <parameter>argtypes</parameter></literal></term>
+    <listitem>
+     <para>
+      an array containing the <acronym>OID</acronym>s of
+      the data types of the parameters
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>Datum * <parameter>values</parameter></literal></term>
+    <listitem>
+     <para>
+      an array of actual parameter values
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>const char * <parameter>nulls</parameter></literal></term>
+    <listitem>
+     <para>
+      an array describing which parameters are null
+     </para>
+
+     <para>
+      If <parameter>nulls</parameter> is <symbol>NULL</symbol> then
+      <function>SPI_execute_with_args</function> assumes that no parameters are
+      null.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>bool <parameter>read_only</parameter></literal></term>
+    <listitem>
+     <para>
+      <literal>true</> for read-only execution
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>long <parameter>count</parameter></literal></term>
+    <listitem>
+     <para>
+      maximum number of rows to process or return
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   The return value is the same as for <function>SPI_execute</function>.
+  </para>
+
+  <para>
+   <varname>SPI_processed</varname> and
+   <varname>SPI_tuptable</varname> are set as in
+   <function>SPI_execute</function> if successful.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
 <refentry id="spi-spi-prepare">
  <refmeta>
   <refentrytitle>SPI_prepare</refentrytitle>
@@ -861,7 +1005,7 @@ SPIPlanPtr SPI_prepare_cursor(const char * <parameter>command</parameter>, int <
      </para>
     </listitem>
    </varlistentry>
- 
+
    <varlistentry>
     <term><literal>int <parameter>cursorOptions</parameter></literal></term>
     <listitem>
@@ -1453,6 +1597,152 @@ Portal SPI_cursor_open(const char * <parameter>name</parameter>, SPIPlanPtr <par
 
 <!-- *********************************************** -->
 
+<refentry id="spi-spi-cursor-open-with-args">
+ <refmeta>
+  <refentrytitle>SPI_cursor_open_with_args</refentrytitle>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_cursor_open_with_args</refname>
+  <refpurpose>set up a cursor using a query and parameters</refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_cursor_open_with_args</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+Portal SPI_cursor_open_with_args(const char *<parameter>name</parameter>,
+                                 const char *<parameter>command</parameter>,
+                                 int <parameter>nargs</parameter>, Oid *<parameter>argtypes</parameter>,
+                                 Datum *<parameter>values</parameter>, const char *<parameter>nulls</parameter>,
+                                 bool <parameter>read_only</parameter>, int <parameter>cursorOptions</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_cursor_open_with_args</function> sets up a cursor
+   (internally, a portal) that will execute the specified query.
+   Most of the parameters have the same meanings as the corresponding
+   parameters to <function>SPI_prepare_cursor</function>
+   and <function>SPI_cursor_open</function>.
+  </para>
+
+  <para>
+   For one-time query execution, this function should be preferred
+   over <function>SPI_prepare_cursor</function> followed by
+   <function>SPI_cursor_open</function>.
+   If the same command is to be executed with many different parameters,
+   either method might be faster, depending on the cost of re-planning
+   versus the benefit of custom plans.
+  </para>
+
+  <para>
+   The passed-in data will be copied into the cursor's portal, so it
+   can be freed while the cursor still exists.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>const char * <parameter>name</parameter></literal></term>
+    <listitem>
+     <para>
+      name for portal, or <symbol>NULL</symbol> to let the system
+      select a name
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>const char * <parameter>command</parameter></literal></term>
+    <listitem>
+     <para>
+      command string
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>int <parameter>nargs</parameter></literal></term>
+    <listitem>
+     <para>
+      number of input parameters (<literal>$1</>, <literal>$2</>, etc.)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>Oid * <parameter>argtypes</parameter></literal></term>
+    <listitem>
+     <para>
+      an array containing the <acronym>OID</acronym>s of
+      the data types of the parameters
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>Datum * <parameter>values</parameter></literal></term>
+    <listitem>
+     <para>
+      an array of actual parameter values
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>const char * <parameter>nulls</parameter></literal></term>
+    <listitem>
+     <para>
+      an array describing which parameters are null
+     </para>
+
+     <para>
+      If <parameter>nulls</parameter> is <symbol>NULL</symbol> then
+      <function>SPI_cursor_open_with_args</function> assumes that no
+      parameters are null.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>bool <parameter>read_only</parameter></literal></term>
+    <listitem>
+     <para>
+      <literal>true</> for read-only execution
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>int <parameter>cursorOptions</parameter></literal></term>
+    <listitem>
+     <para>
+      integer bitmask of cursor options; zero produces default behavior
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   Pointer to portal containing the cursor.  Note there is no error
+   return convention; any error will be reported via <function>elog</>.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
 <refentry id="spi-spi-cursor-find">
  <refmeta>
   <refentrytitle>SPI_cursor_find</refentrytitle>
@@ -1748,7 +2038,7 @@ void SPI_scroll_cursor_fetch(Portal <parameter>portal</parameter>, FetchDirectio
 
   <para>
    See the SQL <xref linkend="sql-fetch" endterm="sql-fetch-title"> command
-   for details of the interpretation of the 
+   for details of the interpretation of the
    <parameter>direction</parameter> and
    <parameter>count</parameter> parameters.
   </para>
@@ -1847,7 +2137,7 @@ void SPI_scroll_cursor_move(Portal <parameter>portal</parameter>, FetchDirection
 
   <para>
    See the SQL <xref linkend="sql-fetch" endterm="sql-fetch-title"> command
-   for details of the interpretation of the 
+   for details of the interpretation of the
    <parameter>direction</parameter> and
    <parameter>count</parameter> parameters.
   </para>
@@ -3346,9 +3636,9 @@ execq(text *sql, int cnt)
     command = text_to_cstring(sql);
 
     SPI_connect();
-    
+
     ret = SPI_exec(command, cnt);
-    
+
     proc = SPI_processed;
     /*
      * If some rows were fetched, print them via elog(INFO).
@@ -3359,11 +3649,11 @@ execq(text *sql, int cnt)
         SPITupleTable *tuptable = SPI_tuptable;
         char buf[8192];
         int i, j;
-        
+
         for (j = 0; j &lt; proc; j++)
         {
             HeapTuple tuple = tuptable-&gt;vals[j];
-            
+
             for (i = 1, buf[0] = 0; i &lt;= tupdesc-&gt;natts; i++)
                 snprintf(buf + strlen (buf), sizeof(buf) - strlen(buf), " %s%s",
                         SPI_getvalue(tuple, tupdesc, i),
@@ -3469,7 +3759,7 @@ INSERT 0 2
  2
  2                  -- 2 rows * 1 (x in first row)
  6                  -- 3 rows (2 + 1 just inserted) * 2 (x in second row)
-(4 rows)               ^^^^^^ 
+(4 rows)               ^^^^^^
                        rows visible to execq() in different invocations
 </programlisting>
   </para>
