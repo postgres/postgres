@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.226.2.2 2008/03/29 00:15:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.226.2.3 2008/04/01 00:48:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -496,7 +496,7 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 		(root->parse->jointree->fromlist != NIL ||
 		 kind == EXPRKIND_QUAL ||
 		 root->query_level > 1))
-		expr = eval_const_expressions(expr);
+		expr = eval_const_expressions(root, expr);
 
 	/*
 	 * If it's a qual or havingQual, canonicalize it.
