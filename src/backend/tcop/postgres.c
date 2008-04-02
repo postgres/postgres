@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.542.2.1 2008/03/12 23:58:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.542.2.2 2008/04/02 18:32:00 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -931,6 +931,11 @@ exec_simple_query(const char *query_string)
 		/* Don't display the portal in pg_cursors */
 		portal->visible = false;
 
+		/*
+		 * We don't have to copy anything into the portal, because everything
+		 * we are passsing here is in MessageContext, which will outlive the
+		 * portal anyway.
+		 */
 		PortalDefineQuery(portal,
 						  NULL,
 						  query_string,
@@ -1354,8 +1359,11 @@ exec_bind_message(StringInfo input_message)
 	CachedPlanSource *psrc;
 	CachedPlan *cplan;
 	Portal		portal;
+	char	   *query_string;
+	char	   *saved_stmt_name;
 	ParamListInfo params;
 	List	   *plan_list;
+	MemoryContext oldContext;
 	bool		save_log_statement_stats = log_statement_stats;
 	char		msec_str[32];
 
@@ -1460,14 +1468,30 @@ exec_bind_message(StringInfo input_message)
 		portal = CreatePortal(portal_name, false, false);
 
 	/*
+	 * Prepare to copy stuff into the portal's memory context.  We do all this
+	 * copying first, because it could possibly fail (out-of-memory) and we
+	 * don't want a failure to occur between RevalidateCachedPlan and
+	 * PortalDefineQuery; that would result in leaking our plancache refcount.
+	 */
+	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+
+	/* Copy the plan's query string, if available, into the portal */
+	query_string = psrc->query_string;
+	if (query_string)
+		query_string = pstrdup(query_string);
+
+	/* Likewise make a copy of the statement name, unless it's unnamed */
+	if (stmt_name[0])
+		saved_stmt_name = pstrdup(stmt_name);
+	else
+		saved_stmt_name = NULL;
+
+	/*
 	 * Fetch parameters, if any, and store in the portal's memory context.
 	 */
 	if (numParams > 0)
 	{
-		MemoryContext oldContext;
 		int			paramno;
-
-		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
 		/* sizeof(ParamListInfoData) includes the first array element */
 		params = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
@@ -1593,11 +1617,12 @@ exec_bind_message(StringInfo input_message)
 			params->params[paramno].pflags = PARAM_FLAG_CONST;
 			params->params[paramno].ptype = ptype;
 		}
-
-		MemoryContextSwitchTo(oldContext);
 	}
 	else
 		params = NULL;
+
+	/* Done storing stuff in portal's context */
+	MemoryContextSwitchTo(oldContext);
 
 	/* Get the result format codes */
 	numRFormats = pq_getmsgint(input_message, 2);
@@ -1625,7 +1650,6 @@ exec_bind_message(StringInfo input_message)
 	}
 	else
 	{
-		MemoryContext oldContext;
 		List	   *query_list;
 
 		/*
@@ -1663,8 +1687,8 @@ exec_bind_message(StringInfo input_message)
 	 * Define portal and start execution.
 	 */
 	PortalDefineQuery(portal,
-					  stmt_name[0] ? stmt_name : NULL,
-					  psrc->query_string,
+					  saved_stmt_name,
+					  query_string,
 					  psrc->commandTag,
 					  plan_list,
 					  cplan);

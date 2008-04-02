@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.80 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.80.2.1 2008/04/02 18:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,9 +249,13 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 		plan_list = cplan->stmt_list;
 	}
 
+	/*
+	 * Note: we don't bother to copy the source query string into the portal.
+	 * Any errors it might be useful for will already have been reported.
+	 */
 	PortalDefineQuery(portal,
 					  NULL,
-					  entry->plansource->query_string,
+					  NULL,
 					  entry->plansource->commandTag,
 					  plan_list,
 					  cplan);
