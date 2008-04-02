@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.192 2008/04/01 03:09:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.193 2008/04/02 18:31:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -918,6 +918,7 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 	CachedPlanSource *plansource;
 	CachedPlan *cplan;
 	List	   *stmt_list;
+	char	   *query_string;
 	ParamListInfo paramLI;
 	Snapshot	snapshot;
 	MemoryContext oldcontext;
@@ -968,10 +969,22 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 		portal = CreatePortal(name, false, false);
 	}
 
+	/*
+	 * Prepare to copy stuff into the portal's memory context.  We do all this
+	 * copying first, because it could possibly fail (out-of-memory) and we
+	 * don't want a failure to occur between RevalidateCachedPlan and
+	 * PortalDefineQuery; that would result in leaking our plancache refcount.
+	 */
+	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+
+	/* Copy the plan's query string, if available, into the portal */
+	query_string = plansource->query_string;
+	if (query_string)
+		query_string = pstrdup(query_string);
+
 	/* If the plan has parameters, copy them into the portal */
 	if (plan->nargs > 0)
 	{
-		oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 		/* sizeof(ParamListInfoData) includes the first array element */
 		paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
 								 (plan->nargs - 1) *sizeof(ParamExternData));
@@ -1000,10 +1013,11 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 									   paramTypByVal, paramTypLen);
 			}
 		}
-		MemoryContextSwitchTo(oldcontext);
 	}
 	else
 		paramLI = NULL;
+
+	MemoryContextSwitchTo(oldcontext);
 
 	if (plan->saved)
 	{
@@ -1025,7 +1039,7 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 	 */
 	PortalDefineQuery(portal,
 					  NULL,		/* no statement name */
-					  plansource->query_string,
+					  query_string,
 					  plansource->commandTag,
 					  stmt_list,
 					  cplan);

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.108 2008/03/25 22:42:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.109 2008/04/02 18:31:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,9 +274,7 @@ CreateNewPortal(void)
  *
  * Notes: commandTag shall be NULL if and only if the original query string
  * (before rewriting) was an empty string.	Also, the passed commandTag must
- * be a pointer to a constant string, since it is not copied.  However,
- * prepStmtName and sourceText, if provided, are copied into the portal's
- * heap context for safekeeping.
+ * be a pointer to a constant string, since it is not copied.
  *
  * If cplan is provided, then it is a cached plan containing the stmts,
  * and the caller must have done RevalidateCachedPlan(), causing a refcount
@@ -285,6 +283,14 @@ CreateNewPortal(void)
  * If cplan is NULL, then it is the caller's responsibility to ensure that
  * the passed plan trees have adequate lifetime.  Typically this is done by
  * copying them into the portal's heap context.
+ *
+ * The caller is also responsible for ensuring that the passed prepStmtName
+ * and sourceText (if not NULL) have adequate lifetime.
+ *
+ * NB: this function mustn't do much beyond storing the passed values; in
+ * particular don't do anything that risks elog(ERROR).  If that were to
+ * happen here before storing the cplan reference, we'd leak the plancache
+ * refcount that the caller is trying to hand off to us.
  */
 void
 PortalDefineQuery(Portal portal,
@@ -299,10 +305,8 @@ PortalDefineQuery(Portal portal,
 
 	Assert(commandTag != NULL || stmts == NIL);
 
-	portal->prepStmtName = prepStmtName ?
-		MemoryContextStrdup(PortalGetHeapMemory(portal), prepStmtName) : NULL;
-	portal->sourceText = sourceText ?
-		MemoryContextStrdup(PortalGetHeapMemory(portal), sourceText) : NULL;
+	portal->prepStmtName = prepStmtName;
+	portal->sourceText = sourceText;
 	portal->commandTag = commandTag;
 	portal->stmts = stmts;
 	portal->cplan = cplan;
