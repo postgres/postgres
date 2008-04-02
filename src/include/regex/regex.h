@@ -29,7 +29,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/include/regex/regex.h,v 1.29 2008/01/03 20:47:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regex.h,v 1.30 2008/04/02 14:42:56 mha Exp $
  */
 
 /*
@@ -165,5 +165,10 @@ extern int	pg_regcomp(regex_t *, const pg_wchar *, size_t, int);
 extern int	pg_regexec(regex_t *, const pg_wchar *, size_t, size_t, rm_detail_t *, size_t, regmatch_t[], int);
 extern void pg_regfree(regex_t *);
 extern size_t pg_regerror(int, const regex_t *, char *, size_t);
+
+/*
+ * guc configuration variables
+ */
+extern int regex_flavor;
 
 #endif   /* _REGEX_H_ */

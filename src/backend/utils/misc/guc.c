@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.440 2008/03/25 22:42:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.441 2008/04/02 14:42:56 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -54,6 +54,7 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
 #include "postmaster/walwriter.h"
+#include "regex/regex.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
 #include "tcop/tcopprot.h"
@@ -140,9 +141,7 @@ static const char *assign_syslog_ident(const char *ident,
 					bool doit, GucSource source);
 #endif
 
-static const char *assign_defaultxactisolevel(const char *newval, bool doit,
-						   GucSource source);
-static const char *assign_session_replication_role(const char *newval, bool doit,
+static bool assign_session_replication_role(int newval, bool doit,
 								GucSource source);
 static const char *show_num_temp_buffers(void);
 static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
@@ -208,6 +207,29 @@ static const struct config_enum_entry log_statement_options[] = {
 	{NULL, 0}
 };
 
+static const struct config_enum_entry regex_flavor_options[] = {
+    {"advanced", REG_ADVANCED},
+    {"extended", REG_EXTENDED},
+    {"basic", REG_BASIC},
+    {NULL, 0}
+};
+
+static const struct config_enum_entry isolation_level_options[] = {
+	{"serializable", XACT_SERIALIZABLE},
+	{"repeatable read", XACT_REPEATABLE_READ},
+	{"read committed", XACT_READ_COMMITTED},
+	{"read uncommitted", XACT_READ_UNCOMMITTED},
+	{NULL, 0}
+};
+
+static const struct config_enum_entry session_replication_role_options[] = {
+	{"origin", SESSION_REPLICATION_ROLE_ORIGIN},
+	{"replica", SESSION_REPLICATION_ROLE_REPLICA},
+	{"local", SESSION_REPLICATION_ROLE_LOCAL},
+	{NULL, 0}
+};
+
+
 /*
  * GUC option variables that are exported from this module
  */
@@ -270,11 +292,8 @@ static double phony_random_seed;
 static char *backslash_quote_string;
 static char *client_encoding_string;
 static char *datestyle_string;
-static char *default_iso_level_string;
-static char *session_replication_role_string;
 static char *locale_collate;
 static char *locale_ctype;
-static char *regex_flavor_string;
 static char *server_encoding_string;
 static char *server_version_string;
 static int	server_version_num;
@@ -1989,26 +2008,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"default_transaction_isolation", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the transaction isolation level of each new transaction."),
-			gettext_noop("Each SQL transaction has an isolation level, which "
-						 "can be either \"read uncommitted\", \"read committed\", \"repeatable read\", or \"serializable\".")
-		},
-		&default_iso_level_string,
-		"read committed", assign_defaultxactisolevel, NULL
-	},
-
-	{
-		{"session_replication_role", PGC_SUSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the session's behavior for triggers and rewrite rules."),
-			gettext_noop("Each session can be either"
-						 " \"origin\", \"replica\", or \"local\".")
-		},
-		&session_replication_role_string,
-		"origin", assign_session_replication_role, NULL
-	},
-
-	{
 		{"dynamic_library_path", PGC_SUSET, CLIENT_CONN_OTHER,
 			gettext_noop("Sets the path for dynamically loadable modules."),
 			gettext_noop("If a dynamically loadable module needs to be opened and "
@@ -2144,15 +2143,6 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&local_preload_libraries_string,
 		"", NULL, NULL
-	},
-
-	{
-		{"regex_flavor", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Sets the regular expression \"flavor\"."),
-			gettext_noop("This can be set to advanced, extended, or basic.")
-		},
-		&regex_flavor_string,
-		"advanced", assign_regex_flavor, NULL
 	},
 
 	{
@@ -2450,6 +2440,16 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
+		{"default_transaction_isolation", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the transaction isolation level of each new transaction."),
+			gettext_noop("Each SQL transaction has an isolation level, which "
+						 "can be either \"read uncommitted\", \"read committed\", \"repeatable read\", or \"serializable\".")
+		},
+		&DefaultXactIsoLevel,
+		XACT_READ_COMMITTED, isolation_level_options, NULL, NULL
+	},
+
+	{
 		{"log_error_verbosity", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Sets the verbosity of logged messages."),
 			gettext_noop("Valid values are \"terse\", \"default\", and \"verbose\".")
@@ -2488,7 +2488,25 @@ static struct config_enum ConfigureNamesEnum[] =
 		LOGSTMT_NONE, log_statement_options, NULL, NULL
 	},
 
+	{
+		{"regex_flavor", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
+			gettext_noop("Sets the regular expression \"flavor\"."),
+			gettext_noop("This can be set to advanced, extended, or basic.")
+		},
+		&regex_flavor,
+		REG_ADVANCED, regex_flavor_options, NULL, NULL
+	},
 
+	{
+		{"session_replication_role", PGC_SUSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the session's behavior for triggers and rewrite rules."),
+			gettext_noop("Each session can be either"
+						 " \"origin\", \"replica\", or \"local\".")
+		},
+		&SessionReplicationRole,
+		SESSION_REPLICATION_ROLE_ORIGIN, session_replication_role_options,
+		assign_session_replication_role, NULL
+	},
 
 
 	/* End-of-list marker */
@@ -6887,59 +6905,19 @@ assign_syslog_ident(const char *ident, bool doit, GucSource source)
 #endif   /* HAVE_SYSLOG */
 
 
-static const char *
-assign_defaultxactisolevel(const char *newval, bool doit, GucSource source)
+static bool
+assign_session_replication_role(int newval, bool doit, GucSource source)
 {
-	if (pg_strcasecmp(newval, "serializable") == 0)
-	{
-		if (doit)
-			DefaultXactIsoLevel = XACT_SERIALIZABLE;
-	}
-	else if (pg_strcasecmp(newval, "repeatable read") == 0)
-	{
-		if (doit)
-			DefaultXactIsoLevel = XACT_REPEATABLE_READ;
-	}
-	else if (pg_strcasecmp(newval, "read committed") == 0)
-	{
-		if (doit)
-			DefaultXactIsoLevel = XACT_READ_COMMITTED;
-	}
-	else if (pg_strcasecmp(newval, "read uncommitted") == 0)
-	{
-		if (doit)
-			DefaultXactIsoLevel = XACT_READ_UNCOMMITTED;
-	}
-	else
-		return NULL;
-	return newval;
-}
-
-static const char *
-assign_session_replication_role(const char *newval, bool doit, GucSource source)
-{
-	int			newrole;
-
-	if (pg_strcasecmp(newval, "origin") == 0)
-		newrole = SESSION_REPLICATION_ROLE_ORIGIN;
-	else if (pg_strcasecmp(newval, "replica") == 0)
-		newrole = SESSION_REPLICATION_ROLE_REPLICA;
-	else if (pg_strcasecmp(newval, "local") == 0)
-		newrole = SESSION_REPLICATION_ROLE_LOCAL;
-	else
-		return NULL;
-
 	/*
 	 * Must flush the plan cache when changing replication role; but don't
 	 * flush unnecessarily.
 	 */
-	if (doit && SessionReplicationRole != newrole)
+	if (doit && SessionReplicationRole != newval)
 	{
 		ResetPlanCache();
-		SessionReplicationRole = newrole;
 	}
 
-	return newval;
+	return true;
 }
 
 static const char *

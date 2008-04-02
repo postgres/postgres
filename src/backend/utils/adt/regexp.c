@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.79 2008/03/19 02:40:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.80 2008/04/02 14:42:56 mha Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -40,7 +40,7 @@
 
 
 /* GUC-settable flavor parameter */
-static int	regex_flavor = REG_ADVANCED;
+int	regex_flavor = REG_ADVANCED;
 
 
 /* all the options of interest for regex functions */
@@ -411,33 +411,6 @@ parse_re_flags(pg_re_flags *flags, text *opts)
 			}
 		}
 	}
-}
-
-
-/*
- * assign_regex_flavor - GUC hook to validate and set REGEX_FLAVOR
- */
-const char *
-assign_regex_flavor(const char *value, bool doit, GucSource source)
-{
-	if (pg_strcasecmp(value, "advanced") == 0)
-	{
-		if (doit)
-			regex_flavor = REG_ADVANCED;
-	}
-	else if (pg_strcasecmp(value, "extended") == 0)
-	{
-		if (doit)
-			regex_flavor = REG_EXTENDED;
-	}
-	else if (pg_strcasecmp(value, "basic") == 0)
-	{
-		if (doit)
-			regex_flavor = REG_BASIC;
-	}
-	else
-		return NULL;			/* fail */
-	return value;				/* OK */
 }
 
 

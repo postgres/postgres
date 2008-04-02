@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.92 2008/03/16 16:42:44 mha Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.93 2008/04/02 14:42:56 mha Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -262,10 +262,6 @@ extern const char *assign_default_tablespace(const char *newval,
 						  bool doit, GucSource source);
 extern const char *assign_temp_tablespaces(const char *newval,
 						bool doit, GucSource source);
-
-/* in utils/adt/regexp.c */
-extern const char *assign_regex_flavor(const char *value,
-					bool doit, GucSource source);
 
 /* in catalog/namespace.c */
 extern const char *assign_search_path(const char *newval,
