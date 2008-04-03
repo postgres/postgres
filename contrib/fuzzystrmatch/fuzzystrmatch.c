@@ -5,7 +5,7 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.26 2008/03/25 22:42:41 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.27 2008/04/03 21:13:07 tgl Exp $
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -15,6 +15,8 @@
  * found at http://www.merriampark.com/ld.htm
  * Also looked at levenshtein.c in the PHP 4.0.6 distribution for
  * inspiration.
+ * Configurable penalty costs extension is introduced by Volkan
+ * YAZICI <volkan.yazici@gmail.com>.
  *
  * metaphone()
  * -----------
@@ -43,152 +45,250 @@
  *
  */
 
-#include "fuzzystrmatch.h"
+#include "postgres.h"
+
+#include <ctype.h>
+
+#include "fmgr.h"
+#include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
 
+
 /*
- * Calculates Levenshtein Distance between two strings.
- * Uses simplest and fastest cost model only, i.e. assumes a cost of 1 for
- * each deletion, substitution, or insertion.
+ * External declarations for exported functions
  */
-PG_FUNCTION_INFO_V1(levenshtein);
-Datum
-levenshtein(PG_FUNCTION_ARGS)
+extern Datum levenshtein_with_costs(PG_FUNCTION_ARGS);
+extern Datum levenshtein(PG_FUNCTION_ARGS);
+extern Datum metaphone(PG_FUNCTION_ARGS);
+extern Datum soundex(PG_FUNCTION_ARGS);
+extern Datum difference(PG_FUNCTION_ARGS);
+
+/*
+ * Soundex
+ */
+static void _soundex(const char *instr, char *outstr);
+
+#define SOUNDEX_LEN 4
+
+/*									ABCDEFGHIJKLMNOPQRSTUVWXYZ */
+static const char *soundex_table = "01230120022455012623010202";
+
+#define soundex_code(letter) soundex_table[toupper((unsigned char) (letter)) - 'A']
+
+
+/*
+ * Levenshtein
+ */
+#define MAX_LEVENSHTEIN_STRLEN		255
+
+static int	levenshtein_internal(const char *s, const char *t,
+								 int ins_c, int del_c, int sub_c);
+
+
+/*
+ * Metaphone
+ */
+#define MAX_METAPHONE_STRLEN		255
+
+/*
+ * Original code by Michael G Schwern starts here.
+ * Code slightly modified for use as PostgreSQL function.
+ */
+
+
+/**************************************************************************
+	metaphone -- Breaks english phrases down into their phonemes.
+
+	Input
+		word			--	An english word to be phonized
+		max_phonemes	--	How many phonemes to calculate.  If 0, then it
+							will phonize the entire phrase.
+		phoned_word		--	The final phonized word.  (We'll allocate the
+							memory.)
+	Output
+		error	--	A simple error flag, returns TRUE or FALSE
+
+	NOTES:	ALL non-alpha characters are ignored, this includes whitespace,
+	although non-alpha characters will break up phonemes.
+****************************************************************************/
+
+
+/**************************************************************************
+	my constants -- constants I like
+
+	Probably redundant.
+
+***************************************************************************/
+
+#define META_ERROR			FALSE
+#define META_SUCCESS		TRUE
+#define META_FAILURE		FALSE
+
+
+/*	I add modifications to the traditional metaphone algorithm that you
+	might find in books.  Define this if you want metaphone to behave
+	traditionally */
+#undef USE_TRADITIONAL_METAPHONE
+
+/* Special encodings */
+#define  SH		'X'
+#define  TH		'0'
+
+static char Lookahead(char *word, int how_far);
+static int	_metaphone(char *word, int max_phonemes, char **phoned_word);
+
+/* Metachar.h ... little bits about characters for metaphone */
+
+
+/*-- Character encoding array & accessing macros --*/
+/* Stolen directly out of the book... */
+char		_codes[26] = {
+	1, 16, 4, 16, 9, 2, 4, 16, 9, 2, 0, 2, 2, 2, 1, 4, 0, 2, 4, 4, 1, 0, 0, 0, 8, 0
+/*	a  b c	d e f g  h i j k l m n o p q r s t u v w x y z */
+};
+
+
+#define ENCODE(c) (isalpha((unsigned char) (c)) ? _codes[((toupper((unsigned char) (c))) - 'A')] : 0)
+
+#define isvowel(c)	(ENCODE(c) & 1)		/* AEIOU */
+
+/* These letters are passed through unchanged */
+#define NOCHANGE(c) (ENCODE(c) & 2)		/* FJMNR */
+
+/* These form dipthongs when preceding H */
+#define AFFECTH(c)	(ENCODE(c) & 4)		/* CGPST */
+
+/* These make C and G soft */
+#define MAKESOFT(c) (ENCODE(c) & 8)		/* EIY */
+
+/* These prevent GH from becoming F */
+#define NOGHTOF(c)	(ENCODE(c) & 16)	/* BDH */
+
+
+/*
+ * levenshtein_internal - Calculates Levenshtein distance metric
+ *                        between supplied strings. Generally
+ *                        (1, 1, 1) penalty costs suffices common
+ *                        cases, but your mileage may vary.
+ */
+static int
+levenshtein_internal(const char *s, const char *t,
+					 int ins_c, int del_c, int sub_c)
 {
-	char	   *str_s = TextDatumGetCString(PG_GETARG_DATUM(0));
-	char	   *str_t = TextDatumGetCString(PG_GETARG_DATUM(1));
-	int			cols = strlen(str_s) + 1;
-	int			rows = strlen(str_t) + 1;
-	char	   *str_s0;
-	int		   *u_cells;
-	int		   *l_cells;
-	int		   *tmp;
-	int			i;
-	int			j;
+	int		 m, n;
+	int		*prev;
+	int		*curr;
+	int		 i, j;
+	const char *x;
+	const char *y;
+
+	m = strlen(s);
+	n = strlen(t);
 
 	/*
-	 * str_s is referred to as the "source", str_t is referred to as the
-	 * "target", cols = length of source + 1 to allow for the initialization
-	 * column, rows = length of target + 1 to allow for the initialization row
+	 * If either m or n is 0, the answer is the other value. This makes
+	 * sense since it would take that many insertions to build a matching
+	 * string
 	 */
+	if (!m)
+		return n;
+	if (!n)
+		return m;
 
 	/*
-	 * Restrict the length of the strings being compared to something
-	 * reasonable because we will have to perform rows * cols calculations. If
-	 * longer strings need to be compared, increase MAX_LEVENSHTEIN_STRLEN to
-	 * suit (but within your tolerance for speed and memory usage).
+	 * For security concerns, restrict excessive CPU+RAM usage. (This
+	 * implementation uses O(m) memory and has O(mn) complexity.)
 	 */
-	if ((cols > MAX_LEVENSHTEIN_STRLEN + 1) || (rows > MAX_LEVENSHTEIN_STRLEN + 1))
+	if (m > MAX_LEVENSHTEIN_STRLEN ||
+		n > MAX_LEVENSHTEIN_STRLEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("argument exceeds the maximum length of %d bytes",
 						MAX_LEVENSHTEIN_STRLEN)));
 
-	/*
-	 * If either rows or cols is 0, the answer is the other value. This makes
-	 * sense since it would take that many insertions the build a matching
-	 * string
-	 */
-
-	if (cols == 0)
-		PG_RETURN_INT32(rows);
-
-	if (rows == 0)
-		PG_RETURN_INT32(cols);
+	/* One more cell for initialization column and row. */
+	++m;
+	++n;
 
 	/*
-	 * Allocate two vectors of integers. One will be used for the "upper" row,
-	 * the other for the "lower" row. Initialize the "upper" row to 0..cols
+	 * Instead of building an (m+1)x(n+1) array, we'll use two
+	 * different arrays of size m+1 for storing accumulated values.
+	 * At each step one represents the "previous" row and one is the
+	 * "current" row of the notional large array.
 	 */
-	u_cells = palloc(sizeof(int) * cols);
-	for (i = 0; i < cols; i++)
-		u_cells[i] = i;
+	prev = (int *) palloc(2 * m * sizeof(int));
+	curr = prev + m;
 
-	l_cells = palloc(sizeof(int) * cols);
+	/* Initialize the "previous" row to 0..cols */
+	for (i = 0; i < m; i++)
+		prev[i] = i;
 
-	/*
-	 * Use str_s0 to "rewind" the pointer to str_s in the nested for loop
-	 * below
-	 */
-	str_s0 = str_s;
-
-	/*
-	 * Loop through the rows, starting at row 1. Row 0 is used for the initial
-	 * "upper" row.
-	 */
-	for (j = 1; j < rows; j++)
+	/* Loop through rows of the notional array */
+	for (y = t, j = 1; j < n; y++, j++)
 	{
+		int *temp;
+
 		/*
-		 * We'll always start with col 1, and initialize lower row col 0 to j
+		 * First cell must increment sequentially, as we're on the
+		 * j'th row of the (m+1)x(n+1) array.
 		 */
-		l_cells[0] = j;
-
-		for (i = 1; i < cols; i++)
+		curr[0] = j;
+		
+		for (x = s, i = 1; i < m; x++, i++)
 		{
-			int			c = 0;
-			int			c1 = 0;
-			int			c2 = 0;
-			int			c3 = 0;
+			int	ins;
+			int	del;
+			int	sub;
 
-			/*
-			 * The "cost" value is 0 if the character at the current col
-			 * position in the source string, matches the character at the
-			 * current row position in the target string; cost is 1 otherwise.
-			 */
-			c = (*str_s != *str_t);
+			/* Calculate costs for probable operations. */
+			ins = prev[i] + ins_c;						/* Insertion    */
+			del = curr[i-1] + del_c;					/* Deletion     */
+			sub = prev[i-1] + ((*x == *y) ? 0 : sub_c);	/* Substitution */
 
-			/*
-			 * c1 is upper right cell plus 1
-			 */
-			c1 = u_cells[i] + 1;
-
-			/*
-			 * c2 is lower left cell plus 1
-			 */
-			c2 = l_cells[i - 1] + 1;
-
-			/*
-			 * c3 is cell diagonally above to the left plus "cost"
-			 */
-			c3 = u_cells[i - 1] + c;
-
-			/*
-			 * The lower right cell is set to the minimum of c1, c2, c3
-			 */
-			l_cells[i] = (c1 < c2 ? c1 : c2) < c3 ? (c1 < c2 ? c1 : c2) : c3;
-
-			/*
-			 * Increment the pointer to str_s
-			 */
-			str_s++;
+			/* Take the one with minimum cost. */
+			curr[i] = Min(ins, del);
+			curr[i] = Min(curr[i], sub);
 		}
 
-		/*
-		 * Lower row now becomes the upper row, and the upper row gets reused
-		 * as the new lower row.
-		 */
-		tmp = u_cells;
-		u_cells = l_cells;
-		l_cells = tmp;
-
-		/*
-		 * Increment the pointer to str_t
-		 */
-		str_t++;
-
-		/*
-		 * Rewind the pointer to str_s
-		 */
-		str_s = str_s0;
+		/* Swap current row with previous row. */
+		temp = curr;
+		curr = prev;
+		prev = temp;
 	}
 
 	/*
-	 * Because the final value (at position row, col) was swapped from the
-	 * lower row to the upper row, that's where we'll find it.
+	 * Because the final value was swapped from the previous row to
+	 * the current row, that's where we'll find it.
 	 */
-	PG_RETURN_INT32(u_cells[cols - 1]);
+	return prev[m-1];
 }
+
+
+PG_FUNCTION_INFO_V1(levenshtein_with_costs);
+Datum
+levenshtein_with_costs(PG_FUNCTION_ARGS)
+{
+	char	*src = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char	*dst = TextDatumGetCString(PG_GETARG_DATUM(1));
+	int		 ins_c = PG_GETARG_INT32(2);
+	int		 del_c = PG_GETARG_INT32(3);
+	int		 sub_c = PG_GETARG_INT32(4);
+
+	PG_RETURN_INT32(levenshtein_internal(src, dst, ins_c, del_c, sub_c));
+}
+
+
+PG_FUNCTION_INFO_V1(levenshtein);
+Datum
+levenshtein(PG_FUNCTION_ARGS)
+{
+	char	*src = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char	*dst = TextDatumGetCString(PG_GETARG_DATUM(1));
+
+	PG_RETURN_INT32(levenshtein_internal(src, dst, 1, 1, 1));
+}
+
 
 /*
  * Calculates the metaphone of an input string.
@@ -249,9 +349,8 @@ metaphone(PG_FUNCTION_ARGS)
 /*
  * Original code by Michael G Schwern starts here.
  * Code slightly modified for use as PostgreSQL
- * function (palloc, etc). Original includes
- * are rolled into fuzzystrmatch.h
- *------------------------------------------------------------------*/
+ * function (palloc, etc).
+ */
 
 /* I suppose I could have been using a character pointer instead of
  * accessing the array directly... */
@@ -273,7 +372,7 @@ metaphone(PG_FUNCTION_ARGS)
 
 /* Allows us to safely look ahead an arbitrary # of letters */
 /* I probably could have just used strlen... */
-char
+static char
 Lookahead(char *word, int how_far)
 {
 	char		letter_ahead = '\0';	/* null by default */
@@ -299,14 +398,10 @@ Lookahead(char *word, int how_far)
 #define Isbreak(c)	(!isalpha((unsigned char) (c)))
 
 
-int
-_metaphone(
- /* IN */
-		   char *word,
+static int
+_metaphone(char *word,				/* IN */
 		   int max_phonemes,
- /* OUT */
-		   char **phoned_word
-)
+		   char **phoned_word)		/* OUT */
 {
 	int			w_idx = 0;		/* point in the phonization we're at. */
 	int			p_idx = 0;		/* end of the phoned phrase */

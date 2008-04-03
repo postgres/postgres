@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/fuzzystrmatch.sgml,v 1.3 2007/12/06 04:12:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/fuzzystrmatch.sgml,v 1.4 2008/04/03 21:13:07 tgl Exp $ -->
 
 <sect1 id="fuzzystrmatch">
  <title>fuzzystrmatch</title>
@@ -74,16 +74,20 @@ SELECT * FROM s WHERE difference(s.nm, 'john') &gt; 2;
   </para>
 
   <programlisting>
+   levenshtein(text source, text target, int ins_cost, int del_cost, int sub_cost) returns int
    levenshtein(text source, text target) returns int
   </programlisting>
 
   <para>
    Both <literal>source</literal> and <literal>target</literal> can be any
-   non-null string, with a maximum of 255 characters.
+   non-null string, with a maximum of 255 bytes.  The cost parameters
+   specify how much to charge for a character insertion, deletion, or
+   substitution, respectively.  You can omit the cost parameters, as in
+   the second version of the function; in that case they all default to 1.
   </para>
 
   <para>
-   Example:
+   Examples:
   </para>
 
   <programlisting>
@@ -91,6 +95,12 @@ test=# SELECT levenshtein('GUMBO', 'GAMBOL');
  levenshtein
 -------------
            2
+(1 row)
+
+test=# SELECT levenshtein('GUMBO', 'GAMBOL', 2,1,1);
+ levenshtein
+-------------
+           3
 (1 row)
   </programlisting>
  </sect2>
