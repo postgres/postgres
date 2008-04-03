@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Thu Apr  3 12:36:59 EDT 2008
+Last updated:           Thu Apr  3 14:13:49 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -440,13 +440,15 @@ first.  There is also a developer's wiki at<br/>
   database creation might have locale-aware indexes.  The indexes would
   need to be reindexed to match the new locale.
 </p>
-  </li><li>Allow encoding on a per-column basis optionally using the ICU library:
+  </li><li>Allow encoding on a per-column basis optionally using the ICU library
 <p>  Right now only one encoding is allowed per database.  [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?locale">locale</a>]
 </p>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php">http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2005-08/msg00309.php">http://archives.postgresql.org/pgsql-patches/2005-08/msg00309.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2006-03/msg00233.php">http://archives.postgresql.org/pgsql-patches/2006-03/msg00233.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg00662.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg00662.php</a>
+  <a href="http://wiki.postgresql.org/wiki/Todo:Collate">http://wiki.postgresql.org/wiki/Todo:Collate</a> 
+  <a href="http://wiki.postgresql.org/wiki/Todo:ICU">http://wiki.postgresql.org/wiki/Todo:ICU</a>
 </p>
   </li><li>Add CREATE COLLATE?  [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?locale">locale</a>]
   </li><li>Support multiple simultaneous character sets, per SQL92
