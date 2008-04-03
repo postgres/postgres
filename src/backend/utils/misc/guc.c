@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.441 2008/04/02 14:42:56 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.442 2008/04/03 09:21:15 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -135,8 +135,8 @@ static const char *assign_log_destination(const char *value,
 #ifdef HAVE_SYSLOG
 static int	syslog_facility = LOG_LOCAL0;
 
-static const char *assign_syslog_facility(const char *facility,
-					   bool doit, GucSource source);
+static bool assign_syslog_facility(int newval,
+				    bool doit, GucSource source);
 static const char *assign_syslog_ident(const char *ident,
 					bool doit, GucSource source);
 #endif
@@ -229,6 +229,18 @@ static const struct config_enum_entry session_replication_role_options[] = {
 	{NULL, 0}
 };
 
+static const struct config_enum_entry syslog_facility_options[] = {
+	{"local0", LOG_LOCAL0},
+	{"local1", LOG_LOCAL1},
+	{"local2", LOG_LOCAL2},
+	{"local3", LOG_LOCAL3},
+	{"local4", LOG_LOCAL4},
+	{"local5", LOG_LOCAL5},
+	{"local6", LOG_LOCAL6},
+	{"local7", LOG_LOCAL7},
+	{NULL, 0}
+};
+
 
 /*
  * GUC option variables that are exported from this module
@@ -283,7 +295,6 @@ int			tcp_keepalives_count;
 static char *log_destination_string;
 
 #ifdef HAVE_SYSLOG
-static char *syslog_facility_str;
 static char *syslog_ident_str;
 #endif
 static bool phony_autocommit;
@@ -2232,15 +2243,6 @@ static struct config_string ConfigureNamesString[] =
 
 #ifdef HAVE_SYSLOG
 	{
-		{"syslog_facility", PGC_SIGHUP, LOGGING_WHERE,
-			gettext_noop("Sets the syslog \"facility\" to be used when syslog enabled."),
-			gettext_noop("Valid values are LOCAL0, LOCAL1, LOCAL2, LOCAL3, "
-						 "LOCAL4, LOCAL5, LOCAL6, LOCAL7.")
-		},
-		&syslog_facility_str,
-		"LOCAL0", assign_syslog_facility, NULL
-	},
-	{
 		{"syslog_ident", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the program name used to identify PostgreSQL "
 						 "messages in syslog."),
@@ -2487,6 +2489,18 @@ static struct config_enum ConfigureNamesEnum[] =
 		&log_statement,
 		LOGSTMT_NONE, log_statement_options, NULL, NULL
 	},
+
+#ifdef HAVE_SYSLOG
+	{
+		{"syslog_facility", PGC_SIGHUP, LOGGING_WHERE,
+			gettext_noop("Sets the syslog \"facility\" to be used when syslog enabled."),
+			gettext_noop("Valid values are LOCAL0, LOCAL1, LOCAL2, LOCAL3, "
+						 "LOCAL4, LOCAL5, LOCAL6, LOCAL7.")
+		},
+		&syslog_facility,
+		LOG_LOCAL0, syslog_facility_options, assign_syslog_facility, NULL
+	},
+#endif
 
 	{
 		{"regex_flavor", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
@@ -6860,38 +6874,14 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 
 #ifdef HAVE_SYSLOG
 
-static const char *
-assign_syslog_facility(const char *facility, bool doit, GucSource source)
+static bool
+assign_syslog_facility(int newval, bool doit, GucSource source)
 {
-	int			syslog_fac;
-
-	if (pg_strcasecmp(facility, "LOCAL0") == 0)
-		syslog_fac = LOG_LOCAL0;
-	else if (pg_strcasecmp(facility, "LOCAL1") == 0)
-		syslog_fac = LOG_LOCAL1;
-	else if (pg_strcasecmp(facility, "LOCAL2") == 0)
-		syslog_fac = LOG_LOCAL2;
-	else if (pg_strcasecmp(facility, "LOCAL3") == 0)
-		syslog_fac = LOG_LOCAL3;
-	else if (pg_strcasecmp(facility, "LOCAL4") == 0)
-		syslog_fac = LOG_LOCAL4;
-	else if (pg_strcasecmp(facility, "LOCAL5") == 0)
-		syslog_fac = LOG_LOCAL5;
-	else if (pg_strcasecmp(facility, "LOCAL6") == 0)
-		syslog_fac = LOG_LOCAL6;
-	else if (pg_strcasecmp(facility, "LOCAL7") == 0)
-		syslog_fac = LOG_LOCAL7;
-	else
-		return NULL;			/* reject */
-
 	if (doit)
-	{
-		syslog_facility = syslog_fac;
 		set_syslog_parameters(syslog_ident_str ? syslog_ident_str : "postgres",
-							  syslog_facility);
-	}
+							  newval);
 
-	return facility;
+	return true;
 }
 
 static const char *
