@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.73 2008/03/24 18:22:36 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.74 2008/04/03 16:27:25 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -497,7 +497,7 @@ extern void pgstat_reset_counters(void);
 extern void pgstat_report_autovac(Oid dboid);
 extern void pgstat_report_vacuum(Oid tableoid, bool shared,
 					 bool analyze, PgStat_Counter tuples);
-extern void pgstat_report_analyze(Oid tableoid, bool shared,
+extern void pgstat_report_analyze(Relation rel,
 					  PgStat_Counter livetuples,
 					  PgStat_Counter deadtuples);
 

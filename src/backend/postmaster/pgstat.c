@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.172 2008/03/26 21:10:38 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.173 2008/04/03 16:27:25 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1037,7 +1037,7 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
  * --------
  */
 void
-pgstat_report_analyze(Oid tableoid, bool shared, PgStat_Counter livetuples,
+pgstat_report_analyze(Relation rel, PgStat_Counter livetuples,
 					  PgStat_Counter deadtuples)
 {
 	PgStat_MsgAnalyze msg;
@@ -1045,10 +1045,36 @@ pgstat_report_analyze(Oid tableoid, bool shared, PgStat_Counter livetuples,
 	if (pgStatSock < 0 || !pgstat_track_counts)
 		return;
 
+	/*
+	 * Unlike VACUUM, ANALYZE might be running inside a transaction that
+	 * has already inserted and/or deleted rows in the target table.
+	 * ANALYZE will have counted such rows as live or dead respectively.
+	 * Because we will report our counts of such rows at transaction end,
+	 * we should subtract off these counts from what we send to the collector
+	 * now, else they'll be double-counted after commit.  (This approach also
+	 * ensures that the collector ends up with the right numbers if we abort
+	 * instead of committing.)
+	 */
+	if (rel->pgstat_info != NULL)
+	{
+		PgStat_TableXactStatus *trans;
+
+		for (trans = rel->pgstat_info->trans; trans; trans = trans->upper)
+		{
+			livetuples -= trans->tuples_inserted - trans->tuples_deleted;
+			deadtuples -= trans->tuples_deleted;
+		}
+		/* count stuff inserted by already-aborted subxacts, too */
+		deadtuples -= rel->pgstat_info->t_counts.t_new_dead_tuples;
+		/* Since ANALYZE's counts are estimates, we could have underflowed */
+		livetuples = Max(livetuples, 0);
+		deadtuples = Max(deadtuples, 0);
+	}
+
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANALYZE);
-	msg.m_databaseid = shared ? InvalidOid : MyDatabaseId;
-	msg.m_tableoid = tableoid;
-	msg.m_autovacuum = IsAutoVacuumWorkerProcess();		/* is this autovacuum? */
+	msg.m_databaseid = rel->rd_rel->relisshared ? InvalidOid : MyDatabaseId;
+	msg.m_tableoid = RelationGetRelid(rel);
+	msg.m_autovacuum = IsAutoVacuumWorkerProcess();	/* is this autovacuum? */
 	msg.m_analyzetime = GetCurrentTimestamp();
 	msg.m_live_tuples = livetuples;
 	msg.m_dead_tuples = deadtuples;
