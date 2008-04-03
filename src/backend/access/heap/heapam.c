@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.254 2008/03/26 21:10:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.255 2008/04/03 17:12:27 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1335,30 +1335,6 @@ heap_fetch(Relation relation,
 		   bool keep_buf,
 		   Relation stats_relation)
 {
-	/* Assume *userbuf is undefined on entry */
-	*userbuf = InvalidBuffer;
-	return heap_release_fetch(relation, snapshot, tuple,
-							  userbuf, keep_buf, stats_relation);
-}
-
-/*
- *	heap_release_fetch		- retrieve tuple with given tid
- *
- * This has the same API as heap_fetch except that if *userbuf is not
- * InvalidBuffer on entry, that buffer will be released before reading
- * the new page.  This saves a separate ReleaseBuffer step and hence
- * one entry into the bufmgr when looping through multiple fetches.
- * Also, if *userbuf is the same buffer that holds the target tuple,
- * we avoid bufmgr manipulation altogether.
- */
-bool
-heap_release_fetch(Relation relation,
-				   Snapshot snapshot,
-				   HeapTuple tuple,
-				   Buffer *userbuf,
-				   bool keep_buf,
-				   Relation stats_relation)
-{
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
 	Buffer		buffer;
@@ -1367,11 +1343,9 @@ heap_release_fetch(Relation relation,
 	bool		valid;
 
 	/*
-	 * get the buffer from the relation descriptor. Note that this does a
-	 * buffer pin, and releases the old *userbuf if not InvalidBuffer.
+	 * Fetch and pin the appropriate page of the relation.
 	 */
-	buffer = ReleaseAndReadBuffer(*userbuf, relation,
-								  ItemPointerGetBlockNumber(tid));
+	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
 	/*
 	 * Need share lock on buffer to examine tuple commit status.

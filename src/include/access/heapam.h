@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.132 2008/03/26 21:10:39 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.133 2008/04/03 17:12:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,9 +153,6 @@ extern HeapTuple heap_getnext(HeapScanDesc scan, ScanDirection direction);
 extern bool heap_fetch(Relation relation, Snapshot snapshot,
 		   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
 		   Relation stats_relation);
-extern bool heap_release_fetch(Relation relation, Snapshot snapshot,
-				   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
-				   Relation stats_relation);
 extern bool heap_hot_search_buffer(ItemPointer tid, Buffer buffer,
 					   Snapshot snapshot, bool *all_dead);
 extern bool heap_hot_search(ItemPointer tid, Relation relation,
