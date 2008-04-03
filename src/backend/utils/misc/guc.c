@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.442 2008/04/03 09:21:15 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.443 2008/04/03 13:25:02 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -229,6 +229,7 @@ static const struct config_enum_entry session_replication_role_options[] = {
 	{NULL, 0}
 };
 
+#ifdef HAVE_SYSLOG
 static const struct config_enum_entry syslog_facility_options[] = {
 	{"local0", LOG_LOCAL0},
 	{"local1", LOG_LOCAL1},
@@ -240,6 +241,7 @@ static const struct config_enum_entry syslog_facility_options[] = {
 	{"local7", LOG_LOCAL7},
 	{NULL, 0}
 };
+#endif
 
 
 /*
