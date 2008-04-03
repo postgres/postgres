@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Apr  2 21:55:58 EDT 2008
+Last updated:		Thu Apr  3 12:36:59 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1620,6 +1620,10 @@ Optimizer / Executor
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
 * Have EXPLAIN ANALYZE issue NOTICE messages when the estimated and
   actual row counts differ by a specified percentage
+* Improve how ANALYZE computes in-doubt tuples
+
+  http://archives.postgresql.org/pgsql-hackers/2007-11/msg00771.php
+
 * Consider using hash buckets to do DISTINCT, rather than sorting
 
   This would be beneficial when there are few distinct values.  This is

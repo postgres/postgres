@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Wed Apr  2 21:55:58 EDT 2008
+Last updated:           Thu Apr  3 12:36:59 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1398,6 +1398,9 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
   </li><li>Have EXPLAIN ANALYZE issue NOTICE messages when the estimated and
   actual row counts differ by a specified percentage
+  </li><li>Improve how ANALYZE computes in-doubt tuples
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg00771.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg00771.php</a>
+</p>
   </li><li>Consider using hash buckets to do DISTINCT, rather than sorting
 <p>  This would be beneficial when there are few distinct values.  This is
   already used by GROUP BY.
