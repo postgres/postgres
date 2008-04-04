@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.445 2008/04/04 11:47:19 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.446 2008/04/04 17:25:23 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -7109,31 +7109,6 @@ assign_canonical_path(const char *newval, bool doit, GucSource source)
 	}
 	else
 		return newval;
-}
-
-static const char *
-assign_backslash_quote(const char *newval, bool doit, GucSource source)
-{
-	BackslashQuoteType bq;
-	bool		bqbool;
-
-	/*
-	 * Although only "on", "off", and "safe_encoding" are documented, we use
-	 * parse_bool so we can accept all the likely variants of "on" and "off".
-	 */
-	if (pg_strcasecmp(newval, "safe_encoding") == 0)
-		bq = BACKSLASH_QUOTE_SAFE_ENCODING;
-	else if (parse_bool(newval, &bqbool))
-	{
-		bq = bqbool ? BACKSLASH_QUOTE_ON : BACKSLASH_QUOTE_OFF;
-	}
-	else
-		return NULL;			/* reject */
-
-	if (doit)
-		backslash_quote = bq;
-
-	return newval;
 }
 
 static const char *
