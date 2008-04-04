@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.124 2008/03/29 19:40:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.125 2008/04/04 17:42:43 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -188,6 +188,7 @@ slashUsage(unsigned short int pager)
 			ON(pset.timing));
 	fprintf(output, _("  \\unset NAME    unset (delete) internal variable\n"));
 	fprintf(output, _("  \\! [COMMAND]   execute command in shell or start interactive shell\n"));
+	fprintf(output, _("  \\?             display this help output\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Query Buffer\n"));
