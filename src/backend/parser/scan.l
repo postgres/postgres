@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.142 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.143 2008/04/04 12:44:36 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ static char    *dolqstart;      /* current $foo$ quote start string */
  * But we shall have to live with it as a short-term thing until the switch
  * to SQL-standard string syntax is complete.
  */
-BackslashQuoteType backslash_quote = BACKSLASH_QUOTE_SAFE_ENCODING;
+int				backslash_quote = BACKSLASH_QUOTE_SAFE_ENCODING;
 bool			escape_string_warning = true;
 bool			standard_conforming_strings = false;
 
