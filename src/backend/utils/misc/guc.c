@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.444 2008/04/04 08:33:15 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.445 2008/04/04 11:47:19 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -153,7 +153,6 @@ static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_transaction_read_only(bool newval, bool doit, GucSource source);
 static const char *assign_canonical_path(const char *newval, bool doit, GucSource source);
-static const char *assign_backslash_quote(const char *newval, bool doit, GucSource source);
 static const char *assign_timezone_abbreviations(const char *newval, bool doit, GucSource source);
 static const char *show_archive_command(void);
 static bool assign_tcp_keepalives_idle(int newval, bool doit, GucSource source);
@@ -254,6 +253,23 @@ static const struct config_enum_entry xmloption_options[] = {
 };
 
 /*
+ * Although only "on", "off", and "safe_encoding" are documented, we
+ * accept all the likely variants of "on" and "off".
+ */
+static const struct config_enum_entry backslash_quote_options[] = {
+	{"safe_encoding", BACKSLASH_QUOTE_SAFE_ENCODING},
+	{"on", BACKSLASH_QUOTE_ON},
+	{"off", BACKSLASH_QUOTE_OFF},
+	{"true", BACKSLASH_QUOTE_ON},
+	{"false", BACKSLASH_QUOTE_OFF},
+	{"yes", BACKSLASH_QUOTE_ON},
+	{"no", BACKSLASH_QUOTE_OFF},
+	{"1", BACKSLASH_QUOTE_ON},
+	{"0", BACKSLASH_QUOTE_OFF},
+	{NULL, 0}
+};
+
+/*
  * GUC option variables that are exported from this module
  */
 #ifdef USE_ASSERT_CHECKING
@@ -311,7 +327,6 @@ static char *syslog_ident_str;
 static bool phony_autocommit;
 static bool session_auth_is_superuser;
 static double phony_random_seed;
-static char *backslash_quote_string;
 static char *client_encoding_string;
 static char *datestyle_string;
 static char *locale_collate;
@@ -1960,15 +1975,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"backslash_quote", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Sets whether \"\\'\" is allowed in string literals."),
-			gettext_noop("Valid values are ON, OFF, and SAFE_ENCODING.")
-		},
-		&backslash_quote_string,
-		"safe_encoding", assign_backslash_quote, NULL
-	},
-
-	{
 		{"client_encoding", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the client's character set encoding."),
 			NULL,
@@ -2419,6 +2425,15 @@ static struct config_string ConfigureNamesString[] =
 
 static struct config_enum ConfigureNamesEnum[] =
 {
+	{
+		{"backslash_quote", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
+			gettext_noop("Sets whether \"\\'\" is allowed in string literals."),
+			gettext_noop("Valid values are ON, OFF, and SAFE_ENCODING.")
+		},
+		&backslash_quote,
+		BACKSLASH_QUOTE_SAFE_ENCODING, backslash_quote_options, NULL, NULL
+	},
+
 	{
 		{"client_min_messages", PGC_USERSET, LOGGING_WHEN,
 			gettext_noop("Sets the message levels that are sent to the client."),
