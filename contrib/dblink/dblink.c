@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.71 2008/03/26 21:10:36 alvherre Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.72 2008/04/04 16:57:21 momjian Exp $
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -1630,23 +1630,6 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	 */
 	PG_RETURN_TEXT_P(cstring_to_text(sql));
 }
-
-/*
- * dblink_current_query
- * return the current query string
- * to allow its use in (among other things)
- * rewrite rules
- */
-PG_FUNCTION_INFO_V1(dblink_current_query);
-Datum
-dblink_current_query(PG_FUNCTION_ARGS)
-{
-	if (debug_query_string)
-		PG_RETURN_TEXT_P(cstring_to_text(debug_query_string));
-	else
-		PG_RETURN_NULL();
-}
-
 
 /*************************************************************
  * internal functions

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.485 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.486 2008/04/04 16:57:21 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1117,6 +1117,8 @@ DESCR("convert char to char()");
 
 DATA(insert OID = 861 ( current_database	   PGNSP PGUID 12 1 0 f f t f i 0 19 "" _null_ _null_ _null_ current_database - _null_ _null_ ));
 DESCR("returns the current database");
+DATA(insert OID = 817 (  current_query        PGNSP PGUID 12 1 0 f f f f v 0 25  "" _null_ _null_ _null_  current_query - _null_ _null_ ));
+DESCR("returns the currently executing query");
 
 DATA(insert OID =  862 (  int4_mul_cash		   PGNSP PGUID 12 1 0 f f t f i 2 790 "23 790" _null_ _null_ _null_ int4_mul_cash - _null_ _null_ ));
 DESCR("multiply");

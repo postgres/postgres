@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/dblink/dblink.sql.in,v 1.14 2007/11/13 04:24:27 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/dblink/dblink.sql.in,v 1.15 2008/04/04 16:57:21 momjian Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -162,11 +162,6 @@ CREATE OR REPLACE FUNCTION dblink_build_sql_update (text, int2vector, int, _text
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_build_sql_update'
 LANGUAGE C STRICT;
-
-CREATE OR REPLACE FUNCTION dblink_current_query ()
-RETURNS text
-AS 'MODULE_PATHNAME','dblink_current_query'
-LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION dblink_send_query(text, text)
 RETURNS int4

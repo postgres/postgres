@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.58 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.59 2008/04/04 16:57:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
+#include "tcop/tcopprot.h"
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
@@ -70,6 +71,19 @@ current_database(PG_FUNCTION_ARGS)
 	PG_RETURN_NAME(db);
 }
 
+
+/*
+ * current_query()
+ *  Expose the current query to the user (useful in stored procedures)
+ */
+Datum
+current_query(PG_FUNCTION_ARGS)
+{
+	if (debug_query_string)
+		PG_RETURN_TEXT_P(cstring_to_text(debug_query_string));
+	else
+		PG_RETURN_NULL();
+}
 
 /*
  * Functions to send signals to other backends.

@@ -22,13 +22,6 @@ INSERT INTO foo VALUES (7,'h','{"a7","b7","c7"}');
 INSERT INTO foo VALUES (8,'i','{"a8","b8","c8"}');
 INSERT INTO foo VALUES (9,'j','{"a9","b9","c9"}');
 -- misc utilities
--- show the currently executing query
-SELECT 'hello' AS hello, dblink_current_query() AS query;
- hello |                           query                           
--------+-----------------------------------------------------------
- hello | SELECT 'hello' AS hello, dblink_current_query() AS query;
-(1 row)
-
 -- list the primary key fields
 SELECT *
 FROM dblink_get_pkey('foo');

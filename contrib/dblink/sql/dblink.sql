@@ -27,9 +27,6 @@ INSERT INTO foo VALUES (9,'j','{"a9","b9","c9"}');
 
 -- misc utilities
 
--- show the currently executing query
-SELECT 'hello' AS hello, dblink_current_query() AS query;
-
 -- list the primary key fields
 SELECT *
 FROM dblink_get_pkey('foo');

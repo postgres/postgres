@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.3 2007/12/06 04:12:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.4 2008/04/04 16:57:21 momjian Exp $ -->
 
 <sect1 id="dblink">
  <title>dblink</title>
@@ -1342,49 +1342,6 @@ SELECT *
 
    <programlisting>
     SELECT dblink_cancel_query('dtest1');
-   </programlisting>
-  </refsect1>
- </refentry>
-
- <refentry id="CONTRIB-DBLINK-CURRENT-QUERY">
-  <refnamediv>
-   <refname>dblink_current_query</refname>
-   <refpurpose>returns the current query string</refpurpose>
-  </refnamediv>
-
-  <refsynopsisdiv>
-   <synopsis>
-    dblink_current_query() returns text
-   </synopsis>
-  </refsynopsisdiv>
-
-  <refsect1>
-   <title>Description</title>
-
-   <para>
-    Returns the currently executing interactive command string of the
-    local database session, or NULL if it can't be determined.  Note
-    that this function is not really related to <filename>dblink</>'s
-    other functionality.  It is provided since it is sometimes useful
-    in generating queries to be forwarded to remote databases.
-   </para>
-  </refsect1>
-
-  <refsect1>
-   <title>Return Value</title>
-
-   <para>Returns a copy of the currently executing query string.</para>
-  </refsect1>
-
-  <refsect1>
-   <title>Example</title>
-
-   <programlisting>
-test=# select dblink_current_query();
-      dblink_current_query
---------------------------------
- select dblink_current_query();
-(1 row)
    </programlisting>
   </refsect1>
  </refentry>

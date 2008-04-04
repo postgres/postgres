@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.425 2008/03/23 00:24:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.426 2008/04/04 16:57:21 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10723,6 +10723,12 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
        <entry><type>name</type></entry>
        <entry>user name of current execution context</entry>
       </row>
+
+      <row>
+       <entry><literal><function>current_query</function></literal></entry>
+       <entry><type>text</type></entry>
+       <entry>text of the currently executing query (might contain more than one statement)</entry>
+      </row>  
 
       <row>
        <entry><literal><function>inet_client_addr</function>()</literal></entry>
