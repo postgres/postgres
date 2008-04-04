@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.71 2008/03/25 22:42:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.72 2008/04/04 08:33:15 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,8 +86,8 @@
 
 
 /* GUC variables */
-XmlBinaryType xmlbinary;
-XmlOptionType xmloption;
+int xmlbinary;
+int xmloption;
 
 #ifdef USE_LIBXML
 
