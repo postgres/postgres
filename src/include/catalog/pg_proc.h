@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.486 2008/04/04 16:57:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.487 2008/04/04 18:45:36 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1115,7 +1115,7 @@ DESCR("does not match LIKE expression");
 DATA(insert OID =  860 (  bpchar		   PGNSP PGUID 12 1 0 f f t f i 1 1042 "18" _null_ _null_ _null_	char_bpchar - _null_ _null_ ));
 DESCR("convert char to char()");
 
-DATA(insert OID = 861 ( current_database	   PGNSP PGUID 12 1 0 f f t f i 0 19 "" _null_ _null_ _null_ current_database - _null_ _null_ ));
+DATA(insert OID = 861 ( current_database	   PGNSP PGUID 12 1 0 f f t f s 0 19 "" _null_ _null_ _null_ current_database - _null_ _null_ ));
 DESCR("returns the current database");
 DATA(insert OID = 817 (  current_query        PGNSP PGUID 12 1 0 f f f f v 0 25  "" _null_ _null_ _null_  current_query - _null_ _null_ ));
 DESCR("returns the currently executing query");
@@ -2573,6 +2573,10 @@ DATA(insert OID = 1745 ( float4					PGNSP PGUID 12 1 0 f f t f i 1 700 "1700" _n
 DESCR("(internal)");
 DATA(insert OID = 1746 ( float8					PGNSP PGUID 12 1 0 f f t f i 1 701 "1700" _null_ _null_ _null_	numeric_float8 - _null_ _null_ ));
 DESCR("(internal)");
+DATA(insert OID = 1973 ( div					PGNSP PGUID 12 1 0 f f t f i 2 1700 "1700 1700" _null_ _null_ _null_	numeric_div_trunc - _null_ _null_ ));
+DESCR("trunc(x/y)");
+DATA(insert OID = 1980 ( numeric_div_trunc		PGNSP PGUID 12 1 0 f f t f i 2 1700 "1700 1700" _null_ _null_ _null_	numeric_div_trunc - _null_ _null_ ));
+DESCR("trunc(x/y)");
 DATA(insert OID = 2170 ( width_bucket			PGNSP PGUID 12 1 0 f f t f i 4 23 "1700 1700 1700 23" _null_ _null_ _null_	width_bucket_numeric - _null_ _null_ ));
 DESCR("bucket number of operand in equidepth histogram");
 
