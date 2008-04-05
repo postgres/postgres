@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.116.2.2 2006/01/10 22:00:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.116.2.3 2008/04/05 01:58:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -934,6 +934,16 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
 	Alias	   *eref;
 	int			numaliases;
+
+	/*
+	 * Fail if join has too many columns --- we must be able to reference
+	 * any of the columns with an AttrNumber.
+	 */
+	if (list_length(aliasvars) > MaxAttrNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("joins can have at most %d columns",
+						MaxAttrNumber)));
 
 	rte->rtekind = RTE_JOIN;
 	rte->relid = InvalidOid;
