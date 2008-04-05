@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/dblink/dblink.sql.in,v 1.16 2008/04/05 02:26:14 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/dblink/dblink.sql.in,v 1.17 2008/04/05 02:44:42 momjian Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -165,7 +165,7 @@ LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_current_query ()
 RETURNS text
-AS 'SELECT current_query()'
+AS 'SELECT pg_catalog.current_query()'
 LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION dblink_send_query(text, text)
