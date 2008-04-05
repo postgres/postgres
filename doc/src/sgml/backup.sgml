@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.116 2008/03/28 15:00:28 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.117 2008/04/05 01:34:05 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -761,12 +761,19 @@ SELECT pg_stop_backup();
     <para>
      Once the WAL segment files used during the backup are archived, you are
      done.  The file identified by <function>pg_stop_backup</>'s result is
-     the last segment that needs to be archived to complete the backup.
-     Archival of these files will happen automatically, since you have
-     already configured <varname>archive_command</>. In many cases, this
-     happens fairly quickly, but you are advised to monitor your archival
-     system to ensure this has taken place so that you can be certain you
-     have a complete backup.
+     the last segment that is required to form a complete set of backup files. 
+     <function>pg_stop_backup</> does not return until the last segment has
+     been archived. 
+     Archiving of these files happens automatically since you have
+     already configured <varname>archive_command</>. In most cases this
+     happens quickly, but you are advised to monitor your archive
+     system to ensure there are no delays.
+     If the archive process has fallen behind
+     because of failures of the archive command, it will keep retrying
+     until the archive succeeds and the backup is complete.
+     If you wish to place a time limit on the execution of
+     <function>pg_stop_backup</>, set an appropriate
+     <varname>statement_timeout</varname> value.
     </para>
    </listitem>
   </orderedlist>
@@ -1044,7 +1051,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
    <note>
      <para>
       The stop point must be after the ending time of the base backup, i.e.,
-      the time of <function>pg_stop_backup</>.  You cannot use a base backup
+      the end time of <function>pg_stop_backup</>.  You cannot use a base backup
       to recover to a time when that backup was still going on.  (To
       recover to such a time, you must go back to your previous base backup
       and roll forward from there.)
@@ -1322,6 +1329,7 @@ tar -rf /var/lib/pgsql/backup.tar /var/lib/pgsql/archive/
       After the backup the switch file is removed. Archived WAL files are
       then added to the backup so that both base backup and all required
       WAL files are part of the same <application>tar</> file.
+      Please remember to add error handling to your backup scripts.
      </para>
     </sect3>
 
