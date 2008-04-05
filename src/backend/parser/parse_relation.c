@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.90.2.2 2005/05/29 17:10:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.90.2.3 2008/04/05 01:59:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1071,6 +1071,16 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
 	Alias	   *eref;
 	int			numaliases;
+
+	/*
+	 * Fail if join has too many columns --- we must be able to reference
+	 * any of the columns with an AttrNumber.
+	 */
+	if (length(aliasvars) > MaxAttrNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("joins can have at most %d columns",
+						MaxAttrNumber)));
 
 	rte->rtekind = RTE_JOIN;
 	rte->relid = InvalidOid;

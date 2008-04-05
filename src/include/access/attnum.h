@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: attnum.h,v 1.17 2003/08/04 02:40:10 momjian Exp $
+ * $Id: attnum.h,v 1.17.4.1 2008/04/05 01:59:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 typedef int16 AttrNumber;
 
 #define InvalidAttrNumber		0
+#define MaxAttrNumber			32767
 
 /* ----------------
  *		support macros
