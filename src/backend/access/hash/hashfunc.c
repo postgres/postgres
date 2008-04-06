@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.55 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.56 2008/04/06 16:54:48 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -199,7 +199,17 @@ hashvarlena(PG_FUNCTION_ARGS)
  * for PostgreSQL by Neil Conway. For more information on this
  * hash function, see http://burtleburtle.net/bob/hash/doobs.html,
  * or Bob's article in Dr. Dobb's Journal, Sept. 1997.
+ *
+ * In the current code, we have adopted an idea from Bob's 2006 update
+ * of his hash function, which is to fetch the data a word at a time when
+ * it is suitably aligned.  This makes for a useful speedup, at the cost
+ * of having to maintain four code paths (aligned vs unaligned, and
+ * little-endian vs big-endian).  Note that we have NOT adopted his newer
+ * mix() function, which is faster but may sacrifice some randomness.
  */
+
+/* Get a bit mask of the bits set in non-uint32 aligned addresses */
+#define UINT32_ALIGN_MASK (sizeof(uint32) - 1)
 
 /*----------
  * mix -- mix 3 32-bit values reversibly.
@@ -235,6 +245,10 @@ hashvarlena(PG_FUNCTION_ARGS)
  * About 6*len+35 instructions. The best hash table sizes are powers
  * of 2.  There is no need to do mod a prime (mod is sooo slow!).
  * If you need less than 32 bits, use a bitmask.
+ *
+ * Note: we could easily change this function to return a 64-bit hash value
+ * by using the final values of both b and c.  b is perhaps a little less
+ * well mixed than c, however.
  */
 Datum
 hash_any(register const unsigned char *k, register int keylen)
@@ -249,46 +263,188 @@ hash_any(register const unsigned char *k, register int keylen)
 	a = b = 0x9e3779b9;			/* the golden ratio; an arbitrary value */
 	c = 3923095;				/* initialize with an arbitrary value */
 
-	/* handle most of the key */
-	while (len >= 12)
+	/* If the source pointer is word-aligned, we use word-wide fetches */
+	if (((long) k & UINT32_ALIGN_MASK) == 0)
 	{
-		a += (k[0] + ((uint32) k[1] << 8) + ((uint32) k[2] << 16) + ((uint32) k[3] << 24));
-		b += (k[4] + ((uint32) k[5] << 8) + ((uint32) k[6] << 16) + ((uint32) k[7] << 24));
-		c += (k[8] + ((uint32) k[9] << 8) + ((uint32) k[10] << 16) + ((uint32) k[11] << 24));
-		mix(a, b, c);
-		k += 12;
-		len -= 12;
+		/* Code path for aligned source data */
+		register const uint32 *ka = (const uint32 *) k;
+
+		/* handle most of the key */
+		while (len >= 12)
+		{
+			a += ka[0];
+			b += ka[1];
+			c += ka[2];
+			mix(a, b, c);
+			ka += 3;
+			len -= 12;
+		}
+
+		/* handle the last 11 bytes */
+		k = (const unsigned char *) ka;
+		c += keylen;
+#ifdef WORDS_BIGENDIAN
+		switch (len)
+		{
+			case 11:
+				c += ((uint32) k[10] << 8);
+				/* fall through */
+			case 10:
+				c += ((uint32) k[9] << 16);
+				/* fall through */
+			case 9:
+				c += ((uint32) k[8] << 24);
+				/* the lowest byte of c is reserved for the length */
+				/* fall through */
+			case 8:
+				b += ka[1];
+				a += ka[0];
+				break;
+			case 7:
+				b += ((uint32) k[6] << 8);
+				/* fall through */
+			case 6:
+				b += ((uint32) k[5] << 16);
+				/* fall through */
+			case 5:
+				b += ((uint32) k[4] << 24);
+				/* fall through */
+			case 4:
+				a += ka[0];
+				break;
+			case 3:
+				a += ((uint32) k[2] << 8);
+				/* fall through */
+			case 2:
+				a += ((uint32) k[1] << 16);
+				/* fall through */
+			case 1:
+				a += ((uint32) k[0] << 24);
+			/* case 0: nothing left to add */
+		}
+#else /* !WORDS_BIGENDIAN */
+		switch (len)
+		{
+			case 11:
+				c += ((uint32) k[10] << 24);
+				/* fall through */
+			case 10:
+				c += ((uint32) k[9] << 16);
+				/* fall through */
+			case 9:
+				c += ((uint32) k[8] << 8);
+				/* the lowest byte of c is reserved for the length */
+				/* fall through */
+			case 8:
+				b += ka[1];
+				a += ka[0];
+				break;
+			case 7:
+				b += ((uint32) k[6] << 16);
+				/* fall through */
+			case 6:
+				b += ((uint32) k[5] << 8);
+				/* fall through */
+			case 5:
+				b += k[4];
+				/* fall through */
+			case 4:
+				a += ka[0];
+				break;
+			case 3:
+				a += ((uint32) k[2] << 16);
+				/* fall through */
+			case 2:
+				a += ((uint32) k[1] << 8);
+				/* fall through */
+			case 1:
+				a += k[0];
+			/* case 0: nothing left to add */
+		}
+#endif /* WORDS_BIGENDIAN */
+	}
+	else
+	{
+		/* Code path for non-aligned source data */
+
+		/* handle most of the key */
+		while (len >= 12)
+		{
+#ifdef WORDS_BIGENDIAN
+			a += (k[3] + ((uint32) k[2] << 8) + ((uint32) k[1] << 16) + ((uint32) k[0] << 24));
+			b += (k[7] + ((uint32) k[6] << 8) + ((uint32) k[5] << 16) + ((uint32) k[4] << 24));
+			c += (k[11] + ((uint32) k[10] << 8) + ((uint32) k[9] << 16) + ((uint32) k[8] << 24));
+#else /* !WORDS_BIGENDIAN */
+			a += (k[0] + ((uint32) k[1] << 8) + ((uint32) k[2] << 16) + ((uint32) k[3] << 24));
+			b += (k[4] + ((uint32) k[5] << 8) + ((uint32) k[6] << 16) + ((uint32) k[7] << 24));
+			c += (k[8] + ((uint32) k[9] << 8) + ((uint32) k[10] << 16) + ((uint32) k[11] << 24));
+#endif /* WORDS_BIGENDIAN */
+			mix(a, b, c);
+			k += 12;
+			len -= 12;
+		}
+
+		/* handle the last 11 bytes */
+		c += keylen;
+#ifdef WORDS_BIGENDIAN
+		switch (len)			/* all the case statements fall through */
+		{
+			case 11:
+				c += ((uint32) k[10] << 8);
+			case 10:
+				c += ((uint32) k[9] << 16);
+			case 9:
+				c += ((uint32) k[8] << 24);
+				/* the lowest byte of c is reserved for the length */
+			case 8:
+				b += k[7];
+			case 7:
+				b += ((uint32) k[6] << 8);
+			case 6:
+				b += ((uint32) k[5] << 16);
+			case 5:
+				b += ((uint32) k[4] << 24);
+			case 4:
+				a += k[3];
+			case 3:
+				a += ((uint32) k[2] << 8);
+			case 2:
+				a += ((uint32) k[1] << 16);
+			case 1:
+				a += ((uint32) k[0] << 24);
+			/* case 0: nothing left to add */
+		}
+#else /* !WORDS_BIGENDIAN */
+		switch (len)			/* all the case statements fall through */
+		{
+			case 11:
+				c += ((uint32) k[10] << 24);
+			case 10:
+				c += ((uint32) k[9] << 16);
+			case 9:
+				c += ((uint32) k[8] << 8);
+				/* the lowest byte of c is reserved for the length */
+			case 8:
+				b += ((uint32) k[7] << 24);
+			case 7:
+				b += ((uint32) k[6] << 16);
+			case 6:
+				b += ((uint32) k[5] << 8);
+			case 5:
+				b += k[4];
+			case 4:
+				a += ((uint32) k[3] << 24);
+			case 3:
+				a += ((uint32) k[2] << 16);
+			case 2:
+				a += ((uint32) k[1] << 8);
+			case 1:
+				a += k[0];
+			/* case 0: nothing left to add */
+		}
+#endif /* WORDS_BIGENDIAN */
 	}
 
-	/* handle the last 11 bytes */
-	c += keylen;
-	switch (len)				/* all the case statements fall through */
-	{
-		case 11:
-			c += ((uint32) k[10] << 24);
-		case 10:
-			c += ((uint32) k[9] << 16);
-		case 9:
-			c += ((uint32) k[8] << 8);
-			/* the first byte of c is reserved for the length */
-		case 8:
-			b += ((uint32) k[7] << 24);
-		case 7:
-			b += ((uint32) k[6] << 16);
-		case 6:
-			b += ((uint32) k[5] << 8);
-		case 5:
-			b += k[4];
-		case 4:
-			a += ((uint32) k[3] << 24);
-		case 3:
-			a += ((uint32) k[2] << 16);
-		case 2:
-			a += ((uint32) k[1] << 8);
-		case 1:
-			a += k[0];
-			/* case 0: nothing left to add */
-	}
 	mix(a, b, c);
 
 	/* report the result */
@@ -298,7 +454,7 @@ hash_any(register const unsigned char *k, register int keylen)
 /*
  * hash_uint32() -- hash a 32-bit value
  *
- * This has the same result (at least on little-endian machines) as
+ * This has the same result as
  *		hash_any(&k, sizeof(uint32))
  * but is faster and doesn't force the caller to store k into memory.
  */

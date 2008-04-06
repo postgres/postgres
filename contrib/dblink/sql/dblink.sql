@@ -340,7 +340,15 @@ UNION
 (SELECT * from dblink_get_result('dtest3') as t3(f1 int, f2 text, f3 text[]))
 ORDER by f1;
 
-SELECT dblink_get_connections();
+-- dblink_get_connections returns an array with elements in a machine-dependent
+-- ordering, so we must resort to unnesting and sorting for a stable result
+create function unnest(anyarray) returns setof anyelement
+language sql strict immutable as $$
+select $1[i] from generate_series(array_lower($1,1), array_upper($1,1)) as i
+$$;
+
+SELECT * FROM unnest(dblink_get_connections()) ORDER BY 1;
+
 SELECT dblink_is_busy('dtest1');
 
 SELECT dblink_disconnect('dtest1');
