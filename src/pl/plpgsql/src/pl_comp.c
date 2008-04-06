@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.123 2008/03/27 03:57:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.124 2008/04/06 23:43:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -575,25 +575,11 @@ do_compile(FunctionCallInfo fcinfo,
 						 errhint("You probably want to use TG_NARGS and TG_ARGV instead.")));
 
 			/* Add the record for referencing NEW */
-			rec = palloc0(sizeof(PLpgSQL_rec));
-			rec->dtype = PLPGSQL_DTYPE_REC;
-			rec->refname = pstrdup("new");
-			rec->tup = NULL;
-			rec->tupdesc = NULL;
-			rec->freetup = false;
-			plpgsql_adddatum((PLpgSQL_datum *) rec);
-			plpgsql_ns_additem(PLPGSQL_NSTYPE_REC, rec->recno, rec->refname);
+			rec = plpgsql_build_record("new", 0, true);
 			function->new_varno = rec->recno;
 
 			/* Add the record for referencing OLD */
-			rec = palloc0(sizeof(PLpgSQL_rec));
-			rec->dtype = PLPGSQL_DTYPE_REC;
-			rec->refname = pstrdup("old");
-			rec->tup = NULL;
-			rec->tupdesc = NULL;
-			rec->freetup = false;
-			plpgsql_adddatum((PLpgSQL_datum *) rec);
-			plpgsql_ns_additem(PLPGSQL_NSTYPE_REC, rec->recno, rec->refname);
+			rec = plpgsql_build_record("old", 0, true);
 			function->old_varno = rec->recno;
 
 			/* Add the variable tg_name */
@@ -1481,21 +1467,10 @@ plpgsql_build_variable(const char *refname, int lineno, PLpgSQL_type *dtype,
 			}
 		case PLPGSQL_TTYPE_REC:
 			{
-				/*
-				 * "record" type -- build a variable-contents record variable
-				 */
+				/* "record" type -- build a record variable */
 				PLpgSQL_rec *rec;
 
-				rec = palloc0(sizeof(PLpgSQL_rec));
-				rec->dtype = PLPGSQL_DTYPE_REC;
-				rec->refname = pstrdup(refname);
-				rec->lineno = lineno;
-
-				plpgsql_adddatum((PLpgSQL_datum *) rec);
-				if (add2namespace)
-					plpgsql_ns_additem(PLPGSQL_NSTYPE_REC,
-									   rec->recno,
-									   refname);
+				rec = plpgsql_build_record(refname, lineno, add2namespace);
 				result = (PLpgSQL_variable *) rec;
 				break;
 			}
@@ -1513,6 +1488,28 @@ plpgsql_build_variable(const char *refname, int lineno, PLpgSQL_type *dtype,
 	}
 
 	return result;
+}
+
+/*
+ * Build empty named record variable, and optionally add it to namespace
+ */
+PLpgSQL_rec *
+plpgsql_build_record(const char *refname, int lineno, bool add2namespace)
+{
+	PLpgSQL_rec *rec;
+
+	rec = palloc0(sizeof(PLpgSQL_rec));
+	rec->dtype = PLPGSQL_DTYPE_REC;
+	rec->refname = pstrdup(refname);
+	rec->lineno = lineno;
+	rec->tup = NULL;
+	rec->tupdesc = NULL;
+	rec->freetup = false;
+	plpgsql_adddatum((PLpgSQL_datum *) rec);
+	if (add2namespace)
+		plpgsql_ns_additem(PLPGSQL_NSTYPE_REC, rec->recno, rec->refname);
+
+	return rec;
 }
 
 /*

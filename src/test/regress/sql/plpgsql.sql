@@ -2595,3 +2595,77 @@ end
 $$ language plpgsql;
 
 select exc_using(5, 'foobar');
+
+-- test FOR-over-cursor
+
+create or replace function forc01() returns void as $$
+declare
+  c cursor(r1 integer, r2 integer)
+       for select * from generate_series(r1,r2) i;
+  c2 cursor
+       for select * from generate_series(41,43) i;
+begin
+  for r in c(5,7) loop
+    raise notice '% from %', r.i, c;
+  end loop;
+  -- again, to test if cursor was closed properly
+  for r in c(9,10) loop
+    raise notice '% from %', r.i, c;
+  end loop;
+  -- and test a parameterless cursor
+  for r in c2 loop
+    raise notice '% from %', r.i, c2;
+  end loop;
+  -- and try it with a hand-assigned name
+  raise notice 'after loop, c2 = %', c2;
+  c2 := 'special_name';
+  for r in c2 loop
+    raise notice '% from %', r.i, c2;
+  end loop;
+  raise notice 'after loop, c2 = %', c2;
+  -- and try it with a generated name
+  -- (which we can't show in the output because it's variable)
+  c2 := null;
+  for r in c2 loop
+    raise notice '%', r.i;
+  end loop;
+  raise notice 'after loop, c2 = %', c2;
+  return;
+end;
+$$ language plpgsql;
+
+select forc01();
+
+-- try updating the cursor's current row
+
+create temp table forc_test as
+  select n as i, n as j from generate_series(1,10) n;
+
+create or replace function forc01() returns void as $$
+declare
+  c cursor for select * from forc_test;
+begin
+  for r in c loop
+    raise notice '%, %', r.i, r.j;
+    update forc_test set i = i * 100, j = r.j * 2 where current of c;
+  end loop;
+end;
+$$ language plpgsql;
+
+select forc01();
+
+select * from forc_test;
+
+drop function forc01();
+
+-- fail because cursor has no query bound to it
+
+create or replace function forc_bad() returns void as $$
+declare
+  c refcursor;
+begin
+  for r in c loop
+    raise notice '%', r.i;
+  end loop;
+end;
+$$ language plpgsql;
