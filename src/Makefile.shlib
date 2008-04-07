@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.114 2008/04/07 14:15:58 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.115 2008/04/07 23:08:15 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -94,13 +94,13 @@ endif
 # Testing the soname variable is a reliable way to determine whether a
 # linkable library is being built.
 soname		= $(shlib_major)
-stlib		= lib$(NAME).a
 else
 # Naming convention for dynamically loadable modules
 ifeq ($(enable_shared), yes)
 shlib		= $(NAME)$(DLSUFFIX)
 endif
 endif
+stlib		= lib$(NAME).a
 
 ifndef soname
 # additional flags for backend modules
