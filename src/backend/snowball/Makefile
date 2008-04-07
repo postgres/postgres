@@ -2,7 +2,7 @@
 #
 # Makefile for src/backend/snowball
 #
-# $PostgreSQL: pgsql/src/backend/snowball/Makefile,v 1.5 2008/03/18 16:24:50 petere Exp $
+# $PostgreSQL: pgsql/src/backend/snowball/Makefile,v 1.6 2008/04/07 14:15:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -77,11 +77,7 @@ else
 VPATH = $(srcdir)/libstemmer
 endif
 
-SHLIB_LINK 	:= $(BE_DLLLIBS)
-
 NAME := dict_snowball
-SO_MAJOR_VERSION := 0
-SO_MINOR_VERSION := 0
 rpath =
 
 all: all-shared-lib $(SQLSCRIPT)
@@ -116,10 +112,7 @@ else
 	echo "-- No language-specific snowball dictionaries, for lack of shared library support" > $@
 endif
 
-install: all installdirs
-ifeq ($(enable_shared), yes)
-	$(INSTALL_SHLIB) $(shlib) '$(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)'
-endif
+install: all installdirs install-lib
 	$(INSTALL_DATA) $(SQLSCRIPT) '$(DESTDIR)$(datadir)'
 	@set -e; \
 	set $(LANGUAGES) ; \
@@ -131,11 +124,10 @@ endif
 		fi \
 	done
 
-installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)' '$(DESTDIR)$(datadir)' '$(DESTDIR)$(datadir)/$(DICTDIR)'
+installdirs: installdirs-lib
+	$(mkinstalldirs) '$(DESTDIR)$(datadir)' '$(DESTDIR)$(datadir)/$(DICTDIR)'
 
-uninstall:
-	rm -f '$(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)'
+uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(datadir)/$(SQLSCRIPT)'
 	@set -e; \
 	set $(LANGUAGES) ; \

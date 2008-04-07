@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.28 2007/02/10 04:26:24 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.29 2008/04/07 14:15:58 petere Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -37,8 +37,6 @@ override CPPFLAGS := -I$(srcdir) $(python_includespec) $(CPPFLAGS)
 rpathdir = $(python_libdir)
 
 NAME = plpython
-SO_MAJOR_VERSION = 0
-SO_MINOR_VERSION = 0
 OBJS = plpython.o
 
 
@@ -56,7 +54,7 @@ python${pytverstr}.def: $(WD)/system32/python${pytverstr}.dll
 endif
 
 
-SHLIB_LINK = $(BE_DLLLIBS) $(python_libspec) $(python_additional_libs)
+SHLIB_LINK = $(python_libspec) $(python_additional_libs)
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plpythonu
 REGRESS = plpython_schema plpython_populate plpython_function plpython_test plpython_error plpython_drop
@@ -89,20 +87,11 @@ $(test_files_build): $(abs_builddir)/%: $(srcdir)/%
 
 endif
 
-install: all installdirs
-ifeq ($(enable_shared), yes)
-	$(INSTALL_SHLIB) $(shlib) '$(DESTDIR)$(pkglibdir)/plpython$(DLSUFFIX)'
-else
-	@echo "*****"; \
-	 echo "* PL/Python was not installed due to lack of shared library support."; \
-	 echo "*****"
-endif
+install: all installdirs install-lib
 
-installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
+installdirs: installdirs-lib
 
-uninstall:
-	rm -f '$(DESTDIR)$(pkglibdir)/plpython$(DLSUFFIX)'
+uninstall: uninstall-lib
 
 installcheck: submake
 	$(top_builddir)/src/test/regress/pg_regress --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)

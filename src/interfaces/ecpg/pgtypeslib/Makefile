@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.41 2008/02/26 06:41:24 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.42 2008/04/07 14:15:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,6 @@ include $(top_builddir)/src/Makefile.global
 NAME= pgtypes
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 1
-DLTYPE= library
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(top_srcdir)/src/include/utils -I$(libpq_srcdir) $(CPPFLAGS)
@@ -48,8 +47,7 @@ pgstrcasecmp.c rint.c snprintf.c: % : $(top_srcdir)/src/port/%
 
 install: all installdirs install-lib
 
-installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(libdir)'
+installdirs: installdirs-lib
 
 uninstall: uninstall-lib
 

@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.11 2007/10/16 15:59:59 tgl Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.12 2008/04/07 14:15:58 petere Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -80,10 +80,6 @@ all: $(PROGRAM) $(DATA_built) $(SCRIPTS_built) $(addsuffix $(DLSUFFIX), $(MODULE
 ifdef MODULE_big
 # shared library parameters
 NAME = $(MODULE_big)
-SO_MAJOR_VERSION= 0
-SO_MINOR_VERSION= 0
-
-SHLIB_LINK += $(BE_DLLLIBS)
 
 include $(top_srcdir)/src/Makefile.shlib
 
@@ -121,9 +117,6 @@ endif # DOCS
 ifdef PROGRAM
 	$(INSTALL_PROGRAM) $(PROGRAM)$(X) '$(DESTDIR)$(bindir)'
 endif # PROGRAM
-ifdef MODULE_big
-	$(INSTALL_SHLIB) $(shlib) '$(DESTDIR)$(pkglibdir)/$(MODULE_big)$(DLSUFFIX)'
-endif # MODULE_big
 ifdef SCRIPTS
 	@for file in $(addprefix $(srcdir)/, $(SCRIPTS)); do \
 	  echo "$(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'"; \
@@ -137,6 +130,10 @@ ifdef SCRIPTS_built
 	done
 endif # SCRIPTS_built
 
+ifdef MODULE_big
+install: install-lib
+endif # MODULE_big
+
 
 installdirs:
 ifneq (,$(DATA)$(DATA_built))
@@ -145,7 +142,7 @@ endif
 ifneq (,$(DATA_TSEARCH))
 	$(mkinstalldirs) '$(DESTDIR)$(datadir)/tsearch_data'
 endif
-ifneq (,$(MODULES)$(MODULE_big))
+ifneq (,$(MODULES))
 	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
 endif
 ifdef DOCS
@@ -156,6 +153,10 @@ endif # DOCS
 ifneq (,$(PROGRAM)$(SCRIPTS)$(SCRIPTS_built))
 	$(mkinstalldirs) '$(DESTDIR)$(bindir)'
 endif
+
+ifdef MODULE_big
+installdirs: installdirs-lib
+endif # MODULE_big
 
 
 uninstall:
@@ -174,15 +175,16 @@ endif
 ifdef PROGRAM
 	rm -f '$(DESTDIR)$(bindir)/$(PROGRAM)$(X)'
 endif
-ifdef MODULE_big
-	rm -f '$(DESTDIR)$(pkglibdir)/$(MODULE_big)$(DLSUFFIX)'
-endif
 ifdef SCRIPTS
 	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, $(SCRIPTS))
 endif
 ifdef SCRIPTS_built
 	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, $(SCRIPTS_built))
 endif
+
+ifdef MODULE_big
+uninstall: uninstall-lib
+endif # MODULE_big
 
 
 clean:

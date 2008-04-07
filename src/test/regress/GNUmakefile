@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.72 2008/03/18 16:24:50 petere Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.73 2008/04/07 14:15:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -77,18 +77,11 @@ uninstall:
 # Build dynamically-loaded object file for CREATE FUNCTION ... LANGUAGE C.
 
 NAME = regress
-SO_MAJOR_VERSION= 0
-SO_MINOR_VERSION= 0
 OBJS = regress.o
-SHLIB_LINK = $(BE_DLLLIBS)
 
 include $(top_srcdir)/src/Makefile.shlib
 
-all: $(NAME)$(DLSUFFIX)
-
-$(NAME)$(DLSUFFIX): $(shlib)
-	rm -f $(NAME)$(DLSUFFIX)
-	$(LN_S) $(shlib) $(NAME)$(DLSUFFIX)
+all: all-lib
 
 # Test input and expected files.  These are created by pg_regress itself, so we
 # don't have a rule to create them.  We do need rules to clean them however.
@@ -169,7 +162,7 @@ bigcheck: all
 
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
-	rm -f $(NAME)$(DLSUFFIX) $(OBJS)
+	rm -f $(OBJS)
 	$(MAKE) -C $(contribdir)/spi clean
 	rm -f $(output_files) $(input_files) pg_regress_main.o pg_regress.o pg_regress$(X)
 # things created by various check targets

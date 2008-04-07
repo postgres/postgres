@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.33 2007/12/01 15:30:09 adunstan Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.34 2008/04/07 14:15:58 petere Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -32,12 +32,10 @@ rpathdir = $(perl_archlibexp)/CORE
 
 
 NAME = plperl
-SO_MAJOR_VERSION = 0
-SO_MINOR_VERSION = 0
 
 OBJS = plperl.o spi_internal.o SPI.o
 
-SHLIB_LINK = $(perl_embed_ldflags) $(BE_DLLLIBS)
+SHLIB_LINK = $(perl_embed_ldflags)
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plperl
 REGRESS = plperl plperl_trigger plperl_shared plperl_elog
@@ -73,20 +71,11 @@ $(test_files_build): $(abs_builddir)/%: $(srcdir)/%
 
 endif
 
-install: all installdirs
-ifeq ($(enable_shared), yes)
-	$(INSTALL_SHLIB) $(shlib) '$(DESTDIR)$(pkglibdir)/plperl$(DLSUFFIX)'
-else
-	@echo "*****"; \
-	 echo "* PL/Perl was not installed due to lack of shared library support."; \
-	 echo "*****"
-endif
+install: all installdirs install-lib
 
-installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
+installdirs: installdirs-lib
 
-uninstall:
-	rm -f '$(DESTDIR)$(pkglibdir)/plperl$(DLSUFFIX)'
+uninstall: uninstall-lib
 
 installcheck: submake
 	$(top_builddir)/src/test/regress/pg_regress --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)

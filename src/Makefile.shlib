@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.113 2008/02/26 14:26:16 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.114 2008/04/07 14:15:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,13 +19,18 @@
 # variables:
 #
 # NAME                  Name of library to build (no suffix nor "lib" prefix)
-# SO_MAJOR_VERSION      Major version number to use for shared library
-# SO_MINOR_VERSION      Minor version number to use for shared library
 # OBJS                  List of object files to include in library
 # SHLIB_LINK            If shared library relies on other libraries,
 #                       additional stuff to put in its link command
 # SHLIB_EXPORTS         (optional) Name of file containing list of symbols to
 #                       export
+#
+# When building a shared library, the following version information
+# must also be set.  It should be omitted when building a dynamically
+# loadable module.
+#
+# SO_MAJOR_VERSION      Major version number to use for shared library
+# SO_MINOR_VERSION      Minor version number to use for shared library
 # (If you want a patchlevel, include it in SO_MINOR_VERSION, e.g., "6.2".)
 #
 # Optional flags when building DLL's (only applicable to win32 and cygwin
@@ -42,6 +47,7 @@
 #
 # all-lib               build the static and shared (if applicable) libraries
 # install-lib           install the libraries into $(libdir)
+# installdirs-lib       create installation directory $(libdir)
 # uninstall-lib         remove the libraries from $(libdir)
 # clean-lib             delete the static and shared libraries from the build dir
 # maintainer-clean-lib  delete .def files built for win32
@@ -72,18 +78,34 @@ LINK.static = $(AR) $(AROPT)
 
 
 
-ifeq ($(enable_shared), yes)
-
 # Insert -L from LDFLAGS after any -L already present in SHLIB_LINK
 SHLIB_LINK := $(filter -L%, $(SHLIB_LINK)) $(filter -L%, $(LDFLAGS)) $(filter-out -L%, $(SHLIB_LINK))
 
 # Need a -L-free version of LDFLAGS to use in combination with SHLIB_LINK
 LDFLAGS_NO_L = $(filter-out -L%, $(LDFLAGS))
 
-# Default shlib naming convention used by the majority of platforms
+ifdef SO_MAJOR_VERSION
+# Default library naming convention used by the majority of platforms
+ifeq ($(enable_shared), yes)
 shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
 shlib_major	= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
 shlib_bare	= lib$(NAME)$(DLSUFFIX)
+endif
+# Testing the soname variable is a reliable way to determine whether a
+# linkable library is being built.
+soname		= $(shlib_major)
+stlib		= lib$(NAME).a
+else
+# Naming convention for dynamically loadable modules
+ifeq ($(enable_shared), yes)
+shlib		= $(NAME)$(DLSUFFIX)
+endif
+endif
+
+ifndef soname
+# additional flags for backend modules
+SHLIB_LINK := $(BE_DLLLIBS) $(SHLIB_LINK)
+endif
 
 # For each platform we support shared libraries on, set shlib to the
 # name of the library (if default above is not right), set
@@ -94,29 +116,29 @@ shlib_bare	= lib$(NAME)$(DLSUFFIX)
 
 override CFLAGS += $(CFLAGS_SL)
 
-soname = lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-
 ifeq ($(PORTNAME), aix)
-  shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  ifdef SO_MAJOR_VERSION
+    shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  endif
   haslibarule   = yes
   exports_file		= lib$(NAME).exp
 endif
 
 ifeq ($(PORTNAME), darwin)
-  ifneq ($(SO_MAJOR_VERSION), 0)
-    version_link	= -compatibility_version $(SO_MAJOR_VERSION) -current_version $(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  endif
-  ifeq ($(DLTYPE), library)
+  ifdef soname
     # linkable library
     DLSUFFIX		= .dylib
+    ifneq ($(SO_MAJOR_VERSION), 0)
+      version_link	= -compatibility_version $(SO_MAJOR_VERSION) -current_version $(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    endif
     LINK.shared		= $(COMPILER) -dynamiclib -install_name $(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX) $(version_link) $(exported_symbols_list) -multiply_defined suppress
+    shlib		= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
+    shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
   else
-    # loadable module (default case)
+    # loadable module
     DLSUFFIX		= .so
     LINK.shared		= $(COMPILER) -bundle -multiply_defined suppress
   endif
-  shlib			= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
-  shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
   BUILD.exports		= $(AWK) '/^[^\#]/ {printf "_%s\n",$$1}' $< >$@
   exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
   ifneq (,$(exports_file))
@@ -126,7 +148,10 @@ endif
 
 ifeq ($(PORTNAME), openbsd)
   ifdef ELF_SYSTEM
-    LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
+    LINK.shared		= $(COMPILER) -shared
+    ifdef soname
+      LINK.shared	+= -Wl,-x,-soname,$(soname)
+    endif
     SHLIB_LINK		+= -lc
   else
     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
@@ -135,7 +160,10 @@ endif
 
 ifeq ($(PORTNAME), bsdi)
   ifeq ($(DLSUFFIX), .so)
-    LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
+    LINK.shared		= $(COMPILER) -shared
+    ifdef soname
+      LINK.shared	+= -Wl,-x,-soname,$(soname)
+    endif
     SHLIB_LINK		+= -lc
   endif
   ifeq ($(DLSUFFIX), .o)
@@ -145,33 +173,50 @@ endif
 
 ifeq ($(PORTNAME), freebsd)
   ifdef ELF_SYSTEM
-    shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-    LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
+    ifdef SO_MAJOR_VERSION
+      shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+    endif
+    LINK.shared		= $(COMPILER) -shared
+    ifdef soname
+      LINK.shared	+= -Wl,-x,-soname,$(soname)
+    endif
   else
-    shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    ifdef SO_MAJOR_VERSION
+      shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    endif
     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
   endif
 endif
 
 ifeq ($(PORTNAME), netbsd)
   ifdef ELF_SYSTEM
-    LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
+    LINK.shared		= $(COMPILER) -shared
+    ifdef soname
+      LINK.shared	+= -Wl,-x,-soname,$(soname)
+    endif
   else
     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
   endif
 endif
 
 ifeq ($(PORTNAME), hpux)
-  shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  ifdef SO_MAJOR_VERSION
+    shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  endif
   ifeq ($(with_gnu_ld), yes)
-    LINK.shared		= $(CC) $(LDFLAGS_NO_L) -shared -Wl,-h -Wl,$(soname)
+    LINK.shared		= $(CC) $(LDFLAGS_NO_L) -shared
+    ifdef soname
+      LINK.shared	+= -Wl,-h -Wl,$(soname)
+    endif
   else
     # can't use the CC-syntax rpath pattern here
     rpath =
+    LINK.shared		= $(LD) -b
+    ifdef soname
+      LINK.shared	+= +h $(soname)
+    endif
     ifeq ($(enable_rpath), yes)
-      LINK.shared	= $(LD) +h $(soname) -b +b '$(rpathdir)'
-    else
-      LINK.shared	= $(LD) +h $(soname) -b
+      LINK.shared	+= +b '$(rpathdir)'
     endif
     # On HPUX platforms, gcc is usually configured to search for libraries
     # in /usr/local/lib, but ld won't do so.  Add an explicit -L switch so
@@ -188,12 +233,20 @@ ifeq ($(PORTNAME), hpux)
 endif
 
 ifeq ($(PORTNAME), irix)
-  shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-  LINK.shared		= $(COMPILER) -shared -Wl,-set_version,sgi$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  ifdef SO_MAJOR_VERSION
+    shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  endif
+  LINK.shared		= $(COMPILER) -shared
+  ifdef soname
+    LINK.shared		+= -Wl,-set_version,sgi$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  endif
 endif
 
 ifeq ($(PORTNAME), linux)
-  LINK.shared		= $(COMPILER) -shared -Wl,-soname,$(soname)
+  LINK.shared		= $(COMPILER) -shared
+  ifdef soname
+    LINK.shared		+= -Wl,-soname,$(soname)
+  endif
   BUILD.exports		= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
   exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
   ifneq (,$(exports_file))
@@ -208,10 +261,12 @@ ifeq ($(PORTNAME), solaris)
 # CFLAGS added for X86_64
     LINK.shared		= $(CC) -G $(CFLAGS)
   endif
-  ifeq ($(with_gnu_ld), yes)
-    LINK.shared		+= -Wl,-soname,$(soname)
-  else
-    LINK.shared		+= -h $(soname)
+  ifdef soname
+    ifeq ($(with_gnu_ld), yes)
+      LINK.shared	+= -Wl,-soname,$(soname)
+    else
+      LINK.shared	+= -h $(soname)
+    endif
   endif
 endif
 
@@ -229,7 +284,10 @@ ifeq ($(PORTNAME), sco)
   else
     LINK.shared		= $(CC) -G
     endif
-  LINK.shared		+= -Wl,-z,text -Wl,-h,$(soname)
+  LINK.shared		+= -Wl,-z,text
+  ifdef soname
+    LINK.shared		+= -Wl,-h,$(soname)
+  endif
 endif
 
 ifeq ($(PORTNAME), svr4)
@@ -246,7 +304,10 @@ ifeq ($(PORTNAME), unixware)
   else
     LINK.shared		= $(CC) -G
   endif
-  LINK.shared		+= -Wl,-z,text -Wl,-h,$(soname) 
+  LINK.shared		+= -Wl,-z,text
+  ifdef soname
+    LINK.shared		+= -Wl,-h,$(soname)
+  endif
 endif
 
 ifeq ($(PORTNAME), cygwin)
@@ -263,8 +324,6 @@ ifeq ($(enable_rpath), yes)
 SHLIB_LINK += $(rpath)
 endif
 
-endif # enable_shared
-
 
 
 ##
@@ -273,14 +332,18 @@ endif # enable_shared
 
 .PHONY: all-lib all-static-lib all-shared-lib
 
-all-lib: all-static-lib all-shared-lib
+all-lib: all-shared-lib
+ifdef soname
+# no static library when building a dynamically loadable module
+all-lib: all-static-lib
+endif
 
-all-static-lib: lib$(NAME).a
+all-static-lib: $(stlib)
 
 all-shared-lib: $(shlib)
 
 ifndef haslibarule
-lib$(NAME).a: $(OBJS)
+$(stlib): $(OBJS)
 	$(LINK.static) $@ $^
 	$(RANLIB) $@
 endif #haslibarule
@@ -293,6 +356,7 @@ ifneq ($(PORTNAME), aix)
 # Normal case
 $(shlib): $(OBJS)
 	$(LINK.shared) $(LDFLAGS_SL) $(OBJS) $(SHLIB_LINK) -o $@
+ifdef shlib_major
 # If we're using major and minor versions, then make a symlink to major-version-only.
 ifneq ($(shlib), $(shlib_major))
 	rm -f $(shlib_major)
@@ -303,6 +367,7 @@ ifneq ($(shlib), $(shlib_bare))
 	rm -f $(shlib_bare)
 	$(LN_S) $(shlib) $(shlib_bare)
 endif
+endif # shlib_major
 
 # Where possible, restrict the symbols exported by the library to just the
 # official list, so as to avoid unintentional ABI changes.  On recent Darwin
@@ -320,13 +385,13 @@ endif
 else # PORTNAME == aix
 
 # AIX case
-$(shlib) lib$(NAME).a: $(OBJS)
-	$(LINK.static) lib$(NAME).a $^
-	$(RANLIB) lib$(NAME).a
-	$(MKLDEXPORT) lib$(NAME).a >$(exports_file)
-	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $(shlib) lib$(NAME).a -Wl,-bE:$(exports_file) $(SHLIB_LINK)
-	rm -f lib$(NAME).a
-	$(AR) $(AROPT) lib$(NAME).a $(shlib)
+$(shlib) $(stlib): $(OBJS)
+	$(LINK.static) $(stlib) $^
+	$(RANLIB) $(stlib)
+	$(MKLDEXPORT) $(stlib) >$(exports_file)
+	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $(shlib) $(stlib) -Wl,-bE:$(exports_file) $(SHLIB_LINK)
+	rm -f $(stlib)
+	$(AR) $(AROPT) $(stlib) $(shlib)
 
 endif # PORTNAME == aix
 
@@ -348,7 +413,7 @@ endif
 $(shlib): $(OBJS) $(DLL_DEFFILE)
 	$(DLLWRAP) $(LDFLAGS_SL) -o $@ --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(DLL_DEFFILE) $(OBJS) $(SHLIB_LINK)
 
-lib$(NAME).a: $(shlib) $(DLL_DEFFILE)
+$(stlib): $(shlib) $(DLL_DEFFILE)
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib $@
 
 endif # PORTNAME == cygwin || PORTNAME == win32
@@ -394,18 +459,22 @@ endif # SHLIB_EXPORTS
 ## INSTALL
 ##
 
-.PHONY: install-lib install-lib-static install-lib-shared
-install-lib: install-lib-static install-lib-shared
+.PHONY: install-lib install-lib-static install-lib-shared installdirs-lib
+install-lib: install-lib-shared
+ifdef soname
+install-lib: install-lib-static
+endif
 
-install-lib-static: lib$(NAME).a
-	$(INSTALL_STLIB) $< '$(DESTDIR)$(libdir)/lib$(NAME).a'
+install-lib-static: $(stlib) installdirs-lib
+	$(INSTALL_STLIB) $< '$(DESTDIR)$(libdir)/$(stlib)'
 ifeq ($(PORTNAME), darwin)
 	cd '$(DESTDIR)$(libdir)' && \
-	ranlib lib$(NAME).a
+	ranlib $(stlib)
 endif
 
 ifeq ($(enable_shared), yes)
-install-lib-shared: $(shlib)
+install-lib-shared: $(shlib) installdirs-lib
+ifdef soname
 # we don't install $(shlib) on AIX
 ifneq ($(PORTNAME), aix)
 	$(INSTALL_SHLIB) $< '$(DESTDIR)$(libdir)/$(shlib)'
@@ -424,7 +493,25 @@ endif
 endif # not win32
 endif # not cygwin
 endif # not aix
+else # no soname
+	$(INSTALL_SHLIB) $< '$(DESTDIR)$(pkglibdir)/$(shlib)'
+endif
+else # not enable_shared
+ifndef soname
+install-lib-shared:
+	@echo "*****"; \
+	 echo "* Module $(NAME) was not installed due to lack of shared library support."; \
+	 echo "*****"
+endif
 endif # enable_shared
+
+
+installdirs-lib:
+ifdef soname
+	$(mkinstalldirs) '$(DESTDIR)$(libdir)'
+else
+	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
+endif
 
 
 ##
@@ -433,12 +520,16 @@ endif # enable_shared
 
 .PHONY: uninstall-lib
 uninstall-lib:
-	rm -f '$(DESTDIR)$(libdir)/lib$(NAME).a'
+ifdef soname
+	rm -f '$(DESTDIR)$(libdir)/$(stlib)'
 ifeq ($(enable_shared), yes)
 	rm -f '$(DESTDIR)$(libdir)/$(shlib_bare)' \
 	  '$(DESTDIR)$(libdir)/$(shlib_major)' \
 	  '$(DESTDIR)$(libdir)/$(shlib)'
 endif # enable_shared
+else # no soname
+	rm -f '$(DESTDIR)$(pkglibdir)/$(shlib)'
+endif # no soname
 
 
 ##
@@ -447,10 +538,7 @@ endif # enable_shared
 
 .PHONY: clean-lib
 clean-lib:
-	rm -f lib$(NAME).a
-ifeq ($(enable_shared), yes)
-	rm -f $(shlib_bare) $(shlib_major) $(shlib) $(exports_file)
-endif
+	rm -f $(shlib) $(shlib_bare) $(shlib_major) $(stlib) $(exports_file)
 
 ifneq (,$(SHLIB_EXPORTS))
 maintainer-clean-lib:

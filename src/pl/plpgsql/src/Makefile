@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.31 2007/07/15 22:18:24 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.32 2008/04/07 14:15:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,11 +12,9 @@ include $(top_builddir)/src/Makefile.global
 
 # Shared library parameters
 NAME= plpgsql
-SO_MAJOR_VERSION= 1
-SO_MINOR_VERSION= 0
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
-SHLIB_LINK = $(filter -lintl, $(LIBS)) $(BE_DLLLIBS)
+SHLIB_LINK = $(filter -lintl, $(LIBS))
 rpath =
 
 OBJS = pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
@@ -27,26 +25,12 @@ all: all-lib
 include $(top_srcdir)/src/Makefile.shlib
 
 
-# In order to use Makefile.shlib, we allow it to build a static
-# library libplpgsql.a, which we just ignore, as well as a shared
-# library that it will insist on naming $(shlib). We don't want to
-# call it that when installed, however, so we ignore the install-shlib
-# rule and do this instead:
+install: installdirs all install-lib
 
-install: installdirs all
-ifeq ($(enable_shared), yes)
-	$(INSTALL_SHLIB) $(shlib) '$(DESTDIR)$(pkglibdir)/plpgsql$(DLSUFFIX)'
-else
-	@echo "*****"; \
-	 echo "* PL/pgSQL was not installed due to lack of shared library support."; \
-	 echo "*****"
-endif
+installdirs: installdirs-lib
 
-installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
+uninstall: uninstall-lib
 
-uninstall:
-	rm -f '$(DESTDIR)$(pkglibdir)/plpgsql$(DLSUFFIX)'
 
 # Force these dependencies to be known even without dependency info built:
 pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h $(srcdir)/pl.tab.h
