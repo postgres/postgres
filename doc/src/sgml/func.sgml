@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.427 2008/04/04 18:45:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.428 2008/04/07 00:51:27 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -344,7 +344,11 @@
     <literal>IS NULL</> is true when the row expression itself is null
     or when all the row's fields are null, while
     <literal>IS NOT NULL</> is true when the row expression itself is non-null
-    and all the row's fields are non-null.
+    and all the row's fields are non-null.  Because of this behavior,
+    <literal>IS NULL</> and <literal>IS NOT NULL</> do not always return
+    inverse results for row-valued expressions, i.e. a row-valued
+    expression that contains both NULL and non-null values will return false
+    for both tests.
     This definition conforms to the SQL standard, and is a change from the
     inconsistent behavior exhibited by <productname>PostgreSQL</productname>
     versions prior to 8.2.
