@@ -4,7 +4,7 @@ use warnings;
 
 our $config = {
     asserts=>0,			# --enable-cassert
-    integer_datetimes=>0,   # --enable-integer-datetimes
+    integer_datetimes=>1,   # --enable-integer-datetimes
     nls=>undef,				# --enable-nls=<path>
     tcl=>'c:\tcl',		# --with-tls=<path>
     perl=>'c:\perl', 			# --with-perl
