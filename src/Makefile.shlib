@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.115 2008/04/07 23:08:15 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.116 2008/04/08 09:50:29 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -311,12 +311,16 @@ ifeq ($(PORTNAME), unixware)
 endif
 
 ifeq ($(PORTNAME), cygwin)
-  shlib			= cyg$(NAME)$(DLSUFFIX)
+  ifdef SO_MAJOR_VERSION
+    shlib		= cyg$(NAME)$(DLSUFFIX)
+  endif
   haslibarule   = yes
 endif
 
 ifeq ($(PORTNAME), win32)
-  shlib			= lib$(NAME)$(DLSUFFIX)
+  ifdef SO_MAJOR_VERSION
+    shlib		= lib$(NAME)$(DLSUFFIX)
+  endif
   haslibarule   = yes
 endif
 
