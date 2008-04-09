@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.44 2008/04/09 00:55:30 momjian Exp $
+$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.45 2008/04/09 00:59:24 momjian Exp $
 
 Optimizer
 =========
@@ -73,8 +73,8 @@ tree is found by a recursive process:
 
 1) Take each base relation in the query, and make a RelOptInfo structure
 for it.  Find each potentially useful way of accessing the relation,
-including sequential and index scans, and make Paths representing those
-ways.  All the Paths made for a given relation are placed in its
+including sequential and index scans, and make a Path representing that
+way.  All the Paths made for a given relation are placed in its
 RelOptInfo.pathlist.  (Actually, we discard Paths that are obviously
 inferior alternatives before they ever get into the pathlist --- what
 ends up in the pathlist is the cheapest way of generating each potentially
@@ -271,7 +271,7 @@ The primary entry point is planner().
 
 planner()
  set up for recursive handling of subqueries
- do final cleanup after planning
+ do final cleanup after planning.
 -subquery_planner()
  pull up subqueries from rangetable, if possible
  canonicalize qual
