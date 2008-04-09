@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.117 2008/04/05 01:34:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.118 2008/04/09 02:52:04 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -386,9 +386,17 @@ tar -cf backup.tar /usr/local/pgsql/data
    not be possible to use snapshot backup because the snapshots
    <emphasis>must</> be simultaneous.
    Read your file system documentation very carefully before trusting
-   to the consistent-snapshot technique in such situations.  The safest
-   approach is to shut down the database server for long enough to
-   establish all the frozen snapshots.
+   to the consistent-snapshot technique in such situations.
+  </para>
+
+  <para>
+   If simultaneous snapshots are not possible, one option is to shut down
+   the database server long enough to establish all the frozen snapshots.
+   Another option is perform a continuous archiving base backup (<xref
+   linkend="backup-base-backup">) because such backups are immune to file
+   system changes during the backup.  This requires enabling continuous
+   archiving just during the backup process; restore is done using
+   continuous archive recovery (<xref linkend="backup-pitr-recovery">).
   </para>
 
   <para>
