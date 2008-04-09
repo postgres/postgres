@@ -1,14 +1,14 @@
-$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.12 2008/03/20 17:55:15 momjian Exp $
+$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.13 2008/04/09 00:55:30 momjian Exp $
 
 Notes About Memory Allocation Redesign
 ======================================
 
 Up through version 7.0, Postgres had serious problems with memory leakage
 during large queries that process a lot of pass-by-reference data.  There
-was no provision for recycling memory until end of query.  This needs to be
-fixed, even more so with the advent of TOAST which will allow very large
+was no provision for recycling memory until end of query.  This needed to be
+fixed, even more so with the advent of TOAST which will allowed very large
 chunks of data to be passed around in the system.  This document describes
-the new memory management plan implemented in 7.1.
+the new memory management system implemented in 7.1.
 
 
 Background
