@@ -19,11 +19,20 @@
  * of lossiness.  In theory we could fall back to page ranges at some
  * point, but for now that seems useless complexity.
  *
+ * We also support the notion of candidate matches, or rechecking.  This
+ * means we know that a search need visit only some tuples on a page,
+ * but we are not certain that all of those tuples are real matches.
+ * So the eventual heap scan must recheck the quals for these tuples only,
+ * rather than rechecking the quals for all tuples on the page as in the
+ * lossy-bitmap case.  Rechecking can be specified when TIDs are inserted
+ * into a bitmap, and it can also happen internally when we AND a lossy
+ * and a non-lossy page.
+ *
  *
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.14 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.15 2008/04/10 22:25:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,11 +90,16 @@
  * have exact storage for the first page of a chunk if we are using
  * lossy storage for any page in the chunk's range, since the same
  * hashtable entry has to serve both purposes.
+ *
+ * recheck is used only on exact pages --- it indicates that although
+ * only the stated tuples need be checked, the full index qual condition
+ * must be checked for each (ie, these are candidate matches).
  */
 typedef struct PagetableEntry
 {
 	BlockNumber blockno;		/* page number (hashtable key) */
 	bool		ischunk;		/* T = lossy storage, F = exact */
+	bool		recheck;		/* should the tuples be rechecked? */
 	bitmapword	words[Max(WORDS_PER_PAGE, WORDS_PER_CHUNK)];
 } PagetableEntry;
 
@@ -244,9 +258,13 @@ tbm_free(TIDBitmap *tbm)
 
 /*
  * tbm_add_tuples - add some tuple IDs to a TIDBitmap
+ *
+ * If recheck is true, then the recheck flag will be set in the
+ * TBMIterateResult when any of these tuples are reported out.
  */
 void
-tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids)
+tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids,
+			   bool recheck)
 {
 	int			i;
 
@@ -280,6 +298,7 @@ tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids)
 			bitnum = BITNUM(off - 1);
 		}
 		page->words[wordnum] |= ((bitmapword) 1 << bitnum);
+		page->recheck |= recheck;
 
 		if (tbm->nentries > tbm->maxentries)
 			tbm_lossify(tbm);
@@ -360,6 +379,7 @@ tbm_union_page(TIDBitmap *a, const PagetableEntry *bpage)
 			/* Both pages are exact, merge at the bit level */
 			for (wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
 				apage->words[wordnum] |= bpage->words[wordnum];
+			apage->recheck |= bpage->recheck;
 		}
 	}
 
@@ -471,22 +491,12 @@ tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 	else if (tbm_page_is_lossy(b, apage->blockno))
 	{
 		/*
-		 * When the page is lossy in b, we have to mark it lossy in a too. We
-		 * know that no bits need be set in bitmap a, but we do not know which
-		 * ones should be cleared, and we have no API for "at most these
-		 * tuples need be checked".  (Perhaps it's worth adding that?)
+		 * Some of the tuples in 'a' might not satisfy the quals for 'b',
+		 * but because the page 'b' is lossy, we don't know which ones. 
+		 * Therefore we mark 'a' as requiring rechecks, to indicate that
+		 * at most those tuples set in 'a' are matches.
 		 */
-		tbm_mark_page_lossy(a, apage->blockno);
-
-		/*
-		 * Note: tbm_mark_page_lossy will have removed apage from a, and may
-		 * have inserted a new lossy chunk instead.  We can continue the same
-		 * seq_search scan at the caller level, because it does not matter
-		 * whether we visit such a new chunk or not: it will have only the bit
-		 * for apage->blockno set, which is correct.
-		 *
-		 * We must return false here since apage was already deleted.
-		 */
+		apage->recheck = true;
 		return false;
 	}
 	else
@@ -504,7 +514,9 @@ tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 				if (apage->words[wordnum] != 0)
 					candelete = false;
 			}
+			apage->recheck |= bpage->recheck;
 		}
+		/* If there is no matching b page, we can just delete the a page */
 		return candelete;
 	}
 }
@@ -585,7 +597,9 @@ tbm_begin_iterate(TIDBitmap *tbm)
  * order.  If result->ntuples < 0, then the bitmap is "lossy" and failed to
  * remember the exact tuples to look at on this page --- the caller must
  * examine all tuples on the page and check if they meet the intended
- * condition.
+ * condition.  If result->recheck is true, only the indicated tuples need
+ * be examined, but the condition must be rechecked anyway.  (For ease of
+ * testing, recheck is always set true when ntuples < 0.)
  */
 TBMIterateResult *
 tbm_iterate(TIDBitmap *tbm)
@@ -638,6 +652,7 @@ tbm_iterate(TIDBitmap *tbm)
 			/* Return a lossy page indicator from the chunk */
 			output->blockno = chunk_blockno;
 			output->ntuples = -1;
+			output->recheck = true;
 			tbm->schunkbit++;
 			return output;
 		}
@@ -676,6 +691,7 @@ tbm_iterate(TIDBitmap *tbm)
 		}
 		output->blockno = page->blockno;
 		output->ntuples = ntuples;
+		output->recheck = page->recheck;
 		tbm->spageptr++;
 		return output;
 	}

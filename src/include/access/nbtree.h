@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.116 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.117 2008/04/10 22:25:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,7 +507,7 @@ extern Datum btbuild(PG_FUNCTION_ARGS);
 extern Datum btinsert(PG_FUNCTION_ARGS);
 extern Datum btbeginscan(PG_FUNCTION_ARGS);
 extern Datum btgettuple(PG_FUNCTION_ARGS);
-extern Datum btgetmulti(PG_FUNCTION_ARGS);
+extern Datum btgetbitmap(PG_FUNCTION_ARGS);
 extern Datum btrescan(PG_FUNCTION_ARGS);
 extern Datum btendscan(PG_FUNCTION_ARGS);
 extern Datum btmarkpos(PG_FUNCTION_ARGS);

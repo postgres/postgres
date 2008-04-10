@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.6 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.7 2008/04/10 22:25:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,8 @@ typedef struct
 {
 	BlockNumber blockno;		/* page number containing tuples */
 	int			ntuples;		/* -1 indicates lossy result */
+	bool		recheck;		/* should the tuples be rechecked? */
+	/* Note: recheck is always true if ntuples < 0 */
 	OffsetNumber offsets[1];	/* VARIABLE LENGTH ARRAY */
 } TBMIterateResult;				/* VARIABLE LENGTH STRUCT */
 
@@ -44,7 +46,9 @@ typedef struct
 extern TIDBitmap *tbm_create(long maxbytes);
 extern void tbm_free(TIDBitmap *tbm);
 
-extern void tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids);
+extern void tbm_add_tuples(TIDBitmap *tbm,
+						   const ItemPointer tids, int ntids,
+						   bool recheck);
 
 extern void tbm_union(TIDBitmap *a, const TIDBitmap *b);
 extern void tbm_intersect(TIDBitmap *a, const TIDBitmap *b);

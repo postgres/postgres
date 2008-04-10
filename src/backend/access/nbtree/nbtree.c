@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.156 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.157 2008/04/10 22:25:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "access/nbtree.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
+#include "miscadmin.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
@@ -278,42 +279,29 @@ btgettuple(PG_FUNCTION_ARGS)
 }
 
 /*
- * btgetmulti() -- get multiple tuples at once
- *
- * In the current implementation there seems no strong reason to stop at
- * index page boundaries; we just press on until we fill the caller's buffer
- * or run out of matches.
+ * btgetbitmap() -- gets all matching tuples, and adds them to a bitmap
  */
 Datum
-btgetmulti(PG_FUNCTION_ARGS)
+btgetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ItemPointer tids = (ItemPointer) PG_GETARG_POINTER(1);
-	int32		max_tids = PG_GETARG_INT32(2);
-	int32	   *returned_tids = (int32 *) PG_GETARG_POINTER(3);
+	TIDBitmap *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	bool		res = true;
-	int32		ntids = 0;
+	int64		ntids = 0;
+	ItemPointer heapTid;
 
-	if (max_tids <= 0)			/* behave correctly in boundary case */
-		PG_RETURN_BOOL(true);
-
-	/* If we haven't started the scan yet, fetch the first page & tuple. */
-	if (!BTScanPosIsValid(so->currPos))
+	/* Fetch the first page & tuple. */
+	if (!_bt_first(scan, ForwardScanDirection))
 	{
-		res = _bt_first(scan, ForwardScanDirection);
-		if (!res)
-		{
-			/* empty scan */
-			*returned_tids = ntids;
-			PG_RETURN_BOOL(res);
-		}
-		/* Save tuple ID, and continue scanning */
-		tids[ntids] = scan->xs_ctup.t_self;
-		ntids++;
+		/* empty scan */
+		PG_RETURN_INT64(0);
 	}
+	/* Save tuple ID, and continue scanning */
+	heapTid = &scan->xs_ctup.t_self;
+	tbm_add_tuples(tbm, heapTid, 1, false);
+	ntids++;
 
-	while (ntids < max_tids)
+	for (;;)
 	{
 		/*
 		 * Advance to next tuple within page.  This is the same as the easy
@@ -321,19 +309,20 @@ btgetmulti(PG_FUNCTION_ARGS)
 		 */
 		if (++so->currPos.itemIndex > so->currPos.lastItem)
 		{
+			CHECK_FOR_INTERRUPTS();
+
 			/* let _bt_next do the heavy lifting */
-			res = _bt_next(scan, ForwardScanDirection);
-			if (!res)
+			if (!_bt_next(scan, ForwardScanDirection))
 				break;
 		}
 
 		/* Save tuple ID, and continue scanning */
-		tids[ntids] = so->currPos.items[so->currPos.itemIndex].heapTid;
+		heapTid = &so->currPos.items[so->currPos.itemIndex].heapTid;
+		tbm_add_tuples(tbm, heapTid, 1, false);
 		ntids++;
 	}
 
-	*returned_tids = ntids;
-	PG_RETURN_BOOL(res);
+	PG_RETURN_INT64(ntids);
 }
 
 /*

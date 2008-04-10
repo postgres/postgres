@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.28 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.29 2008/04/10 22:25:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ extern XLogRecPtr gistxlogInsertCompletion(RelFileNode node, ItemPointerData *ke
 
 /* gistget.c */
 extern Datum gistgettuple(PG_FUNCTION_ARGS);
-extern Datum gistgetmulti(PG_FUNCTION_ARGS);
+extern Datum gistgetbitmap(PG_FUNCTION_ARGS);
 
 /* gistutil.c */
 

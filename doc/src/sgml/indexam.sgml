@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.23 2007/04/06 22:33:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.24 2008/04/10 22:25:25 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -320,23 +320,16 @@ amgettuple (IndexScanDesc scan,
 
   <para>
 <programlisting>
-boolean
-amgetmulti (IndexScanDesc scan,
-            ItemPointer tids,
-            int32 max_tids,
-            int32 *returned_tids);
+int64
+amgetbitmap (IndexScanDesc scan,
+             TIDBitmap *tbm);
 </programlisting>
-   Fetch multiple tuples in the given scan.  Returns TRUE if the scan should
-   continue, FALSE if no matching tuples remain.  <literal>tids</> points to
-   a caller-supplied array of <literal>max_tids</>
-   <structname>ItemPointerData</> records, which the call fills with TIDs of
-   matching tuples.  <literal>*returned_tids</> is set to the number of TIDs
-   actually returned.  This can be less than <literal>max_tids</>, or even
-   zero, even when the return value is TRUE.  (This provision allows the
-   access method to choose the most efficient stopping points in its scan,
-   for example index page boundaries.)  <function>amgetmulti</> and
+   Fetch all tuples in the given scan and add them to the caller-supplied
+   TIDBitmap (that is, OR the set of tuple IDs into whatever set is already
+   in the bitmap).  The number of tuples fetched is returned. 
+   <function>amgetbitmap</> and
    <function>amgettuple</> cannot be used in the same index scan; there
-   are other restrictions too when using <function>amgetmulti</>, as explained
+   are other restrictions too when using <function>amgetbitmap</>, as explained
    in <xref linkend="index-scanning">.
   </para>
 
@@ -491,20 +484,17 @@ amrestrpos (IndexScanDesc scan);
 
   <para>
    Instead of using <function>amgettuple</>, an index scan can be done with 
-   <function>amgetmulti</> to fetch multiple tuples per call.  This can be
+   <function>amgetbitmap</> to fetch all tuples in one call.  This can be
    noticeably more efficient than <function>amgettuple</> because it allows
    avoiding lock/unlock cycles within the access method.  In principle
-   <function>amgetmulti</> should have the same effects as repeated
+   <function>amgetbitmap</> should have the same effects as repeated
    <function>amgettuple</> calls, but we impose several restrictions to
-   simplify matters.  In the first place, <function>amgetmulti</> does not
-   take a <literal>direction</> argument, and therefore it does not support
-   backwards scan nor intrascan reversal of direction.  The access method
-   need not support marking or restoring scan positions during an
-   <function>amgetmulti</> scan, either.  (These restrictions cost little
-   since it would be difficult to use these features in an
-   <function>amgetmulti</> scan anyway: adjusting the caller's buffered
-   list of TIDs would be complex.)  Finally, <function>amgetmulti</> does
-   not guarantee any locking of the returned tuples, with implications
+   simplify matters.  First of all, <function>amgetbitmap</> returns all 
+   tuples at once and marking or restoring scan positions isn't 
+   supported. Secondly, the tuples are returned in a bitmap which doesn't
+   have any specific ordering, which is why <function>amgetbitmap</> doesn't
+   take a <literal>direction</> argument.  Finally, <function>amgetbitmap</>
+   does not guarantee any locking of the returned tuples, with implications
    spelled out in <xref linkend="index-locking">.
   </para>
 
@@ -605,9 +595,8 @@ amrestrpos (IndexScanDesc scan);
   </para>
 
   <para>
-   In an <function>amgetmulti</> index scan, the access method need not
-   guarantee to keep an index pin on any of the returned tuples.  (It would be
-   impractical to pin more than the last one anyway.)  Therefore
+   In an <function>amgetbitmap</> index scan, the access method does not
+   keep an index pin on any of the returned tuples.  Therefore
    it is only safe to use such scans with MVCC-compliant snapshots.
   </para>
 

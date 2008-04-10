@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.61 2008/03/26 16:20:48 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.62 2008/04/10 22:25:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ typedef HeapScanDescData *HeapScanDesc;
 
 /*
  * We use the same IndexScanDescData structure for both amgettuple-based
- * and amgetmulti-based index scans.  Some fields are only relevant in
+ * and amgetbitmap-based index scans.  Some fields are only relevant in
  * amgettuple-based scans.
  */
 typedef struct IndexScanDescData
@@ -68,7 +68,6 @@ typedef struct IndexScanDescData
 	Snapshot	xs_snapshot;	/* snapshot to see */
 	int			numberOfKeys;	/* number of scan keys */
 	ScanKey		keyData;		/* array of scan key descriptors */
-	bool		is_multiscan;	/* TRUE = using amgetmulti */
 
 	/* signaling to index AM about killing index tuples */
 	bool		kill_prior_tuple;		/* last-returned tuple is dead */

@@ -8,13 +8,15 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.10 2008/01/01 19:45:46 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.11 2008/04/10 22:25:25 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
 #include "access/gin.h"
 #include "catalog/index.h"
+#include "miscadmin.h"
 #include "utils/memutils.h"
 
 static bool
@@ -476,34 +478,37 @@ scanGetItem(IndexScanDesc scan, ItemPointerData *item)
 #define GinIsVoidRes(s)		( ((GinScanOpaque) scan->opaque)->isVoidRes == true )
 
 Datum
-gingetmulti(PG_FUNCTION_ARGS)
+gingetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ItemPointer tids = (ItemPointer) PG_GETARG_POINTER(1);
-	int32		max_tids = PG_GETARG_INT32(2);
-	int32	   *returned_tids = (int32 *) PG_GETARG_POINTER(3);
+	TIDBitmap *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
+	int64		ntids;
 
 	if (GinIsNewKey(scan))
 		newScanKey(scan);
 
-	*returned_tids = 0;
-
 	if (GinIsVoidRes(scan))
-		PG_RETURN_BOOL(false);
+		PG_RETURN_INT64(0);
 
 	startScan(scan);
 
-	do
+	ntids = 0;
+	for (;;)
 	{
-		if (scanGetItem(scan, tids + *returned_tids))
-			(*returned_tids)++;
-		else
+		ItemPointerData iptr;
+
+		CHECK_FOR_INTERRUPTS();
+
+		if (!scanGetItem(scan, &iptr))
 			break;
-	} while (*returned_tids < max_tids);
+
+		tbm_add_tuples(tbm, &iptr, 1, false);
+		ntids++;
+	}
 
 	stopScan(scan);
 
-	PG_RETURN_BOOL(*returned_tids == max_tids);
+	PG_RETURN_INT64(ntids);
 }
 
 Datum

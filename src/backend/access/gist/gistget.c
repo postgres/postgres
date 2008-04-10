@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.69 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.70 2008/04/10 22:25:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,13 +16,16 @@
 
 #include "access/gist_private.h"
 #include "executor/execdebug.h"
+#include "miscadmin.h"
 #include "pgstat.h"
 #include "utils/memutils.h"
 
 
 static OffsetNumber gistfindnext(IndexScanDesc scan, OffsetNumber n,
 			 ScanDirection dir);
-static int	gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, bool ignore_killed_tuples);
+static int64 gistnext(IndexScanDesc scan, ScanDirection dir,
+					  ItemPointer tid, TIDBitmap *tbm,
+					  bool ignore_killed_tuples);
 static bool gistindex_keytest(IndexTuple tuple, IndexScanDesc scan,
 				  OffsetNumber offset);
 
@@ -114,32 +117,37 @@ gistgettuple(PG_FUNCTION_ARGS)
 	 * tuples, continue looping until we find a non-killed tuple that matches
 	 * the search key.
 	 */
-	res = (gistnext(scan, dir, &tid, 1, scan->ignore_killed_tuples)) ? true : false;
+	res = (gistnext(scan, dir, &tid, NULL, scan->ignore_killed_tuples) > 0) ? true : false;
 
 	PG_RETURN_BOOL(res);
 }
 
 Datum
-gistgetmulti(PG_FUNCTION_ARGS)
+gistgetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ItemPointer tids = (ItemPointer) PG_GETARG_POINTER(1);
-	int32		max_tids = PG_GETARG_INT32(2);
-	int32	   *returned_tids = (int32 *) PG_GETARG_POINTER(3);
+	TIDBitmap *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
+	int64	   ntids;
 
-	*returned_tids = gistnext(scan, ForwardScanDirection, tids, max_tids, false);
+	ntids = gistnext(scan, ForwardScanDirection, NULL, tbm, false);
 
-	PG_RETURN_BOOL(*returned_tids == max_tids);
+	PG_RETURN_INT64(ntids);
 }
 
 /*
- * Fetch a tuples that matchs the search key; this can be invoked
- * either to fetch the first such tuple or subsequent matching
- * tuples. Returns true iff a matching tuple was found.
+ * Fetch tuple(s) that match the search key; this can be invoked
+ * either to fetch the first such tuple or subsequent matching tuples.
+ *
+ * This function is used by both gistgettuple and gistgetbitmap. When
+ * invoked from gistgettuple, tbm is null and the next matching tuple
+ * is returned in *tid. When invoked from getbitmap, tid is null and
+ * all matching tuples are added to tbm. In both cases, the function
+ * result is the number of returned tuples.
  */
-static int
-gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
-		 int maxtids, bool ignore_killed_tuples)
+static int64
+gistnext(IndexScanDesc scan, ScanDirection dir,
+		 ItemPointer tid, TIDBitmap *tbm,
+		 bool ignore_killed_tuples)
 {
 	Page		p;
 	OffsetNumber n;
@@ -148,7 +156,7 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 	IndexTuple	it;
 	GISTPageOpaque opaque;
 	bool		resetoffset = false;
-	int			ntids = 0;
+	int64		ntids = 0;
 
 	so = (GISTScanOpaque) scan->opaque;
 
@@ -174,6 +182,8 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 
 	for (;;)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		/* First of all, we need lock buffer */
 		Assert(so->curbuf != InvalidBuffer);
 		LockBuffer(so->curbuf, GIST_SHARE);
@@ -285,20 +295,21 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 				 * return success. Note that we keep "curbuf" pinned so that
 				 * we can efficiently resume the index scan later.
 				 */
-
 				ItemPointerSet(&(so->curpos),
 							   BufferGetBlockNumber(so->curbuf), n);
 
 				if (!(ignore_killed_tuples && ItemIdIsDead(PageGetItemId(p, n))))
 				{
 					it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-					tids[ntids] = scan->xs_ctup.t_self = it->t_tid;
 					ntids++;
-
-					if (ntids == maxtids)
+					if (tbm != NULL)
+						tbm_add_tuples(tbm, &it->t_tid, 1, false);
+					else 
 					{
+						*tid = scan->xs_ctup.t_self = it->t_tid;
+
 						LockBuffer(so->curbuf, GIST_UNLOCK);
-						return ntids;
+						return ntids; /* always 1 */
 					}
 				}
 			}
@@ -308,7 +319,6 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 				 * We've found an entry in an internal node whose key is
 				 * consistent with the search key, so push it to stack
 				 */
-
 				stk = (GISTSearchStack *) palloc(sizeof(GISTSearchStack));
 
 				it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
@@ -318,7 +328,6 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 
 				stk->next = so->stack->next;
 				so->stack->next = stk;
-
 			}
 
 			if (ScanDirectionIsBackward(dir))

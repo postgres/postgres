@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.100 2008/03/16 23:15:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.101 2008/04/10 22:25:25 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -22,6 +22,7 @@
 #include "access/hash.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
+#include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/plancat.h"
 
@@ -275,72 +276,51 @@ hashgettuple(PG_FUNCTION_ARGS)
 
 
 /*
- *	hashgetmulti() -- get multiple tuples at once
- *
- * This is a somewhat generic implementation: it avoids lock reacquisition
- * overhead, but there's no smarts about picking especially good stopping
- * points such as index page boundaries.
+ *	hashgetbitmap() -- get all tuples at once
  */
 Datum
-hashgetmulti(PG_FUNCTION_ARGS)
+hashgetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ItemPointer tids = (ItemPointer) PG_GETARG_POINTER(1);
-	int32		max_tids = PG_GETARG_INT32(2);
-	int32	   *returned_tids = (int32 *) PG_GETARG_POINTER(3);
+	TIDBitmap *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
-	Relation	rel = scan->indexRelation;
-	bool		res = true;
-	int32		ntids = 0;
+	bool		res;
+	int64		ntids = 0;
 
-	/*
-	 * We hold pin but not lock on current buffer while outside the hash AM.
-	 * Reacquire the read lock here.
-	 */
-	if (BufferIsValid(so->hashso_curbuf))
-		_hash_chgbufaccess(rel, so->hashso_curbuf, HASH_NOLOCK, HASH_READ);
+	res = _hash_first(scan, ForwardScanDirection);
 
-	while (ntids < max_tids)
+	while (res)
 	{
-		/*
-		 * Start scan, or advance to next tuple.
-		 */
-		if (ItemPointerIsValid(&(so->hashso_curpos)))
-			res = _hash_next(scan, ForwardScanDirection);
-		else
-			res = _hash_first(scan, ForwardScanDirection);
+		bool	add_tuple;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * Skip killed tuples if asked to.
 		 */
 		if (scan->ignore_killed_tuples)
 		{
-			while (res)
-			{
-				Page		page;
-				OffsetNumber offnum;
+			Page		page;
+			OffsetNumber offnum;
 
-				offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
-				page = BufferGetPage(so->hashso_curbuf);
-				if (!ItemIdIsDead(PageGetItemId(page, offnum)))
-					break;
-				res = _hash_next(scan, ForwardScanDirection);
-			}
+			offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
+			page = BufferGetPage(so->hashso_curbuf);
+			add_tuple = !ItemIdIsDead(PageGetItemId(page, offnum));
+		}
+		else
+			add_tuple = true;
+
+		/* Save tuple ID, and continue scanning */
+		if (add_tuple) 
+		{
+			tbm_add_tuples(tbm, &scan->xs_ctup.t_self, 1, false);
+			ntids++;
 		}
 
-		if (!res)
-			break;
-		/* Save tuple ID, and continue scanning */
-		tids[ntids] = scan->xs_ctup.t_self;
-		ntids++;
+		res = _hash_next(scan, ForwardScanDirection);
 	}
 
-	/* Release read lock on current buffer, but keep it pinned */
-	if (BufferIsValid(so->hashso_curbuf))
-		_hash_chgbufaccess(rel, so->hashso_curbuf, HASH_READ, HASH_NOLOCK);
-
-	*returned_tids = ntids;
-	PG_RETURN_BOOL(res);
+	PG_RETURN_INT64(ntids);
 }
 
 
