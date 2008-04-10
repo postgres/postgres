@@ -787,9 +787,9 @@ PGTYPEStimestamp_sub(timestamp *ts1, timestamp *ts2, interval *iv)
 		return PGTYPES_TS_ERR_EINFTIME;
 	else
 #ifdef HAVE_INT64_TIMESTAMP
-		iv->time = (ts1 - ts2);
+		iv->time = (*ts1 - *ts2);
 #else
-		iv->time = JROUND(ts1 - ts2);
+		iv->time = JROUND(*ts1 - *ts2);
 #endif
 
 	iv->month = 0;
