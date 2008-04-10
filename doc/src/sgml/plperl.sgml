@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.68 2008/03/28 00:21:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.69 2008/04/10 15:16:46 alvherre Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -309,20 +309,7 @@ BEGIN { strict->import(); }
 
   <para>
    Access to the database itself from your Perl function can be done
-   via the function <function>spi_exec_query</function> described
-   below, or via an experimental module 
-   <ulink url="http://www.cpan.org/modules/by-module/DBD/APILOS/">
-   <literal>DBD::PgSPI</literal></ulink>
-   (also available at <ulink url="http://www.cpan.org/SITES.html">
-   <acronym>CPAN mirror sites</></ulink>).  This module makes available a
-   <acronym>DBI</>-compliant database-handle named
-   <varname>$pg_dbh</varname> that can be used to perform queries with
-   normal <acronym>DBI</>
-   syntax.<indexterm><primary>DBI</></indexterm>
-  </para>
-
-  <para>
-   PL/Perl provides additional Perl commands:
+   via the following functions:
 
    <variablelist>
     <varlistentry>
@@ -412,6 +399,7 @@ $$ LANGUAGE plperl;
 SELECT * FROM test_munge();
 </programlisting>
     </para>
+
     <para>
     <literal>spi_query</literal> and <literal>spi_fetchrow</literal>
     work together as a pair for row sets which might be large, or for cases
