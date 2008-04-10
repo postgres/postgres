@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.428 2008/04/07 00:51:27 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.429 2008/04/10 13:34:33 alvherre Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10745,6 +10745,15 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
        <entry><type>text</type></entry>
        <entry>text of the currently executing query (might contain more than one statement)</entry>
       </row>  
+
+      <row>
+       <!-- See also the entry for this in monitoring.sgml -->
+       <entry><literal><function>pg_backend_pid</function>()</literal></entry>
+       <entry><type>int</type></entry>
+       <entry>
+        Process ID of the server process attached to the current session
+       </entry>
+      </row>
 
       <row>
        <entry><literal><function>inet_client_addr</function>()</literal></entry>
