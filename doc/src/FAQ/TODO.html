@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sun Apr  6 22:14:10 EDT 2008
+Last updated:           Thu Apr 10 14:57:53 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1063,6 +1063,10 @@ first.  There is also a developer's wiki at<br/>
 </p>
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2005-07/msg00512.php">http://archives.postgresql.org/pgsql-patches/2005-07/msg00512.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg01107.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg01107.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00265.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00265.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg01214.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg01214.php</a>
+  <a href="http://archives.postgresql.org/pgsql-patches/2007-05/msg00013.php">http://archives.postgresql.org/pgsql-patches/2007-05/msg00013.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2007-07/msg00741.php">http://archives.postgresql.org/pgsql-hackers/2007-07/msg00741.php</a>
 </p>
   </li><li>Allow accurate statistics to be collected on indexes with more than
   one column or expression indexes, perhaps using per-index statistics
@@ -1083,6 +1087,8 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-02/msg01264.php">http://archives.postgresql.org/pgsql-hackers/2007-02/msg01264.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00465.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00465.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2007-03/msg00163.php">http://archives.postgresql.org/pgsql-patches/2007-03/msg00163.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2007-08/msg00014.php">http://archives.postgresql.org/pgsql-hackers/2007-08/msg00014.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2007-08/msg00487.php">http://archives.postgresql.org/pgsql-hackers/2007-08/msg00487.php</a>
 </p>
   </li><li>Add REINDEX CONCURRENTLY, like CREATE INDEX CONCURRENTLY
 <p>  This is difficult because you must upgrade to an exclusive table lock
@@ -1095,6 +1101,9 @@ first.  There is also a developer's wiki at<br/>
   single heap scan, and have pg_restore use it
   </li><li>Consider sorting entries before inserting into btree index
 <p>  <a href="http://archives.postgresql.org/pgsql-general/2008-01/msg01010.php">http://archives.postgresql.org/pgsql-general/2008-01/msg01010.php</a>
+</p>
+  </li><li>Allow index scans to return matching index keys
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg01079.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg01079.php</a>
 </p>
   </li><li>Inheritance
   <ul>
@@ -1192,6 +1201,9 @@ first.  There is also a developer's wiki at<br/>
   changes during the heap scan a counter could be set at the start and
   checked at the end --- if it is the same, the table has not been
   modified --- any table change would increment the counter.
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-patches/2007-10/msg00166.php">http://archives.postgresql.org/pgsql-patches/2007-10/msg00166.php</a>
+  <a href="http://archives.postgresql.org/pgsql-patches/2008-01/msg00049.php">http://archives.postgresql.org/pgsql-patches/2008-01/msg00049.php</a>
 </p>
   </li><li>Consider automatic caching of statements at various levels:
   <ul>
