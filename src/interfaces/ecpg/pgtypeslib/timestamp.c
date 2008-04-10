@@ -804,7 +804,7 @@ PGTYPEStimestamp_sub(timestamp * ts1, timestamp * ts2, interval * iv)
 	if (TIMESTAMP_NOT_FINITE(*ts1) || TIMESTAMP_NOT_FINITE(*ts2))
 		return PGTYPES_TS_ERR_EINFTIME;
 	else
-		iv->time = (ts1 - ts2);
+		iv->time = (*ts1 - *ts2);
 
 	iv->month = 0;
 
