@@ -2341,6 +2341,11 @@ Wed, 26 Mar 2008 17:02:08 +0100
 
 	- Moved from PQsetdbLogin to PQconnectDB.
 	- Correctly parse connect options.
+
+Thu, 10 Apr 2008 12:42:25 +0200
+
+	- Fixed bug in PGTYPEStimestamp_sub that used pointers instead of the
+	  values to substract.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.
