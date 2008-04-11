@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.30 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.31 2008/04/11 22:54:23 tgl Exp $
  *------------------------------------------------------------------------
  */
 
@@ -215,10 +215,18 @@
  */
 
 /*
+ * Define this to cause palloc()'d memory to be filled with random data, to
+ * facilitate catching code that depends on the contents of uninitialized
+ * memory.  Right now, this gets defined automatically if --enable-cassert.
+ */
+#ifdef USE_ASSERT_CHECKING
+#define RANDOMIZE_ALLOCATED_MEMORY
+#endif
+
+/*
  * Define this to cause pfree()'d memory to be cleared immediately, to
- * facilitate catching bugs that refer to already-freed values.  XXX
- * Right now, this gets defined automatically if --enable-cassert.	In
- * the long term it probably doesn't need to be on by default.
+ * facilitate catching bugs that refer to already-freed values.
+ * Right now, this gets defined automatically if --enable-cassert.
  */
 #ifdef USE_ASSERT_CHECKING
 #define CLOBBER_FREED_MEMORY
@@ -227,8 +235,7 @@
 /*
  * Define this to check memory allocation errors (scribbling on more
  * bytes than were allocated).	Right now, this gets defined
- * automatically if --enable-cassert.  In the long term it probably
- * doesn't need to be on by default.
+ * automatically if --enable-cassert.
  */
 #ifdef USE_ASSERT_CHECKING
 #define MEMORY_CONTEXT_CHECKING

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.94 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.95 2008/04/11 22:54:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "parser/parse_type.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -485,13 +486,38 @@ typeTypeRelid(Type typ)
 Datum
 stringTypeDatum(Type tp, char *string, int32 atttypmod)
 {
-	Oid			typinput;
-	Oid			typioparam;
+	Form_pg_type typform = (Form_pg_type) GETSTRUCT(tp);
+	Oid			typinput = typform->typinput;
+	Oid			typioparam = getTypeIOParam(tp);
+	Datum		result;
 
-	typinput = ((Form_pg_type) GETSTRUCT(tp))->typinput;
-	typioparam = getTypeIOParam(tp);
-	return OidInputFunctionCall(typinput, string,
-								typioparam, atttypmod);
+	result = OidInputFunctionCall(typinput, string,
+								  typioparam, atttypmod);
+
+#ifdef RANDOMIZE_ALLOCATED_MEMORY
+	/*
+	 * For pass-by-reference data types, repeat the conversion to see if the
+	 * input function leaves any uninitialized bytes in the result.  We can
+	 * only detect that reliably if RANDOMIZE_ALLOCATED_MEMORY is enabled,
+	 * so we don't bother testing otherwise.  The reason we don't want any
+	 * instability in the input function is that comparison of Const nodes
+	 * relies on bytewise comparison of the datums, so if the input function
+	 * leaves garbage then subexpressions that should be identical may not get
+	 * recognized as such.  See pgsql-hackers discussion of 2008-04-04.
+	 */
+	if (string && !typform->typbyval)
+	{
+		Datum		result2;
+
+		result2 = OidInputFunctionCall(typinput, string,
+									   typioparam, atttypmod);
+		if (!datumIsEqual(result, result2, typform->typbyval, typform->typlen))
+			elog(WARNING, "type %s has unstable input conversion for \"%s\"",
+				 NameStr(typform->typname), string);
+	}
+#endif
+
+	return result;
 }
 
 /* given a typeid, return the type's typrelid (associated relation, if any) */

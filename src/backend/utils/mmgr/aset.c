@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.76 2008/01/01 19:45:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.77 2008/04/11 22:54:23 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -281,6 +281,32 @@ AllocSetFreeIndex(Size size)
 
 	return idx;
 }
+
+#ifdef RANDOMIZE_ALLOCATED_MEMORY
+
+/*
+ * Fill a just-allocated piece of memory with "random" data.  It's not really
+ * very random, just a repeating sequence with a length that's prime.  What
+ * we mainly want out of it is to have a good probability that two palloc's
+ * of the same number of bytes start out containing different data.
+ */
+static void
+randomize_mem(char *ptr, size_t size)
+{
+	static int	save_ctr = 1;
+	int			ctr;
+
+	ctr = save_ctr;
+	while (size-- > 0)
+	{
+		*ptr++ = ctr;
+		if (++ctr > 251)
+			ctr = 1;
+	}
+	save_ctr = ctr;
+}
+
+#endif /* RANDOMIZE_ALLOCATED_MEMORY */
 
 
 /*
@@ -552,6 +578,10 @@ AllocSetAlloc(MemoryContext context, Size size)
 		if (size < chunk_size)
 			((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
 #endif
+#ifdef RANDOMIZE_ALLOCATED_MEMORY
+		/* fill the allocated space with junk */
+		randomize_mem((char *) AllocChunkGetPointer(chunk), size);
+#endif
 
 		/*
 		 * Stick the new block underneath the active allocation block, so that
@@ -595,6 +625,10 @@ AllocSetAlloc(MemoryContext context, Size size)
 		/* set mark to catch clobber of "unused" space */
 		if (size < chunk->size)
 			((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
+#endif
+#ifdef RANDOMIZE_ALLOCATED_MEMORY
+		/* fill the allocated space with junk */
+		randomize_mem((char *) AllocChunkGetPointer(chunk), size);
 #endif
 
 		/* isReset must be false already */
@@ -752,6 +786,10 @@ AllocSetAlloc(MemoryContext context, Size size)
 	if (size < chunk->size)
 		((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
 #endif
+#ifdef RANDOMIZE_ALLOCATED_MEMORY
+	/* fill the allocated space with junk */
+	randomize_mem((char *) AllocChunkGetPointer(chunk), size);
+#endif
 
 	set->isReset = false;
 
@@ -864,6 +902,13 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	if (oldsize >= size)
 	{
 #ifdef MEMORY_CONTEXT_CHECKING
+#ifdef RANDOMIZE_ALLOCATED_MEMORY
+		/* We can only fill the extra space if we know the prior request */
+		if (size > chunk->requested_size)
+			randomize_mem((char *) AllocChunkGetPointer(chunk) + chunk->requested_size,
+						  size - chunk->requested_size);
+#endif
+
 		chunk->requested_size = size;
 		/* set mark to catch clobber of "unused" space */
 		if (size < oldsize)
@@ -921,6 +966,12 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		chunk->size = chksize;
 
 #ifdef MEMORY_CONTEXT_CHECKING
+#ifdef RANDOMIZE_ALLOCATED_MEMORY
+		/* We can only fill the extra space if we know the prior request */
+		randomize_mem((char *) AllocChunkGetPointer(chunk) + chunk->requested_size,
+					  size - chunk->requested_size);
+#endif
+
 		chunk->requested_size = size;
 		/* set mark to catch clobber of "unused" space */
 		if (size < chunk->size)
