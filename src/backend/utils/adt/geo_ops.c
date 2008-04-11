@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.99 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.100 2008/04/11 22:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1425,6 +1425,8 @@ path_in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for type path: \"%s\"", str)));
 
 	path->closed = (!isopen);
+	/* prevent instability in unused pad bytes */
+	path->dummy = 0;
 
 	PG_RETURN_PATH_P(path);
 }
