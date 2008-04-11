@@ -117,7 +117,7 @@ ltree_in(PG_FUNCTION_ARGS)
 				 errmsg("syntax error"),
 				 errdetail("Unexpected end of line.")));
 
-	result = (ltree *) palloc(LTREE_HDRSIZE + totallen);
+	result = (ltree *) palloc0(LTREE_HDRSIZE + totallen);
 	result->len = LTREE_HDRSIZE + totallen;
 	result->numlevel = lptr - list;
 	curlevel = LTREE_FIRST(result);
@@ -207,8 +207,7 @@ lquery_in(PG_FUNCTION_ARGS)
 	}
 
 	num++;
-	curqlevel = tmpql = (lquery_level *) palloc(ITEMSIZE * num);
-	memset((void *) tmpql, 0, ITEMSIZE * num);
+	curqlevel = tmpql = (lquery_level *) palloc0(ITEMSIZE * num);
 	ptr = buf;
 	while (*ptr)
 	{
@@ -447,7 +446,7 @@ lquery_in(PG_FUNCTION_ARGS)
 		curqlevel = NEXTLEV(curqlevel);
 	}
 
-	result = (lquery *) palloc(totallen);
+	result = (lquery *) palloc0(totallen);
 	result->len = totallen;
 	result->numlevel = num;
 	result->firstgood = 0;
