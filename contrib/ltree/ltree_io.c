@@ -1,7 +1,7 @@
 /*
  * in/out function for ltree and lquery
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_io.c,v 1.13 2006/09/22 21:39:57 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_io.c,v 1.13.2.1 2008/04/11 22:53:06 tgl Exp $
  */
 
 #include "ltree.h"
@@ -118,7 +118,7 @@ ltree_in(PG_FUNCTION_ARGS)
 				 errmsg("syntax error"),
 				 errdetail("Unexpected end of line.")));
 
-	result = (ltree *) palloc(LTREE_HDRSIZE + totallen);
+	result = (ltree *) palloc0(LTREE_HDRSIZE + totallen);
 	result->len = LTREE_HDRSIZE + totallen;
 	result->numlevel = lptr - list;
 	curlevel = LTREE_FIRST(result);
@@ -208,8 +208,7 @@ lquery_in(PG_FUNCTION_ARGS)
 	}
 
 	num++;
-	curqlevel = tmpql = (lquery_level *) palloc(ITEMSIZE * num);
-	memset((void *) tmpql, 0, ITEMSIZE * num);
+	curqlevel = tmpql = (lquery_level *) palloc0(ITEMSIZE * num);
 	ptr = buf;
 	while (*ptr)
 	{
@@ -448,7 +447,7 @@ lquery_in(PG_FUNCTION_ARGS)
 		curqlevel = NEXTLEV(curqlevel);
 	}
 
-	result = (lquery *) palloc(totallen);
+	result = (lquery *) palloc0(totallen);
 	result->len = totallen;
 	result->numlevel = num;
 	result->firstgood = 0;

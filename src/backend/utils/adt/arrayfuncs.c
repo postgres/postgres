@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.135 2006/11/08 19:24:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.135.2.1 2008/04/11 22:53:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,7 +323,7 @@ array_in(PG_FUNCTION_ARGS)
 		dataoffset = 0;			/* marker for no null bitmap */
 		nbytes += ARR_OVERHEAD_NONULLS(ndim);
 	}
-	retval = (ArrayType *) palloc(nbytes);
+	retval = (ArrayType *) palloc0(nbytes);
 	retval->size = nbytes;
 	retval->ndim = ndim;
 	retval->dataoffset = dataoffset;
