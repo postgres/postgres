@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.164 2008/03/25 22:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.165 2008/04/12 23:21:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -754,7 +754,8 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		 * If we're working with an untoasted source, no need to do an extra
 		 * copying step.
 		 */
-		if (VARATT_IS_COMPRESSED(str) || VARATT_IS_EXTERNAL(str))
+		if (VARATT_IS_COMPRESSED(DatumGetPointer(str)) || 
+			VARATT_IS_EXTERNAL(DatumGetPointer(str)))
 			slice = DatumGetTextPSlice(str, slice_start, slice_size);
 		else
 			slice = (text *) DatumGetPointer(str);
