@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.62 2008/04/10 22:25:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.63 2008/04/12 23:14:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,14 +76,12 @@ typedef struct IndexScanDescData
 	/* index access method's private state */
 	void	   *opaque;			/* access-method-specific info */
 
-	/*
-	 * xs_ctup/xs_cbuf are valid after a successful index_getnext. After
-	 * index_getnext_indexitem, xs_ctup.t_self contains the heap tuple TID
-	 * from the index entry, but its other fields are not valid.
-	 */
+	/* xs_ctup/xs_cbuf are valid after a successful index_getnext */
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */
 	Buffer		xs_cbuf;		/* current heap buffer in scan, if any */
 	/* NB: if xs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
+
+	/* state data for traversing HOT chains in index_getnext */
 	TransactionId xs_prev_xmax; /* previous HOT chain member's XMAX, if any */
 	OffsetNumber xs_next_hot;	/* next member of HOT chain, if any */
 	bool		xs_hot_dead;	/* T if all members of HOT chain are dead */

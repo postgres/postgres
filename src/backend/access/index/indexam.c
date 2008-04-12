@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.105 2008/04/10 22:25:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.106 2008/04/12 23:14:21 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -206,12 +206,7 @@ index_insert(Relation indexRelation,
 /*
  * index_beginscan - start a scan of an index with amgettuple
  *
- * Note: heapRelation may be NULL if there is no intention of calling
- * index_getnext on this scan; index_getnext_indexitem will not use the
- * heapRelation link (nor the snapshot).  However, the caller had better
- * be holding some kind of lock on the heap relation in any case, to ensure
- * no one deletes it (or the index) out from under us.	Caller must also
- * be holding a lock on the index.
+ * Caller must be holding suitable locks on the heap and the index.
  */
 IndexScanDesc
 index_beginscan(Relation heapRelation,
@@ -632,45 +627,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	}
 
 	return NULL;				/* failure exit */
-}
-
-/* ----------------
- *		index_getnext_indexitem - get the next index tuple from a scan
- *
- * Finds the next index tuple satisfying the scan keys.  Note that the
- * corresponding heap tuple is not accessed, and thus no time qual (snapshot)
- * check is done, other than the index AM's internal check for killed tuples
- * (which most callers of this routine will probably want to suppress by
- * setting scan->ignore_killed_tuples = false).
- *
- * On success (TRUE return), the heap TID of the found index entry is in
- * scan->xs_ctup.t_self.  scan->xs_cbuf is untouched.
- * ----------------
- */
-bool
-index_getnext_indexitem(IndexScanDesc scan,
-						ScanDirection direction)
-{
-	FmgrInfo   *procedure;
-	bool		found;
-
-	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(amgettuple);
-
-	/* just make sure this is false... */
-	scan->kill_prior_tuple = false;
-
-	/*
-	 * have the am's gettuple proc do all the work.
-	 */
-	found = DatumGetBool(FunctionCall2(procedure,
-									   PointerGetDatum(scan),
-									   Int32GetDatum(direction)));
-
-	if (found)
-		pgstat_count_index_tuples(scan->indexRelation, 1);
-
-	return found;
 }
 
 /* ----------------

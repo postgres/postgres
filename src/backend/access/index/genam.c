@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.66 2008/04/10 22:25:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.67 2008/04/12 23:14:21 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -256,5 +256,89 @@ systable_endscan(SysScanDesc sysscan)
 	else
 		heap_endscan(sysscan->scan);
 
+	pfree(sysscan);
+}
+
+
+/*
+ * systable_beginscan_ordered --- set up for ordered catalog scan
+ *
+ * These routines have essentially the same API as systable_beginscan etc,
+ * except that they guarantee to return multiple matching tuples in
+ * index order.  Also, for largely historical reasons, the index to use
+ * is opened and locked by the caller, not here.
+ *
+ * Currently we do not support non-index-based scans here.  (In principle
+ * we could do a heapscan and sort, but the uses are in places that
+ * probably don't need to still work with corrupted catalog indexes.)
+ * For the moment, therefore, these functions are merely the thinnest of
+ * wrappers around index_beginscan/index_getnext.  The main reason for their
+ * existence is to centralize possible future support of lossy operators
+ * in catalog scans.
+ */
+SysScanDesc
+systable_beginscan_ordered(Relation heapRelation,
+						   Relation indexRelation,
+						   Snapshot snapshot,
+						   int nkeys, ScanKey key)
+{
+	SysScanDesc sysscan;
+	int			i;
+
+	/* REINDEX can probably be a hard error here ... */
+	if (ReindexIsProcessingIndex(RelationGetRelid(indexRelation)))
+		elog(ERROR, "cannot do ordered scan on index \"%s\", because it is the current REINDEX target",
+			 RelationGetRelationName(indexRelation));
+	/* ... but we only throw a warning about violating IgnoreSystemIndexes */
+	if (IgnoreSystemIndexes)
+		elog(WARNING, "using index \"%s\" despite IgnoreSystemIndexes",
+			 RelationGetRelationName(indexRelation));
+
+	sysscan = (SysScanDesc) palloc(sizeof(SysScanDescData));
+
+	sysscan->heap_rel = heapRelation;
+	sysscan->irel = indexRelation;
+
+	/*
+	 * Change attribute numbers to be index column numbers.
+	 *
+	 * This code could be generalized to search for the index key numbers
+	 * to substitute, but for now there's no need.
+	 */
+	for (i = 0; i < nkeys; i++)
+	{
+		Assert(key[i].sk_attno == indexRelation->rd_index->indkey.values[i]);
+		key[i].sk_attno = i + 1;
+	}
+
+	sysscan->iscan = index_beginscan(heapRelation, indexRelation,
+									 snapshot, nkeys, key);
+	sysscan->scan = NULL;
+
+	return sysscan;
+}
+
+/*
+ * systable_getnext_ordered --- get next tuple in an ordered catalog scan
+ */
+HeapTuple
+systable_getnext_ordered(SysScanDesc sysscan, ScanDirection direction)
+{
+	HeapTuple	htup;
+
+	Assert(sysscan->irel);
+	htup = index_getnext(sysscan->iscan, direction);
+
+	return htup;
+}
+
+/*
+ * systable_endscan_ordered --- close scan, release resources
+ */
+void
+systable_endscan_ordered(SysScanDesc sysscan)
+{
+	Assert(sysscan->irel);
+	index_endscan(sysscan->iscan);
 	pfree(sysscan);
 }

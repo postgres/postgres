@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.85 2008/03/26 21:10:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.86 2008/04/12 23:14:21 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1184,7 +1184,9 @@ toast_save_datum(Relation rel, Datum value,
 		toast_pointer.va_extsize = data_todo;
 	}
 
-	toast_pointer.va_valueid = GetNewOidWithIndex(toastrel, toastidx);
+	toast_pointer.va_valueid = GetNewOidWithIndex(toastrel,
+												  RelationGetRelid(toastidx),
+												  (AttrNumber) 1);
 	toast_pointer.va_toastrelid = rel->rd_rel->reltoastrelid;
 
 	/*
@@ -1273,7 +1275,7 @@ toast_delete_datum(Relation rel, Datum value)
 	Relation	toastrel;
 	Relation	toastidx;
 	ScanKeyData toastkey;
-	IndexScanDesc toastscan;
+	SysScanDesc toastscan;
 	HeapTuple	toasttup;
 
 	if (!VARATT_IS_EXTERNAL(attr))
@@ -1289,8 +1291,7 @@ toast_delete_datum(Relation rel, Datum value)
 	toastidx = index_open(toastrel->rd_rel->reltoastidxid, RowExclusiveLock);
 
 	/*
-	 * Setup a scan key to fetch from the index by va_valueid (we don't
-	 * particularly care whether we see them in sequence or not)
+	 * Setup a scan key to find chunks with matching va_valueid
 	 */
 	ScanKeyInit(&toastkey,
 				(AttrNumber) 1,
@@ -1298,11 +1299,13 @@ toast_delete_datum(Relation rel, Datum value)
 				ObjectIdGetDatum(toast_pointer.va_valueid));
 
 	/*
-	 * Find the chunks by index
+	 * Find all the chunks.  (We don't actually care whether we see them in
+	 * sequence or not, but since we've already locked the index we might
+	 * as well use systable_beginscan_ordered.)
 	 */
-	toastscan = index_beginscan(toastrel, toastidx,
-								SnapshotToast, 1, &toastkey);
-	while ((toasttup = index_getnext(toastscan, ForwardScanDirection)) != NULL)
+	toastscan = systable_beginscan_ordered(toastrel, toastidx,
+										   SnapshotToast, 1, &toastkey);
+	while ((toasttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 	{
 		/*
 		 * Have a chunk, delete it
@@ -1313,7 +1316,7 @@ toast_delete_datum(Relation rel, Datum value)
 	/*
 	 * End scan and close relations
 	 */
-	index_endscan(toastscan);
+	systable_endscan_ordered(toastscan);
 	index_close(toastidx, RowExclusiveLock);
 	heap_close(toastrel, RowExclusiveLock);
 }
@@ -1332,7 +1335,7 @@ toast_fetch_datum(struct varlena * attr)
 	Relation	toastrel;
 	Relation	toastidx;
 	ScanKeyData toastkey;
-	IndexScanDesc toastscan;
+	SysScanDesc toastscan;
 	HeapTuple	ttup;
 	TupleDesc	toasttupDesc;
 	struct varlena *result;
@@ -1383,9 +1386,9 @@ toast_fetch_datum(struct varlena * attr)
 	 */
 	nextidx = 0;
 
-	toastscan = index_beginscan(toastrel, toastidx,
-								SnapshotToast, 1, &toastkey);
-	while ((ttup = index_getnext(toastscan, ForwardScanDirection)) != NULL)
+	toastscan = systable_beginscan_ordered(toastrel, toastidx,
+										   SnapshotToast, 1, &toastkey);
+	while ((ttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 	{
 		/*
 		 * Have a chunk, extract the sequence number and the data
@@ -1464,7 +1467,7 @@ toast_fetch_datum(struct varlena * attr)
 	/*
 	 * End scan and close relations
 	 */
-	index_endscan(toastscan);
+	systable_endscan_ordered(toastscan);
 	index_close(toastidx, AccessShareLock);
 	heap_close(toastrel, AccessShareLock);
 
@@ -1485,7 +1488,7 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	Relation	toastidx;
 	ScanKeyData toastkey[3];
 	int			nscankeys;
-	IndexScanDesc toastscan;
+	SysScanDesc toastscan;
 	HeapTuple	ttup;
 	TupleDesc	toasttupDesc;
 	struct varlena *result;
@@ -1592,9 +1595,9 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	 * The index is on (valueid, chunkidx) so they will come in order
 	 */
 	nextidx = startchunk;
-	toastscan = index_beginscan(toastrel, toastidx,
-								SnapshotToast, nscankeys, toastkey);
-	while ((ttup = index_getnext(toastscan, ForwardScanDirection)) != NULL)
+	toastscan = systable_beginscan_ordered(toastrel, toastidx,
+										   SnapshotToast, nscankeys, toastkey);
+	while ((ttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 	{
 		/*
 		 * Have a chunk, extract the sequence number and the data
@@ -1681,7 +1684,7 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	/*
 	 * End scan and close relations
 	 */
-	index_endscan(toastscan);
+	systable_endscan_ordered(toastscan);
 	index_close(toastidx, AccessShareLock);
 	heap_close(toastrel, AccessShareLock);
 
