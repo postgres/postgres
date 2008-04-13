@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.103 2008/03/26 14:32:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.104 2008/04/13 03:49:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,6 @@ static PQExpBuffer pgdumpopts;
 static bool output_clean = false;
 static bool skip_acls = false;
 static bool verbose = false;
-static bool ignoreVersion = false;
 
 static int	disable_dollar_quoting = 0;
 static int	disable_triggers = 0;
@@ -214,8 +213,7 @@ main(int argc, char *argv[])
 				break;
 
 			case 'i':
-				ignoreVersion = true;
-				appendPQExpBuffer(pgdumpopts, " -i");
+				/* ignored, deprecated option */
 				break;
 
 			case 'l':
@@ -488,7 +486,6 @@ help(void)
 
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -f, --file=FILENAME      output file name\n"));
-	printf(_("  -i, --ignore-version     ignore server version mismatch\n"));
 	printf(_("  --help                   show this help, then exit\n"));
 	printf(_("  --version                output version information, then exit\n"));
 	printf(_("\nOptions controlling the output content:\n"));
@@ -1391,20 +1388,18 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		exit(1);
 	}
 
+	/*
+	 * We allow the server to be back to 7.0, and up to any minor release
+	 * of our own major version.  (See also version check in pg_dump.c.)
+	 */
 	if (my_version != server_version
-		&& (server_version < 70000		/* we can handle back to 7.0 */
-			|| server_version > my_version))
+		&& (server_version < 70000 ||
+			(server_version / 100) > (my_version / 100)))
 	{
 		fprintf(stderr, _("server version: %s; %s version: %s\n"),
 				remoteversion_str, progname, PG_VERSION);
-		if (ignoreVersion)
-			fprintf(stderr, _("ignoring server version mismatch\n"));
-		else
-		{
-			fprintf(stderr, _("aborting because of server version mismatch\n"
-				"Use the -i option to bypass server version check, but be prepared for failure.\n"));
-			exit(1);
-		}
+		fprintf(stderr, _("aborting because of server version mismatch\n"));
+		exit(1);
 	}
 
 	/*

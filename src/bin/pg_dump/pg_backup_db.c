@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.78 2008/03/26 14:32:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.79 2008/04/13 03:49:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 
 static const char *modulename = gettext_noop("archiver (db)");
 
-static void _check_database_version(ArchiveHandle *AH, bool ignoreVersion);
+static void _check_database_version(ArchiveHandle *AH);
 static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, const char *newUser);
 static void notice_processor(void *arg, const char *message);
 static char *_sendSQLLine(ArchiveHandle *AH, char *qry, char *eos);
@@ -48,7 +48,7 @@ _parse_version(ArchiveHandle *AH, const char *versionString)
 }
 
 static void
-_check_database_version(ArchiveHandle *AH, bool ignoreVersion)
+_check_database_version(ArchiveHandle *AH)
 {
 	int			myversion;
 	const char *remoteversion_str;
@@ -71,11 +71,7 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 	{
 		write_msg(NULL, "server version: %s; %s version: %s\n",
 				  remoteversion_str, progname, PG_VERSION);
-		if (ignoreVersion)
-			write_msg(NULL, "ignoring server version mismatch\n");
-		else
-			die_horribly(AH, NULL, "aborting because of server version mismatch\n"
-			"Use the -i option to bypass server version check, but be prepared for failure.\n");
+		die_horribly(AH, NULL, "aborting because of server version mismatch\n");
 	}
 }
 
@@ -182,7 +178,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 		free(password);
 
 	/* check for version mismatch */
-	_check_database_version(AH, true);
+	_check_database_version(AH);
 
 	PQsetNoticeProcessor(newConn, notice_processor, NULL);
 
@@ -201,8 +197,7 @@ ConnectDatabase(Archive *AHX,
 				const char *pghost,
 				const char *pgport,
 				const char *username,
-				const int reqPwd,
-				const int ignoreVersion)
+				int reqPwd)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	char	   *password = NULL;
@@ -254,7 +249,7 @@ ConnectDatabase(Archive *AHX,
 					 PQdb(AH->connection), PQerrorMessage(AH->connection));
 
 	/* check for version mismatch */
-	_check_database_version(AH, ignoreVersion);
+	_check_database_version(AH);
 
 	PQsetNoticeProcessor(AH->connection, notice_processor, NULL);
 

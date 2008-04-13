@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.486 2008/03/28 00:21:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.487 2008/04/13 03:49:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,18 +211,19 @@ main(int argc, char **argv)
 	int			i;
 	bool		force_password = false;
 	int			compressLevel = -1;
-	bool		ignore_version = false;
 	int			plainText = 0;
 	int			outputClean = 0;
 	int			outputCreate = 0;
 	bool		outputBlobs = false;
 	int			outputNoOwner = 0;
 	char	   *outputSuperuser = NULL;
+	int			my_version;
+	int			optindex;
+	RestoreOptions *ropt;
+
 	static int	disable_triggers = 0;
 	static int  outputNoTablespaces = 0;
 	static int	use_setsessauth = 0;
-
-	RestoreOptions *ropt;
 
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
@@ -266,7 +267,6 @@ main(int argc, char **argv)
 
 		{NULL, 0, NULL, 0}
 	};
-	int			optindex;
 
 	set_pglocale_pgservice(argv[0], "pg_dump");
 
@@ -345,8 +345,8 @@ main(int argc, char **argv)
 				pghost = optarg;
 				break;
 
-			case 'i':			/* ignore database version mismatch */
-				ignore_version = true;
+			case 'i':
+				/* ignored, deprecated option */
 				break;
 
 			case 'n':			/* include schema(s) */
@@ -512,20 +512,26 @@ main(int argc, char **argv)
 	/* Let the archiver know how noisy to be */
 	g_fout->verbose = g_verbose;
 
-	g_fout->minRemoteVersion = 70000;	/* we can handle back to 7.0 */
-	g_fout->maxRemoteVersion = parse_version(PG_VERSION);
-	if (g_fout->maxRemoteVersion < 0)
+	my_version = parse_version(PG_VERSION);
+	if (my_version < 0)
 	{
 		write_msg(NULL, "could not parse version string \"%s\"\n", PG_VERSION);
 		exit(1);
 	}
 
 	/*
+	 * We allow the server to be back to 7.0, and up to any minor release
+	 * of our own major version.  (See also version check in pg_dumpall.c.)
+	 */
+	g_fout->minRemoteVersion = 70000;
+	g_fout->maxRemoteVersion = (my_version / 100) * 100 + 99;
+
+	/*
 	 * Open the database using the Archiver, so it knows about it. Errors mean
 	 * death.
 	 */
 	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport,
-							 username, force_password, ignore_version);
+							 username, force_password);
 
 	/* Set the client encoding if requested */
 	if (dumpencoding)
@@ -739,7 +745,6 @@ help(const char *progname)
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -f, --file=FILENAME      output file name\n"));
 	printf(_("  -F, --format=c|t|p       output file format (custom, tar, plain text)\n"));
-	printf(_("  -i, --ignore-version     ignore server version mismatch\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
 	printf(_("  -Z, --compress=0-9       compression level for compressed formats\n"));
 	printf(_("  --help                   show this help, then exit\n"));

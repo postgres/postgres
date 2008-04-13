@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.153 2008/03/20 17:36:57 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.154 2008/04/13 03:49:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 		ConnectDatabase(AHX, ropt->dbname,
 						ropt->pghost, ropt->pgport, ropt->username,
-						ropt->requirePassword, ropt->ignoreVersion);
+						ropt->requirePassword);
 
 		/*
 		 * If we're talking to the DB directly, don't send comments since they

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.71 2008/03/26 16:34:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.72 2008/04/13 03:49:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -156,20 +156,7 @@ PostgreSQL documentation
       <term><option>--ignore-version</></term>
       <listitem>
        <para>
-        Ignore version mismatch between
-        <application>pg_dumpall</application> and the database server.
-       </para>
-
-       <para>
-        By default, <application>pg_dumpall</> will refuse to attempt
-        to dump from a server that is of a newer <productname>PostgreSQL</>
-        version than <application>pg_dumpall</application> is.  It will also
-        refuse to attempt to dump from a server that is older than the oldest
-        supported version (currently, 7.0).  The <option>-i</> option
-        overrides this check and forces a dump to be attempted anyway.
-        This option is <emphasis>deprecated</> because the dump is very
-        likely to fail &mdash; or worse, seem to succeed but be wrong or
-        incomplete.
+        A deprecated option that is now ignored.
        </para>
       </listitem>
      </varlistentry>
