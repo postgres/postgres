@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.24 2008/04/10 22:25:25 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.25 2008/04/13 19:18:13 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -315,7 +315,15 @@ amgettuple (IndexScanDesc scan,
    TID is stored into the <literal>scan</> structure.  Note that
    <quote>success</> means only that the index contains an entry that matches
    the scan keys, not that the tuple necessarily still exists in the heap or
-   will pass the caller's snapshot test.
+   will pass the caller's snapshot test.  On success, <function>amgettuple</>
+   must also set <literal>scan-&gt;xs_recheck</> to TRUE or FALSE.
+   FALSE means it is certain that the index entry matches the scan keys.
+   TRUE means this is not certain, and the conditions represented by the
+   scan keys must be rechecked against the heap tuple after fetching it.
+   This provision supports <quote>lossy</> index operators.
+   Note that rechecking will extend only to the scan conditions; a partial
+   index predicate (if any) is never rechecked by <function>amgettuple</>
+   callers.
   </para>
 
   <para>
@@ -327,6 +335,14 @@ amgetbitmap (IndexScanDesc scan,
    Fetch all tuples in the given scan and add them to the caller-supplied
    TIDBitmap (that is, OR the set of tuple IDs into whatever set is already
    in the bitmap).  The number of tuples fetched is returned. 
+   While inserting tuple IDs into the bitmap, <function>amgetbitmap</> can
+   indicate that rechecking of the scan conditions is required for specific
+   tuple IDs.  This is analogous to the <literal>xs_recheck</> output parameter
+   of <function>amgettuple</>.  Note: in the current implementation, support
+   for this feature is conflated with support for lossy storage of the bitmap
+   itself, and therefore callers recheck both the scan conditions and the
+   partial index predicate (if any) for recheckable tuples.  That might not
+   always be true, however.
    <function>amgetbitmap</> and
    <function>amgettuple</> cannot be used in the same index scan; there
    are other restrictions too when using <function>amgetbitmap</>, as explained

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.172 2008/03/26 21:10:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.173 2008/04/13 19:18:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -775,6 +775,10 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		int			i;
 
 		CHECK_FOR_INTERRUPTS();
+
+		/* Since we used no scan keys, should never need to recheck */
+		if (scan->xs_recheck)
+			elog(ERROR, "CLUSTER does not support lossy index conditions");
 
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.126 2008/03/18 03:54:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.127 2008/04/13 19:18:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ IndexNext(IndexScanState *node)
 	/*
 	 * ok, now that we have what we need, fetch the next tuple.
 	 */
-	if ((tuple = index_getnext(scandesc, direction)) != NULL)
+	while ((tuple = index_getnext(scandesc, direction)) != NULL)
 	{
 		/*
 		 * Store the scanned tuple in the scan tuple slot of the scan state.
@@ -117,6 +117,18 @@ IndexNext(IndexScanState *node)
 					   slot,	/* slot to store in */
 					   scandesc->xs_cbuf,		/* buffer containing tuple */
 					   false);	/* don't pfree */
+
+		/*
+		 * If the index was lossy, we have to recheck the index quals using
+		 * the real tuple.
+		 */
+		if (scandesc->xs_recheck)
+		{
+			econtext->ecxt_scantuple = slot;
+			ResetExprContext(econtext);
+			if (!ExecQual(node->indexqualorig, econtext, false))
+				continue;		/* nope, so ask index for another one */
+		}
 
 		return slot;
 	}

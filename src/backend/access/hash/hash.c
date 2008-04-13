@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.101 2008/04/10 22:25:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.102 2008/04/13 19:18:14 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -209,6 +209,9 @@ hashgettuple(PG_FUNCTION_ARGS)
 	Page		page;
 	OffsetNumber offnum;
 	bool		res;
+
+	/* Hash indexes are never lossy (at the moment anyway) */
+	scan->xs_recheck = false;
 
 	/*
 	 * We hold pin but not lock on current buffer while outside the hash AM.

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.11 2008/04/10 22:25:25 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.12 2008/04/13 19:18:13 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -428,10 +428,13 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx, GinScanKey
  * returns true if found
  */
 static bool
-scanGetItem(IndexScanDesc scan, ItemPointerData *item)
+scanGetItem(IndexScanDesc scan, ItemPointerData *item, bool *recheck)
 {
 	uint32		i;
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
+
+	/* XXX for the moment, treat all GIN operators as lossy */
+	*recheck = true;
 
 	ItemPointerSetMin(item);
 	for (i = 0; i < so->nkeys; i++)
@@ -496,13 +499,14 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	for (;;)
 	{
 		ItemPointerData iptr;
+		bool		recheck;
 
 		CHECK_FOR_INTERRUPTS();
 
-		if (!scanGetItem(scan, &iptr))
+		if (!scanGetItem(scan, &iptr, &recheck))
 			break;
 
-		tbm_add_tuples(tbm, &iptr, 1, false);
+		tbm_add_tuples(tbm, &iptr, 1, recheck);
 		ntids++;
 	}
 
@@ -528,7 +532,7 @@ gingettuple(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	startScan(scan);
-	res = scanGetItem(scan, &scan->xs_ctup.t_self);
+	res = scanGetItem(scan, &scan->xs_ctup.t_self, &scan->xs_recheck);
 	stopScan(scan);
 
 	PG_RETURN_BOOL(res);

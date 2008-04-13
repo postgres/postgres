@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.106 2008/04/12 23:14:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.107 2008/04/13 19:18:14 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -402,6 +402,10 @@ index_restrpos(IndexScanDesc scan)
  * snapshot, or NULL if no more matching tuples exist.	On success,
  * the buffer containing the heap tuple is pinned (the pin will be dropped
  * at the next index_getnext or index_endscan).
+ *
+ * Note: caller must check scan->xs_recheck, and perform rechecking of the
+ * scan keys if required.  We do not do that here because we don't have
+ * enough information to do it efficiently in the general case.
  * ----------------
  */
 HeapTuple
@@ -455,6 +459,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			/*
 			 * The AM's gettuple proc finds the next index entry matching the
 			 * scan keys, and puts the TID in xs_ctup.t_self (ie, *tid).
+			 * It should also set scan->xs_recheck, though we pay no
+			 * attention to that here.
 			 */
 			found = DatumGetBool(FunctionCall2(procedure,
 											   PointerGetDatum(scan),

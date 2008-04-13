@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.67 2008/04/12 23:14:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.68 2008/04/13 19:18:14 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -96,9 +96,9 @@ RelationGetIndexScan(Relation indexRelation,
 	ItemPointerSetInvalid(&scan->xs_ctup.t_self);
 	scan->xs_ctup.t_data = NULL;
 	scan->xs_cbuf = InvalidBuffer;
-	scan->xs_prev_xmax = InvalidTransactionId;
-	scan->xs_next_hot = InvalidOffsetNumber;
 	scan->xs_hot_dead = false;
+	scan->xs_next_hot = InvalidOffsetNumber;
+	scan->xs_prev_xmax = InvalidTransactionId;
 
 	/*
 	 * Let the AM fill in the key and any opaque data it wants.
@@ -233,7 +233,18 @@ systable_getnext(SysScanDesc sysscan)
 	HeapTuple	htup;
 
 	if (sysscan->irel)
+	{
 		htup = index_getnext(sysscan->iscan, ForwardScanDirection);
+		/*
+		 * We currently don't need to support lossy index operators for
+		 * any system catalog scan.  It could be done here, using the
+		 * scan keys to drive the operator calls, if we arranged to save
+		 * the heap attnums during systable_beginscan(); this is practical
+		 * because we still wouldn't need to support indexes on expressions.
+		 */
+		if (htup && sysscan->iscan->xs_recheck)
+			elog(ERROR, "system catalog scans with lossy index conditions are not implemented");
+	}
 	else
 		htup = heap_getnext(sysscan->scan, ForwardScanDirection);
 
@@ -328,6 +339,9 @@ systable_getnext_ordered(SysScanDesc sysscan, ScanDirection direction)
 
 	Assert(sysscan->irel);
 	htup = index_getnext(sysscan->iscan, direction);
+	/* See notes in systable_getnext */
+	if (htup && sysscan->iscan->xs_recheck)
+		elog(ERROR, "system catalog scans with lossy index conditions are not implemented");
 
 	return htup;
 }

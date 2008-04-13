@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.70 2008/04/10 22:25:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.71 2008/04/13 19:18:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,7 @@
 
 static OffsetNumber gistfindnext(IndexScanDesc scan, OffsetNumber n,
 			 ScanDirection dir);
-static int64 gistnext(IndexScanDesc scan, ScanDirection dir,
-					  ItemPointer tid, TIDBitmap *tbm,
-					  bool ignore_killed_tuples);
+static int64 gistnext(IndexScanDesc scan, ScanDirection dir, TIDBitmap *tbm);
 static bool gistindex_keytest(IndexTuple tuple, IndexScanDesc scan,
 				  OffsetNumber offset);
 
@@ -100,7 +98,6 @@ gistgettuple(PG_FUNCTION_ARGS)
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
 	GISTScanOpaque so;
-	ItemPointerData tid;
 	bool		res;
 
 	so = (GISTScanOpaque) scan->opaque;
@@ -113,11 +110,9 @@ gistgettuple(PG_FUNCTION_ARGS)
 		killtuple(scan->indexRelation, so, &(so->curpos));
 
 	/*
-	 * Get the next tuple that matches the search key. If asked to skip killed
-	 * tuples, continue looping until we find a non-killed tuple that matches
-	 * the search key.
+	 * Get the next tuple that matches the search key.
 	 */
-	res = (gistnext(scan, dir, &tid, NULL, scan->ignore_killed_tuples) > 0) ? true : false;
+	res = (gistnext(scan, dir, NULL) > 0);
 
 	PG_RETURN_BOOL(res);
 }
@@ -129,7 +124,7 @@ gistgetbitmap(PG_FUNCTION_ARGS)
 	TIDBitmap *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
 	int64	   ntids;
 
-	ntids = gistnext(scan, ForwardScanDirection, NULL, tbm, false);
+	ntids = gistnext(scan, ForwardScanDirection, tbm);
 
 	PG_RETURN_INT64(ntids);
 }
@@ -140,20 +135,23 @@ gistgetbitmap(PG_FUNCTION_ARGS)
  *
  * This function is used by both gistgettuple and gistgetbitmap. When
  * invoked from gistgettuple, tbm is null and the next matching tuple
- * is returned in *tid. When invoked from getbitmap, tid is null and
- * all matching tuples are added to tbm. In both cases, the function
- * result is the number of returned tuples.
+ * is returned in scan->xs_ctup.t_self.  When invoked from getbitmap,
+ * tbm is non-null and all matching tuples are added to tbm before
+ * returning.  In both cases, the function result is the number of
+ * returned tuples.
+ *
+ * If scan specifies to skip killed tuples, continue looping until we find a
+ * non-killed tuple that matches the search key.
  */
 static int64
-gistnext(IndexScanDesc scan, ScanDirection dir,
-		 ItemPointer tid, TIDBitmap *tbm,
-		 bool ignore_killed_tuples)
+gistnext(IndexScanDesc scan, ScanDirection dir, TIDBitmap *tbm)
 {
 	Page		p;
 	OffsetNumber n;
 	GISTScanOpaque so;
 	GISTSearchStack *stk;
 	IndexTuple	it;
+	bool		recheck;
 	GISTPageOpaque opaque;
 	bool		resetoffset = false;
 	int64		ntids = 0;
@@ -194,7 +192,7 @@ gistnext(IndexScanDesc scan, ScanDirection dir,
 
 		if (XLogRecPtrIsInvalid(so->stack->lsn) || !XLByteEQ(so->stack->lsn, PageGetLSN(p)))
 		{
-			/* page changed from last visit or visit first time , reset offset */
+			/* first visit or page changed from last visit, reset offset */
 			so->stack->lsn = PageGetLSN(p);
 			resetoffset = true;
 
@@ -259,6 +257,8 @@ gistnext(IndexScanDesc scan, ScanDirection dir,
 		for (;;)
 		{
 			n = gistfindnext(scan, n, dir);
+			/* XXX for the moment, treat all GIST operators as lossy */
+			recheck = true;
 
 			if (!OffsetNumberIsValid(n))
 			{
@@ -298,15 +298,17 @@ gistnext(IndexScanDesc scan, ScanDirection dir,
 				ItemPointerSet(&(so->curpos),
 							   BufferGetBlockNumber(so->curbuf), n);
 
-				if (!(ignore_killed_tuples && ItemIdIsDead(PageGetItemId(p, n))))
+				if (!(scan->ignore_killed_tuples &&
+					  ItemIdIsDead(PageGetItemId(p, n))))
 				{
 					it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 					ntids++;
 					if (tbm != NULL)
-						tbm_add_tuples(tbm, &it->t_tid, 1, false);
+						tbm_add_tuples(tbm, &it->t_tid, 1, recheck);
 					else 
 					{
-						*tid = scan->xs_ctup.t_self = it->t_tid;
+						scan->xs_ctup.t_self = it->t_tid;
+						scan->xs_recheck = recheck;
 
 						LockBuffer(so->curbuf, GIST_UNLOCK);
 						return ntids; /* always 1 */
