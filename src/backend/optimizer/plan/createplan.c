@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.238 2008/04/13 19:18:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.239 2008/04/13 20:51:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,12 +67,8 @@ static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
 					  Plan *outer_plan, Plan *inner_plan);
 static HashJoin *create_hashjoin_plan(PlannerInfo *root, HashPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
-static void fix_indexqual_references(List *indexquals, IndexPath *index_path,
-						 List **fixed_indexquals,
-						 List **indexstrategy,
-						 List **indexsubtype);
-static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index,
-					  Oid *opfamily);
+static List *fix_indexqual_references(List *indexquals, IndexPath *index_path);
+static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index);
 static List *get_switched_clauses(List *clauses, Relids outerrelids);
 static List *order_qual_clauses(PlannerInfo *root, List *clauses);
 static void copy_path_costsize(Plan *dest, Path *src);
@@ -80,13 +76,10 @@ static void copy_plan_costsize(Plan *dest, Plan *src);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   Oid indexid, List *indexqual, List *indexqualorig,
-			   List *indexstrategy, List *indexsubtype,
 			   ScanDirection indexscandir);
 static BitmapIndexScan *make_bitmap_indexscan(Index scanrelid, Oid indexid,
 					  List *indexqual,
-					  List *indexqualorig,
-					  List *indexstrategy,
-					  List *indexsubtype);
+					  List *indexqualorig);
 static BitmapHeapScan *make_bitmap_heapscan(List *qptlist,
 					 List *qpqual,
 					 Plan *lefttree,
@@ -850,8 +843,6 @@ create_indexscan_plan(PlannerInfo *root,
 	List	   *qpqual;
 	List	   *stripped_indexquals;
 	List	   *fixed_indexquals;
-	List	   *indexstrategy;
-	List	   *indexsubtype;
 	ListCell   *l;
 	IndexScan  *scan_plan;
 
@@ -867,13 +858,9 @@ create_indexscan_plan(PlannerInfo *root,
 
 	/*
 	 * The executor needs a copy with the indexkey on the left of each clause
-	 * and with index attr numbers substituted for table ones. This pass also
-	 * gets strategy info.
+	 * and with index attr numbers substituted for table ones.
 	 */
-	fix_indexqual_references(indexquals, best_path,
-							 &fixed_indexquals,
-							 &indexstrategy,
-							 &indexsubtype);
+	fixed_indexquals = fix_indexqual_references(indexquals, best_path);
 
 	/*
 	 * If this is an innerjoin scan, the indexclauses will contain join
@@ -951,8 +938,6 @@ create_indexscan_plan(PlannerInfo *root,
 							   indexoid,
 							   fixed_indexquals,
 							   stripped_indexquals,
-							   indexstrategy,
-							   indexsubtype,
 							   best_path->indexscandir);
 
 	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
@@ -1193,9 +1178,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		plan = (Plan *) make_bitmap_indexscan(iscan->scan.scanrelid,
 											  iscan->indexid,
 											  iscan->indexqual,
-											  iscan->indexqualorig,
-											  iscan->indexstrategy,
-											  iscan->indexsubtype);
+											  iscan->indexqualorig);
 		plan->startup_cost = 0.0;
 		plan->total_cost = ipath->indextotalcost;
 		plan->plan_rows =
@@ -1757,52 +1740,36 @@ create_hashjoin_plan(PlannerInfo *root,
  *	  Adjust indexqual clauses to the form the executor's indexqual
  *	  machinery needs.
  *
- * We have four tasks here:
+ * We have three tasks here:
  *	* Remove RestrictInfo nodes from the input clauses.
  *	* Index keys must be represented by Var nodes with varattno set to the
  *	  index's attribute number, not the attribute number in the original rel.
  *	* If the index key is on the right, commute the clause to put it on the
  *	  left.
- *	* We must construct lists of operator strategy numbers and subtypes
- *	  for the top-level operators of each index clause.
  *
- * fixed_indexquals receives a modified copy of the indexquals list --- the
+ * The result is a modified copy of the indexquals list --- the
  * original is not changed.  Note also that the copy shares no substructure
  * with the original; this is needed in case there is a subplan in it (we need
  * two separate copies of the subplan tree, or things will go awry).
- *
- * indexstrategy receives an integer list of strategy numbers.
- * indexsubtype receives an OID list of strategy subtypes.
  */
-static void
-fix_indexqual_references(List *indexquals, IndexPath *index_path,
-						 List **fixed_indexquals,
-						 List **indexstrategy,
-						 List **indexsubtype)
+static List *
+fix_indexqual_references(List *indexquals, IndexPath *index_path)
 {
 	IndexOptInfo *index = index_path->indexinfo;
+	List	   *fixed_indexquals;
 	ListCell   *l;
 
-	*fixed_indexquals = NIL;
-	*indexstrategy = NIL;
-	*indexsubtype = NIL;
+	fixed_indexquals = NIL;
 
 	/*
 	 * For each qual clause, commute if needed to put the indexkey operand on
 	 * the left, and then fix its varattno.  (We do not need to change the
-	 * other side of the clause.)  Then determine the operator's strategy
-	 * number and subtype number.
+	 * other side of the clause.)
 	 */
 	foreach(l, indexquals)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 		Expr	   *clause;
-		Oid			clause_op;
-		Oid			opfamily;
-		int			stratno;
-		Oid			stratlefttype;
-		Oid			stratrighttype;
-		bool		is_null_op = false;
 
 		Assert(IsA(rinfo, RestrictInfo));
 
@@ -1831,13 +1798,11 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 				CommuteOpExpr(op);
 
 			/*
-			 * Now, determine which index attribute this is, change the
-			 * indexkey operand as needed, and get the index opfamily.
+			 * Now, determine which index attribute this is and change the
+			 * indexkey operand as needed.
 			 */
 			linitial(op->args) = fix_indexqual_operand(linitial(op->args),
-													   index,
-													   &opfamily);
-			clause_op = op->opno;
+													   index);
 		}
 		else if (IsA(clause, RowCompareExpr))
 		{
@@ -1856,23 +1821,12 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 			/*
 			 * For each column in the row comparison, determine which index
 			 * attribute this is and change the indexkey operand as needed.
-			 *
-			 * Save the index opfamily for only the first column.  We will
-			 * return the operator and opfamily info for just the first column
-			 * of the row comparison; the executor will have to look up the
-			 * rest if it needs them.
 			 */
 			foreach(lc, rc->largs)
 			{
-				Oid			tmp_opfamily;
-
 				lfirst(lc) = fix_indexqual_operand(lfirst(lc),
-												   index,
-												   &tmp_opfamily);
-				if (lc == list_head(rc->largs))
-					opfamily = tmp_opfamily;
+												   index);
 			}
-			clause_op = linitial_oid(rc->opnos);
 		}
 		else if (IsA(clause, ScalarArrayOpExpr))
 		{
@@ -1881,13 +1835,11 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 			/* Never need to commute... */
 
 			/*
-			 * Now, determine which index attribute this is, change the
-			 * indexkey operand as needed, and get the index opfamily.
+			 * Determine which index attribute this is and change the
+			 * indexkey operand as needed.
 			 */
 			linitial(saop->args) = fix_indexqual_operand(linitial(saop->args),
-														 index,
-														 &opfamily);
-			clause_op = saop->opno;
+														 index);
 		}
 		else if (IsA(clause, NullTest))
 		{
@@ -1895,49 +1847,20 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 
 			Assert(nt->nulltesttype == IS_NULL);
 			nt->arg = (Expr *) fix_indexqual_operand((Node *) nt->arg,
-													 index,
-													 &opfamily);
-			is_null_op = true;
-			clause_op = InvalidOid;		/* keep compiler quiet */
+													 index);
 		}
 		else
-		{
 			elog(ERROR, "unsupported indexqual type: %d",
 				 (int) nodeTag(clause));
-			continue;			/* keep compiler quiet */
-		}
 
-		*fixed_indexquals = lappend(*fixed_indexquals, clause);
-
-		if (is_null_op)
-		{
-			/* IS NULL doesn't have a clause_op */
-			stratno = InvalidStrategy;
-			stratrighttype = InvalidOid;
-		}
-		else
-		{
-			/*
-			 * Look up the (possibly commuted) operator in the operator family
-			 * to get its strategy number and the recheck indicator. This also
-			 * double-checks that we found an operator matching the index.
-			 */
-			bool		recheck;
-
-			get_op_opfamily_properties(clause_op, opfamily,
-									   &stratno,
-									   &stratlefttype,
-									   &stratrighttype,
-									   &recheck);
-		}
-
-		*indexstrategy = lappend_int(*indexstrategy, stratno);
-		*indexsubtype = lappend_oid(*indexsubtype, stratrighttype);
+		fixed_indexquals = lappend(fixed_indexquals, clause);
 	}
+
+	return fixed_indexquals;
 }
 
 static Node *
-fix_indexqual_operand(Node *node, IndexOptInfo *index, Oid *opfamily)
+fix_indexqual_operand(Node *node, IndexOptInfo *index)
 {
 	/*
 	 * We represent index keys by Var nodes having the varno of the base table
@@ -1970,8 +1893,6 @@ fix_indexqual_operand(Node *node, IndexOptInfo *index, Oid *opfamily)
 				{
 					result = (Var *) copyObject(node);
 					result->varattno = pos + 1;
-					/* return the correct opfamily, too */
-					*opfamily = index->opfamily[pos];
 					return (Node *) result;
 				}
 			}
@@ -1997,8 +1918,6 @@ fix_indexqual_operand(Node *node, IndexOptInfo *index, Oid *opfamily)
 				result = makeVar(index->rel->relid, pos + 1,
 								 exprType(lfirst(indexpr_item)), -1,
 								 0);
-				/* return the correct opfamily, too */
-				*opfamily = index->opfamily[pos];
 				return (Node *) result;
 			}
 			indexpr_item = lnext(indexpr_item);
@@ -2007,8 +1926,7 @@ fix_indexqual_operand(Node *node, IndexOptInfo *index, Oid *opfamily)
 
 	/* Ooops... */
 	elog(ERROR, "node is not an index attribute");
-	*opfamily = InvalidOid;		/* keep compiler quiet */
-	return NULL;
+	return NULL;				/* keep compiler quiet */
 }
 
 /*
@@ -2229,8 +2147,6 @@ make_indexscan(List *qptlist,
 			   Oid indexid,
 			   List *indexqual,
 			   List *indexqualorig,
-			   List *indexstrategy,
-			   List *indexsubtype,
 			   ScanDirection indexscandir)
 {
 	IndexScan  *node = makeNode(IndexScan);
@@ -2245,8 +2161,6 @@ make_indexscan(List *qptlist,
 	node->indexid = indexid;
 	node->indexqual = indexqual;
 	node->indexqualorig = indexqualorig;
-	node->indexstrategy = indexstrategy;
-	node->indexsubtype = indexsubtype;
 	node->indexorderdir = indexscandir;
 
 	return node;
@@ -2256,9 +2170,7 @@ static BitmapIndexScan *
 make_bitmap_indexscan(Index scanrelid,
 					  Oid indexid,
 					  List *indexqual,
-					  List *indexqualorig,
-					  List *indexstrategy,
-					  List *indexsubtype)
+					  List *indexqualorig)
 {
 	BitmapIndexScan *node = makeNode(BitmapIndexScan);
 	Plan	   *plan = &node->scan.plan;
@@ -2272,8 +2184,6 @@ make_bitmap_indexscan(Index scanrelid,
 	node->indexid = indexid;
 	node->indexqual = indexqual;
 	node->indexqualorig = indexqualorig;
-	node->indexstrategy = indexstrategy;
-	node->indexsubtype = indexsubtype;
 
 	return node;
 }
