@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_trgm/pg_trgm.sql.in,v 1.7 2007/12/09 02:22:46 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/pg_trgm/pg_trgm.sql.in,v 1.8 2008/04/14 17:05:32 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -55,7 +55,7 @@ CREATE TYPE gtrgm (
 );
 
 -- support functions for gist
-CREATE OR REPLACE FUNCTION gtrgm_consistent(gtrgm,internal,int4)
+CREATE OR REPLACE FUNCTION gtrgm_consistent(internal,text,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -95,7 +95,7 @@ CREATE OPERATOR CLASS gist_trgm_ops
 FOR TYPE text USING gist
 AS
         OPERATOR        1       % (text, text),
-        FUNCTION        1       gtrgm_consistent (gtrgm, internal, int4),
+        FUNCTION        1       gtrgm_consistent (internal, text, int, oid, internal),
         FUNCTION        2       gtrgm_union (bytea, internal),
         FUNCTION        3       gtrgm_compress (internal),
         FUNCTION        4       gtrgm_decompress (internal),
@@ -115,7 +115,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_trgm_consistent(internal, internal, text)
+CREATE OR REPLACE FUNCTION gin_trgm_consistent(internal, int2, text, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -124,9 +124,9 @@ LANGUAGE C IMMUTABLE;
 CREATE OPERATOR CLASS gin_trgm_ops
 FOR TYPE text USING gin
 AS
-        OPERATOR        1       % (text, text) RECHECK,
+        OPERATOR        1       % (text, text),
         FUNCTION        1       btint4cmp (int4, int4),
         FUNCTION        2       gin_extract_trgm (text, internal),
         FUNCTION        3       gin_extract_trgm (text, internal, internal),
-        FUNCTION        4       gin_trgm_consistent (internal, internal, text),
+        FUNCTION        4       gin_trgm_consistent (internal, int2, text, internal),
         STORAGE         int4;

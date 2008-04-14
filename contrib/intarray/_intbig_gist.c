@@ -498,7 +498,12 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	ArrayType  *query = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_POINTER(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	/* Oid		subtype = PG_GETARG_OID(3); */
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	bool		retval;
+
+	/* All cases served by this function are inexact */
+	*recheck = true;
 
 	if (ISALLTRUE(DatumGetPointer(entry->key)))
 		PG_RETURN_BOOL(true);

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.21 2007/12/03 23:49:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.22 2008/04/14 17:05:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAULT ] FOR TYPE <replaceable class="parameter">data_type</replaceable>
   USING <replaceable class="parameter">index_method</replaceable> [ FAMILY <replaceable class="parameter">family_name</replaceable> ] AS
-  {  OPERATOR <replaceable class="parameter">strategy_number</replaceable> <replaceable class="parameter">operator_name</replaceable> [ ( <replaceable class="parameter">op_type</replaceable>, <replaceable class="parameter">op_type</replaceable> ) ] [ RECHECK ]
+  {  OPERATOR <replaceable class="parameter">strategy_number</replaceable> <replaceable class="parameter">operator_name</replaceable> [ ( <replaceable class="parameter">op_type</replaceable>, <replaceable class="parameter">op_type</replaceable> ) ]
    | FUNCTION <replaceable class="parameter">support_number</replaceable> [ ( <replaceable class="parameter">op_type</replaceable> [ , <replaceable class="parameter">op_type</replaceable> ] ) ] <replaceable class="parameter">funcname</replaceable> ( <replaceable class="parameter">argument_type</replaceable> [, ...] )
    | STORAGE <replaceable class="parameter">storage_type</replaceable>
   } [, ... ]
@@ -180,18 +180,6 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    </varlistentry>
 
    <varlistentry>
-    <term><literal>RECHECK</></term>
-    <listitem>
-     <para>
-      If present, the index is <quote>lossy</> for this operator, and
-      so the rows retrieved using the index must be rechecked to
-      verify that they actually satisfy the qualification clause
-      involving this operator.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><replaceable class="parameter">support_number</replaceable></term>
     <listitem>
      <para>
@@ -256,6 +244,14 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    is likely to be inlined into the calling query, which will prevent
    the optimizer from recognizing that the query matches an index.
   </para>
+
+  <para>
+   Before <productname>PostgreSQL</productname> 8.4, the <literal>OPERATOR</>
+   clause could include a <literal>RECHECK</> option.  This is no longer
+   supported because whether an index operator is <quote>lossy</> is now
+   determined on-the-fly at runtime.  This allows efficient handling of
+   cases where an operator might or might not be lossy.
+  </para>
  </refsect1>
   
  <refsect1>
@@ -271,12 +267,12 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
 CREATE OPERATOR CLASS gist__int_ops
     DEFAULT FOR TYPE _int4 USING gist AS
         OPERATOR        3       &amp;&amp;,
-        OPERATOR        6       =       RECHECK,
+        OPERATOR        6       = (anyarray, anyarray),
         OPERATOR        7       @&gt;,
         OPERATOR        8       &lt;@,
         OPERATOR        20      @@ (_int4, query_int),
-        FUNCTION        1       g_int_consistent (internal, _int4, int4),
-        FUNCTION        2       g_int_union (bytea, internal),
+        FUNCTION        1       g_int_consistent (internal, _int4, int, oid, internal),
+        FUNCTION        2       g_int_union (internal, internal),
         FUNCTION        3       g_int_compress (internal),
         FUNCTION        4       g_int_decompress (internal),
         FUNCTION        5       g_int_penalty (internal, internal, internal),

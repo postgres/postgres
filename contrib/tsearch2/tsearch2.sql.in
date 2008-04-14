@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.sql.in,v 1.4 2007/11/28 19:33:04 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.sql.in,v 1.5 2008/04/14 17:05:32 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -388,8 +388,8 @@ CREATE FUNCTION headline(text, tsquery)
 CREATE OPERATOR CLASS gist_tsvector_ops
 FOR TYPE tsvector USING gist
 AS
-        OPERATOR        1       @@ (tsvector, tsquery)  RECHECK ,
-        FUNCTION        1       gtsvector_consistent (gtsvector, internal, int4),
+        OPERATOR        1       @@ (tsvector, tsquery),
+        FUNCTION        1       gtsvector_consistent (internal, gtsvector, int, oid, internal),
         FUNCTION        2       gtsvector_union (internal, internal),
         FUNCTION        3       gtsvector_compress (internal),
         FUNCTION        4       gtsvector_decompress (internal),
@@ -534,9 +534,9 @@ CREATE OR REPLACE FUNCTION tsq_mcontained(tsquery, tsquery)
 CREATE OPERATOR CLASS gist_tp_tsquery_ops
 FOR TYPE tsquery USING gist
 AS
-        OPERATOR        7       @> (tsquery, tsquery) RECHECK,
-        OPERATOR        8       <@ (tsquery, tsquery) RECHECK,
-        FUNCTION        1       gtsquery_consistent (bigint, internal, int4),
+        OPERATOR        7       @> (tsquery, tsquery),
+        OPERATOR        8       <@ (tsquery, tsquery),
+        FUNCTION        1       gtsquery_consistent (internal, internal, int, oid, internal),
         FUNCTION        2       gtsquery_union (internal, internal),
         FUNCTION        3       gtsquery_compress (internal),
         FUNCTION        4       gtsquery_decompress (internal),
@@ -549,11 +549,11 @@ CREATE OPERATOR CLASS gin_tsvector_ops
 FOR TYPE tsvector USING gin
 AS
         OPERATOR        1       @@ (tsvector, tsquery),
-        OPERATOR        2       @@@ (tsvector, tsquery) RECHECK,
+        OPERATOR        2       @@@ (tsvector, tsquery),
         FUNCTION        1       bttextcmp(text, text),
         FUNCTION        2       gin_extract_tsvector(tsvector,internal),
         FUNCTION        3       gin_extract_tsquery(tsquery,internal,smallint),
-        FUNCTION        4       gin_tsquery_consistent(internal,smallint,tsquery),
+        FUNCTION        4       gin_tsquery_consistent(internal,smallint,tsquery,internal),
         STORAGE         text;
 
 CREATE OPERATOR CLASS tsvector_ops

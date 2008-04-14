@@ -95,12 +95,16 @@ gbt_int4_compress(PG_FUNCTION_ARGS)
 Datum
 gbt_int4_consistent(PG_FUNCTION_ARGS)
 {
-
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	int32		query = PG_GETARG_INT32(1);
+	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	/* Oid		subtype = PG_GETARG_OID(3); */
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	int32KEY   *kkk = (int32KEY *) DatumGetPointer(entry->key);
 	GBT_NUMKEY_R key;
-	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
+	/* All cases served by this function are exact */
+	*recheck = false;
 
 	key.lower = (GBT_NUMKEY *) & kkk->lower;
 	key.upper = (GBT_NUMKEY *) & kkk->upper;

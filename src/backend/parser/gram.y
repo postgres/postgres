@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.611 2008/03/28 00:21:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.612 2008/04/14 17:05:33 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3107,7 +3107,6 @@ opclass_item:
 					n->name = $3;
 					n->args = NIL;
 					n->number = $2;
-					n->recheck = $4;
 					$$ = (Node *) n;
 				}
 			| OPERATOR Iconst any_operator '(' oper_argtypes ')' opt_recheck
@@ -3117,7 +3116,6 @@ opclass_item:
 					n->name = $3;
 					n->args = $5;
 					n->number = $2;
-					n->recheck = $7;
 					$$ = (Node *) n;
 				}
 			| FUNCTION Iconst func_name func_args
@@ -3156,7 +3154,14 @@ opt_opfamily:	FAMILY any_name				{ $$ = $2; }
 			| /*EMPTY*/						{ $$ = NIL; }
 		;
 
-opt_recheck:	RECHECK						{ $$ = TRUE; }
+opt_recheck:	RECHECK
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("RECHECK is no longer supported"),
+							 errhint("Update your data type.")));
+					$$ = TRUE;
+				}
 			| /*EMPTY*/						{ $$ = FALSE; }
 		;
 

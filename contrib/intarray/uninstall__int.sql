@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/intarray/uninstall__int.sql,v 1.8 2007/11/13 04:24:28 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/intarray/uninstall__int.sql,v 1.9 2008/04/14 17:05:32 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -7,7 +7,7 @@ DROP OPERATOR CLASS gin__int_ops USING gin;
 
 DROP FUNCTION ginint4_queryextract(internal, internal, int2);
 
-DROP FUNCTION ginint4_consistent(internal, int2, internal);
+DROP FUNCTION ginint4_consistent(internal, int2, internal, internal);
 
 DROP OPERATOR CLASS gist__intbig_ops USING gist;
 
@@ -23,7 +23,7 @@ DROP FUNCTION g_intbig_decompress(internal);
 
 DROP FUNCTION g_intbig_compress(internal);
 
-DROP FUNCTION g_intbig_consistent(internal,internal,int4);
+DROP FUNCTION g_intbig_consistent(internal,internal,int,oid,internal);
 
 DROP TYPE intbig_gkey CASCADE;
 
@@ -41,7 +41,7 @@ DROP FUNCTION g_int_decompress(internal);
 
 DROP FUNCTION g_int_compress(internal);
 
-DROP FUNCTION g_int_consistent(internal,_int4,int4);
+DROP FUNCTION g_int_consistent(internal,_int4,int,oid,internal);
 
 DROP OPERATOR & (_int4, _int4);
 

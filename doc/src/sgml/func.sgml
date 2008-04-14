@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.429 2008/04/10 13:34:33 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.430 2008/04/14 17:05:32 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7738,7 +7738,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </row>
        <row>
         <entry> <literal>@@@</literal> </entry>
-        <entry>same as <literal>@@</>, but see <xref linkend="textsearch-indexes"></entry>
+        <entry>deprecated synonym for <literal>@@</></entry>
         <entry><literal>to_tsvector('fat cats ate rats') @@@ to_tsquery('cat &amp; rat')</literal></entry>
         <entry><literal>t</literal></entry>
        </row>

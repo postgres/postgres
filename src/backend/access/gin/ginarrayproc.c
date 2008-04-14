@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.12 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.13 2008/04/14 17:05:33 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -95,8 +95,9 @@ ginarrayconsistent(PG_FUNCTION_ARGS)
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 	ArrayType  *query = PG_GETARG_ARRAYTYPE_P(2);
-	int			res,
-				i,
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(3);
+	bool		res;
+	int			i,
 				nentries;
 
 	/* ARRAYCHECK was already done by previous ginarrayextract call */
@@ -104,25 +105,51 @@ ginarrayconsistent(PG_FUNCTION_ARGS)
 	switch (strategy)
 	{
 		case GinOverlapStrategy:
-		case GinContainedStrategy:
+			/* result is not lossy */
+			*recheck = false;
 			/* at least one element in check[] is true, so result = true */
-			res = TRUE;
+			res = true;
+			break;
+		case GinContainedStrategy:
+			/* we will need recheck */
+			*recheck = true;
+			/* at least one element in check[] is true, so result = true */
+			res = true;
 			break;
 		case GinContainsStrategy:
-		case GinEqualStrategy:
+			/* result is not lossy */
+			*recheck = false;
+			/* must have all elements in check[] true */
 			nentries = ArrayGetNItems(ARR_NDIM(query), ARR_DIMS(query));
-			res = TRUE;
+			res = true;
 			for (i = 0; i < nentries; i++)
+			{
 				if (!check[i])
 				{
-					res = FALSE;
+					res = false;
 					break;
 				}
+			}
+			break;
+		case GinEqualStrategy:
+			/* we will need recheck */
+			*recheck = true;
+			/* must have all elements in check[] true */
+			nentries = ArrayGetNItems(ARR_NDIM(query), ARR_DIMS(query));
+			res = true;
+			for (i = 0; i < nentries; i++)
+			{
+				if (!check[i])
+				{
+					res = false;
+					break;
+				}
+			}
 			break;
 		default:
 			elog(ERROR, "ginarrayconsistent: unknown strategy number: %d",
 				 strategy);
-			res = FALSE;
+			res = false;
 	}
 
 	PG_RETURN_BOOL(res);

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_trgm/uninstall_pg_trgm.sql,v 1.5 2007/11/13 04:24:28 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/pg_trgm/uninstall_pg_trgm.sql,v 1.6 2008/04/14 17:05:32 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
@@ -17,7 +17,7 @@ DROP FUNCTION gtrgm_decompress(internal);
 
 DROP FUNCTION gtrgm_compress(internal);
  
-DROP FUNCTION gtrgm_consistent(gtrgm,internal,int4);
+DROP FUNCTION gtrgm_consistent(internal,text,int,oid,internal);
 
 DROP TYPE gtrgm CASCADE;
 
@@ -27,7 +27,7 @@ DROP FUNCTION gin_extract_trgm(text, internal);
 
 DROP FUNCTION gin_extract_trgm(text, internal, internal);
 
-DROP FUNCTION gin_trgm_consistent(internal, internal, text);
+DROP FUNCTION gin_trgm_consistent(internal, int2, text, internal);
 
 DROP OPERATOR % (text, text);
 

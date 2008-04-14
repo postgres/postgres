@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/intarray/_int.sql.in,v 1.27 2007/11/13 04:24:28 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/intarray/_int.sql.in,v 1.28 2008/04/14 17:05:32 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -323,7 +323,7 @@ CREATE OPERATOR & (
 --------------
 
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION g_int_consistent(internal,_int4,int4)
+CREATE OR REPLACE FUNCTION g_int_consistent(internal,_int4,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -364,13 +364,13 @@ LANGUAGE C IMMUTABLE;
 CREATE OPERATOR CLASS gist__int_ops
 DEFAULT FOR TYPE _int4 USING gist AS
 	OPERATOR	3	&&,
-	OPERATOR	6	= (anyarray, anyarray)	RECHECK,
+	OPERATOR	6	= (anyarray, anyarray),
 	OPERATOR	7	@>,
 	OPERATOR	8	<@,
 	OPERATOR	13	@,
 	OPERATOR	14	~,
 	OPERATOR	20	@@ (_int4, query_int),
-	FUNCTION	1	g_int_consistent (internal, _int4, int4),
+	FUNCTION	1	g_int_consistent (internal, _int4, int, oid, internal),
 	FUNCTION	2	g_int_union (internal, internal),
 	FUNCTION	3	g_int_compress (internal),
 	FUNCTION	4	g_int_decompress (internal),
@@ -400,7 +400,7 @@ CREATE TYPE intbig_gkey (
         OUTPUT = _intbig_out
 );
 
-CREATE OR REPLACE FUNCTION g_intbig_consistent(internal,internal,int4)
+CREATE OR REPLACE FUNCTION g_intbig_consistent(internal,internal,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -440,14 +440,14 @@ LANGUAGE C IMMUTABLE;
 CREATE OPERATOR CLASS gist__intbig_ops
 FOR TYPE _int4 USING gist
 AS
-	OPERATOR	3	&&	RECHECK,
-	OPERATOR	6	= (anyarray, anyarray)	RECHECK,
-	OPERATOR	7	@>	RECHECK,
-	OPERATOR	8	<@	RECHECK,
-	OPERATOR	13	@	RECHECK,
-	OPERATOR	14	~	RECHECK,
-	OPERATOR	20	@@ (_int4, query_int)	RECHECK,
-	FUNCTION	1	g_intbig_consistent (internal, internal, int4),
+	OPERATOR	3	&&,
+	OPERATOR	6	= (anyarray, anyarray),
+	OPERATOR	7	@>,
+	OPERATOR	8	<@,
+	OPERATOR	13	@,
+	OPERATOR	14	~,
+	OPERATOR	20	@@ (_int4, query_int),
+	FUNCTION	1	g_intbig_consistent (internal, internal, int, oid, internal),
 	FUNCTION	2	g_intbig_union (internal, internal),
 	FUNCTION	3	g_intbig_compress (internal),
 	FUNCTION	4	g_intbig_decompress (internal),
@@ -463,7 +463,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ginint4_consistent(internal, int2, internal)
+CREATE OR REPLACE FUNCTION ginint4_consistent(internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -472,14 +472,14 @@ CREATE OPERATOR CLASS gin__int_ops
 FOR TYPE _int4 USING gin
 AS
 	OPERATOR	3	&&,
-	OPERATOR	6	= (anyarray, anyarray)	RECHECK,
+	OPERATOR	6	= (anyarray, anyarray),
 	OPERATOR	7	@>,
-	OPERATOR	8	<@	RECHECK,
+	OPERATOR	8	<@,
 	OPERATOR	13	@,
-	OPERATOR	14	~	RECHECK,
+	OPERATOR	14	~,
 	OPERATOR	20	@@ (_int4, query_int),
 	FUNCTION	1	btint4cmp (int4, int4),
 	FUNCTION	2	ginarrayextract (anyarray, internal),
 	FUNCTION	3	ginint4_queryextract (internal, internal, int2),
-	FUNCTION	4	ginint4_consistent (internal, int2, internal),
+	FUNCTION	4	ginint4_consistent (internal, int2, internal, internal),
 	STORAGE		int4;

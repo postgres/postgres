@@ -1,5 +1,5 @@
 /******************************************************************************
-  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.34 2007/11/15 21:14:29 momjian Exp $
+  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.35 2008/04/14 17:05:32 tgl Exp $
 
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
@@ -381,7 +381,12 @@ g_cube_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	NDBOX	   *query = PG_GETARG_NDBOX(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	/* Oid		subtype = PG_GETARG_OID(3); */
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	bool		res;
+
+	/* All cases served by this function are exact */
+	*recheck = false;
 
 	/*
 	 * if entry is not leaf, use g_cube_internal_consistent, else use

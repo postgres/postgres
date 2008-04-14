@@ -53,12 +53,17 @@ Datum
 gin_trgm_consistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
-	text	   *query = (text *) PG_GETARG_TEXT_P(2);
+	/* StrategyNumber strategy = PG_GETARG_UINT16(1); */
+	text	   *query = PG_GETARG_TEXT_P(2);
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(3);
 	bool		res = FALSE;
 	TRGM	   *trg;
 	int4		i,
 				trglen,
 				ntrue = 0;
+
+	/* All cases served by this function are inexact */
+	*recheck = true;
 
 	trg = generate_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);
 	trglen = ARRNELEM(trg);

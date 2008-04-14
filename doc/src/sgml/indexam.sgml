@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.25 2008/04/13 19:18:13 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.26 2008/04/14 17:05:32 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -183,7 +183,7 @@ aminsert (Relation indexRelation,
    parameter.  See <xref linkend="index-unique-checks"> for details.
    The result is TRUE if an index entry was inserted, FALSE if not. (A FALSE
    result does not denote an error condition, but is used for cases such
-   as an index AM refusing to index a NULL.)
+   as an index method refusing to index a NULL.)
   </para>
 
   <para>
@@ -430,13 +430,13 @@ amrestrpos (IndexScanDesc scan);
   </para>
 
   <para>
-   The operator family can indicate that the index is <firstterm>lossy</> for a
-   particular operator; this implies that the index scan will return all the
-   entries that pass the scan key, plus possibly additional entries that do
-   not.  The core system's index-scan machinery will then apply that operator
-   again to the heap tuple to verify whether or not it really should be
-   selected.  For non-lossy operators, the index scan must return exactly the
-   set of matching entries, as there is no recheck.
+   The access method can report that the index is <firstterm>lossy</>, or
+   requires rechecks, for a particular query.  This implies that the index
+   scan will return all the entries that pass the scan key, plus possibly
+   additional entries that do not.  The core system's index-scan machinery
+   will then apply the index conditions again to the heap tuple to verify
+   whether or not it really should be selected.  If the recheck option is not
+   specified, the index scan must return exactly the set of matching entries.
   </para>
 
   <para>
@@ -849,7 +849,7 @@ amcostestimate (PlannerInfo *root,
   <para>
    The indexSelectivity should be set to the estimated fraction of the parent
    table rows that will be retrieved during the index scan.  In the case
-   of a lossy index, this will typically be higher than the fraction of
+   of a lossy query, this will typically be higher than the fraction of
    rows that actually pass the given qual conditions.
   </para>
 

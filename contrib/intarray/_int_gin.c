@@ -82,50 +82,76 @@ ginint4_consistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
-	int			res = FALSE;
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(3);
+	bool		res = FALSE;
 
 	/*
-	 * we can do not check array carefully, it's done by previous
+	 * we need not check array carefully, it's done by previous
 	 * ginarrayextract call
 	 */
 
 	switch (strategy)
 	{
 		case RTOverlapStrategyNumber:
+			/* result is not lossy */
+			*recheck = false;
+			/* at least one element in check[] is true, so result = true */
+			res = TRUE;
+			break;
 		case RTContainedByStrategyNumber:
 		case RTOldContainedByStrategyNumber:
+			/* we will need recheck */
+			*recheck = true;
 			/* at least one element in check[] is true, so result = true */
-
 			res = TRUE;
 			break;
 		case RTSameStrategyNumber:
-		case RTContainsStrategyNumber:
-		case RTOldContainsStrategyNumber:
-			res = TRUE;
-			do
 			{
 				ArrayType  *query = PG_GETARG_ARRAYTYPE_P(2);
 				int			i,
 							nentries = ARRNELEMS(query);
 
+				/* we will need recheck */
+				*recheck = true;
+				res = TRUE;
 				for (i = 0; i < nentries; i++)
 					if (!check[i])
 					{
 						res = FALSE;
 						break;
 					}
-			} while (0);
+			}
+			break;
+		case RTContainsStrategyNumber:
+		case RTOldContainsStrategyNumber:
+			{
+				ArrayType  *query = PG_GETARG_ARRAYTYPE_P(2);
+				int			i,
+							nentries = ARRNELEMS(query);
+
+				/* result is not lossy */
+				*recheck = false;
+				res = TRUE;
+				for (i = 0; i < nentries; i++)
+					if (!check[i])
+					{
+						res = FALSE;
+						break;
+					}
+			}
 			break;
 		case BooleanSearchStrategy:
-			do
 			{
 				QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_POINTER(2));
 
+				/* result is not lossy */
+				*recheck = false;
 				res = ginconsistent(query, check);
-			} while (0);
+			}
 			break;
 		default:
-			elog(ERROR, "ginint4_consistent: unknown strategy number: %d", strategy);
+			elog(ERROR, "ginint4_consistent: unknown strategy number: %d",
+				 strategy);
 	}
 
 	PG_RETURN_BOOL(res);

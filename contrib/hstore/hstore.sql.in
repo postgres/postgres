@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/hstore/hstore.sql.in,v 1.8 2007/11/13 04:24:28 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/hstore/hstore.sql.in,v 1.9 2008/04/14 17:05:32 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -214,7 +214,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ghstore_consistent(internal,internal,int4)
+CREATE OR REPLACE FUNCTION ghstore_consistent(internal,internal,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -223,12 +223,12 @@ LANGUAGE C IMMUTABLE;
 CREATE OPERATOR CLASS gist_hstore_ops
 DEFAULT FOR TYPE hstore USING gist
 AS
-       	OPERATOR        7       @>       RECHECK,
-       	OPERATOR        9       ?(hstore,text)       RECHECK,
-        --OPERATOR        8       <@       RECHECK,
-        OPERATOR        13      @       RECHECK,
-        --OPERATOR        14      ~       RECHECK,
-        FUNCTION        1       ghstore_consistent (internal, internal, int4),
+       	OPERATOR        7       @> ,
+       	OPERATOR        9       ?(hstore,text) ,
+        --OPERATOR        8       <@ ,
+        OPERATOR        13      @ ,
+        --OPERATOR        14      ~ ,
+        FUNCTION        1       ghstore_consistent (internal, internal, int, oid, internal),
         FUNCTION        2       ghstore_union (internal, internal),
         FUNCTION        3       ghstore_compress (internal),
         FUNCTION        4       ghstore_decompress (internal),
@@ -249,18 +249,18 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_consistent_hstore(internal, int2, internal)
-RETURNS internal
+CREATE OR REPLACE FUNCTION gin_consistent_hstore(internal, int2, internal, internal)
+RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
 CREATE OPERATOR CLASS gin_hstore_ops
 DEFAULT FOR TYPE hstore USING gin
 AS
-	OPERATOR        7       @> RECHECK,
+	OPERATOR        7       @> ,
 	OPERATOR        9       ?(hstore,text),
 	FUNCTION        1       bttextcmp(text,text),
 	FUNCTION        2       gin_extract_hstore(internal, internal),
 	FUNCTION        3       gin_extract_hstore_query(internal, internal, int2),
-	FUNCTION        4       gin_consistent_hstore(internal, int2, internal),
+	FUNCTION        4       gin_consistent_hstore(internal, int2, internal, internal),
 STORAGE         text;

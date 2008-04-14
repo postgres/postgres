@@ -1,7 +1,7 @@
 /*
  * GiST support for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.22 2007/11/16 01:12:24 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.23 2008/04/14 17:05:32 tgl Exp $
  */
 
 #include "ltree.h"
@@ -624,10 +624,15 @@ Datum
 ltree_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	void	   *query = NULL;
-	ltree_gist *key = (ltree_gist *) DatumGetPointer(entry->key);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	/* Oid		subtype = PG_GETARG_OID(3); */
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
+	ltree_gist *key = (ltree_gist *) DatumGetPointer(entry->key);
+	void	   *query = NULL;
 	bool		res = false;
+
+	/* All cases served by this function are exact */
+	*recheck = false;
 
 	switch (strategy)
 	{

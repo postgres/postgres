@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.164 2008/04/10 22:25:25 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.165 2008/04/14 17:05:32 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -604,13 +604,6 @@
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>Operator strategy number</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amopreqcheck</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Index hit must be rechecked</entry>
      </row>
 
      <row>

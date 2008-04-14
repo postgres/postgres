@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/cube/uninstall_cube.sql,v 1.7 2007/11/13 04:24:27 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/cube/uninstall_cube.sql,v 1.8 2008/04/14 17:05:32 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
@@ -19,7 +19,7 @@ DROP FUNCTION g_cube_decompress(internal);
 
 DROP FUNCTION g_cube_compress(internal);
 
-DROP FUNCTION g_cube_consistent(internal,cube,int4);
+DROP FUNCTION g_cube_consistent(internal,cube,int,oid,internal);
 
 DROP OPERATOR ~ (cube, cube);
 

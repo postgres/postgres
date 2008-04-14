@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/cube/cube.sql.in,v 1.23 2007/11/13 04:24:27 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/cube/cube.sql.in,v 1.24 2008/04/14 17:05:32 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -262,7 +262,7 @@ CREATE OPERATOR ~ (
 
 
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION g_cube_consistent(internal,cube,int4)
+CREATE OR REPLACE FUNCTION g_cube_consistent(internal,cube,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -317,7 +317,7 @@ CREATE OPERATOR CLASS gist_cube_ops
 	OPERATOR	8	<@ ,
 	OPERATOR	13	@ ,
 	OPERATOR	14	~ ,
-	FUNCTION	1	g_cube_consistent (internal, cube, int4),
+	FUNCTION	1	g_cube_consistent (internal, cube, int, oid, internal),
 	FUNCTION	2	g_cube_union (internal, internal),
 	FUNCTION	3	g_cube_compress (internal),
 	FUNCTION	4	g_cube_decompress (internal),

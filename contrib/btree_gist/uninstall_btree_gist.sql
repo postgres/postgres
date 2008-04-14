@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/btree_gist/uninstall_btree_gist.sql,v 1.4 2007/11/13 04:24:27 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/btree_gist/uninstall_btree_gist.sql,v 1.5 2008/04/14 17:05:32 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
@@ -17,7 +17,7 @@ DROP FUNCTION gbt_inet_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_inet_compress(internal);
 
-DROP FUNCTION gbt_inet_consistent(internal,inet,int2);
+DROP FUNCTION gbt_inet_consistent(internal,inet,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_vbit_ops USING gist;
 
@@ -33,7 +33,7 @@ DROP FUNCTION gbt_bit_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_bit_compress(internal);
 
-DROP FUNCTION gbt_bit_consistent(internal,bit,int2);
+DROP FUNCTION gbt_bit_consistent(internal,bit,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_numeric_ops USING gist;
 
@@ -47,7 +47,7 @@ DROP FUNCTION gbt_numeric_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_numeric_compress(internal);
 
-DROP FUNCTION gbt_numeric_consistent(internal,numeric,int2);
+DROP FUNCTION gbt_numeric_consistent(internal,numeric,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_bytea_ops USING gist;
 
@@ -61,7 +61,7 @@ DROP FUNCTION gbt_bytea_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_bytea_compress(internal);
 
-DROP FUNCTION gbt_bytea_consistent(internal,bytea,int2);
+DROP FUNCTION gbt_bytea_consistent(internal,bytea,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_bpchar_ops USING gist;
 
@@ -79,9 +79,9 @@ DROP FUNCTION gbt_bpchar_compress(internal);
 
 DROP FUNCTION gbt_text_compress(internal);
 
-DROP FUNCTION gbt_bpchar_consistent(internal,bpchar,int2);
+DROP FUNCTION gbt_bpchar_consistent(internal,bpchar,int2,oid,internal);
 
-DROP FUNCTION gbt_text_consistent(internal,text,int2);
+DROP FUNCTION gbt_text_consistent(internal,text,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_macaddr_ops USING gist;
 
@@ -95,7 +95,7 @@ DROP FUNCTION gbt_macad_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_macad_compress(internal);
 
-DROP FUNCTION gbt_macad_consistent(internal,macaddr,int2);
+DROP FUNCTION gbt_macad_consistent(internal,macaddr,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_cash_ops USING gist;
 
@@ -109,7 +109,7 @@ DROP FUNCTION gbt_cash_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_cash_compress(internal);
 
-DROP FUNCTION gbt_cash_consistent(internal,money,int2);
+DROP FUNCTION gbt_cash_consistent(internal,money,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_interval_ops USING gist;
 
@@ -125,7 +125,7 @@ DROP FUNCTION gbt_intv_decompress(internal);
 
 DROP FUNCTION gbt_intv_compress(internal);
 
-DROP FUNCTION gbt_intv_consistent(internal,interval,int2);
+DROP FUNCTION gbt_intv_consistent(internal,interval,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_date_ops USING gist;
 
@@ -139,7 +139,7 @@ DROP FUNCTION gbt_date_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_date_compress(internal);
 
-DROP FUNCTION gbt_date_consistent(internal,date,int2);
+DROP FUNCTION gbt_date_consistent(internal,date,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_timetz_ops USING gist;
 
@@ -157,9 +157,9 @@ DROP FUNCTION gbt_timetz_compress(internal);
 
 DROP FUNCTION gbt_time_compress(internal);
 
-DROP FUNCTION gbt_timetz_consistent(internal,timetz,int2);
+DROP FUNCTION gbt_timetz_consistent(internal,timetz,int2,oid,internal);
 
-DROP FUNCTION gbt_time_consistent(internal,time,int2);
+DROP FUNCTION gbt_time_consistent(internal,time,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_timestamptz_ops USING gist;
 
@@ -177,9 +177,9 @@ DROP FUNCTION gbt_tstz_compress(internal);
 
 DROP FUNCTION gbt_ts_compress(internal);
       
-DROP FUNCTION gbt_tstz_consistent(internal,timestamptz,int2);
+DROP FUNCTION gbt_tstz_consistent(internal,timestamptz,int2,oid,internal);
 
-DROP FUNCTION gbt_ts_consistent(internal,timestamp,int2);
+DROP FUNCTION gbt_ts_consistent(internal,timestamp,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_float8_ops USING gist;
 
@@ -193,7 +193,7 @@ DROP FUNCTION gbt_float8_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_float8_compress(internal);
 
-DROP FUNCTION gbt_float8_consistent(internal,float8,int2);
+DROP FUNCTION gbt_float8_consistent(internal,float8,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_float4_ops USING gist;
 
@@ -207,7 +207,7 @@ DROP FUNCTION gbt_float4_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_float4_compress(internal);
 
-DROP FUNCTION gbt_float4_consistent(internal,float4,int2);
+DROP FUNCTION gbt_float4_consistent(internal,float4,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_int8_ops USING gist;
 
@@ -221,7 +221,7 @@ DROP FUNCTION gbt_int8_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_int8_compress(internal);
 
-DROP FUNCTION gbt_int8_consistent(internal,int8,int2);
+DROP FUNCTION gbt_int8_consistent(internal,int8,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_int4_ops USING gist;
 
@@ -235,7 +235,7 @@ DROP FUNCTION gbt_int4_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_int4_compress(internal);
 
-DROP FUNCTION gbt_int4_consistent(internal,int4,int2);
+DROP FUNCTION gbt_int4_consistent(internal,int4,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_int2_ops USING gist;
 
@@ -249,7 +249,7 @@ DROP FUNCTION gbt_int2_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_int2_compress(internal);
 
-DROP FUNCTION gbt_int2_consistent(internal,int2,int2);
+DROP FUNCTION gbt_int2_consistent(internal,int2,int2,oid,internal);
 
 DROP OPERATOR CLASS gist_oid_ops USING gist;
 
@@ -267,7 +267,7 @@ DROP FUNCTION gbt_decompress(internal);
 
 DROP FUNCTION gbt_oid_compress(internal);
 
-DROP FUNCTION gbt_oid_consistent(internal,oid,int2);
+DROP FUNCTION gbt_oid_consistent(internal,oid,int2,oid,internal);
 
 DROP TYPE gbtreekey_var CASCADE;
 

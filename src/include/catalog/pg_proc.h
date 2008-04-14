@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.488 2008/04/10 22:25:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.489 2008/04/14 17:05:33 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3941,7 +3941,7 @@ DATA(insert OID = 2588 (  circle_overabove		PGNSP PGUID 12 1 0 f f t f i 2	16 "7
 DESCR("overlaps or is above");
 
 /* support functions for GiST r-tree emulation */
-DATA(insert OID = 2578 (  gist_box_consistent	PGNSP PGUID 12 1 0 f f t f i 3 16 "2281 603 23" _null_ _null_ _null_	gist_box_consistent - _null_ _null_ ));
+DATA(insert OID = 2578 (  gist_box_consistent	PGNSP PGUID 12 1 0 f f t f i 5 16 "2281 603 23 26 2281" _null_ _null_ _null_	gist_box_consistent - _null_ _null_ ));
 DESCR("GiST support");
 DATA(insert OID = 2579 (  gist_box_compress		PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ gist_box_compress - _null_ _null_ ));
 DESCR("GiST support");
@@ -3955,11 +3955,11 @@ DATA(insert OID = 2583 (  gist_box_union		PGNSP PGUID 12 1 0 f f t f i 2 603 "22
 DESCR("GiST support");
 DATA(insert OID = 2584 (  gist_box_same			PGNSP PGUID 12 1 0 f f t f i 3 2281 "603 603 2281" _null_ _null_ _null_ gist_box_same - _null_ _null_ ));
 DESCR("GiST support");
-DATA(insert OID = 2585 (  gist_poly_consistent	PGNSP PGUID 12 1 0 f f t f i 3 16 "2281 604 23" _null_ _null_ _null_	gist_poly_consistent - _null_ _null_ ));
+DATA(insert OID = 2585 (  gist_poly_consistent	PGNSP PGUID 12 1 0 f f t f i 5 16 "2281 604 23 26 2281" _null_ _null_ _null_	gist_poly_consistent - _null_ _null_ ));
 DESCR("GiST support");
 DATA(insert OID = 2586 (  gist_poly_compress	PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ gist_poly_compress - _null_ _null_ ));
 DESCR("GiST support");
-DATA(insert OID = 2591 (  gist_circle_consistent PGNSP PGUID 12 1 0 f f t f i 3 16 "2281 718 23" _null_ _null_ _null_	gist_circle_consistent - _null_ _null_ ));
+DATA(insert OID = 2591 (  gist_circle_consistent PGNSP PGUID 12 1 0 f f t f i 5 16 "2281 718 23 26 2281" _null_ _null_ _null_	gist_circle_consistent - _null_ _null_ ));
 DESCR("GiST support");
 DATA(insert OID = 2592 (  gist_circle_compress	PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ gist_circle_compress - _null_ _null_ ));
 DESCR("GiST support");
@@ -3997,7 +3997,7 @@ DATA(insert OID = 2743 (  ginarrayextract	 PGNSP PGUID 12 1 0 f f t f i 2 2281 "
 DESCR("GIN array support");
 DATA(insert OID = 2774 (  ginqueryarrayextract	PGNSP PGUID 12 1 0 f f t f i 3 2281 "2277 2281 21" _null_ _null_ _null_ ginqueryarrayextract - _null_ _null_ ));
 DESCR("GIN array support");
-DATA(insert OID = 2744 (  ginarrayconsistent PGNSP PGUID 12 1 0 f f t f i 3 16 "2281 21 2281" _null_ _null_ _null_	ginarrayconsistent - _null_ _null_ ));
+DATA(insert OID = 2744 (  ginarrayconsistent PGNSP PGUID 12 1 0 f f t f i 4 16 "2281 21 2281 2281" _null_ _null_ _null_	ginarrayconsistent - _null_ _null_ ));
 DESCR("GIN array support");
 
 /* overlap/contains/contained */
@@ -4225,14 +4225,14 @@ DATA(insert OID = 3652 (  gtsvector_same		PGNSP PGUID 12 1 0 f f t f i 3 2281 "3
 DESCR("GiST tsvector support");
 DATA(insert OID = 3653 (  gtsvector_penalty		PGNSP PGUID 12 1 0 f f t f i 3 2281 "2281 2281 2281" _null_ _null_ _null_ gtsvector_penalty - _null_ _null_ ));
 DESCR("GiST tsvector support");
-DATA(insert OID = 3654 (  gtsvector_consistent	PGNSP PGUID 12 1 0 f f t f i 3 16 "3642 2281 23" _null_ _null_ _null_ gtsvector_consistent - _null_ _null_ ));
+DATA(insert OID = 3654 (  gtsvector_consistent	PGNSP PGUID 12 1 0 f f t f i 5 16 "2281 3642 23 26 2281" _null_ _null_ _null_ gtsvector_consistent - _null_ _null_ ));
 DESCR("GiST tsvector support");
 
 DATA(insert OID = 3656 (  gin_extract_tsvector	PGNSP PGUID 12 1 0 f f t f i 2 2281 "3614 2281" _null_ _null_ _null_	gin_extract_tsvector - _null_ _null_ ));
 DESCR("GIN tsvector support");
 DATA(insert OID = 3657 (  gin_extract_tsquery	PGNSP PGUID 12 1 0 f f t f i 3 2281 "3615 2281 21" _null_ _null_ _null_ gin_extract_tsquery - _null_ _null_ ));
 DESCR("GIN tsvector support");
-DATA(insert OID = 3658 (  gin_tsquery_consistent PGNSP PGUID 12 1 0 f f t f i 3 16 "2281 21 3615" _null_ _null_ _null_	gin_tsquery_consistent - _null_ _null_ ));
+DATA(insert OID = 3658 (  gin_tsquery_consistent PGNSP PGUID 12 1 0 f f t f i 4 16 "2281 21 3615 2281" _null_ _null_ _null_	gin_tsquery_consistent - _null_ _null_ ));
 DESCR("GIN tsvector support");
 
 DATA(insert OID = 3662 (  tsquery_lt			PGNSP PGUID 12 1 0 f f t f i 2 16 "3615 3615" _null_ _null_ _null_ tsquery_lt - _null_ _null_ ));
@@ -4284,7 +4284,7 @@ DATA(insert OID = 3699 (  gtsquery_same					PGNSP PGUID 12 1 0 f f t f i 3 2281 
 DESCR("GiST tsquery support");
 DATA(insert OID = 3700 (  gtsquery_penalty				PGNSP PGUID 12 1 0 f f t f i 3 2281 "2281 2281 2281" _null_ _null_ _null_ gtsquery_penalty - _null_ _null_ ));
 DESCR("GiST tsquery support");
-DATA(insert OID = 3701 (  gtsquery_consistent			PGNSP PGUID 12 1 0 f f t f i 3 16 "20 2281 23" _null_ _null_ _null_ gtsquery_consistent - _null_ _null_ ));
+DATA(insert OID = 3701 (  gtsquery_consistent			PGNSP PGUID 12 1 0 f f t f i 5 16 "2281 2281 23 26 2281" _null_ _null_ _null_ gtsquery_consistent - _null_ _null_ ));
 DESCR("GiST tsquery support");
 
 DATA(insert OID = 3689 (  ts_stat		PGNSP PGUID 12 10 10000 f f t t v 1 2249 "25" "{25,25,23,23}" "{i,o,o,o}" "{query,word,ndoc,nentry}" ts_stat1 - _null_ _null_ ));

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/ltree/uninstall_ltree.sql,v 1.5 2007/11/13 04:24:28 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/ltree/uninstall_ltree.sql,v 1.6 2008/04/14 17:05:32 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
@@ -15,7 +15,7 @@ DROP FUNCTION _ltree_penalty(internal,internal,internal);
 
 DROP FUNCTION _ltree_compress(internal);
 
-DROP FUNCTION _ltree_consistent(internal,internal,int2);
+DROP FUNCTION _ltree_consistent(internal,internal,int2,oid,internal);
 
 DROP OPERATOR ?@ (_ltree, ltxtquery);
 
@@ -107,7 +107,7 @@ DROP FUNCTION ltree_decompress(internal);
 
 DROP FUNCTION ltree_compress(internal);
 
-DROP FUNCTION ltree_consistent(internal,internal,int2);
+DROP FUNCTION ltree_consistent(internal,internal,int2,oid,internal);
 
 DROP TYPE ltree_gist CASCADE;
   

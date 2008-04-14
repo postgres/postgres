@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/seg/seg.sql.in,v 1.16 2007/11/13 04:24:28 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/seg/seg.sql.in,v 1.17 2008/04/14 17:05:32 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -322,7 +322,7 @@ CREATE OPERATOR ~ (
 
 
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gseg_consistent(internal,seg,int4)
+CREATE OR REPLACE FUNCTION gseg_consistent(internal,seg,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -382,7 +382,7 @@ AS
 	OPERATOR	8	<@ ,
 	OPERATOR	13	@ ,
 	OPERATOR	14	~ ,
-	FUNCTION	1	gseg_consistent (internal, seg, int4),
+	FUNCTION	1	gseg_consistent (internal, seg, int, oid, internal),
 	FUNCTION	2	gseg_union (internal, internal),
 	FUNCTION	3	gseg_compress (internal),
 	FUNCTION	4	gseg_decompress (internal),

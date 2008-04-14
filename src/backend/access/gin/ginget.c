@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.12 2008/04/13 19:18:13 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.13 2008/04/14 17:05:33 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -343,10 +343,12 @@ entryGetItem(Relation index, GinScanEntry entry)
 
 /*
  * Sets key->curItem to new found heap item pointer for one scan key
- * returns isFinished!
+ * Returns isFinished, ie TRUE means we did NOT get a new item pointer!
+ * Also, *keyrecheck is set true if recheck is needed for this scan key.
  */
 static bool
-keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx, GinScanKey key)
+keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx,
+		   GinScanKey key, bool *keyrecheck)
 {
 	uint32		i;
 	GinScanEntry entry;
@@ -391,31 +393,36 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx, GinScanKey
 			return TRUE;
 		}
 
-		if (key->nentries == 1)
-		{
-			/* we can do not call consistentFn !! */
-			key->entryRes[0] = TRUE;
-			return FALSE;
-		}
+		/*
+		 * if key->nentries == 1 then the consistentFn should always succeed,
+		 * but we must call it anyway to find out the recheck status.
+		 */
 
 		/* setting up array for consistentFn */
 		for (i = 0; i < key->nentries; i++)
 		{
 			entry = key->scanEntry + i;
 
-			if (entry->isFinished == FALSE && compareItemPointers(&entry->curItem, &key->curItem) == 0)
+			if (entry->isFinished == FALSE &&
+				compareItemPointers(&entry->curItem, &key->curItem) == 0)
 				key->entryRes[i] = TRUE;
 			else
 				key->entryRes[i] = FALSE;
 		}
 
+		/*
+		 * Initialize *keyrecheck in case the consistentFn doesn't know it
+		 * should set it.  The safe assumption in that case is to force
+		 * recheck.
+		 */
+		*keyrecheck = true;
+
 		oldCtx = MemoryContextSwitchTo(tempCtx);
-		res = DatumGetBool(FunctionCall3(
-										 &ginstate->consistentFn,
+		res = DatumGetBool(FunctionCall4(&ginstate->consistentFn,
 										 PointerGetDatum(key->entryRes),
 										 UInt16GetDatum(key->strategy),
-										 key->query
-										 ));
+										 key->query,
+										 PointerGetDatum(keyrecheck)));
 		MemoryContextSwitchTo(oldCtx);
 		MemoryContextReset(tempCtx);
 	} while (!res);
@@ -430,24 +437,32 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx, GinScanKey
 static bool
 scanGetItem(IndexScanDesc scan, ItemPointerData *item, bool *recheck)
 {
-	uint32		i;
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
+	uint32		i;
+	bool		keyrecheck;
 
-	/* XXX for the moment, treat all GIN operators as lossy */
-	*recheck = true;
+	/*
+	 * We return recheck = true if any of the keyGetItem calls return
+	 * keyrecheck = true.  Note that because the second loop might advance
+	 * some keys, this could theoretically be too conservative.  In practice
+	 * though, we expect that a consistentFn's recheck result will depend
+	 * only on the operator and the query, so for any one key it should
+	 * stay the same regardless of advancing to new items.  So it's not
+	 * worth working harder.
+	 */
+	*recheck = false;
 
 	ItemPointerSetMin(item);
 	for (i = 0; i < so->nkeys; i++)
 	{
 		GinScanKey	key = so->keys + i;
 
-		if (keyGetItem(scan->indexRelation, &so->ginstate, so->tempCtx, key) == FALSE)
-		{
-			if (compareItemPointers(item, &key->curItem) < 0)
-				*item = key->curItem;
-		}
-		else
+		if (keyGetItem(scan->indexRelation, &so->ginstate, so->tempCtx,
+					   key, &keyrecheck))
 			return FALSE;		/* finished one of keys */
+		if (compareItemPointers(item, &key->curItem) < 0)
+			*item = key->curItem;
+		*recheck |= keyrecheck;
 	}
 
 	for (i = 1; i <= so->nkeys; i++)
@@ -462,8 +477,10 @@ scanGetItem(IndexScanDesc scan, ItemPointerData *item, bool *recheck)
 				break;
 			else if (cmp > 0)
 			{
-				if (keyGetItem(scan->indexRelation, &so->ginstate, so->tempCtx, key) == TRUE)
+				if (keyGetItem(scan->indexRelation, &so->ginstate, so->tempCtx,
+							   key, &keyrecheck))
 					return FALSE;		/* finished one of keys */
+				*recheck |= keyrecheck;
 			}
 			else
 			{					/* returns to begin */

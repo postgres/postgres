@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.487 2008/04/13 03:49:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.488 2008/04/14 17:05:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7456,7 +7456,27 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	 */
 	resetPQExpBuffer(query);
 
-	if (g_fout->remoteVersion >= 80300)
+	if (g_fout->remoteVersion >= 80400)
+	{
+		/*
+		 * Print only those opfamily members that are tied to the opclass by
+		 * pg_depend entries.
+		 *
+		 * XXX RECHECK is gone as of 8.4, but we'll still print it if dumping
+		 * an older server's table in which it is used.  Would it be better
+		 * to silently ignore it?
+		 */
+		appendPQExpBuffer(query, "SELECT amopstrategy, false as amopreqcheck, "
+						  "amopopr::pg_catalog.regoperator "
+						  "FROM pg_catalog.pg_amop ao, pg_catalog.pg_depend "
+		   "WHERE refclassid = 'pg_catalog.pg_opclass'::pg_catalog.regclass "
+						  "AND refobjid = '%u'::pg_catalog.oid "
+				   "AND classid = 'pg_catalog.pg_amop'::pg_catalog.regclass "
+						  "AND objid = ao.oid "
+						  "ORDER BY amopstrategy",
+						  opcinfo->dobj.catId.oid);
+	}
+	else if (g_fout->remoteVersion >= 80300)
 	{
 		/*
 		 * Print only those opfamily members that are tied to the opclass by
@@ -7649,7 +7669,14 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 	 * Fetch only those opfamily members that are tied directly to the
 	 * opfamily by pg_depend entries.
 	 */
-	appendPQExpBuffer(query, "SELECT amopstrategy, amopreqcheck, "
+	if (g_fout->remoteVersion >= 80400)
+	{
+		/*
+		 * XXX RECHECK is gone as of 8.4, but we'll still print it if dumping
+		 * an older server's table in which it is used.  Would it be better
+		 * to silently ignore it?
+		 */
+		appendPQExpBuffer(query, "SELECT amopstrategy, false as amopreqcheck, "
 					  "amopopr::pg_catalog.regoperator "
 					  "FROM pg_catalog.pg_amop ao, pg_catalog.pg_depend "
 		  "WHERE refclassid = 'pg_catalog.pg_opfamily'::pg_catalog.regclass "
@@ -7658,6 +7685,19 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 					  "AND objid = ao.oid "
 					  "ORDER BY amopstrategy",
 					  opfinfo->dobj.catId.oid);
+	}
+	else
+	{
+		appendPQExpBuffer(query, "SELECT amopstrategy, amopreqcheck, "
+					  "amopopr::pg_catalog.regoperator "
+					  "FROM pg_catalog.pg_amop ao, pg_catalog.pg_depend "
+		  "WHERE refclassid = 'pg_catalog.pg_opfamily'::pg_catalog.regclass "
+					  "AND refobjid = '%u'::pg_catalog.oid "
+				   "AND classid = 'pg_catalog.pg_amop'::pg_catalog.regclass "
+					  "AND objid = ao.oid "
+					  "ORDER BY amopstrategy",
+					  opfinfo->dobj.catId.oid);
+	}
 
 	res_ops = PQexec(g_conn, query->data);
 	check_sql_result(res_ops, g_conn, query->data, PGRES_TUPLES_OK);

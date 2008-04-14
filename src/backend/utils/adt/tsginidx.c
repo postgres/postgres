@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.10 2008/03/25 22:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.11 2008/04/14 17:05:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 {
 	TSQuery		query = PG_GETARG_TSQUERY(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
-	StrategyNumber strategy = PG_GETARG_UINT16(2);
+	/* StrategyNumber strategy = PG_GETARG_UINT16(2); */
 	Datum	   *entries = NULL;
 
 	*nentries = 0;
@@ -89,12 +89,6 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 				txt = cstring_to_text_with_len(GETOPERAND(query) + val->distance,
 											   val->length);
 				entries[j++] = PointerGetDatum(txt);
-
-				if (strategy != TSearchWithClassStrategyNumber && val->weight != 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("@@ operator does not support lexeme weight restrictions in GIN index searches"),
-							 errhint("Use the @@@ operator instead.")));
 			}
 	}
 	else
@@ -109,12 +103,17 @@ typedef struct
 {
 	QueryItem  *frst;
 	bool	   *mapped_check;
+	bool	   *need_recheck;
 } GinChkVal;
 
 static bool
 checkcondition_gin(void *checkval, QueryOperand *val)
 {
 	GinChkVal  *gcv = (GinChkVal *) checkval;
+
+	/* if any val requiring a weight is used, set recheck flag */
+	if (val->weight != 0)
+		*(gcv->need_recheck) = true;
 
 	return gcv->mapped_check[((QueryItem *) val) - gcv->frst];
 }
@@ -125,7 +124,11 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	/* StrategyNumber strategy = PG_GETARG_UINT16(1); */
 	TSQuery		query = PG_GETARG_TSQUERY(2);
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(3);
 	bool		res = FALSE;
+
+	/* The query requires recheck only if it involves weights */
+	*recheck = false;
 
 	if (query->size > 0)
 	{
@@ -144,6 +147,7 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 
 		gcv.frst = item = GETQUERY(query);
 		gcv.mapped_check = (bool *) palloc(sizeof(bool) * query->size);
+		gcv.need_recheck = recheck;
 
 		for (i = 0; i < query->size; i++)
 			if (item[i].type == QI_VAL)

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/btree_gist/btree_gist.sql.in,v 1.19 2007/11/13 04:24:27 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/btree_gist/btree_gist.sql.in,v 1.20 2008/04/14 17:05:31 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -94,7 +94,7 @@ CREATE TYPE gbtreekey_var (
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_oid_consistent(internal,oid,int2)
+CREATE OR REPLACE FUNCTION gbt_oid_consistent(internal,oid,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -143,7 +143,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_oid_consistent (internal, oid, int2),
+	FUNCTION	1	gbt_oid_consistent (internal, oid, int2, oid, internal),
 	FUNCTION	2	gbt_oid_union (bytea, internal),
 	FUNCTION	3	gbt_oid_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -161,7 +161,7 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_int2_consistent(internal,int2,int2)
+CREATE OR REPLACE FUNCTION gbt_int2_consistent(internal,int2,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -200,7 +200,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_int2_consistent (internal, int2, int2),
+	FUNCTION	1	gbt_int2_consistent (internal, int2, int2, oid, internal),
 	FUNCTION	2	gbt_int2_union (bytea, internal),
 	FUNCTION	3	gbt_int2_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -217,7 +217,7 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_int4_consistent(internal,int4,int2)
+CREATE OR REPLACE FUNCTION gbt_int4_consistent(internal,int4,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -256,7 +256,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_int4_consistent (internal, int4, int2),
+	FUNCTION	1	gbt_int4_consistent (internal, int4, int2, oid, internal),
 	FUNCTION	2	gbt_int4_union (bytea, internal),
 	FUNCTION	3	gbt_int4_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -273,7 +273,7 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_int8_consistent(internal,int8,int2)
+CREATE OR REPLACE FUNCTION gbt_int8_consistent(internal,int8,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -312,7 +312,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_int8_consistent (internal, int8, int2),
+	FUNCTION	1	gbt_int8_consistent (internal, int8, int2, oid, internal),
 	FUNCTION	2	gbt_int8_union (bytea, internal),
 	FUNCTION	3	gbt_int8_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -330,7 +330,7 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_float4_consistent(internal,float4,int2)
+CREATE OR REPLACE FUNCTION gbt_float4_consistent(internal,float4,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -369,7 +369,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_float4_consistent (internal, float4, int2),
+	FUNCTION	1	gbt_float4_consistent (internal, float4, int2, oid, internal),
 	FUNCTION	2	gbt_float4_union (bytea, internal),
 	FUNCTION	3	gbt_float4_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -389,7 +389,7 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_float8_consistent(internal,float8,int2)
+CREATE OR REPLACE FUNCTION gbt_float8_consistent(internal,float8,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -428,7 +428,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_float8_consistent (internal, float8, int2),
+	FUNCTION	1	gbt_float8_consistent (internal, float8, int2, oid, internal),
 	FUNCTION	2	gbt_float8_union (bytea, internal),
 	FUNCTION	3	gbt_float8_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -446,12 +446,12 @@ AS
 --
 --
 
-CREATE OR REPLACE FUNCTION gbt_ts_consistent(internal,timestamp,int2)
+CREATE OR REPLACE FUNCTION gbt_ts_consistent(internal,timestamp,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gbt_tstz_consistent(internal,timestamptz,int2)
+CREATE OR REPLACE FUNCTION gbt_tstz_consistent(internal,timestamptz,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -495,7 +495,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_ts_consistent (internal, timestamp, int2),
+	FUNCTION	1	gbt_ts_consistent (internal, timestamp, int2, oid, internal),
 	FUNCTION	2	gbt_ts_union (bytea, internal),
 	FUNCTION	3	gbt_ts_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -514,7 +514,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_tstz_consistent (internal, timestamptz, int2),
+	FUNCTION	1	gbt_tstz_consistent (internal, timestamptz, int2, oid, internal),
 	FUNCTION	2	gbt_ts_union (bytea, internal),
 	FUNCTION	3	gbt_tstz_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -532,12 +532,12 @@ AS
 --
 --
 
-CREATE OR REPLACE FUNCTION gbt_time_consistent(internal,time,int2)
+CREATE OR REPLACE FUNCTION gbt_time_consistent(internal,time,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gbt_timetz_consistent(internal,timetz,int2)
+CREATE OR REPLACE FUNCTION gbt_timetz_consistent(internal,timetz,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -581,7 +581,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_time_consistent (internal, time, int2),
+	FUNCTION	1	gbt_time_consistent (internal, time, int2, oid, internal),
 	FUNCTION	2	gbt_time_union (bytea, internal),
 	FUNCTION	3	gbt_time_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -593,12 +593,12 @@ AS
 CREATE OPERATOR CLASS gist_timetz_ops
 DEFAULT FOR TYPE timetz USING gist 
 AS
-	OPERATOR	1	<   RECHECK ,
-	OPERATOR	2	<=  RECHECK ,
-	OPERATOR	3	=   RECHECK ,
-	OPERATOR	4	>=  RECHECK ,
-	OPERATOR	5	>   RECHECK ,
-	FUNCTION	1	gbt_timetz_consistent (internal, timetz, int2),
+	OPERATOR	1	<   ,
+	OPERATOR	2	<=  ,
+	OPERATOR	3	=   ,
+	OPERATOR	4	>=  ,
+	OPERATOR	5	>   ,
+	FUNCTION	1	gbt_timetz_consistent (internal, timetz, int2, oid, internal),
 	FUNCTION	2	gbt_time_union (bytea, internal),
 	FUNCTION	3	gbt_timetz_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -616,7 +616,7 @@ AS
 --
 --
 
-CREATE OR REPLACE FUNCTION gbt_date_consistent(internal,date,int2)
+CREATE OR REPLACE FUNCTION gbt_date_consistent(internal,date,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -655,7 +655,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_date_consistent (internal, date, int2),
+	FUNCTION	1	gbt_date_consistent (internal, date, int2, oid, internal),
 	FUNCTION	2	gbt_date_union (bytea, internal),
 	FUNCTION	3	gbt_date_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -673,7 +673,7 @@ AS
 --
 --
 
-CREATE OR REPLACE FUNCTION gbt_intv_consistent(internal,interval,int2)
+CREATE OR REPLACE FUNCTION gbt_intv_consistent(internal,interval,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -717,7 +717,7 @@ AS
 	OPERATOR	3	= ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
-	FUNCTION	1	gbt_intv_consistent (internal, interval, int2),
+	FUNCTION	1	gbt_intv_consistent (internal, interval, int2, oid, internal),
 	FUNCTION	2	gbt_intv_union (bytea, internal),
 	FUNCTION	3	gbt_intv_compress (internal),
 	FUNCTION	4	gbt_intv_decompress (internal),
@@ -734,7 +734,7 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_cash_consistent(internal,money,int2)
+CREATE OR REPLACE FUNCTION gbt_cash_consistent(internal,money,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -773,7 +773,7 @@ AS
 	OPERATOR	3	= ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
-	FUNCTION	1	gbt_cash_consistent (internal, money, int2),
+	FUNCTION	1	gbt_cash_consistent (internal, money, int2, oid, internal),
 	FUNCTION	2	gbt_cash_union (bytea, internal),
 	FUNCTION	3	gbt_cash_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -790,7 +790,7 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_macad_consistent(internal,macaddr,int2)
+CREATE OR REPLACE FUNCTION gbt_macad_consistent(internal,macaddr,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -829,7 +829,7 @@ AS
 	OPERATOR	3	= ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
-	FUNCTION	1	gbt_macad_consistent (internal, macaddr, int2),
+	FUNCTION	1	gbt_macad_consistent (internal, macaddr, int2, oid, internal),
 	FUNCTION	2	gbt_macad_union (bytea, internal),
 	FUNCTION	3	gbt_macad_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -848,12 +848,12 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_text_consistent(internal,text,int2)
+CREATE OR REPLACE FUNCTION gbt_text_consistent(internal,text,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gbt_bpchar_consistent(internal,bpchar,int2)
+CREATE OR REPLACE FUNCTION gbt_bpchar_consistent(internal,bpchar,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -897,7 +897,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_text_consistent (internal, text, int2),
+	FUNCTION	1	gbt_text_consistent (internal, text, int2, oid, internal),
 	FUNCTION	2	gbt_text_union (bytea, internal),
 	FUNCTION	3	gbt_text_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
@@ -916,7 +916,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_bpchar_consistent (internal, bpchar , int2),
+	FUNCTION	1	gbt_bpchar_consistent (internal, bpchar , int2, oid, internal),
 	FUNCTION	2	gbt_text_union (bytea, internal),
 	FUNCTION	3	gbt_bpchar_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
@@ -934,7 +934,7 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_bytea_consistent(internal,bytea,int2)
+CREATE OR REPLACE FUNCTION gbt_bytea_consistent(internal,bytea,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -973,7 +973,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_bytea_consistent (internal, bytea, int2),
+	FUNCTION	1	gbt_bytea_consistent (internal, bytea, int2, oid, internal),
 	FUNCTION	2	gbt_bytea_union (bytea, internal),
 	FUNCTION	3	gbt_bytea_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
@@ -991,7 +991,7 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_numeric_consistent(internal,numeric,int2)
+CREATE OR REPLACE FUNCTION gbt_numeric_consistent(internal,numeric,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -1030,7 +1030,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_numeric_consistent (internal, numeric, int2),
+	FUNCTION	1	gbt_numeric_consistent (internal, numeric, int2, oid, internal),
 	FUNCTION	2	gbt_numeric_union (bytea, internal),
 	FUNCTION	3	gbt_numeric_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
@@ -1046,7 +1046,7 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_bit_consistent(internal,bit,int2)
+CREATE OR REPLACE FUNCTION gbt_bit_consistent(internal,bit,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -1085,7 +1085,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_bit_consistent (internal, bit, int2),
+	FUNCTION	1	gbt_bit_consistent (internal, bit, int2, oid, internal),
 	FUNCTION	2	gbt_bit_union (bytea, internal),
 	FUNCTION	3	gbt_bit_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
@@ -1104,7 +1104,7 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	FUNCTION	1	gbt_bit_consistent (internal, bit, int2),
+	FUNCTION	1	gbt_bit_consistent (internal, bit, int2, oid, internal),
 	FUNCTION	2	gbt_bit_union (bytea, internal),
 	FUNCTION	3	gbt_bit_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
@@ -1123,7 +1123,7 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_inet_consistent(internal,inet,int2)
+CREATE OR REPLACE FUNCTION gbt_inet_consistent(internal,inet,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -1157,12 +1157,12 @@ LANGUAGE C IMMUTABLE;
 CREATE OPERATOR CLASS gist_inet_ops
 DEFAULT FOR TYPE inet USING gist 
 AS
-	OPERATOR	1	<   RECHECK ,
-	OPERATOR	2	<=  RECHECK ,
-	OPERATOR	3	=   RECHECK ,
-	OPERATOR	4	>=  RECHECK ,
-	OPERATOR	5	>   RECHECK ,
-	FUNCTION	1	gbt_inet_consistent (internal, inet, int2),
+	OPERATOR	1	<   ,
+	OPERATOR	2	<=  ,
+	OPERATOR	3	=   ,
+	OPERATOR	4	>=  ,
+	OPERATOR	5	>   ,
+	FUNCTION	1	gbt_inet_consistent (internal, inet, int2, oid, internal),
 	FUNCTION	2	gbt_inet_union (bytea, internal),
 	FUNCTION	3	gbt_inet_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
@@ -1175,12 +1175,12 @@ AS
 CREATE OPERATOR CLASS gist_cidr_ops
 DEFAULT FOR TYPE cidr USING gist 
 AS
-	OPERATOR	1	<  (inet, inet)  RECHECK ,
-	OPERATOR	2	<= (inet, inet)  RECHECK ,
-	OPERATOR	3	=  (inet, inet)  RECHECK ,
-	OPERATOR	4	>= (inet, inet)  RECHECK ,
-	OPERATOR	5	>  (inet, inet)  RECHECK ,
-	FUNCTION	1	gbt_inet_consistent (internal, inet, int2),
+	OPERATOR	1	<  (inet, inet)  ,
+	OPERATOR	2	<= (inet, inet)  ,
+	OPERATOR	3	=  (inet, inet)  ,
+	OPERATOR	4	>= (inet, inet)  ,
+	OPERATOR	5	>  (inet, inet)  ,
+	FUNCTION	1	gbt_inet_consistent (internal, inet, int2, oid, internal),
 	FUNCTION	2	gbt_inet_union (bytea, internal),
 	FUNCTION	3	gbt_inet_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),

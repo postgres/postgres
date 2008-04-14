@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.29 2007/11/13 23:36:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.30 2008/04/14 17:05:32 tgl Exp $ -->
 
 <chapter id="GiST">
 <title>GiST Indexes</title>
@@ -103,7 +103,10 @@
        Given a predicate <literal>p</literal> on a tree page, and a user
        query, <literal>q</literal>, this method will return false if it is
        certain that both <literal>p</literal> and <literal>q</literal> cannot
-       be true for a given data item.
+       be true for a given data item.  For a true result, a
+       <literal>recheck</> flag must also be returned; this indicates whether
+       the predicate implies the query (<literal>recheck</> = false) or
+       not (<literal>recheck</> = true).
       </para>
      </listitem>
     </varlistentry>

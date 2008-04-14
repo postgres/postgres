@@ -42,7 +42,11 @@ float32		seg_center(SEG * seg);
 /*
 ** GiST support methods
 */
-bool		gseg_consistent(GISTENTRY *entry, SEG * query, StrategyNumber strategy);
+bool		gseg_consistent(GISTENTRY *entry,
+							SEG * query,
+							StrategyNumber strategy,
+							Oid subtype,
+							bool *recheck);
 GISTENTRY  *gseg_compress(GISTENTRY *entry);
 GISTENTRY  *gseg_decompress(GISTENTRY *entry);
 float	   *gseg_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result);
@@ -202,8 +206,13 @@ seg_upper(SEG * seg)
 bool
 gseg_consistent(GISTENTRY *entry,
 				SEG * query,
-				StrategyNumber strategy)
+				StrategyNumber strategy,
+				Oid subtype,
+				bool *recheck)
 {
+	/* All cases served by this function are exact */
+	*recheck = false;
+
 	/*
 	 * if entry is not leaf, use gseg_internal_consistent, else use
 	 * gseg_leaf_consistent

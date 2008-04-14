@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.61 2007/12/02 04:36:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.62 2008/04/14 17:05:32 tgl Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -913,26 +913,31 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
 
   <para>
    Normally, declaring an operator as a member of an operator class
-   (or family) means
-   that the index method can retrieve exactly the set of rows
+   (or family) means that the index method can retrieve exactly the set of rows
    that satisfy a <literal>WHERE</> condition using the operator.  For example:
 <programlisting>
 SELECT * FROM table WHERE integer_column &lt; 4;
 </programlisting>
    can be satisfied exactly by a B-tree index on the integer column.
    But there are cases where an index is useful as an inexact guide to
-   the matching rows.  For example, if a GiST index stores only
-   bounding boxes for objects, then it cannot exactly satisfy a <literal>WHERE</>
+   the matching rows.  For example, if a GiST index stores only bounding boxes
+   for geometric objects, then it cannot exactly satisfy a <literal>WHERE</> 
    condition that tests overlap between nonrectangular objects such as
    polygons.  Yet we could use the index to find objects whose bounding
    box overlaps the bounding box of the target object, and then do the
    exact overlap test only on the objects found by the index.  If this
    scenario applies, the index is said to be <quote>lossy</> for the
-   operator, and we add <literal>RECHECK</> to the <literal>OPERATOR</> clause
-   in the <command>CREATE OPERATOR CLASS</> command.
-   <literal>RECHECK</> is valid if the index is guaranteed to return
-   all the required rows, plus perhaps some additional rows, which
-   can be eliminated by performing the original operator invocation.
+   operator.  Lossy index searches are implemented by having the index
+   method return a <firstterm>recheck</> flag when a row might or might
+   not really satisfy the query condition.  The core system will then
+   test the original query condition on the retrieved row to see whether
+   it should be returned as a valid match.  This approach works if
+   the index is guaranteed to return all the required rows, plus perhaps
+   some additional rows, which can be eliminated by performing the original
+   operator invocation.  The index methods that support lossy searches
+   (currently, GiST and GIN) allow the support functions of individual
+   operator classes to set the recheck flag, and so this is essentially an
+   operator-class feature.
   </para>
 
   <para>

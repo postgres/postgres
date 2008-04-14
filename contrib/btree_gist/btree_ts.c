@@ -173,9 +173,14 @@ gbt_ts_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	Timestamp  *query = (Timestamp *) PG_GETARG_POINTER(1);
+	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	/* Oid		subtype = PG_GETARG_OID(3); */
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	tsKEY	   *kkk = (tsKEY *) DatumGetPointer(entry->key);
 	GBT_NUMKEY_R key;
-	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
+	/* All cases served by this function are exact */
+	*recheck = false;
 
 	key.lower = (GBT_NUMKEY *) & kkk->lower;
 	key.upper = (GBT_NUMKEY *) & kkk->upper;
@@ -190,10 +195,15 @@ gbt_tstz_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	TimestampTz *query = (Timestamp *) PG_GETARG_POINTER(1);
+	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	/* Oid		subtype = PG_GETARG_OID(3); */
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	char	   *kkk = (char *) DatumGetPointer(entry->key);
 	GBT_NUMKEY_R key;
-	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	Timestamp	qqq;
+
+	/* All cases served by this function are exact */
+	*recheck = false;
 
 	key.lower = (GBT_NUMKEY *) & kkk[0];
 	key.upper = (GBT_NUMKEY *) & kkk[MAXALIGN(tinfo.size)];

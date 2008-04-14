@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.71 2008/04/13 19:18:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.72 2008/04/14 17:05:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,6 @@ gistnext(IndexScanDesc scan, ScanDirection dir, TIDBitmap *tbm)
 	GISTScanOpaque so;
 	GISTSearchStack *stk;
 	IndexTuple	it;
-	bool		recheck;
 	GISTPageOpaque opaque;
 	bool		resetoffset = false;
 	int64		ntids = 0;
@@ -257,8 +256,6 @@ gistnext(IndexScanDesc scan, ScanDirection dir, TIDBitmap *tbm)
 		for (;;)
 		{
 			n = gistfindnext(scan, n, dir);
-			/* XXX for the moment, treat all GIST operators as lossy */
-			recheck = true;
 
 			if (!OffsetNumberIsValid(n))
 			{
@@ -304,11 +301,11 @@ gistnext(IndexScanDesc scan, ScanDirection dir, TIDBitmap *tbm)
 					it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 					ntids++;
 					if (tbm != NULL)
-						tbm_add_tuples(tbm, &it->t_tid, 1, recheck);
+						tbm_add_tuples(tbm, &it->t_tid, 1, scan->xs_recheck);
 					else 
 					{
 						scan->xs_ctup.t_self = it->t_tid;
-						scan->xs_recheck = recheck;
+						/* scan->xs_recheck is already set */
 
 						LockBuffer(so->curbuf, GIST_UNLOCK);
 						return ntids; /* always 1 */
@@ -345,6 +342,10 @@ gistnext(IndexScanDesc scan, ScanDirection dir, TIDBitmap *tbm)
 /*
  * gistindex_keytest() -- does this index tuple satisfy the scan key(s)?
  *
+ * On success return for a leaf tuple, scan->xs_recheck is set to indicate
+ * whether recheck is needed.  We recheck if any of the consistent() functions
+ * request it.
+ *
  * We must decompress the key in the IndexTuple before passing it to the
  * sk_func (and we have previously overwritten the sk_func to use the
  * user-defined Consistent method, so we actually are invoking that).
@@ -371,6 +372,8 @@ gistindex_keytest(IndexTuple tuple,
 
 	IncrIndexProcessed();
 
+	scan->xs_recheck = false;
+
 	/*
 	 * Tuple doesn't restore after crash recovery because of incomplete insert
 	 */
@@ -382,6 +385,7 @@ gistindex_keytest(IndexTuple tuple,
 		Datum		datum;
 		bool		isNull;
 		Datum		test;
+		bool		recheck;
 		GISTENTRY	de;
 
 		datum = index_getattr(tuple,
@@ -408,7 +412,6 @@ gistindex_keytest(IndexTuple tuple,
 		}
 		else
 		{
-
 			gistdentryinit(giststate, key->sk_attno - 1, &de,
 						   datum, r, p, offset,
 						   FALSE, isNull);
@@ -416,21 +419,28 @@ gistindex_keytest(IndexTuple tuple,
 			/*
 			 * Call the Consistent function to evaluate the test.  The
 			 * arguments are the index datum (as a GISTENTRY*), the comparison
-			 * datum, and the comparison operator's strategy number and
-			 * subtype from pg_amop.
+			 * datum, the comparison operator's strategy number and
+			 * subtype from pg_amop, and the recheck flag.
 			 *
 			 * (Presently there's no need to pass the subtype since it'll
 			 * always be zero, but might as well pass it for possible future
 			 * use.)
+			 *
+			 * We initialize the recheck flag to true (the safest assumption)
+			 * in case the Consistent function forgets to set it.
 			 */
-			test = FunctionCall4(&key->sk_func,
+			recheck = true;
+
+			test = FunctionCall5(&key->sk_func,
 								 PointerGetDatum(&de),
 								 key->sk_argument,
 								 Int32GetDatum(key->sk_strategy),
-								 ObjectIdGetDatum(key->sk_subtype));
+								 ObjectIdGetDatum(key->sk_subtype),
+								 PointerGetDatum(&recheck));
 
 			if (!DatumGetBool(test))
 				return false;
+			scan->xs_recheck |= recheck;
 		}
 
 		keySize--;
@@ -444,6 +454,7 @@ gistindex_keytest(IndexTuple tuple,
  * Return the offset of the first index entry that is consistent with
  * the search key after offset 'n' in the current page. If there are
  * no more consistent entries, return InvalidOffsetNumber.
+ * On success, scan->xs_recheck is set correctly, too.
  * Page should be locked....
  */
 static OffsetNumber
