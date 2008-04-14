@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri Apr 11 15:50:35 EDT 2008
+Last updated:		Mon Apr 14 09:33:40 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1401,6 +1401,7 @@ Cache Usage
 	o Parsed query tree
 	o Query execute plan
 	o Query results
+	http://archives.postgresql.org/pgsql-hackers/2008-04/msg00823.php
 
 * Consider increasing internal areas when shared buffers is increased
 
