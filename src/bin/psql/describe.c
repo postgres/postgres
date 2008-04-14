@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.166 2008/03/30 18:10:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.167 2008/04/14 15:04:20 alvherre Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1373,7 +1373,7 @@ describeOneTableDetails(const char *schemaname,
 			footers[count_footers++] = pg_strdup(buf.data);
 			for (i = 0; i < referencedby_count; i++)
 			{
-				printfPQExpBuffer(&buf, _("  \"%s\" IN %s %s"),
+				printfPQExpBuffer(&buf, _("    \"%s\" IN %s %s"),
 								  PQgetvalue(result6, i, 0),
 								  PQgetvalue(result6, i, 1),
 								  PQgetvalue(result6, i, 2));
