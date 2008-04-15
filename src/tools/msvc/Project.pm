@@ -3,7 +3,7 @@ package Project;
 #
 # Package that encapsulates a Visual C++ project file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.16 2008/02/05 14:17:23 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.16.2.1 2008/04/15 16:23:21 adunstan Exp $
 #
 use Carp;
 use strict;
@@ -256,7 +256,8 @@ sub AddDir
     }
 
     # Match rules that pull in source files from different directories
-    my $replace_re = qr{^([^:\n\$]+\.c)\s*:\s*(?:%\s*: )?\$(\([^\)]+\))\/(.*)\/[^\/]+$};
+    # example: pg_crc.c: $(top_srcdir)/src/backend/utils/hash/pg_crc.c
+    my $replace_re = qr{^([^:\n\$]+\.c)\s*:\s*(?:%\s*: )?\$(\([^\)]+\))\/(.*)\/[^\/]+$}m;
     while ($mf =~ m{$replace_re}m)
     {
         my $match = $1;
