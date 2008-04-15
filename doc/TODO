@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Apr 15 09:55:33 EDT 2008
+Last updated:		Tue Apr 15 10:24:22 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -264,6 +264,9 @@ Data Types
 
   http://archives.postgresql.org/pgsql-bugs/2008-01/msg00189.php
 
+* Allow XML to accept more liberal DOCTYPE specifications
+
+  http://archives.postgresql.org/pgsql-general/2008-02/msg00347.php
 
 
 * Dates and Times
