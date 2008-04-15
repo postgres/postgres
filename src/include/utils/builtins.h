@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.313 2008/04/15 13:55:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.314 2008/04/15 20:28:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,7 +416,6 @@ extern Datum nonnullvalue(PG_FUNCTION_ARGS);
 extern Datum current_database(PG_FUNCTION_ARGS);
 extern Datum current_query(PG_FUNCTION_ARGS);
 extern Datum pg_cancel_backend(PG_FUNCTION_ARGS);
-extern Datum pg_terminate_backend(PG_FUNCTION_ARGS);
 extern Datum pg_reload_conf(PG_FUNCTION_ARGS);
 extern Datum pg_tablespace_databases(PG_FUNCTION_ARGS);
 extern Datum pg_rotate_logfile(PG_FUNCTION_ARGS);

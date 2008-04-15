@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.60 2008/04/15 13:55:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.61 2008/04/15 20:28:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 #include "postmaster/syslogger.h"
 #include "storage/fd.h"
 #include "storage/pmsignal.h"
-#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
 #include "tcop/tcopprot.h"
@@ -90,7 +89,7 @@ current_query(PG_FUNCTION_ARGS)
  * Functions to send signals to other backends.
  */
 static bool
-pg_signal_check(int pid)
+pg_signal_backend(int pid, int sig)
 {
 	if (!superuser())
 		ereport(ERROR,
@@ -107,16 +106,7 @@ pg_signal_check(int pid)
 				(errmsg("PID %d is not a PostgreSQL server process", pid)));
 		return false;
 	}
-	else
-		return true;
-}
 
-/*
- * Functions to send signals to other backends.
- */
-static bool
-pg_signal_backend(int pid, int sig)
-{
 	/* If we have setsid(), signal the backend's whole process group */
 #ifdef HAVE_SETSID
 	if (kill(-pid, sig))
@@ -135,43 +125,7 @@ pg_signal_backend(int pid, int sig)
 Datum
 pg_cancel_backend(PG_FUNCTION_ARGS)
 {
-	int pid = PG_GETARG_INT32(0);
-	
-	if (pg_signal_check(pid))
-		PG_RETURN_BOOL(pg_signal_backend(pid, SIGINT));
-	else
-		PG_RETURN_BOOL(false);
-}
-
-/*
- *	To cleanly terminate a backend, we set PGPROC(pid)->terminate
- *	then send a cancel signal.  We get ProcArrayLock only when
- *	setting PGPROC->terminate so the function might fail in
- *	several places, but that is fine because in those cases the
- *	backend is already gone.
- */
-Datum
-pg_terminate_backend(PG_FUNCTION_ARGS)
-{
-	int pid = PG_GETARG_INT32(0);
-	volatile PGPROC *term_proc;
-
-	/* Is this the super-user, and can we find the PGPROC entry for the pid? */
-	if (pg_signal_check(pid) && (term_proc = BackendPidGetProc(pid)) != NULL)
-	{
-		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-		/* Recheck now that we have the ProcArray lock. */
-		if (term_proc->pid == pid)
-		{
-			term_proc->terminate = true;
-			LWLockRelease(ProcArrayLock);
-			PG_RETURN_BOOL(pg_signal_backend(pid, SIGINT));
-		}
-		else
-			LWLockRelease(ProcArrayLock);
-	}
-
-	PG_RETURN_BOOL(false);
+	PG_RETURN_BOOL(pg_signal_backend(PG_GETARG_INT32(0), SIGINT));
 }
 
 Datum
@@ -214,6 +168,17 @@ pg_rotate_logfile(PG_FUNCTION_ARGS)
 	SendPostmasterSignal(PMSIGNAL_ROTATE_LOGFILE);
 	PG_RETURN_BOOL(true);
 }
+
+#ifdef NOT_USED
+
+/* Disabled in 8.0 due to reliability concerns; FIXME someday */
+Datum
+pg_terminate_backend(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT32(pg_signal_backend(PG_GETARG_INT32(0), SIGTERM));
+}
+#endif
+
 
 /* Function to find out which databases make use of a tablespace */
 

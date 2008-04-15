@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.549 2008/04/15 13:55:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.550 2008/04/15 20:28:46 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2541,8 +2541,7 @@ StatementCancelHandler(SIGNAL_ARGS)
 		 * waiting for input, however.
 		 */
 		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
-			CritSectionCount == 0 &&
-			(!DoingCommandRead || MyProc->terminate))
+			CritSectionCount == 0 && !DoingCommandRead)
 		{
 			/* bump holdoff count to make ProcessInterrupts() a no-op */
 			/* until we are done getting ready for it */
@@ -2622,10 +2621,6 @@ ProcessInterrupts(void)
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling autovacuum task")));
-		else if (MyProc->terminate)
-			ereport(ERROR,
-					(errcode(ERRCODE_ADMIN_SHUTDOWN),
-					 errmsg("terminating backend due to administrator command")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
@@ -3463,9 +3458,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 		/* We don't have a transaction command open anymore */
 		xact_started = false;
-
-		if (MyProc->terminate)
-			die(SIGINT);
 
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();

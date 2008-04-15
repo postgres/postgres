@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.105 2008/04/15 13:55:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.106 2008/04/15 20:28:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,8 +90,6 @@ struct PGPROC
 	Oid			roleId;			/* OID of role using this backend */
 
 	bool		inCommit;		/* true if within commit critical section */
-
-	bool		terminate;		/* admin requested termination */
 
 	uint8		vacuumFlags;	/* vacuum-related flags, see above */
 
