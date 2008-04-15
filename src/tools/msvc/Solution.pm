@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.37 2008/03/21 02:50:02 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.38 2008/04/15 12:16:51 adunstan Exp $
 #
 use Carp;
 use strict;
@@ -22,6 +22,9 @@ sub new
         strver   => '',
     };
     bless $self;
+	# integer_datetimes is now the default
+	$options->{integer_datetimes} = 1 
+		unless exists $options->{integer_datetimes};
     if ($options->{xml})
     {
         if (!($options->{xslt} && $options->{iconv}))
