@@ -184,7 +184,7 @@ sub AddDir {
 	}
 
 # Match rules that pull in source files from different directories
-	my $replace_re = qr{^([^:\n\$]+\.c)\s*:\s*(?:%\s*: )?\$(\([^\)]+\))\/(.*)\/[^\/]+$};
+	my $replace_re = qr{^([^:\n\$]+\.c)\s*:\s*(?:%\s*: )?\$(\([^\)]+\))\/(.*)\/[^\/]+$}m;
 	while ($mf =~ m{$replace_re}m) {
 		my $match = $1;
 		my $top = $2;
