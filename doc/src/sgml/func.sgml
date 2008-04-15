@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.430 2008/04/14 17:05:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.431 2008/04/15 13:55:11 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11849,6 +11849,9 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_cancel_backend</primary>
    </indexterm>
    <indexterm>
+    <primary>pg_terminate_backend</primary>
+   </indexterm>
+   <indexterm>
     <primary>pg_reload_conf</primary>
    </indexterm>
    <indexterm>
@@ -11885,6 +11888,13 @@ SELECT set_config('log_statement_stats', 'off', false);
       </row>
       <row>
        <entry>
+        <literal><function>pg_terminate_backend</function>(<parameter>pid</parameter> <type>int</>)</literal>
+        </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Terminate a backend</entry>
+      </row>
+      <row>
+       <entry>
         <literal><function>pg_reload_conf</function>()</literal>
         </entry>
        <entry><type>boolean</type></entry>
@@ -11907,9 +11917,10 @@ SELECT set_config('log_statement_stats', 'off', false);
    </para>
 
    <para>
-    <function>pg_cancel_backend</> sends a query cancel
-    (<systemitem>SIGINT</>) signal to a backend process identified by
-    process ID.  The process ID of an active backend can be found from
+    <function>pg_cancel_backend</> and <function>pg_terminate_backend</>
+    send a query cancel (<systemitem>SIGINT</>) signal to a backend process
+    identified by process ID.  The
+    process ID of an active backend can be found from
     the <structfield>procpid</structfield> column in the
     <structname>pg_stat_activity</structname> view, or by listing the
     <command>postgres</command> processes on the server with
