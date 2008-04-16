@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.120 2008/04/11 23:53:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.121 2008/04/16 14:19:56 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,8 +287,11 @@ extern bool rmtree(char *path, bool rmtopdir);
  *
  * We must pull in sys/stat.h here so the system header definition
  * goes in first, and we redefine that, and not the other way around.
+ *
+ * Some frontends don't need the size from stat, so if UNSAFE_STAT_OK
+ * is defined we don't bother with this.
  */
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(WIN32) && !defined(__CYGWIN__) && !defined(UNSAFE_STAT_OK)
 #include <sys/stat.h>
 extern int	pgwin32_safestat(const char *path, struct stat *buf);
 #define stat(a,b) pgwin32_safestat(a,b)
