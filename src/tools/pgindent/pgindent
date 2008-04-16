@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.98 2008/01/16 20:13:44 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.99 2008/04/16 21:03:08 momjian Exp $
 
 # Known bugs:
 #
@@ -133,7 +133,7 @@ do
 # We get the list of typedef's from /src/tools/find_typedef
 	indent -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l79 \
 		-lp -nip -npro -bbb $EXTRA_OPTS \
-		`cat "$TYPEDEFS" | sed 's/.*/-T& /'` \
+		`cat "$TYPEDEFS" | sed -e '/^$/d' -e 's/.*/-T& /'` \
 		/tmp/$$a >/tmp/$$ 2>&1
 
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]
