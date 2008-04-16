@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.250.2.1 2008/02/27 17:44:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.250.2.2 2008/04/16 18:23:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,8 +212,11 @@ static OpClassCacheEnt *LookupOpclassInfo(Oid operatorClassOid,
 /*
  *		ScanPgRelation
  *
- *		this is used by RelationBuildDesc to find a pg_class
- *		tuple matching targetRelId.
+ *		This is used by RelationBuildDesc to find a pg_class
+ *		tuple matching targetRelId.  The caller must hold at least
+ *		AccessShareLock on the target relid to prevent concurrent-update
+ *		scenarios --- else our SnapshotNow scan might fail to find any
+ *		version that it thinks is live.
  *
  *		NB: the returned tuple has been copied into palloc'd storage
  *		and must eventually be freed with heap_freetuple.
@@ -773,18 +776,18 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
 }
 
 
-/* ----------------------------------
+/*
  *		RelationBuildDesc
  *
  *		Build a relation descriptor --- either a new one, or by
  *		recycling the given old relation object.  The latter case
  *		supports rebuilding a relcache entry without invalidating
- *		pointers to it.
+ *		pointers to it.  The caller must hold at least
+ *		AccessShareLock on the target relid.
  *
  *		Returns NULL if no pg_class row could be found for the given relid
  *		(suggesting we are trying to access a just-deleted relation).
  *		Any other error is reported via elog.
- * --------------------------------
  */
 static Relation
 RelationBuildDesc(Oid targetRelId, Relation oldrelation)
@@ -1528,6 +1531,10 @@ RelationClose(Relation relation)
  *	RelationClearRelation just marks the entry as invalid by setting
  *	rd_isvalid to false.  This routine is called to fix the entry when it
  *	is next needed.
+ *
+ *	We assume that at the time we are called, we have at least AccessShareLock
+ *	on the target index.  (Note: in the calls from RelationClearRelation,
+ *	this is legitimate because we know the rel has positive refcount.)
  */
 static void
 RelationReloadClassinfo(Relation relation)
@@ -1581,6 +1588,9 @@ RelationReloadClassinfo(Relation relation)
  *	 usually used when we are notified of a change to an open relation
  *	 (one with refcount > 0).  However, this routine just does whichever
  *	 it's told to do; callers must determine which they want.
+ *
+ *	 NB: when rebuilding, we'd better hold some lock on the relation.
+ *	 In current usages this is presumed true because it has refcnt > 0.
  */
 static void
 RelationClearRelation(Relation relation, bool rebuild)
@@ -2385,12 +2395,14 @@ RelationCacheInitializePhase2(void)
 
 #define LOAD_CRIT_INDEX(indexoid) \
 		do { \
+			LockRelationOid(indexoid, AccessShareLock); \
 			ird = RelationBuildDesc(indexoid, NULL); \
 			if (ird == NULL) \
 				elog(PANIC, "could not open critical system index %u", \
 					 indexoid); \
 			ird->rd_isnailed = true; \
 			ird->rd_refcnt = 1; \
+			UnlockRelationOid(indexoid, AccessShareLock); \
 		} while (0)
 
 		LOAD_CRIT_INDEX(ClassOidIndexId);
