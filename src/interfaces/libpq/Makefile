@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.159.2.1 2008/03/05 05:39:17 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.159.2.2 2008/04/16 14:21:22 adunstan Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ SO_MAJOR_VERSION= 5
 SO_MINOR_VERSION= 1
 DLTYPE= library
 
-override CPPFLAGS :=  -DFRONTEND -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port
+override CPPFLAGS :=  -DFRONTEND -DUNSAFE_STAT_OK -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port
 ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif
