@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.59 2008/03/31 01:31:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.60 2008/04/16 22:16:00 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -695,7 +695,6 @@ AddUserToDacl(HANDLE hProcess)
 	DWORD		dwNewAclSize;
 	DWORD		dwSize = 0;
 	DWORD		dwTokenInfoLength = 0;
-	DWORD		dwResult = 0;
 	HANDLE		hToken = NULL;
 	PACL		pacl = NULL;
 	PSID		psidUser = NULL;
@@ -707,7 +706,7 @@ AddUserToDacl(HANDLE hProcess)
 	/* Get the token for the process */
 	if (!OpenProcessToken(hProcess, TOKEN_QUERY | TOKEN_ADJUST_DEFAULT, &hToken))
 	{
-		log_error("could not open process token: %ui", GetLastError());
+		log_error("could not open process token: %lu", GetLastError());
 		goto cleanup;
 	}
 
@@ -719,19 +718,19 @@ AddUserToDacl(HANDLE hProcess)
 			ptdd = (TOKEN_DEFAULT_DACL *) LocalAlloc(LPTR, dwSize);
 			if (ptdd == NULL)
 			{
-				log_error("could not allocate %i bytes of memory", dwSize);
+				log_error("could not allocate %lu bytes of memory", dwSize);
 				goto cleanup;
 			}
 
 			if (!GetTokenInformation(hToken, tic, (LPVOID) ptdd, dwSize, &dwSize))
 			{
-				log_error("could not get token information: %ui", GetLastError());
+				log_error("could not get token information: %lu", GetLastError());
 				goto cleanup;
 			}
 		}
 		else
 		{
-			log_error("could not get token information buffer size: %ui", GetLastError());
+			log_error("could not get token information buffer size: %lu", GetLastError());
 			goto cleanup;
 		}
 	}
@@ -741,14 +740,14 @@ AddUserToDacl(HANDLE hProcess)
 						   (DWORD) sizeof(ACL_SIZE_INFORMATION),
 						   AclSizeInformation))
 	{
-		log_error("could not get ACL information: %ui", GetLastError());
+		log_error("could not get ACL information: %lu", GetLastError());
 		goto cleanup;
 	}
 
 	/* Get the SID for the current user. We need to add this to the ACL. */
 	if (!GetUserSid(&psidUser, hToken))
 	{
-		log_error("could not get user SID: %ui", GetLastError());
+		log_error("could not get user SID: %lu", GetLastError());
 		goto cleanup;
 	}
 
@@ -759,13 +758,13 @@ AddUserToDacl(HANDLE hProcess)
 	pacl = (PACL) LocalAlloc(LPTR, dwNewAclSize);
 	if (pacl == NULL)
 	{
-		log_error("could not allocate %i bytes of memory", dwNewAclSize);
+		log_error("could not allocate %lu bytes of memory", dwNewAclSize);
 		goto cleanup;
 	}
 
 	if (!InitializeAcl(pacl, dwNewAclSize, ACL_REVISION))
 	{
-		log_error("could not initialize ACL: %ui", GetLastError());
+		log_error("could not initialize ACL: %lu", GetLastError());
 		goto cleanup;
 	}
 
@@ -774,13 +773,13 @@ AddUserToDacl(HANDLE hProcess)
 	{
 		if (!GetAce(ptdd->DefaultDacl, i, (LPVOID *) & pace))
 		{
-			log_error("could not get ACE: %ui", GetLastError());
+			log_error("could not get ACE: %lu", GetLastError());
 			goto cleanup;
 		}
 
 		if (!AddAce(pacl, ACL_REVISION, MAXDWORD, pace, ((PACE_HEADER) pace)->AceSize))
 		{
-			log_error("could not add ACE: %ui", GetLastError());
+			log_error("could not add ACE: %lu", GetLastError());
 			goto cleanup;
 		}
 	}
@@ -788,7 +787,7 @@ AddUserToDacl(HANDLE hProcess)
 	/* Add the new ACE for the current user */
 	if (!AddAccessAllowedAce(pacl, ACL_REVISION, GENERIC_ALL, psidUser))
 	{
-		log_error("could not add access allowed ACE: %ui", GetLastError());
+		log_error("could not add access allowed ACE: %lu", GetLastError());
 		goto cleanup;
 	}
 
@@ -797,7 +796,7 @@ AddUserToDacl(HANDLE hProcess)
 
 	if (!SetTokenInformation(hToken, tic, (LPVOID) & tddNew, dwNewAclSize))
 	{
-		log_error("could not set token information: %ui", GetLastError());
+		log_error("could not set token information: %lu", GetLastError());
 		goto cleanup;
 	}
 
@@ -828,8 +827,6 @@ static BOOL
 GetUserSid(PSID * ppSidUser, HANDLE hToken)
 {
 	DWORD		dwLength;
-	DWORD		cbName = 250;
-	DWORD		cbDomainName = 250;
 	PTOKEN_USER pTokenUser = NULL;
 
 
@@ -845,13 +842,13 @@ GetUserSid(PSID * ppSidUser, HANDLE hToken)
 
 			if (pTokenUser == NULL)
 			{
-				log_error("could not allocate %ui bytes of memory", dwLength);
+				log_error("could not allocate %lu bytes of memory", dwLength);
 				return FALSE;
 			}
 		}
 		else
 		{
-			log_error("could not get token information buffer size: %ui", GetLastError());
+			log_error("could not get token information buffer size: %lu", GetLastError());
 			return FALSE;
 		}
 	}
@@ -865,7 +862,7 @@ GetUserSid(PSID * ppSidUser, HANDLE hToken)
 		HeapFree(GetProcessHeap(), 0, pTokenUser);
 		pTokenUser = NULL;
 
-		log_error("could not get token information: %ui", GetLastError());
+		log_error("could not get token information: %lu", GetLastError());
 		return FALSE;
 	}
 
