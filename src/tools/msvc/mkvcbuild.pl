@@ -79,6 +79,7 @@ if ($solution->{options}->{tcl}) {
 
 my $libpq = $solution->AddProject('libpq','dll','interfaces','src\interfaces\libpq');
 $libpq->AddDefine('FRONTEND');
+$libpq->AddDefine('UNSAFE_STAT_OK');
 $libpq->AddIncludeDir('src\port');
 $libpq->AddLibrary('wsock32.lib');
 $libpq->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
