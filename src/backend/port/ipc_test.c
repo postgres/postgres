@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.24 2008/03/24 18:08:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.25 2008/04/16 23:59:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ char	   *DataDir = ".";
 
 static struct ONEXIT
 {
-	void		(*function) (int code, Datum arg);
+	pg_on_exit_callback function;
 	Datum		arg;
 }	on_proc_exit_list[MAX_ON_EXITS], on_shmem_exit_list[MAX_ON_EXITS];
 
@@ -85,7 +85,7 @@ shmem_exit(int code)
 }
 
 void
-			on_shmem_exit(void (*function) (int code, Datum arg), Datum arg)
+on_shmem_exit(pg_on_exit_callback function, Datum arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		elog(FATAL, "out of on_shmem_exit slots");
@@ -114,9 +114,9 @@ ProcessInterrupts(void)
 }
 
 int
-ExceptionalCondition(char *conditionName,
-					 char *errorType,
-					 char *fileName,
+ExceptionalCondition(const char *conditionName,
+					 const char *errorType,
+					 const char *fileName,
 					 int lineNumber)
 {
 	fprintf(stderr, "TRAP: %s(\"%s\", File: \"%s\", Line: %d)\n",

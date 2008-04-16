@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.117 2008/04/10 22:25:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.118 2008/04/16 23:59:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -574,6 +574,7 @@ extern void _bt_killitems(IndexScanDesc scan, bool haveLock);
 extern BTCycleId _bt_vacuum_cycleid(Relation rel);
 extern BTCycleId _bt_start_vacuum(Relation rel);
 extern void _bt_end_vacuum(Relation rel);
+extern void _bt_end_vacuum_callback(int code, Datum arg);
 extern Size BTreeShmemSize(void);
 extern void BTreeShmemInit(void);
 

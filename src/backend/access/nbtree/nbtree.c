@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.158 2008/04/13 19:18:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.159 2008/04/16 23:59:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "storage/freespace.h"
+#include "storage/ipc.h"
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
 
@@ -530,21 +531,15 @@ btbulkdelete(PG_FUNCTION_ARGS)
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 
 	/* Establish the vacuum cycle ID to use for this scan */
-	PG_TRY();
+	/* The ENSURE stuff ensures we clean up shared memory on failure */
+	PG_ENSURE_ERROR_CLEANUP(_bt_end_vacuum_callback, PointerGetDatum(rel));
 	{
 		cycleid = _bt_start_vacuum(rel);
 
 		btvacuumscan(info, stats, callback, callback_state, cycleid);
-
-		_bt_end_vacuum(rel);
 	}
-	PG_CATCH();
-	{
-		/* Make sure shared memory gets cleaned up */
-		_bt_end_vacuum(rel);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	PG_END_ENSURE_ERROR_CLEANUP(_bt_end_vacuum_callback, PointerGetDatum(rel));
+	_bt_end_vacuum(rel);
 
 	PG_RETURN_POINTER(stats);
 }

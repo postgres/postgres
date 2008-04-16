@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.205 2008/03/26 21:10:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.206 2008/04/16 23:59:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "storage/freespace.h"
+#include "storage/ipc.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
@@ -53,7 +54,14 @@
 #include "utils/tqual.h"
 
 
+typedef struct
+{
+	Oid			src_dboid;		/* source (template) DB */
+	Oid			dest_dboid;		/* DB we are trying to create */
+} createdb_failure_params;
+
 /* non-export function prototypes */
+static void createdb_failure_callback(int code, Datum arg);
 static bool get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
@@ -99,6 +107,7 @@ createdb(const CreatedbStmt *stmt)
 	int			encoding = -1;
 	int			dbconnlimit = -1;
 	int			ctype_encoding;
+	createdb_failure_params fparms;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -449,12 +458,15 @@ createdb(const CreatedbStmt *stmt)
 
 	/*
 	 * Once we start copying subdirectories, we need to be able to clean 'em
-	 * up if we fail.  Establish a TRY block to make sure this happens. (This
+	 * up if we fail.  Use an ENSURE block to make sure this happens.  (This
 	 * is not a 100% solution, because of the possibility of failure during
 	 * transaction commit after we leave this routine, but it should handle
 	 * most scenarios.)
 	 */
-	PG_TRY();
+	fparms.src_dboid = src_dboid;
+	fparms.dest_dboid = dboid;
+	PG_ENSURE_ERROR_CLEANUP(createdb_failure_callback,
+							PointerGetDatum(&fparms));
 	{
 		/*
 		 * Iterate through all tablespaces of the template database, and copy
@@ -565,18 +577,25 @@ createdb(const CreatedbStmt *stmt)
 		 */
 		database_file_update_needed();
 	}
-	PG_CATCH();
-	{
-		/* Release lock on source database before doing recursive remove */
-		UnlockSharedObject(DatabaseRelationId, src_dboid, 0,
-						   ShareLock);
+	PG_END_ENSURE_ERROR_CLEANUP(createdb_failure_callback,
+								PointerGetDatum(&fparms));
+}
 
-		/* Throw away any successfully copied subdirectories */
-		remove_dbtablespaces(dboid);
+/* Error cleanup callback for createdb */
+static void
+createdb_failure_callback(int code, Datum arg)
+{
+	createdb_failure_params *fparms = (createdb_failure_params *) DatumGetPointer(arg);
 
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	/*
+	 * Release lock on source database before doing recursive remove.
+	 * This is not essential but it seems desirable to release the lock
+	 * as soon as possible.
+	 */
+	UnlockSharedObject(DatabaseRelationId, fparms->src_dboid, 0, ShareLock);
+
+	/* Throw away any successfully copied subdirectories */
+	remove_dbtablespaces(fparms->dest_dboid);
 }
 
 

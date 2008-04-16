@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.100 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.101 2008/04/16 23:59:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ bool		proc_exit_inprogress = false;
 
 static struct ONEXIT
 {
-	void		(*function) (int code, Datum arg);
+	pg_on_exit_callback function;
 	Datum		arg;
 }	on_proc_exit_list[MAX_ON_EXITS], on_shmem_exit_list[MAX_ON_EXITS];
 
@@ -184,7 +184,7 @@ shmem_exit(int code)
  * ----------------------------------------------------------------
  */
 void
-			on_proc_exit(void (*function) (int code, Datum arg), Datum arg)
+on_proc_exit(pg_on_exit_callback function, Datum arg)
 {
 	if (on_proc_exit_index >= MAX_ON_EXITS)
 		ereport(FATAL,
@@ -205,7 +205,7 @@ void
  * ----------------------------------------------------------------
  */
 void
-			on_shmem_exit(void (*function) (int code, Datum arg), Datum arg)
+on_shmem_exit(pg_on_exit_callback function, Datum arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		ereport(FATAL,
@@ -216,6 +216,24 @@ void
 	on_shmem_exit_list[on_shmem_exit_index].arg = arg;
 
 	++on_shmem_exit_index;
+}
+
+/* ----------------------------------------------------------------
+ *		cancel_shmem_exit
+ *
+ *		this function removes an entry, if present, from the list of
+ *		functions to be invoked by shmem_exit().  For simplicity,
+ *		only the latest entry can be removed.  (We could work harder
+ *		but there is no need for current uses.)
+ * ----------------------------------------------------------------
+ */
+void
+cancel_shmem_exit(pg_on_exit_callback function, Datum arg)
+{
+	if (on_shmem_exit_index > 0 &&
+		on_shmem_exit_list[on_shmem_exit_index - 1].function == function &&
+		on_shmem_exit_list[on_shmem_exit_index - 1].arg == arg)
+		--on_shmem_exit_index;
 }
 
 /* ----------------------------------------------------------------

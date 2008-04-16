@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.92 2008/03/24 18:08:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.93 2008/04/16 23:59:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,6 +204,13 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
  * of levels this will work for.  It's best to keep the error recovery
  * section simple enough that it can't generate any new errors, at least
  * not before popping the error stack.
+ *
+ * Note: an ereport(FATAL) will not be caught by this construct; control will
+ * exit straight through proc_exit().  Therefore, do NOT put any cleanup
+ * of non-process-local resources into the error recovery section, at least
+ * not without taking thought for what will happen during ereport(FATAL).
+ * The PG_ENSURE_ERROR_CLEANUP macros provided by storage/ipc.h may be
+ * helpful in such cases.
  *----------
  */
 #define PG_TRY()  \

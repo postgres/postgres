@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.88 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.89 2008/04/16 23:59:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1252,8 +1252,11 @@ _bt_vacuum_cycleid(Relation rel)
 /*
  * _bt_start_vacuum --- assign a cycle ID to a just-starting VACUUM operation
  *
- * Note: the caller must guarantee (via PG_TRY) that it will eventually call
- * _bt_end_vacuum, else we'll permanently leak an array slot.
+ * Note: the caller must guarantee that it will eventually call
+ * _bt_end_vacuum, else we'll permanently leak an array slot.  To ensure
+ * that this happens even in elog(FATAL) scenarios, the appropriate coding
+ * is not just a PG_TRY, but
+ *		PG_ENSURE_ERROR_CLEANUP(_bt_end_vacuum_callback, PointerGetDatum(rel))
  */
 BTCycleId
 _bt_start_vacuum(Relation rel)
@@ -1335,6 +1338,15 @@ _bt_end_vacuum(Relation rel)
 	}
 
 	LWLockRelease(BtreeVacuumLock);
+}
+
+/*
+ * _bt_end_vacuum wrapped as an on_shmem_exit callback function
+ */
+void
+_bt_end_vacuum_callback(int code, Datum arg)
+{
+	_bt_end_vacuum((Relation) DatumGetPointer(arg));
 }
 
 /*
