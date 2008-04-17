@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.85 2008/01/01 19:45:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.86 2008/04/17 21:37:28 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ index_form_tuple(TupleDesc tupleDescriptor,
 		 * If value is stored EXTERNAL, must fetch it so we are not depending
 		 * on outside storage.	This should be improved someday.
 		 */
-		if (VARATT_IS_EXTERNAL(values[i]))
+		if (VARATT_IS_EXTERNAL(DatumGetPointer(values[i])))
 		{
 			untoasted_values[i] =
 				PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
@@ -85,8 +85,8 @@ index_form_tuple(TupleDesc tupleDescriptor,
 		 * If value is above size target, and is of a compressible datatype,
 		 * try to compress it in-line.
 		 */
-		if (!VARATT_IS_EXTENDED(untoasted_values[i]) &&
-			VARSIZE(untoasted_values[i]) > TOAST_INDEX_TARGET &&
+		if (!VARATT_IS_EXTENDED(DatumGetPointer(untoasted_values[i])) &&
+			VARSIZE(DatumGetPointer(untoasted_values[i])) > TOAST_INDEX_TARGET &&
 			(att->attstorage == 'x' || att->attstorage == 'm'))
 		{
 			Datum		cvalue = toast_compress_datum(untoasted_values[i]);

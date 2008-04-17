@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.114 2008/03/25 22:42:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.115 2008/04/17 21:37:28 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -827,7 +827,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 			break;
 	}
 
-	return (Datum) returnValue;
+	return PointerGetDatum(returnValue);
 }
 
 
@@ -2008,7 +2008,7 @@ fmgr(Oid procedureId,...)
 					flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS)));
 		va_start(pvar, procedureId);
 		for (i = 0; i < n_arguments; i++)
-			fcinfo.arg[i] = (Datum) va_arg(pvar, char *);
+			fcinfo.arg[i] = PointerGetDatum(va_arg(pvar, char *));
 		va_end(pvar);
 	}
 
@@ -2018,7 +2018,7 @@ fmgr(Oid procedureId,...)
 	if (fcinfo.isnull)
 		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
-	return (char *) result;
+	return DatumGetPointer(result);
 }
 
 

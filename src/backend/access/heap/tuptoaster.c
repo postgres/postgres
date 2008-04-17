@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.86 2008/04/12 23:14:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.87 2008/04/17 21:37:28 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -383,7 +383,7 @@ toast_delete(Relation rel, HeapTuple oldtup)
 		{
 			Datum		value = toast_values[i];
 
-			if (!toast_isnull[i] && VARATT_IS_EXTERNAL(value))
+			if (!toast_isnull[i] && VARATT_IS_EXTERNAL(PointerGetDatum(value)))
 				toast_delete_datum(rel, value);
 		}
 	}
@@ -615,9 +615,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		{
 			if (toast_action[i] != ' ')
 				continue;
-			if (VARATT_IS_EXTERNAL(toast_values[i]))
+			if (VARATT_IS_EXTERNAL(DatumGetPointer(toast_values[i])))
 				continue;		/* can't happen, toast_action would be 'p' */
-			if (VARATT_IS_COMPRESSED(toast_values[i]))
+			if (VARATT_IS_COMPRESSED(DatumGetPointer(toast_values[i])))
 				continue;
 			if (att[i]->attstorage != 'x' && att[i]->attstorage != 'e')
 				continue;
@@ -647,7 +647,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 					pfree(DatumGetPointer(old_value));
 				toast_values[i] = new_value;
 				toast_free[i] = true;
-				toast_sizes[i] = VARSIZE(toast_values[i]);
+				toast_sizes[i] = VARSIZE(DatumGetPointer(toast_values[i]));
 				need_change = true;
 				need_free = true;
 			}
@@ -707,7 +707,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		{
 			if (toast_action[i] == 'p')
 				continue;
-			if (VARATT_IS_EXTERNAL(toast_values[i]))
+			if (VARATT_IS_EXTERNAL(DatumGetPointer(toast_values[i])))
 				continue;		/* can't happen, toast_action would be 'p' */
 			if (att[i]->attstorage != 'x' && att[i]->attstorage != 'e')
 				continue;
@@ -756,9 +756,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		{
 			if (toast_action[i] != ' ')
 				continue;
-			if (VARATT_IS_EXTERNAL(toast_values[i]))
+			if (VARATT_IS_EXTERNAL(DatumGetPointer(toast_values[i])))
 				continue;		/* can't happen, toast_action would be 'p' */
-			if (VARATT_IS_COMPRESSED(toast_values[i]))
+			if (VARATT_IS_COMPRESSED(DatumGetPointer(toast_values[i])))
 				continue;
 			if (att[i]->attstorage != 'm')
 				continue;
@@ -786,7 +786,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 				pfree(DatumGetPointer(old_value));
 			toast_values[i] = new_value;
 			toast_free[i] = true;
-			toast_sizes[i] = VARSIZE(toast_values[i]);
+			toast_sizes[i] = VARSIZE(DatumGetPointer(toast_values[i]));
 			need_change = true;
 			need_free = true;
 		}
@@ -817,7 +817,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		{
 			if (toast_action[i] == 'p')
 				continue;
-			if (VARATT_IS_EXTERNAL(toast_values[i]))
+			if (VARATT_IS_EXTERNAL(DatumGetPointer(toast_values[i])))
 				continue;		/* can't happen, toast_action would be 'p' */
 			if (att[i]->attstorage != 'm')
 				continue;
@@ -1070,10 +1070,10 @@ Datum
 toast_compress_datum(Datum value)
 {
 	struct varlena *tmp;
-	int32		valsize = VARSIZE_ANY_EXHDR(value);
+	int32		valsize = VARSIZE_ANY_EXHDR(DatumGetPointer(value));
 
-	Assert(!VARATT_IS_EXTERNAL(value));
-	Assert(!VARATT_IS_COMPRESSED(value));
+	Assert(!VARATT_IS_EXTERNAL(DatumGetPointer(value)));
+	Assert(!VARATT_IS_COMPRESSED(DatumGetPointer(value)));
 
 	/*
 	 * No point in wasting a palloc cycle if value size is out of the
@@ -1095,7 +1095,7 @@ toast_compress_datum(Datum value)
 	 * header byte and no padding if the value is short enough.  So we insist
 	 * on a savings of more than 2 bytes to ensure we have a gain.
 	 */
-	if (pglz_compress(VARDATA_ANY(value), valsize,
+	if (pglz_compress(VARDATA_ANY(DatumGetPointer(value)), valsize,
 					  (PGLZ_Header *) tmp, PGLZ_strategy_default) &&
 		VARSIZE(tmp) < valsize - 2)
 	{
@@ -1141,6 +1141,7 @@ toast_save_datum(Relation rel, Datum value,
 	int32		chunk_seq = 0;
 	char	   *data_p;
 	int32		data_todo;
+	Pointer		dval = DatumGetPointer(value);
 
 	/*
 	 * Open the toast relation and its index.  We can use the index to check
@@ -1159,28 +1160,28 @@ toast_save_datum(Relation rel, Datum value,
 	 *
 	 * va_extsize is the actual size of the data payload in the toast records.
 	 */
-	if (VARATT_IS_SHORT(value))
+	if (VARATT_IS_SHORT(dval))
 	{
-		data_p = VARDATA_SHORT(value);
-		data_todo = VARSIZE_SHORT(value) - VARHDRSZ_SHORT;
+		data_p = VARDATA_SHORT(dval);
+		data_todo = VARSIZE_SHORT(dval) - VARHDRSZ_SHORT;
 		toast_pointer.va_rawsize = data_todo + VARHDRSZ;		/* as if not short */
 		toast_pointer.va_extsize = data_todo;
 	}
-	else if (VARATT_IS_COMPRESSED(value))
+	else if (VARATT_IS_COMPRESSED(dval))
 	{
-		data_p = VARDATA(value);
-		data_todo = VARSIZE(value) - VARHDRSZ;
+		data_p = VARDATA(dval);
+		data_todo = VARSIZE(dval) - VARHDRSZ;
 		/* rawsize in a compressed datum is just the size of the payload */
-		toast_pointer.va_rawsize = VARRAWSIZE_4B_C(value) + VARHDRSZ;
+		toast_pointer.va_rawsize = VARRAWSIZE_4B_C(dval) + VARHDRSZ;
 		toast_pointer.va_extsize = data_todo;
 		/* Assert that the numbers look like it's compressed */
 		Assert(VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer));
 	}
 	else
 	{
-		data_p = VARDATA(value);
-		data_todo = VARSIZE(value) - VARHDRSZ;
-		toast_pointer.va_rawsize = VARSIZE(value);
+		data_p = VARDATA(dval);
+		data_todo = VARSIZE(dval) - VARHDRSZ;
+		toast_pointer.va_rawsize = VARSIZE(dval);
 		toast_pointer.va_extsize = data_todo;
 	}
 

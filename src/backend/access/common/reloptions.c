@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.9 2008/03/25 22:42:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.10 2008/04/17 21:37:28 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ transformRelOptions(Datum oldOptions, List *defList,
 	astate = NULL;
 
 	/* Copy any oldOptions that aren't to be replaced */
-	if (oldOptions != (Datum) 0)
+	if (PointerIsValid(DatumGetPointer(oldOptions)))
 	{
 		ArrayType  *array = DatumGetArrayTypeP(oldOptions);
 		Datum	   *oldoptions;
@@ -164,7 +164,7 @@ untransformRelOptions(Datum options)
 	int			i;
 
 	/* Nothing to do if no options */
-	if (options == (Datum) 0)
+	if (!PointerIsValid(DatumGetPointer(options)))
 		return result;
 
 	array = DatumGetArrayTypeP(options);
@@ -220,7 +220,7 @@ parseRelOptions(Datum options, int numkeywords, const char *const * keywords,
 	MemSet(values, 0, numkeywords * sizeof(char *));
 
 	/* Done if no options */
-	if (options == (Datum) 0)
+	if (!PointerIsValid(DatumGetPointer(options)))
 		return;
 
 	array = DatumGetArrayTypeP(options);
@@ -349,7 +349,7 @@ index_reloptions(RegProcedure amoptions, Datum reloptions, bool validate)
 	Assert(RegProcedureIsValid(amoptions));
 
 	/* Assume function is strict */
-	if (reloptions == (Datum) 0)
+	if (!PointerIsValid(DatumGetPointer(reloptions)))
 		return NULL;
 
 	/* Can't use OidFunctionCallN because we might get a NULL result */
