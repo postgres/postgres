@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.171 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.172 2008/04/17 18:30:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,8 @@ static void explain_outNode(StringInfo str,
 				Plan *plan, PlanState *planstate,
 				Plan *outer_plan,
 				int indent, ExplainState *es);
+static void show_plan_tlist(Plan *plan,
+							StringInfo str, int indent, ExplainState *es);
 static void show_scan_qual(List *qual, const char *qlabel,
 			   int scanrelid, Plan *outer_plan, Plan *inner_plan,
 			   StringInfo str, int indent, ExplainState *es);
@@ -443,7 +445,7 @@ explain_outNode(StringInfo str,
 				Plan *outer_plan,
 				int indent, ExplainState *es)
 {
-	char	   *pname;
+	const char *pname;
 	int			i;
 
 	if (plan == NULL)
@@ -744,6 +746,9 @@ explain_outNode(StringInfo str,
 		appendStringInfo(str, " (never executed)");
 	appendStringInfoChar(str, '\n');
 
+	/* target list */
+	show_plan_tlist(plan, str, indent, es);
+
 	/* quals, sort keys, etc */
 	switch (nodeTag(plan))
 	{
@@ -1041,6 +1046,56 @@ explain_outNode(StringInfo str,
 							indent + 4, es);
 		}
 	}
+}
+
+/*
+ * Show the targetlist of a plan node
+ */
+static void
+show_plan_tlist(Plan *plan,
+				StringInfo str, int indent, ExplainState *es)
+{
+#ifdef EXPLAIN_PRINT_TLISTS
+	List	   *context;
+	bool		useprefix;
+	ListCell   *lc;
+	int			i;
+
+	/* No work if empty tlist (this occurs eg in bitmap indexscans) */
+	if (plan->targetlist == NIL)
+		return;
+	/* The tlist of an Append isn't real helpful, so suppress it */
+	if (IsA(plan, Append))
+		return;
+
+	/* Set up deparsing context */
+	context = deparse_context_for_plan((Node *) outerPlan(plan),
+									   (Node *) innerPlan(plan),
+									   es->rtable);
+	useprefix = list_length(es->rtable) > 1;
+
+	/* Emit line prefix */
+	for (i = 0; i < indent; i++)
+		appendStringInfo(str, "  ");
+	appendStringInfo(str, "  Output: ");
+
+	/* Deparse each non-junk result column */
+	i = 0;
+	foreach(lc, plan->targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		if (tle->resjunk)
+			continue;
+		if (i++ > 0)
+			appendStringInfo(str, ", ");
+		appendStringInfoString(str,
+							   deparse_expression((Node *) tle->expr, context,
+												  useprefix, false));
+	}
+
+	appendStringInfoChar(str, '\n');
+#endif /* EXPLAIN_PRINT_TLISTS */
 }
 
 /*
