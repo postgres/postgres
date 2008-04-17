@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Apr 16 13:49:50 EDT 2008
+Last updated:		Thu Apr 17 16:56:51 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -20,17 +20,8 @@ http://developer.postgresql.org.
 Administration
 ==============
 
-* Allow administrators to safely terminate individual sessions either
+* -Allow administrators to safely terminate individual sessions either
   via an SQL function or SIGTERM
-
-  Lock table corruption following SIGTERM of an individual backend
-  has been reported in 8.0.  A possible cause was fixed in 8.1, but
-  it is unknown whether other problems exist.  This item mostly
-  requires additional testing rather than of writing any new code.
-
-  http://archives.postgresql.org/pgsql-hackers/2006-08/msg00174.php
-  http://archives.postgresql.org/pgsql-hackers/2007-04/msg00218.php
-
 * Check for unreferenced table files created by transactions that were
   in-progress when the server terminated abruptly
 
