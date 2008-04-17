@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.61 2008/04/15 20:28:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.62 2008/04/17 20:56:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,6 +129,12 @@ pg_cancel_backend(PG_FUNCTION_ARGS)
 }
 
 Datum
+pg_terminate_backend(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(pg_signal_backend(PG_GETARG_INT32(0), SIGTERM));
+}
+
+Datum
 pg_reload_conf(PG_FUNCTION_ARGS)
 {
 	if (!superuser())
@@ -168,17 +174,6 @@ pg_rotate_logfile(PG_FUNCTION_ARGS)
 	SendPostmasterSignal(PMSIGNAL_ROTATE_LOGFILE);
 	PG_RETURN_BOOL(true);
 }
-
-#ifdef NOT_USED
-
-/* Disabled in 8.0 due to reliability concerns; FIXME someday */
-Datum
-pg_terminate_backend(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_INT32(pg_signal_backend(PG_GETARG_INT32(0), SIGTERM));
-}
-#endif
-
 
 /* Function to find out which databases make use of a tablespace */
 

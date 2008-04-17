@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.491 2008/04/15 20:28:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.492 2008/04/17 20:56:41 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3157,6 +3157,8 @@ DESCR("is schema another session's temp schema?");
 
 DATA(insert OID = 2171 ( pg_cancel_backend		PGNSP PGUID 12 1 0 f f t f v 1 16 "23" _null_ _null_ _null_ pg_cancel_backend - _null_ _null_ ));
 DESCR("cancel a server process' current query");
+DATA(insert OID = 2096 ( pg_terminate_backend		PGNSP PGUID 12 1 0 f f t f v 1 16 "23" _null_ _null_ _null_ pg_terminate_backend - _null_ _null_ ));
+DESCR("terminate a server process");
 DATA(insert OID = 2172 ( pg_start_backup		PGNSP PGUID 12 1 0 f f t f v 1 25 "25" _null_ _null_ _null_ pg_start_backup - _null_ _null_ ));
 DESCR("prepare for taking an online backup");
 DATA(insert OID = 2173 ( pg_stop_backup			PGNSP PGUID 12 1 0 f f t f v 0 25 "" _null_ _null_ _null_ pg_stop_backup - _null_ _null_ ));

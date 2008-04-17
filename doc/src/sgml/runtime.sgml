@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.413 2008/04/15 20:28:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.414 2008/04/17 20:56:41 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1372,6 +1372,14 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
     well.
    </para>
   </important>
+
+  <para>
+   To terminate a session while allowing other sessions to continue, use
+   <function>pg_terminate_backend()</> (<xref
+   linkend="functions-admin-signal-table">) or send a
+   <systemitem>SIGTERM</> signal to the child process associated with
+   the session.
+  </para>
  </sect1>
 
  <sect1 id="preventing-server-spoofing">
