@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.239 2008/04/13 20:51:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.240 2008/04/17 21:22:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,7 @@ static MergeJoin *make_mergejoin(List *tlist,
 static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst,
 		  double limit_tuples);
+static Material *make_material(Plan *lefttree);
 
 
 /*
@@ -616,12 +617,14 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	 * add any such expressions to the subplan's tlist.
 	 *
 	 * The subplan may have a "physical" tlist if it is a simple scan plan.
-	 * This should be left as-is if we don't need to add any expressions;
+	 * If we're going to sort, this should be reduced to the regular tlist,
+	 * so that we don't sort more data than we need to.  For hashing, the
+	 * tlist should be left as-is if we don't need to add any expressions;
 	 * but if we do have to add expressions, then a projection step will be
-	 * needed at runtime anyway, and so we may as well remove unneeded items.
+	 * needed at runtime anyway, so we may as well remove unneeded items.
 	 * Therefore newtlist starts from build_relation_tlist() not just a
 	 * copy of the subplan's tlist; and we don't install it into the subplan
-	 * unless stuff has to be added.
+	 * unless we are sorting or stuff has to be added.
 	 *
 	 * To find the correct list of values to unique-ify, we look in the
 	 * information saved for IN expressions.  If this code is ever used in
@@ -669,7 +672,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		}
 	}
 
-	if (newitems)
+	if (newitems || best_path->umethod == UNIQUE_PATH_SORT)
 	{
 		/*
 		 * If the top plan node can't do projections, we need to add a Result
@@ -2850,7 +2853,7 @@ make_sort_from_groupcols(PlannerInfo *root,
 					 sortColIdx, sortOperators, nullsFirst, -1.0);
 }
 
-Material *
+static Material *
 make_material(Plan *lefttree)
 {
 	Material   *node = makeNode(Material);

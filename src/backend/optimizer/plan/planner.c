@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.231 2008/04/01 00:48:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.232 2008/04/17 21:22:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -957,8 +957,22 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * Normal case --- create a plan according to query_planner's
 			 * results.
 			 */
+			bool	need_sort_for_grouping = false;
+
 			result_plan = create_plan(root, best_path);
 			current_pathkeys = best_path->pathkeys;
+
+			/* Detect if we'll need an explicit sort for grouping */
+			if (parse->groupClause && !use_hashed_grouping &&
+				!pathkeys_contained_in(group_pathkeys, current_pathkeys))
+			{
+				need_sort_for_grouping = true;
+				/*
+				 * Always override query_planner's tlist, so that we don't
+				 * sort useless data from a "physical" tlist.
+				 */
+				need_tlist_eval = true;
+			}
 
 			/*
 			 * create_plan() returns a plan with just a "flat" tlist of
@@ -1054,8 +1068,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 				if (parse->groupClause)
 				{
-					if (!pathkeys_contained_in(group_pathkeys,
-											   current_pathkeys))
+					if (need_sort_for_grouping)
 					{
 						result_plan = (Plan *)
 							make_sort_from_groupcols(root,
@@ -1098,7 +1111,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * Add an explicit sort if we couldn't make the path come out
 				 * the way the GROUP node needs it.
 				 */
-				if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
+				if (need_sort_for_grouping)
 				{
 					result_plan = (Plan *)
 						make_sort_from_groupcols(root,
