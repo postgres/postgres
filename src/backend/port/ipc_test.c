@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.21 2006/07/14 05:28:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.21.2.1 2008/04/17 00:00:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ char	   *DataDir = ".";
 
 static struct ONEXIT
 {
-	void		(*function) (int code, Datum arg);
+	pg_on_exit_callback function;
 	Datum		arg;
 }	on_proc_exit_list[MAX_ON_EXITS], on_shmem_exit_list[MAX_ON_EXITS];
 
@@ -85,7 +85,7 @@ shmem_exit(int code)
 }
 
 void
-			on_shmem_exit(void (*function) (int code, Datum arg), Datum arg)
+on_shmem_exit(pg_on_exit_callback function, Datum arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		elog(FATAL, "out of on_shmem_exit slots");
