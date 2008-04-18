@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.204.2.2 2008/04/18 06:48:50 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.204.2.3 2008/04/18 17:05:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1320,7 +1320,7 @@ remove_dbtablespaces(Oid db_id)
 
 		if (!rmtree(dstpath, true))
 			ereport(WARNING,
-					(errmsg("could not remove database directory \"%s\"",
+					(errmsg("some useless files may be left behind in old database directory \"%s\"",
 							dstpath)));
 
 		/* Record the filesystem change in XLOG */
@@ -1489,7 +1489,7 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		{
 			if (!rmtree(dst_path, true))
 				ereport(WARNING,
-						(errmsg("could not remove database directory \"%s\"",
+						(errmsg("some useless files may be left behind in old database directory \"%s\"",
 								dst_path)));
 		}
 
@@ -1528,7 +1528,7 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		/* And remove the physical files */
 		if (!rmtree(dst_path, true))
 			ereport(WARNING,
-					(errmsg("could not remove database directory \"%s\"",
+					(errmsg("some useless files may be left behind in old database directory \"%s\"",
 							dst_path)));
 	}
 	else

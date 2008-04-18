@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.116.2.4 2008/04/16 14:21:22 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.116.2.5 2008/04/18 17:05:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ extern bool get_home_path(char *ret_path);
 extern void get_parent_directory(char *path);
 
 /* port/dirmod.c */
-extern char **pgfnames(char *path);
+extern char **pgfnames(const char *path);
 extern void pgfnames_cleanup(char **filenames);
 
 /*
@@ -278,7 +278,7 @@ extern int	pgsymlink(const char *oldpath, const char *newpath);
 
 extern void copydir(char *fromdir, char *todir, bool recurse);
 
-extern bool rmtree(char *path, bool rmtopdir);
+extern bool rmtree(const char *path, bool rmtopdir);
 
 /* 
  * stat() is not guaranteed to set the st_size field on win32, so we
