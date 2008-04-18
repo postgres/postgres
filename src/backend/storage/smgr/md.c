@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.136 2008/03/10 20:06:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.137 2008/04/18 06:48:38 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1196,8 +1196,11 @@ mdpostckpt(void)
 		if (unlink(path) < 0)
 		{
 			/*
-			 * ENOENT shouldn't happen either, but it doesn't really matter
-			 * because we would've deleted it now anyway.
+			 * There's a race condition, when the database is dropped at the
+			 * same time that we process the pending unlink requests. If the
+			 * DROP DATABASE deletes the file before we do, we will get ENOENT
+			 * here. rmtree() also has to ignore ENOENT errors, to deal with
+			 * the possibility that we delete the file first.
 			 */
 			if (errno != ENOENT)
 				ereport(WARNING,
@@ -1321,7 +1324,11 @@ RememberFsyncRequest(RelFileNode rnode, BlockNumber segno)
 		/* Remove any pending requests for the entire database */
 		HASH_SEQ_STATUS hstat;
 		PendingOperationEntry *entry;
+		ListCell   *cell, 
+				   *prev,
+				   *next;
 
+		/* Remove fsync requests */
 		hash_seq_init(&hstat, pendingOpsTable);
 		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
 		{
@@ -1330,6 +1337,22 @@ RememberFsyncRequest(RelFileNode rnode, BlockNumber segno)
 				/* Okay, cancel this entry */
 				entry->canceled = true;
 			}
+		}
+	
+		/* Remove unlink requests */
+		prev = NULL;
+		for (cell = list_head(pendingUnlinks); cell; cell = next)
+		{
+			PendingUnlinkEntry *entry = (PendingUnlinkEntry *) lfirst(cell);
+
+			next = lnext(cell);
+			if (entry->rnode.dbNode == rnode.dbNode) 
+			{
+				pendingUnlinks = list_delete_cell(pendingUnlinks, cell, prev);
+				pfree(entry);
+			}
+			else
+				prev = cell;
 		}
 	}
 	else if (segno == UNLINK_RELATION_REQUEST)
@@ -1386,7 +1409,7 @@ RememberFsyncRequest(RelFileNode rnode, BlockNumber segno)
 }
 
 /*
- * ForgetRelationFsyncRequests -- ensure any fsyncs for a rel are forgotten
+ * ForgetRelationFsyncRequests -- forget any fsyncs for a rel
  */
 void
 ForgetRelationFsyncRequests(RelFileNode rnode)
@@ -1419,7 +1442,7 @@ ForgetRelationFsyncRequests(RelFileNode rnode)
 }
 
 /*
- * ForgetDatabaseFsyncRequests -- ensure any fsyncs for a DB are forgotten
+ * ForgetDatabaseFsyncRequests -- forget any fsyncs and unlinks for a DB
  */
 void
 ForgetDatabaseFsyncRequests(Oid dbid)

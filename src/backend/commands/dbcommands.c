@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.206 2008/04/16 23:59:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.207 2008/04/18 06:48:38 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -715,18 +715,20 @@ dropdb(const char *dbname, bool missing_ok)
 	pgstat_drop_database(db_id);
 
 	/*
-	 * Tell bgwriter to forget any pending fsync requests for files in the
-	 * database; else it'll fail at next checkpoint.
+	 * Tell bgwriter to forget any pending fsync and unlink requests for files
+	 * in the database; else the fsyncs will fail at next checkpoint, or worse,
+	 * it will delete files that belong to a newly created database with the
+	 * same OID.
 	 */
 	ForgetDatabaseFsyncRequests(db_id);
 
 	/*
-	 * On Windows, force a checkpoint so that the bgwriter doesn't hold any
-	 * open files, which would cause rmdir() to fail.
+	 * Force a checkpoint to make sure the bgwriter has received the message
+	 * sent by ForgetDatabaseFsyncRequests. On Windows, this also ensures that
+	 * the bgwriter doesn't hold any open files, which would cause rmdir() to
+	 * fail.
 	 */
-#ifdef WIN32
 	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
-#endif
 
 	/*
 	 * Remove all tablespace subdirs belonging to the database.

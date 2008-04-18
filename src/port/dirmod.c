@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.53 2008/04/11 23:53:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.54 2008/04/18 06:48:38 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -406,8 +406,24 @@ rmtree(char *path, bool rmtopdir)
 	{
 		snprintf(filepath, MAXPGPATH, "%s/%s", path, *filename);
 
+		/*
+		 * It's ok if the file is not there anymore; we were just about to
+		 * delete it anyway.
+		 *
+		 * This is not an academic possibility. One scenario where this
+		 * happens is when bgwriter has a pending unlink request for a file
+		 * in a database that's being dropped. In dropdb(), we call
+		 * ForgetDatabaseFsyncRequests() to flush out any such pending unlink
+		 * requests, but because that's asynchronous, it's not guaranteed
+		 * that the bgwriter receives the message in time.
+		 */
 		if (lstat(filepath, &statbuf) != 0)
-			goto report_and_fail;
+		{
+			if (errno != ENOENT)
+				goto report_and_fail;
+			else
+				continue;
+		}
 
 		if (S_ISDIR(statbuf.st_mode))
 		{
@@ -422,7 +438,10 @@ rmtree(char *path, bool rmtopdir)
 		else
 		{
 			if (unlink(filepath) != 0)
-				goto report_and_fail;
+			{
+				if (errno != ENOENT)
+					goto report_and_fail;
+			}
 		}
 	}
 
