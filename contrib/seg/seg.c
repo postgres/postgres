@@ -33,11 +33,17 @@ extern int	 seg_yydebug;
 /*
 ** Input/Output routines
 */
-SEG		   *seg_in(char *str);
-char	   *seg_out(SEG * seg);
-float4		seg_lower(SEG * seg);
-float4		seg_upper(SEG * seg);
-float4		seg_center(SEG * seg);
+PG_FUNCTION_INFO_V1(seg_in);
+PG_FUNCTION_INFO_V1(seg_out);
+PG_FUNCTION_INFO_V1(seg_lower);
+PG_FUNCTION_INFO_V1(seg_upper);
+PG_FUNCTION_INFO_V1(seg_center);
+
+Datum		seg_in(PG_FUNCTION_ARGS);
+Datum		seg_out(PG_FUNCTION_ARGS);
+Datum		seg_lower(PG_FUNCTION_ARGS);
+Datum		seg_upper(PG_FUNCTION_ARGS);
+Datum		seg_center(PG_FUNCTION_ARGS);
 
 /*
 ** GiST support methods
@@ -98,9 +104,10 @@ int			significant_digits(char *s);
  * Input/Output functions
  *****************************************************************************/
 
-SEG *
-seg_in(char *str)
+Datum
+seg_in(PG_FUNCTION_ARGS)
 {
+	char	   *str = PG_GETARG_CSTRING(0);
 	SEG		   *result = palloc(sizeof(SEG));
 
 	seg_scanner_init(str);
@@ -110,17 +117,15 @@ seg_in(char *str)
 
 	seg_scanner_finish();
 
-	return (result);
+	PG_RETURN_POINTER(result);
 }
 
-char *
-seg_out(SEG * seg)
+Datum
+seg_out(PG_FUNCTION_ARGS)
 {
+	SEG		   *seg = (SEG *) PG_GETARG_POINTER(0);
 	char	   *result;
 	char	   *p;
-
-	if (seg == NULL)
-		return (NULL);
 
 	p = result = (char *) palloc(40);
 
@@ -153,25 +158,31 @@ seg_out(SEG * seg)
 		}
 	}
 
-	return (result);
+	PG_RETURN_CSTRING(result);
 }
 
-float4
-seg_center(SEG * seg)
+Datum
+seg_center(PG_FUNCTION_ARGS)
 {
-	return ((float) seg->lower + (float) seg->upper) / 2.0;
+	SEG 	*seg = (SEG *) PG_GETARG_POINTER(0);
+
+	PG_RETURN_FLOAT4(((float) seg->lower + (float) seg->upper) / 2.0);
 }
 
-float4
-seg_lower(SEG * seg)
+Datum
+seg_lower(PG_FUNCTION_ARGS)
 {
-	return seg->lower;
+	SEG 	*seg = (SEG *) PG_GETARG_POINTER(0);
+
+	PG_RETURN_FLOAT4(seg->lower);
 }
 
-float4
-seg_upper(SEG * seg)
+Datum
+seg_upper(PG_FUNCTION_ARGS)
 {
-	return seg->upper;
+	SEG		*seg = (SEG *) PG_GETARG_POINTER(0);
+
+	PG_RETURN_FLOAT4(seg->upper);
 }
 
 
