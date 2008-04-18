@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.172 2008/04/17 18:30:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.173 2008/04/18 01:42:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "commands/prepare.h"
 #include "commands/trigger.h"
 #include "executor/instrument.h"
-#include "nodes/print.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
 #include "optimizer/var.h"
@@ -44,7 +43,7 @@ explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 typedef struct ExplainState
 {
 	/* options */
-	bool		printNodes;		/* do nodeToString() too */
+	bool		printTList;		/* print plan targetlists */
 	bool		printAnalyze;	/* print actual times */
 	/* other states */
 	PlannedStmt *pstmt;			/* top of plan */
@@ -271,29 +270,10 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 
 	es = (ExplainState *) palloc0(sizeof(ExplainState));
 
-	es->printNodes = stmt->verbose;
+	es->printTList = stmt->verbose;
 	es->printAnalyze = stmt->analyze;
 	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
-
-	if (es->printNodes)
-	{
-		char	   *s;
-		char	   *f;
-
-		s = nodeToString(queryDesc->plannedstmt->planTree);
-		if (s)
-		{
-			if (Explain_pretty_print)
-				f = pretty_format_node_dump(s);
-			else
-				f = format_node_dump(s);
-			pfree(s);
-			do_text_output_multiline(tstate, f);
-			pfree(f);
-			do_text_output_oneline(tstate, ""); /* separator line */
-		}
-	}
 
 	initStringInfo(&buf);
 	explain_outNode(&buf,
@@ -747,7 +727,8 @@ explain_outNode(StringInfo str,
 	appendStringInfoChar(str, '\n');
 
 	/* target list */
-	show_plan_tlist(plan, str, indent, es);
+	if (es->printTList)
+		show_plan_tlist(plan, str, indent, es);
 
 	/* quals, sort keys, etc */
 	switch (nodeTag(plan))
@@ -1055,7 +1036,6 @@ static void
 show_plan_tlist(Plan *plan,
 				StringInfo str, int indent, ExplainState *es)
 {
-#ifdef EXPLAIN_PRINT_TLISTS
 	List	   *context;
 	bool		useprefix;
 	ListCell   *lc;
@@ -1095,7 +1075,6 @@ show_plan_tlist(Plan *plan,
 	}
 
 	appendStringInfoChar(str, '\n');
-#endif /* EXPLAIN_PRINT_TLISTS */
 }
 
 /*

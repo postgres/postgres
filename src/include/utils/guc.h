@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.93 2008/04/02 14:42:56 mha Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.94 2008/04/18 01:42:17 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -127,7 +127,6 @@ extern bool Debug_print_plan;
 extern bool Debug_print_parse;
 extern bool Debug_print_rewritten;
 extern bool Debug_pretty_print;
-extern bool Explain_pretty_print;
 
 extern bool log_parser_stats;
 extern bool log_planner_stats;

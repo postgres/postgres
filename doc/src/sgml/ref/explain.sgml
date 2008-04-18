@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.41 2007/11/28 15:42:31 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.42 2008/04/18 01:42:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -106,12 +106,7 @@ ROLLBACK;
     <term><literal>VERBOSE</literal></term>
     <listitem>
      <para>
-      Show the full internal representation of the plan tree, rather
-      than just a summary.  Usually this option is only useful for
-      specialized debugging purposes.  The
-      <literal>VERBOSE</literal> output is either pretty-printed or
-      not, depending on the setting of the <xref
-      linkend="guc-explain-pretty-print"> configuration parameter.
+      Include the output column list for each node in the plan tree.
      </para>
     </listitem>
    </varlistentry>

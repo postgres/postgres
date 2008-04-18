@@ -447,7 +447,6 @@
 
 # - Other Defaults -
 
-#explain_pretty_print = on
 #dynamic_library_path = '$libdir'
 #local_preload_libraries = ''
 
