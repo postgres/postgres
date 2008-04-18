@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.115 2008/04/17 21:37:28 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.116 2008/04/18 18:43:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2060,10 +2060,25 @@ Int64GetDatum(int64 X)
 Datum
 Float4GetDatum(float4 X)
 {
-	float4	   *retval = (float4 *) palloc(sizeof(float4));
+	union {
+		float4	value;
+		int32	retval;
+	} myunion;
 
-	*retval = X;
-	return PointerGetDatum(retval);
+	myunion.value = X;
+	return SET_4_BYTES(myunion.retval);
+}
+
+float4
+DatumGetFloat4(Datum X)
+{
+	union {
+		int32	value; 
+		float4	retval;
+	} myunion;
+
+	myunion.value = GET_4_BYTES(X);
+	return myunion.retval;
 }
 
 Datum

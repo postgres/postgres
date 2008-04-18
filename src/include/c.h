@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.224 2008/03/17 19:44:41 petere Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.225 2008/04/18 18:43:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,8 +253,8 @@ typedef uint32 bits32;			/* >= 32 bits */
  *		Floating point number, AT LEAST N BITS IN SIZE,
  *		used for numerical computations.
  *
- *		Since sizeof(floatN) may be > sizeof(char *), always pass
- *		floatN by reference.
+ *		Since sizeof(float8) may be > sizeof(char *), always pass
+ *		float8 by reference.  float4 is passed by value.
  *
  * XXX: these typedefs are now deprecated in favor of float4 and float8.
  * They will eventually go away.

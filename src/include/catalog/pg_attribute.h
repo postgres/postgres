@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.135 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.136 2008/04/18 18:43:09 alvherre Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -287,8 +287,8 @@ DATA(insert ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 1255, {"pronamespace"},		26, -1, 4,	2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"proowner"},			26, -1, 4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"prolang"},			26, -1, 4,	4, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"procost"},		   700, -1, 4,	5, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"prorows"},		   700, -1, 4,	6, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 1255, {"procost"},		   700, -1, 4,	5, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1255, {"prorows"},		   700, -1, 4,	6, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"proisagg"},			16, -1, 1,	7, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
 { 1255, {"prosecdef"},			16, -1, 1,	8, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
 { 1255, {"proisstrict"},		16, -1, 1,	9, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
@@ -309,8 +309,8 @@ DATA(insert ( 1255 proname			19 -1 NAMEDATALEN	1 0 -1 -1 f p i t f f t 0));
 DATA(insert ( 1255 pronamespace		26 -1 4   2 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 proowner			26 -1 4   3 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 prolang			26 -1 4   4 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1255 procost		   700 -1 4   5 0 -1 -1 f p i t f f t 0));
-DATA(insert ( 1255 prorows		   700 -1 4   6 0 -1 -1 f p i t f f t 0));
+DATA(insert ( 1255 procost		   700 -1 4   5 0 -1 -1 t p i t f f t 0));
+DATA(insert ( 1255 prorows		   700 -1 4   6 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 proisagg			16 -1 1   7 0 -1 -1 t p c t f f t 0));
 DATA(insert ( 1255 prosecdef		16 -1 1   8 0 -1 -1 t p c t f f t 0));
 DATA(insert ( 1255 proisstrict		16 -1 1   9 0 -1 -1 t p c t f f t 0));
@@ -395,7 +395,7 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 1259, {"relfilenode"},   26, -1,	4,	6, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"reltablespace"}, 26, -1,	4,	7, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"relpages"},	   23, -1,	4,	8, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1259, {"reltuples"},	   700, -1, 4,	9, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 1259, {"reltuples"},	   700, -1, 4,	9, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"reltoastrelid"}, 26, -1,	4, 10, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"reltoastidxid"}, 26, -1,	4, 11, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"relhasindex"},   16, -1,	1, 12, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
@@ -423,7 +423,7 @@ DATA(insert ( 1259 relam			26 -1 4   5 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1259 relfilenode		26 -1 4   6 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1259 reltablespace	26 -1 4   7 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1259 relpages			23 -1 4   8 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1259 reltuples	   700 -1 4   9 0 -1 -1 f p i t f f t 0));
+DATA(insert ( 1259 reltuples	   700 -1 4   9 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1259 reltoastrelid	26 -1 4  10 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1259 reltoastidxid	26 -1 4  11 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1259 relhasindex		16 -1 1  12 0 -1 -1 t p c t f f t 0));

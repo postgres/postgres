@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.89 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.90 2008/04/18 18:43:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -546,18 +546,13 @@ extern Datum Int64GetDatum(int64 X);
 /*
  * DatumGetFloat4
  *		Returns 4-byte floating point value of a datum.
- *
- * Note: this macro hides the fact that float4 is currently a
- * pass-by-reference type.	Someday it may be pass-by-value.
  */
 
-#define DatumGetFloat4(X) (* ((float4 *) DatumGetPointer(X)))
+extern float4 DatumGetFloat4(Datum X);
 
 /*
  * Float4GetDatum
  *		Returns datum representation for a 4-byte floating point number.
- *
- * Note: this routine returns a reference to palloc'd space.
  */
 
 extern Datum Float4GetDatum(float4 X);
@@ -584,56 +579,11 @@ extern Datum Float8GetDatum(float8 X);
 
 
 /*
- * DatumGetFloat32
- *		Returns 32-bit floating point value of a datum.
- *		This is really a pointer, of course.
- *
- * XXX: this macro is now deprecated in favor of DatumGetFloat4.
- * It will eventually go away.
- */
-
-#define DatumGetFloat32(X) ((float32) DatumGetPointer(X))
-
-/*
- * Float32GetDatum
- *		Returns datum representation for a 32-bit floating point number.
- *		This is really a pointer, of course.
- *
- * XXX: this macro is now deprecated in favor of Float4GetDatum.
- * It will eventually go away.
- */
-
-#define Float32GetDatum(X) PointerGetDatum(X)
-
-/*
- * DatumGetFloat64
- *		Returns 64-bit floating point value of a datum.
- *		This is really a pointer, of course.
- *
- * XXX: this macro is now deprecated in favor of DatumGetFloat8.
- * It will eventually go away.
- */
-
-#define DatumGetFloat64(X) ((float64) DatumGetPointer(X))
-
-/*
- * Float64GetDatum
- *		Returns datum representation for a 64-bit floating point number.
- *		This is really a pointer, of course.
- *
- * XXX: this macro is now deprecated in favor of Float8GetDatum.
- * It will eventually go away.
- */
-
-#define Float64GetDatum(X) PointerGetDatum(X)
-
-/*
  * Int64GetDatumFast
- * Float4GetDatumFast
  * Float8GetDatumFast
  *
  * These macros are intended to allow writing code that does not depend on
- * whether int64, float4, float8 are pass-by-reference types, while not
+ * whether int64, float8 are pass-by-reference types, while not
  * sacrificing performance when they are.  The argument must be a variable
  * that will exist and have the same value for as long as the Datum is needed.
  * In the pass-by-ref case, the address of the variable is taken to use as
@@ -642,7 +592,6 @@ extern Datum Float8GetDatum(float8 X);
  */
 
 #define Int64GetDatumFast(X)  PointerGetDatum(&(X))
-#define Float4GetDatumFast(X) PointerGetDatum(&(X))
 #define Float8GetDatumFast(X) PointerGetDatum(&(X))
 
 

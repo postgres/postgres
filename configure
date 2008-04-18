@@ -19693,7 +19693,7 @@ HAVE_LONG_INT_64=$pgac_cv_type_long_int_64
 if test x"$pgac_cv_type_long_int_64" = xyes ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_LONG_INT_64
+#define HAVE_LONG_INT_64 1
 _ACEOF
 
 fi
@@ -19826,7 +19826,7 @@ HAVE_LONG_LONG_INT_64=$pgac_cv_type_long_long_int_64
 if test x"$pgac_cv_type_long_long_int_64" = xyes ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_LONG_LONG_INT_64
+#define HAVE_LONG_LONG_INT_64 1
 _ACEOF
 
 fi

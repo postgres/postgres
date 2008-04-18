@@ -13,10 +13,11 @@ gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo * tinfo
 		{
 			int16		i2;
 			int32		i4;
+			float4		f4;
 			DateADT		dt;
 		}			v;
 
-		GBT_NUMKEY *r = (GBT_NUMKEY *) palloc(2 * tinfo->size);
+		GBT_NUMKEY *r = (GBT_NUMKEY *) palloc0(2 * tinfo->size);
 		void	   *leaf = NULL;
 
 		switch (tinfo->t)
@@ -37,11 +38,14 @@ gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo * tinfo
 				v.dt = DatumGetDateADT(entry->key);
 				leaf = &v.dt;
 				break;
+			case gbt_t_float4:
+				v.f4 = DatumGetFloat4(entry->key);
+				leaf = &v.f4;
+				break;
 			default:
 				leaf = DatumGetPointer(entry->key);
 		}
 
-		memset((void *) &r[0], 0, 2 * tinfo->size);
 		memcpy((void *) &r[0], leaf, tinfo->size);
 		memcpy((void *) &r[tinfo->size], leaf, tinfo->size);
 		retval = palloc(sizeof(GISTENTRY));

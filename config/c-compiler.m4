@@ -1,5 +1,5 @@
 # Macros to detect C compiler features
-# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.15 2008/02/17 16:36:42 petere Exp $
+# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.16 2008/04/18 18:43:08 alvherre Exp $
 
 
 # PGAC_C_SIGNED
@@ -62,7 +62,7 @@ AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([], [sizeof($1) == 8])],
 
 Ac_define=$Ac_cachevar
 if test x"$Ac_cachevar" = xyes ; then
-  AC_DEFINE(Ac_define,, [Define to 1 if `]$1[' works and is 64 bits.])
+  AC_DEFINE(Ac_define, 1, [Define to 1 if `]$1[' works and is 64 bits.])
 fi
 undefine([Ac_define])dnl
 undefine([Ac_cachevar])dnl

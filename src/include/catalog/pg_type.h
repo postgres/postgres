@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.193 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.194 2008/04/18 18:43:09 alvherre Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -368,7 +368,7 @@ DESCR("");
 
 /* OIDS 700 - 799 */
 
-DATA(insert OID = 700 (  float4    PGNSP PGUID	4 f b t \054 0	 0 1021 float4in float4out float4recv float4send - - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 700 (  float4    PGNSP PGUID	4 t b t \054 0	 0 1021 float4in float4out float4recv float4send - - - i p f 0 -1 0 _null_ _null_ ));
 DESCR("single-precision floating point number, 4-byte storage");
 #define FLOAT4OID 700
 DATA(insert OID = 701 (  float8    PGNSP PGUID	8 f b t \054 0	 0 1022 float8in float8out float8recv float8send - - - d p f 0 -1 0 _null_ _null_ ));

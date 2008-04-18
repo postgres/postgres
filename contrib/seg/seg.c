@@ -35,9 +35,9 @@ extern int	 seg_yydebug;
 */
 SEG		   *seg_in(char *str);
 char	   *seg_out(SEG * seg);
-float32		seg_lower(SEG * seg);
-float32		seg_upper(SEG * seg);
-float32		seg_center(SEG * seg);
+float4		seg_lower(SEG * seg);
+float4		seg_upper(SEG * seg);
+float4		seg_center(SEG * seg);
 
 /*
 ** GiST support methods
@@ -138,14 +138,14 @@ seg_out(SEG * seg)
 	{
 		if (seg->l_ext != '-')
 		{
-			/* print the lower boudary if exists */
+			/* print the lower boundary if exists */
 			p += restore(p, seg->lower, seg->l_sigd);
 			p += sprintf(p, " ");
 		}
 		p += sprintf(p, "..");
 		if (seg->u_ext != '-')
 		{
-			/* print the upper boudary if exists */
+			/* print the upper boundary if exists */
 			p += sprintf(p, " ");
 			if (seg->u_ext == '>' || seg->u_ext == '<' || seg->l_ext == '~')
 				p += sprintf(p, "%c", seg->u_ext);
@@ -156,40 +156,22 @@ seg_out(SEG * seg)
 	return (result);
 }
 
-float32
+float4
 seg_center(SEG * seg)
 {
-	float32		result = (float32) palloc(sizeof(float32data));
-
-	if (!seg)
-		return (float32) NULL;
-
-	*result = ((float) seg->lower + (float) seg->upper) / 2.0;
-	return (result);
+	return ((float) seg->lower + (float) seg->upper) / 2.0;
 }
 
-float32
+float4
 seg_lower(SEG * seg)
 {
-	float32		result = (float32) palloc(sizeof(float32data));
-
-	if (!seg)
-		return (float32) NULL;
-
-	*result = (float) seg->lower;
-	return (result);
+	return seg->lower;
 }
 
-float32
+float4
 seg_upper(SEG * seg)
 {
-	float32		result = (float32) palloc(sizeof(float32data));
-
-	if (!seg)
-		return (float32) NULL;
-
-	*result = (float) seg->upper;
-	return (result);
+	return seg->upper;
 }
 
 

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/seg/seg.sql.in,v 1.17 2008/04/14 17:05:32 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/seg/seg.sql.in,v 1.18 2008/04/18 18:43:08 alvherre Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -163,6 +163,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
 -- miscellaneous
+
+CREATE OR REPLACE FUNCTION seg_center(seg)
+RETURNS float4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION seg_upper(seg)
 RETURNS float4
