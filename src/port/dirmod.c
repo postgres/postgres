@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.54 2008/04/18 06:48:38 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.55 2008/04/18 17:05:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,8 +291,8 @@ pgsymlink(const char *oldpath, const char *newpath)
  * must call pgfnames_cleanup later to free the memory allocated by this
  * function.
  */
-char	  **
-pgfnames(char *path)
+char **
+pgfnames(const char *path)
 {
 	DIR		   *dir;
 	struct dirent *file;
@@ -380,12 +380,15 @@ pgfnames_cleanup(char **filenames)
  *	Assumes path points to a valid directory.
  *	Deletes everything under path.
  *	If rmtopdir is true deletes the directory too.
+ *	Returns true if successful, false if there was any problem.
+ *	(The details of the problem are reported already, so caller
+ *	doesn't really have to say anything more, but most do.)
  */
 bool
-rmtree(char *path, bool rmtopdir)
+rmtree(const char *path, bool rmtopdir)
 {
+	bool		result = true;
 	char		pathbuf[MAXPGPATH];
-	char	   *filepath;
 	char	  **filenames;
 	char	  **filename;
 	struct stat statbuf;
@@ -400,11 +403,9 @@ rmtree(char *path, bool rmtopdir)
 		return false;
 
 	/* now we have the names we can start removing things */
-	filepath = pathbuf;
-
 	for (filename = filenames; *filename; filename++)
 	{
-		snprintf(filepath, MAXPGPATH, "%s/%s", path, *filename);
+		snprintf(pathbuf, MAXPGPATH, "%s/%s", path, *filename);
 
 		/*
 		 * It's ok if the file is not there anymore; we were just about to
@@ -417,54 +418,68 @@ rmtree(char *path, bool rmtopdir)
 		 * requests, but because that's asynchronous, it's not guaranteed
 		 * that the bgwriter receives the message in time.
 		 */
-		if (lstat(filepath, &statbuf) != 0)
+		if (lstat(pathbuf, &statbuf) != 0)
 		{
 			if (errno != ENOENT)
-				goto report_and_fail;
-			else
-				continue;
+			{
+#ifndef FRONTEND
+				elog(WARNING, "could not stat file or directory \"%s\": %m",
+					 pathbuf);
+#else
+				fprintf(stderr, _("could not stat file or directory \"%s\": %s\n"),
+						pathbuf, strerror(errno));
+#endif
+				result = false;
+			}
+			continue;
 		}
 
 		if (S_ISDIR(statbuf.st_mode))
 		{
 			/* call ourselves recursively for a directory */
-			if (!rmtree(filepath, true))
+			if (!rmtree(pathbuf, true))
 			{
 				/* we already reported the error */
-				pgfnames_cleanup(filenames);
-				return false;
+				result = false;
 			}
 		}
 		else
 		{
-			if (unlink(filepath) != 0)
+			if (unlink(pathbuf) != 0)
 			{
 				if (errno != ENOENT)
-					goto report_and_fail;
+				{
+#ifndef FRONTEND
+					elog(WARNING, "could not remove file or directory \"%s\": %m",
+						 pathbuf);
+#else
+					fprintf(stderr, _("could not remove file or directory \"%s\": %s\n"),
+							pathbuf, strerror(errno));
+#endif
+					result = false;
+				}
 			}
 		}
 	}
 
 	if (rmtopdir)
 	{
-		filepath = path;
-		if (rmdir(filepath) != 0)
-			goto report_and_fail;
+		if (rmdir(path) != 0)
+		{
+#ifndef FRONTEND
+			elog(WARNING, "could not remove file or directory \"%s\": %m",
+				 path);
+#else
+			fprintf(stderr, _("could not remove file or directory \"%s\": %s\n"),
+					path, strerror(errno));
+#endif
+			result = false;
+		}
 	}
 
 	pgfnames_cleanup(filenames);
-	return true;
 
-report_and_fail:
-
-#ifndef FRONTEND
-	elog(WARNING, "could not remove file or directory \"%s\": %m", filepath);
-#else
-	fprintf(stderr, _("could not remove file or directory \"%s\": %s\n"),
-			filepath, strerror(errno));
-#endif
-	pgfnames_cleanup(filenames);
-	return false;
+	return result;
 }
 
 
