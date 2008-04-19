@@ -35,12 +35,14 @@ extern int	 seg_yydebug;
 */
 PG_FUNCTION_INFO_V1(seg_in);
 PG_FUNCTION_INFO_V1(seg_out);
+PG_FUNCTION_INFO_V1(seg_size);
 PG_FUNCTION_INFO_V1(seg_lower);
 PG_FUNCTION_INFO_V1(seg_upper);
 PG_FUNCTION_INFO_V1(seg_center);
 
 Datum		seg_in(PG_FUNCTION_ARGS);
 Datum		seg_out(PG_FUNCTION_ARGS);
+Datum		seg_size(PG_FUNCTION_ARGS);
 Datum		seg_lower(PG_FUNCTION_ARGS);
 Datum		seg_upper(PG_FUNCTION_ARGS);
 Datum		seg_center(PG_FUNCTION_ARGS);
@@ -81,7 +83,6 @@ bool		seg_over_right(SEG * a, SEG * b);
 SEG		   *seg_union(SEG * a, SEG * b);
 SEG		   *seg_inter(SEG * a, SEG * b);
 void		rt_seg_size(SEG * a, float *sz);
-float	   *seg_size(SEG * a);
 
 /*
 ** Various operators
@@ -717,16 +718,12 @@ rt_seg_size(SEG * a, float *size)
 	return;
 }
 
-float *
-seg_size(SEG * a)
+Datum
+seg_size(PG_FUNCTION_ARGS)
 {
-	float	   *result;
+	SEG 	*seg = (SEG *) PG_GETARG_POINTER(0);
 
-	result = (float *) palloc(sizeof(float));
-
-	*result = (float) Abs(a->upper - a->lower);
-
-	return (result);
+	PG_RETURN_FLOAT4((float) Abs(seg->upper - seg->lower));
 }
 
 
