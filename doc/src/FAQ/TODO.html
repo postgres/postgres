@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sat Apr 19 08:15:19 EDT 2008
+Last updated:           Sat Apr 19 08:32:51 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -802,7 +802,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
     </li><li>Allow function parameters to be passed by name,
           get_employee_salary(12345 AS emp_id, 2001 AS tax_year)
-    </li><li>Allow handling of %TYPE arrays, e.g. tab.col%TYPE[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?"></a>]
+    </li><li>Allow handling of %TYPE arrays, e.g. tab.col%TYPE[]
     </li><li>Allow listing of record column names, and access to
           record columns via variables, e.g. columns := r.(*),
           tval2 := r.(colname)
@@ -984,7 +984,7 @@ first.  There is also a developer's wiki at<br/>
     </li><li>Use backend PREPARE/EXECUTE facility for ecpg where possible
     </li><li>Implement SQLDA
     </li><li>Fix nested C comments
-    </li><li>%sqlwarn[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?6">6</a>] should be 'W' if the PRECISION or SCALE value specified
+    </li><li>%sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
     </li><li>Make SET CONNECTION thread-aware, non-standard?
     </li><li>Allow multidimensional arrays
     </li><li>Add internationalized message strings
@@ -1384,7 +1384,7 @@ first.  There is also a developer's wiki at<br/>
   might be dropped or truncated during crash recovery
 <p>  Allow tables to bypass WAL writes and just fsync() dirty pages on
   commit.  This should be implemented using ALTER TABLE, e.g. ALTER
-  TABLE PERSISTENCE [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo? DROP | TRUNCATE | DEFAULT "> DROP | TRUNCATE | DEFAULT </a>].  Tables using
+  TABLE PERSISTENCE [ DROP | TRUNCATE | DEFAULT ].  Tables using
   non-default logging should not use referential integrity with
   default-logging tables.  A table without dirty buffers during a
   crash could perhaps avoid the drop/truncate.
