@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# $PostgreSQL: pgsql/src/tools/FAQ2txt,v 1.1 2008/04/19 12:42:35 momjian Exp $:
+
+# Converts FAQ.html and FAQ_DEV.html to text files
+
+lynx -force_html -dont_wrap_pre -dump -hiddenlinks=ignore -nolist "$@"
