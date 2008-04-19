@@ -8,15 +8,13 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Thu Apr 17 16:56:51 EDT 2008
+Last updated:           Sat Apr 19 08:15:19 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
 </p>
 <p><strong>A hyphen, "-", marks changes that will appear in the upcoming 8.3 release.</strong><br/>
 <strong>A percent sign, "%", marks items that are easier to implement.</strong>
-</p>
-<p>Bracketed items, "[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?"></a>]", have more detail.
 </p>
 <p>This list contains all known PostgreSQL bugs and feature requests. If<br/>
 you would like to work on an item, please read the Developer's FAQ<br/>
@@ -149,7 +147,6 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Point-In-Time Recovery (PITR)
   <ul>
     <li>Allow a warm standby system to also allow read-only statements
-          [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pitr">pitr</a>]
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php</a>
 </p>
     </li><li>%Create dump tool for write-ahead logs for use in determining
@@ -241,9 +238,10 @@ first.  There is also a developer's wiki at<br/>
     </li><li>Merge hardwired timezone names with the TZ database; allow either
           kind everywhere a TZ name is currently taken
     </li><li>Allow TIMESTAMP WITH TIME ZONE to store the original timezone
-          information, either zone name or offset from UTC [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?timezone">timezone</a>]
+          information, either zone name or offset from UTC
 <p>          If the TIMESTAMP value is stored with a time zone name, interval
           computations should adjust based on the time zone rules.
+          <a href="http://archives.postgresql.org/pgsql-hackers/2004-10/msg00705.php">http://archives.postgresql.org/pgsql-hackers/2004-10/msg00705.php</a>
 </p>
     </li><li>Fix SELECT '0.01 years'::interval, '0.01 months'::interval
     </li><li>Add a GUC variable to allow output of interval values in ISO8601
@@ -439,17 +437,22 @@ first.  There is also a developer's wiki at<br/>
   database creation might have locale-aware indexes.  The indexes would
   need to be reindexed to match the new locale.
 </p>
-  </li><li>Allow encoding on a per-column basis optionally using the ICU library
-<p>  Right now only one encoding is allowed per database.  [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?locale">locale</a>]
+  </li><li>Allow encoding on a per-column basis optionally using the ICU library;
+  Add CREATE COLLATE
+<p>  Right now only one encoding is allowed per database.
 </p>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php">http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php</a>
+  <a href="http://archives.postgresql.org/pgsql-patches/2005-08/msg00039.php">http://archives.postgresql.org/pgsql-patches/2005-08/msg00039.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2005-08/msg00309.php">http://archives.postgresql.org/pgsql-patches/2005-08/msg00309.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2005-09/msg00110.php">http://archives.postgresql.org/pgsql-hackers/2005-09/msg00110.php</a>
+  <a href="http://archives.postgresql.org/pgsql-patches/2005-09/msg00020.php">http://archives.postgresql.org/pgsql-patches/2005-09/msg00020.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2005-12/msg01121.php">http://archives.postgresql.org/pgsql-hackers/2005-12/msg01121.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2006-01/msg00767.php">http://archives.postgresql.org/pgsql-hackers/2006-01/msg00767.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2006-03/msg00233.php">http://archives.postgresql.org/pgsql-patches/2006-03/msg00233.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg00662.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg00662.php</a>
   <a href="http://wiki.postgresql.org/wiki/Todo:Collate">http://wiki.postgresql.org/wiki/Todo:Collate</a> 
   <a href="http://wiki.postgresql.org/wiki/Todo:ICU">http://wiki.postgresql.org/wiki/Todo:ICU</a>
 </p>
-  </li><li>Add CREATE COLLATE?  [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?locale">locale</a>]
   </li><li>Support multiple simultaneous character sets, per SQL92
   </li><li>Improve UTF8 combined character handling?
   </li><li>Add octet_length_server() and octet_length_client()
@@ -523,18 +526,15 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php">http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php</a>
 </p>
   </li><li>Add a GUC variable to warn about non-standard SQL usage in queries
-  </li><li>Add SQL-standard MERGE command, typically used to merge two tables
-  [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?merge">merge</a>]
-<p>  This is similar to UPDATE, then for unmatched rows, INSERT.
-  Whether concurrent access allows modifications which could cause
-  row loss is implementation independent.
-</p>
-  </li><li>Add REPLACE or UPSERT command that does UPDATE, or on failure, INSERT
-  [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?merge">merge</a>]
-<p>  To implement this cleanly requires that the table have a unique index
-  so duplicate checking can be easily performed.  It is possible to
-  do it without a unique index if we require the user to LOCK the table
-  before the MERGE.
+  </li><li>Add SQL-standard MERGE/REPLACE/UPSERT command
+<p>  MERGE is typically used to merge two tables.  REPLACE or UPSERT
+  command does UPDATE, or on failure, INSERT. This is similar to UPDATE,
+  then for unmatched rows, INSERT.  Whether concurrent access allows
+  modifications which could cause row loss is implementation independent.
+  To implement this cleanly requires that the table have a unique index
+  so duplicate checking can be easily performed.  It is possible to do it
+  without a unique index if we require the user to LOCK the table before
+  the MERGE.
 </p>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-11/msg00501.php">http://archives.postgresql.org/pgsql-hackers/2005-11/msg00501.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2005-11/msg00536.php">http://archives.postgresql.org/pgsql-hackers/2005-11/msg00536.php</a>
@@ -872,9 +872,10 @@ first.  There is also a developer's wiki at<br/>
   <ul>
     <li>Have psql show current values for a sequence
     </li><li>Move psql backslash database information into the backend, use
-          mnemonic commands? [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?psql">psql</a>]
+          mnemonic commands?
 <p>          This would allow non-psql clients to pull the same information out
           of the database as psql.
+          <a href="http://archives.postgresql.org/pgsql-hackers/2004-01/msg00191.php">http://archives.postgresql.org/pgsql-hackers/2004-01/msg00191.php</a>
 </p>
     </li><li>Make psql's \d commands more consistent
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2004-11/msg00014.php">http://archives.postgresql.org/pgsql-hackers/2004-11/msg00014.php</a>
@@ -1331,7 +1332,7 @@ first.  There is also a developer's wiki at<br/>
 <h1><a name="section_17">Startup Time Improvements</a></h1>
 
 <ul>
-  <li>Experiment with multi-threaded backend for backend creation [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?thread">thread</a>]
+  <li>Experiment with multi-threaded backend for backend creation
 <p>  This would prevent the overhead associated with process creation. Most
   operating systems have trivial process creation time compared to
   database startup overhead, but a few operating systems (Win32,
@@ -1342,11 +1343,12 @@ first.  There is also a developer's wiki at<br/>
 <h1><a name="section_18">Write-Ahead Log</a></h1>
 
 <ul>
-  <li>Eliminate need to write full pages to WAL before page modification [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?wal">wal</a>]
+  <li>Eliminate need to write full pages to WAL before page modification
 <p>  Currently, to protect against partial disk page writes, we write
   full page images to WAL before they are modified so we can correct any
   partial page writes during recovery.  These pages can also be
   eliminated from point-in-time archive files.
+  <a href="http://archives.postgresql.org/pgsql-hackers/2002-06/msg00655.php">http://archives.postgresql.org/pgsql-hackers/2002-06/msg00655.php</a>
 </p>
   <ul>
     <li>When off, write CRC to WAL and check file system blocks
@@ -1376,23 +1378,26 @@ first.  There is also a developer's wiki at<br/>
 <p>  Currently fsync of WAL requires the disk platter to perform a full
   rotation to fsync again. One idea is to write the WAL to different
   offsets that might reduce the rotational delay.
+  <a href="http://archives.postgresql.org/pgsql-hackers/2002-11/msg00483.php">http://archives.postgresql.org/pgsql-hackers/2002-11/msg00483.php</a>
 </p>
   </li><li>Allow WAL logging to be turned off for a table, but the table
-  might be dropped or truncated during crash recovery [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?walcontrol">walcontrol</a>]
+  might be dropped or truncated during crash recovery
 <p>  Allow tables to bypass WAL writes and just fsync() dirty pages on
   commit.  This should be implemented using ALTER TABLE, e.g. ALTER
   TABLE PERSISTENCE [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo? DROP | TRUNCATE | DEFAULT "> DROP | TRUNCATE | DEFAULT </a>].  Tables using
   non-default logging should not use referential integrity with
   default-logging tables.  A table without dirty buffers during a
   crash could perhaps avoid the drop/truncate.
+  <a href="http://archives.postgresql.org/pgsql-hackers/2005-12/msg01016.php">http://archives.postgresql.org/pgsql-hackers/2005-12/msg01016.php</a>
 </p>
   </li><li>Allow WAL logging to be turned off for a table, but the table would
-  avoid being truncated/dropped [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?walcontrol">walcontrol</a>]
+  avoid being truncated/dropped
 <p>  To do this, only a single writer can modify the table, and writes
   must happen only on new pages so the new pages can be removed during
   crash recovery.  Readers can continue accessing the table.  Such
   tables probably cannot have indexes.  One complexity is the handling
   of indexes on TOAST tables.
+  <a href="http://archives.postgresql.org/pgsql-hackers/2005-12/msg01016.php">http://archives.postgresql.org/pgsql-hackers/2005-12/msg01016.php</a>
 </p>
   </li><li>Speed WAL recovery by allowing more than one page to be prefetched
 <p>  This should be done utilizing the same infrastructure used for

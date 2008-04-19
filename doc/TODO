@@ -1,15 +1,13 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Thu Apr 17 16:56:51 EDT 2008
+Last updated:		Sat Apr 19 08:15:19 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
 
 #A hyphen, "-", marks changes that will appear in the upcoming 8.3 release.#
 #A percent sign, "%", marks items that are easier to implement.#
-
-Bracketed items, "[]", have more detail.
 
 This list contains all known PostgreSQL bugs and feature requests. If
 you would like to work on an item, please read the Developer's FAQ
@@ -162,7 +160,6 @@ Administration
 * Point-In-Time Recovery (PITR)
 
 	o Allow a warm standby system to also allow read-only statements
-	  [pitr]
 
 	  http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php
 
@@ -275,10 +272,11 @@ Data Types
 	o Merge hardwired timezone names with the TZ database; allow either
 	  kind everywhere a TZ name is currently taken
 	o Allow TIMESTAMP WITH TIME ZONE to store the original timezone
-	  information, either zone name or offset from UTC [timezone]
+	  information, either zone name or offset from UTC
 
 	  If the TIMESTAMP value is stored with a time zone name, interval
 	  computations should adjust based on the time zone rules.
+	  http://archives.postgresql.org/pgsql-hackers/2004-10/msg00705.php
 
 	o Fix SELECT '0.01 years'::interval, '0.01 months'::interval
 	o Add a GUC variable to allow output of interval values in ISO8601
@@ -503,18 +501,23 @@ Multi-Language Support
   database creation might have locale-aware indexes.  The indexes would
   need to be reindexed to match the new locale.
 
-* Allow encoding on a per-column basis optionally using the ICU library
+* Allow encoding on a per-column basis optionally using the ICU library;
+  Add CREATE COLLATE
 
-  Right now only one encoding is allowed per database.  [locale]
+  Right now only one encoding is allowed per database.
 
   http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php
+  http://archives.postgresql.org/pgsql-patches/2005-08/msg00039.php
   http://archives.postgresql.org/pgsql-patches/2005-08/msg00309.php
+  http://archives.postgresql.org/pgsql-hackers/2005-09/msg00110.php
+  http://archives.postgresql.org/pgsql-patches/2005-09/msg00020.php
+  http://archives.postgresql.org/pgsql-hackers/2005-12/msg01121.php
+  http://archives.postgresql.org/pgsql-hackers/2006-01/msg00767.php
   http://archives.postgresql.org/pgsql-patches/2006-03/msg00233.php
   http://archives.postgresql.org/pgsql-hackers/2006-09/msg00662.php
   http://wiki.postgresql.org/wiki/Todo:Collate 
   http://wiki.postgresql.org/wiki/Todo:ICU
 
-* Add CREATE COLLATE?  [locale]
 * Support multiple simultaneous character sets, per SQL92
 * Improve UTF8 combined character handling?
 * Add octet_length_server() and octet_length_client()
@@ -601,20 +604,16 @@ SQL Commands
   http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php
 
 * Add a GUC variable to warn about non-standard SQL usage in queries
-* Add SQL-standard MERGE command, typically used to merge two tables
-  [merge]
+* Add SQL-standard MERGE/REPLACE/UPSERT command
 
-  This is similar to UPDATE, then for unmatched rows, INSERT.
-  Whether concurrent access allows modifications which could cause
-  row loss is implementation independent.
-
-* Add REPLACE or UPSERT command that does UPDATE, or on failure, INSERT
-  [merge]
-
+  MERGE is typically used to merge two tables.  REPLACE or UPSERT
+  command does UPDATE, or on failure, INSERT. This is similar to UPDATE,
+  then for unmatched rows, INSERT.  Whether concurrent access allows
+  modifications which could cause row loss is implementation independent.
   To implement this cleanly requires that the table have a unique index
-  so duplicate checking can be easily performed.  It is possible to
-  do it without a unique index if we require the user to LOCK the table
-  before the MERGE.
+  so duplicate checking can be easily performed.  It is possible to do it
+  without a unique index if we require the user to LOCK the table before
+  the MERGE.
 
   http://archives.postgresql.org/pgsql-hackers/2005-11/msg00501.php
   http://archives.postgresql.org/pgsql-hackers/2005-11/msg00536.php
@@ -1007,10 +1006,11 @@ Clients
 * psql
 	o Have psql show current values for a sequence
 	o Move psql backslash database information into the backend, use
-	  mnemonic commands? [psql]
+	  mnemonic commands?
 
 	  This would allow non-psql clients to pull the same information out
 	  of the database as psql.
+	  http://archives.postgresql.org/pgsql-hackers/2004-01/msg00191.php
 
 	o Make psql's \d commands more consistent
 
@@ -1539,7 +1539,7 @@ Locking
 Startup Time Improvements
 =========================
 
-* Experiment with multi-threaded backend for backend creation [thread]
+* Experiment with multi-threaded backend for backend creation
 
   This would prevent the overhead associated with process creation. Most
   operating systems have trivial process creation time compared to
@@ -1552,12 +1552,13 @@ Startup Time Improvements
 Write-Ahead Log
 ===============
 
-* Eliminate need to write full pages to WAL before page modification [wal]
+* Eliminate need to write full pages to WAL before page modification
 
   Currently, to protect against partial disk page writes, we write
   full page images to WAL before they are modified so we can correct any
   partial page writes during recovery.  These pages can also be
   eliminated from point-in-time archive files.
+  http://archives.postgresql.org/pgsql-hackers/2002-06/msg00655.php
 
 	o  When off, write CRC to WAL and check file system blocks
 	   on recovery
@@ -1590,9 +1591,10 @@ Write-Ahead Log
   Currently fsync of WAL requires the disk platter to perform a full
   rotation to fsync again. One idea is to write the WAL to different
   offsets that might reduce the rotational delay.
+  http://archives.postgresql.org/pgsql-hackers/2002-11/msg00483.php
 
 * Allow WAL logging to be turned off for a table, but the table
-  might be dropped or truncated during crash recovery [walcontrol]
+  might be dropped or truncated during crash recovery
 
   Allow tables to bypass WAL writes and just fsync() dirty pages on
   commit.  This should be implemented using ALTER TABLE, e.g. ALTER
@@ -1600,15 +1602,17 @@ Write-Ahead Log
   non-default logging should not use referential integrity with
   default-logging tables.  A table without dirty buffers during a
   crash could perhaps avoid the drop/truncate.
+  http://archives.postgresql.org/pgsql-hackers/2005-12/msg01016.php
 
 * Allow WAL logging to be turned off for a table, but the table would
-  avoid being truncated/dropped [walcontrol]
+  avoid being truncated/dropped
 
   To do this, only a single writer can modify the table, and writes
   must happen only on new pages so the new pages can be removed during
   crash recovery.  Readers can continue accessing the table.  Such
   tables probably cannot have indexes.  One complexity is the handling
   of indexes on TOAST tables.
+  http://archives.postgresql.org/pgsql-hackers/2005-12/msg01016.php
 
 * Speed WAL recovery by allowing more than one page to be prefetched
 
