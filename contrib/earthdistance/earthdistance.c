@@ -1,10 +1,10 @@
-/* $PostgreSQL: pgsql/contrib/earthdistance/earthdistance.c,v 1.13 2006/10/19 20:08:03 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/earthdistance/earthdistance.c,v 1.14 2008/04/20 01:05:52 tgl Exp $ */
 
 #include "postgres.h"
 
 #include <math.h>
 
-#include "utils/geo_decls.h"	/* for Pt */
+#include "utils/geo_decls.h"	/* for Point */
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -14,10 +14,12 @@
 PG_MODULE_MAGIC;
 
 /* Earth's radius is in statute miles. */
-const double EARTH_RADIUS = 3958.747716;
-const double TWO_PI = 2.0 * M_PI;
+static const double EARTH_RADIUS = 3958.747716;
+static const double TWO_PI = 2.0 * M_PI;
 
-double	   *geo_distance(Point *pt1, Point *pt2);
+PG_FUNCTION_INFO_V1(geo_distance);
+
+Datum		geo_distance(PG_FUNCTION_ARGS);
 
 
 /******************************************************
@@ -45,21 +47,22 @@ degtorad(double degrees)
  *	   x-coordinate is longitude in degrees west of Greenwich
  *	   y-coordinate is latitude in degrees above equator
  *
- * returns: double
+ * returns: float8
  *	 distance between the points in miles on earth's surface
  ******************************************************/
 
-double *
-geo_distance(Point *pt1, Point *pt2)
+Datum
+geo_distance(PG_FUNCTION_ARGS)
 {
-
+	Point	   *pt1 = PG_GETARG_POINT_P(0);
+	Point	   *pt2 = PG_GETARG_POINT_P(1);
+	float8		result;
 	double		long1,
 				lat1,
 				long2,
 				lat2;
 	double		longdiff;
 	double		sino;
-	double	   *resultp = palloc(sizeof(double));
 
 	/* convert degrees to radians */
 
@@ -78,7 +81,7 @@ geo_distance(Point *pt1, Point *pt2)
 			cos(lat1) * cos(lat2) * sin(longdiff / 2.) * sin(longdiff / 2.));
 	if (sino > 1.)
 		sino = 1.;
-	*resultp = 2. * EARTH_RADIUS * asin(sino);
+	result = 2. * EARTH_RADIUS * asin(sino);
 
-	return resultp;
+	PG_RETURN_FLOAT8(result);
 }
