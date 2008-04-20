@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_gist.c,v 1.4 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_gist.c,v 1.4.2.1 2008/04/20 09:29:48 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,8 +101,11 @@ gtsquery_same(PG_FUNCTION_ARGS)
 {
 	TSQuerySign *a = (TSQuerySign *) PG_GETARG_POINTER(0);
 	TSQuerySign *b = (TSQuerySign *) PG_GETARG_POINTER(1);
+	bool		*result = (bool *) PG_GETARG_POINTER(2);
 
-	PG_RETURN_POINTER(*a == *b);
+	*result = (*a == *b) ? true : false;
+
+	PG_RETURN_POINTER(result);
 }
 
 static int
