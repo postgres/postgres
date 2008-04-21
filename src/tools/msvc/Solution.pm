@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.38 2008/04/15 12:16:51 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.39 2008/04/21 10:01:32 mha Exp $
 #
 use Carp;
 use strict;
@@ -25,6 +25,8 @@ sub new
 	# integer_datetimes is now the default
 	$options->{integer_datetimes} = 1 
 		unless exists $options->{integer_datetimes};
+    $options->{float4byval} = 1
+        unless exists $options->{float4byval};
     if ($options->{xml})
     {
         if (!($options->{xslt} && $options->{iconv}))
@@ -115,6 +117,20 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         print O "#define HAVE_LIBZ 1\n" if ($self->{options}->{zlib});
         print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
         print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
+        
+        unless ($self->{options}->{float4byval}) 
+        {
+            # float4byval is the default, so undefine
+            print O "#undef USE_FLOAT4_BYVAL\n";
+            print O "#undef FLOAT4PASSBYVAL\n";
+            print O "#define FLOAT4PASSBYVAL false\n";
+        }
+        if ($self->{options}->{float8byval})
+        {
+            print O "#define USE_FLOAT8_BYVAL\n";
+            print O "#undef FLOAT8PASSBYVAL\n";
+            print O "#define FLOAT8PASSBYVAL true\n";
+        }
 
         if ($self->{options}->{uuid})
         {

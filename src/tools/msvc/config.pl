@@ -5,6 +5,8 @@ use warnings;
 our $config = {
     asserts=>0,			# --enable-cassert
     # integer_datetimes=>1,   # --enable-integer-datetimes - on is now default
+    # float4byval=>1,         # --disable-float4-byval, on by default
+    # float8byval=>0,         # --disable-float8-byval, off by default
     nls=>undef,				# --enable-nls=<path>
     tcl=>'c:\tcl',		# --with-tls=<path>
     perl=>'c:\perl', 			# --with-perl
