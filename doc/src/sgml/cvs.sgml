@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.49 2008/04/03 09:52:03 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.50 2008/04/21 11:06:13 mha Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -35,7 +35,7 @@
   and <productname>CVSup</productname>,
   are available to pull the <productname>CVS</productname> code tree from the
   <productname>PostgreSQL</productname> server to your local machine. 
-  Our CVS Wiki, <ulink
+  Our Wiki, <ulink
   url="http://wiki.postgresql.org/index.php/Working_with_CVS"></ulink>,
   has additional details on working with CVS.
  </para>
