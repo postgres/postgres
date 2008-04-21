@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.90 2008/04/18 18:43:09 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.91 2008/04/21 00:26:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,9 +314,15 @@ typedef Datum *DatumPtr;
 #define GET_1_BYTE(datum)	(((Datum) (datum)) & 0x000000ff)
 #define GET_2_BYTES(datum)	(((Datum) (datum)) & 0x0000ffff)
 #define GET_4_BYTES(datum)	(((Datum) (datum)) & 0xffffffff)
+#if SIZEOF_DATUM == 8
+#define GET_8_BYTES(datum)	((Datum) (datum))
+#endif
 #define SET_1_BYTE(value)	(((Datum) (value)) & 0x000000ff)
 #define SET_2_BYTES(value)	(((Datum) (value)) & 0x0000ffff)
 #define SET_4_BYTES(value)	(((Datum) (value)) & 0xffffffff)
+#if SIZEOF_DATUM == 8
+#define SET_8_BYTES(value)	((Datum) (value))
+#endif
 
 /*
  * DatumGetBool
@@ -527,32 +533,48 @@ typedef Datum *DatumPtr;
  * DatumGetInt64
  *		Returns 64-bit integer value of a datum.
  *
- * Note: this macro hides the fact that int64 is currently a
- * pass-by-reference type.	Someday it may be pass-by-value,
- * at least on some platforms.
+ * Note: this macro hides whether int64 is pass by value or by reference.
  */
 
+#ifdef USE_FLOAT8_BYVAL
+#define DatumGetInt64(X) ((int64) GET_8_BYTES(X))
+#else
 #define DatumGetInt64(X) (* ((int64 *) DatumGetPointer(X)))
+#endif
 
 /*
  * Int64GetDatum
  *		Returns datum representation for a 64-bit integer.
  *
- * Note: this routine returns a reference to palloc'd space.
+ * Note: if int64 is pass by reference, this function returns a reference
+ * to palloc'd space.
  */
 
+#ifdef USE_FLOAT8_BYVAL
+#define Int64GetDatum(X) ((Datum) SET_8_BYTES(X))
+#else
 extern Datum Int64GetDatum(int64 X);
+#endif
 
 /*
  * DatumGetFloat4
  *		Returns 4-byte floating point value of a datum.
+ *
+ * Note: this macro hides whether float4 is pass by value or by reference.
  */
 
+#ifdef USE_FLOAT4_BYVAL
 extern float4 DatumGetFloat4(Datum X);
+#else
+#define DatumGetFloat4(X) (* ((float4 *) DatumGetPointer(X)))
+#endif
 
 /*
  * Float4GetDatum
  *		Returns datum representation for a 4-byte floating point number.
+ *
+ * Note: if float4 is pass by reference, this function returns a reference
+ * to palloc'd space.
  */
 
 extern Datum Float4GetDatum(float4 X);
@@ -561,18 +583,21 @@ extern Datum Float4GetDatum(float4 X);
  * DatumGetFloat8
  *		Returns 8-byte floating point value of a datum.
  *
- * Note: this macro hides the fact that float8 is currently a
- * pass-by-reference type.	Someday it may be pass-by-value,
- * at least on some platforms.
+ * Note: this macro hides whether float8 is pass by value or by reference.
  */
 
+#ifdef USE_FLOAT8_BYVAL
+extern float8 DatumGetFloat8(Datum X);
+#else
 #define DatumGetFloat8(X) (* ((float8 *) DatumGetPointer(X)))
+#endif
 
 /*
  * Float8GetDatum
  *		Returns datum representation for an 8-byte floating point number.
  *
- * Note: this routine returns a reference to palloc'd space.
+ * Note: if float8 is pass by reference, this function returns a reference
+ * to palloc'd space.
  */
 
 extern Datum Float8GetDatum(float8 X);
@@ -581,9 +606,10 @@ extern Datum Float8GetDatum(float8 X);
 /*
  * Int64GetDatumFast
  * Float8GetDatumFast
+ * Float4GetDatumFast
  *
  * These macros are intended to allow writing code that does not depend on
- * whether int64, float8 are pass-by-reference types, while not
+ * whether int64, float8, float4 are pass-by-reference types, while not
  * sacrificing performance when they are.  The argument must be a variable
  * that will exist and have the same value for as long as the Datum is needed.
  * In the pass-by-ref case, the address of the variable is taken to use as
@@ -591,8 +617,19 @@ extern Datum Float8GetDatum(float8 X);
  * macros.
  */
 
+#ifdef USE_FLOAT8_BYVAL
+#define Int64GetDatumFast(X)  Int64GetDatum(X)
+#define Float8GetDatumFast(X) Float8GetDatum(X)
+#else
 #define Int64GetDatumFast(X)  PointerGetDatum(&(X))
 #define Float8GetDatumFast(X) PointerGetDatum(&(X))
+#endif
+
+#ifdef USE_FLOAT4_BYVAL
+#define Float4GetDatumFast(X) Float4GetDatum(X)
+#else
+#define Float4GetDatumFast(X) PointerGetDatum(&(X))
+#endif
 
 
 /* ----------------------------------------------------------------

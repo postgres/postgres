@@ -1,20 +1,25 @@
 #include "btree_gist.h"
 #include "btree_utils_num.h"
+#include "utils/cash.h"
 #include "utils/date.h"
+
 
 GISTENTRY *
 gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo * tinfo)
 {
-
 	if (entry->leafkey)
 	{
-
 		union
 		{
 			int16		i2;
 			int32		i4;
+			int64		i8;
 			float4		f4;
+			float8		f8;
 			DateADT		dt;
+			TimeADT		tm;
+			Timestamp	ts;
+			Cash		ch;
 		}			v;
 
 		GBT_NUMKEY *r = (GBT_NUMKEY *) palloc0(2 * tinfo->size);
@@ -30,17 +35,37 @@ gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo * tinfo
 				v.i4 = DatumGetInt32(entry->key);
 				leaf = &v.i4;
 				break;
+			case gbt_t_int8:
+				v.i8 = DatumGetInt64(entry->key);
+				leaf = &v.i8;
+				break;
 			case gbt_t_oid:
 				v.i4 = DatumGetObjectId(entry->key);
 				leaf = &v.i4;
+				break;
+			case gbt_t_float4:
+				v.f4 = DatumGetFloat4(entry->key);
+				leaf = &v.f4;
+				break;
+			case gbt_t_float8:
+				v.f8 = DatumGetFloat8(entry->key);
+				leaf = &v.f8;
 				break;
 			case gbt_t_date:
 				v.dt = DatumGetDateADT(entry->key);
 				leaf = &v.dt;
 				break;
-			case gbt_t_float4:
-				v.f4 = DatumGetFloat4(entry->key);
-				leaf = &v.f4;
+			case gbt_t_time:
+				v.tm = DatumGetTimeADT(entry->key);
+				leaf = &v.tm;
+				break;
+			case gbt_t_ts:
+				v.ts = DatumGetTimestamp(entry->key);
+				leaf = &v.ts;
+				break;
+			case gbt_t_cash:
+				v.ch = DatumGetCash(entry->key);
+				leaf = &v.ch;
 				break;
 			default:
 				leaf = DatumGetPointer(entry->key);

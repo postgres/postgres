@@ -1,8 +1,6 @@
 #include "btree_gist.h"
 #include "btree_utils_num.h"
-
 #include "utils/datetime.h"
-
 
 typedef struct
 {
@@ -32,46 +30,66 @@ Datum		gbt_ts_penalty(PG_FUNCTION_ARGS);
 Datum		gbt_ts_same(PG_FUNCTION_ARGS);
 
 
-#define P_TimestampGetDatum(x)	PointerGetDatum( &(x) )
+#ifdef USE_FLOAT8_BYVAL
+#define TimestampGetDatumFast(X) TimestampGetDatum(X)
+#else
+#define TimestampGetDatumFast(X) PointerGetDatum(&(X))
+#endif
+
 
 static bool
 gbt_tsgt(const void *a, const void *b)
 {
-	return DatumGetBool(
-	DirectFunctionCall2(timestamp_gt, PointerGetDatum(a), PointerGetDatum(b))
-		);
+	const Timestamp *aa = (const Timestamp *) a;
+	const Timestamp *bb = (const Timestamp *) b;
+
+	return DatumGetBool(DirectFunctionCall2(timestamp_gt,
+											TimestampGetDatumFast(*aa),
+											TimestampGetDatumFast(*bb)));
 }
 
 static bool
 gbt_tsge(const void *a, const void *b)
 {
-	return DatumGetBool(
-	DirectFunctionCall2(timestamp_ge, PointerGetDatum(a), PointerGetDatum(b))
-		);
+	const Timestamp *aa = (const Timestamp *) a;
+	const Timestamp *bb = (const Timestamp *) b;
+
+	return DatumGetBool(DirectFunctionCall2(timestamp_ge,
+											TimestampGetDatumFast(*aa),
+											TimestampGetDatumFast(*bb)));
 }
 
 static bool
 gbt_tseq(const void *a, const void *b)
 {
-	return DatumGetBool(
-	DirectFunctionCall2(timestamp_eq, PointerGetDatum(a), PointerGetDatum(b))
-		);
+	const Timestamp *aa = (const Timestamp *) a;
+	const Timestamp *bb = (const Timestamp *) b;
+
+	return DatumGetBool(DirectFunctionCall2(timestamp_eq,
+											TimestampGetDatumFast(*aa),
+											TimestampGetDatumFast(*bb)));
 }
 
 static bool
 gbt_tsle(const void *a, const void *b)
 {
-	return DatumGetBool(
-	DirectFunctionCall2(timestamp_le, PointerGetDatum(a), PointerGetDatum(b))
-		);
+	const Timestamp *aa = (const Timestamp *) a;
+	const Timestamp *bb = (const Timestamp *) b;
+
+	return DatumGetBool(DirectFunctionCall2(timestamp_le,
+											TimestampGetDatumFast(*aa),
+											TimestampGetDatumFast(*bb)));
 }
 
 static bool
 gbt_tslt(const void *a, const void *b)
 {
-	return DatumGetBool(
-	DirectFunctionCall2(timestamp_lt, PointerGetDatum(a), PointerGetDatum(b))
-		);
+	const Timestamp *aa = (const Timestamp *) a;
+	const Timestamp *bb = (const Timestamp *) b;
+
+	return DatumGetBool(DirectFunctionCall2(timestamp_lt,
+											TimestampGetDatumFast(*aa),
+											TimestampGetDatumFast(*bb)));
 }
 
 
@@ -104,30 +122,28 @@ static const gbtree_ninfo tinfo =
  **************************************************/
 
 
-
-static Timestamp *
-tstz_to_ts_gmt(Timestamp *gmt, TimestampTz *ts)
+static Timestamp
+tstz_to_ts_gmt(TimestampTz ts)
 {
+	Timestamp	gmt;
 	int			val,
 				tz;
 
-	*gmt = *ts;
+	gmt = ts;
 	DecodeSpecial(0, "gmt", &val);
 
-	if (*ts < DT_NOEND && *ts > DT_NOBEGIN)
+	if (ts < DT_NOEND && ts > DT_NOBEGIN)
 	{
 		tz = val * 60;
 
 #ifdef HAVE_INT64_TIMESTAMP
-		*gmt -= (tz * INT64CONST(1000000));
+		gmt -= (tz * INT64CONST(1000000));
 #else
-		*gmt -= tz;
+		gmt -= tz;
 #endif
 	}
 	return gmt;
 }
-
-
 
 
 Datum
@@ -149,11 +165,10 @@ gbt_tstz_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{
 		tsKEY	   *r = (tsKEY *) palloc(sizeof(tsKEY));
-
-		TimestampTz ts = *(TimestampTz *) DatumGetPointer(entry->key);
+		TimestampTz ts = DatumGetTimestampTz(entry->key);
 		Timestamp	gmt;
 
-		tstz_to_ts_gmt(&gmt, &ts);
+		gmt = tstz_to_ts_gmt(ts);
 
 		retval = palloc(sizeof(GISTENTRY));
 		r->lower = r->upper = gmt;
@@ -172,7 +187,7 @@ Datum
 gbt_ts_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	Timestamp  *query = (Timestamp *) PG_GETARG_POINTER(1);
+	Timestamp	query = PG_GETARG_TIMESTAMP(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
@@ -186,7 +201,7 @@ gbt_ts_consistent(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) & kkk->upper;
 
 	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) query, &strategy, GIST_LEAF(entry), &tinfo)
+				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo)
 		);
 }
 
@@ -194,7 +209,7 @@ Datum
 gbt_tstz_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	TimestampTz *query = (Timestamp *) PG_GETARG_POINTER(1);
+	TimestampTz	query = PG_GETARG_TIMESTAMPTZ(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
@@ -207,7 +222,7 @@ gbt_tstz_consistent(PG_FUNCTION_ARGS)
 
 	key.lower = (GBT_NUMKEY *) & kkk[0];
 	key.upper = (GBT_NUMKEY *) & kkk[MAXALIGN(tinfo.size)];
-	tstz_to_ts_gmt(&qqq, query);
+	qqq = tstz_to_ts_gmt(query);
 
 	PG_RETURN_BOOL(
 				   gbt_num_consistent(&key, (void *) &qqq, &strategy, GIST_LEAF(entry), &tinfo)

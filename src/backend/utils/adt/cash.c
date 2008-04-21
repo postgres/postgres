@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.78 2008/03/25 22:42:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.79 2008/04/21 00:26:45 tgl Exp $
  */
 
 #include "postgres.h"
@@ -33,14 +33,6 @@
 #define TERMINATOR		(CASH_BUFSZ - 1)
 #define LAST_PAREN		(TERMINATOR - 1)
 #define LAST_DIGIT		(LAST_PAREN - 1)
-
-/*
- * Cash is a pass-by-ref SQL type, so we must pass and return pointers.
- * These macros and support routine hide the pass-by-refness.
- */
-#define PG_GETARG_CASH(n)  (* ((Cash *) PG_GETARG_POINTER(n)))
-#define PG_RETURN_CASH(x)  return CashGetDatum(x)
-
 
 
 /*************************************************************************
@@ -98,15 +90,6 @@ num_word(Cash value)
 
 	return buf;
 }	/* num_word() */
-
-static Datum
-CashGetDatum(Cash value)
-{
-	Cash	   *result = (Cash *) palloc(sizeof(Cash));
-
-	*result = value;
-	return PointerGetDatum(result);
-}
 
 
 /* cash_in()

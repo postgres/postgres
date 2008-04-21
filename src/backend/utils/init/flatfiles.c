@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.32 2008/03/26 21:10:39 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.33 2008/04/21 00:26:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -483,13 +483,14 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 		}
 		else
 		{
-			/*
-			 * rolvaliduntil is timestamptz, which we assume is double
-			 * alignment and pass-by-reference.
-			 */
+			TimestampTz *rvup;
+
+			/* Assume timestamptz has double alignment */
 			off = att_align_nominal(off, 'd');
-			datum = PointerGetDatum(tp + off);
-			auth_info[curr_role].rolvaliduntil = DatumGetCString(DirectFunctionCall1(timestamptz_out, datum));
+			rvup = (TimestampTz *) (tp + off);
+			auth_info[curr_role].rolvaliduntil =
+				DatumGetCString(DirectFunctionCall1(timestamptz_out,
+												TimestampTzGetDatum(*rvup)));
 		}
 
 		/*

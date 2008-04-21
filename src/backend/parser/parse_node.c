@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.99 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.100 2008/04/21 00:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,7 +375,7 @@ make_const(Value *value)
 
 					typeid = INT8OID;
 					typelen = sizeof(int64);
-					typebyval = false;	/* XXX might change someday */
+					typebyval = FLOAT8PASSBYVAL;	/* int8 and float8 alike */
 				}
 			}
 			else

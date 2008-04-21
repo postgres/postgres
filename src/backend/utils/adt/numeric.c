@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.109 2008/04/04 18:45:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.110 2008/04/21 00:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2599,10 +2599,13 @@ int2_sum(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * If we're invoked by nodeAgg, we can cheat and modify out first
+	 * If we're invoked by nodeAgg, we can cheat and modify our first
 	 * parameter in-place to avoid palloc overhead. If not, we need to return
 	 * the new value of the transition variable.
+	 * (If int8 is pass-by-value, then of course this is useless as well
+	 * as incorrect, so just ifdef it out.)
 	 */
+#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 	{
 		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
@@ -2614,6 +2617,7 @@ int2_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(oldsum);
 	}
 	else
+#endif
 	{
 		int64		oldsum = PG_GETARG_INT64(0);
 
@@ -2644,10 +2648,13 @@ int4_sum(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * If we're invoked by nodeAgg, we can cheat and modify out first
+	 * If we're invoked by nodeAgg, we can cheat and modify our first
 	 * parameter in-place to avoid palloc overhead. If not, we need to return
 	 * the new value of the transition variable.
+	 * (If int8 is pass-by-value, then of course this is useless as well
+	 * as incorrect, so just ifdef it out.)
 	 */
+#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 	{
 		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
@@ -2659,6 +2666,7 @@ int4_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(oldsum);
 	}
 	else
+#endif
 	{
 		int64		oldsum = PG_GETARG_INT64(0);
 

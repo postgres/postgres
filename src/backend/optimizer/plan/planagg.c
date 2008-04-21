@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.37 2008/03/31 16:59:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.38 2008/04/21 00:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -514,8 +514,8 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	/* set up LIMIT 1 */
 	subparse->limitOffset = NULL;
 	subparse->limitCount = (Node *) makeConst(INT8OID, -1, sizeof(int64),
-											  Int64GetDatum(1),
-											  false, false /* not by val */ );
+											  Int64GetDatum(1), false,
+											  FLOAT8PASSBYVAL);
 
 	/*
 	 * Generate the plan for the subquery.	We already have a Path for the

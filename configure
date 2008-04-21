@@ -1362,6 +1362,8 @@ Optional Features:
   --enable-cassert        enable assertion checks (for debugging)
   --enable-thread-safety  make client libraries thread-safe
   --enable-thread-safety-force  force thread-safety despite thread test failure
+  --disable-float4-byval  disable float4 passed by value
+  --disable-float8-byval  disable float8 passed by value
   --disable-largefile     omit support for large files
 
 Optional Packages:
@@ -20836,6 +20838,137 @@ cat >>confdefs.h <<_ACEOF
 #define SIZEOF_SIZE_T $ac_cv_sizeof_size_t
 _ACEOF
 
+
+
+# Decide whether float4 is passed by value: user-selectable, enabled by default
+{ echo "$as_me:$LINENO: checking whether to build with float4 passed by value" >&5
+echo $ECHO_N "checking whether to build with float4 passed by value... $ECHO_C" >&6; }
+
+pgac_args="$pgac_args enable_float4_byval"
+
+# Check whether --enable-float4-byval was given.
+if test "${enable_float4_byval+set}" = set; then
+  enableval=$enable_float4_byval;
+  case $enableval in
+    yes)
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_FLOAT4_BYVAL 1
+_ACEOF
+
+               float4passbyval=true
+      ;;
+    no)
+      float4passbyval=false
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --enable-float4-byval option" >&5
+echo "$as_me: error: no argument expected for --enable-float4-byval option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  enable_float4_byval=yes
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_FLOAT4_BYVAL 1
+_ACEOF
+
+               float4passbyval=true
+fi
+
+
+{ echo "$as_me:$LINENO: result: $enable_float4_byval" >&5
+echo "${ECHO_T}$enable_float4_byval" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define FLOAT4PASSBYVAL $float4passbyval
+_ACEOF
+
+
+# Decide whether float8 is passed by value.
+# Note: this setting also controls int8 and related types such as timestamp.
+# If sizeof(Datum) >= 8, this is user-selectable, enabled by default.
+# If not, trying to select it is an error.
+{ echo "$as_me:$LINENO: checking whether to build with float8 passed by value" >&5
+echo $ECHO_N "checking whether to build with float8 passed by value... $ECHO_C" >&6; }
+if test $ac_cv_sizeof_unsigned_long -ge 8 ; then
+
+pgac_args="$pgac_args enable_float8_byval"
+
+# Check whether --enable-float8-byval was given.
+if test "${enable_float8_byval+set}" = set; then
+  enableval=$enable_float8_byval;
+  case $enableval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --enable-float8-byval option" >&5
+echo "$as_me: error: no argument expected for --enable-float8-byval option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  enable_float8_byval=yes
+
+fi
+
+
+else
+
+pgac_args="$pgac_args enable_float8_byval"
+
+# Check whether --enable-float8-byval was given.
+if test "${enable_float8_byval+set}" = set; then
+  enableval=$enable_float8_byval;
+  case $enableval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --enable-float8-byval option" >&5
+echo "$as_me: error: no argument expected for --enable-float8-byval option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  enable_float8_byval=no
+
+fi
+
+
+  if test "$enable_float8_byval" = yes ; then
+    { { echo "$as_me:$LINENO: error: --enable-float8-byval is not supported on 32-bit platforms." >&5
+echo "$as_me: error: --enable-float8-byval is not supported on 32-bit platforms." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+fi
+if test "$enable_float8_byval" = yes ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_FLOAT8_BYVAL 1
+_ACEOF
+
+  float8passbyval=true
+else
+  float8passbyval=false
+fi
+{ echo "$as_me:$LINENO: result: $enable_float8_byval" >&5
+echo "${ECHO_T}$enable_float8_byval" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define FLOAT8PASSBYVAL $float8passbyval
+_ACEOF
 
 
 # Determine memory alignment requirements for the basic C data types.

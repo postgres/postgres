@@ -13,6 +13,12 @@
 
 typedef int64 Cash;
 
+/* Cash is pass-by-reference if and only if int64 is */
+#define DatumGetCash(X)		((Cash) DatumGetInt64(X))
+#define CashGetDatum(X)		Int64GetDatum(X)
+#define PG_GETARG_CASH(n)	DatumGetCash(PG_GETARG_DATUM(n))
+#define PG_RETURN_CASH(x)	return CashGetDatum(x)
+
 extern Datum cash_in(PG_FUNCTION_ARGS);
 extern Datum cash_out(PG_FUNCTION_ARGS);
 extern Datum cash_recv(PG_FUNCTION_ARGS);

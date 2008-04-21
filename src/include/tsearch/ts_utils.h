@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.13 2008/03/25 22:42:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.14 2008/04/21 00:26:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,6 +177,11 @@ typedef struct QTNode
 typedef uint64 TSQuerySign;
 
 #define TSQS_SIGLEN  (sizeof(TSQuerySign)*BITS_PER_BYTE)
+
+#define TSQuerySignGetDatum(X)		Int64GetDatum((int64) (X))
+#define DatumGetTSQuerySign(X)		((TSQuerySign) DatumGetInt64(X))
+#define PG_RETURN_TSQUERYSIGN(X)	return TSQuerySignGetDatum(X)
+#define PG_GETARG_TSQUERYSIGN(n)	DatumGetTSQuerySign(PG_GETARG_DATUM(n))
 
 
 extern QTNode *QT2QTN(QueryItem *in, char *operand);

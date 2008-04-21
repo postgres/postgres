@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.57 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.58 2008/04/21 00:26:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,6 +353,9 @@ extern int no_such_variable
  * are custom-configurable and especially likely to break dynamically loaded
  * modules if they were compiled with other values.  Also, the length field
  * can be used to detect definition changes.
+ *
+ * Note: we compare magic blocks with memcmp(), so there had better not be
+ * any alignment pad bytes in them.
  *-------------------------------------------------------------------------
  */
 
@@ -364,6 +367,8 @@ typedef struct
 	int			funcmaxargs;	/* FUNC_MAX_ARGS */
 	int			indexmaxkeys;	/* INDEX_MAX_KEYS */
 	int			namedatalen;	/* NAMEDATALEN */
+	int			float4byval;	/* FLOAT4PASSBYVAL */
+	int			float8byval;	/* FLOAT8PASSBYVAL */
 } Pg_magic_struct;
 
 /* The actual data block contents */
@@ -373,7 +378,9 @@ typedef struct
 	PG_VERSION_NUM / 100, \
 	FUNC_MAX_ARGS, \
 	INDEX_MAX_KEYS, \
-	NAMEDATALEN \
+	NAMEDATALEN, \
+	FLOAT4PASSBYVAL, \
+	FLOAT8PASSBYVAL \
 }
 
 /*

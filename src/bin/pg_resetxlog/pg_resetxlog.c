@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.64 2008/02/17 02:09:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.65 2008/04/21 00:26:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -487,10 +487,12 @@ GuessControlValues(void)
 	ControlFile.indexMaxKeys = INDEX_MAX_KEYS;
 	ControlFile.toast_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
 #ifdef HAVE_INT64_TIMESTAMP
-	ControlFile.enableIntTimes = TRUE;
+	ControlFile.enableIntTimes = true;
 #else
-	ControlFile.enableIntTimes = FALSE;
+	ControlFile.enableIntTimes = false;
 #endif
+	ControlFile.float4ByVal = FLOAT4PASSBYVAL;
+	ControlFile.float8ByVal = FLOAT8PASSBYVAL;
 	ControlFile.localeBuflen = LOCALE_NAME_BUFLEN;
 
 	localeptr = setlocale(LC_COLLATE, "");
@@ -578,6 +580,10 @@ PrintControlValues(bool guessed)
 		   ControlFile.toast_max_chunk_size);
 	printf(_("Date/time type storage:               %s\n"),
 		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
+	printf(_("Float4 argument passing:              %s\n"),
+		   (ControlFile.float4ByVal ? _("by value") : _("by reference")));
+	printf(_("Float8 argument passing:              %s\n"),
+		   (ControlFile.float8ByVal ? _("by value") : _("by reference")));
 	printf(_("Maximum length of locale name:        %u\n"),
 		   ControlFile.localeBuflen);
 	printf(_("LC_COLLATE:                           %s\n"),

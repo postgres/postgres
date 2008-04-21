@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.118 2008/04/18 18:43:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.119 2008/04/21 00:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1304,7 +1304,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 				/* XXX knows more than it should about type float4: */
 				arry = construct_array(numdatums, nnum,
 									   FLOAT4OID,
-									   sizeof(float4), true, 'i');
+									   sizeof(float4), FLOAT4PASSBYVAL, 'i');
 				values[i++] = PointerGetDatum(arry);	/* stanumbersN */
 			}
 			else

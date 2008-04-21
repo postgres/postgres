@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.116 2008/04/18 18:43:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.117 2008/04/21 00:26:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2023,16 +2023,22 @@ fmgr(Oid procedureId,...)
 
 
 /*-------------------------------------------------------------------------
- *		Support routines for standard pass-by-reference datatypes
+ *		Support routines for standard maybe-pass-by-reference datatypes
  *
- * Note: at some point, at least on some platforms, these might become
- * pass-by-value types.  Obviously Datum must be >= 8 bytes to allow
- * int64 or float8 to be pass-by-value.  I think that Float4GetDatum
- * and Float8GetDatum will need to be out-of-line routines anyway,
- * since just casting from float to Datum will not do the right thing;
- * some kind of trick with pointer-casting or a union will be needed.
+ * int8, float4, and float8 can be passed by value if Datum is wide enough.
+ * (For backwards-compatibility reasons, we allow pass-by-ref to be chosen
+ * at compile time even if pass-by-val is possible.)  For the float types,
+ * we need a support routine even if we are passing by value, because many
+ * machines pass int and float function parameters/results differently;
+ * so we need to play weird games with unions.
+ *
+ * Note: there is only one switch controlling the pass-by-value option for
+ * both int8 and float8; this is to avoid making things unduly complicated
+ * for the timestamp types, which might have either representation.
  *-------------------------------------------------------------------------
  */
+
+#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
 
 Datum
 Int64GetDatum(int64 X)
@@ -2057,9 +2063,12 @@ Int64GetDatum(int64 X)
 #endif   /* INT64_IS_BUSTED */
 }
 
+#endif /* USE_FLOAT8_BYVAL */
+
 Datum
 Float4GetDatum(float4 X)
 {
+#ifdef USE_FLOAT4_BYVAL
 	union {
 		float4	value;
 		int32	retval;
@@ -2067,7 +2076,15 @@ Float4GetDatum(float4 X)
 
 	myunion.value = X;
 	return SET_4_BYTES(myunion.retval);
+#else
+	float4	   *retval = (float4 *) palloc(sizeof(float4));
+
+	*retval = X;
+	return PointerGetDatum(retval);
+#endif
 }
+
+#ifdef USE_FLOAT4_BYVAL
 
 float4
 DatumGetFloat4(Datum X)
@@ -2081,14 +2098,43 @@ DatumGetFloat4(Datum X)
 	return myunion.retval;
 }
 
+#endif /* USE_FLOAT4_BYVAL */
+
 Datum
 Float8GetDatum(float8 X)
 {
+#ifdef USE_FLOAT8_BYVAL
+	union {
+		float8	value;
+		int64	retval;
+	} myunion;
+
+	myunion.value = X;
+	return SET_8_BYTES(myunion.retval);
+#else
 	float8	   *retval = (float8 *) palloc(sizeof(float8));
 
 	*retval = X;
 	return PointerGetDatum(retval);
+#endif
 }
+
+#ifdef USE_FLOAT8_BYVAL
+
+float8
+DatumGetFloat8(Datum X)
+{
+	union {
+		int64	value;
+		float8	retval;
+	} myunion;
+
+	myunion.value = GET_8_BYTES(X);
+	return myunion.retval;
+}
+
+#endif /* USE_FLOAT8_BYVAL */
+
 
 /*-------------------------------------------------------------------------
  *		Support routines for toastable datatypes

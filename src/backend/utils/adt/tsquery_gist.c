@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_gist.c,v 1.6 2008/04/20 09:17:57 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_gist.c,v 1.7 2008/04/21 00:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,8 @@
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 
-#define GETENTRY(vec,pos) ((TSQuerySign *) DatumGetPointer((vec)->vector[(pos)].key))
+#define GETENTRY(vec,pos) DatumGetTSQuerySign((vec)->vector[pos].key)
+
 
 Datum
 gtsquery_compress(PG_FUNCTION_ARGS)
@@ -29,12 +30,12 @@ gtsquery_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{
-		TSQuerySign *sign = (TSQuerySign *) palloc(sizeof(TSQuerySign));
+		TSQuerySign sign;
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
-		*sign = makeTSQuerySign(DatumGetTSQuery(entry->key));
+		sign = makeTSQuerySign(DatumGetTSQuery(entry->key));
 
-		gistentryinit(*retval, PointerGetDatum(sign),
+		gistentryinit(*retval, TSQuerySignGetDatum(sign),
 					  entry->rel, entry->page,
 					  entry->offset, FALSE);
 	}
@@ -56,7 +57,7 @@ gtsquery_consistent(PG_FUNCTION_ARGS)
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	TSQuerySign *key = (TSQuerySign *) DatumGetPointer(entry->key);
+	TSQuerySign	key = DatumGetTSQuerySign(entry->key);
 	TSQuerySign sq = makeTSQuerySign(query);
 	bool		retval;
 
@@ -67,15 +68,15 @@ gtsquery_consistent(PG_FUNCTION_ARGS)
 	{
 		case RTContainsStrategyNumber:
 			if (GIST_LEAF(entry))
-				retval = (*key & sq) == sq;
+				retval = (key & sq) == sq;
 			else
-				retval = (*key & sq) != 0;
+				retval = (key & sq) != 0;
 			break;
 		case RTContainedByStrategyNumber:
 			if (GIST_LEAF(entry))
-				retval = (*key & sq) == *key;
+				retval = (key & sq) == key;
 			else
-				retval = (*key & sq) != 0;
+				retval = (key & sq) != 0;
 			break;
 		default:
 			retval = FALSE;
@@ -88,27 +89,27 @@ gtsquery_union(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
-	TSQuerySign *sign = (TSQuerySign *) palloc(sizeof(TSQuerySign));
+	TSQuerySign sign;
 	int			i;
 
-	memset(sign, 0, sizeof(TSQuerySign));
+	sign = 0;
 
 	for (i = 0; i < entryvec->n; i++)
-		*sign |= *GETENTRY(entryvec, i);
+		sign |= GETENTRY(entryvec, i);
 
 	*size = sizeof(TSQuerySign);
 
-	PG_RETURN_POINTER(sign);
+	PG_RETURN_TSQUERYSIGN(sign);
 }
 
 Datum
 gtsquery_same(PG_FUNCTION_ARGS)
 {
-	TSQuerySign *a = (TSQuerySign *) PG_GETARG_POINTER(0);
-	TSQuerySign *b = (TSQuerySign *) PG_GETARG_POINTER(1);
-	bool		*result = (bool *) PG_GETARG_POINTER(2);
+	TSQuerySign a = PG_GETARG_TSQUERYSIGN(0);
+	TSQuerySign b = PG_GETARG_TSQUERYSIGN(1);
+	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = (*a == *b) ? true : false;
+	*result = (a == b) ? true : false;
 
 	PG_RETURN_POINTER(result);
 }
@@ -136,11 +137,11 @@ hemdist(TSQuerySign a, TSQuerySign b)
 Datum
 gtsquery_penalty(PG_FUNCTION_ARGS)
 {
-	TSQuerySign *origval = (TSQuerySign *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
-	TSQuerySign *newval = (TSQuerySign *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
+	TSQuerySign origval = DatumGetTSQuerySign(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
+	TSQuerySign newval = DatumGetTSQuerySign(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *penalty = (float *) PG_GETARG_POINTER(2);
 
-	*penalty = hemdist(*origval, *newval);
+	*penalty = hemdist(origval, newval);
 
 	PG_RETURN_POINTER(penalty);
 }
@@ -171,9 +172,8 @@ gtsquery_picksplit(PG_FUNCTION_ARGS)
 	OffsetNumber maxoff = entryvec->n - 2;
 	OffsetNumber k,
 				j;
-
-	TSQuerySign *datum_l,
-			   *datum_r;
+	TSQuerySign datum_l,
+				datum_r;
 	int4		size_alpha,
 				size_beta;
 	int4		size_waste,
@@ -194,7 +194,7 @@ gtsquery_picksplit(PG_FUNCTION_ARGS)
 	for (k = FirstOffsetNumber; k < maxoff; k = OffsetNumberNext(k))
 		for (j = OffsetNumberNext(k); j <= maxoff; j = OffsetNumberNext(j))
 		{
-			size_waste = hemdist(*GETENTRY(entryvec, j), *GETENTRY(entryvec, k));
+			size_waste = hemdist(GETENTRY(entryvec, j), GETENTRY(entryvec, k));
 			if (size_waste > waste)
 			{
 				waste = size_waste;
@@ -210,19 +210,16 @@ gtsquery_picksplit(PG_FUNCTION_ARGS)
 		seed_2 = 2;
 	}
 
-	datum_l = (TSQuerySign *) palloc(sizeof(TSQuerySign));
-	*datum_l = *GETENTRY(entryvec, seed_1);
-	datum_r = (TSQuerySign *) palloc(sizeof(TSQuerySign));
-	*datum_r = *GETENTRY(entryvec, seed_2);
-
+	datum_l = GETENTRY(entryvec, seed_1);
+	datum_r = GETENTRY(entryvec, seed_2);
 
 	maxoff = OffsetNumberNext(maxoff);
 	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;
-		size_alpha = hemdist(*GETENTRY(entryvec, seed_1), *GETENTRY(entryvec, j));
-		size_beta = hemdist(*GETENTRY(entryvec, seed_2), *GETENTRY(entryvec, j));
+		size_alpha = hemdist(GETENTRY(entryvec, seed_1), GETENTRY(entryvec, j));
+		size_beta = hemdist(GETENTRY(entryvec, seed_2), GETENTRY(entryvec, j));
 		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
 	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
@@ -242,26 +239,26 @@ gtsquery_picksplit(PG_FUNCTION_ARGS)
 			v->spl_nright++;
 			continue;
 		}
-		size_alpha = hemdist(*datum_l, *GETENTRY(entryvec, j));
-		size_beta = hemdist(*datum_r, *GETENTRY(entryvec, j));
+		size_alpha = hemdist(datum_l, GETENTRY(entryvec, j));
+		size_beta = hemdist(datum_r, GETENTRY(entryvec, j));
 
 		if (size_alpha < size_beta + WISH_F(v->spl_nleft, v->spl_nright, 0.05))
 		{
-			*datum_l |= *GETENTRY(entryvec, j);
+			datum_l |= GETENTRY(entryvec, j);
 			*left++ = j;
 			v->spl_nleft++;
 		}
 		else
 		{
-			*datum_r |= *GETENTRY(entryvec, j);
+			datum_r |= GETENTRY(entryvec, j);
 			*right++ = j;
 			v->spl_nright++;
 		}
 	}
 
 	*right = *left = FirstOffsetNumber;
-	v->spl_ldatum = PointerGetDatum(datum_l);
-	v->spl_rdatum = PointerGetDatum(datum_r);
+	v->spl_ldatum = TSQuerySignGetDatum(datum_l);
+	v->spl_rdatum = TSQuerySignGetDatum(datum_r);
 
 	PG_RETURN_POINTER(v);
 }

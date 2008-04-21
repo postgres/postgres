@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.68 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.69 2008/04/21 00:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -657,17 +657,16 @@ int8mod(PG_FUNCTION_ARGS)
 Datum
 int8inc(PG_FUNCTION_ARGS)
 {
+	/*
+	 * When int8 is pass-by-reference, we provide this special case to avoid
+	 * palloc overhead for COUNT(): when called from nodeAgg, we know that the
+	 * argument is modifiable local storage, so just update it in-place.
+	 * (If int8 is pass-by-value, then of course this is useless as well
+	 * as incorrect, so just ifdef it out.)
+	 */
+#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 	{
-		/*
-		 * Special case to avoid palloc overhead for COUNT(): when called from
-		 * nodeAgg, we know that the argument is modifiable local storage, so
-		 * just update it in-place.
-		 *
-		 * Note: this assumes int8 is a pass-by-ref type; if we ever support
-		 * pass-by-val int8, this should be ifdef'd out when int8 is
-		 * pass-by-val.
-		 */
 		int64	   *arg = (int64 *) PG_GETARG_POINTER(0);
 		int64		result;
 
@@ -682,6 +681,7 @@ int8inc(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(arg);
 	}
 	else
+#endif
 	{
 		/* Not called by nodeAgg, so just do it the dumb way */
 		int64		arg = PG_GETARG_INT64(0);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.241 2008/04/18 18:43:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.242 2008/04/21 00:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ static const struct typinfo TypInfo[] = {
 	F_INT2IN, F_INT2OUT},
 	{"int4", INT4OID, 0, 4, true, 'i', 'p',
 	F_INT4IN, F_INT4OUT},
-	{"float4", FLOAT4OID, 0, 4, true, 'i', 'p',
+	{"float4", FLOAT4OID, 0, 4, FLOAT4PASSBYVAL, 'i', 'p',
 	F_FLOAT4IN, F_FLOAT4OUT},
 	{"name", NAMEOID, CHAROID, NAMEDATALEN, false, 'i', 'p',
 	F_NAMEIN, F_NAMEOUT},

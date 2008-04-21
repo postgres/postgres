@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.11 2008/04/18 18:43:09 alvherre Exp $
+$PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.12 2008/04/21 00:26:45 tgl Exp $
 
 Function Manager
 ================
@@ -211,13 +211,11 @@ also amenable to machine processing --- for example, we could probably
 write a script that scans code like this and extracts argument and result
 type info for comparison to the pg_proc table.
 
-For the standard data types float8 and int8, these macros should
-hide the indirection and space allocation involved, so that the function's
-code is not explicitly aware that these types are pass-by-reference.  This
-will offer a considerable gain in readability, and it also opens up the
-opportunity to make these types be pass-by-value on machines where it's
-feasible to do so.  (For example, on an Alpha it's pretty silly to make int8
-be pass-by-ref, since Datum is going to be 64 bits anyway.)
+For the standard data types float4, float8, and int8, these macros should hide
+whether the types are pass-by-value or pass-by reference, by incorporating
+indirection and space allocation if needed.  This will offer a considerable
+gain in readability, and it also opens up the opportunity to make these types
+be pass-by-value on machines where it's feasible to do so.
 
 Here are the proposed macros and coding conventions:
 
@@ -247,20 +245,22 @@ which expands to
 Argument values are ordinarily fetched using code like
 	int32	name = PG_GETARG_INT32(number);
 
-For float8 and int8, the PG_GETARG macros will hide the pass-by-reference
-nature of the data types; for example PG_GETARG_FLOAT8 expands to
+For float4, float8, and int8, the PG_GETARG macros will hide whether the
+types are pass-by-value or pass-by-reference.  For example, if float8 is
+pass-by-reference then PG_GETARG_FLOAT8 expands to
 	(* (float8 *) DatumGetPointer(fcinfo->arg[number]))
 and would typically be called like this:
 	float8  arg = PG_GETARG_FLOAT8(0);
-Note that "float8" is the recommended typedef to use, not "float64data", and
-the macros are named accordingly.  But 64-bit ints should be declared as
-"int64".
+For what are now historical reasons, the float-related typedefs and macros
+express the type width in bytes (4 or 8), whereas we prefer to label the
+widths of integer types in bits.
 
 Non-null values are returned with a PG_RETURN_XXX macro of the appropriate
 type.  For example, PG_RETURN_INT32 expands to
 	return Int32GetDatum(x)
-PG_RETURN_FLOAT8 and PG_RETURN_INT64 hide the pass-by-reference nature of
-their datatypes.
+PG_RETURN_FLOAT4, PG_RETURN_FLOAT8, and PG_RETURN_INT64 hide whether their
+data types are pass-by-value or pass-by-reference, by doing a palloc if
+needed.
 
 fmgr.h will provide PG_GETARG and PG_RETURN macros for all the basic data
 types.  Modules or header files that define specialized SQL datatypes
@@ -333,9 +333,8 @@ Again, this style of coding does not allow for expressing NULL inputs
 or receiving a NULL result.
 
 As with the callee-side situation, I propose adding argument conversion
-macros that hide the pass-by-reference nature of int8, and
-float8, with an eye to making those types relatively painless to convert
-to pass-by-value.
+macros that hide whether int8, float4, and float8 are pass-by-value or
+pass-by-reference.
 
 The existing helper functions fmgr(), fmgr_c(), etc will be left in
 place until all uses of them are gone.  Of course their internals will
