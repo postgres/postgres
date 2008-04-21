@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.59 2008/01/03 21:36:15 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.60 2008/04/21 09:44:54 mha Exp $ -->
 <!--
 
 Typical markup:
@@ -46,6 +46,8 @@ do it for earlier branch release files.
   <para>
    This release contains a variety of fixes from 7.4.18,
    including fixes for significant security issues.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -197,6 +199,8 @@ do it for earlier branch release files.
 
   <para>
    This release contains fixes from 7.4.17.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -272,6 +276,8 @@ do it for earlier branch release files.
   <para>
    This release contains fixes from 7.4.16,
    including a security fix.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -341,6 +347,8 @@ do it for earlier branch release files.
   <para>
    This release contains a variety of fixes from 7.4.15, including
    a security fix.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -409,6 +417,8 @@ do it for earlier branch release files.
 
   <para>
    This release contains a variety of fixes from 7.4.14.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -496,6 +506,8 @@ do it for earlier branch release files.
 
   <para>
    This release contains a variety of fixes from 7.4.13.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -542,6 +554,8 @@ ANYARRAY</para></listitem>
   <para>
    This release contains a variety of fixes from 7.4.12,
    including patches for extremely serious security issues.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -646,6 +660,8 @@ Fuhr)</para></listitem>
 
   <para>
    This release contains a variety of fixes from 7.4.11.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -707,6 +723,8 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
   <para>
    This release contains a variety of fixes from 7.4.10.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -772,6 +790,8 @@ what's actually returned by the query (Joe)</para></listitem>
 
   <para>
    This release contains a variety of fixes from 7.4.9.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -823,6 +843,8 @@ table has been dropped</para></listitem>
 
   <para>
    This release contains a variety of fixes from 7.4.8.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -891,6 +913,8 @@ code</para></listitem>
   <para>
    This release contains a variety of fixes from 7.4.7, including several
    security-related issues.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -1073,6 +1097,8 @@ holder of the lock released it within a very narrow window.
   <para>
    This release contains a variety of fixes from 7.4.6, including several
    security-related issues.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
   <sect2>
@@ -1130,6 +1156,8 @@ GMT</para></listitem>
 
   <para>
    This release contains a variety of fixes from 7.4.5.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
 
@@ -1200,6 +1228,8 @@ ECPG prepare statement</para></listitem>
 
   <para>
    This release contains one serious bug fix over 7.4.4.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
 
@@ -1236,6 +1266,8 @@ still worth a re-release.  The bug does not exist in pre-7.4 releases.
 
   <para>
    This release contains a variety of fixes from 7.4.3.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
 
@@ -1286,6 +1318,8 @@ aggregate plan</para></listitem>
 
   <para>
    This release contains a variety of fixes from 7.4.2.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
 
@@ -1342,6 +1376,8 @@ names from outer query levels.
 
   <para>
    This release contains a variety of fixes from 7.4.1.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
 
@@ -1483,6 +1519,8 @@ inconveniences associated with the <literal>i/I</> problem.</para></listitem>
 
   <para>
    This release contains a variety of fixes from 7.4.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
   </para>
 
 
