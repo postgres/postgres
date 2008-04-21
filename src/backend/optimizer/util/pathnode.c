@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.142 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.143 2008/04/21 20:54:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -898,7 +898,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 /*
  * translate_sub_tlist - get subquery column numbers represented by tlist
  *
- * The given targetlist should contain only Vars referencing the given relid.
+ * The given targetlist usually contains only Vars referencing the given relid.
  * Extract their varattnos (ie, the column numbers of the subquery) and return
  * as an integer List.
  *

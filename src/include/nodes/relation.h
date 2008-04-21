@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.155 2008/03/24 21:53:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.156 2008/04/21 20:54:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1107,8 +1107,10 @@ typedef struct OuterJoinInfo
  * We record information about each such IN clause in an InClauseInfo struct.
  * These structs are kept in the PlannerInfo node's in_info_list.
  *
- * Note: sub_targetlist is just a list of Vars or expressions; it does not
- * contain TargetEntry nodes.
+ * Note: sub_targetlist is a bit misnamed; it is a list of the expressions
+ * on the RHS of the IN's join clauses.  (This normally starts out as a list
+ * of Vars referencing the subquery outputs, but can get mutated if the
+ * subquery is flattened into the main query.)
  */
 
 typedef struct InClauseInfo
@@ -1116,8 +1118,8 @@ typedef struct InClauseInfo
 	NodeTag		type;
 	Relids		lefthand;		/* base relids in lefthand expressions */
 	Relids		righthand;		/* base relids coming from the subselect */
-	List	   *sub_targetlist; /* targetlist of original RHS subquery */
-	List	   *in_operators;	/* OIDs of the IN's equality operator(s) */
+	List	   *sub_targetlist; /* RHS expressions of the IN's comparisons */
+	List	   *in_operators;	/* OIDs of the IN's equality operators */
 } InClauseInfo;
 
 /*
