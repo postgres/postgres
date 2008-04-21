@@ -53,6 +53,13 @@
    (--enable-thread-safety) */
 #define ENABLE_THREAD_SAFETY 1
 
+/* float4 values are passed by value if 'true', by reference if 'false' */
+#define FLOAT4PASSBYVAL true
+
+/* float8, int8, and related values are passed by value if 'true', by
+   reference if 'false' */
+#define FLOAT8PASSBYVAL false
+
 /* Define to 1 if getpwuid_r() takes a 5th argument. */
 /* #undef GETPWUID_R_5ARG */
 
@@ -615,6 +622,14 @@
 
 /* Define to 1 to build with Bonjour support. (--with-bonjour) */
 /* #undef USE_BONJOUR */
+
+/* Define to 1 if you want float4 values to be passed by value.
+   (--enable-float4-byval) */
+#define USE_FLOAT4_BYVAL 1
+
+/* Define to 1 if you want float8, int8, etc values to be passed by value.
+   (--enable-float8-byval) */
+/* #undef USE_FLOAT8_BYVAL */
 
 /* Define to 1 if you want 64-bit integer timestamp and interval support.
    (--enable-integer-datetimes) */
