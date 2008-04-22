@@ -1,8 +1,7 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/FAQ2txt,v 1.2 2008/04/19 12:52:51 momjian Exp $:
+# $PostgreSQL: pgsql/src/tools/FAQ2txt,v 1.3 2008/04/22 10:30:32 momjian Exp $:
 
-# Converts doc/src/FAQ/FAQ.html to text file doc/FAQ and
-# converts doc/src/FAQ/FAQ_DEV.html to text file doc/FAQ_DEV
+# Converts doc/src/FAQ/FAQ.html to text file doc/FAQ
 
 lynx -force_html -dont_wrap_pre -dump -hiddenlinks=ignore -nolist "$@"
