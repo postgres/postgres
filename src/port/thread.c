@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/thread.c,v 1.38 2008/01/01 19:46:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/thread.c,v 1.39 2008/04/22 13:06:57 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,6 @@
 
 #include <pwd.h>
 #if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY)
-#ifdef WIN32
-#include "pthread-win32.h"
-#else
-#include <pthread.h>
-#endif
 #endif
 
 
@@ -50,7 +45,7 @@
  *	The current setup is to try threading in this order:
  *
  *		use *_r function names if they exit
- *			(*_THREADSAFE=ye)
+ *			(*_THREADSAFE=yes)
  *		use non-*_r functions if they are thread-safe
  *
  *	One thread-safe solution for gethostbyname() might be to use getaddrinfo().
