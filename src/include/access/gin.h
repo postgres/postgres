@@ -3,7 +3,7 @@
  *	  header file for postgres inverted index access method implementation.
  *
  *	Copyright (c) 2006, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.9.2.1 2007/11/16 21:50:13 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.9.2.2 2008/04/22 17:53:41 teodor Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -356,14 +356,16 @@ typedef struct GinScanEntryData
 	/* entry, got from extractQueryFn */
 	Datum		entry;
 
-	/* current ItemPointer to heap, its offset in buffer and buffer */
-	ItemPointerData curItem;
-	OffsetNumber offset;
+	/* Current page in posting tree */
 	Buffer		buffer;
 
-	/* in case of Posing list */
+	/* current ItemPointer to heap */
+	ItemPointerData curItem;
+
+	/* used for Posting list and one page in Posting tree */
 	ItemPointerData *list;
-	uint32		nlist;
+	uint32			 nlist;
+	OffsetNumber     offset;
 
 	bool		isFinished;
 	bool		reduceResult;
