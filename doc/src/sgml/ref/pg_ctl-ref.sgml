@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.44 2007/11/10 21:48:51 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.45 2008/04/23 13:44:58 mha Exp $
 PostgreSQL documentation
 -->
 
@@ -133,9 +133,10 @@ PostgreSQL documentation
    In <option>stop</option> mode, the server that is running in
    the specified data directory is shut down.  Three different
    shutdown methods can be selected with the <option>-m</option>
-   option: <quote>Smart</quote> mode waits for all the clients to
-   disconnect.  This is the default.  <quote>Fast</quote> mode does
-   not wait for clients to disconnect.  All active transactions are
+   option: <quote>Smart</quote> mode waits for online backup mode
+   to finish and all the clients to disconnect.  This is the default.
+   <quote>Fast</quote> mode does not wait for clients to disconnect and
+   will terminate an online backup in progress.  All active transactions are
    rolled back and clients are forcibly disconnected, then the
    server is shut down.  <quote>Immediate</quote> mode will abort
    all server processes without a clean shutdown.  This will lead to 

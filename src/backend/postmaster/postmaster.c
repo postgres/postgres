@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.554 2008/03/31 02:43:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.555 2008/04/23 13:44:59 mha Exp $
  *
  * NOTES
  *
@@ -253,6 +253,7 @@ typedef enum
 	PM_INIT,					/* postmaster starting */
 	PM_STARTUP,					/* waiting for startup subprocess */
 	PM_RUN,						/* normal "database is alive" state */
+	PM_WAIT_BACKUP,				/* waiting for online backup mode to end */
 	PM_WAIT_BACKENDS,			/* waiting for live backends to exit */
 	PM_SHUTDOWN,				/* waiting for bgwriter to do shutdown ckpt */
 	PM_SHUTDOWN_2,				/* waiting for archiver to finish */
@@ -1724,8 +1725,12 @@ processCancelRequest(Port *port, void *pkt)
 static enum CAC_state
 canAcceptConnections(void)
 {
-	/* Can't start backends when in startup/shutdown/recovery state. */
-	if (pmState != PM_RUN)
+	/*
+	 * Can't start backends when in startup/shutdown/recovery state.
+	 * In state PM_WAIT_BACKUP we must allow connections so that
+	 * a superuser can end online backup mode.
+	 */
+	if ((pmState != PM_RUN) && (pmState != PM_WAIT_BACKUP))
 	{
 		if (Shutdown > NoShutdown)
 			return CAC_SHUTDOWN;	/* shutdown is pending */
@@ -1965,11 +1970,12 @@ pmdie(SIGNAL_ARGS)
 				/* and the walwriter too */
 				if (WalWriterPID != 0)
 					signal_child(WalWriterPID, SIGTERM);
-				pmState = PM_WAIT_BACKENDS;
+				pmState = PM_WAIT_BACKUP;
 			}
 
 			/*
-			 * Now wait for backends to exit.  If there are none,
+			 * Now wait for online backup mode to end and
+			 * backends to exit.  If that is already the case,
 			 * PostmasterStateMachine will take the next step.
 			 */
 			PostmasterStateMachine();
@@ -2011,6 +2017,13 @@ pmdie(SIGNAL_ARGS)
 			 * PostmasterStateMachine will take the next step.
 			 */
 			PostmasterStateMachine();
+
+			/*
+			 * Terminate backup mode to avoid recovery after a
+			 * clean fast shutdown.
+			 */
+			CancelBackup();
+
 			break;
 
 		case SIGQUIT:
@@ -2552,6 +2565,20 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 static void
 PostmasterStateMachine(void)
 {
+	if (pmState == PM_WAIT_BACKUP)
+	{
+		/*
+		 * PM_WAIT_BACKUP state ends when online backup mode is no longer
+		 * active.  In this state canAcceptConnections() will still allow
+		 * client connections, which is necessary because a superuser
+		 * has to call pg_stop_backup() to end online backup mode.
+		 */
+		if (!BackupInProgress())
+		{
+			pmState = PM_WAIT_BACKENDS;
+		}
+	}
+
 	/*
 	 * If we are in a state-machine state that implies waiting for backends to
 	 * exit, see if they're all gone, and change state if so.

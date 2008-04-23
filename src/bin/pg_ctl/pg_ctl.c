@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.96 2008/02/29 23:31:20 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.97 2008/04/23 13:44:59 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,7 @@ static char def_postopts_file[MAXPGPATH];
 static char postopts_file[MAXPGPATH];
 static char pid_file[MAXPGPATH];
 static char conf_file[MAXPGPATH];
+static char backup_file[MAXPGPATH];
 
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
 static void unlimit_core_size(void);
@@ -731,6 +732,7 @@ do_stop(void)
 {
 	int			cnt;
 	pgpid_t		pid;
+	struct stat	statbuf;
 
 	pid = get_pgpid();
 
@@ -763,6 +765,12 @@ do_stop(void)
 	}
 	else
 	{
+		if ((shutdown_mode == SMART_MODE) && (stat(backup_file, &statbuf) == 0))
+		{
+			print_msg(_("WARNING: online backup mode is active; must be ended\n"
+						"   with pg_stop_backup() for shutdown to complete\n\n"));
+		}
+
 		print_msg(_("waiting for server to shut down..."));
 
 		for (cnt = 0; cnt < wait_seconds; cnt++)
@@ -799,6 +807,7 @@ do_restart(void)
 {
 	int			cnt;
 	pgpid_t		pid;
+	struct stat	statbuf;
 
 	pid = get_pgpid();
 
@@ -831,6 +840,12 @@ do_restart(void)
 			write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
 						 strerror(errno));
 			exit(1);
+		}
+
+		if ((shutdown_mode == SMART_MODE) && (stat(backup_file, &statbuf) == 0))
+		{
+			print_msg(_("WARNING: online backup mode is active; must be ended\n"
+						"   with pg_stop_backup() for shutdown to complete\n\n"));
 		}
 
 		print_msg(_("waiting for server to shut down..."));
@@ -1883,6 +1898,7 @@ main(int argc, char **argv)
 		snprintf(postopts_file, MAXPGPATH, "%s/postmaster.opts", pg_data);
 		snprintf(pid_file, MAXPGPATH, "%s/postmaster.pid", pg_data);
 		snprintf(conf_file, MAXPGPATH, "%s/postgresql.conf", pg_data);
+		snprintf(backup_file, MAXPGPATH, "%s/backup_label", pg_data);
 	}
 
 	switch (ctl_command)

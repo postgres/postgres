@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.414 2008/04/17 20:56:41 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.415 2008/04/23 13:44:58 mha Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1307,6 +1307,7 @@ sysctl -w vm.overcommit_memory=2
      <listitem>
       <para>
        After receiving <systemitem>SIGTERM</systemitem>, the server
+       waits until online backup mode is no longer active. It then
        disallows new connections, but lets existing sessions end their
        work normally. It shuts down only after all of the sessions
        terminate normally. This is the <firstterm>Smart
@@ -1322,7 +1323,9 @@ sysctl -w vm.overcommit_memory=2
        The server disallows new connections and sends all existing
        server processes <systemitem>SIGTERM</systemitem>, which will cause them
        to abort their current transactions and exit promptly. It then
-       waits for the server processes to exit and finally shuts down. This is the
+       waits for the server processes to exit and finally shuts down.
+       If the server is in online backup mode, backup mode will be
+       terminated, rendering the backup useless.  This is the
        <firstterm>Fast Shutdown</firstterm>.
       </para>
      </listitem>

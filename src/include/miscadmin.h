@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.201 2008/02/20 22:46:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.202 2008/04/23 13:44:59 mha Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -329,5 +329,9 @@ extern void RecordSharedMemoryInLockFile(unsigned long id1,
 extern void ValidatePgVersion(const char *path);
 extern void process_shared_preload_libraries(void);
 extern void process_local_preload_libraries(void);
+
+/* in access/transam/xlog.c */
+extern bool BackupInProgress(void);
+extern void CancelBackup(void);
 
 #endif   /* MISCADMIN_H */

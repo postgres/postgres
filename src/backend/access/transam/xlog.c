@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.298 2008/04/21 00:26:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.299 2008/04/23 13:44:58 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6577,6 +6577,7 @@ pg_start_backup_callback(int code, Datum arg)
  * create a backup history file in pg_xlog (whence it will immediately be
  * archived).  The backup history file contains the same info found in
  * the label file, plus the backup-end time and WAL location.
+ * Note: different from CancelBackup which just cancels online backup mode.
  */
 Datum
 pg_stop_backup(PG_FUNCTION_ARGS)
@@ -7063,3 +7064,52 @@ rm_redo_error_callback(void *arg)
 
 	pfree(buf.data);
 }
+
+/*
+ * BackupInProgress: check if online backup mode is active
+ *
+ * This is done by checking for existence of the "backup_label" file.
+ */
+bool
+BackupInProgress(void)
+{
+	struct stat stat_buf;
+
+	return (stat(BACKUP_LABEL_FILE, &stat_buf) == 0);
+}
+
+/*
+ * CancelBackup: rename the "backup_label" file to cancel backup mode
+ *
+ * If the "backup_label" file exists, it will be renamed to "backup_label.old".
+ * Note that this will render an online backup in progress useless.
+ * To correctly finish an online backup, pg_stop_backup must be called.
+ */
+void
+CancelBackup(void)
+{
+	struct stat stat_buf;
+
+	/* if the file is not there, return */
+	if (stat(BACKUP_LABEL_FILE, &stat_buf) < 0)
+		return;
+
+	/* remove leftover file from previously cancelled backup if it exists */
+	unlink(BACKUP_LABEL_OLD);
+
+	if (rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD) == 0)
+	{
+		ereport(LOG,
+				(errmsg("online backup mode cancelled"),
+				 errdetail("\"%s\" renamed to \"%s\"",
+						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+	}
+	else
+	{
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not rename \"%s\" to \"%s\", backup mode not cancelled: %m",
+						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+	}
+}
+
