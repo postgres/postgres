@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.11 2008/03/25 22:42:43 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.12 2008/04/24 20:46:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1718,34 +1718,15 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 				{
 					ColumnDef  *def = (ColumnDef *) cmd->def;
 
-					Assert(IsA(cmd->def, ColumnDef));
-					transformColumnDefinition(pstate, &cxt,
-											  (ColumnDef *) cmd->def);
+					Assert(IsA(def, ColumnDef));
+					transformColumnDefinition(pstate, &cxt, def);
 
 					/*
 					 * If the column has a non-null default, we can't skip
 					 * validation of foreign keys.
 					 */
-					if (((ColumnDef *) cmd->def)->raw_default != NULL)
+					if (def->raw_default != NULL)
 						skipValidation = false;
-
-					newcmds = lappend(newcmds, cmd);
-
-					/*
-					 * Convert an ADD COLUMN ... NOT NULL constraint to a
-					 * separate command
-					 */
-					if (def->is_not_null)
-					{
-						/* Remove NOT NULL from AddColumn */
-						def->is_not_null = false;
-
-						/* Add as a separate AlterTableCmd */
-						newcmd = makeNode(AlterTableCmd);
-						newcmd->subtype = AT_SetNotNull;
-						newcmd->name = pstrdup(def->colname);
-						newcmds = lappend(newcmds, newcmd);
-					}
 
 					/*
 					 * All constraints are processed in other ways. Remove the
@@ -1753,6 +1734,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 					 */
 					def->constraints = NIL;
 
+					newcmds = lappend(newcmds, cmd);
 					break;
 				}
 			case AT_AddConstraint:
@@ -1760,7 +1742,6 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 				/*
 				 * The original AddConstraint cmd node doesn't go to newcmds
 				 */
-
 				if (IsA(cmd->def, Constraint))
 					transformTableConstraint(pstate, &cxt,
 											 (Constraint *) cmd->def);
