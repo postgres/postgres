@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Wed Apr 23 22:24:23 EDT 2008
+Last updated:           Thu Apr 24 11:53:48 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1090,9 +1090,10 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-general/2007-06/msg00542.php">http://archives.postgresql.org/pgsql-general/2007-06/msg00542.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2008-01/msg01066.php">http://archives.postgresql.org/pgsql-hackers/2008-01/msg01066.php</a>
 </p>
-  </li><li>Consider compressing indexes by storing key values duplicated in
-  several rows as a single index entry
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg00341.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg00341.php</a>
+  </li><li>Consider smaller indexes that record a range of values per heap page,
+  rather than having one index entry for every heap row
+<p>  This is useful if the heap is clustered by the indexed values.
+  <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg00341.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg00341.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-02/msg01264.php">http://archives.postgresql.org/pgsql-hackers/2007-02/msg01264.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00465.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00465.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2007-03/msg00163.php">http://archives.postgresql.org/pgsql-patches/2007-03/msg00163.php</a>
