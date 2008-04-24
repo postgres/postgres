@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Apr 16 16:57:09 EDT 2008
+   Last updated: Thu Apr 24 15:58:18 EDT 2008
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -26,7 +26,8 @@
    1.10) What documentation is available?
    1.11) How can I learn SQL?
    1.12) How do I submit a patch or join the development team?
-   1.13) How does PostgreSQL compare to other DBMSs?
+   1.13) How does PostgreSQL compare to other DBMSs? Can PostgreSQL be
+   embedded?
    1.14) Will PostgreSQL handle recent daylight saving time changes in
    various countries?
    1.15) How do I unsubscribe from the PostgreSQL email lists? How do I
@@ -288,7 +289,7 @@
   
    See the Developer's FAQ.
    
-  1.13) How does PostgreSQL compare to other DBMSs?
+  1.13) How does PostgreSQL compare to other DBMSs? Can PostgreSQL be embedded?
   
    There are several ways of measuring software: features, performance,
    reliability, support, and price.
@@ -330,6 +331,13 @@
           You can add our code to your product with no limitations,
           except those outlined in our BSD-style license stated above.
           
+   PostgreSQL is designed as a client/server architecture, which requires
+   separate processes for each client and server, and various helper
+   processes. Many embedded architectures can support such requirements.
+   However, if your embedded architecture requires the database server to
+   run inside the application process, Postgres cannot be used and a
+   lighter-weight database solution should be selected.
+   
   1.14) Will PostgreSQL handle recent daylight saving time changes in various
   countries?
   

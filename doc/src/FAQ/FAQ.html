@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Wed Apr 16 16:57:09 EDT 2008</P>
+    <P>Last updated: Thu Apr 24 15:58:18 EDT 2008</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -42,7 +42,7 @@
      <A href="#item1.12">1.12</A>) How do I submit a patch or join the
      development team?<BR>
      <A href="#item1.13">1.13</A>) How does PostgreSQL compare to other
-     <SMALL>DBMS</SMALL>s?<BR>
+     <SMALL>DBMS</SMALL>s?  Can PostgreSQL be embedded?<BR>
      <A href="#item1.14">1.14</A>) Will PostgreSQL handle recent daylight
      saving time changes in various countries?<BR>
      <A href="#item1.15">1.15</A>) How do I unsubscribe from the
@@ -385,7 +385,7 @@
     Developer's FAQ</A>.</P>
 
     <H3 id="item1.13">1.13) How does PostgreSQL compare to other
-    <SMALL>DBMS</SMALL>s?</H3>
+    <SMALL>DBMS</SMALL>s?  Can PostgreSQL be embedded?</H3>
 
     <P>There are several ways of measuring software: features,
     performance, reliability, support, and price.</P>
@@ -444,6 +444,13 @@
       </DD>
     </DL>
 
+    <P>PostgreSQL is designed as a client/server architecture, which
+    requires separate processes for each client and server, and various
+    helper processes.  Many embedded architectures can support such
+    requirements.  However, if your embedded architecture requires the
+    database server to run  inside the application process, Postgres cannot
+    be used and a lighter-weight database solution should be selected.</P>
+    
     <H3 id="item1.14">1.14) Will PostgreSQL handle recent daylight
     saving time changes in various countries?</H3>
 
