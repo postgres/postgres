@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Thu Apr 24 13:32:33 EDT 2008
+Last updated:           Thu Apr 24 14:22:49 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -527,6 +527,13 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Improve logging of prepared transactions recovered during startup
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php">http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php</a>
 </p>
+  </li><li>Improve failure message when DROP DATABASE is used on a database that
+  has prepared transactions
+  </li><li>Allow prepared transactions with temporary tables created and dropped
+  in the same transaction, and when an ON COMMIT DELETE ROWS temporary 
+  table is accessed
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-03/msg00047.php">http://archives.postgresql.org/pgsql-hackers/2008-03/msg00047.php</a>
+</p>
   </li><li>Add a GUC variable to warn about non-standard SQL usage in queries
   </li><li>Add SQL-standard MERGE/REPLACE/UPSERT command
 <p>  MERGE is typically used to merge two tables.  REPLACE or UPSERT
@@ -577,8 +584,6 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Add column to pg_stat_activity that shows the progress of long-running
   commands like CREATE INDEX and VACUUM
   </li><li>Implement SQL:2003 window functions
-  </li><li>Improve failure message when DROP DATABASE is used on a database that
-  has prepared transactions
   </li><li>Allow INSERT/UPDATE ... RETURNING inside a SELECT 'FROM' clause
 <p>  <a href="http://archives.postgresql.org/pgsql-general/2006-09/msg00803.php">http://archives.postgresql.org/pgsql-general/2006-09/msg00803.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00693.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00693.php</a>
