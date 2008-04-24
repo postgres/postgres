@@ -506,6 +506,16 @@ create table atacc1 ( test int );
 alter table atacc1 add constraint atacc_test1 primary key (test1);
 drop table atacc1;
 
+-- adding a new column as primary key to a non-empty table.
+-- should fail unless the column has a non-null default value.
+create table atacc1 ( test int );
+insert into atacc1 (test) values (0);
+-- add a primary key column without a default (fails).
+alter table atacc1 add column test2 int primary key;
+-- now add a primary key column with a default (succeeds).
+alter table atacc1 add column test2 int default 0 primary key;
+drop table atacc1;
+
 -- something a little more complicated
 create table atacc1 ( test int, test2 int);
 -- add a primary key constraint
