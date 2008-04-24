@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.242 2008/02/07 17:09:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.242.2.1 2008/04/24 20:17:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3236,6 +3236,11 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 
 		tab->newvals = lappend(tab->newvals, newval);
 	}
+
+	/*
+	 * If the new column is NOT NULL, tell Phase 3 it needs to test that.
+	 */
+	tab->new_notnull |= colDef->is_not_null;
 
 	/*
 	 * Add needed dependency entries for the new column.
