@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.299 2008/04/23 13:44:58 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.300 2008/04/24 14:23:43 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7101,14 +7101,15 @@ CancelBackup(void)
 	{
 		ereport(LOG,
 				(errmsg("online backup mode cancelled"),
-				 errdetail("\"%s\" renamed to \"%s\"",
+				 errdetail("\"%s\" was renamed to \"%s\".",
 						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
 	}
 	else
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("could not rename \"%s\" to \"%s\", backup mode not cancelled: %m",
+				 errmsg("online backup mode was not cancelled"),
+				 errdetail("Could not rename \"%s\" to \"%s\": %m.",
 						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
 	}
 }

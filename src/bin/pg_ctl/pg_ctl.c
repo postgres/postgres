@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.97 2008/04/23 13:44:59 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.98 2008/04/24 14:23:43 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -767,8 +767,8 @@ do_stop(void)
 	{
 		if ((shutdown_mode == SMART_MODE) && (stat(backup_file, &statbuf) == 0))
 		{
-			print_msg(_("WARNING: online backup mode is active; must be ended\n"
-						"   with pg_stop_backup() for shutdown to complete\n\n"));
+			print_msg(_("WARNING: online backup mode is active.\n"
+						"Shutdown will not complete until pg_stop_backup() is called.\n\n"));
 		}
 
 		print_msg(_("waiting for server to shut down..."));
@@ -844,8 +844,8 @@ do_restart(void)
 
 		if ((shutdown_mode == SMART_MODE) && (stat(backup_file, &statbuf) == 0))
 		{
-			print_msg(_("WARNING: online backup mode is active; must be ended\n"
-						"   with pg_stop_backup() for shutdown to complete\n\n"));
+			print_msg(_("WARNING: online backup mode is active.\n"
+						"Shutdown will not complete until pg_stop_backup() is called.\n\n"));
 		}
 
 		print_msg(_("waiting for server to shut down..."));
