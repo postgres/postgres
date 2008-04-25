@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Apr 25 10:28:05 EDT 2008
+   Last updated: Fri Apr 25 10:34:17 EDT 2008
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -335,8 +335,8 @@
    separate processes for each client and server, and various helper
    processes. Many embedded architectures can support such requirements.
    However, if your embedded architecture requires the database server to
-   run inside the application process, you cannot use Postgres and a
-   lighter-weight database solution should be selected.
+   run inside the application process, you cannot use Postgres and should
+   select a lighter-weight database solution.
    
   1.14) Will PostgreSQL handle recent daylight saving time changes in various
   countries?
