@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.555 2008/04/23 13:44:59 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.556 2008/04/26 22:47:40 tgl Exp $
  *
  * NOTES
  *
@@ -230,6 +230,7 @@ static bool FatalError = false; /* T if recovering from backend crash */
  * crash recovery (which is rather like shutdown followed by startup).
  *
  * Normal child backends can only be launched when we are in PM_RUN state.
+ * (We also allow it in PM_WAIT_BACKUP state, but only for superusers.)
  * In other states we handle connection requests by launching "dead_end"
  * child processes, which will simply send the client an error message and
  * quit.  (We track these in the BackendList so that we can know when they
@@ -242,9 +243,9 @@ static bool FatalError = false; /* T if recovering from backend crash */
  * will not be very long).
  *
  * Notice that this state variable does not distinguish *why* we entered
- * PM_WAIT_BACKENDS or later states --- Shutdown and FatalError must be
- * consulted to find that out.	FatalError is never true in PM_RUN state, nor
- * in PM_SHUTDOWN states (because we don't enter those states when trying to
+ * states later than PM_RUN --- Shutdown and FatalError must be consulted
+ * to find that out.  FatalError is never true in PM_RUN state, nor in
+ * PM_SHUTDOWN states (because we don't enter those states when trying to
  * recover from a crash).  It can be true in PM_STARTUP state, because we
  * don't clear it until we've successfully recovered.
  */
@@ -1650,6 +1651,9 @@ retry1:
 					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 					 errmsg("sorry, too many clients already")));
 			break;
+		case CAC_WAITBACKUP:
+			/* OK for now, will check in InitPostgres */
+			break;
 		case CAC_OK:
 			break;
 	}
@@ -1727,11 +1731,15 @@ canAcceptConnections(void)
 {
 	/*
 	 * Can't start backends when in startup/shutdown/recovery state.
-	 * In state PM_WAIT_BACKUP we must allow connections so that
-	 * a superuser can end online backup mode.
+	 *
+	 * In state PM_WAIT_BACKUP only superusers can connect (this must be
+	 * allowed so that a superuser can end online backup mode); we return
+	 * CAC_WAITBACKUP code to indicate that this must be checked later.
 	 */
-	if ((pmState != PM_RUN) && (pmState != PM_WAIT_BACKUP))
+	if (pmState != PM_RUN)
 	{
+		if (pmState == PM_WAIT_BACKUP)
+			return CAC_WAITBACKUP;	/* allow superusers only */
 		if (Shutdown > NoShutdown)
 			return CAC_SHUTDOWN;	/* shutdown is pending */
 		if (pmState == PM_STARTUP && !FatalError)
@@ -1997,7 +2005,7 @@ pmdie(SIGNAL_ARGS)
 
 			if (StartupPID != 0)
 				signal_child(StartupPID, SIGTERM);
-			if (pmState == PM_RUN)
+			if (pmState == PM_RUN || pmState == PM_WAIT_BACKUP)
 			{
 				ereport(LOG,
 						(errmsg("aborting any active transactions")));
@@ -2017,13 +2025,6 @@ pmdie(SIGNAL_ARGS)
 			 * PostmasterStateMachine will take the next step.
 			 */
 			PostmasterStateMachine();
-
-			/*
-			 * Terminate backup mode to avoid recovery after a
-			 * clean fast shutdown.
-			 */
-			CancelBackup();
-
 			break;
 
 		case SIGQUIT:
@@ -2499,7 +2500,9 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 
 	FatalError = true;
 	/* We now transit into a state of waiting for children to die */
-	if (pmState == PM_RUN || pmState == PM_SHUTDOWN)
+	if (pmState == PM_RUN ||
+		pmState == PM_WAIT_BACKUP ||
+		pmState == PM_SHUTDOWN)
 		pmState = PM_WAIT_BACKENDS;
 }
 
@@ -2568,15 +2571,10 @@ PostmasterStateMachine(void)
 	if (pmState == PM_WAIT_BACKUP)
 	{
 		/*
-		 * PM_WAIT_BACKUP state ends when online backup mode is no longer
-		 * active.  In this state canAcceptConnections() will still allow
-		 * client connections, which is necessary because a superuser
-		 * has to call pg_stop_backup() to end online backup mode.
+		 * PM_WAIT_BACKUP state ends when online backup mode is not active.
 		 */
 		if (!BackupInProgress())
-		{
 			pmState = PM_WAIT_BACKENDS;
-		}
 	}
 
 	/*
@@ -2699,6 +2697,12 @@ PostmasterStateMachine(void)
 		}
 		else
 		{
+			/*
+			 * Terminate backup mode to avoid recovery after a
+			 * clean fast shutdown.
+			 */
+			CancelBackup();
+
 			/* Normal exit from the postmaster is here */
 			ExitPostmaster(0);
 		}
@@ -2819,7 +2823,7 @@ BackendStartup(Port *port)
 		return STATUS_ERROR;
 	}
 
-	/* Pass down canAcceptConnections state (kluge for EXEC_BACKEND case) */
+	/* Pass down canAcceptConnections state */
 	port->canAcceptConnections = canAcceptConnections();
 
 #ifdef EXEC_BACKEND
@@ -2880,7 +2884,8 @@ BackendStartup(Port *port)
 	bn->pid = pid;
 	bn->cancel_key = MyCancelKey;
 	bn->is_autovacuum = false;
-	bn->dead_end = (port->canAcceptConnections != CAC_OK);
+	bn->dead_end = (port->canAcceptConnections != CAC_OK &&
+					port->canAcceptConnections != CAC_WAITBACKUP);
 	DLAddHead(BackendList, DLNewElem(bn));
 #ifdef EXEC_BACKEND
 	if (!bn->dead_end)

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.415 2008/04/23 13:44:58 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.416 2008/04/26 22:47:40 tgl Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1306,12 +1306,15 @@ sysctl -w vm.overcommit_memory=2
      <term><systemitem>SIGTERM</systemitem><indexterm><primary>SIGTERM</></></term>
      <listitem>
       <para>
+       This is the <firstterm>Smart Shutdown</firstterm> mode.
        After receiving <systemitem>SIGTERM</systemitem>, the server
-       waits until online backup mode is no longer active. It then
        disallows new connections, but lets existing sessions end their
-       work normally. It shuts down only after all of the sessions
-       terminate normally. This is the <firstterm>Smart
-       Shutdown</firstterm>.
+       work normally. It shuts down only after all of the sessions terminate.
+       If the server is in online backup mode, it additionally waits
+       until online backup mode is no longer active.  While backup mode is
+       active, new connections will still be allowed, but only to superusers
+       (this exception allows a superuser to connect to terminate
+       online backup mode).
       </para>
      </listitem>
     </varlistentry>
@@ -1320,13 +1323,13 @@ sysctl -w vm.overcommit_memory=2
      <term><systemitem>SIGINT</systemitem><indexterm><primary>SIGINT</></></term>
      <listitem>
       <para>
+       This is the <firstterm>Fast Shutdown</firstterm> mode.
        The server disallows new connections and sends all existing
        server processes <systemitem>SIGTERM</systemitem>, which will cause them
        to abort their current transactions and exit promptly. It then
        waits for the server processes to exit and finally shuts down.
        If the server is in online backup mode, backup mode will be
-       terminated, rendering the backup useless.  This is the
-       <firstterm>Fast Shutdown</firstterm>.
+       terminated, rendering the backup useless.
       </para>
      </listitem>
     </varlistentry>
@@ -1335,8 +1338,8 @@ sysctl -w vm.overcommit_memory=2
      <term><systemitem>SIGQUIT</systemitem><indexterm><primary>SIGQUIT</></></term>
      <listitem>
       <para>
-      This is the <firstterm>Immediate Shutdown</firstterm>, which
-      will cause the master <command>postgres</command> process to send a
+      This is the <firstterm>Immediate Shutdown</firstterm> mode.
+      The master <command>postgres</command> process will send a
       <systemitem>SIGQUIT</systemitem> to all child processes and exit
       immediately, without properly shutting itself down. The child processes
       likewise exit immediately upon receiving
@@ -1377,8 +1380,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   </important>
 
   <para>
-   To terminate a session while allowing other sessions to continue, use
-   <function>pg_terminate_backend()</> (<xref
+   To terminate an individual session while allowing other sessions to
+   continue, use <function>pg_terminate_backend()</> (see <xref
    linkend="functions-admin-signal-table">) or send a
    <systemitem>SIGTERM</> signal to the child process associated with
    the session.
