@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.64 2008/03/26 16:34:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.65 2008/04/27 04:33:27 alvherre Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -15,8 +15,13 @@
   Arrays of domains are not yet supported.
  </para>
 
- <sect2>
+ <sect2 id="arrays-declaration">
   <title>Declaration of Array Types</title>
+
+  <indexterm>
+   <primary>array</primary>
+   <secondary>declaration</secondary>
+  </indexterm>
 
  <para>
   To illustrate the use of array types, we create this table:
@@ -77,7 +82,7 @@ CREATE TABLE tictactoe (
  </para>
  </sect2>
 
- <sect2>
+ <sect2 id="arrays-input">
   <title>Array Value Input</title>
 
   <indexterm>
@@ -189,8 +194,13 @@ ERROR:  multidimensional arrays must have array expressions with matching dimens
  </para>
  </sect2>
 
- <sect2>
+ <sect2 id="arrays-accessing">
   <title>Accessing Arrays</title>
+
+  <indexterm>
+   <primary>array</primary>
+   <secondary>accessing</secondary>
+  </indexterm>
 
  <para>
   Now, we can run some queries on the table.
@@ -315,8 +325,13 @@ SELECT array_upper(schedule, 1) FROM sal_emp WHERE name = 'Carol';
  </para>
  </sect2>
 
- <sect2>
+ <sect2 id="arrays-modifying">
   <title>Modifying Arrays</title>
+
+  <indexterm>
+   <primary>array</primary>
+   <secondary>modifying</secondary>
+  </indexterm>
 
  <para>
   An array value can be replaced completely:
@@ -489,8 +504,13 @@ SELECT array_cat(ARRAY[5,6], ARRAY[[1,2],[3,4]]);
  </para>
  </sect2>
 
- <sect2>
+ <sect2 id="arrays-searching">
   <title>Searching in Arrays</title>
+
+  <indexterm>
+   <primary>array</primary>
+   <secondary>searching</secondary>
+  </indexterm>
 
  <para>
   To search for a value in an array, you must check each value of the
@@ -533,8 +553,13 @@ SELECT * FROM sal_emp WHERE 10000 = ALL (pay_by_quarter);
  </tip>
  </sect2>
 
- <sect2>
+ <sect2 id="arrays-io">
   <title>Array Input and Output Syntax</title>
+
+  <indexterm>
+   <primary>array</primary>
+   <secondary>I/O</secondary>
+  </indexterm>
 
   <para>
    The external text representation of an array value consists of items that
