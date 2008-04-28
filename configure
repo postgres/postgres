@@ -8003,9 +8003,9 @@ fi
 
 if test "$with_libxslt" = yes ; then
 
-{ echo "$as_me:$LINENO: checking for xsltLibxmlVersion in -lxslt" >&5
-echo $ECHO_N "checking for xsltLibxmlVersion in -lxslt... $ECHO_C" >&6; }
-if test "${ac_cv_lib_xslt_xsltLibxmlVersion+set}" = set; then
+{ echo "$as_me:$LINENO: checking for xsltCleanupGlobals in -lxslt" >&5
+echo $ECHO_N "checking for xsltCleanupGlobals in -lxslt... $ECHO_C" >&6; }
+if test "${ac_cv_lib_xslt_xsltCleanupGlobals+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -8023,11 +8023,11 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
-char xsltLibxmlVersion ();
+char xsltCleanupGlobals ();
 int
 main ()
 {
-return xsltLibxmlVersion ();
+return xsltCleanupGlobals ();
   ;
   return 0;
 }
@@ -8050,21 +8050,21 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test ! -s conftest.err
        } && test -s conftest$ac_exeext &&
        $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_xslt_xsltLibxmlVersion=yes
+  ac_cv_lib_xslt_xsltCleanupGlobals=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_xslt_xsltLibxmlVersion=no
+	ac_cv_lib_xslt_xsltCleanupGlobals=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_xslt_xsltLibxmlVersion" >&5
-echo "${ECHO_T}$ac_cv_lib_xslt_xsltLibxmlVersion" >&6; }
-if test $ac_cv_lib_xslt_xsltLibxmlVersion = yes; then
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_xslt_xsltCleanupGlobals" >&5
+echo "${ECHO_T}$ac_cv_lib_xslt_xsltCleanupGlobals" >&6; }
+if test $ac_cv_lib_xslt_xsltCleanupGlobals = yes; then
   cat >>confdefs.h <<_ACEOF
 #define HAVE_LIBXSLT 1
 _ACEOF
