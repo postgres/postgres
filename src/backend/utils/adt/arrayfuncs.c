@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.143 2008/04/11 22:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.144 2008/04/28 14:48:57 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <ctype.h>
 
 #include "access/tupmacs.h"
+#include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "parser/parse_coerce.h"
 #include "utils/array.h"
@@ -4230,4 +4231,87 @@ array_smaller(PG_FUNCTION_ARGS)
 	result = ((array_cmp(fcinfo) < 0) ? v1 : v2);
 
 	PG_RETURN_ARRAYTYPE_P(result);
+}
+
+
+typedef struct generate_subscripts_fctx
+{
+        int4    lower;
+        int4    upper;
+        bool    reverse;
+} generate_subscripts_fctx;
+
+/* 
+ * generate_subscripts(array anyarray, dim int [, reverse bool])
+ *		Returns all subscripts of the array for any dimension
+ */
+Datum
+generate_subscripts(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+	MemoryContext oldcontext;
+	generate_subscripts_fctx *fctx;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		ArrayType *v = PG_GETARG_ARRAYTYPE_P(0);
+		int		reqdim = PG_GETARG_INT32(1);
+		int    *lb,
+			   *dimv;
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/* Sanity check: does it look like an array at all? */
+		if (ARR_NDIM(v) <= 0 || ARR_NDIM(v) > MAXDIM)
+			SRF_RETURN_DONE(funcctx);
+
+		/* Sanity check: was the requested dim valid */
+		if (reqdim <= 0 || reqdim > ARR_NDIM(v))
+			SRF_RETURN_DONE(funcctx);
+
+		/*
+		 * switch to memory context appropriate for multiple function calls
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		fctx = (generate_subscripts_fctx *) palloc(sizeof(generate_subscripts_fctx));
+
+		lb = ARR_LBOUND(v);
+		dimv = ARR_DIMS(v);
+
+		fctx->lower = lb[reqdim - 1];
+		fctx->upper = dimv[reqdim - 1] + lb[reqdim - 1] - 1;
+		fctx->reverse = (PG_NARGS() < 3) ? false : PG_GETARG_BOOL(2);
+
+		funcctx->user_fctx = fctx;
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+
+	fctx = funcctx->user_fctx;
+
+	if (fctx->lower <= fctx->upper)
+	{
+		if (!fctx->reverse)
+			SRF_RETURN_NEXT(funcctx, Int32GetDatum(fctx->lower++));
+		else
+			SRF_RETURN_NEXT(funcctx, Int32GetDatum(fctx->upper--));
+	}
+	else
+		/* done when there are no more elements left */
+		SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * generate_subscripts_nodir
+ *		Implements the 2-argument version of generate_subscripts
+ */
+Datum
+generate_subscripts_nodir(PG_FUNCTION_ARGS)
+{
+	/* just call the other one -- it can handle both cases */
+	return generate_subscripts(fcinfo);
 }

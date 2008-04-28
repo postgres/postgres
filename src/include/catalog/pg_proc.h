@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.492 2008/04/17 20:56:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.493 2008/04/28 14:48:57 alvherre Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1010,6 +1010,11 @@ DATA(insert OID = 515 (  array_larger	   PGNSP PGUID 12 1 0 f f t f i 2 2277 "22
 DESCR("larger of two");
 DATA(insert OID = 516 (  array_smaller	   PGNSP PGUID 12 1 0 f f t f i 2 2277 "2277 2277" _null_ _null_ _null_ array_smaller - _null_ _null_ ));
 DESCR("smaller of two");
+DATA(insert OID = 1191 (  generate_subscripts PGNSP PGUID 12 1 1000 f f t t v 3 23 "2277 23 16" _null_ _null_ _null_ generate_subscripts - _null_ _null_ ));
+DESCR("array subscripts generator");
+DATA(insert OID = 1192 (  generate_subscripts PGNSP PGUID 12 1 1000 f f t t v 2 23 "2277 23" _null_ _null_ _null_ generate_subscripts_nodir - _null_ _null_ ));
+DESCR("array subscripts generator");
+
 
 DATA(insert OID = 760 (  smgrin			   PGNSP PGUID 12 1 0 f f t f s 1 210 "2275" _null_ _null_ _null_  smgrin - _null_ _null_ ));
 DESCR("I/O");
