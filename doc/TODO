@@ -1,12 +1,12 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri Apr 25 17:38:39 EDT 2008
+Last updated:		Mon Apr 28 19:08:21 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
 
-#A hyphen, "-", marks changes that will appear in the upcoming 8.3 release.#
+#A hyphen, "-", marks changes that will appear in the upcoming 8.4 release.#
 #A percent sign, "%", marks items that are easier to implement.#
 
 This list contains all known PostgreSQL bugs and feature requests. If
