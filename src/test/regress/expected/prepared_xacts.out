@@ -157,7 +157,7 @@ SELECT gid FROM pg_prepared_xacts;
 (2 rows)
 
 -- pxtest3 should be locked because of the pending DROP
-set statement_timeout to 1000;
+set statement_timeout to 2000;
 SELECT * FROM pxtest3;
 ERROR:  canceling statement due to statement timeout
 reset statement_timeout;
@@ -172,7 +172,7 @@ SELECT gid FROM pg_prepared_xacts;
 (2 rows)
 
 -- pxtest3 should still be locked because of the pending DROP
-set statement_timeout to 1000;
+set statement_timeout to 2000;
 SELECT * FROM pxtest3;
 ERROR:  canceling statement due to statement timeout
 reset statement_timeout;

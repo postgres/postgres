@@ -102,7 +102,7 @@ SELECT * FROM pxtest2;
 SELECT gid FROM pg_prepared_xacts;
 
 -- pxtest3 should be locked because of the pending DROP
-set statement_timeout to 1000;
+set statement_timeout to 2000;
 SELECT * FROM pxtest3;
 reset statement_timeout;
 
@@ -113,7 +113,7 @@ reset statement_timeout;
 SELECT gid FROM pg_prepared_xacts;
 
 -- pxtest3 should still be locked because of the pending DROP
-set statement_timeout to 1000;
+set statement_timeout to 2000;
 SELECT * FROM pxtest3;
 reset statement_timeout;
 
