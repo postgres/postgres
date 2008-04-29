@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.362 2008/04/14 17:05:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.363 2008/04/29 14:59:17 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,17 +234,10 @@ typedef struct A_Const
 {
 	NodeTag		type;
 	Value		val;			/* the value (with the tag) */
-	TypeName   *typename;		/* typecast, or NULL if none */
 } A_Const;
 
 /*
  * TypeCast - a CAST expression
- *
- * NOTE: for mostly historical reasons, A_Const parsenodes contain
- * room for a TypeName, allowing a constant to be marked as being of a given
- * type without a separate TypeCast node.  Either representation will work,
- * but the combined representation saves a bit of code in many
- * productions in gram.y.
  */
 typedef struct TypeCast
 {

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.612 2008/04/14 17:05:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.613 2008/04/29 14:59:16 alvherre Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -91,11 +91,12 @@ static bool QueryIsRule = FALSE;
 
 static Node *makeColumnRef(char *relname, List *indirection, int location);
 static Node *makeTypeCast(Node *arg, TypeName *typename);
-static Node *makeStringConst(char *str, TypeName *typename);
+static Node *makeStringConst(char *str);
+static Node *makeStringConstCast(char *str, TypeName *typename);
 static Node *makeIntConst(int val);
 static Node *makeFloatConst(char *str);
 static Node *makeAConst(Value *v);
-static A_Const *makeBoolAConst(bool state);
+static Node *makeBoolAConst(bool state);
 static FuncCall *makeOverlaps(List *largs, List *rargs, int location);
 static void check_qualified_name(List *names);
 static List *check_func_name(List *names);
@@ -1112,7 +1113,7 @@ set_rest:	/* Generic SET syntaxes: */
 					n->kind = VAR_SET_VALUE;
 					n->name = "client_encoding";
 					if ($2 != NULL)
-						n->args = list_make1(makeStringConst($2, NULL));
+						n->args = list_make1(makeStringConst($2));
 					else
 						n->kind = VAR_SET_DEFAULT;
 					$$ = n;
@@ -1122,7 +1123,7 @@ set_rest:	/* Generic SET syntaxes: */
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
 					n->name = "role";
-					n->args = list_make1(makeStringConst($2, NULL));
+					n->args = list_make1(makeStringConst($2));
 					$$ = n;
 				}
 			| SESSION AUTHORIZATION ColId_or_Sconst
@@ -1130,7 +1131,7 @@ set_rest:	/* Generic SET syntaxes: */
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
 					n->name = "session_authorization";
-					n->args = list_make1(makeStringConst($3, NULL));
+					n->args = list_make1(makeStringConst($3));
 					$$ = n;
 				}
 			| SESSION AUTHORIZATION DEFAULT
@@ -1145,7 +1146,7 @@ set_rest:	/* Generic SET syntaxes: */
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
 					n->name = "xmloption";
-					n->args = list_make1(makeStringConst($3 == XMLOPTION_DOCUMENT ? "DOCUMENT" : "CONTENT", NULL));
+					n->args = list_make1(makeStringConst($3 == XMLOPTION_DOCUMENT ? "DOCUMENT" : "CONTENT"));
 					$$ = n;
 				}
 		;
@@ -1163,9 +1164,9 @@ var_list:	var_value								{ $$ = list_make1($1); }
 		;
 
 var_value:	opt_boolean
-				{ $$ = makeStringConst($1, NULL); }
+				{ $$ = makeStringConst($1); }
 			| ColId_or_Sconst
-				{ $$ = makeStringConst($1, NULL); }
+				{ $$ = makeStringConst($1); }
 			| NumericOnly
 				{ $$ = makeAConst($1); }
 		;
@@ -1194,36 +1195,36 @@ opt_boolean:
 zone_value:
 			Sconst
 				{
-					$$ = makeStringConst($1, NULL);
+					$$ = makeStringConst($1);
 				}
 			| IDENT
 				{
-					$$ = makeStringConst($1, NULL);
+					$$ = makeStringConst($1);
 				}
 			| ConstInterval Sconst opt_interval
 				{
-					A_Const *n = (A_Const *) makeStringConst($2, $1);
+					TypeName *t = $1;
 					if ($3 != INTERVAL_FULL_RANGE)
 					{
 						if (($3 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE")));
-						n->typename->typmods = list_make1(makeIntConst($3));
+						t->typmods = list_make1(makeIntConst($3));
 					}
-					$$ = (Node *)n;
+					$$ = makeStringConstCast($2, t);
 				}
 			| ConstInterval '(' Iconst ')' Sconst opt_interval
 				{
-					A_Const *n = (A_Const *) makeStringConst($5, $1);
+					TypeName *t = $1;
 					if (($6 != INTERVAL_FULL_RANGE)
 						&& (($6 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("time zone interval must be HOUR or HOUR TO MINUTE")));
-					n->typename->typmods = list_make2(makeIntConst($6),
-													  makeIntConst($3));
-					$$ = (Node *)n;
+					t->typmods = list_make2(makeIntConst($6), 
+											makeIntConst($3));
+					$$ = makeStringConstCast($5, t);
 				}
 			| NumericOnly							{ $$ = makeAConst($1); }
 			| DEFAULT								{ $$ = NULL; }
@@ -5207,7 +5208,7 @@ opt_transaction:	WORK							{}
 transaction_mode_item:
 			ISOLATION LEVEL iso_level
 					{ $$ = makeDefElem("transaction_isolation",
-									   makeStringConst($3, NULL)); }
+									   makeStringConst($3)); }
 			| READ ONLY
 					{ $$ = makeDefElem("transaction_read_only",
 									   makeIntConst(TRUE)); }
@@ -7912,16 +7913,9 @@ func_expr:	func_name '(' ')'
 					 * that is actually possible, but not clear that we want
 					 * to rely on it.)
 					 */
-					A_Const *s = makeNode(A_Const);
-					TypeName *d;
-
-					s->val.type = T_String;
-					s->val.val.str = "now";
-					s->typename = SystemTypeName("text");
-
-					d = SystemTypeName("date");
-
-					$$ = (Node *)makeTypeCast((Node *)s, d);
+					Node *n;
+					n = makeStringConstCast("now", SystemTypeName("text"));
+					$$ = makeTypeCast(n, SystemTypeName("date"));
 				}
 			| CURRENT_TIME
 				{
@@ -7929,16 +7923,9 @@ func_expr:	func_name '(' ')'
 					 * Translate as "'now'::text::timetz".
 					 * See comments for CURRENT_DATE.
 					 */
-					A_Const *s = makeNode(A_Const);
-					TypeName *d;
-
-					s->val.type = T_String;
-					s->val.val.str = "now";
-					s->typename = SystemTypeName("text");
-
-					d = SystemTypeName("timetz");
-
-					$$ = (Node *)makeTypeCast((Node *)s, d);
+					Node *n;
+					n = makeStringConstCast("now", SystemTypeName("text"));
+					$$ = makeTypeCast(n, SystemTypeName("timetz"));
 				}
 			| CURRENT_TIME '(' Iconst ')'
 				{
@@ -7946,16 +7933,12 @@ func_expr:	func_name '(' ')'
 					 * Translate as "'now'::text::timetz(n)".
 					 * See comments for CURRENT_DATE.
 					 */
-					A_Const *s = makeNode(A_Const);
+					Node *n;
 					TypeName *d;
-
-					s->val.type = T_String;
-					s->val.val.str = "now";
-					s->typename = SystemTypeName("text");
+					n = makeStringConstCast("now", SystemTypeName("text"));
 					d = SystemTypeName("timetz");
 					d->typmods = list_make1(makeIntConst($3));
-
-					$$ = (Node *)makeTypeCast((Node *)s, d);
+					$$ = makeTypeCast(n, d);
 				}
 			| CURRENT_TIMESTAMP
 				{
@@ -7977,17 +7960,12 @@ func_expr:	func_name '(' ')'
 					 * Translate as "'now'::text::timestamptz(n)".
 					 * See comments for CURRENT_DATE.
 					 */
-					A_Const *s = makeNode(A_Const);
+					Node *n;
 					TypeName *d;
-
-					s->val.type = T_String;
-					s->val.val.str = "now";
-					s->typename = SystemTypeName("text");
-
+					n = makeStringConstCast("now", SystemTypeName("text"));
 					d = SystemTypeName("timestamptz");
 					d->typmods = list_make1(makeIntConst($3));
-
-					$$ = (Node *)makeTypeCast((Node *)s, d);
+					$$ = makeTypeCast(n, d);
 				}
 			| LOCALTIME
 				{
@@ -7995,16 +7973,9 @@ func_expr:	func_name '(' ')'
 					 * Translate as "'now'::text::time".
 					 * See comments for CURRENT_DATE.
 					 */
-					A_Const *s = makeNode(A_Const);
-					TypeName *d;
-
-					s->val.type = T_String;
-					s->val.val.str = "now";
-					s->typename = SystemTypeName("text");
-
-					d = SystemTypeName("time");
-
-					$$ = (Node *)makeTypeCast((Node *)s, d);
+					Node *n;
+					n = makeStringConstCast("now", SystemTypeName("text"));
+					$$ = makeTypeCast((Node *)n, SystemTypeName("time"));
 				}
 			| LOCALTIME '(' Iconst ')'
 				{
@@ -8012,16 +7983,12 @@ func_expr:	func_name '(' ')'
 					 * Translate as "'now'::text::time(n)".
 					 * See comments for CURRENT_DATE.
 					 */
-					A_Const *s = makeNode(A_Const);
+					Node *n;
 					TypeName *d;
-
-					s->val.type = T_String;
-					s->val.val.str = "now";
-					s->typename = SystemTypeName("text");
+					n = makeStringConstCast("now", SystemTypeName("text"));
 					d = SystemTypeName("time");
 					d->typmods = list_make1(makeIntConst($3));
-
-					$$ = (Node *)makeTypeCast((Node *)s, d);
+					$$ = makeTypeCast((Node *)n, d);
 				}
 			| LOCALTIMESTAMP
 				{
@@ -8029,16 +7996,9 @@ func_expr:	func_name '(' ')'
 					 * Translate as "'now'::text::timestamp".
 					 * See comments for CURRENT_DATE.
 					 */
-					A_Const *s = makeNode(A_Const);
-					TypeName *d;
-
-					s->val.type = T_String;
-					s->val.val.str = "now";
-					s->typename = SystemTypeName("text");
-
-					d = SystemTypeName("timestamp");
-
-					$$ = (Node *)makeTypeCast((Node *)s, d);
+					Node *n;
+					n = makeStringConstCast("now", SystemTypeName("text"));
+					$$ = makeTypeCast(n, SystemTypeName("timestamp"));
 				}
 			| LOCALTIMESTAMP '(' Iconst ')'
 				{
@@ -8046,17 +8006,12 @@ func_expr:	func_name '(' ')'
 					 * Translate as "'now'::text::timestamp(n)".
 					 * See comments for CURRENT_DATE.
 					 */
-					A_Const *s = makeNode(A_Const);
+					Node *n;
 					TypeName *d;
-
-					s->val.type = T_String;
-					s->val.val.str = "now";
-					s->typename = SystemTypeName("text");
-
+					n = makeStringConstCast("now", SystemTypeName("text"));
 					d = SystemTypeName("timestamp");
 					d->typmods = list_make1(makeIntConst($3));
-
-					$$ = (Node *)makeTypeCast((Node *)s, d);
+					$$ = makeTypeCast(n, d);
 				}
 			| CURRENT_ROLE
 				{
@@ -8304,13 +8259,13 @@ xml_root_version: VERSION_P a_expr
 		;
 
 opt_xml_root_standalone: ',' STANDALONE_P YES_P
-				{ $$ = (Node *) makeIntConst(XML_STANDALONE_YES); }
+				{ $$ = makeIntConst(XML_STANDALONE_YES); }
 			| ',' STANDALONE_P NO
-				{ $$ = (Node *) makeIntConst(XML_STANDALONE_NO); }
+				{ $$ = makeIntConst(XML_STANDALONE_NO); }
 			| ',' STANDALONE_P NO VALUE_P
-				{ $$ = (Node *) makeIntConst(XML_STANDALONE_NO_VALUE); }
+				{ $$ = makeIntConst(XML_STANDALONE_NO_VALUE); }
 			| /*EMPTY*/
-				{ $$ = (Node *) makeIntConst(XML_STANDALONE_OMITTED); }
+				{ $$ = makeIntConst(XML_STANDALONE_OMITTED); }
 		;
 
 xml_attributes: XMLATTRIBUTES '(' xml_attribute_list ')'	{ $$ = $3; }
@@ -8897,60 +8852,44 @@ AexprConst: Iconst
 			| func_name Sconst
 				{
 					/* generic type 'literal' syntax */
-					A_Const *n = makeNode(A_Const);
-					n->typename = makeTypeNameFromNameList($1);
-					n->typename->location = @1;
-					n->val.type = T_String;
-					n->val.val.str = $2;
-					$$ = (Node *)n;
+					TypeName *t = makeTypeNameFromNameList($1);
+					t->location = @1;
+					$$ = makeStringConstCast($2, t);
 				}
 			| func_name '(' expr_list ')' Sconst
 				{
 					/* generic syntax with a type modifier */
-					A_Const *n = makeNode(A_Const);
-					n->typename = makeTypeNameFromNameList($1);
-					n->typename->typmods = $3;
-					n->typename->location = @1;
-					n->val.type = T_String;
-					n->val.val.str = $5;
-					$$ = (Node *)n;
+					TypeName *t = makeTypeNameFromNameList($1);
+					t->typmods = $3;
+					t->location = @1;
+					$$ = makeStringConstCast($5, t);
 				}
 			| ConstTypename Sconst
 				{
-					A_Const *n = makeNode(A_Const);
-					n->typename = $1;
-					n->val.type = T_String;
-					n->val.val.str = $2;
-					$$ = (Node *)n;
+					$$ = makeStringConstCast($2, $1);
 				}
 			| ConstInterval Sconst opt_interval
 				{
-					A_Const *n = makeNode(A_Const);
-					n->typename = $1;
-					n->val.type = T_String;
-					n->val.val.str = $2;
+					TypeName *t = $1;
 					/* precision is not specified, but fields may be... */
 					if ($3 != INTERVAL_FULL_RANGE)
-						n->typename->typmods = list_make1(makeIntConst($3));
-					$$ = (Node *)n;
+						t->typmods = list_make1(makeIntConst($3));
+					$$ = makeStringConstCast($2, t);
 				}
 			| ConstInterval '(' Iconst ')' Sconst opt_interval
 				{
-					A_Const *n = makeNode(A_Const);
-					n->typename = $1;
-					n->val.type = T_String;
-					n->val.val.str = $5;
-					n->typename->typmods = list_make2(makeIntConst($6),
-													  makeIntConst($3));
-					$$ = (Node *)n;
+					TypeName *t = $1;
+					t->typmods = list_make2(makeIntConst($6),
+										    makeIntConst($3));
+					$$ = makeStringConstCast($5, t);
 				}
 			| TRUE_P
 				{
-					$$ = (Node *)makeBoolAConst(TRUE);
+					$$ = makeBoolAConst(TRUE);
 				}
 			| FALSE_P
 				{
-					$$ = (Node *)makeBoolAConst(FALSE);
+					$$ = makeBoolAConst(FALSE);
 				}
 			| NULL_P
 				{
@@ -9506,24 +9445,31 @@ makeTypeCast(Node *arg, TypeName *typename)
 }
 
 static Node *
-makeStringConst(char *str, TypeName *typename)
+makeStringConst(char *str)
 {
 	A_Const *n = makeNode(A_Const);
 
 	n->val.type = T_String;
 	n->val.val.str = str;
-	n->typename = typename;
 
 	return (Node *)n;
+}
+
+static Node *
+makeStringConstCast(char *str, TypeName *typename)
+{
+	Node *s = makeStringConst(str);
+
+	return makeTypeCast(s, typename);
 }
 
 static Node *
 makeIntConst(int val)
 {
 	A_Const *n = makeNode(A_Const);
+
 	n->val.type = T_Integer;
 	n->val.val.ival = val;
-	n->typename = SystemTypeName("int4");
 
 	return (Node *)n;
 }
@@ -9535,9 +9481,8 @@ makeFloatConst(char *str)
 
 	n->val.type = T_Float;
 	n->val.val.str = str;
-	n->typename = SystemTypeName("float8");
 
-	return (Node *)n;
+	return makeTypeCast((Node *)n, SystemTypeName("float8"));
 }
 
 static Node *
@@ -9557,7 +9502,7 @@ makeAConst(Value *v)
 
 		case T_String:
 		default:
-			n = makeStringConst(v->val.str, NULL);
+			n = makeStringConst(v->val.str);
 			break;
 	}
 
@@ -9565,16 +9510,17 @@ makeAConst(Value *v)
 }
 
 /* makeBoolAConst()
- * Create an A_Const node and initialize to a boolean constant.
+ * Create an A_Const string node and put it inside a boolean cast.
  */
-static A_Const *
+static Node *
 makeBoolAConst(bool state)
 {
 	A_Const *n = makeNode(A_Const);
+
 	n->val.type = T_String;
 	n->val.val.str = (state ? "t" : "f");
-	n->typename = SystemTypeName("bool");
-	return n;
+
+	return makeTypeCast((Node *)n, SystemTypeName("bool"));
 }
 
 /* makeOverlaps()

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.325 2008/04/13 20:51:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.326 2008/04/29 14:59:16 alvherre Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1945,7 +1945,6 @@ _outAConst(StringInfo str, A_Const *node)
 
 	appendStringInfo(str, " :val ");
 	_outValue(str, &(node->val));
-	WRITE_NODE_FIELD(typename);
 }
 
 static void

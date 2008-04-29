@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.321 2008/04/14 17:05:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.322 2008/04/29 14:59:16 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1693,7 +1693,6 @@ _equalAConst(A_Const *a, A_Const *b)
 {
 	if (!equal(&a->val, &b->val))		/* hack for in-line Value field */
 		return false;
-	COMPARE_NODE_FIELD(typename);
 
 	return true;
 }
