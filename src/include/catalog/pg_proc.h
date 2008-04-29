@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.493 2008/04/28 14:48:57 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.494 2008/04/29 13:00:22 alvherre Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1010,9 +1010,9 @@ DATA(insert OID = 515 (  array_larger	   PGNSP PGUID 12 1 0 f f t f i 2 2277 "22
 DESCR("larger of two");
 DATA(insert OID = 516 (  array_smaller	   PGNSP PGUID 12 1 0 f f t f i 2 2277 "2277 2277" _null_ _null_ _null_ array_smaller - _null_ _null_ ));
 DESCR("smaller of two");
-DATA(insert OID = 1191 (  generate_subscripts PGNSP PGUID 12 1 1000 f f t t v 3 23 "2277 23 16" _null_ _null_ _null_ generate_subscripts - _null_ _null_ ));
+DATA(insert OID = 1191 (  generate_subscripts PGNSP PGUID 12 1 1000 f f t t i 3 23 "2277 23 16" _null_ _null_ _null_ generate_subscripts - _null_ _null_ ));
 DESCR("array subscripts generator");
-DATA(insert OID = 1192 (  generate_subscripts PGNSP PGUID 12 1 1000 f f t t v 2 23 "2277 23" _null_ _null_ _null_ generate_subscripts_nodir - _null_ _null_ ));
+DATA(insert OID = 1192 (  generate_subscripts PGNSP PGUID 12 1 1000 f f t t i 2 23 "2277 23" _null_ _null_ _null_ generate_subscripts_nodir - _null_ _null_ ));
 DESCR("array subscripts generator");
 
 
@@ -3864,13 +3864,13 @@ DATA(insert OID = 2856 (  pg_timezone_names		PGNSP PGUID 12 1 1000 f f t t s 0 2
 DESCR("get the available time zone names");
 
 /* non-persistent series generator */
-DATA(insert OID = 1066 (  generate_series PGNSP PGUID 12 1 1000 f f t t v 3 23 "23 23 23" _null_ _null_ _null_ generate_series_step_int4 - _null_ _null_ ));
+DATA(insert OID = 1066 (  generate_series PGNSP PGUID 12 1 1000 f f t t i 3 23 "23 23 23" _null_ _null_ _null_ generate_series_step_int4 - _null_ _null_ ));
 DESCR("non-persistent series generator");
-DATA(insert OID = 1067 (  generate_series PGNSP PGUID 12 1 1000 f f t t v 2 23 "23 23" _null_ _null_ _null_ generate_series_int4 - _null_ _null_ ));
+DATA(insert OID = 1067 (  generate_series PGNSP PGUID 12 1 1000 f f t t i 2 23 "23 23" _null_ _null_ _null_ generate_series_int4 - _null_ _null_ ));
 DESCR("non-persistent series generator");
-DATA(insert OID = 1068 (  generate_series PGNSP PGUID 12 1 1000 f f t t v 3 20 "20 20 20" _null_ _null_ _null_ generate_series_step_int8 - _null_ _null_ ));
+DATA(insert OID = 1068 (  generate_series PGNSP PGUID 12 1 1000 f f t t i 3 20 "20 20 20" _null_ _null_ _null_ generate_series_step_int8 - _null_ _null_ ));
 DESCR("non-persistent series generator");
-DATA(insert OID = 1069 (  generate_series PGNSP PGUID 12 1 1000 f f t t v 2 20 "20 20" _null_ _null_ _null_ generate_series_int8 - _null_ _null_ ));
+DATA(insert OID = 1069 (  generate_series PGNSP PGUID 12 1 1000 f f t t i 2 20 "20 20" _null_ _null_ _null_ generate_series_int8 - _null_ _null_ ));
 DESCR("non-persistent series generator");
 
 /* boolean aggregates */
