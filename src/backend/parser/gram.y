@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.613 2008/04/29 14:59:16 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.614 2008/04/29 20:44:49 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -95,6 +95,8 @@ static Node *makeStringConst(char *str);
 static Node *makeStringConstCast(char *str, TypeName *typename);
 static Node *makeIntConst(int val);
 static Node *makeFloatConst(char *str);
+static Node *makeBitStringConst(char *str);
+static Node *makeNullAConst(void);
 static Node *makeAConst(Value *v);
 static Node *makeBoolAConst(bool state);
 static FuncCall *makeOverlaps(List *largs, List *rargs, int location);
@@ -6395,9 +6397,7 @@ select_limit_value:
 			| ALL
 				{
 					/* LIMIT ALL is represented as a NULL constant */
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_Null;
-					$$ = (Node *)n;
+					$$ = makeNullAConst();
 				}
 		;
 
@@ -7409,11 +7409,9 @@ a_expr:		c_expr									{ $$ = $1; }
 
 			| a_expr SIMILAR TO a_expr				%prec SIMILAR
 				{
-					A_Const *c = makeNode(A_Const);
 					FuncCall *n = makeNode(FuncCall);
-					c->val.type = T_Null;
 					n->funcname = SystemFuncName("similar_escape");
-					n->args = list_make2($4, (Node *) c);
+					n->args = list_make2($4, makeNullAConst());
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->location = @2;
@@ -7431,11 +7429,9 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 			| a_expr NOT SIMILAR TO a_expr			%prec SIMILAR
 				{
-					A_Const *c = makeNode(A_Const);
 					FuncCall *n = makeNode(FuncCall);
-					c->val.type = T_Null;
 					n->funcname = SystemFuncName("similar_escape");
-					n->args = list_make2($5, (Node *) c);
+					n->args = list_make2($5, makeNullAConst());
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->location = @5;
@@ -8251,11 +8247,7 @@ func_expr:	func_name '(' ')'
 xml_root_version: VERSION_P a_expr
 				{ $$ = $2; }
 			| VERSION_P NO VALUE_P
-				{
-					A_Const *val = makeNode(A_Const);
-					val->val.type = T_Null;
-					$$ = (Node *) val;
-				}
+				{ $$ = makeNullAConst(); }
 		;
 
 opt_xml_root_standalone: ',' STANDALONE_P YES_P
@@ -8409,10 +8401,7 @@ array_expr_list: array_expr							{ $$ = list_make1($1); }
 extract_list:
 			extract_arg FROM a_expr
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = $1;
-					$$ = list_make2((Node *) n, $3);
+					$$ = list_make2(makeStringConst($1), $3);
 				}
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
@@ -8496,10 +8485,7 @@ substr_list:
 					 * which it is likely to do if the second argument
 					 * is unknown or doesn't have an implicit cast to int4.
 					 */
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_Integer;
-					n->val.val.ival = 1;
-					$$ = list_make3($1, (Node *) n,
+					$$ = list_make3($1, makeIntConst(1),
 									makeTypeCast($2, SystemTypeName("int4")));
 				}
 			| expr_list
@@ -8811,31 +8797,19 @@ func_name:	type_function_name
  */
 AexprConst: Iconst
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_Integer;
-					n->val.val.ival = $1;
-					$$ = (Node *)n;
+					$$ = makeIntConst($1);
 				}
 			| FCONST
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_Float;
-					n->val.val.str = $1;
-					$$ = (Node *)n;
+					$$ = makeFloatConst($1);
 				}
 			| Sconst
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = $1;
-					$$ = (Node *)n;
+					$$ = makeStringConst($1);
 				}
 			| BCONST
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_BitString;
-					n->val.val.str = $1;
-					$$ = (Node *)n;
+					$$ = makeBitStringConst($1);
 				}
 			| XCONST
 				{
@@ -8844,10 +8818,7 @@ AexprConst: Iconst
 					 * a <general literal> shall not be a
 					 * <bit string literal> or a <hex string literal>.
 					 */
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_BitString;
-					n->val.val.str = $1;
-					$$ = (Node *)n;
+					$$ = makeBitStringConst($1);
 				}
 			| func_name Sconst
 				{
@@ -8893,9 +8864,7 @@ AexprConst: Iconst
 				}
 			| NULL_P
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_Null;
-					$$ = (Node *)n;
+					$$ = makeNullAConst();
 				}
 		;
 
@@ -9482,7 +9451,28 @@ makeFloatConst(char *str)
 	n->val.type = T_Float;
 	n->val.val.str = str;
 
-	return makeTypeCast((Node *)n, SystemTypeName("float8"));
+	return (Node *)n;
+}
+
+static Node *
+makeBitStringConst(char *str)
+{
+	A_Const *n = makeNode(A_Const);
+
+	n->val.type = T_BitString;
+	n->val.val.str = str;
+
+	return (Node *)n;
+}
+
+static Node *
+makeNullAConst(void)
+{
+	A_Const *n = makeNode(A_Const);
+
+	n->val.type = T_Null;
+
+	return (Node *)n;
 }
 
 static Node *

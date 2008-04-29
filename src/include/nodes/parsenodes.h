@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.363 2008/04/29 14:59:17 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.364 2008/04/29 20:44:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,12 +228,12 @@ typedef struct A_Expr
 } A_Expr;
 
 /*
- * A_Const - a constant expression
+ * A_Const - a literal constant
  */
 typedef struct A_Const
 {
 	NodeTag		type;
-	Value		val;			/* the value (with the tag) */
+	Value		val;			/* value (includes type info, see value.h) */
 } A_Const;
 
 /*

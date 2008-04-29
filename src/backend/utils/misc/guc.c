@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.448 2008/04/29 14:59:17 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.449 2008/04/29 20:44:49 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5209,7 +5209,8 @@ flatten_set_variable_args(const char *name, List *args)
 
 	/*
 	 * Each list member may be a plain A_Const node, or an A_Const within a
-	 * TypeCast, as produced by makeFloatConst() et al in gram.y.
+	 * TypeCast; the latter case is supported only for ConstInterval
+	 * arguments (for SET TIME ZONE).
 	 */
 	foreach(l, args)
 	{
@@ -5231,8 +5232,8 @@ flatten_set_variable_args(const char *name, List *args)
 
 		if (!IsA(arg, A_Const))
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(arg));
-
 		con = (A_Const *) arg;
+
 		switch (nodeTag(&con->val))
 		{
 			case T_Integer:
@@ -5243,10 +5244,6 @@ flatten_set_variable_args(const char *name, List *args)
 				appendStringInfoString(&buf, strVal(&con->val));
 				break;
 			case T_String:
-				/*
-				 * Plain string literal or identifier.	For quote mode,
-				 * quote it if it's not a vanilla identifier.
-				 */
 				val = strVal(&con->val);
 				if (typename != NULL)
 				{
@@ -5273,12 +5270,13 @@ flatten_set_variable_args(const char *name, List *args)
 						DatumGetCString(DirectFunctionCall1(interval_out,
 															interval));
 					appendStringInfo(&buf, "INTERVAL '%s'", intervalout);
-
-					/* don't leave this set */
-					typename = NULL;
 				}
 				else
 				{
+					/*
+					 * Plain string literal or identifier.	For quote mode,
+					 * quote it if it's not a vanilla identifier.
+					 */
 					if (flags & GUC_LIST_QUOTE)
 						appendStringInfoString(&buf, quote_identifier(val));
 					else
