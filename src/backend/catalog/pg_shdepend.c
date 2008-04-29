@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.23.2.1 2008/03/24 19:12:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.23.2.2 2008/04/29 19:37:13 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "catalog/pg_type.h"
 #include "commands/conversioncmds.h"
 #include "commands/defrem.h"
+#include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"
@@ -1340,6 +1341,10 @@ shdepReassignOwned(List *roleids, Oid newrole)
 
 				case ProcedureRelationId:
 					AlterFunctionOwner_oid(sdepForm->objid, newrole);
+					break;
+
+				case LanguageRelationId:
+					AlterLanguageOwner_oid(sdepForm->objid, newrole);
 					break;
 
 				default:
