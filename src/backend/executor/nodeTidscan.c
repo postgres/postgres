@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.58 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.59 2008/04/30 23:28:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,10 +54,19 @@ TidListCreate(TidScanState *tidstate)
 {
 	List	   *evalList = tidstate->tss_tidquals;
 	ExprContext *econtext = tidstate->ss.ps.ps_ExprContext;
+	BlockNumber nblocks;
 	ItemPointerData *tidList;
 	int			numAllocTids;
 	int			numTids;
 	ListCell   *l;
+
+	/*
+	 * We silently discard any TIDs that are out of range at the time of
+	 * scan start.  (Since we hold at least AccessShareLock on the table,
+	 * it won't be possible for someone to truncate away the blocks we
+	 * intend to visit.)
+	 */
+	nblocks = RelationGetNumberOfBlocks(tidstate->ss.ss_currentRelation);
 
 	/*
 	 * We initialize the array with enough slots for the case that all quals
@@ -97,7 +106,9 @@ TidListCreate(TidScanState *tidstate)
 														  econtext,
 														  &isNull,
 														  NULL));
-			if (!isNull && ItemPointerIsValid(itemptr))
+			if (!isNull &&
+				ItemPointerIsValid(itemptr) &&
+				ItemPointerGetBlockNumber(itemptr) < nblocks)
 			{
 				if (numTids >= numAllocTids)
 				{
@@ -142,7 +153,8 @@ TidListCreate(TidScanState *tidstate)
 				if (!ipnulls[i])
 				{
 					itemptr = (ItemPointer) DatumGetPointer(ipdatums[i]);
-					if (ItemPointerIsValid(itemptr))
+					if (ItemPointerIsValid(itemptr) &&
+						ItemPointerGetBlockNumber(itemptr) < nblocks)
 						tidList[numTids++] = *itemptr;
 				}
 			}
