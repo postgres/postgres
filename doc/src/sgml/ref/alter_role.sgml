@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.9 2007/09/03 18:46:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.10 2008/04/30 12:38:49 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -214,6 +214,14 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET ALL
 
 <programlisting>
 ALTER ROLE davide WITH PASSWORD 'hu8jmn3';
+</programlisting>
+  </para>
+
+  <para>
+   Remove a role's password:
+
+<programlisting>
+ALTER ROLE davide WITH PASSWORD NULL;
 </programlisting>
   </para>
 
