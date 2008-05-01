@@ -4,7 +4,7 @@
 # timezone_abbreviations to 'Default'.  See the `Date/Time Support'
 # appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.5 2008/03/02 00:10:22 tgl Exp $
+# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.6 2008/05/01 20:05:08 tgl Exp $
 
 
 #################### AFRICA ####################
@@ -334,6 +334,8 @@ PETT    43200    # Petropavlovsk-Kamchatski Time
                  #     (Asia/Kamchatka)
 PHT     28800    # Phillipine Time (not in zic)
 PKT     18000    # Pakistan Time (not in zic)
+SGT     28800    # Singapore Time
+                 #     (Asia/Singapore)
 TJT     18000    # Tajikistan Time
                  #     (Asia/Dushanbe)
 TMT     18000    # Turkmenistan Time
