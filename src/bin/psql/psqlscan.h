@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/psqlscan.h,v 1.8 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/psqlscan.h,v 1.9 2008/05/02 09:27:51 petere Exp $
  */
 #ifndef PSQLSCAN_H
 #define PSQLSCAN_H
@@ -60,7 +60,5 @@ extern char *psql_scan_slash_option(PsqlScanState state,
 					   bool semicolon);
 
 extern void psql_scan_slash_command_end(PsqlScanState state);
-
-extern void psql_scan_slash_pushback(PsqlScanState state, const char *str);
 
 #endif   /* PSQLSCAN_H */

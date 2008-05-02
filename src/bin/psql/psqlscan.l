@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.23 2008/01/01 19:45:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.24 2008/05/02 09:27:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1523,22 +1523,6 @@ psql_scan_slash_command_end(PsqlScanState state)
 	lexresult = yylex();
 
 	/* There are no possible errors in this lex state... */
-}
-
-/*
- * "Push back" the passed string so that it will be rescanned by subsequent
- * psql_scan_slash_option calls.  This is presently only used in the case
- * where a single-letter command has been concatenated with its argument.
- *
- * We use the same buffer stack mechanism as for variable expansion.
- */
-void
-psql_scan_slash_pushback(PsqlScanState state, const char *str)
-{
-	/* needed for push_new_buffer */
-	cur_state = state;
-
-	push_new_buffer(str);
 }
 
 
