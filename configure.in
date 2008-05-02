@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.558 2008/05/02 01:08:26 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.559 2008/05/02 19:52:37 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -221,7 +221,7 @@ AC_SUBST(enable_dtrace)
 # Block size
 #
 AC_MSG_CHECKING([for block size])
-PGAC_ARG_REQ(with, blocksize, [  --with-blocksize=BLOCKSIZE  set block size in kB [[8]]],
+PGAC_ARG_REQ(with, blocksize, [  --with-blocksize=BLOCKSIZE  set table block size in kB [[8]]],
              [blocksize=$withval],
              [blocksize=8])
 case ${blocksize} in
@@ -250,10 +250,10 @@ AC_DEFINE_UNQUOTED([BLCKSZ], ${BLCKSZ}, [
 ]) 
 
 #
-# File segment size
+# Relation segment size
 #
 AC_MSG_CHECKING([for segment size])
-PGAC_ARG_REQ(with, segsize, [  --with-segsize=SEGSIZE  set segment size in GB [[1]]],
+PGAC_ARG_REQ(with, segsize, [  --with-segsize=SEGSIZE  set table segment size in GB [[1]]],
              [segsize=$withval],
              [segsize=1])
 # this expression is set up to avoid unnecessary integer overflow
@@ -278,6 +278,61 @@ AC_DEFINE_UNQUOTED([RELSEG_SIZE], ${RELSEG_SIZE}, [
  but is not absolutely required.
 
  Changing RELSEG_SIZE requires an initdb.
+])
+
+#
+# WAL block size
+#
+AC_MSG_CHECKING([for WAL block size])
+PGAC_ARG_REQ(with, wal-blocksize, [  --with-wal-blocksize=BLOCKSIZE  set WAL block size in kB [[8]]],
+             [wal_blocksize=$withval],
+             [wal_blocksize=8])
+case ${wal_blocksize} in
+  1) XLOG_BLCKSZ=1024;;
+  2) XLOG_BLCKSZ=2048;;
+  4) XLOG_BLCKSZ=4096;;
+  8) XLOG_BLCKSZ=8192;;
+ 16) XLOG_BLCKSZ=16384;;
+ 32) XLOG_BLCKSZ=32768;;
+ 64) XLOG_BLCKSZ=65536;;
+  *) AC_MSG_ERROR([Invalid WAL block size. Allowed values are 1,2,4,8,16,32,64.])
+esac
+AC_MSG_RESULT([${wal_blocksize}kB])
+
+AC_DEFINE_UNQUOTED([XLOG_BLCKSZ], ${XLOG_BLCKSZ}, [
+ Size of a WAL file block.  This need have no particular relation to BLCKSZ.
+ XLOG_BLCKSZ must be a power of 2, and if your system supports O_DIRECT I/O,
+ XLOG_BLCKSZ must be a multiple of the alignment requirement for direct-I/O
+ buffers, else direct I/O may fail.
+
+ Changing XLOG_BLCKSZ requires an initdb.
+]) 
+
+#
+# WAL segment size
+#
+AC_MSG_CHECKING([for WAL segment size])
+PGAC_ARG_REQ(with, wal-segsize, [  --with-wal-segsize=SEGSIZE  set WAL segment size in MB [[16]]],
+             [wal_segsize=$withval],
+             [wal_segsize=16])
+case ${wal_segsize} in
+  1) ;;
+  2) ;;
+  4) ;;
+  8) ;;
+ 16) ;;
+ 32) ;;
+ 64) ;;
+  *) AC_MSG_ERROR([Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64.])
+esac
+AC_MSG_RESULT([${wal_segsize}MB])
+
+AC_DEFINE_UNQUOTED([XLOG_SEG_SIZE], [(${wal_segsize} * 1024 * 1024)], [
+ XLOG_SEG_SIZE is the size of a single WAL file.  This must be a power of 2
+ and larger than XLOG_BLCKSZ (preferably, a great deal larger than
+ XLOG_BLCKSZ).
+
+ Changing XLOG_SEG_SIZE requires an initdb.
 ])
 
 #

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.308 2008/05/02 01:08:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.309 2008/05/02 19:52:37 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1098,6 +1098,34 @@ su - postgres
          is suitable for most situations; but other values may be useful
          in special cases.
          The value must be a power of 2 between 1 and 32 (kilobytes).
+         Note that changing this value requires an initdb.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-wal-segsize=<replaceable>SEGSIZE</replaceable></option></term>
+       <listitem>
+        <para>
+         Set the <firstterm>WAL segment size</>, in megabytes.  This is
+         the size of each individual file in the WAL log.  It may be useful
+         to adjust this size to control the granularity of WAL log shipping.
+         The default size is 16 megabytes.
+         The value must be a power of 2 between 1 and 64 (megabytes).
+         Note that changing this value requires an initdb.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-wal-blocksize=<replaceable>BLOCKSIZE</replaceable></option></term>
+       <listitem>
+        <para>
+         Set the <firstterm>WAL block size</>, in kilobytes.  This is the unit
+         of storage and I/O within the WAL log.  The default, 8 kilobytes,
+         is suitable for most situations; but other values may be useful
+         in special cases.
+         The value must be a power of 2 between 1 and 64 (kilobytes).
          Note that changing this value requires an initdb.
         </para>
        </listitem>

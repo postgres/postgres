@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.52 2007/12/29 17:55:07 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.53 2008/05/02 19:52:37 tgl Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -487,8 +487,11 @@
   <para>
    <acronym>WAL</acronym> logs are stored in the directory
    <filename>pg_xlog</filename> under the data directory, as a set of
-   segment files, normally each 16 MB in size.  Each segment is divided into
-   pages, normally 8 kB each.  The log record headers are described in
+   segment files, normally each 16 MB in size (but the size can be changed
+   by altering the <option>--with-wal-segsize</> configure option when
+   building the server).  Each segment is divided into pages, normally
+   8 kB each (this size can be changed via the <option>--with-wal-blocksize</>
+   configure option).  The log record headers are described in
    <filename>access/xlog.h</filename>; the record content is dependent
    on the type of event that is being logged.  Segment files are given
    ever-increasing numbers as names, starting at
