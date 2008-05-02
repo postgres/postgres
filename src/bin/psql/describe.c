@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.167 2008/04/14 15:04:20 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.168 2008/05/02 10:16:16 heikki Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1766,9 +1766,14 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 						  gettext_noop("Table"));
 
 	if (verbose)
+	{
+		appendPQExpBuffer(&buf,
+						  ",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_relation_size(c.oid)) as \"%s\"",
+					  	  gettext_noop("Size"));
 		appendPQExpBuffer(&buf,
 			  ",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"%s\"",
 						  gettext_noop("Description"));
+	}
 
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_class c"
