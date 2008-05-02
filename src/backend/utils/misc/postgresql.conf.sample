@@ -219,6 +219,7 @@
 
 #default_statistics_target = 10		# range 1-1000
 #constraint_exclusion = off
+#cursor_tuple_fraction = 0.1		# range 0.0-1.0
 #from_collapse_limit = 8
 #join_collapse_limit = 8		# 1 disables collapsing of explicit 
 					# JOIN clauses

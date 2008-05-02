@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.107 2008/04/17 21:22:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.108 2008/05/02 21:26:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,10 @@
 
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
+
+/* GUC parameters */
+#define DEFAULT_CURSOR_TUPLE_FRACTION 0.1
+extern double cursor_tuple_fraction;
 
 /*
  * prototypes for plan/planmain.c

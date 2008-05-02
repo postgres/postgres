@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.176 2008/05/01 19:55:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.177 2008/05/02 21:26:09 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2234,6 +2234,26 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Refer to <xref linkend="ddl-partitioning"> for more information
         on using constraint exclusion and partitioning.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-cursor-tuple-fraction" xreflabel="cursor_tuple_fraction">
+      <term><varname>cursor_tuple_fraction</varname> (<type>floating point</type>)</term>
+      <indexterm>
+       <primary><varname>cursor_tuple_fraction</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the fraction of a cursor's rows that
+        will be retrieved.  The default is 0.1.  Smaller values of this
+        setting bias the planner towards using <quote>fast start</> plans
+        for cursors, which will retrieve the first few rows quickly while
+        perhaps taking a long time to fetch all rows.  Larger values
+        put more emphasis on the total estimated time.  At the maximum
+        setting of 1.0, cursors are planned exactly like regular queries,
+        considering only the total estimated time and not how soon the
+        first rows might be delivered.
        </para>
       </listitem>
      </varlistentry>
