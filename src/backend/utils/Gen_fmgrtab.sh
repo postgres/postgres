@@ -9,13 +9,15 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.38 2008/01/01 19:45:52 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.39 2008/05/02 14:16:24 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
 
-: ${AWK='awk'}
+if [ x"$AWK" = x"" ]; then
+	AWK=awk
+fi
 
 cleanup(){
     [ x"$noclean" != x"t" ] && rm -f "$SORTEDFILE" "$$-$OIDSFILE" "$$-$TABLEFILE"
