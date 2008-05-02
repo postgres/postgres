@@ -27,6 +27,15 @@
 /* The normal alignment of `short', in bytes. */
 #undef ALIGNOF_SHORT
 
+/* Size of a disk block --- this also limits the size of a tuple. You can set
+   it bigger if you need bigger tuples (although TOAST should reduce the need
+   to have large tuples, since fields can be spread across multiple tuples).
+   BLCKSZ must be a power of 2. The maximum possible value of BLCKSZ is
+   currently 2^15 (32768). This is determined by the 15-bit widths of the
+   lp_off and lp_len fields in ItemIdData (see include/storage/itemid.h).
+   Changing BLCKSZ requires an initdb. */
+#undef BLCKSZ
+
 /* Define to the default TCP port number on which the server listens and to
    which clients will try to connect. This can be overridden at run-time, but
    it's convenient if your clients have the right default compiled in.
@@ -644,6 +653,19 @@
    your system. */
 #undef PTHREAD_CREATE_JOINABLE
 
+/* RELSEG_SIZE is the maximum number of blocks allowed in one disk file. Thus,
+   the maximum size of a single file is RELSEG_SIZE * BLCKSZ; relations bigger
+   than that are divided into multiple files. RELSEG_SIZE * BLCKSZ must be
+   less than your OS' limit on file size. This is often 2 GB or 4GB in a
+   32-bit operating system, unless you have large file support enabled. By
+   default, we make the limit 1 GB to avoid any possible integer-overflow
+   problems within the OS. A limit smaller than necessary only means we divide
+   a large relation into more chunks than necessary, so it seems best to err
+   in the direction of a small limit. A power-of-2 value is recommended to
+   save a few cycles in md.c, but is not absolutely required. Changing
+   RELSEG_SIZE requires an initdb. */
+#undef RELSEG_SIZE
+
 /* The size of `off_t', as computed by sizeof. */
 #undef SIZEOF_OFF_T
 
@@ -702,9 +724,6 @@
 
 /* Use replacement snprintf() functions. */
 #undef USE_REPL_SNPRINTF
-
-/* Define to split data files into 1GB segments. */
-#undef USE_SEGMENTED_FILES
 
 /* Define to build with (Open)SSL support. (--with-openssl) */
 #undef USE_SSL

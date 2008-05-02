@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.557 2008/04/28 22:47:03 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.558 2008/05/02 01:08:26 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -155,7 +155,7 @@ AC_SUBST(WANTED_LANGUAGES)
 # Default port number (--with-pgport), default 5432
 #
 AC_MSG_CHECKING([for default port number])
-PGAC_ARG_REQ(with, pgport, [  --with-pgport=PORTNUM   change default port number [[5432]]],
+PGAC_ARG_REQ(with, pgport, [  --with-pgport=PORTNUM   set default port number [[5432]]],
              [default_port=$withval],
              [default_port=5432])
 AC_MSG_RESULT([$default_port])
@@ -218,10 +218,67 @@ AC_SUBST(DTRACEFLAGS)])
 AC_SUBST(enable_dtrace)
 
 #
-# Data file segmentation
+# Block size
 #
-PGAC_ARG_BOOL(enable, segmented-files, yes,
-              [  --disable-segmented-files disable data file segmentation (requires largefile support)])
+AC_MSG_CHECKING([for block size])
+PGAC_ARG_REQ(with, blocksize, [  --with-blocksize=BLOCKSIZE  set block size in kB [[8]]],
+             [blocksize=$withval],
+             [blocksize=8])
+case ${blocksize} in
+  1) BLCKSZ=1024;;
+  2) BLCKSZ=2048;;
+  4) BLCKSZ=4096;;
+  8) BLCKSZ=8192;;
+ 16) BLCKSZ=16384;;
+ 32) BLCKSZ=32768;;
+  *) AC_MSG_ERROR([Invalid block size. Allowed values are 1,2,4,8,16,32.])
+esac
+AC_MSG_RESULT([${blocksize}kB])
+
+AC_DEFINE_UNQUOTED([BLCKSZ], ${BLCKSZ}, [
+ Size of a disk block --- this also limits the size of a tuple.  You
+ can set it bigger if you need bigger tuples (although TOAST should
+ reduce the need to have large tuples, since fields can be spread
+ across multiple tuples).
+ 
+ BLCKSZ must be a power of 2.  The maximum possible value of BLCKSZ
+ is currently 2^15 (32768).  This is determined by the 15-bit widths
+ of the lp_off and lp_len fields in ItemIdData (see
+ include/storage/itemid.h).
+ 
+ Changing BLCKSZ requires an initdb.
+]) 
+
+#
+# File segment size
+#
+AC_MSG_CHECKING([for segment size])
+PGAC_ARG_REQ(with, segsize, [  --with-segsize=SEGSIZE  set segment size in GB [[1]]],
+             [segsize=$withval],
+             [segsize=1])
+# this expression is set up to avoid unnecessary integer overflow
+RELSEG_SIZE=`expr '(' 1024 '*' ${segsize} / ${blocksize} ')' '*' 1024`
+test $? -eq 0 || exit 1
+AC_MSG_RESULT([${segsize}GB])
+
+AC_DEFINE_UNQUOTED([RELSEG_SIZE], ${RELSEG_SIZE}, [
+ RELSEG_SIZE is the maximum number of blocks allowed in one disk file.
+ Thus, the maximum size of a single file is RELSEG_SIZE * BLCKSZ;
+ relations bigger than that are divided into multiple files.
+ 
+ RELSEG_SIZE * BLCKSZ must be less than your OS' limit on file size.
+ This is often 2 GB or 4GB in a 32-bit operating system, unless you
+ have large file support enabled.  By default, we make the limit 1 GB
+ to avoid any possible integer-overflow problems within the OS.
+ A limit smaller than necessary only means we divide a large
+ relation into more chunks than necessary, so it seems best to err
+ in the direction of a small limit.
+
+ A power-of-2 value is recommended to save a few cycles in md.c,
+ but is not absolutely required.
+
+ Changing RELSEG_SIZE requires an initdb.
+])
 
 #
 # C compiler
@@ -1469,8 +1526,9 @@ fi
 # Check for largefile support (must be after AC_SYS_LARGEFILE)
 AC_CHECK_SIZEOF([off_t])
 
-if test "$ac_cv_sizeof_off_t" -lt 8 -o "$enable_segmented_files" = "yes"; then 
-  AC_DEFINE([USE_SEGMENTED_FILES], 1, [Define to split data files into 1GB segments.]) 
+# If we don't have largefile support, can't handle segsize >= 2GB.
+if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then 
+   AC_MSG_ERROR([Large file support is not enabled. Segment size cannot be larger than 1GB.]) 
 fi
 
 # SunOS doesn't handle negative byte comparisons properly with +/- return

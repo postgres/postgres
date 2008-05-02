@@ -6,50 +6,9 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.31 2008/04/11 22:54:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.32 2008/05/02 01:08:27 tgl Exp $
  *------------------------------------------------------------------------
  */
-
-/*
- * Size of a disk block --- this also limits the size of a tuple.  You
- * can set it bigger if you need bigger tuples (although TOAST should
- * reduce the need to have large tuples, since fields can be spread
- * across multiple tuples).
- *
- * BLCKSZ must be a power of 2.  The maximum possible value of BLCKSZ
- * is currently 2^15 (32768).  This is determined by the 15-bit widths
- * of the lp_off and lp_len fields in ItemIdData (see
- * include/storage/itemid.h).
- *
- * Changing BLCKSZ requires an initdb.
- */
-#define BLCKSZ	8192
-
-/*
- * RELSEG_SIZE is the maximum number of blocks allowed in one disk
- * file when USE_SEGMENTED_FILES is defined.  Thus, the maximum size 
- * of a single file is RELSEG_SIZE * BLCKSZ; relations bigger than that 
- * are divided into multiple files.
- *
- * RELSEG_SIZE * BLCKSZ must be less than your OS' limit on file size.
- * This is often 2 GB or 4GB in a 32-bit operating system, unless you
- * have large file support enabled.  By default, we make the limit 1
- * GB to avoid any possible integer-overflow problems within the OS.
- * A limit smaller than necessary only means we divide a large
- * relation into more chunks than necessary, so it seems best to err
- * in the direction of a small limit.  (Besides, a power-of-2 value
- * saves a few cycles in md.c.)
- *
- * When not using segmented files, RELSEG_SIZE is set to zero so that
- * this behavior can be distinguished in pg_control.
- *
- * Changing RELSEG_SIZE requires an initdb.
- */
-#ifdef USE_SEGMENTED_FILES
-#define RELSEG_SIZE (0x40000000 / BLCKSZ)
-#else
-#define RELSEG_SIZE 0
-#endif
 
 /*
  * Size of a WAL file block.  This need have no particular relation to BLCKSZ.

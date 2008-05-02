@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.307 2008/04/21 00:26:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.308 2008/05/02 01:08:26 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1067,15 +1067,38 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--disable-segmented-files</option></term>
+       <term><option>--with-segsize=<replaceable>SEGSIZE</replaceable></option></term>
        <listitem>
         <para>
-         Store large tables as single operating-system files, rather than
-         dividing them into 1GB segments as is the default.  This option
-         is ignored unless the operating system has <quote>largefile</>
-         support (which most do, nowadays).  It can be helpful to reduce
-         the number of file descriptors consumed when working with very
-         large tables.
+         Set the <firstterm>segment size</>, in gigabytes.  Large tables are
+         divided into multiple operating-system files, each of size equal
+         to the segment size.  This avoids problems with file size limits
+         that exist on many platforms.  The default segment size, 1 gigabyte,
+         is safe on all supported platforms.  If your operating system has
+         <quote>largefile</> support (which most do, nowadays), you can use
+         a larger segment size.  This can be helpful to reduce the number of
+         file descriptors consumed when working with very large tables.
+         But be careful not to select a value larger than is supported
+         by your platform and the filesystem(s) you intend to use.  Other
+         tools you might wish to use, such as <application>tar</>, could
+         also set limits on the usable file size.
+         It is recommended, though not absolutely required, that this value
+         be a power of 2.
+         Note that changing this value requires an initdb.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-blocksize=<replaceable>BLOCKSIZE</replaceable></option></term>
+       <listitem>
+        <para>
+         Set the <firstterm>block size</>, in kilobytes.  This is the unit
+         of storage and I/O within tables.  The default, 8 kilobytes,
+         is suitable for most situations; but other values may be useful
+         in special cases.
+         The value must be a power of 2 between 1 and 32 (kilobytes).
+         Note that changing this value requires an initdb.
         </para>
        </listitem>
       </varlistentry>
