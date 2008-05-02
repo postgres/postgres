@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.199 2008/03/30 18:10:20 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.200 2008/05/02 22:50:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1068,7 +1068,7 @@ testdb=&gt;
         the listing to system objects; without <literal>S</literal>,
         only non-system objects are shown.  If <literal>+</literal> is
         appended to the command name, each object is listed with its
-        associated description, if any.
+        physical size on disk and its associated description, if any.
         </para>
 
         <para>
