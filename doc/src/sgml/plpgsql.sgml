@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.127 2008/04/06 23:43:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.128 2008/05/03 00:11:36 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1467,6 +1467,7 @@ RETURN <replaceable>expression</replaceable>;
 <synopsis>
 RETURN NEXT <replaceable>expression</replaceable>;
 RETURN QUERY <replaceable>query</replaceable>;
+RETURN QUERY EXECUTE <replaceable class="command">command-string</replaceable> <optional> USING <replaceable>expression</replaceable> <optional>, ...</optional> </optional>;
 </synopsis>
 
      <para>
@@ -1498,6 +1499,14 @@ RETURN QUERY <replaceable>query</replaceable>;
       up.  A final <command>RETURN</command>, which should have no
       argument, causes control to exit the function (or you can just
       let control reach the end of the function).
+     </para>
+
+     <para>
+      <command>RETURN QUERY</command> has a variant
+      <command>RETURN QUERY EXECUTE</command>, which specifies the
+      query to be executed dynamically.  Parameter expressions can
+      be inserted into the computed query string via <literal>USING</>,
+      in just the same way as in the <command>EXECUTE</> command.
      </para>
 
      <para>
@@ -1544,7 +1553,6 @@ SELECT * FROM getallfoo();
       Note that functions using <command>RETURN NEXT</command> or
       <command>RETURN QUERY</command> must be called as a table source in
       a <literal>FROM</literal> clause.
-
      </para>
 
      <note>

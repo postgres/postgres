@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.210 2008/04/17 21:37:28 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.211 2008/05/03 00:11:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,6 +197,8 @@ static void assign_text_var(PLpgSQL_var *var, const char *str);
 static PreparedParamsData *exec_eval_using_params(PLpgSQL_execstate *estate,
 												  List *params);
 static void free_params_data(PreparedParamsData *ppd);
+static Portal exec_dynquery_with_params(PLpgSQL_execstate *estate,
+										PLpgSQL_expr *query, List *params);
 
 
 /* ----------
@@ -1968,7 +1970,7 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 					PLpgSQL_row *row = (PLpgSQL_row *) retvar;
 
 					Assert(row->rowtupdesc);
-					estate->retval = 
+					estate->retval =
 						PointerGetDatum(make_tuple_from_row(estate, row,
 															row->rowtupdesc));
 					if (DatumGetPointer(estate->retval) == NULL) /* should not happen */
@@ -2189,7 +2191,18 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 	if (estate->tuple_store == NULL)
 		exec_init_tuple_store(estate);
 
-	exec_run_select(estate, stmt->query, 0, &portal);
+	if (stmt->query != NULL)
+	{
+		/* static query */
+		exec_run_select(estate, stmt->query, 0, &portal);
+	}
+	else
+	{
+		/* RETURN QUERY EXECUTE */
+		Assert(stmt->dynquery != NULL);
+		portal = exec_dynquery_with_params(estate, stmt->dynquery,
+										   stmt->params);
+	}
 
 	if (!compatible_tupdesc(estate->rettupdesc, portal->tupDesc))
 		ereport(ERROR,
@@ -2841,58 +2854,10 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 static int
 exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 {
-	Datum		query;
-	bool		isnull;
-	Oid			restype;
-	char	   *querystr;
 	Portal		portal;
 	int			rc;
 
-	/*
-	 * Evaluate the string expression after the EXECUTE keyword. It's result
-	 * is the querystring we have to execute.
-	 */
-	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
-	if (isnull)
-		ereport(ERROR,
-				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("cannot EXECUTE a null querystring")));
-
-	/* Get the C-String representation */
-	querystr = convert_value_to_string(query, restype);
-
-	exec_eval_cleanup(estate);
-
-	/*
-	 * Open an implicit cursor for the query.  We use SPI_cursor_open_with_args
-	 * even when there are no params, because this avoids making and freeing
-	 * one copy of the plan.
-	 */
-	if (stmt->params)
-	{
-		PreparedParamsData *ppd;
-
-		ppd = exec_eval_using_params(estate, stmt->params);
-		portal = SPI_cursor_open_with_args(NULL,
-										   querystr,
-										   ppd->nargs, ppd->types,
-										   ppd->values, ppd->nulls,
-										   estate->readonly_func, 0);
-		free_params_data(ppd);
-	}
-	else
-	{
-		portal = SPI_cursor_open_with_args(NULL,
-										   querystr,
-										   0, NULL,
-										   NULL, NULL,
-										   estate->readonly_func, 0);
-	}
-
-	if (portal == NULL)
-		elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
-			 querystr, SPI_result_code_string(SPI_result));
-	pfree(querystr);
+	portal = exec_dynquery_with_params(estate, stmt->query, stmt->params);
 
 	/*
 	 * Execute the loop
@@ -5207,4 +5172,66 @@ free_params_data(PreparedParamsData *ppd)
 	pfree(ppd->freevals);
 
 	pfree(ppd);
+}
+
+/*
+ * Open portal for dynamic query
+ */
+static Portal
+exec_dynquery_with_params(PLpgSQL_execstate *estate, PLpgSQL_expr *dynquery,
+						  List *params)
+{
+	Portal		portal;
+	Datum		query;
+	bool		isnull;
+	Oid			restype;
+	char	   *querystr;
+
+	/*
+	 * Evaluate the string expression after the EXECUTE keyword. Its result
+	 * is the querystring we have to execute.
+	 */
+	query = exec_eval_expr(estate, dynquery, &isnull, &restype);
+	if (isnull)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("cannot EXECUTE a null querystring")));
+
+	/* Get the C-String representation */
+	querystr = convert_value_to_string(query, restype);
+
+	exec_eval_cleanup(estate);
+
+	/*
+	 * Open an implicit cursor for the query.  We use SPI_cursor_open_with_args
+	 * even when there are no params, because this avoids making and freeing
+	 * one copy of the plan.
+	 */
+	if (params)
+	{
+		PreparedParamsData *ppd;
+
+		ppd = exec_eval_using_params(estate, params);
+		portal = SPI_cursor_open_with_args(NULL,
+										   querystr,
+										   ppd->nargs, ppd->types,
+										   ppd->values, ppd->nulls,
+										   estate->readonly_func, 0);
+		free_params_data(ppd);
+	}
+	else
+	{
+		portal = SPI_cursor_open_with_args(NULL,
+										   querystr,
+										   0, NULL,
+										   NULL, NULL,
+										   estate->readonly_func, 0);
+	}
+
+	if (portal == NULL)
+		elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
+			 querystr, SPI_result_code_string(SPI_result));
+	pfree(querystr);
+
+	return portal;
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.110 2008/04/06 23:43:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.111 2008/05/03 00:11:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2239,6 +2239,7 @@ static PLpgSQL_stmt *
 make_return_query_stmt(int lineno)
 {
 	PLpgSQL_stmt_return_query *new;
+	int			tok;
 
 	if (!plpgsql_curr_compile->fn_retset)
 		yyerror("cannot use RETURN QUERY in a non-SETOF function");
@@ -2246,7 +2247,32 @@ make_return_query_stmt(int lineno)
 	new = palloc0(sizeof(PLpgSQL_stmt_return_query));
 	new->cmd_type = PLPGSQL_STMT_RETURN_QUERY;
 	new->lineno = lineno;
-	new->query = read_sql_stmt("");
+
+	/* check for RETURN QUERY EXECUTE */
+	if ((tok = yylex()) != K_EXECUTE)
+	{
+		/* ordinary static query */
+		plpgsql_push_back_token(tok);
+		new->query = read_sql_stmt("");
+	}
+	else
+	{
+		/* dynamic SQL */
+		int		term;
+
+		new->dynquery = read_sql_expression2(';', K_USING, "; or USING",
+											 &term);
+		if (term == K_USING)
+		{
+			do
+			{
+				PLpgSQL_expr *expr;
+
+				expr = read_sql_expression2(',', ';', ", or ;", &term);
+				new->params = lappend(new->params, expr);
+			} while (term == ',');
+		}
+	}
 
 	return (PLpgSQL_stmt *) new;
 }

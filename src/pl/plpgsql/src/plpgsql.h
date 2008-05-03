@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.97 2008/04/06 23:43:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.98 2008/05/03 00:11:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -529,7 +529,9 @@ typedef struct
 {								/* RETURN QUERY statement */
 	int			cmd_type;
 	int			lineno;
-	PLpgSQL_expr *query;
+	PLpgSQL_expr *query;		/* if static query */
+	PLpgSQL_expr *dynquery;		/* if dynamic query (RETURN QUERY EXECUTE) */
+	List	   *params;			/* USING arguments for dynamic query */
 } PLpgSQL_stmt_return_query;
 
 typedef struct
