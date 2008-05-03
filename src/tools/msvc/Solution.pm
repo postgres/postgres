@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.40 2008/04/21 18:37:28 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.41 2008/05/03 00:24:06 adunstan Exp $
 #
 use Carp;
 use strict;
@@ -34,6 +34,23 @@ sub new
             die "XML requires both XSLT and ICONV\n";
         }
     }
+	$options->{blocksize} = 8
+		unless $options->{blocksize}; # undef or 0 means default
+	die "Bad blocksize $options->{blocksize}"
+		unless grep {$_ == $options->{blocksize}} (1,2,4,8,16,32);
+	$options->{segsize} = 1
+		unless $options->{segsize}; # undef or 0 means default
+	# only allow segsize 1 for now, as we can't do large files yet in windows
+	die "Bad segsize $options->{segsize}"
+		unless $options->{segsize} == 1;
+	$options->{wal_blocksize} = 8
+		unless $options->{wal_blocksize}; # undef or 0 means default
+	die "Bad wal_blocksize $options->{wal_blocksize}"
+		unless grep {$_ == $options->{wal_blocksize}} (1,2,4,8,16,32,64);
+	$options->{wal_segsize} = 16
+		unless $options->{wal_segsize}; # undef or 0 means default
+	die "Bad wal_segsize $options->{wal_segsize}"
+		unless grep {$_ == $options->{wal_segsize}} (1,2,4,8,16,32,64);
     return $self;
 }
 
@@ -116,7 +133,16 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         print O "#define USE_LDAP 1\n" if ($self->{options}->{ldap});
         print O "#define HAVE_LIBZ 1\n" if ($self->{options}->{zlib});
         print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
-        print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
+		print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
+
+		print O "#define BLCKSZ ",1024 * $self->{options}->{blocksize},"\n";
+		print O "#define RELSEG_SIZE ",
+			(1024 / $self->{options}->{blocksize}) * 
+				$self->{options}->{segsize} * 1024, "\n";
+		print O "#define XLOG_BLCKSZ ",
+			1024 * $self->{options}->{wal_blocksize},"\n";
+		print O "#define XLOG_SEG_SIZE (",
+			$self->{options}->{wal_segsize}," * 1024 * 1024)\n";
         
         if ($self->{options}->{float4byval}) 
         {
