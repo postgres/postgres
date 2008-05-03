@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.272 2008/03/28 00:21:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.273 2008/05/03 23:19:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2443,9 +2443,13 @@ get_update_query_def(Query *query, deparse_context *context)
 		appendStringInfoChar(buf, ' ');
 		context->indentLevel += PRETTYINDENT_STD;
 	}
-	appendStringInfo(buf, "UPDATE %s%s SET ",
+	appendStringInfo(buf, "UPDATE %s%s",
 					 only_marker(rte),
 					 generate_relation_name(rte->relid));
+	if (rte->alias != NULL)
+		appendStringInfo(buf, " %s",
+						 quote_identifier(rte->alias->aliasname));
+	appendStringInfoString(buf, " SET ");
 
 	/* Add the comma separated list of 'attname = value' */
 	sep = "";
@@ -2517,12 +2521,15 @@ get_delete_query_def(Query *query, deparse_context *context)
 	Assert(rte->rtekind == RTE_RELATION);
 	if (PRETTY_INDENT(context))
 	{
-		context->indentLevel += PRETTYINDENT_STD;
 		appendStringInfoChar(buf, ' ');
+		context->indentLevel += PRETTYINDENT_STD;
 	}
 	appendStringInfo(buf, "DELETE FROM %s%s",
 					 only_marker(rte),
 					 generate_relation_name(rte->relid));
+	if (rte->alias != NULL)
+		appendStringInfo(buf, " %s",
+						 quote_identifier(rte->alias->aliasname));
 
 	/* Add the USING clause if given */
 	get_from_clause(query, " USING ", context);
