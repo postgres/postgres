@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.154 2008/04/13 03:49:21 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.155 2008/05/03 23:32:32 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,6 +218,11 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		else
 			ahprintf(AH, "BEGIN;\n\n");
 	}
+
+	/*
+	 * Disable statement_timeout in archive for pg_restore/psql
+	 */
+	ahprintf(AH, "SET statement_timeout = 0;\n");
 
 	/*
 	 * Establish important parameter values right away.
