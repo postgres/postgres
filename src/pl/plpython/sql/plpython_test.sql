@@ -143,3 +143,8 @@ SELECT * FROM test_type_record_as('obj', 'one', null, false);
 SELECT * FROM test_type_record_as('obj', null, 2, false);
 SELECT * FROM test_type_record_as('obj', 'three', 3, false);
 SELECT * FROM test_type_record_as('obj', null, null, true);
+
+SELECT * FROM test_in_out_params('test_in');
+-- this doesn't work yet :-(
+SELECT * FROM test_in_out_params_multi('test_in');
+SELECT * FROM test_inout_params('test_in');

@@ -539,3 +539,18 @@ SELECT * FROM test_type_record_as('obj', null, null, true);
        |       
 (1 row)
 
+SELECT * FROM test_in_out_params('test_in');
+      second       
+-------------------
+ test_in_in_to_out
+(1 row)
+
+-- this doesn't work yet :-(
+SELECT * FROM test_in_out_params_multi('test_in');
+ERROR:  plpython functions cannot return type record
+SELECT * FROM test_inout_params('test_in');
+     first     
+---------------
+ test_in_inout
+(1 row)
+

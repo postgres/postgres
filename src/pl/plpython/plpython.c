@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.108 2008/03/28 00:21:56 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.109 2008/05/03 02:47:47 tgl Exp $
  *
  *********************************************************************
  */
@@ -1161,9 +1161,6 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 	bool		isnull;
 	int			i,
 				rv;
-	Datum		argnames;
-	Datum	   *elems;
-	int			nelems;
 
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
@@ -1249,58 +1246,83 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 		}
 
 		/*
-		 * now get information required for input conversion of the
-		 * procedure's arguments.
+		 * Now get information required for input conversion of the
+		 * procedure's arguments.  Note that we ignore output arguments
+		 * here --- since we don't support returning record, and that was
+		 * already checked above, there's no need to worry about multiple
+		 * output arguments.
 		 */
-		proc->nargs = procStruct->pronargs;
-		if (proc->nargs)
+		if (procStruct->pronargs)
 		{
-			argnames = SysCacheGetAttr(PROCOID, procTup, Anum_pg_proc_proargnames, &isnull);
-			if (!isnull)
-			{
-				/* XXX this code is WRONG if there are any output arguments */
-				deconstruct_array(DatumGetArrayTypeP(argnames), TEXTOID, -1, false, 'i',
-								  &elems, NULL, &nelems);
-				if (nelems != proc->nargs)
-					elog(ERROR,
-						 "proargnames must have the same number of elements "
-						 "as the function has arguments");
-				proc->argnames = (char **) PLy_malloc(sizeof(char *) * proc->nargs);
-				memset(proc->argnames, 0, sizeof(char *) * proc->nargs);
-			}
-		}
-		for (i = 0; i < proc->nargs; i++)
-		{
-			HeapTuple	argTypeTup;
-			Form_pg_type argTypeStruct;
+			Oid		*types;
+			char   **names,
+					*modes;
+			int		 i,
+					 pos,
+					 total;
 
-			argTypeTup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(procStruct->proargtypes.values[i]),
-										0, 0, 0);
-			if (!HeapTupleIsValid(argTypeTup))
-				elog(ERROR, "cache lookup failed for type %u",
-					 procStruct->proargtypes.values[i]);
-			argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
+			/* extract argument type info from the pg_proc tuple */
+			total = get_func_arg_info(procTup, &types, &names, &modes);
 
-			/* Disallow pseudotype argument */
-			if (argTypeStruct->typtype == TYPTYPE_PSEUDO)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("plpython functions cannot take type %s",
-						format_type_be(procStruct->proargtypes.values[i]))));
-
-			if (argTypeStruct->typtype != TYPTYPE_COMPOSITE)
-				PLy_input_datum_func(&(proc->args[i]),
-									 procStruct->proargtypes.values[i],
-									 argTypeTup);
+			/* count number of in+inout args into proc->nargs */
+			if (modes == NULL)
+				proc->nargs = total;
 			else
-				proc->args[i].is_rowtype = 2;	/* still need to set I/O funcs */
+			{
+				/* proc->nargs was initialized to 0 above */
+				for (i = 0; i < total; i++)
+				{
+					if (modes[i] != 'o')
+						(proc->nargs)++;
+				}
+			}
 
-			ReleaseSysCache(argTypeTup);
+			proc->argnames = (char **) PLy_malloc(sizeof(char *) * proc->nargs);
+			for (i = pos = 0; i < total; i++)
+			{
+				HeapTuple	argTypeTup;
+				Form_pg_type argTypeStruct;
 
-			/* Fetch argument name */
-			if (proc->argnames)
-				proc->argnames[i] = PLy_strdup(TextDatumGetCString(elems[i]));
+				if (modes && modes[i] == 'o')	/* skip OUT arguments */
+					continue;
+
+				Assert(types[i] == procStruct->proargtypes.values[pos]);
+
+				argTypeTup = SearchSysCache(TYPEOID,
+											ObjectIdGetDatum(types[i]),
+											0, 0, 0);
+				if (!HeapTupleIsValid(argTypeTup))
+					elog(ERROR, "cache lookup failed for type %u", types[i]);
+				argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
+
+				/* check argument type is OK, set up I/O function info */
+				switch (argTypeStruct->typtype)
+				{
+					case TYPTYPE_PSEUDO:
+						/* Disallow pseudotype argument */
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("plpython functions cannot take type %s",
+								 format_type_be(types[i]))));
+						break;
+					case TYPTYPE_COMPOSITE:
+						/* we'll set IO funcs at first call */
+						proc->args[pos].is_rowtype = 2;
+						break;
+					default:
+						PLy_input_datum_func(&(proc->args[pos]),
+											 types[i],
+											 argTypeTup);
+						break;
+				}
+
+				/* get argument name */
+				proc->argnames[pos] = names ? PLy_strdup(names[i]) : NULL;
+
+				ReleaseSysCache(argTypeTup);
+
+				pos++;
+			}
 		}
 
 		/*

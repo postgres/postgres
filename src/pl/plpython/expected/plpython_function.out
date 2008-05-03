@@ -436,3 +436,14 @@ elif typ == 'obj':
 	type_record.second = second
 	return type_record
 $$ LANGUAGE plpythonu;
+CREATE FUNCTION test_in_out_params(first in text, second out text) AS $$
+return first + '_in_to_out';
+$$ LANGUAGE plpythonu;
+-- this doesn't work yet :-(
+CREATE FUNCTION test_in_out_params_multi(first in text,
+                                         second out text, third out text) AS $$
+return first + '_record_in_to_out';
+$$ LANGUAGE plpythonu;
+CREATE FUNCTION test_inout_params(first inout text) AS $$
+return first + '_inout';
+$$ LANGUAGE plpythonu;
