@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.156 2008/05/04 03:46:08 adunstan Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.157 2008/05/04 08:32:21 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2136,7 +2136,7 @@ static void
 _doSetFixedOutputState(ArchiveHandle *AH)
 {
 	/* Disable statement_timeout in archive for pg_restore/psql	 */
-	ahprintf(AH, "SET statement_timeout = 0;\n")
+	ahprintf(AH, "SET statement_timeout = 0;\n");
 
 	/* Select the correct character set encoding */
 	ahprintf(AH, "SET client_encoding = '%s';\n",
