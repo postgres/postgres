@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.76 2008/03/21 01:31:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.77 2008/05/04 21:13:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,6 +195,8 @@ typedef struct
 
 /* Set at postmaster start */
 extern TimestampTz PgStartTime;
+/* Set at configuration reload */
+extern TimestampTz PgReloadTime;
 
 
 /*
@@ -303,7 +305,8 @@ extern Datum now(PG_FUNCTION_ARGS);
 extern Datum statement_timestamp(PG_FUNCTION_ARGS);
 extern Datum clock_timestamp(PG_FUNCTION_ARGS);
 
-extern Datum pgsql_postmaster_start_time(PG_FUNCTION_ARGS);
+extern Datum pg_postmaster_start_time(PG_FUNCTION_ARGS);
+extern Datum pg_conf_load_time(PG_FUNCTION_ARGS);
 
 /* Internal routines (not fmgr-callable) */
 

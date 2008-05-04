@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.434 2008/04/28 14:48:57 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.435 2008/05/04 21:13:35 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10892,6 +10892,12 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
       </row>
 
       <row>
+       <entry><literal><function>pg_conf_load_time</function>()</literal></entry>
+       <entry><type>timestamp with time zone</type></entry>
+       <entry>configuration load time</entry>
+      </row>
+
+      <row>
        <entry><literal><function>session_user</function></literal></entry>
        <entry><type>name</type></entry>
        <entry>session user name</entry>
@@ -11031,9 +11037,23 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    </indexterm>
 
    <para>
-     <function>pg_postmaster_start_time</function> returns the
-     <type>timestamp with time zone</type> when the
-     server started.
+    <function>pg_postmaster_start_time</function> returns the
+    <type>timestamp with time zone</type> when the
+    server started.
+   </para>
+
+   <indexterm>
+    <primary>pg_conf_load_time</primary>
+   </indexterm>
+
+   <para>
+    <function>pg_conf_load_time</function> returns the
+    <type>timestamp with time zone</type> when the
+    server configuration files were last loaded.
+    (If the current session was alive at the time, this will be the time
+    when the session itself re-read the configuration files, so the
+    reading will vary a little in different sessions.  Otherwise it is
+    the time when the postmaster process re-read the configuration files.)
    </para>
 
    <indexterm>

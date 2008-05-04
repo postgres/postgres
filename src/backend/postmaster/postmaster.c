@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.556 2008/04/26 22:47:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.557 2008/05/04 21:13:35 tgl Exp $
  *
  * NOTES
  *
@@ -390,6 +390,7 @@ typedef struct
 	InheritableSocket pgStatSock;
 	pid_t		PostmasterPid;
 	TimestampTz PgStartTime;
+	TimestampTz PgReloadTime;
 	bool		redirection_done;
 #ifdef WIN32
 	HANDLE		PostmasterHandle;
@@ -4263,6 +4264,7 @@ save_backend_variables(BackendParameters * param, Port *port,
 
 	param->PostmasterPid = PostmasterPid;
 	param->PgStartTime = PgStartTime;
+	param->PgReloadTime = PgReloadTime;
 
 	param->redirection_done = redirection_done;
 
@@ -4468,6 +4470,7 @@ restore_backend_variables(BackendParameters * param, Port *port)
 
 	PostmasterPid = param->PostmasterPid;
 	PgStartTime = param->PgStartTime;
+	PgReloadTime = param->PgReloadTime;
 
 	redirection_done = param->redirection_done;
 
