@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.127 2008/03/25 22:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.128 2008/05/04 16:42:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,7 +566,6 @@ varchar(PG_FUNCTION_ARGS)
 	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
 	int32		typmod = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
-	VarChar    *result;
 	int32		len,
 				maxlen;
 	size_t		maxmblen;
@@ -596,11 +595,8 @@ varchar(PG_FUNCTION_ARGS)
 							 maxlen)));
 	}
 
-	result = palloc(maxmblen + VARHDRSZ);
-	SET_VARSIZE(result, maxmblen + VARHDRSZ);
-	memcpy(VARDATA(result), s_data, maxmblen);
-
-	PG_RETURN_VARCHAR_P(result);
+	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(s_data, 
+															 maxmblen));
 }
 
 Datum

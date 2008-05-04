@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.72 2008/04/04 08:33:15 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.73 2008/05/04 16:42:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,13 +319,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	if (newstr != str)
 	{
 		pfree(result);
-
-		nbytes = strlen(newstr);
-
-		result = palloc(nbytes + VARHDRSZ);
-		SET_VARSIZE(result, nbytes + VARHDRSZ);
-		memcpy(VARDATA(result), newstr, nbytes);
-
+		result = (xmltype *) cstring_to_text(newstr);
 		pfree(newstr);
 	}
 
@@ -369,30 +363,14 @@ appendStringInfoText(StringInfo str, const text *t)
 static xmltype *
 stringinfo_to_xmltype(StringInfo buf)
 {
-	int32		len;
-	xmltype    *result;
-
-	len = buf->len + VARHDRSZ;
-	result = palloc(len);
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), buf->data, buf->len);
-
-	return result;
+	return (xmltype *) cstring_to_text_with_len(buf->data, buf->len);
 }
 
 
 static xmltype *
 cstring_to_xmltype(const char *string)
 {
-	int32		len;
-	xmltype    *result;
-
-	len = strlen(string) + VARHDRSZ;
-	result = palloc(len);
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), string, len - VARHDRSZ);
-
-	return result;
+	return (xmltype *) cstring_to_text(string);
 }
 
 
@@ -400,15 +378,8 @@ cstring_to_xmltype(const char *string)
 static xmltype *
 xmlBuffer_to_xmltype(xmlBufferPtr buf)
 {
-	int32		len;
-	xmltype    *result;
-
-	len = xmlBufferLength(buf) + VARHDRSZ;
-	result = palloc(len);
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), xmlBufferContent(buf), len - VARHDRSZ);
-
-	return result;
+	return (xmltype *) cstring_to_text_with_len((char *) xmlBufferContent(buf),
+												xmlBufferLength(buf));
 }
 #endif
 
@@ -474,9 +445,7 @@ xmlconcat(List *args)
 		char	   *str;
 
 		len = VARSIZE(x) - VARHDRSZ;
-		str = palloc(len + 1);
-		memcpy(str, VARDATA(x), len);
-		str[len] = '\0';
+		str = text_to_cstring((text *) x);
 
 		parse_xml_decl((xmlChar *) str, &len, &version, NULL, &standalone);
 
@@ -751,9 +720,7 @@ xmlroot(xmltype *data, text *version, int standalone)
 	StringInfoData buf;
 
 	len = VARSIZE(data) - VARHDRSZ;
-	str = palloc(len + 1);
-	memcpy(str, VARDATA(data), len);
-	str[len] = '\0';
+	str = text_to_cstring((text *) data);
 
 	parse_xml_decl((xmlChar *) str, &len, &orig_version, NULL, &orig_standalone);
 
@@ -1237,19 +1204,12 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 
 
 /*
- * xmlChar<->text convertions
+ * xmlChar<->text conversions
  */
 static xmlChar *
 xml_text2xmlChar(text *in)
 {
-	int32		len = VARSIZE(in) - VARHDRSZ;
-	xmlChar    *res;
-
-	res = palloc(len + 1);
-	memcpy(res, VARDATA(in), len);
-	res[len] = '\0';
-
-	return (res);
+	return (xmlChar *) text_to_cstring(in);
 }
 
 
@@ -3188,7 +3148,6 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 {
 	xmlChar    *str;
 	xmltype    *result;
-	size_t		len;
 	xmlBufferPtr buf;
 
 	if (cur->type == XML_ELEMENT_NODE)
@@ -3201,10 +3160,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 	else
 	{
 		str = xmlXPathCastNodeToString(cur);
-		len = strlen((char *) str);
-		result = (xmltype *) palloc(len + VARHDRSZ);
-		SET_VARSIZE(result, len + VARHDRSZ);
-		memcpy(VARDATA(result), str, len);
+		result = (xmltype *) cstring_to_text((char *) str);
 	}
 
 	return result;

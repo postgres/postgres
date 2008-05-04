@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.9 2007/02/27 23:48:06 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.10 2008/05/04 16:42:41 tgl Exp $
  */
 
 #include "postgres.h"
@@ -34,6 +34,7 @@
 #include "fmgr.h"
 #include "parser/scansup.h"
 #include "mb/pg_wchar.h"
+#include "utils/builtins.h"
 
 #include "mbuf.h"
 #include "px.h"
@@ -140,7 +141,6 @@ static text *
 convert_charset(text *src, int cset_from, int cset_to)
 {
 	int			src_len = VARSIZE(src) - VARHDRSZ;
-	int			dst_len;
 	unsigned char *dst;
 	unsigned char *csrc = (unsigned char *) VARDATA(src);
 	text	   *res;
@@ -149,10 +149,7 @@ convert_charset(text *src, int cset_from, int cset_to)
 	if (dst == csrc)
 		return src;
 
-	dst_len = strlen((char *) dst);
-	res = palloc(dst_len + VARHDRSZ);
-	memcpy(VARDATA(res), dst, dst_len);
-	SET_VARSIZE(res, dst_len + VARHDRSZ);
+	res = cstring_to_text((char *) dst);
 	pfree(dst);
 	return res;
 }

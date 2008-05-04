@@ -194,7 +194,6 @@ xml_encode_special_chars(PG_FUNCTION_ARGS)
 {
 	text	   *tin = PG_GETARG_TEXT_P(0);
 	text	   *tout;
-	int32		ressize;
 	xmlChar    *ts,
 			   *tt;
 
@@ -204,10 +203,7 @@ xml_encode_special_chars(PG_FUNCTION_ARGS)
 
 	pfree(ts);
 
-	ressize = strlen((char *) tt);
-	tout = (text *) palloc(ressize + VARHDRSZ);
-	memcpy(VARDATA(tout), tt, ressize);
-	SET_VARSIZE(tout, ressize + VARHDRSZ);
+	tout = cstring_to_text((char *) tt);
 
 	xmlFree(tt);
 
@@ -306,14 +302,7 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 xmlChar *
 pgxml_texttoxmlchar(text *textstring)
 {
-	xmlChar    *res;
-	int32		txsize;
-
-	txsize = VARSIZE(textstring) - VARHDRSZ;
-	res = (xmlChar *) palloc(txsize + 1);
-	memcpy((char *) res, VARDATA(textstring), txsize);
-	res[txsize] = '\0';
-	return res;
+	return (xmlChar *) text_to_cstring(textstring);
 }
 
 /* Public visible XPath functions */
@@ -577,7 +566,6 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 					 xmlChar * plainsep)
 {
 	xmlChar    *xpresstr;
-	int32		ressize;
 	text	   *xpres;
 
 	if (res == NULL)
@@ -604,10 +592,7 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 
 
 	/* Now convert this result back to text */
-	ressize = strlen((char *) xpresstr);
-	xpres = (text *) palloc(ressize + VARHDRSZ);
-	memcpy(VARDATA(xpres), xpresstr, ressize);
-	SET_VARSIZE(xpres, ressize + VARHDRSZ);
+	xpres = cstring_to_text((char *) xpresstr);
 
 	/* Free various storage */
 	xmlCleanupParser();
