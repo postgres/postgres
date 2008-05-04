@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.495 2008/05/04 21:13:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.496 2008/05/04 23:19:23 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3871,6 +3871,10 @@ DESCR("non-persistent series generator");
 DATA(insert OID = 1068 (  generate_series PGNSP PGUID 12 1 1000 f f t t i 3 20 "20 20 20" _null_ _null_ _null_ generate_series_step_int8 - _null_ _null_ ));
 DESCR("non-persistent series generator");
 DATA(insert OID = 1069 (  generate_series PGNSP PGUID 12 1 1000 f f t t i 2 20 "20 20" _null_ _null_ _null_ generate_series_int8 - _null_ _null_ ));
+DESCR("non-persistent series generator");
+DATA(insert OID = 938  (  generate_series PGNSP PGUID 12 1 1000 f f t t i 3 1114 "1114 1114 1186" _null_ _null_ _null_ generate_series_timestamp - _null_ _null_ ));
+DESCR("non-persistent series generator");
+DATA(insert OID = 939  (  generate_series PGNSP PGUID 12 1 1000 f f t t s 3 1184 "1184 1184 1186" _null_ _null_ _null_ generate_series_timestamptz - _null_ _null_ ));
 DESCR("non-persistent series generator");
 
 /* boolean aggregates */

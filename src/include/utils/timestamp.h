@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.77 2008/05/04 21:13:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.78 2008/05/04 23:19:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,6 +307,9 @@ extern Datum clock_timestamp(PG_FUNCTION_ARGS);
 
 extern Datum pg_postmaster_start_time(PG_FUNCTION_ARGS);
 extern Datum pg_conf_load_time(PG_FUNCTION_ARGS);
+
+extern Datum generate_series_timestamp(PG_FUNCTION_ARGS);
+extern Datum generate_series_timestamptz(PG_FUNCTION_ARGS);
 
 /* Internal routines (not fmgr-callable) */
 

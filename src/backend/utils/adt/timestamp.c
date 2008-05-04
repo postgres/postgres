@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.188 2008/05/04 21:13:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.189 2008/05/04 23:19:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "access/hash.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
@@ -44,6 +45,22 @@
 TimestampTz PgStartTime;
 /* Set at configuration reload */
 TimestampTz PgReloadTime;
+
+typedef struct
+{
+	Timestamp	current;
+	Timestamp	finish;
+	Interval	step;
+	int			step_sign;
+} generate_series_timestamp_fctx;
+
+typedef struct
+{
+	TimestampTz	current;
+	TimestampTz	finish;
+	Interval	step;
+	int			step_sign;
+} generate_series_timestamptz_fctx;
 
 
 static TimeOffset time2t(const int hour, const int min, const int sec, const fsec_t fsec);
@@ -4650,4 +4667,166 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 	result = dt2local(timestamp, tz);
 
 	PG_RETURN_TIMESTAMP(result);
+}
+
+/* generate_series_timestamp()
+ * Generate the set of timestamps from start to finish by step
+ */
+Datum
+generate_series_timestamp(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+	generate_series_timestamp_fctx *fctx;
+	Timestamp result;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		Timestamp start = PG_GETARG_TIMESTAMP(0);
+		Timestamp finish = PG_GETARG_TIMESTAMP(1);
+		Interval *step = PG_GETARG_INTERVAL_P(2);
+		MemoryContext oldcontext;
+		Interval interval_zero;
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/*
+		 * switch to memory context appropriate for multiple function calls
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/* allocate memory for user context */
+		fctx = (generate_series_timestamp_fctx *)
+			palloc(sizeof(generate_series_timestamp_fctx));
+
+		/*
+		 * Use fctx to keep state from call to call. Seed current with the
+		 * original start value
+		 */
+		fctx->current = start;
+		fctx->finish = finish;
+		fctx->step = *step;
+
+		/* Determine sign of the interval */
+		MemSet(&interval_zero, 0, sizeof(Interval));
+		fctx->step_sign = interval_cmp_internal(&fctx->step, &interval_zero);
+
+		if (fctx->step_sign == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("step size cannot equal zero")));
+
+		funcctx->user_fctx = fctx;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+
+	/*
+	 * get the saved state and use current as the result for this iteration
+	 */
+	fctx = funcctx->user_fctx;
+	result = fctx->current;
+
+	if (fctx->step_sign > 0 ?
+		timestamp_cmp_internal(result, fctx->finish) <= 0 :
+		timestamp_cmp_internal(result, fctx->finish) >= 0)
+	{
+		/* increment current in preparation for next iteration */
+		fctx->current = DatumGetTimestamp(
+			DirectFunctionCall2(timestamp_pl_interval,
+								TimestampGetDatum(fctx->current),
+								PointerGetDatum(&fctx->step)));
+
+		/* do when there is more left to send */
+		SRF_RETURN_NEXT(funcctx, TimestampGetDatum(result));
+	}
+	else
+	{
+		/* do when there is no more left */
+		SRF_RETURN_DONE(funcctx);
+	}
+}
+
+/* generate_series_timestamptz()
+ * Generate the set of timestamps from start to finish by step
+ */
+Datum
+generate_series_timestamptz(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+	generate_series_timestamptz_fctx *fctx;
+	TimestampTz result;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		TimestampTz start = PG_GETARG_TIMESTAMPTZ(0);
+		TimestampTz finish = PG_GETARG_TIMESTAMPTZ(1);
+		Interval *step = PG_GETARG_INTERVAL_P(2);
+		MemoryContext oldcontext;
+		Interval interval_zero;
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/*
+		 * switch to memory context appropriate for multiple function calls
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/* allocate memory for user context */
+		fctx = (generate_series_timestamptz_fctx *)
+			palloc(sizeof(generate_series_timestamptz_fctx));
+
+		/*
+		 * Use fctx to keep state from call to call. Seed current with the
+		 * original start value
+		 */
+		fctx->current = start;
+		fctx->finish = finish;
+		fctx->step = *step;
+
+		/* Determine sign of the interval */
+		MemSet(&interval_zero, 0, sizeof(Interval));
+		fctx->step_sign = interval_cmp_internal(&fctx->step, &interval_zero);
+
+		if (fctx->step_sign == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("step size cannot equal zero")));
+
+		funcctx->user_fctx = fctx;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+
+	/*
+	 * get the saved state and use current as the result for this iteration
+	 */
+	fctx = funcctx->user_fctx;
+	result = fctx->current;
+
+	if (fctx->step_sign > 0 ?
+		timestamp_cmp_internal(result, fctx->finish) <= 0 :
+		timestamp_cmp_internal(result, fctx->finish) >= 0)
+	{
+		/* increment current in preparation for next iteration */
+		fctx->current = DatumGetTimestampTz(
+			DirectFunctionCall2(timestamptz_pl_interval,
+								TimestampTzGetDatum(fctx->current),
+								PointerGetDatum(&fctx->step)));
+
+		/* do when there is more left to send */
+		SRF_RETURN_NEXT(funcctx, TimestampTzGetDatum(result));
+	}
+	else
+	{
+		/* do when there is no more left */
+		SRF_RETURN_DONE(funcctx);
+	}
 }

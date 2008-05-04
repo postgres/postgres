@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.435 2008/05/04 21:13:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.436 2008/05/04 23:19:23 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10650,6 +10650,16 @@ AND
       </entry>
      </row>
 
+     <row>
+      <entry><literal><function>generate_series</function>(<parameter>start</parameter>, <parameter>stop</parameter>, <parameter>step</parameter> <type>interval</>)</literal></entry>
+      <entry><type>timestamp</type> or <type>timestamp with time zone</type></entry>
+      <entry><type>setof timestamp</type> or <type>setof timestamp with time zone</type> (same as argument type)</entry>
+      <entry>
+       Generate a series of values, from <parameter>start</parameter> to <parameter>stop</parameter>
+       with a step size of <parameter>step</parameter>
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -10683,6 +10693,7 @@ select * from generate_series(4,3);
 -----------------
 (0 rows)
 
+-- this example relies on the date-plus-integer operator
 select current_date + s.a as dates from generate_series(0,14,7) as s(a);
    dates
 ------------
@@ -10690,16 +10701,26 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
  2004-02-12
  2004-02-19
 (3 rows)
+
+select * from generate_series('2008-03-01 00:00'::timestamp,
+                              '2008-03-04 12:00', '10 hours');
+   generate_series   
+---------------------
+ 2008-03-01 00:00:00
+ 2008-03-01 10:00:00
+ 2008-03-01 20:00:00
+ 2008-03-02 06:00:00
+ 2008-03-02 16:00:00
+ 2008-03-03 02:00:00
+ 2008-03-03 12:00:00
+ 2008-03-03 22:00:00
+ 2008-03-04 08:00:00
+(9 rows)
 </programlisting>
   </para>
 
   <table id="functions-srf-subscripts">
-
-  <indexterm>
-   <primary>generate_subscripts</primary>
-  </indexterm>
-
-   <title>Subscripts Generating Functions</title>
+   <title>Subscript Generating Functions</title>
    <tgroup cols="3">
     <thead>
      <row>
@@ -10711,7 +10732,7 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
 
     <tbody>
      <row>
-      <entry><literal><function>generate_subscripts</function>(<parameter>array annyarray</parameter>, <parameter>dim int</parameter>)</literal></entry>
+      <entry><literal><function>generate_subscripts</function>(<parameter>array anyarray</parameter>, <parameter>dim int</parameter>)</literal></entry>
       <entry><type>setof int</type></entry>
       <entry>
        Generate a series comprising the given array's subscripts.
@@ -10719,7 +10740,7 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
      </row>
 
      <row>
-      <entry><literal><function>generate_subscripts</function>(<parameter>array annyarray</parameter>, <parameter>dim int</parameter>, <parameter>reverse boolean</parameter>)</literal></entry>
+      <entry><literal><function>generate_subscripts</function>(<parameter>array anyarray</parameter>, <parameter>dim int</parameter>, <parameter>reverse boolean</parameter>)</literal></entry>
       <entry><type>setof int</type></entry>
       <entry>
        Generate a series comprising the given array's subscripts. When
@@ -10732,10 +10753,17 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
    </tgroup>
   </table>
 
+  <indexterm>
+   <primary>generate_subscripts</primary>
+  </indexterm>
+
   <para>
+   <function>generate_subscripts</> is a convenience function that generates
+   the set of valid subscripts for the specified dimension of the given
+   array.
    Zero rows are returned for arrays that do not have the requested dimension,
    or for NULL arrays (but valid subscripts are returned for NULL array
-   elements.) Some examples follow:
+   elements).  Some examples follow:
 <programlisting>
 -- basic usage
 select generate_subscripts('{NULL,1,NULL,2}'::int[], 1) as s;
