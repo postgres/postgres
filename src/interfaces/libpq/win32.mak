@@ -69,6 +69,10 @@ CLEAN :
 	-@erase "$(INTDIR)\pthread-win32.obj"
 	-@erase "$(INTDIR)\snprintf.obj"
 	-@erase "$(INTDIR)\strlcpy.obj"
+	-@erase "$(INTDIR)\dirent.obj"
+	-@erase "$(INTDIR)\dirmod.obj"
+	-@erase "$(INTDIR)\pgsleep.obj"
+	-@erase "$(INTDIR)\open.obj"
 	-@erase "$(OUTDIR)\$(OUTFILENAME).lib"
 	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.lib"
 	-@erase "$(OUTDIR)\libpq.res"
@@ -104,6 +108,10 @@ LIB32_OBJS= \
 	"$(INTDIR)\encnames.obj" \
 	"$(INTDIR)\snprintf.obj" \
 	"$(INTDIR)\strlcpy.obj" \
+	"$(INTDIR)\dirent.obj" \
+	"$(INTDIR)\dirmod.obj" \
+	"$(INTDIR)\pgsleep.obj" \
+	"$(INTDIR)\open.obj" \
 	"$(INTDIR)\pthread-win32.obj"
 
 
@@ -221,6 +229,26 @@ LINK32_OBJS= \
 "$(INTDIR)\strlcpy.obj" : ..\..\port\strlcpy.c
 	$(CPP) @<<
 	$(CPP_PROJ) /I"." ..\..\port\strlcpy.c
+<<
+
+"$(INTDIR)\dirent.obj" : ..\..\port\dirent.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I"." ..\..\port\dirent.c
+<<
+
+"$(INTDIR)\dirmod.obj" : ..\..\port\dirmod.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I"." ..\..\port\dirmod.c
+<<
+
+"$(INTDIR)\pgsleep.obj" : ..\..\port\pgsleep.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I"." ..\..\port\pgsleep.c
+<<
+
+"$(INTDIR)\open.obj" : ..\..\port\open.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I"." ..\..\port\open.c
 <<
 
 .c{$(CPP_OBJS)}.obj:
