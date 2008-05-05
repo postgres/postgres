@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.200 2008/05/02 22:50:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.201 2008/05/05 01:38:08 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -1145,7 +1145,8 @@ testdb=&gt;
         <para>
         Lists all data types or only those that match <replaceable
         class="parameter">pattern</replaceable>. The command form
-        <literal>\dT+</literal> shows extra information.
+        <literal>\dT+</literal> shows extra information, namely the type's internal name, size, and
+        allowed values for <type>enum</> types.
         </para>
         </listitem>
       </varlistentry>
