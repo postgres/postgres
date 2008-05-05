@@ -68,19 +68,21 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "deptest_pkey" fo
 GRANT ALL ON deptest1 TO regression_user2;
 RESET SESSION AUTHORIZATION;
 \z deptest1
-                                                          Access privileges for database "regression"
- Schema |   Name   | Type  |                                                         Access privileges                                                          
---------+----------+-------+------------------------------------------------------------------------------------------------------------------------------------
- public | deptest1 | table | {regression_user0=arwdxt/regression_user0,regression_user1=a*r*w*d*x*t*/regression_user0,regression_user2=arwdxt/regression_user1}
+                Access privileges for database "regression"
+ Schema |   Name   | Type  |               Access privileges                
+--------+----------+-------+------------------------------------------------
+ public | deptest1 | table | regression_user0=arwdxt/regression_user0
+                           : regression_user1=a*r*w*d*x*t*/regression_user0
+                           : regression_user2=arwdxt/regression_user1
 (1 row)
 
 DROP OWNED BY regression_user1;
 -- all grants revoked
 \z deptest1
-              Access privileges for database "regression"
- Schema |   Name   | Type  |             Access privileges              
---------+----------+-------+--------------------------------------------
- public | deptest1 | table | {regression_user0=arwdxt/regression_user0}
+             Access privileges for database "regression"
+ Schema |   Name   | Type  |            Access privileges             
+--------+----------+-------+------------------------------------------
+ public | deptest1 | table | regression_user0=arwdxt/regression_user0
 (1 row)
 
 -- table was dropped
