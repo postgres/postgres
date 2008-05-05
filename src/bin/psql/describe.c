@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.168 2008/05/02 10:16:16 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.169 2008/05/05 00:11:31 adunstan Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -307,11 +307,22 @@ describeTypes(const char *pattern, bool verbose)
 						  "    WHEN t.typlen < 0\n"
 						  "      THEN CAST('var' AS pg_catalog.text)\n"
 						  "    ELSE CAST(t.typlen AS pg_catalog.text)\n"
-						  "  END AS \"%s\",\n",
+						  "  END AS \"%s\",\n"
+						  "  pg_catalog.array_to_string(\n"
+						  "  	 ARRAY(\n"
+						  "		     SELECT e.enumlabel\n"
+						  "          FROM pg_catalog.pg_enum e\n"
+						  "          WHERE e.enumtypid = t.oid\n"
+						  "          ORDER BY e.oid\n"
+						  "      ),\n"
+						  "      E'\\n'\n"
+						  "  ) AS \"%s\",\n",
 						  gettext_noop("Internal name"),
-						  gettext_noop("Size"));
+						  gettext_noop("Size"),
+						  gettext_noop("Elements"));
+						  
 	appendPQExpBuffer(&buf,
-				"  pg_catalog.obj_description(t.oid, 'pg_type') as \"%s\"\n",
+					  "  pg_catalog.obj_description(t.oid, 'pg_type') as \"%s\"\n",
 					  gettext_noop("Description"));
 
 	appendPQExpBuffer(&buf, "FROM pg_catalog.pg_type t\n"
