@@ -9,29 +9,9 @@ that supports an extended subset of the SQL standard, including
 transactions, foreign keys, subqueries, triggers, user-defined types
 and functions.  This distribution also contains C language bindings.
 
-PostgreSQL has many language interfaces including some of the more
-common listed below:
+PostgreSQL has many language interfaces, many of which are listed here:
 
-C++ - http://pqxx.org
-JDBC - http://jdbc.postgresql.org
-ODBC - http://odbc.postgresql.org
-Perl - http://search.cpan.org/~dbdpg/
-PHP - http://www.php.net
-Python - http://www.initd.org/
-Ruby - http://ruby.scripting.ca/postgres/
-
-Other language bindings are available from a variety of contributing
-parties.
-
-PostgreSQL also has a great number of procedural languages available,
-a short, incomplete list is below:
-
-PL/pgSQL - included in PostgreSQL source distribution
-PL/Perl - included in PostgreSQL source distribution
-PL/PHP - http://projects.commandprompt.com/projects/public/plphp
-PL/Python - included in PostgreSQL source distribution
-PL/Java - http://pgfoundry.org/projects/pljava/
-PL/Tcl - included in PostgreSQL source distribution
+	http://www.postgresql.org/download
 
 See the file INSTALL for instructions on how to build and install
 PostgreSQL.  That file also lists supported operating systems and
