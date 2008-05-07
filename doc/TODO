@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed May  7 00:12:12 EDT 2008
+Last updated:		Wed May  7 00:34:37 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -373,7 +373,8 @@ Data Types
 
 * Text Search
 
-	o Allow dictionary to filter out only stop words
+	o Allow dictionaries to change the token that is passed on to
+	  later dictionaries
 
 	  http://archives.postgresql.org/pgsql-patches/2007-11/msg00081.php
 
