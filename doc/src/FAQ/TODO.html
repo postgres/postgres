@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue May  6 12:14:21 EDT 2008
+Last updated:           Wed May  7 00:12:12 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -205,16 +205,6 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Allow the UUID type to accept non-standard formats
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-02/msg01214.php">http://archives.postgresql.org/pgsql-hackers/2008-02/msg01214.php</a>
 </p>
-  </li><li>Allow text search dictionary to filter out only stop words
-<p>  <a href="http://archives.postgresql.org/pgsql-patches/2007-11/msg00081.php">http://archives.postgresql.org/pgsql-patches/2007-11/msg00081.php</a>
-</p>
-  </li><li>Consider a function-based API for '@@' full text searches
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg00511.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg00511.php</a>
-</p>
-  </li><li>Improve text search error messages
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-10/msg00966.php">http://archives.postgresql.org/pgsql-hackers/2007-10/msg00966.php</a>
-  <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg01146.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg01146.php</a>
-</p>
   </li><li>Consider a special data type for regular expressions
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-08/msg01067.php">http://archives.postgresql.org/pgsql-hackers/2007-08/msg01067.php</a>
 </p>
@@ -339,6 +329,24 @@ first.  There is also a developer's wiki at<br/>
       </li><li>MONEY dumps in a locale-specific format making it difficult to
           restore to a system with a different locale
       </li><li>Allow MONEY to be easily cast to/from other numeric data types
+    </li></ul>
+    </li><li>Text Search
+    <ul>
+      <li>Allow dictionary to filter out only stop words
+<p>          <a href="http://archives.postgresql.org/pgsql-patches/2007-11/msg00081.php">http://archives.postgresql.org/pgsql-patches/2007-11/msg00081.php</a>
+</p>
+      </li><li>Consider a function-based API for '@@' searches
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg00511.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg00511.php</a>
+</p>
+      </li><li>Improve text search error messages
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-10/msg00966.php">http://archives.postgresql.org/pgsql-hackers/2007-10/msg00966.php</a>
+          <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg01146.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg01146.php</a>
+</p>
+      </li><li>Consider changing error to warning for strings larger than one
+          megabyte
+<p>          <a href="http://archives.postgresql.org/pgsql-bugs/2008-02/msg00190.php">http://archives.postgresql.org/pgsql-bugs/2008-02/msg00190.php</a>
+          <a href="http://archives.postgresql.org/pgsql-patches/2008-03/msg00062.php">http://archives.postgresql.org/pgsql-patches/2008-03/msg00062.php</a>
+</p>
     </li></ul>
   </li></ul>
 </li></ul>

@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue May  6 12:14:21 EDT 2008
+Last updated:		Wed May  7 00:12:12 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -230,19 +230,6 @@ Data Types
 
   http://archives.postgresql.org/pgsql-hackers/2008-02/msg01214.php
 
-* Allow text search dictionary to filter out only stop words
-
-  http://archives.postgresql.org/pgsql-patches/2007-11/msg00081.php
-
-* Consider a function-based API for '@@' full text searches
-
-  http://archives.postgresql.org/pgsql-hackers/2007-11/msg00511.php
-
-* Improve text search error messages
-
-  http://archives.postgresql.org/pgsql-hackers/2007-10/msg00966.php
-  http://archives.postgresql.org/pgsql-hackers/2007-11/msg01146.php
-
 * Consider a special data type for regular expressions
 
   http://archives.postgresql.org/pgsql-hackers/2007-08/msg01067.php
@@ -383,6 +370,28 @@ Data Types
 	* MONEY dumps in a locale-specific format making it difficult to
 	  restore to a system with a different locale
 	* Allow MONEY to be easily cast to/from other numeric data types
+
+* Text Search
+
+	o Allow dictionary to filter out only stop words
+
+	  http://archives.postgresql.org/pgsql-patches/2007-11/msg00081.php
+
+	o Consider a function-based API for '@@' searches
+
+	  http://archives.postgresql.org/pgsql-hackers/2007-11/msg00511.php
+
+	o Improve text search error messages
+
+	  http://archives.postgresql.org/pgsql-hackers/2007-10/msg00966.php
+	  http://archives.postgresql.org/pgsql-hackers/2007-11/msg01146.php
+
+	o Consider changing error to warning for strings larger than one
+	  megabyte
+
+	  http://archives.postgresql.org/pgsql-bugs/2008-02/msg00190.php
+	  http://archives.postgresql.org/pgsql-patches/2008-03/msg00062.php
+
 
 
 Functions
