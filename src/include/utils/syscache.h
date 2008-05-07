@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.71 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.72 2008/05/07 01:04:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,63 +19,65 @@
 #include "utils/catcache.h"
 
 /*
- *		Declarations for util/syscache.c.
- *
  *		SysCache identifiers.
  *
- *		The order of these must match the order
- *		they are entered into the structure cacheinfo[] in syscache.c.
- *		Keep them in alphabetical order.
+ *		The order of these identifiers must match the order
+ *		of the entries in the array cacheinfo[] in syscache.c.
+ *		Keep them in alphabetical order (renumbering only costs a
+ *		backend rebuild).
  */
 
-#define AGGFNOID			0
-#define AMNAME				1
-#define AMOID				2
-#define AMOPOPID			3
-#define AMOPSTRATEGY		4
-#define AMPROCNUM			5
-#define ATTNAME				6
-#define ATTNUM				7
-#define AUTHMEMMEMROLE		8
-#define AUTHMEMROLEMEM		9
-#define AUTHNAME			10
-#define AUTHOID				11
-#define CASTSOURCETARGET	12
-#define CLAAMNAMENSP		13
-#define CLAOID				14
-#define CONDEFAULT			15
-#define CONNAMENSP			16
-#define CONSTROID			17
-#define CONVOID				18
-#define DATABASEOID			19
-#define ENUMOID				20
-#define ENUMTYPOIDNAME		21
-#define INDEXRELID			22
-#define LANGNAME			23
-#define LANGOID				24
-#define NAMESPACENAME		25
-#define NAMESPACEOID		26
-#define OPERNAMENSP			27
-#define OPEROID				28
-#define OPFAMILYAMNAMENSP	29
-#define OPFAMILYOID			30
-#define PROCNAMEARGSNSP		31
-#define PROCOID				32
-#define RELNAMENSP			33
-#define RELOID				34
-#define RULERELNAME			35
-#define STATRELATT			36
-#define TSCONFIGMAP			37
-#define TSCONFIGNAMENSP		38
-#define TSCONFIGOID			39
-#define TSDICTNAMENSP		40
-#define TSDICTOID			41
-#define TSPARSERNAMENSP		42
-#define TSPARSEROID			43
-#define TSTEMPLATENAMENSP	44
-#define TSTEMPLATEOID		45
-#define TYPENAMENSP			46
-#define TYPEOID				47
+enum SysCacheIdentifier
+{
+	AGGFNOID = 0,
+	AMNAME,
+	AMOID,
+	AMOPOPID,
+	AMOPSTRATEGY,
+	AMPROCNUM,
+	ATTNAME,
+	ATTNUM,
+	AUTHMEMMEMROLE,
+	AUTHMEMROLEMEM,
+	AUTHNAME,
+	AUTHOID,
+	CASTSOURCETARGET,
+	CLAAMNAMENSP,
+	CLAOID,
+	CONDEFAULT,
+	CONNAMENSP,
+	CONSTROID,
+	CONVOID,
+	DATABASEOID,
+	ENUMOID,
+	ENUMTYPOIDNAME,
+	INDEXRELID,
+	LANGNAME,
+	LANGOID,
+	NAMESPACENAME,
+	NAMESPACEOID,
+	OPERNAMENSP,
+	OPEROID,
+	OPFAMILYAMNAMENSP,
+	OPFAMILYOID,
+	PROCNAMEARGSNSP,
+	PROCOID,
+	RELNAMENSP,
+	RELOID,
+	RULERELNAME,
+	STATRELATT,
+	TSCONFIGMAP,
+	TSCONFIGNAMENSP,
+	TSCONFIGOID,
+	TSDICTNAMENSP,
+	TSDICTOID,
+	TSPARSERNAMENSP,
+	TSPARSEROID,
+	TSTEMPLATENAMENSP,
+	TSTEMPLATEOID,
+	TYPENAMENSP,
+	TYPEOID
+};
 
 extern void InitCatalogCache(void);
 extern void InitCatalogCachePhase2(void);
