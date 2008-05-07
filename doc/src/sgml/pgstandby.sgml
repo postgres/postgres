@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.4 2007/12/16 23:00:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.5 2008/05/07 18:48:40 alvherre Exp $ -->
 
 <sect1 id="pgstandby">
  <title>pg_standby</title>
@@ -322,7 +322,7 @@ restore_command = 'pg_standby -d -s 5 -t C:\pgsql.trigger.5442 ...\archive %f %p
   <title>Author</title>
 
   <para>
-   Simon Riggs
+   Simon Riggs <email>simon@2ndquadrant.com</email>
   </para>
  </sect2>
 
