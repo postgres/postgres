@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.28 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.29 2008/05/07 02:33:52 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -48,20 +48,47 @@ GetVariable(VariableSpace space, const char *name)
 	return NULL;
 }
 
+/*
+ * Try to interpret value as boolean value.  Valid values are: true,
+ * false, yes, no, on, off, 1, 0; as well as unique prefixes thereof.
+ */
 bool
-ParseVariableBool(const char *val)
+ParseVariableBool(const char *value)
 {
-	if (val == NULL)
-		return false;			/* not set -> assume "off" */
-	if (pg_strcasecmp(val, "off") == 0)
-		return false;			/* accept "off" or "OFF" as true */
+	size_t		len;
 
-	/*
-	 * for backwards compatibility, anything except "off" or "OFF" is taken as
-	 * "true"
-	 */
+	if (value == NULL)
+		return false;			/* not set -> assume "off" */
+
+	len = strlen(value);
+
+	if (pg_strncasecmp(value, "true", len) == 0)
+		return true;
+	else if (pg_strncasecmp(value, "false", len) == 0)
+		return false;
+	else if (pg_strncasecmp(value, "yes", len) == 0)
+		return true;
+	else if (pg_strncasecmp(value, "no", len) == 0)
+		return false;
+	/* 'o' is not unique enough */
+	else if (pg_strncasecmp(value, "on", (len > 2 ? len : 2)) == 0)
+		return true;
+	else if (pg_strncasecmp(value, "off", (len > 2 ? len : 2)) == 0)
+		return false;
+	else if (pg_strcasecmp(value, "1") == 0)
+		return true;
+	else if (pg_strcasecmp(value, "0") == 0)
+		return false;
+	else
+	{
+		/* NULL is treated as false, so a non-matching value is 'true' */
+		psql_error("unrecognized boolean value; assuming \"on\".\n");
+		return true;
+	}
+	/* suppress compiler warning */
 	return true;
 }
+
 
 /*
  * Read numeric variable, or defaultval if it is not set, or faultval if its
