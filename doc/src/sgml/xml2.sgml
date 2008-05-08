@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.4 2007/12/06 04:12:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.5 2008/05/08 16:49:37 tgl Exp $ -->
 
 <sect1 id="xml2">
  <title>xml2</title>
@@ -374,9 +374,7 @@ WHERE t.author_id = p.person_id;
   <title>XSLT functions</title>
 
   <para>
-   The following functions are available if libxslt is installed (this is
-   not currently detected automatically, so you will have to amend the
-   Makefile):
+   The following functions are available if libxslt is installed:
   </para>
 
   <sect3>

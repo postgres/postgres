@@ -1,17 +1,13 @@
-# $PostgreSQL: pgsql/contrib/xml2/Makefile,v 1.11 2007/11/10 23:59:52 momjian Exp $
+# $PostgreSQL: pgsql/contrib/xml2/Makefile,v 1.12 2008/05/08 16:49:37 tgl Exp $
 
 MODULE_big = pgxml
 
-# Remove xslt_proc.o from the following line if you don't have libxslt
-OBJS = xpath.o xslt_proc.o
+OBJS = $(if $(filter -lxslt, $(LIBS)), xpath.o xslt_proc.o, xpath.o)
 
-# Remove -lxslt from the following line if you don't have libxslt.
-SHLIB_LINK = -lxslt -lxml2
+SHLIB_LINK += $(filter -lxslt, $(LIBS)) $(filter -lxml2, $(LIBS))
 
 DATA_built = pgxml.sql
 DATA = uninstall_pgxml.sql
-
-override CFLAGS += $(shell xml2-config --cflags)
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

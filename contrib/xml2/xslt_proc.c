@@ -119,7 +119,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	if (resstat < 0)
 		PG_RETURN_NULL();
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(resstr, reslen));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len((char *) resstr, reslen));
 }
 
 
