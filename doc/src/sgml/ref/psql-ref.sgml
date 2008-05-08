@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.201 2008/05/05 01:38:08 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.202 2008/05/08 00:27:57 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2440,9 +2440,7 @@ testdb=&gt; <userinput>SELECT * FROM :foo;</userinput>
     </para>
 
     <para>
-    A popular application of this facility is to refer to the last
-    inserted <acronym>OID</acronym> in subsequent statements to build a
-    foreign key scenario. Another possible use of this mechanism is to
+    One  possible use of this mechanism is to
     copy the contents of a file into a table column. First load the file into a
     variable and then proceed as above:
 <programlisting>
