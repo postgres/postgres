@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.31 2008/05/08 17:04:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.32 2008/05/08 19:11:36 momjian Exp $
  *
  * XXX this file does not really belong in psql/.  Perhaps move to libpq?
  * It also seems that the mbvalidate function is redundant with existing
@@ -320,6 +320,14 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 				strcpy((char *) ptr, "\\r");
 				linewidth += 2;
 				ptr += 2;
+			}
+			else if (*pwcs == '\t')		/* Tab */
+			{
+				do
+				{
+					*ptr++ = ' ';
+					linewidth++;
+				} while (linewidth % 8 != 0);
 			}
 			else if (w < 0)		/* Other control char */
 			{
