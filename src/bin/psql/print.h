@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.35 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.36 2008/05/08 17:04:26 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -21,6 +21,7 @@ enum printFormat
 	PRINT_NOTHING = 0,			/* to make sure someone initializes this */
 	PRINT_UNALIGNED,
 	PRINT_ALIGNED,
+	PRINT_WRAPPED,
 	PRINT_HTML,
 	PRINT_LATEX,
 	PRINT_TROFF_MS
@@ -47,6 +48,8 @@ typedef struct _printTableOpt
 								 * decimal marker */
 	char	   *tableAttr;		/* attributes for HTML <table ...> */
 	int			encoding;		/* character encoding */
+	int			env_columns;	/* $COLUMNS on psql start, 0 is unset */
+	int			columns;		/* target width for wrapped format */
 } printTableOpt;
 
 

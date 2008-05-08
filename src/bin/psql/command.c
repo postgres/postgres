@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.187 2008/05/02 09:27:50 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.188 2008/05/08 17:04:26 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1502,6 +1502,9 @@ _align2string(enum printFormat in)
 		case PRINT_ALIGNED:
 			return "aligned";
 			break;
+		case PRINT_WRAPPED:
+			return "wrapped";
+			break;
 		case PRINT_HTML:
 			return "html";
 			break;
@@ -1535,6 +1538,8 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.format = PRINT_UNALIGNED;
 		else if (pg_strncasecmp("aligned", value, vallen) == 0)
 			popt->topt.format = PRINT_ALIGNED;
+		else if (pg_strncasecmp("wrapped", value, vallen) == 0)
+			popt->topt.format = PRINT_WRAPPED;
 		else if (pg_strncasecmp("html", value, vallen) == 0)
 			popt->topt.format = PRINT_HTML;
 		else if (pg_strncasecmp("latex", value, vallen) == 0)
@@ -1543,7 +1548,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.format = PRINT_TROFF_MS;
 		else
 		{
-			psql_error("\\pset: allowed formats are unaligned, aligned, html, latex, troff-ms\n");
+			psql_error("\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-ms\n");
 			return false;
 		}
 
@@ -1722,6 +1727,16 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			else
 				puts(_("Default footer is off."));
 		}
+	}
+
+	/* set border style/width */
+	else if (strcmp(param, "columns") == 0)
+	{
+		if (value)
+			popt->topt.columns = atoi(value);
+
+		if (!quiet)
+			printf(_("Target width for \"wrapped\" format is %d.\n"), popt->topt.columns);
 	}
 
 	else

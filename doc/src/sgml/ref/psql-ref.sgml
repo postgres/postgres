@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.202 2008/05/08 00:27:57 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.203 2008/05/08 17:04:26 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1514,7 +1514,8 @@ lo_import 152801
           <listitem>
           <para>
           Sets the output format to one of <literal>unaligned</literal>,
-          <literal>aligned</literal>, <literal>html</literal>,
+          <literal>aligned</literal>, <literal>wrapped</literal>, 
+          <literal>html</literal>,
           <literal>latex</literal>, or <literal>troff-ms</literal>.
           Unique abbreviations are allowed.  (That would mean one letter
           is enough.)
@@ -1526,13 +1527,37 @@ lo_import 152801
           is intended to create output that might be intended to be read
           in by other programs (tab-separated, comma-separated).
           <quote>Aligned</quote> mode is the standard, human-readable,
-          nicely formatted text output that is default. The
-          <quote><acronym>HTML</acronym></quote> and
+          nicely formatted text output that is default.
+          </para>
+
+          <para>
+          <quote>Wrapped</quote> is like <literal>aligned</> but wraps
+          output to the specified width.  If <literal>\pset columns</> is
+          zero (the default), <literal>wrapped</> mode only affects screen
+          output and wrapped width is controlled by the environment
+          variable <envar>COLUMNS</> or the detected screen width.  If
+          <literal>\pset columns</> is set to a non-zero value, all output
+          is wrapped, including file and pipe output.
+          </para>
+
+          <para>
+          The <quote><acronym>HTML</acronym></quote> and
           <quote>LaTeX</quote> modes put out tables that are intended to
           be included in documents using the respective mark-up
           language. They are not complete documents! (This might not be
           so dramatic in <acronym>HTML</acronym>, but in LaTeX you must
           have a complete document wrapper.)
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>columns</literal></term>
+          <listitem>
+          <para>
+          Controls the target width for the <literal>wrapped</> format.
+          Zero (the default) causes the <literal>wrapped</> format to
+          affect only screen output.
           </para>
           </listitem>
           </varlistentry>
@@ -2706,6 +2731,18 @@ $endif
   <title>Environment</title>
 
   <variablelist>
+
+   <varlistentry>
+    <term><envar>COLUMNS</envar></term>
+
+    <listitem>
+     <para>
+      Used for the <literal>wrapped</> output format if 
+      <literal>\pset columns</> is zero.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><envar>PAGER</envar></term>
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.146 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.147 2008/05/08 17:04:26 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -147,6 +147,8 @@ main(int argc, char *argv[])
 	pset.popt.topt.start_table = true;
 	pset.popt.topt.stop_table = true;
 	pset.popt.default_footer = true;
+	/* We must get COLUMNS here before readline() sets it */
+	pset.popt.topt.env_columns = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 0;
 
 	pset.notty = (!isatty(fileno(stdin)) || !isatty(fileno(stdout)));
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.97 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.98 2008/05/08 17:04:26 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -28,6 +28,8 @@
 
 #include "mbprint.h"
 
+static int strlen_max_width(unsigned char *str, int *target_width, int encoding);
+
 /*
  * We define the cancel_pressed flag in this file, rather than common.c where
  * it naturally belongs, because this file is also used by non-psql programs
@@ -42,6 +44,7 @@ volatile bool cancel_pressed = false;
 static char *decimal_point;
 static char *grouping;
 static char *thousands_sep;
+
 
 static void *
 pg_local_malloc(size_t size)
@@ -396,34 +399,43 @@ _print_horizontal_line(const unsigned int col_count, const unsigned int *widths,
 }
 
 
+/*
+ *	Prety pretty boxes around cells.
+ */
 static void
 print_aligned_text(const char *title, const char *const * headers,
 				   const char *const * cells, const char *const * footers,
 				   const char *opt_align, const printTableOpt *opt,
-				   FILE *fout)
+				   bool is_pager, FILE *fout)
 {
 	bool		opt_tuples_only = opt->tuples_only;
 	bool		opt_numeric_locale = opt->numericLocale;
-	unsigned short int opt_border = opt->border;
 	int			encoding = opt->encoding;
-	unsigned int col_count = 0;
-	unsigned int cell_count = 0;
-	unsigned int i;
-	int			tmp;
-	unsigned int *widths,
-				total_w;
-	unsigned int *heights;
-	unsigned int *format_space;
+	unsigned short int opt_border = opt->border;
+
+	unsigned int col_count = 0, cell_count = 0;
+
+	unsigned int i,
+				j;
+
+	unsigned int *width_header,
+			   *max_width,
+			   *width_wrap,
+			   *width_average;
+	unsigned int *max_nl_lines,	/* value split by newlines */
+				*curr_nl_line,
+				*max_bytes;
 	unsigned char **format_buf;
+	unsigned int width_total;
+	unsigned int total_header_width;
 
-	const char *const * ptr;
+	const char * const *ptr;
 
-	struct lineptr **col_lineptrs;		/* pointers to line pointer for each
-										 * column */
-	struct lineptr *lineptr_list;		/* complete list of linepointers */
+	struct lineptr **col_lineptrs;		/* pointers to line pointer per column */
 
-	int		   *complete;		/* Array remembering which columns have
-								 * completed output */
+	bool	   *header_done;	/* Have all header lines been output? */
+	int		   *bytes_output;	/* Bytes output for column value */
+	int			output_columns = 0;	/* Width of interactive console */
 
 	if (cancel_pressed)
 		return;
@@ -437,275 +449,404 @@ print_aligned_text(const char *title, const char *const * headers,
 
 	if (col_count > 0)
 	{
-		widths = pg_local_calloc(col_count, sizeof(*widths));
-		heights = pg_local_calloc(col_count, sizeof(*heights));
+		width_header = pg_local_calloc(col_count, sizeof(*width_header));
+		width_average = pg_local_calloc(col_count, sizeof(*width_average));
+		max_width = pg_local_calloc(col_count, sizeof(*max_width));
+		width_wrap = pg_local_calloc(col_count, sizeof(*width_wrap));
+		max_nl_lines = pg_local_calloc(col_count, sizeof(*max_nl_lines));
+		curr_nl_line = pg_local_calloc(col_count, sizeof(*curr_nl_line));
 		col_lineptrs = pg_local_calloc(col_count, sizeof(*col_lineptrs));
-		format_space = pg_local_calloc(col_count, sizeof(*format_space));
+		max_bytes = pg_local_calloc(col_count, sizeof(*max_bytes));
 		format_buf = pg_local_calloc(col_count, sizeof(*format_buf));
-		complete = pg_local_calloc(col_count, sizeof(*complete));
+		header_done = pg_local_calloc(col_count, sizeof(*header_done));
+		bytes_output = pg_local_calloc(col_count, sizeof(*bytes_output));
 	}
 	else
 	{
-		widths = NULL;
-		heights = NULL;
+		width_header = NULL;
+		width_average = NULL;
+		max_width = NULL;
+		width_wrap = NULL;
+		max_nl_lines = NULL;
+		curr_nl_line = NULL;
 		col_lineptrs = NULL;
-		format_space = NULL;
+		max_bytes = NULL;
 		format_buf = NULL;
-		complete = NULL;
+		header_done = NULL;
+		bytes_output = NULL;
 	}
 
-	/* count cells (rows * cols) */
-	for (ptr = cells; *ptr; ptr++)
-		cell_count++;
-
-	/* calc column widths */
+	/* scan all column headers, find maximum width and max max_nl_lines */
 	for (i = 0; i < col_count; i++)
 	{
-		/* Get width & height */
-		int			height,
-					space;
+		int			width,
+					nl_lines,
+					bytes_required;
 
-		pg_wcssize((unsigned char *) headers[i], strlen(headers[i]), encoding, &tmp, &height, &space);
-		if (tmp > widths[i])
-			widths[i] = tmp;
-		if (height > heights[i])
-			heights[i] = height;
-		if (space > format_space[i])
-			format_space[i] = space;
+		pg_wcssize((unsigned char *) headers[i], strlen(headers[i]), encoding, &width, &nl_lines, &bytes_required);
+		if (width > max_width[i])
+			max_width[i] = width;
+		if (nl_lines > max_nl_lines[i])
+			max_nl_lines[i] = nl_lines;
+		if (bytes_required > max_bytes[i])
+			max_bytes[i] = bytes_required;
+
+		width_header[i] = width;
 	}
 
-	for (i = 0, ptr = cells; *ptr; ptr++, i++)
+	/* scan all cells, find maximum width, compute cell_count */
+	for (i = 0, ptr = cells; *ptr; ptr++, i++, cell_count++)
 	{
-		int			numeric_locale_len;
-		int			height,
-					space;
+		int			width,
+					nl_lines,
+					bytes_required;
 
-		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
-			numeric_locale_len = additional_numeric_locale_len(*ptr);
-		else
-			numeric_locale_len = 0;
+		/* Get width, ignore nl_lines */
+		pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding, &width, &nl_lines, &bytes_required);
+		if (opt_numeric_locale && opt_align[i % col_count] == 'r')
+		{
+			width += additional_numeric_locale_len(*ptr);
+			bytes_required += additional_numeric_locale_len(*ptr);
+		}
 
-		/* Get width, ignore height */
-		pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding, &tmp, &height, &space);
-		tmp += numeric_locale_len;
-		if (tmp > widths[i % col_count])
-			widths[i % col_count] = tmp;
-		if (height > heights[i % col_count])
-			heights[i % col_count] = height;
-		if (space > format_space[i % col_count])
-			format_space[i % col_count] = space;
+		if (width > max_width[i % col_count])
+			max_width[i % col_count] = width;
+		if (nl_lines > max_nl_lines[i % col_count])
+			max_nl_lines[i % col_count] = nl_lines;
+		if (bytes_required > max_bytes[i % col_count])
+			max_bytes[i % col_count] = bytes_required;
+
+		width_average[i % col_count] += width;
 	}
 
+	/* If we have rows, compute average */
+	if (col_count != 0 && cell_count != 0)
+	{
+		int rows = cell_count / col_count;
+		
+		for (i = 0; i < col_count; i++)
+			width_average[i % col_count] /= rows;
+	}
+
+	/* adjust the total display width based on border style */
 	if (opt_border == 0)
-		total_w = col_count - 1;
+		width_total = col_count - 1;
 	else if (opt_border == 1)
-		total_w = col_count * 3 - 1;
+		width_total = col_count * 3 - 1;
 	else
-		total_w = col_count * 3 + 1;
+		width_total = col_count * 3 + 1;
+	total_header_width = width_total;
 
 	for (i = 0; i < col_count; i++)
-		total_w += widths[i];
+	{
+		width_total += max_width[i];
+		total_header_width += width_header[i];
+	}
 
 	/*
-	 * At this point: widths contains the max width of each column heights
-	 * contains the max height of a cell of each column format_space contains
-	 * maximum space required to store formatted string so we prepare the
-	 * formatting structures
+	 * At this point: max_width[] contains the max width of each column,
+	 * max_nl_lines[] contains the max number of lines in each column,
+	 * max_bytes[] contains the maximum storage space for formatting
+	 * strings, width_total contains the giant width sum.  Now we allocate
+	 * some memory for line pointers.
 	 */
-	if (col_count > 0)
+	for (i = 0; i < col_count; i++)
 	{
-		int			heights_total = 0;
-		struct lineptr *lineptr;
+		/* Add entry for ptr == NULL array termination */
+		col_lineptrs[i] = pg_local_calloc(max_nl_lines[i] + 1,
+											sizeof(**col_lineptrs));
 
-		for (i = 0; i < col_count; i++)
-			heights_total += heights[i];
+		format_buf[i] = pg_local_malloc(max_bytes[i] + 1);
 
-		lineptr = lineptr_list = pg_local_calloc(heights_total, sizeof(*lineptr_list));
+		col_lineptrs[i]->ptr = format_buf[i];
+	}
 
-		for (i = 0; i < col_count; i++)
+	/* Default word wrap to the full width, i.e. no word wrap */
+	for (i = 0; i < col_count; i++)
+		width_wrap[i] = max_width[i];
+
+	if (opt->format == PRINT_WRAPPED)
+	{
+		/* Get terminal width */
+		if (opt->columns > 0)
+			output_columns = opt->columns;
+		else if ((fout == stdout && isatty(fileno(stdout))) || is_pager)
 		{
-			col_lineptrs[i] = lineptr;
-			lineptr += heights[i];
+			if (opt->env_columns)
+				output_columns = opt->env_columns;
+#ifdef TIOCGWINSZ
+			else
+			{
+				struct winsize screen_size;
+	
+				if (ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) != -1)
+					output_columns = screen_size.ws_col;
+			}
+#endif
+		}
 
-			format_buf[i] = pg_local_malloc(format_space[i]);
+		/*
+		 * Optional optimized word wrap. Shrink columns with a high max/avg ratio.
+		 * Slighly bias against wider columns. (Increases chance a narrow column
+		 * will fit in its cell.)
+		 * If available columns is positive...
+		 * and greater than the width of the unshrinkable column headers
+		 */
+		if (output_columns > 0 && output_columns >= total_header_width)
+		{
+			/* While there is still excess width... */
+			while (width_total > output_columns)
+			{
+				double		max_ratio = 0;
+				int			worst_col = -1;
 
-			col_lineptrs[i]->ptr = format_buf[i];
+				/*
+				 *	Find column that has the highest ratio of its maximum
+				 *	width compared to its average width.  This tells us which
+				 *	column will produce the fewest wrapped values if shortened.
+				 *	width_wrap starts as equal to max_width.
+				 */
+				for (i = 0; i < col_count; i++)
+				{
+					if (width_average[i] && width_wrap[i] > width_header[i])
+					{
+						/* Penalize wide columns by +1% of their width (0.01) */
+						double ratio = (double)width_wrap[i] / width_average[i] +
+									max_width[i] * 0.01;
+
+						if (ratio > max_ratio)
+						{
+							max_ratio = ratio;
+							worst_col = i;
+						}
+					}
+				}
+
+				/* Exit loop if we can't squeeze any more. */
+				if (worst_col == -1)
+					break;
+
+				/* Decrease width of target column by one. */
+				width_wrap[worst_col]--;
+				width_total--;
+			}
 		}
 	}
-	else
-		lineptr_list = NULL;
 
+	/* time to output */
 	if (opt->start_table)
 	{
 		/* print title */
 		if (title && !opt_tuples_only)
 		{
-			/* Get width & height */
-			int			height;
+			int			width, height;
 
-			pg_wcssize((unsigned char *) title, strlen(title), encoding, &tmp, &height, NULL);
-			if (tmp >= total_w)
-				fprintf(fout, "%s\n", title);
+			pg_wcssize((unsigned char *) title, strlen(title), encoding, &width, &height, NULL);
+			if (width >= width_total)
+				fprintf(fout, "%s\n", title);	/* Aligned */
 			else
-				fprintf(fout, "%-*s%s\n", (total_w - tmp) / 2, "", title);
+				fprintf(fout, "%-*s%s\n", (width_total - width) / 2, "", title);		/* Centered */
 		}
 
 		/* print headers */
 		if (!opt_tuples_only)
 		{
-			int			cols_todo;
-			int			line_count;
+			int			more_col_wrapping;
+			int			curr_nl_line;
 
 			if (opt_border == 2)
-				_print_horizontal_line(col_count, widths, opt_border, fout);
+				_print_horizontal_line(col_count, width_wrap, opt_border, fout);
 
 			for (i = 0; i < col_count; i++)
-				pg_wcsformat((unsigned char *) headers[i], strlen(headers[i]), encoding, col_lineptrs[i], heights[i]);
+				pg_wcsformat((unsigned char *) headers[i], strlen(headers[i]),
+							 encoding, col_lineptrs[i], max_nl_lines[i]);
 
-			cols_todo = col_count;
-			line_count = 0;
-			memset(complete, 0, col_count * sizeof(int));
-			while (cols_todo)
+			more_col_wrapping = col_count;
+			curr_nl_line = 0;
+			memset(header_done, false, col_count * sizeof(bool));
+			while (more_col_wrapping)
 			{
 				if (opt_border == 2)
-					fprintf(fout, "|%c", line_count ? '+' : ' ');
+					fprintf(fout, "|%c", curr_nl_line ? '+' : ' ');
 				else if (opt_border == 1)
-					fputc(line_count ? '+' : ' ', fout);
+					fputc(curr_nl_line ? '+' : ' ', fout);
 
 				for (i = 0; i < col_count; i++)
 				{
 					unsigned int nbspace;
 
-					struct lineptr *this_line = col_lineptrs[i] + line_count;
+					struct lineptr *this_line = col_lineptrs[i] + curr_nl_line;
 
-					if (!complete[i])
+					if (!header_done[i])
 					{
-						nbspace = widths[i] - this_line->width;
+						nbspace = width_wrap[i] - this_line->width;
 
 						/* centered */
 						fprintf(fout, "%-*s%s%-*s",
 								nbspace / 2, "", this_line->ptr, (nbspace + 1) / 2, "");
 
-						if (line_count == (heights[i] - 1) || !(this_line + 1)->ptr)
+						if (!(this_line + 1)->ptr)
 						{
-							cols_todo--;
-							complete[i] = 1;
+							more_col_wrapping--;
+							header_done[i] = 1;
 						}
 					}
 					else
-						fprintf(fout, "%*s", widths[i], "");
+						fprintf(fout, "%*s", width_wrap[i], "");
 					if (i < col_count - 1)
 					{
 						if (opt_border == 0)
-							fputc(line_count ? '+' : ' ', fout);
+							fputc(curr_nl_line ? '+' : ' ', fout);
 						else
-							fprintf(fout, " |%c", line_count ? '+' : ' ');
+							fprintf(fout, " |%c", curr_nl_line ? '+' : ' ');
 					}
 				}
-				line_count++;
+				curr_nl_line++;
 
 				if (opt_border == 2)
 					fputs(" |", fout);
 				else if (opt_border == 1)
-					fputc(' ', fout);;
+					fputc(' ', fout);
 				fputc('\n', fout);
 			}
 
-			_print_horizontal_line(col_count, widths, opt_border, fout);
+			_print_horizontal_line(col_count, width_wrap, opt_border, fout);
 		}
 	}
 
-	/* print cells */
+	/* print cells, one loop per row */
 	for (i = 0, ptr = cells; *ptr; i += col_count, ptr += col_count)
 	{
-		int			j;
-		int			cols_todo = col_count;
-		int			line_count; /* Number of lines output so far in row */
+		bool		more_lines;
 
 		if (cancel_pressed)
 			break;
 
+		/*
+		 * Format each cell.  Format again, it is a numeric formatting locale
+		 * (e.g. 123,456 vs. 123456)
+		 */
 		for (j = 0; j < col_count; j++)
-			pg_wcsformat((unsigned char *) ptr[j], strlen(ptr[j]), encoding, col_lineptrs[j], heights[j]);
-
-		line_count = 0;
-		memset(complete, 0, col_count * sizeof(int));
-		while (cols_todo)
 		{
-			/* beginning of line */
+			pg_wcsformat((unsigned char *) ptr[j], strlen(ptr[j]), encoding, col_lineptrs[j], max_nl_lines[j]);
+			curr_nl_line[j] = 0;
+
+			if (opt_numeric_locale && opt_align[j % col_count] == 'r')
+			{
+				char	   *my_cell;
+
+				my_cell = format_numeric_locale((char *) col_lineptrs[j]->ptr);
+				strcpy((char *) col_lineptrs[j]->ptr, my_cell); /* Buffer IS large
+																 * enough... now */
+				free(my_cell);
+			}
+		}
+
+		memset(bytes_output, 0, col_count * sizeof(int));
+
+		/*
+		 *	Each time through this loop, one display line is output.
+		 *	It can either be a full value or a partial value if embedded
+		 *	newlines exist or if 'format=wrapping' mode is enabled.
+		 */
+		do
+		{
+			more_lines = false;
+
+			/* left border */
 			if (opt_border == 2)
 				fputs("| ", fout);
 			else if (opt_border == 1)
 				fputc(' ', fout);
 
+			/* for each column */
 			for (j = 0; j < col_count; j++)
 			{
-				struct lineptr *this_line = col_lineptrs[j] + line_count;
-				bool		finalspaces = (opt_border == 2 || j != col_count - 1);
+				/* We have a valid array element, so index it */
+				struct lineptr *this_line = &col_lineptrs[j][curr_nl_line[j]];
+				int		bytes_to_output,  chars_to_output = width_wrap[j];
 
-				if (complete[j])	/* Just print spaces... */
-				{
-					if (finalspaces)
-						fprintf(fout, "%*s", widths[j], "");
-				}
+				/* Past newline lines so pad for other columns */
+				if (!this_line->ptr)
+					fprintf(fout, "%*s", width_wrap[j], "");
 				else
 				{
-					/* content */
-					if (opt_align[j] == 'r')
-					{
-						if (opt_numeric_locale)
-						{
-							/*
-							 * Assumption: This code used only on strings
-							 * without multibyte characters, otherwise
-							 * this_line->width < strlen(this_ptr) and we get
-							 * an overflow
-							 */
-							char	   *my_cell = format_numeric_locale((char *) this_line->ptr);
+					/* Get strlen() of the width_wrap character */
+					bytes_to_output = strlen_max_width(this_line->ptr +
+									bytes_output[j], &chars_to_output, encoding);
 
-							fprintf(fout, "%*s%s",
-									(int) (widths[i % col_count] - strlen(my_cell)), "",
-									my_cell);
-							free(my_cell);
-						}
-						else
-							fprintf(fout, "%*s%s",
-									widths[j] - this_line->width, "",
-									this_line->ptr);
-					}
-					else
-						fprintf(fout, "%-s%*s", this_line->ptr,
-						finalspaces ? (widths[j] - this_line->width) : 0, "");
-					/* If at the right height, done this col */
-					if (line_count == heights[j] - 1 || !this_line[1].ptr)
+					/*
+					 *	If we exceeded width_wrap, it means the display width
+					 *	of a single character was wider than our target width.
+					 *	In that case, we have to pretend we are only printing
+					 *	the target display width and make the best of it.
+					 */
+					if (chars_to_output > width_wrap[j])
+						chars_to_output = width_wrap[j];
+
+					if (opt_align[j] == 'r')		/* Right aligned cell */
 					{
-						complete[j] = 1;
-						cols_todo--;
+						/* spaces first */
+						fprintf(fout, "%*s", width_wrap[j] - chars_to_output, "");
+						fprintf(fout, "%.*s", bytes_to_output,
+								this_line->ptr + bytes_output[j]);
+					}
+					else	/* Left aligned cell */
+					{
+						/* spaces second */
+						fprintf(fout, "%.*s", bytes_to_output,
+								this_line->ptr + bytes_output[j]);
+						fprintf(fout, "%*s", width_wrap[j] - chars_to_output, "");
+					}
+
+					bytes_output[j] += bytes_to_output;
+
+					/* Do we have more text to wrap? */
+					if (*(this_line->ptr + bytes_output[j]) != 0)
+						more_lines = true;
+					else
+					{
+						/* Advance to next newline line */
+						curr_nl_line[j]++;
+						if (col_lineptrs[j][curr_nl_line[j]].ptr != NULL)
+							more_lines = true;
+						bytes_output[j] = 0;
 					}
 				}
 
-				/* divider */
+				/* print a divider, middle columns only */
 				if ((j + 1) % col_count)
 				{
 					if (opt_border == 0)
 						fputc(' ', fout);
-					else if (line_count == 0)
-						fputs(" | ", fout);
+					/* Next value is beyond past newlines? */
+					else if (col_lineptrs[j+1][curr_nl_line[j+1]].ptr == NULL)
+						fputs("   ", fout);
+					/* In wrapping of value? */
+					else if (bytes_output[j+1] != 0)
+						fputs(" ; ", fout);
+					/* After first newline value */
+					else if (curr_nl_line[j+1] != 0)
+						fputs(" : ", fout);
 					else
-						fprintf(fout, " %c ", complete[j + 1] ? ' ' : ':');
+					/* Ordinary line */
+						fputs(" | ", fout);
 				}
+
 			}
+
+			/* end of row border */
 			if (opt_border == 2)
 				fputs(" |", fout);
 			fputc('\n', fout);
-			line_count++;
-		}
+
+		} while (more_lines);
 	}
 
 	if (opt->stop_table)
 	{
 		if (opt_border == 2 && !cancel_pressed)
-			_print_horizontal_line(col_count, widths, opt_border, fout);
+			_print_horizontal_line(col_count, width_wrap, opt_border, fout);
 
 		/* print footers */
 		if (footers && !opt_tuples_only && !cancel_pressed)
@@ -722,12 +863,16 @@ print_aligned_text(const char *title, const char *const * headers,
 	}
 
 	/* clean up */
-	free(widths);
-	free(heights);
+	free(width_header);
+	free(width_average);
+	free(max_width);
+	free(width_wrap);
+	free(max_nl_lines);
+	free(curr_nl_line);
 	free(col_lineptrs);
-	free(format_space);
-	free(complete);
-	free(lineptr_list);
+	free(max_bytes);
+	free(header_done);
+	free(bytes_output);
 	for (i = 0; i < col_count; i++)
 		free(format_buf[i]);
 	free(format_buf);
@@ -754,7 +899,6 @@ print_aligned_vertical(const char *title, const char *const * headers,
 				dheight = 1,
 				hformatsize = 0,
 				dformatsize = 0;
-	int			tmp = 0;
 	char	   *divider;
 	unsigned int cell_count = 0;
 	struct lineptr *hlineptr,
@@ -779,12 +923,13 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	/* Find the maximum dimensions for the headers */
 	for (i = 0; i < col_count; i++)
 	{
-		int			height,
+		int			width,
+					height,
 					fs;
 
-		pg_wcssize((unsigned char *) headers[i], strlen(headers[i]), encoding, &tmp, &height, &fs);
-		if (tmp > hwidth)
-			hwidth = tmp;
+		pg_wcssize((unsigned char *) headers[i], strlen(headers[i]), encoding, &width, &height, &fs);
+		if (width > hwidth)
+			hwidth = width;
 		if (height > hheight)
 			hheight = height;
 		if (fs > hformatsize)
@@ -799,7 +944,8 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)
 	{
 		int			numeric_locale_len;
-		int			height,
+		int			width,
+					height,
 					fs;
 
 		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
@@ -807,10 +953,10 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		else
 			numeric_locale_len = 0;
 
-		pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding, &tmp, &height, &fs);
-		tmp += numeric_locale_len;
-		if (tmp > dwidth)
-			dwidth = tmp;
+		pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding, &width, &height, &fs);
+		width += numeric_locale_len;
+		if (width > dwidth)
+			dwidth = width;
 		if (height > dheight)
 			dheight = height;
 		if (fs > dformatsize)
@@ -821,8 +967,8 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	 * We now have all the information we need to setup the formatting
 	 * structures
 	 */
-	dlineptr = pg_local_malloc(sizeof(*dlineptr) * dheight);
-	hlineptr = pg_local_malloc(sizeof(*hlineptr) * hheight);
+	dlineptr = pg_local_malloc((sizeof(*dlineptr) + 1) * dheight);
+	hlineptr = pg_local_malloc((sizeof(*hlineptr) + 1) * hheight);
 
 	dlineptr->ptr = pg_local_malloc(dformatsize);
 	hlineptr->ptr = pg_local_malloc(hformatsize);
@@ -910,7 +1056,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 				fprintf(fout, "%-s%*s", hlineptr[line_count].ptr,
 						hwidth - hlineptr[line_count].width, "");
 
-				if (line_count == (hheight - 1) || !hlineptr[line_count + 1].ptr)
+				if (!hlineptr[line_count + 1].ptr)
 					hcomplete = 1;
 			}
 			else
@@ -943,7 +1089,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 								dwidth - dlineptr[line_count].width, "");
 				}
 
-				if (line_count == dheight - 1 || !dlineptr[line_count + 1].ptr)
+				if (!dlineptr[line_count + 1].ptr)
 					dcomplete = 1;
 			}
 			else
@@ -1823,7 +1969,8 @@ printTable(const char *title,
 {
 	static const char *default_footer[] = {NULL};
 	FILE	   *output;
-
+	bool		is_pager = false;
+	
 	if (cancel_pressed)
 		return;
 
@@ -1858,6 +2005,7 @@ printTable(const char *title,
 			for (ptr = footers; *ptr; ptr++)
 				lines++;
 		output = PageOutput(lines, opt->pager);
+		is_pager = (output != fout);
 	}
 	else
 		output = fout;
@@ -1866,7 +2014,7 @@ printTable(const char *title,
 
 	if (flog)
 		print_aligned_text(title, headers, cells, footers, align,
-						   opt, flog);
+						   opt, is_pager, flog);
 
 	switch (opt->format)
 	{
@@ -1879,12 +2027,13 @@ printTable(const char *title,
 									 opt, output);
 			break;
 		case PRINT_ALIGNED:
+		case PRINT_WRAPPED:
 			if (opt->expanded)
 				print_aligned_vertical(title, headers, cells, footers, align,
 									   opt, output);
 			else
 				print_aligned_text(title, headers, cells, footers, align,
-								   opt, output);
+								   opt, is_pager, output);
 			break;
 		case PRINT_HTML:
 			if (opt->expanded)
@@ -1915,8 +2064,7 @@ printTable(const char *title,
 			exit(EXIT_FAILURE);
 	}
 
-	/* Only close if we used the pager */
-	if (output != fout)
+	if (is_pager)
 		ClosePager(output);
 }
 
@@ -2065,4 +2213,39 @@ setDecimalLocale(void)
 		thousands_sep = ",";
 	else
 		thousands_sep = ".";
+}
+
+/*
+ *	Returns the byte length to the end of the specified character
+ *  and number of display characters processed (useful if the string
+ *	is shorter then dpylen).
+ */
+static int
+strlen_max_width(unsigned char *str, int *target_width, int encoding)
+{
+	unsigned char *start = str;
+	int curr_width = 0;
+
+	while (*str && curr_width < *target_width)
+	{
+		int char_width = PQdsplen((char *) str, encoding);
+
+		/*
+		 *	If the display width of the new character causes
+		 *	the string to exceed its target width, skip it
+		 *	and return.  However, if this is the first character
+		 *	of the string (*width == 0), we have to accept it.
+		 */
+		if (*target_width - curr_width < char_width && curr_width != 0)
+			break;
+			
+		str += PQmblen((char *)str, encoding);
+
+		curr_width += char_width;
+	}
+
+	*target_width = curr_width;
+	
+	/* last byte */
+	return str - start;
 }

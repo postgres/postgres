@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.30 2008/04/16 18:18:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.31 2008/05/08 17:04:26 momjian Exp $
  *
  * XXX this file does not really belong in psql/.  Perhaps move to libpq?
  * It also seems that the mbvalidate function is redundant with existing
@@ -204,8 +204,8 @@ pg_wcswidth(const unsigned char *pwcs, size_t len, int encoding)
 /*
  * pg_wcssize takes the given string in the given encoding and returns three
  * values:
- *	  result_width: Width in display character of longest line in string
- *	  result_height: Number of lines in display output
+ *	  result_width: Width in display characters of the longest line in string
+ *	  result_height: Number of newlines in display output
  *	  result_format_size: Number of bytes required to store formatted representation of string
  */
 int
@@ -279,9 +279,14 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding, int *result_width,
 	return width;
 }
 
+/*
+ *  Filter out unprintable characters, companion to wcs_size.
+ *  Break input into lines based on \n.  lineptr[i].ptr == NULL
+ *	indicates the end of the array.
+ */
 void
 pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
-			 struct lineptr * lines, int count)
+			 struct lineptr *lines, int count)
 {
 	int			w,
 				chlen = 0;
@@ -307,6 +312,7 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 				if (count == 0)
 					exit(1);	/* Screwup */
 
+				/* make next line point to remaining memory */
 				lines->ptr = ptr;
 			}
 			else if (*pwcs == '\r')		/* Linefeed */
@@ -353,12 +359,13 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 		}
 		len -= chlen;
 	}
-	*ptr++ = '\0';
 	lines->width = linewidth;
-	lines++;
-	count--;
-	if (count > 0)
-		lines->ptr = NULL;
+	*ptr++ = '\0';			/* Terminate formatted string */
+
+	if (count == 0)
+		exit(1);	/* Screwup */
+
+	(lines+1)->ptr = NULL;	/* terminate line array */
 }
 
 unsigned char *
