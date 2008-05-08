@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.82 2007/11/13 21:04:45 tgl Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.82.2.1 2008/05/08 16:49:47 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -46,9 +46,7 @@ WANTED_DIRS += uuid-ossp
 endif
 
 ifeq ($(with_libxml),yes)
-ifeq ($(with_libxslt),yes)
 WANTED_DIRS += xml2
-endif
 endif
 
 # Missing:
