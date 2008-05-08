@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.497 2008/05/07 14:41:55 mha Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.498 2008/05/08 08:58:59 mha Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2904,7 +2904,7 @@ DATA(insert OID = 2784 (  pg_stat_get_last_autoanalyze_time PGNSP PGUID 12 1 0 f
 DESCR("statistics: last auto analyze time for a table");
 DATA(insert OID = 1936 (  pg_stat_get_backend_idset		PGNSP PGUID 12 1 100 f f t t s 0 23 "" _null_ _null_ _null_ pg_stat_get_backend_idset - _null_ _null_ ));
 DESCR("statistics: currently active backend IDs");
-DATA(insert OID = 2022 (  pg_stat_get_activity			PGNSP PGUID 12 1 100 f f f t s 1 2249 "23" _null_ _null_ _null_ pg_stat_get_activity - _null_ _null_ ));
+DATA(insert OID = 2022 (  pg_stat_get_activity			PGNSP PGUID 12 1 100 f f f t s 1 2249 "23" "{23,26,23,26,25,16,1184,1184,1184,869,23}" "{i,o,o,o,o,o,o,o,o,o,o}" "{pid,datid,procpid,usesysid,current_query,waiting,xact_start,query_start,backend_start,client_addr,client_port}" pg_stat_get_activity - _null_ _null_ ));
 DESCR("statistics: information about currently active backends");
 DATA(insert OID = 2026 (  pg_backend_pid				PGNSP PGUID 12 1 0 f f t f s 0 23 "" _null_ _null_ _null_ pg_backend_pid - _null_ _null_ ));
 DESCR("statistics: current backend PID");
