@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.111 2008/05/08 19:25:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.112 2008/05/08 22:17:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5170,21 +5170,6 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 	int			local_rscale;
 	double		val;
 
-	/*
-	 *	This avoids log(0) for cases of 0 raised to a non-integer.
-	 *	Also, while 0 ^ 0 can be either 1 or indeterminate (error), we
-	 *	treat it as one because most programming languages do this.
-	 *	http://en.wikipedia.org/wiki/Exponentiation#Zero_to_the_zero_power
-	 */
-	if (cmp_var(base, &const_zero) == 0)
-	{
-		if (cmp_var(exp, &const_zero) == 0)
-			set_var_from_var(&const_one, result);
-		else
-			set_var_from_var(&const_zero, result);
-		return;
-	}
-	
 	/* If exp can be represented as an integer, use power_var_int */
 	if (exp->ndigits == 0 || exp->ndigits <= exp->weight + 1)
 	{
@@ -5217,6 +5202,17 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 		free_var(&x);
 	}
 
+	/*
+	 *	This avoids log(0) for cases of 0 raised to a non-integer.
+	 *	0 ^ 0 handled by power_var_int().
+	 */
+	if (cmp_var(base, &const_zero) == 0)
+	{
+		set_var_from_var(&const_zero, result);
+		result->dscale = NUMERIC_MIN_SIG_DIGITS;	/* no need to round */
+		return;
+	}
+	
 	init_var(&ln_base);
 	init_var(&ln_num);
 
@@ -5284,6 +5280,11 @@ power_var_int(NumericVar *base, int exp, NumericVar *result, int rscale)
 	switch (exp)
 	{
 		case 0:
+			/*
+			 *	While 0 ^ 0 can be either 1 or indeterminate (error), we
+			 *	treat it as 1 because most programming languages do this.
+			 *	http://en.wikipedia.org/wiki/Exponentiation#Zero_to_the_zero_power
+			 */
 			set_var_from_var(&const_one, result);
 			result->dscale = rscale;	/* no need to round */
 			return;

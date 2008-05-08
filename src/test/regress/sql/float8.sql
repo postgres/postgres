@@ -129,6 +129,8 @@ SELECT '' AS bad, f.f1 * '1e200' from FLOAT8_TBL f;
 
 SELECT '' AS bad, f.f1 ^ '1e200' from FLOAT8_TBL f;
 
+SELECT 0 ^ 0 + 0 ^ 1 + 0 ^ 0.0 + 0 ^ 0.5;
+
 SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 = '0.0' ;
 
 SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 < '0.0' ;
