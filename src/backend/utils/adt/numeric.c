@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.110 2008/04/21 00:26:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.111 2008/05/08 19:25:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5170,6 +5170,21 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 	int			local_rscale;
 	double		val;
 
+	/*
+	 *	This avoids log(0) for cases of 0 raised to a non-integer.
+	 *	Also, while 0 ^ 0 can be either 1 or indeterminate (error), we
+	 *	treat it as one because most programming languages do this.
+	 *	http://en.wikipedia.org/wiki/Exponentiation#Zero_to_the_zero_power
+	 */
+	if (cmp_var(base, &const_zero) == 0)
+	{
+		if (cmp_var(exp, &const_zero) == 0)
+			set_var_from_var(&const_one, result);
+		else
+			set_var_from_var(&const_zero, result);
+		return;
+	}
+	
 	/* If exp can be represented as an integer, use power_var_int */
 	if (exp->ndigits == 0 || exp->ndigits <= exp->weight + 1)
 	{
@@ -5266,15 +5281,9 @@ power_var_int(NumericVar *base, int exp, NumericVar *result, int rscale)
 	NumericVar	base_prod;
 	int			local_rscale;
 
-	/* Detect some special cases, particularly 0^0. */
-
 	switch (exp)
 	{
 		case 0:
-			if (base->ndigits == 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
-						 errmsg("zero raised to zero is undefined")));
 			set_var_from_var(&const_one, result);
 			result->dscale = rscale;	/* no need to round */
 			return;
