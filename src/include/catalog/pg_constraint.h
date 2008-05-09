@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.28 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.29 2008/05/09 23:32:04 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -71,6 +71,12 @@ CATALOG(pg_constraint,2606)
 	char		confdeltype;	/* foreign key's ON DELETE action */
 	char		confmatchtype;	/* foreign key's match type */
 
+	/* Has a local definition (hence, do not drop when coninhcount is 0) */
+	bool		conislocal;
+
+	/* Number of times inherited from direct parent relation(s) */
+	int4		coninhcount;
+
 	/*
 	 * VARIABLE LENGTH FIELDS start here.  These fields may be NULL, too.
 	 */
@@ -125,7 +131,7 @@ typedef FormData_pg_constraint *Form_pg_constraint;
  *		compiler constants for pg_constraint
  * ----------------
  */
-#define Natts_pg_constraint					18
+#define Natts_pg_constraint					20
 #define Anum_pg_constraint_conname			1
 #define Anum_pg_constraint_connamespace		2
 #define Anum_pg_constraint_contype			3
@@ -137,13 +143,15 @@ typedef FormData_pg_constraint *Form_pg_constraint;
 #define Anum_pg_constraint_confupdtype		9
 #define Anum_pg_constraint_confdeltype		10
 #define Anum_pg_constraint_confmatchtype	11
-#define Anum_pg_constraint_conkey			12
-#define Anum_pg_constraint_confkey			13
-#define Anum_pg_constraint_conpfeqop		14
-#define Anum_pg_constraint_conppeqop		15
-#define Anum_pg_constraint_conffeqop		16
-#define Anum_pg_constraint_conbin			17
-#define Anum_pg_constraint_consrc			18
+#define Anum_pg_constraint_conislocal		12
+#define Anum_pg_constraint_coninhcount		13
+#define Anum_pg_constraint_conkey			14
+#define Anum_pg_constraint_confkey			15
+#define Anum_pg_constraint_conpfeqop		16
+#define Anum_pg_constraint_conppeqop		17
+#define Anum_pg_constraint_conffeqop		18
+#define Anum_pg_constraint_conbin			19
+#define Anum_pg_constraint_consrc			20
 
 
 /* Valid values for contype */
@@ -192,7 +200,9 @@ extern Oid CreateConstraintEntry(const char *constraintName,
 					  Oid indexRelId,
 					  Node *conExpr,
 					  const char *conBin,
-					  const char *conSrc);
+					  const char *conSrc,
+					  bool conIsLocal,
+					  int conInhCount);
 
 extern void RemoveConstraintById(Oid conId);
 extern void RenameConstraintById(Oid conId, const char *newname);

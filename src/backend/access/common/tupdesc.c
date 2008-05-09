@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.122 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.123 2008/05/09 23:32:04 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -505,20 +505,18 @@ BuildDescForRelation(List *schema)
 	AttrNumber	attnum;
 	ListCell   *l;
 	TupleDesc	desc;
-	AttrDefault *attrdef = NULL;
-	TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
+	bool		has_not_null;
 	char	   *attname;
 	Oid			atttypid;
 	int32		atttypmod;
 	int			attdim;
-	int			ndef = 0;
 
 	/*
 	 * allocate a new tuple descriptor
 	 */
 	natts = list_length(schema);
 	desc = CreateTemplateTupleDesc(natts, false);
-	constr->has_not_null = false;
+	has_not_null = false;
 
 	attnum = 0;
 
@@ -547,52 +545,25 @@ BuildDescForRelation(List *schema)
 						   atttypid, atttypmod, attdim);
 
 		/* Fill in additional stuff not handled by TupleDescInitEntry */
-		if (entry->is_not_null)
-			constr->has_not_null = true;
 		desc->attrs[attnum - 1]->attnotnull = entry->is_not_null;
-
-		/*
-		 * Note we copy only pre-cooked default expressions. Digestion of raw
-		 * ones is someone else's problem.
-		 */
-		if (entry->cooked_default != NULL)
-		{
-			if (attrdef == NULL)
-				attrdef = (AttrDefault *) palloc(natts * sizeof(AttrDefault));
-			attrdef[ndef].adnum = attnum;
-			attrdef[ndef].adbin = pstrdup(entry->cooked_default);
-			ndef++;
-			desc->attrs[attnum - 1]->atthasdef = true;
-		}
-
+		has_not_null |= entry->is_not_null;
 		desc->attrs[attnum - 1]->attislocal = entry->is_local;
 		desc->attrs[attnum - 1]->attinhcount = entry->inhcount;
 	}
 
-	if (constr->has_not_null || ndef > 0)
+	if (has_not_null)
 	{
-		desc->constr = constr;
+		TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
 
-		if (ndef > 0)			/* DEFAULTs */
-		{
-			if (ndef < natts)
-				constr->defval = (AttrDefault *)
-					repalloc(attrdef, ndef * sizeof(AttrDefault));
-			else
-				constr->defval = attrdef;
-			constr->num_defval = ndef;
-		}
-		else
-		{
-			constr->defval = NULL;
-			constr->num_defval = 0;
-		}
+		constr->has_not_null = true;
+		constr->defval = NULL;
+		constr->num_defval = 0;
 		constr->check = NULL;
 		constr->num_check = 0;
+		desc->constr = constr;
 	}
 	else
 	{
-		pfree(constr);
 		desc->constr = NULL;
 	}
 

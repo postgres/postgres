@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.98 2007/11/28 15:42:31 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.99 2008/05/09 23:32:03 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -713,7 +713,8 @@ ALTER TABLE table ALTER COLUMN anycol TYPE anytype;
     The <literal>TRIGGER</>, <literal>CLUSTER</>, <literal>OWNER</>,
     and <literal>TABLESPACE</> actions never recurse to descendant tables;
     that is, they always act as though <literal>ONLY</> were specified.
-    Adding a constraint can recurse only for <literal>CHECK</> constraints.
+    Adding a constraint can recurse only for <literal>CHECK</> constraints,
+    and is required to do so for such constraints.
    </para>
 
    <para>
@@ -804,7 +805,7 @@ ALTER TABLE distributors ALTER COLUMN street DROP NOT NULL;
   </para>
 
   <para> 
-   To add a check constraint to a table:
+   To add a check constraint to a table and all its children:
 <programlisting>
 ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);
 </programlisting>
@@ -815,6 +816,14 @@ ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);
 <programlisting>
 ALTER TABLE distributors DROP CONSTRAINT zipchk;
 </programlisting>
+  </para>
+
+  <para> 
+   To remove a check constraint from a table only:
+<programlisting>
+ALTER TABLE ONLY distributors DROP CONSTRAINT zipchk;
+</programlisting>
+   (The check constraint remains in place for any child tables.)
   </para>
 
   <para> 

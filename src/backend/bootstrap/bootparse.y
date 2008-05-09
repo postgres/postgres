@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.91 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.92 2008/05/09 23:32:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,6 +206,7 @@ Boot_CreateStmt:
 													  $6,
 													  BOOTSTRAP_SUPERUSERID,
 													  tupdesc,
+													  NIL,
 													  RELKIND_RELATION,
 													  $3,
 													  true,

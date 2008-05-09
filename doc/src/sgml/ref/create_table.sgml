@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.109 2007/07/17 05:02:00 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.110 2008/05/09 23:32:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -210,16 +210,25 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       the new table.  If the column name list of the new table
       contains a column name that is also inherited, the data type must
       likewise match the inherited column(s), and the column
-      definitions are merged into one.  However, inherited and new
-      column declarations of the same name need not specify identical
-      constraints: all constraints provided from any declaration are
-      merged together and all are applied to the new table.  If the
+      definitions are merged into one.  If the
       new table explicitly specifies a default value for the column,
       this default overrides any defaults from inherited declarations
       of the column.  Otherwise, any parents that specify default
       values for the column must all specify the same default, or an
       error will be reported.
      </para>
+
+     <para>
+      <literal>CHECK</> constraints are merged in essentially the same way as
+      columns: if multiple parent tables and/or the new table definition
+      contain identically-named <literal>CHECK</> constraints, these
+      constraints must all have the same check expression, or an error will be
+      reported.  Constraints having the same name and expression will
+      be merged into one copy.  Notice that an unnamed <literal>CHECK</>
+      constraint in the new table will never be merged, since a unique name
+      will always be chosen for it.
+     </para>
+
 <!--
      <para>
       <productname>PostgreSQL</> automatically allows the

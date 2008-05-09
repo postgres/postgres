@@ -692,3 +692,220 @@ drop function p2text(p2);
 drop table c1;
 drop table p2;
 drop table p1;
+CREATE TABLE ac (aa TEXT);
+alter table ac add constraint ac_check check (aa is not null);
+CREATE TABLE bc (bb TEXT) INHERITS (ac);
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+ relname | conname  | contype | conislocal | coninhcount |      consrc      
+---------+----------+---------+------------+-------------+------------------
+ ac      | ac_check | c       | t          |           0 | (aa IS NOT NULL)
+ bc      | ac_check | c       | f          |           1 | (aa IS NOT NULL)
+(2 rows)
+
+insert into ac (aa) values (NULL);
+ERROR:  new row for relation "ac" violates check constraint "ac_check"
+insert into bc (aa) values (NULL);
+ERROR:  new row for relation "bc" violates check constraint "ac_check"
+alter table bc drop constraint ac_check;  -- fail, disallowed
+ERROR:  cannot drop inherited constraint "ac_check" of relation "bc"
+alter table ac drop constraint ac_check;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+ relname | conname | contype | conislocal | coninhcount | consrc 
+---------+---------+---------+------------+-------------+--------
+(0 rows)
+
+-- try the unnamed-constraint case
+alter table ac add check (aa is not null);
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+ relname |   conname   | contype | conislocal | coninhcount |      consrc      
+---------+-------------+---------+------------+-------------+------------------
+ ac      | ac_aa_check | c       | t          |           0 | (aa IS NOT NULL)
+ bc      | ac_aa_check | c       | f          |           1 | (aa IS NOT NULL)
+(2 rows)
+
+insert into ac (aa) values (NULL);
+ERROR:  new row for relation "ac" violates check constraint "ac_aa_check"
+insert into bc (aa) values (NULL);
+ERROR:  new row for relation "bc" violates check constraint "ac_aa_check"
+alter table bc drop constraint ac_aa_check;  -- fail, disallowed
+ERROR:  cannot drop inherited constraint "ac_aa_check" of relation "bc"
+alter table ac drop constraint ac_aa_check;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+ relname | conname | contype | conislocal | coninhcount | consrc 
+---------+---------+---------+------------+-------------+--------
+(0 rows)
+
+alter table ac add constraint ac_check check (aa is not null);
+alter table bc no inherit ac;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+ relname | conname  | contype | conislocal | coninhcount |      consrc      
+---------+----------+---------+------------+-------------+------------------
+ ac      | ac_check | c       | t          |           0 | (aa IS NOT NULL)
+ bc      | ac_check | c       | t          |           0 | (aa IS NOT NULL)
+(2 rows)
+
+alter table bc drop constraint ac_check;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+ relname | conname  | contype | conislocal | coninhcount |      consrc      
+---------+----------+---------+------------+-------------+------------------
+ ac      | ac_check | c       | t          |           0 | (aa IS NOT NULL)
+(1 row)
+
+alter table ac drop constraint ac_check;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+ relname | conname | contype | conislocal | coninhcount | consrc 
+---------+---------+---------+------------+-------------+--------
+(0 rows)
+
+drop table bc;
+drop table ac;
+create table ac (a int constraint check_a check (a <> 0));
+create table bc (a int constraint check_a check (a <> 0), b int constraint check_b check (b <> 0)) inherits (ac);
+NOTICE:  merging column "a" with inherited definition
+NOTICE:  merging constraint "check_a" with inherited definition
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+ relname | conname | contype | conislocal | coninhcount |  consrc  
+---------+---------+---------+------------+-------------+----------
+ ac      | check_a | c       | t          |           0 | (a <> 0)
+ bc      | check_a | c       | t          |           1 | (a <> 0)
+ bc      | check_b | c       | t          |           0 | (b <> 0)
+(3 rows)
+
+drop table bc;
+drop table ac;
+create table ac (a int constraint check_a check (a <> 0));
+create table bc (b int constraint check_b check (b <> 0));
+create table cc (c int constraint check_c check (c <> 0)) inherits (ac, bc);
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc', 'cc') order by 1,2;
+ relname | conname | contype | conislocal | coninhcount |  consrc  
+---------+---------+---------+------------+-------------+----------
+ ac      | check_a | c       | t          |           0 | (a <> 0)
+ bc      | check_b | c       | t          |           0 | (b <> 0)
+ cc      | check_a | c       | f          |           1 | (a <> 0)
+ cc      | check_b | c       | f          |           1 | (b <> 0)
+ cc      | check_c | c       | t          |           0 | (c <> 0)
+(5 rows)
+
+alter table cc no inherit bc;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc', 'cc') order by 1,2;
+ relname | conname | contype | conislocal | coninhcount |  consrc  
+---------+---------+---------+------------+-------------+----------
+ ac      | check_a | c       | t          |           0 | (a <> 0)
+ bc      | check_b | c       | t          |           0 | (b <> 0)
+ cc      | check_a | c       | f          |           1 | (a <> 0)
+ cc      | check_b | c       | t          |           0 | (b <> 0)
+ cc      | check_c | c       | t          |           0 | (c <> 0)
+(5 rows)
+
+drop table cc;
+drop table bc;
+drop table ac;
+create table p1(f1 int);
+create table p2(f2 int);
+create table c1(f3 int) inherits(p1,p2);
+insert into c1 values(1,-1,2);
+alter table p2 add constraint cc check (f2>0);  -- fail
+ERROR:  check constraint "cc" is violated by some row
+alter table p2 add check (f2>0);  -- check it without a name, too
+ERROR:  check constraint "p2_f2_check" is violated by some row
+delete from c1;
+insert into c1 values(1,1,2);
+alter table p2 add check (f2>0);
+insert into c1 values(1,-1,2);  -- fail
+ERROR:  new row for relation "c1" violates check constraint "p2_f2_check"
+create table c2(f3 int) inherits(p1,p2);
+\d c2
+      Table "public.c2"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ f1     | integer |          
+ f2     | integer |          
+ f3     | integer |          
+Check constraints:
+    "p2_f2_check" CHECK (f2 > 0)
+Inherits: p1,
+          p2
+
+create table c3 (f4 int) inherits(c1,c2);
+NOTICE:  merging multiple inherited definitions of column "f1"
+NOTICE:  merging multiple inherited definitions of column "f2"
+NOTICE:  merging multiple inherited definitions of column "f3"
+\d c3
+      Table "public.c3"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ f1     | integer |          
+ f2     | integer |          
+ f3     | integer |          
+ f4     | integer |          
+Check constraints:
+    "p2_f2_check" CHECK (f2 > 0)
+Inherits: c1,
+          c2
+
+drop table p1 cascade;
+NOTICE:  drop cascades to table c2
+NOTICE:  drop cascades to table c3
+NOTICE:  drop cascades to constraint p2_f2_check on table c3
+NOTICE:  drop cascades to constraint p2_f2_check on table c2
+NOTICE:  drop cascades to table c1
+NOTICE:  drop cascades to constraint p2_f2_check on table c1
+drop table p2 cascade;
+create table pp1 (f1 int);
+create table cc1 (f2 text, f3 int) inherits (pp1);
+alter table pp1 add column a1 int check (a1 > 0);
+\d cc1
+      Table "public.cc1"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ f1     | integer |          
+ f2     | text    |          
+ f3     | integer |          
+ a1     | integer |          
+Check constraints:
+    "pp1_a1_check" CHECK (a1 > 0)
+Inherits: pp1
+
+create table cc2(f4 float) inherits(pp1,cc1);
+NOTICE:  merging multiple inherited definitions of column "f1"
+NOTICE:  merging multiple inherited definitions of column "a1"
+\d cc2
+          Table "public.cc2"
+ Column |       Type       | Modifiers 
+--------+------------------+-----------
+ f1     | integer          |          
+ a1     | integer          |          
+ f2     | text             |          
+ f3     | integer          |          
+ f4     | double precision |          
+Check constraints:
+    "pp1_a1_check" CHECK (a1 > 0)
+Inherits: pp1,
+          cc1
+
+alter table pp1 add column a2 int check (a2 > 0);
+NOTICE:  merging definition of column "a2" for child "cc2"
+NOTICE:  merging constraint "pp1_a2_check" with inherited definition
+\d cc2
+          Table "public.cc2"
+ Column |       Type       | Modifiers 
+--------+------------------+-----------
+ f1     | integer          |          
+ a1     | integer          |          
+ f2     | text             |          
+ f3     | integer          |          
+ f4     | double precision |          
+ a2     | integer          |          
+Check constraints:
+    "pp1_a1_check" CHECK (a1 > 0)
+    "pp1_a2_check" CHECK (a2 > 0)
+Inherits: pp1,
+          cc1
+
+drop table pp1 cascade;
+NOTICE:  drop cascades to table cc2
+NOTICE:  drop cascades to constraint pp1_a1_check on table cc2
+NOTICE:  drop cascades to constraint pp1_a2_check on table cc2
+NOTICE:  drop cascades to table cc1
+NOTICE:  drop cascades to constraint pp1_a1_check on table cc1
+NOTICE:  drop cascades to constraint pp1_a2_check on table cc1

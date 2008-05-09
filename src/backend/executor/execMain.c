@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.306 2008/04/21 03:49:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.307 2008/05/09 23:32:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2626,7 +2626,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 									 false);
 	(void) heap_reloptions(RELKIND_RELATION, reloptions, true);
 
-	/* have to copy the actual tupdesc to get rid of any constraints */
+	/* Copy the tupdesc because heap_create_with_catalog modifies it */
 	tupdesc = CreateTupleDescCopy(queryDesc->tupDesc);
 
 	/* Now we can actually create the new relation */
@@ -2636,6 +2636,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  InvalidOid,
 											  GetUserId(),
 											  tupdesc,
+											  NIL,
 											  RELKIND_RELATION,
 											  false,
 											  true,

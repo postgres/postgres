@@ -378,19 +378,21 @@ drop table atacc2 cascade;
 NOTICE:  drop cascades to table atacc3
 NOTICE:  drop cascades to constraint foo on table atacc3
 drop table atacc1;
--- let's try only to add only to the parent
+-- adding only to a parent is disallowed as of 8.4
 create table atacc1 (test int);
-create table atacc2 (test2 int);
-create table atacc3 (test3 int) inherits (atacc1, atacc2);
-alter table only atacc2 add constraint foo check (test2>0);
--- fail and then succeed on atacc2
-insert into atacc2 (test2) values (-3);
+create table atacc2 (test2 int) inherits (atacc1);
+-- fail:
+alter table only atacc1 add constraint foo check (test>0);
+ERROR:  constraint must be added to child tables too
+-- ok:
+alter table only atacc2 add constraint foo check (test>0);
+-- check constraint not there on parent
+insert into atacc1 (test) values (-3);
+insert into atacc1 (test) values (3);
+-- check constraint is there on child
+insert into atacc2 (test) values (-3);
 ERROR:  new row for relation "atacc2" violates check constraint "foo"
-insert into atacc2 (test2) values (3);
--- both succeed on atacc3
-insert into atacc3 (test2) values (-3);
-insert into atacc3 (test2) values (3);
-drop table atacc3;
+insert into atacc2 (test) values (3);
 drop table atacc2;
 drop table atacc1;
 -- test unique constraint adding
@@ -1230,7 +1232,7 @@ alter table p1 add column f2 text;
 NOTICE:  merging definition of column "f2" for child "c1"
 insert into p1 values (1,2,'abc');
 insert into c1 values(11,'xyz',33,0); -- should fail
-ERROR:  new row for relation "c1" violates check constraint "c1_a1_check"
+ERROR:  new row for relation "c1" violates check constraint "p1_a1_check"
 insert into c1 values(11,'xyz',33,22);
 select * from p1;
  f1 | a1 | f2  
@@ -1249,7 +1251,7 @@ select * from p1;
 
 drop table p1 cascade;
 NOTICE:  drop cascades to table c1
-NOTICE:  drop cascades to constraint c1_a1_check on table c1
+NOTICE:  drop cascades to constraint p1_a1_check on table c1
 -- test that operations with a dropped column do not try to reference
 -- its datatype
 create domain mytype as text;

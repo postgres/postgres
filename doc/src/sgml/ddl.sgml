@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.81 2008/01/13 17:58:54 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.82 2008/05/09 23:32:03 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2107,7 +2107,8 @@ VALUES ('New York', NULL, NULL, 'NY');
 
   <para>
    A parent table cannot be dropped while any of its children remain. Neither
-   can columns of child tables be dropped or altered if they are inherited
+   can columns or check constraints of child tables be dropped or altered
+   if they are inherited
    from any parent tables. If you wish to remove a table and all of its
    descendants, one easy way is to drop the parent table with the
    <literal>CASCADE</literal> option.
@@ -2117,7 +2118,7 @@ VALUES ('New York', NULL, NULL, 'NY');
    <xref linkend="sql-altertable" endterm="sql-altertable-title"> will
    propagate any changes in column data definitions and check
    constraints down the inheritance hierarchy.  Again, dropping
-   columns or constraints on parent tables is only possible when using
+   columns that are depended on by other tables is only possible when using
    the <literal>CASCADE</literal> option. <command>ALTER
    TABLE</command> follows the same rules for duplicate column merging
    and rejection that apply during <command>CREATE TABLE</command>.

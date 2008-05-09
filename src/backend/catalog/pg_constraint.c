@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.40 2008/03/26 21:10:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.41 2008/05/09 23:32:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,9 @@ CreateConstraintEntry(const char *constraintName,
 					  Oid indexRelId,
 					  Node *conExpr,
 					  const char *conBin,
-					  const char *conSrc)
+					  const char *conSrc,
+					  bool conIsLocal,
+					  int conInhCount)
 {
 	Relation	conDesc;
 	Oid			conOid;
@@ -145,6 +147,8 @@ CreateConstraintEntry(const char *constraintName,
 	values[Anum_pg_constraint_confupdtype - 1] = CharGetDatum(foreignUpdateType);
 	values[Anum_pg_constraint_confdeltype - 1] = CharGetDatum(foreignDeleteType);
 	values[Anum_pg_constraint_confmatchtype - 1] = CharGetDatum(foreignMatchType);
+	values[Anum_pg_constraint_conislocal - 1] = BoolGetDatum(conIsLocal);
+	values[Anum_pg_constraint_coninhcount - 1] = Int32GetDatum(conInhCount);
 
 	if (conkeyArray)
 		values[Anum_pg_constraint_conkey - 1] = PointerGetDatum(conkeyArray);

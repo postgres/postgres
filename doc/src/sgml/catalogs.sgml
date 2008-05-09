@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.165 2008/04/14 17:05:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.166 2008/05/09 23:32:03 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1905,6 +1905,26 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Foreign key match type</entry>
+     </row>
+
+     <row>
+      <entry><structfield>conislocal</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       This constraint is defined locally in the relation.  Note that a
+       constraint can be locally defined and inherited simultaneously
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>coninhcount</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       The number of direct ancestors this constraint has.  A constraint with
+       a nonzero number of ancestors cannot be dropped nor renamed
+      </entry>
      </row>
 
      <row>

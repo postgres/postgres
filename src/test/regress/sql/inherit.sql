@@ -196,3 +196,83 @@ drop function p2text(p2);
 drop table c1;
 drop table p2;
 drop table p1;
+
+CREATE TABLE ac (aa TEXT);
+alter table ac add constraint ac_check check (aa is not null);
+CREATE TABLE bc (bb TEXT) INHERITS (ac);
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+
+insert into ac (aa) values (NULL);
+insert into bc (aa) values (NULL);
+
+alter table bc drop constraint ac_check;  -- fail, disallowed
+alter table ac drop constraint ac_check;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+
+-- try the unnamed-constraint case
+alter table ac add check (aa is not null);
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+
+insert into ac (aa) values (NULL);
+insert into bc (aa) values (NULL);
+
+alter table bc drop constraint ac_aa_check;  -- fail, disallowed
+alter table ac drop constraint ac_aa_check;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+
+alter table ac add constraint ac_check check (aa is not null);
+alter table bc no inherit ac;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+alter table bc drop constraint ac_check;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+alter table ac drop constraint ac_check;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+
+drop table bc;
+drop table ac;
+
+create table ac (a int constraint check_a check (a <> 0));
+create table bc (a int constraint check_a check (a <> 0), b int constraint check_b check (b <> 0)) inherits (ac);
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc') order by 1,2;
+
+drop table bc;
+drop table ac;
+
+create table ac (a int constraint check_a check (a <> 0));
+create table bc (b int constraint check_b check (b <> 0));
+create table cc (c int constraint check_c check (c <> 0)) inherits (ac, bc);
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc', 'cc') order by 1,2;
+
+alter table cc no inherit bc;
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.consrc from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname in ('ac', 'bc', 'cc') order by 1,2;
+
+drop table cc;
+drop table bc;
+drop table ac;
+
+create table p1(f1 int);
+create table p2(f2 int);
+create table c1(f3 int) inherits(p1,p2);
+insert into c1 values(1,-1,2);
+alter table p2 add constraint cc check (f2>0);  -- fail
+alter table p2 add check (f2>0);  -- check it without a name, too
+delete from c1;
+insert into c1 values(1,1,2);
+alter table p2 add check (f2>0);
+insert into c1 values(1,-1,2);  -- fail
+create table c2(f3 int) inherits(p1,p2);
+\d c2
+create table c3 (f4 int) inherits(c1,c2);
+\d c3
+drop table p1 cascade;
+drop table p2 cascade;
+
+create table pp1 (f1 int);
+create table cc1 (f2 text, f3 int) inherits (pp1);
+alter table pp1 add column a1 int check (a1 > 0);
+\d cc1
+create table cc2(f4 float) inherits(pp1,cc1);
+\d cc2
+alter table pp1 add column a2 int check (a2 > 0);
+\d cc2
+drop table pp1 cascade;
