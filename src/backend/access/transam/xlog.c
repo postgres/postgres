@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.301 2008/05/09 14:27:47 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.302 2008/05/09 15:27:17 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2507,7 +2507,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 					 ControlFile->checkPointCopy.ThisTimeLineID,
 					 restartLog, restartSeg);
 		/* we shouldn't need anything earlier than last restart point */
-		Assert(strcmp(lastRestartPointFname, xlogfname) < 0);
+		Assert(strcmp(lastRestartPointFname, xlogfname) <= 0);
 	}
 	else
 		XLogFileName(lastRestartPointFname, 0, 0, 0);
