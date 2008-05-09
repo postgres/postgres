@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.91.2.2 2004/11/17 00:18:23 neilc Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.91.2.3 2008/05/09 22:38:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -877,7 +877,7 @@ change_varattnos_walker(Node *node, const AttrNumber *newattno)
 			 * such a node currently.
 			 */
 			Assert(newattno[var->varattno - 1] > 0);
-			var->varattno = newattno[var->varattno - 1];
+			var->varattno = var->varoattno = newattno[var->varattno - 1];
 		}
 		return false;
 	}
