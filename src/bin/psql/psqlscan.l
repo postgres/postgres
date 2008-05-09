@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.24 2008/05/02 09:27:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.25 2008/05/09 15:36:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,6 +125,7 @@ static void emit(const char *txt, int len);
 %option 8bit
 %option never-interactive
 %option nodefault
+%option noinput
 %option nounput
 %option noyywrap
 

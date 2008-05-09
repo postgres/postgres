@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.61 2008/04/01 03:51:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.62 2008/05/09 15:36:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@ bool plpgsql_SpaceScanned = false;
 %option 8bit
 %option never-interactive
 %option nodefault
+%option noinput
 %option nounput
 %option noyywrap
 %option prefix="plpgsql_base_yy"
