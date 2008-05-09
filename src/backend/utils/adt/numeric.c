@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.113 2008/05/09 15:36:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.114 2008/05/09 21:31:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1897,13 +1897,17 @@ numeric_power(PG_FUNCTION_ARGS)
 	 * certain error conditions.  Specifically, we don't return a divide-by-zero
 	 * error code for 0 ^ -1.
 	 */
-	if ((cmp_var(&arg1, &const_zero) == 0 &&
-		 cmp_var(&arg2, &const_zero) < 0) ||
-		(cmp_var(&arg1, &const_zero) < 0 &&
-		 cmp_var(&arg2, &arg2_trunc) != 0))
+	if (cmp_var(&arg1, &const_zero) == 0 &&
+		cmp_var(&arg2, &const_zero) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION),
-				 errmsg("invalid argument for power function")));
+				 errmsg("zero raised to a negative power is undefined")));
+
+	if (cmp_var(&arg1, &const_zero) < 0 &&
+		cmp_var(&arg2, &arg2_trunc) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION),
+				 errmsg("a negative number raised to a non-integer power yields a complex result")));
 
 	/*
 	 * Call power_var() to compute and return the result; note it handles
