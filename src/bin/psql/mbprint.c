@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.32 2008/05/08 19:11:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.33 2008/05/09 05:25:04 tgl Exp $
  *
  * XXX this file does not really belong in psql/.  Perhaps move to libpq?
  * It also seems that the mbvalidate function is redundant with existing
@@ -205,12 +205,15 @@ pg_wcswidth(const unsigned char *pwcs, size_t len, int encoding)
  * pg_wcssize takes the given string in the given encoding and returns three
  * values:
  *	  result_width: Width in display characters of the longest line in string
- *	  result_height: Number of newlines in display output
- *	  result_format_size: Number of bytes required to store formatted representation of string
+ *	  result_height: Number of lines in display output
+ *	  result_format_size: Number of bytes required to store formatted
+ *		representation of string
+ *
+ * This MUST be kept in sync with pg_wcsformat!
  */
-int
-pg_wcssize(unsigned char *pwcs, size_t len, int encoding, int *result_width,
-		   int *result_height, int *result_format_size)
+void
+pg_wcssize(unsigned char *pwcs, size_t len, int encoding,
+		   int *result_width, int *result_height, int *result_format_size)
 {
 	int			w,
 				chlen = 0,
@@ -241,6 +244,14 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding, int *result_width,
 				linewidth += 2;
 				format_size += 2;
 			}
+			else if (*pwcs == '\t')		/* Tab */
+			{
+				do
+				{
+					linewidth++;
+					format_size++;
+				} while (linewidth % 8 != 0);
+			}
 			else if (w < 0)		/* Other control char */
 			{
 				linewidth += 4;
@@ -266,7 +277,7 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding, int *result_width,
 	}
 	if (linewidth > width)
 		width = linewidth;
-	format_size += 1;
+	format_size += 1;		/* For NUL char */
 
 	/* Set results */
 	if (result_width)
@@ -275,14 +286,13 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding, int *result_width,
 		*result_height = height;
 	if (result_format_size)
 		*result_format_size = format_size;
-
-	return width;
 }
 
 /*
- *  Filter out unprintable characters, companion to wcs_size.
- *  Break input into lines based on \n.  lineptr[i].ptr == NULL
- *	indicates the end of the array.
+ *  Format a string into one or more "struct lineptr" lines.
+ *  lines[i].ptr == NULL indicates the end of the array.
+ *
+ * This MUST be kept in sync with pg_wcssize!
  */
 void
 pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
@@ -309,7 +319,7 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 				linewidth = 0;
 				lines++;
 				count--;
-				if (count == 0)
+				if (count <= 0)
 					exit(1);	/* Screwup */
 
 				/* make next line point to remaining memory */
@@ -346,14 +356,14 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 			if (encoding == PG_UTF8)
 				sprintf((char *) ptr, "\\u%04X", utf2ucs(pwcs));
 			else
-
+			{
 				/*
 				 * This case cannot happen in the current code because only
 				 * UTF-8 signals multibyte control characters. But we may need
 				 * to support it at some stage
 				 */
 				sprintf((char *) ptr, "\\u????");
-
+			}
 			ptr += 6;
 			linewidth += 6;
 		}
@@ -370,7 +380,7 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 	lines->width = linewidth;
 	*ptr++ = '\0';			/* Terminate formatted string */
 
-	if (count == 0)
+	if (count <= 0)
 		exit(1);	/* Screwup */
 
 	(lines+1)->ptr = NULL;	/* terminate line array */
