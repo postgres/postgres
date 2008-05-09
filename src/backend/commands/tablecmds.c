@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.206.2.4 2008/04/24 20:18:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.206.2.5 2008/05/09 22:37:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1174,7 +1174,7 @@ change_varattnos_walker(Node *node, const AttrNumber *newattno)
 			 * currently.
 			 */
 			Assert(newattno[var->varattno - 1] > 0);
-			var->varattno = newattno[var->varattno - 1];
+			var->varattno = var->varoattno = newattno[var->varattno - 1];
 		}
 		return false;
 	}
