@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.79 2008/03/19 03:33:21 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.80 2008/05/09 15:53:07 tgl Exp $
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -1449,6 +1449,7 @@ main(int argc, char **argv)
 	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT only,
 								 * 2: skip update of branches and tellers */
 	char	   *filename = NULL;
+	bool		scale_given = false;
 
 	CState	   *state;			/* status of clients */
 
@@ -1552,6 +1553,7 @@ main(int argc, char **argv)
 				is_connect = 1;
 				break;
 			case 's':
+				scale_given = true;
 				scale = atoi(optarg);
 				if (scale <= 0)
 				{
@@ -1647,16 +1649,6 @@ main(int argc, char **argv)
 
 	remains = nclients;
 
-	if (getVariable(&state[0], "scale") == NULL)
-	{
-		snprintf(val, sizeof(val), "%d", scale);
-		if (putVariable(&state[0], "scale", val) == false)
-		{
-			fprintf(stderr, "Couldn't allocate memory for variable\n");
-			exit(1);
-		}
-	}
-
 	if (nclients > 1)
 	{
 		state = (CState *) realloc(state, sizeof(CState) * nclients);
@@ -1668,8 +1660,7 @@ main(int argc, char **argv)
 
 		memset(state + 1, 0, sizeof(*state) * (nclients - 1));
 
-		snprintf(val, sizeof(val), "%d", scale);
-
+		/* copy any -D switch values to all clients */
 		for (i = 1; i < nclients; i++)
 		{
 			int			j;
@@ -1681,12 +1672,6 @@ main(int argc, char **argv)
 					fprintf(stderr, "Couldn't allocate memory for variable\n");
 					exit(1);
 				}
-			}
-
-			if (putVariable(&state[i], "scale", val) == false)
-			{
-				fprintf(stderr, "Couldn't allocate memory for variable\n");
-				exit(1);
 			}
 		}
 	}
@@ -1743,22 +1728,26 @@ main(int argc, char **argv)
 		}
 		PQclear(res);
 
-		snprintf(val, sizeof(val), "%d", scale);
-		if (putVariable(&state[0], "scale", val) == false)
-		{
-			fprintf(stderr, "Couldn't allocate memory for variable\n");
-			exit(1);
-		}
+		/* warn if we override user-given -s switch */
+		if (scale_given)
+			fprintf(stderr,
+					"Scale option ignored, using branches table count = %d\n",
+					scale);
+	}
 
-		if (nclients > 1)
+	/*
+	 * :scale variables normally get -s or database scale, but don't override
+	 * an explicit -D switch
+	 */
+	if (getVariable(&state[0], "scale") == NULL)
+	{
+		snprintf(val, sizeof(val), "%d", scale);
+		for (i = 0; i < nclients; i++)
 		{
-			for (i = 1; i < nclients; i++)
+			if (putVariable(&state[i], "scale", val) == false)
 			{
-				if (putVariable(&state[i], "scale", val) == false)
-				{
-					fprintf(stderr, "Couldn't allocate memory for variable\n");
-					exit(1);
-				}
+				fprintf(stderr, "Couldn't allocate memory for variable\n");
+				exit(1);
 			}
 		}
 	}
