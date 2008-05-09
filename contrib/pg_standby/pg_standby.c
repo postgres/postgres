@@ -297,6 +297,15 @@ SetWALFileNameForCleanup(void)
 
 	if (restartWALFileName)
 	{
+		/*
+		 * Don't do cleanup if the restartWALFileName provided
+		 * is later than the xlog file requested. This is an error
+		 * and we must not remove these files from archive.
+		 * This shouldn't happen, but better safe than sorry.
+		 */
+		if (strcmp(restartWALFileName, nextWALFileName) > 0)
+			return false;
+
 		strcpy(exclusiveCleanupFileName, restartWALFileName);
 		return true;
 	}
@@ -584,7 +593,11 @@ main(int argc, char **argv)
 		fprintf(stderr, "\nMax wait interval	: %d %s",
 				maxwaittime, (maxwaittime > 0 ? "seconds" : "forever"));
 		fprintf(stderr, "\nCommand for restore	: %s", restoreCommand);
-		fprintf(stderr, "\nKeep archive history	: %s and later", exclusiveCleanupFileName);
+		fprintf(stderr, "\nKeep archive history	: ");
+		if (need_cleanup)
+			fprintf(stderr, "%s and later", exclusiveCleanupFileName);
+		else
+			fprintf(stderr, "No cleanup required");
 		fflush(stderr);
 	}
 
