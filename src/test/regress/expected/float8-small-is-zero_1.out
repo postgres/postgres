@@ -357,6 +357,12 @@ SELECT '' AS bad, f.f1 * '1e200' from FLOAT8_TBL f;
 ERROR:  value out of range: overflow
 SELECT '' AS bad, f.f1 ^ '1e200' from FLOAT8_TBL f;
 ERROR:  value out of range: overflow
+SELECT 0 ^ 0 + 0 ^ 1 + 0 ^ 0.0 + 0 ^ 0.5;
+ ?column? 
+----------
+        2
+(1 row)
+
 SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 = '0.0' ;
 ERROR:  cannot take logarithm of zero
 SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 < '0.0' ;
