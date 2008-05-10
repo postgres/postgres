@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Thu May  8 23:58:36 EDT 2008
+Last updated:           Fri May  9 20:24:53 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -674,10 +674,10 @@ first.  There is also a developer's wiki at<br/>
 <p>          Currently non-global system tables must be in the default database
           tablespace. Global system tables can never be moved.
 </p>
-    </li><li>Prevent parent tables from altering or dropping constraints
+    </li><li>-<em>Prevent parent tables from altering or dropping constraints</em>
           like CHECK that are inherited by child tables unless CASCADE
           is used
-    </li><li>%Prevent child tables from altering or dropping constraints
+    </li><li>-<em>Prevent child tables from altering or dropping constraints</em>
           like CHECK that were inherited from the parent table
     </li><li>Have ALTER INDEX update the name of a constraint using that index
     </li><li>Add ALTER TABLE RENAME CONSTRAINT, update index name also
