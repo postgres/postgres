@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Fri May  9 20:24:53 EDT 2008
+Last updated:           Fri May  9 20:33:21 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -37,16 +37,6 @@ first.  There is also a developer's wiki at<br/>
   owner is correct.
 </p>
   </li><li>-<em>Add function to report the time of the most recent server reload</em>
-  </li><li>Allow statistics collector information to be pulled from the collector
-  process directly, rather than requiring the collector to write a
-  filesystem file twice a second?
-  </li><li>Reduce file system activity overhead of statistics file pgstat.stat
-<p>  <a href="http://archives.postgresql.org/pgsql-general/2007-12/msg00106.php">http://archives.postgresql.org/pgsql-general/2007-12/msg00106.php</a>
-</p>
-  </li><li>Allow statistics last vacuum/analyze execution times to be displayed
-  without requiring stats_row_level to be enabled
-<p>  <a href="http://archives.postgresql.org/pgsql-docs/2007-04/msg00028.php">http://archives.postgresql.org/pgsql-docs/2007-04/msg00028.php</a>
-</p>
   </li><li>Allow log_min_messages to be specified on a per-module basis
 <p>  This would allow administrators to see more detailed information from
   specific sections of the backend, e.g. checkpoints, autovacuum, etc.
@@ -143,6 +133,22 @@ first.  There is also a developer's wiki at<br/>
     </li><li>Allow WAL replay of CREATE TABLESPACE to work when the directory
           structure on the recovery computer is different from the original
     </li><li>Allow per-tablespace quotas
+  </li></ul>
+  </li><li>Statistics Collector
+  <ul>
+    <li>Allow statistics collector information to be pulled from the collector
+          process directly, rather than requiring the collector to write a
+          filesystem file twice a second?
+    </li><li>Reduce file system activity overhead of statistics file pgstat.stat
+<p>          <a href="http://archives.postgresql.org/pgsql-general/2007-12/msg00106.php">http://archives.postgresql.org/pgsql-general/2007-12/msg00106.php</a>
+</p>
+    </li><li>Allow statistics last vacuum/analyze execution times to be displayed
+          without requiring stats_row_level to be enabled
+<p>          <a href="http://archives.postgresql.org/pgsql-docs/2007-04/msg00028.php">http://archives.postgresql.org/pgsql-docs/2007-04/msg00028.php</a>
+</p>
+    </li><li>Clear table counters on TRUNCATE
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2008-04/msg00169.php">http://archives.postgresql.org/pgsql-hackers/2008-04/msg00169.php</a>
+</p>
   </li></ul>
   </li><li>Point-In-Time Recovery (PITR)
   <ul>
