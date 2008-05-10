@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.25.2.2 2008/04/16 14:21:23 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.25.2.3 2008/05/10 16:07:56 adunstan Exp $
 #
 use Carp;
 use Win32;
@@ -398,8 +398,10 @@ sub AddContrib
         $mf =~ s{\\\s*[\r\n]+}{}mg;
         my $proj = $solution->AddProject($dn, 'dll', 'contrib');
         $mf =~ /^OBJS\s*=\s*(.*)$/gm || croak "Could not find objects in MODULE_big for $n\n";
-        foreach my $o (split /\s+/, $1)
+		my $objs = $1;
+        while ($objs =~ /\b([\w-]+\.o)\b/g)
         {
+			my $o = $1;
             $o =~ s/\.o$/.c/;
             $proj->AddFile('contrib\\' . $n . '\\' . $o);
         }
@@ -412,8 +414,10 @@ sub AddContrib
                 $mf2 =~ s{\\\s*[\r\n]+}{}mg;
                 $mf2 =~ /^SUBOBJS\s*=\s*(.*)$/gm
                   || croak "Could not find objects in MODULE_big for $n, subdir $d\n";
-                foreach my $o (split /\s+/, $1)
-                {
+                $objs = $1;
+				while ($objs =~ /\b([\w-]+\.o)\b/g)
+				{
+					my $o = $1;
                     $o =~ s/\.o$/.c/;
                     $proj->AddFile('contrib\\' . $n . '\\' . $d . '\\' . $o);
                 }
@@ -435,8 +439,10 @@ sub AddContrib
     {
         my $proj = $solution->AddProject($1, 'exe', 'contrib');
         $mf =~ /^OBJS\s*=\s*(.*)$/gm || croak "Could not find objects in MODULE_big for $n\n";
-        foreach my $o (split /\s+/, $1)
+        my $objs = $1;
+        while ($objs =~ /\b([\w-]+\.o)\b/g)
         {
+			my $o = $1;
             $o =~ s/\.o$/.c/;
             $proj->AddFile('contrib\\' . $n . '\\' . $o);
         }
