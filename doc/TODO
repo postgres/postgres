@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri May  9 20:33:21 EDT 2008
+Last updated:		Fri May  9 21:40:03 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -685,6 +685,9 @@ SQL Commands
 * Allow DISTINCT to work in multiple-argument aggregate calls
 * Add column to pg_stat_activity that shows the progress of long-running
   commands like CREATE INDEX and VACUUM
+
+  http://archives.postgresql.org/pgsql-patches/2008-04/msg00203.php
+
 * Implement SQL:2003 window functions
 * Allow INSERT/UPDATE ... RETURNING inside a SELECT 'FROM' clause
 
