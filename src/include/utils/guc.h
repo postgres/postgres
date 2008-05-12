@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.94 2008/04/18 01:42:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.95 2008/05/12 08:35:05 mha Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -267,7 +267,7 @@ extern const char *assign_search_path(const char *newval,
 				   bool doit, GucSource source);
 
 /* in access/transam/xlog.c */
-extern const char *assign_xlog_sync_method(const char *method,
-						bool doit, GucSource source);
+extern bool assign_xlog_sync_method(int newval,
+				bool doit, GucSource source);
 
 #endif   /* GUC_H */

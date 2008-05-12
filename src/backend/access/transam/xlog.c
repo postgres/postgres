@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.303 2008/05/12 00:00:46 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.304 2008/05/12 08:35:05 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,8 +66,6 @@ int			XLOGbuffers = 8;
 int			XLogArchiveTimeout = 0;
 bool		XLogArchiveMode = false;
 char	   *XLogArchiveCommand = NULL;
-char	   *XLOG_sync_method = NULL;
-const char	XLOG_sync_method_default[] = DEFAULT_SYNC_METHOD_STR;
 bool		fullPageWrites = true;
 bool		log_checkpoints = false;
 
@@ -95,6 +93,25 @@ static int	open_sync_bit = DEFAULT_SYNC_FLAGBIT;
 
 #define XLOG_SYNC_BIT  (enableFsync ? open_sync_bit : 0)
 
+/*
+ * GUC support
+ */
+const struct config_enum_entry sync_method_options[] = {
+	{"fsync", SYNC_METHOD_FSYNC},
+#ifdef HAVE_FSYNC_WRITETHROUGH
+	{"fsync_writethrough", SYNC_METHOD_FSYNC_WRITETHROUGH},
+#endif
+#ifdef HAVE_FDATASYNC
+	{"fdatasync", SYNC_METHOD_FDATASYNC},
+#endif
+#ifdef OPEN_SYNC_FLAG
+	{"open_sync", SYNC_METHOD_OPEN},
+#endif
+#ifdef OPEN_DATASYNC_FLAG
+	{"open_datasync", SYNC_METHOD_OPEN_DSYNC},
+#endif
+	{NULL, 0}
+};
 
 /*
  * Statistics for current checkpoint are collected in this global struct.
@@ -1601,7 +1618,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 		 * have no open file or the wrong one.	However, we do not need to
 		 * fsync more than one file.
 		 */
-		if (sync_method != SYNC_METHOD_OPEN)
+		if (sync_method != SYNC_METHOD_OPEN && sync_method != SYNC_METHOD_OPEN_DSYNC)
 		{
 			if (openLogFile >= 0 &&
 				!XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
@@ -6314,50 +6331,46 @@ xlog_outrec(StringInfo buf, XLogRecord *record)
 /*
  * GUC support
  */
-const char *
-assign_xlog_sync_method(const char *method, bool doit, GucSource source)
+bool
+assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
 {
-	int			new_sync_method;
-	int			new_sync_bit;
+	int			new_sync_bit = 0;
 
-	if (pg_strcasecmp(method, "fsync") == 0)
+	switch (new_sync_method)
 	{
-		new_sync_method = SYNC_METHOD_FSYNC;
-		new_sync_bit = 0;
-	}
-#ifdef HAVE_FSYNC_WRITETHROUGH
-	else if (pg_strcasecmp(method, "fsync_writethrough") == 0)
-	{
-		new_sync_method = SYNC_METHOD_FSYNC_WRITETHROUGH;
-		new_sync_bit = 0;
-	}
-#endif
-#ifdef HAVE_FDATASYNC
-	else if (pg_strcasecmp(method, "fdatasync") == 0)
-	{
-		new_sync_method = SYNC_METHOD_FDATASYNC;
-		new_sync_bit = 0;
-	}
-#endif
+		/*
+		 * Values for these sync options are defined even if they are not
+		 * supported on the current platform. They are not included in
+		 * the enum option array, and therefor will never be set if the
+		 * platform doesn't support it.
+		 */
+		case SYNC_METHOD_FSYNC:
+		case SYNC_METHOD_FSYNC_WRITETHROUGH:
+		case SYNC_METHOD_FDATASYNC:
+			new_sync_bit = 0;
+			break;
 #ifdef OPEN_SYNC_FLAG
-	else if (pg_strcasecmp(method, "open_sync") == 0)
-	{
-		new_sync_method = SYNC_METHOD_OPEN;
-		new_sync_bit = OPEN_SYNC_FLAG;
-	}
+		case SYNC_METHOD_OPEN:
+			new_sync_bit = OPEN_SYNC_FLAG;
+			break;
 #endif
 #ifdef OPEN_DATASYNC_FLAG
-	else if (pg_strcasecmp(method, "open_datasync") == 0)
-	{
-		new_sync_method = SYNC_METHOD_OPEN;
-		new_sync_bit = OPEN_DATASYNC_FLAG;
-	}
+		case SYNC_METHOD_OPEN_DSYNC:
+			new_sync_bit = OPEN_DATASYNC_FLAG;
+		break;
 #endif
-	else
-		return NULL;
+		default:
+			/* 
+			 * This "can never happen", since the available values in
+			 * new_sync_method are controlled by the available enum
+			 * options.
+			 */
+			elog(PANIC, "unrecognized wal_sync_method: %d", sync_method);
+			break;
+	}
 
 	if (!doit)
-		return method;
+		return true;
 
 	if (sync_method != new_sync_method || open_sync_bit != new_sync_bit)
 	{
@@ -6381,7 +6394,7 @@ assign_xlog_sync_method(const char *method, bool doit, GucSource source)
 		open_sync_bit = new_sync_bit;
 	}
 
-	return method;
+	return true;
 }
 
 
