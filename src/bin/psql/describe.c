@@ -3,36 +3,27 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.170 2008/05/05 01:21:03 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.171 2008/05/12 22:59:58 alvherre Exp $
  */
 #include "postgres_fe.h"
-#include "describe.h"
-
-#include "dumputils.h"
-
-#include "common.h"
-#include "settings.h"
-#include "print.h"
-#include "variables.h"
 
 #include <ctype.h>
 
-#ifdef WIN32
-/*
- * mbvalidate() is used in function describeOneTableDetails() to make sure
- * all characters of the cells will be printed to the DOS console in a
- * correct way
- */
+#include "common.h"
+#include "describe.h"
+#include "dumputils.h"
 #include "mbprint.h"
-#endif
+#include "print.h"
+#include "settings.h"
+#include "variables.h"
 
 
 static bool describeOneTableDetails(const char *schemaname,
 						const char *relationname,
 						const char *oid,
 						bool verbose);
-static bool add_tablespace_footer(char relkind, Oid tablespace, char **footers,
-					  int *count, PQExpBufferData buf, bool newline);
+static void add_tablespace_footer(printTableContent *const cont, char relkind,
+						Oid tablespace, const bool newline);
 static bool listTSParsersVerbose(const char *pattern);
 static bool describeOneTSParser(const char *oid, const char *nspname,
 					const char *prsname);
@@ -789,11 +780,11 @@ describeOneTableDetails(const char *schemaname,
 	PQExpBufferData buf;
 	PGresult   *res = NULL;
 	printTableOpt myopt = pset.popt.topt;
+	printTableContent cont;
 	int			i;
 	char	   *view_def = NULL;
-	const char *headers[5];
-	char	  **cells = NULL;
-	char	  **footers = NULL;
+	char	   *headers[4];
+	char	  **modifiers = NULL;
 	char	  **ptr;
 	PQExpBufferData title;
 	PQExpBufferData tmpbuf;
@@ -852,25 +843,6 @@ describeOneTableDetails(const char *schemaname,
 		atooid(PQgetvalue(res, 0, 6)) : 0;
 	PQclear(res);
 
-	headers[0] = _("Column");
-	headers[1] = _("Type");
-	cols = 2;
-
-	if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v')
-	{
-		show_modifiers = true;
-		cols++;
-		headers[cols - 1] = _("Modifiers");
-	}
-
-	if (verbose)
-	{
-		cols++;
-		headers[cols - 1] = _("Description");
-	}
-
-	headers[cols] = NULL;
-
 	/* Get column info (index requires additional checks) */
 	printfPQExpBuffer(&buf, "SELECT a.attname,");
 	appendPQExpBuffer(&buf, "\n  pg_catalog.format_type(a.atttypid, a.atttypmod),"
@@ -893,6 +865,26 @@ describeOneTableDetails(const char *schemaname,
 		goto error_return;
 	numrows = PQntuples(res);
 
+	/* Set the number of columns, and their names */
+	cols = 2;
+	headers[0] = "Column";
+	headers[1] = "Type";
+
+	if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v')
+	{
+		show_modifiers = true;
+		headers[cols++] = "Modifiers";
+		modifiers = pg_malloc_zero((numrows + 1) * sizeof(*modifiers));
+	}
+
+	if (verbose)
+		headers[cols++] = "Description";
+
+	printTableInit(&cont, &myopt, title.data, cols, numrows);
+
+	for (i = 0; i < cols; i++)
+		printTableAddHeader(&cont, headers[i], true, 'l');
+
 	/* Check if table is a view */
 	if (tableinfo.relkind == 'v')
 	{
@@ -910,33 +902,20 @@ describeOneTableDetails(const char *schemaname,
 	}
 
 	/* Generate table cells to be printed */
-	/* note: initialize all cells[] to NULL in case of error exit */
-	cells = pg_malloc_zero((numrows * cols + 1) * sizeof(*cells));
-
 	for (i = 0; i < numrows; i++)
 	{
-		/* Name */
-#ifdef WIN32
-		cells[i * cols + 0] = mbvalidate(PQgetvalue(res, i, 0), myopt.encoding);
-#else
-		cells[i * cols + 0] = PQgetvalue(res, i, 0);	/* don't free this
-														 * afterwards */
-#endif
+		/* Column */
+		printTableAddCell(&cont, PQgetvalue(res, i, 0), false);
 
 		/* Type */
-#ifdef WIN32
-		cells[i * cols + 1] = mbvalidate(PQgetvalue(res, i, 1), myopt.encoding);
-#else
-		cells[i * cols + 1] = PQgetvalue(res, i, 1);	/* don't free this
-														 * either */
-#endif
+		printTableAddCell(&cont, PQgetvalue(res, i, 1), false);
 
 		/* Extra: not null and default */
 		if (show_modifiers)
 		{
 			resetPQExpBuffer(&tmpbuf);
 			if (strcmp(PQgetvalue(res, i, 3), "t") == 0)
-				appendPQExpBufferStr(&tmpbuf, "not null");
+				appendPQExpBufferStr(&tmpbuf, _("not null"));
 
 			/* handle "default" here */
 			/* (note: above we cut off the 'default' string at 128) */
@@ -944,24 +923,18 @@ describeOneTableDetails(const char *schemaname,
 			{
 				if (tmpbuf.len > 0)
 					appendPQExpBufferStr(&tmpbuf, " ");
-				appendPQExpBuffer(&tmpbuf, "default %s",
+				/* translator: default values of column definitions */
+				appendPQExpBuffer(&tmpbuf, _("default %s"),
 								  PQgetvalue(res, i, 2));
 			}
 
-#ifdef WIN32
-			cells[i * cols + 2] = pg_strdup(mbvalidate(tmpbuf.data, myopt.encoding));
-#else
-			cells[i * cols + 2] = pg_strdup(tmpbuf.data);
-#endif
+			modifiers[i] = pg_strdup(tmpbuf.data);
+			printTableAddCell(&cont, modifiers[i], false);
 		}
 
 		/* Description */
 		if (verbose)
-#ifdef WIN32
-			cells[i * cols + cols - 1] = mbvalidate(PQgetvalue(res, i, 5), myopt.encoding);
-#else
-			cells[i * cols + cols - 1] = PQgetvalue(res, i, 5);
-#endif
+			printTableAddCell(&cont, PQgetvalue(res, i, 5), false);
 	}
 
 	/* Make title */
@@ -997,7 +970,8 @@ describeOneTableDetails(const char *schemaname,
 							  schemaname, relationname);
 			break;
 		default:
-			printfPQExpBuffer(&title, _("?%c? \"%s.%s\""),
+			/* untranslated unknown relkind */
+			printfPQExpBuffer(&title, "?%c? \"%s.%s\"",
 							  tableinfo.relkind, schemaname, relationname);
 			break;
 	}
@@ -1033,7 +1007,6 @@ describeOneTableDetails(const char *schemaname,
 			char	   *indamname = PQgetvalue(result, 0, 4);
 			char	   *indtable = PQgetvalue(result, 0, 5);
 			char	   *indpred = PQgetvalue(result, 0, 6);
-			int			count_footers = 0;
 
 			if (strcmp(indisprimary, "t") == 0)
 				printfPQExpBuffer(&tmpbuf, _("primary key, "));
@@ -1056,11 +1029,9 @@ describeOneTableDetails(const char *schemaname,
 			if (strcmp(indisvalid, "t") != 0)
 				appendPQExpBuffer(&tmpbuf, _(", invalid"));
 
-			footers = pg_malloc_zero(4 * sizeof(*footers));
-			footers[count_footers++] = pg_strdup(tmpbuf.data);
-			add_tablespace_footer(tableinfo.relkind, tableinfo.tablespace,
-								  footers, &count_footers, tmpbuf, true);
-			footers[count_footers] = NULL;
+			printTableAddFooter(&cont, tmpbuf.data);
+			add_tablespace_footer(&cont, tableinfo.relkind,
+								  tableinfo.tablespace, true);
 
 		}
 
@@ -1069,10 +1040,12 @@ describeOneTableDetails(const char *schemaname,
 	else if (view_def)
 	{
 		PGresult   *result = NULL;
-		int			rule_count = 0;
-		int			count_footers = 0;
 
-		/* count rules other than the view rule */
+		/* Footer information about a view */
+		printTableAddFooter(&cont, _("View definition:"));
+		printTableAddFooter(&cont, view_def);
+
+		/* print rules */
 		if (tableinfo.hasrules)
 		{
 			printfPQExpBuffer(&buf,
@@ -1083,60 +1056,32 @@ describeOneTableDetails(const char *schemaname,
 			result = PSQLexec(buf.data, false);
 			if (!result)
 				goto error_return;
-			else
-				rule_count = PQntuples(result);
-		}
 
-		/* Footer information about a view */
-		footers = pg_malloc_zero((rule_count + 3) * sizeof(*footers));
-		footers[count_footers] = pg_malloc(64 + strlen(view_def));
-		snprintf(footers[count_footers], 64 + strlen(view_def),
-				 _("View definition:\n%s"), view_def);
-		count_footers++;
-
-		/* print rules */
-		if (rule_count > 0)
-		{
-			printfPQExpBuffer(&buf, _("Rules:"));
-			footers[count_footers++] = pg_strdup(buf.data);
-			for (i = 0; i < rule_count; i++)
+			if (PQntuples(result) > 0)
 			{
-				const char *ruledef;
+				printTableAddFooter(&cont, _("Rules:"));
+				for (i = 0; i < PQntuples(result); i++)
+				{
+					const char *ruledef;
 
-				/* Everything after "CREATE RULE" is echoed verbatim */
-				ruledef = PQgetvalue(result, i, 1);
-				ruledef += 12;
+					/* Everything after "CREATE RULE" is echoed verbatim */
+					ruledef = PQgetvalue(result, i, 1);
+					ruledef += 12;
 
-				printfPQExpBuffer(&buf, " %s", ruledef);
-
-				footers[count_footers++] = pg_strdup(buf.data);
+					printfPQExpBuffer(&buf, " %s", ruledef);
+					printTableAddFooter(&cont, buf.data);
+				}
 			}
 			PQclear(result);
 		}
-
-		footers[count_footers] = NULL;
-
 	}
 	else if (tableinfo.relkind == 'r')
 	{
 		/* Footer information about a table */
-		PGresult   *result1 = NULL,
-				   *result2 = NULL,
-				   *result3 = NULL,
-				   *result4 = NULL,
-				   *result5 = NULL,
-				   *result6 = NULL,
-				   *result7 = NULL;
-		int			check_count = 0,
-					index_count = 0,
-					foreignkey_count = 0,
-					rule_count = 0,
-					trigger_count = 0,
-					referencedby_count = 0,
-					inherits_count = 0;
-		int			count_footers = 0;
+		PGresult   *result = NULL;
+		int			tuples = 0;
 
-		/* count indexes */
+		/* print indexes */
 		if (tableinfo.hasindex)
 		{
 			printfPQExpBuffer(&buf,
@@ -1146,14 +1091,57 @@ describeOneTableDetails(const char *schemaname,
 							  "WHERE c.oid = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
 			  "ORDER BY i.indisprimary DESC, i.indisunique DESC, c2.relname",
 							  oid);
-			result1 = PSQLexec(buf.data, false);
-			if (!result1)
+			result = PSQLexec(buf.data, false);
+			if (!result)
 				goto error_return;
 			else
-				index_count = PQntuples(result1);
+				tuples = PQntuples(result);
+
+			if (tuples > 0)
+			{
+				printTableAddFooter(&cont, _("Indexes:"));
+				for (i = 0; i < tuples; i++)
+				{
+					const char *indexdef;
+					const char *usingpos;
+
+					/* untranslated index name */
+					printfPQExpBuffer(&buf, "    \"%s\"",
+									  PQgetvalue(result, i, 0));
+
+					/* Label as primary key or unique (but not both) */
+					appendPQExpBuffer(&buf,
+									  strcmp(PQgetvalue(result, i, 1), "t") == 0
+									  ? " PRIMARY KEY," :
+									  (strcmp(PQgetvalue(result, i, 2), "t") == 0
+									   ? " UNIQUE,"
+									   : ""));
+					/* Everything after "USING" is echoed verbatim */
+					indexdef = PQgetvalue(result, i, 5);
+					usingpos = strstr(indexdef, " USING ");
+					if (usingpos)
+						indexdef = usingpos + 7;
+
+					appendPQExpBuffer(&buf, " %s", indexdef);
+
+					if (strcmp(PQgetvalue(result, i, 3), "t") == 0)
+						appendPQExpBuffer(&buf, " CLUSTER");
+
+					if (strcmp(PQgetvalue(result, i, 4), "t") != 0)
+						appendPQExpBuffer(&buf, " INVALID");
+
+					printTableAddFooter(&cont, buf.data);
+
+					/* Print tablespace of the index on the same line */
+					add_tablespace_footer(&cont, 'i',
+										  atooid(PQgetvalue(result, i, 6)),
+										  false);
+				}
+			}
+			PQclear(result);
 		}
 
-		/* count table (and column) check constraints */
+		/* print table (and column) check constraints */
 		if (tableinfo.checks)
 		{
 			printfPQExpBuffer(&buf,
@@ -1162,17 +1150,93 @@ describeOneTableDetails(const char *schemaname,
 							  "FROM pg_catalog.pg_constraint r\n"
 					"WHERE r.conrelid = '%s' AND r.contype = 'c' ORDER BY 1",
 							  oid);
-			result2 = PSQLexec(buf.data, false);
-			if (!result2)
-			{
-				PQclear(result1);
+			result = PSQLexec(buf.data, false);
+			if (!result)
 				goto error_return;
-			}
 			else
-				check_count = PQntuples(result2);
+				tuples = PQntuples(result);
+
+			if (tuples > 0)
+			{
+				printTableAddFooter(&cont, _("Check constraints:"));
+				for (i = 0; i < tuples; i++)
+				{
+					/* untranslated contraint name and def */
+					printfPQExpBuffer(&buf, "    \"%s\" %s",
+									  PQgetvalue(result, i, 0),
+									  PQgetvalue(result, i, 1));
+
+					printTableAddFooter(&cont, buf.data);
+				}
+			}
+			PQclear(result);
 		}
 
-		/* count rules */
+		/* print foreign-key constraints (there are none if no triggers) */
+		if (tableinfo.triggers)
+		{
+			printfPQExpBuffer(&buf,
+							  "SELECT conname,\n"
+				   "  pg_catalog.pg_get_constraintdef(oid, true) as condef\n"
+							  "FROM pg_catalog.pg_constraint r\n"
+					"WHERE r.conrelid = '%s' AND r.contype = 'f' ORDER BY 1",
+							  oid);
+			result = PSQLexec(buf.data, false);
+			if (!result)
+				goto error_return;
+			else
+				tuples = PQntuples(result);
+
+			if (tuples > 0)
+			{
+				printTableAddFooter(&cont, _("Foreign-key constraints:"));
+				for (i = 0; i < tuples; i++)
+				{
+					/* untranslated constraint name and def */
+					printfPQExpBuffer(&buf, "    \"%s\" %s",
+									  PQgetvalue(result, i, 0),
+									  PQgetvalue(result, i, 1));
+
+					printTableAddFooter(&cont, buf.data);
+				}
+			}
+			PQclear(result);
+		}
+
+		/* print incoming foreign-key references (none if no triggers) */
+		if (tableinfo.triggers)
+		{
+			printfPQExpBuffer(&buf,
+							  "SELECT conname, conrelid::pg_catalog.regclass,\n"
+							  "  pg_catalog.pg_get_constraintdef(oid, true) as condef\n"
+							  "FROM pg_catalog.pg_constraint c\n"
+							  "WHERE c.confrelid = '%s' AND c.contype = 'f' ORDER BY 1",
+							  oid);
+			result = PSQLexec(buf.data, false);
+			if (!result)
+				goto error_return;
+			else
+				tuples = PQntuples(result);
+
+			if (tuples > 0)
+			{
+				printTableAddFooter(&cont, _("Referenced by:"));
+				for (i = 0; i < tuples; i++)
+				{
+					/* translator: the first %s is a FK name, the following are
+					 * a table name and the FK definition */
+					printfPQExpBuffer(&buf, _("  \"%s\" IN %s %s"),
+									  PQgetvalue(result, i, 0),
+									  PQgetvalue(result, i, 1),
+									  PQgetvalue(result, i, 2));
+
+					printTableAddFooter(&cont, buf.data);
+				}
+			}
+			PQclear(result);
+		}
+
+		/* print rules */
 		if (tableinfo.hasrules)
 		{
 			if (pset.sversion < 80300)
@@ -1193,18 +1257,81 @@ describeOneTableDetails(const char *schemaname,
 								  "WHERE r.ev_class = '%s' ORDER BY 1",
 								  oid);
 			}
-			result3 = PSQLexec(buf.data, false);
-			if (!result3)
-			{
-				PQclear(result1);
-				PQclear(result2);
+			result = PSQLexec(buf.data, false);
+			if (!result)
 				goto error_return;
-			}
 			else
-				rule_count = PQntuples(result3);
+				tuples = PQntuples(result);
+
+			if (tuples > 0)
+			{
+				bool		have_heading;
+				int			category;
+
+				for (category = 0; category < 4; category++)
+				{
+					have_heading = false;
+
+					for (i = 0; i < tuples; i++)
+					{
+						const char *ruledef;
+						bool		list_rule = false;
+
+						switch (category)
+						{
+							case 0:
+								if (*PQgetvalue(result, i, 2) == 'O')
+									list_rule = true;
+								break;
+							case 1:
+								if (*PQgetvalue(result, i, 2) == 'D')
+									list_rule = true;
+								break;
+							case 2:
+								if (*PQgetvalue(result, i, 2) == 'A')
+									list_rule = true;
+								break;
+							case 3:
+								if (*PQgetvalue(result, i, 2) == 'R')
+									list_rule = true;
+								break;
+						}
+						if (!list_rule)
+							continue;
+
+						if (!have_heading)
+						{
+							switch (category)
+							{
+								case 0:
+									printfPQExpBuffer(&buf, _("Rules:"));
+									break;
+								case 1:
+									printfPQExpBuffer(&buf, _("Disabled rules:"));
+									break;
+								case 2:
+									printfPQExpBuffer(&buf, _("Rules firing always:"));
+									break;
+								case 3:
+									printfPQExpBuffer(&buf, _("Rules firing on replica only:"));
+									break;
+							}
+							printTableAddFooter(&cont, buf.data);
+							have_heading = true;
+						}
+
+						/* Everything after "CREATE RULE" is echoed verbatim */
+						ruledef = PQgetvalue(result, i, 1);
+						ruledef += 12;
+						printfPQExpBuffer(&buf, "    %s", ruledef);
+						printTableAddFooter(&cont, buf.data);
+					}
+				}
+			}
+			PQclear(result);
 		}
 
-		/* count triggers (but ignore foreign-key triggers) */
+		/* print triggers (but ignore foreign-key triggers) */
 		if (tableinfo.triggers)
 		{
 			printfPQExpBuffer(&buf,
@@ -1215,346 +1342,117 @@ describeOneTableDetails(const char *schemaname,
 							  "AND t.tgconstraint = 0\n"
 							  "ORDER BY 1",
 							  oid);
-			result4 = PSQLexec(buf.data, false);
-			if (!result4)
-			{
-				PQclear(result1);
-				PQclear(result2);
-				PQclear(result3);
+			result = PSQLexec(buf.data, false);
+			if (!result)
 				goto error_return;
-			}
 			else
-				trigger_count = PQntuples(result4);
+				tuples = PQntuples(result);
+
+			if (tuples > 0)
+			{
+				bool		have_heading;
+				int			category;
+
+				/*
+				 * split the output into 4 different categories. Enabled triggers,
+				 * disabled triggers and the two special ALWAYS and REPLICA
+				 * configurations.
+				 */
+				for (category = 0; category < 4; category++)
+				{
+					have_heading = false;
+					for (i = 0; i < tuples; i++)
+					{
+						bool		list_trigger;
+						const char *tgdef;
+						const char *usingpos;
+						const char *tgenabled;
+
+						/* Check if this trigger falls into the current category */
+						tgenabled = PQgetvalue(result, i, 2);
+						list_trigger = false;
+						switch (category)
+						{
+							case 0:
+								if (*tgenabled == 'O' || *tgenabled == 't')
+									list_trigger = true;
+								break;
+							case 1:
+								if (*tgenabled == 'D' || *tgenabled == 'f')
+									list_trigger = true;
+								break;
+							case 2:
+								if (*tgenabled == 'A')
+									list_trigger = true;
+								break;
+							case 3:
+								if (*tgenabled == 'R')
+									list_trigger = true;
+								break;
+						}
+						if (list_trigger == false)
+							continue;
+
+						/* Print the category heading once */
+						if (have_heading == false)
+						{
+							switch (category)
+							{
+								case 0:
+									printfPQExpBuffer(&buf, _("Triggers:"));
+									break;
+								case 1:
+									printfPQExpBuffer(&buf, _("Disabled triggers:"));
+									break;
+								case 2:
+									printfPQExpBuffer(&buf, _("Triggers firing always:"));
+									break;
+								case 3:
+									printfPQExpBuffer(&buf, _("Triggers firing on replica only:"));
+									break;
+
+							}
+							printTableAddFooter(&cont, buf.data);
+							have_heading = true;
+						}
+
+						/* Everything after "TRIGGER" is echoed verbatim */
+						tgdef = PQgetvalue(result, i, 1);
+						usingpos = strstr(tgdef, " TRIGGER ");
+						if (usingpos)
+							tgdef = usingpos + 9;
+
+						printfPQExpBuffer(&buf, "    %s", tgdef);
+						printTableAddFooter(&cont, buf.data);
+					}
+				}
+			}
+			PQclear(result);
 		}
 
-		/* count foreign-key constraints (there are none if no triggers) */
-		if (tableinfo.triggers)
-		{
-			printfPQExpBuffer(&buf,
-							  "SELECT conname,\n"
-				   "  pg_catalog.pg_get_constraintdef(oid, true) as condef\n"
-							  "FROM pg_catalog.pg_constraint r\n"
-					"WHERE r.conrelid = '%s' AND r.contype = 'f' ORDER BY 1",
-							  oid);
-			result5 = PSQLexec(buf.data, false);
-			if (!result5)
-			{
-				PQclear(result1);
-				PQclear(result2);
-				PQclear(result3);
-				PQclear(result4);
-				goto error_return;
-			}
-			else
-				foreignkey_count = PQntuples(result5);
-		}
-
-		/* count incoming foreign-key references (none if no triggers) */
-		if (tableinfo.triggers)
-		{
-			printfPQExpBuffer(&buf,
-							  "SELECT conname, conrelid::pg_catalog.regclass,\n"
-							  "  pg_catalog.pg_get_constraintdef(oid, true) as condef\n"
-							  "FROM pg_catalog.pg_constraint c\n"
-							  "WHERE c.confrelid = '%s' AND c.contype = 'f' ORDER BY 1",
-							  oid);
-			result6 = PSQLexec(buf.data, false);
-			if (!result6)
-			{
-				PQclear(result1);
-				PQclear(result2);
-				PQclear(result3);
-				PQclear(result4);
-				PQclear(result5);
-				goto error_return;
-			}
-			else
-				referencedby_count = PQntuples(result6);
-		}
-
-		/* count inherited tables */
+		/* print inherited tables */
 		printfPQExpBuffer(&buf, "SELECT c.oid::pg_catalog.regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhparent AND i.inhrelid = '%s' ORDER BY inhseqno", oid);
 
-		result7 = PSQLexec(buf.data, false);
-		if (!result7)
-		{        
-			PQclear(result1);
-			PQclear(result2);
-			PQclear(result3);
-			PQclear(result4);
-			PQclear(result5);
-			PQclear(result6);
+		result = PSQLexec(buf.data, false);
+		if (!result)
 			goto error_return;
-		}
 		else
-			inherits_count = PQntuples(result7);
+			tuples = PQntuples(result);
 
-		footers = pg_malloc_zero((index_count + check_count + rule_count + trigger_count + foreignkey_count + referencedby_count + inherits_count + 8 + 1) * sizeof(*footers));
-
-		/* print indexes */
-		if (index_count > 0)
-		{
-			printfPQExpBuffer(&buf, _("Indexes:"));
-			footers[count_footers++] = pg_strdup(buf.data);
-			for (i = 0; i < index_count; i++)
-			{
-				const char *indexdef;
-				const char *usingpos;
-				PQExpBufferData tmpbuf;
-
-				/* Output index name */
-				printfPQExpBuffer(&buf, _("    \"%s\""),
-								  PQgetvalue(result1, i, 0));
-
-				/* Label as primary key or unique (but not both) */
-				appendPQExpBuffer(&buf,
-								  strcmp(PQgetvalue(result1, i, 1), "t") == 0
-								  ? " PRIMARY KEY," :
-								  (strcmp(PQgetvalue(result1, i, 2), "t") == 0
-								   ? " UNIQUE,"
-								   : ""));
-				/* Everything after "USING" is echoed verbatim */
-				indexdef = PQgetvalue(result1, i, 5);
-				usingpos = strstr(indexdef, " USING ");
-				if (usingpos)
-					indexdef = usingpos + 7;
-
-				appendPQExpBuffer(&buf, " %s", indexdef);
-
-				if (strcmp(PQgetvalue(result1, i, 3), "t") == 0)
-					appendPQExpBuffer(&buf, " CLUSTER");
-
-				if (strcmp(PQgetvalue(result1, i, 4), "t") != 0)
-					appendPQExpBuffer(&buf, " INVALID");
-
-				/* Print tablespace of the index on the same line */
-				count_footers += 1;
-				initPQExpBuffer(&tmpbuf);
-				if (add_tablespace_footer('i',
-										  atooid(PQgetvalue(result1, i, 6)),
-									 footers, &count_footers, tmpbuf, false))
-				{
-					appendPQExpBuffer(&buf, ", ");
-					appendPQExpBuffer(&buf, tmpbuf.data);
-
-					count_footers -= 2;
-				}
-				else
-					count_footers -= 1;
-				termPQExpBuffer(&tmpbuf);
-
-				footers[count_footers++] = pg_strdup(buf.data);
-			}
-		}
-
-		/* print check constraints */
-		if (check_count > 0)
-		{
-			printfPQExpBuffer(&buf, _("Check constraints:"));
-			footers[count_footers++] = pg_strdup(buf.data);
-			for (i = 0; i < check_count; i++)
-			{
-				printfPQExpBuffer(&buf, _("    \"%s\" %s"),
-								  PQgetvalue(result2, i, 0),
-								  PQgetvalue(result2, i, 1));
-
-				footers[count_footers++] = pg_strdup(buf.data);
-			}
-		}
-
-		/* print foreign key constraints */
-		if (foreignkey_count > 0)
-		{
-			printfPQExpBuffer(&buf, _("Foreign-key constraints:"));
-			footers[count_footers++] = pg_strdup(buf.data);
-			for (i = 0; i < foreignkey_count; i++)
-			{
-				printfPQExpBuffer(&buf, _("    \"%s\" %s"),
-								  PQgetvalue(result5, i, 0),
-								  PQgetvalue(result5, i, 1));
-
-				footers[count_footers++] = pg_strdup(buf.data);
-			}
-		}
-
-		/* print incoming foreign-key constraints */
-		if (referencedby_count > 0)
-		{
-			printfPQExpBuffer(&buf, _("Referenced by:"));
-			footers[count_footers++] = pg_strdup(buf.data);
-			for (i = 0; i < referencedby_count; i++)
-			{
-				printfPQExpBuffer(&buf, _("    \"%s\" IN %s %s"),
-								  PQgetvalue(result6, i, 0),
-								  PQgetvalue(result6, i, 1),
-								  PQgetvalue(result6, i, 2));
-
-				footers[count_footers++] = pg_strdup(buf.data);
-			}
-		}
-
-		/* print rules */
-		if (rule_count > 0)
-		{
-			bool		have_heading;
-			int			category;
-
-			for (category = 0; category < 4; category++)
-			{
-				have_heading = false;
-
-				for (i = 0; i < rule_count; i++)
-				{
-					const char *ruledef;
-					bool		list_rule = false;
-
-					switch (category)
-					{
-						case 0:
-							if (*PQgetvalue(result3, i, 2) == 'O')
-								list_rule = true;
-							break;
-						case 1:
-							if (*PQgetvalue(result3, i, 2) == 'D')
-								list_rule = true;
-							break;
-						case 2:
-							if (*PQgetvalue(result3, i, 2) == 'A')
-								list_rule = true;
-							break;
-						case 3:
-							if (*PQgetvalue(result3, i, 2) == 'R')
-								list_rule = true;
-							break;
-					}
-					if (!list_rule)
-						continue;
-
-					if (!have_heading)
-					{
-						switch (category)
-						{
-							case 0:
-								printfPQExpBuffer(&buf, _("Rules:"));
-								break;
-							case 1:
-								printfPQExpBuffer(&buf, _("Disabled rules:"));
-								break;
-							case 2:
-								printfPQExpBuffer(&buf, _("Rules firing always:"));
-								break;
-							case 3:
-								printfPQExpBuffer(&buf, _("Rules firing on replica only:"));
-								break;
-						}
-						footers[count_footers++] = pg_strdup(buf.data);
-						have_heading = true;
-					}
-
-					/* Everything after "CREATE RULE" is echoed verbatim */
-					ruledef = PQgetvalue(result3, i, 1);
-					ruledef += 12;
-					printfPQExpBuffer(&buf, "    %s", ruledef);
-					footers[count_footers++] = pg_strdup(buf.data);
-				}
-			}
-		}
-
-		/* print triggers */
-		if (trigger_count > 0)
-		{
-			bool		have_heading;
-			int			category;
-
-			/*
-			 * split the output into 4 different categories. Enabled triggers,
-			 * disabled triggers and the two special ALWAYS and REPLICA
-			 * configurations.
-			 */
-			for (category = 0; category < 4; category++)
-			{
-				have_heading = false;
-				for (i = 0; i < trigger_count; i++)
-				{
-					bool		list_trigger;
-					const char *tgdef;
-					const char *usingpos;
-					const char *tgenabled;
-
-					/* Check if this trigger falls into the current category */
-					tgenabled = PQgetvalue(result4, i, 2);
-					list_trigger = false;
-					switch (category)
-					{
-						case 0:
-							if (*tgenabled == 'O' || *tgenabled == 't')
-								list_trigger = true;
-							break;
-						case 1:
-							if (*tgenabled == 'D' || *tgenabled == 'f')
-								list_trigger = true;
-							break;
-						case 2:
-							if (*tgenabled == 'A')
-								list_trigger = true;
-							break;
-						case 3:
-							if (*tgenabled == 'R')
-								list_trigger = true;
-							break;
-					}
-					if (list_trigger == false)
-						continue;
-
-					/* Print the category heading once */
-					if (have_heading == false)
-					{
-						switch (category)
-						{
-							case 0:
-								printfPQExpBuffer(&buf, _("Triggers:"));
-								break;
-							case 1:
-								printfPQExpBuffer(&buf, _("Disabled triggers:"));
-								break;
-							case 2:
-								printfPQExpBuffer(&buf, _("Triggers firing always:"));
-								break;
-							case 3:
-								printfPQExpBuffer(&buf, _("Triggers firing on replica only:"));
-								break;
-
-						}
-						footers[count_footers++] = pg_strdup(buf.data);
-						have_heading = true;
-					}
-
-					/* Everything after "TRIGGER" is echoed verbatim */
-					tgdef = PQgetvalue(result4, i, 1);
-					usingpos = strstr(tgdef, " TRIGGER ");
-					if (usingpos)
-						tgdef = usingpos + 9;
-
-					printfPQExpBuffer(&buf, "    %s", tgdef);
-					footers[count_footers++] = pg_strdup(buf.data);
-				}
-			}
-		}
-
-		/* print inherits */
-		for (i = 0; i < inherits_count; i++)
+		for (i = 0; i < tuples; i++)
 		{
 			const char *s = _("Inherits");
 
 			if (i == 0)
-				printfPQExpBuffer(&buf, "%s: %s", s, PQgetvalue(result7, i, 0));
+				printfPQExpBuffer(&buf, "%s: %s", s, PQgetvalue(result, i, 0));
 			else
-				printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(s), "", PQgetvalue(result7, i, 0));
-			if (i < inherits_count - 1)
+				printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(s), "", PQgetvalue(result, i, 0));
+			if (i < tuples - 1)
 				appendPQExpBuffer(&buf, ",");
 
-			footers[count_footers++] = pg_strdup(buf.data);
+			printTableAddFooter(&cont, buf.data);
 		}
+		PQclear(result);
 
 		if (verbose)
 		{
@@ -1562,51 +1460,31 @@ describeOneTableDetails(const char *schemaname,
 
 			printfPQExpBuffer(&buf, "%s: %s", s,
 							  (tableinfo.hasoids ? _("yes") : _("no")));
-			footers[count_footers++] = pg_strdup(buf.data);
+			printTableAddFooter(&cont, buf.data);
 		}
 
-		add_tablespace_footer(tableinfo.relkind, tableinfo.tablespace,
-							  footers, &count_footers, buf, true);
-		/* end of list marker */
-		footers[count_footers] = NULL;
-
-		PQclear(result1);
-		PQclear(result2);
-		PQclear(result3);
-		PQclear(result4);
-		PQclear(result5);
-		PQclear(result6);
-		PQclear(result7);
+		add_tablespace_footer(&cont, tableinfo.relkind, tableinfo.tablespace,
+							  true);
 	}
 
-	printTable(title.data, headers,
-			   (const char **) cells, (const char **) footers,
-			   "llll", &myopt, pset.queryFout, pset.logfile);
+	printTable(&cont, pset.queryFout, pset.logfile);
+	printTableCleanup(&cont);
 
 	retval = true;
 
 error_return:
 
 	/* clean up */
+	printTableCleanup(&cont);
 	termPQExpBuffer(&buf);
 	termPQExpBuffer(&title);
 	termPQExpBuffer(&tmpbuf);
 
-	if (cells)
+	if (show_modifiers)
 	{
-		for (i = 0; i < numrows; i++)
-		{
-			if (show_modifiers)
-				free(cells[i * cols + 2]);
-		}
-		free(cells);
-	}
-
-	if (footers)
-	{
-		for (ptr = footers; *ptr; ptr++)
+		for (ptr = modifiers; *ptr; ptr++)
 			free(*ptr);
-		free(footers);
+		free(modifiers);
 	}
 
 	if (view_def)
@@ -1618,14 +1496,14 @@ error_return:
 	return retval;
 }
 
-
 /*
- * Return true if the relation uses non default tablespace;
- * otherwise return false
+ * Add a tablespace description to a footer.  If 'newline' is true, it is added
+ * in a new line; otherwise it's appended to the current value of the last
+ * footer.
  */
-static bool
-add_tablespace_footer(char relkind, Oid tablespace, char **footers,
-					  int *count, PQExpBufferData buf, bool newline)
+static void
+add_tablespace_footer(printTableContent *const cont, char relkind,
+					  Oid tablespace, const bool newline)
 {
 	/* relkinds for which we support tablespaces */
 	if (relkind == 'r' || relkind == 'i')
@@ -1636,29 +1514,40 @@ add_tablespace_footer(char relkind, Oid tablespace, char **footers,
 		 */
 		if (tablespace != 0)
 		{
-			PGresult   *result1 = NULL;
+			PGresult   *result = NULL;
+			PQExpBufferData buf;
 
+			initPQExpBuffer(&buf);
 			printfPQExpBuffer(&buf, "SELECT spcname FROM pg_tablespace \n"
 							  "WHERE oid = '%u';", tablespace);
-			result1 = PSQLexec(buf.data, false);
-			if (!result1)
-				return false;
+			result = PSQLexec(buf.data, false);
+			if (!result)
+				return;
 			/* Should always be the case, but.... */
-			if (PQntuples(result1) > 0)
+			if (PQntuples(result) > 0)
 			{
-				printfPQExpBuffer(&buf,
-				  newline ? _("Tablespace: \"%s\"") : _("tablespace \"%s\""),
-								  PQgetvalue(result1, 0, 0));
-
-				footers[(*count)++] = pg_strdup(buf.data);
+				if (newline)
+				{
+					/* Add the tablespace as a new footer */
+					printfPQExpBuffer(&buf, _("Tablespace: \"%s\""),
+									  PQgetvalue(result, 0, 0));
+					printTableAddFooter(cont, buf.data);
+				}
+				else
+				{
+					/* Append the tablespace to the latest footer */
+					printfPQExpBuffer(&buf, "%s", cont->footer->data);
+					/* translator: before this string there's an index
+					 * description like '"foo_pkey" PRIMARY KEY, btree (a)' */
+					appendPQExpBuffer(&buf, _(", tablespace \"%s\""),
+									  PQgetvalue(result, 0, 0));
+					printTableSetFooter(cont, buf.data);
+				}
 			}
-			PQclear(result1);
-
-			return true;
+			PQclear(result);
+			termPQExpBuffer(&buf);
 		}
 	}
-
-	return false;
 }
 
 /*

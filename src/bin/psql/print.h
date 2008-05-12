@@ -3,18 +3,13 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.36 2008/05/08 17:04:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.37 2008/05/12 22:59:58 alvherre Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
 
 #include "libpq-fe.h"
 
-
-extern FILE *PageOutput(int lines, unsigned short int pager);
-extern void ClosePager(FILE *pagerpipe);
-
-extern void html_escaped_print(const char *in, FILE *fout);
 
 enum printFormat
 {
@@ -29,7 +24,7 @@ enum printFormat
 };
 
 
-typedef struct _printTableOpt
+typedef struct printTableOpt
 {
 	enum printFormat format;	/* one of the above */
 	bool		expanded;		/* expanded/vertical output (if supported by
@@ -52,25 +47,42 @@ typedef struct _printTableOpt
 	int			columns;		/* target width for wrapped format */
 } printTableOpt;
 
+/*
+ * Table footers are implemented as a singly-linked list.
+ *
+ * This is so that you don't need to know the number of footers in order to
+ * initialise the printTableContent struct, which is very convenient when
+ * preparing complex footers (as in describeOneTableDetails).
+ */
+typedef struct printTableFooter
+{
+	char *data;
+	struct printTableFooter *next;
+} printTableFooter;
 
 /*
- * Use this to print just any table in the supported formats.
- * - title is just any string (NULL is fine)
- * - headers is the column headings (NULL ptr terminated). It must be given and
- *	 complete since the column count is generated from this.
- * - cells are the data cells to be printed. Now you know why the correct
- *	 column count is important
- * - footers are lines to be printed below the table
- * - align is an 'l' or an 'r' for every column, if the output format needs it.
- *	 (You must specify this long enough. Otherwise anything could happen.)
-*/
-void printTable(const char *title, const char *const * headers,
-		   const char *const * cells, const char *const * footers,
-		   const char *align,
-		   const printTableOpt *opt, FILE *fout, FILE *flog);
+ * The table content struct holds all the information which will be displayed
+ * by printTable().
+ */
+typedef struct printTableContent
+{
+	const printTableOpt *opt;
+	const char  *title;			/* May be NULL */
+	int			 ncolumns;		/* Specified in Init() */
+	int			 nrows;			/* Specified in Init() */
+	const char **headers;		/* NULL-terminated array of header strings */
+	const char **header;		/* Pointer to the last added header */
+	const char **cells;			/* NULL-terminated array of cell content
+								   strings */
+	const char **cell;			/* Pointer to the last added cell */
+	printTableFooter *footers;  /* Pointer to the first footer */
+	printTableFooter *footer;	/* Pointer to the last added footer */
+	char        *aligns;		/* Array of alignment specifiers; 'l' or 'r',
+								   one per column */
+	char        *align;			/* Pointer to the last added alignment */
+} printTableContent;
 
-
-typedef struct _printQueryOpt
+typedef struct printQueryOpt
 {
 	printTableOpt topt;			/* the options above */
 	char	   *nullPrint;		/* how to print null entities */
@@ -82,15 +94,29 @@ typedef struct _printQueryOpt
 	const bool *trans_columns;	/* trans_columns[i-1] => do gettext on col i */
 } printQueryOpt;
 
-/*
- * Use this to print query results
- *
- * It calls the printTable above with all the things set straight.
- */
-void printQuery(const PGresult *result, const printQueryOpt *opt,
-		   FILE *fout, FILE *flog);
 
-void		setDecimalLocale(void);
+extern FILE *PageOutput(int lines, unsigned short int pager);
+extern void ClosePager(FILE *pagerpipe);
+
+extern void html_escaped_print(const char *in, FILE *fout);
+
+extern void printTableInit(printTableContent *const content,
+				const printTableOpt *opt, const char *title,
+				const int ncolumns, const int nrows);
+extern void printTableAddHeader(printTableContent *const content, 
+				const char *header, const bool translate, const char align);
+extern void printTableAddCell(printTableContent *const content, 
+				const char *cell, const bool translate);
+extern void printTableAddFooter(printTableContent *const content, 
+				const char *footer);
+extern void printTableSetFooter(printTableContent *const content, 
+				const char *footer);
+extern void printTableCleanup(printTableContent *const content);
+extern void printTable(const printTableContent *cont, FILE *fout, FILE *flog);
+extern void printQuery(const PGresult *result, const printQueryOpt *opt,
+		FILE *fout, FILE *flog);
+
+extern void	setDecimalLocale(void);
 
 #ifndef __CYGWIN__
 #define DEFAULT_PAGER "more"
