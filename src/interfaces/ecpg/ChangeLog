@@ -2346,6 +2346,11 @@ Thu, 10 Apr 2008 12:42:25 +0200
 
 	- Fixed bug in PGTYPEStimestamp_sub that used pointers instead of the
 	  values to substract.
+
+Mon, 12 May 2008 18:19:08 +0200
+
+	- Check for non-existant connection in prepare statement handling.
+	- Do not close files that weren't opened.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.

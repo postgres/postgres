@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.363 2008/03/27 07:56:00 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.364 2008/05/12 16:29:04 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -87,8 +87,10 @@ mmerror(int error_code, enum errortype type, char * error, ...)
 			ret_value = error_code;
 			break;
 		case ET_FATAL:
-			fclose(yyin);
-			fclose(yyout);
+			if (yyin)
+				fclose(yyin);
+			if (yyout)
+				fclose(yyout);
 			if (unlink(output_filename) != 0 && *output_filename != '-')
 			        fprintf(stderr, "Could not remove output file %s!\n", output_filename);
 			exit(error_code);
