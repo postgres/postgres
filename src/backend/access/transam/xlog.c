@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.306 2008/05/12 16:06:09 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.307 2008/05/12 19:45:23 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6431,6 +6431,7 @@ issue_xlog_fsync(void)
 			break;
 #endif
 		case SYNC_METHOD_OPEN:
+		case SYNC_METHOD_OPEN_DSYNC:
 			/* write synced it already */
 			break;
 		default:
