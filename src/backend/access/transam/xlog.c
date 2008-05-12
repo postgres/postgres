@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.304 2008/05/12 08:35:05 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.305 2008/05/12 14:27:47 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6365,7 +6365,7 @@ assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
 			 * new_sync_method are controlled by the available enum
 			 * options.
 			 */
-			elog(PANIC, "unrecognized wal_sync_method: %d", sync_method);
+			elog(PANIC, "unrecognized wal_sync_method: %d", new_sync_method);
 			break;
 	}
 
