@@ -14,7 +14,7 @@
  *	Author: Jan Wieck, Afilias USA INC.
  *	64-bit txids: Marko Kreen, Skype Technologies
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/txid.c,v 1.6 2008/03/26 18:48:59 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/txid.c,v 1.7 2008/05/12 20:02:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,9 +362,9 @@ txid_current_snapshot(PG_FUNCTION_ARGS)
 	TxidEpoch	state;
 	Snapshot	cur;
 
-	cur = ActiveSnapshot;
+	cur = GetActiveSnapshot();
 	if (cur == NULL)
-		elog(ERROR, "txid_current_snapshot: ActiveSnapshot == NULL");
+		elog(ERROR, "no active snapshot set");
 
 	load_xid_epoch(&state);
 

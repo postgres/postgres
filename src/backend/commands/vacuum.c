@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.372 2008/05/12 00:00:48 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.373 2008/05/12 20:02:00 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,6 +409,10 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 	 */
 	if (use_own_xacts)
 	{
+		/* ActiveSnapshot is not set by autovacuum */
+		if (ActiveSnapshotSet())
+			PopActiveSnapshot();
+
 		/* matches the StartTransaction in PostgresMain() */
 		CommitTransactionCommand();
 	}
@@ -446,7 +450,7 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 				{
 					StartTransactionCommand();
 					/* functions in indexes may want a snapshot set */
-					ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+					PushActiveSnapshot(GetTransactionSnapshot());
 				}
 				else
 					old_context = MemoryContextSwitchTo(anl_context);
@@ -454,7 +458,10 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 				analyze_rel(relid, vacstmt, vac_strategy);
 
 				if (use_own_xacts)
+				{
+					PopActiveSnapshot();
 					CommitTransactionCommand();
+				}
 				else
 				{
 					MemoryContextSwitchTo(old_context);
@@ -981,7 +988,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	if (vacstmt->full)
 	{
 		/* functions in indexes may want a snapshot set */
-		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+		PushActiveSnapshot(GetTransactionSnapshot());
 	}
 	else
 	{
@@ -1038,6 +1045,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 
 	if (!onerel)
 	{
+		if (vacstmt->full)
+			PopActiveSnapshot();
 		CommitTransactionCommand();
 		return;
 	}
@@ -1068,6 +1077,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 					(errmsg("skipping \"%s\" --- only table or database owner can vacuum it",
 							RelationGetRelationName(onerel))));
 		relation_close(onerel, lmode);
+		if (vacstmt->full)
+			PopActiveSnapshot();
 		CommitTransactionCommand();
 		return;
 	}
@@ -1082,6 +1093,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 				(errmsg("skipping \"%s\" --- cannot vacuum indexes, views, or special system tables",
 						RelationGetRelationName(onerel))));
 		relation_close(onerel, lmode);
+		if (vacstmt->full)
+			PopActiveSnapshot();
 		CommitTransactionCommand();
 		return;
 	}
@@ -1096,6 +1109,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	if (isOtherTempNamespace(RelationGetNamespace(onerel)))
 	{
 		relation_close(onerel, lmode);
+		if (vacstmt->full)
+			PopActiveSnapshot();
 		CommitTransactionCommand();
 		return;
 	}
@@ -1143,6 +1158,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	/*
 	 * Complete the transaction and free all temporary memory used.
 	 */
+	if (vacstmt->full)
+		PopActiveSnapshot();
 	CommitTransactionCommand();
 
 	/*

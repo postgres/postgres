@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.263 2008/05/12 00:00:46 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.264 2008/05/12 20:01:58 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -622,12 +622,9 @@ CommandCounterIncrement(void)
 		}
 		currentCommandIdUsed = false;
 
-		/* Propagate new command ID into static snapshots, if set */
-		if (SerializableSnapshot)
-			SerializableSnapshot->curcid = currentCommandId;
-		if (LatestSnapshot)
-			LatestSnapshot->curcid = currentCommandId;
-
+		/* Propagate new command ID into static snapshots */
+		SnapshotSetCommandId(currentCommandId);
+		
 		/*
 		 * Make any catalog changes done by the just-completed command
 		 * visible in the local syscache.  We obviously don't need to do
@@ -1509,9 +1506,8 @@ StartTransaction(void)
 	s->transactionId = InvalidTransactionId;	/* until assigned */
 
 	/*
-	 * Make sure we've freed any old snapshot, and reset xact state variables
+	 * Make sure we've reset xact state variables
 	 */
-	FreeXactSnapshot();
 	XactIsoLevel = DefaultXactIsoLevel;
 	XactReadOnly = DefaultXactReadOnly;
 	forceSyncCommit = false;
@@ -1753,6 +1749,7 @@ CommitTransaction(void)
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
 	AtEOXact_PgStat(true);
+	AtEOXact_Snapshot(true);
 	pgstat_report_xact_timestamp(0);
 
 	CurrentResourceOwner = NULL;
@@ -1985,6 +1982,7 @@ PrepareTransaction(void)
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
 	/* don't call AtEOXact_PgStat here */
+	AtEOXact_Snapshot(true);
 
 	CurrentResourceOwner = NULL;
 	ResourceOwnerDelete(TopTransactionResourceOwner);
@@ -2129,6 +2127,7 @@ AbortTransaction(void)
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(false);
 	AtEOXact_PgStat(false);
+	AtEOXact_Snapshot(false);
 	pgstat_report_xact_timestamp(0);
 
 	/*
@@ -3844,6 +3843,7 @@ CommitSubTransaction(void)
 					  s->parent->subTransactionId);
 	AtEOSubXact_HashTables(true, s->nestingLevel);
 	AtEOSubXact_PgStat(true, s->nestingLevel);
+	AtSubCommit_Snapshot(s->nestingLevel);
 
 	/*
 	 * We need to restore the upper transaction's read-only state, in case the
@@ -3963,6 +3963,7 @@ AbortSubTransaction(void)
 						  s->parent->subTransactionId);
 		AtEOSubXact_HashTables(false, s->nestingLevel);
 		AtEOSubXact_PgStat(false, s->nestingLevel);
+		AtSubAbort_Snapshot(s->nestingLevel);
 	}
 
 	/*

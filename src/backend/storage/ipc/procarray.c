@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.43 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.44 2008/05/12 20:02:00 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -660,8 +660,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
  *
  * We also update the following backend-global variables:
  *		TransactionXmin: the oldest xmin of any snapshot in use in the
- *			current transaction (this is the same as MyProc->xmin).  This
- *			is just the xmin computed for the first, serializable snapshot.
+ *			current transaction (this is the same as MyProc->xmin).
  *		RecentXmin: the xmin computed for the most recent snapshot.  XIDs
  *			older than this are known not running any more.
  *		RecentGlobalXmin: the global xmin (oldest TransactionXmin across all
@@ -669,7 +668,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
  *			the same computation done by GetOldestXmin(true, true).
  */
 Snapshot
-GetSnapshotData(Snapshot snapshot, bool serializable)
+GetSnapshotData(Snapshot snapshot)
 {
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId xmin;
@@ -680,11 +679,6 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	int			subcount = 0;
 
 	Assert(snapshot != NULL);
-
-	/* Serializable snapshot must be computed before any other... */
-	Assert(serializable ?
-		   !TransactionIdIsValid(MyProc->xmin) :
-		   TransactionIdIsValid(MyProc->xmin));
 
 	/*
 	 * Allocating space for maxProcs xids is usually overkill; numProcs would
@@ -806,7 +800,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		}
 	}
 
-	if (serializable)
+	if (!TransactionIdIsValid(MyProc->xmin))
 		MyProc->xmin = TransactionXmin = xmin;
 
 	LWLockRelease(ProcArrayLock);
@@ -829,6 +823,14 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	snapshot->subxcnt = subcount;
 
 	snapshot->curcid = GetCurrentCommandId(false);
+
+	/*
+	 * This is a new snapshot, so set both refcounts are zero, and mark it
+	 * as not copied in persistent memory.
+	 */
+	snapshot->active_count = 0;
+	snapshot->regd_count = 0;
+	snapshot->copied = false;
 
 	return snapshot;
 }

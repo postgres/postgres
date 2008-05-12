@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.194 2008/05/12 00:00:49 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.195 2008/05/12 20:02:00 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,9 +372,10 @@ SPI_execp(SPIPlanPtr plan, Datum *Values, const char *Nulls, long tcount)
 
 /*
  * SPI_execute_snapshot -- identical to SPI_execute_plan, except that we allow
- * the caller to specify exactly which snapshots to use.  Also, the caller
- * may specify that AFTER triggers should be queued as part of the outer
- * query rather than being fired immediately at the end of the command.
+ * the caller to specify exactly which snapshots to use, which will be
+ * registered here.  Also, the caller may specify that AFTER triggers should be
+ * queued as part of the outer query rather than being fired immediately at the
+ * end of the command.
  *
  * This is currently not documented in spi.sgml because it is only intended
  * for use by RI triggers.
@@ -1102,11 +1103,11 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 	}
 
 	/*
-	 * Set up the snapshot to use.	(PortalStart will do CopySnapshot, so we
-	 * skip that here.)
+	 * Set up the snapshot to use.	(PortalStart will do PushActiveSnapshot, so
+	 * we skip that here.)
 	 */
 	if (read_only)
-		snapshot = ActiveSnapshot;
+		snapshot = GetActiveSnapshot();
 	else
 	{
 		CommandCounterIncrement();
@@ -1605,216 +1606,220 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
 				  bool read_only, bool fire_triggers, long tcount)
 {
-	volatile int my_res = 0;
-	volatile uint32 my_processed = 0;
-	volatile Oid my_lastoid = InvalidOid;
-	SPITupleTable *volatile my_tuptable = NULL;
-	volatile int res = 0;
-	Snapshot	saveActiveSnapshot;
+	int			my_res = 0;
+	uint32		my_processed = 0;
+	Oid			my_lastoid = InvalidOid;
+	SPITupleTable *my_tuptable = NULL;
+	int			res = 0;
+	bool		have_active_snap = ActiveSnapshotSet();
+	ErrorContextCallback spierrcontext;
+	CachedPlan *cplan = NULL;
+	ListCell   *lc1;
 
-	/* Be sure to restore ActiveSnapshot on error exit */
-	saveActiveSnapshot = ActiveSnapshot;
-	PG_TRY();
+	/*
+	 * Setup error traceback support for ereport()
+	 */
+	spierrcontext.callback = _SPI_error_callback;
+	spierrcontext.arg = NULL;
+	spierrcontext.previous = error_context_stack;
+	error_context_stack = &spierrcontext;
+
+	foreach(lc1, plan->plancache_list)
 	{
-		ErrorContextCallback spierrcontext;
-		CachedPlan *cplan = NULL;
-		ListCell   *lc1;
+		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc1);
+		List	   *stmt_list;
+		ListCell   *lc2;
 
-		/*
-		 * Setup error traceback support for ereport()
-		 */
-		spierrcontext.callback = _SPI_error_callback;
-		spierrcontext.arg = NULL;
-		spierrcontext.previous = error_context_stack;
-		error_context_stack = &spierrcontext;
+		spierrcontext.arg = (void *) plansource->query_string;
 
-		foreach(lc1, plan->plancache_list)
+		if (plan->saved)
 		{
-			CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc1);
-			List	   *stmt_list;
-			ListCell   *lc2;
+			/* Replan if needed, and increment plan refcount locally */
+			cplan = RevalidateCachedPlan(plansource, true);
+			stmt_list = cplan->stmt_list;
+		}
+		else
+		{
+			/* No replan here */
+			cplan = NULL;
+			stmt_list = plansource->plan->stmt_list;
+		}
 
-			spierrcontext.arg = (void *) plansource->query_string;
+		foreach(lc2, stmt_list)
+		{
+			Node	   *stmt = (Node *) lfirst(lc2);
+			bool		canSetTag;
+			DestReceiver *dest;
+			bool		pushed_active_snap = false;
 
-			if (plan->saved)
+			_SPI_current->processed = 0;
+			_SPI_current->lastoid = InvalidOid;
+			_SPI_current->tuptable = NULL;
+
+			if (IsA(stmt, PlannedStmt))
 			{
-				/* Replan if needed, and increment plan refcount locally */
-				cplan = RevalidateCachedPlan(plansource, true);
-				stmt_list = cplan->stmt_list;
+				canSetTag = ((PlannedStmt *) stmt)->canSetTag;
 			}
 			else
 			{
-				/* No replan here */
-				cplan = NULL;
-				stmt_list = plansource->plan->stmt_list;
-			}
+				/* utilities are canSetTag if only thing in list */
+				canSetTag = (list_length(stmt_list) == 1);
 
-			foreach(lc2, stmt_list)
-			{
-				Node	   *stmt = (Node *) lfirst(lc2);
-				bool		canSetTag;
-				DestReceiver *dest;
-
-				_SPI_current->processed = 0;
-				_SPI_current->lastoid = InvalidOid;
-				_SPI_current->tuptable = NULL;
-
-				if (IsA(stmt, PlannedStmt))
+				if (IsA(stmt, CopyStmt))
 				{
-					canSetTag = ((PlannedStmt *) stmt)->canSetTag;
-				}
-				else
-				{
-					/* utilities are canSetTag if only thing in list */
-					canSetTag = (list_length(stmt_list) == 1);
+					CopyStmt   *cstmt = (CopyStmt *) stmt;
 
-					if (IsA(stmt, CopyStmt))
+					if (cstmt->filename == NULL)
 					{
-						CopyStmt   *cstmt = (CopyStmt *) stmt;
-
-						if (cstmt->filename == NULL)
-						{
-							my_res = SPI_ERROR_COPY;
-							goto fail;
-						}
-					}
-					else if (IsA(stmt, TransactionStmt))
-					{
-						my_res = SPI_ERROR_TRANSACTION;
+						my_res = SPI_ERROR_COPY;
 						goto fail;
 					}
 				}
-
-				if (read_only && !CommandIsReadOnly(stmt))
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					/* translator: %s is a SQL statement name */
-					   errmsg("%s is not allowed in a non-volatile function",
-							  CreateCommandTag(stmt))));
-
-				/*
-				 * If not read-only mode, advance the command counter before
-				 * each command.
-				 */
-				if (!read_only)
-					CommandCounterIncrement();
-
-				dest = CreateDestReceiver(canSetTag ? DestSPI : DestNone,
-										  NULL);
-
-				if (snapshot == InvalidSnapshot)
+				else if (IsA(stmt, TransactionStmt))
 				{
-					/*
-					 * Default read_only behavior is to use the entry-time
-					 * ActiveSnapshot; if read-write, grab a full new snap.
-					 */
-					if (read_only)
-						ActiveSnapshot = CopySnapshot(saveActiveSnapshot);
-					else
-						ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
-				}
-				else
-				{
-					/*
-					 * We interpret read_only with a specified snapshot to be
-					 * exactly that snapshot, but read-write means use the
-					 * snap with advancing of command ID.
-					 */
-					ActiveSnapshot = CopySnapshot(snapshot);
-					if (!read_only)
-						ActiveSnapshot->curcid = GetCurrentCommandId(false);
-				}
-
-				if (IsA(stmt, PlannedStmt) &&
-					((PlannedStmt *) stmt)->utilityStmt == NULL)
-				{
-					QueryDesc  *qdesc;
-
-					qdesc = CreateQueryDesc((PlannedStmt *) stmt,
-											ActiveSnapshot,
-											crosscheck_snapshot,
-											dest,
-											paramLI, false);
-					res = _SPI_pquery(qdesc, fire_triggers,
-									  canSetTag ? tcount : 0);
-					FreeQueryDesc(qdesc);
-				}
-				else
-				{
-					ProcessUtility(stmt,
-								   plansource->query_string,
-								   paramLI,
-								   false,		/* not top level */
-								   dest,
-								   NULL);
-					/* Update "processed" if stmt returned tuples */
-					if (_SPI_current->tuptable)
-						_SPI_current->processed = _SPI_current->tuptable->alloced - _SPI_current->tuptable->free;
-					res = SPI_OK_UTILITY;
-				}
-				FreeSnapshot(ActiveSnapshot);
-				ActiveSnapshot = NULL;
-
-				/*
-				 * The last canSetTag query sets the status values returned to
-				 * the caller.	Be careful to free any tuptables not returned,
-				 * to avoid intratransaction memory leak.
-				 */
-				if (canSetTag)
-				{
-					my_processed = _SPI_current->processed;
-					my_lastoid = _SPI_current->lastoid;
-					SPI_freetuptable(my_tuptable);
-					my_tuptable = _SPI_current->tuptable;
-					my_res = res;
-				}
-				else
-				{
-					SPI_freetuptable(_SPI_current->tuptable);
-					_SPI_current->tuptable = NULL;
-				}
-				/* we know that the receiver doesn't need a destroy call */
-				if (res < 0)
-				{
-					my_res = res;
+					my_res = SPI_ERROR_TRANSACTION;
 					goto fail;
 				}
 			}
 
-			/* Done with this plan, so release refcount */
-			if (cplan)
-				ReleaseCachedPlan(cplan, true);
-			cplan = NULL;
+			if (read_only && !CommandIsReadOnly(stmt))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 /* translator: %s is a SQL statement name */
+						 errmsg("%s is not allowed in a non-volatile function",
+								CreateCommandTag(stmt))));
 
 			/*
-			 * If not read-only mode, advance the command counter after the
-			 * last command.  This ensures that its effects are visible, in
-			 * case it was DDL that would affect the next CachedPlanSource.
+			 * If not read-only mode, advance the command counter before
+			 * each command.
 			 */
 			if (!read_only)
 				CommandCounterIncrement();
+
+			dest = CreateDestReceiver(canSetTag ? DestSPI : DestNone,
+									  NULL);
+
+			if (snapshot == InvalidSnapshot)
+			{
+				/*
+				 * Default read_only behavior is to use the entry-time
+				 * ActiveSnapshot, if any; if read-write, grab a full new snap.
+				 */
+				if (read_only)
+				{
+					if (have_active_snap)
+					{
+						PushActiveSnapshot(GetActiveSnapshot());
+						pushed_active_snap = true;
+					}
+				}
+				else
+				{
+					PushActiveSnapshot(GetTransactionSnapshot());
+					pushed_active_snap = true;
+				}
+			}
+			else
+			{
+				/*
+				 * We interpret read_only with a specified snapshot to be
+				 * exactly that snapshot, but read-write means use the
+				 * snap with advancing of command ID.
+				 */
+				if (read_only)
+					PushActiveSnapshot(snapshot);
+				else
+					PushUpdatedSnapshot(snapshot);
+				pushed_active_snap = true;
+			}
+
+			if (IsA(stmt, PlannedStmt) &&
+				((PlannedStmt *) stmt)->utilityStmt == NULL)
+			{
+				QueryDesc  *qdesc;
+				Snapshot	snap;
+
+				if (ActiveSnapshotSet())
+					snap = GetActiveSnapshot();
+				else
+					snap = InvalidSnapshot;
+
+				qdesc = CreateQueryDesc((PlannedStmt *) stmt,
+										snap, crosscheck_snapshot,
+										dest,
+										paramLI, false);
+				res = _SPI_pquery(qdesc, fire_triggers,
+								  canSetTag ? tcount : 0);
+				FreeQueryDesc(qdesc);
+			}
+			else
+			{
+				ProcessUtility(stmt,
+							   plansource->query_string,
+							   paramLI,
+							   false,		/* not top level */
+							   dest,
+							   NULL);
+				/* Update "processed" if stmt returned tuples */
+				if (_SPI_current->tuptable)
+					_SPI_current->processed = _SPI_current->tuptable->alloced -
+						_SPI_current->tuptable->free;
+				res = SPI_OK_UTILITY;
+			}
+
+			if (pushed_active_snap)
+				PopActiveSnapshot();
+
+			/*
+			 * The last canSetTag query sets the status values returned to
+			 * the caller.	Be careful to free any tuptables not returned,
+			 * to avoid intratransaction memory leak.
+			 */
+			if (canSetTag)
+			{
+				my_processed = _SPI_current->processed;
+				my_lastoid = _SPI_current->lastoid;
+				SPI_freetuptable(my_tuptable);
+				my_tuptable = _SPI_current->tuptable;
+				my_res = res;
+			}
+			else
+			{
+				SPI_freetuptable(_SPI_current->tuptable);
+				_SPI_current->tuptable = NULL;
+			}
+			/* we know that the receiver doesn't need a destroy call */
+			if (res < 0)
+			{
+				my_res = res;
+				goto fail;
+			}
 		}
+
+		/* Done with this plan, so release refcount */
+		if (cplan)
+			ReleaseCachedPlan(cplan, true);
+		cplan = NULL;
+
+		/*
+		 * If not read-only mode, advance the command counter after the
+		 * last command.  This ensures that its effects are visible, in
+		 * case it was DDL that would affect the next CachedPlanSource.
+		 */
+		if (!read_only)
+			CommandCounterIncrement();
+	}
 
 fail:
 
-		/* We no longer need the cached plan refcount, if any */
-		if (cplan)
-			ReleaseCachedPlan(cplan, true);
+	/* We no longer need the cached plan refcount, if any */
+	if (cplan)
+		ReleaseCachedPlan(cplan, true);
 
-		/*
-		 * Pop the error context stack
-		 */
-		error_context_stack = spierrcontext.previous;
-	}
-	PG_CATCH();
-	{
-		/* Restore global vars and propagate error */
-		ActiveSnapshot = saveActiveSnapshot;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	ActiveSnapshot = saveActiveSnapshot;
+	/*
+	 * Pop the error context stack
+	 */
+	error_context_stack = spierrcontext.previous;
 
 	/* Save results for caller */
 	SPI_processed = my_processed;

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.175 2008/05/12 00:00:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.176 2008/05/12 20:01:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,6 +212,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		rvs = get_tables_to_cluster(cluster_context);
 
 		/* Commit to get out of starting transaction */
+		PopActiveSnapshot();
 		CommitTransactionCommand();
 
 		/* Ok, now that we've got them all, cluster them one by one */
@@ -222,8 +223,9 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			/* Start a new transaction for each relation. */
 			StartTransactionCommand();
 			/* functions in indexes may want a snapshot set */
-			ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+			PushActiveSnapshot(GetTransactionSnapshot());
 			cluster_rel(rvtc, true);
+			PopActiveSnapshot();
 			CommitTransactionCommand();
 		}
 

@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.86 2008/05/12 00:00:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.87 2008/05/12 20:01:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,7 +263,7 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	/*
 	 * Run the portal to completion.
 	 */
-	PortalStart(portal, paramLI, ActiveSnapshot);
+	PortalStart(portal, paramLI, GetActiveSnapshot());
 
 	(void) PortalRun(portal, FETCH_ALL, false, dest, dest, completionTag);
 

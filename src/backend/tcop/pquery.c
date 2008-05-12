@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.122 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.123 2008/05/12 20:02:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,8 +70,9 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->operation = plannedstmt->commandType;	/* operation */
 	qd->plannedstmt = plannedstmt;		/* plan */
 	qd->utilitystmt = plannedstmt->utilityStmt; /* in case DECLARE CURSOR */
-	qd->snapshot = snapshot;	/* snapshot */
-	qd->crosscheck_snapshot = crosscheck_snapshot;		/* RI check snapshot */
+	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
+	/* RI check snapshot */
+	qd->crosscheck_snapshot = RegisterSnapshot(crosscheck_snapshot);
 	qd->dest = dest;			/* output dest */
 	qd->params = params;		/* parameter values passed into query */
 	qd->doInstrument = doInstrument;	/* instrumentation wanted? */
@@ -98,7 +99,7 @@ CreateUtilityQueryDesc(Node *utilitystmt,
 	qd->operation = CMD_UTILITY;	/* operation */
 	qd->plannedstmt = NULL;
 	qd->utilitystmt = utilitystmt;		/* utility command */
-	qd->snapshot = snapshot;	/* snapshot */
+	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
 	qd->crosscheck_snapshot = InvalidSnapshot;	/* RI check snapshot */
 	qd->dest = dest;			/* output dest */
 	qd->params = params;		/* parameter values passed into query */
@@ -120,6 +121,11 @@ FreeQueryDesc(QueryDesc *qdesc)
 {
 	/* Can't be a live query */
 	Assert(qdesc->estate == NULL);
+
+	/* forget our snapshots */
+	UnregisterSnapshot(qdesc->snapshot);
+	UnregisterSnapshot(qdesc->crosscheck_snapshot);
+
 	/* Only the QueryDesc itself need be freed */
 	pfree(qdesc);
 }
@@ -152,16 +158,15 @@ ProcessQuery(PlannedStmt *plan,
 	elog(DEBUG3, "ProcessQuery");
 
 	/*
-	 * Must always set snapshot for plannable queries.	Note we assume that
-	 * caller will take care of restoring ActiveSnapshot on exit/error.
+	 * Must always set a snapshot for plannable queries.
 	 */
-	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+	PushActiveSnapshot(GetTransactionSnapshot());
 
 	/*
 	 * Create the QueryDesc object
 	 */
 	queryDesc = CreateQueryDesc(plan,
-								ActiveSnapshot, InvalidSnapshot,
+								GetActiveSnapshot(), InvalidSnapshot,
 								dest, params, false);
 
 	/*
@@ -216,15 +221,14 @@ ProcessQuery(PlannedStmt *plan,
 	/* Now take care of any queued AFTER triggers */
 	AfterTriggerEndQuery(queryDesc->estate);
 
+	PopActiveSnapshot();
+
 	/*
 	 * Now, we close down all the scans and free allocated resources.
 	 */
 	ExecutorEnd(queryDesc);
 
 	FreeQueryDesc(queryDesc);
-
-	FreeSnapshot(ActiveSnapshot);
-	ActiveSnapshot = NULL;
 }
 
 /*
@@ -446,7 +450,6 @@ void
 PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 {
 	Portal		saveActivePortal;
-	Snapshot	saveActiveSnapshot;
 	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;
 	MemoryContext oldContext;
@@ -460,13 +463,11 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 	 * Set up global portal context pointers.
 	 */
 	saveActivePortal = ActivePortal;
-	saveActiveSnapshot = ActiveSnapshot;
 	saveResourceOwner = CurrentResourceOwner;
 	savePortalContext = PortalContext;
 	PG_TRY();
 	{
 		ActivePortal = portal;
-		ActiveSnapshot = NULL;	/* will be set later */
 		CurrentResourceOwner = portal->resowner;
 		PortalContext = PortalGetHeapMemory(portal);
 
@@ -487,21 +488,18 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 		{
 			case PORTAL_ONE_SELECT:
 
-				/*
-				 * Must set snapshot before starting executor.	Be sure to
-				 * copy it into the portal's context.
-				 */
+				/* Must set snapshot before starting executor. */
 				if (snapshot)
-					ActiveSnapshot = CopySnapshot(snapshot);
+					PushActiveSnapshot(snapshot);
 				else
-					ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+					PushActiveSnapshot(GetTransactionSnapshot());
 
 				/*
 				 * Create QueryDesc in portal's context; for the moment, set
 				 * the destination to DestNone.
 				 */
 				queryDesc = CreateQueryDesc((PlannedStmt *) linitial(portal->stmts),
-											ActiveSnapshot,
+											GetActiveSnapshot(),
 											InvalidSnapshot,
 											None_Receiver,
 											params,
@@ -545,6 +543,8 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 				portal->atEnd = false;	/* allow fetches */
 				portal->portalPos = 0;
 				portal->posOverflow = false;
+
+				PopActiveSnapshot();
 				break;
 
 			case PORTAL_ONE_RETURNING:
@@ -608,7 +608,6 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 
 		/* Restore global vars and propagate error */
 		ActivePortal = saveActivePortal;
-		ActiveSnapshot = saveActiveSnapshot;
 		CurrentResourceOwner = saveResourceOwner;
 		PortalContext = savePortalContext;
 
@@ -619,7 +618,6 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 	MemoryContextSwitchTo(oldContext);
 
 	ActivePortal = saveActivePortal;
-	ActiveSnapshot = saveActiveSnapshot;
 	CurrentResourceOwner = saveResourceOwner;
 	PortalContext = savePortalContext;
 
@@ -707,7 +705,6 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 	ResourceOwner saveTopTransactionResourceOwner;
 	MemoryContext saveTopTransactionContext;
 	Portal		saveActivePortal;
-	Snapshot	saveActiveSnapshot;
 	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;
 	MemoryContext saveMemoryContext;
@@ -751,14 +748,12 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 	saveTopTransactionResourceOwner = TopTransactionResourceOwner;
 	saveTopTransactionContext = TopTransactionContext;
 	saveActivePortal = ActivePortal;
-	saveActiveSnapshot = ActiveSnapshot;
 	saveResourceOwner = CurrentResourceOwner;
 	savePortalContext = PortalContext;
 	saveMemoryContext = CurrentMemoryContext;
 	PG_TRY();
 	{
 		ActivePortal = portal;
-		ActiveSnapshot = NULL;	/* will be set later */
 		CurrentResourceOwner = portal->resowner;
 		PortalContext = PortalGetHeapMemory(portal);
 
@@ -839,7 +834,6 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 		else
 			MemoryContextSwitchTo(saveMemoryContext);
 		ActivePortal = saveActivePortal;
-		ActiveSnapshot = saveActiveSnapshot;
 		if (saveResourceOwner == saveTopTransactionResourceOwner)
 			CurrentResourceOwner = TopTransactionResourceOwner;
 		else
@@ -855,7 +849,6 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 	else
 		MemoryContextSwitchTo(saveMemoryContext);
 	ActivePortal = saveActivePortal;
-	ActiveSnapshot = saveActiveSnapshot;
 	if (saveResourceOwner == saveTopTransactionResourceOwner)
 		CurrentResourceOwner = TopTransactionResourceOwner;
 	else
@@ -940,9 +933,10 @@ PortalRunSelect(Portal portal,
 			nprocessed = RunFromStore(portal, direction, count, dest);
 		else
 		{
-			ActiveSnapshot = queryDesc->snapshot;
+			PushActiveSnapshot(queryDesc->snapshot);
 			ExecutorRun(queryDesc, direction, count);
 			nprocessed = queryDesc->estate->es_processed;
+			PopActiveSnapshot();
 		}
 
 		if (!ScanDirectionIsNoMovement(direction))
@@ -982,9 +976,10 @@ PortalRunSelect(Portal portal,
 			nprocessed = RunFromStore(portal, direction, count, dest);
 		else
 		{
-			ActiveSnapshot = queryDesc->snapshot;
+			PushActiveSnapshot(queryDesc->snapshot);
 			ExecutorRun(queryDesc, direction, count);
 			nprocessed = queryDesc->estate->es_processed;
+			PopActiveSnapshot();
 		}
 
 		if (!ScanDirectionIsNoMovement(direction))
@@ -1140,6 +1135,8 @@ static void
 PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 				 DestReceiver *dest, char *completionTag)
 {
+	bool	active_snapshot_set;
+
 	elog(DEBUG3, "ProcessUtility");
 
 	/*
@@ -1152,9 +1149,6 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	 * hacks.  Beware of listing anything that can modify the database --- if,
 	 * say, it has to update an index with expressions that invoke
 	 * user-defined functions, then it had better have a snapshot.
-	 *
-	 * Note we assume that caller will take care of restoring ActiveSnapshot
-	 * on exit/error.
 	 */
 	if (!(IsA(utilityStmt, TransactionStmt) ||
 		  IsA(utilityStmt, LockStmt) ||
@@ -1167,9 +1161,12 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 		  IsA(utilityStmt, NotifyStmt) ||
 		  IsA(utilityStmt, UnlistenStmt) ||
 		  IsA(utilityStmt, CheckPointStmt)))
-		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+	{
+		PushActiveSnapshot(GetTransactionSnapshot());
+		active_snapshot_set = true;
+	}
 	else
-		ActiveSnapshot = NULL;
+		active_snapshot_set = false;
 
 	ProcessUtility(utilityStmt,
 				   portal->sourceText,
@@ -1181,9 +1178,15 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	/* Some utility statements may change context on us */
 	MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-	if (ActiveSnapshot)
-		FreeSnapshot(ActiveSnapshot);
-	ActiveSnapshot = NULL;
+	/*
+	 * Some utility commands may pop the ActiveSnapshot stack from under us,
+	 * so we only pop the stack if we actually see a snapshot set.  Note that
+	 * the set of utility commands that do this must be the same set
+	 * disallowed to run inside a transaction; otherwise, we could be popping
+	 * a snapshot that belongs to some other operation.
+	 */
+	if (active_snapshot_set && ActiveSnapshotSet())
+		PopActiveSnapshot();
 }
 
 /*
@@ -1321,7 +1324,6 @@ PortalRunFetch(Portal portal,
 {
 	long		result;
 	Portal		saveActivePortal;
-	Snapshot	saveActiveSnapshot;
 	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;
 	MemoryContext oldContext;
@@ -1341,13 +1343,11 @@ PortalRunFetch(Portal portal,
 	 * Set up global portal context pointers.
 	 */
 	saveActivePortal = ActivePortal;
-	saveActiveSnapshot = ActiveSnapshot;
 	saveResourceOwner = CurrentResourceOwner;
 	savePortalContext = PortalContext;
 	PG_TRY();
 	{
 		ActivePortal = portal;
-		ActiveSnapshot = NULL;	/* will be set later */
 		CurrentResourceOwner = portal->resowner;
 		PortalContext = PortalGetHeapMemory(portal);
 
@@ -1388,7 +1388,6 @@ PortalRunFetch(Portal portal,
 
 		/* Restore global vars and propagate error */
 		ActivePortal = saveActivePortal;
-		ActiveSnapshot = saveActiveSnapshot;
 		CurrentResourceOwner = saveResourceOwner;
 		PortalContext = savePortalContext;
 
@@ -1402,7 +1401,6 @@ PortalRunFetch(Portal portal,
 	portal->status = PORTAL_READY;
 
 	ActivePortal = saveActivePortal;
-	ActiveSnapshot = saveActiveSnapshot;
 	CurrentResourceOwner = saveResourceOwner;
 	PortalContext = savePortalContext;
 

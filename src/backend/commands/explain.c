@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.173 2008/04/18 01:42:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.174 2008/05/12 20:01:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,17 +229,14 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	int			eflags;
 
 	/*
-	 * Update snapshot command ID to ensure this query sees results of any
-	 * previously executed queries.  (It's a bit cheesy to modify
-	 * ActiveSnapshot without making a copy, but for the limited ways in which
-	 * EXPLAIN can be invoked, I think it's OK, because the active snapshot
-	 * shouldn't be shared with anything else anyway.)
+	 * Use a snapshot with an updated command ID to ensure this query sees
+	 * results of any previously executed queries.
 	 */
-	ActiveSnapshot->curcid = GetCurrentCommandId(false);
+	PushUpdatedSnapshot(GetActiveSnapshot());
 
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(plannedstmt,
-								ActiveSnapshot, InvalidSnapshot,
+								GetActiveSnapshot(), InvalidSnapshot,
 								None_Receiver, params,
 								stmt->analyze);
 
@@ -323,6 +320,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	ExecutorEnd(queryDesc);
 
 	FreeQueryDesc(queryDesc);
+
+	PopActiveSnapshot();
 
 	/* We need a CCI just in case query expanded to multiple plans */
 	if (stmt->analyze)

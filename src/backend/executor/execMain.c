@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.308 2008/05/12 00:00:48 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.309 2008/05/12 20:02:00 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,7 @@
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
 
@@ -185,8 +186,8 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 	/*
 	 * Copy other important information into the EState
 	 */
-	estate->es_snapshot = queryDesc->snapshot;
-	estate->es_crosscheck_snapshot = queryDesc->crosscheck_snapshot;
+	estate->es_snapshot = RegisterSnapshot(queryDesc->snapshot);
+	estate->es_crosscheck_snapshot = RegisterSnapshot(queryDesc->crosscheck_snapshot);
 	estate->es_instrument = queryDesc->doInstrument;
 
 	/*
@@ -312,6 +313,10 @@ ExecutorEnd(QueryDesc *queryDesc)
 	 */
 	if (estate->es_select_into)
 		CloseIntoRel(queryDesc);
+
+	/* do away with our snapshots */
+	UnregisterSnapshot(estate->es_snapshot);
+	UnregisterSnapshot(estate->es_crosscheck_snapshot);
 
 	/*
 	 * Must switch out of context before destroying it

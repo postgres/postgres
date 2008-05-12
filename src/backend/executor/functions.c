@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.124 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.125 2008/05/12 20:02:00 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,15 +295,14 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	 * In a read-only function, use the surrounding query's snapshot;
 	 * otherwise take a new snapshot for each query.  The snapshot should
 	 * include a fresh command ID so that all work to date in this transaction
-	 * is visible.	We copy in both cases so that postquel_end can
-	 * unconditionally do FreeSnapshot.
+	 * is visible.
 	 */
 	if (fcache->readonly_func)
-		snapshot = CopySnapshot(ActiveSnapshot);
+		snapshot = GetActiveSnapshot();
 	else
 	{
 		CommandCounterIncrement();
-		snapshot = CopySnapshot(GetTransactionSnapshot());
+		snapshot = GetTransactionSnapshot();
 	}
 
 	if (IsA(es->stmt, PlannedStmt))
@@ -340,56 +339,44 @@ static TupleTableSlot *
 postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 {
 	TupleTableSlot *result;
-	Snapshot	saveActiveSnapshot;
 	long		count;
 
 	/* Make our snapshot the active one for any called functions */
-	saveActiveSnapshot = ActiveSnapshot;
-	PG_TRY();
-	{
-		ActiveSnapshot = es->qd->snapshot;
+	PushActiveSnapshot(es->qd->snapshot);
 
-		if (es->qd->utilitystmt)
-		{
-			/* ProcessUtility needs the PlannedStmt for DECLARE CURSOR */
-			ProcessUtility((es->qd->plannedstmt ?
-							(Node *) es->qd->plannedstmt :
-							es->qd->utilitystmt),
-						   fcache->src,
-						   es->qd->params,
-						   false,		/* not top level */
-						   es->qd->dest,
-						   NULL);
-			result = NULL;
-		}
+	if (es->qd->utilitystmt)
+	{
+		/* ProcessUtility needs the PlannedStmt for DECLARE CURSOR */
+		ProcessUtility((es->qd->plannedstmt ?
+						(Node *) es->qd->plannedstmt :
+						es->qd->utilitystmt),
+					   fcache->src,
+					   es->qd->params,
+					   false,		/* not top level */
+					   es->qd->dest,
+					   NULL);
+		result = NULL;
+	}
+	else
+	{
+		/*
+		 * If it's the function's last command, and it's a SELECT, fetch
+		 * one row at a time so we can return the results. Otherwise just
+		 * run it to completion.  (If we run to completion then
+		 * ExecutorRun is guaranteed to return NULL.)
+		 */
+		if (LAST_POSTQUEL_COMMAND(es) &&
+			es->qd->operation == CMD_SELECT &&
+			es->qd->plannedstmt->utilityStmt == NULL &&
+			es->qd->plannedstmt->intoClause == NULL)
+			count = 1L;
 		else
-		{
-			/*
-			 * If it's the function's last command, and it's a SELECT, fetch
-			 * one row at a time so we can return the results. Otherwise just
-			 * run it to completion.  (If we run to completion then
-			 * ExecutorRun is guaranteed to return NULL.)
-			 */
-			if (LAST_POSTQUEL_COMMAND(es) &&
-				es->qd->operation == CMD_SELECT &&
-				es->qd->plannedstmt->utilityStmt == NULL &&
-				es->qd->plannedstmt->intoClause == NULL)
-				count = 1L;
-			else
-				count = 0L;
+			count = 0L;
 
-			result = ExecutorRun(es->qd, ForwardScanDirection, count);
-		}
+		result = ExecutorRun(es->qd, ForwardScanDirection, count);
 	}
-	PG_CATCH();
-	{
-		/* Restore global vars and propagate error */
-		ActiveSnapshot = saveActiveSnapshot;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
 
-	ActiveSnapshot = saveActiveSnapshot;
+	PopActiveSnapshot();
 
 	return result;
 }
@@ -397,8 +384,6 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 static void
 postquel_end(execution_state *es)
 {
-	Snapshot	saveActiveSnapshot;
-
 	/* mark status done to ensure we don't do ExecutorEnd twice */
 	es->status = F_EXEC_DONE;
 
@@ -406,26 +391,15 @@ postquel_end(execution_state *es)
 	if (es->qd->utilitystmt == NULL)
 	{
 		/* Make our snapshot the active one for any called functions */
-		saveActiveSnapshot = ActiveSnapshot;
-		PG_TRY();
-		{
-			ActiveSnapshot = es->qd->snapshot;
+		PushActiveSnapshot(es->qd->snapshot);
 
-			if (es->qd->operation != CMD_SELECT)
-				AfterTriggerEndQuery(es->qd->estate);
-			ExecutorEnd(es->qd);
-		}
-		PG_CATCH();
-		{
-			/* Restore global vars and propagate error */
-			ActiveSnapshot = saveActiveSnapshot;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
-		ActiveSnapshot = saveActiveSnapshot;
+		if (es->qd->operation != CMD_SELECT)
+			AfterTriggerEndQuery(es->qd->estate);
+		ExecutorEnd(es->qd);
+
+		PopActiveSnapshot();
 	}
 
-	FreeSnapshot(es->qd->snapshot);
 	FreeQueryDesc(es->qd);
 	es->qd = NULL;
 }

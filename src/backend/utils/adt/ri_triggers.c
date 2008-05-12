@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.107 2008/03/26 21:10:39 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.108 2008/05/12 20:02:02 alvherre Exp $
  *
  * ----------
  */
@@ -2756,12 +2756,13 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	/*
 	 * Run the plan.  For safety we force a current snapshot to be used. (In
 	 * serializable mode, this arguably violates serializability, but we
-	 * really haven't got much choice.)  We need at most one tuple returned,
-	 * so pass limit = 1.
+	 * really haven't got much choice.)  We don't need to register the
+	 * snapshot, because SPI_execute_snapshot will see to it.  We need at most
+	 * one tuple returned, so pass limit = 1.
 	 */
 	spi_result = SPI_execute_snapshot(qplan,
 									  NULL, NULL,
-									  CopySnapshot(GetLatestSnapshot()),
+									  GetLatestSnapshot(),
 									  InvalidSnapshot,
 									  true, false, 1);
 
@@ -3311,13 +3312,15 @@ ri_PerformCheck(RI_QueryKey *qkey, SPIPlanPtr qplan,
 	 * caller passes detectNewRows == false then it's okay to do the query
 	 * with the transaction snapshot; otherwise we use a current snapshot, and
 	 * tell the executor to error out if it finds any rows under the current
-	 * snapshot that wouldn't be visible per the transaction snapshot.
+	 * snapshot that wouldn't be visible per the transaction snapshot.  Note
+	 * that SPI_execute_snapshot will register the snapshots, so we don't need
+	 * to bother here.
 	 */
 	if (IsXactIsoLevelSerializable && detectNewRows)
 	{
 		CommandCounterIncrement();		/* be sure all my own work is visible */
-		test_snapshot = CopySnapshot(GetLatestSnapshot());
-		crosscheck_snapshot = CopySnapshot(GetTransactionSnapshot());
+		test_snapshot = GetLatestSnapshot();
+		crosscheck_snapshot = GetTransactionSnapshot();
 	}
 	else
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.232 2008/05/12 00:00:48 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.233 2008/05/12 20:01:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2976,6 +2976,7 @@ void
 AfterTriggerFireDeferred(void)
 {
 	AfterTriggerEventList *events;
+	bool		snap_pushed = false;
 
 	/* Must be inside a transaction */
 	Assert(afterTriggers != NULL);
@@ -2990,7 +2991,10 @@ AfterTriggerFireDeferred(void)
 	 */
 	events = &afterTriggers->events;
 	if (events->head != NULL)
-		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+	{
+		PushActiveSnapshot(GetTransactionSnapshot());
+		snap_pushed = true;
+	}
 
 	/*
 	 * Run all the remaining triggers.	Loop until they are all gone, in case
@@ -3002,6 +3006,9 @@ AfterTriggerFireDeferred(void)
 
 		afterTriggerInvokeEvents(events, firing_id, NULL, true);
 	}
+
+	if (snap_pushed)
+		PopActiveSnapshot();
 
 	Assert(events->head == NULL);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.212 2008/05/12 00:00:54 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.213 2008/05/12 20:02:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4129,7 +4129,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	CachedPlan *cplan;
 	ParamListInfo paramLI;
 	int			i;
-	Snapshot	saveActiveSnapshot;
+	MemoryContext oldcontext;
 
 	/*
 	 * Forget it if expression wasn't simple before.
@@ -4218,37 +4218,26 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 * updates made so far by our own function.
 	 */
 	SPI_push();
-	saveActiveSnapshot = ActiveSnapshot;
 
-	PG_TRY();
+	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+	if (!estate->readonly_func)
 	{
-		MemoryContext oldcontext;
-
-		oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
-		if (!estate->readonly_func)
-		{
-			CommandCounterIncrement();
-			ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
-		}
-
-		/*
-		 * Finally we can call the executor to evaluate the expression
-		 */
-		*result = ExecEvalExpr(expr->expr_simple_state,
-							   econtext,
-							   isNull,
-							   NULL);
-		MemoryContextSwitchTo(oldcontext);
+		CommandCounterIncrement();
+		PushActiveSnapshot(GetTransactionSnapshot());
 	}
-	PG_CATCH();
-	{
-		/* Restore global vars and propagate error */
-		ActiveSnapshot = saveActiveSnapshot;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
 
-	ActiveSnapshot = saveActiveSnapshot;
+	/*
+	 * Finally we can call the executor to evaluate the expression
+	 */
+	*result = ExecEvalExpr(expr->expr_simple_state,
+						   econtext,
+						   isNull,
+						   NULL);
+	MemoryContextSwitchTo(oldcontext);
+
+	if (!estate->readonly_func)
+		PopActiveSnapshot();
+
 	SPI_pop();
 
 	/*

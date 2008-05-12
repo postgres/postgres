@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.551 2008/05/12 00:00:50 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.552 2008/05/12 20:02:01 alvherre Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -732,49 +732,37 @@ List *
 pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams,
 				bool needSnapshot)
 {
-	List	   * volatile stmt_list = NIL;
-	Snapshot	saveActiveSnapshot = ActiveSnapshot;
+	List	   *stmt_list = NIL;
+	ListCell   *query_list;
+	bool		snapshot_set = false;
 
-	/* PG_TRY to ensure previous ActiveSnapshot is restored on error */
-	PG_TRY();
+	foreach(query_list, querytrees)
 	{
-		Snapshot	mySnapshot = NULL;
-		ListCell   *query_list;
+		Query	   *query = (Query *) lfirst(query_list);
+		Node	   *stmt;
 
-		foreach(query_list, querytrees)
+		if (query->commandType == CMD_UTILITY)
 		{
-			Query	   *query = (Query *) lfirst(query_list);
-			Node	   *stmt;
-
-			if (query->commandType == CMD_UTILITY)
+			/* Utility commands have no plans. */
+			stmt = query->utilityStmt;
+		}
+		else
+		{
+			if (needSnapshot && !snapshot_set)
 			{
-				/* Utility commands have no plans. */
-				stmt = query->utilityStmt;
-			}
-			else
-			{
-				if (needSnapshot && mySnapshot == NULL)
-				{
-					mySnapshot = CopySnapshot(GetTransactionSnapshot());
-					ActiveSnapshot = mySnapshot;
-				}
-				stmt = (Node *) pg_plan_query(query, cursorOptions,
-											  boundParams);
+				PushActiveSnapshot(GetTransactionSnapshot());
+				snapshot_set = true;
 			}
 
-			stmt_list = lappend(stmt_list, stmt);
+			stmt = (Node *) pg_plan_query(query, cursorOptions,
+										  boundParams);
 		}
 
-		if (mySnapshot)
-			FreeSnapshot(mySnapshot);
+		stmt_list = lappend(stmt_list, stmt);
 	}
-	PG_CATCH();
-	{
-		ActiveSnapshot = saveActiveSnapshot;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-	ActiveSnapshot = saveActiveSnapshot;
+
+	if (snapshot_set)
+		PopActiveSnapshot();
 
 	return stmt_list;
 }

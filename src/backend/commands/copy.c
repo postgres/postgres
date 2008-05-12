@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.298 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.299 2008/05/12 20:01:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1044,21 +1044,18 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		plan = planner(query, 0, NULL);
 
 		/*
-		 * Update snapshot command ID to ensure this query sees results of any
-		 * previously executed queries.  (It's a bit cheesy to modify
-		 * ActiveSnapshot without making a copy, but for the limited ways in
-		 * which COPY can be invoked, I think it's OK, because the active
-		 * snapshot shouldn't be shared with anything else anyway.)
+		 * Use a snapshot with an updated command ID to ensure this query sees
+		 * results of any previously executed queries.
 		 */
-		ActiveSnapshot->curcid = GetCurrentCommandId(false);
+		PushUpdatedSnapshot(GetActiveSnapshot());
 
 		/* Create dest receiver for COPY OUT */
 		dest = CreateDestReceiver(DestCopyOut, NULL);
 		((DR_copy *) dest)->cstate = cstate;
 
 		/* Create a QueryDesc requesting no output */
-		cstate->queryDesc = CreateQueryDesc(plan,
-											ActiveSnapshot, InvalidSnapshot,
+		cstate->queryDesc = CreateQueryDesc(plan, GetActiveSnapshot(),
+											InvalidSnapshot,
 											dest, NULL, false);
 
 		/*
@@ -1161,6 +1158,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		/* Close down the query and free resources. */
 		ExecutorEnd(cstate->queryDesc);
 		FreeQueryDesc(cstate->queryDesc);
+		PopActiveSnapshot();
 	}
 
 	/* Clean up storage (probably not really necessary) */
@@ -1390,7 +1388,7 @@ CopyTo(CopyState cstate)
 		values = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
 		nulls = (bool *) palloc(num_phys_attrs * sizeof(bool));
 
-		scandesc = heap_beginscan(cstate->rel, ActiveSnapshot, 0, NULL);
+		scandesc = heap_beginscan(cstate->rel, GetActiveSnapshot(), 0, NULL);
 
 		while ((tuple = heap_getnext(scandesc, ForwardScanDirection)) != NULL)
 		{

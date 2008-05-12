@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.132 2008/04/12 23:14:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.133 2008/05/12 20:02:00 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,12 +246,8 @@ inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 	}
 	else if (flags & INV_READ)
 	{
-		/* be sure to copy snap into mcxt */
-		MemoryContext oldContext = MemoryContextSwitchTo(mcxt);
-
-		retval->snapshot = CopySnapshot(ActiveSnapshot);
+		retval->snapshot = RegisterSnapshot(GetActiveSnapshot());
 		retval->flags = IFS_RDLOCK;
-		MemoryContextSwitchTo(oldContext);
 	}
 	else
 		elog(ERROR, "invalid flags: %d", flags);
@@ -274,7 +270,7 @@ inv_close(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
 	if (obj_desc->snapshot != SnapshotNow)
-		FreeSnapshot(obj_desc->snapshot);
+		UnregisterSnapshot(obj_desc->snapshot);
 	pfree(obj_desc);
 }
 

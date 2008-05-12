@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.73 2008/04/02 18:31:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.74 2008/05/12 20:01:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	/*
 	 * Start execution, inserting parameters if any.
 	 */
-	PortalStart(portal, params, ActiveSnapshot);
+	PortalStart(portal, params, GetActiveSnapshot());
 
 	Assert(portal->strategy == PORTAL_ONE_SELECT);
 
@@ -293,7 +293,6 @@ PersistHoldablePortal(Portal portal)
 {
 	QueryDesc  *queryDesc = PortalGetQueryDesc(portal);
 	Portal		saveActivePortal;
-	Snapshot	saveActiveSnapshot;
 	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;
 	MemoryContext oldcxt;
@@ -334,17 +333,17 @@ PersistHoldablePortal(Portal portal)
 	 * Set up global portal context pointers.
 	 */
 	saveActivePortal = ActivePortal;
-	saveActiveSnapshot = ActiveSnapshot;
 	saveResourceOwner = CurrentResourceOwner;
 	savePortalContext = PortalContext;
 	PG_TRY();
 	{
 		ActivePortal = portal;
-		ActiveSnapshot = queryDesc->snapshot;
 		CurrentResourceOwner = portal->resowner;
 		PortalContext = PortalGetHeapMemory(portal);
 
 		MemoryContextSwitchTo(PortalContext);
+
+		PushActiveSnapshot(queryDesc->snapshot);
 
 		/*
 		 * Rewind the executor: we need to store the entire result set in the
@@ -411,7 +410,6 @@ PersistHoldablePortal(Portal portal)
 
 		/* Restore global vars and propagate error */
 		ActivePortal = saveActivePortal;
-		ActiveSnapshot = saveActiveSnapshot;
 		CurrentResourceOwner = saveResourceOwner;
 		PortalContext = savePortalContext;
 
@@ -425,9 +423,10 @@ PersistHoldablePortal(Portal portal)
 	portal->status = PORTAL_READY;
 
 	ActivePortal = saveActivePortal;
-	ActiveSnapshot = saveActiveSnapshot;
 	CurrentResourceOwner = saveResourceOwner;
 	PortalContext = savePortalContext;
+
+	PopActiveSnapshot();
 
 	/*
 	 * We can now release any subsidiary memory of the portal's heap context;
