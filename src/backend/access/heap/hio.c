@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.69 2008/05/12 00:00:45 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.70 2008/05/12 16:06:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 #include "postgres.h"
 
 #include "access/hio.h"
-#include "storage/bufmgr.h"
 #include "storage/bufpage.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
