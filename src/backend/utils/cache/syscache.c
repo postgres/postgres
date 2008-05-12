@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.115 2008/05/07 01:46:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.116 2008/05/12 00:00:52 alvherre Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -20,7 +20,7 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
+#include "access/sysattr.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_amop.h"

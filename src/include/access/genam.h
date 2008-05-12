@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.71 2008/04/12 23:14:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.72 2008/05/12 00:00:53 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,9 +16,10 @@
 
 #include "access/relscan.h"
 #include "access/sdir.h"
-#include "nodes/primnodes.h"
 #include "nodes/tidbitmap.h"
+#include "storage/buf.h"
 #include "storage/lock.h"
+#include "utils/rel.h"
 
 /*
  * Struct for statistics returned by ambuild

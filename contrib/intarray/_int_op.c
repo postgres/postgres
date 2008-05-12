@@ -1,6 +1,9 @@
-#include "_int.h"
+#include "postgres.h"
 
 #include "lib/stringinfo.h"
+
+#include "_int.h"
+
 
 PG_MODULE_MAGIC;
 

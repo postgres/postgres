@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.33 2008/04/21 00:26:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.34 2008/05/12 00:00:52 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include "access/transam.h"
 #include "access/twophase_rmgr.h"
 #include "access/xact.h"
+#include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
@@ -44,7 +45,9 @@
 #include "catalog/pg_tablespace.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
+#include "storage/bufmgr.h"
 #include "storage/fd.h"
+#include "storage/lmgr.h"
 #include "storage/pmsignal.h"
 #include "utils/builtins.h"
 #include "utils/flatfiles.h"

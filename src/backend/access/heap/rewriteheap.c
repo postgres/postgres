@@ -96,7 +96,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.10 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.11 2008/05/12 00:00:45 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,7 @@
 #include "access/rewriteheap.h"
 #include "access/transam.h"
 #include "access/tuptoaster.h"
+#include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "utils/memutils.h"
 

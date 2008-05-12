@@ -2,10 +2,12 @@
  * op function for ltree[]
  * Teodor Sigaev <teodor@stack.net>
  */
+#include "postgres.h"
 
-#include "ltree.h"
 #include <ctype.h>
+
 #include "utils/array.h"
+#include "ltree.h"
 
 PG_FUNCTION_INFO_V1(_ltree_isparent);
 PG_FUNCTION_INFO_V1(_ltree_r_isparent);

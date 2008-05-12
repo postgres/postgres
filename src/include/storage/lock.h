@@ -7,16 +7,14 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.112 2008/01/08 23:18:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.113 2008/05/12 00:00:54 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LOCK_H_
 #define LOCK_H_
 
-#include "nodes/pg_list.h"
 #include "storage/backendid.h"
-#include "storage/itemptr.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
 

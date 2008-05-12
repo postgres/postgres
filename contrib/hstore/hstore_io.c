@@ -1,5 +1,11 @@
-#include "hstore.h"
+/*
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.8 2008/05/12 00:00:42 alvherre Exp $
+ */
+#include "postgres.h"
+
 #include <ctype.h>
+
+#include "hstore.h"
 
 PG_MODULE_MAGIC;
 

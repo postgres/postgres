@@ -1,8 +1,14 @@
-#include "hstore.h"
+/*
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_gist.c,v 1.9 2008/05/12 00:00:42 alvherre Exp $
+ */
+#include "postgres.h"
 
 #include "access/gist.h"
 #include "access/itup.h"
+#include "access/skey.h"
 #include "crc32.h"
+
+#include "hstore.h"
 
 /* bigint defines */
 #define BITBYTE 8

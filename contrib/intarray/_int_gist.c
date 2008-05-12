@@ -1,3 +1,8 @@
+#include "postgres.h"
+
+#include "access/gist.h"
+#include "access/skey.h"
+
 #include "_int.h"
 
 #define GETENTRY(vec,pos) ((ArrayType *) DatumGetPointer((vec)->vector[(pos)].key))

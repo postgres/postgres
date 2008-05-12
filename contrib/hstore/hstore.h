@@ -1,15 +1,10 @@
+/*
+ * $PostgreSQL: pgsql/contrib/hstore/hstore.h,v 1.6 2008/05/12 00:00:42 alvherre Exp $
+ */
 #ifndef __HSTORE_H__
 #define __HSTORE_H__
 
-#include "postgres.h"
-
-#include "funcapi.h"
-#include "access/gist.h"
-#include "access/itup.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
-#include "utils/builtins.h"
-#include "storage/bufpage.h"
+#include "fmgr.h"
 
 
 typedef struct
@@ -53,4 +48,4 @@ int			uniquePairs(Pairs * a, int4 l, int4 *buflen);
 #define HStoreContainsStrategyNumber	7
 #define HStoreExistsStrategyNumber		9
 
-#endif
+#endif /* __HSTORE_H__ */

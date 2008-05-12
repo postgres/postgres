@@ -1,3 +1,8 @@
+#include "postgres.h"
+
+#include "access/gist.h"
+#include "access/skey.h"
+
 #include "_int.h"
 
 PG_FUNCTION_INFO_V1(ginint4_queryextract);

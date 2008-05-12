@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.550 2008/04/15 20:28:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.551 2008/05/12 00:00:50 alvherre Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -54,6 +54,7 @@
 #include "parser/parser.h"
 #include "postmaster/autovacuum.h"
 #include "rewrite/rewriteHandler.h"
+#include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"

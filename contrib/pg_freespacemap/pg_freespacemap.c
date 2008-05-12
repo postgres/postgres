@@ -3,15 +3,16 @@
  * pg_freespacemap.c
  *	  display some contents of the free space relation and page maps.
  *
- *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.9 2006/10/19 18:32:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.10 2008/05/12 00:00:43 alvherre Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "funcapi.h"
-#include "access/heapam.h"
+#include "access/htup.h"
 #include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "storage/freespace.h"
+#include "storage/lmgr.h"
 
 
 #define		NUM_FREESPACE_PAGES_ELEM	5

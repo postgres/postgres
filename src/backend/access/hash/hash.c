@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.102 2008/04/13 19:18:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.103 2008/05/12 00:00:44 alvherre Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -25,6 +25,7 @@
 #include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/plancat.h"
+#include "storage/bufmgr.h"
 
 
 /* Working state for hashbuild and its callback */

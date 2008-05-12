@@ -1,6 +1,12 @@
-#include "hstore.h"
+/*
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_gin.c,v 1.4 2008/05/12 00:00:42 alvherre Exp $
+ */
+#include "postgres.h"
 
 #include "access/gin.h"
+
+#include "hstore.h"
+
 
 #define KEYFLAG		'K'
 #define VALFLAG		'V'

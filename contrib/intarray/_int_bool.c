@@ -1,3 +1,7 @@
+#include "postgres.h"
+
+#include "utils/builtins.h"
+
 #include "_int.h"
 
 PG_FUNCTION_INFO_V1(bqarr_in);

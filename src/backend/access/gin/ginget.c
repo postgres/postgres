@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.14 2008/04/22 17:52:43 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.15 2008/05/12 00:00:44 alvherre Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -17,6 +17,7 @@
 #include "access/gin.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
+#include "storage/bufmgr.h"
 #include "utils/memutils.h"
 
 static bool

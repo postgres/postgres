@@ -8,16 +8,17 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.13 2008/01/01 19:45:46 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.14 2008/05/12 00:00:44 alvherre Exp $
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 #include "access/genam.h"
 #include "access/gin.h"
-#include "access/heapam.h"
 #include "access/reloptions.h"
+#include "storage/bufmgr.h"
 #include "storage/freespace.h"
+#include "storage/lmgr.h"
 
 void
 initGinState(GinState *state, Relation index)

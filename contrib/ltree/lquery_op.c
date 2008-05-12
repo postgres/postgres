@@ -1,12 +1,14 @@
 /*
  * op function for ltree and lquery
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/lquery_op.c,v 1.11 2006/10/04 00:29:45 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/lquery_op.c,v 1.12 2008/05/12 00:00:42 alvherre Exp $
  */
+#include "postgres.h"
 
-#include "ltree.h"
 #include <ctype.h>
+
 #include "utils/array.h"
+#include "ltree.h"
 
 PG_FUNCTION_INFO_V1(ltq_regex);
 PG_FUNCTION_INFO_V1(ltq_rregex);

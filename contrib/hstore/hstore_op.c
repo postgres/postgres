@@ -1,9 +1,14 @@
-#include "hstore.h"
-#include "utils/array.h"
+/*
+ * $PostgreSQL
+ */
+#include "postgres.h"
+
 #include "catalog/pg_type.h"
 #include "funcapi.h"
-#include <access/heapam.h>
-#include <fmgr.h>
+#include "utils/array.h"
+#include "utils/builtins.h"
+
+#include "hstore.h"
 
 
 static HEntry *

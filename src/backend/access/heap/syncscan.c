@@ -40,7 +40,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/syncscan.c,v 1.4 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/syncscan.c,v 1.5 2008/05/12 00:00:45 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,9 @@
 
 #include "access/heapam.h"
 #include "miscadmin.h"
+#include "storage/block.h"
+#include "storage/relfilenode.h"
+#include "utils/rel.h"
 
 
 /* GUC variables */

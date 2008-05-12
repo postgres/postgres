@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.248 2008/04/13 20:51:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.249 2008/05/12 00:00:51 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +76,7 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "access/sysattr.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"

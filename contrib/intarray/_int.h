@@ -1,18 +1,7 @@
 #ifndef ___INT_H__
 #define ___INT_H__
 
-#include "postgres.h"
-
-#include <float.h>
-
-#include "access/gist.h"
-#include "access/itup.h"
-#include "access/skey.h"
-#include "catalog/pg_type.h"
 #include "utils/array.h"
-#include "utils/builtins.h"
-#include "storage/bufpage.h"
-#include "lib/stringinfo.h"
 
 /* number ranges for compression */
 #define MAXNUMRANGE 100
@@ -173,4 +162,4 @@ if (ARRNELEMS(a) > 1)											\
 		qsort((void*)ARRPTR(a), ARRNELEMS(a),sizeof(int4),		\
 				(direction) ? compASC : compDESC )
 
-#endif
+#endif /* ___INT_H__ */

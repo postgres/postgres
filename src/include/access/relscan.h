@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.64 2008/04/13 19:18:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.65 2008/05/12 00:00:53 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/htup.h"
 #include "access/skey.h"
 #include "storage/bufpage.h"
+#include "utils/rel.h"
 #include "utils/snapshot.h"
 
 

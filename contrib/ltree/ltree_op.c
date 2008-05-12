@@ -1,17 +1,18 @@
 /*
  * op function for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.18 2008/03/25 22:42:41 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.19 2008/05/12 00:00:43 alvherre Exp $
  */
-
-#include "ltree.h"
+#include "postgres.h"
 
 #include <ctype.h>
 
 #include "catalog/pg_statistic.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
+#include "ltree.h"
 
 PG_MODULE_MAGIC;
 

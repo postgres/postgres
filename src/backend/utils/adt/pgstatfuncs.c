@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.50 2008/05/07 14:41:55 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.51 2008/05/12 00:00:51 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "catalog/pg_type.h"
-#include "access/heapam.h"
 #include "utils/builtins.h"
 #include "utils/inet.h"
 #include "libpq/ip.h"

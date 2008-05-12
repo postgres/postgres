@@ -2,13 +2,14 @@
  * GiST support for ltree[]
  * Teodor Sigaev <teodor@stack.net>
  */
+#include "postgres.h"
 
-#include "ltree.h"
 #include "access/gist.h"
 #include "access/skey.h"
 #include "utils/array.h"
-
 #include "crc32.h"
+#include "ltree.h"
+
 
 PG_FUNCTION_INFO_V1(_ltree_compress);
 Datum		_ltree_compress(PG_FUNCTION_ARGS);

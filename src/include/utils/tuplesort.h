@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.29 2008/03/16 23:15:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.30 2008/05/12 00:00:54 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 
 #include "access/itup.h"
 #include "executor/tuptable.h"
+#include "utils/rel.h"
 
 
 /* Tuplesortstate is an opaque type whose details are not known outside
