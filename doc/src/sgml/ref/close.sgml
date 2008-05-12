@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.26 2007/05/15 19:13:55 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.27 2008/05/12 16:23:26 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -90,6 +90,12 @@ CLOSE { <replaceable class="PARAMETER">name</replaceable> | ALL }
   <para>
    You can see all available cursors by querying the <link
    linkend="view-pg-cursors"><structname>pg_cursors</></> system view.
+  </para>
+
+  <para>
+   If a cursor is closed after a savepoint which is later rolled back,
+   the <command>CLOSE</command> is not rolled back; that is, the cursor
+   remains closed.
   </para>
  </refsect1>
 
