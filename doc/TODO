@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri May  9 21:50:47 EDT 2008
+Last updated:		Mon May 12 16:50:43 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1509,7 +1509,7 @@ Vacuum
   in hopes that empty pages at the end can be truncated by VACUUM
 * Allow FSM page return free space based on table clustering, to assist
   in maintaining clustering?
-* Improve dead row detection during multi-statement transactions usage
+* -Improve dead row detection during multi-statement transactions usage
 
   http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php
 
