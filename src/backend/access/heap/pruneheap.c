@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.11 2008/05/12 16:06:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.12 2008/05/13 15:44:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -792,7 +792,7 @@ heap_get_root_tuples(Page page, OffsetNumber *root_offsets)
 	MemSet(root_offsets, 0, MaxHeapTuplesPerPage * sizeof(OffsetNumber));
 
 	maxoff = PageGetMaxOffsetNumber(page);
-	for (offnum = FirstOffsetNumber; offnum <= maxoff; offnum++)
+	for (offnum = FirstOffsetNumber; offnum <= maxoff; offnum = OffsetNumberNext(offnum))
 	{
 		ItemId		lp = PageGetItemId(page, offnum);
 		HeapTupleHeader htup;

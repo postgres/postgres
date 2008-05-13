@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.78 2008/02/10 20:39:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.79 2008/05/13 15:44:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -533,7 +533,7 @@ PageGetHeapFreeSpace(Page page)
 				 * Since this is just a hint, we must confirm that there is
 				 * indeed a free line pointer
 				 */
-				for (offnum = FirstOffsetNumber; offnum <= nline; offnum++)
+				for (offnum = FirstOffsetNumber; offnum <= nline; offnum = OffsetNumberNext(offnum))
 				{
 					ItemId		lp = PageGetItemId(page, offnum);
 
@@ -736,7 +736,7 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 	totallen = 0;
 	nused = 0;
 	nextitm = 0;
-	for (offnum = 1; offnum <= nline; offnum++)
+	for (offnum = FirstOffsetNumber; offnum <= nline; offnum = OffsetNumberNext(offnum))
 	{
 		lp = PageGetItemId(page, offnum);
 		Assert(ItemIdHasStorage(lp));

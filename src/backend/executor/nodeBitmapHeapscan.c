@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.27 2008/05/12 00:00:49 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.28 2008/05/13 15:44:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,7 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 		OffsetNumber maxoff = PageGetMaxOffsetNumber(dp);
 		OffsetNumber offnum;
 
-		for (offnum = FirstOffsetNumber; offnum <= maxoff; offnum++)
+		for (offnum = FirstOffsetNumber; offnum <= maxoff; offnum = OffsetNumberNext(offnum))
 		{
 			ItemId		lp;
 			HeapTupleData loctup;
