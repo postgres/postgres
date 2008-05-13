@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.172 2008/05/13 00:14:11 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.173 2008/05/13 00:23:17 alvherre Exp $
  */
 #include "postgres_fe.h"
 
@@ -24,6 +24,7 @@ static bool describeOneTableDetails(const char *schemaname,
 						bool verbose);
 static void add_tablespace_footer(printTableContent *const cont, char relkind,
 						Oid tablespace, const bool newline);
+static void add_role_attribute(PQExpBuffer buf, const char *const str);
 static bool listTSParsersVerbose(const char *pattern);
 static bool describeOneTSParser(const char *oid, const char *nspname,
 					const char *prsname);
@@ -1560,34 +1561,31 @@ describeRoles(const char *pattern, bool verbose)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
-	printQueryOpt myopt = pset.popt;
-	static const bool trans_columns[] = {false, true, true, true, true, false, false};
+	printTableContent cont;
+	printTableOpt myopt = pset.popt.topt;
+	int			ncols = 3;
+	int			nrows = 0;
+	int			i;
+	int			conns;
+	const char	align = 'l';
+	char	  **attr;
 
 	initPQExpBuffer(&buf);
 
-	printfPQExpBuffer(&buf,
-					  "SELECT r.rolname AS \"%s\",\n"
-				"  CASE WHEN r.rolsuper THEN '%s' ELSE '%s' END AS \"%s\",\n"
-		   "  CASE WHEN r.rolcreaterole THEN '%s' ELSE '%s' END AS \"%s\",\n"
-			 "  CASE WHEN r.rolcreatedb THEN '%s' ELSE '%s' END AS \"%s\",\n"
-		"  CASE WHEN r.rolconnlimit < 0 THEN CAST('%s' AS pg_catalog.text)\n"
-					  "       ELSE CAST(r.rolconnlimit AS pg_catalog.text)\n"
-					  "  END AS \"%s\", \n"
-					  "  ARRAY(SELECT b.rolname FROM pg_catalog.pg_auth_members m JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid) WHERE m.member = r.oid) as \"%s\"",
-					  gettext_noop("Role name"),
-					  gettext_noop("yes"), gettext_noop("no"),
-					  gettext_noop("Superuser"),
-					  gettext_noop("yes"), gettext_noop("no"),
-					  gettext_noop("Create role"),
-					  gettext_noop("yes"), gettext_noop("no"),
-					  gettext_noop("Create DB"),
-					  gettext_noop("no limit"),
-					  gettext_noop("Connections"),
-					  gettext_noop("Member of"));
+	appendPQExpBufferStr(&buf,
+					     "SELECT r.rolname, r.rolsuper, r.rolinherit,\n"
+						 "  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,\n"
+						 "  r.rolconnlimit,\n"
+					     "  ARRAY(SELECT b.rolname\n"
+					     "        FROM pg_catalog.pg_auth_members m\n"
+					     "        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)\n"
+					     "        WHERE m.member = r.oid) as memberof");
 
 	if (verbose)
-		appendPQExpBuffer(&buf, "\n, pg_catalog.shobj_description(r.oid, 'pg_authid') AS \"%s\"",
-						  gettext_noop("Description"));
+	{
+		appendPQExpBufferStr(&buf, "\n, pg_catalog.shobj_description(r.oid, 'pg_authid') AS description");
+		ncols++;
+	}
 
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_roles r\n");
 
@@ -1597,19 +1595,84 @@ describeRoles(const char *pattern, bool verbose)
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
 
 	res = PSQLexec(buf.data, false);
-	termPQExpBuffer(&buf);
 	if (!res)
 		return false;
 
-	myopt.nullPrint = NULL;
-	myopt.title = _("List of roles");
-	myopt.trans_headers = true;
-	myopt.trans_columns = trans_columns;
+	nrows = PQntuples(res);
+	attr = pg_malloc_zero((nrows + 1) * sizeof(*attr));
 
-	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+	printTableInit(&cont, &myopt, _("List of roles"), ncols, nrows);
+
+	printTableAddHeader(&cont, gettext_noop("Role name"), true, align);
+	printTableAddHeader(&cont, gettext_noop("Attributes"), true, align);
+	printTableAddHeader(&cont, gettext_noop("Member of"), true, align);
+
+	if (verbose)
+		printTableAddHeader(&cont, gettext_noop("Description"), true, align);
+
+	for (i = 0; i < nrows; i++)
+	{
+		printTableAddCell(&cont, PQgetvalue(res, i, 0), false);
+
+		resetPQExpBuffer(&buf);
+		if (strcmp(PQgetvalue(res, i, 1), "t") == 0)
+			add_role_attribute(&buf, _("Superuser"));
+
+		if (strcmp(PQgetvalue(res, i, 2), "t") != 0)
+			add_role_attribute(&buf, _("No inheritance"));
+
+		if (strcmp(PQgetvalue(res, i, 3), "t") == 0)
+			add_role_attribute(&buf, _("Create role"));
+
+		if (strcmp(PQgetvalue(res, i, 4), "t") == 0)
+			add_role_attribute(&buf, _("Create DB"));
+
+		if (strcmp(PQgetvalue(res, i, 5), "t") != 0)
+			add_role_attribute(&buf, _("Cannot login"));
+
+		conns = atoi(PQgetvalue(res, i, 6));
+		if (conns >= 0)
+		{
+			if (buf.len > 0)
+				appendPQExpBufferStr(&buf, "\n");
+
+			if (conns == 0)
+				appendPQExpBuffer(&buf, _("No connections"));
+			else if (conns == 1)
+				appendPQExpBuffer(&buf, _("1 connection"));
+			else
+				appendPQExpBuffer(&buf, _("%d connections"), conns);
+		}
+
+		attr[i] = pg_strdup(buf.data);
+
+		printTableAddCell(&cont, attr[i], false);
+
+		printTableAddCell(&cont, PQgetvalue(res, i, 7), false);
+
+		if (verbose)
+			printTableAddCell(&cont, PQgetvalue(res, i, 8), false);
+	}
+	termPQExpBuffer(&buf);
+
+	printTable(&cont, pset.queryFout, pset.logfile);
+	printTableCleanup(&cont);
+
+	for (i = 0; i < nrows; i++)
+		free(attr[i]);
+	free(attr);
 
 	PQclear(res);
 	return true;
+}
+
+void
+add_role_attribute(PQExpBuffer buf, const char *const str)
+{
+	if (buf->len > 0)
+		appendPQExpBufferStr(buf, "\n");
+
+	appendPQExpBufferStr(buf, str);
 }
 
 
