@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.98 2008/05/03 00:11:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.99 2008/05/13 22:10:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,8 @@ enum
 	PLPGSQL_RC_OK,
 	PLPGSQL_RC_EXIT,
 	PLPGSQL_RC_RETURN,
-	PLPGSQL_RC_CONTINUE
+	PLPGSQL_RC_CONTINUE,
+	PLPGSQL_RC_RERAISE
 };
 
 /* ----------
@@ -117,6 +118,18 @@ enum
 {
 	PLPGSQL_GETDIAG_ROW_COUNT,
 	PLPGSQL_GETDIAG_RESULT_OID
+};
+
+/* --------
+ * RAISE statement options
+ * --------
+ */
+enum
+{
+	PLPGSQL_RAISEOPTION_ERRCODE,
+	PLPGSQL_RAISEOPTION_MESSAGE,
+	PLPGSQL_RAISEOPTION_DETAIL,
+	PLPGSQL_RAISEOPTION_HINT
 };
 
 
@@ -539,9 +552,17 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	int			elog_level;
-	char	   *message;
-	List	   *params;			/* list of expressions */
+	char	   *condname;		/* condition name, SQLSTATE, or NULL */
+	char	   *message;		/* old-style message format literal, or NULL */
+	List	   *params;			/* list of expressions for old-style message */
+	List	   *options;		/* list of PLpgSQL_raise_option */
 } PLpgSQL_stmt_raise;
+
+typedef struct
+{								/* RAISE statement option */
+	int 		opt_type;
+	PLpgSQL_expr *expr;
+} PLpgSQL_raise_option;
 
 
 typedef struct
@@ -772,6 +793,8 @@ extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
 					   bool add2namespace);
 extern PLpgSQL_rec *plpgsql_build_record(const char *refname, int lineno,
 										 bool add2namespace);
+extern int	plpgsql_recognize_err_condition(const char *condname,
+											bool allow_sqlstate);
 extern PLpgSQL_condition *plpgsql_parse_err_condition(char *condname);
 extern void plpgsql_adddatum(PLpgSQL_datum *new);
 extern int	plpgsql_add_initdatums(int **varnos);

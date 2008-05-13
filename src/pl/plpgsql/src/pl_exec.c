@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.213 2008/05/12 20:02:02 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.214 2008/05/13 22:10:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,13 +316,17 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 		estate.err_text = NULL;
 
 		/*
-		 * Provide a more helpful message if a CONTINUE has been used outside
-		 * a loop.
+		 * Provide a more helpful message if a CONTINUE or RAISE has been used
+		 * outside the context it can work in.
 		 */
 		if (rc == PLPGSQL_RC_CONTINUE)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("CONTINUE cannot be used outside a loop")));
+		else if (rc == PLPGSQL_RC_RERAISE)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("RAISE without parameters cannot be used outside an exception handler")));
 		else
 			ereport(ERROR,
 			   (errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
@@ -662,13 +666,17 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		estate.err_text = NULL;
 
 		/*
-		 * Provide a more helpful message if a CONTINUE has been used outside
-		 * a loop.
+		 * Provide a more helpful message if a CONTINUE or RAISE has been used
+		 * outside the context it can work in.
 		 */
 		if (rc == PLPGSQL_RC_CONTINUE)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("CONTINUE cannot be used outside a loop")));
+		else if (rc == PLPGSQL_RC_RERAISE)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("RAISE without parameters cannot be used outside an exception handler")));
 		else
 			ereport(ERROR,
 			   (errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
@@ -1109,6 +1117,11 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 					free_var(errm_var);
 					errm_var->value = (Datum) 0;
 					errm_var->isnull = true;
+
+					/* re-throw error if requested by handler */
+					if (rc == PLPGSQL_RC_RERAISE)
+						ReThrowError(edata);
+
 					break;
 				}
 			}
@@ -1139,8 +1152,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 	switch (rc)
 	{
 		case PLPGSQL_RC_OK:
-		case PLPGSQL_RC_CONTINUE:
 		case PLPGSQL_RC_RETURN:
+		case PLPGSQL_RC_CONTINUE:
+		case PLPGSQL_RC_RERAISE:
 			return rc;
 
 		case PLPGSQL_RC_EXIT:
@@ -1469,7 +1483,8 @@ exec_stmt_loop(PLpgSQL_execstate *estate, PLpgSQL_stmt_loop *stmt)
 				break;
 
 			case PLPGSQL_RC_RETURN:
-				return PLPGSQL_RC_RETURN;
+			case PLPGSQL_RC_RERAISE:
+				return rc;
 
 			default:
 				elog(ERROR, "unrecognized rc: %d", rc);
@@ -1532,7 +1547,8 @@ exec_stmt_while(PLpgSQL_execstate *estate, PLpgSQL_stmt_while *stmt)
 				break;
 
 			case PLPGSQL_RC_RETURN:
-				return PLPGSQL_RC_RETURN;
+			case PLPGSQL_RC_RERAISE:
+				return rc;
 
 			default:
 				elog(ERROR, "unrecognized rc: %d", rc);
@@ -1650,8 +1666,9 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		 */
 		rc = exec_stmts(estate, stmt->body);
 
-		if (rc == PLPGSQL_RC_RETURN)
-			break;				/* return from function */
+		if (rc == PLPGSQL_RC_RETURN ||
+			rc == PLPGSQL_RC_RERAISE)
+			break;				/* break out of the loop */
 		else if (rc == PLPGSQL_RC_EXIT)
 		{
 			if (estate->exitlabel == NULL)
@@ -2267,64 +2284,163 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 static int
 exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 {
-	char	   *cp;
-	PLpgSQL_dstring ds;
-	ListCell   *current_param;
+	int			err_code = 0;
+	char	   *condname = NULL;
+	char	   *err_message = NULL;
+	char	   *err_detail = NULL;
+	char	   *err_hint = NULL;
+	ListCell   *lc;
 
-	plpgsql_dstring_init(&ds);
-	current_param = list_head(stmt->params);
+	/* RAISE with no parameters: re-throw current exception */
+	if (stmt->condname == NULL && stmt->message == NULL &&
+		stmt->options == NIL)
+		return PLPGSQL_RC_RERAISE;
 
-	for (cp = stmt->message; *cp; cp++)
+	if (stmt->condname)
 	{
-		/*
-		 * Occurrences of a single % are replaced by the next parameter's
-		 * external representation. Double %'s are converted to one %.
-		 */
-		if (cp[0] == '%')
-		{
-			Oid			paramtypeid;
-			Datum		paramvalue;
-			bool		paramisnull;
-			char	   *extval;
-
-			if (cp[1] == '%')
-			{
-				plpgsql_dstring_append_char(&ds, cp[1]);
-				cp++;
-				continue;
-			}
-
-			if (current_param == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("too few parameters specified for RAISE")));
-
-			paramvalue = exec_eval_expr(estate,
-									  (PLpgSQL_expr *) lfirst(current_param),
-										&paramisnull,
-										&paramtypeid);
-
-			if (paramisnull)
-				extval = "<NULL>";
-			else
-				extval = convert_value_to_string(paramvalue, paramtypeid);
-			plpgsql_dstring_append(&ds, extval);
-			current_param = lnext(current_param);
-			exec_eval_cleanup(estate);
-			continue;
-		}
-
-		plpgsql_dstring_append_char(&ds, cp[0]);
+		err_code = plpgsql_recognize_err_condition(stmt->condname, true);
+		condname = pstrdup(stmt->condname);
 	}
 
-	/*
-	 * If more parameters were specified than were required to process the
-	 * format string, throw an error
-	 */
-	if (current_param != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("too many parameters specified for RAISE")));
+	if (stmt->message)
+	{
+		PLpgSQL_dstring ds;
+		ListCell   *current_param;
+		char	   *cp;
+
+		plpgsql_dstring_init(&ds);
+		current_param = list_head(stmt->params);
+
+		for (cp = stmt->message; *cp; cp++)
+		{
+			/*
+			 * Occurrences of a single % are replaced by the next parameter's
+			 * external representation. Double %'s are converted to one %.
+			 */
+			if (cp[0] == '%')
+			{
+				Oid			paramtypeid;
+				Datum		paramvalue;
+				bool		paramisnull;
+				char	   *extval;
+
+				if (cp[1] == '%')
+				{
+					plpgsql_dstring_append_char(&ds, cp[1]);
+					cp++;
+					continue;
+				}
+
+				if (current_param == NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("too few parameters specified for RAISE")));
+
+				paramvalue = exec_eval_expr(estate,
+											(PLpgSQL_expr *) lfirst(current_param),
+											&paramisnull,
+											&paramtypeid);
+
+				if (paramisnull)
+					extval = "<NULL>";
+				else
+					extval = convert_value_to_string(paramvalue, paramtypeid);
+				plpgsql_dstring_append(&ds, extval);
+				current_param = lnext(current_param);
+				exec_eval_cleanup(estate);
+			}
+			else
+				plpgsql_dstring_append_char(&ds, cp[0]);
+		}
+
+		/*
+		 * If more parameters were specified than were required to process the
+		 * format string, throw an error
+		 */
+		if (current_param != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("too many parameters specified for RAISE")));
+
+		err_message = plpgsql_dstring_get(&ds);
+		/* No dstring_free here, the pfree(err_message) does it */
+	}
+
+	foreach(lc, stmt->options)
+	{
+		PLpgSQL_raise_option *opt = (PLpgSQL_raise_option *) lfirst(lc);
+		Datum		optionvalue;
+		bool		optionisnull;
+		Oid			optiontypeid;
+		char	   *extval;
+
+		optionvalue = exec_eval_expr(estate, opt->expr,
+									 &optionisnull,
+									 &optiontypeid);
+		if (optionisnull)
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("RAISE statement option cannot be NULL")));
+
+		extval = convert_value_to_string(optionvalue, optiontypeid);
+
+		switch (opt->opt_type)
+		{
+			case PLPGSQL_RAISEOPTION_ERRCODE:
+				if (err_code)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("RAISE option already specified: %s",
+									"ERRCODE")));
+				err_code = plpgsql_recognize_err_condition(extval, true);
+				condname = pstrdup(extval);
+				break;
+			case PLPGSQL_RAISEOPTION_MESSAGE:
+				if (err_message)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("RAISE option already specified: %s",
+									"MESSAGE")));
+				err_message = pstrdup(extval);
+				break;
+			case PLPGSQL_RAISEOPTION_DETAIL:
+				if (err_detail)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("RAISE option already specified: %s",
+									"DETAIL")));
+				err_detail = pstrdup(extval);
+				break;
+			case PLPGSQL_RAISEOPTION_HINT:
+				if (err_hint)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("RAISE option already specified: %s",
+									"HINT")));
+				err_hint = pstrdup(extval);
+				break;
+			default:
+				elog(ERROR, "unrecognized raise option: %d", opt->opt_type);
+		}
+
+		exec_eval_cleanup(estate);
+	}
+
+	/* Default code if nothing specified */
+	if (err_code == 0 && stmt->elog_level >= ERROR)
+		err_code = ERRCODE_RAISE_EXCEPTION;
+
+	/* Default error message if nothing specified */
+	if (err_message == NULL)
+	{
+		if (condname)
+		{
+			err_message = condname;
+			condname = NULL;
+		}
+		else
+			err_message = pstrdup(unpack_sql_state(err_code));
+	}
 
 	/*
 	 * Throw the error (may or may not come back)
@@ -2332,12 +2448,21 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 	estate->err_text = raise_skip_msg;	/* suppress traceback of raise */
 
 	ereport(stmt->elog_level,
-		 ((stmt->elog_level >= ERROR) ? errcode(ERRCODE_RAISE_EXCEPTION) : 0,
-		  errmsg_internal("%s", plpgsql_dstring_get(&ds))));
+			(err_code ? errcode(err_code) : 0,
+			 errmsg_internal("%s", err_message),
+			 (err_detail != NULL) ? errdetail(err_detail) : 0,
+			 (err_hint != NULL) ? errhint(err_hint) : 0));
 
 	estate->err_text = NULL;	/* un-suppress... */
 
-	plpgsql_dstring_free(&ds);
+	if (condname != NULL)
+		pfree(condname);
+	if (err_message != NULL)
+		pfree(err_message);
+	if (err_detail != NULL)
+		pfree(err_detail);
+	if (err_hint != NULL)
+		pfree(err_hint);
 
 	return PLPGSQL_RC_OK;
 }

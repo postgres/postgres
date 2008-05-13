@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.70 2008/05/03 00:11:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.71 2008/05/13 22:10:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1003,7 +1003,12 @@ dump_raise(PLpgSQL_stmt_raise *stmt)
 	int			i = 0;
 
 	dump_ind();
-	printf("RAISE '%s'\n", stmt->message);
+	printf("RAISE level=%d", stmt->elog_level);
+	if (stmt->condname)
+		printf(" condname='%s'", stmt->condname);
+	if (stmt->message)
+		printf(" message='%s'", stmt->message);
+	printf("\n");
 	dump_indent += 2;
 	foreach(lc, stmt->params)
 	{
@@ -1011,6 +1016,36 @@ dump_raise(PLpgSQL_stmt_raise *stmt)
 		printf("    parameter %d: ", i++);
 		dump_expr((PLpgSQL_expr *) lfirst(lc));
 		printf("\n");
+	}
+	if (stmt->options)
+	{
+		dump_ind();
+		printf("    USING\n");
+		dump_indent += 2;
+		foreach(lc, stmt->options)
+		{
+			PLpgSQL_raise_option *opt = (PLpgSQL_raise_option *) lfirst(lc);
+		
+			dump_ind();
+			switch (opt->opt_type)
+			{
+				case PLPGSQL_RAISEOPTION_ERRCODE:
+					printf("    ERRCODE = ");
+					break;
+				case PLPGSQL_RAISEOPTION_MESSAGE:
+					printf("    MESSAGE = ");
+					break;	
+				case PLPGSQL_RAISEOPTION_DETAIL:
+					printf("    DETAIL = ");
+					break;
+				case PLPGSQL_RAISEOPTION_HINT:
+					printf("    HINT = ");
+					break;
+			}
+			dump_expr(opt->expr);
+			printf("\n");
+		}		
+		dump_indent -= 2;
 	}
 	dump_indent -= 2;
 }

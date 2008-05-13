@@ -2670,7 +2670,7 @@ begin
 end;
 $$ language plpgsql;
 
--- return query execute
+-- test RETURN QUERY EXECUTE
 
 create or replace function return_dquery()
 returns setof int as $$
@@ -2683,3 +2683,132 @@ $$ language plpgsql;
 select * from return_dquery();
 
 drop function return_dquery();
+
+-- Tests for 8.4's new RAISE features
+
+create or replace function raise_test() returns void as $$
+begin
+  raise notice '% % %', 1, 2, 3 
+     using errcode = '55001', detail = 'some detail info', hint = 'some hint';
+  raise '% % %', 1, 2, 3 
+     using errcode = 'division_by_zero', detail = 'some detail info';
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+-- Since we can't actually see the thrown SQLSTATE in default psql output,
+-- test it like this; this also tests re-RAISE
+
+create or replace function raise_test() returns void as $$
+begin
+  raise 'check me'
+     using errcode = 'division_by_zero', detail = 'some detail info';
+  exception
+    when others then
+      raise notice 'SQLSTATE: % SQLERRM: %', sqlstate, sqlerrm;
+      raise;
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+create or replace function raise_test() returns void as $$
+begin
+  raise 'check me'
+     using errcode = '1234F', detail = 'some detail info';
+  exception
+    when others then
+      raise notice 'SQLSTATE: % SQLERRM: %', sqlstate, sqlerrm;
+      raise;
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+-- SQLSTATE specification in WHEN
+create or replace function raise_test() returns void as $$
+begin
+  raise 'check me'
+     using errcode = '1234F', detail = 'some detail info';
+  exception
+    when sqlstate '1234F' then
+      raise notice 'SQLSTATE: % SQLERRM: %', sqlstate, sqlerrm;
+      raise;
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+create or replace function raise_test() returns void as $$
+begin
+  raise division_by_zero using detail = 'some detail info';
+  exception
+    when others then
+      raise notice 'SQLSTATE: % SQLERRM: %', sqlstate, sqlerrm;
+      raise;
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+create or replace function raise_test() returns void as $$
+begin
+  raise division_by_zero;
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+create or replace function raise_test() returns void as $$
+begin
+  raise sqlstate '1234F';
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+create or replace function raise_test() returns void as $$
+begin
+  raise division_by_zero using message = 'custom' || ' message';
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+create or replace function raise_test() returns void as $$
+begin
+  raise using message = 'custom' || ' message', errcode = '22012';
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+-- conflict on message
+create or replace function raise_test() returns void as $$
+begin
+  raise notice 'some message' using message = 'custom' || ' message', errcode = '22012';
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+-- conflict on errcode
+create or replace function raise_test() returns void as $$
+begin
+  raise division_by_zero using message = 'custom' || ' message', errcode = '22012';
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+-- nothing to re-RAISE
+create or replace function raise_test() returns void as $$
+begin
+  raise;
+end;
+$$ language plpgsql;
+
+select raise_test();
+
+drop function raise_test();

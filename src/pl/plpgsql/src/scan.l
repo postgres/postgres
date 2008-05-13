@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.62 2008/05/09 15:36:31 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.63 2008/05/13 22:10:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,6 @@ close			{ return K_CLOSE;			}
 constant		{ return K_CONSTANT;		}
 continue		{ return K_CONTINUE;		}
 cursor			{ return K_CURSOR;			}
-debug			{ return K_DEBUG;			}
 declare			{ return K_DECLARE;			}
 default			{ return K_DEFAULT;			}
 diagnostics		{ return K_DIAGNOSTICS;		}
@@ -137,16 +136,13 @@ from			{ return K_FROM;			}
 get				{ return K_GET;				}
 if				{ return K_IF;				}
 in				{ return K_IN;				}
-info			{ return K_INFO;			}
 insert			{ return K_INSERT;			}
 into			{ return K_INTO;			}
 is				{ return K_IS;				}
-log				{ return K_LOG;				}
 loop			{ return K_LOOP;			}
 move			{ return K_MOVE;			}
 no{space}+scroll { return K_NOSCROLL;		}
 not				{ return K_NOT;				}
-notice			{ return K_NOTICE;			}
 null			{ return K_NULL;			}
 open			{ return K_OPEN;			}
 or				{ return K_OR;				}
@@ -163,7 +159,6 @@ then			{ return K_THEN;			}
 to				{ return K_TO;				}
 type			{ return K_TYPE;			}
 using			{ return K_USING;			}
-warning			{ return K_WARNING;			}
 when			{ return K_WHEN;			}
 while			{ return K_WHILE;			}
 
