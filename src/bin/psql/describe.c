@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.171 2008/05/12 22:59:58 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.172 2008/05/13 00:14:11 alvherre Exp $
  */
 #include "postgres_fe.h"
 
@@ -865,6 +865,45 @@ describeOneTableDetails(const char *schemaname,
 		goto error_return;
 	numrows = PQntuples(res);
 
+	/* Make title */
+	switch (tableinfo.relkind)
+	{
+		case 'r':
+			printfPQExpBuffer(&title, _("Table \"%s.%s\""),
+							  schemaname, relationname);
+			break;
+		case 'v':
+			printfPQExpBuffer(&title, _("View \"%s.%s\""),
+							  schemaname, relationname);
+			break;
+		case 'S':
+			printfPQExpBuffer(&title, _("Sequence \"%s.%s\""),
+							  schemaname, relationname);
+			break;
+		case 'i':
+			printfPQExpBuffer(&title, _("Index \"%s.%s\""),
+							  schemaname, relationname);
+			break;
+		case 's':
+			/* not used as of 8.2, but keep it for backwards compatibility */
+			printfPQExpBuffer(&title, _("Special relation \"%s.%s\""),
+							  schemaname, relationname);
+			break;
+		case 't':
+			printfPQExpBuffer(&title, _("TOAST table \"%s.%s\""),
+							  schemaname, relationname);
+			break;
+		case 'c':
+			printfPQExpBuffer(&title, _("Composite type \"%s.%s\""),
+							  schemaname, relationname);
+			break;
+		default:
+			/* untranslated unknown relkind */
+			printfPQExpBuffer(&title, "?%c? \"%s.%s\"",
+							  tableinfo.relkind, schemaname, relationname);
+			break;
+	}
+
 	/* Set the number of columns, and their names */
 	cols = 2;
 	headers[0] = "Column";
@@ -935,45 +974,6 @@ describeOneTableDetails(const char *schemaname,
 		/* Description */
 		if (verbose)
 			printTableAddCell(&cont, PQgetvalue(res, i, 5), false);
-	}
-
-	/* Make title */
-	switch (tableinfo.relkind)
-	{
-		case 'r':
-			printfPQExpBuffer(&title, _("Table \"%s.%s\""),
-							  schemaname, relationname);
-			break;
-		case 'v':
-			printfPQExpBuffer(&title, _("View \"%s.%s\""),
-							  schemaname, relationname);
-			break;
-		case 'S':
-			printfPQExpBuffer(&title, _("Sequence \"%s.%s\""),
-							  schemaname, relationname);
-			break;
-		case 'i':
-			printfPQExpBuffer(&title, _("Index \"%s.%s\""),
-							  schemaname, relationname);
-			break;
-		case 's':
-			/* not used as of 8.2, but keep it for backwards compatibility */
-			printfPQExpBuffer(&title, _("Special relation \"%s.%s\""),
-							  schemaname, relationname);
-			break;
-		case 't':
-			printfPQExpBuffer(&title, _("TOAST table \"%s.%s\""),
-							  schemaname, relationname);
-			break;
-		case 'c':
-			printfPQExpBuffer(&title, _("Composite type \"%s.%s\""),
-							  schemaname, relationname);
-			break;
-		default:
-			/* untranslated unknown relkind */
-			printfPQExpBuffer(&title, "?%c? \"%s.%s\"",
-							  tableinfo.relkind, schemaname, relationname);
-			break;
 	}
 
 	/* Make footers */

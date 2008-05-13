@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.100 2008/05/12 22:59:58 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.101 2008/05/13 00:14:11 alvherre Exp $
  */
 #include "postgres_fe.h"
 
@@ -1918,8 +1918,10 @@ ClosePager(FILE *pagerpipe)
 
 /*
  * Initialise a table contents struct.
+ *		Must be called before any other printTable method is used.
  *
- * Must be called before any other printTable method is used.
+ * The title is not duplicated; the caller must ensure that the buffer
+ * is available for the lifetime of the printTableContent struct.
  *
  * If you call this, you must call printTableCleanup once you're done with the
  * table.
