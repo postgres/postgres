@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.292.2.3 2008/05/09 15:28:01 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.292.2.4 2008/05/13 20:54:02 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3317,8 +3317,11 @@ got_record:;
 	return (XLogRecord *) buffer;
 
 next_record_is_invalid:;
-	close(readFile);
-	readFile = -1;
+	if (readFile >= 0)
+	{
+		close(readFile);
+		readFile = -1;
+	}
 	nextRecord = NULL;
 	return NULL;
 }
