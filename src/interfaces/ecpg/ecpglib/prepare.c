@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.27 2008/05/12 16:29:04 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.28 2008/05/14 15:16:27 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -117,7 +117,6 @@ ECPGprepare(int lineno, const char *connection_name, const int questionmarks, co
 	struct statement *stmt;
 	struct prepared_statement *this,
 			   *prev;
-	struct sqlca_t *sqlca = ECPGget_sqlca();
 	PGresult   *query;
 
 	con = ecpg_get_connection(connection_name);
