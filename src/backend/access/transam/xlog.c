@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.308 2008/05/13 20:53:52 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.309 2008/05/14 14:02:57 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,16 +85,11 @@ bool		XLOG_DEBUG = false;
  */
 #define XLOGfileslop	(2*CheckPointSegments + 1)
 
-
-/* these are derived from XLOG_sync_method by assign_xlog_sync_method */
-int			sync_method = DEFAULT_SYNC_METHOD;
-static int	open_sync_bit = DEFAULT_SYNC_FLAGBIT;
-
-#define XLOG_SYNC_BIT  (enableFsync ? open_sync_bit : 0)
-
 /*
  * GUC support
  */
+int 		sync_method = DEFAULT_SYNC_METHOD;
+
 const struct config_enum_entry sync_method_options[] = {
 	{"fsync", SYNC_METHOD_FSYNC},
 #ifdef HAVE_FSYNC_WRITETHROUGH
@@ -444,6 +439,7 @@ static void pg_start_backup_callback(int code, Datum arg);
 static bool read_backup_label(XLogRecPtr *checkPointLoc,
 				  XLogRecPtr *minRecoveryLoc);
 static void rm_redo_error_callback(void *arg);
+static int get_sync_bit(int method);
 
 
 /*
@@ -1960,7 +1956,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	 */
 	if (*use_existent)
 	{
-		fd = BasicOpenFile(path, O_RDWR | PG_BINARY | XLOG_SYNC_BIT,
+		fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 						   S_IRUSR | S_IWUSR);
 		if (fd < 0)
 		{
@@ -1986,7 +1982,7 @@ XLogFileInit(uint32 log, uint32 seg,
 
 	unlink(tmppath);
 
-	/* do not use XLOG_SYNC_BIT here --- want to fsync only at end of fill */
+	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
@@ -2064,7 +2060,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	*use_existent = false;
 
 	/* Now open original target segment (might not be file I just made) */
-	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | XLOG_SYNC_BIT,
+	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		ereport(ERROR,
@@ -2115,7 +2111,7 @@ XLogFileCopy(uint32 log, uint32 seg,
 
 	unlink(tmppath);
 
-	/* do not use XLOG_SYNC_BIT here --- want to fsync only at end of fill */
+	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
@@ -2297,7 +2293,7 @@ XLogFileOpen(uint32 log, uint32 seg)
 
 	XLogFilePath(path, ThisTimeLineID, log, seg);
 
-	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | XLOG_SYNC_BIT,
+	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		ereport(PANIC,
@@ -3653,7 +3649,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 
 	unlink(tmppath);
 
-	/* do not use XLOG_SYNC_BIT here --- want to fsync only at end of fill */
+	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
@@ -6331,14 +6327,17 @@ xlog_outrec(StringInfo buf, XLogRecord *record)
 
 
 /*
- * GUC support
+ * Return the (possible) sync flag used for opening a file, depending on the
+ * value of the GUC wal_sync_method.
  */
-bool
-assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
+static int
+get_sync_bit(int method)
 {
-	int			new_sync_bit = 0;
+	/* If fsync is disabled, never open in sync mode */
+	if (!enableFsync)
+		return 0;
 
-	switch (new_sync_method)
+	switch (method)
 	{
 		/*
 		 * Values for these sync options are defined even if they are not
@@ -6349,17 +6348,14 @@ assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
 		case SYNC_METHOD_FSYNC:
 		case SYNC_METHOD_FSYNC_WRITETHROUGH:
 		case SYNC_METHOD_FDATASYNC:
-			new_sync_bit = 0;
-			break;
+			return 0;
 #ifdef OPEN_SYNC_FLAG
 		case SYNC_METHOD_OPEN:
-			new_sync_bit = OPEN_SYNC_FLAG;
-			break;
+			return OPEN_SYNC_FLAG;
 #endif
 #ifdef OPEN_DATASYNC_FLAG
 		case SYNC_METHOD_OPEN_DSYNC:
-			new_sync_bit = OPEN_DATASYNC_FLAG;
-		break;
+			return OPEN_DATASYNC_FLAG;
 #endif
 		default:
 			/* 
@@ -6367,14 +6363,21 @@ assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
 			 * new_sync_method are controlled by the available enum
 			 * options.
 			 */
-			elog(PANIC, "unrecognized wal_sync_method: %d", new_sync_method);
-			break;
+			elog(PANIC, "unrecognized wal_sync_method: %d", method);
+			return 0; /* silence warning */
 	}
+}
 
+/*
+ * GUC support
+ */
+bool
+assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
+{
 	if (!doit)
 		return true;
 
-	if (sync_method != new_sync_method || open_sync_bit != new_sync_bit)
+	if (sync_method != new_sync_method)
 	{
 		/*
 		 * To ensure that no blocks escape unsynced, force an fsync on the
@@ -6389,11 +6392,9 @@ assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
 						(errcode_for_file_access(),
 						 errmsg("could not fsync log file %u, segment %u: %m",
 								openLogId, openLogSeg)));
-			if (open_sync_bit != new_sync_bit)
+			if (get_sync_bit(sync_method)  != get_sync_bit(new_sync_method))
 				XLogFileClose();
 		}
-		sync_method = new_sync_method;
-		open_sync_bit = new_sync_bit;
 	}
 
 	return true;
