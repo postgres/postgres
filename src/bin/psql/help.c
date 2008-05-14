@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.126 2008/04/04 18:00:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.127 2008/05/14 15:30:22 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -160,7 +160,7 @@ slashUsage(unsigned short int pager)
 {
 	FILE	   *output;
 
-	output = PageOutput(69, pager);
+	output = PageOutput(78, pager);
 
 	/* if you add/remove a line here, change the row count above */
 
@@ -169,25 +169,9 @@ slashUsage(unsigned short int pager)
 	 * in 80 columns >> "
 	 */
 	fprintf(output, _("General\n"));
-	fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
-			"                 connect to new database (currently \"%s\")\n"),
-			PQdb(pset.db));
-	fprintf(output, _("  \\cd [DIR]      change the current working directory\n"));
 	fprintf(output, _("  \\copyright     show PostgreSQL usage and distribution terms\n"));
-	fprintf(output, _("  \\encoding [ENCODING]\n"
-					  "                 show or set client encoding\n"));
 	fprintf(output, _("  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"));
-	fprintf(output, _("  \\prompt [TEXT] NAME\n"
-				 "                 prompt user to set internal variable\n"));
-	fprintf(output, _("  \\password [USERNAME]\n"
-				 "                 securely change the password for a user\n"));
 	fprintf(output, _("  \\q             quit psql\n"));
-	fprintf(output, _("  \\set [NAME [VALUE]]\n"
-					  "                 set internal variable, or list all if no parameters\n"));
-	fprintf(output, _("  \\timing        toggle timing of commands (currently %s)\n"),
-			ON(pset.timing));
-	fprintf(output, _("  \\unset NAME    unset (delete) internal variable\n"));
-	fprintf(output, _("  \\! [COMMAND]   execute command in shell or start interactive shell\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Query Buffer\n"));
@@ -202,11 +186,11 @@ slashUsage(unsigned short int pager)
 	fprintf(output, "\n");
 
 	fprintf(output, _("Input/Output\n"));
+	fprintf(output, _("  \\copy ...      perform SQL COPY with data stream to the client host\n"));
 	fprintf(output, _("  \\echo [STRING] write string to standard output\n"));
 	fprintf(output, _("  \\i FILE        execute commands from file\n"));
 	fprintf(output, _("  \\o [FILE]      send all query results to file or |pipe\n"));
-	fprintf(output, _("  \\qecho [STRING]\n"
-		"                 write string to query output stream (see \\o)\n"));
+	fprintf(output, _("  \\qecho [STRING] write string to query output stream (see \\o)\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Informational\n"));
@@ -241,8 +225,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\f [STRING]    show or set field separator for unaligned query output\n"));
 	fprintf(output, _("  \\H             toggle HTML output mode (currently %s)\n"),
 			ON(pset.popt.topt.format == PRINT_HTML));
-	fprintf(output, _("  \\pset NAME [VALUE]\n"
-					  "                 set table output option\n"
+	fprintf(output, _("  \\pset NAME [VALUE]  set table output option\n"
 					  "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
 					  "                 numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"));
 	fprintf(output, _("  \\t             show only rows (currently %s)\n"),
@@ -252,8 +235,28 @@ slashUsage(unsigned short int pager)
 			ON(pset.popt.topt.expanded));
 	fprintf(output, "\n");
 
-	fprintf(output, _("Copy, Large Object\n"));
-	fprintf(output, _("  \\copy ...      perform SQL COPY with data stream to the client host\n"));
+	fprintf(output, _("Connection\n"));
+	fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
+			"                 connect to new database (currently \"%s\")\n"),
+			PQdb(pset.db));
+	fprintf(output, _("  \\encoding [ENCODING]  show or set client encoding\n"));
+	fprintf(output, _("  \\password [USERNAME]  securely change the password for a user\n"));
+	fprintf(output, "\n");
+
+	fprintf(output, _("External\n"));
+	fprintf(output, _("  \\cd [DIR]      change the current working directory\n"));
+	fprintf(output, _("  \\timing        toggle timing of commands (currently %s)\n"),
+			ON(pset.timing));
+	fprintf(output, _("  \\! [COMMAND]   execute command in shell or start interactive shell\n"));
+	fprintf(output, "\n");
+
+	fprintf(output, _("Variable\n"));
+	fprintf(output, _("  \\prompt [TEXT] NAME  prompt user to set internal variable\n"));
+	fprintf(output, _("  \\set [NAME [VALUE]]  set internal variable, or list all if no parameters\n"));
+	fprintf(output, _("  \\unset NAME          unset (delete) internal variable\n"));
+	fprintf(output, "\n");
+
+	fprintf(output, _("Large Object\n"));
 	fprintf(output, _("  \\lo_export LOBOID FILE\n"
 					  "  \\lo_import FILE [COMMENT]\n"
 					  "  \\lo_list\n"
