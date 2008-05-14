@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getrusage.c,v 1.14 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/getrusage.c,v 1.15 2008/05/14 07:28:13 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,13 @@ getrusage(int who, struct rusage * rusage)
 	FILETIME	usertime;
 	ULARGE_INTEGER li;
 
+	if (who != RUSAGE_SELF)
+	{
+		/* Only RUSAGE_SELF is supported in this implementation for now */
+		errno = EINVAL;
+		return -1;
+	}
+	
 	if (rusage == (struct rusage *) NULL)
 	{
 		errno = EFAULT;
