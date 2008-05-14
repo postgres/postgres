@@ -7,7 +7,7 @@
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.20 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.21 2008/05/14 19:10:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,25 +55,7 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 	}
 
 	INSTR_TIME_SET_CURRENT(endtime);
-
-#ifndef WIN32
-	instr->counter.tv_sec += endtime.tv_sec - instr->starttime.tv_sec;
-	instr->counter.tv_usec += endtime.tv_usec - instr->starttime.tv_usec;
-
-	/* Normalize after each add to avoid overflow/underflow of tv_usec */
-	while (instr->counter.tv_usec < 0)
-	{
-		instr->counter.tv_usec += 1000000;
-		instr->counter.tv_sec--;
-	}
-	while (instr->counter.tv_usec >= 1000000)
-	{
-		instr->counter.tv_usec -= 1000000;
-		instr->counter.tv_sec++;
-	}
-#else							/* WIN32 */
-	instr->counter.QuadPart += (endtime.QuadPart - instr->starttime.QuadPart);
-#endif
+	INSTR_TIME_ACCUM_DIFF(instr->counter, endtime, instr->starttime);
 
 	INSTR_TIME_SET_ZERO(instr->starttime);
 

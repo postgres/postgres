@@ -4,7 +4,7 @@
 #
 # 'make install' installs whole contents of src/include.
 #
-# $PostgreSQL: pgsql/src/include/Makefile,v 1.24 2008/03/17 19:44:41 petere Exp $
+# $PostgreSQL: pgsql/src/include/Makefile,v 1.25 2008/05/14 19:10:29 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,8 @@ SUBDIRS = access bootstrap catalog commands executor lib libpq mb \
 	nodes optimizer parser postmaster regex rewrite storage tcop \
 	snowball snowball/libstemmer tsearch tsearch/dicts utils \
 	port port/win32 port/win32_msvc port/win32_msvc/sys \
-	port/win32/arpa port/win32/netinet port/win32/sys
+	port/win32/arpa port/win32/netinet port/win32/sys \
+	portability
 
 # Install all headers
 install: all installdirs

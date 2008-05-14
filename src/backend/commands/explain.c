@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.174 2008/05/12 20:01:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.175 2008/05/14 19:10:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,19 +390,7 @@ elapsed_time(instr_time *starttime)
 	instr_time	endtime;
 
 	INSTR_TIME_SET_CURRENT(endtime);
-
-#ifndef WIN32
-	endtime.tv_sec -= starttime->tv_sec;
-	endtime.tv_usec -= starttime->tv_usec;
-	while (endtime.tv_usec < 0)
-	{
-		endtime.tv_usec += 1000000;
-		endtime.tv_sec--;
-	}
-#else							/* WIN32 */
-	endtime.QuadPart -= starttime->QuadPart;
-#endif
-
+	INSTR_TIME_SUBTRACT(endtime, *starttime);
 	return INSTR_TIME_GET_DOUBLE(endtime);
 }
 

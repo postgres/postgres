@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.138 2008/01/01 19:45:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.139 2008/05/14 19:10:29 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -16,6 +16,8 @@
 #include <io.h>					/* for _write() */
 #include <win32.h>
 #endif
+
+#include "portability/instr_time.h"
 
 #include "pqsignal.h"
 
@@ -844,11 +846,11 @@ SendQuery(const char *query)
 	if (pset.fetch_count <= 0 || !is_select_command(query))
 	{
 		/* Default fetch-it-all-and-print mode */
-		TimevalStruct before,
+		instr_time	before,
 					after;
 
 		if (pset.timing)
-			GETTIMEOFDAY(&before);
+			INSTR_TIME_SET_CURRENT(before);
 
 		results = PQexec(pset.db, query);
 
@@ -858,8 +860,9 @@ SendQuery(const char *query)
 
 		if (pset.timing)
 		{
-			GETTIMEOFDAY(&after);
-			elapsed_msec = DIFF_MSEC(&after, &before);
+			INSTR_TIME_SET_CURRENT(after);
+			INSTR_TIME_SUBTRACT(after, before);
+			elapsed_msec = INSTR_TIME_GET_MILLISEC(after);
 		}
 
 		/* but printing results isn't: */
@@ -961,7 +964,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 	bool		did_pager = false;
 	int			ntuples;
 	char		fetch_cmd[64];
-	TimevalStruct before,
+	instr_time	before,
 				after;
 
 	*elapsed_msec = 0;
@@ -972,7 +975,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 	my_popt.topt.prior_records = 0;
 
 	if (pset.timing)
-		GETTIMEOFDAY(&before);
+		INSTR_TIME_SET_CURRENT(before);
 
 	/* if we're not in a transaction, start one */
 	if (PQtransactionStatus(pset.db) == PQTRANS_IDLE)
@@ -1001,8 +1004,9 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 
 	if (pset.timing)
 	{
-		GETTIMEOFDAY(&after);
-		*elapsed_msec += DIFF_MSEC(&after, &before);
+		INSTR_TIME_SET_CURRENT(after);
+		INSTR_TIME_SUBTRACT(after, before);
+		*elapsed_msec += INSTR_TIME_GET_MILLISEC(after);
 	}
 
 	snprintf(fetch_cmd, sizeof(fetch_cmd),
@@ -1028,15 +1032,16 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 	for (;;)
 	{
 		if (pset.timing)
-			GETTIMEOFDAY(&before);
+			INSTR_TIME_SET_CURRENT(before);
 
 		/* get FETCH_COUNT tuples at a time */
 		results = PQexec(pset.db, fetch_cmd);
 
 		if (pset.timing)
 		{
-			GETTIMEOFDAY(&after);
-			*elapsed_msec += DIFF_MSEC(&after, &before);
+			INSTR_TIME_SET_CURRENT(after);
+			INSTR_TIME_SUBTRACT(after, before);
+			*elapsed_msec += INSTR_TIME_GET_MILLISEC(after);
 		}
 
 		if (PQresultStatus(results) != PGRES_TUPLES_OK)
@@ -1112,7 +1117,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 
 cleanup:
 	if (pset.timing)
-		GETTIMEOFDAY(&before);
+		INSTR_TIME_SET_CURRENT(before);
 
 	/*
 	 * We try to close the cursor on either success or failure, but on failure
@@ -1137,8 +1142,9 @@ cleanup:
 
 	if (pset.timing)
 	{
-		GETTIMEOFDAY(&after);
-		*elapsed_msec += DIFF_MSEC(&after, &before);
+		INSTR_TIME_SET_CURRENT(after);
+		INSTR_TIME_SUBTRACT(after, before);
+		*elapsed_msec += INSTR_TIME_GET_MILLISEC(after);
 	}
 
 	return OK;
