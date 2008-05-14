@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.203 2008/05/08 17:04:26 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.204 2008/05/14 04:07:01 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1714,16 +1714,13 @@ lo_import 152801
           </para>
 
           <para>
-          When the pager is off, the pager is not used. When the pager
-          is on, the pager is used only when appropriate, i.e. the
+          When the pager is <literal>off</>, the pager is not used. When the pager
+          is <literal>on</>, the pager is used only when appropriate, i.e. the
           output is to a terminal and will not fit on the screen.
           (<application>psql</> does not do a perfect job of estimating
           when to use the pager.) <literal>\pset pager</> turns the
           pager on and off. Pager can also be set to <literal>always</>,
-          which causes the pager to be always used, or you can set the pager
-          to <literal>on</> which will enable the usage of the pager when
-          appropriate, or you can set the pager to <literal>off</> which
-          will disable the pager.
+          which causes the pager to be always used.
           </para>
           </listitem>
           </varlistentry>
