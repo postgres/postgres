@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.112 2008/05/13 22:10:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.113 2008/05/15 22:39:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,8 @@ static	PLpgSQL_stmt_fetch *read_fetch_direction(void);
 static	PLpgSQL_stmt	*make_return_stmt(int lineno);
 static	PLpgSQL_stmt	*make_return_next_stmt(int lineno);
 static	PLpgSQL_stmt	*make_return_query_stmt(int lineno);
+static  PLpgSQL_stmt 	*make_case(int lineno, PLpgSQL_expr *t_expr,
+								   List *case_when_list, List *else_stmts);
 static	void			 check_assignable(PLpgSQL_datum *datum);
 static	void			 read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row,
 										  bool *strict);
@@ -102,6 +104,7 @@ static List				*read_raise_options(void);
 		PLpgSQL_nsitem			*nsitem;
 		PLpgSQL_diag_item		*diagitem;
 		PLpgSQL_stmt_fetch		*fetch;
+		PLpgSQL_case_when		*casewhen;
 }
 
 %type <declhdr> decl_sect
@@ -116,7 +119,7 @@ static List				*read_raise_options(void);
 %type <str>		decl_stmts decl_stmt
 
 %type <expr>	expr_until_semi expr_until_rightbracket
-%type <expr>	expr_until_then expr_until_loop
+%type <expr>	expr_until_then expr_until_loop opt_expr_until_when
 %type <expr>	opt_exitcond
 
 %type <ival>	assign_var
@@ -135,11 +138,15 @@ static List				*read_raise_options(void);
 %type <stmt>	stmt_return stmt_raise stmt_execsql stmt_execsql_insert
 %type <stmt>	stmt_dynexecute stmt_for stmt_perform stmt_getdiag
 %type <stmt>	stmt_open stmt_fetch stmt_move stmt_close stmt_null
+%type <stmt>	stmt_case
 
 %type <list>	proc_exceptions
 %type <exception_block> exception_sect
 %type <exception>	proc_exception
 %type <condition>	proc_conditions proc_condition
+
+%type <casewhen>	case_when
+%type <list>	case_when_list opt_case_else
 
 %type <list>	getdiag_list
 %type <diagitem> getdiag_list_item
@@ -157,6 +164,7 @@ static List				*read_raise_options(void);
 %token	K_ASSIGN
 %token	K_BEGIN
 %token	K_BY
+%token	K_CASE
 %token	K_CLOSE
 %token	K_CONSTANT
 %token	K_CONTINUE
@@ -581,9 +589,7 @@ decl_defkey		: K_ASSIGN
 				;
 
 proc_sect		:
-					{
-						$$ = NIL;
-					}
+					{ $$ = NIL; }
 				| proc_stmts
 					{ $$ = $1; }
 				;
@@ -598,7 +604,7 @@ proc_stmts		: proc_stmts proc_stmt
 				| proc_stmt
 						{
 							if ($1 == NULL)
-								$$ = NULL;
+								$$ = NIL;
 							else
 								$$ = list_make1($1);
 						}
@@ -609,6 +615,8 @@ proc_stmt		: pl_block ';'
 				| stmt_assign
 						{ $$ = $1; }
 				| stmt_if
+						{ $$ = $1; }
+				| stmt_case
 						{ $$ = $1; }
 				| stmt_loop
 						{ $$ = $1; }
@@ -805,6 +813,67 @@ stmt_else		:
 				| K_ELSE proc_sect
 					{
 						$$ = $2;
+					}
+				;
+
+stmt_case		: K_CASE lno opt_expr_until_when case_when_list opt_case_else K_END K_CASE ';'
+					{
+						$$ = make_case($2, $3, $4, $5);
+					}
+				;
+
+opt_expr_until_when	:
+					{
+						PLpgSQL_expr *expr = NULL;
+						int	tok = yylex();
+
+						if (tok != K_WHEN)
+						{
+							plpgsql_push_back_token(tok);
+							expr = plpgsql_read_expression(K_WHEN, "WHEN");
+						}
+						plpgsql_push_back_token(K_WHEN);
+						$$ = expr;
+					}
+			    ;
+
+case_when_list	: case_when_list case_when
+					{
+						$$ = lappend($1, $2);
+					}
+				| case_when
+					{
+						$$ = list_make1($1);
+					}
+				;
+
+case_when		: K_WHEN lno expr_until_then proc_sect
+					{
+						PLpgSQL_case_when *new = palloc(sizeof(PLpgSQL_case_when));
+
+						new->lineno	= $2;
+						new->expr	= $3;
+						new->stmts	= $4;
+						$$ = new;
+					}
+				;
+
+opt_case_else	:
+					{
+						$$ = NIL;
+					}
+				| K_ELSE proc_sect
+					{
+						/*
+						 * proc_sect could return an empty list, but we
+						 * must distinguish that from not having ELSE at all.
+						 * Simplest fix is to return a list with one NULL
+						 * pointer, which make_case() must take care of.
+						 */
+						if ($2 != NIL)
+							$$ = $2;
+						else
+							$$ = list_make1(NULL);
 					}
 				;
 
@@ -2802,6 +2871,103 @@ read_raise_options(void)
 	}
 
 	return result;
+}
+
+/*
+ * Fix up CASE statement
+ */
+static PLpgSQL_stmt *
+make_case(int lineno, PLpgSQL_expr *t_expr,
+		  List *case_when_list, List *else_stmts)
+{
+	PLpgSQL_stmt_case 	*new;
+
+	new = palloc(sizeof(PLpgSQL_stmt_case));
+	new->cmd_type = PLPGSQL_STMT_CASE;
+	new->lineno = lineno;
+	new->t_expr = t_expr;
+	new->t_varno = 0;
+	new->case_when_list = case_when_list;
+	new->have_else = (else_stmts != NIL);
+	/* Get rid of list-with-NULL hack */
+	if (list_length(else_stmts) == 1 && linitial(else_stmts) == NULL)
+		new->else_stmts = NIL;
+	else
+		new->else_stmts = else_stmts;
+
+	/*
+	 * When test expression is present, we create a var for it and then
+	 * convert all the WHEN expressions to "VAR IN (original_expression)".
+	 * This is a bit klugy, but okay since we haven't yet done more than
+	 * read the expressions as text.  (Note that previous parsing won't
+	 * have complained if the WHEN ... THEN expression contained multiple
+	 * comma-separated values.)
+	 */
+	if (t_expr)
+	{
+		ListCell *l;
+		PLpgSQL_var *t_var;
+		int		t_varno;
+
+		/*
+		 * We don't yet know the result datatype of t_expr.  Build the
+		 * variable as if it were INT4; we'll fix this at runtime if needed.
+		 */
+		t_var = (PLpgSQL_var *)
+			plpgsql_build_variable("*case*", lineno,
+								   plpgsql_build_datatype(INT4OID, -1),
+								   false);
+		t_varno = t_var->varno;
+		new->t_varno = t_varno;
+
+		foreach(l, case_when_list)
+		{
+			PLpgSQL_case_when *cwt = (PLpgSQL_case_when *) lfirst(l);
+			PLpgSQL_expr *expr = cwt->expr;
+			int		nparams = expr->nparams;
+			PLpgSQL_expr *new_expr;
+			PLpgSQL_dstring ds;
+			char	buff[32];
+
+			/* Must add the CASE variable as an extra param to expression */
+			if (nparams >= MAX_EXPR_PARAMS)
+			{
+				plpgsql_error_lineno = cwt->lineno;
+				ereport(ERROR,
+					    (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					     errmsg("too many variables specified in SQL statement")));
+			}
+
+			new_expr = palloc(sizeof(PLpgSQL_expr) + sizeof(int) * (nparams + 1) - sizeof(int));
+			memcpy(new_expr, expr,
+				   sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
+			new_expr->nparams = nparams + 1;
+			new_expr->params[nparams] = t_varno;
+
+			/* And do the string hacking */
+			plpgsql_dstring_init(&ds);
+
+			plpgsql_dstring_append(&ds, "SELECT $");
+			snprintf(buff, sizeof(buff), "%d", nparams + 1);
+			plpgsql_dstring_append(&ds, buff);
+			plpgsql_dstring_append(&ds, " IN (");
+
+			/* copy expression query without SELECT keyword */
+			Assert(strncmp(expr->query, "SELECT ", 7) == 0);
+			plpgsql_dstring_append(&ds, expr->query + 7);
+			plpgsql_dstring_append_char(&ds, ')');
+
+			new_expr->query = pstrdup(plpgsql_dstring_get(&ds));
+
+			plpgsql_dstring_free(&ds);
+			pfree(expr->query);
+			pfree(expr);
+
+			cwt->expr = new_expr;
+		}
+	}
+
+	return (PLpgSQL_stmt *) new;
 }
 
 

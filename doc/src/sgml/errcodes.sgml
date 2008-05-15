@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.23 2008/01/15 01:36:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.24 2008/05/15 22:39:48 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -62,14 +62,14 @@
 
  <tgroup cols="3">
   <colspec colnum="1" colname="errorcode">
-  <colspec colnum="3" colname="constant">
-  <spanspec namest="errorcode" nameend="constant" spanname="span13">
+  <colspec colnum="3" colname="condname">
+  <spanspec namest="errorcode" nameend="condname" spanname="span13">
 
   <thead>
    <row>
     <entry>Error Code</entry>
     <entry>Meaning</entry>
-    <entry>Constant</entry>
+    <entry>Condition Name</entry>
    </row>
   </thead>
 
@@ -289,6 +289,17 @@
 <entry><literal>0P000</literal></entry>
 <entry>INVALID ROLE SPECIFICATION</entry>
 <entry>invalid_role_specification</entry>
+</row>
+
+
+<row>
+<entry spanname="span13"><emphasis role="bold">Class 20 &mdash; Case Not Found</></entry>
+</row>
+
+<row>
+<entry><literal>20000</literal></entry>
+<entry>CASE NOT FOUND</entry>
+<entry>case_not_found</entry>
 </row>
 
 

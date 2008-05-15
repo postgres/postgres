@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.214 2008/05/13 22:10:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.215 2008/05/15 22:39:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,8 @@ static int exec_stmt_getdiag(PLpgSQL_execstate *estate,
 				  PLpgSQL_stmt_getdiag *stmt);
 static int exec_stmt_if(PLpgSQL_execstate *estate,
 			 PLpgSQL_stmt_if *stmt);
+static int exec_stmt_case(PLpgSQL_execstate *estate,
+						  PLpgSQL_stmt_case *stmt);
 static int exec_stmt_loop(PLpgSQL_execstate *estate,
 			   PLpgSQL_stmt_loop *stmt);
 static int exec_stmt_while(PLpgSQL_execstate *estate,
@@ -1229,7 +1231,7 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 
 	CHECK_FOR_INTERRUPTS();
 
-	switch (stmt->cmd_type)
+	switch ((enum PLpgSQL_stmt_types) stmt->cmd_type)
 	{
 		case PLPGSQL_STMT_BLOCK:
 			rc = exec_stmt_block(estate, (PLpgSQL_stmt_block *) stmt);
@@ -1249,6 +1251,10 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 
 		case PLPGSQL_STMT_IF:
 			rc = exec_stmt_if(estate, (PLpgSQL_stmt_if *) stmt);
+			break;
+
+		case PLPGSQL_STMT_CASE:
+			rc = exec_stmt_case(estate, (PLpgSQL_stmt_case *) stmt);
 			break;
 
 		case PLPGSQL_STMT_LOOP:
@@ -1439,6 +1445,91 @@ exec_stmt_if(PLpgSQL_execstate *estate, PLpgSQL_stmt_if *stmt)
 	}
 
 	return PLPGSQL_RC_OK;
+}
+
+
+/*-----------
+ * exec_stmt_case
+ *-----------
+ */
+static int
+exec_stmt_case(PLpgSQL_execstate *estate, PLpgSQL_stmt_case *stmt)
+{
+	PLpgSQL_var *t_var = NULL;
+	bool		isnull;
+	ListCell   *l;
+
+	if (stmt->t_expr != NULL)
+	{
+		/* simple case */
+		Datum	t_val;
+		Oid		t_oid;
+
+		t_val = exec_eval_expr(estate, stmt->t_expr, &isnull, &t_oid);
+
+		t_var = (PLpgSQL_var *) estate->datums[stmt->t_varno];
+
+		/*
+		 * When expected datatype is different from real, change it.
+		 * Note that what we're modifying here is an execution copy
+		 * of the datum, so this doesn't affect the originally stored
+		 * function parse tree.
+		 */
+		if (t_var->datatype->typoid != t_oid)
+			t_var->datatype = plpgsql_build_datatype(t_oid, -1);
+
+		/* now we can assign to the variable */
+		exec_assign_value(estate,
+						  (PLpgSQL_datum *) t_var,
+						  t_val,
+						  t_oid,
+						  &isnull);
+
+		exec_eval_cleanup(estate);
+	}
+
+	/* Now search for a successful WHEN clause */
+	foreach(l, stmt->case_when_list)
+	{
+		PLpgSQL_case_when *cwt = (PLpgSQL_case_when *) lfirst(l);
+		bool	value;
+
+		value = exec_eval_boolean(estate, cwt->expr, &isnull);
+		exec_eval_cleanup(estate);
+		if (!isnull && value)
+		{
+			/* Found it */
+
+			/* We can now discard any value we had for the temp variable */
+			if (t_var != NULL)
+			{
+				free_var(t_var);
+				t_var->value = (Datum) 0;
+				t_var->isnull = true;
+			}
+
+			/* Evaluate the statement(s), and we're done */
+			return exec_stmts(estate, cwt->stmts);
+		}
+	}
+
+	/* We can now discard any value we had for the temp variable */
+	if (t_var != NULL)
+	{
+		free_var(t_var);
+		t_var->value = (Datum) 0;
+		t_var->isnull = true;
+	}
+
+	/* SQL2003 mandates this error if there was no ELSE clause */
+	if (!stmt->have_else)
+		ereport(ERROR,
+				(errcode(ERRCODE_CASE_NOT_FOUND),
+				 errmsg("case not found"),
+				 errhint("CASE statement is missing ELSE part.")));
+
+	/* Evaluate the ELSE statements, and we're done */
+	return exec_stmts(estate, stmt->else_stmts);
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.99 2008/05/13 22:10:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.100 2008/05/15 22:39:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,11 +71,12 @@ enum
  * Execution tree node types
  * ----------
  */
-enum
+enum PLpgSQL_stmt_types
 {
 	PLPGSQL_STMT_BLOCK,
 	PLPGSQL_STMT_ASSIGN,
 	PLPGSQL_STMT_IF,
+	PLPGSQL_STMT_CASE,
 	PLPGSQL_STMT_LOOP,
 	PLPGSQL_STMT_WHILE,
 	PLPGSQL_STMT_FORI,
@@ -388,6 +389,25 @@ typedef struct
 	List	   *true_body;		/* List of statements */
 	List	   *false_body;		/* List of statements */
 } PLpgSQL_stmt_if;
+
+
+typedef struct					/* CASE statement */
+{
+	int			cmd_type;
+	int			lineno;
+	PLpgSQL_expr *t_expr;		/* test expression, or NULL if none */
+	int			t_varno;		/* var to store test expression value into */
+	List	   *case_when_list;	/* List of PLpgSQL_case_when structs */
+	bool		have_else;		/* flag needed because list could be empty */
+	List	   *else_stmts;		/* List of statements */
+} PLpgSQL_stmt_case;
+
+typedef struct					/* one arm of CASE statement */
+{
+	int			lineno;
+	PLpgSQL_expr *expr;			/* boolean expression for this case */
+	List	   *stmts;			/* List of statements */
+} PLpgSQL_case_when;
 
 
 typedef struct

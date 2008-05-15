@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.129 2008/05/13 22:10:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.130 2008/05/15 22:39:49 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1581,9 +1581,9 @@ SELECT * FROM getallfoo();
     <title>Conditionals</title>
 
     <para>
-     <literal>IF</> statements let you execute commands based on
-     certain conditions.  <application>PL/pgSQL</> has five forms of
-     <literal>IF</>:
+     <command>IF</> and <command>CASE</> statements let you execute
+     alternative commands based on certain conditions.
+     <application>PL/pgSQL</> has five forms of <command>IF</>:
     <itemizedlist>
      <listitem>
       <para><literal>IF ... THEN</></>
@@ -1599,6 +1599,22 @@ SELECT * FROM getallfoo();
      </listitem>
      <listitem>
       <para><literal>IF ... THEN ... ELSEIF ... THEN ... ELSE</></>
+     </listitem>
+    </itemizedlist>
+
+    and four forms of <command>CASE</>:
+    <itemizedlist>
+     <listitem>
+      <para><literal>CASE ... WHEN ... THEN ... END CASE</></>
+     </listitem>
+     <listitem>
+      <para><literal>CASE ... WHEN ... THEN ... ELSE ... END CASE</></>
+     </listitem>
+     <listitem>
+      <para><literal>CASE WHEN ... THEN ... END CASE</></>
+     </listitem>
+     <listitem>
+      <para><literal>CASE WHEN ... THEN ... ELSE ... END CASE</></>
      </listitem>
     </itemizedlist>
     </para>
@@ -1750,6 +1766,93 @@ END IF;
       <para>
        <literal>ELSEIF</> is an alias for <literal>ELSIF</>.
       </para>
+     </sect3>
+
+     <sect3>
+      <title>Simple <literal>CASE</></title>
+
+<synopsis>
+CASE <replaceable>search-expression</replaceable>
+    WHEN <replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> <optional> ... </optional></optional> THEN
+      <replaceable>statements</replaceable>
+  <optional> WHEN <replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> <optional> ... </optional></optional> THEN
+      <replaceable>statements</replaceable>
+    ... </optional>
+  <optional> ELSE
+      <replaceable>statements</replaceable> </optional>
+END CASE;
+</synopsis>
+
+      <para>
+       The simple form of <command>CASE</> provides conditional execution
+       based on equality of operands.  The <replaceable>search-expression</>
+       is evaluated (once) and successively compared to each
+       <replaceable>expression</> in the <literal>WHEN</> clauses.
+       If a match is found, then the corresponding
+       <replaceable>statements</replaceable> are executed, and then control
+       passes to the next statement after <literal>END CASE</>.  (Subsequent
+       <literal>WHEN</> expressions are not evaluated.)  If no match is
+       found, the <literal>ELSE</> <replaceable>statements</replaceable> are
+       executed; but if <literal>ELSE</> is not present, then a
+       <literal>CASE_NOT_FOUND</literal> exception is raised.
+      </para>
+
+      <para>
+       Here is a simple example:
+
+<programlisting>
+CASE x
+    WHEN 1, 2 THEN
+        msg := 'one or two';
+    ELSE
+        msg := 'other value than one or two';
+END CASE;
+</programlisting>
+      </para>
+     </sect3>
+
+     <sect3>
+      <title>Searched <literal>CASE</></title>
+
+<synopsis>
+CASE
+    WHEN <replaceable>boolean-expression</replaceable> THEN
+      <replaceable>statements</replaceable>
+  <optional> WHEN <replaceable>boolean-expression</replaceable> THEN
+      <replaceable>statements</replaceable>
+    ... </optional>
+  <optional> ELSE
+      <replaceable>statements</replaceable> </optional>
+END CASE;
+</synopsis>
+
+      <para>
+       The searched form of <command>CASE</> provides conditional execution
+       based on truth of boolean expressions.  Each <literal>WHEN</> clause's
+       <replaceable>boolean-expression</replaceable> is evaluated in turn,
+       until one is found that yields <literal>true</>.  Then the
+       corresponding <replaceable>statements</replaceable> are executed, and
+       then control passes to the next statement after <literal>END CASE</>.
+       (Subsequent <literal>WHEN</> expressions are not evaluated.)
+       If no true result is found, the <literal>ELSE</>
+       <replaceable>statements</replaceable> are executed;
+       but if <literal>ELSE</> is not present, then a
+       <literal>CASE_NOT_FOUND</literal> exception is raised.
+      </para>
+
+      <para>
+       Here is an example:
+
+<programlisting>
+CASE
+    WHEN x BETWEEN 0 AND 10 THEN
+        msg := 'value is between zero and ten';
+    WHEN x BETWEEN 11 AND 20 THEN
+        msg := 'value is between eleven and twenty';
+END CASE;
+</programlisting>
+      </para>
+
      </sect3>
    </sect2>
 

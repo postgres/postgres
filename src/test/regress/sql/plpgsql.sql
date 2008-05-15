@@ -2,24 +2,24 @@
 -- PLPGSQL
 --
 -- Scenario:
--- 
+--
 --     A building with a modern TP cable installation where any
 --     of the wall connectors can be used to plug in phones,
 --     ethernet interfaces or local office hubs. The backside
 --     of the wall connectors is wired to one of several patch-
 --     fields in the building.
--- 
+--
 --     In the patchfields, there are hubs and all the slots
 --     representing the wall connectors. In addition there are
 --     slots that can represent a phone line from the central
 --     phone system.
--- 
+--
 --     Triggers ensure consistency of the patching information.
--- 
+--
 --     Functions are used to build up powerful views that let
 --     you look behind the wall when looking at a patchfield
 --     or into a room.
--- 
+--
 
 
 create table Room (
@@ -116,10 +116,10 @@ create unique index PHone_name on PHone using btree (slotname bpchar_ops);
 
 
 -- ************************************************************
--- * 
+-- *
 -- * Trigger procedures and functions for the patchfield
 -- * test of PL/pgSQL
--- * 
+-- *
 -- ************************************************************
 
 
@@ -708,11 +708,11 @@ begin
     mytype := substr(myname, 1, 2);
     link := mytype || substr(blname, 1, 2);
     if link = ''PLPL'' then
-        raise exception 
+        raise exception
 		''backlink between two phone lines does not make sense'';
     end if;
     if link in (''PLWS'', ''WSPL'') then
-        raise exception 
+        raise exception
 		''direct link of phone line to wall slot not permitted'';
     end if;
     if mytype = ''PS'' then
@@ -868,19 +868,19 @@ begin
     mytype := substr(myname, 1, 2);
     link := mytype || substr(blname, 1, 2);
     if link = ''PHPH'' then
-        raise exception 
+        raise exception
 		''slotlink between two phones does not make sense'';
     end if;
     if link in (''PHHS'', ''HSPH'') then
-        raise exception 
+        raise exception
 		''link of phone to hub does not make sense'';
     end if;
     if link in (''PHIF'', ''IFPH'') then
-        raise exception 
+        raise exception
 		''link of phone to hub does not make sense'';
     end if;
     if link in (''PSWS'', ''WSPS'') then
-        raise exception 
+        raise exception
 		''slotlink from patchslot to wallslot not permitted'';
     end if;
     if mytype = ''PS'' then
@@ -2444,7 +2444,7 @@ drop function footest();
 -- test scrollable cursor support
 
 create function sc_test() returns setof integer as $$
-declare 
+declare
   c scroll cursor for select f1 from int4_tbl;
   x integer;
 begin
@@ -2461,7 +2461,7 @@ $$ language plpgsql;
 select * from sc_test();
 
 create or replace function sc_test() returns setof integer as $$
-declare 
+declare
   c no scroll cursor for select f1 from int4_tbl;
   x integer;
 begin
@@ -2478,7 +2478,7 @@ $$ language plpgsql;
 select * from sc_test();  -- fails because of NO SCROLL specification
 
 create or replace function sc_test() returns setof integer as $$
-declare 
+declare
   c refcursor;
   x integer;
 begin
@@ -2495,7 +2495,7 @@ $$ language plpgsql;
 select * from sc_test();
 
 create or replace function sc_test() returns setof integer as $$
-declare 
+declare
   c refcursor;
   x integer;
 begin
@@ -2688,9 +2688,9 @@ drop function return_dquery();
 
 create or replace function raise_test() returns void as $$
 begin
-  raise notice '% % %', 1, 2, 3 
+  raise notice '% % %', 1, 2, 3
      using errcode = '55001', detail = 'some detail info', hint = 'some hint';
-  raise '% % %', 1, 2, 3 
+  raise '% % %', 1, 2, 3
      using errcode = 'division_by_zero', detail = 'some detail info';
 end;
 $$ language plpgsql;
@@ -2812,3 +2812,69 @@ $$ language plpgsql;
 select raise_test();
 
 drop function raise_test();
+
+-- test CASE statement
+
+create or replace function case_test(bigint) returns text as $$
+declare a int = 10;
+        b int = 1;
+begin
+  case $1
+    when 1 then
+      return 'one';
+    when 2 then
+      return 'two';
+    when 3,4,3+5 then
+      return 'three, four or eight';
+    when a then
+      return 'ten';
+    when a+b, a+b+1 then
+      return 'eleven, twelve';
+  end case;
+end;
+$$ language plpgsql immutable;
+
+select case_test(1);
+select case_test(2);
+select case_test(3);
+select case_test(4);
+select case_test(5); -- fails
+select case_test(8);
+select case_test(10);
+select case_test(11);
+select case_test(12);
+select case_test(13); -- fails
+
+create or replace function catch() returns void as $$
+begin
+  raise notice '%', case_test(6);
+exception
+  when case_not_found then
+    raise notice 'caught case_not_found % %', SQLSTATE, SQLERRM;
+end
+$$ language plpgsql;
+
+select catch();
+
+-- test the searched variant too, as well as ELSE
+create or replace function case_test(bigint) returns text as $$
+declare a int = 10;
+begin
+  case
+    when $1 = 1 then
+      return 'one';
+    when $1 = a + 2 then
+      return 'twelve';
+    else
+      return 'other';
+  end case;
+end;
+$$ language plpgsql immutable;
+
+select case_test(1);
+select case_test(2);
+select case_test(12);
+select case_test(13);
+
+drop function catch();
+drop function case_test(bigint);
