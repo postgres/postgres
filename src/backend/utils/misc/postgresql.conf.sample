@@ -363,6 +363,7 @@
 
 #track_activities = on
 #track_counts = on
+#track_functions = none			# none, pl, all
 #update_process_title = on
 
 

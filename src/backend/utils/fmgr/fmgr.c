@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.118 2008/05/12 00:00:52 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.119 2008/05/15 00:17:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "executor/functions.h"
 #include "miscadmin.h"
 #include "parser/parse_expr.h"
+#include "pgstat.h"
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
 #include "utils/guc.h"
@@ -165,8 +166,7 @@ fmgr_info_cxt(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt)
 
 /*
  * This one does the actual work.  ignore_security is ordinarily false
- * but is set to true by fmgr_security_definer to avoid infinite
- * recursive lookups.
+ * but is set to true by fmgr_security_definer to avoid recursion.
  */
 static void
 fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
@@ -197,6 +197,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 		finfo->fn_nargs = fbp->nargs;
 		finfo->fn_strict = fbp->strict;
 		finfo->fn_retset = fbp->retset;
+		finfo->fn_stats = TRACK_FUNC_ALL;	/* ie, never track */
 		finfo->fn_addr = fbp->func;
 		finfo->fn_oid = functionId;
 		return;
@@ -216,13 +217,23 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 
 	/*
 	 * If it has prosecdef set, or non-null proconfig, use
-	 * fmgr_security_definer call handler.
+	 * fmgr_security_definer call handler --- unless we are being called
+	 * again by fmgr_security_definer.
+	 *
+	 * When using fmgr_security_definer, function stats tracking is always
+	 * disabled at the outer level, and instead we set the flag properly
+	 * in fmgr_security_definer's private flinfo and implement the tracking
+	 * inside fmgr_security_definer.  This loses the ability to charge the
+	 * overhead of fmgr_security_definer to the function, but gains the
+	 * ability to set the track_functions GUC as a local GUC parameter of
+	 * an interesting function and have the right things happen.
 	 */
 	if (!ignore_security &&
 		(procedureStruct->prosecdef ||
 		 !heap_attisnull(procedureTuple, Anum_pg_proc_proconfig)))
 	{
 		finfo->fn_addr = fmgr_security_definer;
+		finfo->fn_stats = TRACK_FUNC_ALL;	/* ie, never track */
 		finfo->fn_oid = functionId;
 		ReleaseSysCache(procedureTuple);
 		return;
@@ -255,18 +266,23 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 			pfree(prosrc);
 			/* Should we check that nargs, strict, retset match the table? */
 			finfo->fn_addr = fbp->func;
+			/* note this policy is also assumed in fast path above */
+			finfo->fn_stats = TRACK_FUNC_ALL;	/* ie, never track */
 			break;
 
 		case ClanguageId:
 			fmgr_info_C_lang(functionId, finfo, procedureTuple);
+			finfo->fn_stats = TRACK_FUNC_PL;	/* ie, track if ALL */
 			break;
 
 		case SQLlanguageId:
 			finfo->fn_addr = fmgr_sql;
+			finfo->fn_stats = TRACK_FUNC_PL;	/* ie, track if ALL */
 			break;
 
 		default:
 			fmgr_info_other_lang(functionId, finfo, procedureTuple);
+			finfo->fn_stats = TRACK_FUNC_OFF;	/* ie, track if not OFF */
 			break;
 	}
 
@@ -862,6 +878,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	Oid			save_userid;
 	bool		save_secdefcxt;
 	volatile int save_nestlevel;
+	PgStat_FunctionCallUsage fcusage;
 
 	if (!fcinfo->flinfo->fn_extra)
 	{
@@ -934,7 +951,19 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	{
 		fcinfo->flinfo = &fcache->flinfo;
 
+		/* See notes in fmgr_info_cxt_security */
+		pgstat_init_function_usage(fcinfo, &fcusage);
+
 		result = FunctionCallInvoke(fcinfo);
+
+		/*
+		 * We could be calling either a regular or a set-returning function,
+		 * so we have to test to see what finalize flag to use.
+		 */
+		pgstat_end_function_usage(&fcusage,
+								  (fcinfo->resultinfo == NULL ||
+								   !IsA(fcinfo->resultinfo, ReturnSetInfo) ||
+								   ((ReturnSetInfo *) fcinfo->resultinfo)->isDone != ExprMultipleResult));
 	}
 	PG_CATCH();
 	{
@@ -2089,7 +2118,7 @@ float4
 DatumGetFloat4(Datum X)
 {
 	union {
-		int32	value; 
+		int32	value;
 		float4	retval;
 	} myunion;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.51 2008/05/12 00:00:51 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.52 2008/05/15 00:17:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,10 @@ extern Datum pg_stat_get_last_vacuum_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_last_autovacuum_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_last_analyze_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_last_autoanalyze_time(PG_FUNCTION_ARGS);
+
+extern Datum pg_stat_get_function_calls(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_function_time(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_function_self_time(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_backend_idset(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_activity(PG_FUNCTION_ARGS);
@@ -326,6 +330,39 @@ pg_stat_get_last_autoanalyze_time(PG_FUNCTION_ARGS)
 }
 
 Datum
+pg_stat_get_function_calls(PG_FUNCTION_ARGS)
+{
+	Oid	funcid = PG_GETARG_OID(0);
+	PgStat_StatFuncEntry *funcentry;
+
+	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_INT64(funcentry->f_numcalls);
+}
+
+Datum
+pg_stat_get_function_time(PG_FUNCTION_ARGS)
+{
+	Oid	funcid = PG_GETARG_OID(0);
+	PgStat_StatFuncEntry *funcentry;
+
+	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_INT64(funcentry->f_time);
+}
+
+Datum
+pg_stat_get_function_self_time(PG_FUNCTION_ARGS)
+{
+	Oid	funcid = PG_GETARG_OID(0);
+	PgStat_StatFuncEntry *funcentry;
+
+	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_INT64(funcentry->f_time_self);
+}
+
+Datum
 pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
@@ -401,7 +438,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			/* 
+			/*
 			 * Get one backend - locate by pid.
 			 *
 			 * We lookup the backend early, so we can return zero rows if it doesn't

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.453 2008/05/12 08:35:05 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.454 2008/05/15 00:17:40 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -169,7 +169,6 @@ static char *config_enum_get_options(struct config_enum *record,
 									 const char *prefix, const char *suffix);
 
 
-
 /*
  * Options for enum values defined in this module.
  */
@@ -240,6 +239,13 @@ static const struct config_enum_entry syslog_facility_options[] = {
 	{NULL, 0}
 };
 #endif
+
+static const struct config_enum_entry track_function_options[] = {
+	{"none", TRACK_FUNC_OFF},
+	{"pl", TRACK_FUNC_PL},
+	{"all", TRACK_FUNC_ALL},
+	{NULL, 0}
+};
 
 static const struct config_enum_entry xmlbinary_options[] = {
 	{"base64", XMLBINARY_BASE64},
@@ -2522,6 +2528,15 @@ static struct config_enum ConfigureNamesEnum[] =
 		&SessionReplicationRole,
 		SESSION_REPLICATION_ROLE_ORIGIN, session_replication_role_options,
 		assign_session_replication_role, NULL
+	},
+
+	{
+		{"track_functions", PGC_SUSET, STATS_COLLECTOR,
+			gettext_noop("Collects function-level statistics on database activity."),
+			gettext_noop("Valid values are: NONE, PL, and ALL.")
+		},
+		&pgstat_track_functions,
+		TRACK_FUNC_OFF, track_function_options, NULL, NULL
 	},
 
 	{

@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.77 2008/05/12 00:00:50 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.78 2008/05/15 00:17:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1857,7 +1857,7 @@ do_autovacuum(void)
 	 * want to do this exactly once per DB-processing cycle, even if we find
 	 * nothing worth vacuuming in the database.
 	 */
-	pgstat_vacuum_tabstat();
+	pgstat_vacuum_stat();
 
 	/*
 	 * Find the pg_database entry and select the default freeze_min_age. We

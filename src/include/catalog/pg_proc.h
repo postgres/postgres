@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.498 2008/05/08 08:58:59 mha Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.499 2008/05/15 00:17:40 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2962,6 +2962,13 @@ DATA(insert OID = 2775 ( pg_stat_get_buf_written_backend PGNSP PGUID 12 1 0 f f 
 DESCR("statistics: number of buffers written by backends");
 DATA(insert OID = 2859 ( pg_stat_get_buf_alloc			PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_buf_alloc - _null_ _null_ ));
 DESCR("statistics: number of buffer allocations");
+
+DATA(insert OID = 2978 (  pg_stat_get_function_calls		PGNSP PGUID 12 1 0 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_function_calls - _null_ _null_ ));
+DESCR("statistics: number of function calls");
+DATA(insert OID = 2979 (  pg_stat_get_function_time			PGNSP PGUID 12 1 0 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_function_time - _null_ _null_ ));
+DESCR("statistics: execution time of function");
+DATA(insert OID = 2980 (  pg_stat_get_function_self_time	PGNSP PGUID 12 1 0 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_function_self_time - _null_ _null_ ));
+DESCR("statistics: self execution time of function");
 
 DATA(insert OID = 2230 (  pg_stat_clear_snapshot		PGNSP PGUID 12 1 0 f f f f v 0 2278  "" _null_ _null_ _null_	pg_stat_clear_snapshot - _null_ _null_ ));
 DESCR("statistics: discard current transaction's statistics snapshot");

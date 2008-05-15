@@ -5,17 +5,26 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.74 2008/04/03 16:27:25 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.75 2008/05/15 00:17:41 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
 #define PGSTAT_H
 
 #include "libpq/pqcomm.h"
+#include "portability/instr_time.h"
 #include "utils/hsearch.h"
 #include "utils/rel.h"
 #include "utils/timestamp.h"
 
+
+/* Values for track_functions GUC variable --- order is significant! */
+typedef enum TrackFunctionsLevel
+{
+	TRACK_FUNC_OFF,
+	TRACK_FUNC_PL,
+	TRACK_FUNC_ALL
+} TrackFunctionsLevel;
 
 /* ----------
  * The types of backend -> collector messages
@@ -31,7 +40,9 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_AUTOVAC_START,
 	PGSTAT_MTYPE_VACUUM,
 	PGSTAT_MTYPE_ANALYZE,
-	PGSTAT_MTYPE_BGWRITER
+	PGSTAT_MTYPE_BGWRITER,
+	PGSTAT_MTYPE_FUNCSTAT,
+	PGSTAT_MTYPE_FUNCPURGE
 } StatMsgType;
 
 /* ----------
@@ -300,6 +311,80 @@ typedef struct PgStat_MsgBgWriter
 
 
 /* ----------
+ * PgStat_FunctionCounts	The actual per-function counts kept by a backend
+ *
+ * This struct should contain only actual event counters, because we memcmp
+ * it against zeroes to detect whether there are any counts to transmit.
+ *
+ * Note that the time counters are in instr_time format here.  We convert to
+ * microseconds in PgStat_Counter format when transmitting to the collector.
+ * ----------
+ */
+typedef struct PgStat_FunctionCounts
+{
+	PgStat_Counter f_numcalls;
+	instr_time	f_time;
+	instr_time	f_time_self;
+} PgStat_FunctionCounts;
+
+/* ----------
+ * PgStat_BackendFunctionEntry	Entry in backend's per-function hash table
+ * ----------
+ */
+typedef struct PgStat_BackendFunctionEntry
+{
+	Oid			f_id;
+	PgStat_FunctionCounts f_counts;
+} PgStat_BackendFunctionEntry;
+
+/* ----------
+ * PgStat_FunctionEntry			Per-function info in a MsgFuncstat
+ * ----------
+ */
+typedef struct PgStat_FunctionEntry
+{
+	Oid			f_id;
+	PgStat_Counter f_numcalls;
+	PgStat_Counter f_time;		/* times in microseconds */
+	PgStat_Counter f_time_self;
+} PgStat_FunctionEntry;
+
+/* ----------
+ * PgStat_MsgFuncstat			Sent by the backend to report function
+ *								usage statistics.
+ * ----------
+ */
+#define PGSTAT_NUM_FUNCENTRIES  \
+	((PGSTAT_MSG_PAYLOAD - sizeof(Oid) - sizeof(int))  \
+	 / sizeof(PgStat_FunctionEntry))
+
+typedef struct PgStat_MsgFuncstat
+{
+	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
+	int			m_nentries;
+	PgStat_FunctionEntry m_entry[PGSTAT_NUM_FUNCENTRIES];
+} PgStat_MsgFuncstat;
+
+/* ----------
+ * PgStat_MsgFuncpurge			Sent by the backend to tell the collector
+ *								about dead functions.
+ * ----------
+ */
+#define PGSTAT_NUM_FUNCPURGE  \
+	((PGSTAT_MSG_PAYLOAD - sizeof(Oid) - sizeof(int))  \
+	 / sizeof(Oid))
+
+typedef struct PgStat_MsgFuncpurge
+{
+	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
+	int			m_nentries;
+	Oid			m_functionid[PGSTAT_NUM_FUNCPURGE];
+} PgStat_MsgFuncpurge;
+
+
+/* ----------
  * PgStat_Msg					Union over all possible messages.
  * ----------
  */
@@ -315,6 +400,8 @@ typedef union PgStat_Msg
 	PgStat_MsgVacuum msg_vacuum;
 	PgStat_MsgAnalyze msg_analyze;
 	PgStat_MsgBgWriter msg_bgwriter;
+	PgStat_MsgFuncstat msg_funcstat;
+	PgStat_MsgFuncpurge msg_funcpurge;
 } PgStat_Msg;
 
 
@@ -347,10 +434,11 @@ typedef struct PgStat_StatDBEntry
 	TimestampTz last_autovac_time;
 
 	/*
-	 * tables must be last in the struct, because we don't write the pointer
-	 * out to the stats file.
+	 * tables and functions must be last in the struct, because we don't
+	 * write the pointers out to the stats file.
 	 */
 	HTAB	   *tables;
+	HTAB	   *functions;
 } PgStat_StatDBEntry;
 
 
@@ -384,6 +472,21 @@ typedef struct PgStat_StatTabEntry
 	TimestampTz analyze_timestamp;		/* user initiated */
 	TimestampTz autovac_analyze_timestamp;		/* autovacuum initiated */
 } PgStat_StatTabEntry;
+
+
+/* ----------
+ * PgStat_StatFuncEntry			The collector's data per function
+ * ----------
+ */
+typedef struct PgStat_StatFuncEntry
+{
+	Oid			functionid;
+
+	PgStat_Counter f_numcalls;
+
+	PgStat_Counter f_time;		/* times in microseconds */
+	PgStat_Counter f_time_self;
+} PgStat_StatFuncEntry;
 
 
 /*
@@ -451,6 +554,22 @@ typedef struct PgBackendStatus
 	char		st_activity[PGBE_ACTIVITY_SIZE];
 } PgBackendStatus;
 
+/*
+ * Working state needed to accumulate per-function-call timing statistics.
+ */
+typedef struct PgStat_FunctionCallUsage
+{
+	/* Link to function's hashtable entry (must still be there at exit!) */
+	/* NULL means we are not tracking the current function call */
+	PgStat_FunctionCounts *fs;
+	/* Total time previously charged to function, as of function start */
+	instr_time		save_f_time;
+	/* Backend-wide total time as of function start */
+	instr_time		save_total;
+	/* system clock as of function start */
+	instr_time		f_start;
+} PgStat_FunctionCallUsage;
+
 
 /* ----------
  * GUC parameters
@@ -458,6 +577,7 @@ typedef struct PgBackendStatus
  */
 extern bool pgstat_track_activities;
 extern bool pgstat_track_counts;
+extern int	pgstat_track_functions;
 
 /*
  * BgWriter statistics counters are updated directly by bgwriter and bufmgr
@@ -487,8 +607,8 @@ extern void PgstatCollectorMain(int argc, char *argv[]);
  */
 extern void pgstat_ping(void);
 
-extern void pgstat_report_tabstat(bool force);
-extern void pgstat_vacuum_tabstat(void);
+extern void pgstat_report_stat(bool force);
+extern void pgstat_vacuum_stat(void);
 extern void pgstat_drop_database(Oid databaseid);
 
 extern void pgstat_clear_snapshot(void);
@@ -554,6 +674,11 @@ extern void pgstat_count_heap_update(Relation rel, bool hot);
 extern void pgstat_count_heap_delete(Relation rel);
 extern void pgstat_update_heap_dead_tuples(Relation rel, int delta);
 
+extern void pgstat_init_function_usage(FunctionCallInfoData *fcinfo,
+									   PgStat_FunctionCallUsage *fcu);
+extern void pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu,
+									  bool finalize);
+
 extern void AtEOXact_PgStat(bool isCommit);
 extern void AtEOSubXact_PgStat(bool isCommit, int nestDepth);
 
@@ -575,6 +700,7 @@ extern void pgstat_send_bgwriter(void);
 extern PgStat_StatDBEntry *pgstat_fetch_stat_dbentry(Oid dbid);
 extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry(Oid relid);
 extern PgBackendStatus *pgstat_fetch_stat_beentry(int beid);
+extern PgStat_StatFuncEntry *pgstat_fetch_stat_funcentry(Oid funcid);
 extern int	pgstat_fetch_stat_numbackends(void);
 extern PgStat_GlobalStats *pgstat_fetch_global(void);
 

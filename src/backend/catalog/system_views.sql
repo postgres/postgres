@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.51 2008/05/08 08:58:59 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.52 2008/05/15 00:17:39 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -373,6 +373,18 @@ CREATE VIEW pg_stat_database AS
             pg_stat_get_db_tuples_updated(D.oid) AS tup_updated,
             pg_stat_get_db_tuples_deleted(D.oid) AS tup_deleted
     FROM pg_database D;
+
+CREATE VIEW pg_stat_user_functions AS 
+    SELECT
+            P.oid AS funcid, 
+            N.nspname AS schemaname,
+            P.proname AS funcname,
+            pg_stat_get_function_calls(P.oid) AS calls,
+            pg_stat_get_function_time(P.oid) / 1000 AS total_time,
+            pg_stat_get_function_self_time(P.oid) / 1000 AS self_time
+    FROM pg_proc P LEFT JOIN pg_namespace N ON (N.oid = P.pronamespace)
+    WHERE P.prolang != 12  -- fast check to eliminate built-in functions   
+          AND pg_stat_get_function_calls(P.oid) IS NOT NULL;
 
 CREATE VIEW pg_stat_bgwriter AS
     SELECT

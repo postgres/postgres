@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.12 2008/04/21 00:26:45 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.13 2008/05/15 00:17:40 tgl Exp $
 
 Function Manager
 ================
@@ -70,6 +70,7 @@ typedef struct
     short       fn_nargs;   /* 0..FUNC_MAX_ARGS, or -1 if variable arg count */
     bool        fn_strict;  /* function is "strict" (NULL in => NULL out) */
     bool        fn_retset;  /* function returns a set (over multiple calls) */
+    unsigned char fn_stats; /* collect stats if track_functions > this */
     void       *fn_extra;   /* extra space for use by handler */
     MemoryContext fn_mcxt;  /* memory context to store fn_extra in */
     Node       *fn_expr;    /* expression parse tree for call, or NULL */
@@ -86,10 +87,11 @@ a function handler could set it to avoid making repeated lookups of its
 own when the same FmgrInfo is used repeatedly during a query.)  fn_nargs
 is the number of arguments expected by the function, fn_strict is its
 strictness flag, and fn_retset shows whether it returns a set; all of
-these values come from the function's pg_proc entry.  If the function is
-being called as part of a SQL expression, fn_expr will point to the
-expression parse tree for the function call; this can be used to extract
-parse-time knowledge about the actual arguments.
+these values come from the function's pg_proc entry.  fn_stats is also
+set up to control whether or not to track runtime statistics for calling
+this function.  If the function is being called as part of a SQL expression,
+fn_expr will point to the expression parse tree for the function call; this
+can be used to extract parse-time knowledge about the actual arguments.
 
 FmgrInfo already exists in the current code, but has fewer fields.  This
 change should be transparent at the source-code level.

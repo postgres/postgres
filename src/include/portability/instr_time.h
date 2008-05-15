@@ -20,6 +20,8 @@
  *
  * INSTR_TIME_SET_CURRENT(t)		set t to current time
  *
+ * INSTR_TIME_ADD(x, y)				x += y
+ *
  * INSTR_TIME_SUBTRACT(x, y)		x -= y
  *
  * INSTR_TIME_ACCUM_DIFF(x, y, z)	x += (y - z)
@@ -35,15 +37,15 @@
  * only useful on intervals.
  *
  * When summing multiple measurements, it's recommended to leave the
- * running sum in instr_time form (ie, use INSTR_TIME_ACCUM_DIFF) and
- * convert to a result format only at the end.
+ * running sum in instr_time form (ie, use INSTR_TIME_ADD or
+ * INSTR_TIME_ACCUM_DIFF) and convert to a result format only at the end.
  *
  * Beware of multiple evaluations of the macro arguments.
  *
  *
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/portability/instr_time.h,v 1.1 2008/05/14 19:10:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/portability/instr_time.h,v 1.2 2008/05/15 00:17:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +63,18 @@ typedef struct timeval instr_time;
 #define INSTR_TIME_SET_ZERO(t)	((t).tv_sec = 0, (t).tv_usec = 0)
 
 #define INSTR_TIME_SET_CURRENT(t)	gettimeofday(&(t), NULL)
+
+#define INSTR_TIME_ADD(x,y) \
+	do { \
+		(x).tv_sec += (y).tv_sec; \
+		(x).tv_usec += (y).tv_usec; \
+		/* Normalize */ \
+		while ((x).tv_usec >= 1000000) \
+		{ \
+			(x).tv_usec -= 1000000; \
+			(x).tv_sec++; \
+		} \
+	} while (0)
 
 #define INSTR_TIME_SUBTRACT(x,y) \
 	do { \
@@ -109,6 +123,9 @@ typedef LARGE_INTEGER instr_time;
 #define INSTR_TIME_SET_ZERO(t)	((t).QuadPart = 0)
 
 #define INSTR_TIME_SET_CURRENT(t)	QueryPerformanceCounter(&(t))
+
+#define INSTR_TIME_ADD(x,y) \
+	((x).QuadPart += (y).QuadPart)
 
 #define INSTR_TIME_SUBTRACT(x,y) \
 	((x).QuadPart -= (y).QuadPart)

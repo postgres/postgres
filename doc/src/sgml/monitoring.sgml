@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.58 2008/05/07 14:41:55 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.59 2008/05/15 00:17:39 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -119,7 +119,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    server activity.  Presently, the collector can count accesses to tables
    and indexes in both disk-block and individual-row terms.  It also tracks
    total numbers of rows in each table, and the last vacuum and analyze times
-   for each table.
+   for each table.  It can also count calls to user-defined functions and
+   the total time spent in each one.
   </para>
 
   <para>
@@ -141,15 +142,19 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
   <para>
    The parameter <xref linkend="guc-track-counts"> controls whether
-   information is actually sent to the collector process and thus determines
-   whether any run-time overhead occurs for event counting.
+   statistics are collected about table and index accesses.
+  </para>
+
+  <para>
+   The parameter <xref linkend="guc-track-functions"> enables tracking of
+   usage of user-defined functions.
   </para>
 
   <para>
    The parameter <xref linkend="guc-track-activities"> enables monitoring
    of the current command being executed by any server process.
   </para>
-  
+
   <para>
    Normally these parameters are set in <filename>postgresql.conf</> so
    that they apply to all server processes, but it is possible to turn
@@ -370,6 +375,16 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>Same as <structname>pg_statio_all_sequences</>, except that only
       user sequences are shown.</entry>
      </row>
+
+     <row>
+      <entry><structname>pg_stat_user_functions</></entry>
+      <entry>For all tracked functions, function OID, schema, name, number
+      of calls, total time, and self time.  Self time is the
+      amount of time spent in the function itself, total time includes the
+      time spent in functions it called. Time values are in milliseconds.
+     </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -429,8 +444,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    linkend="monitoring-stats-funcs-table">.  The per-database access
    functions take a database OID as argument to identify which
    database to report on.  The per-table and per-index functions take
-   a table or index OID.  (Note that only tables and indexes in the
-   current database can be seen with these functions.)  The
+   a table or index OID.  The functions for function-call statistics
+   take a function OID.  (Note that only tables, indexes, and functions
+   in the current database can be seen with these functions.)  The
    per-server-process access functions take a server process
    number, which ranges from one to the number of currently active
    server processes.
@@ -671,6 +687,32 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        one record for each active backend in the system if <symbol>NULL</symbol> is
        specified. The fields returned are the same as in the 
        <structname>pg_stat_activity</structname> view
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_function_calls</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of times the function has been called.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_function_time</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Total wall clock time spent in the function, in microseconds.  Includes
+       the time spent in functions called by this one.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_function_self_time</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Time spent in only this function. Time spent in called functions
+       is excluded.
       </entry>
      </row>
 
