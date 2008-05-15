@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.258 2008/05/12 00:00:49 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.259 2008/05/15 17:37:49 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2105,6 +2105,71 @@ eval_const_expressions_mutator(Node *node,
 			newrelabel->relabelformat = relabel->relabelformat;
 			return (Node *) newrelabel;
 		}
+	}
+	if (IsA(node, CoerceViaIO))
+	{
+		CoerceViaIO *expr = (CoerceViaIO *) node;
+		Expr	   *arg;
+		Oid			outfunc;
+		bool		outtypisvarlena;
+		Oid			infunc;
+		Oid			intypioparam;
+		Expr	   *simple;
+		CoerceViaIO *newexpr;
+
+		/*
+		 * Reduce constants in the CoerceViaIO's argument.
+		 */
+		arg = (Expr *) eval_const_expressions_mutator((Node *) expr->arg,
+													  context);
+
+		/*
+		 * CoerceViaIO represents calling the source type's output function
+		 * then the result type's input function.  So, try to simplify it
+		 * as though it were a stack of two such function calls.  First we
+		 * need to know what the functions are.
+		 */
+		getTypeOutputInfo(exprType((Node *) arg), &outfunc, &outtypisvarlena);
+		getTypeInputInfo(expr->resulttype, &infunc, &intypioparam);
+
+		simple = simplify_function(outfunc,
+								   CSTRINGOID, -1,
+								   list_make1(arg),
+								   true, context);
+		if (simple)				/* successfully simplified output fn */
+		{
+			/*
+			 * Input functions may want 1 to 3 arguments.  We always supply
+			 * all three, trusting that nothing downstream will complain.
+			 */
+			List	   *args;
+
+			args = list_make3(simple,
+							  makeConst(OIDOID, -1, sizeof(Oid),
+										ObjectIdGetDatum(intypioparam),
+										false, true),
+							  makeConst(INT4OID, -1, sizeof(int32),
+										Int32GetDatum(-1),
+										false, true));
+
+			simple = simplify_function(infunc,
+									   expr->resulttype, -1,
+									   args,
+									   true, context);
+			if (simple)			/* successfully simplified input fn */
+				return (Node *) simple;
+		}
+
+		/*
+		 * The expression cannot be simplified any further, so build and
+		 * return a replacement CoerceViaIO node using the possibly-simplified
+		 * argument.
+		 */
+		newexpr = makeNode(CoerceViaIO);
+		newexpr->arg = arg;
+		newexpr->resulttype = expr->resulttype;
+		newexpr->coerceformat = expr->coerceformat;
+		return (Node *) newexpr;
 	}
 	if (IsA(node, CaseExpr))
 	{
