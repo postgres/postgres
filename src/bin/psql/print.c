@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.101 2008/05/13 00:14:11 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.102 2008/05/16 16:59:05 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -45,6 +45,8 @@ static char *thousands_sep;
 
 /* Local functions */
 static int strlen_max_width(unsigned char *str, int *target_width, int encoding);
+static void IsPagerNeeded(const printTableContent *cont, const int extra_lines,
+						  FILE **fout, bool *is_pager);
 
 
 static void *
@@ -394,7 +396,7 @@ _print_horizontal_line(const unsigned int ncolumns, const unsigned int *widths,
  *	Print pretty boxes around cells.
  */
 static void
-print_aligned_text(const printTableContent *cont, bool is_pager, FILE *fout)
+print_aligned_text(const printTableContent *cont, FILE *fout)
 {
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	bool		opt_numeric_locale = cont->opt->numericLocale;
@@ -416,6 +418,8 @@ print_aligned_text(const printTableContent *cont, bool is_pager, FILE *fout)
 	unsigned char **format_buf;
 	unsigned int width_total;
 	unsigned int total_header_width;
+	unsigned int extra_row_output_lines = 0;
+	unsigned int extra_output_lines = 0;
 
 	const char * const *ptr;
 
@@ -424,6 +428,7 @@ print_aligned_text(const printTableContent *cont, bool is_pager, FILE *fout)
 	bool	   *header_done;	/* Have all header lines been output? */
 	int		   *bytes_output;	/* Bytes output for column value */
 	int			output_columns = 0;	/* Width of interactive console */
+	bool		is_pager = false;
 
 	if (cancel_pressed)
 		return;
@@ -476,9 +481,14 @@ print_aligned_text(const printTableContent *cont, bool is_pager, FILE *fout)
 			max_nl_lines[i] = nl_lines;
 		if (bytes_required > max_bytes[i])
 			max_bytes[i] = bytes_required;
+		if (nl_lines > extra_row_output_lines)
+			extra_row_output_lines = nl_lines;
 
 		width_header[i] = width;
 	}
+	/* Add height of tallest header column */
+	extra_output_lines += extra_row_output_lines;
+	extra_row_output_lines = 0;
 
 	/* scan all cells, find maximum width, compute cell_count */
 	for (i = 0, ptr = cont->cells; *ptr; ptr++, i++, cell_count++)
@@ -487,7 +497,6 @@ print_aligned_text(const printTableContent *cont, bool is_pager, FILE *fout)
 					nl_lines,
 					bytes_required;
 
-		/* Get width, ignore nl_lines */
 		pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding,
 				   &width, &nl_lines, &bytes_required);
 		if (opt_numeric_locale && cont->aligns[i % col_count] == 'r')
@@ -552,28 +561,28 @@ print_aligned_text(const printTableContent *cont, bool is_pager, FILE *fout)
 	for (i = 0; i < col_count; i++)
 		width_wrap[i] = max_width[i];
 
+	/*
+	 * Choose target output width: \pset columns, or $COLUMNS, or ioctl
+	 */
+	if (cont->opt->columns > 0)
+		output_columns = cont->opt->columns;
+	else if ((fout == stdout && isatty(fileno(stdout))) || is_pager)
+	{
+		if (cont->opt->env_columns > 0)
+			output_columns = cont->opt->env_columns;
+#ifdef TIOCGWINSZ
+		else
+		{
+			struct winsize screen_size;
+
+			if (ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) != -1)
+				output_columns = screen_size.ws_col;
+		}
+#endif
+	}
+
 	if (cont->opt->format == PRINT_WRAPPED)
 	{
-		/*
-		 * Choose target output width: \pset columns, or $COLUMNS, or ioctl
-		 */
-		if (cont->opt->columns > 0)
-			output_columns = cont->opt->columns;
-		else if ((fout == stdout && isatty(fileno(stdout))) || is_pager)
-		{
-			if (cont->opt->env_columns > 0)
-				output_columns = cont->opt->env_columns;
-#ifdef TIOCGWINSZ
-			else
-			{
-				struct winsize screen_size;
-	
-				if (ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) != -1)
-					output_columns = screen_size.ws_col;
-			}
-#endif
-		}
-
 		/*
 		 * Optional optimized word wrap. Shrink columns with a high max/avg
 		 * ratio.  Slighly bias against wider columns. (Increases chance a
@@ -623,6 +632,49 @@ print_aligned_text(const printTableContent *cont, bool is_pager, FILE *fout)
 		}
 	}
 
+	/* If we wrapped beyond the display width, use the pager */
+	if (!is_pager && output_columns > 0 &&
+		(output_columns < total_header_width || output_columns < width_total))
+	{
+		fout = PageOutput(INT_MAX, cont->opt->pager);	/* force pager */
+		is_pager = true;
+	}
+	
+	/* Check if newlines or our wrapping now need the pager */
+	if (!is_pager)
+	{
+		/* scan all cells, find maximum width, compute cell_count */
+		for (i = 0, ptr = cont->cells; *ptr; ptr++, i++, cell_count++)
+		{
+			int			width,
+						nl_lines,
+						bytes_required;
+	
+			pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding,
+					   &width, &nl_lines, &bytes_required);
+			if (opt_numeric_locale && cont->align[i % col_count] == 'r')
+				width += additional_numeric_locale_len(*ptr);
+	
+			/*
+			 *	A row can have both wrapping and newlines that cause
+			 *	it to display across multiple lines.  We check
+			 *	for both cases below.
+			 */
+			if (width > 0 && width_wrap[i] &&
+				(width-1) / width_wrap[i] + nl_lines > extra_row_output_lines)
+				extra_row_output_lines = (width-1) / width_wrap[i] + nl_lines;
+
+			/* If last column, add tallest column height */
+			if (i % col_count == col_count - 1)
+			{
+				/* Add height of tallest row */
+				extra_output_lines += extra_row_output_lines;
+				extra_row_output_lines = 0;
+			}
+		}
+		IsPagerNeeded(cont, extra_output_lines, &fout, &is_pager);
+	}
+	
 	/* time to output */
 	if (cont->opt->start_table)
 	{
@@ -882,6 +934,9 @@ print_aligned_text(const printTableContent *cont, bool is_pager, FILE *fout)
 	for (i = 0; i < col_count; i++)
 		free(format_buf[i]);
 	free(format_buf);
+
+	if (is_pager)
+		ClosePager(fout);
 }
 
 
@@ -2115,21 +2170,15 @@ printTableCleanup(printTableContent *content)
 }
 
 /*
- * Use this to print just any table in the supported formats.
+ * IsPagerNeeded
+ *
+ * Setup pager if required
  */
 void
-printTable(const printTableContent *cont, FILE *fout, FILE *flog)
+IsPagerNeeded(const printTableContent *cont, const int extra_lines, FILE **fout,
+			  bool *is_pager)
 {
-	FILE	   *output;
-	bool		is_pager = false;
-	
-	if (cancel_pressed)
-		return;
-
-	if (cont->opt->format == PRINT_NOTHING)
-		return;
-
-	if (fout == stdout)
+	if (*fout == stdout)
 	{
 		int			lines;
 
@@ -2150,58 +2199,79 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 				lines++;
 		}
 
-		output = PageOutput(lines, cont->opt->pager);
-		is_pager = (output != fout);
+		*fout = PageOutput(lines + extra_lines, cont->opt->pager);
+		*is_pager = (*fout != stdout);
 	}
 	else
-		output = fout;
+		*is_pager = false;
+}
+
+/*
+ * Use this to print just any table in the supported formats.
+ */
+void
+printTable(const printTableContent *cont, FILE *fout, FILE *flog)
+{
+	bool		is_pager = false;
+	
+	if (cancel_pressed)
+		return;
+
+	if (cont->opt->format == PRINT_NOTHING)
+		return;
+
+	/* print_aligned_text() handles the pager itself */
+	if ((cont->opt->format != PRINT_ALIGNED &&
+		 cont->opt->format != PRINT_WRAPPED) ||
+		 cont->opt->expanded)
+		IsPagerNeeded(cont, 0, &fout, &is_pager);
 
 	/* print the stuff */
 
 	if (flog)
-		print_aligned_text(cont, is_pager, flog);
+		print_aligned_text(cont, flog);
 
 	switch (cont->opt->format)
 	{
 		case PRINT_UNALIGNED:
 			if (cont->opt->expanded)
-				print_unaligned_vertical(cont, output);
+				print_unaligned_vertical(cont, fout);
 			else
-				print_unaligned_text(cont, output);
+				print_unaligned_text(cont, fout);
 			break;
 		case PRINT_ALIGNED:
 		case PRINT_WRAPPED:
 			if (cont->opt->expanded)
-				print_aligned_vertical(cont, output);
+				print_aligned_vertical(cont, fout);
 			else
-				print_aligned_text(cont, is_pager, output);
+				print_aligned_text(cont, fout);
 			break;
 		case PRINT_HTML:
 			if (cont->opt->expanded)
-				print_html_vertical(cont, output);
+				print_html_vertical(cont, fout);
 			else
-				print_html_text(cont, output);
+				print_html_text(cont, fout);
 			break;
 		case PRINT_LATEX:
 			if (cont->opt->expanded)
-				print_latex_vertical(cont, output);
+				print_latex_vertical(cont, fout);
 			else
-				print_latex_text(cont, output);
+				print_latex_text(cont, fout);
 			break;
 		case PRINT_TROFF_MS:
 			if (cont->opt->expanded)
-				print_troff_ms_vertical(cont, output);
+				print_troff_ms_vertical(cont, fout);
 			else
-				print_troff_ms_text(cont, output);
+				print_troff_ms_text(cont, fout);
 			break;
 		default:
-			fprintf(stderr, _("invalid output format (internal error): %d"),
+			fprintf(stderr, _("invalid fout format (internal error): %d"),
 					cont->opt->format);
 			exit(EXIT_FAILURE);
 	}
 
 	if (is_pager)
-		ClosePager(output);
+		ClosePager(fout);
 }
 
 /*
