@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.322 2008/04/29 14:59:16 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.323 2008/05/16 23:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1010,6 +1010,7 @@ static bool
 _equalTruncateStmt(TruncateStmt *a, TruncateStmt *b)
 {
 	COMPARE_NODE_FIELD(relations);
+	COMPARE_SCALAR_FIELD(restart_seqs);
 	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;

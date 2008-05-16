@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.253 2008/05/12 00:00:48 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.254 2008/05/16 23:36:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "catalog/toasting.h"
 #include "commands/cluster.h"
 #include "commands/defrem.h"
+#include "commands/sequence.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
@@ -531,6 +532,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 {
 	List	   *rels = NIL;
 	List	   *relids = NIL;
+	List	   *seq_relids = NIL;
 	EState	   *estate;
 	ResultRelInfo *resultRelInfos;
 	ResultRelInfo *resultRelInfo;
@@ -595,6 +597,40 @@ ExecuteTruncate(TruncateStmt *stmt)
 	if (stmt->behavior == DROP_RESTRICT)
 		heap_truncate_check_FKs(rels, false);
 #endif
+
+	/*
+	 * If we are asked to restart sequences, find all the sequences,
+	 * lock them (we only need AccessShareLock because that's all that
+	 * ALTER SEQUENCE takes), and check permissions.  We want to do this
+	 * early since it's pointless to do all the truncation work only to fail
+	 * on sequence permissions.
+	 */
+	if (stmt->restart_seqs)
+	{
+		foreach(cell, rels)
+		{
+			Relation	rel = (Relation) lfirst(cell);
+			List	   *seqlist = getOwnedSequences(RelationGetRelid(rel));
+			ListCell   *seqcell;
+
+			foreach(seqcell, seqlist)
+			{
+				Oid		seq_relid = lfirst_oid(seqcell);
+				Relation seq_rel;
+
+				seq_rel = relation_open(seq_relid, AccessShareLock);
+
+				/* This check must match AlterSequence! */
+				if (!pg_class_ownercheck(seq_relid, GetUserId()))
+					aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+								   RelationGetRelationName(seq_rel));
+
+				seq_relids = lappend_oid(seq_relids, seq_relid);
+
+				relation_close(seq_rel, NoLock);
+			}
+		}
+	}
 
 	/* Prepare to catch AFTER triggers. */
 	AfterTriggerBeginQuery();
@@ -693,6 +729,25 @@ ExecuteTruncate(TruncateStmt *stmt)
 		Relation	rel = (Relation) lfirst(cell);
 
 		heap_close(rel, NoLock);
+	}
+
+	/*
+	 * Lastly, restart any owned sequences if we were asked to.  This is done
+	 * last because it's nontransactional: restarts will not roll back if
+	 * we abort later.  Hence it's important to postpone them as long as
+	 * possible.  (This is also a big reason why we locked and
+	 * permission-checked the sequences beforehand.)
+	 */
+	if (stmt->restart_seqs)
+	{
+		List   *options = list_make1(makeDefElem("restart", NULL));
+
+		foreach(cell, seq_relids)
+		{
+			Oid		seq_relid = lfirst_oid(cell);
+
+			AlterSequenceInternal(seq_relid, options);
+		}
 	}
 }
 

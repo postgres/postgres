@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/sequence.h,v 1.40 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/sequence.h,v 1.41 2008/05/16 23:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@ typedef struct FormData_pg_sequence
 	NameData	sequence_name;
 #ifndef INT64_IS_BUSTED
 	int64		last_value;
+	int64		start_value;
 	int64		increment_by;
 	int64		max_value;
 	int64		min_value;
@@ -38,16 +39,18 @@ typedef struct FormData_pg_sequence
 #else
 	int32		last_value;
 	int32		pad1;
-	int32		increment_by;
+	int32		start_value;
 	int32		pad2;
-	int32		max_value;
+	int32		increment_by;
 	int32		pad3;
-	int32		min_value;
+	int32		max_value;
 	int32		pad4;
-	int32		cache_value;
+	int32		min_value;
 	int32		pad5;
-	int32		log_cnt;
+	int32		cache_value;
 	int32		pad6;
+	int32		log_cnt;
+	int32		pad7;
 #endif
 	bool		is_cycled;
 	bool		is_called;
@@ -61,13 +64,14 @@ typedef FormData_pg_sequence *Form_pg_sequence;
 
 #define SEQ_COL_NAME			1
 #define SEQ_COL_LASTVAL			2
-#define SEQ_COL_INCBY			3
-#define SEQ_COL_MAXVALUE		4
-#define SEQ_COL_MINVALUE		5
-#define SEQ_COL_CACHE			6
-#define SEQ_COL_LOG				7
-#define SEQ_COL_CYCLE			8
-#define SEQ_COL_CALLED			9
+#define SEQ_COL_STARTVAL		3
+#define SEQ_COL_INCBY			4
+#define SEQ_COL_MAXVALUE		5
+#define SEQ_COL_MINVALUE		6
+#define SEQ_COL_CACHE			7
+#define SEQ_COL_LOG				8
+#define SEQ_COL_CYCLE			9
+#define SEQ_COL_CALLED			10
 
 #define SEQ_COL_FIRSTCOL		SEQ_COL_NAME
 #define SEQ_COL_LASTCOL			SEQ_COL_CALLED
@@ -90,6 +94,7 @@ extern Datum lastval(PG_FUNCTION_ARGS);
 
 extern void DefineSequence(CreateSeqStmt *stmt);
 extern void AlterSequence(AlterSeqStmt *stmt);
+extern void AlterSequenceInternal(Oid relid, List *options);
 
 extern void seq_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void seq_desc(StringInfo buf, uint8 xl_info, char *rec);

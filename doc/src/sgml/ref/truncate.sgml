@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.25 2008/03/28 00:21:55 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.26 2008/05/16 23:36:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ... ]
+    [ RESTART IDENTITY | CONTINUE IDENTITY ] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -51,6 +52,25 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
    </varlistentry>
 
    <varlistentry>
+    <term><literal>RESTART IDENTITY</literal></term>
+    <listitem>
+     <para>
+      Automatically restart sequences owned by columns of
+      the truncated table(s).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CONTINUE IDENTITY</literal></term>
+    <listitem>
+     <para>
+      Do not change the values of sequences.  This is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>CASCADE</literal></term>
     <listitem>
      <para>
@@ -66,7 +86,7 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
     <listitem>
      <para>
       Refuse to truncate if any of the tables have foreign-key references
-      from tables that are not to be truncated.  This is the default.
+      from tables that are not listed in the command.  This is the default.
      </para>
     </listitem>
    </varlistentry>
@@ -119,11 +139,23 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
      cause visible inconsistency between the contents of the truncated
      table and other tables in the database.
    </para>
+  </warning>
 
+  <para>
+   <command>TRUNCATE</> is transaction-safe with respect to the data
+   in the tables: the truncation will be safely rolled back if the surrounding
+   transaction does not commit.
+  </para>
+
+  <warning>
    <para>
-    <command>TRUNCATE</> is transaction-safe, however: the truncation
-    will be safely rolled back if the surrounding transaction does not
-    commit.
+    Any <command>ALTER SEQUENCE RESTART</> operations performed as a
+    consequence of using the <literal>RESTART IDENTITY</> option are
+    nontransactional and will not be rolled back.  To minimize risk,
+    these operations are performed only after all the rest of
+    <command>TRUNCATE</>'s work is done.  In practice this will only
+    be an issue if <command>TRUNCATE</> is performed inside a
+    transaction block that is aborted afterwards.
    </para>
   </warning>
  </refsect1>
@@ -132,10 +164,19 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
   <title>Examples</title>
 
   <para>
-   Truncate the tables <literal>bigtable</literal> and <literal>fattable</literal>:
+   Truncate the tables <literal>bigtable</literal> and
+   <literal>fattable</literal>:
 
 <programlisting>
 TRUNCATE bigtable, fattable;
+</programlisting>
+  </para>
+
+  <para>
+   The same, and also reset any associated sequence generators:
+
+<programlisting>
+TRUNCATE bigtable, fattable RESTART IDENTITY;
 </programlisting>
   </para>
 
@@ -154,7 +195,10 @@ TRUNCATE othertable CASCADE;
   <title>Compatibility</title>
 
   <para>
-   There is no <command>TRUNCATE</command> command in the SQL standard.
+   The draft SQL:2008 standard includes a <command>TRUNCATE</command> command,
+   but at this writing it is uncertain whether that will reach standardization
+   or be fully compatible with <productname>PostgreSQL</productname>'s
+   implementation.
   </para>
  </refsect1>
 </refentry>

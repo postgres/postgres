@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.365 2008/05/09 23:32:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.366 2008/05/16 23:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1452,6 +1452,7 @@ typedef struct TruncateStmt
 {
 	NodeTag		type;
 	List	   *relations;		/* relations (RangeVars) to be truncated */
+	bool		restart_seqs;	/* restart owned sequences? */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } TruncateStmt;
 

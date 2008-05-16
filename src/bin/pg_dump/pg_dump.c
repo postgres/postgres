@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.491 2008/05/12 00:00:53 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.492 2008/05/16 23:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -9525,7 +9525,8 @@ static void
 dumpSequence(Archive *fout, TableInfo *tbinfo)
 {
 	PGresult   *res;
-	char	   *last,
+	char	   *startv,
+			   *last,
 			   *incby,
 			   *maxv = NULL,
 			   *minv = NULL,
@@ -9543,19 +9544,40 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	snprintf(bufm, sizeof(bufm), INT64_FORMAT, SEQ_MINVALUE);
 	snprintf(bufx, sizeof(bufx), INT64_FORMAT, SEQ_MAXVALUE);
 
-	appendPQExpBuffer(query,
-					  "SELECT sequence_name, last_value, increment_by, "
-				   "CASE WHEN increment_by > 0 AND max_value = %s THEN NULL "
-				   "     WHEN increment_by < 0 AND max_value = -1 THEN NULL "
-					  "     ELSE max_value "
-					  "END AS max_value, "
-					"CASE WHEN increment_by > 0 AND min_value = 1 THEN NULL "
-				   "     WHEN increment_by < 0 AND min_value = %s THEN NULL "
-					  "     ELSE min_value "
-					  "END AS min_value, "
-					  "cache_value, is_cycled, is_called from %s",
-					  bufx, bufm,
-					  fmtId(tbinfo->dobj.name));
+	if (g_fout->remoteVersion >= 80400)
+	{
+		appendPQExpBuffer(query,
+				  "SELECT sequence_name, "
+				  "start_value, last_value, increment_by, "
+				  "CASE WHEN increment_by > 0 AND max_value = %s THEN NULL "
+				  "     WHEN increment_by < 0 AND max_value = -1 THEN NULL "
+				  "     ELSE max_value "
+				  "END AS max_value, "
+				  "CASE WHEN increment_by > 0 AND min_value = 1 THEN NULL "
+				  "     WHEN increment_by < 0 AND min_value = %s THEN NULL "
+				  "     ELSE min_value "
+				  "END AS min_value, "
+				  "cache_value, is_cycled, is_called from %s",
+				  bufx, bufm,
+				  fmtId(tbinfo->dobj.name));
+	}
+	else
+	{
+		appendPQExpBuffer(query,
+				  "SELECT sequence_name, "
+				  "0 as start_value, last_value, increment_by, "
+				  "CASE WHEN increment_by > 0 AND max_value = %s THEN NULL "
+				  "     WHEN increment_by < 0 AND max_value = -1 THEN NULL "
+				  "     ELSE max_value "
+				  "END AS max_value, "
+				  "CASE WHEN increment_by > 0 AND min_value = 1 THEN NULL "
+				  "     WHEN increment_by < 0 AND min_value = %s THEN NULL "
+				  "     ELSE min_value "
+				  "END AS min_value, "
+				  "cache_value, is_cycled, is_called from %s",
+				  bufx, bufm,
+				  fmtId(tbinfo->dobj.name));
+	}
 
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
@@ -9577,15 +9599,16 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	}
 #endif
 
-	last = PQgetvalue(res, 0, 1);
-	incby = PQgetvalue(res, 0, 2);
-	if (!PQgetisnull(res, 0, 3))
-		maxv = PQgetvalue(res, 0, 3);
+	startv = PQgetvalue(res, 0, 1);
+	last = PQgetvalue(res, 0, 2);
+	incby = PQgetvalue(res, 0, 3);
 	if (!PQgetisnull(res, 0, 4))
-		minv = PQgetvalue(res, 0, 4);
-	cache = PQgetvalue(res, 0, 5);
-	cycled = (strcmp(PQgetvalue(res, 0, 6), "t") == 0);
-	called = (strcmp(PQgetvalue(res, 0, 7), "t") == 0);
+		maxv = PQgetvalue(res, 0, 4);
+	if (!PQgetisnull(res, 0, 5))
+		minv = PQgetvalue(res, 0, 5);
+	cache = PQgetvalue(res, 0, 6);
+	cycled = (strcmp(PQgetvalue(res, 0, 7), "t") == 0);
+	called = (strcmp(PQgetvalue(res, 0, 8), "t") == 0);
 
 	/*
 	 * The logic we use for restoring sequences is as follows:
@@ -9615,8 +9638,18 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 						  "CREATE SEQUENCE %s\n",
 						  fmtId(tbinfo->dobj.name));
 
-		if (!called)
-			appendPQExpBuffer(query, "    START WITH %s\n", last);
+		if (g_fout->remoteVersion >= 80400)
+			appendPQExpBuffer(query, "    START WITH %s\n", startv);
+		else
+		{
+			/*
+			 * Versions before 8.4 did not remember the true start value.  If
+			 * is_called is false then the sequence has never been incremented
+			 * so we can use last_val.  Otherwise punt and let it default.
+			 */
+			if (!called)
+				appendPQExpBuffer(query, "    START WITH %s\n", last);
+		}
 
 		appendPQExpBuffer(query, "    INCREMENT BY %s\n", incby);
 

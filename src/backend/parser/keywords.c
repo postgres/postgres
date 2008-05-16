@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.195 2008/03/27 03:57:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.196 2008/05/16 23:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"constraint", CONSTRAINT, RESERVED_KEYWORD},
 	{"constraints", CONSTRAINTS, UNRESERVED_KEYWORD},
 	{"content", CONTENT_P, UNRESERVED_KEYWORD},
+	{"continue", CONTINUE_P, UNRESERVED_KEYWORD},
 	{"conversion", CONVERSION_P, UNRESERVED_KEYWORD},
 	{"copy", COPY, UNRESERVED_KEYWORD},
 	{"cost", COST, UNRESERVED_KEYWORD},
@@ -181,6 +182,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"header", HEADER_P, UNRESERVED_KEYWORD},
 	{"hold", HOLD, UNRESERVED_KEYWORD},
 	{"hour", HOUR_P, UNRESERVED_KEYWORD},
+	{"identity", IDENTITY_P, UNRESERVED_KEYWORD},
 	{"if", IF_P, UNRESERVED_KEYWORD},
 	{"ilike", ILIKE, TYPE_FUNC_NAME_KEYWORD},
 	{"immediate", IMMEDIATE, UNRESERVED_KEYWORD},

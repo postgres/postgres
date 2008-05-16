@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.150 2008/05/12 00:00:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.151 2008/05/16 23:36:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ static Relation open_share_lock(SeqTable seq);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_info(SeqTable elm, Relation rel, Buffer *buf);
 static void init_params(List *options, bool isInit,
-			Form_pg_sequence new, List **owned_by);
+			Form_pg_sequence new, Form_pg_sequence old, List **owned_by);
 static void do_setval(Oid relid, int64 next, bool iscalled);
 static void process_owned_by(Relation seqrel, List *owned_by);
 
@@ -119,10 +119,10 @@ DefineSequence(CreateSeqStmt *seq)
 	NameData	name;
 
 	/* Check and set all option values */
-	init_params(seq->options, true, &new, &owned_by);
+	init_params(seq->options, true, &new, NULL, &owned_by);
 
 	/*
-	 * Create relation (and fill *null & *value)
+	 * Create relation (and fill value[] and null[] for the tuple)
 	 */
 	stmt->tableElts = NIL;
 	for (i = SEQ_COL_FIRSTCOL; i <= SEQ_COL_LASTCOL; i++)
@@ -150,6 +150,11 @@ DefineSequence(CreateSeqStmt *seq)
 				coldef->typename = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "last_value";
 				value[i - 1] = Int64GetDatumFast(new.last_value);
+				break;
+			case SEQ_COL_STARTVAL:
+				coldef->typename = makeTypeNameFromOid(INT8OID, -1);
+				coldef->colname = "start_value";
+				value[i - 1] = Int64GetDatumFast(new.start_value);
 				break;
 			case SEQ_COL_INCBY:
 				coldef->typename = makeTypeNameFromOid(INT8OID, -1);
@@ -314,6 +319,29 @@ void
 AlterSequence(AlterSeqStmt *stmt)
 {
 	Oid			relid;
+
+	/* find sequence */
+	relid = RangeVarGetRelid(stmt->sequence, false);
+
+	/* allow ALTER to sequence owner only */
+	/* if you change this, see also callers of AlterSequenceInternal! */
+	if (!pg_class_ownercheck(relid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   stmt->sequence->relname);
+
+	/* do the work */
+	AlterSequenceInternal(relid, stmt->options);
+}
+
+/*
+ * AlterSequenceInternal
+ *
+ * Same as AlterSequence except that the sequence is specified by OID
+ * and we assume the caller already checked permissions.
+ */
+void
+AlterSequenceInternal(Oid relid, List *options)
+{
 	SeqTable	elm;
 	Relation	seqrel;
 	Buffer		buf;
@@ -323,23 +351,14 @@ AlterSequence(AlterSeqStmt *stmt)
 	List	   *owned_by;
 
 	/* open and AccessShareLock sequence */
-	relid = RangeVarGetRelid(stmt->sequence, false);
 	init_sequence(relid, &elm, &seqrel);
-
-	/* allow ALTER to sequence owner only */
-	if (!pg_class_ownercheck(elm->relid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   stmt->sequence->relname);
 
 	/* lock page' buffer and read tuple into new sequence structure */
 	seq = read_info(elm, seqrel, &buf);
 	page = BufferGetPage(buf);
 
-	/* Copy old values of options into workspace */
-	memcpy(&new, seq, sizeof(FormData_pg_sequence));
-
-	/* Check and set new values */
-	init_params(stmt->options, false, &new, &owned_by);
+	/* Fill workspace with appropriate new info */
+	init_params(options, false, &new, seq, &owned_by);
 
 	/* Clear local cache so that we don't think we have cached numbers */
 	/* Note that we do not change the currval() state */
@@ -970,7 +989,7 @@ read_info(SeqTable elm, Relation rel, Buffer *buf)
  */
 static void
 init_params(List *options, bool isInit,
-			Form_pg_sequence new, List **owned_by)
+			Form_pg_sequence new, Form_pg_sequence old, List **owned_by)
 {
 	DefElem    *last_value = NULL;
 	DefElem    *increment_by = NULL;
@@ -981,6 +1000,12 @@ init_params(List *options, bool isInit,
 	ListCell   *option;
 
 	*owned_by = NIL;
+
+	/* Copy old values of options into workspace */
+	if (old != NULL)
+		memcpy(new, old, sizeof(FormData_pg_sequence));
+	else
+		memset(new, 0, sizeof(FormData_pg_sequence));
 
 	foreach(option, options)
 	{
@@ -994,13 +1019,24 @@ init_params(List *options, bool isInit,
 						 errmsg("conflicting or redundant options")));
 			increment_by = defel;
 		}
-
-		/*
-		 * start is for a new sequence restart is for alter
-		 */
-		else if (strcmp(defel->defname, "start") == 0 ||
-				 strcmp(defel->defname, "restart") == 0)
+		else if (strcmp(defel->defname, "start") == 0)
 		{
+			if (!isInit)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("use RESTART not START in ALTER SEQUENCE")));
+			if (last_value)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			last_value = defel;
+		}
+		else if (strcmp(defel->defname, "restart") == 0)
+		{
+			if (isInit)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("use START not RESTART in CREATE SEQUENCE")));
 			if (last_value)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1109,24 +1145,59 @@ init_params(List *options, bool isInit,
 						bufm, bufx)));
 	}
 
-	/* START WITH */
+	/* START/RESTART [WITH] */
 	if (last_value != NULL)
 	{
-		new->last_value = defGetInt64(last_value);
+		if (last_value->arg != NULL)
+			new->last_value = defGetInt64(last_value);
+		else
+		{
+			Assert(old != NULL);
+			new->last_value = old->start_value;
+		}
+		if (isInit)
+			new->start_value = new->last_value;
 		new->is_called = false;
 		new->log_cnt = 1;
 	}
 	else if (isInit)
 	{
 		if (new->increment_by > 0)
-			new->last_value = new->min_value;	/* ascending seq */
+			new->start_value = new->min_value;	/* ascending seq */
 		else
-			new->last_value = new->max_value;	/* descending seq */
+			new->start_value = new->max_value;	/* descending seq */
+		new->last_value = new->start_value;
 		new->is_called = false;
 		new->log_cnt = 1;
 	}
 
-	/* crosscheck */
+	/* crosscheck START */
+	if (new->start_value < new->min_value)
+	{
+		char		bufs[100],
+					bufm[100];
+
+		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->start_value);
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("START value (%s) cannot be less than MINVALUE (%s)",
+						bufs, bufm)));
+	}
+	if (new->start_value > new->max_value)
+	{
+		char		bufs[100],
+					bufm[100];
+
+		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->start_value);
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->max_value);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			  errmsg("START value (%s) cannot be greater than MAXVALUE (%s)",
+					 bufs, bufm)));
+	}
+
+	/* must crosscheck RESTART separately */
 	if (new->last_value < new->min_value)
 	{
 		char		bufs[100],
@@ -1136,7 +1207,7 @@ init_params(List *options, bool isInit,
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("START value (%s) cannot be less than MINVALUE (%s)",
+				 errmsg("RESTART value (%s) cannot be less than MINVALUE (%s)",
 						bufs, bufm)));
 	}
 	if (new->last_value > new->max_value)
@@ -1148,7 +1219,7 @@ init_params(List *options, bool isInit,
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->max_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			  errmsg("START value (%s) cannot be greater than MAXVALUE (%s)",
+			  errmsg("RESTART value (%s) cannot be greater than MAXVALUE (%s)",
 					 bufs, bufm)));
 	}
 

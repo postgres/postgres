@@ -99,9 +99,27 @@ DROP SEQUENCE sequence_test;
 CREATE SEQUENCE foo_seq;
 ALTER TABLE foo_seq RENAME TO foo_seq_new;
 SELECT * FROM foo_seq_new;
- sequence_name | last_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
----------------+------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
- foo_seq       |          1 |            1 | 9223372036854775807 |         1 |           1 |       1 | f         | f
+ sequence_name | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
+---------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
+ foo_seq       |          1 |           1 |            1 | 9223372036854775807 |         1 |           1 |       1 | f         | f
+(1 row)
+
+SELECT nextval('foo_seq_new');
+ nextval 
+---------
+       1
+(1 row)
+
+SELECT nextval('foo_seq_new');
+ nextval 
+---------
+       2
+(1 row)
+
+SELECT * FROM foo_seq_new;
+ sequence_name | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
+---------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
+ foo_seq       |          2 |           1 |            1 | 9223372036854775807 |         1 |           1 |      32 | f         | t
 (1 row)
 
 DROP SEQUENCE foo_seq_new;
@@ -155,18 +173,49 @@ SELECT nextval('sequence_test2');
       32
 (1 row)
 
-ALTER SEQUENCE sequence_test2 RESTART WITH 16
-	 INCREMENT BY 4 MAXVALUE 22 MINVALUE 5 CYCLE;
+ALTER SEQUENCE sequence_test2 RESTART WITH 24
+	 INCREMENT BY 4 MAXVALUE 36 MINVALUE 5 CYCLE;
 SELECT nextval('sequence_test2');
  nextval 
 ---------
-      16
+      24
 (1 row)
 
 SELECT nextval('sequence_test2');
  nextval 
 ---------
-      20
+      28
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      32
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      36
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+       5
+(1 row)
+
+ALTER SEQUENCE sequence_test2 RESTART;
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      32
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      36
 (1 row)
 
 SELECT nextval('sequence_test2');

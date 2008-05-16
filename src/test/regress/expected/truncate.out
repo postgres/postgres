@@ -223,3 +223,41 @@ SELECT * FROM trunc_trigger_log;
 DROP TABLE trunc_trigger_test;
 DROP TABLE trunc_trigger_log;
 DROP FUNCTION trunctrigger();
+-- test TRUNCATE ... RESTART IDENTITY
+CREATE SEQUENCE truncate_a_id1 START WITH 33;
+CREATE TABLE truncate_a (id serial,
+                         id1 integer default nextval('truncate_a_id1'));
+NOTICE:  CREATE TABLE will create implicit sequence "truncate_a_id_seq" for serial column "truncate_a.id"
+ALTER SEQUENCE truncate_a_id1 OWNED BY truncate_a.id1;
+INSERT INTO truncate_a DEFAULT VALUES;
+INSERT INTO truncate_a DEFAULT VALUES;
+SELECT * FROM truncate_a;
+ id | id1 
+----+-----
+  1 |  33
+  2 |  34
+(2 rows)
+
+TRUNCATE truncate_a;
+INSERT INTO truncate_a DEFAULT VALUES;
+INSERT INTO truncate_a DEFAULT VALUES;
+SELECT * FROM truncate_a;
+ id | id1 
+----+-----
+  3 |  35
+  4 |  36
+(2 rows)
+
+TRUNCATE truncate_a RESTART IDENTITY;
+INSERT INTO truncate_a DEFAULT VALUES;
+INSERT INTO truncate_a DEFAULT VALUES;
+SELECT * FROM truncate_a;
+ id | id1 
+----+-----
+  1 |  33
+  2 |  34
+(2 rows)
+
+DROP TABLE truncate_a;
+SELECT nextval('truncate_a_id1'); -- fail, seq should have been dropped
+ERROR:  relation "truncate_a_id1" does not exist

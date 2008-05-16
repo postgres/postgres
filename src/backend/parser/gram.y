@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.614 2008/04/29 20:44:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.615 2008/05/16 23:36:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -206,7 +206,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 %type <str>		OptSchemaName
 %type <list>	OptSchemaEltList
 
-%type <boolean> TriggerActionTime TriggerForSpec opt_trusted
+%type <boolean> TriggerActionTime TriggerForSpec opt_trusted opt_restart_seqs
 %type <str>		opt_lancompiler
 
 %type <str>		TriggerEvents
@@ -381,7 +381,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS
-	CONTENT_P CONVERSION_P COPY COST CREATE CREATEDB
+	CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_P CURRENT_DATE CURRENT_ROLE
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
@@ -399,10 +399,10 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 
 	HANDLER HAVING HEADER_P HOLD HOUR_P
 
-	IF_P ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
-	INDEX INDEXES INHERIT INHERITS INITIALLY INNER_P INOUT INPUT_P
-	INSENSITIVE INSERT INSTEAD INT_P INTEGER INTERSECT
-	INTERVAL INTO INVOKER IS ISNULL ISOLATION
+	IDENTITY_P IF_P ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P
+	INCLUDING INCREMENT INDEX INDEXES INHERIT INHERITS INITIALLY
+	INNER_P INOUT INPUT_P INSENSITIVE INSERT INSTEAD INT_P INTEGER
+	INTERSECT INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
 	JOIN
 
@@ -2489,6 +2489,10 @@ OptSeqElem: CACHE NumericOnly
 				{
 					$$ = makeDefElem("start", (Node *)$3);
 				}
+			| RESTART
+				{
+					$$ = makeDefElem("restart", NULL);
+				}
 			| RESTART opt_with NumericOnly
 				{
 					$$ = makeDefElem("restart", (Node *)$3);
@@ -3364,13 +3368,20 @@ attrs:		'.' attr_name
  *****************************************************************************/
 
 TruncateStmt:
-			TRUNCATE opt_table qualified_name_list opt_drop_behavior
+			TRUNCATE opt_table qualified_name_list opt_restart_seqs opt_drop_behavior
 				{
 					TruncateStmt *n = makeNode(TruncateStmt);
 					n->relations = $3;
-					n->behavior = $4;
+					n->restart_seqs = $4;
+					n->behavior = $5;
 					$$ = (Node *)n;
 				}
+		;
+
+opt_restart_seqs:
+			CONTINUE_P IDENTITY_P		{ $$ = false; }
+			| RESTART IDENTITY_P		{ $$ = true; }
+			| /* EMPTY */				{ $$ = false; }
 		;
 
 /*****************************************************************************
@@ -8964,6 +8975,7 @@ unreserved_keyword:
 			| CONNECTION
 			| CONSTRAINTS
 			| CONTENT_P
+			| CONTINUE_P
 			| CONVERSION_P
 			| COPY
 			| COST
@@ -9014,6 +9026,7 @@ unreserved_keyword:
 			| HEADER_P
 			| HOLD
 			| HOUR_P
+			| IDENTITY_P
 			| IF_P
 			| IMMEDIATE
 			| IMMUTABLE
