@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.309 2008/05/14 14:02:57 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.310 2008/05/16 19:15:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ bool		XLogArchiveMode = false;
 char	   *XLogArchiveCommand = NULL;
 bool		fullPageWrites = true;
 bool		log_checkpoints = false;
+int 		sync_method = DEFAULT_SYNC_METHOD;
 
 #ifdef WAL_DEBUG
 bool		XLOG_DEBUG = false;
@@ -88,8 +89,6 @@ bool		XLOG_DEBUG = false;
 /*
  * GUC support
  */
-int 		sync_method = DEFAULT_SYNC_METHOD;
-
 const struct config_enum_entry sync_method_options[] = {
 	{"fsync", SYNC_METHOD_FSYNC},
 #ifdef HAVE_FSYNC_WRITETHROUGH
@@ -1613,7 +1612,8 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 		 * have no open file or the wrong one.	However, we do not need to
 		 * fsync more than one file.
 		 */
-		if (sync_method != SYNC_METHOD_OPEN && sync_method != SYNC_METHOD_OPEN_DSYNC)
+		if (sync_method != SYNC_METHOD_OPEN &&
+			sync_method != SYNC_METHOD_OPEN_DSYNC)
 		{
 			if (openLogFile >= 0 &&
 				!XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
@@ -6340,10 +6340,10 @@ get_sync_bit(int method)
 	switch (method)
 	{
 		/*
-		 * Values for these sync options are defined even if they are not
-		 * supported on the current platform. They are not included in
-		 * the enum option array, and therefor will never be set if the
-		 * platform doesn't support it.
+		 * enum values for all sync options are defined even if they are not
+		 * supported on the current platform.  But if not, they are not
+		 * included in the enum option array, and therefore will never be seen
+		 * here.
 		 */
 		case SYNC_METHOD_FSYNC:
 		case SYNC_METHOD_FSYNC_WRITETHROUGH:
@@ -6358,12 +6358,8 @@ get_sync_bit(int method)
 			return OPEN_DATASYNC_FLAG;
 #endif
 		default:
-			/* 
-			 * This "can never happen", since the available values in
-			 * new_sync_method are controlled by the available enum
-			 * options.
-			 */
-			elog(PANIC, "unrecognized wal_sync_method: %d", method);
+			/* can't happen (unless we are out of sync with option array) */
+			elog(ERROR, "unrecognized wal_sync_method: %d", method);
 			return 0; /* silence warning */
 	}
 }
@@ -6392,7 +6388,7 @@ assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
 						(errcode_for_file_access(),
 						 errmsg("could not fsync log file %u, segment %u: %m",
 								openLogId, openLogSeg)));
-			if (get_sync_bit(sync_method)  != get_sync_bit(new_sync_method))
+			if (get_sync_bit(sync_method) != get_sync_bit(new_sync_method))
 				XLogFileClose();
 		}
 	}
