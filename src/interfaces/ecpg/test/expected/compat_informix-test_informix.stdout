@@ -1,6 +1,6 @@
-doSQLprint: Error: 'duplicate key value violates unique constraint "test_pkey"' in line 31.
-INSERT: -239='duplicate key value violates unique constraint "test_pkey"' in line 31.
-doSQLprint: Error: 'more than one row returned by a subquery used as an expression' in line 39.
+doSQLprint: Error: duplicate key value violates unique constraint "test_pkey" on line 31
+INSERT: -239=duplicate key value violates unique constraint "test_pkey" on line 31
+doSQLprint: Error: more than one row returned by a subquery used as an expression on line 39
 SELECT: 0=
 7 0
 14 1

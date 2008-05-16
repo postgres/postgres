@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.28 2008/05/14 15:16:27 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.29 2008/05/16 15:20:03 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -164,7 +164,7 @@ ECPGprepare(int lineno, const char *connection_name, const int questionmarks, co
 		return false;
 	}
 
-	ecpg_log("ECPGprepare line %d: NAME: %s QUERY: %s\n", stmt->lineno, name, stmt->command);
+	ecpg_log("ECPGprepare on line %d: name %s; query: \"%s\"\n", stmt->lineno, name, stmt->command);
 	PQclear(query);
 	this->prepared = true;
 
@@ -201,7 +201,7 @@ deallocate_one(int lineno, enum COMPAT_MODE c, struct connection * con, struct p
 {
 	bool		r = false;
 
-	ecpg_log("ECPGdeallocate line %d: NAME: %s\n", lineno, this->name);
+	ecpg_log("ECPGdeallocate on line %d: name %s\n", lineno, this->name);
 
 	/* first deallocate the statement in the backend */
 	if (this->prepared)
@@ -470,12 +470,12 @@ ecpg_auto_prepare(int lineno, const char *connection_name, int compat, const int
 	/* if not found - add the statement to the cache	*/
 	if (entNo)
 	{
-		ecpg_log("ecpg_auto_prepare line %d: stmt found in cache, entry %d\n", lineno, entNo);
+		ecpg_log("ecpg_auto_prepare on line %d: statement found in cache; entry %d\n", lineno, entNo);
 		*name = ecpg_strdup(stmtCacheEntries[entNo].stmtID, lineno);
 	}
 	else
 	{
-		ecpg_log("ecpg_auto_prepare line %d: stmt not in cache; inserting\n", lineno);
+		ecpg_log("ecpg_auto_prepare on line %d: statement not in cache; inserting\n", lineno);
 
 		/* generate a statement ID */
 		*name = (char *) ecpg_alloc(STMTID_SIZE, lineno);

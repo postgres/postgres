@@ -2,51 +2,51 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 19: QUERY: create  table test ( a int   , b text    )     with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 19: query: create  table test ( a int   , b text    )    ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 19: using PQexec
+[NO_PID]: ecpg_execute on line 19: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 19 Ok: CREATE TABLE
+[NO_PID]: ecpg_execute on line 19: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 20: QUERY: insert into test values ( 29 , 'abcdef' )  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 20: query: insert into test values ( 29 , 'abcdef' ) ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 20: using PQexec
+[NO_PID]: ecpg_execute on line 20: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 20 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 20: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 23: QUERY: insert into test values ( null , 'defined' )  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 23: query: insert into test values ( null , 'defined' ) ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 23: using PQexec
+[NO_PID]: ecpg_execute on line 23: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 23 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 23: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 31: QUERY: insert into test values ( null , 'someothervar not defined' )  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 31: query: insert into test values ( null , 'someothervar not defined' ) ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 31: using PQexec
+[NO_PID]: ecpg_execute on line 31: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 31 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 31: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 36: QUERY: select  1 , 29 :: text   || '-' || 'abcdef'      with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 36: query: select  1 , 29 :: text   || '-' || 'abcdef'     ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 36: using PQexec
+[NO_PID]: ecpg_execute on line 36: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 36: Correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_execute on line 36: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 36: RESULT: 1 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 36: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 36: RESULT: 29-abcdef offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 36: RESULT: 29-abcdef offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 42: QUERY: insert into test values ( 29 , 'no string' )  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 42: query: insert into test values ( 29 , 'no string' ) ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 42: using PQexec
+[NO_PID]: ecpg_execute on line 42: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 42 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 42: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 53: QUERY: set TIMEZONE to 'UTC' with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 53: query: set TIMEZONE to 'UTC'; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 53: using PQexec
+[NO_PID]: ecpg_execute on line 53: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 53 Ok: SET
+[NO_PID]: ecpg_execute on line 53: OK: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

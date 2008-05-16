@@ -2,139 +2,139 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 29: QUERY: create  table test1 ( a int   , b text    )     with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 29: query: create  table test1 ( a int   , b text    )    ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 29: using PQexec
+[NO_PID]: ecpg_execute on line 29: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 29 Ok: CREATE TABLE
+[NO_PID]: ecpg_execute on line 29: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGprepare line 30: NAME: foo1 QUERY: INSERT INTO test1 VALUES ($1, $2)
+[NO_PID]: ECPGprepare on line 30: name foo1; query: "INSERT INTO test1 VALUES ($1, $2)"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGprepare line 31: NAME: Foo-1 QUERY: INSERT INTO test1 VALUES ($1, $2)
+[NO_PID]: ECPGprepare on line 31: name Foo-1; query: "INSERT INTO test1 VALUES ($1, $2)"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGprepare line 32: NAME: foo2 QUERY: SELECT * from test1 where a = $1 and b = $2
+[NO_PID]: ECPGprepare on line 32: name foo2; query: "SELECT * from test1 where a = $1 and b = $2"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGprepare line 33: NAME: foo3 QUERY: SELECT * from test1 where $1 = a
+[NO_PID]: ECPGprepare on line 33: name foo3; query: "SELECT * from test1 where $1 = a"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 35: QUERY: INSERT INTO test1 VALUES ($1, $2) with 2 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 35: query: INSERT INTO test1 VALUES ($1, $2); with 2 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 35: using PQexecPrepared for INSERT INTO test1 VALUES ($1, $2)
+[NO_PID]: ecpg_execute on line 35: using PQexecPrepared for "INSERT INTO test1 VALUES ($1, $2)"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 35: parameter 1 = 1
+[NO_PID]: free_params on line 35: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 35: parameter 2 = one
+[NO_PID]: free_params on line 35: parameter 2 = one
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 35 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 35: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 40: QUERY: INSERT INTO test1 VALUES ($1, $2) with 2 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 40: query: INSERT INTO test1 VALUES ($1, $2); with 2 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 40: using PQexecPrepared for INSERT INTO test1 VALUES ($1, $2)
+[NO_PID]: ecpg_execute on line 40: using PQexecPrepared for "INSERT INTO test1 VALUES ($1, $2)"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 40: parameter 1 = 2
+[NO_PID]: free_params on line 40: parameter 1 = 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 40: parameter 2 = null
+[NO_PID]: free_params on line 40: parameter 2 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 40 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 40: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 45: QUERY: INSERT INTO test1 VALUES ($1, $2) with 2 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 45: query: INSERT INTO test1 VALUES ($1, $2); with 2 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 45: using PQexecPrepared for INSERT INTO test1 VALUES ($1, $2)
+[NO_PID]: ecpg_execute on line 45: using PQexecPrepared for "INSERT INTO test1 VALUES ($1, $2)"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 45: parameter 1 = 3
+[NO_PID]: free_params on line 45: parameter 1 = 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 45: parameter 2 = this is a long test
+[NO_PID]: free_params on line 45: parameter 2 = this is a long test
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 45 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 45: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGdeallocate line 47: NAME: Foo-1
+[NO_PID]: ECPGdeallocate on line 47: name Foo-1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 52: QUERY: SELECT * from test1 where a = $1 and b = $2 with 2 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 52: query: SELECT * from test1 where a = $1 and b = $2; with 2 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 52: using PQexecPrepared for SELECT * from test1 where a = $1 and b = $2
+[NO_PID]: ecpg_execute on line 52: using PQexecPrepared for "SELECT * from test1 where a = $1 and b = $2"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 1 = 1
+[NO_PID]: free_params on line 52: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 2 = one
+[NO_PID]: free_params on line 52: parameter 2 = one
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 52: Correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_execute on line 52: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute putting result (1 tuples) into descriptor 'outdesc'
+[NO_PID]: ecpg_execute on line 52: putting result (1 tuples) into descriptor outdesc
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 54: RESULT: 1 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 54: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 58: QUERY: declare c1  cursor  for SELECT * from test1 where a = $1 and b = $2 with 2 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 58: query: declare c1  cursor  for SELECT * from test1 where a = $1 and b = $2; with 2 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 58: using PQexecParams 
+[NO_PID]: ecpg_execute on line 58: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 58: parameter 1 = 1
+[NO_PID]: free_params on line 58: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 58: parameter 2 = one
+[NO_PID]: free_params on line 58: parameter 2 = one
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 58 Ok: DECLARE CURSOR
+[NO_PID]: ecpg_execute on line 58: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 60: QUERY: fetch next from c1 with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 60: query: fetch next from c1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 60: using PQexec
+[NO_PID]: ecpg_execute on line 60: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 60: Correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_execute on line 60: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 60: RESULT: 1 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 60: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 60: RESULT: one offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 60: RESULT: one offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 64: QUERY: close c1 with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 64: query: close c1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 64: using PQexec
+[NO_PID]: ecpg_execute on line 64: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 64 Ok: CLOSE CURSOR
+[NO_PID]: ecpg_execute on line 64: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 70: QUERY: declare c2  cursor  for SELECT * from test1 where $1 = a with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 70: query: declare c2  cursor  for SELECT * from test1 where $1 = a; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 70: using PQexecParams 
+[NO_PID]: ecpg_execute on line 70: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 70: parameter 1 = 2
+[NO_PID]: free_params on line 70: parameter 1 = 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 70 Ok: DECLARE CURSOR
+[NO_PID]: ecpg_execute on line 70: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 72: QUERY: fetch next from c2 with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 72: query: fetch next from c2; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 72: using PQexec
+[NO_PID]: ecpg_execute on line 72: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 72: Correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_execute on line 72: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 72: RESULT: 2 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 72: RESULT: 2 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 72: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 75: QUERY: close c2 with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 75: query: close c2; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 75: using PQexec
+[NO_PID]: ecpg_execute on line 75: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 75 Ok: CLOSE CURSOR
+[NO_PID]: ecpg_execute on line 75: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 77: QUERY: select  *  from test1 where a = 3   with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 77: query: select  *  from test1 where a = 3  ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 77: using PQexec
+[NO_PID]: ecpg_execute on line 77: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 77: Correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_execute on line 77: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 77: RESULT: 3 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 77: RESULT: 3 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 77: RESULT: this is a long test offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 77: RESULT: this is a long test offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 80: QUERY: drop table test1  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 80: query: drop table test1 ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 80: using PQexec
+[NO_PID]: ecpg_execute on line 80: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 80 Ok: DROP TABLE
+[NO_PID]: ecpg_execute on line 80: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGdeallocate line 81: NAME: foo3
+[NO_PID]: ECPGdeallocate on line 81: name foo3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGdeallocate line 81: NAME: foo2
+[NO_PID]: ECPGdeallocate on line 81: name foo2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGdeallocate line 81: NAME: foo1
+[NO_PID]: ECPGdeallocate on line 81: name foo1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

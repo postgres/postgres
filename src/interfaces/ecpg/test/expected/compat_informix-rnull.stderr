@@ -2,123 +2,123 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 31: QUERY: create  table test ( id int   , c char  ( 10 )    , s smallint   , i int   , b bool    , f float    , l bigint   , dbl double precision   , dec decimal    , dat date    , tmp timestamptz    )     with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 31: query: create  table test ( id int   , c char  ( 10 )    , s smallint   , i int   , b bool    , f float    , l bigint   , dbl double precision   , dec decimal    , dat date    , tmp timestamptz    )    ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 31: using PQexec
+[NO_PID]: ecpg_execute on line 31: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 31 Ok: CREATE TABLE
+[NO_PID]: ecpg_execute on line 31: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 34 action = commit connection = regress1
+[NO_PID]: ECPGtrans on line 34: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 36: QUERY: insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  ) values ( 1 ,  $1  ,  $2  ,  $3  ,  $4  ,  $5  ,  $6  ,  $7  )  with 7 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 36: query: insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  ) values ( 1 ,  $1  ,  $2  ,  $3  ,  $4  ,  $5  ,  $6  ,  $7  ) ; with 7 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 36: using PQexecParams 
+[NO_PID]: ecpg_execute on line 36: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 36: parameter 1 = abc
+[NO_PID]: free_params on line 36: parameter 1 = abc
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 36: parameter 2 = 17
+[NO_PID]: free_params on line 36: parameter 2 = 17
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 36: parameter 3 = -74874
+[NO_PID]: free_params on line 36: parameter 3 = -74874
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 36: parameter 4 = t
+[NO_PID]: free_params on line 36: parameter 4 = t
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 36: parameter 5 = 3.710000038147
+[NO_PID]: free_params on line 36: parameter 5 = 3.710000038147
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 36: parameter 6 = 487444
+[NO_PID]: free_params on line 36: parameter 6 = 487444
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 36: parameter 7 = 404.404
+[NO_PID]: free_params on line 36: parameter 7 = 404.404
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 36 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 36: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 39 action = commit connection = regress1
+[NO_PID]: ECPGtrans on line 39: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 52: QUERY: insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  , dec  , dat  , tmp  ) values ( 2 ,  $1  ,  $2  ,  $3  ,  $4  ,  $5  ,  $6  ,  $7  ,  $8  ,  $9  ,  $10  )  with 10 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 52: query: insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  , dec  , dat  , tmp  ) values ( 2 ,  $1  ,  $2  ,  $3  ,  $4  ,  $5  ,  $6  ,  $7  ,  $8  ,  $9  ,  $10  ) ; with 10 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 52: using PQexecParams 
+[NO_PID]: ecpg_execute on line 52: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 1 = null
+[NO_PID]: free_params on line 52: parameter 1 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 2 = null
+[NO_PID]: free_params on line 52: parameter 2 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 3 = null
+[NO_PID]: free_params on line 52: parameter 3 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 4 = t
+[NO_PID]: free_params on line 52: parameter 4 = t
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 5 = null
+[NO_PID]: free_params on line 52: parameter 5 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 6 = null
+[NO_PID]: free_params on line 52: parameter 6 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 7 = null
+[NO_PID]: free_params on line 52: parameter 7 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 8 = null
+[NO_PID]: free_params on line 52: parameter 8 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 9 = null
+[NO_PID]: free_params on line 52: parameter 9 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 52: parameter 10 = null
+[NO_PID]: free_params on line 52: parameter 10 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 52 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 52: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 55 action = commit connection = regress1
+[NO_PID]: ECPGtrans on line 55: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 59: QUERY: select  c , s , i , b , f , l , dbl , dec , dat , tmp  from test where id = 1   with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 59: query: select  c , s , i , b , f , l , dbl , dec , dat , tmp  from test where id = 1  ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 59: using PQexec
+[NO_PID]: ecpg_execute on line 59: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 59: Correctly got 1 tuples with 10 fields
+[NO_PID]: ecpg_execute on line 59: correctly got 1 tuples with 10 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 59: RESULT: abc        offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 59: RESULT: abc        offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 59: RESULT: 17 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 59: RESULT: 17 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 59: RESULT: -74874 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 59: RESULT: -74874 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 59: RESULT: t offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 59: RESULT: t offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 59: RESULT: 3.710000038147 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 59: RESULT: 3.710000038147 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 59: RESULT: 487444 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 59: RESULT: 487444 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 59: RESULT: 404.404 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 59: RESULT: 404.404 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 59: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 59: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 59: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 59: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 59: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 59: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 76: QUERY: select  c , s , i , b , f , l , dbl , dec , dat , tmp  from test where id = 2   with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 76: query: select  c , s , i , b , f , l , dbl , dec , dat , tmp  from test where id = 2  ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 76: using PQexec
+[NO_PID]: ecpg_execute on line 76: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 76: Correctly got 1 tuples with 10 fields
+[NO_PID]: ecpg_execute on line 76: correctly got 1 tuples with 10 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 76: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 76: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 76: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 76: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 76: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 76: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 76: RESULT: t offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 76: RESULT: t offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 76: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 76: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 76: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 76: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 76: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 76: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 76: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 76: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 76: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 76: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 76: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 76: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 91: QUERY: drop table test  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 91: query: drop table test ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 91: using PQexec
+[NO_PID]: ecpg_execute on line 91: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 91 Ok: DROP TABLE
+[NO_PID]: ecpg_execute on line 91: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 92 action = commit connection = regress1
+[NO_PID]: ECPGtrans on line 92: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

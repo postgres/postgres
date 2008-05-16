@@ -4,49 +4,49 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 28: QUERY: select  current_database ()      with 0 parameter on connection second 
+[NO_PID]: ecpg_execute on line 28: query: select  current_database ()     ; with 0 parameter(s) on connection second
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 28: using PQexec
+[NO_PID]: ecpg_execute on line 28: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 28: Correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_execute on line 28: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 28: RESULT: regress1 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 28: RESULT: regress1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 29: QUERY: select  current_database ()      with 0 parameter on connection first 
+[NO_PID]: ecpg_execute on line 29: query: select  current_database ()     ; with 0 parameter(s) on connection first
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 29: using PQexec
+[NO_PID]: ecpg_execute on line 29: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 29: Correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_execute on line 29: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 29: RESULT: connectdb offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 29: RESULT: connectdb offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 30: QUERY: select  current_database ()      with 0 parameter on connection second 
+[NO_PID]: ecpg_execute on line 30: query: select  current_database ()     ; with 0 parameter(s) on connection second
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 30: using PQexec
+[NO_PID]: ecpg_execute on line 30: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 30: Correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_execute on line 30: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 30: RESULT: regress1 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 30: RESULT: regress1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 33: QUERY: select  current_database ()      with 0 parameter on connection first 
+[NO_PID]: ecpg_execute on line 33: query: select  current_database ()     ; with 0 parameter(s) on connection first
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 33: using PQexec
+[NO_PID]: ecpg_execute on line 33: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 33: Correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_execute on line 33: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 33: RESULT: connectdb offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 33: RESULT: connectdb offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection first closed.
+[NO_PID]: ecpg_finish: connection first closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 37: QUERY: select  current_database ()      with 0 parameter on connection second 
+[NO_PID]: ecpg_execute on line 37: query: select  current_database ()     ; with 0 parameter(s) on connection second
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 37: using PQexec
+[NO_PID]: ecpg_execute on line 37: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 37: Correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_execute on line 37: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 37: RESULT: regress1 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 37: RESULT: regress1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -220 in line 40, 'No such connection first in line 40.'.
+[NO_PID]: raising sqlcode -220 on line 40: no such connection first on line 40
 [NO_PID]: sqlca: code: -220, state: 08003
-[NO_PID]: ecpg_finish: Connection second closed.
+[NO_PID]: ecpg_finish: connection second closed
 [NO_PID]: sqlca: code: 0, state: 00000

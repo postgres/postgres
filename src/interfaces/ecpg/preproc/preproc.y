@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.364 2008/05/12 16:29:04 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.365 2008/05/16 15:20:04 petere Exp $ */
 
 /* Copyright comment */
 %{
@@ -60,16 +60,19 @@ mmerror(int error_code, enum errortype type, char * error, ...)
 {
 	va_list ap;
 
+	/* internationalize the error message string */
+	error = _(error);
+
 	fprintf(stderr, "%s:%d: ", input_filename, yylineno);
 
 	switch(type)
 	{
 		case ET_WARNING:
-			fprintf(stderr, "WARNING: ");
+			fprintf(stderr, _("WARNING: "));
 			break;
 		case ET_ERROR:
 		case ET_FATAL:
-			fprintf(stderr, "ERROR: ");
+			fprintf(stderr, _("ERROR: "));
 			break;
 	}
 
@@ -92,7 +95,7 @@ mmerror(int error_code, enum errortype type, char * error, ...)
 			if (yyout)
 				fclose(yyout);
 			if (unlink(output_filename) != 0 && *output_filename != '-')
-			        fprintf(stderr, "Could not remove output file %s!\n", output_filename);
+			        fprintf(stderr, _("could not remove output file \"%s\"\n"), output_filename);
 			exit(error_code);
 	}
 }
@@ -303,7 +306,7 @@ add_additional_variables(char *name, bool insert)
 
 	if (ptr == NULL)
 	{
-		mmerror(PARSE_ERROR, ET_ERROR, "trying to access an undeclared cursor %s\n", name);
+		mmerror(PARSE_ERROR, ET_ERROR, "trying to access an undeclared cursor \"%s\"\n", name);
 		return NULL;
 	}
 
@@ -331,14 +334,14 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	if ((type_enum == ECPGt_struct ||
 	     type_enum == ECPGt_union) &&
 	    initializer == 1)
-		mmerror(PARSE_ERROR, ET_ERROR, "Initializer not allowed in typedef command");
+		mmerror(PARSE_ERROR, ET_ERROR, "initializer not allowed in typedef command");
 	else
 	{
 		for (ptr = types; ptr != NULL; ptr = ptr->next)
 		{
 			if (strcmp(name, ptr->name) == 0)
 				/* re-definition is a bug */
-				mmerror(PARSE_ERROR, ET_ERROR, "Type %s already defined", name);
+				mmerror(PARSE_ERROR, ET_ERROR, "type %s already defined", name);
 		}
 		adjust_array(type_enum, &dimension, &length, type_dimension, type_index, array, true);
 
@@ -361,7 +364,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 			type_enum != ECPGt_char &&
 			type_enum != ECPGt_unsigned_char &&
 			atoi(this->type->type_index) >= 0)
-			mmerror(PARSE_ERROR, ET_ERROR, "No multidimensional array support for simple data types");
+			mmerror(PARSE_ERROR, ET_ERROR, "no multidimensional array support for simple data types");
 
 		types = this;
 	}
@@ -749,7 +752,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
 				if (pg_strcasecmp($1+strlen("close "), "database") == 0)
 				{
 					if (connection)
-						mmerror(PARSE_ERROR, ET_ERROR, "no at option for close database statement.\n");
+						mmerror(PARSE_ERROR, ET_ERROR, "no at option for close database statement\n");
 
 					fprintf(yyout, "{ ECPGdisconnect(__LINE__, \"CURRENT\");");
 					whenever_action(2);
@@ -787,7 +790,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| DeallocateStmt
 		{
 			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement.\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement\n");
 				
 			output_deallocate_prepare_statement($1);
 		}
@@ -862,7 +865,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| ECPGConnect
 		{
 			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for connect statement.\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "no at option for connect statement\n");
 
 			fprintf(yyout, "{ ECPGconnect(__LINE__, %d, %s, %d); ", compat, $1, autocommit);
 			reset_variables();
@@ -876,7 +879,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| ECPGDeallocateDescr
 		{
 			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement.\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement\n");
 			fprintf(yyout,"ECPGdeallocate_desc(__LINE__, %s);",$1);
 			whenever_action(0);
 			free($1);
@@ -899,7 +902,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| ECPGDisconnect
 		{
 			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for disconnect statement.\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "no at option for disconnect statement\n");
 
 			fprintf(yyout, "{ ECPGdisconnect(__LINE__, %s);",
 					$1 ? $1 : "\"CURRENT\"");
@@ -951,7 +954,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| ECPGSetConnection
 		{
 			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for set connection statement.\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "no at option for set connection statement\n");
 
 			fprintf(yyout, "{ ECPGsetconn(__LINE__, %s);", $1);
 			whenever_action(2);
@@ -973,7 +976,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| ECPGTypedef
 		{
 			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for typedef statement.\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "no at option for typedef statement\n");
 
 			fprintf(yyout, "%s", $1);
 			free($1);
@@ -982,14 +985,14 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| ECPGVar
 		{
 			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for var statement.\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "no at option for var statement\n");
 
 			output_simple_statement($1);
 		}
 		| ECPGWhenever
 		{
 			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for whenever statement.\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "no at option for whenever statement\n");
 
 			output_simple_statement($1);
 		}
@@ -1496,18 +1499,18 @@ CopyStmt:  COPY opt_binary qualified_name opt_oids copy_from
 		copy_file_name copy_delimiter opt_with copy_opt_list
 			{
 				if (strcmp($5, "to") == 0 && strcmp($6, "stdin") == 0)
-					mmerror(PARSE_ERROR, ET_ERROR, "copy to stdin not possible.\n");
+					mmerror(PARSE_ERROR, ET_ERROR, "copy to stdin not possible\n");
 				else if (strcmp($5, "from") == 0 && strcmp($6, "stdout") == 0)
-					mmerror(PARSE_ERROR, ET_ERROR, "copy from stdout not possible.\n");
+					mmerror(PARSE_ERROR, ET_ERROR, "copy from stdout not possible\n");
 				else if (strcmp($5, "from") == 0 && strcmp($6, "stdin") == 0)
-					mmerror(PARSE_ERROR, ET_WARNING, "copy from stdin not implemented.\n");
+					mmerror(PARSE_ERROR, ET_WARNING, "copy from stdin not implemented\n");
 				
 				$$ = cat_str(9, make_str("copy"), $2, $3, $4, $5, $6, $7, $8, $9);
 			}
 		| COPY select_with_parens TO copy_file_name opt_with copy_opt_list
 			{
 				if (strcmp($4, "stdin") == 0)
-					mmerror(PARSE_ERROR, ET_ERROR, "copy to stdin not possible.\n");
+					mmerror(PARSE_ERROR, ET_ERROR, "copy to stdin is not possible\n");
 				
 				$$ = cat_str(6, make_str("copy"), $2, make_str("to"), $4, $5, $6);
 			}
@@ -1727,7 +1730,7 @@ key_match:	MATCH FULL
 			{ $$ = make_str("match full"); }
 		| MATCH PARTIAL
 		{
-			mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported FOREIGN KEY/MATCH PARTIAL will be passed to backend");
+			mmerror(PARSE_ERROR, ET_WARNING, "currently unsupported FOREIGN KEY/MATCH PARTIAL will be passed to backend");
 			$$ = make_str("match partial");
 		}
 		| /*EMPTY*/
@@ -2487,7 +2490,7 @@ grantee:  RoleId			{ $$ = $1; }
 
 opt_grant_grant_option:  WITH GRANT OPTION
 		{
-			mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported GRANT/WITH GRANT OPTION will be passed to backend");
+			mmerror(PARSE_ERROR, ET_WARNING, "currently unsupported GRANT/WITH GRANT OPTION will be passed to backend");
 			$$ = make_str("with grant option");
 		}
 		| /*EMPTY*/ 		{ $$ = EMPTY; }
@@ -3493,7 +3496,7 @@ DeclareCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR SelectStmt
 			{
 				if (strcmp($2, ptr->name) == 0)
 					/* re-definition is a bug */
-					mmerror(PARSE_ERROR, ET_ERROR, "cursor %s already defined", $2);
+					mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" already defined", $2);
 			}
 
 			this = (struct cursor *) mm_alloc(sizeof(struct cursor));
@@ -3661,7 +3664,7 @@ select_limit:	LIMIT select_limit_value OFFSET select_offset_value
 		   { $$ = cat2_str(make_str("offset"), $2); }
 		| LIMIT select_limit_value ',' select_offset_value
 		   {
-		   	mmerror(PARSE_ERROR, ET_WARNING, "No longer supported LIMIT #,# syntax passed to backend.");
+		   	mmerror(PARSE_ERROR, ET_WARNING, "no longer supported LIMIT #,# syntax passed to backend");
 			$$ = cat_str(4, make_str("limit"), $2, make_str(","), $4);
 		   }
 		;
@@ -5010,7 +5013,7 @@ connection_target: opt_database_name opt_server opt_port
 		{
 			/* old style: dbname[@server][:port] */
 			if (strlen($2) > 0 && *($2) != '@')
-				mmerror(PARSE_ERROR, ET_ERROR, "Expected '@', found '%s'", $2);
+				mmerror(PARSE_ERROR, ET_ERROR, "expected \"@\", found \"%s\"", $2);
 			
 			/* C strings need to be handled differently */
 			if ($1[0] == '\"')
@@ -5022,15 +5025,15 @@ connection_target: opt_database_name opt_server opt_port
 		{
 			/* new style: <tcp|unix>:postgresql://server[:port][/dbname] */
 			if (strncmp($1, "unix:postgresql", strlen("unix:postgresql")) != 0 && strncmp($1, "tcp:postgresql", strlen("tcp:postgresql")) != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "only protocols 'tcp' and 'unix' and database type 'postgresql' are supported");
+				mmerror(PARSE_ERROR, ET_ERROR, "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported");
 
 			if (strncmp($3, "//", strlen("//")) != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "Expected '://', found '%s'", $3);
+				mmerror(PARSE_ERROR, ET_ERROR, "expected \"://\", found \"%s\"", $3);
 
 			if (strncmp($1, "unix", strlen("unix")) == 0 &&
 				strncmp($3 + strlen("//"), "localhost", strlen("localhost")) != 0 &&
 				strncmp($3 + strlen("//"), "127.0.0.1", strlen("127.0.0.1")) != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "unix domain sockets only work on 'localhost' but not on '%s'", $3 + strlen("//"));
+				mmerror(PARSE_ERROR, ET_ERROR, "unix domain sockets only work on \"localhost\" but not on \"%s\"", $3 + strlen("//"));
 
 			$$ = make3_str(make3_str(make_str("\""), $1, make_str(":")), $3, make3_str(make3_str($4, make_str("/"), $6),	$7, make_str("\"")));
 		}
@@ -5056,10 +5059,10 @@ opt_database_name: database_name		{ $$ = $1; }
 db_prefix: ident cvariable
 		{
 			if (strcmp($2, "postgresql") != 0 && strcmp($2, "postgres") != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "Expected 'postgresql', found '%s'", $2);
+				mmerror(PARSE_ERROR, ET_ERROR, "expected \"postgresql\", found \"%s\"", $2);
 
 			if (strcmp($1, "tcp") != 0 && strcmp($1, "unix") != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "Illegal connection type %s", $1);
+				mmerror(PARSE_ERROR, ET_ERROR, "illegal connection type %s", $1);
 
 			$$ = make3_str($1, make_str(":"), $2);
 		}
@@ -5068,7 +5071,7 @@ db_prefix: ident cvariable
 server: Op server_name
 		{
 			if (strcmp($1, "@") != 0 && strcmp($1, "//") != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "Expected '@' or '://', found '%s'", $1);
+				mmerror(PARSE_ERROR, ET_ERROR, "expected \"@\" or \"://\", found \"%s\"", $1);
 
 			$$ = make2_str($1, $2);
 		}
@@ -5174,7 +5177,7 @@ opt_options: Op connect_options
 				mmerror(PARSE_ERROR, ET_ERROR, "incomplete statement");
 
 			if (strcmp($1, "?") != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "unrecognised token '%s'", $1);
+				mmerror(PARSE_ERROR, ET_ERROR, "unrecognized token \"%s\"", $1);
 
 			$$ = make2_str(make_str("?"), $2);
 		}
@@ -5189,7 +5192,7 @@ connect_options:  ColId opt_opt_value
 					mmerror(PARSE_ERROR, ET_ERROR, "incomplete statement");
 
 				if (strcmp($3, "&") != 0)
-					mmerror(PARSE_ERROR, ET_ERROR, "unrecognised token '%s'", $3);
+					mmerror(PARSE_ERROR, ET_ERROR, "unrecognized token \"%s\"", $3);
 
 				$$ = cat_str(3, make2_str($1, $2), $3, $4);
 			}
@@ -5216,7 +5219,7 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 			{
 				if (strcmp($2, ptr->name) == 0)
 					/* re-definition is a bug */
-					mmerror(PARSE_ERROR, ET_ERROR, "cursor %s already defined", $2);
+					mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" already defined", $2);
 			}
 
 			this = (struct cursor *) mm_alloc(sizeof(struct cursor));
@@ -5419,7 +5422,7 @@ var_type:	simple_type
 			}
 			else
 			{
-				mmerror(PARSE_ERROR, ET_ERROR, "Only numeric/decimal have precision/scale argument");
+				mmerror(PARSE_ERROR, ET_ERROR, "only numeric/decimal have precision/scale argument");
 				$$.type_enum = ECPGt_numeric;
 				$$.type_str = make_str("numeric");
 			}
@@ -5431,7 +5434,7 @@ var_type:	simple_type
 		| ECPGColLabelCommon ecpg_interval
 		{
 			if (strlen($2) != 0 && strcmp ($1, "datetime") != 0 && strcmp ($1, "interval") != 0)
-				mmerror (PARSE_ERROR, ET_ERROR, "Interval specification not allowed here ");
+				mmerror (PARSE_ERROR, ET_ERROR, "interval specification not allowed here");
 
 			/*
 			 * Check for type names that the SQL grammar treats as
@@ -5575,7 +5578,7 @@ struct_union_type_with_symbol: s_struct_union_symbol
 		{
 			struct_member_list[struct_level++] = NULL;
 			if (struct_level >= STRUCT_DEPTH)
-				 mmerror(PARSE_ERROR, ET_ERROR, "Too many levels in nested structure/union definition");
+				 mmerror(PARSE_ERROR, ET_ERROR, "too many levels in nested structure/union definition");
 			forward_name = mm_strdup($1.symbol);
 		}
 		'{' variable_declarations '}'
@@ -5600,7 +5603,7 @@ struct_union_type_with_symbol: s_struct_union_symbol
 			{
 					if (strcmp(su_type.type_str, ptr->name) == 0)
 							/* re-definition is a bug */
-							mmerror(PARSE_ERROR, ET_ERROR, "Type %s already defined", su_type.type_str);
+							mmerror(PARSE_ERROR, ET_ERROR, "type \"%s\" already defined", su_type.type_str);
 			}
 
 			this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
@@ -5627,7 +5630,7 @@ struct_union_type: struct_union_type_with_symbol	{ $$ = $1; }
 		{
 			struct_member_list[struct_level++] = NULL;
 			if (struct_level >= STRUCT_DEPTH)
-				 mmerror(PARSE_ERROR, ET_ERROR, "Too many levels in nested structure/union definition");
+				 mmerror(PARSE_ERROR, ET_ERROR, "too many levels in nested structure/union definition");
 		}
 		'{' variable_declarations '}'
 		{
@@ -5941,21 +5944,21 @@ UsingConst: AllConst
 ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor
 	{
 		const char *con = connection ? connection : "NULL";
-		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement\n");
 		$$ = (char *) mm_alloc(sizeof("1, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
 		sprintf($$, "1, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}
 	| SQL_DESCRIBE opt_output name using_descriptor
 	{
 		const char *con = connection ? connection : "NULL";
-		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement\n");
 		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
 		sprintf($$, "0, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}
 	| SQL_DESCRIBE opt_output name into_descriptor
 	{
 		const char *con = connection ? connection : "NULL";
-		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement\n");
 		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
 		sprintf($$, "0, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}
@@ -6138,7 +6141,7 @@ ECPGVar: SQL_VAR
 			if (($5.type_enum == ECPGt_struct ||
 				 $5.type_enum == ECPGt_union) &&
 				initializer == 1)
-				mmerror(PARSE_ERROR, ET_ERROR, "Initializer not allowed in EXEC SQL VAR command");
+				mmerror(PARSE_ERROR, ET_ERROR, "initializer not allowed in EXEC SQL VAR command");
 			else
 			{
 				adjust_array($5.type_enum, &dimension, &length, $5.type_dimension, $5.type_index, *$7?1:0, false);
@@ -6170,7 +6173,7 @@ ECPGVar: SQL_VAR
 
 					default:
 						if (atoi(length) >= 0)
-							mmerror(PARSE_ERROR, ET_ERROR, "No multidimensional array support for simple data types");
+							mmerror(PARSE_ERROR, ET_ERROR, "no multidimensional array support for simple data types");
 
 						if (atoi(dimension) < 0)
 							type = ECPGmake_simple_type($5.type_enum, make_str("1"), 0);
@@ -6893,7 +6896,7 @@ cvariable:	CVARIABLE
 				{
 					case '[':
 							if (brace)
-								mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support for simple data types");
+								mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support for simple data types");
 							brace_open++;
 							break;
 					case ']':
@@ -7018,7 +7021,7 @@ void base_yyerror(const char * error)
 {
 	char buf[1024];
 
-	snprintf(buf,sizeof buf,"%s at or near \"%s\"", error, token_start ? token_start : yytext);
+	snprintf(buf,sizeof buf, _("%s at or near \"%s\""), error, token_start ? token_start : yytext);
 	buf[sizeof(buf)-1]=0;
 	mmerror(PARSE_ERROR, ET_ERROR, buf);
 }

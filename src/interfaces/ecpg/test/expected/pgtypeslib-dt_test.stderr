@@ -2,41 +2,41 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 29: QUERY: create  table date_test ( d date    , ts timestamp    )     with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 29: query: create  table date_test ( d date    , ts timestamp    )    ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 29: using PQexec
+[NO_PID]: ecpg_execute on line 29: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 29 Ok: CREATE TABLE
+[NO_PID]: ecpg_execute on line 29: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 30: QUERY: set datestyle to iso with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 30: query: set datestyle to iso; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 30: using PQexec
+[NO_PID]: ecpg_execute on line 30: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 30 Ok: SET
+[NO_PID]: ecpg_execute on line 30: OK: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 35: QUERY: insert into date_test ( d  , ts  ) values (  $1  ,  $2  )  with 2 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 35: query: insert into date_test ( d  , ts  ) values (  $1  ,  $2  ) ; with 2 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 35: using PQexecParams 
+[NO_PID]: ecpg_execute on line 35: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 35: parameter 1 = 1966-01-17
+[NO_PID]: free_params on line 35: parameter 1 = 1966-01-17
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 35: parameter 2 = 2000-07-12 17:34:29
+[NO_PID]: free_params on line 35: parameter 2 = 2000-07-12 17:34:29
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 35 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 35: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 37: QUERY: select  *  from date_test where d =  $1    with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 37: query: select  *  from date_test where d =  $1   ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 37: using PQexecParams 
+[NO_PID]: ecpg_execute on line 37: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 37: parameter 1 = 1966-01-17
+[NO_PID]: free_params on line 37: parameter 1 = 1966-01-17
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 37: Correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_execute on line 37: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 37: RESULT: 1966-01-17 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 37: RESULT: 1966-01-17 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 37: RESULT: 2000-07-12 17:34:29 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 37: RESULT: 2000-07-12 17:34:29 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 350 action = rollback connection = regress1
+[NO_PID]: ECPGtrans on line 350: action "rollback"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

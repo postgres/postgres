@@ -2,91 +2,91 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 32: QUERY: create  table test ( i int   , c char  ( 10 )    )     with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 32: query: create  table test ( i int   , c char  ( 10 )    )    ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 32: using PQexec
+[NO_PID]: ecpg_execute on line 32: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 32 Ok: CREATE TABLE
+[NO_PID]: ecpg_execute on line 32: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 33: QUERY: insert into test values ( 1 , 'abcdefghij' )  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 33: query: insert into test values ( 1 , 'abcdefghij' ) ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 33: using PQexec
+[NO_PID]: ecpg_execute on line 33: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 33 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 33: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 36: QUERY: select  *  from test    with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 36: query: select  *  from test   ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 36: using PQexec
+[NO_PID]: ecpg_execute on line 36: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 36: Correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_execute on line 36: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 36: RESULT: 1 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 36: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 36: RESULT: abcdefghij offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 36: RESULT: abcdefghij offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
 Warning: At least one column was truncated
-[NO_PID]: ECPGtrans line 37 action = rollback connection = regress1
+[NO_PID]: ECPGtrans on line 37: action "rollback"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 39: QUERY: select  *  from nonexistant    with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 39: query: select  *  from nonexistant   ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 39: using PQexec
+[NO_PID]: ecpg_execute on line 39: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult line 39: Error: ERROR:  relation "nonexistant" does not exist
+[NO_PID]: ecpg_check_PQresult on line 39: ERROR:  relation "nonexistant" does not exist
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 42P01 (sqlcode: -400) in line 39, ''relation "nonexistant" does not exist' in line 39.'.
+[NO_PID]: raising sqlstate 42P01 (sqlcode -400) on line 39: relation "nonexistant" does not exist on line 39
 [NO_PID]: sqlca: code: -400, state: 42P01
-sql error 'relation "nonexistant" does not exist' in line 39.
-[NO_PID]: ECPGtrans line 40 action = rollback connection = regress1
+sql error: relation "nonexistant" does not exist on line 39
+[NO_PID]: ECPGtrans on line 40: action "rollback"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 43: QUERY: select  *  from nonexistant    with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 43: query: select  *  from nonexistant   ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 43: using PQexec
+[NO_PID]: ecpg_execute on line 43: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult line 43: Error: ERROR:  relation "nonexistant" does not exist
+[NO_PID]: ecpg_check_PQresult on line 43: ERROR:  relation "nonexistant" does not exist
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 42P01 (sqlcode: -400) in line 43, ''relation "nonexistant" does not exist' in line 43.'.
+[NO_PID]: raising sqlstate 42P01 (sqlcode -400) on line 43: relation "nonexistant" does not exist on line 43
 [NO_PID]: sqlca: code: -400, state: 42P01
 Error in statement 'select':
-sql error 'relation "nonexistant" does not exist' in line 43.
-[NO_PID]: ECPGtrans line 44 action = rollback connection = regress1
+sql error: relation "nonexistant" does not exist on line 43
+[NO_PID]: ECPGtrans on line 44: action "rollback"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 47: QUERY: select  *  from nonexistant    with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 47: query: select  *  from nonexistant   ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 47: using PQexec
+[NO_PID]: ecpg_execute on line 47: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult line 47: Error: ERROR:  relation "nonexistant" does not exist
+[NO_PID]: ecpg_check_PQresult on line 47: ERROR:  relation "nonexistant" does not exist
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 42P01 (sqlcode: -400) in line 47, ''relation "nonexistant" does not exist' in line 47.'.
+[NO_PID]: raising sqlstate 42P01 (sqlcode -400) on line 47: relation "nonexistant" does not exist on line 47
 [NO_PID]: sqlca: code: -400, state: 42P01
 Found another error
-sql error 'relation "nonexistant" does not exist' in line 47.
-[NO_PID]: ECPGtrans line 48 action = rollback connection = regress1
+sql error: relation "nonexistant" does not exist on line 47
+[NO_PID]: ECPGtrans on line 48: action "rollback"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 51: QUERY: select  *  from nonexistant    with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 51: query: select  *  from nonexistant   ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 51: using PQexec
+[NO_PID]: ecpg_execute on line 51: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult line 51: Error: ERROR:  relation "nonexistant" does not exist
+[NO_PID]: ecpg_check_PQresult on line 51: ERROR:  relation "nonexistant" does not exist
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 42P01 (sqlcode: -400) in line 51, ''relation "nonexistant" does not exist' in line 51.'.
+[NO_PID]: raising sqlstate 42P01 (sqlcode -400) on line 51: relation "nonexistant" does not exist on line 51
 [NO_PID]: sqlca: code: -400, state: 42P01
-[NO_PID]: ECPGtrans line 52 action = rollback connection = regress1
+[NO_PID]: ECPGtrans on line 52: action "rollback"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 55: QUERY: select  *  from nonexistant    with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 55: query: select  *  from nonexistant   ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 55: using PQexec
+[NO_PID]: ecpg_execute on line 55: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult line 55: Error: ERROR:  relation "nonexistant" does not exist
+[NO_PID]: ecpg_check_PQresult on line 55: ERROR:  relation "nonexistant" does not exist
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 42P01 (sqlcode: -400) in line 55, ''relation "nonexistant" does not exist' in line 55.'.
+[NO_PID]: raising sqlstate 42P01 (sqlcode -400) on line 55: relation "nonexistant" does not exist on line 55
 [NO_PID]: sqlca: code: -400, state: 42P01
-[NO_PID]: ECPGtrans line 59 action = rollback connection = regress1
+[NO_PID]: ECPGtrans on line 59: action "rollback"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 62: QUERY: select  *  from nonexistant    with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 62: query: select  *  from nonexistant   ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 62: using PQexec
+[NO_PID]: ecpg_execute on line 62: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult line 62: Error: ERROR:  relation "nonexistant" does not exist
+[NO_PID]: ecpg_check_PQresult on line 62: ERROR:  relation "nonexistant" does not exist
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 42P01 (sqlcode: -400) in line 62, ''relation "nonexistant" does not exist' in line 62.'.
+[NO_PID]: raising sqlstate 42P01 (sqlcode -400) on line 62: relation "nonexistant" does not exist on line 62
 [NO_PID]: sqlca: code: -400, state: 42P01

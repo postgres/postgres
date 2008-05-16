@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.44 2008/02/07 11:09:13 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.45 2008/05/16 15:20:04 petere Exp $ */
 
 #include "postgres_fe.h"
 
@@ -226,7 +226,7 @@ find_variable(char *name)
 				*next = '\0';
 				p = find_simple(name);
 				if (p == NULL)
-					mmerror(PARSE_ERROR, ET_FATAL, "The variable %s is not declared", name);
+					mmerror(PARSE_ERROR, ET_FATAL, "variable %s is not declared", name);
 
 				*next = c;
 				switch (p->type->u.element->type)
@@ -248,7 +248,7 @@ find_variable(char *name)
 		p = find_simple(name);
 
 	if (p == NULL)
-		mmerror(PARSE_ERROR, ET_FATAL, "The variable %s is not declared", name);
+		mmerror(PARSE_ERROR, ET_FATAL, "variable %s is not declared", name);
 
 	return (p);
 }
@@ -468,7 +468,7 @@ get_typedef(char *name)
 
 	for (this = types; this && strcmp(this->name, name); this = this->next);
 	if (!this)
-		mmerror(PARSE_ERROR, ET_FATAL, "invalid datatype '%s'", name);
+		mmerror(PARSE_ERROR, ET_FATAL, "invalid datatype \"%s\"", name);
 
 	return (this);
 }
@@ -479,7 +479,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 	if (atoi(type_index) >= 0)
 	{
 		if (atoi(*length) >= 0)
-			mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support");
+			mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support");
 
 		*length = type_index;
 	}
@@ -487,7 +487,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 	if (atoi(type_dimension) >= 0)
 	{
 		if (atoi(*dimension) >= 0 && atoi(*length) >= 0)
-			mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support");
+			mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support");
 
 		if (atoi(*dimension) >= 0)
 			*length = *dimension;
@@ -496,16 +496,16 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 	}
 
 	if (pointer_len > 2)
-		mmerror(PARSE_ERROR, ET_FATAL, "No multilevel (more than 2) pointer supported %d", pointer_len);
+		mmerror(PARSE_ERROR, ET_FATAL, "no multilevel (more than 2) pointer supported %d", pointer_len);
 
 	if (pointer_len > 1 && type_enum != ECPGt_char && type_enum != ECPGt_unsigned_char)
-		mmerror(PARSE_ERROR, ET_FATAL, "No pointer to pointer supported for this type");
+		mmerror(PARSE_ERROR, ET_FATAL, "no pointer to pointer supported for this type");
 
 	if (pointer_len > 1 && (atoi(*length) >= 0 || atoi(*dimension) >= 0))
-		mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support");
+		mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support");
 
 	if (atoi(*length) >= 0 && atoi(*dimension) >= 0 && pointer_len)
-		mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support");
+		mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support");
 
 	switch (type_enum)
 	{
@@ -519,7 +519,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			}
 
 			if (atoi(*length) >= 0)
-				mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support for structures");
+				mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support for structures");
 
 			break;
 		case ECPGt_varchar:
@@ -579,7 +579,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			}
 
 			if (atoi(*length) >= 0)
-				mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support for simple data types");
+				mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support for simple data types");
 
 			break;
 	}

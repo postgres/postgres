@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.41 2007/11/15 21:14:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.42 2008/05/16 15:20:03 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -15,6 +15,7 @@
 #include "pgtypes_date.h"
 #include "pgtypes_timestamp.h"
 #include "pgtypes_interval.h"
+#include "pg_config_paths.h"
 
 #ifdef HAVE_LONG_LONG_INT_64
 #ifndef LONG_LONG_MIN
@@ -109,7 +110,7 @@ ecpg_init(const struct connection * con, const char *connection_name, const int 
 	if (con == NULL)
 	{
 		ecpg_raise(lineno, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
-				   connection_name ? connection_name : "NULL");
+				   connection_name ? connection_name : _("NULL"));
 		return (false);
 	}
 
@@ -178,7 +179,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	if (!ecpg_init(con, connection_name, lineno))
 		return (false);
 
-	ecpg_log("ECPGtrans line %d action = %s connection = %s\n", lineno, transaction, con ? con->name : "(nil)");
+	ecpg_log("ECPGtrans on line %d: action \"%s\"; connection \"%s\"\n", lineno, transaction, con ? con->name : _("null"));
 
 	/* if we have no connection we just simulate the command */
 	if (con && con->connection)
@@ -241,6 +242,9 @@ ecpg_log(const char *format,...)
 {
 	va_list		ap;
 	struct sqlca_t *sqlca = ECPGget_sqlca();
+
+	/* internationalize the error message string */
+	format = ecpg_gettext(format);
 
 	if (simple_debug)
 	{
@@ -447,3 +451,38 @@ win32_pthread_once(volatile pthread_once_t *once, void (*fn) (void))
 #endif   /* ENABLE_THREAD_SAFETY */
 
 #endif   /* WIN32 */
+
+#ifdef ENABLE_NLS
+
+char *
+ecpg_gettext(const char *msgid)
+{
+	static bool already_bound = false;
+
+	if (!already_bound)
+	{
+		/* dgettext() preserves errno, but bindtextdomain() doesn't */
+#ifdef WIN32
+		int			save_errno = GetLastError();
+#else
+		int			save_errno = errno;
+#endif
+		const char *ldir;
+
+		already_bound = true;
+		/* No relocatable lookup here because the binary could be anywhere */
+		ldir = getenv("PGLOCALEDIR");
+		if (!ldir)
+			ldir = LOCALEDIR;
+		bindtextdomain("ecpg", ldir);
+#ifdef WIN32
+		SetLastError(save_errno);
+#else
+		errno = save_errno;
+#endif
+	}
+
+	return dgettext("ecpg", msgid);
+}
+
+#endif   /* ENABLE_NLS */

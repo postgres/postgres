@@ -1,7 +1,7 @@
 /*
  * functions needed for descriptor handling
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.26 2007/12/21 14:33:20 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.27 2008/05/16 15:20:04 petere Exp $
  *
  * since descriptor might be either a string constant or a string var
  * we need to check for a constant if we expect a constant
@@ -158,7 +158,7 @@ output_get_descr_header(char *desc_name)
 		if (results->value == ECPGd_count)
 			ECPGnumeric_lvalue(results->variable);
 		else
-			mmerror(PARSE_ERROR, ET_WARNING, "unknown descriptor header item '%d'", results->value);
+			mmerror(PARSE_ERROR, ET_WARNING, "unknown descriptor header item \"%d\"", results->value);
 	}
 
 	drop_assignments();
@@ -207,7 +207,7 @@ output_set_descr_header(char *desc_name)
 		if (results->value == ECPGd_count)
 			ECPGnumeric_lvalue(results->variable);
 		else
-			mmerror(PARSE_ERROR, ET_WARNING, "unknown descriptor header item '%d'", results->value);
+			mmerror(PARSE_ERROR, ET_WARNING, "unknown descriptor header item \"%d\"", results->value);
 	}
 
 	drop_assignments();

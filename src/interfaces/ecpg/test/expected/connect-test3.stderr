@@ -4,35 +4,35 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 27: QUERY: select  current_database ()      with 0 parameter on connection second 
+[NO_PID]: ecpg_execute on line 27: query: select  current_database ()     ; with 0 parameter(s) on connection second
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 27: using PQexec
+[NO_PID]: ecpg_execute on line 27: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 27: Correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_execute on line 27: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 27: RESULT: regress1 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 27: RESULT: regress1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection second closed.
+[NO_PID]: ecpg_finish: connection second closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 31: QUERY: select  current_database ()      with 0 parameter on connection first 
+[NO_PID]: ecpg_execute on line 31: query: select  current_database ()     ; with 0 parameter(s) on connection first
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 31: using PQexec
+[NO_PID]: ecpg_execute on line 31: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 31: Correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_execute on line 31: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 31: RESULT: connectdb offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 31: RESULT: connectdb offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -220 in line 35, 'No such connection DEFAULT in line 35.'.
+[NO_PID]: raising sqlcode -220 on line 35: no such connection DEFAULT on line 35
 [NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: ECPGconnect: connection identifier second is already in use
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection second closed.
+[NO_PID]: ecpg_finish: connection second closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection first closed.
+[NO_PID]: ecpg_finish: connection first closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -220 in line 40, 'No such connection CURRENT in line 40.'.
+[NO_PID]: raising sqlcode -220 on line 40: no such connection CURRENT on line 40
 [NO_PID]: sqlca: code: -220, state: 08003
-[NO_PID]: raising sqlcode -220 in line 41, 'No such connection DEFAULT in line 41.'.
+[NO_PID]: raising sqlcode -220 on line 41: no such connection DEFAULT on line 41
 [NO_PID]: sqlca: code: -220, state: 08003

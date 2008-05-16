@@ -2,65 +2,65 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 24: QUERY: alter user connectuser  encrypted password 'connectpw' with 0 parameter on connection main 
+[NO_PID]: ecpg_execute on line 24: query: alter user connectuser  encrypted password 'connectpw'; with 0 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 24: using PQexec
+[NO_PID]: ecpg_execute on line 24: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 24 Ok: ALTER ROLE
+[NO_PID]: ecpg_execute on line 24: OK: ALTER ROLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: ecpg_finish: connection main closed
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database <DEFAULT> on <DEFAULT> port <DEFAULT>  for user connectdb
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: non-localhost access via sockets in line 56
+[NO_PID]: ECPGconnect: non-localhost access via sockets on line 56
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -402 in line 56, 'Could not connect to database connectdb in line 56.'.
+[NO_PID]: raising sqlcode -402 on line 56: could not connect to database "connectdb" on line 56
 [NO_PID]: sqlca: code: -402, state: 08001
-[NO_PID]: raising sqlcode -220 in line 57, 'No such connection main in line 57.'.
+[NO_PID]: raising sqlcode -220 on line 57: no such connection main on line 57
 [NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: ECPGconnect: opening database <DEFAULT> on <DEFAULT> port <DEFAULT>  for user connectdb
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: connection identifier main is already in use
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -220 in line 68, 'No such connection nonexistant in line 68.'.
+[NO_PID]: raising sqlcode -220 on line 68: no such connection nonexistant on line 68
 [NO_PID]: sqlca: code: -220, state: 08003

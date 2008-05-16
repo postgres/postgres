@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.40 2007/11/15 21:14:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.41 2008/05/16 15:20:03 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -60,7 +60,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	else
 		log_offset = offset;
 
-	ecpg_log("ecpg_get_data line %d: RESULT: %s offset: %ld array: %s\n", lineno, pval ? (binary ? "BINARY" : pval) : "EMPTY", log_offset, isarray ? "Yes" : "No");
+	ecpg_log("ecpg_get_data on line %d: RESULT: %s offset: %ld; array: %s\n", lineno, pval ? (binary ? _("BINARY") : pval) : _("EMPTY"), log_offset, isarray ? _("yes") : _("no"));
 
 	/* We will have to decode the value */
 
@@ -360,7 +360,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							else
 								ecpg_raise(lineno, ECPG_CONVERT_BOOL,
 										   ECPG_SQLSTATE_DATATYPE_MISMATCH,
-										   "different size");
+										   _("different size"));
 							break;
 						}
 						else if (pval[0] == 't' && pval[1] == '\0')
@@ -372,7 +372,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							else
 								ecpg_raise(lineno, ECPG_CONVERT_BOOL,
 										   ECPG_SQLSTATE_DATATYPE_MISMATCH,
-										   "different size");
+										   _("different size"));
 							break;
 						}
 						else if (pval[0] == '\0' && PQgetisnull(results, act_tuple, act_field))
@@ -490,7 +490,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						/* did we get an error? */
 						if (nres == NULL)
 						{
-							ecpg_log("ecpg_get_data line %d: RESULT: %s errno %d\n",
+							ecpg_log("ecpg_get_data on line %d: RESULT %s; errno %d\n",
 									 lineno, pval ? pval : "", errno);
 
 							if (INFORMIX_MODE(compat))
@@ -553,7 +553,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						/* did we get an error? */
 						if (ires == NULL)
 						{
-							ecpg_log("ecpg_get_data line %d: RESULT: %s errno %d\n",
+							ecpg_log("ecpg_get_data on line %d: RESULT %s; errno %d\n",
 									 lineno, pval ? pval : "", errno);
 
 							if (INFORMIX_MODE(compat))
@@ -607,7 +607,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						/* did we get an error? */
 						if (errno != 0)
 						{
-							ecpg_log("ecpg_get_data line %d: RESULT: %s errno %d\n",
+							ecpg_log("ecpg_get_data on line %d: RESULT %s; errno %d\n",
 									 lineno, pval ? pval : "", errno);
 
 							if (INFORMIX_MODE(compat))
@@ -654,7 +654,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						/* did we get an error? */
 						if (errno != 0)
 						{
-							ecpg_log("ecpg_get_data line %d: RESULT: %s errno %d\n",
+							ecpg_log("ecpg_get_data on line %d: RESULT %s; errno %d\n",
 									 lineno, pval ? pval : "", errno);
 
 							if (INFORMIX_MODE(compat))

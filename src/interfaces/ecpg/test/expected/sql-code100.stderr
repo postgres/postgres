@@ -2,127 +2,127 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 18: QUERY: create  table test ( "index" numeric ( 3 )   primary key   , "payload" int4    not null )     with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 18: query: create  table test ( "index" numeric ( 3 )   primary key   , "payload" int4    not null )    ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 18: using PQexec
+[NO_PID]: ecpg_execute on line 18: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 18 Ok: CREATE TABLE
+[NO_PID]: ecpg_execute on line 18: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 22 action = commit connection = regress1
+[NO_PID]: ECPGtrans on line 22: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: QUERY: insert into test ( payload  , index  ) values ( 0 ,  $1  )  with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 26: query: insert into test ( payload  , index  ) values ( 0 ,  $1  ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: using PQexecParams 
+[NO_PID]: ecpg_execute on line 26: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 26: parameter 1 = 0
+[NO_PID]: free_params on line 26: parameter 1 = 0
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: QUERY: insert into test ( payload  , index  ) values ( 0 ,  $1  )  with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 26: query: insert into test ( payload  , index  ) values ( 0 ,  $1  ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: using PQexecParams 
+[NO_PID]: ecpg_execute on line 26: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 26: parameter 1 = 1
+[NO_PID]: free_params on line 26: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: QUERY: insert into test ( payload  , index  ) values ( 0 ,  $1  )  with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 26: query: insert into test ( payload  , index  ) values ( 0 ,  $1  ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: using PQexecParams 
+[NO_PID]: ecpg_execute on line 26: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 26: parameter 1 = 2
+[NO_PID]: free_params on line 26: parameter 1 = 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: QUERY: insert into test ( payload  , index  ) values ( 0 ,  $1  )  with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 26: query: insert into test ( payload  , index  ) values ( 0 ,  $1  ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: using PQexecParams 
+[NO_PID]: ecpg_execute on line 26: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 26: parameter 1 = 3
+[NO_PID]: free_params on line 26: parameter 1 = 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: QUERY: insert into test ( payload  , index  ) values ( 0 ,  $1  )  with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 26: query: insert into test ( payload  , index  ) values ( 0 ,  $1  ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: using PQexecParams 
+[NO_PID]: ecpg_execute on line 26: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 26: parameter 1 = 4
+[NO_PID]: free_params on line 26: parameter 1 = 4
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: QUERY: insert into test ( payload  , index  ) values ( 0 ,  $1  )  with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 26: query: insert into test ( payload  , index  ) values ( 0 ,  $1  ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: using PQexecParams 
+[NO_PID]: ecpg_execute on line 26: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 26: parameter 1 = 5
+[NO_PID]: free_params on line 26: parameter 1 = 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: QUERY: insert into test ( payload  , index  ) values ( 0 ,  $1  )  with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 26: query: insert into test ( payload  , index  ) values ( 0 ,  $1  ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: using PQexecParams 
+[NO_PID]: ecpg_execute on line 26: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 26: parameter 1 = 6
+[NO_PID]: free_params on line 26: parameter 1 = 6
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: QUERY: insert into test ( payload  , index  ) values ( 0 ,  $1  )  with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 26: query: insert into test ( payload  , index  ) values ( 0 ,  $1  ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: using PQexecParams 
+[NO_PID]: ecpg_execute on line 26: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 26: parameter 1 = 7
+[NO_PID]: free_params on line 26: parameter 1 = 7
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: QUERY: insert into test ( payload  , index  ) values ( 0 ,  $1  )  with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 26: query: insert into test ( payload  , index  ) values ( 0 ,  $1  ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: using PQexecParams 
+[NO_PID]: ecpg_execute on line 26: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 26: parameter 1 = 8
+[NO_PID]: free_params on line 26: parameter 1 = 8
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: QUERY: insert into test ( payload  , index  ) values ( 0 ,  $1  )  with 1 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 26: query: insert into test ( payload  , index  ) values ( 0 ,  $1  ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26: using PQexecParams 
+[NO_PID]: ecpg_execute on line 26: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params line 26: parameter 1 = 9
+[NO_PID]: free_params on line 26: parameter 1 = 9
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 26 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 31 action = commit connection = regress1
+[NO_PID]: ECPGtrans on line 31: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 34: QUERY: update test set payload  = payload + 1  where index = - 1  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 34: query: update test set payload  = payload + 1  where index = - 1 ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 34: using PQexec
+[NO_PID]: ecpg_execute on line 34: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 34 Ok: UPDATE 0
+[NO_PID]: ecpg_execute on line 34: OK: UPDATE 0
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 in line 34, 'No data found in line 34.'.
+[NO_PID]: raising sqlcode 100 on line 34: no data found on line 34
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute line 38: QUERY: delete from test  where index = - 1  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 38: query: delete from test  where index = - 1 ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 38: using PQexec
+[NO_PID]: ecpg_execute on line 38: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 38 Ok: DELETE 0
+[NO_PID]: ecpg_execute on line 38: OK: DELETE 0
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 in line 38, 'No data found in line 38.'.
+[NO_PID]: raising sqlcode 100 on line 38: no data found on line 38
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute line 41: QUERY: insert into test ( select  *  from test where index = - 1   )  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 41: query: insert into test ( select  *  from test where index = - 1   ) ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 41: using PQexec
+[NO_PID]: ecpg_execute on line 41: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 41 Ok: INSERT 0 0
+[NO_PID]: ecpg_execute on line 41: OK: INSERT 0 0
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 in line 41, 'No data found in line 41.'.
+[NO_PID]: raising sqlcode 100 on line 41: no data found on line 41
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute line 44: QUERY: drop table test  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 44: query: drop table test ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 44: using PQexec
+[NO_PID]: ecpg_execute on line 44: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 44 Ok: DROP TABLE
+[NO_PID]: ecpg_execute on line 44: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 46 action = commit connection = regress1
+[NO_PID]: ECPGtrans on line 46: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

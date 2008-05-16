@@ -2,101 +2,101 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 35: QUERY: set datestyle to mdy with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 35: query: set datestyle to mdy; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 35: using PQexec
+[NO_PID]: ecpg_execute on line 35: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 35 Ok: SET
+[NO_PID]: ecpg_execute on line 35: OK: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 37: QUERY: create  table test ( a serial    , b numeric ( 12 , 3 )   , c varchar    , d varchar ( 3 )    , e char  ( 4 )    , f timestamptz    , g boolean   , h box    , i inet    )     with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 37: query: create  table test ( a serial    , b numeric ( 12 , 3 )   , c varchar    , d varchar ( 3 )    , e char  ( 4 )    , f timestamptz    , g boolean   , h box    , i inet    )    ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 37: using PQexec
+[NO_PID]: ecpg_execute on line 37: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 37 Ok: CREATE TABLE
+[NO_PID]: ecpg_execute on line 37: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 38: QUERY: insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values ( 23.456 , 'varchar' , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , true , '(1,2,3,4)' , '2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128' )  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 38: query: insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values ( 23.456 , 'varchar' , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , true , '(1,2,3,4)' , '2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128' ) ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 38: using PQexec
+[NO_PID]: ecpg_execute on line 38: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 38 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 38: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 39: QUERY: insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values ( 2.446456 , null , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , false , null , null )  with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 39: query: insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values ( 2.446456 , null , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , false , null , null ) ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 39: using PQexec
+[NO_PID]: ecpg_execute on line 39: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 39 Ok: INSERT 0 1
+[NO_PID]: ecpg_execute on line 39: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 42: QUERY: select  a , b , c , d , e , f , g , h , i  from test    order by a   with 0 parameter on connection regress1 
+[NO_PID]: ecpg_execute on line 42: query: select  a , b , c , d , e , f , g , h , i  from test    order by a  ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 42: using PQexec
+[NO_PID]: ecpg_execute on line 42: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute line 42: Correctly got 2 tuples with 9 fields
+[NO_PID]: ecpg_execute on line 42: correctly got 2 tuples with 9 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute putting result (2 tuples) into descriptor 'mydesc'
+[NO_PID]: ecpg_execute on line 42: putting result (2 tuples) into descriptor mydesc
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result: line 43: allocating memory for 2 tuples
+[NO_PID]: ecpg_store_result on line 43: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 43: RESULT: 1 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 43: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 43: RESULT: 2 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 43: RESULT: 2 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result: line 44: allocating memory for 2 tuples
+[NO_PID]: ecpg_store_result on line 44: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 44: RESULT: 23.456 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 44: RESULT: 23.456 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 44: RESULT: 2.446 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 44: RESULT: 2.446 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result: line 45: allocating memory for 2 tuples
+[NO_PID]: ecpg_store_result on line 45: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 45: RESULT: varchar offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 45: RESULT: varchar offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 45: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 45: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result: line 46: allocating memory for 2 tuples
+[NO_PID]: ecpg_store_result on line 46: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 46: RESULT: v offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 46: RESULT: v offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 46: RESULT: v offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 46: RESULT: v offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result: line 47: allocating memory for 2 tuples
+[NO_PID]: ecpg_store_result on line 47: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 47: RESULT: c    offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 47: RESULT: c    offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 47: RESULT: c    offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 47: RESULT: c    offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result: line 48: allocating memory for 2 tuples
+[NO_PID]: ecpg_store_result on line 48: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 48: RESULT: Mon Mar 03 11:33:07 2003 PST offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 48: RESULT: Mon Mar 03 11:33:07 2003 PST offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 48: RESULT: Mon Mar 03 11:33:07 2003 PST offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 48: RESULT: Mon Mar 03 11:33:07 2003 PST offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 7
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result: line 49: allocating memory for 2 tuples
+[NO_PID]: ecpg_store_result on line 49: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 49: RESULT: t offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 49: RESULT: t offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 49: RESULT: f offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 49: RESULT: f offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 9
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result: line 52: allocating memory for 2 tuples
+[NO_PID]: ecpg_store_result on line 52: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 52: RESULT: 2001:4f8:3:ba:2e0:81ff:fe22:d1f1 offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 52: RESULT: 2001:4f8:3:ba:2e0:81ff:fe22:d1f1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data line 52: RESULT:  offset: -1 array: Yes
+[NO_PID]: ecpg_get_data on line 52: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000
