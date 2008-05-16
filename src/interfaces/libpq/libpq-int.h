@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.129 2008/01/01 19:46:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.130 2008/05/16 18:30:53 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,6 +438,13 @@ extern bool pqGetHomeDirectory(char *buf, int bufsize);
 
 #ifdef ENABLE_THREAD_SAFETY
 extern pgthreadlock_t pg_g_threadlock;
+
+#define PGTHREAD_ERROR(msg) \
+	do { \
+		fprintf(stderr, "%s\n", msg); \
+		exit(1); \
+	} while (0)
+
 
 #define pglock_thread()		pg_g_threadlock(true)
 #define pgunlock_thread()	pg_g_threadlock(false)

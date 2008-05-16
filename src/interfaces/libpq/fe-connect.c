@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.357 2008/03/31 02:43:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.358 2008/05/16 18:30:53 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3835,14 +3835,23 @@ default_threadlock(int acquire)
 		while (InterlockedExchange(&mutex_initlock, 1) == 1)
 			 /* loop, another thread own the lock */ ;
 		if (singlethread_lock == NULL)
-			pthread_mutex_init(&singlethread_lock, NULL);
+		{
+			if (pthread_mutex_init(&singlethread_lock, NULL))
+				PGTHREAD_ERROR("failed to initialize mutex");
+		}
 		InterlockedExchange(&mutex_initlock, 0);
 	}
 #endif
 	if (acquire)
-		pthread_mutex_lock(&singlethread_lock);
+	{
+		if (pthread_mutex_lock(&singlethread_lock))
+			PGTHREAD_ERROR("failed to lock mutex");
+	}
 	else
-		pthread_mutex_unlock(&singlethread_lock);
+	{
+		if (pthread_mutex_unlock(&singlethread_lock))
+			PGTHREAD_ERROR("failed to unlock mutex");
+	}
 #endif
 }
 

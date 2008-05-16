@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.104 2008/03/31 02:43:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.105 2008/05/16 18:30:53 mha Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -796,12 +796,21 @@ static void
 pq_lockingcallback(int mode, int n, const char *file, int line)
 {
 	if (mode & CRYPTO_LOCK)
-		pthread_mutex_lock(&pq_lockarray[n]);
+	{
+		if (pthread_mutex_lock(&pq_lockarray[n]))
+			PGTHREAD_ERROR("failed to lock mutex");
+	}
 	else
-		pthread_mutex_unlock(&pq_lockarray[n]);
+	{
+		if (pthread_mutex_unlock(&pq_lockarray[n]))
+			PGTHREAD_ERROR("failed to unlock mutex");
+	}
 }
 #endif   /* ENABLE_THREAD_SAFETY */
 
+/*
+ * Also see similar code in fe-connect.c, default_threadlock()
+ */
 static int
 init_ssl_system(PGconn *conn)
 {
@@ -817,11 +826,15 @@ init_ssl_system(PGconn *conn)
 		while (InterlockedExchange(&mutex_initlock, 1) == 1)
 			 /* loop, another thread own the lock */ ;
 		if (init_mutex == NULL)
-			pthread_mutex_init(&init_mutex, NULL);
+		{
+			if (pthread_mutex_init(&init_mutex, NULL))
+				return -1;
+		}
 		InterlockedExchange(&mutex_initlock, 0);
 	}
 #endif
-	pthread_mutex_lock(&init_mutex);
+	if (pthread_mutex_lock(&init_mutex))
+		return -1;
 
 	if (pq_initssllib && pq_lockarray == NULL)
 	{
@@ -836,7 +849,10 @@ init_ssl_system(PGconn *conn)
 			return -1;
 		}
 		for (i = 0; i < CRYPTO_num_locks(); i++)
-			pthread_mutex_init(&pq_lockarray[i], NULL);
+		{
+			if (pthread_mutex_init(&pq_lockarray[i], NULL))
+				return -1;
+		}
 
 		CRYPTO_set_locking_callback(pq_lockingcallback);
 	}
