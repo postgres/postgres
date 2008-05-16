@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.15 2008/04/08 18:20:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.16 2008/05/16 16:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,11 +127,7 @@ silly_cmp_tsvector(const TSVector a, const TSVector b)
 			{
 				return (aptr->haspos > bptr->haspos) ? -1 : 1;
 			}
-			else if (aptr->len != bptr->len)
-			{
-				return (aptr->len > bptr->len) ? -1 : 1;
-			}
-			else if ((res = strncmp(STRPTR(a) + aptr->pos, STRPTR(b) + bptr->pos, bptr->len)) != 0)
+			else if ( (res=tsCompareString( STRPTR(a) + aptr->pos, aptr->len, STRPTR(b) + bptr->pos, bptr->len, false)) !=0 )
 			{
 				return res;
 			}
@@ -286,18 +282,10 @@ tsvector_setweight(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(out);
 }
 
-static int
-compareEntry(char *ptra, WordEntry *a, char *ptrb, WordEntry *b)
-{
-	if (a->len == b->len)
-	{
-		return strncmp(
-					   ptra + a->pos,
-					   ptrb + b->pos,
-					   a->len);
-	}
-	return (a->len > b->len) ? 1 : -1;
-}
+#define compareEntry(pa, a, pb, b) \
+	tsCompareString((pa) + (a)->pos, (a)->len,	\
+					(pb) + (b)->pos, (b)->len,	\
+					false)
 
 /*
  * Add positions from src to dest after offsetting them by maxpos.
@@ -534,18 +522,46 @@ tsvector_concat(PG_FUNCTION_ARGS)
 }
 
 /*
- * compare 2 string values
+ * Compare two strings by tsvector rules. 
+ * if isPrefix = true then it returns not-zero value if b has prefix a
  */
-static int4
-ValCompare(CHKVAL *chkval, WordEntry *ptr, QueryOperand *item)
+int4
+tsCompareString(char *a, int lena, char *b, int lenb, bool prefix)
 {
-	if (ptr->len == item->length)
-		return strncmp(
-					   &(chkval->values[ptr->pos]),
-					   &(chkval->operand[item->distance]),
-					   item->length);
+	int cmp;
 
-	return (ptr->len > item->length) ? 1 : -1;
+	if ( lena == 0 )
+	{
+		if ( prefix )
+			cmp = 0; /* emtry string is equal to any if a prefix match */ 
+		else
+			cmp = (lenb>0) ? -1 : 0;
+	}
+	else if ( lenb == 0 )
+	{
+		cmp = (lena>0) ? 1 : 0;
+	}
+	else
+	{
+		cmp = memcmp(a, b, Min(lena, lenb));
+
+		if ( prefix )
+		{
+			if ( cmp == 0 && lena > lenb )
+			{
+				/*
+				 * b argument is not beginning with argument a
+				 */
+				cmp=1;
+			}
+		}
+		else if ( (cmp == 0) && (lena != lenb) )
+		{
+			cmp = (lena < lenb) ? -1 : 1;
+		}
+	}
+
+	return cmp;
 }
 
 /*
@@ -582,25 +598,52 @@ checkcondition_str(void *checkval, QueryOperand *val)
 	CHKVAL	   *chkval = (CHKVAL *) checkval;
 	WordEntry  *StopLow = chkval->arrb;
 	WordEntry  *StopHigh = chkval->arre;
-	WordEntry  *StopMiddle;
-	int			difference;
+	WordEntry  *StopMiddle = StopHigh;
+	int			difference = -1; 
+	bool		res=false;
 
 	/* Loop invariant: StopLow <= val < StopHigh */
-
 	while (StopLow < StopHigh)
 	{
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
-		difference = ValCompare(chkval, StopMiddle, val);
+		difference = tsCompareString( chkval->operand + val->distance, val->length,
+									  chkval->values + StopMiddle->pos, StopMiddle->len,
+									  false);
+
 		if (difference == 0)
-			return (val->weight && StopMiddle->haspos) ?
+		{
+			res = (val->weight && StopMiddle->haspos) ?
 				checkclass_str(chkval, StopMiddle, val) : true;
-		else if (difference < 0)
+			break;
+		}
+		else if (difference > 0)
 			StopLow = StopMiddle + 1;
 		else
 			StopHigh = StopMiddle;
 	}
 
-	return (false);
+	if ( res == false && val->prefix == true )
+	{
+		/*
+		 * there was a failed exact search, so we should scan further to find
+		 * a prefix match.
+		 */
+		if ( StopLow >= StopHigh )
+			StopMiddle = StopHigh;
+
+		while( res == false && StopMiddle < chkval->arre && 
+				tsCompareString( chkval->operand + val->distance, val->length,
+								 chkval->values + StopMiddle->pos, StopMiddle->len,
+								 true) == 0 )
+		{
+			res = (val->weight && StopMiddle->haspos) ?
+				checkclass_str(chkval, StopMiddle, val) : true;
+
+			StopMiddle++;
+		}
+	}
+
+	return res; 
 }
 
 /*
@@ -758,50 +801,38 @@ check_weight(TSVector txt, WordEntry *wptr, int8 weight)
 	return num;
 }
 
-static WordEntry **
-SEI_realloc(WordEntry **in, uint32 *len)
-{
-	if (*len == 0 || in == NULL)
-	{
-		*len = 8;
-		in = palloc(sizeof(WordEntry *) * (*len));
-	}
-	else
-	{
-		*len *= 2;
-		in = repalloc(in, sizeof(WordEntry *) * (*len));
-	}
-	return in;
-}
+#define compareStatWord(a,e,s,t) \
+	tsCompareString(STATSTRPTR(s) + (a)->pos, (a)->len,	\
+					STRPTR(t) + (e)->pos, (e)->len,		\
+					false)
 
-static int
-compareStatWord(StatEntry *a, WordEntry *b, tsstat *stat, TSVector txt)
+typedef struct WordEntryMark
 {
-	if (a->len == b->len)
-		return strncmp(
-					   STATSTRPTR(stat) + a->pos,
-					   STRPTR(txt) + b->pos,
-					   a->len
-			);
-	return (a->len > b->len) ? 1 : -1;
-}
+	WordEntry	*newentry;
+	StatEntry	*pos;
+} WordEntryMark;
 
 static tsstat *
-formstat(tsstat *stat, TSVector txt, WordEntry **entry, uint32 len)
+formstat(tsstat *stat, TSVector txt, List *entries)
 {
-	tsstat	   *newstat;
-	uint32		totallen,
-				nentry;
-	uint32		slen = 0;
-	WordEntry **ptr = entry;
-	char	   *curptr;
-	StatEntry  *sptr,
-			   *nptr;
+	tsstat		   *newstat;
+	uint32			totallen,
+					nentry,
+					len = list_length(entries);
+	uint32			slen = 0;
+	WordEntry	   *ptr;
+	char		   *curptr;
+	StatEntry	   *sptr,
+				   *nptr;
+	ListCell  	   *entry;
+	StatEntry  	   *PosSE = STATPTR(stat),
+				   *prevPosSE;
+	WordEntryMark  *mark;
 
-	while (ptr - entry < len)
+	foreach( entry, entries )
 	{
-		slen += (*ptr)->len;
-		ptr++;
+		mark = (WordEntryMark*)lfirst(entry);
+		slen += mark->newentry->len;
 	}
 
 	nentry = stat->size + len;
@@ -815,77 +846,45 @@ formstat(tsstat *stat, TSVector txt, WordEntry **entry, uint32 len)
 	memcpy(STATSTRPTR(newstat), STATSTRPTR(stat), STATSTRSIZE(stat));
 	curptr = STATSTRPTR(newstat) + STATSTRSIZE(stat);
 
-	ptr = entry;
 	sptr = STATPTR(stat);
 	nptr = STATPTR(newstat);
 
-	if (len == 1)
+	foreach(entry, entries)
 	{
-		StatEntry  *StopLow = STATPTR(stat);
-		StatEntry  *StopHigh = (StatEntry *) STATSTRPTR(stat);
+		prevPosSE = PosSE;
 
-		while (StopLow < StopHigh)
+		mark = (WordEntryMark*)lfirst(entry);
+		ptr  = mark->newentry;
+		PosSE = mark->pos;
+
+		/*
+		 * Copy missed entries 
+		 */
+		if ( PosSE > prevPosSE )
 		{
-			sptr = StopLow + (StopHigh - StopLow) / 2;
-			if (compareStatWord(sptr, *ptr, stat, txt) < 0)
-				StopLow = sptr + 1;
-			else
-				StopHigh = sptr;
+			memcpy( nptr, prevPosSE, sizeof(StatEntry) * (PosSE-prevPosSE) );
+			nptr += PosSE-prevPosSE;
 		}
-		nptr = STATPTR(newstat) + (StopLow - STATPTR(stat));
-		memcpy(STATPTR(newstat), STATPTR(stat), sizeof(StatEntry) * (StopLow - STATPTR(stat)));
-		if ((*ptr)->haspos)
-			nptr->nentry = (stat->weight) ? check_weight(txt, *ptr, stat->weight) : POSDATALEN(txt, *ptr);
+
+		/*
+		 * Copy new entry
+		 */
+		if (ptr->haspos)
+			nptr->nentry = (stat->weight) ? check_weight(txt, ptr, stat->weight) : POSDATALEN(txt, ptr);
 		else
 			nptr->nentry = 1;
 		nptr->ndoc = 1;
-		nptr->len = (*ptr)->len;
-		memcpy(curptr, STRPTR(txt) + (*ptr)->pos, nptr->len);
+		nptr->len = ptr->len;
+		memcpy(curptr, STRPTR(txt) + ptr->pos, nptr->len);
 		nptr->pos = curptr - STATSTRPTR(newstat);
-		memcpy(nptr + 1, StopLow, sizeof(StatEntry) * (((StatEntry *) STATSTRPTR(stat)) - StopLow));
-	}
-	else
-	{
-		while (sptr - STATPTR(stat) < stat->size && ptr - entry < len)
-		{
-			if (compareStatWord(sptr, *ptr, stat, txt) < 0)
-			{
-				memcpy(nptr, sptr, sizeof(StatEntry));
-				sptr++;
-			}
-			else
-			{
-				if ((*ptr)->haspos)
-					nptr->nentry = (stat->weight) ? check_weight(txt, *ptr, stat->weight) : POSDATALEN(txt, *ptr);
-				else
-					nptr->nentry = 1;
-				nptr->ndoc = 1;
-				nptr->len = (*ptr)->len;
-				memcpy(curptr, STRPTR(txt) + (*ptr)->pos, nptr->len);
-				nptr->pos = curptr - STATSTRPTR(newstat);
-				curptr += nptr->len;
-				ptr++;
-			}
-			nptr++;
-		}
+		curptr += nptr->len;
+		nptr++;
 
-		memcpy(nptr, sptr, sizeof(StatEntry) * (stat->size - (sptr - STATPTR(stat))));
-
-		while (ptr - entry < len)
-		{
-			if ((*ptr)->haspos)
-				nptr->nentry = (stat->weight) ? check_weight(txt, *ptr, stat->weight) : POSDATALEN(txt, *ptr);
-			else
-				nptr->nentry = 1;
-			nptr->ndoc = 1;
-			nptr->len = (*ptr)->len;
-			memcpy(curptr, STRPTR(txt) + (*ptr)->pos, nptr->len);
-			nptr->pos = curptr - STATSTRPTR(newstat);
-			curptr += nptr->len;
-			ptr++;
-			nptr++;
-		}
+		pfree(mark);
 	}
+
+	if ( PosSE < (StatEntry *) STATSTRPTR(stat) )
+		memcpy(nptr, PosSE, sizeof(StatEntry) * (stat->size - (PosSE - STATPTR(stat))));
 
 	return newstat;
 }
@@ -907,12 +906,11 @@ ts_accum(tsstat *stat, Datum data)
 {
 	tsstat	   *newstat;
 	TSVector	txt = DatumGetTSVector(data);
-	WordEntry **newentry = NULL;
-	uint32		len = 0,
-				cur = 0;
 	StatEntry  *sptr;
 	WordEntry  *wptr;
 	int			n = 0;
+	List	   *newentries=NIL;
+	StatEntry  *StopLow;
 
 	if (stat == NULL)
 	{							/* Init in first */
@@ -932,16 +930,23 @@ ts_accum(tsstat *stat, Datum data)
 
 	sptr = STATPTR(stat);
 	wptr = ARRPTR(txt);
+	StopLow = STATPTR(stat);
 
-	if (stat->size < 100 * txt->size)
-	{							/* merge */
-		while (sptr - STATPTR(stat) < stat->size && wptr - ARRPTR(txt) < txt->size)
+	while (wptr - ARRPTR(txt) < txt->size)
+	{
+		StatEntry  *StopHigh = (StatEntry *) STATSTRPTR(stat);
+		int			cmp;
+
+		/*
+		 * We do not set StopLow to begin of array because tsvector is ordered 
+		 * with the sames rule, so we can search from last stopped position
+		 */
+
+		while (StopLow < StopHigh)
 		{
-			int			cmp = compareStatWord(sptr, wptr, stat, txt);
-
-			if (cmp < 0)
-				sptr++;
-			else if (cmp == 0)
+			sptr = StopLow + (StopHigh - StopLow) / 2;
+			cmp = compareStatWord(sptr, wptr, stat, txt);
+			if (cmp == 0)
 			{
 				if (stat->weight == 0)
 				{
@@ -953,90 +958,38 @@ ts_accum(tsstat *stat, Datum data)
 					sptr->ndoc++;
 					sptr->nentry += n;
 				}
-				sptr++;
-				wptr++;
+				break;
 			}
+			else if (cmp < 0)
+				StopLow = sptr + 1;
 			else
-			{
-				if (stat->weight == 0 || check_weight(txt, wptr, stat->weight) != 0)
-				{
-					if (cur == len)
-						newentry = SEI_realloc(newentry, &len);
-					newentry[cur] = wptr;
-					cur++;
-				}
-				wptr++;
-			}
+				StopHigh = sptr;
 		}
 
-		while (wptr - ARRPTR(txt) < txt->size)
-		{
+		if (StopLow >= StopHigh)
+		{					/* not found */
 			if (stat->weight == 0 || check_weight(txt, wptr, stat->weight) != 0)
 			{
-				if (cur == len)
-					newentry = SEI_realloc(newentry, &len);
-				newentry[cur] = wptr;
-				cur++;
-			}
-			wptr++;
-		}
-	}
-	else
-	{							/* search */
-		while (wptr - ARRPTR(txt) < txt->size)
-		{
-			StatEntry  *StopLow = STATPTR(stat);
-			StatEntry  *StopHigh = (StatEntry *) STATSTRPTR(stat);
-			int			cmp;
+				WordEntryMark *mark = (WordEntryMark*)palloc(sizeof(WordEntryMark));
 
-			while (StopLow < StopHigh)
-			{
-				sptr = StopLow + (StopHigh - StopLow) / 2;
-				cmp = compareStatWord(sptr, wptr, stat, txt);
-				if (cmp == 0)
-				{
-					if (stat->weight == 0)
-					{
-						sptr->ndoc++;
-						sptr->nentry += (wptr->haspos) ? POSDATALEN(txt, wptr) : 1;
-					}
-					else if (wptr->haspos && (n = check_weight(txt, wptr, stat->weight)) != 0)
-					{
-						sptr->ndoc++;
-						sptr->nentry += n;
-					}
-					break;
-				}
-				else if (cmp < 0)
-					StopLow = sptr + 1;
-				else
-					StopHigh = sptr;
-			}
+				mark->newentry = wptr;
+				mark->pos = StopLow;
+				newentries = lappend( newentries, mark );
 
-			if (StopLow >= StopHigh)
-			{					/* not found */
-				if (stat->weight == 0 || check_weight(txt, wptr, stat->weight) != 0)
-				{
-					if (cur == len)
-						newentry = SEI_realloc(newentry, &len);
-					newentry[cur] = wptr;
-					cur++;
-				}
 			}
-			wptr++;
 		}
+		wptr++;
 	}
 
-
-	if (cur == 0)
+	if (list_length(newentries) == 0)
 	{							/* no new words */
 		if (txt != (TSVector) DatumGetPointer(data))
 			pfree(txt);
 		return stat;
 	}
 
-	newstat = formstat(stat, txt, newentry, cur);
-	pfree(newentry);
+	newstat = formstat(stat, txt, newentries);
+	list_free(newentries);
 
 	if (txt != (TSVector) DatumGetPointer(data))
 		pfree(txt);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.8 2008/04/14 17:05:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.9 2008/05/16 16:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,6 +307,12 @@ checkcondition_arr(void *checkval, QueryOperand *val)
 
 	/* Loop invariant: StopLow <= val < StopHigh */
 
+	/* 
+	 * we are not able to find a a prefix by hash value 
+	 */
+	if ( val->prefix )
+		return true;
+
 	while (StopLow < StopHigh)
 	{
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
@@ -324,6 +330,11 @@ checkcondition_arr(void *checkval, QueryOperand *val)
 static bool
 checkcondition_bit(void *checkval, QueryOperand *val)
 {
+	/* 
+	 * we are not able to find a a prefix in signature tree 
+	 */
+	if ( val->prefix )
+		return true; 
 	return GETBIT(checkval, HASHVAL(val->valcrc));
 }
 

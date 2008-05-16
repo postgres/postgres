@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.229 2008/04/13 20:51:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.230 2008/05/16 16:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2364,7 +2364,10 @@ expand_boolean_index_clause(Node *clause,
  * expand_indexqual_opclause --- expand a single indexqual condition
  *		that is an operator clause
  *
- * The input is a single RestrictInfo, the output a list of RestrictInfos
+ * The input is a single RestrictInfo, the output a list of RestrictInfos.
+ *
+ * In the base case this is just list_make1(), but we have to be prepared to
+ * expand special cases that were accepted by match_special_index_operator().
  */
 static List *
 expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
@@ -2379,63 +2382,77 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 	Const	   *prefix = NULL;
 	Const	   *rest = NULL;
 	Pattern_Prefix_Status pstatus;
-	List	   *result;
 
+	/*
+	 * LIKE and regex operators are not members of any btree index opfamily,
+	 * but they can be members of opfamilies for more exotic index types such
+	 * as GIN.  Therefore, we should only do expansion if the operator is
+	 * actually not in the opfamily.  But checking that requires a syscache
+	 * lookup, so it's best to first see if the operator is one we are
+	 * interested in.
+	 */
 	switch (expr_op)
 	{
-			/*
-			 * LIKE and regex operators are not members of any index opfamily,
-			 * so if we find one in an indexqual list we can assume that it
-			 * was accepted by match_special_index_operator().
-			 */
 		case OID_TEXT_LIKE_OP:
 		case OID_BPCHAR_LIKE_OP:
 		case OID_NAME_LIKE_OP:
 		case OID_BYTEA_LIKE_OP:
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
-										   &prefix, &rest);
-			result = prefix_quals(leftop, opfamily, prefix, pstatus);
+			if (!op_in_opfamily(expr_op, opfamily))
+			{
+				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
+											   &prefix, &rest);
+				return prefix_quals(leftop, opfamily, prefix, pstatus);
+			}
 			break;
 
 		case OID_TEXT_ICLIKE_OP:
 		case OID_BPCHAR_ICLIKE_OP:
 		case OID_NAME_ICLIKE_OP:
-			/* the right-hand const is type text for all of these */
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-										   &prefix, &rest);
-			result = prefix_quals(leftop, opfamily, prefix, pstatus);
+			if (!op_in_opfamily(expr_op, opfamily))
+			{
+				/* the right-hand const is type text for all of these */
+				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
+											   &prefix, &rest);
+				return prefix_quals(leftop, opfamily, prefix, pstatus);
+			}
 			break;
 
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_NAME_REGEXEQ_OP:
-			/* the right-hand const is type text for all of these */
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-										   &prefix, &rest);
-			result = prefix_quals(leftop, opfamily, prefix, pstatus);
+			if (!op_in_opfamily(expr_op, opfamily))
+			{
+				/* the right-hand const is type text for all of these */
+				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
+											   &prefix, &rest);
+				return prefix_quals(leftop, opfamily, prefix, pstatus);
+			}
 			break;
 
 		case OID_TEXT_ICREGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
-			/* the right-hand const is type text for all of these */
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-										   &prefix, &rest);
-			result = prefix_quals(leftop, opfamily, prefix, pstatus);
+			if (!op_in_opfamily(expr_op, opfamily))
+			{
+				/* the right-hand const is type text for all of these */
+				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
+											   &prefix, &rest);
+				return prefix_quals(leftop, opfamily, prefix, pstatus);
+			}
 			break;
 
 		case OID_INET_SUB_OP:
 		case OID_INET_SUBEQ_OP:
-			result = network_prefix_quals(leftop, expr_op, opfamily,
-										  patt->constvalue);
-			break;
-
-		default:
-			result = list_make1(rinfo);
+			if (!op_in_opfamily(expr_op, opfamily))
+			{
+				return network_prefix_quals(leftop, expr_op, opfamily,
+											patt->constvalue);
+			}
 			break;
 	}
 
-	return result;
+	/* Default case: just make a list of the unmodified indexqual */
+	return list_make1(rinfo);
 }
 
 /*

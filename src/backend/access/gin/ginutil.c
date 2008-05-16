@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.14 2008/05/12 00:00:44 alvherre Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.15 2008/05/16 16:31:01 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -41,6 +41,22 @@ initGinState(GinState *state, Relation index)
 	fmgr_info_copy(&(state->consistentFn),
 				   index_getprocinfo(index, 1, GIN_CONSISTENT_PROC),
 				   CurrentMemoryContext);
+	
+	/*
+	 * Check opclass capability to do partial match. 
+	 */
+	if ( index_getprocid(index, 1, GIN_COMPARE_PARTIAL_PROC) != InvalidOid )
+	{
+		fmgr_info_copy(&(state->comparePartialFn),
+					   index_getprocinfo(index, 1, GIN_COMPARE_PARTIAL_PROC),
+					   CurrentMemoryContext);
+
+		state->canPartialMatch = true;
+	}
+	else
+	{
+		state->canPartialMatch = false;
+	}
 }
 
 /*

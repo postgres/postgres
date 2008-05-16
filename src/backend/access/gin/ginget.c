@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.15 2008/05/12 00:00:44 alvherre Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.16 2008/05/16 16:31:01 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -18,8 +18,13 @@
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "utils/datum.h"
 #include "utils/memutils.h"
 
+
+/*
+ * Tries to refind previously taken ItemPointer on page.
+ */
 static bool
 findItemInPage(Page page, ItemPointer item, OffsetNumber *off)
 {
@@ -46,8 +51,204 @@ findItemInPage(Page page, ItemPointer item, OffsetNumber *off)
 }
 
 /*
- * Start* functions setup state of searches: find correct buffer and locks it,
- * Stop* functions unlock buffer (but don't release!)
+ * Goes to the next page if current offset is outside of bounds
+ */
+static bool
+moveRightIfItNeeded( GinBtreeData *btree, GinBtreeStack *stack )
+{
+	Page page = BufferGetPage(stack->buffer);
+
+	if ( stack->off > PageGetMaxOffsetNumber(page) )
+	{
+		/*
+		 * We scanned the whole page, so we should take right page
+		 */
+		stack->blkno = GinPageGetOpaque(page)->rightlink;
+
+		if ( GinPageRightMost(page) )
+			return false;  /* no more pages */
+
+		LockBuffer(stack->buffer, GIN_UNLOCK);
+		stack->buffer = ReleaseAndReadBuffer(stack->buffer, btree->index, stack->blkno);
+		LockBuffer(stack->buffer, GIN_SHARE);
+		stack->off = FirstOffsetNumber;
+	}
+
+	return true;
+}
+
+/*
+ * Does fullscan of posting tree and saves ItemPointers
+ * in scanEntry->partialMatch TIDBitmap
+ */
+static void
+scanForItems( Relation index, GinScanEntry scanEntry, BlockNumber rootPostingTree )
+{
+	GinPostingTreeScan *gdi;
+	Buffer				buffer;
+	Page				page;
+	BlockNumber			blkno;
+
+	gdi = prepareScanPostingTree(index, rootPostingTree, TRUE);
+
+	buffer = scanBeginPostingTree(gdi);
+	IncrBufferRefCount(buffer); /* prevent unpin in freeGinBtreeStack */
+
+	freeGinBtreeStack(gdi->stack);
+	pfree(gdi);
+
+	/*
+	 * Goes through all leaves
+	 */
+	for(;;)
+	{
+		page = BufferGetPage(buffer);
+
+		if ((GinPageGetOpaque(page)->flags & GIN_DELETED) == 0 && GinPageGetOpaque(page)->maxoff >= FirstOffsetNumber )
+		{
+			tbm_add_tuples( scanEntry->partialMatch,
+							(ItemPointer)GinDataPageGetItem(page, FirstOffsetNumber),
+						 	GinPageGetOpaque(page)->maxoff, false);
+			scanEntry->predictNumberResult += GinPageGetOpaque(page)->maxoff;
+		}
+
+		blkno = GinPageGetOpaque(page)->rightlink;
+		if ( GinPageRightMost(page) )
+		{
+			UnlockReleaseBuffer(buffer);
+			return;  /* no more pages */
+		}
+
+		LockBuffer(buffer, GIN_UNLOCK);
+		buffer = ReleaseAndReadBuffer(buffer, index, blkno);
+		LockBuffer(buffer, GIN_SHARE);
+	}
+}
+
+/*
+ * Collects all ItemPointer into the TIDBitmap struct
+ * for entries partially matched to search entry.
+ *
+ * Returns true if done, false if it's needed to restart scan from scratch
+ */
+static bool
+computePartialMatchList( GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry scanEntry )
+{
+	Page 		page;
+	IndexTuple  itup;
+	Datum		idatum;
+	bool		isnull;
+	int32		cmp;
+
+	scanEntry->partialMatch = tbm_create( work_mem * 1024L );
+
+	for(;;)
+	{
+		/*
+		 * stack->off points to the interested entry, buffer is already locked
+		 */
+		if ( moveRightIfItNeeded(btree, stack) == false )
+			return true;
+
+		page = BufferGetPage(stack->buffer);
+		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, stack->off));
+		idatum = index_getattr(itup, 1, btree->ginstate->tupdesc, &isnull);
+		Assert(!isnull);
+
+		/*----------
+		 * Check of partial match.
+		 * case cmp == 0 => match
+		 * case cmp > 0 => not match and finish scan
+		 * case cmp < 0 => not match and continue scan
+		 *----------
+		 */
+    	cmp = DatumGetInt32(FunctionCall3(&btree->ginstate->comparePartialFn,
+										  scanEntry->entry,
+										  idatum,
+										  UInt16GetDatum(scanEntry->strategy)));
+
+		if ( cmp > 0 )
+			return true;
+		else if ( cmp < 0 )
+		{
+			stack->off++;
+			continue;
+		}
+
+		if ( GinIsPostingTree(itup) )
+		{
+			BlockNumber rootPostingTree = GinGetPostingTree(itup);
+			Datum		newDatum,
+						savedDatum = datumCopy (
+										idatum,
+										btree->ginstate->tupdesc->attrs[0]->attbyval,
+										btree->ginstate->tupdesc->attrs[0]->attlen
+									);
+			/*
+			 * We should unlock current page (but not unpin) during
+			 * tree scan to prevent deadlock with vacuum processes.
+			 *
+			 * We save current entry value (savedDatum) to be able to refind
+			 * our tuple after re-locking
+			 */
+			LockBuffer(stack->buffer, GIN_UNLOCK);
+			scanForItems( btree->index, scanEntry, rootPostingTree );
+
+			/*
+			 * We lock again the entry page and while it was unlocked
+			 * insert might occured, so we need to refind our position
+			 */
+			LockBuffer(stack->buffer, GIN_SHARE);
+			page = BufferGetPage(stack->buffer);
+			if ( !GinPageIsLeaf(page) )
+			{
+				/*
+				 * Root page becomes non-leaf while we unlock it. We
+				 * will start again, this situation doesn't cause
+				 * often - root can became a non-leaf only one per
+				 * life of index.
+				 */
+
+				return false;
+			}
+
+			for(;;)
+			{
+				if ( moveRightIfItNeeded(btree, stack) == false )
+					elog(ERROR, "lost saved point in index"); /* must not happen !!! */
+
+				page = BufferGetPage(stack->buffer);
+				itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, stack->off));
+				newDatum = index_getattr(itup, FirstOffsetNumber, btree->ginstate->tupdesc, &isnull);
+
+				if ( compareEntries(btree->ginstate, newDatum, savedDatum) == 0 )
+				{
+					/* Found!  */
+					if ( btree->ginstate->tupdesc->attrs[0]->attbyval == false )
+						pfree( DatumGetPointer(savedDatum) );
+					break;
+				}
+
+				stack->off++;
+			}
+		}
+		else
+		{
+			tbm_add_tuples( scanEntry->partialMatch, GinGetPosting(itup),  GinGetNPosting(itup), false);
+			scanEntry->predictNumberResult +=  GinGetNPosting(itup);
+		}
+
+		/*
+		 * Ok, we save ItemPointers, go to the next entry
+		 */
+		stack->off++;
+	}
+
+	return true;
+}
+
+/*
+ * Start* functions setup begining state of searches: finds correct buffer and pins it.
  */
 static void
 startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
@@ -78,10 +279,45 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 	entry->offset = InvalidOffsetNumber;
 	entry->list = NULL;
 	entry->nlist = 0;
+	entry->partialMatch = NULL;
+	entry->partialMatchResult = NULL;
 	entry->reduceResult = FALSE;
 	entry->predictNumberResult = 0;
 
-	if (btreeEntry.findItem(&btreeEntry, stackEntry))
+	if ( entry->isPartialMatch )
+	{
+		/*
+		 * btreeEntry.findItem points to the first equal or greater value
+		 * than needed. So we will scan further and collect all
+	 	 * ItemPointers
+		 */
+		btreeEntry.findItem(&btreeEntry, stackEntry);
+		if ( computePartialMatchList( &btreeEntry, stackEntry, entry ) == false )
+		{
+			/*
+			 * GIN tree was seriously restructured, so we will
+			 * cleanup all found data and rescan. See comments near
+			 * 'return false' in computePartialMatchList()
+			 */
+			if ( entry->partialMatch )
+			{
+				tbm_free( entry->partialMatch );
+				entry->partialMatch = NULL;
+			}
+			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
+			freeGinBtreeStack(stackEntry);
+
+			startScanEntry(index, ginstate, entry);
+			return;
+		}
+
+		if ( entry->partialMatch && !tbm_is_empty(entry->partialMatch) )
+		{
+			tbm_begin_iterate(entry->partialMatch);
+			entry->isFinished = FALSE;
+		}
+	}
+	else if (btreeEntry.findItem(&btreeEntry, stackEntry))
 	{
 		IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, stackEntry->off));
 
@@ -91,6 +327,13 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			GinPostingTreeScan *gdi;
 			Page		page;
 
+			/*
+			 * We should unlock entry page before make deal with
+			 * posting tree to prevent deadlocks with vacuum processes.
+			 * Because entry is never deleted from page and posting tree is
+			 * never reduced to the posting list, we can unlock page after
+			 * getting BlockNumber of root of posting tree.
+			 */
 			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
 			needUnlock = FALSE;
 			gdi = prepareScanPostingTree(index, rootPostingTree, TRUE);
@@ -111,7 +354,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			 */
 			entry->list = (ItemPointerData *) palloc( BLCKSZ );
 			entry->nlist = GinPageGetOpaque(page)->maxoff;
-			memcpy( entry->list, GinDataPageGetItem(page, FirstOffsetNumber), 
+			memcpy( entry->list, GinDataPageGetItem(page, FirstOffsetNumber),
 						GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData) );
 
 			LockBuffer(entry->buffer, GIN_UNLOCK);
@@ -142,7 +385,14 @@ startScanKey(Relation index, GinState *ginstate, GinScanKey key)
 		return;
 
 	for (i = 0; i < key->nentries; i++)
+	{
 		startScanEntry(index, ginstate, key->scanEntry + i);
+		/*
+		 * Copy strategy number to each entry of key to
+		 * use in comparePartialFn call
+		 */
+		key->scanEntry[i].strategy = key->strategy;
+	}
 
 	memset(key->entryRes, TRUE, sizeof(bool) * key->nentries);
 	key->isFinished = FALSE;
@@ -233,12 +483,12 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 				 * Found position equal to or greater than stored
 				 */
 				entry->nlist = GinPageGetOpaque(page)->maxoff;
-				memcpy( entry->list, GinDataPageGetItem(page, FirstOffsetNumber), 
+				memcpy( entry->list, GinDataPageGetItem(page, FirstOffsetNumber),
 							GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData) );
 
 				LockBuffer(entry->buffer, GIN_UNLOCK);
 
-				if ( !ItemPointerIsValid(&entry->curItem) || 
+				if ( !ItemPointerIsValid(&entry->curItem) ||
 					 compareItemPointers( &entry->curItem, entry->list + entry->offset - 1 ) == 0 )
 				{
 					/*
@@ -248,7 +498,7 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 
 					 break;
 				}
-			
+
 				/*
 				 * Find greater than entry->curItem position, store it.
 				 */
@@ -275,6 +525,38 @@ entryGetItem(Relation index, GinScanEntry entry)
 		entry->isFinished = entry->master->isFinished;
 		entry->curItem = entry->master->curItem;
 	}
+	else if ( entry->partialMatch )
+	{
+		do
+		{
+			if ( entry->partialMatchResult == NULL || entry->offset >= entry->partialMatchResult->ntuples )
+			{
+				entry->partialMatchResult = tbm_iterate( entry->partialMatch );
+
+				if ( entry->partialMatchResult == NULL )
+				{
+					ItemPointerSet(&entry->curItem, InvalidBlockNumber, InvalidOffsetNumber);
+					entry->isFinished = TRUE;
+					break;
+				}
+				else if ( entry->partialMatchResult->ntuples < 0 )
+				{
+					/* bitmap became lossy */
+					ereport(ERROR,
+							(errcode(ERRCODE_OUT_OF_MEMORY),
+							errmsg("not enough memory to store result of partial match operator" ),
+							errhint("Increase the \"work_mem\" parameter.")));
+				}
+				entry->offset = 0;
+			}
+
+			ItemPointerSet(&entry->curItem,
+							entry->partialMatchResult->blockno,
+							entry->partialMatchResult->offsets[ entry->offset ]);
+			entry->offset ++;
+
+		} while (entry->isFinished == FALSE && entry->reduceResult == TRUE && dropItem(entry));
+	}
 	else if (!BufferIsValid(entry->buffer))
 	{
 		entry->offset++;
@@ -295,6 +577,54 @@ entryGetItem(Relation index, GinScanEntry entry)
 	}
 
 	return entry->isFinished;
+}
+
+/*
+ * restart from saved position. Actually it's needed only for
+ * partial match. function is called only by ginrestpos()
+ */
+void
+ginrestartentry(GinScanEntry entry)
+{
+	ItemPointerData stopItem = entry->curItem;
+	bool savedReduceResult;
+
+	if ( entry->master || entry->partialMatch == NULL )
+		return; /* entry is slave or not a partial match type*/
+
+	if ( entry->isFinished )
+		return; /* entry was finished before ginmarkpos() call */
+
+	if ( ItemPointerGetBlockNumber(&stopItem) == InvalidBlockNumber )
+		return; /* entry  wasn't began before ginmarkpos() call */
+
+	/*
+	 * Reset iterator
+	 */
+	tbm_begin_iterate( entry->partialMatch );
+	entry->partialMatchResult = NULL;
+	entry->offset = 0;
+
+	/*
+	 * Temporary reset reduceResult flag to guarantee refinding
+	 * of curItem
+	 */
+	savedReduceResult = entry->reduceResult;
+	entry->reduceResult = FALSE;
+
+	do
+	{
+		/*
+		 * We can use null instead of index because
+		 * partial match doesn't use it
+		 */
+		if ( entryGetItem( NULL, entry ) == false )
+			elog(ERROR, "cannot refind scan position"); /* must not be here! */
+	} while( compareItemPointers( &stopItem, &entry->curItem ) != 0 );
+
+	Assert( entry->isFinished == FALSE );
+
+	entry->reduceResult = savedReduceResult;
 }
 
 /*
@@ -494,7 +824,7 @@ gingettuple(PG_FUNCTION_ARGS)
 	bool		res;
 
 	if (dir != ForwardScanDirection)
-		elog(ERROR, "Gin doesn't support other scan directions than forward");
+		elog(ERROR, "GIN doesn't support other scan directions than forward");
 
 	if (GinIsNewKey(scan))
 		newScanKey(scan);

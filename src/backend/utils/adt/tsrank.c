@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.12 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.13 2008/05/16 16:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,45 +71,60 @@ cnt_length(TSVector t)
 	return len;
 }
 
-static int
-WordECompareQueryItem(char *eval, char *qval, WordEntry *ptr, QueryOperand *item)
-{
-	if (ptr->len == item->length)
-		return strncmp(
-					   eval + ptr->pos,
-					   qval + item->distance,
-					   item->length);
 
-	return (ptr->len > item->length) ? 1 : -1;
-}
+#define	WordECompareQueryItem(e,q,p,i,m) \
+	tsCompareString((q) + (i)->distance, (i)->length,	\
+					(e) + (p)->pos,	(p)->len, (m))
+
 
 /*
- * Returns a pointer to a WordEntry corresponding 'item' from tsvector 't'. 'q'
- * is the TSQuery containing 'item'. Returns NULL if not found.
+ * Returns a pointer to a WordEntry's array corresponding to 'item' from
+ * tsvector 't'. 'q' is the TSQuery containing 'item'.
+ * Returns NULL if not found.
  */
 static WordEntry *
-find_wordentry(TSVector t, TSQuery q, QueryOperand *item)
+find_wordentry(TSVector t, TSQuery q, QueryOperand *item, int32 *nitem)
 {
 	WordEntry  *StopLow = ARRPTR(t);
 	WordEntry  *StopHigh = (WordEntry *) STRPTR(t);
-	WordEntry  *StopMiddle;
+	WordEntry  *StopMiddle = StopHigh;
 	int			difference;
 
-	/* Loop invariant: StopLow <= item < StopHigh */
+	*nitem=0;
 
+	/* Loop invariant: StopLow <= item < StopHigh */
 	while (StopLow < StopHigh)
 	{
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
-		difference = WordECompareQueryItem(STRPTR(t), GETOPERAND(q), StopMiddle, item);
+		difference = WordECompareQueryItem(STRPTR(t), GETOPERAND(q), StopMiddle, item, false);
 		if (difference == 0)
-			return StopMiddle;
-		else if (difference < 0)
+		{
+			StopHigh = StopMiddle;
+			*nitem=1;
+			break;
+		}
+		else if (difference > 0)
 			StopLow = StopMiddle + 1;
 		else
 			StopHigh = StopMiddle;
 	}
 
-	return NULL;
+	if ( item->prefix == true )
+	{
+		if ( StopLow >= StopHigh )
+			StopMiddle = StopHigh;
+
+		*nitem=0;
+
+		while( StopMiddle < (WordEntry *) STRPTR(t) && 
+				WordECompareQueryItem(STRPTR(t), GETOPERAND(q), StopMiddle, item, true) == 0 )
+		{
+			(*nitem)++;
+			StopMiddle++;
+		}
+	}
+
+	return ( *nitem > 0 ) ? StopHigh : NULL;
 }
 
 
@@ -123,12 +138,9 @@ compareQueryOperand(const void *a, const void *b, void *arg)
 	QueryOperand *qa = (*(QueryOperand **) a);
 	QueryOperand *qb = (*(QueryOperand **) b);
 
-	if (qa->length == qb->length)
-		return strncmp(operand + qa->distance,
-					   operand + qb->distance,
-					   qb->length);
-
-	return (qa->length > qb->length) ? 1 : -1;
+	return tsCompareString(operand + qa->distance, qa->length,
+						   operand + qb->distance, qb->length,
+						   false);
 }
 
 /*
@@ -198,12 +210,14 @@ calc_rank_and(float *w, TSVector t, TSQuery q)
 				k,
 				l,
 				p;
-	WordEntry  *entry;
+	WordEntry  *entry,
+			   *firstentry;
 	WordEntryPos *post,
 			   *ct;
 	int4		dimt,
 				lenct,
-				dist;
+				dist,
+				nitem;
 	float		res = -1.0;
 	QueryOperand **item;
 	int			size = q->size;
@@ -219,40 +233,44 @@ calc_rank_and(float *w, TSVector t, TSQuery q)
 
 	for (i = 0; i < size; i++)
 	{
-		entry = find_wordentry(t, q, item[i]);
+		firstentry = entry = find_wordentry(t, q, item[i], &nitem);
 		if (!entry)
 			continue;
 
-		if (entry->haspos)
-			pos[i] = _POSVECPTR(t, entry);
-		else
-			pos[i] = &POSNULL;
-
-
-		dimt = pos[i]->npos;
-		post = pos[i]->pos;
-		for (k = 0; k < i; k++)
+		while( entry - firstentry < nitem )
 		{
-			if (!pos[k])
-				continue;
-			lenct = pos[k]->npos;
-			ct = pos[k]->pos;
-			for (l = 0; l < dimt; l++)
-			{
-				for (p = 0; p < lenct; p++)
-				{
-					dist = Abs((int) WEP_GETPOS(post[l]) - (int) WEP_GETPOS(ct[p]));
-					if (dist || (dist == 0 && (pos[i] == &POSNULL || pos[k] == &POSNULL)))
-					{
-						float		curw;
+			if (entry->haspos)
+				pos[i] = _POSVECPTR(t, entry);
+			else
+				pos[i] = &POSNULL;
 
-						if (!dist)
-							dist = MAXENTRYPOS;
-						curw = sqrt(wpos(post[l]) * wpos(ct[p]) * word_distance(dist));
-						res = (res < 0) ? curw : 1.0 - (1.0 - res) * (1.0 - curw);
+			dimt = pos[i]->npos;
+			post = pos[i]->pos;
+			for (k = 0; k < i; k++)
+			{
+				if (!pos[k])
+					continue;
+				lenct = pos[k]->npos;
+				ct = pos[k]->pos;
+				for (l = 0; l < dimt; l++)
+				{
+					for (p = 0; p < lenct; p++)
+					{
+						dist = Abs((int) WEP_GETPOS(post[l]) - (int) WEP_GETPOS(ct[p]));
+						if (dist || (dist == 0 && (pos[i] == &POSNULL || pos[k] == &POSNULL)))
+						{
+							float		curw;
+	
+							if (!dist)
+								dist = MAXENTRYPOS;
+							curw = sqrt(wpos(post[l]) * wpos(ct[p]) * word_distance(dist));
+							res = (res < 0) ? curw : 1.0 - (1.0 - res) * (1.0 - curw);
+						}
 					}
 				}
 			}
+
+			entry++;
 		}
 	}
 	pfree(pos);
@@ -263,11 +281,13 @@ calc_rank_and(float *w, TSVector t, TSQuery q)
 static float
 calc_rank_or(float *w, TSVector t, TSQuery q)
 {
-	WordEntry  *entry;
+	WordEntry  *entry,
+			   *firstentry;
 	WordEntryPos *post;
 	int4		dimt,
 				j,
-				i;
+				i,
+				nitem;
 	float		res = 0.0;
 	QueryOperand **item;
 	int			size = q->size;
@@ -280,41 +300,46 @@ calc_rank_or(float *w, TSVector t, TSQuery q)
 					wjm;
 		int4		jm;
 
-		entry = find_wordentry(t, q, item[i]);
+		firstentry = entry = find_wordentry(t, q, item[i], &nitem);
 		if (!entry)
 			continue;
 
-		if (entry->haspos)
+		while( entry - firstentry < nitem )
 		{
-			dimt = POSDATALEN(t, entry);
-			post = POSDATAPTR(t, entry);
-		}
-		else
-		{
-			dimt = POSNULL.npos;
-			post = POSNULL.pos;
-		}
-
-		resj = 0.0;
-		wjm = -1.0;
-		jm = 0;
-		for (j = 0; j < dimt; j++)
-		{
-			resj = resj + wpos(post[j]) / ((j + 1) * (j + 1));
-			if (wpos(post[j]) > wjm)
+			if (entry->haspos)
 			{
-				wjm = wpos(post[j]);
-				jm = j;
+				dimt = POSDATALEN(t, entry);
+				post = POSDATAPTR(t, entry);
 			}
-		}
+			else
+			{
+				dimt = POSNULL.npos;
+				post = POSNULL.pos;
+			}
+
+			resj = 0.0;
+			wjm = -1.0;
+			jm = 0;
+			for (j = 0; j < dimt; j++)
+			{
+				resj = resj + wpos(post[j]) / ((j + 1) * (j + 1));
+				if (wpos(post[j]) > wjm)
+				{
+					wjm = wpos(post[j]);
+					jm = j;
+				}
+			}
 /*
-		limit (sum(i/i^2),i->inf) = pi^2/6
-		resj = sum(wi/i^2),i=1,noccurence,
-		wi - should be sorted desc,
-		don't sort for now, just choose maximum weight. This should be corrected
-		Oleg Bartunov
+			limit (sum(i/i^2),i->inf) = pi^2/6
+			resj = sum(wi/i^2),i=1,noccurence,
+			wi - should be sorted desc,
+			don't sort for now, just choose maximum weight. This should be corrected
+			Oleg Bartunov
 */
-		res = res + (wjm + resj - wjm / ((jm + 1) * (jm + 1))) / 1.64493406685;
+			res = res + (wjm + resj - wjm / ((jm + 1) * (jm + 1))) / 1.64493406685;
+
+			entry++;
+		}
 	}
 	if (size > 0)
 		res = res / size;
@@ -594,11 +619,13 @@ static DocRepresentation *
 get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 {
 	QueryItem  *item = GETQUERY(qr->query);
-	WordEntry  *entry;
+	WordEntry  *entry,
+			   *firstentry;
 	WordEntryPos *post;
 	int4		dimt,
 				j,
-				i;
+				i,
+				nitem;
 	int			len = qr->query->size * 4,
 				cur = 0;
 	DocRepresentation *doc;
@@ -619,63 +646,68 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 		if (QR_GET_OPERAND_EXISTS(qr, &item[i]))
 			continue;
 
-		entry = find_wordentry(txt, qr->query, curoperand);
+		firstentry = entry = find_wordentry(txt, qr->query, curoperand, &nitem);
 		if (!entry)
 			continue;
 
-		if (entry->haspos)
+		while( entry - firstentry < nitem )
 		{
-			dimt = POSDATALEN(txt, entry);
-			post = POSDATAPTR(txt, entry);
-		}
-		else
-		{
-			dimt = POSNULL.npos;
-			post = POSNULL.pos;
-		}
-
-		while (cur + dimt >= len)
-		{
-			len *= 2;
-			doc = (DocRepresentation *) repalloc(doc, sizeof(DocRepresentation) * len);
-		}
-
-		for (j = 0; j < dimt; j++)
-		{
-			if (j == 0)
+			if (entry->haspos)
 			{
-				int			k;
-
-				doc[cur].nitem = 0;
-				doc[cur].item = (QueryItem **) palloc(sizeof(QueryItem *) * qr->query->size);
-
-				for (k = 0; k < qr->query->size; k++)
-				{
-					QueryOperand *kptr = &item[k].operand;
-					QueryOperand *iptr = &item[i].operand;
-
-					if (k == i ||
-						(item[k].type == QI_VAL &&
-						 compareQueryOperand(&kptr, &iptr, operand) == 0))
-					{
-						/*
-						 * if k == i, we've already checked above that it's
-						 * type == Q_VAL
-						 */
-						doc[cur].item[doc[cur].nitem] = item + k;
-						doc[cur].nitem++;
-						QR_SET_OPERAND_EXISTS(qr, item + k);
-					}
-				}
+				dimt = POSDATALEN(txt, entry);
+				post = POSDATAPTR(txt, entry);
 			}
 			else
 			{
-				doc[cur].nitem = doc[cur - 1].nitem;
-				doc[cur].item = doc[cur - 1].item;
+				dimt = POSNULL.npos;
+				post = POSNULL.pos;
 			}
-			doc[cur].pos = WEP_GETPOS(post[j]);
-			doc[cur].wclass = WEP_GETWEIGHT(post[j]);
-			cur++;
+
+			while (cur + dimt >= len)
+			{
+				len *= 2;
+				doc = (DocRepresentation *) repalloc(doc, sizeof(DocRepresentation) * len);
+			}
+
+			for (j = 0; j < dimt; j++)
+			{
+				if (j == 0)
+				{
+					int			k;
+	
+					doc[cur].nitem = 0;
+					doc[cur].item = (QueryItem **) palloc(sizeof(QueryItem *) * qr->query->size);
+	
+					for (k = 0; k < qr->query->size; k++)
+					{
+						QueryOperand *kptr = &item[k].operand;
+						QueryOperand *iptr = &item[i].operand;
+	
+						if (k == i ||
+							(item[k].type == QI_VAL &&
+							 compareQueryOperand(&kptr, &iptr, operand) == 0))
+						{
+							/*
+							 * if k == i, we've already checked above that it's
+							 * type == Q_VAL
+							 */
+							doc[cur].item[doc[cur].nitem] = item + k;
+							doc[cur].nitem++;
+							QR_SET_OPERAND_EXISTS(qr, item + k);
+						}
+					}
+				}
+				else
+				{
+					doc[cur].nitem = doc[cur - 1].nitem;
+					doc[cur].item = doc[cur - 1].item;
+				}
+				doc[cur].pos = WEP_GETPOS(post[j]);
+				doc[cur].wclass = WEP_GETWEIGHT(post[j]);
+				cur++;
+			}
+
+			entry++;
 		}
 	}
 

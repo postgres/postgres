@@ -232,7 +232,7 @@ ALTER TEXT SEARCH CONFIGURATION ispell_tst ALTER MAPPING FOR
 SELECT to_tsvector('ispell_tst', 'Booking the skies after rebookings for footballklubber from a foot');
                                             to_tsvector                                             
 ----------------------------------------------------------------------------------------------------
- 'sky':3 'ball':7 'book':1,5 'foot':7,10 'booking':1,5 'klubber':7 'football':7 'footballklubber':7
+ 'ball':7 'book':1,5 'booking':1,5 'foot':7,10 'football':7 'footballklubber':7 'klubber':7 'sky':3
 (1 row)
 
 SELECT to_tsquery('ispell_tst', 'footballklubber');
@@ -256,7 +256,7 @@ ALTER TEXT SEARCH CONFIGURATION hunspell_tst ALTER MAPPING
 SELECT to_tsvector('hunspell_tst', 'Booking the skies after rebookings for footballklubber from a foot');
                                             to_tsvector                                             
 ----------------------------------------------------------------------------------------------------
- 'sky':3 'ball':7 'book':1,5 'foot':7,10 'booking':1,5 'klubber':7 'football':7 'footballklubber':7
+ 'ball':7 'book':1,5 'booking':1,5 'foot':7,10 'football':7 'footballklubber':7 'klubber':7 'sky':3
 (1 row)
 
 SELECT to_tsquery('hunspell_tst', 'footballklubber');
@@ -287,7 +287,7 @@ SELECT to_tsvector('synonym_tst', 'Postgresql is often called as postgres or pgs
 SELECT to_tsvector('synonym_tst', 'Most common mistake is to write Gogle instead of Google');
                        to_tsvector                        
 ----------------------------------------------------------
- 'googl':7,10 'write':6 'common':2 'mistak':3 'instead':8
+ 'common':2 'googl':7,10 'instead':8 'mistak':3 'write':6
 (1 row)
 
 -- test thesaurus in configuration
@@ -307,12 +307,12 @@ SELECT to_tsvector('thesaurus_tst', 'one postgres one two one two three one');
 SELECT to_tsvector('thesaurus_tst', 'Supernovae star is very new star and usually called supernovae (abbrevation SN)');
                          to_tsvector                         
 -------------------------------------------------------------
- 'sn':1,9,11 'new':4 'call':8 'star':5 'usual':7 'abbrev':10
+ 'abbrev':10 'call':8 'new':4 'sn':1,9,11 'star':5 'usual':7
 (1 row)
 
 SELECT to_tsvector('thesaurus_tst', 'Booking tickets is looking like a booking a tickets');
                       to_tsvector                      
 -------------------------------------------------------
- 'card':3,10 'like':6 'look':5 'invit':2,9 'order':1,8
+ 'card':3,10 'invit':2,9 'like':6 'look':5 'order':1,8
 (1 row)
 

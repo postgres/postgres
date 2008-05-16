@@ -44,31 +44,31 @@ SELECT E'''1 \\''2'''::tsvector;
 SELECT E'''1 \\''2''3'::tsvector;
   tsvector   
 -------------
- '3' '1 ''2'
+ '1 ''2' '3'
 (1 row)
 
 SELECT E'''1 \\''2'' 3'::tsvector;
   tsvector   
 -------------
- '3' '1 ''2'
+ '1 ''2' '3'
 (1 row)
 
 SELECT E'''1 \\''2'' '' 3'' 4 '::tsvector;
      tsvector     
 ------------------
- '4' ' 3' '1 ''2'
+ ' 3' '1 ''2' '4'
 (1 row)
 
 SELECT $$'\\as' ab\c ab\\c AB\\\c ab\\\\c$$::tsvector;
                 tsvector                
 ----------------------------------------
- '\\as' 'abc' 'AB\\c' 'ab\\c' 'ab\\\\c'
+ 'AB\\c' '\\as' 'ab\\\\c' 'ab\\c' 'abc'
 (1 row)
 
 SELECT tsvectorin(tsvectorout($$'\\as' ab\c ab\\c AB\\\c ab\\\\c$$::tsvector));
                tsvectorin               
 ----------------------------------------
- '\\as' 'abc' 'AB\\c' 'ab\\c' 'ab\\\\c'
+ 'AB\\c' '\\as' 'ab\\\\c' 'ab\\c' 'abc'
 (1 row)
 
 SELECT '''w'':4A,3B,2C,1D,5 a:8';
@@ -86,13 +86,13 @@ SELECT 'a:3A b:2a'::tsvector || 'ba:1234 a:1B';
 SELECT setweight('w:12B w:13* w:12,5,6 a:1,3* a:3 w asd:1dc asd zxc:81,567,222A'::tsvector, 'c');
                         setweight                         
 ----------------------------------------------------------
- 'a':1C,3C 'w':5C,6C,12C,13C 'asd':1C 'zxc':81C,222C,567C
+ 'a':1C,3C 'asd':1C 'w':5C,6C,12C,13C 'zxc':81C,222C,567C
 (1 row)
 
 SELECT strip('w:12B w:13* w:12,5,6 a:1,3* a:3 w asd:1dc asd'::tsvector);
      strip     
 ---------------
- 'a' 'w' 'asd'
+ 'a' 'asd' 'w'
 (1 row)
 
 --Base tsquery test
@@ -336,6 +336,12 @@ SELECT $$'\\as'$$::tsquery;
  '\\as'
 (1 row)
 
+SELECT 'a:* & nbb:*ac | doo:a* | goo'::tsquery;
+                 tsquery                  
+------------------------------------------
+ ( 'a':* & 'nbb':*AC | 'doo':*A ) | 'goo'
+(1 row)
+
 SELECT 'a' < 'b & c'::tsquery as "true";
  true 
 ------
@@ -439,7 +445,91 @@ SELECT 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:CB' as "true";
  t
 (1 row)
 
+SELECT 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & c:*C' as "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & c:*CB' as "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'a b:89  ca:23A,64b cb:80c d:34c'::tsvector @@ 'd:AC & c:*C' as "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'a b:89  ca:23A,64c cb:80b d:34c'::tsvector @@ 'd:AC & c:*C' as "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'a b:89  ca:23A,64c cb:80b d:34c'::tsvector @@ 'd:AC & c:*B' as "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'supernova'::tsvector @@ 'super'::tsquery AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'supeanova supernova'::tsvector @@ 'super'::tsquery AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'supeznova supernova'::tsvector @@ 'super'::tsquery AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'supernova'::tsvector @@ 'super:*'::tsquery AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'supeanova supernova'::tsvector @@ 'super:*'::tsquery AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'supeznova supernova'::tsvector @@ 'super:*'::tsquery AS "true";
+ true 
+------
+ t
+(1 row)
+
 SELECT ts_rank(' a:1 s:2C d g'::tsvector, 'a | s');
+  ts_rank  
+-----------
+ 0.0911891
+(1 row)
+
+SELECT ts_rank(' a:1 sa:2C d g'::tsvector, 'a | s');
+  ts_rank  
+-----------
+ 0.0303964
+(1 row)
+
+SELECT ts_rank(' a:1 sa:2C d g'::tsvector, 'a | s:*');
+  ts_rank  
+-----------
+ 0.0911891
+(1 row)
+
+SELECT ts_rank(' a:1 sa:2C d g'::tsvector, 'a | sa:*');
   ts_rank  
 -----------
  0.0911891
@@ -479,6 +569,30 @@ SELECT ts_rank_cd(' a:1 s:2C d g'::tsvector, 'a | s');
  ts_rank_cd 
 ------------
         0.3
+(1 row)
+
+SELECT ts_rank_cd(' a:1 sa:2C d g'::tsvector, 'a | s');
+ ts_rank_cd 
+------------
+        0.1
+(1 row)
+
+SELECT ts_rank_cd(' a:1 sa:2C d g'::tsvector, 'a | s:*');
+ ts_rank_cd 
+------------
+        0.3
+(1 row)
+
+SELECT ts_rank_cd(' a:1 sa:2C d g'::tsvector, 'a | sa:*');
+ ts_rank_cd 
+------------
+        0.3
+(1 row)
+
+SELECT ts_rank_cd(' a:1 sa:3C sab:2c d g'::tsvector, 'a | sa:*');
+ ts_rank_cd 
+------------
+        0.5
 (1 row)
 
 SELECT ts_rank_cd(' a:1 s:2B d g'::tsvector, 'a | s');

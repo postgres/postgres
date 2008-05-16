@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.62 2008/04/14 17:05:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.63 2008/05/16 16:31:01 tgl Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -443,6 +443,13 @@
       <row>
        <entry>consistent - determine whether value matches query condition</entry>
        <entry>4</entry>
+      </row>
+      <row>
+       <entry>comparePartial - (optional method) compare partial key from
+        query and key from index, and return an integer less than zero, zero,
+        or greater than zero, indicating whether GIN should ignore this index
+        entry, treat the entry as a match, or stop the index scan</entry>
+       <entry>5</entry>
       </row>
      </tbody>
     </tgroup>

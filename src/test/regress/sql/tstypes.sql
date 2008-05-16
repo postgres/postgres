@@ -58,6 +58,7 @@ SELECT '1&(2&(4&(5|6)))'::tsquery;
 SELECT '1&(2&(4&(5|!6)))'::tsquery;
 SELECT E'1&(''2''&('' 4''&(\\|5 | ''6 \\'' !|&'')))'::tsquery;
 SELECT $$'\\as'$$::tsquery;
+SELECT 'a:* & nbb:*ac | doo:a* | goo'::tsquery;
 
 SELECT 'a' < 'b & c'::tsquery as "true";
 SELECT 'a' > 'b & c'::tsquery as "false";
@@ -81,8 +82,23 @@ SELECT 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:B' as "true";
 SELECT 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:A' as "true";
 SELECT 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:C' as "false";
 SELECT 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:CB' as "true";
+SELECT 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & c:*C' as "false";
+SELECT 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & c:*CB' as "true";
+SELECT 'a b:89  ca:23A,64b cb:80c d:34c'::tsvector @@ 'd:AC & c:*C' as "true";
+SELECT 'a b:89  ca:23A,64c cb:80b d:34c'::tsvector @@ 'd:AC & c:*C' as "true";
+SELECT 'a b:89  ca:23A,64c cb:80b d:34c'::tsvector @@ 'd:AC & c:*B' as "true";
+
+SELECT 'supernova'::tsvector @@ 'super'::tsquery AS "false";
+SELECT 'supeanova supernova'::tsvector @@ 'super'::tsquery AS "false";
+SELECT 'supeznova supernova'::tsvector @@ 'super'::tsquery AS "false";
+SELECT 'supernova'::tsvector @@ 'super:*'::tsquery AS "true";
+SELECT 'supeanova supernova'::tsvector @@ 'super:*'::tsquery AS "true";
+SELECT 'supeznova supernova'::tsvector @@ 'super:*'::tsquery AS "true";
 
 SELECT ts_rank(' a:1 s:2C d g'::tsvector, 'a | s');
+SELECT ts_rank(' a:1 sa:2C d g'::tsvector, 'a | s');
+SELECT ts_rank(' a:1 sa:2C d g'::tsvector, 'a | s:*');
+SELECT ts_rank(' a:1 sa:2C d g'::tsvector, 'a | sa:*');
 SELECT ts_rank(' a:1 s:2B d g'::tsvector, 'a | s');
 SELECT ts_rank(' a:1 s:2 d g'::tsvector, 'a | s');
 SELECT ts_rank(' a:1 s:2C d g'::tsvector, 'a & s');
@@ -90,6 +106,10 @@ SELECT ts_rank(' a:1 s:2B d g'::tsvector, 'a & s');
 SELECT ts_rank(' a:1 s:2 d g'::tsvector, 'a & s');
 
 SELECT ts_rank_cd(' a:1 s:2C d g'::tsvector, 'a | s');
+SELECT ts_rank_cd(' a:1 sa:2C d g'::tsvector, 'a | s');
+SELECT ts_rank_cd(' a:1 sa:2C d g'::tsvector, 'a | s:*');
+SELECT ts_rank_cd(' a:1 sa:2C d g'::tsvector, 'a | sa:*');
+SELECT ts_rank_cd(' a:1 sa:3C sab:2c d g'::tsvector, 'a | sa:*');
 SELECT ts_rank_cd(' a:1 s:2B d g'::tsvector, 'a | s');
 SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a | s');
 SELECT ts_rank_cd(' a:1 s:2C d g'::tsvector, 'a & s');

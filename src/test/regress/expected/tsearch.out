@@ -92,6 +92,12 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
     39
 (1 row)
 
+SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
+ count 
+-------
+   494
+(1 row)
+
 create index wowidx on test_tsvector using gist (a);
 SET enable_seqscan=OFF;
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
@@ -128,6 +134,12 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
  count 
 -------
     39
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
+ count 
+-------
+   494
 (1 row)
 
 RESET enable_seqscan;
@@ -168,6 +180,12 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
  count 
 -------
     39
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
+ count 
+-------
+   494
 (1 row)
 
   
@@ -380,7 +398,7 @@ SELECT to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.
 <i <b> wow  < jqw <> qwerty');
                                                                                                                                                                                                                                                                                                                                                                                                                       to_tsvector                                                                                                                                                                                                                                                                                                                                                                                                                       
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- 'ad':17 'dw':19 'jf':39 '234':61 '345':1 '4.2':54,55,56 '455':31 'jqw':64 'qwe':2,18,27,28,35 'wer':36 'wow':63 '-4.2':58,60 'asdf':37 'ewr1':43 'qwer':38 'sdjk':40 '5.005':32 'efd.r':3 'ewri2':44 'hjwer':42 'qwqwe':29 'wefjn':48 'gist.c':52 'gist.h':50 'qwerti':65 '234.435':30 'qwe-wer':34 'readlin':53,57,59 'www.com':4 '+4.0e-10':26 'gist.h.c':51 'rewt/ewr':47 '/?ad=qwe&dw':7,10,14,22 '/wqe-324/ewr':49 'aew.werc.ewr':6 '1aew.werc.ewr':9 '2aew.werc.ewr':11 '3aew.werc.ewr':13 '4aew.werc.ewr':15 '/usr/local/fff':45 '/awdf/dwqe/4325':46 'teodor@stack.net':33 '/?ad=qwe&dw=%20%32':25 '5aew.werc.ewr:8100':16 '6aew.werc.ewr:8100':21 '7aew.werc.ewr:8100':24 'aew.werc.ewr/?ad=qwe&dw':5 '1aew.werc.ewr/?ad=qwe&dw':8 '3aew.werc.ewr/?ad=qwe&dw':12 '6aew.werc.ewr:8100/?ad=qwe&dw':20 '7aew.werc.ewr:8100/?ad=qwe&dw=%20%32':23
+ '+4.0e-10':26 '-4.2':58,60 '/?ad=qwe&dw':7,10,14,22 '/?ad=qwe&dw=%20%32':25 '/awdf/dwqe/4325':46 '/usr/local/fff':45 '/wqe-324/ewr':49 '1aew.werc.ewr':9 '1aew.werc.ewr/?ad=qwe&dw':8 '234':61 '234.435':30 '2aew.werc.ewr':11 '345':1 '3aew.werc.ewr':13 '3aew.werc.ewr/?ad=qwe&dw':12 '4.2':54,55,56 '455':31 '4aew.werc.ewr':15 '5.005':32 '5aew.werc.ewr:8100':16 '6aew.werc.ewr:8100':21 '6aew.werc.ewr:8100/?ad=qwe&dw':20 '7aew.werc.ewr:8100':24 '7aew.werc.ewr:8100/?ad=qwe&dw=%20%32':23 'ad':17 'aew.werc.ewr':6 'aew.werc.ewr/?ad=qwe&dw':5 'asdf':37 'dw':19 'efd.r':3 'ewr1':43 'ewri2':44 'gist.c':52 'gist.h':50 'gist.h.c':51 'hjwer':42 'jf':39 'jqw':64 'qwe':2,18,27,28,35 'qwe-wer':34 'qwer':38 'qwerti':65 'qwqwe':29 'readlin':53,57,59 'rewt/ewr':47 'sdjk':40 'teodor@stack.net':33 'wefjn':48 'wer':36 'wow':63 'www.com':4
 (1 row)
 
 SELECT length(to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
@@ -852,7 +870,7 @@ SET default_text_search_config=simple;
 SELECT to_tsvector('SKIES My booKs');
         to_tsvector         
 ----------------------------
- 'my':2 'books':3 'skies':1
+ 'books':3 'my':2 'skies':1
 (1 row)
 
 SELECT plainto_tsquery('SKIES My booKs');
@@ -871,7 +889,7 @@ SET default_text_search_config=english;
 SELECT to_tsvector('SKIES My booKs');
    to_tsvector    
 ------------------
- 'sky':1 'book':3
+ 'book':3 'sky':1
 (1 row)
 
 SELECT plainto_tsquery('SKIES My booKs');

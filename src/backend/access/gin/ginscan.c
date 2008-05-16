@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.13 2008/05/12 00:00:44 alvherre Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.14 2008/05/16 16:31:01 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -36,7 +36,8 @@ ginbeginscan(PG_FUNCTION_ARGS)
 
 static void
 fillScanKey(GinState *ginstate, GinScanKey key, Datum query,
-			Datum *entryValues, uint32 nEntryValues, StrategyNumber strategy)
+			Datum *entryValues, bool *partial_matches, uint32 nEntryValues, 
+			StrategyNumber strategy)
 {
 	uint32		i,
 				j;
@@ -58,6 +59,8 @@ fillScanKey(GinState *ginstate, GinScanKey key, Datum query,
 		key->scanEntry[i].buffer = InvalidBuffer;
 		key->scanEntry[i].list = NULL;
 		key->scanEntry[i].nlist = 0;
+		key->scanEntry[i].isPartialMatch = ( ginstate->canPartialMatch && partial_matches ) 
+												? partial_matches[i] : false;
 
 		/* link to the equals entry in current scan key */
 		key->scanEntry[i].master = NULL;
@@ -98,6 +101,8 @@ resetScanKeys(GinScanKey keys, uint32 nkeys)
 			key->scanEntry[j].buffer = InvalidBuffer;
 			key->scanEntry[j].list = NULL;
 			key->scanEntry[j].nlist = 0;
+			key->scanEntry[j].partialMatch = NULL;
+			key->scanEntry[j].partialMatchResult = NULL;
 		}
 	}
 }
@@ -122,6 +127,8 @@ freeScanKeys(GinScanKey keys, uint32 nkeys, bool removeRes)
 				ReleaseBuffer(key->scanEntry[j].buffer);
 			if (removeRes && key->scanEntry[j].list)
 				pfree(key->scanEntry[j].list);
+			if (removeRes && key->scanEntry[j].partialMatch)
+				tbm_free(key->scanEntry[j].partialMatch);
 		}
 
 		if (removeRes)
@@ -153,19 +160,21 @@ newScanKey(IndexScanDesc scan)
 	{
 		Datum	   *entryValues;
 		int32		nEntryValues;
+		bool		*partial_matches = NULL;
 
-		if (scankey[i].sk_flags & SK_ISNULL)
-			elog(ERROR, "Gin doesn't support NULL as scan key");
 		Assert(scankey[i].sk_attno == 1);
 
-		entryValues = (Datum *) DatumGetPointer(
-												FunctionCall3(
+		/* XXX can't we treat nulls by just setting isVoidRes? */
+		/* This would amount to assuming that all GIN operators are strict */
+		if (scankey[i].sk_flags & SK_ISNULL)
+			elog(ERROR, "GIN doesn't support NULL as scan key");
+
+		entryValues = (Datum *) DatumGetPointer(FunctionCall4(
 												&so->ginstate.extractQueryFn,
 													  scankey[i].sk_argument,
 											  PointerGetDatum(&nEntryValues),
-									   UInt16GetDatum(scankey[i].sk_strategy)
-															  )
-			);
+									   UInt16GetDatum(scankey[i].sk_strategy),
+										PointerGetDatum(&partial_matches)));
 		if (nEntryValues < 0)
 		{
 			/*
@@ -175,12 +184,16 @@ newScanKey(IndexScanDesc scan)
 			so->isVoidRes = true;
 			break;
 		}
+
+		/*
+		 * extractQueryFn signals that everything matches
+		 */
 		if (entryValues == NULL || nEntryValues == 0)
 			/* full scan... */
 			continue;
 
 		fillScanKey(&so->ginstate, &(so->keys[nkeys]), scankey[i].sk_argument,
-					entryValues, nEntryValues, scankey[i].sk_strategy);
+					entryValues, partial_matches, nEntryValues, scankey[i].sk_strategy);
 		nkeys++;
 	}
 
@@ -253,7 +266,7 @@ ginendscan(PG_FUNCTION_ARGS)
 }
 
 static GinScanKey
-copyScanKeys(GinScanKey keys, uint32 nkeys)
+copyScanKeys(GinScanKey keys, uint32 nkeys, bool restart)
 {
 	GinScanKey	newkeys;
 	uint32		i,
@@ -277,6 +290,9 @@ copyScanKeys(GinScanKey keys, uint32 nkeys)
 
 				newkeys[i].scanEntry[j].master = newkeys[i].scanEntry + masterN;
 			}
+
+			if ( restart )
+				ginrestartentry( &keys[i].scanEntry[j] );
 		}
 	}
 
@@ -290,7 +306,7 @@ ginmarkpos(PG_FUNCTION_ARGS)
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 
 	freeScanKeys(so->markPos, so->nkeys, FALSE);
-	so->markPos = copyScanKeys(so->keys, so->nkeys);
+	so->markPos = copyScanKeys(so->keys, so->nkeys, FALSE);
 
 	PG_RETURN_VOID();
 }
@@ -302,7 +318,7 @@ ginrestrpos(PG_FUNCTION_ARGS)
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 
 	freeScanKeys(so->keys, so->nkeys, FALSE);
-	so->keys = copyScanKeys(so->markPos, so->nkeys);
+	so->keys = copyScanKeys(so->markPos, so->nkeys, TRUE);
 
 	PG_RETURN_VOID();
 }

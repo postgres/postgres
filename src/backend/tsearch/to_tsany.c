@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.11 2008/03/25 22:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.12 2008/05/16 16:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,23 +32,22 @@ get_current_ts_config(PG_FUNCTION_ARGS)
 static int
 compareWORD(const void *a, const void *b)
 {
-	if (((ParsedWord *) a)->len == ((ParsedWord *) b)->len)
+	int res;
+
+	res = tsCompareString(
+					((ParsedWord *) a)->word, ((ParsedWord *) a)->len,
+					((ParsedWord *) b)->word, ((ParsedWord *) b)->len,
+					false );
+	
+	if (res == 0)
 	{
-		int			res = strncmp(
-								  ((ParsedWord *) a)->word,
-								  ((ParsedWord *) b)->word,
-								  ((ParsedWord *) b)->len);
+		if (((ParsedWord *) a)->pos.pos == ((ParsedWord *) b)->pos.pos)
+			return 0;
 
-		if (res == 0)
-		{
-			if (((ParsedWord *) a)->pos.pos == ((ParsedWord *) b)->pos.pos)
-				return 0;
-
-			return (((ParsedWord *) a)->pos.pos > ((ParsedWord *) b)->pos.pos) ? 1 : -1;
-		}
-		return res;
+		res = (((ParsedWord *) a)->pos.pos > ((ParsedWord *) b)->pos.pos) ? 1 : -1;
 	}
-	return (((ParsedWord *) a)->len > ((ParsedWord *) b)->len) ? 1 : -1;
+
+	return res;
 }
 
 static int
@@ -268,7 +267,7 @@ to_tsvector(PG_FUNCTION_ARGS)
  * and different variants are ORred together.
  */
 static void
-pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, int2 weight)
+pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, int2 weight, bool prefix)
 {
 	int4		count = 0;
 	ParsedText	prs;
@@ -302,7 +301,8 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 				while (count < prs.curwords && pos == prs.words[count].pos.pos && variant == prs.words[count].nvariant)
 				{
 
-					pushValue(state, prs.words[count].word, prs.words[count].len, weight);
+					pushValue(state, prs.words[count].word, prs.words[count].len, weight, 
+							(  (prs.words[count].flags & TSL_PREFIX) || prefix  ) ? true : false );
 					pfree(prs.words[count].word);
 					if (cnt)
 						pushOperator(state, OP_AND);

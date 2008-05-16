@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.19 2008/05/12 00:00:53 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.20 2008/05/16 16:31:01 tgl Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -15,6 +15,7 @@
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "fmgr.h"
+#include "nodes/tidbitmap.h"
 #include "storage/block.h"
 #include "storage/buf.h"
 #include "storage/off.h"
@@ -28,7 +29,8 @@
 #define GIN_EXTRACTVALUE_PROC		   2
 #define GIN_EXTRACTQUERY_PROC		   3
 #define GIN_CONSISTENT_PROC			   4
-#define GINNProcs					   4
+#define GIN_COMPARE_PARTIAL_PROC	   5
+#define GINNProcs					   5
 
 /*
  * Page opaque data in a inverted index page.
@@ -141,7 +143,10 @@ typedef struct GinState
 	FmgrInfo	extractValueFn;
 	FmgrInfo	extractQueryFn;
 	FmgrInfo	consistentFn;
+	FmgrInfo	comparePartialFn;	/* optional method */
 
+	bool		canPartialMatch;	/* can opclass perform partial
+									 * match (prefix search)? */
 	TupleDesc	tupdesc;
 } GinState;
 
@@ -360,6 +365,12 @@ typedef struct GinScanEntryData
 	/* current ItemPointer to heap */
 	ItemPointerData curItem;
 
+	/* partial match support */
+	bool		isPartialMatch;
+	TIDBitmap  *partialMatch;
+	TBMIterateResult *partialMatchResult;
+	StrategyNumber strategy;
+
 	/* used for Posting list and one page in Posting tree */
 	ItemPointerData *list;
 	uint32			 nlist;
@@ -424,6 +435,7 @@ extern PGDLLIMPORT int GinFuzzySearchLimit;
 
 extern Datum gingetbitmap(PG_FUNCTION_ARGS);
 extern Datum gingettuple(PG_FUNCTION_ARGS);
+extern void ginrestartentry(GinScanEntry entry);
 
 /* ginvacuum.c */
 extern Datum ginbulkdelete(PG_FUNCTION_ARGS);

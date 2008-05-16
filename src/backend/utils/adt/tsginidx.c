@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.11 2008/04/14 17:05:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.12 2008/05/16 16:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,46 @@
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 
+
+Datum
+gin_cmp_tslexeme(PG_FUNCTION_ARGS)
+{
+	text    *a = PG_GETARG_TEXT_P(0);
+	text    *b = PG_GETARG_TEXT_P(1);
+	int     cmp;
+
+	cmp = tsCompareString(
+					VARDATA(a), VARSIZE(a) - VARHDRSZ,
+					VARDATA(b), VARSIZE(b) - VARHDRSZ,
+					false );
+
+	PG_FREE_IF_COPY(a,0);
+	PG_FREE_IF_COPY(b,1);
+	PG_RETURN_INT32( cmp );
+}
+
+Datum
+gin_cmp_prefix(PG_FUNCTION_ARGS)
+{
+	text    *a = PG_GETARG_TEXT_P(0);
+	text    *b = PG_GETARG_TEXT_P(1);
+#ifdef NOT_USED
+	StrategyNumber strategy = PG_GETARG_UINT16(2);
+#endif
+	int     cmp;
+
+	cmp = tsCompareString(
+					VARDATA(a), VARSIZE(a) - VARHDRSZ,
+					VARDATA(b), VARSIZE(b) - VARHDRSZ,
+					true );
+
+	if ( cmp < 0 )
+		cmp = 1;  /* prevent continue scan */
+
+	PG_FREE_IF_COPY(a,0);
+	PG_FREE_IF_COPY(b,1);
+	PG_RETURN_INT32( cmp );
+}
 
 Datum
 gin_extract_tsvector(PG_FUNCTION_ARGS)
@@ -55,7 +95,9 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 	TSQuery		query = PG_GETARG_TSQUERY(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	/* StrategyNumber strategy = PG_GETARG_UINT16(2); */
+	bool      **ptr_partialmatch = (bool**) PG_GETARG_POINTER(3);
 	Datum	   *entries = NULL;
+	bool       *partialmatch;
 
 	*nentries = 0;
 
@@ -65,12 +107,14 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 					j = 0,
 					len;
 		QueryItem  *item;
+		bool		use_fullscan=false;
 
 		item = clean_NOT(GETQUERY(query), &len);
 		if (!item)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("query requires full scan, which is not supported by GIN indexes")));
+		{
+			use_fullscan = true;
+			*nentries = 1;
+		}
 
 		item = GETQUERY(query);
 
@@ -79,6 +123,7 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 				(*nentries)++;
 
 		entries = (Datum *) palloc(sizeof(Datum) * (*nentries));
+		partialmatch = *ptr_partialmatch = (bool*) palloc(sizeof(bool) * (*nentries));
 
 		for (i = 0; i < query->size; i++)
 			if (item[i].type == QI_VAL)
@@ -88,8 +133,12 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 
 				txt = cstring_to_text_with_len(GETOPERAND(query) + val->distance,
 											   val->length);
+				partialmatch[j] = val->prefix;
 				entries[j++] = PointerGetDatum(txt);
 			}
+
+		if ( use_fullscan )
+			entries[j++] = PointerGetDatum(cstring_to_text_with_len("", 0));
 	}
 	else
 		*nentries = -1;			/* nothing can be found */

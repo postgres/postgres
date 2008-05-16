@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.226 2008/03/30 04:08:14 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.227 2008/05/16 16:31:01 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3298,18 +3298,17 @@ SELECT * FROM test;
 SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector;
                       tsvector
 ----------------------------------------------------
- 'a' 'on' 'and' 'ate' 'cat' 'fat' 'mat' 'rat' 'sat'
+ 'a' 'and' 'ate' 'cat' 'fat' 'mat' 'on' 'rat' 'sat'
 </programlisting>
 
-     (As the example shows, the sorting is first by length and then
-     alphabetically, but that detail is seldom important.)  To represent
+     To represent
      lexemes containing whitespace or punctuation, surround them with quotes:
 
 <programlisting>
 SELECT $$the lexeme '    ' contains spaces$$::tsvector;
                  tsvector                  
 -------------------------------------------
- 'the' '    ' 'lexeme' 'spaces' 'contains'
+ '    ' 'contains' 'lexeme' 'spaces' 'the'
 </programlisting>
 
      (We use dollar-quoted string literals in this example and the next one,
@@ -3320,7 +3319,7 @@ SELECT $$the lexeme '    ' contains spaces$$::tsvector;
 SELECT $$the lexeme 'Joe''s' contains a quote$$::tsvector;
                     tsvector                    
 ------------------------------------------------
- 'a' 'the' 'Joe''s' 'quote' 'lexeme' 'contains'
+ 'Joe''s' 'a' 'contains' 'lexeme' 'quote' 'the'
 </programlisting>
 
      Optionally, integer <firstterm>position(s)</>
@@ -3330,7 +3329,7 @@ SELECT $$the lexeme 'Joe''s' contains a quote$$::tsvector;
 SELECT 'a:1 fat:2 cat:3 sat:4 on:5 a:6 mat:7 and:8 ate:9 a:10 fat:11 rat:12'::tsvector;
                                   tsvector
 -------------------------------------------------------------------------------
- 'a':1,6,10 'on':5 'and':8 'ate':9 'cat':3 'fat':2,11 'mat':7 'rat':12 'sat':4
+ 'a':1,6,10 'and':8 'ate':9 'cat':3 'fat':2,11 'mat':7 'on':5 'rat':12 'sat':4
 </programlisting>
 
      A position normally indicates the source word's location in the
@@ -3369,7 +3368,7 @@ SELECT 'a:1A fat:2B,4C cat:5D'::tsvector;
 select 'The Fat Rats'::tsvector;
       tsvector      
 --------------------
- 'Fat' 'The' 'Rats'
+ 'Fat' 'Rats' 'The'
 </programlisting>
 
      For most English-text-searching applications the above words would
@@ -3437,6 +3436,19 @@ SELECT 'fat:ab &amp; cat'::tsquery;
 ------------------
  'fat':AB &amp; 'cat'
 </programlisting>
+    </para>
+
+    <para>
+     Also, lexemes in a <type>tsquery</type> can be labeled with <literal>*</>
+     to specify prefix matching:
+<programlisting>
+SELECT 'super:*'::tsquery;
+  tsquery  
+-----------
+ 'super':*
+</programlisting>
+     This query will match any word in a <type>tsvector</> that begins
+     with <quote>super</>.
     </para>
 
     <para>

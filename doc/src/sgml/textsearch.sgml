@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.43 2008/04/14 17:05:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.44 2008/05/16 16:31:01 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -754,6 +754,20 @@ SELECT to_tsquery('english', 'Fat | Rats:AB');
  'fat' | 'rat':AB
 </programlisting>
 
+    Also, <literal>*</> can be attached to a lexeme to specify prefix matching:
+
+<programlisting>
+SELECT to_tsquery('supern:*A &amp; star:A*B');
+        to_tsquery        
+--------------------------
+ 'supern':*A &amp; 'star':*AB
+</programlisting>
+
+    Such a lexeme will match any word in a <type>tsvector</> that begins
+    with the given string.
+   </para>
+
+   <para>
     <function>to_tsquery</function> can also accept single-quoted
     phrases.  This is primarily useful when the configuration includes a
     thesaurus dictionary that may trigger on such phrases.
@@ -798,7 +812,8 @@ SELECT to_tsquery('''supernovae stars'' &amp; !crab');
 </programlisting>
 
     Note that <function>plainto_tsquery</> cannot
-    recognize either Boolean operators or weight labels in its input:
+    recognize Boolean operators, weight labels, or prefix-match labels
+    in its input:
 
 <programlisting>
 SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');

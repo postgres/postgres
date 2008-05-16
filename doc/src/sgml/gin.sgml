@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.14 2008/04/14 17:05:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.15 2008/05/16 16:31:01 tgl Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -52,15 +52,15 @@
  </para>
 
  <para>
-   All it takes to get a <acronym>GIN</acronym> access method working
-   is to implement four user-defined methods, which define the behavior of
+   All it takes to get a <acronym>GIN</acronym> access method working is to
+   implement four (or five) user-defined methods, which define the behavior of
    keys in the tree and the relationships between keys, indexed values,
    and indexable queries. In short, <acronym>GIN</acronym> combines
    extensibility with generality, code reuse, and a clean interface.
  </para>
 
  <para>
-   The four methods that an index operator class for
+   The four methods that an operator class for
    <acronym>GIN</acronym> must provide are:
  </para>
 
@@ -77,7 +77,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>Datum* extractValue(Datum inputValue, int32 *nkeys)</term>
+     <term>Datum *extractValue(Datum inputValue, int32 *nkeys)</term>
      <listitem>
       <para>
        Returns an array of keys given a value to be indexed.  The
@@ -87,8 +87,8 @@
     </varlistentry>
 
     <varlistentry>
-     <term>Datum* extractQuery(Datum query, int32 *nkeys,
-        StrategyNumber n)</term>
+     <term>Datum *extractQuery(Datum query, int32 *nkeys,
+        StrategyNumber n, bool **pmatch)</term>
      <listitem>
       <para>
        Returns an array of keys given a value to be queried; that is,
@@ -100,13 +100,22 @@
        to consult <literal>n</> to determine the data type of
        <literal>query</> and the key values that need to be extracted.
        The number of returned keys must be stored into <literal>*nkeys</>.
-       If number of keys is equal to zero then <function>extractQuery</> 
-       should store 0 or -1 into <literal>*nkeys</>. 0 means that any 
-       row matches the <literal>query</> and sequence scan should be 
-       produced. -1 means nothing can satisfy <literal>query</>. 
-       Choice of value should be based on semantics meaning of operation with 
-       given strategy number.
+       If the query contains no keys then <function>extractQuery</> 
+       should store 0 or -1 into <literal>*nkeys</>, depending on the
+       semantics of the operator.  0 means that every
+       value matches the <literal>query</> and a sequential scan should be 
+       produced.  -1 means nothing can match the <literal>query</>. 
+       <literal>pmatch</> is an output argument for use when partial match
+       is supported.  To use it, <function>extractQuery</> must allocate
+       an array of <literal>*nkeys</> booleans and store its address at
+       <literal>*pmatch</>.  Each element of the array should be set to TRUE
+       if the corresponding key requires partial match, FALSE if not.
+       If <literal>*pmatch</> is set to NULL then GIN assumes partial match
+       is not required.  The variable is initialized to NULL before call,
+       so this argument can simply be ignored by operator classes that do
+       not support partial match.
       </para>
+
      </listitem>
     </varlistentry>
 
@@ -133,6 +142,39 @@
 
   </variablelist>
 
+ <para>
+  Optionally, an operator class for
+  <acronym>GIN</acronym> can supply a fifth method:
+ </para>
+
+  <variablelist>
+
+    <varlistentry>
+     <term>int comparePartial(Datum partial_key, Datum key, StrategyNumber n)</term>
+     <listitem>
+      <para>
+       Compare a partial-match query to an index key.  Returns an integer
+       whose sign indicates the result: less than zero means the index key
+       does not match the query, but the index scan should continue; zero
+       means that the index key does match the query; greater than zero
+       indicates that the index scan should stop because no more matches
+       are possible.  The strategy number <literal>n</> of the operator
+       that generated the partial match query is provided, in case its
+       semantics are needed to determine when to end the scan.
+      </para>
+     </listitem>
+    </varlistentry>
+
+  </variablelist>
+
+ <para>
+  To support <quote>partial match</> queries, an operator class must
+  provide the <function>comparePartial</> method, and its
+  <function>extractQuery</> method must set the <literal>pmatch</>
+  parameter when a partial-match query is encountered.  See
+  <xref linkend="gin-partial-match"> for details.
+ </para>
+
 </sect1>
 
 <sect1 id="gin-implementation">
@@ -145,6 +187,33 @@
   either a pointer to a B-tree over heap pointers (PT, posting tree), or a
   list of heap pointers (PL, posting list) if the list is small enough.
  </para>
+
+ <sect2 id="gin-partial-match">
+  <title>Partial match algorithm</title>
+  
+  <para>
+   GIN can support <quote>partial match</> queries, in which the query
+   does not determine an exact match for one or more keys, but the possible
+   matches fall within a reasonably narrow range of key values (within the
+   key sorting order determined by the <function>compare</> support method).
+   The <function>extractQuery</> method, instead of returning a key value
+   to be matched exactly, returns a key value that is the lower bound of
+   the range to be searched, and sets the <literal>pmatch</> flag true.
+   The key range is then searched using the <function>comparePartial</>
+   method.  <function>comparePartial</> must return zero for an actual
+   match, less than zero for a non-match that is still within the range
+   to be searched, or greater than zero if the index key is past the range
+   that could match.
+  </para>
+
+  <para>
+   During a partial-match scan, all <literal>itemPointer</>s for matching keys
+   are OR'ed into a <literal>TIDBitmap</>.
+   The scan fails if the <literal>TIDBitmap</> becomes lossy.
+   In this case an error message will be reported with advice
+   to increase <literal>work_mem</>.
+  </para>
+ </sect2>
 
 </sect1>
 
@@ -236,8 +305,14 @@
  </para>
 
  <para>
-  <acronym>GIN</acronym> searches keys only by equality matching.  This might
-  be improved in future.
+  It is possible for an operator class to circumvent the restriction against
+  full index scan.  To do that, <function>extractValue</> must return at least
+  one (possibly dummy) key for every indexed value, and
+  <function>extractQuery</function> must convert an unrestricted search into
+  a partial-match query that will scan the whole index.  This is inefficient
+  but might be necessary to avoid corner-case failures with operators such
+  as LIKE.  Note however that failure could still occur if the intermediate
+  <literal>TIDBitmap</> becomes lossy.
  </para>
 </sect1>
 
@@ -247,9 +322,11 @@
  <para>
   The <productname>PostgreSQL</productname> source distribution includes
   <acronym>GIN</acronym> operator classes for <type>tsvector</> and
-  for one-dimensional arrays of all internal types.  The following
-  <filename>contrib</> modules also contain <acronym>GIN</acronym>
-  operator classes:
+  for one-dimensional arrays of all internal types.  Prefix searching in
+  <type>tsvector</> is implemented using the <acronym>GIN</> partial match
+  feature.
+  The following <filename>contrib</> modules also contain
+  <acronym>GIN</acronym> operator classes:
  </para>
 
  <variablelist>
