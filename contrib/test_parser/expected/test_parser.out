@@ -32,7 +32,7 @@ SELECT * FROM ts_parse('testparser', 'That''s simple parser can''t parse urls li
 SELECT to_tsvector('testcfg','That''s my first own parser');
                    to_tsvector                   
 -------------------------------------------------
- 'my':2 'own':4 'first':3 'parser':5 'that''s':1
+ 'first':3 'my':2 'own':4 'parser':5 'that''s':1
 (1 row)
 
 SELECT to_tsquery('testcfg', 'star');
