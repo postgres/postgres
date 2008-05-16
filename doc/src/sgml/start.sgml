@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.46 2008/01/23 02:04:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.47 2008/05/16 17:17:00 momjian Exp $ -->
 
  <chapter id="tutorial-start">
   <title>Getting Started</title>
@@ -329,13 +329,8 @@ createdb: database creation failed: ERROR:  permission denied to create database
     In <command>psql</command>, you will be greeted with the following
     message:
 <screen>
-Welcome to psql &version;, the PostgreSQL interactive terminal.
- 
-Type:  \copyright for distribution terms
-       \h for help with SQL commands
-       \? for help with psql commands
-       \g or terminate with semicolon to execute query
-       \q to quit
+psql (&version;)
+Type "help" for help.
  
 mydb=&gt;
 </screen>

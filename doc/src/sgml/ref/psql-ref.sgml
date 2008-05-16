@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.205 2008/05/16 16:59:05 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.206 2008/05/16 17:17:00 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -571,13 +571,10 @@ $ <userinput>psql "service=myservice sslmode=require"</userinput>
     the string <literal>=&gt;</literal>. For example:
 <programlisting>
 $ <userinput>psql testdb</userinput>
-Welcome to psql &version;, the PostgreSQL interactive terminal.
+psql (&version;)
+Type "help" for help.
 
-Type:  \copyright for distribution terms
-       \h for help with SQL commands
-       \? for help with psql commands
-       \g or terminate with semicolon to execute query
-       \q to quit
+test=>
 
 testdb=&gt;
 </programlisting>

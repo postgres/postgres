@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.147 2008/05/08 17:04:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.148 2008/05/16 17:17:00 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -317,33 +317,26 @@ main(int argc, char *argv[])
 					server_version = server_ver_str;
 				}
 
-				printf(_("Welcome to %s %s (server %s), the PostgreSQL interactive terminal.\n\n"),
-					   pset.progname, PG_VERSION, server_version);
+				printf(_("%s (%s, server %s)\n"), 
+				pset.progname, PG_VERSION, server_version);
 			}
 			else
-				printf(_("Welcome to %s %s, the PostgreSQL interactive terminal.\n\n"),
-					   pset.progname, PG_VERSION);
-
-			printf(_("Type:  \\copyright for distribution terms\n"
-					 "       \\h for help with SQL commands\n"
-					 "       \\? for help with psql commands\n"
-				  "       \\g or terminate with semicolon to execute query\n"
-					 "       \\q to quit\n\n"));
+				printf("%s (%s)\n", pset.progname, PG_VERSION);
 
 			if (pset.sversion / 100 != client_ver / 100)
-				printf(_("WARNING:  You are connected to a server with major version %d.%d,\n"
-						 "but your %s client is major version %d.%d.  Some backslash commands,\n"
-						 "such as \\d, might not work properly.\n\n"),
-					   pset.sversion / 10000, (pset.sversion / 100) % 100,
-					   pset.progname,
-					   client_ver / 10000, (client_ver / 100) % 100);
+				printf(_("WARNING: %s version %d.%d, server version %d.%d.\n"
+					 "         Some psql features might not work.\n"),
+					pset.progname, client_ver / 10000, (client_ver / 100) % 100,
+					pset.sversion / 10000, (pset.sversion / 100) % 100);
 
-#ifdef USE_SSL
-			printSSLInfo();
-#endif
 #ifdef WIN32
 			checkWin32Codepage();
 #endif
+#ifdef USE_SSL
+			printSSLInfo();
+#endif
+
+			printf(_("Type \"help\" for help.\n\n"));
 		}
 
 		if (!pset.notty)
@@ -707,7 +700,7 @@ printSSLInfo(void)
 		return;					/* no SSL */
 
 	SSL_get_cipher_bits(ssl, &sslbits);
-	printf(_("SSL connection (cipher: %s, bits: %i)\n\n"),
+	printf(_("SSL connection (cipher: %s, bits: %i)\n"),
 		   SSL_get_cipher(ssl), sslbits);
 }
 #endif
@@ -729,9 +722,9 @@ checkWin32Codepage(void)
 	concp = GetConsoleCP();
 	if (wincp != concp)
 	{
-		printf(_("Warning: Console code page (%u) differs from Windows code page (%u)\n"
+		printf(_("WARNING: Console code page (%u) differs from Windows code page (%u)\n"
 				 "         8-bit characters might not work correctly. See psql reference\n"
-			   "         page \"Notes for Windows users\" for details.\n\n"),
+			     "         page \"Notes for Windows users\" for details.\n"),
 			   concp, wincp);
 	}
 }
