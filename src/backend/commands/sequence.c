@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.151 2008/05/16 23:36:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.152 2008/05/17 01:20:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ static Relation open_share_lock(SeqTable seq);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_info(SeqTable elm, Relation rel, Buffer *buf);
 static void init_params(List *options, bool isInit,
-			Form_pg_sequence new, Form_pg_sequence old, List **owned_by);
+			Form_pg_sequence new, List **owned_by);
 static void do_setval(Oid relid, int64 next, bool iscalled);
 static void process_owned_by(Relation seqrel, List *owned_by);
 
@@ -119,7 +119,7 @@ DefineSequence(CreateSeqStmt *seq)
 	NameData	name;
 
 	/* Check and set all option values */
-	init_params(seq->options, true, &new, NULL, &owned_by);
+	init_params(seq->options, true, &new, &owned_by);
 
 	/*
 	 * Create relation (and fill value[] and null[] for the tuple)
@@ -357,8 +357,11 @@ AlterSequenceInternal(Oid relid, List *options)
 	seq = read_info(elm, seqrel, &buf);
 	page = BufferGetPage(buf);
 
-	/* Fill workspace with appropriate new info */
-	init_params(options, false, &new, seq, &owned_by);
+	/* Copy old values of options into workspace */
+	memcpy(&new, seq, sizeof(FormData_pg_sequence));
+
+	/* Check and set new values */
+	init_params(options, false, &new, &owned_by);
 
 	/* Clear local cache so that we don't think we have cached numbers */
 	/* Note that we do not change the currval() state */
@@ -989,9 +992,10 @@ read_info(SeqTable elm, Relation rel, Buffer *buf)
  */
 static void
 init_params(List *options, bool isInit,
-			Form_pg_sequence new, Form_pg_sequence old, List **owned_by)
+			Form_pg_sequence new, List **owned_by)
 {
-	DefElem    *last_value = NULL;
+	DefElem    *start_value = NULL;
+	DefElem    *restart_value = NULL;
 	DefElem    *increment_by = NULL;
 	DefElem    *max_value = NULL;
 	DefElem    *min_value = NULL;
@@ -1000,12 +1004,6 @@ init_params(List *options, bool isInit,
 	ListCell   *option;
 
 	*owned_by = NIL;
-
-	/* Copy old values of options into workspace */
-	if (old != NULL)
-		memcpy(new, old, sizeof(FormData_pg_sequence));
-	else
-		memset(new, 0, sizeof(FormData_pg_sequence));
 
 	foreach(option, options)
 	{
@@ -1021,27 +1019,19 @@ init_params(List *options, bool isInit,
 		}
 		else if (strcmp(defel->defname, "start") == 0)
 		{
-			if (!isInit)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("use RESTART not START in ALTER SEQUENCE")));
-			if (last_value)
+			if (start_value)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			last_value = defel;
+			start_value = defel;
 		}
 		else if (strcmp(defel->defname, "restart") == 0)
 		{
-			if (isInit)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("use START not RESTART in CREATE SEQUENCE")));
-			if (last_value)
+			if (restart_value)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			last_value = defel;
+			restart_value = defel;
 		}
 		else if (strcmp(defel->defname, "maxvalue") == 0)
 		{
@@ -1145,30 +1135,15 @@ init_params(List *options, bool isInit,
 						bufm, bufx)));
 	}
 
-	/* START/RESTART [WITH] */
-	if (last_value != NULL)
-	{
-		if (last_value->arg != NULL)
-			new->last_value = defGetInt64(last_value);
-		else
-		{
-			Assert(old != NULL);
-			new->last_value = old->start_value;
-		}
-		if (isInit)
-			new->start_value = new->last_value;
-		new->is_called = false;
-		new->log_cnt = 1;
-	}
+	/* START WITH */
+	if (start_value != NULL)
+		new->start_value = defGetInt64(start_value);
 	else if (isInit)
 	{
 		if (new->increment_by > 0)
 			new->start_value = new->min_value;	/* ascending seq */
 		else
 			new->start_value = new->max_value;	/* descending seq */
-		new->last_value = new->start_value;
-		new->is_called = false;
-		new->log_cnt = 1;
 	}
 
 	/* crosscheck START */
@@ -1197,7 +1172,24 @@ init_params(List *options, bool isInit,
 					 bufs, bufm)));
 	}
 
-	/* must crosscheck RESTART separately */
+	/* RESTART [WITH] */
+	if (restart_value != NULL)
+	{
+		if (restart_value->arg != NULL)
+			new->last_value = defGetInt64(restart_value);
+		else
+			new->last_value = new->start_value;
+		new->is_called = false;
+		new->log_cnt = 1;
+	}
+	else if (isInit)
+	{
+		new->last_value = new->start_value;
+		new->is_called = false;
+		new->log_cnt = 1;
+	}
+
+	/* crosscheck RESTART (or current value, if changing MIN/MAX) */
 	if (new->last_value < new->min_value)
 	{
 		char		bufs[100],
