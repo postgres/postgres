@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/nls-global.mk,v 1.12 2006/04/05 13:40:15 petere Exp $
+# $PostgreSQL: pgsql/src/nls-global.mk,v 1.13 2008/05/17 20:24:05 petere Exp $
 
 # Common rules for Native Language Support (NLS)
 #
@@ -77,7 +77,7 @@ uninstall-po:
 
 
 clean-po:
-	rm -f $(MO_FILES)
+	$(if $(MO_FILES),rm -f $(MO_FILES))
 	@rm -f $(addsuffix .old, $(PO_FILES))
 	rm -f po/$(CATALOG_NAME).pot
 
