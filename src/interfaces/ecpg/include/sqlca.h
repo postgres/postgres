@@ -1,6 +1,3 @@
-/*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/sqlca.h,v 1.30 2008/05/17 01:28:25 adunstan Exp $ 
- */
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
