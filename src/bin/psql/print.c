@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.103 2008/05/16 18:35:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.104 2008/05/17 17:52:14 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -522,7 +522,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		int rows = cell_count / col_count;
 		
 		for (i = 0; i < col_count; i++)
-			width_average[i % col_count] /= rows;
+			width_average[i] /= rows;
 	}
 
 	/* adjust the total display width based on border style */
@@ -645,7 +645,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	if (!is_pager)
 	{
 		/* scan all cells, find maximum width, compute cell_count */
-		for (i = 0, ptr = cont->cells; *ptr; ptr++, i++, cell_count++)
+		for (i = 0, ptr = cont->cells; *ptr; ptr++, cell_count++)
 		{
 			int			width,
 						nl_lines,
@@ -653,7 +653,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	
 			pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding,
 					   &width, &nl_lines, &bytes_required);
-			if (opt_numeric_locale && cont->align[i % col_count] == 'r')
+			if (opt_numeric_locale && cont->align[i] == 'r')
 				width += additional_numeric_locale_len(*ptr);
 	
 			/*
@@ -661,14 +661,20 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			 *	it to display across multiple lines.  We check
 			 *	for both cases below.
 			 */
-			if (width > 0 && width_wrap[i] &&
-				(width-1) / width_wrap[i] + nl_lines > extra_row_output_lines)
-				extra_row_output_lines = (width-1) / width_wrap[i] + nl_lines;
-
-			/* If last column, add tallest column height */
-			if (i % col_count == col_count - 1)
+			if (width > 0 && width_wrap[i])
 			{
-				/* Add height of tallest row */
+				unsigned int extra_lines;
+
+				extra_lines = (width-1) / width_wrap[i] + nl_lines;
+				if (extra_lines > extra_row_output_lines)
+					extra_row_output_lines = extra_lines;
+			}
+
+			/* i is the current column number: increment with wrap */
+			if (++i >= col_count)
+			{
+				i = 0;
+				/* At last column of each row, add tallest column height */
 				extra_output_lines += extra_row_output_lines;
 				extra_row_output_lines = 0;
 			}
@@ -780,7 +786,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 						 col_lineptrs[j], max_nl_lines[j]);
 			curr_nl_line[j] = 0;
 
-			if (opt_numeric_locale && cont->aligns[j % col_count] == 'r')
+			if (opt_numeric_locale && cont->aligns[j] == 'r')
 			{
 				char	   *my_cell;
 
