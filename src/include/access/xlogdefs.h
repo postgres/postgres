@@ -7,10 +7,12 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.21 2008/05/17 16:49:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.22 2008/05/17 17:24:57 tgl Exp $
  */
 #ifndef XLOG_DEFS_H
 #define XLOG_DEFS_H
+
+#include <fcntl.h>				/* need open() flags */
 
 /*
  * Pointer to a location in the XLOG.  These pointers are 64 bits wide,
