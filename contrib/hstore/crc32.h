@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/hstore/crc32.h,v 1.2 2008/05/17 01:28:19 adunstan Exp $ 
+ */
 #ifndef _CRC32_H
 #define _CRC32_H
 

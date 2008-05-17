@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/contrib/ltree/_ltree_op.c,v 1.12 2008/05/17 01:28:19 adunstan Exp $ 
+ *
+ *
  * op function for ltree[]
  * Teodor Sigaev <teodor@stack.net>
  */

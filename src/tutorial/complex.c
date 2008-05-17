@@ -1,4 +1,7 @@
-/******************************************************************************
+/*
+ * $PostgreSQL: pgsql/src/tutorial/complex.c,v 1.14 2008/05/17 01:28:26 adunstan Exp $ 
+ *
+ ******************************************************************************
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
   format for these routines is dictated by Postgres architecture.

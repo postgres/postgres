@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/contrib/ltree/_ltree_gist.c,v 1.25 2008/05/17 01:28:19 adunstan Exp $ 
+ *
+ *
  * GiST support for ltree[]
  * Teodor Sigaev <teodor@stack.net>
  */

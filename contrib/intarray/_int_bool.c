@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/intarray/_int_bool.c,v 1.15 2008/05/17 01:28:19 adunstan Exp $ 
+ */
 #include "postgres.h"
 
 #include "utils/builtins.h"

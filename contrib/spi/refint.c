@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/contrib/spi/refint.c,v 1.33 2008/05/17 01:28:22 adunstan Exp $ 
+ *
+ *
  * refint.c --	set of functions to define referential integrity
  *		constraints using general triggers.
  */

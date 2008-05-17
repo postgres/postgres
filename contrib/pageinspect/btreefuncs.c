@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/contrib/pageinspect/btreefuncs.c,v 1.8 2008/05/17 01:28:19 adunstan Exp $ 
+ *
+ *
  * btreefuncs.c
  *
  * Copyright (c) 2006 Satoshi Nagayasu <nagayasus@nttdata.co.jp>

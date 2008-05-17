@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/src/test/examples/testlibpq3.c,v 1.15 2008/05/17 01:28:26 adunstan Exp $ 
+ *
+ *
  * testlibpq3.c
  *		Test out-of-line parameters and binary I/O.
  *

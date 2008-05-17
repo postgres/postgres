@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_op.c,v 1.10 2008/05/17 01:28:21 adunstan Exp $ 
+ */
 #include "trgm.h"
 #include <ctype.h>
 #include "utils/array.h"

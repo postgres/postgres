@@ -1,4 +1,7 @@
-/* Both POSIX and CRC32 checksums */
+/*
+ * $PostgreSQL: pgsql/contrib/hstore/crc32.c,v 1.3 2008/05/17 01:28:19 adunstan Exp $ 
+ *
+ * Both POSIX and CRC32 checksums */
 
 #include <sys/types.h>
 #include <stdio.h>

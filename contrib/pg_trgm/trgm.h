@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm.h,v 1.9 2008/05/17 01:28:21 adunstan Exp $ 
+ */
 #ifndef __TRGM_H__
 #define __TRGM_H__
 

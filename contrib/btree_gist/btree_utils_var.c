@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_var.c,v 1.19 2008/05/17 01:28:19 adunstan Exp $ 
+ */
 #include "btree_gist.h"
 
 #include <math.h>

@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/timestamp.c,v 1.42 2008/05/17 01:28:25 adunstan Exp $ 
+ */
 #include "postgres_fe.h"
 
 #include <time.h>

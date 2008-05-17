@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_gist.h,v 1.8 2008/05/17 01:28:19 adunstan Exp $ 
+ */
 #ifndef __BTREE_GIST_H__
 #define __BTREE_GIST_H__
 

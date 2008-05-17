@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/intarray/_int.h,v 1.16 2008/05/17 01:28:19 adunstan Exp $ 
+ */
 #ifndef ___INT_H__
 #define ___INT_H__
 

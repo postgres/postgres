@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/spi/autoinc.c,v 1.15 2008/05/17 01:28:22 adunstan Exp $ 
+ */
 
 #include "executor/spi.h"		/* this is what you need to work with SPI */
 #include "commands/trigger.h"	/* -"- and triggers */

@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/src/test/examples/testlibpq4.c,v 1.13 2008/05/17 01:28:26 adunstan Exp $ 
+ *
+ *
  * testlibpq4.c
  *		this test program shows to use LIBPQ to make multiple backend
  * connections

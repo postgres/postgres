@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/src/backend/port/nextstep/port.c,v 1.11 2008/05/17 01:28:23 adunstan Exp $ 
+ */
 #include "postgres.h"
 
 #ifndef _POSIX_SOURCE

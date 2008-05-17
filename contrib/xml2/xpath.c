@@ -1,4 +1,7 @@
-/* Parser interface for DOM-based parser (libxml) rather than
+/*
+ * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.20 2008/05/17 01:28:22 adunstan Exp $ 
+ *
+ * Parser interface for DOM-based parser (libxml) rather than
    stream-based SAX-type parser */
 
 #include "postgres.h"

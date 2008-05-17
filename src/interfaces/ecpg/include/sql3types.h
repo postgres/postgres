@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/sql3types.h,v 1.12 2008/05/17 01:28:25 adunstan Exp $ 
+ */
 #ifndef _ECPG_SQL3TYPES_H
 #define _ECPG_SQL3TYPES_H
 

@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_gist.c,v 1.12 2008/05/17 01:28:19 adunstan Exp $ 
+ */
 #include "btree_gist.h"
 
 PG_MODULE_MAGIC;

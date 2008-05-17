@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/src/interfaces/libpq/win32.c,v 1.24 2008/05/17 01:28:25 adunstan Exp $ 
+ *
+ *
  *	FILE
  *		win32.c
  *

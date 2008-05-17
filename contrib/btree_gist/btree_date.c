@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_date.c,v 1.6 2008/05/17 01:28:19 adunstan Exp $ 
+ */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 #include "utils/date.h"

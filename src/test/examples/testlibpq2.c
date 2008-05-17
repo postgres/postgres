@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/src/test/examples/testlibpq2.c,v 1.14 2008/05/17 01:28:26 adunstan Exp $ 
+ *
+ *
  * testlibpq2.c
  *		Test of the asynchronous notification interface
  *

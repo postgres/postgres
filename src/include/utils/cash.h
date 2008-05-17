@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/src/include/utils/cash.h,v 1.26 2008/05/17 01:28:25 adunstan Exp $ 
+ *
+ *
  * cash.h
  * Written by D'Arcy J.M. Cain
  *

@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.12 2008/05/17 01:28:21 adunstan Exp $ 
+ *
+ *
  * pg_standby.c
  *
  * Production-ready example of how to create a Warm Standby

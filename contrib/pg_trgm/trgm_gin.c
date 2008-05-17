@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_gin.c,v 1.4 2008/05/17 01:28:21 adunstan Exp $ 
+ */
 #include "trgm.h"
 
 #include "access/gin.h"

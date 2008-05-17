@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/intarray/_int_gin.c,v 1.8 2008/05/17 01:28:19 adunstan Exp $ 
+ */
 #include "postgres.h"
 
 #include "access/gist.h"

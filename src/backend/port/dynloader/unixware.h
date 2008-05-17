@@ -1,4 +1,7 @@
-/*-------------------------------------------------------------------------
+/*
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/unixware.h,v 1.20 2008/05/17 01:28:23 adunstan Exp $ 
+ *
+ *-------------------------------------------------------------------------
  *
  * unixware.h
  *	  port-specific prototypes for Intel x86/UNIXWARE 7

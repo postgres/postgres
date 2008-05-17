@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/contrib/tablefunc/tablefunc.h,v 1.14 2008/05/17 01:28:22 adunstan Exp $ 
+ *
+ *
  * tablefunc
  *
  * Sample to demonstrate C functions which return setof scalar

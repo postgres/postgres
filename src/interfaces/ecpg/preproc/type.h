@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.49 2008/05/17 01:28:25 adunstan Exp $ 
+ */
 #ifndef _ECPG_PREPROC_TYPE_H
 #define _ECPG_PREPROC_TYPE_H
 

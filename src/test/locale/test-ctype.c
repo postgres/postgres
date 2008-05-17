@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/src/test/locale/test-ctype.c,v 1.5 2008/05/17 01:28:26 adunstan Exp $ 
+ */
 
 /*
 

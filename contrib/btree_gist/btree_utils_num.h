@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_num.h,v 1.12 2008/05/17 01:28:19 adunstan Exp $ 
+ */
 #ifndef __BTREE_UTILS_NUM_H__
 #define __BTREE_UTILS_NUM_H__
 

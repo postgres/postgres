@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstatindex.c,v 1.11 2008/05/17 01:28:22 adunstan Exp $ 
+ *
+ *
  * pgstatindex
  *
  * Copyright (c) 2006 Satoshi Nagayasu <nagayasus@nttdata.co.jp>

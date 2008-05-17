@@ -1,3 +1,6 @@
+/*
+ * $PostgreSQL: pgsql/src/include/port/ultrix4.h,v 1.12 2008/05/17 01:28:24 adunstan Exp $ 
+ */
 #define NOFIXADE
 #define NEED_STRDUP
 
