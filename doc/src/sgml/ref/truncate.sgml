@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.26 2008/05/16 23:36:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.27 2008/05/17 23:36:27 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -151,11 +151,26 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ... ]
    <para>
     Any <command>ALTER SEQUENCE RESTART</> operations performed as a
     consequence of using the <literal>RESTART IDENTITY</> option are
-    nontransactional and will not be rolled back.  To minimize risk,
-    these operations are performed only after all the rest of
-    <command>TRUNCATE</>'s work is done.  In practice this will only
-    be an issue if <command>TRUNCATE</> is performed inside a
-    transaction block that is aborted afterwards.
+    nontransactional and will not be rolled back on failure.  To minimize
+    the risk, these operations are performed only after all the rest of
+    <command>TRUNCATE</>'s work is done.  However, there is still a risk
+    if <command>TRUNCATE</> is performed inside a transaction block that is
+    aborted afterwards.  For example, consider
+
+<programlisting>
+BEGIN;
+TRUNCATE TABLE foo RESTART IDENTITY;
+COPY foo FROM ...;
+COMMIT;
+</programlisting>
+
+    If the <command>COPY</> fails partway through, the table data
+    rolls back correctly, but the sequences will be left with values
+    that are probably smaller than they had before, possibly leading
+    to duplicate-key failures or other problems in later transactions.
+    If this is likely to be a problem, it's best to avoid using
+    <literal>RESTART IDENTITY</>, and accept that the new contents of
+    the table will have higher serial numbers than the old.
    </para>
   </warning>
  </refsect1>
