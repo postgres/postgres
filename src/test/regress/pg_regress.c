@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.44 2008/03/31 01:31:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.45 2008/05/17 20:02:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1305,14 +1305,15 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 }
 
 /*
- * Wait for specified subprocesses to finish
+ * Wait for specified subprocesses to finish, and return their exit
+ * statuses into statuses[]
  *
- * If names isn't NULL, report each subprocess as it finishes
+ * If names isn't NULL, print each subprocess's name as it finishes
  *
  * Note: it's OK to scribble on the pids array, but not on the names array
  */
 static void
-wait_for_tests(PID_TYPE * pids, char **names, int num_tests)
+wait_for_tests(PID_TYPE *pids, int *statuses, char **names, int num_tests)
 {
 	int			tests_left;
 	int			i;
@@ -1327,9 +1328,10 @@ wait_for_tests(PID_TYPE * pids, char **names, int num_tests)
 	while (tests_left > 0)
 	{
 		PID_TYPE	p;
+		int			exit_status;
 
 #ifndef WIN32
-		p = wait(NULL);
+		p = wait(&exit_status);
 
 		if (p == INVALID_PID)
 		{
@@ -1357,9 +1359,11 @@ wait_for_tests(PID_TYPE * pids, char **names, int num_tests)
 			if (p == pids[i])
 			{
 #ifdef WIN32
+				GetExitCodeProcess(pids[i], &exit_status);
 				CloseHandle(pids[i]);
 #endif
 				pids[i] = INVALID_PID;
+				statuses[i] = exit_status;
 				if (names)
 					status(" %s", names[i]);
 				tests_left--;
@@ -1374,6 +1378,35 @@ wait_for_tests(PID_TYPE * pids, char **names, int num_tests)
 }
 
 /*
+ * report nonzero exit code from a test process
+ */
+static void
+log_child_failure(int exitstatus)
+{
+	if (WIFEXITED(exitstatus))
+		status(_(" (test process exited with exit code %d)"),
+			   WEXITSTATUS(exitstatus));
+	else if (WIFSIGNALED(exitstatus))
+	{
+#if defined(WIN32)
+		status(_(" (test process was terminated by exception 0x%X)"),
+			   WTERMSIG(exitstatus));
+#elif defined(HAVE_DECL_SYS_SIGLIST) && HAVE_DECL_SYS_SIGLIST
+		status(_(" (test process was terminated by signal %d: %s)"),
+			   WTERMSIG(exitstatus),
+			   WTERMSIG(exitstatus) < NSIG ?
+			   sys_siglist[WTERMSIG(exitstatus)] : "(unknown))");
+#else
+		status(_(" (test process was terminated by signal %d)"),
+			   WTERMSIG(exitstatus));
+#endif
+	}
+	else
+		status(_(" (test process exited with unrecognized status %d)"),
+			   exitstatus);
+}
+
+/*
  * Run all the tests specified in one schedule file
  */
 static void
@@ -1385,6 +1418,7 @@ run_schedule(const char *schedule, test_function tfunc)
 	_stringlist *expectfiles[MAX_PARALLEL_TESTS];
 	_stringlist *tags[MAX_PARALLEL_TESTS];
 	PID_TYPE	pids[MAX_PARALLEL_TESTS];
+	int			statuses[MAX_PARALLEL_TESTS];
 	_stringlist *ignorelist = NULL;
 	char		scbuf[1024];
 	FILE	   *scf;
@@ -1486,7 +1520,7 @@ run_schedule(const char *schedule, test_function tfunc)
 		{
 			status(_("test %-20s ... "), tests[0]);
 			pids[0] = (tfunc) (tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
-			wait_for_tests(pids, NULL, 1);
+			wait_for_tests(pids, statuses, NULL, 1);
 			/* status line is finished below */
 		}
 		else if (max_connections > 0 && max_connections < num_tests)
@@ -1499,12 +1533,14 @@ run_schedule(const char *schedule, test_function tfunc)
 			{
 				if (i - oldest >= max_connections)
 				{
-					wait_for_tests(pids + oldest, tests + oldest, i - oldest);
+					wait_for_tests(pids + oldest, statuses + oldest,
+								   tests + oldest, i - oldest);
 					oldest = i;
 				}
 				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 			}
-			wait_for_tests(pids + oldest, tests + oldest, i - oldest);
+			wait_for_tests(pids + oldest, statuses + oldest,
+						   tests + oldest, i - oldest);
 			status_end();
 		}
 		else
@@ -1514,7 +1550,7 @@ run_schedule(const char *schedule, test_function tfunc)
 			{
 				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 			}
-			wait_for_tests(pids, tests, num_tests);
+			wait_for_tests(pids, statuses, tests, num_tests);
 			status_end();
 		}
 
@@ -1543,7 +1579,7 @@ run_schedule(const char *schedule, test_function tfunc)
 				bool		newdiff;
 
 				if (tl)
-					tl = tl->next;		/* tl has the same lengt has rl and el
+					tl = tl->next;		/* tl has the same length as rl and el
 										 * if it exists */
 
 				newdiff = results_differ(tests[i], rl->str, el->str);
@@ -1584,6 +1620,9 @@ run_schedule(const char *schedule, test_function tfunc)
 				success_count++;
 			}
 
+			if (statuses[i] != 0)
+				log_child_failure(statuses[i]);
+
 			status_end();
 		}
 	}
@@ -1598,6 +1637,7 @@ static void
 run_single_test(const char *test, test_function tfunc)
 {
 	PID_TYPE	pid;
+	int			exit_status;
 	_stringlist *resultfiles = NULL;
 	_stringlist *expectfiles = NULL;
 	_stringlist *tags = NULL;
@@ -1608,7 +1648,7 @@ run_single_test(const char *test, test_function tfunc)
 
 	status(_("test %-20s ... "), test);
 	pid = (tfunc) (test, &resultfiles, &expectfiles, &tags);
-	wait_for_tests(&pid, NULL, 1);
+	wait_for_tests(&pid, &exit_status, NULL, 1);
 
 	/*
 	 * Advance over all three lists simultaneously.
@@ -1624,7 +1664,7 @@ run_single_test(const char *test, test_function tfunc)
 		bool		newdiff;
 
 		if (tl)
-			tl = tl->next;		/* tl has the same lengt has rl and el if it
+			tl = tl->next;		/* tl has the same length as rl and el if it
 								 * exists */
 
 		newdiff = results_differ(test, rl->str, el->str);
@@ -1645,6 +1685,10 @@ run_single_test(const char *test, test_function tfunc)
 		status(_("ok"));
 		success_count++;
 	}
+
+	if (exit_status != 0)
+		log_child_failure(exit_status);
+
 	status_end();
 }
 
