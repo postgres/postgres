@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.106 2008/05/17 23:34:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.107 2008/05/18 06:50:08 adunstan Exp $
  */
 #include "postgres_fe.h"
 
@@ -918,13 +918,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				fprintf(fout, "%s\n", f->data);
 		}
 
-		/*
-		 * for some reason MinGW (and MSVC) outputs an extra newline, so this
-		 * suppresses it
-		 */
-#ifndef WIN32
 		fputc('\n', fout);
-#endif
 	}
 
 	/* clean up */
