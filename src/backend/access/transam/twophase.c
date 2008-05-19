@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.42 2008/05/12 00:00:45 alvherre Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.43 2008/05/19 18:16:26 heikki Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -56,6 +56,7 @@
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
 
 
 /*
@@ -866,6 +867,15 @@ EndPrepare(GlobalTransaction gxact)
 	hdr->total_len = records.total_len + sizeof(pg_crc32);
 
 	/*
+	 * If the file size exceeds MaxAllocSize, we won't be able to read it in
+	 * ReadTwoPhaseFile. Check for that now, rather than fail at commit time.
+	 */
+	if (hdr->total_len > MaxAllocSize)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("two-phase state file maximum length exceeded")));
+
+	/*
 	 * Create the 2PC state file.
 	 *
 	 * Note: because we use BasicOpenFile(), we are responsible for ensuring
@@ -1045,7 +1055,9 @@ ReadTwoPhaseFile(TransactionId xid)
 
 	/*
 	 * Check file length.  We can determine a lower bound pretty easily. We
-	 * set an upper bound mainly to avoid palloc() failure on a corrupt file.
+	 * set an upper bound to avoid palloc() failure on a corrupt file, though
+	 * we can't guarantee that we won't get an out of memory error anyway,
+	 * even on a valid file.
 	 */
 	if (fstat(fd, &stat))
 	{
@@ -1060,7 +1072,7 @@ ReadTwoPhaseFile(TransactionId xid)
 	if (stat.st_size < (MAXALIGN(sizeof(TwoPhaseFileHeader)) +
 						MAXALIGN(sizeof(TwoPhaseRecordOnDisk)) +
 						sizeof(pg_crc32)) ||
-		stat.st_size > 10000000)
+		stat.st_size > MaxAllocSize)
 	{
 		close(fd);
 		return NULL;
