@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.254 2008/05/16 23:36:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.255 2008/05/19 04:14:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4377,11 +4377,11 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 			/*
 			 * Otherwise, look for an implicit cast from the FK type to the
 			 * opcintype, and if found, use the primary equality operator.
-			 * This is a bit tricky because opcintype might be a generic type
-			 * such as ANYARRAY, and so what we have to test is whether the
-			 * two actual column types can be concurrently cast to that type.
-			 * (Otherwise, we'd fail to reject combinations such as int[] and
-			 * point[].)
+			 * This is a bit tricky because opcintype might be a polymorphic
+			 * type such as ANYARRAY or ANYENUM; so what we have to test is
+			 * whether the two actual column types can be concurrently cast to
+			 * that type.  (Otherwise, we'd fail to reject combinations such
+			 * as int[] and point[].)
 			 */
 			Oid			input_typeids[2];
 			Oid			target_typeids[2];
