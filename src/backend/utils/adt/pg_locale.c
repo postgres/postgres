@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.40 2008/01/01 19:45:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.41 2008/05/19 18:08:16 tgl Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -48,20 +48,31 @@
 #include "postgres.h"
 
 #include <locale.h>
+#include <time.h>
 
 #include "catalog/pg_control.h"
+#include "utils/memutils.h"
 #include "utils/pg_locale.h"
 
 
-/* GUC storage area */
+#define		MAX_L10N_DATA		80
 
+
+/* GUC settings */
 char	   *locale_messages;
 char	   *locale_monetary;
 char	   *locale_numeric;
 char	   *locale_time;
 
+/* lc_time localization cache */
+char	   *localized_abbrev_days[7];
+char	   *localized_full_days[7];
+char	   *localized_abbrev_months[12];
+char	   *localized_full_months[12];
+
 /* indicates whether locale information cache is valid */
 static bool CurrentLocaleConvValid = false;
+static bool CurrentLCTimeValid = false;
 
 /* Environment variable storage area */
 
@@ -209,7 +220,10 @@ locale_xxx_assign(int category, const char *value, bool doit, GucSource source)
 
 	/* need to reload cache next time? */
 	if (doit && value != NULL)
+	{
 		CurrentLocaleConvValid = false;
+		CurrentLCTimeValid = false;
+	}
 
 	return value;
 }
@@ -423,4 +437,79 @@ PGLC_localeconv(void)
 
 	CurrentLocaleConvValid = true;
 	return &CurrentLocaleConv;
+}
+
+
+/*
+ * Update the lc_time localization cache variables if needed.
+ */
+void
+cache_locale_time(void)
+{
+	char		*save_lc_time;
+	time_t		timenow;
+	struct tm	*timeinfo;
+	char		buf[MAX_L10N_DATA];
+	char	   *ptr;
+	int			i;
+
+	/* did we do this already? */
+	if (CurrentLCTimeValid)
+		return;
+
+	elog(DEBUG3, "cache_locale_time() executed; locale: \"%s\"", locale_time);
+
+	/* set user's value of time locale */
+	save_lc_time = setlocale(LC_TIME, NULL);
+	if (save_lc_time)
+		save_lc_time = pstrdup(save_lc_time);
+
+	setlocale(LC_TIME, locale_time);
+
+	timenow = time(NULL);
+	timeinfo = localtime(&timenow);
+
+	/* localized days */
+	for (i = 0; i < 7; i++)
+	{
+		timeinfo->tm_wday = i;
+		strftime(buf, MAX_L10N_DATA, "%a", timeinfo);
+		ptr = MemoryContextStrdup(TopMemoryContext, buf);
+		if (localized_abbrev_days[i])
+			pfree(localized_abbrev_days[i]);
+		localized_abbrev_days[i] = ptr;
+
+		strftime(buf, MAX_L10N_DATA, "%A", timeinfo);
+		ptr = MemoryContextStrdup(TopMemoryContext, buf);
+		if (localized_full_days[i])
+			pfree(localized_full_days[i]);
+		localized_full_days[i] = ptr;
+	}
+
+	/* localized months */
+	for (i = 0; i < 12; i++)
+	{
+		timeinfo->tm_mon = i;
+		timeinfo->tm_mday = 1;	/* make sure we don't have invalid date */
+		strftime(buf, MAX_L10N_DATA, "%b", timeinfo);
+		ptr = MemoryContextStrdup(TopMemoryContext, buf);
+		if (localized_abbrev_months[i])
+			pfree(localized_abbrev_months[i]);
+		localized_abbrev_months[i] = ptr;
+
+		strftime(buf, MAX_L10N_DATA, "%B", timeinfo);
+		ptr = MemoryContextStrdup(TopMemoryContext, buf);
+		if (localized_full_months[i])
+			pfree(localized_full_months[i]);
+		localized_full_months[i] = ptr;
+	}
+
+	/* try to restore internal settings */
+	if (save_lc_time)
+	{
+		setlocale(LC_TIME, save_lc_time);
+		pfree(save_lc_time);
+	}
+
+	CurrentLCTimeValid = true;
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.78 2008/03/25 22:42:44 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.79 2008/05/19 18:08:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,8 @@
 #define USE_WIDE_UPPER_LOWER
 char	   *wstring_lower(char *str);
 char	   *wstring_upper(char *str);
+wchar_t	   *texttowcs(const text *txt);
+text	   *wcstotext(const wchar_t *str, int ncodes);
 #endif
 
 static text *dotrim(const char *string, int stringlen,
@@ -60,7 +62,7 @@ static text *dotrim(const char *string, int stringlen,
 /*
  * Convert a TEXT value into a palloc'd wchar string.
  */
-static wchar_t *
+wchar_t *
 texttowcs(const text *txt)
 {
 	int			nbytes = VARSIZE_ANY_EXHDR(txt);
@@ -112,7 +114,7 @@ texttowcs(const text *txt)
  * must be zero-terminated, but we also require the caller to pass the string
  * length, since it will know it anyway in current uses.
  */
-static text *
+text *
 wcstotext(const wchar_t *str, int ncodes)
 {
 	text	   *result;

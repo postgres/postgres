@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.436 2008/05/04 23:19:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.437 2008/05/19 18:08:15 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -5079,7 +5079,8 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>   
        <row>
         <entry><literal>TM</literal> prefix</entry>
-        <entry>translation mode (print localized day and month names based on <varname>lc_messages</>)</entry>
+        <entry>translation mode (print localized day and month names based on
+         <xref linkend="guc-lc-time">)</entry>
         <entry><literal>TMMonth</literal></entry>
        </row>       
        <row>

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.139 2008/03/25 22:42:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.140 2008/05/19 18:08:15 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -75,7 +75,17 @@
 #include <math.h>
 #include <float.h>
 #include <limits.h>
-#include <locale.h>
+
+/*
+ * towlower() and friends should be in <wctype.h>, but some pre-C99 systems
+ * declare them in <wchar.h>.
+ */
+#ifdef HAVE_WCHAR_H
+#include <wchar.h>
+#endif
+#ifdef HAVE_WCTYPE_H
+#include <wctype.h>
+#endif
 
 #include "utils/builtins.h"
 #include "utils/date.h"
@@ -85,8 +95,6 @@
 #include "utils/numeric.h"
 #include "utils/pg_locale.h"
 #include "mb/pg_wchar.h"
-
-#define _(x)	gettext((x))
 
 /* ----------
  * Routines type
@@ -919,6 +927,7 @@ static int	strspace_len(char *str);
 static int	strdigits_len(char *str);
 static char *str_toupper(char *buff);
 static char *str_tolower(char *buff);
+static char *str_initcap(char *buff);
 
 static int	seq_search(char *name, char **array, int type, int max, int *len);
 static void do_to_timestamp(text *date_txt, text *fmt,
@@ -939,22 +948,13 @@ static NUMCacheEntry *NUM_cache_search(char *str);
 static NUMCacheEntry *NUM_cache_getnew(char *str);
 static void NUM_cache_remove(NUMCacheEntry *ent);
 
-static char *localize_month_full(int index);
-static char *localize_month(int index);
-static char *localize_day_full(int index);
-static char *localize_day(int index);
-
 #if defined(HAVE_WCSTOMBS) && defined(HAVE_TOWLOWER)
 #define USE_WIDE_UPPER_LOWER
 /* externs are in oracle_compat.c */
 extern char *wstring_upper(char *str);
 extern char *wstring_lower(char *str);
-
-static char *localized_str_toupper(char *buff);
-static char *localized_str_tolower(char *buff);
-#else
-#define localized_str_toupper str_toupper
-#define localized_str_tolower str_tolower
+extern wchar_t *texttowcs(const text *txt);
+extern text *wcstotext(const wchar_t *str, int ncodes);
 #endif
 
 /* ----------
@@ -1426,102 +1426,122 @@ str_numth(char *dest, char *num, int type)
 }
 
 /* ----------
- * Convert string to upper case. Input string is modified in place.
+ * Convert string to upper case. It is designed to be multibyte-aware.
  * ----------
  */
 static char *
 str_toupper(char *buff)
 {
-	char	   *p_buff = buff;
+	char		*result;
 
 	if (!buff)
 		return NULL;
 
-	while (*p_buff)
+#ifdef USE_WIDE_UPPER_LOWER
+	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
+		result = wstring_upper(buff);
+	else
+#endif		/* USE_WIDE_UPPER_LOWER */
 	{
-		*p_buff = pg_toupper((unsigned char) *p_buff);
-		++p_buff;
+		char *p;
+
+		result = pstrdup(buff);
+
+		for (p = result; *p; p++)
+			*p = pg_toupper((unsigned char) *p);
 	}
 
-	return buff;
+	return result;
 }
 
 /* ----------
- * Convert string to lower case. Input string is modified in place.
+ * Convert string to lower case. It is designed to be multibyte-aware.
  * ----------
  */
 static char *
 str_tolower(char *buff)
 {
-	char	   *p_buff = buff;
+	char		*result;
 
 	if (!buff)
 		return NULL;
-
-	while (*p_buff)
-	{
-		*p_buff = pg_tolower((unsigned char) *p_buff);
-		++p_buff;
-	}
-	return buff;
-}
-
 
 #ifdef USE_WIDE_UPPER_LOWER
+	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
+		result = wstring_lower(buff);
+	else
+#endif		/* USE_WIDE_UPPER_LOWER */
+	{
+		char *p;
+
+		result = pstrdup(buff);
+
+		for (p = result; *p; p++)
+			*p = pg_tolower((unsigned char) *p);
+	}
+
+	return result;
+}
+  
 /* ----------
- * Convert localized string to upper case.
- * Input string may be modified in place ... or we might make a copy.
+ * wide-character-aware initcap function
  * ----------
  */
 static char *
-localized_str_toupper(char *buff)
+str_initcap(char *buff)
 {
+	char		*result;
+	bool		wasalnum = false;
+
 	if (!buff)
 		return NULL;
 
+#ifdef USE_WIDE_UPPER_LOWER
 	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
-		return wstring_upper(buff);
-	else
 	{
-		char	   *p_buff = buff;
+		wchar_t		*workspace;
+		text		*in_text;
+		text		*out_text;
+		int			i;
 
-		while (*p_buff)
+		in_text = cstring_to_text(buff);
+		workspace = texttowcs(in_text);
+
+		for (i = 0; workspace[i] != 0; i++)
 		{
-			*p_buff = pg_toupper((unsigned char) *p_buff);
-			++p_buff;
+			if (wasalnum)
+				workspace[i] = towlower(workspace[i]);
+			else
+				workspace[i] = towupper(workspace[i]);
+			wasalnum = iswalnum(workspace[i]);
+		}
+
+		out_text = wcstotext(workspace, i);
+		result = text_to_cstring(out_text);
+
+		pfree(workspace);
+		pfree(in_text);
+		pfree(out_text);
+	}
+	else
+#endif		/* USE_WIDE_UPPER_LOWER */
+	{
+		char *p;
+
+		result = pstrdup(buff);
+
+		for (p = result; *p; p++)
+		{
+			if (wasalnum)
+				*p = pg_tolower((unsigned char) *p);
+			else
+				*p = pg_toupper((unsigned char) *p);
+			wasalnum = isalnum((unsigned char) *p);
 		}
 	}
 
-	return buff;
+	return result;
 }
-
-/* ----------
- * Convert localized string to lower case.
- * Input string may be modified in place ... or we might make a copy.
- * ----------
- */
-static char *
-localized_str_tolower(char *buff)
-{
-	if (!buff)
-		return NULL;
-
-	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
-		return wstring_lower(buff);
-	else
-	{
-		char	   *p_buff = buff;
-
-		while (*p_buff)
-		{
-			*p_buff = pg_tolower((unsigned char) *p_buff);
-			++p_buff;
-		}
-	}
-
-	return buff;
-}
-#endif   /* USE_WIDE_UPPER_LOWER */
 
 /* ----------
  * Sequential search with to upper/lower conversion
@@ -1730,6 +1750,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				workbuff[32];
 	int			i;
 
+	/* cache localized days and months */
+	cache_locale_time();
+
 	s = out;
 	for (n = node; n->type != NODE_TYPE_END; n++)
 	{
@@ -1872,8 +1895,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 					break;
 				if (S_TM(n->suffix))
 				{
-					strcpy(workbuff, localize_month_full(tm->tm_mon - 1));
-					sprintf(s, "%*s", 0, localized_str_toupper(workbuff));
+					strcpy(workbuff, localized_full_months[tm->tm_mon - 1]);
+					sprintf(s, "%*s", 0, str_toupper(workbuff));
 				}
 				else
 				{
@@ -1887,9 +1910,14 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					sprintf(s, "%*s", 0, localize_month_full(tm->tm_mon - 1));
+				{
+					strcpy(workbuff, localized_full_months[tm->tm_mon - 1]);
+					sprintf(s, "%*s", 0, str_initcap(workbuff));
+				}
 				else
+				{
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, months_full[tm->tm_mon - 1]);
+				}
 				s += strlen(s);
 				break;
 			case DCH_month:
@@ -1898,8 +1926,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 					break;
 				if (S_TM(n->suffix))
 				{
-					strcpy(workbuff, localize_month_full(tm->tm_mon - 1));
-					sprintf(s, "%*s", 0, localized_str_tolower(workbuff));
+					strcpy(workbuff, localized_full_months[tm->tm_mon - 1]);
+					sprintf(s, "%*s", 0, str_tolower(workbuff));
 				}
 				else
 				{
@@ -1914,13 +1942,13 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 					break;
 				if (S_TM(n->suffix))
 				{
-					strcpy(workbuff, localize_month(tm->tm_mon - 1));
-					strcpy(s, localized_str_toupper(workbuff));
+					strcpy(workbuff, localized_abbrev_months[tm->tm_mon - 1]);
+					sprintf(s, "%*s", 0, str_toupper(workbuff));
 				}
 				else
 				{
-					strcpy(s, months[tm->tm_mon - 1]);
-					str_toupper(s);
+					strcpy(workbuff, months[tm->tm_mon - 1]);
+					sprintf(s, "%*s", 0, str_toupper(workbuff));
 				}
 				s += strlen(s);
 				break;
@@ -1929,9 +1957,14 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, localize_month(tm->tm_mon - 1));
+				{
+					strcpy(workbuff, localized_abbrev_months[tm->tm_mon - 1]);
+					sprintf(s, "%*s", 0, str_initcap(workbuff));
+				}
 				else
+				{
 					strcpy(s, months[tm->tm_mon - 1]);
+				}
 				s += strlen(s);
 				break;
 			case DCH_mon:
@@ -1940,8 +1973,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 					break;
 				if (S_TM(n->suffix))
 				{
-					strcpy(workbuff, localize_month(tm->tm_mon - 1));
-					strcpy(s, localized_str_tolower(workbuff));
+					strcpy(workbuff, localized_abbrev_months[tm->tm_mon - 1]);
+					sprintf(s, "%*s", 0, str_tolower(workbuff));
 				}
 				else
 				{
@@ -1960,8 +1993,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
-					strcpy(workbuff, localize_day_full(tm->tm_wday));
-					sprintf(s, "%*s", 0, localized_str_toupper(workbuff));
+					strcpy(workbuff, localized_full_days[tm->tm_wday]);
+					sprintf(s, "%*s", 0, str_toupper(workbuff));
 				}
 				else
 				{
@@ -1973,17 +2006,22 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_Day:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					sprintf(s, "%*s", 0, localize_day_full(tm->tm_wday));
+				{
+					strcpy(workbuff, localized_full_days[tm->tm_wday]);
+					sprintf(s, "%*s", 0, str_initcap(workbuff));
+				}
 				else
+				{
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, days[tm->tm_wday]);
+				}
 				s += strlen(s);
 				break;
 			case DCH_day:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
-					strcpy(workbuff, localize_day_full(tm->tm_wday));
-					sprintf(s, "%*s", 0, localized_str_tolower(workbuff));
+					strcpy(workbuff, localized_full_days[tm->tm_wday]);
+					sprintf(s, "%*s", 0, str_tolower(workbuff));
 				}
 				else
 				{
@@ -1996,30 +2034,35 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
-					strcpy(workbuff, localize_day(tm->tm_wday));
-					strcpy(s, localized_str_toupper(workbuff));
+					strcpy(workbuff, localized_abbrev_days[tm->tm_wday]);
+					sprintf(s, "%*s", 0, str_toupper(workbuff));
 				}
 				else
 				{
-					strcpy(s, days_short[tm->tm_wday]);
-					str_toupper(s);
+					strcpy(workbuff, days_short[tm->tm_wday]);
+					sprintf(s, "%*s", 0, str_toupper(workbuff));
 				}
 				s += strlen(s);
 				break;
 			case DCH_Dy:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, localize_day(tm->tm_wday));
+				{
+					strcpy(workbuff, localized_abbrev_days[tm->tm_wday]);
+					sprintf(s, "%*s", 0, str_initcap(workbuff));
+				}
 				else
+				{
 					strcpy(s, days_short[tm->tm_wday]);
+				}
 				s += strlen(s);
 				break;
 			case DCH_dy:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
-					strcpy(workbuff, localize_day(tm->tm_wday));
-					strcpy(s, localized_str_tolower(workbuff));
+					strcpy(workbuff, localized_abbrev_days[tm->tm_wday]);
+					sprintf(s, "%*s", 0, str_tolower(workbuff));
 				}
 				else
 				{
@@ -2781,174 +2824,6 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
 
 	pfree(result);
 	return res;
-}
-
-static char *
-localize_month_full(int index)
-{
-	char	   *m = NULL;
-
-	switch (index)
-	{
-		case 0:
-			m = _("January");
-			break;
-		case 1:
-			m = _("February");
-			break;
-		case 2:
-			m = _("March");
-			break;
-		case 3:
-			m = _("April");
-			break;
-		case 4:
-			m = _("May");
-			break;
-		case 5:
-			m = _("June");
-			break;
-		case 6:
-			m = _("July");
-			break;
-		case 7:
-			m = _("August");
-			break;
-		case 8:
-			m = _("September");
-			break;
-		case 9:
-			m = _("October");
-			break;
-		case 10:
-			m = _("November");
-			break;
-		case 11:
-			m = _("December");
-			break;
-	}
-
-	return m;
-}
-
-static char *
-localize_month(int index)
-{
-	char	   *m = NULL;
-
-	switch (index)
-	{
-		case 0:
-			m = _("Jan");
-			break;
-		case 1:
-			m = _("Feb");
-			break;
-		case 2:
-			m = _("Mar");
-			break;
-		case 3:
-			m = _("Apr");
-			break;
-		case 4:
-			/*------
-			  translator: Translate this as the abbreviation of "May".
-			  In English, it is both the full month name and the
-			  abbreviation, so this hack is needed to distinguish
-			  them.  The translation also needs to start with S:,
-			  which will be stripped at run time. */
-			m = _("S:May") + 2;
-			break;
-		case 5:
-			m = _("Jun");
-			break;
-		case 6:
-			m = _("Jul");
-			break;
-		case 7:
-			m = _("Aug");
-			break;
-		case 8:
-			m = _("Sep");
-			break;
-		case 9:
-			m = _("Oct");
-			break;
-		case 10:
-			m = _("Nov");
-			break;
-		case 11:
-			m = _("Dec");
-			break;
-	}
-
-	return m;
-}
-
-static char *
-localize_day_full(int index)
-{
-	char	   *d = NULL;
-
-	switch (index)
-	{
-		case 0:
-			d = _("Sunday");
-			break;
-		case 1:
-			d = _("Monday");
-			break;
-		case 2:
-			d = _("Tuesday");
-			break;
-		case 3:
-			d = _("Wednesday");
-			break;
-		case 4:
-			d = _("Thursday");
-			break;
-		case 5:
-			d = _("Friday");
-			break;
-		case 6:
-			d = _("Saturday");
-			break;
-	}
-
-	return d;
-}
-
-static char *
-localize_day(int index)
-{
-	char	   *d = NULL;
-
-	switch (index)
-	{
-		case 0:
-			d = _("Sun");
-			break;
-		case 1:
-			d = _("Mon");
-			break;
-		case 2:
-			d = _("Tue");
-			break;
-		case 3:
-			d = _("Wed");
-			break;
-		case 4:
-			d = _("Thu");
-			break;
-		case 5:
-			d = _("Fri");
-			break;
-		case 6:
-			d = _("Sat");
-			break;
-	}
-
-	return d;
 }
 
 /****************************************************************************
