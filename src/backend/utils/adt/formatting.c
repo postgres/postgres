@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.140 2008/05/19 18:08:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.141 2008/05/20 01:41:02 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -1894,10 +1894,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_full_months[tm->tm_mon - 1]);
-					sprintf(s, "%*s", 0, str_toupper(workbuff));
-				}
+					strcpy(s, str_toupper(localized_full_months[tm->tm_mon - 1]));
 				else
 				{
 					strcpy(workbuff, months_full[tm->tm_mon - 1]);
@@ -1910,14 +1907,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_full_months[tm->tm_mon - 1]);
-					sprintf(s, "%*s", 0, str_initcap(workbuff));
-				}
+					strcpy(s, str_initcap(localized_full_months[tm->tm_mon - 1]));
 				else
-				{
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, months_full[tm->tm_mon - 1]);
-				}
 				s += strlen(s);
 				break;
 			case DCH_month:
@@ -1925,10 +1917,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_full_months[tm->tm_mon - 1]);
-					sprintf(s, "%*s", 0, str_tolower(workbuff));
-				}
+					strcpy(s, str_tolower(localized_full_months[tm->tm_mon - 1]));
 				else
 				{
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, months_full[tm->tm_mon - 1]);
@@ -1941,15 +1930,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_abbrev_months[tm->tm_mon - 1]);
-					sprintf(s, "%*s", 0, str_toupper(workbuff));
-				}
+					strcpy(s, str_toupper(localized_abbrev_months[tm->tm_mon - 1]));
 				else
-				{
-					strcpy(workbuff, months[tm->tm_mon - 1]);
-					sprintf(s, "%*s", 0, str_toupper(workbuff));
-				}
+					strcpy(s, str_toupper(months[tm->tm_mon - 1]));
 				s += strlen(s);
 				break;
 			case DCH_Mon:
@@ -1957,14 +1940,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_abbrev_months[tm->tm_mon - 1]);
-					sprintf(s, "%*s", 0, str_initcap(workbuff));
-				}
+					strcpy(s, str_initcap(localized_abbrev_months[tm->tm_mon - 1]));
 				else
-				{
 					strcpy(s, months[tm->tm_mon - 1]);
-				}
 				s += strlen(s);
 				break;
 			case DCH_mon:
@@ -1972,10 +1950,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_abbrev_months[tm->tm_mon - 1]);
-					sprintf(s, "%*s", 0, str_tolower(workbuff));
-				}
+					strcpy(s, str_tolower(localized_abbrev_months[tm->tm_mon - 1]));
 				else
 				{
 					strcpy(s, months[tm->tm_mon - 1]);
@@ -1992,10 +1967,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_DAY:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_full_days[tm->tm_wday]);
-					sprintf(s, "%*s", 0, str_toupper(workbuff));
-				}
+					strcpy(s, str_toupper(localized_full_days[tm->tm_wday]));
 				else
 				{
 					strcpy(workbuff, days[tm->tm_wday]);
@@ -2006,23 +1978,15 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_Day:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_full_days[tm->tm_wday]);
-					sprintf(s, "%*s", 0, str_initcap(workbuff));
-				}
+					strcpy(s, str_initcap(localized_full_days[tm->tm_wday]));
 				else
-				{
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, days[tm->tm_wday]);
-				}
 				s += strlen(s);
 				break;
 			case DCH_day:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_full_days[tm->tm_wday]);
-					sprintf(s, "%*s", 0, str_tolower(workbuff));
-				}
+					strcpy(s, str_tolower(localized_full_days[tm->tm_wday]));
 				else
 				{
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, days[tm->tm_wday]);
@@ -2033,37 +1997,23 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_DY:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_abbrev_days[tm->tm_wday]);
-					sprintf(s, "%*s", 0, str_toupper(workbuff));
-				}
+					strcpy(s, str_toupper(localized_abbrev_days[tm->tm_wday]));
 				else
-				{
-					strcpy(workbuff, days_short[tm->tm_wday]);
-					sprintf(s, "%*s", 0, str_toupper(workbuff));
-				}
+					strcpy(s, str_toupper(days_short[tm->tm_wday]));
 				s += strlen(s);
 				break;
 			case DCH_Dy:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_abbrev_days[tm->tm_wday]);
-					sprintf(s, "%*s", 0, str_initcap(workbuff));
-				}
+					strcpy(s, str_initcap(localized_abbrev_days[tm->tm_wday]));
 				else
-				{
 					strcpy(s, days_short[tm->tm_wday]);
-				}
 				s += strlen(s);
 				break;
 			case DCH_dy:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-				{
-					strcpy(workbuff, localized_abbrev_days[tm->tm_wday]);
-					sprintf(s, "%*s", 0, str_tolower(workbuff));
-				}
+					strcpy(s, str_tolower(localized_abbrev_days[tm->tm_wday]));
 				else
 				{
 					strcpy(s, days_short[tm->tm_wday]);
