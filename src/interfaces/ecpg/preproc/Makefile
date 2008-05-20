@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2008, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.132 2008/03/18 17:46:23 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.133 2008/05/20 23:17:32 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 override CFLAGS += $(PTHREAD_CFLAGS)
 
 OBJS=	preproc.o type.o ecpg.o output.o parser.o \
-	keywords.o c_keywords.o ../ecpglib/typename.o descriptor.o variable.o \
+	keywords.o c_keywords.o ecpg_keywords.o ../ecpglib/typename.o descriptor.o variable.o \
 	$(WIN32RES)
 
 all: submake-libpgport ecpg
@@ -56,6 +56,11 @@ endif
 
 c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
+# instead of maintaining our own list, take the one from the backend
+# we cannot just link it in, but must copy and make some minor changes
+keywords.c: % : $(top_srcdir)/src/backend/parser/%
+	sed -e 's/#include "parser\/parse.h"/#include "preproc.h"/' $< > $@
+
 distprep: $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
 
 install: all installdirs
@@ -68,7 +73,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/ecpg$(X)'
 
 clean distclean:
-	rm -f *.o ecpg$(X)
+	rm -f keywords.c *.o ecpg$(X)
 # garbage from partial builds
 	@rm -f y.tab.c y.tab.h
 # garbage from development

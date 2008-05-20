@@ -2351,6 +2351,13 @@ Mon, 12 May 2008 18:19:08 +0200
 
 	- Check for non-existant connection in prepare statement handling.
 	- Do not close files that weren't opened.
+
+Tue, 20 May 2008 17:31:01 +0200
+
+	- Synced parser.
+	- Made ecpg parser use backend provided keyword list. One less file to
+	  sync manually.
+	- Changed whenever test so exit value is 0.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.

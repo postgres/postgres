@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.365 2008/05/16 15:20:04 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.366 2008/05/20 23:17:32 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -392,11 +392,11 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 /* special embedded SQL token */
 %token	SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK
 		SQL_CALL SQL_CARDINALITY SQL_CONNECT
-		SQL_CONTINUE SQL_COUNT SQL_DATA
+		SQL_COUNT SQL_DATA
 		SQL_DATETIME_INTERVAL_CODE
 		SQL_DATETIME_INTERVAL_PRECISION SQL_DESCRIBE
 		SQL_DESCRIPTOR SQL_DISCONNECT SQL_FOUND
-		SQL_FREE SQL_GO SQL_GOTO SQL_IDENTIFIED
+		SQL_FREE SQL_GET SQL_GO SQL_GOTO SQL_IDENTIFIED
 		SQL_INDICATOR SQL_KEY_MEMBER SQL_LENGTH
 		SQL_LONG SQL_NULLABLE SQL_OCTET_LENGTH
 		SQL_OPEN SQL_OUTPUT SQL_REFERENCE
@@ -427,7 +427,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS 
-	CONTENT_P CONVERSION_P COPY COST CREATE CREATEDB
+	CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_P CURRENT_DATE CURRENT_ROLE
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
@@ -441,14 +441,14 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	FALSE_P FAMILY FETCH FIRST_P FLOAT_P FOR FORCE FOREIGN FORWARD FREEZE FROM
 	FULL FUNCTION
 
-	GET GLOBAL GRANT GRANTED GREATEST GROUP_P
+	GLOBAL GRANT GRANTED GREATEST GROUP_P
 
 	HANDLER HAVING HEADER_P HOLD HOUR_P
 
-	IF_P ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
-	INDEX INDEXES INHERIT INHERITS INITIALLY INNER_P INOUT INPUT_P
-	INSENSITIVE INSERT INSTEAD INT_P INTEGER INTERSECT
-	INTERVAL INTO INVOKER IS ISNULL ISOLATION
+	IDENTITY_P IF_P ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P
+	INCLUDING INCREMENT INDEX INDEXES INHERIT INHERITS INITIALLY
+	INNER_P INOUT INPUT_P INSENSITIVE INSERT INSTEAD INT_P INTEGER
+	INTERSECT INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
 	JOIN
 
@@ -555,7 +555,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	ConstraintElem key_actions ColQualList cluster_index_specification
 %type  <str>	target_list target_el alias_clause type_func_name_keyword
 %type  <str>	qualified_name database_name alter_using type_function_name
-%type  <str>	access_method attr_name index_name name func_name
+%type  <str>	access_method attr_name index_name name func_name opt_restart_seqs
 %type  <str>	file_name AexprConst c_expr ConstTypename var_list
 %type  <str>	a_expr b_expr TruncateStmt CommentStmt OnCommitOption opt_by
 %type  <str>	opt_indirection expr_list extract_list extract_arg
@@ -1862,6 +1862,8 @@ OptSeqElem:  CACHE NumConst
 			{ $$ = cat2_str(make_str("owned by"), $3); }
 		| START opt_with NumConst
 			{ $$ = cat_str(3, make_str("start"), $2, $3); }
+		| RESTART
+			{ $$ = make_str("restart"); }
 		| RESTART opt_with NumConst
 			{ $$ = cat_str(3, make_str("restart"), $2, $3); }
 		;
@@ -2179,7 +2181,10 @@ opt_opfamily:  FAMILY any_name		{ $$ = cat2_str(make_str("family"), $2); }
                        | /*EMPTY*/	{ $$ = EMPTY; }
                ;
 
-opt_recheck:   RECHECK	{ $$ = make_str("recheck"); }
+opt_recheck:   RECHECK		{ 
+					mmerror(PARSE_ERROR, ET_WARNING, "no longer supported RECHECK OPTION will be passed to backend");
+					$$ = make_str("recheck");
+				}
 		|  /*EMPTY*/    { $$ = EMPTY; }
 		;
 
@@ -2282,9 +2287,15 @@ attrs: '.' attr_name		{ $$ = cat2_str(make_str("."), $2); }
  *				   truncate table relname1, relname2, ....
  *
  *****************************************************************************/
-TruncateStmt:  TRUNCATE opt_table qualified_name_list opt_drop_behavior
-			{ $$ = cat_str(4, make_str("truncate table"), $2, $3, $4); }
+TruncateStmt:  TRUNCATE opt_table qualified_name_list opt_restart_seqs opt_drop_behavior
+			{ $$ = cat_str(5, make_str("truncate table"), $2, $3, $4, $5); }
 		;
+
+opt_restart_seqs:
+			CONTINUE_P IDENTITY_P	{ $$ = cat2_str(make_str("continue"), make_str("identity")); }
+			| RESTART IDENTITY_P	{ $$ = cat2_str(make_str("restart"), make_str("identity")); }
+			| /* EMPTY */		{ $$ = EMPTY; }
+			;
 
 /*****************************************************************************
  *
@@ -2852,6 +2863,8 @@ RenameStmt:  ALTER AGGREGATE func_name aggr_args RENAME TO name
 			{ $$ = cat_str(4, make_str("alter text search template"), $5, make_str("rename to"), $8); }
 		| ALTER TEXT_P SEARCH CONFIGURATION any_name RENAME TO name
 			{ $$ = cat_str(4, make_str("alter text search configuration"), $5, make_str("rename to"), $8); }
+		| ALTER TYPE_P any_name RENAME TO name
+			{ $$ = cat_str(4, make_str("alter type"), $3, make_str("rename to"), $6); }
 		;
 
 opt_column:  COLUMN			{ $$ = make_str("column"); }
@@ -2960,6 +2973,7 @@ event:	SELECT				{ $$ = make_str("select"); }
 		| UPDATE			{ $$ = make_str("update"); }
 		| DELETE_P			{ $$ = make_str("delete"); }
 		| INSERT			{ $$ = make_str("insert"); }
+		| TRUNCATE			{ $$ = make_str("truncate"); }
 		;
 
 opt_instead:  INSTEAD		{ $$ = make_str("instead"); }
@@ -4538,29 +4552,26 @@ expr_list:	a_expr
 			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-extract_list:  extract_arg FROM a_expr
-			{ $$ = cat_str(3, $1, make_str("from"), $3); }
-		| /* EMPTY */
-			{ $$ = EMPTY; }
-		;
-
 type_list:	 Typename
 			{ $$ = $1; }
 		| type_list ',' Typename
 			{ $$ = cat_str(3, $1, ',', $3); }
 		;
 
+array_expr: '[' expr_list ']'			{ $$ = cat_str(3, make_str("["), $2, make_str("]")); }
+		| '[' array_expr_list ']'	{ $$ = cat_str(3, make_str("["), $2, make_str("]")); }
+		| '[' ']'			{ $$ = make_str("[]"); }
+		;
+
 array_expr_list: array_expr				{ $$ = $1; }
 		| array_expr_list ',' array_expr	{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-
-array_expr: '[' expr_list ']'			{ $$ = cat_str(3, make_str("["), $2, make_str("]")); }
-		| '[' array_expr_list ']'	{ $$ = cat_str(3, make_str("["), $2, make_str("]")); }
+extract_list:  extract_arg FROM a_expr
+			{ $$ = cat_str(3, $1, make_str("from"), $3); }
+		| /* EMPTY */
+			{ $$ = EMPTY; }
 		;
-/* Allow delimited string SCONST in extract_arg as an SQL extension.
- * - thomas 2001-04-12
- */
 
 extract_arg:  ident				{ $$ = $1; }
 		| YEAR_P				{ $$ = make_str("year"); }
@@ -4703,6 +4714,14 @@ target_list:  target_list ',' target_el
 
 target_el:	a_expr AS ColLabel
 			{ $$ = cat_str(3, $1, make_str("as"), $3); }
+		/*
+		 * We support omitting AS only for column labels that aren't
+		 * any known keyword.  There is an ambiguity against postfix
+		 * operators: is "a ! b" an infix expression, or a postfix
+		 * expression and a column label?  We prefer to resolve this
+		 * as an infix expression, which we accomplish by assigning
+		 * IDENT a precedence higher than POSTFIXOP.
+		 */
 		| a_expr IDENT
 			{ $$ = cat_str(3, $1, make_str("as"), $2); }
 		| a_expr
@@ -5999,7 +6018,7 @@ ECPGDeallocateDescr:	DEALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
  * manipulate a descriptor header
  */
 
-ECPGGetDescriptorHeader: GET SQL_DESCRIPTOR quoted_ident_stringvar ECPGGetDescHeaderItems
+ECPGGetDescriptorHeader: SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar ECPGGetDescHeaderItems
 			{  $$ = $3; }
 		;
 
@@ -6034,7 +6053,7 @@ desc_header_item:	SQL_COUNT			{ $$ = ECPGd_count; }
  * manipulate a descriptor
  */
 
-ECPGGetDescriptor:	GET SQL_DESCRIPTOR quoted_ident_stringvar VALUE_P IntConstVar ECPGGetDescItems
+ECPGGetDescriptor:	SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar VALUE_P IntConstVar ECPGGetDescItems
 			{  $$.str = $5; $$.name = $3; }
 		;
 
@@ -6214,7 +6233,7 @@ ECPGWhenever: SQL_WHENEVER SQL_SQLERROR action
 		}
 		;
 
-action : SQL_CONTINUE
+action : CONTINUE_P
 		{
 			$<action>$.code = W_NOTHING;
 			$<action>$.command = NULL;
@@ -6280,7 +6299,6 @@ ECPGKeywords: ECPGKeywords_vanames	{ $$ = $1; }
 ECPGKeywords_vanames:  SQL_BREAK		{ $$ = make_str("break"); }
 		| SQL_CALL						{ $$ = make_str("call"); }
 		| SQL_CARDINALITY				{ $$ = make_str("cardinality"); }
-		| SQL_CONTINUE					{ $$ = make_str("continue"); }
 		| SQL_COUNT						{ $$ = make_str("count"); }
 		| SQL_DATA						{ $$ = make_str("data"); }
 		| SQL_DATETIME_INTERVAL_CODE	{ $$ = make_str("datetime_interval_code"); }
@@ -6467,6 +6485,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 /*		| CONNECTION		{ $$ = make_str("connection"); }*/
 		| CONSTRAINTS		{ $$ = make_str("constraints"); }
 		| CONTENT_P		{ $$ = make_str("content"); }
+		| CONTINUE_P		{ $$ = make_str("continue"); }
 		| CONVERSION_P		{ $$ = make_str("conversion"); }
 		| COPY				{ $$ = make_str("copy"); }
 		| COST				{ $$ = make_str("cost"); }
@@ -6515,6 +6534,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| HEADER_P			{ $$ = make_str("header"); }
 		| HOLD				{ $$ = make_str("hold"); }
 /*		| HOUR_P			{ $$ = make_str("hour"); }*/
+		| IDENTITY_P			{ $$ = make_str("identity"); }
 		| IF_P				{ $$ = make_str("if"); }
 		| IMMEDIATE			{ $$ = make_str("immediate"); }
 		| IMMUTABLE			{ $$ = make_str("immutable"); }

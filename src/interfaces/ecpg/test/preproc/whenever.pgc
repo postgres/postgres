@@ -59,7 +59,9 @@ int main(void)
 	exec sql rollback;
 
 	exec sql whenever sqlerror stop;
-	exec sql select * into :i from nonexistant;
+	/* This cannot fail, thus we don't get an exit value not equal 0. */
+	/* However, it still test the precompiler output. */
+	exec sql select 1 into :i;
 	exec sql rollback;
 	exit (0);
 }	
