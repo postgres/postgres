@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.561 2008/05/18 20:13:12 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.562 2008/05/20 03:30:22 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -426,8 +426,6 @@ if test "$enable_profiling" = yes && test "$ac_cv_prog_cc_g" = yes; then
   fi
 fi
 
-AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
-
 # We already have this in Makefile.win32, but configure needs it too
 if test "$PORTNAME" = "win32"; then
   CPPFLAGS="$CPPFLAGS -I$srcdir/src/include/port/win32 -DEXEC_BACKEND"
@@ -449,16 +447,6 @@ fi
 
 AC_PROG_CPP
 AC_SUBST(GCC)
-
-# If compiler will take -Wl,--as-needed then add that to LDFLAGS.
-# This is much easier than trying to filter LIBS to the minimum for each
-# executable.  (Note that shared libraries won't use this switch, though.)
-# On Darwin it's spelled -Wl,-dead_strip_dylibs, but don't try that elsewhere
-if test "$PORTNAME" != "darwin"; then
-  PGAC_PROG_CC_LDFLAGS_OPT([-Wl,--as-needed])
-else
-  PGAC_PROG_CC_LDFLAGS_OPT([-Wl,-dead_strip_dylibs])
-fi
 
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then
@@ -772,9 +760,6 @@ AC_SUBST(ELF_SYS)
 
 CPPFLAGS="$CPPFLAGS $INCLUDES"
 LDFLAGS="$LDFLAGS $LIBDIRS"
-
-AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
-AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 
 AC_ARG_VAR(LDFLAGS_SL)
 
@@ -1711,6 +1696,31 @@ else
 AC_MSG_WARN([*** skipping thread test on Win32])
 fi
 fi
+
+# If compiler will take -Wl,--as-needed then add that to LDFLAGS.
+# This is much easier than trying to filter LIBS to the minimum for each
+# executable.  (Note that shared libraries won't use this switch, though.)
+# On (at least) some Red-Hat-derived systems, this switch breaks linking to
+# libreadline; therefore we postpone testing it until we know what library
+# dependencies readline has.  The test code will try to link with $LIBS.
+if test "$with_readline" = yes; then
+  link_test_func=readline
+else
+  link_test_func=exit
+fi
+if test "$PORTNAME" != "darwin"; then
+  PGAC_PROG_CC_LDFLAGS_OPT([-Wl,--as-needed], $link_test_func)
+else
+  # On Darwin it's spelled -Wl,-dead_strip_dylibs, but don't try that elsewhere
+  PGAC_PROG_CC_LDFLAGS_OPT([-Wl,-dead_strip_dylibs], $link_test_func)
+fi
+
+
+# Begin output steps
+
+AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
+AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
+AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.

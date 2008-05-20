@@ -1,5 +1,5 @@
 # Macros to detect C compiler features
-# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.17 2008/05/18 20:13:12 tgl Exp $
+# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.18 2008/05/20 03:30:21 tgl Exp $
 
 
 # PGAC_C_SIGNED
@@ -117,11 +117,13 @@ _AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
 # ------------------------
 # Given a string, check if the compiler supports the string as a
 # command-line option. If it does, add the string to LDFLAGS.
+# For reasons you'd really rather not know about, this checks whether
+# you can link to a particular function, not just whether you can link.
 AC_DEFUN([PGAC_PROG_CC_LDFLAGS_OPT],
 [AC_MSG_CHECKING([if $CC supports $1])
 pgac_save_LDFLAGS=$LDFLAGS
 LDFLAGS="$pgac_save_LDFLAGS $1"
-AC_LINK_IFELSE([AC_LANG_PROGRAM()],
+AC_LINK_IFELSE([AC_LANG_CALL([],[$2])],
                AC_MSG_RESULT(yes),
                [LDFLAGS="$pgac_save_LDFLAGS"
                 AC_MSG_RESULT(no)])
