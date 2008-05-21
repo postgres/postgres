@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2008, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.133 2008/05/20 23:17:32 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.134 2008/05/21 00:26:26 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ else
 	@$(missing) flex $< $@
 endif
 
-c_keywords.o keywords.o preproc.o parser.o: preproc.h
+ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
 # instead of maintaining our own list, take the one from the backend
 # we cannot just link it in, but must copy and make some minor changes
