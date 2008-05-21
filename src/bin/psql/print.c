@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.107 2008/05/18 06:50:08 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.108 2008/05/21 16:00:10 mha Exp $
  */
 #include "postgres_fe.h"
 
@@ -1978,7 +1978,7 @@ ClosePager(FILE *pagerpipe)
  */
 void
 printTableInit(printTableContent *const content, const printTableOpt *opt,
-			   const char *title, int ncolumns, int nrows)
+			   const char *title, const int ncolumns, const int nrows)
 {
 	content->opt = opt;
 	content->title = title;
@@ -2016,7 +2016,7 @@ printTableInit(printTableContent *const content, const printTableOpt *opt,
  */
 void
 printTableAddHeader(printTableContent *const content, const char *header,
-					bool translate, char align)
+					const bool translate, const char align)
 {
 #ifndef ENABLE_NLS
 	(void) translate;		/* unused parameter */
@@ -2053,7 +2053,7 @@ printTableAddHeader(printTableContent *const content, const char *header,
  */
 void
 printTableAddCell(printTableContent *const content, const char *cell,
-				  bool translate)
+				  const bool translate)
 {
 #ifndef ENABLE_NLS
 	(void) translate;		/* unused parameter */
@@ -2133,7 +2133,7 @@ printTableSetFooter(printTableContent *const content, const char *footer)
  * printTableInit() again.
  */
 void
-printTableCleanup(printTableContent *content)
+printTableCleanup(printTableContent *const content)
 {
 	free(content->headers);
 	free(content->cells);
