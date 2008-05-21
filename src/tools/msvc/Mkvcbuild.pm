@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.29 2008/05/10 15:30:11 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.30 2008/05/21 18:15:29 mha Exp $
 #
 use Carp;
 use Win32;
@@ -162,6 +162,7 @@ sub mkvcbuild
     my $ecpg = $solution->AddProject('ecpg','exe','interfaces','src\interfaces\ecpg\preproc');
     $ecpg->AddIncludeDir('src\interfaces\ecpg\include');
     $ecpg->AddIncludeDir('src\interfaces\libpq');
+    $ecpg->AddIncludeDir('src\backend'); # needed for parse.h
     $ecpg->AddPrefixInclude('src\interfaces\ecpg\preproc');
     $ecpg->AddFiles('src\interfaces\ecpg\preproc','pgc.l','preproc.y');
     $ecpg->AddDefine('MAJOR_VERSION=4');
