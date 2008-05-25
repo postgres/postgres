@@ -4,10 +4,19 @@
 -- needed so tests pass even in Australia
 SET australian_timezones = 'off';
 
-CREATE TABLE TIMESTAMPTZ_TBL ( d1 timestamp(2) with time zone);
+CREATE TABLE TIMESTAMPTZ_TBL (d1 timestamp(2) with time zone);
+
+-- Test shorthand input values
+-- We can't just "select" the results since they aren't constants; test for
+-- equality instead.  We can do that by running the test inside a transaction
+-- block, within which the value of 'now' shouldn't change.
+-- NOTE: it is possible for this part of the test to fail if the transaction
+-- block is entered exactly at local midnight; then 'now' and 'today' have
+-- the same values and the counts will come out different.
+
+BEGIN;
 
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('now');
-INSERT INTO TIMESTAMPTZ_TBL VALUES ('current');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('today');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('yesterday');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('tomorrow');
@@ -17,7 +26,9 @@ INSERT INTO TIMESTAMPTZ_TBL VALUES ('tomorrow zulu');
 SELECT count(*) AS One FROM TIMESTAMPTZ_TBL WHERE d1 = timestamp with time zone 'today';
 SELECT count(*) AS One FROM TIMESTAMPTZ_TBL WHERE d1 = timestamp with time zone 'tomorrow';
 SELECT count(*) AS One FROM TIMESTAMPTZ_TBL WHERE d1 = timestamp with time zone 'yesterday';
-SELECT count(*) AS None FROM TIMESTAMPTZ_TBL WHERE d1 = timestamp with time zone 'now';
+SELECT count(*) AS One FROM TIMESTAMPTZ_TBL WHERE d1 = timestamp(2) with time zone 'now';
+
+COMMIT;
 
 DELETE FROM TIMESTAMPTZ_TBL;
 
@@ -26,7 +37,8 @@ BEGIN;
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('now');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('now');
 SELECT count(*) AS two FROM TIMESTAMPTZ_TBL WHERE d1 = timestamp(2) with time zone 'now';
-END;
+COMMIT;
+
 DELETE FROM TIMESTAMPTZ_TBL;
 
 -- Special values
@@ -35,6 +47,7 @@ INSERT INTO TIMESTAMPTZ_TBL VALUES ('infinity');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('epoch');
 -- Obsolete special values
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('invalid');
+INSERT INTO TIMESTAMPTZ_TBL VALUES ('current');
 
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
