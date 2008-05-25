@@ -4,26 +4,32 @@
 -- needed so tests pass even in Australia
 SET australian_timezones = 'off';
 
-CREATE TABLE TIMESTAMP_TBL ( d1 timestamp(2) without time zone);
+CREATE TABLE TIMESTAMP_TBL (d1 timestamp(2) without time zone);
 
--- Shorthand values
--- Not directly usable for regression testing since these are not constants.
--- So, just try to test parser and hope for the best - thomas 97/04/26
--- NB: could get a failure if local midnight passes during the next few
--- statements.
+-- Test shorthand input values
+-- We can't just "select" the results since they aren't constants; test for
+-- equality instead.  We can do that by running the test inside a transaction
+-- block, within which the value of 'now' shouldn't change.
+-- NOTE: it is possible for this part of the test to fail if the transaction
+-- block is entered exactly at local midnight; then 'now' and 'today' have
+-- the same values and the counts will come out different.
+
+BEGIN;
 
 INSERT INTO TIMESTAMP_TBL VALUES ('now');
-INSERT INTO TIMESTAMP_TBL VALUES ('current');
 INSERT INTO TIMESTAMP_TBL VALUES ('today');
 INSERT INTO TIMESTAMP_TBL VALUES ('yesterday');
 INSERT INTO TIMESTAMP_TBL VALUES ('tomorrow');
+-- time zone should be ignored by this data type
 INSERT INTO TIMESTAMP_TBL VALUES ('tomorrow EST');
 INSERT INTO TIMESTAMP_TBL VALUES ('tomorrow zulu');
 
 SELECT count(*) AS One FROM TIMESTAMP_TBL WHERE d1 = timestamp without time zone 'today';
-SELECT count(*) AS One FROM TIMESTAMP_TBL WHERE d1 = timestamp without time zone 'tomorrow';
+SELECT count(*) AS Three FROM TIMESTAMP_TBL WHERE d1 = timestamp without time zone 'tomorrow';
 SELECT count(*) AS One FROM TIMESTAMP_TBL WHERE d1 = timestamp without time zone 'yesterday';
-SELECT count(*) AS None FROM TIMESTAMP_TBL WHERE d1 = timestamp without time zone 'now';
+SELECT count(*) AS One FROM TIMESTAMP_TBL WHERE d1 = timestamp(2) without time zone 'now';
+
+COMMIT;
 
 DELETE FROM TIMESTAMP_TBL;
 
@@ -32,7 +38,8 @@ BEGIN;
 INSERT INTO TIMESTAMP_TBL VALUES ('now');
 INSERT INTO TIMESTAMP_TBL VALUES ('now');
 SELECT count(*) AS two FROM TIMESTAMP_TBL WHERE d1 = timestamp(2) without time zone 'now';
-END;
+COMMIT;
+
 DELETE FROM TIMESTAMP_TBL;
 
 -- Special values
@@ -41,6 +48,7 @@ INSERT INTO TIMESTAMP_TBL VALUES ('infinity');
 INSERT INTO TIMESTAMP_TBL VALUES ('epoch');
 -- Obsolete special values
 INSERT INTO TIMESTAMP_TBL VALUES ('invalid');
+INSERT INTO TIMESTAMP_TBL VALUES ('current');
 
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
