@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.432 2008/01/30 18:35:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.432.2.1 2008/05/26 18:54:36 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4370,6 +4370,10 @@ set_config_option(const char *name, const char *value,
 					source = conf->gen.reset_source;
 				}
 
+				/* Save old value to support transaction abort */
+				if (changeVal && !makeDefault)
+					push_old_value(&conf->gen, action);
+
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (newval, changeVal, source))
 					{
@@ -4380,32 +4384,26 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 
-				if (changeVal || makeDefault)
+				if (changeVal)
 				{
-					/* Save old value to support transaction abort */
-					if (!makeDefault)
-						push_old_value(&conf->gen, action);
-					if (changeVal)
-					{
-						*conf->variable = newval;
-						conf->gen.source = source;
-					}
-					if (makeDefault)
-					{
-						GucStack   *stack;
+					*conf->variable = newval;
+					conf->gen.source = source;
+				}
+				if (makeDefault)
+				{
+					GucStack   *stack;
 
-						if (conf->gen.reset_source <= source)
+					if (conf->gen.reset_source <= source)
+					{
+						conf->reset_val = newval;
+						conf->gen.reset_source = source;
+					}
+					for (stack = conf->gen.stack; stack; stack = stack->prev)
+					{
+						if (stack->source <= source)
 						{
-							conf->reset_val = newval;
-							conf->gen.reset_source = source;
-						}
-						for (stack = conf->gen.stack; stack; stack = stack->prev)
-						{
-							if (stack->source <= source)
-							{
-								stack->prior.boolval = newval;
-								stack->source = source;
-							}
+							stack->prior.boolval = newval;
+							stack->source = source;
 						}
 					}
 				}
@@ -4447,6 +4445,10 @@ set_config_option(const char *name, const char *value,
 					source = conf->gen.reset_source;
 				}
 
+				/* Save old value to support transaction abort */
+				if (changeVal && !makeDefault)
+					push_old_value(&conf->gen, action);
+
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (newval, changeVal, source))
 					{
@@ -4457,32 +4459,26 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 
-				if (changeVal || makeDefault)
+				if (changeVal)
 				{
-					/* Save old value to support transaction abort */
-					if (!makeDefault)
-						push_old_value(&conf->gen, action);
-					if (changeVal)
-					{
-						*conf->variable = newval;
-						conf->gen.source = source;
-					}
-					if (makeDefault)
-					{
-						GucStack   *stack;
+					*conf->variable = newval;
+					conf->gen.source = source;
+				}
+				if (makeDefault)
+				{
+					GucStack   *stack;
 
-						if (conf->gen.reset_source <= source)
+					if (conf->gen.reset_source <= source)
+					{
+						conf->reset_val = newval;
+						conf->gen.reset_source = source;
+					}
+					for (stack = conf->gen.stack; stack; stack = stack->prev)
+					{
+						if (stack->source <= source)
 						{
-							conf->reset_val = newval;
-							conf->gen.reset_source = source;
-						}
-						for (stack = conf->gen.stack; stack; stack = stack->prev)
-						{
-							if (stack->source <= source)
-							{
-								stack->prior.intval = newval;
-								stack->source = source;
-							}
+							stack->prior.intval = newval;
+							stack->source = source;
 						}
 					}
 				}
@@ -4521,6 +4517,10 @@ set_config_option(const char *name, const char *value,
 					source = conf->gen.reset_source;
 				}
 
+				/* Save old value to support transaction abort */
+				if (changeVal && !makeDefault)
+					push_old_value(&conf->gen, action);
+
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (newval, changeVal, source))
 					{
@@ -4531,32 +4531,26 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 
-				if (changeVal || makeDefault)
+				if (changeVal)
 				{
-					/* Save old value to support transaction abort */
-					if (!makeDefault)
-						push_old_value(&conf->gen, action);
-					if (changeVal)
-					{
-						*conf->variable = newval;
-						conf->gen.source = source;
-					}
-					if (makeDefault)
-					{
-						GucStack   *stack;
+					*conf->variable = newval;
+					conf->gen.source = source;
+				}
+				if (makeDefault)
+				{
+					GucStack   *stack;
 
-						if (conf->gen.reset_source <= source)
+					if (conf->gen.reset_source <= source)
+					{
+						conf->reset_val = newval;
+						conf->gen.reset_source = source;
+					}
+					for (stack = conf->gen.stack; stack; stack = stack->prev)
+					{
+						if (stack->source <= source)
 						{
-							conf->reset_val = newval;
-							conf->gen.reset_source = source;
-						}
-						for (stack = conf->gen.stack; stack; stack = stack->prev)
-						{
-							if (stack->source <= source)
-							{
-								stack->prior.realval = newval;
-								stack->source = source;
-							}
+							stack->prior.realval = newval;
+							stack->source = source;
 						}
 					}
 				}
@@ -4610,6 +4604,10 @@ set_config_option(const char *name, const char *value,
 					source = conf->gen.reset_source;
 				}
 
+				/* Save old value to support transaction abort */
+				if (changeVal && !makeDefault)
+					push_old_value(&conf->gen, action);
+
 				if (conf->assign_hook && newval)
 				{
 					const char *hookresult;
@@ -4647,40 +4645,32 @@ set_config_option(const char *name, const char *value,
 					}
 				}
 
-				if (changeVal || makeDefault)
+				if (changeVal)
 				{
-					/* Save old value to support transaction abort */
-					if (!makeDefault)
-						push_old_value(&conf->gen, action);
-					if (changeVal)
-					{
-						set_string_field(conf, conf->variable, newval);
-						conf->gen.source = source;
-					}
-					if (makeDefault)
-					{
-						GucStack   *stack;
+					set_string_field(conf, conf->variable, newval);
+					conf->gen.source = source;
+				}
+				if (makeDefault)
+				{
+					GucStack   *stack;
 
-						if (conf->gen.reset_source <= source)
+					if (conf->gen.reset_source <= source)
+					{
+						set_string_field(conf, &conf->reset_val, newval);
+						conf->gen.reset_source = source;
+					}
+					for (stack = conf->gen.stack; stack; stack = stack->prev)
+					{
+						if (stack->source <= source)
 						{
-							set_string_field(conf, &conf->reset_val, newval);
-							conf->gen.reset_source = source;
+							set_string_field(conf, &stack->prior.stringval,
+											 newval);
+							stack->source = source;
 						}
-						for (stack = conf->gen.stack; stack; stack = stack->prev)
-						{
-							if (stack->source <= source)
-							{
-								set_string_field(conf, &stack->prior.stringval,
-												 newval);
-								stack->source = source;
-							}
-						}
-						/* Perhaps we didn't install newval anywhere */
-						if (newval && !string_field_used(conf, newval))
-							free(newval);
 					}
 				}
-				else if (newval)
+				/* Perhaps we didn't install newval anywhere */
+				if (newval && !string_field_used(conf, newval))
 					free(newval);
 				break;
 			}
