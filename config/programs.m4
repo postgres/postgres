@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/programs.m4,v 1.22 2008/02/17 16:36:42 petere Exp $
+# $PostgreSQL: pgsql/config/programs.m4,v 1.23 2008/05/27 22:18:04 tgl Exp $
 
 
 # PGAC_PATH_YACC
@@ -187,10 +187,13 @@ AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER, 1,
 
 # PGAC_CHECK_GETTEXT
 # ------------------
+# We check for bind_textdomain_codeset() not just gettext().  GNU gettext
+# before 0.10.36 does not have that function, and is generally too incomplete
+# to be usable.
 
 AC_DEFUN([PGAC_CHECK_GETTEXT],
 [
-  AC_SEARCH_LIBS(gettext, intl, [],
+  AC_SEARCH_LIBS(bind_textdomain_codeset, intl, [],
                  [AC_MSG_ERROR([a gettext implementation is required for NLS])])
   AC_CHECK_HEADER([libintl.h], [],
                   [AC_MSG_ERROR([header file <libintl.h> is required for NLS])])
@@ -199,7 +202,6 @@ AC_DEFUN([PGAC_CHECK_GETTEXT],
     AC_MSG_ERROR([msgfmt is required for NLS])
   fi
   AC_CHECK_PROGS(MSGMERGE, msgmerge)
-dnl FIXME: We should probably check for version >=0.10.36.
   AC_CHECK_PROGS(XGETTEXT, xgettext)
 ])# PGAC_CHECK_GETTEXT
 
