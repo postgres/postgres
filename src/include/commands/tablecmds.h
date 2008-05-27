@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.21 2004/12/31 22:03:28 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.21.4.1 2008/05/27 21:13:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define TABLECMDS_H
 
 #include "nodes/parsenodes.h"
+#include "utils/rel.h"
 
 
 extern Oid	DefineRelation(CreateStmt *stmt, char relkind);
@@ -26,6 +27,8 @@ extern void AlterTable(AlterTableStmt *stmt);
 extern void AlterTableInternal(Oid relid, List *cmds, bool recurse);
 
 extern void AlterTableCreateToastTable(Oid relOid, bool silent);
+
+extern void CheckTableNotInUse(Relation rel, const char *stmt);
 
 extern void TruncateRelation(const RangeVar *relation);
 

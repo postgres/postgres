@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.177.4.4 2007/08/15 19:16:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.177.4.5 2008/05/27 21:13:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2849,6 +2849,70 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 									 !IsSubTransaction());
 		}
 	}
+}
+
+/* ----------
+ * AfterTriggerPendingOnRel()
+ *		Test to see if there are any pending after-trigger events for rel.
+ *
+ * This is used by TRUNCATE, CLUSTER, ALTER TABLE, etc to detect whether
+ * it is unsafe to perform major surgery on a relation.  Note that only
+ * local pending events are examined.  We assume that having exclusive lock
+ * on a rel guarantees there are no unserviced events in other backends ---
+ * but having a lock does not prevent there being such events in our own.
+ *
+ * In some scenarios it'd be reasonable to remove pending events (more
+ * specifically, mark them DONE by the current subxact) but without a lot
+ * of knowledge of the trigger semantics we can't do this in general.
+ * ----------
+ */
+bool
+AfterTriggerPendingOnRel(Oid relid)
+{
+	AfterTriggerEvent event;
+	int			depth;
+
+	/* No-op if we aren't in a transaction.  (Shouldn't happen?) */
+	if (afterTriggers == NULL)
+		return false;
+
+	/* Scan queued events */
+	for (event = afterTriggers->events.head;
+		 event != NULL;
+		 event = event->ate_next)
+	{
+		/*
+		 * We can ignore completed events.  (Even if a DONE flag is rolled
+		 * back by subxact abort, it's OK because the effects of the TRUNCATE
+		 * or whatever must get rolled back too.)
+		 */
+		if (event->ate_event & AFTER_TRIGGER_DONE)
+			continue;
+
+		if (event->ate_relid == relid)
+			return true;
+	}
+
+	/*
+	 * Also scan events queued by incomplete queries.  This could only matter
+	 * if TRUNCATE/etc is executed by a function or trigger within an updating
+	 * query on the same relation, which is pretty perverse, but let's check.
+	 */
+	for (depth = 0; depth <= afterTriggers->query_depth; depth++)
+	{
+		for (event = afterTriggers->query_stack[depth].head;
+			 event != NULL;
+			 event = event->ate_next)
+		{
+			if (event->ate_event & AFTER_TRIGGER_DONE)
+				continue;
+
+			if (event->ate_relid == relid)
+				return true;
+		}
+	}
+
+	return false;
 }
 
 

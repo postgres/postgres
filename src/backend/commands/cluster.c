@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.131.4.2 2007/09/12 15:16:23 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.131.4.3 2008/05/27 21:13:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,6 +404,12 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		   errmsg("cannot cluster temporary tables of other sessions")));
+
+	/*
+	 * Also check for active uses of the relation in the current transaction,
+	 * including open scans and pending AFTER trigger events.
+	 */
+	CheckTableNotInUse(OldHeap, "CLUSTER");
 
 	/* Drop relcache refcnt on OldIndex, but keep lock */
 	index_close(OldIndex);
