@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.73 2007/10/29 17:29:59 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.74 2008/05/27 18:05:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -196,7 +196,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    attached to a type declaration, such as <literal>char(5)</> or
    <literal>numeric(30,2)</>.  <productname>PostgreSQL</productname> allows
    user-defined types to take one or more simple constants or identifiers as
-   modifiers; however, this information must be capable of being packed into a
+   modifiers.  However, this information must be capable of being packed into a
    single non-negative integer value for storage in the system catalogs.  The
    <replaceable class="parameter">type_modifier_input_function</replaceable>
    is passed the declared modifier(s) in the form of a <type>cstring</>
@@ -212,8 +212,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    function might return <literal>(30,2)</>.
    It is allowed to omit the
    <replaceable class="parameter">type_modifier_output_function</replaceable>,
-   in which case the default display format is just the stored typmod value
-   enclosed in parentheses.
+   in which case the default display format is just the stored typmod integer
+   value enclosed in parentheses.
   </para>
 
   <para>
@@ -433,7 +433,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     <term><replaceable class="parameter">type_modifier_input_function</replaceable></term>
     <listitem>
      <para>
-      The name of a function that converts numeric modifier(s) for the type
+      The name of a function that converts an array of modifier(s) for the type
       into internal form.
      </para>
     </listitem>
