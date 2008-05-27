@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.55 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.56 2008/05/27 00:13:08 tgl Exp $
  *
  * NOTES
  *
@@ -236,13 +236,4 @@ btnamecmp(PG_FUNCTION_ARGS)
 	Name		b = PG_GETARG_NAME(1);
 
 	PG_RETURN_INT32(strncmp(NameStr(*a), NameStr(*b), NAMEDATALEN));
-}
-
-Datum
-btname_pattern_cmp(PG_FUNCTION_ARGS)
-{
-	Name		a = PG_GETARG_NAME(0);
-	Name		b = PG_GETARG_NAME(1);
-
-	PG_RETURN_INT32(memcmp(NameStr(*a), NameStr(*b), NAMEDATALEN));
 }

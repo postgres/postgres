@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opfamily.h,v 1.8 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opfamily.h,v 1.9 2008/05/27 00:13:09 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -108,8 +108,6 @@ DATA(insert OID = 2095 (	403		text_pattern_ops	PGNSP PGUID ));
 #define TEXT_PATTERN_BTREE_FAM_OID 2095
 DATA(insert OID = 2097 (	403		bpchar_pattern_ops	PGNSP PGUID ));
 #define BPCHAR_PATTERN_BTREE_FAM_OID 2097
-DATA(insert OID = 2098 (	403		name_pattern_ops	PGNSP PGUID ));
-#define NAME_PATTERN_BTREE_FAM_OID 2098
 DATA(insert OID = 2099 (	403		money_ops		PGNSP PGUID ));
 DATA(insert OID = 2222 (	405		bool_ops		PGNSP PGUID ));
 #define BOOL_HASH_FAM_OID 2222
@@ -122,7 +120,6 @@ DATA(insert OID = 2227 (	405		abstime_ops		PGNSP PGUID ));
 DATA(insert OID = 2228 (	405		reltime_ops		PGNSP PGUID ));
 DATA(insert OID = 2229 (	405		text_pattern_ops	PGNSP PGUID ));
 DATA(insert OID = 2231 (	405		bpchar_pattern_ops	PGNSP PGUID ));
-DATA(insert OID = 2232 (	405		name_pattern_ops	PGNSP PGUID ));
 DATA(insert OID = 2233 (	403		reltime_ops		PGNSP PGUID ));
 DATA(insert OID = 2234 (	403		tinterval_ops	PGNSP PGUID ));
 DATA(insert OID = 2235 (	405		aclitem_ops		PGNSP PGUID ));

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.72 2007/11/13 23:36:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.73 2008/05/27 00:13:08 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -906,11 +906,10 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
     <listitem>
      <para>
       The operator classes <literal>text_pattern_ops</literal>,
-      <literal>varchar_pattern_ops</literal>,
-      <literal>bpchar_pattern_ops</literal>, and
-      <literal>name_pattern_ops</literal> support B-tree indexes on
-      the types <type>text</type>, <type>varchar</type>,
-      <type>char</type>, and <type>name</type>, respectively.  The
+      <literal>varchar_pattern_ops</literal>, and
+      <literal>bpchar_pattern_ops</literal> support B-tree indexes on
+      the types <type>text</type>, <type>varchar</type>, and
+      <type>char</type> respectively.  The
       difference from the default operator classes is that the values
       are compared strictly character by character rather than
       according to the locale-specific collation rules.  This makes
@@ -923,10 +922,12 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 CREATE INDEX test_index ON test_table (col varchar_pattern_ops);
 </programlisting>
       Note that you should also create an index with the default operator
-      class if you want queries involving ordinary comparisons to use an
-      index.  Such queries cannot use the
+      class if you want queries involving ordinary <literal>&lt;</>,
+      <literal>&lt;=</>, <literal>&gt;</>, or <literal>&gt;=</> comparisons
+      to use an index.  Such queries cannot use the
       <literal><replaceable>xxx</replaceable>_pattern_ops</literal>
-      operator classes.  It is allowed to create multiple
+      operator classes.  (Ordinary equality comparisons can use these
+      operator classes, however.)  It is allowed to create multiple
       indexes on the same column with different operator classes.
       If you do use the C locale, you do not need the
       <literal><replaceable>xxx</replaceable>_pattern_ops</literal>

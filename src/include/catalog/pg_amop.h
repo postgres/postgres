@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.86 2008/04/14 17:05:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.87 2008/05/27 00:13:09 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -416,7 +416,7 @@ DATA(insert (	2002   1562 1562 5 1807	403 ));
 
 DATA(insert (	2095   25 25 1 2314	403 ));
 DATA(insert (	2095   25 25 2 2315	403 ));
-DATA(insert (	2095   25 25 3 2316	403 ));
+DATA(insert (	2095   25 25 3 98	403 ));
 DATA(insert (	2095   25 25 4 2317	403 ));
 DATA(insert (	2095   25 25 5 2318	403 ));
 
@@ -426,19 +426,9 @@ DATA(insert (	2095   25 25 5 2318	403 ));
 
 DATA(insert (	2097   1042 1042 1 2326	403 ));
 DATA(insert (	2097   1042 1042 2 2327	403 ));
-DATA(insert (	2097   1042 1042 3 2328	403 ));
+DATA(insert (	2097   1042 1042 3 1054	403 ));
 DATA(insert (	2097   1042 1042 4 2329	403 ));
 DATA(insert (	2097   1042 1042 5 2330	403 ));
-
-/*
- *	btree name pattern
- */
-
-DATA(insert (	2098   19 19 1 2332	403 ));
-DATA(insert (	2098   19 19 2 2333	403 ));
-DATA(insert (	2098   19 19 3 2334	403 ));
-DATA(insert (	2098   19 19 4 2335	403 ));
-DATA(insert (	2098   19 19 5 2336	403 ));
 
 /*
  *	btree money_ops
@@ -552,11 +542,9 @@ DATA(insert (	2227   702 702 1	560 405 ));
 /* reltime_ops */
 DATA(insert (	2228   703 703 1	566 405 ));
 /* text_pattern_ops */
-DATA(insert (	2229   25 25 1 2316	405 ));
+DATA(insert (	2229   25 25 1 98	405 ));
 /* bpchar_pattern_ops */
-DATA(insert (	2231   1042 1042 1 2328	405 ));
-/* name_pattern_ops */
-DATA(insert (	2232   19 19 1 2334	405 ));
+DATA(insert (	2231   1042 1042 1 1054	405 ));
 /* aclitem_ops */
 DATA(insert (	2235   1033 1033 1  974	405 ));
 /* uuid_ops */

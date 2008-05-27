@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.315 2008/04/17 20:56:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.316 2008/05/27 00:13:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,12 +224,6 @@ extern Datum namelt(PG_FUNCTION_ARGS);
 extern Datum namele(PG_FUNCTION_ARGS);
 extern Datum namegt(PG_FUNCTION_ARGS);
 extern Datum namege(PG_FUNCTION_ARGS);
-extern Datum name_pattern_eq(PG_FUNCTION_ARGS);
-extern Datum name_pattern_ne(PG_FUNCTION_ARGS);
-extern Datum name_pattern_lt(PG_FUNCTION_ARGS);
-extern Datum name_pattern_le(PG_FUNCTION_ARGS);
-extern Datum name_pattern_gt(PG_FUNCTION_ARGS);
-extern Datum name_pattern_ge(PG_FUNCTION_ARGS);
 extern int	namecpy(Name n1, Name n2);
 extern int	namestrcpy(Name name, const char *str);
 extern int	namestrcmp(Name name, const char *str);
@@ -269,8 +263,6 @@ extern Datum bttintervalcmp(PG_FUNCTION_ARGS);
 extern Datum btcharcmp(PG_FUNCTION_ARGS);
 extern Datum btnamecmp(PG_FUNCTION_ARGS);
 extern Datum bttextcmp(PG_FUNCTION_ARGS);
-extern Datum btname_pattern_cmp(PG_FUNCTION_ARGS);
-extern Datum bttext_pattern_cmp(PG_FUNCTION_ARGS);
 
 /* float.c */
 extern PGDLLIMPORT int extra_float_digits;
@@ -609,6 +601,11 @@ extern Datum bpchar_smaller(PG_FUNCTION_ARGS);
 extern Datum bpcharlen(PG_FUNCTION_ARGS);
 extern Datum bpcharoctetlen(PG_FUNCTION_ARGS);
 extern Datum hashbpchar(PG_FUNCTION_ARGS);
+extern Datum bpchar_pattern_lt(PG_FUNCTION_ARGS);
+extern Datum bpchar_pattern_le(PG_FUNCTION_ARGS);
+extern Datum bpchar_pattern_gt(PG_FUNCTION_ARGS);
+extern Datum bpchar_pattern_ge(PG_FUNCTION_ARGS);
+extern Datum btbpchar_pattern_cmp(PG_FUNCTION_ARGS);
 
 extern Datum varcharin(PG_FUNCTION_ARGS);
 extern Datum varcharout(PG_FUNCTION_ARGS);
@@ -640,12 +637,11 @@ extern Datum text_gt(PG_FUNCTION_ARGS);
 extern Datum text_ge(PG_FUNCTION_ARGS);
 extern Datum text_larger(PG_FUNCTION_ARGS);
 extern Datum text_smaller(PG_FUNCTION_ARGS);
-extern Datum text_pattern_eq(PG_FUNCTION_ARGS);
-extern Datum text_pattern_ne(PG_FUNCTION_ARGS);
 extern Datum text_pattern_lt(PG_FUNCTION_ARGS);
 extern Datum text_pattern_le(PG_FUNCTION_ARGS);
 extern Datum text_pattern_gt(PG_FUNCTION_ARGS);
 extern Datum text_pattern_ge(PG_FUNCTION_ARGS);
+extern Datum bttext_pattern_cmp(PG_FUNCTION_ARGS);
 extern Datum textlen(PG_FUNCTION_ARGS);
 extern Datum textoctetlen(PG_FUNCTION_ARGS);
 extern Datum textpos(PG_FUNCTION_ARGS);

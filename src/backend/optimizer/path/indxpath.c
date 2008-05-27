@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.230 2008/05/16 16:31:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.231 2008/05/27 00:13:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2178,9 +2178,8 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 		case OID_NAME_ICLIKE_OP:
 		case OID_NAME_REGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
-			isIndexable =
-				(opfamily == NAME_PATTERN_BTREE_FAM_OID) ||
-				(opfamily == NAME_BTREE_FAM_OID && lc_collate_is_c());
+			/* name uses locale-insensitive sorting */
+			isIndexable = (opfamily == NAME_BTREE_FAM_OID);
 			break;
 
 		case OID_BYTEA_LIKE_OP:
@@ -2700,7 +2699,6 @@ prefix_quals(Node *leftop, Oid opfamily,
 			break;
 
 		case NAME_BTREE_FAM_OID:
-		case NAME_PATTERN_BTREE_FAM_OID:
 			datatype = NAMEOID;
 			break;
 

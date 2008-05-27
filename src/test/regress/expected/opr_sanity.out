@@ -139,11 +139,10 @@ WHERE p1.oid != p2.oid AND
  proargtypes | proargtypes 
 -------------+-------------
           23 |          28
-          25 |        1042
         1114 |        1184
         1560 |        1562
         2277 |        2283
-(5 rows)
+(4 rows)
 
 SELECT DISTINCT p1.proargtypes[2], p2.proargtypes[2]
 FROM pg_proc AS p1, pg_proc AS p2
@@ -774,13 +773,11 @@ ORDER BY 1, 2, 3;
         403 |            2 | <=
         403 |            2 | ~<=~
         403 |            3 | =
-        403 |            3 | ~=~
         403 |            4 | >=
         403 |            4 | ~>=~
         403 |            5 | >
         403 |            5 | ~>~
         405 |            1 | =
-        405 |            1 | ~=~
         783 |            1 | <<
         783 |            1 | @@
         783 |            2 | &<
@@ -802,7 +799,7 @@ ORDER BY 1, 2, 3;
        2742 |            2 | @@@
        2742 |            3 | <@
        2742 |            4 | =
-(33 rows)
+(31 rows)
 
 -- Check that all operators linked to by opclass entries have selectivity
 -- estimators.  This is not absolutely required, but it seems a reasonable
@@ -1041,17 +1038,15 @@ WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'hash')
      OR NOT physically_coercible(amproclefttype, proargtypes[0])
      OR amproclefttype != amprocrighttype)
 ORDER BY 1;
- amprocfamily | amprocnum |    proname     |      opfname       
---------------+-----------+----------------+--------------------
+ amprocfamily | amprocnum |    proname     |     opfname     
+--------------+-----------+----------------+-----------------
           435 |         1 | hashint4       | date_ops
          1999 |         1 | timestamp_hash | timestamptz_ops
          2222 |         1 | hashchar       | bool_ops
          2223 |         1 | hashvarlena    | bytea_ops
          2225 |         1 | hashint4       | xid_ops
          2226 |         1 | hashint4       | cid_ops
-         2229 |         1 | hashvarlena    | text_pattern_ops
-         2231 |         1 | hashvarlena    | bpchar_pattern_ops
-(8 rows)
+(6 rows)
 
 -- Support routines that are primary members of opfamilies must be immutable
 -- (else it suggests that the index ordering isn't fixed).  But cross-type
