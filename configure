@@ -24248,13 +24248,13 @@ _ACEOF
 
 if test "$enable_nls" = yes ; then
 
-  echo "$as_me:$LINENO: checking for library containing gettext" >&5
-echo $ECHO_N "checking for library containing gettext... $ECHO_C" >&6
-if test "${ac_cv_search_gettext+set}" = set; then
+  echo "$as_me:$LINENO: checking for library containing bind_textdomain_codeset" >&5
+echo $ECHO_N "checking for library containing bind_textdomain_codeset... $ECHO_C" >&6
+if test "${ac_cv_search_bind_textdomain_codeset+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_func_search_save_LIBS=$LIBS
-ac_cv_search_gettext=no
+ac_cv_search_bind_textdomain_codeset=no
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -24268,11 +24268,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char gettext ();
+char bind_textdomain_codeset ();
 int
 main ()
 {
-gettext ();
+bind_textdomain_codeset ();
   ;
   return 0;
 }
@@ -24299,7 +24299,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_search_gettext="none required"
+  ac_cv_search_bind_textdomain_codeset="none required"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -24307,7 +24307,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
-if test "$ac_cv_search_gettext" = no; then
+if test "$ac_cv_search_bind_textdomain_codeset" = no; then
   for ac_lib in intl; do
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
     cat >conftest.$ac_ext <<_ACEOF
@@ -24323,11 +24323,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char gettext ();
+char bind_textdomain_codeset ();
 int
 main ()
 {
-gettext ();
+bind_textdomain_codeset ();
   ;
   return 0;
 }
@@ -24354,7 +24354,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_search_gettext="-l$ac_lib"
+  ac_cv_search_bind_textdomain_codeset="-l$ac_lib"
 break
 else
   echo "$as_me: failed program was:" >&5
@@ -24367,10 +24367,10 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 LIBS=$ac_func_search_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_search_gettext" >&5
-echo "${ECHO_T}$ac_cv_search_gettext" >&6
-if test "$ac_cv_search_gettext" != no; then
-  test "$ac_cv_search_gettext" = "none required" || LIBS="$ac_cv_search_gettext $LIBS"
+echo "$as_me:$LINENO: result: $ac_cv_search_bind_textdomain_codeset" >&5
+echo "${ECHO_T}$ac_cv_search_bind_textdomain_codeset" >&6
+if test "$ac_cv_search_bind_textdomain_codeset" != no; then
+  test "$ac_cv_search_bind_textdomain_codeset" = "none required" || LIBS="$ac_cv_search_bind_textdomain_codeset $LIBS"
 
 else
   { { echo "$as_me:$LINENO: error: a gettext implementation is required for NLS" >&5
