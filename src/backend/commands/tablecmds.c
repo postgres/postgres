@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.91.2.3 2008/05/09 22:38:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.91.2.4 2008/05/27 21:14:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,6 +396,12 @@ TruncateRelation(const RangeVar *relation)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			  errmsg("cannot truncate temporary tables of other sessions")));
+
+	/*
+	 * Also check for active uses of the relation in the current
+	 * transaction, including open scans and pending AFTER trigger events.
+	 */
+	CheckTableNotInUse(rel, "TRUNCATE");
 
 	/*
 	 * Don't allow truncate on tables which are referenced by foreign keys
@@ -1592,6 +1598,48 @@ update_ri_trigger_args(Oid relid,
 	CommandCounterIncrement();
 }
 
+/*
+ * Disallow TRUNCATE (and similar commands) when the current backend has
+ * any open reference to the target table besides the one just acquired by
+ * the calling command; this implies there's an open cursor or active plan.
+ * We need this check because our AccessExclusiveLock doesn't protect us
+ * against stomping on our own foot, only other people's feet!
+ *
+ * We also reject these commands if there are any pending AFTER trigger events
+ * for the rel.  This is certainly necessary for CLUSTER, because it does not
+ * preserve tuple TIDs and so the pending events would try to fetch the wrong
+ * tuples.  It might be overly cautious in other cases, but again it seems
+ * better to err on the side of paranoia.
+ *
+ * REINDEX calls this with "rel" referencing the index to be rebuilt; here
+ * we are worried about active indexscans on the index.  The trigger-event
+ * check can be skipped, since we are doing no damage to the parent table.
+ *
+ * The statement name (eg, "TRUNCATE") is passed for use in error messages.
+ */
+void
+CheckTableNotInUse(Relation rel, const char *stmt)
+{
+	int			expected_refcnt;
+
+	expected_refcnt = rel->rd_isnailed ? 2 : 1;
+	if (rel->rd_refcnt != expected_refcnt)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 /* translator: first %s is a SQL command, eg ALTER TABLE */
+				 errmsg("cannot %s \"%s\" because "
+						"it is being used by active queries in this session",
+						stmt, RelationGetRelationName(rel))));
+
+	if (rel->rd_rel->relkind != RELKIND_INDEX &&
+		AfterTriggerPendingOnRel(RelationGetRelid(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 /* translator: first %s is a SQL command, eg ALTER TABLE */
+				 errmsg("cannot %s \"%s\" because "
+						"it has pending trigger events",
+						stmt, RelationGetRelationName(rel))));
+}
 
 /* ----------------
  *		AlterTableAddColumn

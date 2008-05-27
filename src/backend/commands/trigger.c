@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.159.2.2 2006/01/12 21:49:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.159.2.3 2008/05/27 21:14:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2363,6 +2363,49 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	 * invokable.
 	 */
 	deferredTriggers->deftrig_events_imm = NULL;
+}
+
+/* ----------
+ * AfterTriggerPendingOnRel()
+ *		Test to see if there are any pending after-trigger events for rel.
+ *
+ * This is used by TRUNCATE, CLUSTER, ALTER TABLE, etc to detect whether
+ * it is unsafe to perform major surgery on a relation.  Note that only
+ * local pending events are examined.  We assume that having exclusive lock
+ * on a rel guarantees there are no unserviced events in other backends ---
+ * but having a lock does not prevent there being such events in our own.
+ *
+ * In some scenarios it'd be reasonable to remove pending events (more
+ * specifically, mark them DONE by the current subxact) but without a lot
+ * of knowledge of the trigger semantics we can't do this in general.
+ * ----------
+ */
+bool
+AfterTriggerPendingOnRel(Oid relid)
+{
+	DeferredTriggerEvent event;
+
+	/* No-op if we aren't in a transaction.  (Shouldn't happen?) */
+	if (deferredTriggers == NULL)
+		return false;
+
+	/* Scan queued events */
+	for (event = deferredTriggers->deftrig_events;
+		 event != NULL;
+		 event = event->dte_next)
+	{
+		/*
+		 * We can ignore completed events.
+		 */
+		if (event->dte_event & (TRIGGER_DEFERRED_DONE |
+								TRIGGER_DEFERRED_CANCELED))
+			continue;
+
+		if (event->dte_relid == relid)
+			return true;
+	}
+
+	return false;
 }
 
 

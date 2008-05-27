@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.116.2.3 2007/09/12 15:16:24 alvherre Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.116.2.4 2008/05/27 21:14:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,6 +397,12 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("\"%s\" is a system catalog",
 						RelationGetRelationName(OldHeap))));
+
+	/*
+	 * Also check for active uses of the relation in the current transaction,
+	 * including open scans and pending AFTER trigger events.
+	 */
+	CheckTableNotInUse(OldHeap, "CLUSTER");
 
 	/* Drop relcache refcnt on OldIndex, but keep lock */
 	index_close(OldIndex);
