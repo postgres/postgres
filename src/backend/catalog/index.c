@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.274.2.2 2008/01/03 21:23:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.274.2.3 2008/05/27 21:13:25 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -33,10 +33,12 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_type.h"
+#include "commands/tablecmds.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -1953,6 +1955,21 @@ reindex_index(Oid indexId)
 	 * ensure that no one else is touching this particular index.
 	 */
 	iRel = index_open(indexId, AccessExclusiveLock);
+
+	/*
+	 * Don't allow reindex on temp tables of other backends ... their local
+	 * buffer manager is not going to cope.
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(iRel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot reindex temporary tables of other sessions")));
+
+	/*
+	 * Also check for active uses of the index in the current transaction;
+	 * we don't want to reindex underneath an open indexscan.
+	 */
+	CheckTableNotInUse(iRel, "REINDEX INDEX");
 
 	/*
 	 * If it's a shared index, we must do inplace processing (because we have
