@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.311 2008/05/17 17:24:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.312 2008/05/28 15:22:05 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,20 +88,20 @@ bool		XLOG_DEBUG = false;
  * GUC support
  */
 const struct config_enum_entry sync_method_options[] = {
-	{"fsync", SYNC_METHOD_FSYNC},
+	{"fsync", SYNC_METHOD_FSYNC, false},
 #ifdef HAVE_FSYNC_WRITETHROUGH
-	{"fsync_writethrough", SYNC_METHOD_FSYNC_WRITETHROUGH},
+	{"fsync_writethrough", SYNC_METHOD_FSYNC_WRITETHROUGH, false},
 #endif
 #ifdef HAVE_FDATASYNC
-	{"fdatasync", SYNC_METHOD_FDATASYNC},
+	{"fdatasync", SYNC_METHOD_FDATASYNC, false},
 #endif
 #ifdef OPEN_SYNC_FLAG
-	{"open_sync", SYNC_METHOD_OPEN},
+	{"open_sync", SYNC_METHOD_OPEN, false},
 #endif
 #ifdef OPEN_DATASYNC_FLAG
-	{"open_datasync", SYNC_METHOD_OPEN_DSYNC},
+	{"open_datasync", SYNC_METHOD_OPEN_DSYNC, false},
 #endif
-	{NULL, 0}
+	{NULL, 0, false}
 };
 
 /*
