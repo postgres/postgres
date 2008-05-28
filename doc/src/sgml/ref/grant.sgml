@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.68 2008/05/05 01:21:03 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.69 2008/05/28 00:45:40 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -135,10 +135,15 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
      <term>SELECT</term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-select" endterm="sql-select-title"> from any column of the
-       specified table, view, or sequence.  Also allows the use of
-       <xref linkend="sql-copy" endterm="sql-copy-title"> TO.  For sequences, this
-       privilege also allows the use of the <function>currval</function> function.
+       Allows <xref linkend="sql-select" endterm="sql-select-title"> from
+       any column of the specified table, view, or sequence.
+       Also allows the use of
+       <xref linkend="sql-copy" endterm="sql-copy-title"> TO.
+       This privilege is also needed to reference existing column values in
+       <xref linkend="sql-update" endterm="sql-update-title"> or
+       <xref linkend="sql-delete" endterm="sql-delete-title">.
+       For sequences, this privilege also allows the use of the
+       <function>currval</function> function.
       </para>
      </listitem>
     </varlistentry>
@@ -147,8 +152,9 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
      <term>INSERT</term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-insert" endterm="sql-insert-title"> of a new row into the
-       specified table.  Also allows <xref linkend="sql-copy" endterm="sql-copy-title"> FROM.
+       Allows <xref linkend="sql-insert" endterm="sql-insert-title"> of a new
+       row into the specified table.
+       Also allows <xref linkend="sql-copy" endterm="sql-copy-title"> FROM.
       </para>
      </listitem>
     </varlistentry>
@@ -158,10 +164,15 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
      <listitem>
       <para>
        Allows <xref linkend="sql-update" endterm="sql-update-title"> of any
-       column of the specified table.  <literal>SELECT ... FOR UPDATE</literal>
+       column of the specified table.
+       (In practice, any nontrivial <command>UPDATE</> command will require
+       <literal>SELECT</> privilege as well, since it must reference table
+       columns to determine which rows to update, and/or to compute new
+       values for columns.)
+       <literal>SELECT ... FOR UPDATE</literal>
        and <literal>SELECT ... FOR SHARE</literal>
-       also require this privilege (besides the
-       <literal>SELECT</literal> privilege).  For sequences, this
+       also require this privilege, in addition to the
+       <literal>SELECT</literal> privilege.  For sequences, this
        privilege allows the use of the <function>nextval</function> and
        <function>setval</function> functions.
       </para>
@@ -172,8 +183,11 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
      <term>DELETE</term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-delete" endterm="sql-delete-title"> of a row from the
-       specified table.
+       Allows <xref linkend="sql-delete" endterm="sql-delete-title"> of a row
+       from the specified table.
+       (In practice, any nontrivial <command>DELETE</> command will require
+       <literal>SELECT</> privilege as well, since it must reference table
+       columns to determine which rows to delete.)
       </para>
      </listitem>
     </varlistentry>
@@ -235,7 +249,7 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
      <term>TEMP</term>
      <listitem>
       <para>
-       Allows temporary tables to be created while using the database.
+       Allows temporary tables to be created while using the specified database.
       </para>
      </listitem>
     </varlistentry>
