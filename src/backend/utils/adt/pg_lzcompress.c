@@ -164,7 +164,9 @@
  *
  *			Jan Wieck
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.23 2006/10/05 23:33:33 tgl Exp $
+ * Copyright (c) 1999-2008, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.23.2.1 2008/05/28 21:58:08 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -209,31 +211,29 @@ typedef struct PGLZ_HistEntry
  * ----------
  */
 static const PGLZ_Strategy strategy_default_data = {
-	256,						/* Data chunks smaller 256 bytes are not
-								 * compressed			 */
-	6144,						/* Data chunks greater equal 6K force
-								 * compression				 */
-	/* except compressed result is greater uncompressed data		*/
-	20,							/* Compression rates below 20% mean fallback
-								 * to uncompressed	  */
-	/* storage except compression is forced by previous parameter	*/
+	256,						/* Data chunks less than 256 bytes are not
+								 * compressed */
+	6144,						/* Data chunks >= 6K force compression, unless
+								 * compressed output is larger than input */
+	20,							/* Below 6K, compression rates below 20% mean
+								 * fallback to uncompressed */
 	128,						/* Stop history lookup if a match of 128 bytes
-								 * is found			*/
+								 * is found */
 	10							/* Lower good match size by 10% at every
-								 * lookup loop iteration. */
+								 * lookup loop iteration */
 };
-const PGLZ_Strategy * const PGLZ_strategy_default = &strategy_default_data;
+const PGLZ_Strategy *const PGLZ_strategy_default = &strategy_default_data;
 
 
 static const PGLZ_Strategy strategy_always_data = {
-	0,							/* Chunks of any size are compressed							*/
-	0,							/* */
-	0,							/* We want to save at least one single byte						*/
+	0,							/* Chunks of any size are compressed */
+	0,
+	0,							/* It's enough to save one single byte */
 	128,						/* Stop history lookup if a match of 128 bytes
-								 * is found			*/
-	6							/* Look harder for a good match.								*/
+								 * is found */
+	6							/* Look harder for a good match */
 };
-const PGLZ_Strategy * const PGLZ_strategy_always = &strategy_always_data;
+const PGLZ_Strategy *const PGLZ_strategy_always = &strategy_always_data;
 
 
 /* ----------
@@ -509,7 +509,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 	 * If the strategy forbids compression (at all or if source chunk too
 	 * small), fail.
 	 */
-	if (strategy->match_size_good == 0 ||
+	if (strategy->match_size_good <= 0 ||
 		slen < strategy->min_input_size)
 		return false;
 
@@ -605,8 +605,8 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 	}
 
 	/*
-	 * Write out the last control byte and check that we haven't overrun
-	 * the output size allowed by the strategy.
+	 * Write out the last control byte and check that we haven't overrun the
+	 * output size allowed by the strategy.
 	 */
 	*ctrlp = ctrlb;
 	result_size = bp - bstart;
@@ -631,26 +631,26 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 void
 pglz_decompress(const PGLZ_Header *source, char *dest)
 {
-	const unsigned char *dp;
-	const unsigned char *dend;
-	unsigned char *bp;
-	unsigned char ctrl;
-	int32		ctrlc;
-	int32		len;
-	int32		off;
-	int32		destsize;
+	const unsigned char *sp;
+	const unsigned char *srcend;
+	unsigned char *dp;
+	unsigned char *destend;
 
-	dp = ((const unsigned char *) source) + sizeof(PGLZ_Header);
-	dend = ((const unsigned char *) source) + VARATT_SIZE(source);
-	bp = (unsigned char *) dest;
+	sp = ((const unsigned char *) source) + sizeof(PGLZ_Header);
+	srcend = ((const unsigned char *) source) + VARSIZE(source);
+	dp = (unsigned char *) dest;
+	destend = dp + source->rawsize;
 
-	while (dp < dend)
+	while (sp < srcend && dp < destend)
 	{
 		/*
-		 * Read one control byte and process the next 8 items.
+		 * Read one control byte and process the next 8 items (or as many
+		 * as remain in the compressed input).
 		 */
-		ctrl = *dp++;
-		for (ctrlc = 0; ctrlc < 8 && dp < dend; ctrlc++)
+		unsigned char ctrl = *sp++;
+		int		ctrlc;
+
+		for (ctrlc = 0; ctrlc < 8 && sp < srcend; ctrlc++)
 		{
 			if (ctrl & 1)
 			{
@@ -661,11 +661,27 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 				 * coded as 18, another extension tag byte tells how much
 				 * longer the match really was (0-255).
 				 */
-				len = (dp[0] & 0x0f) + 3;
-				off = ((dp[0] & 0xf0) << 4) | dp[1];
-				dp += 2;
+				int32		len;
+				int32		off;
+
+				len = (sp[0] & 0x0f) + 3;
+				off = ((sp[0] & 0xf0) << 4) | sp[1];
+				sp += 2;
 				if (len == 18)
-					len += *dp++;
+					len += *sp++;
+
+				/*
+				 * Check for output buffer overrun, to ensure we don't
+				 * clobber memory in case of corrupt input.  Note: we must
+				 * advance dp here to ensure the error is detected below
+				 * the loop.  We don't simply put the elog inside the loop
+				 * since that will probably interfere with optimization.
+				 */
+				if (dp + len > destend)
+				{
+					dp += len;
+					break;
+				}
 
 				/*
 				 * Now we copy the bytes specified by the tag from OUTPUT to
@@ -675,8 +691,8 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 				 */
 				while (len--)
 				{
-					*bp = bp[-off];
-					bp++;
+					*dp = dp[-off];
+					dp++;
 				}
 			}
 			else
@@ -685,7 +701,10 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 				 * An unset control bit means LITERAL BYTE. So we just copy
 				 * one from INPUT to OUTPUT.
 				 */
-				*bp++ = *dp++;
+				if (dp >= destend)	/* check for buffer overrun */
+					break;			/* do not clobber memory */
+
+				*dp++ = *sp++;
 			}
 
 			/*
@@ -696,14 +715,10 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 	}
 
 	/*
-	 * Check we decompressed the right amount, else die.  This is a FATAL
-	 * condition if we tromped on more memory than expected (we assume we
-	 * have not tromped on shared memory, though, so need not PANIC).
+	 * Check we decompressed the right amount.
 	 */
-	destsize = (char *) bp - dest;
-	if (destsize != source->rawsize)
-		elog(destsize > source->rawsize ? FATAL : ERROR,
-			 "compressed data is corrupt");
+	if (dp != destend || sp != srcend)
+		elog(ERROR, "compressed data is corrupt");
 
 	/*
 	 * That's it.
