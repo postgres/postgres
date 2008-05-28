@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.95 2008/05/12 08:35:05 mha Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.96 2008/05/28 09:04:06 mha Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -100,6 +100,7 @@ struct config_enum_entry
 {
 	const char *name;
 	int         val;
+	bool		hidden;
 };
 
 
