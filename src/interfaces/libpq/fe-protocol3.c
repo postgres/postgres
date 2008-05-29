@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.34 2008/01/17 21:21:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.35 2008/05/29 22:02:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,8 @@ pqParseInput3(PGconn *conn)
 			 * recovery strategy if we are unable to make the buffer big
 			 * enough.
 			 */
-			if (pqCheckInBufferSpace(conn->inCursor + msgLength, conn))
+			if (pqCheckInBufferSpace(conn->inCursor + (size_t) msgLength,
+									 conn))
 			{
 				/*
 				 * XXX add some better recovery code... plan is to skip over
@@ -1310,7 +1311,8 @@ getCopyDataMessage(PGconn *conn)
 			 * Before returning, enlarge the input buffer if needed to hold
 			 * the whole message.  See notes in parseInput.
 			 */
-			if (pqCheckInBufferSpace(conn->inCursor + msgLength - 4, conn))
+			if (pqCheckInBufferSpace(conn->inCursor + (size_t) msgLength - 4,
+									 conn))
 			{
 				/*
 				 * XXX add some better recovery code... plan is to skip over
@@ -1745,7 +1747,8 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 			 * Before looping, enlarge the input buffer if needed to hold the
 			 * whole message.  See notes in parseInput.
 			 */
-			if (pqCheckInBufferSpace(conn->inCursor + msgLength, conn))
+			if (pqCheckInBufferSpace(conn->inCursor + (size_t) msgLength,
+									 conn))
 			{
 				/*
 				 * XXX add some better recovery code... plan is to skip over

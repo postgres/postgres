@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.130 2008/05/16 18:30:53 mha Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.131 2008/05/29 22:02:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -511,8 +511,8 @@ extern PGresult *pqFunctionCall3(PGconn *conn, Oid fnid,
   * Get, EOF merely means the buffer is exhausted, not that there is
   * necessarily any error.
   */
-extern int	pqCheckOutBufferSpace(int bytes_needed, PGconn *conn);
-extern int	pqCheckInBufferSpace(int bytes_needed, PGconn *conn);
+extern int	pqCheckOutBufferSpace(size_t bytes_needed, PGconn *conn);
+extern int	pqCheckInBufferSpace(size_t bytes_needed, PGconn *conn);
 extern int	pqGetc(char *result, PGconn *conn);
 extern int	pqPutc(char c, PGconn *conn);
 extern int	pqGets(PQExpBuffer buf, PGconn *conn);

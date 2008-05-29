@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.194 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.195 2008/05/29 22:02:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1685,7 +1685,8 @@ PQputCopyData(PGconn *conn, const char *buffer, int nbytes)
 		{
 			if (pqFlush(conn) < 0)
 				return -1;
-			if (pqCheckOutBufferSpace(conn->outCount + 5 + nbytes, conn))
+			if (pqCheckOutBufferSpace(conn->outCount + 5 + (size_t) nbytes,
+									  conn))
 				return pqIsnonblocking(conn) ? 0 : -1;
 		}
 		/* Send the data (too simple to delegate to fe-protocol files) */

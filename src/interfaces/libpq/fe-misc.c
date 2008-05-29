@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.133 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.134 2008/05/29 22:02:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,12 +278,12 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
  * Returns 0 on success, EOF if failed to enlarge buffer
  */
 int
-pqCheckOutBufferSpace(int bytes_needed, PGconn *conn)
+pqCheckOutBufferSpace(size_t bytes_needed, PGconn *conn)
 {
 	int			newsize = conn->outBufSize;
 	char	   *newbuf;
 
-	if (bytes_needed <= newsize)
+	if (bytes_needed <= (size_t) newsize)
 		return 0;
 
 	/*
@@ -296,9 +296,9 @@ pqCheckOutBufferSpace(int bytes_needed, PGconn *conn)
 	do
 	{
 		newsize *= 2;
-	} while (bytes_needed > newsize && newsize > 0);
+	} while (newsize > 0 && bytes_needed > (size_t) newsize);
 
-	if (bytes_needed <= newsize)
+	if (newsize > 0 && bytes_needed <= (size_t) newsize)
 	{
 		newbuf = realloc(conn->outBuffer, newsize);
 		if (newbuf)
@@ -314,9 +314,9 @@ pqCheckOutBufferSpace(int bytes_needed, PGconn *conn)
 	do
 	{
 		newsize += 8192;
-	} while (bytes_needed > newsize && newsize > 0);
+	} while (newsize > 0 && bytes_needed > (size_t) newsize);
 
-	if (bytes_needed <= newsize)
+	if (newsize > 0 && bytes_needed <= (size_t) newsize)
 	{
 		newbuf = realloc(conn->outBuffer, newsize);
 		if (newbuf)
@@ -341,12 +341,12 @@ pqCheckOutBufferSpace(int bytes_needed, PGconn *conn)
  * Returns 0 on success, EOF if failed to enlarge buffer
  */
 int
-pqCheckInBufferSpace(int bytes_needed, PGconn *conn)
+pqCheckInBufferSpace(size_t bytes_needed, PGconn *conn)
 {
 	int			newsize = conn->inBufSize;
 	char	   *newbuf;
 
-	if (bytes_needed <= newsize)
+	if (bytes_needed <= (size_t) newsize)
 		return 0;
 
 	/*
@@ -359,9 +359,9 @@ pqCheckInBufferSpace(int bytes_needed, PGconn *conn)
 	do
 	{
 		newsize *= 2;
-	} while (bytes_needed > newsize && newsize > 0);
+	} while (newsize > 0 && bytes_needed > (size_t) newsize);
 
-	if (bytes_needed <= newsize)
+	if (newsize > 0 && bytes_needed <= (size_t) newsize)
 	{
 		newbuf = realloc(conn->inBuffer, newsize);
 		if (newbuf)
@@ -377,9 +377,9 @@ pqCheckInBufferSpace(int bytes_needed, PGconn *conn)
 	do
 	{
 		newsize += 8192;
-	} while (bytes_needed > newsize && newsize > 0);
+	} while (newsize > 0 && bytes_needed > (size_t) newsize);
 
-	if (bytes_needed <= newsize)
+	if (newsize > 0 && bytes_needed <= (size_t) newsize)
 	{
 		newbuf = realloc(conn->inBuffer, newsize);
 		if (newbuf)
@@ -572,7 +572,7 @@ pqReadData(PGconn *conn)
 	 */
 	if (conn->inBufSize - conn->inEnd < 8192)
 	{
-		if (pqCheckInBufferSpace(conn->inEnd + 8192, conn))
+		if (pqCheckInBufferSpace(conn->inEnd + (size_t) 8192, conn))
 		{
 			/*
 			 * We don't insist that the enlarge worked, but we need some room
