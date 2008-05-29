@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Wed May 28 21:58:24 EDT 2008
+Last updated:           Wed May 28 22:04:08 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1057,7 +1057,8 @@ first.  There is also a developer's wiki at<br/>
   <li>Add deferred trigger queue file
 <p>  Right now all deferred trigger information is stored in backend
   memory.  This could exhaust memory for very large trigger queues.
-  This item involves dumping large queues into files.
+  This item involves dumping large queues into files, or doing some
+  kind of join to process all the triggers, or some bulk operation.
   <a href="http://archives.postgresql.org/pgsql-hackers/2008-05/msg00876.php">http://archives.postgresql.org/pgsql-hackers/2008-05/msg00876.php</a>
 </p>
   </li><li>Allow triggers to be disabled in only the current session.
