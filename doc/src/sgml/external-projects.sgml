@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.14.2.1 2007/05/03 15:47:37 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.14.2.2 2008/05/29 02:01:07 momjian Exp $ -->
 
  <appendix id="external-projects">
   <title>External Projects</title>
@@ -141,7 +141,7 @@
       <entry>psqlODBC</entry>
       <entry>ODBC</entry>
       <entry>The most commonly-used ODBC driver</entry>
-      <entry><ulink url="http://odbc.postgresql.org/">http://odbc.postgresql.org/</ulink></entry>
+      <entry><ulink url="http://psqlodbc.projects.postgresql.org/">http://psqlodbc.projects.postgresql.org/</ulink></entry>
      </row>
 
      <row>
