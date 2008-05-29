@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.501 2008/05/27 00:13:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.502 2008/05/29 22:48:07 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2202,7 +2202,7 @@ DESCR("return portion of string");
 DATA(insert OID =  937 (  substring    PGNSP PGUID 12 1 0 f f t f i 2 25 "25 23" _null_ _null_ _null_ text_substr_no_len - _null_ _null_ ));
 DESCR("return portion of string");
 DATA(insert OID =  2087 ( replace	   PGNSP PGUID 12 1 0 f f t f i 3 25 "25 25 25" _null_ _null_ _null_	replace_text - _null_ _null_ ));
-DESCR("replace all occurrences of old_substr with new_substr in string");
+DESCR("replace all occurrences in string of old_substr with new_substr");
 DATA(insert OID =  2284 ( regexp_replace	   PGNSP PGUID 12 1 0 f f t f i 3 25 "25 25 25" _null_ _null_ _null_	textregexreplace_noopt - _null_ _null_ ));
 DESCR("replace text using regexp");
 DATA(insert OID =  2285 ( regexp_replace	   PGNSP PGUID 12 1 0 f f t f i 4 25 "25 25 25 25" _null_ _null_ _null_ textregexreplace - _null_ _null_ ));
