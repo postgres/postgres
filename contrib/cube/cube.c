@@ -1,5 +1,5 @@
 /******************************************************************************
-  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.30.2.1 2007/03/07 21:25:18 teodor Exp $
+  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.30.2.2 2008/05/29 18:46:52 tgl Exp $
 
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
@@ -842,10 +842,11 @@ cube_union(PG_FUNCTION_ARGS)
 Datum
 cube_inter(PG_FUNCTION_ARGS)
 {
+	NDBOX	   *a = PG_GETARG_NDBOX(0);
+	NDBOX	   *b = PG_GETARG_NDBOX(1);
+	NDBOX	   *result;
+	bool		swapped = false;
 	int			i;
-	NDBOX	   *result,
-			   *a = PG_GETARG_NDBOX(0),
-			   *b = PG_GETARG_NDBOX(1);
 
 	if (a->dim >= b->dim)
 	{
@@ -869,6 +870,7 @@ cube_inter(PG_FUNCTION_ARGS)
 
 		b = a;
 		a = tmp;
+		swapped = true;
 	}
 
 	/*
@@ -895,8 +897,17 @@ cube_inter(PG_FUNCTION_ARGS)
 								   a->x[i + a->dim]), result->x[i + a->dim]);
 	}
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	if (swapped)
+	{
+		PG_FREE_IF_COPY(b, 0);
+		PG_FREE_IF_COPY(a, 1);
+	}
+	else
+	{
+		PG_FREE_IF_COPY(a, 0);
+		PG_FREE_IF_COPY(b, 1);
+	}
+
 	/*
 	 * Is it OK to return a non-null intersection for non-overlapping boxes?
 	 */
@@ -1267,14 +1278,12 @@ cube_overlap(PG_FUNCTION_ARGS)
 Datum
 cube_distance(PG_FUNCTION_ARGS)
 {
-	int			i;
+	NDBOX	   *a = PG_GETARG_NDBOX(0),
+			   *b = PG_GETARG_NDBOX(1);
+	bool		swapped = false;
 	double		d,
 				distance;
-	NDBOX	   *a,
-			   *b;
-
-	a = PG_GETARG_NDBOX(0);
-	b = PG_GETARG_NDBOX(1);
+	int			i;
 
 	/* swap the box pointers if needed */
 	if (a->dim < b->dim)
@@ -1283,6 +1292,7 @@ cube_distance(PG_FUNCTION_ARGS)
 
 		b = a;
 		a = tmp;
+		swapped = true;
 	}
 
 	distance = 0.0;
@@ -1300,8 +1310,17 @@ cube_distance(PG_FUNCTION_ARGS)
 		distance += d * d;
 	}
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
+	if (swapped)
+	{
+		PG_FREE_IF_COPY(b, 0);
+		PG_FREE_IF_COPY(a, 1);
+	}
+	else
+	{
+		PG_FREE_IF_COPY(a, 0);
+		PG_FREE_IF_COPY(b, 1);
+	}
+
 	PG_RETURN_FLOAT8(sqrt(distance));
 }
 
@@ -1344,14 +1363,11 @@ cube_is_point(PG_FUNCTION_ARGS)
 Datum
 cube_dim(PG_FUNCTION_ARGS)
 {
-	NDBOX	   *c;
-	int			dim;
-
-	c = PG_GETARG_NDBOX(0);
-	dim = c->dim;
+	NDBOX	   *c = PG_GETARG_NDBOX(0);
+	int			dim = c->dim;
 
 	PG_FREE_IF_COPY(c,0);
-	PG_RETURN_INT32(c->dim);
+	PG_RETURN_INT32(dim);
 }
 
 /* Return a specific normalized LL coordinate */
