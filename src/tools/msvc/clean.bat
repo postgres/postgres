@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.10 2008/02/06 15:13:25 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.11 2008/05/30 00:04:32 tgl Exp $
 
 set DIST=0
 if "%1"=="dist" set DIST=1
@@ -65,6 +65,8 @@ if exist src\test\regress\tmp_check rd /s /q src\test\regress\tmp_check
 if exist contrib\spi\refint.dll del /q contrib\spi\refint.dll
 if exist contrib\spi\autoinc.dll del /q contrib\spi\autoinc.dll
 if exist src\test\regress\regress.dll del /q src\test\regress\regress.dll
+if exist src\test\regress\refint.dll del /q src\test\regress\refint.dll
+if exist src\test\regress\autoinc.dll del /q src\test\regress\autoinc.dll
 
 REM Clean up datafiles built with contrib
 REM cd contrib

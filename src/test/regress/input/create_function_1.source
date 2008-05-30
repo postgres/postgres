@@ -24,17 +24,17 @@ CREATE FUNCTION int44out(city_budget)
 
 CREATE FUNCTION check_primary_key ()
 	RETURNS trigger
-	AS '@abs_builddir@/../../../contrib/spi/refint@DLSUFFIX@'
+	AS '@abs_builddir@/refint@DLSUFFIX@'
 	LANGUAGE C;
 
 CREATE FUNCTION check_foreign_key ()
 	RETURNS trigger
-	AS '@abs_builddir@/../../../contrib/spi/refint@DLSUFFIX@'
+	AS '@abs_builddir@/refint@DLSUFFIX@'
 	LANGUAGE C;
 
 CREATE FUNCTION autoinc ()
 	RETURNS trigger
-	AS '@abs_builddir@/../../../contrib/spi/autoinc@DLSUFFIX@'
+	AS '@abs_builddir@/autoinc@DLSUFFIX@'
 	LANGUAGE C;
 
 CREATE FUNCTION funny_dup17 ()

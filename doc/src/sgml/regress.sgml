@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.58 2007/06/12 17:49:12 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.59 2008/05/30 00:04:32 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -48,9 +48,9 @@ gmake check
    script.  At the end you should see something like
 <screen>
 <computeroutput>
-======================
- All 100 tests passed.
-======================
+=======================
+ All 115 tests passed.
+=======================
 </computeroutput>
 </screen>
    or otherwise a note about which tests failed.  See <xref
@@ -67,7 +67,6 @@ gmake check
     For example
 <screen>
 <prompt>root# </prompt><userinput>chmod -R a+w src/test/regress</userinput>
-<prompt>root# </prompt><userinput>chmod -R a+w contrib/spi</userinput>
 <prompt>root# </prompt><userinput>su - joeuser</userinput>
 <prompt>joeuser$ </prompt><userinput>cd <replaceable>top-level build directory</></userinput>
 <prompt>joeuser$ </prompt><userinput>gmake check</userinput>
