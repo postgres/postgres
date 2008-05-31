@@ -1985,7 +1985,7 @@ Source Code
 	o Remove configure.in check for link failure when cause is found
 	o Remove readdir() errno patch when runtime/mingwex/dirent.c rev
 	  1.4 is released
-	o Remove psql newline patch when we find out why mingw outputs an
+	o -Remove psql newline patch when we find out why mingw outputs an
 	  extra newline
 	o Allow psql to use readline once non-US code pages work with
 	  backslashes
