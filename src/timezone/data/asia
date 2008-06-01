@@ -1,4 +1,4 @@
-# @(#)asia	8.14
+# @(#)asia	8.20
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -446,13 +446,13 @@ Zone	Asia/Dili	8:22:20 -	LMT	1912
 
 # India
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Calcutta	5:53:28 -	LMT	1880	# Kolkata
+Zone	Asia/Kolkata	5:53:28 -	LMT	1880	# Kolkata
 			5:53:20	-	HMT	1941 Oct    # Howrah Mean Time?
 			6:30	-	BURT	1942 May 15 # Burma Time
 			5:30	-	IST	1942 Sep
 			5:30	1:00	IST	1945 Oct 15
 			5:30	-	IST
-# The following are like Asia/Calcutta:
+# The following are like Asia/Kolkata:
 #	Andaman Is
 #	Lakshadweep (Laccadive, Minicoy and Amindivi Is)
 #	Nicobar Is
@@ -660,6 +660,21 @@ Zone	Asia/Tehran	3:25:44	-	LMT	1916
 #
 # So we'll ignore the Economist's claim.
 
+# From Steffen Thorsen (2008-03-10):
+# The cabinet in Iraq abolished DST last week, according to the following
+# news sources (in Arabic):
+# <a href="http://www.aljeeran.net/wesima_articles/news-20080305-98602.html">
+# http://www.aljeeran.net/wesima_articles/news-20080305-98602.html
+# </a>
+# <a href="http://www.aswataliraq.info/look/article.tpl?id=2047&IdLanguage=17&IdPublication=4&NrArticle=71743&NrIssue=1&NrSection=10">
+# http://www.aswataliraq.info/look/article.tpl?id=2047&IdLanguage=17&IdPublication=4&NrArticle=71743&NrIssue=1&NrSection=10
+# </a>
+#
+# We have published a short article in English about the change:
+# <a href="http://www.timeanddate.com/news/time/iraq-dumps-daylight-saving.html">
+# http://www.timeanddate.com/news/time/iraq-dumps-daylight-saving.html
+# </a>
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Iraq	1982	only	-	May	1	0:00	1:00	D
 Rule	Iraq	1982	1984	-	Oct	1	0:00	0	S
@@ -670,8 +685,8 @@ Rule	Iraq	1986	1990	-	Mar	lastSun	1:00s	1:00	D
 # IATA SSIM (1991/1996) says Apr 1 12:01am UTC; guess the `:01' is a typo.
 # Shanks & Pottenger say Iraq did not observe DST 1992/1997; ignore this.
 #
-Rule	Iraq	1991	max	-	Apr	 1	3:00s	1:00	D
-Rule	Iraq	1991	max	-	Oct	 1	3:00s	0	S
+Rule	Iraq	1991	2007	-	Apr	 1	3:00s	1:00	D
+Rule	Iraq	1991	2007	-	Oct	 1	3:00s	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Baghdad	2:57:40	-	LMT	1890
 			2:57:36	-	BMT	1918	    # Baghdad Mean Time?
@@ -1361,6 +1376,42 @@ Zone	Indian/Maldives	4:54:00 -	LMT	1880	# Male
 # They decided not to adopt daylight-saving time....
 # http://www.mongolnews.mn/index.php?module=unuudur&sec=view&id=15742
 
+# From Deborah Goldsmith (2008-03-30):
+# We received a bug report claiming that the tz database UTC offset for
+# Asia/Choibalsan (GMT+09:00) is incorrect, and that it should be GMT
+# +08:00 instead. Different sources appear to disagree with the tz
+# database on this, e.g.:
+#
+# <a href="http://www.timeanddate.com/worldclock/city.html?n=1026">
+# http://www.timeanddate.com/worldclock/city.html?n=1026
+# </a>
+# <a href="http://www.worldtimeserver.com/current_time_in_MN.aspx">
+# http://www.worldtimeserver.com/current_time_in_MN.aspx
+# </a>
+#
+# both say GMT+08:00.
+
+# From Steffen Thorsen (2008-03-31):
+# eznis airways, which operates several domestic flights, has a flight
+# schedule here:
+# <a href="http://www.eznis.com/Container.jsp?id=112"
+# http://www.eznis.com/Container.jsp?id=112
+# </a>
+# (click the English flag for English)
+#
+# There it appears that flights between Choibalsan and Ulaanbatar arrive
+# about 1:35 - 1:50 hours later in local clock time, no matter the
+# direction, while Ulaanbaatar-Khvod takes 2 hours in the Eastern
+# direction and 3:35 back, which indicates that Ulaanbatar and Khvod are
+# in different time zones (like we know about), while Choibalsan and
+# Ulaanbatar are in the same time zone (correction needed).
+
+# From Arthur David Olson (2008-05-19):
+# Assume that Choibalsan is indeed offset by 8:00.
+# XXX--in the absence of better information, assume that transition
+# was at the start of 2008-03-31 (the day of Steffen Thorsen's report);
+# this is almost surely wrong.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Mongol	1983	1984	-	Apr	1	0:00	1:00	S
 Rule	Mongol	1983	only	-	Oct	1	0:00	0	-
@@ -1396,7 +1447,8 @@ Zone	Asia/Ulaanbaatar 7:07:32 -	LMT	1905 Aug
 Zone	Asia/Choibalsan	7:38:00 -	LMT	1905 Aug
 			7:00	-	ULAT	1978
 			8:00	-	ULAT	1983 Apr
-			9:00	Mongol	CHO%sT	# Choibalsan Time
+			9:00	Mongol	CHO%sT	2008 Mar 31 # Choibalsan Time
+			8:00	Mongol	CHO%sT
 
 # Nepal
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -1446,10 +1498,32 @@ Zone	Asia/Muscat	3:54:20 -	LMT	1920
 # The minister told a news conference that the experiment had rather
 # shown 8 per cent higher consumption of electricity.
 
+# From Alex Krivenyshev (2008-05-15):
+# 
+# Here is an article that Pakistan plan to introduce Daylight Saving Time 
+# on June 1, 2008 for 3 months.
+# 
+# "... The federal cabinet on Wednesday announced a new conservation plan to help 
+# reduce load shedding by approving the closure of commercial centres at 9pm and 
+# moving clocks forward by one hour for the next three months. 
+# ...."
+# 
+# <a href="http://www.worldtimezone.net/dst_news/dst_news_pakistan01.html">
+# http://www.worldtimezone.net/dst_news/dst_news_pakistan01.html
+# </a>
+# OR
+# <a href="http://www.dailytimes.com.pk/default.asp?page=2008%5C05%5C15%5Cstory_15-5-2008_pg1_4">
+# http://www.dailytimes.com.pk/default.asp?page=2008%5C05%5C15%5Cstory_15-5-2008_pg1_4
+# </a>
+
+# From Arthur David Olson (2008-05-19):
+# XXX--midnight transitions is a guess; 2008 only is a guess.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule Pakistan	2002	only	-	Apr	Sun>=2	0:01	1:00	S
 Rule Pakistan	2002	only	-	Oct	Sun>=2	0:01	0	-
+Rule Pakistan	2008	only	-	Jun	1	0:00	1:00	S
+Rule Pakistan	2008	only	-	Sep	1	0:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Karachi	4:28:12 -	LMT	1907
 			5:30	-	IST	1942 Sep
@@ -1687,7 +1761,7 @@ Zone	Asia/Singapore	6:55:25 -	LMT	1901 Jan  1
 # kept their clocks set five and a half hours ahead of Greenwich Mean
 # Time (GMT), in line with neighbor India.
 # From Paul Eggert (2006-04-18):
-# People who live in regions under Tamil control can use TZ='Asia/Calcutta',
+# People who live in regions under Tamil control can use [TZ='Asia/Kolkata'],
 # as that zone has agreed with the Tamil areas since our cutoff date of 1970.
 
 # From K Sethu (2006-04-25):
@@ -1777,9 +1851,7 @@ Rule	Syria	2006	only	-	Sep	22	0:00	0	-
 # From Paul Eggert (2007-03-29):
 # Today the AP reported "Syria will switch to summertime at midnight Thursday."
 # http://www.iht.com/articles/ap/2007/03/29/africa/ME-GEN-Syria-Time-Change.php
-# For lack of better info, assume the rule changed to "last Friday in March"
-# this year.
-Rule	Syria	2007	max	-	Mar	lastFri	0:00	1:00	S
+Rule	Syria	2007	only	-	Mar	lastFri	0:00	1:00	S
 # From Jesper Norgard (2007-10-27):
 # The sister center ICARDA of my work CIMMYT is confirming that Syria DST will
 # not take place 1.st November at 0:00 o'clock but 1.st November at 24:00 or
@@ -1801,10 +1873,40 @@ Rule	Syria	2007	max	-	Mar	lastFri	0:00	1:00	S
 # Council of Ministers also approved the commencement of work on 
 # identifying the winter time as of Friday, 2/11/2007 where the 60th 
 # minute delay at midnight Thursday 1/11/2007.
-#
-# From Arthur David Olson (2007-10-30):
-# My best guess for the future is first Friday in November.
-Rule	Syria	2007	max	-	Nov	 Fri>=1	0:00	0	-
+Rule	Syria	2007	only	-	Nov	 Fri>=1	0:00	0	-
+
+# From Stephen Colebourne (2008-03-17):
+# For everyone's info, I saw an IATA time zone change for [Syria] for
+# this month (March 2008) in the last day or so...This is the data IATA
+# are now using:
+# Country     Time Standard   --- DST Start ---   --- DST End ---  DST
+# Name        Zone Variation   Time    Date        Time    Date
+# Variation
+# Syrian Arab
+# Republic    SY    +0200      2200  03APR08       2100  30SEP08   +0300
+#                              2200  02APR09       2100  30SEP09   +0300
+#                              2200  01APR10       2100  30SEP10   +0300
+
+# From Arthur David Olson (2008-03-17):
+# Here's a link to English-language coverage by the Syrian Arab News
+# Agency (SANA)...
+# <a href="http://www.sana.sy/eng/21/2008/03/11/165173.htm">
+# http://www.sana.sy/eng/21/2008/03/11/165173.htm
+# </a>...which reads (in part) "The Cabinet approved the suggestion of the
+# Ministry of Electricity to begin daylight savings time on Friday April
+# 4th, advancing clocks one hour ahead on midnight of Thursday April 3rd."
+# Since Syria is two hours east of UTC, the 2200 and 2100 transition times
+# shown above match up with midnight in Syria.
+
+# From Arthur David Olson (2008-03-18):
+# My buest guess at a Syrian rule is "the Friday nearest April 1";
+# coding that involves either using a "Mar Fri>=29" construct that old time zone
+# compilers can't handle  or having multiple Rules (a la Israel).
+# For now, use "Apr Fri>=1", and go with IATA on a uniform Sep 30 end.
+
+Rule	Syria	2008	max	-	Apr	Fri>=1	0:00	1:00	S
+Rule	Syria	2008	max	-	Oct	1	0:00	0	-
+
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Damascus	2:25:12 -	LMT	1920	# Dimashq
 			2:00	Syria	EE%sT
@@ -1858,13 +1960,13 @@ Zone	Asia/Tashkent	4:37:12 -	LMT	1924 May  2
 
 # Vietnam
 
-# From Paul Eggert (1993-11-18):
-# Saigon's official name is Thanh-Pho Ho Chi Minh, but it's too long.
-# We'll stick with the traditional name for now.
+# From Arthur David Olson (2008-03-18):
+# The English-language name of Vietnam's most populous city is "Ho Chi Min City";
+# we use Ho_Chi_Minh below to avoid a name of more than 14 characters.
 
 # From Shanks & Pottenger:
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Saigon	7:06:40 -	LMT	1906 Jun  9
+Zone	Asia/Ho_Chi_Minh	7:06:40 -	LMT	1906 Jun  9
 			7:06:20	-	SMT	1911 Mar 11 0:01 # Saigon MT?
 			7:00	-	ICT	1912 May
 			8:00	-	ICT	1931 May
