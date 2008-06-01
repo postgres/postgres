@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.195 2008/05/12 20:02:00 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.196 2008/06/01 17:32:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,10 @@ static _SPI_connection *_SPI_current = NULL;
 static int	_SPI_stack_depth = 0;		/* allocated size of _SPI_stack */
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
+
+static Portal SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
+									   Datum *Values, const char *Nulls,
+									   bool read_only, int pflags);
 
 static void _SPI_prepare_plan(const char *src, SPIPlanPtr plan,
 							  ParamListInfo boundParams);
@@ -917,6 +921,80 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 				Datum *Values, const char *Nulls,
 				bool read_only)
 {
+	return SPI_cursor_open_internal(name, plan, Values, Nulls,
+									read_only, 0);
+}
+
+
+/*
+ * SPI_cursor_open_with_args()
+ *
+ * Parse and plan a query and open it as a portal.  Like SPI_execute_with_args,
+ * we can tell the planner to rely on the parameter values as constants,
+ * because the plan will only be used once.
+ */
+Portal
+SPI_cursor_open_with_args(const char *name,
+						  const char *src,
+						  int nargs, Oid *argtypes,
+						  Datum *Values, const char *Nulls,
+						  bool read_only, int cursorOptions)
+{
+	Portal		result;
+	_SPI_plan	plan;
+	ParamListInfo paramLI;
+
+	if (src == NULL || nargs < 0)
+		elog(ERROR, "SPI_cursor_open_with_args called with invalid arguments");
+
+	if (nargs > 0 && (argtypes == NULL || Values == NULL))
+		elog(ERROR, "SPI_cursor_open_with_args called with missing parameters");
+
+	SPI_result = _SPI_begin_call(true);
+	if (SPI_result < 0)
+		elog(ERROR, "SPI_cursor_open_with_args called while not connected");
+
+	memset(&plan, 0, sizeof(_SPI_plan));
+	plan.magic = _SPI_PLAN_MAGIC;
+	plan.cursor_options = cursorOptions;
+	plan.nargs = nargs;
+	plan.argtypes = argtypes;
+
+	paramLI = _SPI_convert_params(nargs, argtypes,
+								  Values, Nulls,
+								  PARAM_FLAG_CONST);
+
+	_SPI_prepare_plan(src, &plan, paramLI);
+
+	/* We needn't copy the plan; SPI_cursor_open_internal will do so */
+
+	/* Adjust stack so that SPI_cursor_open_internal doesn't complain */
+	_SPI_curid--;
+
+	/* SPI_cursor_open_internal must be called in procedure memory context */
+	_SPI_procmem();
+
+	result = SPI_cursor_open_internal(name, &plan, Values, Nulls,
+									  read_only, PARAM_FLAG_CONST);
+
+	/* And clean up */
+	_SPI_curid++;
+	_SPI_end_call(true);
+
+	return result;
+}
+
+
+/*
+ * SPI_cursor_open_internal()
+ *
+ *	Common code for SPI_cursor_open and SPI_cursor_open_with_args
+ */
+static Portal
+SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
+						 Datum *Values, const char *Nulls,
+						 bool read_only, int pflags)
+{
 	CachedPlanSource *plansource;
 	CachedPlan *cplan;
 	List	   *stmt_list;
@@ -997,7 +1075,7 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 			ParamExternData *prm = &paramLI->params[k];
 
 			prm->ptype = plan->argtypes[k];
-			prm->pflags = 0;
+			prm->pflags = pflags;
 			prm->isnull = (Nulls && Nulls[k] == 'n');
 			if (prm->isnull)
 			{
@@ -1126,64 +1204,6 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 
 	/* Return the created portal */
 	return portal;
-}
-
-
-/*
- * SPI_cursor_open_with_args()
- *
- * Parse and plan a query and open it as a portal.  Like SPI_execute_with_args,
- * we can tell the planner to rely on the parameter values as constants,
- * because the plan will only be used once.
- */
-Portal
-SPI_cursor_open_with_args(const char *name,
-						  const char *src,
-						  int nargs, Oid *argtypes,
-						  Datum *Values, const char *Nulls,
-						  bool read_only, int cursorOptions)
-{
-	Portal		result;
-	_SPI_plan	plan;
-	ParamListInfo paramLI;
-
-	if (src == NULL || nargs < 0)
-		elog(ERROR, "SPI_cursor_open_with_args called with invalid arguments");
-
-	if (nargs > 0 && (argtypes == NULL || Values == NULL))
-		elog(ERROR, "SPI_cursor_open_with_args called with missing parameters");
-
-	SPI_result = _SPI_begin_call(true);
-	if (SPI_result < 0)
-		elog(ERROR, "SPI_cursor_open_with_args called while not connected");
-
-	memset(&plan, 0, sizeof(_SPI_plan));
-	plan.magic = _SPI_PLAN_MAGIC;
-	plan.cursor_options = cursorOptions;
-	plan.nargs = nargs;
-	plan.argtypes = argtypes;
-
-	paramLI = _SPI_convert_params(nargs, argtypes,
-								  Values, Nulls,
-								  PARAM_FLAG_CONST);
-
-	_SPI_prepare_plan(src, &plan, paramLI);
-
-	/* We needn't copy the plan; SPI_cursor_open will do so */
-
-	/* Adjust stack so that SPI_cursor_open doesn't complain */
-	_SPI_curid--;
-
-	/* SPI_cursor_open expects to be called in procedure memory context */
-	_SPI_procmem();
-
-	result = SPI_cursor_open(name, &plan, Values, Nulls, read_only);
-
-	/* And clean up */
-	_SPI_curid++;
-	_SPI_end_call(true);
-
-	return result;
 }
 
 
