@@ -1,4 +1,4 @@
-# @(#)southamerica	8.18
+# @(#)southamerica	8.19
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -228,6 +228,76 @@ Rule	Arg	2008	max	-	Oct	Sun>=1	0:00	1:00	S
 # http://www.sanjuan.gov.ar/prensa/archivo/000426.html
 # http://www.sanjuan.gov.ar/prensa/archivo/000441.html
 
+# From Alex Krivenyshev (2008-01-17):
+# Here are articles that Argentina Province San Luis is planning to end DST
+# as earlier as upcoming Monday January 21, 2008 or February 2008:
+#
+# Provincia argentina retrasa reloj y marca diferencia con resto del pais
+# (Argentine Province delayed clock and mark difference with the rest of the
+# country)
+# <a href="http://cl.invertia.com/noticias/noticia.aspx?idNoticia=200801171849_EFE_ET4373&idtel">
+# http://cl.invertia.com/noticias/noticia.aspx?idNoticia=200801171849_EFE_ET4373&idtel
+# </a>
+#
+# Es inminente que en San Luis atrasen una hora los relojes
+# (It is imminent in San Luis clocks one hour delay)
+# <a href="http://www.lagaceta.com.ar/vernotae.asp?id_nota=253414">
+# http://www.lagaceta.com.ar/vernotae.asp?id_nota=253414
+# </a>
+#
+# <a href="http://www.worldtimezone.net/dst_news/dst_news_argentina02.html">
+# http://www.worldtimezone.net/dst_news/dst_news_argentina02.html
+# </a>
+
+# From Jesper Norgaard Welen (2008-01-18):
+# The page of the San Luis provincial government
+# <a href="http://www.sanluis.gov.ar/notas.asp?idCanal=0&id=22812">
+# http://www.sanluis.gov.ar/notas.asp?idCanal=0&id=22812
+# </a>
+# confirms what Alex Krivenyshev has earlier sent to the tz
+# emailing list about that San Luis plans to return to standard
+# time much earlier than the rest of the country. It also
+# confirms that upon request the provinces San Juan and Mendoza 
+# refused to follow San Luis in this change. 
+# 
+# The change is supposed to take place Monday the 21.st at 0:00
+# hours. As far as I understand it if this goes ahead, we need
+# a new timezone for San Luis (although there are also documented
+# independent changes in the southamerica file of San Luis in
+# 1990 and 1991 which has not been confirmed).
+
+# From Jesper Norgaard Welen (2008-01-25):
+# Unfortunately the below page has become defunct, about the San Luis
+# time change. Perhaps because it now is part of a group of pages "Most
+# important pages of 2008."
+#
+# You can use
+# <a href="http://www.sanluis.gov.ar/notas.asp?idCanal=8141&id=22834">
+# http://www.sanluis.gov.ar/notas.asp?idCanal=8141&id=22834
+# </a>
+# instead it seems. Or use "Buscador" from the main page of the San Luis
+# government, and fill in "huso" and click OK, and you will get 3 pages
+# from which the first one is identical to the above.
+
+# From Mariano Absatz (2008-01-28):
+# I can confirm that the Province of San Luis (and so far only that
+# province) decided to go back to UTC-3 effective midnight Jan 20th 2008
+# (that is, Monday 21st at 0:00 is the time the clocks were delayed back
+# 1 hour), and they intend to keep UTC-3 as their timezone all year round
+# (that is, unless they change their mind any minute now).
+#
+# So we'll have to add yet another city to 'southamerica' (I think San
+# Luis city is the mos populated city in the Province, so it'd be
+# America/Argentina/San_Luis... of course I can't remember if San Luis's
+# history of particular changes goes along with Mendoza or San Juan :-(
+# (I only remember not being able to collect hard facts about San Luis
+# back in 2004, when these provinces changed to UTC-4 for a few days, I
+# mailed them personally and never got an answer).
+
+# From Arthur David Olson (2008-03-15):
+# Until there's better information, asssume San Luis was like San Juan
+# rather than Mendoza (since San Juan has a simpler DST history).
+
 # Unless otherwise specified, data are from Shanks & Pottenger through 1992,
 # from the IATA otherwise.  As noted below, Shanks & Pottenger say that
 # America/Cordoba split into 6 subregions during 1991/1992, but we
@@ -349,6 +419,20 @@ Zone America/Argentina/Mendoza -4:35:16 - LMT	1894 Oct 31
 			-3:00	-	ART	2004 May 23
 			-4:00	-	WART	2004 Sep 26
 			-3:00	Arg	AR%sT
+#
+# San Luis (SL)
+Zone America/Argentina/San_Luis -4:25:24 - LMT	1894 Oct 31
+			-4:16:48 -	CMT	1920 May
+			-4:00	-	ART	1930 Dec
+			-4:00	Arg	AR%sT	1969 Oct  5
+			-3:00	Arg	AR%sT	1991 Mar  1
+			-4:00	-	WART	1991 May  7
+			-3:00	Arg	AR%sT	1999 Oct  3
+			-4:00	Arg	AR%sT	2000 Mar  3
+			-3:00	-	ART	2004 May 31
+			-4:00	-	WART	2004 Jul 25
+			-3:00	Arg	AR%sT	2008 Jan 21
+			-3:00	-	ART
 #
 # Santa Cruz (SC)
 Zone America/Argentina/Rio_Gallegos -4:36:52 - LMT 1894 Oct 31
