@@ -1,4 +1,4 @@
-# @(#)zone.tab	8.13
+# @(#)zone.tab	8.16
 #
 # TZ zone descriptions
 #
@@ -42,7 +42,8 @@ AQ	-7824+10654	Antarctica/Vostok	Vostok Station, S Magnetic Pole
 AQ	-6640+14001	Antarctica/DumontDUrville	Dumont-d'Urville Station, Terre Adelie
 AQ	-690022+0393524	Antarctica/Syowa	Syowa Station, E Ongul I
 AR	-3436-05827	America/Argentina/Buenos_Aires	Buenos Aires (BA, CF)
-AR	-3124-06411	America/Argentina/Cordoba	most locations (CB, CC, CN, ER, FM, LP, MN, NQ, RN, SA, SE, SF, SL)
+AR	-3124-06411	America/Argentina/Cordoba	most locations (CB, CC, CN, ER, FM, LP, MN, NQ, RN, SA, SE, SF)
+AR	-3319-06621	America/Argentina/San_Luis	San Luis (SL)
 AR	-2411-06518	America/Argentina/Jujuy	Jujuy (JY)
 AR	-2649-06513	America/Argentina/Tucuman	Tucuman (TM)
 AR	-2828-06547	America/Argentina/Catamarca	Catamarca (CT), Chubut (CH)
@@ -209,7 +210,7 @@ ID	-0232+14042	Asia/Jayapura	Irian Jaya & the Moluccas
 IE	+5320-00615	Europe/Dublin
 IL	+3146+03514	Asia/Jerusalem
 IM	+5409-00428	Europe/Isle_of_Man
-IN	+2232+08822	Asia/Calcutta
+IN	+2232+08822	Asia/Kolkata
 IO	-0720+07225	Indian/Chagos
 IQ	+3321+04425	Asia/Baghdad
 IR	+3540+05126	Asia/Tehran
@@ -411,7 +412,7 @@ VC	+1309-06114	America/St_Vincent
 VE	+1030-06656	America/Caracas
 VG	+1827-06437	America/Tortola
 VI	+1821-06456	America/St_Thomas
-VN	+1045+10640	Asia/Saigon
+VN	+1045+10640	Asia/Ho_Chi_Minh
 VU	-1740+16825	Pacific/Efate
 WF	-1318-17610	Pacific/Wallis
 WS	-1350-17144	Pacific/Apia
