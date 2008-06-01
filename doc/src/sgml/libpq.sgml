@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.257 2008/03/31 02:43:14 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.258 2008/06/01 16:23:08 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -4838,8 +4838,12 @@ defaultNoticeProcessor(void *arg, const char *message)
       <indexterm>
        <primary><envar>PGOPTIONS</envar></primary>
       </indexterm>
-      <envar>PGOPTIONS</envar> sets additional run-time  options  for the
-      <productname>PostgreSQL</productname> server.
+      <envar>PGOPTIONS</envar> sets additional run-time options for the
+      <productname>PostgreSQL</productname> server.  For example, setting
+      <envar>PGOPTIONS</envar> to <literal>-c geqo=off</> sets the session's
+      value of the <varname>geqo</> parameter to <literal>off</>.
+      For a detailed discussion of the available options consult <xref
+      linkend="runtime-config">.
      </para>
     </listitem>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.206 2008/05/16 17:17:00 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.207 2008/06/01 16:23:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2754,22 +2754,13 @@ $endif
 
    <varlistentry>
     <term><envar>PGDATABASE</envar></term>
-
-    <listitem>
-     <para>
-      Default connection database
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><envar>PGHOST</envar></term>
     <term><envar>PGPORT</envar></term>
     <term><envar>PGUSER</envar></term>
 
     <listitem>
      <para>
-      Default connection parameters
+      Default connection parameters (see <xref linkend="libpq-envars">).
      </para>
     </listitem>
    </varlistentry>
