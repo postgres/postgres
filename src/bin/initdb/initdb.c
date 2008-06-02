@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.152.2.2 2008/02/29 23:31:42 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.152.2.3 2008/06/02 03:48:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3005,8 +3005,13 @@ main(int argc, char *argv[])
 	{
 		char	   *linkloc;
 
-		linkloc = (char *) pg_malloc(strlen(pg_data) + 8 + 2);
-		sprintf(linkloc, "%s/pg_xlog", pg_data);
+		/* clean up xlog directory name, check it's absolute */
+		canonicalize_path(xlog_dir);
+		if (!is_absolute_path(xlog_dir))
+		{
+			fprintf(stderr, _("%s: xlog directory location must be an absolute path\n"), progname);
+			exit_nicely();
+		}
 
 		/* check if the specified xlog directory is empty */
 		switch (check_data_dir(xlog_dir))
@@ -3024,9 +3029,7 @@ main(int argc, char *argv[])
 					exit_nicely();
 				}
 				else
-				{
 					check_ok();
-				}
 
 				made_new_xlogdir = true;
 				break;
@@ -3056,7 +3059,7 @@ main(int argc, char *argv[])
 						_("If you want to store the transaction log there, either\n"
 						  "remove or empty the directory \"%s\".\n"),
 						xlog_dir);
-				exit(1);		/* no further message needed */
+				exit_nicely();
 
 			default:
 				/* Trouble accessing directory */
@@ -3064,6 +3067,10 @@ main(int argc, char *argv[])
 						progname, xlog_dir, strerror(errno));
 				exit_nicely();
 		}
+
+		/* form name of the place where the symlink must go */
+		linkloc = (char *) pg_malloc(strlen(pg_data) + 8 + 1);
+		sprintf(linkloc, "%s/pg_xlog", pg_data);
 
 #ifdef HAVE_SYMLINK
 		if (symlink(xlog_dir, linkloc) != 0)
