@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.581 2008/04/21 09:44:47 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.582 2008/06/04 03:16:02 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -62,6 +62,371 @@ do it for earlier branch release files.
    that item.  Of course all changes involve community discussion and patch
    review, so each item is truly a community effort.
   </para>
+
+ <sect1 id="release-8-3-2">
+  <title>Release 8.3.2</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-06-09</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.3.1.
+   For information about new features in the 8.3 major release, see
+   <xref linkend="release-8-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.3.2</title>
+
+   <para>
+    A dump/restore is not required for those running 8.3.X.
+    However, if you are upgrading from a version earlier than 8.3.1,
+    see the release notes for 8.3.1.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix <literal>ERRORDATA_STACK_SIZE exceeded</literal> crash that
+      occurred on Windows when using UTF-8 database encoding and a different
+      client encoding (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect archive truncation point calculation for the
+      <literal>%r</> macro in <varname>recovery_command</> parameters
+      (Simon)
+     </para>
+
+     <para>
+      This could lead to data loss if a warm-standby script relied on
+      <literal>%r</> to decide when to throw away WAL segment files.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>ALTER TABLE ADD COLUMN ... PRIMARY KEY</> so that the new
+      column is correctly checked to see if it's been initialized to all
+      non-nulls (Brendan Jurd)
+     </para>
+
+     <para>
+      Previous versions neglected to check this requirement at all.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>REASSIGN OWNED</> so that it works on procedural
+      languages too (Alvaro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix problems with <command>SELECT FOR UPDATE/SHARE</> occurring as a
+      subquery in a query with a non-<command>SELECT</> top-level operation
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible <command>CREATE TABLE</> failure when inheriting the
+      <quote>same</> constraint from multiple parent relations that
+      inherited that constraint from a common ancestor (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>pg_get_ruledef()</> to show the alias, if any, attached
+      to the target table of an <command>UPDATE</> or <command>DELETE</>
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Restore the pre-8.3 behavior that an out-of-range block number in a
+      TID being used in a TidScan plan results in silently not matching any
+      rows (Tom)
+     </para>
+
+     <para>
+      8.3.0 and 8.3.1 threw an error instead.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix GIN bug that could result in a <literal>too many LWLocks
+      taken</literal> failure (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix broken GiST comparison function for <type>tsquery</> (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>tsvector_update_trigger()</> and <function>ts_stat()</>
+      to accept domains over the types they expect to work with (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix failure to support enum data types as foreign keys (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid possible crash when decompressing corrupted data
+      (Zdenek Kotala)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix race conditions between delayed unlinks and <command>DROP
+      DATABASE</> (Heikki)
+     </para>
+
+     <para>
+      In the worst case this could result in deleting a newly created table
+      in a new database that happened to get the same OID as the
+      recently-dropped one; but of course that is an extremely
+      low-probability scenario.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Repair two places where SIGTERM exit of a backend could leave corrupted
+      state in shared memory (Tom)
+     </para>
+
+     <para>
+      Neither case is very important if SIGTERM is used to shut down the
+      whole database cluster together, but there was a problem if someone
+      tried to SIGTERM individual backends.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash due to incorrect plan generated for an
+      <literal><replaceable>x</> IN (SELECT <replaceable>y</>
+      FROM ...)</literal> clause when <replaceable>x</> and <replaceable>y</>
+      have different data types; and make sure the behavior is semantically
+      correct when the conversion from <replaceable>y</>'s type to
+      <replaceable>x</>'s type is lossy (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix oversight that prevented the planner from substituting known Param
+      values as if they were constants (Tom)
+     </para>
+
+     <para>
+      This mistake partially disabled optimization of unnamed
+      extended-Query statements in 8.3.0 and 8.3.1: in particular the
+      LIKE-to-indexscan optimization would never be applied if the LIKE
+      pattern was passed as a parameter, and constraint exclusion
+      depending on a parameter value didn't work either.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner failure when an indexable <function>MIN</> or
+      <function>MAX</> aggregate is used with <literal>DISTINCT</> or
+      <literal>ORDER BY</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner to ensure it never uses a <quote>physical tlist</> for a
+      plan node that is feeding a Sort node (Tom)
+     </para>
+
+     <para>
+      This led to the sort having to push around more data than it really
+      needed to, since unused column values were included in the sorted
+      data.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unnecessary copying of query strings (Tom)
+     </para>
+
+     <para>
+      This fixes a performance problem introduced in 8.3.0 when a very large
+      number of commands are submitted as a single query string.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <function>TransactionIdIsCurrentTransactionId()</> use binary
+      search instead of linear search when checking child-transaction XIDs
+      (Heikki)
+     </para>
+
+     <para>
+      This fixes some cases in which 8.3.0 was significantly
+      slower than earlier releases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix conversions between ISO-8859-5 and other encodings to handle
+      Cyrillic <quote>Yo</> characters (<literal>e</> and <literal>E</> with
+      two dots) (Sergey Burladyan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix several datatype input functions, notably <function>array_in()</>,
+      that were allowing unused bytes in their results to contain
+      uninitialized, unpredictable values (Tom)
+     </para>
+
+     <para>
+      This could lead to failures in which two apparently identical literal
+      values were not seen as equal, resulting in the parser complaining
+      about unmatched <literal>ORDER BY</> and <literal>DISTINCT</>
+      expressions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a corner case in regular-expression substring matching
+      (<literal>substring(<replaceable>string</> from
+      <replaceable>pattern</>)</literal>) (Tom)
+     </para>
+
+     <para>
+      The problem occurs when there is a match to the pattern overall but
+      the user has specified a parenthesized subexpression and that
+      subexpression hasn't got a match.  An example is
+      <literal>substring('foo' from 'foo(bar)?')</>.
+      This should return NULL, since <literal>(bar)</> isn't matched, but
+      it was mistakenly returning the whole-pattern match instead (ie,
+      <literal>foo</>).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent cancellation of an auto-vacuum that was launched to prevent
+      XID wraparound (Alvaro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve <command>ANALYZE</>'s handling of in-doubt tuples (those
+      inserted or deleted by a not-yet-committed transaction) so that the
+      counts it reports to the stats collector are more likely to be correct
+      (Pavan Deolasee)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>initdb</> to reject a relative path for its
+      <literal>--xlogdir</> (<literal>-X</>) option (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>psql</> print tab characters as an appropriate
+      number of spaces, rather than <literal>\x09</literal> as was done in
+      8.3.0 and 8.3.1 (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2008c (for
+      DST law changes in Morocco, Iraq, Choibalsan, Pakistan, Syria, Cuba, and
+      Argentina/San_Luis)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <function>ECPGget_PGconn()</> function to
+      <application>ecpglib</> (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect result from <application>ecpg</>'s
+      <function>PGTYPEStimestamp_sub()</> function (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of continuation line markers in <application>ecpg</>
+      (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crashes in <filename>contrib/cube</> functions (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix core dump in <filename>contrib/xml2</>'s
+      <function>xpath_table()</> function when the input query returns a
+      NULL value (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/xml2</>'s makefile to not override
+      <literal>CFLAGS</>, and make it auto-configure properly for
+      <application>libxslt</> present or not (Tom)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-3-1">
   <title>Release 8.3.1</title>
@@ -212,7 +577,7 @@ do it for earlier branch release files.
      </para>
 
      <para>
-      This was formerly allowed but trying to do it had various unpleasant 
+      This was formerly allowed but trying to do it had various unpleasant
       consequences, notably that the originating backend could not exit
       as long as an <command>UNLISTEN</> remained uncommitted.
      </para>
@@ -2984,6 +3349,201 @@ current_date &lt; 2017-11-17
   </sect2>
  </sect1>
 
+ <sect1 id="release-8-2-8">
+  <title>Release 8.2.8</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-06-09</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.2.7.
+   For information about new features in the 8.2 major release, see
+   <xref linkend="release-8-2">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.2.8</title>
+
+   <para>
+    A dump/restore is not required for those running 8.2.X.
+    However, if you are upgrading from a version earlier than 8.2.7,
+    see the release notes for 8.2.7.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix <literal>ERRORDATA_STACK_SIZE exceeded</literal> crash that
+      occurred on Windows when using UTF-8 database encoding and a different
+      client encoding (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>ALTER TABLE ADD COLUMN ... PRIMARY KEY</> so that the new
+      column is correctly checked to see if it's been initialized to all
+      non-nulls (Brendan Jurd)
+     </para>
+
+     <para>
+      Previous versions neglected to check this requirement at all.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible <command>CREATE TABLE</> failure when inheriting the
+      <quote>same</> constraint from multiple parent relations that
+      inherited that constraint from a common ancestor (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>pg_get_ruledef()</> to show the alias, if any, attached
+      to the target table of an <command>UPDATE</> or <command>DELETE</>
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix GIN bug that could result in a <literal>too many LWLocks
+      taken</literal> failure (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid possible crash when decompressing corrupted data
+      (Zdenek Kotala)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Repair two places where SIGTERM exit of a backend could leave corrupted
+      state in shared memory (Tom)
+     </para>
+
+     <para>
+      Neither case is very important if SIGTERM is used to shut down the
+      whole database cluster together, but there was a problem if someone
+      tried to SIGTERM individual backends.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix conversions between ISO-8859-5 and other encodings to handle
+      Cyrillic <quote>Yo</> characters (<literal>e</> and <literal>E</> with
+      two dots) (Sergey Burladyan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix several datatype input functions, notably <function>array_in()</>,
+      that were allowing unused bytes in their results to contain
+      uninitialized, unpredictable values (Tom)
+     </para>
+
+     <para>
+      This could lead to failures in which two apparently identical literal
+      values were not seen as equal, resulting in the parser complaining
+      about unmatched <literal>ORDER BY</> and <literal>DISTINCT</>
+      expressions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a corner case in regular-expression substring matching
+      (<literal>substring(<replaceable>string</> from
+      <replaceable>pattern</>)</literal>) (Tom)
+     </para>
+
+     <para>
+      The problem occurs when there is a match to the pattern overall but
+      the user has specified a parenthesized subexpression and that
+      subexpression hasn't got a match.  An example is
+      <literal>substring('foo' from 'foo(bar)?')</>.
+      This should return NULL, since <literal>(bar)</> isn't matched, but
+      it was mistakenly returning the whole-pattern match instead (ie,
+      <literal>foo</>).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2008c (for
+      DST law changes in Morocco, Iraq, Choibalsan, Pakistan, Syria, Cuba, and
+      Argentina/San_Luis)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect result from <application>ecpg</>'s
+      <function>PGTYPEStimestamp_sub()</> function (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix broken GiST comparison function for <filename>contrib/tsearch2</>'s
+      <type>tsquery</> type (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crashes in <filename>contrib/cube</> functions (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix core dump in <filename>contrib/xml2</>'s
+      <function>xpath_table()</> function when the input query returns a
+      NULL value (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/xml2</>'s makefile to not override
+      <literal>CFLAGS</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <literal>DatumGetBool</> macro to not fail with <application>gcc</>
+      4.3 (Tom)
+     </para>
+
+     <para>
+      This problem affects <quote>old style</> (V0) C functions that
+      return boolean.  The fix is already in 8.3, but the need to
+      back-patch it was not realized at the time.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-2-7">
   <title>Release 8.2.7</title>
 
@@ -3068,7 +3628,7 @@ current_date &lt; 2017-11-17
      </para>
 
      <para>
-      This was formerly allowed but trying to do it had various unpleasant 
+      This was formerly allowed but trying to do it had various unpleasant
       consequences, notably that the originating backend could not exit
       as long as an <command>UNLISTEN</> remained uncommitted.
      </para>
@@ -3244,7 +3804,7 @@ current_date &lt; 2017-11-17
      <para>
       This failure has only been observed to occur when a user-defined
       datatype's output routine issues a NOTICE, but there is no
-      guaranteee it couldn't happen due to other causes.
+      guarantee it couldn't happen due to other causes.
      </para>
     </listitem>
 
@@ -6762,6 +7322,256 @@ current_date &lt; 2017-11-17
   </sect2>
  </sect1>
 
+ <sect1 id="release-8-1-12">
+  <title>Release 8.1.12</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-06-09</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.1.11.
+   For information about new features in the 8.1 major release, see
+   <xref linkend="release-8-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.1.12</title>
+
+   <para>
+    A dump/restore is not required for those running 8.1.X.
+    However, if you are upgrading from a version earlier than 8.1.2,
+    see the release notes for 8.1.2.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix <command>ALTER TABLE ADD COLUMN ... PRIMARY KEY</> so that the new
+      column is correctly checked to see if it's been initialized to all
+      non-nulls (Brendan Jurd)
+     </para>
+
+     <para>
+      Previous versions neglected to check this requirement at all.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible <command>CREATE TABLE</> failure when inheriting the
+      <quote>same</> constraint from multiple parent relations that
+      inherited that constraint from a common ancestor (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix conversions between ISO-8859-5 and other encodings to handle
+      Cyrillic <quote>Yo</> characters (<literal>e</> and <literal>E</> with
+      two dots) (Sergey Burladyan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a few datatype input functions
+      that were allowing unused bytes in their results to contain
+      uninitialized, unpredictable values (Tom)
+     </para>
+
+     <para>
+      This could lead to failures in which two apparently identical literal
+      values were not seen as equal, resulting in the parser complaining
+      about unmatched <literal>ORDER BY</> and <literal>DISTINCT</>
+      expressions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a corner case in regular-expression substring matching
+      (<literal>substring(<replaceable>string</> from
+      <replaceable>pattern</>)</literal>) (Tom)
+     </para>
+
+     <para>
+      The problem occurs when there is a match to the pattern overall but
+      the user has specified a parenthesized subexpression and that
+      subexpression hasn't got a match.  An example is
+      <literal>substring('foo' from 'foo(bar)?')</>.
+      This should return NULL, since <literal>(bar)</> isn't matched, but
+      it was mistakenly returning the whole-pattern match instead (ie,
+      <literal>foo</>).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2008c (for
+      DST law changes in Morocco, Iraq, Choibalsan, Pakistan, Syria, Cuba,
+      Argentina/San_Luis, and Chile)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect result from <application>ecpg</>'s
+      <function>PGTYPEStimestamp_sub()</> function (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix core dump in <filename>contrib/xml2</>'s
+      <function>xpath_table()</> function when the input query returns a
+      NULL value (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/xml2</>'s makefile to not override
+      <literal>CFLAGS</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <literal>DatumGetBool</> macro to not fail with <application>gcc</>
+      4.3 (Tom)
+     </para>
+
+     <para>
+      This problem affects <quote>old style</> (V0) C functions that
+      return boolean.  The fix is already in 8.3, but the need to
+      back-patch it was not realized at the time.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix longstanding <command>LISTEN</>/<command>NOTIFY</>
+      race condition (Tom)
+     </para>
+
+     <para>
+      In rare cases a session that had just executed a
+      <command>LISTEN</> might not get a notification, even though
+      one would be expected because the concurrent transaction executing
+      <command>NOTIFY</> was observed to commit later.
+     </para>
+
+     <para>
+      A side effect of the fix is that a transaction that has executed
+      a not-yet-committed <command>LISTEN</> command will not see any
+      row in <structname>pg_listener</> for the <command>LISTEN</>,
+      should it choose to look; formerly it would have.  This behavior
+      was never documented one way or the other, but it is possible that
+      some applications depend on the old behavior.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>LISTEN</> and <command>UNLISTEN</> within a
+      prepared transaction (Tom)
+     </para>
+
+     <para>
+      This was formerly allowed but trying to do it had various unpleasant
+      consequences, notably that the originating backend could not exit
+      as long as an <command>UNLISTEN</> remained uncommitted.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix rare crash when an error occurs during a query using a hash index
+      (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix input of datetime values for February 29 in years BC (Tom)
+     </para>
+
+     <para>
+      The former coding was mistaken about which years were leap years.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>unrecognized node type</> error in some variants of
+      <command>ALTER OWNER</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_ctl</> to correctly extract the postmaster's port
+      number from command-line options (Itagaki Takahiro, Tom)
+     </para>
+
+     <para>
+      Previously, <literal>pg_ctl start -w</> could try to contact the
+      postmaster on the wrong port, leading to bogus reports of startup
+      failure.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use <option>-fwrapv</> to defend against possible misoptimization
+      in recent <application>gcc</> versions (Tom)
+     </para>
+
+     <para>
+      This is known to be necessary when building <productname>PostgreSQL</>
+      with <application>gcc</> 4.3 or later.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix display of constant expressions in <literal>ORDER BY</>
+      and <literal>GROUP BY</> (Tom)
+     </para>
+
+     <para>
+      An explictly casted constant would be shown incorrectly.  This could
+      for example lead to corruption of a view definition during
+      dump and reload.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>libpq</> to handle NOTICE messages correctly
+      during COPY OUT (Tom)
+     </para>
+
+     <para>
+      This failure has only been observed to occur when a user-defined
+      datatype's output routine issues a NOTICE, but there is no
+      guarantee it couldn't happen due to other causes.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-1-11">
   <title>Release 8.1.11</title>
 
@@ -10186,6 +10996,243 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
     </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-8-0-16">
+  <title>Release 8.0.16</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-06-09</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.0.15.
+   For information about new features in the 8.0 major release, see
+   <xref linkend="release-8-0">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.0.16</title>
+
+   <para>
+    A dump/restore is not required for those running 8.0.X.
+    However, if you are upgrading from a version earlier than 8.0.6,
+    see the release notes for 8.0.6.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix <command>ALTER TABLE ADD COLUMN ... PRIMARY KEY</> so that the new
+      column is correctly checked to see if it's been initialized to all
+      non-nulls (Brendan Jurd)
+     </para>
+
+     <para>
+      Previous versions neglected to check this requirement at all.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible <command>CREATE TABLE</> failure when inheriting the
+      <quote>same</> constraint from multiple parent relations that
+      inherited that constraint from a common ancestor (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix conversions between ISO-8859-5 and other encodings to handle
+      Cyrillic <quote>Yo</> characters (<literal>e</> and <literal>E</> with
+      two dots) (Sergey Burladyan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a few datatype input functions
+      that were allowing unused bytes in their results to contain
+      uninitialized, unpredictable values (Tom)
+     </para>
+
+     <para>
+      This could lead to failures in which two apparently identical literal
+      values were not seen as equal, resulting in the parser complaining
+      about unmatched <literal>ORDER BY</> and <literal>DISTINCT</>
+      expressions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a corner case in regular-expression substring matching
+      (<literal>substring(<replaceable>string</> from
+      <replaceable>pattern</>)</literal>) (Tom)
+     </para>
+
+     <para>
+      The problem occurs when there is a match to the pattern overall but
+      the user has specified a parenthesized subexpression and that
+      subexpression hasn't got a match.  An example is
+      <literal>substring('foo' from 'foo(bar)?')</>.
+      This should return NULL, since <literal>(bar)</> isn't matched, but
+      it was mistakenly returning the whole-pattern match instead (ie,
+      <literal>foo</>).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2008c (for
+      DST law changes in Morocco, Iraq, Choibalsan, Pakistan, Syria, Cuba,
+      Argentina/San_Luis, and Chile)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect result from <application>ecpg</>'s
+      <function>PGTYPEStimestamp_sub()</> function (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix core dump in <filename>contrib/xml2</>'s
+      <function>xpath_table()</> function when the input query returns a
+      NULL value (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/xml2</>'s makefile to not override
+      <literal>CFLAGS</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <literal>DatumGetBool</> macro to not fail with <application>gcc</>
+      4.3 (Tom)
+     </para>
+
+     <para>
+      This problem affects <quote>old style</> (V0) C functions that
+      return boolean.  The fix is already in 8.3, but the need to
+      back-patch it was not realized at the time.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix longstanding <command>LISTEN</>/<command>NOTIFY</>
+      race condition (Tom)
+     </para>
+
+     <para>
+      In rare cases a session that had just executed a
+      <command>LISTEN</> might not get a notification, even though
+      one would be expected because the concurrent transaction executing
+      <command>NOTIFY</> was observed to commit later.
+     </para>
+
+     <para>
+      A side effect of the fix is that a transaction that has executed
+      a not-yet-committed <command>LISTEN</> command will not see any
+      row in <structname>pg_listener</> for the <command>LISTEN</>,
+      should it choose to look; formerly it would have.  This behavior
+      was never documented one way or the other, but it is possible that
+      some applications depend on the old behavior.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix rare crash when an error occurs during a query using a hash index
+      (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix input of datetime values for February 29 in years BC (Tom)
+     </para>
+
+     <para>
+      The former coding was mistaken about which years were leap years.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>unrecognized node type</> error in some variants of
+      <command>ALTER OWNER</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_ctl</> to correctly extract the postmaster's port
+      number from command-line options (Itagaki Takahiro, Tom)
+     </para>
+
+     <para>
+      Previously, <literal>pg_ctl start -w</> could try to contact the
+      postmaster on the wrong port, leading to bogus reports of startup
+      failure.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use <option>-fwrapv</> to defend against possible misoptimization
+      in recent <application>gcc</> versions (Tom)
+     </para>
+
+     <para>
+      This is known to be necessary when building <productname>PostgreSQL</>
+      with <application>gcc</> 4.3 or later.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix display of constant expressions in <literal>ORDER BY</>
+      and <literal>GROUP BY</> (Tom)
+     </para>
+
+     <para>
+      An explictly casted constant would be shown incorrectly.  This could
+      for example lead to corruption of a view definition during
+      dump and reload.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>libpq</> to handle NOTICE messages correctly
+      during COPY OUT (Tom)
+     </para>
+
+     <para>
+      This failure has only been observed to occur when a user-defined
+      datatype's output routine issues a NOTICE, but there is no
+      guarantee it couldn't happen due to other causes.
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
   </sect2>
  </sect1>
@@ -14043,6 +15090,151 @@ typedefs (Michael)</para></listitem>
 
     </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-7-4-20">
+  <title>Release 7.4.20</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-06-09</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.19.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.20</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.11,
+    see the release notes for 7.4.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix conversions between ISO-8859-5 and other encodings to handle
+      Cyrillic <quote>Yo</> characters (<literal>e</> and <literal>E</> with
+      two dots) (Sergey Burladyan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a few datatype input functions
+      that were allowing unused bytes in their results to contain
+      uninitialized, unpredictable values (Tom)
+     </para>
+
+     <para>
+      This could lead to failures in which two apparently identical literal
+      values were not seen as equal, resulting in the parser complaining
+      about unmatched <literal>ORDER BY</> and <literal>DISTINCT</>
+      expressions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a corner case in regular-expression substring matching
+      (<literal>substring(<replaceable>string</> from
+      <replaceable>pattern</>)</literal>) (Tom)
+     </para>
+
+     <para>
+      The problem occurs when there is a match to the pattern overall but
+      the user has specified a parenthesized subexpression and that
+      subexpression hasn't got a match.  An example is
+      <literal>substring('foo' from 'foo(bar)?')</>.
+      This should return NULL, since <literal>(bar)</> isn't matched, but
+      it was mistakenly returning the whole-pattern match instead (ie,
+      <literal>foo</>).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect result from <application>ecpg</>'s
+      <function>PGTYPEStimestamp_sub()</> function (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <literal>DatumGetBool</> macro to not fail with <application>gcc</>
+      4.3 (Tom)
+     </para>
+
+     <para>
+      This problem affects <quote>old style</> (V0) C functions that
+      return boolean.  The fix is already in 8.3, but the need to
+      back-patch it was not realized at the time.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix longstanding <command>LISTEN</>/<command>NOTIFY</>
+      race condition (Tom)
+     </para>
+
+     <para>
+      In rare cases a session that had just executed a
+      <command>LISTEN</> might not get a notification, even though
+      one would be expected because the concurrent transaction executing
+      <command>NOTIFY</> was observed to commit later.
+     </para>
+
+     <para>
+      A side effect of the fix is that a transaction that has executed
+      a not-yet-committed <command>LISTEN</> command will not see any
+      row in <structname>pg_listener</> for the <command>LISTEN</>,
+      should it choose to look; formerly it would have.  This behavior
+      was never documented one way or the other, but it is possible that
+      some applications depend on the old behavior.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix display of constant expressions in <literal>ORDER BY</>
+      and <literal>GROUP BY</> (Tom)
+     </para>
+
+     <para>
+      An explictly casted constant would be shown incorrectly.  This could
+      for example lead to corruption of a view definition during
+      dump and reload.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>libpq</> to handle NOTICE messages correctly
+      during COPY OUT (Tom)
+     </para>
+
+     <para>
+      This failure has only been observed to occur when a user-defined
+      datatype's output routine issues a NOTICE, but there is no
+      guarantee it couldn't happen due to other causes.
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
   </sect2>
  </sect1>
