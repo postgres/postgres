@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.60 2008/04/21 09:44:54 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.61 2008/06/04 03:17:01 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -34,6 +34,179 @@ do it for earlier branch release files.
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <para>
+   The release notes contain the significant changes in each
+   <productname>PostgreSQL</> release, with major features and migration
+   issues listed at the top.  The release notes do not contain changes
+   that affect only a few users or changes that are internal and therefore not
+   user-visible.  For example, the optimizer is improved in almost every
+   release, but the improvements are usually observed by users as simply
+   faster queries.
+  </para>
+
+  <para>
+   A complete list of changes for each release can be obtained by
+   viewing the <link linkend="cvs">CVS</link> logs for each release.
+   The <ulink
+   url="http://archives.postgresql.org/pgsql-committers/">pgsql-committers
+   email list</ulink> contains all source code changes as well.  There is also
+   a <ulink url="http://developer.postgresql.org/cvsweb.cgi/pgsql/">web
+   interface</ulink> that shows changes to specific files.
+   <!-- we need a file containing the CVS logs for each release, and something
+   like the SVN web interface that groups commits but has branches -->
+  </para>
+
+  <para>
+   The name appearing next to each item represents the major developer for
+   that item.  Of course all changes involve community discussion and patch
+   review, so each item is truly a community effort.
+  </para>
+
+ <sect1 id="release-7-4-20">
+  <title>Release 7.4.20</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-06-09</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.19.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.20</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.11,
+    see the release notes for 7.4.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix conversions between ISO-8859-5 and other encodings to handle
+      Cyrillic <quote>Yo</> characters (<literal>e</> and <literal>E</> with
+      two dots) (Sergey Burladyan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a few datatype input functions
+      that were allowing unused bytes in their results to contain
+      uninitialized, unpredictable values (Tom)
+     </para>
+
+     <para>
+      This could lead to failures in which two apparently identical literal
+      values were not seen as equal, resulting in the parser complaining
+      about unmatched <literal>ORDER BY</> and <literal>DISTINCT</>
+      expressions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a corner case in regular-expression substring matching
+      (<literal>substring(<replaceable>string</> from
+      <replaceable>pattern</>)</literal>) (Tom)
+     </para>
+
+     <para>
+      The problem occurs when there is a match to the pattern overall but
+      the user has specified a parenthesized subexpression and that
+      subexpression hasn't got a match.  An example is
+      <literal>substring('foo' from 'foo(bar)?')</>.
+      This should return NULL, since <literal>(bar)</> isn't matched, but
+      it was mistakenly returning the whole-pattern match instead (ie,
+      <literal>foo</>).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect result from <application>ecpg</>'s
+      <function>PGTYPEStimestamp_sub()</> function (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <literal>DatumGetBool</> macro to not fail with <application>gcc</>
+      4.3 (Tom)
+     </para>
+
+     <para>
+      This problem affects <quote>old style</> (V0) C functions that
+      return boolean.  The fix is already in 8.3, but the need to
+      back-patch it was not realized at the time.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix longstanding <command>LISTEN</>/<command>NOTIFY</>
+      race condition (Tom)
+     </para>
+
+     <para>
+      In rare cases a session that had just executed a
+      <command>LISTEN</> might not get a notification, even though
+      one would be expected because the concurrent transaction executing
+      <command>NOTIFY</> was observed to commit later.
+     </para>
+
+     <para>
+      A side effect of the fix is that a transaction that has executed
+      a not-yet-committed <command>LISTEN</> command will not see any
+      row in <structname>pg_listener</> for the <command>LISTEN</>,
+      should it choose to look; formerly it would have.  This behavior
+      was never documented one way or the other, but it is possible that
+      some applications depend on the old behavior.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix display of constant expressions in <literal>ORDER BY</>
+      and <literal>GROUP BY</> (Tom)
+     </para>
+
+     <para>
+      An explictly casted constant would be shown incorrectly.  This could
+      for example lead to corruption of a view definition during
+      dump and reload.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>libpq</> to handle NOTICE messages correctly
+      during COPY OUT (Tom)
+     </para>
+
+     <para>
+      This failure has only been observed to occur when a user-defined
+      datatype's output routine issues a NOTICE, but there is no
+      guarantee it couldn't happen due to other causes.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-7-4-19">
   <title>Release 7.4.19</title>
