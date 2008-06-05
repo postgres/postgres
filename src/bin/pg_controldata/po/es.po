@@ -3,7 +3,7 @@
 #  Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2008
 #
 # pgtranslation Id: pg_controldata.po,v 1.5 2008/01/30 15:09:56 alvherre Exp $
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/es.po,v 1.10.2.1 2008/03/14 04:46:30 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/es.po,v 1.10.2.2 2008/06/05 23:36:45 tgl Exp $
 #
 msgid ""
 msgstr ""

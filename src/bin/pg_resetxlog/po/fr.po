@@ -1,22 +1,23 @@
-# translation of pg_resetxlog.po to
-# translation of pg_resetxlog-fr.po to
+# translation of pg_resetxlog-fr.po to FR_fr
 # French message translation file for pg_resetxlog
 #
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/po/fr.po,v 1.11.2.1 2008/06/05 23:36:45 tgl Exp $
+#
 # Use these quotes: « %s »
-# Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
+# Guillaume Lelarge <guillaume@lelarge.info>, 2004-2008.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_resetxlog\n"
+"Project-Id-Version: pg_resetxlog-83-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-11-19 16:29-0400\n"
-"PO-Revision-Date: 2007-11-25 11:22+0100\n"
+"POT-Creation-Date: 2008-03-14 17:20-0300\n"
+"PO-Revision-Date: 2008-03-28 22:30+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
-"Language-Team:  <fr@li.org>\n"
+"Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"X-Generator: KBabel 1.10.2\n"
 
 #: pg_resetxlog.c:126
 #, c-format
@@ -124,8 +125,7 @@ msgid ""
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
 "%s : le verrou « %s » existe\n"
-"Le serveur est-il démarré ? Sinon, supprimez le fichier de verrouillage et\n"
-"réessayez.\n"
+"Le serveur est-il démarré ? Sinon, supprimez le verrou et réessayez.\n"
 
 #: pg_resetxlog.c:332
 #, c-format
@@ -272,17 +272,17 @@ msgstr "Taille du bloc de la base de données :                  %u\n"
 #: pg_resetxlog.c:567
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "Blocs par segment d'une relation volumineuse :          %u\n"
+msgstr "Blocs par segment des relations volumineuses :          %u\n"
 
 #: pg_resetxlog.c:569
 #, c-format
 msgid "WAL block size:                       %u\n"
-msgstr "Taille du bloc des WAL :                                %u\n"
+msgstr "Taille de bloc du journal de transaction :              %u\n"
 
 #: pg_resetxlog.c:571
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
-msgstr "Octets par segment :                                    %u\n"
+msgstr "Octets par segment du journal de transaction :          %u\n"
 
 #: pg_resetxlog.c:573
 #, c-format
@@ -306,7 +306,7 @@ msgstr "Stockage du type date/heure :                           %s\n"
 
 #: pg_resetxlog.c:580
 msgid "64-bit integers"
-msgstr "entiers 64-bit"
+msgstr "entiers 64-bits"
 
 #: pg_resetxlog.c:580
 msgid "floating-point numbers"
@@ -452,12 +452,12 @@ msgstr ""
 #: pg_resetxlog.c:941
 #, c-format
 msgid "  --help          show this help, then exit\n"
-msgstr "  --help          affiche cette aide puis quitte\n"
+msgstr "  --help          affiche cette aide, puis quitte\n"
 
 #: pg_resetxlog.c:942
 #, c-format
 msgid "  --version       output version information, then exit\n"
-msgstr "  --version       affiche la version puis quitte\n"
+msgstr "  --version       affiche la version, puis quitte\n"
 
 #: pg_resetxlog.c:943
 #, c-format
@@ -467,4 +467,3 @@ msgid ""
 msgstr ""
 "\n"
 "Rapportez les bogues à <pgsql-bugs@postgresql.org>.\n"
-

@@ -1,24 +1,23 @@
-# translation of pg_config.po to
-# translation of pg_config-fr.po to
+# translation of pg_config-fr.po to FR_fr
 # French message translation file for pg_config
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.9 2007/11/29 08:50:34 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.9.2.1 2008/06/05 23:36:45 tgl Exp $
 #
 # Use these quotes: « %s »
-# Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
+# Guillaume Lelarge <guillaume@lelarge.info>, 2004-2008.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config\n"
+"Project-Id-Version: pg_config-83-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-06-07 07:16-0300\n"
-"PO-Revision-Date: 2007-11-22 13:18+0100\n"
+"POT-Creation-Date: 2008-03-14 17:20-0300\n"
+"PO-Revision-Date: 2008-03-28 22:30+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
-"Language-Team:  <fr@li.org>\n"
+"Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"X-Generator: KBabel 1.10.2\n"
 
 #: pg_config.c:231
 #: pg_config.c:247
@@ -225,7 +224,7 @@ msgstr "Rapportez les bogues à <pgsql-bugs@postgresql.org>.\n"
 #: pg_config.c:433
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez « %s --help » pour plus informations\n"
+msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
 #: pg_config.c:472
 #, c-format

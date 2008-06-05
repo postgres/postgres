@@ -8569,11 +8569,11 @@ msgstr "sofortiges Herunterfahren verlangt"
 
 #: postmaster/postmaster.c:2099
 msgid "startup process"
-msgstr "Start-Prozess"
+msgstr "Startprozess"
 
 #: postmaster/postmaster.c:2102
 msgid "aborting startup due to startup process failure"
-msgstr "Serverstart abgebrochen wegen Start-Prozess-Fehler"
+msgstr "Serverstart abgebrochen wegen Startprozessfehler"
 
 #: postmaster/postmaster.c:2156
 msgid "database system is ready to accept connections"
@@ -8688,7 +8688,7 @@ msgstr "konnte Serverprozess »%s« nicht ausführen: %m"
 #: postmaster/postmaster.c:4044
 #, c-format
 msgid "could not fork startup process: %m"
-msgstr "konnte Start-Prozess nicht starten (fork-Fehler): %m"
+msgstr "konnte Startprozess nicht starten (fork-Fehler): %m"
 
 #: postmaster/postmaster.c:4048
 #, c-format

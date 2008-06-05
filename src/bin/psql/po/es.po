@@ -3,7 +3,7 @@
 # (c) Diego A. Gil <diego@adminsa.com>, 2005
 #
 # pgtranslation Id: psql.po,v 1.7 2008/01/30 15:09:57 alvherre Exp $
-# $PostgreSQL: pgsql/src/bin/psql/po/es.po,v 1.16.2.1 2008/03/14 04:46:30 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/es.po,v 1.16.2.2 2008/06/05 23:36:45 tgl Exp $
 #
 msgid ""
 msgstr ""
