@@ -1,7 +1,7 @@
 # German message translation file for pg_controldata
 # Peter Eisentraut <peter_e@gmx.net>, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_controldata/po/de.po,v 1.4.4.1 2007/01/31 08:12:55 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_controldata/po/de.po,v 1.4.4.2 2008/06/05 23:38:02 tgl Exp $
 #
 # Use these quotes: »%s«
 #
@@ -56,7 +56,7 @@ msgid ""
 msgstr ""
 "\n"
 "Wenn kein Datenverzeichnis angegeben ist, wird die Umgebungsvariable\n"
-"PGDATA verwendent.\n"
+"PGDATA verwendet.\n"
 "\n"
 
 #: pg_controldata.c:42

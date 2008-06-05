@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/po/de.po,v 1.8.2.6 2007/09/13 20:56:32 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/po/de.po,v 1.8.2.7 2008/06/05 23:38:03 tgl Exp $
 #
 # Use these quotes: »%s«
 #
@@ -597,7 +597,7 @@ msgstr ""
 #: help.c:183
 #, c-format
 msgid "  \\q             quit psql\n"
-msgstr "  \\q           beende psql\n"
+msgstr "  \\q             beende psql\n"
 
 #: help.c:184
 #, c-format
