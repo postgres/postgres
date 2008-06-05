@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.300.2.1 2008/03/06 21:37:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.300.2.2 2008/06/05 19:56:14 alvherre Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -368,7 +368,7 @@ su - postgres
   <procedure>
    <step>
     <para>
-     If making a backup, make sure that your database is being updated.
+     If making a backup, make sure that your database is not being updated.
      This does not affect the integrity of the backup, but the changed
      data would of course not be included. If necessary, edit the
      permissions in the file <filename>/usr/local/pgsql/data/pg_hba.conf</>
