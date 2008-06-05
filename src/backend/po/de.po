@@ -1,7 +1,7 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2003, 2004, 2005.
 #
-# pgtranslation Id: postgres.po,v 1.5.2.9 2007/09/12 11:20:08 petere Exp $
+# pgtranslation Id: postgres.po,v 1.5.2.11 2007/12/05 13:02:50 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-09 07:02-0300\n"
-"PO-Revision-Date: 2007-09-12 13:19+0200\n"
+"PO-Revision-Date: 2007-12-05 13:57+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -5720,12 +5720,12 @@ msgstr "konnte nicht alle von %s abhängenden Objekte löschen"
 #: catalog/dependency.c:330 catalog/dependency.c:742 catalog/pg_shdepend.c:504
 #, c-format
 msgid "cannot drop %s because it is required by the database system"
-msgstr "kann %s nicht löschen, weil es vom Datenbanksystem benötigt wird"
+msgstr "kann %s nicht löschen, wird vom Datenbanksystem benötigt"
 
 #: catalog/dependency.c:469
 #, c-format
 msgid "cannot drop %s because %s requires it"
-msgstr "kann %s nicht löschen, weil es von %s benötigt wird"
+msgstr "kann %s nicht löschen, wird von %s benötigt"
 
 #: catalog/dependency.c:471
 #, c-format
@@ -10100,7 +10100,7 @@ msgid ""
 "aggregate function"
 msgstr ""
 "Spalte »%s.%s« muss in der GROUP-BY-Klausel erscheinen oder in einer "
-"Aggregatfunktion verwendent werden"
+"Aggregatfunktion verwendet werden"
 
 #: parser/parse_agg.c:334
 #, c-format

@@ -6,9 +6,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts-tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-01-06 01:34-0400\n"
-"PO-Revision-Date: 2006-10-05 22:28+0200\n"
-"Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
+"POT-Creation-Date: 2007-12-05 09:15-0400\n"
+"PO-Revision-Date: 2008-01-31 10:34-0800\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -21,11 +21,11 @@ msgstr ""
 
 #: createdb.c:102
 #: createdb.c:121
-#: createlang.c:85
-#: createlang.c:106
-#: createlang.c:152
-#: createuser.c:157
-#: createuser.c:172
+#: createlang.c:86
+#: createlang.c:107
+#: createlang.c:153
+#: createuser.c:150
+#: createuser.c:165
 #: dropdb.c:84
 #: dropdb.c:93
 #: dropdb.c:101
@@ -45,8 +45,8 @@ msgid "Try \"%s --help\" for more information.\n"
 msgstr "Daha fazla bilgi için \"%s --help\" komutunu deneyiniz.\n"
 
 #: createdb.c:119
-#: createlang.c:104
-#: createuser.c:170
+#: createlang.c:105
+#: createuser.c:163
 #: dropdb.c:99
 #: droplang.c:115
 #: dropuser.c:97
@@ -67,12 +67,12 @@ msgstr "%s: \"%s\" geçerli bir dil kodlaması değil\n"
 msgid "%s: database creation failed: %s"
 msgstr "%s: veritabanı yaratma başarısız oldu: %s"
 
-#: createdb.c:198
+#: createdb.c:197
 #, c-format
 msgid "%s: comment creation failed (database was created): %s"
 msgstr "%s: yorum yaratma işlemi başarısız oldu (veritabanı yaratıldı): %s"
 
-#: createdb.c:220
+#: createdb.c:218
 #, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
@@ -81,12 +81,12 @@ msgstr ""
 "%s bir PostgreSQL veritabanı yaratır.\n"
 "\n"
 
-#: createdb.c:221
+#: createdb.c:219
 #: createlang.c:204
-#: createuser.c:313
-#: dropdb.c:146
+#: createuser.c:304
+#: dropdb.c:148
 #: droplang.c:321
-#: dropuser.c:145
+#: dropuser.c:147
 #: clusterdb.c:234
 #: vacuumdb.c:260
 #: reindexdb.c:332
@@ -94,17 +94,17 @@ msgstr ""
 msgid "Usage:\n"
 msgstr "Kullanımı:\n"
 
-#: createdb.c:222
+#: createdb.c:220
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [SEÇENEK]... [VERİTABANI_ADI] [TANIM]\n"
 
-#: createdb.c:223
+#: createdb.c:221
 #: createlang.c:206
-#: createuser.c:315
-#: dropdb.c:148
+#: createuser.c:306
+#: dropdb.c:150
 #: droplang.c:323
-#: dropuser.c:147
+#: dropuser.c:149
 #: clusterdb.c:236
 #: vacuumdb.c:262
 #: reindexdb.c:334
@@ -116,48 +116,48 @@ msgstr ""
 "\n"
 "Seçenekler:\n"
 
-#: createdb.c:224
+#: createdb.c:222
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=TABLESPACE  veritabanı için öntanımlı tablespace\n"
 
-#: createdb.c:225
+#: createdb.c:223
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  -E, --encoding=ENCODING      veritabanı için dil kodlaması\n"
 
-#: createdb.c:226
+#: createdb.c:224
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr "  -O, --owner=OWNER            Yeni veritabanının sahibi olacak veritabanı kullanıcısı\n"
 
-#: createdb.c:227
+#: createdb.c:225
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=TEMPLATE      kopyalanacak şablon veritabanı\n"
 
-#: createdb.c:228
+#: createdb.c:226
 #, c-format
 msgid "  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo                   sunucuya gönderilen komutları göster\n"
 
-#: createdb.c:229
+#: createdb.c:227
 #, c-format
 msgid "  -q, --quiet                  don't write any messages\n"
 msgstr "  -q, --quiet                  Hiç bir mesaj yazma\n"
 
-#: createdb.c:230
+#: createdb.c:228
 #, c-format
 msgid "  --help                       show this help, then exit\n"
 msgstr "  --help                       bu yardımı göster ve çık\n"
 
-#: createdb.c:231
+#: createdb.c:229
 #, c-format
 msgid "  --version                    output version information, then exit\n"
 msgstr "  --version                    sürüm bilgisini göster ve çık\n"
 
-#: createdb.c:232
-#: createuser.c:335
+#: createdb.c:230
+#: createuser.c:326
 #: clusterdb.c:244
 #: vacuumdb.c:273
 #: reindexdb.c:344
@@ -169,27 +169,27 @@ msgstr ""
 "\n"
 "Bağlantı seçenekleri:\n"
 
-#: createdb.c:233
+#: createdb.c:231
 #, c-format
 msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME          veritabanı sunucusu adresi ya da soket dizini\n"
 
-#: createdb.c:234
+#: createdb.c:232
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              veritabanı sunucu portu\n"
 
-#: createdb.c:235
+#: createdb.c:233
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=KULLANICI_ADI      bağlanılacak kullanıcı adı\n"
 
-#: createdb.c:236
+#: createdb.c:234
 #, c-format
 msgid "  -W, --password               prompt for password\n"
 msgstr "  -W, --password               şifre sormasını sağla\n"
 
-#: createdb.c:237
+#: createdb.c:235
 #, c-format
 msgid ""
 "\n"
@@ -198,12 +198,12 @@ msgstr ""
 "\n"
 "Öntanımlı olarak , mevcut kullanıcı ile aynı adda veritabanı yaratılır.\n"
 
-#: createdb.c:238
+#: createdb.c:236
 #: createlang.c:216
-#: createuser.c:342
-#: dropdb.c:158
+#: createuser.c:333
+#: dropdb.c:160
 #: droplang.c:333
-#: dropuser.c:157
+#: dropuser.c:159
 #: clusterdb.c:250
 #: vacuumdb.c:279
 #: reindexdb.c:350
@@ -215,43 +215,43 @@ msgstr ""
 "\n"
 "Hataları <pgsql-bugs@postgresql.org> adresine bildirebilirsiniz.\n"
 
-#: createlang.c:135
+#: createlang.c:136
 #: droplang.c:146
 msgid "Name"
 msgstr "Adı"
 
-#: createlang.c:135
+#: createlang.c:136
 #: droplang.c:146
 msgid "yes"
 msgstr "evet"
 
-#: createlang.c:135
+#: createlang.c:136
 #: droplang.c:146
 msgid "no"
 msgstr "hayır"
 
-#: createlang.c:135
+#: createlang.c:136
 #: droplang.c:146
 msgid "Trusted?"
 msgstr "Güvenilir mi?"
 
-#: createlang.c:142
+#: createlang.c:143
 #: droplang.c:153
 msgid "Procedural Languages"
 msgstr "Yordamsal Diller"
 
-#: createlang.c:151
+#: createlang.c:152
 #: droplang.c:162
 #, c-format
 msgid "%s: missing required argument language name\n"
 msgstr "%s: Gerekli bir argüman olan dil adı eksik\n"
 
-#: createlang.c:173
+#: createlang.c:174
 #, c-format
 msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
 msgstr "%s: \"%s\" dili daha önceden veritabanına yüklenmiştir \"%s\"\n"
 
-#: createlang.c:187
+#: createlang.c:188
 #, c-format
 msgid "%s: language installation failed: %s"
 msgstr "%s: Dil kurulumu başarısız oldu: %s"
@@ -277,10 +277,10 @@ msgid "  -d, --dbname=DBNAME       database to install language in\n"
 msgstr "  -d, --dbname=VERİTABANI_ADI       dilin kurulacağı veritabanının adı\n"
 
 #: createlang.c:208
-#: createuser.c:331
-#: dropdb.c:149
+#: createuser.c:322
+#: dropdb.c:151
 #: droplang.c:325
-#: dropuser.c:148
+#: dropuser.c:150
 #: clusterdb.c:240
 #: reindexdb.c:340
 #, c-format
@@ -294,10 +294,10 @@ msgid "  -l, --list                show a list of currently installed languages\
 msgstr "  -l, --list                Şu anda kurulu olan dilleri göster\n"
 
 #: createlang.c:210
-#: createuser.c:336
-#: dropdb.c:152
+#: createuser.c:327
+#: dropdb.c:154
 #: droplang.c:327
-#: dropuser.c:151
+#: dropuser.c:153
 #: clusterdb.c:245
 #: vacuumdb.c:274
 #: reindexdb.c:345
@@ -306,10 +306,10 @@ msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME       veritabanı sunucusu adresi ya da soket dizini\n"
 
 #: createlang.c:211
-#: createuser.c:337
-#: dropdb.c:153
+#: createuser.c:328
+#: dropdb.c:155
 #: droplang.c:328
-#: dropuser.c:152
+#: dropuser.c:154
 #: clusterdb.c:246
 #: vacuumdb.c:275
 #: reindexdb.c:346
@@ -318,7 +318,7 @@ msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           veritabanı sunucusunun portu\n"
 
 #: createlang.c:212
-#: dropdb.c:154
+#: dropdb.c:156
 #: droplang.c:329
 #: clusterdb.c:247
 #: vacuumdb.c:276
@@ -328,7 +328,7 @@ msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=KULLANICI_ADI   bağlanılacak kullanıcı adı\n"
 
 #: createlang.c:213
-#: dropdb.c:155
+#: dropdb.c:157
 #: droplang.c:330
 #: clusterdb.c:248
 #: vacuumdb.c:277
@@ -338,10 +338,10 @@ msgid "  -W, --password            prompt for password\n"
 msgstr "  -W, --password            şifre sorulmasını sağla\n"
 
 #: createlang.c:214
-#: createuser.c:333
-#: dropdb.c:156
+#: createuser.c:324
+#: dropdb.c:158
 #: droplang.c:331
-#: dropuser.c:155
+#: dropuser.c:157
 #: clusterdb.c:242
 #: reindexdb.c:342
 #, c-format
@@ -349,56 +349,51 @@ msgid "  --help                    show this help, then exit\n"
 msgstr "  --help                    bu yardımı göster ve çık\n"
 
 #: createlang.c:215
-#: createuser.c:334
-#: dropdb.c:157
+#: createuser.c:325
+#: dropdb.c:159
 #: droplang.c:332
-#: dropuser.c:156
+#: dropuser.c:158
 #: clusterdb.c:243
 #: reindexdb.c:343
 #, c-format
 msgid "  --version                 output version information, then exit\n"
 msgstr "  --version                 sürüm bilgisini göster ve çık\n"
 
-#: createuser.c:177
+#: createuser.c:170
 msgid "Enter name of role to add: "
 msgstr "Eklenecek rol asını girin: "
 
-#: createuser.c:184
+#: createuser.c:177
 msgid "Enter password for new role: "
 msgstr "Yeni rol için şifre girin: "
 
-#: createuser.c:185
+#: createuser.c:178
 msgid "Enter it again: "
 msgstr "Yeniden girin: "
 
-#: createuser.c:188
+#: createuser.c:181
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Şifreler uyuşmadı.\n"
 
-#: createuser.c:197
-msgid "Shall the new role be a superuser?"
-msgstr "Yeni rol superuser olsun mu?"
+#: createuser.c:192
+msgid "Shall the new role be a superuser? (y/n) "
+msgstr "Yeni rol superuser olsun mu?(y/n)"
 
-#: createuser.c:212
-msgid "Shall the new role be allowed to create databases?"
-msgstr "Yeni rol, veritabanı oluşturabilsin mi?"
+#: createuser.c:210
+msgid "Shall the new role be allowed to create databases? (y/n) "
+msgstr "Yeni rol, veritabanı oluşturabilsin mi? (y/n)"
 
-#: createuser.c:220
-msgid "Shall the new role be allowed to create more new roles?"
-msgstr "Yeni rol, yeni rolleri oluşturma hakkına sahip olsun mu?"
+#: createuser.c:221
+msgid "Shall the new role be allowed to create more new roles? (y/n) "
+msgstr "Yeni rol, yeni rolleri oluşturma hakkına sahip olsun mu?(y/n)"
 
-#: createuser.c:253
-#, c-format
-msgid "Password encryption failed.\n"
-msgstr "Parola şifreleme hatası.\n"
-
-#: createuser.c:292
+#: createuser.c:284
 #, c-format
 msgid "%s: creation of new role failed: %s"
 msgstr "%s: yeni rol oluşturma işlemi başarısız oldu: %s"
 
-#: createuser.c:312
+#: createuser.c:303
 #, c-format
 msgid ""
 "%s creates a new PostgreSQL role.\n"
@@ -407,105 +402,105 @@ msgstr ""
 "%s yeni bir PostgreSQL rol oluşturur.\n"
 "\n"
 
-#: createuser.c:314
-#: dropuser.c:146
+#: createuser.c:305
+#: dropuser.c:148
 #, c-format
 msgid "  %s [OPTION]... [ROLENAME]\n"
 msgstr "  %s [SEÇENEKLER]... [ROL_ADI]\n"
 
-#: createuser.c:316
+#: createuser.c:307
 #, c-format
 msgid "  -s, --superuser           role will be superuser\n"
 msgstr "  -s, --superuser           rol, superuser olacaktır\n"
 
-#: createuser.c:317
+#: createuser.c:308
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser\n"
 msgstr "  -S, --no-superuser        rol, superuser olmayacktır\n"
 
-#: createuser.c:318
+#: createuser.c:309
 #, c-format
 msgid "  -d, --createdb            role can create new databases\n"
 msgstr "  -d, --createdb            rol, yeni veritabanı oluşturabiliyor\n"
 
-#: createuser.c:319
+#: createuser.c:310
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases\n"
 msgstr "  -D, --no-createdb         rol, veritabanı oluşturamaz\n"
 
-#: createuser.c:320
+#: createuser.c:311
 #, c-format
 msgid "  -r, --createrole          role can create new roles\n"
 msgstr "  -r, --createrole          rol, yeni rol oluşturabiliyor\n"
 
-#: createuser.c:321
+#: createuser.c:312
 #, c-format
 msgid "  -R, --no-createrole       role cannot create roles\n"
 msgstr "  -R, --no-createrole       rol, başka bir rol oluşturamaz\n"
 
-#: createuser.c:322
+#: createuser.c:313
 #, c-format
 msgid "  -l, --login               role can login (default)\n"
 msgstr "  -l, --login               rol giriş yapabiliyor\n"
 
-#: createuser.c:323
+#: createuser.c:314
 #, c-format
 msgid "  -L, --no-login            role cannot login\n"
 msgstr "  -L, --no-login            role giriş yapamaz\n"
 
-#: createuser.c:324
+#: createuser.c:315
 #, c-format
 msgid ""
 "  -i, --inherit             role inherits privileges of roles it is a\n"
 "                            member of (default)\n"
 msgstr "  -i, --inherit             rol, üye olduğu rollerin (default) yetikelri inherit eder\n"
 
-#: createuser.c:326
+#: createuser.c:317
 #, c-format
 msgid "  -I, --no-inherit          role does not inherit privileges\n"
 msgstr "  -I, --no-inherit          rol, hiçbir yetki inherit etmiyor\n"
 
-#: createuser.c:327
+#: createuser.c:318
 #, c-format
 msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
 msgstr "  -c, --connection-limit=N  rol için azami bağlantı sayısın (varsayılan: sınırsız)\n"
 
-#: createuser.c:328
+#: createuser.c:319
 #, c-format
 msgid "  -P, --pwprompt            assign a password to new role\n"
 msgstr "  -P, --pwprompt            yeni role bir şifre atar\n"
 
-#: createuser.c:329
+#: createuser.c:320
 #, c-format
 msgid "  -E, --encrypted           encrypt stored password\n"
 msgstr "  -E, --encrypted           saklanan şifreleri encrypt eder\n"
 
-#: createuser.c:330
+#: createuser.c:321
 #, c-format
 msgid "  -N, --unencrypted         do not encrypt stored password\n"
 msgstr "  -N, --unencrypted         saklanmış şifreyi kriptolama\n"
 
-#: createuser.c:332
-#: dropdb.c:151
-#: dropuser.c:150
+#: createuser.c:323
+#: dropdb.c:153
+#: dropuser.c:152
 #: clusterdb.c:241
 #: reindexdb.c:341
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet               hiçbir ileti yazmaz\n"
 
-#: createuser.c:338
+#: createuser.c:329
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr "  -U, --username=KULLANICI_ADI   bağlanılacak kullanıcı adı (yaratılacak değil)\n"
 
-#: createuser.c:339
-#: dropuser.c:154
+#: createuser.c:330
+#: dropuser.c:156
 #, c-format
 msgid "  -W, --password            prompt for password to connect\n"
 msgstr "  -W, --password            bağlanmak için şifre sor\n"
 
-#: createuser.c:340
+#: createuser.c:331
 #, c-format
 msgid ""
 "\n"
@@ -521,22 +516,22 @@ msgstr ""
 msgid "%s: missing required argument database name\n"
 msgstr "%s: Gerekli argüman eksik: Veritabanı adı\n"
 
-#: dropdb.c:107
+#: dropdb.c:109
 #, c-format
 msgid "Database \"%s\" will be permanently removed.\n"
 msgstr "\"%s\" veritabanı kalıcı olarak silinecektir.\n"
 
-#: dropdb.c:108
-#: dropuser.c:109
-msgid "Are you sure?"
-msgstr "Emin misiniz?"
+#: dropdb.c:110
+#: dropuser.c:111
+msgid "Are you sure? (y/n) "
+msgstr "Emin misiniz?(y/n)"
 
-#: dropdb.c:125
+#: dropdb.c:128
 #, c-format
 msgid "%s: database removal failed: %s"
 msgstr "%s: veritabanı silme işlemi başarısız oldu: %s"
 
-#: dropdb.c:145
+#: dropdb.c:147
 #, c-format
 msgid ""
 "%s removes a PostgreSQL database.\n"
@@ -545,28 +540,28 @@ msgstr ""
 "%s PostgreSQL veritabanını siler.\n"
 "\n"
 
-#: dropdb.c:147
+#: dropdb.c:149
 #, c-format
 msgid "  %s [OPTION]... DBNAME\n"
 msgstr "  %s [SEÇENEK]... VERİTABANI_ADI\n"
 
-#: dropdb.c:150
-#: dropuser.c:149
+#: dropdb.c:152
+#: dropuser.c:151
 #, c-format
 msgid "  -i, --interactive         prompt before deleting anything\n"
 msgstr "  -i, --interactive         herhangi birşeyi silmeden önce uyarı verir\n"
 
-#: droplang.c:192
+#: droplang.c:193
 #, c-format
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
 msgstr "%s: \"%s\" dili \"%s\" veritabanında kurulu değil \n"
 
-#: droplang.c:212
+#: droplang.c:213
 #, c-format
 msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
 msgstr "%s: %s fonksiyon, \"%s\" dilinde tanımlanmış durumda;  dil kaldırılamadı\n"
 
-#: droplang.c:305
+#: droplang.c:306
 #, c-format
 msgid "%s: language removal failed: %s"
 msgstr "%s: dil silme işlemi başarısız oldu: %s"
@@ -589,17 +584,17 @@ msgstr "  -d, --dbname=VERİTABANI_ADI       dilin sileneceği veritabanının a
 msgid "Enter name of role to drop: "
 msgstr "Silinecek rolün adını giriniz: "
 
-#: dropuser.c:108
+#: dropuser.c:110
 #, c-format
 msgid "Role \"%s\" will be permanently removed.\n"
 msgstr "\"%s\" rolü kalıcı olarak silinecektir.\n"
 
-#: dropuser.c:124
+#: dropuser.c:127
 #, c-format
 msgid "%s: removal of role \"%s\" failed: %s"
 msgstr "%s: \"%s\" rolün silinmesi başarısız oldu: %s"
 
-#: dropuser.c:144
+#: dropuser.c:146
 #, c-format
 msgid ""
 "%s removes a PostgreSQL role.\n"
@@ -608,7 +603,7 @@ msgstr ""
 "%s bir PostgreSQL rolünü siler.\n"
 "\n"
 
-#: dropuser.c:153
+#: dropuser.c:155
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
 msgstr "  -U, --username=KULLANICI _ADI   bağlanırken kullanılacak kullanıcı adı (silinecek olan değil)\n"
@@ -906,23 +901,20 @@ msgstr "%s: sorgu başarısız oldu: %s"
 msgid "%s: query was: %s\n"
 msgstr "%s: sorgu şu idi: %s\n"
 
-#. translator: abbreviation for "yes"
+#. translator: Make sure the (y/n) prompts match the translation of this.
 #: common.c:202
 msgid "y"
 msgstr "y"
 
-#. translator: abbreviation for "no"
+#. translator: Make sure the (y/n) prompts match the translation of this.
 #: common.c:204
 msgid "n"
 msgstr "n"
 
-#: common.c:215
-#, c-format
-msgid "%s (%s/%s) "
-msgstr "%s (%s/%s) "
-
-#: common.c:236
-#, c-format
-msgid "Please answer \"%s\" or \"%s\".\n"
-msgstr "Geçerli cevap: \"%s\" veya \"%s\".\n"
+#~ msgid "Password encryption failed.\n"
+#~ msgstr "Parola şifreleme hatası.\n"
+#~ msgid "%s (%s/%s) "
+#~ msgstr "%s (%s/%s) "
+#~ msgid "Please answer \"%s\" or \"%s\".\n"
+#~ msgstr "Geçerli cevap: \"%s\" veya \"%s\".\n"
 

@@ -4,9 +4,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: libpq-tr\n"
-"POT-Creation-Date: 2005-04-02 07:16+0100\n"
-"PO-Revision-Date: 2006-10-05 22:20+0200\n"
-"Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-12-05 09:15-0400\n"
+"PO-Revision-Date: 2008-01-31 10:30-0800\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -15,71 +16,69 @@ msgstr ""
 "X-Poedit-Basepath: /home/ntufar/pg/pgsql/src/interfaces/libpq\n"
 "X-Poedit-SearchPath-0: /home/ntufar/pg/pgsql/src/interfaces/libpq\n"
 
-#: fe-auth.c:258
+#: fe-auth.c:257
 #, c-format
 msgid "could not set socket to blocking mode: %s\n"
 msgstr "soket engelleme moduna ayarlanamadı: %s\n"
 
-#: fe-auth.c:276
-#: fe-auth.c:280
+#: fe-auth.c:275
+#: fe-auth.c:279
 #, c-format
 msgid "Kerberos 5 authentication rejected: %*s\n"
 msgstr "Kerberos 5 yetkilendirmesi kabul edilmedi: %*s\n"
 
-#: fe-auth.c:306
+#: fe-auth.c:305
 #, c-format
 msgid "could not restore non-blocking mode on socket: %s\n"
 msgstr "could not restore non-blocking mode on socket: %s\n"
 
-#: fe-auth.c:375
+#: fe-auth.c:374
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "SCM_CRED yetkilendirme yöntemi desteklenmiyor.\n"
 
-#: fe-auth.c:398
-#: fe-connect.c:1276
-#: fe-connect.c:2418
-#: fe-connect.c:2637
-#: fe-connect.c:2967
-#: fe-connect.c:2976
-#: fe-connect.c:3113
-#: fe-connect.c:3153
-#: fe-connect.c:3171
-#: fe-exec.c:2751
-#: fe-lobj.c:616
-#: fe-protocol2.c:1027
-#: fe-protocol3.c:1330
+#: fe-auth.c:397
+#: fe-connect.c:1259
+#: fe-connect.c:2505
+#: fe-connect.c:2514
+#: fe-connect.c:2651
+#: fe-connect.c:2691
+#: fe-connect.c:2709
+#: fe-exec.c:2522
+#: fe-lobj.c:602
+#: fe-protocol2.c:1029
+#: fe-protocol3.c:977
 msgid "out of memory\n"
 msgstr "yetersiz bellek\n"
 
-#: fe-auth.c:461
+#: fe-auth.c:460
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Kerberos 4 yetkilendirmesi desteklenmiyor\n"
 
-#: fe-auth.c:478
+#: fe-auth.c:477
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Kerberos 5 yetkilendirmesi desteklenmiyor\n"
 
-#: fe-auth.c:506
+#: fe-auth.c:505
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "%u yetkilendirme sistemi desteklenmiyor\n"
 
-#: fe-connect.c:486
+#: fe-connect.c:479
 #, c-format
 msgid "invalid sslmode value: \"%s\"\n"
 msgstr "geçersiz sslmode değeri: \"%s\"\n"
 
-#: fe-connect.c:506
+#: fe-connect.c:499
 #, c-format
 msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
 msgstr "\"%s\" ssl modu, SSL desteği derlenmeyince geçersizdir.\n"
 
-#: fe-connect.c:672
+#: fe-connect.c:658
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
 msgstr "could not set socket to TCP no delay mode: %s\n"
 
-#: fe-connect.c:702
+#: fe-connect.c:688
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -90,7 +89,7 @@ msgstr ""
 "\tSunucu yerelde çalışıyor ve Unix domain\n"
 "\tsoketleri üzerinden bağlantılara izin veriyor mu? \"%s\"?\n"
 
-#: fe-connect.c:712
+#: fe-connect.c:698
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -101,355 +100,301 @@ msgstr ""
 "\tSunucu \"%s\" sunucunda çalışıyor ve\n"
 "\t\"%s\" portundan bağlantılara izin veriyor mu?\n"
 
-#: fe-connect.c:802
+#: fe-connect.c:785
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
 msgstr "\"%s\" makine adı bir adrese çevirilemedi: %s\n"
 
-#: fe-connect.c:806
+#: fe-connect.c:789
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
 msgstr "\"%s\" Unix domain soket yolu adrese çevirilemedi: %s\n"
 
-#: fe-connect.c:1007
+#: fe-connect.c:990
 msgid "invalid connection state, probably indicative of memory corruption\n"
 msgstr "Geçersiz bağlantı durumu, hafızanın zarar görmüş olmasının işareti olabilir\n"
 
-#: fe-connect.c:1050
+#: fe-connect.c:1033
 #, c-format
 msgid "could not create socket: %s\n"
 msgstr "soket yaratılamadı: %s\n"
 
-#: fe-connect.c:1073
+#: fe-connect.c:1056
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
 msgstr "could not set socket to non-blocking mode: %s\n"
 
-#: fe-connect.c:1085
+#: fe-connect.c:1068
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s\n"
 msgstr "soket close-on-exec moduna ayarlanamadı: %s\n"
 
-#: fe-connect.c:1172
+#: fe-connect.c:1155
 #, c-format
 msgid "could not get socket error status: %s\n"
 msgstr "soket hata durumu alınamadı: %s\n"
 
-#: fe-connect.c:1210
+#: fe-connect.c:1193
 #, c-format
 msgid "could not get client address from socket: %s\n"
 msgstr "soketten istemci adresi alınamadı: %s\n"
 
-#: fe-connect.c:1254
+#: fe-connect.c:1237
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "could not send SSL negotiation packet: %s\n"
 
-#: fe-connect.c:1289
+#: fe-connect.c:1272
 #, c-format
 msgid "could not send startup packet: %s\n"
 msgstr "başlangıç paketi gönderilemedi: %s\n"
 
+#: fe-connect.c:1337
 #: fe-connect.c:1354
-#: fe-connect.c:1371
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "sunucu SSL desteklemiyor, ama SSL gerekli idi\n"
 
-#: fe-connect.c:1387
+#: fe-connect.c:1370
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "ssl görüşmesine geçersiz yanıt alındı: %c\n"
 
-#: fe-connect.c:1444
-#: fe-connect.c:1476
+#: fe-connect.c:1427
+#: fe-connect.c:1459
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr "sunucudan yetkilendirme isteği beklendi ancak %c alındı\n"
 
-#: fe-connect.c:1708
+#: fe-connect.c:1691
 msgid "unexpected message from server during startup\n"
 msgstr "başlangıç sırasında sunucudan beklenmeyen bir mesaj alındı\n"
 
-#: fe-connect.c:1776
+#: fe-connect.c:1759
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
 msgstr "%c - geçersiz bağlantı durumu, bellek zarar görmüş olabilir\n"
 
-#: fe-connect.c:2431
-#, c-format
-msgid "bad LDAP URL \"%s\": scheme must be ldap://\n"
-msgstr "geçersiz LDAP URL \"%s\": şema, ldap olmalı://\n"
-
-#: fe-connect.c:2446
-#, c-format
-msgid "bad LDAP URL \"%s\": missing distinguished name\n"
-msgstr "geçersiz LDAP URL \"%s\": distinguished name eksik\n"
-
-#: fe-connect.c:2457
-#: fe-connect.c:2511
-#, c-format
-msgid "bad LDAP URL \"%s\": must have exactly one attribute\n"
-msgstr "geçersiz LDAP URL \"%s\": sadece bir attribute olmalı\n"
-
-#: fe-connect.c:2468
-#: fe-connect.c:2526
-#, c-format
-msgid "bad LDAP URL \"%s\": must have search scope (base/one/sub)\n"
-msgstr "geçersiz LDAP URL \"%s\": arama kapsamı içermelidir (base/one/sub)\n"
-
-#: fe-connect.c:2479
-#, c-format
-msgid "bad LDAP URL \"%s\": no filter\n"
-msgstr "geçersiz LDAP URL \"%s\": filtere eksik\n"
-
-#: fe-connect.c:2500
-#, c-format
-msgid "bad LDAP URL \"%s\": invalid port number\n"
-msgstr "geçersiz LDAP URL \"%s\": geçersiz port numarası\n"
-
-#: fe-connect.c:2535
-msgid "error creating LDAP structure\n"
-msgstr "LDAP yapısını oluşturma hatası\n"
-
-#: fe-connect.c:2577
-#, c-format
-msgid "lookup on LDAP server failed: %s\n"
-msgstr "LDAP sonucunda sorgulama hatası: %s\n"
-
-#: fe-connect.c:2588
-msgid "more than one entry found on LDAP lookup\n"
-msgstr "LDAP sorgusu sonucunda birden fazla giriş bulundu\n"
-
-#: fe-connect.c:2589
-#: fe-connect.c:2601
-msgid "no entry found on LDAP lookup\n"
-msgstr "LDAP sorgusu sonucunda hiçbir giriş bulunamadı\n"
-
-#: fe-connect.c:2612
-#: fe-connect.c:2625
-msgid "attribute has no values on LDAP lookup\n"
-msgstr "LDAP sorgusu sonucunda bulunan attribute, hiçbir değer içermiyor\n"
-
-#: fe-connect.c:2676
-#: fe-connect.c:2694
-#: fe-connect.c:3015
-#, c-format
-msgid "missing \"=\" after \"%s\" in connection info string\n"
-msgstr "bağlantı bilgi katarında \"%s\" bilgisinden sonra \"=\" işareti eksik\n"
-
-#: fe-connect.c:2757
-#: fe-connect.c:3097
-#, c-format
-msgid "invalid connection option \"%s\"\n"
-msgstr "geçersiz bağlantı seçeneği \"%s\"\n"
-
-#: fe-connect.c:2770
-#: fe-connect.c:3064
-msgid "unterminated quoted string in connection info string\n"
-msgstr "bağlantı bilgi katarında sonlandırılmamış tırnaklı katar\n"
-
-#: fe-connect.c:2813
+#: fe-connect.c:2372
 #, c-format
 msgid "ERROR: service file \"%s\" not found\n"
 msgstr "HATA: \"%s\" servis dosyası bulunamadı\n"
 
-#: fe-connect.c:2826
+#: fe-connect.c:2385
 #, c-format
 msgid "ERROR: line %d too long in service file \"%s\"\n"
 msgstr "HATA: \"%2$s\" servis dosyasında %1$d no'lu satır çok uzun \n"
 
-#: fe-connect.c:2898
-#: fe-connect.c:2925
+#: fe-connect.c:2436
+#: fe-connect.c:2463
 #, c-format
 msgid "ERROR: syntax error in service file \"%s\", line %d\n"
 msgstr "ERROR: \"%s\" servis dosyasında yazım hatası, satır no %d\n"
 
-#: fe-connect.c:3340
+#: fe-connect.c:2553
+#, c-format
+msgid "missing \"=\" after \"%s\" in connection info string\n"
+msgstr "bağlantı bilgi katarında \"%s\" bilgisinden sonra \"=\" işareti eksik\n"
+
+#: fe-connect.c:2602
+msgid "unterminated quoted string in connection info string\n"
+msgstr "bağlantı bilgi katarında sonlandırılmamış tırnaklı katar\n"
+
+#: fe-connect.c:2635
+#, c-format
+msgid "invalid connection option \"%s\"\n"
+msgstr "geçersiz bağlantı seçeneği \"%s\"\n"
+
+#: fe-connect.c:2878
 msgid "connection pointer is NULL\n"
 msgstr "bağlantı belirteci NULL'dur\n"
 
-#: fe-connect.c:3601
+#: fe-connect.c:3130
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "UYARI: \"%s\" password dosyası düz metin dosyası değildir\n"
 
-#: fe-connect.c:3611
+#: fe-connect.c:3139
 #, c-format
 msgid "WARNING: password file \"%s\" has world or group read access; permission should be u=rw (0600)\n"
 msgstr "UYARI: \"%s\" şifre dosyası herkes ya da grup tarafından erişilebilir durumda; dosyanın izinleri u=rw olmalı (0600)\n"
 
-#: fe-exec.c:498
+#: fe-exec.c:488
 msgid "NOTICE"
 msgstr "BİLGİ"
 
-#: fe-exec.c:682
-#: fe-exec.c:739
-#: fe-exec.c:779
+#: fe-exec.c:672
+#: fe-exec.c:723
+#: fe-exec.c:763
 msgid "command string is a null pointer\n"
 msgstr "komut katarı null belirteçtir\n"
 
-#: fe-exec.c:772
-#: fe-exec.c:867
+#: fe-exec.c:756
+#: fe-exec.c:845
 msgid "statement name is a null pointer\n"
 msgstr "durum adı null belirteçtir\n"
 
-#: fe-exec.c:787
-#: fe-exec.c:941
-#: fe-exec.c:1570
-#: fe-exec.c:1766
+#: fe-exec.c:771
+#: fe-exec.c:919
+#: fe-exec.c:1599
 msgid "function requires at least protocol version 3.0\n"
 msgstr "fonksiyon en az 3.0 prokolüne gereksinim duyar.\n"
 
-#: fe-exec.c:898
+#: fe-exec.c:876
 msgid "no connection to the server\n"
 msgstr "sunucuya bağlantı yok\n"
 
-#: fe-exec.c:905
+#: fe-exec.c:883
 msgid "another command is already in progress\n"
 msgstr "şu anda işlenen başka bir komut var\n"
 
-#: fe-exec.c:1015
+#: fe-exec.c:990
 msgid "length must be given for binary parameter\n"
 msgstr "binary parametresinin uzunluğu belirtilmelidir\n"
 
-#: fe-exec.c:1262
+#: fe-exec.c:1228
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "beklenmeyen asyncStatus: %d\n"
 
-#: fe-exec.c:1388
+#: fe-exec.c:1354
 msgid "COPY terminated by new PQexec"
 msgstr "COPY, yeni PQexec tarafından sonlandırıldı"
 
-#: fe-exec.c:1396
+#: fe-exec.c:1362
 msgid "COPY IN state must be terminated first\n"
 msgstr "Öncelikle COPY IN durumu sonlandırılmalıdır\n"
 
-#: fe-exec.c:1416
+#: fe-exec.c:1382
 msgid "COPY OUT state must be terminated first\n"
 msgstr "Öncelikle COPY OUT durumu sonlandırılmalıdır\n"
 
-#: fe-exec.c:1658
-#: fe-exec.c:1723
-#: fe-exec.c:1808
-#: fe-protocol2.c:1172
-#: fe-protocol3.c:1486
+#: fe-exec.c:1491
+#: fe-exec.c:1556
+#: fe-exec.c:1641
+#: fe-protocol2.c:1174
+#: fe-protocol3.c:1133
 msgid "no COPY in progress\n"
 msgstr "çalışan COPY süreci yok\n"
 
-#: fe-exec.c:2000
+#: fe-exec.c:1833
 msgid "connection in wrong state\n"
 msgstr "bağlantı yanlış durumda\n"
 
-#: fe-exec.c:2031
+#: fe-exec.c:1864
 msgid "invalid ExecStatusType code"
 msgstr "geçersizExecStatusType kodu"
 
-#: fe-exec.c:2095
-#: fe-exec.c:2118
+#: fe-exec.c:1928
+#: fe-exec.c:1951
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "%d kolon numarası, 0..%d sınırının dışında"
 
-#: fe-exec.c:2111
+#: fe-exec.c:1944
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "%d satır numarası, 0..%d sınırının dışında"
 
-#: fe-exec.c:2133
-#, c-format
-msgid "parameter number %d is out of range 0..%d"
-msgstr "%d parametre sıra şıdı: 0..%d"
-
-#: fe-exec.c:2420
+#: fe-exec.c:2225
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "sunucudan gelen yanıt yorumlanamadı: %s"
 
-#: fe-exec.c:2659
+#: fe-exec.c:2430
 msgid "incomplete multibyte character\n"
 msgstr "tamamlanmamış çoklu bayt karakteri\n"
 
-#: fe-lobj.c:325
+#: fe-lobj.c:331
 msgid "cannot determine OID of function lo_create\n"
 msgstr "lo_create fonksiyonunun OID'i belirlenemiyor\n"
 
-#: fe-lobj.c:449
-#: fe-lobj.c:544
+#: fe-lobj.c:456
+#: fe-lobj.c:541
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "\"%s\" dosyası açılamadı: %s\n"
 
-#: fe-lobj.c:495
+#: fe-lobj.c:468
 #, c-format
-msgid "could not read from file \"%s\": %s\n"
-msgstr "\"%s\" dosyasından okuma hatası: %s\n"
+msgid "could not create large object for file \"%s\"\n"
+msgstr "\"%s\" dosyası için large object yaratılamadı\n"
 
-#: fe-lobj.c:559
-#: fe-lobj.c:583
+#: fe-lobj.c:478
+#: fe-lobj.c:528
 #, c-format
-msgid "could not write to file \"%s\": %s\n"
-msgstr "\"%s\" dosyasına yazılamadı: %s\n"
+msgid "could not open large object %u\n"
+msgstr "\"%u\" large object'i açılamadı\n"
 
-#: fe-lobj.c:662
+#: fe-lobj.c:493
+#, c-format
+msgid "error while reading file \"%s\"\n"
+msgstr " \"%s\" dosyası okunurken hata oluştu\n"
+
+#: fe-lobj.c:556
+#: fe-lobj.c:569
+#, c-format
+msgid "error while writing to file \"%s\"\n"
+msgstr " \"%s\" dosyasına yazılırken hata oluştu\n"
+
+#: fe-lobj.c:648
 msgid "query to initialize large object functions did not return data\n"
 msgstr "large object fonksiyonlarını ilklendirecek sorgu veri döndürmedi\n"
 
-#: fe-lobj.c:702
+#: fe-lobj.c:688
 msgid "cannot determine OID of function lo_open\n"
 msgstr "lo_open fonksiyonunun OID'i belirlenemiyor\n"
 
-#: fe-lobj.c:709
+#: fe-lobj.c:695
 msgid "cannot determine OID of function lo_close\n"
 msgstr "lo_close fonksiyonunun OID'i belirlenemiyor\n"
 
-#: fe-lobj.c:716
+#: fe-lobj.c:702
 msgid "cannot determine OID of function lo_creat\n"
 msgstr "lo_create fonksiyonunun OID'i belirlenemiyor\n"
 
-#: fe-lobj.c:723
+#: fe-lobj.c:709
 msgid "cannot determine OID of function lo_unlink\n"
 msgstr "lo_unlink fonksiyonunun OID'i belirlenemiyor\n"
 
-#: fe-lobj.c:730
+#: fe-lobj.c:716
 msgid "cannot determine OID of function lo_lseek\n"
 msgstr "lo_lseek fonksiyonunun OID'i belirlenemiyor\n"
 
-#: fe-lobj.c:737
+#: fe-lobj.c:723
 msgid "cannot determine OID of function lo_tell\n"
 msgstr "lo_tell fonksiyonunun OID'i belirlenemiyor\n"
 
-#: fe-lobj.c:744
+#: fe-lobj.c:730
 msgid "cannot determine OID of function loread\n"
 msgstr "loread fonksiyonunun OID'i belirlenemiyor\n"
 
-#: fe-lobj.c:751
+#: fe-lobj.c:737
 msgid "cannot determine OID of function lowrite\n"
 msgstr "lowrite fonksiyonunun OID'i belirlenemiyor\n"
 
-#: fe-misc.c:227
+#: fe-misc.c:229
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "%lu büyüklüğündeki tamsayılar pqGetInt tarafından desteklenmez."
 
-#: fe-misc.c:263
+#: fe-misc.c:265
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "%lu büyüklüğündeki tamsayılar pqPutInt tarafından desteklenmez."
 
-#: fe-misc.c:543
-#: fe-misc.c:745
+#: fe-misc.c:545
+#: fe-misc.c:747
 msgid "connection not open\n"
 msgstr "bağlantı açık değil\n"
 
-#: fe-misc.c:608
-#: fe-misc.c:698
+#: fe-misc.c:610
+#: fe-misc.c:700
 #, c-format
 msgid "could not receive data from server: %s\n"
 msgstr "Sunucudan veri alınamadı: %s\n"
 
-#: fe-misc.c:715
-#: fe-misc.c:783
+#: fe-misc.c:717
+#: fe-misc.c:785
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -459,280 +404,299 @@ msgstr ""
 "\tBu ileti sunucunun isteği işlemeden hemen önce ya da \n"
 "\tisteği işlerken kapatıldığı anlamına gelir.\n"
 
-#: fe-misc.c:800
+#: fe-misc.c:802
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "Sunucuya veri gönderilemedi: %s\n"
 
-#: fe-misc.c:919
+#: fe-misc.c:921
 msgid "timeout expired\n"
 msgstr "zamanaşımı süresi sona derdi\n"
 
-#: fe-misc.c:964
+#: fe-misc.c:966
 msgid "socket not open\n"
 msgstr "soket açık değil\n"
 
-#: fe-misc.c:987
+#: fe-misc.c:989
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() başarısız oldu: %s\n"
 
-#: fe-protocol2.c:89
+#: fe-protocol2.c:91
 #, c-format
 msgid "invalid setenv state %c, probably indicative of memory corruption\n"
 msgstr "Geçersizsetenv durumu %c, belleğin zarar görmesinin bir işareti olabilir\n"
 
-#: fe-protocol2.c:330
+#: fe-protocol2.c:332
 #, c-format
 msgid "invalid state %c, probably indicative of memory corruption\n"
 msgstr "Geçersiz %c durumu, belleğin zarar görmesinin bir işareti olabilir\n"
 
-#: fe-protocol2.c:419
-#: fe-protocol3.c:185
+#: fe-protocol2.c:421
+#: fe-protocol3.c:183
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "Sunucu boş durumdayken sunucudan 0x%02x ileti tipi geldi"
 
-#: fe-protocol2.c:462
+#: fe-protocol2.c:464
 #, c-format
 msgid "unexpected character %c following empty query response (\"I\" message)"
 msgstr "Boş sorgu yanıtını takip eden geçersiz karakter:%c  (\"I\" ileti)"
 
-#: fe-protocol2.c:516
+#: fe-protocol2.c:518
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
 msgstr "Sunucu öncelikli satır tanımı olmadan veri (\"D\" ileti) gönderdi (\"T\" ileti)"
 
-#: fe-protocol2.c:532
+#: fe-protocol2.c:534
 msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
 msgstr "Sunucu öncelikli satır tanımı olmadan ikili veri (\"D\" ileti) gönderdi (\"T\" ileti)"
 
-#: fe-protocol2.c:547
-#: fe-protocol3.c:376
+#: fe-protocol2.c:549
+#: fe-protocol3.c:355
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
 msgstr "sunucudan beklenmeyen bir yanıt alındı; alınan ilk karakter\"%c\" idi\n"
 
-#: fe-protocol2.c:768
-#: fe-protocol3.c:695
+#: fe-protocol2.c:770
+#: fe-protocol3.c:594
 msgid "out of memory for query result\n"
 msgstr "Sorgu sonucu için yetersiz bellek\n"
 
-#: fe-protocol2.c:1215
-#: fe-protocol3.c:1554
+#: fe-protocol2.c:1217
+#: fe-protocol3.c:1201
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: fe-protocol2.c:1227
+#: fe-protocol2.c:1229
 msgid "lost synchronization with server, resetting connection"
 msgstr "sunucu ile eşzamanlama kayboldu, bağlantı yeniden açılıyor"
 
-#: fe-protocol2.c:1361
-#: fe-protocol2.c:1393
-#: fe-protocol3.c:1756
+#: fe-protocol2.c:1363
+#: fe-protocol2.c:1395
+#: fe-protocol3.c:1403
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "protokol hatası: id=0x%x\n"
 
-#: fe-protocol3.c:338
+#: fe-protocol3.c:317
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
 msgstr "Sunucu öncelikli satır tanımı olmadan veri (\"D\" ileti) gönderdi (\"T\" ileti)\n"
 
-#: fe-protocol3.c:397
+#: fe-protocol3.c:376
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
 msgstr "İleti içeriği,\"%c\" ileti tipinin içindeki uzunlukla aynı değil\n"
 
-#: fe-protocol3.c:418
+#: fe-protocol3.c:397
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr "sunucu ile eşzamanlılık kayboldu: \"%c\" ileti tipi alındı, uzunluğu %d\n"
 
-#: fe-protocol3.c:640
+#: fe-protocol3.c:539
 msgid "unexpected field count in \"D\" message\n"
 msgstr "\"D\" iletisinde beklenmeyen alan sayısı\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:782
-#: fe-protocol3.c:801
+#: fe-protocol3.c:670
+#: fe-protocol3.c:678
 #, c-format
 msgid " at character %s"
 msgstr "at character %s"
 
-#: fe-protocol3.c:814
+#: fe-protocol3.c:687
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "AYRINTI:  %s\n"
 
-#: fe-protocol3.c:817
+#: fe-protocol3.c:690
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "İPUCU:  %s\n"
 
-#: fe-protocol3.c:820
+#: fe-protocol3.c:693
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "SORGU:  %s\n"
 
-#: fe-protocol3.c:823
+#: fe-protocol3.c:696
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "CONTEXT:  %s\n"
 
-#: fe-protocol3.c:835
+#: fe-protocol3.c:708
 msgid "LOCATION:  "
 msgstr "YER:  "
 
-#: fe-protocol3.c:837
+#: fe-protocol3.c:710
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:839
+#: fe-protocol3.c:712
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1064
-#, c-format
-msgid "LINE %d: "
-msgstr "SATIR %d: "
-
-#: fe-protocol3.c:1372
+#: fe-protocol3.c:1019
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: COPY OUT metnini yapmıyor\n"
 
-#: fe-secure.c:212
+#: fe-secure.c:277
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "SSL bağlantısı sağlanamadı: %s\n"
 
-#: fe-secure.c:283
-#: fe-secure.c:379
-#: fe-secure.c:869
+#: fe-secure.c:348
+#: fe-secure.c:444
+#: fe-secure.c:1054
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL SYSCALL hatası: %s\n"
 
-#: fe-secure.c:288
-#: fe-secure.c:385
-#: fe-secure.c:873
+#: fe-secure.c:353
+#: fe-secure.c:450
+#: fe-secure.c:1058
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL SYSCALL hatası: EOF bulundu\n"
 
-#: fe-secure.c:300
-#: fe-secure.c:396
-#: fe-secure.c:892
+#: fe-secure.c:365
+#: fe-secure.c:461
+#: fe-secure.c:1077
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSL hatası: %s\n"
 
-#: fe-secure.c:310
-#: fe-secure.c:406
-#: fe-secure.c:902
+#: fe-secure.c:375
+#: fe-secure.c:471
+#: fe-secure.c:1087
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "tanımlanamayan SSL hata kodu: %d\n"
 
-#: fe-secure.c:476
+#: fe-secure.c:541
 #, c-format
 msgid "error querying socket: %s\n"
 msgstr "soketi sorgularken hata oluştu: %s\n"
 
-#: fe-secure.c:503
+#: fe-secure.c:568
 #, c-format
 msgid "could not get information about host \"%s\": %s\n"
 msgstr "\"%s\" sunucusu hakkında bilgi alınamadı: %s\n"
 
-#: fe-secure.c:522
+#: fe-secure.c:587
 msgid "unsupported protocol\n"
 msgstr "desteklenmeyen protokol\n"
 
-#: fe-secure.c:544
+#: fe-secure.c:609
 #, c-format
 msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
 msgstr "Sunucu ortak adı olan \"%s\"  %ld.%ld.%ld.%ld adresine çözülemiyor\n"
 
-#: fe-secure.c:551
+#: fe-secure.c:616
 #, c-format
 msgid "server common name \"%s\" does not resolve to peer address\n"
 msgstr "Sunucu ortak adı olan \"%s\" eş (peer) adresine çözülemiyor\n"
 
-#: fe-secure.c:584
+#: fe-secure.c:789
 msgid "could not get user information\n"
 msgstr "kullanıcı bilgisi alınamadı\n"
 
-#: fe-secure.c:593
+#: fe-secure.c:798
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "\"%s\" sertifikası açılamadı: %s\n"
 
-#: fe-secure.c:602
+#: fe-secure.c:807
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "\"%s\" sertifikası okunamadı: %s\n"
 
-#: fe-secure.c:615
+#: fe-secure.c:820
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "Sertifika mevcut ancak özel anahtar mevcut değil \"%s\"\n"
 
-#: fe-secure.c:624
+#: fe-secure.c:829
 #, c-format
 msgid "private key file \"%s\" has wrong permissions\n"
 msgstr "\"%s\" özel anahtarı yanlış izinlere sahip\n"
 
-#: fe-secure.c:632
+#: fe-secure.c:837
 #, c-format
 msgid "could not open private key file \"%s\": %s\n"
 msgstr "\"%s\" özel anahtar dosyası açılamadı: %s\n"
 
-#: fe-secure.c:641
+#: fe-secure.c:846
 #, c-format
 msgid "private key file \"%s\" changed during execution\n"
 msgstr "\"%s\" özel anahtar dosyası çalışma anında açılamadı\n"
 
-#: fe-secure.c:650
+#: fe-secure.c:855
 #, c-format
 msgid "could not read private key file \"%s\": %s\n"
 msgstr "\"%s\" özel anahtar dosyası okunamadı: %s\n"
 
-#: fe-secure.c:664
+#: fe-secure.c:869
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "Sertifika, \"%s\" özel anahtar dosyası ile uyuşmuyor: %s\n"
 
-#: fe-secure.c:750
+#: fe-secure.c:955
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "SSL içeriği yaratılamadı: %s\n"
 
-#: fe-secure.c:791
+#: fe-secure.c:994
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "\"%s\"kök sertifika dosyası okunamadı: %s\n"
 
-#: fe-secure.c:811
-#, c-format
-msgid "Installed SSL library does not support CRL certificates, file \"%s\"\n"
-msgstr "Kurulu SSL kütüphanesi CRL sertifikaları desteklemiyor, dosya \"%s\"\n"
-
-#: fe-secure.c:922
+#: fe-secure.c:1107
 #, c-format
 msgid "certificate could not be validated: %s\n"
 msgstr "sertifika doğrulanamadı: %s\n"
 
-#: fe-secure.c:936
+#: fe-secure.c:1121
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "sertifika elde edilemedi: %s\n"
 
-#: fe-secure.c:1016
-msgid "no SSL error reported"
-msgstr "SSL hata yok"
-
-#: fe-secure.c:1026
-#, c-format
-msgid "SSL error code %lu"
-msgstr "SSL hata kodu: %lu"
+#~ msgid "bad LDAP URL \"%s\": scheme must be ldap://\n"
+#~ msgstr "geçersiz LDAP URL \"%s\": şema, ldap olmalı://\n"
+#~ msgid "bad LDAP URL \"%s\": missing distinguished name\n"
+#~ msgstr "geçersiz LDAP URL \"%s\": distinguished name eksik\n"
+#~ msgid "bad LDAP URL \"%s\": must have exactly one attribute\n"
+#~ msgstr "geçersiz LDAP URL \"%s\": sadece bir attribute olmalı\n"
+#~ msgid "bad LDAP URL \"%s\": must have search scope (base/one/sub)\n"
+#~ msgstr ""
+#~ "geçersiz LDAP URL \"%s\": arama kapsamı içermelidir (base/one/sub)\n"
+#~ msgid "bad LDAP URL \"%s\": no filter\n"
+#~ msgstr "geçersiz LDAP URL \"%s\": filtere eksik\n"
+#~ msgid "bad LDAP URL \"%s\": invalid port number\n"
+#~ msgstr "geçersiz LDAP URL \"%s\": geçersiz port numarası\n"
+#~ msgid "error creating LDAP structure\n"
+#~ msgstr "LDAP yapısını oluşturma hatası\n"
+#~ msgid "lookup on LDAP server failed: %s\n"
+#~ msgstr "LDAP sonucunda sorgulama hatası: %s\n"
+#~ msgid "more than one entry found on LDAP lookup\n"
+#~ msgstr "LDAP sorgusu sonucunda birden fazla giriş bulundu\n"
+#~ msgid "no entry found on LDAP lookup\n"
+#~ msgstr "LDAP sorgusu sonucunda hiçbir giriş bulunamadı\n"
+#~ msgid "attribute has no values on LDAP lookup\n"
+#~ msgstr "LDAP sorgusu sonucunda bulunan attribute, hiçbir değer içermiyor\n"
+#~ msgid "parameter number %d is out of range 0..%d"
+#~ msgstr "%d parametre sıra şıdı: 0..%d"
+#~ msgid "could not read from file \"%s\": %s\n"
+#~ msgstr "\"%s\" dosyasından okuma hatası: %s\n"
+#~ msgid "LINE %d: "
+#~ msgstr "SATIR %d: "
+#~ msgid ""
+#~ "Installed SSL library does not support CRL certificates, file \"%s\"\n"
+#~ msgstr ""
+#~ "Kurulu SSL kütüphanesi CRL sertifikaları desteklemiyor, dosya \"%s\"\n"
+#~ msgid "no SSL error reported"
+#~ msgstr "SSL hata yok"
+#~ msgid "SSL error code %lu"
+#~ msgstr "SSL hata kodu: %lu"
 
