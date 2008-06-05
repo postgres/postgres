@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: pg_ctl-cs\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-10-27 14:16+0200\n"
-"PO-Revision-Date: 2004-10-27 14:51+0200\n"
+"PO-Revision-Date: 2008-05-13 12:52-0400\n"
 "Last-Translator: \n"
 "Language-Team:  <cs@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -288,7 +288,7 @@ msgstr ""
 #: pg_ctl.c:1095
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
-msgstr "  %s odregistrovaní [-N SERVICENAME]\n"
+msgstr "  %s unregister [-N SERVICENAME]\n"
 
 #: pg_ctl.c:1098
 #, c-format
@@ -429,7 +429,7 @@ msgid ""
 "Options for register and unregister:\n"
 msgstr ""
 "\n"
-"Pøepínaèe pro start nebo restart:\n"
+"Pøepínaèe pro register nebo unregister:\n"
 
 #: pg_ctl.c:1127
 #, c-format
@@ -489,7 +489,7 @@ msgstr "%s: mnoho parametrù pøíkazové øádky (první je \"%s\")\n"
 #: pg_ctl.c:1373
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
-msgstr "%s: chýbìjící argument pro \"kil!\" mód\n"
+msgstr "%s: chýbìjící argument pro \"kill\" mód\n"
 
 #: pg_ctl.c:1391
 #, c-format

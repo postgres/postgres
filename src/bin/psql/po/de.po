@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.15.4.2 2007/09/13 21:04:12 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.15.4.3 2008/06/05 23:37:31 tgl Exp $
 #
 # Use these quotes: »%s«
 #
@@ -619,7 +619,7 @@ msgstr ""
 #: help.c:184
 #, c-format
 msgid "  \\q             quit psql\n"
-msgstr "  \\q           beende psql\n"
+msgstr "  \\q             beende psql\n"
 
 #: help.c:185
 #, c-format
