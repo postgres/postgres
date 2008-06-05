@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.374 2008/05/15 00:17:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.375 2008/06/05 15:47:32 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,7 +210,7 @@ static BufferAccessStrategy vac_strategy;
 
 
 /* non-export function prototypes */
-static List *get_rel_oids(List *relids, const RangeVar *vacrel,
+static List *get_rel_oids(Oid relid, const RangeVar *vacrel,
 			 const char *stmttype);
 static void vac_truncate_clog(TransactionId frozenXID);
 static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
@@ -264,9 +264,9 @@ static Size PageGetFreeSpaceWithFillFactor(Relation relation, Page page);
 /*
  * Primary entry point for VACUUM and ANALYZE commands.
  *
- * relids is normally NIL; if it is not, then it provides the list of
- * relation OIDs to be processed, and vacstmt->relation is ignored.
- * (The non-NIL case is currently only used by autovacuum.)
+ * relid is normally InvalidOid; if it is not, then it provides the relation
+ * OID to be processed, and vacstmt->relation is ignored.  (The non-invalid
+ * case is currently only used by autovacuum.)
  *
  * for_wraparound is used by autovacuum to let us know when it's forcing
  * a vacuum for wraparound, which should not be auto-cancelled.
@@ -276,12 +276,12 @@ static Size PageGetFreeSpaceWithFillFactor(Relation relation, Page page);
  *
  * isTopLevel should be passed down from ProcessUtility.
  *
- * It is the caller's responsibility that vacstmt, relids, and bstrategy
+ * It is the caller's responsibility that vacstmt and bstrategy
  * (if given) be allocated in a memory context that won't disappear
  * at transaction commit.
  */
 void
-vacuum(VacuumStmt *vacstmt, List *relids,
+vacuum(VacuumStmt *vacstmt, Oid relid,
 	   BufferAccessStrategy bstrategy, bool for_wraparound, bool isTopLevel)
 {
 	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
@@ -351,13 +351,13 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 	vac_strategy = bstrategy;
 
 	/* Remember whether we are processing everything in the DB */
-	all_rels = (relids == NIL && vacstmt->relation == NULL);
+	all_rels = (!OidIsValid(relid) && vacstmt->relation == NULL);
 
 	/*
 	 * Build list of relations to process, unless caller gave us one. (If we
 	 * build one, we put it in vac_context for safekeeping.)
 	 */
-	relations = get_rel_oids(relids, vacstmt->relation, stmttype);
+	relations = get_rel_oids(relid, vacstmt->relation, stmttype);
 
 	/*
 	 * Decide whether we need to start/commit our own transactions.
@@ -531,16 +531,19 @@ vacuum(VacuumStmt *vacstmt, List *relids,
  * per-relation transactions.
  */
 static List *
-get_rel_oids(List *relids, const RangeVar *vacrel, const char *stmttype)
+get_rel_oids(Oid relid, const RangeVar *vacrel, const char *stmttype)
 {
 	List	   *oid_list = NIL;
 	MemoryContext oldcontext;
 
-	/* List supplied by VACUUM's caller? */
-	if (relids)
-		return relids;
-
-	if (vacrel)
+	/* OID supplied by VACUUM's caller? */
+	if (OidIsValid(relid))
+	{
+		oldcontext = MemoryContextSwitchTo(vac_context);
+		oid_list = lappend_oid(oid_list, relid);
+		MemoryContextSwitchTo(oldcontext);
+	}
+	else if (vacrel)
 	{
 		/* Process a specific relation */
 		Oid			relid;

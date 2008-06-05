@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.78 2008/05/15 00:17:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.79 2008/06/05 15:47:32 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1244,8 +1244,7 @@ do_start_worker(void)
  * left to do_start_worker.
  *
  * This routine is also expected to insert an entry into the database list if
- * the selected database was previously absent from the list.  It returns the
- * new database list.
+ * the selected database was previously absent from the list.
  */
 static void
 launch_worker(TimestampTz now)
@@ -2601,8 +2600,6 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 						  BufferAccessStrategy bstrategy)
 {
 	VacuumStmt	vacstmt;
-	List	   *relids;
-	MemoryContext old_cxt;
 
 	/* Set up command parameters --- use a local variable instead of palloc */
 	MemSet(&vacstmt, 0, sizeof(vacstmt));
@@ -2613,21 +2610,13 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 	vacstmt.analyze = doanalyze;
 	vacstmt.freeze_min_age = freeze_min_age;
 	vacstmt.verbose = false;
-	vacstmt.relation = NULL;	/* not used since we pass a relids list */
+	vacstmt.relation = NULL;	/* not used since we pass a relid */
 	vacstmt.va_cols = NIL;
-
-	/*
-	 * The list must survive transaction boundaries, so make sure we create it
-	 * in a long-lived context
-	 */
-	old_cxt = MemoryContextSwitchTo(AutovacMemCxt);
-	relids = list_make1_oid(relid);
-	MemoryContextSwitchTo(old_cxt);
 
 	/* Let pgstat know what we're doing */
 	autovac_report_activity(&vacstmt, relid);
 
-	vacuum(&vacstmt, relids, bstrategy, for_wraparound, true);
+	vacuum(&vacstmt, relid, bstrategy, for_wraparound, true);
 }
 
 /*
