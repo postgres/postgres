@@ -1,33 +1,26 @@
-# translation of pg_config.po to
-# translation of pg_config-fr.po to
+# translation of pg_config-fr.po to FR_fr
 # French message translation file for pg_config
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.7.2.3 2008/03/14 04:51:30 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.7.2.4 2008/06/05 23:36:58 tgl Exp $
 #
 # Use these quotes: « %s »
-# Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
+# Guillaume Lelarge <guillaume@lelarge.info>, 2004-2008.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config\n"
+"Project-Id-Version: pg_config-82-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-01-31 22:16-0400\n"
-"PO-Revision-Date: 2008-02-08 17:17+0100\n"
+"POT-Creation-Date: 2008-03-14 17:20-0300\n"
+"PO-Revision-Date: 2008-03-28 22:30+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
-"Language-Team:  <fr@li.org>\n"
+"Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"X-Generator: KBabel 1.10.2\n"
 
-#: pg_config.c:231
-#: pg_config.c:247
-#: pg_config.c:263
-#: pg_config.c:279
-#: pg_config.c:295
-#: pg_config.c:311
-#: pg_config.c:327
-#: pg_config.c:343
+#: pg_config.c:231 pg_config.c:247 pg_config.c:263 pg_config.c:279
+#: pg_config.c:295 pg_config.c:311 pg_config.c:327 pg_config.c:343
 #, c-format
 msgid "not recorded\n"
 msgstr "non enregistré\n"
@@ -78,13 +71,15 @@ msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr ""
-"  --includedir          affiche l'emplacement des fichiers d'en-tête C des\n"
-"                        interfaces client\n"
+"  --includedir          affiche l'emplacement des fichiers d'en-tête C\n"
+"                        des interfaces client\n"
 
 #: pg_config.c:406
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
-msgstr "  --pkgincludedir       affiche l'emplacement des autres fichiers d'en-tête C\n"
+msgstr ""
+"  --pkgincludedir       affiche l'emplacement des autres fichiers d'en-tête\n"
+"                        C\n"
 
 #: pg_config.c:407
 #, c-format
@@ -149,50 +144,50 @@ msgstr ""
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
 msgstr ""
-"  --cc                  affiche la valeur de CC utilisée à la construction de\n"
-"                        PostgreSQL\n"
+"  --cc                  affiche la valeur de CC utilisée lors de la\n"
+"                        construction de PostgreSQL\n"
 
 #: pg_config.c:418
 #, c-format
 msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
 msgstr ""
-"  --cppflags            affiche la valeur de CPPFLAGS utilisée à la\n"
+"  --cppflags            affiche la valeur de CPPFLAGS utilisée lors de la\n"
 "                        construction de PostgreSQL\n"
 
 #: pg_config.c:419
 #, c-format
 msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
 msgstr ""
-"  --cflags              affiche la valeur de CFLAGS utilisée à la\n"
+"  --cflags              affiche la valeur de CFLAGS utilisée lors de la\n"
 "                        construction de PostgreSQL\n"
 
 #: pg_config.c:420
 #, c-format
 msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
 msgstr ""
-"  --cflags_sl           affiche la valeur de CFLAGS_SL utilisée à la\n"
+"  --cflags_sl           affiche la valeur de CFLAGS_SL utilisée lors de la\n"
 "                        construction de PostgreSQL\n"
 
 #: pg_config.c:421
 #, c-format
 msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
 msgstr ""
-"  --ldflags             affiche la valeur de LDFLAGS utilisée à pour\n"
+"  --ldflags             affiche la valeur de LDFLAGS utilisée à lors de la\n"
 "                        construction de PostgreSQL\n"
 
 #: pg_config.c:422
 #, c-format
 msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
 msgstr ""
-"  --ldflags_sl          affiche la valeur de LDFLAGS_SL utilisée à la\n"
+"  --ldflags_sl          affiche la valeur de LDFLAGS_SL utilisée lors de la\n"
 "                        construction de PostgreSQL\n"
 
 #: pg_config.c:423
 #, c-format
 msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
 msgstr ""
-"  --libs                affiche la valeur de LIBS utilisée à la construction\n"
-"                        de PostgreSQL\n"
+"  --libs                affiche la valeur de LIBS utilisée lors de la\n"
+"                        construction de PostgreSQL\n"
 
 #: pg_config.c:424
 #, c-format
@@ -223,7 +218,7 @@ msgstr "Rapportez les bogues à <pgsql-bugs@postgresql.org>.\n"
 #: pg_config.c:433
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez « %s --help » pour plus informations.\n"
+msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
 #: pg_config.c:472
 #, c-format
@@ -235,51 +230,47 @@ msgstr "%s : n'a pas pu trouver son propre exécutable\n"
 msgid "%s: invalid argument: %s\n"
 msgstr "%s : argument invalide : %s\n"
 
-#: ../../port/exec.c:191
-#: ../../port/exec.c:305
-#: ../../port/exec.c:348
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "n'a pas pu identifier le répertoire courant : %s"
 
-#: ../../port/exec.c:210
+#: ../../port/exec.c:213
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "binaire « %s » invalide"
 
-#: ../../port/exec.c:259
+#: ../../port/exec.c:262
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "n'a pas pu lire le binaire « %s »"
 
-#: ../../port/exec.c:266
+#: ../../port/exec.c:269
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "n'a pas pu trouver un « %s » à exécuter"
 
-#: ../../port/exec.c:321
-#: ../../port/exec.c:357
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "n'a pas pu accéder au répertoire « %s »"
 
-#: ../../port/exec.c:336
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "n'a pas pu lire le lien symbolique « %s »"
 
-#: ../../port/exec.c:582
+#: ../../port/exec.c:585
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "le processus fils a quitté avec le code de sortie %d"
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:588
 #, c-format
 msgid "child process was terminated by signal %d"
-msgstr "le processus fils a été terminé avec le signal %d"
+msgstr "le processus fils a été terminé par le signal %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:591
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "le processus fils a quitté avec un statut %d non reconnu"
-
