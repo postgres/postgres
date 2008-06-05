@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.72 2008/05/12 00:00:46 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.73 2008/06/05 15:04:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2005,6 +2005,7 @@ getObjectDescription(const ObjectAddress *object)
 				SysScanDesc amscan;
 				HeapTuple	tup;
 				Form_pg_amop amopForm;
+				StringInfoData opfam;
 
 				amopDesc = heap_open(AccessMethodOperatorRelationId,
 									 AccessShareLock);
@@ -2025,10 +2026,18 @@ getObjectDescription(const ObjectAddress *object)
 
 				amopForm = (Form_pg_amop) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, _("operator %d %s of "),
+				initStringInfo(&opfam);
+				getOpFamilyDescription(&opfam, amopForm->amopfamily);
+				/*
+				 * translator: %d is the operator strategy (a number), the
+				 * first %s is the textual form of the operator, and the second
+				 * %s is the description of the operator family.
+				 */
+				appendStringInfo(&buffer, _("operator %d %s of %s"),
 								 amopForm->amopstrategy,
-								 format_operator(amopForm->amopopr));
-				getOpFamilyDescription(&buffer, amopForm->amopfamily);
+								 format_operator(amopForm->amopopr),
+								 opfam.data);
+				pfree(opfam.data);
 
 				systable_endscan(amscan);
 				heap_close(amopDesc, AccessShareLock);
@@ -2042,6 +2051,7 @@ getObjectDescription(const ObjectAddress *object)
 				SysScanDesc amscan;
 				HeapTuple	tup;
 				Form_pg_amproc amprocForm;
+				StringInfoData opfam;
 
 				amprocDesc = heap_open(AccessMethodProcedureRelationId,
 									   AccessShareLock);
@@ -2062,10 +2072,18 @@ getObjectDescription(const ObjectAddress *object)
 
 				amprocForm = (Form_pg_amproc) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, _("function %d %s of "),
+				initStringInfo(&opfam);
+				getOpFamilyDescription(&opfam, amprocForm->amprocfamily);
+				/*
+				 * translator: %d is the function number, the first %s is the
+				 * textual form of the function with arguments, and the second
+				 * %s is the description of the operator family.
+				 */
+				appendStringInfo(&buffer, _("function %d %s of %s"),
 								 amprocForm->amprocnum,
-								 format_procedure(amprocForm->amproc));
-				getOpFamilyDescription(&buffer, amprocForm->amprocfamily);
+								 format_procedure(amprocForm->amproc),
+								 opfam.data);
+				pfree(opfam.data);
 
 				systable_endscan(amscan);
 				heap_close(amprocDesc, AccessShareLock);
