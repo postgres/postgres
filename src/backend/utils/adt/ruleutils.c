@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.157.2.6 2008/01/06 01:03:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.157.2.7 2008/06/06 18:00:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3518,10 +3518,19 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 				 * In reality we only need to defend against infinity and
 				 * NaN, so we need not get too crazy about pattern
 				 * matching here.
+				 *
+				 * There is a special-case gotcha: if the constant is signed,
+				 * we need to parenthesize it, else the parser might see a
+				 * leading plus/minus as binding less tightly than adjacent
+				 * operators --- particularly, the cast that we might attach
+				 * below.
 				 */
 				if (strspn(extval, "0123456789+-eE.") == strlen(extval))
 				{
-					appendStringInfoString(buf, extval);
+					if (extval[0] == '+' || extval[0] == '-')
+						appendStringInfo(buf, "(%s)", extval);
+					else
+						appendStringInfoString(buf, extval);
 					if (strcspn(extval, "eE.") != strlen(extval))
 						isfloat = true; /* it looks like a float */
 				}
