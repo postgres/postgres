@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.235.2.5 2008/05/03 23:19:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.235.2.6 2008/06/06 17:59:45 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -4229,10 +4229,19 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 				 *
 				 * In reality we only need to defend against infinity and NaN,
 				 * so we need not get too crazy about pattern matching here.
+				 *
+				 * There is a special-case gotcha: if the constant is signed,
+				 * we need to parenthesize it, else the parser might see a
+				 * leading plus/minus as binding less tightly than adjacent
+				 * operators --- particularly, the cast that we might attach
+				 * below.
 				 */
 				if (strspn(extval, "0123456789+-eE.") == strlen(extval))
 				{
-					appendStringInfoString(buf, extval);
+					if (extval[0] == '+' || extval[0] == '-')
+						appendStringInfo(buf, "(%s)", extval);
+					else
+						appendStringInfoString(buf, extval);
 					if (strcspn(extval, "eE.") != strlen(extval))
 						isfloat = true; /* it looks like a float */
 				}
