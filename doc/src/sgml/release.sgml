@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.43 2008/06/04 03:16:46 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.44 2008/06/06 05:33:52 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -47,7 +47,7 @@ do it for earlier branch release files.
 
   <para>
    A complete list of changes for each release can be obtained by
-   viewing the <link linkend="cvs">CVS</link> logs for each release.
+   viewing the CVS logs for each release.
    The <ulink
    url="http://archives.postgresql.org/pgsql-committers/">pgsql-committers
    email list</ulink> contains all source code changes as well.  There is also
