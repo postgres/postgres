@@ -7,14 +7,14 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.79 2008/05/12 16:06:10 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.80 2008/06/06 22:35:22 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BUFPAGE_H
 #define BUFPAGE_H
 
-#include "access/xlog.h"
+#include "access/xlogdefs.h"
 #include "storage/bufmgr.h"
 #include "storage/item.h"
 #include "storage/off.h"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.87 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.88 2008/06/06 22:35:22 alvherre Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/printtup.h"
+#include "lib/stringinfo.h"
 #include "nodes/print.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"

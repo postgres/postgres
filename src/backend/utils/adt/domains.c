@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/domains.c,v 1.6 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/domains.c,v 1.7 2008/06/06 22:35:22 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 
 #include "commands/typecmds.h"
 #include "executor/executor.h"
+#include "lib/stringinfo.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 

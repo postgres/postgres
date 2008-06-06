@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.119 2008/05/15 00:17:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.120 2008/06/06 22:35:22 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "executor/functions.h"
+#include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "parser/parse_expr.h"
 #include "pgstat.h"
