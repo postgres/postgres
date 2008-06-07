@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.62 2008/06/06 05:34:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.63 2008/06/07 22:11:40 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -63,12 +63,66 @@ do it for earlier branch release files.
    review, so each item is truly a community effort.
   </para>
 
+ <sect1 id="release-7-4-21">
+  <title>Release 7.4.21</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-06-12</simpara>
+  </note>
+
+  <para>
+   This release contains one serious bug fix over 7.4.20.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.21</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.11,
+    see the release notes for 7.4.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Make <function>pg_get_ruledef()</> parenthesize negative constants (Tom)
+     </para>
+
+     <para>
+      Before this fix, a negative constant in a view or rule might be dumped
+      as, say, <literal>-42::integer</>, which is subtly incorrect: it should
+      be <literal>(-42)::integer</> due to operator precedence rules.
+      Usually this would make little difference, but it could interact with
+      another recent patch to cause
+      <productname>PostgreSQL</> to reject what had been a valid
+      <command>SELECT DISTINCT</> view query.  Since this could result in
+      <application>pg_dump</> output failing to reload, it is being treated
+      as a high-priority fix.  The only released versions in which dump
+      output is actually incorrect are 8.3.1 and 8.2.7.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-7-4-20">
   <title>Release 7.4.20</title>
 
   <note>
   <title>Release date</title>
-  <simpara>2008-06-09</simpara>
+  <simpara>never released</simpara>
   </note>
 
   <para>
