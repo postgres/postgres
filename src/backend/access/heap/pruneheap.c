@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.12 2008/05/13 15:44:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.13 2008/06/08 22:00:47 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "access/transam.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "storage/bufpage.h"
+#include "storage/bufmgr.h"
 #include "storage/off.h"
 #include "utils/inval.h"
 #include "utils/tqual.h"

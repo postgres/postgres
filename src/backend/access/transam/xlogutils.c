@@ -11,14 +11,14 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.53 2008/05/12 16:06:09 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.54 2008/06/08 22:00:47 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/xlogutils.h"
-#include "storage/bufpage.h"
+#include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "utils/hsearch.h"
 
