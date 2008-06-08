@@ -3,8 +3,8 @@
 /*
  * Parts of pg_config.h that you get with autoconf on other systems
  */
-#define PG_VERSION "7.4.20"
-#define PG_VERSION_STR "7.4.20 (win32)"
+#define PG_VERSION "7.4.21"
+#define PG_VERSION_STR "7.4.21 (win32)"
 
 #define SYSCONFDIR ""
 
