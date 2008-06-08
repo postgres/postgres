@@ -245,9 +245,6 @@ NOTICE:  3
 (1 row)
 
 select cachebug();
-NOTICE:  drop cascades to rule _RETURN on view vv
-CONTEXT:  SQL statement "drop table if exists temptable cascade"
-PL/pgSQL function "cachebug" line 3 at SQL statement
 NOTICE:  drop cascades to view vv
 CONTEXT:  SQL statement "drop table if exists temptable cascade"
 PL/pgSQL function "cachebug" line 3 at SQL statement

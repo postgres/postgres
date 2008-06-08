@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.72 2008/05/12 00:00:53 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.73 2008/06/08 22:41:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,6 +138,7 @@ extern SysScanDesc systable_beginscan(Relation heapRelation,
 				   Snapshot snapshot,
 				   int nkeys, ScanKey key);
 extern HeapTuple systable_getnext(SysScanDesc sysscan);
+extern bool systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup);
 extern void systable_endscan(SysScanDesc sysscan);
 extern SysScanDesc systable_beginscan_ordered(Relation heapRelation,
 											  Relation indexRelation,

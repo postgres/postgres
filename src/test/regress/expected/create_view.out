@@ -237,72 +237,43 @@ And relnamespace IN (SELECT OID FROM pg_namespace WHERE nspname LIKE 'pg_temp%')
 (1 row)
 
 DROP SCHEMA temp_view_test CASCADE;
-NOTICE:  drop cascades to view temp_view_test.v9
-NOTICE:  drop cascades to rule _RETURN on view temp_view_test.v9
-NOTICE:  drop cascades to sequence temp_view_test.seq1
-NOTICE:  drop cascades to view temp_view_test.v8
-NOTICE:  drop cascades to rule _RETURN on view temp_view_test.v8
-NOTICE:  drop cascades to view temp_view_test.v7
-NOTICE:  drop cascades to rule _RETURN on view temp_view_test.v7
-NOTICE:  drop cascades to view temp_view_test.v6
-NOTICE:  drop cascades to rule _RETURN on view temp_view_test.v6
-NOTICE:  drop cascades to view temp_view_test.v5
-NOTICE:  drop cascades to rule _RETURN on view temp_view_test.v5
-NOTICE:  drop cascades to view temp_view_test.v4
-NOTICE:  drop cascades to rule _RETURN on view temp_view_test.v4
-NOTICE:  drop cascades to view temp_view_test.v3
-NOTICE:  drop cascades to rule _RETURN on view temp_view_test.v3
-NOTICE:  drop cascades to view temp_view_test.v2
-NOTICE:  drop cascades to rule _RETURN on view temp_view_test.v2
-NOTICE:  drop cascades to view temp_view_test.v1
-NOTICE:  drop cascades to rule _RETURN on view temp_view_test.v1
-NOTICE:  drop cascades to table temp_view_test.base_table2
-NOTICE:  drop cascades to rule _RETURN on view v5_temp
-NOTICE:  drop cascades to view v5_temp
 NOTICE:  drop cascades to table temp_view_test.base_table
-NOTICE:  drop cascades to rule _RETURN on view v9_temp
-NOTICE:  drop cascades to view v9_temp
-NOTICE:  drop cascades to rule _RETURN on view v8_temp
-NOTICE:  drop cascades to view v8_temp
-NOTICE:  drop cascades to rule _RETURN on view v6_temp
-NOTICE:  drop cascades to view v6_temp
-NOTICE:  drop cascades to rule _RETURN on view v4_temp
-NOTICE:  drop cascades to view v4_temp
-NOTICE:  drop cascades to rule _RETURN on view v2_temp
-NOTICE:  drop cascades to view v2_temp
-NOTICE:  drop cascades to rule _RETURN on view v11_temp
-NOTICE:  drop cascades to view v11_temp
-NOTICE:  drop cascades to rule _RETURN on view v12_temp
-NOTICE:  drop cascades to view v12_temp
-NOTICE:  drop cascades to rule _RETURN on view v7_temp
 NOTICE:  drop cascades to view v7_temp
-NOTICE:  drop cascades to rule _RETURN on view v10_temp
 NOTICE:  drop cascades to view v10_temp
+NOTICE:  drop cascades to view v11_temp
+NOTICE:  drop cascades to view v12_temp
+NOTICE:  drop cascades to view v2_temp
+NOTICE:  drop cascades to view v4_temp
+NOTICE:  drop cascades to view v6_temp
+NOTICE:  drop cascades to view v8_temp
+NOTICE:  drop cascades to view v9_temp
+NOTICE:  drop cascades to table temp_view_test.base_table2
+NOTICE:  drop cascades to view v5_temp
+NOTICE:  drop cascades to view temp_view_test.v1
+NOTICE:  drop cascades to view temp_view_test.v2
+NOTICE:  drop cascades to view temp_view_test.v3
+NOTICE:  drop cascades to view temp_view_test.v4
+NOTICE:  drop cascades to view temp_view_test.v5
+NOTICE:  drop cascades to view temp_view_test.v6
+NOTICE:  drop cascades to view temp_view_test.v7
+NOTICE:  drop cascades to view temp_view_test.v8
+NOTICE:  drop cascades to sequence temp_view_test.seq1
+NOTICE:  drop cascades to view temp_view_test.v9
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to view pubview
-NOTICE:  drop cascades to rule _RETURN on view pubview
-NOTICE:  drop cascades to table tbl4
-NOTICE:  drop cascades to rule _RETURN on view mytempview
-NOTICE:  drop cascades to view mytempview
-NOTICE:  drop cascades to table tbl3
-NOTICE:  drop cascades to table tbl2
-NOTICE:  drop cascades to table tbl1
-NOTICE:  drop cascades to view nontemp4
-NOTICE:  drop cascades to rule _RETURN on view nontemp4
-NOTICE:  drop cascades to view nontemp3
-NOTICE:  drop cascades to rule _RETURN on view nontemp3
-NOTICE:  drop cascades to view nontemp2
-NOTICE:  drop cascades to rule _RETURN on view nontemp2
-NOTICE:  drop cascades to view nontemp1
-NOTICE:  drop cascades to rule _RETURN on view nontemp1
-NOTICE:  drop cascades to table t2
 NOTICE:  drop cascades to table t1
-NOTICE:  drop cascades to rule _RETURN on view temporal4
-NOTICE:  drop cascades to view temporal4
-NOTICE:  drop cascades to rule _RETURN on view temporal3
-NOTICE:  drop cascades to view temporal3
-NOTICE:  drop cascades to rule _RETURN on view temporal2
-NOTICE:  drop cascades to view temporal2
-NOTICE:  drop cascades to rule _RETURN on view temporal1
 NOTICE:  drop cascades to view temporal1
+NOTICE:  drop cascades to view temporal2
+NOTICE:  drop cascades to view temporal3
+NOTICE:  drop cascades to view temporal4
+NOTICE:  drop cascades to table t2
+NOTICE:  drop cascades to view nontemp1
+NOTICE:  drop cascades to view nontemp2
+NOTICE:  drop cascades to view nontemp3
+NOTICE:  drop cascades to view nontemp4
+NOTICE:  drop cascades to table tbl1
+NOTICE:  drop cascades to table tbl2
+NOTICE:  drop cascades to table tbl3
+NOTICE:  drop cascades to table tbl4
+NOTICE:  drop cascades to view mytempview
+NOTICE:  drop cascades to view pubview
 SET search_path to public;

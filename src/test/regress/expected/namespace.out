@@ -39,10 +39,8 @@ SELECT * FROM test_schema_1.abc_view;
 (3 rows)
 
 DROP SCHEMA test_schema_1 CASCADE;
-NOTICE:  drop cascades to view test_schema_1.abc_view
-NOTICE:  drop cascades to rule _RETURN on view test_schema_1.abc_view
 NOTICE:  drop cascades to table test_schema_1.abc
-NOTICE:  drop cascades to default for table test_schema_1.abc column a
+NOTICE:  drop cascades to view test_schema_1.abc_view
 -- verify that the objects were dropped
 SELECT COUNT(*) FROM pg_class WHERE relnamespace =
     (SELECT oid FROM pg_namespace WHERE nspname = 'test_schema_1');

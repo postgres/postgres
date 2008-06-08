@@ -1157,15 +1157,15 @@ FOREIGN KEY (x2,x4,x1) REFERENCES pktable(id1,id3,id2);
 ERROR:  foreign key constraint "fk_241_132" cannot be implemented
 DETAIL:  Key columns "x2" and "id1" are of incompatible types: character varying and integer.
 DROP TABLE pktable, fktable CASCADE;
-NOTICE:  drop cascades to constraint fk_253_213 on table fktable
-NOTICE:  drop cascades to constraint fk_213_213 on table fktable
-NOTICE:  drop cascades to constraint fk_123_123 on table fktable
-NOTICE:  drop cascades to constraint fk_5_1 on table fktable
-NOTICE:  drop cascades to constraint fktable_x1_fkey on table fktable
-NOTICE:  drop cascades to constraint fk_4_2 on table fktable
-NOTICE:  drop cascades to constraint fktable_x2_fkey on table fktable
-NOTICE:  drop cascades to constraint fk_1_3 on table fktable
 NOTICE:  drop cascades to constraint fktable_x3_fkey on table fktable
+NOTICE:  drop cascades to constraint fk_1_3 on table fktable
+NOTICE:  drop cascades to constraint fktable_x2_fkey on table fktable
+NOTICE:  drop cascades to constraint fk_4_2 on table fktable
+NOTICE:  drop cascades to constraint fktable_x1_fkey on table fktable
+NOTICE:  drop cascades to constraint fk_5_1 on table fktable
+NOTICE:  drop cascades to constraint fk_123_123 on table fktable
+NOTICE:  drop cascades to constraint fk_213_213 on table fktable
+NOTICE:  drop cascades to constraint fk_253_213 on table fktable
 -- test a tricky case: we can elide firing the FK check trigger during
 -- an UPDATE if the UPDATE did not change the foreign key
 -- field. However, we can't do this if our transaction was the one that

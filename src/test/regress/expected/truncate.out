@@ -141,10 +141,10 @@ SELECT * FROM trunc_e;
 (0 rows)
 
 DROP TABLE truncate_a,trunc_c,trunc_b,trunc_d,trunc_e CASCADE;
-NOTICE:  drop cascades to constraint trunc_e_a_fkey on table trunc_e
 NOTICE:  drop cascades to constraint trunc_b_a_fkey on table trunc_b
-NOTICE:  drop cascades to constraint trunc_e_b_fkey on table trunc_e
+NOTICE:  drop cascades to constraint trunc_e_a_fkey on table trunc_e
 NOTICE:  drop cascades to constraint trunc_d_a_fkey on table trunc_d
+NOTICE:  drop cascades to constraint trunc_e_b_fkey on table trunc_e
 -- Test ON TRUNCATE triggers
 CREATE TABLE trunc_trigger_test (f1 int, f2 text, f3 text);
 CREATE TABLE trunc_trigger_log (tgop text, tglevel text, tgwhen text,

@@ -818,9 +818,9 @@ create table c2(f3 int) inherits(p1,p2);
       Table "public.c2"
  Column |  Type   | Modifiers 
 --------+---------+-----------
- f1     | integer |          
- f2     | integer |          
- f3     | integer |          
+ f1     | integer | 
+ f2     | integer | 
+ f3     | integer | 
 Check constraints:
     "p2_f2_check" CHECK (f2 > 0)
 Inherits: p1,
@@ -834,22 +834,19 @@ NOTICE:  merging multiple inherited definitions of column "f3"
       Table "public.c3"
  Column |  Type   | Modifiers 
 --------+---------+-----------
- f1     | integer |          
- f2     | integer |          
- f3     | integer |          
- f4     | integer |          
+ f1     | integer | 
+ f2     | integer | 
+ f3     | integer | 
+ f4     | integer | 
 Check constraints:
     "p2_f2_check" CHECK (f2 > 0)
 Inherits: c1,
           c2
 
 drop table p1 cascade;
+NOTICE:  drop cascades to table c1
 NOTICE:  drop cascades to table c2
 NOTICE:  drop cascades to table c3
-NOTICE:  drop cascades to constraint p2_f2_check on table c3
-NOTICE:  drop cascades to constraint p2_f2_check on table c2
-NOTICE:  drop cascades to table c1
-NOTICE:  drop cascades to constraint p2_f2_check on table c1
 drop table p2 cascade;
 create table pp1 (f1 int);
 create table cc1 (f2 text, f3 int) inherits (pp1);
@@ -858,10 +855,10 @@ alter table pp1 add column a1 int check (a1 > 0);
       Table "public.cc1"
  Column |  Type   | Modifiers 
 --------+---------+-----------
- f1     | integer |          
- f2     | text    |          
- f3     | integer |          
- a1     | integer |          
+ f1     | integer | 
+ f2     | text    | 
+ f3     | integer | 
+ a1     | integer | 
 Check constraints:
     "pp1_a1_check" CHECK (a1 > 0)
 Inherits: pp1
@@ -873,11 +870,11 @@ NOTICE:  merging multiple inherited definitions of column "a1"
           Table "public.cc2"
  Column |       Type       | Modifiers 
 --------+------------------+-----------
- f1     | integer          |          
- a1     | integer          |          
- f2     | text             |          
- f3     | integer          |          
- f4     | double precision |          
+ f1     | integer          | 
+ a1     | integer          | 
+ f2     | text             | 
+ f3     | integer          | 
+ f4     | double precision | 
 Check constraints:
     "pp1_a1_check" CHECK (a1 > 0)
 Inherits: pp1,
@@ -890,12 +887,12 @@ NOTICE:  merging constraint "pp1_a2_check" with inherited definition
           Table "public.cc2"
  Column |       Type       | Modifiers 
 --------+------------------+-----------
- f1     | integer          |          
- a1     | integer          |          
- f2     | text             |          
- f3     | integer          |          
- f4     | double precision |          
- a2     | integer          |          
+ f1     | integer          | 
+ a1     | integer          | 
+ f2     | text             | 
+ f3     | integer          | 
+ f4     | double precision | 
+ a2     | integer          | 
 Check constraints:
     "pp1_a1_check" CHECK (a1 > 0)
     "pp1_a2_check" CHECK (a2 > 0)
@@ -903,9 +900,5 @@ Inherits: pp1,
           cc1
 
 drop table pp1 cascade;
-NOTICE:  drop cascades to table cc2
-NOTICE:  drop cascades to constraint pp1_a1_check on table cc2
-NOTICE:  drop cascades to constraint pp1_a2_check on table cc2
 NOTICE:  drop cascades to table cc1
-NOTICE:  drop cascades to constraint pp1_a1_check on table cc1
-NOTICE:  drop cascades to constraint pp1_a2_check on table cc1
+NOTICE:  drop cascades to table cc2

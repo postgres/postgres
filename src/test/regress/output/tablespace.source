@@ -65,9 +65,9 @@ ERROR:  tablespace "nosuchspace" does not exist
 DROP TABLESPACE testspace;
 ERROR:  tablespace "testspace" is not empty
 DROP SCHEMA testschema CASCADE;
-NOTICE:  drop cascades to table testschema.atable
-NOTICE:  drop cascades to table testschema.asexecute
-NOTICE:  drop cascades to table testschema.asselect
 NOTICE:  drop cascades to table testschema.foo
+NOTICE:  drop cascades to table testschema.asselect
+NOTICE:  drop cascades to table testschema.asexecute
+NOTICE:  drop cascades to table testschema.atable
 -- Should succeed
 DROP TABLESPACE testspace;

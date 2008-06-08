@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.68 2008/04/13 19:18:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.69 2008/06/08 22:41:04 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -249,6 +249,47 @@ systable_getnext(SysScanDesc sysscan)
 		htup = heap_getnext(sysscan->scan, ForwardScanDirection);
 
 	return htup;
+}
+
+/*
+ * systable_recheck_tuple --- recheck visibility of most-recently-fetched tuple
+ *
+ * This is useful to test whether an object was deleted while we waited to
+ * acquire lock on it.
+ *
+ * Note: we don't actually *need* the tuple to be passed in, but it's a
+ * good crosscheck that the caller is interested in the right tuple.
+ */
+bool
+systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
+{
+	bool		result;
+
+	if (sysscan->irel)
+	{
+		IndexScanDesc scan = sysscan->iscan;
+
+		Assert(tup == &scan->xs_ctup);
+		Assert(BufferIsValid(scan->xs_cbuf));
+		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
+		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
+		result = HeapTupleSatisfiesVisibility(tup, scan->xs_snapshot,
+											  scan->xs_cbuf);
+		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
+	}
+	else
+	{
+		HeapScanDesc scan = sysscan->scan;
+
+		Assert(tup == &scan->rs_ctup);
+		Assert(BufferIsValid(scan->rs_cbuf));
+		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
+		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+		result = HeapTupleSatisfiesVisibility(tup, scan->rs_snapshot,
+											  scan->rs_cbuf);
+		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+	}
+	return result;
 }
 
 /*

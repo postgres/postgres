@@ -266,8 +266,8 @@ ERROR:  domain dnotnulltest does not allow null values
 alter domain dnotnulltest drop not null;
 update domnotnull set col1 = null;
 drop domain dnotnulltest cascade;
-NOTICE:  drop cascades to table domnotnull column col2
 NOTICE:  drop cascades to table domnotnull column col1
+NOTICE:  drop cascades to table domnotnull column col2
 -- Test ALTER DOMAIN .. DEFAULT ..
 create table domdeftest (col1 ddef1);
 insert into domdeftest default values;

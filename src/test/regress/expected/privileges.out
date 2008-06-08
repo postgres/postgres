@@ -589,7 +589,6 @@ DROP VIEW atestv1;
 DROP VIEW atestv2;
 -- this should cascade to drop atestv4
 DROP VIEW atestv3 CASCADE;
-NOTICE:  drop cascades to rule _RETURN on view atestv4
 NOTICE:  drop cascades to view atestv4
 -- this should complain "does not exist"
 DROP VIEW atestv4;

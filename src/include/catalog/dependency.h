@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.35 2008/05/16 23:36:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.36 2008/06/08 22:41:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include "nodes/parsenodes.h"	/* for DropBehavior */
 
 
-/*----------
+/*
  * Precise semantics of a dependency relationship are specified by the
  * DependencyType code (which is stored in a "char" field in pg_depend,
  * so we assign ASCII-code values to the enumeration members).
@@ -56,7 +56,6 @@
  * contain zeroes.
  *
  * Other dependency flavors may be needed in future.
- *----------
  */
 
 typedef enum DependencyType
@@ -178,7 +177,7 @@ extern void add_exact_object_address(const ObjectAddress *object,
 						 ObjectAddresses *addrs);
 
 extern bool object_address_present(const ObjectAddress *object,
-					   ObjectAddresses *addrs);
+					   const ObjectAddresses *addrs);
 
 extern void record_object_address_dependencies(const ObjectAddress *depender,
 								   ObjectAddresses *referenced,
