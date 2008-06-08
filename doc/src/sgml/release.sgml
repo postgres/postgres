@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.583 2008/06/07 22:10:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.584 2008/06/08 21:46:07 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -72,7 +72,7 @@ do it for earlier branch release files.
   </note>
 
   <para>
-   This release contains one serious bug fix over 8.3.2.
+   This release contains one serious and one minor bug fix over 8.3.2.
    For information about new features in the 8.3 major release, see
    <xref linkend="release-8-3">.
   </para>
@@ -109,6 +109,19 @@ do it for earlier branch release files.
       <application>pg_dump</> output failing to reload, it is being treated
       as a high-priority fix.  The only released versions in which dump
       output is actually incorrect are 8.3.1 and 8.2.7.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <command>ALTER AGGREGATE ... OWNER TO</> update
+      <structname>pg_shdepend</> (Tom)
+     </para>
+
+     <para>
+      This oversight could lead to problems if the aggregate was later
+      involved in a <command>DROP OWNED</> or <command>REASSIGN OWNED</>
+      operation.
      </para>
     </listitem>
 
@@ -3412,7 +3425,7 @@ current_date &lt; 2017-11-17
   </note>
 
   <para>
-   This release contains one serious bug fix over 8.2.8.
+   This release contains one serious and one minor bug fix over 8.2.8.
    For information about new features in the 8.2 major release, see
    <xref linkend="release-8-2">.
   </para>
@@ -3449,6 +3462,19 @@ current_date &lt; 2017-11-17
       <application>pg_dump</> output failing to reload, it is being treated
       as a high-priority fix.  The only released versions in which dump
       output is actually incorrect are 8.3.1 and 8.2.7.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <command>ALTER AGGREGATE ... OWNER TO</> update
+      <structname>pg_shdepend</> (Tom)
+     </para>
+
+     <para>
+      This oversight could lead to problems if the aggregate was later
+      involved in a <command>DROP OWNED</> or <command>REASSIGN OWNED</>
+      operation.
      </para>
     </listitem>
 
@@ -7439,7 +7465,7 @@ current_date &lt; 2017-11-17
   </note>
 
   <para>
-   This release contains one serious bug fix over 8.1.12.
+   This release contains one serious and one minor bug fix over 8.1.12.
    For information about new features in the 8.1 major release, see
    <xref linkend="release-8-1">.
   </para>
@@ -7476,6 +7502,19 @@ current_date &lt; 2017-11-17
       <application>pg_dump</> output failing to reload, it is being treated
       as a high-priority fix.  The only released versions in which dump
       output is actually incorrect are 8.3.1 and 8.2.7.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <command>ALTER AGGREGATE ... OWNER TO</> update
+      <structname>pg_shdepend</> (Tom)
+     </para>
+
+     <para>
+      This oversight could lead to problems if the aggregate was later
+      involved in a <command>DROP OWNED</> or <command>REASSIGN OWNED</>
+      operation.
      </para>
     </listitem>
 
