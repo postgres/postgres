@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.30.2.1 2005/11/22 18:23:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.30.2.2 2008/06/08 21:10:05 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -332,6 +332,14 @@ AlterAggregateOwner(List *name, TypeName *basetype, Oid newOwnerId)
 	 */
 	if (procForm->proowner != newOwnerId)
 	{
+		Datum		repl_val[Natts_pg_proc];
+		char		repl_null[Natts_pg_proc];
+		char		repl_repl[Natts_pg_proc];
+		Acl		   *newAcl;
+		Datum		aclDatum;
+		bool		isNull;
+		HeapTuple	newtuple;
+
 		/* Superusers can always do it */
 		if (!superuser())
 		{
@@ -352,13 +360,36 @@ AlterAggregateOwner(List *name, TypeName *basetype, Oid newOwnerId)
 							   get_namespace_name(procForm->pronamespace));
 		}
 
-		/*
-		 * Modify the owner --- okay to scribble on tup because it's a copy
-		 */
-		procForm->proowner = newOwnerId;
+		memset(repl_null, ' ', sizeof(repl_null));
+		memset(repl_repl, ' ', sizeof(repl_repl));
 
-		simple_heap_update(rel, &tup->t_self, tup);
-		CatalogUpdateIndexes(rel, tup);
+		repl_repl[Anum_pg_proc_proowner - 1] = 'r';
+		repl_val[Anum_pg_proc_proowner - 1] = ObjectIdGetDatum(newOwnerId);
+
+		/*
+		 * Determine the modified ACL for the new owner.  This is only
+		 * necessary when the ACL is non-null.
+		 */
+		aclDatum = SysCacheGetAttr(PROCOID, tup,
+								   Anum_pg_proc_proacl,
+								   &isNull);
+		if (!isNull)
+		{
+			newAcl = aclnewowner(DatumGetAclP(aclDatum),
+								 procForm->proowner, newOwnerId);
+			repl_repl[Anum_pg_proc_proacl - 1] = 'r';
+			repl_val[Anum_pg_proc_proacl - 1] = PointerGetDatum(newAcl);
+		}
+
+		newtuple = heap_modifytuple(tup, RelationGetDescr(rel), repl_val, repl_null, repl_repl);
+
+		simple_heap_update(rel, &newtuple->t_self, newtuple);
+		CatalogUpdateIndexes(rel, newtuple);
+
+		heap_freetuple(newtuple);
+
+		/* Update owner dependency reference */
+		changeDependencyOnOwner(ProcedureRelationId, procOid, newOwnerId);
 	}
 
 	heap_close(rel, NoLock);
