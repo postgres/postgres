@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.45 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.46 2008/06/08 21:09:48 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -318,58 +318,10 @@ void
 AlterAggregateOwner(List *name, List *args, Oid newOwnerId)
 {
 	Oid			procOid;
-	HeapTuple	tup;
-	Form_pg_proc procForm;
-	Relation	rel;
-	AclResult	aclresult;
-
-	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
 	/* Look up function and make sure it's an aggregate */
 	procOid = LookupAggNameTypeNames(name, args, false);
 
-	tup = SearchSysCacheCopy(PROCOID,
-							 ObjectIdGetDatum(procOid),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for function %u", procOid);
-	procForm = (Form_pg_proc) GETSTRUCT(tup);
-
-	/*
-	 * If the new owner is the same as the existing owner, consider the
-	 * command to have succeeded.  This is for dump restoration purposes.
-	 */
-	if (procForm->proowner != newOwnerId)
-	{
-		/* Superusers can always do it */
-		if (!superuser())
-		{
-			/* Otherwise, must be owner of the existing object */
-			if (!pg_proc_ownercheck(procOid, GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
-							   NameListToString(name));
-
-			/* Must be able to become new owner */
-			check_is_member_of_role(GetUserId(), newOwnerId);
-
-			/* New owner must have CREATE privilege on namespace */
-			aclresult = pg_namespace_aclcheck(procForm->pronamespace,
-											  newOwnerId,
-											  ACL_CREATE);
-			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-							   get_namespace_name(procForm->pronamespace));
-		}
-
-		/*
-		 * Modify the owner --- okay to scribble on tup because it's a copy
-		 */
-		procForm->proowner = newOwnerId;
-
-		simple_heap_update(rel, &tup->t_self, tup);
-		CatalogUpdateIndexes(rel, tup);
-	}
-
-	heap_close(rel, NoLock);
-	heap_freetuple(tup);
+	/* The rest is just like a function */
+	AlterFunctionOwner_oid(procOid, newOwnerId);
 }
