@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.199 2008/01/26 19:55:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.200 2008/06/09 06:55:34 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1171,9 +1171,9 @@ CheckDeadLock(void)
 	/*
 	 * Check to see if we've been awoken by anyone in the interim.
 	 *
-	 * If we have we can return and resume our transaction -- happy day.
-	 * Before we are awoken the process releasing the lock grants it to us so
-	 * we know that we don't have to wait anymore.
+	 * If we can return and resume our transaction -- happy day.  Before we
+	 * are awoken the process releasing the lock grants it to us so we know
+	 * that we don't have to wait anymore.
 	 *
 	 * We check by looking to see if we've been unlinked from the wait queue.
 	 * This is quicker than checking our semaphore's state, since no kernel
