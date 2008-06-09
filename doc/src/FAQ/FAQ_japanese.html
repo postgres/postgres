@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:	Mon Mar  3 11:22:50 EST 2008</p>
+<p>原文最終更新日:	Thu Apr 24 15:58:18 EDT 2008</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -52,7 +52,7 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
 <a href="#item1.10">1.10</a>) どのような文書がありますか？<br />
 <a href="#item1.11">1.11</a>) <small>SQL</small>はどうすれば学べますか？<br />
 <a href="#item1.12">1.12</a>) パッチを提供したり、開発チーム参加するにはどうすればよいですか？<br />
-<a href="#item1.13">1.13</a>) 他の<small>DBMS</small>と比べてPostgreSQLはどうなのですか？<br />
+<a href="#item1.13">1.13</a>) 他の<small>DBMS</small>と比べてPostgreSQL はどうなのですか？ PostgreSQLを組み込みに使えますか？<br />
 <a href="#item1.14">1.14</a>) PostgreSQLは国毎の最新の夏時間の変更を扱いますか？<br />
 <a href="#item1.15">1.15</a>) PostgreSQLのメーリングリストの購読をやめるにはどうすればよいですか？また、電子メールを重複して受け取らないようにするにはどうしますか？<br />
 
@@ -268,7 +268,7 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
 
 <h4 id="item1.6">1.6</a>) 最新のリリースはどれですか？</h4>
 
-    <p>PostgreSQL の最新版はバージョン 8.3 です。</p>
+    <p>PostgreSQL の最新版はバージョン 8.3.1 です。</p>
     <p>我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを
     行なうことを計画しています。</p>
 
@@ -489,7 +489,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     （開発者向けの）Developer's FAQ</a>をごらんください。</p>
 
 
-<h4 id="item1.13">1.13</a>) 他の<small>DBMS</small>と比べPostgreSQLはどうなのですか？</h4>
+<h4 id="item1.13">1.13</a>) 他の<small>DBMS</small>と比べPostgreSQLはどうなのですか？ PostgreSQLを組み込みに使えますか？</h4>
 
     <p>ソフトウェアを計る方法にはいくつかあります。機能と性能と信頼性と
     サポートと価格です。</p> 
@@ -545,6 +545,13 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
       限無しで商品に組み込むことができます。<br /> 
       </dd>
    </dl>
+    PostgreSQLはクライアント／サーバ・アーキテクチャで設計されていて、
+    クライアントとサーバおよびそれを補助するいろいろなプロセスが別々に走
+    ることが要求されます。多くの組み込みアーキテクチャはこのような要求を
+    サポート可能です。しかし、お使いになっている組み込みアーキテクチャに
+    よっては、データベースサーバがアプリケーション・プロセスの中で走るこ
+    とを要求される場合があり、Postgresを使うことはできないので、軽量のデー
+    タベースソリューションを選択すべきです。
    </p>
 
 <h3 id="item1.14">1.14) PostgreSQLは国毎の最新の夏時間の変更を扱いますか？</h3>
@@ -1330,7 +1337,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2008年3月4日
+  最終更新日:	2008年4月25日
   翻訳者:	桑村 潤 (<a href="mailto:juk at postgresql.jp">Jun KUWAMURA &lt;juk at postgresql.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
