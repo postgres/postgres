@@ -373,7 +373,7 @@ alter table atacc3 rename test2 to testx;
 alter table atacc3 inherit atacc2;
 -- fail due to mismatched data type
 alter table atacc3 add test2 bool;
-alter table atacc3 add inherit atacc2;
+alter table atacc3 inherit atacc2;
 alter table atacc3 drop test2;
 -- succeed
 alter table atacc3 add test2 int;
