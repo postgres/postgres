@@ -2,14 +2,9 @@ For All Releases (major, minor, beta, RC)
 ================
 
 * Release version number changes
-	o doc/bug.template
-	o bump Win32 interface version numbers
-		- src/include/pg_config.h.win32
-		- src/interfaces/libpq/libpq.rc.in
-		- src/port/win32ver.rc
 	o update doc/FAQ and doc/src/FAQ/FAQ.html
 	o copy FAQs from HEAD to top-most branch
-	o configure.in, and run autoconf or update configure (by packager)
+	o run src/tools/version_stamp.pl, then run autoconf (by packager)
 
 * Release notes
 	o scan cvs logs, use pgcvslog and flags in comments
