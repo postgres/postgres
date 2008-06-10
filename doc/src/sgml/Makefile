@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.105 2007/12/15 10:28:21 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.106 2008/06/10 00:19:32 alvherre Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -224,7 +224,7 @@ OSX = osx # (may be called sx or sgml2xml on some systems)
 XSLTPROC = xsltproc
 
 postgres.xml: postgres.sgml $(GENERATED_SGML)
-	$(OSX) -x lower $< | \
+	$(OSX) -D. -x lower $< | \
 	  sed -e 's/\[\(amp\|copy\|egrave\|gt\|lt\|mdash\|nbsp\|ouml\|pi\|quot\|uuml\) *\]/\&\1;/g' \
 	      -e '1a\' -e '<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">' \
 	  >$@
