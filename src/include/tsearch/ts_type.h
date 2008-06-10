@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.11 2008/05/16 16:31:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.12 2008/06/10 08:55:50 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,10 +238,10 @@ typedef TSQueryData *TSQuery;
  */
 #define COMPUTESIZE(size, lenofoperand) ( HDRSIZETQ + (size) * sizeof(QueryItem) + (lenofoperand) )
 
-/* Returns a pointer to the first QueryItem in a TSVector */
+/* Returns a pointer to the first QueryItem in a TSQuery */
 #define GETQUERY(x)  ((QueryItem*)( (char*)(x)+HDRSIZETQ ))
 
-/* Returns a pointer to the beginning of operands in a TSVector */
+/* Returns a pointer to the beginning of operands in a TSQuery */
 #define GETOPERAND(x)	( (char*)GETQUERY(x) + ((TSQuery)(x))->size * sizeof(QueryItem) )
 
 /*
