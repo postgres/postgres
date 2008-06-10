@@ -1,9 +1,5 @@
 * Version numbers
-    configure.in and configure
-    bump interface version numbers
-      o src/interfaces/*/Makefile
-      o src/interfaces/libpq/libpq.rc (update for minor release)
-      o src/include/pg_config.h.win32 (update for minor release)
+    run src/tools/version_stamp.pl, then run autoconf (by packager)
 
 * Release notes
     update doc/src/sgml/release.sgml
