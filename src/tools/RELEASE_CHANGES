@@ -1,17 +1,9 @@
 
-* Beta and Release Candidate (RC) changes
-	o configure.in and configure
-	o src/include/pg_config.h.win32
-
 * Version numbers
-	o configure.in, and run autoconf or update configure
-	o doc/bug.template
+	o run src/tools/version_stamp.pl, then run autoconf (by packager)
 	o bump interface version numbers
 		- src/interfaces/*/Makefile (major releases only)
 		- src/interfaces/*/*/Makefile (major releases only)
-		- src/interfaces/libpq/libpq.rc.in (major and minor releases)
-		- src/include/pg_config.h.win32 (major and minor releases)
-		- src/port/win32ver.rc (major and minor releases)
 
 * Release notes
 	o scan cvs logs, use pgcvslog and flags in comments
