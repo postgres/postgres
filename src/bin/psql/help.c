@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.128 2008/05/16 17:17:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.129 2008/06/11 10:55:43 heikki Exp $
  */
 #include "postgres_fe.h"
 
@@ -244,10 +244,10 @@ slashUsage(unsigned short int pager)
 	fprintf(output, "\n");
 
 	fprintf(output, _("External\n"));
-	fprintf(output, _("  \\cd [DIR]      change the current working directory\n"));
-	fprintf(output, _("  \\timing        toggle timing of commands (currently %s)\n"),
+	fprintf(output, _("  \\cd [DIR]         change the current working directory\n"));
+	fprintf(output, _("  \\timing [on|off]  toggle timing of commands (currently %s)\n"),
 			ON(pset.timing));
-	fprintf(output, _("  \\! [COMMAND]   execute command in shell or start interactive shell\n"));
+	fprintf(output, _("  \\! [COMMAND]      execute command in shell or start interactive shell\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Variable\n"));
