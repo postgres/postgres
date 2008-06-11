@@ -237,43 +237,45 @@ And relnamespace IN (SELECT OID FROM pg_namespace WHERE nspname LIKE 'pg_temp%')
 (1 row)
 
 DROP SCHEMA temp_view_test CASCADE;
-NOTICE:  drop cascades to table temp_view_test.base_table
-NOTICE:  drop cascades to view v7_temp
-NOTICE:  drop cascades to view v10_temp
-NOTICE:  drop cascades to view v11_temp
-NOTICE:  drop cascades to view v12_temp
-NOTICE:  drop cascades to view v2_temp
-NOTICE:  drop cascades to view v4_temp
-NOTICE:  drop cascades to view v6_temp
-NOTICE:  drop cascades to view v8_temp
-NOTICE:  drop cascades to view v9_temp
-NOTICE:  drop cascades to table temp_view_test.base_table2
-NOTICE:  drop cascades to view v5_temp
-NOTICE:  drop cascades to view temp_view_test.v1
-NOTICE:  drop cascades to view temp_view_test.v2
-NOTICE:  drop cascades to view temp_view_test.v3
-NOTICE:  drop cascades to view temp_view_test.v4
-NOTICE:  drop cascades to view temp_view_test.v5
-NOTICE:  drop cascades to view temp_view_test.v6
-NOTICE:  drop cascades to view temp_view_test.v7
-NOTICE:  drop cascades to view temp_view_test.v8
-NOTICE:  drop cascades to sequence temp_view_test.seq1
-NOTICE:  drop cascades to view temp_view_test.v9
+NOTICE:  drop cascades to 22 other objects
+DETAIL:  drop cascades to table temp_view_test.base_table
+drop cascades to view v7_temp
+drop cascades to view v10_temp
+drop cascades to view v11_temp
+drop cascades to view v12_temp
+drop cascades to view v2_temp
+drop cascades to view v4_temp
+drop cascades to view v6_temp
+drop cascades to view v8_temp
+drop cascades to view v9_temp
+drop cascades to table temp_view_test.base_table2
+drop cascades to view v5_temp
+drop cascades to view temp_view_test.v1
+drop cascades to view temp_view_test.v2
+drop cascades to view temp_view_test.v3
+drop cascades to view temp_view_test.v4
+drop cascades to view temp_view_test.v5
+drop cascades to view temp_view_test.v6
+drop cascades to view temp_view_test.v7
+drop cascades to view temp_view_test.v8
+drop cascades to sequence temp_view_test.seq1
+drop cascades to view temp_view_test.v9
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to table t1
-NOTICE:  drop cascades to view temporal1
-NOTICE:  drop cascades to view temporal2
-NOTICE:  drop cascades to view temporal3
-NOTICE:  drop cascades to view temporal4
-NOTICE:  drop cascades to table t2
-NOTICE:  drop cascades to view nontemp1
-NOTICE:  drop cascades to view nontemp2
-NOTICE:  drop cascades to view nontemp3
-NOTICE:  drop cascades to view nontemp4
-NOTICE:  drop cascades to table tbl1
-NOTICE:  drop cascades to table tbl2
-NOTICE:  drop cascades to table tbl3
-NOTICE:  drop cascades to table tbl4
-NOTICE:  drop cascades to view mytempview
-NOTICE:  drop cascades to view pubview
+NOTICE:  drop cascades to 16 other objects
+DETAIL:  drop cascades to table t1
+drop cascades to view temporal1
+drop cascades to view temporal2
+drop cascades to view temporal3
+drop cascades to view temporal4
+drop cascades to table t2
+drop cascades to view nontemp1
+drop cascades to view nontemp2
+drop cascades to view nontemp3
+drop cascades to view nontemp4
+drop cascades to table tbl1
+drop cascades to table tbl2
+drop cascades to table tbl3
+drop cascades to table tbl4
+drop cascades to view mytempview
+drop cascades to view pubview
 SET search_path to public;

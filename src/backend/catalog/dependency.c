@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.74 2008/06/08 22:41:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.75 2008/06/11 21:53:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,7 @@
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -752,7 +753,7 @@ findDependentObjects(const ObjectAddress *object,
  *
  *	targetObjects: list of objects that are scheduled to be deleted
  *	behavior: RESTRICT or CASCADE
- *	msglevel: elog level for non-debug notice messages
+ *	msglevel: elog level for non-error report messages
  *	origObject: base object of deletion, or NULL if not available
  *		(the latter case occurs in DROP OWNED)
  */
@@ -763,7 +764,35 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 					   const ObjectAddress *origObject)
 {
 	bool		ok = true;
+	StringInfoData clientdetail;
+	StringInfoData logdetail;
+	int			numReportedClient = 0;
+	int			numNotReportedClient = 0;
 	int			i;
+
+	/*
+	 * If no error is to be thrown, and the msglevel is too low to be shown
+	 * to either client or server log, there's no need to do any of the work.
+	 *
+	 * Note: this code doesn't know all there is to be known about elog
+	 * levels, but it works for NOTICE and DEBUG2, which are the only values
+	 * msglevel can currently have.  We also assume we are running in a normal
+	 * operating environment.
+	 */
+	if (behavior == DROP_CASCADE &&
+		msglevel < client_min_messages &&
+		(msglevel < log_min_messages || log_min_messages == LOG))
+		return;
+
+	/*
+	 * We limit the number of dependencies reported to the client to
+	 * MAX_REPORTED_DEPS, since client software may not deal well with
+	 * enormous error strings.	The server log always gets a full report.
+	 */
+#define MAX_REPORTED_DEPS 100
+
+	initStringInfo(&clientdetail);
+	initStringInfo(&logdetail);
 
 	/*
 	 * We process the list back to front (ie, in dependency order not deletion
@@ -773,10 +802,13 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 	{
 		const ObjectAddress *obj = &targetObjects->refs[i];
 		const ObjectAddressExtra *extra = &targetObjects->extras[i];
+		char	   *objDesc;
 
 		/* Ignore the original deletion target(s) */
 		if (extra->flags & DEPFLAG_ORIGINAL)
 			continue;
+
+		objDesc = getObjectDescription(obj);
 
 		/*
 		 * If, at any stage of the recursive search, we reached the object
@@ -784,22 +816,67 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 		 * even in RESTRICT mode.
 		 */
 		if (extra->flags & (DEPFLAG_AUTO | DEPFLAG_INTERNAL))
+		{
+			/*
+			 * auto-cascades are reported at DEBUG2, not msglevel.  We
+			 * don't try to combine them with the regular message because
+			 * the results are too confusing when client_min_messages and
+			 * log_min_messages are different.
+			 */
 			ereport(DEBUG2,
 					(errmsg("drop auto-cascades to %s",
-							getObjectDescription(obj))));
+							objDesc)));
+		}
 		else if (behavior == DROP_RESTRICT)
 		{
-			ereport(msglevel,
-					(errmsg("%s depends on %s",
-							getObjectDescription(obj),
-							getObjectDescription(&extra->dependee))));
+			char   *otherDesc = getObjectDescription(&extra->dependee);
+
+			if (numReportedClient < MAX_REPORTED_DEPS)
+			{
+				/* separate entries with a newline */
+				if (clientdetail.len != 0)
+					appendStringInfoChar(&clientdetail, '\n');
+				appendStringInfo(&clientdetail, _("%s depends on %s"),
+								 objDesc, otherDesc);
+				numReportedClient++;
+			}
+			else
+				numNotReportedClient++;
+			/* separate entries with a newline */
+			if (logdetail.len != 0)
+				appendStringInfoChar(&logdetail, '\n');
+			appendStringInfo(&logdetail, _("%s depends on %s"),
+							 objDesc, otherDesc);
+			pfree(otherDesc);
 			ok = false;
 		}
 		else
-			ereport(msglevel,
-					(errmsg("drop cascades to %s",
-							getObjectDescription(obj))));
+		{
+			if (numReportedClient < MAX_REPORTED_DEPS)
+			{
+				/* separate entries with a newline */
+				if (clientdetail.len != 0)
+					appendStringInfoChar(&clientdetail, '\n');
+				appendStringInfo(&clientdetail, _("drop cascades to %s"),
+								 objDesc);
+				numReportedClient++;
+			}
+			else
+				numNotReportedClient++;
+			/* separate entries with a newline */
+			if (logdetail.len != 0)
+				appendStringInfoChar(&logdetail, '\n');
+			appendStringInfo(&logdetail, _("drop cascades to %s"),
+							 objDesc);
+		}
+
+		pfree(objDesc);
 	}
+
+	if (numNotReportedClient > 0)
+		appendStringInfo(&clientdetail, _("\nand %d other objects "
+										  "(see server log for list)"),
+						 numNotReportedClient);
 
 	if (!ok)
 	{
@@ -808,13 +885,35 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 					 errmsg("cannot drop %s because other objects depend on it",
 							getObjectDescription(origObject)),
+					 errdetail("%s", clientdetail.data),
+					 errdetail_log("%s", logdetail.data),
 					 errhint("Use DROP ... CASCADE to drop the dependent objects too.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 					 errmsg("cannot drop desired object(s) because other objects depend on them"),
+					 errdetail("%s", clientdetail.data),
+					 errdetail_log("%s", logdetail.data),
 					 errhint("Use DROP ... CASCADE to drop the dependent objects too.")));
 	}
+	else if (numReportedClient > 1)
+	{
+		ereport(msglevel,
+				/* translator: %d always has a value larger than 1 */
+				(errmsg("drop cascades to %d other objects",
+						numReportedClient + numNotReportedClient),
+				 errdetail("%s", clientdetail.data),
+				 errdetail_log("%s", logdetail.data)));
+	}
+	else if (numReportedClient == 1)
+	{
+		/* we just use the single item as-is */
+		ereport(msglevel,
+				(errmsg_internal("%s", clientdetail.data)));
+	}
+
+	pfree(clientdetail.data);
+	pfree(logdetail.data);
 }
 
 /*

@@ -844,9 +844,10 @@ Inherits: c1,
           c2
 
 drop table p1 cascade;
-NOTICE:  drop cascades to table c1
-NOTICE:  drop cascades to table c2
-NOTICE:  drop cascades to table c3
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table c1
+drop cascades to table c2
+drop cascades to table c3
 drop table p2 cascade;
 create table pp1 (f1 int);
 create table cc1 (f2 text, f3 int) inherits (pp1);
@@ -900,5 +901,6 @@ Inherits: pp1,
           cc1
 
 drop table pp1 cascade;
-NOTICE:  drop cascades to table cc1
-NOTICE:  drop cascades to table cc2
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table cc1
+drop cascades to table cc2

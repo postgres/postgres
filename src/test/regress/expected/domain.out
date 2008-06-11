@@ -7,8 +7,8 @@ comment on domain domaindroptest is 'About to drop this..';
 create domain dependenttypetest domaindroptest;
 -- fail because of dependent type
 drop domain domaindroptest;
-NOTICE:  type dependenttypetest depends on type domaindroptest
 ERROR:  cannot drop type domaindroptest because other objects depend on it
+DETAIL:  type dependenttypetest depends on type domaindroptest
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 drop domain domaindroptest cascade;
 NOTICE:  drop cascades to type dependenttypetest
@@ -266,8 +266,9 @@ ERROR:  domain dnotnulltest does not allow null values
 alter domain dnotnulltest drop not null;
 update domnotnull set col1 = null;
 drop domain dnotnulltest cascade;
-NOTICE:  drop cascades to table domnotnull column col1
-NOTICE:  drop cascades to table domnotnull column col2
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table domnotnull column col1
+drop cascades to table domnotnull column col2
 -- Test ALTER DOMAIN .. DEFAULT ..
 create table domdeftest (col1 ddef1);
 insert into domdeftest default values;
@@ -395,8 +396,9 @@ insert into dtest values('xz23'); -- fail
 ERROR:  value for domain dtop violates check constraint "dtop_check"
 drop table dtest;
 drop domain vchar4 cascade;
-NOTICE:  drop cascades to type dinter
-NOTICE:  drop cascades to type dtop
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to type dinter
+drop cascades to type dtop
 -- Make sure that constraints of newly-added domain columns are
 -- enforced correctly, even if there's no default value for the new
 -- column. Per bug #1433

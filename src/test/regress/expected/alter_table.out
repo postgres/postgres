@@ -1161,8 +1161,9 @@ order by relname, attnum;
 (8 rows)
 
 drop table p1, p2 cascade;
-NOTICE:  drop cascades to table c1
-NOTICE:  drop cascades to table gc1
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table c1
+drop cascades to table gc1
 --
 -- Test the ALTER TABLE WITHOUT OIDS command
 --
@@ -1469,8 +1470,9 @@ select alter2.plus1(41);
 
 -- clean up
 drop schema alter2 cascade;
-NOTICE:  drop cascades to table alter2.t1
-NOTICE:  drop cascades to view alter2.v1
-NOTICE:  drop cascades to function alter2.plus1(integer)
-NOTICE:  drop cascades to type alter2.posint
-NOTICE:  drop cascades to type alter2.ctype
+NOTICE:  drop cascades to 5 other objects
+DETAIL:  drop cascades to table alter2.t1
+drop cascades to view alter2.v1
+drop cascades to function alter2.plus1(integer)
+drop cascades to type alter2.posint
+drop cascades to type alter2.ctype

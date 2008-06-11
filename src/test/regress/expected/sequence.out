@@ -148,12 +148,12 @@ CREATE TEMP TABLE t1 (
 NOTICE:  CREATE TABLE will create implicit sequence "t1_f1_seq" for serial column "t1.f1"
 -- Both drops should fail, but with different error messages:
 DROP SEQUENCE t1_f1_seq;
-NOTICE:  default for table t1 column f1 depends on sequence t1_f1_seq
 ERROR:  cannot drop sequence t1_f1_seq because other objects depend on it
+DETAIL:  default for table t1 column f1 depends on sequence t1_f1_seq
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP SEQUENCE myseq2;
-NOTICE:  default for table t1 column f2 depends on sequence myseq2
 ERROR:  cannot drop sequence myseq2 because other objects depend on it
+DETAIL:  default for table t1 column f2 depends on sequence myseq2
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 -- This however will work:
 DROP SEQUENCE myseq3;
