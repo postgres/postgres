@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Wed May 28 22:04:08 EDT 2008
+Last updated:           Wed Jun 11 16:54:08 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -898,6 +898,7 @@ first.  There is also a developer's wiki at<br/>
   allow pg_ctl to read and understand postgresql.conf to find the
   data_directory value.
 </p>
+  </li><li>Add pg_ctl option to do a syntax check of postgresql.conf
   </li><li>Add a function like pg_get_indexdef() that report more detailed index
   information
 <p>  <a href="http://archives.postgresql.org/pgsql-bugs/2007-12/msg00166.php">http://archives.postgresql.org/pgsql-bugs/2007-12/msg00166.php</a>
@@ -1708,8 +1709,8 @@ first.  There is also a developer's wiki at<br/>
     <li>Remove configure.in check for link failure when cause is found
     </li><li>Remove readdir() errno patch when runtime/mingwex/dirent.c rev
           1.4 is released
-    </li><li>-<em>Remove psql newline patch when we find out why mingw outputs an
-          extra newline</em>
+    </li><li>-<em>Remove psql newline patch when we find out why mingw outputs an</em>
+          extra newline
     </li><li>Allow psql to use readline once non-US code pages work with
           backslashes
     </li><li>Fix problem with shared memory on the Win32 Terminal Server
