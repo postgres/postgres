@@ -21,7 +21,7 @@
 # take effect.
 #
 # Any parameter can also be given as a command-line option to the server, e.g.,
-# "postgres -c log_connections=on".  Some paramters can be changed at run time
+# "postgres -c log_connections=on".  Some parameters can be changed at run time
 # with the "SET" SQL command.
 #
 # Memory units:  kB = kilobytes MB = megabytes GB = gigabytes
