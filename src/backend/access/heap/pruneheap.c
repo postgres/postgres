@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.13 2008/06/08 22:00:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.14 2008/06/12 09:12:30 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,7 +225,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 		 * and update the page's hint bit about whether it has free line
 		 * pointers.
 		 */
-		heap_page_prune_execute(relation, buffer,
+		heap_page_prune_execute(buffer,
 								prstate.redirected, prstate.nredirected,
 								prstate.nowdead, prstate.ndead,
 								prstate.nowunused, prstate.nunused,
@@ -696,7 +696,7 @@ heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum)
  * arguments are identical to those of log_heap_clean().
  */
 void
-heap_page_prune_execute(Relation reln, Buffer buffer,
+heap_page_prune_execute(Buffer buffer,
 						OffsetNumber *redirected, int nredirected,
 						OffsetNumber *nowdead, int ndead,
 						OffsetNumber *nowunused, int nunused,

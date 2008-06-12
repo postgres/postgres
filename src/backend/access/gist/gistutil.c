@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.26 2008/05/12 00:00:44 alvherre Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.27 2008/06/12 09:12:29 heikki Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -27,11 +27,10 @@ static Datum attrS[INDEX_MAX_KEYS];
 static bool isnullS[INDEX_MAX_KEYS];
 
 /*
- * Write itup vector to page, has no control of free space
+ * Write itup vector to page, has no control of free space.
  */
-OffsetNumber
-gistfillbuffer(Relation r, Page page, IndexTuple *itup,
-			   int len, OffsetNumber off)
+void
+gistfillbuffer(Page page, IndexTuple *itup, int len, OffsetNumber off)
 {
 	OffsetNumber l = InvalidOffsetNumber;
 	int			i;
@@ -42,14 +41,13 @@ gistfillbuffer(Relation r, Page page, IndexTuple *itup,
 
 	for (i = 0; i < len; i++)
 	{
-		l = PageAddItem(page, (Item) itup[i], IndexTupleSize(itup[i]),
-						off, false, false);
+		Size sz = IndexTupleSize(itup[i]);
+		l = PageAddItem(page, (Item) itup[i], sz, off, false, false);
 		if (l == InvalidOffsetNumber)
-			elog(ERROR, "failed to add item to index page in \"%s\"",
-				 RelationGetRelationName(r));
+			elog(ERROR, "failed to add item to GiST index page, item %d out of %d, size %d bytes",
+				 i, len, sz);
 		off++;
 	}
-	return l;
 }
 
 /*

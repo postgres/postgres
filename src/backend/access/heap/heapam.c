@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.258 2008/06/08 22:00:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.259 2008/06/12 09:12:30 heikki Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -3944,7 +3944,6 @@ static void
 heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 {
 	xl_heap_clean *xlrec = (xl_heap_clean *) XLogRecGetData(record);
-	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber *end;
@@ -3958,8 +3957,7 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	reln = XLogOpenRelation(xlrec->node);
-	buffer = XLogReadBuffer(reln, xlrec->block, false);
+	buffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
 	if (!BufferIsValid(buffer))
 		return;
 	page = (Page) BufferGetPage(buffer);
@@ -3980,7 +3978,7 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	Assert(nunused >= 0);
 
 	/* Update all item pointers per the record, and repair fragmentation */
-	heap_page_prune_execute(reln, buffer,
+	heap_page_prune_execute(buffer,
 							redirected, nredirected,
 							nowdead, ndead,
 							nowunused, nunused,
@@ -4002,15 +4000,13 @@ heap_xlog_freeze(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_freeze *xlrec = (xl_heap_freeze *) XLogRecGetData(record);
 	TransactionId cutoff_xid = xlrec->cutoff_xid;
-	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	reln = XLogOpenRelation(xlrec->node);
-	buffer = XLogReadBuffer(reln, xlrec->block, false);
+	buffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
 	if (!BufferIsValid(buffer))
 		return;
 	page = (Page) BufferGetPage(buffer);
@@ -4050,7 +4046,6 @@ static void
 heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_newpage *xlrec = (xl_heap_newpage *) XLogRecGetData(record);
-	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 
@@ -4058,8 +4053,7 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 	 * Note: the NEWPAGE log record is used for both heaps and indexes, so do
 	 * not do anything that assumes we are touching a heap.
 	 */
-	reln = XLogOpenRelation(xlrec->node);
-	buffer = XLogReadBuffer(reln, xlrec->blkno, true);
+	buffer = XLogReadBuffer(xlrec->node, xlrec->blkno, true);
 	Assert(BufferIsValid(buffer));
 	page = (Page) BufferGetPage(buffer);
 
@@ -4076,7 +4070,6 @@ static void
 heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_delete *xlrec = (xl_heap_delete *) XLogRecGetData(record);
-	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber offnum;
@@ -4086,8 +4079,7 @@ heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	reln = XLogOpenRelation(xlrec->target.node);
-	buffer = XLogReadBuffer(reln,
+	buffer = XLogReadBuffer(xlrec->target.node,
 							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 							false);
 	if (!BufferIsValid(buffer))
@@ -4133,7 +4125,6 @@ static void
 heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_insert *xlrec = (xl_heap_insert *) XLogRecGetData(record);
-	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber offnum;
@@ -4149,11 +4140,9 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	reln = XLogOpenRelation(xlrec->target.node);
-
 	if (record->xl_info & XLOG_HEAP_INIT_PAGE)
 	{
-		buffer = XLogReadBuffer(reln,
+		buffer = XLogReadBuffer(xlrec->target.node,
 							 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 								true);
 		Assert(BufferIsValid(buffer));
@@ -4163,7 +4152,7 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 	}
 	else
 	{
-		buffer = XLogReadBuffer(reln,
+		buffer = XLogReadBuffer(xlrec->target.node,
 							 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 								false);
 		if (!BufferIsValid(buffer))
@@ -4216,7 +4205,6 @@ static void
 heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move, bool hot_update)
 {
 	xl_heap_update *xlrec = (xl_heap_update *) XLogRecGetData(record);
-	Relation	reln = XLogOpenRelation(xlrec->target.node);
 	Buffer		buffer;
 	bool		samepage = (ItemPointerGetBlockNumber(&(xlrec->newtid)) ==
 							ItemPointerGetBlockNumber(&(xlrec->target.tid)));
@@ -4242,7 +4230,7 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move, bool hot_update)
 
 	/* Deal with old tuple version */
 
-	buffer = XLogReadBuffer(reln,
+	buffer = XLogReadBuffer(xlrec->target.node,
 							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 							false);
 	if (!BufferIsValid(buffer))
@@ -4317,7 +4305,7 @@ newt:;
 
 	if (record->xl_info & XLOG_HEAP_INIT_PAGE)
 	{
-		buffer = XLogReadBuffer(reln,
+		buffer = XLogReadBuffer(xlrec->target.node,
 								ItemPointerGetBlockNumber(&(xlrec->newtid)),
 								true);
 		Assert(BufferIsValid(buffer));
@@ -4327,7 +4315,7 @@ newt:;
 	}
 	else
 	{
-		buffer = XLogReadBuffer(reln,
+		buffer = XLogReadBuffer(xlrec->target.node,
 								ItemPointerGetBlockNumber(&(xlrec->newtid)),
 								false);
 		if (!BufferIsValid(buffer))
@@ -4399,7 +4387,6 @@ static void
 heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_lock *xlrec = (xl_heap_lock *) XLogRecGetData(record);
-	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber offnum;
@@ -4409,8 +4396,7 @@ heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	reln = XLogOpenRelation(xlrec->target.node);
-	buffer = XLogReadBuffer(reln,
+	buffer = XLogReadBuffer(xlrec->target.node,
 							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 							false);
 	if (!BufferIsValid(buffer))
@@ -4458,7 +4444,6 @@ static void
 heap_xlog_inplace(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_inplace *xlrec = (xl_heap_inplace *) XLogRecGetData(record);
-	Relation	reln = XLogOpenRelation(xlrec->target.node);
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber offnum;
@@ -4470,7 +4455,7 @@ heap_xlog_inplace(XLogRecPtr lsn, XLogRecord *record)
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	buffer = XLogReadBuffer(reln,
+	buffer = XLogReadBuffer(xlrec->target.node,
 							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 							false);
 	if (!BufferIsValid(buffer))

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.95 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.96 2008/06/12 09:12:31 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "storage/buf.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+#include "storage/smgr.h"
 #include "storage/spin.h"
 #include "utils/rel.h"
 
@@ -75,9 +76,9 @@ typedef struct buftag
 	(a).blockNum = InvalidBlockNumber \
 )
 
-#define INIT_BUFFERTAG(a,xx_reln,xx_blockNum) \
+#define INIT_BUFFERTAG(a,xx_rnode,xx_blockNum) \
 ( \
-	(a).rnode = (xx_reln)->rd_node, \
+	(a).rnode = (xx_rnode), \
 	(a).blockNum = (xx_blockNum) \
 )
 
@@ -201,7 +202,7 @@ extern int	BufTableInsert(BufferTag *tagPtr, uint32 hashcode, int buf_id);
 extern void BufTableDelete(BufferTag *tagPtr, uint32 hashcode);
 
 /* localbuf.c */
-extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
+extern BufferDesc *LocalBufferAlloc(SMgrRelation reln, BlockNumber blockNum,
 				 bool *foundPtr);
 extern void MarkLocalBufferDirty(Buffer buffer);
 extern void DropRelFileNodeLocalBuffers(RelFileNode rnode,

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.109 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.110 2008/06/12 09:12:31 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,6 +329,13 @@ smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
 	XLogRecData rdata;
 	xl_smgr_create xlrec;
 	PendingRelDelete *pending;
+
+	/*
+	 * Exit quickly in WAL replay mode if we've already opened the file. 
+	 * If it's open, it surely must exist.
+	 */ 
+	if (isRedo && reln->md_fd != NULL)
+		return;
 
 	/*
 	 * We may be using the target table space for the first time in this

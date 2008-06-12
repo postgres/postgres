@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.34 2008/05/12 00:00:52 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.35 2008/06/12 09:12:31 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -704,12 +704,6 @@ BuildFlatFiles(bool database_only)
 				rel_authid,
 				rel_authmem;
 
-	/*
-	 * We don't have any hope of running a real relcache, but we can use the
-	 * same fake-relcache facility that WAL replay uses.
-	 */
-	XLogInitRelationCache();
-
 	/* Need a resowner to keep the heapam and buffer code happy */
 	owner = ResourceOwnerCreate(NULL, "BuildFlatFiles");
 	CurrentResourceOwner = owner;
@@ -719,9 +713,15 @@ BuildFlatFiles(bool database_only)
 	rnode.dbNode = 0;
 	rnode.relNode = DatabaseRelationId;
 
-	/* No locking is needed because no one else is alive yet */
-	rel_db = XLogOpenRelation(rnode);
+	/*
+	 * We don't have any hope of running a real relcache, but we can use the
+	 * same fake-relcache facility that WAL replay uses.
+	 *
+	 * No locking is needed because no one else is alive yet.
+	 */
+	rel_db = CreateFakeRelcacheEntry(rnode);
 	write_database_file(rel_db, true);
+	FreeFakeRelcacheEntry(rel_db);
 
 	if (!database_only)
 	{
@@ -729,21 +729,21 @@ BuildFlatFiles(bool database_only)
 		rnode.spcNode = GLOBALTABLESPACE_OID;
 		rnode.dbNode = 0;
 		rnode.relNode = AuthIdRelationId;
-		rel_authid = XLogOpenRelation(rnode);
+		rel_authid = CreateFakeRelcacheEntry(rnode);
 
 		/* hard-wired path to pg_auth_members */
 		rnode.spcNode = GLOBALTABLESPACE_OID;
 		rnode.dbNode = 0;
 		rnode.relNode = AuthMemRelationId;
-		rel_authmem = XLogOpenRelation(rnode);
+		rel_authmem = CreateFakeRelcacheEntry(rnode);
 
 		write_auth_file(rel_authid, rel_authmem);
+		FreeFakeRelcacheEntry(rel_authid);
+		FreeFakeRelcacheEntry(rel_authmem);
 	}
 
 	CurrentResourceOwner = NULL;
 	ResourceOwnerDelete(owner);
-
-	XLogCloseRelationCache();
 }
 
 

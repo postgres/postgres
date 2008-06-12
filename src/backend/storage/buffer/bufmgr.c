@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.231 2008/06/08 22:00:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.232 2008/06/12 09:12:31 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,9 +76,10 @@ static bool IsForInput;
 static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 
-static Buffer ReadBuffer_common(Relation reln, BlockNumber blockNum,
-				  bool zeroPage,
-				  BufferAccessStrategy strategy);
+static Buffer ReadBuffer_relcache(Relation reln, BlockNumber blockNum,
+				  bool zeroPage, BufferAccessStrategy strategy);
+static Buffer ReadBuffer_common(SMgrRelation reln, bool isLocalBuf, BlockNumber blockNum,
+				  bool zeroPage, BufferAccessStrategy strategy, bool *hit);
 static bool PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
 static void UnpinBuffer(volatile BufferDesc *buf, bool fixOwner);
@@ -89,7 +90,7 @@ static bool StartBufferIO(volatile BufferDesc *buf, bool forInput);
 static void TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
 				  int set_flag_bits);
 static void buffer_write_error_callback(void *arg);
-static volatile BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
+static volatile BufferDesc *BufferAlloc(SMgrRelation smgr, BlockNumber blockNum,
 			BufferAccessStrategy strategy,
 			bool *foundPtr);
 static void FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln);
@@ -114,7 +115,7 @@ static void AtProcExit_Buffers(int code, Datum arg);
 Buffer
 ReadBuffer(Relation reln, BlockNumber blockNum)
 {
-	return ReadBuffer_common(reln, blockNum, false, NULL);
+	return ReadBuffer_relcache(reln, blockNum, false, NULL);
 }
 
 /*
@@ -125,7 +126,7 @@ Buffer
 ReadBufferWithStrategy(Relation reln, BlockNumber blockNum,
 					   BufferAccessStrategy strategy)
 {
-	return ReadBuffer_common(reln, blockNum, false, strategy);
+	return ReadBuffer_relcache(reln, blockNum, false, strategy);
 }
 
 /*
@@ -142,41 +143,79 @@ ReadBufferWithStrategy(Relation reln, BlockNumber blockNum,
 Buffer
 ReadOrZeroBuffer(Relation reln, BlockNumber blockNum)
 {
-	return ReadBuffer_common(reln, blockNum, true, NULL);
+	return ReadBuffer_relcache(reln, blockNum, true, NULL);
 }
 
 /*
- * ReadBuffer_common -- common logic for ReadBuffer variants
+ * ReadBufferWithoutRelcache -- like ReadBuffer, but doesn't require a 
+ *		relcache entry for the relation. If zeroPage is true, this behaves
+ *		like ReadOrZeroBuffer rather than ReadBuffer.
+ */
+Buffer
+ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp, 
+						  BlockNumber blockNum, bool zeroPage)
+{
+	bool hit;
+
+	SMgrRelation smgr = smgropen(rnode);
+	return ReadBuffer_common(smgr, isTemp, blockNum, zeroPage, NULL, &hit);
+}
+
+/*
+ * ReadBuffer_relcache -- common logic for ReadBuffer-variants that 
+ *		operate on a Relation.
  */
 static Buffer
-ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
-				  BufferAccessStrategy strategy)
+ReadBuffer_relcache(Relation reln, BlockNumber blockNum, 
+					bool zeroPage, BufferAccessStrategy strategy)
+{
+	bool hit;
+	Buffer buf;
+
+	/* Open it at the smgr level if not already done */
+	RelationOpenSmgr(reln);
+
+	/*
+	 * Read the buffer, and update pgstat counters to reflect a cache
+	 * hit or miss.
+	 */
+	pgstat_count_buffer_read(reln);
+	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_istemp, blockNum, 
+							zeroPage, strategy, &hit);
+	if (hit)
+		pgstat_count_buffer_hit(reln);
+	return buf;
+}
+
+/*
+ * ReadBuffer_common -- common logic for all ReadBuffer variants
+ *
+ * *hit is set to true if the request was satisfied from shared buffer cache.
+ */
+static Buffer
+ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum, 
+				  bool zeroPage, BufferAccessStrategy strategy, bool *hit)
 {
 	volatile BufferDesc *bufHdr;
 	Block		bufBlock;
 	bool		found;
 	bool		isExtend;
-	bool		isLocalBuf;
+
+	*hit = false;
 
 	/* Make sure we will have room to remember the buffer pin */
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 
 	isExtend = (blockNum == P_NEW);
-	isLocalBuf = reln->rd_istemp;
-
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(reln);
 
 	/* Substitute proper block number if caller asked for P_NEW */
 	if (isExtend)
-		blockNum = smgrnblocks(reln->rd_smgr);
-
-	pgstat_count_buffer_read(reln);
+		blockNum = smgrnblocks(smgr);
 
 	if (isLocalBuf)
 	{
 		ReadLocalBufferCount++;
-		bufHdr = LocalBufferAlloc(reln, blockNum, &found);
+		bufHdr = LocalBufferAlloc(smgr, blockNum, &found);
 		if (found)
 			LocalBufferHitCount++;
 	}
@@ -188,7 +227,7 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
 		 * lookup the buffer.  IO_IN_PROGRESS is set if the requested block is
 		 * not currently in memory.
 		 */
-		bufHdr = BufferAlloc(reln, blockNum, strategy, &found);
+		bufHdr = BufferAlloc(smgr, blockNum, strategy, &found);
 		if (found)
 			BufferHitCount++;
 	}
@@ -201,7 +240,7 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
 		if (!isExtend)
 		{
 			/* Just need to update stats before we exit */
-			pgstat_count_buffer_hit(reln);
+			*hit = true;
 
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageHit;
@@ -225,8 +264,8 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
 		bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
 		if (!PageIsNew((PageHeader) bufBlock))
 			ereport(ERROR,
-					(errmsg("unexpected data beyond EOF in block %u of relation \"%s\"",
-							blockNum, RelationGetRelationName(reln)),
+					(errmsg("unexpected data beyond EOF in block %u of relation %u/%u/%u",
+							blockNum, smgr->smgr_rnode.spcNode, smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode),
 					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
 
 		/*
@@ -278,8 +317,7 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
 	{
 		/* new buffers are zero-filled */
 		MemSet((char *) bufBlock, 0, BLCKSZ);
-		smgrextend(reln->rd_smgr, blockNum, (char *) bufBlock,
-				   reln->rd_istemp);
+		smgrextend(smgr, blockNum, (char *) bufBlock, isLocalBuf);
 	}
 	else
 	{
@@ -290,7 +328,7 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
 		if (zeroPage)
 			MemSet((char *) bufBlock, 0, BLCKSZ);
 		else
-			smgrread(reln->rd_smgr, blockNum, (char *) bufBlock);
+			smgrread(smgr, blockNum, (char *) bufBlock);
 		/* check for garbage data */
 		if (!PageHeaderIsValid((PageHeader) bufBlock))
 		{
@@ -298,15 +336,20 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_DATA_CORRUPTED),
-						 errmsg("invalid page header in block %u of relation \"%s\"; zeroing out page",
-								blockNum, RelationGetRelationName(reln))));
+						 errmsg("invalid page header in block %u of relation %u/%u/%u; zeroing out page",
+								blockNum, 
+								smgr->smgr_rnode.spcNode,
+								smgr->smgr_rnode.dbNode,
+								smgr->smgr_rnode.relNode)));
 				MemSet((char *) bufBlock, 0, BLCKSZ);
 			}
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("invalid page header in block %u of relation \"%s\"",
-						blockNum, RelationGetRelationName(reln))));
+				 errmsg("invalid page header in block %u of relation %u/%u/%u",
+						blockNum, smgr->smgr_rnode.spcNode,
+						smgr->smgr_rnode.dbNode,
+						smgr->smgr_rnode.relNode)));
 		}
 	}
 
@@ -347,7 +390,7 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
  * No locks are held either at entry or exit.
  */
 static volatile BufferDesc *
-BufferAlloc(Relation reln,
+BufferAlloc(SMgrRelation smgr,
 			BlockNumber blockNum,
 			BufferAccessStrategy strategy,
 			bool *foundPtr)
@@ -364,7 +407,7 @@ BufferAlloc(Relation reln,
 	bool		valid;
 
 	/* create a tag so we can lookup the buffer */
-	INIT_BUFFERTAG(newTag, reln, blockNum);
+	INIT_BUFFERTAG(newTag, smgr->smgr_rnode, blockNum);
 
 	/* determine its hash code and partition lock ID */
 	newHash = BufTableHashCode(&newTag);
