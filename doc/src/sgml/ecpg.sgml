@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.85 2007/12/03 23:49:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.86 2008/06/12 19:15:40 momjian Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -4061,7 +4061,7 @@ struct
     struct
     {
         int sqlerrml;
-        char sqlerrmc[70];
+        char sqlerrmc[SQLERRMC_LEN];
     } sqlerrm;
     char sqlerrp[8];
     long sqlerrd[6];
