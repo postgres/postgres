@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.11 2008/03/26 21:10:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.12 2008/06/14 18:04:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,40 +271,59 @@ DefineTSParser(List *names, List *parameters)
  * DROP TEXT SEARCH PARSER
  */
 void
-RemoveTSParser(List *names, DropBehavior behavior, bool missing_ok)
+RemoveTSParsers(DropStmt *drop)
 {
-	Oid			prsOid;
-	ObjectAddress object;
+	ObjectAddresses *objects;
+	ListCell		*cell;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to drop text search parsers")));
 
-	prsOid = TSParserGetPrsid(names, true);
-	if (!OidIsValid(prsOid))
+	/*
+	 * First we identify all the objects, then we delete them in a single
+	 * performMultipleDeletions() call.  This is to avoid unwanted
+	 * DROP RESTRICT errors if one of the objects depends on another.
+	 */
+	objects = new_object_addresses();
+
+	foreach(cell, drop->objects)
 	{
-		if (!missing_ok)
+		List		*names = (List *) lfirst(cell);
+		Oid			prsOid;
+		ObjectAddress object;
+
+		prsOid = TSParserGetPrsid(names, true);
+
+		if (!OidIsValid(prsOid))
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("text search parser \"%s\" does not exist",
+			if (!drop->missing_ok)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("text search parser \"%s\" does not exist",
+								NameListToString(names))));
+			}
+			else
+			{
+				ereport(NOTICE,
+					(errmsg("text search parser \"%s\" does not exist, skipping",
 							NameListToString(names))));
+			}
+			continue;
 		}
-		else
-		{
-			ereport(NOTICE,
-				(errmsg("text search parser \"%s\" does not exist, skipping",
-						NameListToString(names))));
-		}
-		return;
+
+		object.classId = TSParserRelationId;
+		object.objectId = prsOid;
+		object.objectSubId = 0;
+
+		add_exact_object_address(&object, objects);
 	}
 
-	object.classId = TSParserRelationId;
-	object.objectId = prsOid;
-	object.objectSubId = 0;
+	performMultipleDeletions(objects, drop->behavior);
 
-	performDeletion(&object, behavior);
+	free_object_addresses(objects);
 }
 
 /*
@@ -613,54 +632,72 @@ RenameTSDictionary(List *oldname, const char *newname)
  * DROP TEXT SEARCH DICTIONARY
  */
 void
-RemoveTSDictionary(List *names, DropBehavior behavior, bool missing_ok)
+RemoveTSDictionaries(DropStmt *drop)
 {
-	Oid			dictOid;
-	ObjectAddress object;
-	HeapTuple	tup;
-	Oid			namespaceId;
+	ObjectAddresses *objects;
+	ListCell		*cell;
 
-	dictOid = TSDictionaryGetDictid(names, true);
-	if (!OidIsValid(dictOid))
+	/*
+	 * First we identify all the objects, then we delete them in a single
+	 * performMultipleDeletions() call.  This is to avoid unwanted
+	 * DROP RESTRICT errors if one of the objects depends on another.
+	 */
+	objects = new_object_addresses();
+
+	foreach(cell, drop->objects)
 	{
-		if (!missing_ok)
+		List		*names = (List *) lfirst(cell);
+		Oid			dictOid;
+		ObjectAddress object;
+		HeapTuple	tup;
+		Oid			namespaceId;
+
+		dictOid = TSDictionaryGetDictid(names, true);
+
+		if (!OidIsValid(dictOid))
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("text search dictionary \"%s\" does not exist",
-							NameListToString(names))));
+			if (!drop->missing_ok)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("text search dictionary \"%s\" does not exist",
+								NameListToString(names))));
+			}
+			else
+			{
+				ereport(NOTICE,
+				(errmsg("text search dictionary \"%s\" does not exist, skipping",
+						NameListToString(names))));
+			}
+			continue;
 		}
-		else
-		{
-			ereport(NOTICE,
-			(errmsg("text search dictionary \"%s\" does not exist, skipping",
-					NameListToString(names))));
-		}
-		return;
+
+		tup = SearchSysCache(TSDICTOID,
+							 ObjectIdGetDatum(dictOid),
+							 0, 0, 0);
+		if (!HeapTupleIsValid(tup)) /* should not happen */
+			elog(ERROR, "cache lookup failed for text search dictionary %u",
+				 dictOid);
+
+		/* Permission check: must own dictionary or its namespace */
+		namespaceId = ((Form_pg_ts_dict) GETSTRUCT(tup))->dictnamespace;
+		if (!pg_ts_dict_ownercheck(dictOid, GetUserId()) &&
+			!pg_namespace_ownercheck(namespaceId, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSDICTIONARY,
+						   NameListToString(names));
+
+		object.classId = TSDictionaryRelationId;
+		object.objectId = dictOid;
+		object.objectSubId = 0;
+
+		add_exact_object_address(&object, objects);
+
+		ReleaseSysCache(tup);
 	}
 
-	tup = SearchSysCache(TSDICTOID,
-						 ObjectIdGetDatum(dictOid),
-						 0, 0, 0);
+	performMultipleDeletions(objects, drop->behavior);
 
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for text search dictionary %u",
-			 dictOid);
-
-	/* Permission check: must own dictionary or its namespace */
-	namespaceId = ((Form_pg_ts_dict) GETSTRUCT(tup))->dictnamespace;
-	if (!pg_ts_dict_ownercheck(dictOid, GetUserId()) &&
-		!pg_namespace_ownercheck(namespaceId, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSDICTIONARY,
-					   NameListToString(names));
-
-	ReleaseSysCache(tup);
-
-	object.classId = TSDictionaryRelationId;
-	object.objectId = dictOid;
-	object.objectSubId = 0;
-
-	performDeletion(&object, behavior);
+	free_object_addresses(objects);
 }
 
 /*
@@ -1086,40 +1123,59 @@ RenameTSTemplate(List *oldname, const char *newname)
  * DROP TEXT SEARCH TEMPLATE
  */
 void
-RemoveTSTemplate(List *names, DropBehavior behavior, bool missing_ok)
+RemoveTSTemplates(DropStmt *drop)
 {
-	Oid			tmplOid;
-	ObjectAddress object;
+	ObjectAddresses *objects;
+	ListCell		*cell;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to drop text search templates")));
 
-	tmplOid = TSTemplateGetTmplid(names, true);
-	if (!OidIsValid(tmplOid))
+	/*
+	 * First we identify all the objects, then we delete them in a single
+	 * performMultipleDeletions() call.  This is to avoid unwanted
+	 * DROP RESTRICT errors if one of the objects depends on another.
+	 */
+	objects = new_object_addresses();
+
+	foreach(cell, drop->objects)
 	{
-		if (!missing_ok)
+		List		*names = (List *) lfirst(cell);
+		Oid			tmplOid;
+		ObjectAddress object;
+
+		tmplOid = TSTemplateGetTmplid(names, true);
+
+		if (!OidIsValid(tmplOid))
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("text search template \"%s\" does not exist",
-							NameListToString(names))));
+			if (!drop->missing_ok)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("text search template \"%s\" does not exist",
+								NameListToString(names))));
+			}
+			else
+			{
+				ereport(NOTICE,
+						(errmsg("text search template \"%s\" does not exist, skipping",
+								NameListToString(names))));
+			}
+			continue;
 		}
-		else
-		{
-			ereport(NOTICE,
-			  (errmsg("text search template \"%s\" does not exist, skipping",
-					  NameListToString(names))));
-		}
-		return;
+
+		object.classId = TSTemplateRelationId;
+		object.objectId = tmplOid;
+		object.objectSubId = 0;
+
+		add_exact_object_address(&object, objects);
 	}
 
-	object.classId = TSTemplateRelationId;
-	object.objectId = tmplOid;
-	object.objectSubId = 0;
+	performMultipleDeletions(objects, drop->behavior);
 
-	performDeletion(&object, behavior);
+	free_object_addresses(objects);
 }
 
 /*
@@ -1474,48 +1530,66 @@ RenameTSConfiguration(List *oldname, const char *newname)
  * DROP TEXT SEARCH CONFIGURATION
  */
 void
-RemoveTSConfiguration(List *names, DropBehavior behavior, bool missing_ok)
+RemoveTSConfigurations(DropStmt *drop)
 {
-	Oid			cfgOid;
-	Oid			namespaceId;
-	ObjectAddress object;
-	HeapTuple	tup;
+	ObjectAddresses *objects;
+	ListCell		*cell;
 
-	tup = GetTSConfigTuple(names);
+	/*
+	 * First we identify all the objects, then we delete them in a single
+	 * performMultipleDeletions() call.  This is to avoid unwanted
+	 * DROP RESTRICT errors if one of the objects depends on another.
+	 */
+	objects = new_object_addresses();
 
-	if (!HeapTupleIsValid(tup))
+	foreach(cell, drop->objects)
 	{
-		if (!missing_ok)
+		List		*names = (List *) lfirst(cell);
+		Oid			cfgOid;
+		Oid			namespaceId;
+		ObjectAddress object;
+		HeapTuple	tup;
+
+		tup = GetTSConfigTuple(names);
+
+		if (!HeapTupleIsValid(tup))
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("text search configuration \"%s\" does not exist",
-							NameListToString(names))));
+			if (!drop->missing_ok)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("text search configuration \"%s\" does not exist",
+								NameListToString(names))));
+			}
+			else
+			{
+				ereport(NOTICE,
+						(errmsg("text search configuration \"%s\" does not exist, skipping",
+								NameListToString(names))));
+			}
+			continue;
 		}
-		else
-		{
-			ereport(NOTICE,
-					(errmsg("text search configuration \"%s\" does not exist, skipping",
-							NameListToString(names))));
-		}
-		return;
+
+		/* Permission check: must own configuration or its namespace */
+		cfgOid = HeapTupleGetOid(tup);
+		namespaceId = ((Form_pg_ts_config) GETSTRUCT(tup))->cfgnamespace;
+		if (!pg_ts_config_ownercheck(cfgOid, GetUserId()) &&
+			!pg_namespace_ownercheck(namespaceId, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSCONFIGURATION,
+						   NameListToString(names));
+
+		object.classId = TSConfigRelationId;
+		object.objectId = cfgOid;
+		object.objectSubId = 0;
+
+		add_exact_object_address(&object, objects);
+
+		ReleaseSysCache(tup);
 	}
 
-	/* Permission check: must own configuration or its namespace */
-	cfgOid = HeapTupleGetOid(tup);
-	namespaceId = ((Form_pg_ts_config) GETSTRUCT(tup))->cfgnamespace;
-	if (!pg_ts_config_ownercheck(cfgOid, GetUserId()) &&
-		!pg_namespace_ownercheck(namespaceId, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSCONFIGURATION,
-					   NameListToString(names));
+	performMultipleDeletions(objects, drop->behavior);
 
-	ReleaseSysCache(tup);
-
-	object.classId = TSConfigRelationId;
-	object.objectId = cfgOid;
-	object.objectSubId = 0;
-
-	performDeletion(&object, behavior);
+	free_object_addresses(objects);
 }
 
 /*

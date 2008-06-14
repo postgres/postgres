@@ -724,7 +724,7 @@ INSERT INTO fktable VALUES (100, 200);
 -- error here on commit
 COMMIT;
 
-DROP TABLE pktable, fktable CASCADE;
+DROP TABLE pktable, fktable;
 
 -- test notice about expensive referential integrity checks,
 -- where the index cannot be used because of type incompatibilities.
@@ -799,7 +799,7 @@ FOREIGN KEY (x1,x2,x3) REFERENCES pktable(id2,id3,id1);
 ALTER TABLE fktable ADD CONSTRAINT fk_241_132
 FOREIGN KEY (x2,x4,x1) REFERENCES pktable(id1,id3,id2);
 
-DROP TABLE pktable, fktable CASCADE;
+DROP TABLE pktable, fktable;
 
 -- test a tricky case: we can elide firing the FK check trigger during
 -- an UPDATE if the UPDATE did not change the foreign key

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.255 2008/05/19 04:14:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.256 2008/06/14 18:04:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/bufmgr.h"
+#include "storage/lmgr.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -167,6 +168,53 @@ typedef struct NewColumnValue
 	Expr	   *expr;			/* expression to compute */
 	ExprState  *exprstate;		/* execution state */
 } NewColumnValue;
+
+/*
+ * Error-reporting support for RemoveRelations
+ */
+struct dropmsgstrings
+{
+	char		kind;
+	int			nonexistent_code;
+	const char *nonexistent_msg;
+	const char *skipping_msg;
+	const char *nota_msg;
+	const char *drophint_msg;
+};
+
+static const struct dropmsgstrings dropmsgstringarray[] = {
+	{RELKIND_RELATION,
+	 ERRCODE_UNDEFINED_TABLE,
+	 gettext_noop("table \"%s\" does not exist"),
+	 gettext_noop("table \"%s\" does not exist, skipping"),
+	 gettext_noop("\"%s\" is not a table"),
+	 gettext_noop("Use DROP TABLE to remove a table.")},
+	{RELKIND_SEQUENCE,
+	 ERRCODE_UNDEFINED_TABLE,
+	 gettext_noop("sequence \"%s\" does not exist"),
+	 gettext_noop("sequence \"%s\" does not exist, skipping"),
+	 gettext_noop("\"%s\" is not a sequence"),
+	 gettext_noop("Use DROP SEQUENCE to remove a sequence.")},
+	{RELKIND_VIEW,
+	 ERRCODE_UNDEFINED_TABLE,
+	 gettext_noop("view \"%s\" does not exist"),
+	 gettext_noop("view \"%s\" does not exist, skipping"),
+	 gettext_noop("\"%s\" is not a view"),
+	 gettext_noop("Use DROP VIEW to remove a view.")},
+	{RELKIND_INDEX,
+	 ERRCODE_UNDEFINED_OBJECT,
+	 gettext_noop("index \"%s\" does not exist"),
+	 gettext_noop("index \"%s\" does not exist, skipping"),
+	 gettext_noop("\"%s\" is not an index"),
+	 gettext_noop("Use DROP INDEX to remove an index.")},
+	{RELKIND_COMPOSITE_TYPE,
+	 ERRCODE_UNDEFINED_OBJECT,
+	 gettext_noop("type \"%s\" does not exist"),
+	 gettext_noop("type \"%s\" does not exist, skipping"),
+	 gettext_noop("\"%s\" is not a type"),
+	 gettext_noop("Use DROP TYPE to remove a type.")},
+	{'\0', 0, NULL, NULL, NULL, NULL}
+};
 
 
 static void truncate_check_rel(Relation rel);
@@ -497,22 +545,175 @@ DefineRelation(CreateStmt *stmt, char relkind)
 }
 
 /*
- * RemoveRelation
- *		Deletes a relation.
+ * Emit the right error or warning message for a "DROP" command issued on a
+ * non-existent relation
+ */
+static void
+DropErrorMsgNonExistent(const char *relname, char rightkind, bool missing_ok)
+{
+	const struct dropmsgstrings *rentry;
+
+	for (rentry = dropmsgstringarray; rentry->kind != '\0'; rentry++)
+	{
+		if (rentry->kind == rightkind)
+		{
+			if (!missing_ok)
+			{
+				ereport(ERROR,
+						(errcode(rentry->nonexistent_code),
+						 errmsg(rentry->nonexistent_msg, relname)));
+			}
+			else
+			{
+				ereport(NOTICE, (errmsg(rentry->skipping_msg, relname)));
+				break;
+			}
+		}
+	}
+
+	Assert(rentry->kind != '\0');		/* Should be impossible */
+}
+
+/*
+ * Emit the right error message for a "DROP" command issued on a
+ * relation of the wrong type
+ */
+static void
+DropErrorMsgWrongType(const char *relname, char wrongkind, char rightkind)
+{
+	const struct dropmsgstrings *rentry;
+	const struct dropmsgstrings *wentry;
+
+	for (rentry = dropmsgstringarray; rentry->kind != '\0'; rentry++)
+		if (rentry->kind == rightkind)
+			break;
+	Assert(rentry->kind != '\0');
+
+	for (wentry = dropmsgstringarray; wentry->kind != '\0'; wentry++)
+		if (wentry->kind == wrongkind)
+			break;
+	/* wrongkind could be something we don't have in our table... */
+
+	ereport(ERROR,
+			(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+			 errmsg(rentry->nota_msg, relname),
+			 (wentry->kind != '\0') ? errhint(wentry->drophint_msg) : 0));
+}
+
+/*
+ * RemoveRelations
+ *		Implements DROP TABLE, DROP INDEX, DROP SEQUENCE, DROP VIEW
  */
 void
-RemoveRelation(const RangeVar *relation, DropBehavior behavior)
+RemoveRelations(DropStmt *drop)
 {
-	Oid			relOid;
-	ObjectAddress object;
+	ObjectAddresses *objects;
+	char		relkind;
+	ListCell   *cell;
 
-	relOid = RangeVarGetRelid(relation, false);
+	/*
+	 * First we identify all the relations, then we delete them in a single
+	 * performMultipleDeletions() call.  This is to avoid unwanted
+	 * DROP RESTRICT errors if one of the relations depends on another.
+	 */
 
-	object.classId = RelationRelationId;
-	object.objectId = relOid;
-	object.objectSubId = 0;
+	/* Determine required relkind */
+	switch (drop->removeType)
+	{
+		case OBJECT_TABLE:
+			relkind = RELKIND_RELATION;
+			break;
 
-	performDeletion(&object, behavior);
+		case OBJECT_INDEX:
+			relkind = RELKIND_INDEX;
+			break;
+
+		case OBJECT_SEQUENCE:
+			relkind = RELKIND_SEQUENCE;
+			break;
+
+		case OBJECT_VIEW:
+			relkind = RELKIND_VIEW;
+			break;
+
+		default:
+			elog(ERROR, "unrecognized drop object type: %d",
+				 (int) drop->removeType);
+			relkind = 0;	/* keep compiler quiet */
+			break;
+	}
+
+	/* Lock and validate each relation; build a list of object addresses */
+	objects = new_object_addresses();
+
+	foreach(cell, drop->objects)
+	{
+		RangeVar   *rel = makeRangeVarFromNameList((List *) lfirst(cell));
+		Oid			relOid;
+		HeapTuple	tuple;
+		Form_pg_class classform;
+		ObjectAddress obj;
+
+		/*
+		 * These next few steps are a great deal like relation_openrv, but we
+		 * don't bother building a relcache entry since we don't need it.
+		 *
+		 * Check for shared-cache-inval messages before trying to access the
+		 * relation.  This is needed to cover the case where the name
+		 * identifies a rel that has been dropped and recreated since the
+		 * start of our transaction: if we don't flush the old syscache entry,
+		 * then we'll latch onto that entry and suffer an error later.
+		 */
+		AcceptInvalidationMessages();
+
+		/* Look up the appropriate relation using namespace search */
+		relOid = RangeVarGetRelid(rel, true);
+
+		/* Not there? */
+		if (!OidIsValid(relOid))
+		{
+			DropErrorMsgNonExistent(rel->relname, relkind, drop->missing_ok);
+			continue;
+		}
+
+		/* Get the lock before trying to fetch the syscache entry */
+		LockRelationOid(relOid, AccessExclusiveLock);
+
+		tuple = SearchSysCache(RELOID,
+							   ObjectIdGetDatum(relOid),
+							   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for relation %u", relOid);
+		classform = (Form_pg_class) GETSTRUCT(tuple);
+
+		if (classform->relkind != relkind)
+			DropErrorMsgWrongType(rel->relname, classform->relkind, relkind);
+
+		/* Allow DROP to either table owner or schema owner */
+		if (!pg_class_ownercheck(relOid, GetUserId()) &&
+			!pg_namespace_ownercheck(classform->relnamespace, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+						   rel->relname);
+
+		if (!allowSystemTableMods && IsSystemClass(classform))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied: \"%s\" is a system catalog",
+							rel->relname)));
+
+		/* OK, we're ready to delete this one */
+		obj.classId = RelationRelationId;
+		obj.objectId = relOid;
+		obj.objectSubId = 0;
+
+		add_exact_object_address(&obj, objects);
+
+		ReleaseSysCache(tuple);
+	}
+
+	performMultipleDeletions(objects, drop->behavior);
+
+	free_object_addresses(objects);
 }
 
 /*

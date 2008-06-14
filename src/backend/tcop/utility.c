@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.292 2008/06/05 15:47:32 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.293 2008/06/14 18:04:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,161 +56,6 @@
 #include "utils/guc.h"
 #include "utils/syscache.h"
 
-
-/*
- * Error-checking support for DROP commands
- */
-
-struct msgstrings
-{
-	char		kind;
-	int			nonexistent_code;
-	const char *nonexistent_msg;
-	const char *skipping_msg;
-	const char *nota_msg;
-	const char *drophint_msg;
-};
-
-static const struct msgstrings msgstringarray[] = {
-	{RELKIND_RELATION,
-		ERRCODE_UNDEFINED_TABLE,
-		gettext_noop("table \"%s\" does not exist"),
-		gettext_noop("table \"%s\" does not exist, skipping"),
-		gettext_noop("\"%s\" is not a table"),
-	gettext_noop("Use DROP TABLE to remove a table.")},
-	{RELKIND_SEQUENCE,
-		ERRCODE_UNDEFINED_TABLE,
-		gettext_noop("sequence \"%s\" does not exist"),
-		gettext_noop("sequence \"%s\" does not exist, skipping"),
-		gettext_noop("\"%s\" is not a sequence"),
-	gettext_noop("Use DROP SEQUENCE to remove a sequence.")},
-	{RELKIND_VIEW,
-		ERRCODE_UNDEFINED_TABLE,
-		gettext_noop("view \"%s\" does not exist"),
-		gettext_noop("view \"%s\" does not exist, skipping"),
-		gettext_noop("\"%s\" is not a view"),
-	gettext_noop("Use DROP VIEW to remove a view.")},
-	{RELKIND_INDEX,
-		ERRCODE_UNDEFINED_OBJECT,
-		gettext_noop("index \"%s\" does not exist"),
-		gettext_noop("index \"%s\" does not exist, skipping"),
-		gettext_noop("\"%s\" is not an index"),
-	gettext_noop("Use DROP INDEX to remove an index.")},
-	{RELKIND_COMPOSITE_TYPE,
-		ERRCODE_UNDEFINED_OBJECT,
-		gettext_noop("type \"%s\" does not exist"),
-		gettext_noop("type \"%s\" does not exist, skipping"),
-		gettext_noop("\"%s\" is not a type"),
-	gettext_noop("Use DROP TYPE to remove a type.")},
-	{'\0', 0, NULL, NULL, NULL}
-};
-
-
-/*
- * Emit the right error message for a "DROP" command issued on a
- * relation of the wrong type
- */
-static void
-DropErrorMsgWrongType(char *relname, char wrongkind, char rightkind)
-{
-	const struct msgstrings *rentry;
-	const struct msgstrings *wentry;
-
-	for (rentry = msgstringarray; rentry->kind != '\0'; rentry++)
-		if (rentry->kind == rightkind)
-			break;
-	Assert(rentry->kind != '\0');
-
-	for (wentry = msgstringarray; wentry->kind != '\0'; wentry++)
-		if (wentry->kind == wrongkind)
-			break;
-	/* wrongkind could be something we don't have in our table... */
-
-	ereport(ERROR,
-			(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			 errmsg(rentry->nota_msg, relname),
-			 (wentry->kind != '\0') ? errhint(wentry->drophint_msg) : 0));
-}
-
-/*
- * Emit the right error message for a "DROP" command issued on a
- * non-existent relation
- */
-static void
-DropErrorMsgNonExistent(RangeVar *rel, char rightkind, bool missing_ok)
-{
-	const struct msgstrings *rentry;
-
-	for (rentry = msgstringarray; rentry->kind != '\0'; rentry++)
-	{
-		if (rentry->kind == rightkind)
-		{
-			if (!missing_ok)
-			{
-				ereport(ERROR,
-						(errcode(rentry->nonexistent_code),
-						 errmsg(rentry->nonexistent_msg, rel->relname)));
-			}
-			else
-			{
-				ereport(NOTICE, (errmsg(rentry->skipping_msg, rel->relname)));
-				break;
-			}
-		}
-	}
-
-	Assert(rentry->kind != '\0');		/* Should be impossible */
-}
-
-/*
- * returns false if missing_ok is true and the object does not exist,
- * true if object exists and permissions are OK,
- * errors otherwise
- *
- */
-
-static bool
-CheckDropPermissions(RangeVar *rel, char rightkind, bool missing_ok)
-{
-	Oid			relOid;
-	HeapTuple	tuple;
-	Form_pg_class classform;
-
-	relOid = RangeVarGetRelid(rel, true);
-	if (!OidIsValid(relOid))
-	{
-		DropErrorMsgNonExistent(rel, rightkind, missing_ok);
-		return false;
-	}
-
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(relOid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", relOid);
-
-	classform = (Form_pg_class) GETSTRUCT(tuple);
-
-	if (classform->relkind != rightkind)
-		DropErrorMsgWrongType(rel->relname, classform->relkind,
-							  rightkind);
-
-	/* Allow DROP to either table owner or schema owner */
-	if (!pg_class_ownercheck(relOid, GetUserId()) &&
-		!pg_namespace_ownercheck(classform->relnamespace, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   rel->relname);
-
-	if (!allowSystemTableMods && IsSystemClass(classform))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied: \"%s\" is a system catalog",
-						rel->relname)));
-
-	ReleaseSysCache(tuple);
-
-	return true;
-}
 
 /*
  * Verify user has ownership of specified relation, else ereport.
@@ -603,96 +448,49 @@ ProcessUtility(Node *parsetree,
 		case T_DropStmt:
 			{
 				DropStmt   *stmt = (DropStmt *) parsetree;
-				ListCell   *arg;
 
-				foreach(arg, stmt->objects)
+				switch (stmt->removeType)
 				{
-					List	   *names = (List *) lfirst(arg);
-					RangeVar   *rel;
+					case OBJECT_TABLE:
+					case OBJECT_SEQUENCE:
+					case OBJECT_VIEW:
+					case OBJECT_INDEX:
+						RemoveRelations(stmt);
+						break;
 
-					switch (stmt->removeType)
-					{
-						case OBJECT_TABLE:
-							rel = makeRangeVarFromNameList(names);
-							if (CheckDropPermissions(rel, RELKIND_RELATION,
-													 stmt->missing_ok))
-								RemoveRelation(rel, stmt->behavior);
-							break;
+					case OBJECT_TYPE:
+					case OBJECT_DOMAIN:
+						RemoveTypes(stmt);
+						break;
 
-						case OBJECT_SEQUENCE:
-							rel = makeRangeVarFromNameList(names);
-							if (CheckDropPermissions(rel, RELKIND_SEQUENCE,
-													 stmt->missing_ok))
-								RemoveRelation(rel, stmt->behavior);
-							break;
+					case OBJECT_CONVERSION:
+						DropConversionsCommand(stmt);
+						break;
 
-						case OBJECT_VIEW:
-							rel = makeRangeVarFromNameList(names);
-							if (CheckDropPermissions(rel, RELKIND_VIEW,
-													 stmt->missing_ok))
-								RemoveView(rel, stmt->behavior);
-							break;
+					case OBJECT_SCHEMA:
+						RemoveSchemas(stmt);
+						break;
 
-						case OBJECT_INDEX:
-							rel = makeRangeVarFromNameList(names);
-							if (CheckDropPermissions(rel, RELKIND_INDEX,
-													 stmt->missing_ok))
-								RemoveIndex(rel, stmt->behavior);
-							break;
+					case OBJECT_TSPARSER:
+						RemoveTSParsers(stmt);
+						break;
 
-						case OBJECT_TYPE:
-							/* RemoveType does its own permissions checks */
-							RemoveType(names, stmt->behavior,
-									   stmt->missing_ok);
-							break;
+					case OBJECT_TSDICTIONARY:
+						RemoveTSDictionaries(stmt);
+						break;
 
-						case OBJECT_DOMAIN:
-							/* RemoveDomain does its own permissions checks */
-							RemoveDomain(names, stmt->behavior,
-										 stmt->missing_ok);
-							break;
+					case OBJECT_TSTEMPLATE:
+						RemoveTSTemplates(stmt);
+						break;
 
-						case OBJECT_CONVERSION:
-							DropConversionCommand(names, stmt->behavior,
-												  stmt->missing_ok);
-							break;
+					case OBJECT_TSCONFIGURATION:
+						RemoveTSConfigurations(stmt);
+						break;
 
-						case OBJECT_SCHEMA:
-							/* RemoveSchema does its own permissions checks */
-							RemoveSchema(names, stmt->behavior,
-										 stmt->missing_ok);
-							break;
-
-						case OBJECT_TSPARSER:
-							RemoveTSParser(names, stmt->behavior,
-										   stmt->missing_ok);
-							break;
-
-						case OBJECT_TSDICTIONARY:
-							RemoveTSDictionary(names, stmt->behavior,
-											   stmt->missing_ok);
-							break;
-
-						case OBJECT_TSTEMPLATE:
-							RemoveTSTemplate(names, stmt->behavior,
-											 stmt->missing_ok);
-							break;
-
-						case OBJECT_TSCONFIGURATION:
-							RemoveTSConfiguration(names, stmt->behavior,
-												  stmt->missing_ok);
-							break;
-
-						default:
-							elog(ERROR, "unrecognized drop object type: %d",
-								 (int) stmt->removeType);
-							break;
-					}
-
-					/*
-					 * We used to need to do CommandCounterIncrement() here,
-					 * but now it's done inside performDeletion().
-					 */
+					default:
+						elog(ERROR, "unrecognized drop object type: %d",
+							 (int) stmt->removeType);
+						break;
 				}
 			}
 			break;

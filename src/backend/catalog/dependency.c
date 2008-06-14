@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.75 2008/06/11 21:53:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.76 2008/06/14 18:04:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,6 +259,10 @@ performMultipleDeletions(const ObjectAddresses *objects,
 	ObjectAddresses *targetObjects;
 	int			i;
 
+	/* No work if no objects... */
+	if (objects->numrefs <= 0)
+		return;
+
 	/*
 	 * We save some cycles by opening pg_depend just once and passing the
 	 * Relation pointer down to all the recursive deletion steps.
@@ -295,11 +299,14 @@ performMultipleDeletions(const ObjectAddresses *objects,
 
 	/*
 	 * Check if deletion is allowed, and report about cascaded deletes.
+	 *
+	 * If there's exactly one object being deleted, report it the same
+	 * way as in performDeletion(), else we have to be vaguer.
 	 */
 	reportDependentObjects(targetObjects,
 						   behavior,
 						   NOTICE,
-						   NULL);
+						   (objects->numrefs == 1 ? objects->refs : NULL));
 
 	/*
 	 * Delete all the objects in the proper order.

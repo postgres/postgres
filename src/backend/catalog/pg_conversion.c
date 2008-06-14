@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.43 2008/05/12 00:00:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.44 2008/06/14 18:04:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-#include "catalog/namespace.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_conversion_fn.h"
 #include "catalog/pg_namespace.h"
@@ -136,40 +135,6 @@ ConversionCreate(const char *conname, Oid connamespace,
 	heap_close(rel, RowExclusiveLock);
 
 	return oid;
-}
-
-/*
- * ConversionDrop
- *
- * Drop a conversion after doing permission checks.
- */
-void
-ConversionDrop(Oid conversionOid, DropBehavior behavior)
-{
-	HeapTuple	tuple;
-	ObjectAddress object;
-
-	tuple = SearchSysCache(CONVOID,
-						   ObjectIdGetDatum(conversionOid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for conversion %u", conversionOid);
-
-	if (!superuser() &&
-		((Form_pg_conversion) GETSTRUCT(tuple))->conowner != GetUserId())
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
-				  NameStr(((Form_pg_conversion) GETSTRUCT(tuple))->conname));
-
-	ReleaseSysCache(tuple);
-
-	/*
-	 * Do the deletion
-	 */
-	object.classId = ConversionRelationId;
-	object.objectId = conversionOid;
-	object.objectSubId = 0;
-
-	performDeletion(&object, behavior);
 }
 
 /*

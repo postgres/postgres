@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.88 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.89 2008/06/14 18:04:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,6 @@ extern void DefineIndex(RangeVar *heapRelation,
 			bool skip_build,
 			bool quiet,
 			bool concurrent);
-extern void RemoveIndex(RangeVar *relation, DropBehavior behavior);
 extern void ReindexIndex(RangeVar *indexRelation);
 extern void ReindexTable(RangeVar *relation);
 extern void ReindexDatabase(const char *databaseName,
@@ -94,28 +93,24 @@ extern void AlterOpFamilyOwner(List *name, const char *access_method, Oid newOwn
 /* commands/tsearchcmds.c */
 extern void DefineTSParser(List *names, List *parameters);
 extern void RenameTSParser(List *oldname, const char *newname);
-extern void RemoveTSParser(List *names, DropBehavior behavior,
-			   bool missing_ok);
+extern void RemoveTSParsers(DropStmt *drop);
 extern void RemoveTSParserById(Oid prsId);
 
 extern void DefineTSDictionary(List *names, List *parameters);
 extern void RenameTSDictionary(List *oldname, const char *newname);
-extern void RemoveTSDictionary(List *names, DropBehavior behavior,
-				   bool missing_ok);
+extern void RemoveTSDictionaries(DropStmt *drop);
 extern void RemoveTSDictionaryById(Oid dictId);
 extern void AlterTSDictionary(AlterTSDictionaryStmt *stmt);
 extern void AlterTSDictionaryOwner(List *name, Oid newOwnerId);
 
 extern void DefineTSTemplate(List *names, List *parameters);
 extern void RenameTSTemplate(List *oldname, const char *newname);
-extern void RemoveTSTemplate(List *names, DropBehavior behavior,
-				 bool missing_ok);
+extern void RemoveTSTemplates(DropStmt *stmt);
 extern void RemoveTSTemplateById(Oid tmplId);
 
 extern void DefineTSConfiguration(List *names, List *parameters);
 extern void RenameTSConfiguration(List *oldname, const char *newname);
-extern void RemoveTSConfiguration(List *names, DropBehavior behavior,
-					  bool missing_ok);
+extern void RemoveTSConfigurations(DropStmt *stmt);
 extern void RemoveTSConfigurationById(Oid cfgId);
 extern void AlterTSConfiguration(AlterTSConfigurationStmt *stmt);
 extern void AlterTSConfigurationOwner(List *name, Oid newOwnerId);

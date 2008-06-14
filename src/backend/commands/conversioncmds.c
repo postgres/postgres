@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.33 2008/03/27 03:57:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.34 2008/06/14 18:04:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,31 +99,73 @@ CreateConversionCommand(CreateConversionStmt *stmt)
  * DROP CONVERSION
  */
 void
-DropConversionCommand(List *name, DropBehavior behavior, bool missing_ok)
+DropConversionsCommand(DropStmt *drop)
 {
-	Oid			conversionOid;
+	ObjectAddresses *objects;
+	ListCell *cell;
 
-	conversionOid = FindConversionByName(name);
-	if (!OidIsValid(conversionOid))
+	/*
+	 * First we identify all the conversions, then we delete them in a single
+	 * performMultipleDeletions() call.  This is to avoid unwanted
+	 * DROP RESTRICT errors if one of the conversions depends on another.
+	 * (Not that that is very likely, but we may as well do this consistently.)
+	 */
+	objects = new_object_addresses();
+
+	foreach(cell, drop->objects)
 	{
-		if (!missing_ok)
+		List		*name = (List *) lfirst(cell);
+		Oid			conversionOid;
+		HeapTuple	tuple;
+		Form_pg_conversion con;
+		ObjectAddress object;
+
+		conversionOid = FindConversionByName(name);
+
+		if (!OidIsValid(conversionOid))
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("conversion \"%s\" does not exist",
-							NameListToString(name))));
-		}
-		else
-		{
-			ereport(NOTICE,
-					(errmsg("conversion \"%s\" does not exist, skipping",
-							NameListToString(name))));
+			if (!drop->missing_ok)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("conversion \"%s\" does not exist",
+								NameListToString(name))));
+			}
+			else
+			{
+				ereport(NOTICE,
+						(errmsg("conversion \"%s\" does not exist, skipping",
+								NameListToString(name))));
+			}
+			continue;
 		}
 
-		return;
+		tuple = SearchSysCache(CONVOID,
+							   ObjectIdGetDatum(conversionOid),
+							   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for conversion %u",
+				 conversionOid);
+		con = (Form_pg_conversion) GETSTRUCT(tuple);
+
+		/* Permission check: must own conversion or its namespace */
+		if (!pg_conversion_ownercheck(conversionOid, GetUserId()) &&
+			!pg_namespace_ownercheck(con->connamespace, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
+						   NameStr(con->conname));
+
+		object.classId = ConversionRelationId;
+		object.objectId = conversionOid;
+		object.objectSubId = 0;
+
+		add_exact_object_address(&object, objects);
+
+		ReleaseSysCache(tuple);
 	}
 
-	ConversionDrop(conversionOid, behavior);
+	performMultipleDeletions(objects, drop->behavior);
+
+	free_object_addresses(objects);
 }
 
 /*

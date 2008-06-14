@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.118 2008/05/09 23:32:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.119 2008/06/14 18:04:33 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -483,66 +483,93 @@ DefineType(List *names, List *parameters)
 
 
 /*
- *	RemoveType
- *		Removes a datatype.
+ *	RemoveTypes
+ *		Implements DROP TYPE and DROP DOMAIN
+ *
+ * Note: if DOMAIN is specified, we enforce that each type is a domain, but
+ * we don't enforce the converse for DROP TYPE
  */
 void
-RemoveType(List *names, DropBehavior behavior, bool missing_ok)
+RemoveTypes(DropStmt *drop)
 {
-	TypeName   *typename;
-	Oid			typeoid;
-	HeapTuple	tup;
-	ObjectAddress object;
-	Form_pg_type typ;
+	ObjectAddresses *objects;
+	ListCell		*cell;
 
-	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
+	/*
+	 * First we identify all the types, then we delete them in a single
+	 * performMultipleDeletions() call.  This is to avoid unwanted
+	 * DROP RESTRICT errors if one of the types depends on another.
+	 */
+	objects = new_object_addresses();
 
-	/* Use LookupTypeName here so that shell types can be removed. */
-	tup = LookupTypeName(NULL, typename, NULL);
-	if (tup == NULL)
+	foreach(cell, drop->objects)
 	{
-		if (!missing_ok)
+		List       *names = (List *) lfirst(cell);
+		TypeName   *typename;
+		Oid			typeoid;
+		HeapTuple	tup;
+		ObjectAddress object;
+		Form_pg_type typ;
+
+		/* Make a TypeName so we can use standard type lookup machinery */
+		typename = makeTypeNameFromNameList(names);
+
+		/* Use LookupTypeName here so that shell types can be removed. */
+		tup = LookupTypeName(NULL, typename, NULL);
+		if (tup == NULL)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("type \"%s\" does not exist",
-							TypeNameToString(typename))));
-		}
-		else
-		{
-			ereport(NOTICE,
-					(errmsg("type \"%s\" does not exist, skipping",
-							TypeNameToString(typename))));
+			if (!drop->missing_ok)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("type \"%s\" does not exist",
+								TypeNameToString(typename))));
+			}
+			else
+			{
+				ereport(NOTICE,
+						(errmsg("type \"%s\" does not exist, skipping",
+								TypeNameToString(typename))));
+			}
+			continue;
 		}
 
-		return;
+		typeoid = typeTypeId(tup);
+		typ = (Form_pg_type) GETSTRUCT(tup);
+
+		/* Permission check: must own type or its namespace */
+		if (!pg_type_ownercheck(typeoid, GetUserId()) &&
+			!pg_namespace_ownercheck(typ->typnamespace, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+						   TypeNameToString(typename));
+
+		if (drop->removeType == OBJECT_DOMAIN)
+		{
+			/* Check that this is actually a domain */
+			if (typ->typtype != TYPTYPE_DOMAIN)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a domain",
+								TypeNameToString(typename))));
+		}
+
+		/*
+		 * Note: we need no special check for array types here, as the normal
+		 * treatment of internal dependencies handles it just fine
+		 */
+
+		object.classId = TypeRelationId;
+		object.objectId = typeoid;
+		object.objectSubId = 0;
+
+		add_exact_object_address(&object, objects);
+
+		ReleaseSysCache(tup);
 	}
 
-	typeoid = typeTypeId(tup);
-	typ = (Form_pg_type) GETSTRUCT(tup);
+	performMultipleDeletions(objects, drop->behavior);
 
-	/* Permission check: must own type or its namespace */
-	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
-		!pg_namespace_ownercheck(typ->typnamespace, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-					   TypeNameToString(typename));
-
-	/*
-	 * Note: we need no special check for array types here, as the normal
-	 * treatment of internal dependencies handles it just fine
-	 */
-
-	ReleaseSysCache(tup);
-
-	/*
-	 * Do the deletion
-	 */
-	object.classId = TypeRelationId;
-	object.objectId = typeoid;
-	object.objectSubId = 0;
-
-	performDeletion(&object, behavior);
+	free_object_addresses(objects);
 }
 
 
@@ -922,75 +949,6 @@ DefineDomain(CreateDomainStmt *stmt)
 	ReleaseSysCache(typeTup);
 }
 
-
-/*
- *	RemoveDomain
- *		Removes a domain.
- *
- * This is identical to RemoveType except we insist it be a domain.
- */
-void
-RemoveDomain(List *names, DropBehavior behavior, bool missing_ok)
-{
-	TypeName   *typename;
-	Oid			typeoid;
-	HeapTuple	tup;
-	char		typtype;
-	ObjectAddress object;
-
-	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
-
-	/* Use LookupTypeName here so that shell types can be removed. */
-	tup = LookupTypeName(NULL, typename, NULL);
-	if (tup == NULL)
-	{
-		if (!missing_ok)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("type \"%s\" does not exist",
-							TypeNameToString(typename))));
-		}
-		else
-		{
-			ereport(NOTICE,
-					(errmsg("type \"%s\" does not exist, skipping",
-							TypeNameToString(typename))));
-		}
-
-		return;
-	}
-
-	typeoid = typeTypeId(tup);
-
-	/* Permission check: must own type or its namespace */
-	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
-	  !pg_namespace_ownercheck(((Form_pg_type) GETSTRUCT(tup))->typnamespace,
-							   GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-					   TypeNameToString(typename));
-
-	/* Check that this is actually a domain */
-	typtype = ((Form_pg_type) GETSTRUCT(tup))->typtype;
-
-	if (typtype != TYPTYPE_DOMAIN)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a domain",
-						TypeNameToString(typename))));
-
-	ReleaseSysCache(tup);
-
-	/*
-	 * Do the deletion
-	 */
-	object.classId = TypeRelationId;
-	object.objectId = typeoid;
-	object.objectSubId = 0;
-
-	performDeletion(&object, behavior);
-}
 
 /*
  * DefineEnum
