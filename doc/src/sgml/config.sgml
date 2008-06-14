@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.179 2008/05/19 18:08:15 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.180 2008/06/14 21:59:59 alvherre Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2428,8 +2428,8 @@ local0.*    /var/log/postgresql
         <varname>log_filename</varname> were <literal>server_log</literal>,
         then the chosen file name would be <literal>server_log.1093827753</>
         for a log starting at Sun Aug 29 19:02:33 2004 MST.
-        This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
+        Note that the system's <systemitem>strftime</systemitem> is not used
+        directly, so platform-specific (nonstandard) extensions do not work.
        </para>
        <para>
         If CSV-format output is enabled in <varname>log_destination</>,
@@ -2439,6 +2439,10 @@ local0.*    /var/log/postgresql
         replaced instead.)
         In the case of the example above, the CSV
         file name will be <literal>server_log.1093827753.csv</literal>.
+       </para>
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
