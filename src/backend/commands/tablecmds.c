@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.256 2008/06/14 18:04:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.257 2008/06/15 01:25:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2174,6 +2174,44 @@ AlterTable(AlterTableStmt *stmt)
 	Relation	rel = relation_openrv(stmt->relation, AccessExclusiveLock);
 
 	CheckTableNotInUse(rel, "ALTER TABLE");
+
+	/* Check relation type against type specified in the ALTER command */
+	switch (stmt->relkind)
+	{
+		case OBJECT_TABLE:
+			/*
+			 * For mostly-historical reasons, we allow ALTER TABLE to apply
+			 * to all relation types.
+			 */
+			break;
+
+		case OBJECT_INDEX:
+			if (rel->rd_rel->relkind != RELKIND_INDEX)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not an index",
+								RelationGetRelationName(rel))));
+			break;
+
+		case OBJECT_SEQUENCE:
+			if (rel->rd_rel->relkind != RELKIND_SEQUENCE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a sequence",
+								RelationGetRelationName(rel))));
+			break;
+
+		case OBJECT_VIEW:
+			if (rel->rd_rel->relkind != RELKIND_VIEW)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a view",
+								RelationGetRelationName(rel))));
+			break;
+
+		default:
+			elog(ERROR, "unrecognized object type: %d", (int) stmt->relkind);
+	}
 
 	ATController(rel, stmt->cmds, interpretInhOption(stmt->relation->inhOpt));
 }
@@ -7191,7 +7229,8 @@ ATExecDropInherit(Relation rel, RangeVar *parent)
  * Note: caller must have checked ownership of the relation already
  */
 void
-AlterTableNamespace(RangeVar *relation, const char *newschema)
+AlterTableNamespace(RangeVar *relation, const char *newschema,
+					ObjectType stmttype)
 {
 	Relation	rel;
 	Oid			relid;
@@ -7203,6 +7242,36 @@ AlterTableNamespace(RangeVar *relation, const char *newschema)
 
 	relid = RelationGetRelid(rel);
 	oldNspOid = RelationGetNamespace(rel);
+
+	/* Check relation type against type specified in the ALTER command */
+	switch (stmttype)
+	{
+		case OBJECT_TABLE:
+			/*
+			 * For mostly-historical reasons, we allow ALTER TABLE to apply
+			 * to all relation types.
+			 */
+			break;
+
+		case OBJECT_SEQUENCE:
+			if (rel->rd_rel->relkind != RELKIND_SEQUENCE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a sequence",
+								RelationGetRelationName(rel))));
+			break;
+
+		case OBJECT_VIEW:
+			if (rel->rd_rel->relkind != RELKIND_VIEW)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a view",
+								RelationGetRelationName(rel))));
+			break;
+
+		default:
+			elog(ERROR, "unrecognized object type: %d", (int) stmttype);
+	}
 
 	/* Can we change the schema of this tuple? */
 	switch (rel->rd_rel->relkind)

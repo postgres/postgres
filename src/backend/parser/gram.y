@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.615 2008/05/16 23:36:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.616 2008/06/15 01:25:54 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -185,8 +185,8 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 %type <node>	alter_column_default opclass_item opclass_drop alter_using
 %type <ival>	add_drop opt_asc_desc opt_nulls_order
 
-%type <node>	alter_table_cmd alter_rel_cmd
-%type <list>	alter_table_cmds alter_rel_cmds
+%type <node>	alter_table_cmd
+%type <list>	alter_table_cmds
 
 %type <dbehavior>	opt_drop_behavior
 
@@ -291,8 +291,8 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 
 %type <node>	fetch_direction select_limit_value select_offset_value
 
-%type <list>	OptSeqList
-%type <defelt>	OptSeqElem
+%type <list>	OptSeqOptList SeqOptList
+%type <defelt>	SeqOptElem
 
 %type <istmt>	insert_rest
 
@@ -1391,8 +1391,10 @@ DiscardStmt:
 
 /*****************************************************************************
  *
- *	ALTER [ TABLE | INDEX ] variations
+ *	ALTER [ TABLE | INDEX | SEQUENCE | VIEW ] variations
  *
+ * Note: we accept all subcommands for each of the four variants, and sort
+ * out what's really legal at execution time.
  *****************************************************************************/
 
 AlterTableStmt:
@@ -1404,12 +1406,28 @@ AlterTableStmt:
 					n->relkind = OBJECT_TABLE;
 					$$ = (Node *)n;
 				}
-		|	ALTER INDEX relation_expr alter_rel_cmds
+		|	ALTER INDEX relation_expr alter_table_cmds
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = $3;
 					n->cmds = $4;
 					n->relkind = OBJECT_INDEX;
+					$$ = (Node *)n;
+				}
+		|	ALTER SEQUENCE relation_expr alter_table_cmds
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->relation = $3;
+					n->cmds = $4;
+					n->relkind = OBJECT_SEQUENCE;
+					$$ = (Node *)n;
+				}
+		|	ALTER VIEW relation_expr alter_table_cmds
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->relation = $3;
+					n->cmds = $4;
+					n->relkind = OBJECT_VIEW;
 					$$ = (Node *)n;
 				}
 		;
@@ -1419,9 +1437,8 @@ alter_table_cmds:
 			| alter_table_cmds ',' alter_table_cmd	{ $$ = lappend($1, $3); }
 		;
 
-/* Subcommands that are for ALTER TABLE only */
 alter_table_cmd:
-			/* ALTER TABLE <relation> ADD [COLUMN] <coldef> */
+			/* ALTER TABLE <name> ADD [COLUMN] <coldef> */
 			ADD_P opt_column columnDef
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1429,7 +1446,7 @@ alter_table_cmd:
 					n->def = $3;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
 			| ALTER opt_column ColId alter_column_default
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1438,7 +1455,7 @@ alter_table_cmd:
 					n->def = $4;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> DROP NOT NULL */
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> DROP NOT NULL */
 			| ALTER opt_column ColId DROP NOT NULL_P
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1446,7 +1463,7 @@ alter_table_cmd:
 					n->name = $3;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET NOT NULL */
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET NOT NULL */
 			| ALTER opt_column ColId SET NOT NULL_P
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1454,7 +1471,7 @@ alter_table_cmd:
 					n->name = $3;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STATISTICS <IntegerOnly> */
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STATISTICS <IntegerOnly> */
 			| ALTER opt_column ColId SET STATISTICS IntegerOnly
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1463,7 +1480,7 @@ alter_table_cmd:
 					n->def = (Node *) $6;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
 			| ALTER opt_column ColId SET STORAGE ColId
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1472,7 +1489,7 @@ alter_table_cmd:
 					n->def = (Node *) makeString($6);
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> DROP [COLUMN] <colname> [RESTRICT|CASCADE] */
+			/* ALTER TABLE <name> DROP [COLUMN] <colname> [RESTRICT|CASCADE] */
 			| DROP opt_column ColId opt_drop_behavior
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1482,7 +1499,7 @@ alter_table_cmd:
 					$$ = (Node *)n;
 				}
 			/*
-			 * ALTER TABLE <relation> ALTER [COLUMN] <colname> TYPE <typename>
+			 * ALTER TABLE <name> ALTER [COLUMN] <colname> TYPE <typename>
 			 *		[ USING <expression> ]
 			 */
 			| ALTER opt_column ColId TYPE_P Typename alter_using
@@ -1494,7 +1511,7 @@ alter_table_cmd:
 					n->transform = $6;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ADD CONSTRAINT ... */
+			/* ALTER TABLE <name> ADD CONSTRAINT ... */
 			| ADD_P TableConstraint
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1502,7 +1519,7 @@ alter_table_cmd:
 					n->def = $2;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> DROP CONSTRAINT <name> [RESTRICT|CASCADE] */
+			/* ALTER TABLE <name> DROP CONSTRAINT <name> [RESTRICT|CASCADE] */
 			| DROP CONSTRAINT name opt_drop_behavior
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1511,7 +1528,7 @@ alter_table_cmd:
 					n->behavior = $4;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> SET WITHOUT OIDS  */
+			/* ALTER TABLE <name> SET WITHOUT OIDS  */
 			| SET WITHOUT OIDS
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1642,28 +1659,15 @@ alter_table_cmd:
 					n->def = (Node *) $3;
 					$$ = (Node *)n;
 				}
-			| alter_rel_cmd
-				{
-					$$ = $1;
-				}
-		;
-
-alter_rel_cmds:
-			alter_rel_cmd							{ $$ = list_make1($1); }
-			| alter_rel_cmds ',' alter_rel_cmd		{ $$ = lappend($1, $3); }
-		;
-
-/* Subcommands that are for ALTER TABLE or ALTER INDEX */
-alter_rel_cmd:
-			/* ALTER [TABLE|INDEX] <name> OWNER TO RoleId */
-			OWNER TO RoleId
+			/* ALTER TABLE <name> OWNER TO RoleId */
+			| OWNER TO RoleId
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ChangeOwner;
 					n->name = $3;
 					$$ = (Node *)n;
 				}
-			/* ALTER [TABLE|INDEX] <name> SET TABLESPACE <tablespacename> */
+			/* ALTER TABLE <name> SET TABLESPACE <tablespacename> */
 			| SET TABLESPACE name
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1671,7 +1675,7 @@ alter_rel_cmd:
 					n->name = $3;
 					$$ = (Node *)n;
 				}
-			/* ALTER [TABLE|INDEX] <name> SET (...) */
+			/* ALTER TABLE <name> SET (...) */
 			| SET definition
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1679,7 +1683,7 @@ alter_rel_cmd:
 					n->def = (Node *)$2;
 					$$ = (Node *)n;
 				}
-			/* ALTER [TABLE|INDEX] <name> RESET (...) */
+			/* ALTER TABLE <name> RESET (...) */
 			| RESET definition
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -2425,7 +2429,7 @@ CreateAsElement:
  *****************************************************************************/
 
 CreateSeqStmt:
-			CREATE OptTemp SEQUENCE qualified_name OptSeqList
+			CREATE OptTemp SEQUENCE qualified_name OptSeqOptList
 				{
 					CreateSeqStmt *n = makeNode(CreateSeqStmt);
 					$4->istemp = $2;
@@ -2436,7 +2440,7 @@ CreateSeqStmt:
 		;
 
 AlterSeqStmt:
-			ALTER SEQUENCE qualified_name OptSeqList
+			ALTER SEQUENCE relation_expr SeqOptList
 				{
 					AlterSeqStmt *n = makeNode(AlterSeqStmt);
 					n->sequence = $3;
@@ -2445,11 +2449,15 @@ AlterSeqStmt:
 				}
 		;
 
-OptSeqList: OptSeqList OptSeqElem					{ $$ = lappend($1, $2); }
+OptSeqOptList: SeqOptList							{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-OptSeqElem: CACHE NumericOnly
+SeqOptList: SeqOptElem								{ $$ = list_make1($1); }
+			| SeqOptList SeqOptElem					{ $$ = lappend($1, $2); }
+		;
+
+SeqOptElem: CACHE NumericOnly
 				{
 					$$ = makeDefElem("cache", (Node *)$2);
 				}
@@ -4802,6 +4810,14 @@ AlterObjectSchemaStmt:
 					n->newschema = $6;
 					$$ = (Node *)n;
 				}
+			| ALTER TABLE relation_expr SET SCHEMA name
+				{
+					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
+					n->objectType = OBJECT_TABLE;
+					n->relation = $3;
+					n->newschema = $6;
+					$$ = (Node *)n;
+				}
 			| ALTER SEQUENCE relation_expr SET SCHEMA name
 				{
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
@@ -4810,10 +4826,10 @@ AlterObjectSchemaStmt:
 					n->newschema = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER TABLE relation_expr SET SCHEMA name
+			| ALTER VIEW relation_expr SET SCHEMA name
 				{
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
-					n->objectType = OBJECT_TABLE;
+					n->objectType = OBJECT_VIEW;
 					n->relation = $3;
 					n->newschema = $6;
 					$$ = (Node *)n;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.21 2008/05/17 01:20:39 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.22 2008/06/15 01:25:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,6 +30,7 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ B
     [ RESTART [ [ WITH ] <replaceable class="parameter">restart</replaceable> ] ]
     [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
     [ OWNED BY { <replaceable class="parameter">table</replaceable>.<replaceable class="parameter">column</replaceable> | NONE } ]
+ALTER SEQUENCE <replaceable class="parameter">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
 ALTER SEQUENCE <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
   </synopsis>
@@ -48,6 +49,11 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <rep
    You must own the sequence to use <command>ALTER SEQUENCE</>.
    To change a sequence's schema, you must also have <literal>CREATE</>
    privilege on the new schema.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the sequence's schema.  (These restrictions enforce that altering the owner
+   doesn't do anything you couldn't do by dropping and recreating the sequence.
+   However, a superuser can alter ownership of any sequence anyway.)
   </para>
  </refsect1>
 
@@ -206,6 +212,15 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <rep
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The user name of the new owner of the sequence.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">new_name</replaceable></term>
     <listitem>
      <para>
@@ -233,9 +248,9 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <rep
   <para>
    To avoid blocking of concurrent transactions that obtain numbers from the
    same sequence, <command>ALTER SEQUENCE</command>'s effects on the sequence
-   generation parameters are never rolled back;
-   those changes take effect immediately and are not reversible.  However,
-   the <literal>OWNED BY</>, <literal>RENAME</>, and <literal>SET SCHEMA</>
+   generation parameters are never rolled back; those changes take effect
+   immediately and are not reversible.  However, the <literal>OWNED BY</>,
+   <literal>OWNER TO</>, <literal>RENAME TO</>, and <literal>SET SCHEMA</>
    clauses cause ordinary catalog updates that can be rolled back.
   </para>
 
@@ -255,9 +270,9 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <rep
   </para>
 
   <para>
-   Some variants of <command>ALTER TABLE</command> can be used with
-   sequences as well; for example, to rename a sequence it is also
-   possible to use <command>ALTER TABLE RENAME</command>.
+   For historical reasons, <command>ALTER TABLE</command> can be used with
+   sequences too; but the only variants of <command>ALTER TABLE</command>
+   that are allowed with sequences are equivalent to the forms shown above.
   </para>
  </refsect1>
 
@@ -278,7 +293,7 @@ ALTER SEQUENCE serial RESTART WITH 105;
   <para>
    <command>ALTER SEQUENCE</command> conforms to the <acronym>SQL</acronym>
    standard, except for the <literal>START WITH</>,
-   <literal>OWNED BY</>, <literal>RENAME</>, and
+   <literal>OWNED BY</>, <literal>OWNER TO</>, <literal>RENAME TO</>, and
    <literal>SET SCHEMA</literal> clauses, which are
    <productname>PostgreSQL</productname> extensions.
   </para>
