@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/add_cvs_markers,v 1.1 2008/06/15 21:46:02 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/add_cvs_markers,v 1.2 2008/06/15 21:58:55 adunstan Exp $
 
 # Author: Andrew Dunstan
 
@@ -36,7 +36,7 @@ find . \( \( -name 'libstemmer' -o -name 'expected' -o -name 'ppport.h' \
   { while read file ; do 
       head -n 1 < $file | grep -q '^/\*' && echo $file 
     done ; echo dummy ;} |  \
-  xargs -l sed -i -e '1s/^\// /' -e '1i/*\n * $PostgreSQL: pgsql/src/tools/add_cvs_markers,v 1.1 2008/06/15 21:46:02 adunstan Exp $ \n *'
+  xargs -l sed -i -e '1s/^\// /' -e '1i/*\n * \x24PostgreSQL:$ \n *'
 
 # now all the rest (i.e. the files that don't start with a comment)
 
@@ -44,7 +44,7 @@ find . \( \( -name 'libstemmer' -o -name 'expected' -o -name 'ppport.h' \
      -o -name 'regression.h' -o -name 'sql3types.h' -o -name 'sqlca.h' \) \
      -prune \) -o  \( -name '*.[ch]' \) \( -exec grep -q '\$PostgreSQL' {} \; \
      -o -print \) ; echo dummy ;} | \
-  xargs -l sed -i -e '1i/*\n * $PostgreSQL: pgsql/src/tools/add_cvs_markers,v 1.1 2008/06/15 21:46:02 adunstan Exp $ \n */'
+  xargs -l sed -i -e '1i/*\n * \x24PostgreSQL:$ \n */'
 
 rm -f dummy
 
