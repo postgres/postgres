@@ -1,0 +1,50 @@
+#!/bin/sh
+
+# $PostgreSQL: pgsql/src/tools/add_cvs_markers,v 1.1 2008/06/15 21:46:02 adunstan Exp $
+
+# Author: Andrew Dunstan
+
+# Script to add PostgreSQL markers to source files that are lacking them.
+# currently only works for .c and .h files
+
+# Needs a sed that understands the -i switch. 
+# Really only tested on my Linux box.
+
+# We try to avoid adding markers to third party files, or files that will
+# cause regression problems (e.g. some ecpg headers).
+
+# If the file begins with a comment, we put the marker in there, 
+# otherwise we add a new comment at the top of the file. This makes things
+# a bit prettier.
+
+# This script should be run at the top of the source tree. 
+# If we're in the tools directory, the script tries to take us to the 
+# right spot.
+CWD=`pwd`
+test "`basename $CWD`" = "tools" && cd ../.. 
+
+# need a dummy file in case we don't find any with missing markers,
+# to suppress messages about sed not finding any input files
+touch dummy
+
+# first process the files that already start with a comment:
+
+find . \( \( -name 'libstemmer' -o -name 'expected' -o -name 'ppport.h' \
+     -o -name 'regression.h' -o -name 'sql3types.h' -o -name 'sqlca.h' \) \
+     -prune \) -o  \( -name '*.[ch]' \) \( -exec grep -q '\$PostgreSQL' {} \; \
+     -o -print \) | \
+  { while read file ; do 
+      head -n 1 < $file | grep -q '^/\*' && echo $file 
+    done ; echo dummy ;} |  \
+  xargs -l sed -i -e '1s/^\// /' -e '1i/*\n * $PostgreSQL: pgsql/src/tools/add_cvs_markers,v 1.1 2008/06/15 21:46:02 adunstan Exp $ \n *'
+
+# now all the rest (i.e. the files that don't start with a comment)
+
+{ find . \( \( -name 'libstemmer' -o -name 'expected' -o -name 'ppport.h' \
+     -o -name 'regression.h' -o -name 'sql3types.h' -o -name 'sqlca.h' \) \
+     -prune \) -o  \( -name '*.[ch]' \) \( -exec grep -q '\$PostgreSQL' {} \; \
+     -o -print \) ; echo dummy ;} | \
+  xargs -l sed -i -e '1i/*\n * $PostgreSQL: pgsql/src/tools/add_cvs_markers,v 1.1 2008/06/15 21:46:02 adunstan Exp $ \n */'
+
+rm -f dummy
+
