@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.85 2007/11/28 15:42:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.86 2008/06/16 03:13:14 tgl Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -16,7 +16,7 @@
    be performed regularly to achieve optimum performance. The tasks
    discussed here are <emphasis>required</emphasis>, but they
    are repetitive in nature and can easily be automated using standard
-   Unix tools such as <application>cron</application> scripts or
+   tools such as <application>cron</application> scripts or
    Windows' <application>Task Scheduler</>.  But it is the database
    administrator's responsibility to set up appropriate scripts, and to
    check that they execute successfully.
@@ -59,9 +59,28 @@
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname>'s
-   <xref linkend="sql-vacuum" endterm="sql-vacuum-title"> command has to run on
-   a regular basis for several reasons:
+   <productname>PostgreSQL</productname> databases require periodic
+   maintenance known as <firstterm>vacuuming</>.  For many installations, it
+   is sufficient to let vacuuming be performed by the <firstterm>autovacuum
+   daemon</>, which is described in <xref linkend="autovacuum">.  You might
+   need to adjust the autovacuuming parameters described there to obtain best
+   results for your situation.  Some database administrators will want to
+   supplement or replace the daemon's activities with manually-managed
+   <command>VACUUM</> commands, which typically are executed according to a
+   schedule by <application>cron</application> or <application>Task
+   Scheduler</> scripts.  To set up manually-managed vacuuming properly,
+   it is essential to understand the issues discussed in the next few
+   subsections.  Administrators who rely on autovacuuming may still wish
+   to skim this material to help them understand and adjust autovacuuming.
+  </para>
+
+  <sect2 id="vacuum-basics">
+   <title>Vacuuming Basics</title>
+
+   <para>
+    <productname>PostgreSQL</productname>'s
+    <xref linkend="sql-vacuum" endterm="sql-vacuum-title"> command has to
+    process each table on a regular basis for several reasons:
 
     <orderedlist>
      <listitem>
@@ -79,29 +98,38 @@
       <firstterm>transaction ID wraparound</>.</simpara>
      </listitem>
     </orderedlist>
-  </para>
 
-  <para>
-   The standard form of <command>VACUUM</> can run in parallel with production
-   database operations. Commands such as <command>SELECT</command>,
-   <command>INSERT</command>, <command>UPDATE</command>, and <command>DELETE</command>
-   will continue to function as normal, though you will not be able to modify the
-   definition of a table with commands such as <command>ALTER TABLE ADD COLUMN</command>
-   while it is being vacuumed.
-   Also, <command>VACUUM</command> requires a substantial amount of I/O
-   traffic, which can cause poor performance for other active sessions.
-   There are configuration parameters that can be adjusted to reduce the
-   performance impact of background vacuuming &mdash; see
-   <xref linkend="runtime-config-resource-vacuum-cost">.
-  </para>
+    Each of these reasons dictates performing <command>VACUUM</> operations
+    of varying frequency and scope, as explained in the following subsections.
+   </para>
 
-  <para>
-   Fortunately, <xref linkend="autovacuum" endterm="autovacuum-title">
-   monitors table
-   activity and performs <command>VACUUM</command>s when necessary.
-   Autovacuum works dynamically so it is often better
-   administration-scheduled vacuuming.
-  </para>
+   <para>
+    There are two variants of <command>VACUUM</>: standard <command>VACUUM</>
+    and <command>VACUUM FULL</>.  <command>VACUUM FULL</> can reclaim more
+    disk space but runs much more slowly.  Also,
+    the standard form of <command>VACUUM</> can run in parallel with production
+    database operations.  (Commands such as <command>SELECT</command>,
+    <command>INSERT</command>, <command>UPDATE</command>, and
+    <command>DELETE</command> will continue to function as normal, though you
+    will not be able to modify the definition of a table with commands such as
+    <command>ALTER TABLE</command> while it is being vacuumed.)
+    <command>VACUUM FULL</> requires exclusive lock on the table it is
+    working on, and therefore cannot be done in parallel with other use
+    of the table.  Another disadvantage of <command>VACUUM FULL</> is that
+    while it reduces table size, it does not reduce index size proportionally;
+    in fact it can make indexes <emphasis>larger</>.  Generally, therefore,
+    administrators should strive to use standard <command>VACUUM</> and
+    avoid <command>VACUUM FULL</>.
+   </para>
+
+   <para>
+    <command>VACUUM</command> creates a substantial amount of I/O
+    traffic, which can cause poor performance for other active sessions.
+    There are configuration parameters that can be adjusted to reduce the
+    performance impact of background vacuuming &mdash; see
+    <xref linkend="runtime-config-resource-vacuum-cost">.
+   </para>
+  </sect2>
 
   <sect2 id="vacuum-for-space-recovery">
    <title>Recovering Disk Space</title>
@@ -111,72 +139,70 @@
    </indexterm>
 
    <para>
-    In normal <productname>PostgreSQL</productname> operation, an
+    In <productname>PostgreSQL</productname>, an
     <command>UPDATE</> or <command>DELETE</> of a row does not
     immediately remove the old version of the row.
     This approach is necessary to gain the benefits of multiversion
-    concurrency control (see <xref linkend="mvcc">): the row versions
+    concurrency control (see <xref linkend="mvcc">): the row version
     must not be deleted while it is still potentially visible to other
     transactions. But eventually, an outdated or deleted row version is no
-    longer of interest to any transaction. The space it occupies must be
+    longer of interest to any transaction. The space it occupies must then be
     reclaimed for reuse by new rows, to avoid infinite growth of disk
     space requirements. This is done by running <command>VACUUM</>.
    </para>
 
    <para>
-    There are two variants of the <command>VACUUM</command>
-    command. The first form, known as <quote>lazy vacuum</quote> or
-    just <command>VACUUM</command>, marks dead data in tables and
-    indexes for future reuse; it does <emphasis>not</emphasis> attempt
-    to reclaim the space used by this dead data unless the space is
-    at the end of the table and an exclusive table lock can be easily 
-    obtained. Unused space at the start or middle of the file does
-    not result in the file being shortened and space returned to the
-    operating system. This variant of <command>VACUUM</command> can be
-    run concurrently with normal database operations.
+    The standard form of <command>VACUUM</command> removes dead row
+    versions in tables and indexes and marks the space available for
+    future reuse.  However, it will not return the space to the operating
+    system, except in the special case where one or more pages at the
+    end of a table become entirely free and an exclusive table lock can be
+    easily obtained.  In contrast, <command>VACUUM FULL</> actively compacts
+    tables by moving row versions to earlier pages.  It is thus able to
+    force pages at the end of the table to become entirely free, whereupon
+    it will return them to the operating system.  However, if many rows
+    must be moved, this can take a long time.  Also, moving a row requires
+    transiently making duplicate index entries for it (the entry pointing
+    to its new location must be made before the old entry can be removed);
+    so moving a lot of rows this way causes severe index bloat.
    </para>
 
    <para>
-    The second form is the <command>VACUUM FULL</command>
-    command. This uses a more aggressive algorithm for reclaiming the
-    space consumed by dead row versions. Any space that is freed by
-    <command>VACUUM FULL</command> is immediately returned to the
-    operating system, and the table data is physically compacted on
-    the disk. Unfortunately, this variant of the
-    <command>VACUUM</command> command acquires an exclusive lock on
-    each table while <command>VACUUM FULL</command> is processing
-    it. Therefore, frequently using <command>VACUUM FULL</command> can
-    have an extremely negative effect on the performance of concurrent
-    database queries.
-   </para>
-
-   <para>
-    Fortunately, <xref linkend="autovacuum" endterm="autovacuum-title">
-    monitors table
-    activity and performs <command>VACUUM</command>s when necessary.  This
-    eliminates the need for administrators to worry about disk space
-    recovery in all but the most unusual cases.
-   </para>
-
-   <para>
-    For administrators who want to control <command>VACUUM</command>
-    themselves, the standard form of <command>VACUUM</> is best used to
-    maintain a steady-state usage of disk space. If you need to return
-    disk space to the operating system, you can use <command>VACUUM
-    FULL</>, but this is unwise if the table will just grow again in the
-    future.  Moderately-frequent standard <command>VACUUM</> runs are a
+    The usual goal of routine vacuuming is to do standard <command>VACUUM</>s
+    often enough to avoid needing <command>VACUUM FULL</>.  The
+    autovacuum daemon attempts to work this way, and in fact will
+    never issue <command>VACUUM FULL</>.  In this approach, the idea
+    is not to keep tables at their minimum size, but to maintain steady-state
+    usage of disk space: each table occupies space equivalent to its
+    minimum size plus however much space gets used up between vacuumings.
+    Although <command>VACUUM FULL</> can be used to shrink a table back
+    to its minimum size and return the disk space to the operating system,
+    there is not much point in this if the table will just grow again in the
+    future.  Thus, moderately-frequent standard <command>VACUUM</> runs are a
     better approach than infrequent <command>VACUUM FULL</> runs for
-    maintaining heavily-updated tables.  However, if some heavily-updated
-    tables have gone too long with infrequent <command>VACUUM</>, you can
-    use <command>VACUUM FULL</> or <command>CLUSTER</> to get performance
-    back (it is much slower to scan a table containing almost only dead
-    rows).
+    maintaining heavily-updated tables.
    </para>
 
    <para>
-    For those not using autovacuum, one approach is to schedule a
-    database-wide <command>VACUUM</> once a day during low-usage period,
-    supplemented by more frequent vacuuming of heavily-updated tables if
+    Some administrators prefer to schedule vacuuming themselves, for example
+    doing all the work at night when load is low.
+    The difficulty with doing vacuuming according to a fixed schedule
+    is that if a table has an unexpected spike in update activity, it may
+    get bloated to the point that <command>VACUUM FULL</> is really necessary
+    to reclaim space.  Using the autovacuum daemon alleviates this problem,
+    since the daemon schedules vacuuming dynamically in response to update
+    activity.  It is unwise to disable the daemon completely unless you
+    have an extremely predictable workload.  One possible compromise is
+    to set the daemon's parameters so that it will only react to unusually
+    heavy update activity, thus keeping things from getting out of hand,
+    while scheduled <command>VACUUM</>s are expected to do the bulk of the
+    work when the load is typical.
+   </para>
+
+   <para>
+    For those not using autovacuum, a typical approach is to schedule a
+    database-wide <command>VACUUM</> once a day during a low-usage period,
+    supplemented by more frequent vacuuming of heavily-updated tables as
     necessary. (Some installations with extremely high update rates vacuum
     their busiest tables as often as once every few minutes.) If you have
     multiple databases in a cluster, don't forget to
@@ -184,24 +210,38 @@
     linkend="app-vacuumdb" endterm="app-vacuumdb-title"> might be helpful.
    </para>
 
+   <tip>
    <para>
-    <command>VACUUM FULL</> is recommended for cases where you know
-    you have deleted the majority of rows in a table, so that the
-    steady-state size of the table can be shrunk substantially with
-    <command>VACUUM FULL</>'s more aggressive approach.  Use plain
-    <command>VACUUM</>, not <command>VACUUM FULL</>, for routine
-    vacuuming for space recovery.
+    Neither form of <command>VACUUM</> is entirely satisfactory when
+    a table contains large numbers of dead row versions as a result of
+    massive update or delete activity.  If you have such a table and
+    you need to reclaim the excess disk space it occupies, the best
+    way is to use <xref linkend="sql-cluster" endterm="sql-cluster-title">
+    or one of the table-rewriting variants of
+    <xref linkend="sql-altertable" endterm="sql-altertable-title">.
+    These commands rewrite an entire new copy of the table and build
+    new indexes for it.  Like <command>VACUUM FULL</>, they require
+    exclusive lock.  Note that they also temporarily use extra disk
+    space, since the old copies of the table and indexes can't be
+    released until the new ones are complete.  In the worst case where
+    your disk is nearly full, <command>VACUUM FULL</> may be the only
+    workable alternative.
    </para>
+   </tip>
 
+   <tip>
    <para>
     If you have a table whose entire contents are deleted on a periodic
-    basis, consider doing it with <command>TRUNCATE</command> rather
+    basis, consider doing it with
+    <xref linkend="sql-truncate" endterm="sql-truncate-title"> rather
     than using <command>DELETE</command> followed by
     <command>VACUUM</command>. <command>TRUNCATE</command> removes the
     entire content of the table immediately, without requiring a
     subsequent <command>VACUUM</command> or <command>VACUUM
     FULL</command> to reclaim the now-unused disk space.
+    The disadvantage is that strict MVCC semantics are violated.
    </para>
+   </tip>
   </sect2>
 
   <sect2 id="vacuum-for-statistics">
@@ -228,6 +268,18 @@
    </para>
 
    <para>
+    The autovacuum daemon, if enabled, will automatically issue
+    <command>ANALYZE</> commands whenever the content of a table has
+    changed sufficiently.  However, administrators might prefer to rely
+    on manually-scheduled <command>ANALYZE</> operations, particularly
+    if it is known that update activity on a table will not affect the
+    statistics of <quote>interesting</> columns.  The daemon schedules
+    <command>ANALYZE</> strictly as a function of the number of rows
+    inserted or updated; it has no knowledge of whether that will lead
+    to meaningful statistical changes.
+   </para>
+
+   <para>
     As with vacuuming for space recovery, frequent updates of statistics
     are more useful for heavily-updated tables than for seldom-updated
     ones. But even for a heavily-updated table, there might be no need for
@@ -247,9 +299,10 @@
     It is possible to run <command>ANALYZE</> on specific tables and even
     just specific columns of a table, so the flexibility exists to update some
     statistics more frequently than others if your application requires it.
-    In practice, however, it is usually best to just analyze the entire database
-    because it is a fast operation.  It uses a statistical random sampling of 
-    the rows of a table rather than reading every single row.
+    In practice, however, it is usually best to just analyze the entire
+    database, because it is a fast operation.  <command>ANALYZE</> uses a
+    statistical random sampling of the rows of a table rather than reading
+    every single row.
    </para>
 
    <tip>
@@ -257,29 +310,13 @@
      Although per-column tweaking of <command>ANALYZE</> frequency might not be
      very productive, you might well find it worthwhile to do per-column
      adjustment of the level of detail of the statistics collected by
-     <command>ANALYZE</>.  Columns that are heavily used in <literal>WHERE</> clauses
-     and have highly irregular data distributions might require a finer-grain
-     data histogram than other columns.  See <command>ALTER TABLE SET
-     STATISTICS</>.
+     <command>ANALYZE</>.  Columns that are heavily used in <literal>WHERE</>
+     clauses and have highly irregular data distributions might require a
+     finer-grain data histogram than other columns.  See <command>ALTER TABLE
+     SET STATISTICS</>, or change the database-wide default using the <xref
+     linkend="guc-default-statistics-target"> configuration parameter.
     </para>
    </tip>
-
-   <para>
-    Fortunately, <xref linkend="autovacuum" endterm="autovacuum-title">
-    monitors table
-    activity and performs <command>ANALYZE</command>s when necessary.  This
-    eliminates the need for administrators to manually schedule
-    <command>ANALYZE</command>.
-   </para>
-
-   <para>
-    For those not using autovacuum, one approach is to schedule a
-    database-wide <command>ANALYZE</> once a day at a low-usage time of
-    day; this can usefully be combined with a nightly <command>VACUUM</>.
-    However, sites with relatively slowly changing table statistics might
-    find that this is overkill, and that less-frequent <command>ANALYZE</>
-    runs are sufficient.
-   </para>
   </sect2>
 
   <sect2 id="vacuum-for-wraparound">
@@ -342,15 +379,12 @@
    <para>
     The maximum time that a table can go unvacuumed is two billion
     transactions minus the <varname>vacuum_freeze_min_age</> that was used
-    when it was last vacuumed.
-    If it were to go unvacuumed for longer than that,
-    data loss could result.  To ensure that this does not
-    happen, <xref linkend="autovacuum" endterm="autovacuum-title">
-    is invoked on any table
-    that might contain XIDs older than the age specified by the
-    configuration parameter
-    <xref linkend="guc-autovacuum-freeze-max-age">.  (This will happen
-    even if autovacuum is otherwise disabled.)
+    when it was last vacuumed.  If it were to go unvacuumed for longer than
+    that, data loss could result.  To ensure that this does not happen,
+    autovacuum is invoked on any table that might contain XIDs older than the
+    age specified by the configuration parameter <xref
+    linkend="guc-autovacuum-freeze-max-age">.  (This will happen even if
+    autovacuum is otherwise disabled.)
    </para>
 
    <para>
@@ -464,15 +498,15 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
   </sect2>
 
   <sect2 id="autovacuum">
-   <title id="autovacuum-title">The Auto-Vacuum Daemon</title>
+   <title id="autovacuum-title">The Autovacuum Daemon</title>
 
    <indexterm>
     <primary>autovacuum</primary>
     <secondary>general information</secondary>
    </indexterm>
    <para>
-    Beginning in <productname>PostgreSQL</productname> 8.1, there is an
-    optional feature called <firstterm>autovacuum</firstterm>,
+    <productname>PostgreSQL</productname> has an optional but highly
+    recommended feature called <firstterm>autovacuum</firstterm>,
     whose purpose is to automate the execution of
     <command>VACUUM</command> and <command>ANALYZE </command> commands.
     When enabled, autovacuum checks for
@@ -485,20 +519,21 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
    </para>
 
    <para>
-    Beginning in <productname>PostgreSQL</productname> 8.3, autovacuum has a
-    multiprocess architecture:  There is a daemon process, called the
+    The <quote>autovacuum daemon</> actually consists of multiple processes.
+    There is a persistent daemon process, called the
     <firstterm>autovacuum launcher</firstterm>, which is in charge of starting
     an <firstterm>autovacuum worker</firstterm> process on each database every
     <xref linkend="guc-autovacuum-naptime"> seconds. On each run, the worker
-    process checks each table within that database, and <command>VACUUM</> or
-    <command>ANALYZE</> commands are issued as needed.
+    process checks each table within that database, and executes
+    <command>VACUUM</> and/or <command>ANALYZE</> commands as needed.
    </para>
 
    <para>
     The <xref linkend="guc-autovacuum-max-workers"> setting limits how many
     workers may be running at any time. If several large tables all become
     eligible for vacuuming in a short amount of time, all autovacuum workers
-    may end up vacuuming those tables for a very long time. This would result
+    may become occupied with vacuuming those tables for a long period.
+    This would result
     in other tables and databases not being vacuumed until a worker became
     available. There is not a limit on how many workers might be in a
     single database, but workers do try to avoid repeating work that has
@@ -510,9 +545,7 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
    <para>
     Tables whose <structfield>relfrozenxid</> value is more than
     <varname>autovacuum_freeze_max_age</> transactions old are always
-    vacuumed.  Otherwise,
-    two conditions are used to determine which operation(s)
-    to apply.  If the number of obsolete tuples since the last
+    vacuumed.  Otherwise, if the number of tuples obsoleted since the last
     <command>VACUUM</command> exceeds the <quote>vacuum threshold</quote>, the
     table is vacuumed.  The vacuum threshold is defined as:
 <programlisting>
@@ -528,7 +561,11 @@ vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuple
     collector; it is a semi-accurate count updated by each
     <command>UPDATE</command> and <command>DELETE</command> operation.  (It
     is only semi-accurate because some information might be lost under heavy
-    load.)  For analyze, a similar condition is used: the threshold, defined as:
+    load.)
+   </para>
+
+   <para>
+    For analyze, a similar condition is used: the threshold, defined as:
 <programlisting>
 analyze threshold = analyze base threshold + analyze scale factor * number of tuples
 </programlisting>
@@ -560,14 +597,14 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
     The next two parameters, the vacuum cost delay
     (<structname>pg_autovacuum</structname>.<structfield>vac_cost_delay</structfield>)
     and the vacuum cost limit
-    (<structname>pg_autovacuum</structname>.<structfield>vac_cost_limit</structfield>), 
+    (<structname>pg_autovacuum</structname>.<structfield>vac_cost_limit</structfield>),
     are used to set table-specific values for the
     <xref linkend="runtime-config-resource-vacuum-cost" endterm="runtime-config-resource-vacuum-cost-title">
     feature.
     The last two parameters,
     (<structname>pg_autovacuum</structname>.<structfield>freeze_min_age</structfield>)
     and
-    (<structname>pg_autovacuum</structname>.<structfield>freeze_max_age</structfield>), 
+    (<structname>pg_autovacuum</structname>.<structfield>freeze_max_age</structfield>),
     are used to set table-specific values for
     <xref linkend="guc-vacuum-freeze-min-age"> and
     <xref linkend="guc-autovacuum-freeze-max-age"> respectively.
