@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.502 2008/05/29 22:48:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.503 2008/06/17 19:10:56 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -351,10 +351,6 @@ DATA(insert OID = 172 (  int24div		   PGNSP PGUID 12 1 0 f f t f i 2 23 "21 23" 
 DESCR("divide");
 DATA(insert OID = 173 (  int42div		   PGNSP PGUID 12 1 0 f f t f i 2 23 "23 21" _null_ _null_ _null_ int42div - _null_ _null_ ));
 DESCR("divide");
-DATA(insert OID = 174 (  int24mod		   PGNSP PGUID 12 1 0 f f t f i 2 23 "21 23" _null_ _null_ _null_ int24mod - _null_ _null_ ));
-DESCR("modulus");
-DATA(insert OID = 175 (  int42mod		   PGNSP PGUID 12 1 0 f f t f i 2 23 "23 21" _null_ _null_ _null_ int42mod - _null_ _null_ ));
-DESCR("modulus");
 DATA(insert OID = 176 (  int2pl			   PGNSP PGUID 12 1 0 f f t f i 2 21 "21 21" _null_ _null_ _null_ int2pl - _null_ _null_ ));
 DESCR("add");
 DATA(insert OID = 177 (  int4pl			   PGNSP PGUID 12 1 0 f f t f i 2 23 "23 23" _null_ _null_ _null_ int4pl - _null_ _null_ ));
@@ -1177,10 +1173,6 @@ DATA(insert OID = 940 (  mod			   PGNSP PGUID 12 1 0 f f t f i 2 21 "21 21" _nul
 DESCR("modulus");
 DATA(insert OID = 941 (  mod			   PGNSP PGUID 12 1 0 f f t f i 2 23 "23 23" _null_ _null_ _null_ int4mod - _null_ _null_ ));
 DESCR("modulus");
-DATA(insert OID = 942 (  mod			   PGNSP PGUID 12 1 0 f f t f i 2 23 "21 23" _null_ _null_ _null_ int24mod - _null_ _null_ ));
-DESCR("modulus");
-DATA(insert OID = 943 (  mod			   PGNSP PGUID 12 1 0 f f t f i 2 23 "23 21" _null_ _null_ _null_ int42mod - _null_ _null_ ));
-DESCR("modulus");
 
 DATA(insert OID = 945 (  int8mod		   PGNSP PGUID 12 1 0 f f t f i 2 20 "20 20" _null_ _null_ _null_ int8mod - _null_ _null_ ));
 DESCR("modulus");
@@ -1568,6 +1560,23 @@ DESCR("subtract");
 DATA(insert OID = 1280 (  int48mul		   PGNSP PGUID 12 1 0 f f t f i 2 20 "23 20" _null_ _null_ _null_ int48mul - _null_ _null_ ));
 DESCR("multiply");
 DATA(insert OID = 1281 (  int48div		   PGNSP PGUID 12 1 0 f f t f i 2 20 "23 20" _null_ _null_ _null_ int48div - _null_ _null_ ));
+DESCR("divide");
+
+DATA(insert OID =  837 (  int82pl		   PGNSP PGUID 12 1 0 f f t f i 2 20 "20 21" _null_ _null_ _null_ int82pl - _null_ _null_ ));
+DESCR("add");
+DATA(insert OID =  838 (  int82mi		   PGNSP PGUID 12 1 0 f f t f i 2 20 "20 21" _null_ _null_ _null_ int82mi - _null_ _null_ ));
+DESCR("subtract");
+DATA(insert OID =  839 (  int82mul		   PGNSP PGUID 12 1 0 f f t f i 2 20 "20 21" _null_ _null_ _null_ int82mul - _null_ _null_ ));
+DESCR("multiply");
+DATA(insert OID =  840 (  int82div		   PGNSP PGUID 12 1 0 f f t f i 2 20 "20 21" _null_ _null_ _null_ int82div - _null_ _null_ ));
+DESCR("divide");
+DATA(insert OID =  841 (  int28pl		   PGNSP PGUID 12 1 0 f f t f i 2 20 "21 20" _null_ _null_ _null_ int28pl - _null_ _null_ ));
+DESCR("add");
+DATA(insert OID =  942 (  int28mi		   PGNSP PGUID 12 1 0 f f t f i 2 20 "21 20" _null_ _null_ _null_ int28mi - _null_ _null_ ));
+DESCR("subtract");
+DATA(insert OID =  943 (  int28mul		   PGNSP PGUID 12 1 0 f f t f i 2 20 "21 20" _null_ _null_ _null_ int28mul - _null_ _null_ ));
+DESCR("multiply");
+DATA(insert OID =  948 (  int28div		   PGNSP PGUID 12 1 0 f f t f i 2 20 "21 20" _null_ _null_ _null_ int28div - _null_ _null_ ));
 DESCR("divide");
 
 DATA(insert OID = 1287 (  oid			   PGNSP PGUID 12 1 0 f f t f i 1 26 "20" _null_ _null_ _null_	i8tooid - _null_ _null_ ));

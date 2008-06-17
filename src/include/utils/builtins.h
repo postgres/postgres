@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.316 2008/05/27 00:13:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.317 2008/06/17 19:10:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,8 +190,6 @@ extern Datum int42mul(PG_FUNCTION_ARGS);
 extern Datum int42div(PG_FUNCTION_ARGS);
 extern Datum int4mod(PG_FUNCTION_ARGS);
 extern Datum int2mod(PG_FUNCTION_ARGS);
-extern Datum int24mod(PG_FUNCTION_ARGS);
-extern Datum int42mod(PG_FUNCTION_ARGS);
 extern Datum int2larger(PG_FUNCTION_ARGS);
 extern Datum int2smaller(PG_FUNCTION_ARGS);
 extern Datum int4larger(PG_FUNCTION_ARGS);

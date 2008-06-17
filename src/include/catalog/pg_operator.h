@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.159 2008/05/27 00:13:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.160 2008/06/17 19:10:56 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -204,8 +204,6 @@ DATA(insert OID = 544 (  "*"	   PGNSP PGUID b f f	21	23	23 545	 0 int24mul - - )
 DATA(insert OID = 545 (  "*"	   PGNSP PGUID b f f	23	21	23 544	 0 int42mul - - ));
 DATA(insert OID = 546 (  "/"	   PGNSP PGUID b f f	21	23	23	 0	 0 int24div - - ));
 DATA(insert OID = 547 (  "/"	   PGNSP PGUID b f f	23	21	23	 0	 0 int42div - - ));
-DATA(insert OID = 548 (  "%"	   PGNSP PGUID b f f	21	23	23	 0	 0 int24mod - - ));
-DATA(insert OID = 549 (  "%"	   PGNSP PGUID b f f	23	21	23	 0	 0 int42mod - - ));
 DATA(insert OID = 550 (  "+"	   PGNSP PGUID b f f	21	21	21 550	 0 int2pl - - ));
 DATA(insert OID = 551 (  "+"	   PGNSP PGUID b f f	23	23	23 551	 0 int4pl - - ));
 DATA(insert OID = 552 (  "+"	   PGNSP PGUID b f f	21	23	23 553	 0 int24pl - - ));
@@ -321,6 +319,7 @@ DATA(insert OID = 684 (  "+"	   PGNSP PGUID b f f	20	20	20 684	 0 int8pl - - ));
 DATA(insert OID = 685 (  "-"	   PGNSP PGUID b f f	20	20	20	 0	 0 int8mi - - ));
 DATA(insert OID = 686 (  "*"	   PGNSP PGUID b f f	20	20	20 686	 0 int8mul - - ));
 DATA(insert OID = 687 (  "/"	   PGNSP PGUID b f f	20	20	20	 0	 0 int8div - - ));
+
 DATA(insert OID = 688 (  "+"	   PGNSP PGUID b f f	20	23	20 692	 0 int84pl - - ));
 DATA(insert OID = 689 (  "-"	   PGNSP PGUID b f f	20	23	20	 0	 0 int84mi - - ));
 DATA(insert OID = 690 (  "*"	   PGNSP PGUID b f f	20	23	20 694	 0 int84mul - - ));
@@ -329,6 +328,15 @@ DATA(insert OID = 692 (  "+"	   PGNSP PGUID b f f	23	20	20 688	 0 int48pl - - ))
 DATA(insert OID = 693 (  "-"	   PGNSP PGUID b f f	23	20	20	 0	 0 int48mi - - ));
 DATA(insert OID = 694 (  "*"	   PGNSP PGUID b f f	23	20	20 690	 0 int48mul - - ));
 DATA(insert OID = 695 (  "/"	   PGNSP PGUID b f f	23	20	20	 0	 0 int48div - - ));
+
+DATA(insert OID = 818 (  "+"	   PGNSP PGUID b f f	20	21	20 822	 0 int82pl - - ));
+DATA(insert OID = 819 (  "-"	   PGNSP PGUID b f f	20	21	20	 0	 0 int82mi - - ));
+DATA(insert OID = 820 (  "*"	   PGNSP PGUID b f f	20	21	20 824	 0 int82mul - - ));
+DATA(insert OID = 821 (  "/"	   PGNSP PGUID b f f	20	21	20	 0	 0 int82div - - ));
+DATA(insert OID = 822 (  "+"	   PGNSP PGUID b f f	21	20	20 818	 0 int28pl - - ));
+DATA(insert OID = 823 (  "-"	   PGNSP PGUID b f f	21	20	20	 0	 0 int28mi - - ));
+DATA(insert OID = 824 (  "*"	   PGNSP PGUID b f f	21	20	20 820	 0 int28mul - - ));
+DATA(insert OID = 825 (  "/"	   PGNSP PGUID b f f	21	20	20	 0	 0 int28div - - ));
 
 DATA(insert OID = 706 (  "<->"	   PGNSP PGUID b f f 603 603 701 706	 0 box_distance - - ));
 DATA(insert OID = 707 (  "<->"	   PGNSP PGUID b f f 602 602 701 707	 0 path_distance - - ));

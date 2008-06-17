@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.81 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.82 2008/06/17 19:10:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1083,36 +1083,6 @@ int2mod(PG_FUNCTION_ARGS)
 	/* No overflow is possible */
 
 	PG_RETURN_INT16(arg1 % arg2);
-}
-
-Datum
-int24mod(PG_FUNCTION_ARGS)
-{
-	int16		arg1 = PG_GETARG_INT16(0);
-	int32		arg2 = PG_GETARG_INT32(1);
-
-	if (arg2 == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
-	/* No overflow is possible */
-
-	PG_RETURN_INT32(arg1 % arg2);
-}
-
-Datum
-int42mod(PG_FUNCTION_ARGS)
-{
-	int32		arg1 = PG_GETARG_INT32(0);
-	int16		arg2 = PG_GETARG_INT16(1);
-
-	if (arg2 == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
-	/* No overflow is possible */
-
-	PG_RETURN_INT32(arg1 % arg2);
 }
 
 
