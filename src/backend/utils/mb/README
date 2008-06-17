@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/mb/README,v 1.7 2008/03/21 13:23:28 momjian Exp $
+$PostgreSQL: pgsql/src/backend/utils/mb/README,v 1.8 2008/06/17 18:22:43 momjian Exp $
 
 Encodings
 =========
@@ -14,3 +14,7 @@ wstrncmp.c:	strncmp for mb
 win866.c:	a tool to generate KOI8 <--> CP866 conversion table
 iso.c:		a tool to generate KOI8 <--> ISO8859-5 conversion table
 win1251.c:	a tool to generate KOI8 <--> CP1251 conversion table
+
+Introduction
+------------
+	http://www.cprogramming.com/tutorial/unicode.html
