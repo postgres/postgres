@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.79 2008/05/19 18:08:16 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.80 2008/06/17 16:09:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,12 +40,8 @@
  * functions, which of course will not work as desired in multibyte character
  * sets.  Note that in either case we are effectively assuming that the
  * database character encoding matches the encoding implied by LC_CTYPE.
- *
- * We assume if we have these two functions, we have their friends too, and
- * can use the wide-character method.
  */
-#if defined(HAVE_WCSTOMBS) && defined(HAVE_TOWLOWER)
-#define USE_WIDE_UPPER_LOWER
+#ifdef USE_WIDE_UPPER_LOWER
 char	   *wstring_lower(char *str);
 char	   *wstring_upper(char *str);
 wchar_t	   *texttowcs(const text *txt);

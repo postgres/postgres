@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.226 2008/04/21 00:26:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.227 2008/06/17 16:09:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -813,6 +813,14 @@ extern int	fdatasync(int fildes);
 #define HAVE_STRTOULL 1
 #endif
 
+/*
+ * We assume if we have these two functions, we have their friends too, and
+ * can use the wide-character functions.
+ */
+#if defined(HAVE_WCSTOMBS) && defined(HAVE_TOWLOWER)
+#define USE_WIDE_UPPER_LOWER
+#endif
+   
 /* EXEC_BACKEND defines */
 #ifdef EXEC_BACKEND
 #define NON_EXEC_STATIC
