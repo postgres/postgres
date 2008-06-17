@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.69 2008/03/18 12:36:43 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.70 2008/06/17 20:07:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,6 @@ typedef struct SISeg
 	int			maxMsgNum;		/* next message number to be assigned */
 	int			lastBackend;	/* index of last active procState entry, +1 */
 	int			maxBackends;	/* size of procState array */
-	int			freeBackends;	/* number of empty procState slots */
 
 	/*
 	 * Next LocalTransactionId to use for each idle backend slot.  We keep
@@ -157,7 +156,6 @@ CreateSharedInvalidationState(void)
 	shmInvalBuffer->maxMsgNum = 0;
 	shmInvalBuffer->lastBackend = 0;
 	shmInvalBuffer->maxBackends = MaxBackends;
-	shmInvalBuffer->freeBackends = MaxBackends;
 
 	/* The buffer[] array is initially all unused, so we need not fill it */
 
@@ -223,9 +221,6 @@ SharedInvalBackendInit(void)
 	/* Advertise assigned backend ID in MyProc */
 	MyProc->backendId = MyBackendId;
 
-	/* Reduce free slot count */
-	segP->freeBackends--;
-
 	/* Fetch next local transaction ID into local memory */
 	nextLocalTransactionId = segP->nextLXID[MyBackendId - 1];
 
@@ -272,9 +267,6 @@ CleanupInvalidationState(int status, Datum arg)
 			break;
 	}
 	segP->lastBackend = i;
-
-	/* Adjust free slot count */
-	segP->freeBackends++;
 
 	LWLockRelease(SInvalLock);
 }
