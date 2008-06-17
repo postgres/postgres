@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.98.2.2 2006/01/17 17:33:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.98.2.3 2008/06/17 00:53:04 tgl Exp $
  *
  **********************************************************************/
 
@@ -62,9 +62,16 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
+#define HAVE_TCL_VERSION(maj,min) \
+	((TCL_MAJOR_VERSION > maj) || \
+	 (TCL_MAJOR_VERSION == maj && TCL_MINOR_VERSION >= min))
 
-#if defined(UNICODE_CONVERSION) && TCL_MAJOR_VERSION == 8 \
-	&& TCL_MINOR_VERSION > 0
+/* In Tcl >= 8.0, really not supposed to touch interp->result directly */
+#if !HAVE_TCL_VERSION(8,0)
+#define Tcl_GetStringResult(interp)  ((interp)->result)
+#endif
+
+#if defined(UNICODE_CONVERSION) && HAVE_TCL_VERSION(8,1)
 
 #include "mb/pg_wchar.h"
 
@@ -160,6 +167,8 @@ void		pltcl_init(void);
 static Datum pltcl_func_handler(PG_FUNCTION_ARGS);
 
 static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS);
+
+static void throw_tcl_error(Tcl_Interp *interp);
 
 static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid);
 
@@ -586,15 +595,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	 * Check for errors reported by Tcl.
 	 ************************************************************/
 	if (tcl_rc != TCL_OK)
-	{
-		UTF_BEGIN;
-		ereport(ERROR,
-				(errmsg("%s", interp->result),
-				 errcontext("%s",
-							UTF_U2E(Tcl_GetVar(interp, "errorInfo",
-											   TCL_GLOBAL_ONLY)))));
-		UTF_END;
-	}
+		throw_tcl_error(interp);
 
 	/************************************************************
 	 * Disconnect from SPI manager and then create the return
@@ -602,8 +603,8 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	 * this must not be allocated in the SPI memory context
 	 * because SPI_finish would free it).  But don't try to call
 	 * the result_in_func if we've been told to return a NULL;
-	 * the contents of interp->result may not be a valid value of
-	 * the result type in that case.
+	 * the Tcl result may not be a valid value of the result type
+	 * in that case.
 	 ************************************************************/
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed");
@@ -614,7 +615,8 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	{
 		UTF_BEGIN;
 		retval = FunctionCall3(&prodesc->result_in_func,
-							   PointerGetDatum(UTF_U2E(interp->result)),
+							   PointerGetDatum(UTF_U2E((char *) Tcl_GetStringResult(interp))),
+
 							   ObjectIdGetDatum(prodesc->result_typioparam),
 							   Int32GetDatum(-1));
 		UTF_END;
@@ -645,6 +647,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	Datum	   *modvalues;
 	char	   *modnulls;
 	int			ret_numvals;
+	CONST84 char *result;
 	CONST84 char **ret_values;
 
 	/* Connect to SPI manager */
@@ -802,36 +805,35 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	 * Check for errors reported by Tcl.
 	 ************************************************************/
 	if (tcl_rc != TCL_OK)
-	{
-		UTF_BEGIN;
-		ereport(ERROR,
-				(errmsg("%s", interp->result),
-				 errcontext("%s",
-							UTF_U2E(Tcl_GetVar(interp, "errorInfo",
-											   TCL_GLOBAL_ONLY)))));
-		UTF_END;
-	}
+		throw_tcl_error(interp);
 
 	/************************************************************
 	 * The return value from the procedure might be one of
-	 * the magic strings OK or SKIP or a list from array get
+	 * the magic strings OK or SKIP or a list from array get.
+	 * We can check for OK or SKIP without worrying about encoding.
 	 ************************************************************/
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed");
 
-	if (strcmp(interp->result, "OK") == 0)
+	result = Tcl_GetStringResult(interp);
+
+	if (strcmp(result, "OK") == 0)
 		return rettup;
-	if (strcmp(interp->result, "SKIP") == 0)
+	if (strcmp(result, "SKIP") == 0)
 		return (HeapTuple) NULL;
 
 	/************************************************************
 	 * Convert the result value from the Tcl interpreter
 	 * and setup structures for SPI_modifytuple();
 	 ************************************************************/
-	if (Tcl_SplitList(interp, interp->result,
+	if (Tcl_SplitList(interp, result,
 					  &ret_numvals, &ret_values) != TCL_OK)
+	{
+		UTF_BEGIN;
 		elog(ERROR, "could not split return value from trigger: %s",
-			 interp->result);
+			 UTF_U2E(Tcl_GetStringResult(interp)));
+		UTF_END;
+	}
 
 	/* Use a TRY to ensure ret_values will get freed */
 	PG_TRY();
@@ -930,6 +932,35 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	ckfree((char *) ret_values);
 
 	return rettup;
+}
+
+
+/**********************************************************************
+ * throw_tcl_error	- ereport an error returned from the Tcl interpreter
+ **********************************************************************/
+static void
+throw_tcl_error(Tcl_Interp *interp)
+{
+	/*
+	 * Caution is needed here because Tcl_GetVar could overwrite the
+	 * interpreter result (even though it's not really supposed to),
+	 * and we can't control the order of evaluation of ereport arguments.
+	 * Hence, make real sure we have our own copy of the result string
+	 * before invoking Tcl_GetVar.
+	 */
+	char	   *emsg;
+	char	   *econtext;
+
+	UTF_BEGIN;
+	emsg = pstrdup(UTF_U2E(Tcl_GetStringResult(interp)));
+	UTF_END;
+	UTF_BEGIN;
+	econtext = UTF_U2E((char *) Tcl_GetVar(interp, "errorInfo",
+										   TCL_GLOBAL_ONLY));
+	ereport(ERROR,
+			(errmsg("%s", emsg),
+			 errcontext("%s", econtext)));
+	UTF_END;
 }
 
 
@@ -1250,8 +1281,10 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		{
 			free(prodesc->proname);
 			free(prodesc);
+			UTF_BEGIN;
 			elog(ERROR, "could not create internal procedure \"%s\": %s",
-				 internal_proname, interp->result);
+				 internal_proname, UTF_U2E(Tcl_GetStringResult(interp)));
+			UTF_END;
 		}
 
 		/************************************************************
@@ -1280,8 +1313,7 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 
 	if (argc != 3)
 	{
-		Tcl_SetResult(interp, "syntax error - 'elog level msg'",
-					  TCL_VOLATILE);
+		Tcl_SetResult(interp, "syntax error - 'elog level msg'", TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -1306,11 +1338,26 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		return TCL_ERROR;
 	}
 
-	/************************************************************
-	 * If elog() throws an error, catch it and return the error to the
-	 * Tcl interpreter.  Note we are assuming that elog() can't have any
+	if (level == ERROR)
+	{
+		/*
+		 * We just pass the error back to Tcl.  If it's not caught,
+		 * it'll eventually get converted to a PG error when we reach
+		 * the call handler.
+		 */
+		Tcl_SetResult(interp, (char *) argv[2], TCL_VOLATILE);
+		return TCL_ERROR;
+	}
+
+	/*
+	 * For non-error messages, just pass 'em to elog().  We do not expect
+	 * that this will fail, but just on the off chance it does, report the
+	 * error back to Tcl.  Note we are assuming that elog() can't have any
 	 * internal failures that are so bad as to require a transaction abort.
-	 ************************************************************/
+	 *
+	 * This path is also used for FATAL errors, which aren't going to come
+	 * back to us at all.
+	 */
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
@@ -1328,7 +1375,9 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		FlushErrorState();
 
 		/* Pass the error message to Tcl */
-		Tcl_SetResult(interp, edata->message, TCL_VOLATILE);
+		UTF_BEGIN;
+		Tcl_SetResult(interp, UTF_E2U(edata->message), TCL_VOLATILE);
+		UTF_END;
 		FreeErrorData(edata);
 
 		return TCL_ERROR;
@@ -1356,7 +1405,7 @@ pltcl_quote(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	if (argc != 2)
 	{
-		Tcl_SetResult(interp, "syntax error - 'quote string'", TCL_VOLATILE);
+		Tcl_SetResult(interp, "syntax error - 'quote string'", TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -1408,7 +1457,8 @@ pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	if (argc != 2)
 	{
-		Tcl_SetResult(interp, "syntax error - 'argisnull argno'", TCL_VOLATILE);
+		Tcl_SetResult(interp, "syntax error - 'argisnull argno'",
+					  TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -1418,7 +1468,7 @@ pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
 	if (fcinfo == NULL)
 	{
 		Tcl_SetResult(interp, "argisnull cannot be used in triggers",
-					  TCL_VOLATILE);
+					  TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -1434,7 +1484,7 @@ pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
 	argno--;
 	if (argno < 0 || argno >= fcinfo->nargs)
 	{
-		Tcl_SetResult(interp, "argno out of range", TCL_VOLATILE);
+		Tcl_SetResult(interp, "argno out of range", TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -1442,9 +1492,9 @@ pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
 	 * Get the requested NULL state
 	 ************************************************************/
 	if (PG_ARGISNULL(argno))
-		Tcl_SetResult(interp, "1", TCL_VOLATILE);
+		Tcl_SetResult(interp, "1", TCL_STATIC);
 	else
-		Tcl_SetResult(interp, "0", TCL_VOLATILE);
+		Tcl_SetResult(interp, "0", TCL_STATIC);
 
 	return TCL_OK;
 }
@@ -1464,7 +1514,7 @@ pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	if (argc != 1)
 	{
-		Tcl_SetResult(interp, "syntax error - 'return_null'", TCL_VOLATILE);
+		Tcl_SetResult(interp, "syntax error - 'return_null'", TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -1474,7 +1524,7 @@ pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 	if (fcinfo == NULL)
 	{
 		Tcl_SetResult(interp, "return_null cannot be used in triggers",
-					  TCL_VOLATILE);
+					  TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -1560,7 +1610,9 @@ pltcl_subtrans_abort(Tcl_Interp *interp,
 	SPI_restore_connection();
 
 	/* Pass the error message to Tcl */
-	Tcl_SetResult(interp, edata->message, TCL_VOLATILE);
+	UTF_BEGIN;
+	Tcl_SetResult(interp, UTF_E2U(edata->message), TCL_VOLATILE);
+	UTF_END;
 	FreeErrorData(edata);
 }
 
@@ -1592,7 +1644,7 @@ pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	if (argc < 2)
 	{
-		Tcl_SetResult(interp, usage, TCL_VOLATILE);
+		Tcl_SetResult(interp, usage, TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -1603,7 +1655,7 @@ pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 		{
 			if (++i >= argc)
 			{
-				Tcl_SetResult(interp, usage, TCL_VOLATILE);
+				Tcl_SetResult(interp, usage, TCL_STATIC);
 				return TCL_ERROR;
 			}
 			arrayname = argv[i++];
@@ -1614,7 +1666,7 @@ pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 		{
 			if (++i >= argc)
 			{
-				Tcl_SetResult(interp, usage, TCL_VOLATILE);
+				Tcl_SetResult(interp, usage, TCL_STATIC);
 				return TCL_ERROR;
 			}
 			if (Tcl_GetInt(interp, argv[i++], &count) != TCL_OK)
@@ -1628,7 +1680,7 @@ pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 	query_idx = i;
 	if (query_idx >= argc || query_idx + 2 < argc)
 	{
-		Tcl_SetResult(interp, usage, TCL_VOLATILE);
+		Tcl_SetResult(interp, usage, TCL_STATIC);
 		return TCL_ERROR;
 	}
 	if (query_idx + 1 < argc)
@@ -1690,7 +1742,7 @@ pltcl_process_SPI_result(Tcl_Interp *interp,
 	switch (spi_rc)
 	{
 		case SPI_OK_UTILITY:
-			Tcl_SetResult(interp, "0", TCL_VOLATILE);
+			Tcl_SetResult(interp, "0", TCL_STATIC);
 			break;
 
 		case SPI_OK_SELINTO:
@@ -1798,7 +1850,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	if (argc != 3)
 	{
 		Tcl_SetResult(interp, "syntax error - 'SPI_prepare query argtypes'",
-					  TCL_VOLATILE);
+					  TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -1913,6 +1965,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 
 	ckfree((char *) args);
 
+	/* qname is ASCII, so no need for encoding conversion */
 	Tcl_SetResult(interp, qdesc->qname, TCL_VOLATILE);
 	return TCL_OK;
 }
@@ -1956,7 +2009,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		{
 			if (++i >= argc)
 			{
-				Tcl_SetResult(interp, usage, TCL_VOLATILE);
+				Tcl_SetResult(interp, usage, TCL_STATIC);
 				return TCL_ERROR;
 			}
 			arrayname = argv[i++];
@@ -1966,7 +2019,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		{
 			if (++i >= argc)
 			{
-				Tcl_SetResult(interp, usage, TCL_VOLATILE);
+				Tcl_SetResult(interp, usage, TCL_STATIC);
 				return TCL_ERROR;
 			}
 			nulls = argv[i++];
@@ -1976,7 +2029,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		{
 			if (++i >= argc)
 			{
-				Tcl_SetResult(interp, usage, TCL_VOLATILE);
+				Tcl_SetResult(interp, usage, TCL_STATIC);
 				return TCL_ERROR;
 			}
 			if (Tcl_GetInt(interp, argv[i++], &count) != TCL_OK)
@@ -1992,7 +2045,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	if (i >= argc)
 	{
-		Tcl_SetResult(interp, usage, TCL_VOLATILE);
+		Tcl_SetResult(interp, usage, TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -2019,7 +2072,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		{
 			Tcl_SetResult(interp,
 					   "length of nulls string doesn't match # of arguments",
-						  TCL_VOLATILE);
+						  TCL_STATIC);
 			return TCL_ERROR;
 		}
 	}
@@ -2032,7 +2085,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	{
 		if (i >= argc)
 		{
-			Tcl_SetResult(interp, "missing argument list", TCL_VOLATILE);
+			Tcl_SetResult(interp, "missing argument list", TCL_STATIC);
 			return TCL_ERROR;
 		}
 
@@ -2049,7 +2102,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		{
 			Tcl_SetResult(interp,
 			   "argument list length doesn't match # of arguments for query",
-						  TCL_VOLATILE);
+						  TCL_STATIC);
 			ckfree((char *) callargs);
 			return TCL_ERROR;
 		}
@@ -2065,7 +2118,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 
 	if (i != argc)
 	{
-		Tcl_SetResult(interp, usage, TCL_VOLATILE);
+		Tcl_SetResult(interp, usage, TCL_STATIC);
 		return TCL_ERROR;
 	}
 
