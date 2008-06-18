@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.59 2008/05/15 00:17:39 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.60 2008/06/18 17:44:12 neilc Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -1190,7 +1190,7 @@ Total time (ns)                        2312105013
 
    <step>
     <para>
-     Add the probe definitons to <filename>src/backend/src/utils/probes.d</>
+     Add the probe definitions to <filename>src/backend/utils/probes.d</>
     </para>
    </step>
 
@@ -1224,7 +1224,7 @@ Total time (ns)                        2312105013
    <step>
     <para>
      Add <quote>probe transaction__start(int);</quote> to
-     <filename>src/backend/src/utils/probes.d</>, and it should look like the following:
+     <filename>src/backend/utils/probes.d</>, and it should look like the following:
 <programlisting>
 provider postgresql {
       ...
@@ -1247,7 +1247,7 @@ provider postgresql {
     <para>
      At compile time, transaction__start is converted to a macro called
      TRACE_POSTGRESQL_TRANSACTION_START, and it resides in
-     <filename>src/backend/src/utils/probes.h</>. Before recompiling, add
+     <filename>src/backend/utils/probes.h</>. Before recompiling, add
      the single line macro to the appropriate location in the source code.
      In this case, it looks like the following: 
     </para>
