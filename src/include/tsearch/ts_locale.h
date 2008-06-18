@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.7 2008/06/18 18:42:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.8 2008/06/18 20:55:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,16 @@
 #ifdef HAVE_WCTYPE_H
 #include <wctype.h>
 #endif
+
+/* working state for tsearch_readline (should be a local var in caller) */
+typedef struct
+{
+	FILE	   *fp;
+	const char *filename;
+	int			lineno;
+	char	   *curline;
+	ErrorContextCallback cb;
+} tsearch_readline_state;
 
 #define TOUCHAR(x)	(*((const unsigned char *) (x)))
 
@@ -55,6 +65,12 @@ extern int	t_isprint(const char *ptr);
 
 extern char *lowerstr(const char *str);
 extern char *lowerstr_with_len(const char *str, int len);
+
+extern bool tsearch_readline_begin(tsearch_readline_state *stp,
+								   const char *filename);
+extern char *tsearch_readline(tsearch_readline_state *stp);
+extern void tsearch_readline_end(tsearch_readline_state *stp);
+
 extern char *t_readline(FILE *fp);
 
 #endif   /* __TSLOCALE_H__ */

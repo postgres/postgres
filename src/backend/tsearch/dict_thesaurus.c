@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.11 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.12 2008/06/18 20:55:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 
 #include "catalog/namespace.h"
 #include "commands/defrem.h"
-#include "storage/fd.h"
 #include "tsearch/ts_cache.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
@@ -169,29 +168,25 @@ addWrd(DictThesaurus *d, char *b, char *e, uint16 idsubst, uint16 nwrd, uint16 p
 static void
 thesaurusRead(char *filename, DictThesaurus *d)
 {
-	FILE	   *fh;
-	int			lineno = 0;
+	tsearch_readline_state trst;
 	uint16		idsubst = 0;
 	bool		useasis = false;
 	char	   *line;
 
 	filename = get_tsearch_config_filename(filename, "ths");
-	fh = AllocateFile(filename, "r");
-	if (!fh)
+	if (!tsearch_readline_begin(&trst, filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("could not open thesaurus file \"%s\": %m",
 						filename)));
 
-	while ((line = t_readline(fh)) != NULL)
+	while ((line = tsearch_readline(&trst)) != NULL)
 	{
 		char	   *ptr;
 		int			state = TR_WAITLEX;
 		char	   *beginwrd = NULL;
 		uint16		posinsubst = 0;
 		uint16		nwrd = 0;
-
-		lineno++;
 
 		ptr = line;
 
@@ -213,13 +208,9 @@ thesaurusRead(char *filename, DictThesaurus *d)
 				if (t_iseq(ptr, ':'))
 				{
 					if (posinsubst == 0)
-					{
-						FreeFile(fh);
 						ereport(ERROR,
 								(errcode(ERRCODE_CONFIG_FILE_ERROR),
-								 errmsg("unexpected delimiter at line %d of thesaurus file \"%s\"",
-										lineno, filename)));
-					}
+								 errmsg("unexpected delimiter")));
 					state = TR_WAITSUBS;
 				}
 				else if (!t_isspace(ptr))
@@ -269,8 +260,7 @@ thesaurusRead(char *filename, DictThesaurus *d)
 					if (ptr == beginwrd)
 						ereport(ERROR,
 								(errcode(ERRCODE_CONFIG_FILE_ERROR),
-								 errmsg("unexpected end of line or lexeme at line %d of thesaurus file \"%s\"",
-										lineno, filename)));
+								 errmsg("unexpected end of line or lexeme")));
 					addWrd(d, beginwrd, ptr, idsubst, nwrd++, posinsubst, useasis);
 					state = TR_WAITSUBS;
 				}
@@ -286,28 +276,23 @@ thesaurusRead(char *filename, DictThesaurus *d)
 			if (ptr == beginwrd)
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("unexpected end of line or lexeme at line %d of thesaurus file \"%s\"",
-								lineno, filename)));
+						 errmsg("unexpected end of line or lexeme")));
 			addWrd(d, beginwrd, ptr, idsubst, nwrd++, posinsubst, useasis);
 		}
 
 		idsubst++;
 
 		if (!(nwrd && posinsubst))
-		{
-			FreeFile(fh);
 			ereport(ERROR,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("unexpected end of line at line %d of thesaurus file \"%s\"",
-							lineno, filename)));
-		}
+					 errmsg("unexpected end of line")));
 
 		pfree(line);
 	}
 
 	d->nsubst = idsubst;
 
-	FreeFile(fh);
+	tsearch_readline_end(&trst);
 }
 
 static TheLexeme *

@@ -6,7 +6,7 @@
  * Copyright (c) 2007-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/dict_xsyn/dict_xsyn.c,v 1.4 2008/01/01 20:31:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/dict_xsyn/dict_xsyn.c,v 1.5 2008/06/18 20:55:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "commands/defrem.h"
 #include "fmgr.h"
-#include "storage/fd.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_utils.h"
 
@@ -75,17 +74,17 @@ static void
 read_dictionary(DictSyn *d, char *filename)
 {
 	char	   *real_filename = get_tsearch_config_filename(filename, "rules");
-	FILE	   *fin;
+	tsearch_readline_state trst;
 	char	   *line;
 	int			cur = 0;
 
-	if ((fin = AllocateFile(real_filename, "r")) == NULL)
+	if (!tsearch_readline_begin(&trst, real_filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("could not open synonym file \"%s\": %m",
 						real_filename)));
 
-	while ((line = t_readline(fin)) != NULL)
+	while ((line = tsearch_readline(&trst)) != NULL)
 	{
 		char	   *value;
 		char	   *key;
@@ -119,7 +118,7 @@ read_dictionary(DictSyn *d, char *filename)
 		cur++;
 	}
 
-	FreeFile(fin);
+	tsearch_readline_end(&trst);
 
 	d->len = cur;
 	if (cur > 1)

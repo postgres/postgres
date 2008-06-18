@@ -7,14 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.11 2008/01/21 02:46:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.12 2008/06/18 20:55:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "storage/fd.h"
 #include "tsearch/dicts/spell.h"
 #include "tsearch/ts_locale.h"
 #include "utils/memutils.h"
@@ -194,18 +193,18 @@ NIAddSpell(IspellDict *Conf, const char *word, const char *flag)
 void
 NIImportDictionary(IspellDict *Conf, const char *filename)
 {
-	FILE	   *dict;
+	tsearch_readline_state trst;
 	char	   *line;
 
 	checkTmpCtx();
 
-	if (!(dict = AllocateFile(filename, "r")))
+	if (!tsearch_readline_begin(&trst, filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("could not open dictionary file \"%s\": %m",
 						filename)));
 
-	while ((line = t_readline(dict)) != NULL)
+	while ((line = tsearch_readline(&trst)) != NULL)
 	{
 		char	   *s,
 				   *pstr;
@@ -250,7 +249,7 @@ NIImportDictionary(IspellDict *Conf, const char *filename)
 
 		pfree(line);
 	}
-	FreeFile(dict);
+	tsearch_readline_end(&trst);
 }
 
 
@@ -392,8 +391,7 @@ NIAddAffix(IspellDict *Conf, int flag, char flagflags, const char *mask, const c
 #define PAE_INREPL	5
 
 static bool
-parse_affentry(char *str, char *mask, char *find, char *repl,
-			   const char *filename, int lineno)
+parse_affentry(char *str, char *mask, char *find, char *repl)
 {
 	int			state = PAE_WAIT_MASK;
 	char	   *pmask = mask,
@@ -443,8 +441,7 @@ parse_affentry(char *str, char *mask, char *find, char *repl,
 			else if (!t_isspace(str))
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					   errmsg("syntax error at line %d of affix file \"%s\"",
-							  lineno, filename)));
+						 errmsg("syntax error")));
 		}
 		else if (state == PAE_INFIND)
 		{
@@ -461,8 +458,7 @@ parse_affentry(char *str, char *mask, char *find, char *repl,
 			else if (!t_isspace(str))
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					   errmsg("syntax error at line %d of affix file \"%s\"",
-							  lineno, filename)));
+						 errmsg("syntax error")));
 		}
 		else if (state == PAE_WAIT_REPL)
 		{
@@ -479,8 +475,7 @@ parse_affentry(char *str, char *mask, char *find, char *repl,
 			else if (!t_isspace(str))
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					   errmsg("syntax error at line %d of affix file \"%s\"",
-							  lineno, filename)));
+						 errmsg("syntax error")));
 		}
 		else if (state == PAE_INREPL)
 		{
@@ -497,8 +492,7 @@ parse_affentry(char *str, char *mask, char *find, char *repl,
 			else if (!t_isspace(str))
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					   errmsg("syntax error at line %d of affix file \"%s\"",
-							  lineno, filename)));
+						 errmsg("syntax error")));
 		}
 		else
 			elog(ERROR, "unrecognized state in parse_affentry: %d", state);
@@ -512,8 +506,7 @@ parse_affentry(char *str, char *mask, char *find, char *repl,
 }
 
 static void
-addFlagValue(IspellDict *Conf, char *s, uint32 val,
-			 const char *filename, int lineno)
+addFlagValue(IspellDict *Conf, char *s, uint32 val)
 {
 	while (*s && t_isspace(s))
 		s++;
@@ -521,14 +514,12 @@ addFlagValue(IspellDict *Conf, char *s, uint32 val,
 	if (!*s)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("syntax error at line %d of affix file \"%s\"",
-						lineno, filename)));
+				 errmsg("syntax error")));
 
 	if (pg_mblen(s) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("multibyte flag character is not allowed at line %d of affix file \"%s\"",
-						lineno, filename)));
+				 errmsg("multibyte flag character is not allowed")));
 
 	Conf->flagval[(unsigned int) *s] = (unsigned char) val;
 	Conf->usecompound = true;
@@ -549,8 +540,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 	bool		isSuffix = false;
 	int			flag = 0;
 	char		flagflags = 0;
-	FILE	   *affix;
-	int			lineno = 0;
+	tsearch_readline_state trst;
 	int			scanread = 0;
 	char		scanbuf[BUFSIZ];
 	char	   *recoded;
@@ -561,16 +551,14 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 	memset(Conf->flagval, 0, sizeof(Conf->flagval));
 	Conf->usecompound = false;
 
-	if (!(affix = AllocateFile(filename, "r")))
+	if (!tsearch_readline_begin(&trst, filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("could not open affix file \"%s\": %m",
 						filename)));
 
-	while ((recoded = t_readline(affix)) != NULL)
+	while ((recoded = tsearch_readline(&trst)) != NULL)
 	{
-		lineno++;
-
 		if (*recoded == '\0' || t_isspace(recoded) || t_iseq(recoded, '#'))
 		{
 			pfree(recoded);
@@ -579,29 +567,29 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 
 		if (STRNCMP(recoded, "COMPOUNDFLAG") == 0)
 			addFlagValue(Conf, recoded + strlen("COMPOUNDFLAG"),
-						 FF_COMPOUNDFLAG, filename, lineno);
+						 FF_COMPOUNDFLAG);
 		else if (STRNCMP(recoded, "COMPOUNDBEGIN") == 0)
 			addFlagValue(Conf, recoded + strlen("COMPOUNDBEGIN"),
-						 FF_COMPOUNDBEGIN, filename, lineno);
+						 FF_COMPOUNDBEGIN);
 		else if (STRNCMP(recoded, "COMPOUNDLAST") == 0)
 			addFlagValue(Conf, recoded + strlen("COMPOUNDLAST"),
-						 FF_COMPOUNDLAST, filename, lineno);
+						 FF_COMPOUNDLAST);
 		/* COMPOUNDLAST and COMPOUNDEND are synonyms */
 		else if (STRNCMP(recoded, "COMPOUNDEND") == 0)
 			addFlagValue(Conf, recoded + strlen("COMPOUNDEND"),
-						 FF_COMPOUNDLAST, filename, lineno);
+						 FF_COMPOUNDLAST);
 		else if (STRNCMP(recoded, "COMPOUNDMIDDLE") == 0)
 			addFlagValue(Conf, recoded + strlen("COMPOUNDMIDDLE"),
-						 FF_COMPOUNDMIDDLE, filename, lineno);
+						 FF_COMPOUNDMIDDLE);
 		else if (STRNCMP(recoded, "ONLYINCOMPOUND") == 0)
 			addFlagValue(Conf, recoded + strlen("ONLYINCOMPOUND"),
-						 FF_COMPOUNDONLY, filename, lineno);
+						 FF_COMPOUNDONLY);
 		else if (STRNCMP(recoded, "COMPOUNDPERMITFLAG") == 0)
 			addFlagValue(Conf, recoded + strlen("COMPOUNDPERMITFLAG"),
-						 FF_COMPOUNDPERMITFLAG, filename, lineno);
+						 FF_COMPOUNDPERMITFLAG);
 		else if (STRNCMP(recoded, "COMPOUNDFORBIDFLAG") == 0)
 			addFlagValue(Conf, recoded + strlen("COMPOUNDFORBIDFLAG"),
-						 FF_COMPOUNDFORBIDFLAG, filename, lineno);
+						 FF_COMPOUNDFORBIDFLAG);
 		else if (STRNCMP(recoded, "FLAG") == 0)
 		{
 			char	   *s = recoded + strlen("FLAG");
@@ -612,26 +600,23 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 			if (*s && STRNCMP(s, "default") != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("Ispell dictionary supports only default flag value at line %d of affix file \"%s\"",
-								lineno, filename)));
+						 errmsg("Ispell dictionary supports only default flag value")));
 		}
 
 		pfree(recoded);
 	}
-	FreeFile(affix);
-	lineno = 0;
+	tsearch_readline_end(&trst);
 
 	sprintf(scanbuf, "%%6s %%%ds %%%ds %%%ds %%%ds", BUFSIZ / 5, BUFSIZ / 5, BUFSIZ / 5, BUFSIZ / 5);
 
-	if (!(affix = AllocateFile(filename, "r")))
+	if (!tsearch_readline_begin(&trst, filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("could not open affix file \"%s\": %m",
 						filename)));
 
-	while ((recoded = t_readline(affix)) != NULL)
+	while ((recoded = tsearch_readline(&trst)) != NULL)
 	{
-		lineno++;
 		if (*recoded == '\0' || t_isspace(recoded) || t_iseq(recoded, '#'))
 			goto nextline;
 
@@ -691,9 +676,9 @@ nextline:
 		pfree(recoded);
 	}
 
+	tsearch_readline_end(&trst);
 	if (ptype)
 		pfree(ptype);
-	FreeFile(affix);
 }
 
 /*
@@ -713,14 +698,13 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 	bool		prefixes = false;
 	int			flag = 0;
 	char		flagflags = 0;
-	FILE	   *affix;
-	int			lineno = 0;
+	tsearch_readline_state trst;
 	bool		oldformat = false;
 	char	   *recoded = NULL;
 
 	checkTmpCtx();
 
-	if (!(affix = AllocateFile(filename, "r")))
+	if (!tsearch_readline_begin(&trst, filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("could not open affix file \"%s\": %m",
@@ -729,11 +713,9 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 	memset(Conf->flagval, 0, sizeof(Conf->flagval));
 	Conf->usecompound = false;
 
-	while ((recoded = t_readline(affix)) != NULL)
+	while ((recoded = tsearch_readline(&trst)) != NULL)
 	{
 		pstr = lowerstr(recoded);
-
-		lineno++;
 
 		/* Skip comments and empty lines */
 		if (*pstr == '#' || *pstr == '\n')
@@ -787,8 +769,7 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 			if (pg_mblen(s) != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("multibyte flag character is not allowed at line %d of affix file \"%s\"",
-								lineno, filename)));
+						 errmsg("multibyte flag character is not allowed")));
 
 			if (*s == '*')
 			{
@@ -808,8 +789,7 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 			if (pg_mblen(s) != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("multibyte flag character is not allowed at line %d of affix file \"%s\"",
-								lineno, filename)));
+						 errmsg("multibyte flag character is not allowed")));
 
 			flag = (unsigned char) *s;
 			goto nextline;
@@ -820,16 +800,15 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 			if (oldformat)
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("wrong affix file format for flag at line %d of affix file \"%s\"",
-								lineno, filename)));
-			FreeFile(affix);
+						 errmsg("wrong affix file format for flag")));
+			tsearch_readline_end(&trst);
 			NIImportOOAffixes(Conf, filename);
 			return;
 		}
 		if ((!suffixes) && (!prefixes))
 			goto nextline;
 
-		if (!parse_affentry(pstr, mask, find, repl, filename, lineno))
+		if (!parse_affentry(pstr, mask, find, repl))
 			goto nextline;
 
 		NIAddAffix(Conf, flag, flagflags, mask, find, repl, suffixes ? FF_SUFFIX : FF_PREFIX);
@@ -838,7 +817,7 @@ nextline:
 		pfree(recoded);
 		pfree(pstr);
 	}
-	FreeFile(affix);
+	tsearch_readline_end(&trst);
 }
 
 static int

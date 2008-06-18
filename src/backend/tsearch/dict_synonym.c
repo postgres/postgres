@@ -7,14 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.8 2008/03/10 03:01:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.9 2008/06/18 20:55:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "commands/defrem.h"
-#include "storage/fd.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
 #include "tsearch/ts_utils.h"
@@ -79,7 +78,7 @@ dsynonym_init(PG_FUNCTION_ARGS)
 	ListCell   *l;
 	char	   *filename = NULL;
 	bool		case_sensitive = false;
-	FILE	   *fin;
+	tsearch_readline_state trst;
 	char	   *starti,
 			   *starto,
 			   *end = NULL;
@@ -108,7 +107,7 @@ dsynonym_init(PG_FUNCTION_ARGS)
 
 	filename = get_tsearch_config_filename(filename, "syn");
 
-	if ((fin = AllocateFile(filename, "r")) == NULL)
+	if (!tsearch_readline_begin(&trst, filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("could not open synonym file \"%s\": %m",
@@ -116,7 +115,7 @@ dsynonym_init(PG_FUNCTION_ARGS)
 
 	d = (DictSyn *) palloc0(sizeof(DictSyn));
 
-	while ((line = t_readline(fin)) != NULL)
+	while ((line = tsearch_readline(&trst)) != NULL)
 	{
 		starti = findwrd(line, &end);
 		if (!starti)
@@ -175,7 +174,7 @@ skipline:
 		pfree(line);
 	}
 
-	FreeFile(fin);
+	tsearch_readline_end(&trst);
 
 	d->len = cur;
 	qsort(d->syn, d->len, sizeof(Syn), compareSyn);
