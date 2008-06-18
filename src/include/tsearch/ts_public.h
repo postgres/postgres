@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.9 2008/05/16 16:31:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.10 2008/06/18 18:42:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,6 @@ typedef struct
  */
 extern char *get_tsearch_config_filename(const char *basename,
 							const char *extension);
-
-extern char *pnstrdup(const char *in, int len);
 
 /*
  * Often useful stopword list management

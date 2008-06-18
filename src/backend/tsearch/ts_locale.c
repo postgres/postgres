@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.8 2008/06/17 16:09:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.9 2008/06/18 18:42:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,124 +16,7 @@
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
 
-
 #ifdef USE_WIDE_UPPER_LOWER
-
-/*
- * wchar2char --- convert wide characters to multibyte format
- *
- * This has the same API as the standard wcstombs() function; in particular,
- * tolen is the maximum number of bytes to store at *to, and *from must be
- * zero-terminated.  The output will be zero-terminated iff there is room.
- */
-size_t
-wchar2char(char *to, const wchar_t *from, size_t tolen)
-{
-	if (tolen == 0)
-		return 0;
-
-#ifdef WIN32
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		int			r;
-
-		r = WideCharToMultiByte(CP_UTF8, 0, from, -1, to, tolen,
-								NULL, NULL);
-
-		if (r <= 0)
-			return (size_t) -1;
-
-		Assert(r <= tolen);
-
-		/* Microsoft counts the zero terminator in the result */
-		return r - 1;
-	}
-#endif   /* WIN32 */
-
-	return wcstombs(to, from, tolen);
-}
-
-/*
- * char2wchar --- convert multibyte characters to wide characters
- *
- * This has almost the API of mbstowcs(), except that *from need not be
- * null-terminated; instead, the number of input bytes is specified as
- * fromlen.  Also, we ereport() rather than returning -1 for invalid
- * input encoding.	tolen is the maximum number of wchar_t's to store at *to.
- * The output will be zero-terminated iff there is room.
- */
-size_t
-char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen)
-{
-	if (tolen == 0)
-		return 0;
-
-#ifdef WIN32
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		int			r;
-
-		/* stupid Microsloth API does not work for zero-length input */
-		if (fromlen == 0)
-			r = 0;
-		else
-		{
-			r = MultiByteToWideChar(CP_UTF8, 0, from, fromlen, to, tolen - 1);
-
-			if (r <= 0)
-			{
-				/* see notes in oracle_compat.c about error reporting */
-				pg_verifymbstr(from, fromlen, false);
-				ereport(ERROR,
-						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-						 errmsg("invalid multibyte character for locale"),
-						 errhint("The server's LC_CTYPE locale is probably incompatible with the database encoding.")));
-			}
-		}
-
-		Assert(r < tolen);
-		to[r] = 0;
-
-		return r;
-	}
-#endif   /* WIN32 */
-
-	if (lc_ctype_is_c())
-	{
-		/*
-		 * pg_mb2wchar_with_len always adds trailing '\0', so 'to' should be
-		 * allocated with sufficient space
-		 */
-		return pg_mb2wchar_with_len(from, (pg_wchar *) to, fromlen);
-	}
-	else
-	{
-		/*
-		 * mbstowcs requires ending '\0'
-		 */
-		char	   *str = pnstrdup(from, fromlen);
-		size_t		result;
-
-		result = mbstowcs(to, str, tolen);
-
-		pfree(str);
-
-		if (result == (size_t) -1)
-		{
-			pg_verifymbstr(from, fromlen, false);
-			ereport(ERROR,
-					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-					 errmsg("invalid multibyte character for locale"),
-					 errhint("The server's LC_CTYPE locale is probably incompatible with the database encoding.")));
-		}
-
-		if (result < tolen)
-			to[result] = 0;
-
-		return result;
-	}
-}
-
 
 int
 t_isdigit(const char *ptr)

@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.38 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.39 2008/06/18 18:42:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,8 @@ extern void *MemoryContextAllocZeroAligned(MemoryContext context, Size size);
 extern void pfree(void *pointer);
 
 extern void *repalloc(void *pointer, Size size);
+
+extern char *pnstrdup(const char *in, int len);
 
 /*
  * MemoryContextSwitchTo can't be a macro in standard C compilers.

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.6 2008/06/17 16:09:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.7 2008/06/18 18:42:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,6 @@
 #define TOUCHAR(x)	(*((const unsigned char *) (x)))
 
 #ifdef USE_WIDE_UPPER_LOWER
-
-extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen);
-extern size_t char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen);
 
 extern int	t_isdigit(const char *ptr);
 extern int	t_isspace(const char *ptr);
