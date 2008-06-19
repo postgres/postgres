@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.35 2008/05/16 17:31:17 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.36 2008/06/19 00:46:03 alvherre Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -26,9 +26,8 @@
 
 #include "access/gist_private.h"
 #include "access/hash.h"
-#include "access/heapam.h"
-#include "access/htup.h"
 #include "access/nbtree.h"
+#include "access/relscan.h"
 #include "catalog/namespace.h"
 #include "funcapi.h"
 #include "miscadmin.h"

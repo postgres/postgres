@@ -8,15 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.54 2008/05/12 00:00:44 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.55 2008/06/19 00:46:03 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/hash.h"
 #include "access/reloptions.h"
+#include "access/relscan.h"
 #include "executor/execdebug.h"
 #include "storage/bufmgr.h"
 #include "utils/lsyscache.h"

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.28 2008/06/15 01:41:37 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.29 2008/06/19 00:46:03 alvherre Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -18,6 +18,7 @@
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
 #include "storage/bufmgr.h"
+#include "utils/rel.h"
 
 /*
  * static *S used for temrorary storage (saves stack and palloc() call)

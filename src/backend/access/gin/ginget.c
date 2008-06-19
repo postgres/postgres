@@ -8,13 +8,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.16 2008/05/16 16:31:01 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.17 2008/06/19 00:46:03 alvherre Exp $
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
 #include "access/gin.h"
+#include "access/relscan.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.10 2008/05/12 00:00:43 alvherre Exp $
+ * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.11 2008/06/19 00:46:03 alvherre Exp $
  *
  * Copyright (c) 2005-2006	Tatsuo Ishii
  *
@@ -26,6 +26,7 @@
 
 #include "access/heapam.h"
 #include "access/multixact.h"
+#include "access/relscan.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
 #include "funcapi.h"

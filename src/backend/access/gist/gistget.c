@@ -8,13 +8,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.73 2008/05/12 00:00:44 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.74 2008/06/19 00:46:03 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/gist_private.h"
+#include "access/relscan.h"
 #include "executor/execdebug.h"
 #include "miscadmin.h"
 #include "pgstat.h"

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.42 2008/03/13 18:00:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.43 2008/06/19 00:46:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #define INVAL_H
 
 #include "access/htup.h"
-#include "utils/rel.h"
+#include "utils/relcache.h"
 
 
 typedef void (*CacheCallbackFunction) (Datum arg, Oid relid);

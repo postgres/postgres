@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.75 2008/05/15 00:17:41 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.76 2008/06/19 00:46:05 alvherre Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -14,7 +14,7 @@
 #include "libpq/pqcomm.h"
 #include "portability/instr_time.h"
 #include "utils/hsearch.h"
-#include "utils/rel.h"
+#include "utils/relcache.h"
 #include "utils/timestamp.h"
 
 

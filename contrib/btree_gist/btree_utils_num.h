@@ -1,10 +1,11 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_num.h,v 1.12 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_num.h,v 1.13 2008/06/19 00:46:02 alvherre Exp $ 
  */
 #ifndef __BTREE_UTILS_NUM_H__
 #define __BTREE_UTILS_NUM_H__
 
 #include "btree_gist.h"
+#include "utils/rel.h"
 
 #include <math.h>
 #include <float.h>

@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.18 2008/03/31 01:31:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.19 2008/06/19 00:46:05 alvherre Exp $
  *
  */
 
@@ -24,8 +24,8 @@
 #include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
-#include "utils/relcache.h"
 
 
 /* Return physical size of directory contents, or 0 if dir doesn't exist */

@@ -6,13 +6,15 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlogutils.h,v 1.24 2008/06/12 09:12:31 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlogutils.h,v 1.25 2008/06/19 00:46:06 alvherre Exp $
  */
 #ifndef XLOG_UTILS_H
 #define XLOG_UTILS_H
 
 #include "storage/buf.h"
-#include "utils/rel.h"
+#include "storage/relfilenode.h"
+#include "storage/block.h"
+#include "utils/relcache.h"
 
 
 extern void XLogCheckInvalidPages(void);

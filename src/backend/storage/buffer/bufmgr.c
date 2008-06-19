@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.232 2008/06/12 09:12:31 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.233 2008/06/19 00:46:05 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/smgr.h"
+#include "utils/rel.h"
 #include "utils/resowner.h"
 #include "pgstat.h"
 

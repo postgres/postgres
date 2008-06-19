@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_numeric.c,v 1.11 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_numeric.c,v 1.12 2008/06/19 00:46:02 alvherre Exp $ 
  */
 #include "btree_gist.h"
 
@@ -9,6 +9,7 @@
 #include "btree_utils_var.h"
 #include "utils/builtins.h"
 #include "utils/numeric.h"
+#include "utils/rel.h"
 
 /*
 ** Bytea ops

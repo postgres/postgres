@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.105 2008/06/14 18:04:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.106 2008/06/19 00:46:04 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "rewrite/rewriteSupport.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 
 
 static void checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc);

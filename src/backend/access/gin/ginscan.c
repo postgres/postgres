@@ -8,17 +8,18 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.14 2008/05/16 16:31:01 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.15 2008/06/19 00:46:03 alvherre Exp $
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/gin.h"
+#include "access/relscan.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 
 Datum

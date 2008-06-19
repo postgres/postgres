@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.12 2008/05/12 00:00:44 alvherre Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.13 2008/06/19 00:46:03 alvherre Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -17,6 +17,7 @@
 #include "access/gin.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "utils/rel.h"
 
 /*
  * Locks buffer by needed method for search.

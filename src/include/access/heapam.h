@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.136 2008/06/12 09:12:31 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.137 2008/06/19 00:46:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,11 +15,13 @@
 #define HEAPAM_H
 
 #include "access/htup.h"
-#include "access/relscan.h"
 #include "access/sdir.h"
+#include "access/skey.h"
 #include "access/xlog.h"
 #include "nodes/primnodes.h"
+#include "storage/bufpage.h"
 #include "storage/lock.h"
+#include "utils/relcache.h"
 #include "utils/snapshot.h"
 
 
@@ -49,6 +51,15 @@ extern Relation heap_open(Oid relationId, LOCKMODE lockmode);
 extern Relation heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
 
 #define heap_close(r,l)  relation_close(r,l)
+
+/* struct definition appears in relscan.h */
+typedef struct HeapScanDescData *HeapScanDesc;
+
+/*
+ * HeapScanIsValid
+ *		True iff the heap scan is valid.
+ */
+#define HeapScanIsValid(scan) PointerIsValid(scan)
 
 extern HeapScanDesc heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key);

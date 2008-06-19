@@ -7,18 +7,22 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.183 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.184 2008/06/19 00:46:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECNODES_H
 #define EXECNODES_H
 
-#include "access/relscan.h"
+#include "access/genam.h"
+#include "access/heapam.h"
+#include "access/skey.h"
 #include "nodes/params.h"
-#include "nodes/plannodes.h"
-#include "nodes/tidbitmap.h"
+#include "nodes/plannodes.h"    
+#include "nodes/tidbitmap.h"    
 #include "utils/hsearch.h"
+#include "utils/rel.h"
+#include "utils/snapshot.h"
 #include "utils/tuplestore.h"
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.103 2008/05/12 00:00:44 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.104 2008/06/19 00:46:03 alvherre Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -18,8 +18,8 @@
 
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/hash.h"
+#include "access/relscan.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"

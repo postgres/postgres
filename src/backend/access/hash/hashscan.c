@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashscan.c,v 1.44 2008/03/07 15:59:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashscan.c,v 1.45 2008/06/19 00:46:03 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,9 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "access/relscan.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 #include "utils/resowner.h"
 
 

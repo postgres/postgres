@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.21 2008/06/06 22:35:22 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.22 2008/06/19 00:46:05 alvherre Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -12,8 +12,8 @@
 #ifndef GIN_H
 #define GIN_H
 
+#include "access/genam.h"
 #include "access/itup.h"
-#include "access/relscan.h"
 #include "access/xlog.h"
 #include "fmgr.h"
 #include "nodes/tidbitmap.h"

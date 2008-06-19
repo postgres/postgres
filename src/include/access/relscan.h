@@ -7,18 +7,15 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.65 2008/05/12 00:00:53 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.66 2008/06/19 00:46:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RELSCAN_H
 #define RELSCAN_H
 
-#include "access/htup.h"
-#include "access/skey.h"
-#include "storage/bufpage.h"
-#include "utils/rel.h"
-#include "utils/snapshot.h"
+#include "access/genam.h"
+#include "access/heapam.h"
 
 
 typedef struct HeapScanDescData
@@ -54,8 +51,6 @@ typedef struct HeapScanDescData
 	OffsetNumber rs_vistuples[MaxHeapTuplesPerPage];	/* their offsets */
 } HeapScanDescData;
 
-typedef HeapScanDescData *HeapScanDesc;
-
 /*
  * We use the same IndexScanDescData structure for both amgettuple-based
  * and amgetbitmap-based index scans.  Some fields are only relevant in
@@ -89,19 +84,13 @@ typedef struct IndexScanDescData
 	TransactionId xs_prev_xmax; /* previous HOT chain member's XMAX, if any */
 } IndexScanDescData;
 
-typedef IndexScanDescData *IndexScanDesc;
-
-
-/*
- * HeapScanIsValid
- *		True iff the heap scan is valid.
- */
-#define HeapScanIsValid(scan) PointerIsValid(scan)
-
-/*
- * IndexScanIsValid
- *		True iff the index scan is valid.
- */
-#define IndexScanIsValid(scan) PointerIsValid(scan)
+/* Struct for heap-or-index scans of system tables */
+typedef struct SysScanDescData
+{
+	Relation	heap_rel;		/* catalog being scanned */
+	Relation	irel;			/* NULL if doing heap scan */
+	HeapScanDesc scan;			/* only valid in heap-scan case */
+	IndexScanDesc iscan;		/* only valid in index-scan case */
+} SysScanDescData;
 
 #endif   /* RELSCAN_H */

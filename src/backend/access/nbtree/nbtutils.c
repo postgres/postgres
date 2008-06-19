@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.90 2008/05/12 00:00:45 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.91 2008/06/19 00:46:03 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "access/genam.h"
 #include "access/nbtree.h"
 #include "access/reloptions.h"
+#include "access/relscan.h"
 #include "executor/execdebug.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"

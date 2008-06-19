@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.299 2008/05/12 20:01:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.300 2008/06/19 00:46:04 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -25,6 +25,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/relscan.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/xact.h"

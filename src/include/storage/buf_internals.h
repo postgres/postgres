@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.96 2008/06/12 09:12:31 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.97 2008/06/19 00:46:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include "storage/shmem.h"
 #include "storage/smgr.h"
 #include "storage/spin.h"
-#include "utils/rel.h"
+#include "utils/relcache.h"
 
 
 /*

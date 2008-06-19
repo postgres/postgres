@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_var.c,v 1.19 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_var.c,v 1.20 2008/06/19 00:46:02 alvherre Exp $ 
  */
 #include "btree_gist.h"
 
@@ -10,6 +10,7 @@
 #include "btree_utils_var.h"
 #include "utils/pg_locale.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 
 PG_FUNCTION_INFO_V1(gbt_var_decompress);
 Datum		gbt_var_decompress(PG_FUNCTION_ARGS);
