@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.85 2008/03/17 11:50:26 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.86 2008/06/19 21:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,9 +17,7 @@
 #include "access/xact.h"
 #include "commands/async.h"
 #include "miscadmin.h"
-#include "storage/backendid.h"
 #include "storage/ipc.h"
-#include "storage/proc.h"
 #include "storage/sinvaladt.h"
 #include "utils/inval.h"
 
@@ -27,9 +25,9 @@
 /*
  * Because backends sitting idle will not be reading sinval events, we
  * need a way to give an idle backend a swift kick in the rear and make
- * it catch up before the sinval queue overflows and forces everyone
- * through a cache reset exercise.	This is done by broadcasting SIGUSR1
- * to all backends when the queue is threatening to become full.
+ * it catch up before the sinval queue overflows and forces it to go
+ * through a cache reset exercise.	This is done by sending SIGUSR1
+ * to any backend that gets too far behind.
  *
  * State for catchup events consists of two flags: one saying whether
  * the signal handler is currently allowed to call ProcessCatchupEvent
@@ -47,67 +45,101 @@ static void ProcessCatchupEvent(void);
 
 
 /*
- * SendSharedInvalidMessage
- *	Add a shared-cache-invalidation message to the global SI message queue.
+ * SendSharedInvalidMessages
+ *	Add shared-cache-invalidation message(s) to the global SI message queue.
  */
 void
-SendSharedInvalidMessage(SharedInvalidationMessage *msg)
+SendSharedInvalidMessages(const SharedInvalidationMessage *msgs, int n)
 {
-	bool		insertOK;
-
-	insertOK = SIInsertDataEntry(msg);
-	if (!insertOK)
-		elog(DEBUG4, "SI buffer overflow");
+	SIInsertDataEntries(msgs, n);
 }
 
 /*
  * ReceiveSharedInvalidMessages
  *		Process shared-cache-invalidation messages waiting for this backend
  *
+ * We guarantee to process all messages that had been queued before the
+ * routine was entered.  It is of course possible for more messages to get
+ * queued right after our last SIGetDataEntries call.
+ *
  * NOTE: it is entirely possible for this routine to be invoked recursively
  * as a consequence of processing inside the invalFunction or resetFunction.
- * Hence, we must be holding no SI resources when we call them.  The only
- * bad side-effect is that SIDelExpiredDataEntries might be called extra
- * times on the way out of a nested call.
+ * Furthermore, such a recursive call must guarantee that all outstanding
+ * inval messages have been processed before it exits.  This is the reason
+ * for the strange-looking choice to use a statically allocated buffer array
+ * and counters; it's so that a recursive call can process messages already
+ * sucked out of sinvaladt.c.
  */
 void
 ReceiveSharedInvalidMessages(
 					  void (*invalFunction) (SharedInvalidationMessage *msg),
 							 void (*resetFunction) (void))
 {
-	SharedInvalidationMessage data;
-	int			getResult;
-	bool		gotMessage = false;
+#define MAXINVALMSGS 32
+	static SharedInvalidationMessage messages[MAXINVALMSGS];
+	/*
+	 * We use volatile here to prevent bugs if a compiler doesn't realize
+	 * that recursion is a possibility ...
+	 */
+	static volatile int nextmsg = 0;
+	static volatile int nummsgs = 0;
 
-	for (;;)
+	/* Deal with any messages still pending from an outer recursion */
+	while (nextmsg < nummsgs)
 	{
-		/*
-		 * We can discard any pending catchup event, since we will not exit
-		 * this loop until we're fully caught up.
-		 */
-		catchupInterruptOccurred = 0;
+		SharedInvalidationMessage *msg = &messages[nextmsg++];
 
-		getResult = SIGetDataEntry(MyBackendId, &data);
+		invalFunction(msg);
+	}
 
-		if (getResult == 0)
-			break;				/* nothing more to do */
+	do
+	{
+		int			getResult;
+
+		nextmsg = nummsgs = 0;
+
+		/* Try to get some more messages */
+		getResult = SIGetDataEntries(messages, MAXINVALMSGS);
+
 		if (getResult < 0)
 		{
 			/* got a reset message */
 			elog(DEBUG4, "cache state reset");
 			resetFunction();
+			break;				/* nothing more to do */
 		}
-		else
-		{
-			/* got a normal data message */
-			invalFunction(&data);
-		}
-		gotMessage = true;
-	}
 
-	/* If we got any messages, try to release dead messages */
-	if (gotMessage)
-		SIDelExpiredDataEntries(false);
+		/* Process them, being wary that a recursive call might eat some */
+		nextmsg = 0;
+		nummsgs = getResult;
+
+		while (nextmsg < nummsgs)
+		{
+			SharedInvalidationMessage *msg = &messages[nextmsg++];
+
+			invalFunction(msg);
+		}
+
+		/*
+		 * We only need to loop if the last SIGetDataEntries call (which
+		 * might have been within a recursive call) returned a full buffer.
+		 */
+	} while (nummsgs == MAXINVALMSGS);
+
+	/*
+	 * We are now caught up.  If we received a catchup signal, reset that
+	 * flag, and call SICleanupQueue().  This is not so much because we
+	 * need to flush dead messages right now, as that we want to pass on
+	 * the catchup signal to the next slowest backend.  "Daisy chaining" the
+	 * catchup signal this way avoids creating spikes in system load for
+	 * what should be just a background maintenance activity.
+	 */
+	if (catchupInterruptOccurred)
+	{
+		catchupInterruptOccurred = 0;
+		elog(DEBUG4, "sinval catchup complete, cleaning queue");
+		SICleanupQueue(false, 0);
+	}
 }
 
 

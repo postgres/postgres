@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/pmsignal.h,v 1.19 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/pmsignal.h,v 1.20 2008/06/19 21:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 typedef enum
 {
 	PMSIGNAL_PASSWORD_CHANGE,	/* pg_auth file has changed */
-	PMSIGNAL_WAKEN_CHILDREN,	/* send a SIGUSR1 signal to all backends */
 	PMSIGNAL_WAKEN_ARCHIVER,	/* send a NOTIFY signal to xlog archiver */
 	PMSIGNAL_ROTATE_LOGFILE,	/* send SIGUSR1 to syslogger to rotate logfile */
 	PMSIGNAL_START_AUTOVAC_LAUNCHER,	/* start an autovacuum launcher */

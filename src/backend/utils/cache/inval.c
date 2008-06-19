@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.85 2008/06/19 00:46:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.86 2008/06/19 21:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,7 +203,7 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 	if (chunk == NULL)
 	{
 		/* First time through; create initial chunk */
-#define FIRSTCHUNKSIZE 16
+#define FIRSTCHUNKSIZE 32
 		chunk = (InvalidationChunk *)
 			MemoryContextAlloc(CurTransactionContext,
 							   sizeof(InvalidationChunk) +
@@ -272,6 +272,23 @@ AppendInvalidationMessageList(InvalidationChunk **destHdr,
 				SharedInvalidationMessage *msg = &_chunk->msgs[_cindex]; \
 				codeFragment; \
 			} \
+		} \
+	} while (0)
+
+/*
+ * Process a list of invalidation messages group-wise.
+ *
+ * As above, but the code fragment can handle an array of messages.
+ * The fragment should refer to the messages as msgs[], with n entries.
+ */
+#define ProcessMessageListMulti(listHdr, codeFragment) \
+	do { \
+		InvalidationChunk *_chunk; \
+		for (_chunk = (listHdr); _chunk != NULL; _chunk = _chunk->next) \
+		{ \
+			SharedInvalidationMessage *msgs = _chunk->msgs; \
+			int		n = _chunk->nitems; \
+			codeFragment; \
 		} \
 	} while (0)
 
@@ -369,6 +386,18 @@ ProcessInvalidationMessages(InvalidationListHeader *hdr,
 {
 	ProcessMessageList(hdr->cclist, func(msg));
 	ProcessMessageList(hdr->rclist, func(msg));
+}
+
+/*
+ * As above, but the function is able to process an array of messages
+ * rather than just one at a time.
+ */
+static void
+ProcessInvalidationMessagesMulti(InvalidationListHeader *hdr,
+								 void (*func) (const SharedInvalidationMessage *msgs, int n))
+{
+	ProcessMessageListMulti(hdr->cclist, func(msgs, n));
+	ProcessMessageListMulti(hdr->rclist, func(msgs, n));
 }
 
 /* ----------------------------------------------------------------
@@ -792,7 +821,7 @@ inval_twophase_postcommit(TransactionId xid, uint16 info,
 		case TWOPHASE_INFO_MSG:
 			msg = (SharedInvalidationMessage *) recdata;
 			Assert(len == sizeof(SharedInvalidationMessage));
-			SendSharedInvalidMessage(msg);
+			SendSharedInvalidMessages(msg, 1);
 			break;
 		case TWOPHASE_INFO_FILE_BEFORE:
 			RelationCacheInitFileInvalidate(true);
@@ -850,8 +879,8 @@ AtEOXact_Inval(bool isCommit)
 		AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 								   &transInvalInfo->CurrentCmdInvalidMsgs);
 
-		ProcessInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
-									SendSharedInvalidMessage);
+		ProcessInvalidationMessagesMulti(&transInvalInfo->PriorCmdInvalidMsgs,
+										 SendSharedInvalidMessages);
 
 		if (transInvalInfo->RelcacheInitFileInval)
 			RelationCacheInitFileInvalidate(false);
@@ -1033,8 +1062,8 @@ EndNonTransactionalInvalidation(void)
 	/* Send out the invals */
 	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
 								LocalExecuteInvalidationMessage);
-	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
-								SendSharedInvalidMessage);
+	ProcessInvalidationMessagesMulti(&transInvalInfo->CurrentCmdInvalidMsgs,
+									 SendSharedInvalidMessages);
 
 	/* Clean up and release memory */
 	for (chunk = transInvalInfo->CurrentCmdInvalidMsgs.cclist;
