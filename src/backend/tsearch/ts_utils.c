@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_utils.c,v 1.9.2.1 2008/06/18 20:55:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_utils.c,v 1.9.2.2 2008/06/19 16:52:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ readstoplist(const char *fname, StopList *s, char *(*wordop) (const char *))
 
 			/* Trim trailing space */
 			while (*pbuf && !t_isspace(pbuf))
-				pbuf++;
+				pbuf += pg_mblen(pbuf);
 			*pbuf = '\0';
 
 			/* Skip empty lines */
