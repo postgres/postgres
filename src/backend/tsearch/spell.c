@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.12 2008/06/18 20:55:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.13 2008/06/19 16:52:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -509,7 +509,7 @@ static void
 addFlagValue(IspellDict *Conf, char *s, uint32 val)
 {
 	while (*s && t_isspace(s))
-		s++;
+		s += pg_mblen(s);
 
 	if (!*s)
 		ereport(ERROR,
@@ -595,7 +595,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 			char	   *s = recoded + strlen("FLAG");
 
 			while (*s && t_isspace(s))
-				s++;
+				s += pg_mblen(s);
 
 			if (*s && STRNCMP(s, "default") != 0)
 				ereport(ERROR,
@@ -729,9 +729,9 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 				s = recoded + (s - pstr);		/* we need non-lowercased
 												 * string */
 				while (*s && !t_isspace(s))
-					s++;
+					s += pg_mblen(s);
 				while (*s && t_isspace(s))
-					s++;
+					s += pg_mblen(s);
 
 				if (*s && pg_mblen(s) == 1)
 				{
@@ -762,7 +762,7 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 			flagflags = 0;
 
 			while (*s && t_isspace(s))
-				s++;
+				s += pg_mblen(s);
 			oldformat = true;
 
 			/* allow only single-encoded flags */
