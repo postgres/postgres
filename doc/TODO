@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Jun 23 18:12:15 EDT 2008
+Last updated:		Mon Jun 23 18:23:48 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -650,6 +650,7 @@ SQL Commands
 
   http://archives.postgresql.org/pgsql-hackers/2005-11/msg00501.php
   http://archives.postgresql.org/pgsql-hackers/2005-11/msg00536.php
+  http://archives.postgresql.org/pgsql-hackers/2008-04/msg01157.php
   http://archives.postgresql.org/pgsql-hackers/2008-04/msg01475.php
 
 * Add NOVICE output level for helpful messages like automatic sequence/index
