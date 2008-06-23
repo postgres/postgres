@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.41 2008/05/03 00:24:06 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.42 2008/06/23 17:54:30 tgl Exp $
 #
 use Carp;
 use strict;
@@ -198,61 +198,12 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
     $self->GenerateDefFile("src\\interfaces\\ecpg\\compatlib\\compatlib.def","src\\interfaces\\ecpg\\compatlib\\exports.txt","LIBECPG_COMPAT");
     $self->GenerateDefFile("src\\interfaces\\ecpg\\pgtypeslib\\pgtypeslib.def","src\\interfaces\\ecpg\\pgtypeslib\\exports.txt","LIBPGTYPES");
 
-    if (IsNewer("src\\backend\\utils\\fmgrtab.c","src\\include\\catalog\\pg_proc.h"))
+    if (IsNewer('src\backend\utils\fmgrtab.c','src\include\catalog\pg_proc.h'))
     {
         print "Generating fmgrtab.c and fmgroids.h...\n";
-        open(I,"src\\include\\catalog\\pg_proc.h") || confess "Could not open pg_proc.h";
-        my @fmgr = ();
-        my %seenit;
-        while (<I>)
-        {
-            next unless (/^DATA/);
-            s/^.*OID[^=]*=[^0-9]*//;
-            s/\(//g;
-            s/[ \t]*\).*$//;
-            my @p = split;
-            next if ($p[4] ne "12");
-            push @fmgr,
-              {
-                oid     => $p[0],
-                proname => $p[1],
-                prosrc  => $p[$#p-3],
-                nargs   => $p[12],
-                strict  => $p[9],
-                retset  => $p[10],
-              };
-        }
-        close(I);
-
-        open(H,'>', 'src\include\utils\fmgroids.h')
-          ||confess "Could not open fmgroids.h";
-        print H
-          "/* fmgroids.h generated for Visual C++ */\n#ifndef FMGROIDS_H\n#define FMGROIDS_H\n\n";
-        open(T,">src\\backend\\utils\\fmgrtab.c") || confess "Could not open fmgrtab.c";
-        print T
-"/* fmgrtab.c generated for Visual C++ */\n#include \"postgres.h\"\n#include \"utils/fmgrtab.h\"\n\n";
-        foreach my $s (sort {$a->{oid} <=> $b->{oid}} @fmgr)
-        {
-            next if $seenit{$s->{prosrc}};
-            $seenit{$s->{prosrc}} = 1;
-            print H "#define F_" . uc $s->{prosrc} . " $s->{oid}\n";
-            print T "extern Datum $s->{prosrc} (PG_FUNCTION_ARGS);\n";
-        }
-        print H "\n#endif\n /* FMGROIDS_H */\n";
-        close(H);
-        print T "const FmgrBuiltin fmgr_builtins[] = {\n";
-        my %bmap;
-        $bmap{'t'} = 'true';
-        $bmap{'f'} = 'false';
-        foreach my $s (sort {$a->{oid} <=> $b->{oid}} @fmgr)
-        {
-            print T
-"  { $s->{oid}, \"$s->{prosrc}\", $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, $s->{prosrc} },\n";
-        }
-
-        print T
-" { 0, NULL, 0, false, false, NULL }\n};\n\nconst int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin)) - 1;\n";
-        close(T);
+        chdir('src\backend\utils');
+        system("perl Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
+        chdir('..\..\..');
     }
 
     if (IsNewer('src\include\utils\probes.h','src\backend\utils\pg_trace.d'))

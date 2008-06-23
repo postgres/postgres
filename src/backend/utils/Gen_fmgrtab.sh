@@ -4,12 +4,14 @@
 # Gen_fmgrtab.sh
 #    shell script to generate fmgroids.h and fmgrtab.c from pg_proc.h
 #
+# NOTE: if you change this, you need to fix Gen_fmgrtab.pl too!
+#
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.39 2008/05/02 14:16:24 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.40 2008/06/23 17:54:29 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -70,20 +72,35 @@ TABLEFILE=fmgrtab.c
 
 trap 'echo "Caught signal." ; cleanup ; exit 1' 1 2 15
 
+#
+# Collect the column numbers of the pg_proc columns we need.  Because we will
+# be looking at data that includes the OID as the first column, add one to
+# each column number.
+#
+proname=`egrep '^#define Anum_pg_proc_proname[ 	]' $INFILE | $AWK '{print $3+1}'`
+prolang=`egrep '^#define Anum_pg_proc_prolang[ 	]' $INFILE | $AWK '{print $3+1}'`
+proisstrict=`egrep '^#define Anum_pg_proc_proisstrict[ 	]' $INFILE | $AWK '{print $3+1}'`
+proretset=`egrep '^#define Anum_pg_proc_proretset[ 	]' $INFILE | $AWK '{print $3+1}'`
+pronargs=`egrep '^#define Anum_pg_proc_pronargs[ 	]' $INFILE | $AWK '{print $3+1}'`
+prosrc=`egrep '^#define Anum_pg_proc_prosrc[ 	]' $INFILE | $AWK '{print $3+1}'`
 
 #
-# Generate the file containing raw pg_proc tuple data
-# (but only for "internal" language procedures...).
-# Basically we strip off the DATA macro call, leaving procedure OID as $1
+# Generate the file containing raw pg_proc data.  We do three things here:
+# 1. Strip off the DATA macro call, leaving procedure OID as $1
 # and all the pg_proc field values as $2, $3, etc on each line.
+# 2. Fold quoted fields to simple "xxx".  We need this because such fields
+# may contain whitespace, which would confuse awk's counting of fields.
+# Fortunately, this script doesn't need to look at any fields that might
+# need quoting, so this simple hack is sufficient.
+# 3. Select out just the rows for internal-language procedures.
 #
-# Note assumption here that prolang == $5 and INTERNALlanguageId == 12.
+# Note assumption here that INTERNALlanguageId == 12.
 #
 egrep '^DATA' $INFILE | \
-sed 	-e 's/^.*OID[^=]*=[^0-9]*//' \
-	-e 's/(//g' \
-	-e 's/[ 	]*).*$//' | \
-$AWK '$5 == "12" { print }' | \
+sed 	-e 's/^[^O]*OID[^=]*=[ 	]*//' \
+	-e 's/(//' \
+	-e 's/"[^"]*"/"xxx"/g' | \
+$AWK "\$$prolang == \"12\" { print }" | \
 sort -n > $SORTEDFILE
 
 if [ $? -ne 0 ]; then
@@ -120,7 +137,7 @@ cat > "$$-$OIDSFILE" <<FuNkYfMgRsTuFf
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	$cpp_define
+#ifndef $cpp_define
 #define $cpp_define
 
 /*
@@ -136,12 +153,9 @@ cat > "$$-$OIDSFILE" <<FuNkYfMgRsTuFf
  */
 FuNkYfMgRsTuFf
 
-# Note assumption here that prosrc == $(NF-3).
-
 tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' < $SORTEDFILE | \
-$AWK '
-BEGIN	{ OFS = ""; }
-	{ if (seenit[$(NF-3)]++ == 0) print "#define F_", $(NF-3), " ", $1; }' >> "$$-$OIDSFILE"
+$AWK "{ if (seenit[\$$prosrc]++ == 0)
+	printf \"#define F_%s %s\\n\", \$$prosrc, \$1; }" >> "$$-$OIDSFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -151,7 +165,7 @@ fi
 
 cat >> "$$-$OIDSFILE" <<FuNkYfMgRsTuFf
 
-#endif	/* $cpp_define */
+#endif /* $cpp_define */
 FuNkYfMgRsTuFf
 
 #
@@ -186,9 +200,8 @@ cat > "$$-$TABLEFILE" <<FuNkYfMgRtAbStUfF
 
 FuNkYfMgRtAbStUfF
 
-# Note assumption here that prosrc == $(NF-3).
-
-$AWK '{ print "extern Datum", $(NF-3), "(PG_FUNCTION_ARGS);"; }' $SORTEDFILE >> "$$-$TABLEFILE"
+$AWK "{ if (seenit[\$$prosrc]++ == 0)
+	print \"extern Datum\", \$$prosrc, \"(PG_FUNCTION_ARGS);\"; }" $SORTEDFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -205,17 +218,14 @@ FuNkYfMgRtAbStUfF
 # Note: using awk arrays to translate from pg_proc values to fmgrtab values
 # may seem tedious, but avoid the temptation to write a quick x?y:z
 # conditional expression instead.  Not all awks have conditional expressions.
-#
-# Note assumptions here that prosrc == $(NF-3), pronargs == $13,
-# proisstrict == $10, proretset == $11
 
-$AWK 'BEGIN {
-    Bool["t"] = "true"
-    Bool["f"] = "false"
+$AWK "BEGIN {
+    Bool[\"t\"] = \"true\";
+    Bool[\"f\"] = \"false\";
 }
-{ printf ("  { %d, \"%s\", %d, %s, %s, %s },\n"), \
-	$1, $(NF-3), $13, Bool[$10], Bool[$11], $(NF-3)
-}' $SORTEDFILE >> "$$-$TABLEFILE"
+{ printf (\"  { %d, \\\"%s\\\", %d, %s, %s, %s },\\n\"),
+	\$1, \$$prosrc, \$$pronargs, Bool[\$$proisstrict], Bool[\$$proretset], \$$prosrc ;
+}" $SORTEDFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -232,7 +242,6 @@ cat >> "$$-$TABLEFILE" <<FuNkYfMgRtAbStUfF
 
 /* Note fmgr_nbuiltins excludes the dummy entry */
 const int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin)) - 1;
-
 FuNkYfMgRtAbStUfF
 
 # We use the temporary files to avoid problems with concurrent runs
