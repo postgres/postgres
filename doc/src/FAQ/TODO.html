@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Wed Jun 18 21:15:40 EDT 2008
+Last updated:           Mon Jun 23 16:20:35 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1203,7 +1203,24 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Allow multi-column hash indexes
   </li><li>-<em>During index creation, pre-sort the tuples to improve build speed</em>
 </li></ul>
-<h1><a name="section_13">Fsync</a></h1>
+<h1><a name="section_13">Sorting</a></h1>
+<ul>
+  <li>Consider using hash buckets to do DISTINCT, rather than sorting
+<p>  This would be beneficial when there are few distinct values.  This is
+  already used by GROUP BY.
+</p>
+  </li><li>Consider whether duplicate keys should be sorted by block/offset
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-03/msg00558.php">http://archives.postgresql.org/pgsql-hackers/2008-03/msg00558.php</a>
+</p>
+  </li><li>-<em>Avoid tuple some tuple copying in sort routines</em>
+  </li><li>Consider being smarter about memory and external files used during
+  sorts
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg01101.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg01101.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2007-12/msg00045.php">http://archives.postgresql.org/pgsql-hackers/2007-12/msg00045.php</a>
+</p>
+  </li><li>Consider detoasting keys before sorting
+</li></ul>
+<h1><a name="section_14">Fsync</a></h1>
 
 <ul>
   <li>Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
@@ -1216,7 +1233,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-06/msg00541.php">http://archives.postgresql.org/pgsql-hackers/2007-06/msg00541.php</a>
 </p>
 </li></ul>
-<h1><a name="section_14">Cache Usage</a></h1>
+<h1><a name="section_15">Cache Usage</a></h1>
 
 <ul>
   <li>Speed up COUNT(*)
@@ -1277,7 +1294,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg00562.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg00562.php</a>
 </p>
 </li></ul>
-<h1><a name="section_15">Vacuum</a></h1>
+<h1><a name="section_16">Vacuum</a></h1>
 
 <ul>
   <li>Improve speed with indexes
@@ -1345,7 +1362,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li></ul>
 </li></ul>
-<h1><a name="section_16">Locking</a></h1>
+<h1><a name="section_17">Locking</a></h1>
 
 <ul>
   <li>Fix priority ordering of read and write light-weight locks (Neil)
@@ -1375,7 +1392,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-01/msg00873.php">http://archives.postgresql.org/pgsql-hackers/2008-01/msg00873.php</a>
 </p>
 </li></ul>
-<h1><a name="section_17">Startup Time Improvements</a></h1>
+<h1><a name="section_18">Startup Time Improvements</a></h1>
 
 <ul>
   <li>Experiment with multi-threaded backend for backend creation
@@ -1386,7 +1403,7 @@ first.  There is also a developer's wiki at<br/>
   a single session using multiple threads to execute a statement faster.
 </p>
 </li></ul>
-<h1><a name="section_18">Write-Ahead Log</a></h1>
+<h1><a name="section_19">Write-Ahead Log</a></h1>
 
 <ul>
   <li>Eliminate need to write full pages to WAL before page modification
@@ -1469,7 +1486,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg00035.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg00035.php</a>
 </p>
 </li></ul>
-<h1><a name="section_19">Optimizer / Executor</a></h1>
+<h1><a name="section_20">Optimizer / Executor</a></h1>
 
 <ul>
   <li>Improve selectivity functions for geometric operators
@@ -1480,10 +1497,6 @@ first.  There is also a developer's wiki at<br/>
   actual row counts differ by a specified percentage
   </li><li>Improve how ANALYZE computes in-doubt tuples
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg00771.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg00771.php</a>
-</p>
-  </li><li>Consider using hash buckets to do DISTINCT, rather than sorting
-<p>  This would be beneficial when there are few distinct values.  This is
-  already used by GROUP BY.
 </p>
   </li><li>Log statements where the optimizer row estimates were dramatically
   different from the number of rows actually found?
@@ -1498,7 +1511,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-05/msg00450.php">http://archives.postgresql.org/pgsql-hackers/2007-05/msg00450.php</a>
 </p>
 </li></ul>
-<h1><a name="section_20">Background Writer</a></h1>
+<h1><a name="section_21">Background Writer</a></h1>
 
 <ul>
   <li>Consider having the background writer update the transaction status
@@ -1522,7 +1535,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2007-06/msg00340.php">http://archives.postgresql.org/pgsql-patches/2007-06/msg00340.php</a>
 </p>
 </li></ul>
-<h1><a name="section_21">Miscellaneous Performance</a></h1>
+<h1><a name="section_22">Miscellaneous Performance</a></h1>
 
 <ul>
   <li>Do async I/O for faster random read-ahead of data
@@ -1608,7 +1621,6 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Sort large UPDATE/DELETEs so it is done in heap order
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-01/msg01119.php">http://archives.postgresql.org/pgsql-hackers/2008-01/msg01119.php</a>
 </p>
-  </li><li>-<em>Avoid tuple some tuple copying in sort routines</em>
   </li><li>SMP scalability improvements
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-07/msg00439.php">http://archives.postgresql.org/pgsql-hackers/2007-07/msg00439.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-09/msg00206.php">http://archives.postgresql.org/pgsql-hackers/2007-09/msg00206.php</a>
@@ -1617,18 +1629,13 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Research reducing deTOASTing in more places
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-09/msg00895.php">http://archives.postgresql.org/pgsql-hackers/2007-09/msg00895.php</a>
 </p>
-  </li><li>Consider being smarter about memory and external files used during
-  sorts
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg01101.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg01101.php</a>
-  <a href="http://archives.postgresql.org/pgsql-hackers/2007-12/msg00045.php">http://archives.postgresql.org/pgsql-hackers/2007-12/msg00045.php</a>
-</p>
   </li><li>Allow one transaction to see tuples using the snapshot of another
   transaction
 <p>  This would assist multiple backends in working together.
   <a href="http://archives.postgresql.org/pgsql-hackers/2008-01/msg00400.php">http://archives.postgresql.org/pgsql-hackers/2008-01/msg00400.php</a>
 </p>
 </li></ul>
-<h1><a name="section_22">Source Code</a></h1>
+<h1><a name="section_23">Source Code</a></h1>
 
 <ul>
   <li>Add use of 'const' for variables in source tree
@@ -1653,7 +1660,6 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg02238.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg02238.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2006-10/msg00048.php">http://archives.postgresql.org/pgsql-patches/2006-10/msg00048.php</a>
 </p>
-  </li><li>Consider detoasting keys before sorting
   </li><li>Consider GnuTLS if OpenSSL license becomes a problem
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php">http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg01213.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg01213.php</a>
@@ -1749,7 +1755,7 @@ first.  There is also a developer's wiki at<br/>
           of result sets using new statement protocol
   </li></ul>
 </li></ul>
-<h1><a name="section_23">Exotic Features</a></h1>
+<h1><a name="section_24">Exotic Features</a></h1>
 
 <ul>
   <li>Add pre-parsing phase that converts non-ISO syntax to supported
@@ -1777,7 +1783,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-01/msg00893.php">http://archives.postgresql.org/pgsql-hackers/2008-01/msg00893.php</a>
 </p>
 </li></ul>
-<h1><a name="section_24">Features We Do <u>Not</u> Want</a></h1>
+<h1><a name="section_25">Features We Do <u>Not</u> Want</a></h1>
 
 <ul>
   <li>All backends running as threads in a single process (not wanted)

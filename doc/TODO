@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Jun 18 21:15:40 EDT 2008
+Last updated:		Mon Jun 23 16:20:35 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1388,6 +1388,25 @@ Indexes
 	o Allow multi-column hash indexes
 	o -During index creation, pre-sort the tuples to improve build speed
 
+Sorting
+=======
+* Consider using hash buckets to do DISTINCT, rather than sorting
+
+  This would be beneficial when there are few distinct values.  This is
+  already used by GROUP BY.
+
+* Consider whether duplicate keys should be sorted by block/offset
+
+  http://archives.postgresql.org/pgsql-hackers/2008-03/msg00558.php
+
+* -Avoid tuple some tuple copying in sort routines
+* Consider being smarter about memory and external files used during
+  sorts
+
+  http://archives.postgresql.org/pgsql-hackers/2007-11/msg01101.php
+  http://archives.postgresql.org/pgsql-hackers/2007-12/msg00045.php
+
+* Consider detoasting keys before sorting
 
 
 Fsync
@@ -1711,11 +1730,6 @@ Optimizer / Executor
 
   http://archives.postgresql.org/pgsql-hackers/2007-11/msg00771.php
 
-* Consider using hash buckets to do DISTINCT, rather than sorting
-
-  This would be beneficial when there are few distinct values.  This is
-  already used by GROUP BY.
-
 * Log statements where the optimizer row estimates were dramatically
   different from the number of rows actually found?
 * Consider compressed annealing to search for query plans
@@ -1865,7 +1879,6 @@ Miscellaneous Performance
 
   http://archives.postgresql.org/pgsql-hackers/2008-01/msg01119.php
 
-* -Avoid tuple some tuple copying in sort routines
 * SMP scalability improvements
 
   http://archives.postgresql.org/pgsql-hackers/2007-07/msg00439.php
@@ -1875,12 +1888,6 @@ Miscellaneous Performance
 * Research reducing deTOASTing in more places
 
   http://archives.postgresql.org/pgsql-hackers/2007-09/msg00895.php
-
-* Consider being smarter about memory and external files used during
-  sorts
-
-  http://archives.postgresql.org/pgsql-hackers/2007-11/msg01101.php
-  http://archives.postgresql.org/pgsql-hackers/2007-12/msg00045.php
 
 * Allow one transaction to see tuples using the snapshot of another
   transaction
@@ -1917,7 +1924,6 @@ Source Code
   http://archives.postgresql.org/pgsql-hackers/2006-09/msg02238.php
   http://archives.postgresql.org/pgsql-patches/2006-10/msg00048.php
 
-* Consider detoasting keys before sorting
 * Consider GnuTLS if OpenSSL license becomes a problem
 
   http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php
