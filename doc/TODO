@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Jun 23 17:35:26 EDT 2008
+Last updated:		Mon Jun 23 18:12:15 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -62,6 +62,7 @@ Administration
   defaults so things like search_path can be defaulted for a
   specific user connecting to a specific database.
 
+* Allow custom variables to appear in pg_settings()
 * Allow custom variable classes that can restrict who can set the values
 
   http://archives.postgresql.org/pgsql-hackers/2006-11/msg00911.php
