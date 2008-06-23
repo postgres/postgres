@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.118 2008/04/09 02:52:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.119 2008/06/23 22:15:17 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -930,7 +930,7 @@ SELECT pg_stop_backup();
    </listitem>
    <listitem>
     <para>
-     Restore the database files from your backup dump.  Be careful that they
+     Restore the database files from your base backup.  Be careful that they
      are restored with the right ownership (the database system user, not
      <literal>root</>!) and with the right permissions.  If you are using
      tablespaces,
