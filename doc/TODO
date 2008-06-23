@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Jun 23 16:20:35 EDT 2008
+Last updated:		Mon Jun 23 17:35:26 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1990,6 +1990,11 @@ Source Code
   http://archives.postgresql.org/pgsql-patches/2008-02/msg00097.php
   http://archives.postgresql.org/pgsql-hackers/2008-03/msg01211.php
   http://archives.postgresql.org/pgsql-patches/2008-04/msg00001.php
+
+* Implement a module capability for loading /contrib-style extensions
+
+  http://archives.postgresql.org/pgsql-patches/2008-04/msg00164.php
+
 
 * Win32
 
