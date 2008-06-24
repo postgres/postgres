@@ -28,7 +28,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.81 2008/05/27 00:13:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.82 2008/06/24 17:58:27 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -121,8 +121,15 @@ DATA(insert (	403		interval_ops		PGNSP PGUID 1982 1186 t 0 ));
 DATA(insert (	405		interval_ops		PGNSP PGUID 1983 1186 t 0 ));
 DATA(insert (	403		macaddr_ops			PGNSP PGUID 1984  829 t 0 ));
 DATA(insert (	405		macaddr_ops			PGNSP PGUID 1985  829 t 0 ));
-DATA(insert (	403		name_ops			PGNSP PGUID 1986   19 t 0 ));
-DATA(insert (	405		name_ops			PGNSP PGUID 1987   19 t 0 ));
+/*
+ * Here's an ugly little hack to save space in the system catalog indexes.
+ * btree and hash don't ordinarily allow a storage type different from input
+ * type; but cstring and name are the same thing except for trailing padding,
+ * and we can safely omit that within an index entry.  So we declare the
+ * opclasses for name as using cstring storage type.
+ */
+DATA(insert (	403		name_ops			PGNSP PGUID 1986   19 t 2275 ));
+DATA(insert (	405		name_ops			PGNSP PGUID 1987   19 t 2275 ));
 DATA(insert (	403		numeric_ops			PGNSP PGUID 1988 1700 t 0 ));
 DATA(insert (	405		numeric_ops			PGNSP PGUID 1998 1700 t 0 ));
 DATA(insert OID = 1981 ( 403	oid_ops		PGNSP PGUID 1989   26 t 0 ));

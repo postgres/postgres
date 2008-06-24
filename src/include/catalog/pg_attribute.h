@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.137 2008/04/21 00:26:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.138 2008/06/24 17:58:27 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -217,7 +217,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
  * ----------------
  */
 #define Schema_pg_type \
-{ 1247, {"typname"},	   19, -1, NAMEDATALEN, 1, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 1247, {"typname"},	   19, -1, NAMEDATALEN, 1, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0 }, \
 { 1247, {"typnamespace"},  26, -1,	4,	2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1247, {"typowner"},	   26, -1,	4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1247, {"typlen"},		   21, -1,	2,	4, 0, -1, -1, true, 'p', 's', true, false, false, true, 0 }, \
@@ -244,7 +244,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 { 1247, {"typdefaultbin"}, 25, -1, -1, 25, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1247, {"typdefault"},    25, -1, -1, 26, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
 
-DATA(insert ( 1247 typname			19 -1 NAMEDATALEN	1 0 -1 -1 f p i t f f t 0));
+DATA(insert ( 1247 typname			19 -1 NAMEDATALEN	1 0 -1 -1 f p c t f f t 0));
 DATA(insert ( 1247 typnamespace		26 -1 4   2 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 typowner			26 -1 4   3 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 typlen			21 -1 2   4 0 -1 -1 t p s t f f t 0));
@@ -283,7 +283,7 @@ DATA(insert ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
  * ----------------
  */
 #define Schema_pg_proc \
-{ 1255, {"proname"},			19, -1, NAMEDATALEN,  1, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 1255, {"proname"},			19, -1, NAMEDATALEN,  1, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0 }, \
 { 1255, {"pronamespace"},		26, -1, 4,	2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"proowner"},			26, -1, 4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"prolang"},			26, -1, 4,	4, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
@@ -305,7 +305,7 @@ DATA(insert ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 1255, {"proconfig"},		  1009, -1, -1, 20, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1255, {"proacl"},			  1034, -1, -1, 21, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
 
-DATA(insert ( 1255 proname			19 -1 NAMEDATALEN	1 0 -1 -1 f p i t f f t 0));
+DATA(insert ( 1255 proname			19 -1 NAMEDATALEN	1 0 -1 -1 f p c t f f t 0));
 DATA(insert ( 1255 pronamespace		26 -1 4   2 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 proowner			26 -1 4   3 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 prolang			26 -1 4   4 0 -1 -1 t p i t f f t 0));
@@ -340,7 +340,7 @@ DATA(insert ( 1255 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
  */
 #define Schema_pg_attribute \
 { 1249, {"attrelid"},	  26, -1,	4,	1, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1249, {"attname"},	  19, -1, NAMEDATALEN,	2, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 1249, {"attname"},	  19, -1, NAMEDATALEN,	2, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0 }, \
 { 1249, {"atttypid"},	  26, -1,	4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1249, {"attstattarget"}, 23, -1,	4,	4, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1249, {"attlen"},		  21, -1,	2,	5, 0, -1, -1, true, 'p', 's', true, false, false, true, 0 }, \
@@ -358,7 +358,7 @@ DATA(insert ( 1255 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 1249, {"attinhcount"},  23, -1,	4, 17, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }
 
 DATA(insert ( 1249 attrelid			26 -1  4   1 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1249 attname			19 -1 NAMEDATALEN  2 0 -1 -1 f p i t f f t 0));
+DATA(insert ( 1249 attname			19 -1 NAMEDATALEN  2 0 -1 -1 f p c t f f t 0));
 DATA(insert ( 1249 atttypid			26 -1  4   3 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1249 attstattarget	23 -1  4   4 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1249 attlen			21 -1  2   5 0 -1 -1 t p s t f f t 0));
@@ -387,7 +387,7 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
  * ----------------
  */
 #define Schema_pg_class \
-{ 1259, {"relname"},	   19, -1, NAMEDATALEN, 1, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 1259, {"relname"},	   19, -1, NAMEDATALEN, 1, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0 }, \
 { 1259, {"relnamespace"},  26, -1,	4,	2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"reltype"},	   26, -1,	4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"relowner"},	   26, -1,	4,	4, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
@@ -415,7 +415,7 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 1259, {"relacl"},		 1034, -1, -1, 26, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1259, {"reloptions"},  1009, -1, -1, 27, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
 
-DATA(insert ( 1259 relname			19 -1 NAMEDATALEN	1 0 -1 -1 f p i t f f t 0));
+DATA(insert ( 1259 relname			19 -1 NAMEDATALEN	1 0 -1 -1 f p c t f f t 0));
 DATA(insert ( 1259 relnamespace		26 -1 4   2 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1259 reltype			26 -1 4   3 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1259 relowner			26 -1 4   4 0 -1 -1 t p i t f f t 0));

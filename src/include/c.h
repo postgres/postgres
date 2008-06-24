@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.227 2008/06/17 16:09:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.228 2008/06/24 17:58:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,16 +442,12 @@ typedef struct
 } oidvector;					/* VARIABLE LENGTH STRUCT */
 
 /*
- * We want NameData to have length NAMEDATALEN and int alignment,
- * because that's how the data type 'name' is defined in pg_type.
- * Use a union to make sure the compiler agrees.  Note that NAMEDATALEN
- * must be a multiple of sizeof(int), else sizeof(NameData) will probably
- * not come out equal to NAMEDATALEN.
+ * Representation of a Name: effectively just a C string, but null-padded to
+ * exactly NAMEDATALEN bytes.  The use of a struct is historical.
  */
-typedef union nameData
+typedef struct nameData
 {
 	char		data[NAMEDATALEN];
-	int			alignmentDummy;
 } NameData;
 typedef NameData *Name;
 

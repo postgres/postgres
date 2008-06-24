@@ -6,14 +6,14 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.33 2008/05/02 19:52:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.34 2008/06/24 17:58:27 tgl Exp $
  *------------------------------------------------------------------------
  */
 
 /*
  * Maximum length for identifiers (e.g. table names, column names,
- * function names).  It must be a multiple of sizeof(int) (typically
- * 4).
+ * function names).  Names actually are limited to one less byte than this,
+ * because the length must include a trailing zero byte.
  *
  * Changing this requires an initdb.
  */
