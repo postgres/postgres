@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.122 2008/03/20 21:42:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.123 2008/06/26 22:24:42 momjian Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -286,19 +286,63 @@ SELECT 'foo'      'bar';
      quote.)
      Within an escape string, a backslash character (<literal>\</>) begins a
      C-like <firstterm>backslash escape</> sequence, in which the combination
-     of backslash and following character(s) represents a special byte value.
-     <literal>\b</literal> is a backspace,
-     <literal>\f</literal> is a form feed,
-     <literal>\n</literal> is a newline,
-     <literal>\r</literal> is a carriage return,
-     <literal>\t</literal> is a tab.
-     Also supported are
-     <literal>\<replaceable>digits</replaceable></literal>, where
-     <replaceable>digits</replaceable> represents an octal byte value, and
-     <literal>\x<replaceable>hexdigits</replaceable></literal>, where
-     <replaceable>hexdigits</replaceable> represents a hexadecimal byte value.
-     (It is your responsibility that the byte sequences you create are
-     valid characters in the server character set encoding.) Any other
+     of backslash and following character(s) represent a special byte
+     value:
+
+     <table id="sql-backslash-table">
+      <title>Backslash Escape Sequences</title>
+      <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>Backslash Escape Sequence</>
+        <entry>Interpretation</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><literal>\b</literal></entry>
+        <entry>backspace</entry>
+       </row>
+       <row>
+        <entry><literal>\f</literal></entry>
+        <entry>form feed</entry>
+       </row>
+       <row>
+        <entry><literal>\n</literal></entry>
+        <entry>newline</entry>
+       </row>
+       <row>
+        <entry><literal>\r</literal></entry>
+        <entry>carriage return</entry>
+       </row>
+       <row>
+        <entry><literal>\t</literal></entry>
+        <entry>tab</entry>
+       </row>
+       <row>
+        <entry>
+         <literal>\<replaceable>o</replaceable></literal>,
+         <literal>\<replaceable>oo</replaceable></literal>,
+         <literal>\<replaceable>ooo</replaceable></literal>
+         (<replaceable>o</replaceable> = 0 - 7)
+        </entry>
+        <entry>octal byte value</entry>
+       </row>
+       <row>
+        <entry>
+         <literal>\x<replaceable>h</replaceable></literal>,
+         <literal>\x<replaceable>hh</replaceable></literal>
+         (<replaceable>h</replaceable> = 0 - 9, A - F)
+        </entry>
+        <entry>hexadecimal byte value</entry>
+       </row>
+      </tbody>
+      </tgroup>
+     </table>
+
+     It is your responsibility that the byte sequences you create are
+     valid characters in the server character set encoding. Any other
      character following a backslash is taken literally. Thus, to
      include a backslash character, write two backslashes (<literal>\\</>).
      Also, a single quote can be included in an escape string by writing
