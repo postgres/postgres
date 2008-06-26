@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Jun 25 23:02:18 EDT 2008
+   Last updated: Wed Jun 25 23:54:14 EDT 2008
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -181,7 +181,7 @@
    
   1.6) What is the most recent release?
   
-   The latest release of PostgreSQL is version 8.3.1.
+   The latest release of PostgreSQL is version 8.3.3.
    
    We plan to have a major release every year, with minor releases every
    few months.
@@ -265,7 +265,8 @@
    Douglas. A list of book reviews can be found at
    http://www.postgresql.org/docs/books/. There is also a collection of
    PostgreSQL technical articles at
-   http://www.postgresql.org/docs/techdocs.
+   http://wiki.postgresql.org/wiki/Community_Generated_Articles%2C_Guides
+   %2C_and_Documentation.
    
    The command line client program psql has some \d commands to show
    information about types, operators, functions, aggregates, etc. - use
@@ -444,9 +445,10 @@
           
   3.4) What debugging features are available?
   
-   There are many log_* server configuration variables that enable
-   printing of query and process statistics which can be very useful for
-   debugging and performance measurements.
+   There are many log_* server configuration variables at
+   http://www.postgresql.org/docs/current/interactive/runtime-config-logg
+   ing.html that enable printing of query and process statistics which
+   can be very useful for debugging and performance measurements.
    
   3.5) Why do I get "Sorry, too many clients" when trying to connect?
   
