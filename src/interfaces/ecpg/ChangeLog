@@ -2362,6 +2362,10 @@ Tue, 20 May 2008 17:31:01 +0200
 Wed, 04 Jun 2008 14:22:30 +0200
 
 	- Added lost symbol SQL to list of allowed variable names.
+
+Tue, 24 Jun 2008 13:30:51 +0200
+
+	- Synced parser.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.

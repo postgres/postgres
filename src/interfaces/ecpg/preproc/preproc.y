@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.367 2008/06/04 12:23:34 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.368 2008/06/26 08:04:05 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -556,15 +556,15 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	target_list target_el alias_clause type_func_name_keyword
 %type  <str>	qualified_name database_name alter_using type_function_name
 %type  <str>	access_method attr_name index_name name func_name opt_restart_seqs
-%type  <str>	file_name AexprConst c_expr ConstTypename var_list
+%type  <str>	file_name AexprConst c_expr ConstTypename var_list 
 %type  <str>	a_expr b_expr TruncateStmt CommentStmt OnCommitOption opt_by
-%type  <str>	opt_indirection expr_list extract_list extract_arg
+%type  <str>	opt_indirection expr_list extract_list extract_arg OptSeqOptList
 %type  <str>	position_list substr_list substr_from alter_column_default
 %type  <str>	trim_list in_expr substr_for attrs TableFuncElement
 %type  <str>	Typename SimpleTypename Numeric opt_float DiscardStmt
 %type  <str>	Character character opt_varying opt_charset enum_val_list
 %type  <str>	opt_timezone opt_interval table_ref fetch_direction
-%type  <str>	ConstDatetime AlterDomainStmt AlterSeqStmt alter_rel_cmds
+%type  <str>	ConstDatetime AlterDomainStmt AlterSeqStmt 
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
 %type  <str>	sortby qualified_name_list name_list ColId_or_Sconst
@@ -591,8 +591,8 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>	VariableResetStmt AlterTableStmt from_list overlay_list
 %type  <str>	relation_name OptTableSpace LockStmt opt_lock 
-%type  <str>	CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
-%type  <str>	OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
+%type  <str>	CreateUserStmt AlterUserStmt CreateSeqStmt SeqOptList
+%type  <str>	SeqOptElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
 %type  <str>	TriggerActionTime CreateTrigStmt DropPLangStmt DropCastStmt
 %type  <str>	CreatePLangStmt TriggerFuncArgs TriggerFuncArg simple_select
@@ -621,7 +621,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
 %type  <str>	columnref values_clause AllConstVar prep_type_clause ExecuteStmt
 %type  <str>	insert_column_item DropRuleStmt ctext_expr execute_param_clause 
-%type  <str>	createfunc_opt_item set_rest alter_rel_cmd
+%type  <str>	createfunc_opt_item set_rest 
 %type  <str>	CreateFunctionStmt createfunc_opt_list func_table
 %type  <str>	DropUserStmt copy_from copy_opt_list copy_opt_item
 %type  <str>	opt_oids TableLikeClause key_action opt_definition
@@ -1347,55 +1347,58 @@ DiscardStmt:
 
 /*****************************************************************************
  *
- *	ALTER [ TABLE | INDEX ] variations
+ *	ALTER [ TABLE | INDEX | SEQUENCE | VIEW ] variations
  *
  *****************************************************************************/
 
 AlterTableStmt:
 		ALTER TABLE relation_expr alter_table_cmds
 			{ $$ = cat_str(3, make_str("alter table"), $3, $4); }
-		|       ALTER INDEX relation_expr alter_rel_cmds
-			{ $$ = cat_str(3, make_str("alter table"), $3, $4); }
+		|       ALTER INDEX relation_expr alter_table_cmds
+			{ $$ = cat_str(3, make_str("alter index"), $3, $4); }
+		|       ALTER SEQUENCE relation_expr alter_table_cmds
+			{ $$ = cat_str(3, make_str("alter sequence"), $3, $4); }
+		|       ALTER VIEW relation_expr alter_table_cmds
+			{ $$ = cat_str(3, make_str("alter view"), $3, $4); }
 		;
 
-/* Subcommands that are for ALTER TABLE only */
 alter_table_cmds:
 		alter_table_cmd 			{ $$ = $1; }
 		| alter_table_cmds ',' alter_table_cmd	{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
 alter_table_cmd:
+/* ALTER TABLE <name> ADD [COLUMN] <coldef> */
 		ADD_P opt_column columnDef
-/* ALTER TABLE <relation> ADD [COLUMN] <coldef> */
 			{ $$ = cat_str(3, make_str("add"), $2, $3); }
-/* ALTER TABLE <relation> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
+/* ALTER TABLE <name> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
 		| ALTER opt_column ColId alter_column_default
 			{ $$ = cat_str(4, make_str("alter"), $2, $3, $4); }
-/* ALTER TABLE <relation> ALTER [COLUMN] <colname> DROP NOT NULL */
+/* ALTER TABLE <name> ALTER [COLUMN] <colname> DROP NOT NULL */
 		| ALTER opt_column ColId DROP NOT NULL_P
 			{ $$ = cat_str(4, make_str("alter"), $2, $3, make_str("drop not null")); }
-/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET NOT NULL */
+/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET NOT NULL */
 		| ALTER opt_column ColId SET NOT NULL_P
 			{ $$ = cat_str(4, make_str("alter"), $2, $3, make_str("set not null")); }
-/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STATISTICS <IntegerOnly> */
+/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STATISTICS <IntegerOnly> */
 		| ALTER opt_column ColId SET STATISTICS PosIntConst
 			{ $$ = cat_str(5, make_str("alter"), $2, $3, make_str("set statistics"), $6); }
-/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
+/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
 		| ALTER opt_column ColId SET STORAGE ColId
 			{ $$ = cat_str(5, make_str("alter"), $2, $3, make_str("set storage"), $6); }
-/* ALTER TABLE <relation> DROP [COLUMN] <colname> {RESTRICT|CASCADE} */
+/* ALTER TABLE <name> DROP [COLUMN] <colname> {RESTRICT|CASCADE} */
 		| DROP opt_column ColId opt_drop_behavior
 			{ $$ = cat_str(4, make_str("drop"), $2, $3, $4); }
-/* ALTER TABLE <relation> ALTER [COLUMN] <colname> TYPE <typename> [ USING <expression> ] */
+/* ALTER TABLE <name> ALTER [COLUMN] <colname> TYPE <typename> [ USING <expression> ] */
 		| ALTER opt_column ColId TYPE_P Typename alter_using
 			{ $$ = cat_str(6, make_str("alter"), $2, $3, make_str("type"), $5, $6); }
-/* ALTER TABLE <relation> ADD CONSTRAINT ... */
+/* ALTER TABLE <name> ADD CONSTRAINT ... */
 		| ADD_P TableConstraint
 			{ $$ = cat_str(2, make_str("add"), $2); }
-/* ALTER TABLE <relation> DROP CONSTRAINT ... */
+/* ALTER TABLE <name> DROP CONSTRAINT ... */
 		| DROP CONSTRAINT name opt_drop_behavior
 			{ $$ = cat_str(3, make_str("drop constraint"), $3, $4); }
-/* ALTER TABLE <relation> SET WITHOUT OIDS  */
+/* ALTER TABLE <name> SET WITHOUT OIDS  */
 		| SET WITHOUT OIDS
 			{ $$ = make_str("set without oids"); }
 /* ALTER TABLE <name> CLUSTER ON <indexname> */
@@ -1446,20 +1449,10 @@ alter_table_cmd:
 /* ALTER TABLE <name> NO INHERITS <parent> */
 		| NO INHERIT qualified_name
 			{ $$ = cat2_str(make_str("no inherit"), $3); }
-		| alter_rel_cmd
-			{ $$ = $1; }
-		;
-
-alter_rel_cmds: alter_rel_cmd  				{ $$ = $1; }
-		| alter_rel_cmds ',' alter_rel_cmd	{ $$ = cat_str(3, $1, make_str(","), $3); }
-		;
-
-/* Subcommands that are for ALTER TABLE or ALTER INDEX */
-alter_rel_cmd:
-		/* ALTER [TABLE|INDEX] <name> OWNER TO RoleId */
-		OWNER TO RoleId
+		/* ALTER <name> OWNER TO RoleId */
+		| OWNER TO RoleId
 			{ $$ = cat2_str(make_str("owner to"), $3); }
-		/* ALTER [TABLE|INDEX] <name> SET TABLESPACE <tablespacename> */
+		/* ALTER <name> SET TABLESPACE <tablespacename> */
 		| SET TABLESPACE name
 			{ $$ = cat2_str(make_str("set tablespace"), $3); }
 		| SET definition
@@ -1830,19 +1823,23 @@ CreateAsElement:  ColId { $$ = $1; }
  *
  *****************************************************************************/
 
-CreateSeqStmt:	CREATE OptTemp SEQUENCE qualified_name OptSeqList
+CreateSeqStmt:	CREATE OptTemp SEQUENCE qualified_name OptSeqOptList
 			{ $$ = cat_str(5, make_str("create"), $2, make_str("sequence"), $4, $5); }
 		;
 
-AlterSeqStmt: ALTER SEQUENCE qualified_name OptSeqList
+AlterSeqStmt: ALTER SEQUENCE relation_expr SeqOptList
 			{ $$ = cat_str(3,make_str("alter sequence"), $3, $4); }
 		;
 
-OptSeqList:  OptSeqList OptSeqElem	{ $$ = cat2_str($1, $2); }
-		| /*EMPTY*/					{ $$ = EMPTY; }
+OptSeqOptList:  SeqOptList	{ $$ = $1; }
+		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
-OptSeqElem:  CACHE NumConst
+SeqOptList: 	SeqOptElem		{ $$ = $1; }
+		| SeqOptList SeqOptElem	{ $$ = cat2_str($1, $2); }
+		;
+
+SeqOptElem:  CACHE NumConst
 			{ $$ = cat2_str(make_str("cache"), $2); }
 		| CYCLE
 			{ $$ = make_str("cycle"); }
@@ -2841,6 +2838,8 @@ RenameStmt:  ALTER AGGREGATE func_name aggr_args RENAME TO name
 			{ $$ = cat_str(4, make_str("alter schema"), $3, make_str("rename to"), $6); }
 		| ALTER TABLE relation_expr RENAME TO name
 			{ $$ = cat_str(4, make_str("alter table"), $3, make_str("rename to"), $6); }
+		| ALTER TABLE relation_expr SET SCHEMA name
+			{ $$ = cat_str(4, make_str("alter table"), $3, make_str("set schema"), $6); }
 		| ALTER SEQUENCE relation_expr RENAME TO name
 			{ $$ = cat_str(4, make_str("alter sequence"), $3, make_str("rename to"), $6); }
 		| ALTER VIEW relation_expr RENAME TO name
@@ -2886,7 +2885,7 @@ AlterObjectSchemaStmt:
 			{ $$ = cat_str(4, make_str("alter function"), $3, make_str("set schema"), $6); }
 		| ALTER SEQUENCE relation_expr SET SCHEMA name
 			{ $$ = cat_str(4, make_str("alter sequence"), $3, make_str("set schema"), $6); }
-		| ALTER TABLE relation_expr SET SCHEMA name
+		| ALTER VIEW relation_expr SET SCHEMA name
 			{ $$ = cat_str(4, make_str("alter sequence"), $3, make_str("set schema"), $6); }
 		| ALTER TYPE_P any_name SET SCHEMA name
 			{ $$ = cat_str(4, make_str("alter type"), $3, make_str("set schema"), $6); }
