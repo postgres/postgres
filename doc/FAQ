@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Apr 25 10:34:17 EDT 2008
+   Last updated: Wed Jun 25 23:02:18 EDT 2008
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -164,12 +164,13 @@
    
    PostgreSQL also runs natively on Microsoft Windows NT-based operating
    systems like Win2000 SP4, WinXP, and Win2003. A prepackaged installer
-   is available at http://pgfoundry.org/projects/pginstaller. MSDOS-based
-   versions of Windows (Win95, Win98, WinMe) can run PostgreSQL using
-   Cygwin.
+   is available at http://www.postgresql.org/download/windows.
+   MSDOS-based versions of Windows (Win95, Win98, WinMe) can run
+   PostgreSQL using Cygwin.
    
-   There is also a Novell Netware 6 port at http://forge.novell.com, and
-   an OS/2 (eComStation) version at
+   There is also a Novell Netware 6 port at
+   http://developer.novell.com/wiki/index.php/Postgresql, and an OS/2
+   (eComStation) version at
    http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgre
    SQL&stype=all&sort=type&dir=%2F.
    
@@ -391,7 +392,7 @@
   
    There are a large number of GUI Tools that are available for
    PostgreSQL from both commercial and open source developers. A detailed
-   list can be found in the PostgreSQL Community Documentation
+   list can be found in the Community Guide to PostgreSQL GUI Tools.
      _________________________________________________________________
    
                           Administrative Questions
@@ -818,7 +819,8 @@
   4.18) How do I return multiple rows or columns from a function?
   
    It is easy using set-returning functions,
-   http://www.postgresql.org/docs/techdocs.17.
+   http://wiki.postgresql.org/wiki/Return_more_than_one_row_of_data_from_
+   PL/pgSQL_functions.
    
   4.19) Why do I get "relation with OID ##### does not exist" errors when
   accessing temporary tables in PL/PgSQL functions?
