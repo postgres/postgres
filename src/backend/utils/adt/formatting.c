@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.143 2008/06/23 19:27:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.144 2008/06/26 16:06:37 teodor Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -1454,7 +1454,7 @@ str_tolower(char *buff, size_t nbytes)
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
-		char2wchar(workspace, nbytes + 1, buff, nbytes + 1);
+		char2wchar(workspace, nbytes + 1, buff, nbytes);
 
 		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
 			workspace[curr_char] = towlower(workspace[curr_char]);
@@ -1502,7 +1502,7 @@ str_toupper(char *buff, size_t nbytes)
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
-		char2wchar(workspace, nbytes + 1, buff, nbytes + 1);
+		char2wchar(workspace, nbytes + 1, buff, nbytes);
 
 		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
 			workspace[curr_char] = towupper(workspace[curr_char]);
@@ -1551,7 +1551,7 @@ str_initcap(char *buff, size_t nbytes)
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
-		char2wchar(workspace, nbytes + 1, buff, nbytes + 1);
+		char2wchar(workspace, nbytes + 1, buff, nbytes);
 
 		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
 		{
