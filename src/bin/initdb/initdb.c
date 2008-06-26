@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.156 2008/06/02 03:48:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.157 2008/06/26 01:35:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1078,14 +1078,14 @@ test_config_settings(void)
 		test_max_fsm = FSM_FOR_BUFS(test_buffs);
 
 		snprintf(cmd, sizeof(cmd),
-				 "%s\"%s\" --boot -x0 %s "
+				 SYSTEMQUOTE "\"%s\" --boot -x0 %s "
 				 "-c max_connections=%d "
 				 "-c shared_buffers=%d "
 				 "-c max_fsm_pages=%d "
-				 "< \"%s\" > \"%s\" 2>&1%s",
-				 SYSTEMQUOTE, backend_exec, boot_options,
+				 "< \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
+				 backend_exec, boot_options,
 				 test_conns, test_buffs, test_max_fsm,
-				 DEVNULL, DEVNULL, SYSTEMQUOTE);
+				 DEVNULL, DEVNULL);
 		status = system(cmd);
 		if (status == 0)
 		{
@@ -1114,14 +1114,14 @@ test_config_settings(void)
 		test_max_fsm = FSM_FOR_BUFS(test_buffs);
 
 		snprintf(cmd, sizeof(cmd),
-				 "%s\"%s\" --boot -x0 %s "
+				 SYSTEMQUOTE "\"%s\" --boot -x0 %s "
 				 "-c max_connections=%d "
 				 "-c shared_buffers=%d "
 				 "-c max_fsm_pages=%d "
-				 "< \"%s\" > \"%s\" 2>&1%s",
-				 SYSTEMQUOTE, backend_exec, boot_options,
+				 "< \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
+				 backend_exec, boot_options,
 				 n_connections, test_buffs, test_max_fsm,
-				 DEVNULL, DEVNULL, SYSTEMQUOTE);
+				 DEVNULL, DEVNULL);
 		status = system(cmd);
 		if (status == 0)
 			break;

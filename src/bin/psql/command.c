@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.190 2008/06/11 10:48:17 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.191 2008/06/26 01:35:45 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1288,8 +1288,7 @@ editFile(const char *fname)
 #ifndef WIN32
 	sprintf(sys, "exec %s '%s'", editorName, fname);
 #else
-	sprintf(sys, "%s\"%s\" \"%s\"%s",
-			SYSTEMQUOTE, editorName, fname, SYSTEMQUOTE);
+	sprintf(sys, SYSTEMQUOTE "\"%s\" \"%s\"" SYSTEMQUOTE, editorName, fname);
 #endif
 	result = system(sys);
 	if (result == -1)
@@ -1790,9 +1789,8 @@ do_shell(const char *command)
 		/* See EDITOR handling comment for an explaination */
 				"exec %s", shellName);
 #else
-		sprintf(sys,
 		/* See EDITOR handling comment for an explaination */
-				"%s\"%s\"%s", SYSTEMQUOTE, shellName, SYSTEMQUOTE);
+		sprintf(sys, SYSTEMQUOTE "\"%s\"" SYSTEMQUOTE, shellName);
 #endif
 		result = system(sys);
 		free(sys);

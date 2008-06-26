@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.104 2008/04/13 03:49:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.105 2008/06/26 01:35:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1248,18 +1248,18 @@ runPgDump(const char *dbname)
 	if (filename)
 	{
 #ifndef WIN32
-		appendPQExpBuffer(cmd, "%s\"%s\" %s -Fa '", SYSTEMQUOTE, pg_dump_bin,
+		appendPQExpBuffer(cmd, SYSTEMQUOTE"\"%s\" %s -Fa '", pg_dump_bin,
 #else
-		appendPQExpBuffer(cmd, "%s\"%s\" %s -Fa \"", SYSTEMQUOTE, pg_dump_bin,
+		appendPQExpBuffer(cmd, SYSTEMQUOTE"\"%s\" %s -Fa \"", pg_dump_bin,
 #endif
 						  pgdumpopts->data);
 	}
 	else
 	{
 #ifndef WIN32
-		appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp '", SYSTEMQUOTE, pg_dump_bin,
+		appendPQExpBuffer(cmd, SYSTEMQUOTE "\"%s\" %s -Fp '", pg_dump_bin,
 #else
-		appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp \"", SYSTEMQUOTE, pg_dump_bin,
+		appendPQExpBuffer(cmd, SYSTEMQUOTE "\"%s\" %s -Fp \"", pg_dump_bin,
 #endif
 						  pgdumpopts->data);
 	}
