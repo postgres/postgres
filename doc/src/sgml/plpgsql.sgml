@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.130 2008/05/15 22:39:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.131 2008/06/27 01:52:59 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1583,7 +1583,7 @@ SELECT * FROM getallfoo();
     <para>
      <command>IF</> and <command>CASE</> statements let you execute
      alternative commands based on certain conditions.
-     <application>PL/pgSQL</> has five forms of <command>IF</>:
+     <application>PL/pgSQL</> has three forms of <command>IF</>:
     <itemizedlist>
      <listitem>
       <para><literal>IF ... THEN</></>
@@ -1592,26 +1592,14 @@ SELECT * FROM getallfoo();
       <para><literal>IF ... THEN ... ELSE</></>
      </listitem>
      <listitem>
-      <para><literal>IF ... THEN ... ELSE IF</></>
-     </listitem>
-     <listitem>
       <para><literal>IF ... THEN ... ELSIF ... THEN ... ELSE</></>
-     </listitem>
-     <listitem>
-      <para><literal>IF ... THEN ... ELSEIF ... THEN ... ELSE</></>
      </listitem>
     </itemizedlist>
 
-    and four forms of <command>CASE</>:
+    and two forms of <command>CASE</>:
     <itemizedlist>
      <listitem>
-      <para><literal>CASE ... WHEN ... THEN ... END CASE</></>
-     </listitem>
-     <listitem>
       <para><literal>CASE ... WHEN ... THEN ... ELSE ... END CASE</></>
-     </listitem>
-     <listitem>
-      <para><literal>CASE WHEN ... THEN ... END CASE</></>
      </listitem>
      <listitem>
       <para><literal>CASE WHEN ... THEN ... ELSE ... END CASE</></>
@@ -1661,7 +1649,8 @@ END IF;
         <literal>IF-THEN-ELSE</literal> statements add to
         <literal>IF-THEN</literal> by letting you specify an
         alternative set of statements that should be executed if the
-        condition evaluates to false.
+        condition is not true.  (Note this includes the case where the
+        condition evaluates to NULL.)
        </para>
 
        <para>
@@ -1687,37 +1676,7 @@ END IF;
     </sect3>
 
      <sect3>
-      <title><literal>IF-THEN-ELSE IF</></title>
-
-       <para>
-        <literal>IF</literal> statements can be nested, as in the
-        following example:
-
-<programlisting>
-IF demo_row.sex = 'm' THEN
-    pretty_sex := 'man';
-ELSE
-    IF demo_row.sex = 'f' THEN
-        pretty_sex := 'woman';
-    END IF;
-END IF;
-</programlisting>
-       </para>
-
-       <para>
-        When you use this form, you are actually nesting an
-        <literal>IF</literal> statement inside the
-        <literal>ELSE</literal> part of an outer <literal>IF</literal>
-        statement. Thus you need one <literal>END IF</literal>
-        statement for each nested <literal>IF</literal> and one for the parent
-        <literal>IF-ELSE</literal>.  This is workable but grows
-        tedious when there are many alternatives to be checked.
-        Hence the next form.
-       </para>
-     </sect3>
-
-     <sect3>
-      <title><literal>IF-THEN-ELSIF-ELSE</></title>
+      <title><literal>IF-THEN-ELSIF</></title>
 
 <synopsis>
 IF <replaceable>boolean-expression</replaceable> THEN
@@ -1735,11 +1694,16 @@ END IF;
 </synopsis>
 
        <para>
-        <literal>IF-THEN-ELSIF-ELSE</> provides a more convenient
-        method of checking many alternatives in one statement.
-        Functionally it is equivalent to nested
-        <literal>IF-THEN-ELSE-IF-THEN</> commands, but only one
-        <literal>END IF</> is needed.
+        Sometimes there are more than just two alternatives.
+        <literal>IF-THEN-ELSIF</> provides a convenient
+        method of checking several alternatives in turn.
+        The <literal>IF</> conditions are tested successively
+        until the first one that is true is found.  Then the
+        associated statement(s) are executed, after which control
+        passes to the next statement after <literal>END IF</>.
+        (Any subsequent <literal>IF</> conditions are <emphasis>not</>
+        tested.)  If none of the <literal>IF</> conditions is true,
+        then the <literal>ELSE</> block (if any) is executed.
        </para>
 
        <para>
@@ -1758,14 +1722,33 @@ ELSE
 END IF;
 </programlisting>
        </para>
-     </sect3>
 
-     <sect3>
-      <title><literal>IF-THEN-ELSEIF-ELSE</></title>
+       <para>
+        The key word <literal>ELSIF</> can also be spelled
+        <literal>ELSEIF</>.
+       </para>
 
-      <para>
-       <literal>ELSEIF</> is an alias for <literal>ELSIF</>.
-      </para>
+       <para>
+        An alternative way of accomplishing the same task is to nest
+        <literal>IF-THEN-ELSE</literal> statements, as in the
+        following example:
+
+<programlisting>
+IF demo_row.sex = 'm' THEN
+    pretty_sex := 'man';
+ELSE
+    IF demo_row.sex = 'f' THEN
+        pretty_sex := 'woman';
+    END IF;
+END IF;
+</programlisting>
+       </para>
+
+       <para>
+        However, this method requires writing a matching <literal>END IF</>
+        for each <literal>IF</>, so it is much more cumbersome than
+        using <literal>ELSIF</> when there are many alternatives.
+       </para>
      </sect3>
 
      <sect3>
@@ -1851,6 +1834,13 @@ CASE
         msg := 'value is between eleven and twenty';
 END CASE;
 </programlisting>
+      </para>
+
+      <para>
+       This form of <command>CASE</> is entirely equivalent to
+       <literal>IF-THEN-ELSIF</>, except for the rule that reaching
+       an omitted <literal>ELSE</> clause results in an error rather
+       than doing nothing.
       </para>
 
      </sect3>
