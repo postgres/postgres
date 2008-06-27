@@ -485,3 +485,13 @@ select * from
   zt2 left join zt3 on (f2 = f3)
       left join zv1 on (f3 = f1)
 where f2 = 53;
+
+--
+-- regression test for improper extraction of OR indexqual conditions
+-- (as seen in early 8.3.x releases)
+--
+
+select a.unique2, a.ten, b.tenthous, b.unique2, b.hundred
+from tenk1 a left join tenk1 b on a.unique2 = b.tenthous
+where a.unique1 = 42 and
+      ((b.unique2 is null and a.ten = 2) or b.hundred = 3);

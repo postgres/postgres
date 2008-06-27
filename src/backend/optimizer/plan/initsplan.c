@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.139 2008/04/01 00:48:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.140 2008/06/27 20:54:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1092,14 +1092,15 @@ check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
 				(ojinfo->is_full_join &&
 				 bms_overlap(relids, ojinfo->min_lefthand)))
 			{
-				/* yes; have we included all its rels in relids? */
+				/* yes, so set the result flag */
+				outerjoin_delayed = true;
+				/* have we included all its rels in relids? */
 				if (!bms_is_subset(ojinfo->min_lefthand, relids) ||
 					!bms_is_subset(ojinfo->min_righthand, relids))
 				{
 					/* no, so add them in */
 					relids = bms_add_members(relids, ojinfo->min_lefthand);
 					relids = bms_add_members(relids, ojinfo->min_righthand);
-					outerjoin_delayed = true;
 					/* we'll need another iteration */
 					found_some = true;
 				}
