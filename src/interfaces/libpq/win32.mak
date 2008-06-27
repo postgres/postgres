@@ -100,7 +100,7 @@ CLEAN :
 	-@erase "$(INTDIR)\fe-secure.obj"
 	-@erase "$(INTDIR)\pqexpbuffer.obj"
 	-@erase "$(INTDIR)\pqsignal.obj"
-	-@erase "$(OUTDIR)\win32.obj"
+	-@erase "$(INTDIR)\win32.obj"
 	-@erase "$(INTDIR)\wchar.obj"
 	-@erase "$(INTDIR)\encnames.obj"
 	-@erase "$(INTDIR)\pthread-win32.obj"
@@ -110,6 +110,7 @@ CLEAN :
 	-@erase "$(INTDIR)\dirmod.obj"
 	-@erase "$(INTDIR)\pgsleep.obj"
 	-@erase "$(INTDIR)\open.obj"
+	-@erase "$(INTDIR)\win32error.obj"
 	-@erase "$(OUTDIR)\$(OUTFILENAME).lib"
 	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.lib"
 	-@erase "$(OUTDIR)\libpq.res"
@@ -151,6 +152,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\dirmod.obj" \
 	"$(INTDIR)\pgsleep.obj" \
 	"$(INTDIR)\open.obj" \
+	"$(INTDIR)\win32error.obj" \
 	"$(INTDIR)\pthread-win32.obj"
 
 
@@ -220,8 +222,10 @@ LINK32_OBJS= \
 	$(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 # Inclusion of manifest
-!IF "$(_NMAKE_VER)" != "6.00.9782.0"
+!IF "$(_NMAKE_VER)" != "6.00.8168.0" && "$(_NMAKE_VER)" != "7.00.9466"
+!IF "$(_NMAKE_VER)" != "6.00.9782.0" && "$(_NMAKE_VER)" != "7.10.3077"
         mt -manifest $(OUTDIR)\$(OUTFILENAME).dll.manifest -outputresource:$(OUTDIR)\$(OUTFILENAME).dll;2
+!ENDIF
 !ENDIF
 
 "$(INTDIR)\getaddrinfo.obj" : ..\..\port\getaddrinfo.c
@@ -303,6 +307,11 @@ LINK32_OBJS= \
 "$(INTDIR)\open.obj" : ..\..\port\open.c
 	$(CPP) @<<
 	$(CPP_PROJ) /I"." ..\..\port\open.c
+<<
+
+"$(INTDIR)\win32error.obj" : ..\..\port\win32error.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I"." ..\..\port\win32error.c
 <<
 
 .c{$(CPP_OBJS)}.obj:
