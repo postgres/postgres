@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Thu Jun 26 15:18:30 EDT 2008
+Last updated:           Thu Jun 26 22:38:18 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1731,6 +1731,8 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Implement a module capability for loading /contrib-style extensions
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2008-04/msg00164.php">http://archives.postgresql.org/pgsql-patches/2008-04/msg00164.php</a>
 </p>
+  </li><li>Fix system views like pg_stat_all_tables to use set-returning
+  functions, rather than views of per-column functions
   </li><li>Win32
   <ul>
     <li>Remove configure.in check for link failure when cause is found
