@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.259 2008/06/23 21:10:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.260 2008/06/27 02:44:31 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -1403,7 +1403,9 @@ PGresult *PQexecParams(PGconn *conn,
             For example, integers must be passed in network byte
             order.  Passing <type>numeric</> values requires
             knowledge of the server storage format, as implemented
-            in <filename>src/backend/utils/adt/numeric.c</>.
+            in
+            <filename>src/backend/utils/adt/numeric.c::numeric_send()</> and
+            <filename>src/backend/utils/adt/numeric.c::numeric_recv()</>.
            </para>
           </listitem>
          </varlistentry>
