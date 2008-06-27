@@ -10,13 +10,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.240 2008/04/17 21:22:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.241 2008/06/27 03:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <limits.h>
+#include <math.h>
 
 #include "access/skey.h"
 #include "nodes/makefuncs.h"
@@ -2312,6 +2313,7 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 {
 	Append	   *node = makeNode(Append);
 	Plan	   *plan = &node->plan;
+	double		total_size;
 	ListCell   *subnode;
 
 	/*
@@ -2322,7 +2324,7 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 	plan->startup_cost = 0;
 	plan->total_cost = 0;
 	plan->plan_rows = 0;
-	plan->plan_width = 0;
+	total_size = 0;
 	foreach(subnode, appendplans)
 	{
 		Plan	   *subplan = (Plan *) lfirst(subnode);
@@ -2331,9 +2333,12 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 			plan->startup_cost = subplan->startup_cost;
 		plan->total_cost += subplan->total_cost;
 		plan->plan_rows += subplan->plan_rows;
-		if (plan->plan_width < subplan->plan_width)
-			plan->plan_width = subplan->plan_width;
+		total_size += subplan->plan_width * subplan->plan_rows;
 	}
+	if (plan->plan_rows > 0)
+		plan->plan_width = rint(total_size / plan->plan_rows);
+	else
+		plan->plan_width = 0;
 
 	plan->targetlist = tlist;
 	plan->qual = NIL;
