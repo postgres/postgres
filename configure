@@ -25633,7 +25633,7 @@ fi
 
 # If compiler will take -Wl,--as-needed then add that to LDFLAGS.
 # This is much easier than trying to filter LIBS to the minimum for each
-# executable.  (Note that shared libraries won't use this switch, though.)
+# executable.  (Note that shared library links won't use this switch, though.)
 # On (at least) some Red-Hat-derived systems, this switch breaks linking to
 # libreadline; therefore we postpone testing it until we know what library
 # dependencies readline has.  The test code will try to link with $LIBS.
@@ -25647,59 +25647,62 @@ if test "$PORTNAME" != "darwin"; then
 echo $ECHO_N "checking if $CC supports -Wl,--as-needed... $ECHO_C" >&6; }
 pgac_save_LDFLAGS=$LDFLAGS
 LDFLAGS="$pgac_save_LDFLAGS -Wl,--as-needed"
-cat >conftest.$ac_ext <<_ACEOF
+if test "$cross_compiling" = yes; then
+  LDFLAGS="$pgac_save_LDFLAGS"
+               { echo "$as_me:$LINENO: result: assuming no" >&5
+echo "${ECHO_T}assuming no" >&6; }
+else
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char $link_test_func ();
+extern void $link_test_func (); void (*fptr) () = $link_test_func;
 int
 main ()
 {
-return $link_test_func ();
+
   ;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -f conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
   *) ac_try_echo=$ac_try;;
 esac
 eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
+  (eval "$ac_link") 2>&5
   ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
   { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
 else
-  echo "$as_me: failed program was:" >&5
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	LDFLAGS="$pgac_save_LDFLAGS"
-                { echo "$as_me:$LINENO: result: no" >&5
+( exit $ac_status )
+LDFLAGS="$pgac_save_LDFLAGS"
+               { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
 fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
 
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
+
 
 else
   # On Darwin it's spelled -Wl,-dead_strip_dylibs, but don't try that elsewhere
@@ -25707,59 +25710,62 @@ else
 echo $ECHO_N "checking if $CC supports -Wl,-dead_strip_dylibs... $ECHO_C" >&6; }
 pgac_save_LDFLAGS=$LDFLAGS
 LDFLAGS="$pgac_save_LDFLAGS -Wl,-dead_strip_dylibs"
-cat >conftest.$ac_ext <<_ACEOF
+if test "$cross_compiling" = yes; then
+  LDFLAGS="$pgac_save_LDFLAGS"
+               { echo "$as_me:$LINENO: result: assuming no" >&5
+echo "${ECHO_T}assuming no" >&6; }
+else
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char $link_test_func ();
+extern void $link_test_func (); void (*fptr) () = $link_test_func;
 int
 main ()
 {
-return $link_test_func ();
+
   ;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -f conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
   *) ac_try_echo=$ac_try;;
 esac
 eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
+  (eval "$ac_link") 2>&5
   ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
   { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
 else
-  echo "$as_me: failed program was:" >&5
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	LDFLAGS="$pgac_save_LDFLAGS"
-                { echo "$as_me:$LINENO: result: no" >&5
+( exit $ac_status )
+LDFLAGS="$pgac_save_LDFLAGS"
+               { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
 fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
 
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
+
 
 fi
 
