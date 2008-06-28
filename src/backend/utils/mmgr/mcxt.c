@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.64 2008/06/18 18:42:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.65 2008/06/28 16:45:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -624,18 +624,6 @@ repalloc(void *pointer, Size size)
 												 pointer, size);
 }
 
-/* Like pstrdup(), but append null byte */
-char *
-pnstrdup(const char *in, int len)
-{
-	char	   *out = palloc(len + 1);
-
-	memcpy(out, in, len);
-	out[len] = '\0';
-	return out;
-}
-
-
 /*
  * MemoryContextSwitchTo
  *		Returns the current context; installs the given context.
@@ -674,6 +662,21 @@ MemoryContextStrdup(MemoryContext context, const char *string)
 	memcpy(nstr, string, len);
 
 	return nstr;
+}
+
+/*
+ * pnstrdup
+ *		Like pstrdup(), but append null byte to a
+ *		not-necessarily-null-terminated input string.
+ */
+char *
+pnstrdup(const char *in, Size len)
+{
+	char	   *out = palloc(len + 1);
+
+	memcpy(out, in, len);
+	out[len] = '\0';
+	return out;
 }
 
 

@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.39 2008/06/18 18:42:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.40 2008/06/28 16:45:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,8 +70,6 @@ extern void pfree(void *pointer);
 
 extern void *repalloc(void *pointer, Size size);
 
-extern char *pnstrdup(const char *in, int len);
-
 /*
  * MemoryContextSwitchTo can't be a macro in standard C compilers.
  * But we can make it an inline function when using GCC.
@@ -98,6 +96,8 @@ extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
 extern char *MemoryContextStrdup(MemoryContext context, const char *string);
 
 #define pstrdup(str)  MemoryContextStrdup(CurrentMemoryContext, (str))
+
+extern char *pnstrdup(const char *in, Size len);
 
 #if defined(WIN32) || defined(__CYGWIN__)
 extern void *pgport_palloc(Size sz);
