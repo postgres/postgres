@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Thu Jun 26 22:38:18 EDT 2008
+Last updated:		Mon Jun 30 15:41:25 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1121,7 +1121,14 @@ Clients
 
 	o -Improve display of enums to show valid enum values
 	o Add prompt escape to display the client and server versions
+	o Add option to wrap column values at whitespace boundaries,
+          rather than chopping them at a fixed width.
 
+	  Currently, "wrapped" format chops values into fixed
+	  widths.  Perhaps the word wrapping could use the same
+	  algorithm documented in the W3C specification.
+	  http://archives.postgresql.org/pgsql-hackers/2008-05/msg00404.php
+	  http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
 
 * pg_dump / pg_restore
 	o %Add dumping of comments on index columns and composite type columns

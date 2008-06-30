@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Thu Jun 26 22:38:18 EDT 2008
+Last updated:           Mon Jun 30 15:41:25 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -969,6 +969,14 @@ first.  There is also a developer's wiki at<br/>
 </p>
     </li><li>-<em>Improve display of enums to show valid enum values</em>
     </li><li>Add prompt escape to display the client and server versions
+    </li><li>Add option to wrap column values at whitespace boundaries,
+          rather than chopping them at a fixed width.
+<p>          Currently, "wrapped" format chops values into fixed
+          widths.  Perhaps the word wrapping could use the same
+          algorithm documented in the W3C specification.
+          <a href="http://archives.postgresql.org/pgsql-hackers/2008-05/msg00404.php">http://archives.postgresql.org/pgsql-hackers/2008-05/msg00404.php</a>
+          <a href="http://www.w3.org/TR/CSS21/tables.html<strong>auto-table-layout">http://www.w3.org/TR/CSS21/tables.html</strong>auto-table-layout</a>
+</p>
   </li></ul>
   </li><li>pg_dump / pg_restore
   <ul>
