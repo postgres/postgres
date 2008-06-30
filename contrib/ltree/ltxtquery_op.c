@@ -1,7 +1,7 @@
 /*
  * txtquery operations with ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_op.c,v 1.8 2008/05/12 00:00:43 alvherre Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_op.c,v 1.9 2008/06/30 18:30:48 teodor Exp $
  */
 #include "postgres.h"
 
@@ -57,7 +57,7 @@ checkcondition_str(void *checkval, ITEM * val)
 	char	   *op = ((CHKVAL *) checkval)->operand + val->distance;
 	int			(*cmpptr) (const char *, const char *, size_t);
 
-	cmpptr = (val->flag & LVAR_INCASE) ? pg_strncasecmp : strncmp;
+	cmpptr = (val->flag & LVAR_INCASE) ? ltree_strncasecmp : strncmp;
 	while (tlen > 0)
 	{
 		if (val->flag & LVAR_SUBLEXEME)

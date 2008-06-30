@@ -1,7 +1,7 @@
 /*
  * txtquery io
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_io.c,v 1.15 2008/05/12 00:00:43 alvherre Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_io.c,v 1.16 2008/06/30 18:30:48 teodor Exp $
  */
 #include "postgres.h"
 
@@ -59,49 +59,53 @@ typedef struct
 static int4
 gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint16 *flag)
 {
-	while (1)
+	int charlen;
+
+	for(;;)	
 	{
+		charlen = pg_mblen(state->buf);
+
 		switch (state->state)
 		{
 			case WAITOPERAND:
-				if (*(state->buf) == '!')
+				if (charlen==1 && t_iseq(state->buf, '!'))
 				{
 					(state->buf)++;
 					*val = (int4) '!';
 					return OPR;
 				}
-				else if (*(state->buf) == '(')
+				else if (charlen==1 && t_iseq(state->buf, '('))
 				{
 					state->count++;
 					(state->buf)++;
 					return OPEN;
 				}
-				else if (ISALNUM(*(state->buf)))
+				else if (ISALNUM(state->buf))
 				{
 					state->state = INOPERAND;
 					*strval = state->buf;
-					*lenval = 1;
+					*lenval = charlen;
 					*flag = 0;
 				}
-				else if (!isspace((unsigned char) *(state->buf)))
+				else if (!t_isspace(state->buf))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("operand syntax error")));
 				break;
 			case INOPERAND:
-				if (ISALNUM(*(state->buf)))
+				if (ISALNUM(state->buf))
 				{
 					if (*flag)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("modificators syntax error")));
-					(*lenval)++;
+					*lenval += charlen;
 				}
-				else if (*(state->buf) == '%')
+				else if (charlen==1 && t_iseq(state->buf, '%'))
 					*flag |= LVAR_SUBLEXEME;
-				else if (*(state->buf) == '@')
+				else if (charlen==1 && t_iseq(state->buf, '@'))
 					*flag |= LVAR_INCASE;
-				else if (*(state->buf) == '*')
+				else if (charlen==1 && t_iseq(state->buf, '*'))
 					*flag |= LVAR_ANYEND;
 				else
 				{
@@ -110,14 +114,14 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
 				}
 				break;
 			case WAITOPERATOR:
-				if (*(state->buf) == '&' || *(state->buf) == '|')
+				if (charlen==1 && ( t_iseq(state->buf, '&') || t_iseq(state->buf, '|') ))
 				{
 					state->state = WAITOPERAND;
 					*val = (int4) *(state->buf);
 					(state->buf)++;
 					return OPR;
 				}
-				else if (*(state->buf) == ')')
+				else if (charlen==1 && t_iseq(state->buf, ')'))
 				{
 					(state->buf)++;
 					state->count--;
@@ -125,14 +129,15 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
 				}
 				else if (*(state->buf) == '\0')
 					return (state->count) ? ERR : END;
-				else if (*(state->buf) != ' ')
+				else if (charlen==1 && !t_iseq(state->buf, ' '))
 					return ERR;
 				break;
 			default:
 				return ERR;
 				break;
 		}
-		(state->buf)++;
+
+		state->buf += charlen;
 	}
 	return END;
 }
