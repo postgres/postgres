@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.175 2008/06/19 00:46:05 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.176 2008/06/30 10:58:47 heikki Exp $
  * ----------
  */
 #include "postgres.h"
@@ -101,6 +101,7 @@
 bool		pgstat_track_activities = false;
 bool		pgstat_track_counts = false;
 int			pgstat_track_functions = TRACK_FUNC_OFF;
+int			pgstat_track_activity_query_size = 1024;
 
 /*
  * BgWriter global statistics counters (unused in other processes).
@@ -2010,6 +2011,7 @@ pgstat_fetch_global(void)
 
 static PgBackendStatus *BackendStatusArray = NULL;
 static PgBackendStatus *MyBEEntry = NULL;
+static char			   *BackendActivityBuffer = NULL;
 
 
 /*
@@ -2020,20 +2022,25 @@ BackendStatusShmemSize(void)
 {
 	Size		size;
 
-	size = mul_size(sizeof(PgBackendStatus), MaxBackends);
+	size = add_size(mul_size(sizeof(PgBackendStatus), MaxBackends),
+					mul_size(pgstat_track_activity_query_size, MaxBackends));
 	return size;
 }
 
 /*
- * Initialize the shared status array during postmaster startup.
+ * Initialize the shared status array and activity string buffer during
+ * postmaster startup.
  */
 void
 CreateSharedBackendStatus(void)
 {
-	Size		size = BackendStatusShmemSize();
+	Size		size;
 	bool		found;
+	int			i;
+	char	   *buffer;
 
 	/* Create or attach to the shared array */
+	size = mul_size(sizeof(PgBackendStatus), MaxBackends);
 	BackendStatusArray = (PgBackendStatus *)
 		ShmemInitStruct("Backend Status Array", size, &found);
 
@@ -2043,6 +2050,23 @@ CreateSharedBackendStatus(void)
 		 * We're the first - initialize.
 		 */
 		MemSet(BackendStatusArray, 0, size);
+	}
+
+	/* Create or attach to the shared activity buffer */
+	size = mul_size(pgstat_track_activity_query_size, MaxBackends);
+	BackendActivityBuffer = (char*)
+		ShmemInitStruct("Backend Activity Buffer", size, &found);
+
+	if (!found)
+	{
+		MemSet(BackendActivityBuffer, 0, size);
+
+		/* Initialize st_activity pointers. */
+		buffer = BackendActivityBuffer;
+		for (i = 0; i < MaxBackends; i++) {
+			BackendStatusArray[i].st_activity = buffer;
+			buffer += pgstat_track_activity_query_size;
+		}
 	}
 }
 
@@ -2128,7 +2152,7 @@ pgstat_bestart(void)
 	beentry->st_waiting = false;
 	beentry->st_activity[0] = '\0';
 	/* Also make sure the last byte in the string area is always 0 */
-	beentry->st_activity[PGBE_ACTIVITY_SIZE - 1] = '\0';
+	beentry->st_activity[pgstat_track_activity_query_size - 1] = '\0';
 
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);
@@ -2188,7 +2212,7 @@ pgstat_report_activity(const char *cmd_str)
 	start_timestamp = GetCurrentStatementStartTimestamp();
 
 	len = strlen(cmd_str);
-	len = pg_mbcliplen(cmd_str, len, PGBE_ACTIVITY_SIZE - 1);
+	len = pg_mbcliplen(cmd_str, len, pgstat_track_activity_query_size - 1);
 
 	/*
 	 * Update my status entry, following the protocol of bumping
@@ -2267,6 +2291,7 @@ pgstat_read_current_status(void)
 	volatile PgBackendStatus *beentry;
 	PgBackendStatus *localtable;
 	PgBackendStatus *localentry;
+	char			*localactivity;
 	int			i;
 
 	Assert(!pgStatRunningInCollector);
@@ -2278,6 +2303,9 @@ pgstat_read_current_status(void)
 	localtable = (PgBackendStatus *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   sizeof(PgBackendStatus) * MaxBackends);
+	localactivity = (char *)
+		MemoryContextAlloc(pgStatLocalContext,
+						   pgstat_track_activity_query_size * MaxBackends);
 	localNumBackends = 0;
 
 	beentry = BackendStatusArray;
@@ -2295,11 +2323,17 @@ pgstat_read_current_status(void)
 		{
 			int			save_changecount = beentry->st_changecount;
 
-			/*
-			 * XXX if PGBE_ACTIVITY_SIZE is really large, it might be best to
-			 * use strcpy not memcpy for copying the activity string?
-			 */
-			memcpy(localentry, (char *) beentry, sizeof(PgBackendStatus));
+			localentry->st_procpid = beentry->st_procpid;
+			if (localentry->st_procpid > 0)
+			{
+				memcpy(localentry, (char *) beentry, sizeof(PgBackendStatus));
+				/*
+				 * strcpy is safe even if the string is modified concurrently,
+				 * because there's always a \0 at the end of the buffer.
+				 */
+				strcpy(localactivity, (char *) beentry->st_activity);
+				localentry->st_activity = localactivity;
+			}
 
 			if (save_changecount == beentry->st_changecount &&
 				(save_changecount & 1) == 0)
@@ -2314,6 +2348,7 @@ pgstat_read_current_status(void)
 		if (localentry->st_procpid > 0)
 		{
 			localentry++;
+			localactivity += pgstat_track_activity_query_size;
 			localNumBackends++;
 		}
 	}

@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.76 2008/06/19 00:46:05 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.77 2008/06/30 10:58:47 heikki Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -509,9 +509,6 @@ typedef struct PgStat_GlobalStats
  * ----------
  */
 
-/* Max length of st_activity string ... perhaps replace with a GUC var? */
-#define PGBE_ACTIVITY_SIZE	1024
-
 /* ----------
  * PgBackendStatus
  *
@@ -551,7 +548,7 @@ typedef struct PgBackendStatus
 	bool		st_waiting;
 
 	/* current command string; MUST be null-terminated */
-	char		st_activity[PGBE_ACTIVITY_SIZE];
+	char	   *st_activity;
 } PgBackendStatus;
 
 /*
@@ -578,6 +575,7 @@ typedef struct PgStat_FunctionCallUsage
 extern bool pgstat_track_activities;
 extern bool pgstat_track_counts;
 extern int	pgstat_track_functions;
+extern int	pgstat_track_activity_query_size;
 
 /*
  * BgWriter statistics counters are updated directly by bgwriter and bufmgr

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.180 2008/06/14 21:59:59 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.181 2008/06/30 10:58:47 heikki Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3327,6 +3327,22 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         the session being reported on; so it should not represent a
         security risk.
         Only superusers can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-track-activity-query-size" xreflabel="track_activity_query_size">
+      <term><varname>track_activity_query_size</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>track_activity_query_size</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+       Specifies the number of bytes reserved to track the currently
+       executing command for each active session, for the
+       <structname>pg_stat_activity</>.<structfield>current_query</> field.
+       The default value is 1024. This parameter can only be set at server
+       start.
        </para>
       </listitem>
      </varlistentry>

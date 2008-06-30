@@ -364,6 +364,7 @@
 #track_activities = on
 #track_counts = on
 #track_functions = none			# none, pl, all
+#track_activity_query_size = 1024
 #update_process_title = on
 
 

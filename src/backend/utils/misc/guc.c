@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.456 2008/05/28 09:04:06 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.457 2008/06/30 10:58:47 heikki Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1846,6 +1846,15 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&log_temp_files,
 		-1, -1, INT_MAX, NULL, NULL
+	},
+
+	{
+		{"track_activity_query_size", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Sets the size reserved for pg_stat_activity.current_query, in bytes."),
+			NULL,
+		},
+		&pgstat_track_activity_query_size,
+		1024, 100, 102400, NULL, NULL
 	},
 
 	/* End-of-list marker */
