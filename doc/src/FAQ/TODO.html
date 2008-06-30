@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Mon Jun 30 15:41:25 EDT 2008
+Last updated:           Mon Jun 30 15:45:09 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -976,9 +976,12 @@ first.  There is also a developer's wiki at<br/>
           algorithm documented in the W3C specification.
           <a href="http://archives.postgresql.org/pgsql-hackers/2008-05/msg00404.php">http://archives.postgresql.org/pgsql-hackers/2008-05/msg00404.php</a>
           <a href="http://www.w3.org/TR/CSS21/tables.html<strong>auto-table-layout">http://www.w3.org/TR/CSS21/tables.html</strong>auto-table-layout</a>
+    <li>Add "auto" expanded mode that outputs in expanded format if
+          "wrapped" mode can't wrap the output to the screen width
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2008-05/msg00417.php">http://archives.postgresql.org/pgsql-hackers/2008-05/msg00417.php</a>
 </p>
   </li></ul>
-  </li><li>pg_dump / pg_restore
+  <li>pg_dump / pg_restore
   <ul>
     <li>%Add dumping of comments on index columns and composite type columns
     </li><li>%Add full object name to the tag field.  eg. for operators we need
@@ -1078,7 +1081,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li></ul>
 </li></ul>
-<h1><a name="section_11">Triggers</a></h1>
+</p><h1><a name="section_11">Triggers</a></h1>
 
 <ul>
   <li>Add deferred trigger queue file
@@ -1840,6 +1843,6 @@ first.  There is also a developer's wiki at<br/>
   to run in the same process address space as the client application
   would add too much complexity and failure cases.</p>
 </li></ul>
-
+</li></ul></li></ul>
 </body>
 </html>
