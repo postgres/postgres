@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.314 2008/06/12 09:12:30 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.315 2008/06/30 22:10:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4523,13 +4523,10 @@ readRecoveryCommandFile(void)
 			/*
 			 * does nothing if a recovery_target is not also set
 			 */
-			if (strcmp(tok2, "true") == 0)
-				recoveryTargetInclusive = true;
-			else
-			{
-				recoveryTargetInclusive = false;
-				tok2 = "false";
-			}
+			if (!parse_bool(tok2, &recoveryTargetInclusive))
+				  ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					  errmsg("parameter \"recovery_target_inclusive\" requires a Boolean value")));
 			ereport(LOG,
 					(errmsg("recovery_target_inclusive = %s", tok2)));
 		}
@@ -4538,13 +4535,10 @@ readRecoveryCommandFile(void)
 			/*
 			 * does nothing if a recovery_target is not also set
 			 */
-			if (strcmp(tok2, "true") == 0)
-				recoveryLogRestartpoints = true;
-			else
-			{
-				recoveryLogRestartpoints = false;
-				tok2 = "false";
-			}
+			if (!parse_bool(tok2, &recoveryLogRestartpoints))
+				  ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					  errmsg("parameter \"log_restartpoints\" requires a Boolean value")));
 			ereport(LOG,
 					(errmsg("log_restartpoints = %s", tok2)));
 		}
