@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.191 2008/06/26 01:35:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.192 2008/07/01 00:08:18 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -28,6 +28,9 @@
 #include <direct.h>
 #include <sys/types.h>			/* for umask() */
 #include <sys/stat.h>			/* for stat() */
+#endif
+#ifdef USE_SSL
+#include <openssl/ssl.h>
 #endif
 
 #include "portability/instr_time.h"
@@ -56,6 +59,15 @@ static backslashResult exec_command(const char *cmd,
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
 static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
+
+#ifdef USE_SSL
+static void printSSLInfo(void);
+#endif
+
+#ifdef WIN32
+static void checkWin32Codepage(void);
+#endif
+
 
 
 /*----------
@@ -1185,6 +1197,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	 * Replace the old connection with the new one, and update
 	 * connection-dependent variables.
 	 */
+	connection_warnings();
 	PQsetNoticeProcessor(n_conn, NoticeProcessor, NULL);
 	pset.db = n_conn;
 	SyncVariables();
@@ -1210,6 +1223,100 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		PQfinish(o_conn);
 	return true;
 }
+
+
+void
+connection_warnings(void)
+{
+	if (!pset.quiet && !pset.notty)
+	{
+		int			client_ver = parse_version(PG_VERSION);
+
+		if (pset.sversion != client_ver)
+		{
+			const char *server_version;
+			char		server_ver_str[16];
+
+			/* Try to get full text form, might include "devel" etc */
+			server_version = PQparameterStatus(pset.db, "server_version");
+			if (!server_version)
+			{
+				snprintf(server_ver_str, sizeof(server_ver_str),
+						 "%d.%d.%d",
+						 pset.sversion / 10000,
+						 (pset.sversion / 100) % 100,
+						 pset.sversion % 100);
+				server_version = server_ver_str;
+			}
+
+			printf(_("%s (%s, server %s)\n"), 
+			pset.progname, PG_VERSION, server_version);
+		}
+		else
+			printf("%s (%s)\n", pset.progname, PG_VERSION);
+
+		if (pset.sversion / 100 != client_ver / 100)
+			printf(_("WARNING: %s version %d.%d, server version %d.%d.\n"
+				 "         Some psql features might not work.\n"),
+				pset.progname, client_ver / 10000, (client_ver / 100) % 100,
+				pset.sversion / 10000, (pset.sversion / 100) % 100);
+
+#ifdef WIN32
+		checkWin32Codepage();
+#endif
+#ifdef USE_SSL
+		printSSLInfo();
+#endif
+	}
+}
+
+
+/*
+ * printSSLInfo
+ *
+ * Prints information about the current SSL connection, if SSL is in use
+ */
+#ifdef USE_SSL
+static void
+printSSLInfo(void)
+{
+	int			sslbits = -1;
+	SSL		   *ssl;
+
+	ssl = PQgetssl(pset.db);
+	if (!ssl)
+		return;					/* no SSL */
+
+	SSL_get_cipher_bits(ssl, &sslbits);
+	printf(_("SSL connection (cipher: %s, bits: %i)\n"),
+		   SSL_get_cipher(ssl), sslbits);
+}
+#endif
+
+
+/*
+ * checkWin32Codepage
+ *
+ * Prints a warning when win32 console codepage differs from Windows codepage
+ */
+#ifdef WIN32
+static void
+checkWin32Codepage(void)
+{
+	unsigned int wincp,
+				concp;
+
+	wincp = GetACP();
+	concp = GetConsoleCP();
+	if (wincp != concp)
+	{
+		printf(_("WARNING: Console code page (%u) differs from Windows code page (%u)\n"
+				 "         8-bit characters might not work correctly. See psql reference\n"
+			     "         page \"Notes for Windows users\" for details.\n"),
+			   concp, wincp);
+	}
+}
+#endif
 
 
 /*
