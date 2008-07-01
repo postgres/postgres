@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.78 2008/06/19 00:46:06 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.79 2008/07/01 10:33:09 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,6 +92,18 @@ typedef struct VacAttrStats
 	float4	   *stanumbers[STATISTIC_NUM_SLOTS];
 	int			numvalues[STATISTIC_NUM_SLOTS];
 	Datum	   *stavalues[STATISTIC_NUM_SLOTS];
+
+	/*
+	 * These fields describe the stavalues[n] element types. They will
+	 * be initialized to be the same as the column's that's underlying the
+	 * slot, but a custom typanalyze function might want to store an array of
+	 * something other than the analyzed column's elements. It should then
+	 * overwrite these fields.
+	 */
+	Oid			statypid[STATISTIC_NUM_SLOTS];
+	int2		statyplen[STATISTIC_NUM_SLOTS];
+	bool		statypbyval[STATISTIC_NUM_SLOTS];
+	char		statypalign[STATISTIC_NUM_SLOTS];
 
 	/*
 	 * These fields are private to the main ANALYZE code and should not be

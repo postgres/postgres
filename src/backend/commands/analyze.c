@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.122 2008/06/08 22:00:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.123 2008/07/01 10:33:09 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -684,6 +684,7 @@ examine_attribute(Relation onerel, int attnum)
 	Form_pg_attribute attr = onerel->rd_att->attrs[attnum - 1];
 	HeapTuple	typtuple;
 	VacAttrStats *stats;
+	int			i;
 	bool		ok;
 
 	/* Never analyze dropped columns */
@@ -710,6 +711,20 @@ examine_attribute(Relation onerel, int attnum)
 	ReleaseSysCache(typtuple);
 	stats->anl_context = anl_context;
 	stats->tupattnum = attnum;
+
+	/*
+	 * The fields describing the stats->stavalues[n] element types default
+	 * to the type of the field being analyzed, but the type-specific
+	 * typanalyze function can change them if it wants to store something
+	 * else.
+	 */
+	for (i = 0; i < STATISTIC_NUM_SLOTS; i++)
+	{
+		stats->statypid[i] = stats->attr->atttypid;
+		stats->statyplen[i] = stats->attrtype->typlen;
+		stats->statypbyval[i] = stats->attrtype->typbyval;
+		stats->statypalign[i] = stats->attrtype->typalign;
+	}
 
 	/*
 	 * Call the type-specific typanalyze function.	If none is specified, use
@@ -1322,10 +1337,10 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 
 				arry = construct_array(stats->stavalues[k],
 									   stats->numvalues[k],
-									   stats->attr->atttypid,
-									   stats->attrtype->typlen,
-									   stats->attrtype->typbyval,
-									   stats->attrtype->typalign);
+									   stats->statypid[k],
+									   stats->statyplen[k],
+									   stats->statypbyval[k],
+									   stats->statypalign[k]);
 				values[i++] = PointerGetDatum(arry);	/* stavaluesN */
 			}
 			else
@@ -1855,6 +1870,10 @@ compute_minimal_stats(VacAttrStatsP stats,
 			stats->numnumbers[0] = num_mcv;
 			stats->stavalues[0] = mcv_values;
 			stats->numvalues[0] = num_mcv;
+			/*
+			 * Accept the defaults for stats->statypid and others.
+			 * They have been set before we were called (see vacuum.h)
+			 */
 		}
 	}
 	else if (null_cnt > 0)
@@ -2198,6 +2217,10 @@ compute_scalar_stats(VacAttrStatsP stats,
 			stats->numnumbers[slot_idx] = num_mcv;
 			stats->stavalues[slot_idx] = mcv_values;
 			stats->numvalues[slot_idx] = num_mcv;
+			/*
+			 * Accept the defaults for stats->statypid and others.
+			 * They have been set before we were called (see vacuum.h)
+			 */
 			slot_idx++;
 		}
 
@@ -2282,6 +2305,10 @@ compute_scalar_stats(VacAttrStatsP stats,
 			stats->staop[slot_idx] = mystats->ltopr;
 			stats->stavalues[slot_idx] = hist_values;
 			stats->numvalues[slot_idx] = num_hist;
+			/*
+			 * Accept the defaults for stats->statypid and others.
+			 * They have been set before we were called (see vacuum.h)
+			 */
 			slot_idx++;
 		}
 
