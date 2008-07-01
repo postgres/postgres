@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.181 2008/06/30 10:58:47 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.182 2008/07/01 21:49:04 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -5104,15 +5104,161 @@ plruby.use_strict = true        # generates error: unknown class name
 
      <varlistentry>
       <term><varname>trace_locks</varname> (<type>boolean</type>)</term>
-      <term><varname>trace_lwlocks</varname> (<type>boolean</type>)</term>
-      <term><varname>trace_userlocks</varname> (<type>boolean</type>)</term>
-      <term><varname>trace_lock_oidmin</varname> (<type>boolean</type>)</term>
-      <term><varname>trace_lock_table</varname> (<type>boolean</type>)</term>
-      <term><varname>debug_deadlocks</varname> (<type>boolean</type>)</term>
-      <term><varname>log_btree_build_stats</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>trace_locks</> configuration parameter</primary>
+      </indexterm>
       <listitem>
        <para>
-        Various other code tracing and debugging options.
+        If on, emit information about lock usage.  Information dumped
+        includes the type of lock operation, the type of lock and the unique
+        identifier of the object being locked or unlocked.  Also included
+        are bitmasks for the lock types already granted on this object as
+        well as for the lock types awaited on this object.  For each lock
+        type a count of the number of granted locks and waiting locks is
+        also dumped as well as the totals.  An example of the log file output
+        is shown here:
+       </para>
+       <para>
+        LOG:  LockAcquire: new: lock(0xb7acd844) id(24688,24696,0,0,0,1)
+              grantMask(0) req(0,0,0,0,0,0,0)=0 grant(0,0,0,0,0,0,0)=0
+              wait(0) type(AccessShareLock)
+       </para>
+       <para>
+        LOG:  GrantLock: lock(0xb7acd844) id(24688,24696,0,0,0,1)
+              grantMask(2) req(1,0,0,0,0,0,0)=1 grant(1,0,0,0,0,0,0)=1
+              wait(0) type(AccessShareLock)
+
+       </para>
+       <para>
+        LOG:  UnGrantLock: updated: lock(0xb7acd844) id(24688,24696,0,0,0,1)
+              grantMask(0) req(0,0,0,0,0,0,0)=0 grant(0,0,0,0,0,0,0)=0
+              wait(0) type(AccessShareLock)
+       </para>
+       <para>
+        LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
+              grantMask(0) req(0,0,0,0,0,0,0)=0 grant(0,0,0,0,0,0,0)=0
+              wait(0) type(INVALID)
+       </para>
+       <para>
+        Details of the structure being dumped may be found in
+        src/include/storage/lock.h
+       </para>
+       <para>
+        This parameter is only available if the <symbol>LOCK_DEBUG</symbol>
+        macro was defined when <productname>PostgreSQL</productname> was
+        compiled.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>trace_lwlocks</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>trace_lwlocks</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        If on, emit information about lightweight lock usage.  Lightweight
+        locks are intended primarily to provide mutual exclusion of access
+        to shared-memory data structures.
+       </para>
+       <para>
+        This parameter is only available if the <symbol>LOCK_DEBUG</symbol>
+        macro was defined when <productname>PostgreSQL</productname> was
+        compiled.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>trace_userlocks</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>trace_userlocks</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        If on, emit information about user lock usage.  Output is the same
+        as for <symbol>trace_locks</symbol>, only for user locks.
+       </para>
+       <para>
+        User locks were removed as of PostgreSQL version 8.2.  This option
+        currently has no effect.
+       </para>
+       <para>
+        This parameter is only available if the <symbol>LOCK_DEBUG</symbol>
+        macro was defined when <productname>PostgreSQL</productname> was
+        compiled.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>trace_lock_oidmin</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>trace_lock_oidmin</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        If set, do not trace locks for tables below this OID. (use to avoid
+        output on system tables)
+       </para>
+       <para>
+        This parameter is only available if the <symbol>LOCK_DEBUG</symbol>
+        macro was defined when <productname>PostgreSQL</productname> was
+        compiled.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>trace_lock_table</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>trace_lock_table</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Unconditionally trace locks on this table (OID).
+       </para>
+       <para>
+        This parameter is only available if the <symbol>LOCK_DEBUG</symbol>
+        macro was defined when <productname>PostgreSQL</productname> was
+        compiled.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>debug_deadlocks</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>debug_deadlocks</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        If set, dumps information about all current locks when a
+        DeadLockTimeout occurs.
+       </para>
+       <para>
+        This parameter is only available if the <symbol>LOCK_DEBUG</symbol>
+        macro was defined when <productname>PostgreSQL</productname> was
+        compiled.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>log_btree_build_stats</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>log_btree_build_stats</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        If set, logs system resource usage statistics (memory and CPU) on
+        various btree operations.
+       </para>
+       <para>
+        This parameter is only available if the <symbol>BTREE_BUILD_STATS</symbol>
+        macro was defined when <productname>PostgreSQL</productname> was
+        compiled.
        </para>
       </listitem>
      </varlistentry>
