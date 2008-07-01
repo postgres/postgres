@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Mon Jun 30 15:45:09 EDT 2008
+Last updated:           Tue Jul  1 14:09:02 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -543,6 +543,8 @@ first.  There is also a developer's wiki at<br/>
 <p>  Currently only the owner can TRUNCATE a table because triggers are not
   called, and the table is locked in exclusive mode.
 </p>
+  </li><li>Fix TRUNCATE ... RESTART IDENTITY so its affect on sequences is rolled
+  back on transaction abort
   </li><li>Allow PREPARE of cursors
   </li><li>Allow finer control over the caching of prepared query plans
 <p>  Currently queries prepared via the libpq API are planned on first
