@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.460 2008/07/01 06:36:11 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.461 2008/07/01 21:07:33 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -212,8 +212,8 @@ static const struct config_enum_entry server_message_level_options[] = {
 };
 
 static const struct config_enum_entry log_error_verbosity_options[] = {
-	{"default", PGERROR_DEFAULT, false},
 	{"terse", PGERROR_TERSE, false},
+	{"default", PGERROR_DEFAULT, false},
 	{"verbose", PGERROR_VERBOSE, false},
 	{NULL, 0, false}
 };
@@ -1355,7 +1355,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"unix_socket_permissions", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("Sets the access permissions of the Unix-domain socket."),
 			gettext_noop("Unix-domain sockets use the usual Unix file system "
-						 "permission set. The parameter value is expected to be an numeric mode "
+						 "permission set. The parameter value is expected to be a numeric mode "
 						 "specification in the form accepted by the chmod and umask system "
 						 "calls. (To use the customary octal format the number must start with "
 						 "a 0 (zero).)")
@@ -2323,7 +2323,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"timezone_abbreviations", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Selects a file of time zone abbreviations."),
-			NULL,
+			NULL
 		},
 		&timezone_abbreviations_string,
 		"UNKNOWN", assign_timezone_abbreviations, NULL
@@ -2462,7 +2462,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"backslash_quote", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Sets whether \"\\'\" is allowed in string literals."),
-			gettext_noop("Valid values are ON, OFF, and SAFE_ENCODING.")
+			NULL
 		},
 		&backslash_quote,
 		BACKSLASH_QUOTE_SAFE_ENCODING, backslash_quote_options, NULL, NULL
@@ -2475,14 +2475,13 @@ static struct config_enum ConfigureNamesEnum[] =
 						 " the level, the fewer messages are sent.")
 		},
 		&client_min_messages,
-		NOTICE, client_message_level_options,NULL, NULL
+		NOTICE, client_message_level_options, NULL, NULL
 	},
 
 	{
 		{"default_transaction_isolation", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the transaction isolation level of each new transaction."),
-			gettext_noop("Each SQL transaction has an isolation level, which "
-						 "can be either \"read uncommitted\", \"read committed\", \"repeatable read\", or \"serializable\".")
+			NULL
 		},
 		&DefaultXactIsoLevel,
 		XACT_READ_COMMITTED, isolation_level_options, NULL, NULL
@@ -2491,7 +2490,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_error_verbosity", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Sets the verbosity of logged messages."),
-			gettext_noop("Valid values are \"terse\", \"default\", and \"verbose\".")
+			NULL
 		},
 		&Log_error_verbosity,
 		PGERROR_DEFAULT, log_error_verbosity_options, NULL, NULL
@@ -2500,7 +2499,8 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_min_messages", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Sets the message levels that are logged."),
-			gettext_noop("Each level includes all levels that follow it.")
+			gettext_noop("Each level includes all the levels that follow it. The later"
+						 " the level, the fewer messages are sent.")
 		},
 		&log_min_messages,
 		WARNING, server_message_level_options, NULL, NULL
@@ -2509,8 +2509,8 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_min_error_statement", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Causes all statements generating error at or above this level to be logged."),
-			gettext_noop("All SQL statements that cause an error of the "
-						 "specified level or a higher level are logged.")
+			gettext_noop("Each level includes all the levels that follow it. The later"
+						 " the level, the fewer messages are sent.")
 		},
 		&log_min_error_statement,
 		ERROR, server_message_level_options, NULL, NULL
@@ -2519,7 +2519,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_statement", PGC_SUSET, LOGGING_WHAT,
 			gettext_noop("Sets the type of statements logged."),
-			gettext_noop("Valid values are \"none\", \"ddl\", \"mod\", and \"all\".")
+			NULL
 		},
 		&log_statement,
 		LOGSTMT_NONE, log_statement_options, NULL, NULL
@@ -2529,8 +2529,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"syslog_facility", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the syslog \"facility\" to be used when syslog enabled."),
-			gettext_noop("Valid values are LOCAL0, LOCAL1, LOCAL2, LOCAL3, "
-						 "LOCAL4, LOCAL5, LOCAL6, LOCAL7.")
+			NULL
 		},
 		&syslog_facility,
 		LOG_LOCAL0, syslog_facility_options, assign_syslog_facility, NULL
@@ -2540,7 +2539,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"regex_flavor", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Sets the regular expression \"flavor\"."),
-			gettext_noop("This can be set to advanced, extended, or basic.")
+			NULL
 		},
 		&regex_flavor,
 		REG_ADVANCED, regex_flavor_options, NULL, NULL
@@ -2549,8 +2548,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"session_replication_role", PGC_SUSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the session's behavior for triggers and rewrite rules."),
-			gettext_noop("Each session can be either"
-						 " \"origin\", \"replica\", or \"local\".")
+			NULL
 		},
 		&SessionReplicationRole,
 		SESSION_REPLICATION_ROLE_ORIGIN, session_replication_role_options,
@@ -2560,7 +2558,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"track_functions", PGC_SUSET, STATS_COLLECTOR,
 			gettext_noop("Collects function-level statistics on database activity."),
-			gettext_noop("Valid values are: NONE, PL, and ALL.")
+			NULL
 		},
 		&pgstat_track_functions,
 		TRACK_FUNC_OFF, track_function_options, NULL, NULL
@@ -2579,7 +2577,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"xmlbinary", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets how binary values are to be encoded in XML."),
-			gettext_noop("Valid values are BASE64 and HEX.")
+			NULL
 		},
 		&xmlbinary,
 		XMLBINARY_BASE64, xmlbinary_options, NULL, NULL
@@ -2589,7 +2587,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		{"xmloption", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets whether XML data in implicit parsing and serialization "
 						 "operations is to be considered as documents or content fragments."),
-			gettext_noop("Valid values are DOCUMENT and CONTENT.")
+			NULL
 		},
 		&xmloption,
 		XMLOPTION_CONTENT, xmloption_options, NULL, NULL
