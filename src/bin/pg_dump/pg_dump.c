@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.492 2008/05/16 23:36:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.493 2008/07/01 11:46:48 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6775,14 +6775,12 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	rettypename = getFormattedTypeName(finfo->prorettype, zeroAsOpaque);
 
 	appendPQExpBuffer(q, "CREATE FUNCTION %s ", funcsig);
-	appendPQExpBuffer(q, "RETURNS %s%s\n    %s\n    LANGUAGE %s",
+	appendPQExpBuffer(q, "RETURNS %s%s",
 					  (proretset[0] == 't') ? "SETOF " : "",
-					  rettypename,
-					  asPart->data,
-					  fmtId(lanname));
-
+					  rettypename);
 	free(rettypename);
 
+	appendPQExpBuffer(q, "\n    LANGUAGE %s", fmtId(lanname));
 	if (provolatile[0] != PROVOLATILE_VOLATILE)
 	{
 		if (provolatile[0] == PROVOLATILE_IMMUTABLE)
@@ -6850,7 +6848,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 			appendStringLiteralAH(q, pos, fout);
 	}
 
-	appendPQExpBuffer(q, ";\n");
+	appendPQExpBuffer(q, "\n    %s;\n", asPart->data);
 
 	ArchiveEntry(fout, finfo->dobj.catId, finfo->dobj.dumpId,
 				 funcsig_tag,
