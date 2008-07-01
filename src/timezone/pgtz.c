@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.59 2008/02/16 21:16:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.60 2008/07/01 03:40:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,7 +198,7 @@ scan_directory_ci(const char *dirname, const char *fname, int fnamelen,
 #define T_WEEK	((time_t) (60*60*24*7))
 #define T_MONTH ((time_t) (60*60*24*31))
 
-#define MAX_TEST_TIMES (52*100) /* 100 years, or 1904..2004 */
+#define MAX_TEST_TIMES (52*100) /* 100 years */
 
 struct tztry
 {
@@ -367,6 +367,7 @@ identify_system_timezone(void)
 	time_t		t;
 	struct tztry tt;
 	struct tm  *tm;
+	int			thisyear;
 	int			bestscore;
 	char		tmptzdir[MAXPGPATH];
 	int			std_ofs;
@@ -379,11 +380,14 @@ identify_system_timezone(void)
 
 	/*
 	 * Set up the list of dates to be probed to see how well our timezone
-	 * matches the system zone.  We first probe January and July of 2004; this
-	 * serves to quickly eliminate the vast majority of the TZ database
-	 * entries.  If those dates match, we probe every week from 2004 backwards
-	 * to late 1904.  (Weekly resolution is good enough to identify DST
-	 * transition rules, since everybody switches on Sundays.)	The further
+	 * matches the system zone.  We first probe January and July of the
+	 * current year; this serves to quickly eliminate the vast majority of the
+	 * TZ database entries.  If those dates match, we probe every week for 100
+	 * years backwards from the current July.  (Weekly resolution is good
+	 * enough to identify DST transition rules, since everybody switches on
+	 * Sundays.)  This is sufficient to cover most of the Unix time_t range,
+	 * and we don't want to look further than that since many systems won't
+	 * have sane TZ behavior further back anyway.  The further
 	 * back the zone matches, the better we score it.  This may seem like a
 	 * rather random way of doing things, but experience has shown that
 	 * system-supplied timezone definitions are likely to have DST behavior
@@ -393,9 +397,29 @@ identify_system_timezone(void)
 	 * (Note: we probe Thursdays, not Sundays, to avoid triggering
 	 * DST-transition bugs in localtime itself.)
 	 */
+	tnow = time(NULL);
+	tm = localtime(&tnow);
+	if (!tm)
+		return NULL;			/* give up if localtime is broken... */
+	thisyear = tm->tm_year + 1900;
+
+	t = build_time_t(thisyear, 1, 15);
+	/*
+	 * Round back to GMT midnight Thursday.  This depends on the knowledge
+	 * that the time_t origin is Thu Jan 01 1970.  (With a different origin
+	 * we'd be probing some other day of the week, but it wouldn't matter
+	 * anyway unless localtime() had DST-transition bugs.)
+	 */
+	t -= (t % T_WEEK);
+
 	tt.n_test_times = 0;
-	tt.test_times[tt.n_test_times++] = build_time_t(2004, 1, 15);
-	tt.test_times[tt.n_test_times++] = t = build_time_t(2004, 7, 15);
+	tt.test_times[tt.n_test_times++] = t;
+
+	t = build_time_t(thisyear, 7, 15);
+	t -= (t % T_WEEK);
+
+	tt.test_times[tt.n_test_times++] = t;
+
 	while (tt.n_test_times < MAX_TEST_TIMES)
 	{
 		t -= T_WEEK;
@@ -410,7 +434,12 @@ identify_system_timezone(void)
 							 &tt,
 							 &bestscore, resultbuf);
 	if (bestscore > 0)
+	{
+		/* Ignore zic's rather silly "Factory" time zone; use GMT instead */
+		if (strcmp(resultbuf, "Factory") == 0)
+			return NULL;
 		return resultbuf;
+	}
 
 	/*
 	 * Couldn't find a match in the database, so next we try constructed zone
