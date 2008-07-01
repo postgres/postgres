@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.72 2008/06/20 00:24:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.73 2008/07/01 02:09:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,6 +355,33 @@ CleanupInvalidationState(int status, Datum arg)
 	segP->lastBackend = i;
 
 	LWLockRelease(SInvalWriteLock);
+}
+
+/*
+ * BackendIdIsActive
+ *		Test if the given backend ID is currently assigned to a process.
+ */
+bool
+BackendIdIsActive(int backendID)
+{
+	bool		result;
+	SISeg	   *segP = shmInvalBuffer;
+
+	/* Need to lock out additions/removals of backends */
+	LWLockAcquire(SInvalWriteLock, LW_SHARED);
+
+	if (backendID > 0 && backendID <= segP->lastBackend)
+	{
+		ProcState  *stateP = &segP->procState[backendID - 1];
+
+		result = (stateP->procPid != 0);
+	}
+	else
+		result = false;
+
+	LWLockRelease(SInvalWriteLock);
+
+	return result;
 }
 
 /*

@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.79 2008/06/05 15:47:32 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.80 2008/07/01 02:09:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,7 @@
 #include "access/heapam.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_autovacuum.h"
@@ -90,7 +91,7 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
-#include "storage/sinval.h"
+#include "storage/sinvaladt.h"
 #include "tcop/tcopprot.h"
 #include "utils/flatfiles.h"
 #include "utils/fmgroids.h"
@@ -275,10 +276,6 @@ static void autovac_balance_cost(void);
 static void do_autovacuum(void);
 static void FreeWorkerInfo(int code, Datum arg);
 
-static void relation_check_autovac(Oid relid, Form_pg_class classForm,
-					Form_pg_autovacuum avForm, PgStat_StatTabEntry *tabentry,
-					   List **table_oids, List **table_toast_list,
-					   List **toast_oids);
 static autovac_table *table_recheck_autovac(Oid relid);
 static void relation_needs_vacanalyze(Oid relid, Form_pg_autovacuum avForm,
 						  Form_pg_class classForm,
@@ -1912,17 +1909,14 @@ do_autovacuum(void)
 		PgStat_StatTabEntry *tabentry;
 		HeapTuple	avTup;
 		Oid			relid;
+		bool		dovacuum;
+		bool		doanalyze;
+		bool		wraparound;
+		int			backendID;
 
 		/* Consider only regular and toast tables. */
 		if (classForm->relkind != RELKIND_RELATION &&
 			classForm->relkind != RELKIND_TOASTVALUE)
-			continue;
-
-		/*
-		 * Skip temp tables (i.e. those in temp namespaces).  We cannot safely
-		 * process other backends' temp tables.
-		 */
-		if (isAnyTempNamespace(classForm->relnamespace))
 			continue;
 
 		relid = HeapTupleGetOid(tuple);
@@ -1936,8 +1930,76 @@ do_autovacuum(void)
 		tabentry = get_pgstat_tabentry_relid(relid, classForm->relisshared,
 											 shared, dbentry);
 
-		relation_check_autovac(relid, classForm, avForm, tabentry,
-							   &table_oids, &table_toast_list, &toast_oids);
+		/* Check if it needs vacuum or analyze */
+		relation_needs_vacanalyze(relid, avForm, classForm, tabentry,
+								  &dovacuum, &doanalyze, &wraparound);
+
+		/*
+		 * Check if it is a temp table (presumably, of some other backend's).
+		 * We cannot safely process other backends' temp tables.
+		 */
+		backendID = GetTempNamespaceBackendId(classForm->relnamespace);
+
+		if (backendID > 0)
+		{
+			/* We just ignore it if the owning backend is still active */
+			if (backendID == MyBackendId || !BackendIdIsActive(backendID))
+			{
+				/*
+				 * We found an orphan temp table (which was probably left
+				 * behind by a crashed backend).  If it's so old as to need
+				 * vacuum for wraparound, forcibly drop it.  Otherwise just
+				 * log a complaint.
+				 */
+				if (wraparound && classForm->relkind == RELKIND_RELATION)
+				{
+					ObjectAddress object;
+
+					ereport(LOG,
+							(errmsg("autovacuum: dropping orphan temp table \"%s\".\"%s\" in database \"%s\"",
+									get_namespace_name(classForm->relnamespace),
+									NameStr(classForm->relname),
+									get_database_name(MyDatabaseId))));
+					object.classId = RelationRelationId;
+					object.objectId = relid;
+					object.objectSubId = 0;
+					performDeletion(&object, DROP_CASCADE);
+				}
+				else
+				{
+					ereport(LOG,
+							(errmsg("autovacuum: found orphan temp table \"%s\".\"%s\" in database \"%s\"",
+									get_namespace_name(classForm->relnamespace),
+									NameStr(classForm->relname),
+									get_database_name(MyDatabaseId))));
+				}
+			}
+		}
+		else if (classForm->relkind == RELKIND_RELATION)
+		{
+			/* Plain relations that need work are added to table_oids */
+			if (dovacuum || doanalyze)
+				table_oids = lappend_oid(table_oids, relid);
+			else if (OidIsValid(classForm->reltoastrelid))
+			{
+				/*
+				 * If it doesn't appear to need vacuuming, but it has a toast
+				 * table, remember the association to revisit below.
+				 */
+				av_relation *rel = palloc(sizeof(av_relation));
+
+				rel->ar_relid = relid;
+				rel->ar_toastrelid = classForm->reltoastrelid;
+
+				table_toast_list = lappend(table_toast_list, rel);
+			}
+		}
+		else
+		{
+			/* TOAST relations that need vacuum are added to toast_oids */
+			if (dovacuum)
+				toast_oids = lappend_oid(toast_oids, relid);
+		}
 
 		if (HeapTupleIsValid(avTup))
 			heap_freetuple(avTup);
@@ -2229,56 +2291,6 @@ get_pgstat_tabentry_relid(Oid relid, bool isshared, PgStat_StatDBEntry *shared,
 							   HASH_FIND, NULL);
 
 	return tabentry;
-}
-
-/*
- * relation_check_autovac
- *
- * For a given relation (either a plain table or TOAST table), check whether it
- * needs vacuum or analyze.
- *
- * Plain tables that need either are added to the table_list.  TOAST tables
- * that need vacuum are added to toast_list.  Plain tables that don't need
- * either but which have a TOAST table are added, as a struct, to
- * table_toast_list.  The latter is to allow appending the OIDs of the plain
- * tables whose TOAST table needs vacuuming into the plain tables list, which
- * allows us to substantially reduce the number of "rechecks" that we need to
- * do later on.
- */
-static void
-relation_check_autovac(Oid relid, Form_pg_class classForm,
-					Form_pg_autovacuum avForm, PgStat_StatTabEntry *tabentry,
-					   List **table_oids, List **table_toast_list,
-					   List **toast_oids)
-{
-	bool		dovacuum;
-	bool		doanalyze;
-	bool		dummy;
-
-	relation_needs_vacanalyze(relid, avForm, classForm, tabentry,
-							  &dovacuum, &doanalyze, &dummy);
-
-	if (classForm->relkind == RELKIND_TOASTVALUE)
-	{
-		if (dovacuum)
-			*toast_oids = lappend_oid(*toast_oids, relid);
-	}
-	else
-	{
-		Assert(classForm->relkind == RELKIND_RELATION);
-
-		if (dovacuum || doanalyze)
-			*table_oids = lappend_oid(*table_oids, relid);
-		else if (OidIsValid(classForm->reltoastrelid))
-		{
-			av_relation *rel = palloc(sizeof(av_relation));
-
-			rel->ar_relid = relid;
-			rel->ar_toastrelid = classForm->reltoastrelid;
-
-			*table_toast_list = lappend(*table_toast_list, rel);
-		}
-	}
 }
 
 /*
