@@ -16,7 +16,7 @@ EXECUTE q1;
 SELECT name, statement, parameter_types FROM pg_prepared_statements;
  name |          statement           | parameter_types 
 ------+------------------------------+-----------------
- q1   | PREPARE q1 AS SELECT 1 AS a; | {}             
+ q1   | PREPARE q1 AS SELECT 1 AS a; | {}
 (1 row)
 
 -- should fail
@@ -35,8 +35,8 @@ PREPARE q2 AS SELECT 2 AS b;
 SELECT name, statement, parameter_types FROM pg_prepared_statements;
  name |          statement           | parameter_types 
 ------+------------------------------+-----------------
- q1   | PREPARE q1 AS SELECT 2;      | {}             
- q2   | PREPARE q2 AS SELECT 2 AS b; | {}             
+ q1   | PREPARE q1 AS SELECT 2;      | {}
+ q2   | PREPARE q2 AS SELECT 2 AS b; | {}
 (2 rows)
 
 -- sql92 syntax
@@ -44,7 +44,7 @@ DEALLOCATE PREPARE q1;
 SELECT name, statement, parameter_types FROM pg_prepared_statements;
  name |          statement           | parameter_types 
 ------+------------------------------+-----------------
- q2   | PREPARE q2 AS SELECT 2 AS b; | {}             
+ q2   | PREPARE q2 AS SELECT 2 AS b; | {}
 (1 row)
 
 DEALLOCATE PREPARE q2;
@@ -61,7 +61,7 @@ PREPARE q2(text) AS
 EXECUTE q2('regression');
   datname   | datistemplate | datallowconn 
 ------------+---------------+--------------
- regression | f             | t           
+ regression | f             | t
 (1 row)
 
 PREPARE q3(text, int, float, boolean, oid, smallint) AS
@@ -71,35 +71,35 @@ PREPARE q3(text, int, float, boolean, oid, smallint) AS
 EXECUTE q3('AAAAxx', 5::smallint, 10.5::float, false, 500::oid, 4::bigint);
  unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
 ---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
-       2 |    2716 |   0 |    2 |   2 |      2 |       2 |        2 |           2 |         2 |        2 |   4 |    5 | CAAAAA   | MAEAAA   | AAAAxx 
-     102 |     612 |   0 |    2 |   2 |      2 |       2 |      102 |         102 |       102 |      102 |   4 |    5 | YDAAAA   | OXAAAA   | AAAAxx 
-     802 |    2908 |   0 |    2 |   2 |      2 |       2 |      802 |         802 |       802 |      802 |   4 |    5 | WEAAAA   | WHEAAA   | AAAAxx 
-     902 |    1104 |   0 |    2 |   2 |      2 |       2 |      902 |         902 |       902 |      902 |   4 |    5 | SIAAAA   | MQBAAA   | AAAAxx 
-    1002 |    2580 |   0 |    2 |   2 |      2 |       2 |        2 |        1002 |      1002 |     1002 |   4 |    5 | OMAAAA   | GVDAAA   | AAAAxx 
-    1602 |    8148 |   0 |    2 |   2 |      2 |       2 |      602 |        1602 |      1602 |     1602 |   4 |    5 | QJAAAA   | KBMAAA   | AAAAxx 
-    1702 |    7940 |   0 |    2 |   2 |      2 |       2 |      702 |        1702 |      1702 |     1702 |   4 |    5 | MNAAAA   | KTLAAA   | AAAAxx 
-    2102 |    6184 |   0 |    2 |   2 |      2 |       2 |      102 |         102 |      2102 |     2102 |   4 |    5 | WCAAAA   | WDJAAA   | AAAAxx 
-    2202 |    8028 |   0 |    2 |   2 |      2 |       2 |      202 |         202 |      2202 |     2202 |   4 |    5 | SGAAAA   | UWLAAA   | AAAAxx 
-    2302 |    7112 |   0 |    2 |   2 |      2 |       2 |      302 |         302 |      2302 |     2302 |   4 |    5 | OKAAAA   | ONKAAA   | AAAAxx 
-    2902 |    6816 |   0 |    2 |   2 |      2 |       2 |      902 |         902 |      2902 |     2902 |   4 |    5 | QHAAAA   | ECKAAA   | AAAAxx 
-    3202 |    7128 |   0 |    2 |   2 |      2 |       2 |      202 |        1202 |      3202 |     3202 |   4 |    5 | ETAAAA   | EOKAAA   | AAAAxx 
-    3902 |    9224 |   0 |    2 |   2 |      2 |       2 |      902 |        1902 |      3902 |     3902 |   4 |    5 | CUAAAA   | UQNAAA   | AAAAxx 
-    4102 |    7676 |   0 |    2 |   2 |      2 |       2 |      102 |         102 |      4102 |     4102 |   4 |    5 | UBAAAA   | GJLAAA   | AAAAxx 
-    4202 |    6628 |   0 |    2 |   2 |      2 |       2 |      202 |         202 |      4202 |     4202 |   4 |    5 | QFAAAA   | YUJAAA   | AAAAxx 
-    4502 |     412 |   0 |    2 |   2 |      2 |       2 |      502 |         502 |      4502 |     4502 |   4 |    5 | ERAAAA   | WPAAAA   | AAAAxx 
-    4702 |    2520 |   0 |    2 |   2 |      2 |       2 |      702 |         702 |      4702 |     4702 |   4 |    5 | WYAAAA   | YSDAAA   | AAAAxx 
-    4902 |    1600 |   0 |    2 |   2 |      2 |       2 |      902 |         902 |      4902 |     4902 |   4 |    5 | OGAAAA   | OJCAAA   | AAAAxx 
-    5602 |    8796 |   0 |    2 |   2 |      2 |       2 |      602 |        1602 |       602 |     5602 |   4 |    5 | MHAAAA   | IANAAA   | AAAAxx 
-    6002 |    8932 |   0 |    2 |   2 |      2 |       2 |        2 |           2 |      1002 |     6002 |   4 |    5 | WWAAAA   | OFNAAA   | AAAAxx 
-    6402 |    3808 |   0 |    2 |   2 |      2 |       2 |      402 |         402 |      1402 |     6402 |   4 |    5 | GMAAAA   | MQFAAA   | AAAAxx 
-    7602 |    1040 |   0 |    2 |   2 |      2 |       2 |      602 |        1602 |      2602 |     7602 |   4 |    5 | KGAAAA   | AOBAAA   | AAAAxx 
-    7802 |    7508 |   0 |    2 |   2 |      2 |       2 |      802 |        1802 |      2802 |     7802 |   4 |    5 | COAAAA   | UCLAAA   | AAAAxx 
-    8002 |    9980 |   0 |    2 |   2 |      2 |       2 |        2 |           2 |      3002 |     8002 |   4 |    5 | UVAAAA   | WTOAAA   | AAAAxx 
-    8302 |    7800 |   0 |    2 |   2 |      2 |       2 |      302 |         302 |      3302 |     8302 |   4 |    5 | IHAAAA   | AOLAAA   | AAAAxx 
-    8402 |    5708 |   0 |    2 |   2 |      2 |       2 |      402 |         402 |      3402 |     8402 |   4 |    5 | ELAAAA   | OLIAAA   | AAAAxx 
-    8602 |    5440 |   0 |    2 |   2 |      2 |       2 |      602 |         602 |      3602 |     8602 |   4 |    5 | WSAAAA   | GBIAAA   | AAAAxx 
-    9502 |    1812 |   0 |    2 |   2 |      2 |       2 |      502 |        1502 |      4502 |     9502 |   4 |    5 | MBAAAA   | SRCAAA   | AAAAxx 
-    9602 |    9972 |   0 |    2 |   2 |      2 |       2 |      602 |        1602 |      4602 |     9602 |   4 |    5 | IFAAAA   | OTOAAA   | AAAAxx 
+       2 |    2716 |   0 |    2 |   2 |      2 |       2 |        2 |           2 |         2 |        2 |   4 |    5 | CAAAAA   | MAEAAA   | AAAAxx
+     102 |     612 |   0 |    2 |   2 |      2 |       2 |      102 |         102 |       102 |      102 |   4 |    5 | YDAAAA   | OXAAAA   | AAAAxx
+     802 |    2908 |   0 |    2 |   2 |      2 |       2 |      802 |         802 |       802 |      802 |   4 |    5 | WEAAAA   | WHEAAA   | AAAAxx
+     902 |    1104 |   0 |    2 |   2 |      2 |       2 |      902 |         902 |       902 |      902 |   4 |    5 | SIAAAA   | MQBAAA   | AAAAxx
+    1002 |    2580 |   0 |    2 |   2 |      2 |       2 |        2 |        1002 |      1002 |     1002 |   4 |    5 | OMAAAA   | GVDAAA   | AAAAxx
+    1602 |    8148 |   0 |    2 |   2 |      2 |       2 |      602 |        1602 |      1602 |     1602 |   4 |    5 | QJAAAA   | KBMAAA   | AAAAxx
+    1702 |    7940 |   0 |    2 |   2 |      2 |       2 |      702 |        1702 |      1702 |     1702 |   4 |    5 | MNAAAA   | KTLAAA   | AAAAxx
+    2102 |    6184 |   0 |    2 |   2 |      2 |       2 |      102 |         102 |      2102 |     2102 |   4 |    5 | WCAAAA   | WDJAAA   | AAAAxx
+    2202 |    8028 |   0 |    2 |   2 |      2 |       2 |      202 |         202 |      2202 |     2202 |   4 |    5 | SGAAAA   | UWLAAA   | AAAAxx
+    2302 |    7112 |   0 |    2 |   2 |      2 |       2 |      302 |         302 |      2302 |     2302 |   4 |    5 | OKAAAA   | ONKAAA   | AAAAxx
+    2902 |    6816 |   0 |    2 |   2 |      2 |       2 |      902 |         902 |      2902 |     2902 |   4 |    5 | QHAAAA   | ECKAAA   | AAAAxx
+    3202 |    7128 |   0 |    2 |   2 |      2 |       2 |      202 |        1202 |      3202 |     3202 |   4 |    5 | ETAAAA   | EOKAAA   | AAAAxx
+    3902 |    9224 |   0 |    2 |   2 |      2 |       2 |      902 |        1902 |      3902 |     3902 |   4 |    5 | CUAAAA   | UQNAAA   | AAAAxx
+    4102 |    7676 |   0 |    2 |   2 |      2 |       2 |      102 |         102 |      4102 |     4102 |   4 |    5 | UBAAAA   | GJLAAA   | AAAAxx
+    4202 |    6628 |   0 |    2 |   2 |      2 |       2 |      202 |         202 |      4202 |     4202 |   4 |    5 | QFAAAA   | YUJAAA   | AAAAxx
+    4502 |     412 |   0 |    2 |   2 |      2 |       2 |      502 |         502 |      4502 |     4502 |   4 |    5 | ERAAAA   | WPAAAA   | AAAAxx
+    4702 |    2520 |   0 |    2 |   2 |      2 |       2 |      702 |         702 |      4702 |     4702 |   4 |    5 | WYAAAA   | YSDAAA   | AAAAxx
+    4902 |    1600 |   0 |    2 |   2 |      2 |       2 |      902 |         902 |      4902 |     4902 |   4 |    5 | OGAAAA   | OJCAAA   | AAAAxx
+    5602 |    8796 |   0 |    2 |   2 |      2 |       2 |      602 |        1602 |       602 |     5602 |   4 |    5 | MHAAAA   | IANAAA   | AAAAxx
+    6002 |    8932 |   0 |    2 |   2 |      2 |       2 |        2 |           2 |      1002 |     6002 |   4 |    5 | WWAAAA   | OFNAAA   | AAAAxx
+    6402 |    3808 |   0 |    2 |   2 |      2 |       2 |      402 |         402 |      1402 |     6402 |   4 |    5 | GMAAAA   | MQFAAA   | AAAAxx
+    7602 |    1040 |   0 |    2 |   2 |      2 |       2 |      602 |        1602 |      2602 |     7602 |   4 |    5 | KGAAAA   | AOBAAA   | AAAAxx
+    7802 |    7508 |   0 |    2 |   2 |      2 |       2 |      802 |        1802 |      2802 |     7802 |   4 |    5 | COAAAA   | UCLAAA   | AAAAxx
+    8002 |    9980 |   0 |    2 |   2 |      2 |       2 |        2 |           2 |      3002 |     8002 |   4 |    5 | UVAAAA   | WTOAAA   | AAAAxx
+    8302 |    7800 |   0 |    2 |   2 |      2 |       2 |      302 |         302 |      3302 |     8302 |   4 |    5 | IHAAAA   | AOLAAA   | AAAAxx
+    8402 |    5708 |   0 |    2 |   2 |      2 |       2 |      402 |         402 |      3402 |     8402 |   4 |    5 | ELAAAA   | OLIAAA   | AAAAxx
+    8602 |    5440 |   0 |    2 |   2 |      2 |       2 |      602 |         602 |      3602 |     8602 |   4 |    5 | WSAAAA   | GBIAAA   | AAAAxx
+    9502 |    1812 |   0 |    2 |   2 |      2 |       2 |      502 |        1502 |      4502 |     9502 |   4 |    5 | MBAAAA   | SRCAAA   | AAAAxx
+    9602 |    9972 |   0 |    2 |   2 |      2 |       2 |      602 |        1602 |      4602 |     9602 |   4 |    5 | IFAAAA   | OTOAAA   | AAAAxx
 (29 rows)
 
 -- too few params
@@ -127,22 +127,22 @@ CREATE TEMPORARY TABLE q5_prep_results AS EXECUTE q5(200, 'DTAAAA');
 SELECT * FROM q5_prep_results;
  unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
 ---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
-     200 |    9441 |   0 |    0 |   0 |      0 |       0 |      200 |         200 |       200 |      200 |   0 |    1 | SHAAAA   | DZNAAA   | HHHHxx 
-     497 |    9092 |   1 |    1 |   7 |     17 |      97 |      497 |         497 |       497 |      497 | 194 |  195 | DTAAAA   | SLNAAA   | AAAAxx 
-    1173 |    6699 |   1 |    1 |   3 |     13 |      73 |      173 |        1173 |      1173 |     1173 | 146 |  147 | DTAAAA   | RXJAAA   | VVVVxx 
-    1849 |    8143 |   1 |    1 |   9 |      9 |      49 |      849 |        1849 |      1849 |     1849 |  98 |   99 | DTAAAA   | FBMAAA   | VVVVxx 
-    2525 |      64 |   1 |    1 |   5 |      5 |      25 |      525 |         525 |      2525 |     2525 |  50 |   51 | DTAAAA   | MCAAAA   | AAAAxx 
-    3201 |    7309 |   1 |    1 |   1 |      1 |       1 |      201 |        1201 |      3201 |     3201 |   2 |    3 | DTAAAA   | DVKAAA   | HHHHxx 
-    3877 |    4060 |   1 |    1 |   7 |     17 |      77 |      877 |        1877 |      3877 |     3877 | 154 |  155 | DTAAAA   | EAGAAA   | AAAAxx 
-    4553 |    4113 |   1 |    1 |   3 |     13 |      53 |      553 |         553 |      4553 |     4553 | 106 |  107 | DTAAAA   | FCGAAA   | HHHHxx 
-    5229 |    6407 |   1 |    1 |   9 |      9 |      29 |      229 |        1229 |       229 |     5229 |  58 |   59 | DTAAAA   | LMJAAA   | VVVVxx 
-    5905 |    9537 |   1 |    1 |   5 |      5 |       5 |      905 |        1905 |       905 |     5905 |  10 |   11 | DTAAAA   | VCOAAA   | HHHHxx 
-    6581 |    4686 |   1 |    1 |   1 |      1 |      81 |      581 |         581 |      1581 |     6581 | 162 |  163 | DTAAAA   | GYGAAA   | OOOOxx 
-    7257 |    1895 |   1 |    1 |   7 |     17 |      57 |      257 |        1257 |      2257 |     7257 | 114 |  115 | DTAAAA   | XUCAAA   | VVVVxx 
-    7933 |    4514 |   1 |    1 |   3 |     13 |      33 |      933 |        1933 |      2933 |     7933 |  66 |   67 | DTAAAA   | QRGAAA   | OOOOxx 
-    8609 |    5918 |   1 |    1 |   9 |      9 |       9 |      609 |         609 |      3609 |     8609 |  18 |   19 | DTAAAA   | QTIAAA   | OOOOxx 
-    9285 |    8469 |   1 |    1 |   5 |      5 |      85 |      285 |        1285 |      4285 |     9285 | 170 |  171 | DTAAAA   | TNMAAA   | HHHHxx 
-    9961 |    2058 |   1 |    1 |   1 |      1 |      61 |      961 |        1961 |      4961 |     9961 | 122 |  123 | DTAAAA   | EBDAAA   | OOOOxx 
+     200 |    9441 |   0 |    0 |   0 |      0 |       0 |      200 |         200 |       200 |      200 |   0 |    1 | SHAAAA   | DZNAAA   | HHHHxx
+     497 |    9092 |   1 |    1 |   7 |     17 |      97 |      497 |         497 |       497 |      497 | 194 |  195 | DTAAAA   | SLNAAA   | AAAAxx
+    1173 |    6699 |   1 |    1 |   3 |     13 |      73 |      173 |        1173 |      1173 |     1173 | 146 |  147 | DTAAAA   | RXJAAA   | VVVVxx
+    1849 |    8143 |   1 |    1 |   9 |      9 |      49 |      849 |        1849 |      1849 |     1849 |  98 |   99 | DTAAAA   | FBMAAA   | VVVVxx
+    2525 |      64 |   1 |    1 |   5 |      5 |      25 |      525 |         525 |      2525 |     2525 |  50 |   51 | DTAAAA   | MCAAAA   | AAAAxx
+    3201 |    7309 |   1 |    1 |   1 |      1 |       1 |      201 |        1201 |      3201 |     3201 |   2 |    3 | DTAAAA   | DVKAAA   | HHHHxx
+    3877 |    4060 |   1 |    1 |   7 |     17 |      77 |      877 |        1877 |      3877 |     3877 | 154 |  155 | DTAAAA   | EAGAAA   | AAAAxx
+    4553 |    4113 |   1 |    1 |   3 |     13 |      53 |      553 |         553 |      4553 |     4553 | 106 |  107 | DTAAAA   | FCGAAA   | HHHHxx
+    5229 |    6407 |   1 |    1 |   9 |      9 |      29 |      229 |        1229 |       229 |     5229 |  58 |   59 | DTAAAA   | LMJAAA   | VVVVxx
+    5905 |    9537 |   1 |    1 |   5 |      5 |       5 |      905 |        1905 |       905 |     5905 |  10 |   11 | DTAAAA   | VCOAAA   | HHHHxx
+    6581 |    4686 |   1 |    1 |   1 |      1 |      81 |      581 |         581 |      1581 |     6581 | 162 |  163 | DTAAAA   | GYGAAA   | OOOOxx
+    7257 |    1895 |   1 |    1 |   7 |     17 |      57 |      257 |        1257 |      2257 |     7257 | 114 |  115 | DTAAAA   | XUCAAA   | VVVVxx
+    7933 |    4514 |   1 |    1 |   3 |     13 |      33 |      933 |        1933 |      2933 |     7933 |  66 |   67 | DTAAAA   | QRGAAA   | OOOOxx
+    8609 |    5918 |   1 |    1 |   9 |      9 |       9 |      609 |         609 |      3609 |     8609 |  18 |   19 | DTAAAA   | QTIAAA   | OOOOxx
+    9285 |    8469 |   1 |    1 |   5 |      5 |      85 |      285 |        1285 |      4285 |     9285 | 170 |  171 | DTAAAA   | TNMAAA   | HHHHxx
+    9961 |    2058 |   1 |    1 |   1 |      1 |      61 |      961 |        1961 |      4961 |     9961 | 122 |  123 | DTAAAA   | EBDAAA   | OOOOxx
 (16 rows)
 
 -- unknown or unspecified parameter types: should succeed
@@ -154,20 +154,20 @@ SELECT name, statement, parameter_types FROM pg_prepared_statements
     ORDER BY name;
  name |                              statement                              |                    parameter_types                     
 ------+---------------------------------------------------------------------+--------------------------------------------------------
- q2   | PREPARE q2(text) AS                                                 | {text}                                                
-      :         SELECT datname, datistemplate, datallowconn                                                                         
-      :         FROM pg_database WHERE datname = $1;                                                                                
+ q2   | PREPARE q2(text) AS                                                 | {text}
+      :         SELECT datname, datistemplate, datallowconn                   
+      :         FROM pg_database WHERE datname = $1;                          
  q3   | PREPARE q3(text, int, float, boolean, oid, smallint) AS             | {text,integer,"double precision",boolean,oid,smallint}
-      :         SELECT * FROM tenk1 WHERE string4 = $1 AND (four = $2 OR                                                            
-      :         ten = $3::bigint OR true = $4 OR oid = $5 OR odd = $6::int)                                                         
-      :         ORDER BY unique1;                                                                                                   
- q5   | PREPARE q5(int, text) AS                                            | {integer,text}                                        
-      :         SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2                                                             
-      :         ORDER BY unique1;                                                                                                   
- q6   | PREPARE q6 AS                                                       | {integer,name}                                        
-      :     SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;                                                               
- q7   | PREPARE q7(unknown) AS                                              | {path}                                                
-      :     SELECT * FROM road WHERE thepath = $1;                                                                                  
+      :         SELECT * FROM tenk1 WHERE string4 = $1 AND (four = $2 OR      
+      :         ten = $3::bigint OR true = $4 OR oid = $5 OR odd = $6::int)   
+      :         ORDER BY unique1;                                             
+ q5   | PREPARE q5(int, text) AS                                            | {integer,text}
+      :         SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2       
+      :         ORDER BY unique1;                                             
+ q6   | PREPARE q6 AS                                                       | {integer,name}
+      :     SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;         
+ q7   | PREPARE q7(unknown) AS                                              | {path}
+      :     SELECT * FROM road WHERE thepath = $1;                            
 (5 rows)
 
 -- test DEALLOCATE ALL;
