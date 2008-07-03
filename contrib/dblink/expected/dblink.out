@@ -125,9 +125,8 @@ WHERE t.a > 7;
 
 -- open a cursor with bad SQL and fail_on_error set to false
 SELECT dblink_open('rmt_foo_cursor','SELECT * FROM foobar',false);
-NOTICE:  sql error
-DETAIL:  ERROR:  relation "foobar" does not exist
-
+NOTICE:  relation "foobar" does not exist
+CONTEXT:  Error occurred on dblink connection named "unnamed": could not open cursor.
  dblink_open 
 -------------
  ERROR
@@ -194,9 +193,8 @@ FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 -- intentionally botch a fetch
 SELECT *
 FROM dblink_fetch('rmt_foobar_cursor',4,false) AS t(a int, b text, c text[]);
-NOTICE:  sql error
-DETAIL:  ERROR:  cursor "rmt_foobar_cursor" does not exist
-
+NOTICE:  cursor "rmt_foobar_cursor" does not exist
+CONTEXT:  Error occurred on dblink connection named "unnamed": could not fetch from cursor.
  a | b | c 
 ---+---+---
 (0 rows)
@@ -210,9 +208,8 @@ SELECT dblink_exec('ABORT');
 
 -- close the wrong cursor
 SELECT dblink_close('rmt_foobar_cursor',false);
-NOTICE:  sql error
-DETAIL:  ERROR:  cursor "rmt_foobar_cursor" does not exist
-
+NOTICE:  cursor "rmt_foobar_cursor" does not exist
+CONTEXT:  Error occurred on dblink connection named "unnamed": could not close cursor.
  dblink_close 
 --------------
  ERROR
@@ -221,15 +218,13 @@ DETAIL:  ERROR:  cursor "rmt_foobar_cursor" does not exist
 -- should generate 'cursor "rmt_foo_cursor" not found' error
 SELECT *
 FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
-ERROR:  sql error
-DETAIL:  ERROR:  cursor "rmt_foo_cursor" does not exist
-
+ERROR:  cursor "rmt_foo_cursor" does not exist
+CONTEXT:  Error occurred on dblink connection named "unnamed": could not fetch from cursor.
 -- this time, 'cursor "rmt_foo_cursor" not found' as a notice
 SELECT *
 FROM dblink_fetch('rmt_foo_cursor',4,false) AS t(a int, b text, c text[]);
-NOTICE:  sql error
-DETAIL:  ERROR:  cursor "rmt_foo_cursor" does not exist
-
+NOTICE:  cursor "rmt_foo_cursor" does not exist
+CONTEXT:  Error occurred on dblink connection named "unnamed": could not fetch from cursor.
  a | b | c 
 ---+---+---
 (0 rows)
@@ -291,9 +286,8 @@ FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[]);
 -- bad remote select
 SELECT *
 FROM dblink('SELECT * FROM foobar',false) AS t(a int, b text, c text[]);
-NOTICE:  sql error
-DETAIL:  ERROR:  relation "foobar" does not exist
-
+NOTICE:  relation "foobar" does not exist
+CONTEXT:  Error occurred on dblink connection named "unnamed": could not execute query.
  a | b | c 
 ---+---+---
 (0 rows)
@@ -316,9 +310,8 @@ WHERE a = 11;
 
 -- botch a change to some other data
 SELECT dblink_exec('UPDATE foobar SET f3[2] = ''b99'' WHERE f1 = 11',false);
-NOTICE:  sql error
-DETAIL:  ERROR:  relation "foobar" does not exist
-
+NOTICE:  relation "foobar" does not exist
+CONTEXT:  Error occurred on dblink connection named "unnamed": could not execute command.
  dblink_exec 
 -------------
  ERROR
@@ -378,9 +371,8 @@ WHERE t.a > 7;
 SELECT *
 FROM dblink('myconn','SELECT * FROM foobar',false) AS t(a int, b text, c text[])
 WHERE t.a > 7;
-NOTICE:  sql error
-DETAIL:  ERROR:  relation "foobar" does not exist
-
+NOTICE:  relation "foobar" does not exist
+CONTEXT:  Error occurred on dblink connection named "unnamed": could not execute query.
  a | b | c 
 ---+---+---
 (0 rows)
@@ -416,9 +408,8 @@ SELECT dblink_disconnect('myconn2');
 
 -- open a cursor incorrectly
 SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foobar',false);
-NOTICE:  sql error
-DETAIL:  ERROR:  relation "foobar" does not exist
-
+NOTICE:  relation "foobar" does not exist
+CONTEXT:  Error occurred on dblink connection named "myconn": could not open cursor.
  dblink_open 
 -------------
  ERROR
@@ -503,9 +494,8 @@ SELECT dblink_close('myconn','rmt_foo_cursor');
 
 -- this should fail because there is no open transaction
 SELECT dblink_exec('myconn','DECLARE xact_test CURSOR FOR SELECT * FROM foo');
-ERROR:  sql error
-DETAIL:  ERROR:  DECLARE CURSOR can only be used in transaction blocks
-
+ERROR:  DECLARE CURSOR can only be used in transaction blocks
+CONTEXT:  Error occurred on dblink connection named "unnamed": could not execute command.
 -- reset remote transaction state
 SELECT dblink_exec('myconn','ABORT');
  dblink_exec 
@@ -554,9 +544,8 @@ FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 -- fetch some data incorrectly
 SELECT *
 FROM dblink_fetch('myconn','rmt_foobar_cursor',4,false) AS t(a int, b text, c text[]);
-NOTICE:  sql error
-DETAIL:  ERROR:  cursor "rmt_foobar_cursor" does not exist
-
+NOTICE:  cursor "rmt_foobar_cursor" does not exist
+CONTEXT:  Error occurred on dblink connection named "myconn": could not fetch from cursor.
  a | b | c 
 ---+---+---
 (0 rows)
@@ -571,9 +560,8 @@ SELECT dblink_exec('myconn','ABORT');
 -- should generate 'cursor "rmt_foo_cursor" not found' error
 SELECT *
 FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
-ERROR:  sql error
-DETAIL:  ERROR:  cursor "rmt_foo_cursor" does not exist
-
+ERROR:  cursor "rmt_foo_cursor" does not exist
+CONTEXT:  Error occurred on dblink connection named "myconn": could not fetch from cursor.
 -- close the named persistent connection
 SELECT dblink_disconnect('myconn');
  dblink_disconnect 
