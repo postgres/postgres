@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.74 2008/05/12 00:00:51 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.75 2008/07/03 00:04:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3160,6 +3160,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 	{
 		str = xmlXPathCastNodeToString(cur);
 		result = (xmltype *) cstring_to_text((char *) str);
+		xmlFree(str);
 	}
 
 	return result;
