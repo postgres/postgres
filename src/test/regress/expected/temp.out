@@ -42,7 +42,7 @@ SELECT * FROM temptest;
 DROP TABLE temptest;
 -- test temp table deletion
 CREATE TEMP TABLE temptest(col int);
-\c regression
+\c
 SELECT * FROM temptest;
 ERROR:  relation "temptest" does not exist
 -- Test ON COMMIT DELETE ROWS

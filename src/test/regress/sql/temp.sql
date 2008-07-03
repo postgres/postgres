@@ -47,7 +47,7 @@ DROP TABLE temptest;
 
 CREATE TEMP TABLE temptest(col int);
 
-\c regression
+\c
 
 SELECT * FROM temptest;
 

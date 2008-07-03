@@ -58,10 +58,10 @@ SELECT name, statement, parameter_types FROM pg_prepared_statements;
 PREPARE q2(text) AS
 	SELECT datname, datistemplate, datallowconn
 	FROM pg_database WHERE datname = $1;
-EXECUTE q2('regression');
-  datname   | datistemplate | datallowconn 
-------------+---------------+--------------
- regression | f             | t
+EXECUTE q2('postgres');
+ datname  | datistemplate | datallowconn 
+----------+---------------+--------------
+ postgres | f             | t
 (1 row)
 
 PREPARE q3(text, int, float, boolean, oid, smallint) AS

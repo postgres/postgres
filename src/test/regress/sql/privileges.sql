@@ -334,7 +334,7 @@ SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION')
 
 -- clean up
 
-\c regression
+\c
 
 DROP FUNCTION testfunc2(int);
 DROP FUNCTION testfunc4(boolean);
