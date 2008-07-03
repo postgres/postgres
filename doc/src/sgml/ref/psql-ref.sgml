@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.208 2008/06/11 10:48:16 heikki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.209 2008/07/03 03:37:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -407,7 +407,7 @@ PostgreSQL documentation
       <listitem>
       <para>
        Force <application>psql</application> to prompt for a
-       password before connecting to a database.  
+       password before connecting to a database.
       </para>
 
       <para>
@@ -459,7 +459,7 @@ PostgreSQL documentation
         <option>-f</> option, adding this option wraps
         <command>BEGIN</>/<command>COMMIT</> around the script to execute it
         as a single transaction.  This ensures that either all the commands
-        complete successfully, or no changes are applied.  
+        complete successfully, or no changes are applied.
        </para>
 
        <para>
@@ -542,8 +542,8 @@ PostgreSQL documentation
 
     <para>
      An alternative way to specify connection parameters is in a
-     <parameter>conninfo</parameter> string, which is used instead of a 
-     database name. This mechanism give you very wide control over the 
+     <parameter>conninfo</parameter> string, which is used instead of a
+     database name. This mechanism give you very wide control over the
      connection. For example:
 <programlisting>
 $ <userinput>psql "service=myservice sslmode=require"</userinput>
@@ -873,7 +873,7 @@ testdb=&gt;
         Lists all available tablespaces. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only tablespaces whose names match the pattern are shown.
-        If <literal>+</literal> is appended to the command name, each object 
+        If <literal>+</literal> is appended to the command name, each object
         is listed with its associated permissions.
         </para>
         </listitem>
@@ -1511,7 +1511,7 @@ lo_import 152801
           <listitem>
           <para>
           Sets the output format to one of <literal>unaligned</literal>,
-          <literal>aligned</literal>, <literal>wrapped</literal>, 
+          <literal>aligned</literal>, <literal>wrapped</literal>,
           <literal>html</literal>,
           <literal>latex</literal>, or <literal>troff-ms</literal>.
           Unique abbreviations are allowed.  (That would mean one letter
@@ -2533,7 +2533,7 @@ testdb=&gt; <userinput>\set content '''' `sed -e "s/'/''/g" -e 's/\\/\\\\/g' &lt
           The full host name (with domain name) of the database server,
           or <literal>[local]</literal> if the connection is over a Unix
           domain socket, or
-          <literal>[local:<replaceable>/dir/name</replaceable>]</literal>, 
+          <literal>[local:<replaceable>/dir/name</replaceable>]</literal>,
           if the Unix domain socket is not at the compiled in default
           location.
         </para>
@@ -2857,28 +2857,24 @@ $endif
     <itemizedlist>
       <listitem>
       <para>
-      In an earlier life <application>psql</application> allowed the
-      first argument of a single-letter backslash command to start
-      directly after the command, without intervening whitespace. For
-      compatibility this is still supported to some extent,
-      but we are not going to explain the details here as this use is
-      discouraged.  If you get strange messages, keep this in mind.
-      For example:
-<programlisting>
-testdb=&gt; <userinput>\foo</userinput>
-Field separator is "oo".
-</programlisting>
-      which is perhaps not what one would expect.
+       In an earlier life <application>psql</application> allowed the
+       first argument of a single-letter backslash command to start
+       directly after the command, without intervening whitespace.
+       As of <productname>PostgreSQL</productname> 8.4 this is no
+       longer allowed.
       </para>
       </listitem>
 
       <listitem>
       <para>
-      <application>psql</application> only works smoothly with servers
-      of the same version. That does not mean other combinations will
-      fail outright, but subtle and not-so-subtle problems might come
-      up.  Backslash commands are particularly likely to fail if the
-      server is of a different version.
+       <application>psql</application> is only guaranteed to work smoothly
+       with servers of the same version. That does not mean other combinations
+       will fail outright, but subtle and not-so-subtle problems might come
+       up.  Backslash commands are particularly likely to fail if the
+       server is of a newer version than <application>psql</> itself.  However,
+       backslash commands of the <literal>\d</> family should work with
+       servers of versions back to 7.4, though not necessarily with servers
+       newer than  <application>psql</> itself.
       </para>
       </listitem>
 
