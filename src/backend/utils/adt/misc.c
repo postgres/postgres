@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.62 2008/04/17 20:56:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.63 2008/07/03 20:58:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,12 @@
 #include <math.h>
 
 #include "access/xact.h"
+#include "catalog/pg_type.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "parser/keywords.h"
 #include "postmaster/syslogger.h"
 #include "storage/fd.h"
 #include "storage/pmsignal.h"
@@ -321,4 +323,73 @@ pg_sleep(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_VOID();
+}
+
+/* Function to return the list of grammar keywords */
+Datum
+pg_get_keywords(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		MemoryContext oldcontext;
+		TupleDesc	tupdesc;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		tupdesc = CreateTemplateTupleDesc(3, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "word",
+						   TEXTOID, -1, 0);
+  		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catcode",
+						   CHAROID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "catdesc",
+						   TEXTOID, -1, 0);
+
+		funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+
+	if (&ScanKeywords[funcctx->call_cntr] < LastScanKeyword)
+	{
+		char	   *values[3];
+		HeapTuple	tuple;
+
+		/* cast-away-const is ugly but alternatives aren't much better */
+		values[0] = (char *) ScanKeywords[funcctx->call_cntr].name;
+
+		switch (ScanKeywords[funcctx->call_cntr].category)
+		{
+			case UNRESERVED_KEYWORD:
+				values[1] = "U";
+				values[2] = _("Unreserved");
+				break;
+			case COL_NAME_KEYWORD:
+				values[1] = "C";
+				values[2] = _("Column name");
+				break;
+			case TYPE_FUNC_NAME_KEYWORD:
+				values[1] = "T";
+				values[2] = _("Type or function name");
+				break;
+			case RESERVED_KEYWORD:
+				values[1] = "R";
+				values[2] = _("Reserved");
+				break;
+			default:			/* shouldn't be possible */
+				values[1] = NULL;
+				values[2] = NULL;
+				break;
+		}
+
+		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+
+		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
+	}
+
+	SRF_RETURN_DONE(funcctx);
 }

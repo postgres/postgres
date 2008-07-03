@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.197 2008/05/21 19:51:01 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.198 2008/07/03 20:58:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
  * !!WARNING!!: This list must be sorted by ASCII name, because binary
  *		 search is used to locate entries.
  */
-static const ScanKeyword ScanKeywords[] = {
+const ScanKeyword ScanKeywords[] = {
 	/* name, value, category */
 	{"abort", ABORT_P, UNRESERVED_KEYWORD},
 	{"absolute", ABSOLUTE_P, UNRESERVED_KEYWORD},
@@ -427,6 +427,9 @@ static const ScanKeyword ScanKeywords[] = {
 	{"yes", YES_P, UNRESERVED_KEYWORD},
 	{"zone", ZONE, UNRESERVED_KEYWORD},
 };
+
+/* End of ScanKeywords, for use elsewhere */
+const ScanKeyword *LastScanKeyword = endof(ScanKeywords);
 
 /*
  * ScanKeywordLookup - see if a given word is a keyword

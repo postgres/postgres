@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.437 2008/05/19 18:08:15 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.438 2008/07/03 20:58:46 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11485,6 +11485,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
+    <primary>pg_get_keywords</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>pg_get_viewdef</primary>
    </indexterm>
 
@@ -11537,6 +11541,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>format_type</function>(<parameter>type_oid</parameter>, <parameter>typemod</>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>get SQL name of a data type</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_keywords</function>()</literal></entry>
+       <entry><type>setof record</type></entry>
+       <entry>get list of SQL keywords and their categories</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_constraintdef</function>(<parameter>constraint_oid</parameter>)</literal></entry>
@@ -11631,6 +11640,16 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    <function>format_type</function> returns the SQL name of a data type that
    is identified by its type OID and possibly a type modifier.  Pass NULL
    for the type modifier if no specific modifier is known.
+  </para>
+
+  <para>
+   <function>pg_get_keywords</function> returns a set of records describing
+   the SQL keywords recognized by the server. The <structfield>word</> column
+   contains the keyword.  The <structfield>catcode</> column contains a
+   category code: <literal>U</> for unreserved, <literal>C</> for column name,
+   <literal>T</> for type or function name, or <literal>R</> for reserved.
+   The <structfield>catdesc</> column contains a possibly-localized string
+   describing the category.
   </para>
 
   <para>
