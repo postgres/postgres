@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68.2.2 2008/03/24 19:12:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68.2.3 2008/07/03 00:04:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3201,6 +3201,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 		result = (text *) palloc(len + VARHDRSZ);
 		SET_VARSIZE(result, len + VARHDRSZ);
 		memcpy(VARDATA(result), str, len);
+		xmlFree(str);
 	}
 
 	return result;
