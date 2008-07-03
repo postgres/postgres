@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.69 2008/05/28 00:45:40 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.70 2008/07/03 15:59:55 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -419,7 +419,7 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
     to obtain information about existing privileges, for example:
 <programlisting>
 =&gt; \z mytable
-   Access privileges for database "lusitania"
+                Access privileges
  Schema |  Name   | Type  |  Access privileges   
 --------+---------+-------+----------------------
  public | mytable | table | miriam=arwdxt/miriam

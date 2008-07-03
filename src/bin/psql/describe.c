@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.174 2008/07/03 03:37:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.175 2008/07/03 15:59:55 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -544,8 +544,7 @@ permissionsList(const char *pattern)
 	}
 
 	myopt.nullPrint = NULL;
-	printfPQExpBuffer(&buf, _("Access privileges for database \"%s\""),
-					  PQdb(pset.db));
+	printfPQExpBuffer(&buf, _("Access privileges"));
 	myopt.title = buf.data;
 	myopt.trans_headers = true;
 	myopt.trans_columns = trans_columns;
