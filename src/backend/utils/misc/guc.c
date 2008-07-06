@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.360.2.2 2008/05/26 18:54:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.360.2.3 2008/07/06 19:49:02 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -88,8 +88,13 @@
 #define KB_PER_GB (1024*1024)
 
 #define MS_PER_S 1000
+#define S_PER_MIN 60
 #define MS_PER_MIN (1000 * 60)
+#define MIN_PER_H 60
+#define S_PER_H (60 * 60)
 #define MS_PER_H (1000 * 60 * 60)
+#define MIN_PER_D (60 * 24)
+#define S_PER_D (60 * 60 * 24)
 #define MS_PER_D (1000 * 60 * 60 * 24)
 
 /* XXX these should appear in other modules' header files */
@@ -3610,120 +3615,209 @@ parse_bool(const char *value, bool *result)
 
 /*
  * Try to parse value as an integer.  The accepted formats are the
- * usual decimal, octal, or hexadecimal formats.  If the string parses
- * okay, return true, else false.  If result is not NULL, return the
- * value there.
+ * usual decimal, octal, or hexadecimal formats, optionally followed by
+ * a unit name if "flags" indicates a unit is allowed.
+ *
+ * If the string parses okay, return true, else false.
+ * If okay and result is not NULL, return the value in *result.
+ * If not okay and hintmsg is not NULL, *hintmsg is set to a suitable
+ *	HINT message, or NULL if no hint provided.
  */
 static bool
-parse_int(const char *value, int *result, int flags)
+parse_int(const char *value, int *result, int flags, const char **hintmsg)
 {
-	long		val;
+	int64		val;
 	char	   *endptr;
 
+	/* To suppress compiler warnings, always set output params */
+	if (result)
+		*result = 0;
+	if (hintmsg)
+		*hintmsg = NULL;
+
+	/* We assume here that int64 is at least as wide as long */
 	errno = 0;
 	val = strtol(value, &endptr, 0);
 
-	if ((flags & GUC_UNIT_MEMORY) && endptr != value)
+	if (endptr == value)
+		return false;			/* no HINT for integer syntax error */
+
+	if (errno == ERANGE || val != (int64) ((int32) val))
 	{
-		bool		used = false;
-
-		while (*endptr == ' ')
-			endptr++;
-
-		if (strcmp(endptr, "kB") == 0)
-		{
-			used = true;
-			endptr += 2;
-		}
-		else if (strcmp(endptr, "MB") == 0)
-		{
-			val *= KB_PER_MB;
-			used = true;
-			endptr += 2;
-		}
-		else if (strcmp(endptr, "GB") == 0)
-		{
-			val *= KB_PER_GB;
-			used = true;
-			endptr += 2;
-		}
-
-		if (used)
-		{
-			switch (flags & GUC_UNIT_MEMORY)
-			{
-				case GUC_UNIT_BLOCKS:
-					val /= (BLCKSZ / 1024);
-					break;
-				case GUC_UNIT_XBLOCKS:
-					val /= (XLOG_BLCKSZ / 1024);
-					break;
-			}
-		}
-	}
-
-	if ((flags & GUC_UNIT_TIME) && endptr != value)
-	{
-		bool		used = false;
-
-		while (*endptr == ' ')
-			endptr++;
-
-		if (strcmp(endptr, "ms") == 0)
-		{
-			used = true;
-			endptr += 2;
-		}
-		else if (strcmp(endptr, "s") == 0)
-		{
-			val *= MS_PER_S;
-			used = true;
-			endptr += 1;
-		}
-		else if (strcmp(endptr, "min") == 0)
-		{
-			val *= MS_PER_MIN;
-			used = true;
-			endptr += 3;
-		}
-		else if (strcmp(endptr, "h") == 0)
-		{
-			val *= MS_PER_H;
-			used = true;
-			endptr += 1;
-		}
-		else if (strcmp(endptr, "d") == 0)
-		{
-			val *= MS_PER_D;
-			used = true;
-			endptr += 1;
-		}
-
-		if (used)
-		{
-			switch (flags & GUC_UNIT_TIME)
-			{
-				case GUC_UNIT_S:
-					val /= MS_PER_S;
-					break;
-				case GUC_UNIT_MIN:
-					val /= MS_PER_MIN;
-					break;
-			}
-		}
-	}
-
-	if (endptr == value || *endptr != '\0' || errno == ERANGE
-#ifdef HAVE_LONG_INT_64
-	/* if long > 32 bits, check for overflow of int4 */
-		|| val != (long) ((int32) val)
-#endif
-		)
-	{
-		if (result)
-			*result = 0;		/* suppress compiler warning */
+		if (hintmsg)
+			*hintmsg = gettext_noop("Value exceeds integer range.");
 		return false;
 	}
+
+	/* allow whitespace between integer and unit */
+	while (isspace((unsigned char) *endptr))
+		endptr++;
+
+	/* Handle possible unit */
+	if (*endptr != '\0')
+	{
+		/*
+		 * Note: the multiple-switch coding technique here is a bit tedious,
+		 * but seems necessary to avoid intermediate-value overflows.
+		 *
+		 * If INT64_IS_BUSTED (ie, it's really int32) we will fail to detect
+		 * overflow due to units conversion, but there are few enough such
+		 * machines that it does not seem worth trying to be smarter.
+		 */
+		if (flags & GUC_UNIT_MEMORY)
+		{
+			/* Set hint for use if no match or trailing garbage */
+			if (hintmsg)
+				*hintmsg = gettext_noop("Valid units for this parameter are \"kB\", \"MB\", and \"GB\".");
+
+#if BLCKSZ < 1024 || BLCKSZ > (1024*1024)
+#error BLCKSZ must be between 1KB and 1MB
+#endif
+#if XLOG_BLCKSZ < 1024 || XLOG_BLCKSZ > (1024*1024)
+#error XLOG_BLCKSZ must be between 1KB and 1MB
+#endif
+
+			if (strncmp(endptr, "kB", 2) == 0)
+			{
+				endptr += 2;
+				switch (flags & GUC_UNIT_MEMORY)
+				{
+					case GUC_UNIT_BLOCKS:
+						val /= (BLCKSZ / 1024);
+						break;
+					case GUC_UNIT_XBLOCKS:
+						val /= (XLOG_BLCKSZ / 1024);
+						break;
+				}
+			}
+			else if (strncmp(endptr, "MB", 2) == 0)
+			{
+				endptr += 2;
+				switch (flags & GUC_UNIT_MEMORY)
+				{
+					case GUC_UNIT_KB:
+						val *= KB_PER_MB;
+						break;
+					case GUC_UNIT_BLOCKS:
+						val *= KB_PER_MB / (BLCKSZ / 1024);
+						break;
+					case GUC_UNIT_XBLOCKS:
+						val *= KB_PER_MB / (XLOG_BLCKSZ / 1024);
+						break;
+				}
+			}
+			else if (strncmp(endptr, "GB", 2) == 0)
+			{
+				endptr += 2;
+				switch (flags & GUC_UNIT_MEMORY)
+				{
+					case GUC_UNIT_KB:
+						val *= KB_PER_GB;
+						break;
+					case GUC_UNIT_BLOCKS:
+						val *= KB_PER_GB / (BLCKSZ / 1024);
+						break;
+					case GUC_UNIT_XBLOCKS:
+						val *= KB_PER_GB / (XLOG_BLCKSZ / 1024);
+						break;
+				}
+			}
+		}
+		else if (flags & GUC_UNIT_TIME)
+		{
+			/* Set hint for use if no match or trailing garbage */
+			if (hintmsg)
+				*hintmsg = gettext_noop("Valid units for this parameter are \"ms\", \"s\", \"min\", \"h\", and \"d\".");
+
+			if (strncmp(endptr, "ms", 2) == 0)
+			{
+				endptr += 2;
+				switch (flags & GUC_UNIT_TIME)
+				{
+					case GUC_UNIT_S:
+						val /= MS_PER_S;
+						break;
+					case GUC_UNIT_MIN:
+						val /= MS_PER_MIN;
+						break;
+				}
+			}
+			else if (strncmp(endptr, "s", 1) == 0)
+			{
+				endptr += 1;
+				switch (flags & GUC_UNIT_TIME)
+				{
+					case GUC_UNIT_MS:
+						val *= MS_PER_S;
+						break;
+					case GUC_UNIT_MIN:
+						val /= S_PER_MIN;
+						break;
+				}
+			}
+			else if (strncmp(endptr, "min", 3) == 0)
+			{
+				endptr += 3;
+				switch (flags & GUC_UNIT_TIME)
+				{
+					case GUC_UNIT_MS:
+						val *= MS_PER_MIN;
+						break;
+					case GUC_UNIT_S:
+						val *= S_PER_MIN;
+						break;
+				}
+			}
+			else if (strncmp(endptr, "h", 1) == 0)
+			{
+				endptr += 1;
+				switch (flags & GUC_UNIT_TIME)
+				{
+					case GUC_UNIT_MS:
+						val *= MS_PER_H;
+						break;
+					case GUC_UNIT_S:
+						val *= S_PER_H;
+						break;
+					case GUC_UNIT_MIN:
+						val *= MIN_PER_H;
+						break;
+				}
+			}
+			else if (strncmp(endptr, "d", 1) == 0)
+			{
+				endptr += 1;
+				switch (flags & GUC_UNIT_TIME)
+				{
+					case GUC_UNIT_MS:
+						val *= MS_PER_D;
+						break;
+					case GUC_UNIT_S:
+						val *= S_PER_D;
+						break;
+					case GUC_UNIT_MIN:
+						val *= MIN_PER_D;
+						break;
+				}
+			}
+		}
+
+		/* allow whitespace after unit */
+		while (isspace((unsigned char) *endptr))
+			endptr++;
+
+		if (*endptr != '\0')
+			return false;		/* appropriate hint, if any, already set */
+
+		/* Check for overflow due to units conversion */
+		if (val != (int64) ((int32) val))
+		{
+			if (hintmsg)
+				*hintmsg = gettext_noop("Value exceeds integer range.");
+			return false;
+		}
+	}
+
 	if (result)
 		*result = (int) val;
 	return true;
@@ -4044,12 +4138,15 @@ set_config_option(const char *name, const char *value,
 
 				if (value)
 				{
-					if (!parse_int(value, &newval, conf->gen.flags))
+					const char *hintmsg;
+
+					if (!parse_int(value, &newval, conf->gen.flags, &hintmsg))
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("parameter \"%s\" requires an integer value",
-								name)));
+								 errmsg("invalid value for parameter \"%s\": \"%s\"",
+										name, value),
+								 hintmsg ? errhint(hintmsg) : 0));
 						return false;
 					}
 					if (newval < conf->min || newval > conf->max)
@@ -5317,10 +5414,18 @@ _ShowOption(struct config_generic * record, bool use_units)
 					val = (*conf->show_hook) ();
 				else
 				{
-					char		unit[4];
-					int			result = *conf->variable;
+					/*
+					 * Use int64 arithmetic to avoid overflows in units
+					 * conversion.  If INT64_IS_BUSTED we might overflow
+					 * anyway and print bogus answers, but there are few
+					 * enough such machines that it doesn't seem worth
+					 * trying harder.
+					 */
+					int64		result = *conf->variable;
+					const char *unit;
 
-					if (use_units && result > 0 && (record->flags & GUC_UNIT_MEMORY))
+					if (use_units && result > 0 &&
+						(record->flags & GUC_UNIT_MEMORY))
 					{
 						switch (record->flags & GUC_UNIT_MEMORY)
 						{
@@ -5335,19 +5440,20 @@ _ShowOption(struct config_generic * record, bool use_units)
 						if (result % KB_PER_GB == 0)
 						{
 							result /= KB_PER_GB;
-							strcpy(unit, "GB");
+							unit = "GB";
 						}
 						else if (result % KB_PER_MB == 0)
 						{
 							result /= KB_PER_MB;
-							strcpy(unit, "MB");
+							unit = "MB";
 						}
 						else
 						{
-							strcpy(unit, "kB");
+							unit = "kB";
 						}
 					}
-					else if (use_units && result > 0 && (record->flags & GUC_UNIT_TIME))
+					else if (use_units && result > 0 &&
+							 (record->flags & GUC_UNIT_TIME))
 					{
 						switch (record->flags & GUC_UNIT_TIME)
 						{
@@ -5362,33 +5468,33 @@ _ShowOption(struct config_generic * record, bool use_units)
 						if (result % MS_PER_D == 0)
 						{
 							result /= MS_PER_D;
-							strcpy(unit, "d");
+							unit = "d";
 						}
 						else if (result % MS_PER_H == 0)
 						{
 							result /= MS_PER_H;
-							strcpy(unit, "h");
+							unit = "h";
 						}
 						else if (result % MS_PER_MIN == 0)
 						{
 							result /= MS_PER_MIN;
-							strcpy(unit, "min");
+							unit = "min";
 						}
 						else if (result % MS_PER_S == 0)
 						{
 							result /= MS_PER_S;
-							strcpy(unit, "s");
+							unit = "s";
 						}
 						else
 						{
-							strcpy(unit, "ms");
+							unit = "ms";
 						}
 					}
 					else
-						strcpy(unit, "");
+						unit = "";
 
-					snprintf(buffer, sizeof(buffer), "%d%s",
-							 (int) result, unit);
+					snprintf(buffer, sizeof(buffer), INT64_FORMAT "%s",
+							 result, unit);
 					val = buffer;
 				}
 			}
@@ -5442,21 +5548,24 @@ is_newvalue_equal(struct config_generic * record, const char *newvalue)
 				struct config_bool *conf = (struct config_bool *) record;
 				bool		newval;
 
-				return parse_bool(newvalue, &newval) && *conf->variable == newval;
+				return parse_bool(newvalue, &newval)
+					&& *conf->variable == newval;
 			}
 		case PGC_INT:
 			{
 				struct config_int *conf = (struct config_int *) record;
 				int			newval;
 
-				return parse_int(newvalue, &newval, record->flags) && *conf->variable == newval;
+				return parse_int(newvalue, &newval, record->flags, NULL)
+					&& *conf->variable == newval;
 			}
 		case PGC_REAL:
 			{
 				struct config_real *conf = (struct config_real *) record;
 				double		newval;
 
-				return parse_real(newvalue, &newval) && *conf->variable == newval;
+				return parse_real(newvalue, &newval)
+					&& *conf->variable == newval;
 			}
 		case PGC_STRING:
 			{
