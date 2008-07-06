@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.461 2008/07/01 21:07:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.462 2008/07/06 19:48:45 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -6266,10 +6266,18 @@ _ShowOption(struct config_generic * record, bool use_units)
 					val = (*conf->show_hook) ();
 				else
 				{
-					char		unit[4];
-					int			result = *conf->variable;
+					/*
+					 * Use int64 arithmetic to avoid overflows in units
+					 * conversion.  If INT64_IS_BUSTED we might overflow
+					 * anyway and print bogus answers, but there are few
+					 * enough such machines that it doesn't seem worth
+					 * trying harder.
+					 */
+					int64		result = *conf->variable;
+					const char *unit;
 
-					if (use_units && result > 0 && (record->flags & GUC_UNIT_MEMORY))
+					if (use_units && result > 0 &&
+						(record->flags & GUC_UNIT_MEMORY))
 					{
 						switch (record->flags & GUC_UNIT_MEMORY)
 						{
@@ -6284,19 +6292,20 @@ _ShowOption(struct config_generic * record, bool use_units)
 						if (result % KB_PER_GB == 0)
 						{
 							result /= KB_PER_GB;
-							strcpy(unit, "GB");
+							unit = "GB";
 						}
 						else if (result % KB_PER_MB == 0)
 						{
 							result /= KB_PER_MB;
-							strcpy(unit, "MB");
+							unit = "MB";
 						}
 						else
 						{
-							strcpy(unit, "kB");
+							unit = "kB";
 						}
 					}
-					else if (use_units && result > 0 && (record->flags & GUC_UNIT_TIME))
+					else if (use_units && result > 0 &&
+							 (record->flags & GUC_UNIT_TIME))
 					{
 						switch (record->flags & GUC_UNIT_TIME)
 						{
@@ -6311,33 +6320,33 @@ _ShowOption(struct config_generic * record, bool use_units)
 						if (result % MS_PER_D == 0)
 						{
 							result /= MS_PER_D;
-							strcpy(unit, "d");
+							unit = "d";
 						}
 						else if (result % MS_PER_H == 0)
 						{
 							result /= MS_PER_H;
-							strcpy(unit, "h");
+							unit = "h";
 						}
 						else if (result % MS_PER_MIN == 0)
 						{
 							result /= MS_PER_MIN;
-							strcpy(unit, "min");
+							unit = "min";
 						}
 						else if (result % MS_PER_S == 0)
 						{
 							result /= MS_PER_S;
-							strcpy(unit, "s");
+							unit = "s";
 						}
 						else
 						{
-							strcpy(unit, "ms");
+							unit = "ms";
 						}
 					}
 					else
-						strcpy(unit, "");
+						unit = "";
 
-					snprintf(buffer, sizeof(buffer), "%d%s",
-							 (int) result, unit);
+					snprintf(buffer, sizeof(buffer), INT64_FORMAT "%s",
+							 result, unit);
 					val = buffer;
 				}
 			}
