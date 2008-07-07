@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.122.2.2 2007/06/02 16:41:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.122.2.3 2008/07/07 18:10:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2509,40 +2509,42 @@ timetz_zone(PG_FUNCTION_ARGS)
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
 	int			len;
+	char	   *lowzone;
+	int			type,
+				val;
 	pg_tz	   *tzp;
 
 	/*
-	 * Look up the requested timezone.	First we look in the timezone database
-	 * (to handle cases like "America/New_York"), and if that fails, we look
-	 * in the date token table (to handle cases like "EST").
+	 * Look up the requested timezone.  First we look in the date token table
+	 * (to handle cases like "EST"), and if that fails, we look in the
+	 * timezone database (to handle cases like "America/New_York").  (This
+	 * matches the order in which timestamp input checks the cases; it's
+	 * important because the timezone database unwisely uses a few zone names
+	 * that are identical to offset abbreviations.)
 	 */
-	len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
-	memcpy(tzname, VARDATA(zone), len);
-	tzname[len] = '\0';
-	tzp = pg_tzset(tzname);
-	if (tzp)
-	{
-		/* Get the offset-from-GMT that is valid today for the selected zone */
-		pg_time_t	now;
-		struct pg_tm *tm;
+	lowzone = downcase_truncate_identifier(VARDATA(zone),
+										   VARSIZE(zone) - VARHDRSZ,
+										   false);
+	type = DecodeSpecial(0, lowzone, &val);
 
-		now = time(NULL);
-		tm = pg_localtime(&now, tzp);
-		tz = -tm->tm_gmtoff;
-	}
+	if (type == TZ || type == DTZ)
+		tz = val * 60;
 	else
 	{
-		char	   *lowzone;
-		int			type,
-					val;
+		len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
+		memcpy(tzname, VARDATA(zone), len);
+		tzname[len] = '\0';
+		tzp = pg_tzset(tzname);
+		if (tzp)
+		{
+			/* Get the offset-from-GMT that is valid today for the zone */
+			pg_time_t	now;
+			struct pg_tm *tm;
 
-		lowzone = downcase_truncate_identifier(VARDATA(zone),
-											   VARSIZE(zone) - VARHDRSZ,
-											   false);
-		type = DecodeSpecial(0, lowzone, &val);
-
-		if (type == TZ || type == DTZ)
-			tz = val * 60;
+			now = time(NULL);
+			tm = pg_localtime(&now, tzp);
+			tz = -tm->tm_gmtoff;
+		}
 		else
 		{
 			ereport(ERROR,
