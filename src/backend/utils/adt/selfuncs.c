@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.147.2.5 2007/01/03 22:39:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.147.2.6 2008/07/07 20:25:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1990,21 +1990,25 @@ mergejoinscansel(Query *root, Node *clause,
  * case (all possible cross-product terms actually appear as groups) since
  * very often the grouped-by Vars are highly correlated.  Our current approach
  * is as follows:
- *	1.	Reduce the given expressions to a list of unique Vars used.  For
+ *	1.	Expressions yielding boolean are assumed to contribute two groups,
+ *		independently of their content, and are ignored in the subsequent
+ *		steps.  This is mainly because tests like "col IS NULL" break the
+ *		heuristic used in step 2 especially badly.
+ *	2.	Reduce the given expressions to a list of unique Vars used.  For
  *		example, GROUP BY a, a + b is treated the same as GROUP BY a, b.
  *		It is clearly correct not to count the same Var more than once.
  *		It is also reasonable to treat f(x) the same as x: f() cannot
  *		increase the number of distinct values (unless it is volatile,
  *		which we consider unlikely for grouping), but it probably won't
  *		reduce the number of distinct values much either.
- *	2.	If the list contains Vars of different relations that are known equal
+ *	3.	If the list contains Vars of different relations that are known equal
  *		due to equijoin clauses, then drop all but one of the Vars from each
  *		known-equal set, keeping the one with smallest estimated # of values
  *		(since the extra values of the others can't appear in joined rows).
  *		Note the reason we only consider Vars of different relations is that
  *		if we considered ones of the same rel, we'd be double-counting the
  *		restriction selectivity of the equality in the next step.
- *	3.	For Vars within a single source rel, we multiply together the numbers
+ *	4.	For Vars within a single source rel, we multiply together the numbers
  *		of values, clamp to the number of rows in the rel, and then multiply
  *		by the selectivity of the restriction clauses for that rel.  The
  *		initial product is probably too high (it's the worst case) but since
@@ -2012,10 +2016,10 @@ mergejoinscansel(Query *root, Node *clause,
  *		by the restriction selectivity is effectively assuming that the
  *		restriction clauses are independent of the grouping, which is a crummy
  *		assumption, but it's hard to do better.
- *	4.	If there are Vars from multiple rels, we repeat step 3 for each such
+ *	5.	If there are Vars from multiple rels, we repeat step 4 for each such
  *		rel, and multiply the results together.
  * Note that rels not containing grouped Vars are ignored completely, as are
- * join clauses other than the equijoin clauses used in step 2.  Such rels
+ * join clauses other than the equijoin clauses used in step 3.  Such rels
  * cannot increase the number of groups, and we assume such clauses do not
  * reduce the number either (somewhat bogus, but we don't have the info to
  * do better).
@@ -2036,11 +2040,23 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 	/* We should not be called unless query has GROUP BY (or DISTINCT) */
 	Assert(groupExprs != NIL);
 
-	/* Step 1: get the unique Vars used */
+	/*
+	 * Count groups derived from boolean grouping expressions.  For other
+	 * expressions, find the unique Vars used.
+	 */
+	numdistinct = 1.0;
+
 	foreach(l, groupExprs)
 	{
 		Node	   *groupexpr = (Node *) lfirst(l);
 		List	   *varshere;
+
+		/* Short-circuit for expressions returning boolean */
+		if (exprType(groupexpr) == BOOLOID)
+		{
+			numdistinct *= 2.0;
+			continue;
+		}
 
 		varshere = pull_var_clause(groupexpr, false);
 
@@ -2059,15 +2075,23 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 		allvars = nconc(allvars, varshere);
 	}
 
-	/* If now no Vars, we must have an all-constant GROUP BY list. */
+	/*
+	 * If now no Vars, we must have an all-constant or all-boolean GROUP BY
+	 * list.
+	 */
 	if (allvars == NIL)
-		return 1.0;
+	{
+		/* Guard against out-of-range answers */
+		if (numdistinct > input_rows)
+			numdistinct = input_rows;
+		return numdistinct;
+	}
 
 	/* Use set_union() to discard duplicates */
 	allvars = set_union(NIL, allvars);
 
 	/*
-	 * Step 2: acquire statistical estimate of number of distinct values
+	 * Acquire statistical estimate of number of distinct values
 	 * of each Var (total in its table, without regard for filtering).
 	 * Also, detect known-equal Vars and discard the ones we don't want.
 	 */
@@ -2132,7 +2156,7 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 	}
 
 	/*
-	 * Steps 3/4: group Vars by relation and estimate total numdistinct.
+	 * Group Vars by relation and estimate total numdistinct.
 	 *
 	 * For each iteration of the outer loop, we process the frontmost Var in
 	 * varinfos, plus all other Vars in the same relation.	We remove
@@ -2140,8 +2164,6 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 	 * is the easiest way to group Vars of same rel together.
 	 */
 	Assert(varinfos != NIL);
-	numdistinct = 1.0;
-
 	do
 	{
 		MyVarInfo  *varinfo1 = (MyVarInfo *) lfirst(varinfos);
