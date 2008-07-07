@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.438 2008/07/03 20:58:46 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.439 2008/07/07 16:11:35 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8336,6 +8336,60 @@ SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'),
  <?xml version="1.0" standalone="yes"?>
  <content>abc</content>
 ]]></screen>
+    </para>
+   </sect3>
+
+   <sect3>
+    <title><literal>xmlagg</literal></title>
+
+    <indexterm>
+     <primary>xmlagg</primary>
+    </indexterm>
+
+<synopsis>
+<function>xmlagg</function>(<replaceable>xml</replaceable>)
+</synopsis>
+
+    <para>
+     The function <function>xmlagg</function> is, unlike the other
+     functions below, an aggregate function.  It concatenates the
+     input values to the aggregate function call,
+     like <function>xmlconcat</function> does.
+     See <xref linkend="functions-aggregate"> for general information
+     about aggregate functions.
+    </para>
+
+    <para>
+     Example:
+<screen><![CDATA[
+CREATE TABLE test (y int, x xml);
+INSERT INTO test VALUES (1, '<foo>abc</foo>');
+INSERT INTO test VALUES (2, '<bar/>');
+SELECT xmlagg(x) FROM test;
+        xmlagg
+----------------------
+ <foo>abc</foo><bar/>
+]]></screen>
+    </para>
+
+    <para>
+     Note that in the current implementation, the order of the
+     concatenation is in principle undefined.  Making the input values
+     to be sorted in some other way will usually work, however.  For
+     instance, in the above example, one could influence the order
+     like so:
+<screen><![CDATA[
+SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
+        xmlagg
+----------------------
+ <bar/><foo>abc</foo>
+]]></screen>
+
+     But this approach is not guaranteed to work in all situations and
+     in all versions of PostgreSQL.  A future version of PostgreSQL
+     will probably provide an additional feature to control the order
+     in a proper way (<literal>xmlagg(expr ORDER BY expr, expr,
+     ...</literal>).
     </para>
    </sect3>
 
