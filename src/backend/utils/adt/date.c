@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.141 2008/03/25 22:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.142 2008/07/07 18:09:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2441,37 +2441,40 @@ timetz_zone(PG_FUNCTION_ARGS)
 	TimeTzADT  *result;
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
+	char	   *lowzone;
+	int			type,
+				val;
 	pg_tz	   *tzp;
 
 	/*
-	 * Look up the requested timezone.	First we look in the timezone database
-	 * (to handle cases like "America/New_York"), and if that fails, we look
-	 * in the date token table (to handle cases like "EST").
+	 * Look up the requested timezone.  First we look in the date token table
+	 * (to handle cases like "EST"), and if that fails, we look in the
+	 * timezone database (to handle cases like "America/New_York").  (This
+	 * matches the order in which timestamp input checks the cases; it's
+	 * important because the timezone database unwisely uses a few zone names
+	 * that are identical to offset abbreviations.)
 	 */
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
-	tzp = pg_tzset(tzname);
-	if (tzp)
-	{
-		/* Get the offset-from-GMT that is valid today for the selected zone */
-		pg_time_t	now = (pg_time_t) time(NULL);
-		struct pg_tm *tm;
+	lowzone = downcase_truncate_identifier(tzname,
+										   strlen(tzname),
+										   false);
 
-		tm = pg_localtime(&now, tzp);
-		tz = -tm->tm_gmtoff;
-	}
+	type = DecodeSpecial(0, lowzone, &val);
+
+	if (type == TZ || type == DTZ)
+		tz = val * 60;
 	else
 	{
-		char	   *lowzone;
-		int			type,
-					val;
+		tzp = pg_tzset(tzname);
+		if (tzp)
+		{
+			/* Get the offset-from-GMT that is valid today for the zone */
+			pg_time_t	now = (pg_time_t) time(NULL);
+			struct pg_tm *tm;
 
-		lowzone = downcase_truncate_identifier(tzname,
-											   strlen(tzname),
-											   false);
-		type = DecodeSpecial(0, lowzone, &val);
-
-		if (type == TZ || type == DTZ)
-			tz = val * 60;
+			tm = pg_localtime(&now, tzp);
+			tz = -tm->tm_gmtoff;
+		}
 		else
 		{
 			ereport(ERROR,
