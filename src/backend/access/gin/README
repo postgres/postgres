@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/gin/README,v 1.5 2008/03/20 17:55:14 momjian Exp $
+$PostgreSQL: pgsql/src/backend/access/gin/README,v 1.6 2008/07/08 03:25:42 neilc Exp $
 
 Gin for PostgreSQL
 ==================
@@ -25,8 +25,8 @@ for tsvector) and where each tuple in a leaf page is either a pointer to a
 B-tree over item pointers (PT, posting tree), or a list of item pointers 
 (PL, posting list) if the tuple is small enough.
 
-Note: There is no delete operation for ET. The reason for this is that from
-our experience, a set of unique words over a large collection change very
+Note: There is no delete operation for ET. The reason for this is that in
+our experience, the set of distinct words in a large corpus changes very
 rarely.  This greatly simplifies the code and concurrency algorithms.
 
 Gin comes with built-in support for one-dimensional arrays (eg. integer[], 
@@ -64,7 +64,7 @@ itself is very fast.)
 
 Such queries usually contain very frequent lexemes, so the results are not 
 very helpful. To facilitate execution of such queries Gin has a configurable 
-soft upper limit of the size of the returned set, determined by the 
+soft upper limit on the size of the returned set, determined by the 
 'gin_fuzzy_search_limit' GUC variable.  This is set to 0 by default (no 
 limit).
 
