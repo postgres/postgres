@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.12 2008/05/17 01:28:21 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.13 2008/07/08 15:11:58 heikki Exp $ 
  *
  *
  * pg_standby.c
@@ -323,7 +323,7 @@ SetWALFileNameForCleanup(void)
 			if (seg_diff > seg)
 			{
 				log_diff++;
-				seg = MaxSegmentsPerLogFile - seg_diff;
+				seg = MaxSegmentsPerLogFile - (seg_diff - seg);
 			}
 			else
 				seg -= seg_diff;
