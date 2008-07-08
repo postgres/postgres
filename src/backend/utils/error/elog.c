@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.125.2.3 2007/07/21 22:12:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.125.2.4 2008/07/08 22:18:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -925,7 +925,8 @@ write_syslog(int level, const char *line)
 	static bool openlog_done = false;
 	static unsigned long seq = 0;
 
-	int			len = strlen(line);
+	int			len;
+	const char *nlpos;
 
 	if (Use_syslog == 0)
 		return;
@@ -965,8 +966,10 @@ write_syslog(int level, const char *line)
 	seq++;
 
 	/* divide into multiple syslog() calls if message is too long */
-	/* or if the message contains embedded NewLine(s) '\n' */
-	if (len > PG_SYSLOG_LIMIT || strchr(line, '\n') != NULL)
+	/* or if the message contains embedded newline(s) */
+	len = strlen(line);
+	nlpos = strchr(line, '\n');
+	if (len > PG_SYSLOG_LIMIT || nlpos != NULL)
 	{
 		int			chunk_nr = 0;
 
@@ -981,15 +984,19 @@ write_syslog(int level, const char *line)
 			{
 				line++;
 				len--;
+				/* we need to recompute the next newline's position, too */
+				nlpos = strchr(line, '\n');
 				continue;
 			}
 
-			strncpy(buf, line, PG_SYSLOG_LIMIT);
-			buf[PG_SYSLOG_LIMIT] = '\0';
-			if (strchr(buf, '\n') != NULL)
-				*strchr(buf, '\n') = '\0';
-
-			buflen = strlen(buf);
+			/* copy one line, or as much as will fit, to buf */
+			if (nlpos != NULL)
+				buflen = nlpos - line;
+			else
+				buflen = len;
+			buflen = Min(buflen, PG_SYSLOG_LIMIT);
+			memcpy(buf, line, buflen);
+			buf[buflen] = '\0';
 
 			/* trim to multibyte letter boundary */
 			buflen = pg_mbcliplen(buf, buflen, buflen);
@@ -998,8 +1005,8 @@ write_syslog(int level, const char *line)
 			buf[buflen] = '\0';
 
 			/* already word boundary? */
-			if (!isspace((unsigned char) line[buflen]) &&
-				line[buflen] != '\0')
+			if (line[buflen] != '\0' &&
+				!isspace((unsigned char) line[buflen]))
 			{
 				/* try to divide at word boundary */
 				i = buflen - 1;
