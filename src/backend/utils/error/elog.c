@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.167.2.5 2007/07/21 22:12:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.167.2.6 2008/07/08 22:18:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1199,6 +1199,7 @@ write_syslog(int level, const char *line)
 	static unsigned long seq = 0;
 
 	int			len;
+	const char *nlpos;
 
 	/* Open syslog connection if not done yet */
 	if (!openlog_done)
@@ -1221,10 +1222,11 @@ write_syslog(int level, const char *line)
 	 * fact, it does work around by splitting up messages into smaller pieces.
 	 *
 	 * We divide into multiple syslog() calls if message is too long or if the
-	 * message contains embedded NewLine(s) '\n'.
+	 * message contains embedded newline(s).
 	 */
 	len = strlen(line);
-	if (len > PG_SYSLOG_LIMIT || strchr(line, '\n') != NULL)
+	nlpos = strchr(line, '\n');
+	if (len > PG_SYSLOG_LIMIT || nlpos != NULL)
 	{
 		int			chunk_nr = 0;
 
@@ -1239,15 +1241,19 @@ write_syslog(int level, const char *line)
 			{
 				line++;
 				len--;
+				/* we need to recompute the next newline's position, too */
+				nlpos = strchr(line, '\n');
 				continue;
 			}
 
-			strncpy(buf, line, PG_SYSLOG_LIMIT);
-			buf[PG_SYSLOG_LIMIT] = '\0';
-			if (strchr(buf, '\n') != NULL)
-				*strchr(buf, '\n') = '\0';
-
-			buflen = strlen(buf);
+			/* copy one line, or as much as will fit, to buf */
+			if (nlpos != NULL)
+				buflen = nlpos - line;
+			else
+				buflen = len;
+			buflen = Min(buflen, PG_SYSLOG_LIMIT);
+			memcpy(buf, line, buflen);
+			buf[buflen] = '\0';
 
 			/* trim to multibyte letter boundary */
 			buflen = pg_mbcliplen(buf, buflen, buflen);
