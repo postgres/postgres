@@ -320,7 +320,7 @@ SetWALFileNameForCleanup(void)
 			if (seg_diff > seg)
 			{
 				log_diff++;
-				seg = MaxSegmentsPerLogFile - seg_diff;
+				seg = MaxSegmentsPerLogFile - (seg_diff - seg);
 			}
 			else
 				seg -= seg_diff;
