@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.204 2008/07/08 22:17:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.205 2008/07/09 15:56:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,17 @@ char	   *Log_line_prefix = NULL;		/* format for extra log line info */
 int			Log_destination = LOG_DESTINATION_STDERR;
 
 #ifdef HAVE_SYSLOG
+
+/*
+ * Max string length to send to syslog().  Note that this doesn't count the
+ * sequence-number prefix we add, and of course it doesn't count the prefix
+ * added by syslog itself.  On many implementations it seems that the hard
+ * limit is approximately 2K bytes including both those prefixes.
+ */
+#ifndef PG_SYSLOG_LIMIT
+#define PG_SYSLOG_LIMIT 1024
+#endif
+
 static bool openlog_done = false;
 static char *syslog_ident = NULL;
 static int	syslog_facility = LOG_LOCAL0;
@@ -1257,7 +1268,6 @@ DebugFileOpen(void)
 }
 
 
-
 #ifdef HAVE_SYSLOG
 
 /*
@@ -1292,10 +1302,6 @@ set_syslog_parameters(const char *ident, int facility)
 	}
 }
 
-
-#ifndef PG_SYSLOG_LIMIT
-#define PG_SYSLOG_LIMIT 128
-#endif
 
 /*
  * Write a message line to syslog
