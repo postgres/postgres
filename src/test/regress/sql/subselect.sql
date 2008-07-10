@@ -218,7 +218,7 @@ create rule shipped_view_insert as on insert to shipped_view do instead
 insert into parts (partnum, cost) values (1, 1234.56);
 
 insert into shipped_view (ordnum, partnum, value)
-    values (0, 1, (select cost from parts where partnum = 1));
+    values (0, 1, (select cost from parts where partnum = '1'));
 
 select * from shipped_view;
 
@@ -251,3 +251,29 @@ select * from (
   select min(unique1) from tenk1 as a
   where not exists (select 1 from tenk1 as b where b.unique2 = 10000)
 ) ss;
+
+--
+-- Test case for bug #4290: bogus calculation of subplan param sets
+--
+
+create temp table ta (id int primary key, val int);
+
+insert into ta values(1,1);
+insert into ta values(2,2);
+
+create temp table tb (id int primary key, aval int);
+
+insert into tb values(1,1);
+insert into tb values(2,1);
+insert into tb values(3,2);
+insert into tb values(4,2);
+
+create temp table tc (id int primary key, aid int);
+
+insert into tc values(1,1);
+insert into tc values(2,2);
+
+select
+  ( select min(tb.id) from tb
+    where tb.aval = (select ta.val from ta where ta.id = tc.aid) ) as min_tb_id
+from tc;

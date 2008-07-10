@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.100.2.4 2007/07/18 21:41:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.100.2.5 2008/07/10 01:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,8 +76,7 @@ typedef struct PlannerParamItem
 
 typedef struct finalize_primnode_context
 {
-	Bitmapset  *paramids;		/* Set of PARAM_EXEC paramids found */
-	Bitmapset  *outer_params;	/* Set of accessible outer paramids */
+	Bitmapset  *paramids;		/* Non-local PARAM_EXEC paramids found */
 } finalize_primnode_context;
 
 
@@ -88,7 +87,6 @@ static bool subplan_is_hashable(SubLink *slink, SubPlan *node);
 static Node *replace_correlation_vars_mutator(Node *node, void *context);
 static Node *process_sublinks_mutator(Node *node, bool *isTopQual);
 static Bitmapset *finalize_plan(Plan *plan, List *rtable,
-			  Bitmapset *outer_params,
 			  Bitmapset *valid_params);
 static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 
@@ -894,8 +892,7 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 void
 SS_finalize_plan(Plan *plan, List *rtable)
 {
-	Bitmapset  *outer_params,
-			   *valid_params,
+	Bitmapset  *valid_params,
 			   *initExtParam,
 			   *initSetParam;
 	Cost		initplan_cost;
@@ -905,9 +902,12 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	/*
 	 * First, scan the param list to discover the sets of params that are
 	 * available from outer query levels and my own query level. We do this
-	 * once to save time in the per-plan recursion steps.
+	 * once to save time in the per-plan recursion steps.  (This calculation
+	 * is overly generous: it can include a lot of params that actually
+	 * shouldn't be referenced here.  However, valid_params is just used as
+	 * a debugging crosscheck, so it's not worth trying to be exact.)
 	 */
-	outer_params = valid_params = NULL;
+	valid_params = NULL;
 	paramid = 0;
 	foreach(l, PlannerParamList)
 	{
@@ -916,7 +916,6 @@ SS_finalize_plan(Plan *plan, List *rtable)
 		if (pitem->abslevel < PlannerQueryLevel)
 		{
 			/* valid outer-level parameter */
-			outer_params = bms_add_member(outer_params, paramid);
 			valid_params = bms_add_member(valid_params, paramid);
 		}
 		else if (pitem->abslevel == PlannerQueryLevel &&
@@ -932,9 +931,8 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	/*
 	 * Now recurse through plan tree.
 	 */
-	(void) finalize_plan(plan, rtable, outer_params, valid_params);
+	(void) finalize_plan(plan, rtable, valid_params);
 
-	bms_free(outer_params);
 	bms_free(valid_params);
 
 	/*
@@ -970,11 +968,13 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	/* allParam must include all these params */
 	plan->allParam = bms_add_members(plan->allParam, initExtParam);
 	plan->allParam = bms_add_members(plan->allParam, initSetParam);
+	/* extParam must include any child extParam */
+	plan->extParam = bms_add_members(plan->extParam, initExtParam);
 	/* but extParam shouldn't include any setParams */
-	initExtParam = bms_del_members(initExtParam, initSetParam);
-	/* empty test ensures extParam is exactly NULL if it's empty */
-	if (!bms_is_empty(initExtParam))
-		plan->extParam = bms_join(plan->extParam, initExtParam);
+	plan->extParam = bms_del_members(plan->extParam, initSetParam);
+	/* ensure extParam is exactly NULL if it's empty */
+	if (bms_is_empty(plan->extParam))
+		plan->extParam = NULL;
 
 	plan->startup_cost += initplan_cost;
 	plan->total_cost += initplan_cost;
@@ -987,8 +987,7 @@ SS_finalize_plan(Plan *plan, List *rtable)
  * This is just an internal notational convenience.
  */
 static Bitmapset *
-finalize_plan(Plan *plan, List *rtable,
-			  Bitmapset *outer_params, Bitmapset *valid_params)
+finalize_plan(Plan *plan, List *rtable, Bitmapset *valid_params)
 {
 	finalize_primnode_context context;
 
@@ -996,7 +995,6 @@ finalize_plan(Plan *plan, List *rtable,
 		return NULL;
 
 	context.paramids = NULL;	/* initialize set to empty */
-	context.outer_params = outer_params;
 
 	/*
 	 * When we call finalize_primnode, context.paramids sets are automatically
@@ -1081,7 +1079,6 @@ finalize_plan(Plan *plan, List *rtable,
 						bms_add_members(context.paramids,
 										finalize_plan((Plan *) lfirst(l),
 													  rtable,
-													  outer_params,
 													  valid_params));
 				}
 			}
@@ -1097,7 +1094,6 @@ finalize_plan(Plan *plan, List *rtable,
 						bms_add_members(context.paramids,
 										finalize_plan((Plan *) lfirst(l),
 													  rtable,
-													  outer_params,
 													  valid_params));
 				}
 			}
@@ -1113,7 +1109,6 @@ finalize_plan(Plan *plan, List *rtable,
 						bms_add_members(context.paramids,
 										finalize_plan((Plan *) lfirst(l),
 													  rtable,
-													  outer_params,
 													  valid_params));
 				}
 			}
@@ -1164,13 +1159,11 @@ finalize_plan(Plan *plan, List *rtable,
 	context.paramids = bms_add_members(context.paramids,
 									   finalize_plan(plan->lefttree,
 													 rtable,
-													 outer_params,
 													 valid_params));
 
 	context.paramids = bms_add_members(context.paramids,
 									   finalize_plan(plan->righttree,
 													 rtable,
-													 outer_params,
 													 valid_params));
 
 	/* Now we have all the paramids */
@@ -1178,22 +1171,24 @@ finalize_plan(Plan *plan, List *rtable,
 	if (!bms_is_subset(context.paramids, valid_params))
 		elog(ERROR, "plan should not reference subplan's variable");
 
-	plan->extParam = bms_intersect(context.paramids, outer_params);
-	plan->allParam = context.paramids;
-
 	/*
+	 * Note: by definition, extParam and allParam should have the same value
+	 * in any plan node that doesn't have child initPlans.  We set them
+	 * equal here, and later SS_finalize_plan will update them properly
+	 * in node(s) that it attaches initPlans to.
+	 *
 	 * For speed at execution time, make sure extParam/allParam are actually
 	 * NULL if they are empty sets.
 	 */
-	if (bms_is_empty(plan->extParam))
+	if (bms_is_empty(context.paramids))
 	{
-		bms_free(plan->extParam);
 		plan->extParam = NULL;
-	}
-	if (bms_is_empty(plan->allParam))
-	{
-		bms_free(plan->allParam);
 		plan->allParam = NULL;
+	}
+	else
+	{
+		plan->extParam = context.paramids;
+		plan->allParam = bms_copy(context.paramids);
 	}
 
 	return plan->allParam;
@@ -1221,12 +1216,42 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 	if (is_subplan(node))
 	{
 		SubPlan    *subplan = (SubPlan *) node;
+		Plan	   *plan = subplan->plan;
+		ListCell   *lc;
+		Bitmapset  *subparamids;
 
-		/* Add outer-level params needed by the subplan to paramids */
-		context->paramids = bms_join(context->paramids,
-									 bms_intersect(subplan->plan->extParam,
-												   context->outer_params));
-		/* fall through to recurse into subplan args */
+		/* Recurse into the exprs, but not into the Plan */
+		finalize_primnode((Node *) subplan->exprs, context);
+
+		/*
+		 * Remove any param IDs of output parameters of the subplan that were
+		 * referenced in the exprs.  These are not interesting for
+		 * parameter change signaling since we always re-evaluate the subplan.
+		 * Note that this wouldn't work too well if there might be uses of the
+		 * same param IDs elsewhere in the plan, but that can't happen because
+		 * generate_new_param never tries to merge params.
+		 */
+		foreach(lc, subplan->paramIds)
+		{
+			context->paramids = bms_del_member(context->paramids,
+											   lfirst_int(lc));
+		}
+
+		/* Also examine args list */
+		finalize_primnode((Node *) subplan->args, context);
+
+		/*
+		 * Add params needed by the subplan to paramids, but excluding those
+		 * we will pass down to it.
+		 */
+		subparamids = bms_copy(plan->extParam);
+		foreach(lc, subplan->parParam)
+		{
+			subparamids = bms_del_member(subparamids, lfirst_int(lc));
+		}
+		context->paramids = bms_join(context->paramids, subparamids);
+
+		return false;			/* no more to do here */
 	}
 	return expression_tree_walker(node, finalize_primnode,
 								  (void *) context);
