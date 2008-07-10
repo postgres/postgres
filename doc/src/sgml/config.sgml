@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.182 2008/07/01 21:49:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.183 2008/07/10 22:08:17 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -4865,6 +4865,22 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-segment-size" xreflabel="segment_size">
+      <term><varname>segment_size</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>segment_size</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Reports the number of blocks (pages) that can be stored within a file
+        segment.  It is determined by the value of <literal>RELSEG_SIZE</>
+        when building the server.  The maximum size of a segment file in bytes
+        is equal to <varname>segment_size</> multiplied by
+        <varname>block_size</>; by default this is 1GB.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-server-encoding" xreflabel="server_encoding">
       <term><varname>server_encoding</varname> (<type>string</type>)</term>
       <indexterm>
@@ -4901,8 +4917,38 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        Reports the version number of the server as an integer. It is determined 
+        Reports the version number of the server as an integer. It is determined
         by the value of <literal>PG_VERSION_NUM</> when building the server.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-wal-block-size" xreflabel="wal_block_size">
+      <term><varname>wal_block_size</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>wal_block_size</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Reports the size of a WAL disk block.  It is determined by the value
+        of <literal>XLOG_BLCKSZ</> when building the server. The default value
+        is 8192 bytes.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-wal-segment-size" xreflabel="wal_segment_size">
+      <term><varname>wal_segment_size</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>wal_segment_size</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Reports the number of blocks (pages) in a WAL segment file.
+        The total size of a WAL segment file in bytes is equal to
+        <varname>wal_segment_size</> multiplied by <varname>wal_block_size</>;
+        by default this is 16MB.  See <xref linkend="wal-configuration"> for
+        more information.
        </para>
       </listitem>
      </varlistentry>
