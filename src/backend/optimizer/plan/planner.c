@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.233 2008/05/02 21:26:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.234 2008/07/10 02:14:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -459,7 +459,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 */
 	if (list_length(glob->subplans) != num_old_subplans ||
 		root->query_level > 1)
-		SS_finalize_plan(root, plan);
+		SS_finalize_plan(root, plan, true);
 
 	/* Return internal info if caller wants it */
 	if (subroot)
