@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.94 2008/01/01 19:45:49 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.95 2008/07/10 01:17:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,19 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 	if (node->instrument)
 		InstrEndLoop(node->instrument);
 
-	/* If we have changed parameters, propagate that info */
+	/*
+	 * If we have changed parameters, propagate that info.
+	 *
+	 * Note: ExecReScanSetParamPlan() can add bits to node->chgParam,
+	 * corresponding to the output param(s) that the InitPlan will update.
+	 * Since we make only one pass over the list, that means that an InitPlan
+	 * can depend on the output param(s) of a sibling InitPlan only if that
+	 * sibling appears earlier in the list.  This is workable for now given
+	 * the limited ways in which one InitPlan could depend on another, but
+	 * eventually we might need to work harder (or else make the planner
+	 * enlarge the extParam/allParam sets to include the params of depended-on
+	 * InitPlans).
+	 */
 	if (node->chgParam != NULL)
 	{
 		ListCell   *l;

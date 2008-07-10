@@ -272,3 +272,29 @@ select * from float_table
 
 select * from numeric_table
   where num_col in (select float_col from float_table);
+
+--
+-- Test case for bug #4290: bogus calculation of subplan param sets
+--
+
+create temp table ta (id int primary key, val int);
+
+insert into ta values(1,1);
+insert into ta values(2,2);
+
+create temp table tb (id int primary key, aval int);
+
+insert into tb values(1,1);
+insert into tb values(2,1);
+insert into tb values(3,2);
+insert into tb values(4,2);
+
+create temp table tc (id int primary key, aid int);
+
+insert into tc values(1,1);
+insert into tc values(2,2);
+
+select
+  ( select min(tb.id) from tb
+    where tb.aval = (select ta.val from ta where ta.id = tc.aid) ) as min_tb_id
+from tc;

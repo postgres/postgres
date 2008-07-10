@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.130 2008/04/21 20:54:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.131 2008/07/10 01:17:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,7 @@ typedef struct process_sublinks_context
 typedef struct finalize_primnode_context
 {
 	PlannerInfo *root;
-	Bitmapset  *paramids;		/* Set of PARAM_EXEC paramids found */
-	Bitmapset  *outer_params;	/* Set of accessible outer paramids */
+	Bitmapset  *paramids;		/* Non-local PARAM_EXEC paramids found */
 } finalize_primnode_context;
 
 
@@ -68,7 +67,6 @@ static Node *process_sublinks_mutator(Node *node,
 						 process_sublinks_context *context);
 static Bitmapset *finalize_plan(PlannerInfo *root,
 			  Plan *plan,
-			  Bitmapset *outer_params,
 			  Bitmapset *valid_params);
 static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 
@@ -394,17 +392,21 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 	}
 	else
 	{
-		List	   *params;
 		List	   *args;
 		ListCell   *l;
 
-		/* Adjust the Params */
-		params = generate_subquery_params(root,
-										  plan->targetlist,
-										  &splan->paramIds);
-		splan->testexpr = convert_testexpr(root,
-										   testexpr,
-										   params);
+		if (testexpr)
+		{
+			List	   *params;
+
+			/* Adjust the Params in the testexpr */
+			params = generate_subquery_params(root,
+											  plan->targetlist,
+											  &splan->paramIds);
+			splan->testexpr = convert_testexpr(root,
+											   testexpr,
+											   params);
+		}
 
 		/*
 		 * We can't convert subplans of ALL_SUBLINK or ANY_SUBLINK types to
@@ -1031,8 +1033,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 void
 SS_finalize_plan(PlannerInfo *root, Plan *plan)
 {
-	Bitmapset  *outer_params,
-			   *valid_params,
+	Bitmapset  *valid_params,
 			   *initExtParam,
 			   *initSetParam;
 	Cost		initplan_cost;
@@ -1042,9 +1043,12 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
 	/*
 	 * First, scan the param list to discover the sets of params that are
 	 * available from outer query levels and my own query level. We do this
-	 * once to save time in the per-plan recursion steps.
+	 * once to save time in the per-plan recursion steps.  (This calculation
+	 * is overly generous: it can include a lot of params that actually
+	 * shouldn't be referenced here.  However, valid_params is just used as
+	 * a debugging crosscheck, so it's not worth trying to be exact.)
 	 */
-	outer_params = valid_params = NULL;
+	valid_params = NULL;
 	paramid = 0;
 	foreach(l, root->glob->paramlist)
 	{
@@ -1053,7 +1057,6 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
 		if (pitem->abslevel < root->query_level)
 		{
 			/* valid outer-level parameter */
-			outer_params = bms_add_member(outer_params, paramid);
 			valid_params = bms_add_member(valid_params, paramid);
 		}
 		else if (pitem->abslevel == root->query_level &&
@@ -1069,9 +1072,8 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
 	/*
 	 * Now recurse through plan tree.
 	 */
-	(void) finalize_plan(root, plan, outer_params, valid_params);
+	(void) finalize_plan(root, plan, valid_params);
 
-	bms_free(outer_params);
 	bms_free(valid_params);
 
 	/*
@@ -1107,11 +1109,13 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
 	/* allParam must include all these params */
 	plan->allParam = bms_add_members(plan->allParam, initExtParam);
 	plan->allParam = bms_add_members(plan->allParam, initSetParam);
+	/* extParam must include any child extParam */
+	plan->extParam = bms_add_members(plan->extParam, initExtParam);
 	/* but extParam shouldn't include any setParams */
-	initExtParam = bms_del_members(initExtParam, initSetParam);
-	/* empty test ensures extParam is exactly NULL if it's empty */
-	if (!bms_is_empty(initExtParam))
-		plan->extParam = bms_join(plan->extParam, initExtParam);
+	plan->extParam = bms_del_members(plan->extParam, initSetParam);
+	/* ensure extParam is exactly NULL if it's empty */
+	if (bms_is_empty(plan->extParam))
+		plan->extParam = NULL;
 
 	plan->startup_cost += initplan_cost;
 	plan->total_cost += initplan_cost;
@@ -1124,8 +1128,7 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
  * This is just an internal notational convenience.
  */
 static Bitmapset *
-finalize_plan(PlannerInfo *root, Plan *plan,
-			  Bitmapset *outer_params, Bitmapset *valid_params)
+finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 {
 	finalize_primnode_context context;
 
@@ -1134,7 +1137,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 
 	context.root = root;
 	context.paramids = NULL;	/* initialize set to empty */
-	context.outer_params = outer_params;
 
 	/*
 	 * When we call finalize_primnode, context.paramids sets are automatically
@@ -1218,7 +1220,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
-													  outer_params,
 													  valid_params));
 				}
 			}
@@ -1234,7 +1235,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
-													  outer_params,
 													  valid_params));
 				}
 			}
@@ -1250,7 +1250,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
-													  outer_params,
 													  valid_params));
 				}
 			}
@@ -1301,13 +1300,11 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 	context.paramids = bms_add_members(context.paramids,
 									   finalize_plan(root,
 													 plan->lefttree,
-													 outer_params,
 													 valid_params));
 
 	context.paramids = bms_add_members(context.paramids,
 									   finalize_plan(root,
 													 plan->righttree,
-													 outer_params,
 													 valid_params));
 
 	/* Now we have all the paramids */
@@ -1315,22 +1312,24 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 	if (!bms_is_subset(context.paramids, valid_params))
 		elog(ERROR, "plan should not reference subplan's variable");
 
-	plan->extParam = bms_intersect(context.paramids, outer_params);
-	plan->allParam = context.paramids;
-
 	/*
+	 * Note: by definition, extParam and allParam should have the same value
+	 * in any plan node that doesn't have child initPlans.  We set them
+	 * equal here, and later SS_finalize_plan will update them properly
+	 * in node(s) that it attaches initPlans to.
+	 *
 	 * For speed at execution time, make sure extParam/allParam are actually
 	 * NULL if they are empty sets.
 	 */
-	if (bms_is_empty(plan->extParam))
+	if (bms_is_empty(context.paramids))
 	{
-		bms_free(plan->extParam);
 		plan->extParam = NULL;
-	}
-	if (bms_is_empty(plan->allParam))
-	{
-		bms_free(plan->allParam);
 		plan->allParam = NULL;
+	}
+	else
+	{
+		plan->extParam = context.paramids;
+		plan->allParam = bms_copy(context.paramids);
 	}
 
 	return plan->allParam;
@@ -1359,12 +1358,41 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 	{
 		SubPlan    *subplan = (SubPlan *) node;
 		Plan	   *plan = planner_subplan_get_plan(context->root, subplan);
+		ListCell   *lc;
+		Bitmapset  *subparamids;
 
-		/* Add outer-level params needed by the subplan to paramids */
-		context->paramids = bms_join(context->paramids,
-									 bms_intersect(plan->extParam,
-												   context->outer_params));
-		/* fall through to recurse into subplan args */
+		/* Recurse into the testexpr, but not into the Plan */
+		finalize_primnode(subplan->testexpr, context);
+
+		/*
+		 * Remove any param IDs of output parameters of the subplan that were
+		 * referenced in the testexpr.  These are not interesting for
+		 * parameter change signaling since we always re-evaluate the subplan.
+		 * Note that this wouldn't work too well if there might be uses of the
+		 * same param IDs elsewhere in the plan, but that can't happen because
+		 * generate_new_param never tries to merge params.
+		 */
+		foreach(lc, subplan->paramIds)
+		{
+			context->paramids = bms_del_member(context->paramids,
+											   lfirst_int(lc));
+		}
+
+		/* Also examine args list */
+		finalize_primnode((Node *) subplan->args, context);
+
+		/*
+		 * Add params needed by the subplan to paramids, but excluding those
+		 * we will pass down to it.
+		 */
+		subparamids = bms_copy(plan->extParam);
+		foreach(lc, subplan->parParam)
+		{
+			subparamids = bms_del_member(subparamids, lfirst_int(lc));
+		}
+		context->paramids = bms_join(context->paramids, subparamids);
+
+		return false;			/* no more to do here */
 	}
 	return expression_tree_walker(node, finalize_primnode,
 								  (void *) context);
