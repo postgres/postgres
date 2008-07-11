@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.93 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.94 2008/07/11 07:02:43 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -48,6 +48,7 @@
 #include "commands/defrem.h"
 #include "commands/proclang.h"
 #include "miscadmin.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
@@ -1403,10 +1404,10 @@ CreateCast(CreateCastStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				  errmsg("cast function must take one to three arguments")));
-		if (procstruct->proargtypes.values[0] != sourcetypeid)
+		if (!IsBinaryCoercible(sourcetypeid, procstruct->proargtypes.values[0]))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			errmsg("argument of cast function must match source data type")));
+			errmsg("argument of cast function must match or be binary-compatible with source data type")));
 		if (nargs > 1 && procstruct->proargtypes.values[1] != INT4OID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1415,10 +1416,10 @@ CreateCast(CreateCastStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 			errmsg("third argument of cast function must be type boolean")));
-		if (procstruct->prorettype != targettypeid)
+		if (!IsBinaryCoercible(procstruct->prorettype, targettypeid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("return data type of cast function must match target data type")));
+					 errmsg("return data type of cast function must match or be binary-compatible with target data type")));
 
 		/*
 		 * Restricting the volatility of a cast function may or may not be a

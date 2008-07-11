@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.166 2008/05/09 23:32:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.167 2008/07/11 07:02:43 petere Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1440,7 +1440,7 @@
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>
        The OID of the function to use to perform this cast.  Zero is
-       stored if the data types are binary compatible (that is, no
+       stored if the data types are binary coercible (that is, no
        run-time operation is needed to perform the cast)
       </entry>
      </row>

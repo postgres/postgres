@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.26 2007/06/05 21:31:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.27 2008/07/11 07:02:43 petere Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -44,12 +44,18 @@ SELECT CAST(42 AS float8);
   </para>
 
   <para>
-   Two types can be <firstterm>binary compatible</firstterm>, which
-   means that they can be converted into one another <quote>for
-   free</quote> without invoking any function.  This requires that
-   corresponding values use the same internal representation.  For
-   instance, the types <type>text</type> and <type>varchar</type> are
-   binary compatible.
+   Two types can be <firstterm>binary coercible</firstterm>, which
+   means that the conversion can be performed <quote>for free</quote>
+   without invoking any function.  This requires that corresponding
+   values use the same internal representation.  For instance, the
+   types <type>text</type> and <type>varchar</type> are binary
+   coercible both ways.  Binary coercibility is not necessarily a
+   symmetric relationship.  For example, the cast
+   from <type>xml</type> to <type>text</type> can be performed for
+   free in the present implementation, but the reverse direction
+   requires a function that performs at least a syntax check.  (Two
+   types that are binary coercible both ways are also referred to as
+   binary compatible.)
   </para>
 
   <para>
@@ -127,8 +133,8 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
 
   <para>
    To be able to create a cast, you must own the source or the target
-   data type.  To create a binary-compatible cast, you must be superuser.
-   (This restriction is made because an erroneous binary-compatible cast
+   data type.  To create a binary-coercible cast, you must be superuser.
+   (This restriction is made because an erroneous binary-coercible cast
    conversion can easily crash the server.)
   </para>
  </refsect1>
@@ -176,7 +182,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
      <listitem>
       <para>
        Indicates that the source type and the target type are binary
-       compatible, so no function is required to perform the cast.
+       coercible, so no function is required to perform the cast.
       </para>
      </listitem>
     </varlistentry>
@@ -205,8 +211,8 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
 
   <para>
    Cast implementation functions can have one to three arguments.
-   The first argument type must be identical to the cast's source type.
-   The second argument,
+   The first argument type must be identical to or binary-coercible from
+   the cast's source type.  The second argument,
    if present, must be type <type>integer</>; it receives the type
    modifier associated with the destination type, or <literal>-1</>
    if there is none.  The third argument,
@@ -216,6 +222,11 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
    implicit casts in some cases.  This argument is supplied for functions
    that must implement such casts.  It is not recommended that you design
    your own data types so that this matters.)
+  </para>
+
+  <para>
+   The return type of a cast function must be identical to or
+   binary-coercible to the cast's target type.
   </para>
 
   <para>
@@ -311,10 +322,10 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
     request without having matched it to an actual function.
     If a function call <replaceable>name</>(<replaceable>x</>) does not
     exactly match any existing function, but <replaceable>name</> is the name
-    of a data type and <structname>pg_cast</> provides a binary-compatible cast
+    of a data type and <structname>pg_cast</> provides a binary-coercible cast
     to this type from the type of <replaceable>x</>, then the call will be
     construed as a binary-compatible cast.  This exception is made so that
-    binary-compatible casts can be invoked using functional syntax, even
+    binary-coercible casts can be invoked using functional syntax, even
     though they lack any function.  Likewise, if there is no
     <structname>pg_cast</> entry but the cast would be to or from a string
     type, the call will be construed as an I/O conversion cast.  This
@@ -345,7 +356,7 @@ CREATE CAST (bigint AS int4) WITH FUNCTION int4(bigint);
   <para>
    The <command>CREATE CAST</command> command conforms to the
    <acronym>SQL</acronym> standard,
-   except that SQL does not make provisions for binary-compatible
+   except that SQL does not make provisions for binary-coercible
    types or extra arguments to implementation functions.
    <literal>AS IMPLICIT</> is a <productname>PostgreSQL</productname> 
    extension, too.

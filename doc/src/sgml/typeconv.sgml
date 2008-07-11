@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.53 2007/11/26 16:46:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.54 2008/07/11 07:02:43 petere Exp $ -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>
@@ -522,7 +522,7 @@ If no exact match is found, see whether the function call appears
 to be a special type conversion request.  This happens if the function call
 has just one argument and the function name is the same as the (internal)
 name of some data type.  Furthermore, the function argument must be either
-an unknown-type literal, or a type that is binary-compatible with the named
+an unknown-type literal, or a type that is binary-coercible to the named
 data type, or a type that could be converted to the named data type by
 applying that type's I/O functions (that is, the conversion is either to or
 from one of the standard string types).  When these conditions are met,
@@ -783,8 +783,8 @@ to <type>text</type> by default, allowing the <literal>||</literal> operator
 to be resolved as <type>text</type> concatenation.  Then the <type>text</type>
 result of the operator is converted to <type>bpchar</type> (<quote>blank-padded
 char</>, the internal name of the <type>character</type> data type) to match the target
-column type.  (Since the types <type>text</type> and
-<type>bpchar</type> are binary-compatible, this conversion does
+column type.  (Since the conversion from <type>text</type> to
+<type>bpchar</type> is binary-coercible, this conversion does
 not insert any real function call.)  Finally, the sizing function
 <literal>bpchar(bpchar, integer)</literal> is found in the system catalog
 and applied to the operator's result and the stored column length.  This
