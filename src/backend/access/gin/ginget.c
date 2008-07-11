@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.17 2008/06/19 00:46:03 alvherre Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.18 2008/07/11 21:06:29 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -138,7 +138,6 @@ computePartialMatchList( GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry
 	Page 		page;
 	IndexTuple  itup;
 	Datum		idatum;
-	bool		isnull;
 	int32		cmp;
 
 	scanEntry->partialMatch = tbm_create( work_mem * 1024L );
@@ -153,8 +152,15 @@ computePartialMatchList( GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry
 
 		page = BufferGetPage(stack->buffer);
 		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, stack->off));
-		idatum = index_getattr(itup, 1, btree->ginstate->tupdesc, &isnull);
-		Assert(!isnull);
+
+		/*
+		 * If tuple stores another attribute then stop scan
+		 */
+		if ( gintuple_get_attrnum( btree->ginstate, itup ) != scanEntry->attnum )
+			return true;
+
+		idatum = gin_index_getattr( btree->ginstate, itup );
+
 
 		/*----------
 		 * Check of partial match.
@@ -163,7 +169,7 @@ computePartialMatchList( GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry
 		 * case cmp < 0 => not match and continue scan
 		 *----------
 		 */
-    	cmp = DatumGetInt32(FunctionCall3(&btree->ginstate->comparePartialFn,
+    	cmp = DatumGetInt32(FunctionCall3(&btree->ginstate->comparePartialFn[scanEntry->attnum-1],
 										  scanEntry->entry,
 										  idatum,
 										  UInt16GetDatum(scanEntry->strategy)));
@@ -182,8 +188,8 @@ computePartialMatchList( GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry
 			Datum		newDatum,
 						savedDatum = datumCopy (
 										idatum,
-										btree->ginstate->tupdesc->attrs[0]->attbyval,
-										btree->ginstate->tupdesc->attrs[0]->attlen
+										btree->ginstate->origTupdesc->attrs[scanEntry->attnum-1]->attbyval,
+										btree->ginstate->origTupdesc->attrs[scanEntry->attnum-1]->attlen
 									);
 			/*
 			 * We should unlock current page (but not unpin) during
@@ -220,12 +226,15 @@ computePartialMatchList( GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry
 
 				page = BufferGetPage(stack->buffer);
 				itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, stack->off));
-				newDatum = index_getattr(itup, FirstOffsetNumber, btree->ginstate->tupdesc, &isnull);
+				newDatum = gin_index_getattr( btree->ginstate, itup );
 
-				if ( compareEntries(btree->ginstate, newDatum, savedDatum) == 0 )
+				if ( gintuple_get_attrnum( btree->ginstate, itup ) != scanEntry->attnum )
+					elog(ERROR, "lost saved point in index"); /* must not happen !!! */
+
+				if ( compareEntries(btree->ginstate, scanEntry->attnum, newDatum, savedDatum) == 0 )
 				{
 					/* Found!  */
-					if ( btree->ginstate->tupdesc->attrs[0]->attbyval == false )
+					if ( btree->ginstate->origTupdesc->attrs[scanEntry->attnum-1]->attbyval == false )
 						pfree( DatumGetPointer(savedDatum) );
 					break;
 				}
@@ -270,7 +279,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 	 * or just store posting list in memory
 	 */
 
-	prepareEntryScan(&btreeEntry, index, entry->entry, ginstate);
+	prepareEntryScan(&btreeEntry, index, entry->attnum, entry->entry, ginstate);
 	btreeEntry.searchMode = TRUE;
 	stackEntry = ginFindLeafPage(&btreeEntry, NULL);
 	page = BufferGetPage(stackEntry->buffer);
@@ -705,7 +714,7 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx,
 		*keyrecheck = true;
 
 		oldCtx = MemoryContextSwitchTo(tempCtx);
-		res = DatumGetBool(FunctionCall4(&ginstate->consistentFn,
+		res = DatumGetBool(FunctionCall4(&ginstate->consistentFn[key->attnum-1],
 										 PointerGetDatum(key->entryRes),
 										 UInt16GetDatum(key->strategy),
 										 key->query,

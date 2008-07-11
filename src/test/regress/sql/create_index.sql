@@ -138,7 +138,7 @@ RESET enable_indexscan;
 RESET enable_bitmapscan;
 
 --
--- GIN over int[]
+-- GIN over int[] and text[]
 --
 
 SET enable_seqscan = OFF;
@@ -179,6 +179,33 @@ SELECT * FROM array_index_op_test WHERE i @> '{32,17}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i && '{32,17}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i <@ '{38,34,32,89}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i = '{47,77}' ORDER BY seqno;
+
+-- And try it with a multicolumn GIN index
+
+DROP INDEX intarrayidx, textarrayidx;
+
+CREATE INDEX botharrayidx ON array_index_op_test USING gin (i, t);
+
+SET enable_seqscan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = OFF;
+
+SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAA80240}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t && '{AAAAAAA80240}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i @> '{32}' AND t && '{AAAAAAA80240}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i && '{32}' AND t @> '{AAAAAAA80240}' ORDER BY seqno;
+
+SET enable_indexscan = OFF;
+SET enable_bitmapscan = ON;
+
+SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAA80240}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t && '{AAAAAAA80240}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i @> '{32}' AND t && '{AAAAAAA80240}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i && '{32}' AND t @> '{AAAAAAA80240}' ORDER BY seqno;
 
 RESET enable_seqscan;
 RESET enable_indexscan;

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.20 2008/05/12 00:00:44 alvherre Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.21 2008/07/11 21:06:29 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -515,8 +515,8 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 
 			if (GinGetNPosting(itup) != newN)
 			{
-				bool		isnull;
-				Datum		value;
+				Datum			value;
+				OffsetNumber	attnum;
 
 				/*
 				 * Some ItemPointers was deleted, so we should remake our
@@ -544,8 +544,9 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 					itup = (IndexTuple) PageGetItem(tmppage, PageGetItemId(tmppage, i));
 				}
 
-				value = index_getattr(itup, FirstOffsetNumber, gvs->ginstate.tupdesc, &isnull);
-				itup = GinFormTuple(&gvs->ginstate, value, GinGetPosting(itup), newN);
+				value = gin_index_getattr(&gvs->ginstate, itup);
+				attnum = gintuple_get_attrnum(&gvs->ginstate, itup);
+				itup = GinFormTuple(&gvs->ginstate, attnum, value, GinGetPosting(itup), newN);
 				PageIndexTupleDelete(tmppage, i);
 
 				if (PageAddItem(tmppage, (Item) itup, IndexTupleSize(itup), i, false, false) != i)

@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.22 2008/06/19 00:46:05 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.23 2008/07/11 21:06:29 tgl Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -140,15 +140,18 @@ typedef struct
 
 typedef struct GinState
 {
-	FmgrInfo	compareFn;
-	FmgrInfo	extractValueFn;
-	FmgrInfo	extractQueryFn;
-	FmgrInfo	consistentFn;
-	FmgrInfo	comparePartialFn;	/* optional method */
+	FmgrInfo	compareFn[INDEX_MAX_KEYS];
+	FmgrInfo	extractValueFn[INDEX_MAX_KEYS];
+	FmgrInfo	extractQueryFn[INDEX_MAX_KEYS];
+	FmgrInfo	consistentFn[INDEX_MAX_KEYS];
+	FmgrInfo	comparePartialFn[INDEX_MAX_KEYS];	/* optional method */
 
-	bool		canPartialMatch;	/* can opclass perform partial
-									 * match (prefix search)? */
-	TupleDesc	tupdesc;
+	bool		canPartialMatch[INDEX_MAX_KEYS];	/* can opclass perform partial
+													 * match (prefix search)? */
+
+	TupleDesc   tupdesc[INDEX_MAX_KEYS];
+	TupleDesc   origTupdesc;
+	bool        oneCol;
 } GinState;
 
 /* XLog stuff */
@@ -235,12 +238,16 @@ extern void initGinState(GinState *state, Relation index);
 extern Buffer GinNewBuffer(Relation index);
 extern void GinInitBuffer(Buffer b, uint32 f);
 extern void GinInitPage(Page page, uint32 f, Size pageSize);
-extern int	compareEntries(GinState *ginstate, Datum a, Datum b);
-extern Datum *extractEntriesS(GinState *ginstate, Datum value,
+extern int	compareEntries(GinState *ginstate, OffsetNumber attnum, Datum a, Datum b);
+extern int	compareAttEntries(GinState *ginstate, OffsetNumber attnum_a, Datum a, 
+												  OffsetNumber attnum_b, Datum b);
+extern Datum *extractEntriesS(GinState *ginstate, OffsetNumber attnum, Datum value,
 				int32 *nentries, bool *needUnique);
-extern Datum *extractEntriesSU(GinState *ginstate, Datum value, int32 *nentries);
+extern Datum *extractEntriesSU(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nentries);
 extern Page GinPageGetCopyPage(Page page);
 
+extern Datum gin_index_getattr(GinState *ginstate, IndexTuple tuple);
+extern OffsetNumber gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple);
 /* gininsert.c */
 extern Datum ginbuild(PG_FUNCTION_ARGS);
 extern Datum gininsert(PG_FUNCTION_ARGS);
@@ -291,6 +298,7 @@ typedef struct GinBtreeData
 	BlockNumber rightblkno;
 
 	/* Entry options */
+	OffsetNumber	entryAttnum;
 	Datum		entryValue;
 	IndexTuple	entry;
 	bool		isDelete;
@@ -310,9 +318,10 @@ extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack);
 extern void findParents(GinBtree btree, GinBtreeStack *stack, BlockNumber rootBlkno);
 
 /* ginentrypage.c */
-extern IndexTuple GinFormTuple(GinState *ginstate, Datum key, ItemPointerData *ipd, uint32 nipd);
-extern Datum ginGetHighKey(GinState *ginstate, Page page);
-extern void prepareEntryScan(GinBtree btree, Relation index, Datum value, GinState *ginstate);
+extern IndexTuple GinFormTuple(GinState *ginstate, OffsetNumber attnum, Datum key, 
+										ItemPointerData *ipd, uint32 nipd);
+extern void prepareEntryScan(GinBtree btree, Relation index, OffsetNumber attnum,
+								Datum value, GinState *ginstate);
 extern void entryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
 extern IndexTuple ginPageGetLinkItup(Buffer buf);
 
@@ -359,6 +368,7 @@ typedef struct GinScanEntryData
 
 	/* entry, got from extractQueryFn */
 	Datum		entry;
+	OffsetNumber	attnum;
 
 	/* Current page in posting tree */
 	Buffer		buffer;
@@ -396,6 +406,7 @@ typedef struct GinScanKeyData
 	/* for calling consistentFn(GinScanKey->entryRes, strategy, query) */
 	StrategyNumber strategy;
 	Datum		query;
+	OffsetNumber	attnum;
 
 	ItemPointerData curItem;
 	bool		firstCall;
@@ -450,11 +461,12 @@ extern Datum ginarrayconsistent(PG_FUNCTION_ARGS);
 /* ginbulk.c */
 typedef struct EntryAccumulator
 {
-	Datum		value;
-	uint32		length;
-	uint32		number;
+	OffsetNumber	attnum;
+	Datum			value;
+	uint32			length;
+	uint32			number;
 	ItemPointerData *list;
-	bool		shouldSort;
+	bool			shouldSort;
 	struct EntryAccumulator *left;
 	struct EntryAccumulator *right;
 } EntryAccumulator;
@@ -474,7 +486,8 @@ typedef struct
 
 extern void ginInitBA(BuildAccumulator *accum);
 extern void ginInsertRecordBA(BuildAccumulator *accum,
-				  ItemPointer heapptr, Datum *entries, int32 nentry);
-extern ItemPointerData *ginGetEntry(BuildAccumulator *accum, Datum *entry, uint32 *n);
+				  ItemPointer heapptr, 
+				  OffsetNumber attnum, Datum *entries, int32 nentry);
+extern ItemPointerData *ginGetEntry(BuildAccumulator *accum, OffsetNumber *attnum, Datum *entry, uint32 *n);
 
 #endif

@@ -170,7 +170,7 @@ RESET enable_seqscan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 --
--- GIN over int[]
+-- GIN over int[] and text[]
 --
 SET enable_seqscan = OFF;
 SET enable_indexscan = ON;
@@ -414,6 +414,130 @@ SELECT * FROM array_index_op_test WHERE i = '{47,77}' ORDER BY seqno;
  seqno |    i    |                                                        t                                                        
 -------+---------+-----------------------------------------------------------------------------------------------------------------
     95 | {47,77} | {AAAAAAAAAAAAAAAAA764,AAAAAAAAAAA74076,AAAAAAAAAA18107,AAAAA40681,AAAAAAAAAAAAAAA35875,AAAAA60038,AAAAAAA56483}
+(1 row)
+
+-- And try it with a multicolumn GIN index
+DROP INDEX intarrayidx, textarrayidx;
+CREATE INDEX botharrayidx ON array_index_op_test USING gin (i, t);
+SET enable_seqscan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = OFF;
+SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
+ seqno |                i                |                                                                 t                                                                  
+-------+---------------------------------+------------------------------------------------------------------------------------------------------------------------------------
+     6 | {39,35,5,94,17,92,60,32}        | {AAAAAAAAAAAAAAA35875,AAAAAAAAAAAAAAAA23657}
+    74 | {32}                            | {AAAAAAAAAAAAAAAA1729,AAAAAAAAAAAAA22860,AAAAAA99807,AAAAA17383,AAAAAAAAAAAAAAA67062,AAAAAAAAAAA15165,AAAAAAAAAAA50956}
+    77 | {97,15,32,17,55,59,18,37,50,39} | {AAAAAAAAAAAA67946,AAAAAA54032,AAAAAAAA81587,55847,AAAAAAAAAAAAAA28620,AAAAAAAAAAAAAAAAA43052,AAAAAA75463,AAAA49534,AAAAAAAA44066}
+    89 | {40,32,17,6,30,88}              | {AA44673,AAAAAAAAAAA6119,AAAAAAAAAAAAAAAA23657,AAAAAAAAAAAAAAAAAA47955,AAAAAAAAAAAAAAAA33598,AAAAAAAAAAA33576,AA44673}
+    98 | {38,34,32,89}                   | {AAAAAAAAAAAAAAAAAA71621,AAAA8857,AAAAAAAAAAAAAAAAAAA65037,AAAAAAAAAAAAAAAA31334,AAAAAAAAAA48845}
+   100 | {85,32,57,39,49,84,32,3,30}     | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
+(6 rows)
+
+SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
+ seqno |                i                |                                                                 t                                                                  
+-------+---------------------------------+------------------------------------------------------------------------------------------------------------------------------------
+     6 | {39,35,5,94,17,92,60,32}        | {AAAAAAAAAAAAAAA35875,AAAAAAAAAAAAAAAA23657}
+    74 | {32}                            | {AAAAAAAAAAAAAAAA1729,AAAAAAAAAAAAA22860,AAAAAA99807,AAAAA17383,AAAAAAAAAAAAAAA67062,AAAAAAAAAAA15165,AAAAAAAAAAA50956}
+    77 | {97,15,32,17,55,59,18,37,50,39} | {AAAAAAAAAAAA67946,AAAAAA54032,AAAAAAAA81587,55847,AAAAAAAAAAAAAA28620,AAAAAAAAAAAAAAAAA43052,AAAAAA75463,AAAA49534,AAAAAAAA44066}
+    89 | {40,32,17,6,30,88}              | {AA44673,AAAAAAAAAAA6119,AAAAAAAAAAAAAAAA23657,AAAAAAAAAAAAAAAAAA47955,AAAAAAAAAAAAAAAA33598,AAAAAAAAAAA33576,AA44673}
+    98 | {38,34,32,89}                   | {AAAAAAAAAAAAAAAAAA71621,AAAA8857,AAAAAAAAAAAAAAAAAAA65037,AAAAAAAAAAAAAAAA31334,AAAAAAAAAA48845}
+   100 | {85,32,57,39,49,84,32,3,30}     | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
+(6 rows)
+
+SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAA80240}' ORDER BY seqno;
+ seqno |               i                |                                                                              t                                                                              
+-------+--------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    19 | {52,82,17,74,23,46,69,51,75}   | {AAAAAAAAAAAAA73084,AAAAA75968,AAAAAAAAAAAAAAAA14047,AAAAAAA80240,AAAAAAAAAAAAAAAAAAA1205,A68938}
+    30 | {26,81,47,91,34}               | {AAAAAAAAAAAAAAAAAAA70104,AAAAAAA80240}
+    64 | {26,19,34,24,81,78}            | {A96617,AAAAAAAAAAAAAAAAAAA70104,A68938,AAAAAAAAAAA53908,AAAAAAAAAAAAAAA453,AA17009,AAAAAAA80240}
+    82 | {34,60,4,79,78,16,86,89,42,50} | {AAAAA40681,AAAAAAAAAAAAAAAAAA12591,AAAAAAA80240,AAAAAAAAAAAAAAAA55798,AAAAAAAAAAAAAAAAAAA70104}
+    88 | {41,90,77,24,6,24}             | {AAAA35194,AAAA35194,AAAAAAA80240,AAAAAAAAAAA46154,AAAAAA58494,AAAAAAAAAAAAAAAAAAA17075,AAAAAAAAAAAAAAAAAA59334,AAAAAAAAAAAAAAAAAAA91804,AA74433}
+    97 | {54,2,86,65}                   | {47735,AAAAAAA99836,AAAAAAAAAAAAAAAAA6897,AAAAAAAAAAAAAAAA29150,AAAAAAA80240,AAAAAAAAAAAAAAAA98414,AAAAAAA56483,AAAAAAAAAAAAAAAA29150,AAAAAAA39692,AA21643}
+   100 | {85,32,57,39,49,84,32,3,30}    | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
+(7 rows)
+
+SELECT * FROM array_index_op_test WHERE t && '{AAAAAAA80240}' ORDER BY seqno;
+ seqno |               i                |                                                                              t                                                                              
+-------+--------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    19 | {52,82,17,74,23,46,69,51,75}   | {AAAAAAAAAAAAA73084,AAAAA75968,AAAAAAAAAAAAAAAA14047,AAAAAAA80240,AAAAAAAAAAAAAAAAAAA1205,A68938}
+    30 | {26,81,47,91,34}               | {AAAAAAAAAAAAAAAAAAA70104,AAAAAAA80240}
+    64 | {26,19,34,24,81,78}            | {A96617,AAAAAAAAAAAAAAAAAAA70104,A68938,AAAAAAAAAAA53908,AAAAAAAAAAAAAAA453,AA17009,AAAAAAA80240}
+    82 | {34,60,4,79,78,16,86,89,42,50} | {AAAAA40681,AAAAAAAAAAAAAAAAAA12591,AAAAAAA80240,AAAAAAAAAAAAAAAA55798,AAAAAAAAAAAAAAAAAAA70104}
+    88 | {41,90,77,24,6,24}             | {AAAA35194,AAAA35194,AAAAAAA80240,AAAAAAAAAAA46154,AAAAAA58494,AAAAAAAAAAAAAAAAAAA17075,AAAAAAAAAAAAAAAAAA59334,AAAAAAAAAAAAAAAAAAA91804,AA74433}
+    97 | {54,2,86,65}                   | {47735,AAAAAAA99836,AAAAAAAAAAAAAAAAA6897,AAAAAAAAAAAAAAAA29150,AAAAAAA80240,AAAAAAAAAAAAAAAA98414,AAAAAAA56483,AAAAAAAAAAAAAAAA29150,AAAAAAA39692,AA21643}
+   100 | {85,32,57,39,49,84,32,3,30}    | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
+(7 rows)
+
+SELECT * FROM array_index_op_test WHERE i @> '{32}' AND t && '{AAAAAAA80240}' ORDER BY seqno;
+ seqno |              i              |                                      t                                       
+-------+-----------------------------+------------------------------------------------------------------------------
+   100 | {85,32,57,39,49,84,32,3,30} | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
+(1 row)
+
+SELECT * FROM array_index_op_test WHERE i && '{32}' AND t @> '{AAAAAAA80240}' ORDER BY seqno;
+ seqno |              i              |                                      t                                       
+-------+-----------------------------+------------------------------------------------------------------------------
+   100 | {85,32,57,39,49,84,32,3,30} | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
+(1 row)
+
+SET enable_indexscan = OFF;
+SET enable_bitmapscan = ON;
+SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
+ seqno |                i                |                                                                 t                                                                  
+-------+---------------------------------+------------------------------------------------------------------------------------------------------------------------------------
+     6 | {39,35,5,94,17,92,60,32}        | {AAAAAAAAAAAAAAA35875,AAAAAAAAAAAAAAAA23657}
+    74 | {32}                            | {AAAAAAAAAAAAAAAA1729,AAAAAAAAAAAAA22860,AAAAAA99807,AAAAA17383,AAAAAAAAAAAAAAA67062,AAAAAAAAAAA15165,AAAAAAAAAAA50956}
+    77 | {97,15,32,17,55,59,18,37,50,39} | {AAAAAAAAAAAA67946,AAAAAA54032,AAAAAAAA81587,55847,AAAAAAAAAAAAAA28620,AAAAAAAAAAAAAAAAA43052,AAAAAA75463,AAAA49534,AAAAAAAA44066}
+    89 | {40,32,17,6,30,88}              | {AA44673,AAAAAAAAAAA6119,AAAAAAAAAAAAAAAA23657,AAAAAAAAAAAAAAAAAA47955,AAAAAAAAAAAAAAAA33598,AAAAAAAAAAA33576,AA44673}
+    98 | {38,34,32,89}                   | {AAAAAAAAAAAAAAAAAA71621,AAAA8857,AAAAAAAAAAAAAAAAAAA65037,AAAAAAAAAAAAAAAA31334,AAAAAAAAAA48845}
+   100 | {85,32,57,39,49,84,32,3,30}     | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
+(6 rows)
+
+SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
+ seqno |                i                |                                                                 t                                                                  
+-------+---------------------------------+------------------------------------------------------------------------------------------------------------------------------------
+     6 | {39,35,5,94,17,92,60,32}        | {AAAAAAAAAAAAAAA35875,AAAAAAAAAAAAAAAA23657}
+    74 | {32}                            | {AAAAAAAAAAAAAAAA1729,AAAAAAAAAAAAA22860,AAAAAA99807,AAAAA17383,AAAAAAAAAAAAAAA67062,AAAAAAAAAAA15165,AAAAAAAAAAA50956}
+    77 | {97,15,32,17,55,59,18,37,50,39} | {AAAAAAAAAAAA67946,AAAAAA54032,AAAAAAAA81587,55847,AAAAAAAAAAAAAA28620,AAAAAAAAAAAAAAAAA43052,AAAAAA75463,AAAA49534,AAAAAAAA44066}
+    89 | {40,32,17,6,30,88}              | {AA44673,AAAAAAAAAAA6119,AAAAAAAAAAAAAAAA23657,AAAAAAAAAAAAAAAAAA47955,AAAAAAAAAAAAAAAA33598,AAAAAAAAAAA33576,AA44673}
+    98 | {38,34,32,89}                   | {AAAAAAAAAAAAAAAAAA71621,AAAA8857,AAAAAAAAAAAAAAAAAAA65037,AAAAAAAAAAAAAAAA31334,AAAAAAAAAA48845}
+   100 | {85,32,57,39,49,84,32,3,30}     | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
+(6 rows)
+
+SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAA80240}' ORDER BY seqno;
+ seqno |               i                |                                                                              t                                                                              
+-------+--------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    19 | {52,82,17,74,23,46,69,51,75}   | {AAAAAAAAAAAAA73084,AAAAA75968,AAAAAAAAAAAAAAAA14047,AAAAAAA80240,AAAAAAAAAAAAAAAAAAA1205,A68938}
+    30 | {26,81,47,91,34}               | {AAAAAAAAAAAAAAAAAAA70104,AAAAAAA80240}
+    64 | {26,19,34,24,81,78}            | {A96617,AAAAAAAAAAAAAAAAAAA70104,A68938,AAAAAAAAAAA53908,AAAAAAAAAAAAAAA453,AA17009,AAAAAAA80240}
+    82 | {34,60,4,79,78,16,86,89,42,50} | {AAAAA40681,AAAAAAAAAAAAAAAAAA12591,AAAAAAA80240,AAAAAAAAAAAAAAAA55798,AAAAAAAAAAAAAAAAAAA70104}
+    88 | {41,90,77,24,6,24}             | {AAAA35194,AAAA35194,AAAAAAA80240,AAAAAAAAAAA46154,AAAAAA58494,AAAAAAAAAAAAAAAAAAA17075,AAAAAAAAAAAAAAAAAA59334,AAAAAAAAAAAAAAAAAAA91804,AA74433}
+    97 | {54,2,86,65}                   | {47735,AAAAAAA99836,AAAAAAAAAAAAAAAAA6897,AAAAAAAAAAAAAAAA29150,AAAAAAA80240,AAAAAAAAAAAAAAAA98414,AAAAAAA56483,AAAAAAAAAAAAAAAA29150,AAAAAAA39692,AA21643}
+   100 | {85,32,57,39,49,84,32,3,30}    | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
+(7 rows)
+
+SELECT * FROM array_index_op_test WHERE t && '{AAAAAAA80240}' ORDER BY seqno;
+ seqno |               i                |                                                                              t                                                                              
+-------+--------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    19 | {52,82,17,74,23,46,69,51,75}   | {AAAAAAAAAAAAA73084,AAAAA75968,AAAAAAAAAAAAAAAA14047,AAAAAAA80240,AAAAAAAAAAAAAAAAAAA1205,A68938}
+    30 | {26,81,47,91,34}               | {AAAAAAAAAAAAAAAAAAA70104,AAAAAAA80240}
+    64 | {26,19,34,24,81,78}            | {A96617,AAAAAAAAAAAAAAAAAAA70104,A68938,AAAAAAAAAAA53908,AAAAAAAAAAAAAAA453,AA17009,AAAAAAA80240}
+    82 | {34,60,4,79,78,16,86,89,42,50} | {AAAAA40681,AAAAAAAAAAAAAAAAAA12591,AAAAAAA80240,AAAAAAAAAAAAAAAA55798,AAAAAAAAAAAAAAAAAAA70104}
+    88 | {41,90,77,24,6,24}             | {AAAA35194,AAAA35194,AAAAAAA80240,AAAAAAAAAAA46154,AAAAAA58494,AAAAAAAAAAAAAAAAAAA17075,AAAAAAAAAAAAAAAAAA59334,AAAAAAAAAAAAAAAAAAA91804,AA74433}
+    97 | {54,2,86,65}                   | {47735,AAAAAAA99836,AAAAAAAAAAAAAAAAA6897,AAAAAAAAAAAAAAAA29150,AAAAAAA80240,AAAAAAAAAAAAAAAA98414,AAAAAAA56483,AAAAAAAAAAAAAAAA29150,AAAAAAA39692,AA21643}
+   100 | {85,32,57,39,49,84,32,3,30}    | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
+(7 rows)
+
+SELECT * FROM array_index_op_test WHERE i @> '{32}' AND t && '{AAAAAAA80240}' ORDER BY seqno;
+ seqno |              i              |                                      t                                       
+-------+-----------------------------+------------------------------------------------------------------------------
+   100 | {85,32,57,39,49,84,32,3,30} | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
+(1 row)
+
+SELECT * FROM array_index_op_test WHERE i && '{32}' AND t @> '{AAAAAAA80240}' ORDER BY seqno;
+ seqno |              i              |                                      t                                       
+-------+-----------------------------+------------------------------------------------------------------------------
+   100 | {85,32,57,39,49,84,32,3,30} | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
 (1 row)
 
 RESET enable_seqscan;

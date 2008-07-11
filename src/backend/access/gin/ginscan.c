@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.16 2008/07/04 13:21:18 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.17 2008/07/11 21:06:29 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -36,7 +36,7 @@ ginbeginscan(PG_FUNCTION_ARGS)
 }
 
 static void
-fillScanKey(GinState *ginstate, GinScanKey key, Datum query,
+fillScanKey(GinState *ginstate, GinScanKey key, OffsetNumber attnum, Datum query,
 			Datum *entryValues, bool *partial_matches, uint32 nEntryValues, 
 			StrategyNumber strategy)
 {
@@ -47,6 +47,7 @@ fillScanKey(GinState *ginstate, GinScanKey key, Datum query,
 	key->entryRes = (bool *) palloc0(sizeof(bool) * nEntryValues);
 	key->scanEntry = (GinScanEntry) palloc(sizeof(GinScanEntryData) * nEntryValues);
 	key->strategy = strategy;
+	key->attnum = attnum;
 	key->query = query;
 	key->firstCall = TRUE;
 	ItemPointerSet(&(key->curItem), InvalidBlockNumber, InvalidOffsetNumber);
@@ -55,19 +56,20 @@ fillScanKey(GinState *ginstate, GinScanKey key, Datum query,
 	{
 		key->scanEntry[i].pval = key->entryRes + i;
 		key->scanEntry[i].entry = entryValues[i];
+		key->scanEntry[i].attnum = attnum;
 		ItemPointerSet(&(key->scanEntry[i].curItem), InvalidBlockNumber, InvalidOffsetNumber);
 		key->scanEntry[i].offset = InvalidOffsetNumber;
 		key->scanEntry[i].buffer = InvalidBuffer;
 		key->scanEntry[i].partialMatch = NULL;
 		key->scanEntry[i].list = NULL;
 		key->scanEntry[i].nlist = 0;
-		key->scanEntry[i].isPartialMatch = ( ginstate->canPartialMatch && partial_matches ) 
+		key->scanEntry[i].isPartialMatch = ( ginstate->canPartialMatch[attnum - 1] && partial_matches ) 
 												? partial_matches[i] : false;
 
 		/* link to the equals entry in current scan key */
 		key->scanEntry[i].master = NULL;
 		for (j = 0; j < i; j++)
-			if (compareEntries(ginstate, entryValues[i], entryValues[j]) == 0)
+			if (compareEntries(ginstate, attnum, entryValues[i], entryValues[j]) == 0)
 			{
 				key->scanEntry[i].master = key->scanEntry + j;
 				break;
@@ -164,19 +166,17 @@ newScanKey(IndexScanDesc scan)
 		int32		nEntryValues;
 		bool		*partial_matches = NULL;
 
-		Assert(scankey[i].sk_attno == 1);
-
 		/* XXX can't we treat nulls by just setting isVoidRes? */
 		/* This would amount to assuming that all GIN operators are strict */
 		if (scankey[i].sk_flags & SK_ISNULL)
 			elog(ERROR, "GIN doesn't support NULL as scan key");
 
 		entryValues = (Datum *) DatumGetPointer(FunctionCall4(
-												&so->ginstate.extractQueryFn,
-													  scankey[i].sk_argument,
-											  PointerGetDatum(&nEntryValues),
-									   UInt16GetDatum(scankey[i].sk_strategy),
-										PointerGetDatum(&partial_matches)));
+												&so->ginstate.extractQueryFn[scankey[i].sk_attno - 1],
+												scankey[i].sk_argument,
+												PointerGetDatum(&nEntryValues),
+												UInt16GetDatum(scankey[i].sk_strategy),
+												PointerGetDatum(&partial_matches)));
 		if (nEntryValues < 0)
 		{
 			/*
@@ -194,7 +194,7 @@ newScanKey(IndexScanDesc scan)
 			/* full scan... */
 			continue;
 
-		fillScanKey(&so->ginstate, &(so->keys[nkeys]), scankey[i].sk_argument,
+		fillScanKey(&so->ginstate, &(so->keys[nkeys]), scankey[i].sk_attno, scankey[i].sk_argument,
 					entryValues, partial_matches, nEntryValues, scankey[i].sk_strategy);
 		nkeys++;
 	}

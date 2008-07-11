@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.67 2008/03/16 23:57:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.68 2008/07/11 21:06:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -394,7 +394,7 @@ Indexes:
   </para>
 
   <para>
-   Currently, only the B-tree and GiST index methods support
+   Currently, only the B-tree, GiST and GIN index methods support
    multicolumn indexes. Up to 32 fields can be specified by default.
    (This limit can be altered when building
    <productname>PostgreSQL</productname>.)  Only B-tree currently
@@ -423,7 +423,7 @@ Indexes:
    the optional clauses <literal>ASC</>, <literal>DESC</>, <literal>NULLS
    FIRST</>, and/or <literal>NULLS LAST</> can be specified to reverse
    the normal sort direction of the index.  Since an ordered index can be
-   scanned either forward or backward, it is not normally useful to create a 
+   scanned either forward or backward, it is not normally useful to create a
    single-column <literal>DESC</> index &mdash; that sort ordering is already
    available with a regular index.  The value of these options is that
    multicolumn indexes can be created that match the sort ordering requested
