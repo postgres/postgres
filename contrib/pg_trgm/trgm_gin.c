@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_gin.c,v 1.4 2008/05/17 01:28:21 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_gin.c,v 1.5 2008/07/11 11:56:48 teodor Exp $ 
  */
 #include "trgm.h"
 
@@ -52,6 +52,16 @@ gin_extract_trgm(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(entries);
 }
 
+/*
+ * Per call strage for consistent functions to
+ * cache computed value from query
+ */
+typedef struct PerCallConsistentStorage {
+	int		trglen;
+	text	data[1]; /* query */
+} PerCallConsistentStorage;
+#define PCCSHDR_SZ  offsetof(PerCallConsistentStorage, data)
+
 Datum
 gin_trgm_consistent(PG_FUNCTION_ARGS)
 {
@@ -60,16 +70,30 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 	text	   *query = PG_GETARG_TEXT_P(2);
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(3);
 	bool		res = FALSE;
-	TRGM	   *trg;
 	int4		i,
 				trglen,
 				ntrue = 0;
+	PerCallConsistentStorage  *pccs = (PerCallConsistentStorage*) fcinfo->flinfo->fn_extra;
 
 	/* All cases served by this function are inexact */
 	*recheck = true;
 
-	trg = generate_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);
-	trglen = ARRNELEM(trg);
+	if ( pccs == NULL || VARSIZE(pccs->data) != VARSIZE(query) || memcmp( pccs->data, query, VARSIZE(query) ) !=0  )
+	{
+		TRGM	   *trg = generate_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);
+
+		if ( pccs )
+			pfree(pccs);
+
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt, 
+									VARSIZE(query) + PCCSHDR_SZ);
+		pccs = (PerCallConsistentStorage*) fcinfo->flinfo->fn_extra;
+
+		pccs->trglen = ARRNELEM(trg);
+		memcpy( pccs->data, query, VARSIZE(query) );
+	}
+
+	trglen = pccs->trglen;
 
 	for (i = 0; i < trglen; i++)
 		if (check[i])

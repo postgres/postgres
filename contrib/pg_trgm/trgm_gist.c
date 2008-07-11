@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_gist.c,v 1.14 2008/05/17 01:28:21 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_gist.c,v 1.15 2008/07/11 11:56:48 teodor Exp $ 
  */
 #include "trgm.h"
 
@@ -168,11 +168,29 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	TRGM	   *key = (TRGM *) DatumGetPointer(entry->key);
-	TRGM	   *qtrg = generate_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);
+	TRGM	   *qtrg;
 	bool		res = false;
+	char		*cache  = (char*) fcinfo->flinfo->fn_extra;
 
 	/* All cases served by this function are exact */
 	*recheck = false;
+
+	if ( cache == NULL || VARSIZE(cache) != VARSIZE(query) || memcmp( cache, query, VARSIZE(query) ) !=0  )
+	{
+		qtrg = generate_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);    
+
+		if (cache)
+			pfree(cache);
+
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							MAXALIGN(VARSIZE(query)) + VARSIZE(qtrg) );
+		cache = (char*) fcinfo->flinfo->fn_extra;
+
+		memcpy( cache, query, VARSIZE(query) );
+		memcpy( cache + MAXALIGN(VARSIZE(query)), qtrg, VARSIZE(qtrg) );
+	}
+
+	qtrg = (TRGM*)( cache + MAXALIGN(VARSIZE(query)) );
 
 	if (GIST_LEAF(entry))
 	{							/* all leafs contains orig trgm */
