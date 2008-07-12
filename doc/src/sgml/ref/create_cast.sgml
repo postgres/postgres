@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.27 2008/07/11 07:02:43 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.28 2008/07/12 16:20:06 tgl Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -294,7 +294,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
    the same name as a data type, returned that data type, and took one
    argument of a different type was automatically a cast function.
    This convention has been abandoned in face of the introduction of
-   schemas and to be able to represent binary compatible casts in the
+   schemas and to be able to represent binary-coercible casts in the
    system catalogs.  The built-in cast functions still follow this naming
    scheme, but they have to be shown as casts in the system catalog
    <structname>pg_cast</> as well.
@@ -324,7 +324,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
     exactly match any existing function, but <replaceable>name</> is the name
     of a data type and <structname>pg_cast</> provides a binary-coercible cast
     to this type from the type of <replaceable>x</>, then the call will be
-    construed as a binary-compatible cast.  This exception is made so that
+    construed as a binary-coercible cast.  This exception is made so that
     binary-coercible casts can be invoked using functional syntax, even
     though they lack any function.  Likewise, if there is no
     <structname>pg_cast</> entry but the cast would be to or from a string
