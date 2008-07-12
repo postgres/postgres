@@ -9,28 +9,14 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.81 2008/06/23 19:27:19 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.82 2008/07/12 00:44:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <ctype.h>
-#include <limits.h>
-/*
- * towlower() and friends should be in <wctype.h>, but some pre-C99 systems
- * declare them in <wchar.h>.
- */
-#ifdef HAVE_WCHAR_H
-#include <wchar.h>
-#endif
-#ifdef HAVE_WCTYPE_H
-#include <wctype.h>
-#endif
-
 #include "utils/builtins.h"
 #include "utils/formatting.h"
-#include "utils/pg_locale.h"
 #include "mb/pg_wchar.h"
 
 
@@ -60,7 +46,8 @@ lower(PG_FUNCTION_ARGS)
 	char	*out_string;
 	text	*result;
 
-	out_string = str_tolower(VARDATA_ANY(in_string), VARSIZE_ANY_EXHDR(in_string));
+	out_string = str_tolower(VARDATA_ANY(in_string),
+							 VARSIZE_ANY_EXHDR(in_string));
 	result = cstring_to_text(out_string);
 	pfree(out_string);
 
@@ -89,7 +76,8 @@ upper(PG_FUNCTION_ARGS)
 	char	*out_string;
 	text	*result;
 
-	out_string = str_toupper(VARDATA_ANY(in_string), VARSIZE_ANY_EXHDR(in_string));
+	out_string = str_toupper(VARDATA_ANY(in_string),
+							 VARSIZE_ANY_EXHDR(in_string));
 	result = cstring_to_text(out_string);
 	pfree(out_string);
 
@@ -121,7 +109,8 @@ initcap(PG_FUNCTION_ARGS)
 	char	*out_string;
 	text	*result;
 
-	out_string = str_initcap(VARDATA_ANY(in_string), VARSIZE_ANY_EXHDR(in_string));
+	out_string = str_initcap(VARDATA_ANY(in_string),
+							 VARSIZE_ANY_EXHDR(in_string));
 	result = cstring_to_text(out_string);
 	pfree(out_string);
 

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------
  * formatting.h
  *
- * $PostgreSQL: pgsql/src/include/utils/formatting.h,v 1.19 2008/06/23 19:27:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/formatting.h,v 1.20 2008/07/12 00:44:38 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -21,9 +21,9 @@
 #include "fmgr.h"
 
 
-extern char *str_tolower(char *buff, size_t nbytes);
-extern char *str_toupper(char *buff, size_t nbytes);
-extern char *str_initcap(char *buff, size_t nbytes);
+extern char *str_tolower(const char *buff, size_t nbytes);
+extern char *str_toupper(const char *buff, size_t nbytes);
+extern char *str_initcap(const char *buff, size_t nbytes);
 
 extern Datum timestamp_to_char(PG_FUNCTION_ARGS);
 extern Datum timestamptz_to_char(PG_FUNCTION_ARGS);
