@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.79 2008/05/13 15:44:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.80 2008/07/13 21:50:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,7 +260,6 @@ Page
 PageGetTempPage(Page page, Size specialSize)
 {
 	Size		pageSize;
-	Size		size;
 	Page		temp;
 	PageHeader	thdr;
 
@@ -271,14 +270,12 @@ PageGetTempPage(Page page, Size specialSize)
 	/* copy old page in */
 	memcpy(temp, page, pageSize);
 
-	/* clear out the middle */
-	size = pageSize - SizeOfPageHeaderData;
-	size -= MAXALIGN(specialSize);
-	MemSet(PageGetContents(thdr), 0, size);
-
 	/* set high, low water marks */
 	thdr->pd_lower = SizeOfPageHeaderData;
 	thdr->pd_upper = pageSize - MAXALIGN(specialSize);
+
+	/* clear out the middle */
+	MemSet((char *) temp + thdr->pd_lower, 0, thdr->pd_upper - thdr->pd_lower);
 
 	return temp;
 }

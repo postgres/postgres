@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.23 2008/07/11 21:06:29 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.24 2008/07/13 21:50:04 tgl Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -121,17 +121,19 @@ typedef struct
 /*
  * Data (posting tree) pages
  */
+#define GinDataPageGetRightBound(page)	((ItemPointer) PageGetContents(page))
 #define GinDataPageGetData(page)	\
-	(PageGetContents(page)+MAXALIGN(sizeof(ItemPointerData)))
-#define GinDataPageGetRightBound(page)	((ItemPointer)PageGetContents(page))
-#define GinSizeOfItem(page) ( (GinPageIsLeaf(page)) ? sizeof(ItemPointerData) : sizeof(PostingItem) )
-#define GinDataPageGetItem(page,i) ( GinDataPageGetData(page) + ((i)-1) * GinSizeOfItem(page) )
+	(PageGetContents(page) + MAXALIGN(sizeof(ItemPointerData)))
+#define GinSizeOfItem(page)	\
+	(GinPageIsLeaf(page) ? sizeof(ItemPointerData) : sizeof(PostingItem))
+#define GinDataPageGetItem(page,i)	\
+	(GinDataPageGetData(page) + ((i)-1) * GinSizeOfItem(page))
 
 #define GinDataPageGetFreeSpace(page)	\
-	( BLCKSZ - SizeOfPageHeaderData - MAXALIGN(sizeof(GinPageOpaqueData)) - \
-		GinPageGetOpaque(page)->maxoff * GinSizeOfItem(page) - \
-		MAXALIGN(sizeof(ItemPointerData)))
-
+	(BLCKSZ - MAXALIGN(SizeOfPageHeaderData) \
+	 - MAXALIGN(sizeof(ItemPointerData)) \
+	 - GinPageGetOpaque(page)->maxoff * GinSizeOfItem(page) \
+	 - MAXALIGN(sizeof(GinPageOpaqueData)))
 
 
 #define GIN_UNLOCK	BUFFER_LOCK_UNLOCK

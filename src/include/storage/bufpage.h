@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.81 2008/06/08 22:00:48 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.82 2008/07/13 21:50:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,9 +206,13 @@ typedef PageHeaderData *PageHeader;
 /*
  * PageGetContents
  *		To be used in case the page does not contain item pointers.
+ *
+ * Note: prior to 8.3 this was not guaranteed to yield a MAXALIGN'd result.
+ * Now it is.  Beware of old code that might think the offset to the contents
+ * is just SizeOfPageHeaderData rather than MAXALIGN(SizeOfPageHeaderData).
  */
 #define PageGetContents(page) \
-	((char *) (&((PageHeader) (page))->pd_linp[0]))
+	((char *) (page) + MAXALIGN(SizeOfPageHeaderData))
 
 /* ----------------
  *		macros to access page size info
