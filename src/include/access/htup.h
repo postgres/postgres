@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.99 2008/05/12 00:00:53 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.100 2008/07/13 20:45:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,12 +362,12 @@ do { \
  * other stuff that has to be on a disk page.  Since heap pages use no
  * "special space", there's no deduction for that.
  *
- * NOTE: we do not need to count an ItemId for the tuple because
- * sizeof(PageHeaderData) includes the first ItemId on the page.  But beware
- * of assuming that, say, you can fit 2 tuples of size MaxHeapTupleSize/2
- * on the same page.
+ * NOTE: we allow for the ItemId that must point to the tuple, ensuring that
+ * an otherwise-empty page can indeed hold a tuple of this size.  Because
+ * ItemIds and tuples have different alignment requirements, don't assume that
+ * you can, say, fit 2 tuples of size MaxHeapTupleSize/2 on the same page.
  */
-#define MaxHeapTupleSize  (BLCKSZ - MAXALIGN(sizeof(PageHeaderData)))
+#define MaxHeapTupleSize  (BLCKSZ - MAXALIGN(SizeOfPageHeaderData + sizeof(ItemIdData)))
 
 /*
  * MaxHeapTuplesPerPage is an upper bound on the number of tuples that can
@@ -381,7 +381,7 @@ do { \
  * require increases in the size of work arrays.
  */
 #define MaxHeapTuplesPerPage	\
-	((int) ((BLCKSZ - offsetof(PageHeaderData, pd_linp)) / \
+	((int) ((BLCKSZ - SizeOfPageHeaderData) / \
 			(MAXALIGN(offsetof(HeapTupleHeaderData, t_bits)) + sizeof(ItemIdData))))
 
 /*

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.40 2008/06/19 00:46:06 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.41 2008/07/13 20:45:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,10 +46,9 @@
  */
 #define TOAST_TUPLES_PER_PAGE	4
 
-/* Note: sizeof(PageHeaderData) includes the first ItemId on the page */
 #define TOAST_TUPLE_THRESHOLD	\
 	MAXALIGN_DOWN((BLCKSZ - \
-				   MAXALIGN(sizeof(PageHeaderData) + (TOAST_TUPLES_PER_PAGE-1) * sizeof(ItemIdData))) \
+				   MAXALIGN(SizeOfPageHeaderData + TOAST_TUPLES_PER_PAGE * sizeof(ItemIdData))) \
 				  / TOAST_TUPLES_PER_PAGE)
 
 #define TOAST_TUPLE_TARGET		TOAST_TUPLE_THRESHOLD
@@ -73,10 +72,9 @@
  */
 #define EXTERN_TUPLES_PER_PAGE	4		/* tweak only this */
 
-/* Note: sizeof(PageHeaderData) includes the first ItemId on the page */
 #define EXTERN_TUPLE_MAX_SIZE	\
 	MAXALIGN_DOWN((BLCKSZ - \
-				   MAXALIGN(sizeof(PageHeaderData) + (EXTERN_TUPLES_PER_PAGE-1) * sizeof(ItemIdData))) \
+				   MAXALIGN(SizeOfPageHeaderData + EXTERN_TUPLES_PER_PAGE * sizeof(ItemIdData))) \
 				  / EXTERN_TUPLES_PER_PAGE)
 
 #define TOAST_MAX_CHUNK_SIZE	\

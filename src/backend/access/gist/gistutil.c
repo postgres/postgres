@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.29 2008/06/19 00:46:03 alvherre Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.30 2008/07/13 20:45:46 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -591,8 +591,7 @@ gistcheckpage(Relation rel, Buffer buf)
 	/*
 	 * Additionally check that the special area looks sane.
 	 */
-	if (((PageHeader) (page))->pd_special !=
-		(BLCKSZ - MAXALIGN(sizeof(GISTPageOpaqueData))))
+	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GISTPageOpaqueData)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("index \"%s\" contains corrupted page at block %u",

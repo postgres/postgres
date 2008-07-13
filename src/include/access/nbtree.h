@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.120 2008/06/19 00:46:06 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.121 2008/07/13 20:45:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,13 +113,10 @@ typedef struct BTMetaPageData
  *
  * We actually need to be able to fit three items on every page,
  * so restrict any one item to 1/3 the per-page available space.
- *
- * Note: sizeof(PageHeaderData) includes the first ItemId, but we have
- * to allow for 2 more, as well as the end-of-page special space.
  */
 #define BTMaxItemSize(page) \
 	MAXALIGN_DOWN((PageGetPageSize(page) - \
-				   MAXALIGN(sizeof(PageHeaderData) + 2*sizeof(ItemIdData)) - \
+				   MAXALIGN(SizeOfPageHeaderData + 3*sizeof(ItemIdData)) - \
 				   MAXALIGN(sizeof(BTPageOpaqueData))) / 3)
 
 /*

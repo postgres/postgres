@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.315 2008/06/30 22:10:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.316 2008/07/13 20:45:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1017,19 +1017,19 @@ static bool
 XLogCheckBuffer(XLogRecData *rdata, bool doPageWrites,
 				XLogRecPtr *lsn, BkpBlock *bkpb)
 {
-	PageHeader	page;
+	Page		page;
 
-	page = (PageHeader) BufferGetBlock(rdata->buffer);
+	page = BufferGetPage(rdata->buffer);
 
 	/*
 	 * XXX We assume page LSN is first data on *every* page that can be passed
 	 * to XLogInsert, whether it otherwise has the standard page layout or
 	 * not.
 	 */
-	*lsn = page->pd_lsn;
+	*lsn = PageGetLSN(page);
 
 	if (doPageWrites &&
-		XLByteLE(page->pd_lsn, RedoRecPtr))
+		XLByteLE(PageGetLSN(page), RedoRecPtr))
 	{
 		/*
 		 * The page needs to be backed up, so set up *bkpb
@@ -1040,8 +1040,8 @@ XLogCheckBuffer(XLogRecData *rdata, bool doPageWrites,
 		if (rdata->buffer_std)
 		{
 			/* Assume we can omit data between pd_lower and pd_upper */
-			uint16		lower = page->pd_lower;
-			uint16		upper = page->pd_upper;
+			uint16		lower = ((PageHeader) page)->pd_lower;
+			uint16		upper = ((PageHeader) page)->pd_upper;
 
 			if (lower >= SizeOfPageHeaderData &&
 				upper > lower &&

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.153 2008/06/12 09:12:30 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.154 2008/07/13 20:45:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ DefineSequence(CreateSeqStmt *seq)
 	Oid			seqoid;
 	Relation	rel;
 	Buffer		buf;
-	PageHeader	page;
+	Page		page;
 	sequence_magic *sm;
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
@@ -212,9 +212,9 @@ DefineSequence(CreateSeqStmt *seq)
 	buf = ReadBuffer(rel, P_NEW);
 	Assert(BufferGetBlockNumber(buf) == 0);
 
-	page = (PageHeader) BufferGetPage(buf);
+	page = BufferGetPage(buf);
 
-	PageInit((Page) page, BufferGetPageSize(buf), sizeof(sequence_magic));
+	PageInit(page, BufferGetPageSize(buf), sizeof(sequence_magic));
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 	sm->magic = SEQ_MAGIC;
 
@@ -954,7 +954,7 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 static Form_pg_sequence
 read_info(SeqTable elm, Relation rel, Buffer *buf)
 {
-	PageHeader	page;
+	Page		page;
 	ItemId		lp;
 	HeapTupleData tuple;
 	sequence_magic *sm;
@@ -963,7 +963,7 @@ read_info(SeqTable elm, Relation rel, Buffer *buf)
 	*buf = ReadBuffer(rel, 0);
 	LockBuffer(*buf, BUFFER_LOCK_EXCLUSIVE);
 
-	page = (PageHeader) BufferGetPage(*buf);
+	page = BufferGetPage(*buf);
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 
 	if (sm->magic != SEQ_MAGIC)
@@ -972,7 +972,7 @@ read_info(SeqTable elm, Relation rel, Buffer *buf)
 
 	lp = PageGetItemId(page, FirstOffsetNumber);
 	Assert(ItemIdIsNormal(lp));
-	tuple.t_data = (HeapTupleHeader) PageGetItem((Page) page, lp);
+	tuple.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 
 	seq = (Form_pg_sequence) GETSTRUCT(&tuple);
 

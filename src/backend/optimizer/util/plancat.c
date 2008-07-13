@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.147 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.148 2008/07/13 20:45:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,7 +429,7 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				tuple_width += sizeof(HeapTupleHeaderData);
 				tuple_width += sizeof(ItemPointerData);
 				/* note: integer division is intentional here */
-				density = (BLCKSZ - sizeof(PageHeaderData)) / tuple_width;
+				density = (BLCKSZ - SizeOfPageHeaderData) / tuple_width;
 			}
 			*tuples = rint(density * (double) curpages);
 			break;
