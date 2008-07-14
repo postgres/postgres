@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.82 2008/07/13 21:50:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.83 2008/07/14 03:22:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,9 +179,9 @@ typedef PageHeaderData *PageHeader;
 #define PageIsValid(page) PointerIsValid(page)
 
 /*
- * line pointer does not count as part of header
+ * line pointer(s) do not count as part of header
  */
-#define SizeOfPageHeaderData (offsetof(PageHeaderData, pd_linp[0]))
+#define SizeOfPageHeaderData (offsetof(PageHeaderData, pd_linp))
 
 /*
  * PageIsEmpty
