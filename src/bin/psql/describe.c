@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.176 2008/07/12 10:44:56 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.177 2008/07/14 22:00:04 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -106,7 +106,7 @@ describeAggregates(const char *pattern, bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of aggregate functions");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -166,7 +166,7 @@ describeTablespaces(const char *pattern, bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of tablespaces");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -278,7 +278,7 @@ describeFunctions(const char *pattern, bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of functions");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -368,7 +368,7 @@ describeTypes(const char *pattern, bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of data types");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -418,7 +418,7 @@ describeOperators(const char *pattern)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of operators");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -478,7 +478,7 @@ listAllDbs(bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of databases");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -497,7 +497,7 @@ permissionsList(const char *pattern)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool trans_columns[] = {false, false, true, false};
+	static const bool translate_columns[] = {false, false, true, false};
 
 	initPQExpBuffer(&buf);
 
@@ -546,8 +546,8 @@ permissionsList(const char *pattern)
 	myopt.nullPrint = NULL;
 	printfPQExpBuffer(&buf, _("Access privileges"));
 	myopt.title = buf.data;
-	myopt.trans_headers = true;
-	myopt.trans_columns = trans_columns;
+	myopt.translate_header = true;
+	myopt.translate_columns = translate_columns;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -572,7 +572,7 @@ objectDescription(const char *pattern)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool trans_columns[] = {false, false, true, false};
+	static const bool translate_columns[] = {false, false, true, false};
 
 	initPQExpBuffer(&buf);
 
@@ -712,8 +712,8 @@ objectDescription(const char *pattern)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("Object descriptions");
-	myopt.trans_headers = true;
-	myopt.trans_columns = trans_columns;
+	myopt.translate_header = true;
+	myopt.translate_columns = translate_columns;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -1770,7 +1770,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool trans_columns[] = {false, false, true, false, false, false};
+	static const bool translate_columns[] = {false, false, true, false, false, false};
 
 	if (!(showTables || showIndexes || showViews || showSeq))
 		showTables = showViews = showSeq = true;
@@ -1867,8 +1867,8 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 	{
 		myopt.nullPrint = NULL;
 		myopt.title = _("List of relations");
-		myopt.trans_headers = true;
-		myopt.trans_columns = trans_columns;
+		myopt.translate_header = true;
+		myopt.translate_columns = translate_columns;
 
 		printQuery(res, &myopt, pset.queryFout, pset.logfile);
 	}
@@ -1925,7 +1925,7 @@ listDomains(const char *pattern)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of domains");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -1944,7 +1944,7 @@ listConversions(const char *pattern)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool trans_columns[] = {false, false, false, false, true};
+	static const bool translate_columns[] = {false, false, false, false, true};
 
 	initPQExpBuffer(&buf);
 
@@ -1977,8 +1977,8 @@ listConversions(const char *pattern)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of conversions");
-	myopt.trans_headers = true;
-	myopt.trans_columns = trans_columns;
+	myopt.translate_header = true;
+	myopt.translate_columns = translate_columns;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -1997,7 +1997,7 @@ listCasts(const char *pattern)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool trans_columns[] = {false, false, false, true};
+	static const bool translate_columns[] = {false, false, false, true};
 
 	initPQExpBuffer(&buf);
 	/*
@@ -2032,8 +2032,8 @@ listCasts(const char *pattern)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of casts");
-	myopt.trans_headers = true;
-	myopt.trans_columns = trans_columns;
+	myopt.translate_header = true;
+	myopt.translate_columns = translate_columns;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -2085,7 +2085,7 @@ listSchemas(const char *pattern, bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of schemas");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -2142,7 +2142,7 @@ listTSParsers(const char *pattern, bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of text search parsers");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -2225,7 +2225,7 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 	PGresult   *res;
 	char		title[1024];
 	printQueryOpt myopt = pset.popt;
-	static const bool trans_columns[] = {true, false, false};
+	static const bool translate_columns[] = {true, false, false};
 
 	initPQExpBuffer(&buf);
 
@@ -2286,8 +2286,8 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 	myopt.title = title;
 	myopt.footers = NULL;
 	myopt.default_footer = false;
-	myopt.trans_headers = true;
-	myopt.trans_columns = trans_columns;
+	myopt.translate_header = true;
+	myopt.translate_columns = translate_columns;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -2317,8 +2317,8 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 	myopt.title = title;
 	myopt.footers = NULL;
 	myopt.default_footer = true;
-	myopt.trans_headers = true;
-	myopt.trans_columns = NULL;
+	myopt.translate_header = true;
+	myopt.translate_columns = NULL;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -2386,7 +2386,7 @@ listTSDictionaries(const char *pattern, bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of text search dictionaries");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -2454,7 +2454,7 @@ listTSTemplates(const char *pattern, bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of text search templates");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -2511,7 +2511,7 @@ listTSConfigs(const char *pattern, bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of text search configurations");
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
@@ -2649,7 +2649,7 @@ describeOneTSConfig(const char *oid, const char *nspname, const char *cfgname,
 	myopt.title = title.data;
 	myopt.footers = NULL;
 	myopt.default_footer = false;
-	myopt.trans_headers = true;
+	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 

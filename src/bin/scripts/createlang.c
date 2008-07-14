@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.29 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.30 2008/07/14 22:00:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 	if (listlangs)
 	{
 		printQueryOpt popt;
-		static const bool trans_columns[] = {false, true};
+		static const bool translate_columns[] = {false, true};
 
 		conn = connectDatabase(dbname, host, port, username, password,
 							   progname);
@@ -145,8 +145,8 @@ main(int argc, char *argv[])
 		popt.topt.stop_table = true;
 		popt.topt.encoding = PQclientEncoding(conn);
 		popt.title = _("Procedural Languages");
-		popt.trans_headers = true;
-		popt.trans_columns = trans_columns;
+		popt.translate_header = true;
+		popt.translate_columns = translate_columns;
 		printQuery(result, &popt, stdout, NULL);
 
 		PQfinish(conn);
