@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.178 2008/07/14 22:51:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.179 2008/07/14 23:13:04 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -1007,6 +1007,7 @@ describeOneTableDetails(const char *schemaname,
 		if (verbose)
 		{
 			char *storage = PQgetvalue(res, i, 5);
+			/* these strings are literal in our syntax, so not translated. */
 			printTableAddCell(&cont, (storage[0]=='p' ? "plain" :
 									  (storage[0]=='m' ? "main" :
 									   (storage[0]=='x' ? "extended" :
