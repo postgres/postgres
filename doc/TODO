@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Jul  1 14:26:21 EDT 2008
+Last updated:		Mon Jul 14 13:16:04 EDT 2008
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -193,7 +193,7 @@ Administration
 
 	  http://archives.postgresql.org/pgsql-hackers/2006-12/msg00497.php
 
-	o Fix server restart problem when the server was shutdown during
+	o -Fix server restart problem when the server was shutdown during
 	  a PITR backup
 
 	  http://archives.postgresql.org/pgsql-hackers/2007-11/msg00800.php
