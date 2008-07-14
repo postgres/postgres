@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.504 2008/07/03 20:58:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.505 2008/07/14 00:51:45 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4312,6 +4312,9 @@ DATA(insert OID = 3700 (  gtsquery_penalty				PGNSP PGUID 12 1 0 f f t f i 3 228
 DESCR("GiST tsquery support");
 DATA(insert OID = 3701 (  gtsquery_consistent			PGNSP PGUID 12 1 0 f f t f i 5 16 "2281 2281 23 26 2281" _null_ _null_ _null_ gtsquery_consistent - _null_ _null_ ));
 DESCR("GiST tsquery support");
+
+DATA(insert OID = 3688 (  ts_typanalyze	PGNSP PGUID 12 1 0 f f t f s 1 16 "2281" _null_ _null_ _null_ ts_typanalyze - _null_ _null_ ));
+DESCR("tsvector typanalyze");
 
 DATA(insert OID = 3689 (  ts_stat		PGNSP PGUID 12 10 10000 f f t t v 1 2249 "25" "{25,25,23,23}" "{i,o,o,o}" "{query,word,ndoc,nentry}" ts_stat1 - _null_ _null_ ));
 DESCR("statistics of tsvector column");

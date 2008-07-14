@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.52 2008/05/15 00:17:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.53 2008/07/14 00:51:45 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -110,30 +110,30 @@ CREATE VIEW pg_stats AS
         stanullfrac AS null_frac, 
         stawidth AS avg_width, 
         stadistinct AS n_distinct, 
-        CASE 1 
-            WHEN stakind1 THEN stavalues1 
-            WHEN stakind2 THEN stavalues2 
-            WHEN stakind3 THEN stavalues3 
-            WHEN stakind4 THEN stavalues4 
-        END AS most_common_vals, 
-        CASE 1 
-            WHEN stakind1 THEN stanumbers1 
-            WHEN stakind2 THEN stanumbers2 
-            WHEN stakind3 THEN stanumbers3 
-            WHEN stakind4 THEN stanumbers4 
-        END AS most_common_freqs, 
-        CASE 2 
-            WHEN stakind1 THEN stavalues1 
-            WHEN stakind2 THEN stavalues2 
-            WHEN stakind3 THEN stavalues3 
-            WHEN stakind4 THEN stavalues4 
-        END AS histogram_bounds, 
-        CASE 3 
-            WHEN stakind1 THEN stanumbers1[1] 
-            WHEN stakind2 THEN stanumbers2[1] 
-            WHEN stakind3 THEN stanumbers3[1] 
-            WHEN stakind4 THEN stanumbers4[1] 
-        END AS correlation 
+        CASE
+            WHEN stakind1 IN (1, 4) THEN stavalues1
+            WHEN stakind2 IN (1, 4) THEN stavalues2
+            WHEN stakind3 IN (1, 4) THEN stavalues3
+            WHEN stakind4 IN (1, 4) THEN stavalues4
+        END AS most_common_vals,
+        CASE
+            WHEN stakind1 IN (1, 4) THEN stanumbers1
+            WHEN stakind2 IN (1, 4) THEN stanumbers2
+            WHEN stakind3 IN (1, 4) THEN stanumbers3
+            WHEN stakind4 IN (1, 4) THEN stanumbers4
+        END AS most_common_freqs,
+        CASE
+            WHEN stakind1 = 2 THEN stavalues1
+            WHEN stakind2 = 2 THEN stavalues2
+            WHEN stakind3 = 2 THEN stavalues3
+            WHEN stakind4 = 2 THEN stavalues4
+        END AS histogram_bounds,
+        CASE
+            WHEN stakind1 = 3 THEN stanumbers1[1]
+            WHEN stakind2 = 3 THEN stanumbers2[1]
+            WHEN stakind3 = 3 THEN stanumbers3[1]
+            WHEN stakind4 = 3 THEN stanumbers4[1]
+        END AS correlation
     FROM pg_statistic s JOIN pg_class c ON (c.oid = s.starelid) 
          JOIN pg_attribute a ON (c.oid = attrelid AND attnum = s.staattnum) 
          LEFT JOIN pg_namespace n ON (n.oid = c.relnamespace) 

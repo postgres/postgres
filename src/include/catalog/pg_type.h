@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.196 2008/06/24 17:58:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.197 2008/07/14 00:51:45 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -543,7 +543,7 @@ DESCR("UUID datatype");
 DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b t \054 0 2950 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
 
 /* text search */
-DATA(insert OID = 3614 ( tsvector		PGNSP PGUID -1 f b t \054 0 0 3643 tsvectorin tsvectorout tsvectorrecv tsvectorsend - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3614 ( tsvector		PGNSP PGUID -1 f b t \054 0 0 3643 tsvectorin tsvectorout tsvectorrecv tsvectorsend - - ts_typanalyze i x f 0 -1 0 _null_ _null_ ));
 DESCR("text representation for text search");
 #define TSVECTOROID		3614
 DATA(insert OID = 3642 ( gtsvector		PGNSP PGUID -1 f b t \054 0 0 3644 gtsvectorin gtsvectorout - - - - - i p f 0 -1 0 _null_ _null_ ));

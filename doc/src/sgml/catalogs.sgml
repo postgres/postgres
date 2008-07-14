@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.167 2008/07/11 07:02:43 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.168 2008/07/14 00:51:45 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -6516,6 +6516,8 @@
       <entry>
        A list of the most common values in the column. (NULL if
        no values seem to be more common than any others.)
+       For some datatypes such as <type>tsvector</>, this is a list of
+       the most common element values rather than values of the type itself.
       </entry>
      </row>
 
@@ -6524,10 +6526,10 @@
       <entry><type>real[]</type></entry>
       <entry></entry>
       <entry>
-       A list of the frequencies of the most common values,
+       A list of the frequencies of the most common values or elements,
        i.e., number of occurrences of each divided by total number of rows.
        (NULL when <structfield>most_common_vals</structfield> is.)
-     </entry>
+      </entry>
      </row>
 
      <row>
