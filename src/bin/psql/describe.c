@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.177 2008/07/14 22:00:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.178 2008/07/14 22:51:48 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -811,7 +811,7 @@ describeOneTableDetails(const char *schemaname,
 	printTableContent cont;
 	int			i;
 	char	   *view_def = NULL;
-	char	   *headers[4];
+	char	   *headers[5];
 	char	  **modifiers = NULL;
 	char	  **ptr;
 	PQExpBufferData title;
@@ -878,7 +878,7 @@ describeOneTableDetails(const char *schemaname,
 					  "\n   WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum AND a.atthasdef),"
 					  "\n  a.attnotnull, a.attnum");
 	if (verbose)
-		appendPQExpBuffer(&buf, ", pg_catalog.col_description(a.attrelid, a.attnum)");
+		appendPQExpBuffer(&buf, ", a.attstorage, pg_catalog.col_description(a.attrelid, a.attnum)");
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_attribute a");
 	if (tableinfo.relkind == 'i')
 		appendPQExpBuffer(&buf, ", pg_catalog.pg_index i");
@@ -933,19 +933,22 @@ describeOneTableDetails(const char *schemaname,
 
 	/* Set the number of columns, and their names */
 	cols = 2;
-	headers[0] = "Column";
-	headers[1] = "Type";
+	headers[0] = gettext_noop("Column");
+	headers[1] = gettext_noop("Type");
 
 	if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v')
 	{
 		show_modifiers = true;
-		headers[cols++] = "Modifiers";
+		headers[cols++] = gettext_noop("Modifiers");
 		modifiers = pg_malloc_zero((numrows + 1) * sizeof(*modifiers));
 	}
 
 	if (verbose)
-		headers[cols++] = "Description";
-
+	{
+		headers[cols++] = gettext_noop("Storage");
+		headers[cols++] = gettext_noop("Description");
+	}
+	
 	printTableInit(&cont, &myopt, title.data, cols, numrows);
 
 	for (i = 0; i < cols; i++)
@@ -1000,9 +1003,18 @@ describeOneTableDetails(const char *schemaname,
 			printTableAddCell(&cont, modifiers[i], false);
 		}
 
-		/* Description */
+		/* Storage and Description */
 		if (verbose)
-			printTableAddCell(&cont, PQgetvalue(res, i, 5), false);
+		{
+			char *storage = PQgetvalue(res, i, 5);
+			printTableAddCell(&cont, (storage[0]=='p' ? "plain" :
+									  (storage[0]=='m' ? "main" :
+									   (storage[0]=='x' ? "extended" :
+										(storage[0]=='e' ? "external" :
+										 "???")))),
+							  false);
+			printTableAddCell(&cont, PQgetvalue(res, i, 6), false);
+		}
 	}
 
 	/* Make footers */
