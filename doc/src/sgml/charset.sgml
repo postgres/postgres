@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.85 2008/03/06 15:37:56 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.86 2008/07/15 01:35:23 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -65,15 +65,17 @@ initdb --locale=sv_SE
    </para>
 
    <para>
-    This example sets the locale to Swedish (<literal>sv</>) as spoken
+    This example for Unix systems sets the locale to Swedish 
+    (<literal>sv</>) as spoken
     in Sweden (<literal>SE</>).  Other possibilities might be
     <literal>en_US</> (U.S. English) and <literal>fr_CA</> (French
     Canadian).  If more than one character set can be useful for a
     locale then the specifications look like this:
     <literal>cs_CZ.ISO8859-2</>. What locales are available under what
     names on your system depends on what was provided by the operating
-    system vendor and what was installed.  (On most systems, the command
-    <literal>locale -a</> will provide a list of available locales.)
+    system vendor and what was installed.  On most Unix systems, the command
+    <literal>locale -a</> will provide a list of available locales.
+    Windows uses more verbose names, such as <literal>German_Germany</>.
    </para>
 
    <para>
