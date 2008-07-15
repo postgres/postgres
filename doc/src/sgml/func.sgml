@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.439 2008/07/07 16:11:35 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.440 2008/07/15 18:24:59 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9340,10 +9340,10 @@ SELECT NULLIF(value, '(none)') ...
       <tbody>
        <row>
         <entry>
-     <literal>
-      <function>array_append</function>(<type>anyarray</type>, <type>anyelement</type>)
-     </literal>
-    </entry>
+         <literal>
+          <function>array_append</function>(<type>anyarray</type>, <type>anyelement</type>)
+         </literal>
+        </entry>
         <entry><type>anyarray</type></entry>
         <entry>append an element to the end of an array</entry>
         <entry><literal>array_append(ARRAY[1,2], 3)</literal></entry>
@@ -9351,10 +9351,10 @@ SELECT NULLIF(value, '(none)') ...
        </row>
        <row>
         <entry>
-     <literal>
-      <function>array_cat</function>(<type>anyarray</type>, <type>anyarray</type>)
-     </literal>
-    </entry>
+         <literal>
+          <function>array_cat</function>(<type>anyarray</type>, <type>anyarray</type>)
+         </literal>
+        </entry>
         <entry><type>anyarray</type></entry>
         <entry>concatenate two arrays</entry>
         <entry><literal>array_cat(ARRAY[1,2,3], ARRAY[4,5])</literal></entry>
@@ -9362,10 +9362,10 @@ SELECT NULLIF(value, '(none)') ...
        </row>
        <row>
         <entry>
-     <literal>
-      <function>array_dims</function>(<type>anyarray</type>)
-     </literal>
-    </entry>
+         <literal>
+          <function>array_dims</function>(<type>anyarray</type>)
+         </literal>
+        </entry>
         <entry><type>text</type></entry>
         <entry>returns a text representation of array's dimensions</entry>
         <entry><literal>array_dims(ARRAY[[1,2,3], [4,5,6]])</literal></entry>
@@ -9373,10 +9373,10 @@ SELECT NULLIF(value, '(none)') ...
        </row>
        <row>
         <entry>
-     <literal>
-      <function>array_lower</function>(<type>anyarray</type>, <type>int</type>)
-     </literal>
-    </entry>
+         <literal>
+          <function>array_lower</function>(<type>anyarray</type>, <type>int</type>)
+         </literal>
+        </entry>
         <entry><type>int</type></entry>
         <entry>returns lower bound of the requested array dimension</entry>
         <entry><literal>array_lower('[0:2]={1,2,3}'::int[], 1)</literal></entry>
@@ -9384,10 +9384,10 @@ SELECT NULLIF(value, '(none)') ...
        </row>
        <row>
         <entry>
-     <literal>
-      <function>array_prepend</function>(<type>anyelement</type>, <type>anyarray</type>)
-     </literal>
-    </entry>
+         <literal>
+          <function>array_prepend</function>(<type>anyelement</type>, <type>anyarray</type>)
+         </literal>
+        </entry>
         <entry><type>anyarray</type></entry>
         <entry>append an element to the beginning of an array</entry>
         <entry><literal>array_prepend(1, ARRAY[2,3])</literal></entry>
@@ -9395,10 +9395,10 @@ SELECT NULLIF(value, '(none)') ...
        </row>
        <row>
         <entry>
-     <literal>
-      <function>array_to_string</function>(<type>anyarray</type>, <type>text</type>)
-     </literal>
-    </entry>
+         <literal>
+          <function>array_to_string</function>(<type>anyarray</type>, <type>text</type>)
+         </literal>
+        </entry>
         <entry><type>text</type></entry>
         <entry>concatenates array elements using provided delimiter</entry>
         <entry><literal>array_to_string(ARRAY[1, 2, 3], '~^~')</literal></entry>
@@ -9406,10 +9406,10 @@ SELECT NULLIF(value, '(none)') ...
        </row>
        <row>
         <entry>
-     <literal>
-      <function>array_upper</function>(<type>anyarray</type>, <type>int</type>)
-     </literal>
-    </entry>
+         <literal>
+          <function>array_upper</function>(<type>anyarray</type>, <type>int</type>)
+         </literal>
+        </entry>
         <entry><type>int</type></entry>
         <entry>returns upper bound of the requested array dimension</entry>
         <entry><literal>array_upper(ARRAY[1,2,3,4], 1)</literal></entry>
@@ -9417,10 +9417,10 @@ SELECT NULLIF(value, '(none)') ...
        </row>
        <row>
         <entry>
-     <literal>
-      <function>string_to_array</function>(<type>text</type>, <type>text</type>)
-     </literal>
-    </entry>
+         <literal>
+          <function>string_to_array</function>(<type>text</type>, <type>text</type>)
+         </literal>
+        </entry>
         <entry><type>text[]</type></entry>
         <entry>splits string into array elements using provided delimiter</entry>
         <entry><literal>string_to_array('xx~^~yy~^~zz', '~^~')</literal></entry>
