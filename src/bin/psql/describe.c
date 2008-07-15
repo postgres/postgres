@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.179 2008/07/14 23:13:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.180 2008/07/15 03:16:03 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -811,7 +811,8 @@ describeOneTableDetails(const char *schemaname,
 	printTableContent cont;
 	int			i;
 	char	   *view_def = NULL;
-	char	   *headers[5];
+	char	   *headers[6];
+	char	  **seq_values = NULL;
 	char	  **modifiers = NULL;
 	char	  **ptr;
 	PQExpBufferData title;
@@ -869,6 +870,35 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.tablespace = (pset.sversion >= 80000) ?
 		atooid(PQgetvalue(res, 0, 6)) : 0;
 	PQclear(res);
+	
+	/*
+	 * This is used to get the values of a sequence and store it in an
+	 * array that will be used later.
+	 */
+	if (tableinfo.relkind == 'S')
+	{
+		PGresult   *result;
+		
+#define SEQ_NUM_COLS 10
+		printfPQExpBuffer(&buf,
+				"SELECT sequence_name, last_value, \n"
+				"		start_value, increment_by, \n"
+				"		max_value, min_value, cache_value, \n"
+				"		log_cnt, is_cycled, is_called \n"
+				"FROM \"%s\"",
+				relationname);
+		
+		result = PSQLexec(buf.data, false);
+		if (!result)
+			goto error_return;
+		
+		seq_values = pg_malloc_zero((SEQ_NUM_COLS+1) * sizeof(*seq_values));
+		
+		for (i = 0; i < SEQ_NUM_COLS; i++) 
+			seq_values[i] = pg_strdup(PQgetvalue(result, 0, i));
+		
+		PQclear(result);
+	}
 
 	/* Get column info (index requires additional checks) */
 	printfPQExpBuffer(&buf, "SELECT a.attname,");
@@ -932,7 +962,7 @@ describeOneTableDetails(const char *schemaname,
 	}
 
 	/* Set the number of columns, and their names */
-	cols = 2;
+	cols += 2;
 	headers[0] = gettext_noop("Column");
 	headers[1] = gettext_noop("Type");
 
@@ -943,6 +973,9 @@ describeOneTableDetails(const char *schemaname,
 		modifiers = pg_malloc_zero((numrows + 1) * sizeof(*modifiers));
 	}
 
+	if (tableinfo.relkind == 'S')
+		headers[cols++] = gettext_noop("Value");
+		
 	if (verbose)
 	{
 		headers[cols++] = gettext_noop("Storage");
@@ -980,7 +1013,11 @@ describeOneTableDetails(const char *schemaname,
 
 		/* Type */
 		printTableAddCell(&cont, PQgetvalue(res, i, 1), false);
-
+		
+		/* A special 'Value' column for sequences */
+		if (tableinfo.relkind == 'S')
+			printTableAddCell(&cont, seq_values[i], false);
+		
 		/* Extra: not null and default */
 		if (show_modifiers)
 		{
@@ -1543,7 +1580,14 @@ error_return:
 	termPQExpBuffer(&buf);
 	termPQExpBuffer(&title);
 	termPQExpBuffer(&tmpbuf);
-
+	
+	if (tableinfo.relkind == 'S')
+	{
+		for (ptr = seq_values; *ptr; ptr++)
+			free(*ptr);
+		free(seq_values);
+	}
+    
 	if (show_modifiers)
 	{
 		for (ptr = modifiers; *ptr; ptr++)
