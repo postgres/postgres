@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.180 2008/07/15 03:16:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.181 2008/07/15 16:06:06 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -868,7 +868,7 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
 	tableinfo.hasoids = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
 	tableinfo.tablespace = (pset.sversion >= 80000) ?
-		atooid(PQgetvalue(res, 0, 6)) : 0;
+								atooid(PQgetvalue(res, 0, 6)) : 0;
 	PQclear(res);
 	
 	/*
