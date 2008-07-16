@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.440 2008/07/15 18:24:59 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.441 2008/07/16 00:48:53 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9370,6 +9370,19 @@ SELECT NULLIF(value, '(none)') ...
         <entry>returns a text representation of array's dimensions</entry>
         <entry><literal>array_dims(ARRAY[[1,2,3], [4,5,6]])</literal></entry>
         <entry><literal>[1:2][1:3]</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>array_fill</function>(<type>anyelement</type>, <type>anyarray</type>,
+          <optional>, <type>anyarray</type></optional>)
+         </literal>
+        </entry>
+        <entry><type>anyarray</type></entry>
+        <entry>returns an array initialized with supplied value,
+        dimensions, and lower bounds</entry>
+        <entry><literal>array_fill(7, ARRAY[3], ARRAY[2])</literal></entry>
+        <entry><literal>[2:4]={7,7,7}</literal></entry>
        </row>
        <row>
         <entry>

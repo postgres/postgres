@@ -357,3 +357,17 @@ select * from unnest2(array[[1,2,3],[4,5,6]]);
 
 drop function unnest1(anyarray);
 drop function unnest2(anyarray);
+
+select array_fill(null::integer, array[3,3],array[2,2]);
+select array_fill(null::integer, array[3,3]);
+select array_fill(null::text, array[3,3],array[2,2]);
+select array_fill(null::text, array[3,3]);
+select array_fill(7, array[3,3],array[2,2]);
+select array_fill(7, array[3,3]);
+select array_fill('juhu'::text, array[3,3],array[2,2]);
+select array_fill('juhu'::text, array[3,3]);
+-- raise exception
+select array_fill(1, null, array[2,2]);
+select array_fill(1, array[2,2], null);
+select array_fill(1, array[3,3], array[1,1,1]);
+select array_fill(1, array[1,2,null]);

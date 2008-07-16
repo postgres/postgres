@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.145 2008/05/12 00:00:51 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.146 2008/07/16 00:48:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,11 @@ static void array_insert_slice(ArrayType *destArray, ArrayType *origArray,
 				   int *st, int *endp,
 				   int typlen, bool typbyval, char typalign);
 static int	array_cmp(FunctionCallInfo fcinfo);
+static ArrayType *create_array_envelope(int ndims, int *dimv, int *lbv, int nbytes,
+			    Oid elmtype, int dataoffset);
+static ArrayType *array_fill_internal(ArrayType *dims, ArrayType *lbs, Datum value, 
+					    Oid elmtype, bool isnull, 
+					    FunctionCallInfo fcinfo);
 
 
 /*
@@ -4313,4 +4318,273 @@ generate_subscripts_nodir(PG_FUNCTION_ARGS)
 {
 	/* just call the other one -- it can handle both cases */
 	return generate_subscripts(fcinfo);
+}
+
+/*
+ * array_fill_with_lower_bounds
+ *		Create and fill array with defined lower bounds.
+ */
+Datum
+array_fill_with_lower_bounds(PG_FUNCTION_ARGS)
+{
+	ArrayType	*dims;
+	ArrayType	*lbs;
+	ArrayType		*result;
+	Oid			elmtype;
+	Datum 	value;
+	bool	isnull;
+
+	if (PG_ARGISNULL(1) || PG_ARGISNULL(2))
+		ereport(ERROR, 
+			    (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+			     errmsg("dimension array or low bound array cannot be NULL")));
+
+	dims = PG_GETARG_ARRAYTYPE_P(1);
+	lbs  = PG_GETARG_ARRAYTYPE_P(2);
+
+	if (!PG_ARGISNULL(0))
+	{
+		value = PG_GETARG_DATUM(0);
+		isnull = false;
+	}
+	else
+	{
+		value = 0;
+		isnull = true;
+	}
+
+	elmtype = get_fn_expr_argtype(fcinfo->flinfo, 0); 
+	if (!OidIsValid(elmtype)) 
+		elog(ERROR, "could not determine data type of input"); 
+
+	result = array_fill_internal(dims, lbs, value, elmtype, isnull, fcinfo);
+	PG_RETURN_ARRAYTYPE_P(result);
+}
+
+/*
+ * array_fill
+ *		Create and fill array with default lower bounds.
+ */
+Datum
+array_fill(PG_FUNCTION_ARGS)
+{
+	ArrayType	*dims;
+	ArrayType		*result;
+	Oid			elmtype;
+	Datum 	value;
+	bool	isnull;
+
+	if (PG_ARGISNULL(1))
+		ereport(ERROR, 
+			    (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+			     errmsg("dimension array or low bound array cannot be NULL")));
+
+	dims = PG_GETARG_ARRAYTYPE_P(1);
+
+	if (!PG_ARGISNULL(0))
+	{
+		value = PG_GETARG_DATUM(0);
+		isnull = false;
+	}
+	else
+	{
+		value = 0;
+		isnull = true;
+	}
+
+	elmtype = get_fn_expr_argtype(fcinfo->flinfo, 0); 
+	if (!OidIsValid(elmtype)) 
+		elog(ERROR, "could not determine data type of input"); 
+
+	result = array_fill_internal(dims, NULL, value, elmtype, isnull, fcinfo);
+	PG_RETURN_ARRAYTYPE_P(result);
+}
+
+static ArrayType *
+create_array_envelope(int ndims, int *dimv, int *lbsv, int nbytes,
+			    Oid elmtype, int dataoffset)
+{
+	ArrayType *result;
+
+	result = (ArrayType *) palloc0(nbytes);
+	SET_VARSIZE(result, nbytes);
+	result->ndim = ndims;
+	result->dataoffset = dataoffset;
+	result->elemtype = elmtype;
+	memcpy(ARR_DIMS(result), dimv, ndims * sizeof(int));
+	memcpy(ARR_LBOUND(result), lbsv, ndims * sizeof(int));
+
+	return result;
+}
+
+static ArrayType *
+array_fill_internal(ArrayType *dims, ArrayType *lbs, Datum value, 
+					    Oid elmtype, bool isnull,
+					    FunctionCallInfo fcinfo)
+{
+	ArrayType	*result;
+	int	*dimv;
+	int	*lbsv;
+	int	ndims;
+	int	nitems;
+	int 		deflbs[MAXDIM];
+	int16 elmlen; 
+	bool elmbyval; 
+	char elmalign;
+	ArrayMetaState 		*my_extra;
+
+	/* 
+	 * Params checks
+	 */
+	if (ARR_NDIM(dims) != 1)
+		ereport(ERROR,
+			    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+			     errmsg("wrong number of array subscripts"),
+			     errhint("Dimension array must be one dimensional.")));
+
+	if (ARR_LBOUND(dims)[0] != 1)
+		ereport(ERROR,
+			    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+			     errmsg("wrong range of array_subscripts"),
+			     errhint("Lower bound of dimension array must be one.")));
+	
+	if (ARR_HASNULL(dims))
+		ereport(ERROR, 
+			    (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+			     errmsg("dimension values cannot be null")));
+
+	dimv = (int *) ARR_DATA_PTR(dims);
+	ndims = ARR_DIMS(dims)[0];
+	
+	if (ndims < 0)				/* we do allow zero-dimension arrays */
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid number of dimensions: %d", ndims)));
+	if (ndims > MAXDIM)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
+						ndims, MAXDIM)));
+	
+	if (lbs != NULL)
+	{
+		if (ARR_NDIM(lbs) != 1)
+			ereport(ERROR,
+				    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+			    	     errmsg("wrong number of array subscripts"),
+			    	     errhint("Dimension array must be one dimensional.")));
+
+		if (ARR_LBOUND(lbs)[0] != 1)
+			ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+			         errmsg("wrong range of array_subscripts"),
+			    	 errhint("Lower bound of dimension array must be one.")));
+	
+		if (ARR_HASNULL(lbs))
+			ereport(ERROR, 
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("dimension values cannot be null")));
+
+		if (ARR_DIMS(lbs)[0] != ndims)
+			ereport(ERROR,
+				    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				     errmsg("wrong number of array_subscripts"),
+				     errhint("Low bound array has different size than dimensions array.")));
+				     
+		lbsv = (int *) ARR_DATA_PTR(lbs);
+	}
+	else	
+	{
+		int	i;
+	
+		for (i = 0; i < MAXDIM; i++)
+			deflbs[i] = 1;
+
+		lbsv = deflbs;
+	}
+
+	/* fast track for empty array */
+	if (ndims == 0)
+		return construct_empty_array(elmtype);
+	
+	nitems = ArrayGetNItems(ndims, dimv);
+
+
+	/*
+	 * We arrange to look up info about element type only once per series of
+	 * calls, assuming the element type doesn't change underneath us.
+	 */
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													  sizeof(ArrayMetaState));
+		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+		my_extra->element_type = InvalidOid;
+	}
+
+	if (my_extra->element_type != elmtype)
+	{
+		/* Get info about element type */
+		get_typlenbyvalalign(elmtype,
+							 &my_extra->typlen,
+							 &my_extra->typbyval,
+							 &my_extra->typalign);
+		my_extra->element_type = elmtype;
+	}
+
+	elmlen = my_extra->typlen;
+	elmbyval = my_extra->typbyval;
+	elmalign = my_extra->typalign;
+
+	/* compute required space */
+	if (!isnull)
+	{
+		int 	i;
+		char		*p;
+		int			nbytes;
+		Datum	aux_value = value;
+
+		/* make sure data is not toasted */
+		if (elmlen == -1)
+			value = PointerGetDatum(PG_DETOAST_DATUM(value));
+
+		nbytes = att_addlength_datum(0, elmlen, value);
+		nbytes = att_align_nominal(nbytes, elmalign);
+
+		nbytes *= nitems;
+		/* check for overflow of total request */
+		if (!AllocSizeIsValid(nbytes))
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("array size exceeds the maximum allowed (%d)",
+							(int) MaxAllocSize)));
+
+		nbytes += ARR_OVERHEAD_NONULLS(ndims);
+		result = create_array_envelope(ndims, dimv, lbsv, nbytes,
+							elmtype, 0);
+		p = ARR_DATA_PTR(result);
+		for (i = 0; i < nitems; i++)
+			p += ArrayCastAndSet(value, elmlen, elmbyval, elmalign, p);
+
+		/* cleaning up detoasted copies of datum */
+		if (aux_value != value)
+			pfree((Pointer) value);
+	}
+	else
+	{
+		int	nbytes;
+		int	dataoffset;
+		bits8	*bitmap;
+
+		dataoffset = ARR_OVERHEAD_WITHNULLS(ndims, nitems);
+		nbytes = dataoffset;
+
+		result = create_array_envelope(ndims, dimv, lbsv, nbytes,
+							elmtype, dataoffset);
+		bitmap = ARR_NULLBITMAP(result);
+		MemSet(bitmap, 0, (nitems + 7) / 8);
+	}
+		
+	return result;
 }
