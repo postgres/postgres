@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.151 2008/03/27 03:57:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.152 2008/07/16 16:55:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,7 @@ ProcedureCreate(const char *procedureName,
 	bool		genericOutParam = false;
 	bool		internalInParam = false;
 	bool		internalOutParam = false;
+	Oid			variadicType = InvalidOid;
 	Relation	rel;
 	HeapTuple	tup;
 	HeapTuple	oldtup;
@@ -103,7 +104,6 @@ ProcedureCreate(const char *procedureName,
 	 * sanity checks
 	 */
 	Assert(PointerIsValid(prosrc));
-	Assert(PointerIsValid(probin));
 
 	parameterCount = parameterTypes->dim1;
 	if (parameterCount < 0 || parameterCount > FUNC_MAX_ARGS)
@@ -211,6 +211,64 @@ ProcedureCreate(const char *procedureName,
 						procedureName,
 						format_type_be(parameterTypes->values[0]))));
 
+	if (parameterModes != PointerGetDatum(NULL))
+	{
+		/*
+		 * We expect the array to be a 1-D CHAR array; verify that. We don't
+		 * need to use deconstruct_array() since the array data is just going
+		 * to look like a C array of char values.
+		 */
+		ArrayType  *modesArray = (ArrayType *) DatumGetPointer(parameterModes);
+		char	   *modes;
+
+		if (ARR_NDIM(modesArray) != 1 ||
+			ARR_DIMS(modesArray)[0] != allParamCount ||
+			ARR_HASNULL(modesArray) ||
+			ARR_ELEMTYPE(modesArray) != CHAROID)
+			elog(ERROR, "parameterModes is not a 1-D char array");
+		modes = (char *) ARR_DATA_PTR(modesArray);
+		/*
+		 * Only the last input parameter can be variadic; if it is, save
+		 * its element type.  Errors here are just elog since caller should
+		 * have checked this already.
+		 */
+		for (i = 0; i < allParamCount; i++)
+		{
+			switch (modes[i])
+			{
+				case PROARGMODE_IN:
+				case PROARGMODE_INOUT:
+					if (OidIsValid(variadicType))
+						elog(ERROR, "variadic parameter must be last");
+					break;
+				case PROARGMODE_OUT:
+					/* okay */
+					break;
+				case PROARGMODE_VARIADIC:
+					if (OidIsValid(variadicType))
+						elog(ERROR, "variadic parameter must be last");
+					switch (allParams[i])
+					{
+						case ANYOID:
+							variadicType = ANYOID;
+							break;
+						case ANYARRAYOID:
+							variadicType = ANYELEMENTOID;
+							break;
+						default:
+							variadicType = get_element_type(allParams[i]);
+							if (!OidIsValid(variadicType))
+								elog(ERROR, "variadic parameter is not an array");
+							break;
+					}
+					break;
+				default:
+					elog(ERROR, "invalid parameter mode '%c'", modes[i]);
+					break;
+			}
+		}
+	}
+
 	/*
 	 * All seems OK; prepare the data to be inserted into pg_proc.
 	 */
@@ -229,6 +287,7 @@ ProcedureCreate(const char *procedureName,
 	values[Anum_pg_proc_prolang - 1] = ObjectIdGetDatum(languageObjectId);
 	values[Anum_pg_proc_procost - 1] = Float4GetDatum(procost);
 	values[Anum_pg_proc_prorows - 1] = Float4GetDatum(prorows);
+	values[Anum_pg_proc_provariadic - 1] = ObjectIdGetDatum(variadicType);
 	values[Anum_pg_proc_proisagg - 1] = BoolGetDatum(isAgg);
 	values[Anum_pg_proc_prosecdef - 1] = BoolGetDatum(security_definer);
 	values[Anum_pg_proc_proisstrict - 1] = BoolGetDatum(isStrict);
@@ -250,7 +309,10 @@ ProcedureCreate(const char *procedureName,
 	else
 		nulls[Anum_pg_proc_proargnames - 1] = 'n';
 	values[Anum_pg_proc_prosrc - 1] = CStringGetTextDatum(prosrc);
-	values[Anum_pg_proc_probin - 1] = CStringGetTextDatum(probin);
+	if (probin)
+		values[Anum_pg_proc_probin - 1] = CStringGetTextDatum(probin);
+	else
+		nulls[Anum_pg_proc_probin - 1] = 'n';
 	if (proconfig != PointerGetDatum(NULL))
 		values[Anum_pg_proc_proconfig - 1] = proconfig;
 	else
@@ -497,12 +559,12 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
-		elog(ERROR, "null prosrc");
+		elog(ERROR, "null prosrc for C function %u", funcoid);
 	prosrc = TextDatumGetCString(tmp);
 
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_probin, &isnull);
 	if (isnull)
-		elog(ERROR, "null probin");
+		elog(ERROR, "null probin for C function %u", funcoid);
 	probin = TextDatumGetCString(tmp);
 
 	(void) load_external_function(probin, prosrc, true, &libraryhandle);

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.108 2008/07/16 01:30:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.109 2008/07/16 16:55:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,50 +619,23 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 		int			pronargs = procform->pronargs;
 		int			effective_nargs;
 		int			pathpos = 0;
-		bool		variadic = false;
-		Oid			va_elem_type = InvalidOid;
+		bool		variadic;
+		Oid			va_elem_type;
 		FuncCandidateList newResult;
 
 		/*
 		 * Check if function is variadic, and get variadic element type if so.
-		 * If expand_variadic is false, we can just ignore variadic-ness.
-		 *
-		 * XXX it's annoying to inject something as expensive as this even
-		 * when there are no variadic functions involved.  Find a better way.
+		 * If expand_variadic is false, we should just ignore variadic-ness.
 		 */
 		if (expand_variadic)
 		{
-			Datum 		proargmodes;
-			bool		isnull;
-
-			proargmodes = SysCacheGetAttr(PROCOID, proctup,
-										  Anum_pg_proc_proargmodes, &isnull);
-			if (!isnull)
-			{
-				ArrayType	*ar = DatumGetArrayTypeP(proargmodes);
-				char		*argmodes;
-				int	j;
-
-				argmodes = ARR_DATA_PTR(ar);
-				j = ARR_DIMS(ar)[0] - 1;
-				if (j >= 0 && argmodes[j] == PROARGMODE_VARIADIC)
-				{
-					variadic = any_variadic = true;
-					switch (procform->proargtypes.values[j])
-					{
-						case ANYOID:
-							va_elem_type = ANYOID;
-							break;
-						case ANYARRAYOID:
-							va_elem_type = ANYELEMENTOID;
-							break;
-						default:
-							va_elem_type = get_element_type(procform->proargtypes.values[j]);
-							Assert(OidIsValid(va_elem_type));
-							break;
-					}
-				}
-			}
+			va_elem_type = procform->provariadic;
+			variadic = OidIsValid(va_elem_type);
+		}
+		else
+		{
+			va_elem_type = InvalidOid;
+			variadic = false;
 		}
 
 		/* Ignore if it doesn't match requested argument count */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.276 2008/07/16 01:30:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.277 2008/07/16 16:55:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5389,29 +5389,12 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 	/* Check variadic-ness if caller cares */
 	if (is_variadic)
 	{
-		/* XXX change this if we simplify code in FuncnameGetCandidates */
-		Datum 		proargmodes;
-		bool		isnull;
-
-		*is_variadic = false;
-
-		proargmodes = SysCacheGetAttr(PROCOID, proctup,
-									  Anum_pg_proc_proargmodes, &isnull);
-		if (!isnull)
-		{
-			ArrayType	*ar = DatumGetArrayTypeP(proargmodes);
-			char		*argmodes;
-			int	j;
-
-			argmodes = ARR_DATA_PTR(ar);
-			j = ARR_DIMS(ar)[0] - 1;
-			if (j >= 0 && argmodes[j] == PROARGMODE_VARIADIC)
-			{
-				/* "any" variadics are not treated as variadics for listing */
-				if (procform->proargtypes.values[j] != ANYOID)
-					*is_variadic = true;
-			}
-		}
+		/* "any" variadics are not treated as variadics for listing */
+		if (OidIsValid(procform->provariadic) &&
+			procform->provariadic != ANYOID)
+			*is_variadic = true;
+		else
+			*is_variadic = false;
 	}
 
 	ReleaseSysCache(proctup);

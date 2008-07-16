@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.120 2008/06/06 22:35:22 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.121 2008/07/16 16:55:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,18 +324,20 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 		void	   *libraryhandle;
 
 		/*
-		 * Get prosrc and probin strings (link symbol and library filename)
+		 * Get prosrc and probin strings (link symbol and library filename).
+		 * While in general these columns might be null, that's not allowed
+		 * for C-language functions.
 		 */
 		prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
 									 Anum_pg_proc_prosrc, &isnull);
 		if (isnull)
-			elog(ERROR, "null prosrc for function %u", functionId);
+			elog(ERROR, "null prosrc for C function %u", functionId);
 		prosrcstring = TextDatumGetCString(prosrcattr);
 
 		probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
 									 Anum_pg_proc_probin, &isnull);
 		if (isnull)
-			elog(ERROR, "null probin for function %u", functionId);
+			elog(ERROR, "null probin for C function %u", functionId);
 		probinstring = TextDatumGetCString(probinattr);
 
 		/* Look up the function itself */

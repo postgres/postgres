@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.169 2008/07/16 01:30:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.170 2008/07/16 16:55:23 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -3567,6 +3567,14 @@
       <entry><type>float4</type></entry>
       <entry></entry>
       <entry>Estimated number of result rows (zero if not <structfield>proretset</>)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>provariadic</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>Data type of the variadic array parameter's elements,
+       or zero if the function does not have a variadic parameter</entry>
      </row>
 
      <row>
