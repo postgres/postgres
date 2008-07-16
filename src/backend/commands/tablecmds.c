@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.260 2008/07/16 16:54:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.261 2008/07/16 19:33:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -762,9 +762,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 	ResultRelInfo *resultRelInfo;
 	ListCell   *cell;
 
-	/* make list unique */
-	stmt->relations = list_union(NIL, stmt->relations);
-
 	/*
 	 * Open, exclusive-lock, and check all the explicitly-specified relations
 	 */
@@ -774,6 +771,12 @@ ExecuteTruncate(TruncateStmt *stmt)
 		Relation	rel;
 
 		rel = heap_openrv(rv, AccessExclusiveLock);
+		/* don't throw error for "TRUNCATE foo, foo" */
+		if (list_member_oid(relids, RelationGetRelid(rel)))
+		{
+			heap_close(rel, AccessExclusiveLock);
+			continue;
+		}
 		truncate_check_rel(rel);
 		rels = lappend(rels, rel);
 		relids = lappend_oid(relids, RelationGetRelid(rel));
