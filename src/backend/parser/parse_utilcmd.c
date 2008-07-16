@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.13 2008/04/29 14:59:17 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.14 2008/07/16 01:30:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,6 +388,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		funccallnode->args = list_make1(castnode);
 		funccallnode->agg_star = false;
 		funccallnode->agg_distinct = false;
+		funccallnode->func_variadic = false;
 		funccallnode->location = -1;
 
 		constraint = makeNode(Constraint);

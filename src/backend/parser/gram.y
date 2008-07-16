@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.616 2008/06/15 01:25:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.617 2008/07/16 01:30:22 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -444,7 +444,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL
 	UPDATE USER USING
 
-	VACUUM VALID VALIDATOR VALUE_P VALUES VARCHAR VARYING
+	VACUUM VALID VALIDATOR VALUE_P VALUES VARCHAR VARIADIC VARYING
 	VERBOSE VERSION_P VIEW VOLATILE
 
 	WHEN WHERE WHITESPACE_P WITH WITHOUT WORK WRITE
@@ -4200,10 +4200,11 @@ func_arg:
 		;
 
 /* INOUT is SQL99 standard, IN OUT is for Oracle compatibility */
-arg_class:	IN_P									{ $$ = FUNC_PARAM_IN; }
-			| OUT_P									{ $$ = FUNC_PARAM_OUT; }
-			| INOUT									{ $$ = FUNC_PARAM_INOUT; }
-			| IN_P OUT_P							{ $$ = FUNC_PARAM_INOUT; }
+arg_class:	IN_P								{ $$ = FUNC_PARAM_IN; }
+			| OUT_P								{ $$ = FUNC_PARAM_OUT; }
+			| INOUT								{ $$ = FUNC_PARAM_INOUT; }
+			| IN_P OUT_P						{ $$ = FUNC_PARAM_INOUT; }
+			| VARIADIC							{ $$ = FUNC_PARAM_VARIADIC; }
 		;
 
 /*
@@ -7336,6 +7337,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($5, $1);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @2;
 					$$ = (Node *) n;
 				}
@@ -7394,6 +7396,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @4;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", $1, (Node *) n, @2);
 				}
@@ -7406,6 +7409,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @5;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", $1, (Node *) n, @2);
 				}
@@ -7418,6 +7422,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @4;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", $1, (Node *) n, @2);
 				}
@@ -7430,6 +7435,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @5;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", $1, (Node *) n, @2);
 				}
@@ -7441,6 +7447,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($4, makeNullAConst());
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @2;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n, @2);
 				}
@@ -7451,6 +7458,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @5;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n, @2);
 				}
@@ -7461,6 +7469,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($5, makeNullAConst());
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @5;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n, @2);
 				}
@@ -7471,6 +7480,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($5, $7);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @6;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n, @2);
 				}
@@ -7862,6 +7872,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -7872,6 +7883,29 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
+					n->location = @1;
+					$$ = (Node *)n;
+				}
+			| func_name '(' VARIADIC a_expr ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = list_make1($4);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					n->func_variadic = TRUE;
+					n->location = @1;
+					$$ = (Node *)n;
+				}
+			| func_name '(' expr_list ',' VARIADIC a_expr ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = lappend($3, $6);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					n->func_variadic = TRUE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -7886,6 +7920,7 @@ func_expr:	func_name '(' ')'
 					 * "must be an aggregate", but there's no provision
 					 * for that in FuncCall at the moment.
 					 */
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -7896,6 +7931,7 @@ func_expr:	func_name '(' ')'
 					n->args = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = TRUE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -7916,6 +7952,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = TRUE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -7974,6 +8011,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8043,6 +8081,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8053,6 +8092,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8063,6 +8103,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8073,6 +8114,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8085,6 +8127,7 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8100,6 +8143,7 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8111,6 +8155,7 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8124,6 +8169,7 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8143,6 +8189,7 @@ func_expr:	func_name '(' ')'
 					n->args = list_make1($3);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8156,6 +8203,7 @@ func_expr:	func_name '(' ')'
 					n->args = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8166,6 +8214,7 @@ func_expr:	func_name '(' ')'
 					n->args = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8176,6 +8225,7 @@ func_expr:	func_name '(' ')'
 					n->args = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8186,6 +8236,7 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -9362,6 +9413,7 @@ reserved_keyword:
 			| UNIQUE
 			| USER
 			| USING
+			| VARIADIC
 			| WHEN
 			| WHERE
 		;
@@ -9566,6 +9618,7 @@ makeOverlaps(List *largs, List *rargs, int location)
 	n->args = list_concat(largs, rargs);
 	n->agg_star = FALSE;
 	n->agg_distinct = FALSE;
+	n->func_variadic = FALSE;
 	n->location = location;
 	return n;
 }
@@ -9625,7 +9678,7 @@ extractArgTypes(List *parameters)
 	{
 		FunctionParameter *p = (FunctionParameter *) lfirst(i);
 
-		if (p->mode != FUNC_PARAM_OUT)			/* keep if IN or INOUT */
+		if (p->mode != FUNC_PARAM_OUT)		/* keep if IN, INOUT, VARIADIC */
 			result = lappend(result, p->argType);
 	}
 	return result;

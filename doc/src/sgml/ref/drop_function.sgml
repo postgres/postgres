@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.33 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.34 2008/07/16 01:30:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -65,13 +65,14 @@ DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( 
 
     <listitem>
      <para>
-      The mode of an argument: either <literal>IN</>, <literal>OUT</>,
-      or <literal>INOUT</>.  If omitted, the default is <literal>IN</>.
+      The mode of an argument: <literal>IN</>, <literal>OUT</>,
+      <literal>INOUT</>, or <literal>VARIADIC</>.
+      If omitted, the default is <literal>IN</>.
       Note that <command>DROP FUNCTION</command> does not actually pay
       any attention to <literal>OUT</> arguments, since only the input
       arguments are needed to determine the function's identity.
-      So it is sufficient to list the <literal>IN</> and <literal>INOUT</>
-      arguments.
+      So it is sufficient to list the <literal>IN</>, <literal>INOUT</>,
+      and <literal>VARIADIC</> arguments.
      </para>
     </listitem>
    </varlistentry>

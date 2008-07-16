@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.202 2008/03/26 21:10:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.203 2008/07/16 01:30:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,14 +56,14 @@ static void unknown_attribute(ParseState *pstate, Node *relref, char *attname,
  *	intended to be used only to deliver an appropriate error message,
  *	not to affect the semantics.  When is_column is true, we should have
  *	a single argument (the putative table), unqualified function name
- *	equal to the column name, and no aggregate decoration.
+ *	equal to the column name, and no aggregate or variadic decoration.
  *
  *	The argument expressions (in fargs) must have been transformed already.
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
-				  bool agg_star, bool agg_distinct, bool is_column,
-				  int location)
+				  bool agg_star, bool agg_distinct, bool func_variadic,
+				  bool is_column, int location)
 {
 	Oid			rettype;
 	Oid			funcid;
@@ -75,6 +75,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	Oid		   *declared_arg_types;
 	Node	   *retval;
 	bool		retset;
+	int			nvargs;
 	FuncDetailCode fdresult;
 
 	/*
@@ -126,9 +127,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * Check for column projection: if function has one argument, and that
 	 * argument is of complex type, and function name is not qualified, then
 	 * the "function call" could be a projection.  We also check that there
-	 * wasn't any aggregate decoration.
+	 * wasn't any aggregate or variadic decoration.
 	 */
-	if (nargs == 1 && !agg_star && !agg_distinct && list_length(funcname) == 1)
+	if (nargs == 1 && !agg_star && !agg_distinct && !func_variadic &&
+		list_length(funcname) == 1)
 	{
 		Oid			argtype = actual_arg_types[0];
 
@@ -153,11 +155,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * func_get_detail looks up the function in the catalogs, does
 	 * disambiguation for polymorphic functions, handles inheritance, and
 	 * returns the funcid and type and set or singleton status of the
-	 * function's return value.  it also returns the true argument types to
-	 * the function.
+	 * function's return value.  It also returns the true argument types to
+	 * the function.  (In the case of a variadic function call, the reported
+	 * "true" types aren't really what is in pg_proc: the variadic argument is
+	 * replaced by a suitable number of copies of its element type.  We'll fix
+	 * it up below.)
 	 */
 	fdresult = func_get_detail(funcname, fargs, nargs, actual_arg_types,
-							   &funcid, &rettype, &retset,
+							   !func_variadic,
+							   &funcid, &rettype, &retset, &nvargs,
 							   &declared_arg_types);
 	if (fdresult == FUNCDETAIL_COERCION)
 	{
@@ -241,6 +247,34 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 	/* perform the necessary typecasting of arguments */
 	make_fn_arguments(pstate, fargs, actual_arg_types, declared_arg_types);
+
+	/*
+	 * If it's a variadic function call, transform the last nvargs arguments
+	 * into an array --- unless it's an "any" variadic.
+	 */
+	if (nvargs > 0 && declared_arg_types[nargs - 1] != ANYOID)
+	{
+		ArrayExpr *newa = makeNode(ArrayExpr);
+		int 	non_var_args = nargs - nvargs;
+		List	*vargs;
+
+		Assert(non_var_args >= 0);
+		vargs = list_copy_tail(fargs, non_var_args);
+		fargs = list_truncate(fargs, non_var_args);
+
+		newa->elements = vargs;
+		/* assume all the variadic arguments were coerced to the same type */
+		newa->element_typeid = exprType((Node *) linitial(vargs));
+		newa->array_typeid = get_array_type(newa->element_typeid);
+		if (!OidIsValid(newa->array_typeid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("could not find array type for data type %s",
+							format_type_be(newa->element_typeid))));
+		newa->multidims = false;
+
+		fargs = lappend(fargs, newa);
+	}
 
 	/* build the appropriate output structure */
 	if (fdresult == FUNCDETAIL_NORMAL)
@@ -668,21 +702,12 @@ func_select_candidate(int nargs,
  * Find the named function in the system catalogs.
  *
  * Attempt to find the named function in the system catalogs with
- *	arguments exactly as specified, so that the normal case
- *	(exact match) is as quick as possible.
+ * arguments exactly as specified, so that the normal case (exact match)
+ * is as quick as possible.
  *
  * If an exact match isn't found:
  *	1) check for possible interpretation as a type coercion request
- *	2) get a vector of all possible input arg type arrays constructed
- *	   from the superclasses of the original input arg types
- *	3) get a list of all possible argument type arrays to the function
- *	   with given name and number of arguments
- *	4) for each input arg type array from vector #1:
- *	 a) find how many of the function arg type arrays from list #2
- *		it can be coerced to
- *	 b) if the answer is one, we have our function
- *	 c) if the answer is more than one, attempt to resolve the conflict
- *	 d) if the answer is zero, try the next array from vector #1
+ *	2) apply the ambiguous-function resolution rules
  *
  * Note: we rely primarily on nargs/argtypes as the argument description.
  * The actual expression node list is passed in fargs so that we can check
@@ -694,16 +719,18 @@ func_get_detail(List *funcname,
 				List *fargs,
 				int nargs,
 				Oid *argtypes,
+				bool expand_variadic,
 				Oid *funcid,	/* return value */
 				Oid *rettype,	/* return value */
 				bool *retset,	/* return value */
+				int *nvargs,	/* return value */
 				Oid **true_typeids)		/* return value */
 {
 	FuncCandidateList raw_candidates;
 	FuncCandidateList best_candidate;
 
 	/* Get list of possible candidates from namespace search */
-	raw_candidates = FuncnameGetCandidates(funcname, nargs);
+	raw_candidates = FuncnameGetCandidates(funcname, nargs, expand_variadic);
 
 	/*
 	 * Quickly check if there is an exact match to the input datatypes (there
@@ -786,6 +813,7 @@ func_get_detail(List *funcname,
 					*funcid = InvalidOid;
 					*rettype = targetType;
 					*retset = false;
+					*nvargs = 0;
 					*true_typeids = argtypes;
 					return FUNCDETAIL_COERCION;
 				}
@@ -835,6 +863,7 @@ func_get_detail(List *funcname,
 		FuncDetailCode result;
 
 		*funcid = best_candidate->oid;
+		*nvargs = best_candidate->nvargs;
 		*true_typeids = best_candidate->args;
 
 		ftup = SearchSysCache(PROCOID,
@@ -1189,7 +1218,7 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 {
 	FuncCandidateList clist;
 
-	clist = FuncnameGetCandidates(funcname, nargs);
+	clist = FuncnameGetCandidates(funcname, nargs, false);
 
 	while (clist)
 	{

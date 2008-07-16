@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.107 2008/07/01 02:09:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.108 2008/07/16 01:30:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse_func.h"
 #include "storage/backendid.h"
 #include "storage/ipc.h"
 #include "utils/acl.h"
@@ -561,23 +562,35 @@ TypeIsVisible(Oid typid)
  *		retrieve a list of the possible matches.
  *
  * If nargs is -1, we return all functions matching the given name,
- * regardless of argument count.
+ * regardless of argument count. (expand_variadic must be false in this case.)
+ *
+ * If expand_variadic is true, then variadic functions having the same number
+ * or fewer arguments will be retrieved, with the variadic argument and any
+ * additional argument positions filled with the variadic element type.
+ * nvargs in the returned struct is set to the number of such arguments.
+ * If expand_variadic is false, variadic arguments are not treated specially,
+ * and the returned nvargs will always be zero.
  *
  * We search a single namespace if the function name is qualified, else
  * all namespaces in the search path.  The return list will never contain
  * multiple entries with identical argument lists --- in the multiple-
  * namespace case, we arrange for entries in earlier namespaces to mask
- * identical entries in later namespaces.
+ * identical entries in later namespaces.  We also arrange for non-variadic
+ * functions to mask variadic ones if the expanded argument list is the same.
  */
 FuncCandidateList
-FuncnameGetCandidates(List *names, int nargs)
+FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 {
 	FuncCandidateList resultList = NULL;
+	bool		any_variadic = false;
 	char	   *schemaname;
 	char	   *funcname;
 	Oid			namespaceId;
 	CatCList   *catlist;
 	int			i;
+
+	/* check for caller error */
+	Assert(nargs >= 0 || !expand_variadic);
 
 	/* deconstruct the name list */
 	DeconstructQualifiedName(names, &schemaname, &funcname);
@@ -604,11 +617,57 @@ FuncnameGetCandidates(List *names, int nargs)
 		HeapTuple	proctup = &catlist->members[i]->tuple;
 		Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
 		int			pronargs = procform->pronargs;
+		int			effective_nargs;
 		int			pathpos = 0;
+		bool		variadic = false;
+		Oid			va_elem_type = InvalidOid;
 		FuncCandidateList newResult;
 
+		/*
+		 * Check if function is variadic, and get variadic element type if so.
+		 * If expand_variadic is false, we can just ignore variadic-ness.
+		 *
+		 * XXX it's annoying to inject something as expensive as this even
+		 * when there are no variadic functions involved.  Find a better way.
+		 */
+		if (expand_variadic)
+		{
+			Datum 		proargmodes;
+			bool		isnull;
+
+			proargmodes = SysCacheGetAttr(PROCOID, proctup,
+										  Anum_pg_proc_proargmodes, &isnull);
+			if (!isnull)
+			{
+				ArrayType	*ar = DatumGetArrayTypeP(proargmodes);
+				char		*argmodes;
+				int	j;
+
+				argmodes = ARR_DATA_PTR(ar);
+				j = ARR_DIMS(ar)[0] - 1;
+				if (j >= 0 && argmodes[j] == PROARGMODE_VARIADIC)
+				{
+					variadic = any_variadic = true;
+					switch (procform->proargtypes.values[j])
+					{
+						case ANYOID:
+							va_elem_type = ANYOID;
+							break;
+						case ANYARRAYOID:
+							va_elem_type = ANYELEMENTOID;
+							break;
+						default:
+							va_elem_type = get_element_type(procform->proargtypes.values[j]);
+							Assert(OidIsValid(va_elem_type));
+							break;
+					}
+				}
+			}
+		}
+
 		/* Ignore if it doesn't match requested argument count */
-		if (nargs >= 0 && pronargs != nargs)
+		if (nargs >= 0 &&
+			(variadic ? (pronargs > nargs) : (pronargs != nargs)))
 			continue;
 
 		if (OidIsValid(namespaceId))
@@ -616,7 +675,6 @@ FuncnameGetCandidates(List *names, int nargs)
 			/* Consider only procs in specified namespace */
 			if (procform->pronamespace != namespaceId)
 				continue;
-			/* No need to check args, they must all be different */
 		}
 		else
 		{
@@ -635,28 +693,63 @@ FuncnameGetCandidates(List *names, int nargs)
 			}
 			if (nsp == NULL)
 				continue;		/* proc is not in search path */
+		}
 
+		/*
+		 * We must compute the effective argument list so that we can easily
+		 * compare it to earlier results.  We waste a palloc cycle if it gets
+		 * masked by an earlier result, but really that's a pretty infrequent
+		 * case so it's not worth worrying about.
+		 */
+		effective_nargs = Max(pronargs, nargs);
+		newResult = (FuncCandidateList)
+			palloc(sizeof(struct _FuncCandidateList) - sizeof(Oid)
+				   + effective_nargs * sizeof(Oid));
+		newResult->pathpos = pathpos;
+		newResult->oid = HeapTupleGetOid(proctup);
+		newResult->nargs = effective_nargs;
+		memcpy(newResult->args, procform->proargtypes.values,
+			   pronargs * sizeof(Oid));
+		if (variadic)
+		{
+			int		i;
+
+			newResult->nvargs = effective_nargs - pronargs + 1;
+			/* Expand variadic argument into N copies of element type */
+			for (i = pronargs - 1; i < effective_nargs; i++)
+				newResult->args[i] = va_elem_type;
+		}
+		else
+			newResult->nvargs = 0;
+
+		/*
+		 * Does it have the same arguments as something we already accepted?
+		 * If so, decide which one to keep.  We can skip this check for the
+		 * single-namespace case if no variadic match has been made, since
+		 * then the unique index on pg_proc guarantees all the matches have
+		 * different argument lists.
+		 */
+		if (any_variadic || !OidIsValid(namespaceId))
+		{
 			/*
-			 * Okay, it's in the search path, but does it have the same
-			 * arguments as something we already accepted?	If so, keep only
-			 * the one that appears earlier in the search path.
-			 *
 			 * If we have an ordered list from SearchSysCacheList (the normal
 			 * case), then any conflicting proc must immediately adjoin this
 			 * one in the list, so we only need to look at the newest result
 			 * item.  If we have an unordered list, we have to scan the whole
-			 * result list.
+			 * result list.  Also, if either the current candidate or any
+			 * previous candidate is a variadic match, we can't assume that
+			 * conflicts are adjacent.
 			 */
 			if (resultList)
 			{
 				FuncCandidateList prevResult;
 
-				if (catlist->ordered)
+				if (catlist->ordered && !any_variadic)
 				{
-					if (pronargs == resultList->nargs &&
-						memcmp(procform->proargtypes.values,
+					if (effective_nargs == resultList->nargs &&
+						memcmp(newResult->args,
 							   resultList->args,
-							   pronargs * sizeof(Oid)) == 0)
+							   effective_nargs * sizeof(Oid)) == 0)
 						prevResult = resultList;
 					else
 						prevResult = NULL;
@@ -667,22 +760,58 @@ FuncnameGetCandidates(List *names, int nargs)
 						 prevResult;
 						 prevResult = prevResult->next)
 					{
-						if (pronargs == prevResult->nargs &&
-							memcmp(procform->proargtypes.values,
+						if (effective_nargs == prevResult->nargs &&
+							memcmp(newResult->args,
 								   prevResult->args,
-								   pronargs * sizeof(Oid)) == 0)
+								   effective_nargs * sizeof(Oid)) == 0)
 							break;
 					}
 				}
 				if (prevResult)
 				{
-					/* We have a match with a previous result */
-					Assert(pathpos != prevResult->pathpos);
+					/*
+					 * We have a match with a previous result.  Prefer the
+					 * one that's earlier in the search path.
+					 */
 					if (pathpos > prevResult->pathpos)
+					{
+						pfree(newResult);
 						continue;		/* keep previous result */
+					}
+					else if (pathpos == prevResult->pathpos)
+					{
+						/*
+						 * With variadic functions we could have, for example,
+						 * both foo(numeric) and foo(variadic numeric[]) in
+						 * the same namespace; if so we prefer the
+						 * non-variadic match on efficiency grounds.  It's
+						 * also possible to have conflicting variadic
+						 * functions, such as foo(numeric, variadic numeric[])
+						 * and foo(variadic numeric[]).  If you're silly
+						 * enough to do that, we throw an error.  (XXX It'd be
+						 * better to detect such conflicts when the functions
+						 * are created.)
+						 */
+						if (variadic)
+						{
+							if (prevResult->nvargs > 0)
+								ereport(ERROR,
+										(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+										 errmsg("variadic function %s conflicts with another",
+												func_signature_string(names, pronargs,
+																	  procform->proargtypes.values))));
+							/* else, previous result wasn't variadic */
+							pfree(newResult);
+							continue;	/* keep previous result */
+						}
+						/* non-variadic can replace a previous variadic */
+						Assert(prevResult->nvargs > 0);
+					}
 					/* replace previous result */
 					prevResult->pathpos = pathpos;
-					prevResult->oid = HeapTupleGetOid(proctup);
+					prevResult->oid = newResult->oid;
+					prevResult->nvargs = newResult->nvargs;
+					pfree(newResult);
 					continue;	/* args are same, of course */
 				}
 			}
@@ -691,15 +820,6 @@ FuncnameGetCandidates(List *names, int nargs)
 		/*
 		 * Okay to add it to result list
 		 */
-		newResult = (FuncCandidateList)
-			palloc(sizeof(struct _FuncCandidateList) - sizeof(Oid)
-				   + pronargs * sizeof(Oid));
-		newResult->pathpos = pathpos;
-		newResult->oid = HeapTupleGetOid(proctup);
-		newResult->nargs = pronargs;
-		memcpy(newResult->args, procform->proargtypes.values,
-			   pronargs * sizeof(Oid));
-
 		newResult->next = resultList;
 		resultList = newResult;
 	}
@@ -755,7 +875,8 @@ FunctionIsVisible(Oid funcid)
 
 		visible = false;
 
-		clist = FuncnameGetCandidates(list_make1(makeString(proname)), nargs);
+		clist = FuncnameGetCandidates(list_make1(makeString(proname)),
+									  nargs, false);
 
 		for (; clist; clist = clist->next)
 		{
@@ -1023,6 +1144,7 @@ OpernameGetCandidates(List *names, char oprkind)
 		newResult->pathpos = pathpos;
 		newResult->oid = HeapTupleGetOid(opertup);
 		newResult->nargs = 2;
+		newResult->nvargs = 0;
 		newResult->args[0] = operform->oprleft;
 		newResult->args[1] = operform->oprright;
 		newResult->next = resultList;

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.168 2008/07/14 00:51:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.169 2008/07/16 01:30:21 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -3643,7 +3643,8 @@
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>
        An array with the data types of the function arguments.  This includes
-       only input arguments (including <literal>INOUT</literal> arguments), and thus represents
+       only input arguments (including <literal>INOUT</literal> and
+       <literal>VARIADIC</> arguments), and thus represents
        the call signature of the function
       </entry>
      </row>
@@ -3654,8 +3655,9 @@
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>
        An array with the data types of the function arguments.  This includes
-       all arguments (including <literal>OUT</literal> and <literal>INOUT</literal> arguments); however, if all the
-       arguments are IN arguments, this field will be null.
+       all arguments (including <literal>OUT</literal> and
+       <literal>INOUT</literal> arguments); however, if all the
+       arguments are <literal>IN</literal> arguments, this field will be null.
        Note that subscripting is 1-based, whereas for historical reasons
        <structfield>proargtypes</> is subscripted from 0
       </entry>
@@ -3669,8 +3671,10 @@
         An array with the modes of the function arguments, encoded as
         <literal>i</literal> for <literal>IN</> arguments,
         <literal>o</literal> for <literal>OUT</> arguments,
-        <literal>b</literal> for <literal>INOUT</> arguments.
-        If all the arguments are <literal>IN</literal> arguments, this field will be null.
+        <literal>b</literal> for <literal>INOUT</> arguments,
+        <literal>v</literal> for <literal>VARIADIC</> arguments.
+        If all the arguments are <literal>IN</literal> arguments,
+        this field will be null.
         Note that subscripts correspond to positions of
         <structfield>proallargtypes</> not <structfield>proargtypes</>
       </entry>

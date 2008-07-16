@@ -426,3 +426,46 @@ create aggregate build_group(int8, integer) (
   SFUNC = add_group,
   STYPE = int8[]
 );
+
+-- test variadic polymorphic functions
+
+create function myleast(variadic anyarray) returns anyelement as $$
+  select min($1[i]) from generate_subscripts($1,1) g(i)
+$$ language sql immutable strict;
+
+select myleast(10, 1, 20, 33);
+select myleast(1.1, 0.22, 0.55);
+select myleast('z'::text);
+select myleast(); -- fail
+
+-- test with variadic call parameter
+select myleast(variadic array[1,2,3,4,-1]);
+select myleast(variadic array[1.1, -5.5]);
+
+--test with empty variadic call parameter
+select myleast(variadic array[]::int[]);
+
+-- an example with some ordinary arguments too
+create function concat(text, variadic anyarray) returns text as $$
+  select array_to_string($2, $1);
+$$ language sql immutable strict;
+
+select concat('%', 1, 2, 3, 4, 5);
+select concat('|', 'a'::text, 'b', 'c');
+select concat('|', variadic array[1,2,33]);
+select concat('|', variadic array[]::int[]);
+
+drop function concat(text, anyarray);
+
+-- mix variadic with anyelement
+create function formarray(anyelement, variadic anyarray) returns anyarray as $$
+  select array_prepend($1, $2);
+$$ language sql immutable strict;
+
+select formarray(1,2,3,4,5);
+select formarray(1.1, variadic array[1.2,55.5]);
+select formarray(1.1, array[1.2,55.5]); -- fail without variadic
+select formarray(1, 'x'::text); -- fail, type mismatch
+select formarray(1, variadic array['x'::text]); -- fail, type mismatch
+
+drop function formarray(anyelement, variadic anyarray);

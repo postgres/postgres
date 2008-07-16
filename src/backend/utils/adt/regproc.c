@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.107 2008/06/19 00:46:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.108 2008/07/16 01:30:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@ regprocin(PG_FUNCTION_ARGS)
 	 * pg_proc entries in the current search path.
 	 */
 	names = stringToQualifiedNameList(pro_name_or_oid);
-	clist = FuncnameGetCandidates(names, -1);
+	clist = FuncnameGetCandidates(names, -1, false);
 
 	if (clist == NULL)
 		ereport(ERROR,
@@ -189,7 +189,8 @@ regprocout(PG_FUNCTION_ARGS)
 			 * Would this proc be found (uniquely!) by regprocin? If not,
 			 * qualify it.
 			 */
-			clist = FuncnameGetCandidates(list_make1(makeString(proname)), -1);
+			clist = FuncnameGetCandidates(list_make1(makeString(proname)),
+										  -1, false);
 			if (clist != NULL && clist->next == NULL &&
 				clist->oid == proid)
 				nspname = NULL;
@@ -276,7 +277,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	 */
 	parseNameAndArgTypes(pro_name_or_oid, false, &names, &nargs, argtypes);
 
-	clist = FuncnameGetCandidates(names, nargs);
+	clist = FuncnameGetCandidates(names, nargs, false);
 
 	for (; clist; clist = clist->next)
 	{

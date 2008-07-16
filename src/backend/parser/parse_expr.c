@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.228 2008/04/29 14:59:16 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.229 2008/07/16 01:30:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -358,8 +358,8 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 			result = ParseFuncOrColumn(pstate,
 									   list_make1(n),
 									   list_make1(result),
-									   false, false, true,
-									   -1);
+									   false, false, false,
+									   true, -1);
 		}
 	}
 	/* process trailing subscripts, if any */
@@ -481,8 +481,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name2)),
 											 list_make1(node),
-											 false, false, true,
-											 cref->location);
+											 false, false, false,
+											 true, cref->location);
 				}
 				break;
 			}
@@ -511,8 +511,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name3)),
 											 list_make1(node),
-											 false, false, true,
-											 cref->location);
+											 false, false, false,
+											 true, cref->location);
 				}
 				break;
 			}
@@ -552,8 +552,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name4)),
 											 list_make1(node),
-											 false, false, true,
-											 cref->location);
+											 false, false, false,
+											 true, cref->location);
 				}
 				break;
 			}
@@ -1018,25 +1018,21 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	List	   *targs;
 	ListCell   *args;
 
-	/*
-	 * Transform the list of arguments.  We use a shallow list copy and then
-	 * transform-in-place to avoid O(N^2) behavior from repeated lappend's.
-	 *
-	 * XXX: repeated lappend() would no longer result in O(n^2) behavior;
-	 * worth reconsidering this design?
-	 */
-	targs = list_copy(fn->args);
-	foreach(args, targs)
+	/* Transform the list of arguments ... */
+	targs = NIL;
+	foreach(args, fn->args)
 	{
-		lfirst(args) = transformExpr(pstate,
-									 (Node *) lfirst(args));
+		targs = lappend(targs, transformExpr(pstate,
+											 (Node *) lfirst(args)));
 	}
 
+	/* ... and hand off to ParseFuncOrColumn */
 	return ParseFuncOrColumn(pstate,
 							 fn->funcname,
 							 targs,
 							 fn->agg_star,
 							 fn->agg_distinct,
+							 fn->func_variadic,
 							 false,
 							 fn->location);
 }

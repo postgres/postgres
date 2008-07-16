@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.198 2008/07/03 20:58:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.199 2008/07/16 01:30:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -393,6 +393,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"value", VALUE_P, UNRESERVED_KEYWORD},
 	{"values", VALUES, COL_NAME_KEYWORD},
 	{"varchar", VARCHAR, COL_NAME_KEYWORD},
+	{"variadic", VARIADIC, RESERVED_KEYWORD},
 	{"varying", VARYING, UNRESERVED_KEYWORD},
 	{"verbose", VERBOSE, TYPE_FUNC_NAME_KEYWORD},
 	{"version", VERSION_P, UNRESERVED_KEYWORD},

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.54 2008/07/11 07:02:43 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.55 2008/07/16 01:30:21 tgl Exp $ -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>
@@ -501,6 +501,18 @@ If the search path finds multiple functions of identical argument types,
 only the one appearing earliest in the path is considered.  But functions of
 different argument types are considered on an equal footing regardless of
 search path position.
+</para>
+</step>
+<step performance="optional">
+<para>
+If a function is declared with a <literal>VARIADIC</> array parameter, and
+the call does not use the <literal>VARIADIC</> keyword, then the function
+is treated as if the array parameter were replaced by one or more occurrences
+of its element type, as needed to match the call.  After such expansion the
+function might have effective argument types identical to some non-variadic
+function.  In that case the function appearing earlier in the search path is
+used, or if the two functions are in the same schema, the non-variadic one is
+selected.
 </para>
 </step>
 </substeps>

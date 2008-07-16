@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.54 2008/07/01 02:09:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.55 2008/07/16 01:30:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ typedef struct _FuncCandidateList
 	int			pathpos;		/* for internal use of namespace lookup */
 	Oid			oid;			/* the function or operator's OID */
 	int			nargs;			/* number of arg types returned */
+	int			nvargs;			/* number of args to become variadic array */
 	Oid			args[1];		/* arg types --- VARIABLE LENGTH ARRAY */
 }	*FuncCandidateList;	/* VARIABLE LENGTH STRUCT */
 
@@ -51,7 +52,8 @@ extern bool RelationIsVisible(Oid relid);
 extern Oid	TypenameGetTypid(const char *typname);
 extern bool TypeIsVisible(Oid typid);
 
-extern FuncCandidateList FuncnameGetCandidates(List *names, int nargs);
+extern FuncCandidateList FuncnameGetCandidates(List *names, int nargs,
+											   bool expand_variadic);
 extern bool FunctionIsVisible(Oid funcid);
 
 extern Oid	OpernameGetOprid(List *names, Oid oprleft, Oid oprright);

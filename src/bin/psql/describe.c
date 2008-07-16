@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.181 2008/07/15 16:06:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.182 2008/07/16 01:30:23 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -204,7 +204,8 @@ describeFunctions(const char *pattern, bool verbose)
 					  "        CASE\n"
 					  "          WHEN p.proargmodes[s.i] = 'i' THEN ''\n"
 					  "          WHEN p.proargmodes[s.i] = 'o' THEN 'OUT '\n"
-					"          WHEN p.proargmodes[s.i] = 'b' THEN 'INOUT '\n"
+					  "          WHEN p.proargmodes[s.i] = 'b' THEN 'INOUT '\n"
+					  "          WHEN p.proargmodes[s.i] = 'v' THEN 'VARIADIC '\n"
 					  "        END ||\n"
 					  "        CASE\n"
 			 "          WHEN COALESCE(p.proargnames[s.i], '') = '' THEN ''\n"

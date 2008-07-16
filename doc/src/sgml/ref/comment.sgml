@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.36 2007/08/21 21:08:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.37 2008/07/16 01:30:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -136,13 +136,14 @@ COMMENT ON
 
     <listitem>
      <para>
-      The mode of a function argument: either <literal>IN</>, <literal>OUT</>,
-      or <literal>INOUT</>.  If omitted, the default is <literal>IN</>.
+      The mode of a function argument: <literal>IN</>, <literal>OUT</>,
+      <literal>INOUT</>, or <literal>VARIADIC</>.
+      If omitted, the default is <literal>IN</>.
       Note that <command>COMMENT ON FUNCTION</command> does not actually pay
       any attention to <literal>OUT</> arguments, since only the input
       arguments are needed to determine the function's identity.
-      So it is sufficient to list the <literal>IN</> and <literal>INOUT</>
-      arguments.
+      So it is sufficient to list the <literal>IN</>, <literal>INOUT</>,
+      and <literal>VARIADIC</> arguments.
      </para>
     </listitem>
    </varlistentry>

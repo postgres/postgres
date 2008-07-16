@@ -2878,3 +2878,50 @@ select case_test(13);
 
 drop function catch();
 drop function case_test(bigint);
+
+-- test variadic functions
+
+create or replace function vari(variadic int[])
+returns void as $$
+begin
+  for i in array_lower($1,1)..array_upper($1,1) loop
+    raise notice '%', $1[i];
+  end loop; end;
+$$ language plpgsql;
+
+select vari(1,2,3,4,5);
+select vari(3,4,5);
+select vari(variadic array[5,6,7]);
+
+drop function vari(int[]);
+
+-- coercion test
+create or replace function pleast(variadic numeric[])
+returns numeric as $$
+declare aux numeric = $1[array_lower($1,1)];
+begin
+  for i in array_lower($1,1)+1..array_upper($1,1) loop
+    if $1[i] < aux then aux := $1[i]; end if;
+  end loop;
+  return aux;
+end;
+$$ language plpgsql immutable strict;
+
+select pleast(10,1,2,3,-16);
+select pleast(10.2,2.2,-1.1);
+select pleast(10.2,10, -20);
+select pleast(10,20, -1.0);
+
+-- in case of conflict, non-variadic version is preferred
+create or replace function pleast(numeric)
+returns numeric as $$
+begin
+  raise notice 'non-variadic function called';
+  return $1;
+end;
+$$ language plpgsql immutable strict;
+
+select pleast(10);
+
+drop function pleast(numeric[]);
+drop function pleast(numeric);

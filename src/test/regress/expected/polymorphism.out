@@ -613,3 +613,111 @@ create aggregate build_group(int8, integer) (
   SFUNC = add_group,
   STYPE = int8[]
 );
+-- test variadic polymorphic functions
+create function myleast(variadic anyarray) returns anyelement as $$
+  select min($1[i]) from generate_subscripts($1,1) g(i)
+$$ language sql immutable strict;
+select myleast(10, 1, 20, 33);
+ myleast 
+---------
+       1
+(1 row)
+
+select myleast(1.1, 0.22, 0.55);
+ myleast 
+---------
+    0.22
+(1 row)
+
+select myleast('z'::text);
+ myleast 
+---------
+ z
+(1 row)
+
+select myleast(); -- fail
+ERROR:  function myleast() does not exist
+LINE 1: select myleast();
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+-- test with variadic call parameter
+select myleast(variadic array[1,2,3,4,-1]);
+ myleast 
+---------
+      -1
+(1 row)
+
+select myleast(variadic array[1.1, -5.5]);
+ myleast 
+---------
+    -5.5
+(1 row)
+
+--test with empty variadic call parameter
+select myleast(variadic array[]::int[]);
+ myleast 
+---------
+        
+(1 row)
+
+-- an example with some ordinary arguments too
+create function concat(text, variadic anyarray) returns text as $$
+  select array_to_string($2, $1);
+$$ language sql immutable strict;
+select concat('%', 1, 2, 3, 4, 5);
+  concat   
+-----------
+ 1%2%3%4%5
+(1 row)
+
+select concat('|', 'a'::text, 'b', 'c');
+ concat 
+--------
+ a|b|c
+(1 row)
+
+select concat('|', variadic array[1,2,33]);
+ concat 
+--------
+ 1|2|33
+(1 row)
+
+select concat('|', variadic array[]::int[]);
+ concat 
+--------
+ 
+(1 row)
+
+drop function concat(text, anyarray);
+-- mix variadic with anyelement
+create function formarray(anyelement, variadic anyarray) returns anyarray as $$
+  select array_prepend($1, $2);
+$$ language sql immutable strict;
+select formarray(1,2,3,4,5);
+  formarray  
+-------------
+ {1,2,3,4,5}
+(1 row)
+
+select formarray(1.1, variadic array[1.2,55.5]);
+   formarray    
+----------------
+ {1.1,1.2,55.5}
+(1 row)
+
+select formarray(1.1, array[1.2,55.5]); -- fail without variadic
+ERROR:  function formarray(numeric, numeric[]) does not exist
+LINE 1: select formarray(1.1, array[1.2,55.5]);
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+select formarray(1, 'x'::text); -- fail, type mismatch
+ERROR:  function formarray(integer, text) does not exist
+LINE 1: select formarray(1, 'x'::text);
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+select formarray(1, variadic array['x'::text]); -- fail, type mismatch
+ERROR:  function formarray(integer, text[]) does not exist
+LINE 1: select formarray(1, variadic array['x'::text]);
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+drop function formarray(anyelement, variadic anyarray);

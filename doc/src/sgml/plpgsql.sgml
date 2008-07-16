@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.131 2008/06/27 01:52:59 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.132 2008/07/16 01:30:21 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -119,6 +119,13 @@
      function as returning <type>record</>, which means that the result
      is a row type whose columns are determined by specification in the
      calling query, as discussed in <xref linkend="queries-tablefunctions">.
+    </para>
+
+    <para>
+     <application>PL/pgSQL</> functions can be declared to accept a variable
+     number of arguments by using the <literal>VARIADIC</> marker.  This
+     works exactly the same way as for SQL functions, as discussed in
+     <xref linkend="xfunc-sql-variadic-functions">.
     </para>
 
     <para>

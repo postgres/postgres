@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.130 2007/11/10 20:14:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.131 2008/07/16 01:30:21 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -495,7 +495,7 @@ SELECT getname(new_emp());
  None
 (1 row)
 </screen>
-    </para>     
+    </para>
 
     <para>
      Still another way to use a function that returns a composite type is to
@@ -505,7 +505,7 @@ SELECT getname(new_emp());
    </sect2>
 
    <sect2 id="xfunc-output-parameters">
-    <title>Functions with Output Parameters</title>
+    <title><acronym>SQL</> Functions with Output Parameters</title>
 
    <indexterm>
     <primary>function</primary>
@@ -578,9 +578,75 @@ DROP FUNCTION sum_n_product (int, int);
 
     <para>
      Parameters can be marked as <literal>IN</> (the default),
-     <literal>OUT</>, or <literal>INOUT</>.  An <literal>INOUT</>
+     <literal>OUT</>, <literal>INOUT</>, or <literal>VARIADIC</>.
+     An <literal>INOUT</>
      parameter serves as both an input parameter (part of the calling
      argument list) and an output parameter (part of the result record type).
+     <literal>VARIADIC</> parameters are input parameters, but are treated
+     specially as described next.
+    </para>
+   </sect2>
+
+   <sect2 id="xfunc-sql-variadic-functions">
+    <title><acronym>SQL</> Functions with Variable Numbers of Arguments</title>
+
+    <indexterm>
+     <primary>function</primary>
+     <secondary>variadic</secondary>
+    </indexterm>
+
+    <indexterm>
+     <primary>variadic function</primary>
+    </indexterm>
+
+    <para>
+     <acronym>SQL</acronym> functions can be declared to accept
+     variable numbers of arguments, so long as all the <quote>optional</>
+     arguments are of the same data type.  The optional arguments will be
+     passed to the function as an array.  The function is declared by
+     marking the last parameter as <literal>VARIADIC</>; this parameter
+     must be declared as being of an array type.  For example:
+
+<screen>
+CREATE FUNCTION mleast(VARIADIC numeric[]) RETURNS numeric AS $$
+    SELECT min($1[i]) FROM generate_subscripts($1, 1) g(i);
+$$ LANGUAGE SQL;
+
+SELECT mleast(10, -1, 5, 4.4);
+ mleast 
+--------
+     -1
+(1 row)
+</screen>
+
+     Effectively, all the actual arguments at or beyond the
+     <literal>VARIADIC</> position are gathered up into a one-dimensional
+     array, as if you had written
+
+<screen>
+SELECT mleast(ARRAY[10, -1, 5, 4.4]);    -- doesn't work
+</screen>
+
+     You can't actually write that, though &mdash; or at least, it will
+     not match this function definition.  A parameter marked
+     <literal>VARIADIC</> matches one or more occurrences of its element
+     type, not of its own type.
+    </para>
+
+    <para>
+     Sometimes it is useful to be able to pass an already-constructed array
+     to a variadic function; this is particularly handy when one variadic
+     function wants to pass on its array parameter to another one.  You can
+     do that by specifying <literal>VARIADIC</> in the call:
+
+<screen>
+SELECT mleast(VARIADIC ARRAY[10, -1, 5, 4.4]);
+</screen>
+
+     This prevents expansion of the function's variadic parameter into its
+     element type, thereby allowing the array argument value to match
+     normally.  <literal>VARIADIC</> can only be attached to the last
+     actual argument of a function call.
     </para>
    </sect2>
 
@@ -795,12 +861,44 @@ DETAIL:  A function returning a polymorphic type must have at least one polymorp
      For example:
 <screen>
 CREATE FUNCTION dup (f1 anyelement, OUT f2 anyelement, OUT f3 anyarray)
-AS 'select $1, array[$1,$1]' LANGUAGE sql;
+AS 'select $1, array[$1,$1]' LANGUAGE SQL;
 
 SELECT * FROM dup(22);
  f2 |   f3
 ----+---------
  22 | {22,22}
+(1 row)
+</screen>
+    </para>
+
+    <para>
+     Polymorphism can also be used with variadic functions.
+     For example:
+<screen>
+CREATE FUNCTION anyleast (VARIADIC anyarray) RETURNS anyelement AS $$
+    SELECT min($1[i]) FROM generate_subscripts($1, 1) g(i);
+$$ LANGUAGE SQL;
+
+SELECT anyleast(10, -1, 5, 4);
+ anyleast 
+----------
+       -1
+(1 row)
+
+SELECT anyleast('abc'::text, 'def');
+ anyleast 
+----------
+ abc
+(1 row)
+
+CREATE FUNCTION concat(text, VARIADIC anyarray) RETURNS text AS $$
+    SELECT array_to_string($2, $1);
+$$ LANGUAGE SQL;
+
+SELECT concat('|', 1, 4, 2);
+ concat 
+--------
+ 1|4|2
 (1 row)
 </screen>
     </para>
@@ -850,6 +948,16 @@ CREATE FUNCTION test(smallint, double precision) RETURNS ...
     to override that choice by schema-qualifying the function name
     (that is, <literal>schema.func(table)</literal>) but it's better to
     avoid the problem by not choosing conflicting names.
+   </para>
+
+   <para>
+    Another possible conflict is between variadic and non-variadic functions.
+    For instance, it is possible to create both <literal>foo(numeric)</> and
+    <literal>foo(VARIADIC numeric[])</>.  In this case it is unclear which one
+    should be matched to a call providing a single numeric argument, such as
+    <literal>foo(10.1)</>.  The rule is that the function appearing
+    earlier in the search path is used, or if the two functions are in the
+    same schema, the non-variadic one is preferred.
    </para>
 
    <para>
@@ -2952,7 +3060,25 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
     LANGUAGE C IMMUTABLE;
 </programlisting>
     </para>
+
+    <para>
+     There is a variant of polymorphism that is only available to C-language
+     functions: they can be declared to take parameters of type
+     <literal>"any"</>.  (Note that this type name must be double-quoted,
+     since it's also a SQL reserved word.)  This works like
+     <type>anyelement</> except that it does not constrain different
+     <literal>"any"</> arguments to be the same type, nor do they help
+     determine the function's result type.  A C-language function can also
+     declare its final parameter to be <literal>VARIADIC "any"</>.  This will
+     match one or more actual arguments of any type (not necessarily the same
+     type).  These arguments will <emphasis>not</> be gathered into an array
+     as happens with normal variadic functions; they will just be passed to
+     the function separately.  The <function>PG_NARGS()</> macro and the
+     methods described above must be used to determine the number of actual
+     arguments and their types when using this feature.
+    </para>
    </sect2>
+
    <sect2>
     <title>Shared Memory and LWLocks</title>
 

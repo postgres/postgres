@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.78 2007/09/11 00:06:41 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.79 2008/07/16 01:30:21 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -101,8 +101,9 @@ CREATE [ OR REPLACE ] FUNCTION
 
      <listitem>
       <para>
-       The mode of an argument: either <literal>IN</>, <literal>OUT</>,
-       or <literal>INOUT</>.  If omitted, the default is <literal>IN</>.
+       The mode of an argument: <literal>IN</>, <literal>OUT</>,
+       <literal>INOUT</>, or <literal>VARIADIC</>.
+       If omitted, the default is <literal>IN</>.
       </para>
      </listitem>
     </varlistentry>

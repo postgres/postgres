@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.506 2008/07/16 00:48:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.507 2008/07/16 01:30:23 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4474,5 +4474,6 @@ DESCR("is txid visible in snapshot?");
 #define PROARGMODE_IN		'i'
 #define PROARGMODE_OUT		'o'
 #define PROARGMODE_INOUT	'b'
+#define PROARGMODE_VARIADIC	'v'
 
 #endif   /* PG_PROC_H */
