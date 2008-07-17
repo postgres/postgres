@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.80 2008/07/01 02:09:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.81 2008/07/17 21:02:31 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,6 +176,9 @@ typedef struct autovac_table
 	int			at_vacuum_cost_delay;
 	int			at_vacuum_cost_limit;
 	bool		at_wraparound;
+	char	   *at_relname;
+	char	   *at_nspname;
+	char	   *at_datname;
 } autovac_table;
 
 /*-------------
@@ -282,15 +285,13 @@ static void relation_needs_vacanalyze(Oid relid, Form_pg_autovacuum avForm,
 						  PgStat_StatTabEntry *tabentry, bool *dovacuum,
 						  bool *doanalyze, bool *wraparound);
 
-static void autovacuum_do_vac_analyze(Oid relid, bool dovacuum,
-						  bool doanalyze, int freeze_min_age,
-						  bool for_wraparound,
+static void autovacuum_do_vac_analyze(autovac_table *tab,
 						  BufferAccessStrategy bstrategy);
 static HeapTuple get_pg_autovacuum_tuple_relid(Relation avRel, Oid relid);
 static PgStat_StatTabEntry *get_pgstat_tabentry_relid(Oid relid, bool isshared,
 						  PgStat_StatDBEntry *shared,
 						  PgStat_StatDBEntry *dbentry);
-static void autovac_report_activity(VacuumStmt *vacstmt, Oid relid);
+static void autovac_report_activity(autovac_table *tab);
 static void avl_sighup_handler(SIGNAL_ARGS);
 static void avl_sigusr1_handler(SIGNAL_ARGS);
 static void avl_sigterm_handler(SIGNAL_ARGS);
@@ -2061,9 +2062,6 @@ do_autovacuum(void)
 		autovac_table *tab;
 		WorkerInfo	worker;
 		bool		skipit;
-		char	   *datname,
-				   *nspname,
-				   *relname;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -2158,13 +2156,17 @@ do_autovacuum(void)
 
 		/*
 		 * Save the relation name for a possible error message, to avoid a
-		 * catalog lookup in case of an error.	Note: they must live in a
-		 * long-lived memory context because we call vacuum and analyze in
-		 * different transactions.
+		 * catalog lookup in case of an error.  If any of these return NULL,
+		 * then the relation has been dropped since last we checked; skip it.
+		 * Note: they must live in a long-lived memory context because we call
+		 * vacuum and analyze in different transactions.
 		 */
-		datname = get_database_name(MyDatabaseId);
-		nspname = get_namespace_name(get_rel_namespace(tab->at_relid));
-		relname = get_rel_name(tab->at_relid);
+
+		tab->at_relname = get_rel_name(tab->at_relid);
+		tab->at_nspname = get_namespace_name(get_rel_namespace(tab->at_relid));
+		tab->at_datname = get_database_name(MyDatabaseId);
+		if (!tab->at_relname || !tab->at_nspname || !tab->at_datname)
+			goto deleted;
 
 		/*
 		 * We will abort vacuuming the current table if something errors out,
@@ -2175,12 +2177,7 @@ do_autovacuum(void)
 		{
 			/* have at it */
 			MemoryContextSwitchTo(TopTransactionContext);
-			autovacuum_do_vac_analyze(tab->at_relid,
-									  tab->at_dovacuum,
-									  tab->at_doanalyze,
-									  tab->at_freeze_min_age,
-									  tab->at_wraparound,
-									  bstrategy);
+			autovacuum_do_vac_analyze(tab, bstrategy);
 
 			/*
 			 * Clear a possible query-cancel signal, to avoid a late reaction
@@ -2199,10 +2196,10 @@ do_autovacuum(void)
 			HOLD_INTERRUPTS();
 			if (tab->at_dovacuum)
 				errcontext("automatic vacuum of table \"%s.%s.%s\"",
-						   datname, nspname, relname);
+						   tab->at_datname, tab->at_nspname, tab->at_relname);
 			else
 				errcontext("automatic analyze of table \"%s.%s.%s\"",
-						   datname, nspname, relname);
+						   tab->at_datname, tab->at_nspname, tab->at_relname);
 			EmitErrorReport();
 
 			/* this resets the PGPROC flags too */
@@ -2219,10 +2216,14 @@ do_autovacuum(void)
 		/* the PGPROC flags are reset at the next end of transaction */
 
 		/* be tidy */
+deleted:
+		if (tab->at_datname != NULL)
+			pfree(tab->at_datname);
+		if (tab->at_nspname != NULL)
+			pfree(tab->at_nspname);
+		if (tab->at_relname != NULL)
+			pfree(tab->at_relname);
 		pfree(tab);
-		pfree(datname);
-		pfree(nspname);
-		pfree(relname);
 
 		/* remove my info from shared memory */
 		LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
@@ -2299,6 +2300,8 @@ get_pgstat_tabentry_relid(Oid relid, bool isshared, PgStat_StatDBEntry *shared,
  * Recheck whether a plain table still needs vacuum or analyze; be it because
  * it does directly, or because its TOAST table does.  Return value is a valid
  * autovac_table pointer if it does, NULL otherwise.
+ *
+ * Note that the returned autovac_table does not have the name fields set.
  */
 static autovac_table *
 table_recheck_autovac(Oid relid)
@@ -2437,6 +2440,9 @@ table_recheck_autovac(Oid relid)
 		tab->at_vacuum_cost_limit = vac_cost_limit;
 		tab->at_vacuum_cost_delay = vac_cost_delay;
 		tab->at_wraparound = wraparound || toast_wraparound;
+		tab->at_relname = NULL;
+		tab->at_nspname = NULL;
+		tab->at_datname = NULL;
 	}
 
 	heap_close(avRel, AccessShareLock);
@@ -2607,8 +2613,7 @@ relation_needs_vacanalyze(Oid relid,
  *		Vacuum and/or analyze the specified table
  */
 static void
-autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
-						  int freeze_min_age, bool for_wraparound,
+autovacuum_do_vac_analyze(autovac_table *tab,
 						  BufferAccessStrategy bstrategy)
 {
 	VacuumStmt	vacstmt;
@@ -2617,18 +2622,18 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 	MemSet(&vacstmt, 0, sizeof(vacstmt));
 
 	vacstmt.type = T_VacuumStmt;
-	vacstmt.vacuum = dovacuum;
+	vacstmt.vacuum = tab->at_dovacuum;
 	vacstmt.full = false;
-	vacstmt.analyze = doanalyze;
-	vacstmt.freeze_min_age = freeze_min_age;
+	vacstmt.analyze = tab->at_doanalyze;
+	vacstmt.freeze_min_age = tab->at_freeze_min_age;
 	vacstmt.verbose = false;
 	vacstmt.relation = NULL;	/* not used since we pass a relid */
 	vacstmt.va_cols = NIL;
 
 	/* Let pgstat know what we're doing */
-	autovac_report_activity(&vacstmt, relid);
+	autovac_report_activity(tab);
 
-	vacuum(&vacstmt, relid, bstrategy, for_wraparound, true);
+	vacuum(&vacstmt, tab->at_relid, bstrategy, tab->at_wraparound, true);
 }
 
 /*
@@ -2643,37 +2648,28 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
  * bother to report "<IDLE>" or some such.
  */
 static void
-autovac_report_activity(VacuumStmt *vacstmt, Oid relid)
+autovac_report_activity(autovac_table *tab)
 {
-	char	   *relname = get_rel_name(relid);
-	char	   *nspname = get_namespace_name(get_rel_namespace(relid));
-
 #define MAX_AUTOVAC_ACTIV_LEN (NAMEDATALEN * 2 + 32)
-	char		activity[MAX_AUTOVAC_ACTIV_LEN];
+	char	activity[MAX_AUTOVAC_ACTIV_LEN];
+	int		len;
 
 	/* Report the command and possible options */
-	if (vacstmt->vacuum)
+	if (tab->at_dovacuum)
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
 				 "autovacuum: VACUUM%s",
-				 vacstmt->analyze ? " ANALYZE" : "");
+				 tab->at_doanalyze ? " ANALYZE" : "");
 	else
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
 				 "autovacuum: ANALYZE");
 
 	/*
 	 * Report the qualified name of the relation.
-	 *
-	 * Paranoia is appropriate here in case relation was recently dropped ---
-	 * the lsyscache routines we just invoked will return NULL rather than
-	 * failing.
 	 */
-	if (relname && nspname)
-	{
-		int			len = strlen(activity);
+	len = strlen(activity);
 
-		snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
-				 " %s.%s", nspname, relname);
-	}
+	snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
+			 " %s.%s", tab->at_nspname, tab->at_relname);
 
 	/* Set statement_timestamp() to current time for pg_stat_activity */
 	SetCurrentStatementStartTimestamp();
