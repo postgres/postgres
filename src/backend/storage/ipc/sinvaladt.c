@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.73 2008/07/01 02:09:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.74 2008/07/18 14:45:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,8 +296,6 @@ SharedInvalBackendInit(void)
 
 	MyBackendId = (stateP - &segP->procState[0]) + 1;
 
-	elog(DEBUG4, "my backend id is %d", MyBackendId);
-
 	/* Advertise assigned backend ID in MyProc */
 	MyProc->backendId = MyBackendId;
 
@@ -314,6 +312,8 @@ SharedInvalBackendInit(void)
 
 	/* register exit routine to mark my entry inactive at exit */
 	on_shmem_exit(CleanupInvalidationState, PointerGetDatum(segP));
+
+	elog(DEBUG4, "my backend id is %d", MyBackendId);
 }
 
 /*
@@ -416,16 +416,18 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 		 * If the buffer is full, we *must* acquire some space.  Clean the
 		 * queue and reset anyone who is preventing space from being freed.
 		 * Otherwise, clean the queue only when it's exceeded the next
-		 * fullness threshold.
+		 * fullness threshold.  We have to loop and recheck the buffer state
+		 * after any call of SICleanupQueue.
 		 */
-		numMsgs = segP->maxMsgNum - segP->minMsgNum;
-		if (numMsgs + nthistime > MAXNUMMESSAGES)
+		for (;;)
 		{
-			SICleanupQueue(true, nthistime);
-			Assert((segP->maxMsgNum - segP->minMsgNum + nthistime) <= MAXNUMMESSAGES);
+			numMsgs = segP->maxMsgNum - segP->minMsgNum;
+			if (numMsgs + nthistime > MAXNUMMESSAGES ||
+				numMsgs >= segP->nextThreshold)
+				SICleanupQueue(true, nthistime);
+			else
+				break;
 		}
-		else if (numMsgs >= segP->nextThreshold)
-			SICleanupQueue(true, 0);
 
 		/*
 		 * Insert new message(s) into proper slot of circular buffer
@@ -546,12 +548,16 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
  *		Remove messages that have been consumed by all active backends
  *
  * callerHasWriteLock is TRUE if caller is holding SInvalWriteLock.
- * minFree is the minimum number of free message slots required at completion.
+ * minFree is the minimum number of message slots to make free.
  *
  * Possible side effects of this routine include marking one or more
  * backends as "reset" in the array, and sending a catchup interrupt (SIGUSR1)
  * to some backend that seems to be getting too far behind.  We signal at
  * most one backend at a time, for reasons explained at the top of the file.
+ *
+ * Caution: because we transiently release write lock when we have to signal
+ * some other backend, it is NOT guaranteed that there are still minFree
+ * free message slots at exit.  Caller must recheck and perhaps retry.
  */
 void
 SICleanupQueue(bool callerHasWriteLock, int minFree)
