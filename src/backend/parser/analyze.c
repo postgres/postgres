@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.372 2008/06/19 00:46:04 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.373 2008/07/18 20:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,6 @@ static bool check_parameter_resolution_walker(Node *node,
  * parse_analyze
  *		Analyze a raw parse tree and transform it to Query form.
  *
- * If available, pass the source text from which the raw parse tree was
- * generated; it's OK to pass NULL if this is not available.
- *
  * Optionally, information about $n parameter types can be supplied.
  * References to $n indexes not defined by paramTypes[] are disallowed.
  *
@@ -88,6 +85,8 @@ parse_analyze(Node *parseTree, const char *sourceText,
 {
 	ParseState *pstate = make_parsestate(NULL);
 	Query	   *query;
+
+	Assert(sourceText != NULL);				/* required as of 8.4 */
 
 	pstate->p_sourcetext = sourceText;
 	pstate->p_paramtypes = paramTypes;
@@ -114,6 +113,8 @@ parse_analyze_varparams(Node *parseTree, const char *sourceText,
 {
 	ParseState *pstate = make_parsestate(NULL);
 	Query	   *query;
+
+	Assert(sourceText != NULL);				/* required as of 8.4 */
 
 	pstate->p_sourcetext = sourceText;
 	pstate->p_paramtypes = *paramTypes;

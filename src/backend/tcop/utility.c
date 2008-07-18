@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.294 2008/06/15 01:25:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.295 2008/07/18 20:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,12 +218,16 @@ check_xact_readonly(Node *parsetree)
  *		general utility function invoker
  *
  *	parsetree: the parse tree for the utility statement
- *	queryString: original source text of command (NULL if not available)
+ *	queryString: original source text of command
  *	params: parameters to use during execution
  *	isTopLevel: true if executing a "top level" (interactively issued) command
  *	dest: where to send results
  *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
  *		in which to store a command completion status string.
+ *
+ * Notes: as of PG 8.4, caller MUST supply a queryString; it is not
+ * allowed anymore to pass NULL.  (If you really don't have source text,
+ * you can pass a constant string, perhaps "(query not available)".)
  *
  * completionTag is only set nonempty if we want to return a nondefault status.
  *
@@ -237,6 +241,8 @@ ProcessUtility(Node *parsetree,
 			   DestReceiver *dest,
 			   char *completionTag)
 {
+	Assert(queryString != NULL);				/* required as of 8.4 */
+
 	check_xact_readonly(parsetree);
 
 	if (completionTag)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.553 2008/05/15 00:17:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.554 2008/07/18 20:26:06 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1388,9 +1388,9 @@ exec_bind_message(StringInfo input_message)
 	/*
 	 * Report query to various monitoring facilities.
 	 */
-	debug_query_string = psrc->query_string ? psrc->query_string : "<BIND>";
+	debug_query_string = psrc->query_string;
 
-	pgstat_report_activity(debug_query_string);
+	pgstat_report_activity(psrc->query_string);
 
 	set_ps_display("BIND", false);
 
@@ -1466,10 +1466,8 @@ exec_bind_message(StringInfo input_message)
 	 */
 	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-	/* Copy the plan's query string, if available, into the portal */
-	query_string = psrc->query_string;
-	if (query_string)
-		query_string = pstrdup(query_string);
+	/* Copy the plan's query string into the portal */
+	query_string = pstrdup(psrc->query_string);
 
 	/* Likewise make a copy of the statement name, unless it's unnamed */
 	if (stmt_name[0])
@@ -1714,7 +1712,7 @@ exec_bind_message(StringInfo input_message)
 							*stmt_name ? stmt_name : "<unnamed>",
 							*portal_name ? "/" : "",
 							*portal_name ? portal_name : "",
-			psrc->query_string ? psrc->query_string : "<source not stored>"),
+							psrc->query_string),
 					 errhidestmt(true),
 					 errdetail_params(params)));
 			break;
@@ -1780,7 +1778,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 */
 	if (is_xact_command)
 	{
-		sourceText = portal->sourceText ? pstrdup(portal->sourceText) : NULL;
+		sourceText = pstrdup(portal->sourceText);
 		if (portal->prepStmtName)
 			prepStmtName = pstrdup(portal->prepStmtName);
 		else
@@ -1805,9 +1803,9 @@ exec_execute_message(const char *portal_name, long max_rows)
 	/*
 	 * Report query to various monitoring facilities.
 	 */
-	debug_query_string = sourceText ? sourceText : "<EXECUTE>";
+	debug_query_string = sourceText;
 
-	pgstat_report_activity(debug_query_string);
+	pgstat_report_activity(sourceText);
 
 	set_ps_display(portal->commandTag, false);
 
@@ -1840,15 +1838,14 @@ exec_execute_message(const char *portal_name, long max_rows)
 	if (check_log_statement(portal->stmts))
 	{
 		ereport(LOG,
-				(errmsg("%s %s%s%s%s%s",
+				(errmsg("%s %s%s%s: %s",
 						execute_is_fetch ?
 						_("execute fetch from") :
 						_("execute"),
 						prepStmtName,
 						*portal_name ? "/" : "",
 						*portal_name ? portal_name : "",
-						sourceText ? ": " : "",
-						sourceText ? sourceText : ""),
+						sourceText),
 				 errhidestmt(true),
 				 errdetail_params(portalParams)));
 		was_logged = true;
@@ -1924,7 +1921,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 			break;
 		case 2:
 			ereport(LOG,
-					(errmsg("duration: %s ms  %s %s%s%s%s%s",
+					(errmsg("duration: %s ms  %s %s%s%s: %s",
 							msec_str,
 							execute_is_fetch ?
 							_("execute fetch from") :
@@ -1932,8 +1929,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 							prepStmtName,
 							*portal_name ? "/" : "",
 							*portal_name ? portal_name : "",
-							sourceText ? ": " : "",
-							sourceText ? sourceText : ""),
+							sourceText),
 					 errhidestmt(true),
 					 errdetail_params(portalParams)));
 			break;
@@ -2049,7 +2045,7 @@ errdetail_execute(List *raw_parsetree_list)
 			PreparedStatement *pstmt;
 
 			pstmt = FetchPreparedStatement(stmt->name, false);
-			if (pstmt && pstmt->plansource->query_string)
+			if (pstmt)
 			{
 				errdetail("prepare: %s", pstmt->plansource->query_string);
 				return 0;

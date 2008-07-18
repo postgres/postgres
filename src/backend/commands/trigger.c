@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.235 2008/07/13 20:45:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.236 2008/07/18 20:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -728,7 +728,8 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 
 		/* ... and execute it */
 		ProcessUtility((Node *) atstmt,
-					   NULL, NULL, false, None_Receiver, NULL);
+					   "(generated ALTER TABLE ADD FOREIGN KEY command)",
+					   NULL, false, None_Receiver, NULL);
 
 		/* Remove the matched item from the list */
 		info_list = list_delete_ptr(info_list, info);

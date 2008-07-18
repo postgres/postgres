@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.110 2008/05/12 00:00:52 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.111 2008/07/18 20:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,7 +271,11 @@ CreateNewPortal(void)
  * PortalDefineQuery
  *		A simple subroutine to establish a portal's query.
  *
- * Notes: commandTag shall be NULL if and only if the original query string
+ * Notes: as of PG 8.4, caller MUST supply a sourceText string; it is not
+ * allowed anymore to pass NULL.  (If you really don't have source text,
+ * you can pass a constant string, perhaps "(query not available)".)
+ *
+ * commandTag shall be NULL if and only if the original query string
  * (before rewriting) was an empty string.	Also, the passed commandTag must
  * be a pointer to a constant string, since it is not copied.
  *
@@ -284,7 +288,7 @@ CreateNewPortal(void)
  * copying them into the portal's heap context.
  *
  * The caller is also responsible for ensuring that the passed prepStmtName
- * and sourceText (if not NULL) have adequate lifetime.
+ * (if not NULL) and sourceText have adequate lifetime.
  *
  * NB: this function mustn't do much beyond storing the passed values; in
  * particular don't do anything that risks elog(ERROR).  If that were to
@@ -302,7 +306,8 @@ PortalDefineQuery(Portal portal,
 	AssertArg(PortalIsValid(portal));
 	AssertState(portal->status == PORTAL_NEW);
 
-	Assert(commandTag != NULL || stmts == NIL);
+	AssertArg(sourceText != NULL);
+	AssertArg(commandTag != NULL || stmts == NIL);
 
 	portal->prepStmtName = prepStmtName;
 	portal->sourceText = sourceText;
@@ -927,10 +932,7 @@ pg_cursor(PG_FUNCTION_ARGS)
 		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = CStringGetTextDatum(portal->name);
-		if (!portal->sourceText)
-			nulls[1] = true;
-		else
-			values[1] = CStringGetTextDatum(portal->sourceText);
+		values[1] = CStringGetTextDatum(portal->sourceText);
 		values[2] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_HOLD);
 		values[3] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_BINARY);
 		values[4] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_SCROLL);

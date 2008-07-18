@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.18 2008/05/12 20:02:02 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.19 2008/07/18 20:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,8 +104,7 @@ InitPlanCache(void)
  * about all that we do here is copy it into permanent storage.
  *
  * raw_parse_tree: output of raw_parser()
- * query_string: original query text (can be NULL if not available, but
- *		that is discouraged because it degrades error message quality)
+ * query_string: original query text (as of PG 8.4, must not be NULL)
  * commandTag: compile-time-constant tag for query, or NULL if empty query
  * param_types: array of parameter type OIDs, or NULL if none
  * num_params: number of parameters
@@ -130,6 +129,8 @@ CreateCachedPlan(Node *raw_parse_tree,
 	MemoryContext source_context;
 	MemoryContext oldcxt;
 
+	Assert(query_string != NULL);				/* required as of 8.4 */
+
 	/*
 	 * Make a dedicated memory context for the CachedPlanSource and its
 	 * subsidiary data.  We expect it can be pretty small.
@@ -152,7 +153,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 	oldcxt = MemoryContextSwitchTo(source_context);
 	plansource = (CachedPlanSource *) palloc(sizeof(CachedPlanSource));
 	plansource->raw_parse_tree = copyObject(raw_parse_tree);
-	plansource->query_string = query_string ? pstrdup(query_string) : NULL;
+	plansource->query_string = pstrdup(query_string);
 	plansource->commandTag = commandTag;		/* no copying needed */
 	if (num_params > 0)
 	{
@@ -227,6 +228,8 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 	CachedPlanSource *plansource;
 	OverrideSearchPath *search_path;
 	MemoryContext oldcxt;
+
+	Assert(query_string != NULL);				/* required as of 8.4 */
 
 	/*
 	 * Fetch current search_path into given context, but do any recalculation
