@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.170 2008/07/16 16:55:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.171 2008/07/18 03:32:51 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -3680,7 +3680,8 @@
         <literal>i</literal> for <literal>IN</> arguments,
         <literal>o</literal> for <literal>OUT</> arguments,
         <literal>b</literal> for <literal>INOUT</> arguments,
-        <literal>v</literal> for <literal>VARIADIC</> arguments.
+        <literal>v</literal> for <literal>VARIADIC</> arguments,
+        <literal>t</literal> for <literal>TABLE</> arguments.
         If all the arguments are <literal>IN</literal> arguments,
         this field will be null.
         Note that subscripts correspond to positions of

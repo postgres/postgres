@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.617 2008/07/16 01:30:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.618 2008/07/18 03:32:52 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -112,6 +112,8 @@ static Node *doNegate(Node *n, int location);
 static void doNegateFloat(Value *v);
 static Node *makeAArrayExpr(List *elements);
 static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args);
+static List *mergeTableFuncParameters(List *func_args, List *columns);
+static TypeName *TableFuncTypeName(List *columns);
 
 %}
 
@@ -253,13 +255,13 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 				TableFuncElementList opt_type_modifiers
 				prep_type_clause
 				execute_param_clause using_clause returning_clause
-				enum_val_list
+				enum_val_list table_func_column_list
 
 %type <range>	OptTempTableName
 %type <into>	into_clause create_as_target
 
 %type <defelt>	createfunc_opt_item common_func_opt_item
-%type <fun_param> func_arg
+%type <fun_param> func_arg table_func_column
 %type <fun_param_mode> arg_class
 %type <typnam>	func_return func_type
 
@@ -4119,6 +4121,19 @@ CreateFunctionStmt:
 					$$ = (Node *)n;
 				}
 			| CREATE opt_or_replace FUNCTION func_name func_args
+			  RETURNS TABLE '(' table_func_column_list ')' createfunc_opt_list opt_definition
+				{
+					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
+					n->replace = $2;
+					n->funcname = $4;
+					n->parameters = mergeTableFuncParameters($5, $9);
+					n->returnType = TableFuncTypeName($9);
+					n->returnType->location = @7;
+					n->options = $11;
+					n->withClause = $12;
+					$$ = (Node *)n;
+				}
+			| CREATE opt_or_replace FUNCTION func_name func_args
 			  createfunc_opt_list opt_definition
 				{
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
@@ -4336,6 +4351,27 @@ func_as:	Sconst						{ $$ = list_make1(makeString($1)); }
 opt_definition:
 			WITH definition							{ $$ = $2; }
 			| /*EMPTY*/								{ $$ = NIL; }
+		;
+
+table_func_column:	param_name func_type
+				{
+					FunctionParameter *n = makeNode(FunctionParameter);
+					n->name = $1;
+					n->argType = $2;
+					n->mode = FUNC_PARAM_TABLE;
+					$$ = n;
+				}
+		;
+
+table_func_column_list:
+			table_func_column
+				{
+					$$ = list_make1($1);
+				}
+			| table_func_column_list ',' table_func_column
+				{
+					$$ = lappend($1, $3);
+				}
 		;
 
 /*****************************************************************************
@@ -9678,7 +9714,7 @@ extractArgTypes(List *parameters)
 	{
 		FunctionParameter *p = (FunctionParameter *) lfirst(i);
 
-		if (p->mode != FUNC_PARAM_OUT)		/* keep if IN, INOUT, VARIADIC */
+		if (p->mode != FUNC_PARAM_OUT && p->mode != FUNC_PARAM_TABLE)
 			result = lappend(result, p->argType);
 	}
 	return result;
@@ -9859,6 +9895,51 @@ void
 parser_init(void)
 {
 	QueryIsRule = FALSE;
+}
+
+/*
+ * Merge the input and output parameters of a table function.
+ */
+static List *
+mergeTableFuncParameters(List *func_args, List *columns)
+{
+	ListCell   *lc;
+
+	/* Explicit OUT and INOUT parameters shouldn't be used in this syntax */
+	foreach(lc, func_args)
+	{
+		FunctionParameter *p = (FunctionParameter *) lfirst(lc);
+
+		if (p->mode != FUNC_PARAM_IN && p->mode != FUNC_PARAM_VARIADIC)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("OUT and INOUT arguments aren't allowed in TABLE functions")));
+	}
+
+	return list_concat(func_args, columns);
+}
+
+/*
+ * Determine return type of a TABLE function.  A single result column
+ * returns setof that column's type; otherwise return setof record.
+ */
+static TypeName *
+TableFuncTypeName(List *columns)
+{
+	TypeName *result;
+
+	if (list_length(columns) == 1)
+	{
+		FunctionParameter *p = (FunctionParameter *) linitial(columns);
+
+		result = (TypeName *) copyObject(p->argType);
+	}
+	else
+		result = SystemTypeName("record");
+
+	result->setof = true;
+
+	return result;
 }
 
 /*

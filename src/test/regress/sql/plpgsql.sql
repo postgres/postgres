@@ -2925,3 +2925,26 @@ select pleast(10);
 
 drop function pleast(numeric[]);
 drop function pleast(numeric);
+
+-- test table functions
+
+create function tftest(int) returns table(a int, b int) as $$
+begin
+  return query select $1, $1+i from generate_series(1,5) g(i);
+end;
+$$ language plpgsql immutable strict;
+
+select * from tftest(10);
+
+create or replace function tftest(a1 int) returns table(a int, b int) as $$
+begin
+  a := a1; b := a1 + 1;
+  return next;
+  a := a1 * 10; b := a1 * 10 + 1;
+  return next;
+end;
+$$ language plpgsql immutable strict;
+
+select * from tftest(10);
+
+drop function tftest(int);

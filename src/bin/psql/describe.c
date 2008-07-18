@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.182 2008/07/16 01:30:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.183 2008/07/18 03:32:52 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -189,15 +189,20 @@ describeFunctions(const char *pattern, bool verbose)
 
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname as \"%s\",\n"
-					  "  p.proname as \"%s\",\n"
-					  "  CASE WHEN p.proretset THEN 'setof ' ELSE '' END ||\n"
-				  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n",
+					  "  p.proname as \"%s\",\n",
 					  gettext_noop("Schema"),
-					  gettext_noop("Name"),
-					  gettext_noop("Result data type"));
+					  gettext_noop("Name"));
 
-    if (pset.sversion >= 80100)
+    if (pset.sversion >= 80400)
 		appendPQExpBuffer(&buf,
+						  "  pg_catalog.pg_get_function_result(p.oid) as \"%s\",\n"
+						  "  pg_catalog.pg_get_function_arguments(p.oid) as \"%s\"",
+						  gettext_noop("Result data type"),
+						  gettext_noop("Argument data types"));
+    else if (pset.sversion >= 80100)
+		appendPQExpBuffer(&buf,
+					  "  CASE WHEN p.proretset THEN 'SETOF ' ELSE '' END ||\n"
+				  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
 					  "  CASE WHEN proallargtypes IS NOT NULL THEN\n"
 					  "    pg_catalog.array_to_string(ARRAY(\n"
 					  "      SELECT\n"
@@ -227,10 +232,14 @@ describeFunctions(const char *pattern, bool verbose)
 					  "        pg_catalog.generate_series(0, pg_catalog.array_upper(p.proargtypes, 1)) AS s(i)\n"
 					  "    ), ', ')\n"
 					  "  END AS \"%s\"",
-					  gettext_noop("Argument data types"));
+						  gettext_noop("Result data type"),
+						  gettext_noop("Argument data types"));
 	else
 		appendPQExpBuffer(&buf,
+					  "  CASE WHEN p.proretset THEN 'SETOF ' ELSE '' END ||\n"
+				  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
 					  "  pg_catalog.oidvectortypes(p.proargtypes) as \"%s\"",
+						  gettext_noop("Result data type"),
 						  gettext_noop("Argument data types"));
 
 	if (verbose)

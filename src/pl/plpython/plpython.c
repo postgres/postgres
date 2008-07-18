@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.111 2008/07/16 01:30:23 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.112 2008/07/18 03:32:53 tgl Exp $
  *
  *********************************************************************
  */
@@ -1271,7 +1271,8 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 				/* proc->nargs was initialized to 0 above */
 				for (i = 0; i < total; i++)
 				{
-					if (modes[i] != PROARGMODE_OUT)
+					if (modes[i] != PROARGMODE_OUT &&
+						modes[i] != PROARGMODE_TABLE)
 						(proc->nargs)++;
 				}
 			}
@@ -1282,7 +1283,9 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 				HeapTuple	argTypeTup;
 				Form_pg_type argTypeStruct;
 
-				if (modes && modes[i] == PROARGMODE_OUT)
+				if (modes &&
+					(modes[i] == PROARGMODE_OUT ||
+					 modes[i] == PROARGMODE_TABLE))
 					continue;	/* skip OUT arguments */
 
 				Assert(types[i] == procStruct->proargtypes.values[pos]);

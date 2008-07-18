@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.495 2008/07/16 16:55:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.496 2008/07/18 03:32:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,8 @@ static void dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 static void getDependencies(void);
 static void getDomainConstraints(TypeInfo *tinfo);
 static void getTableData(TableInfo *tblinfo, int numTables, bool oids);
-static char *format_function_arguments(FuncInfo *finfo, int nallargs,
+static char *format_function_arguments(FuncInfo *finfo, char *funcargs);
+static char *format_function_arguments_old(FuncInfo *finfo, int nallargs,
 						  char **allargtypes,
 						  char **argmodes,
 						  char **argnames);
@@ -6405,16 +6406,34 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 /*
  * format_function_arguments: generate function name and argument list
  *
+ * This is used when we can rely on pg_get_function_arguments to format
+ * the argument list.
+ */
+static char *format_function_arguments(FuncInfo *finfo, char *funcargs)
+{
+	PQExpBufferData fn;
+
+	initPQExpBuffer(&fn);
+	appendPQExpBuffer(&fn, "%s(%s)", fmtId(finfo->dobj.name), funcargs);
+	return fn.data;
+}
+
+/*
+ * format_function_arguments_old: generate function name and argument list
+ *
  * The argument type names are qualified if needed.  The function name
  * is never qualified.
+ *
+ * This is used only with pre-8.4 servers, so we aren't expecting to see
+ * VARIADIC or TABLE arguments.
  *
  * Any or all of allargtypes, argmodes, argnames may be NULL.
  */
 static char *
-format_function_arguments(FuncInfo *finfo, int nallargs,
-						  char **allargtypes,
-						  char **argmodes,
-						  char **argnames)
+format_function_arguments_old(FuncInfo *finfo, int nallargs,
+							  char **allargtypes,
+							  char **argmodes,
+							  char **argnames)
 {
 	PQExpBufferData fn;
 	int			j;
@@ -6444,9 +6463,6 @@ format_function_arguments(FuncInfo *finfo, int nallargs,
 				case PROARGMODE_INOUT:
 					argmode = "INOUT ";
 					break;
-				case PROARGMODE_VARIADIC:
-					argmode = "VARIADIC ";
-					break;
 				default:
 					write_msg(NULL, "WARNING: bogus value in proargmodes array\n");
 					argmode = "";
@@ -6475,7 +6491,7 @@ format_function_arguments(FuncInfo *finfo, int nallargs,
 /*
  * format_function_signature: generate function name and argument list
  *
- * This is like format_function_arguments except that only a minimal
+ * This is like format_function_arguments_old except that only a minimal
  * list of input argument types is generated; this is sufficient to
  * reference the function, but not to define it.
  *
@@ -6527,6 +6543,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	   *proretset;
 	char	   *prosrc;
 	char	   *probin;
+	char	   *funcargs;
+	char	   *funcresult;
 	char	   *proallargtypes;
 	char	   *proargmodes;
 	char	   *proargnames;
@@ -6559,7 +6577,24 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	selectSourceSchema(finfo->dobj.namespace->dobj.name);
 
 	/* Fetch function-specific details */
-	if (g_fout->remoteVersion >= 80300)
+	if (g_fout->remoteVersion >= 80400)
+	{
+		/*
+		 * In 8.4 and up we rely on pg_get_function_arguments and
+		 * pg_get_function_result instead of examining proallargtypes etc.
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT proretset, prosrc, probin, "
+						  "pg_catalog.pg_get_function_arguments(oid) as funcargs, "
+						  "pg_catalog.pg_get_function_result(oid) as funcresult, "
+						  "provolatile, proisstrict, prosecdef, "
+						  "proconfig, procost, prorows, "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
+						  "FROM pg_catalog.pg_proc "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  finfo->dobj.catId.oid);
+	}
+	else if (g_fout->remoteVersion >= 80300)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
@@ -6659,9 +6694,19 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	proretset = PQgetvalue(res, 0, PQfnumber(res, "proretset"));
 	prosrc = PQgetvalue(res, 0, PQfnumber(res, "prosrc"));
 	probin = PQgetvalue(res, 0, PQfnumber(res, "probin"));
-	proallargtypes = PQgetvalue(res, 0, PQfnumber(res, "proallargtypes"));
-	proargmodes = PQgetvalue(res, 0, PQfnumber(res, "proargmodes"));
-	proargnames = PQgetvalue(res, 0, PQfnumber(res, "proargnames"));
+	if (g_fout->remoteVersion >= 80400)
+	{
+		funcargs = PQgetvalue(res, 0, PQfnumber(res, "funcargs"));
+		funcresult = PQgetvalue(res, 0, PQfnumber(res, "funcresult"));
+		proallargtypes = proargmodes = proargnames = NULL;
+	}
+	else
+	{
+		proallargtypes = PQgetvalue(res, 0, PQfnumber(res, "proallargtypes"));
+		proargmodes = PQgetvalue(res, 0, PQfnumber(res, "proargmodes"));
+		proargnames = PQgetvalue(res, 0, PQfnumber(res, "proargnames"));
+		funcargs = funcresult = NULL;
+	}
 	provolatile = PQgetvalue(res, 0, PQfnumber(res, "provolatile"));
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
 	prosecdef = PQgetvalue(res, 0, PQfnumber(res, "prosecdef"));
@@ -6766,8 +6811,11 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		}
 	}
 
-	funcsig = format_function_arguments(finfo, nallargs, allargtypes,
-										argmodes, argnames);
+	if (funcargs)
+		funcsig = format_function_arguments(finfo, funcargs);
+	else
+		funcsig = format_function_arguments_old(finfo, nallargs, allargtypes,
+												argmodes, argnames);
 	funcsig_tag = format_function_signature(finfo, false);
 
 	/*
@@ -6777,13 +6825,17 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 					  fmtId(finfo->dobj.namespace->dobj.name),
 					  funcsig);
 
-	rettypename = getFormattedTypeName(finfo->prorettype, zeroAsOpaque);
-
 	appendPQExpBuffer(q, "CREATE FUNCTION %s ", funcsig);
-	appendPQExpBuffer(q, "RETURNS %s%s",
-					  (proretset[0] == 't') ? "SETOF " : "",
-					  rettypename);
-	free(rettypename);
+	if (funcresult)
+		appendPQExpBuffer(q, "RETURNS %s", funcresult);
+	else
+	{
+		rettypename = getFormattedTypeName(finfo->prorettype, zeroAsOpaque);
+		appendPQExpBuffer(q, "RETURNS %s%s",
+						  (proretset[0] == 't') ? "SETOF " : "",
+						  rettypename);
+		free(rettypename);
+	}
 
 	appendPQExpBuffer(q, "\n    LANGUAGE %s", fmtId(lanname));
 	if (provolatile[0] != PROVOLATILE_VOLATILE)

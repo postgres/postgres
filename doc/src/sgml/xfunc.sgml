@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.131 2008/07/16 01:30:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.132 2008/07/18 03:32:52 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -94,11 +94,12 @@
    </para>
 
    <para>
-    <indexterm><primary>SETOF</><seealso>function</></> Alternatively,
-    an SQL function can be declared to return a set, by specifying the
-    function's return type as <literal>SETOF
-    <replaceable>sometype</></literal>.  In this case all rows of the
-    last query's result are returned.  Further details appear below.
+    Alternatively, an SQL function can be declared to return a set,
+    by specifying the function's return type as <literal>SETOF
+    <replaceable>sometype</></literal>, or equivalently by declaring it as
+    <literal>RETURNS TABLE(<replaceable>columns</>)</literal>.  In this case
+    all rows of the last query's result are returned.  Further details appear
+    below.
    </para>
 
    <para>
@@ -117,7 +118,7 @@
      other SQL commands. (The only exception is that you cannot put
      <command>BEGIN</>, <command>COMMIT</>, <command>ROLLBACK</>, or
      <command>SAVEPOINT</> commands into a <acronym>SQL</acronym> function.)
-     However, the final command 
+     However, the final command
      must be a <command>SELECT</command> that returns whatever is
      specified as the function's return type.  Alternatively, if you
      want to define a SQL function that performs actions but has no
@@ -175,7 +176,7 @@ INSERT INTO $1 VALUES (42);
     <para>
      The simplest possible <acronym>SQL</acronym> function has no arguments and
      simply returns a base type, such as <type>integer</type>:
-     
+
 <screen>
 CREATE FUNCTION one() RETURNS integer AS $$
     SELECT 1 AS result;
@@ -202,7 +203,7 @@ SELECT one();
     </para>
 
     <para>
-     It is almost as easy to define <acronym>SQL</acronym> functions  
+     It is almost as easy to define <acronym>SQL</acronym> functions
      that take base types as arguments.  In the example below, notice
      how we refer to the arguments within the function as <literal>$1</>
      and <literal>$2</>.
@@ -226,7 +227,7 @@ SELECT add_em(1, 2) AS answer;
 
 <programlisting>
 CREATE FUNCTION tf1 (integer, numeric) RETURNS integer AS $$
-    UPDATE bank 
+    UPDATE bank
         SET balance = balance - $2
         WHERE accountno = $1;
     SELECT 1;
@@ -248,7 +249,7 @@ SELECT tf1(17, 100.0);
 
 <programlisting>
 CREATE FUNCTION tf1 (integer, numeric) RETURNS numeric AS $$
-    UPDATE bank 
+    UPDATE bank
         SET balance = balance - $2
         WHERE accountno = $1;
     SELECT balance FROM bank WHERE accountno = $1;
@@ -267,7 +268,7 @@ $$ LANGUAGE SQL;
      types, we must  not  only  specify  which
      argument  we  want (as we did above with <literal>$1</> and <literal>$2</literal>) but
      also the desired attribute (field) of  that  argument.   For  example,
-     suppose that 
+     suppose that
      <type>emp</type> is a table containing employee data, and therefore
      also the name of the composite type of each row of the table.  Here
      is a function <function>double_salary</function> that computes what someone's
@@ -323,7 +324,7 @@ SELECT name, double_salary(ROW(name, salary*1.1, age, cubicle)) AS dream
 
     <para>
      It is also possible to build a function that returns a composite type.
-     This is an example of a function 
+     This is an example of a function
      that returns a single <type>emp</type> row:
 
 <programlisting>
@@ -364,7 +365,7 @@ ERROR:  function declared to return emp returns varchar instead of text at colum
        </para>
       </listitem>
      </itemizedlist>
-    </para>     
+    </para>
 
     <para>
      A different way to define the same function is:
@@ -380,7 +381,7 @@ $$ LANGUAGE SQL;
      in this situation, but it is a handy alternative in some cases
      &mdash; for example, if we need to compute the result by calling
      another function that returns the desired composite value.
-    </para>     
+    </para>
 
     <para>
      We could call this function directly in either of two ways:
@@ -401,7 +402,7 @@ SELECT * FROM new_emp();
 
      The second way is described more fully in <xref
      linkend="xfunc-sql-table-functions">.
-    </para>     
+    </para>
 
     <para>
      When you use a function that returns a composite type,
@@ -429,7 +430,7 @@ LINE 1: SELECT new_emp().name;
 
     <para>
      Another option is to use
-     functional notation for extracting an attribute.  The  simple  way 
+     functional notation for extracting an attribute.  The  simple  way
      to explain this is that we can use the
      notations <literal>attribute(table)</>  and  <literal>table.attribute</>
      interchangeably.
@@ -693,8 +694,13 @@ SELECT *, upper(fooname) FROM getfoo(1) AS t1;
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-sql-functions-returning-set">
     <title><acronym>SQL</acronym> Functions Returning Sets</title>
+
+    <indexterm>
+     <primary>function</primary>
+     <secondary>with SETOF</secondary>
+    </indexterm>
 
     <para>
      When an SQL function is declared as returning <literal>SETOF
@@ -733,7 +739,7 @@ SELECT * FROM getfoo(1) AS t1;
 
 <programlisting>
 CREATE FUNCTION sum_n_product_with_tab (x int, OUT sum int, OUT product int) RETURNS SETOF record AS $$
-    SELECT x + tab.y, x * tab.y FROM tab;
+    SELECT $1 + tab.y, $1 * tab.y FROM tab;
 $$ LANGUAGE SQL;
 </programlisting>
 
@@ -791,6 +797,41 @@ SELECT name, listchildren(name) FROM nodes;
      notice that no output row appears for <literal>Child2</>, <literal>Child3</>, etc.
      This happens because <function>listchildren</function> returns an empty set
      for those arguments, so no result rows are generated.
+    </para>
+   </sect2>
+
+   <sect2 id="xfunc-sql-functions-returning-table">
+    <title><acronym>SQL</acronym> Functions Returning <literal>TABLE</></title>
+
+    <indexterm>
+     <primary>function</primary>
+     <secondary>RETURNS TABLE</secondary>
+    </indexterm>
+
+    <para>
+     There is another way to declare a function as returning a set,
+     which is to use the syntax
+     <literal>RETURNS TABLE(<replaceable>columns</>)</literal>.
+     This is equivalent to using one or more <literal>OUT</> parameters plus
+     marking the function as returning <literal>SETOF record</> (or
+     <literal>SETOF</> a single output parameter's type, as appropriate).
+     This notation is specified in recent versions of the SQL standard, and
+     thus may be more portable than using <literal>SETOF</>.
+    </para>
+
+    <para>
+     For example, the preceding sum-and-product example could also be
+     done this way:
+
+<programlisting>
+CREATE FUNCTION sum_n_product_with_tab (x int) RETURNS TABLE(sum int, product int) AS $$
+    SELECT $1 + tab.y, $1 * tab.y FROM tab;
+$$ LANGUAGE SQL;
+</programlisting>
+
+     It is not allowed to use explicit <literal>OUT</> or <literal>INOUT</>
+     parameters with the <literal>RETURNS TABLE</> notation &mdash; you must
+     put all the output columns in the <literal>TABLE</> list.
     </para>
    </sect2>
 

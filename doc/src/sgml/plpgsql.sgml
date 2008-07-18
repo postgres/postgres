@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.132 2008/07/16 01:30:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.133 2008/07/18 03:32:51 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -157,6 +157,8 @@
      parameters in place of an explicit specification of the return type.
      This does not add any fundamental capability to the language, but
      it is often convenient, especially for returning multiple values.
+     The <literal>RETURNS TABLE</> notation can also be used in place
+     of <literal>RETURNS SETOF</>.
     </para>
 
     <para>
@@ -466,6 +468,23 @@ $$ LANGUAGE plpgsql;
       effectively creates an anonymous record type for the function's
       results.  If a <literal>RETURNS</> clause is given, it must say
       <literal>RETURNS record</>.
+     </para>
+
+     <para>
+      Another way to declare a <application>PL/pgSQL</application> function
+      is with <literal>RETURNS TABLE</>, for example:
+
+<programlisting>
+CREATE FUNCTION extended_sales(p_itemno int) RETURNS TABLE(quantity int, total numeric) AS $$
+BEGIN
+    RETURN QUERY SELECT quantity, quantity * price FROM sales WHERE itemno = p_itemno;
+END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+
+      This is exactly equivalent to declaring one or more <literal>OUT</>
+      parameters and specifying <literal>RETURNS SETOF
+      <replaceable>sometype</></literal>.
      </para>
 
      <para>

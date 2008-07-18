@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.97 2008/07/16 16:55:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.98 2008/07/18 03:32:52 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -228,9 +228,10 @@ examine_parameter_list(List *parameters, Oid languageOid,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("functions cannot accept set arguments")));
 
-		if (fp->mode != FUNC_PARAM_OUT)
+		/* handle input parameters */
+		if (fp->mode != FUNC_PARAM_OUT && fp->mode != FUNC_PARAM_TABLE)
 		{
-			/* only OUT parameters can follow a VARIADIC parameter */
+			/* other input parameters can't follow a VARIADIC parameter */
 			if (varCount > 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -238,9 +239,10 @@ examine_parameter_list(List *parameters, Oid languageOid,
 			inTypes[inCount++] = toid;
 		}
 
+		/* handle output parameters */
 		if (fp->mode != FUNC_PARAM_IN && fp->mode != FUNC_PARAM_VARIADIC)
 		{
-			if (outCount == 0)	/* save first OUT param's type */
+			if (outCount == 0)	/* save first output param's type */
 				*requiredResultType = toid;
 			outCount++;
 		}

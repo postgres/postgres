@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.79 2008/07/16 01:30:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.80 2008/07/18 03:32:52 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -21,7 +21,8 @@ $PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.79 2008/07/16 01:30
 <synopsis>
 CREATE [ OR REPLACE ] FUNCTION
     <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
-    [ RETURNS <replaceable class="parameter">rettype</replaceable> ]
+    [ RETURNS <replaceable class="parameter">rettype</replaceable>
+      | RETURNS TABLE ( <replaceable class="parameter">colname</replaceable> <replaceable class="parameter">coltype</replaceable> [, ...] ) ]
   { LANGUAGE <replaceable class="parameter">langname</replaceable>
     | IMMUTABLE | STABLE | VOLATILE
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
@@ -49,7 +50,7 @@ CREATE [ OR REPLACE ] FUNCTION
    If a schema name is included, then the function is created in the
    specified schema.  Otherwise it is created in the current schema.
    The name of the new function must not match any existing function
-   with the same argument types in the same schema.  However,
+   with the same input argument types in the same schema.  However,
    functions of different argument types can share a name (this is
    called <firstterm>overloading</>).
   </para>
@@ -104,6 +105,9 @@ CREATE [ OR REPLACE ] FUNCTION
        The mode of an argument: <literal>IN</>, <literal>OUT</>,
        <literal>INOUT</>, or <literal>VARIADIC</>.
        If omitted, the default is <literal>IN</>.
+       Only <literal>OUT</> arguments can follow a <literal>VARIADIC</> one.
+       Also, <literal>OUT</> and <literal>INOUT</> arguments cannot be used
+       together with the <literal>RETURNS TABLE</> notation.
       </para>
      </listitem>
     </varlistentry>
@@ -179,6 +183,30 @@ CREATE [ OR REPLACE ] FUNCTION
        <literal><replaceable
        class="parameter">tablename</replaceable>.<replaceable
        class="parameter">columnname</replaceable>%TYPE</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">colname</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of an output column in the <literal>RETURNS TABLE</>
+       syntax.  This is effectively another way of declaring a named
+       <literal>OUT</> parameter, except that <literal>RETURNS TABLE</>
+       also implies <literal>RETURNS SETOF</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">coltype</replaceable></term>
+
+     <listitem>
+      <para>
+       The data type of an output column in the <literal>RETURNS TABLE</>
+       syntax.
       </para>
      </listitem>
     </varlistentry>
@@ -437,7 +465,7 @@ CREATE [ OR REPLACE ] FUNCTION
     <productname>PostgreSQL</productname> allows function
     <firstterm>overloading</firstterm>; that is, the same name can be
     used for several different functions so long as they have distinct
-    argument types.  However, the C names of all functions must be
+    input argument types.  However, the C names of all functions must be
     different, so you must give overloaded C functions different C
     names (for example, use the argument types as part of the C
     names).
@@ -541,6 +569,18 @@ CREATE FUNCTION dup(int) RETURNS dup_result
 
 SELECT * FROM dup(42);
 </programlisting>
+   Another way to return multiple columns is to use a <literal>TABLE</>
+   function:
+<programlisting>
+CREATE FUNCTION dup(int) RETURNS TABLE(f1 int, f2 text)
+    AS $$ SELECT $1, CAST($1 AS text) || ' is text' $$
+    LANGUAGE SQL;
+
+SELECT * FROM dup(42);
+</programlisting>
+   However, a <literal>TABLE</> function is different from the
+   preceding examples, because it actually returns a <emphasis>set</>
+   of records, not just one record.
   </para>
  </refsect1>
 

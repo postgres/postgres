@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.44 2008/07/16 01:30:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.45 2008/07/18 03:32:52 tgl Exp $
  */
 
 /*
@@ -1007,6 +1007,7 @@ CREATE VIEW parameters AS
                 WHEN proargmodes[(ss.x).n] = 'o' THEN 'OUT'
                 WHEN proargmodes[(ss.x).n] = 'b' THEN 'INOUT'
                 WHEN proargmodes[(ss.x).n] = 'v' THEN 'IN'
+                WHEN proargmodes[(ss.x).n] = 't' THEN 'OUT'
              END AS character_data) AS parameter_mode,
            CAST('NO' AS character_data) AS is_result,
            CAST('NO' AS character_data) AS as_locator,

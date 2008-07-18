@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.441 2008/07/16 00:48:53 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.442 2008/07/18 03:32:51 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11564,6 +11564,14 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
+    <primary>pg_get_function_arguments</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>pg_get_function_result</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>pg_get_indexdef</primary>
    </indexterm>
 
@@ -11635,6 +11643,16 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><type>text</type></entry>
        <entry>decompile internal form of an expression, assuming that any Vars
        in it refer to the relation indicated by the second parameter</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_function_arguments</function>(<parameter>func_oid</parameter>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get argument list for function</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_function_result</function>(<parameter>func_oid</parameter>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get <literal>RETURNS</> clause for function</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_indexdef</function>(<parameter>index_oid</parameter>)</literal></entry>
@@ -11736,6 +11754,14 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    <productname>PostgreSQL</>; avoid using pretty-printed output for dump
    purposes.  Passing <literal>false</> for the pretty-print parameter yields
    the same result as the variant that does not have the parameter at all.
+  </para>
+
+  <para>
+   <function>pg_get_function_arguments</function> returns the argument list
+   of a function, in the form it would need to appear in within
+   <command>CREATE FUNCTION</>.
+   <function>pg_get_function_result</function> similarly returns the
+   appropriate <literal>RETURNS</> clause for the function.
   </para>
 
   <para>
