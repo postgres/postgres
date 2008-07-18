@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.119 2008/06/23 22:15:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.120 2008/07/18 17:33:17 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1122,7 +1122,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
         when so asked.  Examples:
 <programlisting>
 restore_command = 'cp /mnt/server/archivedir/%f "%p"'
-restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
+restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 </programlisting>
        </para>
       </listitem>
