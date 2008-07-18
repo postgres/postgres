@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.183 2008/07/18 03:32:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.184 2008/07/18 04:20:24 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -1591,14 +1591,14 @@ error_return:
 	termPQExpBuffer(&title);
 	termPQExpBuffer(&tmpbuf);
 	
-	if (tableinfo.relkind == 'S')
+	if (seq_values)
 	{
 		for (ptr = seq_values; *ptr; ptr++)
 			free(*ptr);
 		free(seq_values);
 	}
     
-	if (show_modifiers)
+	if (modifiers)
 	{
 		for (ptr = modifiers; *ptr; ptr++)
 			free(*ptr);
