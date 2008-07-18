@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.309 2008/05/12 20:02:00 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.310 2008/07/18 18:23:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,9 @@
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
+
+/* Hook for plugins to get control in ExecutorRun() */
+ExecutorRun_hook_type ExecutorRun_hook = NULL;
 
 typedef struct evalPlanQual
 {
@@ -214,11 +217,28 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
  *		Note: count = 0 is interpreted as no portal limit, i.e., run to
  *		completion.
  *
+ *		We provide a function hook variable that lets loadable plugins
+ *		get control when ExecutorRun is called.  Such a plugin would
+ *		normally call standard_ExecutorRun().
+ *
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
 ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count)
+{
+	TupleTableSlot *result;
+
+	if (ExecutorRun_hook)
+		result = (*ExecutorRun_hook) (queryDesc, direction, count);
+	else
+		result = standard_ExecutorRun(queryDesc, direction, count);
+	return result;
+}
+
+TupleTableSlot *
+standard_ExecutorRun(QueryDesc *queryDesc,
+					 ScanDirection direction, long count)
 {
 	EState	   *estate;
 	CmdType		operation;
