@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/tools/msvc/Genbki.pm,v 1.4 2008/04/21 00:26:47 tgl Exp $
+#    $PostgreSQL: pgsql/src/tools/msvc/Genbki.pm,v 1.5 2008/07/19 04:01:29 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,19 +32,6 @@ sub genbki
 
     $version =~ /^(\d+\.\d+)/ || die "Bad format verison $version\n";
     my $majorversion = $1;
-
-    my $pgext = read_file("src/include/pg_config_manual.h");
-    $pgext =~ /^#define\s+NAMEDATALEN\s+(\d+)$/mg
-      || die "Could not read NAMEDATALEN from pg_config_manual.h\n";
-    my $namedatalen = $1;
-
-    my $pgconf = read_file("src/include/pg_config.h");
-    $pgconf =~ /^#define\s+FLOAT4PASSBYVAL\s+(\w+)$/mg
-      || die "Could not read FLOAT4PASSBYVAL from pg_config.h\n";
-    my $float4passbyval = $1;
-    $pgconf =~ /^#define\s+FLOAT8PASSBYVAL\s+(\w+)$/mg
-      || die "Could not read FLOAT8PASSBYVAL from pg_config.h\n";
-    my $float8passbyval = $1;
 
     my $pgauthid = read_file("src/include/catalog/pg_authid.h");
     $pgauthid =~ /^#define\s+BOOTSTRAP_SUPERUSERID\s+(\d+)$/mg
@@ -78,9 +65,6 @@ sub genbki
     $indata =~ s{^TransactionId}{xid}gm;
     $indata =~ s{\(TransactionId}{(xid}g;
     $indata =~ s{PGUID}{$bootstrapsuperuserid}g;
-    $indata =~ s{NAMEDATALEN}{$namedatalen}g;
-    $indata =~ s{FLOAT4PASSBYVAL}{$float4passbyval}g;
-    $indata =~ s{FLOAT8PASSBYVAL}{$float8passbyval}g;
     $indata =~ s{PGNSP}{$pgcatalognamespace}g;
 
     #print $indata;
