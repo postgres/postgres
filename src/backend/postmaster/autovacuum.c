@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.71.2.4 2008/07/17 21:02:41 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.71.2.5 2008/07/21 15:27:08 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,7 +291,7 @@ static HeapTuple get_pg_autovacuum_tuple_relid(Relation avRel, Oid relid);
 static PgStat_StatTabEntry *get_pgstat_tabentry_relid(Oid relid, bool isshared,
 						  PgStat_StatDBEntry *shared,
 						  PgStat_StatDBEntry *dbentry);
-static void autovac_report_activity(VacuumStmt *vacstmt, Oid relid);
+static void autovac_report_activity(VacuumStmt *vacstmt, Oid relid, bool for_wraparound);
 static void avl_sighup_handler(SIGNAL_ARGS);
 static void avl_sigusr1_handler(SIGNAL_ARGS);
 static void avl_sigterm_handler(SIGNAL_ARGS);
@@ -2633,7 +2633,7 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 	MemoryContextSwitchTo(old_cxt);
 
 	/* Let pgstat know what we're doing */
-	autovac_report_activity(&vacstmt, relid);
+	autovac_report_activity(&vacstmt, relid, for_wraparound);
 
 	vacuum(&vacstmt, relids, bstrategy, for_wraparound, true);
 }
@@ -2650,7 +2650,7 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
  * bother to report "<IDLE>" or some such.
  */
 static void
-autovac_report_activity(VacuumStmt *vacstmt, Oid relid)
+autovac_report_activity(VacuumStmt *vacstmt, Oid relid, bool for_wraparound)
 {
 	char	   *relname = get_rel_name(relid);
 	char	   *nspname = get_namespace_name(get_rel_namespace(relid));
@@ -2661,8 +2661,9 @@ autovac_report_activity(VacuumStmt *vacstmt, Oid relid)
 	/* Report the command and possible options */
 	if (vacstmt->vacuum)
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
-				 "autovacuum: VACUUM%s",
-				 vacstmt->analyze ? " ANALYZE" : "");
+				 "autovacuum: VACUUM%s%s",
+				 vacstmt->analyze ? " ANALYZE" : "",
+				 for_wraparound ? " (to prevent wraparound)" : "");
 	else
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
 				 "autovacuum: ANALYZE");
