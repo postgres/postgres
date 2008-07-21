@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.88 2008/07/18 20:26:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.89 2008/07/21 15:26:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,6 +162,12 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 
 /*
  * Implements the 'EXECUTE' utility statement.
+ *
+ * Note: this is one of very few places in the code that needs to deal with
+ * two query strings at once.  The passed-in queryString is that of the
+ * EXECUTE, which we might need for error reporting while processing the
+ * parameter expressions.  The query_string that we copy from the plan
+ * source is that of the original PREPARE.
  */
 void
 ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
