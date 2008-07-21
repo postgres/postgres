@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.442 2008/07/18 03:32:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.443 2008/07/21 04:47:00 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9186,17 +9186,16 @@ SELECT NULLIF(value, '(none)') ...
   </sect2>
  </sect1>
 
-
  <sect1 id="functions-array">
   <title>Array Functions and Operators</title>
 
   <para>
    <xref linkend="array-operators-table"> shows the operators
-   available for <type>array</type> types.
+   available for array types.
   </para>
 
     <table id="array-operators-table">
-     <title><type>array</type> Operators</title>
+     <title>Array Operators</title>
      <tgroup cols="4">
       <thead>
        <row>
@@ -9326,7 +9325,7 @@ SELECT NULLIF(value, '(none)') ...
   </para>
 
     <table id="array-functions-table">
-     <title><type>array</type> Functions</title>
+     <title>Array Functions</title>
      <tgroup cols="5">
       <thead>
        <row>
@@ -9374,13 +9373,13 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
          <literal>
-          <function>array_fill</function>(<type>anyelement</type>, <type>anyarray</type>,
-          <optional>, <type>anyarray</type></optional>)
+          <function>array_fill</function>(<type>anyelement</type>, <type>int[]</type>,
+          <optional>, <type>int[]</type></optional>)
          </literal>
         </entry>
         <entry><type>anyarray</type></entry>
-        <entry>returns an array initialized with supplied value,
-        dimensions, and lower bounds</entry>
+        <entry>returns an array initialized with supplied value and
+         dimensions, optionally with lower bounds other than 1</entry>
         <entry><literal>array_fill(7, ARRAY[3], ARRAY[2])</literal></entry>
         <entry><literal>[2:4]={7,7,7}</literal></entry>
        </row>
