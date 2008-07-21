@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.81 2008/07/17 21:02:31 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.82 2008/07/21 15:27:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2657,8 +2657,9 @@ autovac_report_activity(autovac_table *tab)
 	/* Report the command and possible options */
 	if (tab->at_dovacuum)
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
-				 "autovacuum: VACUUM%s",
-				 tab->at_doanalyze ? " ANALYZE" : "");
+				 "autovacuum: VACUUM%s%s",
+				 tab->at_doanalyze ? " ANALYZE" : "",
+				 tab->at_wraparound ? " (to prevent wraparound)" : "");
 	else
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
 				 "autovacuum: ANALYZE");
