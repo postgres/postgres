@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.15 2008/05/16 16:31:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.16 2008/07/22 22:05:24 tgl Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -37,7 +37,7 @@
   implementation in <productname>PostgreSQL</productname> is primarily
   maintained by Teodor Sigaev and Oleg Bartunov. There is more
   information about <acronym>GIN</acronym> on their
-  <ulink url="http://www.sai.msu.su/~megera/oddmuse/index.cgi/Gin">website</ulink>.
+  <ulink url="http://www.sai.msu.su/~megera/wiki/Gin">website</ulink>.
  </para>
 </sect1>
 
