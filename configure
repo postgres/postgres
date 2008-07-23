@@ -25032,6 +25032,12 @@ fi
   test -n "$TCLSH" && break
 done
 
+if test x"$TCLSH" = x""; then
+  { { echo "$as_me:$LINENO: error: Tcl shell not found" >&5
+echo "$as_me: error: Tcl shell not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
 { echo "$as_me:$LINENO: checking for tclConfig.sh" >&5
 echo $ECHO_N "checking for tclConfig.sh... $ECHO_C" >&6; }
 # Let user override test
