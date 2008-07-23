@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.82 2008/07/21 15:27:02 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.83 2008/07/23 20:20:10 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2650,16 +2650,15 @@ autovacuum_do_vac_analyze(autovac_table *tab,
 static void
 autovac_report_activity(autovac_table *tab)
 {
-#define MAX_AUTOVAC_ACTIV_LEN (NAMEDATALEN * 2 + 32)
+#define MAX_AUTOVAC_ACTIV_LEN (NAMEDATALEN * 2 + 56)
 	char	activity[MAX_AUTOVAC_ACTIV_LEN];
 	int		len;
 
 	/* Report the command and possible options */
 	if (tab->at_dovacuum)
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
-				 "autovacuum: VACUUM%s%s",
-				 tab->at_doanalyze ? " ANALYZE" : "",
-				 tab->at_wraparound ? " (to prevent wraparound)" : "");
+				 "autovacuum: VACUUM%s",
+				 tab->at_doanalyze ? " ANALYZE" : "");
 	else
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
 				 "autovacuum: ANALYZE");
@@ -2670,7 +2669,8 @@ autovac_report_activity(autovac_table *tab)
 	len = strlen(activity);
 
 	snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
-			 " %s.%s", tab->at_nspname, tab->at_relname);
+			 " %s.%s%s", tab->at_nspname, tab->at_relname,
+				 tab->at_wraparound ? " (to prevent wraparound)" : "");
 
 	/* Set statement_timestamp() to current time for pg_stat_activity */
 	SetCurrentStatementStartTimestamp();
