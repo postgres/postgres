@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.10 2008/04/17 21:37:28 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.11 2008/07/23 17:29:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "nodes/makefuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/rel.h"
 
 
@@ -287,7 +288,7 @@ default_reloptions(Datum reloptions, bool validate,
 {
 	static const char *const default_keywords[1] = {"fillfactor"};
 	char	   *values[1];
-	int32		fillfactor;
+	int			fillfactor;
 	StdRdOptions *result;
 
 	parseRelOptions(reloptions, 1, default_keywords, values, validate);
@@ -300,7 +301,16 @@ default_reloptions(Datum reloptions, bool validate,
 	if (values[0] == NULL)
 		return NULL;
 
-	fillfactor = pg_atoi(values[0], sizeof(int32), 0);
+	if (!parse_int(values[0], &fillfactor, 0, NULL))
+	{
+		if (validate)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("fillfactor must be an integer: \"%s\"",
+							values[0])));
+		return NULL;
+	}
+
 	if (fillfactor < minFillfactor || fillfactor > 100)
 	{
 		if (validate)

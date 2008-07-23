@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.97 2008/06/30 22:10:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.98 2008/07/23 17:29:53 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -224,6 +224,9 @@ extern void AtEOXact_GUC(bool isCommit, int nestLevel);
 extern void BeginReportingGUCOptions(void);
 extern void ParseLongOption(const char *string, char **name, char **value);
 extern bool parse_bool(const char *value, bool *result);
+extern bool parse_int(const char *value, int *result, int flags,
+					  const char **hintmsg);
+extern bool parse_real(const char *value, double *result);
 extern bool set_config_option(const char *name, const char *value,
 				  GucContext context, GucSource source,
 				  GucAction action, bool changeVal);
