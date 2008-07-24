@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.164 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.165 2008/07/24 17:43:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ pg_isblank(const char c)
  * Grab one token out of fp. Tokens are strings of non-blank
  * characters bounded by blank characters, commas, beginning of line, and
  * end of line. Blank means space or tab. Tokens can be delimited by
- * double quotes (and usually are, in current usage).
+ * double quotes (this allows the inclusion of blanks, but not newlines).
  *
  * The token, if any, is returned at *buf (a buffer of size bufsz).
  *
@@ -110,7 +110,9 @@ pg_isblank(const char c)
  * beginning of the next line or EOF, whichever comes first.
  *
  * Handle comments. Treat unquoted keywords that might be role names or
- * database names specially, by appending a newline to them.
+ * database names specially, by appending a newline to them.  Also, when
+ * a token is terminated by a comma, the comma is included in the returned
+ * token.
  */
 static bool
 next_token(FILE *fp, char *buf, int bufsz)
@@ -139,7 +141,7 @@ next_token(FILE *fp, char *buf, int bufsz)
 	 * or unquoted whitespace.
 	 */
 	while (c != EOF && c != '\n' &&
-		   (!pg_isblank(c) || in_quote == true))
+		   (!pg_isblank(c) || in_quote))
 	{
 		/* skip comments to EOL */
 		if (c == '#' && !in_quote)
@@ -165,11 +167,11 @@ next_token(FILE *fp, char *buf, int bufsz)
 			break;
 		}
 
-		if (c != '"' || (c == '"' && was_quote))
+		if (c != '"' || was_quote)
 			*buf++ = c;
 
 		/* We pass back the comma so the caller knows there is more */
-		if ((pg_isblank(c) || c == ',') && !in_quote)
+		if (c == ',' && !in_quote)
 			break;
 
 		/* Literal double-quote is two double-quotes */
