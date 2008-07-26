@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.310 2008/07/18 18:23:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.311 2008/07/26 19:15:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -694,9 +694,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 	/*
 	 * Initialize the junk filter if needed.  SELECT and INSERT queries need a
-	 * filter if there are any junk attrs in the tlist.  INSERT and SELECT
-	 * INTO also need a filter if the plan may return raw disk tuples (else
-	 * heap_insert will be scribbling on the source relation!). UPDATE and
+	 * filter if there are any junk attrs in the tlist.  UPDATE and
 	 * DELETE always need a filter, since there's always a junk 'ctid'
 	 * attribute present --- no need to look first.
 	 */
@@ -718,10 +716,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 						break;
 					}
 				}
-				if (!junk_filter_needed &&
-					(operation == CMD_INSERT || estate->es_select_into) &&
-					ExecMayReturnRawTuples(planstate))
-					junk_filter_needed = true;
 				break;
 			case CMD_UPDATE:
 			case CMD_DELETE:
@@ -2424,8 +2418,6 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	epqstate->es_result_relation_info = estate->es_result_relation_info;
 	epqstate->es_junkFilter = estate->es_junkFilter;
 	/* es_trig_target_relations must NOT be copied */
-	epqstate->es_into_relation_descriptor = estate->es_into_relation_descriptor;
-	epqstate->es_into_relation_use_wal = estate->es_into_relation_use_wal;
 	epqstate->es_param_list_info = estate->es_param_list_info;
 	if (estate->es_plannedstmt->nParamExec > 0)
 		epqstate->es_param_exec_vals = (ParamExecData *)
@@ -2559,15 +2551,14 @@ ExecGetActivePlanTree(QueryDesc *queryDesc)
  *
  * We implement SELECT INTO by diverting SELECT's normal output with
  * a specialized DestReceiver type.
- *
- * TODO: remove some of the INTO-specific cruft from EState, and keep
- * it in the DestReceiver instead.
  */
 
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
 	EState	   *estate;			/* EState we are working with */
+	Relation	rel;			/* Relation to write to */
+	bool		use_wal;		/* do we need to WAL-log our writes? */
 } DR_intorel;
 
 /*
@@ -2692,15 +2683,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 */
 	intoRelationDesc = heap_open(intoRelationId, AccessExclusiveLock);
 
-	/* use_wal off requires rd_targblock be initially invalid */
-	Assert(intoRelationDesc->rd_targblock == InvalidBlockNumber);
-
-	/*
-	 * We can skip WAL-logging the insertions, unless PITR is in use.
-	 */
-	estate->es_into_relation_use_wal = XLogArchivingActive();
-	estate->es_into_relation_descriptor = intoRelationDesc;
-
 	/*
 	 * Now replace the query's DestReceiver with one for SELECT INTO
 	 */
@@ -2708,6 +2690,15 @@ OpenIntoRel(QueryDesc *queryDesc)
 	myState = (DR_intorel *) queryDesc->dest;
 	Assert(myState->pub.mydest == DestIntoRel);
 	myState->estate = estate;
+
+	/*
+	 * We can skip WAL-logging the insertions, unless PITR is in use.
+	 */
+	myState->use_wal = XLogArchivingActive();
+	myState->rel = intoRelationDesc;
+
+	/* use_wal off requires rd_targblock be initially invalid */
+	Assert(intoRelationDesc->rd_targblock == InvalidBlockNumber);
 }
 
 /*
@@ -2716,19 +2707,19 @@ OpenIntoRel(QueryDesc *queryDesc)
 static void
 CloseIntoRel(QueryDesc *queryDesc)
 {
-	EState	   *estate = queryDesc->estate;
+	DR_intorel *myState = (DR_intorel *) queryDesc->dest;
 
 	/* OpenIntoRel might never have gotten called */
-	if (estate->es_into_relation_descriptor)
+	if (myState && myState->pub.mydest == DestIntoRel && myState->rel)
 	{
 		/* If we skipped using WAL, must heap_sync before commit */
-		if (!estate->es_into_relation_use_wal)
-			heap_sync(estate->es_into_relation_descriptor);
+		if (!myState->use_wal)
+			heap_sync(myState->rel);
 
 		/* close rel, but keep lock until commit */
-		heap_close(estate->es_into_relation_descriptor, NoLock);
+		heap_close(myState->rel, NoLock);
 
-		estate->es_into_relation_descriptor = NULL;
+		myState->rel = NULL;
 	}
 }
 
@@ -2736,21 +2727,19 @@ CloseIntoRel(QueryDesc *queryDesc)
  * CreateIntoRelDestReceiver -- create a suitable DestReceiver object
  *
  * Since CreateDestReceiver doesn't accept the parameters we'd need,
- * we just leave the private fields empty here.  OpenIntoRel will
+ * we just leave the private fields zeroed here.  OpenIntoRel will
  * fill them in.
  */
 DestReceiver *
 CreateIntoRelDestReceiver(void)
 {
-	DR_intorel *self = (DR_intorel *) palloc(sizeof(DR_intorel));
+	DR_intorel *self = (DR_intorel *) palloc0(sizeof(DR_intorel));
 
 	self->pub.receiveSlot = intorel_receive;
 	self->pub.rStartup = intorel_startup;
 	self->pub.rShutdown = intorel_shutdown;
 	self->pub.rDestroy = intorel_destroy;
 	self->pub.mydest = DestIntoRel;
-
-	self->estate = NULL;
 
 	return (DestReceiver *) self;
 }
@@ -2771,20 +2760,21 @@ static void
 intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
-	EState	   *estate = myState->estate;
 	HeapTuple	tuple;
 
-	tuple = ExecCopySlotTuple(slot);
+	/*
+	 * get the heap tuple out of the tuple table slot, making sure we have a
+	 * writable copy
+	 */
+	tuple = ExecMaterializeSlot(slot);
 
-	heap_insert(estate->es_into_relation_descriptor,
+	heap_insert(myState->rel,
 				tuple,
-				estate->es_output_cid,
-				estate->es_into_relation_use_wal,
+				myState->estate->es_output_cid,
+				myState->use_wal,
 				false);			/* never any point in using FSM */
 
 	/* We know this is a newly created relation, so there are no indexes */
-
-	heap_freetuple(tuple);
 
 	IncrAppended();
 }

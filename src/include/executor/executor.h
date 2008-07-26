@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.148 2008/07/18 18:23:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.149 2008/07/26 19:15:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@ extern void ExecMarkPos(PlanState *node);
 extern void ExecRestrPos(PlanState *node);
 extern bool ExecSupportsMarkRestore(NodeTag plantype);
 extern bool ExecSupportsBackwardScan(Plan *node);
-extern bool ExecMayReturnRawTuples(PlanState *node);
 
 /*
  * prototypes from functions in execCurrent.c
