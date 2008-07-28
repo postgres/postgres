@@ -29,12 +29,22 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.66.2.5 2007/11/23 01:47:12 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.66.2.6 2008/07/28 18:45:05 tgl Exp $
  *
  *********************************************************************
  */
 
 #include <Python.h>
+
+/*
+ * Py_ssize_t compat for Python <= 2.4
+ */
+#if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
+typedef int Py_ssize_t;
+#define PY_SSIZE_T_MAX INT_MAX
+#define PY_SSIZE_T_MIN INT_MIN
+#endif
+
 #include "postgres.h"
 
 /* system stuff */
@@ -1541,11 +1551,11 @@ static void PLy_result_dealloc(PyObject *);
 static PyObject *PLy_result_getattr(PyObject *, char *);
 static PyObject *PLy_result_nrows(PyObject *, PyObject *);
 static PyObject *PLy_result_status(PyObject *, PyObject *);
-static int	PLy_result_length(PyObject *);
-static PyObject *PLy_result_item(PyObject *, int);
-static PyObject *PLy_result_slice(PyObject *, int, int);
-static int	PLy_result_ass_item(PyObject *, int, PyObject *);
-static int	PLy_result_ass_slice(PyObject *, int, int, PyObject *);
+static Py_ssize_t PLy_result_length(PyObject *);
+static PyObject *PLy_result_item(PyObject *, Py_ssize_t);
+static PyObject *PLy_result_slice(PyObject *, Py_ssize_t, Py_ssize_t);
+static int	PLy_result_ass_item(PyObject *, Py_ssize_t, PyObject *);
+static int	PLy_result_ass_slice(PyObject *, Py_ssize_t, Py_ssize_t, PyObject *);
 
 
 static PyObject *PLy_spi_prepare(PyObject *, PyObject *);
@@ -1565,9 +1575,9 @@ static PyTypeObject PLy_PlanType = {
 	/*
 	 * methods
 	 */
-	(destructor) PLy_plan_dealloc,		/* tp_dealloc */
+	PLy_plan_dealloc,			/* tp_dealloc */
 	0,							/* tp_print */
-	(getattrfunc) PLy_plan_getattr,		/* tp_getattr */
+	PLy_plan_getattr,			/* tp_getattr */
 	0,							/* tp_setattr */
 	0,							/* tp_compare */
 	0,							/* tp_repr */
@@ -1580,7 +1590,7 @@ static PyTypeObject PLy_PlanType = {
 	0,							/* tp_getattro */
 	0,							/* tp_setattro */
 	0,							/* tp_as_buffer */
-	0,							/* tp_xxx4 */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,	/* tp_flags */
 	PLy_plan_doc,				/* tp_doc */
 };
 
@@ -1589,15 +1599,14 @@ static PyMethodDef PLy_plan_methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-
 static PySequenceMethods PLy_result_as_sequence = {
-	(inquiry) PLy_result_length,	/* sq_length */
-	(binaryfunc) 0,				/* sq_concat */
-	(intargfunc) 0,				/* sq_repeat */
-	(intargfunc) PLy_result_item,		/* sq_item */
-	(intintargfunc) PLy_result_slice,	/* sq_slice */
-	(intobjargproc) PLy_result_ass_item,		/* sq_ass_item */
-	(intintobjargproc) PLy_result_ass_slice,	/* sq_ass_slice */
+	PLy_result_length,		/* sq_length */
+	NULL,					/* sq_concat */
+	NULL,					/* sq_repeat */
+	PLy_result_item,		/* sq_item */
+	PLy_result_slice,		/* sq_slice */
+	PLy_result_ass_item,	/* sq_ass_item */
+	PLy_result_ass_slice,	/* sq_ass_slice */
 };
 
 static PyTypeObject PLy_ResultType = {
@@ -1610,9 +1619,9 @@ static PyTypeObject PLy_ResultType = {
 	/*
 	 * methods
 	 */
-	(destructor) PLy_result_dealloc,	/* tp_dealloc */
+	PLy_result_dealloc,			/* tp_dealloc */
 	0,							/* tp_print */
-	(getattrfunc) PLy_result_getattr,	/* tp_getattr */
+	PLy_result_getattr,			/* tp_getattr */
 	0,							/* tp_setattr */
 	0,							/* tp_compare */
 	0,							/* tp_repr */
@@ -1625,7 +1634,7 @@ static PyTypeObject PLy_ResultType = {
 	0,							/* tp_getattro */
 	0,							/* tp_setattro */
 	0,							/* tp_as_buffer */
-	0,							/* tp_xxx4 */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,	/* tp_flags */
 	PLy_result_doc,				/* tp_doc */
 };
 
@@ -1698,7 +1707,7 @@ PLy_plan_dealloc(PyObject * arg)
 		PLy_free(ob->args);
 	}
 
-	PyMem_DEL(arg);
+	arg->ob_type->tp_free(arg);
 }
 
 
@@ -1753,7 +1762,7 @@ PLy_result_dealloc(PyObject * arg)
 	Py_XDECREF(ob->rows);
 	Py_XDECREF(ob->status);
 
-	PyMem_DEL(ob);
+	arg->ob_type->tp_free(arg);
 }
 
 static PyObject *
@@ -1780,7 +1789,7 @@ PLy_result_status(PyObject * self, PyObject * args)
 	return ob->status;
 }
 
-static int
+static Py_ssize_t
 PLy_result_length(PyObject * arg)
 {
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -1789,7 +1798,7 @@ PLy_result_length(PyObject * arg)
 }
 
 static PyObject *
-PLy_result_item(PyObject * arg, int idx)
+PLy_result_item(PyObject * arg, Py_ssize_t idx)
 {
 	PyObject   *rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -1801,7 +1810,7 @@ PLy_result_item(PyObject * arg, int idx)
 }
 
 static int
-PLy_result_ass_item(PyObject * arg, int idx, PyObject * item)
+PLy_result_ass_item(PyObject * arg, Py_ssize_t idx, PyObject * item)
 {
 	int			rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -1812,7 +1821,7 @@ PLy_result_ass_item(PyObject * arg, int idx, PyObject * item)
 }
 
 static PyObject *
-PLy_result_slice(PyObject * arg, int lidx, int hidx)
+PLy_result_slice(PyObject * arg, Py_ssize_t lidx, Py_ssize_t hidx)
 {
 	PyObject   *rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -1825,7 +1834,7 @@ PLy_result_slice(PyObject * arg, int lidx, int hidx)
 }
 
 static int
-PLy_result_ass_slice(PyObject * arg, int lidx, int hidx, PyObject * slice)
+PLy_result_ass_slice(PyObject * arg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject * slice)
 {
 	int			rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2036,13 +2045,14 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	PG_TRY();
 	{
 		char	   *nulls = palloc(nargs * sizeof(char));
+		volatile int j;
 
-		for (i = 0; i < nargs; i++)
+		for (j = 0; j < nargs; j++)
 		{
 			PyObject   *elem,
 					   *so;
 
-			elem = PySequence_GetItem(list, i);
+			elem = PySequence_GetItem(list, j);
 			if (elem != Py_None)
 			{
 				so = PyObject_Str(elem);
@@ -2055,10 +2065,10 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 				{
 					char *sv = PyString_AsString(so);
 
-					plan->values[i] =
-						FunctionCall3(&(plan->args[i].out.d.typfunc),
+					plan->values[j] =
+						FunctionCall3(&(plan->args[j].out.d.typfunc),
 									  CStringGetDatum(sv),
-								ObjectIdGetDatum(plan->args[i].out.d.typioparam),
+								ObjectIdGetDatum(plan->args[j].out.d.typioparam),
 									  Int32GetDatum(-1));
 				}
 				PG_CATCH();
@@ -2069,13 +2079,13 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 				PG_END_TRY();
 
 				Py_DECREF(so);
-				nulls[i] = ' ';
+				nulls[j] = ' ';
 			}
 			else
 			{
 				Py_DECREF(elem);
-				plan->values[i] = (Datum) 0;
-				nulls[i] = 'n';
+				plan->values[j] = (Datum) 0;
+				nulls[j] = 'n';
 			}
 		}
 
@@ -2086,6 +2096,8 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	}
 	PG_CATCH();
 	{
+		int		k;
+
 		MemoryContextSwitchTo(oldcontext);
 		PLy_error_in_progress = CopyErrorData();
 		FlushErrorState();
@@ -2093,13 +2105,13 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 		/*
 		 * cleanup plan->values array
 		 */
-		for (i = 0; i < nargs; i++)
+		for (k = 0; k < nargs; k++)
 		{
-			if (!plan->args[i].out.d.typbyval &&
-				(plan->values[i] != (Datum) NULL))
+			if (!plan->args[k].out.d.typbyval &&
+				(plan->values[k] != (Datum) NULL))
 			{
-				pfree(DatumGetPointer(plan->values[i]));
-				plan->values[i] = (Datum) NULL;
+				pfree(DatumGetPointer(plan->values[k]));
+				plan->values[k] = (Datum) NULL;
 			}
 		}
 
@@ -2319,7 +2331,11 @@ PLy_init_plpy(void)
 	/*
 	 * initialize plpy module
 	 */
-	PLy_PlanType.ob_type = PLy_ResultType.ob_type = &PyType_Type;
+	if (PyType_Ready(&PLy_PlanType) < 0)
+		elog(ERROR, "could not init PLy_PlanType");
+	if (PyType_Ready(&PLy_ResultType) < 0)
+		elog(ERROR, "could not init PLy_ResultType");
+
 	plpy = Py_InitModule("plpy", PLy_methods);
 	plpy_dict = PyModule_GetDict(plpy);
 

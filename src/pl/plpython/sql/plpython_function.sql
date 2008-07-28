@@ -58,7 +58,6 @@ CREATE FUNCTION import_succeed() returns text
   import sha
   import string
   import time
-  import whrandom
 except Exception, ex:
 	plpy.notice("import failed -- %s" % str(ex))
 	return "failed, that wasn''t supposed to happen"
