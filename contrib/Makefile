@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.83 2008/05/08 16:49:36 tgl Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.84 2008/07/29 18:31:20 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -8,6 +8,7 @@ WANTED_DIRS = \
 		adminpack	\
 		btree_gist	\
 		chkpass		\
+		citext		\
 		cube		\
 		dblink		\
 		dict_int	\

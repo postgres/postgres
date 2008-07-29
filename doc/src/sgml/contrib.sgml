@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib.sgml,v 1.8 2007/12/06 04:12:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib.sgml,v 1.9 2008/07/29 18:31:20 tgl Exp $ -->
 
 <appendix id="contrib">
  <title>Additional Supplied Modules</title>
@@ -81,6 +81,7 @@ psql -d dbname -f <replaceable>SHAREDIR</>/contrib/<replaceable>module</>.sql
  &adminpack;
  &btree-gist;
  &chkpass;
+ &citext;
  &cube;
  &dblink;
  &dict-int;

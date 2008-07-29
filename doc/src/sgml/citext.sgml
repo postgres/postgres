@@ -1,0 +1,222 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/citext.sgml,v 1.1 2008/07/29 18:31:20 tgl Exp $ -->
+
+<sect1 id="citext">
+ <title>citext</title>
+
+ <indexterm zone="citext">
+  <primary>citext</primary>
+ </indexterm>
+
+ <para>
+  The <filename>citext</> module provides a case-insensitive
+  character string type, <type>citext</>. Essentially, it internally calls
+  <function>lower</> when comparing values. Otherwise, it behaves almost
+  exactly like <type>text</>.
+ </para>
+
+ <sect2>
+  <title>Rationale</title>
+
+  <para>
+   The standard approach to doing case-insensitive matches
+   in <productname>PostgreSQL</> has been to use the <function>lower</>
+   function when comparing values, for example
+
+  <programlisting>
+   SELECT * FROM tab WHERE lower(col) = LOWER(?);
+  </programlisting>
+  </para>
+
+  <para>
+   This works reasonably well, but has a number of drawbacks:
+  </para>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      It makes your SQL statements verbose, and you always have to remember to
+      use <function>lower</> on both the column and the query value.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      It won't use an index, unless you create a functional index using
+      <function>lower</>.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      If you declare a column as <literal>UNIQUE</> or <literal>PRIMARY
+      KEY</>, the implicitly generated index is case-sensitive.  So it's
+      useless for case-insensitive searches, and it won't enforce
+      uniqueness case-insensitively.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   <para>
+    The <type>citext</> data type allows you to eliminate calls
+    to <function>lower</> in SQL queries, and allows a primary key to
+    be case-insensitive. <type>citext</> is locale-aware, just
+    like <type>text</>, which means that the comparison of uppercase and
+    lowercase characters is dependent on the rules of
+    the <literal>LC_CTYPE</> locale setting. Again, this behavior is
+    identical to the use of <function>lower</> in queries. But because it's
+    done transparently by the datatype, you don't have to remember to do
+    anything special in your queries.
+   </para>
+
+ </sect2>
+
+ <sect2>
+  <title>How to Use It</title>
+
+  <para>
+   Here's a simple example of usage:
+
+  <programlisting>
+   CREATE TABLE users (
+       nick CITEXT PRIMARY KEY,
+       pass TEXT   NOT NULL
+   );
+
+   INSERT INTO users VALUES ( 'larry',  md5(random()::text) );
+   INSERT INTO users VALUES ( 'Tom',    md5(random()::text) );
+   INSERT INTO users VALUES ( 'Damian', md5(random()::text) );
+   INSERT INTO users VALUES ( 'NEAL',   md5(random()::text) );
+   INSERT INTO users VALUES ( 'Bj&oslash;rn',  md5(random()::text) );
+
+   SELECT * FROM users WHERE nick = 'Larry';
+  </programlisting>
+
+   The <command>SELECT</> statement will return one tuple, even though
+   the <structfield>nick</> column was set to <quote>larry</> and the query
+   was for <quote>Larry</>.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Limitations</title>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      <type>citext</>'s behavior depends on
+      the <literal>LC_CTYPE</> setting of your database. How it compares
+      values is therefore determined when
+      <application>initdb</> is run to create the cluster. It is not truly
+      case-insensitive in the terms defined by the Unicode standard.
+      Effectively, what this means is that, as long as you're happy with your
+      collation, you should be happy with <type>citext</>'s comparisons. But
+      if you have data in different languages stored in your database, users
+      of one language may find their query results are not as expected if the
+      collation is for another language.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The pattern-matching comparison operators, such as <literal>LIKE</>,
+      <literal>~</>, <literal>~~</>, <literal>!~</>, <literal>!~~</>, etc.,
+      have been overloaded to make case-insensitive comparisons when their
+      left-hand argument is of type <type>citext</>.  However, related
+      functions have not been changed, including:
+     </para>
+
+     <itemizedlist>
+      <listitem>
+       <para>
+         <function>regexp_replace()</>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+         <function>regexp_split_to_array()</>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+         <function>regexp_split_to_table()</>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+         <function>replace()</>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+         <function>split_part()</>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+         <function>strpos()</>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+         <function>translate()</>
+       </para>
+      </listitem>
+     </itemizedlist>
+
+     <para>
+      Of course, for the regular expression functions, you can specify
+      case-insensitive comparisons in their <parameter>flags</> arguments, but
+      the same cannot be done for the the non-regexp functions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+       <type>citext</> is not as efficient as <type>text</> because the
+       operator functions and the btree comparison functions must make copies
+       of the data and convert it to lower case for comparisons. It is,
+       however, slightly more efficient than using <function>lower</> to get
+       case-insensitive matching.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <productname>PostgreSQL</> supports casting between <type>text</>
+      and any other type (even non-string types) by using the other type's
+      I/O functions.  This doesn't work with <type>citext</>.  However,
+      you can cast via I/O functions in two steps, for example
+      <literal><replaceable>somevalue</>::text::citext</literal> or
+      <literal><replaceable>citextvalue</>::text::<replaceable>sometype</></literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <type>citext</> doesn't help much if you need data to compare
+      case-sensitively in some contexts and case-insensitively in other
+      contexts.  The standard answer is to use the <type>text</> type and
+      manually use the <function>lower</> function when you need to compare
+      case-insensitively; this works all right if case-insensitive comparison
+      is needed only infrequently.  If you need case-insensitive most of
+      the time and case-sensitive infrequently, consider storing the data
+      as <type>citext</> and explicitly casting the column to <type>text</>
+      when you want case-sensitive comparison.  In either situation, you
+      will need two indexes if you want both types of searches to be fast.
+    </para>
+    </listitem>
+   </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Author</title>
+
+  <para>
+   David E. Wheeler <email>david@kineticode.com</email>
+  </para>
+
+  <para>
+    Inspired by the original <type>citext</> module by Donald Fraser.
+  </para>
+
+ </sect2>
+
+</sect1>

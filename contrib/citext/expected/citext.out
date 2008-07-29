@@ -1,0 +1,1153 @@
+--
+--  Test citext datatype
+--
+--
+-- first, define the datatype.  Turn off echoing so that expected file
+-- does not depend on contents of citext.sql.
+--
+SET client_min_messages = warning;
+\set ECHO none
+-- Test the operators and indexing functions
+-- Test = and <>.
+SELECT 'a'::citext = 'a'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext = 'A'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext = 'A'::text AS f;        -- text wins the discussion
+ f 
+---
+ f
+(1 row)
+
+SELECT 'a'::citext = 'b'::citext AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT 'a'::citext = 'ab'::citext AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT 'a'::citext <> 'ab'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Multibyte sanity tests. Uncomment to run.
+-- SELECT 'À'::citext =  'À'::citext AS t;
+-- SELECT 'À'::citext =  'à'::citext AS t;
+-- SELECT 'À'::text   =  'à'::text   AS f; -- text wins.
+-- SELECT 'À'::citext <> 'B'::citext AS t;
+-- Test combining characters making up canonically equivalent strings.
+-- SELECT 'Ä'::text   <> 'Ä'::text   AS t;
+-- SELECT 'Ä'::citext <> 'Ä'::citext AS t;
+-- Test the Turkish dotted I. The lowercase is a single byte while the
+-- uppercase is multibyte. This is why the comparison code can't be optimized
+-- to compare string lengths.
+-- SELECT 'i'::citext = 'İ'::citext AS t;
+-- Regression.
+-- SELECT 'láska'::citext <> 'laská'::citext AS t;
+-- SELECT 'Ask Bjørn Hansen'::citext = 'Ask Bjørn Hansen'::citext AS t;
+-- SELECT 'Ask Bjørn Hansen'::citext = 'ASK BJØRN HANSEN'::citext AS t;
+-- SELECT 'Ask Bjørn Hansen'::citext <> 'Ask Bjorn Hansen'::citext AS t;
+-- SELECT 'Ask Bjørn Hansen'::citext <> 'ASK BJORN HANSEN'::citext AS t;
+-- SELECT citext_cmp('Ask Bjørn Hansen'::citext, 'Ask Bjørn Hansen'::citext) AS zero;
+-- SELECT citext_cmp('Ask Bjørn Hansen'::citext, 'ask bjørn hansen'::citext) AS zero;
+-- SELECT citext_cmp('Ask Bjørn Hansen'::citext, 'ASK BJØRN HANSEN'::citext) AS zero;
+-- SELECT citext_cmp('Ask Bjørn Hansen'::citext, 'Ask Bjorn Hansen'::citext) AS positive;
+-- SELECT citext_cmp('Ask Bjorn Hansen'::citext, 'Ask Bjørn Hansen'::citext) AS negative;
+-- Test > and >=
+SELECT 'B'::citext > 'a'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'b'::citext >  'A'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'B'::citext >  'b'::citext AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT 'B'::citext >= 'b'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Test < and <=
+SELECT 'a'::citext <  'B'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext <= 'B'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Test implicit casting. citext casts to text, but not vice-versa.
+SELECT 'a'::citext = 'a'::text   AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'A'::text  <> 'a'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'B'::citext <  'a'::text AS t;  -- text wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'B'::citext <= 'a'::text AS t;  -- text wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext >  'B'::text AS t;  -- text wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext >= 'B'::text AS t;  -- text wins.
+ t 
+---
+ t
+(1 row)
+
+-- Test implicit casting. citext casts to varchar, but not vice-versa.
+SELECT 'a'::citext = 'a'::varchar   AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'A'::varchar  <> 'a'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'B'::citext <  'a'::varchar AS t;  -- varchar wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'B'::citext <= 'a'::varchar AS t;  -- varchar wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext >  'B'::varchar AS t;  -- varchar wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext >= 'B'::varchar AS t;  -- varchar wins.
+ t 
+---
+ t
+(1 row)
+
+-- A couple of longer examlpes to ensure that we don't get any issues with bad
+-- conversions to char[] in the c code. Yes, I did do this.
+SELECT 'aardvark'::citext = 'aardvark'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'aardvark'::citext = 'aardVark'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Check the citext_cmp() function explicitly.
+SELECT citext_cmp('aardvark'::citext, 'aardvark'::citext) AS zero;
+ zero 
+------
+    0
+(1 row)
+
+SELECT citext_cmp('aardvark'::citext, 'aardVark'::citext) AS zero;
+ zero 
+------
+    0
+(1 row)
+
+SELECT citext_cmp('AARDVARK'::citext, 'AARDVARK'::citext) AS zero;
+ zero 
+------
+    0
+(1 row)
+
+SELECT citext_cmp('B'::citext, 'a'::citext) AS one;
+ one 
+-----
+   1
+(1 row)
+
+-- Do some tests using a table and index.
+CREATE TEMP TABLE try (
+   name citext PRIMARY KEY
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "try_pkey" for table "try"
+INSERT INTO try (name)
+VALUES ('a'), ('ab'), ('â'), ('aba'), ('b'), ('ba'), ('bab'), ('AZ');
+SELECT name, 'a' = name AS eq_a   FROM try WHERE name <> 'â';
+ name | eq_a 
+------+------
+ a    | t
+ ab   | f
+ aba  | f
+ b    | f
+ ba   | f
+ bab  | f
+ AZ   | f
+(7 rows)
+
+SELECT name, 'a' = name AS t      FROM try where name = 'a';
+ name | t 
+------+---
+ a    | t
+(1 row)
+
+SELECT name, 'A' = name AS "eq_A" FROM try WHERE name <> 'â';
+ name | eq_A 
+------+------
+ a    | t
+ ab   | f
+ aba  | f
+ b    | f
+ ba   | f
+ bab  | f
+ AZ   | f
+(7 rows)
+
+SELECT name, 'A' = name AS t      FROM try where name = 'A';
+ name | t 
+------+---
+ a    | t
+(1 row)
+
+SELECT name, 'A' = name AS t      FROM try where name = 'A';
+ name | t 
+------+---
+ a    | t
+(1 row)
+
+-- expected failures on duplicate key
+INSERT INTO try (name) VALUES ('a');
+ERROR:  duplicate key value violates unique constraint "try_pkey"
+INSERT INTO try (name) VALUES ('A');
+ERROR:  duplicate key value violates unique constraint "try_pkey"
+INSERT INTO try (name) VALUES ('aB');
+ERROR:  duplicate key value violates unique constraint "try_pkey"
+-- Make sure that citext_smaller() and citext_lager() work properly.
+SELECT citext_smaller( 'aa'::citext, 'ab'::citext ) = 'aa' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT citext_smaller( 'AAAA'::citext, 'bbbb'::citext ) = 'AAAA' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT citext_smaller( 'aardvark'::citext, 'Aaba'::citext ) = 'Aaba' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT citext_smaller( 'aardvark'::citext, 'AARDVARK'::citext ) = 'AARDVARK' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT citext_larger( 'aa'::citext, 'ab'::citext ) = 'ab' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT citext_larger( 'AAAA'::citext, 'bbbb'::citext ) = 'bbbb' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT citext_larger( 'aardvark'::citext, 'Aaba'::citext ) = 'aardvark' AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Test aggregate functions and sort ordering
+CREATE TEMP TABLE srt (
+   name CITEXT
+);
+INSERT INTO srt (name)
+VALUES ('aardvark'),
+       ('AAA'),
+       ('aba'),
+       ('ABC'),
+       ('abd');
+-- Check the min() and max() aggregates, with and without index.
+set enable_seqscan = off;
+SELECT MIN(name) AS "AAA" FROM srt;
+ AAA 
+-----
+ AAA
+(1 row)
+
+SELECT MAX(name) AS abd FROM srt;
+ abd 
+-----
+ abd
+(1 row)
+
+reset enable_seqscan;
+set enable_indexscan = off;
+SELECT MIN(name) AS "AAA" FROM srt;
+ AAA 
+-----
+ AAA
+(1 row)
+
+SELECT MAX(name) AS abd FROM srt;
+ abd 
+-----
+ abd
+(1 row)
+
+reset enable_indexscan;
+-- Check sorting likewise
+set enable_seqscan = off;
+SELECT name FROM srt ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+ aba
+ ABC
+ abd
+(5 rows)
+
+reset enable_seqscan;
+set enable_indexscan = off;
+SELECT name FROM srt ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+ aba
+ ABC
+ abd
+(5 rows)
+
+reset enable_indexscan;
+-- Test assignment casts.
+SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::text;
+ aaa 
+-----
+ aaa
+(1 row)
+
+SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::varchar;
+ aaa 
+-----
+ aaa
+(1 row)
+
+SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::bpchar;
+ aaa 
+-----
+ aaa
+(1 row)
+
+SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA';
+ aaa 
+-----
+ aaa
+(1 row)
+
+SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::citext;
+ aaa 
+-----
+ aaa
+(1 row)
+
+-- LIKE shoudl be case-insensitive
+SELECT name FROM srt WHERE name     LIKE '%a%' ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+ aba
+ ABC
+ abd
+(5 rows)
+
+SELECT name FROM srt WHERE name NOT LIKE '%b%' ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+(2 rows)
+
+SELECT name FROM srt WHERE name     LIKE '%A%' ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+ aba
+ ABC
+ abd
+(5 rows)
+
+SELECT name FROM srt WHERE name NOT LIKE '%B%' ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+(2 rows)
+
+-- ~~ should be case-insensitive
+SELECT name FROM srt WHERE name ~~  '%a%' ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+ aba
+ ABC
+ abd
+(5 rows)
+
+SELECT name FROM srt WHERE name !~~ '%b%' ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+(2 rows)
+
+SELECT name FROM srt WHERE name ~~  '%A%' ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+ aba
+ ABC
+ abd
+(5 rows)
+
+SELECT name FROM srt WHERE name !~~ '%B%' ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+(2 rows)
+
+-- ~ should be case-insensitive
+SELECT name FROM srt WHERE name ~  '^a' ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+ aba
+ ABC
+ abd
+(5 rows)
+
+SELECT name FROM srt WHERE name !~ 'a$' ORDER BY name;
+   name   
+----------
+ aardvark
+ ABC
+ abd
+(3 rows)
+
+SELECT name FROM srt WHERE name ~  '^A' ORDER BY name;
+   name   
+----------
+ AAA
+ aardvark
+ aba
+ ABC
+ abd
+(5 rows)
+
+SELECT name FROM srt WHERE name !~ 'A$' ORDER BY name;
+   name   
+----------
+ aardvark
+ ABC
+ abd
+(3 rows)
+
+-- SIMILAR TO should be case-insensitive.
+SELECT name FROM srt WHERE name SIMILAR TO '%a.*';
+ name 
+------
+ AAA
+ aba
+(2 rows)
+
+SELECT name FROM srt WHERE name SIMILAR TO '%A.*';
+ name 
+------
+ AAA
+ aba
+(2 rows)
+
+-- Table 9-5. SQL String Functions and Operators
+SELECT 'D'::citext || 'avid'::citext = 'David'::citext AS citext_concat;
+ citext_concat 
+---------------
+ t
+(1 row)
+
+SELECT 'Value: '::citext || 42 = 'Value: 42' AS text_concat;
+ text_concat 
+-------------
+ t
+(1 row)
+
+SELECT  42 || ': value'::citext ='42: value' AS int_concat;
+ int_concat 
+------------
+ t
+(1 row)
+
+SELECT bit_length('jose'::citext) = 32 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT bit_length( name ) = bit_length( name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT textlen( name ) = textlen( name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT char_length( name ) = char_length( name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT lower( name ) = lower( name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT octet_length( name ) = octet_length( name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT overlay( name placing 'hom' from 2 for 4) = overlay( name::text placing 'hom' from 2 for 4) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT position( 'a' IN name ) = position( 'a' IN name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT substr('alphabet'::citext, 3)       = 'phabet' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT substr('alphabet'::citext, 3, 2)    = 'ph' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT substring('alphabet'::citext, 3)    = 'phabet' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT substring('alphabet'::citext, 3, 2) = 'ph' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT substring('Thomas'::citext from 2 for 3) = 'hom' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT substring('Thomas'::citext from 2) = 'homas' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT substring('Thomas'::citext from '...$') = 'mas' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT substring('Thomas'::citext from '%#"o_a#"_' for '#') = 'oma' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT trim('    trim    '::citext)               = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT trim('xxxxxtrimxxxx'::citext, 'x'::citext) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT trim('xxxxxxtrimxxxx'::text,  'x'::citext) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT trim('xxxxxtrimxxxx'::text,   'x'::citext) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT upper( name ) = upper( name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+-- Table 9-6. Other String Functions.
+SELECT ascii( name ) = ascii( name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT btrim('    trim'::citext                   ) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT btrim('xxxxxtrimxxxx'::citext, 'x'::citext ) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT btrim('xyxtrimyyx'::citext,    'xy'::citext) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT btrim('xyxtrimyyx'::text,      'xy'::citext) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT btrim('xyxtrimyyx'::citext,    'xy'::text  ) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+-- chr() takes an int and returns text.
+-- convert() and convert_from take bytea and return text.
+SELECT convert_to( name, 'ISO-8859-1' ) = convert_to( name::text, 'ISO-8859-1' ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT decode('MTIzAAE='::citext, 'base64') = decode('MTIzAAE='::text, 'base64') AS t;
+ t 
+---
+ t
+(1 row)
+
+-- encode() takes bytea and returns text.
+SELECT initcap('hi THOMAS'::citext) = initcap('hi THOMAS'::text) AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT length( name ) = length( name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT lpad('hi'::citext, 5              ) = '   hi' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT lpad('hi'::citext, 5, 'xy'::citext) = 'xyxhi' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT lpad('hi'::text,   5, 'xy'::citext) = 'xyxhi' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT lpad('hi'::citext, 5, 'xy'::text  ) = 'xyxhi' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT ltrim('    trim'::citext               ) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT ltrim('zzzytrim'::citext, 'xyz'::citext) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT ltrim('zzzytrim'::text,   'xyz'::citext) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT ltrim('zzzytrim'::citext, 'xyz'::text  ) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT md5( name ) = md5( name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+-- pg_client_encoding() takes no args and returns name.
+SELECT quote_ident( name ) = quote_ident( name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT quote_literal( name ) = quote_literal( name::text ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT regexp_matches('foobarbequebaz'::citext, '(bar)(beque)') = ARRAY[ 'bar', 'beque' ] AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT regexp_replace('Thomas'::citext, '.[mN]a.', 'M') = 'ThM' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT regexp_split_to_array('hello world'::citext, E'\\s+') = ARRAY[ 'hello', 'world' ] AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT regexp_split_to_table('hello world'::citext, E'\\s+') AS words;
+ words 
+-------
+ hello
+ world
+(2 rows)
+
+SELECT repeat('Pg'::citext, 4) = 'PgPgPgPg' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT replace('abcdefabcdef'::citext, 'cd', 'XX') = 'abXXefabXXef' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT rpad('hi'::citext, 5              ) = 'hi   ' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT rpad('hi'::citext, 5, 'xy'::citext) = 'hixyx' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT rpad('hi'::text,   5, 'xy'::citext) = 'hixyx' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT rpad('hi'::citext, 5, 'xy'::text  ) = 'hixyx' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT rtrim('trim    '::citext             ) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT rtrim('trimxxxx'::citext, 'x'::citext) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT rtrim('trimxxxx'::text,   'x'::citext) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT rtrim('trimxxxx'::text,   'x'::text  ) = 'trim' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT split_part('abc~@~def~@~ghi'::citext, '~@~', 2) = 'def' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT strpos('high'::citext, 'ig'        ) = 2 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT strpos('high'::citext, 'ig'::citext) = 2 AS t;
+ t 
+---
+ t
+(1 row)
+
+-- to_ascii() does not support UTF-8.
+-- to_hex() takes a numeric argument.
+SELECT substr('alphabet', 3, 2) = 'ph' AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT translate('abcdefabcdef'::citext, 'cd', 'XX') = 'abXXefabXXef' AS t;
+ t 
+---
+ t
+(1 row)
+
+-- TODO These functions should work case-insensitively, but don't.
+SELECT regexp_matches('foobarbequebaz'::citext, '(BAR)(BEQUE)') = ARRAY[ 'bar', 'beque' ] AS "t TODO";
+ t TODO 
+--------
+(0 rows)
+
+SELECT regexp_replace('Thomas'::citext, '.[MN]A.', 'M') = 'THM' AS "t TODO";
+ t TODO 
+--------
+ f
+(1 row)
+
+SELECT regexp_split_to_array('helloTworld'::citext, 't') = ARRAY[ 'hello', 'world' ] AS "t TODO";
+ t TODO 
+--------
+ f
+(1 row)
+
+SELECT regexp_split_to_table('helloTworld'::citext, 't') AS "words TODO";
+ words TODO  
+-------------
+ helloTworld
+(1 row)
+
+SELECT replace('abcdefabcdef'::citext, 'CD', 'XX') = 'abXXefabXXef' AS "t TODO";
+ t TODO 
+--------
+ f
+(1 row)
+
+SELECT split_part('abcTdefTghi'::citext, 't', 2) = 'def' AS "t TODO";
+ t TODO 
+--------
+ f
+(1 row)
+
+SELECT strpos('high'::citext, 'IG'::citext) = 2 AS "t TODO";
+ t TODO 
+--------
+ f
+(1 row)
+
+SELECT translate('abcdefabcdef'::citext, 'CD', 'XX') = 'abXXefabXXef' AS "t TODO";
+ t TODO 
+--------
+ f
+(1 row)
+
+-- Table 9-20. Formatting Functions
+SELECT to_date('05 Dec 2000'::citext, 'DD Mon YYYY'::citext)
+     = to_date('05 Dec 2000',         'DD Mon YYYY') AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT to_date('05 Dec 2000'::citext, 'DD Mon YYYY')
+     = to_date('05 Dec 2000',         'DD Mon YYYY') AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT to_date('05 Dec 2000',         'DD Mon YYYY'::citext)
+     = to_date('05 Dec 2000',         'DD Mon YYYY') AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT to_number('12,454.8-'::citext, '99G999D9S'::citext)
+     = to_number('12,454.8-',         '99G999D9S') AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT to_number('12,454.8-'::citext, '99G999D9S')
+     = to_number('12,454.8-',         '99G999D9S') AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT to_number('12,454.8-',         '99G999D9S'::citext)
+     = to_number('12,454.8-',         '99G999D9S') AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT to_timestamp('05 Dec 2000'::citext, 'DD Mon YYYY'::citext)
+     = to_timestamp('05 Dec 2000',         'DD Mon YYYY') AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT to_timestamp('05 Dec 2000'::citext, 'DD Mon YYYY')
+     = to_timestamp('05 Dec 2000',         'DD Mon YYYY') AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT to_timestamp('05 Dec 2000',         'DD Mon YYYY'::citext)
+     = to_timestamp('05 Dec 2000',         'DD Mon YYYY') AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Try assigning function results to a column.
+SELECT COUNT(*) = 8::bigint AS t FROM try;
+ t 
+---
+ t
+(1 row)
+
+INSERT INTO try
+VALUES ( to_char(  now()::timestamp,          'HH12:MI:SS') ),
+       ( to_char(  now() + '1 sec'::interval, 'HH12:MI:SS') ), -- timetamptz
+       ( to_char(  '15h 2m 12s'::interval,    'HH24:MI:SS') ),
+       ( to_char(  current_date,              '999') ),
+       ( to_char(  125::int,                  '999') ),
+       ( to_char(  127::int4,                 '999') ),
+       ( to_char(  126::int8,                 '999') ),
+       ( to_char(  128.8::real,               '999D9') ),
+       ( to_char(  125.7::float4,             '999D9') ),
+       ( to_char(  125.9::float8,             '999D9') ),
+       ( to_char( -125.8::numeric,            '999D99S') );
+SELECT COUNT(*) = 19::bigint AS t FROM try;
+ t 
+---
+ t
+(1 row)
+
+SELECT like_escape( name, '' ) = like_escape( name::text, '' ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+SELECT like_escape( name::text, ''::citext ) =like_escape( name::text, '' ) AS t FROM srt;
+ t 
+---
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+--- TODO: Get citext working with magic cast functions?
+SELECT cidr( '192.168.1.2'::citext ) = cidr( '192.168.1.2'::text ) AS "t TODO";
+ERROR:  function cidr(citext) does not exist
+LINE 1: SELECT cidr( '192.168.1.2'::citext ) = cidr( '192.168.1.2'::...
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT '192.168.1.2'::cidr::citext = '192.168.1.2'::cidr::text AS "t TODO";
+ERROR:  cannot cast type cidr to citext
+LINE 1: SELECT '192.168.1.2'::cidr::citext = '192.168.1.2'::cidr::te...
+                                    ^

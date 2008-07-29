@@ -36,6 +36,10 @@ chkpass -
 	An auto-encrypted password datatype
 	by D'Arcy J.M. Cain <darcy@druid.net>
 
+citext -
+	A case-insensitive character string datatype
+	by David E. Wheeler <david@kineticode.com>
+
 cube -
 	Multidimensional-cube datatype (GiST indexing example)
 	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>
