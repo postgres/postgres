@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.47 2008/03/14 17:28:23 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.48 2008/07/29 15:17:27 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -83,14 +83,16 @@
       ActiveState Perl is required to run the build generation scripts. MinGW
       or Cygwin Perl will not work. It must also be present in the PATH.
       Binaries can be downloaded from
-      <ulink url="http://www.activestate.com"></>.
+      <ulink url="http://www.activestate.com"></> (Note: version 5.8 is required,
+      the free Standard Distribution is sufficient).
      </para></listitem>
     </varlistentry>
 
     <varlistentry>
      <term><productname>ActiveState TCL</productname></term>
      <listitem><para>
-      Required for building <application>PL/TCL</application>.
+      Required for building <application>PL/TCL</application> (Note: version
+      8.4 is required, the free Standard Distribution is sufficient).
      </para></listitem>
     </varlistentry>
 
