@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/citext/citext.sql.in,v 1.1 2008/07/29 18:31:20 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/citext/citext.sql.in,v 1.2 2008/07/30 17:08:52 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -49,7 +49,10 @@ CREATE TYPE citext (
     RECEIVE        = citextrecv,
     SEND           = citextsend,
     INTERNALLENGTH = VARIABLE,
-    STORAGE        = extended
+    STORAGE        = extended,
+    -- make it a non-preferred member of string type category
+    CATEGORY       = 'S',
+    PREFERRED      = false
 );
 
 --
@@ -105,12 +108,6 @@ CREATE OR REPLACE FUNCTION citext_ge( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
-
--- We overload || just to preserve "citext-ness" of the result.
-CREATE OR REPLACE FUNCTION textcat(citext, citext)
-RETURNS citext
-AS 'textcat'
-LANGUAGE 'internal' IMMUTABLE STRICT;
 
 --
 -- Operators.
@@ -178,12 +175,6 @@ CREATE OPERATOR > (
     JOIN       = scalargtjoinsel
 );
 
-CREATE OPERATOR || (
-    LEFTARG   = CITEXT,
-    RIGHTARG  = CITEXT,
-    PROCEDURE = textcat
-);
-
 --
 -- Support functions for indexing.
 --
@@ -245,25 +236,6 @@ CREATE AGGREGATE max(citext)  (
     STYPE = citext,
     SORTOP = >
 );
-
---
--- Miscellaneous functions
--- These exist to preserve the "citext-ness" of the input.
---
-
-CREATE OR REPLACE FUNCTION lower(citext)
-RETURNS citext AS 'lower'
-LANGUAGE 'internal' IMMUTABLE STRICT;
-
-CREATE OR REPLACE FUNCTION upper(citext)
-RETURNS citext AS 'upper'
-LANGUAGE 'internal' IMMUTABLE STRICT;
-
--- needed to avoid "function is not unique" errors
--- XXX find a better way to deal with this...
-CREATE FUNCTION quote_literal(citext)
-RETURNS text AS 'quote_literal'
-LANGUAGE 'internal' IMMUTABLE STRICT;
 
 --
 -- CITEXT pattern matching.

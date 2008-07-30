@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/citext/uninstall_citext.sql,v 1.1 2008/07/29 18:31:20 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/citext/uninstall_citext.sql,v 1.2 2008/07/30 17:08:52 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
@@ -15,7 +15,6 @@ DROP OPERATOR < (citext, citext);
 DROP OPERATOR <= (citext, citext);
 DROP OPERATOR >= (citext, citext);
 DROP OPERATOR > (citext, citext);
-DROP OPERATOR || (citext, citext);
 
 DROP OPERATOR ~ (citext, citext);
 DROP OPERATOR ~* (citext, citext);
@@ -49,14 +48,10 @@ DROP FUNCTION citext_lt(citext, citext);
 DROP FUNCTION citext_le(citext, citext);
 DROP FUNCTION citext_gt(citext, citext);
 DROP FUNCTION citext_ge(citext, citext);
-DROP FUNCTION textcat(citext, citext);
 DROP FUNCTION citext_cmp(citext, citext);
 DROP FUNCTION citext_hash(citext);
 DROP FUNCTION citext_smaller(citext, citext);
 DROP FUNCTION citext_larger(citext, citext);
-DROP FUNCTION lower(citext);
-DROP FUNCTION upper(citext);
-DROP FUNCTION quote_literal(citext);
 DROP FUNCTION texticlike(citext, citext);
 DROP FUNCTION texticnlike(citext, citext);
 DROP FUNCTION texticregexeq(citext, citext);
