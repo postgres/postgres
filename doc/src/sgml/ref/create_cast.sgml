@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.28 2008/07/12 16:20:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.29 2008/07/30 21:23:17 tgl Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -26,7 +26,7 @@ CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</r
     [ AS ASSIGNMENT | AS IMPLICIT ]
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1 id="sql-createcast-description">
   <title>Description</title>
 
@@ -131,6 +131,18 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
    to <type>int4</>, are best made explicit-only.
   </para>
 
+  <note>
+   <para>
+    Sometimes it is necessary for usability or standards-compliance reasons
+    to provide multiple implicit casts among a set of types, resulting in
+    ambiguity that cannot be avoided as above.  The parser has a fallback
+    heuristic based on <firstterm>type categories</> and <firstterm>preferred
+    types</> that can help to provide desired behavior in such cases.  See
+    <xref linkend="sql-createtype" endterm="sql-createtype-title"> for
+    more information.
+   </para>
+  </note>
+
   <para>
    To be able to create a cast, you must own the source or the target
    data type.  To create a binary-coercible cast, you must be superuser.
@@ -181,8 +193,8 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
 
      <listitem>
       <para>
-       Indicates that the source type and the target type are binary
-       coercible, so no function is required to perform the cast.
+       Indicates that the source type is binary-coercible to the target type,
+       so no function is required to perform the cast.
       </para>
      </listitem>
     </varlistentry>
@@ -218,7 +230,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
    if there is none.  The third argument,
    if present, must be type <type>boolean</>; it receives <literal>true</>
    if the cast is an explicit cast, <literal>false</> otherwise.
-   (Bizarrely, the SQL spec demands different behaviors for explicit and
+   (Bizarrely, the SQL standard demands different behaviors for explicit and
    implicit casts in some cases.  This argument is supplied for functions
    that must implement such casts.  It is not recommended that you design
    your own data types so that this matters.)
@@ -271,7 +283,8 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
   <para>
    It is normally not necessary to create casts between user-defined types
    and the standard string types (<type>text</>, <type>varchar</>, and
-   <type>char(<replaceable>n</>)</type>).  <productname>PostgreSQL</> will
+   <type>char(<replaceable>n</>)</type>, as well as user-defined types that
+   are defined to be in the string category).  <productname>PostgreSQL</> will
    automatically handle a cast to a string type by invoking the other
    type's output function, or conversely handle a cast from a string type
    by invoking the other type's input function.  These
@@ -340,16 +353,15 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
   <title>Examples</title>
 
   <para>
-   To create a cast from type <type>bigint</type> to type
+   To create an assignment cast from type <type>bigint</type> to type
    <type>int4</type> using the function <literal>int4(bigint)</literal>:
 <programlisting>
-CREATE CAST (bigint AS int4) WITH FUNCTION int4(bigint);
+CREATE CAST (bigint AS int4) WITH FUNCTION int4(bigint) AS ASSIGNMENT;
 </programlisting>
    (This cast is already predefined in the system.)
   </para>
  </refsect1>
 
- 
  <refsect1 id="sql-createcast-compat">
   <title>Compatibility</title>
 
@@ -358,7 +370,7 @@ CREATE CAST (bigint AS int4) WITH FUNCTION int4(bigint);
    <acronym>SQL</acronym> standard,
    except that SQL does not make provisions for binary-coercible
    types or extra arguments to implementation functions.
-   <literal>AS IMPLICIT</> is a <productname>PostgreSQL</productname> 
+   <literal>AS IMPLICIT</> is a <productname>PostgreSQL</productname>
    extension, too.
   </para>
  </refsect1>

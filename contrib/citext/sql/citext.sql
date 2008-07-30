@@ -323,6 +323,6 @@ SELECT COUNT(*) = 19::bigint AS t FROM try;
 SELECT like_escape( name, '' ) = like_escape( name::text, '' ) AS t FROM srt;
 SELECT like_escape( name::text, ''::citext ) =like_escape( name::text, '' ) AS t FROM srt;
 
---- TODO: Get citext working with magic cast functions?
-SELECT cidr( '192.168.1.2'::citext ) = cidr( '192.168.1.2'::text ) AS "t TODO";
-SELECT '192.168.1.2'::cidr::citext = '192.168.1.2'::cidr::text AS "t TODO";
+--- citext should work as source or destination of I/O conversion casts
+SELECT cidr( '192.168.1.2'::citext ) = cidr( '192.168.1.2'::text ) AS "t";
+SELECT '192.168.1.2'::cidr::citext = '192.168.1.2'::cidr::text AS "t";

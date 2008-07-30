@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.162 2008/07/30 17:05:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.163 2008/07/30 21:23:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1796,8 +1796,8 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 
 		/*
 		 * If we still haven't found a possibility, consider automatic casting
-		 * using I/O functions.  We allow assignment casts to textual types
-		 * and explicit casts from textual types to be handled this way. (The
+		 * using I/O functions.  We allow assignment casts to string types
+		 * and explicit casts from string types to be handled this way. (The
 		 * CoerceViaIO mechanism is a lot more general than that, but this is
 		 * all we want to allow in the absence of a pg_cast entry.) It would
 		 * probably be better to insist on explicit casts in both directions,
@@ -1807,14 +1807,10 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		if (result == COERCION_PATH_NONE)
 		{
 			if (ccontext >= COERCION_ASSIGNMENT &&
-				(targetTypeId == TEXTOID ||
-				 targetTypeId == VARCHAROID ||
-				 targetTypeId == BPCHAROID))
+				TypeCategory(targetTypeId) == TYPCATEGORY_STRING)
 				result = COERCION_PATH_COERCEVIAIO;
 			else if (ccontext >= COERCION_EXPLICIT &&
-					 (sourceTypeId == TEXTOID ||
-					  sourceTypeId == VARCHAROID ||
-					  sourceTypeId == BPCHAROID))
+					 TypeCategory(sourceTypeId) == TYPCATEGORY_STRING)
 				result = COERCION_PATH_COERCEVIAIO;
 		}
 	}
