@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.497 2008/07/20 18:43:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.498 2008/07/30 17:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5736,6 +5736,8 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	Oid			typmodinoid;
 	Oid			typmodoutoid;
 	Oid			typanalyzeoid;
+	char	   *typcategory;
+	char	   *typispreferred;
 	char	   *typdelim;
 	char	   *typbyval;
 	char	   *typalign;
@@ -5747,7 +5749,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	selectSourceSchema(tinfo->dobj.namespace->dobj.name);
 
 	/* Fetch type-specific details */
-	if (fout->remoteVersion >= 80300)
+	if (fout->remoteVersion >= 80400)
 	{
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, typreceive, typsend, "
@@ -5759,6 +5761,26 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "typmodin::pg_catalog.oid as typmodinoid, "
 						  "typmodout::pg_catalog.oid as typmodoutoid, "
 						  "typanalyze::pg_catalog.oid as typanalyzeoid, "
+						  "typcategory, typispreferred, "
+						  "typdelim, typbyval, typalign, typstorage, "
+						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
+						  "FROM pg_catalog.pg_type "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  tinfo->dobj.catId.oid);
+	}
+	else if (fout->remoteVersion >= 80300)
+	{
+		appendPQExpBuffer(query, "SELECT typlen, "
+						  "typinput, typoutput, typreceive, typsend, "
+						  "typmodin, typmodout, typanalyze, "
+						  "typinput::pg_catalog.oid as typinputoid, "
+						  "typoutput::pg_catalog.oid as typoutputoid, "
+						  "typreceive::pg_catalog.oid as typreceiveoid, "
+						  "typsend::pg_catalog.oid as typsendoid, "
+						  "typmodin::pg_catalog.oid as typmodinoid, "
+						  "typmodout::pg_catalog.oid as typmodoutoid, "
+						  "typanalyze::pg_catalog.oid as typanalyzeoid, "
+						  "'U' as typcategory, true as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
@@ -5777,6 +5799,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "typsend::pg_catalog.oid as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "typanalyze::pg_catalog.oid as typanalyzeoid, "
+						  "'U' as typcategory, true as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
@@ -5795,6 +5818,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "typsend::pg_catalog.oid as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "0 as typanalyzeoid, "
+						  "'U' as typcategory, true as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
@@ -5813,6 +5837,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "0 as typanalyzeoid, "
+						  "'U' as typcategory, true as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
@@ -5835,6 +5860,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "0 as typanalyzeoid, "
+						  "'U' as typcategory, true as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "NULL as typdefaultbin, typdefault "
 						  "FROM pg_type "
@@ -5857,6 +5883,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "0 as typanalyzeoid, "
+						  "'U' as typcategory, true as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "NULL as typdefaultbin, NULL as typdefault "
 						  "FROM pg_type "
@@ -5875,6 +5902,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "0 as typanalyzeoid, "
+						  "'U' as typcategory, true as typispreferred, "
 						  "typdelim, typbyval, typalign, "
 						  "'p'::char as typstorage, "
 						  "NULL as typdefaultbin, NULL as typdefault "
@@ -5910,6 +5938,8 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	typmodinoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typmodinoid")));
 	typmodoutoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typmodoutoid")));
 	typanalyzeoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typanalyzeoid")));
+	typcategory = PQgetvalue(res, 0, PQfnumber(res, "typcategory"));
+	typispreferred = PQgetvalue(res, 0, PQfnumber(res, "typispreferred"));
 	typdelim = PQgetvalue(res, 0, PQfnumber(res, "typdelim"));
 	typbyval = PQgetvalue(res, 0, PQfnumber(res, "typbyval"));
 	typalign = PQgetvalue(res, 0, PQfnumber(res, "typalign"));
@@ -5985,6 +6015,15 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 		appendPQExpBuffer(q, ",\n    ELEMENT = %s", elemType);
 		free(elemType);
 	}
+
+	if (strcmp(typcategory, "U") != 0)
+	{
+		appendPQExpBuffer(q, ",\n    CATEGORY = ");
+		appendStringLiteralAH(q, typcategory, fout);
+	}
+
+	if (strcmp(typispreferred, "f") == 0)
+		appendPQExpBuffer(q, ",\n    PREFERRED = false");
 
 	if (typdelim && strcmp(typdelim, ",") != 0)
 	{

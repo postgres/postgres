@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.157 2008/04/13 20:51:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.158 2008/07/30 17:05:04 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -2165,6 +2165,29 @@ bool
 type_is_enum(Oid typid)
 {
 	return (get_typtype(typid) == TYPTYPE_ENUM);
+}
+
+/*
+ * get_type_category_preferred
+ *
+ *		Given the type OID, fetch its category and preferred-type status.
+ *		Throws error on failure.
+ */
+void
+get_type_category_preferred(Oid typid, char *typcategory, bool *typispreferred)
+{
+	HeapTuple	tp;
+	Form_pg_type typtup;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for type %u", typid);
+	typtup = (Form_pg_type) GETSTRUCT(tp);
+	*typcategory = typtup->typcategory;
+	*typispreferred = typtup->typispreferred;
+	ReleaseSysCache(tp);
 }
 
 /*

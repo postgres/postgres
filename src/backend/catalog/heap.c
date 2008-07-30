@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.334 2008/05/12 00:00:46 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.335 2008/07/30 17:05:04 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -761,6 +761,8 @@ AddNewRelationType(const char *typeName,
 				   new_rel_kind,	/* relation kind */
 				   -1,			/* internal size (varlena) */
 				   TYPTYPE_COMPOSITE,	/* type-type (composite) */
+				   TYPCATEGORY_COMPOSITE, /* type-category (ditto) */
+				   true,		/* all composite types are preferred */
 				   DEFAULT_TYPDELIM,	/* default array delimiter */
 				   F_RECORD_IN, /* input procedure */
 				   F_RECORD_OUT,	/* output procedure */
@@ -938,6 +940,8 @@ heap_create_with_catalog(const char *relname,
 				   0,			/* relkind, also N/A here */
 				   -1,			/* Internal size (varlena) */
 				   TYPTYPE_BASE,	/* Not composite - typelem is */
+				   TYPCATEGORY_ARRAY, /* type-category (array) */
+				   true,		/* all array types are preferred */
 				   DEFAULT_TYPDELIM,	/* default array delimiter */
 				   F_ARRAY_IN,	/* array input proc */
 				   F_ARRAY_OUT, /* array output proc */

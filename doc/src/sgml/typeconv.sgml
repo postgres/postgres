@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.55 2008/07/16 01:30:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.56 2008/07/30 17:05:04 tgl Exp $ -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>
@@ -10,7 +10,7 @@
 
 <para>
 <acronym>SQL</acronym> statements can, intentionally or not, require
-mixing of different data types in the same expression. 
+mixing of different data types in the same expression.
 <productname>PostgreSQL</productname> has extensive facilities for
 evaluating mixed-type expressions.
 </para>
@@ -153,18 +153,31 @@ altered.)
 
 <para>
 An additional heuristic is provided in the parser to allow better guesses
-at proper behavior for <acronym>SQL</acronym> standard types. There are
-several basic <firstterm>type categories</firstterm> defined: <type>boolean</type>,
-<type>numeric</type>, <type>string</type>, <type>bitstring</type>, <type>datetime</type>, <type>timespan</type>, <type>geometric</type>, <type>network</type>,
-and user-defined. Each category, with the exception of user-defined, has
-one or more <firstterm>preferred types</firstterm> which are preferentially
-selected when there is ambiguity.
-In the user-defined category, each type is its own preferred type.
-Ambiguous expressions (those with multiple candidate parsing solutions)
-can therefore often be resolved when there are multiple possible built-in types, but
-they will raise an error when there are multiple choices for user-defined
-types.
+at proper casting behavior among groups of types that have implicit casts.
+Data types are divided into several basic <firstterm>type
+categories</firstterm>, including <type>boolean</type>, <type>numeric</type>,
+<type>string</type>, <type>bitstring</type>, <type>datetime</type>,
+<type>timespan</type>, <type>geometric</type>, <type>network</type>, and
+user-defined.  (For a list see <xref linkend="catalog-typcategory-table">;
+but note it is also possible to create custom type categories.)  Within each
+category there are one or more <firstterm>preferred types</firstterm>, which
+are preferentially selected when there is ambiguity.  With careful selection
+of preferred types and available implicit casts, it is possible to ensure that
+ambiguous expressions (those with multiple candidate parsing solutions) can be
+resolved in a useful way.
 </para>
+
+<note>
+ <para>
+  For what are now historical reasons, types in the <quote>user-defined</>
+  category are normally always marked as <quote>preferred</>.  Since all types
+  in this category are preferred, the heuristic that favors preferred types
+  accomplishes nothing, and thus this situation is equivalent to treating them
+  all as non-preferred.  The <quote>preferred</> marking is useful within the
+  system-defined type categories, and can be useful within custom type
+  categories.
+ </para>
+</note>
 
 <para>
 All type conversion rules are designed with several principles in mind:
@@ -173,23 +186,6 @@ All type conversion rules are designed with several principles in mind:
 <listitem>
 <para>
 Implicit conversions should never have surprising or unpredictable outcomes.
-</para>
-</listitem>
-
-<listitem>
-<para>
-User-defined types, of which the parser has no <foreignphrase>a priori</> knowledge, should be
-<quote>higher</quote> in the type hierarchy. In mixed-type expressions, native types shall always
-be converted to a user-defined type (of course, only if conversion is necessary).
-</para>
-</listitem>
-
-<listitem>
-<para>
-User-defined types are not related. Currently, <productname>PostgreSQL</productname>
-does not have information available to it on relationships between types, other than
-hardcoded heuristics for built-in types and implicit relationships based on
-available functions and casts.
 </para>
 </listitem>
 
@@ -317,7 +313,7 @@ all the remaining candidates accept the same type category, select that
 category; otherwise fail because the correct choice cannot be deduced
 without more clues.  Now discard
 candidates that do not accept the selected type category.  Furthermore,
-if any candidate accepts a preferred type at a given argument position,
+if any candidate accepts a preferred type in that category,
 discard candidates that accept non-preferred types for that argument.
 </para>
 </step>
@@ -341,7 +337,7 @@ Some examples follow.
 
 <para>
 There is only one factorial operator (postfix <literal>!</>)
-defined in the standard catalog, and it takes an argument of type 
+defined in the standard catalog, and it takes an argument of type
 <type>bigint</type>.
 The scanner assigns an initial type of <type>integer</type> to the argument
 in this query expression:
@@ -407,7 +403,7 @@ In this case there is no initial hint for which type to use, since no types
 are specified in the query. So, the parser looks for all candidate operators
 and finds that there are candidates accepting both string-category and
 bit-string-category inputs.  Since string category is preferred when available,
-that category is selected, and then the 
+that category is selected, and then the
 preferred type for strings, <type>text</type>, is used as the specific
 type to resolve the unknown literals to.
 </para>
@@ -585,7 +581,7 @@ If only one candidate remains, use it; else continue to the next step.
 <step performance="required">
 <para>
 If any input arguments are <type>unknown</type>, check the type categories
-accepted 
+accepted
 at those argument positions by the remaining candidates.  At each position,
 select the <type>string</type> category if any candidate accepts that category.
 (This bias towards string
@@ -594,9 +590,8 @@ Otherwise, if all the remaining candidates accept the same type category,
 select that category; otherwise fail because
 the correct choice cannot be deduced without more clues.
 Now discard candidates that do not accept the selected type category.
-Furthermore, if any candidate accepts a preferred type at a given argument
-position, discard candidates that accept non-preferred types for that
-argument.
+Furthermore, if any candidate accepts a preferred type in that category,
+discard candidates that accept non-preferred types for that argument.
 </para>
 </step>
 <step performance="required">

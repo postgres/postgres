@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.203 2008/07/16 01:30:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.204 2008/07/30 17:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,8 +439,9 @@ func_select_candidate(int nargs,
 	int			nbestMatch,
 				nmatch;
 	Oid			input_base_typeids[FUNC_MAX_ARGS];
-	CATEGORY	slot_category[FUNC_MAX_ARGS],
+	TYPCATEGORY	slot_category[FUNC_MAX_ARGS],
 				current_category;
+	bool		current_is_preferred;
 	bool		slot_has_preferred_type[FUNC_MAX_ARGS];
 	bool		resolved_unknowns;
 
@@ -591,7 +592,7 @@ func_select_candidate(int nargs,
 		if (input_base_typeids[i] != UNKNOWNOID)
 			continue;
 		resolved_unknowns = true;		/* assume we can do it */
-		slot_category[i] = INVALID_TYPE;
+		slot_category[i] = TYPCATEGORY_INVALID;
 		slot_has_preferred_type[i] = false;
 		have_conflict = false;
 		for (current_candidate = candidates;
@@ -600,29 +601,28 @@ func_select_candidate(int nargs,
 		{
 			current_typeids = current_candidate->args;
 			current_type = current_typeids[i];
-			current_category = TypeCategory(current_type);
-			if (slot_category[i] == INVALID_TYPE)
+			get_type_category_preferred(current_type,
+										&current_category,
+										&current_is_preferred);
+			if (slot_category[i] == TYPCATEGORY_INVALID)
 			{
 				/* first candidate */
 				slot_category[i] = current_category;
-				slot_has_preferred_type[i] =
-					IsPreferredType(current_category, current_type);
+				slot_has_preferred_type[i] = current_is_preferred;
 			}
 			else if (current_category == slot_category[i])
 			{
 				/* more candidates in same category */
-				slot_has_preferred_type[i] |=
-					IsPreferredType(current_category, current_type);
+				slot_has_preferred_type[i] |= current_is_preferred;
 			}
 			else
 			{
 				/* category conflict! */
-				if (current_category == STRING_TYPE)
+				if (current_category == TYPCATEGORY_STRING)
 				{
 					/* STRING always wins if available */
 					slot_category[i] = current_category;
-					slot_has_preferred_type[i] =
-						IsPreferredType(current_category, current_type);
+					slot_has_preferred_type[i] = current_is_preferred;
 				}
 				else
 				{
@@ -633,7 +633,7 @@ func_select_candidate(int nargs,
 				}
 			}
 		}
-		if (have_conflict && slot_category[i] != STRING_TYPE)
+		if (have_conflict && slot_category[i] != TYPCATEGORY_STRING)
 		{
 			/* Failed to resolve category conflict at this position */
 			resolved_unknowns = false;
@@ -658,14 +658,15 @@ func_select_candidate(int nargs,
 				if (input_base_typeids[i] != UNKNOWNOID)
 					continue;
 				current_type = current_typeids[i];
-				current_category = TypeCategory(current_type);
+				get_type_category_preferred(current_type,
+											&current_category,
+											&current_is_preferred);
 				if (current_category != slot_category[i])
 				{
 					keepit = false;
 					break;
 				}
-				if (slot_has_preferred_type[i] &&
-					!IsPreferredType(current_category, current_type))
+				if (slot_has_preferred_type[i] && !current_is_preferred)
 				{
 					keepit = false;
 					break;

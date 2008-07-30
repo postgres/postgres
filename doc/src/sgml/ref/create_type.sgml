@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.74 2008/05/27 18:05:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.75 2008/07/30 17:05:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -38,6 +38,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
     [ , PASSEDBYVALUE ]
     [ , ALIGNMENT = <replaceable class="parameter">alignment</replaceable> ]
     [ , STORAGE = <replaceable class="parameter">storage</replaceable> ]
+    [ , CATEGORY = <replaceable class="parameter">category</replaceable> ]
+    [ , PREFERRED = <replaceable class="parameter">preferred</replaceable> ]
     [ , DEFAULT = <replaceable class="parameter">default</replaceable> ]
     [ , ELEMENT = <replaceable class="parameter">element</replaceable> ]
     [ , DELIMITER = <replaceable class="parameter">delimiter</replaceable> ]
@@ -282,6 +284,27 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
+   The <replaceable class="parameter">category</replaceable> and
+   <replaceable class="parameter">preferred</replaceable> parameters can be
+   used to help control which implicit cast will be applied in ambiguous
+   situations.  Each data type belongs to a category named by a single ASCII
+   character, and each type is either <quote>preferred</> or not within its
+   category.  The parser will prefer casting to preferred types (but only from
+   other types within the same category) when this rule is helpful in
+   resolving overloaded functions or operators.  For more details see <xref
+   linkend="typeconv">.  For types that have no implicit casts to or from any
+   other types, it is sufficient to leave these settings at the defaults.
+   However, for a group of related types that have implicit casts, it is often
+   helpful to mark them all as belonging to a category and select one or two
+   of the <quote>most general</> types as being preferred within the category.
+   The <replaceable class="parameter">category</replaceable> parameter is
+   especially useful when adding a user-defined type to an existing built-in
+   category, such as the numeric or string types.  However, it is also
+   possible to create new entirely-user-defined type categories.  Select any
+   ASCII character other than an upper-case letter to name such a category.
+  </para>
+
+  <para>
    A default value can be specified, in case a user wants columns of the
    data type to default to something other than the null value.
    Specify the default with the <literal>DEFAULT</literal> key word.
@@ -490,6 +513,31 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
       <literal>plain</literal>, <literal>external</literal>,
       <literal>extended</literal>, or <literal>main</literal>; the
       default is <literal>plain</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">category</replaceable></term>
+    <listitem>
+     <para>
+      The category code (a single ASCII character) for this type.
+      The default is <literal>'U'</> for <quote>user-defined type</>.
+      Other standard category codes can be found in
+      <xref linkend="catalog-typcategory-table">.  You may also choose
+      other ASCII characters in order to create custom categories.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">preferred</replaceable></term>
+    <listitem>
+     <para>
+      True if this type is a preferred type within its type category,
+      else false.  The default is true (which is appropriate for
+      all entries in category <literal>U</>, but is usually not
+      appropriate for new types in other categories &mdash; beware!).
      </para>
     </listitem>
    </varlistentry>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type_fn.h,v 1.1 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type_fn.h,v 1.2 2008/07/30 17:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,8 @@ extern Oid TypeCreate(Oid newTypeOid,
 		   char relationKind,
 		   int16 internalSize,
 		   char typeType,
+		   char typeCategory,
+		   bool typePreferred,
 		   char typDelim,
 		   Oid inputProcedure,
 		   Oid outputProcedure,

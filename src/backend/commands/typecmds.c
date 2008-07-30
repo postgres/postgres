@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.119 2008/06/14 18:04:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.120 2008/07/30 17:05:04 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -111,6 +111,8 @@ DefineType(List *names, List *parameters)
 	List	   *analyzeName = NIL;
 	char	   *defaultValue = NULL;
 	bool		byValue = false;
+	char		category = TYPCATEGORY_USER;
+	bool		preferred = true;
 	char		delimiter = DEFAULT_TYPDELIM;
 	char		alignment = 'i';	/* default alignment */
 	char		storage = 'p';	/* default TOAST storage method */
@@ -188,8 +190,6 @@ DefineType(List *names, List *parameters)
 
 		if (pg_strcasecmp(defel->defname, "internallength") == 0)
 			internalLength = defGetTypeLength(defel);
-		else if (pg_strcasecmp(defel->defname, "externallength") == 0)
-			;					/* ignored -- remove after 7.3 */
 		else if (pg_strcasecmp(defel->defname, "input") == 0)
 			inputName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "output") == 0)
@@ -205,11 +205,26 @@ DefineType(List *names, List *parameters)
 		else if (pg_strcasecmp(defel->defname, "analyze") == 0 ||
 				 pg_strcasecmp(defel->defname, "analyse") == 0)
 			analyzeName = defGetQualifiedName(defel);
+		else if (pg_strcasecmp(defel->defname, "category") == 0)
+		{
+			char	   *p = defGetString(defel);
+
+			category = p[0];
+			/* restrict to non-control ASCII */
+			if (category < 32 || category > 126)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid type category \"%s\": must be simple ASCII",
+								p)));
+		}
+		else if (pg_strcasecmp(defel->defname, "preferred") == 0)
+			preferred = defGetBoolean(defel);
 		else if (pg_strcasecmp(defel->defname, "delimiter") == 0)
 		{
 			char	   *p = defGetString(defel);
 
 			delimiter = p[0];
+			/* XXX shouldn't we restrict the delimiter? */
 		}
 		else if (pg_strcasecmp(defel->defname, "element") == 0)
 		{
@@ -421,6 +436,8 @@ DefineType(List *names, List *parameters)
 				   0,			/* relation kind (ditto) */
 				   internalLength,		/* internal size */
 				   TYPTYPE_BASE,	/* type-type (base type) */
+				   category,	/* type-category */
+				   preferred,	/* is it a preferred type? */
 				   delimiter,	/* array element delimiter */
 				   inputOid,	/* input procedure */
 				   outputOid,	/* output procedure */
@@ -457,6 +474,8 @@ DefineType(List *names, List *parameters)
 			   0,				/* relation kind (ditto) */
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
+			   TYPCATEGORY_ARRAY, /* type-category (array) */
+			   true,			/* all array types are preferred */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
 			   F_ARRAY_OUT,		/* output procedure */
@@ -624,6 +643,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	Oid			analyzeProcedure;
 	bool		byValue;
 	Oid			typelem;
+	char		category;
 	char		delimiter;
 	char		alignment;
 	char		storage;
@@ -704,6 +724,9 @@ DefineDomain(CreateDomainStmt *stmt)
 
 	/* Storage Length */
 	internalLength = baseType->typlen;
+
+	/* Type Category */
+	category = baseType->typcategory;
 
 	/* Array element type (in case base type is an array) */
 	typelem = baseType->typelem;
@@ -895,6 +918,8 @@ DefineDomain(CreateDomainStmt *stmt)
 				   0,			/* relation kind (ditto) */
 				   internalLength,		/* internal size */
 				   TYPTYPE_DOMAIN,		/* type-type (domain type) */
+				   category,	/* type-category */
+				   false,		/* domains are never preferred types */
 				   delimiter,	/* array element delimiter */
 				   inputProcedure,		/* input procedure */
 				   outputProcedure,		/* output procedure */
@@ -1006,6 +1031,8 @@ DefineEnum(CreateEnumStmt *stmt)
 				   0,			/* relation kind (ditto) */
 				   sizeof(Oid), /* internal size */
 				   TYPTYPE_ENUM,	/* type-type (enum type) */
+				   TYPCATEGORY_ENUM,	/* type-category (enum type) */
+				   true,		/* all enum types are preferred */
 				   DEFAULT_TYPDELIM,	/* array element delimiter */
 				   F_ENUM_IN,	/* input procedure */
 				   F_ENUM_OUT,	/* output procedure */
@@ -1042,6 +1069,8 @@ DefineEnum(CreateEnumStmt *stmt)
 			   0,				/* relation kind (ditto) */
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
+			   TYPCATEGORY_ARRAY, /* type-category (array) */
+			   true,			/* all array types are preferred */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
 			   F_ARRAY_OUT,		/* output procedure */

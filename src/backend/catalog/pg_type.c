@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.119 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.120 2008/07/30 17:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,8 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	values[i++] = Int16GetDatum(sizeof(int4));	/* typlen */
 	values[i++] = BoolGetDatum(true);	/* typbyval */
 	values[i++] = CharGetDatum(TYPTYPE_PSEUDO); /* typtype */
+	values[i++] = CharGetDatum(TYPCATEGORY_PSEUDOTYPE); /* typcategory */
+	values[i++] = BoolGetDatum(false);	/* typispreferred */
 	values[i++] = BoolGetDatum(false);	/* typisdefined */
 	values[i++] = CharGetDatum(DEFAULT_TYPDELIM);		/* typdelim */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typrelid */
@@ -173,6 +175,8 @@ TypeCreate(Oid newTypeOid,
 		   char relationKind,	/* ditto */
 		   int16 internalSize,
 		   char typeType,
+		   char typeCategory,
+		   bool typePreferred,
 		   char typDelim,
 		   Oid inputProcedure,
 		   Oid outputProcedure,
@@ -253,6 +257,8 @@ TypeCreate(Oid newTypeOid,
 	values[i++] = Int16GetDatum(internalSize);	/* typlen */
 	values[i++] = BoolGetDatum(passedByValue);	/* typbyval */
 	values[i++] = CharGetDatum(typeType);		/* typtype */
+	values[i++] = CharGetDatum(typeCategory);	/* typcategory */
+	values[i++] = BoolGetDatum(typePreferred);	/* typispreferred */
 	values[i++] = BoolGetDatum(true);	/* typisdefined */
 	values[i++] = CharGetDatum(typDelim);		/* typdelim */
 	values[i++] = ObjectIdGetDatum(relationOid);		/* typrelid */

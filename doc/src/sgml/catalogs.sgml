@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.171 2008/07/18 03:32:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.172 2008/07/30 17:05:04 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -994,7 +994,7 @@
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
-       The number of direct ancestors this column has.  A column with a 
+       The number of direct ancestors this column has.  A column with a
        nonzero number of ancestors cannot be dropped nor renamed
       </entry>
      </row>
@@ -1005,7 +1005,7 @@
 
   <para>
    In a dropped column's <structname>pg_attribute</structname> entry,
-   <structfield>atttypid</structfield> is reset to zero, but 
+   <structfield>atttypid</structfield> is reset to zero, but
    <structfield>attlen</structfield> and the other fields copied from
    <structname>pg_type</> are still valid.  This arrangement is needed
    to cope with the situation where the dropped column's data type was
@@ -1118,7 +1118,7 @@
       <entry><structfield>rolconnlimit</structfield></entry>
       <entry><type>int4</type></entry>
       <entry>
-       For roles that can log in, this sets maximum number of concurrent 
+       For roles that can log in, this sets maximum number of concurrent
        connections this role can make.  -1 means no limit
       </entry>
      </row>
@@ -2169,7 +2169,7 @@
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
-       Sets maximum number of concurrent connections that can be made 
+       Sets maximum number of concurrent connections that can be made
        to this database.  -1 means no limit
       </entry>
      </row>
@@ -4855,7 +4855,7 @@
 
   <para>
    The catalog <structname>pg_type</structname> stores information about data
-   types.  Base types (scalar types) are created with
+   types.  Base types and enum types (scalar types) are created with
    <xref linkend="sql-createtype" endterm="sql-createtype-title">, and
    domains with
    <xref linkend="sql-createdomain" endterm="sql-createdomain-title">.
@@ -4926,8 +4926,7 @@
        where Datum is 8 bytes).
        Variable-length types are always passed by reference. Note that
        <structfield>typbyval</structfield> can be false even if the
-       length would allow pass-by-value; this is currently true for
-       type <type>float4</type>, for example
+       length would allow pass-by-value
       </entry>
      </row>
 
@@ -4944,6 +4943,28 @@
        or <literal>p</literal> for a pseudo-type.
        See also <structfield>typrelid</structfield> and
        <structfield>typbasetype</structfield>
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>typcategory</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       <structfield>typcategory</structfield> is an arbitrary classification
+       of data types that is used by the parser to determine which implicit
+       casts should be <quote>preferred</>.
+       See <xref linkend="catalog-typcategory-table">
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>typispreferred</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       True if the type is a preferred cast target within its
+       <structfield>typcategory</structfield>
       </entry>
      </row>
 
@@ -5217,6 +5238,86 @@
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   <xref linkend="catalog-typcategory-table"> lists the system-defined values
+   of <structfield>typcategory</>.  Any future additions to this list will
+   also be upper-case ASCII letters.  All other ASCII characters are reserved
+   for user-defined categories.
+  </para>
+
+  <table id="catalog-typcategory-table">
+   <title><structfield>typcategory</> Codes</title>
+
+   <tgroup cols=2>
+    <thead>
+     <row>
+      <entry>Code</entry>
+      <entry>Category</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>A</literal></entry>
+      <entry>Array types</entry>
+     </row>
+     <row>
+      <entry><literal>B</literal></entry>
+      <entry>Boolean types</entry>
+     </row>
+     <row>
+      <entry><literal>C</literal></entry>
+      <entry>Composite types</entry>
+     </row>
+     <row>
+      <entry><literal>D</literal></entry>
+      <entry>Date/time types</entry>
+     </row>
+     <row>
+      <entry><literal>E</literal></entry>
+      <entry>Enum types</entry>
+     </row>
+     <row>
+      <entry><literal>G</literal></entry>
+      <entry>Geometric types</entry>
+     </row>
+     <row>
+      <entry><literal>I</literal></entry>
+      <entry>Network address types</entry>
+     </row>
+     <row>
+      <entry><literal>N</literal></entry>
+      <entry>Numeric types</entry>
+     </row>
+     <row>
+      <entry><literal>P</literal></entry>
+      <entry>Pseudo-types</entry>
+     </row>
+     <row>
+      <entry><literal>S</literal></entry>
+      <entry>String types</entry>
+     </row>
+     <row>
+      <entry><literal>T</literal></entry>
+      <entry>Timespan types</entry>
+     </row>
+     <row>
+      <entry><literal>U</literal></entry>
+      <entry>User-defined types</entry>
+     </row>
+     <row>
+      <entry><literal>V</literal></entry>
+      <entry>Bit-string types</entry>
+     </row>
+     <row>
+      <entry><literal>X</literal></entry>
+      <entry><type>unknown</> type</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
  </sect1>
 
  <sect1 id="views-overview">
@@ -5787,7 +5888,7 @@
    for another transaction, it does so by attempting to acquire share lock on
    the other transaction ID (either virtual or permanent ID depending on the
    situation). That will succeed only when the other transaction
-   terminates and releases its locks. 
+   terminates and releases its locks.
   </para>
 
   <para>
@@ -6036,7 +6137,7 @@
   <para>
    The view <structname>pg_roles</structname> provides access to
    information about database roles.  This is simply a publicly
-   readable view of 
+   readable view of
    <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>
    that blanks out the password field.
   </para>
@@ -6121,7 +6222,7 @@
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
-       For roles that can log in, this sets maximum number of concurrent 
+       For roles that can log in, this sets maximum number of concurrent
        connections this role can make.  -1 means no limit
       </entry>
      </row>
@@ -6316,7 +6417,7 @@
     </tbody>
    </tgroup>
   </table>
-  
+
   <para>
    The <structname>pg_settings</structname> view cannot be inserted into or
    deleted from, but it can be updated.  An <command>UPDATE</command> applied
@@ -6774,7 +6875,7 @@
   <para>
    The view <structname>pg_user</structname> provides access to
    information about database users.  This is simply a publicly
-   readable view of 
+   readable view of
    <link linkend="view-pg-shadow"><structname>pg_shadow</structname></link>
    that blanks out the password field.
   </para>

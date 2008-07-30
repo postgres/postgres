@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.177 2008/06/14 18:04:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.178 2008/07/30 17:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1012,7 +1012,7 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
 	ScanKeyData skey[1];
 	SysScanDesc scan;
 	HeapTuple	tup;
-	CATEGORY	tcategory;
+	TYPCATEGORY	tcategory;
 
 	/* If it's a domain, look at the base type instead */
 	type_id = getBaseType(type_id);
