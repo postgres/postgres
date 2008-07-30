@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.120 2008/07/30 17:05:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.121 2008/07/30 19:35:13 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -112,7 +112,7 @@ DefineType(List *names, List *parameters)
 	char	   *defaultValue = NULL;
 	bool		byValue = false;
 	char		category = TYPCATEGORY_USER;
-	bool		preferred = true;
+	bool		preferred = false;
 	char		delimiter = DEFAULT_TYPDELIM;
 	char		alignment = 'i';	/* default alignment */
 	char		storage = 'p';	/* default TOAST storage method */
@@ -475,7 +475,7 @@ DefineType(List *names, List *parameters)
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
 			   TYPCATEGORY_ARRAY, /* type-category (array) */
-			   true,			/* all array types are preferred */
+			   false,			/* array types are never preferred */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
 			   F_ARRAY_OUT,		/* output procedure */
@@ -919,7 +919,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   internalLength,		/* internal size */
 				   TYPTYPE_DOMAIN,		/* type-type (domain type) */
 				   category,	/* type-category */
-				   false,		/* domains are never preferred types */
+				   false,		/* domain types are never preferred */
 				   delimiter,	/* array element delimiter */
 				   inputProcedure,		/* input procedure */
 				   outputProcedure,		/* output procedure */
@@ -1032,7 +1032,7 @@ DefineEnum(CreateEnumStmt *stmt)
 				   sizeof(Oid), /* internal size */
 				   TYPTYPE_ENUM,	/* type-type (enum type) */
 				   TYPCATEGORY_ENUM,	/* type-category (enum type) */
-				   true,		/* all enum types are preferred */
+				   false,		/* enum types are never preferred */
 				   DEFAULT_TYPDELIM,	/* array element delimiter */
 				   F_ENUM_IN,	/* input procedure */
 				   F_ENUM_OUT,	/* output procedure */
@@ -1070,7 +1070,7 @@ DefineEnum(CreateEnumStmt *stmt)
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
 			   TYPCATEGORY_ARRAY, /* type-category (array) */
-			   true,			/* all array types are preferred */
+			   false,			/* array types are never preferred */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
 			   F_ARRAY_OUT,		/* output procedure */

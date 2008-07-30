@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.56 2008/07/30 17:05:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.57 2008/07/30 19:35:12 tgl Exp $ -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>
@@ -160,24 +160,12 @@ categories</firstterm>, including <type>boolean</type>, <type>numeric</type>,
 <type>timespan</type>, <type>geometric</type>, <type>network</type>, and
 user-defined.  (For a list see <xref linkend="catalog-typcategory-table">;
 but note it is also possible to create custom type categories.)  Within each
-category there are one or more <firstterm>preferred types</firstterm>, which
+category there can be one or more <firstterm>preferred types</firstterm>, which
 are preferentially selected when there is ambiguity.  With careful selection
 of preferred types and available implicit casts, it is possible to ensure that
 ambiguous expressions (those with multiple candidate parsing solutions) can be
 resolved in a useful way.
 </para>
-
-<note>
- <para>
-  For what are now historical reasons, types in the <quote>user-defined</>
-  category are normally always marked as <quote>preferred</>.  Since all types
-  in this category are preferred, the heuristic that favors preferred types
-  accomplishes nothing, and thus this situation is equivalent to treating them
-  all as non-preferred.  The <quote>preferred</> marking is useful within the
-  system-defined type categories, and can be useful within custom type
-  categories.
- </para>
-</note>
 
 <para>
 All type conversion rules are designed with several principles in mind:

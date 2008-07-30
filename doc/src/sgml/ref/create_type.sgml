@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.75 2008/07/30 17:05:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.76 2008/07/30 19:35:12 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -535,9 +535,9 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       True if this type is a preferred type within its type category,
-      else false.  The default is true (which is appropriate for
-      all entries in category <literal>U</>, but is usually not
-      appropriate for new types in other categories &mdash; beware!).
+      else false.  The default is false.  Be very careful about creating
+      a new preferred type within an existing type category, as this
+      could cause surprising changes in behavior.
      </para>
     </listitem>
    </varlistentry>

@@ -22,7 +22,7 @@ CREATE TYPE city_budget (
    output = int44out, 
    element = int4,
    category = 'x',   -- just to verify the system will take it
-   preferred = false -- ditto
+   preferred = true  -- ditto
 );
 
 -- Test creation and destruction of shell types

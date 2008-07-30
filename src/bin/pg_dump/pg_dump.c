@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.498 2008/07/30 17:05:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.499 2008/07/30 19:35:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5780,7 +5780,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "typmodin::pg_catalog.oid as typmodinoid, "
 						  "typmodout::pg_catalog.oid as typmodoutoid, "
 						  "typanalyze::pg_catalog.oid as typanalyzeoid, "
-						  "'U' as typcategory, true as typispreferred, "
+						  "'U' as typcategory, false as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
@@ -5799,7 +5799,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "typsend::pg_catalog.oid as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "typanalyze::pg_catalog.oid as typanalyzeoid, "
-						  "'U' as typcategory, true as typispreferred, "
+						  "'U' as typcategory, false as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
@@ -5818,7 +5818,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "typsend::pg_catalog.oid as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "0 as typanalyzeoid, "
-						  "'U' as typcategory, true as typispreferred, "
+						  "'U' as typcategory, false as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
@@ -5837,7 +5837,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "0 as typanalyzeoid, "
-						  "'U' as typcategory, true as typispreferred, "
+						  "'U' as typcategory, false as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
@@ -5860,7 +5860,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "0 as typanalyzeoid, "
-						  "'U' as typcategory, true as typispreferred, "
+						  "'U' as typcategory, false as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "NULL as typdefaultbin, typdefault "
 						  "FROM pg_type "
@@ -5883,7 +5883,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "0 as typanalyzeoid, "
-						  "'U' as typcategory, true as typispreferred, "
+						  "'U' as typcategory, false as typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
 						  "NULL as typdefaultbin, NULL as typdefault "
 						  "FROM pg_type "
@@ -5902,7 +5902,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "0 as typmodinoid, 0 as typmodoutoid, "
 						  "0 as typanalyzeoid, "
-						  "'U' as typcategory, true as typispreferred, "
+						  "'U' as typcategory, false as typispreferred, "
 						  "typdelim, typbyval, typalign, "
 						  "'p'::char as typstorage, "
 						  "NULL as typdefaultbin, NULL as typdefault "
@@ -6022,8 +6022,8 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 		appendStringLiteralAH(q, typcategory, fout);
 	}
 
-	if (strcmp(typispreferred, "f") == 0)
-		appendPQExpBuffer(q, ",\n    PREFERRED = false");
+	if (strcmp(typispreferred, "t") == 0)
+		appendPQExpBuffer(q, ",\n    PREFERRED = true");
 
 	if (typdelim && strcmp(typdelim, ",") != 0)
 	{
