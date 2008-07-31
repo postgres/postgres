@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.234 2008/07/10 02:14:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.235 2008/07/31 22:47:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -826,6 +826,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/*
 		 * Calculate pathkeys that represent result ordering requirements
 		 */
+		Assert(parse->distinctClause == NIL);
 		sort_pathkeys = make_pathkeys_for_sortclauses(root,
 													  parse->sortClause,
 													  tlist,
@@ -864,17 +865,29 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * Calculate pathkeys that represent grouping/ordering requirements.
 		 * Stash them in PlannerInfo so that query_planner can canonicalize
 		 * them after EquivalenceClasses have been formed.
+		 *
+		 * Note: for the moment, DISTINCT is always implemented via sort/uniq,
+		 * and we set the sort_pathkeys to be the more rigorous of the
+		 * DISTINCT and ORDER BY requirements.  This should be changed
+		 * someday, but DISTINCT ON is a bit of a problem ...
 		 */
 		root->group_pathkeys =
 			make_pathkeys_for_sortclauses(root,
 										  parse->groupClause,
 										  tlist,
 										  false);
-		root->sort_pathkeys =
-			make_pathkeys_for_sortclauses(root,
-										  parse->sortClause,
-										  tlist,
-										  false);
+		if (list_length(parse->distinctClause) > list_length(parse->sortClause))
+			root->sort_pathkeys =
+				make_pathkeys_for_sortclauses(root,
+											  parse->distinctClause,
+											  tlist,
+											  false);
+		else
+			root->sort_pathkeys =
+				make_pathkeys_for_sortclauses(root,
+											  parse->sortClause,
+											  tlist,
+											  false);
 
 		/*
 		 * Will need actual number of aggregates for estimating costs.
@@ -903,9 +916,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * by ORDER BY --- but that might just leave us failing to exploit an
 		 * available sort order at all. Needs more thought...)
 		 */
-		if (parse->groupClause)
+		if (root->group_pathkeys)
 			root->query_pathkeys = root->group_pathkeys;
-		else if (parse->sortClause)
+		else if (root->sort_pathkeys)
 			root->query_pathkeys = root->sort_pathkeys;
 		else
 			root->query_pathkeys = NIL;
@@ -1172,7 +1185,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	 * If we were not able to make the plan come out in the right order, add
 	 * an explicit sort step.
 	 */
-	if (parse->sortClause)
+	if (sort_pathkeys)
 	{
 		if (!pathkeys_contained_in(sort_pathkeys, current_pathkeys))
 		{

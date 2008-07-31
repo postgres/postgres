@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.373 2008/07/18 20:26:06 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.374 2008/07/31 22:47:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -711,6 +711,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Transform sorting/grouping stuff.  Do ORDER BY first because both
 	 * transformGroupClause and transformDistinctClause need the results.
+	 * Note that these functions can also change the targetList, so it's
+	 * passed to them by reference.
 	 */
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
@@ -725,8 +727,9 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->distinctClause = transformDistinctClause(pstate,
 												  stmt->distinctClause,
 												  &qry->targetList,
-												  &qry->sortClause);
+												  qry->sortClause);
 
+	/* transform LIMIT */
 	qry->limitOffset = transformLimitClause(pstate, stmt->limitOffset,
 											"OFFSET");
 	qry->limitCount = transformLimitClause(pstate, stmt->limitCount,

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.368 2008/07/18 03:32:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.369 2008/07/31 22:47:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -613,14 +613,19 @@ typedef struct RangeTblEntry
  * tleSortGroupRef must match ressortgroupref of exactly one entry of the
  * associated targetlist; that is the expression to be sorted (or grouped) by.
  * sortop is the OID of the ordering operator (a "<" or ">" operator).
- * nulls_first does about what you'd expect.
+ * nulls_first means about what you'd expect.
  *
  * SortClauses are also used to identify targets that we will do a "Unique"
  * filter step on (for SELECT DISTINCT and SELECT DISTINCT ON).  The
- * distinctClause list is simply a copy of the relevant members of the
- * sortClause list.  Note that distinctClause can be a subset of sortClause,
- * but cannot have members not present in sortClause; and the members that
- * do appear must be in the same order as in sortClause.
+ * distinctClause list is a list of SortClauses for the expressions to be
+ * unique-ified.  (As per comment for GroupClause, this overspecifies the
+ * semantics.)  In SELECT DISTINCT, the distinctClause list is typically
+ * longer than the ORDER BY list, while in SELECT DISTINCT ON it's typically
+ * shorter.  The two lists must match up to the end of the shorter one ---
+ * the parser rearranges the distinctClause if necessary to make this true.
+ * (This restriction ensures that only one sort step is needed to both
+ * satisfy the ORDER BY and set up for the Unique step.  This is semantically
+ * necessary for DISTINCT ON, and offers no real drawback for DISTINCT.)
  */
 typedef struct SortClause
 {

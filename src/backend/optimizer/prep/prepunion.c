@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.147 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.148 2008/07/31 22:47:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,7 @@ static List *generate_setop_tlist(List *colTypes, int flag,
 static List *generate_append_tlist(List *colTypes, bool flag,
 					  List *input_plans,
 					  List *refnames_tlist);
+static List *generate_setop_sortlist(List *targetlist);
 static void expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte,
 						 Index rti);
 static void make_inh_translation_lists(Relation oldrelation,
@@ -319,7 +320,7 @@ generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 	{
 		List	   *sortList;
 
-		sortList = addAllTargetsToSortList(NULL, NIL, tlist, false);
+		sortList = generate_setop_sortlist(tlist);
 		if (sortList)
 		{
 			plan = (Plan *) make_sort_from_sortclauses(root, sortList, plan);
@@ -384,7 +385,7 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 	 * Sort the child results, then add a SetOp plan node to generate the
 	 * correct output.
 	 */
-	sortList = addAllTargetsToSortList(NULL, NIL, tlist, false);
+	sortList = generate_setop_sortlist(tlist);
 
 	if (sortList == NIL)		/* nothing to sort on? */
 	{
@@ -673,6 +674,31 @@ generate_append_tlist(List *colTypes, bool flag,
 	pfree(colTypmods);
 
 	return tlist;
+}
+
+/*
+ * generate_setop_sortlist
+ *		Build a SortClause list enumerating all the non-resjunk tlist entries,
+ *		using default ordering properties.
+ */
+static List *
+generate_setop_sortlist(List *targetlist)
+{
+	List	   *sortlist = NIL;
+	ListCell   *l;
+
+	foreach(l, targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (!tle->resjunk)
+			sortlist = addTargetToSortList(NULL, tle,
+										   sortlist, targetlist,
+										   SORTBY_DEFAULT,
+										   SORTBY_NULLS_DEFAULT,
+										   NIL, false);
+	}
+	return sortlist;
 }
 
 
