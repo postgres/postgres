@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.121 2008/07/30 19:35:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.122 2008/07/31 16:27:16 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -92,14 +92,13 @@ static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 
 /*
  * DefineType
- *		Registers a new type.
+ *		Registers a new base type.
  */
 void
 DefineType(List *names, List *parameters)
 {
 	char	   *typeName;
 	Oid			typeNamespace;
-	AclResult	aclresult;
 	int16		internalLength = -1;	/* default: variable-length */
 	Oid			elemType = InvalidOid;
 	List	   *inputName = NIL;
@@ -130,14 +129,33 @@ DefineType(List *names, List *parameters)
 	Oid			resulttype;
 	Relation	pg_type;
 
+	/*
+	 * As of Postgres 8.4, we require superuser privilege to create a base
+	 * type.  This is simple paranoia: there are too many ways to mess up the
+	 * system with an incorrect type definition (for instance, representation
+	 * parameters that don't match what the C code expects).  In practice
+	 * it takes superuser privilege to create the I/O functions, and so the
+	 * former requirement that you own the I/O functions pretty much forced
+	 * superuserness anyway.  We're just making doubly sure here.
+	 *
+	 * XXX re-enable NOT_USED code sections below if you remove this test.
+	 */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to create a base type")));
+
 	/* Convert list of names to a name and namespace */
 	typeNamespace = QualifiedNameGetCreationNamespace(names, &typeName);
 
+#ifdef NOT_USED
+	/* XXX this is unnecessary given the superuser check above */
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(typeNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 					   get_namespace_name(typeNamespace));
+#endif
 
 	/*
 	 * Look to see if type already exists (presumably as a shell; if not,
@@ -398,6 +416,8 @@ DefineType(List *names, List *parameters)
 	 * don't have a way to make the type go away if the grant option is
 	 * revoked, so ownership seems better.
 	 */
+#ifdef NOT_USED
+	/* XXX this is unnecessary given the superuser check above */
 	if (inputOid && !pg_proc_ownercheck(inputOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 					   NameListToString(inputName));
@@ -419,6 +439,7 @@ DefineType(List *names, List *parameters)
 	if (analyzeOid && !pg_proc_ownercheck(analyzeOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 					   NameListToString(analyzeName));
+#endif
 
 	/* Preassign array type OID so we can insert it in pg_type.typarray */
 	pg_type = heap_open(TypeRelationId, AccessShareLock);
