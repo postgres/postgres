@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.123 2008/05/12 20:02:02 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.124 2008/08/01 13:16:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "commands/prepare.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
+#include "pg_trace.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
@@ -711,6 +712,8 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 
 	AssertArg(PortalIsValid(portal));
 
+	TRACE_POSTGRESQL_QUERY_EXECUTE_START();
+
 	/* Initialize completion tag to empty string */
 	if (completionTag)
 		completionTag[0] = '\0';
@@ -857,6 +860,8 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 
 	if (log_executor_stats && portal->strategy != PORTAL_MULTI_QUERY)
 		ShowUsage("EXECUTOR STATISTICS");
+	
+	TRACE_POSTGRESQL_QUERY_EXECUTE_DONE();
 
 	return result;
 }
@@ -1237,6 +1242,8 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 			 */
 			PlannedStmt *pstmt = (PlannedStmt *) stmt;
 
+			TRACE_POSTGRESQL_QUERY_EXECUTE_START();
+
 			if (log_executor_stats)
 				ResetUsage();
 
@@ -1257,6 +1264,8 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 
 			if (log_executor_stats)
 				ShowUsage("EXECUTOR STATISTICS");
+
+			TRACE_POSTGRESQL_QUERY_EXECUTE_DONE();
 		}
 		else
 		{

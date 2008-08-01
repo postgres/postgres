@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.53 2008/03/24 18:22:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.54 2008/08/01 13:16:09 alvherre Exp $
  *
  *	Interface:
  *
@@ -26,6 +26,7 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
+#include "pg_trace.h"
 #include "pgstat.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
@@ -221,6 +222,8 @@ DeadLockCheck(PGPROC *proc)
 		 * deadlockDetails[] for the basic state with no rearrangements.
 		 */
 		int			nSoftEdges;
+
+		TRACE_POSTGRESQL_DEADLOCK_FOUND();
 
 		nWaitOrders = 0;
 		if (!FindLockCycle(proc, possibleConstraints, &nSoftEdges))

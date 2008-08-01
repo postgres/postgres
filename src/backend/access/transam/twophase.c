@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.43 2008/05/19 18:16:26 heikki Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.44 2008/08/01 13:16:08 alvherre Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -51,6 +51,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "pg_trace.h"
 #include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/procarray.h"
@@ -1387,6 +1388,9 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 	 */
 	if (max_prepared_xacts <= 0)
 		return;					/* nothing to do */
+
+	TRACE_POSTGRESQL_TWOPHASE_CHECKPOINT_START();
+
 	xids = (TransactionId *) palloc(max_prepared_xacts * sizeof(TransactionId));
 	nxids = 0;
 
@@ -1444,6 +1448,8 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 	}
 
 	pfree(xids);
+
+	TRACE_POSTGRESQL_TWOPHASE_CHECKPOINT_DONE();
 }
 
 /*

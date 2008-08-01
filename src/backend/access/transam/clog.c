@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.46 2008/01/01 19:45:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.47 2008/08/01 13:16:08 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "access/clog.h"
 #include "access/slru.h"
 #include "access/transam.h"
+#include "pg_trace.h"
 #include "postmaster/bgwriter.h"
 
 /*
@@ -313,7 +314,9 @@ void
 ShutdownCLOG(void)
 {
 	/* Flush dirty CLOG pages to disk */
+	TRACE_POSTGRESQL_CLOG_CHECKPOINT_START(false);
 	SimpleLruFlush(ClogCtl, false);
+	TRACE_POSTGRESQL_CLOG_CHECKPOINT_DONE(false);
 }
 
 /*
@@ -323,7 +326,9 @@ void
 CheckPointCLOG(void)
 {
 	/* Flush dirty CLOG pages to disk */
+	TRACE_POSTGRESQL_CLOG_CHECKPOINT_START(true);
 	SimpleLruFlush(ClogCtl, true);
+	TRACE_POSTGRESQL_CLOG_CHECKPOINT_DONE(true);
 }
 
 

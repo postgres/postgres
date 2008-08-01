@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.85 2008/06/19 00:46:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.86 2008/08/01 13:16:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,6 +107,7 @@
 #include "catalog/pg_operator.h"
 #include "commands/tablespace.h"
 #include "miscadmin.h"
+#include "pg_trace.h"
 #include "utils/datum.h"
 #include "utils/logtape.h"
 #include "utils/lsyscache.h"
@@ -121,6 +122,11 @@
 #ifdef TRACE_SORT
 bool		trace_sort = false;
 #endif
+
+#define HEAP_SORT	0
+#define INDEX_SORT	1
+#define DATUM_SORT	2
+
 #ifdef DEBUG_BOUNDED_SORT
 bool		optimize_bounded_sort = true;
 #endif
@@ -570,6 +576,8 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 			 nkeys, workMem, randomAccess ? 't' : 'f');
 #endif
 
+	TRACE_POSTGRESQL_SORT_START(HEAP_SORT, false, nkeys, workMem, randomAccess);
+
 	state->nKeys = nkeys;
 
 	state->comparetup = comparetup_heap;
@@ -635,6 +643,8 @@ tuplesort_begin_index_btree(Relation indexRel,
 #endif
 
 	state->nKeys = RelationGetNumberOfAttributes(indexRel);
+
+	TRACE_POSTGRESQL_SORT_START(INDEX_SORT, enforceUnique, state->nKeys, workMem, randomAccess);
 
 	state->comparetup = comparetup_index_btree;
 	state->copytup = copytup_index;
@@ -713,6 +723,8 @@ tuplesort_begin_datum(Oid datumType,
 			 "begin datum sort: workMem = %d, randomAccess = %c",
 			 workMem, randomAccess ? 't' : 'f');
 #endif
+
+	TRACE_POSTGRESQL_SORT_START(DATUM_SORT, false, 1, workMem, randomAccess);
 
 	state->nKeys = 1;			/* always a one-column sort */
 
@@ -824,6 +836,11 @@ tuplesort_end(Tuplesortstate *state)
 				 spaceUsed, pg_rusage_show(&state->ru_start));
 	}
 #endif
+
+	TRACE_POSTGRESQL_SORT_DONE(state->tapeset,
+			(state->tapeset ? LogicalTapeSetBlocks(state->tapeset) :
+			(state->allowedMem - state->availMem + 1023) / 1024));
+
 
 	MemoryContextSwitchTo(oldcontext);
 

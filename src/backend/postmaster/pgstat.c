@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.176 2008/06/30 10:58:47 heikki Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.177 2008/08/01 13:16:08 alvherre Exp $
  * ----------
  */
 #include "postgres.h"
@@ -48,6 +48,7 @@
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "pg_trace.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
@@ -2201,6 +2202,8 @@ pgstat_report_activity(const char *cmd_str)
 	volatile PgBackendStatus *beentry = MyBEEntry;
 	TimestampTz start_timestamp;
 	int			len;
+
+	TRACE_POSTGRESQL_STATEMENT_STATUS(cmd_str);
 
 	if (!pgstat_track_activities || !beentry)
 		return;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.234 2008/07/13 20:45:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.235 2008/08/01 13:16:08 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,8 @@
 #include <unistd.h>
 
 #include "miscadmin.h"
+#include "pg_trace.h"
+#include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
@@ -42,7 +44,6 @@
 #include "storage/smgr.h"
 #include "utils/rel.h"
 #include "utils/resowner.h"
-#include "pgstat.h"
 
 
 /* Note: these two macros only work on shared buffers, not local ones! */
@@ -213,12 +214,22 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 	if (isExtend)
 		blockNum = smgrnblocks(smgr);
 
+	TRACE_POSTGRESQL_BUFFER_READ_START(blockNum, smgr->smgr_rnode.spcNode,
+		smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode, isLocalBuf);
+
 	if (isLocalBuf)
 	{
 		ReadLocalBufferCount++;
 		bufHdr = LocalBufferAlloc(smgr, blockNum, &found);
 		if (found)
+		{
 			LocalBufferHitCount++;
+			TRACE_POSTGRESQL_BUFFER_HIT(true); /* true == local buffer */
+		}
+		else
+		{
+			TRACE_POSTGRESQL_BUFFER_MISS(true); /* ditto */
+		}
 	}
 	else
 	{
@@ -230,7 +241,14 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 		 */
 		bufHdr = BufferAlloc(smgr, blockNum, strategy, &found);
 		if (found)
+		{
 			BufferHitCount++;
+			TRACE_POSTGRESQL_BUFFER_HIT(false); /* false != local buffer */
+		}
+		else
+		{
+			TRACE_POSTGRESQL_BUFFER_MISS(false); /* ditto */
+		}
 	}
 
 	/* At this point we do NOT hold any locks. */
@@ -245,6 +263,11 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageHit;
+
+			TRACE_POSTGRESQL_BUFFER_READ_DONE(blockNum,
+				smgr->smgr_rnode.spcNode,
+				smgr->smgr_rnode.dbNode,
+				smgr->smgr_rnode.relNode, isLocalBuf, found);
 
 			return BufferDescriptorGetBuffer(bufHdr);
 		}
@@ -367,6 +390,10 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 
 	if (VacuumCostActive)
 		VacuumCostBalance += VacuumCostPageMiss;
+
+	TRACE_POSTGRESQL_BUFFER_READ_DONE(blockNum, smgr->smgr_rnode.spcNode,
+			smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode,
+			isLocalBuf, found);
 
 	return BufferDescriptorGetBuffer(bufHdr);
 }
@@ -1086,6 +1113,8 @@ BufferSync(int flags)
 	if (num_to_write == 0)
 		return;					/* nothing to do */
 
+	TRACE_POSTGRESQL_BUFFER_SYNC_START(NBuffers, num_to_write);
+
 	/*
 	 * Loop over all buffers again, and write the ones (still) marked with
 	 * BM_CHECKPOINT_NEEDED.  In this loop, we start at the clock sweep point
@@ -1117,6 +1146,7 @@ BufferSync(int flags)
 		{
 			if (SyncOneBuffer(buf_id, false) & BUF_WRITTEN)
 			{
+				TRACE_POSTGRESQL_BUFFER_SYNC_WRITTEN(buf_id);
 				BgWriterStats.m_buf_written_checkpoints++;
 				num_written++;
 
@@ -1146,6 +1176,8 @@ BufferSync(int flags)
 		if (++buf_id >= NBuffers)
 			buf_id = 0;
 	}
+
+	TRACE_POSTGRESQL_BUFFER_SYNC_DONE(NBuffers, num_written, num_to_write);
 
 	/*
 	 * Update checkpoint statistics. As noted above, this doesn't include
@@ -1653,11 +1685,13 @@ PrintBufferLeakWarning(Buffer buffer)
 void
 CheckPointBuffers(int flags)
 {
+	TRACE_POSTGRESQL_BUFFER_CHECKPOINT_START(flags);
 	CheckpointStats.ckpt_write_t = GetCurrentTimestamp();
 	BufferSync(flags);
 	CheckpointStats.ckpt_sync_t = GetCurrentTimestamp();
 	smgrsync();
 	CheckpointStats.ckpt_sync_end_t = GetCurrentTimestamp();
+	TRACE_POSTGRESQL_BUFFER_CHECKPOINT_DONE();
 }
 
 
@@ -1759,6 +1793,10 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	if (reln == NULL)
 		reln = smgropen(buf->tag.rnode);
 
+	TRACE_POSTGRESQL_BUFFER_FLUSH_START(reln->smgr_rnode.spcNode,
+		 reln->smgr_rnode.dbNode,
+		 reln->smgr_rnode.relNode);
+
 	/*
 	 * Force XLOG flush up to buffer's LSN.  This implements the basic WAL
 	 * rule that log updates must hit disk before any of the data-file changes
@@ -1784,6 +1822,9 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 			  false);
 
 	BufferFlushCount++;
+
+	TRACE_POSTGRESQL_BUFFER_FLUSH_DONE(reln->smgr_rnode.spcNode,
+		 reln->smgr_rnode.dbNode, reln->smgr_rnode.relNode);
 
 	/*
 	 * Mark the buffer as clean (unless BM_JUST_DIRTIED has become set) and
