@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.210 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.211 2008/08/02 21:31:59 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -142,6 +142,7 @@ _readQuery(void)
 	READ_NODE_FIELD(intoClause);
 	READ_BOOL_FIELD(hasAggs);
 	READ_BOOL_FIELD(hasSubLinks);
+	READ_BOOL_FIELD(hasDistinctOn);
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
 	READ_NODE_FIELD(targetList);
@@ -187,29 +188,15 @@ _readDeclareCursorStmt(void)
 }
 
 /*
- * _readSortClause
+ * _readSortGroupClause
  */
-static SortClause *
-_readSortClause(void)
+static SortGroupClause *
+_readSortGroupClause(void)
 {
-	READ_LOCALS(SortClause);
+	READ_LOCALS(SortGroupClause);
 
 	READ_UINT_FIELD(tleSortGroupRef);
-	READ_OID_FIELD(sortop);
-	READ_BOOL_FIELD(nulls_first);
-
-	READ_DONE();
-}
-
-/*
- * _readGroupClause
- */
-static GroupClause *
-_readGroupClause(void)
-{
-	READ_LOCALS(GroupClause);
-
-	READ_UINT_FIELD(tleSortGroupRef);
+	READ_OID_FIELD(eqop);
 	READ_OID_FIELD(sortop);
 	READ_BOOL_FIELD(nulls_first);
 
@@ -1030,10 +1017,8 @@ parseNodeString(void)
 
 	if (MATCH("QUERY", 5))
 		return_value = _readQuery();
-	else if (MATCH("SORTCLAUSE", 10))
-		return_value = _readSortClause();
-	else if (MATCH("GROUPCLAUSE", 11))
-		return_value = _readGroupClause();
+	else if (MATCH("SORTGROUPCLAUSE", 15))
+		return_value = _readSortGroupClause();
 	else if (MATCH("ROWMARKCLAUSE", 13))
 		return_value = _readRowMarkClause();
 	else if (MATCH("SETOPERATIONSTMT", 16))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.78 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.79 2008/08/02 21:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,49 +156,43 @@ get_sortgroupref_tle(Index sortref, List *targetList)
 
 /*
  * get_sortgroupclause_tle
- *		Find the targetlist entry matching the given SortClause
- *		(or GroupClause) by ressortgroupref, and return it.
- *
- * Because GroupClause is typedef'd as SortClause, either kind of
- * node can be passed without casting.
+ *		Find the targetlist entry matching the given SortGroupClause
+ *		by ressortgroupref, and return it.
  */
 TargetEntry *
-get_sortgroupclause_tle(SortClause *sortClause,
+get_sortgroupclause_tle(SortGroupClause *sgClause,
 						List *targetList)
 {
-	return get_sortgroupref_tle(sortClause->tleSortGroupRef, targetList);
+	return get_sortgroupref_tle(sgClause->tleSortGroupRef, targetList);
 }
 
 /*
  * get_sortgroupclause_expr
- *		Find the targetlist entry matching the given SortClause
- *		(or GroupClause) by ressortgroupref, and return its expression.
- *
- * Because GroupClause is typedef'd as SortClause, either kind of
- * node can be passed without casting.
+ *		Find the targetlist entry matching the given SortGroupClause
+ *		by ressortgroupref, and return its expression.
  */
 Node *
-get_sortgroupclause_expr(SortClause *sortClause, List *targetList)
+get_sortgroupclause_expr(SortGroupClause *sgClause, List *targetList)
 {
-	TargetEntry *tle = get_sortgroupclause_tle(sortClause, targetList);
+	TargetEntry *tle = get_sortgroupclause_tle(sgClause, targetList);
 
 	return (Node *) tle->expr;
 }
 
 /*
  * get_sortgrouplist_exprs
- *		Given a list of SortClauses (or GroupClauses), build a list
+ *		Given a list of SortGroupClauses, build a list
  *		of the referenced targetlist expressions.
  */
 List *
-get_sortgrouplist_exprs(List *sortClauses, List *targetList)
+get_sortgrouplist_exprs(List *sgClauses, List *targetList)
 {
 	List	   *result = NIL;
 	ListCell   *l;
 
-	foreach(l, sortClauses)
+	foreach(l, sgClauses)
 	{
-		SortClause *sortcl = (SortClause *) lfirst(l);
+		SortGroupClause *sortcl = (SortGroupClause *) lfirst(l);
 		Node	   *sortexpr;
 
 		sortexpr = get_sortgroupclause_expr(sortcl, targetList);

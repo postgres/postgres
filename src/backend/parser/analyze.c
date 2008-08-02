@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.374 2008/07/31 22:47:56 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.375 2008/08/02 21:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -724,10 +724,28 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 											&qry->targetList,
 											qry->sortClause);
 
-	qry->distinctClause = transformDistinctClause(pstate,
-												  stmt->distinctClause,
-												  &qry->targetList,
-												  qry->sortClause);
+	if (stmt->distinctClause == NIL)
+	{
+		qry->distinctClause = NIL;
+		qry->hasDistinctOn = false;
+	}
+	else if (linitial(stmt->distinctClause) == NULL)
+	{
+		/* We had SELECT DISTINCT */
+		qry->distinctClause = transformDistinctClause(pstate,
+													  &qry->targetList,
+													  qry->sortClause);
+		qry->hasDistinctOn = false;
+	}
+	else
+	{
+		/* We had SELECT DISTINCT ON */
+		qry->distinctClause = transformDistinctOnClause(pstate,
+														stmt->distinctClause,
+														&qry->targetList,
+														qry->sortClause);
+		qry->hasDistinctOn = true;
+	}
 
 	/* transform LIMIT */
 	qry->limitOffset = transformLimitClause(pstate, stmt->limitOffset,

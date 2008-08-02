@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.259 2008/05/15 17:37:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.260 2008/08/02 21:32:00 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1331,85 +1331,6 @@ is_pseudo_constant_clause_relids(Node *clause, Relids relids)
 		!contain_volatile_functions(clause))
 		return true;
 	return false;
-}
-
-
-/*****************************************************************************
- *		Tests on clauses of queries
- *
- * Possibly this code should go someplace else, since this isn't quite the
- * same meaning of "clause" as is used elsewhere in this module.  But I can't
- * think of a better place for it...
- *****************************************************************************/
-
-/*
- * Test whether a query uses DISTINCT ON, ie, has a distinct-list that is
- * not the same as the set of output columns.
- */
-bool
-has_distinct_on_clause(Query *query)
-{
-	ListCell   *l;
-
-	/* Is there a DISTINCT clause at all? */
-	if (query->distinctClause == NIL)
-		return false;
-
-	/*
-	 * If the DISTINCT list contains all the nonjunk targetlist items, and
-	 * nothing else (ie, no junk tlist items), then it's a simple DISTINCT,
-	 * else it's DISTINCT ON.  We do not require the lists to be in the same
-	 * order (since the parser may have adjusted the DISTINCT clause ordering
-	 * to agree with ORDER BY).  Furthermore, a non-DISTINCT junk tlist item
-	 * that is in the sortClause is also evidence of DISTINCT ON, since we
-	 * don't allow ORDER BY on junk tlist items when plain DISTINCT is used.
-	 *
-	 * This code assumes that the DISTINCT list is valid, ie, all its entries
-	 * match some entry of the tlist.
-	 */
-	foreach(l, query->targetList)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-
-		if (tle->ressortgroupref == 0)
-		{
-			if (tle->resjunk)
-				continue;		/* we can ignore unsorted junk cols */
-			return true;		/* definitely not in DISTINCT list */
-		}
-		if (targetIsInSortList(tle, InvalidOid, query->distinctClause))
-		{
-			if (tle->resjunk)
-				return true;	/* junk TLE in DISTINCT means DISTINCT ON */
-			/* else this TLE is okay, keep looking */
-		}
-		else
-		{
-			/* This TLE is not in DISTINCT list */
-			if (!tle->resjunk)
-				return true;	/* non-junk, non-DISTINCT, so DISTINCT ON */
-			if (targetIsInSortList(tle, InvalidOid, query->sortClause))
-				return true;	/* sorted, non-distinct junk */
-			/* unsorted junk is okay, keep looking */
-		}
-	}
-	/* It's a simple DISTINCT */
-	return false;
-}
-
-/*
- * Test whether a query uses simple DISTINCT, ie, has a distinct-list that
- * is the same as the set of output columns.
- */
-bool
-has_distinct_clause(Query *query)
-{
-	/* Is there a DISTINCT clause at all? */
-	if (query->distinctClause == NIL)
-		return false;
-
-	/* It's DISTINCT if it's not DISTINCT ON */
-	return !has_distinct_on_clause(query);
 }
 
 

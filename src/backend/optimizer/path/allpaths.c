@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.171 2008/06/27 03:56:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.172 2008/08/02 21:31:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -963,11 +963,12 @@ compare_tlist_datatypes(List *tlist, List *colTypes,
  *
  * 4. If the subquery uses DISTINCT ON, we must not push down any quals that
  * refer to non-DISTINCT output columns, because that could change the set
- * of rows returned.  This condition is vacuous for DISTINCT, because then
- * there are no non-DISTINCT output columns, but unfortunately it's fairly
- * expensive to tell the difference between DISTINCT and DISTINCT ON in the
- * parsetree representation.  It's cheaper to just make sure all the Vars
- * in the qual refer to DISTINCT columns.
+ * of rows returned.  (This condition is vacuous for DISTINCT, because then
+ * there are no non-DISTINCT output columns, so we needn't check.  But note
+ * we are assuming that the qual can't distinguish values that the DISTINCT
+ * operator sees as equal.  This is a bit shaky but we have no way to test
+ * for the case, and it's unlikely enough that we shouldn't refuse the
+ * optimization just because it could theoretically happen.)
  *
  * 5. We must not push down any quals that refer to subselect outputs that
  * return sets, else we'd introduce functions-returning-sets into the
@@ -1030,8 +1031,8 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 		Assert(tle != NULL);
 		Assert(!tle->resjunk);
 
-		/* If subquery uses DISTINCT or DISTINCT ON, check point 4 */
-		if (subquery->distinctClause != NIL &&
+		/* If subquery uses DISTINCT ON, check point 4 */
+		if (subquery->hasDistinctOn &&
 			!targetIsInSortList(tle, InvalidOid, subquery->distinctClause))
 		{
 			/* non-DISTINCT column, so fail */

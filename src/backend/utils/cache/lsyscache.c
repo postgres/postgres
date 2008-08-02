@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.158 2008/07/30 17:05:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.159 2008/08/02 21:32:00 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -254,11 +254,14 @@ get_compare_function_for_ordering_op(Oid opno, Oid *cmpfunc, bool *reverse)
  *		Get the OID of the datatype-specific btree equality operator
  *		associated with an ordering operator (a "<" or ">" operator).
  *
+ * If "reverse" isn't NULL, also set *reverse to FALSE if the operator is "<",
+ * TRUE if it's ">"
+ *
  * Returns InvalidOid if no matching equality operator can be found.
  * (This indicates that the operator is not a valid ordering operator.)
  */
 Oid
-get_equality_op_for_ordering_op(Oid opno)
+get_equality_op_for_ordering_op(Oid opno, bool *reverse)
 {
 	Oid			result = InvalidOid;
 	Oid			opfamily;
@@ -274,6 +277,8 @@ get_equality_op_for_ordering_op(Oid opno)
 									 opcintype,
 									 opcintype,
 									 BTEqualStrategyNumber);
+		if (reverse)
+			*reverse = (strategy == BTGreaterStrategyNumber);
 	}
 
 	return result;
@@ -666,16 +671,26 @@ get_op_btree_interpretation(Oid opno, List **opfamilies, List **opstrats)
 }
 
 /*
- * ops_in_same_btree_opfamily
- *		Return TRUE if there exists a btree opfamily containing both operators.
- *		(This implies that they have compatible notions of equality.)
+ * equality_ops_are_compatible
+ *		Return TRUE if the two given equality operators have compatible
+ *		semantics.
+ *
+ * This is trivially true if they are the same operator.  Otherwise,
+ * we look to see if they can be found in the same btree or hash opfamily.
+ * Either finding allows us to assume that they have compatible notions
+ * of equality.  (The reason we need to do these pushups is that one might
+ * be a cross-type operator; for instance int24eq vs int4eq.)
  */
 bool
-ops_in_same_btree_opfamily(Oid opno1, Oid opno2)
+equality_ops_are_compatible(Oid opno1, Oid opno2)
 {
-	bool		result = false;
+	bool		result;
 	CatCList   *catlist;
 	int			i;
+
+	/* Easy if they're the same operator */
+	if (opno1 == opno2)
+		return true;
 
 	/*
 	 * We search through all the pg_amop entries for opno1.
@@ -683,19 +698,22 @@ ops_in_same_btree_opfamily(Oid opno1, Oid opno2)
 	catlist = SearchSysCacheList(AMOPOPID, 1,
 								 ObjectIdGetDatum(opno1),
 								 0, 0, 0);
+
+	result = false;
 	for (i = 0; i < catlist->n_members; i++)
 	{
 		HeapTuple	op_tuple = &catlist->members[i]->tuple;
 		Form_pg_amop op_form = (Form_pg_amop) GETSTRUCT(op_tuple);
 
-		/* must be btree */
-		if (op_form->amopmethod != BTREE_AM_OID)
-			continue;
-
-		if (op_in_opfamily(opno2, op_form->amopfamily))
+		/* must be btree or hash */
+		if (op_form->amopmethod == BTREE_AM_OID ||
+			op_form->amopmethod == HASH_AM_OID)
 		{
-			result = true;
-			break;
+			if (op_in_opfamily(opno2, op_form->amopfamily))
+			{
+				result = true;
+				break;
+			}
 		}
 	}
 

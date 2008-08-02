@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.278 2008/07/18 03:32:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.279 2008/08/02 21:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ static void get_target_list(List *targetList, deparse_context *context,
 static void get_setop_query(Node *setOp, Query *query,
 				deparse_context *context,
 				TupleDesc resultDesc);
-static Node *get_rule_sortgroupclause(SortClause *srt, List *tlist,
+static Node *get_rule_sortgroupclause(SortGroupClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
 static char *get_variable(Var *var, int levelsup, bool showstar,
@@ -2056,7 +2056,7 @@ get_select_query_def(Query *query, deparse_context *context,
 		sep = "";
 		foreach(l, query->sortClause)
 		{
-			SortClause *srt = (SortClause *) lfirst(l);
+			SortGroupClause *srt = (SortGroupClause *) lfirst(l);
 			Node	   *sortexpr;
 			Oid			sortcoltype;
 			TypeCacheEntry *typentry;
@@ -2178,13 +2178,13 @@ get_basic_select_query(Query *query, deparse_context *context,
 	/* Add the DISTINCT clause if given */
 	if (query->distinctClause != NIL)
 	{
-		if (has_distinct_on_clause(query))
+		if (query->hasDistinctOn)
 		{
 			appendStringInfo(buf, " DISTINCT ON (");
 			sep = "";
 			foreach(l, query->distinctClause)
 			{
-				SortClause *srt = (SortClause *) lfirst(l);
+				SortGroupClause *srt = (SortGroupClause *) lfirst(l);
 
 				appendStringInfoString(buf, sep);
 				get_rule_sortgroupclause(srt, query->targetList,
@@ -2219,7 +2219,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 		sep = "";
 		foreach(l, query->groupClause)
 		{
-			GroupClause *grp = (GroupClause *) lfirst(l);
+			SortGroupClause *grp = (SortGroupClause *) lfirst(l);
 
 			appendStringInfoString(buf, sep);
 			get_rule_sortgroupclause(grp, query->targetList,
@@ -2398,7 +2398,7 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
  * Also returns the expression tree, so caller need not find it again.
  */
 static Node *
-get_rule_sortgroupclause(SortClause *srt, List *tlist, bool force_colno,
+get_rule_sortgroupclause(SortGroupClause *srt, List *tlist, bool force_colno,
 						 deparse_context *context)
 {
 	StringInfo	buf = context->buf;

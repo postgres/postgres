@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.143 2008/04/21 20:54:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.144 2008/08/02 21:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -935,8 +935,10 @@ translate_sub_tlist(List *tlist, int relid)
  * corresponding upper-level equality operators listed in opids would think
  * the values are distinct.  (Note: the opids entries could be cross-type
  * operators, and thus not exactly the equality operators that the subquery
- * would use itself.  We assume that the subquery is compatible if these
- * operators appear in the same btree opfamily as the ones the subquery uses.)
+ * would use itself.  We use equality_ops_are_compatible() to check
+ * compatibility.  That looks at btree or hash opfamily membership, and so
+ * should give trustworthy answers for all operators that we might need
+ * to deal with here.)
  */
 static bool
 query_is_distinct_for(Query *query, List *colnos, List *opids)
@@ -955,13 +957,13 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	{
 		foreach(l, query->distinctClause)
 		{
-			SortClause *scl = (SortClause *) lfirst(l);
-			TargetEntry *tle = get_sortgroupclause_tle(scl,
+			SortGroupClause *sgc = (SortGroupClause *) lfirst(l);
+			TargetEntry *tle = get_sortgroupclause_tle(sgc,
 													   query->targetList);
 
 			opid = distinct_col_search(tle->resno, colnos, opids);
 			if (!OidIsValid(opid) ||
-				!ops_in_same_btree_opfamily(opid, scl->sortop))
+				!equality_ops_are_compatible(opid, sgc->eqop))
 				break;			/* exit early if no match */
 		}
 		if (l == NULL)			/* had matches for all? */
@@ -976,13 +978,13 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	{
 		foreach(l, query->groupClause)
 		{
-			GroupClause *grpcl = (GroupClause *) lfirst(l);
-			TargetEntry *tle = get_sortgroupclause_tle(grpcl,
+			SortGroupClause *sgc = (SortGroupClause *) lfirst(l);
+			TargetEntry *tle = get_sortgroupclause_tle(sgc,
 													   query->targetList);
 
 			opid = distinct_col_search(tle->resno, colnos, opids);
 			if (!OidIsValid(opid) ||
-				!ops_in_same_btree_opfamily(opid, grpcl->sortop))
+				!equality_ops_are_compatible(opid, sgc->eqop))
 				break;			/* exit early if no match */
 		}
 		if (l == NULL)			/* had matches for all? */
@@ -1002,10 +1004,11 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	 * UNION, INTERSECT, EXCEPT guarantee uniqueness of the whole output row,
 	 * except with ALL.
 	 *
-	 * XXX this code knows that prepunion.c will adopt the default ordering
-	 * operator for each column datatype as the sortop.  It'd probably be
-	 * better if these operators were chosen at parse time and stored into the
-	 * parsetree, instead of leaving bits of the planner to decide semantics.
+	 * XXX this code knows that prepunion.c will adopt the default sort/group
+	 * operators for each column datatype to determine uniqueness.  It'd
+	 * probably be better if these operators were chosen at parse time and
+	 * stored into the parsetree, instead of leaving bits of the planner to
+	 * decide semantics.
 	 */
 	if (query->setOperations)
 	{
@@ -1020,14 +1023,20 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 			foreach(l, query->targetList)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(l);
+				Oid		tle_eq_opr;
 
 				if (tle->resjunk)
 					continue;	/* ignore resjunk columns */
 
 				opid = distinct_col_search(tle->resno, colnos, opids);
-				if (!OidIsValid(opid) ||
-					!ops_in_same_btree_opfamily(opid,
-						   ordering_oper_opid(exprType((Node *) tle->expr))))
+				if (!OidIsValid(opid))
+					break;		/* exit early if no match */
+				/* check for compatible semantics */
+				get_sort_group_operators(exprType((Node *) tle->expr),
+										 false, false, false,
+										 NULL, &tle_eq_opr, NULL);
+				if (!OidIsValid(tle_eq_opr) ||
+					!equality_ops_are_compatible(opid, tle_eq_opr))
 					break;		/* exit early if no match */
 			}
 			if (l == NULL)		/* had matches for all? */

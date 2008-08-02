@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.79 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.80 2008/08/02 21:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 */
 	foreach(l, qry->groupClause)
 	{
-		GroupClause *grpcl = (GroupClause *) lfirst(l);
+		SortGroupClause *grpcl = (SortGroupClause *) lfirst(l);
 		Node	   *expr;
 
 		expr = get_sortgroupclause_expr(grpcl, qry->targetList);

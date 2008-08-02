@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.76 2008/06/14 18:04:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.77 2008/08/02 21:31:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1335,7 +1335,7 @@ find_expr_references_walker(Node *node,
 		}
 		return false;
 	}
-	if (IsA(node, Const))
+	else if (IsA(node, Const))
 	{
 		Const	   *con = (Const *) node;
 		Oid			objoid;
@@ -1408,7 +1408,7 @@ find_expr_references_walker(Node *node,
 		}
 		return false;
 	}
-	if (IsA(node, Param))
+	else if (IsA(node, Param))
 	{
 		Param	   *param = (Param *) node;
 
@@ -1416,7 +1416,7 @@ find_expr_references_walker(Node *node,
 		add_object_address(OCLASS_TYPE, param->paramtype, 0,
 						   context->addrs);
 	}
-	if (IsA(node, FuncExpr))
+	else if (IsA(node, FuncExpr))
 	{
 		FuncExpr   *funcexpr = (FuncExpr *) node;
 
@@ -1424,7 +1424,7 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-	if (IsA(node, OpExpr))
+	else if (IsA(node, OpExpr))
 	{
 		OpExpr	   *opexpr = (OpExpr *) node;
 
@@ -1432,7 +1432,7 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-	if (IsA(node, DistinctExpr))
+	else if (IsA(node, DistinctExpr))
 	{
 		DistinctExpr *distinctexpr = (DistinctExpr *) node;
 
@@ -1440,7 +1440,7 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-	if (IsA(node, ScalarArrayOpExpr))
+	else if (IsA(node, ScalarArrayOpExpr))
 	{
 		ScalarArrayOpExpr *opexpr = (ScalarArrayOpExpr *) node;
 
@@ -1448,7 +1448,7 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-	if (IsA(node, NullIfExpr))
+	else if (IsA(node, NullIfExpr))
 	{
 		NullIfExpr *nullifexpr = (NullIfExpr *) node;
 
@@ -1456,7 +1456,7 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-	if (IsA(node, Aggref))
+	else if (IsA(node, Aggref))
 	{
 		Aggref	   *aggref = (Aggref *) node;
 
@@ -1464,12 +1464,12 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-	if (is_subplan(node))
+	else if (is_subplan(node))
 	{
 		/* Extra work needed here if we ever need this case */
 		elog(ERROR, "already-planned subqueries not supported");
 	}
-	if (IsA(node, RelabelType))
+	else if (IsA(node, RelabelType))
 	{
 		RelabelType *relab = (RelabelType *) node;
 
@@ -1477,7 +1477,7 @@ find_expr_references_walker(Node *node,
 		add_object_address(OCLASS_TYPE, relab->resulttype, 0,
 						   context->addrs);
 	}
-	if (IsA(node, CoerceViaIO))
+	else if (IsA(node, CoerceViaIO))
 	{
 		CoerceViaIO *iocoerce = (CoerceViaIO *) node;
 
@@ -1485,7 +1485,7 @@ find_expr_references_walker(Node *node,
 		add_object_address(OCLASS_TYPE, iocoerce->resulttype, 0,
 						   context->addrs);
 	}
-	if (IsA(node, ArrayCoerceExpr))
+	else if (IsA(node, ArrayCoerceExpr))
 	{
 		ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) node;
 
@@ -1496,7 +1496,7 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-	if (IsA(node, ConvertRowtypeExpr))
+	else if (IsA(node, ConvertRowtypeExpr))
 	{
 		ConvertRowtypeExpr *cvt = (ConvertRowtypeExpr *) node;
 
@@ -1504,14 +1504,14 @@ find_expr_references_walker(Node *node,
 		add_object_address(OCLASS_TYPE, cvt->resulttype, 0,
 						   context->addrs);
 	}
-	if (IsA(node, RowExpr))
+	else if (IsA(node, RowExpr))
 	{
 		RowExpr    *rowexpr = (RowExpr *) node;
 
 		add_object_address(OCLASS_TYPE, rowexpr->row_typeid, 0,
 						   context->addrs);
 	}
-	if (IsA(node, RowCompareExpr))
+	else if (IsA(node, RowCompareExpr))
 	{
 		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
 		ListCell   *l;
@@ -1528,14 +1528,25 @@ find_expr_references_walker(Node *node,
 		}
 		/* fall through to examine arguments */
 	}
-	if (IsA(node, CoerceToDomain))
+	else if (IsA(node, CoerceToDomain))
 	{
 		CoerceToDomain *cd = (CoerceToDomain *) node;
 
 		add_object_address(OCLASS_TYPE, cd->resulttype, 0,
 						   context->addrs);
 	}
-	if (IsA(node, Query))
+	else if (IsA(node, SortGroupClause))
+	{
+		SortGroupClause *sgc = (SortGroupClause *) node;
+
+		add_object_address(OCLASS_OPERATOR, sgc->eqop, 0,
+						   context->addrs);
+		if (OidIsValid(sgc->sortop))
+			add_object_address(OCLASS_OPERATOR, sgc->sortop, 0,
+							   context->addrs);
+		return false;
+	}
+	else if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
 		Query	   *query = (Query *) node;
@@ -1571,6 +1582,11 @@ find_expr_references_walker(Node *node,
 					break;
 			}
 		}
+
+		/* query_tree_walker ignores ORDER BY etc, but we need those opers */
+		find_expr_references_walker((Node *) query->sortClause, context);
+		find_expr_references_walker((Node *) query->groupClause, context);
+		find_expr_references_walker((Node *) query->distinctClause, context);
 
 		/* Examine substructure of query */
 		context->rtables = lcons(query->rtable, context->rtables);

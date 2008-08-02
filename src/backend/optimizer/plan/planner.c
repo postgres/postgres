@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.235 2008/07/31 22:47:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.236 2008/08/02 21:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ static bool is_dummy_plan(Plan *plan);
 static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
+static void preprocess_groupclause(PlannerInfo *root);
 static Oid *extract_grouping_ops(List *groupClause);
 static bool choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
@@ -846,10 +847,15 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		Path	   *best_path;
 		long		numGroups = 0;
 		AggClauseCounts agg_counts;
-		int			numGroupCols = list_length(parse->groupClause);
+		int			numGroupCols;
 		bool		use_hashed_grouping = false;
 
 		MemSet(&agg_counts, 0, sizeof(AggClauseCounts));
+
+		/* Preprocess GROUP BY clause, if any */
+		if (parse->groupClause)
+			preprocess_groupclause(root);
+		numGroupCols = list_length(parse->groupClause);
 
 		/* Preprocess targetlist */
 		tlist = preprocess_targetlist(root, tlist);
@@ -1476,6 +1482,88 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 	return tuple_fraction;
 }
 
+
+/*
+ * preprocess_groupclause - do preparatory work on GROUP BY clause
+ *
+ * The idea here is to adjust the ordering of the GROUP BY elements
+ * (which in itself is semantically insignificant) to match ORDER BY,
+ * thereby allowing a single sort operation to both implement the ORDER BY
+ * requirement and set up for a Unique step that implements GROUP BY.
+ *
+ * In principle it might be interesting to consider other orderings of the
+ * GROUP BY elements, which could match the sort ordering of other
+ * possible plans (eg an indexscan) and thereby reduce cost.  We don't
+ * bother with that, though.  Hashed grouping will frequently win anyway.
+ */
+static void
+preprocess_groupclause(PlannerInfo *root)
+{
+	Query	   *parse = root->parse;
+	List	   *new_groupclause;
+	bool		partial_match;
+	ListCell   *sl;
+	ListCell   *gl;
+
+	/* If no ORDER BY, nothing useful to do here anyway */
+	if (parse->sortClause == NIL)
+		return;
+
+	/*
+	 * Scan the ORDER BY clause and construct a list of matching GROUP BY
+	 * items, but only as far as we can make a matching prefix.
+	 *
+	 * This code assumes that the sortClause contains no duplicate items.
+	 */
+	new_groupclause = NIL;
+	foreach(sl, parse->sortClause)
+	{
+		SortGroupClause *sc = (SortGroupClause *) lfirst(sl);
+
+		foreach(gl, parse->groupClause)
+		{
+			SortGroupClause *gc = (SortGroupClause *) lfirst(gl);
+
+			if (equal(gc, sc))
+			{
+				new_groupclause = lappend(new_groupclause, gc);
+				break;
+			}
+		}
+		if (gl == NULL)
+			break;				/* no match, so stop scanning */
+	}
+
+	/* Did we match all of the ORDER BY list, or just some of it? */
+	partial_match = (sl != NULL);
+
+	/* If no match at all, no point in reordering GROUP BY */
+	if (new_groupclause == NIL)
+		return;
+
+	/*
+	 * Add any remaining GROUP BY items to the new list, but only if we
+	 * were able to make a complete match.  In other words, we only
+	 * rearrange the GROUP BY list if the result is that one list is a
+	 * prefix of the other --- otherwise there's no possibility of a
+	 * common sort.
+	 */
+	foreach(gl, parse->groupClause)
+	{
+		SortGroupClause *gc = (SortGroupClause *) lfirst(gl);
+
+		if (list_member_ptr(new_groupclause, gc))
+			continue;			/* it matched an ORDER BY item */
+		if (partial_match)
+			return;				/* give up, no common sort possible */
+		new_groupclause = lappend(new_groupclause, gc);
+	}
+
+	/* Success --- install the rearranged GROUP BY list */
+	Assert(list_length(parse->groupClause) == list_length(new_groupclause));
+	parse->groupClause = new_groupclause;
+}
+
 /*
  * extract_grouping_ops - make an array of the equality operator OIDs
  *		for the GROUP BY clause
@@ -1492,12 +1580,10 @@ extract_grouping_ops(List *groupClause)
 
 	foreach(glitem, groupClause)
 	{
-		GroupClause *groupcl = (GroupClause *) lfirst(glitem);
+		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
 
-		groupOperators[colno] = get_equality_op_for_ordering_op(groupcl->sortop);
-		if (!OidIsValid(groupOperators[colno])) /* shouldn't happen */
-			elog(ERROR, "could not find equality operator for ordering operator %u",
-				 groupcl->sortop);
+		groupOperators[colno] = groupcl->eqop;
+		Assert(OidIsValid(groupOperators[colno]));
 		colno++;
 	}
 
@@ -1738,7 +1824,7 @@ make_subplanTargetList(PlannerInfo *root,
 
 		foreach(gl, parse->groupClause)
 		{
-			GroupClause *grpcl = (GroupClause *) lfirst(gl);
+			SortGroupClause *grpcl = (SortGroupClause *) lfirst(gl);
 			Node	   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
 			TargetEntry *te = NULL;
 			ListCell   *sl;
@@ -1797,7 +1883,7 @@ locate_grouping_columns(PlannerInfo *root,
 
 	foreach(gl, root->parse->groupClause)
 	{
-		GroupClause *grpcl = (GroupClause *) lfirst(gl);
+		SortGroupClause *grpcl = (SortGroupClause *) lfirst(gl);
 		Node	   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
 		TargetEntry *te = NULL;
 		ListCell   *sl;

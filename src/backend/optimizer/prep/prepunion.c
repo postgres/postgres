@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.148 2008/07/31 22:47:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.149 2008/08/02 21:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ static List *adjust_inherited_tlist(List *tlist,
  * zero means "all the tuples will be fetched".  Any LIMIT present at the
  * top level has already been factored into tuple_fraction.
  *
- * *sortClauses is an output argument: it is set to a list of SortClauses
+ * *sortClauses is an output argument: it is set to a list of SortGroupClauses
  * representing the result ordering of the topmost set operation.
  */
 Plan *
@@ -152,7 +152,7 @@ plan_set_operations(PlannerInfo *root, double tuple_fraction,
  * junkOK: if true, child resjunk columns may be left in the result
  * flag: if >= 0, add a resjunk output column indicating value of flag
  * refnames_tlist: targetlist to take column names from
- * *sortClauses: receives list of SortClauses for result plan, if any
+ * *sortClauses: receives list of SortGroupClauses for result plan, if any
  *
  * We don't have to care about typmods here: the only allowed difference
  * between set-op input and output typmods is input is a specific typmod
@@ -678,8 +678,11 @@ generate_append_tlist(List *colTypes, bool flag,
 
 /*
  * generate_setop_sortlist
- *		Build a SortClause list enumerating all the non-resjunk tlist entries,
- *		using default ordering properties.
+ *		Build a SortGroupClause list enumerating all the non-resjunk
+ *		tlist entries, using default ordering properties.
+ *
+ * For now, we require all the items to be sortable.  Eventually we
+ * should implement hashing setops and allow hash-only datatypes.
  */
 static List *
 generate_setop_sortlist(List *targetlist)
@@ -692,11 +695,10 @@ generate_setop_sortlist(List *targetlist)
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
 		if (!tle->resjunk)
-			sortlist = addTargetToSortList(NULL, tle,
-										   sortlist, targetlist,
-										   SORTBY_DEFAULT,
-										   SORTBY_NULLS_DEFAULT,
-										   NIL, false);
+			sortlist = addTargetToGroupList(NULL, tle,
+											sortlist, targetlist,
+											true, /* XXX fixme someday */
+											false);
 	}
 	return sortlist;
 }

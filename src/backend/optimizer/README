@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.46 2008/04/09 01:00:46 momjian Exp $
+$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.47 2008/08/02 21:31:59 tgl Exp $
 
 Optimizer
 =========
@@ -563,8 +563,8 @@ competing Paths are equivalently sorted.
 
 Pathkeys are also useful to represent an ordering that we wish to achieve,
 since they are easily compared to the pathkeys of a potential candidate
-path.  So, SortClause lists are turned into pathkeys lists for use inside
-the optimizer.
+path.  So, SortGroupClause lists are turned into pathkeys lists for use
+inside the optimizer.
 
 Because we have to generate pathkeys lists from the sort clauses before
 we've finished EquivalenceClass merging, we cannot use the pointer-equality

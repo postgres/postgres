@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.90 2008/04/01 00:48:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.91 2008/08/02 21:32:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,9 +62,6 @@ extern Relids find_nonnullable_rels(Node *clause);
 
 extern bool is_pseudo_constant_clause(Node *clause);
 extern bool is_pseudo_constant_clause_relids(Node *clause, Relids relids);
-
-extern bool has_distinct_clause(Query *query);
-extern bool has_distinct_on_clause(Query *query);
 
 extern int	NumRelids(Node *clause);
 

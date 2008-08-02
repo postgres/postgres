@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.137 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.138 2008/08/02 21:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -969,14 +969,14 @@ typedef struct CurrentOfExpr
  * a specific system-generated name (such as "ctid") or NULL; anything else
  * risks confusing ExecGetJunkAttribute!
  *
- * ressortgroupref is used in the representation of ORDER BY and
- * GROUP BY items.	Targetlist entries with ressortgroupref=0 are not
- * sort/group items.  If ressortgroupref>0, then this item is an ORDER BY or
- * GROUP BY value.	No two entries in a targetlist may have the same nonzero
- * ressortgroupref --- but there is no particular meaning to the nonzero
- * values, except as tags.	(For example, one must not assume that lower
- * ressortgroupref means a more significant sort key.)	The order of the
- * associated SortClause or GroupClause lists determine the semantics.
+ * ressortgroupref is used in the representation of ORDER BY, GROUP BY, and
+ * DISTINCT items.  Targetlist entries with ressortgroupref=0 are not
+ * sort/group items.  If ressortgroupref>0, then this item is an ORDER BY,
+ * GROUP BY, and/or DISTINCT target value.  No two entries in a targetlist
+ * may have the same nonzero ressortgroupref --- but there is no particular
+ * meaning to the nonzero values, except as tags.  (For example, one must
+ * not assume that lower ressortgroupref means a more significant sort key.)
+ * The order of the associated SortGroupClause lists determine the semantics.
  *
  * resorigtbl/resorigcol identify the source of the column, if it is a
  * simple reference to a column of a base table (or view).	If it is not

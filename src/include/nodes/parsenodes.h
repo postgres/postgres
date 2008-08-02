@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.369 2008/07/31 22:47:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.370 2008/08/02 21:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +108,7 @@ typedef struct Query
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasSubLinks;	/* has subquery SubLink */
+	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
 
 	List	   *rtable;			/* list of range table entries */
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
@@ -116,13 +117,13 @@ typedef struct Query
 
 	List	   *returningList;	/* return-values list (of TargetEntry) */
 
-	List	   *groupClause;	/* a list of GroupClause's */
+	List	   *groupClause;	/* a list of SortGroupClause's */
 
 	Node	   *havingQual;		/* qualifications applied to groups */
 
-	List	   *distinctClause; /* a list of SortClause's */
+	List	   *distinctClause; /* a list of SortGroupClause's */
 
-	List	   *sortClause;		/* a list of SortClause's */
+	List	   *sortClause;		/* a list of SortGroupClause's */
 
 	Node	   *limitOffset;	/* # of result tuples to skip (int8 expr) */
 	Node	   *limitCount;		/* # of result tuples to return (int8 expr) */
@@ -607,47 +608,58 @@ typedef struct RangeTblEntry
 } RangeTblEntry;
 
 /*
- * SortClause -
- *	   representation of ORDER BY clauses
+ * SortGroupClause -
+ *	   representation of ORDER BY, GROUP BY, DISTINCT, DISTINCT ON items
+ *
+ * You might think that ORDER BY is only interested in defining ordering,
+ * and GROUP/DISTINCT are only interested in defining equality.  However,
+ * one way to implement grouping is to sort and then apply a "uniq"-like
+ * filter.  So it's also interesting to keep track of possible sort operators
+ * for GROUP/DISTINCT, and in particular to try to sort for the grouping
+ * in a way that will also yield a requested ORDER BY ordering.  So we need
+ * to be able to compare ORDER BY and GROUP/DISTINCT lists, which motivates
+ * the decision to give them the same representation.
  *
  * tleSortGroupRef must match ressortgroupref of exactly one entry of the
- * associated targetlist; that is the expression to be sorted (or grouped) by.
- * sortop is the OID of the ordering operator (a "<" or ">" operator).
- * nulls_first means about what you'd expect.
+ *		query's targetlist; that is the expression to be sorted or grouped by.
+ * eqop is the OID of the equality operator.
+ * sortop is the OID of the ordering operator (a "<" or ">" operator),
+ *		or InvalidOid if not available.
+ * nulls_first means about what you'd expect.  If sortop is InvalidOid
+ *		then nulls_first is meaningless and should be set to false.
  *
- * SortClauses are also used to identify targets that we will do a "Unique"
- * filter step on (for SELECT DISTINCT and SELECT DISTINCT ON).  The
- * distinctClause list is a list of SortClauses for the expressions to be
- * unique-ified.  (As per comment for GroupClause, this overspecifies the
- * semantics.)  In SELECT DISTINCT, the distinctClause list is typically
- * longer than the ORDER BY list, while in SELECT DISTINCT ON it's typically
- * shorter.  The two lists must match up to the end of the shorter one ---
- * the parser rearranges the distinctClause if necessary to make this true.
- * (This restriction ensures that only one sort step is needed to both
- * satisfy the ORDER BY and set up for the Unique step.  This is semantically
- * necessary for DISTINCT ON, and offers no real drawback for DISTINCT.)
+ * In an ORDER BY item, all fields must be valid.  (The eqop isn't essential
+ * here, but it's cheap to get it along with the sortop, and requiring it
+ * to be valid eases comparisons to grouping items.)
+ *
+ * In a grouping item, eqop must be valid.  If the eqop is a btree equality
+ * operator, then sortop should be set to a compatible ordering operator.
+ * We prefer to set eqop/sortop/nulls_first to match any ORDER BY item that
+ * the query presents for the same tlist item.  If there is none, we just
+ * use the default ordering op for the datatype.
+ *
+ * If the tlist item's type has a hash opclass but no btree opclass, then
+ * we will set eqop to the hash equality operator, sortop to InvalidOid,
+ * and nulls_first to false.  A grouping item of this kind can only be
+ * implemented by hashing, and of course it'll never match an ORDER BY item.
+ *
+ * A query might have both ORDER BY and DISTINCT (or DISTINCT ON) clauses.
+ * In SELECT DISTINCT, the distinctClause list is as long or longer than the
+ * sortClause list, while in SELECT DISTINCT ON it's typically shorter.
+ * The two lists must match up to the end of the shorter one --- the parser
+ * rearranges the distinctClause if necessary to make this true.  (This
+ * restriction ensures that only one sort step is needed to both satisfy the
+ * ORDER BY and set up for the Unique step.  This is semantically necessary
+ * for DISTINCT ON, and presents no real drawback for DISTINCT.)
  */
-typedef struct SortClause
+typedef struct SortGroupClause
 {
 	NodeTag		type;
 	Index		tleSortGroupRef;	/* reference into targetlist */
-	Oid			sortop;			/* the ordering operator ('<' op) */
-	bool		nulls_first;	/* do NULLs come before normal values? */
-} SortClause;
-
-/*
- * GroupClause -
- *	   representation of GROUP BY clauses
- *
- * GroupClause is exactly like SortClause except for the nodetag value.
- * We have routines that operate interchangeably on both.
- *
- * XXX SortClause overspecifies the semantics so far as GROUP BY is concerned
- * (ditto for DISTINCT).  It'd be better to specify an equality operator not
- * an ordering operator.  However, the two implementations are tightly entwined
- * at the moment ... breaking them apart is work for another day.
- */
-typedef SortClause GroupClause;
+	Oid			eqop;				/* the equality operator ('=' op) */
+	Oid			sortop;				/* the ordering operator ('<' op), or 0 */
+	bool		nulls_first;		/* do NULLs come before normal values? */
+} SortGroupClause;
 
 /*
  * RowMarkClause -

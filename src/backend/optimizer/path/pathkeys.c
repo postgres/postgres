@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.93 2008/01/09 20:42:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.94 2008/08/02 21:31:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,8 +227,8 @@ canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
  *	  a PathKey.  If canonicalize = true, the result is a "canonical"
  *	  PathKey, otherwise not.  (But note it might be redundant anyway.)
  *
- * If the PathKey is being generated from a SortClause, sortref should be
- * the SortClause's SortGroupRef; otherwise zero.
+ * If the PathKey is being generated from a SortGroupClause, sortref should be
+ * the SortGroupClause's SortGroupRef; otherwise zero.
  *
  * canonicalize should always be TRUE after EquivalenceClass merging has
  * been performed, but FALSE if we haven't done EquivalenceClass merging yet.
@@ -823,7 +823,7 @@ build_join_pathkeys(PlannerInfo *root,
 /*
  * make_pathkeys_for_sortclauses
  *		Generate a pathkeys list that represents the sort order specified
- *		by a list of SortClauses (GroupClauses will work too!)
+ *		by a list of SortGroupClauses
  *
  * If canonicalize is TRUE, the resulting PathKeys are all in canonical form;
  * otherwise not.  canonicalize should always be TRUE after EquivalenceClass
@@ -832,7 +832,7 @@ build_join_pathkeys(PlannerInfo *root,
  * be able to represent requested pathkeys before the equivalence classes have
  * been created for the query.)
  *
- * 'sortclauses' is a list of SortClause or GroupClause nodes
+ * 'sortclauses' is a list of SortGroupClause nodes
  * 'tlist' is the targetlist to find the referenced tlist entries in
  */
 List *
@@ -846,11 +846,12 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
 
 	foreach(l, sortclauses)
 	{
-		SortClause *sortcl = (SortClause *) lfirst(l);
+		SortGroupClause *sortcl = (SortGroupClause *) lfirst(l);
 		Expr	   *sortkey;
 		PathKey    *pathkey;
 
 		sortkey = (Expr *) get_sortgroupclause_expr(sortcl, tlist);
+		Assert(OidIsValid(sortcl->sortop));
 		pathkey = make_pathkey_from_sortinfo(root,
 											 sortkey,
 											 sortcl->sortop,

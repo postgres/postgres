@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.328 2008/07/17 16:02:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.329 2008/08/02 21:31:59 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1732,6 +1732,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(intoClause);
 	WRITE_BOOL_FIELD(hasAggs);
 	WRITE_BOOL_FIELD(hasSubLinks);
+	WRITE_BOOL_FIELD(hasDistinctOn);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(jointree);
 	WRITE_NODE_FIELD(targetList);
@@ -1747,21 +1748,12 @@ _outQuery(StringInfo str, Query *node)
 }
 
 static void
-_outSortClause(StringInfo str, SortClause *node)
+_outSortGroupClause(StringInfo str, SortGroupClause *node)
 {
-	WRITE_NODE_TYPE("SORTCLAUSE");
+	WRITE_NODE_TYPE("SORTGROUPCLAUSE");
 
 	WRITE_UINT_FIELD(tleSortGroupRef);
-	WRITE_OID_FIELD(sortop);
-	WRITE_BOOL_FIELD(nulls_first);
-}
-
-static void
-_outGroupClause(StringInfo str, GroupClause *node)
-{
-	WRITE_NODE_TYPE("GROUPCLAUSE");
-
-	WRITE_UINT_FIELD(tleSortGroupRef);
+	WRITE_OID_FIELD(eqop);
 	WRITE_OID_FIELD(sortop);
 	WRITE_BOOL_FIELD(nulls_first);
 }
@@ -2398,11 +2390,8 @@ _outNode(StringInfo str, void *obj)
 			case T_Query:
 				_outQuery(str, obj);
 				break;
-			case T_SortClause:
-				_outSortClause(str, obj);
-				break;
-			case T_GroupClause:
-				_outGroupClause(str, obj);
+			case T_SortGroupClause:
+				_outSortGroupClause(str, obj);
 				break;
 			case T_RowMarkClause:
 				_outRowMarkClause(str, obj);
