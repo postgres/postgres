@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.120 2008/07/30 17:05:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.121 2008/08/03 15:23:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,8 +213,7 @@ TypeCreate(Oid newTypeOid,
 	 * not check for bad combinations.
 	 *
 	 * Validate size specifications: either positive (fixed-length) or -1
-	 * (varlena) or -2 (cstring).  Pass-by-value types must have a fixed
-	 * length not more than sizeof(Datum).
+	 * (varlena) or -2 (cstring).
 	 */
 	if (!(internalSize > 0 ||
 		  internalSize == -1 ||
@@ -223,12 +222,70 @@ TypeCreate(Oid newTypeOid,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("invalid type internal size %d",
 						internalSize)));
-	if (passedByValue &&
-		(internalSize <= 0 || internalSize > (int16) sizeof(Datum)))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+
+	if (passedByValue)
+	{
+		/*
+		 * Pass-by-value types must have a fixed length that is one of the
+		 * values supported by fetch_att() and store_att_byval(); and the
+		 * alignment had better agree, too.  All this code must match
+		 * access/tupmacs.h!
+		 */
+		if (internalSize == (int16) sizeof(char))
+		{
+			if (alignment != 'c')
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("alignment \"%c\" is invalid for passed-by-value type of size %d",
+								alignment, internalSize)));
+		}
+		else if (internalSize == (int16) sizeof(int16))
+		{
+			if (alignment != 's')
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("alignment \"%c\" is invalid for passed-by-value type of size %d",
+								alignment, internalSize)));
+		}
+		else if (internalSize == (int16) sizeof(int32))
+		{
+			if (alignment != 'i')
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("alignment \"%c\" is invalid for passed-by-value type of size %d",
+								alignment, internalSize)));
+		}
+#if SIZEOF_DATUM == 8
+		else if (internalSize == (int16) sizeof(Datum))
+		{
+			if (alignment != 'd')
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("alignment \"%c\" is invalid for passed-by-value type of size %d",
+								alignment, internalSize)));
+		}
+#endif
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 			   errmsg("internal size %d is invalid for passed-by-value type",
 					  internalSize)));
+	}
+	else
+	{
+		/* varlena types must have int align or better */
+		if (internalSize == -1 && !(alignment == 'i' || alignment == 'd'))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("alignment \"%c\" is invalid for variable-length type",
+							alignment)));
+		/* cstring must have char alignment */
+		if (internalSize == -2 && !(alignment == 'c'))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("alignment \"%c\" is invalid for variable-length type",
+							alignment)));
+	}
 
 	/* Only varlena types can be toasted */
 	if (storage != 'p' && internalSize != -1)
