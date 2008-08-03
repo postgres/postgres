@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.172 2008/08/02 21:32:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.173 2008/08/03 19:10:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1351,15 +1351,11 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		/*
 		 * If no match in ORDER BY, just add it to the result using
 		 * default sort/group semantics.
-		 *
-		 * XXX for now, the planner requires groupClause to be sortable,
-		 * so we have to insist on that here.
 		 */
 		if (!found)
 			result = addTargetToGroupList(pstate, tle,
 										  result, *targetlist,
-										  true,	/* XXX for now */
-										  true);
+										  false, true);
 	}
 
 	return result;

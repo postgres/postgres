@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.107 2008/07/31 22:47:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.108 2008/08/03 19:10:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,8 +288,7 @@ query_planner(PlannerInfo *root, List *tlist,
 		 * levels of sort --- and, therefore, certainly need to read all the
 		 * tuples --- unless ORDER BY is a subset of GROUP BY.
 		 */
-		if (root->group_pathkeys && root->sort_pathkeys &&
-			!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys))
+		if (!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys))
 			tuple_fraction = 0.0;
 	}
 	else if (parse->hasAggs || root->hasHavingQual)

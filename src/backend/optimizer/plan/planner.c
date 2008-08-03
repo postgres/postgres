@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.236 2008/08/02 21:32:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.237 2008/08/03 19:10:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,11 +69,12 @@ static double preprocess_limit(PlannerInfo *root,
 				 int64 *offset_est, int64 *count_est);
 static void preprocess_groupclause(PlannerInfo *root);
 static Oid *extract_grouping_ops(List *groupClause);
+static bool grouping_is_sortable(List *groupClause);
+static bool grouping_is_hashable(List *groupClause);
 static bool choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
 					   Path *cheapest_path, Path *sorted_path,
-					   Oid *groupOperators, double dNumGroups,
-					   AggClauseCounts *agg_counts);
+					   double dNumGroups, AggClauseCounts *agg_counts);
 static List *make_subplanTargetList(PlannerInfo *root, List *tlist,
 					   AttrNumber **groupColIdx, bool *need_tlist_eval);
 static void locate_grouping_columns(PlannerInfo *root,
@@ -839,7 +840,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		List	   *sub_tlist;
 		List	   *group_pathkeys;
 		AttrNumber *groupColIdx = NULL;
-		Oid		   *groupOperators = NULL;
 		bool		need_tlist_eval = true;
 		QualCost	tlist_cost;
 		Path	   *cheapest_path;
@@ -877,11 +877,15 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * DISTINCT and ORDER BY requirements.  This should be changed
 		 * someday, but DISTINCT ON is a bit of a problem ...
 		 */
-		root->group_pathkeys =
-			make_pathkeys_for_sortclauses(root,
-										  parse->groupClause,
-										  tlist,
-										  false);
+		if (parse->groupClause && grouping_is_sortable(parse->groupClause))
+			root->group_pathkeys =
+				make_pathkeys_for_sortclauses(root,
+											  parse->groupClause,
+											  tlist,
+											  false);
+		else
+			root->group_pathkeys = NIL;
+
 		if (list_length(parse->distinctClause) > list_length(parse->sortClause))
 			root->sort_pathkeys =
 				make_pathkeys_for_sortclauses(root,
@@ -915,12 +919,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/*
 		 * Figure out whether we need a sorted result from query_planner.
 		 *
-		 * If we have a GROUP BY clause, then we want a result sorted properly
-		 * for grouping.  Otherwise, if there is an ORDER BY clause, we want
-		 * to sort by the ORDER BY clause.	(Note: if we have both, and ORDER
-		 * BY is a superset of GROUP BY, it would be tempting to request sort
-		 * by ORDER BY --- but that might just leave us failing to exploit an
-		 * available sort order at all. Needs more thought...)
+		 * If we have a sortable GROUP BY clause, then we want a result sorted
+		 * properly for grouping.  Otherwise, if there is an ORDER BY clause,
+		 * we want to sort by the ORDER BY clause. (Note: if we have both, and
+		 * ORDER BY is a superset of GROUP BY, it would be tempting to request
+		 * sort by ORDER BY --- but that might just leave us failing to
+		 * exploit an available sort order at all. Needs more thought...)
 		 */
 		if (root->group_pathkeys)
 			root->query_pathkeys = root->group_pathkeys;
@@ -942,17 +946,39 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		sort_pathkeys = root->sort_pathkeys;
 
 		/*
-		 * If grouping, extract the grouping operators and decide whether we
-		 * want to use hashed grouping.
+		 * If grouping, decide whether to use sorted or hashed grouping.
 		 */
 		if (parse->groupClause)
 		{
-			groupOperators = extract_grouping_ops(parse->groupClause);
-			use_hashed_grouping =
-				choose_hashed_grouping(root, tuple_fraction, limit_tuples,
-									   cheapest_path, sorted_path,
-									   groupOperators, dNumGroups,
-									   &agg_counts);
+			bool	can_hash;
+			bool	can_sort;
+
+			/*
+			 * Executor doesn't support hashed aggregation with DISTINCT
+			 * aggregates.  (Doing so would imply storing *all* the input
+			 * values in the hash table, which seems like a certain loser.)
+			 */
+			can_hash = (agg_counts.numDistinctAggs == 0 &&
+						grouping_is_hashable(parse->groupClause));
+			can_sort = grouping_is_sortable(parse->groupClause);
+			if (can_hash && can_sort)
+			{
+				/* we have a meaningful choice to make ... */
+				use_hashed_grouping =
+					choose_hashed_grouping(root,
+										   tuple_fraction, limit_tuples,
+										   cheapest_path, sorted_path,
+										   dNumGroups, &agg_counts);
+			}
+			else if (can_hash)
+				use_hashed_grouping = true;
+			else if (can_sort)
+				use_hashed_grouping = false;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("could not implement GROUP BY"),
+						 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
 
 			/* Also convert # groups to long int --- but 'ware overflow! */
 			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
@@ -1088,7 +1114,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												AGG_HASHED,
 												numGroupCols,
 												groupColIdx,
-												groupOperators,
+									extract_grouping_ops(parse->groupClause),
 												numGroups,
 												agg_counts.numAggs,
 												result_plan);
@@ -1131,7 +1157,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												aggstrategy,
 												numGroupCols,
 												groupColIdx,
-												groupOperators,
+									extract_grouping_ops(parse->groupClause),
 												numGroups,
 												agg_counts.numAggs,
 												result_plan);
@@ -1160,7 +1186,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												  (List *) parse->havingQual,
 												  numGroupCols,
 												  groupColIdx,
-												  groupOperators,
+									extract_grouping_ops(parse->groupClause),
 												  dNumGroups,
 												  result_plan);
 				/* The Group node won't change sort ordering */
@@ -1495,6 +1521,9 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
  * GROUP BY elements, which could match the sort ordering of other
  * possible plans (eg an indexscan) and thereby reduce cost.  We don't
  * bother with that, though.  Hashed grouping will frequently win anyway.
+ *
+ * Note: we need no comparable processing of the distinctClause because
+ * the parser already enforced that that matches ORDER BY.
  */
 static void
 preprocess_groupclause(PlannerInfo *root)
@@ -1505,7 +1534,7 @@ preprocess_groupclause(PlannerInfo *root)
 	ListCell   *sl;
 	ListCell   *gl;
 
-	/* If no ORDER BY, nothing useful to do here anyway */
+	/* If no ORDER BY, nothing useful to do here */
 	if (parse->sortClause == NIL)
 		return;
 
@@ -1546,7 +1575,8 @@ preprocess_groupclause(PlannerInfo *root)
 	 * were able to make a complete match.  In other words, we only
 	 * rearrange the GROUP BY list if the result is that one list is a
 	 * prefix of the other --- otherwise there's no possibility of a
-	 * common sort.
+	 * common sort.  Also, give up if there are any non-sortable GROUP BY
+	 * items, since then there's no hope anyway.
 	 */
 	foreach(gl, parse->groupClause)
 	{
@@ -1556,6 +1586,8 @@ preprocess_groupclause(PlannerInfo *root)
 			continue;			/* it matched an ORDER BY item */
 		if (partial_match)
 			return;				/* give up, no common sort possible */
+		if (!OidIsValid(gc->sortop))
+			return;				/* give up, GROUP BY can't be sorted */
 		new_groupclause = lappend(new_groupclause, gc);
 	}
 
@@ -1566,7 +1598,7 @@ preprocess_groupclause(PlannerInfo *root)
 
 /*
  * extract_grouping_ops - make an array of the equality operator OIDs
- *		for the GROUP BY clause
+ *		for a SortGroupClause list
  */
 static Oid *
 extract_grouping_ops(List *groupClause)
@@ -1591,14 +1623,58 @@ extract_grouping_ops(List *groupClause)
 }
 
 /*
+ * grouping_is_sortable - is it possible to implement grouping list by sorting?
+ *
+ * This is easy since the parser will have included a sortop if one exists.
+ */
+static bool
+grouping_is_sortable(List *groupClause)
+{
+	ListCell   *glitem;
+
+	foreach(glitem, groupClause)
+	{
+		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
+
+		if (!OidIsValid(groupcl->sortop))
+			return false;
+	}
+	return true;
+}
+
+/*
+ * grouping_is_hashable - is it possible to implement grouping list by hashing?
+ *
+ * We assume hashing is OK if the equality operators are marked oprcanhash.
+ * (If there isn't actually a supporting hash function, the executor will
+ * complain at runtime; but this is a misdeclaration of the operator, not
+ * a system bug.)
+ */
+static bool
+grouping_is_hashable(List *groupClause)
+{
+	ListCell   *glitem;
+
+	foreach(glitem, groupClause)
+	{
+		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
+
+		if (!op_hashjoinable(groupcl->eqop))
+			return false;
+	}
+	return true;
+}
+
+/*
  * choose_hashed_grouping - should we use hashed grouping?
+ *
+ * Note: this is only applied when both alternatives are actually feasible.
  */
 static bool
 choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
 					   Path *cheapest_path, Path *sorted_path,
-					   Oid *groupOperators, double dNumGroups,
-					   AggClauseCounts *agg_counts)
+					   double dNumGroups, AggClauseCounts *agg_counts)
 {
 	int			numGroupCols = list_length(root->parse->groupClause);
 	double		cheapest_path_rows;
@@ -1607,27 +1683,10 @@ choose_hashed_grouping(PlannerInfo *root,
 	List	   *current_pathkeys;
 	Path		hashed_p;
 	Path		sorted_p;
-	int			i;
 
-	/*
-	 * Check can't-do-it conditions, including whether the grouping operators
-	 * are hashjoinable.  (We assume hashing is OK if they are marked
-	 * oprcanhash.	If there isn't actually a supporting hash function, the
-	 * executor will complain at runtime.)
-	 *
-	 * Executor doesn't support hashed aggregation with DISTINCT aggregates.
-	 * (Doing so would imply storing *all* the input values in the hash table,
-	 * which seems like a certain loser.)
-	 */
+	/* Prefer sorting when enable_hashagg is off */
 	if (!enable_hashagg)
 		return false;
-	if (agg_counts->numDistinctAggs != 0)
-		return false;
-	for (i = 0; i < numGroupCols; i++)
-	{
-		if (!op_hashjoinable(groupOperators[i]))
-			return false;
-	}
 
 	/*
 	 * Don't do it if it doesn't look like the hashtable will fit into
