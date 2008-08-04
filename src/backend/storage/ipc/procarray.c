@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.45 2008/07/11 02:10:13 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.46 2008/08/04 18:03:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1177,7 +1177,7 @@ CountUserBackends(Oid roleid)
 }
 
 /*
- * CheckOtherDBBackends -- check for other backends running in the given DB
+ * CountOtherDBBackends -- check for other backends running in the given DB
  *
  * If there are other backends in the DB, we will wait a maximum of 5 seconds
  * for them to exit.  Autovacuum backends are encouraged to exit early by
@@ -1187,6 +1187,8 @@ CountUserBackends(Oid roleid)
  * check whether the current backend uses the given DB, if it's important.
  *
  * Returns TRUE if there are (still) other backends in the DB, FALSE if not.
+ * Also, *nbackends and *nprepared are set to the number of other backends
+ * and prepared transactions in the DB, respectively.
  *
  * This function is used to interlock DROP DATABASE and related commands
  * against there being any active backends in the target DB --- dropping the
@@ -1198,18 +1200,23 @@ CountUserBackends(Oid roleid)
  * indefinitely.
  */
 bool
-CheckOtherDBBackends(Oid databaseId)
+CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
 {
 	ProcArrayStruct *arrayP = procArray;
+#define MAXAUTOVACPIDS  10		/* max autovacs to SIGTERM per iteration */
+	int			autovac_pids[MAXAUTOVACPIDS];
 	int			tries;
 
 	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
 	for (tries = 0; tries < 50; tries++)
 	{
+		int			nautovacs = 0;
 		bool		found = false;
 		int			index;
 
 		CHECK_FOR_INTERRUPTS();
+
+		*nbackends = *nprepared = 0;
 
 		LWLockAcquire(ProcArrayLock, LW_SHARED);
 
@@ -1224,38 +1231,32 @@ CheckOtherDBBackends(Oid databaseId)
 
 			found = true;
 
-			if (proc->vacuumFlags & PROC_IS_AUTOVACUUM)
-			{
-				/* an autovacuum --- send it SIGTERM before sleeping */
-				int			autopid = proc->pid;
-
-				/*
-				 * It's a bit awkward to release ProcArrayLock within the
-				 * loop, but we'd probably better do so before issuing kill().
-				 * We have no idea what might block kill() inside the
-				 * kernel...
-				 */
-				LWLockRelease(ProcArrayLock);
-
-				(void) kill(autopid, SIGTERM);	/* ignore any error */
-
-				break;
-			}
+			if (proc->pid == 0)
+				(*nprepared)++;
 			else
 			{
-				LWLockRelease(ProcArrayLock);
-				break;
+				(*nbackends)++;
+				if ((proc->vacuumFlags & PROC_IS_AUTOVACUUM) &&
+					nautovacs < MAXAUTOVACPIDS)
+					autovac_pids[nautovacs++] = proc->pid;
 			}
 		}
 
-		/* if found is set, we released the lock within the loop body */
-		if (!found)
-		{
-			LWLockRelease(ProcArrayLock);
-			return false;		/* no conflicting backends, so done */
-		}
+		LWLockRelease(ProcArrayLock);
 
-		/* else sleep and try again */
+		if (!found)
+			return false;		/* no conflicting backends, so done */
+
+		/*
+		 * Send SIGTERM to any conflicting autovacuums before sleeping.
+		 * We postpone this step until after the loop because we don't
+		 * want to hold ProcArrayLock while issuing kill().
+		 * We have no idea what might block kill() inside the kernel...
+		 */
+		for (index = 0; index < nautovacs; index++)
+			(void) kill(autovac_pids[index], SIGTERM);	/* ignore any error */
+
+		/* sleep, then try again */
 		pg_usleep(100 * 1000L); /* 100ms */
 	}
 
