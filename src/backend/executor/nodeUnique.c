@@ -8,14 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.53 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.53.2.1 2008/08/05 21:28:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
  *		ExecUnique		- generate a unique'd temporary relation
- *		ExecInitUnique	- initialize node and subnodes..
+ *		ExecInitUnique	- initialize node and subnodes
  *		ExecEndUnique	- shutdown node and subnodes
  *
  * NOTES
@@ -32,9 +32,6 @@
 
 /* ----------------------------------------------------------------
  *		ExecUnique
- *
- *		This is a very simple node which filters out duplicate
- *		tuples from a stream of sorted tuples from a subplan.
  * ----------------------------------------------------------------
  */
 TupleTableSlot *				/* return: a tuple or NULL */
@@ -54,11 +51,7 @@ ExecUnique(UniqueState *node)
 	/*
 	 * now loop, returning only non-duplicate tuples. We assume that the
 	 * tuples arrive in sorted order so we can detect duplicates easily.
-	 *
-	 * We return the first tuple from each group of duplicates (or the last
-	 * tuple of each group, when moving backwards).  At either end of the
-	 * subplan, clear the result slot so that we correctly return the
-	 * first/last tuple when reversing direction.
+	 * The first tuple of each group is returned.
 	 */
 	for (;;)
 	{
@@ -68,13 +61,13 @@ ExecUnique(UniqueState *node)
 		slot = ExecProcNode(outerPlan);
 		if (TupIsNull(slot))
 		{
-			/* end of subplan; reset in case we change direction */
+			/* end of subplan, so we're done */
 			ExecClearTuple(resultTupleSlot);
 			return NULL;
 		}
 
 		/*
-		 * Always return the first/last tuple from the subplan.
+		 * Always return the first tuple from the subplan.
 		 */
 		if (TupIsNull(resultTupleSlot))
 			break;
@@ -113,7 +106,7 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 	UniqueState *uniquestate;
 
 	/* check for unsupported flags */
-	Assert(!(eflags & EXEC_FLAG_MARK));
+	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	/*
 	 * create state structure
