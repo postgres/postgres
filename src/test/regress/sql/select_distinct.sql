@@ -10,12 +10,12 @@ SELECT DISTINCT two FROM tmp;
 --
 -- awk '{print $5;}' onek.data | sort -n | uniq
 --
-SELECT DISTINCT ten FROM tmp;
+SELECT DISTINCT ten FROM tmp ORDER BY 1;
 
 --
 -- awk '{print $16;}' onek.data | sort -d | uniq
 --
-SELECT DISTINCT string4 FROM tmp;
+SELECT DISTINCT string4 FROM tmp ORDER BY 1;
 
 --
 -- awk '{print $3,$16,$5;}' onek.data | sort -d | uniq |

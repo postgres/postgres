@@ -183,7 +183,8 @@ SELECT p.name, name(p.hobbies) FROM person* p;
 -- the next two queries demonstrate how functions generate bogus duplicates.
 -- this is a "feature" ..
 --
-SELECT DISTINCT hobbies_r.name, name(hobbies_r.equipment) FROM hobbies_r;
+SELECT DISTINCT hobbies_r.name, name(hobbies_r.equipment) FROM hobbies_r
+  ORDER BY 1,2;
 
 SELECT hobbies_r.name, (hobbies_r.equipment).name FROM hobbies_r;
 

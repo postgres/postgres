@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.173 2008/08/03 19:10:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.174 2008/08/05 02:43:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1447,9 +1447,6 @@ transformDistinctClause(ParseState *pstate,
 	/*
 	 * Now add any remaining non-resjunk tlist items, using default
 	 * sort/group semantics for their data types.
-	 *
-	 * XXX for now, the planner requires distinctClause to be sortable,
-	 * so we have to insist on that here.
 	 */
 	foreach(tlitem, *targetlist)
 	{
@@ -1459,8 +1456,7 @@ transformDistinctClause(ParseState *pstate,
 			continue;			/* ignore junk */
 		result = addTargetToGroupList(pstate, tle,
 									  result, *targetlist,
-									  true,	/* XXX for now */
-									  true);
+									  false, true);
 	}
 
 	return result;
@@ -1555,8 +1551,7 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 					 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions")));
 		result = addTargetToGroupList(pstate, tle,
 									  result, *targetlist,
-									  true,	/* someday allow hash-only? */
-									  true);
+									  false, true);
 	}
 
 	return result;

@@ -129,7 +129,8 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.prorettype < p2.prorettype);
+    (p1.prorettype < p2.prorettype)
+ORDER BY 1, 2;
  prorettype | prorettype 
 ------------+------------
          25 |       1043
@@ -142,7 +143,8 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[0] < p2.proargtypes[0]);
+    (p1.proargtypes[0] < p2.proargtypes[0])
+ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
           25 |        1042
@@ -158,7 +160,8 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[1] < p2.proargtypes[1]);
+    (p1.proargtypes[1] < p2.proargtypes[1])
+ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
           23 |          28
@@ -173,7 +176,8 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[2] < p2.proargtypes[2]);
+    (p1.proargtypes[2] < p2.proargtypes[2])
+ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
         1114 |        1184
@@ -185,7 +189,8 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[3] < p2.proargtypes[3]);
+    (p1.proargtypes[3] < p2.proargtypes[3])
+ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
         1114 |        1184
@@ -197,7 +202,8 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[4] < p2.proargtypes[4]);
+    (p1.proargtypes[4] < p2.proargtypes[4])
+ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
 (0 rows)
@@ -208,7 +214,8 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[5] < p2.proargtypes[5]);
+    (p1.proargtypes[5] < p2.proargtypes[5])
+ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
 (0 rows)
@@ -219,7 +226,8 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[6] < p2.proargtypes[6]);
+    (p1.proargtypes[6] < p2.proargtypes[6])
+ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
 (0 rows)
@@ -230,7 +238,8 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[7] < p2.proargtypes[7]);
+    (p1.proargtypes[7] < p2.proargtypes[7])
+ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
 (0 rows)

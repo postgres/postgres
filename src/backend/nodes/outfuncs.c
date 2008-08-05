@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.329 2008/08/02 21:31:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.330 2008/08/05 02:43:17 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1334,6 +1334,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(append_rel_list);
 	WRITE_NODE_FIELD(query_pathkeys);
 	WRITE_NODE_FIELD(group_pathkeys);
+	WRITE_NODE_FIELD(distinct_pathkeys);
 	WRITE_NODE_FIELD(sort_pathkeys);
 	WRITE_FLOAT_FIELD(total_table_pages, "%.0f");
 	WRITE_FLOAT_FIELD(tuple_fraction, "%.4f");

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.108 2008/08/03 19:10:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.109 2008/08/05 02:43:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,9 +66,9 @@
  * PlannerInfo field and not a passed parameter is that the low-level routines
  * in indxpath.c need to see it.)
  *
- * Note: the PlannerInfo node also includes group_pathkeys and sort_pathkeys,
- * which like query_pathkeys need to be canonicalized once the info is
- * available.
+ * Note: the PlannerInfo node also includes group_pathkeys, distinct_pathkeys,
+ * and sort_pathkeys, which like query_pathkeys need to be canonicalized once
+ * the info is available.
  *
  * tuple_fraction is interpreted as follows:
  *	  0: expect all tuples to be retrieved (normal case)
@@ -120,6 +120,8 @@ query_planner(PlannerInfo *root, List *tlist,
 													 root->query_pathkeys);
 		root->group_pathkeys = canonicalize_pathkeys(root,
 													 root->group_pathkeys);
+		root->distinct_pathkeys = canonicalize_pathkeys(root,
+													root->distinct_pathkeys);
 		root->sort_pathkeys = canonicalize_pathkeys(root,
 													root->sort_pathkeys);
 		return;
@@ -237,10 +239,12 @@ query_planner(PlannerInfo *root, List *tlist,
 	/*
 	 * We have completed merging equivalence sets, so it's now possible to
 	 * convert the requested query_pathkeys to canonical form.	Also
-	 * canonicalize the groupClause and sortClause pathkeys for use later.
+	 * canonicalize the groupClause, distinctClause and sortClause pathkeys
+	 * for use later.
 	 */
 	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
 	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
+	root->distinct_pathkeys = canonicalize_pathkeys(root, root->distinct_pathkeys);
 	root->sort_pathkeys = canonicalize_pathkeys(root, root->sort_pathkeys);
 
 	/*
@@ -286,9 +290,11 @@ query_planner(PlannerInfo *root, List *tlist,
 		/*
 		 * If both GROUP BY and ORDER BY are specified, we will need two
 		 * levels of sort --- and, therefore, certainly need to read all the
-		 * tuples --- unless ORDER BY is a subset of GROUP BY.
+		 * tuples --- unless ORDER BY is a subset of GROUP BY.  Likewise if
+		 * we have both DISTINCT and GROUP BY.
 		 */
-		if (!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys))
+		if (!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys) ||
+			!pathkeys_contained_in(root->distinct_pathkeys, root->group_pathkeys))
 			tuple_fraction = 0.0;
 	}
 	else if (parse->hasAggs || root->hasHavingQual)
