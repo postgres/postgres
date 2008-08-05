@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.46 2008/08/03 05:12:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.47 2008/08/05 05:16:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,7 @@ unlimit_core_size(void)
 	if (lim.rlim_max == 0)
 	{
 		fprintf(stderr,
-				_("%s: cannot set core size,: disallowed by hard limit.\n"),
+				_("%s: could not set core size: disallowed by hard limit\n"),
 				progname);
 		return;
 	}
@@ -524,7 +524,7 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 	 */
 	if (count <= 0)
 	{
-		fprintf(stderr, _("%s: no *.source files found in %s\n"),
+		fprintf(stderr, _("%s: no *.source files found in \"%s\"\n"),
 				progname, indir);
 		exit_nicely(2);
 	}
@@ -965,14 +965,16 @@ spawn_process(const char *cmdline)
 	{
 		if (Advapi32Handle != NULL)
 			FreeLibrary(Advapi32Handle);
-		fprintf(stderr, "ERROR: cannot create restricted tokens on this platform\n");
+		fprintf(stderr, _("%s: cannot create restricted tokens on this platform\n"),
+				progname);
 		exit_nicely(2);
 	}
 
 	/* Open the current token to use as base for the restricted one */
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
 	{
-		fprintf(stderr, "could not open process token: %lu\n", GetLastError());
+		fprintf(stderr, _("could not open process token: %lu\n"),
+				GetLastError());
 		exit_nicely(2);
 	}
 
@@ -983,7 +985,7 @@ spawn_process(const char *cmdline)
 		!AllocateAndInitializeSid(&NtAuthority, 2,
 								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0, 0, &dropSids[1].Sid))
 	{
-		fprintf(stderr, "could not allocate SIDs: %lu\n", GetLastError());
+		fprintf(stderr, _("could not allocate SIDs: %lu\n"), GetLastError());
 		exit_nicely(2);
 	}
 
@@ -1002,7 +1004,8 @@ spawn_process(const char *cmdline)
 
 	if (!b)
 	{
-		fprintf(stderr, "could not create restricted token: %lu\n", GetLastError());
+		fprintf(stderr, _("could not create restricted token: %lu\n"),
+				GetLastError());
 		exit_nicely(2);
 	}
 
@@ -2073,13 +2076,13 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			pg_conf = fopen(buf, "a");
 			if (pg_conf == NULL)
 			{
-				fprintf(stderr, _("\n%s: could not open %s for adding extra config:\nError was %s\n"), progname, buf, strerror(errno));
+				fprintf(stderr, _("\n%s: could not open \"%s\" for adding extra config: %s\n"), progname, buf, strerror(errno));
 				exit_nicely(2);
 			}
 			extra_conf = fopen(temp_config, "r");
 			if (extra_conf == NULL)
 			{
-				fprintf(stderr, _("\n%s: could not open %s to read extra config:\nError was %s\n"), progname, temp_config, strerror(errno));
+				fprintf(stderr, _("\n%s: could not open \"%s\" to read extra config: %s\n"), progname, temp_config, strerror(errno));
 				exit_nicely(2);
 			}
 			while (fgets(line_buf, sizeof(line_buf), extra_conf) != NULL)
