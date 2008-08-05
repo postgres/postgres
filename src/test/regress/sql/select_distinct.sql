@@ -5,7 +5,7 @@
 --
 -- awk '{print $3;}' onek.data | sort -n | uniq
 --
-SELECT DISTINCT two FROM tmp;
+SELECT DISTINCT two FROM tmp ORDER BY 1;
 
 --
 -- awk '{print $5;}' onek.data | sort -n | uniq
