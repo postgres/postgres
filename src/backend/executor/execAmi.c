@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.75.4.2 2004/03/02 18:56:28 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.75.4.3 2008/08/05 21:29:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,9 +337,6 @@ ExecSupportsBackwardScan(Plan *node)
 		case T_Material:
 		case T_Sort:
 			return true;
-
-		case T_Unique:
-			return ExecSupportsBackwardScan(outerPlan(node));
 
 		case T_Limit:
 			return ExecSupportsBackwardScan(outerPlan(node));
