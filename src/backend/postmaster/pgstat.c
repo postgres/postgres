@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.177 2008/08/01 13:16:08 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.178 2008/08/05 12:09:30 mha Exp $
  * ----------
  */
 #include "postgres.h"
@@ -68,8 +68,10 @@
  * Paths for the statistics files (relative to installation's $PGDATA).
  * ----------
  */
-#define PGSTAT_STAT_FILENAME	"global/pgstat.stat"
-#define PGSTAT_STAT_TMPFILE		"global/pgstat.tmp"
+#define PGSTAT_STAT_PERMANENT_FILENAME		"global/pgstat.stat"
+#define PGSTAT_STAT_PERMANENT_TMPFILE		"global/pgstat.tmp"
+#define PGSTAT_STAT_FILENAME				"pg_stat_tmp/pgstat.stat"
+#define PGSTAT_STAT_TMPFILE					"pg_stat_tmp/pgstat.tmp"
 
 /* ----------
  * Timer definitions.
@@ -219,8 +221,8 @@ static void force_statwrite(SIGNAL_ARGS);
 static void pgstat_beshutdown_hook(int code, Datum arg);
 
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
-static void pgstat_write_statsfile(void);
-static HTAB *pgstat_read_statsfile(Oid onlydb);
+static void pgstat_write_statsfile(bool permanent);
+static HTAB *pgstat_read_statsfile(Oid onlydb, bool permanent);
 static void backend_read_statsfile(void);
 static void pgstat_read_current_status(void);
 
@@ -510,6 +512,7 @@ void
 pgstat_reset_all(void)
 {
 	unlink(PGSTAT_STAT_FILENAME);
+	unlink(PGSTAT_STAT_PERMANENT_FILENAME);
 }
 
 #ifdef EXEC_BACKEND
@@ -2598,7 +2601,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 * zero.
 	 */
 	pgStatRunningInCollector = true;
-	pgStatDBHash = pgstat_read_statsfile(InvalidOid);
+	pgStatDBHash = pgstat_read_statsfile(InvalidOid, true);
 
 	/*
 	 * Setup the descriptor set for select(2).	Since only one bit in the set
@@ -2638,7 +2641,7 @@ PgstatCollectorMain(int argc, char *argv[])
 			if (!PostmasterIsAlive(true))
 				break;
 
-			pgstat_write_statsfile();
+			pgstat_write_statsfile(false);
 			need_statwrite = false;
 			need_timer = true;
 		}
@@ -2806,7 +2809,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	/*
 	 * Save the final stats to reuse at next startup.
 	 */
-	pgstat_write_statsfile();
+	pgstat_write_statsfile(true);
 
 	exit(0);
 }
@@ -2891,10 +2894,14 @@ pgstat_get_db_entry(Oid databaseid, bool create)
  * pgstat_write_statsfile() -
  *
  *	Tell the news.
+ *	If writing to the permanent file (happens when the collector is
+ *	shutting down only), remove the temporary file so that backends
+ *	starting up under a new postmaster can't read the old data before
+ *	the new collector is ready.
  * ----------
  */
 static void
-pgstat_write_statsfile(void)
+pgstat_write_statsfile(bool permanent)
 {
 	HASH_SEQ_STATUS hstat;
 	HASH_SEQ_STATUS tstat;
@@ -2904,17 +2911,19 @@ pgstat_write_statsfile(void)
 	PgStat_StatFuncEntry *funcentry;
 	FILE	   *fpout;
 	int32		format_id;
+	const char *tmpfile = permanent?PGSTAT_STAT_PERMANENT_TMPFILE:PGSTAT_STAT_TMPFILE;
+	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:PGSTAT_STAT_FILENAME;
 
 	/*
 	 * Open the statistics temp file to write out the current values.
 	 */
-	fpout = fopen(PGSTAT_STAT_TMPFILE, PG_BINARY_W);
+	fpout = fopen(tmpfile, PG_BINARY_W);
 	if (fpout == NULL)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not open temporary statistics file \"%s\": %m",
-						PGSTAT_STAT_TMPFILE)));
+						tmpfile)));
 		return;
 	}
 
@@ -2981,26 +2990,29 @@ pgstat_write_statsfile(void)
 		ereport(LOG,
 				(errcode_for_file_access(),
 			   errmsg("could not write temporary statistics file \"%s\": %m",
-					  PGSTAT_STAT_TMPFILE)));
+					  tmpfile)));
 		fclose(fpout);
-		unlink(PGSTAT_STAT_TMPFILE);
+		unlink(tmpfile);
 	}
 	else if (fclose(fpout) < 0)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
 			   errmsg("could not close temporary statistics file \"%s\": %m",
-					  PGSTAT_STAT_TMPFILE)));
-		unlink(PGSTAT_STAT_TMPFILE);
+					  tmpfile)));
+		unlink(tmpfile);
 	}
-	else if (rename(PGSTAT_STAT_TMPFILE, PGSTAT_STAT_FILENAME) < 0)
+	else if (rename(tmpfile, statfile) < 0)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not rename temporary statistics file \"%s\" to \"%s\": %m",
-						PGSTAT_STAT_TMPFILE, PGSTAT_STAT_FILENAME)));
-		unlink(PGSTAT_STAT_TMPFILE);
+						tmpfile, statfile)));
+		unlink(tmpfile);
 	}
+
+	if (permanent)
+		unlink(PGSTAT_STAT_FILENAME);
 }
 
 
@@ -3012,7 +3024,7 @@ pgstat_write_statsfile(void)
  * ----------
  */
 static HTAB *
-pgstat_read_statsfile(Oid onlydb)
+pgstat_read_statsfile(Oid onlydb, bool permanent)
 {
 	PgStat_StatDBEntry *dbentry;
 	PgStat_StatDBEntry dbbuf;
@@ -3027,6 +3039,7 @@ pgstat_read_statsfile(Oid onlydb)
 	FILE	   *fpin;
 	int32		format_id;
 	bool		found;
+	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:PGSTAT_STAT_FILENAME;
 
 	/*
 	 * The tables will live in pgStatLocalContext.
@@ -3055,7 +3068,7 @@ pgstat_read_statsfile(Oid onlydb)
 	 * return zero for anything and the collector simply starts from scratch
 	 * with empty counters.
 	 */
-	if ((fpin = AllocateFile(PGSTAT_STAT_FILENAME, PG_BINARY_R)) == NULL)
+	if ((fpin = AllocateFile(statfile, PG_BINARY_R)) == NULL)
 		return dbhash;
 
 	/*
@@ -3244,6 +3257,9 @@ pgstat_read_statsfile(Oid onlydb)
 done:
 	FreeFile(fpin);
 
+	if (permanent)
+		unlink(PGSTAT_STAT_PERMANENT_FILENAME);
+
 	return dbhash;
 }
 
@@ -3262,9 +3278,9 @@ backend_read_statsfile(void)
 
 	/* Autovacuum launcher wants stats about all databases */
 	if (IsAutoVacuumLauncherProcess())
-		pgStatDBHash = pgstat_read_statsfile(InvalidOid);
+		pgStatDBHash = pgstat_read_statsfile(InvalidOid, false);
 	else
-		pgStatDBHash = pgstat_read_statsfile(MyDatabaseId);
+		pgStatDBHash = pgstat_read_statsfile(MyDatabaseId, false);
 }
 
 

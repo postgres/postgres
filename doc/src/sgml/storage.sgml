@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.23 2008/05/02 01:08:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.24 2008/08/05 12:09:30 mha Exp $ -->
 
 <chapter id="storage">
 
@@ -75,6 +75,12 @@ Item
  <entry><filename>pg_multixact</></entry>
  <entry>Subdirectory containing multitransaction status data
   (used for shared row locks)</entry> 
+</row>
+
+<row>
+ <entry><filename>pg_stat_tmp</></entry>
+ <entry>Subdirectory containing temporary files for the statistics
+  subsystem</entry>
 </row>
 
 <row>

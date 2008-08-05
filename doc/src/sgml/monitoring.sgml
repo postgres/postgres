@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.60 2008/06/18 17:44:12 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.61 2008/08/05 12:09:30 mha Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -164,6 +164,17 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    only superusers are allowed to change these parameters with
    <command>SET</>.)
   </para>
+
+  <para>
+   The statistics collector communicates with the backends needing 
+   information (including autovacuum) through temporary files.
+   These files are stored in the <filename>pg_stat_tmp</filename> subdirectory.
+   When the postmaster shuts down, a permanent copy of the statistics
+   data is stored in the <filename>global</filename> subdirectory. For increased
+   performance, it is possible to mount or symlink a RAM based
+   filesystem to the <filename>pg_stat_tmp</filename> directory.
+  </para>
+
  </sect2>
 
  <sect2 id="monitoring-stats-views">
