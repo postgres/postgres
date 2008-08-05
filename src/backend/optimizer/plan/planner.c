@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.238 2008/08/05 02:43:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.239 2008/08/05 16:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1304,11 +1304,24 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			/*
 			 * Use a Unique node to implement DISTINCT.  Add an explicit sort
 			 * if we couldn't make the path come out the way the Unique node
-			 * needs it.  If we do have to sort, sort by the more rigorous
-			 * of DISTINCT and ORDER BY, to avoid a second sort below.
+			 * needs it.  If we do have to sort, always sort by the more
+			 * rigorous of DISTINCT and ORDER BY, to avoid a second sort
+			 * below.  However, for regular DISTINCT, don't sort now if we
+			 * don't have to --- sorting afterwards will likely be cheaper,
+			 * and also has the possibility of optimizing via LIMIT.  But
+			 * for DISTINCT ON, we *must* force the final sort now, else
+			 * it won't have the desired behavior.
 			 */
-			if (!pathkeys_contained_in(root->distinct_pathkeys,
-									   current_pathkeys))
+			List   *needed_pathkeys;
+
+			if (parse->hasDistinctOn &&
+				list_length(root->distinct_pathkeys) <
+				list_length(root->sort_pathkeys))
+				needed_pathkeys = root->sort_pathkeys;
+			else
+				needed_pathkeys = root->distinct_pathkeys;
+
+			if (!pathkeys_contained_in(needed_pathkeys, current_pathkeys))
 			{
 				if (list_length(root->distinct_pathkeys) >=
 					list_length(root->sort_pathkeys))
@@ -1961,6 +1974,7 @@ choose_hashed_distinct(PlannerInfo *root,
 	int			numDistinctCols = list_length(root->parse->distinctClause);
 	Size		hashentrysize;
 	List	   *current_pathkeys;
+	List	   *needed_pathkeys;
 	Path		hashed_p;
 	Path		sorted_p;
 
@@ -2002,13 +2016,21 @@ choose_hashed_distinct(PlannerInfo *root,
 		cost_sort(&hashed_p, root, root->sort_pathkeys, hashed_p.total_cost,
 				  dNumDistinctRows, input_plan->plan_width, limit_tuples);
 
-	/* Now for the GROUP case ... */
+	/*
+	 * Now for the GROUP case.  See comments in grouping_planner about the
+	 * sorting choices here --- this code should match that code.
+	 */
 	sorted_p.startup_cost = input_plan->startup_cost;
 	sorted_p.total_cost = input_plan->total_cost;
 	current_pathkeys = input_pathkeys;
-	if (!pathkeys_contained_in(root->distinct_pathkeys, current_pathkeys))
+	if (root->parse->hasDistinctOn &&
+		list_length(root->distinct_pathkeys) <
+		list_length(root->sort_pathkeys))
+		needed_pathkeys = root->sort_pathkeys;
+	else
+		needed_pathkeys = root->distinct_pathkeys;
+	if (!pathkeys_contained_in(needed_pathkeys, current_pathkeys))
 	{
-		/* We don't want to sort twice */
 		if (list_length(root->distinct_pathkeys) >=
 			list_length(root->sort_pathkeys))
 			current_pathkeys = root->distinct_pathkeys;
