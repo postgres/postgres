@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.144 2008/08/02 21:32:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.145 2008/08/07 01:11:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "optimizer/paths.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_oper.h"
 #include "parser/parsetree.h"
 #include "utils/selfuncs.h"
 #include "utils/lsyscache.h"
@@ -1003,12 +1002,6 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	/*
 	 * UNION, INTERSECT, EXCEPT guarantee uniqueness of the whole output row,
 	 * except with ALL.
-	 *
-	 * XXX this code knows that prepunion.c will adopt the default sort/group
-	 * operators for each column datatype to determine uniqueness.  It'd
-	 * probably be better if these operators were chosen at parse time and
-	 * stored into the parsetree, instead of leaving bits of the planner to
-	 * decide semantics.
 	 */
 	if (query->setOperations)
 	{
@@ -1019,24 +1012,26 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 
 		if (!topop->all)
 		{
+			ListCell   *lg;
+
 			/* We're good if all the nonjunk output columns are in colnos */
+			lg = list_head(topop->groupClauses);
 			foreach(l, query->targetList)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(l);
-				Oid		tle_eq_opr;
+				SortGroupClause *sgc;
 
 				if (tle->resjunk)
 					continue;	/* ignore resjunk columns */
 
+				/* non-resjunk columns should have grouping clauses */
+				Assert(lg != NULL);
+				sgc = (SortGroupClause *) lfirst(lg);
+				lg = lnext(lg);
+
 				opid = distinct_col_search(tle->resno, colnos, opids);
-				if (!OidIsValid(opid))
-					break;		/* exit early if no match */
-				/* check for compatible semantics */
-				get_sort_group_operators(exprType((Node *) tle->expr),
-										 false, false, false,
-										 NULL, &tle_eq_opr, NULL);
-				if (!OidIsValid(tle_eq_opr) ||
-					!equality_ops_are_compatible(opid, tle_eq_opr))
+				if (!OidIsValid(opid) ||
+					!equality_ops_are_compatible(opid, sgc->eqop))
 					break;		/* exit early if no match */
 			}
 			if (l == NULL)		/* had matches for all? */

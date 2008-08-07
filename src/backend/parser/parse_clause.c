@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.174 2008/08/05 02:43:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.175 2008/08/07 01:11:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,9 @@ static List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					List *sortlist, List *targetlist,
 					SortByDir sortby_dir, SortByNulls sortby_nulls,
 					List *sortby_opname, bool resolveUnknown);
+static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
+					 List *grouplist, List *targetlist,
+					 bool resolveUnknown);
 
 
 /*
@@ -1355,7 +1358,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		if (!found)
 			result = addTargetToGroupList(pstate, tle,
 										  result, *targetlist,
-										  false, true);
+										  true);
 	}
 
 	return result;
@@ -1456,7 +1459,7 @@ transformDistinctClause(ParseState *pstate,
 			continue;			/* ignore junk */
 		result = addTargetToGroupList(pstate, tle,
 									  result, *targetlist,
-									  false, true);
+									  true);
 	}
 
 	return result;
@@ -1551,7 +1554,7 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 					 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions")));
 		result = addTargetToGroupList(pstate, tle,
 									  result, *targetlist,
-									  false, true);
+									  true);
 	}
 
 	return result;
@@ -1679,10 +1682,6 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
  * the TLE is considered "already in the list" if it appears there with any
  * sorting semantics.
  *
- * If requireSortOp is TRUE, we require a sorting operator to be found too.
- * XXX this argument should eventually be obsolete, but for now there are
- * parts of the system that can't support non-sortable grouping lists.
- *
  * If resolveUnknown is TRUE, convert TLEs of type UNKNOWN to TEXT.  If not,
  * do nothing (which implies the search for an equality operator will fail).
  * pstate should be provided if resolveUnknown is TRUE, but can be NULL
@@ -1690,10 +1689,10 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
  *
  * Returns the updated SortGroupClause list.
  */
-List *
+static List *
 addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 List *grouplist, List *targetlist,
-					 bool requireSortOp, bool resolveUnknown)
+					 bool resolveUnknown)
 {
 	Oid			restype = exprType((Node *) tle->expr);
 	Oid			sortop;
@@ -1716,7 +1715,7 @@ addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 
 		/* determine the eqop and optional sortop */
 		get_sort_group_operators(restype,
-								 requireSortOp, true, false,
+								 false, true, false,
 								 &sortop, &eqop, NULL);
 
 		grpcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);

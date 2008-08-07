@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.260 2008/08/02 21:32:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.261 2008/08/07 01:11:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3933,6 +3933,8 @@ expression_tree_walker(Node *node,
 					return true;
 				if (walker(setop->rarg, context))
 					return true;
+
+				/* groupClauses are deemed uninteresting */
 			}
 			break;
 		case T_InClauseInfo:
@@ -4535,6 +4537,7 @@ expression_tree_mutator(Node *node,
 				FLATCOPY(newnode, setop, SetOperationStmt);
 				MUTATE(newnode->larg, setop->larg, Node *);
 				MUTATE(newnode->rarg, setop->rarg, Node *);
+				/* We do not mutate groupClauses by default */
 				return (Node *) newnode;
 			}
 			break;

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.77 2008/08/02 21:31:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.78 2008/08/07 01:11:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1597,6 +1597,15 @@ find_expr_references_walker(Node *node,
 		context->rtables = list_delete_first(context->rtables);
 		return result;
 	}
+	else if (IsA(node, SetOperationStmt))
+	{
+		SetOperationStmt *setop = (SetOperationStmt *) node;
+
+		/* we need to look at the groupClauses for operator references */
+		find_expr_references_walker((Node *) setop->groupClauses, context);
+		/* fall through to examine child nodes */
+	}
+
 	return expression_tree_walker(node, find_expr_references_walker,
 								  (void *) context);
 }

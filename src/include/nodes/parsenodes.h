@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.370 2008/08/02 21:32:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.371 2008/08/07 01:11:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -797,7 +797,12 @@ typedef struct SelectStmt
  * top-level Query node containing the leaf SELECTs as subqueries in its
  * range table.  Its setOperations field shows the tree of set operations,
  * with leaf SelectStmt nodes replaced by RangeTblRef nodes, and internal
- * nodes replaced by SetOperationStmt nodes.
+ * nodes replaced by SetOperationStmt nodes.  Information about the output
+ * column types is added, too.  (Note that the child nodes do not necessarily
+ * produce these types directly, but we've checked that their output types
+ * can be coerced to the output column type.)  Also, if it's not UNION ALL,
+ * information about the types' sort/group semantics is provided in the form
+ * of a SortGroupClause list (same representation as, eg, DISTINCT).
  * ----------------------
  */
 typedef struct SetOperationStmt
@@ -812,6 +817,8 @@ typedef struct SetOperationStmt
 	/* Fields derived during parse analysis: */
 	List	   *colTypes;		/* OID list of output column type OIDs */
 	List	   *colTypmods;		/* integer list of output column typmods */
+	List	   *groupClauses;	/* a list of SortGroupClause's */
+	/* groupClauses is NIL if UNION ALL, but must be set otherwise */
 } SetOperationStmt;
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.79 2008/08/02 21:32:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.80 2008/08/07 01:11:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parse_expr.h"
+#include "utils/lsyscache.h"
 
 
 /*****************************************************************************
@@ -200,6 +201,109 @@ get_sortgrouplist_exprs(List *sgClauses, List *targetList)
 	}
 	return result;
 }
+
+
+/*****************************************************************************
+ *		Functions to extract data from a list of SortGroupClauses
+ *
+ * These don't really belong in tlist.c, but they are sort of related to the
+ * functions just above, and they don't seem to deserve their own file.
+ *****************************************************************************/
+
+/*
+ * extract_grouping_ops - make an array of the equality operator OIDs
+ *		for a SortGroupClause list
+ */
+Oid *
+extract_grouping_ops(List *groupClause)
+{
+	int			numCols = list_length(groupClause);
+	int			colno = 0;
+	Oid		   *groupOperators;
+	ListCell   *glitem;
+
+	groupOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+
+	foreach(glitem, groupClause)
+	{
+		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
+
+		groupOperators[colno] = groupcl->eqop;
+		Assert(OidIsValid(groupOperators[colno]));
+		colno++;
+	}
+
+	return groupOperators;
+}
+
+/*
+ * extract_grouping_cols - make an array of the grouping column resnos
+ *		for a SortGroupClause list
+ */
+AttrNumber *
+extract_grouping_cols(List *groupClause, List *tlist)
+{
+	AttrNumber *grpColIdx;
+	int			numCols = list_length(groupClause);
+	int			colno = 0;
+	ListCell   *glitem;
+
+	grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
+
+	foreach(glitem, groupClause)
+	{
+		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
+		TargetEntry *tle = get_sortgroupclause_tle(groupcl, tlist);
+
+		grpColIdx[colno++] = tle->resno;
+	}
+
+	return grpColIdx;
+}
+
+/*
+ * grouping_is_sortable - is it possible to implement grouping list by sorting?
+ *
+ * This is easy since the parser will have included a sortop if one exists.
+ */
+bool
+grouping_is_sortable(List *groupClause)
+{
+	ListCell   *glitem;
+
+	foreach(glitem, groupClause)
+	{
+		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
+
+		if (!OidIsValid(groupcl->sortop))
+			return false;
+	}
+	return true;
+}
+
+/*
+ * grouping_is_hashable - is it possible to implement grouping list by hashing?
+ *
+ * We assume hashing is OK if the equality operators are marked oprcanhash.
+ * (If there isn't actually a supporting hash function, the executor will
+ * complain at runtime; but this is a misdeclaration of the operator, not
+ * a system bug.)
+ */
+bool
+grouping_is_hashable(List *groupClause)
+{
+	ListCell   *glitem;
+
+	foreach(glitem, groupClause)
+	{
+		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
+
+		if (!op_hashjoinable(groupcl->eqop))
+			return false;
+	}
+	return true;
+}
+
 
 
 /*

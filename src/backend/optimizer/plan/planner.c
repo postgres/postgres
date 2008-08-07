@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.239 2008/08/05 16:03:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.240 2008/08/07 01:11:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,10 +68,6 @@ static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
 static void preprocess_groupclause(PlannerInfo *root);
-static Oid *extract_grouping_ops(List *groupClause);
-static AttrNumber *extract_grouping_cols(List *groupClause, List *tlist);
-static bool grouping_is_sortable(List *groupClause);
-static bool grouping_is_hashable(List *groupClause);
 static bool choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
 					   Path *cheapest_path, Path *sorted_path,
@@ -784,10 +780,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		/*
 		 * If there's a top-level ORDER BY, assume we have to fetch all the
-		 * tuples.	This might seem too simplistic given all the hackery below
-		 * to possibly avoid the sort ... but a nonzero tuple_fraction is only
-		 * of use to plan_set_operations() when the setop is UNION ALL, and
-		 * the result of UNION ALL is always unsorted.
+		 * tuples.	This might be too simplistic given all the hackery below
+		 * to possibly avoid the sort; but the odds of accurate estimates
+		 * here are pretty low anyway.
 		 */
 		if (parse->sortClause)
 			tuple_fraction = 0.0;
@@ -818,7 +813,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 */
 		Assert(parse->commandType == CMD_SELECT);
 
-		tlist = postprocess_setop_tlist(result_plan->targetlist, tlist);
+		tlist = postprocess_setop_tlist(copyObject(result_plan->targetlist),
+										tlist);
 
 		/*
 		 * Can't handle FOR UPDATE/SHARE here (parser should have checked
@@ -1712,100 +1708,6 @@ preprocess_groupclause(PlannerInfo *root)
 	/* Success --- install the rearranged GROUP BY list */
 	Assert(list_length(parse->groupClause) == list_length(new_groupclause));
 	parse->groupClause = new_groupclause;
-}
-
-/*
- * extract_grouping_ops - make an array of the equality operator OIDs
- *		for a SortGroupClause list
- */
-static Oid *
-extract_grouping_ops(List *groupClause)
-{
-	int			numCols = list_length(groupClause);
-	int			colno = 0;
-	Oid		   *groupOperators;
-	ListCell   *glitem;
-
-	groupOperators = (Oid *) palloc(sizeof(Oid) * numCols);
-
-	foreach(glitem, groupClause)
-	{
-		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
-
-		groupOperators[colno] = groupcl->eqop;
-		Assert(OidIsValid(groupOperators[colno]));
-		colno++;
-	}
-
-	return groupOperators;
-}
-
-/*
- * extract_grouping_cols - make an array of the grouping column resnos
- *		for a SortGroupClause list
- */
-static AttrNumber *
-extract_grouping_cols(List *groupClause, List *tlist)
-{
-	AttrNumber *grpColIdx;
-	int			numCols = list_length(groupClause);
-	int			colno = 0;
-	ListCell   *glitem;
-
-	grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
-
-	foreach(glitem, groupClause)
-	{
-		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
-		TargetEntry *tle = get_sortgroupclause_tle(groupcl, tlist);
-
-		grpColIdx[colno++] = tle->resno;
-	}
-
-	return grpColIdx;
-}
-
-/*
- * grouping_is_sortable - is it possible to implement grouping list by sorting?
- *
- * This is easy since the parser will have included a sortop if one exists.
- */
-static bool
-grouping_is_sortable(List *groupClause)
-{
-	ListCell   *glitem;
-
-	foreach(glitem, groupClause)
-	{
-		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
-
-		if (!OidIsValid(groupcl->sortop))
-			return false;
-	}
-	return true;
-}
-
-/*
- * grouping_is_hashable - is it possible to implement grouping list by hashing?
- *
- * We assume hashing is OK if the equality operators are marked oprcanhash.
- * (If there isn't actually a supporting hash function, the executor will
- * complain at runtime; but this is a misdeclaration of the operator, not
- * a system bug.)
- */
-static bool
-grouping_is_hashable(List *groupClause)
-{
-	ListCell   *glitem;
-
-	foreach(glitem, groupClause)
-	{
-		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
-
-		if (!op_hashjoinable(groupcl->eqop))
-			return false;
-	}
-	return true;
 }
 
 /*

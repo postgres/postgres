@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.325 2008/08/02 21:31:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.326 2008/08/07 01:11:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -839,6 +839,7 @@ _equalSetOperationStmt(SetOperationStmt *a, SetOperationStmt *b)
 	COMPARE_NODE_FIELD(rarg);
 	COMPARE_NODE_FIELD(colTypes);
 	COMPARE_NODE_FIELD(colTypmods);
+	COMPARE_NODE_FIELD(groupClauses);
 
 	return true;
 }
