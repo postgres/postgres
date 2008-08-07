@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.101 2008/08/07 03:04:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.102 2008/08/07 19:35:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -541,6 +541,7 @@ typedef struct SetOp
 	AttrNumber *dupColIdx;		/* their indexes in the target list */
 	Oid		   *dupOperators;	/* equality operators to compare with */
 	AttrNumber	flagColIdx;		/* where is the flag column, if any */
+	int			firstFlag;		/* flag value for first input relation */
 	long		numGroups;		/* estimated number of groups in input */
 } SetOp;
 

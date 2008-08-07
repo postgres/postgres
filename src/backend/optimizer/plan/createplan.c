@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.243 2008/08/07 03:04:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.244 2008/08/07 19:35:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3109,8 +3109,8 @@ make_unique(Plan *lefttree, List *distinctList)
  */
 SetOp *
 make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
-		   List *distinctList, AttrNumber flagColIdx, long numGroups,
-		   double outputRows)
+		   List *distinctList, AttrNumber flagColIdx, int firstFlag,
+		   long numGroups, double outputRows)
 {
 	SetOp	   *node = makeNode(SetOp);
 	Plan	   *plan = &node->plan;
@@ -3159,6 +3159,7 @@ make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 	node->dupColIdx = dupColIdx;
 	node->dupOperators = dupOperators;
 	node->flagColIdx = flagColIdx;
+	node->firstFlag = firstFlag;
 	node->numGroups = numGroups;
 
 	return node;

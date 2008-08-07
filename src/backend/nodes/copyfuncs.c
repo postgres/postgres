@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.398 2008/08/07 03:04:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.399 2008/08/07 19:35:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -657,6 +657,7 @@ _copySetOp(SetOp *from)
 	COPY_POINTER_FIELD(dupColIdx, from->numCols * sizeof(AttrNumber));
 	COPY_POINTER_FIELD(dupOperators, from->numCols * sizeof(Oid));
 	COPY_SCALAR_FIELD(flagColIdx);
+	COPY_SCALAR_FIELD(firstFlag);
 	COPY_SCALAR_FIELD(numGroups);
 
 	return newnode;

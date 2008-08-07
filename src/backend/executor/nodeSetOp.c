@@ -12,11 +12,16 @@
  * relation.  Then it is a simple matter to emit the output demanded by the
  * SQL spec for INTERSECT, INTERSECT ALL, EXCEPT, or EXCEPT ALL.
  *
- * In SETOP_HASHED mode, the input is delivered in no particular order.
- * We build a hash table in memory with one entry for each group of
- * identical tuples, and count the number of tuples in the group from
- * each relation.  After seeing all the input, we scan the hashtable and
- * generate the correct output using those counts.
+ * In SETOP_HASHED mode, the input is delivered in no particular order,
+ * except that we know all the tuples from one input relation will come before
+ * all the tuples of the other.  The planner guarantees that the first input
+ * relation is the left-hand one for EXCEPT, and tries to make the smaller
+ * input relation come first for INTERSECT.  We build a hash table in memory
+ * with one entry for each group of identical tuples, and count the number of
+ * tuples in the group from each relation.  After seeing all the input, we
+ * scan the hashtable and generate the correct output using those counts.
+ * We can avoid making hashtable entries for any tuples appearing only in the
+ * second input relation, since they cannot result in any output.
  *
  * This node type is not used for UNION or UNION ALL, since those can be
  * implemented more cheaply (there's no need for the junk attribute to
@@ -32,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.26 2008/08/07 03:04:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.27 2008/08/07 19:35:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,8 +87,8 @@ static TupleTableSlot *setop_retrieve_hash_table(SetOpState *setopstate);
 /*
  * Initialize state for a new group of input values.
  */
-static void
-initialize_counts(SetOpState *setopstate, SetOpStatePerGroup pergroup)
+static inline void
+initialize_counts(SetOpStatePerGroup pergroup)
 {
 	pergroup->numLeft = pergroup->numRight = 0;
 }
@@ -91,9 +96,21 @@ initialize_counts(SetOpState *setopstate, SetOpStatePerGroup pergroup)
 /*
  * Advance the appropriate counter for one input tuple.
  */
-static void
-advance_counts(SetOpState *setopstate, SetOpStatePerGroup pergroup,
-			   TupleTableSlot *inputslot)
+static inline void
+advance_counts(SetOpStatePerGroup pergroup, int flag)
+{
+	if (flag)
+		pergroup->numRight++;
+	else
+		pergroup->numLeft++;
+}
+
+/*
+ * Fetch the "flag" column from an input tuple.
+ * This is an integer column with value 0 for left side, 1 for right side.
+ */
+static int
+fetch_tuple_flag(SetOpState *setopstate, TupleTableSlot *inputslot)
 {
 	SetOp	   *node = (SetOp *) setopstate->ps.plan;
 	int			flag;
@@ -103,10 +120,8 @@ advance_counts(SetOpState *setopstate, SetOpStatePerGroup pergroup,
 									  node->flagColIdx,
 									  &isNull));
 	Assert(!isNull);
-	if (flag)
-		pergroup->numRight++;
-	else
-		pergroup->numLeft++;
+	Assert(flag == 0 || flag == 1);
+	return flag;
 }
 
 /*
@@ -128,33 +143,6 @@ build_hash_table(SetOpState *setopstate)
 												sizeof(SetOpHashEntryData),
 												setopstate->tableContext,
 												setopstate->tempContext);
-}
-
-/*
- * Find or create a hashtable entry for the tuple group containing the
- * given tuple.
- */
-static SetOpHashEntry
-lookup_hash_entry(SetOpState *setopstate, TupleTableSlot *inputslot)
-{
-	SetOpHashEntry entry;
-	bool		isnew;
-
-	/* find or create the hashtable entry */
-	entry = (SetOpHashEntry) LookupTupleHashEntry(setopstate->hashtable,
-												  inputslot,
-												  &isnew);
-
-	if (isnew)
-	{
-		/* initialize counts for new tuple group */
-		initialize_counts(setopstate, &entry->pergroup);
-	}
-
-	/* Must reset temp context after each hashtable lookup */
-	MemoryContextReset(setopstate->tempContext);
-
-	return entry;
 }
 
 /*
@@ -289,10 +277,11 @@ setop_retrieve_direct(SetOpState *setopstate)
 		setopstate->grp_firstTuple = NULL;	/* don't keep two pointers */
 
 		/* Initialize working state for a new input tuple group */
-		initialize_counts(setopstate, pergroup);
+		initialize_counts(pergroup);
 
 		/* Count the first input tuple */
-		advance_counts(setopstate, pergroup, resultTupleSlot);
+		advance_counts(pergroup,
+					   fetch_tuple_flag(setopstate, resultTupleSlot));
 
 		/*
 		 * Scan the outer plan until we exhaust it or cross a group boundary.
@@ -324,7 +313,8 @@ setop_retrieve_direct(SetOpState *setopstate)
 			}
 
 			/* Still in same group, so count this tuple */
-			advance_counts(setopstate, pergroup, outerslot);
+			advance_counts(pergroup,
+						   fetch_tuple_flag(setopstate, outerslot));
 		}
 
 		/*
@@ -351,30 +341,73 @@ setop_retrieve_direct(SetOpState *setopstate)
 static void
 setop_fill_hash_table(SetOpState *setopstate)
 {
+	SetOp	   *node = (SetOp *) setopstate->ps.plan;
 	PlanState  *outerPlan;
-	SetOpHashEntry entry;
-	TupleTableSlot *outerslot;
+	int			firstFlag;
+	bool		in_first_rel;
 
 	/*
 	 * get state info from node
 	 */
 	outerPlan = outerPlanState(setopstate);
+	firstFlag = node->firstFlag;
+	/* verify planner didn't mess up */
+	Assert(firstFlag == 0 ||
+		   (firstFlag == 1 &&
+			(node->cmd == SETOPCMD_INTERSECT ||
+			 node->cmd == SETOPCMD_INTERSECT_ALL)));
 
 	/*
 	 * Process each outer-plan tuple, and then fetch the next one, until we
 	 * exhaust the outer plan.
 	 */
+	in_first_rel = true;
 	for (;;)
 	{
+		TupleTableSlot *outerslot;
+		int			flag;
+		SetOpHashEntry entry;
+		bool		isnew;
+
 		outerslot = ExecProcNode(outerPlan);
 		if (TupIsNull(outerslot))
 			break;
 
-		/* Find or build hashtable entry for this tuple's group */
-		entry = lookup_hash_entry(setopstate, outerslot);
+		/* Identify whether it's left or right input */
+		flag = fetch_tuple_flag(setopstate, outerslot);
 
-		/* Advance the counts */
-		advance_counts(setopstate, &entry->pergroup, outerslot);
+		if (flag == firstFlag)
+		{
+			/* (still) in first input relation */
+			Assert(in_first_rel);
+
+			/* Find or build hashtable entry for this tuple's group */
+			entry = (SetOpHashEntry)
+				LookupTupleHashEntry(setopstate->hashtable, outerslot, &isnew);
+
+			/* If new tuple group, initialize counts */
+			if (isnew)
+				initialize_counts(&entry->pergroup);
+
+			/* Advance the counts */
+			advance_counts(&entry->pergroup, flag);
+		}
+		else
+		{
+			/* reached second relation */
+			in_first_rel = false;
+
+			/* For tuples not seen previously, do not make hashtable entry */
+			entry = (SetOpHashEntry)
+				LookupTupleHashEntry(setopstate->hashtable, outerslot, NULL);
+
+			/* Advance the counts if entry is already present */
+			if (entry)
+				advance_counts(&entry->pergroup, flag);
+		}
+
+		/* Must reset temp context after each hashtable lookup */
+		MemoryContextReset(setopstate->tempContext);
 	}
 
 	setopstate->table_filled = true;

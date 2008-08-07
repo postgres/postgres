@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.80 2008/08/07 01:11:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.81 2008/08/07 19:35:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,69 @@ add_to_flat_tlist(List *tlist, List *vars)
 		}
 	}
 	return tlist;
+}
+
+
+/*
+ * get_tlist_exprs
+ *		Get just the expression subtrees of a tlist
+ *
+ * Resjunk columns are ignored unless includeJunk is true
+ */
+List *
+get_tlist_exprs(List *tlist, bool includeJunk)
+{
+	List	   *result = NIL;
+	ListCell   *l;
+
+	foreach(l, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (tle->resjunk && !includeJunk)
+			continue;
+
+		result = lappend(result, tle->expr);
+	}
+	return result;
+}
+
+
+/*
+ * Does tlist have same output datatypes as listed in colTypes?
+ *
+ * Resjunk columns are ignored if junkOK is true; otherwise presence of
+ * a resjunk column will always cause a 'false' result.
+ *
+ * Note: currently no callers care about comparing typmods.
+ */
+bool
+tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
+{
+	ListCell   *l;
+	ListCell   *curColType = list_head(colTypes);
+
+	foreach(l, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (tle->resjunk)
+		{
+			if (!junkOK)
+				return false;
+		}
+		else
+		{
+			if (curColType == NULL)
+				return false;	/* tlist longer than colTypes */
+			if (exprType((Node *) tle->expr) != lfirst_oid(curColType))
+				return false;
+			curColType = lnext(curColType);
+		}
+	}
+	if (curColType != NULL)
+		return false;			/* tlist shorter than colTypes */
+	return true;
 }
 
 
@@ -301,44 +364,5 @@ grouping_is_hashable(List *groupClause)
 		if (!op_hashjoinable(groupcl->eqop))
 			return false;
 	}
-	return true;
-}
-
-
-
-/*
- * Does tlist have same output datatypes as listed in colTypes?
- *
- * Resjunk columns are ignored if junkOK is true; otherwise presence of
- * a resjunk column will always cause a 'false' result.
- *
- * Note: currently no callers care about comparing typmods.
- */
-bool
-tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
-{
-	ListCell   *l;
-	ListCell   *curColType = list_head(colTypes);
-
-	foreach(l, tlist)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-
-		if (tle->resjunk)
-		{
-			if (!junkOK)
-				return false;
-		}
-		else
-		{
-			if (curColType == NULL)
-				return false;	/* tlist longer than colTypes */
-			if (exprType((Node *) tle->expr) != lfirst_oid(curColType))
-				return false;
-			curColType = lnext(curColType);
-		}
-	}
-	if (curColType != NULL)
-		return false;			/* tlist shorter than colTypes */
 	return true;
 }

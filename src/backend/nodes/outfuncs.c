@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.332 2008/08/07 03:04:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.333 2008/08/07 19:35:02 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -611,6 +611,7 @@ _outSetOp(StringInfo str, SetOp *node)
 		appendStringInfo(str, " %u", node->dupOperators[i]);
 
 	WRITE_INT_FIELD(flagColIdx);
+	WRITE_INT_FIELD(firstFlag);
 	WRITE_LONG_FIELD(numGroups);
 }
 
