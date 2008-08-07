@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.150 2008/08/07 01:11:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.151 2008/08/07 03:04:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ static Plan *generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 					double tuple_fraction,
 					List *refnames_tlist, List **sortClauses);
 static Plan *generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
+					   double tuple_fraction,
 					   List *refnames_tlist, List **sortClauses);
 static List *recurse_union_children(Node *setOp, PlannerInfo *root,
 					   double tuple_fraction,
@@ -229,7 +230,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 									   refnames_tlist,
 									   sortClauses);
 		else
-			plan = generate_nonunion_plan(op, root,
+			plan = generate_nonunion_plan(op, root, tuple_fraction,
 										  refnames_tlist,
 										  sortClauses);
 
@@ -341,6 +342,7 @@ generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
  */
 static Plan *
 generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
+					   double tuple_fraction,
 					   List *refnames_tlist,
 					   List **sortClauses)
 {
@@ -351,6 +353,10 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 			   *groupList,
 			   *planlist,
 			   *child_sortclauses;
+	double		dNumDistinctRows;
+	double		dNumOutputRows;
+	long		numDistinctRows;
+	bool		use_hash;
 	SetOpCmd	cmd;
 
 	/* Recurse on children, ensuring their outputs are marked */
@@ -394,9 +400,31 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 	}
 
 	/*
+	 * XXX for the moment, take the number of distinct groups as being the
+	 * total input size, ie, the worst case.  This is too conservative, but
+	 * we don't want to risk having the hashtable overrun memory; also,
+	 * it's not clear how to get a decent estimate of the true size.
+	 */
+	dNumDistinctRows = plan->plan_rows;
+
+	/* Also convert to long int --- but 'ware overflow! */
+	numDistinctRows = (long) Min(dNumDistinctRows, (double) LONG_MAX);
+
+	/*
+	 * The output size is taken as 10% of that, which is a completely bogus
+	 * guess, but it's what we've used historically.
+	 */
+	dNumOutputRows = ceil(dNumDistinctRows * 0.1);
+
+	/*
 	 * Decide whether to hash or sort, and add a sort node if needed.
 	 */
-	plan = (Plan *) make_sort_from_sortclauses(root, groupList, plan);
+	use_hash = choose_hashed_setop(root, groupList, plan,
+								   tuple_fraction, dNumDistinctRows,
+								   (op->op == SETOP_INTERSECT) ? "INTERSECT" : "EXCEPT");
+
+	if (!use_hash)
+		plan = (Plan *) make_sort_from_sortclauses(root, groupList, plan);
 
 	/*
 	 * Finally, add a SetOp plan node to generate the correct output.
@@ -414,9 +442,12 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 			cmd = SETOPCMD_INTERSECT;	/* keep compiler quiet */
 			break;
 	}
-	plan = (Plan *) make_setop(cmd, plan, groupList, list_length(op->colTypes) + 1);
+	plan = (Plan *) make_setop(cmd, use_hash ? SETOP_HASHED : SETOP_SORTED,
+							   plan, groupList, list_length(op->colTypes) + 1,
+							   numDistinctRows, dNumOutputRows);
 
-	*sortClauses = groupList;
+	/* Result is sorted only if we're not hashing */
+	*sortClauses = use_hash ? NIL : groupList;
 
 	return plan;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.175 2008/05/14 19:10:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.176 2008/08/07 03:04:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -558,19 +558,47 @@ explain_outNode(StringInfo str,
 			pname = "Unique";
 			break;
 		case T_SetOp:
-			switch (((SetOp *) plan)->cmd)
+			switch (((SetOp *) plan)->strategy)
 			{
-				case SETOPCMD_INTERSECT:
-					pname = "SetOp Intersect";
+				case SETOP_SORTED:
+					switch (((SetOp *) plan)->cmd)
+					{
+						case SETOPCMD_INTERSECT:
+							pname = "SetOp Intersect";
+							break;
+						case SETOPCMD_INTERSECT_ALL:
+							pname = "SetOp Intersect All";
+							break;
+						case SETOPCMD_EXCEPT:
+							pname = "SetOp Except";
+							break;
+						case SETOPCMD_EXCEPT_ALL:
+							pname = "SetOp Except All";
+							break;
+						default:
+							pname = "SetOp ???";
+							break;
+					}
 					break;
-				case SETOPCMD_INTERSECT_ALL:
-					pname = "SetOp Intersect All";
-					break;
-				case SETOPCMD_EXCEPT:
-					pname = "SetOp Except";
-					break;
-				case SETOPCMD_EXCEPT_ALL:
-					pname = "SetOp Except All";
+				case SETOP_HASHED:
+					switch (((SetOp *) plan)->cmd)
+					{
+						case SETOPCMD_INTERSECT:
+							pname = "HashSetOp Intersect";
+							break;
+						case SETOPCMD_INTERSECT_ALL:
+							pname = "HashSetOp Intersect All";
+							break;
+						case SETOPCMD_EXCEPT:
+							pname = "HashSetOp Except";
+							break;
+						case SETOPCMD_EXCEPT_ALL:
+							pname = "HashSetOp Except All";
+							break;
+						default:
+							pname = "HashSetOp ???";
+							break;
+					}
 					break;
 				default:
 					pname = "SetOp ???";

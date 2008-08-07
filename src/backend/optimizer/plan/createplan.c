@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.242 2008/08/02 21:32:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.243 2008/08/07 03:04:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3108,8 +3108,9 @@ make_unique(Plan *lefttree, List *distinctList)
  * already be sorted accordingly.
  */
 SetOp *
-make_setop(SetOpCmd cmd, Plan *lefttree,
-		   List *distinctList, AttrNumber flagColIdx)
+make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
+		   List *distinctList, AttrNumber flagColIdx, long numGroups,
+		   double outputRows)
 {
 	SetOp	   *node = makeNode(SetOp);
 	Plan	   *plan = &node->plan;
@@ -3120,20 +3121,13 @@ make_setop(SetOpCmd cmd, Plan *lefttree,
 	ListCell   *slitem;
 
 	copy_plan_costsize(plan, lefttree);
+	plan->plan_rows = outputRows;
 
 	/*
 	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
 	 * all columns get compared at most of the tuples.
 	 */
-	plan->total_cost += cpu_operator_cost * plan->plan_rows * numCols;
-
-	/*
-	 * We make the unsupported assumption that there will be 10% as many
-	 * tuples out as in.  Any way to do better?
-	 */
-	plan->plan_rows *= 0.1;
-	if (plan->plan_rows < 1)
-		plan->plan_rows = 1;
+	plan->total_cost += cpu_operator_cost * lefttree->plan_rows * numCols;
 
 	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
@@ -3160,10 +3154,12 @@ make_setop(SetOpCmd cmd, Plan *lefttree,
 	}
 
 	node->cmd = cmd;
+	node->strategy = strategy;
 	node->numCols = numCols;
 	node->dupColIdx = dupColIdx;
 	node->dupOperators = dupOperators;
 	node->flagColIdx = flagColIdx;
+	node->numGroups = numGroups;
 
 	return node;
 }

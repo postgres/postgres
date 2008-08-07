@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.100 2008/04/13 20:51:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.101 2008/08/07 03:04:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -525,15 +525,23 @@ typedef enum SetOpCmd
 	SETOPCMD_EXCEPT_ALL
 } SetOpCmd;
 
+typedef enum SetOpStrategy
+{
+	SETOP_SORTED,				/* input must be sorted */
+	SETOP_HASHED				/* use internal hashtable */
+} SetOpStrategy;
+
 typedef struct SetOp
 {
 	Plan		plan;
 	SetOpCmd	cmd;			/* what to do */
+	SetOpStrategy strategy;		/* how to do it */
 	int			numCols;		/* number of columns to check for
 								 * duplicate-ness */
 	AttrNumber *dupColIdx;		/* their indexes in the target list */
 	Oid		   *dupOperators;	/* equality operators to compare with */
 	AttrNumber	flagColIdx;		/* where is the flag column, if any */
+	long		numGroups;		/* estimated number of groups in input */
 } SetOp;
 
 /* ----------------

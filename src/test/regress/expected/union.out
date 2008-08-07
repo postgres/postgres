@@ -275,21 +275,21 @@ SELECT q2 FROM int8_tbl INTERSECT ALL SELECT q1 FROM int8_tbl;
  4567890123456789
 (3 rows)
 
-SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl;
+SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl ORDER BY 1;
         q2         
 -------------------
  -4567890123456789
                456
 (2 rows)
 
-SELECT q2 FROM int8_tbl EXCEPT ALL SELECT q1 FROM int8_tbl;
+SELECT q2 FROM int8_tbl EXCEPT ALL SELECT q1 FROM int8_tbl ORDER BY 1;
         q2         
 -------------------
  -4567890123456789
                456
 (2 rows)
 
-SELECT q2 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q1 FROM int8_tbl;
+SELECT q2 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q1 FROM int8_tbl ORDER BY 1;
         q2         
 -------------------
  -4567890123456789
@@ -326,7 +326,7 @@ SELECT f1 FROM float8_tbl INTERSECT SELECT f1 FROM int4_tbl;
   0
 (1 row)
 
-SELECT f1 FROM float8_tbl EXCEPT SELECT f1 FROM int4_tbl;
+SELECT f1 FROM float8_tbl EXCEPT SELECT f1 FROM int4_tbl ORDER BY 1;
           f1           
 -----------------------
  -1.2345678901234e+200
@@ -369,14 +369,14 @@ SELECT q1 FROM int8_tbl INTERSECT (((SELECT q2 FROM int8_tbl UNION ALL SELECT q2
  -4567890123456789
 (7 rows)
 
-SELECT q1 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl;
+SELECT q1 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl ORDER BY 1;
         q1         
 -------------------
  -4567890123456789
                456
 (2 rows)
 
-SELECT q1 FROM int8_tbl UNION ALL (((SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl)));
+SELECT q1 FROM int8_tbl UNION ALL (((SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl ORDER BY 1)));
         q1         
 -------------------
                123
@@ -388,7 +388,7 @@ SELECT q1 FROM int8_tbl UNION ALL (((SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FR
                456
 (7 rows)
 
-(((SELECT q1 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl))) EXCEPT SELECT q1 FROM int8_tbl;
+(((SELECT q1 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl))) EXCEPT SELECT q1 FROM int8_tbl ORDER BY 1;
         q1         
 -------------------
  -4567890123456789
