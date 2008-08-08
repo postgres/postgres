@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.256.2.6 2006/04/26 23:01:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.256.2.7 2008/08/08 17:01:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,11 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
+#include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -76,6 +78,7 @@ static void initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  List *rangeTable,
 				  CmdType operation,
 				  bool doInstrument);
+static void ExecCheckPlanOutput(Relation resultRel, List *targetList);
 static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
@@ -631,6 +634,9 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	 * heap_insert will be scribbling on the source relation!). UPDATE and
 	 * DELETE always need a filter, since there's always a junk 'ctid'
 	 * attribute present --- no need to look first.
+	 *
+	 * This section of code is also a convenient place to verify that the
+	 * output of an INSERT or UPDATE matches the target table(s).
 	 */
 	{
 		bool		junk_filter_needed = false;
@@ -690,6 +696,10 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 					PlanState  *subplan = appendplans[i];
 					JunkFilter *j;
 
+					if (operation == CMD_UPDATE)
+						ExecCheckPlanOutput(resultRelInfo->ri_RelationDesc,
+											subplan->plan->targetlist);
+
 					j = ExecInitJunkFilter(subplan->plan->targetlist,
 							resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
 								  ExecAllocTableSlot(estate->es_tupleTable));
@@ -709,6 +719,10 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 				/* Normal case with just one JunkFilter */
 				JunkFilter *j;
 
+				if (operation == CMD_INSERT || operation == CMD_UPDATE)
+					ExecCheckPlanOutput(estate->es_result_relation_info->ri_RelationDesc,
+										planstate->plan->targetlist);
+
 				j = ExecInitJunkFilter(planstate->plan->targetlist,
 									   tupType->tdhasoid,
 								  ExecAllocTableSlot(estate->es_tupleTable));
@@ -722,7 +736,13 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 			}
 		}
 		else
+		{
+			if (operation == CMD_INSERT)
+				ExecCheckPlanOutput(estate->es_result_relation_info->ri_RelationDesc,
+									planstate->plan->targetlist);
+
 			estate->es_junkFilter = NULL;
+		}
 	}
 
 	/*
@@ -957,6 +977,76 @@ ExecContextForcesOids(PlanState *planstate, bool *hasoids)
 
 	return false;
 }
+
+/*
+ * Verify that the tuples to be produced by INSERT or UPDATE match the
+ * target relation's rowtype
+ *
+ * We do this to guard against stale plans.  If plan invalidation is
+ * functioning properly then we should never get a failure here, but better
+ * safe than sorry.  Note that this is called after we have obtained lock
+ * on the target rel, so the rowtype can't change underneath us.
+ *
+ * The plan output is represented by its targetlist, because that makes
+ * handling the dropped-column case easier.
+ */
+static void
+ExecCheckPlanOutput(Relation resultRel, List *targetList)
+{
+	TupleDesc	resultDesc = RelationGetDescr(resultRel);
+	int			attno = 0;
+	ListCell   *lc;
+
+	foreach(lc, targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+		Form_pg_attribute attr;
+
+		if (tle->resjunk)
+			continue;			/* ignore junk tlist items */
+
+		if (attno >= resultDesc->natts)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("table row type and query-specified row type do not match"),
+					 errdetail("Query has too many columns.")));
+		attr = resultDesc->attrs[attno++];
+
+		if (!attr->attisdropped)
+		{
+			/* Normal case: demand type match */
+			if (exprType((Node *) tle->expr) != attr->atttypid)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("table row type and query-specified row type do not match"),
+						 errdetail("Table has type %s at ordinal position %d, but query expects %s.",
+								   format_type_be(attr->atttypid),
+								   attno,
+								   format_type_be(exprType((Node *) tle->expr)))));
+		}
+		else
+		{
+			/*
+			 * For a dropped column, we can't check atttypid (it's likely 0).
+			 * In any case the planner has most likely inserted an INT4 null.
+			 * What we insist on is just *some* NULL constant.
+			 */
+			if (!IsA(tle->expr, Const) ||
+				!((Const *) tle->expr)->constisnull)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("table row type and query-specified row type do not match"),
+						 errdetail("Query provides a value for a dropped column at ordinal position %d.",
+								   attno)));
+		}
+	}
+	if (attno != resultDesc->natts)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("table row type and query-specified row type do not match"),
+				 errdetail("Query has too few columns.")));
+}
+
 
 /* ----------------------------------------------------------------
  *		ExecEndPlan
