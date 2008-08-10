@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.292 2008/01/30 19:46:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.292.2.1 2008/08/10 19:02:46 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2373,9 +2373,13 @@ reindex_relation(Oid relid, bool toast_too)
 	 * problem.
 	 */
 	is_pg_class = (RelationGetRelid(rel) == RelationRelationId);
-	doneIndexes = NIL;
+
+	/* Ensure rd_indexattr is valid; see comments for RelationSetIndexList */
+	if (is_pg_class)
+		(void) RelationGetIndexAttrBitmap(rel);
 
 	/* Reindex all the indexes. */
+	doneIndexes = NIL;
 	foreach(indexId, indexIds)
 	{
 		Oid			indexOid = lfirst_oid(indexId);

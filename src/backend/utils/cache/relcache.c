@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.266.2.3 2008/04/16 18:23:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.266.2.4 2008/08/10 19:02:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2994,6 +2994,13 @@ insert_ordered_oid(List *list, Oid datum)
  * messages.  In practice it is only used on pg_class (see REINDEX).
  *
  * It is up to the caller to make sure the given list is correctly ordered.
+ *
+ * We deliberately do not change rd_indexattr here: even when operating
+ * with a temporary partial index list, HOT-update decisions must be made
+ * correctly with respect to the full index set.  It is up to the caller
+ * to ensure that a correct rd_indexattr set has been cached before first
+ * calling RelationSetIndexList; else a subsequent inquiry might cause a
+ * wrong rd_indexattr set to get computed and cached.
  */
 void
 RelationSetIndexList(Relation relation, List *indexIds, Oid oidIndex)
@@ -3012,7 +3019,6 @@ RelationSetIndexList(Relation relation, List *indexIds, Oid oidIndex)
 	relation->rd_indexvalid = 2;	/* mark list as forced */
 	/* must flag that we have a forced index list */
 	need_eoxact_work = true;
-	/* we deliberately do not change rd_indexattr */
 }
 
 /*
