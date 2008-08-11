@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.62 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.63 2008/08/11 11:05:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,8 @@ typedef struct SMgrRelationData
 	 */
 	int			smgr_which;		/* storage manager selector */
 
-	struct _MdfdVec *md_fd;		/* for md.c; NULL if not open */
+	/* for md.c; NULL for forks that are not open */
+	struct _MdfdVec *md_fd[MAX_FORKNUM + 1];
 } SMgrRelationData;
 
 typedef SMgrRelationData *SMgrRelation;
@@ -59,24 +60,29 @@ typedef SMgrRelationData *SMgrRelation;
 
 extern void smgrinit(void);
 extern SMgrRelation smgropen(RelFileNode rnode);
+extern bool smgrexists(SMgrRelation reln, ForkNumber forknum);
 extern void smgrsetowner(SMgrRelation *owner, SMgrRelation reln);
 extern void smgrclose(SMgrRelation reln);
 extern void smgrcloseall(void);
 extern void smgrclosenode(RelFileNode rnode);
-extern void smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo);
-extern void smgrscheduleunlink(SMgrRelation reln, bool isTemp);
-extern void smgrdounlink(SMgrRelation reln, bool isTemp, bool isRedo);
-extern void smgrextend(SMgrRelation reln, BlockNumber blocknum, char *buffer,
-		   bool isTemp);
-extern void smgrread(SMgrRelation reln, BlockNumber blocknum, char *buffer);
-extern void smgrwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer,
-		  bool isTemp);
-extern BlockNumber smgrnblocks(SMgrRelation reln);
-extern void smgrtruncate(SMgrRelation reln, BlockNumber nblocks,
-			 bool isTemp);
-extern void smgrimmedsync(SMgrRelation reln);
+extern void smgrcreate(SMgrRelation reln, ForkNumber forknum,
+					   bool isTemp, bool isRedo);
+extern void smgrscheduleunlink(SMgrRelation reln, ForkNumber forknum,
+							   bool isTemp);
+extern void smgrdounlink(SMgrRelation reln, ForkNumber forknum,
+						 bool isTemp, bool isRedo);
+extern void smgrextend(SMgrRelation reln, ForkNumber forknum, 
+					   BlockNumber blocknum, char *buffer, bool isTemp);
+extern void smgrread(SMgrRelation reln, ForkNumber forknum,
+					 BlockNumber blocknum, char *buffer);
+extern void smgrwrite(SMgrRelation reln, ForkNumber forknum,
+					  BlockNumber blocknum, char *buffer, bool isTemp);
+extern BlockNumber smgrnblocks(SMgrRelation reln, ForkNumber forknum);
+extern void smgrtruncate(SMgrRelation reln, ForkNumber forknum,
+						 BlockNumber nblocks, bool isTemp);
+extern void smgrimmedsync(SMgrRelation reln, ForkNumber forknum);
 extern void smgrDoPendingDeletes(bool isCommit);
-extern int smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr,
+extern int smgrGetPendingDeletes(bool forCommit, RelFileFork **ptr,
 					  bool *haveNonTemp);
 extern void AtSubCommit_smgr(void);
 extern void AtSubAbort_smgr(void);
@@ -95,23 +101,27 @@ extern void smgr_desc(StringInfo buf, uint8 xl_info, char *rec);
 
 /* in md.c */
 extern void mdinit(void);
-extern void mdclose(SMgrRelation reln);
-extern void mdcreate(SMgrRelation reln, bool isRedo);
-extern void mdunlink(RelFileNode rnode, bool isRedo);
-extern void mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer,
-		 bool isTemp);
-extern void mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer);
-extern void mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer,
-		bool isTemp);
-extern BlockNumber mdnblocks(SMgrRelation reln);
-extern void mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp);
-extern void mdimmedsync(SMgrRelation reln);
+extern void mdclose(SMgrRelation reln, ForkNumber forknum);
+extern void mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo);
+extern bool mdexists(SMgrRelation reln, ForkNumber forknum);
+extern void mdunlink(RelFileNode rnode, ForkNumber forknum, bool isRedo);
+extern void mdextend(SMgrRelation reln, ForkNumber forknum,
+					 BlockNumber blocknum, char *buffer, bool isTemp);
+extern void mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
+				   char *buffer);
+extern void mdwrite(SMgrRelation reln, ForkNumber forknum,
+					BlockNumber blocknum, char *buffer, bool isTemp);
+extern BlockNumber mdnblocks(SMgrRelation reln, ForkNumber forknum);
+extern void mdtruncate(SMgrRelation reln, ForkNumber forknum,
+					   BlockNumber nblocks, bool isTemp);
+extern void mdimmedsync(SMgrRelation reln, ForkNumber forknum);
 extern void mdpreckpt(void);
 extern void mdsync(void);
 extern void mdpostckpt(void);
 
-extern void RememberFsyncRequest(RelFileNode rnode, BlockNumber segno);
-extern void ForgetRelationFsyncRequests(RelFileNode rnode);
+extern void RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum,
+								 BlockNumber segno);
+extern void ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum);
 extern void ForgetDatabaseFsyncRequests(Oid dbid);
 
 /* smgrtype.c */

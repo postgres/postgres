@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.19 2008/06/19 00:46:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.20 2008/08/11 11:05:11 heikki Exp $
  *
  */
 
@@ -255,7 +255,8 @@ calculate_relation_size(RelFileNode *rfn)
 	char		pathname[MAXPGPATH];
 	unsigned int segcount = 0;
 
-	relationpath = relpath(*rfn);
+	/* XXX: This ignores the other forks. */
+	relationpath = relpath(*rfn, MAIN_FORKNUM);
 
 	for (segcount = 0;; segcount++)
 	{

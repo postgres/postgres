@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/smgr/README,v 1.5 2008/03/21 13:23:28 momjian Exp $
+$PostgreSQL: pgsql/src/backend/storage/smgr/README,v 1.6 2008/08/11 11:05:11 heikki Exp $
 
 Storage Manager
 ===============
@@ -32,3 +32,20 @@ The files in this directory, and their contents, are
     md.c	The magnetic disk storage manager.
 
 Note that md.c in turn relies on src/backend/storage/file/fd.c.
+
+Relation Forks
+==============
+
+Since 8.4, a single smgr relation can be comprised of multiple physical
+files, called relation forks. This allows storing additional metadata like
+Free Space information in additional forks, which can be grown and truncated
+independently of the main data file, while still treating it all as a single
+physical relation in system catalogs.
+
+It is assumed that the main fork, fork number 0 or MAIN_FORKNUM, always
+exists. Fork numbers are assigned in src/include/storage/relfilenode.h.
+Functions in smgr.c and md.c take an extra fork number argument, in addition
+to relfilenode and block number, to identify which relation fork you want to
+access. Since most code wants to access the main fork, a shortcut version of
+ReadBuffer that accesses MAIN_FORKNUM is provided in the buffer manager for
+convenience.

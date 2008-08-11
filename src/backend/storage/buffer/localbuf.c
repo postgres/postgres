@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.80 2008/06/12 09:12:31 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.81 2008/08/11 11:05:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,8 @@ static Block GetLocalBufferStorage(void);
  * (hence, usage_count is always advanced).
  */
 BufferDesc *
-LocalBufferAlloc(SMgrRelation smgr, BlockNumber blockNum, bool *foundPtr)
+LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
+				 bool *foundPtr)
 {
 	BufferTag	newTag;			/* identity of requested block */
 	LocalBufferLookupEnt *hresult;
@@ -70,7 +71,7 @@ LocalBufferAlloc(SMgrRelation smgr, BlockNumber blockNum, bool *foundPtr)
 	int			trycounter;
 	bool		found;
 
-	INIT_BUFFERTAG(newTag, smgr->smgr_rnode, blockNum);
+	INIT_BUFFERTAG(newTag, smgr->smgr_rnode, forkNum, blockNum);
 
 	/* Initialize local buffers if first request in this session */
 	if (LocalBufHash == NULL)
@@ -162,6 +163,7 @@ LocalBufferAlloc(SMgrRelation smgr, BlockNumber blockNum, bool *foundPtr)
 
 		/* And write... */
 		smgrwrite(oreln,
+				  bufHdr->tag.forkNum,
 				  bufHdr->tag.blockNum,
 				  (char *) LocalBufHdrGetBlock(bufHdr),
 				  true);
@@ -250,7 +252,8 @@ MarkLocalBufferDirty(Buffer buffer)
  *		See DropRelFileNodeBuffers in bufmgr.c for more notes.
  */
 void
-DropRelFileNodeLocalBuffers(RelFileNode rnode, BlockNumber firstDelBlock)
+DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
+							BlockNumber firstDelBlock)
 {
 	int			i;
 
@@ -261,6 +264,7 @@ DropRelFileNodeLocalBuffers(RelFileNode rnode, BlockNumber firstDelBlock)
 
 		if ((bufHdr->flags & BM_TAG_VALID) &&
 			RelFileNodeEquals(bufHdr->tag.rnode, rnode) &&
+			bufHdr->tag.forkNum == forkNum &&
 			bufHdr->tag.blockNum >= firstDelBlock)
 		{
 			if (LocalRefCount[i] != 0)

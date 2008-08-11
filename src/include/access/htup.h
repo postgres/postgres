@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.100 2008/07/13 20:45:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.101 2008/08/11 11:05:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -670,6 +670,7 @@ typedef struct xl_heap_clean
 typedef struct xl_heap_newpage
 {
 	RelFileNode node;
+	ForkNumber	forknum;
 	BlockNumber blkno;			/* location of new page */
 	/* entire page contents follow at end of record */
 } xl_heap_newpage;

@@ -57,7 +57,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.116 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.117 2008/08/11 11:05:10 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,7 +267,7 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	if (wstate->btws_use_wal)
 	{
 		/* We use the heap NEWPAGE record type for this */
-		log_newpage(&wstate->index->rd_node, blkno, page);
+		log_newpage(&wstate->index->rd_node, MAIN_FORKNUM, blkno, page);
 	}
 	else
 	{
@@ -286,7 +286,8 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	{
 		if (!wstate->btws_zeropage)
 			wstate->btws_zeropage = (Page) palloc0(BLCKSZ);
-		smgrextend(wstate->index->rd_smgr, wstate->btws_pages_written++,
+		smgrextend(wstate->index->rd_smgr, MAIN_FORKNUM,
+				   wstate->btws_pages_written++,
 				   (char *) wstate->btws_zeropage,
 				   true);
 	}
@@ -299,13 +300,15 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	if (blkno == wstate->btws_pages_written)
 	{
 		/* extending the file... */
-		smgrextend(wstate->index->rd_smgr, blkno, (char *) page, true);
+		smgrextend(wstate->index->rd_smgr, MAIN_FORKNUM, blkno,
+				   (char *) page, true);
 		wstate->btws_pages_written++;
 	}
 	else
 	{
 		/* overwriting a block we zero-filled before */
-		smgrwrite(wstate->index->rd_smgr, blkno, (char *) page, true);
+		smgrwrite(wstate->index->rd_smgr, MAIN_FORKNUM, blkno,
+				  (char *) page, true);
 	}
 
 	pfree(page);
@@ -809,6 +812,6 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	if (!wstate->index->rd_istemp)
 	{
 		RelationOpenSmgr(wstate->index);
-		smgrimmedsync(wstate->index->rd_smgr);
+		smgrimmedsync(wstate->index->rd_smgr, MAIN_FORKNUM);
 	}
 }

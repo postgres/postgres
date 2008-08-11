@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.15 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.16 2008/08/11 11:05:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,25 @@
 #define RELFILENODE_H
 
 /*
+ * The physical storage of a relation consists of one or more forks. The
+ * main fork is always created, but in addition to that there can be
+ * additional forks for storing various metadata. ForkNumber is used when
+ * we need to refer to a specific fork in a relation.
+ */
+typedef enum ForkNumber
+{
+	InvalidForkNumber = -1,
+	MAIN_FORKNUM = 0
+	/* NOTE: change NUM_FORKS below when you add new forks */
+} ForkNumber;
+
+#define MAX_FORKNUM		MAIN_FORKNUM
+
+/*
  * RelFileNode must provide all that we need to know to physically access
- * a relation.
+ * a relation. Note, however, that a "physical" relation is comprised of
+ * multiple files on the filesystem, as each fork is stored as a separate
+ * file, and each fork can be divided into multiple segments. See md.c.
  *
  * spcNode identifies the tablespace of the relation.  It corresponds to
  * pg_tablespace.oid.
@@ -56,5 +73,14 @@ typedef struct RelFileNode
 	((node1).relNode == (node2).relNode && \
 	 (node1).dbNode == (node2).dbNode && \
 	 (node1).spcNode == (node2).spcNode)
+
+/*
+ * RelFileFork identifies a particular fork of a relation.
+ */
+typedef struct RelFileFork
+{
+	RelFileNode rnode;
+	ForkNumber forknum;
+} RelFileFork;
 
 #endif   /* RELFILENODE_H */

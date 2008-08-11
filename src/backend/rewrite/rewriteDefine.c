@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.127 2008/06/19 00:46:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.128 2008/08/11 11:05:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,8 +482,14 @@ DefineQueryRewrite(char *rulename,
 	 */
 	if (RelisBecomingView)
 	{
+		ForkNumber forknum;
+
 		RelationOpenSmgr(event_relation);
-		smgrscheduleunlink(event_relation->rd_smgr, event_relation->rd_istemp);
+		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+			if (smgrexists(event_relation->rd_smgr, forknum))
+				smgrscheduleunlink(event_relation->rd_smgr, forknum,
+								   event_relation->rd_istemp);
+		RelationCloseSmgr(event_relation);
 	}
 
 	/* Close rel, but keep lock till commit... */

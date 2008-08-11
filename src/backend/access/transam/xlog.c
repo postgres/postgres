@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.316 2008/07/13 20:45:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.317 2008/08/11 11:05:10 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1034,8 +1034,7 @@ XLogCheckBuffer(XLogRecData *rdata, bool doPageWrites,
 		/*
 		 * The page needs to be backed up, so set up *bkpb
 		 */
-		bkpb->node = BufferGetFileNode(rdata->buffer);
-		bkpb->block = BufferGetBlockNumber(rdata->buffer);
+		BufferGetTag(rdata->buffer, &bkpb->node, &bkpb->fork, &bkpb->block);
 
 		if (rdata->buffer_std)
 		{
@@ -2855,7 +2854,8 @@ RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
 		memcpy(&bkpb, blk, sizeof(BkpBlock));
 		blk += sizeof(BkpBlock);
 
-		buffer = XLogReadBuffer(bkpb.node, bkpb.block, true);
+		buffer = XLogReadBufferWithFork(bkpb.node, bkpb.fork, bkpb.block,
+										true);
 		Assert(BufferIsValid(buffer));
 		page = (Page) BufferGetPage(buffer);
 

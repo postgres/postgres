@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.264 2008/05/12 20:01:58 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.265 2008/08/11 11:05:10 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -819,7 +819,7 @@ RecordTransactionCommit(void)
 	bool		markXidCommitted = TransactionIdIsValid(xid);
 	TransactionId latestXid = InvalidTransactionId;
 	int			nrels;
-	RelFileNode *rels;
+	RelFileFork *rels;
 	bool		haveNonTemp;
 	int			nchildren;
 	TransactionId *children;
@@ -900,7 +900,7 @@ RecordTransactionCommit(void)
 		{
 			rdata[0].next = &(rdata[1]);
 			rdata[1].data = (char *) rels;
-			rdata[1].len = nrels * sizeof(RelFileNode);
+			rdata[1].len = nrels * sizeof(RelFileFork);
 			rdata[1].buffer = InvalidBuffer;
 			lastrdata = 1;
 		}
@@ -1203,7 +1203,7 @@ RecordTransactionAbort(bool isSubXact)
 	TransactionId xid = GetCurrentTransactionIdIfAny();
 	TransactionId latestXid;
 	int			nrels;
-	RelFileNode *rels;
+	RelFileFork *rels;
 	int			nchildren;
 	TransactionId *children;
 	XLogRecData rdata[3];
@@ -1264,7 +1264,7 @@ RecordTransactionAbort(bool isSubXact)
 	{
 		rdata[0].next = &(rdata[1]);
 		rdata[1].data = (char *) rels;
-		rdata[1].len = nrels * sizeof(RelFileNode);
+		rdata[1].len = nrels * sizeof(RelFileFork);
 		rdata[1].buffer = InvalidBuffer;
 		lastrdata = 1;
 	}
@@ -4282,8 +4282,13 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid)
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < xlrec->nrels; i++)
 	{
-		XLogDropRelation(xlrec->xnodes[i]);
-		smgrdounlink(smgropen(xlrec->xnodes[i]), false, true);
+		SMgrRelation srel;
+
+		XLogDropRelation(xlrec->xnodes[i].rnode, xlrec->xnodes[i].forknum);
+
+		srel = smgropen(xlrec->xnodes[i].rnode);
+		smgrdounlink(srel, xlrec->xnodes[i].forknum, false, true);
+		smgrclose(srel);
 	}
 }
 
@@ -4317,8 +4322,13 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < xlrec->nrels; i++)
 	{
-		XLogDropRelation(xlrec->xnodes[i]);
-		smgrdounlink(smgropen(xlrec->xnodes[i]), false, true);
+		SMgrRelation srel;
+
+		XLogDropRelation(xlrec->xnodes[i].rnode, xlrec->xnodes[i].forknum);
+
+		srel = smgropen(xlrec->xnodes[i].rnode);
+		smgrdounlink(srel, xlrec->xnodes[i].forknum, false, true);
+		smgrclose(srel);
 	}
 }
 
@@ -4374,10 +4384,12 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			RelFileNode rnode = xlrec->xnodes[i];
+			RelFileNode rnode = xlrec->xnodes[i].rnode;
+			ForkNumber	forknum = xlrec->xnodes[i].forknum;
 
-			appendStringInfo(buf, " %u/%u/%u",
-							 rnode.spcNode, rnode.dbNode, rnode.relNode);
+			appendStringInfo(buf, " %u/%u/%u/%u",
+							 rnode.spcNode, rnode.dbNode, rnode.relNode,
+							 forknum);
 		}
 	}
 	if (xlrec->nsubxacts > 0)
@@ -4402,10 +4414,12 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			RelFileNode rnode = xlrec->xnodes[i];
+			RelFileNode rnode = xlrec->xnodes[i].rnode;
+			ForkNumber	forknum = xlrec->xnodes[i].forknum;
 
-			appendStringInfo(buf, " %u/%u/%u",
-							 rnode.spcNode, rnode.dbNode, rnode.relNode);
+			appendStringInfo(buf, " %u/%u/%u/%u",
+							 rnode.spcNode, rnode.dbNode, rnode.relNode,
+							 forknum);
 		}
 	}
 	if (xlrec->nsubxacts > 0)

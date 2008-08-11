@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.301 2008/08/10 19:02:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.302 2008/08/11 11:05:10 heikki Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -874,6 +874,7 @@ index_drop(Oid indexId)
 	Relation	indexRelation;
 	HeapTuple	tuple;
 	bool		hasexprs;
+	ForkNumber	forknum;
 
 	/*
 	 * To drop an index safely, we must grab exclusive lock on its parent
@@ -892,11 +893,14 @@ index_drop(Oid indexId)
 	userIndexRelation = index_open(indexId, AccessExclusiveLock);
 
 	/*
-	 * Schedule physical removal of the file
+	 * Schedule physical removal of the files
 	 */
 	RelationOpenSmgr(userIndexRelation);
-	smgrscheduleunlink(userIndexRelation->rd_smgr,
-					   userIndexRelation->rd_istemp);
+	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+		if (smgrexists(userIndexRelation->rd_smgr, forknum))
+			smgrscheduleunlink(userIndexRelation->rd_smgr, forknum, 
+							   userIndexRelation->rd_istemp);
+	RelationCloseSmgr(userIndexRelation);
 
 	/*
 	 * Close and flush the index's relcache entry, to ensure relcache doesn't
@@ -1260,6 +1264,7 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 	Relation	pg_class;
 	HeapTuple	tuple;
 	Form_pg_class rd_rel;
+	ForkNumber	i;
 
 	/* Can't change relfilenode for nailed tables (indexes ok though) */
 	Assert(!relation->rd_isnailed ||
@@ -1290,18 +1295,29 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 			 RelationGetRelid(relation));
 	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
-	/* create another storage file. Is it a little ugly ? */
-	/* NOTE: any conflict in relfilenode value will be caught here */
+	RelationOpenSmgr(relation);
+
+	/*
+	 * ... and create storage for corresponding forks in the new relfilenode.
+	 *
+	 * NOTE: any conflict in relfilenode value will be caught here 
+	 */
 	newrnode = relation->rd_node;
 	newrnode.relNode = newrelfilenode;
-
 	srel = smgropen(newrnode);
-	smgrcreate(srel, relation->rd_istemp, false);
-	smgrclose(srel);
 
-	/* schedule unlinking old relfilenode */
-	RelationOpenSmgr(relation);
-	smgrscheduleunlink(relation->rd_smgr, relation->rd_istemp);
+	/* Create the main fork, like heap_create() does */
+	smgrcreate(srel, MAIN_FORKNUM, relation->rd_istemp, false);
+
+	/* schedule unlinking old files */
+	for (i = 0; i <= MAX_FORKNUM; i++)
+	{
+		if (smgrexists(relation->rd_smgr, i))
+			smgrscheduleunlink(relation->rd_smgr, i, relation->rd_istemp);
+	}
+
+	smgrclose(srel);
+	RelationCloseSmgr(relation);
 
 	/* update the pg_class row */
 	rd_rel->relfilenode = newrelfilenode;

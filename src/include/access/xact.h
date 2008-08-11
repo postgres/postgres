@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.94 2008/03/04 19:54:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.95 2008/08/11 11:05:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,10 +88,10 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 typedef struct xl_xact_commit
 {
 	TimestampTz xact_time;		/* time of commit */
-	int			nrels;			/* number of RelFileNodes */
+	int			nrels;			/* number of RelFileForks */
 	int			nsubxacts;		/* number of subtransaction XIDs */
-	/* Array of RelFileNode(s) to drop at commit */
-	RelFileNode xnodes[1];		/* VARIABLE LENGTH ARRAY */
+	/* Array of RelFileFork(s) to drop at commit */
+	RelFileFork	xnodes[1];		/* VARIABLE LENGTH ARRAY */
 	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
 } xl_xact_commit;
 
@@ -100,10 +100,10 @@ typedef struct xl_xact_commit
 typedef struct xl_xact_abort
 {
 	TimestampTz xact_time;		/* time of abort */
-	int			nrels;			/* number of RelFileNodes */
+	int			nrels;			/* number of RelFileForks */
 	int			nsubxacts;		/* number of subtransaction XIDs */
-	/* Array of RelFileNode(s) to drop at abort */
-	RelFileNode xnodes[1];		/* VARIABLE LENGTH ARRAY */
+	/* Array of RelFileFork(s) to drop at abort */
+	RelFileFork	xnodes[1];		/* VARIABLE LENGTH ARRAY */
 	/* ARRAY OF ABORTED SUBTRANSACTION XIDs FOLLOWS */
 } xl_xact_abort;
 

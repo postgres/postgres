@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.44 2008/08/01 13:16:08 alvherre Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.45 2008/08/11 11:05:10 heikki Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -141,12 +141,12 @@ static void RecordTransactionCommitPrepared(TransactionId xid,
 								int nchildren,
 								TransactionId *children,
 								int nrels,
-								RelFileNode *rels);
+								RelFileFork *rels);
 static void RecordTransactionAbortPrepared(TransactionId xid,
 							   int nchildren,
 							   TransactionId *children,
 							   int nrels,
-							   RelFileNode *rels);
+							   RelFileFork *rels);
 static void ProcessRecords(char *bufptr, TransactionId xid,
 			   const TwoPhaseCallback callbacks[]);
 
@@ -694,8 +694,8 @@ TwoPhaseGetDummyProc(TransactionId xid)
  *
  *	1. TwoPhaseFileHeader
  *	2. TransactionId[] (subtransactions)
- *	3. RelFileNode[] (files to be deleted at commit)
- *	4. RelFileNode[] (files to be deleted at abort)
+ *	3. RelFileFork[] (files to be deleted at commit)
+ *	4. RelFileFork[] (files to be deleted at abort)
  *	5. TwoPhaseRecordOnDisk
  *	6. ...
  *	7. TwoPhaseRecordOnDisk (end sentinel, rmid == TWOPHASE_RM_END_ID)
@@ -793,8 +793,8 @@ StartPrepare(GlobalTransaction gxact)
 	TransactionId xid = gxact->proc.xid;
 	TwoPhaseFileHeader hdr;
 	TransactionId *children;
-	RelFileNode *commitrels;
-	RelFileNode *abortrels;
+	RelFileFork *commitrels;
+	RelFileFork *abortrels;
 
 	/* Initialize linked list */
 	records.head = palloc0(sizeof(XLogRecData));
@@ -832,12 +832,12 @@ StartPrepare(GlobalTransaction gxact)
 	}
 	if (hdr.ncommitrels > 0)
 	{
-		save_state_data(commitrels, hdr.ncommitrels * sizeof(RelFileNode));
+		save_state_data(commitrels, hdr.ncommitrels * sizeof(RelFileFork));
 		pfree(commitrels);
 	}
 	if (hdr.nabortrels > 0)
 	{
-		save_state_data(abortrels, hdr.nabortrels * sizeof(RelFileNode));
+		save_state_data(abortrels, hdr.nabortrels * sizeof(RelFileFork));
 		pfree(abortrels);
 	}
 }
@@ -1140,8 +1140,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	TwoPhaseFileHeader *hdr;
 	TransactionId latestXid;
 	TransactionId *children;
-	RelFileNode *commitrels;
-	RelFileNode *abortrels;
+	RelFileFork *commitrels;
+	RelFileFork *abortrels;
 	int			i;
 
 	/*
@@ -1169,10 +1169,10 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	bufptr = buf + MAXALIGN(sizeof(TwoPhaseFileHeader));
 	children = (TransactionId *) bufptr;
 	bufptr += MAXALIGN(hdr->nsubxacts * sizeof(TransactionId));
-	commitrels = (RelFileNode *) bufptr;
-	bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileNode));
-	abortrels = (RelFileNode *) bufptr;
-	bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileNode));
+	commitrels = (RelFileFork *) bufptr;
+	bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileFork));
+	abortrels = (RelFileFork *) bufptr;
+	bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileFork));
 
 	/* compute latestXid among all children */
 	latestXid = TransactionIdLatest(xid, hdr->nsubxacts, children);
@@ -1215,12 +1215,20 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	if (isCommit)
 	{
 		for (i = 0; i < hdr->ncommitrels; i++)
-			smgrdounlink(smgropen(commitrels[i]), false, false);
+		{
+			SMgrRelation srel = smgropen(commitrels[i].rnode);
+			smgrdounlink(srel, commitrels[i].forknum, false, false);
+			smgrclose(srel);
+		}
 	}
 	else
 	{
 		for (i = 0; i < hdr->nabortrels; i++)
-			smgrdounlink(smgropen(abortrels[i]), false, false);
+		{
+			SMgrRelation srel = smgropen(abortrels[i].rnode);
+			smgrdounlink(srel, abortrels[i].forknum, false, false);
+			smgrclose(srel);
+		}
 	}
 
 	/* And now do the callbacks */
@@ -1631,8 +1639,8 @@ RecoverPreparedTransactions(void)
 			bufptr = buf + MAXALIGN(sizeof(TwoPhaseFileHeader));
 			subxids = (TransactionId *) bufptr;
 			bufptr += MAXALIGN(hdr->nsubxacts * sizeof(TransactionId));
-			bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileNode));
-			bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileNode));
+			bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileFork));
+			bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileFork));
 
 			/*
 			 * Reconstruct subtrans state for the transaction --- needed
@@ -1685,7 +1693,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 								int nchildren,
 								TransactionId *children,
 								int nrels,
-								RelFileNode *rels)
+								RelFileFork *rels)
 {
 	XLogRecData rdata[3];
 	int			lastrdata = 0;
@@ -1710,7 +1718,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	{
 		rdata[0].next = &(rdata[1]);
 		rdata[1].data = (char *) rels;
-		rdata[1].len = nrels * sizeof(RelFileNode);
+		rdata[1].len = nrels * sizeof(RelFileFork);
 		rdata[1].buffer = InvalidBuffer;
 		lastrdata = 1;
 	}
@@ -1760,7 +1768,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 							   int nchildren,
 							   TransactionId *children,
 							   int nrels,
-							   RelFileNode *rels)
+							   RelFileFork *rels)
 {
 	XLogRecData rdata[3];
 	int			lastrdata = 0;
@@ -1790,7 +1798,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	{
 		rdata[0].next = &(rdata[1]);
 		rdata[1].data = (char *) rels;
-		rdata[1].len = nrels * sizeof(RelFileNode);
+		rdata[1].len = nrels * sizeof(RelFileFork);
 		rdata[1].buffer = InvalidBuffer;
 		lastrdata = 1;
 	}

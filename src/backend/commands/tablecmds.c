@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.261 2008/07/16 19:33:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.262 2008/08/11 11:05:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,7 +318,8 @@ static void ATExecEnableDisableRule(Relation rel, char *rulename,
 						char fires_when);
 static void ATExecAddInherit(Relation rel, RangeVar *parent);
 static void ATExecDropInherit(Relation rel, RangeVar *parent);
-static void copy_relation_data(Relation rel, SMgrRelation dst);
+static void copy_relation_data(SMgrRelation rel, SMgrRelation dst,
+							   ForkNumber forkNum, bool istemp);
 
 
 /* ----------------------------------------------------------------
@@ -6483,6 +6484,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	Relation	pg_class;
 	HeapTuple	tuple;
 	Form_pg_class rd_rel;
+	ForkNumber	forkNum;
 
 	/*
 	 * Need lock here in case we are recursing to toast table or index
@@ -6538,26 +6540,42 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 		elog(ERROR, "cache lookup failed for relation %u", tableOid);
 	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
-	/* create another storage file. Is it a little ugly ? */
-	/* NOTE: any conflict in relfilenode value will be caught here */
+	/*
+	 * Since we copy the file directly without looking at the shared buffers,
+	 * we'd better first flush out any pages of the source relation that are
+	 * in shared buffers.  We assume no new changes will be made while we are
+	 * holding exclusive lock on the rel.
+	 */
+	FlushRelationBuffers(rel);
+
+	/* Open old and new relation */
 	newrnode = rel->rd_node;
 	newrnode.spcNode = newTableSpace;
-
 	dstrel = smgropen(newrnode);
-	smgrcreate(dstrel, rel->rd_istemp, false);
 
-	/* copy relation data to the new physical file */
-	copy_relation_data(rel, dstrel);
-
-	/* schedule unlinking old physical file */
 	RelationOpenSmgr(rel);
-	smgrscheduleunlink(rel->rd_smgr, rel->rd_istemp);
 
 	/*
-	 * Now drop smgr references.  The source was already dropped by
-	 * smgrscheduleunlink.
+	 * Create and copy all forks of the relation, and schedule unlinking
+	 * of old physical files.
+	 *
+	 * NOTE: any conflict in relfilenode value will be caught in
+	 *		 smgrcreate() below.
 	 */
+	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+	{
+		if (smgrexists(rel->rd_smgr, forkNum))
+		{
+			smgrcreate(dstrel, forkNum, rel->rd_istemp, false);
+			copy_relation_data(rel->rd_smgr, dstrel, forkNum, rel->rd_istemp);
+
+			smgrscheduleunlink(rel->rd_smgr, forkNum, rel->rd_istemp);
+		}
+	}
+
+	/* Close old and new relation */
 	smgrclose(dstrel);
+	RelationCloseSmgr(rel);
 
 	/* update the pg_class row */
 	rd_rel->reltablespace = (newTableSpace == MyDatabaseTableSpace) ? InvalidOid : newTableSpace;
@@ -6584,9 +6602,9 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
  * Copy data, block by block
  */
 static void
-copy_relation_data(Relation rel, SMgrRelation dst)
+copy_relation_data(SMgrRelation src, SMgrRelation dst,
+				   ForkNumber forkNum, bool istemp)
 {
-	SMgrRelation src;
 	bool		use_wal;
 	BlockNumber nblocks;
 	BlockNumber blkno;
@@ -6594,37 +6612,27 @@ copy_relation_data(Relation rel, SMgrRelation dst)
 	Page		page = (Page) buf;
 
 	/*
-	 * Since we copy the file directly without looking at the shared buffers,
-	 * we'd better first flush out any pages of the source relation that are
-	 * in shared buffers.  We assume no new changes will be made while we are
-	 * holding exclusive lock on the rel.
-	 */
-	FlushRelationBuffers(rel);
-
-	/*
 	 * We need to log the copied data in WAL iff WAL archiving is enabled AND
 	 * it's not a temp rel.
 	 */
-	use_wal = XLogArchivingActive() && !rel->rd_istemp;
+	use_wal = XLogArchivingActive() && !istemp;
 
-	nblocks = RelationGetNumberOfBlocks(rel);
-	/* RelationGetNumberOfBlocks will certainly have opened rd_smgr */
-	src = rel->rd_smgr;
+	nblocks = smgrnblocks(src, forkNum);
 
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
-		smgrread(src, blkno, buf);
+		smgrread(src, forkNum, blkno, buf);
 
 		/* XLOG stuff */
 		if (use_wal)
-			log_newpage(&dst->smgr_rnode, blkno, page);
+			log_newpage(&dst->smgr_rnode, forkNum, blkno, page);
 
 		/*
 		 * Now write the page.	We say isTemp = true even if it's not a temp
 		 * rel, because there's no need for smgr to schedule an fsync for this
 		 * write; we'll do it ourselves below.
 		 */
-		smgrextend(dst, blkno, buf, true);
+		smgrextend(dst, forkNum, blkno, buf, true);
 	}
 
 	/*
@@ -6641,8 +6649,8 @@ copy_relation_data(Relation rel, SMgrRelation dst)
 	 * wouldn't replay our earlier WAL entries. If we do not fsync those pages
 	 * here, they might still not be on disk when the crash occurs.
 	 */
-	if (!rel->rd_istemp)
-		smgrimmedsync(dst);
+	if (!istemp)
+		smgrimmedsync(dst, forkNum);
 }
 
 /*

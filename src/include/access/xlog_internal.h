@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.23 2008/02/17 02:09:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.24 2008/08/11 11:05:11 heikki Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
@@ -40,6 +40,7 @@
 typedef struct BkpBlock
 {
 	RelFileNode node;			/* relation containing block */
+	ForkNumber	fork;			/* fork within the relation */
 	BlockNumber block;			/* block number */
 	uint16		hole_offset;	/* number of bytes before "hole" */
 	uint16		hole_length;	/* number of bytes in "hole" */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.97 2008/06/19 00:46:06 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.98 2008/08/11 11:05:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@ typedef bits16 BufFlags;
 typedef struct buftag
 {
 	RelFileNode rnode;			/* physical relation identifier */
+	ForkNumber	forkNum;
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
 } BufferTag;
 
@@ -73,19 +74,22 @@ typedef struct buftag
 	(a).rnode.spcNode = InvalidOid, \
 	(a).rnode.dbNode = InvalidOid, \
 	(a).rnode.relNode = InvalidOid, \
+	(a).forkNum = InvalidForkNumber, \
 	(a).blockNum = InvalidBlockNumber \
 )
 
-#define INIT_BUFFERTAG(a,xx_rnode,xx_blockNum) \
+#define INIT_BUFFERTAG(a,xx_rnode,xx_forkNum,xx_blockNum) \
 ( \
 	(a).rnode = (xx_rnode), \
+	(a).forkNum = (xx_forkNum), \
 	(a).blockNum = (xx_blockNum) \
 )
 
 #define BUFFERTAGS_EQUAL(a,b) \
 ( \
 	RelFileNodeEquals((a).rnode, (b).rnode) && \
-	(a).blockNum == (b).blockNum \
+	(a).blockNum == (b).blockNum && \
+	(a).forkNum == (b).forkNum \
 )
 
 /*
@@ -202,10 +206,10 @@ extern int	BufTableInsert(BufferTag *tagPtr, uint32 hashcode, int buf_id);
 extern void BufTableDelete(BufferTag *tagPtr, uint32 hashcode);
 
 /* localbuf.c */
-extern BufferDesc *LocalBufferAlloc(SMgrRelation reln, BlockNumber blockNum,
-				 bool *foundPtr);
+extern BufferDesc *LocalBufferAlloc(SMgrRelation reln, ForkNumber forkNum,
+				 BlockNumber blockNum, bool *foundPtr);
 extern void MarkLocalBufferDirty(Buffer buffer);
-extern void DropRelFileNodeLocalBuffers(RelFileNode rnode,
+extern void DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
 							BlockNumber firstDelBlock);
 extern void AtEOXact_LocalBuffers(bool isCommit);
 

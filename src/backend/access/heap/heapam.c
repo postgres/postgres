@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.261 2008/07/13 20:45:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.262 2008/08/11 11:05:10 heikki Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -3906,7 +3906,8 @@ log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from,
  * not do anything that assumes we are touching a heap.
  */
 XLogRecPtr
-log_newpage(RelFileNode *rnode, BlockNumber blkno, Page page)
+log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
+			Page page)
 {
 	xl_heap_newpage xlrec;
 	XLogRecPtr	recptr;
@@ -3916,6 +3917,7 @@ log_newpage(RelFileNode *rnode, BlockNumber blkno, Page page)
 	START_CRIT_SECTION();
 
 	xlrec.node = *rnode;
+	xlrec.forknum = forkNum;
 	xlrec.blkno = blkno;
 
 	rdata[0].data = (char *) &xlrec;
@@ -4714,7 +4716,7 @@ heap_sync(Relation rel)
 	/* main heap */
 	FlushRelationBuffers(rel);
 	/* FlushRelationBuffers will have opened rd_smgr */
-	smgrimmedsync(rel->rd_smgr);
+	smgrimmedsync(rel->rd_smgr, MAIN_FORKNUM);
 
 	/* toast heap, if any */
 	if (OidIsValid(rel->rd_rel->reltoastrelid))
@@ -4723,7 +4725,7 @@ heap_sync(Relation rel)
 
 		toastrel = heap_open(rel->rd_rel->reltoastrelid, AccessShareLock);
 		FlushRelationBuffers(toastrel);
-		smgrimmedsync(toastrel->rd_smgr);
+		smgrimmedsync(toastrel->rd_smgr, MAIN_FORKNUM);
 		heap_close(toastrel, AccessShareLock);
 	}
 }

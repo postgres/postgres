@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/postmaster/bgwriter.h,v 1.11 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/bgwriter.h,v 1.12 2008/08/11 11:05:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,8 @@ extern void BackgroundWriterMain(void);
 extern void RequestCheckpoint(int flags);
 extern void CheckpointWriteDelay(int flags, double progress);
 
-extern bool ForwardFsyncRequest(RelFileNode rnode, BlockNumber segno);
+extern bool ForwardFsyncRequest(RelFileNode rnode, ForkNumber forknum,
+								BlockNumber segno);
 extern void AbsorbFsyncRequests(void);
 
 extern Size BgWriterShmemSize(void);

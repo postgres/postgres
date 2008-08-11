@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.77 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.78 2008/08/11 11:05:10 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,8 @@
 #include "utils/tqual.h"
 
 
-#define OIDCHARS	10			/* max chars printed by %u */
+#define OIDCHARS		10			/* max chars printed by %u */
+#define FORKNUMCHARS	1			/* max chars for a fork number */
 
 
 /*
@@ -51,7 +52,7 @@
  * Result is a palloc'd string.
  */
 char *
-relpath(RelFileNode rnode)
+relpath(RelFileNode rnode, ForkNumber forknum)
 {
 	int			pathlen;
 	char	   *path;
@@ -60,26 +61,38 @@ relpath(RelFileNode rnode)
 	{
 		/* Shared system relations live in {datadir}/global */
 		Assert(rnode.dbNode == 0);
-		pathlen = 7 + OIDCHARS + 1;
+		pathlen = 7 + OIDCHARS + 1 + FORKNUMCHARS + 1;
 		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "global/%u",
-				 rnode.relNode);
+		if (forknum != MAIN_FORKNUM)
+			snprintf(path, pathlen, "global/%u_%u",
+					 rnode.relNode, forknum);
+		else
+			snprintf(path, pathlen, "global/%u", rnode.relNode);
 	}
 	else if (rnode.spcNode == DEFAULTTABLESPACE_OID)
 	{
 		/* The default tablespace is {datadir}/base */
-		pathlen = 5 + OIDCHARS + 1 + OIDCHARS + 1;
+		pathlen = 5 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNUMCHARS + 1;
 		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "base/%u/%u",
-				 rnode.dbNode, rnode.relNode);
+		if (forknum != MAIN_FORKNUM)
+			snprintf(path, pathlen, "base/%u/%u_%u",
+					 rnode.dbNode, rnode.relNode, forknum);
+		else
+			snprintf(path, pathlen, "base/%u/%u",
+					 rnode.dbNode, rnode.relNode);
 	}
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-		pathlen = 10 + OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS + 1;
+		pathlen = 10 + OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS + 1
+			+ FORKNUMCHARS + 1;
 		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "pg_tblspc/%u/%u/%u",
-				 rnode.spcNode, rnode.dbNode, rnode.relNode);
+		if (forknum != MAIN_FORKNUM)
+			snprintf(path, pathlen, "pg_tblspc/%u/%u/%u_%u",
+					 rnode.spcNode, rnode.dbNode, rnode.relNode, forknum);
+		else
+			snprintf(path, pathlen, "pg_tblspc/%u/%u/%u",
+					 rnode.spcNode, rnode.dbNode, rnode.relNode);
 	}
 	return path;
 }
@@ -431,7 +444,7 @@ GetNewRelFileNode(Oid reltablespace, bool relisshared, Relation pg_class)
 			rnode.relNode = GetNewObjectId();
 
 		/* Check for existing file of same name */
-		rpath = relpath(rnode);
+		rpath = relpath(rnode, MAIN_FORKNUM);
 		fd = BasicOpenFile(rpath, O_RDONLY | PG_BINARY, 0);
 
 		if (fd >= 0)
