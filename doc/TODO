@@ -280,10 +280,6 @@ Data Types
 
   http://archives.postgresql.org/pgsql-bugs/2008-01/msg00189.php
 
-* Allow XML to accept more liberal DOCTYPE specifications
-
-  http://archives.postgresql.org/pgsql-general/2008-02/msg00347.php
-
 * Allow adding/renaming/removing enumerated values to an existing
   enumerated data type
 
