@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.375 2008/06/05 15:47:32 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.376 2008/08/13 00:07:50 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,8 +213,8 @@ static BufferAccessStrategy vac_strategy;
 static List *get_rel_oids(Oid relid, const RangeVar *vacrel,
 			 const char *stmttype);
 static void vac_truncate_clog(TransactionId frozenXID);
-static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
-					   bool for_wraparound);
+static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast,
+		   bool for_wraparound);
 static void full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel,
 		  VacPageList vacuum_pages, VacPageList fraged_pages);
@@ -268,6 +268,9 @@ static Size PageGetFreeSpaceWithFillFactor(Relation relation, Page page);
  * OID to be processed, and vacstmt->relation is ignored.  (The non-invalid
  * case is currently only used by autovacuum.)
  *
+ * do_toast is passed as FALSE by autovacuum, because it processes TOAST
+ * tables separately.
+ *
  * for_wraparound is used by autovacuum to let us know when it's forcing
  * a vacuum for wraparound, which should not be auto-cancelled.
  *
@@ -281,7 +284,7 @@ static Size PageGetFreeSpaceWithFillFactor(Relation relation, Page page);
  * at transaction commit.
  */
 void
-vacuum(VacuumStmt *vacstmt, Oid relid,
+vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	   BufferAccessStrategy bstrategy, bool for_wraparound, bool isTopLevel)
 {
 	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
@@ -433,7 +436,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid,
 			Oid			relid = lfirst_oid(cur);
 
 			if (vacstmt->vacuum)
-				vacuum_rel(relid, vacstmt, RELKIND_RELATION, for_wraparound);
+				vacuum_rel(relid, vacstmt, do_toast, for_wraparound);
 
 			if (vacstmt->analyze)
 			{
@@ -975,8 +978,7 @@ vac_truncate_clog(TransactionId frozenXID)
  *		At entry and exit, we are not inside a transaction.
  */
 static void
-vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
-		   bool for_wraparound)
+vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 {
 	LOCKMODE	lmode;
 	Relation	onerel;
@@ -1013,8 +1015,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 		 * by autovacuum; it's used to avoid cancelling a vacuum that was
 		 * invoked in an emergency.
 		 *
-		 * Note: this flag remains set until CommitTransaction or
-		 * AbortTransaction.  We don't want to clear it until we reset
+		 * Note: these flags remain set until CommitTransaction or
+		 * AbortTransaction.  We don't want to clear them until we reset
 		 * MyProc->xid/xmin, else OldestXmin might appear to go backwards,
 		 * which is probably Not Good.
 		 */
@@ -1087,10 +1089,11 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	}
 
 	/*
-	 * Check that it's a plain table; we used to do this in get_rel_oids() but
-	 * seems safer to check after we've locked the relation.
+	 * Check that it's a vacuumable table; we used to do this in get_rel_oids()
+	 * but seems safer to check after we've locked the relation.
 	 */
-	if (onerel->rd_rel->relkind != expected_relkind)
+	if (onerel->rd_rel->relkind != RELKIND_RELATION &&
+		onerel->rd_rel->relkind != RELKIND_TOASTVALUE)
 	{
 		ereport(WARNING,
 				(errmsg("skipping \"%s\" --- cannot vacuum indexes, views, or special system tables",
@@ -1132,9 +1135,13 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	LockRelationIdForSession(&onerelid, lmode);
 
 	/*
-	 * Remember the relation's TOAST relation for later
+	 * Remember the relation's TOAST relation for later, if the caller asked
+	 * us to process it.
 	 */
-	toast_relid = onerel->rd_rel->reltoastrelid;
+	if (do_toast)
+		toast_relid = onerel->rd_rel->reltoastrelid;
+	else
+		toast_relid = InvalidOid;
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are
@@ -1173,7 +1180,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	 * totally unimportant for toast relations.
 	 */
 	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, vacstmt, RELKIND_TOASTVALUE, for_wraparound);
+		vacuum_rel(toast_relid, vacstmt, false, for_wraparound);
 
 	/*
 	 * Now release the session-level lock on the master table.
