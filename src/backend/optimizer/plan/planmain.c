@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.109 2008/08/05 02:43:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.110 2008/08/14 18:47:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,8 +131,8 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * Init planner lists to empty, and set up the array to hold RelOptInfos
 	 * for "simple" rels.
 	 *
-	 * NOTE: in_info_list and append_rel_list were set up by subquery_planner,
-	 * do not touch here; eq_classes may contain data already, too.
+	 * NOTE: append_rel_list was set up by subquery_planner, so do not touch
+	 * here; eq_classes may contain data already, too.
 	 */
 	root->simple_rel_array_size = list_length(parse->rtable) + 1;
 	root->simple_rel_array = (RelOptInfo **)
@@ -143,7 +143,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	root->left_join_clauses = NIL;
 	root->right_join_clauses = NIL;
 	root->full_join_clauses = NIL;
-	root->oj_info_list = NIL;
+	root->join_info_list = NIL;
 	root->initial_rels = NIL;
 
 	/*
@@ -214,13 +214,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	build_base_rel_tlists(root, tlist);
 
 	joinlist = deconstruct_jointree(root);
-
-	/*
-	 * Vars mentioned in InClauseInfo items also have to be added to baserel
-	 * targetlists.  Nearly always, they'd have got there from the original
-	 * WHERE qual, but in corner cases maybe not.
-	 */
-	add_IN_vars_to_tlists(root);
 
 	/*
 	 * Reconsider any postponed outer-join quals now that we have built up

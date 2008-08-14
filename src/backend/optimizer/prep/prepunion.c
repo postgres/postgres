@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.152 2008/08/07 19:35:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.153 2008/08/14 18:47:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1465,25 +1465,25 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 			j->rtindex = context->child_relid;
 		return (Node *) j;
 	}
-	if (IsA(node, InClauseInfo))
+	if (IsA(node, FlattenedSubLink))
 	{
-		/* Copy the InClauseInfo node with correct mutation of subnodes */
-		InClauseInfo *ininfo;
+		/* Copy the FlattenedSubLink node with correct mutation of subnodes */
+		FlattenedSubLink *fslink;
 
-		ininfo = (InClauseInfo *) expression_tree_mutator(node,
+		fslink = (FlattenedSubLink *) expression_tree_mutator(node,
 											  adjust_appendrel_attrs_mutator,
-														  (void *) context);
-		/* now fix InClauseInfo's relid sets */
-		ininfo->lefthand = adjust_relid_set(ininfo->lefthand,
+															 (void *) context);
+		/* now fix FlattenedSubLink's relid sets */
+		fslink->lefthand = adjust_relid_set(fslink->lefthand,
 											context->parent_relid,
 											context->child_relid);
-		ininfo->righthand = adjust_relid_set(ininfo->righthand,
+		fslink->righthand = adjust_relid_set(fslink->righthand,
 											 context->parent_relid,
 											 context->child_relid);
-		return (Node *) ininfo;
+		return (Node *) fslink;
 	}
-	/* Shouldn't need to handle OuterJoinInfo or AppendRelInfo here */
-	Assert(!IsA(node, OuterJoinInfo));
+	/* Shouldn't need to handle SpecialJoinInfo or AppendRelInfo here */
+	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
 
 	/*

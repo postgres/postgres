@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.192 2008/03/24 21:53:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.193 2008/08/14 18:47:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,8 +119,9 @@ static MergeScanSelCache *cached_scansel(PlannerInfo *root,
 			   PathKey *pathkey);
 static bool cost_qual_eval_walker(Node *node, cost_qual_eval_context *context);
 static Selectivity approx_selectivity(PlannerInfo *root, List *quals,
-				   JoinType jointype);
-static Selectivity join_in_selectivity(JoinPath *path, PlannerInfo *root);
+				   SpecialJoinInfo *sjinfo);
+static Selectivity join_in_selectivity(JoinPath *path, PlannerInfo *root,
+									   SpecialJoinInfo *sjinfo);
 static void set_rel_width(PlannerInfo *root, RelOptInfo *rel);
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
@@ -1273,9 +1274,10 @@ nestloop_inner_path_rows(Path *path)
  *	  nested loop algorithm.
  *
  * 'path' is already filled in except for the cost fields
+ * 'sjinfo' is extra info about the join for selectivity estimation
  */
 void
-cost_nestloop(NestPath *path, PlannerInfo *root)
+cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 {
 	Path	   *outer_path = path->outerjoinpath;
 	Path	   *inner_path = path->innerjoinpath;
@@ -1298,7 +1300,7 @@ cost_nestloop(NestPath *path, PlannerInfo *root)
 	 * selectivity.  (This assumes that all the quals attached to the join are
 	 * IN quals, which should be true.)
 	 */
-	joininfactor = join_in_selectivity(path, root);
+	joininfactor = join_in_selectivity(path, root, sjinfo);
 
 	/* cost of source data */
 
@@ -1349,6 +1351,7 @@ cost_nestloop(NestPath *path, PlannerInfo *root)
  *	  merge join algorithm.
  *
  * 'path' is already filled in except for the cost fields
+ * 'sjinfo' is extra info about the join for selectivity estimation
  *
  * Notes: path's mergeclauses should be a subset of the joinrestrictinfo list;
  * outersortkeys and innersortkeys are lists of the keys to be used
@@ -1356,7 +1359,7 @@ cost_nestloop(NestPath *path, PlannerInfo *root)
  * sort is needed because the source path is already ordered.
  */
 void
-cost_mergejoin(MergePath *path, PlannerInfo *root)
+cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 {
 	Path	   *outer_path = path->jpath.outerjoinpath;
 	Path	   *inner_path = path->jpath.innerjoinpath;
@@ -1402,8 +1405,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	 * Note: it's probably bogus to use the normal selectivity calculation
 	 * here when either the outer or inner path is a UniquePath.
 	 */
-	merge_selec = approx_selectivity(root, mergeclauses,
-									 path->jpath.jointype);
+	merge_selec = approx_selectivity(root, mergeclauses, sjinfo);
 	cost_qual_eval(&merge_qual_cost, mergeclauses, root);
 	cost_qual_eval(&qp_qual_cost, path->jpath.joinrestrictinfo, root);
 	qp_qual_cost.startup -= merge_qual_cost.startup;
@@ -1605,7 +1607,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	 * output size.  (This assumes that all the quals attached to the join are
 	 * IN quals, which should be true.)
 	 */
-	joininfactor = join_in_selectivity(&path->jpath, root);
+	joininfactor = join_in_selectivity(&path->jpath, root, sjinfo);
 
 	/*
 	 * The number of tuple comparisons needed is approximately number of outer
@@ -1696,11 +1698,12 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
  *	  hash join algorithm.
  *
  * 'path' is already filled in except for the cost fields
+ * 'sjinfo' is extra info about the join for selectivity estimation
  *
  * Note: path's hashclauses should be a subset of the joinrestrictinfo list
  */
 void
-cost_hashjoin(HashPath *path, PlannerInfo *root)
+cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 {
 	Path	   *outer_path = path->jpath.outerjoinpath;
 	Path	   *inner_path = path->jpath.innerjoinpath;
@@ -1733,8 +1736,7 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
 	 * Note: it's probably bogus to use the normal selectivity calculation
 	 * here when either the outer or inner path is a UniquePath.
 	 */
-	hash_selec = approx_selectivity(root, hashclauses,
-									path->jpath.jointype);
+	hash_selec = approx_selectivity(root, hashclauses, sjinfo);
 	cost_qual_eval(&hash_qual_cost, hashclauses, root);
 	cost_qual_eval(&qp_qual_cost, path->jpath.joinrestrictinfo, root);
 	qp_qual_cost.startup -= hash_qual_cost.startup;
@@ -1863,7 +1865,7 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
 	 * output size.  (This assumes that all the quals attached to the join are
 	 * IN quals, which should be true.)
 	 */
-	joininfactor = join_in_selectivity(&path->jpath, root);
+	joininfactor = join_in_selectivity(&path->jpath, root, sjinfo);
 
 	/*
 	 * The number of tuple comparisons needed is the number of outer tuples
@@ -2216,6 +2218,9 @@ get_initplan_cost(PlannerInfo *root, SubPlan *subplan)
  *		The input can be either an implicitly-ANDed list of boolean
  *		expressions, or a list of RestrictInfo nodes (typically the latter).
  *
+ * Currently this is only used in join estimation, so sjinfo should never
+ * be NULL.
+ *
  * This is quick-and-dirty because we bypass clauselist_selectivity, and
  * simply multiply the independent clause selectivities together.  Now
  * clauselist_selectivity often can't do any better than that anyhow, but
@@ -2228,7 +2233,7 @@ get_initplan_cost(PlannerInfo *root, SubPlan *subplan)
  * seems OK to live with the approximation.
  */
 static Selectivity
-approx_selectivity(PlannerInfo *root, List *quals, JoinType jointype)
+approx_selectivity(PlannerInfo *root, List *quals, SpecialJoinInfo *sjinfo)
 {
 	Selectivity total = 1.0;
 	ListCell   *l;
@@ -2238,7 +2243,7 @@ approx_selectivity(PlannerInfo *root, List *quals, JoinType jointype)
 		Node	   *qual = (Node *) lfirst(l);
 
 		/* Note that clause_selectivity will be able to cache its result */
-		total *= clause_selectivity(root, qual, 0, jointype);
+		total *= clause_selectivity(root, qual, 0, sjinfo->jointype, sjinfo);
 	}
 	return total;
 }
@@ -2269,7 +2274,8 @@ set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 		clauselist_selectivity(root,
 							   rel->baserestrictinfo,
 							   0,
-							   JOIN_INNER);
+							   JOIN_INNER,
+							   NULL);
 
 	rel->rows = clamp_row_est(nrows);
 
@@ -2295,11 +2301,6 @@ set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel)
  * calculations for each pair of input rels that's encountered, and somehow
  * average the results?  Probably way more trouble than it's worth.)
  *
- * It's important that the results for symmetric JoinTypes be symmetric,
- * eg, (rel1, rel2, JOIN_LEFT) should produce the same result as (rel2,
- * rel1, JOIN_RIGHT).  Also, JOIN_IN should produce the same result as
- * JOIN_UNIQUE_INNER, likewise JOIN_REVERSE_IN == JOIN_UNIQUE_OUTER.
- *
  * We set only the rows field here.  The width field was already set by
  * build_joinrel_tlist, and baserestrictcost is not used for join rels.
  */
@@ -2307,9 +2308,10 @@ void
 set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel,
-						   JoinType jointype,
+						   SpecialJoinInfo *sjinfo,
 						   List *restrictlist)
 {
+	JoinType	jointype = sjinfo->jointype;
 	Selectivity jselec;
 	Selectivity pselec;
 	double		nrows;
@@ -2347,11 +2349,13 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 		jselec = clauselist_selectivity(root,
 										joinquals,
 										0,
-										jointype);
+										jointype,
+										sjinfo);
 		pselec = clauselist_selectivity(root,
 										pushedquals,
 										0,
-										jointype);
+										jointype,
+										sjinfo);
 
 		/* Avoid leaking a lot of ListCells */
 		list_free(joinquals);
@@ -2362,7 +2366,8 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 		jselec = clauselist_selectivity(root,
 										restrictlist,
 										0,
-										jointype);
+										jointype,
+										sjinfo);
 		pselec = 0.0;			/* not used, keep compiler quiet */
 	}
 
@@ -2390,12 +2395,6 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 				nrows = outer_rel->rows;
 			nrows *= pselec;
 			break;
-		case JOIN_RIGHT:
-			nrows = outer_rel->rows * inner_rel->rows * jselec;
-			if (nrows < inner_rel->rows)
-				nrows = inner_rel->rows;
-			nrows *= pselec;
-			break;
 		case JOIN_FULL:
 			nrows = outer_rel->rows * inner_rel->rows * jselec;
 			if (nrows < outer_rel->rows)
@@ -2404,23 +2403,27 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 				nrows = inner_rel->rows;
 			nrows *= pselec;
 			break;
-		case JOIN_IN:
-		case JOIN_UNIQUE_INNER:
+		case JOIN_SEMI:
+			/* XXX this is unsafe, could Assert? */
 			upath = create_unique_path(root, inner_rel,
-									   inner_rel->cheapest_total_path);
-			nrows = outer_rel->rows * upath->rows * jselec;
+									   inner_rel->cheapest_total_path,
+									   sjinfo);
+			if (upath)
+				nrows = outer_rel->rows * upath->rows * jselec;
+			else
+				nrows = outer_rel->rows * inner_rel->rows * jselec;
 			if (nrows > outer_rel->rows)
 				nrows = outer_rel->rows;
 			break;
-		case JOIN_REVERSE_IN:
-		case JOIN_UNIQUE_OUTER:
-			upath = create_unique_path(root, outer_rel,
-									   outer_rel->cheapest_total_path);
-			nrows = upath->rows * inner_rel->rows * jselec;
-			if (nrows > inner_rel->rows)
-				nrows = inner_rel->rows;
+		case JOIN_ANTI:
+			/* XXX this is utterly wrong */
+			nrows = outer_rel->rows * inner_rel->rows * jselec;
+			if (nrows < outer_rel->rows)
+				nrows = outer_rel->rows;
+			nrows *= pselec;
 			break;
 		default:
+			/* other values not expected here */
 			elog(ERROR, "unrecognized join type: %d", (int) jointype);
 			nrows = 0;			/* keep compiler quiet */
 			break;
@@ -2435,9 +2438,10 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
  *	  to be smaller than an ordinary inner join.
  *
  * 'path' is already filled in except for the cost fields
+ * 'sjinfo' must be the JOIN_SEMI SpecialJoinInfo for the join
  */
 static Selectivity
-join_in_selectivity(JoinPath *path, PlannerInfo *root)
+join_in_selectivity(JoinPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 {
 	RelOptInfo *innerrel;
 	UniquePath *innerunique;
@@ -2445,8 +2449,9 @@ join_in_selectivity(JoinPath *path, PlannerInfo *root)
 	double		nrows;
 
 	/* Return 1.0 whenever it's not JOIN_IN */
-	if (path->jointype != JOIN_IN)
+	if (path->jointype != JOIN_SEMI)
 		return 1.0;
+	Assert(sjinfo && sjinfo->jointype == JOIN_SEMI);
 
 	/*
 	 * Return 1.0 if the inner side is already known unique.  The case where
@@ -2458,10 +2463,12 @@ join_in_selectivity(JoinPath *path, PlannerInfo *root)
 	if (IsA(path->innerjoinpath, UniquePath))
 		return 1.0;
 	innerrel = path->innerjoinpath->parent;
+	/* XXX might assert if sjinfo doesn't exactly match innerrel? */
 	innerunique = create_unique_path(root,
 									 innerrel,
-									 innerrel->cheapest_total_path);
-	if (innerunique->rows >= innerrel->rows)
+									 innerrel->cheapest_total_path,
+									 sjinfo);
+	if (innerunique && innerunique->rows >= innerrel->rows)
 		return 1.0;
 
 	/*
@@ -2473,7 +2480,8 @@ join_in_selectivity(JoinPath *path, PlannerInfo *root)
 	selec = clauselist_selectivity(root,
 								   path->joinrestrictinfo,
 								   0,
-								   JOIN_INNER);
+								   JOIN_INNER,
+								   NULL);
 	nrows = path->outerjoinpath->parent->rows * innerrel->rows * selec;
 
 	nrows = clamp_row_est(nrows);

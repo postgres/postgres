@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.26 2008/04/14 17:05:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.27 2008/08/14 18:47:58 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -879,7 +879,8 @@ amcostestimate (PlannerInfo *root,
 
 <programlisting>
 *indexSelectivity = clauselist_selectivity(root, indexQuals,
-                                           index-&gt;rel-&gt;relid, JOIN_INNER);
+                                           index-&gt;rel-&gt;relid,
+                                           JOIN_INNER, NULL);
 </programlisting>
     </para>
    </step>

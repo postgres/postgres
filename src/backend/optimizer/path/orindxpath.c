@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.84 2008/01/09 20:42:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.85 2008/08/14 18:47:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,11 +169,11 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 	 * selectivity will stay cached ...)
 	 */
 	or_selec = clause_selectivity(root, (Node *) or_rinfo,
-								  0, JOIN_INNER);
+								  0, JOIN_INNER, NULL);
 	if (or_selec > 0 && or_selec < 1)
 	{
 		orig_selec = clause_selectivity(root, (Node *) bestrinfo,
-										0, JOIN_INNER);
+										0, JOIN_INNER, NULL);
 		bestrinfo->this_selec = orig_selec / or_selec;
 		/* clamp result to sane range */
 		if (bestrinfo->this_selec > 1)

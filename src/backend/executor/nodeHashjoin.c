@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.93 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.94 2008/08/14 18:47:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,9 @@
 #include "executor/nodeHashjoin.h"
 #include "utils/memutils.h"
 
+
+/* Returns true for JOIN_LEFT and JOIN_ANTI jointypes */
+#define HASHJOIN_IS_OUTER(hjstate)  ((hjstate)->hj_NullInnerTupleSlot != NULL)
 
 static TupleTableSlot *ExecHashJoinOuterGetTuple(PlanState *outerNode,
 						  HashJoinState *hjstate,
@@ -90,14 +93,6 @@ ExecHashJoin(HashJoinState *node)
 	}
 
 	/*
-	 * If we're doing an IN join, we want to return at most one row per outer
-	 * tuple; so we can stop scanning the inner scan if we matched on the
-	 * previous try.
-	 */
-	if (node->js.jointype == JOIN_IN && node->hj_MatchedOuter)
-		node->hj_NeedNewOuter = true;
-
-	/*
 	 * Reset per-tuple memory context to free any expression evaluation
 	 * storage allocated in the previous tuple cycle.  Note this can't happen
 	 * until we're done projecting out tuples from a join tuple.
@@ -129,7 +124,7 @@ ExecHashJoin(HashJoinState *node)
 		 * outer plan node.  If we succeed, we have to stash it away for later
 		 * consumption by ExecHashJoinOuterGetTuple.
 		 */
-		if (node->js.jointype == JOIN_LEFT ||
+		if (HASHJOIN_IS_OUTER(node) ||
 			(outerNode->plan->startup_cost < hashNode->ps.plan->total_cost &&
 			 !node->hj_OuterNotEmpty))
 		{
@@ -162,7 +157,7 @@ ExecHashJoin(HashJoinState *node)
 		 * If the inner relation is completely empty, and we're not doing an
 		 * outer join, we can quit without scanning the outer relation.
 		 */
-		if (hashtable->totalTuples == 0 && node->js.jointype != JOIN_LEFT)
+		if (hashtable->totalTuples == 0 && !HASHJOIN_IS_OUTER(node))
 			return NULL;
 
 		/*
@@ -263,27 +258,41 @@ ExecHashJoin(HashJoinState *node)
 			{
 				node->hj_MatchedOuter = true;
 
-				if (otherqual == NIL || ExecQual(otherqual, econtext, false))
-				{
-					TupleTableSlot *result;
-
-					result = ExecProject(node->js.ps.ps_ProjInfo, &isDone);
-
-					if (isDone != ExprEndResult)
-					{
-						node->js.ps.ps_TupFromTlist =
-							(isDone == ExprMultipleResult);
-						return result;
-					}
-				}
-
-				/*
-				 * If we didn't return a tuple, may need to set NeedNewOuter
-				 */
-				if (node->js.jointype == JOIN_IN)
+				/* In an antijoin, we never return a matched tuple */
+				if (node->js.jointype == JOIN_ANTI)
 				{
 					node->hj_NeedNewOuter = true;
 					break;		/* out of loop over hash bucket */
+				}
+				else
+				{
+					/*
+					 * In a semijoin, we'll consider returning the first match,
+					 * but after that we're done with this outer tuple.
+					 */
+					if (node->js.jointype == JOIN_SEMI)
+						node->hj_NeedNewOuter = true;
+
+					if (otherqual == NIL || ExecQual(otherqual, econtext, false))
+					{
+						TupleTableSlot *result;
+
+						result = ExecProject(node->js.ps.ps_ProjInfo, &isDone);
+
+						if (isDone != ExprEndResult)
+						{
+							node->js.ps.ps_TupFromTlist =
+								(isDone == ExprMultipleResult);
+							return result;
+						}
+					}
+
+					/*
+					 * If semijoin and we didn't return the tuple, we're still
+					 * done with this outer tuple.
+					 */
+					if (node->js.jointype == JOIN_SEMI)
+						break;		/* out of loop over hash bucket */
 				}
 			}
 		}
@@ -296,7 +305,7 @@ ExecHashJoin(HashJoinState *node)
 		node->hj_NeedNewOuter = true;
 
 		if (!node->hj_MatchedOuter &&
-			node->js.jointype == JOIN_LEFT)
+			HASHJOIN_IS_OUTER(node))
 		{
 			/*
 			 * We are doing an outer join and there were no join matches for
@@ -305,7 +314,7 @@ ExecHashJoin(HashJoinState *node)
 			 */
 			econtext->ecxt_innertuple = node->hj_NullInnerTupleSlot;
 
-			if (ExecQual(otherqual, econtext, false))
+			if (otherqual == NIL || ExecQual(otherqual, econtext, false))
 			{
 				/*
 				 * qualification was satisfied so we project and return the
@@ -398,12 +407,14 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	ExecInitResultTupleSlot(estate, &hjstate->js.ps);
 	hjstate->hj_OuterTupleSlot = ExecInitExtraTupleSlot(estate);
 
+	/* note: HASHJOIN_IS_OUTER macro depends on this initialization */
 	switch (node->join.jointype)
 	{
 		case JOIN_INNER:
-		case JOIN_IN:
+		case JOIN_SEMI:
 			break;
 		case JOIN_LEFT:
+		case JOIN_ANTI:
 			hjstate->hj_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
 								 ExecGetResultType(innerPlanState(hjstate)));
@@ -570,7 +581,7 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 			if (ExecHashGetHashValue(hashtable, econtext,
 									 hjstate->hj_OuterHashKeys,
 									 true,		/* outer tuple */
-									 (hjstate->js.jointype == JOIN_LEFT),
+									 HASHJOIN_IS_OUTER(hjstate),
 									 hashvalue))
 			{
 				/* remember outer relation is not empty for possible rescan */
@@ -650,7 +661,7 @@ start_over:
 	 * sides.  We can sometimes skip over batches that are empty on only one
 	 * side, but there are exceptions:
 	 *
-	 * 1. In a LEFT JOIN, we have to process outer batches even if the inner
+	 * 1. In an outer join, we have to process outer batches even if the inner
 	 * batch is empty.
 	 *
 	 * 2. If we have increased nbatch since the initial estimate, we have to
@@ -667,7 +678,7 @@ start_over:
 			hashtable->innerBatchFile[curbatch] == NULL))
 	{
 		if (hashtable->outerBatchFile[curbatch] &&
-			hjstate->js.jointype == JOIN_LEFT)
+			HASHJOIN_IS_OUTER(hjstate))
 			break;				/* must process due to rule 1 */
 		if (hashtable->innerBatchFile[curbatch] &&
 			nbatch != hashtable->nbatch_original)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.107 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.108 2008/08/14 18:47:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,15 +176,15 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 			j->rtindex += context->offset;
 		/* fall through to examine children */
 	}
-	if (IsA(node, InClauseInfo))
+	if (IsA(node, FlattenedSubLink))
 	{
-		InClauseInfo *ininfo = (InClauseInfo *) node;
+		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
 
 		if (context->sublevels_up == 0)
 		{
-			ininfo->lefthand = offset_relid_set(ininfo->lefthand,
+			fslink->lefthand = offset_relid_set(fslink->lefthand,
 												context->offset);
-			ininfo->righthand = offset_relid_set(ininfo->righthand,
+			fslink->righthand = offset_relid_set(fslink->righthand,
 												 context->offset);
 		}
 		/* fall through to examine children */
@@ -338,16 +338,16 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			j->rtindex = context->new_index;
 		/* fall through to examine children */
 	}
-	if (IsA(node, InClauseInfo))
+	if (IsA(node, FlattenedSubLink))
 	{
-		InClauseInfo *ininfo = (InClauseInfo *) node;
+		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
 
 		if (context->sublevels_up == 0)
 		{
-			ininfo->lefthand = adjust_relid_set(ininfo->lefthand,
+			fslink->lefthand = adjust_relid_set(fslink->lefthand,
 												context->rt_index,
 												context->new_index);
-			ininfo->righthand = adjust_relid_set(ininfo->righthand,
+			fslink->righthand = adjust_relid_set(fslink->righthand,
 												 context->rt_index,
 												 context->new_index);
 		}
@@ -589,8 +589,8 @@ rangeTableEntry_used_walker(Node *node,
 		/* fall through to examine children */
 	}
 	/* Shouldn't need to handle planner auxiliary nodes here */
-	Assert(!IsA(node, OuterJoinInfo));
-	Assert(!IsA(node, InClauseInfo));
+	Assert(!IsA(node, FlattenedSubLink));
+	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
 
 	if (IsA(node, Query))

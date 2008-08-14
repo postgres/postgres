@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.207 2008/08/02 21:32:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.208 2008/08/14 18:48:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,8 +202,8 @@ typedef enum NodeTag
 	T_PathKey,
 	T_RestrictInfo,
 	T_InnerIndexscanInfo,
-	T_OuterJoinInfo,
-	T_InClauseInfo,
+	T_FlattenedSubLink,
+	T_SpecialJoinInfo,
 	T_AppendRelInfo,
 	T_PlannerParamItem,
 
@@ -474,31 +474,49 @@ typedef enum CmdType
 typedef enum JoinType
 {
 	/*
-	 * The canonical kinds of joins
+	 * The canonical kinds of joins according to the SQL JOIN syntax.
+	 * Only these codes can appear in parser output (e.g., JoinExpr nodes).
 	 */
 	JOIN_INNER,					/* matching tuple pairs only */
-	JOIN_LEFT,					/* pairs + unmatched outer tuples */
-	JOIN_FULL,					/* pairs + unmatched outer + unmatched inner */
-	JOIN_RIGHT,					/* pairs + unmatched inner tuples */
+	JOIN_LEFT,					/* pairs + unmatched LHS tuples */
+	JOIN_FULL,					/* pairs + unmatched LHS + unmatched RHS */
+	JOIN_RIGHT,					/* pairs + unmatched RHS tuples */
 
 	/*
-	 * These are used for queries like WHERE foo IN (SELECT bar FROM ...).
-	 * Only JOIN_IN is actually implemented in the executor; the others are
-	 * defined for internal use in the planner.
+	 * Semijoins and anti-semijoins (as defined in relational theory) do
+	 * not appear in the SQL JOIN syntax, but there are standard idioms for
+	 * representing them (e.g., using EXISTS).  The planner recognizes these
+	 * cases and converts them to joins.  So the planner and executor must
+	 * support these codes.  NOTE: in JOIN_SEMI output, it is unspecified
+	 * which matching RHS row is joined to.  In JOIN_ANTI output, the row
+	 * is guaranteed to be null-extended.
 	 */
-	JOIN_IN,					/* at most one result per outer row */
-	JOIN_REVERSE_IN,			/* at most one result per inner row */
-	JOIN_UNIQUE_OUTER,			/* outer path must be made unique */
-	JOIN_UNIQUE_INNER			/* inner path must be made unique */
+	JOIN_SEMI,					/* 1 copy of each LHS row that has match(es) */
+	JOIN_ANTI,					/* 1 copy of each LHS row that has no match */
+
+	/*
+	 * These codes are used internally in the planner, but are not supported
+	 * by the executor (nor, indeed, by most of the planner).
+	 */
+	JOIN_UNIQUE_OUTER,			/* LHS path must be made unique */
+	JOIN_UNIQUE_INNER			/* RHS path must be made unique */
 
 	/*
 	 * We might need additional join types someday.
 	 */
 } JoinType;
 
+/*
+ * OUTER joins are those for which pushed-down quals must behave differently
+ * from the join's own quals.  This is in fact everything except INNER joins.
+ * However, this macro must also exclude the JOIN_UNIQUE symbols since those
+ * are temporary proxies for what will eventually be an INNER join.
+ *
+ * Note: in some places it is preferable to treat JOIN_SEMI as not being
+ * an outer join, since it doesn't produce null-extended rows.  Be aware
+ * of that distinction when deciding whether to use this macro.
+ */
 #define IS_OUTER_JOIN(jointype) \
-	((jointype) == JOIN_LEFT || \
-	 (jointype) == JOIN_FULL || \
-	 (jointype) == JOIN_RIGHT)
+	((jointype) > JOIN_INNER && (jointype) < JOIN_UNIQUE_OUTER)
 
 #endif   /* NODES_H */

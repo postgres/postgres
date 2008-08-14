@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.74 2008/05/12 00:00:49 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.75 2008/08/14 18:47:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -644,23 +644,23 @@ flatten_join_alias_vars_mutator(Node *node,
 		/* Recurse in case join input is itself a join */
 		return flatten_join_alias_vars_mutator(newvar, context);
 	}
-	if (IsA(node, InClauseInfo))
+	if (IsA(node, FlattenedSubLink))
 	{
-		/* Copy the InClauseInfo node with correct mutation of subnodes */
-		InClauseInfo *ininfo;
+		/* Copy the FlattenedSubLink node with correct mutation of subnodes */
+		FlattenedSubLink *fslink;
 
-		ininfo = (InClauseInfo *) expression_tree_mutator(node,
+		fslink = (FlattenedSubLink *) expression_tree_mutator(node,
 											 flatten_join_alias_vars_mutator,
-														  (void *) context);
-		/* now fix InClauseInfo's relid sets */
+															 (void *) context);
+		/* now fix FlattenedSubLink's relid sets */
 		if (context->sublevels_up == 0)
 		{
-			ininfo->lefthand = alias_relid_set(context->root,
-											   ininfo->lefthand);
-			ininfo->righthand = alias_relid_set(context->root,
-												ininfo->righthand);
+			fslink->lefthand = alias_relid_set(context->root,
+											   fslink->lefthand);
+			fslink->righthand = alias_relid_set(context->root,
+												fslink->righthand);
 		}
-		return (Node *) ininfo;
+		return (Node *) fslink;
 	}
 
 	if (IsA(node, Query))

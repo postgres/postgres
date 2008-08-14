@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.250 2008/07/07 20:24:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.251 2008/08/14 18:47:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1300,7 +1300,7 @@ icnlikesel(PG_FUNCTION_ARGS)
  */
 Selectivity
 booltestsel(PlannerInfo *root, BoolTestType booltesttype, Node *arg,
-			int varRelid, JoinType jointype)
+			int varRelid, JoinType jointype, SpecialJoinInfo *sjinfo)
 {
 	VariableStatData vardata;
 	double		selec;
@@ -1436,12 +1436,14 @@ booltestsel(PlannerInfo *root, BoolTestType booltesttype, Node *arg,
 			case IS_TRUE:
 			case IS_NOT_FALSE:
 				selec = (double) clause_selectivity(root, arg,
-													varRelid, jointype);
+													varRelid,
+													jointype, sjinfo);
 				break;
 			case IS_FALSE:
 			case IS_NOT_TRUE:
 				selec = 1.0 - (double) clause_selectivity(root, arg,
-														  varRelid, jointype);
+														  varRelid,
+														  jointype, sjinfo);
 				break;
 			default:
 				elog(ERROR, "unrecognized booltesttype: %d",
@@ -1463,24 +1465,11 @@ booltestsel(PlannerInfo *root, BoolTestType booltesttype, Node *arg,
  *		nulltestsel		- Selectivity of NullTest Node.
  */
 Selectivity
-nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
-			Node *arg, int varRelid, JoinType jointype)
+nulltestsel(PlannerInfo *root, NullTestType nulltesttype, Node *arg,
+			int varRelid, JoinType jointype, SpecialJoinInfo *sjinfo)
 {
 	VariableStatData vardata;
 	double		selec;
-
-	/*
-	 * Special hack: an IS NULL test being applied at an outer join should not
-	 * be taken at face value, since it's very likely being used to select the
-	 * outer-side rows that don't have a match, and thus its selectivity has
-	 * nothing whatever to do with the statistics of the original table
-	 * column.	We do not have nearly enough context here to determine its
-	 * true selectivity, so for the moment punt and guess at 0.5.  Eventually
-	 * the planner should be made to provide enough info about the clause's
-	 * context to let us do better.
-	 */
-	if (IS_OUTER_JOIN(jointype) && nulltesttype == IS_NULL)
-		return (Selectivity) 0.5;
 
 	examine_variable(root, arg, varRelid, &vardata);
 
@@ -1579,7 +1568,9 @@ Selectivity
 scalararraysel(PlannerInfo *root,
 			   ScalarArrayOpExpr *clause,
 			   bool is_join_clause,
-			   int varRelid, JoinType jointype)
+			   int varRelid,
+			   JoinType jointype,
+			   SpecialJoinInfo *sjinfo)
 {
 	Oid			operator = clause->opno;
 	bool		useOr = clause->useOr;
@@ -1802,7 +1793,7 @@ estimate_array_length(Node *arrayexpr)
 Selectivity
 rowcomparesel(PlannerInfo *root,
 			  RowCompareExpr *clause,
-			  int varRelid, JoinType jointype)
+			  int varRelid, JoinType jointype, SpecialJoinInfo *sjinfo)
 {
 	Selectivity s1;
 	Oid			opno = linitial_oid(clause->opnos);
@@ -1942,25 +1933,16 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
 		/*
-		 * If we are doing any variant of JOIN_IN, pretend all the values of
+		 * If we are doing any variant of JOIN_SEMI, pretend all the values of
 		 * the righthand relation are unique (ie, act as if it's been
 		 * DISTINCT'd).
-		 *
-		 * NOTE: it might seem that we should unique-ify the lefthand input
-		 * when considering JOIN_REVERSE_IN.  But this is not so, because the
-		 * join clause we've been handed has not been commuted from the way
-		 * the parser originally wrote it.	We know that the unique side of
-		 * the IN clause is *always* on the right.
 		 *
 		 * NOTE: it would be dangerous to try to be smart about JOIN_LEFT or
 		 * JOIN_RIGHT here, because we do not have enough information to
 		 * determine which var is really on which side of the join. Perhaps
 		 * someday we should pass in more information.
 		 */
-		if (jointype == JOIN_IN ||
-			jointype == JOIN_REVERSE_IN ||
-			jointype == JOIN_UNIQUE_INNER ||
-			jointype == JOIN_UNIQUE_OUTER)
+		if (jointype == JOIN_SEMI)
 		{
 			float4		oneovern = 1.0 / nd2;
 
@@ -5144,7 +5126,8 @@ genericcostestimate(PlannerInfo *root,
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
 											   index->rel->relid,
-											   JOIN_INNER);
+											   JOIN_INNER,
+											   NULL);
 
 	/*
 	 * If caller didn't give us an estimate, estimate the number of index
@@ -5483,7 +5466,8 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 		btreeSelectivity = clauselist_selectivity(root, indexBoundQuals,
 												  index->rel->relid,
-												  JOIN_INNER);
+												  JOIN_INNER,
+												  NULL);
 		numIndexTuples = btreeSelectivity * index->rel->tuples;
 
 		/*

@@ -4,7 +4,7 @@
  *	  Planner preprocessing for subqueries and join tree manipulation.
  *
  * NOTE: the intended sequence for invoking these operations is
- *		pull_up_IN_clauses
+ *		pull_up_sublinks
  *		inline_set_returning_functions
  *		pull_up_subqueries
  *		do expression preprocessing (including flattening JOIN alias vars)
@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.50 2008/03/18 22:04:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.51 2008/08/14 18:47:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,26 +63,32 @@ static reduce_outer_joins_state *reduce_outer_joins_pass1(Node *jtnode);
 static void reduce_outer_joins_pass2(Node *jtnode,
 						 reduce_outer_joins_state *state,
 						 PlannerInfo *root,
-						 Relids nonnullable_rels);
-static void fix_in_clause_relids(List *in_info_list, int varno,
-					 Relids subrelids);
+						 Relids nonnullable_rels,
+						 List *nonnullable_vars,
+						 List *forced_null_vars);
+static void fix_flattened_sublink_relids(Node *node,
+										 int varno, Relids subrelids);
 static void fix_append_rel_relids(List *append_rel_list, int varno,
 					  Relids subrelids);
 static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
 
 
 /*
- * pull_up_IN_clauses
- *		Attempt to pull up top-level IN clauses to be treated like joins.
+ * pull_up_sublinks
+ *		Attempt to pull up top-level ANY and EXISTS SubLinks to be treated
+ *		as semijoins or anti-semijoins.
  *
- * A clause "foo IN (sub-SELECT)" appearing at the top level of WHERE can
- * be processed by pulling the sub-SELECT up to become a rangetable entry
- * and handling the implied equality comparisons as join operators (with
- * special join rules).
+ * A clause "foo op ANY (sub-SELECT)" appearing at the top level of WHERE
+ * can be processed by pulling the sub-SELECT up to become a rangetable entry
+ * and handling the implied comparisons as quals of a semijoin.
  * This optimization *only* works at the top level of WHERE, because
- * it cannot distinguish whether the IN ought to return FALSE or NULL in
- * cases involving NULL inputs.  This routine searches for such clauses
- * and does the necessary parsetree transformations if any are found.
+ * it cannot distinguish whether the ANY ought to return FALSE or NULL in
+ * cases involving NULL inputs.  Similarly, EXISTS and NOT EXISTS clauses
+ * can be handled by pulling up the sub-SELECT and creating a semijoin
+ * or anti-semijoin respectively.
+ *
+ * This routine searches for such clauses and does the necessary parsetree
+ * transformations if any are found.
  *
  * This routine has to run before preprocess_expression(), so the WHERE
  * clause is not yet reduced to implicit-AND format.  That means we need
@@ -90,9 +96,10 @@ static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
  * probably only binary ANDs.  We stop as soon as we hit a non-AND item.
  *
  * Returns the possibly-modified version of the given qual-tree node.
+ * There may be side-effects on the query's rtable and jointree, too.
  */
 Node *
-pull_up_IN_clauses(PlannerInfo *root, Node *node)
+pull_up_sublinks(PlannerInfo *root, Node *node)
 {
 	if (node == NULL)
 		return NULL;
@@ -101,11 +108,39 @@ pull_up_IN_clauses(PlannerInfo *root, Node *node)
 		SubLink    *sublink = (SubLink *) node;
 		Node	   *subst;
 
-		/* Is it a convertible IN clause?  If not, return it as-is */
-		subst = convert_IN_to_join(root, sublink);
-		if (subst == NULL)
-			return node;
-		return subst;
+		/* Is it a convertible ANY or EXISTS clause? */
+		if (sublink->subLinkType == ANY_SUBLINK)
+		{
+			subst = convert_ANY_sublink_to_join(root, sublink);
+			if (subst)
+				return subst;
+		}
+		else if (sublink->subLinkType == EXISTS_SUBLINK)
+		{
+			subst = convert_EXISTS_sublink_to_join(root, sublink, false);
+			if (subst)
+				return subst;
+		}
+		/* Else return it unmodified */
+		return node;
+	}
+	if (not_clause(node))
+	{
+		/* If the immediate argument of NOT is EXISTS, try to convert */
+		SubLink    *sublink = (SubLink *) get_notclausearg((Expr *) node);
+		Node	   *subst;
+
+		if (sublink && IsA(sublink, SubLink))
+		{
+			if (sublink->subLinkType == EXISTS_SUBLINK)
+			{
+				subst = convert_EXISTS_sublink_to_join(root, sublink, true);
+				if (subst)
+					return subst;
+			}
+		}
+		/* Else return it unmodified */
+		return node;
 	}
 	if (and_clause(node))
 	{
@@ -117,7 +152,7 @@ pull_up_IN_clauses(PlannerInfo *root, Node *node)
 			Node	   *oldclause = (Node *) lfirst(l);
 
 			newclauses = lappend(newclauses,
-								 pull_up_IN_clauses(root, oldclause));
+								 pull_up_sublinks(root, oldclause));
 		}
 		return (Node *) make_andclause(newclauses);
 	}
@@ -137,8 +172,8 @@ pull_up_IN_clauses(PlannerInfo *root, Node *node)
  *
  * This has to be done before we have started to do any optimization of
  * subqueries, else any such steps wouldn't get applied to subqueries
- * obtained via inlining.  However, we do it after pull_up_IN_clauses
- * so that we can inline any functions used in IN subselects.
+ * obtained via inlining.  However, we do it after pull_up_sublinks
+ * so that we can inline any functions used in SubLink subselects.
  *
  * Like most of the planner, this feels free to scribble on its input data
  * structure.
@@ -344,15 +379,14 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->planner_cxt = CurrentMemoryContext;
 	subroot->init_plans = NIL;
 	subroot->eq_classes = NIL;
-	subroot->in_info_list = NIL;
 	subroot->append_rel_list = NIL;
 
 	/*
-	 * Pull up any IN clauses within the subquery's WHERE, so that we don't
-	 * leave unoptimized INs behind.
+	 * Pull up any SubLinks within the subquery's WHERE, so that we don't
+	 * leave unoptimized SubLinks behind.
 	 */
 	if (subquery->hasSubLinks)
-		subquery->jointree->quals = pull_up_IN_clauses(subroot,
+		subquery->jointree->quals = pull_up_sublinks(subroot,
 												  subquery->jointree->quals);
 
 	/*
@@ -402,12 +436,11 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 
 	/*
 	 * Adjust level-0 varnos in subquery so that we can append its rangetable
-	 * to upper query's.  We have to fix the subquery's in_info_list and
-	 * append_rel_list, as well.
+	 * to upper query's.  We have to fix the subquery's append_rel_list
+	 * as well.
 	 */
 	rtoffset = list_length(parse->rtable);
 	OffsetVarNodes((Node *) subquery, rtoffset, 0);
-	OffsetVarNodes((Node *) subroot->in_info_list, rtoffset, 0);
 	OffsetVarNodes((Node *) subroot->append_rel_list, rtoffset, 0);
 
 	/*
@@ -415,7 +448,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * than before.
 	 */
 	IncrementVarSublevelsUp((Node *) subquery, -1, 1);
-	IncrementVarSublevelsUp((Node *) subroot->in_info_list, -1, 1);
 	IncrementVarSublevelsUp((Node *) subroot->append_rel_list, -1, 1);
 
 	/*
@@ -438,10 +470,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	Assert(parse->setOperations == NULL);
 	parse->havingQual =
 		ResolveNew(parse->havingQual,
-				   varno, 0, rte,
-				   subtlist, CMD_SELECT, 0);
-	root->in_info_list = (List *)
-		ResolveNew((Node *) root->in_info_list,
 				   varno, 0, rte,
 				   subtlist, CMD_SELECT, 0);
 	root->append_rel_list = (List *)
@@ -474,29 +502,27 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	parse->rowMarks = list_concat(parse->rowMarks, subquery->rowMarks);
 
 	/*
-	 * We also have to fix the relid sets of any parent InClauseInfo nodes.
-	 * (This could perhaps be done by ResolveNew, but it would clutter that
-	 * routine's API unreasonably.)
+	 * We also have to fix the relid sets of any FlattenedSubLink nodes in
+	 * the parent query.  (This could perhaps be done by ResolveNew, but it
+	 * would clutter that routine's API unreasonably.)
 	 *
 	 * Likewise, relids appearing in AppendRelInfo nodes have to be fixed (but
 	 * we took care of their translated_vars lists above).	We already checked
 	 * that this won't require introducing multiple subrelids into the
 	 * single-slot AppendRelInfo structs.
 	 */
-	if (root->in_info_list || root->append_rel_list)
+	if (parse->hasSubLinks || root->append_rel_list)
 	{
 		Relids		subrelids;
 
 		subrelids = get_relids_in_jointree((Node *) subquery->jointree);
-		fix_in_clause_relids(root->in_info_list, varno, subrelids);
+		fix_flattened_sublink_relids((Node *) parse, varno, subrelids);
 		fix_append_rel_relids(root->append_rel_list, varno, subrelids);
 	}
 
 	/*
-	 * And now add any subquery InClauseInfos and AppendRelInfos to our lists.
+	 * And now add subquery's AppendRelInfos to our list.
 	 */
-	root->in_info_list = list_concat(root->in_info_list,
-									 subroot->in_info_list);
 	root->append_rel_list = list_concat(root->append_rel_list,
 										subroot->append_rel_list);
 
@@ -504,8 +530,8 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * We don't have to do the equivalent bookkeeping for outer-join info,
 	 * because that hasn't been set up yet.
 	 */
-	Assert(root->oj_info_list == NIL);
-	Assert(subroot->oj_info_list == NIL);
+	Assert(root->join_info_list == NIL);
+	Assert(subroot->join_info_list == NIL);
 
 	/*
 	 * Miscellaneous housekeeping.
@@ -966,6 +992,20 @@ resolvenew_in_jointree(Node *jtnode, int varno,
  * nullable side of the join to be non-null.  (For FULL joins this applies
  * to each side separately.)
  *
+ * Another transformation we apply here is to recognize cases like
+ *		SELECT ... FROM a LEFT JOIN b ON (a.x = b.y) WHERE b.y IS NULL;
+ * If the join clause is strict for b.y, then only null-extended rows could
+ * pass the upper WHERE, and we can conclude that what the query is really
+ * specifying is an anti-semijoin.  We change the join type from JOIN_LEFT
+ * to JOIN_ANTI.  The IS NULL clause then becomes redundant, and must be
+ * removed to prevent bogus selectivity calculations, but we leave it to
+ * distribute_qual_to_rels to get rid of such clauses.
+ *
+ * Also, we get rid of JOIN_RIGHT cases by flipping them around to become
+ * JOIN_LEFT.  This saves some code here and in some later planner routines,
+ * but the main reason to do it is to not need to invent a JOIN_REVERSE_ANTI
+ * join type.
+ *
  * To ease recognition of strict qual clauses, we require this routine to be
  * run after expression preprocessing (i.e., qual canonicalization and JOIN
  * alias-var expansion).
@@ -991,7 +1031,7 @@ reduce_outer_joins(PlannerInfo *root)
 		elog(ERROR, "so where are the outer joins?");
 
 	reduce_outer_joins_pass2((Node *) root->parse->jointree,
-							 state, root, NULL);
+							 state, root, NULL, NIL, NIL);
 }
 
 /*
@@ -1068,12 +1108,16 @@ reduce_outer_joins_pass1(Node *jtnode)
  *	state: state data collected by phase 1 for this node
  *	root: toplevel planner state
  *	nonnullable_rels: set of base relids forced non-null by upper quals
+ *	nonnullable_vars: list of Vars forced non-null by upper quals
+ *	forced_null_vars: list of Vars forced null by upper quals
  */
 static void
 reduce_outer_joins_pass2(Node *jtnode,
 						 reduce_outer_joins_state *state,
 						 PlannerInfo *root,
-						 Relids nonnullable_rels)
+						 Relids nonnullable_rels,
+						 List *nonnullable_vars,
+						 List *forced_null_vars)
 {
 	/*
 	 * pass 2 should never descend as far as an empty subnode or base rel,
@@ -1088,12 +1132,21 @@ reduce_outer_joins_pass2(Node *jtnode,
 		FromExpr   *f = (FromExpr *) jtnode;
 		ListCell   *l;
 		ListCell   *s;
-		Relids		pass_nonnullable;
+		Relids		pass_nonnullable_rels;
+		List	   *pass_nonnullable_vars;
+		List	   *pass_forced_null_vars;
 
-		/* Scan quals to see if we can add any nonnullability constraints */
-		pass_nonnullable = find_nonnullable_rels(f->quals);
-		pass_nonnullable = bms_add_members(pass_nonnullable,
-										   nonnullable_rels);
+		/* Scan quals to see if we can add any constraints */
+		pass_nonnullable_rels = find_nonnullable_rels(f->quals);
+		pass_nonnullable_rels = bms_add_members(pass_nonnullable_rels,
+												nonnullable_rels);
+		/* NB: we rely on list_concat to not damage its second argument */
+		pass_nonnullable_vars = find_nonnullable_vars(f->quals);
+		pass_nonnullable_vars = list_concat(pass_nonnullable_vars,
+											nonnullable_vars);
+		pass_forced_null_vars = find_forced_null_vars(f->quals);
+		pass_forced_null_vars = list_concat(pass_forced_null_vars,
+											forced_null_vars);
 		/* And recurse --- but only into interesting subtrees */
 		Assert(list_length(f->fromlist) == list_length(state->sub_states));
 		forboth(l, f->fromlist, s, state->sub_states)
@@ -1102,9 +1155,12 @@ reduce_outer_joins_pass2(Node *jtnode,
 
 			if (sub_state->contains_outer)
 				reduce_outer_joins_pass2(lfirst(l), sub_state, root,
-										 pass_nonnullable);
+										 pass_nonnullable_rels,
+										 pass_nonnullable_vars,
+										 pass_forced_null_vars);
 		}
-		bms_free(pass_nonnullable);
+		bms_free(pass_nonnullable_rels);
+		/* can't so easily clean up var lists, unfortunately */
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -1113,10 +1169,14 @@ reduce_outer_joins_pass2(Node *jtnode,
 		JoinType	jointype = j->jointype;
 		reduce_outer_joins_state *left_state = linitial(state->sub_states);
 		reduce_outer_joins_state *right_state = lsecond(state->sub_states);
+		List	   *local_nonnullable_vars = NIL;
+		bool		computed_local_nonnullable_vars = false;
 
 		/* Can we simplify this join? */
 		switch (jointype)
 		{
+			case JOIN_INNER:
+				break;
 			case JOIN_LEFT:
 				if (bms_overlap(nonnullable_rels, right_state->relids))
 					jointype = JOIN_INNER;
@@ -1140,11 +1200,63 @@ reduce_outer_joins_pass2(Node *jtnode,
 				}
 				break;
 			default:
+				elog(ERROR, "unrecognized join type: %d",
+					 (int) jointype);
 				break;
 		}
+
+		/*
+		 * Convert JOIN_RIGHT to JOIN_LEFT.  Note that in the case where we
+		 * reduced JOIN_FULL to JOIN_RIGHT, this will mean the JoinExpr no
+		 * longer matches the internal ordering of any CoalesceExpr's built to
+		 * represent merged join variables.  We don't care about that at
+		 * present, but be wary of it ...
+		 */
+		if (jointype == JOIN_RIGHT)
+		{
+			Node	   *tmparg;
+
+			tmparg = j->larg;
+			j->larg = j->rarg;
+			j->rarg = tmparg;
+			jointype = JOIN_LEFT;
+			right_state = linitial(state->sub_states);
+			left_state = lsecond(state->sub_states);
+		}
+
+		/*
+		 * See if we can reduce JOIN_LEFT to JOIN_ANTI.  This is the case
+		 * if the join's own quals are strict for any var that was forced
+		 * null by higher qual levels.  NOTE: there are other ways that we
+		 * could detect an anti-join, in particular if we were to check
+		 * whether Vars coming from the RHS must be non-null because of
+		 * table constraints.  That seems complicated and expensive though
+		 * (in particular, one would have to be wary of lower outer joins).
+		 * For the moment this seems sufficient.
+		 */
+		if (jointype == JOIN_LEFT)
+		{
+			List	   *overlap;
+
+			local_nonnullable_vars = find_nonnullable_vars(j->quals);
+			computed_local_nonnullable_vars = true;
+
+			/*
+			 * It's not sufficient to check whether local_nonnullable_vars
+			 * and forced_null_vars overlap: we need to know if the overlap
+			 * includes any RHS variables.
+			 */
+			overlap = list_intersection(local_nonnullable_vars,
+										forced_null_vars);
+			if (overlap != NIL &&
+				bms_overlap(pull_varnos((Node *) overlap),
+							right_state->relids))
+				jointype = JOIN_ANTI;
+		}
+
+		/* Apply the jointype change, if any, to both jointree node and RTE */
 		if (jointype != j->jointype)
 		{
-			/* apply the change to both jointree node and RTE */
 			RangeTblEntry *rte = rt_fetch(rtindex, root->parse->rtable);
 
 			Assert(rte->rtekind == RTE_JOIN);
@@ -1155,45 +1267,103 @@ reduce_outer_joins_pass2(Node *jtnode,
 		/* Only recurse if there's more to do below here */
 		if (left_state->contains_outer || right_state->contains_outer)
 		{
-			Relids		local_nonnullable;
-			Relids		pass_nonnullable;
+			Relids		local_nonnullable_rels;
+			List	   *local_forced_null_vars;
+			Relids		pass_nonnullable_rels;
+			List	   *pass_nonnullable_vars;
+			List	   *pass_forced_null_vars;
 
 			/*
-			 * If this join is (now) inner, we can add any nonnullability
-			 * constraints its quals provide to those we got from above. But
-			 * if it is outer, we can only pass down the local constraints
-			 * into the nullable side, because an outer join never eliminates
-			 * any rows from its non-nullable side.  If it's a FULL join then
-			 * it doesn't eliminate anything from either side.
+			 * If this join is (now) inner, we can add any constraints its
+			 * quals provide to those we got from above.  But if it is outer,
+			 * we can pass down the local constraints only into the nullable
+			 * side, because an outer join never eliminates any rows from its
+			 * non-nullable side.  Also, there is no point in passing upper
+			 * constraints into the nullable side, since if there were any
+			 * we'd have been able to reduce the join.  (In the case of
+			 * upper forced-null constraints, we *must not* pass them into
+			 * the nullable side --- they either applied here, or not.)
+			 * The upshot is that we pass either the local or the upper
+			 * constraints, never both, to the children of an outer join.
+			 *
+			 * At a FULL join we just punt and pass nothing down --- is it
+			 * possible to be smarter?
 			 */
 			if (jointype != JOIN_FULL)
 			{
-				local_nonnullable = find_nonnullable_rels(j->quals);
-				local_nonnullable = bms_add_members(local_nonnullable,
-													nonnullable_rels);
+				local_nonnullable_rels = find_nonnullable_rels(j->quals);
+				if (!computed_local_nonnullable_vars)
+					local_nonnullable_vars = find_nonnullable_vars(j->quals);
+				local_forced_null_vars = find_forced_null_vars(j->quals);
+				if (jointype == JOIN_INNER)
+				{
+					/* OK to merge upper and local constraints */
+					local_nonnullable_rels = bms_add_members(local_nonnullable_rels,
+															 nonnullable_rels);
+					local_nonnullable_vars = list_concat(local_nonnullable_vars,
+														 nonnullable_vars);
+					local_forced_null_vars = list_concat(local_forced_null_vars,
+														 forced_null_vars);
+				}
 			}
 			else
-				local_nonnullable = NULL;		/* no use in calculating it */
+			{
+				/* no use in calculating these */
+				local_nonnullable_rels = NULL;
+				local_forced_null_vars = NIL;
+			}
 
 			if (left_state->contains_outer)
 			{
-				if (jointype == JOIN_INNER || jointype == JOIN_RIGHT)
-					pass_nonnullable = local_nonnullable;
+				if (jointype == JOIN_INNER)
+				{
+					/* pass union of local and upper constraints */
+					pass_nonnullable_rels = local_nonnullable_rels;
+					pass_nonnullable_vars = local_nonnullable_vars;
+					pass_forced_null_vars = local_forced_null_vars;
+				}
+				else if (jointype != JOIN_FULL)		/* ie, LEFT or ANTI */
+				{
+					/* can't pass local constraints to non-nullable side */
+					pass_nonnullable_rels = nonnullable_rels;
+					pass_nonnullable_vars = nonnullable_vars;
+					pass_forced_null_vars = forced_null_vars;
+				}
 				else
-					pass_nonnullable = nonnullable_rels;
+				{
+					/* no constraints pass through JOIN_FULL */
+					pass_nonnullable_rels = NULL;
+					pass_nonnullable_vars = NIL;
+					pass_forced_null_vars = NIL;
+				}
 				reduce_outer_joins_pass2(j->larg, left_state, root,
-										 pass_nonnullable);
+										 pass_nonnullable_rels,
+										 pass_nonnullable_vars,
+										 pass_forced_null_vars);
 			}
+
 			if (right_state->contains_outer)
 			{
-				if (jointype == JOIN_INNER || jointype == JOIN_LEFT)
-					pass_nonnullable = local_nonnullable;
+				if (jointype != JOIN_FULL)		/* ie, INNER, LEFT or ANTI */
+				{
+					/* pass appropriate constraints, per comment above */
+					pass_nonnullable_rels = local_nonnullable_rels;
+					pass_nonnullable_vars = local_nonnullable_vars;
+					pass_forced_null_vars = local_forced_null_vars;
+				}
 				else
-					pass_nonnullable = nonnullable_rels;
+				{
+					/* no constraints pass through JOIN_FULL */
+					pass_nonnullable_rels = NULL;
+					pass_nonnullable_vars = NIL;
+					pass_forced_null_vars = NIL;
+				}
 				reduce_outer_joins_pass2(j->rarg, right_state, root,
-										 pass_nonnullable);
+										 pass_nonnullable_rels,
+										 pass_nonnullable_vars,
+										 pass_forced_null_vars);
 			}
-			bms_free(local_nonnullable);
+			bms_free(local_nonnullable_rels);
 		}
 	}
 	else
@@ -1202,33 +1372,70 @@ reduce_outer_joins_pass2(Node *jtnode,
 }
 
 /*
- * fix_in_clause_relids: update RT-index sets of InClauseInfo nodes
+ * fix_flattened_sublink_relids - adjust FlattenedSubLink nodes after
+ * pulling up a subquery
  *
- * When we pull up a subquery, any InClauseInfo references to the subquery's
- * RT index have to be replaced by the set of substituted relids.
+ * Find any FlattenedSubLink nodes in the given tree that reference the
+ * pulled-up relid, and change them to reference the replacement relid(s).
+ * We do not need to recurse into subqueries, since no subquery of the
+ * current top query could contain such a reference.
  *
- * We assume we may modify the InClauseInfo nodes in-place.
+ * NOTE: although this has the form of a walker, we cheat and modify the
+ * nodes in-place.  This should be OK since the tree was copied by ResolveNew
+ * earlier.
  */
-static void
-fix_in_clause_relids(List *in_info_list, int varno, Relids subrelids)
+
+typedef struct
 {
-	ListCell   *l;
+	int			varno;
+	Relids		subrelids;
+} fix_flattened_sublink_relids_context;
 
-	foreach(l, in_info_list)
+static bool
+fix_flattened_sublink_relids_walker(Node *node,
+							   fix_flattened_sublink_relids_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, FlattenedSubLink))
 	{
-		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
+		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
 
-		if (bms_is_member(varno, ininfo->lefthand))
+		if (bms_is_member(context->varno, fslink->lefthand))
 		{
-			ininfo->lefthand = bms_del_member(ininfo->lefthand, varno);
-			ininfo->lefthand = bms_add_members(ininfo->lefthand, subrelids);
+			fslink->lefthand = bms_del_member(fslink->lefthand,
+											  context->varno);
+			fslink->lefthand = bms_add_members(fslink->lefthand,
+											   context->subrelids);
 		}
-		if (bms_is_member(varno, ininfo->righthand))
+		if (bms_is_member(context->varno, fslink->righthand))
 		{
-			ininfo->righthand = bms_del_member(ininfo->righthand, varno);
-			ininfo->righthand = bms_add_members(ininfo->righthand, subrelids);
+			fslink->righthand = bms_del_member(fslink->righthand,
+											   context->varno);
+			fslink->righthand = bms_add_members(fslink->righthand,
+												context->subrelids);
 		}
+		/* fall through to examine children */
 	}
+	return expression_tree_walker(node, fix_flattened_sublink_relids_walker,
+								  (void *) context);
+}
+
+static void
+fix_flattened_sublink_relids(Node *node, int varno, Relids subrelids)
+{
+	fix_flattened_sublink_relids_context context;
+
+	context.varno = varno;
+	context.subrelids = subrelids;
+
+	/*
+	 * Must be prepared to start with a Query or a bare expression tree.
+	 */
+	query_or_expression_tree_walker(node,
+									fix_flattened_sublink_relids_walker,
+									(void *) &context,
+									0);
 }
 
 /*

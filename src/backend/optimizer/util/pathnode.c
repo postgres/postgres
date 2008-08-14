@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.145 2008/08/07 01:11:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.146 2008/08/14 18:47:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +19,12 @@
 #include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "utils/selfuncs.h"
@@ -33,7 +35,6 @@
 static List *translate_sub_tlist(List *tlist, int relid);
 static bool query_is_distinct_for(Query *query, List *colnos, List *opids);
 static Oid	distinct_col_search(int colno, List *colnos, List *opids);
-static bool hash_safe_operators(List *opids);
 
 
 /*****************************************************************************
@@ -481,15 +482,16 @@ create_index_path(PlannerInfo *root,
 		 * into different lists, it should be sufficient to use pointer
 		 * comparison to remove duplicates.)
 		 *
-		 * Always assume the join type is JOIN_INNER; even if some of the join
-		 * clauses come from other contexts, that's not our problem.
+		 * Note that we force the clauses to be treated as non-join clauses
+		 * during selectivity estimation.
 		 */
 		allclauses = list_union_ptr(rel->baserestrictinfo, allclauses);
 		pathnode->rows = rel->tuples *
 			clauselist_selectivity(root,
 								   allclauses,
 								   rel->relid,	/* do not use 0! */
-								   JOIN_INNER);
+								   JOIN_INNER,
+								   NULL);
 		/* Like costsize.c, force estimate to be at least one row */
 		pathnode->rows = clamp_row_est(pathnode->rows);
 	}
@@ -719,42 +721,141 @@ create_material_path(RelOptInfo *rel, Path *subpath)
 /*
  * create_unique_path
  *	  Creates a path representing elimination of distinct rows from the
- *	  input data.
+ *	  input data.  Distinct-ness is defined according to the needs of the
+ *	  semijoin represented by sjinfo.  If it is not possible to identify
+ *	  how to make the data unique, NULL is returned.
  *
  * If used at all, this is likely to be called repeatedly on the same rel;
  * and the input subpath should always be the same (the cheapest_total path
  * for the rel).  So we cache the result.
  */
 UniquePath *
-create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
+create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
+				   SpecialJoinInfo *sjinfo)
 {
 	UniquePath *pathnode;
 	Path		sort_path;		/* dummy for result of cost_sort */
 	Path		agg_path;		/* dummy for result of cost_agg */
 	MemoryContext oldcontext;
-	List	   *sub_targetlist;
 	List	   *in_operators;
-	ListCell   *l;
+	List	   *uniq_exprs;
+	bool		all_btree;
+	bool		all_hash;
 	int			numCols;
+	ListCell   *lc;
 
-	/* Caller made a mistake if subpath isn't cheapest_total */
+	/* Caller made a mistake if subpath isn't cheapest_total ... */
 	Assert(subpath == rel->cheapest_total_path);
+	/* ... or if SpecialJoinInfo is the wrong one */
+	Assert(sjinfo->jointype == JOIN_SEMI);
+	Assert(bms_equal(rel->relids, sjinfo->syn_righthand));
 
 	/* If result already cached, return it */
 	if (rel->cheapest_unique_path)
 		return (UniquePath *) rel->cheapest_unique_path;
 
+	/* If we previously failed, return NULL quickly */
+	if (sjinfo->join_quals == NIL)
+		return NULL;
+
 	/*
-	 * We must ensure path struct is allocated in main planning context;
-	 * otherwise GEQO memory management causes trouble.  (Compare
-	 * best_inner_indexscan().)
+	 * We must ensure path struct and subsidiary data are allocated in main
+	 * planning context; otherwise GEQO memory management causes trouble.
+	 * (Compare best_inner_indexscan().)
 	 */
 	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
-	pathnode = makeNode(UniquePath);
+	/*
+	 * Look to see whether the semijoin's join quals consist of AND'ed
+	 * equality operators, with (only) RHS variables on only one side of
+	 * each one.  If so, we can figure out how to enforce uniqueness for
+	 * the RHS.
+	 *
+	 * Note that the in_operators list consists of the joinqual operators
+	 * themselves (but commuted if needed to put the RHS value on the right).
+	 * These could be cross-type operators, in which case the operator
+	 * actually needed for uniqueness is a related single-type operator.
+	 * We assume here that that operator will be available from the btree
+	 * or hash opclass when the time comes ... if not, create_unique_plan()
+	 * will fail.
+	 */
+	in_operators = NIL;
+	uniq_exprs = NIL;
+	all_btree = true;
+	all_hash = enable_hashagg;		/* don't consider hash if not enabled */
+	foreach(lc, sjinfo->join_quals)
+	{
+		OpExpr	   *op = (OpExpr *) lfirst(lc);
+		Oid			opno;
+		Node	   *left_expr;
+		Node	   *right_expr;
+		Relids		left_varnos;
+		Relids		right_varnos;
 
-	/* There is no substructure to allocate, so can switch back right away */
-	MemoryContextSwitchTo(oldcontext);
+		/* must be binary opclause... */
+		if (!IsA(op, OpExpr))
+			goto no_unique_path;
+		if (list_length(op->args) != 2)
+			goto no_unique_path;
+		opno = op->opno;
+		left_expr = linitial(op->args);
+		right_expr = lsecond(op->args);
+
+		/* check rel membership of arguments */
+		left_varnos = pull_varnos(left_expr);
+		right_varnos = pull_varnos(right_expr);
+		if (!bms_is_empty(right_varnos) &&
+			bms_is_subset(right_varnos, sjinfo->syn_righthand) &&
+			!bms_overlap(left_varnos, sjinfo->syn_righthand))
+		{
+			/* typical case, right_expr is RHS variable */
+		}
+		else if (!bms_is_empty(left_varnos) &&
+				 bms_is_subset(left_varnos, sjinfo->syn_righthand) &&
+				 !bms_overlap(right_varnos, sjinfo->syn_righthand))
+		{
+			/* flipped case, left_expr is RHS variable */
+			opno = get_commutator(opno);
+			if (!OidIsValid(opno))
+				goto no_unique_path;
+			right_expr = left_expr;
+		}
+		else
+			goto no_unique_path;
+
+		/* all operators must be btree equality or hash equality */
+		if (all_btree)
+		{
+			/* oprcanmerge is considered a hint... */
+			if (!op_mergejoinable(opno) ||
+				get_mergejoin_opfamilies(opno) == NIL)
+				all_btree = false;
+		}
+		if (all_hash)
+		{
+			/* ... but oprcanhash had better be correct */
+			if (!op_hashjoinable(opno))
+				all_hash = false;
+		}
+		if (!(all_btree || all_hash))
+			goto no_unique_path;
+
+		/* so far so good, keep building lists */
+		in_operators = lappend_oid(in_operators, opno);
+		uniq_exprs = lappend(uniq_exprs, copyObject(right_expr));
+	}
+
+	/*
+	 * The expressions we'd need to unique-ify mustn't be volatile.
+	 */
+	if (contain_volatile_functions((Node *) uniq_exprs))
+		goto no_unique_path;
+
+	/*
+	 * If we get here, we can unique-ify using at least one of sorting
+	 * and hashing.  Start building the result Path object.
+	 */
+	pathnode = makeNode(UniquePath);
 
 	pathnode->path.pathtype = T_Unique;
 	pathnode->path.parent = rel;
@@ -766,43 +867,24 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 	pathnode->path.pathkeys = NIL;
 
 	pathnode->subpath = subpath;
-
-	/*
-	 * Try to identify the targetlist that will actually be unique-ified. In
-	 * current usage, this routine is only used for sub-selects of IN clauses,
-	 * so we should be able to find the tlist in in_info_list.	Get the IN
-	 * clause's operators, too, because they determine what "unique" means.
-	 */
-	sub_targetlist = NIL;
-	in_operators = NIL;
-	foreach(l, root->in_info_list)
-	{
-		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
-
-		if (bms_equal(ininfo->righthand, rel->relids))
-		{
-			sub_targetlist = ininfo->sub_targetlist;
-			in_operators = ininfo->in_operators;
-			break;
-		}
-	}
+	pathnode->in_operators = in_operators;
+	pathnode->uniq_exprs = uniq_exprs;
 
 	/*
 	 * If the input is a subquery whose output must be unique already, then we
 	 * don't need to do anything.  The test for uniqueness has to consider
 	 * exactly which columns we are extracting; for example "SELECT DISTINCT
 	 * x,y" doesn't guarantee that x alone is distinct. So we cannot check for
-	 * this optimization unless we found our own targetlist above, and it
-	 * consists only of simple Vars referencing subquery outputs.  (Possibly
-	 * we could do something with expressions in the subquery outputs, too,
-	 * but for now keep it simple.)
+	 * this optimization unless uniq_exprs consists only of simple Vars
+	 * referencing subquery outputs.  (Possibly we could do something with
+	 * expressions in the subquery outputs, too, but for now keep it simple.)
 	 */
-	if (sub_targetlist && rel->rtekind == RTE_SUBQUERY)
+	if (rel->rtekind == RTE_SUBQUERY)
 	{
 		RangeTblEntry *rte = planner_rt_fetch(rel->relid, root);
 		List	   *sub_tlist_colnos;
 
-		sub_tlist_colnos = translate_sub_tlist(sub_targetlist, rel->relid);
+		sub_tlist_colnos = translate_sub_tlist(uniq_exprs, rel->relid);
 
 		if (sub_tlist_colnos &&
 			query_is_distinct_for(rte->subquery,
@@ -816,48 +898,37 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 
 			rel->cheapest_unique_path = (Path *) pathnode;
 
+			MemoryContextSwitchTo(oldcontext);
+
 			return pathnode;
 		}
 	}
 
-	/*
-	 * If we know the targetlist, try to estimate number of result rows;
-	 * otherwise punt.
-	 */
-	if (sub_targetlist)
+	/* Estimate number of output rows */
+	pathnode->rows = estimate_num_groups(root, uniq_exprs, rel->rows);
+	numCols = list_length(uniq_exprs);
+
+	if (all_btree)
 	{
-		pathnode->rows = estimate_num_groups(root, sub_targetlist, rel->rows);
-		numCols = list_length(sub_targetlist);
+		/*
+		 * Estimate cost for sort+unique implementation
+		 */
+		cost_sort(&sort_path, root, NIL,
+				  subpath->total_cost,
+				  rel->rows,
+				  rel->width,
+				  -1.0);
+
+		/*
+		 * Charge one cpu_operator_cost per comparison per input tuple.
+		 * We assume all columns get compared at most of the tuples. (XXX
+		 * probably this is an overestimate.)  This should agree with
+		 * make_unique.
+		 */
+		sort_path.total_cost += cpu_operator_cost * rel->rows * numCols;
 	}
-	else
-	{
-		pathnode->rows = rel->rows;
-		numCols = list_length(rel->reltargetlist);
-	}
 
-	/*
-	 * Estimate cost for sort+unique implementation
-	 */
-	cost_sort(&sort_path, root, NIL,
-			  subpath->total_cost,
-			  rel->rows,
-			  rel->width,
-			  -1.0);
-
-	/*
-	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
-	 * all columns get compared at most of the tuples.	(XXX probably this is
-	 * an overestimate.)  This should agree with make_unique.
-	 */
-	sort_path.total_cost += cpu_operator_cost * rel->rows * numCols;
-
-	/*
-	 * Is it safe to use a hashed implementation?  If so, estimate and compare
-	 * costs.  We only try this if we know the IN operators, else we can't
-	 * check their hashability.
-	 */
-	pathnode->umethod = UNIQUE_PATH_SORT;
-	if (enable_hashagg && in_operators && hash_safe_operators(in_operators))
+	if (all_hash)
 	{
 		/*
 		 * Estimate the overhead per hashtable entry at 64 bytes (same as in
@@ -865,18 +936,30 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 		 */
 		int			hashentrysize = rel->width + 64;
 
-		if (hashentrysize * pathnode->rows <= work_mem * 1024L)
-		{
+		if (hashentrysize * pathnode->rows > work_mem * 1024L)
+			all_hash = false;	/* don't try to hash */
+		else
 			cost_agg(&agg_path, root,
 					 AGG_HASHED, 0,
 					 numCols, pathnode->rows,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows);
-			if (agg_path.total_cost < sort_path.total_cost)
-				pathnode->umethod = UNIQUE_PATH_HASH;
-		}
 	}
+
+	if (all_btree && all_hash)
+	{
+		if (agg_path.total_cost < sort_path.total_cost)
+			pathnode->umethod = UNIQUE_PATH_HASH;
+		else
+			pathnode->umethod = UNIQUE_PATH_SORT;
+	}
+	else if (all_btree)
+		pathnode->umethod = UNIQUE_PATH_SORT;
+	else if (all_hash)
+		pathnode->umethod = UNIQUE_PATH_HASH;
+	else
+		goto no_unique_path;
 
 	if (pathnode->umethod == UNIQUE_PATH_HASH)
 	{
@@ -891,7 +974,18 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 
 	rel->cheapest_unique_path = (Path *) pathnode;
 
+	MemoryContextSwitchTo(oldcontext);
+
 	return pathnode;
+
+no_unique_path:					/* failure exit */
+
+	/* Mark the SpecialJoinInfo as not unique-able */
+	sjinfo->join_quals = NIL;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	return NULL;
 }
 
 /*
@@ -1069,31 +1163,6 @@ distinct_col_search(int colno, List *colnos, List *opids)
 }
 
 /*
- * hash_safe_operators - can all the specified IN operators be hashed?
- *
- * We assume hashed aggregation will work if each IN operator is marked
- * hashjoinable.  If the IN operators are cross-type, this could conceivably
- * fail: the aggregation will need a hashable equality operator for the RHS
- * datatype --- but it's pretty hard to conceive of a hash opfamily that has
- * cross-type hashing without support for hashing the individual types, so
- * we don't expend cycles here to support the case.  We could check
- * get_compatible_hash_operator() instead of just op_hashjoinable(), but the
- * former is a significantly more expensive test.
- */
-static bool
-hash_safe_operators(List *opids)
-{
-	ListCell   *lc;
-
-	foreach(lc, opids)
-	{
-		if (!op_hashjoinable(lfirst_oid(lc)))
-			return false;
-	}
-	return true;
-}
-
-/*
  * create_subqueryscan_path
  *	  Creates a path corresponding to a sequential scan of a subquery,
  *	  returning the pathnode.
@@ -1157,6 +1226,7 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel)
  *
  * 'joinrel' is the join relation.
  * 'jointype' is the type of join required
+ * 'sjinfo' is extra info about the join for selectivity estimation
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
@@ -1168,6 +1238,7 @@ NestPath *
 create_nestloop_path(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 JoinType jointype,
+					 SpecialJoinInfo *sjinfo,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
@@ -1183,7 +1254,7 @@ create_nestloop_path(PlannerInfo *root,
 	pathnode->joinrestrictinfo = restrict_clauses;
 	pathnode->path.pathkeys = pathkeys;
 
-	cost_nestloop(pathnode, root);
+	cost_nestloop(pathnode, root, sjinfo);
 
 	return pathnode;
 }
@@ -1195,6 +1266,7 @@ create_nestloop_path(PlannerInfo *root,
  *
  * 'joinrel' is the join relation
  * 'jointype' is the type of join required
+ * 'sjinfo' is extra info about the join for selectivity estimation
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
@@ -1208,6 +1280,7 @@ MergePath *
 create_mergejoin_path(PlannerInfo *root,
 					  RelOptInfo *joinrel,
 					  JoinType jointype,
+					  SpecialJoinInfo *sjinfo,
 					  Path *outer_path,
 					  Path *inner_path,
 					  List *restrict_clauses,
@@ -1256,7 +1329,7 @@ create_mergejoin_path(PlannerInfo *root,
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
 
-	cost_mergejoin(pathnode, root);
+	cost_mergejoin(pathnode, root, sjinfo);
 
 	return pathnode;
 }
@@ -1267,6 +1340,7 @@ create_mergejoin_path(PlannerInfo *root,
  *
  * 'joinrel' is the join relation
  * 'jointype' is the type of join required
+ * 'sjinfo' is extra info about the join for selectivity estimation
  * 'outer_path' is the cheapest outer path
  * 'inner_path' is the cheapest inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
@@ -1277,6 +1351,7 @@ HashPath *
 create_hashjoin_path(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 JoinType jointype,
+					 SpecialJoinInfo *sjinfo,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
@@ -1294,7 +1369,7 @@ create_hashjoin_path(PlannerInfo *root,
 	pathnode->jpath.path.pathkeys = NIL;
 	pathnode->path_hashclauses = hashclauses;
 
-	cost_hashjoin(pathnode, root);
+	cost_hashjoin(pathnode, root, sjinfo);
 
 	return pathnode;
 }

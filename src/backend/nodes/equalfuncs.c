@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.326 2008/08/07 01:11:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.327 2008/08/14 18:47:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -702,26 +702,27 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 }
 
 static bool
-_equalOuterJoinInfo(OuterJoinInfo *a, OuterJoinInfo *b)
+_equalFlattenedSubLink(FlattenedSubLink *a, FlattenedSubLink *b)
 {
-	COMPARE_BITMAPSET_FIELD(min_lefthand);
-	COMPARE_BITMAPSET_FIELD(min_righthand);
-	COMPARE_BITMAPSET_FIELD(syn_lefthand);
-	COMPARE_BITMAPSET_FIELD(syn_righthand);
-	COMPARE_SCALAR_FIELD(is_full_join);
-	COMPARE_SCALAR_FIELD(lhs_strict);
-	COMPARE_SCALAR_FIELD(delay_upper_joins);
+	COMPARE_SCALAR_FIELD(jointype);
+	COMPARE_BITMAPSET_FIELD(lefthand);
+	COMPARE_BITMAPSET_FIELD(righthand);
+	COMPARE_NODE_FIELD(quals);
 
 	return true;
 }
 
 static bool
-_equalInClauseInfo(InClauseInfo *a, InClauseInfo *b)
+_equalSpecialJoinInfo(SpecialJoinInfo *a, SpecialJoinInfo *b)
 {
-	COMPARE_BITMAPSET_FIELD(lefthand);
-	COMPARE_BITMAPSET_FIELD(righthand);
-	COMPARE_NODE_FIELD(sub_targetlist);
-	COMPARE_NODE_FIELD(in_operators);
+	COMPARE_BITMAPSET_FIELD(min_lefthand);
+	COMPARE_BITMAPSET_FIELD(min_righthand);
+	COMPARE_BITMAPSET_FIELD(syn_lefthand);
+	COMPARE_BITMAPSET_FIELD(syn_righthand);
+	COMPARE_SCALAR_FIELD(jointype);
+	COMPARE_SCALAR_FIELD(lhs_strict);
+	COMPARE_SCALAR_FIELD(delay_upper_joins);
+	COMPARE_NODE_FIELD(join_quals);
 
 	return true;
 }
@@ -2185,11 +2186,11 @@ equal(void *a, void *b)
 		case T_RestrictInfo:
 			retval = _equalRestrictInfo(a, b);
 			break;
-		case T_OuterJoinInfo:
-			retval = _equalOuterJoinInfo(a, b);
+		case T_FlattenedSubLink:
+			retval = _equalFlattenedSubLink(a, b);
 			break;
-		case T_InClauseInfo:
-			retval = _equalInClauseInfo(a, b);
+		case T_SpecialJoinInfo:
+			retval = _equalSpecialJoinInfo(a, b);
 			break;
 		case T_AppendRelInfo:
 			retval = _equalAppendRelInfo(a, b);

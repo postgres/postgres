@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.261 2008/08/07 01:11:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.262 2008/08/14 18:47:59 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -32,6 +32,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
+#include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
@@ -79,6 +80,7 @@ static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
+static List *find_nonnullable_vars_walker(Node *node, bool top_level);
 static bool is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK);
 static bool set_coercionform_dontcare_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node,
@@ -1054,6 +1056,13 @@ contain_nonstrict_functions_walker(Node *node, void *context)
  * the expression to have been AND/OR flattened and converted to implicit-AND
  * format.
  *
+ * Note: this function is largely duplicative of find_nonnullable_vars().
+ * The reason not to simplify this function into a thin wrapper around
+ * find_nonnullable_vars() is that the tested conditions really are different:
+ * a clause like "t1.v1 IS NOT NULL OR t1.v2 IS NOT NULL" does not prove
+ * that either v1 or v2 can't be NULL, but it does prove that the t1 row
+ * as a whole can't be all-NULL.
+ *
  * top_level is TRUE while scanning top-level AND/OR structure; here, showing
  * the result is either FALSE or NULL is good enough.  top_level is FALSE when
  * we have descended below a NOT or a strict function: now we must be able to
@@ -1228,7 +1237,328 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 			 expr->booltesttype == IS_NOT_UNKNOWN))
 			result = find_nonnullable_rels_walker((Node *) expr->arg, false);
 	}
+	else if (IsA(node, FlattenedSubLink))
+	{
+		/* JOIN_SEMI sublinks preserve strictness, but JOIN_ANTI ones don't */
+		FlattenedSubLink *expr = (FlattenedSubLink *) node;
+
+		if (expr->jointype == JOIN_SEMI)
+			result = find_nonnullable_rels_walker((Node *) expr->quals,
+												  top_level);
+	}
 	return result;
+}
+
+/*
+ * find_nonnullable_vars
+ *		Determine which Vars are forced nonnullable by given clause.
+ *
+ * Returns a list of all level-zero Vars that are referenced in the clause in
+ * such a way that the clause cannot possibly return TRUE if any of these Vars
+ * is NULL.  (It is OK to err on the side of conservatism; hence the analysis
+ * here is simplistic.)
+ *
+ * The semantics here are subtly different from contain_nonstrict_functions:
+ * that function is concerned with NULL results from arbitrary expressions,
+ * but here we assume that the input is a Boolean expression, and wish to
+ * see if NULL inputs will provably cause a FALSE-or-NULL result.  We expect
+ * the expression to have been AND/OR flattened and converted to implicit-AND
+ * format.
+ *
+ * The result is a palloc'd List, but we have not copied the member Var nodes.
+ * Also, we don't bother trying to eliminate duplicate entries.
+ *
+ * top_level is TRUE while scanning top-level AND/OR structure; here, showing
+ * the result is either FALSE or NULL is good enough.  top_level is FALSE when
+ * we have descended below a NOT or a strict function: now we must be able to
+ * prove that the subexpression goes to NULL.
+ *
+ * We don't use expression_tree_walker here because we don't want to descend
+ * through very many kinds of nodes; only the ones we can be sure are strict.
+ */
+List *
+find_nonnullable_vars(Node *clause)
+{
+	return find_nonnullable_vars_walker(clause, true);
+}
+
+static List *
+find_nonnullable_vars_walker(Node *node, bool top_level)
+{
+	List	   *result = NIL;
+	ListCell   *l;
+
+	if (node == NULL)
+		return NIL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup == 0)
+			result = list_make1(var);
+	}
+	else if (IsA(node, List))
+	{
+		/*
+		 * At top level, we are examining an implicit-AND list: if any of the
+		 * arms produces FALSE-or-NULL then the result is FALSE-or-NULL. If
+		 * not at top level, we are examining the arguments of a strict
+		 * function: if any of them produce NULL then the result of the
+		 * function must be NULL.  So in both cases, the set of nonnullable
+		 * vars is the union of those found in the arms, and we pass down the
+		 * top_level flag unmodified.
+		 */
+		foreach(l, (List *) node)
+		{
+			result = list_concat(result,
+								 find_nonnullable_vars_walker(lfirst(l),
+															  top_level));
+		}
+	}
+	else if (IsA(node, FuncExpr))
+	{
+		FuncExpr   *expr = (FuncExpr *) node;
+
+		if (func_strict(expr->funcid))
+			result = find_nonnullable_vars_walker((Node *) expr->args, false);
+	}
+	else if (IsA(node, OpExpr))
+	{
+		OpExpr	   *expr = (OpExpr *) node;
+
+		set_opfuncid(expr);
+		if (func_strict(expr->opfuncid))
+			result = find_nonnullable_vars_walker((Node *) expr->args, false);
+	}
+	else if (IsA(node, ScalarArrayOpExpr))
+	{
+		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
+
+		if (is_strict_saop(expr, true))
+			result = find_nonnullable_vars_walker((Node *) expr->args, false);
+	}
+	else if (IsA(node, BoolExpr))
+	{
+		BoolExpr   *expr = (BoolExpr *) node;
+
+		switch (expr->boolop)
+		{
+			case AND_EXPR:
+				/* At top level we can just recurse (to the List case) */
+				if (top_level)
+				{
+					result = find_nonnullable_vars_walker((Node *) expr->args,
+														  top_level);
+					break;
+				}
+
+				/*
+				 * Below top level, even if one arm produces NULL, the result
+				 * could be FALSE (hence not NULL).  However, if *all* the
+				 * arms produce NULL then the result is NULL, so we can take
+				 * the intersection of the sets of nonnullable vars, just as
+				 * for OR.	Fall through to share code.
+				 */
+				/* FALL THRU */
+			case OR_EXPR:
+
+				/*
+				 * OR is strict if all of its arms are, so we can take the
+				 * intersection of the sets of nonnullable vars for each arm.
+				 * This works for both values of top_level.
+				 */
+				foreach(l, expr->args)
+				{
+					List	   *subresult;
+
+					subresult = find_nonnullable_vars_walker(lfirst(l),
+															 top_level);
+					if (result == NIL)	/* first subresult? */
+						result = subresult;
+					else
+						result = list_intersection(result, subresult);
+
+					/*
+					 * If the intersection is empty, we can stop looking. This
+					 * also justifies the test for first-subresult above.
+					 */
+					if (result == NIL)
+						break;
+				}
+				break;
+			case NOT_EXPR:
+				/* NOT will return null if its arg is null */
+				result = find_nonnullable_vars_walker((Node *) expr->args,
+													  false);
+				break;
+			default:
+				elog(ERROR, "unrecognized boolop: %d", (int) expr->boolop);
+				break;
+		}
+	}
+	else if (IsA(node, RelabelType))
+	{
+		RelabelType *expr = (RelabelType *) node;
+
+		result = find_nonnullable_vars_walker((Node *) expr->arg, top_level);
+	}
+	else if (IsA(node, CoerceViaIO))
+	{
+		/* not clear this is useful, but it can't hurt */
+		CoerceViaIO *expr = (CoerceViaIO *) node;
+
+		result = find_nonnullable_vars_walker((Node *) expr->arg, false);
+	}
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		/* ArrayCoerceExpr is strict at the array level */
+		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
+
+		result = find_nonnullable_vars_walker((Node *) expr->arg, top_level);
+	}
+	else if (IsA(node, ConvertRowtypeExpr))
+	{
+		/* not clear this is useful, but it can't hurt */
+		ConvertRowtypeExpr *expr = (ConvertRowtypeExpr *) node;
+
+		result = find_nonnullable_vars_walker((Node *) expr->arg, top_level);
+	}
+	else if (IsA(node, NullTest))
+	{
+		/* IS NOT NULL can be considered strict, but only at top level */
+		NullTest   *expr = (NullTest *) node;
+
+		if (top_level && expr->nulltesttype == IS_NOT_NULL)
+			result = find_nonnullable_vars_walker((Node *) expr->arg, false);
+	}
+	else if (IsA(node, BooleanTest))
+	{
+		/* Boolean tests that reject NULL are strict at top level */
+		BooleanTest *expr = (BooleanTest *) node;
+
+		if (top_level &&
+			(expr->booltesttype == IS_TRUE ||
+			 expr->booltesttype == IS_FALSE ||
+			 expr->booltesttype == IS_NOT_UNKNOWN))
+			result = find_nonnullable_vars_walker((Node *) expr->arg, false);
+	}
+	else if (IsA(node, FlattenedSubLink))
+	{
+		/* JOIN_SEMI sublinks preserve strictness, but JOIN_ANTI ones don't */
+		FlattenedSubLink *expr = (FlattenedSubLink *) node;
+
+		if (expr->jointype == JOIN_SEMI)
+			result = find_nonnullable_vars_walker((Node *) expr->quals,
+												  top_level);
+	}
+	return result;
+}
+
+/*
+ * find_forced_null_vars
+ *		Determine which Vars must be NULL for the given clause to return TRUE.
+ *
+ * This is the complement of find_nonnullable_vars: find the level-zero Vars
+ * that must be NULL for the clause to return TRUE.  (It is OK to err on the
+ * side of conservatism; hence the analysis here is simplistic.  In fact,
+ * we only detect simple "var IS NULL" tests at the top level.)
+ *
+ * The result is a palloc'd List, but we have not copied the member Var nodes.
+ * Also, we don't bother trying to eliminate duplicate entries.
+ */
+List *
+find_forced_null_vars(Node *node)
+{
+	List	   *result = NIL;
+	Var		   *var;
+	ListCell   *l;
+
+	if (node == NULL)
+		return NIL;
+	/* Check single-clause cases using subroutine */
+	var = find_forced_null_var(node);
+	if (var)
+	{
+		result = list_make1(var);
+	}
+	/* Otherwise, handle AND-conditions */
+	else if (IsA(node, List))
+	{
+		/*
+		 * At top level, we are examining an implicit-AND list: if any of the
+		 * arms produces FALSE-or-NULL then the result is FALSE-or-NULL.
+		 */
+		foreach(l, (List *) node)
+		{
+			result = list_concat(result,
+								 find_forced_null_vars(lfirst(l)));
+		}
+	}
+	else if (IsA(node, BoolExpr))
+	{
+		BoolExpr   *expr = (BoolExpr *) node;
+
+		/*
+		 * We don't bother considering the OR case, because it's fairly
+		 * unlikely anyone would write "v1 IS NULL OR v1 IS NULL".
+		 * Likewise, the NOT case isn't worth expending code on.
+		 */
+		if (expr->boolop == AND_EXPR)
+		{
+			/* At top level we can just recurse (to the List case) */
+			result = find_forced_null_vars((Node *) expr->args);
+		}
+	}
+	return result;
+}
+
+/*
+ * find_forced_null_var
+ *		Return the Var forced null by the given clause, or NULL if it's
+ *		not an IS NULL-type clause.  For success, the clause must enforce
+ *		*only* nullness of the particular Var, not any other conditions.
+ *
+ * This is just the single-clause case of find_forced_null_vars(), without
+ * any allowance for AND conditions.  It's used by initsplan.c on individual
+ * qual clauses.  The reason for not just applying find_forced_null_vars()
+ * is that if an AND of an IS NULL clause with something else were to somehow
+ * survive AND/OR flattening, initsplan.c might get fooled into discarding
+ * the whole clause when only the IS NULL part of it had been proved redundant.
+ */
+Var *
+find_forced_null_var(Node *node)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, NullTest))
+	{
+		/* check for var IS NULL */
+		NullTest   *expr = (NullTest *) node;
+
+		if (expr->nulltesttype == IS_NULL)
+		{
+			Var	   *var = (Var *) expr->arg;
+
+			if (var && IsA(var, Var) &&
+				var->varlevelsup == 0)
+				return var;
+		}
+	}
+	else if (IsA(node, BooleanTest))
+	{
+		/* var IS UNKNOWN is equivalent to var IS NULL */
+		BooleanTest *expr = (BooleanTest *) node;
+
+		if (expr->booltesttype == IS_UNKNOWN)
+		{
+			Var	   *var = (Var *) expr->arg;
+
+			if (var && IsA(var, Var) &&
+				var->varlevelsup == 0)
+				return var;
+		}
+	}
+	return NULL;
 }
 
 /*
@@ -2479,6 +2809,24 @@ eval_const_expressions_mutator(Node *node,
 		newbtest->booltesttype = btest->booltesttype;
 		return (Node *) newbtest;
 	}
+	if (IsA(node, FlattenedSubLink))
+	{
+		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
+		FlattenedSubLink *newfslink;
+		Expr	   *quals;
+
+		/* Simplify and also canonicalize the arguments */
+		quals = (Expr *) eval_const_expressions_mutator((Node *) fslink->quals,
+														context);
+		quals = canonicalize_qual(quals);
+
+		newfslink = makeNode(FlattenedSubLink);
+		newfslink->jointype = fslink->jointype;
+		newfslink->lefthand = fslink->lefthand;
+		newfslink->righthand = fslink->righthand;
+		newfslink->quals = quals;
+		return (Node *) newfslink;
+	}
 
 	/*
 	 * For any node type not handled above, we recurse using
@@ -3706,7 +4054,6 @@ expression_tree_walker(Node *node,
 		case T_SetToDefault:
 		case T_CurrentOfExpr:
 		case T_RangeTblRef:
-		case T_OuterJoinInfo:
 			/* primitive node types with no expression subnodes */
 			break;
 		case T_Aggref:
@@ -3937,11 +4284,11 @@ expression_tree_walker(Node *node,
 				/* groupClauses are deemed uninteresting */
 			}
 			break;
-		case T_InClauseInfo:
+		case T_FlattenedSubLink:
 			{
-				InClauseInfo *ininfo = (InClauseInfo *) node;
+				FlattenedSubLink *fslink = (FlattenedSubLink *) node;
 
-				if (expression_tree_walker((Node *) ininfo->sub_targetlist,
+				if (expression_tree_walker((Node *) fslink->quals,
 										   walker, context))
 					return true;
 			}
@@ -4175,7 +4522,6 @@ expression_tree_mutator(Node *node,
 		case T_SetToDefault:
 		case T_CurrentOfExpr:
 		case T_RangeTblRef:
-		case T_OuterJoinInfo:
 			return (Node *) copyObject(node);
 		case T_Aggref:
 			{
@@ -4541,14 +4887,14 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
-		case T_InClauseInfo:
+		case T_FlattenedSubLink:
 			{
-				InClauseInfo *ininfo = (InClauseInfo *) node;
-				InClauseInfo *newnode;
+				FlattenedSubLink *fslink = (FlattenedSubLink *) node;
+				FlattenedSubLink *newnode;
 
-				FLATCOPY(newnode, ininfo, InClauseInfo);
-				MUTATE(newnode->sub_targetlist, ininfo->sub_targetlist, List *);
-				/* Assume we need not make a copy of in_operators list */
+				FLATCOPY(newnode, fslink, FlattenedSubLink);
+				/* Assume we need not copy the relids bitmapsets */
+				MUTATE(newnode->quals, fslink->quals, Expr *);
 				return (Node *) newnode;
 			}
 			break;

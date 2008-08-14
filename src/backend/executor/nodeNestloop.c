@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.46 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.47 2008/08/14 18:47:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,15 +102,6 @@ ExecNestLoop(NestLoopState *node)
 	}
 
 	/*
-	 * If we're doing an IN join, we want to return at most one row per outer
-	 * tuple; so we can stop scanning the inner scan if we matched on the
-	 * previous try.
-	 */
-	if (node->js.jointype == JOIN_IN &&
-		node->nl_MatchedOuter)
-		node->nl_NeedNewOuter = true;
-
-	/*
 	 * Reset per-tuple memory context to free any expression evaluation
 	 * storage allocated in the previous tuple cycle.  Note this can't happen
 	 * until we're done projecting out tuples from a join tuple.
@@ -177,7 +168,8 @@ ExecNestLoop(NestLoopState *node)
 			node->nl_NeedNewOuter = true;
 
 			if (!node->nl_MatchedOuter &&
-				node->js.jointype == JOIN_LEFT)
+				(node->js.jointype == JOIN_LEFT ||
+				 node->js.jointype == JOIN_ANTI))
 			{
 				/*
 				 * We are doing an outer join and there were no join matches
@@ -189,7 +181,7 @@ ExecNestLoop(NestLoopState *node)
 
 				ENL1_printf("testing qualification for outer-join tuple");
 
-				if (ExecQual(otherqual, econtext, false))
+				if (otherqual == NIL || ExecQual(otherqual, econtext, false))
 				{
 					/*
 					 * qualification was satisfied so we project and return
@@ -232,30 +224,39 @@ ExecNestLoop(NestLoopState *node)
 		{
 			node->nl_MatchedOuter = true;
 
-			if (otherqual == NIL || ExecQual(otherqual, econtext, false))
+			/* In an antijoin, we never return a matched tuple */
+			if (node->js.jointype == JOIN_ANTI)
+				node->nl_NeedNewOuter = true;
+			else
 			{
 				/*
-				 * qualification was satisfied so we project and return the
-				 * slot containing the result tuple using ExecProject().
+				 * In a semijoin, we'll consider returning the first match,
+				 * but after that we're done with this outer tuple.
 				 */
-				TupleTableSlot *result;
-				ExprDoneCond isDone;
-
-				ENL1_printf("qualification succeeded, projecting tuple");
-
-				result = ExecProject(node->js.ps.ps_ProjInfo, &isDone);
-
-				if (isDone != ExprEndResult)
+				if (node->js.jointype == JOIN_SEMI)
+					node->nl_NeedNewOuter = true;
+				if (otherqual == NIL || ExecQual(otherqual, econtext, false))
 				{
-					node->js.ps.ps_TupFromTlist =
-						(isDone == ExprMultipleResult);
-					return result;
+					/*
+					 * qualification was satisfied so we project and return
+					 * the slot containing the result tuple using
+					 * ExecProject().
+					 */
+					TupleTableSlot *result;
+					ExprDoneCond isDone;
+
+					ENL1_printf("qualification succeeded, projecting tuple");
+
+					result = ExecProject(node->js.ps.ps_ProjInfo, &isDone);
+
+					if (isDone != ExprEndResult)
+					{
+						node->js.ps.ps_TupFromTlist =
+							(isDone == ExprMultipleResult);
+						return result;
+					}
 				}
 			}
-
-			/* If we didn't return a tuple, may need to set NeedNewOuter */
-			if (node->js.jointype == JOIN_IN)
-				node->nl_NeedNewOuter = true;
 		}
 
 		/*
@@ -333,9 +334,10 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	switch (node->join.jointype)
 	{
 		case JOIN_INNER:
-		case JOIN_IN:
+		case JOIN_SEMI:
 			break;
 		case JOIN_LEFT:
+		case JOIN_ANTI:
 			nlstate->nl_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
 								 ExecGetResultType(innerPlanState(nlstate)));

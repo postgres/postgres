@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.47 2008/08/02 21:31:59 tgl Exp $
+$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.48 2008/08/14 18:47:59 tgl Exp $
 
 Optimizer
 =========
@@ -114,9 +114,8 @@ no choice but to generate a clauseless Cartesian-product join; so we
 consider joining that rel to each other available rel.  But in the presence
 of join clauses we will only consider joins that use available join
 clauses.  Note that join-order restrictions induced by outer joins and
-IN clauses are treated as if they were real join clauses, to ensure that
-we find a workable join order in cases where those restrictions force a
-clauseless join to be done.)
+IN/EXISTS clauses are also checked, to ensure that we find a workable join
+order in cases where those restrictions force a clauseless join to be done.)
 
 If we only had two relations in the list, we are done: we just pick
 the cheapest path for the join RelOptInfo.  If we had more than two, we now
@@ -174,9 +173,9 @@ for it or the cheapest path with the desired ordering (if that's cheaper
 than applying a sort to the cheapest other path).
 
 If the query contains one-sided outer joins (LEFT or RIGHT joins), or
-"IN (sub-select)" WHERE clauses that were converted to joins, then some of
+IN or EXISTS WHERE clauses that were converted to joins, then some of
 the possible join orders may be illegal.  These are excluded by having
-join_is_legal consult side lists of outer joins and IN joins to see
+join_is_legal consult a side list of such "special" joins to see
 whether a proposed join is illegal.  (The same consultation allows it
 to see which join style should be applied for a valid join, ie,
 JOIN_INNER, JOIN_LEFT, etc.)
@@ -219,10 +218,10 @@ FULL JOIN ordering is enforced by not collapsing FULL JOIN nodes when
 translating the jointree to "joinlist" representation.  LEFT and RIGHT
 JOIN nodes are normally collapsed so that they participate fully in the
 join order search.  To avoid generating illegal join orders, the planner
-creates an OuterJoinInfo node for each outer join, and join_is_legal
+creates a SpecialJoinInfo node for each outer join, and join_is_legal
 checks this list to decide if a proposed join is legal.
 
-What we store in OuterJoinInfo nodes are the minimum sets of Relids
+What we store in SpecialJoinInfo nodes are the minimum sets of Relids
 required on each side of the join to form the outer join.  Note that
 these are minimums; there's no explicit maximum, since joining other
 rels to the OJ's syntactic rels may be legal.  Per identities 1 and 2,
@@ -273,7 +272,7 @@ planner()
  set up for recursive handling of subqueries
  do final cleanup after planning
 -subquery_planner()
- pull up subqueries from rangetable, if possible
+ pull up sublinks and subqueries from rangetable, if possible
  canonicalize qual
      Attempt to simplify WHERE clause to the most useful form; this includes
      flattening nested AND/ORs and detecting clauses that are duplicated in

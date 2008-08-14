@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.176 2008/08/07 03:04:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.177 2008/08/14 18:47:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,8 +450,11 @@ explain_outNode(StringInfo str,
 				case JOIN_RIGHT:
 					pname = "Nested Loop Right Join";
 					break;
-				case JOIN_IN:
-					pname = "Nested Loop IN Join";
+				case JOIN_SEMI:
+					pname = "Nested Loop Semi Join";
+					break;
+				case JOIN_ANTI:
+					pname = "Nested Loop Anti Join";
 					break;
 				default:
 					pname = "Nested Loop ??? Join";
@@ -473,8 +476,11 @@ explain_outNode(StringInfo str,
 				case JOIN_RIGHT:
 					pname = "Merge Right Join";
 					break;
-				case JOIN_IN:
-					pname = "Merge IN Join";
+				case JOIN_SEMI:
+					pname = "Merge Semi Join";
+					break;
+				case JOIN_ANTI:
+					pname = "Merge Anti Join";
 					break;
 				default:
 					pname = "Merge ??? Join";
@@ -496,8 +502,11 @@ explain_outNode(StringInfo str,
 				case JOIN_RIGHT:
 					pname = "Hash Right Join";
 					break;
-				case JOIN_IN:
-					pname = "Hash IN Join";
+				case JOIN_SEMI:
+					pname = "Hash Semi Join";
+					break;
+				case JOIN_ANTI:
+					pname = "Hash Anti Join";
 					break;
 				default:
 					pname = "Hash ??? Join";
