@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.108 2008/08/14 18:47:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.109 2008/08/14 20:31:29 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -531,6 +531,25 @@ IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 									IncrementVarSublevelsUp_walker,
 									(void *) &context,
 									0);
+}
+
+/*
+ * IncrementVarSublevelsUp_rtable -
+ *	Same as IncrementVarSublevelsUp, but to be invoked on a range table.
+ */
+void
+IncrementVarSublevelsUp_rtable(List *rtable, int delta_sublevels_up,
+							   int min_sublevels_up)
+{
+	IncrementVarSublevelsUp_context context;
+
+	context.delta_sublevels_up = delta_sublevels_up;
+	context.min_sublevels_up = min_sublevels_up;
+
+	range_table_walker(rtable,
+					   IncrementVarSublevelsUp_walker,
+					   (void *) &context,
+					   0);
 }
 
 

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.51 2008/08/14 18:47:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.52 2008/08/14 20:31:29 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@ static Node *pull_up_simple_subquery(PlannerInfo *root, Node *jtnode,
 static Node *pull_up_simple_union_all(PlannerInfo *root, Node *jtnode,
 						 RangeTblEntry *rte);
 static void pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root,
-						   int parentRTindex, Query *setOpQuery);
+						  int parentRTindex, Query *setOpQuery,
+						  int childRToffset);
 static void make_setop_translation_lists(Query *query,
 							 Index newvarno,
 							 List **col_mappings, List **translated_vars);
@@ -560,14 +561,34 @@ pull_up_simple_union_all(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 {
 	int			varno = ((RangeTblRef *) jtnode)->rtindex;
 	Query	   *subquery = rte->subquery;
+	int			rtoffset;
+	List	   *rtable;
 
 	/*
-	 * Recursively scan the subquery's setOperations tree and copy the leaf
-	 * subqueries into the parent rangetable.  Add AppendRelInfo nodes for
-	 * them to the parent's append_rel_list, too.
+	 * Append the subquery rtable entries to upper query.
+	 */
+	rtoffset = list_length(root->parse->rtable);
+
+	/*
+	 * Append child RTEs to parent rtable.
+	 *
+	 * Upper-level vars in subquery are now one level closer to their
+	 * parent than before.	We don't have to worry about offsetting
+	 * varnos, though, because any such vars must refer to stuff above the
+	 * level of the query we are pulling into.
+	 */
+	rtable = copyObject(subquery->rtable);
+	IncrementVarSublevelsUp_rtable(rtable, -1, 1);
+	root->parse->rtable = list_concat(root->parse->rtable, rtable);
+
+	/*
+	 * Recursively scan the subquery's setOperations tree and add
+	 * AppendRelInfo nodes for leaf subqueries to the parent's
+	 * append_rel_list.
 	 */
 	Assert(subquery->setOperations);
-	pull_up_union_leaf_queries(subquery->setOperations, root, varno, subquery);
+	pull_up_union_leaf_queries(subquery->setOperations, root, varno, subquery,
+							   rtoffset);
 
 	/*
 	 * Mark the parent as an append relation.
@@ -583,41 +604,26 @@ pull_up_simple_union_all(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
  * Note that setOpQuery is the Query containing the setOp node, whose rtable
  * is where to look up the RTE if setOp is a RangeTblRef.  This is *not* the
  * same as root->parse, which is the top-level Query we are pulling up into.
+ *
  * parentRTindex is the appendrel parent's index in root->parse->rtable.
+ *
+ * The child RTEs have already been copied to the parent. childRToffset
+ * tells us where in the parent's range table they were copied.
  */
 static void
 pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root, int parentRTindex,
-						   Query *setOpQuery)
+						   Query *setOpQuery, int childRToffset)
 {
 	if (IsA(setOp, RangeTblRef))
 	{
 		RangeTblRef *rtr = (RangeTblRef *) setOp;
-		RangeTblEntry *rte = rt_fetch(rtr->rtindex, setOpQuery->rtable);
-		Query	   *subquery;
 		int			childRTindex;
 		AppendRelInfo *appinfo;
-		Query	   *parse = root->parse;
 
 		/*
-		 * Make a modifiable copy of the child RTE and contained query.
+		 * Calculate the index in the parent's range table
 		 */
-		rte = copyObject(rte);
-		subquery = rte->subquery;
-		Assert(subquery != NULL);
-
-		/*
-		 * Upper-level vars in subquery are now one level closer to their
-		 * parent than before.	We don't have to worry about offsetting
-		 * varnos, though, because any such vars must refer to stuff above the
-		 * level of the query we are pulling into.
-		 */
-		IncrementVarSublevelsUp((Node *) subquery, -1, 1);
-
-		/*
-		 * Attach child RTE to parent rtable.
-		 */
-		parse->rtable = lappend(parse->rtable, rte);
-		childRTindex = list_length(parse->rtable);
+		childRTindex = childRToffset + rtr->rtindex;
 
 		/*
 		 * Build a suitable AppendRelInfo, and attach to parent's list.
@@ -649,8 +655,10 @@ pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root, int parentRTindex,
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
 
 		/* Recurse to reach leaf queries */
-		pull_up_union_leaf_queries(op->larg, root, parentRTindex, setOpQuery);
-		pull_up_union_leaf_queries(op->rarg, root, parentRTindex, setOpQuery);
+		pull_up_union_leaf_queries(op->larg, root, parentRTindex, setOpQuery,
+								   childRToffset);
+		pull_up_union_leaf_queries(op->rarg, root, parentRTindex, setOpQuery,
+								   childRToffset);
 	}
 	else
 	{
