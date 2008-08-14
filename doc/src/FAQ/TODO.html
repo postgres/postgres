@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Mon Aug 11 23:48:39 EDT 2008
+Last updated:           Wed Aug 13 21:57:34 EDT 2008
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -539,6 +539,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Improve ability to modify views via ALTER TABLE
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-05/msg00691.php">http://archives.postgresql.org/pgsql-hackers/2008-05/msg00691.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2008-07/msg01410.php">http://archives.postgresql.org/pgsql-hackers/2008-07/msg01410.php</a>
 </p>
 </li></ul>
 <h1><a name="section_7">SQL Commands</a></h1>
@@ -667,6 +668,7 @@ first.  There is also a developer's wiki at<br/>
 <p>          <a href="http://archives.postgresql.org/pgsql-bugs/2007-10/msg00169.php">http://archives.postgresql.org/pgsql-bugs/2007-10/msg00169.php</a>
 </p>
     </li><li>Add CREATE SCHEMA ... LIKE that copies a schema
+    </li><li>Add CREATE TABLE LIKE ... INCLUDING COMMENTS
   </li></ul>
   </li><li>UPDATE
   <ul>
@@ -1765,6 +1767,8 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Fix system views like pg_stat_all_tables to use set-returning
   functions, rather than views of per-column functions
+  </li><li>Allow table and index WITH options to be specified via hooks, for use
+  with plugins like GiST index methods
   </li><li>Win32
   <ul>
     <li>Remove configure.in check for link failure when cause is found
