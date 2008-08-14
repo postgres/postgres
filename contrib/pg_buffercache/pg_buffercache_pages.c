@@ -3,7 +3,7 @@
  * pg_buffercache_pages.c
  *	  display some contents of the buffer cache
  *
- *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.14 2007/11/15 21:14:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.15 2008/08/14 12:56:41 heikki Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -16,7 +16,7 @@
 #include "utils/relcache.h"
 
 
-#define NUM_BUFFERCACHE_PAGES_ELEM	7
+#define NUM_BUFFERCACHE_PAGES_ELEM	8
 
 PG_MODULE_MAGIC;
 
@@ -32,6 +32,7 @@ typedef struct
 	Oid			relfilenode;
 	Oid			reltablespace;
 	Oid			reldatabase;
+	ForkNumber	forknum;
 	BlockNumber blocknum;
 	bool		isvalid;
 	bool		isdirty;
@@ -88,11 +89,13 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 4, "reldatabase",
 						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "relblocknumber",
+		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "relforknumber",
+						   INT2OID, -1, 0);
+		TupleDescInitEntry(tupledesc, (AttrNumber) 6, "relblocknumber",
 						   INT8OID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 6, "isdirty",
+		TupleDescInitEntry(tupledesc, (AttrNumber) 7, "isdirty",
 						   BOOLOID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 7, "usage_count",
+		TupleDescInitEntry(tupledesc, (AttrNumber) 8, "usage_count",
 						   INT2OID, -1, 0);
 
 		fctx->tupdesc = BlessTupleDesc(tupledesc);
@@ -129,6 +132,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			fctx->record[i].relfilenode = bufHdr->tag.rnode.relNode;
 			fctx->record[i].reltablespace = bufHdr->tag.rnode.spcNode;
 			fctx->record[i].reldatabase = bufHdr->tag.rnode.dbNode;
+			fctx->record[i].forknum = bufHdr->tag.forkNum;
 			fctx->record[i].blocknum = bufHdr->tag.blockNum;
 			fctx->record[i].usagecount = bufHdr->usage_count;
 
@@ -184,6 +188,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			nulls[4] = true;
 			nulls[5] = true;
 			nulls[6] = true;
+			nulls[7] = true;
 		}
 		else
 		{
@@ -193,12 +198,14 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			nulls[2] = false;
 			values[3] = ObjectIdGetDatum(fctx->record[i].reldatabase);
 			nulls[3] = false;
-			values[4] = Int64GetDatum((int64) fctx->record[i].blocknum);
+			values[4] = ObjectIdGetDatum(fctx->record[i].forknum);
 			nulls[4] = false;
-			values[5] = BoolGetDatum(fctx->record[i].isdirty);
+			values[5] = Int64GetDatum((int64) fctx->record[i].blocknum);
 			nulls[5] = false;
-			values[6] = Int16GetDatum(fctx->record[i].usagecount);
+			values[6] = BoolGetDatum(fctx->record[i].isdirty);
 			nulls[6] = false;
+			values[7] = Int16GetDatum(fctx->record[i].usagecount);
+			nulls[7] = false;
 		}
 
 		/* Build and return the tuple. */

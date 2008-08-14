@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache.sql.in,v 1.7 2007/11/13 04:24:28 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache.sql.in,v 1.8 2008/08/14 12:56:41 heikki Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -13,7 +13,7 @@ LANGUAGE C;
 CREATE VIEW pg_buffercache AS
 	SELECT P.* FROM pg_buffercache_pages() AS P
  	(bufferid integer, relfilenode oid, reltablespace oid, reldatabase oid, 
- 	 relblocknumber int8, isdirty bool, usagecount int2);
+	 relforknumber int2, relblocknumber int8, isdirty bool, usagecount int2);
  
 -- Don't want these to be available at public.
 REVOKE ALL ON FUNCTION pg_buffercache_pages() FROM PUBLIC;

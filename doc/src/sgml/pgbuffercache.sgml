@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbuffercache.sgml,v 2.2 2007/12/10 05:32:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbuffercache.sgml,v 2.3 2008/08/14 12:56:41 heikki Exp $ -->
 
 <sect1 id="pgbuffercache">
  <title>pg_buffercache</title>
@@ -78,6 +78,13 @@
       <entry><type>bigint</type></entry>
       <entry></entry>
       <entry>Page number within the relation</entry>
+     </row>
+
+     <row>
+      <entry><structfield>relforknumber</structfield></entry>
+      <entry><type>smallint</type></entry>
+      <entry></entry>
+      <entry>Fork number within the relation</entry>
      </row>
 
      <row>
