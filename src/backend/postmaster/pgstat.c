@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.178 2008/08/05 12:09:30 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.179 2008/08/15 08:37:39 mha Exp $
  * ----------
  */
 #include "postgres.h"
@@ -70,8 +70,6 @@
  */
 #define PGSTAT_STAT_PERMANENT_FILENAME		"global/pgstat.stat"
 #define PGSTAT_STAT_PERMANENT_TMPFILE		"global/pgstat.tmp"
-#define PGSTAT_STAT_FILENAME				"pg_stat_tmp/pgstat.stat"
-#define PGSTAT_STAT_TMPFILE					"pg_stat_tmp/pgstat.tmp"
 
 /* ----------
  * Timer definitions.
@@ -105,6 +103,13 @@ bool		pgstat_track_activities = false;
 bool		pgstat_track_counts = false;
 int			pgstat_track_functions = TRACK_FUNC_OFF;
 int			pgstat_track_activity_query_size = 1024;
+
+/* ----------
+ * Built from GUC parameter
+ * ----------
+ */
+char	   *pgstat_stat_filename = NULL;
+char	   *pgstat_stat_tmpname = NULL;
 
 /*
  * BgWriter global statistics counters (unused in other processes).
@@ -511,7 +516,7 @@ startup_failed:
 void
 pgstat_reset_all(void)
 {
-	unlink(PGSTAT_STAT_FILENAME);
+	unlink(pgstat_stat_filename);
 	unlink(PGSTAT_STAT_PERMANENT_FILENAME);
 }
 
@@ -2911,8 +2916,8 @@ pgstat_write_statsfile(bool permanent)
 	PgStat_StatFuncEntry *funcentry;
 	FILE	   *fpout;
 	int32		format_id;
-	const char *tmpfile = permanent?PGSTAT_STAT_PERMANENT_TMPFILE:PGSTAT_STAT_TMPFILE;
-	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:PGSTAT_STAT_FILENAME;
+	const char *tmpfile = permanent?PGSTAT_STAT_PERMANENT_TMPFILE:pgstat_stat_tmpname;
+	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:pgstat_stat_filename;
 
 	/*
 	 * Open the statistics temp file to write out the current values.
@@ -3012,7 +3017,7 @@ pgstat_write_statsfile(bool permanent)
 	}
 
 	if (permanent)
-		unlink(PGSTAT_STAT_FILENAME);
+		unlink(pgstat_stat_filename);
 }
 
 
@@ -3039,7 +3044,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 	FILE	   *fpin;
 	int32		format_id;
 	bool		found;
-	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:PGSTAT_STAT_FILENAME;
+	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:pgstat_stat_filename;
 
 	/*
 	 * The tables will live in pgStatLocalContext.

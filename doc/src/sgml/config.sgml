@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.184 2008/07/18 17:33:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.185 2008/08/15 08:37:41 mha Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3390,6 +3390,22 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         by the <command>ps</> command,
         or in Windows by using the <application>Process Explorer</>.
         Only superusers can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-stats-temp-directory" xreflabel="stats_temp_directory">
+      <term><varname>stats_temp_directory</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>stats_temp_directory</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the directory to store temporary statistics data in. This can be a 
+        path relative to the data directory or an absolute path. The default is
+        <filename>pg_stat_tmp</filename>. Pointing this at a RAM based filesystem
+        will decrease physical I/O requirements and can lead to increased 
+        performance. This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>

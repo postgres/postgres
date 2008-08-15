@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.61 2008/08/05 12:09:30 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.62 2008/08/15 08:37:41 mha Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -171,8 +171,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    These files are stored in the <filename>pg_stat_tmp</filename> subdirectory.
    When the postmaster shuts down, a permanent copy of the statistics
    data is stored in the <filename>global</filename> subdirectory. For increased
-   performance, it is possible to mount or symlink a RAM based
-   filesystem to the <filename>pg_stat_tmp</filename> directory.
+   performance, the parameter <xref linkend="guc-stats-temp-directory"> can
+   be pointed at a RAM based filesystem, decreasing physical I/O requirements.
   </para>
 
  </sect2>

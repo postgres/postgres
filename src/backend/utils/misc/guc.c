@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.465 2008/07/23 17:29:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.466 2008/08/15 08:37:40 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -164,6 +164,7 @@ static const char *show_tcp_keepalives_interval(void);
 static const char *show_tcp_keepalives_count(void);
 static bool assign_autovacuum_max_workers(int newval, bool doit, GucSource source);
 static bool assign_maxconnections(int newval, bool doit, GucSource source);
+static const char *assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source);
 
 static char *config_enum_get_options(struct config_enum *record, 
 									 const char *prefix, const char *suffix);
@@ -342,6 +343,8 @@ char	   *ConfigFileName;
 char	   *HbaFileName;
 char	   *IdentFileName;
 char	   *external_pid_file;
+
+char	   *pgstat_temp_directory;
 
 int			tcp_keepalives_idle;
 int			tcp_keepalives_interval;
@@ -2464,6 +2467,16 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&external_pid_file,
 		NULL, assign_canonical_path, NULL
+	},
+
+	{
+		{"stats_temp_directory", PGC_POSTMASTER, STATS_COLLECTOR,
+			gettext_noop("Writes temporary statistics files to the specified directory."),
+			NULL,
+			GUC_SUPERUSER_ONLY
+		},
+		&pgstat_temp_directory,
+		"pg_stat_tmp", assign_pgstat_temp_directory, NULL
 	},
 
 	{
@@ -7368,6 +7381,26 @@ assign_autovacuum_max_workers(int newval, bool doit, GucSource source)
 		MaxBackends = newval + MaxConnections;
 
 	return true;
+}
+
+static const char *
+assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source)
+{
+	if (doit)
+	{
+		if (pgstat_stat_tmpname)
+			free(pgstat_stat_tmpname);
+		if (pgstat_stat_filename)
+			free(pgstat_stat_filename);
+
+		pgstat_stat_tmpname = guc_malloc(FATAL, strlen(newval) + 12);  /* /pgstat.tmp */
+		pgstat_stat_filename = guc_malloc(FATAL, strlen(newval) + 13); /* /pgstat.stat */
+
+		sprintf(pgstat_stat_tmpname, "%s/pgstat.tmp", newval);
+		sprintf(pgstat_stat_filename, "%s/pgstat.stat", newval);
+	}
+
+	return newval;
 }
 
 #include "guc-file.c"
