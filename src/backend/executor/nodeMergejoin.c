@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.92 2008/08/14 18:47:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.93 2008/08/15 19:20:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -757,15 +757,9 @@ ExecMergeJoin(MergeJoinState *node)
 				innerTupleSlot = node->mj_InnerTupleSlot;
 				econtext->ecxt_innertuple = innerTupleSlot;
 
-				if (node->js.jointype == JOIN_SEMI &&
-					node->mj_MatchedOuter)
-					qualResult = false;
-				else
-				{
-					qualResult = (joinqual == NIL ||
-								  ExecQual(joinqual, econtext, false));
-					MJ_DEBUG_QUAL(joinqual, qualResult);
-				}
+				qualResult = (joinqual == NIL ||
+							  ExecQual(joinqual, econtext, false));
+				MJ_DEBUG_QUAL(joinqual, qualResult);
 
 				if (qualResult)
 				{
@@ -774,7 +768,17 @@ ExecMergeJoin(MergeJoinState *node)
 
 					/* In an antijoin, we never return a matched tuple */
 					if (node->js.jointype == JOIN_ANTI)
+					{
+						node->mj_JoinState = EXEC_MJ_NEXTOUTER;
 						break;
+					}
+
+					/*
+					 * In a semijoin, we'll consider returning the first match,
+					 * but after that we're done with this outer tuple.
+					 */
+					if (node->js.jointype == JOIN_SEMI)
+						node->mj_JoinState = EXEC_MJ_NEXTOUTER;
 
 					qualResult = (otherqual == NIL ||
 								  ExecQual(otherqual, econtext, false));

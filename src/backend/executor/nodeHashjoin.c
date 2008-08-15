@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.94 2008/08/14 18:47:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.95 2008/08/15 19:20:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,36 +264,34 @@ ExecHashJoin(HashJoinState *node)
 					node->hj_NeedNewOuter = true;
 					break;		/* out of loop over hash bucket */
 				}
-				else
+
+				/*
+				 * In a semijoin, we'll consider returning the first match,
+				 * but after that we're done with this outer tuple.
+				 */
+				if (node->js.jointype == JOIN_SEMI)
+					node->hj_NeedNewOuter = true;
+
+				if (otherqual == NIL || ExecQual(otherqual, econtext, false))
 				{
-					/*
-					 * In a semijoin, we'll consider returning the first match,
-					 * but after that we're done with this outer tuple.
-					 */
-					if (node->js.jointype == JOIN_SEMI)
-						node->hj_NeedNewOuter = true;
+					TupleTableSlot *result;
 
-					if (otherqual == NIL || ExecQual(otherqual, econtext, false))
+					result = ExecProject(node->js.ps.ps_ProjInfo, &isDone);
+
+					if (isDone != ExprEndResult)
 					{
-						TupleTableSlot *result;
-
-						result = ExecProject(node->js.ps.ps_ProjInfo, &isDone);
-
-						if (isDone != ExprEndResult)
-						{
-							node->js.ps.ps_TupFromTlist =
-								(isDone == ExprMultipleResult);
-							return result;
-						}
+						node->js.ps.ps_TupFromTlist =
+							(isDone == ExprMultipleResult);
+						return result;
 					}
-
-					/*
-					 * If semijoin and we didn't return the tuple, we're still
-					 * done with this outer tuple.
-					 */
-					if (node->js.jointype == JOIN_SEMI)
-						break;		/* out of loop over hash bucket */
 				}
+
+				/*
+				 * If semijoin and we didn't return the tuple, we're still
+				 * done with this outer tuple.
+				 */
+				if (node->js.jointype == JOIN_SEMI)
+					break;		/* out of loop over hash bucket */
 			}
 		}
 
