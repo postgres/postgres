@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Jun 25 23:54:14 EDT 2008
+   Last updated: Fri Aug 15 20:32:19 EDT 2008
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -286,6 +286,7 @@
      * http://sqlcourse.com
      * http://www.w3schools.com/sql/default.asp
      * http://mysite.verizon.net/Graeme_Birchall/id1.html
+     * http://sqlzoo.net
        
   1.12) How do I submit a patch or join the development team?
   
