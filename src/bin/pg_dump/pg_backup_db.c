@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.66.2.2 2006/02/09 18:28:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.66.2.3 2008/08/16 02:25:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,19 +293,23 @@ ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc)
 	PGresult   *res;
 	char		errStmt[DB_MAX_ERR_STMT];
 
-	/* fprintf(stderr, "Executing: '%s'\n\n", qry->data); */
+#ifdef NOT_USED
+	 fprintf(stderr, "Executing: '%s'\n\n", qry->data);
+#endif
 	res = PQexec(conn, qry->data);
-	if (!res)
-		die_horribly(AH, modulename, "%s: no result from server\n", desc);
 
-	if (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK)
+	switch (PQresultStatus(res))
 	{
-		if (PQresultStatus(res) == PGRES_COPY_IN)
-		{
+		case PGRES_COMMAND_OK:
+		case PGRES_TUPLES_OK:
+			/* A-OK */
+			break;
+		case PGRES_COPY_IN:
+			/* Assume this is an expected result */
 			AH->pgCopyIn = true;
-		}
-		else
-		{
+			break;
+		default:
+			/* trouble */
 			strncpy(errStmt, qry->data, DB_MAX_ERR_STMT);
 			if (errStmt[DB_MAX_ERR_STMT - 1] != '\0')
 			{
@@ -315,9 +319,7 @@ ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc)
 				errStmt[DB_MAX_ERR_STMT - 1] = '\0';
 			}
 			warn_or_die_horribly(AH, modulename, "%s: %s    Command was: %s\n",
-								 desc, PQerrorMessage(AH->connection),
-								 errStmt);
-		}
+								 desc, PQerrorMessage(conn), errStmt);
 	}
 
 	PQclear(res);
