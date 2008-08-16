@@ -3,11 +3,6 @@ The FAQ* files in this directory are the master versions, and the
 
 	lynx -force_html -dont_wrap_pre -dump -hiddenlinks=ignore -nolist FAQ*
 
-The TODO.html file in this directory is not the master, but ../../TODO
-is.  The conversion is done using txt2html:
+The TODO.html file in this directory is not the master; doc/TODO is the
+master.  Use src/tools/TODO2html to create the HTML version stored here.
 
-	txt2html --xhtml -s 100 -p 100 --xhtml --titlefirst \
-	        --body_deco ' bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF"' \
-	        --caps_tag '' \
-		/pgtop/doc/TODO |
-	sed 's;\[\([^]]*\)\];[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?\1">\1</a>];g' > /pgtop/doc/src/FAQ/TODO.html
