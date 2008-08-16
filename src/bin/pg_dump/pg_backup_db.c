@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.61.4.3 2006/02/09 18:28:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.61.4.4 2008/08/16 02:25:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,8 +309,6 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 
 	/* fprintf(stderr, "Executing: '%s'\n\n", qry->data); */
 	res = PQexec(conn, qry->data);
-	if (!res)
-		die_horribly(AH, modulename, "%s: no result from server\n", desc);
 
 	if (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -332,8 +330,7 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 				errStmt[DB_MAX_ERR_STMT - 1] = '\0';
 			}
 			warn_or_die_horribly(AH, modulename, "%s: %s    Command was: %s\n",
-								 desc, PQerrorMessage(AH->connection),
-								 errStmt);
+								 desc, PQerrorMessage(conn), errStmt);
 		}
 	}
 
