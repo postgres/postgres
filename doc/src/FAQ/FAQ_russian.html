@@ -12,24 +12,27 @@
   <BODY bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Пятница 26 октября 14:59:45 EDT 2007</P>
+    <P>Дата последнего обновления: Среда 25 июня 23:54:14 EDT 2008</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
-    "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
+    "mailto:bruce@momjian.us">bruce@monjian.us</A>)
     </P>
     <P>Перевёл на русский: Виктор Вислобоков (<A href=
-    "mailto:admin@linuxshare.ru">admin@linuxshare.ru</A>)<BR>
+    "mailto:admin@postgresql.ru.net">admin@postgresql.ru.net</A>)<BR>
     </P>
 
     <P>Самую свежую английскую версию документа можно найти на
     <A href="http://www.postgresql.org/files/documentation/faqs/FAQ.html">http://www.postgresql.org/files/documentation/faqs/FAQ.html</A>.</P>
+
+    <P>Самую свежую русскую версию документа можно найти на
+    <A href="http://postgresql.ru.net/docs/FAQ_russian.html">http://postgresql.ru.net/docs/FAQ_russian.html</A>.</P>
 
     <P>Ответы на вопросы специфичные для конкретных платформ можно найти на
     <A href="http://www.postgresql.org/docs/faq/">http://www.postgresql.org/docs/faq/</A>.</P>
     <HR>
 
     <H2 align="center">Общие вопросы</H2>
-     <A href="#item1.1">1.1</A>) Что такое PostgreSQL? Как произносится это название?<BR>
+     <A href="#item1.1">1.1</A>) Что такое PostgreSQL? Как произносится это название? Что такое Postgres?<BR>
      <A href="#item1.2">1.2</A>) Кто управляет PostgreSQL?<BR>
      <A href="#item1.3">1.3</A>) Каковы авторские права на PostgreSQL?<BR>
      <A href="#item1.4">1.4</A>) На каких платформах работает PostgreSQL?<BR>
@@ -43,9 +46,11 @@
      <A href="#item1.11">1.11</A>) Как научиться <SMALL>SQL</SMALL>?<BR>
      <A href="#item1.12">1.12</A>) Как мне отправить исправление или присоединится к команде разработчиков?<BR>
      <A href="#item1.13">1.13</A>) Как сравнить PostgreSQL с другими
-    <SMALL>СУБД</SMALL>?<BR>
+    <SMALL>СУБД</SMALL>? Может ли PostgreSQL быть встроенной?<BR>
      <A href="#item1.14">1.14</A>) Будет ли PostgreSQL работать с последними изменениями, в разных страных,
      касающимися дневного времени?<BR>
+     <A href="#item1.15">1.15</A>) Как мне отписаться от списков рассылки PostgreSQL?
+     Как избежать получения дублирующихся сообщений?<BR>
 
     <H2 align="center">Вопросы пользователей по клиентской части</H2>
      <A href="#item2.1">2.1</A>) Какие интерфейсы есть для PostgreSQL?<BR>
@@ -124,10 +129,9 @@
 
     <H2 align="center">Общие вопросы</H2>
 
-    <H3><A name="item1.1">1.1</A>) Что такое PostgreSQL? Как произносится это название?</H3>
+    <H3><A name="item1.1">1.1</A>) Что такое PostgreSQL? Как произносится это название? Что такое Postgres?</H3>
 
-    <P>PostgreSQL произносится <I>Post-Gres-Q-L (Пост-Грес-Кью-Эл)</I>,
-    также говорят и просто <I>Postgres</I>, особенно при разговоре.
+    <P>PostgreSQL произносится <I>Post-Gres-Q-L (Пост-Грес-Кью-Эл)</I>.
     (Для особо любопытствующих как произносить "PostgreSQL", существует
     <A href="http://www.postgresql.org/files/postgresql.mp3">аудио-файл</A>).
     </P>
@@ -145,6 +149,12 @@
     <A href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">
     http://www.postgresql.org/docs/faqs.FAQ_DEV.html</A>
     </P>
+
+    <P>Postgres &mdash; это широко используемое сокращение для PostgreSQL.
+    Первоначальным именем проекта в Беркли было Postgres и этот ник теперь
+    наиболее популярен в разговорах о PostgreSQL по сравнению с другими.
+    Если вам трудно полностью проговаривать 'PostgreSQL', можно просто
+    говорить 'Postgres'.</P>
 
     <H3><A name="item1.2">1.2</A>) Кто управляет PostgreSQL?</H3>
     
@@ -169,7 +179,7 @@
 
     <P>Система Управления Базами Данных PostgreSQL</P>
 
-    <P>Portions copyright (c) 1996-2007, PostgreSQL Global Development
+    <P>Portions copyright (c) 1996-2008, PostgreSQL Global Development
     Group Portions Copyright (c) 1994-1996 Regents of the University of
     California</P>
 
@@ -204,13 +214,13 @@
     <P>PostgreSQL также работает на операционных системах Microsoft
     Windows, основанных на NT, таких как Win2000 SP4, WinXP и Win2003.
     Пакет инсталлятора доступен по адресу
-    <A href="http://pgfoundry.org/projects/pginstaller">
-    http://pgfoundry.org/projects/pginstaller</A>. Версии Windows,
+    <A href="http://www.postgresql.org/download/windows">
+    http://www.postgresql.org/download/windows</A>. Версии Windows,
     основанные на MS-DOS (Win95, Win98, WinMe) могут запускать
     PostgreSQL с помощью Cygwin.</P>
     
     <P>Также существует версия спортированная под Novell Netware 6 на
-    <A href="http://forge.novell.com/">http://forge.novell.com</A>,
+    <A href="http://developer.novell.com/wiki/index.php/Postgresql">http://developer.novell.com/wiki/index.php/Postgresql</A>,
     и версия для OS/2 (eComStation) на
     <A href="http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&amp;button=Search&amp;key=postgreSQL&amp;stype=all&amp;sort=type&amp;dir=%2F">
     http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&amp;button=Search&amp;key=postgreSQL&amp;stype=all&amp;sort=type&amp;dir=%2F</A>.</P>
@@ -224,7 +234,7 @@
 
     <H3><A name="item1.6">1.6</A>) Какая версия наиболее свежая?</H3>
 
-    <P>Последний выпуск PostgreSQL - это версия 8.2.5</P>
+    <P>Последний выпуск PostgreSQL - это версия 8.3.3</P>
 
     <P>Мы планируем выпускать новые старшие версии каждый год,
     а младшие версии каждые несколько месяцев.</P>
@@ -348,7 +358,7 @@
     Одну из наиболее популярных написал Корри Дуглас (Korry Douglas).
     Список обзоров по этим книгам доступен по адресу
     <a href="http://www.postgresql.org/docs/books/">http://www.postgresql.org/docs/books/</a>.
-    Кроме того, по адресу <a href="http://www.postgresql.org/docs/techdocs">http://www.postgresql.org/docs/techdocs</a>
+    Кроме того, по адресу <a href="http://wiki.postgresql.org/wiki/Community_Generated_Articles%2C_Guides%2C_and_Documentation">http://wiki.postgresql.org/wiki/Community_Generated_Articles%2C_Guides%2C_and_Documentation</a>
     вы можете найти коллекцию технических статей, посвещенных PostgreSQL.</P>
 
     <P>Клиент командной строки <I>psql</I> имеет несколько команд \d для
@@ -386,7 +396,7 @@
 
     
     <H3><A name="item1.13">1.13</A>) Как сравнить PostgreSQL с другими
-    <SMALL>СУБД</SMALL>?</H3>
+    <SMALL>СУБД</SMALL>? Может ли PostgreSQL быть встроенным?</H3>
 
     <P>
     Существует несколько методов сравнения программного обеспечения:
@@ -450,6 +460,14 @@
       <BR>
       </DD>
     </DL>
+    
+    <P>PostgreSQL разрабатывается по архитектуре клиент/сервер, которая
+    требует отдельных процессов для каждого клиента и сервера, а также
+    несколько вспомогательных процессов. Многие встраиваемые архитектуры
+    могут соответствовать таким требованиям. Однако, если ваша встраиваемая
+    архитектура требует сервер баз данных для запуска внутри прикладного
+    процесса, вы не можете использовать Postgres и вам лучше бы выбрать
+    для базы данных какое-либо другое облегченное решение.</P>
 
     <H3><A name="item1.14">1.14</A>) Будет ли PostgreSQL работать с
     последними изменениями, в разных страных, касающимися дневного времени?</H3>
@@ -461,7 +479,26 @@
     дневного времени из базы данных временных зон в операционной системе.</p>
     <HR>
 
-    <H3 align="center">Вопросы пользователей по клиентской части</H3>
+    <H3 id="item1.15">1.15) Как мне отписаться от списков рассылки PostgreSQL?
+    Как избежать получения дублирующих сообщений?</H3>
+
+    <P>Страница <a
+    href="http://mail.postgresql.org/mj/mj_wwwusr/domain=postgresql.org?user=&amp;passw=&amp;func=login">Majordomo</a>
+    на сайте PostgreSQL позволяет подписаться или отписаться от любого из списков
+    рассылки PostgreSQL. (Вам может понадобится ваш пароль для Majordomo, который
+    отправляется на ваш E-mail, чтобы войти в управление вашими подписками.)</P>
+    
+    <P>Все списки рассылки PostgreSQL настариваются так, чтобы групповой ответ уходил
+    на адрес списка <I>и</I> на адрес автора сообщения. Так сделано, чтобы пользователи
+    получали ответы на E-mail как можно быстрее. Если вы не хотите получать дублирующие
+    E-mail сообщения из списка, в случаях когда вы уже получили эти сообщения напрямую,
+    установите флажок <I>eliminatecc</I> на странице <I>Change Settings</I> в
+    Majordomo. Вы также можете избежать получения копий своих сообщений для самого себя,
+    если снимите флажок <I>selfcopy</I>.</P>
+    
+    <HR>
+
+    <H2 align="center">Вопросы пользователей по клиентской части</H2>
 
     <H3><A name="item2.1">2.1</A>) Какие интерфейсы есть для PostgreSQL?</H3>
 
@@ -474,9 +511,7 @@
     <P>Некоторые языки программирования, такие как <small>PHP</small>
     включают в себя интерфейс к PostgreSQL. Интерфейсы для таких языков
     как Perl, <small>TCL</small>, Python и многих других, доступны на
-    <A href="http://gborg.postgresql.org">http://gborg.postgresql.org</A>
-    в секции <i>Drivers/Interfaces</I>, а также через поиск в Интернет.</P>
-
+    <a href="http://pgfoundry.org">http://pgfoundry.org</A>.</P>
 
     <H3><A name="item2.2">2.2</A>) Какие инструменты существуют для использования
     PostgreSQL через Web?</H3>
@@ -495,8 +530,8 @@
 
     <P>Для PostgreSQL существует большое количество инструментов с
     графическим интерфейсом как коммерческих, так и открытых. Подробности
-    можно найти в <a href="http://www.postgresql.org/docs/techdocs.54">
-    Документации сообщества PostgreSQL</A></P>
+    можно найти в <A href="http://wiki.postgresql.org/wiki/Community_Guide_to_PostgreSQL_GUI_Tools">
+    Документации сообщества для GUI иструментов PostgreSQL</A></P>
 
     <HR>
 
@@ -515,7 +550,7 @@
     другие машины смогли подключиться к базе вы должны изменить
     <I>listen_addresses</I> в <I>postgresql.conf</I>, разрешить
     host-авторизация в файле <I>$PGDATA/pg_hba.conf</I> и перестартовать
-    сервер.</P>
+    сервер СУБД.</P>
 
     <H3><A name="item3.3">3.3</A>) Какие настройки мне нужно сделать для улучшения
      производительности?</H3>
@@ -574,9 +609,10 @@
     наличии?</H3>
 
     <P>Есть множество установок в настройках сервера, начинающихся
-    на <code>log_*</code>, позволяющих протоколировать запросы
-    и статистику работы процесса, которая очень полезна для отладки
-    и измерения производительности.</P>
+    на <code>log_*</code> на <a
+    href="http://www.postgresql.org/docs/current/interactive/runtime-config-logging.html">http://www.postgresql.org/docs/current/interactive/runtime-config-logging.html</a>,
+    позволяющих протоколировать запросы и статистику работы процесса,
+    которая очень полезна для отладки и измерения производительности.</P>
     
 
     <H3><A name="item3.5">3.5</A>) Почему я получаю сообщение <I>"Sorry, too
@@ -1101,9 +1137,8 @@ CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
     <H3><A name="item4.18">4.18</A>) Как мне вернуть из функции несколько строк таблицы?</H3>
 
     <P>Вы можете легко использовать функции, возвращающие список,
-     <A href="http://www.postgresql.org/docs/techdocs.17">
-     http://www.postgresql.org/docs/techdocs.17</A>.</P>
-
+    <a href="http://wiki.postgresql.org/wiki/Return_more_than_one_row_of_data_from_PL/pgSQL_functions">
+    http://wiki.postgresql.org/wiki/Return_more_than_one_row_of_data_from_PL/pgSQL_functions</a>.</P>
 
     <H3><A name="item4.19">4.19</A>) Почему я получаю ошибку "relation with OID ####
      не существует", когда обращаютсь к временным таблицам в функциях PL/PgSQL?</H3>
