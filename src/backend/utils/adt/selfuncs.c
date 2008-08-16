@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.251 2008/08/14 18:47:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.252 2008/08/16 00:01:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,19 +55,34 @@
  *
  *		float8 oprrest (internal, oid, internal, int4);
  *
+ * The result is a selectivity, that is, a fraction (0 to 1) of the rows
+ * of the relation that are expected to produce a TRUE result for the
+ * given operator.
+ *
  * The call convention for a join estimator (oprjoin function) is similar
- * except that varRelid is not needed, and instead the join type is
+ * except that varRelid is not needed, and instead join information is
  * supplied:
  *
  *		Selectivity oprjoin (PlannerInfo *root,
  *							 Oid operator,
  *							 List *args,
- *							 JoinType jointype);
+ *							 JoinType jointype,
+ *							 SpecialJoinInfo *sjinfo);
  *
- *		float8 oprjoin (internal, oid, internal, int2);
+ *		float8 oprjoin (internal, oid, internal, int2, internal);
  *
- * (We deliberately make the SQL signature different to facilitate
- * catching errors.)
+ * (Before Postgres 8.4, join estimators had only the first four of these
+ * parameters.  That signature is still allowed, but deprecated.)  The
+ * relationship between jointype and sjinfo is explained in the comments for
+ * clause_selectivity() --- the short version is that jointype is usually
+ * best ignored in favor of examining sjinfo.
+ *
+ * Join selectivity for regular inner and outer joins is defined as the
+ * fraction (0 to 1) of the cross product of the relations that is expected
+ * to produce a TRUE result for the given operator.  For both semi and anti
+ * joins, however, the selectivity is defined as the fraction of the left-hand
+ * side relation's rows that are expected to have a match (ie, at least one
+ * row with a TRUE result) in the right-hand side.
  *----------
  */
 
@@ -113,6 +128,10 @@ static double var_eq_non_const(VariableStatData *vardata, Oid operator,
 static double ineq_histogram_selectivity(VariableStatData *vardata,
 						   FmgrInfo *opproc, bool isgt,
 						   Datum constval, Oid consttype);
+static double eqjoinsel_inner(Oid operator,
+				VariableStatData *vardata1, VariableStatData *vardata2);
+static double eqjoinsel_semi(Oid operator,
+				VariableStatData *vardata1, VariableStatData *vardata2);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
@@ -1579,7 +1598,6 @@ scalararraysel(PlannerInfo *root,
 	Oid			nominal_element_type;
 	RegProcedure oprsel;
 	FmgrInfo	oprselproc;
-	Datum		selarg4;
 	Selectivity s1;
 
 	/*
@@ -1587,15 +1605,9 @@ scalararraysel(PlannerInfo *root,
 	 * it hasn't got one.
 	 */
 	if (is_join_clause)
-	{
 		oprsel = get_oprjoin(operator);
-		selarg4 = Int16GetDatum(jointype);
-	}
 	else
-	{
 		oprsel = get_oprrest(operator);
-		selarg4 = Int32GetDatum(varRelid);
-	}
 	if (!oprsel)
 		return (Selectivity) 0.5;
 	fmgr_info(oprsel, &oprselproc);
@@ -1660,11 +1672,19 @@ scalararraysel(PlannerInfo *root,
 										elem_values[i],
 										elem_nulls[i],
 										elmbyval));
-			s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
-											  PointerGetDatum(root),
-											  ObjectIdGetDatum(operator),
-											  PointerGetDatum(args),
-											  selarg4));
+			if (is_join_clause)
+				s2 = DatumGetFloat8(FunctionCall5(&oprselproc,
+												  PointerGetDatum(root),
+												  ObjectIdGetDatum(operator),
+												  PointerGetDatum(args),
+												  Int16GetDatum(jointype),
+												  PointerGetDatum(sjinfo)));
+			else
+				s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
+												  PointerGetDatum(root),
+												  ObjectIdGetDatum(operator),
+												  PointerGetDatum(args),
+												  Int32GetDatum(varRelid)));
 			if (useOr)
 				s1 = s1 + s2 - s1 * s2;
 			else
@@ -1694,11 +1714,19 @@ scalararraysel(PlannerInfo *root,
 			 * estimation function would really care ...
 			 */
 			args = list_make2(leftop, elem);
-			s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
-											  PointerGetDatum(root),
-											  ObjectIdGetDatum(operator),
-											  PointerGetDatum(args),
-											  selarg4));
+			if (is_join_clause)
+				s2 = DatumGetFloat8(FunctionCall5(&oprselproc,
+												  PointerGetDatum(root),
+												  ObjectIdGetDatum(operator),
+												  PointerGetDatum(args),
+												  Int16GetDatum(jointype),
+												  PointerGetDatum(sjinfo)));
+			else
+				s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
+												  PointerGetDatum(root),
+												  ObjectIdGetDatum(operator),
+												  PointerGetDatum(args),
+												  Int32GetDatum(varRelid)));
 			if (useOr)
 				s1 = s1 + s2 - s1 * s2;
 			else
@@ -1721,11 +1749,19 @@ scalararraysel(PlannerInfo *root,
 		dummyexpr->typeId = nominal_element_type;
 		dummyexpr->typeMod = -1;
 		args = list_make2(leftop, dummyexpr);
-		s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
-										  PointerGetDatum(root),
-										  ObjectIdGetDatum(operator),
-										  PointerGetDatum(args),
-										  selarg4));
+		if (is_join_clause)
+			s2 = DatumGetFloat8(FunctionCall5(&oprselproc,
+											  PointerGetDatum(root),
+											  ObjectIdGetDatum(operator),
+											  PointerGetDatum(args),
+											  Int16GetDatum(jointype),
+											  PointerGetDatum(sjinfo)));
+		else
+			s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
+											  PointerGetDatum(root),
+											  ObjectIdGetDatum(operator),
+											  PointerGetDatum(args),
+											  Int32GetDatum(varRelid)));
 		s1 = useOr ? 0.0 : 1.0;
 
 		/*
@@ -1803,13 +1839,24 @@ rowcomparesel(PlannerInfo *root,
 	/* Build equivalent arg list for single operator */
 	opargs = list_make2(linitial(clause->largs), linitial(clause->rargs));
 
-	/* Decide if it's a join clause, same as for OpExpr */
+	/*
+	 * Decide if it's a join clause.  This should match clausesel.c's
+	 * treat_as_join_clause(), except that we intentionally consider only
+	 * the leading columns and not the rest of the clause.
+	 */
 	if (varRelid != 0)
 	{
 		/*
-		 * If we are considering a nestloop join then all clauses are
-		 * restriction clauses, since we are only interested in the one
-		 * relation.
+		 * Caller is forcing restriction mode (eg, because we are examining
+		 * an inner indexscan qual).
+		 */
+		is_join_clause = false;
+	}
+	else if (sjinfo == NULL)
+	{
+		/*
+		 * It must be a restriction clause, since it's being evaluated at
+		 * a scan node.
 		 */
 		is_join_clause = false;
 	}
@@ -1817,7 +1864,6 @@ rowcomparesel(PlannerInfo *root,
 	{
 		/*
 		 * Otherwise, it's a join if there's more than one relation used.
-		 * Notice we ignore the low-order columns here.
 		 */
 		is_join_clause = (NumRelids((Node *) opargs) > 1);
 	}
@@ -1827,7 +1873,8 @@ rowcomparesel(PlannerInfo *root,
 		/* Estimate selectivity for a join clause. */
 		s1 = join_selectivity(root, opno,
 							  opargs,
-							  jointype);
+							  jointype,
+							  sjinfo);
 	}
 	else
 	{
@@ -1849,10 +1896,60 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
+#ifdef NOT_USED
 	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
+#endif
+	SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) PG_GETARG_POINTER(4);
 	double		selec;
 	VariableStatData vardata1;
 	VariableStatData vardata2;
+	bool		join_is_reversed;
+
+	get_join_variables(root, args, sjinfo,
+					   &vardata1, &vardata2, &join_is_reversed);
+
+	switch (sjinfo->jointype)
+	{
+		case JOIN_INNER:
+		case JOIN_LEFT:
+		case JOIN_FULL:
+			selec = eqjoinsel_inner(operator, &vardata1, &vardata2);
+			break;
+		case JOIN_SEMI:
+		case JOIN_ANTI:
+			if (!join_is_reversed)
+				selec = eqjoinsel_semi(operator, &vardata1, &vardata2);
+			else
+				selec = eqjoinsel_semi(get_commutator(operator),
+									   &vardata2, &vardata1);
+			break;
+		default:
+			/* other values not expected here */
+			elog(ERROR, "unrecognized join type: %d",
+				 (int) sjinfo->jointype);
+			selec = 0;			/* keep compiler quiet */
+			break;
+	}
+
+	ReleaseVariableStats(vardata1);
+	ReleaseVariableStats(vardata2);
+
+	CLAMP_PROBABILITY(selec);
+
+	PG_RETURN_FLOAT8((float8) selec);
+}
+
+/*
+ * eqjoinsel_inner --- eqjoinsel for normal inner join
+ *
+ * We also use this for LEFT/FULL outer joins; it's not presently clear
+ * that it's worth trying to distinguish them here.
+ */
+static double
+eqjoinsel_inner(Oid operator,
+				VariableStatData *vardata1, VariableStatData *vardata2)
+{
+	double		selec;
 	double		nd1;
 	double		nd2;
 	Form_pg_statistic stats1 = NULL;
@@ -1868,29 +1965,27 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	float4	   *numbers2 = NULL;
 	int			nnumbers2 = 0;
 
-	get_join_variables(root, args, &vardata1, &vardata2);
+	nd1 = get_variable_numdistinct(vardata1);
+	nd2 = get_variable_numdistinct(vardata2);
 
-	nd1 = get_variable_numdistinct(&vardata1);
-	nd2 = get_variable_numdistinct(&vardata2);
-
-	if (HeapTupleIsValid(vardata1.statsTuple))
+	if (HeapTupleIsValid(vardata1->statsTuple))
 	{
-		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1.statsTuple);
-		have_mcvs1 = get_attstatsslot(vardata1.statsTuple,
-									  vardata1.atttype,
-									  vardata1.atttypmod,
+		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
+		have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
+									  vardata1->atttype,
+									  vardata1->atttypmod,
 									  STATISTIC_KIND_MCV,
 									  InvalidOid,
 									  &values1, &nvalues1,
 									  &numbers1, &nnumbers1);
 	}
 
-	if (HeapTupleIsValid(vardata2.statsTuple))
+	if (HeapTupleIsValid(vardata2->statsTuple))
 	{
-		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2.statsTuple);
-		have_mcvs2 = get_attstatsslot(vardata2.statsTuple,
-									  vardata2.atttype,
-									  vardata2.atttypmod,
+		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
+		have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
+									  vardata2->atttype,
+									  vardata2->atttypmod,
 									  STATISTIC_KIND_MCV,
 									  InvalidOid,
 									  &values2, &nvalues2,
@@ -1931,25 +2026,6 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		fmgr_info(get_opcode(operator), &eqproc);
 		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
-
-		/*
-		 * If we are doing any variant of JOIN_SEMI, pretend all the values of
-		 * the righthand relation are unique (ie, act as if it's been
-		 * DISTINCT'd).
-		 *
-		 * NOTE: it would be dangerous to try to be smart about JOIN_LEFT or
-		 * JOIN_RIGHT here, because we do not have enough information to
-		 * determine which var is really on which side of the join. Perhaps
-		 * someday we should pass in more information.
-		 */
-		if (jointype == JOIN_SEMI)
-		{
-			float4		oneovern = 1.0 / nd2;
-
-			for (i = 0; i < nvalues2; i++)
-				numbers2[i] = oneovern;
-			nullfrac2 = oneovern;
-		}
 
 		/*
 		 * Note we assume that each MCV will match at most one member of the
@@ -2075,18 +2151,170 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	}
 
 	if (have_mcvs1)
-		free_attstatsslot(vardata1.atttype, values1, nvalues1,
+		free_attstatsslot(vardata1->atttype, values1, nvalues1,
 						  numbers1, nnumbers1);
 	if (have_mcvs2)
-		free_attstatsslot(vardata2.atttype, values2, nvalues2,
+		free_attstatsslot(vardata2->atttype, values2, nvalues2,
 						  numbers2, nnumbers2);
 
-	ReleaseVariableStats(vardata1);
-	ReleaseVariableStats(vardata2);
+	return selec;
+}
 
-	CLAMP_PROBABILITY(selec);
+/*
+ * eqjoinsel_semi --- eqjoinsel for semi join
+ *
+ * (Also used for anti join, which we are supposed to estimate the same way.)
+ * Caller has ensured that vardata1 is the LHS variable.
+ */
+static double
+eqjoinsel_semi(Oid operator,
+			   VariableStatData *vardata1, VariableStatData *vardata2)
+{
+	double		selec;
+	double		nd1;
+	double		nd2;
+	Form_pg_statistic stats1 = NULL;
+	Form_pg_statistic stats2 = NULL;
+	bool		have_mcvs1 = false;
+	Datum	   *values1 = NULL;
+	int			nvalues1 = 0;
+	float4	   *numbers1 = NULL;
+	int			nnumbers1 = 0;
+	bool		have_mcvs2 = false;
+	Datum	   *values2 = NULL;
+	int			nvalues2 = 0;
+	float4	   *numbers2 = NULL;
+	int			nnumbers2 = 0;
 
-	PG_RETURN_FLOAT8((float8) selec);
+	nd1 = get_variable_numdistinct(vardata1);
+	nd2 = get_variable_numdistinct(vardata2);
+
+	if (HeapTupleIsValid(vardata1->statsTuple))
+	{
+		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
+		have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
+									  vardata1->atttype,
+									  vardata1->atttypmod,
+									  STATISTIC_KIND_MCV,
+									  InvalidOid,
+									  &values1, &nvalues1,
+									  &numbers1, &nnumbers1);
+	}
+
+	if (HeapTupleIsValid(vardata2->statsTuple))
+	{
+		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
+		have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
+									  vardata2->atttype,
+									  vardata2->atttypmod,
+									  STATISTIC_KIND_MCV,
+									  InvalidOid,
+									  &values2, &nvalues2,
+									  &numbers2, &nnumbers2);
+	}
+
+	if (have_mcvs1 && have_mcvs2 && OidIsValid(operator))
+	{
+		/*
+		 * We have most-common-value lists for both relations.	Run through
+		 * the lists to see which MCVs actually join to each other with the
+		 * given operator.	This allows us to determine the exact join
+		 * selectivity for the portion of the relations represented by the MCV
+		 * lists.  We still have to estimate for the remaining population, but
+		 * in a skewed distribution this gives us a big leg up in accuracy.
+		 */
+		FmgrInfo	eqproc;
+		bool	   *hasmatch1;
+		bool	   *hasmatch2;
+		double		nullfrac1 = stats1->stanullfrac;
+		double		matchfreq1;
+		int			i,
+					nmatches;
+
+		fmgr_info(get_opcode(operator), &eqproc);
+		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
+		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
+
+		/*
+		 * Note we assume that each MCV will match at most one member of the
+		 * other MCV list.	If the operator isn't really equality, there could
+		 * be multiple matches --- but we don't look for them, both for speed
+		 * and because the math wouldn't add up...
+		 */
+		nmatches = 0;
+		for (i = 0; i < nvalues1; i++)
+		{
+			int			j;
+
+			for (j = 0; j < nvalues2; j++)
+			{
+				if (hasmatch2[j])
+					continue;
+				if (DatumGetBool(FunctionCall2(&eqproc,
+											   values1[i],
+											   values2[j])))
+				{
+					hasmatch1[i] = hasmatch2[j] = true;
+					nmatches++;
+					break;
+				}
+			}
+		}
+		/* Sum up frequencies of matched MCVs */
+		matchfreq1 = 0.0;
+		for (i = 0; i < nvalues1; i++)
+		{
+			if (hasmatch1[i])
+				matchfreq1 += numbers1[i];
+		}
+		CLAMP_PROBABILITY(matchfreq1);
+		pfree(hasmatch1);
+		pfree(hasmatch2);
+
+		/*
+		 * Now we need to estimate the fraction of relation 1 that has at
+		 * least one join partner.  We know for certain that the matched
+		 * MCVs do, so that gives us a lower bound, but we're really in the
+		 * dark about everything else.  Our crude approach is: if nd1 <= nd2
+		 * then assume all non-null rel1 rows have join partners, else assume
+		 * for the uncertain rows that a fraction nd2/nd1 have join partners.
+		 * We can discount the known-matched MCVs from the distinct-values
+		 * counts before doing the division.
+		 */
+		nd1 -= nmatches;
+		nd2 -= nmatches;
+		if (nd1 <= nd2 || nd2 <= 0)
+			selec = Max(matchfreq1, 1.0 - nullfrac1);
+		else
+		{
+			double	uncertain = 1.0 - matchfreq1 - nullfrac1;
+
+			CLAMP_PROBABILITY(uncertain);
+			selec = matchfreq1 + (nd2/nd1) * uncertain;
+		}
+	}
+	else
+	{
+		/*
+		 * Without MCV lists for both sides, we can only use the heuristic
+		 * about nd1 vs nd2.
+		 */
+		double		nullfrac1 = stats1 ? stats1->stanullfrac : 0.0;
+
+		if (nd1 <= nd2 || nd2 <= 0)
+			selec = 1.0 - nullfrac1;
+		else
+			selec = (nd2/nd1) * (1.0 - nullfrac1);
+	}
+
+	if (have_mcvs1)
+		free_attstatsslot(vardata1->atttype, values1, nvalues1,
+						  numbers1, nnumbers1);
+	if (have_mcvs2)
+		free_attstatsslot(vardata2->atttype, values2, nvalues2,
+						  numbers2, nnumbers2);
+
+	return selec;
 }
 
 /*
@@ -2099,6 +2327,7 @@ neqjoinsel(PG_FUNCTION_ARGS)
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
+	SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) PG_GETARG_POINTER(4);
 	Oid			eqop;
 	float8		result;
 
@@ -2109,11 +2338,12 @@ neqjoinsel(PG_FUNCTION_ARGS)
 	eqop = get_negator(operator);
 	if (eqop)
 	{
-		result = DatumGetFloat8(DirectFunctionCall4(eqjoinsel,
+		result = DatumGetFloat8(DirectFunctionCall5(eqjoinsel,
 													PointerGetDatum(root),
 													ObjectIdGetDatum(eqop),
 													PointerGetDatum(args),
-													Int16GetDatum(jointype)));
+													Int16GetDatum(jointype),
+													PointerGetDatum(sjinfo)));
 	}
 	else
 	{
@@ -3661,10 +3891,17 @@ get_restriction_variable(PlannerInfo *root, List *args, int varRelid,
 /*
  * get_join_variables
  *		Apply examine_variable() to each side of a join clause.
+ *		Also, attempt to identify whether the join clause has the same
+ *		or reversed sense compared to the SpecialJoinInfo.
+ *
+ * We consider the join clause "normal" if it is "lhs_var OP rhs_var",
+ * or "reversed" if it is "rhs_var OP lhs_var".  In complicated cases
+ * where we can't tell for sure, we default to assuming it's normal.
  */
 void
-get_join_variables(PlannerInfo *root, List *args,
-				   VariableStatData *vardata1, VariableStatData *vardata2)
+get_join_variables(PlannerInfo *root, List *args, SpecialJoinInfo *sjinfo,
+				   VariableStatData *vardata1, VariableStatData *vardata2,
+				   bool *join_is_reversed)
 {
 	Node	   *left,
 			   *right;
@@ -3677,6 +3914,15 @@ get_join_variables(PlannerInfo *root, List *args,
 
 	examine_variable(root, left, 0, vardata1);
 	examine_variable(root, right, 0, vardata2);
+
+	if (vardata1->rel &&
+		bms_is_subset(vardata1->rel->relids, sjinfo->syn_righthand))
+		*join_is_reversed = true;				/* var1 is on RHS */
+	else if (vardata2->rel &&
+			 bms_is_subset(vardata2->rel->relids, sjinfo->syn_lefthand))
+		*join_is_reversed = true;				/* var2 is on LHS */
+	else
+		*join_is_reversed = false;
 }
 
 /*

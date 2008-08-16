@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.91 2008/08/14 18:47:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.92 2008/08/16 00:01:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,6 +398,50 @@ bms_is_subset_singleton(const Bitmapset *s, int x)
 	return false;
 }
 
+/*
+ * treat_as_join_clause -
+ *	  Decide whether an operator clause is to be handled by the
+ *	  restriction or join estimator.  Subroutine for clause_selectivity().
+ */
+static inline bool
+treat_as_join_clause(Node *clause, RestrictInfo *rinfo,
+					 int varRelid, SpecialJoinInfo *sjinfo)
+{
+	if (varRelid != 0)
+	{
+		/*
+		 * Caller is forcing restriction mode (eg, because we are examining
+		 * an inner indexscan qual).
+		 */
+		return false;
+	}
+	else if (sjinfo == NULL)
+	{
+		/*
+		 * It must be a restriction clause, since it's being evaluated at
+		 * a scan node.
+		 */
+		return false;
+	}
+	else
+	{
+		/*
+		 * Otherwise, it's a join if there's more than one relation used.
+		 * We can optimize this calculation if an rinfo was passed.
+		 *
+		 * XXX  Since we know the clause is being evaluated at a join,
+		 * the only way it could be single-relation is if it was delayed
+		 * by outer joins.  Although we can make use of the restriction
+		 * qual estimators anyway, it seems likely that we ought to account
+		 * for the probability of injected nulls somehow.
+		 */
+		if (rinfo)
+			return (bms_membership(rinfo->clause_relids) == BMS_MULTIPLE);
+		else
+			return (NumRelids(clause) > 1);
+	}
+}
+
 
 /*
  * clause_selectivity -
@@ -429,9 +473,6 @@ bms_is_subset_singleton(const Bitmapset *s, int x)
  *	   root->join_info_list.
  *	2. For an INNER join, sjinfo is just a transient struct, and only the
  *	   relids and jointype fields in it can be trusted.
- *	3. XXX sjinfo might be NULL even though it really is a join.  This case
- *	   will go away soon, but fixing it requires API changes for oprjoin and
- *	   amcostestimate functions.
  * It is possible for jointype to be different from sjinfo->jointype.
  * This indicates we are considering a variant join: either with
  * the LHS and RHS switched, or with one input unique-ified.
@@ -603,36 +644,14 @@ clause_selectivity(PlannerInfo *root,
 	else if (is_opclause(clause) || IsA(clause, DistinctExpr))
 	{
 		Oid			opno = ((OpExpr *) clause)->opno;
-		bool		is_join_clause;
 
-		if (varRelid != 0)
-		{
-			/*
-			 * If we are considering a nestloop join then all clauses are
-			 * restriction clauses, since we are only interested in the one
-			 * relation.
-			 */
-			is_join_clause = false;
-		}
-		else
-		{
-			/*
-			 * Otherwise, it's a join if there's more than one relation used.
-			 * We can optimize this calculation if an rinfo was passed.
-			 */
-			if (rinfo)
-				is_join_clause = (bms_membership(rinfo->clause_relids) ==
-								  BMS_MULTIPLE);
-			else
-				is_join_clause = (NumRelids(clause) > 1);
-		}
-
-		if (is_join_clause)
+		if (treat_as_join_clause(clause, rinfo, varRelid, sjinfo))
 		{
 			/* Estimate selectivity for a join clause. */
 			s1 = join_selectivity(root, opno,
 								  ((OpExpr *) clause)->args,
-								  jointype);
+								  jointype,
+								  sjinfo);
 		}
 		else
 		{
@@ -671,35 +690,11 @@ clause_selectivity(PlannerInfo *root,
 #endif
 	else if (IsA(clause, ScalarArrayOpExpr))
 	{
-		/* First, decide if it's a join clause, same as for OpExpr */
-		bool		is_join_clause;
-
-		if (varRelid != 0)
-		{
-			/*
-			 * If we are considering a nestloop join then all clauses are
-			 * restriction clauses, since we are only interested in the one
-			 * relation.
-			 */
-			is_join_clause = false;
-		}
-		else
-		{
-			/*
-			 * Otherwise, it's a join if there's more than one relation used.
-			 * We can optimize this calculation if an rinfo was passed.
-			 */
-			if (rinfo)
-				is_join_clause = (bms_membership(rinfo->clause_relids) ==
-								  BMS_MULTIPLE);
-			else
-				is_join_clause = (NumRelids(clause) > 1);
-		}
-
 		/* Use node specific selectivity calculation function */
 		s1 = scalararraysel(root,
 							(ScalarArrayOpExpr *) clause,
-							is_join_clause,
+							treat_as_join_clause(clause, rinfo,
+												 varRelid, sjinfo),
 							varRelid,
 							jointype,
 							sjinfo);

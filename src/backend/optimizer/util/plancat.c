@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.148 2008/07/13 20:45:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.149 2008/08/16 00:01:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -830,7 +830,8 @@ Selectivity
 join_selectivity(PlannerInfo *root,
 				 Oid operator,
 				 List *args,
-				 JoinType jointype)
+				 JoinType jointype,
+				 SpecialJoinInfo *sjinfo)
 {
 	RegProcedure oprjoin = get_oprjoin(operator);
 	float8		result;
@@ -842,11 +843,12 @@ join_selectivity(PlannerInfo *root,
 	if (!oprjoin)
 		return (Selectivity) 0.5;
 
-	result = DatumGetFloat8(OidFunctionCall4(oprjoin,
+	result = DatumGetFloat8(OidFunctionCall5(oprjoin,
 											 PointerGetDatum(root),
 											 ObjectIdGetDatum(operator),
 											 PointerGetDatum(args),
-											 Int16GetDatum(jointype)));
+											 Int16GetDatum(jointype),
+											 PointerGetDatum(sjinfo)));
 
 	if (result < 0.0 || result > 1.0)
 		elog(ERROR, "invalid join selectivity: %f", result);

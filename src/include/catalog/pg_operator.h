@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.161 2008/07/14 00:51:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.162 2008/08/16 00:01:37 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -941,11 +941,11 @@ extern void OperatorCreate(const char *operatorName,
 			   Oid operatorNamespace,
 			   Oid leftTypeId,
 			   Oid rightTypeId,
-			   List *procedureName,
+			   Oid procedureId,
 			   List *commutatorName,
 			   List *negatorName,
-			   List *restrictionName,
-			   List *joinName,
+			   Oid restrictionId,
+			   Oid joinId,
 			   bool canMerge,
 			   bool canHash);
 

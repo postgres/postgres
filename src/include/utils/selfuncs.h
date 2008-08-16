@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.45 2008/08/14 18:48:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.46 2008/08/16 00:01:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,8 +104,10 @@ extern bool get_restriction_variable(PlannerInfo *root, List *args,
 						 VariableStatData *vardata, Node **other,
 						 bool *varonleft);
 extern void get_join_variables(PlannerInfo *root, List *args,
+				   SpecialJoinInfo *sjinfo,
 				   VariableStatData *vardata1,
-				   VariableStatData *vardata2);
+				   VariableStatData *vardata2,
+				   bool *join_is_reversed);
 extern double get_variable_numdistinct(VariableStatData *vardata);
 extern double mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 				Datum constval, bool varonleft,

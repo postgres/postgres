@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.509 2008/07/18 03:32:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.510 2008/08/16 00:01:37 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -223,13 +223,13 @@ DATA(insert OID = 103 (  scalarltsel	   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "22
 DESCR("restriction selectivity of < and related operators on scalar datatypes");
 DATA(insert OID = 104 (  scalargtsel	   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 23" _null_ _null_ _null_	scalargtsel _null_ _null_ _null_ ));
 DESCR("restriction selectivity of > and related operators on scalar datatypes");
-DATA(insert OID = 105 (  eqjoinsel		   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_	eqjoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 105 (  eqjoinsel		   PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_	eqjoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of = and related operators");
-DATA(insert OID = 106 (  neqjoinsel		   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_	neqjoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 106 (  neqjoinsel		   PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_	neqjoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of <> and related operators");
-DATA(insert OID = 107 (  scalarltjoinsel   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_	scalarltjoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 107 (  scalarltjoinsel   PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_	scalarltjoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of < and related operators on scalar datatypes");
-DATA(insert OID = 108 (  scalargtjoinsel   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_	scalargtjoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 108 (  scalargtjoinsel   PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_	scalargtjoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of > and related operators on scalar datatypes");
 
 DATA(insert OID =  109 (  unknownin		   PGNSP PGUID 12 1 0 0 f f t f i 1 705 "2275" _null_ _null_ _null_ unknownin _null_ _null_ _null_ ));
@@ -289,7 +289,7 @@ DATA(insert OID = 138 (  box_center		   PGNSP PGUID 12 1 0 0 f f t f i 1 600 "60
 DESCR("center of");
 DATA(insert OID = 139 (  areasel		   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 23" _null_ _null_ _null_	areasel _null_ _null_ _null_ ));
 DESCR("restriction selectivity for area-comparison operators");
-DATA(insert OID = 140 (  areajoinsel	   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_	areajoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 140 (  areajoinsel	   PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_	areajoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity for area-comparison operators");
 DATA(insert OID = 141 (  int4mul		   PGNSP PGUID 12 1 0 0 f f t f i 2 23 "23 23" _null_ _null_ _null_ int4mul _null_ _null_ _null_ ));
 DESCR("multiply");
@@ -1630,11 +1630,11 @@ DESCR("current clock time");
 
 DATA(insert OID = 1300 (  positionsel		   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 23" _null_ _null_ _null_	positionsel _null_ _null_ _null_ ));
 DESCR("restriction selectivity for position-comparison operators");
-DATA(insert OID = 1301 (  positionjoinsel	   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_	positionjoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 1301 (  positionjoinsel	   PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_	positionjoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity for position-comparison operators");
 DATA(insert OID = 1302 (  contsel		   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 23" _null_ _null_ _null_	contsel _null_ _null_ _null_ ));
 DESCR("restriction selectivity for containment comparison operators");
-DATA(insert OID = 1303 (  contjoinsel	   PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_	contjoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 1303 (  contjoinsel	   PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_	contjoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity for containment comparison operators");
 
 DATA(insert OID = 1304 ( overlaps			 PGNSP PGUID 12 1 0 0 f f f f i 4 16 "1184 1184 1184 1184" _null_ _null_ _null_ overlaps_timestamp _null_ _null_ _null_ ));
@@ -2684,9 +2684,9 @@ DATA(insert OID = 1814 ( iclikesel			PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 
 DESCR("restriction selectivity of ILIKE");
 DATA(insert OID = 1815 ( icnlikesel			PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 23" _null_ _null_ _null_  icnlikesel _null_ _null_ _null_ ));
 DESCR("restriction selectivity of NOT ILIKE");
-DATA(insert OID = 1816 ( iclikejoinsel		PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_  iclikejoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 1816 ( iclikejoinsel		PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_  iclikejoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of ILIKE");
-DATA(insert OID = 1817 ( icnlikejoinsel		PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_  icnlikejoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 1817 ( icnlikejoinsel		PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_  icnlikejoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of NOT ILIKE");
 DATA(insert OID = 1818 ( regexeqsel			PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 23" _null_ _null_ _null_  regexeqsel _null_ _null_ _null_ ));
 DESCR("restriction selectivity of regex match");
@@ -2700,17 +2700,17 @@ DATA(insert OID = 1822 ( nlikesel			PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 2
 DESCR("restriction selectivity of NOT LIKE");
 DATA(insert OID = 1823 ( icregexnesel		PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 23" _null_ _null_ _null_  icregexnesel _null_ _null_ _null_ ));
 DESCR("restriction selectivity of case-insensitive regex non-match");
-DATA(insert OID = 1824 ( regexeqjoinsel		PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_  regexeqjoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 1824 ( regexeqjoinsel		PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_  regexeqjoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of regex match");
-DATA(insert OID = 1825 ( likejoinsel		PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_  likejoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 1825 ( likejoinsel		PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_  likejoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of LIKE");
-DATA(insert OID = 1826 ( icregexeqjoinsel	PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_  icregexeqjoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 1826 ( icregexeqjoinsel	PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_  icregexeqjoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of case-insensitive regex match");
-DATA(insert OID = 1827 ( regexnejoinsel		PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_  regexnejoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 1827 ( regexnejoinsel		PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_  regexnejoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of regex non-match");
-DATA(insert OID = 1828 ( nlikejoinsel		PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_  nlikejoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 1828 ( nlikejoinsel		PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_  nlikejoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of NOT LIKE");
-DATA(insert OID = 1829 ( icregexnejoinsel	PGNSP PGUID 12 1 0 0 f f t f s 4 701 "2281 26 2281 21" _null_ _null_ _null_  icregexnejoinsel _null_ _null_ _null_ ));
+DATA(insert OID = 1829 ( icregexnejoinsel	PGNSP PGUID 12 1 0 0 f f t f s 5 701 "2281 26 2281 21 2281" _null_ _null_ _null_  icregexnejoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of case-insensitive regex non-match");
 
 /* Aggregate-related functions */

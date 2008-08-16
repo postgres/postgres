@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.40 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.41 2008/08/16 00:01:35 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -39,8 +39,10 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
+#include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
@@ -76,6 +78,11 @@ DefineOperator(List *names, List *parameters)
 	List	   *negatorName = NIL;		/* optional negator operator name */
 	List	   *restrictionName = NIL;	/* optional restrict. sel. procedure */
 	List	   *joinName = NIL; /* optional join sel. procedure */
+	Oid			functionOid;	/* functions converted to OID */
+	Oid			restrictionOid;
+	Oid			joinOid;
+	Oid			typeId[5];		/* only need up to 5 args here */
+	int			nargs;
 	ListCell   *pl;
 
 	/* Convert list of names to a name and namespace */
@@ -154,6 +161,109 @@ DefineOperator(List *names, List *parameters)
 	if (typeName2)
 		typeId2 = typenameTypeId(NULL, typeName2, NULL);
 
+	if (!OidIsValid(typeId1) && !OidIsValid(typeId2))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+		   errmsg("at least one of leftarg or rightarg must be specified")));
+
+	/*
+	 * Look up the operator's underlying function.
+	 */
+	if (!OidIsValid(typeId1))
+	{
+		typeId[0] = typeId2;
+		nargs = 1;
+	}
+	else if (!OidIsValid(typeId2))
+	{
+		typeId[0] = typeId1;
+		nargs = 1;
+	}
+	else
+	{
+		typeId[0] = typeId1;
+		typeId[1] = typeId2;
+		nargs = 2;
+	}
+	functionOid = LookupFuncName(functionName, nargs, typeId, false);
+
+	/*
+	 * We require EXECUTE rights for the function.  This isn't strictly
+	 * necessary, since EXECUTE will be checked at any attempted use of
+	 * the operator, but it seems like a good idea anyway.
+	 */
+	aclresult = pg_proc_aclcheck(functionOid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_PROC,
+					   NameListToString(functionName));
+
+	/*
+	 * Look up restriction estimator if specified
+	 */
+	if (restrictionName)
+	{
+		typeId[0] = INTERNALOID;	/* PlannerInfo */
+		typeId[1] = OIDOID;		/* operator OID */
+		typeId[2] = INTERNALOID;	/* args list */
+		typeId[3] = INT4OID;	/* varRelid */
+
+		restrictionOid = LookupFuncName(restrictionName, 4, typeId, false);
+
+		/* estimators must return float8 */
+		if (get_func_rettype(restrictionOid) != FLOAT8OID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("restriction estimator function %s must return type \"float8\"",
+							NameListToString(restrictionName))));
+
+		/* Require EXECUTE rights for the estimator */
+		aclresult = pg_proc_aclcheck(restrictionOid, GetUserId(), ACL_EXECUTE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_PROC,
+						   NameListToString(restrictionName));
+	}
+	else
+		restrictionOid = InvalidOid;
+
+	/*
+	 * Look up join estimator if specified
+	 */
+	if (joinName)
+	{
+		typeId[0] = INTERNALOID;	/* PlannerInfo */
+		typeId[1] = OIDOID;		/* operator OID */
+		typeId[2] = INTERNALOID;	/* args list */
+		typeId[3] = INT2OID;	/* jointype */
+		typeId[4] = INTERNALOID;	/* SpecialJoinInfo */
+
+		/*
+		 * As of Postgres 8.4, the preferred signature for join estimators
+		 * has 5 arguments, but we still allow the old 4-argument form.
+		 * Try the preferred form first.
+		 */
+		joinOid = LookupFuncName(joinName, 5, typeId, true);
+		if (!OidIsValid(joinOid))
+			joinOid = LookupFuncName(joinName, 4, typeId, true);
+		/* If not found, reference the 5-argument signature in error msg */
+		if (!OidIsValid(joinOid))
+			joinOid = LookupFuncName(joinName, 5, typeId, false);
+
+		/* estimators must return float8 */
+		if (get_func_rettype(joinOid) != FLOAT8OID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("join estimator function %s must return type \"float8\"",
+							NameListToString(joinName))));
+
+		/* Require EXECUTE rights for the estimator */
+		aclresult = pg_proc_aclcheck(joinOid, GetUserId(), ACL_EXECUTE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_PROC,
+						   NameListToString(joinName));
+	}
+	else
+		joinOid = InvalidOid;
+
 	/*
 	 * now have OperatorCreate do all the work..
 	 */
@@ -161,11 +271,11 @@ DefineOperator(List *names, List *parameters)
 				   oprNamespace,	/* namespace */
 				   typeId1,		/* left type id */
 				   typeId2,		/* right type id */
-				   functionName,	/* function for operator */
+				   functionOid,	/* function for operator */
 				   commutatorName,		/* optional commutator operator name */
 				   negatorName, /* optional negator operator name */
-				   restrictionName,		/* optional restrict. sel. procedure */
-				   joinName,	/* optional join sel. procedure name */
+				   restrictionOid,		/* optional restrict. sel. procedure */
+				   joinOid,		/* optional join sel. procedure name */
 				   canMerge,	/* operator merges */
 				   canHash);	/* operator hashes */
 }

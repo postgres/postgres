@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.104 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.105 2008/08/16 00:01:35 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -21,12 +21,12 @@
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
-#include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -274,6 +274,11 @@ OperatorShellMake(const char *operatorName,
 	heap_freetuple(tup);
 
 	/*
+	 * Make sure the tuple is visible for subsequent lookups/updates.
+	 */
+	CommandCounterIncrement();
+
+	/*
 	 * close the operator relation and return the oid.
 	 */
 	heap_close(pg_operator_desc, RowExclusiveLock);
@@ -289,13 +294,18 @@ OperatorShellMake(const char *operatorName,
  *		operatorNamespace		namespace for new operator
  *		leftTypeId				X left type ID
  *		rightTypeId				X right type ID
- *		procedureName			procedure for operator
+ *		procedureId				procedure ID for operator
  *		commutatorName			X commutator operator
  *		negatorName				X negator operator
- *		restrictionName			X restriction sel. procedure
- *		joinName				X join sel. procedure
+ *		restrictionId			X restriction selectivity procedure ID
+ *		joinId					X join selectivity procedure ID
  *		canMerge				merge join can be used with this operator
  *		canHash					hash join can be used with this operator
+ *
+ * The caller should have validated properties and permissions for the
+ * objects passed as OID references.  We must handle the commutator and
+ * negator operator references specially, however, since those need not
+ * exist beforehand.
  *
  * This routine gets complicated because it allows the user to
  * specify operators that do not exist.  For example, if operator
@@ -310,59 +320,17 @@ OperatorShellMake(const char *operatorName,
  * information about the operator (just its name and types).
  * Forward declaration is used only for this purpose, it is
  * not available to the user as it is for type definition.
- *
- * Algorithm:
- *
- * check if operator already defined
- *	  if so, but oprcode is null, save the Oid -- we are filling in a shell
- *	  otherwise error
- * get the attribute types from relation descriptor for pg_operator
- * assign values to the fields of the operator:
- *	 operatorName
- *	 owner id (simply the user id of the caller)
- *	 operator "kind" either "b" for binary or "l" for left unary
- *	 canMerge boolean
- *	 canHash boolean
- *	 leftTypeObjectId -- type must already be defined
- *	 rightTypeObjectId -- this is optional, enter ObjectId=0 if none specified
- *	 resultType -- defer this, since it must be determined from
- *				   the pg_procedure catalog
- *	 commutatorObjectId -- if this is NULL, enter ObjectId=0
- *					  else if this already exists, enter its ObjectId
- *					  else if this does not yet exist, and is not
- *						the same as the main operatorName, then create
- *						a shell and enter the new ObjectId
- *					  else if this does not exist but IS the same
- *						name & types as the main operator, set the ObjectId=0.
- *						(We are creating a self-commutating operator.)
- *						The link will be fixed later by OperatorUpd.
- *	 negatorObjectId   -- same as for commutatorObjectId
- *	 operatorProcedure -- must access the pg_procedure catalog to get the
- *				   ObjectId of the procedure that actually does the operator
- *				   actions this is required.  Do a lookup to find out the
- *				   return type of the procedure
- *	 restrictionProcedure -- must access the pg_procedure catalog to get
- *				   the ObjectId but this is optional
- *	 joinProcedure -- same as restrictionProcedure
- * now either insert or replace the operator into the pg_operator catalog
- * if the operator shell is being filled in
- *	 access the catalog in order to get a valid buffer
- *	 create a tuple using ModifyHeapTuple
- *	 get the t_self from the modified tuple and call RelationReplaceHeapTuple
- * else if a new operator is being created
- *	 create a tuple using heap_formtuple
- *	 call simple_heap_insert
  */
 void
 OperatorCreate(const char *operatorName,
 			   Oid operatorNamespace,
 			   Oid leftTypeId,
 			   Oid rightTypeId,
-			   List *procedureName,
+			   Oid procedureId,
 			   List *commutatorName,
 			   List *negatorName,
-			   List *restrictionName,
-			   List *joinName,
+			   Oid restrictionId,
+			   Oid joinId,
 			   bool canMerge,
 			   bool canHash)
 {
@@ -373,15 +341,10 @@ OperatorCreate(const char *operatorName,
 	Datum		values[Natts_pg_operator];
 	Oid			operatorObjectId;
 	bool		operatorAlreadyDefined;
-	Oid			procOid;
 	Oid			operResultType;
 	Oid			commutatorId,
-				negatorId,
-				restOid,
-				joinOid;
+				negatorId;
 	bool		selfCommutator = false;
-	Oid			typeId[4];		/* only need up to 4 args here */
-	int			nargs;
 	NameData	oname;
 	TupleDesc	tupDesc;
 	int			i;
@@ -395,11 +358,6 @@ OperatorCreate(const char *operatorName,
 				 errmsg("\"%s\" is not a valid operator name",
 						operatorName)));
 
-	if (!OidIsValid(leftTypeId) && !OidIsValid(rightTypeId))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-		   errmsg("at least one of leftarg or rightarg must be specified")));
-
 	if (!(OidIsValid(leftTypeId) && OidIsValid(rightTypeId)))
 	{
 		/* If it's not a binary op, these things mustn't be set: */
@@ -407,7 +365,7 @@ OperatorCreate(const char *operatorName,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("only binary operators can have commutators")));
-		if (joinName)
+		if (OidIsValid(joinId))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("only binary operators can have join selectivity")));
@@ -419,6 +377,33 @@ OperatorCreate(const char *operatorName,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("only binary operators can hash")));
+	}
+
+	operResultType = get_func_rettype(procedureId);
+
+	if (operResultType != BOOLOID)
+	{
+		/* If it's not a boolean op, these things mustn't be set: */
+		if (negatorName)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only boolean operators can have negators")));
+		if (OidIsValid(restrictionId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("only boolean operators can have restriction selectivity")));
+		if (OidIsValid(joinId))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("only boolean operators can have join selectivity")));
+		if (canMerge)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only boolean operators can merge join")));
+		if (canHash)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only boolean operators can hash")));
 	}
 
 	operatorObjectId = OperatorGet(operatorName,
@@ -435,62 +420,61 @@ OperatorCreate(const char *operatorName,
 
 	/*
 	 * At this point, if operatorObjectId is not InvalidOid then we are
-	 * filling in a previously-created shell.
+	 * filling in a previously-created shell.  Insist that the user own
+	 * any such shell.
 	 */
+	if (OidIsValid(operatorObjectId) &&
+		!pg_oper_ownercheck(operatorObjectId, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
+					   operatorName);
 
 	/*
-	 * Look up registered procedures -- find the return type of procedureName
-	 * to place in "result" field. Do this before shells are created so we
-	 * don't have to worry about deleting them later.
+	 * Set up the other operators.	If they do not currently exist, create
+	 * shells in order to get ObjectId's.
 	 */
-	if (!OidIsValid(leftTypeId))
+
+	if (commutatorName)
 	{
-		typeId[0] = rightTypeId;
-		nargs = 1;
-	}
-	else if (!OidIsValid(rightTypeId))
-	{
-		typeId[0] = leftTypeId;
-		nargs = 1;
+		/* commutator has reversed arg types */
+		commutatorId = get_other_operator(commutatorName,
+										  rightTypeId, leftTypeId,
+										  operatorName, operatorNamespace,
+										  leftTypeId, rightTypeId,
+										  true);
+
+		/* Permission check: must own other operator */
+		if (OidIsValid(commutatorId) &&
+			!pg_oper_ownercheck(commutatorId, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
+						   NameListToString(commutatorName));
+
+		/*
+		 * self-linkage to this operator; will fix below. Note that only
+		 * self-linkage for commutation makes sense.
+		 */
+		if (!OidIsValid(commutatorId))
+			selfCommutator = true;
 	}
 	else
-	{
-		typeId[0] = leftTypeId;
-		typeId[1] = rightTypeId;
-		nargs = 2;
-	}
-	procOid = LookupFuncName(procedureName, nargs, typeId, false);
-	operResultType = get_func_rettype(procOid);
+		commutatorId = InvalidOid;
 
-	/*
-	 * find restriction estimator
-	 */
-	if (restrictionName)
+	if (negatorName)
 	{
-		typeId[0] = INTERNALOID;	/* Query */
-		typeId[1] = OIDOID;		/* operator OID */
-		typeId[2] = INTERNALOID;	/* args list */
-		typeId[3] = INT4OID;	/* varRelid */
+		/* negator has same arg types */
+		negatorId = get_other_operator(negatorName,
+									   leftTypeId, rightTypeId,
+									   operatorName, operatorNamespace,
+									   leftTypeId, rightTypeId,
+									   false);
 
-		restOid = LookupFuncName(restrictionName, 4, typeId, false);
+		/* Permission check: must own other operator */
+		if (OidIsValid(negatorId) &&
+			!pg_oper_ownercheck(negatorId, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
+						   NameListToString(negatorName));
 	}
 	else
-		restOid = InvalidOid;
-
-	/*
-	 * find join estimator
-	 */
-	if (joinName)
-	{
-		typeId[0] = INTERNALOID;	/* Query */
-		typeId[1] = OIDOID;		/* operator OID */
-		typeId[2] = INTERNALOID;	/* args list */
-		typeId[3] = INT2OID;	/* jointype */
-
-		joinOid = LookupFuncName(joinName, 4, typeId, false);
-	}
-	else
-		joinOid = InvalidOid;
+		negatorId = InvalidOid;
 
 	/*
 	 * set up values in the operator tuple
@@ -514,53 +498,16 @@ OperatorCreate(const char *operatorName,
 	values[i++] = ObjectIdGetDatum(leftTypeId); /* oprleft */
 	values[i++] = ObjectIdGetDatum(rightTypeId);		/* oprright */
 	values[i++] = ObjectIdGetDatum(operResultType);		/* oprresult */
-
-	/*
-	 * Set up the other operators.	If they do not currently exist, create
-	 * shells in order to get ObjectId's.
-	 */
-
-	if (commutatorName)
-	{
-		/* commutator has reversed arg types */
-		commutatorId = get_other_operator(commutatorName,
-										  rightTypeId, leftTypeId,
-										  operatorName, operatorNamespace,
-										  leftTypeId, rightTypeId,
-										  true);
-
-		/*
-		 * self-linkage to this operator; will fix below. Note that only
-		 * self-linkage for commutation makes sense.
-		 */
-		if (!OidIsValid(commutatorId))
-			selfCommutator = true;
-	}
-	else
-		commutatorId = InvalidOid;
 	values[i++] = ObjectIdGetDatum(commutatorId);		/* oprcom */
-
-	if (negatorName)
-	{
-		/* negator has same arg types */
-		negatorId = get_other_operator(negatorName,
-									   leftTypeId, rightTypeId,
-									   operatorName, operatorNamespace,
-									   leftTypeId, rightTypeId,
-									   false);
-	}
-	else
-		negatorId = InvalidOid;
-	values[i++] = ObjectIdGetDatum(negatorId);	/* oprnegate */
-
-	values[i++] = ObjectIdGetDatum(procOid);	/* oprcode */
-	values[i++] = ObjectIdGetDatum(restOid);	/* oprrest */
-	values[i++] = ObjectIdGetDatum(joinOid);	/* oprjoin */
+	values[i++] = ObjectIdGetDatum(negatorId);		/* oprnegate */
+	values[i++] = ObjectIdGetDatum(procedureId);	/* oprcode */
+	values[i++] = ObjectIdGetDatum(restrictionId);	/* oprrest */
+	values[i++] = ObjectIdGetDatum(joinId);			/* oprjoin */
 
 	pg_operator_desc = heap_open(OperatorRelationId, RowExclusiveLock);
 
 	/*
-	 * If we are adding to an operator shell, update; else insert
+	 * If we are replacing an operator shell, update; else insert
 	 */
 	if (operatorObjectId)
 	{
@@ -706,7 +653,8 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	/*
 	 * check and update the commutator & negator, if necessary
 	 *
-	 * First make sure we can see them...
+	 * We need a CommandCounterIncrement here in case of a self-commutator
+	 * operator: we'll need to update the tuple that we just inserted.
 	 */
 	CommandCounterIncrement();
 
