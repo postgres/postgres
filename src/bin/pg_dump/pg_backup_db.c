@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.79 2008/04/13 03:49:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.80 2008/08/16 02:25:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,27 +266,31 @@ notice_processor(void *arg, const char *message)
 
 /* Public interface */
 /* Convenience function to send a query. Monitors result to handle COPY statements */
-static int
-ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc)
+static void
+ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 {
 	PGconn	   *conn = AH->connection;
 	PGresult   *res;
 	char		errStmt[DB_MAX_ERR_STMT];
 
-	/* fprintf(stderr, "Executing: '%s'\n\n", qry->data); */
-	res = PQexec(conn, qry->data);
-	if (!res)
-		die_horribly(AH, modulename, "%s: no result from server\n", desc);
+#ifdef NOT_USED
+	 fprintf(stderr, "Executing: '%s'\n\n", qry);
+#endif
+	res = PQexec(conn, qry);
 
-	if (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK)
+	switch (PQresultStatus(res))
 	{
-		if (PQresultStatus(res) == PGRES_COPY_IN)
-		{
+		case PGRES_COMMAND_OK:
+		case PGRES_TUPLES_OK:
+			/* A-OK */
+			break;
+		case PGRES_COPY_IN:
+			/* Assume this is an expected result */
 			AH->pgCopyIn = true;
-		}
-		else
-		{
-			strncpy(errStmt, qry->data, DB_MAX_ERR_STMT);
+			break;
+		default:
+			/* trouble */
+			strncpy(errStmt, qry, DB_MAX_ERR_STMT);
 			if (errStmt[DB_MAX_ERR_STMT - 1] != '\0')
 			{
 				errStmt[DB_MAX_ERR_STMT - 4] = '.';
@@ -295,14 +299,11 @@ ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc)
 				errStmt[DB_MAX_ERR_STMT - 1] = '\0';
 			}
 			warn_or_die_horribly(AH, modulename, "%s: %s    Command was: %s\n",
-								 desc, PQerrorMessage(AH->connection),
-								 errStmt);
-		}
+								 desc, PQerrorMessage(conn), errStmt);
+			break;
 	}
 
 	PQclear(res);
-
-	return strlen(qry->data);
 }
 
 /*
@@ -427,7 +428,7 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 					 * the buffer.
 					 */
 					appendPQExpBufferChar(AH->sqlBuf, ';');		/* inessential */
-					ExecuteSqlCommand(AH, AH->sqlBuf,
+					ExecuteSqlCommand(AH, AH->sqlBuf->data,
 									  "could not execute query");
 					resetPQExpBuffer(AH->sqlBuf);
 					AH->sqlparse.lastChar = '\0';
@@ -626,25 +627,13 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, size_t bufLen)
 void
 StartTransaction(ArchiveHandle *AH)
 {
-	PQExpBuffer qry = createPQExpBuffer();
-
-	appendPQExpBuffer(qry, "BEGIN");
-
-	ExecuteSqlCommand(AH, qry, "could not start database transaction");
-
-	destroyPQExpBuffer(qry);
+	ExecuteSqlCommand(AH, "BEGIN", "could not start database transaction");
 }
 
 void
 CommitTransaction(ArchiveHandle *AH)
 {
-	PQExpBuffer qry = createPQExpBuffer();
-
-	appendPQExpBuffer(qry, "COMMIT");
-
-	ExecuteSqlCommand(AH, qry, "could not commit database transaction");
-
-	destroyPQExpBuffer(qry);
+	ExecuteSqlCommand(AH, "COMMIT", "could not commit database transaction");
 }
 
 static bool
