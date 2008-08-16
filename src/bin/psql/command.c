@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.192 2008/07/01 00:08:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.193 2008/08/16 00:16:56 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1197,10 +1197,10 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	 * Replace the old connection with the new one, and update
 	 * connection-dependent variables.
 	 */
-	connection_warnings();
 	PQsetNoticeProcessor(n_conn, NoticeProcessor, NULL);
 	pset.db = n_conn;
 	SyncVariables();
+	connection_warnings(); /* Must be after SyncVariables */
 
 	/* Tell the user about the new connection */
 	if (!pset.quiet)
