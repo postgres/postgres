@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.50 2003/10/03 20:10:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.50.2.1 2008/08/16 02:25:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,8 +303,6 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 
 	/* fprintf(stderr, "Executing: '%s'\n\n", qry->data); */
 	res = PQexec(conn, qry->data);
-	if (!res)
-		die_horribly(AH, modulename, "%s: no result from server\n", desc);
 
 	if (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -317,7 +315,7 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 		}
 		else
 			die_horribly(AH, modulename, "%s: %s",
-						 desc, PQerrorMessage(AH->connection));
+						 desc, PQerrorMessage(conn));
 	}
 
 	PQclear(res);
