@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.170 2008/03/29 19:19:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.171 2008/08/16 01:36:35 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -2577,11 +2577,11 @@ exec_query(const char *query)
 
 	result = PQexec(pset.db, query);
 
-	if (result != NULL && PQresultStatus(result) != PGRES_TUPLES_OK)
+	if (PQresultStatus(result) != PGRES_TUPLES_OK)
 	{
 #if 0
-		psql_error("tab completion: %s failed - %s\n",
-				   query, PQresStatus(PQresultStatus(result)));
+		psql_error("tab completion query failed: %s\nQuery was:\n%s\n",
+				   PQerrorMessage(pset.db), query);
 #endif
 		PQclear(result);
 		result = NULL;

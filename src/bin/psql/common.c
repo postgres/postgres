@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.139 2008/05/14 19:10:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.140 2008/08/16 01:36:35 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -880,16 +880,20 @@ SendQuery(const char *query)
 	/* If we made a temporary savepoint, possibly release/rollback */
 	if (on_error_rollback_savepoint)
 	{
-		PGresult   *svptres;
+		const char *svptcmd;
 
 		transaction_status = PQtransactionStatus(pset.db);
 
-		/* We always rollback on an error */
 		if (transaction_status == PQTRANS_INERROR)
-			svptres = PQexec(pset.db, "ROLLBACK TO pg_psql_temporary_savepoint");
-		/* If they are no longer in a transaction, then do nothing */
+		{
+			/* We always rollback on an error */
+			svptcmd = "ROLLBACK TO pg_psql_temporary_savepoint";
+		}
 		else if (transaction_status != PQTRANS_INTRANS)
-			svptres = NULL;
+		{
+			/* If they are no longer in a transaction, then do nothing */
+			svptcmd = NULL;
+		}
 		else
 		{
 			/*
@@ -901,20 +905,27 @@ SendQuery(const char *query)
 				(strcmp(PQcmdStatus(results), "SAVEPOINT") == 0 ||
 				 strcmp(PQcmdStatus(results), "RELEASE") == 0 ||
 				 strcmp(PQcmdStatus(results), "ROLLBACK") == 0))
-				svptres = NULL;
+				svptcmd = NULL;
 			else
-				svptres = PQexec(pset.db, "RELEASE pg_psql_temporary_savepoint");
-		}
-		if (svptres && PQresultStatus(svptres) != PGRES_COMMAND_OK)
-		{
-			psql_error("%s", PQerrorMessage(pset.db));
-			PQclear(results);
-			PQclear(svptres);
-			ResetCancelConn();
-			return false;
+				svptcmd = "RELEASE pg_psql_temporary_savepoint";
 		}
 
-		PQclear(svptres);
+		if (svptcmd)
+		{
+			PGresult   *svptres;
+
+			svptres = PQexec(pset.db, svptcmd);
+			if (PQresultStatus(svptres) != PGRES_COMMAND_OK)
+			{
+				psql_error("%s", PQerrorMessage(pset.db));
+				PQclear(svptres);
+
+				PQclear(results);
+				ResetCancelConn();
+				return false;
+			}
+			PQclear(svptres);
+		}
 	}
 
 	PQclear(results);
