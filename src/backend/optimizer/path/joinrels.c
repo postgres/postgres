@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.93 2008/08/14 18:47:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.94 2008/08/17 19:40:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,8 @@ static List *make_rels_by_clauseless_joins(PlannerInfo *root,
 static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
 static bool has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel);
 static bool is_dummy_rel(RelOptInfo *rel);
-static void mark_dummy_join(RelOptInfo *rel);
+static void mark_dummy_rel(RelOptInfo *rel);
+static bool restriction_is_constant_false(List *restrictlist);
 
 
 /*
@@ -558,15 +559,20 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	 * this way since it's conceivable that dummy-ness of a multi-element
 	 * join might only be noticeable for certain construction paths.)
 	 *
+	 * Also, a provably constant-false join restriction typically means that
+	 * we can skip evaluating one or both sides of the join.  We do this
+	 * by marking the appropriate rel as dummy.
+	 *
 	 * We need only consider the jointypes that appear in join_info_list,
 	 * plus JOIN_INNER.
 	 */
 	switch (sjinfo->jointype)
 	{
 		case JOIN_INNER:
-			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
+			if (is_dummy_rel(rel1) || is_dummy_rel(rel2) ||
+				restriction_is_constant_false(restrictlist))
 			{
-				mark_dummy_join(joinrel);
+				mark_dummy_rel(joinrel);
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
@@ -579,9 +585,12 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_LEFT:
 			if (is_dummy_rel(rel1))
 			{
-				mark_dummy_join(joinrel);
+				mark_dummy_rel(joinrel);
 				break;
 			}
+			if (restriction_is_constant_false(restrictlist) &&
+				bms_is_subset(rel2->relids, sjinfo->syn_righthand))
+				mark_dummy_rel(rel2);
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
 								 JOIN_LEFT, sjinfo,
 								 restrictlist);
@@ -592,7 +601,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_FULL:
 			if (is_dummy_rel(rel1) && is_dummy_rel(rel2))
 			{
-				mark_dummy_join(joinrel);
+				mark_dummy_rel(joinrel);
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
@@ -603,9 +612,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 								 restrictlist);
 			break;
 		case JOIN_SEMI:
-			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
+			if (is_dummy_rel(rel1) || is_dummy_rel(rel2) ||
+				restriction_is_constant_false(restrictlist))
 			{
-				mark_dummy_join(joinrel);
+				mark_dummy_rel(joinrel);
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
@@ -632,9 +642,12 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_ANTI:
 			if (is_dummy_rel(rel1))
 			{
-				mark_dummy_join(joinrel);
+				mark_dummy_rel(joinrel);
 				break;
 			}
+			if (restriction_is_constant_false(restrictlist) &&
+				bms_is_subset(rel2->relids, sjinfo->syn_righthand))
+				mark_dummy_rel(rel2);
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
 								 JOIN_ANTI, sjinfo,
 								 restrictlist);
@@ -851,10 +864,10 @@ is_dummy_rel(RelOptInfo *rel)
 }
 
 /*
- * Mark a joinrel as proven empty.
+ * Mark a rel as proven empty.
  */
 static void
-mark_dummy_join(RelOptInfo *rel)
+mark_dummy_rel(RelOptInfo *rel)
 {
 	/* Set dummy size estimate */
 	rel->rows = 0;
@@ -865,10 +878,46 @@ mark_dummy_join(RelOptInfo *rel)
 	/* Set up the dummy path */
 	add_path(rel, (Path *) create_append_path(rel, NIL));
 
-	/*
-	 * Although set_cheapest will be done again later, we do it immediately
-	 * in order to keep is_dummy_rel as cheap as possible (ie, not have
-	 * to examine the pathlist).
-	 */
+	/* Set or update cheapest_total_path */
 	set_cheapest(rel);
+}
+
+
+/*
+ * restriction_is_constant_false --- is a restrictlist just FALSE?
+ *
+ * In cases where a qual is provably constant FALSE, eval_const_expressions
+ * will generally have thrown away anything that's ANDed with it.  In outer
+ * join situations this will leave us computing cartesian products only to
+ * decide there's no match for an outer row, which is pretty stupid.  So,
+ * we need to detect the case.
+ */
+static bool
+restriction_is_constant_false(List *restrictlist)
+{
+	ListCell   *lc;
+
+	/*
+	 * Despite the above comment, the restriction list we see here might
+	 * possibly have other members besides the FALSE constant, since other
+	 * quals could get "pushed down" to the outer join level.  So we check
+	 * each member of the list.
+	 */
+	foreach(lc, restrictlist)
+	{
+		RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lc);
+
+		Assert(IsA(rinfo, RestrictInfo));
+		if (rinfo->clause && IsA(rinfo->clause, Const))
+		{
+			Const  *con = (Const *) rinfo->clause;
+
+			/* constant NULL is as good as constant FALSE for our purposes */
+			if (con->constisnull)
+				return true;
+			if (!DatumGetBool(con->constvalue))
+				return true;
+		}
+	}
+	return false;
 }
