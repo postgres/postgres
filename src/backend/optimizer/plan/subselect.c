@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.134 2008/08/17 01:20:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.135 2008/08/17 02:19:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -967,14 +967,6 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * We don't risk optimizing if the WHERE clause is volatile, either.
 	 */
 	if (contain_volatile_functions(whereClause))
-		return false;
-
-	/*
-	 * Also disallow SubLinks within the WHERE clause.  (XXX this could
-	 * probably be supported, but it would complicate the transformation
-	 * below, and it doesn't seem worth worrying about in a first pass.)
-	 */
-	if (contain_subplans(whereClause))
 		return false;
 
 	/*
