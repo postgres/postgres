@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.555 2008/08/01 13:16:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.556 2008/08/19 18:30:04 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -630,12 +630,12 @@ pg_rewrite_query(Query *query)
 {
 	List	   *querytree_list;
 
+	if (Debug_print_parse)
+		elog_node_display(LOG, "parse tree", query,
+						  Debug_pretty_print);
+
 	if (log_parser_stats)
 		ResetUsage();
-
-	if (Debug_print_parse)
-		elog_node_display(DEBUG1, "parse tree", query,
-						  Debug_pretty_print);
 
 	if (query->commandType == CMD_UTILITY)
 	{
@@ -666,7 +666,7 @@ pg_rewrite_query(Query *query)
 #endif
 
 	if (Debug_print_rewritten)
-		elog_node_display(DEBUG1, "rewritten parse tree", querytree_list,
+		elog_node_display(LOG, "rewritten parse tree", querytree_list,
 						  Debug_pretty_print);
 
 	return querytree_list;
@@ -720,7 +720,7 @@ pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
 	 * Print plan if debugging.
 	 */
 	if (Debug_print_plan)
-		elog_node_display(DEBUG1, "plan", plan, Debug_pretty_print);
+		elog_node_display(LOG, "plan", plan, Debug_pretty_print);
 
 	TRACE_POSTGRESQL_QUERY_PLAN_DONE();
 

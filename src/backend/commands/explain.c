@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.177 2008/08/14 18:47:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.178 2008/08/19 18:30:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, const char *queryString,
 		PlannedStmt *plan;
 
 		/* plan the query */
-		plan = planner(query, 0, params);
+		plan = pg_plan_query(query, 0, params);
 
 		/* run it (if needed) and produce output */
 		ExplainOnePlan(plan, params, stmt, tstate);

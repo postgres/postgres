@@ -322,7 +322,7 @@
 #debug_print_parse = off
 #debug_print_rewritten = off
 #debug_print_plan = off
-#debug_pretty_print = off
+#debug_pretty_print = on
 #log_checkpoints = off
 #log_connections = off
 #log_disconnections = off

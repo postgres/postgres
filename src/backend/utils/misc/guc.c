@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.466 2008/08/15 08:37:40 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.467 2008/08/19 18:30:04 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -316,7 +316,7 @@ bool		log_duration = false;
 bool		Debug_print_plan = false;
 bool		Debug_print_parse = false;
 bool		Debug_print_rewritten = false;
-bool		Debug_pretty_print = false;
+bool		Debug_pretty_print = true;
 
 bool		log_parser_stats = false;
 bool		log_planner_stats = false;
@@ -772,7 +772,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"debug_print_parse", PGC_USERSET, LOGGING_WHAT,
-			gettext_noop("Prints the parse tree to the server log."),
+			gettext_noop("Logs each query's parse tree."),
 			NULL
 		},
 		&Debug_print_parse,
@@ -780,7 +780,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"debug_print_rewritten", PGC_USERSET, LOGGING_WHAT,
-			gettext_noop("Prints the parse tree after rewriting to server log."),
+			gettext_noop("Logs each query's rewritten parse tree."),
 			NULL
 		},
 		&Debug_print_rewritten,
@@ -788,7 +788,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"debug_print_plan", PGC_USERSET, LOGGING_WHAT,
-			gettext_noop("Prints the execution plan to server log."),
+			gettext_noop("Logs each query's execution plan."),
 			NULL
 		},
 		&Debug_print_plan,
@@ -800,7 +800,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&Debug_pretty_print,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 	{
 		{"log_parser_stats", PGC_SUSET, STATS_MONITORING,
