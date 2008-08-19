@@ -3601,7 +3601,7 @@ fi
 # ICC pretends to be GCC but it's lying; it doesn't support these options.
 
 if test "$GCC" = yes -a "$ICC" = no; then
-  CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith -Winline"
+  CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith"
   # These work in some but not all gcc versions
   { echo "$as_me:$LINENO: checking if $CC supports -Wdeclaration-after-statement" >&5
 echo $ECHO_N "checking if $CC supports -Wdeclaration-after-statement... $ECHO_C" >&6; }
