@@ -331,40 +331,40 @@ Data Types
 
 	  http://archives.postgresql.org/pgsql-hackers/2006-11/msg00390.php
 
-	o Add ISO INTERVAL handling
+* Add ISO INTERVAL handling
 
-		  http://archives.postgresql.org/pgsql-hackers/2006-01/msg00250.php
-		  http://archives.postgresql.org/pgsql-bugs/2006-04/msg00248.php
+  http://archives.postgresql.org/pgsql-hackers/2006-01/msg00250.php
+  http://archives.postgresql.org/pgsql-bugs/2006-04/msg00248.php
 
-		o Support ISO INTERVAL syntax if units cannot be determined from
-		  the string, and are supplied after the string
+	o Support ISO INTERVAL syntax if units cannot be determined from
+	  the string, and are supplied after the string
 
-		  The SQL standard states that the units after the string
-		  specify the units of the string, e.g. INTERVAL '2' MINUTE
-		  should return '00:02:00'. The current behavior has the units
-		  restrict the interval value to the specified unit or unit
-		  range, INTERVAL '70' SECOND returns '00:00:10'.
+	  The SQL standard states that the units after the string
+	  specify the units of the string, e.g. INTERVAL '2' MINUTE
+	  should return '00:02:00'. The current behavior has the units
+	  restrict the interval value to the specified unit or unit
+	  range, INTERVAL '70' SECOND returns '00:00:10'.
 
-		  For syntax that isn't uniquely ISO or PG syntax, like '1' or
-		  '1:30', treat as ISO if there is a range specification clause,
-		  and as PG if there no clause is present, e.g. interpret '1:30'
-		  MINUTE TO SECOND as '1 minute 30 seconds', and interpret
-		  '1:30' as '1 hour, 30 minutes'.
+	  For syntax that isn't uniquely ISO or PG syntax, like '1' or
+	  '1:30', treat as ISO if there is a range specification clause,
+	  and as PG if there no clause is present, e.g. interpret '1:30'
+	  MINUTE TO SECOND as '1 minute 30 seconds', and interpret
+	  '1:30' as '1 hour, 30 minutes'.
 
-		  This makes common cases like SELECT INTERVAL '1' MONTH
-		  SQL-standard results. The SQL standard supports a limited
-		  number of unit combinations and doesn't support unit names in
-		  the string. The PostgreSQL syntax is more flexible in the
-		  range of units supported, e.g. PostgreSQL supports '1 year 1
-		  hour', while the SQL standard does not.
+	  This makes common cases like SELECT INTERVAL '1' MONTH
+	  SQL-standard results. The SQL standard supports a limited
+	  number of unit combinations and doesn't support unit names in
+	  the string. The PostgreSQL syntax is more flexible in the
+	  range of units supported, e.g. PostgreSQL supports '1 year 1
+	  hour', while the SQL standard does not.
 
-		o Add support for year-month syntax, INTERVAL '50-6' YEAR
-		  TO MONTH
-		o Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1
-		  year' AS INTERVAL MONTH), and this should return '12 months'
-		o Round or truncate values to the requested precision, e.g.
-		  INTERVAL '11 months' AS YEAR should return one or zero
-		o Support precision, CREATE TABLE foo (a INTERVAL MONTH(3))
+	o Add support for year-month syntax, INTERVAL '50-6' YEAR
+	  TO MONTH
+	o Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1
+	  year' AS INTERVAL MONTH), and this should return '12 months'
+	o Round or truncate values to the requested precision, e.g.
+	  INTERVAL '11 months' AS YEAR should return one or zero
+	o Support precision, CREATE TABLE foo (a INTERVAL MONTH(3))
 
 
 * Arrays
@@ -384,7 +384,7 @@ Data Types
 	o Add security checking for large objects
 	o Auto-delete large objects when referencing row is deleted
 
-          contrib/lo offers this functionality.
+	  contrib/lo offers this functionality.
 
 	o Allow read/write into TOAST values like large objects
 
@@ -396,14 +396,14 @@ Data Types
 
 * MONEY data type
 
-	* Add locale-aware MONEY type, and support multiple currencies
+	o Add locale-aware MONEY type, and support multiple currencies
 
 	  http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php
 	  http://archives.postgresql.org/pgsql-hackers/2007-03/msg01181.php
 
-	* MONEY dumps in a locale-specific format making it difficult to
+	o MONEY dumps in a locale-specific format making it difficult to
 	  restore to a system with a different locale
-	* Allow MONEY to be easily cast to/from other numeric data types
+	o Allow MONEY to be easily cast to/from other numeric data types
 
 * Text Search
 
@@ -494,7 +494,7 @@ Functions
 * Prevent malicious functions from being executed with the permissions
   of unsuspecting users
 
-  Index functions are safe, so VACUUM and ANALYZE are safe too. 
+  Index functions are safe, so VACUUM and ANALYZE are safe too.
   Triggers, CHECK and DEFAULT expressions, and rules are still vulnerable.
   http://archives.postgresql.org/pgsql-hackers/2008-01/msg00268.php
 
@@ -569,7 +569,7 @@ Multi-Language Support
   http://archives.postgresql.org/pgsql-hackers/2006-01/msg00767.php
   http://archives.postgresql.org/pgsql-patches/2006-03/msg00233.php
   http://archives.postgresql.org/pgsql-hackers/2006-09/msg00662.php
-  http://wiki.postgresql.org/wiki/Todo:Collate 
+  http://wiki.postgresql.org/wiki/Todo:Collate
   http://wiki.postgresql.org/wiki/Todo:ICU
 
 * Support multiple simultaneous character sets, per SQL92
@@ -667,7 +667,7 @@ SQL Commands
 * Improve failure message when DROP DATABASE is used on a database that
   has prepared transactions
 * Allow prepared transactions with temporary tables created and dropped
-  in the same transaction, and when an ON COMMIT DELETE ROWS temporary 
+  in the same transaction, and when an ON COMMIT DELETE ROWS temporary
   table is accessed
 
   http://archives.postgresql.org/pgsql-hackers/2008-03/msg00047.php
@@ -840,7 +840,7 @@ SQL Commands
 	  like CHECK that are inherited by child tables unless CASCADE
 	  is used
 	o -Prevent child tables from altering or dropping constraints
-          like CHECK that were inherited from the parent table
+	  like CHECK that were inherited from the parent table
 	o Have ALTER INDEX update the name of a constraint using that index
 	o Add ALTER TABLE RENAME CONSTRAINT, update index name also
 	o Allow column display reordering by recording a display,
@@ -860,7 +860,7 @@ SQL Commands
 	  This might require some background daemon to maintain clustering
 	  during periods of low usage. It might also require tables to be only
 	  partially filled for easier reorganization.  Another idea would
-          be to create a merged heap/index data file so an index lookup would
+	  be to create a merged heap/index data file so an index lookup would
 	  automatically access the heap data too.  A third idea would be to
 	  store heap rows in hashed groups, perhaps using a user-supplied
 	  hash function.
@@ -915,7 +915,7 @@ SQL Commands
 
 	o Allow COPY to report errors sooner
 
-         http://archives.postgresql.org/pgsql-hackers/2008-04/msg01169.php
+	  http://archives.postgresql.org/pgsql-hackers/2008-04/msg01169.php
 
 
 
@@ -958,7 +958,7 @@ SQL Commands
 
 	o Allow LISTEN/NOTIFY to store info in memory rather than tables?
 
-	  Currently LISTEN/NOTIFY information is stored in pg_listener. 
+	  Currently LISTEN/NOTIFY information is stored in pg_listener.
 	  Storing such information in memory would improve performance.
 
 	o Add optional textual message to NOTIFY
@@ -1154,7 +1154,7 @@ Clients
 	o -Improve display of enums to show valid enum values
 	o Add prompt escape to display the client and server versions
 	o Add option to wrap column values at whitespace boundaries,
-          rather than chopping them at a fixed width.
+	  rather than chopping them at a fixed width.
 
 	  Currently, "wrapped" format chops values into fixed
 	  widths.  Perhaps the word wrapping could use the same
@@ -1195,7 +1195,7 @@ Clients
 	  http://archives.postgresql.org/pgsql-hackers/2008-02/msg00205.php
 
 	o Allow pg_restore to utilize multiple CPUs and I/O channels by
-          restoring multiple objects simultaneously
+	  restoring multiple objects simultaneously
 
 	  This might require a pg_restore flag to indicate how many
 	  simultaneous operations should be performed.  Only pg_dump's
@@ -1208,7 +1208,7 @@ Clients
 	  concurrently, via a single heap scan
 
 	  This requires a pg_dump -Fc file because that format contains
-          the required dependency information.
+	  the required dependency information.
 	  http://archives.postgresql.org/pgsql-general/2007-05/msg01274.php
 
 	o Allow pg_restore to load different parts of the COPY data
@@ -1435,7 +1435,7 @@ Indexes
 
 * Hash
 
-	  http://archives.postgresql.org/pgsql-hackers/2007-09/msg00051.php
+	o http://archives.postgresql.org/pgsql-hackers/2007-09/msg00051.php
 
 	o Pack hash index buckets onto disk pages more efficiently
 
@@ -1526,7 +1526,7 @@ Cache Usage
   page of bitmaps could track 512MB of heap pages.
 
   A third idea would be for a heap scan to check if all rows are visible
-  and if so set a per-table flag which can be checked by index scans. 
+  and if so set a per-table flag which can be checked by index scans.
   Any change to the table would have to clear the flag.  To detect
   changes during the heap scan a counter could be set at the start and
   checked at the end --- if it is the same, the table has not been
@@ -1536,11 +1536,9 @@ Cache Usage
   http://archives.postgresql.org/pgsql-patches/2008-01/msg00049.php
 
 * Consider automatic caching of statements at various levels:
+  parsed query tree, query execution plan, query results
 
-	o Parsed query tree
-	o Query execute plan
-	o Query results
-	http://archives.postgresql.org/pgsql-hackers/2008-04/msg00823.php
+  http://archives.postgresql.org/pgsql-hackers/2008-04/msg00823.php
 
 * Consider increasing internal areas when shared buffers is increased
 
@@ -1617,7 +1615,7 @@ Vacuum
 
 	  http://archives.postgresql.org/pgsql-hackers/2006-12/msg00876.php
 
-	o Prevent long-lived temporary tables from causing frozen-xid
+	o -Prevent long-lived temporary tables from causing frozen-xid
 	  advancement starvation
 
 	  The problem is that autovacuum cannot vacuum them to set frozen xids;
@@ -1639,7 +1637,7 @@ Vacuum
 Locking
 =======
 
-* Fix priority ordering of read and write light-weight locks (Neil)
+* Fix priority ordering of read and write light-weight locks
 
   http://archives.postgresql.org/pgsql-hackers/2004-11/msg00893.php
   http://archives.postgresql.org/pgsql-hackers/2004-11/msg00905.php
@@ -1822,7 +1820,7 @@ Background Writer
   catalogs and the transaction status log.
 
 * Consider adding buffers the background writer finds reusable to the
-  free list 
+  free list
 
   http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php
 
@@ -1925,7 +1923,7 @@ Miscellaneous Performance
 
   http://archives.postgresql.org/pgsql-committers/2007-11/msg00585.php
 
-* Improve performance of shared invalidation queue for multiple CPUs
+* -Improve performance of shared invalidation queue for multiple CPUs
 
   http://archives.postgresql.org/pgsql-performance/2008-01/msg00023.php
 
@@ -1975,7 +1973,7 @@ Source Code
 * %Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
 * Add optional CRC checksum to heap and index pages
-* Improve documentation to build only interfaces (Marc)
+* Improve documentation to build only interfaces
 * Remove or relicense modules that are not under the BSD license, if possible
 * Acquire lock on a relation before building a relcache entry for it
 * Allow cross-compiling by generating the zic database on the target system
@@ -2132,7 +2130,7 @@ Exotic Features
   modification.
 
 * Allow plug-in modules to emulate features from other databases
-* Add features of Oracle-style packages  (Pavel)
+* Add features of Oracle-style packages
 
   A package would be a schema with session-local variables,
   public/private functions, and initialization functions.  It

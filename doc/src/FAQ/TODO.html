@@ -1,9 +1,9 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>PostgreSQL TODO List</title>
-<meta name="generator" content="HTML::TextToHTML v2.25"/>
+<meta name="generator" content="HTML::TextToHTML v2.51"/>
 </head>
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
@@ -286,94 +286,92 @@ first.  There is also a developer's wiki at<br/>
           LC_MESSAGES
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2006-11/msg00390.php">http://archives.postgresql.org/pgsql-hackers/2006-11/msg00390.php</a>
 </p>
-    </li><li>Add ISO INTERVAL handling
   </li></ul>
-</li></ul>
-<p>                  <a href="http://archives.postgresql.org/pgsql-hackers/2006-01/msg00250.php">http://archives.postgresql.org/pgsql-hackers/2006-01/msg00250.php</a><br/>
-                  <a href="http://archives.postgresql.org/pgsql-bugs/2006-04/msg00248.php">http://archives.postgresql.org/pgsql-bugs/2006-04/msg00248.php</a>
+  </li><li>Add ISO INTERVAL handling
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-01/msg00250.php">http://archives.postgresql.org/pgsql-hackers/2006-01/msg00250.php</a>
+  <a href="http://archives.postgresql.org/pgsql-bugs/2006-04/msg00248.php">http://archives.postgresql.org/pgsql-bugs/2006-04/msg00248.php</a>
 </p>
-<ul>
-  <li>Support ISO INTERVAL syntax if units cannot be determined from
-                  the string, and are supplied after the string
-<p>                  The SQL standard states that the units after the string
-                  specify the units of the string, e.g. INTERVAL '2' MINUTE
-                  should return '00:02:00'. The current behavior has the units
-                  restrict the interval value to the specified unit or unit
-                  range, INTERVAL '70' SECOND returns '00:00:10'.
-</p>
-<p>                  For syntax that isn't uniquely ISO or PG syntax, like '1' or
-                  '1:30', treat as ISO if there is a range specification clause,
-                  and as PG if there no clause is present, e.g. interpret '1:30'
-                  MINUTE TO SECOND as '1 minute 30 seconds', and interpret
-                  '1:30' as '1 hour, 30 minutes'.
-</p>
-<p>                  This makes common cases like SELECT INTERVAL '1' MONTH
-                  SQL-standard results. The SQL standard supports a limited
-                  number of unit combinations and doesn't support unit names in
-                  the string. The PostgreSQL syntax is more flexible in the
-                  range of units supported, e.g. PostgreSQL supports '1 year 1
-                  hour', while the SQL standard does not.
-</p>
-  </li><li>Add support for year-month syntax, INTERVAL '50-6' YEAR
-                  TO MONTH
-  </li><li>Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1
-                  year' AS INTERVAL MONTH), and this should return '12 months'
-  </li><li>Round or truncate values to the requested precision, e.g.
-                  INTERVAL '11 months' AS YEAR should return one or zero
-  </li><li>Support precision, CREATE TABLE foo (a INTERVAL MONTH(3))
   <ul>
-    <li>Arrays
-    <ul>
-      <li>Delay resolution of array expression's data type so assignment
+    <li>Support ISO INTERVAL syntax if units cannot be determined from
+          the string, and are supplied after the string
+<p>          The SQL standard states that the units after the string
+          specify the units of the string, e.g. INTERVAL '2' MINUTE
+          should return '00:02:00'. The current behavior has the units
+          restrict the interval value to the specified unit or unit
+          range, INTERVAL '70' SECOND returns '00:00:10'.
+</p>
+<p>          For syntax that isn't uniquely ISO or PG syntax, like '1' or
+          '1:30', treat as ISO if there is a range specification clause,
+          and as PG if there no clause is present, e.g. interpret '1:30'
+          MINUTE TO SECOND as '1 minute 30 seconds', and interpret
+          '1:30' as '1 hour, 30 minutes'.
+</p>
+<p>          This makes common cases like SELECT INTERVAL '1' MONTH
+          SQL-standard results. The SQL standard supports a limited
+          number of unit combinations and doesn't support unit names in
+          the string. The PostgreSQL syntax is more flexible in the
+          range of units supported, e.g. PostgreSQL supports '1 year 1
+          hour', while the SQL standard does not.
+</p>
+    </li><li>Add support for year-month syntax, INTERVAL '50-6' YEAR
+          TO MONTH
+    </li><li>Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1
+          year' AS INTERVAL MONTH), and this should return '12 months'
+    </li><li>Round or truncate values to the requested precision, e.g.
+          INTERVAL '11 months' AS YEAR should return one or zero
+    </li><li>Support precision, CREATE TABLE foo (a INTERVAL MONTH(3))
+  </li></ul>
+  </li><li>Arrays
+  <ul>
+    <li>Delay resolution of array expression's data type so assignment
           coercion can be performed on empty array expressions
-      </li><li>Add support for arrays of domains
+    </li><li>Add support for arrays of domains
 <p>          <a href="http://archives.postgresql.org/pgsql-patches/2007-05/msg00114.php">http://archives.postgresql.org/pgsql-patches/2007-05/msg00114.php</a>
 </p>
-      </li><li>Allow single-byte header storage for array elements
-    </li></ul>
-    </li><li>Binary Data
-    <ul>
-      <li>Improve vacuum of large objects, like contrib/vacuumlo?
-      </li><li>Add security checking for large objects
-      </li><li>Auto-delete large objects when referencing row is deleted
+    </li><li>Allow single-byte header storage for array elements
+  </li></ul>
+  </li><li>Binary Data
+  <ul>
+    <li>Improve vacuum of large objects, like contrib/vacuumlo?
+    </li><li>Add security checking for large objects
+    </li><li>Auto-delete large objects when referencing row is deleted
 <p>          contrib/lo offers this functionality.
 </p>
-      </li><li>Allow read/write into TOAST values like large objects
+    </li><li>Allow read/write into TOAST values like large objects
 <p>          This requires the TOAST column to be stored EXTERNAL.
 </p>
-      </li><li>Add API for 64-bit large object access
+    </li><li>Add API for 64-bit large object access
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2005-09/msg00781.php">http://archives.postgresql.org/pgsql-hackers/2005-09/msg00781.php</a>
 </p>
-    </li></ul>
-    </li><li>MONEY data type
-    <ul>
-      <li>Add locale-aware MONEY type, and support multiple currencies
+  </li></ul>
+  </li><li>MONEY data type
+  <ul>
+    <li>Add locale-aware MONEY type, and support multiple currencies
 <p>          <a href="http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php">http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php</a>
           <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg01181.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg01181.php</a>
 </p>
-      </li><li>MONEY dumps in a locale-specific format making it difficult to
+    </li><li>MONEY dumps in a locale-specific format making it difficult to
           restore to a system with a different locale
-      </li><li>Allow MONEY to be easily cast to/from other numeric data types
-    </li></ul>
-    </li><li>Text Search
-    <ul>
-      <li>Allow dictionaries to change the token that is passed on to
+    </li><li>Allow MONEY to be easily cast to/from other numeric data types
+  </li></ul>
+  </li><li>Text Search
+  <ul>
+    <li>Allow dictionaries to change the token that is passed on to
           later dictionaries
 <p>          <a href="http://archives.postgresql.org/pgsql-patches/2007-11/msg00081.php">http://archives.postgresql.org/pgsql-patches/2007-11/msg00081.php</a>
 </p>
-      </li><li>Consider a function-based API for '@@' searches
+    </li><li>Consider a function-based API for '@@' searches
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg00511.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg00511.php</a>
 </p>
-      </li><li>Improve text search error messages
+    </li><li>Improve text search error messages
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-10/msg00966.php">http://archives.postgresql.org/pgsql-hackers/2007-10/msg00966.php</a>
           <a href="http://archives.postgresql.org/pgsql-hackers/2007-11/msg01146.php">http://archives.postgresql.org/pgsql-hackers/2007-11/msg01146.php</a>
 </p>
-      </li><li>Consider changing error to warning for strings larger than one
+    </li><li>Consider changing error to warning for strings larger than one
           megabyte
 <p>          <a href="http://archives.postgresql.org/pgsql-bugs/2008-02/msg00190.php">http://archives.postgresql.org/pgsql-bugs/2008-02/msg00190.php</a>
           <a href="http://archives.postgresql.org/pgsql-patches/2008-03/msg00062.php">http://archives.postgresql.org/pgsql-patches/2008-03/msg00062.php</a>
 </p>
-    </li></ul>
   </li></ul>
 </li></ul>
 <h1><a name="section_4">Functions</a></h1>
@@ -431,7 +429,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Prevent malicious functions from being executed with the permissions
   of unsuspecting users
-<p>  Index functions are safe, so VACUUM and ANALYZE are safe too. 
+<p>  Index functions are safe, so VACUUM and ANALYZE are safe too.
   Triggers, CHECK and DEFAULT expressions, and rules are still vulnerable.
   <a href="http://archives.postgresql.org/pgsql-hackers/2008-01/msg00268.php">http://archives.postgresql.org/pgsql-hackers/2008-01/msg00268.php</a>
 </p>
@@ -493,7 +491,7 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-01/msg00767.php">http://archives.postgresql.org/pgsql-hackers/2006-01/msg00767.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2006-03/msg00233.php">http://archives.postgresql.org/pgsql-patches/2006-03/msg00233.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg00662.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg00662.php</a>
-  <a href="http://wiki.postgresql.org/wiki/Todo:Collate">http://wiki.postgresql.org/wiki/Todo:Collate</a> 
+  <a href="http://wiki.postgresql.org/wiki/Todo:Collate">http://wiki.postgresql.org/wiki/Todo:Collate</a>
   <a href="http://wiki.postgresql.org/wiki/Todo:ICU">http://wiki.postgresql.org/wiki/Todo:ICU</a>
 </p>
   </li><li>Support multiple simultaneous character sets, per SQL92
@@ -578,7 +576,7 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Improve failure message when DROP DATABASE is used on a database that
   has prepared transactions
   </li><li>Allow prepared transactions with temporary tables created and dropped
-  in the same transaction, and when an ON COMMIT DELETE ROWS temporary 
+  in the same transaction, and when an ON COMMIT DELETE ROWS temporary
   table is accessed
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-03/msg00047.php">http://archives.postgresql.org/pgsql-hackers/2008-03/msg00047.php</a>
 </p>
@@ -788,12 +786,10 @@ first.  There is also a developer's wiki at<br/>
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2008-02/msg00954.php">http://archives.postgresql.org/pgsql-hackers/2008-02/msg00954.php</a>
 </p>
     </li><li>Allow COPY to report errors sooner
-  </li></ul>
-</li></ul>
-<p>         <a href="http://archives.postgresql.org/pgsql-hackers/2008-04/msg01169.php">http://archives.postgresql.org/pgsql-hackers/2008-04/msg01169.php</a>
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2008-04/msg01169.php">http://archives.postgresql.org/pgsql-hackers/2008-04/msg01169.php</a>
 </p>
-<ul>
-  <li>GRANT/REVOKE
+  </li></ul>
+  </li><li>GRANT/REVOKE
   <ul>
     <li>Allow column-level privileges
     </li><li>%Allow GRANT/REVOKE permissions to be applied to all schema objects
@@ -825,7 +821,7 @@ first.  There is also a developer's wiki at<br/>
   </li><li>LISTEN/NOTIFY
   <ul>
     <li>Allow LISTEN/NOTIFY to store info in memory rather than tables?
-<p>          Currently LISTEN/NOTIFY information is stored in pg_listener. 
+<p>          Currently LISTEN/NOTIFY information is stored in pg_listener.
           Storing such information in memory would improve performance.
 </p>
     </li><li>Add optional textual message to NOTIFY
@@ -1000,7 +996,7 @@ first.  There is also a developer's wiki at<br/>
           widths.  Perhaps the word wrapping could use the same
           algorithm documented in the W3C specification.
           <a href="http://archives.postgresql.org/pgsql-hackers/2008-05/msg00404.php">http://archives.postgresql.org/pgsql-hackers/2008-05/msg00404.php</a>
-          <a href="http://www.w3.org/TR/CSS21/tables.html<strong>auto-table-layout">http://www.w3.org/TR/CSS21/tables.html</strong>auto-table-layout</a>
+          <a href="http://www.w3.org/TR/CSS21/tables.html#auto-table-layout">http://www.w3.org/TR/CSS21/tables.html#auto-table-layout</a>
     <li>Add "auto" expanded mode that outputs in expanded format if
           "wrapped" mode can't wrap the output to the screen width
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2008-05/msg00417.php">http://archives.postgresql.org/pgsql-hackers/2008-05/msg00417.php</a>
@@ -1106,8 +1102,8 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li></ul>
 </li></ul>
-</p><h1><a name="section_11">Triggers</a></h1>
-
+<h1><a name="section_11">Triggers</a></h1>
+</p>
 <ul>
   <li>Add deferred trigger queue file
 <p>  Right now all deferred trigger information is stored in backend
@@ -1239,24 +1235,23 @@ first.  There is also a developer's wiki at<br/>
           digital trees (see Aoki)
   </li></ul>
   </li><li>Hash
-</li></ul>
-<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-09/msg00051.php">http://archives.postgresql.org/pgsql-hackers/2007-09/msg00051.php</a>
-</p>
-<ul>
-  <li>Pack hash index buckets onto disk pages more efficiently
+  <ul>
+    <li><a href="http://archives.postgresql.org/pgsql-hackers/2007-09/msg00051.php">http://archives.postgresql.org/pgsql-hackers/2007-09/msg00051.php</a>
+    </li><li>Pack hash index buckets onto disk pages more efficiently
 <p>          Currently only one hash bucket can be stored on a page. Ideally
           several hash buckets could be stored on a single page and greater
           granularity used for the hash algorithm.
 </p>
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2004-06/msg00168.php">http://archives.postgresql.org/pgsql-hackers/2004-06/msg00168.php</a>
 </p>
-  </li><li>Consider sorting hash buckets so entries can be found using a
+    </li><li>Consider sorting hash buckets so entries can be found using a
           binary search, rather than a linear scan
-  </li><li>In hash indexes, consider storing the hash value with or instead
+    </li><li>In hash indexes, consider storing the hash value with or instead
           of the key itself
-  </li><li>Add WAL logging for crash recovery
-  </li><li>Allow multi-column hash indexes
-  </li><li>-<em>During index creation, pre-sort the tuples to improve build speed</em>
+    </li><li>Add WAL logging for crash recovery
+    </li><li>Allow multi-column hash indexes
+    </li><li>-<em>During index creation, pre-sort the tuples to improve build speed</em>
+  </li></ul>
 </li></ul>
 <h1><a name="section_13">Sorting</a></h1>
 <ul>
@@ -1321,7 +1316,7 @@ first.  There is also a developer's wiki at<br/>
   page of bitmaps could track 512MB of heap pages.
 </p>
 <p>  A third idea would be for a heap scan to check if all rows are visible
-  and if so set a per-table flag which can be checked by index scans. 
+  and if so set a per-table flag which can be checked by index scans.
   Any change to the table would have to clear the flag.  To detect
   changes during the heap scan a counter could be set at the start and
   checked at the end --- if it is the same, the table has not been
@@ -1331,12 +1326,9 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-patches/2008-01/msg00049.php">http://archives.postgresql.org/pgsql-patches/2008-01/msg00049.php</a>
 </p>
   </li><li>Consider automatic caching of statements at various levels:
-  <ul>
-    <li>Parsed query tree
-    </li><li>Query execute plan
-    </li><li>Query results
-        <a href="http://archives.postgresql.org/pgsql-hackers/2008-04/msg00823.php">http://archives.postgresql.org/pgsql-hackers/2008-04/msg00823.php</a>
-  </li></ul>
+  Parsed query tree, query execution plan, query results
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-04/msg00823.php">http://archives.postgresql.org/pgsql-hackers/2008-04/msg00823.php</a>
+</p>
   </li><li>Consider increasing internal areas when shared buffers is increased
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-10/msg01419.php">http://archives.postgresql.org/pgsql-hackers/2005-10/msg01419.php</a>
 </p>
@@ -1401,7 +1393,7 @@ first.  There is also a developer's wiki at<br/>
     </li><li>Improve control of auto-vacuum
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg00876.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg00876.php</a>
 </p>
-    </li><li>Prevent long-lived temporary tables from causing frozen-xid
+    </li><li>-<em>Prevent long-lived temporary tables from causing frozen-xid</em>
           advancement starvation
 <p>          The problem is that autovacuum cannot vacuum them to set frozen xids;
           only the session that created them can do that.
@@ -1420,7 +1412,7 @@ first.  There is also a developer's wiki at<br/>
 <h1><a name="section_17">Locking</a></h1>
 
 <ul>
-  <li>Fix priority ordering of read and write light-weight locks (Neil)
+  <li>Fix priority ordering of read and write light-weight locks
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2004-11/msg00893.php">http://archives.postgresql.org/pgsql-hackers/2004-11/msg00893.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2004-11/msg00905.php">http://archives.postgresql.org/pgsql-hackers/2004-11/msg00905.php</a>
 </p>
@@ -1575,7 +1567,7 @@ first.  There is also a developer's wiki at<br/>
   catalogs and the transaction status log.
 </p>
   </li><li>Consider adding buffers the background writer finds reusable to the
-  free list 
+  free list
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php">http://archives.postgresql.org/pgsql-hackers/2007-04/msg00781.php</a>
 </p>
   </li><li>Automatically tune bgwriter_delay based on activity rather then using a
@@ -1661,7 +1653,7 @@ first.  There is also a developer's wiki at<br/>
   AcceptInvalidationMessages() call
 <p>  <a href="http://archives.postgresql.org/pgsql-committers/2007-11/msg00585.php">http://archives.postgresql.org/pgsql-committers/2007-11/msg00585.php</a>
 </p>
-  </li><li>Improve performance of shared invalidation queue for multiple CPUs
+  </li><li>-<em>Improve performance of shared invalidation queue for multiple CPUs</em>
 <p>  <a href="http://archives.postgresql.org/pgsql-performance/2008-01/msg00023.php">http://archives.postgresql.org/pgsql-performance/2008-01/msg00023.php</a>
 </p>
   </li><li>Consider Cartesian joins when both relations are needed to form an
@@ -1702,7 +1694,7 @@ first.  There is also a developer's wiki at<br/>
   </li><li>%Remove warnings created by -Wcast-align
   </li><li>Move platform-specific ps status display info from ps_status.c to ports
   </li><li>Add optional CRC checksum to heap and index pages
-  </li><li>Improve documentation to build only interfaces (Marc)
+  </li><li>Improve documentation to build only interfaces
   </li><li>Remove or relicense modules that are not under the BSD license, if possible
   </li><li>Acquire lock on a relation before building a relcache entry for it
   </li><li>Allow cross-compiling by generating the zic database on the target system
@@ -1830,7 +1822,7 @@ first.  There is also a developer's wiki at<br/>
   modification.
 </p>
   </li><li>Allow plug-in modules to emulate features from other databases
-  </li><li>Add features of Oracle-style packages  (Pavel)
+  </li><li>Add features of Oracle-style packages
 <p>  A package would be a schema with session-local variables,
   public/private functions, and initialization functions.  It
   is also possible to implement these capabilities
@@ -1850,7 +1842,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2008-01/msg00893.php">http://archives.postgresql.org/pgsql-hackers/2008-01/msg00893.php</a>
 </p>
 </li></ul>
-<h1><a name="section_25">Features We Do <u>Not</u> Want</a></h1>
+<h1><a name="section_25">Features We Do _Not_ Want</a></h1>
 
 <ul>
   <li>All backends running as threads in a single process (not wanted)
