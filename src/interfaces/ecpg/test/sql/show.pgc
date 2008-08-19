@@ -6,7 +6,7 @@ EXEC SQL INCLUDE ../regression;
 
 int main(int argc, char* argv[]) {
   EXEC SQL BEGIN DECLARE SECTION;
-    char var[25];
+    char var[25] = "public";
   EXEC SQL END DECLARE SECTION;
 
   ECPGdebug(1, stderr);
@@ -14,6 +14,10 @@ int main(int argc, char* argv[]) {
 
   EXEC SQL WHENEVER SQLWARNING SQLPRINT;
   EXEC SQL WHENEVER SQLERROR SQLPRINT;
+
+  EXEC SQL SET search_path TO :var;
+  EXEC SQL SHOW search_path INTO :var;
+  printf("Var: Search path: %s\n", var);
 
   EXEC SQL SET search_path TO 'public';
   EXEC SQL SHOW search_path INTO :var;
