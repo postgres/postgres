@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.359.2.4 2008/06/04 12:26:14 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.359.2.5 2008/08/20 14:07:16 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1243,7 +1243,16 @@ iso_level:	READ UNCOMMITTED	{ $$ = make_str("read uncommitted"); }
 		;
 
 var_value:	opt_boolean		{ $$ = $1; }
-		| AllConst			{ $$ = $1; }
+		| AllConst			{ 	/* we have to check for a variable here because it has to be
+						     	replaced with its value on the client side */
+							if ($1[1] == '$')
+							{
+								$$ = make_str("$0");
+								free($1);
+							}
+							else
+								$$ = $1;
+						}
 		| ColId				{ $$ = $1; }
 		;
 
@@ -2358,7 +2367,7 @@ fetch_direction:  NEXT				{ $$ = make_str("next"); }
 fetch_count:	IntConst	{
 		                	if ($1[1] == '$')
 					{
-						/* a variable here has to be replaced on the client side, thus we have to use '?' here */
+						/* a variable here has to be replaced on the client side, thus we have to use '$0' here */
 						$$ = make_str("$0");
 						free($1);
 					}
