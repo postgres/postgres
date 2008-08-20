@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.370 2008/08/19 10:40:32 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.371 2008/08/20 14:09:16 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -564,7 +564,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	Typename SimpleTypename Numeric opt_float DiscardStmt
 %type  <str>	Character character opt_varying opt_charset enum_val_list
 %type  <str>	opt_timezone opt_interval table_ref fetch_direction
-%type  <str>	ConstDatetime AlterDomainStmt AlterSeqStmt 
+%type  <str>	ConstDatetime AlterDomainStmt AlterSeqStmt table_func_column
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
 %type  <str>	sortby qualified_name_list name_list ColId_or_Sconst
@@ -590,7 +590,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	RemoveOperStmt RenameStmt all_Op opt_trusted opt_lancompiler
 %type  <str>	VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>	VariableResetStmt AlterTableStmt from_list overlay_list
-%type  <str>	relation_name OptTableSpace LockStmt opt_lock 
+%type  <str>	relation_name OptTableSpace LockStmt opt_lock table_func_column_list
 %type  <str>	CreateUserStmt AlterUserStmt CreateSeqStmt SeqOptList
 %type  <str>	SeqOptElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
@@ -2379,7 +2379,7 @@ fetch_direction:  NEXT				{ $$ = make_str("next"); }
 fetch_count:	IntConst	{
 		                	if ($1[1] == '$')
 					{
-						/* a variable here has to be replaced on the client side, thus we have to use '?' here */
+						/* a variable here has to be replaced on the client side, thus we have to use '$0' here */
 						$$ = make_str("$0");
 						free($1);
 					}
@@ -2607,6 +2607,9 @@ CreateFunctionStmt:	CREATE opt_or_replace FUNCTION func_name func_args
 					RETURNS func_return createfunc_opt_list opt_definition
 			{ $$ = cat_str(8, make_str("create"), $2, make_str("function"), $4, $5, make_str("returns"), $7, $8); }
 		| CREATE opt_or_replace FUNCTION func_name func_args
+					RETURNS TABLE '(' table_func_column_list ')' createfunc_opt_list opt_definition
+			{ $$ = cat_str(9, make_str("create"), $2, make_str("function"), $4, $5, make_str("returns table ("), $9, make_str(")"), $11, $12); }
+		| CREATE opt_or_replace FUNCTION func_name func_args
 					createfunc_opt_list opt_definition
 			{ $$ = cat_str(6, make_str("create"), $2, make_str("function"), $4, $5, $6, $7); }
 		;
@@ -2714,6 +2717,14 @@ createfunc_opt_item: AS func_as
 opt_definition: WITH definition	{ $$ = cat2_str(make_str("with"), $2); }
 		| /*EMPTY*/ 	{ $$ = EMPTY; }
 		;
+
+table_func_column:      param_name func_type	{ $$ = cat2_str($1, $2); }
+			;
+
+table_func_column_list:
+			table_func_column				{ $$ = $1; }
+			| table_func_column_list ',' table_func_column	{ $$ = cat_str(3, $1, make_str(","), $3); }
+			; 
 
 AlterFunctionStmt:
 		ALTER FUNCTION function_with_argtypes alterfunc_opt_list opt_restrict
@@ -4383,6 +4394,10 @@ func_expr:      func_name '(' ')'
 			{ $$ = cat2_str($1, make_str("()"));	}
 		| func_name '(' expr_list ')'
 			{ $$ = cat_str(4, $1, make_str("("), $3, make_str(")"));	}
+		| func_name '(' VARIADIC a_expr ')'
+			{ $$ = cat_str(4, $1, make_str("( variadic "), $4, make_str(")"));	}
+		| func_name '(' expr_list ',' VARIADIC a_expr ')'
+			{ $$ = cat_str(6, $1, make_str("("), $3, make_str(", variadic "), $6, make_str(")"));	}
 		| func_name '(' ALL expr_list ')'
 			{ $$ = cat_str(4, $1, make_str("( all"), $4, make_str(")"));	}
 		| func_name '(' DISTINCT expr_list ')'

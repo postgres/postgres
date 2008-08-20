@@ -2370,6 +2370,10 @@ Tue, 24 Jun 2008 13:30:51 +0200
 Tue, 19 Aug 2008 12:32:24 +0200
 
 	- Fixed incorrect argument handling in SET command if argument is a variable.
+
+Wed, 20 Aug 2008 15:49:23 +0200
+
+	- Synced parser.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.
