@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.134 2008/05/29 22:02:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.135 2008/08/20 11:53:45 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -752,7 +752,16 @@ pqSendSome(PGconn *conn, int len)
 		int			sent;
 		char		sebuf[256];
 
+#ifndef WIN32
 		sent = pqsecure_write(conn, ptr, len);
+#else
+		/*
+		 * Windows can fail on large sends, per KB article Q201213. The failure-point
+		 * appears to be different in different versions of Windows, but 64k should
+		 * always be safe.
+		 */
+		sent = pqsecure_write(conn, ptr, Min(len, 65536));
+#endif
 
 		if (sent < 0)
 		{
