@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.135 2008/08/17 02:19:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.136 2008/08/20 15:49:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,14 +94,9 @@ replace_outer_var(PlannerInfo *root, Var *var)
 	 * NOTE: in sufficiently complex querytrees, it is possible for the same
 	 * varno/abslevel to refer to different RTEs in different parts of the
 	 * parsetree, so that different fields might end up sharing the same Param
-	 * number.	As long as we check the vartype as well, I believe that this
-	 * sort of aliasing will cause no trouble. The correct field should get
-	 * stored into the Param slot at execution in each part of the tree.
-	 *
-	 * We also need to demand a match on vartypmod.  This does not matter for
-	 * the Param itself, since those are not typmod-dependent, but it does
-	 * matter when make_subplan() instantiates a modified copy of the Var for
-	 * a subplan's args list.
+	 * number.	As long as we check the vartype/typmod as well, I believe that
+	 * this sort of aliasing will cause no trouble.  The correct field should
+	 * get stored into the Param slot at execution in each part of the tree.
 	 */
 	i = 0;
 	foreach(ppl, root->glob->paramlist)
