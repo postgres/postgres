@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.136 2008/08/20 15:49:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.137 2008/08/20 19:58:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1148,10 +1148,14 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	 * take steps to preserve AND/OR flatness of a qual.  We assume the input
 	 * has been AND/OR flattened and so we need no recursion here.
 	 *
-	 * If we recurse down through anything other than an AND node, we are
-	 * definitely not at top qual level anymore.  (Due to the coding here, we
-	 * will not get called on the List subnodes of an AND, so no check is
-	 * needed for List.)
+	 * (Due to the coding here, we will not get called on the List subnodes of
+	 * an AND; and the input is *not* yet in implicit-AND format.  So no check
+	 * is needed for a bare List.)
+	 *
+	 * Anywhere within the top-level AND/OR clause structure, we can tell
+	 * make_subplan() that NULL and FALSE are interchangeable.  So isTopQual
+	 * propagates down in both cases.  (Note that this is unlike the meaning
+	 * of "top level qual" used in most other places in Postgres.)
 	 */
 	if (and_clause(node))
 	{
@@ -1174,13 +1178,13 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 		return (Node *) make_andclause(newargs);
 	}
 
-	/* otherwise not at qual top-level */
-	locContext.isTopQual = false;
-
 	if (or_clause(node))
 	{
 		List	   *newargs = NIL;
 		ListCell   *l;
+
+		/* Still at qual top-level */
+		locContext.isTopQual = context->isTopQual;
 
 		foreach(l, ((BoolExpr *) node)->args)
 		{
@@ -1194,6 +1198,12 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 		}
 		return (Node *) make_orclause(newargs);
 	}
+
+	/*
+	 * If we recurse down through anything other than an AND or OR node,
+	 * we are definitely not at top qual level anymore.
+	 */
+	locContext.isTopQual = false;
 
 	return expression_tree_mutator(node,
 								   process_sublinks_mutator,
