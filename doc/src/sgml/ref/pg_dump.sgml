@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.103 2008/07/20 18:43:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.104 2008/08/21 22:25:44 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -754,22 +754,13 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   <application>pg_dump</application> has a few limitations:
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      When a data-only dump is chosen and the option
-      <option>--disable-triggers</> is used,
-      <application>pg_dump</application> emits commands to disable
-      triggers on user tables before inserting the data and commands
-      to re-enable them after the data has been inserted.  If the
-      restore is stopped in the middle, the system catalogs might be
-      left in the wrong state.
-     </para>
-    </listitem>
-
-   </itemizedlist>
+   <application>pg_dump</application> has a limitation; when a
+   data-only dump is chosen and the option <option>--disable-triggers</>
+   is used, <application>pg_dump</application> emits commands
+   to disable triggers on user tables before inserting the data
+   and commands to re-enable them after the data has been
+   inserted.  If the restore is stopped in the middle, the system
+   catalogs might be left in the wrong state.
   </para>
 
   <para>
@@ -782,11 +773,14 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   The dump file produced by <application>pg_dump</application> does
-   not contain the statistics used by the optimizer to make query
-   planning decisions.  Therefore, it is wise to run
-   <command>ANALYZE</command> after restoring from a dump file to
-   ensure good performance.
+   The dump file produced by <application>pg_dump</application>
+   does not contain the statistics used by the optimizer to make
+   query planning decisions.  Therefore, it is wise to run
+   <command>ANALYZE</command> after restoring from a dump file
+   to ensure good performance.  The dump file also does not
+   contain any <command>ALTER DATABASE ... SET</> commands;
+   these settings are dumped by <xref linkend="app-pg-dumpall">,
+   along with database users and other installation-wide settings.
   </para>
 
   <para>
