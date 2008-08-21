@@ -19215,7 +19215,7 @@ done
 # Do test here with the proper thread flags
 { echo "$as_me:$LINENO: checking whether getpwuid_r takes a fifth argument" >&5
 echo $ECHO_N "checking whether getpwuid_r takes a fifth argument... $ECHO_C" >&6; }
-if test "${pgac_func_getpwuid_r_5arg+set}" = set; then
+if test "${pgac_cv_func_getpwuid_r_5arg+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -19256,19 +19256,19 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
        } && test -s conftest.$ac_objext; then
-  pgac_func_getpwuid_r_5arg=yes
+  pgac_cv_func_getpwuid_r_5arg=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	pgac_func_getpwuid_r_5arg=no
+	pgac_cv_func_getpwuid_r_5arg=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
-{ echo "$as_me:$LINENO: result: $pgac_func_getpwuid_r_5arg" >&5
-echo "${ECHO_T}$pgac_func_getpwuid_r_5arg" >&6; }
-if test x"$pgac_func_getpwuid_r_5arg" = xyes ; then
+{ echo "$as_me:$LINENO: result: $pgac_cv_func_getpwuid_r_5arg" >&5
+echo "${ECHO_T}$pgac_cv_func_getpwuid_r_5arg" >&6; }
+if test x"$pgac_cv_func_getpwuid_r_5arg" = xyes ; then
 
 cat >>confdefs.h <<\_ACEOF
 #define GETPWUID_R_5ARG
@@ -19278,7 +19278,7 @@ fi
 
 { echo "$as_me:$LINENO: checking whether strerror_r returns int" >&5
 echo $ECHO_N "checking whether strerror_r returns int... $ECHO_C" >&6; }
-if test "${pgac_func_strerror_r_int+set}" = set; then
+if test "${pgac_cv_func_strerror_r_int+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -19318,19 +19318,19 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
        } && test -s conftest.$ac_objext; then
-  pgac_func_strerror_r_int=yes
+  pgac_cv_func_strerror_r_int=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	pgac_func_strerror_r_int=no
+	pgac_cv_func_strerror_r_int=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
-{ echo "$as_me:$LINENO: result: $pgac_func_strerror_r_int" >&5
-echo "${ECHO_T}$pgac_func_strerror_r_int" >&6; }
-if test x"$pgac_func_strerror_r_int" = xyes ; then
+{ echo "$as_me:$LINENO: result: $pgac_cv_func_strerror_r_int" >&5
+echo "${ECHO_T}$pgac_cv_func_strerror_r_int" >&6; }
+if test x"$pgac_cv_func_strerror_r_int" = xyes ; then
 
 cat >>confdefs.h <<\_ACEOF
 #define STRERROR_R_INT

@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $PostgreSQL: pgsql/config/c-library.m4,v 1.32 2008/02/19 18:02:30 petere Exp $
+# $PostgreSQL: pgsql/config/c-library.m4,v 1.33 2008/08/21 13:53:28 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -83,7 +83,7 @@ AH_VERBATIM(GETTIMEOFDAY_1ARG_,
 # If so, define GETPWUID_R_5ARG
 AC_DEFUN([PGAC_FUNC_GETPWUID_R_5ARG],
 [AC_CACHE_CHECK(whether getpwuid_r takes a fifth argument,
-pgac_func_getpwuid_r_5arg,
+pgac_cv_func_getpwuid_r_5arg,
 [AC_TRY_COMPILE([#include <sys/types.h>
 #include <pwd.h>],
 [uid_t uid;
@@ -92,9 +92,9 @@ char *buf;
 size_t bufsize;
 struct passwd **result;
 getpwuid_r(uid, space, buf, bufsize, result);],
-[pgac_func_getpwuid_r_5arg=yes],
-[pgac_func_getpwuid_r_5arg=no])])
-if test x"$pgac_func_getpwuid_r_5arg" = xyes ; then
+[pgac_cv_func_getpwuid_r_5arg=yes],
+[pgac_cv_func_getpwuid_r_5arg=no])])
+if test x"$pgac_cv_func_getpwuid_r_5arg" = xyes ; then
   AC_DEFINE(GETPWUID_R_5ARG,, [Define to 1 if getpwuid_r() takes a 5th argument.])
 fi
 ])# PGAC_FUNC_GETPWUID_R_5ARG
@@ -106,7 +106,7 @@ fi
 # If so, define STRERROR_R_INT
 AC_DEFUN([PGAC_FUNC_STRERROR_R_INT],
 [AC_CACHE_CHECK(whether strerror_r returns int,
-pgac_func_strerror_r_int,
+pgac_cv_func_strerror_r_int,
 [AC_TRY_COMPILE([#include <string.h>],
 [#ifndef _AIX
 int strerror_r(int, char *, size_t);
@@ -114,9 +114,9 @@ int strerror_r(int, char *, size_t);
 /* Older AIX has 'int' for the third argument so we don't test the args. */
 int strerror_r();
 #endif],
-[pgac_func_strerror_r_int=yes],
-[pgac_func_strerror_r_int=no])])
-if test x"$pgac_func_strerror_r_int" = xyes ; then
+[pgac_cv_func_strerror_r_int=yes],
+[pgac_cv_func_strerror_r_int=no])])
+if test x"$pgac_cv_func_strerror_r_int" = xyes ; then
   AC_DEFINE(STRERROR_R_INT,, [Define to 1 if strerror_r() returns a int.])
 fi
 ])# PGAC_FUNC_STRERROR_R_INT
