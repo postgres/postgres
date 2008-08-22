@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.78 2008/08/07 01:11:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.79 2008/08/22 00:16:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1464,7 +1464,7 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-	else if (is_subplan(node))
+	else if (IsA(node, SubPlan))
 	{
 		/* Extra work needed here if we ever need this case */
 		elog(ERROR, "already-planned subqueries not supported");

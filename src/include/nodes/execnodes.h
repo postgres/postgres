@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.186 2008/08/07 03:04:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.187 2008/08/22 00:16:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -626,6 +626,17 @@ typedef struct SubPlanState
 	FmgrInfo   *lhs_hash_funcs; /* hash functions for lefthand datatype(s) */
 	FmgrInfo   *cur_eq_funcs;	/* equality functions for LHS vs. table */
 } SubPlanState;
+
+/* ----------------
+ *		AlternativeSubPlanState node
+ * ----------------
+ */
+typedef struct AlternativeSubPlanState
+{
+	ExprState	xprstate;
+	List	   *subplans;		/* states of alternative subplans */
+	int			active;			/* list index of the one we're using */
+} AlternativeSubPlanState;
 
 /* ----------------
  *		FieldSelectState node

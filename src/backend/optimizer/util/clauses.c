@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.262 2008/08/14 18:47:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.263 2008/08/22 00:16:04 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -360,7 +360,7 @@ make_ands_implicit(Expr *clause)
  * are no subqueries.  There mustn't be outer-aggregate references either.
  *
  * (If you want something like this but able to deal with subqueries,
- * see rewriteManip.c's checkExprHasAggs().)
+ * see rewriteManip.c's contain_aggs_of_level().)
  */
 bool
 contain_agg_clause(Node *clause)
@@ -566,6 +566,8 @@ expression_returns_set_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, SubPlan))
 		return false;
+	if (IsA(node, AlternativeSubPlan))
+		return false;
 	if (IsA(node, ArrayExpr))
 		return false;
 	if (IsA(node, RowExpr))
@@ -637,6 +639,8 @@ expression_returns_set_rows_walker(Node *node, double *count)
 		return false;
 	if (IsA(node, SubPlan))
 		return false;
+	if (IsA(node, AlternativeSubPlan))
+		return false;
 	if (IsA(node, ArrayExpr))
 		return false;
 	if (IsA(node, RowExpr))
@@ -684,6 +688,7 @@ contain_subplans_walker(Node *node, void *context)
 	if (node == NULL)
 		return false;
 	if (IsA(node, SubPlan) ||
+		IsA(node, AlternativeSubPlan) ||
 		IsA(node, SubLink))
 		return true;			/* abort the tree traversal and return true */
 	return expression_tree_walker(node, contain_subplans_walker, context);
@@ -1011,6 +1016,8 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		return true;
 	}
 	if (IsA(node, SubPlan))
+		return true;
+	if (IsA(node, AlternativeSubPlan))
 		return true;
 	/* ArrayCoerceExpr is strict at the array level, regardless of elemfunc */
 	if (IsA(node, FieldStore))
@@ -2308,7 +2315,8 @@ eval_const_expressions_mutator(Node *node,
 				break;
 		}
 	}
-	if (IsA(node, SubPlan))
+	if (IsA(node, SubPlan) ||
+		IsA(node, AlternativeSubPlan))
 	{
 		/*
 		 * Return a SubPlan unchanged --- too late to do anything with it.
@@ -4156,6 +4164,8 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_AlternativeSubPlan:
+			return walker(((AlternativeSubPlan *) node)->subplans, context);
 		case T_FieldSelect:
 			return walker(((FieldSelect *) node)->arg, context);
 		case T_FieldStore:
@@ -4627,6 +4637,16 @@ expression_tree_mutator(Node *node,
 				/* transform args list (params to be passed to subplan) */
 				MUTATE(newnode->args, subplan->args, List *);
 				/* but not the sub-Plan itself, which is referenced as-is */
+				return (Node *) newnode;
+			}
+			break;
+		case T_AlternativeSubPlan:
+			{
+				AlternativeSubPlan *asplan = (AlternativeSubPlan *) node;
+				AlternativeSubPlan *newnode;
+
+				FLATCOPY(newnode, asplan, AlternativeSubPlan);
+				MUTATE(newnode->subplans, asplan->subplans, List *);
 				return (Node *) newnode;
 			}
 			break;

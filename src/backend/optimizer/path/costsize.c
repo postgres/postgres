@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.194 2008/08/16 00:01:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.195 2008/08/22 00:16:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1869,6 +1869,93 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 
 /*
+ * cost_subplan
+ *		Figure the costs for a SubPlan (or initplan).
+ *
+ * Note: we could dig the subplan's Plan out of the root list, but in practice
+ * all callers have it handy already, so we make them pass it.
+ */
+void
+cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan)
+{
+	QualCost	sp_cost;
+
+	/* Figure any cost for evaluating the testexpr */
+	cost_qual_eval(&sp_cost,
+				   make_ands_implicit((Expr *) subplan->testexpr),
+				   root);
+
+	if (subplan->useHashTable)
+	{
+		/*
+		 * If we are using a hash table for the subquery outputs, then the
+		 * cost of evaluating the query is a one-time cost.  We charge one
+		 * cpu_operator_cost per tuple for the work of loading the hashtable,
+		 * too.
+		 */
+		sp_cost.startup += plan->total_cost +
+			cpu_operator_cost * plan->plan_rows;
+
+		/*
+		 * The per-tuple costs include the cost of evaluating the lefthand
+		 * expressions, plus the cost of probing the hashtable.  We already
+		 * accounted for the lefthand expressions as part of the testexpr,
+		 * and will also have counted one cpu_operator_cost for each
+		 * comparison operator.  That is probably too low for the probing
+		 * cost, but it's hard to make a better estimate, so live with it for
+		 * now.
+		 */
+	}
+	else
+	{
+		/*
+		 * Otherwise we will be rescanning the subplan output on each
+		 * evaluation.  We need to estimate how much of the output we will
+		 * actually need to scan.  NOTE: this logic should agree with the
+		 * tuple_fraction estimates used by make_subplan() in
+		 * plan/subselect.c.
+		 */
+		Cost		plan_run_cost = plan->total_cost - plan->startup_cost;
+
+		if (subplan->subLinkType == EXISTS_SUBLINK)
+		{
+			/* we only need to fetch 1 tuple */
+			sp_cost.per_tuple += plan_run_cost / plan->plan_rows;
+		}
+		else if (subplan->subLinkType == ALL_SUBLINK ||
+				 subplan->subLinkType == ANY_SUBLINK)
+		{
+			/* assume we need 50% of the tuples */
+			sp_cost.per_tuple += 0.50 * plan_run_cost;
+			/* also charge a cpu_operator_cost per row examined */
+			sp_cost.per_tuple += 0.50 * plan->plan_rows * cpu_operator_cost;
+		}
+		else
+		{
+			/* assume we need all tuples */
+			sp_cost.per_tuple += plan_run_cost;
+		}
+
+		/*
+		 * Also account for subplan's startup cost. If the subplan is
+		 * uncorrelated or undirect correlated, AND its topmost node is a Sort
+		 * or Material node, assume that we'll only need to pay its startup
+		 * cost once; otherwise assume we pay the startup cost every time.
+		 */
+		if (subplan->parParam == NIL &&
+			(IsA(plan, Sort) ||
+			 IsA(plan, Material)))
+			sp_cost.startup += plan->startup_cost;
+		else
+			sp_cost.per_tuple += plan->startup_cost;
+	}
+
+	subplan->startup_cost = sp_cost.startup;
+	subplan->per_call_cost = sp_cost.per_tuple;
+}
+
+
+/*
  * cost_qual_eval
  *		Estimate the CPU costs of evaluating a WHERE clause.
  *		The input can be either an implicitly-ANDed list of boolean
@@ -2066,121 +2153,35 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 		 * subplan will be executed on each evaluation, so charge accordingly.
 		 * (Sub-selects that can be executed as InitPlans have already been
 		 * removed from the expression.)
-		 *
-		 * An exception occurs when we have decided we can implement the
-		 * subplan by hashing.
 		 */
 		SubPlan    *subplan = (SubPlan *) node;
-		Plan	   *plan = planner_subplan_get_plan(context->root, subplan);
 
-		if (subplan->useHashTable)
-		{
-			/*
-			 * If we are using a hash table for the subquery outputs, then the
-			 * cost of evaluating the query is a one-time cost. We charge one
-			 * cpu_operator_cost per tuple for the work of loading the
-			 * hashtable, too.
-			 */
-			context->total.startup += plan->total_cost +
-				cpu_operator_cost * plan->plan_rows;
+		context->total.startup += subplan->startup_cost;
+		context->total.per_tuple += subplan->per_call_cost;
 
-			/*
-			 * The per-tuple costs include the cost of evaluating the lefthand
-			 * expressions, plus the cost of probing the hashtable. Recursion
-			 * into the testexpr will handle the lefthand expressions
-			 * properly, and will count one cpu_operator_cost for each
-			 * comparison operator.  That is probably too low for the probing
-			 * cost, but it's hard to make a better estimate, so live with it
-			 * for now.
-			 */
-		}
-		else
-		{
-			/*
-			 * Otherwise we will be rescanning the subplan output on each
-			 * evaluation.	We need to estimate how much of the output we will
-			 * actually need to scan.  NOTE: this logic should agree with
-			 * get_initplan_cost, below, and with the estimates used by
-			 * make_subplan() in plan/subselect.c.
-			 */
-			Cost		plan_run_cost = plan->total_cost - plan->startup_cost;
+		/*
+		 * We don't want to recurse into the testexpr, because it was already
+		 * counted in the SubPlan node's costs.  So we're done.
+		 */
+		return false;
+	}
+	else if (IsA(node, AlternativeSubPlan))
+	{
+		/*
+		 * Arbitrarily use the first alternative plan for costing.  (We should
+		 * certainly only include one alternative, and we don't yet have
+		 * enough information to know which one the executor is most likely
+		 * to use.)
+		 */
+		AlternativeSubPlan *asplan = (AlternativeSubPlan *) node;
 
-			if (subplan->subLinkType == EXISTS_SUBLINK)
-			{
-				/* we only need to fetch 1 tuple */
-				context->total.per_tuple += plan_run_cost / plan->plan_rows;
-			}
-			else if (subplan->subLinkType == ALL_SUBLINK ||
-					 subplan->subLinkType == ANY_SUBLINK)
-			{
-				/* assume we need 50% of the tuples */
-				context->total.per_tuple += 0.50 * plan_run_cost;
-				/* also charge a cpu_operator_cost per row examined */
-				context->total.per_tuple +=
-					0.50 * plan->plan_rows * cpu_operator_cost;
-			}
-			else
-			{
-				/* assume we need all tuples */
-				context->total.per_tuple += plan_run_cost;
-			}
-
-			/*
-			 * Also account for subplan's startup cost. If the subplan is
-			 * uncorrelated or undirect correlated, AND its topmost node is a
-			 * Sort or Material node, assume that we'll only need to pay its
-			 * startup cost once; otherwise assume we pay the startup cost
-			 * every time.
-			 */
-			if (subplan->parParam == NIL &&
-				(IsA(plan, Sort) ||
-				 IsA(plan, Material)))
-				context->total.startup += plan->startup_cost;
-			else
-				context->total.per_tuple += plan->startup_cost;
-		}
+		return cost_qual_eval_walker((Node *) linitial(asplan->subplans),
+									 context);
 	}
 
 	/* recurse into children */
 	return expression_tree_walker(node, cost_qual_eval_walker,
 								  (void *) context);
-}
-
-
-/*
- * get_initplan_cost
- *		Get the expected cost of evaluating an initPlan.
- *
- * Keep this in sync with cost_qual_eval_walker's handling of subplans, above,
- * and with the estimates used by make_subplan() in plan/subselect.c.
- */
-Cost
-get_initplan_cost(PlannerInfo *root, SubPlan *subplan)
-{
-	Cost		result;
-	Plan	   *plan = planner_subplan_get_plan(root, subplan);
-
-	/* initPlans never use hashtables */
-	Assert(!subplan->useHashTable);
-	/* they are never ALL or ANY, either */
-	Assert(!(subplan->subLinkType == ALL_SUBLINK ||
-			 subplan->subLinkType == ANY_SUBLINK));
-
-	if (subplan->subLinkType == EXISTS_SUBLINK)
-	{
-		/* we only need to fetch 1 tuple */
-		Cost		plan_run_cost = plan->total_cost - plan->startup_cost;
-
-		result = plan->startup_cost;
-		result += plan_run_cost / plan->plan_rows;
-	}
-	else
-	{
-		/* assume we need all tuples */
-		result = plan->total_cost;
-	}
-
-	return result;
 }
 
 

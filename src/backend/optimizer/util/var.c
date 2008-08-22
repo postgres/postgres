@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.75 2008/08/14 18:47:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.76 2008/08/22 00:16:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,7 +171,7 @@ pull_varattnos_walker(Node *node, Bitmapset **varattnos)
 	}
 	/* Should not find a subquery or subplan */
 	Assert(!IsA(node, Query));
-	Assert(!is_subplan(node));
+	Assert(!IsA(node, SubPlan));
 
 	return expression_tree_walker(node, pull_varattnos_walker,
 								  (void *) varattnos);
@@ -677,7 +677,7 @@ flatten_join_alias_vars_mutator(Node *node,
 		return (Node *) newnode;
 	}
 	/* Already-planned tree not supported */
-	Assert(!is_subplan(node));
+	Assert(!IsA(node, SubPlan));
 
 	return expression_tree_mutator(node, flatten_join_alias_vars_mutator,
 								   (void *) context);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.229 2008/07/16 01:30:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.230 2008/08/22 00:16:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1978,6 +1978,15 @@ exprType(Node *expr)
 					/* for all other subplan types, result is boolean */
 					type = BOOLOID;
 				}
+			}
+			break;
+		case T_AlternativeSubPlan:
+			{
+				/* As above, supported for the convenience of ruleutils.c */
+				AlternativeSubPlan *asplan = (AlternativeSubPlan *) expr;
+
+				/* subplans should all return the same thing */
+				type = exprType((Node *) linitial(asplan->subplans));
 			}
 			break;
 		case T_FieldSelect:

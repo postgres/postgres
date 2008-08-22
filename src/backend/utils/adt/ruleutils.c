@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.279 2008/08/02 21:32:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.280 2008/08/22 00:16:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3730,6 +3730,11 @@ get_rule_expr(Node *node, deparse_context *context,
 				else
 					appendStringInfo(buf, "(subplan)");
 			}
+			break;
+
+		case T_AlternativeSubPlan:
+			/* As above, just punt */
+			appendStringInfo(buf, "(alternative subplans)");
 			break;
 
 		case T_FieldSelect:

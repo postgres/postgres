@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.109 2008/08/14 20:31:29 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.110 2008/08/22 00:16:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,10 +25,10 @@
 typedef struct
 {
 	int			sublevels_up;
-} checkExprHasAggs_context;
+} contain_aggs_of_level_context;
 
-static bool checkExprHasAggs_walker(Node *node,
-						checkExprHasAggs_context *context);
+static bool contain_aggs_of_level_walker(Node *node,
+						contain_aggs_of_level_context *context);
 static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
@@ -37,32 +37,44 @@ static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
 /*
  * checkExprHasAggs -
  *	Check if an expression contains an aggregate function call.
- *
- * The objective of this routine is to detect whether there are aggregates
- * belonging to the initial query level.  Aggregates belonging to subqueries
- * or outer queries do NOT cause a true result.  We must recurse into
- * subqueries to detect outer-reference aggregates that logically belong to
- * the initial query level.
  */
 bool
 checkExprHasAggs(Node *node)
 {
-	checkExprHasAggs_context context;
+	return contain_aggs_of_level(node, 0);
+}
 
-	context.sublevels_up = 0;
+/*
+ * contain_aggs_of_level -
+ *	Check if an expression contains an aggregate function call of a
+ *	specified query level.
+ *
+ * The objective of this routine is to detect whether there are aggregates
+ * belonging to the given query level.  Aggregates belonging to subqueries
+ * or outer queries do NOT cause a true result.  We must recurse into
+ * subqueries to detect outer-reference aggregates that logically belong to
+ * the specified query level.
+ */
+bool
+contain_aggs_of_level(Node *node, int levelsup)
+{
+	contain_aggs_of_level_context context;
+
+	context.sublevels_up = levelsup;
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree; if
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	return query_or_expression_tree_walker(node,
-										   checkExprHasAggs_walker,
+										   contain_aggs_of_level_walker,
 										   (void *) &context,
 										   0);
 }
 
 static bool
-checkExprHasAggs_walker(Node *node, checkExprHasAggs_context *context)
+contain_aggs_of_level_walker(Node *node,
+							 contain_aggs_of_level_context *context)
 {
 	if (node == NULL)
 		return false;
@@ -79,12 +91,12 @@ checkExprHasAggs_walker(Node *node, checkExprHasAggs_context *context)
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   checkExprHasAggs_walker,
+								   contain_aggs_of_level_walker,
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, checkExprHasAggs_walker,
+	return expression_tree_walker(node, contain_aggs_of_level_walker,
 								  (void *) context);
 }
 
