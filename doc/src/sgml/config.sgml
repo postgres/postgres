@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.186 2008/08/19 18:30:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.187 2008/08/22 18:47:07 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3175,6 +3175,7 @@ local0.*    /var/log/postgresql
         values log only files whose size is equal or greater than
         the specified number of kilobytes.  The
         default is <literal>-1</>, which disables this logging.
+        Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
