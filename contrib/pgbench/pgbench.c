@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.80 2008/05/09 15:53:07 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.81 2008/08/22 17:57:34 momjian Exp $
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -1080,7 +1080,10 @@ init(void)
 
 	/* vacuum */
 	fprintf(stderr, "vacuum...");
-	executeStatement(con, "vacuum analyze");
+	executeStatement(con, "vacuum analyze branches");
+	executeStatement(con, "vacuum analyze tellers");
+	executeStatement(con, "vacuum analyze accounts");
+	executeStatement(con, "vacuum analyze history");
 
 	fprintf(stderr, "done.\n");
 	PQfinish(con);
@@ -1757,8 +1760,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "starting vacuum...");
 		executeStatement(con, "vacuum branches");
 		executeStatement(con, "vacuum tellers");
-		executeStatement(con, "delete from history");
-		executeStatement(con, "vacuum history");
+		executeStatement(con, "truncate history");
 		fprintf(stderr, "end.\n");
 
 		if (do_vacuum_accounts)
