@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.467 2008/08/19 18:30:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.468 2008/08/22 00:20:40 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4598,16 +4598,18 @@ set_config_option(const char *name, const char *value,
 				if (changeVal && !is_newvalue_equal(record, value))
 					ereport(elevel,
 							(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-							 errmsg("parameter \"%s\" cannot be changed after server start; configuration file change ignored",
-									name)));
+							 errmsg("attempted change of parameter \"%s\" ignored",
+									name),
+							 errdetail("This parameter cannot be changed after server start.")));
 				return true;
 			}
 			if (context != PGC_POSTMASTER)
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-						 errmsg("parameter \"%s\" cannot be changed after server start",
-								name)));
+						 errmsg("attempted change of parameter \"%s\" ignored",
+								name),
+						 errdetail("This parameter cannot be changed after server start.")));
 				return false;
 			}
 			break;

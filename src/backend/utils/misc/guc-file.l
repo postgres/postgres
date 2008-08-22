@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.55 2008/05/09 15:36:31 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.56 2008/08/22 00:20:40 momjian Exp $
  */
 
 %{
@@ -258,8 +258,9 @@ ProcessConfigFile(GucContext context)
 		{
 			ereport(elevel,
 					(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-					 errmsg("parameter \"%s\" cannot be changed after server start; configuration file change ignored",
-							gconf->name)));
+					 errmsg("attempted change of parameter \"%s\" ignored",
+							gconf->name),
+					 errdetail("This parameter cannot be changed after server start.")));
 			continue;
 		}
 
