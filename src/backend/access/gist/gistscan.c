@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.70 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.71 2008/08/23 10:37:24 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ gistrescan(PG_FUNCTION_ARGS)
 			ReleaseBuffer(so->markbuf);
 			so->markbuf = InvalidBuffer;
 		}
+
 	}
 	else
 	{
@@ -83,6 +84,7 @@ gistrescan(PG_FUNCTION_ARGS)
 	 */
 	ItemPointerSetInvalid(&so->curpos);
 	ItemPointerSetInvalid(&so->markpos);
+	so->nPageData = so->curPageData = 0;
 
 	/* Update scan key, if a new one is given */
 	if (key && scan->numberOfKeys > 0)
@@ -150,6 +152,11 @@ gistmarkpos(PG_FUNCTION_ARGS)
 		so->markbuf = so->curbuf;
 	}
 
+	so->markNPageData = so->nPageData;
+	so->markCurPageData = so->curPageData;
+	if ( so->markNPageData > 0 )
+		memcpy( so->markPageData, so->pageData, sizeof(ItemResult) * so->markNPageData );		
+
 	PG_RETURN_VOID();
 }
 
@@ -198,6 +205,11 @@ gistrestrpos(PG_FUNCTION_ARGS)
 		IncrBufferRefCount(so->markbuf);
 		so->curbuf = so->markbuf;
 	}
+
+	so->nPageData = so->markNPageData;
+	so->curPageData = so->markNPageData;
+	if ( so->markNPageData > 0 )
+		memcpy( so->pageData, so->markPageData, sizeof(ItemResult) * so->markNPageData );		
 
 	PG_RETURN_VOID();
 }
