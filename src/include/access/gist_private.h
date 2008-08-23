@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.8 2005/10/15 02:49:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.8.2.1 2008/08/23 10:43:58 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,13 @@ typedef struct GISTScanOpaqueData
 	MemoryContext tempCxt;
 	Buffer		curbuf;
 	Buffer		markbuf;
+
+	ItemPointerData pageData[BLCKSZ/sizeof(IndexTupleData)];
+	OffsetNumber    nPageData;
+	OffsetNumber    curPageData;
+	ItemPointerData markPageData[BLCKSZ/sizeof(IndexTupleData)];
+	OffsetNumber    markNPageData;
+	OffsetNumber    markCurPageData;
 } GISTScanOpaqueData;
 
 typedef GISTScanOpaqueData *GISTScanOpaque;
