@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.180 2008/08/25 15:11:00 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.181 2008/08/25 18:55:43 mha Exp $
  * ----------
  */
 #include "postgres.h"
@@ -2638,11 +2638,14 @@ PgstatCollectorMain(int argc, char *argv[])
 
 		/*
 		 * Reload configuration if we got SIGHUP from the postmaster.
+		 * Also, signal a new write of the file, so we drop a new file as
+		 * soon as possible of the directory for it changes.
 		 */
 		if (got_SIGHUP)
 		{
 			ProcessConfigFile(PGC_SIGHUP);
 			got_SIGHUP = false;
+			need_statwrite = true;
 		}
 
 		/*
