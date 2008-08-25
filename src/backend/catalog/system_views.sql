@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.53 2008/07/14 00:51:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.54 2008/08/25 11:18:43 mha Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -143,37 +143,27 @@ REVOKE ALL on pg_statistic FROM public;
 
 CREATE VIEW pg_locks AS 
     SELECT * 
-    FROM pg_lock_status() AS L
-    (locktype text, database oid, relation oid, page int4, tuple int2,
-     virtualxid text, transactionid xid, classid oid, objid oid, objsubid int2,
-     virtualtransaction text, pid int4, mode text, granted boolean);
+    FROM pg_lock_status() AS L;
 
 CREATE VIEW pg_cursors AS
     SELECT C.name, C.statement, C.is_holdable, C.is_binary,
            C.is_scrollable, C.creation_time
-    FROM pg_cursor() AS C
-         (name text, statement text, is_holdable boolean, is_binary boolean,
-          is_scrollable boolean, creation_time timestamptz);
+    FROM pg_cursor() AS C;
 
 CREATE VIEW pg_prepared_xacts AS
     SELECT P.transaction, P.gid, P.prepared,
            U.rolname AS owner, D.datname AS database
     FROM pg_prepared_xact() AS P
-    (transaction xid, gid text, prepared timestamptz, ownerid oid, dbid oid)
          LEFT JOIN pg_authid U ON P.ownerid = U.oid
          LEFT JOIN pg_database D ON P.dbid = D.oid;
 
 CREATE VIEW pg_prepared_statements AS
     SELECT P.name, P.statement, P.prepare_time, P.parameter_types, P.from_sql
-    FROM pg_prepared_statement() AS P
-    (name text, statement text, prepare_time timestamptz,
-     parameter_types regtype[], from_sql boolean);
+    FROM pg_prepared_statement() AS P;
 
 CREATE VIEW pg_settings AS 
     SELECT * 
-    FROM pg_show_all_settings() AS A 
-    (name text, setting text, unit text, category text, short_desc text, extra_desc text,
-     context text, vartype text, source text, min_val text, max_val text, enumvals text);
+    FROM pg_show_all_settings() AS A; 
 
 CREATE RULE pg_settings_u AS 
     ON UPDATE TO pg_settings 

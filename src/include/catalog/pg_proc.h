@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.511 2008/08/23 20:31:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.512 2008/08/25 11:18:43 mha Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3157,11 +3157,11 @@ DATA(insert OID = 2077 (  current_setting	PGNSP PGUID 12 1 0 0 f f t f s 1 25 "2
 DESCR("SHOW X as a function");
 DATA(insert OID = 2078 (  set_config		PGNSP PGUID 12 1 0 0 f f f f v 3 25 "25 25 16" _null_ _null_ _null_ set_config_by_name _null_ _null_ _null_ ));
 DESCR("SET X as a function");
-DATA(insert OID = 2084 (  pg_show_all_settings	PGNSP PGUID 12 1 1000 0 f f t t s 0 2249 "" _null_ _null_ _null_ show_all_settings _null_ _null_ _null_ ));
+DATA(insert OID = 2084 (  pg_show_all_settings	PGNSP PGUID 12 1 1000 0 f f t t s 0 2249 "" "{25,25,25,25,25,25,25,25,25,25,25,25}" "{o,o,o,o,o,o,o,o,o,o,o,o}" "{name,setting,unit,category,short_desc,extra_desc,context,vartype,source,min_val,max_val,enumvals}" show_all_settings _null_ _null_ _null_ ));
 DESCR("SHOW ALL as a function");
-DATA(insert OID = 1371 (  pg_lock_status   PGNSP PGUID 12 1 1000 0 f f t t v 0 2249 "" _null_ _null_ _null_ pg_lock_status _null_ _null_ _null_ ));
+DATA(insert OID = 1371 (  pg_lock_status   PGNSP PGUID 12 1 1000 0 f f t t v 0 2249 "" "{25,26,26,23,21,25,28,26,26,21,25,23,25,16}" "{o,o,o,o,o,o,o,o,o,o,o,o,o,o}" "{locktype,database,relation,page,tuple,virtualxid,transactionid,classid,objid,objsubid,virtualtransaction,pid,mode,granted}" pg_lock_status _null_ _null_ _null_ ));
 DESCR("view system lock information");
-DATA(insert OID = 1065 (  pg_prepared_xact PGNSP PGUID 12 1 1000 0 f f t t v 0 2249 "" _null_ _null_ _null_ pg_prepared_xact _null_ _null_ _null_ ));
+DATA(insert OID = 1065 (  pg_prepared_xact PGNSP PGUID 12 1 1000 0 f f t t v 0 2249 "" "{28,25,1184,26,26}" "{o,o,o,o,o}" "{transaction,gid,prepared,ownerid,dbid}" pg_prepared_xact _null_ _null_ _null_ ));
 DESCR("view two-phase transactions");
 
 DATA(insert OID = 2079 (  pg_table_is_visible		PGNSP PGUID 12 1 0 0 f f t f s 1 16 "26" _null_ _null_ _null_ pg_table_is_visible _null_ _null_ _null_ ));
@@ -3975,9 +3975,9 @@ DATA(insert OID = 2508 (  pg_get_constraintdef PGNSP PGUID 12 1 0 0 f f t f s 2 
 DESCR("constraint description with pretty-print option");
 DATA(insert OID = 2509 (  pg_get_expr		   PGNSP PGUID 12 1 0 0 f f t f s 3 25 "25 26 16" _null_ _null_ _null_ pg_get_expr_ext _null_ _null_ _null_ ));
 DESCR("deparse an encoded expression with pretty-print option");
-DATA(insert OID = 2510 (  pg_prepared_statement PGNSP PGUID 12 1 1000 0 f f t t s 0 2249 "" _null_ _null_ _null_ pg_prepared_statement _null_ _null_ _null_ ));
+DATA(insert OID = 2510 (  pg_prepared_statement PGNSP PGUID 12 1 1000 0 f f t t s 0 2249 "" "{25,25,1184,2211,16}" "{o,o,o,o,o}" "{name,statement,prepare_time,parameter_types,from_sql}" pg_prepared_statement _null_ _null_ _null_ ));
 DESCR("get the prepared statements for this session");
-DATA(insert OID = 2511 (  pg_cursor PGNSP PGUID 12 1 1000 0 f f t t s 0 2249 "" _null_ _null_ _null_ pg_cursor _null_ _null_ _null_ ));
+DATA(insert OID = 2511 (  pg_cursor PGNSP PGUID 12 1 1000 0 f f t t s 0 2249 "" "{25,25,16,16,16,1184}" "{o,o,o,o,o,o}" "{name,statement,is_holdable,is_binary,is_scrollable,creation_time}" pg_cursor _null_ _null_ _null_ ));
 DESCR("get the open cursors for this session");
 DATA(insert OID = 2599 (  pg_timezone_abbrevs	PGNSP PGUID 12 1 1000 0 f f t t s 0 2249 "" "{25,1186,16}" "{o,o,o}" "{abbrev,utc_offset,is_dst}" pg_timezone_abbrevs _null_ _null_ _null_ ));
 DESCR("get the available time zone abbreviations");
