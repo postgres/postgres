@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.93 2008/08/22 00:16:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.94 2008/08/25 22:42:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@ extern List *make_ands_implicit(Expr *clause);
 extern bool contain_agg_clause(Node *clause);
 extern void count_agg_clauses(Node *clause, AggClauseCounts *counts);
 
-extern bool expression_returns_set(Node *clause);
 extern double expression_returns_set_rows(Node *clause);
 
 extern bool contain_subplans(Node *clause);
@@ -79,30 +78,5 @@ extern Node *eval_const_expressions(PlannerInfo *root, Node *node);
 extern Node *estimate_expression_value(PlannerInfo *root, Node *node);
 
 extern Query *inline_set_returning_function(PlannerInfo *root, Node *node);
-
-extern bool expression_tree_walker(Node *node, bool (*walker) (),
-											   void *context);
-extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (),
-												 void *context);
-
-/* flags bits for query_tree_walker and query_tree_mutator */
-#define QTW_IGNORE_RT_SUBQUERIES	0x01		/* subqueries in rtable */
-#define QTW_IGNORE_JOINALIASES		0x02		/* JOIN alias var lists */
-#define QTW_DONT_COPY_QUERY			0x04		/* do not copy top Query */
-
-extern bool query_tree_walker(Query *query, bool (*walker) (),
-										  void *context, int flags);
-extern Query *query_tree_mutator(Query *query, Node *(*mutator) (),
-											 void *context, int flags);
-
-extern bool range_table_walker(List *rtable, bool (*walker) (),
-										   void *context, int flags);
-extern List *range_table_mutator(List *rtable, Node *(*mutator) (),
-											 void *context, int flags);
-
-extern bool query_or_expression_tree_walker(Node *node, bool (*walker) (),
-												   void *context, int flags);
-extern Node *query_or_expression_tree_mutator(Node *node, Node *(*mutator) (),
-												   void *context, int flags);
 
 #endif   /* CLAUSES_H */

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/nodes/README,v 1.3 2008/03/20 17:55:14 momjian Exp $
+$PostgreSQL: pgsql/src/backend/nodes/README,v 1.4 2008/08/25 22:42:32 tgl Exp $
 
 Node Structures
 ===============
@@ -13,52 +13,68 @@ achieved by convention. No additional functions will be generated. Functions
 that manipulate node structures reside in this directory.
 
 
-FILES IN THIS DIRECTORY
+FILES IN THIS DIRECTORY (src/backend/nodes/)
 
-    Node manipulation functions:
-	copyfuncs.c	- copying a node
-	equalfuncs.c	- comparing a node
-	outfuncs.c	- convert a node to ascii representation
-	readfuncs.c	- convert ascii representation back to a node
-	makefuncs.c	- creator functions for primitive nodes
+    General-purpose node manipulation functions:
+	copyfuncs.c	- copy a node tree
+	equalfuncs.c	- compare two node trees
+	outfuncs.c	- convert a node tree to text representation
+	readfuncs.c	- convert text representation back to a node tree
+	makefuncs.c	- creator functions for some common node types
+	nodeFuncs.c	- some other general-purpose manipulation functions
+
+    Specialized manipulation functions:
+	bitmapset.c	- Bitmapset support
+	list.c		- generic list support
+	params.c	- Param support
+	tidbitmap.c	- TIDBitmap support
+	value.c		- support for Value nodes
+
+FILES IN src/include/nodes/
 
     Node definitions:
 	nodes.h		- define node tags (NodeTag)
-	pg_list.h	- generic list 
 	primnodes.h	- primitive nodes
 	parsenodes.h	- parse tree nodes
 	plannodes.h	- plan tree nodes
-	relation.h	- inner plan tree nodes
+	relation.h	- planner internal nodes
 	execnodes.h	- executor nodes
 	memnodes.h	- memory nodes
+	pg_list.h	- generic list 
 
 
 Steps to Add a Node
 -------------------
 
-Suppose you wana define a node Foo:
+Suppose you wanna define a node Foo:
 
-1. add a tag (T_Foo) to the enum NodeTag in nodes.h (You may have to
-   recompile the whole tree after doing this.)
-2. add the structure definition to the appropriate ???nodes.h file. If you
-   intend to inherit from, say a Plan node, put Plan as the first field of
-   you definition.
-3. if you intend to use copyObject, equal, nodeToString or stringToNode,
+1. Add a tag (T_Foo) to the enum NodeTag in nodes.h.  (If you insert the
+   tag in a way that moves the numbers associated with existing tags,
+   you'll need to recompile the whole tree after doing this.  It doesn't
+   force initdb though, because the numbers never go to disk.)
+2. Add the structure definition to the appropriate include/nodes/???.h file.
+   If you intend to inherit from, say a Plan node, put Plan as the first field
+   of your struct definition.
+3. If you intend to use copyObject, equal, nodeToString or stringToNode,
    add an appropriate function to copyfuncs.c, equalfuncs.c, outfuncs.c
-   and readfuncs.c accordingly. (Except for frequently used nodes, don't
-   bother writing a creator function in makefuncs.c)
+   and readfuncs.c accordingly.  (Except for frequently used nodes, don't
+   bother writing a creator function in makefuncs.c)  The header comments
+   in those files give general rules for whether you need to add support.
+4. Add cases to the functions in nodeFuncs.c as needed.  There are many
+   other places you'll probably also need to teach about your new node
+   type.  Best bet is to grep for references to one or two similar existing
+   node types to find all the places to touch.
 
 
 Historical Note
 ---------------
 
 Prior to the current simple C structure definitions, the Node structures 
-uses a pseudo-inheritance system which automatically generates creator and
-accessor functions. Since every node inherits from LispValue, the whole thing
-is a mess. Here's a little anecdote:
+used a pseudo-inheritance system which automatically generated creator and
+accessor functions. Since every node inherited from LispValue, the whole thing
+was a mess. Here's a little anecdote:
 
     LispValue definition -- class used to support lisp structures
     in C.  This is here because we did not want to totally rewrite
     planner and executor code which depended on lisp structures when
     we ported postgres V1 from lisp to C. -cim 4/23/90
- 
