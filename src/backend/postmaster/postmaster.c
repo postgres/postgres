@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.561 2008/06/26 02:47:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.562 2008/08/25 15:11:01 mha Exp $
  *
  * NOTES
  *
@@ -1923,7 +1923,8 @@ SIGHUP_handler(SIGNAL_ARGS)
 			signal_child(PgArchPID, SIGHUP);
 		if (SysLoggerPID != 0)
 			signal_child(SysLoggerPID, SIGHUP);
-		/* PgStatPID does not currently need SIGHUP */
+		if (PgStatPID != 0)
+			signal_child(PgStatPID, SIGHUP);
 
 		/* Reload authentication config files too */
 		load_hba();

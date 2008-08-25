@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.469 2008/08/22 18:47:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.470 2008/08/25 15:11:00 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2470,7 +2470,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"stats_temp_directory", PGC_POSTMASTER, STATS_COLLECTOR,
+		{"stats_temp_directory", PGC_SIGHUP, STATS_COLLECTOR,
 			gettext_noop("Writes temporary statistics files to the specified directory."),
 			NULL,
 			GUC_SUPERUSER_ONLY

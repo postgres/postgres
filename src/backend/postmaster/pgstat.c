@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.179 2008/08/15 08:37:39 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.180 2008/08/25 15:11:00 mha Exp $
  * ----------
  */
 #include "postgres.h"
@@ -203,6 +203,7 @@ static PgStat_GlobalStats globalStats;
 
 static volatile bool need_exit = false;
 static volatile bool need_statwrite = false;
+static volatile bool got_SIGHUP = false;
 
 /*
  * Total time charged to functions so far in the current backend.
@@ -224,6 +225,7 @@ NON_EXEC_STATIC void PgstatCollectorMain(int argc, char *argv[]);
 static void pgstat_exit(SIGNAL_ARGS);
 static void force_statwrite(SIGNAL_ARGS);
 static void pgstat_beshutdown_hook(int code, Datum arg);
+static void pgstat_sighup_handler(SIGNAL_ARGS);
 
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
 static void pgstat_write_statsfile(bool permanent);
@@ -2571,7 +2573,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 * Ignore all signals usually bound to some action in the postmaster,
 	 * except SIGQUIT and SIGALRM.
 	 */
-	pqsignal(SIGHUP, SIG_IGN);
+	pqsignal(SIGHUP, pgstat_sighup_handler);
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SIG_IGN);
 	pqsignal(SIGQUIT, pgstat_exit);
@@ -2633,6 +2635,15 @@ PgstatCollectorMain(int argc, char *argv[])
 		 */
 		if (need_exit)
 			break;
+
+		/*
+		 * Reload configuration if we got SIGHUP from the postmaster.
+		 */
+		if (got_SIGHUP)
+		{
+			ProcessConfigFile(PGC_SIGHUP);
+			got_SIGHUP = false;
+		}
 
 		/*
 		 * If time to write the stats file, do so.	Note that the alarm
@@ -2832,6 +2843,13 @@ static void
 force_statwrite(SIGNAL_ARGS)
 {
 	need_statwrite = true;
+}
+
+/* SIGHUP handler for collector process */
+static void
+pgstat_sighup_handler(SIGNAL_ARGS)
+{
+	got_SIGHUP = true;
 }
 
 
