@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.27 2008/04/13 20:51:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.28 2008/08/25 20:20:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,6 +275,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	 */
 	ExecIndexBuildScanKeys((PlanState *) indexstate,
 						   indexstate->biss_RelationDesc,
+						   node->scan.scanrelid,
 						   node->indexqual,
 						   &indexstate->biss_ScanKeys,
 						   &indexstate->biss_NumScanKeys,
