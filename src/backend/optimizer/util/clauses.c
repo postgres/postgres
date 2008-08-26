@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.264 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.265 2008/08/26 02:16:31 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2357,6 +2357,41 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->arg = arg;
 		newexpr->resulttype = expr->resulttype;
 		newexpr->coerceformat = expr->coerceformat;
+		return (Node *) newexpr;
+	}
+	if (IsA(node, ArrayCoerceExpr))
+	{
+		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
+		Expr	   *arg;
+		ArrayCoerceExpr *newexpr;
+
+		/*
+		 * Reduce constants in the ArrayCoerceExpr's argument, then build
+		 * a new ArrayCoerceExpr.
+		 */
+		arg = (Expr *) eval_const_expressions_mutator((Node *) expr->arg,
+													  context);
+
+		newexpr = makeNode(ArrayCoerceExpr);
+		newexpr->arg = arg;
+		newexpr->elemfuncid = expr->elemfuncid;
+		newexpr->resulttype = expr->resulttype;
+		newexpr->resulttypmod = expr->resulttypmod;
+		newexpr->isExplicit = expr->isExplicit;
+		newexpr->coerceformat = expr->coerceformat;
+
+		/*
+		 * If constant argument and it's a binary-coercible or immutable
+		 * conversion, we can simplify it to a constant.
+		 */
+		if (arg && IsA(arg, Const) &&
+			(!OidIsValid(newexpr->elemfuncid) ||
+			 func_volatile(newexpr->elemfuncid) == PROVOLATILE_IMMUTABLE))
+			return (Node *) evaluate_expr((Expr *) newexpr,
+										  newexpr->resulttype,
+										  newexpr->resulttypmod);
+
+		/* Else we must return the partially-simplified node */
 		return (Node *) newexpr;
 	}
 	if (IsA(node, CaseExpr))
