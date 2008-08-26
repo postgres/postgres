@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.104 2008/08/21 22:25:44 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.105 2008/08/26 00:03:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -538,9 +538,14 @@ PostgreSQL documentation
       <term><option>--compress=<replaceable class="parameter">0..9</replaceable></option></term>
       <listitem>
        <para>
-        Specify the compression level to use in archive formats that
-        support compression.  (Currently only the custom archive
-        format supports compression.)
+        Specify the compression level to use.  Zero means no compression.
+        For the custom archive format, this specifies compression of
+        individual table-data segments, and the default is to compress
+        at a moderate level.
+        For plain text output, setting a nonzero compression level causes
+        the entire output file to be compressed, as though it had been
+        fed through <application>gzip</>; but the default is not to compress.
+        The tar archive format currently does not support compression at all.
        </para>
       </listitem>
      </varlistentry>
