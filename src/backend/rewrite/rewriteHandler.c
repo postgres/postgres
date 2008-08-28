@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.178 2008/08/25 22:42:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.179 2008/08/28 23:09:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -654,6 +654,7 @@ rewriteTargetList(Query *parsetree, Relation target_relation,
 												InvalidOid, -1,
 												att_tup->atttypid,
 												COERCE_IMPLICIT_CAST,
+												-1,
 												false,
 												false);
 				}
@@ -886,7 +887,8 @@ build_column_default(Relation rel, int attrno)
 								 expr, exprtype,
 								 atttype, atttypmod,
 								 COERCION_ASSIGNMENT,
-								 COERCE_IMPLICIT_CAST);
+								 COERCE_IMPLICIT_CAST,
+								 -1);
 	if (expr == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -993,6 +995,7 @@ rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation, List *attrnos)
 												InvalidOid, -1,
 												att_tup->atttypid,
 												COERCE_IMPLICIT_CAST,
+												-1,
 												false,
 												false);
 				}

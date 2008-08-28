@@ -787,6 +787,8 @@ select '{ }}'::text[];
 ERROR:  malformed array literal: "{ }}"
 select array[];
 ERROR:  cannot determine type of empty array
+LINE 1: select array[];
+               ^
 HINT:  Explicitly cast to the desired type, for example ARRAY[]::integer[].
 -- none of the above should be accepted
 -- all of the following should be accepted

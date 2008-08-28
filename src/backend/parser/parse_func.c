@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.205 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.206 2008/08/28 23:09:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 */
 		return coerce_type(pstate, linitial(fargs),
 						   actual_arg_types[0], rettype, -1,
-						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL);
+						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL, location);
 	}
 	else if (fdresult == FUNCDETAIL_NORMAL)
 	{
@@ -272,6 +272,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("could not find array type for data type %s",
 							format_type_be(newa->element_typeid))));
 		newa->multidims = false;
+		newa->location = exprLocation((Node *) vargs);
 
 		fargs = lappend(fargs, newa);
 	}
@@ -286,6 +287,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		funcexpr->funcretset = retset;
 		funcexpr->funcformat = COERCE_EXPLICIT_CALL;
 		funcexpr->args = fargs;
+		funcexpr->location = location;
 
 		retval = (Node *) funcexpr;
 	}
@@ -299,6 +301,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		aggref->args = fargs;
 		aggref->aggstar = agg_star;
 		aggref->aggdistinct = agg_distinct;
+		aggref->location = location;
 
 		/*
 		 * Reject attempt to call a parameterless aggregate without (*)
@@ -1009,7 +1012,8 @@ make_fn_arguments(ParseState *pstate,
 												actual_arg_types[i],
 												declared_arg_types[i], -1,
 												COERCION_IMPLICIT,
-												COERCE_IMPLICIT_CAST);
+												COERCE_IMPLICIT_CAST,
+												-1);
 		}
 		i++;
 	}

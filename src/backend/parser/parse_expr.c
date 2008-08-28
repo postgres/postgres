@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.231 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.232 2008/08/28 23:09:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,7 @@ static Node *transformWholeRowRef(ParseState *pstate, char *schemaname,
 					 char *relname, int location);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
-static Node *typecast_expression(ParseState *pstate, Node *expr,
-					TypeName *typename);
+static Node *transformTypeCast(ParseState *pstate, TypeCast *tc);
 static Node *make_row_comparison_op(ParseState *pstate, List *opname,
 					   List *largs, List *rargs, int location);
 static Node *make_row_distinct_op(ParseState *pstate, List *opname,
@@ -123,7 +122,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				A_Const    *con = (A_Const *) expr;
 				Value	   *val = &con->val;
 
-				result = (Node *) make_const(val);
+				result = (Node *) make_const(val, con->location);
 				break;
 			}
 
@@ -145,7 +144,6 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_TypeCast:
 			{
 				TypeCast   *tc = (TypeCast *) expr;
-				Node	   *arg;
 
 				/*
 				 * If the subject of the typecast is an ARRAY[] construct
@@ -179,8 +177,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					 */
 				}
 
-				arg = transformExpr(pstate, tc->arg);
-				result = typecast_expression(pstate, arg, tc->typename);
+				result = transformTypeCast(pstate, tc);
 				break;
 			}
 
@@ -425,6 +422,14 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 						strcmp(name, "value") == 0)
 					{
 						node = (Node *) copyObject(pstate->p_value_substitute);
+
+						/*
+						 * Try to propagate location knowledge.  This should
+						 * be extended if p_value_substitute can ever take on
+						 * other node types.
+						 */
+						if (IsA(node, CoerceToDomainValue))
+							((CoerceToDomainValue *) node)->location = cref->location;
 						break;
 					}
 
@@ -631,6 +636,7 @@ transformParamRef(ParseState *pstate, ParamRef *pref)
 	param->paramid = paramno;
 	param->paramtype = *pptype;
 	param->paramtypmod = -1;
+	param->location = pref->location;
 
 	return (Node *) param;
 }
@@ -691,6 +697,7 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 		s->subLinkType = ROWCOMPARE_SUBLINK;
 		s->testexpr = lexpr;
 		s->operName = a->name;
+		s->location = a->location;
 		result = transformExpr(pstate, (Node *) s);
 	}
 	else if (lexpr && IsA(lexpr, RowExpr) &&
@@ -734,7 +741,8 @@ transformAExprAnd(ParseState *pstate, A_Expr *a)
 	rexpr = coerce_to_boolean(pstate, rexpr, "AND");
 
 	return (Node *) makeBoolExpr(AND_EXPR,
-								 list_make2(lexpr, rexpr));
+								 list_make2(lexpr, rexpr),
+								 a->location);
 }
 
 static Node *
@@ -747,7 +755,8 @@ transformAExprOr(ParseState *pstate, A_Expr *a)
 	rexpr = coerce_to_boolean(pstate, rexpr, "OR");
 
 	return (Node *) makeBoolExpr(OR_EXPR,
-								 list_make2(lexpr, rexpr));
+								 list_make2(lexpr, rexpr),
+								 a->location);
 }
 
 static Node *
@@ -758,7 +767,8 @@ transformAExprNot(ParseState *pstate, A_Expr *a)
 	rexpr = coerce_to_boolean(pstate, rexpr, "NOT");
 
 	return (Node *) makeBoolExpr(NOT_EXPR,
-								 list_make1(rexpr));
+								 list_make1(rexpr),
+								 a->location);
 }
 
 static Node *
@@ -849,6 +859,7 @@ transformAExprOf(ParseState *pstate, A_Expr *a)
 	 * in a boolean constant node.
 	 */
 	Node	   *lexpr = transformExpr(pstate, a->lexpr);
+	Const	   *result;
 	ListCell   *telem;
 	Oid			ltype,
 				rtype;
@@ -870,7 +881,12 @@ transformAExprOf(ParseState *pstate, A_Expr *a)
 	if (strcmp(strVal(linitial(a->name)), "<>") == 0)
 		matched = (!matched);
 
-	return makeBoolConst(matched, false);
+	result = (Const *) makeBoolConst(matched, false);
+
+	/* Make the result have the original input's parse location */
+	result->location = exprLocation((Node *) a);
+
+	return (Node *) result;
 }
 
 static Node *
@@ -878,7 +894,6 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 {
 	Node	   *lexpr;
 	List	   *rexprs;
-	List	   *typeids;
 	bool		useOr;
 	bool		haveRowExpr;
 	Node	   *result;
@@ -903,7 +918,6 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	 */
 	lexpr = transformExpr(pstate, a->lexpr);
 	haveRowExpr = (lexpr && IsA(lexpr, RowExpr));
-	typeids = list_make1_oid(exprType(lexpr));
 	rexprs = NIL;
 	foreach(l, (List *) a->rexpr)
 	{
@@ -911,7 +925,6 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 
 		haveRowExpr |= (rexpr && IsA(rexpr, RowExpr));
 		rexprs = lappend(rexprs, rexpr);
-		typeids = lappend_oid(typeids, exprType(rexpr));
 	}
 
 	/*
@@ -922,6 +935,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	 */
 	if (!haveRowExpr && list_length(rexprs) != 1)
 	{
+		List	   *allexprs;
 		Oid			scalar_type;
 		Oid			array_type;
 
@@ -929,8 +943,11 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		 * Select a common type for the array elements.  Note that since the
 		 * LHS' type is first in the list, it will be preferred when there is
 		 * doubt (eg, when all the RHS items are unknown literals).
+		 *
+		 * Note: use list_concat here not lcons, to avoid damaging rexprs.
 		 */
-		scalar_type = select_common_type(typeids, "IN");
+		allexprs = list_concat(list_make1(lexpr), rexprs);
+		scalar_type = select_common_type(pstate, allexprs, "IN", NULL);
 
 		/* Do we have an array type to use? */
 		array_type = get_array_type(scalar_type);
@@ -958,6 +975,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 			newa->element_typeid = scalar_type;
 			newa->elements = aexprs;
 			newa->multidims = false;
+			newa->location = -1;
 
 			return (Node *) make_scalar_array_op(pstate,
 												 a->name,
@@ -1003,7 +1021,8 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 			result = cmp;
 		else
 			result = (Node *) makeBoolExpr(useOr ? OR_EXPR : AND_EXPR,
-										   list_make2(result, cmp));
+										   list_make2(result, cmp),
+										   a->location);
 	}
 
 	return result;
@@ -1041,7 +1060,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	Node	   *arg;
 	CaseTestExpr *placeholder;
 	List	   *newargs;
-	List	   *typeids;
+	List	   *resultexprs;
 	ListCell   *l;
 	Node	   *defresult;
 	Oid			ptype;
@@ -1079,7 +1098,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 
 	/* transform the list of arguments */
 	newargs = NIL;
-	typeids = NIL;
+	resultexprs = NIL;
 	foreach(l, c->args)
 	{
 		CaseWhen   *w = (CaseWhen *) lfirst(l);
@@ -1095,7 +1114,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 			warg = (Node *) makeSimpleA_Expr(AEXPR_OP, "=",
 											 (Node *) placeholder,
 											 warg,
-											 -1);
+											 w->location);
 		}
 		neww->expr = (Expr *) transformExpr(pstate, warg);
 
@@ -1105,9 +1124,10 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 
 		warg = (Node *) w->result;
 		neww->result = (Expr *) transformExpr(pstate, warg);
+		neww->location = w->location;
 
 		newargs = lappend(newargs, neww);
-		typeids = lappend_oid(typeids, exprType((Node *) neww->result));
+		resultexprs = lappend(resultexprs, neww->result);
 	}
 
 	newc->args = newargs;
@@ -1119,6 +1139,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 		A_Const    *n = makeNode(A_Const);
 
 		n->val.type = T_Null;
+		n->location = -1;
 		defresult = (Node *) n;
 	}
 	newc->defresult = (Expr *) transformExpr(pstate, defresult);
@@ -1128,9 +1149,9 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	 * determining preferred type. This is how the code worked before, but it
 	 * seems a little bogus to me --- tgl
 	 */
-	typeids = lcons_oid(exprType((Node *) newc->defresult), typeids);
+	resultexprs = lcons(newc->defresult, resultexprs);
 
-	ptype = select_common_type(typeids, "CASE");
+	ptype = select_common_type(pstate, resultexprs, "CASE", NULL);
 	Assert(OidIsValid(ptype));
 	newc->casetype = ptype;
 
@@ -1152,6 +1173,8 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 								  ptype,
 								  "CASE/WHEN");
 	}
+
+	newc->location = c->location;
 
 	return (Node *) newc;
 }
@@ -1196,13 +1219,15 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			((TargetEntry *) lfirst(tlist_item))->resjunk)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("subquery must return a column")));
+					 errmsg("subquery must return a column"),
+					 parser_errposition(pstate, sublink->location)));
 		while ((tlist_item = lnext(tlist_item)) != NULL)
 		{
 			if (!((TargetEntry *) lfirst(tlist_item))->resjunk)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("subquery must return only one column")));
+						 errmsg("subquery must return only one column"),
+						 parser_errposition(pstate, sublink->location)));
 		}
 
 		/*
@@ -1247,6 +1272,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			param->paramid = tent->resno;
 			param->paramtype = exprType((Node *) tent->expr);
 			param->paramtypmod = exprTypmod((Node *) tent->expr);
+			param->location = -1;
 
 			right_list = lappend(right_list, param);
 		}
@@ -1259,11 +1285,13 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		if (list_length(left_list) < list_length(right_list))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("subquery has too many columns")));
+					 errmsg("subquery has too many columns"),
+					 parser_errposition(pstate, sublink->location)));
 		if (list_length(left_list) > list_length(right_list))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("subquery has too few columns")));
+					 errmsg("subquery has too few columns"),
+					 parser_errposition(pstate, sublink->location)));
 
 		/*
 		 * Identify the combining operator(s) and generate a suitable
@@ -1273,7 +1301,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 												   sublink->operName,
 												   left_list,
 												   right_list,
-												   -1);
+												   sublink->location);
 	}
 
 	return result;
@@ -1293,7 +1321,6 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	ArrayExpr  *newa = makeNode(ArrayExpr);
 	List	   *newelems = NIL;
 	List	   *newcoercedelems = NIL;
-	List	   *typeids = NIL;
 	ListCell   *element;
 	Oid			coerce_type;
 	bool		coerce_hard;
@@ -1309,7 +1336,6 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	{
 		Node	   *e = (Node *) lfirst(element);
 		Node	   *newe;
-		Oid			newe_type;
 
 		/*
 		 * If an element is itself an A_ArrayExpr, recurse directly so that
@@ -1322,25 +1348,22 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 									  array_type,
 									  element_type,
 									  typmod);
-			newe_type = exprType(newe);
 			/* we certainly have an array here */
-			Assert(array_type == InvalidOid || array_type == newe_type);
+			Assert(array_type == InvalidOid || array_type == exprType(newe));
 			newa->multidims = true;
 		}
 		else
 		{
 			newe = transformExpr(pstate, e);
-			newe_type = exprType(newe);
 			/*
 			 * Check for sub-array expressions, if we haven't already
 			 * found one.
 			 */
-			if (!newa->multidims && type_is_array(newe_type))
+			if (!newa->multidims && type_is_array(exprType(newe)))
 				newa->multidims = true;
 		}
 
 		newelems = lappend(newelems, newe);
-		typeids = lappend_oid(typeids, newe_type);
 	}
 
 	/* 
@@ -1359,15 +1382,16 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	else
 	{
 		/* Can't handle an empty array without a target type */
-		if (typeids == NIL)
+		if (newelems == NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDETERMINATE_DATATYPE),
 					 errmsg("cannot determine type of empty array"),
 					 errhint("Explicitly cast to the desired type, "
-							 "for example ARRAY[]::integer[].")));
+							 "for example ARRAY[]::integer[]."),
+					 parser_errposition(pstate, a->location)));
 
 		/* Select a common type for the elements */
-		coerce_type = select_common_type(typeids, "ARRAY");
+		coerce_type = select_common_type(pstate, newelems, "ARRAY", NULL);
 
 		if (newa->multidims)
 		{
@@ -1414,13 +1438,15 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 										 coerce_type, 
 										 typmod,
 										 COERCION_EXPLICIT,
-										 COERCE_EXPLICIT_CAST);
+										 COERCE_EXPLICIT_CAST,
+										 -1);
 			if (newe == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_CANNOT_COERCE),
 						 errmsg("cannot cast type %s to %s",
 								format_type_be(exprType(e)),
-								format_type_be(coerce_type))));
+								format_type_be(coerce_type)),
+						 parser_errposition(pstate, exprLocation(e))));
 		}
 		else
 			newe = coerce_to_common_type(pstate, e,
@@ -1432,6 +1458,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	newa->array_typeid = array_type;
 	newa->element_typeid = element_type;
 	newa->elements = newcoercedelems;
+	newa->location = a->location;
 
 	return (Node *) newa;
 }
@@ -1447,6 +1474,7 @@ transformRowExpr(ParseState *pstate, RowExpr *r)
 	/* Barring later casting, we consider the type RECORD */
 	newr->row_typeid = RECORDOID;
 	newr->row_format = COERCE_IMPLICIT_CAST;
+	newr->location = r->location;
 
 	return (Node *) newr;
 }
@@ -1457,7 +1485,6 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 	CoalesceExpr *newc = makeNode(CoalesceExpr);
 	List	   *newargs = NIL;
 	List	   *newcoercedargs = NIL;
-	List	   *typeids = NIL;
 	ListCell   *args;
 
 	foreach(args, c->args)
@@ -1467,10 +1494,9 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 
 		newe = transformExpr(pstate, e);
 		newargs = lappend(newargs, newe);
-		typeids = lappend_oid(typeids, exprType(newe));
 	}
 
-	newc->coalescetype = select_common_type(typeids, "COALESCE");
+	newc->coalescetype = select_common_type(pstate, newargs, "COALESCE", NULL);
 
 	/* Convert arguments if necessary */
 	foreach(args, newargs)
@@ -1485,6 +1511,7 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 	}
 
 	newc->args = newcoercedargs;
+	newc->location = c->location;
 	return (Node *) newc;
 }
 
@@ -1494,7 +1521,7 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 	MinMaxExpr *newm = makeNode(MinMaxExpr);
 	List	   *newargs = NIL;
 	List	   *newcoercedargs = NIL;
-	List	   *typeids = NIL;
+	const char *funcname = (m->op == IS_GREATEST) ? "GREATEST" : "LEAST";
 	ListCell   *args;
 
 	newm->op = m->op;
@@ -1505,10 +1532,9 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 
 		newe = transformExpr(pstate, e);
 		newargs = lappend(newargs, newe);
-		typeids = lappend_oid(typeids, exprType(newe));
 	}
 
-	newm->minmaxtype = select_common_type(typeids, "GREATEST/LEAST");
+	newm->minmaxtype = select_common_type(pstate, newargs, funcname, NULL);
 
 	/* Convert arguments if necessary */
 	foreach(args, newargs)
@@ -1518,11 +1544,12 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 
 		newe = coerce_to_common_type(pstate, e,
 									 newm->minmaxtype,
-									 "GREATEST/LEAST");
+									 funcname);
 		newcoercedargs = lappend(newcoercedargs, newe);
 	}
 
 	newm->args = newcoercedargs;
+	newm->location = m->location;
 	return (Node *) newm;
 }
 
@@ -1538,6 +1565,8 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 		newx->name = map_sql_identifier_to_xml_name(x->name, false, false);
 	else
 		newx->name = NULL;
+	newx->xmloption = x->xmloption;
+	newx->location = x->location;
 
 	/*
 	 * gram.y built the named args as a list of ResTarget.	Transform each,
@@ -1566,31 +1595,30 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 x->op == IS_XMLELEMENT
-			? errmsg("unnamed XML attribute value must be a column reference")
-					 : errmsg("unnamed XML element value must be a column reference")));
+					 ? errmsg("unnamed XML attribute value must be a column reference")
+					 : errmsg("unnamed XML element value must be a column reference"),
+					 parser_errposition(pstate, r->location)));
 			argname = NULL;		/* keep compiler quiet */
+		}
+
+		/* reject duplicate argnames in XMLELEMENT only */
+		if (x->op == IS_XMLELEMENT)
+		{
+			ListCell   *lc2;
+
+			foreach(lc2, newx->arg_names)
+			{
+				if (strcmp(argname, strVal(lfirst(lc2))) == 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("XML attribute name \"%s\" appears more than once",
+									argname),
+							 parser_errposition(pstate, r->location)));
+			}
 		}
 
 		newx->named_args = lappend(newx->named_args, expr);
 		newx->arg_names = lappend(newx->arg_names, makeString(argname));
-	}
-
-	newx->xmloption = x->xmloption;
-
-	if (x->op == IS_XMLELEMENT)
-	{
-		foreach(lc, newx->arg_names)
-		{
-			ListCell   *lc2;
-
-			for_each_cell(lc2, lnext(lc))
-			{
-				if (strcmp(strVal(lfirst(lc)), strVal(lfirst(lc2))) == 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("XML attribute name \"%s\" appears more than once", strVal(lfirst(lc)))));
-			}
-		}
 	}
 
 	/* The other arguments are of varying types depending on the function */
@@ -1639,6 +1667,7 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 				break;
 			case IS_XMLSERIALIZE:
 				/* not handled here */
+				Assert(false);
 				break;
 			case IS_DOCUMENT:
 				newe = coerce_to_specific_type(pstate, newe, XMLOID,
@@ -1655,9 +1684,10 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 static Node *
 transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 {
+	Node	   *result;
+	XmlExpr    *xexpr;
 	Oid			targetType;
 	int32		targetTypmod;
-	XmlExpr    *xexpr;
 
 	xexpr = makeNode(XmlExpr);
 	xexpr->op = IS_XMLSERIALIZE;
@@ -1669,6 +1699,7 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 	targetType = typenameTypeId(pstate, xs->typename, &targetTypmod);
 
 	xexpr->xmloption = xs->xmloption;
+	xexpr->location = xs->location;
 	/* We actually only need these to be able to parse back the expression. */
 	xexpr->type = targetType;
 	xexpr->typmod = targetTypmod;
@@ -1679,8 +1710,18 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 	 * from text.  This way, user-defined text-like data types automatically
 	 * fit in.
 	 */
-	return (Node *) coerce_to_target_type(pstate, (Node *) xexpr, TEXTOID, targetType, targetTypmod,
-									COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
+	result = coerce_to_target_type(pstate, (Node *) xexpr,
+								   TEXTOID, targetType, targetTypmod,
+								   COERCION_IMPLICIT,
+								   COERCE_IMPLICIT_CAST,
+								   -1);
+	if (result == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_CANNOT_COERCE),
+				 errmsg("cannot cast XMLSERIALIZE result to %s",
+						format_type_be(targetType)),
+				 parser_errposition(pstate, xexpr->location)));
+	return result;
 }
 
 static Node *
@@ -1773,7 +1814,7 @@ static Node *
 transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 					 int location)
 {
-	Node	   *result;
+	Var		   *result;
 	RangeTblEntry *rte;
 	int			vnum;
 	int			sublevels_up;
@@ -1800,22 +1841,22 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 			if (!OidIsValid(toid))
 				elog(ERROR, "could not find type OID for relation %u",
 					 rte->relid);
-			result = (Node *) makeVar(vnum,
-									  InvalidAttrNumber,
-									  toid,
-									  -1,
-									  sublevels_up);
+			result = makeVar(vnum,
+							 InvalidAttrNumber,
+							 toid,
+							 -1,
+							 sublevels_up);
 			break;
 		case RTE_FUNCTION:
 			toid = exprType(rte->funcexpr);
 			if (type_is_rowtype(toid))
 			{
 				/* func returns composite; same as relation case */
-				result = (Node *) makeVar(vnum,
-										  InvalidAttrNumber,
-										  toid,
-										  -1,
-										  sublevels_up);
+				result = makeVar(vnum,
+								 InvalidAttrNumber,
+								 toid,
+								 -1,
+								 sublevels_up);
 			}
 			else
 			{
@@ -1825,21 +1866,21 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 				 * seems a tad inconsistent, especially if "f.*" was
 				 * explicitly written ...)
 				 */
-				result = (Node *) makeVar(vnum,
-										  1,
-										  toid,
-										  -1,
-										  sublevels_up);
+				result = makeVar(vnum,
+								 1,
+								 toid,
+								 -1,
+								 sublevels_up);
 			}
 			break;
 		case RTE_VALUES:
 			toid = RECORDOID;
 			/* returns composite; same as relation case */
-			result = (Node *) makeVar(vnum,
-									  InvalidAttrNumber,
-									  toid,
-									  -1,
-									  sublevels_up);
+			result = makeVar(vnum,
+							 InvalidAttrNumber,
+							 toid,
+							 -1,
+							 sublevels_up);
 			break;
 		default:
 
@@ -1849,48 +1890,64 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 			 * expanded to a RowExpr during planning, but that is not our
 			 * concern here.)
 			 */
-			result = (Node *) makeVar(vnum,
-									  InvalidAttrNumber,
-									  RECORDOID,
-									  -1,
-									  sublevels_up);
+			result = makeVar(vnum,
+							 InvalidAttrNumber,
+							 RECORDOID,
+							 -1,
+							 sublevels_up);
 			break;
 	}
 
-	return result;
+	/* location is not filled in by makeVar */
+	result->location = location;
+
+	return (Node *) result;
 }
 
 /*
  * Handle an explicit CAST construct.
  *
- * The given expr has already been transformed, but we need to lookup
- * the type name and then apply any necessary coercion function(s).
+ * Transform the argument, then look up the type name and apply any necessary
+ * coercion function(s).
  */
 static Node *
-typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
+transformTypeCast(ParseState *pstate, TypeCast *tc)
 {
+	Node	   *result;
+	Node	   *expr = transformExpr(pstate, tc->arg);
 	Oid			inputType = exprType(expr);
 	Oid			targetType;
 	int32		targetTypmod;
+	int			location;
 
-	targetType = typenameTypeId(pstate, typename, &targetTypmod);
+	targetType = typenameTypeId(pstate, tc->typename, &targetTypmod);
 
 	if (inputType == InvalidOid)
 		return expr;			/* do nothing if NULL input */
 
-	expr = coerce_to_target_type(pstate, expr, inputType,
-								 targetType, targetTypmod,
-								 COERCION_EXPLICIT,
-								 COERCE_EXPLICIT_CAST);
-	if (expr == NULL)
+	/*
+	 * Location of the coercion is preferentially the location of the :: or
+	 * CAST symbol, but if there is none then use the location of the type
+	 * name (this can happen in TypeName 'string' syntax, for instance).
+	 */
+	location = tc->location;
+	if (location < 0)
+		location = tc->typename->location;
+
+	result = coerce_to_target_type(pstate, expr, inputType,
+								   targetType, targetTypmod,
+								   COERCION_EXPLICIT,
+								   COERCE_EXPLICIT_CAST,
+								   location);
+	if (result == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
 				 errmsg("cannot cast type %s to %s",
 						format_type_be(inputType),
 						format_type_be(targetType)),
-				 parser_errposition(pstate, typename->location)));
+				 parser_coercion_errposition(pstate, location, expr)));
 
-	return expr;
+	return result;
 }
 
 /*
@@ -2043,9 +2100,9 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	 * the system thinks BoolExpr is N-argument anyway.
 	 */
 	if (rctype == ROWCOMPARE_EQ)
-		return (Node *) makeBoolExpr(AND_EXPR, opexprs);
+		return (Node *) makeBoolExpr(AND_EXPR, opexprs, location);
 	if (rctype == ROWCOMPARE_NE)
-		return (Node *) makeBoolExpr(OR_EXPR, opexprs);
+		return (Node *) makeBoolExpr(OR_EXPR, opexprs, location);
 
 	/*
 	 * Otherwise we need to choose exactly which opfamily to associate with
@@ -2138,7 +2195,8 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 			result = cmp;
 		else
 			result = (Node *) makeBoolExpr(OR_EXPR,
-										   list_make2(result, cmp));
+										   list_make2(result, cmp),
+										   location);
 	}
 
 	if (result == NULL)

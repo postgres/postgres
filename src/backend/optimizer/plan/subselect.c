@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.139 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.140 2008/08/28 23:09:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,6 +140,7 @@ replace_outer_var(PlannerInfo *root, Var *var)
 	retval->paramid = i;
 	retval->paramtype = var->vartype;
 	retval->paramtypmod = var->vartypmod;
+	retval->location = -1;
 
 	return retval;
 }
@@ -179,6 +180,7 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 	retval->paramid = i;
 	retval->paramtype = agg->aggtype;
 	retval->paramtypmod = -1;
+	retval->location = -1;
 
 	return retval;
 }
@@ -199,6 +201,7 @@ generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod)
 	retval->paramid = list_length(root->glob->paramlist);
 	retval->paramtype = paramtype;
 	retval->paramtypmod = paramtypmod;
+	retval->location = -1;
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) retval;

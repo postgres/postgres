@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.104 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.105 2008/08/28 23:09:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -857,6 +857,7 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	result->opresulttype = rettype;
 	result->opretset = get_func_retset(opform->oprcode);
 	result->args = args;
+	result->location = location;
 
 	ReleaseSysCache(tup);
 
@@ -984,6 +985,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	result->opfuncid = opform->oprcode;
 	result->useOr = useOr;
 	result->args = args;
+	result->location = location;
 
 	ReleaseSysCache(tup);
 

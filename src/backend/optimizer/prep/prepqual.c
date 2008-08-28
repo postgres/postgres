@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.58 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.59 2008/08/28 23:09:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,6 +219,7 @@ push_nots(Expr *qual)
 			newopexpr->opresulttype = opexpr->opresulttype;
 			newopexpr->opretset = opexpr->opretset;
 			newopexpr->args = opexpr->args;
+			newopexpr->location = opexpr->location;
 			return (Expr *) newopexpr;
 		}
 		else
@@ -243,6 +244,7 @@ push_nots(Expr *qual)
 			newopexpr->opfuncid = InvalidOid;
 			newopexpr->useOr = !saopexpr->useOr;
 			newopexpr->args = saopexpr->args;
+			newopexpr->location = saopexpr->location;
 			return (Expr *) newopexpr;
 		}
 		else

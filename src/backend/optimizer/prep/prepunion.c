@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.154 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.155 2008/08/28 23:09:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1410,6 +1410,7 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 						r->arg = (Expr *) var;
 						r->resulttype = context->parent_reltype;
 						r->convertformat = COERCE_IMPLICIT_CAST;
+						r->location = -1;
 						/* Make sure the Var node has the right type ID, too */
 						var->vartype = context->child_reltype;
 						return (Node *) r;
@@ -1428,6 +1429,8 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 					rowexpr->args = fields;
 					rowexpr->row_typeid = var->vartype;
 					rowexpr->row_format = COERCE_IMPLICIT_CAST;
+					rowexpr->location = -1;
+
 					return (Node *) rowexpr;
 				}
 			}

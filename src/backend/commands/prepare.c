@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.90 2008/08/25 22:42:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.91 2008/08/28 23:09:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,7 +353,8 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 		expr = coerce_to_target_type(pstate, expr, given_type_id,
 									 expected_type_id, -1,
 									 COERCION_ASSIGNMENT,
-									 COERCE_IMPLICIT_CAST);
+									 COERCE_IMPLICIT_CAST,
+									 -1);
 
 		if (expr == NULL)
 			ereport(ERROR,

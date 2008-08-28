@@ -13,12 +13,16 @@
  * Currently, in fact, equal() doesn't know how to compare Plan trees
  * either.	This might need to be fixed someday.
  *
+ * NOTE: it is intentional that parse location fields (in nodes that have
+ * one) are not compared.  This is because we want, for example, a variable
+ * "x" to be considered equal() to another reference to "x" in the query.
+ *
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.328 2008/08/22 00:16:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.329 2008/08/28 23:09:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +78,10 @@
 		if (memcmp(a->fldname, b->fldname, (sz)) != 0) \
 			return false; \
 	} while (0)
+
+/* Compare a parse location field (this is a no-op, per note above) */
+#define COMPARE_LOCATION_FIELD(fldname) \
+	((void) 0)
 
 
 /*
@@ -131,6 +139,7 @@ _equalVar(Var *a, Var *b)
 	COMPARE_SCALAR_FIELD(varlevelsup);
 	COMPARE_SCALAR_FIELD(varnoold);
 	COMPARE_SCALAR_FIELD(varoattno);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -143,6 +152,7 @@ _equalConst(Const *a, Const *b)
 	COMPARE_SCALAR_FIELD(constlen);
 	COMPARE_SCALAR_FIELD(constisnull);
 	COMPARE_SCALAR_FIELD(constbyval);
+	COMPARE_LOCATION_FIELD(location);
 
 	/*
 	 * We treat all NULL constants of the same type as equal. Someday this
@@ -161,6 +171,7 @@ _equalParam(Param *a, Param *b)
 	COMPARE_SCALAR_FIELD(paramid);
 	COMPARE_SCALAR_FIELD(paramtype);
 	COMPARE_SCALAR_FIELD(paramtypmod);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -174,6 +185,7 @@ _equalAggref(Aggref *a, Aggref *b)
 	COMPARE_SCALAR_FIELD(agglevelsup);
 	COMPARE_SCALAR_FIELD(aggstar);
 	COMPARE_SCALAR_FIELD(aggdistinct);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -209,6 +221,7 @@ _equalFuncExpr(FuncExpr *a, FuncExpr *b)
 		return false;
 
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -232,6 +245,7 @@ _equalOpExpr(OpExpr *a, OpExpr *b)
 	COMPARE_SCALAR_FIELD(opresulttype);
 	COMPARE_SCALAR_FIELD(opretset);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -255,6 +269,7 @@ _equalDistinctExpr(DistinctExpr *a, DistinctExpr *b)
 	COMPARE_SCALAR_FIELD(opresulttype);
 	COMPARE_SCALAR_FIELD(opretset);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -277,6 +292,7 @@ _equalScalarArrayOpExpr(ScalarArrayOpExpr *a, ScalarArrayOpExpr *b)
 
 	COMPARE_SCALAR_FIELD(useOr);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -286,6 +302,7 @@ _equalBoolExpr(BoolExpr *a, BoolExpr *b)
 {
 	COMPARE_SCALAR_FIELD(boolop);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -297,6 +314,7 @@ _equalSubLink(SubLink *a, SubLink *b)
 	COMPARE_NODE_FIELD(testexpr);
 	COMPARE_NODE_FIELD(operName);
 	COMPARE_NODE_FIELD(subselect);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -366,6 +384,8 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 		b->relabelformat != COERCE_DONTCARE)
 		return false;
 
+	COMPARE_LOCATION_FIELD(location);
+
 	return true;
 }
 
@@ -383,6 +403,8 @@ _equalCoerceViaIO(CoerceViaIO *a, CoerceViaIO *b)
 		a->coerceformat != COERCE_DONTCARE &&
 		b->coerceformat != COERCE_DONTCARE)
 		return false;
+
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -405,6 +427,8 @@ _equalArrayCoerceExpr(ArrayCoerceExpr *a, ArrayCoerceExpr *b)
 		b->coerceformat != COERCE_DONTCARE)
 		return false;
 
+	COMPARE_LOCATION_FIELD(location);
+
 	return true;
 }
 
@@ -423,6 +447,8 @@ _equalConvertRowtypeExpr(ConvertRowtypeExpr *a, ConvertRowtypeExpr *b)
 		b->convertformat != COERCE_DONTCARE)
 		return false;
 
+	COMPARE_LOCATION_FIELD(location);
+
 	return true;
 }
 
@@ -433,6 +459,7 @@ _equalCaseExpr(CaseExpr *a, CaseExpr *b)
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_NODE_FIELD(args);
 	COMPARE_NODE_FIELD(defresult);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -442,6 +469,7 @@ _equalCaseWhen(CaseWhen *a, CaseWhen *b)
 {
 	COMPARE_NODE_FIELD(expr);
 	COMPARE_NODE_FIELD(result);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -462,6 +490,7 @@ _equalArrayExpr(ArrayExpr *a, ArrayExpr *b)
 	COMPARE_SCALAR_FIELD(element_typeid);
 	COMPARE_NODE_FIELD(elements);
 	COMPARE_SCALAR_FIELD(multidims);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -480,6 +509,8 @@ _equalRowExpr(RowExpr *a, RowExpr *b)
 		a->row_format != COERCE_DONTCARE &&
 		b->row_format != COERCE_DONTCARE)
 		return false;
+
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -501,6 +532,7 @@ _equalCoalesceExpr(CoalesceExpr *a, CoalesceExpr *b)
 {
 	COMPARE_SCALAR_FIELD(coalescetype);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -511,6 +543,7 @@ _equalMinMaxExpr(MinMaxExpr *a, MinMaxExpr *b)
 	COMPARE_SCALAR_FIELD(minmaxtype);
 	COMPARE_SCALAR_FIELD(op);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -526,6 +559,7 @@ _equalXmlExpr(XmlExpr *a, XmlExpr *b)
 	COMPARE_SCALAR_FIELD(xmloption);
 	COMPARE_SCALAR_FIELD(type);
 	COMPARE_SCALAR_FIELD(typmod);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -549,6 +583,7 @@ _equalNullIfExpr(NullIfExpr *a, NullIfExpr *b)
 	COMPARE_SCALAR_FIELD(opresulttype);
 	COMPARE_SCALAR_FIELD(opretset);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -587,6 +622,8 @@ _equalCoerceToDomain(CoerceToDomain *a, CoerceToDomain *b)
 		b->coercionformat != COERCE_DONTCARE)
 		return false;
 
+	COMPARE_LOCATION_FIELD(location);
+
 	return true;
 }
 
@@ -595,6 +632,7 @@ _equalCoerceToDomainValue(CoerceToDomainValue *a, CoerceToDomainValue *b)
 {
 	COMPARE_SCALAR_FIELD(typeId);
 	COMPARE_SCALAR_FIELD(typeMod);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -604,6 +642,7 @@ _equalSetToDefault(SetToDefault *a, SetToDefault *b)
 {
 	COMPARE_SCALAR_FIELD(typeId);
 	COMPARE_SCALAR_FIELD(typeMod);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -1680,7 +1719,7 @@ _equalAExpr(A_Expr *a, A_Expr *b)
 	COMPARE_NODE_FIELD(name);
 	COMPARE_NODE_FIELD(lexpr);
 	COMPARE_NODE_FIELD(rexpr);
-	COMPARE_SCALAR_FIELD(location);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -1689,7 +1728,7 @@ static bool
 _equalColumnRef(ColumnRef *a, ColumnRef *b)
 {
 	COMPARE_NODE_FIELD(fields);
-	COMPARE_SCALAR_FIELD(location);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -1698,6 +1737,7 @@ static bool
 _equalParamRef(ParamRef *a, ParamRef *b)
 {
 	COMPARE_SCALAR_FIELD(number);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -1707,6 +1747,7 @@ _equalAConst(A_Const *a, A_Const *b)
 {
 	if (!equal(&a->val, &b->val))		/* hack for in-line Value field */
 		return false;
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -1719,7 +1760,7 @@ _equalFuncCall(FuncCall *a, FuncCall *b)
 	COMPARE_SCALAR_FIELD(agg_star);
 	COMPARE_SCALAR_FIELD(agg_distinct);
 	COMPARE_SCALAR_FIELD(func_variadic);
-	COMPARE_SCALAR_FIELD(location);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -1746,6 +1787,7 @@ static bool
 _equalA_ArrayExpr(A_ArrayExpr *a, A_ArrayExpr *b)
 {
 	COMPARE_NODE_FIELD(elements);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -1756,7 +1798,7 @@ _equalResTarget(ResTarget *a, ResTarget *b)
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(indirection);
 	COMPARE_NODE_FIELD(val);
-	COMPARE_SCALAR_FIELD(location);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -1771,7 +1813,7 @@ _equalTypeName(TypeName *a, TypeName *b)
 	COMPARE_NODE_FIELD(typmods);
 	COMPARE_SCALAR_FIELD(typemod);
 	COMPARE_NODE_FIELD(arrayBounds);
-	COMPARE_SCALAR_FIELD(location);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -1781,6 +1823,7 @@ _equalTypeCast(TypeCast *a, TypeCast *b)
 {
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_NODE_FIELD(typename);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -1941,6 +1984,7 @@ _equalXmlSerialize(XmlSerialize *a, XmlSerialize *b)
 	COMPARE_SCALAR_FIELD(xmloption);
 	COMPARE_NODE_FIELD(expr);
 	COMPARE_NODE_FIELD(typename);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }

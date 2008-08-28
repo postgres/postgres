@@ -8,13 +8,19 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.212 2008/08/07 01:11:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.213 2008/08/28 23:09:46 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
  *	  never have occasion to read them in.	(There was once code here that
  *	  claimed to read them, but it was broken as well as unused.)  We
  *	  never read executor state trees, either.
+ *
+ *	  Parse location fields are written out by outfuncs.c, but only for
+ *	  possible debugging use.  When reading a location field, we discard
+ *	  the stored value and set the location field to -1 (ie, "unknown").
+ *	  This is because nodes coming from a stored rule should not be thought
+ *	  to have a known location in the current query's text.
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +102,12 @@
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	token = pg_strtok(&length);		/* get field value */ \
 	local_node->fldname = nullable_string(token, length)
+
+/* Read a parse location field (and throw away the value, per notes above) */
+#define READ_LOCATION_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(&length);		/* get field value */ \
+	local_node->fldname = -1		/* set field to "unknown" */
 
 /* Read a Node field */
 #define READ_NODE_FIELD(fldname) \
@@ -299,6 +311,7 @@ _readVar(void)
 	READ_UINT_FIELD(varlevelsup);
 	READ_UINT_FIELD(varnoold);
 	READ_INT_FIELD(varoattno);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -316,6 +329,7 @@ _readConst(void)
 	READ_INT_FIELD(constlen);
 	READ_BOOL_FIELD(constbyval);
 	READ_BOOL_FIELD(constisnull);
+	READ_LOCATION_FIELD(location);
 
 	token = pg_strtok(&length); /* skip :constvalue */
 	if (local_node->constisnull)
@@ -338,6 +352,7 @@ _readParam(void)
 	READ_INT_FIELD(paramid);
 	READ_OID_FIELD(paramtype);
 	READ_INT_FIELD(paramtypmod);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -356,6 +371,7 @@ _readAggref(void)
 	READ_UINT_FIELD(agglevelsup);
 	READ_BOOL_FIELD(aggstar);
 	READ_BOOL_FIELD(aggdistinct);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -392,6 +408,7 @@ _readFuncExpr(void)
 	READ_BOOL_FIELD(funcretset);
 	READ_ENUM_FIELD(funcformat, CoercionForm);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -420,6 +437,7 @@ _readOpExpr(void)
 	READ_OID_FIELD(opresulttype);
 	READ_BOOL_FIELD(opretset);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -448,6 +466,7 @@ _readDistinctExpr(void)
 	READ_OID_FIELD(opresulttype);
 	READ_BOOL_FIELD(opretset);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -475,6 +494,7 @@ _readScalarArrayOpExpr(void)
 
 	READ_BOOL_FIELD(useOr);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -500,6 +520,7 @@ _readBoolExpr(void)
 		elog(ERROR, "unrecognized boolop \"%.*s\"", length, token);
 
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -516,6 +537,7 @@ _readSubLink(void)
 	READ_NODE_FIELD(testexpr);
 	READ_NODE_FIELD(operName);
 	READ_NODE_FIELD(subselect);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -568,6 +590,7 @@ _readRelabelType(void)
 	READ_OID_FIELD(resulttype);
 	READ_INT_FIELD(resulttypmod);
 	READ_ENUM_FIELD(relabelformat, CoercionForm);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -583,6 +606,7 @@ _readCoerceViaIO(void)
 	READ_NODE_FIELD(arg);
 	READ_OID_FIELD(resulttype);
 	READ_ENUM_FIELD(coerceformat, CoercionForm);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -601,6 +625,7 @@ _readArrayCoerceExpr(void)
 	READ_INT_FIELD(resulttypmod);
 	READ_BOOL_FIELD(isExplicit);
 	READ_ENUM_FIELD(coerceformat, CoercionForm);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -616,6 +641,7 @@ _readConvertRowtypeExpr(void)
 	READ_NODE_FIELD(arg);
 	READ_OID_FIELD(resulttype);
 	READ_ENUM_FIELD(convertformat, CoercionForm);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -632,6 +658,7 @@ _readCaseExpr(void)
 	READ_NODE_FIELD(arg);
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(defresult);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -646,6 +673,7 @@ _readCaseWhen(void)
 
 	READ_NODE_FIELD(expr);
 	READ_NODE_FIELD(result);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -676,6 +704,7 @@ _readArrayExpr(void)
 	READ_OID_FIELD(element_typeid);
 	READ_NODE_FIELD(elements);
 	READ_BOOL_FIELD(multidims);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -691,6 +720,7 @@ _readRowExpr(void)
 	READ_NODE_FIELD(args);
 	READ_OID_FIELD(row_typeid);
 	READ_ENUM_FIELD(row_format, CoercionForm);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -722,6 +752,7 @@ _readCoalesceExpr(void)
 
 	READ_OID_FIELD(coalescetype);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -737,6 +768,7 @@ _readMinMaxExpr(void)
 	READ_OID_FIELD(minmaxtype);
 	READ_ENUM_FIELD(op, MinMaxOp);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -757,6 +789,7 @@ _readXmlExpr(void)
 	READ_ENUM_FIELD(xmloption, XmlOptionType);
 	READ_OID_FIELD(type);
 	READ_INT_FIELD(typmod);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -785,6 +818,7 @@ _readNullIfExpr(void)
 	READ_OID_FIELD(opresulttype);
 	READ_BOOL_FIELD(opretset);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -829,6 +863,7 @@ _readCoerceToDomain(void)
 	READ_OID_FIELD(resulttype);
 	READ_INT_FIELD(resulttypmod);
 	READ_ENUM_FIELD(coercionformat, CoercionForm);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -843,6 +878,7 @@ _readCoerceToDomainValue(void)
 
 	READ_OID_FIELD(typeId);
 	READ_INT_FIELD(typeMod);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -857,6 +893,7 @@ _readSetToDefault(void)
 
 	READ_OID_FIELD(typeId);
 	READ_INT_FIELD(typeMod);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }

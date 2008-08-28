@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.263 2008/08/25 22:42:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.264 2008/08/28 23:09:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3649,7 +3649,8 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 												typeOid,
 												typmod,
 												COERCION_ASSIGNMENT,
-												COERCE_IMPLICIT_CAST);
+												COERCE_IMPLICIT_CAST,
+												-1);
 		if (defval == NULL)		/* should not happen */
 			elog(ERROR, "failed to coerce base type to domain");
 	}
@@ -5509,7 +5510,8 @@ ATPrepAlterColumnType(List **wqueue,
 									  transform, exprType(transform),
 									  targettype, targettypmod,
 									  COERCION_ASSIGNMENT,
-									  COERCE_IMPLICIT_CAST);
+									  COERCE_IMPLICIT_CAST,
+									  -1);
 	if (transform == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -5607,7 +5609,8 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 										  defaultexpr, exprType(defaultexpr),
 											targettype, targettypmod,
 											COERCION_ASSIGNMENT,
-											COERCE_IMPLICIT_CAST);
+											COERCE_IMPLICIT_CAST,
+											-1);
 		if (defaultexpr == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),

@@ -3,11 +3,17 @@
  * parsenodes.h
  *	  definitions for parse tree nodes
  *
+ * Many of the node types used in parsetrees include a "location" field.
+ * This is a byte (not character) offset in the original source text, to be
+ * used for positioning an error cursor when there is an error related to
+ * the node.  Access to the original source text is needed to make use of
+ * the location.
+ *
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.371 2008/08/07 01:11:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.372 2008/08/28 23:09:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,11 +147,6 @@ typedef struct Query
  *	Most of these node types appear in raw parsetrees output by the grammar,
  *	and get transformed to something else by the analyzer.	A few of them
  *	are used as-is in transformed querytrees.
- *
- *	Many of the node types used in raw parsetrees include a "location" field.
- *	This is a byte (not character) offset in the original source text, to be
- *	used for positioning an error cursor when there is an analysis-time
- *	error related to the node.
  ****************************************************************************/
 
 /*
@@ -199,6 +200,7 @@ typedef struct ParamRef
 {
 	NodeTag		type;
 	int			number;			/* the number of the parameter */
+	int			location;		/* token location, or -1 if unknown */
 } ParamRef;
 
 /*
@@ -235,6 +237,7 @@ typedef struct A_Const
 {
 	NodeTag		type;
 	Value		val;			/* value (includes type info, see value.h) */
+	int			location;		/* token location, or -1 if unknown */
 } A_Const;
 
 /*
@@ -245,6 +248,7 @@ typedef struct TypeCast
 	NodeTag		type;
 	Node	   *arg;			/* the expression being casted */
 	TypeName   *typename;		/* the target type */
+	int			location;		/* token location, or -1 if unknown */
 } TypeCast;
 
 /*
@@ -305,6 +309,7 @@ typedef struct A_ArrayExpr
 {
 	NodeTag		type;
 	List	   *elements;		/* array element expressions */
+	int			location;		/* token location, or -1 if unknown */
 } A_ArrayExpr;
 
 /*
@@ -459,14 +464,15 @@ typedef struct LockingClause
 } LockingClause;
 
 /*
- * XMLSERIALIZE
+ * XMLSERIALIZE (in raw parse tree only)
  */
 typedef struct XmlSerialize
 {
 	NodeTag		type;
-	XmlOptionType xmloption;
+	XmlOptionType xmloption;	/* DOCUMENT or CONTENT */
 	Node	   *expr;
 	TypeName   *typename;
+	int			location;		/* token location, or -1 if unknown */
 } XmlSerialize;
 
 

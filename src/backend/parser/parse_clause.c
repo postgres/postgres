@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.176 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.177 2008/08/28 23:09:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -964,9 +964,10 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	outcoltypmod = l_colvar->vartypmod;
 	if (outcoltype != r_colvar->vartype)
 	{
-		outcoltype = select_common_type(list_make2_oid(l_colvar->vartype,
-													   r_colvar->vartype),
-										"JOIN/USING");
+		outcoltype = select_common_type(pstate,
+										list_make2(l_colvar, r_colvar),
+										"JOIN/USING",
+										NULL);
 		outcoltypmod = -1;		/* ie, unknown */
 	}
 	else if (outcoltypmod != r_colvar->vartypmod)
@@ -984,7 +985,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	if (l_colvar->vartype != outcoltype)
 		l_node = coerce_type(pstate, (Node *) l_colvar, l_colvar->vartype,
 							 outcoltype, outcoltypmod,
-							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
+							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST, -1);
 	else if (l_colvar->vartypmod != outcoltypmod)
 		l_node = (Node *) makeRelabelType((Expr *) l_colvar,
 										  outcoltype, outcoltypmod,
@@ -995,7 +996,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	if (r_colvar->vartype != outcoltype)
 		r_node = coerce_type(pstate, (Node *) r_colvar, r_colvar->vartype,
 							 outcoltype, outcoltypmod,
-							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
+							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST, -1);
 	else if (r_colvar->vartypmod != outcoltypmod)
 		r_node = (Node *) makeRelabelType((Expr *) r_colvar,
 										  outcoltype, outcoltypmod,
@@ -1038,6 +1039,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 
 				c->coalescetype = outcoltype;
 				c->args = list_make2(l_node, r_node);
+				c->location = -1;
 				res_node = (Node *) c;
 				break;
 			}
@@ -1239,6 +1241,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 	if (IsA(node, A_Const))
 	{
 		Value	   *val = &((A_Const *) node)->val;
+		int			location = ((A_Const *) node)->location;
 		int			targetlist_pos = 0;
 		int			target_pos;
 
@@ -1247,7 +1250,9 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 			/* translator: %s is name of a SQL construct, eg ORDER BY */
 					 errmsg("non-integer constant in %s",
-							clauseText[clause])));
+							clauseText[clause]),
+					 parser_errposition(pstate, location)));
+
 		target_pos = intVal(val);
 		foreach(tl, *tlist)
 		{
@@ -1263,7 +1268,8 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 		/* translator: %s is name of a SQL construct, eg ORDER BY */
 				 errmsg("%s position %d is not in select list",
-						clauseText[clause], target_pos)));
+						clauseText[clause], target_pos),
+				 parser_errposition(pstate, location)));
 	}
 
 	/*
@@ -1590,7 +1596,8 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 		tle->expr = (Expr *) coerce_type(pstate, (Node *) tle->expr,
 										 restype, TEXTOID, -1,
 										 COERCION_IMPLICIT,
-										 COERCE_IMPLICIT_CAST);
+										 COERCE_IMPLICIT_CAST,
+										 -1);
 		restype = TEXTOID;
 	}
 
@@ -1704,7 +1711,8 @@ addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 		tle->expr = (Expr *) coerce_type(pstate, (Node *) tle->expr,
 										 restype, TEXTOID, -1,
 										 COERCION_IMPLICIT,
-										 COERCE_IMPLICIT_CAST);
+										 COERCE_IMPLICIT_CAST,
+										 -1);
 		restype = TEXTOID;
 	}
 

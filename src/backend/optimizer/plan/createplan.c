@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.246 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.247 2008/08/28 23:09:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1949,6 +1949,7 @@ get_switched_clauses(List *clauses, Relids outerrelids)
 			temp->opresulttype = clause->opresulttype;
 			temp->opretset = clause->opretset;
 			temp->args = list_copy(clause->args);
+			temp->location = clause->location;
 			/* Commute it --- note this modifies the temp node in-place. */
 			CommuteOpExpr(temp);
 			t_list = lappend(t_list, temp);

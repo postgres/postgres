@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.335 2008/08/22 00:16:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.336 2008/08/28 23:09:46 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -78,6 +78,10 @@
 #define WRITE_STRING_FIELD(fldname) \
 	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
 	 _outToken(str, node->fldname))
+
+/* Write a parse location field (actually same as INT case) */
+#define WRITE_LOCATION_FIELD(fldname) \
+	appendStringInfo(str, " :" CppAsString(fldname) " %d", node->fldname)
 
 /* Write a Node field */
 #define WRITE_NODE_FIELD(fldname) \
@@ -689,6 +693,7 @@ _outVar(StringInfo str, Var *node)
 	WRITE_UINT_FIELD(varlevelsup);
 	WRITE_UINT_FIELD(varnoold);
 	WRITE_INT_FIELD(varoattno);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -701,6 +706,7 @@ _outConst(StringInfo str, Const *node)
 	WRITE_INT_FIELD(constlen);
 	WRITE_BOOL_FIELD(constbyval);
 	WRITE_BOOL_FIELD(constisnull);
+	WRITE_LOCATION_FIELD(location);
 
 	appendStringInfo(str, " :constvalue ");
 	if (node->constisnull)
@@ -718,6 +724,7 @@ _outParam(StringInfo str, Param *node)
 	WRITE_INT_FIELD(paramid);
 	WRITE_OID_FIELD(paramtype);
 	WRITE_INT_FIELD(paramtypmod);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -731,6 +738,7 @@ _outAggref(StringInfo str, Aggref *node)
 	WRITE_UINT_FIELD(agglevelsup);
 	WRITE_BOOL_FIELD(aggstar);
 	WRITE_BOOL_FIELD(aggdistinct);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -757,6 +765,7 @@ _outFuncExpr(StringInfo str, FuncExpr *node)
 	WRITE_BOOL_FIELD(funcretset);
 	WRITE_ENUM_FIELD(funcformat, CoercionForm);
 	WRITE_NODE_FIELD(args);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -769,6 +778,7 @@ _outOpExpr(StringInfo str, OpExpr *node)
 	WRITE_OID_FIELD(opresulttype);
 	WRITE_BOOL_FIELD(opretset);
 	WRITE_NODE_FIELD(args);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -781,6 +791,7 @@ _outDistinctExpr(StringInfo str, DistinctExpr *node)
 	WRITE_OID_FIELD(opresulttype);
 	WRITE_BOOL_FIELD(opretset);
 	WRITE_NODE_FIELD(args);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -792,6 +803,7 @@ _outScalarArrayOpExpr(StringInfo str, ScalarArrayOpExpr *node)
 	WRITE_OID_FIELD(opfuncid);
 	WRITE_BOOL_FIELD(useOr);
 	WRITE_NODE_FIELD(args);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -818,6 +830,7 @@ _outBoolExpr(StringInfo str, BoolExpr *node)
 	_outToken(str, opstr);
 
 	WRITE_NODE_FIELD(args);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -829,6 +842,7 @@ _outSubLink(StringInfo str, SubLink *node)
 	WRITE_NODE_FIELD(testexpr);
 	WRITE_NODE_FIELD(operName);
 	WRITE_NODE_FIELD(subselect);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -889,6 +903,7 @@ _outRelabelType(StringInfo str, RelabelType *node)
 	WRITE_OID_FIELD(resulttype);
 	WRITE_INT_FIELD(resulttypmod);
 	WRITE_ENUM_FIELD(relabelformat, CoercionForm);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -899,6 +914,7 @@ _outCoerceViaIO(StringInfo str, CoerceViaIO *node)
 	WRITE_NODE_FIELD(arg);
 	WRITE_OID_FIELD(resulttype);
 	WRITE_ENUM_FIELD(coerceformat, CoercionForm);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -912,6 +928,7 @@ _outArrayCoerceExpr(StringInfo str, ArrayCoerceExpr *node)
 	WRITE_INT_FIELD(resulttypmod);
 	WRITE_BOOL_FIELD(isExplicit);
 	WRITE_ENUM_FIELD(coerceformat, CoercionForm);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -922,6 +939,7 @@ _outConvertRowtypeExpr(StringInfo str, ConvertRowtypeExpr *node)
 	WRITE_NODE_FIELD(arg);
 	WRITE_OID_FIELD(resulttype);
 	WRITE_ENUM_FIELD(convertformat, CoercionForm);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -933,6 +951,7 @@ _outCaseExpr(StringInfo str, CaseExpr *node)
 	WRITE_NODE_FIELD(arg);
 	WRITE_NODE_FIELD(args);
 	WRITE_NODE_FIELD(defresult);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -942,6 +961,7 @@ _outCaseWhen(StringInfo str, CaseWhen *node)
 
 	WRITE_NODE_FIELD(expr);
 	WRITE_NODE_FIELD(result);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -962,6 +982,7 @@ _outArrayExpr(StringInfo str, ArrayExpr *node)
 	WRITE_OID_FIELD(element_typeid);
 	WRITE_NODE_FIELD(elements);
 	WRITE_BOOL_FIELD(multidims);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -972,6 +993,7 @@ _outRowExpr(StringInfo str, RowExpr *node)
 	WRITE_NODE_FIELD(args);
 	WRITE_OID_FIELD(row_typeid);
 	WRITE_ENUM_FIELD(row_format, CoercionForm);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -993,6 +1015,7 @@ _outCoalesceExpr(StringInfo str, CoalesceExpr *node)
 
 	WRITE_OID_FIELD(coalescetype);
 	WRITE_NODE_FIELD(args);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1003,6 +1026,7 @@ _outMinMaxExpr(StringInfo str, MinMaxExpr *node)
 	WRITE_OID_FIELD(minmaxtype);
 	WRITE_ENUM_FIELD(op, MinMaxOp);
 	WRITE_NODE_FIELD(args);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1018,6 +1042,7 @@ _outXmlExpr(StringInfo str, XmlExpr *node)
 	WRITE_ENUM_FIELD(xmloption, XmlOptionType);
 	WRITE_OID_FIELD(type);
 	WRITE_INT_FIELD(typmod);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1030,6 +1055,7 @@ _outNullIfExpr(StringInfo str, NullIfExpr *node)
 	WRITE_OID_FIELD(opresulttype);
 	WRITE_BOOL_FIELD(opretset);
 	WRITE_NODE_FIELD(args);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1059,6 +1085,7 @@ _outCoerceToDomain(StringInfo str, CoerceToDomain *node)
 	WRITE_OID_FIELD(resulttype);
 	WRITE_INT_FIELD(resulttypmod);
 	WRITE_ENUM_FIELD(coercionformat, CoercionForm);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1068,6 +1095,7 @@ _outCoerceToDomainValue(StringInfo str, CoerceToDomainValue *node)
 
 	WRITE_OID_FIELD(typeId);
 	WRITE_INT_FIELD(typeMod);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1077,6 +1105,7 @@ _outSetToDefault(StringInfo str, SetToDefault *node)
 
 	WRITE_OID_FIELD(typeId);
 	WRITE_INT_FIELD(typeMod);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1626,7 +1655,7 @@ _outFuncCall(StringInfo str, FuncCall *node)
 	WRITE_BOOL_FIELD(agg_star);
 	WRITE_BOOL_FIELD(agg_distinct);
 	WRITE_BOOL_FIELD(func_variadic);
-	WRITE_INT_FIELD(location);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1656,6 +1685,7 @@ _outXmlSerialize(StringInfo str, XmlSerialize *node)
 	WRITE_ENUM_FIELD(xmloption, XmlOptionType);
 	WRITE_NODE_FIELD(expr);
 	WRITE_NODE_FIELD(typename);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1685,7 +1715,7 @@ _outTypeName(StringInfo str, TypeName *node)
 	WRITE_NODE_FIELD(typmods);
 	WRITE_INT_FIELD(typemod);
 	WRITE_NODE_FIELD(arrayBounds);
-	WRITE_INT_FIELD(location);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1695,6 +1725,7 @@ _outTypeCast(StringInfo str, TypeCast *node)
 
 	WRITE_NODE_FIELD(arg);
 	WRITE_NODE_FIELD(typename);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1892,7 +1923,7 @@ _outAExpr(StringInfo str, A_Expr *node)
 
 	WRITE_NODE_FIELD(lexpr);
 	WRITE_NODE_FIELD(rexpr);
-	WRITE_INT_FIELD(location);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1936,7 +1967,7 @@ _outColumnRef(StringInfo str, ColumnRef *node)
 	WRITE_NODE_TYPE("COLUMNREF");
 
 	WRITE_NODE_FIELD(fields);
-	WRITE_INT_FIELD(location);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1945,6 +1976,7 @@ _outParamRef(StringInfo str, ParamRef *node)
 	WRITE_NODE_TYPE("PARAMREF");
 
 	WRITE_INT_FIELD(number);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1954,6 +1986,7 @@ _outAConst(StringInfo str, A_Const *node)
 
 	appendStringInfo(str, " :val ");
 	_outValue(str, &(node->val));
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1980,6 +2013,7 @@ _outA_ArrayExpr(StringInfo str, A_ArrayExpr *node)
 	WRITE_NODE_TYPE("A_ARRAYEXPR");
 
 	WRITE_NODE_FIELD(elements);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1990,7 +2024,7 @@ _outResTarget(StringInfo str, ResTarget *node)
 	WRITE_STRING_FIELD(name);
 	WRITE_NODE_FIELD(indirection);
 	WRITE_NODE_FIELD(val);
-	WRITE_INT_FIELD(location);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void

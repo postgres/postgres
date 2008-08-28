@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.161 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.162 2008/08/28 23:09:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,7 +318,7 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
  * colname		target column name (ie, name of attribute to be assigned to)
  * attrno		target attribute number
  * indirection	subscripts/field names for target column, if any
- * location		error cursor position, or -1
+ * location		error cursor position for the target column, or -1
  *
  * Returns the modified expression.
  */
@@ -403,7 +403,8 @@ transformAssignedExpr(ParseState *pstate,
 			 */
 			colVar = (Node *) make_var(pstate,
 									   pstate->p_target_rangetblentry,
-									   attrno);
+									   attrno,
+									   location);
 		}
 
 		expr = (Expr *)
@@ -428,7 +429,8 @@ transformAssignedExpr(ParseState *pstate,
 								  (Node *) expr, type_id,
 								  attrtype, attrtypmod,
 								  COERCION_ASSIGNMENT,
-								  COERCE_IMPLICIT_CAST);
+								  COERCE_IMPLICIT_CAST,
+								  -1);
 		if (expr == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -677,7 +679,8 @@ transformAssignmentIndirection(ParseState *pstate,
 								   rhs, exprType(rhs),
 								   targetTypeId, targetTypMod,
 								   COERCION_ASSIGNMENT,
-								   COERCE_IMPLICIT_CAST);
+								   COERCE_IMPLICIT_CAST,
+								   -1);
 	if (result == NULL)
 	{
 		if (targetIsArray)

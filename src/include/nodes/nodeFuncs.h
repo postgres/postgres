@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodeFuncs.h,v 1.27 2008/08/25 22:42:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodeFuncs.h,v 1.28 2008/08/28 23:09:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,8 @@ extern Oid	exprType(Node *expr);
 extern int32 exprTypmod(Node *expr);
 extern bool exprIsLengthCoercion(Node *expr, int32 *coercedTypmod);
 extern bool expression_returns_set(Node *clause);
+
+extern int	exprLocation(Node *expr);
 
 extern bool expression_tree_walker(Node *node, bool (*walker) (),
 											   void *context);

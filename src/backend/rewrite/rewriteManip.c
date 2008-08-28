@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.111 2008/08/25 22:42:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.112 2008/08/28 23:09:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -933,6 +933,7 @@ resolve_one_var(Var *var, ResolveNew_context *context)
 									InvalidOid, -1,
 									var->vartype,
 									COERCE_IMPLICIT_CAST,
+									-1,
 									false,
 									false);
 		}
@@ -989,6 +990,7 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 				rowexpr->args = fields;
 				rowexpr->row_typeid = var->vartype;
 				rowexpr->row_format = COERCE_IMPLICIT_CAST;
+				rowexpr->location = -1;
 
 				return (Node *) rowexpr;
 			}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.54 2008/06/19 00:46:06 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.55 2008/08/28 23:09:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,8 @@ extern ParseState *make_parsestate(ParseState *parentParseState);
 extern void free_parsestate(ParseState *pstate);
 extern int	parser_errposition(ParseState *pstate, int location);
 
-extern Var *make_var(ParseState *pstate, RangeTblEntry *rte, int attrno);
+extern Var *make_var(ParseState *pstate, RangeTblEntry *rte, int attrno,
+					 int location);
 extern Oid	transformArrayType(Oid arrayType);
 extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 Node *arrayBase,
@@ -95,6 +96,6 @@ extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 int32 elementTypMod,
 						 List *indirection,
 						 Node *assignFrom);
-extern Const *make_const(Value *value);
+extern Const *make_const(Value *value, int location);
 
 #endif   /* PARSE_NODE_H */

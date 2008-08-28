@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.265 2008/08/26 02:16:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.266 2008/08/28 23:09:46 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -135,6 +135,7 @@ make_opclause(Oid opno, Oid opresulttype, bool opretset,
 		expr->args = list_make2(leftop, rightop);
 	else
 		expr->args = list_make1(leftop);
+	expr->location = -1;
 	return (Expr *) expr;
 }
 
@@ -201,6 +202,7 @@ make_notclause(Expr *notclause)
 
 	expr->boolop = NOT_EXPR;
 	expr->args = list_make1(notclause);
+	expr->location = -1;
 	return (Expr *) expr;
 }
 
@@ -244,6 +246,7 @@ make_orclause(List *orclauses)
 
 	expr->boolop = OR_EXPR;
 	expr->args = orclauses;
+	expr->location = -1;
 	return (Expr *) expr;
 }
 
@@ -277,6 +280,7 @@ make_andclause(List *andclauses)
 
 	expr->boolop = AND_EXPR;
 	expr->args = andclauses;
+	expr->location = -1;
 	return (Expr *) expr;
 }
 
@@ -2014,6 +2018,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->funcretset = expr->funcretset;
 		newexpr->funcformat = expr->funcformat;
 		newexpr->args = args;
+		newexpr->location = expr->location;
 		return (Node *) newexpr;
 	}
 	if (IsA(node, OpExpr))
@@ -2071,6 +2076,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->opresulttype = expr->opresulttype;
 		newexpr->opretset = expr->opretset;
 		newexpr->args = args;
+		newexpr->location = expr->location;
 		return (Node *) newexpr;
 	}
 	if (IsA(node, DistinctExpr))
@@ -2162,6 +2168,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->opresulttype = expr->opresulttype;
 		newexpr->opretset = expr->opretset;
 		newexpr->args = args;
+		newexpr->location = expr->location;
 		return (Node *) newexpr;
 	}
 	if (IsA(node, BoolExpr))
@@ -2291,6 +2298,7 @@ eval_const_expressions_mutator(Node *node,
 			newrelabel->resulttype = relabel->resulttype;
 			newrelabel->resulttypmod = relabel->resulttypmod;
 			newrelabel->relabelformat = relabel->relabelformat;
+			newrelabel->location = relabel->location;
 			return (Node *) newrelabel;
 		}
 	}
@@ -2357,6 +2365,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->arg = arg;
 		newexpr->resulttype = expr->resulttype;
 		newexpr->coerceformat = expr->coerceformat;
+		newexpr->location = expr->location;
 		return (Node *) newexpr;
 	}
 	if (IsA(node, ArrayCoerceExpr))
@@ -2379,6 +2388,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->resulttypmod = expr->resulttypmod;
 		newexpr->isExplicit = expr->isExplicit;
 		newexpr->coerceformat = expr->coerceformat;
+		newexpr->location = expr->location;
 
 		/*
 		 * If constant argument and it's a binary-coercible or immutable
@@ -2477,6 +2487,7 @@ eval_const_expressions_mutator(Node *node,
 
 				newcasewhen->expr = (Expr *) casecond;
 				newcasewhen->result = (Expr *) caseresult;
+				newcasewhen->location = oldcasewhen->location;
 				newargs = lappend(newargs, newcasewhen);
 				continue;
 			}
@@ -2506,6 +2517,7 @@ eval_const_expressions_mutator(Node *node,
 		newcase->arg = (Expr *) newarg;
 		newcase->args = newargs;
 		newcase->defresult = (Expr *) defresult;
+		newcase->location = caseexpr->location;
 		return (Node *) newcase;
 	}
 	if (IsA(node, CaseTestExpr))
@@ -2545,6 +2557,7 @@ eval_const_expressions_mutator(Node *node,
 		newarray->element_typeid = arrayexpr->element_typeid;
 		newarray->elements = newelems;
 		newarray->multidims = arrayexpr->multidims;
+		newarray->location = arrayexpr->location;
 
 		if (all_const)
 			return (Node *) evaluate_expr((Expr *) newarray,
@@ -2590,6 +2603,7 @@ eval_const_expressions_mutator(Node *node,
 		newcoalesce = makeNode(CoalesceExpr);
 		newcoalesce->coalescetype = coalesceexpr->coalescetype;
 		newcoalesce->args = newargs;
+		newcoalesce->location = coalesceexpr->location;
 		return (Node *) newcoalesce;
 	}
 	if (IsA(node, FieldSelect))
@@ -3206,6 +3220,7 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod, List *args,
 	newexpr->funcretset = false;
 	newexpr->funcformat = COERCE_DONTCARE;		/* doesn't matter */
 	newexpr->args = args;
+	newexpr->location = -1;
 
 	return evaluate_expr((Expr *) newexpr, result_type, result_typmod);
 }

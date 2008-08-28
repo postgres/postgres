@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.139 2008/08/22 00:16:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.140 2008/08/28 23:09:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,14 +138,12 @@ typedef struct Var
 								 * all */
 	Oid			vartype;		/* pg_type OID for the type of this var */
 	int32		vartypmod;		/* pg_attribute typmod value */
-	Index		varlevelsup;
-
-	/*
-	 * for subquery variables referencing outer relations; 0 in a normal var,
-	 * >0 means N levels up
-	 */
+	Index		varlevelsup;	/* for subquery variables referencing outer
+								 * relations; 0 in a normal var, >0 means N
+								 * levels up */
 	Index		varnoold;		/* original value of varno, for debugging */
 	AttrNumber	varoattno;		/* original value of varattno */
+	int			location;		/* token location, or -1 if unknown */
 } Var;
 
 /*
@@ -164,6 +162,7 @@ typedef struct Const
 								 * If true, then all the information is stored
 								 * in the Datum. If false, then the Datum
 								 * contains a pointer to the information. */
+	int			location;		/* token location, or -1 if unknown */
 } Const;
 
 /* ----------------
@@ -204,6 +203,7 @@ typedef struct Param
 	int			paramid;		/* numeric ID for parameter */
 	Oid			paramtype;		/* pg_type OID of parameter's datatype */
 	int32		paramtypmod;	/* typmod value, if known */
+	int			location;		/* token location, or -1 if unknown */
 } Param;
 
 /*
@@ -218,6 +218,7 @@ typedef struct Aggref
 	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
 	bool		aggstar;		/* TRUE if argument list was really '*' */
 	bool		aggdistinct;	/* TRUE if it's agg(DISTINCT ...) */
+	int			location;		/* token location, or -1 if unknown */
 } Aggref;
 
 /* ----------------
@@ -293,6 +294,7 @@ typedef struct FuncExpr
 	bool		funcretset;		/* true if function returns set */
 	CoercionForm funcformat;	/* how to display this function call */
 	List	   *args;			/* arguments to the function */
+	int			location;		/* token location, or -1 if unknown */
 } FuncExpr;
 
 /*
@@ -312,6 +314,7 @@ typedef struct OpExpr
 	Oid			opresulttype;	/* PG_TYPE OID of result value */
 	bool		opretset;		/* true if operator returns set */
 	List	   *args;			/* arguments to the operator (1 or 2) */
+	int			location;		/* token location, or -1 if unknown */
 } OpExpr;
 
 /*
@@ -343,6 +346,7 @@ typedef struct ScalarArrayOpExpr
 	Oid			opfuncid;		/* PG_PROC OID of underlying function */
 	bool		useOr;			/* true for ANY, false for ALL */
 	List	   *args;			/* the scalar and array operands */
+	int			location;		/* token location, or -1 if unknown */
 } ScalarArrayOpExpr;
 
 /*
@@ -350,9 +354,11 @@ typedef struct ScalarArrayOpExpr
  *
  * Notice the arguments are given as a List.  For NOT, of course the list
  * must always have exactly one element.  For AND and OR, the executor can
- * handle any number of arguments.	The parser treats AND and OR as binary
- * and so it only produces two-element lists, but the optimizer will flatten
- * trees of AND and OR nodes to produce longer lists when possible.
+ * handle any number of arguments.  The parser generally treats AND and OR
+ * as binary and so it typically only produces two-element lists, but the
+ * optimizer will flatten trees of AND and OR nodes to produce longer lists
+ * when possible.  There are also a few special cases where more arguments
+ * can appear before optimization.
  */
 typedef enum BoolExprType
 {
@@ -364,6 +370,7 @@ typedef struct BoolExpr
 	Expr		xpr;
 	BoolExprType boolop;
 	List	   *args;			/* arguments to this expression */
+	int			location;		/* token location, or -1 if unknown */
 } BoolExpr;
 
 /*
@@ -423,6 +430,7 @@ typedef struct SubLink
 	Node	   *testexpr;		/* outer-query test for ALL/ANY/ROWCOMPARE */
 	List	   *operName;		/* originally specified operator name */
 	Node	   *subselect;		/* subselect as Query* or parsetree */
+	int			location;		/* token location, or -1 if unknown */
 } SubLink;
 
 /*
@@ -570,6 +578,7 @@ typedef struct RelabelType
 	Oid			resulttype;		/* output type of coercion expression */
 	int32		resulttypmod;	/* output typmod (usually -1) */
 	CoercionForm relabelformat; /* how to display this node */
+	int			location;		/* token location, or -1 if unknown */
 } RelabelType;
 
 /* ----------------
@@ -588,6 +597,7 @@ typedef struct CoerceViaIO
 	Oid			resulttype;		/* output type of coercion */
 	/* output typmod is not stored, but is presumed -1 */
 	CoercionForm coerceformat;	/* how to display this node */
+	int			location;		/* token location, or -1 if unknown */
 } CoerceViaIO;
 
 /* ----------------
@@ -611,6 +621,7 @@ typedef struct ArrayCoerceExpr
 	int32		resulttypmod;	/* output typmod (also element typmod) */
 	bool		isExplicit;		/* conversion semantics flag to pass to func */
 	CoercionForm coerceformat;	/* how to display this node */
+	int			location;		/* token location, or -1 if unknown */
 } ArrayCoerceExpr;
 
 /* ----------------
@@ -632,6 +643,7 @@ typedef struct ConvertRowtypeExpr
 	Oid			resulttype;		/* output type (always a composite type) */
 	/* result typmod is not stored, but must be -1; see RowExpr comments */
 	CoercionForm convertformat; /* how to display this node */
+	int			location;		/* token location, or -1 if unknown */
 } ConvertRowtypeExpr;
 
 /*----------
@@ -663,6 +675,7 @@ typedef struct CaseExpr
 	Expr	   *arg;			/* implicit equality comparison argument */
 	List	   *args;			/* the arguments (list of WHEN clauses) */
 	Expr	   *defresult;		/* the default result (ELSE clause) */
+	int			location;		/* token location, or -1 if unknown */
 } CaseExpr;
 
 /*
@@ -673,6 +686,7 @@ typedef struct CaseWhen
 	Expr		xpr;
 	Expr	   *expr;			/* condition expression */
 	Expr	   *result;			/* substitution result */
+	int			location;		/* token location, or -1 if unknown */
 } CaseWhen;
 
 /*
@@ -705,6 +719,7 @@ typedef struct ArrayExpr
 	Oid			element_typeid; /* common type of array elements */
 	List	   *elements;		/* the array elements or sub-arrays */
 	bool		multidims;		/* true if elements are sub-arrays */
+	int			location;		/* token location, or -1 if unknown */
 } ArrayExpr;
 
 /*
@@ -733,6 +748,7 @@ typedef struct RowExpr
 	 * parsetrees.	We must assume typmod -1 for a RowExpr node.
 	 */
 	CoercionForm row_format;	/* how to display this node */
+	int			location;		/* token location, or -1 if unknown */
 } RowExpr;
 
 /*
@@ -778,6 +794,7 @@ typedef struct CoalesceExpr
 	Expr		xpr;
 	Oid			coalescetype;	/* type of expression result */
 	List	   *args;			/* the arguments */
+	int			location;		/* token location, or -1 if unknown */
 } CoalesceExpr;
 
 /*
@@ -795,6 +812,7 @@ typedef struct MinMaxExpr
 	Oid			minmaxtype;		/* common type of arguments and result */
 	MinMaxOp	op;				/* function to execute */
 	List	   *args;			/* the arguments */
+	int			location;		/* token location, or -1 if unknown */
 } MinMaxExpr;
 
 /*
@@ -833,6 +851,7 @@ typedef struct XmlExpr
 	XmlOptionType xmloption;	/* DOCUMENT or CONTENT */
 	Oid			type;			/* target type for XMLSERIALIZE */
 	int32		typmod;
+	int			location;		/* token location, or -1 if unknown */
 } XmlExpr;
 
 /*
@@ -905,6 +924,7 @@ typedef struct CoerceToDomain
 	Oid			resulttype;		/* domain type ID (result type) */
 	int32		resulttypmod;	/* output typmod (currently always -1) */
 	CoercionForm coercionformat;	/* how to display this node */
+	int			location;		/* token location, or -1 if unknown */
 } CoerceToDomain;
 
 /*
@@ -921,6 +941,7 @@ typedef struct CoerceToDomainValue
 	Expr		xpr;
 	Oid			typeId;			/* type for substituted value */
 	int32		typeMod;		/* typemod for substituted value */
+	int			location;		/* token location, or -1 if unknown */
 } CoerceToDomainValue;
 
 /*
@@ -935,6 +956,7 @@ typedef struct SetToDefault
 	Expr		xpr;
 	Oid			typeId;			/* type for substituted value */
 	int32		typeMod;		/* typemod for substituted value */
+	int			location;		/* token location, or -1 if unknown */
 } SetToDefault;
 
 /*

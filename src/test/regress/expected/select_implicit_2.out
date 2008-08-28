@@ -115,6 +115,8 @@ SELECT c, count(*) FROM test_missing_target GROUP BY 1 ORDER BY 1;
 --   failure expected
 SELECT c, count(*) FROM test_missing_target GROUP BY 3;
 ERROR:  GROUP BY position 3 is not in select list
+LINE 1: SELECT c, count(*) FROM test_missing_target GROUP BY 3;
+                                                             ^
 --   group w/o existing GROUP BY and ORDER BY target under ambiguous condition
 --   failure expected
 SELECT count(*) FROM test_missing_target x, test_missing_target y 

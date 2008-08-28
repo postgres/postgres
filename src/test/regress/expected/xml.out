@@ -54,6 +54,8 @@ SELECT xmlconcat('hello', 'you');
 
 SELECT xmlconcat(1, 2);
 ERROR:  argument of XMLCONCAT must be type xml, not type integer
+LINE 1: SELECT xmlconcat(1, 2);
+                         ^
 SELECT xmlconcat('bad', '<syntax');
 ERROR:  invalid XML content
 DETAIL:  Entity: line 1: parser error : Couldn't find end of Start Tag syntax line 1
@@ -82,6 +84,8 @@ SELECT xmlelement(name element,
 SELECT xmlelement(name element,
                   xmlattributes ('unnamed and wrong'));
 ERROR:  unnamed XML attribute value must be a column reference
+LINE 2:                   xmlattributes ('unnamed and wrong'));
+                                         ^
 SELECT xmlelement(name element, xmlelement(name nested, 'stuff'));
                 xmlelement                 
 -------------------------------------------
@@ -101,6 +105,8 @@ SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
 
 SELECT xmlelement(name duplicate, xmlattributes(1 as a, 2 as b, 3 as a));
 ERROR:  XML attribute name "a" appears more than once
+LINE 1: ...ment(name duplicate, xmlattributes(1 as a, 2 as b, 3 as a));
+                                                              ^
 SELECT xmlelement(name num, 37);
   xmlelement   
 ---------------

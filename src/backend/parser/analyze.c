@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.377 2008/08/25 22:42:33 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.378 2008/08/28 23:09:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,8 @@ static List *transformInsertRow(ParseState *pstate, List *exprlist,
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
-static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
-static void getSetColTypes(ParseState *pstate, Node *node,
-			   List **colTypes, List **colTypmods);
+static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
+									   List **colInfo);
 static void applyColumnNames(List *dst, List *src);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static List *transformReturningList(ParseState *pstate, List *returningList);
@@ -789,7 +788,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 	List	   *exprsLists = NIL;
-	List	  **coltype_lists = NULL;
+	List	  **colexprs = NULL;
 	Oid		   *coltypes = NULL;
 	int			sublist_length = -1;
 	List	   *newExprsLists;
@@ -831,8 +830,8 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 		{
 			/* Remember post-transformation length of first sublist */
 			sublist_length = list_length(sublist);
-			/* and allocate arrays for column-type info */
-			coltype_lists = (List **) palloc0(sublist_length * sizeof(List *));
+			/* and allocate arrays for per-column info */
+			colexprs = (List **) palloc0(sublist_length * sizeof(List *));
 			coltypes = (Oid *) palloc0(sublist_length * sizeof(Oid));
 		}
 		else if (sublist_length != list_length(sublist))
@@ -844,6 +843,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 
 		exprsLists = lappend(exprsLists, sublist);
 
+		/* Check for DEFAULT and build per-column expression lists */
 		i = 0;
 		foreach(lc2, sublist)
 		{
@@ -852,8 +852,9 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 			if (IsA(col, SetToDefault))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("DEFAULT can only appear in a VALUES list within INSERT")));
-			coltype_lists[i] = lappend_oid(coltype_lists[i], exprType(col));
+						 errmsg("DEFAULT can only appear in a VALUES list within INSERT"),
+						 parser_errposition(pstate, exprLocation(col))));
+			colexprs[i] = lappend(colexprs[i], col);
 			i++;
 		}
 	}
@@ -864,7 +865,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	 */
 	for (i = 0; i < sublist_length; i++)
 	{
-		coltypes[i] = select_common_type(coltype_lists[i], "VALUES");
+		coltypes[i] = select_common_type(pstate, colexprs[i], "VALUES", NULL);
 	}
 
 	newExprsLists = NIL;
@@ -985,6 +986,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	int			leftmostRTI;
 	Query	   *leftmostQuery;
 	SetOperationStmt *sostmt;
+	List	   *socolinfo;
 	List	   *intoColNames = NIL;
 	List	   *sortClause;
 	Node	   *limitOffset;
@@ -1047,7 +1049,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Recursively transform the components of the tree.
 	 */
-	sostmt = (SetOperationStmt *) transformSetOperationTree(pstate, stmt);
+	sostmt = (SetOperationStmt *) transformSetOperationTree(pstate, stmt,
+															&socolinfo);
 	Assert(sostmt && IsA(sostmt, SetOperationStmt));
 	qry->setOperations = (Node *) sostmt;
 
@@ -1191,9 +1194,17 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 /*
  * transformSetOperationTree
  *		Recursively transform leaves and internal nodes of a set-op tree
+ *
+ * In addition to returning the transformed node, we return a list of
+ * expression nodes showing the type, typmod, and location (for error messages)
+ * of each output column of the set-op node.  This is used only during the
+ * internal recursion of this function.  We use SetToDefault nodes for
+ * this purpose, since they carry exactly the fields needed, but any other
+ * expression node type would do as well.
  */
 static Node *
-transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
+transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
+						  List **colInfo)
 {
 	bool		isLeaf;
 
@@ -1240,6 +1251,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		char		selectName[32];
 		RangeTblEntry *rte;
 		RangeTblRef *rtr;
+		ListCell   *tl;
 
 		/*
 		 * Transform SelectStmt into a Query.
@@ -1265,6 +1277,24 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		}
 
 		/*
+		 * Extract information about the result columns.
+		 */
+		*colInfo = NIL;
+		foreach(tl, selectQuery->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+			SetToDefault   *cinfo;
+
+			if (tle->resjunk)
+				continue;
+			cinfo = makeNode(SetToDefault);
+			cinfo->typeId = exprType((Node *) tle->expr);
+			cinfo->typeMod = exprTypmod((Node *) tle->expr);
+			cinfo->location = exprLocation((Node *) tle->expr);
+			*colInfo = lappend(*colInfo, cinfo);
+		}
+
+		/*
 		 * Make the leaf query be a subquery in the top-level rangetable.
 		 */
 		snprintf(selectName, sizeof(selectName), "*SELECT* %d",
@@ -1287,14 +1317,10 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 	{
 		/* Process an internal node (set operation node) */
 		SetOperationStmt *op = makeNode(SetOperationStmt);
-		List	   *lcoltypes;
-		List	   *rcoltypes;
-		List	   *lcoltypmods;
-		List	   *rcoltypmods;
-		ListCell   *lct;
-		ListCell   *rct;
-		ListCell   *lcm;
-		ListCell   *rcm;
+		List	   *lcolinfo;
+		List	   *rcolinfo;
+		ListCell   *lci;
+		ListCell   *rci;
 		const char *context;
 
 		context = (stmt->op == SETOP_UNION ? "UNION" :
@@ -1307,46 +1333,66 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		/*
 		 * Recursively transform the child nodes.
 		 */
-		op->larg = transformSetOperationTree(pstate, stmt->larg);
-		op->rarg = transformSetOperationTree(pstate, stmt->rarg);
+		op->larg = transformSetOperationTree(pstate, stmt->larg,
+											 &lcolinfo);
+		op->rarg = transformSetOperationTree(pstate, stmt->rarg,
+											 &rcolinfo);
 
 		/*
 		 * Verify that the two children have the same number of non-junk
 		 * columns, and determine the types of the merged output columns.
 		 */
-		getSetColTypes(pstate, op->larg, &lcoltypes, &lcoltypmods);
-		getSetColTypes(pstate, op->rarg, &rcoltypes, &rcoltypmods);
-		if (list_length(lcoltypes) != list_length(rcoltypes))
+		if (list_length(lcolinfo) != list_length(rcolinfo))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("each %s query must have the same number of columns",
-						context)));
-		Assert(list_length(lcoltypes) == list_length(lcoltypmods));
-		Assert(list_length(rcoltypes) == list_length(rcoltypmods));
+						context),
+					 parser_errposition(pstate,
+										exprLocation((Node *) rcolinfo))));
 
+		*colInfo = NIL;
 		op->colTypes = NIL;
 		op->colTypmods = NIL;
 		op->groupClauses = NIL;
-		/* don't have a "foreach4", so chase two of the lists by hand */
-		lcm = list_head(lcoltypmods);
-		rcm = list_head(rcoltypmods);
-		forboth(lct, lcoltypes, rct, rcoltypes)
+		forboth(lci, lcolinfo, rci, rcolinfo)
 		{
-			Oid			lcoltype = lfirst_oid(lct);
-			Oid			rcoltype = lfirst_oid(rct);
-			int32		lcoltypmod = lfirst_int(lcm);
-			int32		rcoltypmod = lfirst_int(rcm);
+			SetToDefault *lcolinfo = (SetToDefault *) lfirst(lci);
+			SetToDefault *rcolinfo = (SetToDefault *) lfirst(rci);
+			Oid			lcoltype = lcolinfo->typeId;
+			Oid			rcoltype = rcolinfo->typeId;
+			int32		lcoltypmod = lcolinfo->typeMod;
+			int32		rcoltypmod = rcolinfo->typeMod;
+			Node	   *bestexpr;
+			SetToDefault *rescolinfo;
 			Oid			rescoltype;
 			int32		rescoltypmod;
 
 			/* select common type, same as CASE et al */
-			rescoltype = select_common_type(list_make2_oid(lcoltype, rcoltype),
-											context);
+			rescoltype = select_common_type(pstate,
+											list_make2(lcolinfo, rcolinfo),
+											context,
+											&bestexpr);
 			/* if same type and same typmod, use typmod; else default */
 			if (lcoltype == rcoltype && lcoltypmod == rcoltypmod)
 				rescoltypmod = lcoltypmod;
 			else
 				rescoltypmod = -1;
+
+			/* verify the coercions are actually possible */
+			if (lcoltype != UNKNOWNOID)
+				(void) coerce_to_common_type(pstate, (Node *) lcolinfo,
+											 rescoltype, context);
+			if (rcoltype != UNKNOWNOID)
+				(void) coerce_to_common_type(pstate, (Node *) rcolinfo,
+											 rescoltype, context);
+
+			/* emit results */
+			rescolinfo = makeNode(SetToDefault);
+			rescolinfo->typeId = rescoltype;
+			rescolinfo->typeMod = rescoltypmod;
+			rescolinfo->location = ((SetToDefault *) bestexpr)->location;
+			*colInfo = lappend(*colInfo, rescolinfo);
+
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
 			op->colTypmods = lappend_int(op->colTypmods, rescoltypmod);
 
@@ -1374,57 +1420,10 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 
 				op->groupClauses = lappend(op->groupClauses, grpcl);
 			}
-
-			lcm = lnext(lcm);
-			rcm = lnext(rcm);
 		}
 
 		return (Node *) op;
 	}
-}
-
-/*
- * getSetColTypes
- *	  Get output column types/typmods of an (already transformed) set-op node
- */
-static void
-getSetColTypes(ParseState *pstate, Node *node,
-			   List **colTypes, List **colTypmods)
-{
-	*colTypes = NIL;
-	*colTypmods = NIL;
-	if (IsA(node, RangeTblRef))
-	{
-		RangeTblRef *rtr = (RangeTblRef *) node;
-		RangeTblEntry *rte = rt_fetch(rtr->rtindex, pstate->p_rtable);
-		Query	   *selectQuery = rte->subquery;
-		ListCell   *tl;
-
-		Assert(selectQuery != NULL);
-		/* Get types of non-junk columns */
-		foreach(tl, selectQuery->targetList)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(tl);
-
-			if (tle->resjunk)
-				continue;
-			*colTypes = lappend_oid(*colTypes,
-									exprType((Node *) tle->expr));
-			*colTypmods = lappend_int(*colTypmods,
-									  exprTypmod((Node *) tle->expr));
-		}
-	}
-	else if (IsA(node, SetOperationStmt))
-	{
-		SetOperationStmt *op = (SetOperationStmt *) node;
-
-		/* Result already computed during transformation of node */
-		Assert(op->colTypes != NIL);
-		*colTypes = op->colTypes;
-		*colTypmods = op->colTypmods;
-	}
-	else
-		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 }
 
 /*
