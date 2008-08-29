@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.209 2008/08/22 00:16:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.210 2008/08/29 22:49:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,6 +384,23 @@ typedef struct Node
  * !WARNING!: Avoid using newNode directly. You should be using the
  *	  macro makeNode.  eg. to create a Query node, use makeNode(Query)
  *
+ * Note: the size argument should always be a compile-time constant, so the
+ * apparent risk of multiple evaluation doesn't matter in practice.
+ */
+#ifdef __GNUC__
+
+/* With GCC, we can use a compound statement within an expression */
+#define newNode(size, tag) \
+({	Node   *_result; \
+	AssertMacro((size) >= sizeof(Node));		/* need the tag, at least */ \
+	_result = (Node *) palloc0fast(size); \
+	_result->type = (tag); \
+	_result; \
+})
+
+#else
+
+/*
  *	There is no way to dereference the palloc'ed pointer to assign the
  *	tag, and also return the pointer itself, so we need a holder variable.
  *	Fortunately, this macro isn't recursive so we just define
@@ -398,6 +415,8 @@ extern PGDLLIMPORT Node *newNodeMacroHolder;
 	newNodeMacroHolder->type = (tag), \
 	newNodeMacroHolder \
 )
+
+#endif   /* __GNUC__ */
 
 
 #define makeNode(_type_)		((_type_ *) newNode(sizeof(_type_),T_##_type_))

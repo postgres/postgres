@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodes.c,v 1.28 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/nodes.c,v 1.29 2008/08/29 22:49:07 tgl Exp $
  *
  * HISTORY
  *	  Andrew Yu			Oct 20, 1994	file creation
@@ -22,6 +22,10 @@
 
 /*
  * Support for newNode() macro
+ *
+ * In a GCC build there is no need for the global variable newNodeMacroHolder.
+ * However, we create it anyway, to support the case of a non-GCC-built
+ * loadable module being loaded into a GCC-built backend.
  */
 
 Node	   *newNodeMacroHolder;
