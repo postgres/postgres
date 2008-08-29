@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.128 2008/07/18 03:32:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.129 2008/08/29 13:02:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 
 #include <ctype.h>
 
-#include "pl.tab.h"
+#include "pl_gram.h"
 
 #include "catalog/namespace.h"
 #include "catalog/pg_attrdef.h"

@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.32 2008/04/07 14:15:58 petere Exp $
+# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.33 2008/08/29 13:02:33 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,20 +33,18 @@ uninstall: uninstall-lib
 
 
 # Force these dependencies to be known even without dependency info built:
-pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h $(srcdir)/pl.tab.h
+pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h $(srcdir)/pl_gram.h
 
 # pl_scan is compiled as part of pl_gram
 pl_gram.o: $(srcdir)/pl_scan.c
 
 # See notes in src/backend/parser/Makefile about the following two rules
 
-$(srcdir)/pl_gram.c: $(srcdir)/pl.tab.h ;
+$(srcdir)/pl_gram.h: $(srcdir)/pl_gram.c ;
 
-$(srcdir)/pl.tab.h: gram.y
-ifdef YACC
-	$(YACC) -d $(YFLAGS) $<
-	mv -f y.tab.c $(srcdir)/pl_gram.c
-	mv -f y.tab.h $(srcdir)/pl.tab.h
+$(srcdir)/pl_gram.c: gram.y
+ifdef BISON
+	$(BISON) -d $(BISONFLAGS) -o $@ $<
 else
 	@$(missing) bison $< $@
 endif
@@ -62,14 +60,12 @@ else
 	@$(missing) flex $< $@
 endif
 
-distprep: $(srcdir)/pl_scan.c $(srcdir)/pl.tab.h $(srcdir)/pl_gram.c
+distprep: $(srcdir)/pl_scan.c $(srcdir)/pl_gram.h $(srcdir)/pl_gram.c
 
-# pl_gram.c, pl.tab.h, and pl_scan.c are in the distribution tarball,
+# pl_gram.c, pl_gram.h, and pl_scan.c are in the distribution tarball,
 # so they are not cleaned here.
 clean distclean: clean-lib
 	rm -f $(OBJS)
-# And the garbage that might have been left behind by partial build:
-	@rm -f y.tab.h y.tab.c y.output lex.yy.c
 
 maintainer-clean: clean
-	rm -f $(srcdir)/pl_gram.c $(srcdir)/pl.tab.h $(srcdir)/pl_scan.c
+	rm -f $(srcdir)/pl_gram.c $(srcdir)/pl_gram.h $(srcdir)/pl_scan.c

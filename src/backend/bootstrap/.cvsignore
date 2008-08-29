@@ -1,3 +1,2 @@
 bootparse.c
-bootstrap_tokens.h
 bootscanner.c

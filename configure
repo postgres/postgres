@@ -718,8 +718,8 @@ STRIP_SHARED_LIB
 TAR
 LN_S
 AWK
-YACC
-YFLAGS
+BISON
+BISONFLAGS
 FLEX
 FLEXFLAGS
 PERL
@@ -5952,18 +5952,18 @@ done
 
 
 # Let the user override the search
-if test -z "$YACC"; then
-  for ac_prog in 'bison -y'
+if test -z "$BISON"; then
+  for ac_prog in bison
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_YACC+set}" = set; then
+if test "${ac_cv_prog_BISON+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if test -n "$YACC"; then
-  ac_cv_prog_YACC="$YACC" # Let the user override the test.
+  if test -n "$BISON"; then
+  ac_cv_prog_BISON="$BISON" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
@@ -5972,7 +5972,7 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_YACC="$ac_prog"
+    ac_cv_prog_BISON="$ac_prog"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -5982,26 +5982,26 @@ IFS=$as_save_IFS
 
 fi
 fi
-YACC=$ac_cv_prog_YACC
-if test -n "$YACC"; then
-  { echo "$as_me:$LINENO: result: $YACC" >&5
-echo "${ECHO_T}$YACC" >&6; }
+BISON=$ac_cv_prog_BISON
+if test -n "$BISON"; then
+  { echo "$as_me:$LINENO: result: $BISON" >&5
+echo "${ECHO_T}$BISON" >&6; }
 else
   { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
 fi
 
 
-  test -n "$YACC" && break
+  test -n "$BISON" && break
 done
 
 fi
 
-if test "$YACC"; then
-  pgac_yacc_version=`$YACC --version 2>/dev/null | sed q`
-  { echo "$as_me:$LINENO: using $pgac_yacc_version" >&5
-echo "$as_me: using $pgac_yacc_version" >&6;}
-  if echo "$pgac_yacc_version" | $AWK '{ if ($4 < 1.875) exit 0; else exit 1;}'
+if test "$BISON"; then
+  pgac_bison_version=`$BISON --version 2>/dev/null | sed q`
+  { echo "$as_me:$LINENO: using $pgac_bison_version" >&5
+echo "$as_me: using $pgac_bison_version" >&6;}
+  if echo "$pgac_bison_version" | $AWK '{ if ($4 < 1.875) exit 0; else exit 1;}'
   then
     { echo "$as_me:$LINENO: WARNING:
 *** The installed version of Bison is too old to use with PostgreSQL.
@@ -6009,29 +6009,25 @@ echo "$as_me: using $pgac_yacc_version" >&6;}
 echo "$as_me: WARNING:
 *** The installed version of Bison is too old to use with PostgreSQL.
 *** Bison version 1.875 or later is required." >&2;}
-    YACC=""
+    BISON=""
   fi
 fi
 
-if test -z "$YACC"; then
+if test -z "$BISON"; then
   { echo "$as_me:$LINENO: WARNING:
 *** Without Bison you will not be able to build PostgreSQL from CVS nor
 *** change any of the parser definition files.  You can obtain Bison from
 *** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this, because the Bison
-*** output is pre-generated.)  To use a different yacc program (possible,
-*** but not recommended), set the environment variable YACC before running
-*** 'configure'." >&5
+*** output is pre-generated.)" >&5
 echo "$as_me: WARNING:
 *** Without Bison you will not be able to build PostgreSQL from CVS nor
 *** change any of the parser definition files.  You can obtain Bison from
 *** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this, because the Bison
-*** output is pre-generated.)  To use a different yacc program (possible,
-*** but not recommended), set the environment variable YACC before running
-*** 'configure'." >&2;}
+*** output is pre-generated.)" >&2;}
 fi
-# We don't need AC_SUBST(YACC) because AC_PATH_PROG did it
+# We don't need AC_SUBST(BISON) because AC_PATH_PROG did it
 
 
 { echo "$as_me:$LINENO: checking for flex" >&5
@@ -26600,8 +26596,8 @@ for ac_last_try in false false false false false :; do
 TAR!$TAR$ac_delim
 LN_S!$LN_S$ac_delim
 AWK!$AWK$ac_delim
-YACC!$YACC$ac_delim
-YFLAGS!$YFLAGS$ac_delim
+BISON!$BISON$ac_delim
+BISONFLAGS!$BISONFLAGS$ac_delim
 FLEX!$FLEX$ac_delim
 FLEXFLAGS!$FLEXFLAGS$ac_delim
 PERL!$PERL$ac_delim

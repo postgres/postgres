@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.199 2008/07/16 01:30:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.200 2008/08/29 13:02:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include <ctype.h>
 
 /*
- * This macro definition overrides the YYSTYPE union definition in parse.h.
+ * This macro definition overrides the YYSTYPE union definition in gram.h.
  * We don't need that struct in this file, and including the real definition
  * would require sucking in some backend-only include files.
  */
@@ -30,7 +30,7 @@
 
 #include "parser/keywords.h"
 #ifndef ECPG_COMPILE
-#include "parser/parse.h"
+#include "parser/gram.h"
 #else
 #include "preproc.h"
 #endif

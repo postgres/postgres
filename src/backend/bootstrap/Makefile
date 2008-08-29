@@ -2,7 +2,7 @@
 #
 # Makefile for the bootstrap module
 #
-# $PostgreSQL: pgsql/src/backend/bootstrap/Makefile,v 1.36 2008/02/19 10:30:07 petere Exp $
+# $PostgreSQL: pgsql/src/backend/bootstrap/Makefile,v 1.37 2008/08/29 13:02:32 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,15 +20,9 @@ include $(top_srcdir)/src/backend/common.mk
 # bootscanner is compiled as part of bootparse
 bootparse.o: $(srcdir)/bootscanner.c
 
-# See notes in src/backend/parser/Makefile about the following two rules
-
-$(srcdir)/bootparse.c: $(srcdir)/bootstrap_tokens.h ;
-
-$(srcdir)/bootstrap_tokens.h: bootparse.y
-ifdef YACC
-	$(YACC) -d $(YFLAGS) $<
-	mv -f y.tab.c $(srcdir)/bootparse.c
-	mv -f y.tab.h $(srcdir)/bootstrap_tokens.h
+$(srcdir)/bootparse.c: bootparse.y
+ifdef BISON
+	$(BISON) $(BISONFLAGS) -o $@ $<
 else
 	@$(missing) bison $< $@
 endif
@@ -40,12 +34,6 @@ else
 	@$(missing) flex $< $@
 endif
 
-# Force these dependencies to be known even without dependency info built:
-bootstrap.o bootparse.o: $(srcdir)/bootstrap_tokens.h
 
-
-# bootparse.c, bootstrap_tokens.h, and bootscanner.c are in the distribution
-# tarball, so they are not cleaned here.
-clean:
-# And the garbage that might have been left behind by partial build:
-	@rm -f y.tab.h y.tab.c y.output lex.yy.c
+# bootparse.c and bootscanner.c are in the distribution tarball, so
+# they are not cleaned here.

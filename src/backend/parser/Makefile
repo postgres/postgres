@@ -2,7 +2,7 @@
 #
 # Makefile for parser
 #
-# $PostgreSQL: pgsql/src/backend/parser/Makefile,v 1.46 2008/02/19 10:30:07 petere Exp $
+# $PostgreSQL: pgsql/src/backend/parser/Makefile,v 1.47 2008/08/29 13:02:32 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,13 +32,11 @@ gram.o: $(srcdir)/scan.c
 # important, otherwise make will choose the built-in rule for
 # gram.y=>gram.c.
 
-$(srcdir)/gram.c: $(srcdir)/parse.h ;
+$(srcdir)/gram.h: $(srcdir)/gram.c ;
 
-$(srcdir)/parse.h: gram.y
-ifdef YACC
-	$(YACC) -d $(YFLAGS) $<
-	mv -f y.tab.c $(srcdir)/gram.c
-	mv -f y.tab.h $(srcdir)/parse.h
+$(srcdir)/gram.c: gram.y
+ifdef BISON
+	$(BISON) -d $(BISONFLAGS) -o $@ $<
 else
 	@$(missing) bison $< $@
 endif
@@ -53,11 +51,8 @@ endif
 
 
 # Force these dependencies to be known even without dependency info built:
-gram.o keywords.o parser.o: $(srcdir)/parse.h
+gram.o keywords.o parser.o: $(srcdir)/gram.h
 
 
-# gram.c, parse.h, and scan.c are in the distribution tarball, so they
+# gram.c, gram.h, and scan.c are in the distribution tarball, so they
 # are not cleaned here.
-clean: 
-# And the garbage that might have been left behind by partial build:
-	@rm -f y.tab.h y.tab.c y.output lex.yy.c

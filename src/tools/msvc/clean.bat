@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.13 2008/08/18 13:42:49 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.14 2008/08/29 13:02:33 petere Exp $
 
 set DIST=0
 if "%1"=="dist" set DIST=1
@@ -18,7 +18,7 @@ if exist src\backend\win32ver.rc del /q src\backend\win32ver.rc
 REM Delete files created with GenerateFiles() in Solution.pm
 if exist src\include\pg_config.h del /q src\include\pg_config.h
 if exist src\include\pg_config_os.h del /q src\include\pg_config_os.h
-if %DIST%==1 if exist src\backend\parser\parse.h del /q src\backend\parser\parse.h
+if %DIST%==1 if exist src\backend\parser\gram.h del /q src\backend\parser\gram.h
 if exist src\include\utils\fmgroids.h del /q src\include\utils\fmgroids.h
 if exist src\include\utils\probes.h del /q src\include\utils\probes.h
 
@@ -31,7 +31,6 @@ if %DIST%==1 if exist src\backend\parser\scan.c del /q src\backend\parser\scan.c
 if %DIST%==1 if exist src\backend\parser\gram.c del /q src\backend\parser\gram.c
 if %DIST%==1 if exist src\backend\bootstrap\bootscanner.c del /q src\backend\bootstrap\bootscanner.c
 if %DIST%==1 if exist src\backend\bootstrap\bootparse.c del /q src\backend\bootstrap\bootparse.c
-if %DIST%==1 if exist src\backend\bootstrap\bootstrap_tokens.h del /q src\backend\bootstrap\bootstrap_tokens.h
 if %DIST%==1 if exist src\backend\utils\misc\guc-file.c del /q src\backend\utils\misc\guc-file.c
 
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.311 2008/07/23 17:07:50 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.312 2008/08/29 13:02:32 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -277,6 +277,9 @@ su - postgres
        <primary>flex</primary>
       </indexterm>
       <indexterm>
+       <primary>lex</primary>
+      </indexterm>
+      <indexterm>
        <primary>bison</primary>
       </indexterm>
       <indexterm>
@@ -287,10 +290,8 @@ su - postgres
       are needed to build a CVS checkout or if you changed the actual
       scanner and parser definition files. If you need them, be sure
       to get <application>Flex</> 2.5.4 or later and
-      <application>Bison</> 1.875 or later. Other <application>yacc</>
-      programs can sometimes be used, but doing so requires extra
-      effort and is not recommended. Other <application>lex</>
-      programs will definitely not work.
+      <application>Bison</> 1.875 or later. Other <application>lex</>
+      and <application>yacc</> programs cannot be used.
      </para>
     </listitem>
    </itemizedlist>
@@ -1342,6 +1343,15 @@ su - postgres
  
      <variablelist>
       <varlistentry>
+       <term><envar>BISON</envar></term>
+       <listitem>
+        <para>
+         Bison program
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
        <term><envar>CC</envar></term>
        <listitem>
         <para>
@@ -1391,6 +1401,15 @@ su - postgres
        <listitem>
         <para>
          options to pass to the <command>dtrace</command> program
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><envar>FLEX</envar></term>
+       <listitem>
+        <para>
+         Flex program
         </para>
        </listitem>
       </varlistentry>
@@ -1459,15 +1478,6 @@ su - postgres
         <para>
          <command>xml2-config</command> program used to locate the
          libxml installation.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>YACC</envar></term>
-       <listitem>
-        <para>
-         Yacc program (<literal>bison -y</literal> if using Bison)
         </para>
        </listitem>
       </varlistentry>

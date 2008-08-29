@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.129 2008/08/01 13:16:08 alvherre Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.130 2008/08/29 13:02:32 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ endif
 endif # aix
 
 # Update the commonly used headers before building the subdirectories
-$(SUBDIRS:%=%-recursive): $(top_builddir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h $(top_builddir)/src/include/utils/probes.h
+$(SUBDIRS:%=%-recursive): $(top_builddir)/src/include/parser/gram.h $(top_builddir)/src/include/utils/fmgroids.h $(top_builddir)/src/include/utils/probes.h
 
 
 # The postgres.o target is needed by the rule in Makefile.global that
@@ -118,8 +118,8 @@ postgres.o: $(OBJS)
 # the make files in our subdirectories. Note that it's important we
 # match the dependencies shown in the subdirectory makefiles!
 
-$(srcdir)/parser/parse.h: parser/gram.y
-	$(MAKE) -C parser parse.h
+$(srcdir)/parser/gram.h: parser/gram.y
+	$(MAKE) -C parser gram.h
 
 utils/fmgroids.h: utils/Gen_fmgrtab.sh $(top_srcdir)/src/include/catalog/pg_proc.h
 	$(MAKE) -C utils fmgroids.h
@@ -131,7 +131,7 @@ utils/probes.h: utils/probes.d
 # we can cut down on the -I options. Also, a symlink is automatically
 # up to date when we update the base file.
 
-$(top_builddir)/src/include/parser/parse.h: $(srcdir)/parser/parse.h
+$(top_builddir)/src/include/parser/gram.h: $(srcdir)/parser/gram.h
 	prereqdir=`cd $(dir $<) >/dev/null && pwd` && \
 	  cd $(dir $@) && rm -f $(notdir $@) && \
 	  $(LN_S) "$$prereqdir/$(notdir $<)" .
@@ -154,8 +154,8 @@ endif
 ##########################################################################
 
 distprep:
-	$(MAKE) -C parser	gram.c parse.h scan.c
-	$(MAKE) -C bootstrap	bootparse.c bootstrap_tokens.h bootscanner.c
+	$(MAKE) -C parser	gram.c gram.h scan.c
+	$(MAKE) -C bootstrap	bootparse.c bootscanner.c
 	$(MAKE) -C utils/misc	guc-file.c
 
 
@@ -239,7 +239,7 @@ endif
 
 clean:
 	rm -f $(LOCALOBJS) postgres$(X) $(POSTGRES_IMP) \
-		$(top_srcdir)/src/include/parser/parse.h \
+		$(top_srcdir)/src/include/parser/gram.h \
 		$(top_builddir)/src/include/utils/fmgroids.h
 ifeq ($(PORTNAME), cygwin)
 	rm -f postgres.dll postgres.def libpostgres.a
@@ -254,10 +254,9 @@ distclean: clean
 maintainer-clean: distclean
 	rm -f $(srcdir)/bootstrap/bootparse.c \
 	      $(srcdir)/bootstrap/bootscanner.c \
-	      $(srcdir)/bootstrap/bootstrap_tokens.h \
 	      $(srcdir)/parser/gram.c \
 	      $(srcdir)/parser/scan.c \
-	      $(srcdir)/parser/parse.h \
+	      $(srcdir)/parser/gram.h \
 	      $(srcdir)/utils/misc/guc-file.c
 
 

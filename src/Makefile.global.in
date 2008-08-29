@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.241 2008/02/17 16:36:43 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.242 2008/08/29 13:02:32 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -216,8 +216,8 @@ CFLAGS = @CFLAGS@
 
 # Kind-of compilers
 
-YACC = @YACC@
-YFLAGS = @YFLAGS@
+BISON = @BISON@
+BISONFLAGS = @BISONFLAGS@ $(YFLAGS)
 FLEX = @FLEX@
 FLEXFLAGS = @FLEXFLAGS@ $(LFLAGS)
 DTRACE = @DTRACE@
