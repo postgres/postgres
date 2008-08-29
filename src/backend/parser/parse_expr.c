@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.226 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.226.2.1 2008/08/29 17:27:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1539,9 +1539,10 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 static Node *
 transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 {
+	Node	   *result;
+	XmlExpr    *xexpr;
 	Oid			targetType;
 	int32		targetTypmod;
-	XmlExpr    *xexpr;
 
 	xexpr = makeNode(XmlExpr);
 	xexpr->op = IS_XMLSERIALIZE;
@@ -1563,8 +1564,15 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 	 * from text.  This way, user-defined text-like data types automatically
 	 * fit in.
 	 */
-	return (Node *) coerce_to_target_type(pstate, (Node *) xexpr, TEXTOID, targetType, targetTypmod,
-									COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
+	result = coerce_to_target_type(pstate, (Node *) xexpr,
+								   TEXTOID, targetType, targetTypmod,
+								   COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
+	if (result == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_CANNOT_COERCE),
+				 errmsg("cannot cast XMLSERIALIZE result to %s",
+						format_type_be(targetType))));
+	return result;
 }
 
 static Node *
