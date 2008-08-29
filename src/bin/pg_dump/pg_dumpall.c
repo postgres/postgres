@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.105 2008/06/26 01:35:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.106 2008/08/29 17:28:43 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,7 @@ main(int argc, char *argv[])
 		{"disable-triggers", no_argument, &disable_triggers, 1},
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
+		{"lock-wait-timeout", required_argument, NULL, 2},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -305,6 +306,11 @@ main(int argc, char *argv[])
 			case 0:
 				break;
 
+			case 2:
+				appendPQExpBuffer(pgdumpopts, " --lock-wait-timeout=");
+				appendPQExpBuffer(pgdumpopts, optarg);
+				break;
+
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -488,6 +494,8 @@ help(void)
 	printf(_("  -f, --file=FILENAME      output file name\n"));
 	printf(_("  --help                   show this help, then exit\n"));
 	printf(_("  --version                output version information, then exit\n"));
+	printf(_("  --lock-wait-timeout=TIMEOUT\n"
+			 "                           fail after waiting TIMEOUT for a table lock\n"));
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only          dump only the data, not the schema\n"));
 	printf(_("  -c, --clean              clean (drop) databases prior to create\n"));
