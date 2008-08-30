@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.232 2008/08/28 23:09:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.233 2008/08/30 01:39:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,6 +334,13 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 
 		if (IsA(n, A_Indices))
 			subscripts = lappend(subscripts, n);
+		else if (IsA(n, A_Star))
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("row expansion via \"*\" is not supported here"),
+					 parser_errposition(pstate, exprLocation(basenode))));
+		}
 		else
 		{
 			Assert(IsA(n, String));
@@ -403,10 +410,14 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	{
 		case 1:
 			{
-				char	   *name = strVal(linitial(cref->fields));
+				Node	   *field1 = (Node *) linitial(cref->fields);
+				char	   *name1;
+
+				Assert(IsA(field1, String));
+				name1 = strVal(field1);
 
 				/* Try to identify as an unqualified column */
-				node = colNameToVar(pstate, name, false, cref->location);
+				node = colNameToVar(pstate, name1, false, cref->location);
 
 				if (node == NULL)
 				{
@@ -419,7 +430,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					 * have used VALUE as a column name in the past.)
 					 */
 					if (pstate->p_value_substitute != NULL &&
-						strcmp(name, "value") == 0)
+						strcmp(name1, "value") == 0)
 					{
 						node = (Node *) copyObject(pstate->p_value_substitute);
 
@@ -442,31 +453,39 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					 * PostQUEL-inspired syntax.  The preferred form now is
 					 * "rel.*".
 					 */
-					if (refnameRangeTblEntry(pstate, NULL, name,
+					if (refnameRangeTblEntry(pstate, NULL, name1,
 											 &levels_up) != NULL)
-						node = transformWholeRowRef(pstate, NULL, name,
+						node = transformWholeRowRef(pstate, NULL, name1,
 													cref->location);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
 								 errmsg("column \"%s\" does not exist",
-										name),
+										name1),
 								 parser_errposition(pstate, cref->location)));
 				}
 				break;
 			}
 		case 2:
 			{
-				char	   *name1 = strVal(linitial(cref->fields));
-				char	   *name2 = strVal(lsecond(cref->fields));
+				Node	   *field1 = (Node *) linitial(cref->fields);
+				Node	   *field2 = (Node *) lsecond(cref->fields);
+				char	   *name1;
+				char	   *name2;
+
+				Assert(IsA(field1, String));
+				name1 = strVal(field1);
 
 				/* Whole-row reference? */
-				if (strcmp(name2, "*") == 0)
+				if (IsA(field2, A_Star))
 				{
 					node = transformWholeRowRef(pstate, NULL, name1,
 												cref->location);
 					break;
 				}
+
+				Assert(IsA(field2, String));
+				name2 = strVal(field2);
 
 				/* Try to identify as a once-qualified column */
 				node = qualifiedNameToVar(pstate, NULL, name1, name2, true,
@@ -490,17 +509,28 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			}
 		case 3:
 			{
-				char	   *name1 = strVal(linitial(cref->fields));
-				char	   *name2 = strVal(lsecond(cref->fields));
-				char	   *name3 = strVal(lthird(cref->fields));
+				Node	   *field1 = (Node *) linitial(cref->fields);
+				Node	   *field2 = (Node *) lsecond(cref->fields);
+				Node	   *field3 = (Node *) lthird(cref->fields);
+				char	   *name1;
+				char	   *name2;
+				char	   *name3;
+
+				Assert(IsA(field1, String));
+				name1 = strVal(field1);
+				Assert(IsA(field2, String));
+				name2 = strVal(field2);
 
 				/* Whole-row reference? */
-				if (strcmp(name3, "*") == 0)
+				if (IsA(field3, A_Star))
 				{
 					node = transformWholeRowRef(pstate, name1, name2,
 												cref->location);
 					break;
 				}
+
+				Assert(IsA(field3, String));
+				name3 = strVal(field3);
 
 				/* Try to identify as a twice-qualified column */
 				node = qualifiedNameToVar(pstate, name1, name2, name3, true,
@@ -520,10 +550,21 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			}
 		case 4:
 			{
-				char	   *name1 = strVal(linitial(cref->fields));
-				char	   *name2 = strVal(lsecond(cref->fields));
-				char	   *name3 = strVal(lthird(cref->fields));
-				char	   *name4 = strVal(lfourth(cref->fields));
+				Node	   *field1 = (Node *) linitial(cref->fields);
+				Node	   *field2 = (Node *) lsecond(cref->fields);
+				Node	   *field3 = (Node *) lthird(cref->fields);
+				Node	   *field4 = (Node *) lfourth(cref->fields);
+				char	   *name1;
+				char	   *name2;
+				char	   *name3;
+				char	   *name4;
+
+				Assert(IsA(field1, String));
+				name1 = strVal(field1);
+				Assert(IsA(field2, String));
+				name2 = strVal(field2);
+				Assert(IsA(field3, String));
+				name3 = strVal(field3);
 
 				/*
 				 * We check the catalog name and then ignore it.
@@ -536,12 +577,15 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 							 parser_errposition(pstate, cref->location)));
 
 				/* Whole-row reference? */
-				if (strcmp(name4, "*") == 0)
+				if (IsA(field4, A_Star))
 				{
 					node = transformWholeRowRef(pstate, name2, name3,
 												cref->location);
 					break;
 				}
+
+				Assert(IsA(field4, String));
+				name4 = strVal(field4);
 
 				/* Try to identify as a twice-qualified column */
 				node = qualifiedNameToVar(pstate, name2, name3, name4, true,

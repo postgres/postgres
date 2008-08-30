@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.162 2008/08/28 23:09:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.163 2008/08/30 01:39:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,14 +109,14 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 		/*
 		 * Check for "something.*".  Depending on the complexity of the
-		 * "something", the star could appear as the last name in ColumnRef,
+		 * "something", the star could appear as the last field in ColumnRef,
 		 * or as the last indirection item in A_Indirection.
 		 */
 		if (IsA(res->val, ColumnRef))
 		{
 			ColumnRef  *cref = (ColumnRef *) res->val;
 
-			if (strcmp(strVal(llast(cref->fields)), "*") == 0)
+			if (IsA(llast(cref->fields), A_Star))
 			{
 				/* It is something.*, expand into multiple items */
 				p_target = list_concat(p_target,
@@ -128,10 +128,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 		else if (IsA(res->val, A_Indirection))
 		{
 			A_Indirection *ind = (A_Indirection *) res->val;
-			Node	   *lastitem = llast(ind->indirection);
 
-			if (IsA(lastitem, String) &&
-				strcmp(strVal(lastitem), "*") == 0)
+			if (IsA(llast(ind->indirection), A_Star))
 			{
 				/* It is something.*, expand into multiple items */
 				p_target = list_concat(p_target,
@@ -176,14 +174,14 @@ transformExpressionList(ParseState *pstate, List *exprlist)
 
 		/*
 		 * Check for "something.*".  Depending on the complexity of the
-		 * "something", the star could appear as the last name in ColumnRef,
+		 * "something", the star could appear as the last field in ColumnRef,
 		 * or as the last indirection item in A_Indirection.
 		 */
 		if (IsA(e, ColumnRef))
 		{
 			ColumnRef  *cref = (ColumnRef *) e;
 
-			if (strcmp(strVal(llast(cref->fields)), "*") == 0)
+			if (IsA(llast(cref->fields), A_Star))
 			{
 				/* It is something.*, expand into multiple items */
 				result = list_concat(result,
@@ -195,10 +193,8 @@ transformExpressionList(ParseState *pstate, List *exprlist)
 		else if (IsA(e, A_Indirection))
 		{
 			A_Indirection *ind = (A_Indirection *) e;
-			Node	   *lastitem = llast(ind->indirection);
 
-			if (IsA(lastitem, String) &&
-				strcmp(strVal(lastitem), "*") == 0)
+			if (IsA(llast(ind->indirection), A_Star))
 			{
 				/* It is something.*, expand into multiple items */
 				result = list_concat(result,
@@ -560,6 +556,13 @@ transformAssignmentIndirection(ParseState *pstate,
 			if (((A_Indices *) n)->lidx != NULL)
 				isSlice = true;
 		}
+		else if (IsA(n, A_Star))
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("row expansion via \"*\" is not supported here"),
+					 parser_errposition(pstate, location)));
+		}
 		else
 		{
 			FieldStore *fstore;
@@ -809,7 +812,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
  * ExpandColumnRefStar()
  *		Transforms foo.* into a list of expressions or targetlist entries.
  *
- * This handles the case where '*' appears as the last or only name in a
+ * This handles the case where '*' appears as the last or only item in a
  * ColumnRef.  The code is shared between the case of foo.* at the top level
  * in a SELECT target list (where we want TargetEntry nodes in the result)
  * and foo.* in a ROW() or VALUES() construct (where we want just bare
@@ -830,13 +833,9 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 * (e.g., SELECT * FROM emp, dept)
 		 *
 		 * Since the grammar only accepts bare '*' at top level of SELECT, we
-		 * need not handle the targetlist==false case here.  However, we must
-		 * test for it because the grammar currently fails to distinguish a
-		 * quoted name "*" from a real asterisk.
+		 * need not handle the targetlist==false case here.
 		 */
-		if (!targetlist)
-			elog(ERROR, "invalid use of *");
-
+		Assert(targetlist);
 		return ExpandAllTables(pstate);
 	}
 	else
@@ -1226,7 +1225,7 @@ FigureColnameInternal(Node *node, char **name)
 				{
 					Node	   *i = lfirst(l);
 
-					if (strcmp(strVal(i), "*") != 0)
+					if (IsA(i, String))
 						fname = strVal(i);
 				}
 				if (fname)
@@ -1242,13 +1241,12 @@ FigureColnameInternal(Node *node, char **name)
 				char	   *fname = NULL;
 				ListCell   *l;
 
-				/* find last field name, if any, ignoring "*" */
+				/* find last field name, if any, ignoring "*" and subscripts */
 				foreach(l, ind->indirection)
 				{
 					Node	   *i = lfirst(l);
 
-					if (IsA(i, String) &&
-						strcmp(strVal(i), "*") != 0)
+					if (IsA(i, String))
 						fname = strVal(i);
 				}
 				if (fname)

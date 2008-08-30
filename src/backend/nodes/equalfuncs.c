@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.329 2008/08/28 23:09:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.330 2008/08/30 01:39:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1766,6 +1766,12 @@ _equalFuncCall(FuncCall *a, FuncCall *b)
 }
 
 static bool
+_equalAStar(A_Star *a, A_Star *b)
+{
+	return true;
+}
+
+static bool
 _equalAIndices(A_Indices *a, A_Indices *b)
 {
 	COMPARE_NODE_FIELD(lidx);
@@ -2530,6 +2536,9 @@ equal(void *a, void *b)
 			break;
 		case T_FuncCall:
 			retval = _equalFuncCall(a, b);
+			break;
+		case T_A_Star:
+			retval = _equalAStar(a, b);
 			break;
 		case T_A_Indices:
 			retval = _equalAIndices(a, b);

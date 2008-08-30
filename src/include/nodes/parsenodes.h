@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.372 2008/08/28 23:09:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.373 2008/08/30 01:39:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,8 +178,10 @@ typedef struct TypeName
 /*
  * ColumnRef - specifies a reference to a column, or possibly a whole tuple
  *
- *		The "fields" list must be nonempty; its last component may be "*"
- *		instead of a regular field name.
+ * The "fields" list must be nonempty.  It can contain string Value nodes
+ * (representing names) and A_Star nodes (representing occurrence of a '*').
+ * Currently, A_Star must appear only as the last list element --- the grammar
+ * is responsible for enforcing this!
  *
  * Note: any array subscripting or selection of fields from composite columns
  * is represented by an A_Indirection node above the ColumnRef.  However,
@@ -189,7 +191,7 @@ typedef struct TypeName
 typedef struct ColumnRef
 {
 	NodeTag		type;
-	List	   *fields;			/* field names (list of Value strings) */
+	List	   *fields;			/* field names (Value strings) or A_Star */
 	int			location;		/* token location, or -1 if unknown */
 } ColumnRef;
 
@@ -271,35 +273,46 @@ typedef struct FuncCall
 } FuncCall;
 
 /*
- * A_Indices - array reference or bounds ([lidx:uidx] or [uidx])
+ * A_Star - '*' representing all columns of a table or compound field
+ *
+ * This can appear within ColumnRef.fields, A_Indirection.indirection, and
+ * ResTarget.indirection lists.
+ */
+typedef struct A_Star
+{
+	NodeTag		type;
+} A_Star;
+
+/*
+ * A_Indices - array subscript or slice bounds ([lidx:uidx] or [uidx])
  */
 typedef struct A_Indices
 {
 	NodeTag		type;
-	Node	   *lidx;			/* could be NULL */
+	Node	   *lidx;			/* NULL if it's a single subscript */
 	Node	   *uidx;
 } A_Indices;
 
 /*
  * A_Indirection - select a field and/or array element from an expression
  *
- * The indirection list can contain both A_Indices nodes (representing
- * subscripting) and string Value nodes (representing field selection
- * --- the string value is the name of the field to select).  For example,
- * a complex selection operation like
+ * The indirection list can contain A_Indices nodes (representing
+ * subscripting), string Value nodes (representing field selection --- the
+ * string value is the name of the field to select), and A_Star nodes
+ * (representing selection of all fields of a composite type).
+ * For example, a complex selection operation like
  *				(foo).field1[42][7].field2
  * would be represented with a single A_Indirection node having a 4-element
  * indirection list.
  *
- * Note: as of Postgres 8.0, we don't support arrays of composite values,
- * so cases in which a field select follows a subscript aren't actually
- * semantically legal.	However the parser is prepared to handle such.
+ * Currently, A_Star must appear only as the last list element --- the grammar
+ * is responsible for enforcing this!
  */
 typedef struct A_Indirection
 {
 	NodeTag		type;
 	Node	   *arg;			/* the thing being selected from */
-	List	   *indirection;	/* subscripts and/or field names */
+	List	   *indirection;	/* subscripts and/or field names and/or * */
 } A_Indirection;
 
 /*
@@ -334,7 +347,7 @@ typedef struct ResTarget
 {
 	NodeTag		type;
 	char	   *name;			/* column name or NULL */
-	List	   *indirection;	/* subscripts and field names, or NIL */
+	List	   *indirection;	/* subscripts, field names, and '*', or NIL */
 	Node	   *val;			/* the value expression to compute or assign */
 	int			location;		/* token location, or -1 if unknown */
 } ResTarget;
@@ -1739,7 +1752,7 @@ typedef struct NotifyStmt
 typedef struct ListenStmt
 {
 	NodeTag		type;
-	RangeVar   *relation;		/* qualified name to listen on */
+	RangeVar   *relation;		/* name to listen on */
 } ListenStmt;
 
 /* ----------------------
@@ -1749,7 +1762,7 @@ typedef struct ListenStmt
 typedef struct UnlistenStmt
 {
 	NodeTag		type;
-	RangeVar   *relation;		/* qualified name to unlisten on, or '*' */
+	RangeVar   *relation;		/* name to unlisten on, or NULL for all */
 } UnlistenStmt;
 
 /* ----------------------
