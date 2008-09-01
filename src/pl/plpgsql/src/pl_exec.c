@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.218 2008/08/29 13:02:33 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.219 2008/09/01 22:30:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4513,13 +4513,27 @@ exec_move_row(PLpgSQL_execstate *estate,
 	if (rec != NULL)
 	{
 		/*
-		 * copy input first, just in case it is pointing at variable's value
+		 * Copy input first, just in case it is pointing at variable's value
 		 */
 		if (HeapTupleIsValid(tup))
 			tup = heap_copytuple(tup);
+		else if (tupdesc)
+		{
+			/* If we have a tupdesc but no data, form an all-nulls tuple */
+			char	   *nulls;
+
+			nulls = (char *) palloc(tupdesc->natts * sizeof(char));
+			memset(nulls, 'n', tupdesc->natts * sizeof(char));
+
+			tup = heap_formtuple(tupdesc, NULL, nulls);
+
+			pfree(nulls);
+		}
+
 		if (tupdesc)
 			tupdesc = CreateTupleDescCopy(tupdesc);
 
+		/* Free the old value ... */
 		if (rec->freetup)
 		{
 			heap_freetuple(rec->tup);
@@ -4531,23 +4545,11 @@ exec_move_row(PLpgSQL_execstate *estate,
 			rec->freetupdesc = false;
 		}
 
+		/* ... and install the new */
 		if (HeapTupleIsValid(tup))
 		{
 			rec->tup = tup;
 			rec->freetup = true;
-		}
-		else if (tupdesc)
-		{
-			/* If we have a tupdesc but no data, form an all-nulls tuple */
-			char	   *nulls;
-
-			nulls = (char *) palloc(tupdesc->natts * sizeof(char));
-			memset(nulls, 'n', tupdesc->natts * sizeof(char));
-
-			rec->tup = heap_formtuple(tupdesc, NULL, nulls);
-			rec->freetup = true;
-
-			pfree(nulls);
 		}
 		else
 			rec->tup = NULL;
@@ -4568,7 +4570,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 	 * attributes of the tuple to the variables the row points to.
 	 *
 	 * NOTE: this code used to demand row->nfields ==
-	 * HeapTupleHeaderGetNatts(tup->t_data, but that's wrong.  The tuple might
+	 * HeapTupleHeaderGetNatts(tup->t_data), but that's wrong.  The tuple might
 	 * have more fields than we expected if it's from an inheritance-child
 	 * table of the current table, or it might have fewer if the table has had
 	 * columns added by ALTER TABLE. Ignore extra columns and assume NULL for
@@ -4580,6 +4582,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 	 */
 	if (row != NULL)
 	{
+		int			td_natts = tupdesc ? tupdesc->natts : 0;
 		int			t_natts;
 		int			fnum;
 		int			anum;
@@ -4602,12 +4605,18 @@ exec_move_row(PLpgSQL_execstate *estate,
 
 			var = (PLpgSQL_var *) (estate->datums[row->varnos[fnum]]);
 
-			while (anum < t_natts && tupdesc->attrs[anum]->attisdropped)
+			while (anum < td_natts && tupdesc->attrs[anum]->attisdropped)
 				anum++;			/* skip dropped column in tuple */
 
-			if (anum < t_natts)
+			if (anum < td_natts)
 			{
-				value = SPI_getbinval(tup, tupdesc, anum + 1, &isnull);
+				if (anum < t_natts)
+					value = SPI_getbinval(tup, tupdesc, anum + 1, &isnull);
+				else
+				{
+					value = (Datum) 0;
+					isnull = true;
+				}
 				valtype = SPI_gettypeid(tupdesc, anum + 1);
 				anum++;
 			}
