@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.180.2.5 2007/04/19 16:33:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.180.2.6 2008/09/01 22:30:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4103,13 +4103,27 @@ exec_move_row(PLpgSQL_execstate *estate,
 	if (rec != NULL)
 	{
 		/*
-		 * copy input first, just in case it is pointing at variable's value
+		 * Copy input first, just in case it is pointing at variable's value
 		 */
 		if (HeapTupleIsValid(tup))
 			tup = heap_copytuple(tup);
+		else if (tupdesc)
+		{
+			/* If we have a tupdesc but no data, form an all-nulls tuple */
+			char	   *nulls;
+
+			nulls = (char *) palloc(tupdesc->natts * sizeof(char));
+			memset(nulls, 'n', tupdesc->natts * sizeof(char));
+
+			tup = heap_formtuple(tupdesc, NULL, nulls);
+
+			pfree(nulls);
+		}
+
 		if (tupdesc)
 			tupdesc = CreateTupleDescCopy(tupdesc);
 
+		/* Free the old value ... */
 		if (rec->freetup)
 		{
 			heap_freetuple(rec->tup);
@@ -4121,23 +4135,11 @@ exec_move_row(PLpgSQL_execstate *estate,
 			rec->freetupdesc = false;
 		}
 
+		/* ... and install the new */
 		if (HeapTupleIsValid(tup))
 		{
 			rec->tup = tup;
 			rec->freetup = true;
-		}
-		else if (tupdesc)
-		{
-			/* If we have a tupdesc but no data, form an all-nulls tuple */
-			char	   *nulls;
-
-			nulls = (char *) palloc(tupdesc->natts * sizeof(char));
-			memset(nulls, 'n', tupdesc->natts * sizeof(char));
-
-			rec->tup = heap_formtuple(tupdesc, NULL, nulls);
-			rec->freetup = true;
-
-			pfree(nulls);
 		}
 		else
 			rec->tup = NULL;
@@ -4170,6 +4172,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 	 */
 	if (row != NULL)
 	{
+		int			td_natts = tupdesc ? tupdesc->natts : 0;
 		int			t_natts;
 		int			fnum;
 		int			anum;
@@ -4192,12 +4195,18 @@ exec_move_row(PLpgSQL_execstate *estate,
 
 			var = (PLpgSQL_var *) (estate->datums[row->varnos[fnum]]);
 
-			while (anum < t_natts && tupdesc->attrs[anum]->attisdropped)
+			while (anum < td_natts && tupdesc->attrs[anum]->attisdropped)
 				anum++;			/* skip dropped column in tuple */
 
-			if (anum < t_natts)
+			if (anum < td_natts)
 			{
-				value = SPI_getbinval(tup, tupdesc, anum + 1, &isnull);
+				if (anum < t_natts)
+					value = SPI_getbinval(tup, tupdesc, anum + 1, &isnull);
+				else
+				{
+					value = (Datum) 0;
+					isnull = true;
+				}
 				valtype = SPI_gettypeid(tupdesc, anum + 1);
 				anum++;
 			}
