@@ -1,0 +1,290 @@
+---
+--- test creation of SERIAL column
+---
+ 
+CREATE TABLE serialTest (f1 text, f2 serial);
+NOTICE:  CREATE TABLE will create implicit sequence "serialtest_f2_seq" for serial column "serialtest.f2"
+ 
+INSERT INTO serialTest VALUES ('foo');
+INSERT INTO serialTest VALUES ('bar');
+INSERT INTO serialTest VALUES ('force', 100);
+INSERT INTO serialTest VALUES ('wrong', NULL);
+ERROR:  null value in column "f2" violates not-null constraint
+ 
+SELECT * FROM serialTest;
+  f1   | f2  
+-------+-----
+ foo   |   1
+ bar   |   2
+ force | 100
+(3 rows)
+
+-- basic sequence operations using both text and oid references
+CREATE SEQUENCE sequence_test;
+ 
+SELECT nextval('sequence_test'::text);
+ nextval 
+---------
+       1
+(1 row)
+
+SELECT nextval('sequence_test'::regclass);
+ nextval 
+---------
+       2
+(1 row)
+
+SELECT currval('sequence_test'::text);
+ currval 
+---------
+       2
+(1 row)
+
+SELECT currval('sequence_test'::regclass);
+ currval 
+---------
+       2
+(1 row)
+
+SELECT setval('sequence_test'::text, 32);
+ setval 
+--------
+     32
+(1 row)
+
+SELECT nextval('sequence_test'::regclass);
+ nextval 
+---------
+      33
+(1 row)
+
+SELECT setval('sequence_test'::text, 99, false);
+ setval 
+--------
+     99
+(1 row)
+
+SELECT nextval('sequence_test'::regclass);
+ nextval 
+---------
+      99
+(1 row)
+
+SELECT setval('sequence_test'::regclass, 32);
+ setval 
+--------
+     32
+(1 row)
+
+SELECT nextval('sequence_test'::text);
+ nextval 
+---------
+      33
+(1 row)
+
+SELECT setval('sequence_test'::regclass, 99, false);
+ setval 
+--------
+     99
+(1 row)
+
+SELECT nextval('sequence_test'::text);
+ nextval 
+---------
+      99
+(1 row)
+
+DROP SEQUENCE sequence_test;
+-- renaming sequences
+CREATE SEQUENCE foo_seq;
+ALTER TABLE foo_seq RENAME TO foo_seq_new;
+SELECT * FROM foo_seq_new;
+ sequence_name | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
+---------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
+ foo_seq       |          1 |           1 |            1 | 9223372036854775807 |         1 |           1 |       1 | f         | f
+(1 row)
+
+SELECT nextval('foo_seq_new');
+ nextval 
+---------
+       1
+(1 row)
+
+SELECT nextval('foo_seq_new');
+ nextval 
+---------
+       2
+(1 row)
+
+SELECT * FROM foo_seq_new;
+ sequence_name | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
+---------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
+ foo_seq       |          2 |           1 |            1 | 9223372036854775807 |         1 |           1 |      31 | f         | t
+(1 row)
+
+DROP SEQUENCE foo_seq_new;
+-- renaming serial sequences
+ALTER TABLE serialtest_f2_seq RENAME TO serialtest_f2_foo;
+INSERT INTO serialTest VALUES ('more');
+SELECT * FROM serialTest;
+  f1   | f2  
+-------+-----
+ foo   |   1
+ bar   |   2
+ force | 100
+ more  |   3
+(4 rows)
+
+--
+-- Check dependencies of serial and ordinary sequences
+--
+CREATE TEMP SEQUENCE myseq2;
+CREATE TEMP SEQUENCE myseq3;
+CREATE TEMP TABLE t1 (
+  f1 serial,
+  f2 int DEFAULT nextval('myseq2'),
+  f3 int DEFAULT nextval('myseq3'::text)
+);
+NOTICE:  CREATE TABLE will create implicit sequence "t1_f1_seq" for serial column "t1.f1"
+-- Both drops should fail, but with different error messages:
+DROP SEQUENCE t1_f1_seq;
+ERROR:  cannot drop sequence t1_f1_seq because other objects depend on it
+DETAIL:  default for table t1 column f1 depends on sequence t1_f1_seq
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+DROP SEQUENCE myseq2;
+ERROR:  cannot drop sequence myseq2 because other objects depend on it
+DETAIL:  default for table t1 column f2 depends on sequence myseq2
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+-- This however will work:
+DROP SEQUENCE myseq3;
+DROP TABLE t1;
+-- Fails because no longer existent:
+DROP SEQUENCE t1_f1_seq;
+ERROR:  sequence "t1_f1_seq" does not exist
+-- Now OK:
+DROP SEQUENCE myseq2;
+--
+-- Alter sequence
+--
+CREATE SEQUENCE sequence_test2 START WITH 32;
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      32
+(1 row)
+
+ALTER SEQUENCE sequence_test2 RESTART WITH 24
+	 INCREMENT BY 4 MAXVALUE 36 MINVALUE 5 CYCLE;
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      24
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      28
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      32
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      36
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+       5
+(1 row)
+
+ALTER SEQUENCE sequence_test2 RESTART;
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      32
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      36
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+       5
+(1 row)
+
+-- Test comments
+COMMENT ON SEQUENCE asdf IS 'won''t work';
+ERROR:  relation "asdf" does not exist
+COMMENT ON SEQUENCE sequence_test2 IS 'will work';
+COMMENT ON SEQUENCE sequence_test2 IS NULL;
+-- Test lastval()
+CREATE SEQUENCE seq;
+SELECT nextval('seq');
+ nextval 
+---------
+       1
+(1 row)
+
+SELECT lastval();
+ lastval 
+---------
+       1
+(1 row)
+
+SELECT setval('seq', 99);
+ setval 
+--------
+     99
+(1 row)
+
+SELECT lastval();
+ lastval 
+---------
+      99
+(1 row)
+
+CREATE SEQUENCE seq2;
+SELECT nextval('seq2');
+ nextval 
+---------
+       1
+(1 row)
+
+SELECT lastval();
+ lastval 
+---------
+       1
+(1 row)
+
+DROP SEQUENCE seq2;
+-- should fail
+SELECT lastval();
+ERROR:  lastval is not yet defined in this session
+CREATE USER seq_user;
+BEGIN;
+SET LOCAL SESSION AUTHORIZATION seq_user;
+CREATE SEQUENCE seq3;
+SELECT nextval('seq3');
+ nextval 
+---------
+       1
+(1 row)
+
+REVOKE ALL ON seq3 FROM seq_user;
+SELECT lastval();
+ERROR:  permission denied for sequence seq3
+ROLLBACK;
+DROP USER seq_user;
+DROP SEQUENCE seq;
