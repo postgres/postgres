@@ -6,7 +6,7 @@ DLSUFFIX = .so
 CFLAGS_SL =
 
 %.so: %.o
-	$(LD) -G -Bdynamic -shared -o $@ $< 
+	$(CC) $(CFLAGS) -shared -o $@ $< 
 
 override CPPFLAGS += -U_NO_XOPEN4
 

@@ -38,6 +38,6 @@ MKLDEXPORT=$(top_srcdir)/src/backend/port/aix/mkldexport.sh
 	$(MKLDEXPORT) $^ >$@
 
 %$(DLSUFFIX): %.o %.exp
-	$(CC) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $*.o -Wl,-bE:$*.exp $(SHLIB_LINK)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $*.o -Wl,-bE:$*.exp $(SHLIB_LINK)
 
 sqlmansect = 7

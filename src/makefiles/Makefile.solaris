@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.solaris,v 1.13 2005/12/09 21:19:36 petere Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.solaris,v 1.14 2008/09/01 08:50:10 petere Exp $
 
 AROPT = crs
 
@@ -17,6 +17,10 @@ CFLAGS_SL = -KPIC
 endif
 
 %.so: %.o
-	$(LD) -G -Bdynamic -o $@ $<
+ifeq ($(GCC), yes)
+	$(CC) $(CFLAGS) -shared -o $@ $<
+else
+	$(CC) $(CFLAGS) -G -o $@ $<
+endif
 
 sqlmansect = 5sql

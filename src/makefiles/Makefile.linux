@@ -11,6 +11,6 @@ CFLAGS_SL = -fpic
 endif
 
 %.so: %.o
-	$(CC) -shared -o $@ $<
+	$(CC) $(CFLAGS) -shared -o $@ $<
 
 sqlmansect = 7

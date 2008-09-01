@@ -16,7 +16,7 @@ endif
 
 %.so: %.o
 ifdef ELF_SYSTEM
-	$(LD) -x -shared -o $@ $<
+	$(CC) $(CFLAGS) -shared -o $@ $<
 else
 	$(LD) $(LDREL) $(LDOUT) $<.obj -x $<
 	@echo building shared object $@
