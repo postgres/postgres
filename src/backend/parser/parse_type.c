@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.98 2008/08/30 01:39:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.99 2008/09/01 20:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ LookupTypeName(ParseState *pstate, const TypeName *typename,
 	else if (typename->pct_type)
 	{
 		/* Handle %TYPE reference to type of an existing field */
-		RangeVar   *rel = makeRangeVar(NULL, NULL);
+		RangeVar   *rel = makeRangeVar(NULL, NULL, typename->location);
 		char	   *field = NULL;
 		Oid			relid;
 		AttrNumber	attnum;
@@ -122,7 +122,7 @@ LookupTypeName(ParseState *pstate, const TypeName *typename,
 		/* this construct should never have an array indicator */
 		Assert(typename->arrayBounds == NIL);
 
-		/* emit nuisance notice */
+		/* emit nuisance notice (intentionally not errposition'd) */
 		ereport(NOTICE,
 				(errmsg("type reference %s converted to %s",
 						TypeNameToString(typename),
@@ -247,6 +247,7 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 	int			n;
 	ListCell   *l;
 	ArrayType  *arrtypmod;
+	ParseCallbackState pcbstate;
 
 	/* Return prespecified typmod if no typmod expressions */
 	if (typename->typmods == NIL)
@@ -321,8 +322,13 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 	arrtypmod = construct_array(datums, n, CSTRINGOID,
 								-2, false, 'c');
 
+	/* arrange to report location if type's typmodin function fails */
+	setup_parser_errposition_callback(&pcbstate, pstate, typename->location);
+
 	result = DatumGetInt32(OidFunctionCall1(typmodin,
 											PointerGetDatum(arrtypmod)));
+
+	cancel_parser_errposition_callback(&pcbstate);
 
 	pfree(datums);
 	pfree(arrtypmod);

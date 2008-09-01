@@ -93,6 +93,8 @@ SELECT * FROM foo;		-- should be empty
 
 SELECT * FROM bar;		-- shouldn't exist
 ERROR:  relation "bar" does not exist
+LINE 1: SELECT * FROM bar;
+                      ^
 SELECT * FROM barbaz;	-- should be empty
  a 
 ---
@@ -109,6 +111,8 @@ BEGIN;
 	SAVEPOINT one;
 		INSERT into bar VALUES (1);
 ERROR:  relation "bar" does not exist
+LINE 1: INSERT into bar VALUES (1);
+                    ^
 	ROLLBACK TO one;
 	RELEASE SAVEPOINT one;
 	SAVEPOINT two;

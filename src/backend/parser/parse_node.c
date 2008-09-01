@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.102 2008/08/28 23:09:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.103 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,9 @@
 #include "utils/int8.h"
 #include "utils/syscache.h"
 #include "utils/varbit.h"
+
+
+static void pcb_error_callback(void *arg);
 
 
 /*
@@ -109,6 +112,62 @@ parser_errposition(ParseState *pstate, int location)
 	pos = pg_mbstrlen_with_len(pstate->p_sourcetext, location) + 1;
 	/* And pass it to the ereport mechanism */
 	return errposition(pos);
+}
+
+
+/*
+ * setup_parser_errposition_callback
+ *		Arrange for non-parser errors to report an error position
+ *
+ * Sometimes the parser calls functions that aren't part of the parser
+ * subsystem and can't reasonably be passed a ParseState; yet we would
+ * like any errors thrown in those functions to be tagged with a parse
+ * error location.  Use this function to set up an error context stack
+ * entry that will accomplish that.  Usage pattern:
+ *
+ *		declare a local variable "ParseCallbackState pcbstate"
+ *		...
+ *		setup_parser_errposition_callback(&pcbstate, pstate, location);
+ *		call function that might throw error;
+ *		cancel_parser_errposition_callback(&pcbstate);
+ */
+void
+setup_parser_errposition_callback(ParseCallbackState *pcbstate,
+								  ParseState *pstate, int location)
+{
+	/* Setup error traceback support for ereport() */
+	pcbstate->pstate = pstate;
+	pcbstate->location = location;
+	pcbstate->errcontext.callback = pcb_error_callback;
+	pcbstate->errcontext.arg = (void *) pcbstate;
+	pcbstate->errcontext.previous = error_context_stack;
+	error_context_stack = &pcbstate->errcontext;
+}
+
+/*
+ * Cancel a previously-set-up errposition callback.
+ */
+void
+cancel_parser_errposition_callback(ParseCallbackState *pcbstate)
+{
+	/* Pop the error context stack */
+	error_context_stack = pcbstate->errcontext.previous;
+}
+
+/*
+ * Error context callback for inserting parser error location.
+ *
+ * Note that this will be called for *any* error occurring while the
+ * callback is installed.  We avoid inserting an irrelevant error location
+ * if the error is a query cancel --- are there any other important cases?
+ */
+static void
+pcb_error_callback(void *arg)
+{
+	ParseCallbackState *pcbstate = (ParseCallbackState *) arg;
+
+	if (geterrcode() != ERRCODE_QUERY_CANCELED)
+		(void) parser_errposition(pcbstate->pstate, pcbstate->location);
 }
 
 
@@ -344,14 +403,15 @@ transformArraySubscripts(ParseState *pstate,
  *	too many examples that fail if we try.
  */
 Const *
-make_const(Value *value, int location)
+make_const(ParseState *pstate, Value *value, int location)
 {
+	Const	   *con;
 	Datum		val;
 	int64		val64;
 	Oid			typeid;
 	int			typelen;
 	bool		typebyval;
-	Const	   *con;
+	ParseCallbackState pcbstate;
 
 	switch (nodeTag(value))
 	{
@@ -392,10 +452,13 @@ make_const(Value *value, int location)
 			}
 			else
 			{
+				/* arrange to report location if numeric_in() fails */
+				setup_parser_errposition_callback(&pcbstate, pstate, location);
 				val = DirectFunctionCall3(numeric_in,
 										  CStringGetDatum(strVal(value)),
 										  ObjectIdGetDatum(InvalidOid),
 										  Int32GetDatum(-1));
+				cancel_parser_errposition_callback(&pcbstate);
 
 				typeid = NUMERICOID;
 				typelen = -1;	/* variable len */
@@ -417,10 +480,13 @@ make_const(Value *value, int location)
 			break;
 
 		case T_BitString:
+			/* arrange to report location if bit_in() fails */
+			setup_parser_errposition_callback(&pcbstate, pstate, location);
 			val = DirectFunctionCall3(bit_in,
 									  CStringGetDatum(strVal(value)),
 									  ObjectIdGetDatum(InvalidOid),
 									  Int32GetDatum(-1));
+			cancel_parser_errposition_callback(&pcbstate);
 			typeid = BITOID;
 			typelen = -1;
 			typebyval = false;

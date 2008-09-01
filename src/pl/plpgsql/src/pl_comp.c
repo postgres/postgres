@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.129 2008/08/29 13:02:33 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.130 2008/09/01 20:42:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1272,7 +1272,7 @@ plpgsql_parse_tripwordtype(char *word)
 	word[i] = '%';
 	pfree(cp[3]);
 
-	relvar = makeRangeVar(cp[0], cp[1]);
+	relvar = makeRangeVar(cp[0], cp[1], -1);
 	classOid = RangeVarGetRelid(relvar, true);
 	if (!OidIsValid(classOid))
 		goto done;
@@ -1393,7 +1393,7 @@ plpgsql_parse_dblwordrowtype(char *word)
 	word[i] = '%';
 
 	/* Lookup the relation */
-	relvar = makeRangeVar(cp[0], cp[1]);
+	relvar = makeRangeVar(cp[0], cp[1], -1);
 	classOid = RangeVarGetRelid(relvar, true);
 	if (!OidIsValid(classOid))
 		ereport(ERROR,

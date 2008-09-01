@@ -107,6 +107,8 @@ DROP TABLE default_test;
 -- (we have borrowed numeric's typmod functions)
 CREATE TEMP TABLE mytab (foo widget(42,13,7));     -- should fail
 ERROR:  invalid NUMERIC type modifier
+LINE 1: CREATE TEMP TABLE mytab (foo widget(42,13,7));
+                                     ^
 CREATE TEMP TABLE mytab (foo widget(42,13));
 SELECT format_type(atttypid,atttypmod) FROM pg_attribute
 WHERE attrelid = 'mytab'::regclass AND attnum > 0;

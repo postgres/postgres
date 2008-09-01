@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.281 2008/08/25 22:42:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.282 2008/09/01 20:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2713,8 +2713,7 @@ get_utility_query_def(Query *query, deparse_context *context)
 		appendContextKeyword(context, "",
 							 0, PRETTYINDENT_STD, 1);
 		appendStringInfo(buf, "NOTIFY %s",
-					   quote_qualified_identifier(stmt->relation->schemaname,
-												  stmt->relation->relname));
+						 quote_identifier(stmt->conditionname));
 	}
 	else
 	{

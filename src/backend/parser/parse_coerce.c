@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.165 2008/08/28 23:09:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.166 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,6 +180,7 @@ coerce_type(ParseState *pstate, Node *node,
 		Oid			baseTypeId;
 		int32		baseTypeMod;
 		Type		targetType;
+		ParseCallbackState pcbstate;
 
 		/*
 		 * If the target type is a domain, we want to call its base type's
@@ -208,6 +209,12 @@ coerce_type(ParseState *pstate, Node *node,
 			newcon->location = location;
 
 		/*
+		 * Set up to point at the constant's text if the input routine
+		 * throws an error.
+		 */
+		setup_parser_errposition_callback(&pcbstate, pstate, con->location);
+
+		/*
 		 * We pass typmod -1 to the input routine, primarily because existing
 		 * input routines follow implicit-coercion semantics for length
 		 * checks, which is not always what we want here. Any length
@@ -222,6 +229,8 @@ coerce_type(ParseState *pstate, Node *node,
 												 -1);
 		else
 			newcon->constvalue = stringTypeDatum(targetType, NULL, -1);
+
+		cancel_parser_errposition_callback(&pcbstate);
 
 		result = (Node *) newcon;
 
@@ -257,7 +266,8 @@ coerce_type(ParseState *pstate, Node *node,
 			paramno > toppstate->p_numparams)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_PARAMETER),
-					 errmsg("there is no parameter $%d", paramno)));
+					 errmsg("there is no parameter $%d", paramno),
+					 parser_errposition(pstate, param->location)));
 
 		if (toppstate->p_paramtypes[paramno - 1] == UNKNOWNOID)
 		{
@@ -277,7 +287,8 @@ coerce_type(ParseState *pstate, Node *node,
 							paramno),
 					 errdetail("%s versus %s",
 						format_type_be(toppstate->p_paramtypes[paramno - 1]),
-							   format_type_be(targetTypeId))));
+							   format_type_be(targetTypeId)),
+					 parser_errposition(pstate, param->location)));
 		}
 
 		param->paramtype = targetTypeId;
@@ -819,10 +830,11 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 	{
 		int			rtindex = ((Var *) node)->varno;
 		int			sublevels_up = ((Var *) node)->varlevelsup;
+		int			vlocation = ((Var *) node)->location;
 		RangeTblEntry *rte;
 
 		rte = GetRTEByRangeTablePosn(pstate, rtindex, sublevels_up);
-		expandRTE(rte, rtindex, sublevels_up, false,
+		expandRTE(rte, rtindex, sublevels_up, vlocation, false,
 				  NULL, &args);
 	}
 	else

@@ -293,6 +293,8 @@ group by ten
 having exists (select 1 from onek b
                where sum(distinct a.four + b.four) = b.four);
 ERROR:  aggregates not allowed in WHERE clause
+LINE 4:                where sum(distinct a.four + b.four) = b.four)...
+                             ^
 --
 -- test for bitwise integer aggregates
 --

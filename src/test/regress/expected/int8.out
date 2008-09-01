@@ -11,18 +11,32 @@ INSERT INTO INT8_TBL VALUES('4567890123456789','-4567890123456789');
 -- bad inputs
 INSERT INTO INT8_TBL(q1) VALUES ('      ');
 ERROR:  invalid input syntax for integer: "      "
+LINE 1: INSERT INTO INT8_TBL(q1) VALUES ('      ');
+                                         ^
 INSERT INTO INT8_TBL(q1) VALUES ('xxx');
 ERROR:  invalid input syntax for integer: "xxx"
+LINE 1: INSERT INTO INT8_TBL(q1) VALUES ('xxx');
+                                         ^
 INSERT INTO INT8_TBL(q1) VALUES ('3908203590239580293850293850329485');
 ERROR:  value "3908203590239580293850293850329485" is out of range for type bigint
+LINE 1: INSERT INTO INT8_TBL(q1) VALUES ('39082035902395802938502938...
+                                         ^
 INSERT INTO INT8_TBL(q1) VALUES ('-1204982019841029840928340329840934');
 ERROR:  value "-1204982019841029840928340329840934" is out of range for type bigint
+LINE 1: INSERT INTO INT8_TBL(q1) VALUES ('-1204982019841029840928340...
+                                         ^
 INSERT INTO INT8_TBL(q1) VALUES ('- 123');
 ERROR:  invalid input syntax for integer: "- 123"
+LINE 1: INSERT INTO INT8_TBL(q1) VALUES ('- 123');
+                                         ^
 INSERT INTO INT8_TBL(q1) VALUES ('  345     5');
 ERROR:  invalid input syntax for integer: "  345     5"
+LINE 1: INSERT INTO INT8_TBL(q1) VALUES ('  345     5');
+                                         ^
 INSERT INTO INT8_TBL(q1) VALUES ('');
 ERROR:  invalid input syntax for integer: ""
+LINE 1: INSERT INTO INT8_TBL(q1) VALUES ('');
+                                         ^
 SELECT * FROM INT8_TBL;
         q1        |        q2         
 ------------------+-------------------
@@ -309,6 +323,8 @@ select '-9223372036854775808'::int8;
 
 select '-9223372036854775809'::int8;
 ERROR:  value "-9223372036854775809" is out of range for type bigint
+LINE 1: select '-9223372036854775809'::int8;
+               ^
 select '9223372036854775807'::int8;
         int8         
 ---------------------
@@ -317,3 +333,5 @@ select '9223372036854775807'::int8;
 
 select '9223372036854775808'::int8;
 ERROR:  value "9223372036854775808" is out of range for type bigint
+LINE 1: select '9223372036854775808'::int8;
+               ^

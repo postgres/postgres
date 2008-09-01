@@ -82,14 +82,22 @@ INSERT INTO TIMESTAMP_TBL VALUES ('epoch');
 -- Obsolete special values
 INSERT INTO TIMESTAMP_TBL VALUES ('invalid');
 ERROR:  date/time value "invalid" is no longer supported
+LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('invalid');
+                                          ^
 INSERT INTO TIMESTAMP_TBL VALUES ('current');
 ERROR:  date/time value "current" is no longer supported
+LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('current');
+                                          ^
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
 INSERT INTO TIMESTAMP_TBL VALUES ('Invalid Abstime');
 ERROR:  date/time value "Invalid Abstime" is no longer supported
+LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('Invalid Abstime');
+                                          ^
 INSERT INTO TIMESTAMP_TBL VALUES ('Undefined Abstime');
 ERROR:  date/time value "Undefined Abstime" is no longer supported
+LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('Undefined Abstime');
+                                          ^
 -- Variations on Postgres v6.1 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.000001 1997 PST');
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.999999 1997 PST');
@@ -129,6 +137,8 @@ INSERT INTO TIMESTAMP_TBL VALUES ('19970210 173201 America/New_York');
 -- this fails (even though TZ is a no-op, we still look it up)
 INSERT INTO TIMESTAMP_TBL VALUES ('19970710 173201 America/Does_not_exist');
 ERROR:  time zone "america/does_not_exist" not recognized
+LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('19970710 173201 America/D...
+                                          ^
 -- Check date conversion and date arithmetic
 INSERT INTO TIMESTAMP_TBL VALUES ('1997-06-10 18:32:01 PDT');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 10 17:32:01 1997');
@@ -156,6 +166,8 @@ INSERT INTO TIMESTAMP_TBL VALUES ('Jan 01 17:32:01 1997');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 28 17:32:01 1997');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 29 17:32:01 1997');
 ERROR:  date/time field value out of range: "Feb 29 17:32:01 1997"
+LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('Feb 29 17:32:01 1997');
+                                          ^
 INSERT INTO TIMESTAMP_TBL VALUES ('Mar 01 17:32:01 1997');
 INSERT INTO TIMESTAMP_TBL VALUES ('Dec 30 17:32:01 1997');
 INSERT INTO TIMESTAMP_TBL VALUES ('Dec 31 17:32:01 1997');
@@ -166,8 +178,12 @@ INSERT INTO TIMESTAMP_TBL VALUES ('Jan 01 17:32:01 2001');
 -- Currently unsupported syntax and ranges
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 -0097');
 ERROR:  time zone displacement out of range: "Feb 16 17:32:01 -0097"
+LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 -0097');
+                                          ^
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 5097 BC');
 ERROR:  timestamp out of range: "Feb 16 17:32:01 5097 BC"
+LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 5097 BC')...
+                                          ^
 SELECT '' AS "64", d1 FROM TIMESTAMP_TBL; 
  64 |             d1              
 ----+-----------------------------

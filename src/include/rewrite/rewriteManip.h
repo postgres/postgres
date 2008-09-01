@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/rewrite/rewriteManip.h,v 1.46 2008/08/22 00:16:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/rewrite/rewriteManip.h,v 1.47 2008/09/01 20:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@ extern void AddQual(Query *parsetree, Node *qual);
 extern void AddInvertedQual(Query *parsetree, Node *qual);
 
 extern bool contain_aggs_of_level(Node *node, int levelsup);
+extern int	locate_agg_of_level(Node *node, int levelsup);
 extern bool checkExprHasAggs(Node *node);
 extern bool checkExprHasSubLink(Node *node);
 

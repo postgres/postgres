@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.59 2008/08/28 23:09:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.60 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,7 @@ makeRelabelType(Expr *arg, Oid rtype, int32 rtypmod, CoercionForm rformat)
  *	  creates a RangeVar node (rather oversimplified case)
  */
 RangeVar *
-makeRangeVar(char *schemaname, char *relname)
+makeRangeVar(char *schemaname, char *relname, int location)
 {
 	RangeVar   *r = makeNode(RangeVar);
 
@@ -276,6 +276,7 @@ makeRangeVar(char *schemaname, char *relname)
 	r->inhOpt = INH_DEFAULT;
 	r->istemp = false;
 	r->alias = NULL;
+	r->location = location;
 
 	return r;
 }

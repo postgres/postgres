@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.244 2008/06/24 17:58:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.245 2008/09/01 20:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -637,7 +637,7 @@ boot_openrel(char *relname)
 	elog(DEBUG4, "open relation %s, attrsize %d",
 		 relname, (int) ATTRIBUTE_TUPLE_SIZE);
 
-	boot_reldesc = heap_openrv(makeRangeVar(NULL, relname), NoLock);
+	boot_reldesc = heap_openrv(makeRangeVar(NULL, relname, -1), NoLock);
 	numattr = boot_reldesc->rd_rel->relnatts;
 	for (i = 0; i < numattr; i++)
 	{

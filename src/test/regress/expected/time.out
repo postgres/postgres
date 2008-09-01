@@ -16,6 +16,8 @@ INSERT INTO TIME_TBL VALUES ('2003-07-07 15:36:39 America/New_York');
 -- this should fail (the timezone offset is not known)
 INSERT INTO TIME_TBL VALUES ('15:36:39 America/New_York');
 ERROR:  invalid input syntax for type time: "15:36:39 America/New_York"
+LINE 1: INSERT INTO TIME_TBL VALUES ('15:36:39 America/New_York');
+                                     ^
 SELECT f1 AS "Time" FROM TIME_TBL;
     Time     
 -------------

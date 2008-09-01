@@ -71,8 +71,12 @@ INSERT INTO INTERVAL_TBL (f1) VALUES ('5 months 12 hours');
 -- badly formatted interval
 INSERT INTO INTERVAL_TBL (f1) VALUES ('badly formatted interval');
 ERROR:  invalid input syntax for type interval: "badly formatted interval"
+LINE 1: INSERT INTO INTERVAL_TBL (f1) VALUES ('badly formatted inter...
+                                              ^
 INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
 ERROR:  invalid input syntax for type interval: "@ 30 eons ago"
+LINE 1: INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
+                                              ^
 -- test interval operators
 SELECT '' AS ten, * FROM INTERVAL_TBL;
  ten |       f1        
@@ -343,9 +347,17 @@ SELECT '3 days 5 milliseconds'::interval;
 
 SELECT '1 second 2 seconds'::interval;              -- error
 ERROR:  invalid input syntax for type interval: "1 second 2 seconds"
+LINE 1: SELECT '1 second 2 seconds'::interval;
+               ^
 SELECT '10 milliseconds 20 milliseconds'::interval; -- error
 ERROR:  invalid input syntax for type interval: "10 milliseconds 20 milliseconds"
+LINE 1: SELECT '10 milliseconds 20 milliseconds'::interval;
+               ^
 SELECT '5.5 seconds 3 milliseconds'::interval;      -- error
 ERROR:  invalid input syntax for type interval: "5.5 seconds 3 milliseconds"
+LINE 1: SELECT '5.5 seconds 3 milliseconds'::interval;
+               ^
 SELECT '1:20:05 5 microseconds'::interval;          -- error
 ERROR:  invalid input syntax for type interval: "1:20:05 5 microseconds"
+LINE 1: SELECT '1:20:05 5 microseconds'::interval;
+               ^

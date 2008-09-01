@@ -137,6 +137,8 @@ INSERT INTO BOOLTBL2 (f1) VALUES (bool 'FALSE');
 INSERT INTO BOOLTBL2 (f1) 
    VALUES (bool 'XXX');  
 ERROR:  invalid input syntax for type boolean: "XXX"
+LINE 2:    VALUES (bool 'XXX');
+                        ^
 -- BOOLTBL2 should be full of false's at this point 
 SELECT '' AS f_4, BOOLTBL2.* FROM BOOLTBL2;
  f_4 | f1 

@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.145 2008/08/29 13:02:32 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.146 2008/09/01 20:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,8 @@ static void addlit(char *ytext, int yleng);
 static void addlitchar(unsigned char ychar);
 static char *litbufdup(void);
 
-static int	lexer_errposition(void);
+#define lexer_errposition()  scanner_errposition(yylloc)
+
 static void check_escape_warning(void);
 static void check_string_escape_warning(unsigned char ychar);
 
@@ -756,22 +757,27 @@ other			.
 %%
 
 /*
- * lexer_errposition
- *		Report a lexical-analysis-time cursor position, if possible.
+ * scanner_errposition
+ *		Report a lexer or grammar error cursor position, if possible.
  *
  * This is expected to be used within an ereport() call.  The return value
  * is a dummy (always 0, in fact).
  *
- * Note that this can only be used for messages from the lexer itself,
- * since it depends on scanbuf to still be valid.
+ * Note that this can only be used for messages emitted during raw parsing
+ * (essentially, scan.l and gram.y), since it requires scanbuf to still be
+ * valid.
  */
-static int
-lexer_errposition(void)
+int
+scanner_errposition(int location)
 {
 	int		pos;
 
+	Assert(scanbuf != NULL);	/* else called from wrong place */
+	if (location < 0)
+		return 0;				/* no-op if location is unknown */
+
 	/* Convert byte offset to character number */
-	pos = pg_mbstrlen_with_len(scanbuf, yylloc) + 1;
+	pos = pg_mbstrlen_with_len(scanbuf, location) + 1;
 	/* And pass it to the ereport mechanism */
 	return errposition(pos);
 }
@@ -849,6 +855,7 @@ scanner_finish(void)
 {
 	yy_delete_buffer(scanbufhandle);
 	pfree(scanbuf);
+	scanbuf = NULL;
 }
 
 

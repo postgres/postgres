@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.62 2008/08/28 23:09:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.63 2008/09/01 20:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ extern Alias *makeAlias(const char *aliasname, List *colnames);
 extern RelabelType *makeRelabelType(Expr *arg, Oid rtype, int32 rtypmod,
 				CoercionForm rformat);
 
-extern RangeVar *makeRangeVar(char *schemaname, char *relname);
+extern RangeVar *makeRangeVar(char *schemaname, char *relname, int location);
 
 extern TypeName *makeTypeName(char *typnam);
 extern TypeName *makeTypeNameFromNameList(List *names);

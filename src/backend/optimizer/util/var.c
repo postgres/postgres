@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.78 2008/08/28 23:09:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.79 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,10 +30,16 @@ typedef struct
 
 typedef struct
 {
-	int			varno;
-	int			varattno;
+	int			var_location;
 	int			sublevels_up;
-} contain_var_reference_context;
+} locate_var_of_level_context;
+
+typedef struct
+{
+	int			var_location;
+	int			relid;
+	int			sublevels_up;
+} locate_var_of_relation_context;
 
 typedef struct
 {
@@ -56,11 +62,12 @@ typedef struct
 static bool pull_varnos_walker(Node *node,
 				   pull_varnos_context *context);
 static bool pull_varattnos_walker(Node *node, Bitmapset **varattnos);
-static bool contain_var_reference_walker(Node *node,
-							 contain_var_reference_context *context);
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
-static bool contain_vars_above_level_walker(Node *node, int *sublevels_up);
+static bool locate_var_of_level_walker(Node *node,
+									   locate_var_of_level_context *context);
+static bool locate_var_of_relation_walker(Node *node,
+									locate_var_of_relation_context *context);
 static bool find_minimum_var_level_walker(Node *node,
 							  find_minimum_var_level_context *context);
 static bool pull_var_clause_walker(Node *node,
@@ -136,6 +143,7 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 								  (void *) context);
 }
 
+
 /*
  * pull_varattnos
  *		Find all the distinct attribute numbers present in an expression tree,
@@ -179,69 +187,6 @@ pull_varattnos_walker(Node *node, Bitmapset **varattnos)
 
 
 /*
- *		contain_var_reference
- *
- *		Detect whether a parsetree contains any references to a specified
- *		attribute of a specified rtable entry.
- *
- * NOTE: this is used on not-yet-planned expressions.  It may therefore find
- * bare SubLinks, and if so it needs to recurse into them to look for uplevel
- * references to the desired rtable entry!	But when we find a completed
- * SubPlan, we only need to look at the parameters passed to the subplan.
- */
-bool
-contain_var_reference(Node *node, int varno, int varattno, int levelsup)
-{
-	contain_var_reference_context context;
-
-	context.varno = varno;
-	context.varattno = varattno;
-	context.sublevels_up = levelsup;
-
-	/*
-	 * Must be prepared to start with a Query or a bare expression tree; if
-	 * it's a Query, we don't want to increment sublevels_up.
-	 */
-	return query_or_expression_tree_walker(node,
-										   contain_var_reference_walker,
-										   (void *) &context,
-										   0);
-}
-
-static bool
-contain_var_reference_walker(Node *node,
-							 contain_var_reference_context *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		if (var->varno == context->varno &&
-			var->varattno == context->varattno &&
-			var->varlevelsup == context->sublevels_up)
-			return true;
-		return false;
-	}
-	if (IsA(node, Query))
-	{
-		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		bool		result;
-
-		context->sublevels_up++;
-		result = query_tree_walker((Query *) node,
-								   contain_var_reference_walker,
-								   (void *) context, 0);
-		context->sublevels_up--;
-		return result;
-	}
-	return expression_tree_walker(node, contain_var_reference_walker,
-								  (void *) context);
-}
-
-
-/*
  * contain_var_clause
  *	  Recursively scan a clause to discover whether it contains any Var nodes
  *	  (of the current query level).
@@ -272,6 +217,7 @@ contain_var_clause_walker(Node *node, void *context)
 		return true;
 	return expression_tree_walker(node, contain_var_clause_walker, context);
 }
+
 
 /*
  * contain_vars_of_level
@@ -328,53 +274,146 @@ contain_vars_of_level_walker(Node *node, int *sublevels_up)
 								  (void *) sublevels_up);
 }
 
+
 /*
- * contain_vars_above_level
- *	  Recursively scan a clause to discover whether it contains any Var nodes
- *	  above the specified query level.	(For example, pass zero to detect
- *	  all nonlocal Vars.)
+ * locate_var_of_level
+ *	  Find the parse location of any Var of the specified query level.
  *
- *	  Returns true if any such Var found.
+ * Returns -1 if no such Var is in the querytree, or if they all have
+ * unknown parse location.  (The former case is probably caller error,
+ * but we don't bother to distinguish it from the latter case.)
  *
  * Will recurse into sublinks.	Also, may be invoked directly on a Query.
+ *
+ * Note: it might seem appropriate to merge this functionality into
+ * contain_vars_of_level, but that would complicate that function's API.
+ * Currently, the only uses of this function are for error reporting,
+ * and so shaving cycles probably isn't very important.
  */
-bool
-contain_vars_above_level(Node *node, int levelsup)
+int
+locate_var_of_level(Node *node, int levelsup)
 {
-	int			sublevels_up = levelsup;
+	locate_var_of_level_context context;
 
-	return query_or_expression_tree_walker(node,
-										   contain_vars_above_level_walker,
-										   (void *) &sublevels_up,
+	context.var_location = -1;		/* in case we find nothing */
+	context.sublevels_up = levelsup;
+
+	(void) query_or_expression_tree_walker(node,
+										   locate_var_of_level_walker,
+										   (void *) &context,
 										   0);
+
+	return context.var_location;
 }
 
 static bool
-contain_vars_above_level_walker(Node *node, int *sublevels_up)
+locate_var_of_level_walker(Node *node,
+						   locate_var_of_level_context *context)
 {
 	if (node == NULL)
 		return false;
 	if (IsA(node, Var))
 	{
-		if (((Var *) node)->varlevelsup > *sublevels_up)
+		Var	   *var = (Var *) node;
+
+		if (var->varlevelsup == context->sublevels_up &&
+			var->location >= 0)
+		{
+			context->var_location = var->location;
 			return true;		/* abort tree traversal and return true */
+		}
+		return false;
+	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		/* since CurrentOfExpr doesn't carry location, nothing we can do */
+		return false;
 	}
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
 		bool		result;
 
-		(*sublevels_up)++;
+		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   contain_vars_above_level_walker,
-								   (void *) sublevels_up,
+								   locate_var_of_level_walker,
+								   (void *) context,
 								   0);
-		(*sublevels_up)--;
+		context->sublevels_up--;
 		return result;
 	}
 	return expression_tree_walker(node,
-								  contain_vars_above_level_walker,
-								  (void *) sublevels_up);
+								  locate_var_of_level_walker,
+								  (void *) context);
+}
+
+
+/*
+ * locate_var_of_relation
+ *	  Find the parse location of any Var of the specified relation.
+ *
+ * Returns -1 if no such Var is in the querytree, or if they all have
+ * unknown parse location.
+ *
+ * Will recurse into sublinks.	Also, may be invoked directly on a Query.
+ */
+int
+locate_var_of_relation(Node *node, int relid, int levelsup)
+{
+	locate_var_of_relation_context context;
+
+	context.var_location = -1;		/* in case we find nothing */
+	context.relid = relid;
+	context.sublevels_up = levelsup;
+
+	(void) query_or_expression_tree_walker(node,
+										   locate_var_of_relation_walker,
+										   (void *) &context,
+										   0);
+
+	return context.var_location;
+}
+
+static bool
+locate_var_of_relation_walker(Node *node,
+							  locate_var_of_relation_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var	   *var = (Var *) node;
+
+		if (var->varno == context->relid &&
+			var->varlevelsup == context->sublevels_up &&
+			var->location >= 0)
+		{
+			context->var_location = var->location;
+			return true;		/* abort tree traversal and return true */
+		}
+		return false;
+	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		/* since CurrentOfExpr doesn't carry location, nothing we can do */
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into subselects */
+		bool		result;
+
+		context->sublevels_up++;
+		result = query_tree_walker((Query *) node,
+								   locate_var_of_relation_walker,
+								   (void *) context,
+								   0);
+		context->sublevels_up--;
+		return result;
+	}
+	return expression_tree_walker(node,
+								  locate_var_of_relation_walker,
+								  (void *) context);
 }
 
 

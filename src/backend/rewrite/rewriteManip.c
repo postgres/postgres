@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.112 2008/08/28 23:09:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.113 2008/09/01 20:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,16 @@ typedef struct
 	int			sublevels_up;
 } contain_aggs_of_level_context;
 
+typedef struct
+{
+	int			agg_location;
+	int			sublevels_up;
+} locate_agg_of_level_context;
+
 static bool contain_aggs_of_level_walker(Node *node,
 						contain_aggs_of_level_context *context);
+static bool locate_agg_of_level_walker(Node *node,
+						locate_agg_of_level_context *context);
 static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
@@ -37,7 +45,8 @@ static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
 
 /*
  * checkExprHasAggs -
- *	Check if an expression contains an aggregate function call.
+ *	Check if an expression contains an aggregate function call of the
+ *	current query level.
  */
 bool
 checkExprHasAggs(Node *node)
@@ -98,6 +107,71 @@ contain_aggs_of_level_walker(Node *node,
 		return result;
 	}
 	return expression_tree_walker(node, contain_aggs_of_level_walker,
+								  (void *) context);
+}
+
+/*
+ * locate_agg_of_level -
+ *	  Find the parse location of any aggregate of the specified query level.
+ *
+ * Returns -1 if no such agg is in the querytree, or if they all have
+ * unknown parse location.  (The former case is probably caller error,
+ * but we don't bother to distinguish it from the latter case.)
+ *
+ * Note: it might seem appropriate to merge this functionality into
+ * contain_aggs_of_level, but that would complicate that function's API.
+ * Currently, the only uses of this function are for error reporting,
+ * and so shaving cycles probably isn't very important.
+ */
+int
+locate_agg_of_level(Node *node, int levelsup)
+{
+	locate_agg_of_level_context context;
+
+	context.agg_location = -1;		/* in case we find nothing */
+	context.sublevels_up = levelsup;
+
+	/*
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
+	 */
+	(void) query_or_expression_tree_walker(node,
+										   locate_agg_of_level_walker,
+										   (void *) &context,
+										   0);
+
+	return context.agg_location;
+}
+
+static bool
+locate_agg_of_level_walker(Node *node,
+						   locate_agg_of_level_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Aggref))
+	{
+		if (((Aggref *) node)->agglevelsup == context->sublevels_up &&
+			((Aggref *) node)->location >= 0)
+		{
+			context->agg_location = ((Aggref *) node)->location;
+			return true;		/* abort the tree traversal and return true */
+		}
+		/* else fall through to examine argument */
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into subselects */
+		bool		result;
+
+		context->sublevels_up++;
+		result = query_tree_walker((Query *) node,
+								   locate_agg_of_level_walker,
+								   (void *) context, 0);
+		context->sublevels_up--;
+		return result;
+	}
+	return expression_tree_walker(node, locate_agg_of_level_walker,
 								  (void *) context);
 }
 
@@ -980,7 +1054,7 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 				 * this is a JOIN), then omit dropped columns.
 				 */
 				expandRTE(context->target_rte,
-						  this_varno, this_varlevelsup,
+						  this_varno, this_varlevelsup, var->location,
 						  (var->vartype != RECORDOID),
 						  NULL, &fields);
 				/* Adjust the generated per-field Vars... */

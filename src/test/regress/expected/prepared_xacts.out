@@ -148,6 +148,8 @@ ERROR:  cursor "foo" does not exist
 -- Table doesn't exist, the creation hasn't been committed yet
 SELECT * FROM pxtest2;
 ERROR:  relation "pxtest2" does not exist
+LINE 1: SELECT * FROM pxtest2;
+                      ^
 -- There should be two prepared transactions
 SELECT gid FROM pg_prepared_xacts;
      gid     
@@ -202,6 +204,8 @@ SELECT gid FROM pg_prepared_xacts;
 COMMIT PREPARED 'regress-two';
 SELECT * FROM pxtest3;
 ERROR:  relation "pxtest3" does not exist
+LINE 1: SELECT * FROM pxtest3;
+                      ^
 -- There should be no prepared transactions
 SELECT gid FROM pg_prepared_xacts;
  gid 

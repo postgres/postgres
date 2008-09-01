@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.110 2008/08/30 01:39:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.111 2008/09/01 20:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2156,7 +2156,7 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 RangeVar *
 makeRangeVarFromNameList(List *names)
 {
-	RangeVar   *rel = makeRangeVar(NULL, NULL);
+	RangeVar   *rel = makeRangeVar(NULL, NULL, -1);
 
 	switch (list_length(names))
 	{

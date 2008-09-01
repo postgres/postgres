@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.55 2008/08/28 23:09:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.56 2008/09/01 20:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,9 +82,22 @@ typedef struct ParseState
 	RangeTblEntry *p_target_rangetblentry;
 } ParseState;
 
+/* Support for parser_errposition_callback function */
+typedef struct ParseCallbackState
+{
+	ParseState *pstate;
+	int			location;
+	ErrorContextCallback errcontext;
+} ParseCallbackState;
+
+
 extern ParseState *make_parsestate(ParseState *parentParseState);
 extern void free_parsestate(ParseState *pstate);
 extern int	parser_errposition(ParseState *pstate, int location);
+
+extern void setup_parser_errposition_callback(ParseCallbackState *pcbstate,
+								  ParseState *pstate, int location);
+extern void cancel_parser_errposition_callback(ParseCallbackState *pcbstate);
 
 extern Var *make_var(ParseState *pstate, RangeTblEntry *rte, int attrno,
 					 int location);
@@ -96,6 +109,6 @@ extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 int32 elementTypMod,
 						 List *indirection,
 						 Node *assignFrom);
-extern Const *make_const(Value *value, int location);
+extern Const *make_const(ParseState *pstate, Value *value, int location);
 
 #endif   /* PARSE_NODE_H */

@@ -11,10 +11,16 @@ INSERT INTO CIRCLE_TBL VALUES ('<(100,1),115>');
 -- bad values
 INSERT INTO CIRCLE_TBL VALUES ('<(-100,0),-100>');
 ERROR:  invalid input syntax for type circle: "<(-100,0),-100>"
+LINE 1: INSERT INTO CIRCLE_TBL VALUES ('<(-100,0),-100>');
+                                       ^
 INSERT INTO CIRCLE_TBL VALUES ('1abc,3,5');
 ERROR:  invalid input syntax for type circle: "1abc,3,5"
+LINE 1: INSERT INTO CIRCLE_TBL VALUES ('1abc,3,5');
+                                       ^
 INSERT INTO CIRCLE_TBL VALUES ('(3,(1,2),3)');
 ERROR:  invalid input syntax for type circle: "(3,(1,2),3)"
+LINE 1: INSERT INTO CIRCLE_TBL VALUES ('(3,(1,2),3)');
+                                       ^
 SELECT * FROM CIRCLE_TBL;
        f1       
 ----------------

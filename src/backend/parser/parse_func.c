@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.206 2008/08/28 23:09:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.207 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,7 +270,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("could not find array type for data type %s",
-							format_type_be(newa->element_typeid))));
+							format_type_be(newa->element_typeid)),
+					 parser_errposition(pstate, exprLocation((Node *) vargs))));
 		newa->multidims = false;
 		newa->location = exprLocation((Node *) vargs);
 

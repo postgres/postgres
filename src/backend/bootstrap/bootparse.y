@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.92 2008/05/09 23:32:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.93 2008/09/01 20:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,7 +247,7 @@ Boot_DeclareIndexStmt:
 				{
 					do_start();
 
-					DefineIndex(makeRangeVar(NULL, LexIDStr($6)),
+					DefineIndex(makeRangeVar(NULL, LexIDStr($6), -1),
 								LexIDStr($3),
 								$4,
 								LexIDStr($8),
@@ -265,7 +265,7 @@ Boot_DeclareUniqueIndexStmt:
 				{
 					do_start();
 
-					DefineIndex(makeRangeVar(NULL, LexIDStr($7)),
+					DefineIndex(makeRangeVar(NULL, LexIDStr($7), -1),
 								LexIDStr($4),
 								$5,
 								LexIDStr($9),

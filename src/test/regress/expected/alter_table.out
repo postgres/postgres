@@ -112,6 +112,8 @@ SELECT * FROM tmp_new;
 ALTER TABLE tmp RENAME TO tmp_new2;
 SELECT * FROM tmp;		-- should fail
 ERROR:  relation "tmp" does not exist
+LINE 1: SELECT * FROM tmp;
+                      ^
 SELECT * FROM tmp_new;
  tmptable 
 ----------
@@ -780,8 +782,12 @@ LINE 1: update atacc1 set b = 2 where "........pg.dropped.1........"...
 -- INSERTs
 insert into atacc1 values (10, 11, 12, 13);
 ERROR:  INSERT has more expressions than target columns
+LINE 1: insert into atacc1 values (10, 11, 12, 13);
+                                               ^
 insert into atacc1 values (default, 11, 12, 13);
 ERROR:  INSERT has more expressions than target columns
+LINE 1: insert into atacc1 values (default, 11, 12, 13);
+                                                    ^
 insert into atacc1 values (11, 12, 13);
 insert into atacc1 (a) values (10);
 ERROR:  column "a" of relation "atacc1" does not exist

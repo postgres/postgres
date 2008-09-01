@@ -17,6 +17,8 @@ SELECT DISTINCT ON (string4, ten) string4, two, ten
    FROM tmp
    ORDER BY string4 using <, two using <, ten using <;
 ERROR:  SELECT DISTINCT ON expressions must match initial ORDER BY expressions
+LINE 1: SELECT DISTINCT ON (string4, ten) string4, two, ten
+                                     ^
 SELECT DISTINCT ON (string4, ten) string4, ten, two
    FROM tmp
    ORDER BY string4 using <, ten using >, two using <;

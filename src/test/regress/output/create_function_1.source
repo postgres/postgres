@@ -66,7 +66,8 @@ CONTEXT:  SQL function "test1"
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
     AS 'SELECT $2;';
 ERROR:  there is no parameter $2
-CONTEXT:  SQL function "test1"
+LINE 2:     AS 'SELECT $2;';
+                       ^
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
     AS 'a', 'b';
 ERROR:  only one AS item needed for language "sql"

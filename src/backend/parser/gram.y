@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.620 2008/08/30 01:39:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.621 2008/09/01 20:42:44 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -55,6 +55,7 @@
 #include "catalog/namespace.h"
 #include "commands/defrem.h"
 #include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
 #include "parser/gramparse.h"
 #include "storage/lmgr.h"
 #include "utils/date.h"
@@ -1215,7 +1216,8 @@ zone_value:
 						if (($3 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE")));
+									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
+									 scanner_errposition(@3)));
 						t->typmods = list_make1(makeIntConst($3, @3));
 					}
 					$$ = makeStringConstCast($2, @2, t);
@@ -1227,7 +1229,8 @@ zone_value:
 						&& (($6 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("time zone interval must be HOUR or HOUR TO MINUTE")));
+								 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
+								 scanner_errposition(@6)));
 					t->typmods = list_make2(makeIntConst($6, @6),
 											makeIntConst($3, @3));
 					$$ = makeStringConstCast($5, @5, t);
@@ -2286,7 +2289,8 @@ key_match:  MATCH FULL
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("MATCH PARTIAL not yet implemented")));
+						 errmsg("MATCH PARTIAL not yet implemented"),
+						 scanner_errposition(@1)));
 				$$ = FKCONSTR_MATCH_PARTIAL;
 			}
 		| MATCH SIMPLE
@@ -2378,7 +2382,8 @@ CreateAsStmt:
 					if (n->intoClause != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("CREATE TABLE AS cannot specify INTO")));
+								 errmsg("CREATE TABLE AS cannot specify INTO"),
+								 scanner_errposition(exprLocation((Node *) n->intoClause))));
 					$4->rel->istemp = $2;
 					n->intoClause = $4;
 					$$ = $6;
@@ -2799,7 +2804,8 @@ ConstraintAttributeSpec:
 					if ($1 == 0 && $2 != 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
+								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE"),
+								 scanner_errposition(@1)));
 					$$ = $1 | $2;
 				}
 			| ConstraintTimeSpec
@@ -2814,7 +2820,8 @@ ConstraintAttributeSpec:
 					if ($2 == 0 && $1 != 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
+								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE"),
+								 scanner_errposition(@1)));
 					$$ = $1 | $2;
 				}
 			| /*EMPTY*/
@@ -2986,9 +2993,11 @@ DefineStmt:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("improper qualified name (too many dotted names): %s",
-											NameListToString($3))));
+											NameListToString($3)),
+											scanner_errposition(@3)));
 							break;
 					}
+					r->location = @3;
 					n->typevar = r;
 					n->coldeflist = $6;
 					$$ = (Node *)n;
@@ -3128,12 +3137,12 @@ opclass_item:
 					n->number = $2;
 					$$ = (Node *) n;
 				}
-			| OPERATOR Iconst any_operator '(' oper_argtypes ')' opt_recheck
+			| OPERATOR Iconst any_operator oper_argtypes opt_recheck
 				{
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
 					n->name = $3;
-					n->args = $5;
+					n->args = $4;
 					n->number = $2;
 					$$ = (Node *) n;
 				}
@@ -3178,7 +3187,8 @@ opt_recheck:	RECHECK
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("RECHECK is no longer supported"),
-							 errhint("Update your data type.")));
+							 errhint("Update your data type."),
+							 scanner_errposition(@1)));
 					$$ = TRUE;
 				}
 			| /*EMPTY*/						{ $$ = FALSE; }
@@ -3445,14 +3455,13 @@ CommentStmt:
 					n->comment = $7;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON OPERATOR any_operator '(' oper_argtypes ')'
-			IS comment_text
+			| COMMENT ON OPERATOR any_operator oper_argtypes IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPERATOR;
 					n->objname = $4;
-					n->objargs = $6;
-					n->comment = $9;
+					n->objargs = $5;
+					n->comment = $7;
 					$$ = (Node *) n;
 				}
 			| COMMENT ON CONSTRAINT name ON any_name IS comment_text
@@ -4088,8 +4097,8 @@ opt_class:	any_name								{ $$ = $1; }
 		;
 
 opt_asc_desc: ASC							{ $$ = SORTBY_ASC; }
-			| DESC						{ $$ = SORTBY_DESC; }
-			| /*EMPTY*/					{ $$ = SORTBY_DEFAULT; }
+			| DESC							{ $$ = SORTBY_DESC; }
+			| /*EMPTY*/						{ $$ = SORTBY_DEFAULT; }
 		;
 
 opt_nulls_order: NULLS_FIRST				{ $$ = SORTBY_NULLS_FIRST; }
@@ -4464,42 +4473,43 @@ RemoveAggrStmt:
 		;
 
 RemoveOperStmt:
-			DROP OPERATOR any_operator '(' oper_argtypes ')' opt_drop_behavior
+			DROP OPERATOR any_operator oper_argtypes opt_drop_behavior
 				{
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->kind = OBJECT_OPERATOR;
 					n->name = $3;
-					n->args = $5;
-					n->behavior = $7;
+					n->args = $4;
+					n->behavior = $5;
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
-			| DROP OPERATOR IF_P EXISTS any_operator '(' oper_argtypes ')' opt_drop_behavior
+			| DROP OPERATOR IF_P EXISTS any_operator oper_argtypes opt_drop_behavior
 				{
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->kind = OBJECT_OPERATOR;
 					n->name = $5;
-					n->args = $7;
-					n->behavior = $9;
+					n->args = $6;
+					n->behavior = $7;
 					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
 		;
 
 oper_argtypes:
-			Typename
+			'(' Typename ')'
 				{
 				   ereport(ERROR,
 						   (errcode(ERRCODE_SYNTAX_ERROR),
 							errmsg("missing argument"),
-							errhint("Use NONE to denote the missing argument of a unary operator.")));
+							errhint("Use NONE to denote the missing argument of a unary operator."),
+							scanner_errposition(@3)));
 				}
-			| Typename ',' Typename
-					{ $$ = list_make2($1, $3); }
-			| NONE ',' Typename							/* left unary */
-					{ $$ = list_make2(NULL, $3); }
-			| Typename ',' NONE							/* right unary */
-					{ $$ = list_make2($1, NULL); }
+			| '(' Typename ',' Typename ')'
+					{ $$ = list_make2($2, $4); }
+			| '(' NONE ',' Typename ')'					/* left unary */
+					{ $$ = list_make2(NULL, $4); }
+			| '(' Typename ',' NONE ')'					/* right unary */
+					{ $$ = list_make2($2, NULL); }
 		;
 
 any_operator:
@@ -4939,13 +4949,13 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 					n->newowner = $7;
 					$$ = (Node *)n;
 				}
-			| ALTER OPERATOR any_operator '(' oper_argtypes ')' OWNER TO RoleId
+			| ALTER OPERATOR any_operator oper_argtypes OWNER TO RoleId
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_OPERATOR;
 					n->object = $3;
-					n->objarg = $5;
-					n->newowner = $9;
+					n->objarg = $4;
+					n->newowner = $7;
 					$$ = (Node *)n;
 				}
 			| ALTER OPERATOR CLASS any_name USING access_method OWNER TO RoleId
@@ -5108,7 +5118,7 @@ DropRuleStmt:
 /*****************************************************************************
  *
  *		QUERY:
- *				NOTIFY <qualified_name> can appear both in rule bodies and
+ *				NOTIFY <identifier> can appear both in rule bodies and
  *				as a query-level command
  *
  *****************************************************************************/
@@ -5116,9 +5126,7 @@ DropRuleStmt:
 NotifyStmt: NOTIFY ColId
 				{
 					NotifyStmt *n = makeNode(NotifyStmt);
-					n->relation = makeNode(RangeVar);
-					n->relation->relname = $2;
-					n->relation->schemaname = NULL;
+					n->conditionname = $2;
 					$$ = (Node *)n;
 				}
 		;
@@ -5126,9 +5134,7 @@ NotifyStmt: NOTIFY ColId
 ListenStmt: LISTEN ColId
 				{
 					ListenStmt *n = makeNode(ListenStmt);
-					n->relation = makeNode(RangeVar);
-					n->relation->relname = $2;
-					n->relation->schemaname = NULL;
+					n->conditionname = $2;
 					$$ = (Node *)n;
 				}
 		;
@@ -5137,15 +5143,13 @@ UnlistenStmt:
 			UNLISTEN ColId
 				{
 					UnlistenStmt *n = makeNode(UnlistenStmt);
-					n->relation = makeNode(RangeVar);
-					n->relation->relname = $2;
-					n->relation->schemaname = NULL;
+					n->conditionname = $2;
 					$$ = (Node *)n;
 				}
 			| UNLISTEN '*'
 				{
 					UnlistenStmt *n = makeNode(UnlistenStmt);
-					n->relation = NULL;
+					n->conditionname = NULL;
 					$$ = (Node *)n;
 				}
 		;
@@ -6119,7 +6123,8 @@ multiple_set_clause:
 					if (list_length($2) != list_length($5))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("number of columns does not match number of values")));
+								 errmsg("number of columns does not match number of values"),
+								 scanner_errposition(@1)));
 					forboth(col_cell, $2, val_cell, $5)
 					{
 						ResTarget *res_col = (ResTarget *) lfirst(col_cell);
@@ -6419,6 +6424,7 @@ sortby:		a_expr USING qual_all_Op opt_nulls_order
 					$$->sortby_dir = SORTBY_USING;
 					$$->sortby_nulls = $4;
 					$$->useOp = $3;
+					$$->location = @3;
 				}
 			| a_expr opt_asc_desc opt_nulls_order
 				{
@@ -6427,6 +6433,7 @@ sortby:		a_expr USING qual_all_Op opt_nulls_order
 					$$->sortby_dir = $2;
 					$$->sortby_nulls = $3;
 					$$->useOp = NIL;
+					$$->location = -1;		/* no operator */
 				}
 		;
 
@@ -6446,7 +6453,8 @@ select_limit:
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("LIMIT #,# syntax is not supported"),
-							 errhint("Use separate LIMIT and OFFSET clauses.")));
+							 errhint("Use separate LIMIT and OFFSET clauses."),
+							 scanner_errposition(@1)));
 				}
 		;
 
@@ -6514,7 +6522,7 @@ for_locking_item:
 		;
 
 locked_rels_list:
-			OF name_list							{ $$ = $2; }
+			OF qualified_name_list					{ $$ = $2; }
 			| /* EMPTY */							{ $$ = NIL; }
 		;
 
@@ -6629,12 +6637,14 @@ table_ref:	relation_expr
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("VALUES in FROM must have an alias"),
-								 errhint("For example, FROM (VALUES ...) [AS] foo.")));
+								 errhint("For example, FROM (VALUES ...) [AS] foo."),
+								 scanner_errposition(@1)));
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("subquery in FROM must have an alias"),
-								 errhint("For example, FROM (SELECT ...) [AS] foo.")));
+								 errhint("For example, FROM (SELECT ...) [AS] foo."),
+								 scanner_errposition(@1)));
 					$$ = NULL;
 				}
 			| select_with_parens alias_clause
@@ -7089,7 +7099,8 @@ opt_float:	'(' Iconst ')'
 					if ($2 < 1)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("precision for type float must be at least 1 bit")));
+								 errmsg("precision for type float must be at least 1 bit"),
+								 scanner_errposition(@2)));
 					else if ($2 <= 24)
 						$$ = SystemTypeName("float4");
 					else if ($2 <= 53)
@@ -7097,7 +7108,8 @@ opt_float:	'(' Iconst ')'
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("precision for type float must be less than 54 bits")));
+								 errmsg("precision for type float must be less than 54 bits"),
+								 scanner_errposition(@2)));
 				}
 			| /*EMPTY*/
 				{
@@ -7734,7 +7746,8 @@ a_expr:		c_expr									{ $$ = $1; }
 					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("UNIQUE predicate is not yet implemented")));
+							 errmsg("UNIQUE predicate is not yet implemented"),
+							 scanner_errposition(@1)));
 				}
 			| a_expr IS DOCUMENT_P					%prec IS
 				{
@@ -8874,6 +8887,7 @@ qualified_name:
 					$$->catalogname = NULL;
 					$$->schemaname = NULL;
 					$$->relname = $1;
+					$$->location = @1;
 				}
 			| relation_name indirection
 				{
@@ -8895,9 +8909,11 @@ qualified_name:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("improper qualified name (too many dotted names): %s",
-											NameListToString(lcons(makeString($1), $2)))));
+											NameListToString(lcons(makeString($1), $2))),
+									 scanner_errposition(@1)));
 							break;
 					}
+					$$->location = @1;
 				}
 		;
 
@@ -9494,7 +9510,8 @@ SpecialRuleRelation:
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("OLD used in query that is not in a rule")));
+								 errmsg("OLD used in query that is not in a rule"),
+								 scanner_errposition(@1)));
 				}
 			| NEW
 				{
@@ -9503,7 +9520,8 @@ SpecialRuleRelation:
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("NEW used in query that is not in a rule")));
+								 errmsg("NEW used in query that is not in a rule"),
+								 scanner_errposition(@1)));
 				}
 		;
 
@@ -9689,13 +9707,15 @@ makeOverlaps(List *largs, List *rargs, int location)
 	else if (list_length(largs) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("wrong number of parameters on left side of OVERLAPS expression")));
+				 errmsg("wrong number of parameters on left side of OVERLAPS expression"),
+				 scanner_errposition(location)));
 	if (list_length(rargs) == 1)
 		rargs = lappend(rargs, rargs);
 	else if (list_length(rargs) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("wrong number of parameters on right side of OVERLAPS expression")));
+				 errmsg("wrong number of parameters on right side of OVERLAPS expression"),
+				 scanner_errposition(location)));
 	n->args = list_concat(largs, rargs);
 	n->agg_star = FALSE;
 	n->agg_distinct = FALSE;
@@ -9813,7 +9833,8 @@ insertSelectOptions(SelectStmt *stmt,
 		if (stmt->sortClause)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("multiple ORDER BY clauses not allowed")));
+					 errmsg("multiple ORDER BY clauses not allowed"),
+					 scanner_errposition(exprLocation((Node *) sortClause))));
 		stmt->sortClause = sortClause;
 	}
 	/* We can handle multiple locking clauses, though */
@@ -9823,7 +9844,8 @@ insertSelectOptions(SelectStmt *stmt,
 		if (stmt->limitOffset)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("multiple OFFSET clauses not allowed")));
+					 errmsg("multiple OFFSET clauses not allowed"),
+					 scanner_errposition(exprLocation(limitOffset))));
 		stmt->limitOffset = limitOffset;
 	}
 	if (limitCount)
@@ -9831,7 +9853,8 @@ insertSelectOptions(SelectStmt *stmt,
 		if (stmt->limitCount)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("multiple LIMIT clauses not allowed")));
+					 errmsg("multiple LIMIT clauses not allowed"),
+					 scanner_errposition(exprLocation(limitCount))));
 		stmt->limitCount = limitCount;
 	}
 }

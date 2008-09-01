@@ -18,9 +18,13 @@ INSERT INTO TINTERVAL_TBL (f1)
 INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["bad time specifications" ""]');
 ERROR:  invalid input syntax for type abstime: "bad time specifications"
+LINE 2:    VALUES ('["bad time specifications" ""]');
+                   ^
 INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["" "infinity"]');
 ERROR:  invalid input syntax for type abstime: ""
+LINE 2:    VALUES ('["" "infinity"]');
+                   ^
 -- test tinterval operators
 SELECT '' AS five, * FROM TINTERVAL_TBL;
  five |                               f1                                

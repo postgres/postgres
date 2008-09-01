@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.82 2008/08/28 23:09:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.83 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,9 @@ transformAggregateCall(ParseState *pstate, Aggref *agg)
 		if (checkExprHasAggs((Node *) agg->args))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("aggregate function calls cannot be nested")));
+					 errmsg("aggregate function calls cannot be nested"),
+					 parser_errposition(pstate,
+										locate_agg_of_level((Node *) agg->args, 0))));
 	}
 
 	if (min_varlevel < 0)
@@ -117,11 +119,15 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	if (checkExprHasAggs(qry->jointree->quals))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("aggregates not allowed in WHERE clause")));
+				 errmsg("aggregates not allowed in WHERE clause"),
+				 parser_errposition(pstate,
+									locate_agg_of_level(qry->jointree->quals, 0))));
 	if (checkExprHasAggs((Node *) qry->jointree->fromlist))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("aggregates not allowed in JOIN conditions")));
+				 errmsg("aggregates not allowed in JOIN conditions"),
+				 parser_errposition(pstate,
+									locate_agg_of_level((Node *) qry->jointree->fromlist, 0))));
 
 	/*
 	 * No aggregates allowed in GROUP BY clauses, either.
@@ -140,7 +146,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 		if (checkExprHasAggs(expr))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("aggregates not allowed in GROUP BY clause")));
+					 errmsg("aggregates not allowed in GROUP BY clause"),
+					 parser_errposition(pstate,
+										locate_agg_of_level(expr, 0))));
 		groupClauses = lcons(expr, groupClauses);
 	}
 
@@ -327,13 +335,14 @@ check_ungrouped_columns_walker(Node *node,
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 					 errmsg("column \"%s.%s\" must appear in the GROUP BY clause or be used in an aggregate function",
-							rte->eref->aliasname, attname)));
+							rte->eref->aliasname, attname),
+					 parser_errposition(context->pstate, var->location)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 					 errmsg("subquery uses ungrouped column \"%s.%s\" from outer query",
-							rte->eref->aliasname, attname)));
-
+							rte->eref->aliasname, attname),
+					 parser_errposition(context->pstate, var->location)));
 	}
 
 	if (IsA(node, Query))

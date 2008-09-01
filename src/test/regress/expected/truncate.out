@@ -257,3 +257,5 @@ SELECT * FROM truncate_a;
 DROP TABLE truncate_a;
 SELECT nextval('truncate_a_id1'); -- fail, seq should have been dropped
 ERROR:  relation "truncate_a_id1" does not exist
+LINE 1: SELECT nextval('truncate_a_id1');
+                       ^

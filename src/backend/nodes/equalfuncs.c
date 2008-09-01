@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.330 2008/08/30 01:39:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.331 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,7 @@ _equalRangeVar(RangeVar *a, RangeVar *b)
 	COMPARE_SCALAR_FIELD(inhOpt);
 	COMPARE_SCALAR_FIELD(istemp);
 	COMPARE_NODE_FIELD(alias);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -1230,7 +1231,7 @@ _equalRuleStmt(RuleStmt *a, RuleStmt *b)
 static bool
 _equalNotifyStmt(NotifyStmt *a, NotifyStmt *b)
 {
-	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(conditionname);
 
 	return true;
 }
@@ -1238,7 +1239,7 @@ _equalNotifyStmt(NotifyStmt *a, NotifyStmt *b)
 static bool
 _equalListenStmt(ListenStmt *a, ListenStmt *b)
 {
-	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(conditionname);
 
 	return true;
 }
@@ -1246,7 +1247,7 @@ _equalListenStmt(ListenStmt *a, ListenStmt *b)
 static bool
 _equalUnlistenStmt(UnlistenStmt *a, UnlistenStmt *b)
 {
-	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(conditionname);
 
 	return true;
 }
@@ -1837,10 +1838,11 @@ _equalTypeCast(TypeCast *a, TypeCast *b)
 static bool
 _equalSortBy(SortBy *a, SortBy *b)
 {
+	COMPARE_NODE_FIELD(node);
 	COMPARE_SCALAR_FIELD(sortby_dir);
 	COMPARE_SCALAR_FIELD(sortby_nulls);
 	COMPARE_NODE_FIELD(useOp);
-	COMPARE_NODE_FIELD(node);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }

@@ -10,11 +10,17 @@ INSERT INTO POINT_TBL(f1) VALUES ('(-5.0,-12.0)');
 -- bad format points 
 INSERT INTO POINT_TBL(f1) VALUES ('asdfasdf');
 ERROR:  invalid input syntax for type point: "asdfasdf"
+LINE 1: INSERT INTO POINT_TBL(f1) VALUES ('asdfasdf');
+                                          ^
 INSERT INTO POINT_TBL(f1) VALUES ('10.0,10.0');
 INSERT INTO POINT_TBL(f1) VALUES ('(10.0 10.0)');
 ERROR:  invalid input syntax for type point: "(10.0 10.0)"
+LINE 1: INSERT INTO POINT_TBL(f1) VALUES ('(10.0 10.0)');
+                                          ^
 INSERT INTO POINT_TBL(f1) VALUES ('(10.0,10.0');
 ERROR:  invalid input syntax for type point: "(10.0,10.0"
+LINE 1: INSERT INTO POINT_TBL(f1) VALUES ('(10.0,10.0');
+                                          ^
 SELECT '' AS six, * FROM POINT_TBL;
  six |     f1     
 -----+------------

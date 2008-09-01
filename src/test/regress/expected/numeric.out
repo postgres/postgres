@@ -1231,25 +1231,45 @@ INSERT INTO num_input_test(n1) VALUES ('555.50');
 INSERT INTO num_input_test(n1) VALUES ('-555.50');
 INSERT INTO num_input_test(n1) VALUES ('NaN ');
 ERROR:  invalid input syntax for type numeric: "NaN "
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('NaN ');
+                                               ^
 INSERT INTO num_input_test(n1) VALUES ('        nan');
 ERROR:  invalid input syntax for type numeric: "        nan"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('        nan');
+                                               ^
 -- bad inputs
 INSERT INTO num_input_test(n1) VALUES ('     ');
 ERROR:  invalid input syntax for type numeric: "     "
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('     ');
+                                               ^
 INSERT INTO num_input_test(n1) VALUES ('   1234   %');
 ERROR:  invalid input syntax for type numeric: "   1234   %"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('   1234   %');
+                                               ^
 INSERT INTO num_input_test(n1) VALUES ('xyz');
 ERROR:  invalid input syntax for type numeric: "xyz"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('xyz');
+                                               ^
 INSERT INTO num_input_test(n1) VALUES ('- 1234');
 ERROR:  invalid input syntax for type numeric: "- 1234"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('- 1234');
+                                               ^
 INSERT INTO num_input_test(n1) VALUES ('5 . 0');
 ERROR:  invalid input syntax for type numeric: "5 . 0"
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('5 . 0');
+                                               ^
 INSERT INTO num_input_test(n1) VALUES ('5. 0   ');
 ERROR:  invalid input syntax for type numeric: "5. 0   "
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('5. 0   ');
+                                               ^
 INSERT INTO num_input_test(n1) VALUES ('');
 ERROR:  invalid input syntax for type numeric: ""
+LINE 1: INSERT INTO num_input_test(n1) VALUES ('');
+                                               ^
 INSERT INTO num_input_test(n1) VALUES (' N aN ');
 ERROR:  invalid input syntax for type numeric: " N aN "
+LINE 1: INSERT INTO num_input_test(n1) VALUES (' N aN ');
+                                               ^
 SELECT * FROM num_input_test;
    n1    
 ---------

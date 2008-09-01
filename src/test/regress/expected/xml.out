@@ -6,6 +6,8 @@ INSERT INTO xmltest VALUES (1, '<value>one</value>');
 INSERT INTO xmltest VALUES (2, '<value>two</value>');
 INSERT INTO xmltest VALUES (3, '<wrong');
 ERROR:  invalid XML content
+LINE 1: INSERT INTO xmltest VALUES (3, '<wrong');
+                                       ^
 DETAIL:  Entity: line 1: parser error : Couldn't find end of Start Tag wrong line 1
 <wrong
       ^
@@ -58,6 +60,8 @@ LINE 1: SELECT xmlconcat(1, 2);
                          ^
 SELECT xmlconcat('bad', '<syntax');
 ERROR:  invalid XML content
+LINE 1: SELECT xmlconcat('bad', '<syntax');
+                                ^
 DETAIL:  Entity: line 1: parser error : Couldn't find end of Start Tag syntax line 1
 <syntax
        ^
@@ -340,6 +344,8 @@ SELECT xml 'abc' IS NOT DOCUMENT;
 
 SELECT '<>' IS NOT DOCUMENT;
 ERROR:  invalid XML content
+LINE 1: SELECT '<>' IS NOT DOCUMENT;
+               ^
 DETAIL:  Entity: line 1: parser error : StartTag: invalid element name
 <>
  ^
@@ -384,6 +390,8 @@ EXECUTE foo ('<bar/>');
 
 EXECUTE foo ('bad');
 ERROR:  invalid XML document
+LINE 1: EXECUTE foo ('bad');
+                     ^
 DETAIL:  Entity: line 1: parser error : Start tag expected, '<' not found
 bad
 ^

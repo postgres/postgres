@@ -20,6 +20,8 @@ CREATE FUNCTION foot(int) returns setof foo2 as 'SELECT * FROM foo2 WHERE fooid 
 -- supposed to fail with ERROR
 select * from foo2, foot(foo2.fooid) z where foo2.f2 = z.f2;
 ERROR:  function expression in FROM cannot refer to other relations of same query level
+LINE 1: select * from foo2, foot(foo2.fooid) z where foo2.f2 = z.f2;
+                                 ^
 -- function in subselect
 select * from foo2 where f2 in (select f2 from foot(foo2.fooid) z where z.fooid = foo2.fooid) ORDER BY 1,2;
  fooid | f2  

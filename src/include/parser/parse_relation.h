@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.57 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.58 2008/09/01 20:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@ extern bool add_missing_from;
 extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
 					 const char *schemaname,
 					 const char *refname,
+					 int location,
 					 int *sublevels_up);
 extern void checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
 						List *namespace2);
@@ -40,6 +41,8 @@ extern Node *qualifiedNameToVar(ParseState *pstate,
 				   char *colname,
 				   bool implicitRTEOK,
 				   int location);
+extern Relation parserOpenTable(ParseState *pstate, const RangeVar *relation,
+								int lockmode);
 extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 				   RangeVar *relation,
 				   Alias *alias,
@@ -72,13 +75,12 @@ extern RangeTblEntry *addRangeTableEntryForJoin(ParseState *pstate,
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList,
 			  bool addToRelNameSpace, bool addToVarNameSpace);
-extern RangeTblEntry *addImplicitRTE(ParseState *pstate, RangeVar *relation,
-			   int location);
+extern RangeTblEntry *addImplicitRTE(ParseState *pstate, RangeVar *relation);
 extern void expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
-		  bool include_dropped,
+		  int location, bool include_dropped,
 		  List **colnames, List **colvars);
 extern List *expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
-			   int rtindex, int sublevels_up);
+			   int rtindex, int sublevels_up, int location);
 extern int	attnameAttNum(Relation rd, const char *attname, bool sysColOK);
 extern Name attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);

@@ -14,24 +14,44 @@ INSERT INTO OID_TBL(f1) VALUES ('	  15 	  ');
 -- bad inputs 
 INSERT INTO OID_TBL(f1) VALUES ('');
 ERROR:  invalid input syntax for type oid: ""
+LINE 1: INSERT INTO OID_TBL(f1) VALUES ('');
+                                        ^
 INSERT INTO OID_TBL(f1) VALUES ('    ');
 ERROR:  invalid input syntax for type oid: "    "
+LINE 1: INSERT INTO OID_TBL(f1) VALUES ('    ');
+                                        ^
 INSERT INTO OID_TBL(f1) VALUES ('asdfasd');
 ERROR:  invalid input syntax for type oid: "asdfasd"
+LINE 1: INSERT INTO OID_TBL(f1) VALUES ('asdfasd');
+                                        ^
 INSERT INTO OID_TBL(f1) VALUES ('99asdfasd');
 ERROR:  invalid input syntax for type oid: "99asdfasd"
+LINE 1: INSERT INTO OID_TBL(f1) VALUES ('99asdfasd');
+                                        ^
 INSERT INTO OID_TBL(f1) VALUES ('5    d');
 ERROR:  invalid input syntax for type oid: "5    d"
+LINE 1: INSERT INTO OID_TBL(f1) VALUES ('5    d');
+                                        ^
 INSERT INTO OID_TBL(f1) VALUES ('    5d');
 ERROR:  invalid input syntax for type oid: "    5d"
+LINE 1: INSERT INTO OID_TBL(f1) VALUES ('    5d');
+                                        ^
 INSERT INTO OID_TBL(f1) VALUES ('5    5');
 ERROR:  invalid input syntax for type oid: "5    5"
+LINE 1: INSERT INTO OID_TBL(f1) VALUES ('5    5');
+                                        ^
 INSERT INTO OID_TBL(f1) VALUES (' - 500');
 ERROR:  invalid input syntax for type oid: " - 500"
+LINE 1: INSERT INTO OID_TBL(f1) VALUES (' - 500');
+                                        ^
 INSERT INTO OID_TBL(f1) VALUES ('32958209582039852935');
 ERROR:  value "32958209582039852935" is out of range for type oid
+LINE 1: INSERT INTO OID_TBL(f1) VALUES ('32958209582039852935');
+                                        ^
 INSERT INTO OID_TBL(f1) VALUES ('-23582358720398502385');
 ERROR:  value "-23582358720398502385" is out of range for type oid
+LINE 1: INSERT INTO OID_TBL(f1) VALUES ('-23582358720398502385');
+                                        ^
 SELECT '' AS six, * FROM OID_TBL;
  six |     f1     
 -----+------------

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.403 2008/08/30 01:39:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.404 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -722,6 +722,7 @@ _copyRangeVar(RangeVar *from)
 	COPY_SCALAR_FIELD(inhOpt);
 	COPY_SCALAR_FIELD(istemp);
 	COPY_NODE_FIELD(alias);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -1773,10 +1774,11 @@ _copySortBy(SortBy *from)
 {
 	SortBy	   *newnode = makeNode(SortBy);
 
+	COPY_NODE_FIELD(node);
 	COPY_SCALAR_FIELD(sortby_dir);
 	COPY_SCALAR_FIELD(sortby_nulls);
 	COPY_NODE_FIELD(useOp);
-	COPY_NODE_FIELD(node);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -2406,7 +2408,7 @@ _copyNotifyStmt(NotifyStmt *from)
 {
 	NotifyStmt *newnode = makeNode(NotifyStmt);
 
-	COPY_NODE_FIELD(relation);
+	COPY_STRING_FIELD(conditionname);
 
 	return newnode;
 }
@@ -2416,7 +2418,7 @@ _copyListenStmt(ListenStmt *from)
 {
 	ListenStmt *newnode = makeNode(ListenStmt);
 
-	COPY_NODE_FIELD(relation);
+	COPY_STRING_FIELD(conditionname);
 
 	return newnode;
 }
@@ -2426,7 +2428,7 @@ _copyUnlistenStmt(UnlistenStmt *from)
 {
 	UnlistenStmt *newnode = makeNode(UnlistenStmt);
 
-	COPY_NODE_FIELD(relation);
+	COPY_STRING_FIELD(conditionname);
 
 	return newnode;
 }

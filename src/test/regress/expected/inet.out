@@ -25,15 +25,23 @@ INSERT INTO INET_TBL (c, i) VALUES ('::ffff:1.2.3.4', '::4.3.2.1/24');
 -- check that CIDR rejects invalid input:
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.2/30', '192.168.1.226');
 ERROR:  invalid cidr value: "192.168.1.2/30"
+LINE 1: INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.2/30', '192.1...
+                                            ^
 DETAIL:  Value has bits set to right of mask.
 INSERT INTO INET_TBL (c, i) VALUES ('1234::1234::1234', '::1.2.3.4');
 ERROR:  invalid input syntax for type cidr: "1234::1234::1234"
+LINE 1: INSERT INTO INET_TBL (c, i) VALUES ('1234::1234::1234', '::1...
+                                            ^
 -- check that CIDR rejects invalid input when converting from text:
 INSERT INTO INET_TBL (c, i) VALUES (cidr('192.168.1.2/30'), '192.168.1.226');
 ERROR:  invalid cidr value: "192.168.1.2/30"
+LINE 1: INSERT INTO INET_TBL (c, i) VALUES (cidr('192.168.1.2/30'), ...
+                                                 ^
 DETAIL:  Value has bits set to right of mask.
 INSERT INTO INET_TBL (c, i) VALUES (cidr('ffff:ffff:ffff:ffff::/24'), '::192.168.1.226');
 ERROR:  invalid cidr value: "ffff:ffff:ffff:ffff::/24"
+LINE 1: INSERT INTO INET_TBL (c, i) VALUES (cidr('ffff:ffff:ffff:fff...
+                                                 ^
 DETAIL:  Value has bits set to right of mask.
 SELECT '' AS ten, c AS cidr, i AS inet FROM INET_TBL;
  ten |        cidr        |       inet       

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.134 2008/08/28 23:09:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.135 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,20 +36,20 @@
 bool		add_missing_from;
 
 static RangeTblEntry *scanNameSpaceForRefname(ParseState *pstate,
-						const char *refname);
-static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid);
+						const char *refname, int location);
+static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
+											int location);
 static bool isLockedRel(ParseState *pstate, char *refname);
 static void expandRelation(Oid relid, Alias *eref,
 			   int rtindex, int sublevels_up,
-			   bool include_dropped,
+			   int location, bool include_dropped,
 			   List **colnames, List **colvars);
 static void expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 				int rtindex, int sublevels_up,
-				bool include_dropped,
+				int location, bool include_dropped,
 				List **colnames, List **colvars);
 static int	specialAttNum(const char *attname);
-static void warnAutoRange(ParseState *pstate, RangeVar *relation,
-			  int location);
+static void warnAutoRange(ParseState *pstate, RangeVar *relation);
 
 
 /*
@@ -77,6 +77,7 @@ RangeTblEntry *
 refnameRangeTblEntry(ParseState *pstate,
 					 const char *schemaname,
 					 const char *refname,
+					 int location,
 					 int *sublevels_up)
 {
 	Oid			relId = InvalidOid;
@@ -99,9 +100,9 @@ refnameRangeTblEntry(ParseState *pstate,
 		RangeTblEntry *result;
 
 		if (OidIsValid(relId))
-			result = scanNameSpaceForRelid(pstate, relId);
+			result = scanNameSpaceForRelid(pstate, relId, location);
 		else
-			result = scanNameSpaceForRefname(pstate, refname);
+			result = scanNameSpaceForRefname(pstate, refname, location);
 
 		if (result)
 			return result;
@@ -122,7 +123,7 @@ refnameRangeTblEntry(ParseState *pstate,
  * if no match.  Raise error if multiple matches.
  */
 static RangeTblEntry *
-scanNameSpaceForRefname(ParseState *pstate, const char *refname)
+scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
 {
 	RangeTblEntry *result = NULL;
 	ListCell   *l;
@@ -137,7 +138,8 @@ scanNameSpaceForRefname(ParseState *pstate, const char *refname)
 				ereport(ERROR,
 						(errcode(ERRCODE_AMBIGUOUS_ALIAS),
 						 errmsg("table reference \"%s\" is ambiguous",
-								refname)));
+								refname),
+						 parser_errposition(pstate, location)));
 			result = rte;
 		}
 	}
@@ -154,7 +156,7 @@ scanNameSpaceForRefname(ParseState *pstate, const char *refname)
  * acts the way it does.
  */
 static RangeTblEntry *
-scanNameSpaceForRelid(ParseState *pstate, Oid relid)
+scanNameSpaceForRelid(ParseState *pstate, Oid relid, int location)
 {
 	RangeTblEntry *result = NULL;
 	ListCell   *l;
@@ -172,7 +174,8 @@ scanNameSpaceForRelid(ParseState *pstate, Oid relid)
 				ereport(ERROR,
 						(errcode(ERRCODE_AMBIGUOUS_ALIAS),
 						 errmsg("table reference %u is ambiguous",
-								relid)));
+								relid),
+						 parser_errposition(pstate, location)));
 			result = rte;
 		}
 	}
@@ -466,14 +469,15 @@ qualifiedNameToVar(ParseState *pstate,
 	RangeTblEntry *rte;
 	int			sublevels_up;
 
-	rte = refnameRangeTblEntry(pstate, schemaname, refname, &sublevels_up);
+	rte = refnameRangeTblEntry(pstate, schemaname, refname, location,
+							   &sublevels_up);
 
 	if (rte == NULL)
 	{
 		if (!implicitRTEOK)
 			return NULL;
-		rte = addImplicitRTE(pstate, makeRangeVar(schemaname, refname),
-							 location);
+		rte = addImplicitRTE(pstate,
+							 makeRangeVar(schemaname, refname, location));
 	}
 
 	return scanRTEForColumn(pstate, rte, colname, location);
@@ -608,6 +612,28 @@ buildScalarFunctionAlias(Node *funcexpr, char *funcname,
 }
 
 /*
+ * Open a table during parse analysis
+ *
+ * This is essentially just the same as heap_openrv(), except that it
+ * arranges to include the RangeVar's parse location in any resulting error.
+ *
+ * Note: properly, lockmode should be declared LOCKMODE not int, but that
+ * would require importing storage/lock.h into parse_relation.h.  Since
+ * LOCKMODE is typedef'd as int anyway, that seems like overkill.
+ */
+Relation
+parserOpenTable(ParseState *pstate, const RangeVar *relation, int lockmode)
+{
+	Relation	rel;
+	ParseCallbackState pcbstate;
+
+	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
+	rel = heap_openrv(relation, lockmode);
+	cancel_parser_errposition_callback(&pcbstate);
+	return rel;
+}
+
+/*
  * Add an entry for a relation to the pstate's range table (p_rtable).
  *
  * If pstate is NULL, we just build an RTE and return it without adding it
@@ -638,7 +664,7 @@ addRangeTableEntry(ParseState *pstate,
 	 * depending on whether we're doing SELECT FOR UPDATE/SHARE.
 	 */
 	lockmode = isLockedRel(pstate, refname) ? RowShareLock : AccessShareLock;
-	rel = heap_openrv(relation, lockmode);
+	rel = parserOpenTable(pstate, relation, lockmode);
 	rte->relid = RelationGetRelid(rel);
 
 	/*
@@ -859,14 +885,16 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		if (functypclass != TYPEFUNC_RECORD)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("a column definition list is only allowed for functions returning \"record\"")));
+					 errmsg("a column definition list is only allowed for functions returning \"record\""),
+					 parser_errposition(pstate, exprLocation(funcexpr))));
 	}
 	else
 	{
 		if (functypclass == TYPEFUNC_RECORD)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("a column definition list is required for functions returning \"record\"")));
+					 errmsg("a column definition list is required for functions returning \"record\""),
+					 parser_errposition(pstate, exprLocation(funcexpr))));
 	}
 
 	if (functypclass == TYPEFUNC_COMPOSITE)
@@ -901,7 +929,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("column \"%s\" cannot be declared SETOF",
-								attrname)));
+								attrname),
+						 parser_errposition(pstate, n->typename->location)));
 			attrtype = typenameTypeId(pstate, n->typename, &attrtypmod);
 			eref->colnames = lappend(eref->colnames, makeString(attrname));
 			rte->funccoltypes = lappend_oid(rte->funccoltypes, attrtype);
@@ -912,7 +941,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 			 errmsg("function \"%s\" in FROM has unsupported return type %s",
-					funcname, format_type_be(funcrettype))));
+					funcname, format_type_be(funcrettype)),
+				 parser_errposition(pstate, exprLocation(funcexpr))));
 
 	/*----------
 	 * Flags:
@@ -1107,9 +1137,9 @@ isLockedRel(ParseState *pstate, char *refname)
 
 				foreach(l2, lc->lockedRels)
 				{
-					char	   *rname = strVal(lfirst(l2));
+					RangeVar   *thisrel = (RangeVar *) lfirst(l2);
 
-					if (strcmp(refname, rname) == 0)
+					if (strcmp(refname, thisrel->relname) == 0)
 						return true;
 				}
 			}
@@ -1150,12 +1180,12 @@ addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
  * a conflicting name.
  */
 RangeTblEntry *
-addImplicitRTE(ParseState *pstate, RangeVar *relation, int location)
+addImplicitRTE(ParseState *pstate, RangeVar *relation)
 {
 	RangeTblEntry *rte;
 
 	/* issue warning or error as needed */
-	warnAutoRange(pstate, relation, location);
+	warnAutoRange(pstate, relation);
 
 	/*
 	 * Note that we set inFromCl true, so that the RTE will be listed
@@ -1179,9 +1209,9 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation, int location)
  * results.  If include_dropped is TRUE then empty strings and NULL constants
  * (not Vars!) are returned for dropped columns.
  *
- * rtindex and sublevels_up are the varno and varlevelsup values to use
- * in the created Vars.  Ordinarily rtindex should match the actual position
- * of the RTE in its rangetable.
+ * rtindex, sublevels_up, and location are the varno, varlevelsup, and location
+ * values to use in the created Vars.  Ordinarily rtindex should match the
+ * actual position of the RTE in its rangetable.
  *
  * The output lists go into *colnames and *colvars.
  * If only one of the two kinds of output list is needed, pass NULL for the
@@ -1189,7 +1219,7 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation, int location)
  */
 void
 expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
-		  bool include_dropped,
+		  int location, bool include_dropped,
 		  List **colnames, List **colvars)
 {
 	int			varattno;
@@ -1203,7 +1233,8 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 	{
 		case RTE_RELATION:
 			/* Ordinary relation RTE */
-			expandRelation(rte->relid, rte->eref, rtindex, sublevels_up,
+			expandRelation(rte->relid, rte->eref,
+						   rtindex, sublevels_up, location,
 						   include_dropped, colnames, colvars);
 			break;
 		case RTE_SUBQUERY:
@@ -1239,6 +1270,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 										  exprType((Node *) te->expr),
 										  exprTypmod((Node *) te->expr),
 										  sublevels_up);
+						varnode->location = location;
 
 						*colvars = lappend(*colvars, varnode);
 					}
@@ -1259,7 +1291,8 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				{
 					/* Composite data type, e.g. a table's row type */
 					Assert(tupdesc);
-					expandTupleDesc(tupdesc, rte->eref, rtindex, sublevels_up,
+					expandTupleDesc(tupdesc, rte->eref,
+									rtindex, sublevels_up, location,
 									include_dropped, colnames, colvars);
 				}
 				else if (functypclass == TYPEFUNC_SCALAR)
@@ -1276,6 +1309,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 						varnode = makeVar(rtindex, 1,
 										  funcrettype, -1,
 										  sublevels_up);
+						varnode->location = location;
 
 						*colvars = lappend(*colvars, varnode);
 					}
@@ -1302,6 +1336,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 											  attrtype,
 											  attrtypmod,
 											  sublevels_up);
+							varnode->location = location;
 							*colvars = lappend(*colvars, varnode);
 						}
 					}
@@ -1343,6 +1378,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 										  exprType(col),
 										  exprTypmod(col),
 										  sublevels_up);
+						varnode->location = location;
 						*colvars = lappend(*colvars, varnode);
 					}
 				}
@@ -1401,6 +1437,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 										  exprType(avar),
 										  exprTypmod(avar),
 										  sublevels_up);
+						varnode->location = location;
 
 						*colvars = lappend(*colvars, varnode);
 					}
@@ -1417,14 +1454,15 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
  */
 static void
 expandRelation(Oid relid, Alias *eref, int rtindex, int sublevels_up,
-			   bool include_dropped,
+			   int location, bool include_dropped,
 			   List **colnames, List **colvars)
 {
 	Relation	rel;
 
 	/* Get the tupledesc and turn it over to expandTupleDesc */
 	rel = relation_open(relid, AccessShareLock);
-	expandTupleDesc(rel->rd_att, eref, rtindex, sublevels_up, include_dropped,
+	expandTupleDesc(rel->rd_att, eref, rtindex, sublevels_up,
+					location, include_dropped,
 					colnames, colvars);
 	relation_close(rel, AccessShareLock);
 }
@@ -1435,7 +1473,7 @@ expandRelation(Oid relid, Alias *eref, int rtindex, int sublevels_up,
 static void
 expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 				int rtindex, int sublevels_up,
-				bool include_dropped,
+				int location, bool include_dropped,
 				List **colnames, List **colvars)
 {
 	int			maxattrs = tupdesc->natts;
@@ -1482,6 +1520,7 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 			varnode = makeVar(rtindex, attr->attnum,
 							  attr->atttypid, attr->atttypmod,
 							  sublevels_up);
+			varnode->location = location;
 
 			*colvars = lappend(*colvars, varnode);
 		}
@@ -1491,15 +1530,15 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 /*
  * expandRelAttrs -
  *	  Workhorse for "*" expansion: produce a list of targetentries
- *	  for the attributes of the rte
+ *	  for the attributes of the RTE
  *
  * As with expandRTE, rtindex/sublevels_up determine the varno/varlevelsup
- * fields of the Vars produced.  pstate->p_next_resno determines the resnos
- * assigned to the TLEs.
+ * fields of the Vars produced, and location sets their location.
+ * pstate->p_next_resno determines the resnos assigned to the TLEs.
  */
 List *
 expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
-			   int rtindex, int sublevels_up)
+			   int rtindex, int sublevels_up, int location)
 {
 	List	   *names,
 			   *vars;
@@ -1507,7 +1546,7 @@ expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
 			   *var;
 	List	   *te_list = NIL;
 
-	expandRTE(rte, rtindex, sublevels_up, false,
+	expandRTE(rte, rtindex, sublevels_up, location, false,
 			  &names, &vars);
 
 	forboth(name, names, var, vars)
@@ -1523,7 +1562,7 @@ expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
 		te_list = lappend(te_list, te);
 	}
 
-	Assert(name == NULL && var == NULL);		/* lists not the same length? */
+	Assert(name == NULL && var == NULL);	/* lists not the same length? */
 
 	return te_list;
 }
@@ -1966,7 +2005,7 @@ attnumTypeId(Relation rd, int attid)
  * a warning.
  */
 static void
-warnAutoRange(ParseState *pstate, RangeVar *relation, int location)
+warnAutoRange(ParseState *pstate, RangeVar *relation)
 {
 	RangeTblEntry *rte;
 	int			sublevels_up;
@@ -1991,6 +2030,7 @@ warnAutoRange(ParseState *pstate, RangeVar *relation, int location)
 	if (rte && rte->alias &&
 		strcmp(rte->eref->aliasname, relation->relname) != 0 &&
 		refnameRangeTblEntry(pstate, NULL, rte->eref->aliasname,
+							 relation->location,
 							 &sublevels_up) == rte)
 		badAlias = rte->eref->aliasname;
 
@@ -2006,7 +2046,7 @@ warnAutoRange(ParseState *pstate, RangeVar *relation, int location)
 					badAlias) :
 					  errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
 							  rte->eref->aliasname)),
-					 parser_errposition(pstate, location)));
+					 parser_errposition(pstate, relation->location)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
@@ -2015,7 +2055,7 @@ warnAutoRange(ParseState *pstate, RangeVar *relation, int location)
 					relation->relname) :
 					  errmsg("missing FROM-clause entry for table \"%s\"",
 							 relation->relname)),
-					 parser_errposition(pstate, location)));
+					 parser_errposition(pstate, relation->location)));
 	}
 	else
 	{
@@ -2033,6 +2073,6 @@ warnAutoRange(ParseState *pstate, RangeVar *relation, int location)
 				  (rte ?
 				   errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
 						   rte->eref->aliasname) : 0)),
-				 parser_errposition(pstate, location)));
+				 parser_errposition(pstate, relation->location)));
 	}
 }

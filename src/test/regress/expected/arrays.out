@@ -775,16 +775,28 @@ select 'foo' ilike all (array['F%', '%O']); -- t
 -- none of the following should be accepted
 select '{{1,{2}},{2,3}}'::text[];
 ERROR:  malformed array literal: "{{1,{2}},{2,3}}"
+LINE 1: select '{{1,{2}},{2,3}}'::text[];
+               ^
 select '{{},{}}'::text[];
 ERROR:  malformed array literal: "{{},{}}"
+LINE 1: select '{{},{}}'::text[];
+               ^
 select E'{{1,2},\\{2,3}}'::text[];
 ERROR:  malformed array literal: "{{1,2},\{2,3}}"
+LINE 1: select E'{{1,2},\\{2,3}}'::text[];
+               ^
 select '{{"1 2" x},{3}}'::text[];
 ERROR:  malformed array literal: "{{"1 2" x},{3}}"
+LINE 1: select '{{"1 2" x},{3}}'::text[];
+               ^
 select '{}}'::text[];
 ERROR:  malformed array literal: "{}}"
+LINE 1: select '{}}'::text[];
+               ^
 select '{ }}'::text[];
 ERROR:  malformed array literal: "{ }}"
+LINE 1: select '{ }}'::text[];
+               ^
 select array[];
 ERROR:  cannot determine type of empty array
 LINE 1: select array[];

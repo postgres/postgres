@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.233 2008/08/30 01:39:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.234 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				A_Const    *con = (A_Const *) expr;
 				Value	   *val = &con->val;
 
-				result = (Node *) make_const(val, con->location);
+				result = (Node *) make_const(pstate, val, con->location);
 				break;
 			}
 
@@ -454,6 +454,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					 * "rel.*".
 					 */
 					if (refnameRangeTblEntry(pstate, NULL, name1,
+											 cref->location,
 											 &levels_up) != NULL)
 						node = transformWholeRowRef(pstate, NULL, name1,
 													cref->location);
@@ -621,7 +622,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
  * return a pointer to it.
  */
 static Oid *
-find_param_type(ParseState *pstate, int paramno)
+find_param_type(ParseState *pstate, int paramno, int location)
 {
 	Oid		   *result;
 
@@ -635,14 +636,15 @@ find_param_type(ParseState *pstate, int paramno)
 	if (paramno <= 0)			/* probably can't happen? */
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_PARAMETER),
-				 errmsg("there is no parameter $%d", paramno)));
+				 errmsg("there is no parameter $%d", paramno),
+				 parser_errposition(pstate, location)));
 	if (paramno > pstate->p_numparams)
 	{
 		if (!pstate->p_variableparams)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_PARAMETER),
-					 errmsg("there is no parameter $%d",
-							paramno)));
+					 errmsg("there is no parameter $%d", paramno),
+					 parser_errposition(pstate, location)));
 		/* Okay to enlarge param array */
 		if (pstate->p_paramtypes)
 			pstate->p_paramtypes = (Oid *) repalloc(pstate->p_paramtypes,
@@ -672,7 +674,7 @@ static Node *
 transformParamRef(ParseState *pstate, ParamRef *pref)
 {
 	int			paramno = pref->number;
-	Oid		   *pptype = find_param_type(pstate, paramno);
+	Oid		   *pptype = find_param_type(pstate, paramno, pref->location);
 	Param	   *param;
 
 	param = makeNode(Param);
@@ -1235,10 +1237,22 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 
 	pstate->p_hasSubLinks = true;
 	qtree = parse_sub_analyze(sublink->subselect, pstate);
-	if (qtree->commandType != CMD_SELECT ||
-		qtree->utilityStmt != NULL ||
-		qtree->intoClause != NULL)
-		elog(ERROR, "bad query in sub-select");
+
+	/*
+	 * Check that we got something reasonable.	Many of these conditions are
+	 * impossible given restrictions of the grammar, but check 'em anyway.
+	 */
+	if (!IsA(qtree, Query) ||
+		qtree->commandType != CMD_SELECT ||
+		qtree->utilityStmt != NULL)
+		elog(ERROR, "unexpected non-SELECT command in SubLink");
+	if (qtree->intoClause)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("subquery cannot have SELECT INTO"),
+				 parser_errposition(pstate,
+									exprLocation((Node *) qtree->intoClause))));
+
 	sublink->subselect = (Node *) qtree;
 
 	if (sublink->subLinkType == EXISTS_SUBLINK)
@@ -1445,7 +1459,8 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("could not find element type for data type %s",
-								format_type_be(array_type))));
+								format_type_be(array_type)),
+						 parser_errposition(pstate, a->location)));
 		}
 		else
 		{
@@ -1455,7 +1470,8 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("could not find array type for data type %s",
-								format_type_be(element_type))));
+								format_type_be(element_type)),
+						 parser_errposition(pstate, a->location)));
 		}
 		coerce_hard = false;
 	}
@@ -1823,7 +1839,7 @@ transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 	/* If a parameter is used, it must be of type REFCURSOR */
 	if (cexpr->cursor_name == NULL)
 	{
-		Oid		   *pptype = find_param_type(pstate, cexpr->cursor_param);
+		Oid		   *pptype = find_param_type(pstate, cexpr->cursor_param, -1);
 
 		if (pstate->p_variableparams && *pptype == UNKNOWNOID)
 		{
@@ -1866,12 +1882,12 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 
 	/* Look up the referenced RTE, creating it if needed */
 
-	rte = refnameRangeTblEntry(pstate, schemaname, relname,
+	rte = refnameRangeTblEntry(pstate, schemaname, relname, location,
 							   &sublevels_up);
 
 	if (rte == NULL)
-		rte = addImplicitRTE(pstate, makeRangeVar(schemaname, relname),
-							 location);
+		rte = addImplicitRTE(pstate,
+							 makeRangeVar(schemaname, relname, location));
 
 	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 

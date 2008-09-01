@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.178 2008/08/30 01:39:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.179 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,12 +66,13 @@ static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List **tlist, int clause);
+static int	get_matching_location(int sortgroupref,
+								  List *sortgrouprefs, List *exprs);
 static List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
-					List *sortlist, List *targetlist,
-					SortByDir sortby_dir, SortByNulls sortby_nulls,
-					List *sortby_opname, bool resolveUnknown);
+					List *sortlist, List *targetlist, SortBy *sortby,
+					bool resolveUnknown);
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
-					 List *grouplist, List *targetlist,
+					 List *grouplist, List *targetlist, int location,
 					 bool resolveUnknown);
 
 
@@ -163,7 +164,8 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 * free_parsestate() will eventually do the corresponding heap_close(),
 	 * but *not* release the lock.
 	 */
-	pstate->p_target_relation = heap_openrv(relation, RowExclusiveLock);
+	pstate->p_target_relation = parserOpenTable(pstate, relation,
+												RowExclusiveLock);
 
 	/*
 	 * Now build an RTE.
@@ -390,7 +392,9 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 		 errmsg("JOIN/ON clause refers to \"%s\", which is not part of JOIN",
-				rt_fetch(varno, pstate->p_rtable)->eref->aliasname)));
+				rt_fetch(varno, pstate->p_rtable)->eref->aliasname),
+				 parser_errposition(pstate,
+									locate_var_of_relation(result, varno, 0))));
 	}
 	bms_free(clause_varnos);
 
@@ -431,12 +435,11 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	/*
 	 * We require user to supply an alias for a subselect, per SQL92. To relax
 	 * this, we'd have to be prepared to gin up a unique alias for an
-	 * unlabeled subselect.
+	 * unlabeled subselect.  (This is just elog, not ereport, because the
+	 * grammar should have enforced it already.)
 	 */
 	if (r->alias == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("subquery in FROM must have an alias")));
+		elog(ERROR, "subquery in FROM must have an alias");
 
 	/*
 	 * Analyze and transform the subquery.
@@ -447,13 +450,16 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 * Check that we got something reasonable.	Many of these conditions are
 	 * impossible given restrictions of the grammar, but check 'em anyway.
 	 */
-	if (query->commandType != CMD_SELECT ||
+	if (!IsA(query, Query) ||
+		query->commandType != CMD_SELECT ||
 		query->utilityStmt != NULL)
-		elog(ERROR, "expected SELECT query from subquery in FROM");
-	if (query->intoClause != NULL)
+		elog(ERROR, "unexpected non-SELECT command in subquery in FROM");
+	if (query->intoClause)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("subquery in FROM cannot have SELECT INTO")));
+				 errmsg("subquery in FROM cannot have SELECT INTO"),
+				 parser_errposition(pstate,
+									exprLocation((Node *) query->intoClause))));
 
 	/*
 	 * The subquery cannot make use of any variables from FROM items created
@@ -473,7 +479,9 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 		if (contain_vars_of_level((Node *) query, 1))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("subquery in FROM cannot refer to other relations of same query level")));
+					 errmsg("subquery in FROM cannot refer to other relations of same query level"),
+					 parser_errposition(pstate,
+										locate_var_of_level((Node *) query, 1))));
 	}
 
 	/*
@@ -522,7 +530,9 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 		if (contain_vars_of_level(funcexpr, 0))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("function expression in FROM cannot refer to other relations of same query level")));
+					 errmsg("function expression in FROM cannot refer to other relations of same query level"),
+					 parser_errposition(pstate,
+										locate_var_of_level(funcexpr, 0))));
 	}
 
 	/*
@@ -534,7 +544,9 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 		if (checkExprHasAggs(funcexpr))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("cannot use aggregate function in function expression in FROM")));
+					 errmsg("cannot use aggregate function in function expression in FROM"),
+					 parser_errposition(pstate,
+										locate_agg_of_level(funcexpr, 0))));
 	}
 
 	/*
@@ -709,9 +721,9 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		 *
 		 * Note: expandRTE returns new lists, safe for me to modify
 		 */
-		expandRTE(l_rte, l_rtindex, 0, false,
+		expandRTE(l_rte, l_rtindex, 0, -1, false,
 				  &l_colnames, &l_colvars);
-		expandRTE(r_rte, r_rtindex, 0, false,
+		expandRTE(r_rte, r_rtindex, 0, -1, false,
 				  &r_colnames, &r_colvars);
 
 		/*
@@ -1109,7 +1121,9 @@ transformLimitClause(ParseState *pstate, Node *clause,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 		/* translator: %s is name of a SQL construct, eg LIMIT */
 				 errmsg("argument of %s must not contain variables",
-						constructName)));
+						constructName),
+				 parser_errposition(pstate,
+									locate_var_of_level(qual, 0))));
 	}
 	if (checkExprHasAggs(qual))
 	{
@@ -1117,7 +1131,9 @@ transformLimitClause(ParseState *pstate, Node *clause,
 				(errcode(ERRCODE_GROUPING_ERROR),
 		/* translator: %s is name of a SQL construct, eg LIMIT */
 				 errmsg("argument of %s must not contain aggregates",
-						constructName)));
+						constructName),
+				 parser_errposition(pstate,
+									locate_agg_of_level(qual, 0))));
 	}
 
 	return qual;
@@ -1365,6 +1381,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		if (!found)
 			result = addTargetToGroupList(pstate, tle,
 										  result, *targetlist,
+										  exprLocation(gexpr),
 										  true);
 	}
 
@@ -1396,10 +1413,7 @@ transformSortClause(ParseState *pstate,
 								  targetlist, ORDER_CLAUSE);
 
 		sortlist = addTargetToSortList(pstate, tle,
-									   sortlist, *targetlist,
-									   sortby->sortby_dir,
-									   sortby->sortby_nulls,
-									   sortby->useOp,
+									   sortlist, *targetlist, sortby,
 									   resolveUnknown);
 	}
 
@@ -1450,7 +1464,9 @@ transformDistinctClause(ParseState *pstate,
 		if (tle->resjunk)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("for SELECT DISTINCT, ORDER BY expressions must appear in select list")));
+					 errmsg("for SELECT DISTINCT, ORDER BY expressions must appear in select list"),
+					 parser_errposition(pstate,
+										exprLocation((Node *) tle->expr))));
 		result = lappend(result, copyObject(scl));
 	}
 
@@ -1466,6 +1482,7 @@ transformDistinctClause(ParseState *pstate,
 			continue;			/* ignore junk */
 		result = addTargetToGroupList(pstate, tle,
 									  result, *targetlist,
+									  exprLocation((Node *) tle->expr),
 									  true);
 	}
 
@@ -1490,28 +1507,29 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 						  List **targetlist, List *sortClause)
 {
 	List	   *result = NIL;
-	ListCell   *slitem;
-	ListCell   *dlitem;
-	Bitmapset  *refnos = NULL;
-	int			sortgroupref;
+	List	   *sortgrouprefs = NIL;
 	bool		skipped_sortitem;
+	ListCell   *lc;
+	ListCell   *lc2;
 
 	/*
 	 * Add all the DISTINCT ON expressions to the tlist (if not already
 	 * present, they are added as resjunk items).  Assign sortgroupref
-	 * numbers to them, and form a bitmapset of these numbers.  (A
-	 * bitmapset is convenient here because we don't care about order
-	 * and we can discard duplicates.)
+	 * numbers to them, and make a list of these numbers.  (NB: we rely
+	 * below on the sortgrouprefs list being one-for-one with the original
+	 * distinctlist.  Also notice that we could have duplicate DISTINCT ON
+	 * expressions and hence duplicate entries in sortgrouprefs.)
 	 */
-	foreach(dlitem, distinctlist)
+	foreach(lc, distinctlist)
 	{
-		Node	   *dexpr = (Node *) lfirst(dlitem);
+		Node	   *dexpr = (Node *) lfirst(lc);
+		int			sortgroupref;
 		TargetEntry *tle;
 
 		tle = findTargetlistEntry(pstate, dexpr,
 								  targetlist, DISTINCT_ON_CLAUSE);
 		sortgroupref = assignSortGroupRef(tle, *targetlist);
-		refnos = bms_add_member(refnos, sortgroupref);
+		sortgrouprefs = lappend_int(sortgrouprefs, sortgroupref);
 	}
 
 	/*
@@ -1523,16 +1541,20 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 	 * skipped an ORDER BY item that wasn't in DISTINCT ON.
 	 */
 	skipped_sortitem = false;
-	foreach(slitem, sortClause)
+	foreach(lc, sortClause)
 	{
-		SortGroupClause *scl = (SortGroupClause *) lfirst(slitem);
+		SortGroupClause *scl = (SortGroupClause *) lfirst(lc);
 
-		if (bms_is_member(scl->tleSortGroupRef, refnos))
+		if (list_member_int(sortgrouprefs, scl->tleSortGroupRef))
 		{
 			if (skipped_sortitem)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions")));
+						 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions"),
+						 parser_errposition(pstate,
+											get_matching_location(scl->tleSortGroupRef,
+																  sortgrouprefs,
+																  distinctlist))));
 			else
 				result = lappend(result, copyObject(scl));
 		}
@@ -1549,8 +1571,10 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 	 * better to throw an error or warning here.  But historically we've
 	 * allowed it, so keep doing so.)
 	 */
-	while ((sortgroupref = bms_first_member(refnos)) >= 0)
+	forboth(lc, distinctlist, lc2, sortgrouprefs)
 	{
+		Node	   *dexpr = (Node *) lfirst(lc);
+		int			sortgroupref = lfirst_int(lc2);
 		TargetEntry *tle = get_sortgroupref_tle(sortgroupref, *targetlist);
 
 		if (targetIsInSortList(tle, InvalidOid, result))
@@ -1558,13 +1582,42 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 		if (skipped_sortitem)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions")));
+					 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions"),
+					 parser_errposition(pstate, exprLocation(dexpr))));
 		result = addTargetToGroupList(pstate, tle,
 									  result, *targetlist,
+									  exprLocation(dexpr),
 									  true);
 	}
 
 	return result;
+}
+
+/*
+ * get_matching_location
+ *		Get the exprLocation of the exprs member corresponding to the
+ *		(first) member of sortgrouprefs that equals sortgroupref.
+ *
+ * This is used so that we can point at a troublesome DISTINCT ON entry.
+ * (Note that we need to use the original untransformed DISTINCT ON list
+ * item, as whatever TLE it corresponds to will very possibly have a
+ * parse location pointing to some matching entry in the SELECT list
+ * or ORDER BY list.)
+ */
+static int
+get_matching_location(int sortgroupref, List *sortgrouprefs, List *exprs)
+{
+	ListCell   *lcs;
+	ListCell   *lce;
+
+	forboth(lcs, sortgrouprefs, lce, exprs)
+	{
+		if (lfirst_int(lcs) == sortgroupref)
+			return exprLocation((Node *) lfirst(lce));
+	}
+	/* if no match, caller blew it */
+	elog(ERROR, "get_matching_location: no matching sortgroupref");
+	return -1;					/* keep compiler quiet */
 }
 
 /*
@@ -1582,14 +1635,15 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
  */
 static List *
 addTargetToSortList(ParseState *pstate, TargetEntry *tle,
-					List *sortlist, List *targetlist,
-					SortByDir sortby_dir, SortByNulls sortby_nulls,
-					List *sortby_opname, bool resolveUnknown)
+					List *sortlist, List *targetlist, SortBy *sortby,
+					bool resolveUnknown)
 {
 	Oid			restype = exprType((Node *) tle->expr);
 	Oid			sortop;
 	Oid			eqop;
 	bool		reverse;
+	int			location;
+	ParseCallbackState pcbstate;
 
 	/* if tlist item is an UNKNOWN literal, change it to TEXT */
 	if (restype == UNKNOWNOID && resolveUnknown)
@@ -1602,8 +1656,21 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 		restype = TEXTOID;
 	}
 
+	/*
+	 * Rather than clutter the API of get_sort_group_operators and the other
+	 * functions we're about to use, make use of error context callback to
+	 * mark any error reports with a parse position.  We point to the operator
+	 * location if present, else to the expression being sorted.  (NB: use
+	 * the original untransformed expression here; the TLE entry might well
+	 * point at a duplicate expression in the regular SELECT list.)
+	 */
+	location = sortby->location;
+	if (location < 0)
+		location = exprLocation(sortby->node);
+	setup_parser_errposition_callback(&pcbstate, pstate, location);
+
 	/* determine the sortop, eqop, and directionality */
-	switch (sortby_dir)
+	switch (sortby->sortby_dir)
 	{
 		case SORTBY_DEFAULT:
 		case SORTBY_ASC:
@@ -1619,8 +1686,8 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 			reverse = true;
 			break;
 		case SORTBY_USING:
-			Assert(sortby_opname != NIL);
-			sortop = compatible_oper_opid(sortby_opname,
+			Assert(sortby->useOp != NIL);
+			sortop = compatible_oper_opid(sortby->useOp,
 										  restype,
 										  restype,
 										  false);
@@ -1635,16 +1702,18 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					   errmsg("operator %s is not a valid ordering operator",
-							  strVal(llast(sortby_opname))),
+							  strVal(llast(sortby->useOp))),
 						 errhint("Ordering operators must be \"<\" or \">\" members of btree operator families.")));
 			break;
 		default:
-			elog(ERROR, "unrecognized sortby_dir: %d", sortby_dir);
+			elog(ERROR, "unrecognized sortby_dir: %d", sortby->sortby_dir);
 			sortop = InvalidOid;	/* keep compiler quiet */
 			eqop = InvalidOid;
 			reverse = false;
 			break;
 	}
+
+	cancel_parser_errposition_callback(&pcbstate);
 
 	/* avoid making duplicate sortlist entries */
 	if (!targetIsInSortList(tle, sortop, sortlist))
@@ -1656,7 +1725,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 		sortcl->eqop = eqop;
 		sortcl->sortop = sortop;
 
-		switch (sortby_nulls)
+		switch (sortby->sortby_nulls)
 		{
 			case SORTBY_NULLS_DEFAULT:
 				/* NULLS FIRST is default for DESC; other way for ASC */
@@ -1669,7 +1738,8 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 				sortcl->nulls_first = false;
 				break;
 			default:
-				elog(ERROR, "unrecognized sortby_nulls: %d", sortby_nulls);
+				elog(ERROR, "unrecognized sortby_nulls: %d",
+					 sortby->sortby_nulls);
 				break;
 		}
 
@@ -1690,6 +1760,11 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
  * the TLE is considered "already in the list" if it appears there with any
  * sorting semantics.
  *
+ * location is the parse location to be fingered in event of trouble.  Note
+ * that we can't rely on exprLocation(tle->expr), because that might point
+ * to a SELECT item that matches the GROUP BY item; it'd be pretty confusing
+ * to report such a location.
+ *
  * If resolveUnknown is TRUE, convert TLEs of type UNKNOWN to TEXT.  If not,
  * do nothing (which implies the search for an equality operator will fail).
  * pstate should be provided if resolveUnknown is TRUE, but can be NULL
@@ -1699,7 +1774,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
  */
 static List *
 addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
-					 List *grouplist, List *targetlist,
+					 List *grouplist, List *targetlist, int location,
 					 bool resolveUnknown)
 {
 	Oid			restype = exprType((Node *) tle->expr);
@@ -1721,11 +1796,16 @@ addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 	if (!targetIsInSortList(tle, InvalidOid, grouplist))
 	{
 		SortGroupClause *grpcl = makeNode(SortGroupClause);
+		ParseCallbackState pcbstate;
+
+		setup_parser_errposition_callback(&pcbstate, pstate, location);
 
 		/* determine the eqop and optional sortop */
 		get_sort_group_operators(restype,
 								 false, true, false,
 								 &sortop, &eqop, NULL);
+
+		cancel_parser_errposition_callback(&pcbstate);
 
 		grpcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
 		grpcl->eqop = eqop;

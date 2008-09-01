@@ -257,88 +257,144 @@ SELECT '[(0,0,0,0),(1,0,0,0)]'::cube AS cube;
 -- invalid input: parse errors
 SELECT ''::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT ''::cube AS cube;
+               ^
 DETAIL:  syntax error at end of input
 SELECT 'ABC'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT 'ABC'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near "A"
 SELECT '()'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '()'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near ")"
 SELECT '[]'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '[]'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near "]"
 SELECT '[()]'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '[()]'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near ")"
 SELECT '[(1)]'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '[(1)]'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near "]"
 SELECT '[(1),]'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '[(1),]'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near "]"
 SELECT '[(1),2]'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '[(1),2]'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near "2"
 SELECT '[(1),(2),(3)]'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '[(1),(2),(3)]'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near ","
 SELECT '1,'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '1,'::cube AS cube;
+               ^
 DETAIL:  syntax error at end of input
 SELECT '1,2,'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '1,2,'::cube AS cube;
+               ^
 DETAIL:  syntax error at end of input
 SELECT '1,,2'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '1,,2'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near ","
 SELECT '(1,)'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '(1,)'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near ")"
 SELECT '(1,2,)'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '(1,2,)'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near ")"
 SELECT '(1,,2)'::cube AS cube;
 ERROR:  bad cube representation
+LINE 1: SELECT '(1,,2)'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near ","
 -- invalid input: semantic errors and trailing garbage
 SELECT '[(1),(2)],'::cube AS cube; -- 0
 ERROR:  bad cube representation
+LINE 1: SELECT '[(1),(2)],'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near ","
 SELECT '[(1,2,3),(2,3)]'::cube AS cube; -- 1
 ERROR:  bad cube representation
+LINE 1: SELECT '[(1,2,3),(2,3)]'::cube AS cube;
+               ^
 DETAIL:  Different point dimensions in (1,2,3) and (2,3).
 SELECT '[(1,2),(1,2,3)]'::cube AS cube; -- 1
 ERROR:  bad cube representation
+LINE 1: SELECT '[(1,2),(1,2,3)]'::cube AS cube;
+               ^
 DETAIL:  Different point dimensions in (1,2) and (1,2,3).
 SELECT '(1),(2),'::cube AS cube; -- 2
 ERROR:  bad cube representation
+LINE 1: SELECT '(1),(2),'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near ","
 SELECT '(1,2,3),(2,3)'::cube AS cube; -- 3
 ERROR:  bad cube representation
+LINE 1: SELECT '(1,2,3),(2,3)'::cube AS cube;
+               ^
 DETAIL:  Different point dimensions in (1,2,3) and (2,3).
 SELECT '(1,2),(1,2,3)'::cube AS cube; -- 3
 ERROR:  bad cube representation
+LINE 1: SELECT '(1,2),(1,2,3)'::cube AS cube;
+               ^
 DETAIL:  Different point dimensions in (1,2) and (1,2,3).
 SELECT '(1,2,3)ab'::cube AS cube; -- 4
 ERROR:  bad cube representation
+LINE 1: SELECT '(1,2,3)ab'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near "a"
 SELECT '(1,2,3)a'::cube AS cube; -- 5
 ERROR:  bad cube representation
+LINE 1: SELECT '(1,2,3)a'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near "a"
 SELECT '(1,2)('::cube AS cube; -- 5
 ERROR:  bad cube representation
+LINE 1: SELECT '(1,2)('::cube AS cube;
+               ^
 DETAIL:  syntax error at or near "("
 SELECT '1,2ab'::cube AS cube; -- 6
 ERROR:  bad cube representation
+LINE 1: SELECT '1,2ab'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near "a"
 SELECT '1 e7'::cube AS cube; -- 6
 ERROR:  bad cube representation
+LINE 1: SELECT '1 e7'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near "e"
 SELECT '1,2a'::cube AS cube; -- 7
 ERROR:  bad cube representation
+LINE 1: SELECT '1,2a'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near "a"
 SELECT '1..2'::cube AS cube; -- 7
 ERROR:  bad cube representation
+LINE 1: SELECT '1..2'::cube AS cube;
+               ^
 DETAIL:  syntax error at or near ".2"
 --
 -- Testing building cubes from float8 values
@@ -430,9 +486,13 @@ ERROR:  Index out of bounds
 --
 select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)'::cube;
 ERROR:  bad cube representation
+LINE 1: select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0...
+               ^
 DETAIL:  A cube cannot have more than 100 dimensions.
 select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)'::cube;
 ERROR:  bad cube representation
+LINE 1: select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0...
+               ^
 DETAIL:  A cube cannot have more than 100 dimensions.
 --
 -- testing the  operators

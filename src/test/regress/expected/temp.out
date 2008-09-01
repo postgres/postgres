@@ -45,6 +45,8 @@ CREATE TEMP TABLE temptest(col int);
 \c
 SELECT * FROM temptest;
 ERROR:  relation "temptest" does not exist
+LINE 1: SELECT * FROM temptest;
+                      ^
 -- Test ON COMMIT DELETE ROWS
 CREATE TEMP TABLE temptest(col int) ON COMMIT DELETE ROWS;
 BEGIN;
@@ -94,6 +96,8 @@ SELECT * FROM temptest;
 COMMIT;
 SELECT * FROM temptest;
 ERROR:  relation "temptest" does not exist
+LINE 1: SELECT * FROM temptest;
+                      ^
 BEGIN;
 CREATE TEMP TABLE temptest(col) ON COMMIT DROP AS SELECT 1;
 SELECT * FROM temptest;
@@ -105,6 +109,8 @@ SELECT * FROM temptest;
 COMMIT;
 SELECT * FROM temptest;
 ERROR:  relation "temptest" does not exist
+LINE 1: SELECT * FROM temptest;
+                      ^
 -- ON COMMIT is only allowed for TEMP
 CREATE TABLE temptest(col int) ON COMMIT DELETE ROWS;
 ERROR:  ON COMMIT can only be used on temporary tables

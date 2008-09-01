@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.205 2008/07/09 15:56:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.206 2008/09/01 20:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -877,6 +877,23 @@ internalerrquery(const char *query)
 		edata->internalquery = MemoryContextStrdup(ErrorContext, query);
 
 	return 0;					/* return value does not matter */
+}
+
+/*
+ * geterrcode --- return the currently set SQLSTATE error code
+ *
+ * This is only intended for use in error callback subroutines, since there
+ * is no other place outside elog.c where the concept is meaningful.
+ */
+int
+geterrcode(void)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	return edata->sqlerrcode;
 }
 
 /*

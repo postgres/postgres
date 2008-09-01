@@ -137,6 +137,8 @@ SELECT perl_record();
 
 SELECT * FROM perl_record();
 ERROR:  a column definition list is required for functions returning "record"
+LINE 1: SELECT * FROM perl_record();
+                      ^
 SELECT * FROM perl_record() AS (f1 integer, f2 text, f3 text);
  f1 | f2 | f3 
 ----+----+----
@@ -150,6 +152,8 @@ SELECT perl_record();
 ERROR:  function returning record called in context that cannot accept type record
 SELECT * FROM perl_record();
 ERROR:  a column definition list is required for functions returning "record"
+LINE 1: SELECT * FROM perl_record();
+                      ^
 SELECT * FROM perl_record() AS (f1 integer, f2 text, f3 text);
  f1 |  f2   |  f3   
 ----+-------+-------
@@ -163,6 +167,8 @@ SELECT perl_record_set();
 ERROR:  set-valued function called in context that cannot accept a set
 SELECT * FROM perl_record_set();
 ERROR:  a column definition list is required for functions returning "record"
+LINE 1: SELECT * FROM perl_record_set();
+                      ^
 SELECT * FROM perl_record_set() AS (f1 integer, f2 text, f3 text);
  f1 | f2 | f3 
 ----+----+----
@@ -179,6 +185,8 @@ SELECT perl_record_set();
 ERROR:  set-valued function called in context that cannot accept a set
 SELECT * FROM perl_record_set();
 ERROR:  a column definition list is required for functions returning "record"
+LINE 1: SELECT * FROM perl_record_set();
+                      ^
 SELECT * FROM perl_record_set() AS (f1 integer, f2 text, f3 text);
 ERROR:  setof-composite-returning Perl function must call return_next with reference to hash
 CREATE OR REPLACE FUNCTION perl_record_set() RETURNS SETOF record AS $$
@@ -192,6 +200,8 @@ SELECT perl_record_set();
 ERROR:  set-valued function called in context that cannot accept a set
 SELECT * FROM perl_record_set();
 ERROR:  a column definition list is required for functions returning "record"
+LINE 1: SELECT * FROM perl_record_set();
+                      ^
 SELECT * FROM perl_record_set() AS (f1 integer, f2 text, f3 text);
  f1 |  f2   |     f3     
 ----+-------+------------

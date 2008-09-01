@@ -45,6 +45,8 @@ SELECT count(*) FROM test_missing_target GROUP BY test_missing_target.c ORDER BY
 --   failure expected
 SELECT count(*) FROM test_missing_target GROUP BY a ORDER BY b;
 ERROR:  column "test_missing_target.b" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: ...ECT count(*) FROM test_missing_target GROUP BY a ORDER BY b;
+                                                                     ^
 --   w/o existing GROUP BY target and w/o existing same ORDER BY target
 SELECT count(*) FROM test_missing_target GROUP BY b ORDER BY b;
  count 
@@ -240,6 +242,8 @@ ORDER BY lower(test_missing_target.c);
 --   failure expected
 SELECT count(a) FROM test_missing_target GROUP BY a ORDER BY b;
 ERROR:  column "test_missing_target.b" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: ...ECT count(a) FROM test_missing_target GROUP BY a ORDER BY b;
+                                                                     ^
 --   w/o existing GROUP BY target and w/o existing same ORDER BY target
 SELECT count(b) FROM test_missing_target GROUP BY b/2 ORDER BY b/2;
  count 

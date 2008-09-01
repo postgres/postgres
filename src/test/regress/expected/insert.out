@@ -22,12 +22,20 @@ select * from inserttest;
 --
 insert into inserttest (col1, col2, col3) values (DEFAULT, DEFAULT);
 ERROR:  INSERT has more target columns than expressions
+LINE 1: insert into inserttest (col1, col2, col3) values (DEFAULT, D...
+                                            ^
 insert into inserttest (col1, col2, col3) values (1, 2);
 ERROR:  INSERT has more target columns than expressions
+LINE 1: insert into inserttest (col1, col2, col3) values (1, 2);
+                                            ^
 insert into inserttest (col1) values (1, 2);
 ERROR:  INSERT has more expressions than target columns
+LINE 1: insert into inserttest (col1) values (1, 2);
+                                                 ^
 insert into inserttest (col1) values (DEFAULT, DEFAULT);
 ERROR:  INSERT has more expressions than target columns
+LINE 1: insert into inserttest (col1) values (DEFAULT, DEFAULT);
+                                                       ^
 select * from inserttest;
  col1 | col2 |  col3   
 ------+------+---------

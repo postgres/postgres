@@ -65,8 +65,12 @@ SELECT min(a), max(a) FROM test_having HAVING min(a) < max(a);
 -- errors: ungrouped column references
 SELECT a FROM test_having HAVING min(a) < max(a);
 ERROR:  column "test_having.a" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: SELECT a FROM test_having HAVING min(a) < max(a);
+               ^
 SELECT 1 AS one FROM test_having HAVING a > 1;
 ERROR:  column "test_having.a" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: SELECT 1 AS one FROM test_having HAVING a > 1;
+                                                ^
 -- the really degenerate case: need not scan table at all
 SELECT 1 AS one FROM test_having HAVING 1 > 2;
  one 

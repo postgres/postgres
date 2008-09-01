@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.337 2008/08/30 01:39:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.338 2008/09/01 20:42:44 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -667,6 +667,7 @@ _outRangeVar(StringInfo str, RangeVar *node)
 	WRITE_ENUM_FIELD(inhOpt, InhOption);
 	WRITE_BOOL_FIELD(istemp);
 	WRITE_NODE_FIELD(alias);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1609,7 +1610,7 @@ _outNotifyStmt(StringInfo str, NotifyStmt *node)
 {
 	WRITE_NODE_TYPE("NOTIFY");
 
-	WRITE_NODE_FIELD(relation);
+	WRITE_STRING_FIELD(conditionname);
 }
 
 static void
@@ -2038,10 +2039,11 @@ _outSortBy(StringInfo str, SortBy *node)
 {
 	WRITE_NODE_TYPE("SORTBY");
 
+	WRITE_NODE_FIELD(node);
 	WRITE_ENUM_FIELD(sortby_dir, SortByDir);
 	WRITE_ENUM_FIELD(sortby_nulls, SortByNulls);
 	WRITE_NODE_FIELD(useOp);
-	WRITE_NODE_FIELD(node);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void

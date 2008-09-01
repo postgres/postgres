@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.31 2008/08/28 23:09:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.32 2008/09/01 20:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -613,6 +613,9 @@ exprLocation(Node *expr)
 		return -1;
 	switch (nodeTag(expr))
 	{
+		case T_RangeVar:
+			loc = ((RangeVar *) expr)->location;
+			break;
 		case T_Var:
 			loc = ((Var *) expr)->location;
 			break;
@@ -789,6 +792,10 @@ exprLocation(Node *expr)
 			/* just use argument's location */
 			loc = exprLocation((Node *) ((TargetEntry *) expr)->expr);
 			break;
+		case T_IntoClause:
+			/* use the contained RangeVar's location --- close enough */
+			loc = exprLocation((Node *) ((IntoClause *) expr)->rel);
+			break;
 		case T_List:
 			{
 				/* report location of first list member that has a location */
@@ -851,6 +858,10 @@ exprLocation(Node *expr)
 				loc = leftmostLoc(loc, tc->typename->location);
 				loc = leftmostLoc(loc, tc->location);
 			}
+			break;
+		case T_SortBy:
+			/* just use argument's location (ignore operator, if any) */
+			loc = exprLocation(((SortBy *) expr)->node);
 			break;
 		case T_TypeName:
 			loc = ((TypeName *) expr)->location;

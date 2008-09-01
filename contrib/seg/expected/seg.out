@@ -394,30 +394,48 @@ SELECT '100(+-)1'::seg AS seg;
 -- invalid input
 SELECT ''::seg AS seg;
 ERROR:  bad seg representation
+LINE 1: SELECT ''::seg AS seg;
+               ^
 DETAIL:  syntax error at end of input
 SELECT 'ABC'::seg AS seg;
 ERROR:  bad seg representation
+LINE 1: SELECT 'ABC'::seg AS seg;
+               ^
 DETAIL:  syntax error at or near "A"
 SELECT '1ABC'::seg AS seg;
 ERROR:  bad seg representation
+LINE 1: SELECT '1ABC'::seg AS seg;
+               ^
 DETAIL:  syntax error at or near "A"
 SELECT '1.'::seg AS seg;
 ERROR:  bad seg representation
+LINE 1: SELECT '1.'::seg AS seg;
+               ^
 DETAIL:  syntax error at or near "."
 SELECT '1.....'::seg AS seg;
 ERROR:  bad seg representation
+LINE 1: SELECT '1.....'::seg AS seg;
+               ^
 DETAIL:  syntax error at or near ".."
 SELECT '.1'::seg AS seg;
 ERROR:  bad seg representation
+LINE 1: SELECT '.1'::seg AS seg;
+               ^
 DETAIL:  syntax error at or near "."
 SELECT '1..2.'::seg AS seg;
 ERROR:  bad seg representation
+LINE 1: SELECT '1..2.'::seg AS seg;
+               ^
 DETAIL:  syntax error at or near "."
 SELECT '1 e7'::seg AS seg;
 ERROR:  bad seg representation
+LINE 1: SELECT '1 e7'::seg AS seg;
+               ^
 DETAIL:  syntax error at or near "e"
 SELECT '1e700'::seg AS seg;
 ERROR:  "1e700" is out of range for type real
+LINE 1: SELECT '1e700'::seg AS seg;
+               ^
 --
 -- testing the  operators
 --

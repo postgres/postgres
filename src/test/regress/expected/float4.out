@@ -10,29 +10,53 @@ INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e-20');
 -- test for over and under flow 
 INSERT INTO FLOAT4_TBL(f1) VALUES ('10e70');
 ERROR:  value out of range: overflow
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('10e70');
+                                           ^
 INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e70');
 ERROR:  value out of range: overflow
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e70');
+                                           ^
 INSERT INTO FLOAT4_TBL(f1) VALUES ('10e-70');
 ERROR:  value out of range: underflow
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('10e-70');
+                                           ^
 INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-70');
 ERROR:  value out of range: underflow
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-70');
+                                           ^
 -- bad input
 INSERT INTO FLOAT4_TBL(f1) VALUES ('');
 ERROR:  invalid input syntax for type real: ""
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('');
+                                           ^
 INSERT INTO FLOAT4_TBL(f1) VALUES ('       ');
 ERROR:  invalid input syntax for type real: "       "
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('       ');
+                                           ^
 INSERT INTO FLOAT4_TBL(f1) VALUES ('xyz');
 ERROR:  invalid input syntax for type real: "xyz"
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('xyz');
+                                           ^
 INSERT INTO FLOAT4_TBL(f1) VALUES ('5.0.0');
 ERROR:  invalid input syntax for type real: "5.0.0"
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('5.0.0');
+                                           ^
 INSERT INTO FLOAT4_TBL(f1) VALUES ('5 . 0');
 ERROR:  invalid input syntax for type real: "5 . 0"
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('5 . 0');
+                                           ^
 INSERT INTO FLOAT4_TBL(f1) VALUES ('5.   0');
 ERROR:  invalid input syntax for type real: "5.   0"
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('5.   0');
+                                           ^
 INSERT INTO FLOAT4_TBL(f1) VALUES ('     - 3.0');
 ERROR:  invalid input syntax for type real: "     - 3.0"
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('     - 3.0');
+                                           ^
 INSERT INTO FLOAT4_TBL(f1) VALUES ('123            5');
 ERROR:  invalid input syntax for type real: "123            5"
+LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('123            5');
+                                           ^
 -- special inputs
 SELECT 'NaN'::float4;
  float4 
@@ -67,10 +91,16 @@ SELECT '          -INFINiTY   '::float4;
 -- bad special inputs
 SELECT 'N A N'::float4;
 ERROR:  invalid input syntax for type real: "N A N"
+LINE 1: SELECT 'N A N'::float4;
+               ^
 SELECT 'NaN x'::float4;
 ERROR:  invalid input syntax for type real: "NaN x"
+LINE 1: SELECT 'NaN x'::float4;
+               ^
 SELECT ' INFINITY    x'::float4;
 ERROR:  invalid input syntax for type real: " INFINITY    x"
+LINE 1: SELECT ' INFINITY    x'::float4;
+               ^
 SELECT 'Infinity'::float4 + 100.0;
  ?column? 
 ----------

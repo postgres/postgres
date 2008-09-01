@@ -25,6 +25,8 @@ LINE 1: select;
 -- no such relation 
 select * from nonesuch;
 ERROR:  relation "nonesuch" does not exist
+LINE 1: select * from nonesuch;
+                      ^
 -- missing target list
 select from pg_database;
 ERROR:  syntax error at or near "from"
@@ -66,6 +68,8 @@ LINE 1: delete from;
 -- no such relation 
 delete from nonesuch;
 ERROR:  relation "nonesuch" does not exist
+LINE 1: delete from nonesuch;
+                    ^
 --
 -- DROP
  
@@ -245,6 +249,8 @@ LINE 1: drop operator === ();
 -- no such operator 
 drop operator === (int4);
 ERROR:  missing argument
+LINE 1: drop operator === (int4);
+                               ^
 HINT:  Use NONE to denote the missing argument of a unary operator.
 -- no such operator by that name 
 drop operator === (int4, int4);
@@ -252,6 +258,8 @@ ERROR:  operator does not exist: integer === integer
 -- no such type1 
 drop operator = (nonesuch);
 ERROR:  missing argument
+LINE 1: drop operator = (nonesuch);
+                                 ^
 HINT:  Use NONE to denote the missing argument of a unary operator.
 -- no such type1 
 drop operator = ( , int4);

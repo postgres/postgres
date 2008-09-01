@@ -22,6 +22,8 @@ SELECT 'red'::rainbow;
 
 SELECT 'mauve'::rainbow;
 ERROR:  invalid input value for enum rainbow: "mauve"
+LINE 1: SELECT 'mauve'::rainbow;
+               ^
 --
 -- Basic table creation, row selection
 --
