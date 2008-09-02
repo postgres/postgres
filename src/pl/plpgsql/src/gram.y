@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.113 2008/05/15 22:39:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.114 2008/09/02 20:37:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,18 @@
 #include "plpgsql.h"
 
 #include "parser/parser.h"
+
+
+/*
+ * Bison doesn't allocate anything that needs to live across parser calls,
+ * so we can easily have it use palloc instead of malloc.  This prevents
+ * memory leaks if we error out during parsing.  Note this only works with
+ * bison >= 2.0.  However, in bison 1.875 the default is to use alloca()
+ * if possible, so there's not really much problem anyhow, at least if
+ * you're building with gcc.
+ */
+#define YYMALLOC palloc
+#define YYFREE   pfree
 
 
 static PLpgSQL_expr		*read_sql_construct(int until,

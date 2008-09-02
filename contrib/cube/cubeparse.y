@@ -2,7 +2,7 @@
 /* NdBox = [(lowerleft),(upperright)] */
 /* [(xLL(1)...xLL(N)),(xUR(1)...xUR(n))] */
 
-/* $PostgreSQL: pgsql/contrib/cube/cubeparse.y,v 1.17 2007/02/27 23:48:05 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/cube/cubeparse.y,v 1.18 2008/09/02 20:37:54 tgl Exp $ */
 
 #define YYPARSE_PARAM result  /* need this to pass a pointer (void *) to yyparse */
 #define YYSTYPE char *
@@ -11,6 +11,17 @@
 #include "postgres.h"
 
 #include "cubedata.h"
+
+/*
+ * Bison doesn't allocate anything that needs to live across parser calls,
+ * so we can easily have it use palloc instead of malloc.  This prevents
+ * memory leaks if we error out during parsing.  Note this only works with
+ * bison >= 2.0.  However, in bison 1.875 the default is to use alloca()
+ * if possible, so there's not really much problem anyhow, at least if
+ * you're building with gcc.
+ */
+#define YYMALLOC palloc
+#define YYFREE   pfree
 
 extern int cube_yylex(void);
 

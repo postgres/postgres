@@ -9,6 +9,17 @@
 #include "utils/builtins.h"
 #include "segdata.h"
 
+/*
+ * Bison doesn't allocate anything that needs to live across parser calls,
+ * so we can easily have it use palloc instead of malloc.  This prevents
+ * memory leaks if we error out during parsing.  Note this only works with
+ * bison >= 2.0.  However, in bison 1.875 the default is to use alloca()
+ * if possible, so there's not really much problem anyhow, at least if
+ * you're building with gcc.
+ */
+#define YYMALLOC palloc
+#define YYFREE   pfree
+
   extern int seg_yylex(void);
 
   extern int significant_digits(char *str);		/* defined in seg.c */
