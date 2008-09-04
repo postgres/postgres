@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.18 2008/07/11 21:06:29 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.19 2008/09/04 11:47:05 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -395,14 +395,7 @@ startScanKey(Relation index, GinState *ginstate, GinScanKey key)
 		return;
 
 	for (i = 0; i < key->nentries; i++)
-	{
 		startScanEntry(index, ginstate, key->scanEntry + i);
-		/*
-		 * Copy strategy number to each entry of key to
-		 * use in comparePartialFn call
-		 */
-		key->scanEntry[i].strategy = key->strategy;
-	}
 
 	memset(key->entryRes, TRUE, sizeof(bool) * key->nentries);
 	key->isFinished = FALSE;
