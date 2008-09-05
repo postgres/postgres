@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.566 2008/09/05 12:11:18 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.567 2008/09/05 18:54:58 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -207,8 +207,8 @@ AC_SUBST(enable_profiling)
 # --enable-coverage enables generation of code coverage metrics with gcov
 #
 PGAC_ARG_BOOL(enable, coverage, no,
-              [  --enable-coverage       build with coverage testing instrumentation])
-AC_CHECK_PROGS(GCOV, gcov)
+              [  --enable-coverage       build with coverage testing instrumentation],
+[AC_CHECK_PROGS(GCOV, gcov)
 if test -z "$GCOV"; then
   AC_MSG_ERROR([gcov not found])
 fi
@@ -219,7 +219,7 @@ fi
 AC_CHECK_PROGS(GENHTML, genhtml)
 if test -z "$GENHTML"; then
   AC_MSG_ERROR([genhtml not found])
-fi
+fi])
 AC_SUBST(enable_coverage)
 
 #
