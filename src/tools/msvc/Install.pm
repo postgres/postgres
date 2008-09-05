@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.29 2008/02/28 12:17:59 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.30 2008/09/05 16:54:39 momjian Exp $
 #
 use strict;
 use warnings;
@@ -216,8 +216,11 @@ sub GenerateConversionScript
         $sql .= "-- $se --> $de\n";
         $sql .=
 "CREATE OR REPLACE FUNCTION $func (INTEGER, INTEGER, CSTRING, INTERNAL, INTEGER) RETURNS VOID AS '\$libdir/$obj', '$func' LANGUAGE C STRICT;\n";
+        $sql .=
+"COMMENT ON FUNCTION $func(INTEGER, INTEGER, CSTRING, INTERNAL, INTEGER) IS 'internal conversion function for $se to $de';\n";
         $sql .= "DROP CONVERSION pg_catalog.$name;\n";
         $sql .= "CREATE DEFAULT CONVERSION pg_catalog.$name FOR '$se' TO '$de' FROM $func;\n";
+        $sql .= "COMMENT ON CONVERSION pg_catalog.$name IS 'conversion for $se to $de';\n";
     }
     open($F,">$target/share/conversion_create.sql")
       || die "Could not write to conversion_create.sql\n";
