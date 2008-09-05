@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.565 2008/08/29 13:02:32 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.566 2008/09/05 12:11:18 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -204,6 +204,25 @@ PGAC_ARG_BOOL(enable, profiling, no,
 AC_SUBST(enable_profiling)
 
 #
+# --enable-coverage enables generation of code coverage metrics with gcov
+#
+PGAC_ARG_BOOL(enable, coverage, no,
+              [  --enable-coverage       build with coverage testing instrumentation])
+AC_CHECK_PROGS(GCOV, gcov)
+if test -z "$GCOV"; then
+  AC_MSG_ERROR([gcov not found])
+fi
+AC_CHECK_PROGS(LCOV, lcov)
+if test -z "$LCOV"; then
+  AC_MSG_ERROR([lcov not found])
+fi
+AC_CHECK_PROGS(GENHTML, genhtml)
+if test -z "$GENHTML"; then
+  AC_MSG_ERROR([genhtml not found])
+fi
+AC_SUBST(enable_coverage)
+
+#
 # DTrace
 #
 PGAC_ARG_BOOL(enable, dtrace, no,
@@ -370,13 +389,16 @@ unset CFLAGS
 # CFLAGS are selected so:
 # If the user specifies something in the environment, that is used.
 # else:  If the template file set something, that is used.
+# else:  If coverage was enabled, don't set anything.
 # else:  If the compiler is GCC, then we use -O2.
-# else:  If the compiler is something else, then we use -0.
+# else:  If the compiler is something else, then we use -O.
 
 if test "$ac_env_CFLAGS_set" = set; then
   CFLAGS=$ac_env_CFLAGS_value
 elif test "${CFLAGS+set}" = set; then
   : # (keep what template set)
+elif test "$enable_coverage" = yes; then
+  : # no optimization by default
 elif test "$GCC" = yes; then
   CFLAGS="-O2"
 else
@@ -413,6 +435,15 @@ fi
 # supply -g if --enable-debug
 if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
   CFLAGS="$CFLAGS -g"
+fi
+
+# enable code coverage if --enable-coverage
+if test "$enable_coverage" = yes; then
+  if test "$GCC" = yes; then
+    CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage"
+  else
+    AC_MSG_ERROR([--enable-coverage is supported only when using GCC])
+  fi
 fi
 
 # enable profiling if --enable-profiling

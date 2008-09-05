@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.312 2008/08/29 13:02:32 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.313 2008/09/05 12:11:18 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1229,6 +1229,21 @@ su - postgres
          recommended for production installations only if you use GCC.
          But you should always have it on if you are doing development work
          or running a beta version.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--enable-coverage</option></term>
+       <listitem>
+        <para>
+         If using GCC, all programs and libraries are compiled with
+         code coverage testing instrumentation.  When run, they
+         generate files in the build directory with code coverage
+         metrics.
+         <![%standalone-ignore[See <xref linkend="regress-coverage">
+         for more information.]]> This option is for use only with GCC
+         and when doing development work.
         </para>
        </listitem>
       </varlistentry>

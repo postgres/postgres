@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.59 2008/05/30 00:04:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.60 2008/09/05 12:11:18 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -419,5 +419,37 @@ float8:out:i.86-.*-openbsd=float8-small-is-zero.out
    </para>
     
   </sect1>
-  
+
+  <sect1 id="regress-coverage">
+   <title>Test Coverage Examination</title>
+
+   <para>
+    The PostgreSQL source code can be compiled with coverage testing
+    instrumentation, so that it becomes possible to examine which
+    parts of the code are covered by the regression tests or any other
+    test suite that is run with the code.  This is currently supported
+    when compiling with GCC and requires the <command>gcov</command>
+    and <command>lcov</command> programs.
+   </para>
+
+   <para>
+    A typical workflow would look like this:
+<screen>
+./configure --enable-coverage ... OTHER OPTIONS ...
+gmake
+gmake check # or other test suite
+gmake coverage-html
+</screen>
+    Then point your HTML browser
+    to <filename>coverage/index.html</filename>.
+   </para>
+
+   <para>
+    To reset the execution counts between test runs, run
+<screen>
+gmake coverage-clean
+</screen>
+   </para>
+  </sect1>
+
 </chapter>

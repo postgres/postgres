@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.242 2008/08/29 13:02:32 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.243 2008/09/05 12:11:18 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -18,7 +18,7 @@
 #
 # Meta configuration
 
-.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check
+.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage
 .SILENT: installdirs
 
 # make `all' the default target
@@ -165,6 +165,7 @@ enable_rpath	= @enable_rpath@
 enable_nls	= @enable_nls@
 enable_debug	= @enable_debug@
 enable_dtrace	= @enable_dtrace@
+enable_coverage	= @enable_coverage@
 enable_thread_safety	= @enable_thread_safety@
 
 python_includespec	= @python_includespec@
@@ -290,6 +291,17 @@ STRIP_SHARED_LIB = @STRIP_SHARED_LIB@
 JADE	= @JADE@
 NSGMLS	= @NSGMLS@
 SGMLSPL	= @SGMLSPL@
+
+# Code coverage
+
+GCOV = @GCOV@
+LCOV = @LCOV@
+GENHTML = @GENHTML@
+
+ifeq ($(enable_coverage),yes)
+# ccache loses .gcno files
+export CCACHE_DISABLE = 1
+endif
 
 # Feature settings
 
@@ -574,3 +586,39 @@ include $(top_srcdir)/src/nls-global.mk
 
 endif # nls.mk
 endif # enable_nls
+
+
+##########################################################################
+#
+# Coverage
+
+ifeq ($(enable_coverage), yes)
+
+# There is a strange interaction between lcov and existing .gcov
+# output files.  Hence the rm command and the ordering dependency.
+
+gcda_files := $(wildcard *.gcda)
+
+lcov.info:
+	rm -f *.gcov
+ifneq (,$(gcda_files))
+	$(LCOV) -d . -c -o $@ $(LCOVFLAGS)
+endif
+
+%.c.gcov: %.gcda | lcov.info
+	$(GCOV) -b -f -p -o . $(GCOVFLAGS) $*.c >$*.c.gcov.out
+
+
+# hook for clean-up
+clean distclean maintainer-clean: clean-coverage
+
+.PHONY: clean-coverage
+clean-coverage:
+	rm -f *.gcda *.gcno lcov.info *.gcov *.gcov.out
+
+
+# User-callable target to reset counts between test runs
+coverage-clean:
+	rm -f `find . -name '*.gcda' -print`
+
+endif # enable_coverage

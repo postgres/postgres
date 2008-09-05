@@ -1,7 +1,7 @@
 #
 # Common make rules for backend
 #
-# $PostgreSQL: pgsql/src/backend/common.mk,v 1.7 2008/03/17 18:24:56 petere Exp $
+# $PostgreSQL: pgsql/src/backend/common.mk,v 1.8 2008/09/05 12:11:18 petere Exp $
 #
 
 # When including this file, set OBJS to the object files created in
@@ -46,3 +46,9 @@ ifdef SUBDIRS
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean || exit; done
 endif
 	rm -f $(subsysfilename) $(OBJS)
+
+
+coverage: $(gcda_files:.gcda=.c.gcov) lcov.info
+ifdef SUBDIRS
+	for dir in $(SUBDIRS); do $(MAKE) -C $$dir coverage || exit; done
+endif
