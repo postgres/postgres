@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.247 2008/08/28 23:09:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.248 2008/09/05 21:07:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1545,7 +1545,8 @@ create_mergejoin_plan(PlannerInfo *root,
 
 		/*
 		 * We assume the materialize will not spill to disk, and therefore
-		 * charge just cpu_tuple_cost per tuple.
+		 * charge just cpu_tuple_cost per tuple.  (Keep this estimate in sync
+		 * with similar ones in cost_mergejoin and create_mergejoin_path.)
 		 */
 		copy_plan_costsize(matplan, inner_plan);
 		matplan->total_cost += cpu_tuple_cost * matplan->plan_rows;

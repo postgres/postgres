@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.146 2008/08/14 18:47:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.147 2008/09/05 21:07:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1304,19 +1304,43 @@ create_mergejoin_path(PlannerInfo *root,
 
 	/*
 	 * If we are not sorting the inner path, we may need a materialize node to
-	 * ensure it can be marked/restored.  (Sort does support mark/restore, so
-	 * no materialize is needed in that case.)
+	 * ensure it can be marked/restored.
 	 *
 	 * Since the inner side must be ordered, and only Sorts and IndexScans can
-	 * create order to begin with, you might think there's no problem --- but
-	 * you'd be wrong.  Nestloop and merge joins can *preserve* the order of
-	 * their inputs, so they can be selected as the input of a mergejoin, and
-	 * they don't support mark/restore at present.
+	 * create order to begin with, and they both support mark/restore, you
+	 * might think there's no problem --- but you'd be wrong.  Nestloop and
+	 * merge joins can *preserve* the order of their inputs, so they can be
+	 * selected as the input of a mergejoin, and they don't support
+	 * mark/restore at present.
+	 *
+	 * Note: Sort supports mark/restore, so no materialize is really needed
+	 * in that case; but one may be desirable anyway to optimize the sort.
+	 * However, since we aren't representing the sort step separately in
+	 * the Path tree, we can't explicitly represent the materialize either.
+	 * So that case is not handled here.  Instead, cost_mergejoin has to
+	 * factor in the cost and create_mergejoin_plan has to add the plan node.
 	 */
 	if (innersortkeys == NIL &&
 		!ExecSupportsMarkRestore(inner_path->pathtype))
-		inner_path = (Path *)
-			create_material_path(inner_path->parent, inner_path);
+	{
+		Path   *mpath;
+
+		mpath = (Path *) create_material_path(inner_path->parent, inner_path);
+
+		/*
+		 * We expect the materialize won't spill to disk (it could only do
+		 * so if there were a whole lot of duplicate tuples, which is a case
+		 * cost_mergejoin will avoid choosing anyway).  Therefore
+		 * cost_material's cost estimate is bogus and we should charge
+		 * just cpu_tuple_cost per tuple.  (Keep this estimate in sync with
+		 * similar ones in cost_mergejoin and create_mergejoin_plan.)
+		 */
+		mpath->startup_cost = inner_path->startup_cost;
+		mpath->total_cost = inner_path->total_cost;
+		mpath->total_cost += cpu_tuple_cost * inner_path->parent->rows;
+
+		inner_path = mpath;
+	}
 
 	pathnode->jpath.path.pathtype = T_MergeJoin;
 	pathnode->jpath.path.parent = joinrel;
