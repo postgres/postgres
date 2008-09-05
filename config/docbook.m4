@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/docbook.m4,v 1.8 2007/08/09 02:33:58 tgl Exp $
+# $PostgreSQL: pgsql/config/docbook.m4,v 1.9 2008/09/05 09:37:37 petere Exp $
 
 # PGAC_PROG_JADE
 # --------------
@@ -55,7 +55,7 @@ AC_CACHE_VAL([pgac_cv_path_stylesheets],
 [if test -n "$DOCBOOKSTYLE"; then
   pgac_cv_path_stylesheets=$DOCBOOKSTYLE
 else
-  for pgac_prefix in /usr /usr/local /opt; do
+  for pgac_prefix in /usr /usr/local /opt /sw; do
     for pgac_infix in share lib; do
       for pgac_postfix in \
         sgml/stylesheets/nwalsh-modular \
@@ -64,7 +64,8 @@ else
         sgml/docbook-dsssl \
         sgml/docbook/dsssl/modular \
         sgml/docbook/stylesheet/dsssl/modular \
-        sgml/docbook/dsssl-stylesheets
+        sgml/docbook/dsssl-stylesheets \
+        sgml/dsssl/docbook-dsssl-nwalsh
       do
         pgac_candidate=$pgac_prefix/$pgac_infix/$pgac_postfix
         if test -r "$pgac_candidate/html/docbook.dsl" \
