@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.210 2008/09/06 00:01:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.211 2008/09/06 20:18:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1161,7 +1161,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\edit</literal> (or <literal>\e</literal>) <literal>[ <replaceable class="parameter">filename</replaceable> ]</literal></term>
+        <term><literal>\edit</literal> (or <literal>\e</literal>) <literal><optional> <replaceable class="parameter">filename</replaceable> </optional></literal></term>
 
         <listitem>
         <para>
@@ -1196,7 +1196,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\ef <replaceable class="parameter">function_description</replaceable> </literal></term>
+        <term><literal>\ef <optional> <replaceable class="parameter">function_description</replaceable> </optional></literal></term>
 
         <listitem>
         <para>
@@ -1213,6 +1213,11 @@ testdb=&gt;
          and arguments, for example <literal>foo(integer, text)</>.
          The argument types must be given if there is more
          than one function of the same name.
+        </para>
+
+        <para>
+         If no function is specified, a blank <command>CREATE FUNCTION</>
+         template is presented for editing.
         </para>
         </listitem>
       </varlistentry>

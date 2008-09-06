@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.194 2008/09/06 00:01:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.195 2008/09/06 20:18:08 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -62,6 +62,7 @@ static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
 static bool lookup_function_oid(PGconn *conn, const char *desc, Oid *foid);
 static bool get_create_function_cmd(PGconn *conn, Oid oid, PQExpBuffer buf);
+static void minimal_error_message(PGresult *res);
 
 #ifdef USE_SSL
 static void printSSLInfo(void);
@@ -433,8 +434,6 @@ exec_command(const char *cmd,
 	 */
 	else if (strcmp(cmd, "e") == 0 || strcmp(cmd, "edit") == 0)
 	{
-		char	   *fname;
-
 		if (!query_buf)
 		{
 			psql_error("no query buffer\n");
@@ -442,6 +441,8 @@ exec_command(const char *cmd,
 		}
 		else
 		{
+			char	   *fname;
+
 			fname = psql_scan_slash_option(scan_state,
 										   OT_NORMAL, NULL, true);
 			expand_tilde(&fname);
@@ -456,53 +457,59 @@ exec_command(const char *cmd,
 	}
 
 	/*
-	 * \ef -- edit the named function in $EDITOR.
+	 * \ef -- edit the named function, or present a blank CREATE FUNCTION
+	 * template if no argument is given
 	 */
 	else if (strcmp(cmd, "ef") == 0)
 	{
-		char   *func;
-		Oid		foid;
-
-		func = psql_scan_slash_option(scan_state, OT_WHOLE_LINE, NULL, true);
-		if (!func)
-		{
-			psql_error("no function name specified\n");
-			status = PSQL_CMD_ERROR;
-		}
-		else if (!lookup_function_oid(pset.db, func, &foid))
-		{
-			psql_error(PQerrorMessage(pset.db));
-			status = PSQL_CMD_ERROR;
-		}
-		else if (!query_buf)
+		if (!query_buf)
 		{
 			psql_error("no query buffer\n");
 			status = PSQL_CMD_ERROR;
 		}
-		else if (!get_create_function_cmd(pset.db, foid, query_buf))
-		{
-			psql_error(PQerrorMessage(pset.db));
-			status = PSQL_CMD_ERROR;
-		}
 		else
+		{
+			char	   *func;
+			Oid			foid;
+
+			func = psql_scan_slash_option(scan_state,
+										  OT_WHOLE_LINE, NULL, true);
+			if (!func)
+			{
+				/* set up an empty command to fill in */
+				printfPQExpBuffer(query_buf,
+								  "CREATE FUNCTION ( )\n"
+								  " RETURNS \n"
+								  " LANGUAGE \n"
+								  " -- common options:  IMMUTABLE  STABLE  STRICT  SECURITY DEFINER\n"
+								  "AS $function$\n"
+								  "\n$function$\n");
+			}
+			else if (!lookup_function_oid(pset.db, func, &foid))
+			{
+				/* error already reported */
+				status = PSQL_CMD_ERROR;
+			}
+			else if (!get_create_function_cmd(pset.db, foid, query_buf))
+			{
+				/* error already reported */
+				status = PSQL_CMD_ERROR;
+			}
+			if (func)
+				free(func);
+		}
+
+		if (status != PSQL_CMD_ERROR)
 		{
 			bool edited = false;
 
 			if (!do_edit(0, query_buf, &edited))
-			{
 				status = PSQL_CMD_ERROR;
-			}
 			else if (!edited)
-			{
-				printf("No changes\n");
-			}
+				puts(_("No changes."));
 			else
-			{
 				status = PSQL_CMD_NEWEDIT;
-			}
 		}
-		if (func)
-			free(func);
 	}
 
 	/* \echo and \qecho */
@@ -1998,7 +2005,10 @@ lookup_function_oid(PGconn *conn, const char *desc, Oid *foid)
 	if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1)
 		*foid = atooid(PQgetvalue(res, 0, 0));
 	else
+	{
+		minimal_error_message(res);
 		result = false;
+	}
 
 	PQclear(res);
 	destroyPQExpBuffer(query);
@@ -2027,10 +2037,42 @@ get_create_function_cmd(PGconn *conn, Oid oid, PQExpBuffer buf)
 		appendPQExpBufferStr(buf, PQgetvalue(res, 0, 0));
 	}
 	else
+	{
+		minimal_error_message(res);
 		result = false;
+	}
 
 	PQclear(res);
 	destroyPQExpBuffer(query);
 
 	return result;
+}
+
+/*
+ * Report just the primary error; this is to avoid cluttering the output
+ * with, for instance, a redisplay of the internally generated query
+ */
+static void
+minimal_error_message(PGresult *res)
+{
+	PQExpBuffer msg;
+	const char *fld;
+
+	msg = createPQExpBuffer();
+
+	fld = PQresultErrorField(res, PG_DIAG_SEVERITY);
+	if (fld)
+		printfPQExpBuffer(msg, "%s:  ", fld);
+	else
+		printfPQExpBuffer(msg, "ERROR:  ");
+	fld = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
+	if (fld)
+		appendPQExpBufferStr(msg, fld);
+	else
+		appendPQExpBufferStr(msg, "(not available)");
+	appendPQExpBufferStr(msg, "\n");
+
+	psql_error(msg->data);
+
+	destroyPQExpBuffer(msg);
 }

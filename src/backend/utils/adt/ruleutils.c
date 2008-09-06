@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.283 2008/09/06 00:01:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.284 2008/09/06 20:18:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1543,9 +1543,15 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 		elog(ERROR, "null prosrc");
 	prosrc = TextDatumGetCString(tmp);
 
-	/* We always use dollar quoting.  Figure out a suitable delimiter. */
+	/*
+	 * We always use dollar quoting.  Figure out a suitable delimiter.
+	 *
+	 * Since the user is likely to be editing the function body string,
+	 * we shouldn't use a short delimiter that he might easily create a
+	 * conflict with.  Hence prefer "$function$", but extend if needed.
+	 */
 	initStringInfo(&dq);
-	appendStringInfoChar(&dq, '$');
+	appendStringInfoString(&dq, "$function");
 	while (strstr(prosrc, dq.data) != NULL)
 		appendStringInfoChar(&dq, 'x');
 	appendStringInfoChar(&dq, '$');
