@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.209 2008/07/03 03:37:16 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.210 2008/09/06 00:01:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1191,6 +1191,29 @@ testdb=&gt;
         systems, <filename>notepad.exe</filename> on Windows systems.
         </para>
         </tip>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\ef <replaceable class="parameter">function_description</replaceable> </literal></term>
+
+        <listitem>
+        <para>
+         This command fetches and edits the definition of the named function,
+         in the form of a <command>CREATE OR REPLACE FUNCTION</> command.
+         Editing is done in the same way as for <literal>\e</>.
+         After the editor exits, the updated command waits in the query buffer;
+         type semicolon or <literal>\g</> to send it, or <literal>\r</>
+         to cancel.
+        </para>
+
+        <para>
+         The target function can be specified by name alone, or by name
+         and arguments, for example <literal>foo(integer, text)</>.
+         The argument types must be given if there is more
+         than one function of the same name.
+        </para>
         </listitem>
       </varlistentry>
 

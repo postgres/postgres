@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.193 2008/08/16 00:16:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.194 2008/09/06 00:01:24 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -56,9 +56,12 @@
 static backslashResult exec_command(const char *cmd,
 			 PsqlScanState scan_state,
 			 PQExpBuffer query_buf);
-static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
+static bool do_edit(const char *filename_arg, PQExpBuffer query_buf,
+					bool *edited);
 static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
+static bool lookup_function_oid(PGconn *conn, const char *desc, Oid *foid);
+static bool get_create_function_cmd(PGconn *conn, Oid oid, PQExpBuffer buf);
 
 #ifdef USE_SSL
 static void printSSLInfo(void);
@@ -444,9 +447,62 @@ exec_command(const char *cmd,
 			expand_tilde(&fname);
 			if (fname)
 				canonicalize_path(fname);
-			status = do_edit(fname, query_buf) ? PSQL_CMD_NEWEDIT : PSQL_CMD_ERROR;
+			if (do_edit(fname, query_buf, NULL))
+				status = PSQL_CMD_NEWEDIT;
+			else
+				status = PSQL_CMD_ERROR;
 			free(fname);
 		}
+	}
+
+	/*
+	 * \ef -- edit the named function in $EDITOR.
+	 */
+	else if (strcmp(cmd, "ef") == 0)
+	{
+		char   *func;
+		Oid		foid;
+
+		func = psql_scan_slash_option(scan_state, OT_WHOLE_LINE, NULL, true);
+		if (!func)
+		{
+			psql_error("no function name specified\n");
+			status = PSQL_CMD_ERROR;
+		}
+		else if (!lookup_function_oid(pset.db, func, &foid))
+		{
+			psql_error(PQerrorMessage(pset.db));
+			status = PSQL_CMD_ERROR;
+		}
+		else if (!query_buf)
+		{
+			psql_error("no query buffer\n");
+			status = PSQL_CMD_ERROR;
+		}
+		else if (!get_create_function_cmd(pset.db, foid, query_buf))
+		{
+			psql_error(PQerrorMessage(pset.db));
+			status = PSQL_CMD_ERROR;
+		}
+		else
+		{
+			bool edited = false;
+
+			if (!do_edit(0, query_buf, &edited))
+			{
+				status = PSQL_CMD_ERROR;
+			}
+			else if (!edited)
+			{
+				printf("No changes\n");
+			}
+			else
+			{
+				status = PSQL_CMD_NEWEDIT;
+			}
+		}
+		if (func)
+			free(func);
 	}
 
 	/* \echo and \qecho */
@@ -1410,7 +1466,7 @@ editFile(const char *fname)
 
 /* call this one */
 static bool
-do_edit(const char *filename_arg, PQExpBuffer query_buf)
+do_edit(const char *filename_arg, PQExpBuffer query_buf, bool *edited)
 {
 	char		fnametmp[MAXPGPATH];
 	FILE	   *stream = NULL;
@@ -1532,10 +1588,13 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 				psql_error("%s: %s\n", fname, strerror(errno));
 				error = true;
 			}
+			else if (edited)
+			{
+				*edited = true;
+			}
 
 			fclose(stream);
 		}
-
 	}
 
 	/* remove temp file */
@@ -1911,4 +1970,67 @@ do_shell(const char *command)
 		return false;
 	}
 	return true;
+}
+
+/*
+ * This function takes a function description, e.g. "x" or "x(int)", and
+ * issues a query on the given connection to retrieve the function's OID
+ * using a cast to regproc or regprocedure (as appropriate). The result,
+ * if there is one, is returned at *foid.  Note that we'll fail if the
+ * function doesn't exist OR if there are multiple matching candidates
+ * OR if there's something syntactically wrong with the function description;
+ * unfortunately it can be hard to tell the difference.
+ */
+static bool
+lookup_function_oid(PGconn *conn, const char *desc, Oid *foid)
+{
+	bool		result = true;
+	PQExpBuffer query;
+	PGresult *res;
+
+	query = createPQExpBuffer();
+	printfPQExpBuffer(query, "SELECT ");
+	appendStringLiteralConn(query, desc, conn);
+	appendPQExpBuffer(query, "::pg_catalog.%s::pg_catalog.oid",
+					  strchr(desc, '(') ? "regprocedure" : "regproc");
+
+	res = PQexec(conn, query->data);
+	if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1)
+		*foid = atooid(PQgetvalue(res, 0, 0));
+	else
+		result = false;
+
+	PQclear(res);
+	destroyPQExpBuffer(query);
+
+	return result;
+}
+
+/*
+ * Fetches the "CREATE OR REPLACE FUNCTION ..." command that describes the
+ * function with the given OID.  If successful, the result is stored in buf.
+ */
+static bool
+get_create_function_cmd(PGconn *conn, Oid oid, PQExpBuffer buf)
+{
+	bool		result = true;
+	PQExpBuffer query;
+	PGresult *res;
+
+	query = createPQExpBuffer();
+	printfPQExpBuffer(query, "SELECT pg_catalog.pg_get_functiondef(%u)", oid);
+
+	res = PQexec(conn, query->data);
+	if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1)
+	{
+		resetPQExpBuffer(buf);
+		appendPQExpBufferStr(buf, PQgetvalue(res, 0, 0));
+	}
+	else
+		result = false;
+
+	PQclear(res);
+	destroyPQExpBuffer(query);
+
+	return result;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.512 2008/08/25 11:18:43 mha Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.513 2008/09/06 00:01:24 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2292,6 +2292,8 @@ DATA(insert OID = 1716 (  pg_get_expr		   PGNSP PGUID 12 1 0 0 f f t f s 2 25 "2
 DESCR("deparse an encoded expression");
 DATA(insert OID = 1665 (  pg_get_serial_sequence	PGNSP PGUID 12 1 0 0 f f t f s 2 25 "25 25" _null_ _null_ _null_	pg_get_serial_sequence _null_ _null_ _null_ ));
 DESCR("name of sequence for a serial column");
+DATA(insert OID = 2098 (  pg_get_functiondef	PGNSP PGUID 12 1 0 0 f f t f s 1 25 "26" _null_ _null_ _null_	pg_get_functiondef _null_ _null_ _null_ ));
+DESCR("definition of a function");
 DATA(insert OID = 2162 (  pg_get_function_arguments	   PGNSP PGUID 12 1 0 0 f f t f s 1 25 "26" _null_ _null_ _null_	pg_get_function_arguments _null_ _null_ _null_ ));
 DESCR("argument list of a function");
 DATA(insert OID = 2165 (  pg_get_function_result	   PGNSP PGUID 12 1 0 0 f f t f s 1 25 "26" _null_ _null_ _null_	pg_get_function_result _null_ _null_ _null_ ));

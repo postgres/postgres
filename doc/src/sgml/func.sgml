@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.443 2008/07/21 04:47:00 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.444 2008/09/06 00:01:21 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11563,6 +11563,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
+    <primary>pg_get_functiondef</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>pg_get_function_arguments</primary>
    </indexterm>
 
@@ -11642,6 +11646,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><type>text</type></entry>
        <entry>decompile internal form of an expression, assuming that any Vars
        in it refer to the relation indicated by the second parameter</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_functiondef</function>(<parameter>func_oid</parameter>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get definition of a function</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_function_arguments</function>(<parameter>func_oid</parameter>)</literal></entry>
@@ -11756,6 +11765,8 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   </para>
 
   <para>
+   <function>pg_get_functiondef</> returns a complete
+   <command>CREATE OR REPLACE FUNCTION</> statement for a function.
    <function>pg_get_function_arguments</function> returns the argument list
    of a function, in the form it would need to appear in within
    <command>CREATE FUNCTION</>.
