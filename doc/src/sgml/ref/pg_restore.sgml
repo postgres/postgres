@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.75 2008/04/13 03:49:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.76 2008/09/07 19:12:57 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -588,8 +588,11 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
     <listitem>
      <para>
-      <application>pg_restore</application> will not restore large objects for a single table. If
-      an archive contains large objects, then all large objects will be restored.
+      <application>pg_restore</application> cannot restore large objects
+      selectively, for instance only those for a specific table.  If
+      an archive contains large objects, then all large objects will be
+      restored, or none of them if they are excluded via <option>-L</option>,
+      <option>-t</option>, or other options.
      </para>
     </listitem>
 
