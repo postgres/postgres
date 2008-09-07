@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.30 2008/03/24 18:08:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.31 2008/09/07 02:01:04 tgl Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -7,24 +7,56 @@
    <title>Formatting</title>
 
    <para>
-    Source code formatting uses 4 column tab spacing, with 
-    tabs preserved (i.e. tabs are not expanded to spaces).
+    Source code formatting uses 4 column tab spacing, with
+    tabs preserved (i.e., tabs are not expanded to spaces).
     Each logical indentation level is one additional tab stop.
-    Layout rules (brace positioning, etc) follow BSD conventions.
+   </para>
+
+   <para>
+    Layout rules (brace positioning, etc) follow BSD conventions.  In
+    particular, curly braces for the controlled blocks of <literal>if</>,
+    <literal>while</>, <literal>switch</>, etc go on their own lines.
+   </para>
+
+   <para>
+    Do not use C++ style comments (<literal>//</> comments).  Strict ANSI C
+    compilers do not accept them.  For the same reason, do not use C++
+    extensions such as declaring new variables mid-block.
+   </para>
+
+   <para>
+    The preferred style for multi-line comment blocks is
+<programlisting>
+/*
+ * comment text begins here
+ * and continues here
+ */
+</programlisting>
+    Note that comment blocks that begin in column 1 will be preserved as-is
+    by <application>pgindent</>, but it will re-flow indented comment blocks
+    as though they were plain text.  If you want to preserve the line breaks
+    in an indented block, add dashes like this:
+<programlisting>
+    /*----------
+     * comment text begins here
+     * and continues here
+     *----------
+     */
+</programlisting>
    </para>
 
    <para>
     While submitted patches do not absolutely have to follow these formatting
     rules, it's a good idea to do so.  Your code will get run through
-    <application>pgindent</>, so there's no point in making it look nice
-    under some other set of formatting conventions.
+    <application>pgindent</> before the next release, so there's no point in
+    making it look nice under some other set of formatting conventions.
    </para>
 
    <para>
-    The <filename>src/tools</filename> directory contains sample settings 
-    files that can be used with the <productname>emacs</productname>, 
-    <productname>xemacs</productname> or <productname>vim</productname> 
-    editors to help ensure that they format code according to these 
+    The <filename>src/tools</filename> directory contains sample settings
+    files that can be used with the <productname>emacs</productname>,
+    <productname>xemacs</productname> or <productname>vim</productname>
+    editors to help ensure that they format code according to these
     conventions.
    </para>
 
