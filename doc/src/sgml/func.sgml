@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.444 2008/09/06 00:01:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.445 2008/09/07 01:29:36 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -12006,11 +12006,14 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><type>xip_list</type></entry>
        <entry>
-        Active txids at the time of the snapshot.  All of them are between
-        <literal>xmin</> and <literal>xmax</>.  A txid that is
-        <literal>xmin &lt;= txid &lt; xmax</literal> and not in this list was
-        already completed at the time of the snapshot, and thus either visible
-        or dead according to its commit status.
+        Active txids at the time of the snapshot.  The list
+        includes only those active txids between <literal>xmin</>
+        and <literal>xmax</>; there might be active txids higher
+        than xmax.  A txid that is <literal>xmin &lt;= txid &lt;
+        xmax</literal> and not in this list was already completed
+        at the time of the snapshot, and thus either visible or
+        dead according to its commit status.  The list does not
+        include txids of subtransactions.
        </entry>
       </row>
 
