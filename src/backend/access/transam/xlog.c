@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.317 2008/08/11 11:05:10 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.318 2008/09/08 16:42:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -391,7 +391,8 @@ static bool InRedo = false;
 
 static void XLogArchiveNotify(const char *xlog);
 static void XLogArchiveNotifySeg(uint32 log, uint32 seg);
-static bool XLogArchiveCheckDone(const char *xlog, bool create_if_missing);
+static bool XLogArchiveCheckDone(const char *xlog);
+static bool XLogArchiveIsBusy(const char *xlog);
 static void XLogArchiveCleanup(const char *xlog);
 static void readRecoveryCommandFile(void);
 static void exitArchiveRecovery(TimeLineID endTLI,
@@ -1137,7 +1138,7 @@ XLogArchiveNotifySeg(uint32 log, uint32 seg)
  * create <XLOG>.ready fails, we'll retry during subsequent checkpoints.
  */
 static bool
-XLogArchiveCheckDone(const char *xlog, bool create_if_missing)
+XLogArchiveCheckDone(const char *xlog)
 {
 	char		archiveStatusPath[MAXPGPATH];
 	struct stat stat_buf;
@@ -1162,10 +1163,52 @@ XLogArchiveCheckDone(const char *xlog, bool create_if_missing)
 		return true;
 
 	/* Retry creation of the .ready file */
-	if (create_if_missing)
-		XLogArchiveNotify(xlog);
-
+	XLogArchiveNotify(xlog);
 	return false;
+}
+
+/*
+ * XLogArchiveIsBusy
+ *
+ * Check to see if an XLOG segment file is still unarchived.
+ * This is almost but not quite the inverse of XLogArchiveCheckDone: in
+ * the first place we aren't chartered to recreate the .ready file, and
+ * in the second place we should consider that if the file is already gone
+ * then it's not busy.  (This check is needed to handle the race condition
+ * that a checkpoint already deleted the no-longer-needed file.)
+ */
+static bool
+XLogArchiveIsBusy(const char *xlog)
+{
+	char		archiveStatusPath[MAXPGPATH];
+	struct stat stat_buf;
+
+	/* First check for .done --- this means archiver is done with it */
+	StatusFilePath(archiveStatusPath, xlog, ".done");
+	if (stat(archiveStatusPath, &stat_buf) == 0)
+		return false;
+
+	/* check for .ready --- this means archiver is still busy with it */
+	StatusFilePath(archiveStatusPath, xlog, ".ready");
+	if (stat(archiveStatusPath, &stat_buf) == 0)
+		return true;
+
+	/* Race condition --- maybe archiver just finished, so recheck */
+	StatusFilePath(archiveStatusPath, xlog, ".done");
+	if (stat(archiveStatusPath, &stat_buf) == 0)
+		return false;
+
+	/*
+	 * Check to see if the WAL file has been removed by checkpoint,
+	 * which implies it has already been archived, and explains why we
+	 * can't see a status file for it.
+	 */
+	snprintf(archiveStatusPath, MAXPGPATH, XLOGDIR "/%s", xlog);
+	if (stat(archiveStatusPath, &stat_buf) != 0 &&
+		errno == ENOENT)
+		return false;
+
+	return true;
 }
 
 /*
@@ -2499,14 +2542,14 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 *
 	 * We initialise this with the filename of an InvalidXLogRecPtr, which
 	 * will prevent the deletion of any WAL files from the archive
-	 * because of the alphabetic sorting property of WAL filenames. 
+	 * because of the alphabetic sorting property of WAL filenames.
 	 *
 	 * Once we have successfully located the redo pointer of the checkpoint
 	 * from which we start recovery we never request a file prior to the redo
 	 * pointer of the last restartpoint. When redo begins we know that we
 	 * have successfully located it, so there is no need for additional
 	 * status flags to signify the point when we can begin deleting WAL files
-	 * from the archive. 
+	 * from the archive.
 	 */
 	if (InRedo)
 	{
@@ -2740,7 +2783,7 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 			strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
 			strcmp(xlde->d_name + 8, lastoff + 8) <= 0)
 		{
-			if (XLogArchiveCheckDone(xlde->d_name, true))
+			if (XLogArchiveCheckDone(xlde->d_name))
 			{
 				snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlde->d_name);
 
@@ -2807,7 +2850,7 @@ CleanupBackupHistory(void)
 			strcmp(xlde->d_name + strlen(xlde->d_name) - strlen(".backup"),
 				   ".backup") == 0)
 		{
-			if (XLogArchiveCheckDone(xlde->d_name, true))
+			if (XLogArchiveCheckDone(xlde->d_name))
 			{
 				ereport(DEBUG2,
 				(errmsg("removing transaction log backup history file \"%s\"",
@@ -6623,6 +6666,12 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to run a backup"))));
 
+	if (!XLogArchivingActive())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("WAL archiving is not active"),
+				 errhint("archive_mode must be enabled at server start.")));
+
 	/*
 	 * OK to clear forcePageWrites
 	 */
@@ -6721,17 +6770,14 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	CleanupBackupHistory();
 
 	/*
-	 * Wait until the history file has been archived. We assume that the 
-	 * alphabetic sorting property of the WAL files ensures the last WAL
-	 * file is guaranteed archived by the time the history file is archived.
+	 * Wait until both the last WAL file filled during backup and the history
+	 * file have been archived.  We assume that the alphabetic sorting
+	 * property of the WAL files ensures any earlier WAL files are safely
+	 * archived as well.
 	 *
 	 * We wait forever, since archive_command is supposed to work and
-	 * we assume the admin wanted his backup to work completely. If you 
-	 * don't wish to wait, you can SET statement_timeout = xx;
-	 *
-	 * If the status file is missing, we assume that is because it was
-	 * set to .ready before we slept, then while asleep it has been set
-	 * to .done and then removed by a concurrent checkpoint.
+	 * we assume the admin wanted his backup to work completely. If you
+	 * don't wish to wait, you can set statement_timeout.
 	 */
 	BackupHistoryFileName(histfilepath, ThisTimeLineID, _logId, _logSeg,
 						  startpoint.xrecoff % XLogSegSize);
@@ -6739,7 +6785,8 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	seconds_before_warning = 60;
 	waits = 0;
 
-	while (!XLogArchiveCheckDone(histfilepath, false))
+	while (XLogArchiveIsBusy(stopxlogfilename) ||
+		   XLogArchiveIsBusy(histfilepath))
 	{
 		CHECK_FOR_INTERRUPTS();
 
@@ -6748,8 +6795,9 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 		if (++waits >= seconds_before_warning)
 		{
 			seconds_before_warning *= 2;     /* This wraps in >10 years... */
-			elog(WARNING, "pg_stop_backup() waiting for archive to complete " 
-							"(%d seconds delay)", waits);
+			ereport(WARNING,
+					(errmsg("pg_stop_backup still waiting for archive to complete (%d seconds elapsed)",
+							waits)));
 		}
 	}
 
