@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.39 2007/02/01 00:28:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.40 2008/09/08 00:47:40 tgl Exp $ -->
 
 <chapter id="user-manag">
  <title>Database Roles and Privileges</title>
@@ -293,7 +293,7 @@ ALTER ROLE myname SET enable_indexscan TO off;
    granted.
    There are several different kinds of privilege: <literal>SELECT</>,
    <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
-   <literal>REFERENCES</>, <literal>TRIGGER</>,
+   <literal>TRUNCATE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
    <literal>CREATE</>, <literal>CONNECT</>, <literal>TEMPORARY</>,
    <literal>EXECUTE</>, and <literal>USAGE</>.
    For more information on the different types of privileges supported by

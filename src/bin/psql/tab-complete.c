@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.171 2008/08/16 01:36:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.172 2008/09/08 00:47:40 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1610,9 +1610,9 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "REVOKE") == 0)
 	{
 		static const char *const list_privileg[] =
-		{"SELECT", "INSERT", "UPDATE", "DELETE", "RULE", "REFERENCES",
-			"TRIGGER", "CREATE", "CONNECT", "TEMPORARY", "EXECUTE", "USAGE",
-		"ALL", NULL};
+		{"SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES",
+		 "TRIGGER", "CREATE", "CONNECT", "TEMPORARY", "EXECUTE", "USAGE",
+		 "ALL", NULL};
 
 		COMPLETE_WITH_LIST(list_privileg);
 	}

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.374 2008/09/01 20:42:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.375 2008/09/08 00:47:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 #define ACL_SELECT		(1<<1)
 #define ACL_UPDATE		(1<<2)
 #define ACL_DELETE		(1<<3)
-/* #define ACL_RULE		(1<<4)	unused, available */
+#define ACL_TRUNCATE	(1<<4)
 #define ACL_REFERENCES	(1<<5)
 #define ACL_TRIGGER		(1<<6)
 #define ACL_EXECUTE		(1<<7)	/* for functions */

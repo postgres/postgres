@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.445 2008/09/07 01:29:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.446 2008/09/08 00:47:40 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11369,7 +11369,7 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     The desired access privilege type
     is specified by a text string, which must evaluate to one of the
     values <literal>SELECT</literal>, <literal>INSERT</literal>,
-    <literal>UPDATE</literal>, <literal>DELETE</literal>,
+    <literal>UPDATE</literal>, <literal>DELETE</literal>, <literal>TRUNCATE</>,
     <literal>REFERENCES</literal>, or <literal>TRIGGER</literal>.
     (Case of the string is not significant, however.)
     An example is:

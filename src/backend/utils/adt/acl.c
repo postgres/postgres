@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.140 2008/03/25 22:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.141 2008/09/08 00:47:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,6 +264,9 @@ aclparse(const char *s, AclItem *aip)
 				break;
 			case ACL_DELETE_CHR:
 				read = ACL_DELETE;
+				break;
+			case ACL_TRUNCATE_CHR:
+				read = ACL_TRUNCATE;
 				break;
 			case ACL_REFERENCES_CHR:
 				read = ACL_REFERENCES;
@@ -1323,6 +1326,8 @@ convert_priv_string(text *priv_type_text)
 		return ACL_UPDATE;
 	if (pg_strcasecmp(priv_type, "DELETE") == 0)
 		return ACL_DELETE;
+	if (pg_strcasecmp(priv_type, "TRUNCATE") == 0)
+		return ACL_TRUNCATE;
 	if (pg_strcasecmp(priv_type, "REFERENCES") == 0)
 		return ACL_REFERENCES;
 	if (pg_strcasecmp(priv_type, "TRIGGER") == 0)
@@ -1547,6 +1552,11 @@ convert_table_priv_string(text *priv_type_text)
 		return ACL_DELETE;
 	if (pg_strcasecmp(priv_type, "DELETE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_DELETE);
+
+	if (pg_strcasecmp(priv_type, "TRUNCATE") == 0)
+		return ACL_TRUNCATE;
+	if (pg_strcasecmp(priv_type, "TRUNCATE WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_TRUNCATE);
 
 	if (pg_strcasecmp(priv_type, "REFERENCES") == 0)
 		return ACL_REFERENCES;

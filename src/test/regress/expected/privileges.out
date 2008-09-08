@@ -10,14 +10,16 @@ DROP ROLE IF EXISTS regressuser1;
 DROP ROLE IF EXISTS regressuser2;
 DROP ROLE IF EXISTS regressuser3;
 DROP ROLE IF EXISTS regressuser4;
+DROP ROLE IF EXISTS regressuser5;
 RESET client_min_messages;
 -- test proper begins here
 CREATE USER regressuser1;
 CREATE USER regressuser2;
 CREATE USER regressuser3;
 CREATE USER regressuser4;
-CREATE USER regressuser4;	-- duplicate
-ERROR:  role "regressuser4" already exists
+CREATE USER regressuser5;
+CREATE USER regressuser5;	-- duplicate
+ERROR:  role "regressuser5" already exists
 CREATE GROUP regressgroup1;
 CREATE GROUP regressgroup2 WITH USER regressuser1, regressuser2;
 ALTER GROUP regressgroup1 ADD USER regressuser4;
@@ -42,6 +44,7 @@ SELECT * FROM atest1;
 INSERT INTO atest1 VALUES (1, 'one');
 DELETE FROM atest1;
 UPDATE atest1 SET a = 1 WHERE b = 'blech';
+TRUNCATE atest1;
 LOCK atest1 IN ACCESS EXCLUSIVE MODE;
 REVOKE ALL ON atest1 FROM PUBLIC;
 SELECT * FROM atest1;
@@ -60,6 +63,7 @@ CREATE TABLE atest2 (col1 varchar(10), col2 boolean);
 GRANT SELECT ON atest2 TO regressuser2;
 GRANT UPDATE ON atest2 TO regressuser3;
 GRANT INSERT ON atest2 TO regressuser4;
+GRANT TRUNCATE ON atest2 TO regressuser5;
 SET SESSION AUTHORIZATION regressuser2;
 SELECT session_user, current_user;
  session_user | current_user 
@@ -95,6 +99,8 @@ SELECT * FROM atest1 FOR UPDATE; -- ok
 SELECT * FROM atest2 FOR UPDATE; -- fail
 ERROR:  permission denied for relation atest2
 DELETE FROM atest2; -- fail
+ERROR:  permission denied for relation atest2
+TRUNCATE atest2; -- fail
 ERROR:  permission denied for relation atest2
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- fail
 ERROR:  permission denied for relation atest2
@@ -146,6 +152,8 @@ ERROR:  permission denied for relation atest1
 SELECT * FROM atest2 FOR UPDATE; -- fail
 ERROR:  permission denied for relation atest2
 DELETE FROM atest2; -- fail
+ERROR:  permission denied for relation atest2
+TRUNCATE atest2; -- fail
 ERROR:  permission denied for relation atest2
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- ok
 COPY atest2 FROM stdin; -- fail
@@ -285,6 +293,11 @@ ERROR:  must be owner of function testfunc1
 DROP FUNCTION testfunc1(int); -- ok
 -- restore to sanity
 GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
+-- truncate
+SET SESSION AUTHORIZATION regressuser5;
+TRUNCATE atest2; -- ok
+TRUNCATE atest3; -- fail
+ERROR:  permission denied for relation atest3
 -- has_table_privilege function
 -- bad-input checks
 select has_table_privilege(NULL,'pg_authid','select');
@@ -375,6 +388,12 @@ select has_table_privilege('pg_authid','delete');
  t
 (1 row)
 
+select has_table_privilege('pg_authid','truncate');
+ has_table_privilege 
+---------------------
+ t
+(1 row)
+
 select has_table_privilege(t1.oid,'select')
 from (select oid from pg_class where relname = 'pg_authid') as t1;
  has_table_privilege 
@@ -452,6 +471,12 @@ select has_table_privilege('pg_class','delete');
  f
 (1 row)
 
+select has_table_privilege('pg_class','truncate');
+ has_table_privilege 
+---------------------
+ f
+(1 row)
+
 select has_table_privilege(t1.oid,'select')
 from (select oid from pg_class where relname = 'pg_class') as t1;
  has_table_privilege 
@@ -522,6 +547,12 @@ select has_table_privilege('atest1','update');
 (1 row)
 
 select has_table_privilege('atest1','delete');
+ has_table_privilege 
+---------------------
+ f
+(1 row)
+
+select has_table_privilege('atest1','truncate');
  has_table_privilege 
 ---------------------
  f
@@ -604,3 +635,4 @@ DROP USER regressuser1;
 DROP USER regressuser2;
 DROP USER regressuser3;
 DROP USER regressuser4;
+DROP USER regressuser5;

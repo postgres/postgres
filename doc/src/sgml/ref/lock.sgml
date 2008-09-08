@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.48 2006/09/16 00:30:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.49 2008/09/08 00:47:40 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -155,7 +155,8 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
    <para>
     <literal>LOCK TABLE ... IN ACCESS SHARE MODE</> requires <literal>SELECT</>
     privileges on the target table.  All other forms of <command>LOCK</>
-    require <literal>UPDATE</> and/or <literal>DELETE</> privileges.
+    require at least one of <literal>UPDATE</>, <literal>DELETE</>, or
+    <literal>TRUNCATE</> privileges.
    </para>
 
    <para>

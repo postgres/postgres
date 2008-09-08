@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.70 2008/07/03 15:59:55 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.71 2008/09/08 00:47:40 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-GRANT { { SELECT | INSERT | UPDATE | DELETE | REFERENCES | TRIGGER }
+GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
     ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
     TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
@@ -188,6 +188,16 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
        (In practice, any nontrivial <command>DELETE</> command will require
        <literal>SELECT</> privilege as well, since it must reference table
        columns to determine which rows to delete.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>TRUNCATE</term>
+     <listitem>
+      <para>
+       Allows <xref linkend="sql-truncate" endterm="sql-truncate-title"> on
+       the specified table.
       </para>
      </listitem>
     </varlistentry>
@@ -421,8 +431,8 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
 =&gt; \z mytable
                 Access privileges
  Schema |  Name   | Type  |  Access privileges   
---------+---------+-------+----------------------
- public | mytable | table | miriam=arwdxt/miriam
+--------+---------+-------+-----------------------
+ public | mytable | table | miriam=arwdDxt/miriam
                           : =r/miriam
                           : admin=arw/miriam
 (1 row)
@@ -436,6 +446,7 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
                   w -- UPDATE ("write")
                   a -- INSERT ("append")
                   d -- DELETE
+                  D -- TRUNCATE
                   x -- REFERENCES
                   t -- TRIGGER
                   X -- EXECUTE
@@ -443,7 +454,7 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
                   C -- CREATE
                   c -- CONNECT
                   T -- TEMPORARY
-             arwdxt -- ALL PRIVILEGES (for tables)
+            arwdDxt -- ALL PRIVILEGES (for tables)
                   * -- grant option for preceding privilege
 
               /yyyy -- role that granted this privilege
@@ -466,7 +477,7 @@ GRANT SELECT, UPDATE, INSERT ON mytable TO admin;
     object type, as explained above.  The first <command>GRANT</> or
     <command>REVOKE</> on an object
     will instantiate the default privileges (producing, for example,
-    <literal>{miriam=arwdxt/miriam}</>) and then modify them per the
+    <literal>{miriam=arwdDxt/miriam}</>) and then modify them per the
     specified request.
    </para>
 
@@ -524,7 +535,8 @@ GRANT admins TO joe;
    <para>
     <productname>PostgreSQL</productname> allows an object owner to revoke his
     own ordinary privileges: for example, a table owner can make the table
-    read-only to himself by revoking his own INSERT, UPDATE, and DELETE
+    read-only to himself by revoking his own <literal>INSERT</>,
+    <literal>UPDATE</>, <literal>DELETE</>, and <literal>TRUNCATE</>
     privileges.  This is not possible according to the SQL standard.  The
     reason is that <productname>PostgreSQL</productname> treats the owner's
     privileges as having been granted by the owner to himself; therefore he

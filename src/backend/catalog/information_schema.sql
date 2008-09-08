@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.45 2008/07/18 03:32:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.46 2008/09/08 00:47:40 tgl Exp $
  */
 
 /*
@@ -1214,9 +1214,10 @@ CREATE VIEW role_table_grants AS
          pg_authid u_grantor,
          pg_authid g_grantee,
          (SELECT 'SELECT' UNION ALL
-          SELECT 'DELETE' UNION ALL
           SELECT 'INSERT' UNION ALL
           SELECT 'UPDATE' UNION ALL
+          SELECT 'DELETE' UNION ALL
+          SELECT 'TRUNCATE' UNION ALL
           SELECT 'REFERENCES' UNION ALL
           SELECT 'TRIGGER') AS pr (type)
 
@@ -1728,6 +1729,7 @@ CREATE VIEW table_constraints AS
                OR has_table_privilege(r.oid, 'INSERT')
                OR has_table_privilege(r.oid, 'UPDATE')
                OR has_table_privilege(r.oid, 'DELETE')
+               OR has_table_privilege(r.oid, 'TRUNCATE')
                OR has_table_privilege(r.oid, 'REFERENCES')
                OR has_table_privilege(r.oid, 'TRIGGER') )
 
@@ -1761,6 +1763,7 @@ CREATE VIEW table_constraints AS
                OR has_table_privilege(r.oid, 'INSERT')
                OR has_table_privilege(r.oid, 'UPDATE')
                OR has_table_privilege(r.oid, 'DELETE')
+               OR has_table_privilege(r.oid, 'TRUNCATE')
                OR has_table_privilege(r.oid, 'REFERENCES')
                OR has_table_privilege(r.oid, 'TRIGGER') );
 
@@ -1802,9 +1805,10 @@ CREATE VIEW table_privileges AS
            SELECT 0::oid, 'PUBLIC'
          ) AS grantee (oid, rolname),
          (SELECT 'SELECT' UNION ALL
-          SELECT 'DELETE' UNION ALL
           SELECT 'INSERT' UNION ALL
           SELECT 'UPDATE' UNION ALL
+          SELECT 'DELETE' UNION ALL
+          SELECT 'TRUNCATE' UNION ALL
           SELECT 'REFERENCES' UNION ALL
           SELECT 'TRIGGER') AS pr (type)
 
@@ -1861,6 +1865,7 @@ CREATE VIEW tables AS
                OR has_table_privilege(c.oid, 'INSERT')
                OR has_table_privilege(c.oid, 'UPDATE')
                OR has_table_privilege(c.oid, 'DELETE')
+               OR has_table_privilege(c.oid, 'TRUNCATE')
                OR has_table_privilege(c.oid, 'REFERENCES')
                OR has_table_privilege(c.oid, 'TRIGGER') );
 
@@ -1982,6 +1987,7 @@ CREATE VIEW triggers AS
                OR has_table_privilege(c.oid, 'INSERT')
                OR has_table_privilege(c.oid, 'UPDATE')
                OR has_table_privilege(c.oid, 'DELETE')
+               OR has_table_privilege(c.oid, 'TRUNCATE')
                OR has_table_privilege(c.oid, 'REFERENCES')
                OR has_table_privilege(c.oid, 'TRIGGER') );
 
@@ -2180,6 +2186,7 @@ CREATE VIEW views AS
                OR has_table_privilege(c.oid, 'INSERT')
                OR has_table_privilege(c.oid, 'UPDATE')
                OR has_table_privilege(c.oid, 'DELETE')
+               OR has_table_privilege(c.oid, 'TRUNCATE')
                OR has_table_privilege(c.oid, 'REFERENCES')
                OR has_table_privilege(c.oid, 'TRIGGER') );
 

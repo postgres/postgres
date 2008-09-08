@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.40 2008/01/01 19:45:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.41 2008/09/08 00:47:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -659,6 +659,8 @@ do { \
 				CONVERT_PRIV('x', "REFERENCES");
 				CONVERT_PRIV('t', "TRIGGER");
 			}
+			if (remoteVersion >= 80400)
+				CONVERT_PRIV('D', "TRUNCATE");
 		}
 
 		/* UPDATE */

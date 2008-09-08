@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.47 2008/03/03 19:17:27 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.48 2008/09/08 00:47:40 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 REVOKE [ GRANT OPTION FOR ]
-    { { SELECT | INSERT | UPDATE | DELETE | REFERENCES | TRIGGER }
+    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
     ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
     FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]

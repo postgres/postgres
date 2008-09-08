@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.147 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.148 2008/09/08 00:47:40 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1331,6 +1331,8 @@ string_to_privilege(const char *privname)
 		return ACL_UPDATE;
 	if (strcmp(privname, "delete") == 0)
 		return ACL_DELETE;
+	if (strcmp(privname, "truncate") == 0)
+		return ACL_TRUNCATE;
 	if (strcmp(privname, "references") == 0)
 		return ACL_REFERENCES;
 	if (strcmp(privname, "trigger") == 0)
@@ -1368,6 +1370,8 @@ privilege_to_string(AclMode privilege)
 			return "UPDATE";
 		case ACL_DELETE:
 			return "DELETE";
+		case ACL_TRUNCATE:
+			return "TRUNCATE";
 		case ACL_REFERENCES:
 			return "REFERENCES";
 		case ACL_TRIGGER:
@@ -1582,7 +1586,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 	 * protected in this way.  Assume the view rules can take care of
 	 * themselves.	ACL_USAGE is if we ever have system sequences.
 	 */
-	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_USAGE)) &&
+	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_USAGE)) &&
 		IsSystemClass(classForm) &&
 		classForm->relkind != RELKIND_VIEW &&
 		!has_rolcatupdate(roleid) &&
@@ -1591,7 +1595,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 #ifdef ACLDEBUG
 		elog(DEBUG2, "permission denied for system catalog update");
 #endif
-		mask &= ~(ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_USAGE);
+		mask &= ~(ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_USAGE);
 	}
 
 	/*

@@ -14,6 +14,7 @@ DROP ROLE IF EXISTS regressuser1;
 DROP ROLE IF EXISTS regressuser2;
 DROP ROLE IF EXISTS regressuser3;
 DROP ROLE IF EXISTS regressuser4;
+DROP ROLE IF EXISTS regressuser5;
 
 RESET client_min_messages;
 
@@ -23,7 +24,8 @@ CREATE USER regressuser1;
 CREATE USER regressuser2;
 CREATE USER regressuser3;
 CREATE USER regressuser4;
-CREATE USER regressuser4;	-- duplicate
+CREATE USER regressuser5;
+CREATE USER regressuser5;	-- duplicate
 
 CREATE GROUP regressgroup1;
 CREATE GROUP regressgroup2 WITH USER regressuser1, regressuser2;
@@ -45,6 +47,7 @@ SELECT * FROM atest1;
 INSERT INTO atest1 VALUES (1, 'one');
 DELETE FROM atest1;
 UPDATE atest1 SET a = 1 WHERE b = 'blech';
+TRUNCATE atest1;
 LOCK atest1 IN ACCESS EXCLUSIVE MODE;
 
 REVOKE ALL ON atest1 FROM PUBLIC;
@@ -58,6 +61,7 @@ CREATE TABLE atest2 (col1 varchar(10), col2 boolean);
 GRANT SELECT ON atest2 TO regressuser2;
 GRANT UPDATE ON atest2 TO regressuser3;
 GRANT INSERT ON atest2 TO regressuser4;
+GRANT TRUNCATE ON atest2 TO regressuser5;
 
 
 SET SESSION AUTHORIZATION regressuser2;
@@ -75,6 +79,7 @@ UPDATE atest2 SET col2 = NOT col2; -- fail
 SELECT * FROM atest1 FOR UPDATE; -- ok
 SELECT * FROM atest2 FOR UPDATE; -- fail
 DELETE FROM atest2; -- fail
+TRUNCATE atest2; -- fail
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- fail
 COPY atest2 FROM stdin; -- fail
 GRANT ALL ON atest1 TO PUBLIC; -- fail
@@ -99,6 +104,7 @@ UPDATE atest2 SET col2 = true FROM atest1 WHERE atest1.a = 5; -- ok
 SELECT * FROM atest1 FOR UPDATE; -- fail
 SELECT * FROM atest2 FOR UPDATE; -- fail
 DELETE FROM atest2; -- fail
+TRUNCATE atest2; -- fail
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- ok
 COPY atest2 FROM stdin; -- fail
 
@@ -205,6 +211,10 @@ DROP FUNCTION testfunc1(int); -- ok
 -- restore to sanity
 GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
 
+-- truncate
+SET SESSION AUTHORIZATION regressuser5;
+TRUNCATE atest2; -- ok
+TRUNCATE atest3; -- fail
 
 -- has_table_privilege function
 
@@ -243,6 +253,7 @@ from (select oid from pg_class where relname = 'pg_authid') as t1,
 
 select has_table_privilege('pg_authid','update');
 select has_table_privilege('pg_authid','delete');
+select has_table_privilege('pg_authid','truncate');
 
 select has_table_privilege(t1.oid,'select')
 from (select oid from pg_class where relname = 'pg_authid') as t1;
@@ -272,6 +283,7 @@ from (select oid from pg_class where relname = 'pg_class') as t1,
 
 select has_table_privilege('pg_class','update');
 select has_table_privilege('pg_class','delete');
+select has_table_privilege('pg_class','truncate');
 
 select has_table_privilege(t1.oid,'select')
 from (select oid from pg_class where relname = 'pg_class') as t1;
@@ -298,6 +310,7 @@ from (select oid from pg_class where relname = 'atest1') as t1,
 
 select has_table_privilege('atest1','update');
 select has_table_privilege('atest1','delete');
+select has_table_privilege('atest1','truncate');
 
 select has_table_privilege(t1.oid,'select')
 from (select oid from pg_class where relname = 'atest1') as t1;
@@ -359,3 +372,4 @@ DROP USER regressuser1;
 DROP USER regressuser2;
 DROP USER regressuser3;
 DROP USER regressuser4;
+DROP USER regressuser5;

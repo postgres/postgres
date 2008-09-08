@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.33 2007/02/20 23:14:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.34 2008/09/08 00:47:40 tgl Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -2820,9 +2820,9 @@ ORDER BY c.ordinal_position;
       <entry><type>character_data</type></entry>
       <entry>
        Type of the privilege: <literal>SELECT</literal>,
-       <literal>DELETE</literal>, <literal>INSERT</literal>,
-       <literal>UPDATE</literal>, <literal>REFERENCES</literal>,
-       or <literal>TRIGGER</literal>
+       <literal>INSERT</literal>, <literal>UPDATE</literal>,
+       <literal>DELETE</literal>, <literal>TRUNCATE</literal>,
+       <literal>REFERENCES</literal>, or <literal>TRIGGER</literal>
       </entry>
      </row>
 
@@ -4406,9 +4406,9 @@ ORDER BY c.ordinal_position;
       <entry><type>character_data</type></entry>
       <entry>
        Type of the privilege: <literal>SELECT</literal>,
-       <literal>DELETE</literal>, <literal>INSERT</literal>,
-       <literal>UPDATE</literal>, <literal>REFERENCES</literal>,
-       or <literal>TRIGGER</literal>
+       <literal>INSERT</literal>, <literal>UPDATE</literal>,
+       <literal>DELETE</literal>, <literal>TRUNCATE</literal>,
+       <literal>REFERENCES</literal>, or <literal>TRIGGER</literal>
       </entry>
      </row>
 

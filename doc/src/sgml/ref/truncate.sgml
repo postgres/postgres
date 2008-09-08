@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.27 2008/05/17 23:36:27 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.28 2008/09/08 00:47:40 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -97,7 +97,8 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ... ]
   <title>Notes</title>
 
   <para>
-   Only the owner of a table can <command>TRUNCATE</> it.
+   You must have the <literal>TRUNCATE</literal> privilege on a table
+   to truncate it.
   </para>
 
   <para>

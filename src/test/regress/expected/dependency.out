@@ -21,7 +21,7 @@ DETAIL:  access to table deptest
 REVOKE SELECT ON deptest FROM GROUP regression_group;
 DROP GROUP regression_group;
 -- can't drop the user if we revoke the privileges partially
-REVOKE SELECT, INSERT, UPDATE, DELETE, RULE, REFERENCES ON deptest FROM regression_user;
+REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES ON deptest FROM regression_user;
 DROP USER regression_user;
 ERROR:  role "regression_user" cannot be dropped because some objects depend on it
 DETAIL:  access to table deptest
@@ -68,21 +68,21 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "deptest_pkey" fo
 GRANT ALL ON deptest1 TO regression_user2;
 RESET SESSION AUTHORIZATION;
 \z deptest1
-                             Access privileges
- Schema |   Name   | Type  |               Access privileges                
---------+----------+-------+------------------------------------------------
- public | deptest1 | table | regression_user0=arwdxt/regression_user0
-                           : regression_user1=a*r*w*d*x*t*/regression_user0
-                           : regression_user2=arwdxt/regression_user1
+                              Access privileges
+ Schema |   Name   | Type  |                Access privileges                 
+--------+----------+-------+--------------------------------------------------
+ public | deptest1 | table | regression_user0=arwdDxt/regression_user0
+                           : regression_user1=a*r*w*d*D*x*t*/regression_user0
+                           : regression_user2=arwdDxt/regression_user1
 (1 row)
 
 DROP OWNED BY regression_user1;
 -- all grants revoked
 \z deptest1
-                          Access privileges
- Schema |   Name   | Type  |            Access privileges             
---------+----------+-------+------------------------------------------
- public | deptest1 | table | regression_user0=arwdxt/regression_user0
+                           Access privileges
+ Schema |   Name   | Type  |             Access privileges             
+--------+----------+-------+-------------------------------------------
+ public | deptest1 | table | regression_user0=arwdDxt/regression_user0
 (1 row)
 
 -- table was dropped
