@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.160 2008/08/25 22:42:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.161 2008/09/08 00:22:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -805,6 +805,23 @@ ExecAgg(AggState *node)
 	if (node->agg_done)
 		return NULL;
 
+	/*
+	 * Check to see if we're still projecting out tuples from a previous agg
+	 * tuple (because there is a function-returning-set in the projection
+	 * expressions).  If so, try to project another one.
+	 */
+	if (node->ss.ps.ps_TupFromTlist)
+	{
+		TupleTableSlot *result;
+		ExprDoneCond isDone;
+
+		result = ExecProject(node->ss.ps.ps_ProjInfo, &isDone);
+		if (isDone == ExprMultipleResult)
+			return result;
+		/* Done with that source tuple... */
+		node->ss.ps.ps_TupFromTlist = false;
+	}
+
 	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
 	{
 		if (!node->table_filled)
@@ -825,7 +842,6 @@ agg_retrieve_direct(AggState *aggstate)
 	PlanState  *outerPlan;
 	ExprContext *econtext;
 	ExprContext *tmpcontext;
-	ProjectionInfo *projInfo;
 	Datum	   *aggvalues;
 	bool	   *aggnulls;
 	AggStatePerAgg peragg;
@@ -844,7 +860,6 @@ agg_retrieve_direct(AggState *aggstate)
 	aggnulls = econtext->ecxt_aggnulls;
 	/* tmpcontext is the per-input-tuple expression context */
 	tmpcontext = aggstate->tmpcontext;
-	projInfo = aggstate->ss.ps.ps_ProjInfo;
 	peragg = aggstate->peragg;
 	pergroup = aggstate->pergroup;
 	firstSlot = aggstate->ss.ss_ScanTupleSlot;
@@ -982,10 +997,19 @@ agg_retrieve_direct(AggState *aggstate)
 		{
 			/*
 			 * Form and return a projection tuple using the aggregate results
-			 * and the representative input tuple.	Note we do not support
-			 * aggregates returning sets ...
+			 * and the representative input tuple.
 			 */
-			return ExecProject(projInfo, NULL);
+			TupleTableSlot *result;
+			ExprDoneCond isDone;
+
+			result = ExecProject(aggstate->ss.ps.ps_ProjInfo, &isDone);
+
+			if (isDone != ExprEndResult)
+			{
+				aggstate->ss.ps.ps_TupFromTlist =
+					(isDone == ExprMultipleResult);
+				return result;
+			}
 		}
 	}
 
@@ -1045,7 +1069,6 @@ static TupleTableSlot *
 agg_retrieve_hash_table(AggState *aggstate)
 {
 	ExprContext *econtext;
-	ProjectionInfo *projInfo;
 	Datum	   *aggvalues;
 	bool	   *aggnulls;
 	AggStatePerAgg peragg;
@@ -1061,7 +1084,6 @@ agg_retrieve_hash_table(AggState *aggstate)
 	econtext = aggstate->ss.ps.ps_ExprContext;
 	aggvalues = econtext->ecxt_aggvalues;
 	aggnulls = econtext->ecxt_aggnulls;
-	projInfo = aggstate->ss.ps.ps_ProjInfo;
 	peragg = aggstate->peragg;
 	firstSlot = aggstate->ss.ss_ScanTupleSlot;
 
@@ -1125,10 +1147,19 @@ agg_retrieve_hash_table(AggState *aggstate)
 		{
 			/*
 			 * Form and return a projection tuple using the aggregate results
-			 * and the representative input tuple.	Note we do not support
-			 * aggregates returning sets ...
+			 * and the representative input tuple.
 			 */
-			return ExecProject(projInfo, NULL);
+			TupleTableSlot *result;
+			ExprDoneCond isDone;
+
+			result = ExecProject(aggstate->ss.ps.ps_ProjInfo, &isDone);
+
+			if (isDone != ExprEndResult)
+			{
+				aggstate->ss.ps.ps_TupFromTlist =
+					(isDone == ExprMultipleResult);
+				return result;
+			}
 		}
 	}
 
