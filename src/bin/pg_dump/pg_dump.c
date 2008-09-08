@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.499 2008/07/30 19:35:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.500 2008/09/08 15:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,6 +166,7 @@ static void dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 static void getDependencies(void);
 static void getDomainConstraints(TypeInfo *tinfo);
 static void getTableData(TableInfo *tblinfo, int numTables, bool oids);
+static void getTableDataFKConstraints(void);
 static char *format_function_arguments(FuncInfo *finfo, char *funcargs);
 static char *format_function_arguments_old(FuncInfo *finfo, int nallargs,
 						  char **allargtypes,
@@ -659,7 +660,11 @@ main(int argc, char **argv)
 		guessConstraintInheritance(tblinfo, numTables);
 
 	if (!schemaOnly)
+	{
 		getTableData(tblinfo, numTables, oids);
+		if (dataOnly)
+			getTableDataFKConstraints();
+	}
 
 	if (outputBlobs && hasBlobs(g_fout))
 	{
@@ -1392,8 +1397,57 @@ getTableData(TableInfo *tblinfo, int numTables, bool oids)
 			tdinfo->tdtable = &(tblinfo[i]);
 			tdinfo->oids = oids;
 			addObjectDependency(&tdinfo->dobj, tblinfo[i].dobj.dumpId);
+
+			tblinfo[i].dataObj = tdinfo;
 		}
 	}
+}
+
+/*
+ * getTableDataFKConstraints -
+ *	  add dump-order dependencies reflecting foreign key constraints
+ *
+ * This code is executed only in a data-only dump --- in schema+data dumps
+ * we handle foreign key issues by not creating the FK constraints until
+ * after the data is loaded.  In a data-only dump, however, we want to
+ * order the table data objects in such a way that a table's referenced
+ * tables are restored first.  (In the presence of circular references or
+ * self-references this may be impossible; we'll detect and complain about
+ * that during the dependency sorting step.)
+ */
+static void
+getTableDataFKConstraints(void)
+{
+	DumpableObject **dobjs;
+	int			numObjs;
+	int			i;
+
+	/* Search through all the dumpable objects for FK constraints */
+	getDumpableObjects(&dobjs, &numObjs);
+	for (i = 0; i < numObjs; i++)
+	{
+		if (dobjs[i]->objType == DO_FK_CONSTRAINT)
+		{
+			ConstraintInfo *cinfo = (ConstraintInfo *) dobjs[i];
+			TableInfo *ftable;
+
+			/* Not interesting unless both tables are to be dumped */
+			if (cinfo->contable == NULL ||
+				cinfo->contable->dataObj == NULL)
+				continue;
+			ftable = findTableByOid(cinfo->confrelid);
+			if (ftable == NULL ||
+				ftable->dataObj == NULL)
+				continue;
+			/*
+			 * Okay, make referencing table's TABLE_DATA object depend on
+			 * the referenced table's TABLE_DATA object.
+			 */
+			addObjectDependency(&cinfo->contable->dataObj->dobj,
+								ftable->dataObj->dobj.dumpId);
+		}
+	}
+	free(dobjs);
 }
 
 
@@ -3626,6 +3680,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 				constrinfo[j].condomain = NULL;
 				constrinfo[j].contype = contype;
 				constrinfo[j].condef = NULL;
+				constrinfo[j].confrelid = InvalidOid;
 				constrinfo[j].conindex = indxinfo[j].dobj.dumpId;
 				constrinfo[j].conislocal = true;
 				constrinfo[j].separate = true;
@@ -3666,10 +3721,11 @@ getConstraints(TableInfo tblinfo[], int numTables)
 	ConstraintInfo *constrinfo;
 	PQExpBuffer query;
 	PGresult   *res;
-	int			i_condef,
-				i_contableoid,
+	int			i_contableoid,
 				i_conoid,
-				i_conname;
+				i_conname,
+				i_confrelid,
+				i_condef;
 	int			ntups;
 
 	/* pg_constraint was created in 7.3, so nothing to do if older */
@@ -3697,7 +3753,7 @@ getConstraints(TableInfo tblinfo[], int numTables)
 
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query,
-						  "SELECT tableoid, oid, conname, "
+						  "SELECT tableoid, oid, conname, confrelid, "
 						  "pg_catalog.pg_get_constraintdef(oid) as condef "
 						  "FROM pg_catalog.pg_constraint "
 						  "WHERE conrelid = '%u'::pg_catalog.oid "
@@ -3711,6 +3767,7 @@ getConstraints(TableInfo tblinfo[], int numTables)
 		i_contableoid = PQfnumber(res, "tableoid");
 		i_conoid = PQfnumber(res, "oid");
 		i_conname = PQfnumber(res, "conname");
+		i_confrelid = PQfnumber(res, "confrelid");
 		i_condef = PQfnumber(res, "condef");
 
 		constrinfo = (ConstraintInfo *) malloc(ntups * sizeof(ConstraintInfo));
@@ -3727,6 +3784,7 @@ getConstraints(TableInfo tblinfo[], int numTables)
 			constrinfo[j].condomain = NULL;
 			constrinfo[j].contype = 'f';
 			constrinfo[j].condef = strdup(PQgetvalue(res, j, i_condef));
+			constrinfo[j].confrelid = atooid(PQgetvalue(res, j, i_confrelid));
 			constrinfo[j].conindex = 0;
 			constrinfo[j].conislocal = true;
 			constrinfo[j].separate = true;
@@ -3810,6 +3868,7 @@ getDomainConstraints(TypeInfo *tinfo)
 		constrinfo[i].condomain = tinfo;
 		constrinfo[i].contype = 'c';
 		constrinfo[i].condef = strdup(PQgetvalue(res, i, i_consrc));
+		constrinfo[i].confrelid = InvalidOid;
 		constrinfo[i].conindex = 0;
 		constrinfo[i].conislocal = true;
 		constrinfo[i].separate = false;
@@ -4788,6 +4847,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				constrs[j].condomain = NULL;
 				constrs[j].contype = 'c';
 				constrs[j].condef = strdup(PQgetvalue(res, j, 3));
+				constrs[j].confrelid = InvalidOid;
 				constrs[j].conindex = 0;
 				constrs[j].conislocal = (PQgetvalue(res, j, 4)[0] == 't');
 				constrs[j].separate = false;

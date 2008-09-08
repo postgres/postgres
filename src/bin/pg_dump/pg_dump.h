@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.140 2008/05/09 23:32:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.141 2008/09/08 15:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,6 +280,7 @@ typedef struct _tableInfo
 	 */
 	int			numParents;		/* number of (immediate) parent tables */
 	struct _tableInfo **parents;	/* TableInfos of immediate parents */
+	struct _tableDataInfo *dataObj;	/* TableDataInfo, if dumping its data */
 } TableInfo;
 
 typedef struct _attrDefInfo
@@ -352,6 +353,7 @@ typedef struct _constraintInfo
 	TypeInfo   *condomain;		/* NULL if table constraint */
 	char		contype;
 	char	   *condef;			/* definition, if CHECK or FOREIGN KEY */
+	Oid			confrelid;		/* referenced table, if FOREIGN KEY */
 	DumpId		conindex;		/* identifies associated index if any */
 	bool		conislocal;		/* TRUE if constraint has local definition */
 	bool		separate;		/* TRUE if must dump as separate item */

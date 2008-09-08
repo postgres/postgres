@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.20 2008/01/01 19:45:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.21 2008/09/08 15:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -947,6 +947,30 @@ repairDependencyLoop(DumpableObject **loop,
 	}
 
 	/*
+	 * If all the objects are TABLE_DATA items, what we must have is a
+	 * circular set of foreign key constraints (or a single self-referential
+	 * table).  Print an appropriate complaint and break the loop arbitrarily.
+	 */
+	for (i = 0; i < nLoop; i++)
+	{
+		if (loop[i]->objType != DO_TABLE_DATA)
+			break;
+	}
+	if (i >= nLoop)
+	{
+		write_msg(NULL, "NOTICE: there are circular foreign-key constraints among these table(s):\n");
+		for (i = 0; i < nLoop; i++)
+			write_msg(NULL, "  %s\n", loop[i]->name);
+		write_msg(NULL, "You may not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.\n");
+		write_msg(NULL, "Consider using a full dump instead of a --data-only dump to avoid this problem.\n");
+		if (nLoop > 1)
+			removeObjectDependency(loop[0], loop[1]->dumpId);
+		else						/* must be a self-dependency */
+			removeObjectDependency(loop[0], loop[0]->dumpId);
+		return;
+	}
+
+	/*
 	 * If we can't find a principled way to break the loop, complain and break
 	 * it in an arbitrary fashion.
 	 */
@@ -958,7 +982,11 @@ repairDependencyLoop(DumpableObject **loop,
 		describeDumpableObject(loop[i], buf, sizeof(buf));
 		write_msg(modulename, "  %s\n", buf);
 	}
-	removeObjectDependency(loop[0], loop[1]->dumpId);
+
+	if (nLoop > 1)
+		removeObjectDependency(loop[0], loop[1]->dumpId);
+	else						/* must be a self-dependency */
+		removeObjectDependency(loop[0], loop[0]->dumpId);
 }
 
 /*
