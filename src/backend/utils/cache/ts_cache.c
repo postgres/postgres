@@ -20,7 +20,7 @@
  * Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.7 2008/04/12 23:14:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.8 2008/09/09 18:58:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,18 +79,19 @@ static Oid	TSCurrentConfigCache = InvalidOid;
 
 
 /*
- * We use this catcache callback to detect when a visible change to a TS
+ * We use this syscache callback to detect when a visible change to a TS
  * catalog entry has been made, by either our own backend or another one.
- * We don't get enough information to know *which* specific catalog row
- * changed, so we have to invalidate all related cache entries.  Fortunately,
- * it seems unlikely that TS configuration changes will occur often enough
- * for this to be a performance problem.
+ *
+ * In principle we could just flush the specific cache entry that changed,
+ * but given that TS configuration changes are probably infrequent, it
+ * doesn't seem worth the trouble to determine that; we just flush all the
+ * entries of the related hash table.
  *
  * We can use the same function for all TS caches by passing the hash
  * table address as the "arg".
  */
 static void
-InvalidateTSCacheCallBack(Datum arg, Oid relid)
+InvalidateTSCacheCallBack(Datum arg, int cacheid, ItemPointer tuplePtr)
 {
 	HTAB	   *hash = (HTAB *) DatumGetPointer(arg);
 	HASH_SEQ_STATUS status;

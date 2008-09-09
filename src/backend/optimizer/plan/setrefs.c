@@ -9,12 +9,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.143 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.144 2008/09/09 18:58:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/transam.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -23,6 +24,7 @@
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 typedef struct
@@ -112,6 +114,8 @@ static Node *fix_upper_expr(PlannerGlobal *glob,
 static Node *fix_upper_expr_mutator(Node *node,
 					   fix_upper_expr_context *context);
 static bool fix_opfuncids_walker(Node *node, void *context);
+static bool extract_query_dependencies_walker(Node *node,
+											  PlannerGlobal *context);
 
 
 /*****************************************************************************
@@ -138,10 +142,12 @@ static bool fix_opfuncids_walker(Node *node, void *context);
  * 4. We compute regproc OIDs for operators (ie, we look up the function
  * that implements each op).
  *
- * 5. We create a list of OIDs of relations that the plan depends on.
+ * 5. We create lists of specific objects that the plan depends on.
  * This will be used by plancache.c to drive invalidation of cached plans.
- * (Someday we might want to generalize this to include other types of
- * objects, but for now tracking relations seems to solve most problems.)
+ * Relation dependencies are represented by OIDs, and everything else by
+ * PlanInvalItems (this distinction is motivated by the shared-inval APIs).
+ * Currently, relations and user-defined functions are the only types of
+ * objects that are explicitly tracked this way.
  *
  * We also perform one final optimization step, which is to delete
  * SubqueryScan plan nodes that aren't doing anything useful (ie, have
@@ -164,7 +170,8 @@ static bool fix_opfuncids_walker(Node *node, void *context);
  * different when the passed-in Plan is a SubqueryScan we decide isn't needed.
  *
  * The flattened rangetable entries are appended to glob->finalrtable, and
- * the list of relation OIDs is appended to glob->relationOids.
+ * plan dependencies are appended to glob->relationOids (for relations)
+ * and glob->invalItems (for everything else).
  *
  * Notice that we modify Plan nodes in-place, but use expression_tree_mutator
  * to process targetlist and qual expressions.	We can assume that the Plan
@@ -623,6 +630,74 @@ copyVar(Var *var)
 }
 
 /*
+ * fix_expr_common
+ *		Do generic set_plan_references processing on an expression node
+ *
+ * This is code that is common to all variants of expression-fixing.
+ * We must look up operator opcode info for OpExpr and related nodes,
+ * add OIDs from regclass Const nodes into glob->relationOids,
+ * and add catalog TIDs for user-defined functions into glob->invalItems.
+ *
+ * We assume it's okay to update opcode info in-place.  So this could possibly
+ * scribble on the planner's input data structures, but it's OK.
+ */
+static void
+fix_expr_common(PlannerGlobal *glob, Node *node)
+{
+	/* We assume callers won't call us on a NULL pointer */
+	if (IsA(node, Aggref))
+	{
+		record_plan_function_dependency(glob,
+										((Aggref *) node)->aggfnoid);
+	}
+	else if (IsA(node, FuncExpr))
+	{
+		record_plan_function_dependency(glob,
+										((FuncExpr *) node)->funcid);
+	}
+	else if (IsA(node, OpExpr))
+	{
+		set_opfuncid((OpExpr *) node);
+		record_plan_function_dependency(glob,
+										((OpExpr *) node)->opfuncid);
+	}
+	else if (IsA(node, DistinctExpr))
+	{
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
+		record_plan_function_dependency(glob,
+										((DistinctExpr *) node)->opfuncid);
+	}
+	else if (IsA(node, NullIfExpr))
+	{
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
+		record_plan_function_dependency(glob,
+										((NullIfExpr *) node)->opfuncid);
+	}
+	else if (IsA(node, ScalarArrayOpExpr))
+	{
+		set_sa_opfuncid((ScalarArrayOpExpr *) node);
+		record_plan_function_dependency(glob,
+										((ScalarArrayOpExpr *) node)->opfuncid);
+	}
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		if (OidIsValid(((ArrayCoerceExpr *) node)->elemfuncid))
+			record_plan_function_dependency(glob,
+											((ArrayCoerceExpr *) node)->elemfuncid);
+	}
+	else if (IsA(node, Const))
+	{
+		Const	   *con = (Const *) node;
+
+		/* Check for regclass reference */
+		if (ISREGCLASSCONST(con))
+			glob->relationOids =
+				lappend_oid(glob->relationOids,
+							DatumGetObjectId(con->constvalue));
+	}
+}
+
+/*
  * fix_scan_expr
  *		Do set_plan_references processing on a scan-level expression
  *
@@ -687,30 +762,7 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		cexpr->cvarno += context->rtoffset;
 		return (Node *) cexpr;
 	}
-
-	/*
-	 * Since we update opcode info in-place, this part could possibly scribble
-	 * on the planner's input data structures, but it's OK.
-	 */
-	if (IsA(node, OpExpr))
-		set_opfuncid((OpExpr *) node);
-	else if (IsA(node, DistinctExpr))
-		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
-	else if (IsA(node, NullIfExpr))
-		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
-	else if (IsA(node, ScalarArrayOpExpr))
-		set_sa_opfuncid((ScalarArrayOpExpr *) node);
-	else if (IsA(node, Const))
-	{
-		Const	   *con = (Const *) node;
-
-		/* Check for regclass reference */
-		if (ISREGCLASSCONST(con))
-			context->glob->relationOids =
-				lappend_oid(context->glob->relationOids,
-							DatumGetObjectId(con->constvalue));
-		/* Fall through to let expression_tree_mutator copy it */
-	}
+	fix_expr_common(context->glob, node);
 	return expression_tree_mutator(node, fix_scan_expr_mutator,
 								   (void *) context);
 }
@@ -720,25 +772,7 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
 {
 	if (node == NULL)
 		return false;
-	if (IsA(node, OpExpr))
-		set_opfuncid((OpExpr *) node);
-	else if (IsA(node, DistinctExpr))
-		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
-	else if (IsA(node, NullIfExpr))
-		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
-	else if (IsA(node, ScalarArrayOpExpr))
-		set_sa_opfuncid((ScalarArrayOpExpr *) node);
-	else if (IsA(node, Const))
-	{
-		Const	   *con = (Const *) node;
-
-		/* Check for regclass reference */
-		if (ISREGCLASSCONST(con))
-			context->glob->relationOids =
-				lappend_oid(context->glob->relationOids,
-							DatumGetObjectId(con->constvalue));
-		return false;
-	}
+	fix_expr_common(context->glob, node);
 	return expression_tree_walker(node, fix_scan_expr_walker,
 								  (void *) context);
 }
@@ -1384,30 +1418,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		if (newvar)
 			return (Node *) newvar;
 	}
-
-	/*
-	 * Since we update opcode info in-place, this part could possibly scribble
-	 * on the planner's input data structures, but it's OK.
-	 */
-	if (IsA(node, OpExpr))
-		set_opfuncid((OpExpr *) node);
-	else if (IsA(node, DistinctExpr))
-		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
-	else if (IsA(node, NullIfExpr))
-		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
-	else if (IsA(node, ScalarArrayOpExpr))
-		set_sa_opfuncid((ScalarArrayOpExpr *) node);
-	else if (IsA(node, Const))
-	{
-		Const	   *con = (Const *) node;
-
-		/* Check for regclass reference */
-		if (ISREGCLASSCONST(con))
-			context->glob->relationOids =
-				lappend_oid(context->glob->relationOids,
-							DatumGetObjectId(con->constvalue));
-		/* Fall through to let expression_tree_mutator copy it */
-	}
+	fix_expr_common(context->glob, node);
 	return expression_tree_mutator(node,
 								   fix_join_expr_mutator,
 								   (void *) context);
@@ -1482,30 +1493,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 		if (newvar)
 			return (Node *) newvar;
 	}
-
-	/*
-	 * Since we update opcode info in-place, this part could possibly scribble
-	 * on the planner's input data structures, but it's OK.
-	 */
-	if (IsA(node, OpExpr))
-		set_opfuncid((OpExpr *) node);
-	else if (IsA(node, DistinctExpr))
-		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
-	else if (IsA(node, NullIfExpr))
-		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
-	else if (IsA(node, ScalarArrayOpExpr))
-		set_sa_opfuncid((ScalarArrayOpExpr *) node);
-	else if (IsA(node, Const))
-	{
-		Const	   *con = (Const *) node;
-
-		/* Check for regclass reference */
-		if (ISREGCLASSCONST(con))
-			context->glob->relationOids =
-				lappend_oid(context->glob->relationOids,
-							DatumGetObjectId(con->constvalue));
-		/* Fall through to let expression_tree_mutator copy it */
-	}
+	fix_expr_common(context->glob, node);
 	return expression_tree_mutator(node,
 								   fix_upper_expr_mutator,
 								   (void *) context);
@@ -1623,4 +1611,109 @@ set_sa_opfuncid(ScalarArrayOpExpr *opexpr)
 {
 	if (opexpr->opfuncid == InvalidOid)
 		opexpr->opfuncid = get_opcode(opexpr->opno);
+}
+
+/*****************************************************************************
+ *					QUERY DEPENDENCY MANAGEMENT
+ *****************************************************************************/
+
+/*
+ * record_plan_function_dependency
+ *		Mark the current plan as depending on a particular function.
+ *
+ * This is exported so that the function-inlining code can record a
+ * dependency on a function that it's removed from the plan tree.
+ */
+void
+record_plan_function_dependency(PlannerGlobal *glob, Oid funcid)
+{
+	/*
+	 * For performance reasons, we don't bother to track built-in functions;
+	 * we just assume they'll never change (or at least not in ways that'd
+	 * invalidate plans using them).  For this purpose we can consider a
+	 * built-in function to be one with OID less than FirstBootstrapObjectId.
+	 * Note that the OID generator guarantees never to generate such an
+	 * OID after startup, even at OID wraparound.
+	 */
+	if (funcid >= (Oid) FirstBootstrapObjectId)
+	{
+		HeapTuple	func_tuple;
+		PlanInvalItem *inval_item;
+
+		func_tuple = SearchSysCache(PROCOID,
+									ObjectIdGetDatum(funcid),
+									0, 0, 0);
+		if (!HeapTupleIsValid(func_tuple))
+			elog(ERROR, "cache lookup failed for function %u", funcid);
+
+		inval_item = makeNode(PlanInvalItem);
+
+		/*
+		 * It would work to use any syscache on pg_proc, but plancache.c
+		 * expects us to use PROCOID.
+		 */
+		inval_item->cacheId = PROCOID;
+		inval_item->tupleId = func_tuple->t_self;
+
+		glob->invalItems = lappend(glob->invalItems, inval_item);
+
+		ReleaseSysCache(func_tuple);
+	}
+}
+
+/*
+ * extract_query_dependencies
+ *		Given a list of not-yet-planned queries (i.e. Query nodes),
+ *		extract their dependencies just as set_plan_references would do.
+ *
+ * This is needed by plancache.c to handle invalidation of cached unplanned
+ * queries.
+ */
+void
+extract_query_dependencies(List *queries,
+						   List **relationOids,
+						   List **invalItems)
+{
+	PlannerGlobal glob;
+
+	/* Make up a dummy PlannerGlobal so we can use this module's machinery */
+	MemSet(&glob, 0, sizeof(glob));
+	glob.type = T_PlannerGlobal;
+	glob.relationOids = NIL;
+	glob.invalItems = NIL;
+
+	(void) extract_query_dependencies_walker((Node *) queries, &glob);
+
+	*relationOids = glob.relationOids;
+	*invalItems = glob.invalItems;
+}
+
+static bool
+extract_query_dependencies_walker(Node *node, PlannerGlobal *context)
+{
+	if (node == NULL)
+		return false;
+	/* Extract function dependencies and check for regclass Consts */
+	fix_expr_common(context, node);
+	if (IsA(node, Query))
+	{
+		Query	   *query = (Query *) node;
+		ListCell   *lc;
+
+		/* Collect relation OIDs in this Query's rtable */
+		foreach(lc, query->rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
+			if (rte->rtekind == RTE_RELATION)
+				context->relationOids = lappend_oid(context->relationOids,
+													rte->relid);
+		}
+
+		/* And recurse into the query's subexpressions */
+		return query_tree_walker(query, extract_query_dependencies_walker,
+								 (void *) context, 0);
+	}
+	return expression_tree_walker(node, extract_query_dependencies_walker,
+								  (void *) context);
 }

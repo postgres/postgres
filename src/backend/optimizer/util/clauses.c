@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.266 2008/08/28 23:09:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.267 2008/09/09 18:58:08 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -50,6 +50,7 @@
 typedef struct
 {
 	ParamListInfo boundParams;
+	PlannerGlobal *glob;
 	List	   *active_fns;
 	Node	   *case_val;
 	bool		estimate;
@@ -1890,9 +1891,15 @@ eval_const_expressions(PlannerInfo *root, Node *node)
 	eval_const_expressions_context context;
 
 	if (root)
+	{
 		context.boundParams = root->glob->boundParams;	/* bound Params */
+		context.glob = root->glob; /* for inlined-function dependencies */
+	}
 	else
+	{
 		context.boundParams = NULL;
+		context.glob = NULL;
+	}
 	context.active_fns = NIL;	/* nothing being recursively simplified */
 	context.case_val = NULL;	/* no CASE being examined */
 	context.estimate = false;	/* safe transformations only */
@@ -1921,6 +1928,8 @@ estimate_expression_value(PlannerInfo *root, Node *node)
 	eval_const_expressions_context context;
 
 	context.boundParams = root->glob->boundParams;		/* bound Params */
+	/* we do not need to mark the plan as depending on inlined functions */
+	context.glob = NULL;
 	context.active_fns = NIL;	/* nothing being recursively simplified */
 	context.case_val = NULL;	/* no CASE being examined */
 	context.estimate = true;	/* unsafe transformations OK */
@@ -3469,6 +3478,13 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	MemoryContextDelete(mycxt);
 
 	/*
+	 * Since there is now no trace of the function in the plan tree, we
+	 * must explicitly record the plan's dependency on the function.
+	 */
+	if (context->glob)
+		record_plan_function_dependency(context->glob, funcid);
+
+	/*
 	 * Recursively try to simplify the modified expression.  Here we must add
 	 * the current function to the context list of active functions.
 	 */
@@ -3841,6 +3857,12 @@ inline_set_returning_function(PlannerInfo *root, Node *node)
 	MemoryContextDelete(mycxt);
 	error_context_stack = sqlerrcontext.previous;
 	ReleaseSysCache(func_tuple);
+
+	/*
+	 * Since there is now no trace of the function in the plan tree, we
+	 * must explicitly record the plan's dependency on the function.
+	 */
+	record_plan_function_dependency(root->glob, fexpr->funcid);
 
 	return querytree;
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.12 2008/07/18 20:26:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.13 2008/09/09 18:58:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,9 @@ typedef struct CachedPlan
 	int			refcount;		/* count of live references to this struct */
 	int			generation;		/* counter, starting at 1, for replans */
 	MemoryContext context;		/* context containing this CachedPlan */
+	/* These fields are used only in the not-fully-planned case: */
+	List	   *relationOids;	/* OIDs of relations the stmts depend on */
+	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
 } CachedPlan;
 
 

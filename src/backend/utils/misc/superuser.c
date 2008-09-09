@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/superuser.c,v 1.37 2008/01/01 19:45:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/superuser.c,v 1.38 2008/09/09 18:58:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ static Oid	last_roleid = InvalidOid;	/* InvalidOid == cache not valid */
 static bool last_roleid_is_super = false;
 static bool roleid_callback_registered = false;
 
-static void RoleidCallback(Datum arg, Oid relid);
+static void RoleidCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
 
 
 /*
@@ -102,7 +102,7 @@ superuser_arg(Oid roleid)
  *		Syscache inval callback function
  */
 static void
-RoleidCallback(Datum arg, Oid relid)
+RoleidCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 {
 	/* Invalidate our local cache in case role's superuserness changed */
 	last_roleid = InvalidOid;

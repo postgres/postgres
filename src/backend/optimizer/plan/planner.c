@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.242 2008/08/17 01:19:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.243 2008/09/09 18:58:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,6 +140,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->rewindPlanIDs = NULL;
 	glob->finalrtable = NIL;
 	glob->relationOids = NIL;
+	glob->invalItems = NIL;
 	glob->transientPlan = false;
 
 	/* Determine what fraction of the plan is likely to be scanned */
@@ -213,6 +214,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->returningLists = root->returningLists;
 	result->rowMarks = parse->rowMarks;
 	result->relationOids = glob->relationOids;
+	result->invalItems = glob->invalItems;
 	result->nParamExec = list_length(glob->paramlist);
 
 	return result;

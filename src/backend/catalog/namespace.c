@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.111 2008/09/01 20:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.112 2008/09/09 18:58:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,7 @@ static void recomputeNamespacePath(void);
 static void InitTempTableNamespace(void);
 static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(int code, Datum arg);
-static void NamespaceCallback(Datum arg, Oid relid);
+static void NamespaceCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
 
 /* These don't really need to appear in any header file */
 Datum		pg_table_is_visible(PG_FUNCTION_ARGS);
@@ -3094,7 +3094,7 @@ InitializeSearchPath(void)
  *		Syscache inval callback function
  */
 static void
-NamespaceCallback(Datum arg, Oid relid)
+NamespaceCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 {
 	/* Force search path to be recomputed on next use */
 	baseSearchPathValid = false;
