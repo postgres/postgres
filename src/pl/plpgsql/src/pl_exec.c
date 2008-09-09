@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.219 2008/09/01 22:30:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.220 2008/09/09 15:14:08 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,8 @@ static Datum exec_simple_cast_value(Datum value, Oid valtype,
 					   Oid reqtype, int32 reqtypmod,
 					   bool isnull);
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
-static bool compatible_tupdesc(TupleDesc td1, TupleDesc td2);
+static void validate_tupdesc_compat(TupleDesc expected, TupleDesc returned,
+						const char *msg);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 static void plpgsql_create_econtext(PLpgSQL_execstate *estate);
 static void free_var(PLpgSQL_var *var);
@@ -384,11 +385,9 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 			{
 				case TYPEFUNC_COMPOSITE:
 					/* got the expected result rowtype, now check it */
-					if (estate.rettupdesc == NULL ||
-						!compatible_tupdesc(estate.rettupdesc, tupdesc))
-						ereport(ERROR,
-								(errcode(ERRCODE_DATATYPE_MISMATCH),
-								 errmsg("returned record type does not match expected record type")));
+					validate_tupdesc_compat(tupdesc, estate.rettupdesc,
+											gettext_noop("returned record type does "
+														 "not match expected record type"));
 					break;
 				case TYPEFUNC_RECORD:
 
@@ -705,11 +704,10 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		rettup = NULL;
 	else
 	{
-		if (!compatible_tupdesc(estate.rettupdesc,
-								trigdata->tg_relation->rd_att))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("returned tuple structure does not match table of trigger event")));
+		validate_tupdesc_compat(trigdata->tg_relation->rd_att,
+								estate.rettupdesc,
+								gettext_noop("returned tuple structure does "
+											 "not match table of trigger event"));
 		/* Copy tuple to upper executor memory */
 		rettup = SPI_copytuple((HeapTuple) DatumGetPointer(estate.retval));
 	}
@@ -2199,11 +2197,11 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						   errmsg("record \"%s\" is not assigned yet",
 								  rec->refname),
-						   errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
-					if (!compatible_tupdesc(tupdesc, rec->tupdesc))
-						ereport(ERROR,
-								(errcode(ERRCODE_DATATYPE_MISMATCH),
-						errmsg("wrong record type supplied in RETURN NEXT")));
+						   errdetail("The tuple structure of a not-yet-assigned"
+									 " record is indeterminate.")));
+					validate_tupdesc_compat(tupdesc, rec->tupdesc,
+						                    gettext_noop("wrong record type supplied "
+														 "in RETURN NEXT"));
 					tuple = rec->tup;
 				}
 				break;
@@ -2309,10 +2307,9 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 										   stmt->params);
 	}
 
-	if (!compatible_tupdesc(estate->rettupdesc, portal->tupDesc))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-		  errmsg("structure of query does not match function result type")));
+	validate_tupdesc_compat(estate->rettupdesc, portal->tupDesc,
+							gettext_noop("structure of query does not match "
+										 "function result type"));
 
 	while (true)
 	{
@@ -5145,23 +5142,42 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 }
 
 /*
- * Check two tupledescs have matching number and types of attributes
+ * Validates compatibility of supplied TupleDesc pair by checking number and type
+ * of attributes.
  */
-static bool
-compatible_tupdesc(TupleDesc td1, TupleDesc td2)
+static void
+validate_tupdesc_compat(TupleDesc expected, TupleDesc returned, const char *msg)
 {
-	int			i;
+	int		   i;
+	const char dropped_column_type[] = gettext_noop("n/a (dropped column)");
 
-	if (td1->natts != td2->natts)
-		return false;
+	if (!expected || !returned)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("%s", _(msg))));
 
-	for (i = 0; i < td1->natts; i++)
-	{
-		if (td1->attrs[i]->atttypid != td2->attrs[i]->atttypid)
-			return false;
-	}
+	if (expected->natts != returned->natts)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("%s", _(msg)),
+				 errdetail("Number of returned columns (%d) does not match "
+						   "expected column count (%d).",
+						   returned->natts, expected->natts)));
 
-	return true;
+	for (i = 0; i < expected->natts; i++)
+		if (expected->attrs[i]->atttypid != returned->attrs[i]->atttypid)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("%s", _(msg)),
+					 errdetail("Returned type %s does not match expected type "
+							   "%s in column %s.",
+							   OidIsValid(returned->attrs[i]->atttypid) ?
+							   format_type_be(returned->attrs[i]->atttypid) :
+							   _(dropped_column_type),
+							   OidIsValid(expected->attrs[i]->atttypid) ?
+							   format_type_be(expected->attrs[i]->atttypid) :
+							   _(dropped_column_type),
+							   NameStr(expected->attrs[i]->attname))));
 }
 
 /* ----------
