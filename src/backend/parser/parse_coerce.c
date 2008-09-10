@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.166 2008/09/01 20:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.167 2008/09/10 18:29:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,6 +179,7 @@ coerce_type(ParseState *pstate, Node *node,
 		Const	   *newcon = makeNode(Const);
 		Oid			baseTypeId;
 		int32		baseTypeMod;
+		int32		inputTypeMod;
 		Type		targetType;
 		ParseCallbackState pcbstate;
 
@@ -190,13 +191,27 @@ coerce_type(ParseState *pstate, Node *node,
 		 * what we want here.  The needed check will be applied properly
 		 * inside coerce_to_domain().
 		 */
-		baseTypeMod = -1;
+		baseTypeMod = targetTypeMod;
 		baseTypeId = getBaseTypeAndTypmod(targetTypeId, &baseTypeMod);
+
+		/*
+		 * For most types we pass typmod -1 to the input routine, because
+		 * existing input routines follow implicit-coercion semantics for
+		 * length checks, which is not always what we want here.  Any length
+		 * constraint will be applied later by our caller.  An exception
+		 * however is the INTERVAL type, for which we *must* pass the typmod
+		 * or it won't be able to obey the bizarre SQL-spec input rules.
+		 * (Ugly as sin, but so is this part of the spec...)
+		 */
+		if (baseTypeId == INTERVALOID)
+			inputTypeMod = baseTypeMod;
+		else
+			inputTypeMod = -1;
 
 		targetType = typeidType(baseTypeId);
 
 		newcon->consttype = baseTypeId;
-		newcon->consttypmod = -1;
+		newcon->consttypmod = inputTypeMod;
 		newcon->constlen = typeLen(targetType);
 		newcon->constbyval = typeByVal(targetType);
 		newcon->constisnull = con->constisnull;
@@ -215,20 +230,17 @@ coerce_type(ParseState *pstate, Node *node,
 		setup_parser_errposition_callback(&pcbstate, pstate, con->location);
 
 		/*
-		 * We pass typmod -1 to the input routine, primarily because existing
-		 * input routines follow implicit-coercion semantics for length
-		 * checks, which is not always what we want here. Any length
-		 * constraint will be applied later by our caller.
-		 *
 		 * We assume here that UNKNOWN's internal representation is the same
 		 * as CSTRING.
 		 */
 		if (!con->constisnull)
 			newcon->constvalue = stringTypeDatum(targetType,
 											DatumGetCString(con->constvalue),
-												 -1);
+												 inputTypeMod);
 		else
-			newcon->constvalue = stringTypeDatum(targetType, NULL, -1);
+			newcon->constvalue = stringTypeDatum(targetType,
+												 NULL,
+												 inputTypeMod);
 
 		cancel_parser_errposition_callback(&pcbstate);
 

@@ -127,3 +127,32 @@ SELECT '1 second 2 seconds'::interval;              -- error
 SELECT '10 milliseconds 20 milliseconds'::interval; -- error
 SELECT '5.5 seconds 3 milliseconds'::interval;      -- error
 SELECT '1:20:05 5 microseconds'::interval;          -- error
+SELECT interval '1-2';  -- SQL year-month literal
+
+-- test SQL-spec syntaxes for restricted field sets
+SELECT interval '1' year;
+SELECT interval '2' month;
+SELECT interval '3' day;
+SELECT interval '4' hour;
+SELECT interval '5' minute;
+SELECT interval '6' second;
+SELECT interval '1' year to month;
+SELECT interval '1-2' year to month;
+SELECT interval '1 2' day to hour;
+SELECT interval '1 2:03' day to hour;
+SELECT interval '1 2:03:04' day to hour;
+SELECT interval '1 2' day to minute;
+SELECT interval '1 2:03' day to minute;
+SELECT interval '1 2:03:04' day to minute;
+SELECT interval '1 2' day to second;
+SELECT interval '1 2:03' day to second;
+SELECT interval '1 2:03:04' day to second;
+SELECT interval '1 2' hour to minute;
+SELECT interval '1 2:03' hour to minute;
+SELECT interval '1 2:03:04' hour to minute;
+SELECT interval '1 2' hour to second;
+SELECT interval '1 2:03' hour to second;
+SELECT interval '1 2:03:04' hour to second;
+SELECT interval '1 2' minute to second;
+SELECT interval '1 2:03' minute to second;
+SELECT interval '1 2:03:04' minute to second;

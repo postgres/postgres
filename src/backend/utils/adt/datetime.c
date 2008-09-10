@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.190 2008/06/09 19:34:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.191 2008/09/10 18:29:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +35,8 @@ static int DecodeNumber(int flen, char *field, bool haveTextMonth,
 static int DecodeNumberField(int len, char *str,
 				  int fmask, int *tmask,
 				  struct pg_tm * tm, fsec_t *fsec, bool *is2digits);
-static int DecodeTime(char *str, int fmask, int *tmask,
-		   struct pg_tm * tm, fsec_t *fsec);
+static int DecodeTime(char *str, int fmask, int range,
+		   int *tmask, struct pg_tm * tm, fsec_t *fsec);
 static int	DecodeTimezone(char *str, int *tzp);
 static const datetkn *datebsearch(const char *key, const datetkn *base, int nel);
 static int	DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
@@ -832,7 +832,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				break;
 
 			case DTK_TIME:
-				dterr = DecodeTime(field[i], fmask, &tmask, tm, fsec);
+				dterr = DecodeTime(field[i], fmask, INTERVAL_FULL_RANGE,
+								   &tmask, tm, fsec);
 				if (dterr)
 					return dterr;
 
@@ -1563,6 +1564,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 			case DTK_TIME:
 				dterr = DecodeTime(field[i], (fmask | DTK_DATE_M),
+								   INTERVAL_FULL_RANGE,
 								   &tmask, tm, fsec);
 				if (dterr)
 					return dterr;
@@ -2224,7 +2226,8 @@ ValidateDate(int fmask, bool is2digits, bool bc, struct pg_tm * tm)
  * used to represent time spans.
  */
 static int
-DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
+DecodeTime(char *str, int fmask, int range,
+		   int *tmask, struct pg_tm * tm, fsec_t *fsec)
 {
 	char	   *cp;
 
@@ -2245,6 +2248,13 @@ DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
 	{
 		tm->tm_sec = 0;
 		*fsec = 0;
+		/* If it's a MINUTE TO SECOND interval, take 2 fields as being mm:ss */
+		if (range == (INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND)))
+		{
+			tm->tm_sec = tm->tm_min;
+			tm->tm_min = tm->tm_hour;
+			tm->tm_hour = 0;
+		}
 	}
 	else if (*cp != ':')
 		return DTERR_BAD_FORMAT;
@@ -2705,7 +2715,8 @@ DecodeSpecial(int field, char *lowtoken, int *val)
  *	preceding an hh:mm:ss field. - thomas 1998-04-30
  */
 int
-DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, fsec_t *fsec)
+DecodeInterval(char **field, int *ftype, int nf, int range,
+			   int *dtype, struct pg_tm * tm, fsec_t *fsec)
 {
 	bool		is_before = FALSE;
 	char	   *cp;
@@ -2734,7 +2745,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 		switch (ftype[i])
 		{
 			case DTK_TIME:
-				dterr = DecodeTime(field[i], fmask, &tmask, tm, fsec);
+				dterr = DecodeTime(field[i], fmask, range,
+								   &tmask, tm, fsec);
 				if (dterr)
 					return dterr;
 				type = DTK_DAY;
@@ -2757,7 +2769,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 				while (*cp != '\0' && *cp != ':' && *cp != '.')
 					cp++;
 				if (*cp == ':' &&
-					DecodeTime(field[i] + 1, fmask, &tmask, tm, fsec) == 0)
+					DecodeTime(field[i] + 1, fmask, INTERVAL_FULL_RANGE,
+							   &tmask, tm, fsec) == 0)
 				{
 					if (*field[i] == '-')
 					{
@@ -2796,19 +2809,66 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						type = DTK_HOUR;
 					}
 				}
-				/* DROP THROUGH */
+				/* FALL THROUGH */
 
 			case DTK_DATE:
 			case DTK_NUMBER:
+				if (type == IGNORE_DTF)
+				{
+					/* use typmod to decide what rightmost integer field is */
+					switch (range)
+					{
+						case INTERVAL_MASK(YEAR):
+							type = DTK_YEAR;
+							break;
+						case INTERVAL_MASK(MONTH):
+						case INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH):
+							type = DTK_MONTH;
+							break;
+						case INTERVAL_MASK(DAY):
+							type = DTK_DAY;
+							break;
+						case INTERVAL_MASK(HOUR):
+						case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR):
+						case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
+						case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+							type = DTK_HOUR;
+							break;
+						case INTERVAL_MASK(MINUTE):
+						case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
+							type = DTK_MINUTE;
+							break;
+						case INTERVAL_MASK(SECOND):
+						case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+						case INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+							type = DTK_SECOND;
+							break;
+						default:
+							type = DTK_SECOND;
+							break;
+					}
+				}
+
 				errno = 0;
 				val = strtoi(field[i], &cp, 10);
 				if (errno == ERANGE)
 					return DTERR_FIELD_OVERFLOW;
 
-				if (type == IGNORE_DTF)
-					type = DTK_SECOND;
+				if (*cp == '-')
+				{
+					/* SQL "years-months" syntax */
+					int		val2;
 
-				if (*cp == '.')
+					val2 = strtoi(cp + 1, &cp, 10);
+					if (errno == ERANGE || val2 < 0 || val2 >= MONTHS_PER_YEAR)
+						return DTERR_FIELD_OVERFLOW;
+					if (*cp != '\0')
+						return DTERR_BAD_FORMAT;
+					type = DTK_MONTH;
+					val = val * MONTHS_PER_YEAR + val2;
+					fval = 0;
+				}
+				else if (*cp == '.')
 				{
 					fval = strtod(cp, &cp);
 					if (*cp != '\0')
@@ -2896,6 +2956,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 #endif
 						}
 						tmask = DTK_M(HOUR);
+						type = DTK_DAY;
 						break;
 
 					case DTK_DAY:
