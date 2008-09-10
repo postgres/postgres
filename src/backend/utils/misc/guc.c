@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.471 2008/09/10 18:09:19 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.472 2008/09/10 19:16:22 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5128,9 +5128,10 @@ set_config_sourcefile(const char *name, char *sourcefile, int sourceline)
 	if (record == NULL)
 		elog(ERROR, "unrecognized configuration parameter \"%s\"", name);
 
+	sourcefile = guc_strdup(elevel, sourcefile);
 	if (record->sourcefile)
 		free(record->sourcefile);
-	record->sourcefile = guc_strdup(elevel, sourcefile);
+	record->sourcefile = sourcefile;
 	record->sourceline = sourceline;
 }
 
