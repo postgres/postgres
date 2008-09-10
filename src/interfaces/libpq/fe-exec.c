@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.194 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.194.2.1 2008/09/10 17:01:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2760,10 +2760,14 @@ PQescapeByteaInternal(PGconn *conn,
 	{
 		if (*vp < 0x20 || *vp > 0x7e)
 		{
+			int		val = *vp;
+
 			if (!std_strings)
 				*rp++ = '\\';
-			(void) sprintf((char *) rp, "\\%03o", *vp);
-			rp += 4;
+			*rp++ = '\\';
+			*rp++ = (val >> 6) + '0';
+			*rp++ = ((val >> 3) & 07) + '0';
+			*rp++ = (val & 07) + '0';
 		}
 		else if (*vp == '\'')
 		{
