@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.172 2008/07/30 17:05:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.173 2008/09/10 18:09:19 alvherre Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -6413,6 +6413,20 @@
       <entry><type>text</type></entry>
       <entry>Allowed values in enum parameters (NULL for non-enum
       values)</entry>
+     </row>
+     <row>
+      <entry><structfield>sourcefile</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>Input file the current value was set from (NULL for values set in
+      sources other than configuration files).  Helpful when using
+      configuration include directives.</entry>
+     </row>
+     <row>
+      <entry><structfield>sourceline</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>Line number within the sourcefile the current value was set 
+      from (NULL for values set in sources other than configuration files)
+      </entry>
      </row>
     </tbody>
    </tgroup>

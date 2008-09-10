@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.470 2008/08/25 15:11:00 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.471 2008/09/10 18:09:19 alvherre Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -129,6 +129,8 @@ extern bool optimize_bounded_sort;
 extern char *SSLCipherSuites;
 #endif
 
+static void set_config_sourcefile(const char *name, char *sourcefile,
+					  int sourceline);
 
 static const char *assign_log_destination(const char *value,
 					   bool doit, GucSource source);
@@ -3200,6 +3202,8 @@ InitializeGUCOptions(void)
 		gconf->reset_source = PGC_S_DEFAULT;
 		gconf->source = PGC_S_DEFAULT;
 		gconf->stack = NULL;
+		gconf->sourcefile = NULL;
+		gconf->sourceline = 0;
 
 		switch (gconf->vartype)
 		{
@@ -3541,7 +3545,6 @@ ResetAllOptions(void)
 												   PGC_S_SESSION))
 							elog(ERROR, "failed to reset %s", conf->gen.name);
 					*conf->variable = conf->reset_val;
-					conf->gen.source = conf->gen.reset_source;
 					break;
 				}
 			case PGC_INT:
@@ -3553,7 +3556,6 @@ ResetAllOptions(void)
 												   PGC_S_SESSION))
 							elog(ERROR, "failed to reset %s", conf->gen.name);
 					*conf->variable = conf->reset_val;
-					conf->gen.source = conf->gen.reset_source;
 					break;
 				}
 			case PGC_REAL:
@@ -3565,7 +3567,6 @@ ResetAllOptions(void)
 												   PGC_S_SESSION))
 							elog(ERROR, "failed to reset %s", conf->gen.name);
 					*conf->variable = conf->reset_val;
-					conf->gen.source = conf->gen.reset_source;
 					break;
 				}
 			case PGC_STRING:
@@ -3594,7 +3595,6 @@ ResetAllOptions(void)
 					}
 
 					set_string_field(conf, conf->variable, str);
-					conf->gen.source = conf->gen.reset_source;
 					break;
 				}
 			case PGC_ENUM:
@@ -3606,10 +3606,11 @@ ResetAllOptions(void)
 												   PGC_S_SESSION))
 							elog(ERROR, "failed to reset %s", conf->gen.name);
 					*conf->variable = conf->reset_val;
-					conf->gen.source = conf->gen.reset_source;
 					break;
 				}
 		}
+
+		gconf->source = gconf->reset_source;
 
 		if (gconf->flags & GUC_REPORT)
 			ReportGUCOption(gconf);
@@ -5108,9 +5109,38 @@ set_config_option(const char *name, const char *value,
 
 
 /*
+ * Set the fields for source file and line number the setting came from.
+ */
+static void
+set_config_sourcefile(const char *name, char *sourcefile, int sourceline)
+{
+	struct config_generic *record;
+	int			elevel;
+
+	/*
+	 * To avoid cluttering the log, only the postmaster bleats loudly
+	 * about problems with the config file.
+	 */
+	elevel = IsUnderPostmaster ? DEBUG3 : LOG;
+
+	record = find_option(name, true, elevel);
+	/* should not happen */
+	if (record == NULL)
+		elog(ERROR, "unrecognized configuration parameter \"%s\"", name);
+
+	if (record->sourcefile)
+		free(record->sourcefile);
+	record->sourcefile = guc_strdup(elevel, sourcefile);
+	record->sourceline = sourceline;
+}
+
+/*
  * Set a config option to the given value. See also set_config_option,
  * this is just the wrapper to be called from outside GUC.	NB: this
  * is used only for non-transactional operations.
+ *
+ * Note: there is no support here for setting source file/line, as it
+ * is currently not needed.
  */
 void
 SetConfigOption(const char *name, const char *value,
@@ -6144,6 +6174,19 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 			}
 			break;
 	}
+
+	/* If the setting came from a config file, set the source location */
+	if (conf->source == PGC_S_FILE)
+	{
+		values[12] = conf->sourcefile;
+		snprintf(buffer, sizeof(buffer), "%d", conf->sourceline);
+		values[13] = pstrdup(buffer);
+	}
+	else
+	{
+		values[12] = NULL;
+		values[13] = NULL;
+	}
 }
 
 /*
@@ -6179,7 +6222,7 @@ show_config_by_name(PG_FUNCTION_ARGS)
  * show_all_settings - equiv to SHOW ALL command but implemented as
  * a Table Function.
  */
-#define NUM_PG_SETTINGS_ATTS	12
+#define NUM_PG_SETTINGS_ATTS	14
 
 Datum
 show_all_settings(PG_FUNCTION_ARGS)
@@ -6231,6 +6274,10 @@ show_all_settings(PG_FUNCTION_ARGS)
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "enumvals",
 						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 13, "sourcefile",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 14, "sourceline",
+						   INT4OID, -1, 0);
 
 		/*
 		 * Generate attribute metadata needed later to produce tuples from raw
