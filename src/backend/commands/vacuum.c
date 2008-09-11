@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.364.2.1 2008/03/14 17:26:00 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.364.2.2 2008/09/11 14:01:35 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -781,14 +781,12 @@ vac_update_datfrozenxid(void)
 	bool		dirty = false;
 
 	/*
-	 * Initialize the "min" calculation with RecentGlobalXmin.	Any
-	 * not-yet-committed pg_class entries for new tables must have
-	 * relfrozenxid at least this high, because any other open xact must have
-	 * RecentXmin >= its PGPROC.xmin >= our RecentGlobalXmin; see
-	 * AddNewRelationTuple().  So we cannot produce a wrong minimum by
-	 * starting with this.
+	 * Initialize the "min" calculation with GetOldestXmin, which is a
+	 * reasonable approximation to the minimum relfrozenxid for not-yet-
+	 * committed pg_class entries for new tables; see AddNewRelationTuple().
+	 * Se we cannot produce a wrong minimum by starting with this.
 	 */
-	newFrozenXid = RecentGlobalXmin;
+	newFrozenXid = GetOldestXmin(true, true);
 
 	/*
 	 * We must seqscan pg_class to find the minimum Xid, because there is no
@@ -982,18 +980,16 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
 
-	if (vacstmt->full)
-	{
-		/* functions in indexes may want a snapshot set */
-		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
-	}
-	else
+	/*
+	 * Functions in indexes may want a snapshot set. Also, setting
+	 * a snapshot ensures that RecentGlobalXmin is kept truly recent.
+	 */
+	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+
+	if (!vacstmt->full)
 	{
 		/*
-		 * During a lazy VACUUM we do not run any user-supplied functions, and
-		 * so it should be safe to not create a transaction snapshot.
-		 *
-		 * We can furthermore set the PROC_IN_VACUUM flag, which lets other
+		 * During a lazy VACUUM we can set the PROC_IN_VACUUM flag, which lets other
 		 * concurrent VACUUMs know that they can ignore this one while
 		 * determining their OldestXmin.  (The reason we don't set it during a
 		 * full VACUUM is exactly that we may have to run user- defined
