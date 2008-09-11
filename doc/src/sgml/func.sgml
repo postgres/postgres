@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.446 2008/09/08 00:47:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.447 2008/09/11 17:32:33 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -5187,7 +5187,12 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </itemizedlist>
       </para>
       <para>
-       Attempting to construct a date using a mixture of ISO week and Gregorian date fields is nonsensical, and could yield unexpected results.  In the context of an ISO year, the concept of a 'month' or 'day of month' has no meaning.  In the context of a Gregorian year, the ISO week has no meaning.  Users should take care to keep Gregorian and ISO date specifications separate.
+       Attempting to construct a date using a mixture of ISO week and
+       Gregorian date fields is nonsensical, and will cause an error.  In the
+       context of an ISO year, the concept of a <quote>month</> or <quote>day
+       of month</> has no meaning.  In the context of a Gregorian year, the
+       ISO week has no meaning.  Users should take care to keep Gregorian and
+       ISO date specifications separate.
       </para>
      </listitem>
 
