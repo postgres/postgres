@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.262 2008/08/11 11:05:10 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.263 2008/09/11 14:01:09 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -219,6 +219,7 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 	/*
 	 * Prune and repair fragmentation for the whole page, if possible.
 	 */
+	Assert(TransactionIdIsValid(RecentGlobalXmin));
 	heap_page_prune_opt(scan->rs_rd, buffer, RecentGlobalXmin);
 
 	/*
@@ -1468,6 +1469,8 @@ heap_hot_search_buffer(ItemPointer tid, Buffer buffer, Snapshot snapshot,
 
 	if (all_dead)
 		*all_dead = true;
+
+	Assert(TransactionIdIsValid(RecentGlobalXmin));
 
 	Assert(ItemPointerGetBlockNumber(tid) == BufferGetBlockNumber(buffer));
 	offnum = ItemPointerGetOffsetNumber(tid);

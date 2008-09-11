@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.184 2008/05/12 00:00:52 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.185 2008/09/11 14:01:09 alvherre Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -47,6 +47,7 @@
 #include "utils/plancache.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
@@ -461,10 +462,15 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	on_shmem_exit(ShutdownPostgres, 0);
 
 	/*
-	 * Start a new transaction here before first access to db
+	 * Start a new transaction here before first access to db, and get a
+	 * snapshot.  We don't have a use for the snapshot itself, but we're
+	 * interested in the secondary effect that it sets RecentGlobalXmin.
 	 */
 	if (!bootstrap)
+	{
 		StartTransactionCommand();
+		(void) GetTransactionSnapshot();
+	}
 
 	/*
 	 * Now that we have a transaction, we can take locks.  Take a writer's

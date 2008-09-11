@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.29 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.30 2008/09/11 14:01:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 
 #include "access/heapam.h"
 #include "access/relscan.h"
+#include "access/transam.h"
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapHeapscan.h"
 #include "pgstat.h"
@@ -262,6 +263,7 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	/*
 	 * Prune and repair fragmentation for the whole page, if possible.
 	 */
+	Assert(TransactionIdIsValid(RecentGlobalXmin));
 	heap_page_prune_opt(scan->rs_rd, buffer, RecentGlobalXmin);
 
 	/*

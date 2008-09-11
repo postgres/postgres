@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.4 2008/07/11 02:10:14 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.5 2008/09/11 14:01:10 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,10 +59,14 @@ static Snapshot	SecondarySnapshot = NULL;
  * These are updated by GetSnapshotData.  We initialize them this way
  * for the convenience of TransactionIdIsInProgress: even in bootstrap
  * mode, we don't want it to say that BootstrapTransactionId is in progress.
+ *
+ * RecentGlobalXmin is initialized to InvalidTransactionId, to ensure that no
+ * one tries to use a stale value.  Readers should ensure that it has been set
+ * to something else before using it.
  */
 TransactionId TransactionXmin = FirstNormalTransactionId;
 TransactionId RecentXmin = FirstNormalTransactionId;
-TransactionId RecentGlobalXmin = FirstNormalTransactionId;
+TransactionId RecentGlobalXmin = InvalidTransactionId;
 
 /*
  * Elements of the list of registered snapshots.

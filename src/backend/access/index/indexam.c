@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.109 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.110 2008/09/11 14:01:09 alvherre Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -418,6 +418,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(amgettuple);
+
+	Assert(TransactionIdIsValid(RecentGlobalXmin));
 
 	/*
 	 * We always reset xs_hot_dead; if we are here then either we are just
