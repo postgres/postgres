@@ -156,3 +156,22 @@ SELECT interval '1 2:03:04' hour to second;
 SELECT interval '1 2' minute to second;
 SELECT interval '1 2:03' minute to second;
 SELECT interval '1 2:03:04' minute to second;
+
+-- test syntaxes for restricted precision
+SELECT interval(0) '1 day 01:23:45.6789';
+SELECT interval(2) '1 day 01:23:45.6789';
+SELECT interval '12:34.5678' minute to second(2);  -- per SQL spec
+SELECT interval(2) '12:34.5678' minute to second;  -- historical PG
+SELECT interval(2) '12:34.5678' minute to second(2);  -- syntax error
+SELECT interval '1.234' second;
+SELECT interval '1.234' second(2);
+SELECT interval '1 2.345' day to second(2);
+SELECT interval '1 2:03' day to second(2);
+SELECT interval '1 2:03.4567' day to second(2);
+SELECT interval '1 2:03:04.5678' day to second(2);
+SELECT interval '1 2.345' hour to second(2);
+SELECT interval '1 2:03.45678' hour to second(2);
+SELECT interval '1 2:03:04.5678' hour to second(2);
+SELECT interval '1 2.3456' minute to second(2);
+SELECT interval '1 2:03.5678' minute to second(2);
+SELECT interval '1 2:03:04.5678' minute to second(2);

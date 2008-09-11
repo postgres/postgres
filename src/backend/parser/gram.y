@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.622 2008/09/02 20:37:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.623 2008/09/11 15:27:30 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -292,7 +292,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <list>	extract_list overlay_list position_list
 %type <list>	substr_list trim_list
-%type <ival>	opt_interval
+%type <list>	opt_interval interval_second
 %type <node>	overlay_placing substr_from substr_for
 
 %type <boolean> opt_instead opt_analyze
@@ -1222,28 +1222,39 @@ zone_value:
 			| ConstInterval Sconst opt_interval
 				{
 					TypeName *t = $1;
-					if ($3 != INTERVAL_FULL_RANGE)
+					if ($3 != NIL)
 					{
-						if (($3 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
+						A_Const *n = (A_Const *) linitial($3);
+						if ((n->val.val.ival & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
 									 scanner_errposition(@3)));
-						t->typmods = list_make1(makeIntConst($3, @3));
 					}
+					t->typmods = $3;
 					$$ = makeStringConstCast($2, @2, t);
 				}
 			| ConstInterval '(' Iconst ')' Sconst opt_interval
 				{
 					TypeName *t = $1;
-					if (($6 != INTERVAL_FULL_RANGE)
-						&& (($6 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0))
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
-								 scanner_errposition(@6)));
-					t->typmods = list_make2(makeIntConst($6, @6),
-											makeIntConst($3, @3));
+					if ($6 != NIL)
+					{
+						A_Const *n = (A_Const *) linitial($6);
+						if ((n->val.val.ival & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
+									 scanner_errposition(@6)));
+						if (list_length($6) != 1)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("interval precision specified twice"),
+									 scanner_errposition(@1)));
+						t->typmods = lappend($6, makeIntConst($3, @3));
+					}
+					else
+						t->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
+												makeIntConst($3, @3));
 					$$ = makeStringConstCast($5, @5, t);
 				}
 			| NumericOnly							{ $$ = makeAConst($1, @1); }
@@ -6983,14 +6994,23 @@ SimpleTypename:
 			| ConstInterval opt_interval
 				{
 					$$ = $1;
-					if ($2 != INTERVAL_FULL_RANGE)
-						$$->typmods = list_make1(makeIntConst($2, @2));
+					$$->typmods = $2;
 				}
 			| ConstInterval '(' Iconst ')' opt_interval
 				{
 					$$ = $1;
-					$$->typmods = list_make2(makeIntConst($5, @5),
-											 makeIntConst($3, @3));
+					if ($5 != NIL)
+					{
+						if (list_length($5) != 1)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("interval precision specified twice"),
+									 scanner_errposition(@1)));
+						$$->typmods = lappend($5, makeIntConst($3, @3));
+					}
+					else
+						$$->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
+												 makeIntConst($3, @3));
 				}
 		;
 
@@ -7337,30 +7357,74 @@ opt_timezone:
 		;
 
 opt_interval:
-			YEAR_P									{ $$ = INTERVAL_MASK(YEAR); }
-			| MONTH_P								{ $$ = INTERVAL_MASK(MONTH); }
-			| DAY_P									{ $$ = INTERVAL_MASK(DAY); }
-			| HOUR_P								{ $$ = INTERVAL_MASK(HOUR); }
-			| MINUTE_P								{ $$ = INTERVAL_MASK(MINUTE); }
-			| SECOND_P								{ $$ = INTERVAL_MASK(SECOND); }
+			YEAR_P
+				{ $$ = list_make1(makeIntConst(INTERVAL_MASK(YEAR), @1)); }
+			| MONTH_P
+				{ $$ = list_make1(makeIntConst(INTERVAL_MASK(MONTH), @1)); }
+			| DAY_P
+				{ $$ = list_make1(makeIntConst(INTERVAL_MASK(DAY), @1)); }
+			| HOUR_P
+				{ $$ = list_make1(makeIntConst(INTERVAL_MASK(HOUR), @1)); }
+			| MINUTE_P
+				{ $$ = list_make1(makeIntConst(INTERVAL_MASK(MINUTE), @1)); }
+			| interval_second
+				{ $$ = $1; }
 			| YEAR_P TO MONTH_P
-					{ $$ = INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH); }
+				{
+					$$ = list_make1(makeIntConst(INTERVAL_MASK(YEAR) |
+												 INTERVAL_MASK(MONTH), @1));
+				}
 			| DAY_P TO HOUR_P
-					{ $$ = INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR); }
+				{
+					$$ = list_make1(makeIntConst(INTERVAL_MASK(DAY) |
+												 INTERVAL_MASK(HOUR), @1));
+				}
 			| DAY_P TO MINUTE_P
-					{ $$ = INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR)
-						| INTERVAL_MASK(MINUTE); }
-			| DAY_P TO SECOND_P
-					{ $$ = INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR)
-						| INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND); }
+				{
+					$$ = list_make1(makeIntConst(INTERVAL_MASK(DAY) |
+												 INTERVAL_MASK(HOUR) |
+												 INTERVAL_MASK(MINUTE), @1));
+				}
+			| DAY_P TO interval_second
+				{
+					$$ = $3;
+					linitial($$) = makeIntConst(INTERVAL_MASK(DAY) |
+												INTERVAL_MASK(HOUR) |
+												INTERVAL_MASK(MINUTE) |
+												INTERVAL_MASK(SECOND), @1);
+				}
 			| HOUR_P TO MINUTE_P
-					{ $$ = INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE); }
-			| HOUR_P TO SECOND_P
-					{ $$ = INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE)
-						| INTERVAL_MASK(SECOND); }
-			| MINUTE_P TO SECOND_P
-					{ $$ = INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND); }
-			| /*EMPTY*/								{ $$ = INTERVAL_FULL_RANGE; }
+				{
+					$$ = list_make1(makeIntConst(INTERVAL_MASK(HOUR) |
+												 INTERVAL_MASK(MINUTE), @1));
+				}
+			| HOUR_P TO interval_second
+				{
+					$$ = $3;
+					linitial($$) = makeIntConst(INTERVAL_MASK(HOUR) |
+												INTERVAL_MASK(MINUTE) |
+												INTERVAL_MASK(SECOND), @1);
+				}
+			| MINUTE_P TO interval_second
+				{
+					$$ = $3;
+					linitial($$) = makeIntConst(INTERVAL_MASK(MINUTE) |
+												INTERVAL_MASK(SECOND), @1);
+				}
+			| /*EMPTY*/
+				{ $$ = NIL; }
+		;
+
+interval_second:
+			SECOND_P
+				{
+					$$ = list_make1(makeIntConst(INTERVAL_MASK(SECOND), @1));
+				}
+			| SECOND_P '(' Iconst ')'
+				{
+					$$ = list_make2(makeIntConst(INTERVAL_MASK(SECOND), @1),
+									makeIntConst($3, @3));
+				}
 		;
 
 
@@ -9014,16 +9078,24 @@ AexprConst: Iconst
 			| ConstInterval Sconst opt_interval
 				{
 					TypeName *t = $1;
-					/* precision is not specified, but fields may be... */
-					if ($3 != INTERVAL_FULL_RANGE)
-						t->typmods = list_make1(makeIntConst($3, @3));
+					t->typmods = $3;
 					$$ = makeStringConstCast($2, @2, t);
 				}
 			| ConstInterval '(' Iconst ')' Sconst opt_interval
 				{
 					TypeName *t = $1;
-					t->typmods = list_make2(makeIntConst($6, @6),
-										    makeIntConst($3, @3));
+					if ($6 != NIL)
+					{
+						if (list_length($6) != 1)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("interval precision specified twice"),
+									 scanner_errposition(@1)));
+						t->typmods = lappend($6, makeIntConst($3, @3));
+					}
+					else
+						t->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
+												makeIntConst($3, @3));
 					$$ = makeStringConstCast($5, @5, t);
 				}
 			| TRUE_P

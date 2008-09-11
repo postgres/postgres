@@ -518,3 +518,100 @@ SELECT interval '1 2:03:04' minute to second;
  00:03:04
 (1 row)
 
+-- test syntaxes for restricted precision
+SELECT interval(0) '1 day 01:23:45.6789';
+    interval    
+----------------
+ 1 day 01:23:46
+(1 row)
+
+SELECT interval(2) '1 day 01:23:45.6789';
+     interval      
+-------------------
+ 1 day 01:23:45.68
+(1 row)
+
+SELECT interval '12:34.5678' minute to second(2);  -- per SQL spec
+  interval   
+-------------
+ 00:12:34.57
+(1 row)
+
+SELECT interval(2) '12:34.5678' minute to second;  -- historical PG
+  interval   
+-------------
+ 00:12:34.57
+(1 row)
+
+SELECT interval(2) '12:34.5678' minute to second(2);  -- syntax error
+ERROR:  interval precision specified twice
+LINE 1: SELECT interval(2) '12:34.5678' minute to second(2);
+               ^
+SELECT interval '1.234' second;
+   interval   
+--------------
+ 00:00:01.234
+(1 row)
+
+SELECT interval '1.234' second(2);
+  interval   
+-------------
+ 00:00:01.23
+(1 row)
+
+SELECT interval '1 2.345' day to second(2);
+    interval    
+----------------
+ 1 day 02:20:42
+(1 row)
+
+SELECT interval '1 2:03' day to second(2);
+    interval    
+----------------
+ 1 day 02:03:00
+(1 row)
+
+SELECT interval '1 2:03.4567' day to second(2);
+     interval      
+-------------------
+ 1 day 00:02:03.46
+(1 row)
+
+SELECT interval '1 2:03:04.5678' day to second(2);
+     interval      
+-------------------
+ 1 day 02:03:04.57
+(1 row)
+
+SELECT interval '1 2.345' hour to second(2);
+ERROR:  invalid input syntax for type interval: "1 2.345"
+LINE 1: SELECT interval '1 2.345' hour to second(2);
+                        ^
+SELECT interval '1 2:03.45678' hour to second(2);
+  interval   
+-------------
+ 00:02:03.46
+(1 row)
+
+SELECT interval '1 2:03:04.5678' hour to second(2);
+  interval   
+-------------
+ 02:03:04.57
+(1 row)
+
+SELECT interval '1 2.3456' minute to second(2);
+ERROR:  invalid input syntax for type interval: "1 2.3456"
+LINE 1: SELECT interval '1 2.3456' minute to second(2);
+                        ^
+SELECT interval '1 2:03.5678' minute to second(2);
+  interval   
+-------------
+ 00:02:03.57
+(1 row)
+
+SELECT interval '1 2:03:04.5678' minute to second(2);
+  interval   
+-------------
+ 00:03:04.57
+(1 row)
+

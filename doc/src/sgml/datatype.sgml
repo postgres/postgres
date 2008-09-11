@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.227 2008/05/16 16:31:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.228 2008/09/11 15:27:30 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -131,7 +131,7 @@
       </row>
 
       <row>
-       <entry><type>interval [ (<replaceable>p</replaceable>) ]</type></entry>
+       <entry><type>interval [ <replaceable>fields</replaceable> ] [ (<replaceable>p</replaceable>) ]</type></entry>
        <entry></entry>
        <entry>time span</entry>
       </row>
@@ -1420,7 +1420,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
-        <entry><type>interval [ (<replaceable>p</replaceable>) ]</type></entry>
+        <entry><type>interval [ <replaceable>fields</replaceable> ] [ (<replaceable>p</replaceable>) ]</type></entry>
         <entry>12 bytes</entry>
         <entry>time intervals</entry>
         <entry>-178000000 years</entry>
@@ -1503,6 +1503,30 @@ SELECT b, char_length(b) FROM test2;
     For the <type>time</type> types, the allowed range of
     <replaceable>p</replaceable> is from 0 to 6 when eight-byte integer
     storage is used, or from 0 to 10 when floating-point storage is used.
+   </para>
+
+   <para>
+    The <type>interval</type> type has an additional option, which is
+    to restrict the set of stored fields by writing one of these phrases:
+<programlisting>
+    YEAR
+    MONTH
+    DAY
+    HOUR
+    MINUTE
+    SECOND
+    YEAR TO MONTH
+    DAY TO HOUR
+    DAY TO MINUTE
+    DAY TO SECOND
+    HOUR TO MINUTE
+    MINUTE TO SECOND
+</programlisting>
+    Input falling outside the specified set of fields is silently discarded.
+    Note that if both <replaceable>fields</replaceable> and
+    <replaceable>precision</replaceable> are specified, the
+    <replaceable>fields</replaceable> must include <literal>SECOND</>,
+    since the precision applies only to the seconds.
    </para>
 
    <para>
@@ -1928,18 +1952,26 @@ January 8 04:05:06 1999 PST
       <replaceable>direction</> can be <literal>ago</literal> or
       empty.  The at sign (<literal>@</>) is optional noise.  The amounts
       of different units are implicitly added up with appropriate
-      sign accounting.
+      sign accounting.  <literal>ago</literal> negates all the fields.
      </para>
 
      <para>
       Quantities of days, hours, minutes, and seconds can be specified without
       explicit unit markings.  For example, <literal>'1 12:59:10'</> is read
-      the same as <literal>'1 day 12 hours 59 min 10 sec'</>.
+      the same as <literal>'1 day 12 hours 59 min 10 sec'</>.  Also,
+      a combination of years and months can be specified with a dash;
+      for example <literal>'200-10'</> is read the same as <literal>'200 years
+      10 months'</>.  (These shorter forms are in fact the only ones allowed
+      by the SQL standard.)
      </para>
 
      <para>
-      The optional subsecond precision <replaceable>p</replaceable> should 
-      be between 0 and 6, and defaults to the precision of the input literal.
+      When writing an interval constant with a <replaceable>fields</>
+      specification, or when assigning to an interval column that was defined
+      with a <replaceable>fields</> specification, the interpretation of
+      unmarked quantities depends on the <replaceable>fields</>.  For
+      example <literal>INTERVAL '1' YEAR</> is read as 1 year, whereas
+      <literal>INTERVAL '1'</> means 1 second.
      </para>
 
      <para>
