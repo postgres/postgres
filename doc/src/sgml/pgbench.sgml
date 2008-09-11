@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.6 2008/03/19 03:33:21 ishii Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.7 2008/09/11 23:52:48 tgl Exp $ -->
 
 <sect1 id="pgbench">
  <title>pgbench</title>
@@ -35,7 +35,7 @@ tps = 85.296346 (excluding connections establishing)
   The first four lines just report some of the most important parameter
   settings.  The next line reports the number of transactions completed
   and intended (the latter being just the product of number of clients
-  and number of transactions); these will be equal unless the run
+  and number of transactions per client); these will be equal unless the run
   failed before completion.  The last two lines report the TPS rate,
   figured with and without counting the time to start database sessions.
  </para>
@@ -99,8 +99,9 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
    In nearly all cases, you'll need some options to make a useful test.
    The most important options are <literal>-c</> (number of clients),
-   <literal>-t</> (number of transactions), and <literal>-f</> (specify
-   a custom script file).  See below for a full list.
+   <literal>-t</> (number of transactions), <literal>-T</> (time limit),
+   and <literal>-f</> (specify a custom script file).
+   See below for a full list.
   </para>
 
   <para>
@@ -174,20 +175,29 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       </entry>
      </row>
      <row>
+      <entry><literal>-T</literal> <replaceable>seconds</></entry>
+      <entry>
+       Duration of benchmark test in seconds. <literal>-t</literal> and
+       <literal>-T</literal> are mutually exclusive.
+      </entry>
+     </row>
+     <row>
       <entry><literal>-M</literal> <replaceable>querymode</></entry>
       <entry>
-       Choose the query mode from the follows. default is simple.
+       Protocol to use for submitting queries for the server:
          <itemizedlist>
           <listitem>
-           <para>simple: using simple query protocol.</para>
+           <para><literal>simple</>: use simple query protocol.</para>
           </listitem>
           <listitem>
-           <para>extended: using extended protocol.</para>
+           <para><literal>extended</>: use extended query protocol.</para>
           </listitem>
           <listitem>
-           <para>prepared: using extended protocol with prepared statements.</para>
+           <para><literal>prepared</>: use extended query protocol with prepared statements.</para>
           </listitem>
          </itemizedlist>
+       The default is simple query protocol.  (See <xref linkend="protocol">
+       for more information.)
       </entry>
      </row>
      <row>
@@ -515,7 +525,7 @@ END;
 
   <para>
    In the first place, <emphasis>never</> believe any test that runs
-   for only a few seconds.  Increase the <literal>-t</> setting enough
+   for only a few seconds.  Use the <literal>-t</> or <literal>-T</> option
    to make the run last at least a few minutes, so as to average out noise.
    In some cases you could need hours to get numbers that are reproducible.
    It's a good idea to try the test run a few times, to find out if your

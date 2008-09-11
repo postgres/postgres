@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.81 2008/08/22 17:57:34 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.82 2008/09/11 23:52:48 tgl Exp $
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -29,6 +29,7 @@
 #include "postgres_fe.h"
 
 #include "libpq-fe.h"
+#include "pqsignal.h"
 
 #include <ctype.h>
 
@@ -37,6 +38,7 @@
 #define FD_SETSIZE 1024
 #include <win32.h>
 #else
+#include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
 #endif   /* ! WIN32 */
@@ -67,8 +69,11 @@ extern int	optind;
 #define MAXCLIENTS	1024
 #endif
 
+#define DEFAULT_NXACTS	10		/* default nxacts */
+
 int			nclients = 1;		/* default number of simulated clients */
-int			nxacts = 10;		/* default number of transactions per clients */
+int			nxacts = 0;			/* number of transactions per client */
+int			duration = 0;		/* duration in seconds */
 
 /*
  * scaling factor. for example, scale = 10 will make 1000000 tuples of
@@ -104,6 +109,8 @@ char	   *pgoptions = NULL;
 char	   *pgtty = NULL;
 char	   *login = NULL;
 char	   *dbName;
+
+volatile bool timer_exceeded = false;		/* flag from signal handler */
 
 /* variable definitions */
 typedef struct
@@ -162,7 +169,7 @@ typedef struct
 }	Command;
 
 Command   **sql_files[MAX_FILES];		/* SQL script files */
-int			num_files;			/* its number */
+int			num_files;			/* number of script files */
 
 /* default scenario */
 static char *tpc_b = {
@@ -208,6 +215,10 @@ static char *select_only = {
 /* Connection overhead time */
 static struct timeval conn_total_time = {0, 0};
 
+/* Function prototypes */
+static void setalarm(int seconds);
+
+
 /* Calculate total time */
 static void
 addTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
@@ -241,7 +252,7 @@ diffTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-M querymode][-f filename][-l][-U login][-d][dbname]\n");
+	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions | -T duration][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-M querymode][-f filename][-l][-U login][-d][dbname]\n");
 	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor] [-F fillfactor] [-U login][-d][dbname]\n");
 }
 
@@ -630,7 +641,8 @@ top:
 				st->con = NULL;
 			}
 
-			if (++st->cnt >= nxacts)
+			++st->cnt;
+			if ((st->cnt >= nxacts && duration <= 0) || timer_exceeded)
 			{
 				remains--;		/* I've done */
 				if (st->con != NULL)
@@ -1434,8 +1446,18 @@ printResults(
 	printf("scaling factor: %d\n", scale);
 	printf("query mode: %s\n", QUERYMODE[querymode]);
 	printf("number of clients: %d\n", nclients);
-	printf("number of transactions per client: %d\n", nxacts);
-	printf("number of transactions actually processed: %d/%d\n", normal_xacts, nxacts * nclients);
+	if (duration <= 0)
+	{
+		printf("number of transactions per client: %d\n", nxacts);
+		printf("number of transactions actually processed: %d/%d\n",
+			   normal_xacts, nxacts * nclients);
+	}
+	else
+	{
+		printf("duration: %d s\n", duration);
+		printf("number of transactions actually processed: %d\n",
+			   normal_xacts);
+	}
 	printf("tps = %f (including connections establishing)\n", t1);
 	printf("tps = %f (excluding connections establishing)\n", t2);
 }
@@ -1499,7 +1521,7 @@ main(int argc, char **argv)
 
 	memset(state, 0, sizeof(*state));
 
-	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:CNSlf:D:F:M:")) != -1)
+	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Cs:t:T:U:lf:D:F:M:")) != -1)
 	{
 		switch (c)
 		{
@@ -1565,10 +1587,28 @@ main(int argc, char **argv)
 				}
 				break;
 			case 't':
+				if (duration > 0)
+				{
+					fprintf(stderr, "specify either a number of transactions (-t) or a duration (-T), not both.\n");
+					exit(1);
+				}
 				nxacts = atoi(optarg);
 				if (nxacts <= 0)
 				{
 					fprintf(stderr, "invalid number of transactions: %d\n", nxacts);
+					exit(1);
+				}
+				break;
+			case 'T':
+				if (nxacts > 0)
+				{
+					fprintf(stderr, "specify either a number of transactions (-t) or a duration (-T), not both.\n");
+					exit(1);
+				}
+				duration = atoi(optarg);
+				if (duration <= 0)
+				{
+					fprintf(stderr, "invalid duration: %d\n", duration);
 					exit(1);
 				}
 				break;
@@ -1650,6 +1690,10 @@ main(int argc, char **argv)
 		exit(0);
 	}
 
+	/* Use DEFAULT_NXACTS if neither nxacts nor duration is specified. */
+	if (nxacts <= 0 && duration <= 0)
+		nxacts = DEFAULT_NXACTS;
+
 	remains = nclients;
 
 	if (nclients > 1)
@@ -1695,8 +1739,12 @@ main(int argc, char **argv)
 
 	if (debug)
 	{
-		printf("pghost: %s pgport: %s nclients: %d nxacts: %d dbName: %s\n",
+		if (duration <= 0)
+			printf("pghost: %s pgport: %s nclients: %d nxacts: %d dbName: %s\n",
 			   pghost, pgport, nclients, nxacts, dbName);
+		else
+			printf("pghost: %s pgport: %s nclients: %d duration: %d dbName: %s\n",
+			   pghost, pgport, nclients, duration, dbName);
 	}
 
 	/* opening connection... */
@@ -1778,6 +1826,10 @@ main(int argc, char **argv)
 
 	/* get start up time */
 	gettimeofday(&start_time, NULL);
+
+	/* set alarm if duration is specified. */
+	if (duration > 0)
+		setalarm(duration);
 
 	if (is_connect == 0)
 	{
@@ -1951,3 +2003,51 @@ main(int argc, char **argv)
 		}
 	}
 }
+
+
+/*
+ * Support for duration option: set timer_exceeded after so many seconds.
+ */
+
+#ifndef WIN32
+
+static void
+handle_sig_alarm(SIGNAL_ARGS)
+{
+	timer_exceeded = true;
+}
+
+static void
+setalarm(int seconds)
+{
+	pqsignal(SIGALRM, handle_sig_alarm);
+	alarm(seconds);
+}
+
+#else  /* WIN32 */
+
+static VOID CALLBACK
+win32_timer_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
+{
+	timer_exceeded = true;
+}
+
+static void
+setalarm(int seconds)
+{
+	HANDLE	queue;
+	HANDLE	timer;
+
+	/* This function will be called at most once, so we can cheat a bit. */
+	queue = CreateTimerQueue();
+	if (seconds > ((DWORD)-1) / 1000 ||
+		!CreateTimerQueueTimer(&timer, queue,
+							   win32_timer_callback, NULL, seconds * 1000, 0,
+							   WT_EXECUTEINTIMERTHREAD | WT_EXECUTEONLYONCE))
+	{
+		fprintf(stderr, "Failed to set timer\n");
+		exit(1);
+	}
+}
+
+#endif  /* WIN32 */
