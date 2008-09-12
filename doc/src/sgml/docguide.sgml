@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.72 2007/12/28 11:13:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.73 2008/09/12 08:43:53 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -131,12 +131,21 @@
     </varlistentry>
 
     <varlistentry>
-     <term><ulink url="http://docbook2x.sourceforge.net">DocBook2X tools</ulink></term>
+     <term><ulink url="http://search.cpan.org/dist/SGMLSpm/">SGMLSpm</ulink></term>
      <listitem>
       <para>
-       This optional package is used to create man pages.  It has a
-       number of prerequisite packages of its own.  Check the web
-       site.
+       This optional package is used to create man pages.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><ulink url="http://docbook2x.sourceforge.net">DocBook2X</ulink></term>
+     <listitem>
+      <para>
+       This optional package is also used to create man pages.  You
+       want the <literal>docbook2man-sgmlspl</literal> package, not
+       the main <literal>docbook2x</literal> package.
       </para>
      </listitem>
     </varlistentry>
@@ -257,6 +266,7 @@ CATALOG "docbook/4.2/catalog"
 apt-get install openjade1.3
 apt-get install docbook
 apt-get install docbook-dsssl
+apt-get install sgmlspl   # for the man pages
 </programlisting>
     (The plain <literal>openjade</literal> package installs
     OpenJade 1.4, which seems not to work.)
@@ -573,25 +583,44 @@ gmake postgres.tar.gz
   <title>Manpages</title>
 
   <para>
-   We use the <application>docbook2man</application> utility to
+   We use the <application>docbook2man-sgmlspl</application> utility
+   from the <productname>DocBook2X</productname> project to
    convert <productname>DocBook</productname>
    <sgmltag>refentry</sgmltag> pages to *roff output suitable for man
    pages.  The man pages are also distributed as a tar archive,
    similar to the <acronym>HTML</acronym> version.  To create the man
-   page package, use the commands:
+   pages, use the commands:
 <programlisting>
-cd doc/src
-gmake man.tar.gz
+cd doc/src/sgml
+gmake man D2MDIR=<replaceable>directory</replaceable>
 </programlisting>
-   which will result in a tar file being generated in the
-   <filename>doc/src</filename> directory.
+   Use the <varname>D2MDIR</varname> variable to specify the name of
+   the directory where the
+   file <filename>docbook2man-spec.pl</filename> from
+   the <application>docbook2man-sgmlspl</application> package resides.
+   There is no default for that.  Since that package is not available
+   or outdated in many packaging systems, you might want to just
+   download the source code tarball and unpack it.  No building is
+   required.  Then the path is something
+   like <literal>D2MDIR=/home/you/somewhere/docbook2man-sgmlspl-1.0/perl</literal>.
+   You may get warnings like this:
+<screen>
+Warning: unrecognized SDATA '[scaron]': please add definition to docbook2man-spec.pl
+Warning: unrecognized SDATA '[ouml  ]': please add definition to docbook2man-spec.pl
+</screen>
+   which can ignore if (and only if) you are using the latest version
+   of <filename>docbook2man-spec.pl</filename>
+   and you are not seeing any other SDATA warnings besides those.
   </para>
 
   <para>
-   To generate quality man pages, it might be necessary to use a
-   hacked version of the conversion utility or do some manual
-   postprocessing.  All man pages should be manually inspected before
-   distribution.
+   To create the man page package for a release, use the following commands:
+<programlisting>
+cd doc/src
+gmake man.tar.gz D2MDIR=<replaceable>directory</replaceable>
+</programlisting>
+   which will result in a tar file being generated in the
+   <filename>doc/src</filename> directory.
   </para>
  </sect2>
 
