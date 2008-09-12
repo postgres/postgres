@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/citext.sgml,v 1.1 2008/07/29 18:31:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/citext.sgml,v 1.2 2008/09/12 18:29:49 tgl Exp $ -->
 
 <sect1 id="citext">
  <title>citext</title>
@@ -96,6 +96,73 @@
  </sect2>
 
  <sect2>
+  <title>String Comparison Behavior</title>
+  <para>
+   In order to emulate a case-insensitive collation as closely as possible,
+   there are <type>citext</>-specific versions of a number of the comparison
+   operators and functions.  So, for example, the regular expression
+   operators <literal>~</> and <literal>~*</> exhibit the same behavior when
+   applied to <type>citext</>: they both compare case-insensitively.
+   The same is true
+   for <literal>!~</> and <literal>!~*</>, as well as for the
+   <literal>LIKE</> operators <literal>~~</> and <literal>~~*</>, and
+   <literal>!~~</> and <literal>!~~*</>. If you'd like to match
+   case-sensitively, you can always cast to <type>text</> before comparing.
+  </para>
+
+  <para>
+   Similarly, all of the following functions perform matching
+   case-insensitively if their arguments are <type>citext</>:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+      <function>regexp_replace()</>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+      <function>regexp_split_to_array()</>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+      <function>regexp_split_to_table()</>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+      <function>replace()</>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+      <function>split_part()</>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+      <function>strpos()</>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+      <function>translate()</>
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   For the regexp functions, if you want to match case-sensitively, you can
+   specify the <quote>c</> flag to force a case-sensitive match.  Otherwise,
+   you must cast to <type>text</> before using one of these functions if
+   you want case-sensitive behavior.
+  </para>
+
+ </sect2>
+
+ <sect2>
   <title>Limitations</title>
 
    <itemizedlist>
@@ -116,76 +183,11 @@
 
     <listitem>
      <para>
-      The pattern-matching comparison operators, such as <literal>LIKE</>,
-      <literal>~</>, <literal>~~</>, <literal>!~</>, <literal>!~~</>, etc.,
-      have been overloaded to make case-insensitive comparisons when their
-      left-hand argument is of type <type>citext</>.  However, related
-      functions have not been changed, including:
-     </para>
-
-     <itemizedlist>
-      <listitem>
-       <para>
-         <function>regexp_replace()</>
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-         <function>regexp_split_to_array()</>
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-         <function>regexp_split_to_table()</>
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-         <function>replace()</>
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-         <function>split_part()</>
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-         <function>strpos()</>
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-         <function>translate()</>
-       </para>
-      </listitem>
-     </itemizedlist>
-
-     <para>
-      Of course, for the regular expression functions, you can specify
-      case-insensitive comparisons in their <parameter>flags</> arguments, but
-      the same cannot be done for the the non-regexp functions.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
        <type>citext</> is not as efficient as <type>text</> because the
        operator functions and the btree comparison functions must make copies
        of the data and convert it to lower case for comparisons. It is,
        however, slightly more efficient than using <function>lower</> to get
        case-insensitive matching.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <productname>PostgreSQL</> supports casting between <type>text</>
-      and any other type (even non-string types) by using the other type's
-      I/O functions.  This doesn't work with <type>citext</>.  However,
-      you can cast via I/O functions in two steps, for example
-      <literal><replaceable>somevalue</>::text::citext</literal> or
-      <literal><replaceable>citextvalue</>::text::<replaceable>sometype</></literal>.
      </para>
     </listitem>
 
