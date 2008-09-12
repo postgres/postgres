@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.232 2008/08/14 18:47:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.233 2008/09/12 14:56:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1584,7 +1584,18 @@ eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
 		{
 			Oid			curFamily = families[0];
 
-			if (list_member_oid(ec->ec_opfamilies, curFamily) &&
+			/*
+			 * If it's a btree index, we can reject it if its opfamily isn't
+			 * compatible with the EC, since no clause generated from the
+			 * EC could be used with the index.  For non-btree indexes,
+			 * we can't easily tell whether clauses generated from the EC
+			 * could be used with the index, so only check for expression
+			 * match.  This might mean we return "true" for a useless index,
+			 * but that will just cause some wasted planner cycles; it's
+			 * better than ignoring useful indexes.
+			 */
+			if ((index->relam != BTREE_AM_OID ||
+				 list_member_oid(ec->ec_opfamilies, curFamily)) &&
 				match_index_to_operand((Node *) em->em_expr, indexcol, index))
 				return true;
 
