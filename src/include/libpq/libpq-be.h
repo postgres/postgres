@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.66 2008/04/26 22:47:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.67 2008/09/15 12:32:57 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,8 +121,7 @@ typedef struct Port
 	/*
 	 * Information that needs to be held during the authentication cycle.
 	 */
-	UserAuth	auth_method;
-	char	   *auth_arg;
+	HbaLine	   *hba;
 	char		md5Salt[4];		/* Password salt */
 	char		cryptSalt[2];	/* Password salt */
 

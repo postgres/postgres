@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.74 2008/01/01 19:45:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.75 2008/09/15 12:32:56 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 		return STATUS_ERROR;
 
 	/* We can't do crypt with MD5 passwords */
-	if (isMD5(shadow_pass) && port->auth_method == uaCrypt)
+	if (isMD5(shadow_pass) && port->hba->auth_method == uaCrypt)
 	{
 		ereport(LOG,
 				(errmsg("cannot use authentication method \"crypt\" because password is MD5-encrypted")));
@@ -65,7 +65,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 	 * Compare with the encrypted or plain password depending on the
 	 * authentication method being used for this connection.
 	 */
-	switch (port->auth_method)
+	switch (port->hba->auth_method)
 	{
 		case uaMD5:
 			crypt_pwd = palloc(MD5_PASSWD_LEN + 1);
@@ -155,7 +155,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 		}
 	}
 
-	if (port->auth_method == uaMD5)
+	if (port->hba->auth_method == uaMD5)
 		pfree(crypt_pwd);
 	if (crypt_client_pass != client_pass)
 		pfree(crypt_client_pass);

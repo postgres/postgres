@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.167 2008/08/01 11:41:12 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.168 2008/09/15 12:32:56 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,7 +211,7 @@ auth_failed(Port *port, int status)
 	if (status == STATUS_EOF)
 		proc_exit(0);
 
-	switch (port->auth_method)
+	switch (port->hba->auth_method)
 	{
 		case uaReject:
 			errstr = gettext_noop("authentication failed for user \"%s\": host rejected");
@@ -279,7 +279,7 @@ ClientAuthentication(Port *port)
 				 errmsg("missing or erroneous pg_hba.conf file"),
 				 errhint("See server log for details.")));
 
-	switch (port->auth_method)
+	switch (port->hba->auth_method)
 	{
 		case uaReject:
 
@@ -1761,7 +1761,7 @@ ident_unix(int sock, char *ident_user)
 /*
  *	Determine the username of the initiator of the connection described
  *	by "port".	Then look in the usermap file under the usermap
- *	port->auth_arg and see if that user is equivalent to Postgres user
+ *	port->hba->usermap and see if that user is equivalent to Postgres user
  *	port->user.
  *
  *	Return STATUS_OK if yes, STATUS_ERROR if no match (or couldn't get info).
@@ -1799,7 +1799,7 @@ authident(hbaPort *port)
 			(errmsg("Ident protocol identifies remote user as \"%s\"",
 					ident_user)));
 
-	if (check_ident_usermap(port->auth_arg, port->user_name, ident_user))
+	if (check_ident_usermap(port->hba->usermap, port->user_name, ident_user))
 		return STATUS_OK;
 	else
 		return STATUS_ERROR;
@@ -1913,8 +1913,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 														 * not allocated */
 
 	/* Optionally, one can set the service name in pg_hba.conf */
-	if (port->auth_arg && port->auth_arg[0] != '\0')
-		retval = pam_start(port->auth_arg, "pgsql@",
+	if (port->hba->auth_arg && port->hba->auth_arg[0] != '\0')
+		retval = pam_start(port->hba->auth_arg, "pgsql@",
 						   &pam_passw_conv, &pamh);
 	else
 		retval = pam_start(PGSQL_PAM_SERVICE, "pgsql@",
@@ -2011,7 +2011,7 @@ CheckLDAPAuth(Port *port)
 	int			ldapport = LDAP_PORT;
 	char		fulluser[NAMEDATALEN + 256 + 1];
 
-	if (!port->auth_arg || port->auth_arg[0] == '\0')
+	if (!port->hba->auth_arg || port->hba->auth_arg[0] == '\0')
 	{
 		ereport(LOG,
 				(errmsg("LDAP configuration URL not specified")));
@@ -2035,13 +2035,13 @@ CheckLDAPAuth(Port *port)
 	suffix[0] = '\0';
 
 	/* ldap, including port number */
-	r = sscanf(port->auth_arg,
+	r = sscanf(port->hba->auth_arg,
 			   "ldap://%127[^:]:%d/%127[^;];%127[^;];%127[^\n]",
 			   server, &ldapport, basedn, prefix, suffix);
 	if (r < 3)
 	{
 		/* ldaps, including port number */
-		r = sscanf(port->auth_arg,
+		r = sscanf(port->hba->auth_arg,
 				   "ldaps://%127[^:]:%d/%127[^;];%127[^;];%127[^\n]",
 				   server, &ldapport, basedn, prefix, suffix);
 		if (r >= 3)
@@ -2050,14 +2050,14 @@ CheckLDAPAuth(Port *port)
 	if (r < 3)
 	{
 		/* ldap, no port number */
-		r = sscanf(port->auth_arg,
+		r = sscanf(port->hba->auth_arg,
 				   "ldap://%127[^/]/%127[^;];%127[^;];%127[^\n]",
 				   server, basedn, prefix, suffix);
 	}
 	if (r < 2)
 	{
 		/* ldaps, no port number */
-		r = sscanf(port->auth_arg,
+		r = sscanf(port->hba->auth_arg,
 				   "ldaps://%127[^/]/%127[^;];%127[^;];%127[^\n]",
 				   server, basedn, prefix, suffix);
 		if (r >= 2)
@@ -2067,7 +2067,7 @@ CheckLDAPAuth(Port *port)
 	{
 		ereport(LOG,
 				(errmsg("invalid LDAP URL: \"%s\"",
-						port->auth_arg)));
+						port->hba->auth_arg)));
 		return STATUS_ERROR;
 	}
 

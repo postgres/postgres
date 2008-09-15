@@ -30,7 +30,6 @@
 #
 # No map names are defined in the default configuration.  If all ident
 # user names and PostgreSQL user names are the same, you don't need
-# this file.  Instead, use the special map name "sameuser" in
-# pg_hba.conf.
+# this file.
 
 # MAPNAME     IDENT-USERNAME    PG-USERNAME

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.106 2008/01/05 13:17:00 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.107 2008/09/15 12:32:56 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -509,7 +509,7 @@ host    all         all         127.0.0.1     255.255.255.255     trust
 # the connection (typically the Unix user name).
 # 
 # TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-host    postgres    all         192.168.93.0/24       ident sameuser
+host    postgres    all         192.168.93.0/24       ident
 
 # Allow a user from host 192.168.12.10 to connect to database
 # "postgres" if the user's password is correctly supplied.
@@ -839,8 +839,8 @@ local   db1,db2,@demodbs  all                         md5
 
    <para>
     The ident authentication method works by obtaining the client's
-    operating system user name, then determining the allowed database
-    user names using a map file that lists the permitted
+    operating system user name, then optionally determining the allowed 
+    database user names using a map file that lists the permitted
     corresponding pairs of names.  The determination of the client's
     user name is the security-critical point, and it works differently
     depending on the connection type.
@@ -928,15 +928,13 @@ local   db1,db2,@demodbs  all                         md5
     allowed to connect as the database user he is requesting to connect
     as. This is controlled by the ident map argument that follows the
     <literal>ident</> key word in the <filename>pg_hba.conf</filename>
-    file. There is a predefined ident map <literal>sameuser</literal>,
-    which allows any operating system user to connect as the database
-    user of the same name (if the latter exists). Other maps must be
-    created manually.
+    file. If an ident map is not specified, the database user will be
+    checked with the same name as the operating system user. Other maps
+    must be created manually.
    </para>
 
    <para>
-    Ident maps other than <literal>sameuser</literal> are defined in the
-    ident map file, which by default is named
+    Ident maps are defined in the ident map file, which by default is named
     <filename>pg_ident.conf</><indexterm><primary>pg_ident.conf</primary></indexterm>
     and is stored in the
     cluster's data directory.  (It is possible to place the map file
