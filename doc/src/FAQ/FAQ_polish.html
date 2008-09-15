@@ -6,7 +6,7 @@
 
   <HEAD>
     <META name="generator" content="HTML Tidy, see www.w3.org">
-	 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-2">
+	 <meta http-equiv="Content-Type" content="text/html; charset=utf8">
     <TITLE>PostgreSQL FAQ</TITLE>
   </HEAD>
 
@@ -17,199 +17,199 @@
 
     <P>Ostatnia aktualizacja: Sobota Luty 7 22:16:21 EST 2004</P>
 
-	 <P>Ostatnia aktualizacja tłumaczenia: Piątek Marzec 5 19:31:12 EST 2004</P>
+	 <P>Ostatnia aktualizacja tĹumaczenia: PiÄtek Marzec 5 19:31:12 EST 2004</P>
 
     <P>Obecny maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
     </P>
-    <P>Tłumaczenie: Marcin Mazurek (<A href=
+    <P>TĹumaczenie: Marcin Mazurek (<A href=
     "mailto:m.mazurek@netsync.pl">m.mazurek@netsync.pl</A>)<BR>
     </P>
 
-    <P>Najbardziej aktualną wersję tego dokumentu można znaleźć pod
+    <P>Najbardziej aktualnÄ wersjÄ tego dokumentu moĹźna znaleĹşÄ pod
 	 adresem:
 	 <A href=
     "http://www.Postgresql.org/docs/faqs/FAQ.html">http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>.</P>
 
-    <P>Odpowiedzi na pytania dotyczące konkretnych systemów operacyjnych
-	 można znaleźć pod adresem: 
+    <P>Odpowiedzi na pytania dotyczÄce konkretnych systemĂłw operacyjnych
+	 moĹźna znaleĹşÄ pod adresem: 
 	 <A href=
     "http://www.PostgreSQL.org/docs/index.html">http://www.PostgreSQL.org/docs/index.html</A>.</P>
     <HR>
 
-    <H2 align="center">Pytania ogólne</H2>
-    <A href="#1.1">1.1</A>) Co to jest PostgreSQL? Jak to wymawiać?<BR>
-     <A href="#1.2">1.2</A>) Jaką licencją chroniony jest PostgreSQL?<BR>
-     <A href="#1.3">1.3</A>) Na jakich systemach Unixowych działa
+    <H2 align="center">Pytania ogĂłlne</H2>
+    <A href="#1.1">1.1</A>) Co to jest PostgreSQL? Jak to wymawiaÄ?<BR>
+     <A href="#1.2">1.2</A>) JakÄ licencjÄ chroniony jest PostgreSQL?<BR>
+     <A href="#1.3">1.3</A>) Na jakich systemach Unixowych dziaĹa
 	  PostreSQL?<BR>
-     <A href="#1.4">1.4</A>) Na jakich nie-Unixowych systemach działa
+     <A href="#1.4">1.4</A>) Na jakich nie-Unixowych systemach dziaĹa
 	  PostgreSQL?<BR>
-     <A href="#1.5">1.5</A>) Skąd mogę ściągnąć PostgreSQL?<BR>
-     <A href="#1.6">1.6</A>) Gdzie można szukać wsparcia technicznego?<BR>
-     <A href="#1.7">1.7</A>) Jaka jest ostatnia dostępna wersja?<BR>
-     <A href="#1.8">1.8</A>) Jaka dokumentacja jest dostępna?<BR>
-     <A href="#1.9">1.9</A>) Gdzie mogę znaleźć informację o znanych
-	  błędach czy brakujących rozwiązanich?<BR>
-     <A href="#1.10">1.10</A>) Jak mogę się nauczyć <SMALL>SQL</SMALL>?<BR>
-     <A href="#1.11">1.11</A>) Czy PostgreSQL ma rozwiązany problem Y2K?<BR>
-     <A href="#1.12">1.12</A>) Jak mogę się przyłączyć do grupy osób
-	  bezpośrednio pracujących nad rozwojem PostgreSQL?<BR>
-     <A href="#1.13">1.13</A>) Jak mogę zgłaszać błędy?<BR>
-     <A href="#1.14">1.14</A>) Jak można porównać PostgreSQL w stosunku
+     <A href="#1.5">1.5</A>) SkÄd mogÄ ĹciÄgnÄÄ PostgreSQL?<BR>
+     <A href="#1.6">1.6</A>) Gdzie moĹźna szukaÄ wsparcia technicznego?<BR>
+     <A href="#1.7">1.7</A>) Jaka jest ostatnia dostÄpna wersja?<BR>
+     <A href="#1.8">1.8</A>) Jaka dokumentacja jest dostÄpna?<BR>
+     <A href="#1.9">1.9</A>) Gdzie mogÄ znaleĹşÄ informacjÄ o znanych
+	  bĹÄdach czy brakujÄcych rozwiÄzanich?<BR>
+     <A href="#1.10">1.10</A>) Jak mogÄ siÄ nauczyÄ <SMALL>SQL</SMALL>?<BR>
+     <A href="#1.11">1.11</A>) Czy PostgreSQL ma rozwiÄzany problem Y2K?<BR>
+     <A href="#1.12">1.12</A>) Jak mogÄ siÄ przyĹÄczyÄ do grupy osĂłb
+	  bezpoĹrednio pracujÄcych nad rozwojem PostgreSQL?<BR>
+     <A href="#1.13">1.13</A>) Jak mogÄ zgĹaszaÄ bĹÄdy?<BR>
+     <A href="#1.14">1.14</A>) Jak moĹźna porĂłwnaÄ PostgreSQL w stosunku
 	  do innych <SMALL>DBMS</SMALL>?<BR>
-     <A href="#1.15">1.15</A>) W jaki sposób mogę wesprzeć finansowo
+     <A href="#1.15">1.15</A>) W jaki sposĂłb mogÄ wesprzeÄ finansowo
     PostgreSQL?<BR>
     
-	 <H2 align="center">Pytania użytkowników</H2>
-    <A href="#2.1">2.1</A>) Czy są jakieś driwery <SMALL>ODBC</SMALL> dla
+	 <H2 align="center">Pytania uĹźytkownikĂłw</H2>
+    <A href="#2.1">2.1</A>) Czy sÄ jakieĹ driwery <SMALL>ODBC</SMALL> dla
     PostgreSQL?<BR>
-     <A href="#2.2">2.2</A>) Jakie istnieją narzędzia pozwalające na dostęp do
+     <A href="#2.2">2.2</A>) Jakie istniejÄ narzÄdzia pozwalajÄce na dostÄp do
 	  PostgreSQL przez www?<BR>
-     <A href="#2.3">2.3</A>) Czy istnieje jakieś GUI dla PostgreSQL?<BR>
-     <A href="#2.4">2.4</A>) Za pomocą jakich języków programowania można
-	  się komunikować z PostgreSQL?<BR>
+     <A href="#2.3">2.3</A>) Czy istnieje jakieĹ GUI dla PostgreSQL?<BR>
+     <A href="#2.4">2.4</A>) Za pomocÄ jakich jÄzykĂłw programowania moĹźna
+	  siÄ komunikowaÄ z PostgreSQL?<BR>
      
 
-    <H2 align="center">Pytania dotyczące administracji</H2>
-    <A href="#3.1">3.1</A>) Jak mogę zainstalować PostgreSQL w innej 
-	 		lokalizacji niż <I>/usr/local/pgsql</I>?<BR>
+    <H2 align="center">Pytania dotyczÄce administracji</H2>
+    <A href="#3.1">3.1</A>) Jak mogÄ zainstalowaÄ PostgreSQL w innej 
+	 		lokalizacji niĹź <I>/usr/local/pgsql</I>?<BR>
      <A href="#3.2">3.2</A>) Podczas startu <I>postmaster'a</I>,
-	  otrzymuję komunikat:
+	  otrzymujÄ komunikat:
     <I>Bad System Call</I> lub "core dumped". Dlaczego?<BR>
      <A href="#3.3">3.3</A>) Podczas startu <I>postmaster'a</I>, 
-     otrzymuję komunikat o błędzie: <I>IpcMemoryCreate</I>. Dlaczego?<BR>
+     otrzymujÄ komunikat o bĹÄdzie: <I>IpcMemoryCreate</I>. Dlaczego?<BR>
      <A href="#3.4">3.4</A>) Podczas startu <I>postmaster'a</I>,
-     otrzymuję komunikat o błędzie: <I>IpcSemaphoreCreate</I>. Dlaczego?<BR>
-     <A href="#3.5">3.5</A>) W jaki sposób mogę kontrolować połączenia z
-	  innych hostów?<BR>
-     <A href="#3.6">3.6</A>) Jak powinienem skonfigurować system baz
-	  danych aby uzyskać lepszą wydajność?<BR>
-     <A href="#3.7">3.7</A>) Jakie są możliwości wyszukiwania błędów?<BR>
-     <A href="#3.8">3.8</A>) Skąd się bierze komunikat: <I>"Sorry, too many
-    clients"</I> podczas próby połączenia się z bazą danych?<BR>
-     <A href="#3.9">3.9</A>) Jakie pliki znajdują się w <I>pg_temp</I>?<BR>
+     otrzymujÄ komunikat o bĹÄdzie: <I>IpcSemaphoreCreate</I>. Dlaczego?<BR>
+     <A href="#3.5">3.5</A>) W jaki sposĂłb mogÄ kontrolowaÄ poĹÄczenia z
+	  innych hostĂłw?<BR>
+     <A href="#3.6">3.6</A>) Jak powinienem skonfigurowaÄ system baz
+	  danych aby uzyskaÄ lepszÄ wydajnoĹÄ?<BR>
+     <A href="#3.7">3.7</A>) Jakie sÄ moĹźliwoĹci wyszukiwania bĹÄdĂłw?<BR>
+     <A href="#3.8">3.8</A>) SkÄd siÄ bierze komunikat: <I>"Sorry, too many
+    clients"</I> podczas prĂłby poĹÄczenia siÄ z bazÄ danych?<BR>
+     <A href="#3.9">3.9</A>) Jakie pliki znajdujÄ siÄ w <I>pg_temp</I>?<BR>
      <A href="#3.10">3.10</A>) Dlaczego konieczne jest przy upgradzie
-	  PostgreSQL korzystanie ze skryptów dump i restore?<BR>
+	  PostgreSQL korzystanie ze skryptĂłw dump i restore?<BR>
 
-    <H2 align="center">Pytania dotyczące użytkowania</H2>
-    <A href="#4.1">4.1</A>) Jaka jest różnica pomiędzy kursorami
-	 binarnymi (binary cursors) i zwykłymi kursorami (normal cursors)?<BR>
-     <A href="#4.2">4.2</A>) Jak mogę pobrać za pomocą <SMALL>SELECT</SMALL>
-	  jedynie kilka pierwszych wyników zapytania?<BR>
-     <A href="#4.3">4.3</A>) Jak mogę uzyskać listę wszystkich tabel czy
+    <H2 align="center">Pytania dotyczÄce uĹźytkowania</H2>
+    <A href="#4.1">4.1</A>) Jaka jest rĂłĹźnica pomiÄdzy kursorami
+	 binarnymi (binary cursors) i zwykĹymi kursorami (normal cursors)?<BR>
+     <A href="#4.2">4.2</A>) Jak mogÄ pobraÄ za pomocÄ <SMALL>SELECT</SMALL>
+	  jedynie kilka pierwszych wynikĂłw zapytania?<BR>
+     <A href="#4.3">4.3</A>) Jak mogÄ uzyskaÄ listÄ wszystkich tabel czy
 	  innych rzeczy pod <I>psql</I>?<BR>
-     <A href="#4.4">4.4</A>) Jak usunąć kolumnę z tabeli lub zmienić jej
+     <A href="#4.4">4.4</A>) Jak usunÄÄ kolumnÄ z tabeli lub zmieniÄ jej
 	  typ?<BR>
-     <A href="#4.5">4.5</A>) Jaki jest maksymalny rozmiar dla rzędu,
+     <A href="#4.5">4.5</A>) Jaki jest maksymalny rozmiar dla rzÄdu,
 	  tabeli i bazy danych?<BR>
-     <A href="#4.6">4.6</A>) Jak dużo miejsca w bazie danych jest
-	  potrzebne aby przechować dane ze zwyczajnego pliku tekstowego?<BR>
-     <A href="#4.7">4.7</A>) Jak mogę sprawdzić jakie tabele, klucze,
-	  bazy danych i użytkownicy są utworzeni?<BR>
-     <A href="#4.8">4.8</A>) Moje zapytania są wolne lub nie używają
+     <A href="#4.6">4.6</A>) Jak duĹźo miejsca w bazie danych jest
+	  potrzebne aby przechowaÄ dane ze zwyczajnego pliku tekstowego?<BR>
+     <A href="#4.7">4.7</A>) Jak mogÄ sprawdziÄ jakie tabele, klucze,
+	  bazy danych i uĹźytkownicy sÄ utworzeni?<BR>
+     <A href="#4.8">4.8</A>) Moje zapytania sÄ wolne lub nie uĹźywajÄ
 	  kluczy. Dlaczego?<BR>
-     <A href="#4.9">4.9</A>) Jak mogę sprawdzić w jakis sposób "query
+     <A href="#4.9">4.9</A>) Jak mogÄ sprawdziÄ w jakis sposĂłb "query
 	  optimizer" wykonuje moje zapytanie?<BR>
      <A href="#4.10">4.10</A>) Co to jest "R-tree index"?<BR>
      <A href="#4.11">4.11</A>) Co to jest "Genetic Query Optimizer"?<BR>
-     <A href="#4.12">4.12</A>) Jak mogę używać wyrażeń regularnych w
-	  zapytaniach i zapytań case-insensitive w wyrażeniach regularnych?
-	  Jak korzystać z indeksów dla zapytań case-insensitive?<BR>
-     <A href="#4.13">4.13</A>) Jak sprawdzić w zapytaniu czy pole ma
-	  wartość <SMALL>NULL</SMALL>?<BR>
-     <A href="#4.14">4.14</A>) Jaka jest różnica pomiędzy różnymi typami
+     <A href="#4.12">4.12</A>) Jak mogÄ uĹźywaÄ wyraĹźeĹ regularnych w
+	  zapytaniach i zapytaĹ case-insensitive w wyraĹźeniach regularnych?
+	  Jak korzystaÄ z indeksĂłw dla zapytaĹ case-insensitive?<BR>
+     <A href="#4.13">4.13</A>) Jak sprawdziÄ w zapytaniu czy pole ma
+	  wartoĹÄ <SMALL>NULL</SMALL>?<BR>
+     <A href="#4.14">4.14</A>) Jaka jest rĂłĹźnica pomiÄdzy rĂłĹźnymi typami
 	  tekstowymi (character types)?<BR>
-     <A href="#4.15.1">4.15.1</A>) Jak mogę utworzyć pole typu int, które samo
-	  zwiększa swoją wartość?<BR>
-     <A href="#4.15.2">4.15.2</A>) Jak pobrać wartość pola typu 
+     <A href="#4.15.1">4.15.1</A>) Jak mogÄ utworzyÄ pole typu int, ktĂłre samo
+	  zwiÄksza swojÄ wartoĹÄ?<BR>
+     <A href="#4.15.2">4.15.2</A>) Jak pobraÄ wartoĹÄ pola typu 
     <SMALL>SERIAL</SMALL> po wykonaniu insert'u?<BR>
-     <A href="#4.15.3">4.15.3</A>) Czy użycie <I>currval()</I> i
+     <A href="#4.15.3">4.15.3</A>) Czy uĹźycie <I>currval()</I> i
     <I>nextval()</I> nie doprowadzi do "race condition" z innymi
-	 użytkownikami?<BR>
-     <A href="#4.15.4">4.15.4</A>) Dlaczego numery sekwencji nie są
-	  ponownie używane przy przerwaniu transakcji?
-    Skąd się biorą luki w numerowaniu kolumny tabeli sekwencjami/SERIALem?<BR>
+	 uĹźytkownikami?<BR>
+     <A href="#4.15.4">4.15.4</A>) Dlaczego numery sekwencji nie sÄ
+	  ponownie uĹźywane przy przerwaniu transakcji?
+    SkÄd siÄ biorÄ luki w numerowaniu kolumny tabeli sekwencjami/SERIALem?<BR>
      <A href="#4.16">4.16</A>) Co to jest <SMALL>OID</SMALL>? Co to jest
     <SMALL>TID</SMALL>?<BR>
-     <A href="#4.17">4.17</A>) Jakie jest znaczenie niektórych terminów w 
+     <A href="#4.17">4.17</A>) Jakie jest znaczenie niektĂłrych terminĂłw w 
     PostgreSQL?<BR>
-     <A href="#4.18">4.18</A>) Skąd bierze się ten błąd: <I>"ERROR: Memory
+     <A href="#4.18">4.18</A>) SkÄd bierze siÄ ten bĹÄd: <I>"ERROR: Memory
     exhausted in AllocSetAlloc()"</I>?<BR>
-     <A href="#4.19">4.19</A>) Jak sprawdzić jakiej wersji PostgreSQL
-    używam?<BR>
-     <A href="#4.20">4.20</A>) Dlaczego operacje, które wykonuję na
-	  dużych obiektach "large-object" zwracają komunikat:
+     <A href="#4.19">4.19</A>) Jak sprawdziÄ jakiej wersji PostgreSQL
+    uĹźywam?<BR>
+     <A href="#4.20">4.20</A>) Dlaczego operacje, ktĂłre wykonujÄ na
+	  duĹźych obiektach "large-object" zwracajÄ komunikat:
     <I>"invalid large obj descriptor"</I>?<BR>
-     <A href="#4.21">4.21</A>) Jak stworzyć kolumnę której domyślną
-	  wartością będzie bieżący czas?<BR>
-     <A href="#4.22">4.22</A>) Dlaczego zapytania używające
-    <CODE><SMALL>IN</SMALL></CODE> są takie wolne?<BR>
-     <A href="#4.23">4.23</A>) Jak wykonać "outer join"?<BR>
-     <A href="#4.24">4.24</A>) Jak wykonywać zapytanie używające kilku
-	  baz danych jednocześnie?<BR>
-     <A href="#4.25">4.25</A>) Jak zwrócić w funkcji wiele rzędów lub
+     <A href="#4.21">4.21</A>) Jak stworzyÄ kolumnÄ ktĂłrej domyĹlnÄ
+	  wartoĹciÄ bÄdzie bieĹźÄcy czas?<BR>
+     <A href="#4.22">4.22</A>) Dlaczego zapytania uĹźywajÄce
+    <CODE><SMALL>IN</SMALL></CODE> sÄ takie wolne?<BR>
+     <A href="#4.23">4.23</A>) Jak wykonaÄ "outer join"?<BR>
+     <A href="#4.24">4.24</A>) Jak wykonywaÄ zapytanie uĹźywajÄce kilku
+	  baz danych jednoczeĹnie?<BR>
+     <A href="#4.25">4.25</A>) Jak zwrĂłciÄ w funkcji wiele rzÄdĂłw lub
 	  kolumn?<BR>
-     <A href="#4.26">4.26</A>) Dlaczego nie mogę w sposób pewny
-	  tworzyć/usuwać tabel tymczasowych w funkcjach PL/PgSQL?<BR>
-     <A href="#4.27">4.27</A>) Jakie są możliwości replikacji w
+     <A href="#4.26">4.26</A>) Dlaczego nie mogÄ w sposĂłb pewny
+	  tworzyÄ/usuwaÄ tabel tymczasowych w funkcjach PL/PgSQL?<BR>
+     <A href="#4.27">4.27</A>) Jakie sÄ moĹźliwoĹci replikacji w
 	  PostgreSQL?<BR>
-     <A href="#4.28">4.28</A>) Jakie możliwości szyfrowania oferuje
+     <A href="#4.28">4.28</A>) Jakie moĹźliwoĹci szyfrowania oferuje
 	  PostgreSQL?<BR>
     
     <H2 align="center">Rozwijanie PostgreSQL</H2>
-    <A href="#5.1">5.1</A>) Napisałem własną funkcję. Kiedy użyję jej w
-	 <I>psql</I>, program zrzuca pamięć (dump core)?<BR>
-     <A href="#5.2">5.2</A>) Jak mogę dodać/zgłosić nowe typy czy funkcje
+    <A href="#5.1">5.1</A>) NapisaĹem wĹasnÄ funkcjÄ. Kiedy uĹźyjÄ jej w
+	 <I>psql</I>, program zrzuca pamiÄÄ (dump core)?<BR>
+     <A href="#5.2">5.2</A>) Jak mogÄ dodaÄ/zgĹosiÄ nowe typy czy funkcje
 	  do PostgreSQL?<BR>
-     <A href="#5.3">5.3</A>) Jak napisać funkcję C zwracającą krotkę
+     <A href="#5.3">5.3</A>) Jak napisaÄ funkcjÄ C zwracajÄcÄ krotkÄ
 	  (tuple)?<BR>
-     <A href="#5.4">5.4</A>) Zmieniłem plik źródłowy. Dlaczego po
-	  rekompilacji nie widać zmiany?<BR>
+     <A href="#5.4">5.4</A>) ZmieniĹem plik ĹşrĂłdĹowy. Dlaczego po
+	  rekompilacji nie widaÄ zmiany?<BR>
      
     <HR>
 
-    <H2 align="center">Pytania ogólne</H2>
+    <H2 align="center">Pytania ogĂłlne</H2>
 
-    <H4><A name="1.1">1.1</A>) Co to jest PostgreSQL? Jak to wymawiać?</H4>
+    <H4><A name="1.1">1.1</A>) Co to jest PostgreSQL? Jak to wymawiaÄ?</H4>
 
-    <P>PostgreSQL wymawia się <I>Post-Gres-kju-el</I>. Często podczas
-	 rozmów używany jest termin "Postgres"</P>
+    <P>PostgreSQL wymawia siÄ <I>Post-Gres-kju-el</I>. CzÄsto podczas
+	 rozmĂłw uĹźywany jest termin "Postgres"</P>
 
-    <P>PostgreSQL jest rozszerzeniem systemu zarządzania bazami danych -
-	 POSTGRES, kolejną generacją rozwojowego prototypu <SMALL>DBMS</SMALL>.
-    Mimo, że PostgreSQL zachował bardzo dobrze zbudowany model danych
-	 (data model) i bogaty zestaw typów danych POSTGRES'a, zastąpił
-	 PostQuel'owy język zapytań z rozbudowanym podzbiorem języka 
+    <P>PostgreSQL jest rozszerzeniem systemu zarzÄdzania bazami danych -
+	 POSTGRES, kolejnÄ generacjÄ rozwojowego prototypu <SMALL>DBMS</SMALL>.
+    Mimo, Ĺźe PostgreSQL zachowaĹ bardzo dobrze zbudowany model danych
+	 (data model) i bogaty zestaw typĂłw danych POSTGRES'a, zastÄpiĹ
+	 PostQuel'owy jÄzyk zapytaĹ z rozbudowanym podzbiorem jÄzyka 
 	 <SMALL>SQL</SMALL>. PostgreSQL jest oprogramowaniem darmowym 
-	 z dostępnymi całymi źródłami.
+	 z dostÄpnymi caĹymi ĹşrĂłdĹami.
 	 </P>
 
-    <P>Rozwój PostgreSQL jest prowadzony przez grupę ludzi z Internetu,
-	 komunikujących się poprzez mailowe listy dyskusyjne PostgreSQL.
+    <P>RozwĂłj PostgreSQL jest prowadzony przez grupÄ ludzi z Internetu,
+	 komunikujÄcych siÄ poprzez mailowe listy dyskusyjne PostgreSQL.
     Obecnym koordynatorem jest Marc G. Fournier (<A href=
     "mailto:scrappy@PostgreSQL.org">scrappy@PostgreSQL.org</A>). (Zobacz
-	 pytanie <A href="#1.6">1.6</A> jak się przyłączyć). Ta grupa ludzi jest 
-	 odpowiedzialna za cały rozwój PostgreSQL. PostgreSQL jest projektem
-	 nie kontrolowanym przez żadną firmę, aby wziąć udział w jego rozwoju
-	 sprawdź, <A href="http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html">
+	 pytanie <A href="#1.6">1.6</A> jak siÄ przyĹÄczyÄ). Ta grupa ludzi jest 
+	 odpowiedzialna za caĹy rozwĂłj PostgreSQL. PostgreSQL jest projektem
+	 nie kontrolowanym przez ĹźadnÄ firmÄ, aby wziÄÄ udziaĹ w jego rozwoju
+	 sprawdĹş, <A href="http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html">
 	 http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html</a></P>
 
     <P>Autorami PostgreSQL 1.01 byli Andrew Yu and Jolly Chen.
-	 Wiele innych osób pomogło przy portowaniu, testowaniu, debugowaniu i
-	 rozwijaniu kodu. Oryginalny kod Postgresa, na którym został oparty
-	 PostgreSQL, był wysiłkiem studentów oraz pracowników pracujących pod
+	 Wiele innych osĂłb pomogĹo przy portowaniu, testowaniu, debugowaniu i
+	 rozwijaniu kodu. Oryginalny kod Postgresa, na ktĂłrym zostaĹ oparty
+	 PostgreSQL, byĹ wysiĹkiem studentĂłw oraz pracownikĂłw pracujÄcych pod
 	 kierownictwem profesora Michael'a Stonebraker'a z University of
 	 California w Berkeley.</P>
 
-    <P>Oryginalną nazwą oprogramowania w Berkeley był Postgres.  Po
-	 dodaniu obsługi <SMALL>SQL</SMALL> w 1995, nazwa została zmieniona
-    na Postgres95. Pod koniec roku 1996 nazwa została zmieniona na
+    <P>OryginalnÄ nazwÄ oprogramowania w Berkeley byĹ Postgres.  Po
+	 dodaniu obsĹugi <SMALL>SQL</SMALL> w 1995, nazwa zostaĹa zmieniona
+    na Postgres95. Pod koniec roku 1996 nazwa zostaĹa zmieniona na
     PostgreSQL.</P>
 
-    <H4><A name="1.2">1.2</A>) Jaką licencją chroniony jest
+    <H4><A name="1.2">1.2</A>) JakÄ licencjÄ chroniony jest
     PostgreSQL?</H4>
 
-    <P>PostgreSQL objęty jest następującą licencją:</P>
+    <P>PostgreSQL objÄty jest nastÄpujÄcÄ licencjÄ:</P>
 
     <P>PostgreSQL Data Base Management System</P>
 
@@ -235,63 +235,63 @@
     UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE,
     SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.</P>
 
-    <P>Tekst powyżej, jest klasyczną licencją BSD.
-    Nie posiada ona żadnych restrykcji co do używania kodu źródłowego.
-	 Podoba nam się i nie zamierzamy jej zmieniać.</P>
+    <P>Tekst powyĹźej, jest klasycznÄ licencjÄ BSD.
+    Nie posiada ona Ĺźadnych restrykcji co do uĹźywania kodu ĹşrĂłdĹowego.
+	 Podoba nam siÄ i nie zamierzamy jej zmieniaÄ.</P>
 
-    <H4><A name="1.3">1.3</A>) Na jakich systemach Unixowych działa
+    <H4><A name="1.3">1.3</A>) Na jakich systemach Unixowych dziaĹa
 	      PostreSQL?</H4>
 
-    <P>PostgreSQL powinien działać na wszystkich nowych Unix-podobnych
-	 systemach. Platformy, które zostały szczegółowo przetestowane podczas
-	 publikowania PostgreSQL są wymienione w dokumentacji opisującej
-	 instalację.</P>
+    <P>PostgreSQL powinien dziaĹaÄ na wszystkich nowych Unix-podobnych
+	 systemach. Platformy, ktĂłre zostaĹy szczegĂłĹowo przetestowane podczas
+	 publikowania PostgreSQL sÄ wymienione w dokumentacji opisujÄcej
+	 instalacjÄ.</P>
 
-    <H4><A name="1.4">1.4</A>) Na jakich nie-Unixowych systemach działa
+    <H4><A name="1.4">1.4</A>) Na jakich nie-Unixowych systemach dziaĹa
 	      PostgreSQL?</H4>
 
     <P><STRONG>Klient</STRONG></P>
 
-    <P>Możliwa jest kompilacja bibliteki C <I>libpq</I>, psql oraz
-	 innych interfejsów i uruchamianie ich na platformie MS Windows. W tym
-	 wypadku klient jest uruchamiany na MS Windows a z serwerem komunikuje się
-	 poprzez TCP/IP. Serwer może działać na dowolnej wspieranej platformie 
-	 Unixowej. Plik <I>win32.mak</I> jest dołączony
-	 do źródeł, aby można było stworzyć bibliotekę <I>libpq</I> oraz
-	 program <I>psql</I> działające w środowisku Win32. PostgreSQL może się 
-	 także komunikować z klientami <SMALL>ODBC</SMALL>.</P>
+    <P>MoĹźliwa jest kompilacja bibliteki C <I>libpq</I>, psql oraz
+	 innych interfejsĂłw i uruchamianie ich na platformie MS Windows. W tym
+	 wypadku klient jest uruchamiany na MS Windows a z serwerem komunikuje siÄ
+	 poprzez TCP/IP. Serwer moĹźe dziaĹaÄ na dowolnej wspieranej platformie 
+	 Unixowej. Plik <I>win32.mak</I> jest doĹÄczony
+	 do ĹşrĂłdeĹ, aby moĹźna byĹo stworzyÄ bibliotekÄ <I>libpq</I> oraz
+	 program <I>psql</I> dziaĹajÄce w Ĺrodowisku Win32. PostgreSQL moĹźe siÄ 
+	 takĹźe komunikowaÄ z klientami <SMALL>ODBC</SMALL>.</P>
 
     <P><STRONG>Serwer</STRONG></P>
 
-    <P>Serwer może być uruchamiany na Windows NT i Win2k używając
+    <P>Serwer moĹźe byÄ uruchamiany na Windows NT i Win2k uĹźywajÄc
 	 bibliotek Cygwin, Cygnus Unix/NT. W pliku <I>pgsql/doc/FAQ_MSWIN</I>
-	 znajdującym się w źródłach lub pod adresem: <A href=
+	 znajdujÄcym siÄ w ĹşrĂłdĹach lub pod adresem: <A href=
     "http://www.postgresql.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A> na naszych stronach.</P><P>
-	 Obecnie prowadzone są prace nad stworzeniem wersji dla MS Win
-	 NT/200/XP. Jeśli chcesz się dowiedzieć o obecnym statusie tych prac
+	 Obecnie prowadzone sÄ prace nad stworzeniem wersji dla MS Win
+	 NT/200/XP. JeĹli chcesz siÄ dowiedzieÄ o obecnym statusie tych prac
 	 zobacz <A
 	 href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</A> and
 	 <A
 	 href="http://momjian.postgresql.org/main/writings/pgsql/win32.html">http://momjian.postgresql.org/main/writings/pgsql/win32.html</A>.
 	 </P>
 	 <P>
-	 Istnieje także port pod Novell Netware 6 dostępny pod adresem <A
+	 Istnieje takĹźe port pod Novell Netware 6 dostÄpny pod adresem <A
 	 href="http://forge.novell.com">http://forge.novell.com</A>.
 	 </P>
 
-    <H4><A name="1.5">1.5</A>) Skąd można ściągnąć PostgreSQL?</H4>
+    <H4><A name="1.5">1.5</A>) SkÄd moĹźna ĹciÄgnÄÄ PostgreSQL?</H4>
 
-    <P>Główny serwer ftp z dostępem "anonymous" dla PostgreSQL znajduje
-	 się <A href="ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A>.
-	 jeśli szukasz mirrorów sprawdź naszą główną stronę www.</P>
+    <P>GĹĂłwny serwer ftp z dostÄpem "anonymous" dla PostgreSQL znajduje
+	 siÄ <A href="ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A>.
+	 jeĹli szukasz mirrorĂłw sprawdĹş naszÄ gĹĂłwnÄ stronÄ www.</P>
 
-    <H4><A name="1.6">1.6</A>) Gdzie można szukać wsparcia technicznego?</H4>
+    <H4><A name="1.6">1.6</A>) Gdzie moĹźna szukaÄ wsparcia technicznego?</H4>
 
-    <P>Adres głównej listy mailowej: <A href=
+    <P>Adres gĹĂłwnej listy mailowej: <A href=
     "mailto:pgsql-general@PostgreSQL.org">pgsql-general@PostgreSQL.org</A>.
-    Jest ona przeznaczona dyskusjom dotyczącym spraw związanych z PostgreSQL.
-    Żeby zapisac się na listę, wyślij email z następującymi liniami w
-	 treści maila (nie w temacie):</P>
+    Jest ona przeznaczona dyskusjom dotyczÄcym spraw zwiÄzanych z PostgreSQL.
+    Ĺťeby zapisac siÄ na listÄ, wyĹlij email z nastÄpujÄcymi liniami w
+	 treĹci maila (nie w temacie):</P>
 <PRE>
     subscribe
     end
@@ -300,100 +300,100 @@
     <P>na adres: <A href=
     "mailto:pgsql-general-request@PostgreSQL.org">pgsql-general-request@PostgreSQL.org</A>.</P>
 
-    <P>Dostępna jest także lista wysyłająca digesty. Aby zapisać się na
-	 nią, wyślij email na adres:
+    <P>DostÄpna jest takĹźe lista wysyĹajÄca digesty. Aby zapisaÄ siÄ na
+	 niÄ, wyĹlij email na adres:
     <A href=
     "mailto:pgsql-general-digest-request@PostgreSQL.org">pgsql-general-digest-request@PostgreSQL.org</A>
-    z treścią maila zawierającą:</P>
+    z treĹciÄ maila zawierajÄcÄ:</P>
 <PRE>
     subscribe
     end
 </PRE>
-	Digesty są wysyłane do członków listy, kiedy na główną listę dotrze ok
-	30k wiadomości.
+	Digesty sÄ wysyĹane do czĹonkĂłw listy, kiedy na gĹĂłwnÄ listÄ dotrze ok
+	30k wiadomoĹci.
 
-    <P>Dostępna jest także lista poświęcona błędom znalezionym w
-	 PostgreSQL. Aby zapisać się na nią wyślij email na adres:
+    <P>DostÄpna jest takĹźe lista poĹwiÄcona bĹÄdom znalezionym w
+	 PostgreSQL. Aby zapisaÄ siÄ na niÄ wyĹlij email na adres:
     <A href=
     "mailto:pgsql-bugs-request@PostgreSQL.org">pgsql-bugs-request@PostgreSQL.org</A>
-    z treścią maila zawierającą:</P>
+    z treĹciÄ maila zawierajÄcÄ:</P>
 <PRE>
     subscribe
     end
 </PRE>
-    Lista poświęcona dyskusjom developerów jest dostępna pod adresem:
+    Lista poĹwiÄcona dyskusjom developerĂłw jest dostÄpna pod adresem:
     <A href=
     "mailto:pgsql-hackers-request@PostgreSQL.org">pgsql-hackers-request@PostgreSQL.org</A>
-	 Aby się na nią zapisać wyślij na jej adres mail z treścią:
+	 Aby siÄ na niÄ zapisaÄ wyĹlij na jej adres mail z treĹciÄ:
 <PRE>
     subscribe
     end
 </PRE>
 
-    <P>Dodatkowe informacje o listach mailowych dotyczących PostgreSQL
-	 można znaleźć na stronach WWW PostgreSQL pod adresem:</P>
+    <P>Dodatkowe informacje o listach mailowych dotyczÄcych PostgreSQL
+	 moĹźna znaleĹşÄ na stronach WWW PostgreSQL pod adresem:</P>
 
     <BLOCKQUOTE>
       <P><A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A></P>
     </BLOCKQUOTE>
 
-    <P>W sieci EFNet istnieje kanał IRC <I>#PostgreSQL</I>. Ja, do
-	 połączenia się z kanałem używam Unixowego polecenia <CODE>irc -c
+    <P>W sieci EFNet istnieje kanaĹ IRC <I>#PostgreSQL</I>. Ja, do
+	 poĹÄczenia siÄ z kanaĹem uĹźywam Unixowego polecenia <CODE>irc -c
     '#PostgreSQL' "$USER" irc.phoenix.net.</CODE></P>
 
-    <P>Lista firm oferujących wsparcie na zasadach komercyjnych znajduje
-	 się pod adresem: <A href= "http://techdocs.postgresql.org/companies.php">http://techdocs.postgresql.org/companies.php</A>.</P>
+    <P>Lista firm oferujÄcych wsparcie na zasadach komercyjnych znajduje
+	 siÄ pod adresem: <A href= "http://techdocs.postgresql.org/companies.php">http://techdocs.postgresql.org/companies.php</A>.</P>
 
-    <H4><A name="1.7">1.7</A>) Jaka jest ostatnia dostępna wersja?</H4>
+    <H4><A name="1.7">1.7</A>) Jaka jest ostatnia dostÄpna wersja?</H4>
 
-    <P>Ostatnia dostępna wersja PostgreSQL to 7.4.1.</P>
+    <P>Ostatnia dostÄpna wersja PostgreSQL to 7.4.1.</P>
 
-    <P>Planujemy publikowanie kolejnych wersji co sześć do ośmiu miesięcy.</P>
+    <P>Planujemy publikowanie kolejnych wersji co szeĹÄ do oĹmiu miesiÄcy.</P>
 
-    <H4><A name="1.8">1.8</A>) Jaka dokumentacja jest dostępna?</H4>
+    <H4><A name="1.8">1.8</A>) Jaka dokumentacja jest dostÄpna?</H4>
 
-    <P>Kilka manuali, stron podęcznika man, oraz kilka przykładów do
-	 testowania są załączone w samej dystrybucji. Znajdują się one w
-	 katalogu <I>/doc</I>. Manual może być także przeglądany poprzez
+    <P>Kilka manuali, stron podÄcznika man, oraz kilka przykĹadĂłw do
+	 testowania sÄ zaĹÄczone w samej dystrybucji. ZnajdujÄ siÄ one w
+	 katalogu <I>/doc</I>. Manual moĹźe byÄ takĹźe przeglÄdany poprzez
 	 strony www pod adresem <A href=
     "http://www.PostgreSQL.org/docs">http://www.PostgreSQL.org/docs</A>.</P>
 	
-    <P>Istnieją także dwie książki dostępne online pod adresami
+    <P>IstniejÄ takĹźe dwie ksiÄĹźki dostÄpne online pod adresami
 	 <A href=
     "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
     i <A href=
     "http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</A>.
-    Lista książek o PostgreSQL, które można kupić znajduje się pod adresem
+    Lista ksiÄĹźek o PostgreSQL, ktĂłre moĹźna kupiÄ znajduje siÄ pod adresem
 	 <A href=
     "http://techdocs.PostgreSQL.org/techdocs/bookreviews.php">
 	 http://techdocs.PostgreSQL.org/techdocs/bookreviews.php</A>.
-    Zbiór technicznych artykułów o PostgreSQL znajduje się pod adresem <A
+    ZbiĂłr technicznych artykuĹĂłw o PostgreSQL znajduje siÄ pod adresem <A
     href=
     "http://techdocs.PostgreSQL.org">http://techdocs.postgresql.org/</A>.</P>
 
-    <P><I>psql</I> posiada kilka wbudowanych poleceń \d, za pomoca których
-	 można sprawdzić informacje dotyczące typów, operatorów, funkcji,
-	 agregatów itd.</P>
+    <P><I>psql</I> posiada kilka wbudowanych poleceĹ \d, za pomoca ktĂłrych
+	 moĹźna sprawdziÄ informacje dotyczÄce typĂłw, operatorĂłw, funkcji,
+	 agregatĂłw itd.</P>
 
-    <P>Na naszej stronie można znaleźć dużo więcej dokumentacji.</P>
+    <P>Na naszej stronie moĹźna znaleĹşÄ duĹźo wiÄcej dokumentacji.</P>
 
-    <H4><A name="1.9">1.9</A>) Gdzie można znaleźć informację o znanych
-	      błędach czy brakujących rozwiązanich?</H4>
+    <H4><A name="1.9">1.9</A>) Gdzie moĹźna znaleĹşÄ informacjÄ o znanych
+	      bĹÄdach czy brakujÄcych rozwiÄzanich?</H4>
 
-    <P>PostgreSQL wspiera rozszerzony podzbiór standardu <SMALL>SQL</SMALL>-92.
-    Sprawdź naszą listę <A href="http://www.postgresql.org/docs/faqs.TODO.html">TODO</A>
-    aby znaleźć informację o znanych problemach, brakujących
-	 rozwiązaniach czy przyszłych planach.</P>
+    <P>PostgreSQL wspiera rozszerzony podzbiĂłr standardu <SMALL>SQL</SMALL>-92.
+    SprawdĹş naszÄ listÄ <A href="http://www.postgresql.org/docs/faqs.TODO.html">TODO</A>
+    aby znaleĹşÄ informacjÄ o znanych problemach, brakujÄcych
+	 rozwiÄzaniach czy przyszĹych planach.</P>
 
-    <H4><A name="1.10">1.10</A>) Jak mogę się nauczyć
+    <H4><A name="1.10">1.10</A>) Jak mogÄ siÄ nauczyÄ
     <SMALL>SQL</SMALL>?</H4>
 
-    <P>Książka o PostgreSQL <A href=
+    <P>KsiÄĹźka o PostgreSQL <A href=
     "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
-    uczy <SMALL>SQL</SMALL>. Jest jeszcze inna ksiązka o PostgreSQL
-	 dostępna pod adresem: <A href=
+    uczy <SMALL>SQL</SMALL>. Jest jeszcze inna ksiÄzka o PostgreSQL
+	 dostÄpna pod adresem: <A href=
     "http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook.</A>
-    Dobry tutorial możesz znaleźć pod adresem: <A href=
+    Dobry tutorial moĹźesz znaleĹşÄ pod adresem: <A href=
     "http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm,</A>
     oraz <A href=
     "http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM">
@@ -405,211 +405,211 @@
     pod adresem: <A href=
     "http://members.tripod.com/er4ebus/sql/index.htm">http://members.tripod.com/er4ebus/sql/index.htm</A></P>
 
-    <P>Wielu z naszych użytkowników poleca <I>The Practical SQL Handbook</I>,
-    Bowman, Judith S., et al., Addison-Wesley. Inni polecają <I>The
+    <P>Wielu z naszych uĹźytkownikĂłw poleca <I>The Practical SQL Handbook</I>,
+    Bowman, Judith S., et al., Addison-Wesley. Inni polecajÄ <I>The
     Complete Reference SQL</I>, Groff et al., McGraw-Hill.</P>
 
-    <H4><A name="1.11">1.11</A>) Czy PostgreSQL ma rozwiązany problem Y2K?</H4>
+    <H4><A name="1.11">1.11</A>) Czy PostgreSQL ma rozwiÄzany problem Y2K?</H4>
 
     <P>Tak, bez problemu radzimy sobie z datami po roku 2000 AD, oraz
 	 przed rokiem 2000 BC.</P>
 
-    <H4><A name="1.12">1.12</A>) Jak mogę się przyłączyć do grupy osób
-	      bezpośrednio pracujących nad rozwojem PostgreSQL?</H4>
+    <H4><A name="1.12">1.12</A>) Jak mogÄ siÄ przyĹÄczyÄ do grupy osĂłb
+	      bezpoĹrednio pracujÄcych nad rozwojem PostgreSQL?</H4>
 
-    <P>Przede wszystkim ściągnij ostatnie dostępne źródła i przeczytaj
-	 dokumentację przeznaczoną dla developerów na naszej stronie www lub
-	 dostępną także w źródłach PostgreSQL. Następnie zapisz się na listy
+    <P>Przede wszystkim ĹciÄgnij ostatnie dostÄpne ĹşrĂłdĹa i przeczytaj
+	 dokumentacjÄ przeznaczonÄ dla developerĂłw na naszej stronie www lub
+	 dostÄpnÄ takĹźe w ĹşrĂłdĹach PostgreSQL. NastÄpnie zapisz siÄ na listy
 	 mailowe <I>pgsql-hackers</I> i
-    <I>pgsql-patches</I>. I na koniec, wysyłaj nam wysokiej jakości
-	 patch'e na listę pgsql-patches.</P>
+    <I>pgsql-patches</I>. I na koniec, wysyĹaj nam wysokiej jakoĹci
+	 patch'e na listÄ pgsql-patches.</P>
 
-    <P>Jest około 12 osób, które mają uprawnienia do commit'owania w
-    <SMALL>CVS</SMALL> PostgreSQL'a. Każdy z nich submitował tak wiele
-	 wysokiej jakości patchy, że stało się niemożliwe dla obecnych
-	 commiterów być z nimi na bieżąco, więc musieliśmy im ufać i mieć
-	 pewność, że ich poprawki są wysokiej jakości.</P>
+    <P>Jest okoĹo 12 osĂłb, ktĂłre majÄ uprawnienia do commit'owania w
+    <SMALL>CVS</SMALL> PostgreSQL'a. KaĹźdy z nich submitowaĹ tak wiele
+	 wysokiej jakoĹci patchy, Ĺźe staĹo siÄ niemoĹźliwe dla obecnych
+	 commiterĂłw byÄ z nimi na bieĹźÄco, wiÄc musieliĹmy im ufaÄ i mieÄ
+	 pewnoĹÄ, Ĺźe ich poprawki sÄ wysokiej jakoĹci.</P>
 
-    <H4><A name="1.13">1.13</A>) Jak mogę zgłaszać błędy?</H4>
+    <H4><A name="1.13">1.13</A>) Jak mogÄ zgĹaszaÄ bĹÄdy?</H4>
 
-    <P>Zajrzyj na stronę <A href=
+    <P>Zajrzyj na stronÄ <A href=
     "http://www.postgresql.org/bugs/bugs.php">PostgreSQL BugTool</A>, na
-	 której opisane są wskazówki jak zgłaszać informacje o błędach.</P>
+	 ktĂłrej opisane sÄ wskazĂłwki jak zgĹaszaÄ informacje o bĹÄdach.</P>
 
-    <P>Zajrzyj także na nasz ftp <A href=
+    <P>Zajrzyj takĹźe na nasz ftp <A href=
     "ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A>, aby
-	 sprawdzić czy nie ma nowszych wersji PostgreSQL czy patchy.</P>
+	 sprawdziÄ czy nie ma nowszych wersji PostgreSQL czy patchy.</P>
 
-    <H4><A name="1.14">1.14</A>) Jak można porównać PostgreSQL w stosunku
+    <H4><A name="1.14">1.14</A>) Jak moĹźna porĂłwnaÄ PostgreSQL w stosunku
 	      do innych <SMALL>DBMS</SMALL>?</H4>
 
-    <P>Jest kilka sposobów oceny softwaru: możliwości,
-    wydajność, stabilność, wsparcie i cena.</P>
+    <P>Jest kilka sposobĂłw oceny softwaru: moĹźliwoĹci,
+    wydajnoĹÄ, stabilnoĹÄ, wsparcie i cena.</P>
 
     <DL>
-      <DT><B>Możliwości</B></DT>
+      <DT><B>MoĹźliwoĹci</B></DT>
 
-      <DD>PostgreSQL posiada możliwości dostępne w dużych, komercyjnych
+      <DD>PostgreSQL posiada moĹźliwoĹci dostÄpne w duĹźych, komercyjnych
 		systemach <SMALL>DBMS</SMALL>, takie jak transakcje, podzapytania
 		(subselects), triggery, widoki, klucze obce, referential integrity,
-		oraz wyrafinowany system blokowania. Mamy także właściowści których
-		inni nie posiadają, jak typy definiowane przez użytkownika,
-		dziedziczenie, rules, multi-version concurrency control, która
+		oraz wyrafinowany system blokowania. Mamy takĹźe wĹaĹciowĹci ktĂłrych
+		inni nie posiadajÄ, jak typy definiowane przez uĹźytkownika,
+		dziedziczenie, rules, multi-version concurrency control, ktĂłra
 		redukuje problemy z blokowaniem (lock contention).<BR>
       <BR>
       </DD>
 
-      <DT><B>Wydajność</B></DT>
+      <DT><B>WydajnoĹÄ</B></DT>
 
-      <DD>Wydajność PostgreSQL jest podobna do innych komercyjnych i open
-		source baz danych. W niektórych sytuacjach jest szybszy w
-		niektórych wolniejszy. W porównianiu do MySQL lub mniejszych baz
-		danych jesteśmy szybsi przy wielu użytkownikach, skomplikowaych
-		zapytaniach i dużym obciążeniu podczas. MySQL jest szybszy dla
-		prostych SELECTów wykonywanych przez niewielu użytkowników.
-		Spowodowane jest to narzutem, który się pojawia przy transakcjach.
-		Oczywiście MySQL nie ma większości z rozwiązań opisanych powyżej
-		w sekcji <I> Możliwości </I>. PostgreSQL został stworzony z myślą o
-		stabilności, oraz szerokiej gamie możliwości, ale mimo to staramy
-		się w każdej wersji poprawiać jego wydajność.
-		Ciekawe porównanie PostgreSQL i MySQL można znaleźć pod adresem <A href=
+      <DD>WydajnoĹÄ PostgreSQL jest podobna do innych komercyjnych i open
+		source baz danych. W niektĂłrych sytuacjach jest szybszy w
+		niektĂłrych wolniejszy. W porĂłwnianiu do MySQL lub mniejszych baz
+		danych jesteĹmy szybsi przy wielu uĹźytkownikach, skomplikowaych
+		zapytaniach i duĹźym obciÄĹźeniu podczas. MySQL jest szybszy dla
+		prostych SELECTĂłw wykonywanych przez niewielu uĹźytkownikĂłw.
+		Spowodowane jest to narzutem, ktĂłry siÄ pojawia przy transakcjach.
+		OczywiĹcie MySQL nie ma wiÄkszoĹci z rozwiÄzaĹ opisanych powyĹźej
+		w sekcji <I> MoĹźliwoĹci </I>. PostgreSQL zostaĹ stworzony z myĹlÄ o
+		stabilnoĹci, oraz szerokiej gamie moĹźliwoĹci, ale mimo to staramy
+		siÄ w kaĹźdej wersji poprawiaÄ jego wydajnoĹÄ.
+		Ciekawe porĂłwnanie PostgreSQL i MySQL moĹźna znaleĹşÄ pod adresem <A href=
       "http://openacs.org/philosophy/why-not-mysql.html">http://openacs.org/philosophy/why-not-mysql.html</A>
-		Dodatkowo, MySQL jest firmą, która dystrybuuje jej produkty poprzez
-		zasadę Open Source i wymaga wykupienia licencji w przypadku
+		Dodatkowo, MySQL jest firmÄ, ktĂłra dystrybuuje jej produkty poprzez
+		zasadÄ Open Source i wymaga wykupienia licencji w przypadku
 		tworzenia close-source software, co ie ma miejsca w przypadku
 		PostgreSQL.<BR>
       <BR>
       </DD>
-      <DT><B>Stabilność</B></DT>
+      <DT><B>StabilnoĹÄ</B></DT>
 
-      <DD>Zdajemy sobie sprawę, że <SMALL>DBMS</SMALL> musi być stabilny,
-		w przeciwnym wypadku jest bez wartości. Staramy się publikować kod
-		stabilny, dobrze przetestowany, z minimum możliwych błędów. Każde
-		wydanie poprzedza co najmniej miesiąc testów wersji beta. Patrząc na
-		historię wydań PostgreSQL widać, że dostarczamy stabilne, dobrze
-		sprawdzone wersje, które są gotowe do użycia w środowisku
-		produkcyjnym. Myślimy, że proces publikowania kolejnych wersji
-		opracowany przez nas jest jednym z lepszych wśród innych twórców
+      <DD>Zdajemy sobie sprawÄ, Ĺźe <SMALL>DBMS</SMALL> musi byÄ stabilny,
+		w przeciwnym wypadku jest bez wartoĹci. Staramy siÄ publikowaÄ kod
+		stabilny, dobrze przetestowany, z minimum moĹźliwych bĹÄdĂłw. KaĹźde
+		wydanie poprzedza co najmniej miesiÄc testĂłw wersji beta. PatrzÄc na
+		historiÄ wydaĹ PostgreSQL widaÄ, Ĺźe dostarczamy stabilne, dobrze
+		sprawdzone wersje, ktĂłre sÄ gotowe do uĹźycia w Ĺrodowisku
+		produkcyjnym. MyĹlimy, Ĺźe proces publikowania kolejnych wersji
+		opracowany przez nas jest jednym z lepszych wĹrĂłd innych twĂłrcĂłw
 		oprogramowania bazodanowego.<BR>
       <BR>
       </DD>
 
       <DT><B>Wsparcie</B></DT>
 
-      <DD>Dzięki naszym listom mailowym masz dostęp do dużej liczby
-		programistów i użytkowników, którzy pomagają rozwiązać każdy
-		napotkany problem. Chociaż nie możemy gwarantować znalezienia
-		rozwiązania danego problemu, nie różnimy się w tym od innych
-		komercyjnych systemów <SMALL>DBMS</SMALL>. Bezpośredni kontakt z
-		programistami, użytkownikami, dokumentacją i kodem źródłowym
-		sprawiają, że wsparcie oferowane PostgreSQL niejednokrotnie jest
-		lepsze niż w innych systemach <SMALL>DBMS</SMALL>. Istnieje także
-		możliwość skorzystania z komercyjnego wsparcia dla tych, których
-		takiego rozwiązania potrzebują.
-      (Sprawdź <A href="#1.6">ten punkt FAQ</A>.)<BR>
+      <DD>DziÄki naszym listom mailowym masz dostÄp do duĹźej liczby
+		programistĂłw i uĹźytkownikĂłw, ktĂłrzy pomagajÄ rozwiÄzaÄ kaĹźdy
+		napotkany problem. ChociaĹź nie moĹźemy gwarantowaÄ znalezienia
+		rozwiÄzania danego problemu, nie rĂłĹźnimy siÄ w tym od innych
+		komercyjnych systemĂłw <SMALL>DBMS</SMALL>. BezpoĹredni kontakt z
+		programistami, uĹźytkownikami, dokumentacjÄ i kodem ĹşrĂłdĹowym
+		sprawiajÄ, Ĺźe wsparcie oferowane PostgreSQL niejednokrotnie jest
+		lepsze niĹź w innych systemach <SMALL>DBMS</SMALL>. Istnieje takĹźe
+		moĹźliwoĹÄ skorzystania z komercyjnego wsparcia dla tych, ktĂłrych
+		takiego rozwiÄzania potrzebujÄ.
+      (SprawdĹş <A href="#1.6">ten punkt FAQ</A>.)<BR>
       <BR>
       </DD>
 
       <DT><B>Cena</B></DT>
 
-      <DD>Korzystanie z PostgreSQL jest darmowe, zarówno w przypadku
-		komercyjnym jak i niekomercyjnym. Możesz korzystać z naszego kodu
-		źródłowego w Twoim produkcie bez żadnych ograniczeń, poza tymi
-		wymienionymi w licencji BSD przytoczonej powyżej.<BR>
+      <DD>Korzystanie z PostgreSQL jest darmowe, zarĂłwno w przypadku
+		komercyjnym jak i niekomercyjnym. MoĹźesz korzystaÄ z naszego kodu
+		ĹşrĂłdĹowego w Twoim produkcie bez Ĺźadnych ograniczeĹ, poza tymi
+		wymienionymi w licencji BSD przytoczonej powyĹźej.<BR>
       <BR>
       </DD>
     </DL>
 
-    <H4><A name="1.15">1.15</A>) W jaki sposób mogę wesprzeć finansowo
+    <H4><A name="1.15">1.15</A>) W jaki sposĂłb mogÄ wesprzeÄ finansowo
 	     PostgreSQL?</H4>
 
-    <P>PostgreSQL korzysta z najlepszej infrastruktury od samego początku
-	 istnienia projektu, czyli roku 1996 kiedy rozpoczeliśmy pracę. Wszystko 
-	 to zawdzięczamy Marc'owi Fournier'owi, który stworzył tą infrastrukturę 
-	 i zarządza nią od lat.</P>
+    <P>PostgreSQL korzysta z najlepszej infrastruktury od samego poczÄtku
+	 istnienia projektu, czyli roku 1996 kiedy rozpoczeliĹmy pracÄ. Wszystko 
+	 to zawdziÄczamy Marc'owi Fournier'owi, ktĂłry stworzyĹ tÄ infrastrukturÄ 
+	 i zarzÄdza niÄ od lat.</P>
 
-    <P>Wysokiej jakości infrastruktura jest bardzo ważna dla każdego
+    <P>Wysokiej jakoĹci infrastruktura jest bardzo waĹźna dla kaĹźdego
 	 projektu open-source. Zapobiega przerwom w rozwoju projektu i
 	 jakimkolwiek przestojom.</P>
 
-    <P>Oczywiście korzystanie z wysokiej jakości infrastruktury nie jest
-	 tanie. Istnieje wiele różnych miesięcznych, czy jednorazowych
-	 wydatków, które trzeba ponosić aby wszystko działało jak należy.
-	 Jeśli Ty, bądź Twoja firma może wspomóc finansowo rozwój PostgreSQL
-	 odwiedź adres: <A href=
+    <P>OczywiĹcie korzystanie z wysokiej jakoĹci infrastruktury nie jest
+	 tanie. Istnieje wiele rĂłĹźnych miesiÄcznych, czy jednorazowych
+	 wydatkĂłw, ktĂłre trzeba ponosiÄ aby wszystko dziaĹaĹo jak naleĹźy.
+	 JeĹli Ty, bÄdĹş Twoja firma moĹźe wspomĂłc finansowo rozwĂłj PostgreSQL
+	 odwiedĹş adres: <A href=
     "http://store.pgsql.com/shopping/">http://store.pgsql.com/shopping/</A>
- 	 gdzie opisane jest jak to zrobić.</P>
+ 	 gdzie opisane jest jak to zrobiÄ.</P>
 
-    <P>Chociaż na stronie wspomniana jest nazwa PostgreSQL Inc, "datki"
-	 są przeznaczone jedynie na rozwój projektu PostgreSQL i nie są
-	 przeznaczane na finansowanie jakiejkolwiek firmy. Jeśli wolisz, 
-	 możesz wysłać czek na adres kontaktowy.</P>
+    <P>ChociaĹź na stronie wspomniana jest nazwa PostgreSQL Inc, "datki"
+	 sÄ przeznaczone jedynie na rozwĂłj projektu PostgreSQL i nie sÄ
+	 przeznaczane na finansowanie jakiejkolwiek firmy. JeĹli wolisz, 
+	 moĹźesz wysĹaÄ czek na adres kontaktowy.</P>
     <HR>
-	 Jeśli możesz się pochwalić udanymi wdrożeniami PostgreSQL, prosimy
-	 abyś zgłosił nam to na stronie: <A
+	 JeĹli moĹźesz siÄ pochwaliÄ udanymi wdroĹźeniami PostgreSQL, prosimy
+	 abyĹ zgĹosiĹ nam to na stronie: <A
 	 href="http://advocacy.postgresql.org/">http://advocacy.postgresql.org</a>.
 
     <H2 align="center">User Client Questions</H2>
 
-    <H4><A name="2.1">2.1</A>) Czy są jakieś driwery <SMALL>ODBC</SMALL> dla
+    <H4><A name="2.1">2.1</A>) Czy sÄ jakieĹ driwery <SMALL>ODBC</SMALL> dla
 	     PostgreSQL?</H4>
 
-    <P>Dostępne są dwa driwery <SMALL>ODBC</SMALL>: PsqlODBC
+    <P>DostÄpne sÄ dwa driwery <SMALL>ODBC</SMALL>: PsqlODBC
     i OpenLink <SMALL>ODBC</SMALL>.</P>
 
-    <P>Możesz pobrać PsqlODBC z adresu <A
+    <P>MoĹźesz pobraÄ PsqlODBC z adresu <A
 	 href="http://gborg.postgresql.org/project/psqlodbc/projdisplay.php">http://gborg.postgresql.org/project/psqlodbc/projdisplay.php</A>
 	 </P>
 	 
-    <P>OpenLink <SMALL>ODBC</SMALL> może być pobrany z adresu: <A href=
+    <P>OpenLink <SMALL>ODBC</SMALL> moĹźe byÄ pobrany z adresu: <A href=
     "http://www.openlinksw.com/">http://www.openlinksw.com</A>.
-	 Współpracuje ze standardowym oprogramowaniem klienckim <SMALL>ODBC</SMALL>
-	 więc w ten sposób możesz korzystać z PostgreSQL <SMALL>ODBC</SMALL>
-	 dostępnego na każdej pltaformie którą wspiera (Win, Mac, Unix, VMS).</P>
+	 WspĂłĹpracuje ze standardowym oprogramowaniem klienckim <SMALL>ODBC</SMALL>
+	 wiÄc w ten sposĂłb moĹźesz korzystaÄ z PostgreSQL <SMALL>ODBC</SMALL>
+	 dostÄpnego na kaĹźdej pltaformie ktĂłrÄ wspiera (Win, Mac, Unix, VMS).</P>
 
-    <P>Autorzy będą prawdopodobnie sprzedawać ten produkt osobom które
-	 wymagają komercyjnego wsparcia, ale wersja darmowa będzie zawsze
-	 dostępna. Wszystkie pytania możesz wysyłać na adres: <A href=
+    <P>Autorzy bÄdÄ prawdopodobnie sprzedawaÄ ten produkt osobom ktĂłre
+	 wymagajÄ komercyjnego wsparcia, ale wersja darmowa bÄdzie zawsze
+	 dostÄpna. Wszystkie pytania moĹźesz wysyĹaÄ na adres: <A href=
     "mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</A>.</P>
 
-    <H4><A name="2.2">2.2</A>) Jakie istnieją narzędzia pozwalające na dostęp do
+    <H4><A name="2.2">2.2</A>) Jakie istniejÄ narzÄdzia pozwalajÄce na dostÄp do
 	      PostgreSQL przez www?</H4>
 
-    <P>Dobry podręcznik dla początkujących o dostępie do bazy danych
-	 przez www możesz znaleźć pod adresem:
+    <P>Dobry podrÄcznik dla poczÄtkujÄcych o dostÄpie do bazy danych
+	 przez www moĹźesz znaleĹşÄ pod adresem:
     <A href="http://www.webreview.com">http://www.webreview.com</A></P>
 
-    <P>Do integracji z www, świetnym rozwiązaniem jest PHP. Możesz
-	 znaleźć więcej informacji na ten temat pod adresem
+    <P>Do integracji z www, Ĺwietnym rozwiÄzaniem jest PHP. MoĹźesz
+	 znaleĹşÄ wiÄcej informacji na ten temat pod adresem
     <A href="http://www.php.net">http://www.php.net</A>.</P>
 
-    <P>Wiele osób w przypadku skomplikowanych rozwiązań uzywa Perl'a i
-	 modułu CGI.pl lub mod_perl.</P>
+    <P>Wiele osĂłb w przypadku skomplikowanych rozwiÄzaĹ uzywa Perl'a i
+	 moduĹu CGI.pl lub mod_perl.</P>
 
-    <H4><A name="2.3">2.3</A>)  Czy istnieje jakieś GUI dla PostgreSQL?</H4>
+    <H4><A name="2.3">2.3</A>)  Czy istnieje jakieĹ GUI dla PostgreSQL?</H4>
 
-    <P>Tak, istnieje kilka interfejsów graficznych dla PostgreSQL.
-	 Wśród nich PgAccess (<A href="http://www.pgaccess.org">
+    <P>Tak, istnieje kilka interfejsĂłw graficznych dla PostgreSQL.
+	 WĹrĂłd nich PgAccess (<A href="http://www.pgaccess.org">
 	 http://www.pgaccess.org</A>), PgAdmin III (<A
 	 href="http://www.pgadmin.org">http://www.pgadmin.org</A>), 
 	 RHDB Admin (http://sources.redhat.com/rhdb/ ) oraz Rekall (
 	http://www.thekompany.com/products/rekall/, komercyjny). Istnieje
-	także PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ), webowy
+	takĹźe PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ), webowy
 	interfejs dla PostgreSQL.
 	</P>
 	<P>
-	Więcej informacji na ten temat znajduje się pod adresem See
+	WiÄcej informacji na ten temat znajduje siÄ pod adresem See
 	<A href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</A>.</P>
 	 
-	 <H4><A name="2.4">2.4</A>) Za pomocą jakich języków programowania
-	 można się komunikować z PostgreSQL?</H4>
+	 <H4><A name="2.4">2.4</A>) Za pomocÄ jakich jÄzykĂłw programowania
+	 moĹźna siÄ komunikowaÄ z PostgreSQL?</H4>
 	 
-    <P>Najbardziej popularne języki posiiadają własny interfejs dla
-	 PostgreSQL. Sprawdź listę rozszerzeń dla intersującego Ciebie języka
+    <P>Najbardziej popularne jÄzyki posiiadajÄ wĹasny interfejs dla
+	 PostgreSQL. SprawdĹş listÄ rozszerzeĹ dla intersujÄcego Ciebie jÄzyka
 	 programowania.</P>
 	 
-    <P>Ze źródłami PostreSQL dystrubuowane są interfejsy dla
-	 następujących języków programowania:</P>
+    <P>Ze ĹşrĂłdĹami PostreSQL dystrubuowane sÄ interfejsy dla
+	 nastÄpujÄcych jÄzykĂłw programowania:</P>
 
 
     <UL>
@@ -623,266 +623,266 @@
 
       <LI>TCL (libpgtcl)</LI>
     </UL>
-	Inne interfejsy są dostępne pod adresem: 
+	Inne interfejsy sÄ dostÄpne pod adresem: 
 	<A href="http://gborg.postgresql.org"> http://gborg.postgresql.org</A> w
 	sekcji Drivers/Interfaces.
     <HR>
 
-    <H2 align="center">Pytania dotyczące administracji</H2>
+    <H2 align="center">Pytania dotyczÄce administracji</H2>
 
-    <H4><A name="3.1">3.1</A>) Jak mogę zainstalować PostgreSQL w innej
-	          lokalizacji niż <I>/usr/local/pgsql</I>?</H4>
+    <H4><A name="3.1">3.1</A>) Jak mogÄ zainstalowaÄ PostgreSQL w innej
+	          lokalizacji niĹź <I>/usr/local/pgsql</I>?</H4>
 
-    <P>Użyj opcji <I>--prefix</I> podczas uruchamiania skryptu
+    <P>UĹźyj opcji <I>--prefix</I> podczas uruchamiania skryptu
     <I>configure</I>.</P>
 
     <H4><A name="3.2">3.2</A>) Podczas startu <I>postmaster'a</I>,
-	      otrzymuję komunikat o błędzie: <I>Bad System Call</I> lub "core dumped".
+	      otrzymujÄ komunikat o bĹÄdzie: <I>Bad System Call</I> lub "core dumped".
 			Dlaczego?</H4>
 
 
-    <P>Ten błąd może być wynikiem wielu problemów, ale na początek
-	 sprawdź czy masz zainstalowane rozszerzenia systemu V w jądrze
-	 systemu. PostgreSQL wymaga do pracy zainstalowanej obsługi pamięci
-	 dzielonej i semaforów.</P>
+    <P>Ten bĹÄd moĹźe byÄ wynikiem wielu problemĂłw, ale na poczÄtek
+	 sprawdĹş czy masz zainstalowane rozszerzenia systemu V w jÄdrze
+	 systemu. PostgreSQL wymaga do pracy zainstalowanej obsĹugi pamiÄci
+	 dzielonej i semaforĂłw.</P>
 
     <H4><A name="3.3">3.3</A>) Podczas startu <I>postmaster'a</I>,
-	      otrzymuję komunikat o błędzie: <I>IpcMemoryCreate</I>.
+	      otrzymujÄ komunikat o bĹÄdzie: <I>IpcMemoryCreate</I>.
 			Dlaczego?</H4>
 
-    <P>Albo nie masz poprawnie skonfigurowanej obsługi pamięci dzielonej
-	 w jądrze systemu, albo musisz zwiększyć jej dostępny rozmiar.
-    Dokładna ilość jaką potrzebujesz jest zależna od architektury systemu
-	 na jakim pracujesz, jak dużo buforów oraz jak dużo procesów backendu
-	 skonfigurowałeś dla <I>postmaster'a</I>. Dla większości systemów, z
-	 domyślną liczbą buforów i procesów potrzebujesz minimum w
-	 przybliżeniu 1MB. Zobacz  <A href=
+    <P>Albo nie masz poprawnie skonfigurowanej obsĹugi pamiÄci dzielonej
+	 w jÄdrze systemu, albo musisz zwiÄkszyÄ jej dostÄpny rozmiar.
+    DokĹadna iloĹÄ jakÄ potrzebujesz jest zaleĹźna od architektury systemu
+	 na jakim pracujesz, jak duĹźo buforĂłw oraz jak duĹźo procesĂłw backendu
+	 skonfigurowaĹeĹ dla <I>postmaster'a</I>. Dla wiÄkszoĹci systemĂłw, z
+	 domyĹlnÄ liczbÄ buforĂłw i procesĂłw potrzebujesz minimum w
+	 przybliĹźeniu 1MB. Zobacz  <A href=
     "http://www.postgresql.org/idocs/index.php?kernel-resources.html">PostgreSQL
-    Administrator's Guide</A> gdzie szczegółowo zostało opisane
-	 wykorzystanie pamięci dzielonej i semaforów.</P>
+    Administrator's Guide</A> gdzie szczegĂłĹowo zostaĹo opisane
+	 wykorzystanie pamiÄci dzielonej i semaforĂłw.</P>
 
     <H4><A name="3.4">3.4</A>) Podczas startu <I>postmaster'a</I>,
-	      otrzymuję komunikat o błędzie: <I>IpcSemaphoreCreate</I>.
+	      otrzymujÄ komunikat o bĹÄdzie: <I>IpcSemaphoreCreate</I>.
 			Dlaczego?</H4>
 			
-    <P>Jeśli treść błędu brzmi: <I>IpcSemaphoreCreate: semget failed
-	 (No space left on device)</I> oznacza to, że jądro systemu nie jest
-	 skonfigurowane do obsługi wystarczającej liczby semaforów.
+    <P>JeĹli treĹÄ bĹÄdu brzmi: <I>IpcSemaphoreCreate: semget failed
+	 (No space left on device)</I> oznacza to, Ĺźe jÄdro systemu nie jest
+	 skonfigurowane do obsĹugi wystarczajÄcej liczby semaforĂłw.
 	 Postgres wymaga jednego semafor'a na potencjalny jeden proces backend.
-	 Tymczasowym rozwiązaniem jest uruchomienie programu <I>postmaster</I>
-	 z mniejszą  maksymalną liczbą procesów backend.
-	 Użyj opcji <I>-N</i> z parameterem mniejszym od domyślnego - 32.   
-	 Bardziej trwałym rozwiązaniem jest zwiększenie parametrów
-	 <SMALL>SEMMNS</SMALL> i <SMALL>SEMMNI</SMALL> jądra twojego systemu.</P>
+	 Tymczasowym rozwiÄzaniem jest uruchomienie programu <I>postmaster</I>
+	 z mniejszÄ  maksymalnÄ liczbÄ procesĂłw backend.
+	 UĹźyj opcji <I>-N</i> z parameterem mniejszym od domyĹlnego - 32.   
+	 Bardziej trwaĹym rozwiÄzaniem jest zwiÄkszenie parametrĂłw
+	 <SMALL>SEMMNS</SMALL> i <SMALL>SEMMNI</SMALL> jÄdra twojego systemu.</P>
 
-	 <P>Niedziałające semafory mogą spowodować niepoprawne zamknięcie
+	 <P>NiedziaĹajÄce semafory mogÄ spowodowaÄ niepoprawne zamkniÄcie
 	 systemu w czasie intensywnego korzystania z bazy.</P>
 	 
-	 <P>Jeśli treść błędu jest inna, może to oznaczać, że obsługa semaforów 
-	 nie została włączona do jądra wcale. Zobacz PostgreSQL 
-	 Administrator's Guide po bardziej szczegółowe informacje o pamięci 
+	 <P>JeĹli treĹÄ bĹÄdu jest inna, moĹźe to oznaczaÄ, Ĺźe obsĹuga semaforĂłw 
+	 nie zostaĹa wĹÄczona do jÄdra wcale. Zobacz PostgreSQL 
+	 Administrator's Guide po bardziej szczegĂłĹowe informacje o pamiÄci 
 	 dzielonej i semaforach.</P>
 
-    <H4><A name="3.5">3.5</A>) W jaki sposób mogę kontrolować połączenia
-	 z innych hostów?</H4>
+    <H4><A name="3.5">3.5</A>) W jaki sposĂłb mogÄ kontrolowaÄ poĹÄczenia
+	 z innych hostĂłw?</H4>
 
-    <P>Domyślnie PostgreSQL pozwala jedynie na połączenia za pomocą
-	 socketów Unixowych z lokalnego hosta. Inne hosty nie będą  mogły się
-	 połączyć z serwerem dopóki nie zostanie dodana opcja <I>-i</I> do
+    <P>DomyĹlnie PostgreSQL pozwala jedynie na poĹÄczenia za pomocÄ
+	 socketĂłw Unixowych z lokalnego hosta. Inne hosty nie bÄdÄ  mogĹy siÄ
+	 poĹÄczyÄ z serwerem dopĂłki nie zostanie dodana opcja <I>-i</I> do
 	 <I>postmaster'a</I>,
-    <B>oraz</B> nie umożliwi się autoryzacji na podstawie adresu hostów
-	 modyfikując odpowiednio plik
-    <I>$PGDATA/pg_hba.conf</I>. To zmiany pozwolą na połączenia TCP/IP.</P>
+    <B>oraz</B> nie umoĹźliwi siÄ autoryzacji na podstawie adresu hostĂłw
+	 modyfikujÄc odpowiednio plik
+    <I>$PGDATA/pg_hba.conf</I>. To zmiany pozwolÄ na poĹÄczenia TCP/IP.</P>
 
-    <H4><A name="3.6">3.6</A>) Jak powinienem skonfigurować system baz
-	      danych aby uzyskać lepszą wydajność?</H4>
+    <H4><A name="3.6">3.6</A>) Jak powinienem skonfigurowaÄ system baz
+	      danych aby uzyskaÄ lepszÄ wydajnoĹÄ?</H4>
 
-    <P>Indeksy bez wątpienia mogą przyspieszyć wykonywanie zapytań.
-    Polecenie <SMALL>EXPLAIN</SMALL> pozwala zobaczyć jak PostgreSQL
-	 interpretuje Twoje zapytanie i które indeksy są używane.</P>
+    <P>Indeksy bez wÄtpienia mogÄ przyspieszyÄ wykonywanie zapytaĹ.
+    Polecenie <SMALL>EXPLAIN</SMALL> pozwala zobaczyÄ jak PostgreSQL
+	 interpretuje Twoje zapytanie i ktĂłre indeksy sÄ uĹźywane.</P>
 
-    <P>Jeśli wykonujesz bardzo dużo <SMALL>INSERTów</SMALL>, może warto
-	 je wykonać za pomocą jednego dużego pliku używając polecenia
-	<SMALL>COPY</SMALL>. Jest to dużo szybsze niż pojedyncze
+    <P>JeĹli wykonujesz bardzo duĹźo <SMALL>INSERTĂłw</SMALL>, moĹźe warto
+	 je wykonaÄ za pomocÄ jednego duĹźego pliku uĹźywajÄc polecenia
+	<SMALL>COPY</SMALL>. Jest to duĹźo szybsze niĹź pojedyncze
     <SMALL>INSERTy.</SMALL> Po drugie polecenia SQL nie zawarte w bloku
-	 określającym transakcję - <SMALL>BEGIN WORK/COMMIT</SMALL>, są
-	 traktowane jako pojedyncza transakcja. Rozważ wykonanie kilku
-	 poleceń/zdań SQL w jednym bloku transakcji. To redukuje narzut
-	 nakładany przez transakcję. Przy dużych zmianach w danych, warto
-	 usunąć i stworzyć na nowo indeksy.</P>
+	 okreĹlajÄcym transakcjÄ - <SMALL>BEGIN WORK/COMMIT</SMALL>, sÄ
+	 traktowane jako pojedyncza transakcja. RozwaĹź wykonanie kilku
+	 poleceĹ/zdaĹ SQL w jednym bloku transakcji. To redukuje narzut
+	 nakĹadany przez transakcjÄ. Przy duĹźych zmianach w danych, warto
+	 usunÄÄ i stworzyÄ na nowo indeksy.</P>
 
-    <P>Jest kilka opcji pozwalających na poprawienie wydajności.
-	 Możesz wyłączyć <I>fsync()</I> poprzez uruchomienie <I>postmaster'a</I>
-	 z opcjami <I>-o -F</I>. To spowoduje, że
-    <I>fsync()</I> nie będzie zrzucał danych na dysk po każdej
+    <P>Jest kilka opcji pozwalajÄcych na poprawienie wydajnoĹci.
+	 MoĹźesz wyĹÄczyÄ <I>fsync()</I> poprzez uruchomienie <I>postmaster'a</I>
+	 z opcjami <I>-o -F</I>. To spowoduje, Ĺźe
+    <I>fsync()</I> nie bÄdzie zrzucaĹ danych na dysk po kaĹźdej
 	 transakcji.</P>
 
-    <P>Możesz także uruchomić <I>postmaster'a</I> z opcją <I>-B</I>
-	 aby zwiększyć wielkość pamięci dzielonej używanej przez procesy
-	 backendów. Jeśli ustawisz tą wartość zbyt wysoko i przekroczysz limity
-	 ustawione przez kernel na pamięć dzieloną, <I>postmaster</I>  może się
-	 nie uruchomić. Każdy bufor zajmuje 8K a domyślna ilość buforów to 64.</P>
+    <P>MoĹźesz takĹźe uruchomiÄ <I>postmaster'a</I> z opcjÄ <I>-B</I>
+	 aby zwiÄkszyÄ wielkoĹÄ pamiÄci dzielonej uĹźywanej przez procesy
+	 backendĂłw. JeĹli ustawisz tÄ wartoĹÄ zbyt wysoko i przekroczysz limity
+	 ustawione przez kernel na pamiÄÄ dzielonÄ, <I>postmaster</I>  moĹźe siÄ
+	 nie uruchomiÄ. KaĹźdy bufor zajmuje 8K a domyĹlna iloĹÄ buforĂłw to 64.</P>
 
-    <P>Możesz także użyć opcji <I>-S</I> dla backendu aby zwiększyć
-	 maksymalną wartość pamięci używaną przez proces backendu podczas
-	 sortowania. Opcja <I>-S</I> jest ustawiana wartością podawaną w
-	 kilobajtach, domyślna wartość to 512K.</P>
+    <P>MoĹźesz takĹźe uĹźyÄ opcji <I>-S</I> dla backendu aby zwiÄkszyÄ
+	 maksymalnÄ wartoĹÄ pamiÄci uĹźywanÄ przez proces backendu podczas
+	 sortowania. Opcja <I>-S</I> jest ustawiana wartoĹciÄ podawanÄ w
+	 kilobajtach, domyĹlna wartoĹÄ to 512K.</P>
 
-    <P>Możesz także użyć polecenia <SMALL>CLUSTER</SMALL> aby pogrupować
+    <P>MoĹźesz takĹźe uĹźyÄ polecenia <SMALL>CLUSTER</SMALL> aby pogrupowaÄ
 	 dane w tabelach wg indeksu. Zobacz opis polecenia <SMALL>CLUSTER</SMALL>
-    w manualu żeby dowiedzieć się więcej.</P>
+    w manualu Ĺźeby dowiedzieÄ siÄ wiÄcej.</P>
 
-    <H4><A name="3.7">3.7</A>) Jakie są możliwości wyszukiwania
-	 błędów?</H4>
+    <H4><A name="3.7">3.7</A>) Jakie sÄ moĹźliwoĹci wyszukiwania
+	 bĹÄdĂłw?</H4>
 
-    <P>PostgreSQL ma kilka możliwości na raportowanie informacji o
-	 jego statusie, które mogą być przydatne przy debugowaniu procesu.</P>
+    <P>PostgreSQL ma kilka moĹźliwoĹci na raportowanie informacji o
+	 jego statusie, ktĂłre mogÄ byÄ przydatne przy debugowaniu procesu.</P>
 
-    <P>Przede wszystkim uruchom skrypt <I>configure</I> z opcją
-	 --enable-cassert, wiele funkcji <I>assert()</I> monitorują postęp
-	 procesu backend i zatrzymują program kiedy wydarzy się coś
+    <P>Przede wszystkim uruchom skrypt <I>configure</I> z opcjÄ
+	 --enable-cassert, wiele funkcji <I>assert()</I> monitorujÄ postÄp
+	 procesu backend i zatrzymujÄ program kiedy wydarzy siÄ coĹ
 	 nieoczekiwanego.</P>
 
-    <P>Zarówno <I>postmaster</I> jak i <I>postgres</I> mają kilka opcji
-	 do debugowania. Za każdym razem kiedy uruchamiasz <I>postmaster'a</I>,
-    upewnij się, że wysyłasz standardowe wyjście i error do pliku z
-	 logami, np. w ten sposób:</P>
+    <P>ZarĂłwno <I>postmaster</I> jak i <I>postgres</I> majÄ kilka opcji
+	 do debugowania. Za kaĹźdym razem kiedy uruchamiasz <I>postmaster'a</I>,
+    upewnij siÄ, Ĺźe wysyĹasz standardowe wyjĹcie i error do pliku z
+	 logami, np. w ten sposĂłb:</P>
 <PRE>
     cd /usr/local/pgsql
     ./bin/postmaster &gt;server.log 2&gt;&amp;1 &amp;
 </PRE>
 
-    <P>To utworzy plik server.log w głównym katalogu PostgreSQL.
-	 Ten plik zawiera pożyteczne informacje o problemach i błędach, które
-	 wydarzyły się podczas pracy serwera. <I>Postmaster</I> posiada opcję
-	 <I>-d</I>, która pozwala na raportowanie bardzo szczególowych
-	 informacji. Do opcji <I>-d</I> podajemy liczbę, która określa
-	 szczegółowość wysyłanych informacji. Musisz mieć świadomość, że
-	 wysoki poziom logowania będzie powodował tworzenie bardzo duzych
-	 plików z logami.</P>
+    <P>To utworzy plik server.log w gĹĂłwnym katalogu PostgreSQL.
+	 Ten plik zawiera poĹźyteczne informacje o problemach i bĹÄdach, ktĂłre
+	 wydarzyĹy siÄ podczas pracy serwera. <I>Postmaster</I> posiada opcjÄ
+	 <I>-d</I>, ktĂłra pozwala na raportowanie bardzo szczegĂłlowych
+	 informacji. Do opcji <I>-d</I> podajemy liczbÄ, ktĂłra okreĹla
+	 szczegĂłĹowoĹÄ wysyĹanych informacji. Musisz mieÄ ĹwiadomoĹÄ, Ĺźe
+	 wysoki poziom logowania bÄdzie powodowaĹ tworzenie bardzo duzych
+	 plikĂłw z logami.</P>
 
-    <P>Jeśli <I>postmaster</I> nie został uruchomiony, możesz uruchomić
-    <I>postgres'owy</I> backend z linii poleceń, i uruchomić Twoje
-	 polecenie <SMALL>SQL</SMALL> bezpośrednio na nim.
-	 Taki sposób jest polecany <B>jedynie</B> w przypadku debugowania.
-	 Zwróć uwagę, że w tym wypadku zapytanie kończy znak nowej linii a nie
-	 średnik. Jeśli skompilowałeś z opcjami debugowania mozesz użyć
-	 debuggera aby sprawdzić co się dzieje. Poniewż backend nie został
-	 uruchomiony przez <I>postmaster'a</I>, nie działa w identycznym
-	 środowisku, co oznacza że powtórzenie warunków w jakich wystąpiły
-	 problemy moze być problemem.</P>
+    <P>JeĹli <I>postmaster</I> nie zostaĹ uruchomiony, moĹźesz uruchomiÄ
+    <I>postgres'owy</I> backend z linii poleceĹ, i uruchomiÄ Twoje
+	 polecenie <SMALL>SQL</SMALL> bezpoĹrednio na nim.
+	 Taki sposĂłb jest polecany <B>jedynie</B> w przypadku debugowania.
+	 ZwrĂłÄ uwagÄ, Ĺźe w tym wypadku zapytanie koĹczy znak nowej linii a nie
+	 Ĺrednik. JeĹli skompilowaĹeĹ z opcjami debugowania mozesz uĹźyÄ
+	 debuggera aby sprawdziÄ co siÄ dzieje. PoniewĹź backend nie zostaĹ
+	 uruchomiony przez <I>postmaster'a</I>, nie dziaĹa w identycznym
+	 Ĺrodowisku, co oznacza Ĺźe powtĂłrzenie warunkĂłw w jakich wystÄpiĹy
+	 problemy moze byÄ problemem.</P>
 
-    <P>Jeśli <I>postmaster</I> działa, uruchom <I>psql</I> w jednym z
-	 okien, następnie znajdź <SMALL>PID</SMALL> procesu <I>postgres</I>
-    używanego przez <I>psql</I>. Użyj debuggera aby do
-	 <SMALL>PID'u</SMALL> <I>postgres'a</I>. Możesz ustawiać pułapki
-	 (breakpoints) w debuggerze i wykonywać zapytania z <I>psql</I>. 
-	 Jeśli debugujesz uruchamianie <I>postgres'a</I>, możesz ustawić zmienną
-	 PGOPTIONS="-W n", następnie uruchomić <I>psql</I>. 
-	 Opcja ta pozwoli spowolnić uruchomienie na	 
-	 <I>n</I> sekund abyś mógł się połączyć z procesem za pomocą
-	 debugera, ustawić jakiekolwiek pułapki i kontynuować proces
+    <P>JeĹli <I>postmaster</I> dziaĹa, uruchom <I>psql</I> w jednym z
+	 okien, nastÄpnie znajdĹş <SMALL>PID</SMALL> procesu <I>postgres</I>
+    uĹźywanego przez <I>psql</I>. UĹźyj debuggera aby do
+	 <SMALL>PID'u</SMALL> <I>postgres'a</I>. MoĹźesz ustawiaÄ puĹapki
+	 (breakpoints) w debuggerze i wykonywaÄ zapytania z <I>psql</I>. 
+	 JeĹli debugujesz uruchamianie <I>postgres'a</I>, moĹźesz ustawiÄ zmiennÄ
+	 PGOPTIONS="-W n", nastÄpnie uruchomiÄ <I>psql</I>. 
+	 Opcja ta pozwoli spowolniÄ uruchomienie na	 
+	 <I>n</I> sekund abyĹ mĂłgĹ siÄ poĹÄczyÄ z procesem za pomocÄ
+	 debugera, ustawiÄ jakiekolwiek puĹapki i kontynuowaÄ proces
 	 uruchamiania.</P>
 
-    <P><I>postgres</I> może być uruchamiany z opcjami <I>-s, -A</I> i
-	 <I>-t</I>, które mogą być bardzo przydatne przy debuggowaniu i ocenie
-	 wydajności.</P>
+    <P><I>postgres</I> moĹźe byÄ uruchamiany z opcjami <I>-s, -A</I> i
+	 <I>-t</I>, ktĂłre mogÄ byÄ bardzo przydatne przy debuggowaniu i ocenie
+	 wydajnoĹci.</P>
 
-    <P>Możesz także skompilować z profilingiem aby zobaczyć jakie funkcje
-	 ile czasu wykonują się. Pliki profilowane dla backendu zostaną
+    <P>MoĹźesz takĹźe skompilowaÄ z profilingiem aby zobaczyÄ jakie funkcje
+	 ile czasu wykonujÄ siÄ. Pliki profilowane dla backendu zostanÄ
 	 umieszczone w katalogu
-    <I>pgsql/data/base/dbname</I>. Pliki profilu klienta zostaną
-	 umieszczone w bieżącym katalogu klienta. Linux wymaga aby kompilować
-	 z opcją <I>-DLINUX_PROFILE</I> aby profilowanie odbywało się
+    <I>pgsql/data/base/dbname</I>. Pliki profilu klienta zostanÄ
+	 umieszczone w bieĹźÄcym katalogu klienta. Linux wymaga aby kompilowaÄ
+	 z opcjÄ <I>-DLINUX_PROFILE</I> aby profilowanie odbywaĹo siÄ
 	 poprawnie.</P>
 
-    <H4><A name="3.8">3.8</A>) Skąd się bierze komunikat: <I>"Sorry, too
-	 many clients"</I> podczas próby połączenia się z bazą danych?</H4>
+    <H4><A name="3.8">3.8</A>) SkÄd siÄ bierze komunikat: <I>"Sorry, too
+	 many clients"</I> podczas prĂłby poĹÄczenia siÄ z bazÄ danych?</H4>
 
-    <P>Musisz zwiększyć limit ilości jednoczesnych procesów bacekendu
+    <P>Musisz zwiÄkszyÄ limit iloĹci jednoczesnych procesĂłw bacekendu
 	 dla procesu <I>postmaster'a</I>.</P>
 
-    <P>Domyślny limit to 32 procesy. Możesz go zwiększyć przez restart
-    <I>postmaster</I> z odpowiednią wartością ustawianą opcję <I>-N</I> w
+    <P>DomyĹlny limit to 32 procesy. MoĹźesz go zwiÄkszyÄ przez restart
+    <I>postmaster</I> z odpowiedniÄ wartoĹciÄ ustawianÄ opcjÄ <I>-N</I> w
 	 pliku <I>postgresql.conf</I>.</P>
 
-    <P>Weź pod uwagę, że jeśli zwiększysz wartość podaną w opcji
-	 <I>-N</I> na więcej niż 32 musisz także zwiększyć wartość w opcji
-    <I>-B</I> ponad jej domyślną wartość 64; wartość <I>-B</I> musi być
-	 co najmniej dwa razy większa od wartości podanej w opcji 
-    <I>-N</I>, a prawdopodobnie powinna być w rzeczywistości jeszcze
-	 większa dla optymalnej wydajności.
-    Dla dużej liczby procesów backendu na pewno zauważysz, że trzeba
-	 zwiększyć różne parametry jądra Unixa. Rzeczy, które pownieneś
-	 sprawdzić to maksymalna liczba bloków pamięci dzielonej, 
-	 <SMALL>SHMMAX;</SMALL> maksymalna liczba semaforów, <SMALL>SEMMNS</SMALL>
+    <P>WeĹş pod uwagÄ, Ĺźe jeĹli zwiÄkszysz wartoĹÄ podanÄ w opcji
+	 <I>-N</I> na wiÄcej niĹź 32 musisz takĹźe zwiÄkszyÄ wartoĹÄ w opcji
+    <I>-B</I> ponad jej domyĹlnÄ wartoĹÄ 64; wartoĹÄ <I>-B</I> musi byÄ
+	 co najmniej dwa razy wiÄksza od wartoĹci podanej w opcji 
+    <I>-N</I>, a prawdopodobnie powinna byÄ w rzeczywistoĹci jeszcze
+	 wiÄksza dla optymalnej wydajnoĹci.
+    Dla duĹźej liczby procesĂłw backendu na pewno zauwaĹźysz, Ĺźe trzeba
+	 zwiÄkszyÄ rĂłĹźne parametry jÄdra Unixa. Rzeczy, ktĂłre pownieneĹ
+	 sprawdziÄ to maksymalna liczba blokĂłw pamiÄci dzielonej, 
+	 <SMALL>SHMMAX;</SMALL> maksymalna liczba semaforĂłw, <SMALL>SEMMNS</SMALL>
 	 oraz <SMALL>SEMMNI;</SMALL> 
-    maksymalna liczba procesów, <SMALL>NPROC;</SMALL> maksymalna liczba
-	 procesów na jednego użytkownika, <SMALL>MAXUPRC;</SMALL> i maksymalna
-	 liczba otwartych plików, <SMALL>NFILE</SMALL> oraz
-    <SMALL>NINODE.</SMALL> Powód dla którego PostgreSQL ma limit na
-	 maksymalną liczbę procesów backendu to obawa o wyczerpanie zasobów
+    maksymalna liczba procesĂłw, <SMALL>NPROC;</SMALL> maksymalna liczba
+	 procesĂłw na jednego uĹźytkownika, <SMALL>MAXUPRC;</SMALL> i maksymalna
+	 liczba otwartych plikĂłw, <SMALL>NFILE</SMALL> oraz
+    <SMALL>NINODE.</SMALL> PowĂłd dla ktĂłrego PostgreSQL ma limit na
+	 maksymalnÄ liczbÄ procesĂłw backendu to obawa o wyczerpanie zasobĂłw
 	 systemu.</P>
 
-    <H4><A name="3.9">3.9</A>)  Jakie pliki znajdują się w <I>pg_temp</I>?</H4>
+    <H4><A name="3.9">3.9</A>)  Jakie pliki znajdujÄ siÄ w <I>pg_temp</I>?</H4>
 
     <P>Katalog ten zawiera tymczasowe pliki utworzone przez executor. Dla 
-	 przykładu, jeśli jakaś operacja sortowania jest wymagana do wykonania
-    <SMALL>ORDER BY,</SMALL> a samo sortowanie wymaga więcej  miejsca niż
+	 przykĹadu, jeĹli jakaĹ operacja sortowania jest wymagana do wykonania
+    <SMALL>ORDER BY,</SMALL> a samo sortowanie wymaga wiÄcej  miejsca niĹź
 	 parametr backendu
-    <I>-S</I> ustawił do wykorzystania, wtedy tymczasowe pliki są używane
+    <I>-S</I> ustawiĹ do wykorzystania, wtedy tymczasowe pliki sÄ uĹźywane
 	 do przechowywania tych danych.</P>
 
-    <P>Pliki tymczasowe powinny być usunięte automatycznie, ale mogło się
-	 to nie stać jeśli proces backendu w międzyczasie nie zakończył się
-	 poprawnie podczas operacji sortowania. Jeśli w danym momencie nie
-	 działają żadne procesy backendów mozesz spokojnie usunąć pliki
+    <P>Pliki tymczasowe powinny byÄ usuniÄte automatycznie, ale mogĹo siÄ
+	 to nie staÄ jeĹli proces backendu w miÄdzyczasie nie zakoĹczyĹ siÄ
+	 poprawnie podczas operacji sortowania. JeĹli w danym momencie nie
+	 dziaĹajÄ Ĺźadne procesy backendĂłw mozesz spokojnie usunÄÄ pliki
     pg_tempNNN.NN.</P>
 
 	 <H4><A name="3.9">3.9</A>) Dlaczego konieczne jest przy upgradzie
-	      PostgreSQL korzystanie ze skryptów dump i restore?</H4>
+	      PostgreSQL korzystanie ze skryptĂłw dump i restore?</H4>
 	 <P>
-	 Twórcy PostgreSQL dokonują jedynie małych zmian pomiędzy małymi
+	 TwĂłrcy PostgreSQL dokonujÄ jedynie maĹych zmian pomiÄdzy maĹymi
 	 upgradami wersji, np z 7.2 do 7.2.1, wtedy upgrade nie wymaga
-	 korzystania z dump i restore. Przy większych zmianach, np. z wersji
-	 7.2 do 7.3, często zmianymają wpływ na format przechowywanych danych.
-	 Zmiany te są na tyle skomplikowane, że nie utrzymujemy zgodości z
+	 korzystania z dump i restore. Przy wiÄkszych zmianach, np. z wersji
+	 7.2 do 7.3, czÄsto zmianymajÄ wpĹyw na format przechowywanych danych.
+	 Zmiany te sÄ na tyle skomplikowane, Ĺźe nie utrzymujemy zgodoĹci z
 	 poprzednimi wersjami PostgreSQL. dump pozwala na wydostanie danych w
-	 takiej postaci, w której łatwe jest ich zaimportowanie do nowszych
-	 wersji bez kłopotu.
+	 takiej postaci, w ktĂłrej Ĺatwe jest ich zaimportowanie do nowszych
+	 wersji bez kĹopotu.
 	 </P>
 	 <P>
-	 W wydaniach gdzie zmiany nie dotyczą formatu danych na dysku, można
-	 wykorzystać skryptu pg_upgrade, do upgradu bez użycia dump/restore.
-	 Dokumentacja do danego wydania zawiera informację czy możliwe jest
-	 użycie pg_upgrade.
+	 W wydaniach gdzie zmiany nie dotyczÄ formatu danych na dysku, moĹźna
+	 wykorzystaÄ skryptu pg_upgrade, do upgradu bez uĹźycia dump/restore.
+	 Dokumentacja do danego wydania zawiera informacjÄ czy moĹźliwe jest
+	 uĹźycie pg_upgrade.
 	 </P>
     <HR>
 
-    <H2 align="center">Pytania dotyczące używania</H2>
+    <H2 align="center">Pytania dotyczÄce uĹźywania</H2>
 
-    <H4><A name="4.1">4.1</A>) Jaka jest różnica pomiędzy kursorami
-	     binarnymi (binary cursors) i zwykłymi kursorami (normal
+    <H4><A name="4.1">4.1</A>) Jaka jest rĂłĹźnica pomiÄdzy kursorami
+	     binarnymi (binary cursors) i zwykĹymi kursorami (normal
 		  cursors)?</H4>
 
     <P>Zobacz w manualu opis polecenia <SMALL>DECLARE</SMALL>.</P>
 
-    <H4><A name="4.2">4.2</A>) Jak mogę pobrać za pomocą
-	 <SMALL>SELECT</SMALL> jedynie kilka pierwszych wyników
+    <H4><A name="4.2">4.2</A>) Jak mogÄ pobraÄ za pomocÄ
+	 <SMALL>SELECT</SMALL> jedynie kilka pierwszych wynikĂłw
 	 zapytania?</H4>
 	 
-    <P>Zobacz w manualu opis polecenia <SMALL>FETCH</SMALL> lub użyj
+    <P>Zobacz w manualu opis polecenia <SMALL>FETCH</SMALL> lub uĹźyj
     polecenia <SMALL>SELECT</SMALL> ... <SMALL>LIMIT</SMALL>....</P>
 
-    <P>Nawet jeśli chesz pobrać kilka pierwszych rzędów z wyniku
-	 zapytania, całe zapytanie musi zostać wykonane. Byc może powinieneś
-	 skorzystać z polecenia <SMALL>ORDER BY.</SMALL>
-	 Jeśli istnieje indeks który odpowiada polom określonym przez
-	 <SMALL>ORDER BY</SMALL>, PostgreSQL może wykorzystać jedynie kilka
-	 pierwszych rzędów, być może będzie konieczność wykonania zapytania do
-	 momentu aż zostaną znalezione pożądane wyniki.</P>
+    <P>Nawet jeĹli chesz pobraÄ kilka pierwszych rzÄdĂłw z wyniku
+	 zapytania, caĹe zapytanie musi zostaÄ wykonane. Byc moĹźe powinieneĹ
+	 skorzystaÄ z polecenia <SMALL>ORDER BY.</SMALL>
+	 JeĹli istnieje indeks ktĂłry odpowiada polom okreĹlonym przez
+	 <SMALL>ORDER BY</SMALL>, PostgreSQL moĹźe wykorzystaÄ jedynie kilka
+	 pierwszych rzÄdĂłw, byÄ moĹźe bÄdzie koniecznoĹÄ wykonania zapytania do
+	 momentu aĹź zostanÄ znalezione poĹźÄdane wyniki.</P>
 	 <P>
-	 Aby otrzymać losowy rząd, użyj:</P>
+	 Aby otrzymaÄ losowy rzÄd, uĹźyj:</P>
 	 <PRE>
     SELECT col
     FROM tab
@@ -890,33 +890,33 @@
     LIMIT 1;
 	 </PRE>
 
-    <H4><A name="4.3">4.3</A>) Jak mogę uzyskać listę wszystkich tabel
+    <H4><A name="4.3">4.3</A>) Jak mogÄ uzyskaÄ listÄ wszystkich tabel
 	 czy  innych rzeczy pod <I>psql</I>?</H4>
 	 
-    <P>Możesz sprawdzić zawartość źródeł <I>psql</I>, a konkretnie plik
+    <P>MoĹźesz sprawdziÄ zawartoĹÄ ĹşrĂłdeĹ <I>psql</I>, a konkretnie plik
     <I>pgsql/src/bin/psql/describe.c</I>. Zawiera on polecenia
-    <SMALL>SQL</SMALL> które generuja wyniki komend z backslashem.
-    Możesz także uruchomić <I>psql</I> z opcją
-    <I>-E</I> wtedy po wykonaniu polecenia z backslashem wyświetlane
-	 będzie zapytanie, które w rzeczywistości jest wykonywane.</P>
+    <SMALL>SQL</SMALL> ktĂłre generuja wyniki komend z backslashem.
+    MoĹźesz takĹźe uruchomiÄ <I>psql</I> z opcjÄ
+    <I>-E</I> wtedy po wykonaniu polecenia z backslashem wyĹwietlane
+	 bÄdzie zapytanie, ktĂłre w rzeczywistoĹci jest wykonywane.</P>
 
-    <H4><A name="4.4">4.4</A>) Jak usunąć kolumnę z tabeli lub zmienić
+    <H4><A name="4.4">4.4</A>) Jak usunÄÄ kolumnÄ z tabeli lub zmieniÄ
 	 jej typ?</H4>
 
-    <P>DROP COLUMNT zostało dodane w wersji 7.3 przy poleceniu ALTER
-	 TABLE DROP COLUMN. We wcześńiejszych wersjach możesz zrobić tak:
+    <P>DROP COLUMNT zostaĹo dodane w wersji 7.3 przy poleceniu ALTER
+	 TABLE DROP COLUMN. We wczeĹĹiejszych wersjach moĹźesz zrobiÄ tak:
 	 </P>
 <PRE>
 	 BEGIN;
 	 LOCAL TABLE old_table;
-    SELECT ...  -- wybierz wszystkie kolumny poza tą jedną której chcesz się pozbyć
+    SELECT ...  -- wybierz wszystkie kolumny poza tÄ jednÄ ktĂłrej chcesz siÄ pozbyÄ
     INTO TABLE new_table
     FROM old_table;
     DROP TABLE old_table;
     ALTER TABLE new_table RENAME TO old_table;
 </PRE>
 	<P>
-	Aby zmienić typ danych kolumny możesz zrobić tak:
+	Aby zmieniÄ typ danych kolumny moĹźesz zrobiÄ tak:
 	</P>
 	<PRE>
    BEGIN;
@@ -926,117 +926,117 @@
    COMMIT;
 	</PRE>
 
-    <H4><A name="4.5">4.5</A>) Jaki jest maksymalny rozmiar dla rzędu,
+    <H4><A name="4.5">4.5</A>) Jaki jest maksymalny rozmiar dla rzÄdu,
 	      tabeli i bazy danych?</H4>
 	 
     <P>Oto wszystkie ograniczenia:</P>
 <PRE>
-    Maksymalny rozmiar dla bazdy danych?     nieograniczony ( istnieją
-	 bazy danych o wielkości 32 TB databases )
+    Maksymalny rozmiar dla bazdy danych?     nieograniczony ( istniejÄ
+	 bazy danych o wielkoĹci 32 TB databases )
     Maksymalny rozmiar dla tabeli?           32 TB
-    Maksymalny rozmiar dla rzędu?            1.6 TB
+    Maksymalny rozmiar dla rzÄdu?            1.6 TB
     Maksymalny rozmiar pola?                 1 GB
-    Maksymalna liczba rzędów w tabeli?       nieograniczona
-    Maksymalna liczba kolumn w tabeli?       250-1600 w zależoności od typów kolumn
-    Makasymalna liczba indeksów na tabeli?   nieograniczona
+    Maksymalna liczba rzÄdĂłw w tabeli?       nieograniczona
+    Maksymalna liczba kolumn w tabeli?       250-1600 w zaleĹźonoĹci od typĂłw kolumn
+    Makasymalna liczba indeksĂłw na tabeli?   nieograniczona
 </PRE>
 
-	Oczywiście "nieograniczony" nie jest prawdą tak do końca, istnieją
-	ograniczenia wynikające z dostępnego miejsca na dysku, pamięci/swapa.
-	Kiedy wielkości te będą bardzo duże może odbić się to na wydajności.
+	OczywiĹcie "nieograniczony" nie jest prawdÄ tak do koĹca, istniejÄ
+	ograniczenia wynikajÄce z dostÄpnego miejsca na dysku, pamiÄci/swapa.
+	Kiedy wielkoĹci te bÄdÄ bardzo duĹźe moĹźe odbiÄ siÄ to na wydajnoĹci.
 
     <P>Maksymalny rozmiar tabeli, czyli 32 TB nie wymaga od systemu
-	 operacyjnego wsparcia dla dużych plików. Duże tabele są przechowywane
-	 jako pliki o rozmiarze 1 GB, więc ograniczenia co do wielkości plików
-	 narzucone przez system plików nie są istotne.</P>
+	 operacyjnego wsparcia dla duĹźych plikĂłw. DuĹźe tabele sÄ przechowywane
+	 jako pliki o rozmiarze 1 GB, wiÄc ograniczenia co do wielkoĹci plikĂłw
+	 narzucone przez system plikĂłw nie sÄ istotne.</P>
 
-    <P>Masymalny rozmiar tabeli i maksymalna liczba kolumn może być
-	 zwiększona jeśli zwiększymy domyślny rozmiar bloku (block size) do
+    <P>Masymalny rozmiar tabeli i maksymalna liczba kolumn moĹźe byÄ
+	 zwiÄkszona jeĹli zwiÄkszymy domyĹlny rozmiar bloku (block size) do
 	 32k.</P>
 
-    <H4><A name="4.6">4.6</A>) Jak dużo miejsca w bazie danych jest
-	      konieczne aby przechowywać dane ze zwyczajnego pliku
+    <H4><A name="4.6">4.6</A>) Jak duĹźo miejsca w bazie danych jest
+	      konieczne aby przechowywaÄ dane ze zwyczajnego pliku
 			tekstowego?</H4>
 
-    <P>Baza danych PostgreSQL może potrzebować do pięciu razy więcej
-	 miejsca na przechowywanie danych z plików tekstowych niż ich
-	 objętość.</P>
+    <P>Baza danych PostgreSQL moĹźe potrzebowaÄ do piÄciu razy wiÄcej
+	 miejsca na przechowywanie danych z plikĂłw tekstowych niĹź ich
+	 objÄtoĹÄ.</P>
 
-    <P>Jako przykład możemy rozważyć plik składający się z 100,000 linii
-	 zbudowanych z liczby całkowitej oraz opisu tekstowego w każdej.
-	 Załóżmy, że średnio każdy łańcuch tekstu w linii zajmuje 20
-	 bajtów. Cały plik powinien zajmować ok. 2.8 MB. Rozmiar pliku bazy danych w
-	 PostgreSQL zawierającego te dane mozna oszacować na około 6.4MB:</P>
+    <P>Jako przykĹad moĹźemy rozwaĹźyÄ plik skĹadajÄcy siÄ z 100,000 linii
+	 zbudowanych z liczby caĹkowitej oraz opisu tekstowego w kaĹźdej.
+	 ZaĹĂłĹźmy, Ĺźe Ĺrednio kaĹźdy ĹaĹcuch tekstu w linii zajmuje 20
+	 bajtĂłw. CaĹy plik powinien zajmowaÄ ok. 2.8 MB. Rozmiar pliku bazy danych w
+	 PostgreSQL zawierajÄcego te dane mozna oszacowaÄ na okoĹo 6.4MB:</P>
 
 <PRE>
-    36 bajtów: nagłówek każdego rzędu w przybliżeniu)
+    36 bajtĂłw: nagĹĂłwek kaĹźdego rzÄdu w przybliĹźeniu)
     24 bajty:  jedno pole int i jedno pole typu text
-   + 4 bajty:  wkaźnik na stronie do krotki
+   + 4 bajty:  wkaĹşnik na stronie do krotki
    --------------------------------------------------
-    64 bajty w jednym rzędzie
+    64 bajty w jednym rzÄdzie
 
-	Strona danych w PostgreSQL zajmuje 8192 bajtów (8 KB), więc:
+	Strona danych w PostgreSQL zajmuje 8192 bajtĂłw (8 KB), wiÄc:
 
-   8192 bajtów na stronę
-   ---------------------   =  128 rzędów na jedną strone w bazie (zaokrąglone w dół)
-     64 bajtów na rząd
+   8192 bajtĂłw na stronÄ
+   ---------------------   =  128 rzÄdĂłw na jednÄ strone w bazie (zaokrÄglone w dĂłĹ)
+     64 bajtĂłw na rzÄd
 
-   100000 rzędów danych
-   -----------------------  =  782 stron w bazie danych (zaokrąglone w górę)
-      128 rzędów na stronę
+   100000 rzÄdĂłw danych
+   -----------------------  =  782 stron w bazie danych (zaokrÄglone w gĂłrÄ)
+      128 rzÄdĂłw na stronÄ
 
-782 stron w bazie * 8192 bajtów na stronę  =  6,406,144 bajtów (6.4 MB)
+782 stron w bazie * 8192 bajtĂłw na stronÄ  =  6,406,144 bajtĂłw (6.4 MB)
 </PRE>
 
-    <P>Indeksy nie powodują dużego narzutu na zajmowane miejsce, 
-	 ale zawierają pewne dane,
-	 więc w pewnych przypadkach moga być całkiem duże.</P>
-	 <P> NULLe są przechowywane jako mapy bitowe, więc używają bardzo mało
+    <P>Indeksy nie powodujÄ duĹźego narzutu na zajmowane miejsce, 
+	 ale zawierajÄ pewne dane,
+	 wiÄc w pewnych przypadkach moga byÄ caĹkiem duĹźe.</P>
+	 <P> NULLe sÄ przechowywane jako mapy bitowe, wiÄc uĹźywajÄ bardzo maĹo
 	 miejsca.
 	 </P>
 
-    <H4><A name="4.7">4.7</A>) Jak mogę sprawdzić jakie tabele, klucze,
-	      bazy danych i użytkownicy są utworzeni?</H4>
+    <H4><A name="4.7">4.7</A>) Jak mogÄ sprawdziÄ jakie tabele, klucze,
+	      bazy danych i uĹźytkownicy sÄ utworzeni?</H4>
 	 
-    <P><I>psql</I> ma całkiem dużą ilość poleceń z backslashem aby
-	 wydobyć takie informacje. Wprowadź \? aby zobaczyć ich spis. Istnieją
-	 także tablice systemowe rozpoczynające się od <i>pg_</i>, zawierające
-	 interesujące Ciebie informacje. Wykonanie <i>psql -l</i> pokaże spis
+    <P><I>psql</I> ma caĹkiem duĹźÄ iloĹÄ poleceĹ z backslashem aby
+	 wydobyÄ takie informacje. WprowadĹş \? aby zobaczyÄ ich spis. IstniejÄ
+	 takĹźe tablice systemowe rozpoczynajÄce siÄ od <i>pg_</i>, zawierajÄce
+	 interesujÄce Ciebie informacje. Wykonanie <i>psql -l</i> pokaĹźe spis
 	 wszystkich baz danych.</P>
 
-    <P>Obejrzyj także plik <I>pgsql/src/tutorial/syscat.source</I>.
-	 Zawiera on wiele z zapytań typu <SMALL>SELECT</SMALL>, które są
-	 potrzebne aby wydobyć informacje z tablic systemowych.</P>
+    <P>Obejrzyj takĹźe plik <I>pgsql/src/tutorial/syscat.source</I>.
+	 Zawiera on wiele z zapytaĹ typu <SMALL>SELECT</SMALL>, ktĂłre sÄ
+	 potrzebne aby wydobyÄ informacje z tablic systemowych.</P>
 
-    <H4><A name="4.8">4.8</A>) Moje zapytania są wolne lub nie używają
+    <H4><A name="4.8">4.8</A>) Moje zapytania sÄ wolne lub nie uĹźywajÄ
 	      kluczy. Dlaczego?</H4>
 			
-	Indeksy nie są używane automatycznie przez kążde z zapytań. Ideksy są
-	używane jedynie gdy tabela jest odpowiedniego rozmiaru, większego niż
-	wymagany minimalny, a zapytanie wybiera jedynie mały procent
-	zawartości tabeli. Wynika to z tego, że losowy dostep do dysku
-	powodowany przez ideksowane poszukiwanie jest czasami wolniejsze niż
-	poszukiwanie sekwencyjne bez użycia kluczy.
+	Indeksy nie sÄ uĹźywane automatycznie przez kÄĹźde z zapytaĹ. Ideksy sÄ
+	uĹźywane jedynie gdy tabela jest odpowiedniego rozmiaru, wiÄkszego niĹź
+	wymagany minimalny, a zapytanie wybiera jedynie maĹy procent
+	zawartoĹci tabeli. Wynika to z tego, Ĺźe losowy dostep do dysku
+	powodowany przez ideksowane poszukiwanie jest czasami wolniejsze niĹź
+	poszukiwanie sekwencyjne bez uĹźycia kluczy.
 	
-    <P>Żeby zdecydować czy indeks powinien byc używany, PostgreSQL musi
-	 mieć statystyki dotyczące danej tabeli. Są one gromadzone przez
-	 użycie polecenia <SMALL>VACUUM ANALYZE</SMALL>, lub poprostu
-	 <SMALL>ANALYZE</SMALL>. używając statystyk, optymalizator wie ile
-	 rzędów jest w tabeli i może lepiej określić czy indeksy powinny być
-	 użyte. Statystyki mogą być także pomocne w określeniu najlepszej
-	 kolejności wykonania złączenia (join) i jego sposobu. Gromadzenie
-	 statystyk powinno się odbywać w określonych interwałach czasu
-	 ponieważ dane w tabelach zmieniają się.</P>
+    <P>Ĺťeby zdecydowaÄ czy indeks powinien byc uĹźywany, PostgreSQL musi
+	 mieÄ statystyki dotyczÄce danej tabeli. SÄ one gromadzone przez
+	 uĹźycie polecenia <SMALL>VACUUM ANALYZE</SMALL>, lub poprostu
+	 <SMALL>ANALYZE</SMALL>. uĹźywajÄc statystyk, optymalizator wie ile
+	 rzÄdĂłw jest w tabeli i moĹźe lepiej okreĹliÄ czy indeksy powinny byÄ
+	 uĹźyte. Statystyki mogÄ byÄ takĹźe pomocne w okreĹleniu najlepszej
+	 kolejnoĹci wykonania zĹÄczenia (join) i jego sposobu. Gromadzenie
+	 statystyk powinno siÄ odbywaÄ w okreĹlonych interwaĹach czasu
+	 poniewaĹź dane w tabelach zmieniajÄ siÄ.</P>
 
-    <P>Indeksy nie są zazwyczaj używane przez <SMALL>ORDER BY</SMALL> lub
-	 przy wykonywaniu złączeń (join). Sekwencyjne przeszukiwanie po którym
-	 następuje sortowanie jest zazwyczaj szybsze nię wyszukiwanie za
-	 pomocą indeksu na dużej tabeli.</P>
-	 <P>Jakkolwiek <SMALL>LIMIT</SMALL> w połączeniu z <SMALL>ORDER BY</SMALL>
-	często będzie wykorzystywał indeksy ponieważ jedynie mała część z
-	tabeli jest zwracana. W rzeczywistości, chociaż MAX() i MIN() nie
-	używają indeksów, możliwe jest aby zwrócić te wartości używając
-	indeksów poprzez użycie ORDER BY i LIMIT.
+    <P>Indeksy nie sÄ zazwyczaj uĹźywane przez <SMALL>ORDER BY</SMALL> lub
+	 przy wykonywaniu zĹÄczeĹ (join). Sekwencyjne przeszukiwanie po ktĂłrym
+	 nastÄpuje sortowanie jest zazwyczaj szybsze niÄ wyszukiwanie za
+	 pomocÄ indeksu na duĹźej tabeli.</P>
+	 <P>Jakkolwiek <SMALL>LIMIT</SMALL> w poĹÄczeniu z <SMALL>ORDER BY</SMALL>
+	czÄsto bÄdzie wykorzystywaĹ indeksy poniewaĹź jedynie maĹa czÄĹÄ z
+	tabeli jest zwracana. W rzeczywistoĹci, chociaĹź MAX() i MIN() nie
+	uĹźywajÄ indeksĂłw, moĹźliwe jest aby zwrĂłciÄ te wartoĹci uĹźywajÄc
+	indeksĂłw poprzez uĹźycie ORDER BY i LIMIT.
 	</P>
 	<PRE>
     SELECT col
@@ -1045,147 +1045,147 @@
     LIMIT 1;					 
 	</PRE>
 	<P>
-	Jeśli uważasz, że optimizer myli się wybierając sequential scan, użyj
-	SET enable_seqscan TO 'off' i uruchom testy aby sprawdzić czy wtym
-	wypadku zapytanie będzie szybciej wykonywane.</P>
+	JeĹli uwaĹźasz, Ĺźe optimizer myli siÄ wybierajÄc sequential scan, uĹźyj
+	SET enable_seqscan TO 'off' i uruchom testy aby sprawdziÄ czy wtym
+	wypadku zapytanie bÄdzie szybciej wykonywane.</P>
 
-    <P>Kiedy używa się operatorów dopasujących takich jak
-	 <SMALL>LIKE</SMALL> lub <I>~</I>, indeksy będą używane jedynie w
+    <P>Kiedy uĹźywa siÄ operatorĂłw dopasujÄcych takich jak
+	 <SMALL>LIKE</SMALL> lub <I>~</I>, indeksy bÄdÄ uĹźywane jedynie w
 	 pewnych wypadkach:</P>
 	 <UL>
-	 <LI>Początek wyszukiwania jest oparty na początku łańcucha tekstu.
+	 <LI>PoczÄtek wyszukiwania jest oparty na poczÄtku ĹaĹcucha tekstu.
 	 <UL>
-	 	<LI>wzorce <SMALL>LIKE</SMALL> nie mogą się zaczynać <I>%</I></LI>
+	 	<LI>wzorce <SMALL>LIKE</SMALL> nie mogÄ siÄ zaczynaÄ <I>%</I></LI>
 		<LI>dopasowania operatorem <I>~</I> (dopasowania regularne)
-		muszą się zaczynać znakiem specjalnym <I>^</I>.</LI>
+		muszÄ siÄ zaczynaÄ znakiem specjalnym <I>^</I>.</LI>
 	 </UL></LI>
-	 <LI>Początek wyszukiwania nie może się zaczynać od klas znaków, np.
+	 <LI>PoczÄtek wyszukiwania nie moĹźe siÄ zaczynaÄ od klas znakĂłw, np.
 	 [a-e].</LI>
 	 <LI>Case-insensitive searches such as ILIKE and ~* do not utilise
 	 indexes. Instead, use functional indexes, which are described in
 	 section 4.12.</LI>
-	 <LI>Standardowe locale C musi być uzyte przy wykonywaniu initdb</LI>
+	 <LI>Standardowe locale C musi byÄ uzyte przy wykonywaniu initdb</LI>
 	 </UL>
-    <H4><A name="4.9">4.9</A>) Jak mogę sprawdzić w jakis sposób "query
+    <H4><A name="4.9">4.9</A>) Jak mogÄ sprawdziÄ w jakis sposĂłb "query
 	 optimizer" wykonuje moje zapytanie?</H4>
 
     <P>Zobacz manual dla polecenia <SMALL>EXPLAIN</SMALL>.</P>
 
     <H4><A name="4.10">4.10</A>) Co to jest "R-tree index"?</H4>
 
-    <P>Indeks R-tree jest używany do indeksowania danych przestrzennych.
-	 Indeks hasuujący nie nadaje się do wyszukiwania odległości.
-    Natomiast indeks typu B-tree może wyszukiwać odleglości jedynie w
+    <P>Indeks R-tree jest uĹźywany do indeksowania danych przestrzennych.
+	 Indeks hasuujÄcy nie nadaje siÄ do wyszukiwania odlegĹoĹci.
+    Natomiast indeks typu B-tree moĹźe wyszukiwaÄ odlegloĹci jedynie w
 	 jednowymiarowych przestrzeniach. R-tree indeks radzi sobie z
-	 przestrzeniami wielo-wymiarowymi. Dla przykładu, jeśli zostanie
-	 założony indeks typu R-tree na polu typu <I>point</I>, system może
-	 bardziej wydajnie odpowiadać na zapytania typu
+	 przestrzeniami wielo-wymiarowymi. Dla przykĹadu, jeĹli zostanie
+	 zaĹoĹźony indeks typu R-tree na polu typu <I>point</I>, system moĹźe
+	 bardziej wydajnie odpowiadaÄ na zapytania typu
     "select all points within a bounding rectangle."</P>
 
-    <P>Źródłowym dokumentem opisującym oryginalnie projektowanie R-tree
-	 indeksów jest:</P>
+    <P>ĹšrĂłdĹowym dokumentem opisujÄcym oryginalnie projektowanie R-tree
+	 indeksĂłw jest:</P>
 
     <P>Guttman, A. "R-trees: A Dynamic Index Structure for Spatial
     Searching." Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt
     of Data, 45-57.</P>
 
-    <P>Ten dokument możesz znaleźć także w pracy Stonebraker'a "Readings in
+    <P>Ten dokument moĹźesz znaleĹşÄ takĹźe w pracy Stonebraker'a "Readings in
     Database Systems".</P>
 
-    <P>Wbudowane indeksy R-trees radzą sobie w wielobokami i boxes.
-	 Teoretycznie, indeksy R-tree mogą być rozszerzone o możliwości
-	 indeksowania w więcej wymiarowych przestrzeniach. W praktyce,
-	 rozbudowa indeksów R-tree wymaga trochę pracy, a w tej chwili nie
-	 dysponujemy jakąkolwiek dokumentacją jak to zrobić.</P>
+    <P>Wbudowane indeksy R-trees radzÄ sobie w wielobokami i boxes.
+	 Teoretycznie, indeksy R-tree mogÄ byÄ rozszerzone o moĹźliwoĹci
+	 indeksowania w wiÄcej wymiarowych przestrzeniach. W praktyce,
+	 rozbudowa indeksĂłw R-tree wymaga trochÄ pracy, a w tej chwili nie
+	 dysponujemy jakÄkolwiek dokumentacjÄ jak to zrobiÄ.</P>
 
     <H4><A name="4.11">4.11</A>) Co to jest "Genetic Query
 	 Optimizer"?</H4>
 
-    <P>Moduł <SMALL>GEQO</SMALL> ma za zadanie przyspieszenie
-	 optymalizacji zapytań łącząc wiele tabel za pomocą algorytmów
-	 genetycznych (Genetic Algorithm (GA)). Pozwala na używanie dużych
-	 zapytań łączących tabele (join queries) bez wykorzystywania
-	 zasobożernego wyszukiwania.</P>
+    <P>ModuĹ <SMALL>GEQO</SMALL> ma za zadanie przyspieszenie
+	 optymalizacji zapytaĹ ĹÄczÄc wiele tabel za pomocÄ algorytmĂłw
+	 genetycznych (Genetic Algorithm (GA)). Pozwala na uĹźywanie duĹźych
+	 zapytaĹ ĹÄczÄcych tabele (join queries) bez wykorzystywania
+	 zasoboĹźernego wyszukiwania.</P>
 
-    <H4><A name="4.12">4.12</A>) Jak mogę używać wyrażeń regularnych w
-	      zapytaniach i zapytań case-insensitive w wyrażeniach
+    <H4><A name="4.12">4.12</A>) Jak mogÄ uĹźywaÄ wyraĹźeĹ regularnych w
+	      zapytaniach i zapytaĹ case-insensitive w wyraĹźeniach
 			regularnych?
-			     Jak korzystać z indeksów dla zapytań case-insensitive?</H4>
+			     Jak korzystaÄ z indeksĂłw dla zapytaĹ case-insensitive?</H4>
 
-    <P>Operator <I>~</I> moze być wykorzystywany do wyszukiwania za
-	 pomocą wyrażeń regularnych, a 
-    <I>~*</I> do wyszukiwania case-insensitive z wyrażeniami
+    <P>Operator <I>~</I> moze byÄ wykorzystywany do wyszukiwania za
+	 pomocÄ wyraĹźeĹ regularnych, a 
+    <I>~*</I> do wyszukiwania case-insensitive z wyraĹźeniami
 	 regularnymi. 
-    Wariant case-insensitive dla <SMALL>LIKE</SMALL> został nazwany
+    Wariant case-insensitive dla <SMALL>LIKE</SMALL> zostaĹ nazwany
     <SMALL>ILIKE</SMALL>.</P>
 
-    <P>Porównania case-insensitive są zazwyczaj wykonywane w następujący
-	 sposób:</P>
+    <P>PorĂłwnania case-insensitive sÄ zazwyczaj wykonywane w nastÄpujÄcy
+	 sposĂłb:</P>
 <PRE>
     SELECT *
     FROM tab
     WHERE lower(col) = 'abc'
    
 </PRE>
-	W tym wypadku standardowe indeksy nie będą używane. Możesz utworzyć
+	W tym wypadku standardowe indeksy nie bÄdÄ uĹźywane. MoĹźesz utworzyÄ
 	indeks funkcyjny, poprzez:
 <PRE>
     CREATE INDEX tabindex on tab (lower(col));
    
 </PRE>
 
-    <H4><A name="4.13">4.13</A>) Jak sprawdzić w zapytaniu czy pole ma
-	      wartość <SMALL>NULL</SMALL>?</H4>
+    <H4><A name="4.13">4.13</A>) Jak sprawdziÄ w zapytaniu czy pole ma
+	      wartoĹÄ <SMALL>NULL</SMALL>?</H4>
 
-    <P>Możesz to sprawdzić, testując wartość kolumny warunkiem 
+    <P>MoĹźesz to sprawdziÄ, testujÄc wartoĹÄ kolumny warunkiem 
 	 <SMALL>IS NULL</SMALL> albo <SMALL>IS NOT NULL</SMALL>.</P>
 
-    <H4><A name="4.14">4.14</A>) Jaka jest różnica pomiędzy różnymi
+    <H4><A name="4.14">4.14</A>) Jaka jest rĂłĹźnica pomiÄdzy rĂłĹźnymi
 	 typami tekstowymi (character types)?</H4>
 <PRE>
-Type            Nazwa wewnętrzna   Uwagi
+Type            Nazwa wewnÄtrzna   Uwagi
 --------------------------------------------------
-VARCHAR(n)      varchar            rozmiar określa maksymalną długość, nie ma tutaj wypełniania
-CHAR(n)         bpchar             wypełniane pustymi znakami do podanej długości
-TEXT            text               bez limitu na długość łańcucha
-BYTEA           bytea              zmiennej długości tablica bajtów (null-byte safe)
+VARCHAR(n)      varchar            rozmiar okreĹla maksymalnÄ dĹugoĹÄ, nie ma tutaj wypeĹniania
+CHAR(n)         bpchar             wypeĹniane pustymi znakami do podanej dĹugoĹci
+TEXT            text               bez limitu na dĹugoĹÄ ĹaĹcucha
+BYTEA           bytea              zmiennej dĹugoĹci tablica bajtĂłw (null-byte safe)
 "char"          char            	  1 znak
 </PRE>
 
-    <P>Jeśli będziesz przeglądać katalogi systemowe lub komunikaty o
-	 błędach często spotkasz się z podanymi powyżej nazwami
-	 wewnętrznymi.</P>
+    <P>JeĹli bÄdziesz przeglÄdaÄ katalogi systemowe lub komunikaty o
+	 bĹÄdach czÄsto spotkasz siÄ z podanymi powyĹźej nazwami
+	 wewnÄtrznymi.</P>
 
-    <P>Pierwsze cztery typy powyżej to tzw typy "varlena" (np. pierwsze
-	 cztery bajty na dysku to długość, po których jest data). Dlatego
-	 faktyczna długośc takiego łańcucha jest trochę większa niż
-	 zadeklarowany rozmiar. Te typy także podlegają kompresji lub mogą być
-	 przechowywane out-of-line jako <SMALL>TOAST</SMALL>, więc faktyczne
-	 zużycie miejsca na dysku może być mniejsze niż oczekiwane.</P>
+    <P>Pierwsze cztery typy powyĹźej to tzw typy "varlena" (np. pierwsze
+	 cztery bajty na dysku to dĹugoĹÄ, po ktĂłrych jest data). Dlatego
+	 faktyczna dĹugoĹc takiego ĹaĹcucha jest trochÄ wiÄksza niĹź
+	 zadeklarowany rozmiar. Te typy takĹźe podlegajÄ kompresji lub mogÄ byÄ
+	 przechowywane out-of-line jako <SMALL>TOAST</SMALL>, wiÄc faktyczne
+	 zuĹźycie miejsca na dysku moĹźe byÄ mniejsze niĹź oczekiwane.</P>
 
 	<P> <SMALL>VARCHAR(n)</SMALL> jest
-	 najodpowiedniejszy do przechowywania łańcuchów o różnej długości
-	 ale określa on maksymalną jego długość. 
+	 najodpowiedniejszy do przechowywania ĹaĹcuchĂłw o rĂłĹźnej dĹugoĹci
+	 ale okreĹla on maksymalnÄ jego dĹugoĹÄ. 
 	 
-	 <SMALL>TEXT</SMALL> jest najlepszy dla łańcuchów o dowolnej długości,
-	 nie przekraczającej 1GB.</P>
+	 <SMALL>TEXT</SMALL> jest najlepszy dla ĹaĹcuchĂłw o dowolnej dĹugoĹci,
+	 nie przekraczajÄcej 1GB.</P>
 
 	<P>
 	<SMALL>CHAR(n)</SMALL> jast najlepszym typem do przechowywania
-	 łańcuchów o tej samej długości. CHAR(n) wypełnia dane do żadanej
-	 długości, podczas gdy VARCHAR(n) przechowuje jedynie dane
+	 ĹaĹcuchĂłw o tej samej dĹugoĹci. CHAR(n) wypeĹnia dane do Ĺźadanej
+	 dĹugoĹci, podczas gdy VARCHAR(n) przechowuje jedynie dane
 	 dostarczone.
 	
-	<SMALL>BYTEA</SMALL> służy do przechowywania danych binarnych,
-	 w szczególności dla danych zawierających <SMALL>NULL</SMALL> bajty.
-	 Wszystkie typy opisane tutaj maja podobne charakterystyki jeśli
-	 chodzi o wydajność.</P>
+	<SMALL>BYTEA</SMALL> sĹuĹźy do przechowywania danych binarnych,
+	 w szczegĂłlnoĹci dla danych zawierajÄcych <SMALL>NULL</SMALL> bajty.
+	 Wszystkie typy opisane tutaj maja podobne charakterystyki jeĹli
+	 chodzi o wydajnoĹÄ.</P>
 
-    <H4><A name="4.15.1">4.15.1</A>) Jak mogę utworzyć pole które samo
-	      zwiększa swoją wartość?</H4>
+    <H4><A name="4.15.1">4.15.1</A>) Jak mogÄ utworzyÄ pole ktĂłre samo
+	      zwiÄksza swojÄ wartoĹÄ?</H4>
 
     <P>PostgreSQL ma zaimplementowany typ <SMALL>SERIAL</SMALL>.
-	 Automatycznie tworzy sekwencję i indeks na tej kolumnie. Dla
+	 Automatycznie tworzy sekwencjÄ i indeks na tej kolumnie. Dla
 	 przykladu:</P>
 <PRE>
     CREATE TABLE person ( 
@@ -1193,7 +1193,7 @@ BYTEA           bytea              zmiennej długości tablica bajtów (null-byte s
         name TEXT 
     );
 </PRE>
-    zostanie automatycznie prztłumaczone na:
+    zostanie automatycznie prztĹumaczone na:
 <PRE>
     CREATE SEQUENCE person_id_seq;
     CREATE TABLE person ( 
@@ -1202,95 +1202,95 @@ BYTEA           bytea              zmiennej długości tablica bajtów (null-byte s
     );
     CREATE UNIQUE INDEX person_id_key ON person ( id );
 </PRE>
-    Więcej informacji o sekwencjach znajdziesz w manualu o
-	 <I>create_sequence</I>. Możesz także użyć  pola <I>OID</I> jako
-	 unikalnej wartości dla każdego rzędu danych. Jeśli będziesz
-	 potrzebował z backupować dane robiąc dump bazy i odtworzyć ją, musisz
-	 użyc <I>pg_dump</I> z opcją <I>-o</I> lub polecenia <SMALL>COPY
-	     WITH OIDS</SMALL> aby zachować <SMALL>OIDy</SMALL>.
+    WiÄcej informacji o sekwencjach znajdziesz w manualu o
+	 <I>create_sequence</I>. MoĹźesz takĹźe uĹźyÄ  pola <I>OID</I> jako
+	 unikalnej wartoĹci dla kaĹźdego rzÄdu danych. JeĹli bÄdziesz
+	 potrzebowaĹ z backupowaÄ dane robiÄc dump bazy i odtworzyÄ jÄ, musisz
+	 uĹźyc <I>pg_dump</I> z opcjÄ <I>-o</I> lub polecenia <SMALL>COPY
+	     WITH OIDS</SMALL> aby zachowaÄ <SMALL>OIDy</SMALL>.
 	 
-    <H4><A name="4.15.2">4.15.2</A>) Jak pobrać wartość pola typu
+    <H4><A name="4.15.2">4.15.2</A>) Jak pobraÄ wartoĹÄ pola typu
 	     <SMALL>SERIAL</SMALL> po wykonaniu insert'u?</H4>
 
-    <P>Jednym z podejść jest pobranie kolejnej wartości typu 
-	 <SMALL>SERIAL</SMALL> z sekwencji za pomocą funkcji <I>nextval()</I>
-    <I>zanim</I> zostanie wstawiona, a później należy jej użyć. Używając
-	 przykładu z tabeli z punktu <A href="#4.15.1">4.15.1</A>, może to
-	 wyglądać w Perlu na przykład w ten sposób:</P>
+    <P>Jednym z podejĹÄ jest pobranie kolejnej wartoĹci typu 
+	 <SMALL>SERIAL</SMALL> z sekwencji za pomocÄ funkcji <I>nextval()</I>
+    <I>zanim</I> zostanie wstawiona, a pĂłĹşniej naleĹźy jej uĹźyÄ. UĹźywajÄc
+	 przykĹadu z tabeli z punktu <A href="#4.15.1">4.15.1</A>, moĹźe to
+	 wyglÄdaÄ w Perlu na przykĹad w ten sposĂłb:</P>
 
 <PRE>
     new_id = output of "SELECT nextval('person_id_seq')"
     INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal');
 </PRE>
-	Będziesz miał wtedy tą wartość przechowaną w zmiennej 
-    <CODE>new_id</CODE> do użytku w innych zapytaniach (np. jako klucz
-	 obcy do tabeli <CODE>person</CODE>). Warto zwrócić uwagę, że nazwa
+	BÄdziesz miaĹ wtedy tÄ wartoĹÄ przechowanÄ w zmiennej 
+    <CODE>new_id</CODE> do uĹźytku w innych zapytaniach (np. jako klucz
+	 obcy do tabeli <CODE>person</CODE>). Warto zwrĂłciÄ uwagÄ, Ĺźe nazwa
 	 automatycznie utworzonej sekwencji
-    <SMALL>SEQUENCE</SMALL> będzie następująca:
+    <SMALL>SEQUENCE</SMALL> bÄdzie nastÄpujÄca:
     &lt;<I>tabela</I>&gt;_&lt;<I>kolumnatypuserial</I>&gt;_<I>seq</I>,
 	 gdzie 
-    <I>tabela</I> i <I>kolumnatypuserial</I> są nazwami Twojej tabeli i
+    <I>tabela</I> i <I>kolumnatypuserial</I> sÄ nazwami Twojej tabeli i
 	 Twojej kolumny typu <SMALL>SERIAL</SMALL>. 
 
-    <P>Inne rozwiązanie to użycie funkcji <I>currval</I>() na pola typu
-    <SMALL>SERIAL</SMALL> po dodaniu nowej wartości do rzędu zawierającego
-	 kolumnę typu <SMALL>SERIAL</SMALL> z wstawioną domyślnie wartością,
+    <P>Inne rozwiÄzanie to uĹźycie funkcji <I>currval</I>() na pola typu
+    <SMALL>SERIAL</SMALL> po dodaniu nowej wartoĹci do rzÄdu zawierajÄcego
+	 kolumnÄ typu <SMALL>SERIAL</SMALL> z wstawionÄ domyĹlnie wartoĹciÄ,
 	 np.</P>
 <PRE>
     INSERT INTO person (name) VALUES ('Blaise Pascal');
     new_id = output of "SELECT currval('person_id_seq')";
 </PRE>
-	Ostatecznie możesz użyć <A href="#4.16"><SMALL>OID</SMALL></A>
-	zwracanej po wykonaniu <SMALL>INSERT</SMALL>, chociaż to jest najmniej
-	przenośne rozwiązanie.
-   W Perlu, wykorzystując bibliotekę DBI z modułem Edmunda Mergla
-	DBD::Pg, oid jest dostępny poprzez <I>$sth-&gt;{pg_oid_status}</I> po
+	Ostatecznie moĹźesz uĹźyÄ <A href="#4.16"><SMALL>OID</SMALL></A>
+	zwracanej po wykonaniu <SMALL>INSERT</SMALL>, chociaĹź to jest najmniej
+	przenoĹne rozwiÄzanie.
+   W Perlu, wykorzystujÄc bibliotekÄ DBI z moduĹem Edmunda Mergla
+	DBD::Pg, oid jest dostÄpny poprzez <I>$sth-&gt;{pg_oid_status}</I> po
 	wykonaniu <I>$sth-&gt;execute()</I>. 
 
-    <H4><A name="4.15.3">4.15.3</A>) Czy użycie <I>currval()</I> i
+    <H4><A name="4.15.3">4.15.3</A>) Czy uĹźycie <I>currval()</I> i
 	     <I>nextval()</I> nie doprowadzi do race condition z innymi
-		      użytkownikami?</H4>
+		      uĹźytkownikami?</H4>
 
-    <P>Nie. currval() zwraca bieżącą wartość przypisaną przez Twój
-	 backend, a nie przez wszystkich użytkowników.</P>
+    <P>Nie. currval() zwraca bieĹźÄcÄ wartoĹÄ przypisanÄ przez TwĂłj
+	 backend, a nie przez wszystkich uĹźytkownikĂłw.</P>
 
-    <H4><A name="4.15.4">4.15.4</A>) Dlaczego numery sekwencji nie są
-	      ponownie używane przy przerwaniu transakcji?
-	    Skąd się biorą luki w numerowaniu kolumny tabeli
+    <H4><A name="4.15.4">4.15.4</A>) Dlaczego numery sekwencji nie sÄ
+	      ponownie uĹźywane przy przerwaniu transakcji?
+	    SkÄd siÄ biorÄ luki w numerowaniu kolumny tabeli
 				     sekwancjami/SERIALem?</H4>
 
-    <P>Aby poprawić zbieżność (concurrency), wartości sekwencji są
-	 podawane działającym transakcjom kiedy tego potrzebują i nie są
-	 blokowane dopóki transakcja się nie zakończy. To spowoduje przerwy w
+    <P>Aby poprawiÄ zbieĹźnoĹÄ (concurrency), wartoĹci sekwencji sÄ
+	 podawane dziaĹajÄcym transakcjom kiedy tego potrzebujÄ i nie sÄ
+	 blokowane dopĂłki transakcja siÄ nie zakoĹczy. To spowoduje przerwy w
 	 numerowaniu z przerwanych transakcji.</P>
 
     <H4><A name="4.16">4.16</A>) Co to jest <SMALL>OID</SMALL>? Co to
 	 jest <SMALL>TID</SMALL>?</H4>
 
-    <P><SMALL>OID</SMALL> są PostgreSQL'owym rozwiązaniem problemu
-	 unikalnych numerów rzędów. Każdy rząd tworzony przez PostgreSQL
+    <P><SMALL>OID</SMALL> sÄ PostgreSQL'owym rozwiÄzaniem problemu
+	 unikalnych numerĂłw rzÄdĂłw. KaĹźdy rzÄd tworzony przez PostgreSQL
 	 otrzymuje unikalny <SMALL>OID</SMALL>. Wszystkie <SMALL>OID</SMALL>y
 	 generowane podczas procesu uruchamianego przez skrypt
-    <I>initdb</I> mają mniejszą wartość niż 16384 (na podstawie pliku
+    <I>initdb</I> majÄ mniejszÄ wartoĹÄ niĹź 16384 (na podstawie pliku
     <I>backend/access/transam.h</I>). Wszystkie 
-    <SMALL>OID</SMALL>y tworzone przez użytkownika sa równe lub większe
-	 podanej wcześniej wartości. Domyślnie
-    wszystkie <SMALL>OID</SMALL>y są unikalne nie tylko w pojedyńczej
-	 tabeli czy bazie danych ale w całej instalacji PostgreSQL.</P>
+    <SMALL>OID</SMALL>y tworzone przez uĹźytkownika sa rĂłwne lub wiÄksze
+	 podanej wczeĹniej wartoĹci. DomyĹlnie
+    wszystkie <SMALL>OID</SMALL>y sÄ unikalne nie tylko w pojedyĹczej
+	 tabeli czy bazie danych ale w caĹej instalacji PostgreSQL.</P>
 
-    <P>PostgreSQL używa <SMALL>OIDów</SMALL> w swoim wewnętrznym systemie
-	 tabel, aby można było je łączyć.
-    Te <SMALL>OIDy</SMALL> mogą byc używane aby identyfikowac rzędy w
-	 tabelach i wykorzystywać je w złączeniach tych tabel. Zaleca się abyś
-	 używał typu <SMALL>OID</SMALL> aby przechowywać wartości
-    <SMALL>OID</SMALL>. Możesz utworzyć indeks na polu 
-    <SMALL>OID</SMALL> aby dostęp do niego był szybszy.</P>
+    <P>PostgreSQL uĹźywa <SMALL>OIDĂłw</SMALL> w swoim wewnÄtrznym systemie
+	 tabel, aby moĹźna byĹo je ĹÄczyÄ.
+    Te <SMALL>OIDy</SMALL> mogÄ byc uĹźywane aby identyfikowac rzÄdy w
+	 tabelach i wykorzystywaÄ je w zĹÄczeniach tych tabel. Zaleca siÄ abyĹ
+	 uĹźywaĹ typu <SMALL>OID</SMALL> aby przechowywaÄ wartoĹci
+    <SMALL>OID</SMALL>. MoĹźesz utworzyÄ indeks na polu 
+    <SMALL>OID</SMALL> aby dostÄp do niego byĹ szybszy.</P>
 
-    <P><SMALL>OID</SMALL> są przypisane do wszystkich rzędów z jednego
-	 głównego miejsca i używane sa przez wszystkie bazy danych. Jeśli
-	 chciałbyś zmienić <SMALL>OID</SMALL> na coś innego, lub jeśli
-	 chciałbyś zrobić kopię tabeli, z orginalnymi <SMALL>OIDami</SMALL>
-	 nie ma żadnego przeciwwskazania abyś to zrobił:</P>
+    <P><SMALL>OID</SMALL> sÄ przypisane do wszystkich rzÄdĂłw z jednego
+	 gĹĂłwnego miejsca i uĹźywane sa przez wszystkie bazy danych. JeĹli
+	 chciaĹbyĹ zmieniÄ <SMALL>OID</SMALL> na coĹ innego, lub jeĹli
+	 chciaĹbyĹ zrobiÄ kopiÄ tabeli, z orginalnymi <SMALL>OIDami</SMALL>
+	 nie ma Ĺźadnego przeciwwskazania abyĹ to zrobiĹ:</P>
 	 
 <PRE>
         CREATE TABLE new_table(old_oid oid, mycol int);
@@ -1304,21 +1304,21 @@ BYTEA           bytea              zmiennej długości tablica bajtów (null-byte s
 -->
 </PRE>
 
-    <P><SMALL>OIDy</SMALL> są przechowywane jako cztero-bajtowe liczby
-	 całkowite i skończą się po osiągnięciu czterech miliardów. Nikt jak
-	 dotąd nie zgłosił aby coś takiego się stalo, ale mamy zamiar pozbyć
-	 się tego ograniczenia zanim ktoś to zgłosi.</P>
+    <P><SMALL>OIDy</SMALL> sÄ przechowywane jako cztero-bajtowe liczby
+	 caĹkowite i skoĹczÄ siÄ po osiÄgniÄciu czterech miliardĂłw. Nikt jak
+	 dotÄd nie zgĹosiĹ aby coĹ takiego siÄ stalo, ale mamy zamiar pozbyÄ
+	 siÄ tego ograniczenia zanim ktoĹ to zgĹosi.</P>
 
-    <P><SMALL>TID</SMALL> są używane aby zidentyfikować konkretne rzędy z
-	 blokami i wartością ofsetów. <SMALL>TIDy</SMALL> zmieniają się wraz
-	 ze zmianami rzędów. Sa używane przez indeksy, aby wskazywać do
-	 fizycznych rzędów.</P>
+    <P><SMALL>TID</SMALL> sÄ uĹźywane aby zidentyfikowaÄ konkretne rzÄdy z
+	 blokami i wartoĹciÄ ofsetĂłw. <SMALL>TIDy</SMALL> zmieniajÄ siÄ wraz
+	 ze zmianami rzÄdĂłw. Sa uĹźywane przez indeksy, aby wskazywaÄ do
+	 fizycznych rzÄdĂłw.</P>
 
-    <H4><A name="4.17">4.17</A>) Jakie jest znaczenie niektórych terminów
+    <H4><A name="4.17">4.17</A>) Jakie jest znaczenie niektĂłrych terminĂłw
 	 w PostgreSQL?</H4>
 
-    <P>W części kodu źródłowego i starszej dokumentacji używamy terminów,
-	 które mają bardziej ogólne znaczenie. Oto niektóre z nich:</P>
+    <P>W czÄĹci kodu ĹşrĂłdĹowego i starszej dokumentacji uĹźywamy terminĂłw,
+	 ktĂłre majÄ bardziej ogĂłlne znaczenie. Oto niektĂłre z nich:</P>
 
     <UL>
       <LI>table, relation, class</LI>
@@ -1340,70 +1340,70 @@ BYTEA           bytea              zmiennej długości tablica bajtów (null-byte s
       <LI>range variable, table name, table alias</LI>
     </UL>
 
-    <P>Listę terminów związanych z bazami danych możesz znaleźć pod tym
+    <P>ListÄ terminĂłw zwiÄzanych z bazami danych moĹźesz znaleĹşÄ pod tym
 	 adresem:<A
 	 href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html">http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html</A>.</P>
 
-    <H4><A name="4.18">4.18</A>) Skąd bierze się ten błąd <I>"ERROR:
+    <H4><A name="4.18">4.18</A>) SkÄd bierze siÄ ten bĹÄd <I>"ERROR:
 	 Memory exhausted in AllocSetAlloc()"</I>?</H4>
 
     <P>
-	 Prawdopodobnie wyczerpała Ci się pamięć wirtualna (virtual memory) 
-	 w systemie lub Twój kernel ma zbyt nisko
-	 ustawione limity dla pewnych zasobów. Spróbuj wykonać następujące
+	 Prawdopodobnie wyczerpaĹa Ci siÄ pamiÄÄ wirtualna (virtual memory) 
+	 w systemie lub TwĂłj kernel ma zbyt nisko
+	 ustawione limity dla pewnych zasobĂłw. SprĂłbuj wykonaÄ nastÄpujÄce
 	 polecenia zanim uruchomisz <I>postmaster'a</I>:</P>
 <PRE>
     ulimit -d 262144
     limit datasize 256m
 </PRE>
-	W zależności od shell'a jakiego używasz jedno z tych poleceń może nie
-	zadziałać, ale to ustawienie pozwoli ustawić segment danych dla
-	procesu znacznie większy i być może pozwoli wykonać zapytanie.
-	To polecenie zadziała dla bieżącego procesu oraz wszytkich podprocesów
-	utworzonych po wykonaniu polecenia. Jeśli ten problem występuje z
-	klientem <SMALL>SQL</SMALL>, ponieważ backend zwraca zbyt dużo danych,
-	spróbuj wykonać to polecenie przed uruchomieniem klienta.
+	W zaleĹźnoĹci od shell'a jakiego uĹźywasz jedno z tych poleceĹ moĹźe nie
+	zadziaĹaÄ, ale to ustawienie pozwoli ustawiÄ segment danych dla
+	procesu znacznie wiÄkszy i byÄ moĹźe pozwoli wykonaÄ zapytanie.
+	To polecenie zadziaĹa dla bieĹźÄcego procesu oraz wszytkich podprocesĂłw
+	utworzonych po wykonaniu polecenia. JeĹli ten problem wystÄpuje z
+	klientem <SMALL>SQL</SMALL>, poniewaĹź backend zwraca zbyt duĹźo danych,
+	sprĂłbuj wykonaÄ to polecenie przed uruchomieniem klienta.
 
-    <H4><A name="4.19">4.19</A>) Jak sprawdzić jakiej wersji PostgreSQL
-	     używam?</H4>
+    <H4><A name="4.19">4.19</A>) Jak sprawdziÄ jakiej wersji PostgreSQL
+	     uĹźywam?</H4>
 
     <P>W <I>psql</I>, wpisz <CODE>select version();</CODE></P>
 
-    <H4><A name="4.20">4.20</A>) Dlaczego operacje, które wykonuję na
-	      dużych obiektach "large-object" zwracają komunikat:
+    <H4><A name="4.20">4.20</A>) Dlaczego operacje, ktĂłre wykonujÄ na
+	      duĹźych obiektach "large-object" zwracajÄ komunikat:
 			    <I>"invalid large obj descriptor"</I>?</H4>
 
-    <P>Musisz użyć <CODE>BEGIN WORK</CODE> i <CODE>COMMIT</CODE>
-    przed i po użyciu uchwytu do dużego obiektu, tzn. musisz nimi otoczyć
+    <P>Musisz uĹźyÄ <CODE>BEGIN WORK</CODE> i <CODE>COMMIT</CODE>
+    przed i po uĹźyciu uchwytu do duĹźego obiektu, tzn. musisz nimi otoczyÄ
     funkcje <CODE>lo_open</CODE> ... <CODE>lo_close.</CODE></P>
 
-    <P>Obecnie PostgreSQL używjąc "rule" zamyka uchwyt do dużego obiektu
-	 przy każdym wywołaniu "commit". Więc pierwsze próba zrobienia
+    <P>Obecnie PostgreSQL uĹźywjÄc "rule" zamyka uchwyt do duĹźego obiektu
+	 przy kaĹźdym wywoĹaniu "commit". WiÄc pierwsze prĂłba zrobienia
 	 czegokolwiek z uchwytem spowoduje wypisanie: <I>invalid large obj 
-	 descriptor</I>. Kod, który do tej pory działał (przynajmniej
-	 większość razy) będzie teraz generował informację o błędzie jeśli nie
-	 będziesz korzystał z transakcji.</P>
+	 descriptor</I>. Kod, ktĂłry do tej pory dziaĹaĹ (przynajmniej
+	 wiÄkszoĹÄ razy) bÄdzie teraz generowaĹ informacjÄ o bĹÄdzie jeĹli nie
+	 bÄdziesz korzystaĹ z transakcji.</P>
 
-    <P>Jeśli używasz interfejsu klienta jak <SMALL>ODBC</SMALL>  być może
-	 będziesz musiał ustawić <CODE>auto-commit off.</CODE></P>
+    <P>JeĹli uĹźywasz interfejsu klienta jak <SMALL>ODBC</SMALL>  byÄ moĹźe
+	 bÄdziesz musiaĹ ustawiÄ <CODE>auto-commit off.</CODE></P>
 
-    <H4><A name="4.21">4.21</A>) Jak stworzyć kolumnę której domyślną
-	      wartością będzie bieżący czas?</H4>
+    <H4><A name="4.21">4.21</A>) Jak stworzyÄ kolumnÄ ktĂłrej domyĹlnÄ
+	      wartoĹciÄ bÄdzie bieĹźÄcy czas?</H4>
 
-    <P>Użyj <I>CURRENT_TIMESTAMP</I>:</P>
+    <P>UĹźyj <I>CURRENT_TIMESTAMP</I>:</P>
 <PRE>
 <CODE>CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 </CODE>
 </PRE>
 
-    <H4><A name="4.22">4.22</A>) Dlaczego zapytania używające
+    <H4><A name="4.22">4.22</A>) Dlaczego zapytania uĹźywajÄce
 	     <CODE><SMALL>IN</SMALL></CODE> sa takie wolne?</H4>
 
-    <P>W wersjach wcześniejszych niż 7.4 łączymy podzapytania w outer queries 
-	 poprzez sekwencyjne przeszukiwanie wyników podzapytania dla każdego rzędu 
-	 z outer query. Jeśli podzapytanie zwraca jedynie kilka rzędów a
-	 zewnętrzne zapytanie zwraca ich wiele, IN jest najszybsze.
-	 Aby przyspieszyć inne zapytania można zastąpić <CODE>IN</CODE> przez 
+    <P>W wersjach wczeĹniejszych niĹź 7.4 ĹÄczymy podzapytania w outer queries 
+	 poprzez sekwencyjne przeszukiwanie wynikĂłw podzapytania dla kaĹźdego rzÄdu 
+	 z outer query. JeĹli podzapytanie zwraca jedynie kilka rzÄdĂłw a
+	 zewnÄtrzne zapytanie zwraca ich wiele, IN jest najszybsze.
+	 Aby przyspieszyÄ inne zapytania moĹźna zastÄpiÄ <CODE>IN</CODE> przez 
     <CODE>EXISTS</CODE>:</P>
 <PRE>
 <CODE>SELECT *
@@ -1419,18 +1419,18 @@ BYTEA           bytea              zmiennej długości tablica bajtów (null-byte s
 </CODE>
 </PRE>
 	<P>
-	Aby to rozwiązanie było szybkie, subcol powinna być kolumną
-	indeksowaną.
+	Aby to rozwiÄzanie byĹo szybkie, subcol powinna byÄ kolumnÄ
+	indeksowanÄ.
 	</P>
 	<P>
-	W wersji 7.4 i późniejszych, IN w rzeczywistości używa tej samej
-	wyrafinowanej techniki łączenia jak normalne zapytania i jest
-	preferowane nad używaniem EXISTS.
+	W wersji 7.4 i pĂłĹşniejszych, IN w rzeczywistoĹci uĹźywa tej samej
+	wyrafinowanej techniki ĹÄczenia jak normalne zapytania i jest
+	preferowane nad uĹźywaniem EXISTS.
 	</P>
-    <H4><A name="4.23">4.23</A>) Jak wykonać "outer join"?</H4>
+    <H4><A name="4.23">4.23</A>) Jak wykonaÄ "outer join"?</H4>
 
     <P>PostgreSQL ma zaimplementowane outer join
-	 wykorzystując standardową składnię SQL. Poniżej dwa przykłady:</P>
+	 wykorzystujÄc standardowÄ skĹadniÄ SQL. PoniĹźej dwa przykĹady:</P>
 	 
 <PRE>
     SELECT *
@@ -1442,19 +1442,19 @@ BYTEA           bytea              zmiennej długości tablica bajtów (null-byte s
     FROM t1 LEFT OUTER JOIN t2 USING (col);
 </PRE>
 
-    <P>Te dwa identyczne zapytania łączą kolumnę t1.col z kolumną t2.col,
-	 ale także zwrócą niepołączone rzędy w t1 (te, które nie pasują w t2).
-    <SMALL>RIGHT</SMALL> join dodałby niepołączone rzędy z tabeli t2.
-    <SMALL>FULL</SMALL> join zwróciłby rzędy plus dodatkowo wszystkie
-	 rzędy z tabel t1 i t2. Słowo <SMALL>OUTER</SMALL> jest opcjonalne i
-	 jest dodawane domyślnie przy
+    <P>Te dwa identyczne zapytania ĹÄczÄ kolumnÄ t1.col z kolumnÄ t2.col,
+	 ale takĹźe zwrĂłcÄ niepoĹÄczone rzÄdy w t1 (te, ktĂłre nie pasujÄ w t2).
+    <SMALL>RIGHT</SMALL> join dodaĹby niepoĹÄczone rzÄdy z tabeli t2.
+    <SMALL>FULL</SMALL> join zwrĂłciĹby rzÄdy plus dodatkowo wszystkie
+	 rzÄdy z tabel t1 i t2. SĹowo <SMALL>OUTER</SMALL> jest opcjonalne i
+	 jest dodawane domyĹlnie przy
     <SMALL>LEFT</SMALL>, <SMALL>RIGHT</SMALL>, i <SMALL>FULL</SMALL>
-	 join'ach. Zwykłe join'y są nazywane <SMALL>INNER</SMALL> joins.</P>
+	 join'ach. ZwykĹe join'y sÄ nazywane <SMALL>INNER</SMALL> joins.</P>
 
-    <P>W poprzednich wersjach "outer joins" mogą być zasymulowane poprzez
-	 użycie slowa kluczowego
-    <SMALL>UNION</SMALL> i <SMALL>NOT IN</SMALL>. Dla przykładu, łącząc
-	 tabele <I>tab1</I> i <I>tab2</I>, następujące zapytanie wykonuje
+    <P>W poprzednich wersjach "outer joins" mogÄ byÄ zasymulowane poprzez
+	 uĹźycie slowa kluczowego
+    <SMALL>UNION</SMALL> i <SMALL>NOT IN</SMALL>. Dla przykĹadu, ĹÄczÄc
+	 tabele <I>tab1</I> i <I>tab2</I>, nastÄpujÄce zapytanie wykonuje
 	 <I>outer</I> join:<BR>
     <BR>
     </P>
@@ -1469,103 +1469,103 @@ BYTEA           bytea              zmiennej długości tablica bajtów (null-byte s
     ORDER BY col1
 </PRE>
 
-    <H4><A name="4.24">4.24</A>) Jak wykonywać zapytanie używające kilku
-	      baz danych jednocześnie?</H4>
+    <H4><A name="4.24">4.24</A>) Jak wykonywaÄ zapytanie uĹźywajÄce kilku
+	      baz danych jednoczeĹnie?</H4>
 
-    <P>Nie ma takiej możliwości aby w zapytaniu odpytawać inną baze danych
-	 poza bieżącą. Ponieważ PostgreSQL ładuje specyficzne dla bazy danych
-	 katalogi systemowe, nie jest do końca jasne jak zapytanie pomiędzy
-	 różnymi bazami danych powinno się zachowywać.</P>
+    <P>Nie ma takiej moĹźliwoĹci aby w zapytaniu odpytawaÄ innÄ baze danych
+	 poza bieĹźÄcÄ. PoniewaĹź PostgreSQL Ĺaduje specyficzne dla bazy danych
+	 katalogi systemowe, nie jest do koĹca jasne jak zapytanie pomiÄdzy
+	 rĂłĹźnymi bazami danych powinno siÄ zachowywaÄ.</P>
 	 
-    <P><I>contrib/dblink</I> pozwala na wykonywanie zapytań poprzez różne
-	 bazy danych wywołując odpowiednie funkcje. Oczywiście klient może łączyć 
-	 się z różnymi bazami danych i łączyć informację w ten sposób uzyskaną
+    <P><I>contrib/dblink</I> pozwala na wykonywanie zapytaĹ poprzez rĂłĹźne
+	 bazy danych wywoĹujÄc odpowiednie funkcje. OczywiĹcie klient moĹźe ĹÄczyÄ 
+	 siÄ z rĂłĹźnymi bazami danych i ĹÄczyÄ informacjÄ w ten sposĂłb uzyskanÄ
 	 po stronie klienta.</P>
 
-    <H4><A name="4.25">4.25</A>) Jak zwrócić w funkcji wiele rzędów lub
+    <H4><A name="4.25">4.25</A>) Jak zwrĂłciÄ w funkcji wiele rzÄdĂłw lub
 	      kolumn?</H4>
 
-     <P>Możesz w łatwy sposób zwracać wiele rzędów lub kolumn używając
+     <P>MoĹźesz w Ĺatwy sposĂłb zwracaÄ wiele rzÄdĂłw lub kolumn uĹźywajÄc
 	  funkcji z: <A href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</A>.</P>
      
-	<H4><A name="4.26">4.26</A>) Dlaczego nie mogę w sposób pewny
-	     tworzyć/usuwać tabel tymczasowych w funkcjach PL/PgSQL?</H4>
+	<H4><A name="4.26">4.26</A>) Dlaczego nie mogÄ w sposĂłb pewny
+	     tworzyÄ/usuwaÄ tabel tymczasowych w funkcjach PL/PgSQL?</H4>
 	<P>
-	PL/PgSQL przechowuje w cache zawartość funkcji, niepożądanym efektem tego
-	jest to, że gdy taka funkcja korzysta z tabel tymczasowych, które są
-	później kasowane i odtwarzane, a funkcja wywoływana jest ponownie,jej
-	wywołanie nie powiedzie się ponieważ cachowana funkcja wciąż będzie
-	wskazywać na stara tablicę tymczasową. Rozwiązaniem tego problemu jest
-	używanie EXECUTE aby korzystać z tabel tymczasowych w PL/PgSQL. To
-	spowoduje, że zapytanie będzie parsowane przy każdym wywołaniu
+	PL/PgSQL przechowuje w cache zawartoĹÄ funkcji, niepoĹźÄdanym efektem tego
+	jest to, Ĺźe gdy taka funkcja korzysta z tabel tymczasowych, ktĂłre sÄ
+	pĂłĹşniej kasowane i odtwarzane, a funkcja wywoĹywana jest ponownie,jej
+	wywoĹanie nie powiedzie siÄ poniewaĹź cachowana funkcja wciÄĹź bÄdzie
+	wskazywaÄ na stara tablicÄ tymczasowÄ. RozwiÄzaniem tego problemu jest
+	uĹźywanie EXECUTE aby korzystaÄ z tabel tymczasowych w PL/PgSQL. To
+	spowoduje, Ĺźe zapytanie bÄdzie parsowane przy kaĹźdym wywoĹaniu
 	funkcji.
 	</P>
 	
-	<H4><A name="4.27">4.27</A>) Jakie są możliwości replikacji w PostgreSQL?</H4>
+	<H4><A name="4.27">4.27</A>) Jakie sÄ moĹźliwoĹci replikacji w PostgreSQL?</H4>
 	<P>
-	Jest kilka opcji aby stosować replikację typu master/slave. Ten typ
+	Jest kilka opcji aby stosowaÄ replikacjÄ typu master/slave. Ten typ
 	pozwala jedynie masterowi na dokonywanie zmian w bazie danych, a
-	slave może jedynie te zmiany odczytywać. Na stronie 
+	slave moĹźe jedynie te zmiany odczytywaÄ. Na stronie 
 	<A
 	href="http://gborg.PostgreSQL.org/genpage?replication_research">http://gborg.PostgreSQL.org/genpage?replication_research</A>
-	znajduje się ich lista. Replikacja typu multi-master jest w trakcie
-	prac, opis projektu znajduje się pod adresem: <A
+	znajduje siÄ ich lista. Replikacja typu multi-master jest w trakcie
+	prac, opis projektu znajduje siÄ pod adresem: <A
 	href="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">
 http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</A>.
 	</P>
 
-	<H4><A name="4.28">4.28</A>) Jakie możliwości szyfrowania oferuje
+	<H4><A name="4.28">4.28</A>) Jakie moĹźliwoĹci szyfrowania oferuje
 	PostgreSQL?</H4>
 	<UL>
-	<LI>contrib/pgcrypto zawiera wiele funkcji za pomocą, których możemy używać
+	<LI>contrib/pgcrypto zawiera wiele funkcji za pomocÄ, ktĂłrych moĹźemy uĹźywaÄ
 	kryptografii w zapytaniach SQL.</LI>
-	<LI>Aby szyfrować transmisję od klienta do serwera, ten musi mieć
-	ustawioną opcję ssl na true w pliku postgresql.conf, odpowiedni
-	wpis host lub hostssl musi występować w pliku pg_hba.conf, oraz
-	sslmode nie może być wyłączone w kliencie. (Warto zwrócić uwagę, że
-	możliwe jest także używanie transportów szyfrująców przez strony
+	<LI>Aby szyfrowaÄ transmisjÄ od klienta do serwera, ten musi mieÄ
+	ustawionÄ opcjÄ ssl na true w pliku postgresql.conf, odpowiedni
+	wpis host lub hostssl musi wystÄpowaÄ w pliku pg_hba.conf, oraz
+	sslmode nie moĹźe byÄ wyĹÄczone w kliencie. (Warto zwrĂłciÄ uwagÄ, Ĺźe
+	moĹźliwe jest takĹźe uĹźywanie transportĂłw szyfrujÄcĂłw przez strony
 	trzecie, takie jak stunnel lub ssh, poza natywnym wsparciem dla SSL
 	przez PostgreSQL).</LI>
-	<LI>Hasła użytkowników bazy danych są automatycznie szyfrowane od
-	wersji 7.3. W poprzednich wersjach, należy tą funkcjonalność poprzez
-	włączenie opcji PASSWORD_ENCRYPTION w postgresql.conf. </LI>
-	<LI>Serwer może działać używając szyfrowanego systemu plików.</LI>
+	<LI>HasĹa uĹźytkownikĂłw bazy danych sÄ automatycznie szyfrowane od
+	wersji 7.3. W poprzednich wersjach, naleĹźy tÄ funkcjonalnoĹÄ poprzez
+	wĹÄczenie opcji PASSWORD_ENCRYPTION w postgresql.conf. </LI>
+	<LI>Serwer moĹźe dziaĹaÄ uĹźywajÄc szyfrowanego systemu plikĂłw.</LI>
 	</UL>
 
     <H2 align="center">Rozwijanie PostgreSQL</H2>
 
-    <H4><A name="5.1">5.1</A>) Napisałem własną funkcję. Kiedy użyję jej
-	 w <I>psql</I>, program zrzuca pamięć (dump core)?</H4>
+    <H4><A name="5.1">5.1</A>) NapisaĹem wĹasnÄ funkcjÄ. Kiedy uĹźyjÄ jej
+	 w <I>psql</I>, program zrzuca pamiÄÄ (dump core)?</H4>
 
-    <P>Problem może być spowodowany przez bardzo wiele rzeczy. Spróbuj
-	 najpierw przetestować Twoją funkcję w samodzielnie działającym programie.
+    <P>Problem moĹźe byÄ spowodowany przez bardzo wiele rzeczy. SprĂłbuj
+	 najpierw przetestowaÄ TwojÄ funkcjÄ w samodzielnie dziaĹajÄcym programie.
 	 </P>
 
-    <H4><A name="5.2">5.2</A>) Jak mogę dodać/zgłosić nowe typy czy
+    <H4><A name="5.2">5.2</A>) Jak mogÄ dodaÄ/zgĹosiÄ nowe typy czy
 	 funkcje do PostgreSQL?</H4>
 
-    <P>Wyślij Twoje propozycje na listę mailową <I>pgsql-hackers</I>,
-    wtedy prawdopodobnie Twój kod znajdzie się w katalogu <I>contrib/</I>.</P>
+    <P>WyĹlij Twoje propozycje na listÄ mailowÄ <I>pgsql-hackers</I>,
+    wtedy prawdopodobnie TwĂłj kod znajdzie siÄ w katalogu <I>contrib/</I>.</P>
 
-    <H4><A name="5.3">5.3</A>) Jak napisać funkcję C zwracającą krotkę
+    <H4><A name="5.3">5.3</A>) Jak napisaÄ funkcjÄ C zwracajÄcÄ krotkÄ
 	      (tuple)?</H4>
 
 	<P>
-	W wersjach PostgreSQL od numeru 7.3, funckje zwracające tabele są w
-	pęlni wspierane w C, PL/PgSQL i SQL. Sprawdź w Programmer's Guide aby
-	uzyskać więcej informacji. Przykład funkcji napisanej w C zwracającej
-	tabelę został umieszczony w <I>contrib/tablefunc</I>.
+	W wersjach PostgreSQL od numeru 7.3, funckje zwracajÄce tabele sÄ w
+	pÄlni wspierane w C, PL/PgSQL i SQL. SprawdĹş w Programmer's Guide aby
+	uzyskaÄ wiÄcej informacji. PrzykĹad funkcji napisanej w C zwracajÄcej
+	tabelÄ zostaĹ umieszczony w <I>contrib/tablefunc</I>.
 	</P>
 
-    <H4><A name="5.4">5.4</A>)  Zmieniłem plik źródłowy. Dlaczego po
-	      rekompilacji nie widać zmiany?</H4>
+    <H4><A name="5.4">5.4</A>)  ZmieniĹem plik ĹşrĂłdĹowy. Dlaczego po
+	      rekompilacji nie widaÄ zmiany?</H4>
 
-    <P>Pliki <I>Makefiles</I> nie mają dorzuconych odpowiednich
-	 zależności dla plików nagłówkowych (include files). Wykonaj najpierw
-	 <I>make clean</I>, a następnie ponownie <I>make</I>.
-    Jeśli używasz <SMALL>GCC</SMALL> możesz użyć opcji
+    <P>Pliki <I>Makefiles</I> nie majÄ dorzuconych odpowiednich
+	 zaleĹźnoĹci dla plikĂłw nagĹĂłwkowych (include files). Wykonaj najpierw
+	 <I>make clean</I>, a nastÄpnie ponownie <I>make</I>.
+    JeĹli uĹźywasz <SMALL>GCC</SMALL> moĹźesz uĹźyÄ opcji
     <I>--enable-depend</I> przy wykonywaniu <I>configure</I> aby
-	 kompilator mógł określić zależności samodzielnie.
+	 kompilator mĂłgĹ okreĹliÄ zaleĹźnoĹci samodzielnie.
 	 </P>
   </BODY>
 </HTML>
