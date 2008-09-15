@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.109 2008/05/19 04:14:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.110 2008/09/15 23:37:39 tgl Exp $
  *
  * ----------
  */
@@ -3615,6 +3615,7 @@ static SPIPlanPtr
 ri_FetchPreparedPlan(RI_QueryKey *key)
 {
 	RI_QueryHashEntry *entry;
+	SPIPlanPtr		plan;
 
 	/*
 	 * On the first call initialize the hashtable
@@ -3630,7 +3631,30 @@ ri_FetchPreparedPlan(RI_QueryKey *key)
 											  HASH_FIND, NULL);
 	if (entry == NULL)
 		return NULL;
-	return entry->plan;
+
+	/*
+	 * Check whether the plan is still valid.  If it isn't, we don't want
+	 * to simply rely on plancache.c to regenerate it; rather we should
+	 * start from scratch and rebuild the query text too.  This is to cover
+	 * cases such as table/column renames.  We depend on the plancache
+	 * machinery to detect possible invalidations, though.
+	 *
+	 * CAUTION: this check is only trustworthy if the caller has already
+	 * locked both FK and PK rels.
+	 */
+	plan = entry->plan;
+	if (plan && SPI_plan_is_valid(plan))
+		return plan;
+
+	/*
+	 * Otherwise we might as well flush the cached plan now, to free a
+	 * little memory space before we make a new one.
+	 */
+	entry->plan = NULL;
+	if (plan)
+		SPI_freeplan(plan);
+
+	return NULL;
 }
 
 
@@ -3653,11 +3677,13 @@ ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan)
 		ri_InitHashTables();
 
 	/*
-	 * Add the new plan.
+	 * Add the new plan.  We might be overwriting an entry previously
+	 * found invalid by ri_FetchPreparedPlan.
 	 */
 	entry = (RI_QueryHashEntry *) hash_search(ri_query_cache,
 											  (void *) key,
 											  HASH_ENTER, &found);
+	Assert(!found || entry->plan == NULL);
 	entry->plan = plan;
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.197 2008/07/18 20:26:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.198 2008/09/15 23:37:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1365,6 +1365,36 @@ SPI_is_cursor_plan(SPIPlanPtr plan)
 		return true;
 
 	return false;
+}
+
+/*
+ * SPI_plan_is_valid --- test whether a SPI plan is currently valid
+ * (that is, not marked as being in need of revalidation).
+ *
+ * See notes for CachedPlanIsValid before using this.
+ */
+bool
+SPI_plan_is_valid(SPIPlanPtr plan)
+{
+	Assert(plan->magic == _SPI_PLAN_MAGIC);
+	if (plan->saved)
+	{
+		ListCell   *lc;
+
+		foreach(lc, plan->plancache_list)
+		{
+			CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
+
+			if (!CachedPlanIsValid(plansource))
+				return false;
+		}
+		return true;
+	}
+	else
+	{
+		/* An unsaved plan is assumed valid for its (short) lifetime */
+		return true;
+	}
 }
 
 /*
