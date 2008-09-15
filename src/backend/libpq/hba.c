@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.167 2008/09/15 12:32:56 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.168 2008/09/15 20:55:04 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -660,8 +660,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("invalid IP address \"%s\": %s",
 							token, gai_strerror(ret)),
-					 errdetail("In file \"%s\", line %d",
-							   HbaFileName, line_num)));
+					 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
 			if (cidr_slash)
 				*cidr_slash = '/';
 			if (gai_result)
@@ -697,8 +697,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("invalid IP mask \"%s\": %s",
 								token, gai_strerror(ret)),
-						 errdetail("In file \"%s\", line %d",
-							   HbaFileName, line_num)));
+						 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
 				if (gai_result)
 					pg_freeaddrinfo_all(hints.ai_family, gai_result);
 				goto hba_other_error;
@@ -773,8 +773,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("invalid authentication method \"%s\"",
 						token),
-				 errdetail("In file \"%s\" line %d",
-						HbaFileName, line_num)));
+				 errcontext("line %d of configuration file \"%s\"",
+						line_num, HbaFileName)));
 		goto hba_other_error;
 	}
 
@@ -784,8 +784,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("invalid authentication method \"%s\": not supported on this platform",
 						token),
-				 errdetail("In file \"%s\" line %d",
-						HbaFileName, line_num)));
+				 errcontext("line %d of configuration file \"%s\"",
+						line_num, HbaFileName)));
 		goto hba_other_error;
 	}
 
@@ -796,8 +796,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("krb5 authentication is not supported on local sockets"),
-				 errdetail("In file \"%s\" line %d",
-						HbaFileName, line_num)));
+				 errcontext("line %d of configuration file \"%s\"",
+						line_num, HbaFileName)));
 		goto hba_other_error;
 	}
 
@@ -840,14 +840,16 @@ hba_syntax:
 	if (line_item)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("invalid entry in file \"%s\" at line %d, token \"%s\"",
-						HbaFileName, line_num,
-						(char *) lfirst(line_item))));
+				 errmsg("invalid token \"%s\"",
+						(char *) lfirst(line_item)),
+				 errcontext("line %d of configuration file \"%s\"",
+						line_num, HbaFileName)));
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("missing field in file \"%s\" at end of line %d",
-						HbaFileName, line_num)));
+				 errmsg("missing field at end of line"),
+				 errcontext("line %d of configuration file \"%s\"",
+						line_num, HbaFileName)));
 
 	/* Come here if suitable message already logged */
 hba_other_error:
