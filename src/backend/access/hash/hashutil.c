@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.56 2008/07/13 20:45:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.57 2008/09/15 18:43:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,12 +28,21 @@
 bool
 _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 {
+	/*
+	 * Currently, we can't check any of the scan conditions since we do
+	 * not have the original index entry value to supply to the sk_func.
+	 * Always return true; we expect that hashgettuple already set the
+	 * recheck flag to make the main indexscan code do it.
+	 */
+#ifdef NOT_USED
 	TupleDesc	tupdesc = RelationGetDescr(scan->indexRelation);
 	ScanKey		key = scan->keyData;
 	int			scanKeySize = scan->numberOfKeys;
+#endif
 
 	IncrIndexProcessed();
 
+#ifdef NOT_USED
 	while (scanKeySize > 0)
 	{
 		Datum		datum;
@@ -59,6 +68,7 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 		key++;
 		scanKeySize--;
 	}
+#endif
 
 	return true;
 }
@@ -190,7 +200,7 @@ _hash_checkpage(Relation rel, Buffer buf, int flags)
 	 */
 	if (flags == LH_META_PAGE)
 	{
-		HashMetaPage metap = (HashMetaPage) page;
+		HashMetaPage metap = HashPageGetMeta(page);
 
 		if (metap->hashm_magic != HASH_MAGIC)
 			ereport(ERROR,
@@ -220,4 +230,124 @@ hashoptions(PG_FUNCTION_ARGS)
 	if (result)
 		PG_RETURN_BYTEA_P(result);
 	PG_RETURN_NULL();
+}
+
+/*
+ * _hash_get_indextuple_hashkey - get the hash index tuple's hash key value
+ */
+uint32
+_hash_get_indextuple_hashkey(IndexTuple itup)
+{
+	char	   *attp;
+
+	/*
+	 * We assume the hash key is the first attribute and can't be null,
+	 * so this can be done crudely but very very cheaply ...
+	 */
+	attp = (char *) itup + IndexInfoFindDataOffset(itup->t_info);
+	return *((uint32 *) attp);
+}
+
+/*
+ * _hash_form_tuple - form an index tuple containing hash code only
+ */
+IndexTuple
+_hash_form_tuple(Relation index, Datum *values, bool *isnull)
+{
+	IndexTuple		itup;
+	uint32			hashkey;
+	Datum			hashkeydatum;
+	TupleDesc		hashdesc;
+
+	if (isnull[0])
+		hashkeydatum = (Datum) 0;
+	else
+	{
+		hashkey = _hash_datum2hashkey(index, values[0]);
+		hashkeydatum = UInt32GetDatum(hashkey);
+	}
+	hashdesc = RelationGetDescr(index);
+	Assert(hashdesc->natts == 1);
+	itup = index_form_tuple(hashdesc, &hashkeydatum, isnull);
+	return itup;
+}
+
+/*
+ * _hash_binsearch - Return the offset number in the page where the
+ *					 specified hash value should be sought or inserted.
+ *
+ * We use binary search, relying on the assumption that the existing entries
+ * are ordered by hash key.
+ *
+ * Returns the offset of the first index entry having hashkey >= hash_value,
+ * or the page's max offset plus one if hash_value is greater than all
+ * existing hash keys in the page.  This is the appropriate place to start
+ * a search, or to insert a new item.
+ */
+OffsetNumber
+_hash_binsearch(Page page, uint32 hash_value)
+{
+	OffsetNumber	upper;
+	OffsetNumber	lower;
+
+	/* Loop invariant: lower <= desired place <= upper */
+	upper = PageGetMaxOffsetNumber(page) + 1;
+	lower = FirstOffsetNumber;
+
+	while (upper > lower)
+	{
+		OffsetNumber	off;
+		IndexTuple		itup;
+		uint32			hashkey;
+
+		off = (upper + lower) / 2;
+		Assert(OffsetNumberIsValid(off));
+
+		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, off));
+		hashkey = _hash_get_indextuple_hashkey(itup);
+		if (hashkey < hash_value)
+			lower = off + 1;
+		else
+			upper = off;
+	}
+
+	return lower;
+}
+
+/*
+ * _hash_binsearch_last
+ *
+ * Same as above, except that if there are multiple matching items in the
+ * page, we return the offset of the last one instead of the first one,
+ * and the possible range of outputs is 0..maxoffset not 1..maxoffset+1.
+ * This is handy for starting a new page in a backwards scan.
+ */
+OffsetNumber
+_hash_binsearch_last(Page page, uint32 hash_value)
+{
+	OffsetNumber	upper;
+	OffsetNumber	lower;
+
+	/* Loop invariant: lower <= desired place <= upper */
+	upper = PageGetMaxOffsetNumber(page);
+	lower = FirstOffsetNumber - 1;
+
+	while (upper > lower)
+	{
+		IndexTuple		itup;
+		OffsetNumber	off;
+		uint32			hashkey;
+
+		off = (upper + lower + 1) / 2;
+		Assert(OffsetNumberIsValid(off));
+
+		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, off));
+		hashkey = _hash_get_indextuple_hashkey(itup);
+		if (hashkey > hash_value)
+			upper = off - 1;
+		else
+			lower = off;
+	}
+
+	return lower;
 }

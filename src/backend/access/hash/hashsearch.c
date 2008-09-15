@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.53 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.54 2008/09/15 18:43:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,6 +178,8 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 		hashkey = _hash_datum2hashkey_type(rel, cur->sk_argument,
 										   cur->sk_subtype);
 
+	so->hashso_sk_hash = hashkey;
+
 	/*
 	 * Acquire shared split lock so we can compute the target bucket safely
 	 * (see README).
@@ -186,7 +188,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 	/* Read the metapage */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap = (HashMetaPage) BufferGetPage(metabuf);
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	/*
 	 * Compute the target bucket number, and convert to block number.
@@ -284,7 +286,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 		offnum = InvalidOffsetNumber;
 
 	/*
-	 * 'offnum' now points to the last tuple we have seen (if any).
+	 * 'offnum' now points to the last tuple we examined (if any).
 	 *
 	 * continue to step through tuples until: 1) we get to the end of the
 	 * bucket chain or 2) we find a valid tuple.
@@ -297,25 +299,39 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				if (offnum != InvalidOffsetNumber)
 					offnum = OffsetNumberNext(offnum);	/* move forward */
 				else
-					offnum = FirstOffsetNumber; /* new page */
+				{
+					/* new page, locate starting position by binary search */
+					offnum = _hash_binsearch(page, so->hashso_sk_hash);
+				}
 
-				while (offnum > maxoff)
+				for (;;)
 				{
 					/*
-					 * either this page is empty (maxoff ==
-					 * InvalidOffsetNumber) or we ran off the end.
+					 * check if we're still in the range of items with
+					 * the target hash key
+					 */
+					if (offnum <= maxoff)
+					{
+						Assert(offnum >= FirstOffsetNumber);
+						itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+						if (so->hashso_sk_hash == _hash_get_indextuple_hashkey(itup))
+							break;				/* yes, so exit for-loop */
+					}
+
+					/*
+					 * ran off the end of this page, try the next
 					 */
 					_hash_readnext(rel, &buf, &page, &opaque);
 					if (BufferIsValid(buf))
 					{
 						maxoff = PageGetMaxOffsetNumber(page);
-						offnum = FirstOffsetNumber;
+						offnum = _hash_binsearch(page, so->hashso_sk_hash);
 					}
 					else
 					{
 						/* end of bucket */
-						maxoff = offnum = InvalidOffsetNumber;
-						break;	/* exit while */
+						itup = NULL;
+						break;	/* exit for-loop */
 					}
 				}
 				break;
@@ -324,22 +340,39 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				if (offnum != InvalidOffsetNumber)
 					offnum = OffsetNumberPrev(offnum);	/* move back */
 				else
-					offnum = maxoff;	/* new page */
+				{
+					/* new page, locate starting position by binary search */
+					offnum = _hash_binsearch_last(page, so->hashso_sk_hash);
+				}
 
-				while (offnum < FirstOffsetNumber)
+				for (;;)
 				{
 					/*
-					 * either this page is empty (offnum ==
-					 * InvalidOffsetNumber) or we ran off the end.
+					 * check if we're still in the range of items with
+					 * the target hash key
+					 */
+					if (offnum >= FirstOffsetNumber)
+					{
+						Assert(offnum <= maxoff);
+						itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+						if (so->hashso_sk_hash == _hash_get_indextuple_hashkey(itup))
+							break;				/* yes, so exit for-loop */
+					}
+
+					/*
+					 * ran off the end of this page, try the next
 					 */
 					_hash_readprev(rel, &buf, &page, &opaque);
 					if (BufferIsValid(buf))
-						maxoff = offnum = PageGetMaxOffsetNumber(page);
+					{
+						maxoff = PageGetMaxOffsetNumber(page);
+						offnum = _hash_binsearch_last(page, so->hashso_sk_hash);
+					}
 					else
 					{
 						/* end of bucket */
-						maxoff = offnum = InvalidOffsetNumber;
-						break;	/* exit while */
+						itup = NULL;
+						break;	/* exit for-loop */
 					}
 				}
 				break;
@@ -347,19 +380,19 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 			default:
 				/* NoMovementScanDirection */
 				/* this should not be reached */
+				itup = NULL;
 				break;
 		}
 
-		/* we ran off the end of the world without finding a match */
-		if (offnum == InvalidOffsetNumber)
+		if (itup == NULL)
 		{
+			/* we ran off the end of the bucket without finding a match */
 			*bufP = so->hashso_curbuf = InvalidBuffer;
 			ItemPointerSetInvalid(current);
 			return false;
 		}
 
-		/* get ready to check this tuple */
-		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+		/* check the tuple quals, loop around if not met */
 	} while (!_hash_checkqual(scan, itup));
 
 	/* if we made it to here, we've found a valid tuple */

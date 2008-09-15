@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.76 2008/08/11 11:05:10 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.77 2008/09/15 18:43:41 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -348,11 +348,9 @@ _hash_metapinit(Relation rel, double num_tuples)
 	 * Determine the target fill factor (in tuples per bucket) for this index.
 	 * The idea is to make the fill factor correspond to pages about as full
 	 * as the user-settable fillfactor parameter says.	We can compute it
-	 * exactly if the index datatype is fixed-width, but for var-width there's
-	 * some guessing involved.
+	 * exactly since the index datatype (i.e. uint32 hash key) is fixed-width.
 	 */
-	data_width = get_typavgwidth(RelationGetDescr(rel)->attrs[0]->atttypid,
-								 RelationGetDescr(rel)->attrs[0]->atttypmod);
+	data_width = sizeof(uint32);
 	item_width = MAXALIGN(sizeof(IndexTupleData)) + MAXALIGN(data_width) +
 		sizeof(ItemIdData);		/* include the line pointer */
 	ffactor = RelationGetTargetPageUsage(rel, HASH_DEFAULT_FILLFACTOR) / item_width;
@@ -395,20 +393,18 @@ _hash_metapinit(Relation rel, double num_tuples)
 	pageopaque->hasho_flag = LH_META_PAGE;
 	pageopaque->hasho_page_id = HASHO_PAGE_ID;
 
-	metap = (HashMetaPage) pg;
+	metap = HashPageGetMeta(pg);
 
 	metap->hashm_magic = HASH_MAGIC;
 	metap->hashm_version = HASH_VERSION;
 	metap->hashm_ntuples = 0;
 	metap->hashm_nmaps = 0;
 	metap->hashm_ffactor = ffactor;
-	metap->hashm_bsize = BufferGetPageSize(metabuf);
+	metap->hashm_bsize = HashGetMaxBitmapSize(pg);
 	/* find largest bitmap array size that will fit in page size */
 	for (i = _hash_log2(metap->hashm_bsize); i > 0; --i)
 	{
-		if ((1 << i) <= (metap->hashm_bsize -
-						 (MAXALIGN(sizeof(PageHeaderData)) +
-						  MAXALIGN(sizeof(HashPageOpaqueData)))))
+		if ((1 << i) <= metap->hashm_bsize)
 			break;
 	}
 	Assert(i > 0);
@@ -532,7 +528,7 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
 
 	_hash_checkpage(rel, metabuf, LH_META_PAGE);
-	metap = (HashMetaPage) BufferGetPage(metabuf);
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	/*
 	 * Check to see if split is still needed; someone else might have already
@@ -774,8 +770,6 @@ _hash_splitbucket(Relation rel,
 	Buffer		nbuf;
 	BlockNumber oblkno;
 	BlockNumber nblkno;
-	bool		null;
-	Datum		datum;
 	HashPageOpaque oopaque;
 	HashPageOpaque nopaque;
 	IndexTuple	itup;
@@ -785,7 +779,6 @@ _hash_splitbucket(Relation rel,
 	OffsetNumber omaxoffnum;
 	Page		opage;
 	Page		npage;
-	TupleDesc	itupdesc = RelationGetDescr(rel);
 
 	/*
 	 * It should be okay to simultaneously write-lock pages from each bucket,
@@ -846,16 +839,11 @@ _hash_splitbucket(Relation rel,
 		}
 
 		/*
-		 * Re-hash the tuple to determine which bucket it now belongs in.
-		 *
-		 * It is annoying to call the hash function while holding locks, but
-		 * releasing and relocking the page for each tuple is unappealing too.
+		 * Fetch the item's hash key (conveniently stored in the item)
+		 * and determine which bucket it now belongs in.
 		 */
 		itup = (IndexTuple) PageGetItem(opage, PageGetItemId(opage, ooffnum));
-		datum = index_getattr(itup, 1, itupdesc, &null);
-		Assert(!null);
-
-		bucket = _hash_hashkey2bucket(_hash_datum2hashkey(rel, datum),
+		bucket = _hash_hashkey2bucket(_hash_get_indextuple_hashkey(itup),
 									  maxbucket, highmask, lowmask);
 
 		if (bucket == nbucket)

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.173 2008/09/10 18:09:19 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.174 2008/09/15 18:43:41 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -449,6 +449,13 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Can an index of this type be clustered on?</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amkeytype</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>Type of data stored in index, or zero if not a fixed type</entry>
      </row>
 
      <row>
@@ -6424,7 +6431,7 @@
      <row>
       <entry><structfield>sourceline</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Line number within the sourcefile the current value was set 
+      <entry>Line number within the sourcefile the current value was set
       from (NULL for values set in sources other than configuration files)
       </entry>
      </row>

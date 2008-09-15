@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.303 2008/08/25 22:42:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.304 2008/09/15 18:43:41 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -76,6 +76,7 @@ typedef struct
 /* non-export function prototypes */
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 						 IndexInfo *indexInfo,
+						 Oid accessMethodObjectId,
 						 Oid *classObjectId);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
@@ -105,15 +106,28 @@ static Oid	IndexGetRelation(Oid indexId);
 static TupleDesc
 ConstructTupleDescriptor(Relation heapRelation,
 						 IndexInfo *indexInfo,
+						 Oid accessMethodObjectId,
 						 Oid *classObjectId)
 {
 	int			numatts = indexInfo->ii_NumIndexAttrs;
 	ListCell   *indexpr_item = list_head(indexInfo->ii_Expressions);
+	HeapTuple	amtuple;
+	Form_pg_am	amform;
 	TupleDesc	heapTupDesc;
 	TupleDesc	indexTupDesc;
 	int			natts;			/* #atts in heap rel --- for error checks */
 	int			i;
 
+	/* We need access to the index AM's pg_am tuple */
+	amtuple = SearchSysCache(AMOID,
+							 ObjectIdGetDatum(accessMethodObjectId),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(amtuple))
+		elog(ERROR, "cache lookup failed for access method %u",
+			 accessMethodObjectId);
+	amform = (Form_pg_am) GETSTRUCT(amtuple);
+
+	/* ... and to the table's tuple descriptor */
 	heapTupDesc = RelationGetDescr(heapRelation);
 	natts = RelationGetForm(heapRelation)->relnatts;
 
@@ -133,6 +147,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 		Form_pg_attribute to = indexTupDesc->attrs[i];
 		HeapTuple	tuple;
 		Form_pg_type typeTup;
+		Form_pg_opclass opclassTup;
 		Oid			keyType;
 
 		if (atnum != 0)
@@ -231,8 +246,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 		to->attrelid = InvalidOid;
 
 		/*
-		 * Check the opclass to see if it provides a keytype (overriding the
-		 * attribute type).
+		 * Check the opclass and index AM to see if either provides a keytype
+		 * (overriding the attribute type).  Opclass takes precedence.
 		 */
 		tuple = SearchSysCache(CLAOID,
 							   ObjectIdGetDatum(classObjectId[i]),
@@ -240,7 +255,11 @@ ConstructTupleDescriptor(Relation heapRelation,
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for opclass %u",
 				 classObjectId[i]);
-		keyType = ((Form_pg_opclass) GETSTRUCT(tuple))->opckeytype;
+		opclassTup = (Form_pg_opclass) GETSTRUCT(tuple);
+		if (OidIsValid(opclassTup->opckeytype))
+			keyType = opclassTup->opckeytype;
+		else
+			keyType = amform->amkeytype;
 		ReleaseSysCache(tuple);
 
 		if (OidIsValid(keyType) && keyType != to->atttypid)
@@ -263,6 +282,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			ReleaseSysCache(tuple);
 		}
 	}
+
+	ReleaseSysCache(amtuple);
 
 	return indexTupDesc;
 }
@@ -577,6 +598,7 @@ index_create(Oid heapRelationId,
 	 */
 	indexTupDesc = ConstructTupleDescriptor(heapRelation,
 											indexInfo,
+											accessMethodObjectId,
 											classObjectId);
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.104 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.105 2008/09/15 18:43:41 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -79,12 +79,12 @@ hashbuild(PG_FUNCTION_ARGS)
 	 * then we'll thrash horribly.  To prevent that scenario, we can sort the
 	 * tuples by (expected) bucket number.  However, such a sort is useless
 	 * overhead when the index does fit in RAM.  We choose to sort if the
-	 * initial index size exceeds effective_cache_size.
+	 * initial index size exceeds NBuffers.
 	 *
 	 * NOTE: this test will need adjustment if a bucket is ever different
 	 * from one page.
 	 */
-	if (num_buckets >= (uint32) effective_cache_size)
+	if (num_buckets >= (uint32) NBuffers)
 		buildstate.spool = _h_spoolinit(index, num_buckets);
 	else
 		buildstate.spool = NULL;
@@ -129,7 +129,7 @@ hashbuildCallback(Relation index,
 	IndexTuple	itup;
 
 	/* form an index tuple and point it at the heap tuple */
-	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
+	itup = _hash_form_tuple(index, values, isnull);
 	itup->t_tid = htup->t_self;
 
 	/* Hash indexes don't index nulls, see notes in hashinsert */
@@ -153,8 +153,8 @@ hashbuildCallback(Relation index,
 /*
  *	hashinsert() -- insert an index tuple into a hash table.
  *
- *	Hash on the index tuple's key, find the appropriate location
- *	for the new tuple, and put it there.
+ *	Hash on the heap tuple's key, form an index tuple with hash code.
+ *	Find the appropriate location for the new tuple, and put it there.
  */
 Datum
 hashinsert(PG_FUNCTION_ARGS)
@@ -171,7 +171,7 @@ hashinsert(PG_FUNCTION_ARGS)
 	IndexTuple	itup;
 
 	/* generate an index tuple */
-	itup = index_form_tuple(RelationGetDescr(rel), values, isnull);
+	itup = _hash_form_tuple(rel, values, isnull);
 	itup->t_tid = *ht_ctid;
 
 	/*
@@ -211,8 +211,8 @@ hashgettuple(PG_FUNCTION_ARGS)
 	OffsetNumber offnum;
 	bool		res;
 
-	/* Hash indexes are never lossy (at the moment anyway) */
-	scan->xs_recheck = false;
+	/* Hash indexes are always lossy since we store only the hash code */
+	scan->xs_recheck = true;
 
 	/*
 	 * We hold pin but not lock on current buffer while outside the hash AM.
@@ -317,7 +317,8 @@ hashgetbitmap(PG_FUNCTION_ARGS)
 		/* Save tuple ID, and continue scanning */
 		if (add_tuple) 
 		{
-			tbm_add_tuples(tbm, &scan->xs_ctup.t_self, 1, false);
+			/* Note we mark the tuple ID as requiring recheck */
+			tbm_add_tuples(tbm, &scan->xs_ctup.t_self, 1, true);
 			ntids++;
 		}
 
@@ -527,7 +528,7 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	 * each bucket.
 	 */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap = (HashMetaPage) BufferGetPage(metabuf);
+	metap =  HashPageGetMeta(BufferGetPage(metabuf));
 	orig_maxbucket = metap->hashm_maxbucket;
 	orig_ntuples = metap->hashm_ntuples;
 	memcpy(&local_metapage, metap, sizeof(local_metapage));
@@ -629,7 +630,7 @@ loop_top:
 
 	/* Write-lock metapage and check for split since we started */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE, LH_META_PAGE);
-	metap = (HashMetaPage) BufferGetPage(metabuf);
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	if (cur_maxbucket != metap->hashm_maxbucket)
 	{

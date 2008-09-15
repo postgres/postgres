@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.89 2008/07/13 20:45:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.90 2008/09/15 18:43:41 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -75,6 +75,9 @@ typedef HashPageOpaqueData *HashPageOpaque;
  */
 typedef struct HashScanOpaqueData
 {
+	/* Hash value of the scan key, ie, the hash key we seek */
+	uint32		hashso_sk_hash;
+
 	/*
 	 * By definition, a hash scan should be examining only one bucket. We
 	 * record the bucket number here as soon as it is known.
@@ -111,7 +114,7 @@ typedef HashScanOpaqueData *HashScanOpaque;
 #define HASH_METAPAGE	0		/* metapage is always block 0 */
 
 #define HASH_MAGIC		0x6440640
-#define HASH_VERSION	1		/* new for Pg 7.4 */
+#define HASH_VERSION	2		/* 2 signifies only hash key value is stored */
 
 /*
  * Spares[] holds the number of overflow pages currently allocated at or
@@ -138,7 +141,6 @@ typedef HashScanOpaqueData *HashScanOpaque;
 
 typedef struct HashMetaPageData
 {
-	PageHeaderData hashm_phdr;	/* pad for page header (do not use) */
 	uint32		hashm_magic;	/* magic no. for hash tables */
 	uint32		hashm_version;	/* version ID */
 	double		hashm_ntuples;	/* number of tuples stored in the table */
@@ -191,8 +193,16 @@ typedef HashMetaPageData *HashMetaPage;
 #define BMPGSZ_BIT(metap)		((metap)->hashm_bmsize << BYTE_TO_BIT)
 #define BMPG_SHIFT(metap)		((metap)->hashm_bmshift)
 #define BMPG_MASK(metap)		(BMPGSZ_BIT(metap) - 1)
-#define HashPageGetBitmap(pg) \
-	((uint32 *) (((char *) (pg)) + MAXALIGN(sizeof(PageHeaderData))))
+
+#define HashPageGetBitmap(page) \
+	((uint32 *) PageGetContents(page))
+
+#define HashGetMaxBitmapSize(page) \
+	(PageGetPageSize((Page) page) - \
+	 (MAXALIGN(SizeOfPageHeaderData) + MAXALIGN(sizeof(HashPageOpaqueData))))
+
+#define HashPageGetMeta(page) \
+	((HashMetaPage) PageGetContents(page))
 
 /*
  * The number of bits in an ovflpage bitmap word.
@@ -330,6 +340,11 @@ extern Bucket _hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
 					 uint32 highmask, uint32 lowmask);
 extern uint32 _hash_log2(uint32 num);
 extern void _hash_checkpage(Relation rel, Buffer buf, int flags);
+extern uint32 _hash_get_indextuple_hashkey(IndexTuple itup);
+extern IndexTuple _hash_form_tuple(Relation index,
+								   Datum *values, bool *isnull);
+extern OffsetNumber _hash_binsearch(Page page, uint32 hash_value);
+extern OffsetNumber _hash_binsearch_last(Page page, uint32 hash_value);
 
 /* hash.c */
 extern void hash_redo(XLogRecPtr lsn, XLogRecord *record);
