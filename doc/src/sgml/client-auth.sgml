@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.107 2008/09/15 12:32:56 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.108 2008/09/15 12:41:54 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -900,7 +900,7 @@ local   db1,db2,@demodbs  all                         md5
     On systems supporting <symbol>SO_PEERCRED</symbol> requests for
     Unix-domain sockets (currently <systemitem
     class="osname">Linux</>, <systemitem class="osname">FreeBSD</>,
-    <systemitem class="osname">NetBSD</>, <systemitem class=osname>OpenBSD</>, 
+    <systemitem class="osname">NetBSD</>, <systemitem class="osname">OpenBSD</>, 
     and <systemitem class="osname">BSD/OS</>), ident authentication can also 
     be applied to local connections. In this case, no security risk is added by
     using ident authentication; indeed it is a preferable choice for
