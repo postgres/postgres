@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.195 2008/09/06 20:18:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.196 2008/09/15 12:18:00 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -470,7 +470,7 @@ exec_command(const char *cmd,
 		else
 		{
 			char	   *func;
-			Oid			foid;
+			Oid			foid = InvalidOid;
 
 			func = psql_scan_slash_option(scan_state,
 										  OT_WHOLE_LINE, NULL, true);
