@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.65 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.65.2.1 2008/09/15 23:37:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,7 @@ extern int	SPI_freeplan(SPIPlanPtr plan);
 extern Oid	SPI_getargtypeid(SPIPlanPtr plan, int argIndex);
 extern int	SPI_getargcount(SPIPlanPtr plan);
 extern bool SPI_is_cursor_plan(SPIPlanPtr plan);
+extern bool SPI_plan_is_valid(SPIPlanPtr plan);
 extern const char *SPI_result_code_string(int code);
 
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
