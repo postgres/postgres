@@ -8,7 +8,6 @@ SET DATESTYLE = 'ISO';
 SELECT INTERVAL '01:00' AS "One hour";
 SELECT INTERVAL '+02:00' AS "Two hours";
 SELECT INTERVAL '-08:00' AS "Eight hours";
-SELECT INTERVAL '-05' AS "Five hours";
 SELECT INTERVAL '-1 +02:03' AS "22 hours ago...";
 SELECT INTERVAL '-1 days +02:03' AS "22 hours ago...";
 SELECT INTERVAL '1.5 weeks' AS "Ten days twelve hours";

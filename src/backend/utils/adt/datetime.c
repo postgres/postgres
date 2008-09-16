@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.192 2008/09/11 15:27:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.193 2008/09/16 22:31:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,7 +448,7 @@ TrimTrailingZeros(char *str)
  *	DTK_TIME - digits, colon delimiters, and possibly a decimal point
  *	DTK_STRING - text (no digits or punctuation)
  *	DTK_SPECIAL - leading "+" or "-" followed by text
- *	DTK_TZ - leading "+" or "-" followed by digits (also eats ':' or '.')
+ *	DTK_TZ - leading "+" or "-" followed by digits (also eats ':', '.', '-')
  *
  * Note that some field types can hold unexpected items:
  *	DTK_NUMBER can hold date fields (yy.ddd)
@@ -610,12 +610,13 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 			while (isspace((unsigned char) *cp))
 				cp++;
 			/* numeric timezone? */
+			/* note that "DTK_TZ" could also be a signed float or yyyy-mm */
 			if (isdigit((unsigned char) *cp))
 			{
 				ftype[nf] = DTK_TZ;
 				APPEND_CHAR(bufp, bufend, *cp++);
 				while (isdigit((unsigned char) *cp) ||
-					   *cp == ':' || *cp == '.')
+					   *cp == ':' || *cp == '.' || *cp == '-')
 					APPEND_CHAR(bufp, bufend, *cp++);
 			}
 			/* special? */
@@ -2774,19 +2775,17 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 
 				/*
 				 * Timezone is a token with a leading sign character and
-				 * otherwise the same as a non-signed time field
+				 * at least one digit; there could be ':', '.', '-'
+				 * embedded in it as well.
 				 */
 				Assert(*field[i] == '-' || *field[i] == '+');
 
 				/*
-				 * A single signed number ends up here, but will be rejected
-				 * by DecodeTime(). So, work this out to drop through to
-				 * DTK_NUMBER, which *can* tolerate this.
+				 * Try for hh:mm or hh:mm:ss.  If not, fall through to
+				 * DTK_NUMBER case, which can handle signed float numbers
+				 * and signed year-month values.
 				 */
-				cp = field[i] + 1;
-				while (*cp != '\0' && *cp != ':' && *cp != '.')
-					cp++;
-				if (*cp == ':' &&
+				if (strchr(field[i] + 1, ':') != NULL &&
 					DecodeTime(field[i] + 1, fmask, INTERVAL_FULL_RANGE,
 							   &tmask, tm, fsec) == 0)
 				{
@@ -2808,32 +2807,13 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 					tmask = DTK_M(TZ);
 					break;
 				}
-				else if (type == IGNORE_DTF)
-				{
-					if (*cp == '.')
-					{
-						/*
-						 * Got a decimal point? Then assume some sort of
-						 * seconds specification
-						 */
-						type = DTK_SECOND;
-					}
-					else if (*cp == '\0')
-					{
-						/*
-						 * Only a signed integer? Then must assume a
-						 * timezone-like usage
-						 */
-						type = DTK_HOUR;
-					}
-				}
 				/* FALL THROUGH */
 
 			case DTK_DATE:
 			case DTK_NUMBER:
 				if (type == IGNORE_DTF)
 				{
-					/* use typmod to decide what rightmost integer field is */
+					/* use typmod to decide what rightmost field is */
 					switch (range)
 					{
 						case INTERVAL_MASK(YEAR):
@@ -2883,6 +2863,8 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 					if (*cp != '\0')
 						return DTERR_BAD_FORMAT;
 					type = DTK_MONTH;
+					if (val < 0)
+						val2 = -val2;
 					val = val * MONTHS_PER_YEAR + val2;
 					fval = 0;
 				}

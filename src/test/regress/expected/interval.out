@@ -21,12 +21,6 @@ SELECT INTERVAL '-08:00' AS "Eight hours";
  -08:00:00
 (1 row)
 
-SELECT INTERVAL '-05' AS "Five hours";
- Five hours 
-------------
- -05:00:00
-(1 row)
-
 SELECT INTERVAL '-1 +02:03' AS "22 hours ago...";
   22 hours ago...  
 -------------------
