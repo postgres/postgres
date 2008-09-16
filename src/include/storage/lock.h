@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.91 2005/10/15 02:49:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.91.2.1 2008/09/16 01:56:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,7 +314,7 @@ typedef struct LOCALLOCKOWNER
 	 * Must use a forward struct reference to avoid circularity.
 	 */
 	struct ResourceOwnerData *owner;
-	int			nLocks;			/* # of times held by this owner */
+	int64		nLocks;			/* # of times held by this owner */
 } LOCALLOCKOWNER;
 
 typedef struct LOCALLOCK
@@ -326,7 +326,7 @@ typedef struct LOCALLOCK
 	LOCK	   *lock;			/* associated LOCK object in shared mem */
 	PROCLOCK   *proclock;		/* associated PROCLOCK object in shmem */
 	bool		isTempObject;	/* true if lock is on a temporary object */
-	int			nLocks;			/* total number of times lock is held */
+	int64		nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
 	LOCALLOCKOWNER *lockOwners; /* dynamically resizable array */
