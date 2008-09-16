@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.76 2008/08/25 22:42:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.77 2008/09/16 00:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,22 +208,16 @@ xml_in(PG_FUNCTION_ARGS)
 static char *
 xml_out_internal(xmltype *x, pg_enc target_encoding)
 {
-	char	   *str;
-	size_t		len;
+	char	   *str = text_to_cstring((text *) x);
 
 #ifdef USE_LIBXML
+	size_t		len = strlen(str);
 	xmlChar    *version;
-	xmlChar    *encoding;
 	int			standalone;
 	int			res_code;
-#endif
 
-	str = text_to_cstring((text *) x);
-	len = strlen(str);
-
-#ifdef USE_LIBXML
 	if ((res_code = parse_xml_decl((xmlChar *) str,
-							   &len, &version, &encoding, &standalone)) == 0)
+								   &len, &version, NULL, &standalone)) == 0)
 	{
 		StringInfoData buf;
 
@@ -240,6 +234,10 @@ xml_out_internal(xmltype *x, pg_enc target_encoding)
 				len += 1;
 		}
 		appendStringInfoString(&buf, str + len);
+
+		if (version)
+			xmlFree(version);
+		pfree(str);
 
 		return buf.data;
 	}
