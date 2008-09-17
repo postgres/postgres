@@ -1,4 +1,4 @@
-# @(#)zone.tab	8.16
+# @(#)zone.tab	8.18
 #
 # TZ zone descriptions
 #
@@ -92,7 +92,8 @@ BR	-1259-03831	America/Bahia	Bahia
 BR	-2332-04637	America/Sao_Paulo	S & SE Brazil (GO, DF, MG, ES, RJ, SP, PR, SC, RS)
 BR	-2027-05437	America/Campo_Grande	Mato Grosso do Sul
 BR	-1535-05605	America/Cuiaba	Mato Grosso
-BR	-0846-06354	America/Porto_Velho	W Para, Rondonia
+BR	-0226-05452	America/Santarem	W Para
+BR	-0846-06354	America/Porto_Velho	Rondonia
 BR	+0249-06040	America/Boa_Vista	Roraima
 BR	-0308-06001	America/Manaus	E Amazonas
 BR	-0640-06952	America/Eirunepe	W Amazonas
