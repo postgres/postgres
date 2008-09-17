@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.166 2008/04/16 14:19:56 adunstan Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.167 2008/09/17 04:31:08 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,6 +32,7 @@ LIBS := $(LIBS:-lpgport=)
 
 OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
+	libpq-events.o \
 	md5.o ip.o wchar.o encnames.o noblock.o pgstrcasecmp.o thread.o \
 	$(filter crypt.o getaddrinfo.o inet_aton.o open.o snprintf.o strerror.o strlcpy.o win32error.o, $(LIBOBJS))
 
@@ -106,6 +107,7 @@ $(top_builddir)/src/port/pg_config_paths.h:
 
 install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/libpq-fe.h '$(DESTDIR)$(includedir)'
+	$(INSTALL_DATA) $(srcdir)/libpq-events.h '$(DESTDIR)$(includedir)'
 	$(INSTALL_DATA) $(srcdir)/libpq-int.h '$(DESTDIR)$(includedir_internal)'
 	$(INSTALL_DATA) $(srcdir)/pqexpbuffer.h '$(DESTDIR)$(includedir_internal)'
 	$(INSTALL_DATA) $(srcdir)/pg_service.conf.sample '$(DESTDIR)$(datadir)/pg_service.conf.sample'
@@ -114,7 +116,11 @@ installdirs: installdirs-lib
 	$(mkinstalldirs) '$(DESTDIR)$(includedir)' '$(DESTDIR)$(includedir_internal)'
 
 uninstall: uninstall-lib
-	rm -f '$(DESTDIR)$(includedir)/libpq-fe.h' '$(DESTDIR)$(includedir_internal)/libpq-int.h' '$(DESTDIR)$(includedir_internal)/pqexpbuffer.h' '$(DESTDIR)$(datadir)/pg_service.conf.sample'
+	rm -f '$(DESTDIR)$(includedir)/libpq-fe.h'
+	rm -f '$(DESTDIR)$(includedir)/libpq-events.h'
+	rm -f '$(DESTDIR)$(includedir_internal)/libpq-int.h'
+	rm -f '$(DESTDIR)$(includedir_internal)/pqexpbuffer.h'
+	rm -f '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
 clean distclean: clean-lib
 	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c inet_aton.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c md5.c ip.c encnames.c wchar.c win32error.c pgsleep.c pthread.h libpq.rc

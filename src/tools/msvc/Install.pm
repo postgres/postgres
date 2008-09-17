@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.30 2008/09/05 16:54:39 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.31 2008/09/17 04:31:08 tgl Exp $
 #
 use strict;
 use warnings;
@@ -393,7 +393,9 @@ sub CopyIncludeFiles
     lcopy('src/include/libpq/libpq-fs.h', $target . '/include/libpq/')
       || croak 'Could not copy libpq-fs.h';
 
-    CopyFiles('Libpq headers', $target . '/include/', 'src/interfaces/libpq/', 'libpq-fe.h');
+    CopyFiles('Libpq headers',
+	      $target . '/include/', 'src/interfaces/libpq/',
+	      'libpq-fe.h', 'libpq-events.h');
     CopyFiles(
         'Libpq internal headers',
         $target .'/include/internal/',

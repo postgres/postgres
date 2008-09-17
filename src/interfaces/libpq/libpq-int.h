@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.131 2008/05/29 22:02:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.132 2008/09/17 04:31:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 
 /* We assume libpq-fe.h has already been included. */
 #include "postgres_fe.h"
+#include "libpq-events.h"
 
 #include <time.h>
 #include <sys/types.h>
@@ -100,19 +101,6 @@ union pgresult_data
 	char		space[1];		/* dummy for accessing block as bytes */
 };
 
-/* Data about a single attribute (column) of a query result */
-
-typedef struct pgresAttDesc
-{
-	char	   *name;			/* column name */
-	Oid			tableid;		/* source table, if known */
-	int			columnid;		/* source column, if known */
-	int			format;			/* format code for value (text/binary) */
-	Oid			typid;			/* type id */
-	int			typlen;			/* type size */
-	int			atttypmod;		/* type-specific modifier info */
-} PGresAttDesc;
-
 /* Data about a single parameter of a prepared statement */
 typedef struct pgresParamDesc
 {
@@ -162,6 +150,14 @@ typedef struct
 	void	   *noticeProcArg;
 } PGNoticeHooks;
 
+typedef struct PGEvent
+{
+	PGEventProc	proc;			/* the function to call on events */
+	char	   *name;			/* used only for error messages */
+	void	   *passThrough;	/* pointer supplied at registration time */
+	void	   *data;			/* optional state (instance) data */
+} PGEvent;
+
 struct pg_result
 {
 	int			ntups;
@@ -182,6 +178,8 @@ struct pg_result
 	 * on the PGresult don't have to reference the PGconn.
 	 */
 	PGNoticeHooks noticeHooks;
+	PGEvent	   *events;
+	int			nEvents;
 	int			client_encoding;	/* encoding id */
 
 	/*
@@ -302,6 +300,11 @@ struct pg_conn
 
 	/* Callback procedures for notice message processing */
 	PGNoticeHooks noticeHooks;
+
+	/* Event procs registered via PQregisterEventProc */
+	PGEvent	   *events;			/* expandable array of event data */
+	int			nEvents;		/* number of active events */
+	int			eventArraySize;	/* allocated array size */
 
 	/* Status indicators */
 	ConnStatusType status;

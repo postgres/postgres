@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.260 2008/06/27 02:44:31 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.261 2008/09/17 04:31:08 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -2060,38 +2060,6 @@ PGresult *PQdescribePortal(PGconn *conn, const char *portalName);
         command, nor even if you close the connection.  To get rid of it,
         you must call <function>PQclear</function>.  Failure to do this
         will result in memory leaks in your application.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       <function>PQmakeEmptyPGresult</function>
-       <indexterm>
-        <primary>PQmakeEmptyPGresult</primary>
-       </indexterm>
-      </term>
-
-      <listitem>
-       <para>
-        Constructs an empty <structname>PGresult</structname> object with the given status.
-        <synopsis>
-         PGresult *PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
-        </synopsis>
-       </para>
-
-       <para>
-        This is <application>libpq</>'s internal function to allocate and
-        initialize an empty <structname>PGresult</structname> object.  This
-        function returns NULL if memory could not be allocated. It is
-        exported because some applications find it useful to generate result
-        objects (particularly objects with error status) themselves.  If
-        <parameter>conn</parameter> is not null and <parameter>status</>
-        indicates an error, the current error message of the specified
-        connection is copied into the <structname>PGresult</structname>.
-        Note that <function>PQclear</function> should eventually be called
-        on the object, just as with a <structname>PGresult</structname>
-        returned by <application>libpq</application> itself.
        </para>
       </listitem>
      </varlistentry>
@@ -4598,6 +4566,170 @@ char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>);
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>PQmakeEmptyPGresult</function>
+     <indexterm>
+      <primary>PQmakeEmptyPGresult</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Constructs an empty <structname>PGresult</structname> object with the given status.
+      <synopsis>
+       PGresult *PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
+      </synopsis>
+     </para>
+
+     <para>
+      This is <application>libpq</>'s internal function to allocate and
+      initialize an empty <structname>PGresult</structname> object.  This
+      function returns NULL if memory could not be allocated. It is
+      exported because some applications find it useful to generate result
+      objects (particularly objects with error status) themselves.  If
+      <parameter>conn</parameter> is not null and <parameter>status</>
+      indicates an error, the current error message of the specified
+      connection is copied into the <structname>PGresult</structname>.
+      Also, if <parameter>conn</parameter> is not null, any event handlers
+      registered in the connection are copied into the
+      <structname>PGresult</structname> (but they don't get
+      <literal>PGEVT_RESULTCREATE</> calls).
+      Note that <function>PQclear</function> should eventually be called
+      on the object, just as with a <structname>PGresult</structname>
+      returned by <application>libpq</application> itself.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>PQcopyResult</function>
+     <indexterm>
+      <primary>PQcopyResult</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Makes a copy of a <structname>PGresult</structname> object.  The copy is
+      not linked to the source result in any way and
+      <function>PQclear</function> must be called when the copy is no longer
+      needed.  If the function fails, NULL is returned.
+
+      <synopsis>
+       PGresult *PQcopyResult(const PGresult *src, int flags);
+      </synopsis>
+     </para>
+
+     <para>
+      This is not intended to make an exact copy.  The returned result is
+      always put into <literal>PGRES_TUPLES_OK</literal> status, and does not
+      copy any error message in the source.  (It does copy the command status
+      string, however.)  The <parameter>flags</parameter> argument determines
+      what else is copied.  It is a bitwise OR of several flags.
+      <literal>PG_COPYRES_ATTRS</literal> specifies copying the source
+      result's attributes (column definitions).
+      <literal>PG_COPYRES_TUPLES</literal> specifies copying the source
+      result's tuples.  (This implies copying the attributes, too.)
+      <literal>PG_COPYRES_NOTICEHOOKS</literal> specifies
+      copying the source result's notify hooks.
+      <literal>PG_COPYRES_EVENTS</literal> specifies copying the source
+      result's events.  (But any instance data associated with the source
+      is not copied.)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>PQsetResultAttrs</function>
+     <indexterm>
+      <primary>PQsetResultAttrs</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Sets the attributes of a <structname>PGresult</structname> object.
+      <synopsis>
+       int PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs);
+      </synopsis>
+     </para>
+
+     <para>
+      The provided <parameter>attDescs</parameter> are copied into the result.
+      If the <parameter>attDescs</parameter> pointer is NULL or
+      <parameter>numAttributes</parameter> is less than one, the request is
+      ignored and the function succeeds.  If <parameter>res</parameter>
+      already contains attributes, the function will fail.  If the function
+      fails, the return value is zero.  If the function succeeds, the return
+      value is non-zero.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>PQsetvalue</function>
+     <indexterm>
+      <primary>PQsetvalue</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Sets a tuple field value of a <structname>PGresult</structname> object.
+      <synopsis>
+       int PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len);
+      </synopsis>
+     </para>
+
+     <para>
+      The function will automatically grow the result's internal tuples array
+      as needed.  However, the <parameter>tup_num</parameter> argument must be
+      less than or equal to <function>PQntuples</function>, meaning this
+      function can only grow the tuples array one tuple at a time.  But any
+      field of any existing tuple can be modified in any order.  If a value at
+      <parameter>field_num</parameter> already exists, it will be overwritten.
+      If <parameter>len</parameter> is <literal>-1</literal> or
+      <parameter>value</parameter> is <literal>NULL</literal>, the field value
+      will be set to an SQL <literal>NULL</literal>.  The
+      <parameter>value</parameter> is copied into the result's private storage,
+      thus is no longer needed after the function
+      returns.  If the function fails, the return value is zero.  If the
+      function succeeds, the return value is non-zero.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>PQresultAlloc</function>
+     <indexterm>
+      <primary>PQresultAlloc</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Allocate subsidiary storage for a <structname>PGresult</structname> object.
+      <synopsis>
+       void *PQresultAlloc(PGresult *res, size_t nBytes);
+      </synopsis>
+     </para>
+
+     <para>
+      Any memory allocated with this function will be freed when
+      <parameter>res</parameter> is cleared.  If the function fails,
+      the return value is <literal>NULL</literal>.  The result is
+      guaranteed to be adequately aligned for any type of data,
+      just as for <function>malloc</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
 
  </sect1>
@@ -4709,6 +4841,551 @@ defaultNoticeProcessor(void *arg, const char *message)
    <function>PQgetvalue</function>.
   </para>
 
+ </sect1>
+
+ <sect1 id="libpq-events">
+  <title>Event System</title>
+
+  <para>
+   <application>libpq</application>'s event system is designed to notify
+   registered event handlers about interesting
+   <application>libpq</application> events, such as the creation or
+   destruction of <structname>PGconn</structname> and
+   <structname>PGresult</structname> objects.  A principal use case is that
+   this allows applications to associate their own data with a
+   <structname>PGconn</structname> or <structname>PGresult</structname>
+   and ensure that that data is freed at an appropriate time.
+  </para>
+
+  <para>
+   Each registered event handler is associated with two pieces of data,
+   known to <application>libpq</application> only as opaque <literal>void *</>
+   pointers.  There is a <firstterm>passthrough</> pointer that is provided
+   by the application when the event handler is registered with a
+   <structname>PGconn</>.  The passthrough pointer never changes for the
+   life of the <structname>PGconn</> and all <structname>PGresult</>s
+   generated from it; so if used, it must point to long-lived data.
+   In addition there is an <firstterm>instance data</> pointer, which starts
+   out NULL in every <structname>PGconn</> and <structname>PGresult</>.
+   This pointer can be manipulated using the
+   <function>PQinstanceData</function>,
+   <function>PQsetInstanceData</function>,
+   <function>PQresultInstanceData</function> and
+   <function>PQsetResultInstanceData</function> functions.  Note that
+   unlike the passthrough pointer, instance data of a <structname>PGconn</>
+   is not automatically inherited by <structname>PGresult</>s created from
+   it.  <application>libpq</application> does not know what passthrough
+   and instance data pointers point to (if anything) and will never attempt
+   to free them &mdash; that is the responsibility of the event handler.
+  </para>
+
+  <sect2 id="libpq-events-types">
+   <title>Event Types</title>
+
+   <para>
+    The enum <literal>PGEventId</> names the types of events handled by
+    the event system.  All its values have names beginning with
+    <literal>PGEVT</literal>.  For each event type, there is a corresponding
+    event info structure that carries the parameters passed to the event
+    handlers.  The event types are:
+   </para>
+
+   <variablelist>
+    <varlistentry>
+     <term><literal>PGEVT_REGISTER</literal></term>
+     <listitem>
+      <para>
+       The register event occurs when <function>PQregisterEventProc</function>
+       is called.  It is the ideal time to initialize any
+       <literal>instanceData</literal> an event procedure may need.  Only one
+       register event will be fired per event handler per connection.  If the
+       event procedure fails, the registration is aborted.
+
+      <synopsis>
+typedef struct
+{
+    const PGconn *conn;
+} PGEventRegister;
+      </synopsis>
+
+       When a <literal>PGEVT_REGISTER</literal> event is received, the
+       <parameter>evtInfo</parameter> pointer should be cast to a
+       <structname>PGEventRegister *</structname>.  This structure contains a
+       <structname>PGconn</structname> that should be in the
+       <literal>CONNECTION_OK</literal> status; guaranteed if one calls
+       <function>PQregisterEventProc</function> right after obtaining a good
+       <structname>PGconn</structname>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>PGEVT_CONNRESET</literal></term>
+     <listitem>
+      <para>
+       The connection reset event is fired on completion of
+       <function>PQreset</function> or <function>PQresetPoll</function>.  In
+       both cases, the event is only fired if the reset was successful.  If
+       the event procedure fails, the entire connection reset will fail; the
+       <structname>PGconn</structname> is put into
+       <literal>CONNECTION_BAD</literal> status and
+       <function>PQresetPoll</function> will return
+       <literal>PGRES_POLLING_FAILED</literal>.
+
+      <synopsis>
+typedef struct
+{
+    const PGconn *conn;
+} PGEventConnReset;
+      </synopsis>
+
+       When a <literal>PGEVT_CONNRESET</literal> event is received, the
+       <parameter>evtInfo</parameter> pointer should be cast to a
+       <structname>PGEventConnReset *</structname>.  Although the contained
+       <structname>PGconn</structname> was just reset, all event data remains
+       unchanged.  This event should be used to reset/reload/requery any
+       associated <literal>instanceData</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>PGEVT_CONNDESTROY</literal></term>
+     <listitem>
+      <para>
+       The connection destroy event is fired in response to
+       <function>PQfinish</function>.  It is the event procedure's
+       responsibility to properly clean up its event data as libpq has no
+       ability to manage this memory.  Failure to clean up will lead
+       to memory leaks.
+
+      <synopsis>
+typedef struct
+{
+    const PGconn *conn;
+} PGEventConnDestroy;
+      </synopsis>
+
+       When a <literal>PGEVT_CONNDESTROY</literal> event is received, the
+       <parameter>evtInfo</parameter> pointer should be cast to a
+       <structname>PGEventConnDestroy *</structname>.  This event is fired
+       prior to <function>PQfinish</function> performing any other cleanup.
+       The return value of the event procedure is ignored since there is no
+       way of indicating a failure from <function>PQfinish</function>.  Also,
+       an event procedure failure should not abort the process of cleaning up
+       unwanted memory.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>PGEVT_RESULTCREATE</literal></term>
+     <listitem>
+      <para>
+       The result creation event is fired in response to any query execution
+       function that generates a result, including
+       <function>PQgetResult</function>.  This event will only be fired after
+       the result has been created successfully.
+
+      <synopsis>
+typedef struct
+{
+    const PGconn *conn;
+    PGresult *result;
+} PGEventResultCreate;
+      </synopsis>
+
+       When a <literal>PGEVT_RESULTCREATE</literal> event is received, the
+       <parameter>evtInfo</parameter> pointer should be cast to a
+       <structname>PGEventResultCreate *</structname>.  The
+       <parameter>conn</parameter> is the connection used to generate the
+       result.  This is the ideal place to initialize any
+       <literal>instanceData</literal> that needs to be associated with the
+       result.  If the event procedure fails, the result will be cleared and
+       the failure will be propagated.  The event procedure must not try to
+       <function>PQclear</> the result object for itself.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>PGEVT_RESULTCOPY</literal></term>
+     <listitem>
+      <para>
+       The result copy event is fired in response to
+       <function>PQcopyResult</function>.  This event will only be fired after
+       the copy is complete.
+
+      <synopsis>
+typedef struct
+{
+    const PGresult *src;
+    PGresult *dest;
+} PGEventResultCopy;
+      </synopsis>
+
+       When a <literal>PGEVT_RESULTCOPY</literal> event is received, the
+       <parameter>evtInfo</parameter> pointer should be cast to a
+       <structname>PGEventResultCopy *</structname>.  The
+       <parameter>src</parameter> result is what was copied while the
+       <parameter>dest</parameter> result is the copy destination.  This event
+       can be used to provide a deep copy of <literal>instanceData</literal>,
+       since <literal>PQcopyResult</literal> cannot do that.  If the event
+       procedure fails, the entire copy operation will fail and the
+       <parameter>dest</parameter> result will be cleared.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>PGEVT_RESULTDESTROY</literal></term>
+     <listitem>
+      <para>
+       The result destroy event is fired in response to a
+       <function>PQclear</function>.  It is the event procedure's
+       responsibility to properly clean up its event data as libpq has no
+       ability to manage this memory.  Failure to clean up will lead
+       to memory leaks.
+
+      <synopsis>
+typedef struct
+{
+    const PGresult *result;
+} PGEventResultDestroy;
+      </synopsis>
+
+       When a <literal>PGEVT_RESULTDESTROY</literal> event is received, the
+       <parameter>evtInfo</parameter> pointer should be cast to a
+       <structname>PGEventResultDestroy *</structname>.  This event is fired
+       prior to <function>PQclear</function> performing any other cleanup.
+       The return value of the event procedure is ignored since there is no
+       way of indicating a failure from <function>PQclear</function>.  Also,
+       an event procedure failure should not abort the process of cleaning up
+       unwanted memory.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </sect2>
+
+  <sect2 id="libpq-events-proc">
+   <title>Event Callback Procedure</title>
+
+   <variablelist>
+    <varlistentry>
+     <term>
+      <literal>PGEventProc</literal>
+      <indexterm>
+       <primary>PGEventProc</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+       <literal>PGEventProc</literal> is a typedef for a pointer to an
+       event procedure, that is, the user callback function that receives
+       events from libpq.  The signature of an event procedure must be
+
+      <synopsis>
+int eventproc(PGEventId evtId, void *evtInfo, void *passThrough)
+      </synopsis>
+
+       The <parameter>evtId</parameter> parameter indicates which
+       <literal>PGEVT</literal> event occurred.  The
+       <parameter>evtInfo</parameter> pointer must be cast to the appropriate
+       structure type to obtain further information about the event.
+       The <parameter>passThrough</parameter> parameter is the pointer
+       provided to <function>PQregisterEventProc</function> when the event
+       procedure was registered.  The function should return a non-zero value
+       if it succeeds and zero if it fails.
+      </para>
+
+      <para>
+       A particular event procedure can be registered only once in any
+       <structname>PGconn</>.  This is because the address of the procedure
+       is used as a lookup key to identify the associated instance data.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </sect2>
+
+  <sect2 id="libpq-events-funcs">
+   <title>Event Support Functions</title>
+
+    <variablelist>
+    <varlistentry>
+     <term>
+      <function>PQregisterEventProc</function>
+      <indexterm>
+       <primary>PQregisterEventProc</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+       Registers an event callback procedure with libpq.
+
+       <synopsis>
+        int PQregisterEventProc(PGconn *conn, PGEventProc proc,
+                                const char *name, void *passThrough);
+       </synopsis>
+      </para>
+
+      <para>
+       An event procedure must be registered once on each
+       <structname>PGconn</> you want to receive events about.  There is no
+       limit, other than memory, on the number of event procedures that
+       can be registered with a connection.  The function returns a non-zero
+       value if it succeeds and zero if it fails.
+      </para>
+
+      <para>
+       The <parameter>proc</parameter> argument will be called when a libpq
+       event is fired.  Its memory address is also used to lookup
+       <literal>instanceData</literal>.  The <parameter>name</parameter>
+       argument is used to refer to the event procedure in error messages.
+       This value cannot be NULL or a zero-length string.  The name string is
+       copied into the <structname>PGconn</>, so what is passed need not be
+       long-lived.  The <parameter>passThrough</parameter> pointer is passed
+       to the <parameter>proc</parameter> whenever an event occurs. This
+       argument can be NULL.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      <function>PQsetInstanceData</function>
+      <indexterm>
+       <primary>PQsetInstanceData</primary>
+      </indexterm>
+     </term>
+     <listitem>
+      <para>
+       Sets the conn's instanceData for proc to data.  This returns non-zero
+       for success and zero for failure.  (Failure is only possible if
+       the proc has not been properly registered in the conn.)
+
+       <synopsis>
+        int PQsetInstanceData(PGconn *conn, PGEventProc proc, void *data);
+       </synopsis>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      <function>PQinstanceData</function>
+      <indexterm>
+       <primary>PQinstanceData</primary>
+      </indexterm>
+     </term>
+     <listitem>
+      <para>
+       Returns the conn's instanceData associated with proc, or NULL
+       if there is none.
+
+       <synopsis>
+        void *PQinstanceData(const PGconn *conn, PGEventProc proc);
+       </synopsis>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      <function>PQresultSetInstanceData</function>
+      <indexterm>
+       <primary>PQresultSetInstanceData</primary>
+      </indexterm>
+     </term>
+     <listitem>
+      <para>
+       Sets the result's instanceData for proc to data.  This returns non-zero
+       for success and zero for failure.  (Failure is only possible if the
+       proc has not been properly registered in the result.)
+
+       <synopsis>
+        int PQresultSetInstanceData(PGresult *res, PGEventProc proc, void *data);
+       </synopsis>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      <function>PQresultInstanceData</function>
+      <indexterm>
+       <primary>PQresultInstanceData</primary>
+      </indexterm>
+     </term>
+     <listitem>
+      <para>
+       Returns the result's instanceData associated with proc, or NULL
+       if there is none.
+
+       <synopsis>
+        void *PQresultInstanceData(const PGresult *res, PGEventProc proc);
+       </synopsis>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </sect2>
+
+  <sect2 id="libpq-events-example">
+   <title>Event Example</title>
+
+   <para>
+    Here is a skeleton example of managing private data associated with
+    libpq connections and results.
+   </para>
+
+   <programlisting>
+/* required header for libpq events (note: includes libpq-fe.h) */
+#include &lt;libpq-events.h&gt;
+
+/* The instanceData */
+typedef struct
+{
+    int n;
+    char *str;
+} mydata;
+
+/* PGEventProc */
+static int myEventProc(PGEventId evtId, void *evtInfo, void *passThrough);
+
+int
+main(void)
+{
+    mydata *data;
+    PGresult *res;
+    PGconn *conn = PQconnectdb("dbname = postgres");
+
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s",
+                PQerrorMessage(conn));
+        PQfinish(conn);
+        return 1;
+    }
+
+    /* called once on any connection that should receive events.
+     * Sends a PGEVT_REGISTER to myEventProc.
+     */
+    if (!PQregisterEventProc(conn, myEventProc, "mydata_proc", NULL))
+    {
+        fprintf(stderr, "Cannot register PGEventProc\n");
+        PQfinish(conn);
+        return 1;
+    }
+
+    /* conn instanceData is available */
+    data = PQinstanceData(conn, myEventProc);
+
+    /* Sends a PGEVT_RESULTCREATE to myEventProc */
+    res = PQexec(conn, "SELECT 1 + 1");
+
+    /* result instanceData is available */
+    data = PQresultInstanceData(res, myEventProc);
+
+    /* If PG_COPYRES_EVENTS is used, sends a PGEVT_RESULTCOPY to myEventProc */
+    res_copy = PQcopyResult(res, PG_COPYRES_TUPLES | PG_COPYRES_EVENTS);
+
+    /* result instanceData is available if PG_COPYRES_EVENTS was
+     * used during the PQcopyResult call.
+     */
+    data = PQresultInstanceData(res_copy, myEventProc);
+
+    /* Both clears send a PGEVT_RESULTDESTROY to myEventProc */
+    PQclear(res);
+    PQclear(res_copy);
+
+    /* Sends a PGEVT_CONNDESTROY to myEventProc */
+    PQfinish(conn);
+
+    return 0;
+}
+
+static int
+myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
+{
+    switch (evtId)
+    {
+        case PGEVT_REGISTER:
+        {
+            PGEventRegister *e = (PGEventRegister *)evtInfo;
+            mydata *data = get_mydata(e-&gt;conn);
+
+            /* associate app specific data with connection */
+            PQsetInstanceData(e-&gt;conn, myEventProc, data);
+            break;
+        }
+
+        case PGEVT_CONNRESET:
+        {
+            PGEventConnReset *e = (PGEventConnReset *)evtInfo;
+            mydata *data = PQinstanceData(e-&gt;conn, myEventProc);
+
+            if (data)
+              memset(data, 0, sizeof(mydata));
+            break;
+        }
+
+        case PGEVT_CONNDESTROY:
+        {
+            PGEventConnDestroy *e = (PGEventConnDestroy *)evtInfo;
+            mydata *data = PQinstanceData(e-&gt;conn, myEventProc);
+
+            /* free instance data because the conn is being destroyed */
+            if (data)
+              free_mydata(data);
+            break;
+        }
+
+        case PGEVT_RESULTCREATE:
+        {
+            PGEventResultCreate *e = (PGEventResultCreate *)evtInfo;
+            mydata *conn_data = PQinstanceData(e-&gt;conn, myEventProc);
+            mydata *res_data = dup_mydata(conn_data);
+
+            /* associate app specific data with result (copy it from conn) */
+            PQsetResultInstanceData(e-&gt;result, myEventProc, res_data);
+            break;
+        }
+
+        case PGEVT_RESULTCOPY:
+        {
+            PGEventResultCopy *e = (PGEventResultCopy *)evtInfo;
+            mydata *src_data = PQresultInstanceData(e-&gt;src, myEventProc);
+            mydata *dest_data = dup_mydata(src_data);
+
+            /* associate app specific data with result (copy it from a result) */
+            PQsetResultInstanceData(e-&gt;dest, myEventProc, dest_data);
+            break;
+        }
+
+        case PGEVT_RESULTDESTROY:
+        {
+            PGEventResultDestroy *e = (PGEventResultDestroy *)evtInfo;
+            mydata *data = PQresultInstanceData(e-&gt;result, myEventProc);
+
+            /* free instance data because the result is being destroyed */
+            if (data)
+              free_mydata(data);
+            break;
+        }
+
+        /* unknown event id, just return TRUE. */
+        default:
+            break;
+    }
+
+    return TRUE; /* event processing succeeded */
+}
+</programlisting>
+  </sect2>
  </sect1>
 
  <sect1 id="libpq-envars">
@@ -5263,7 +5940,7 @@ defaultNoticeProcessor(void *arg, const char *message)
    to inside <application>libpq</application>), you can use
    <function>PQinitSSL(int)</> to tell <application>libpq</application>
    that the <acronym>SSL</> library has already been initialized by your
-   application.  
+   application.
    <!-- If this URL changes replace it with a URL to www.archive.org. -->
    See <ulink
    url="http://h71000.www7.hp.com/doc/83final/BA554_90007/ch04.html"></ulink>
