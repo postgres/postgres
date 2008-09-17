@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.80 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.81 2008/09/17 13:15:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,8 @@ long int	BufferHitCount;
 long int	LocalBufferHitCount;
 long int	BufferFlushCount;
 long int	LocalBufferFlushCount;
+long int	BufFileReadCount;
+long int	BufFileWriteCount;
 
 
 /*

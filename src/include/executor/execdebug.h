@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/execdebug.h,v 1.32 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/execdebug.h,v 1.33 2008/09/17 13:15:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,20 +189,5 @@ extern int	NIndexTupleInserted;
 #define MJ_DEBUG_QUAL(clause, res)
 #define MJ_DEBUG_PROC_NODE(slot)
 #endif   /* EXEC_MERGEJOINDEBUG */
-
-/* ----------------------------------------------------------------
- *		DO NOT DEFINE THESE EVER OR YOU WILL BURN!
- * ----------------------------------------------------------------
- */
-/* ----------------
- *		NOTYET is placed around any code not yet implemented
- *		in the executor.  Only remove these when actually implementing
- *		said code.
- * ----------------
- */
-#undef NOTYET
-
-extern long NDirectFileRead;
-extern long NDirectFileWrite;
 
 #endif   /* ExecDebugIncluded */

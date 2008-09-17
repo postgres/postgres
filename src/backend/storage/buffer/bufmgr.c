@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.237 2008/08/11 11:05:11 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.238 2008/09/17 13:15:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,12 +63,6 @@
 bool		zero_damaged_pages = false;
 int			bgwriter_lru_maxpages = 100;
 double		bgwriter_lru_multiplier = 2.0;
-
-
-long		NDirectFileRead;	/* some I/O's are direct file access. bypass
-								 * bufmgr */
-long		NDirectFileWrite;	/* e.g., I/O in psort and hashjoin. */
-
 
 /* local state for StartBufferIO and related functions */
 static volatile BufferDesc *InProgressBuf = NULL;
@@ -1572,7 +1566,7 @@ ShowBufferUsage(void)
 					 ReadLocalBufferCount - LocalBufferHitCount, LocalBufferFlushCount, localhitrate);
 	appendStringInfo(&str,
 					 "!\tDirect blocks: %10ld read, %10ld written\n",
-					 NDirectFileRead, NDirectFileWrite);
+					 BufFileReadCount, BufFileWriteCount);
 
 	return str.data;
 }
@@ -1586,8 +1580,8 @@ ResetBufferUsage(void)
 	LocalBufferHitCount = 0;
 	ReadLocalBufferCount = 0;
 	LocalBufferFlushCount = 0;
-	NDirectFileRead = 0;
-	NDirectFileWrite = 0;
+	BufFileReadCount = 0;
+	BufFileWriteCount = 0;
 }
 
 /*
