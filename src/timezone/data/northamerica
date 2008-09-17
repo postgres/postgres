@@ -1,4 +1,4 @@
-# @(#)northamerica	8.23
+# @(#)northamerica	8.24
 # <pre>
 
 # also includes Central America and the Caribbean
@@ -2076,8 +2076,8 @@ Zone	America/Antigua	-4:07:12 -	LMT	1912 Mar 2
 # http://www.jonesbahamas.com/?c=45&a=10412
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule	Bahamas	1964	2006	-	Oct	lastSun	2:00	0	S
-Rule	Bahamas	1964	1986	-	Apr	lastSun	2:00	1:00	D
+Rule	Bahamas	1964	1975	-	Oct	lastSun	2:00	0	S
+Rule	Bahamas	1964	1975	-	Apr	lastSun	2:00	1:00	D
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Nassau	-5:09:24 -	LMT	1912 Mar 2
 			-5:00	Bahamas	E%sT	1976
