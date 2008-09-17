@@ -1,4 +1,4 @@
-# @(#)africa	8.11
+# @(#)africa	8.16
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -387,9 +387,80 @@ Zone Africa/Nouakchott	-1:03:48 -	LMT	1912
 			 0:00	-	GMT
 
 # Mauritius
+
+# From Steffen Thorsen (2008-06-25):
+# Mauritius plans to observe DST from 2008-11-01 to 2009-03-31 on a trial
+# basis....
+# It seems that Mauritius observed daylight saving time from 1982-10-10 to 
+# 1983-03-20 as well, but that was not successful....
+# http://www.timeanddate.com/news/time/mauritius-daylight-saving-time.html
+
+# From Alex Krivenyshev (2008-06-25):
+# http://economicdevelopment.gov.mu/portal/site/Mainhomepage/menuitem.a42b24128104d9845dabddd154508a0c/?content_id=0a7cee8b5d69a110VgnVCM1000000a04a8c0RCRD
+
+# From Arthur David Olson (2008-06-30):
+# The www.timeanddate.com article cited by Steffen Thorsen notes that "A
+# final decision has yet to be made on the times that daylight saving
+# would begin and end on these dates." As a place holder, use midnight.
+
+# From Paul Eggert (2008-06-30):
+# Follow Thorsen on DST in 1982/1983, instead of Shanks & Pottenger.
+
+# From Steffen Thorsen (2008-07-10):
+# According to
+# <a href="http://www.lexpress.mu/display_article.php?news_id=111216">
+# http://www.lexpress.mu/display_article.php?news_id=111216
+# </a>
+# (in French), Mauritius will start and end their DST a few days earlier
+# than previously announced (2008-11-01 to 2009-03-31).  The new start
+# date is 2008-10-26 at 02:00 and the new end date is 2009-03-27 (no time
+# given, but it is probably at either 2 or 3 wall clock time).
+# 
+# A little strange though, since the article says that they moved the date 
+# to align itself with Europe and USA which also change time on that date, 
+# but that means they have not paid attention to what happened in 
+# USA/Canada last year (DST ends first Sunday in November). I also wonder 
+# why that they end on a Friday, instead of aligning with Europe which 
+# changes two days later.
+
+# From Alex Krivenyshev (2008-07-11):
+# Seems that English language article "The revival of daylight saving
+# time:  Energy conservation?"-# No. 16578 (07/11/2008) was originally
+# published on Monday, June 30, 2008...
+#
+# I guess that article in French "Le gouvernement avance l'introduction
+# de l'heure d'ete" stating that DST in Mauritius starting on October 26
+# and ending on March 27, 2009 is the most recent one.
+# ...
+# <a href="http://www.worldtimezone.com/dst_news/dst_news_mauritius02.html">
+# http://www.worldtimezone.com/dst_news/dst_news_mauritius02.html
+# </a>
+
+# From Riad M. Hossen Ally (2008-08-03):
+# The Government of Mauritius weblink
+# <a href="http://www.gov.mu/portal/site/pmosite/menuitem.4ca0efdee47462e7440a600248a521ca/?content_id=3D4728ca68b2a5b110VgnVCM1000000a04a8c0RCRD">
+# http://www.gov.mu/portal/site/pmosite/menuitem.4ca0efdee47462e7440a600248a521ca/?content_id=3D4728ca68b2a5b110VgnVCM1000000a04a8c0RCRD
+# </a>
+# Cabinet Decision of July 18th, 2008 states as follows:
+#
+# 4. ...Cabinet has agreed to the introduction into the National Assembly
+# of the Time Bill which provides for the introduction of summer time in
+# Mauritius. The summer time period which will be of one hour ahead of
+# the standard time, will be aligned with that in Europe and the United
+# States of America. It will start at two o'clock in the morning on the
+# last Sunday of October and will end at two o'clock in the morning on
+# the last Sunday of March the following year. The summer time for the
+# year 2008 - 2009 will, therefore, be effective as from 26 October 2008
+# and end on 29 March 2009.
+
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule Mauritius	1982	only	-	Oct	10	0:00	1:00	S
+Rule Mauritius	1983	only	-	Mar	21	0:00	0	-
+Rule Mauritius	2008	max	-	Oct	lastSun	2:00	1:00	S
+Rule Mauritius	2009	max	-	Mar	lastSun	2:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Indian/Mauritius	3:50:00 -	LMT	1907		# Port Louis
-			4:00	-	MUT	# Mauritius Time
+			4:00 Mauritius	MU%sT	# Mauritius Time
 # Agalega Is, Rodriguez
 # no information; probably like Indian/Mauritius
 
@@ -451,7 +522,7 @@ Zone	Indian/Mayotte	3:00:56 -	LMT	1911 Jul	# Mamoutzou
 # published on the web.
 #
 # It's also confirmed here:
-# <a href="http://www.maroc.ma/NR/exeres/FACF141F-D910-44B0-B7FA-6E03733425D1.htm ">
+# <a href="http://www.maroc.ma/NR/exeres/FACF141F-D910-44B0-B7FA-6E03733425D1.htm">
 # http://www.maroc.ma/NR/exeres/FACF141F-D910-44B0-B7FA-6E03733425D1.htm
 # </a>
 # on a government portal as being  between june 1st and sept 27th (not yet
@@ -471,7 +542,22 @@ Zone	Indian/Mayotte	3:00:56 -	LMT	1911 Jul	# Mamoutzou
 # From Arthur David Olson (2008-05-09):
 # XXX--guess that it is only Morocco for now; guess only 2008 for now.
 
+# From Steffen Thorsen (2008-08-27):
+# Morocco will change the clocks back on the midnight between August 31 
+# and September 1. They originally planned to observe DST to near the end 
+# of September:
+#
+# One article about it (in French):
+# <a href="http://www.menara.ma/fr/Actualites/Maroc/Societe/ci.retour_a_l_heure_gmt_a_partir_du_dimanche_31_aout_a_minuit_officiel_.default">
+# http://www.menara.ma/fr/Actualites/Maroc/Societe/ci.retour_a_l_heure_gmt_a_partir_du_dimanche_31_aout_a_minuit_officiel_.default
+# </a>
+#
+# We have some further details posted here:
+# <a href="http://www.timeanddate.com/news/time/morocco-ends-dst-early-2008.html">
+# http://www.timeanddate.com/news/time/morocco-ends-dst-early-2008.html
+# </a>
 # RULE	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+
 Rule	Morocco	1939	only	-	Sep	12	 0:00	1:00	S
 Rule	Morocco	1939	only	-	Nov	19	 0:00	0	-
 Rule	Morocco	1940	only	-	Feb	25	 0:00	1:00	S
@@ -488,7 +574,7 @@ Rule	Morocco	1977	only	-	Sep	28	 0:00	0	-
 Rule	Morocco	1978	only	-	Jun	 1	 0:00	1:00	S
 Rule	Morocco	1978	only	-	Aug	 4	 0:00	0	-
 Rule	Morocco	2008	only	-	Jun	 1	 0:00	1:00	S
-Rule	Morocco	2008	only	-	Sep	28	 0:00	0	-
+Rule	Morocco	2008	only	-	Sep	 1	 0:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Africa/Casablanca	-0:30:20 -	LMT	1913 Oct 26
 			 0:00	Morocco	WE%sT	1984 Mar 16
