@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-events.h,v 1.1 2008/09/17 04:31:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-events.h,v 1.2 2008/09/19 20:06:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,22 +36,22 @@ typedef enum
 
 typedef struct
 {
-	const PGconn *conn;
+	PGconn *conn;
 } PGEventRegister;
 
 typedef struct
 {
-	const PGconn *conn;
+	PGconn *conn;
 } PGEventConnReset;
 
 typedef struct
 {
-	const PGconn *conn;
+	PGconn *conn;
 } PGEventConnDestroy;
 
 typedef struct
 {
-	const PGconn *conn;
+	PGconn *conn;
 	PGresult *result;
 } PGEventResultCreate;
 
@@ -63,7 +63,7 @@ typedef struct
 
 typedef struct
 {
-	const PGresult *result;
+	PGresult *result;
 } PGEventResultDestroy;
 
 typedef int (*PGEventProc) (PGEventId evtId, void *evtInfo, void *passThrough);
@@ -83,6 +83,9 @@ extern int	PQresultSetInstanceData(PGresult *result, PGEventProc proc, void *dat
 
 /* Gets the PGresult instance data for the provided proc. */
 extern void *PQresultInstanceData(const PGresult *result, PGEventProc proc);
+
+/* Fires RESULTCREATE events for an application-created PGresult. */
+extern int	PQfireResultCreateEvents(PGconn *conn, PGresult *res);
 
 #ifdef __cplusplus
 }

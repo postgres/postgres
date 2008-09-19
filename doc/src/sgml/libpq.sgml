@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.262 2008/09/19 16:40:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.263 2008/09/19 20:06:13 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -4592,13 +4592,54 @@ char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>);
       <parameter>conn</parameter> is not null and <parameter>status</>
       indicates an error, the current error message of the specified
       connection is copied into the <structname>PGresult</structname>.
-      Also, if <parameter>conn</parameter> is not null, any event handlers
+      Also, if <parameter>conn</parameter> is not null, any event procedures
       registered in the connection are copied into the
-      <structname>PGresult</structname> (but they don't get
-      <literal>PGEVT_RESULTCREATE</> calls).
+      <structname>PGresult</structname>.  (They do not get
+      <literal>PGEVT_RESULTCREATE</> calls, but see
+      <function>PQfireResultCreateEvents</function>.)
       Note that <function>PQclear</function> should eventually be called
       on the object, just as with a <structname>PGresult</structname>
       returned by <application>libpq</application> itself.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>PQfireResultCreateEvents</function>
+     <indexterm>
+      <primary>PQfireResultCreateEvents</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Fires a <literal>PGEVT_RESULTCREATE</literal> event (see <xref
+      linkend="libpq-events">) for each event procedure registered in the
+      <structname>PGresult</structname> object.  Returns non-zero for success,
+      zero if any event procedure fails.
+
+      <synopsis>
+       int PQfireResultCreateEvents(PGconn *conn, PGresult *res);
+      </synopsis>
+     </para>
+
+     <para>
+      The <literal>conn</> argument is passed through to event procedures
+      but not used directly.  It can be <literal>NULL</> if the event
+      procedures won't use it.
+     </para>
+
+     <para>
+      Event procedures that have already received a
+      <literal>PGEVT_RESULTCREATE</> or <literal>PGEVT_RESULTCOPY</> event
+      for this object are not fired again.
+     </para>
+
+     <para>
+      The main reason that this function is separate from
+      <function>PQmakeEmptyPGResult</function> is that it is often appropriate
+      to create a <structname>PGresult</structname> and fill it with data
+      before invoking the event procedures.
      </para>
     </listitem>
    </varlistentry>
@@ -4904,7 +4945,7 @@ defaultNoticeProcessor(void *arg, const char *message)
       <synopsis>
 typedef struct
 {
-    const PGconn *conn;
+    PGconn *conn;
 } PGEventRegister;
       </synopsis>
 
@@ -4937,7 +4978,7 @@ typedef struct
       <synopsis>
 typedef struct
 {
-    const PGconn *conn;
+    PGconn *conn;
 } PGEventConnReset;
       </synopsis>
 
@@ -4967,7 +5008,7 @@ typedef struct
       <synopsis>
 typedef struct
 {
-    const PGconn *conn;
+    PGconn *conn;
 } PGEventConnDestroy;
       </synopsis>
 
@@ -4995,7 +5036,7 @@ typedef struct
       <synopsis>
 typedef struct
 {
-    const PGconn *conn;
+    PGconn *conn;
     PGresult *result;
 } PGEventResultCreate;
       </synopsis>
@@ -5063,7 +5104,7 @@ typedef struct
       <synopsis>
 typedef struct
 {
-    const PGresult *result;
+    PGresult *result;
 } PGEventResultDestroy;
       </synopsis>
 
