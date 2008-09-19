@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.261 2008/09/17 04:31:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.262 2008/09/19 16:40:40 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -4914,7 +4914,9 @@ typedef struct
        <structname>PGconn</structname> that should be in the
        <literal>CONNECTION_OK</literal> status; guaranteed if one calls
        <function>PQregisterEventProc</function> right after obtaining a good
-       <structname>PGconn</structname>.
+       <structname>PGconn</structname>.  When returning a failure code, all
+       cleanup must be performed as no <literal>PGEVT_CONNDESTROY</literal>
+       event will be sent.
       </para>
      </listitem>
     </varlistentry>
@@ -4944,7 +4946,10 @@ typedef struct
        <structname>PGEventConnReset *</structname>.  Although the contained
        <structname>PGconn</structname> was just reset, all event data remains
        unchanged.  This event should be used to reset/reload/requery any
-       associated <literal>instanceData</literal>.
+       associated <literal>instanceData</literal>.  Note that even if the
+       event procedure fails to process <literal>PGEVT_CONNRESET</>, it will
+       still receive a <literal>PGEVT_CONNDESTROY</> event when the connection
+       is closed.
       </para>
      </listitem>
     </varlistentry>
@@ -5003,7 +5008,9 @@ typedef struct
        <literal>instanceData</literal> that needs to be associated with the
        result.  If the event procedure fails, the result will be cleared and
        the failure will be propagated.  The event procedure must not try to
-       <function>PQclear</> the result object for itself.
+       <function>PQclear</> the result object for itself.  When returning a
+       failure code, all cleanup must be performed as no
+       <literal>PGEVT_RESULTDESTROY</literal> event will be sent.
       </para>
      </listitem>
     </varlistentry>
@@ -5014,7 +5021,10 @@ typedef struct
       <para>
        The result copy event is fired in response to
        <function>PQcopyResult</function>.  This event will only be fired after
-       the copy is complete.
+       the copy is complete.  Only event procedures that have
+       successfully handled the <literal>PGEVT_RESULTCREATE</literal>
+       or <literal>PGEVT_RESULTCOPY</literal> event for the source result
+       will receive <literal>PGEVT_RESULTCOPY</literal> events.
 
       <synopsis>
 typedef struct
@@ -5032,7 +5042,10 @@ typedef struct
        can be used to provide a deep copy of <literal>instanceData</literal>,
        since <literal>PQcopyResult</literal> cannot do that.  If the event
        procedure fails, the entire copy operation will fail and the
-       <parameter>dest</parameter> result will be cleared.
+       <parameter>dest</parameter> result will be cleared.   When returning a
+       failure code, all cleanup must be performed as no
+       <literal>PGEVT_RESULTDESTROY</literal> event will be sent for the
+       destination result.
       </para>
      </listitem>
     </varlistentry>

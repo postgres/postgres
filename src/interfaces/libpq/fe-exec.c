@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.198 2008/09/17 04:31:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.199 2008/09/19 16:40:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,10 +331,7 @@ PQcopyResult(const PGresult *src, int flags)
 	if (flags & PG_COPYRES_NOTICEHOOKS)
 		dest->noticeHooks = src->noticeHooks;
 
-	/*
-	 * Wants to copy PGEvents?  NB: this should be last, as we don't want
-	 * to trigger RESULTDESTROY events on a useless PGresult.
-	 */
+	/* Wants to copy PGEvents? */
 	if ((flags & PG_COPYRES_EVENTS) && src->nEvents > 0)
 	{
 		dest->events = dupEvents(src->events, src->nEvents);
@@ -349,15 +346,19 @@ PQcopyResult(const PGresult *src, int flags)
 	/* Okay, trigger PGEVT_RESULTCOPY event */
 	for (i = 0; i < dest->nEvents; i++)
 	{
-		PGEventResultCopy evt;
-
-		evt.src = src;
-		evt.dest = dest;
-		if (!dest->events[i].proc(PGEVT_RESULTCOPY, &evt,
-								  dest->events[i].passThrough))
+		if (src->events[i].resultInitialized)
 		{
-			PQclear(dest);
-			return NULL;
+			PGEventResultCopy evt;
+
+			evt.src = src;
+			evt.dest = dest;
+			if (!dest->events[i].proc(PGEVT_RESULTCOPY, &evt,
+									  dest->events[i].passThrough))
+			{
+				PQclear(dest);
+				return NULL;
+			}
+			dest->events[i].resultInitialized = TRUE;
 		}
 	}
 
@@ -365,8 +366,9 @@ PQcopyResult(const PGresult *src, int flags)
 }
 
 /*
- * Copy an array of PGEvents (with no extra space for more)
- * Does not duplicate the event instance data, sets this to NULL
+ * Copy an array of PGEvents (with no extra space for more).
+ * Does not duplicate the event instance data, sets this to NULL.
+ * Also, the resultInitialized flags are all cleared.
  */
 static PGEvent *
 dupEvents(PGEvent *events, int count)
@@ -381,13 +383,13 @@ dupEvents(PGEvent *events, int count)
 	if (!newEvents)
 		return NULL;
 
-	memcpy(newEvents, events, count * sizeof(PGEvent));
-
-	/* NULL out the data pointers and deep copy names */
 	for (i = 0; i < count; i++)
 	{
+		newEvents[i].proc = events[i].proc;
+		newEvents[i].passThrough = events[i].passThrough;
 		newEvents[i].data = NULL;
-		newEvents[i].name = strdup(newEvents[i].name);
+		newEvents[i].resultInitialized = FALSE;
+		newEvents[i].name = strdup(events[i].name);
 		if (!newEvents[i].name)
 		{
 			while (--i >= 0)
@@ -666,11 +668,15 @@ PQclear(PGresult *res)
 
 	for (i = 0; i < res->nEvents; i++)
 	{
-		PGEventResultDestroy evt;
+		/* only send DESTROY to successfully-initialized event procs */
+		if (res->events[i].resultInitialized)
+		{
+			PGEventResultDestroy evt;
 
-		evt.result = res;
-		(void) res->events[i].proc(PGEVT_RESULTDESTROY, &evt,
-								   res->events[i].passThrough);
+			evt.result = res;
+			(void) res->events[i].proc(PGEVT_RESULTDESTROY, &evt,
+									   res->events[i].passThrough);
+		}
 		free(res->events[i].name);
 	}
 
@@ -1612,6 +1618,7 @@ PQgetResult(PGconn *conn)
 				res->resultStatus = PGRES_FATAL_ERROR;
 				break;
 			}
+			res->events[i].resultInitialized = TRUE;
 		}
 	}
 
