@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.63 2008/06/07 22:11:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.64 2008/09/19 02:46:08 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -62,6 +62,82 @@ do it for earlier branch release files.
    that item.  Of course all changes involve community discussion and patch
    review, so each item is truly a community effort.
   </para>
+
+ <sect1 id="release-7-4-22">
+  <title>Release 7.4.22</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-09-22</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.21.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.22</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.11,
+    see the release notes for 7.4.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix datetime input functions to correctly detect integer overflow when
+      running on a 64-bit platform (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve performance of writing very long log messages to syslog (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bug in backwards scanning of a cursor on a <literal>SELECT DISTINCT
+      ON</> query (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner to estimate that <literal>GROUP BY</> expressions yielding
+      boolean results always result in two groups, regardless of the
+      expressions' contents (Tom)
+     </para>
+
+     <para>
+      This is very substantially more accurate than the regular <literal>GROUP
+      BY</> estimate for certain boolean tests like <replaceable>col</>
+      <literal>IS NULL</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve <application>pg_dump</> and <application>pg_restore</>'s
+      error reporting after failure to send a SQL command (Tom)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-7-4-21">
   <title>Release 7.4.21</title>
