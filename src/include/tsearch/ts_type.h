@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.13 2008/07/14 00:51:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.14 2008/09/19 19:03:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,6 +152,9 @@ extern Datum ts_rankcd_tt(PG_FUNCTION_ARGS);
 extern Datum ts_rankcd_wtt(PG_FUNCTION_ARGS);
 extern Datum ts_rankcd_ttf(PG_FUNCTION_ARGS);
 extern Datum ts_rankcd_wttf(PG_FUNCTION_ARGS);
+
+extern Datum tsmatchsel(PG_FUNCTION_ARGS);
+extern Datum tsmatchjoinsel(PG_FUNCTION_ARGS);
 
 extern Datum ts_typanalyze(PG_FUNCTION_ARGS);
 

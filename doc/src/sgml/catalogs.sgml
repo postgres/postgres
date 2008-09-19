@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.174 2008/09/15 18:43:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.175 2008/09/19 19:03:40 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -6664,6 +6664,9 @@
        A list of the frequencies of the most common values or elements,
        i.e., number of occurrences of each divided by total number of rows.
        (NULL when <structfield>most_common_vals</structfield> is.)
+       For some datatypes such as <type>tsvector</>, it can also store some
+       additional information, making it longer than the
+       <structfield>most_common_vals</> array.
       </entry>
      </row>
 

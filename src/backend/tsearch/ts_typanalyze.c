@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_typanalyze.c,v 1.1 2008/07/14 00:51:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_typanalyze.c,v 1.2 2008/09/19 19:03:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,9 @@ static void compute_tsvector_stats(VacAttrStats *stats,
 static void prune_lexemes_hashtable(HTAB *lexemes_tab, int b_current);
 static uint32 lexeme_hash(const void *key, Size keysize);
 static int lexeme_match(const void *key1, const void *key2, Size keysize);
-static int trackitem_compare_desc(const void *e1, const void *e2);
+static int lexeme_compare(const void *key1, const void *key2);
+static int trackitem_compare_frequencies_desc(const void *e1, const void *e2);
+static int trackitem_compare_lexemes(const void *e1, const void *e2);
 
 
 /*
@@ -247,6 +249,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		int			i;
 		TrackItem	**sort_table;
 		int			track_len;
+		int			minfreq, maxfreq;
 
 		stats->stats_valid = true;
 		/* Do the simple null-frac and average width stats */
@@ -273,7 +276,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		Assert(i == track_len);
 
 		qsort(sort_table, track_len, sizeof(TrackItem *),
-			  trackitem_compare_desc);
+			  trackitem_compare_frequencies_desc);
 
 		/* Suppress any single-occurrence items */
 		while (track_len > 0)
@@ -287,6 +290,26 @@ compute_tsvector_stats(VacAttrStats *stats,
 		if (num_mcelem > track_len)
 			num_mcelem = track_len;
 
+		/* Grab the minimal and maximal frequencies that will get stored */
+		minfreq = sort_table[num_mcelem - 1]->frequency;
+		maxfreq = sort_table[0]->frequency;
+
+		/*
+		 * We want to store statistics sorted on the lexeme value using first
+		 * length, then byte-for-byte comparison. The reason for doing length
+		 * comparison first is that we don't care about the ordering so long
+		 * as it's consistent, and comparing lengths first gives us a chance
+		 * to avoid a strncmp() call.
+		 *
+		 * This is different from what we do with scalar statistics -- they get
+		 * sorted on frequencies. The rationale is that we usually search
+		 * through most common elements looking for a specific value, so we can
+		 * grab its frequency.  When values are presorted we can employ binary
+		 * search for that.  See ts_selfuncs.c for a real usage scenario.
+		 */
+		qsort(sort_table, num_mcelem, sizeof(TrackItem *),
+			  trackitem_compare_lexemes);
+
 		/* Generate MCELEM slot entry */
 		if (num_mcelem > 0)
 		{
@@ -296,8 +319,15 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 			/* Must copy the target values into anl_context */
 			old_context = MemoryContextSwitchTo(stats->anl_context);
+
+			/*
+			 * We sorted statistics on the lexeme value, but we want to be
+			 * able to find out the minimal and maximal frequency without
+			 * going through all the values.  We keep those two extra
+			 * frequencies in two extra cells in mcelem_freqs.
+			 */
 			mcelem_values = (Datum *) palloc(num_mcelem * sizeof(Datum));
-			mcelem_freqs = (float4 *) palloc(num_mcelem * sizeof(float4));
+			mcelem_freqs = (float4 *) palloc((num_mcelem + 2) * sizeof(float4));
 
 			for (i = 0; i < num_mcelem; i++)
 			{
@@ -308,12 +338,15 @@ compute_tsvector_stats(VacAttrStats *stats,
 															 item->key.length));
 				mcelem_freqs[i] = (double) item->frequency / (double) nonnull_cnt;
 			}
+			mcelem_freqs[i++] = (double) minfreq / (double) nonnull_cnt;
+			mcelem_freqs[i] = (double) maxfreq / (double) nonnull_cnt;
 			MemoryContextSwitchTo(old_context);
 
 			stats->stakind[0] = STATISTIC_KIND_MCELEM;
 			stats->staop[0] = TextEqualOperator;
 			stats->stanumbers[0] = mcelem_freqs;
-			stats->numnumbers[0] = num_mcelem;
+			/* See above comment about two extra frequency fields */
+			stats->numnumbers[0] = num_mcelem + 2;
 			stats->stavalues[0] = mcelem_values;
 			stats->numvalues[0] = num_mcelem;
 			/* We are storing text values */
@@ -379,25 +412,48 @@ lexeme_hash(const void *key, Size keysize)
 static int
 lexeme_match(const void *key1, const void *key2, Size keysize)
 {
-	const LexemeHashKey *d1 = (const LexemeHashKey *) key1;
-	const LexemeHashKey *d2 = (const LexemeHashKey *) key2;
-
-	/* The lexemes need to have the same length, and be memcmp-equal */
-	if (d1->length == d2->length &&
-		memcmp(d1->lexeme, d2->lexeme, d1->length) == 0)
-		return 0;
-	else
-		return 1;
+	/* The keysize parameter is superfluous, the keys store their lengths */
+	return lexeme_compare(key1, key2);
 }
 
 /*
- *	qsort() comparator for TrackItems - LC style (descending sort)
+ *	Comparison function for lexemes.
  */
 static int
-trackitem_compare_desc(const void *e1, const void *e2)
+lexeme_compare(const void *key1, const void *key2)
+{
+	const LexemeHashKey	*d1 = (const LexemeHashKey *) key1;
+	const LexemeHashKey	*d2 = (const LexemeHashKey *) key2;
+
+	/* First, compare by length */
+	if (d1->length > d2->length)
+		return 1;
+	else if (d1->length < d2->length)
+		return -1;
+	/* Lengths are equal, do a byte-by-byte comparison */
+	return strncmp(d1->lexeme, d2->lexeme, d1->length);
+}
+
+/*
+ *	qsort() comparator for sorting TrackItems on frequencies (descending sort)
+ */
+static int
+trackitem_compare_frequencies_desc(const void *e1, const void *e2)
 {
 	const TrackItem * const *t1 = (const TrackItem * const *) e1;
 	const TrackItem * const *t2 = (const TrackItem * const *) e2;
 
 	return (*t2)->frequency - (*t1)->frequency;
+}
+
+/*
+ *	qsort() comparator for sorting TrackItems on lexemes
+ */
+static int
+trackitem_compare_lexemes(const void *e1, const void *e2)
+{
+	const TrackItem * const *t1 = (const TrackItem * const *) e1;
+	const TrackItem * const *t2 = (const TrackItem * const *) e2;
+
+	return lexeme_compare(&(*t1)->key, &(*t2)->key);
 }

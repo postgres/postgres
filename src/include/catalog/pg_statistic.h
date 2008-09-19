@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.36 2008/07/14 00:51:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.37 2008/09/19 19:03:41 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -243,8 +243,12 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * values.  This is useful when the column datatype is an array or some other
  * type with identifiable elements (for instance, tsvector).  staop contains
  * the equality operator appropriate to the element type.  stavalues contains
- * the most common element values, and stanumbers their frequencies, with the
- * same rules as for MCV slots.
+ * the most common element values, and stanumbers their frequencies.  Unlike
+ * MCV slots, the values are sorted into order (to support binary search
+ * for a particular value).  Since this puts the minimum and maximum
+ * frequencies at unpredictable spots in stanumbers, there are two extra
+ * members of stanumbers, holding copies of the minimum and maximum
+ * frequencies.
  *
  * Note: in current usage for tsvector columns, the stavalues elements are of
  * type text, even though their representation within tsvector is not
