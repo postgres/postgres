@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.66 2008/01/02 23:34:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.66.2.1 2008/09/19 14:43:47 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ typedef struct TriggerData
 #define SESSION_REPLICATION_ROLE_ORIGIN		0
 #define SESSION_REPLICATION_ROLE_REPLICA	1
 #define SESSION_REPLICATION_ROLE_LOCAL		2
-extern int	SessionReplicationRole;
+extern PGDLLIMPORT int	SessionReplicationRole;
 
 #define TRIGGER_FIRES_ON_ORIGIN				'O'
 #define TRIGGER_FIRES_ALWAYS				'A'
