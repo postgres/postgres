@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.54 2008/08/25 11:18:43 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.55 2008/09/21 19:38:56 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -142,13 +142,10 @@ CREATE VIEW pg_stats AS
 REVOKE ALL on pg_statistic FROM public;
 
 CREATE VIEW pg_locks AS 
-    SELECT * 
-    FROM pg_lock_status() AS L;
+    SELECT * FROM pg_lock_status() AS L;
 
 CREATE VIEW pg_cursors AS
-    SELECT C.name, C.statement, C.is_holdable, C.is_binary,
-           C.is_scrollable, C.creation_time
-    FROM pg_cursor() AS C;
+    SELECT * FROM pg_cursor() AS C;
 
 CREATE VIEW pg_prepared_xacts AS
     SELECT P.transaction, P.gid, P.prepared,
@@ -158,12 +155,10 @@ CREATE VIEW pg_prepared_xacts AS
          LEFT JOIN pg_database D ON P.dbid = D.oid;
 
 CREATE VIEW pg_prepared_statements AS
-    SELECT P.name, P.statement, P.prepare_time, P.parameter_types, P.from_sql
-    FROM pg_prepared_statement() AS P;
+    SELECT * FROM pg_prepared_statement() AS P;
 
 CREATE VIEW pg_settings AS 
-    SELECT * 
-    FROM pg_show_all_settings() AS A; 
+    SELECT * FROM pg_show_all_settings() AS A; 
 
 CREATE RULE pg_settings_u AS 
     ON UPDATE TO pg_settings 
