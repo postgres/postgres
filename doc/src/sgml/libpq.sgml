@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.263 2008/09/19 20:06:13 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.264 2008/09/22 13:55:13 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -593,7 +593,7 @@ typedef struct
     char   *compiled;  /* Fallback compiled in default value */
     char   *val;       /* Option's current value, or NULL */
     char   *label;     /* Label for field in connect dialog */
-    char   *dispchar;  /* Character to display for this field
+    char   *dispchar;  /* Indicates how to display this field
                           in a connect dialog. Values are:
                           ""        Display entered value as is
                           "*"       Password field - hide value
@@ -622,6 +622,51 @@ typedef struct
       </para>
 
      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PQconninfoParse</function><indexterm><primary>PQconninfoParse</></></term>
+     <listitem>
+      <para>
+       Returns parsed connection options from the provided connection string.
+
+<synopsis>
+PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
+</synopsis>
+      </para>
+
+      <para>
+       Parses a connection string and returns the resulting options as an
+       array; or returns NULL if there is a problem with the connection
+       string.  This can be used to determine
+       the <function>PQconnectdb</function> options in the provided
+       connection string.  The return value points to an array of
+       <structname>PQconninfoOption</structname> structures, which ends
+       with an entry having a null <structfield>keyword</> pointer.
+      </para>
+
+      <para>
+       Note that only options explicitly specified in the string will have
+       values set in the result array; no defaults are inserted.
+      </para>
+
+      <para>
+       If <literal>errmsg</> is not NULL, then <literal>*errmsg</> is set
+       to NULL on success, else to a malloc'd error string explaining
+       the problem.  (It is also possible for <literal>*errmsg</> to be
+       set to NULL even when NULL is returned; this indicates an out-of-memory
+       situation.)
+      </para>
+
+      <para>
+       After processing the options array, free it by passing it to
+       <function>PQconninfoFree</function>.  If this is not done, some memory
+       is leaked for each call to <function>PQconninfoParse</function>.
+       Conversely, if an error occurs and <literal>errmsg</> is not NULL,
+       be sure to free the error string using <function>PQfreemem</>.
+      </para>
+
+   </listitem>
     </varlistentry>
 
     <varlistentry>
@@ -2985,39 +3030,6 @@ typedef struct {
       </para>
      </listitem>
     </varlistentry>
-
-    <varlistentry>
-     <term>
-      <function>PQfreemem</function>
-      <indexterm>
-       <primary>PQfreemem</primary>
-      </indexterm>
-     </term>
-
-     <listitem>
-      <para>
-       Frees memory allocated by <application>libpq</>.
-       <synopsis>
-        void PQfreemem(void *ptr);
-       </synopsis>
-      </para>
-
-      <para>
-       Frees memory allocated by <application>libpq</>, particularly
-       <function>PQescapeByteaConn</function>,
-       <function>PQescapeBytea</function>,
-       <function>PQunescapeBytea</function>,
-       and <function>PQnotifies</function>.
-       It is particularly important that this function, rather than
-       <function>free()</>, be used on Microsoft Windows.  This is because
-       allocating memory in a DLL and releasing it in the application works
-       only if multithreaded/single-threaded, release/debug, and static/dynamic
-       flags are the same for the DLL and the application.  On non-Microsoft
-       Windows platforms, this function is the same as the standard library
-       function <function>free()</>.
-      </para>
-     </listitem>
-    </varlistentry>
    </variablelist>
 
   </sect2>
@@ -4537,6 +4549,63 @@ char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>);
   </para>
 
   <variablelist>
+   <varlistentry>
+    <term>
+     <function>PQfreemem</function>
+     <indexterm>
+      <primary>PQfreemem</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Frees memory allocated by <application>libpq</>.
+      <synopsis>
+       void PQfreemem(void *ptr);
+      </synopsis>
+     </para>
+
+     <para>
+      Frees memory allocated by <application>libpq</>, particularly
+      <function>PQescapeByteaConn</function>,
+      <function>PQescapeBytea</function>,
+      <function>PQunescapeBytea</function>,
+      and <function>PQnotifies</function>.
+      It is particularly important that this function, rather than
+      <function>free()</>, be used on Microsoft Windows.  This is because
+      allocating memory in a DLL and releasing it in the application works
+      only if multithreaded/single-threaded, release/debug, and static/dynamic
+      flags are the same for the DLL and the application.  On non-Microsoft
+      Windows platforms, this function is the same as the standard library
+      function <function>free()</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>PQconninfoFree</function>
+     <indexterm>
+      <primary>PQconninfoFree</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Frees the data structures allocated by
+      <function>PQconndefaults</> or <function>PQconninfoParse</>.
+      <synopsis>
+       void PQconninfoFree(PQconninfoOption *connOptions);
+      </synopsis>
+     </para>
+
+     <para>
+      A simple <function>PQfreemem</function> will not do for this, since
+      the array contains references to subsidiary strings.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term>
      <function>PQencryptPassword</function>

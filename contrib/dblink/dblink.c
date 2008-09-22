@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.74 2008/07/03 03:56:57 joe Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.75 2008/09/22 13:55:13 tgl Exp $
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -93,6 +93,7 @@ static int16 get_attnum_pk_pos(int2vector *pkattnums, int16 pknumatts, int16 key
 static HeapTuple get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals);
 static Oid	get_relid_from_relname(text *relname_text);
 static char *generate_relation_name(Oid relid);
+static void dblink_connstr_check(const char *connstr);
 static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_msg, bool fail);
 
@@ -165,6 +166,7 @@ typedef struct remoteConnHashEnt
 			else \
 			{ \
 				connstr = conname_or_str; \
+				dblink_connstr_check(connstr); \
 				conn = PQconnectdb(connstr); \
 				if (PQstatus(conn) == CONNECTION_BAD) \
 				{ \
@@ -229,6 +231,9 @@ dblink_connect(PG_FUNCTION_ARGS)
 
 	if (connname)
 		rconn = (remoteConn *) palloc(sizeof(remoteConn));
+
+	/* check password in connection string if not superuser */
+	dblink_connstr_check(connstr);
 	conn = PQconnectdb(connstr);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -246,7 +251,7 @@ dblink_connect(PG_FUNCTION_ARGS)
 				 errdetail("%s", msg)));
 	}
 
-	/* check password used if not superuser */
+	/* check password actually used if not superuser */
 	dblink_security_check(conn, rconn);
 
 	if (connname)
@@ -2248,6 +2253,46 @@ dblink_security_check(PGconn *conn, remoteConn *rconn)
 				   errdetail("Non-superuser cannot connect if the server does not request a password."),
 				   errhint("Target server's authentication method must be changed.")));
 		}
+	}
+}
+
+/*
+ * For non-superusers, insist that the connstr specify a password.  This
+ * prevents a password from being picked up from .pgpass, a service file,
+ * the environment, etc.  We don't want the postgres user's passwords
+ * to be accessible to non-superusers.
+ */
+static void
+dblink_connstr_check(const char *connstr)
+{
+	if (!superuser())
+	{
+		PQconninfoOption   *options;
+		PQconninfoOption   *option;
+		bool				connstr_gives_password = false;
+
+		options = PQconninfoParse(connstr, NULL);
+		if (options)
+		{
+			for (option = options; option->keyword != NULL; option++)
+			{
+				if (strcmp(option->keyword, "password") == 0)
+				{
+					if (option->val != NULL && option->val[0] != '\0')
+					{
+						connstr_gives_password = true;
+						break;
+					}
+				}
+			}
+			PQconninfoFree(options);
+		}
+
+		if (!connstr_gives_password)
+			ereport(ERROR,
+					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+					 errmsg("password is required"),
+					 errdetail("Non-superusers must provide a password in the connection string.")));
 	}
 }
 

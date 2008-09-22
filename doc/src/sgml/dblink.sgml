@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.4 2008/04/04 16:57:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.5 2008/09/22 13:55:13 tgl Exp $ -->
 
 <sect1 id="dblink">
  <title>dblink</title>
@@ -140,12 +140,19 @@
     involve a password, then impersonation and subsequent escalation of
     privileges can occur, because the session will appear to have
     originated from the user as which the local <productname>PostgreSQL</>
-    server runs.  Therefore, <function>dblink_connect_u()</> is initially
+    server runs.  Also, even if the remote server does demand a password,
+    it is possible for the password to be supplied from the server
+    environment, such as a <filename>~/.pgpass</> file belonging to the
+    server's user.  This opens not only a risk of impersonation, but the
+    possibility of exposing a password to an untrustworthy remote server.
+    Therefore, <function>dblink_connect_u()</> is initially
     installed with all privileges revoked from <literal>PUBLIC</>,
     making it un-callable except by superusers.  In some situations
     it may be appropriate to grant <literal>EXECUTE</> permission for
     <function>dblink_connect_u()</> to specific users who are considered
-    trustworthy, but this should be done with care.
+    trustworthy, but this should be done with care.  It is also recommended
+    that any <filename>~/.pgpass</> file belonging to the server's user
+    <emphasis>not</> contain any records specifying a wildcard host name.
    </para>
 
    <para>
