@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.361 2008/09/22 13:55:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.362 2008/09/22 14:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,8 +232,7 @@ static PGconn *makeEmptyPGconn(void);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
-			   PQExpBuffer errorMessage, bool use_defaults,
-			   bool *password_from_string);
+			   PQExpBuffer errorMessage, bool use_defaults);
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
 static void defaultNoticeReceiver(void *arg, const PGresult *res);
@@ -377,8 +376,7 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	/*
 	 * Parse the conninfo string
 	 */
-	connOptions = conninfo_parse(conninfo, &conn->errorMessage, true,
-								 &conn->pgpass_from_client);
+	connOptions = conninfo_parse(conninfo, &conn->errorMessage, true);
 	if (connOptions == NULL)
 	{
 		conn->status = CONNECTION_BAD;
@@ -474,7 +472,6 @@ connectOptions2(PGconn *conn)
 										conn->dbName, conn->pguser);
 		if (conn->pgpass == NULL)
 			conn->pgpass = strdup(DefaultPassword);
-		conn->pgpass_from_client = false;
 	}
 
 	/*
@@ -560,14 +557,12 @@ PQconninfoOption *
 PQconndefaults(void)
 {
 	PQExpBufferData errorBuf;
-	bool		password_from_string;
 	PQconninfoOption *connOptions;
 
 	initPQExpBuffer(&errorBuf);
 	if (errorBuf.data == NULL)
 		return NULL;			/* out of memory already :-( */
-	connOptions = conninfo_parse("", &errorBuf, true,
-								 &password_from_string);
+	connOptions = conninfo_parse("", &errorBuf, true);
 	termPQExpBuffer(&errorBuf);
 	return connOptions;
 }
@@ -668,7 +663,6 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pgpass)
 			free(conn->pgpass);
 		conn->pgpass = strdup(pwd);
-		conn->pgpass_from_client = true;
 	}
 
 	/*
@@ -3127,7 +3121,6 @@ PQconninfoOption *
 PQconninfoParse(const char *conninfo, char **errmsg)
 {
 	PQExpBufferData errorBuf;
-	bool		password_from_string;
 	PQconninfoOption *connOptions;
 
 	if (errmsg)
@@ -3135,8 +3128,7 @@ PQconninfoParse(const char *conninfo, char **errmsg)
 	initPQExpBuffer(&errorBuf);
 	if (errorBuf.data == NULL)
 		return NULL;			/* out of memory already :-( */
-	connOptions = conninfo_parse(conninfo, &errorBuf, false,
-								 &password_from_string);
+	connOptions = conninfo_parse(conninfo, &errorBuf, false);
 	if (connOptions == NULL && errmsg)
 		*errmsg = errorBuf.data;
 	else
@@ -3152,12 +3144,10 @@ PQconninfoParse(const char *conninfo, char **errmsg)
  * left in errorMessage.
  * Defaults are supplied (from a service file, environment variables, etc)
  * for unspecified options, but only if use_defaults is TRUE.
- * *password_from_string is set TRUE if we got a password from the
- * conninfo string, otherwise FALSE.
  */
 static PQconninfoOption *
 conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
-			   bool use_defaults, bool *password_from_string)
+			   bool use_defaults)
 {
 	char	   *pname;
 	char	   *pval;
@@ -3167,8 +3157,6 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
 	char	   *cp2;
 	PQconninfoOption *options;
 	PQconninfoOption *option;
-
-	*password_from_string = false;			/* default result */
 
 	/* Make a working copy of PQconninfoOptions */
 	options = malloc(sizeof(PQconninfoOptions));
@@ -3326,12 +3314,6 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
 			free(buf);
 			return NULL;
 		}
-
-		/*
-		 * Special handling for password
-		 */
-		if (strcmp(option->keyword, "password") == 0)
-			*password_from_string = (option->val[0] != '\0');
 	}
 
 	/* Done with the modifiable input string */
@@ -3597,7 +3579,7 @@ PQconnectionUsedPassword(const PGconn *conn)
 {
 	if (!conn)
 		return false;
-	if (conn->password_needed && conn->pgpass_from_client)
+	if (conn->password_needed)
 		return true;
 	else
 		return false;

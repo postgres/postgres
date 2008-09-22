@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.264 2008/09/22 13:55:13 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.265 2008/09/22 14:21:44 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -1201,7 +1201,6 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
        <synopsis>
         int PQconnectionNeedsPassword(const PGconn *conn);
        </synopsis>
-
       </para>
 
       <para>
@@ -1216,19 +1215,16 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
      <listitem>
       <para>
        Returns true (1) if the connection authentication method
-       used a caller-supplied password. Returns false (0) if not.
+       used a password. Returns false (0) if not.
 
        <synopsis>
         int PQconnectionUsedPassword(const PGconn *conn);
        </synopsis>
-
       </para>
 
       <para>
-       This function detects whether a password supplied to the connection
-       function was actually used.  Passwords obtained from other
-       sources (such as the <filename>.pgpass</> file) are not considered
-       caller-supplied.
+       This function can be applied after either a failed or successful
+       connection attempt to detect whether the server demanded a password.
       </para>
      </listitem>
     </varlistentry>
