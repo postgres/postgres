@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.185 2008/09/11 14:01:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.186 2008/09/23 09:20:36 heikki Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -159,6 +159,8 @@ CheckMyDatabase(const char *name, bool am_superuser)
 {
 	HeapTuple	tup;
 	Form_pg_database dbform;
+	char	   *collate;
+	char	   *ctype;
 
 	/* Fetch our real pg_database row */
 	tup = SearchSysCache(DATABASEOID,
@@ -240,6 +242,28 @@ CheckMyDatabase(const char *name, bool am_superuser)
 	/* If we have no other source of client_encoding, use server encoding */
 	SetConfigOption("client_encoding", GetDatabaseEncodingName(),
 					PGC_BACKEND, PGC_S_DEFAULT);
+	
+	/* assign locale variables */ 
+	collate = NameStr(dbform->datcollate);
+	ctype = NameStr(dbform->datctype);
+					
+	if (setlocale(LC_COLLATE, collate) == NULL)
+		ereport(FATAL, 
+			(errmsg("database locale is incompatible with operating system"),
+			errdetail("The database was initialized with LC_COLLATE \"%s\", "
+						" which is not recognized by setlocale().", collate),
+			errhint("Recreate the database with another locale or install the missing locale.")));
+			
+	if (setlocale(LC_CTYPE, ctype) == NULL)
+		ereport(FATAL, 
+			(errmsg("database locale is incompatible with operating system"),
+			errdetail("The database was initialized with LC_CTYPE \"%s\", "
+						" which is not recognized by setlocale().", ctype),
+			errhint("Recreate the database with another locale or install the missing locale.")));
+			
+	/* Make the locale settings visible as GUC variables, too */
+	SetConfigOption("lc_collate", collate, PGC_INTERNAL, PGC_S_OVERRIDE);
+	SetConfigOption("lc_ctype", ctype, PGC_INTERNAL, PGC_S_OVERRIDE);
 
 	/*
 	 * Lastly, set up any database-specific configuration variables.

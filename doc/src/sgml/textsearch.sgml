@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.44 2008/05/16 16:31:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.45 2008/09/23 09:20:34 heikki Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -1896,7 +1896,7 @@ LIMIT 10;
 
   <note>
    <para>
-    The parser's notion of a <quote>letter</> is determined by the server's
+    The parser's notion of a <quote>letter</> is determined by the database's
     locale setting, specifically <varname>lc_ctype</>.  Words containing
     only the basic ASCII letters are reported as a separate token type,
     since it is sometimes useful to distinguish them.  In most European

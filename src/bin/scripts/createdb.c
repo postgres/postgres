@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.26 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.27 2008/09/23 09:20:38 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,8 @@ main(int argc, char *argv[])
 		{"tablespace", required_argument, NULL, 'D'},
 		{"template", required_argument, NULL, 'T'},
 		{"encoding", required_argument, NULL, 'E'},
+		{"lc-collate", required_argument, NULL, 1},
+		{"lc-ctype", required_argument, NULL, 2},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -50,6 +52,8 @@ main(int argc, char *argv[])
 	char	   *tablespace = NULL;
 	char	   *template = NULL;
 	char	   *encoding = NULL;
+	char	   *lc_collate = NULL;
+	char	   *lc_ctype = NULL;
 
 	PQExpBufferData sql;
 
@@ -94,6 +98,12 @@ main(int argc, char *argv[])
 				break;
 			case 'E':
 				encoding = optarg;
+				break;
+			case 1:
+				lc_collate = optarg;
+				break;
+			case 2:
+				lc_ctype = optarg;
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -152,6 +162,11 @@ main(int argc, char *argv[])
 		appendPQExpBuffer(&sql, " ENCODING '%s'", encoding);
 	if (template)
 		appendPQExpBuffer(&sql, " TEMPLATE %s", fmtId(template));
+	if (lc_collate)
+		appendPQExpBuffer(&sql, " COLLATE '%s'", lc_collate);
+	if (lc_ctype)
+		appendPQExpBuffer(&sql, " CTYPE '%s'", lc_ctype);
+
 	appendPQExpBuffer(&sql, ";\n");
 
 	conn = connectDatabase(strcmp(dbname, "postgres") == 0 ? "template1" : "postgres",
@@ -209,6 +224,8 @@ help(const char *progname)
 	printf(_("\nOptions:\n"));
 	printf(_("  -D, --tablespace=TABLESPACE  default tablespace for the database\n"));
 	printf(_("  -E, --encoding=ENCODING      encoding for the database\n"));
+	printf(_("  --lc-collate=LOCALE          LC_COLLATE setting for the database\n"));
+	printf(_("  --lc-ctype=LOCALE            LC_CTYPE setting for the database\n"));
 	printf(_("  -O, --owner=OWNER            database user to own the new database\n"));
 	printf(_("  -T, --template=TEMPLATE      template database to copy\n"));
 	printf(_("  -e, --echo                   show the commands being sent to the server\n"));

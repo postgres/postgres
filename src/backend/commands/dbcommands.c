@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.210 2008/08/04 18:03:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.211 2008/09/23 09:20:35 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/pg_locale.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
@@ -69,7 +70,7 @@ static bool get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
 			Oid *dbLastSysOidP, TransactionId *dbFrozenXidP,
-			Oid *dbTablespace);
+			Oid *dbTablespace, char **dbCollate, char **dbCtype);
 static bool have_createdb_privilege(void);
 static void remove_dbtablespaces(Oid db_id);
 static bool check_db_file_conflict(Oid db_id);
@@ -87,6 +88,8 @@ createdb(const CreatedbStmt *stmt)
 	Oid			src_dboid;
 	Oid			src_owner;
 	int			src_encoding;
+	char	   *src_collate;
+	char	   *src_ctype;
 	bool		src_istemplate;
 	bool		src_allowconn;
 	Oid			src_lastsysoid;
@@ -104,10 +107,14 @@ createdb(const CreatedbStmt *stmt)
 	DefElem    *downer = NULL;
 	DefElem    *dtemplate = NULL;
 	DefElem    *dencoding = NULL;
+	DefElem    *dcollate = NULL;
+	DefElem    *dctype = NULL;
 	DefElem    *dconnlimit = NULL;
 	char	   *dbname = stmt->dbname;
 	char	   *dbowner = NULL;
 	const char *dbtemplate = NULL;
+	char	   *dbcollate = NULL;
+	char	   *dbctype = NULL;
 	int			encoding = -1;
 	int			dbconnlimit = -1;
 	int			ctype_encoding;
@@ -151,6 +158,22 @@ createdb(const CreatedbStmt *stmt)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			dencoding = defel;
+		}
+		else if (strcmp(defel->defname, "collate") == 0)
+		{
+			if (dcollate)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dcollate = defel;
+		}
+		else if (strcmp(defel->defname, "ctype") == 0)
+		{
+			if (dctype)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dctype = defel;
 		}
 		else if (strcmp(defel->defname, "connectionlimit") == 0)
 		{
@@ -205,6 +228,11 @@ createdb(const CreatedbStmt *stmt)
 			elog(ERROR, "unrecognized node type: %d",
 				 nodeTag(dencoding->arg));
 	}
+	if (dcollate && dcollate->arg)
+		dbcollate = strVal(dcollate->arg);
+	if (dctype && dctype->arg)
+		dbctype = strVal(dctype->arg);
+
 	if (dconnlimit && dconnlimit->arg)
 		dbconnlimit = intVal(dconnlimit->arg);
 
@@ -243,7 +271,8 @@ createdb(const CreatedbStmt *stmt)
 	if (!get_db_info(dbtemplate, ShareLock,
 					 &src_dboid, &src_owner, &src_encoding,
 					 &src_istemplate, &src_allowconn, &src_lastsysoid,
-					 &src_frozenxid, &src_deftablespace))
+					 &src_frozenxid, &src_deftablespace,
+					 &src_collate, &src_ctype))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("template database \"%s\" does not exist",
@@ -262,15 +291,29 @@ createdb(const CreatedbStmt *stmt)
 							dbtemplate)));
 	}
 
-	/* If encoding is defaulted, use source's encoding */
+	/* If encoding or locales are defaulted, use source's setting */
 	if (encoding < 0)
 		encoding = src_encoding;
+	if (dbcollate == NULL)
+		dbcollate = src_collate;
+	if (dbctype == NULL)
+		dbctype = src_ctype;
 
 	/* Some encodings are client only */
 	if (!PG_VALID_BE_ENCODING(encoding))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("invalid server encoding %d", encoding)));
+
+	/* Check that the chosen locales are valid */
+	if (!check_locale(LC_COLLATE, dbcollate))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("invalid locale name %s", dbcollate)));
+	if (!check_locale(LC_CTYPE, dbctype))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("invalid locale name %s", dbctype)));
 
 	/*
 	 * Check whether encoding matches server locale settings.  We allow
@@ -290,7 +333,7 @@ createdb(const CreatedbStmt *stmt)
 	 *
 	 * Note: if you change this policy, fix initdb to match.
 	 */
-	ctype_encoding = pg_get_encoding_from_locale(NULL);
+	ctype_encoding = pg_get_encoding_from_locale(dbctype);
 
 	if (!(ctype_encoding == encoding ||
 		  ctype_encoding == PG_SQL_ASCII ||
@@ -299,11 +342,31 @@ createdb(const CreatedbStmt *stmt)
 #endif
 		  (encoding == PG_SQL_ASCII && superuser())))
 		ereport(ERROR,
-				(errmsg("encoding %s does not match server's locale %s",
+				(errmsg("encoding %s does not match locale %s",
 						pg_encoding_to_char(encoding),
-						setlocale(LC_CTYPE, NULL)),
-			 errdetail("The server's LC_CTYPE setting requires encoding %s.",
+						dbctype),
+			 errdetail("The chosen LC_CTYPE setting requires encoding %s.",
 					   pg_encoding_to_char(ctype_encoding))));
+
+	/*
+	 * Check that the new locale is compatible with the source database.
+	 *
+	 * We know that template0 doesn't contain any indexes that depend on
+	 * collation or ctype, so template0 can be used as template for
+	 * any locale.
+	 */
+	if (strcmp(dbtemplate, "template0") != 0)
+	{
+		if (strcmp(dbcollate, src_collate))
+			ereport(ERROR,
+					(errmsg("new collation is incompatible with the collation of the template database (%s)", src_collate),
+					 errhint("Use the same collation as in the template database, or use template0 as template")));
+
+		if (strcmp(dbctype, src_ctype))
+			ereport(ERROR,
+					(errmsg("new ctype is incompatible with the ctype of the template database (%s)", src_ctype),
+					 errhint("Use the same ctype as in the template database, or use template0 as template")));
+	}
 
 	/* Resolve default tablespace for new database */
 	if (dtablespacename && dtablespacename->arg)
@@ -421,6 +484,10 @@ createdb(const CreatedbStmt *stmt)
 		DirectFunctionCall1(namein, CStringGetDatum(dbname));
 	new_record[Anum_pg_database_datdba - 1] = ObjectIdGetDatum(datdba);
 	new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
+	new_record[Anum_pg_database_datcollate - 1] =
+		DirectFunctionCall1(namein, CStringGetDatum(dbcollate));
+	new_record[Anum_pg_database_datctype - 1] =
+		DirectFunctionCall1(namein, CStringGetDatum(dbctype));
 	new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(false);
 	new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(true);
 	new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(dbconnlimit);
@@ -629,7 +696,7 @@ dropdb(const char *dbname, bool missing_ok)
 	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 &db_istemplate, NULL, NULL, NULL, NULL))
+					 &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL))
 	{
 		if (!missing_ok)
 		{
@@ -781,7 +848,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(oldname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 NULL, NULL, NULL, NULL, NULL))
+					 NULL, NULL, NULL, NULL, NULL, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", oldname)));
@@ -1168,7 +1235,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
 			Oid *dbLastSysOidP, TransactionId *dbFrozenXidP,
-			Oid *dbTablespace)
+			Oid *dbTablespace, char **dbCollate, char **dbCtype)
 {
 	bool		result = false;
 	Relation	relation;
@@ -1259,6 +1326,11 @@ get_db_info(const char *name, LOCKMODE lockmode,
 				/* default tablespace for this database */
 				if (dbTablespace)
 					*dbTablespace = dbform->dattablespace;
+ 				/* default locale settings for this database */
+ 				if (dbCollate)
+ 					*dbCollate = pstrdup(NameStr(dbform->datcollate));
+ 				if (dbCtype)
+ 					*dbCtype = pstrdup(NameStr(dbform->datctype));
 				ReleaseSysCache(tuple);
 				result = true;
 				break;

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.74 2008/07/11 21:06:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.75 2008/09/23 09:20:34 heikki Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -157,7 +157,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    <emphasis>if</emphasis> the pattern is a constant and is anchored to
    the beginning of the string &mdash; for example, <literal>col LIKE
    'foo%'</literal> or <literal>col ~ '^foo'</literal>, but not
-   <literal>col LIKE '%bar'</literal>. However, if your server does not
+   <literal>col LIKE '%bar'</literal>. However, if your database does not
    use the C locale you will need to create the index with a special
    operator class to support indexing of pattern-matching queries. See
    <xref linkend="indexes-opclass"> below. It is also possible to use
@@ -922,7 +922,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
       according to the locale-specific collation rules.  This makes
       these operator classes suitable for use by queries involving
       pattern matching expressions (<literal>LIKE</literal> or POSIX
-      regular expressions) when the server does not use the standard
+      regular expressions) when the database does not use the standard
       <quote>C</quote> locale.  As an example, you might index a
       <type>varchar</type> column like this:
 <programlisting>

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.106 2008/08/29 17:28:43 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.107 2008/09/23 09:20:38 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -925,11 +925,22 @@ dumpCreateDB(PGconn *conn)
 
 	fprintf(OPF, "--\n-- Database creation\n--\n\n");
 
-	if (server_version >= 80100)
+	if (server_version >= 80400)
 		res = executeQuery(conn,
 						   "SELECT datname, "
 						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
+						   "datcollate, datctype, "
+						   "datistemplate, datacl, datconnlimit, "
+						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
+			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
+						   "WHERE datallowconn ORDER BY 1");
+	else if (server_version >= 80100)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, "
 						   "datistemplate, datacl, datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
@@ -939,6 +950,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, "
 						   "datistemplate, datacl, -1 as datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
@@ -948,6 +960,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, "
 						   "datistemplate, datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
 		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
@@ -959,6 +972,7 @@ dumpCreateDB(PGconn *conn)
 					"(select usename from pg_shadow where usesysid=datdba), "
 						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, "
 						   "datistemplate, '' as datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
 						   "FROM pg_database d "
@@ -973,6 +987,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 					"(select usename from pg_shadow where usesysid=datdba), "
 						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, "
 						   "'f' as datistemplate, "
 						   "'' as datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
@@ -985,10 +1000,12 @@ dumpCreateDB(PGconn *conn)
 		char	   *dbname = PQgetvalue(res, i, 0);
 		char	   *dbowner = PQgetvalue(res, i, 1);
 		char	   *dbencoding = PQgetvalue(res, i, 2);
-		char	   *dbistemplate = PQgetvalue(res, i, 3);
-		char	   *dbacl = PQgetvalue(res, i, 4);
-		char	   *dbconnlimit = PQgetvalue(res, i, 5);
-		char	   *dbtablespace = PQgetvalue(res, i, 6);
+		char	   *dbcollate = PQgetvalue(res, i, 3);
+		char	   *dbctype = PQgetvalue(res, i, 4);
+		char	   *dbistemplate = PQgetvalue(res, i, 5);
+		char	   *dbacl = PQgetvalue(res, i, 6);
+		char	   *dbconnlimit = PQgetvalue(res, i, 7);
+		char	   *dbtablespace = PQgetvalue(res, i, 8);
 		char	   *fdbname;
 
 		fdbname = strdup(fmtId(dbname));
@@ -1015,6 +1032,18 @@ dumpCreateDB(PGconn *conn)
 
 			appendPQExpBuffer(buf, " ENCODING = ");
 			appendStringLiteralConn(buf, dbencoding, conn);
+
+			if (strlen(dbcollate) != 0)
+			{
+				appendPQExpBuffer(buf, " COLLATE = ");
+				appendStringLiteralConn(buf, dbcollate, conn);
+			}
+
+			if (strlen(dbctype) != 0)
+			{
+				appendPQExpBuffer(buf, " CTYPE = ");
+				appendStringLiteralConn(buf, dbctype, conn);
+			}
 
 			/*
 			 * Output tablespace if it isn't the default.  For default, it

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.103 2008/02/15 22:17:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.104 2008/09/23 09:20:35 heikki Exp $
 PostgreSQL documentation
 -->
 
@@ -747,8 +747,7 @@ SELECT name FROM distributors ORDER BY code;
 
    <para>
     Character-string data is sorted according to the locale-specific
-    collation order that was established when the database cluster
-    was initialized.
+    collation order that was established when the database was created.
    </para>
   </refsect2>
 

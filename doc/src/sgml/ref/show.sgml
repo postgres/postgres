@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.45 2008/01/03 21:23:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.46 2008/09/23 09:20:35 heikki Exp $
 PostgreSQL documentation
 -->
 
@@ -82,8 +82,8 @@ SHOW ALL
          <para>
           Shows the database's locale setting for collation (text
           ordering).  At present, this parameter can be shown but not
-          set, because the setting is determined at
-          <command>initdb</> time.
+          set, because the setting is determined at database creation
+          time.
          </para>
         </listitem>
        </varlistentry>
@@ -94,8 +94,8 @@ SHOW ALL
          <para>
           Shows the database's locale setting for character
           classification.  At present, this parameter can be shown but
-          not set, because the setting is determined at
-          <command>initdb</> time.
+          not set, because the setting is determined at database creation
+          time.
          </para>
         </listitem>
        </varlistentry>

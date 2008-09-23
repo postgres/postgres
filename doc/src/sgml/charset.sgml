@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.87 2008/07/15 17:45:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.88 2008/09/23 09:20:34 heikki Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -130,23 +130,23 @@ initdb --locale=sv_SE
 
    <para>
     The nature of some locale categories is that their value has to be
-    fixed for the lifetime of a database cluster.  That is, once
-    <command>initdb</command> has run, you cannot change them anymore.
-    <literal>LC_COLLATE</literal> and <literal>LC_CTYPE</literal> are
-    those categories.  They affect the sort order of indexes, so they
-    must be kept fixed, or indexes on text columns will become corrupt.
-    <productname>PostgreSQL</productname> enforces this by recording
-    the values of <envar>LC_COLLATE</> and <envar>LC_CTYPE</> that are
-    seen by <command>initdb</>.  The server automatically adopts
-    those two values when it is started.
+    fixed when the database is created.  You can use different settings
+    for different databases, but once a database is created, you cannot
+    change them for that database anymore. <literal>LC_COLLATE</literal>
+    and <literal>LC_CTYPE</literal> are those categories.  They affect
+    the sort order of indexes, so they must be kept fixed, or indexes on
+    text columns will become corrupt.  The default values for these
+    categories are defined when <command>initdb</command> is run, and
+    those values are used when new databases are created, unless
+    specified otherwise in the <command>CREATE DATABASE</command> command.
    </para>
 
    <para>
     The other locale categories can be changed as desired whenever the
     server is running by setting the run-time configuration variables
     that have the same name as the locale categories (see <xref
-    linkend="runtime-config-client-format"> for details).  The defaults that are
-    chosen by <command>initdb</command> are actually only written into
+    linkend="runtime-config-client-format"> for details).  The defaults
+    that are chosen by <command>initdb</command> are actually only written into
     the configuration file <filename>postgresql.conf</filename> to
     serve as defaults when the server is started.  If you delete these
     assignments from <filename>postgresql.conf</filename> then the
@@ -261,7 +261,7 @@ initdb --locale=sv_SE
 
    <para>
     Check that <productname>PostgreSQL</> is actually using the locale
-    that you think it is.  <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
+    that you think it is.  The default <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
     settings are determined at <command>initdb</> time and cannot be
     changed without repeating <command>initdb</>.  Other locale
     settings including <envar>LC_MESSAGES</> and <envar>LC_MONETARY</>
@@ -319,17 +319,11 @@ initdb --locale=sv_SE
   </para>
 
   <para>
-   An important restriction, however, is that each database character set
-   must be compatible with the server's <envar>LC_CTYPE</> setting.
+   An important restriction, however, is that each database's character set
+   must be compatible with the database's <envar>LC_CTYPE</> setting.
    When <envar>LC_CTYPE</> is <literal>C</> or <literal>POSIX</>, any
    character set is allowed, but for other settings of <envar>LC_CTYPE</>
    there is only one character set that will work correctly.
-   Since the <envar>LC_CTYPE</> setting is frozen by <command>initdb</>, the
-   apparent flexibility to use different encodings in different databases
-   of a cluster is more theoretical than real, except when you select
-   <literal>C</> or <literal>POSIX</> locale (thus disabling any real locale
-   awareness).  It is likely that these mechanisms will be revisited in future
-   versions of <productname>PostgreSQL</productname>.
   </para>
 
    <sect2 id="multibyte-charset-supported">
@@ -734,19 +728,19 @@ initdb -E EUC_JP
     </para>
 
     <para>
-     If you have selected <literal>C</> or <literal>POSIX</> locale,
-     you can create a database with a different character set:
+     You can specify a non-default encoding at database creation time,
+     provided that the encoding is compatible with the selected locale:
 
 <screen>
-createdb -E EUC_KR korean
+createdb -E EUC_KR -T template0 --lc-collate=ko_KR.euckr --lc-ctype=ko_KR.euckr korean
 </screen>
 
      This will create a database named <literal>korean</literal> that
-     uses the character set <literal>EUC_KR</literal>.  Another way to
-     accomplish this is to use this SQL command:
+     uses the character set <literal>EUC_KR</literal>, and locale <literal>ko_KR</literal>.
+     Another way to accomplish this is to use this SQL command:
 
 <programlisting>
-CREATE DATABASE korean WITH ENCODING 'EUC_KR';
+CREATE DATABASE korean WITH ENCODING 'EUC_KR' COLLATE='ko_KR.euckr' CTYPE='ko_KR.euckr' TEMPLATE=template0;
 </programlisting>
 
      The encoding for a database is stored in the system catalog
@@ -756,20 +750,17 @@ CREATE DATABASE korean WITH ENCODING 'EUC_KR';
 
 <screen>
 $ <userinput>psql -l</userinput>
-            List of databases
-   Database    |  Owner  |   Encoding    
----------------+---------+---------------
- euc_cn        | t-ishii | EUC_CN
- euc_jp        | t-ishii | EUC_JP
- euc_kr        | t-ishii | EUC_KR
- euc_tw        | t-ishii | EUC_TW
- mule_internal | t-ishii | MULE_INTERNAL
- postgres      | t-ishii | EUC_JP
- regression    | t-ishii | SQL_ASCII
- template1     | t-ishii | EUC_JP
- test          | t-ishii | EUC_JP
- utf8          | t-ishii | UTF8
-(9 rows)
+                                         List of databases
+   Name    |  Owner   | Encoding  |  Collation  |    Ctype    |          Access Privileges          
+-----------+----------+-----------+-------------+-------------+-------------------------------------
+ clocaledb | hlinnaka | SQL_ASCII | C           | C           | 
+ englishdb | hlinnaka | UTF8      | en_GB.UTF8  | en_GB.UTF8  | 
+ japanese  | hlinnaka | UTF8      | ja_JP.UTF8  | ja_JP.UTF8  | 
+ korean    | hlinnaka | EUC_KR    | ko_KR.euckr | ko_KR.euckr | 
+ postgres  | hlinnaka | UTF8      | fi_FI.UTF8  | fi_FI.UTF8  | 
+ template0 | hlinnaka | UTF8      | fi_FI.UTF8  | fi_FI.UTF8  | {=c/hlinnaka,hlinnaka=CTc/hlinnaka}
+ template1 | hlinnaka | UTF8      | fi_FI.UTF8  | fi_FI.UTF8  | {=c/hlinnaka,hlinnaka=CTc/hlinnaka}
+(7 rows)
 </screen>
     </para>
 

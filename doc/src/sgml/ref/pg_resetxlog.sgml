@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.20 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.21 2008/09/23 09:20:35 heikki Exp $
 PostgreSQL documentation
 -->
 
@@ -62,14 +62,10 @@ PostgreSQL documentation
    by specifying the <literal>-f</> (force) switch.  In this case plausible
    values will be substituted for the missing data.  Most of the fields can be
    expected to match, but manual assistance might be needed for the next OID,
-   next transaction ID and epoch, next multitransaction ID and offset,
-   WAL starting address, and database locale fields.
-   The first six of these can be set using the switches discussed below.
-   <command>pg_resetxlog</command>'s own environment is the source for its
-   guess at the locale fields; take care that <envar>LANG</> and so forth
-   match the environment that <command>initdb</> was run in.
-   If you are not able to determine correct values for all these fields,
-   <literal>-f</> can still be used, but
+   next transaction ID and epoch, next multitransaction ID and offset, and
+   WAL starting address fields. These fields can be set using the switches
+   discussed below. If you are not able to determine correct values for all
+   these fields, <literal>-f</> can still be used, but
    the recovered database must be treated with even more suspicion than
    usual: an immediate dump and reload is imperative.  <emphasis>Do not</>
    execute any data-modifying operations in the database before you dump,

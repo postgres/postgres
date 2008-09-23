@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.416 2008/04/26 22:47:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.417 2008/09/23 09:20:34 heikki Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -145,11 +145,12 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    Normally, it will just take the locale settings in the environment
    and apply them to the initialized database.  It is possible to
    specify a different locale for the database; more information about
-   that can be found in <xref linkend="locale">.  The sort order used
-   within a particular database cluster is set by
-   <command>initdb</command> and cannot be changed later, short of
-   dumping all data, rerunning <command>initdb</command>, and reloading
-   the data. There is also a performance impact for using locales
+   that can be found in <xref linkend="locale">.  The default sort order used
+   within the particular database cluster is set by
+   <command>initdb</command>, and while you can create new databases using
+   different sort order, the order used in the template databases that initdb
+   creates cannot be changed without dropping and recreating them.
+   There is also a performance impact for using locales
    other than <literal>C</> or <literal>POSIX</>. Therefore, it is
    important to make this choice correctly the first time.
   </para>

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.563 2008/09/15 12:32:57 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.564 2008/09/23 09:20:36 heikki Exp $
  *
  * NOTES
  *
@@ -403,8 +403,8 @@ typedef struct
 	char		my_exec_path[MAXPGPATH];
 	char		pkglib_path[MAXPGPATH];
 	char		ExtraOptions[MAXPGPATH];
-	char		lc_collate[LOCALE_NAME_BUFLEN];
-	char		lc_ctype[LOCALE_NAME_BUFLEN];
+	char		lc_collate[NAMEDATALEN];
+	char		lc_ctype[NAMEDATALEN];
 }	BackendParameters;
 
 static void read_backend_variables(char *id, Port *port);
@@ -4294,8 +4294,8 @@ save_backend_variables(BackendParameters * param, Port *port,
 
 	strlcpy(param->ExtraOptions, ExtraOptions, MAXPGPATH);
 
-	strlcpy(param->lc_collate, setlocale(LC_COLLATE, NULL), LOCALE_NAME_BUFLEN);
-	strlcpy(param->lc_ctype, setlocale(LC_CTYPE, NULL), LOCALE_NAME_BUFLEN);
+	strlcpy(param->lc_collate, setlocale(LC_COLLATE, NULL), NAMEDATALEN);
+	strlcpy(param->lc_ctype, setlocale(LC_CTYPE, NULL), NAMEDATALEN);
 
 	return true;
 }

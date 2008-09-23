@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.318 2008/09/08 16:42:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.319 2008/09/23 09:20:35 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
 #include "storage/smgr.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
-#include "utils/pg_locale.h"
+#include "utils/guc.h"
 #include "utils/ps_status.h"
 
 
@@ -3847,7 +3847,6 @@ WriteControlFile(void)
 {
 	int			fd;
 	char		buffer[PG_CONTROL_SIZE];		/* need not be aligned */
-	char	   *localeptr;
 
 	/*
 	 * Initialize version and compatibility-check fields
@@ -3875,18 +3874,6 @@ WriteControlFile(void)
 #endif
 	ControlFile->float4ByVal = FLOAT4PASSBYVAL;
 	ControlFile->float8ByVal = FLOAT8PASSBYVAL;
-
-	ControlFile->localeBuflen = LOCALE_NAME_BUFLEN;
-	localeptr = setlocale(LC_COLLATE, NULL);
-	if (!localeptr)
-		ereport(PANIC,
-				(errmsg("invalid LC_COLLATE setting")));
-	StrNCpy(ControlFile->lc_collate, localeptr, LOCALE_NAME_BUFLEN);
-	localeptr = setlocale(LC_CTYPE, NULL);
-	if (!localeptr)
-		ereport(PANIC,
-				(errmsg("invalid LC_CTYPE setting")));
-	StrNCpy(ControlFile->lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
 
 	/* Contents are protected with a CRC */
 	INIT_CRC32(ControlFile->crc);
@@ -4126,34 +4113,6 @@ ReadControlFile(void)
 						   " but the server was compiled without USE_FLOAT8_BYVAL."),
 				 errhint("It looks like you need to recompile or initdb.")));
 #endif
-
-	if (ControlFile->localeBuflen != LOCALE_NAME_BUFLEN)
-		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with LOCALE_NAME_BUFLEN %d,"
-				  " but the server was compiled with LOCALE_NAME_BUFLEN %d.",
-						   ControlFile->localeBuflen, LOCALE_NAME_BUFLEN),
-				 errhint("It looks like you need to recompile or initdb.")));
-	if (pg_perm_setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
-		ereport(FATAL,
-			(errmsg("database files are incompatible with operating system"),
-			 errdetail("The database cluster was initialized with LC_COLLATE \"%s\","
-					   " which is not recognized by setlocale().",
-					   ControlFile->lc_collate),
-			 errhint("It looks like you need to initdb or install locale support.")));
-	if (pg_perm_setlocale(LC_CTYPE, ControlFile->lc_ctype) == NULL)
-		ereport(FATAL,
-			(errmsg("database files are incompatible with operating system"),
-		errdetail("The database cluster was initialized with LC_CTYPE \"%s\","
-				  " which is not recognized by setlocale().",
-				  ControlFile->lc_ctype),
-			 errhint("It looks like you need to initdb or install locale support.")));
-
-	/* Make the fixed locale settings visible as GUC variables, too */
-	SetConfigOption("lc_collate", ControlFile->lc_collate,
-					PGC_INTERNAL, PGC_S_OVERRIDE);
-	SetConfigOption("lc_ctype", ControlFile->lc_ctype,
-					PGC_INTERNAL, PGC_S_OVERRIDE);
 }
 
 void

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.41 2008/04/21 00:26:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.42 2008/09/23 09:20:39 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	842
+#define PG_CONTROL_VERSION	843
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -59,15 +59,12 @@ typedef enum DBState
 	DB_IN_PRODUCTION
 } DBState;
 
-#define LOCALE_NAME_BUFLEN	128
-
 /*
  * Contents of pg_control.
  *
  * NOTE: try to keep this under 512 bytes so that it will fit on one physical
  * sector of typical disk drives.  This reduces the odds of corruption due to
- * power failure midway through a write.  Currently it fits comfortably,
- * but we could probably reduce LOCALE_NAME_BUFLEN if things get tight.
+ * power failure midway through a write.
  */
 
 typedef struct ControlFileData
@@ -143,11 +140,6 @@ typedef struct ControlFileData
 	/* flags indicating pass-by-value status of various types */
 	bool		float4ByVal;	/* float4 pass-by-value? */
 	bool		float8ByVal;	/* float8, int8, etc pass-by-value? */
-
-	/* active locales */
-	uint32		localeBuflen;
-	char		lc_collate[LOCALE_NAME_BUFLEN];
-	char		lc_ctype[LOCALE_NAME_BUFLEN];
 
 	/* CRC of all above ... MUST BE LAST! */
 	pg_crc32	crc;

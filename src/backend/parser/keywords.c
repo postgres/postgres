@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.200 2008/08/29 13:02:32 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.201 2008/09/23 09:20:36 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"createuser", CREATEUSER, UNRESERVED_KEYWORD},
 	{"cross", CROSS, TYPE_FUNC_NAME_KEYWORD},
 	{"csv", CSV, UNRESERVED_KEYWORD},
+	{"ctype", CTYPE, UNRESERVED_KEYWORD},
 	{"current", CURRENT_P, UNRESERVED_KEYWORD},
 	{"current_date", CURRENT_DATE, RESERVED_KEYWORD},
 	{"current_role", CURRENT_ROLE, RESERVED_KEYWORD},

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.43 2007/03/26 17:23:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.44 2008/09/23 09:20:34 heikki Exp $
 PostgreSQL documentation
 -->
 
@@ -76,25 +76,34 @@ PostgreSQL documentation
 
   <para>
    <command>initdb</command> initializes the database cluster's default
-   locale and character set encoding. The collation order
-   (<literal>LC_COLLATE</>) and character set classes
-   (<literal>LC_CTYPE</>, e.g. upper, lower, digit) are fixed for all
-   databases and cannot be changed. Collation orders other than
-   <literal>C</> or <literal>POSIX</> also have a performance penalty.
-   For these reasons it is important to choose the right locale when
-   running <command>initdb</command>. The remaining locale categories
-   can be changed later when the server is started. All server locale
-   values (<literal>lc_*</>) can be displayed via <command>SHOW ALL</>.
+   locale and character set encoding. The character set encoding,
+   collation order (<literal>LC_COLLATE</>) and character set classes
+   (<literal>LC_CTYPE</>, e.g. upper, lower, digit) can be set separately
+   for a database when it is created. <command>initdb</command> determines
+   those settings for the <literal>template1</literal> database, which will
+   serve as the default for all other databases.
+  </para>
+
+  <para>
+   To alter the default collation order or character set classes, use the
+   <option>--lc-collate</option> and <option>--lc-ctype</option> options.
+   Collation orders other than <literal>C</> or <literal>POSIX</> also have
+   a performance penalty.  For these reasons it is important to choose the
+   right locale when running <command>initdb</command>. 
+  </para>
+
+  <para>
+   The remaining locale categories can be changed later when the server
+   is started.  You can also use <option>--locale</option> to set the
+   default for all locale categories, including collation order and
+   character set classes. All server locale values (<literal>lc_*</>) can
+   be displayed via <command>SHOW ALL</>.
    More details can be found in <xref linkend="locale">.
   </para>
 
   <para>
-   The character set encoding can be set separately for a database when
-   it is created. <command>initdb</command> determines the encoding for
-   the <literal>template1</literal> database, which will serve as the
-   default for all other databases. To alter the default encoding use
-   the <option>--encoding</option> option. More details can be found in
-   <xref linkend="multibyte">.
+   To alter the default encoding, use the <option>--encoding</option>.
+   More details can be found in <xref linkend="multibyte">.
   </para>
 
  </refsect1>

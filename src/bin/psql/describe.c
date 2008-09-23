@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.184 2008/07/18 04:20:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.185 2008/09/23 09:20:38 heikki Exp $
  */
 #include "postgres_fe.h"
 
@@ -454,11 +454,18 @@ listAllDbs(bool verbose)
 	printfPQExpBuffer(&buf,
 					  "SELECT d.datname as \"%s\",\n"
 					  "       pg_catalog.pg_get_userbyid(d.datdba) as \"%s\",\n"
-					  "       pg_catalog.pg_encoding_to_char(d.encoding) as \"%s\",\n"
-					  "       d.datacl as \"%s\"",
+					  "       pg_catalog.pg_encoding_to_char(d.encoding) as \"%s\",\n",
 					  gettext_noop("Name"),
 					  gettext_noop("Owner"),
-					  gettext_noop("Encoding"),
+					  gettext_noop("Encoding"));
+	if (pset.sversion >= 80400)
+		appendPQExpBuffer(&buf,
+						  "       d.datcollate as \"%s\",\n"
+						  "       d.datctype as \"%s\",\n",
+						  gettext_noop("Collation"),
+						  gettext_noop("Ctype"));
+	appendPQExpBuffer(&buf,
+					  "       d.datacl as \"%s\"",
 					  gettext_noop("Access Privileges"));
 	if (verbose && pset.sversion >= 80200)
 		appendPQExpBuffer(&buf,

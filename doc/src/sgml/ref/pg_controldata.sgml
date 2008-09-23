@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_controldata.sgml,v 1.10 2007/02/20 18:10:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_controldata.sgml,v 1.11 2008/09/23 09:20:35 heikki Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ PostgreSQL documentation
   <title>Description</title>
   <para>
    <command>pg_controldata</command> prints information initialized during
-   <command>initdb</>, such as the catalog version and server locale.
+   <command>initdb</>, such as the catalog version.
    It also shows information about write-ahead logging and checkpoint 
    processing.  This information is cluster-wide, and not specific to any one
    database.

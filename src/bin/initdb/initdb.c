@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.159 2008/08/05 12:09:30 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.160 2008/09/23 09:20:37 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1353,6 +1353,10 @@ bootstrap_template1(char *short_version)
 
 	bki_lines = replace_token(bki_lines, "ENCODING", encodingid);
 
+	bki_lines = replace_token(bki_lines, "LC_COLLATE", lc_collate);
+	
+	bki_lines = replace_token(bki_lines, "LC_CTYPE", lc_ctype);
+	
 	/*
 	 * Pass correct LC_xxx environment to bootstrap.
 	 *
@@ -2179,6 +2183,8 @@ locale_date_order(const char *locale)
 
 /*
  * check if given string is a valid locale specifier
+ *
+ * this should match the backend check_locale() function
  */
 static bool
 chklocale(const char *locale)
@@ -2378,12 +2384,12 @@ usage(const char *progname)
 	printf(_("\nOptions:\n"));
 	printf(_(" [-D, --pgdata=]DATADIR     location for this database cluster\n"));
 	printf(_("  -E, --encoding=ENCODING   set default encoding for new databases\n"));
-	printf(_("  --locale=LOCALE           initialize database cluster with given locale\n"));
+	printf(_("  --locale=LOCALE           set default locale for new databases\n"));
 	printf(_("  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
 			 "  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
-			 "                            initialize database cluster with given locale\n"
-			 "                            in the respective category (default taken from\n"
-			 "                            environment)\n"));
+			 "                            set default locale in the respective\n"
+			 "                            category for new databases (default\n"
+			 "                            taken from environment)\n"));
 	printf(_("  --no-locale               equivalent to --locale=C\n"));
 	printf(_("  -T, --text-search-config=CFG\n"
 		 "                            default text search configuration\n"));

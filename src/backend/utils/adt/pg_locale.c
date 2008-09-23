@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.41 2008/05/19 18:08:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.42 2008/09/23 09:20:36 heikki Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ static bool CurrentLCTimeValid = false;
 
 /* Environment variable storage area */
 
-#define LC_ENV_BUFSIZE (LOCALE_NAME_BUFLEN + 20)
+#define LC_ENV_BUFSIZE (NAMEDATALEN + 20)
 
 static char lc_collate_envbuf[LC_ENV_BUFSIZE];
 static char lc_ctype_envbuf[LC_ENV_BUFSIZE];
@@ -189,6 +189,31 @@ pg_perm_setlocale(int category, const char *locale)
 }
 
 
+/*
+ * Is the locale name valid for the locale category?
+ */
+bool
+check_locale(int category, const char *value)
+{
+	char	   *save;
+	bool		ret;
+
+	save = setlocale(category, NULL);
+	if (!save)
+		return false;			/* won't happen, we hope */
+
+	/* save may be pointing at a modifiable scratch variable, see above */
+	save = pstrdup(save);
+
+	/* set the locale with setlocale, to see if it accepts it. */
+	ret = (setlocale(category, value) != NULL);
+
+	setlocale(category, save);	/* assume this won't fail */
+	pfree(save);
+
+	return ret;
+}
+
 /* GUC assign hooks */
 
 /*
@@ -203,20 +228,8 @@ pg_perm_setlocale(int category, const char *locale)
 static const char *
 locale_xxx_assign(int category, const char *value, bool doit, GucSource source)
 {
-	char	   *save;
-
-	save = setlocale(category, NULL);
-	if (!save)
-		return NULL;			/* won't happen, we hope */
-
-	/* save may be pointing at a modifiable scratch variable, see above */
-	save = pstrdup(save);
-
-	if (!setlocale(category, value))
+	if (!check_locale(category, value))
 		value = NULL;			/* set failure return marker */
-
-	setlocale(category, save);	/* assume this won't fail */
-	pfree(save);
 
 	/* need to reload cache next time? */
 	if (doit && value != NULL)
