@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.472 2008/09/10 19:16:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.473 2008/09/23 21:12:03 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -6176,8 +6176,12 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 			break;
 	}
 
-	/* If the setting came from a config file, set the source location */
-	if (conf->source == PGC_S_FILE)
+	/* 
+	 * If the setting came from a config file, set the source location.
+	 * For security reasons, we don't show source file/line number for
+	 * non-superusers.
+	 */
+	if (conf->source == PGC_S_FILE && superuser())
 	{
 		values[12] = conf->sourcefile;
 		snprintf(buffer, sizeof(buffer), "%d", conf->sourceline);
