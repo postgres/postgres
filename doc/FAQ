@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Aug 22 21:55:19 EDT 2008
+   Last updated: Tue Sep 23 16:19:49 EDT 2008
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -472,8 +472,9 @@
    quality motherboards are more reliable and have better performance
    than less expensive hardware. PostgreSQL will run on almost any
    hardware, but if reliability and performance are important it is wise
-   to research your hardware options thoroughly. Our email lists can be
-   used to discuss hardware options and tradeoffs.
+   to research your hardware options thoroughly. A disk controller with a
+   battery-backed cache is also useful. Our email lists can be used to
+   discuss hardware options and tradeoffs.
      _________________________________________________________________
    
                            Operational Questions
