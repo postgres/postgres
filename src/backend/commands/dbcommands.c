@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.211 2008/09/23 09:20:35 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.212 2008/09/23 10:58:03 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,7 @@ createdb(const CreatedbStmt *stmt)
 	int			encoding = -1;
 	int			dbconnlimit = -1;
 	int			ctype_encoding;
+	int			collate_encoding;
 	int			notherbackends;
 	int			npreparedxacts;
 	createdb_failure_params fparms;
@@ -334,6 +335,7 @@ createdb(const CreatedbStmt *stmt)
 	 * Note: if you change this policy, fix initdb to match.
 	 */
 	ctype_encoding = pg_get_encoding_from_locale(dbctype);
+	collate_encoding = pg_get_encoding_from_locale(dbcollate);
 
 	if (!(ctype_encoding == encoding ||
 		  ctype_encoding == PG_SQL_ASCII ||
@@ -345,8 +347,21 @@ createdb(const CreatedbStmt *stmt)
 				(errmsg("encoding %s does not match locale %s",
 						pg_encoding_to_char(encoding),
 						dbctype),
-			 errdetail("The chosen LC_CTYPE setting requires encoding %s.",
+			 errdetail("The chosen CTYPE setting requires encoding %s.",
 					   pg_encoding_to_char(ctype_encoding))));
+
+	if (!(collate_encoding == encoding ||
+		  collate_encoding == PG_SQL_ASCII ||
+#ifdef WIN32
+		  encoding == PG_UTF8 ||
+#endif
+		  (encoding == PG_SQL_ASCII && superuser())))
+		ereport(ERROR,
+				(errmsg("encoding %s does not match locale %s",
+						pg_encoding_to_char(encoding),
+						dbcollate),
+			 errdetail("The chosen COLLATE setting requires encoding %s.",
+					   pg_encoding_to_char(collate_encoding))));
 
 	/*
 	 * Check that the new locale is compatible with the source database.

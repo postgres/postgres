@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.160 2008/09/23 09:20:37 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.161 2008/09/23 10:58:03 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,8 @@ static void trapsig(int signum);
 static void check_ok(void);
 static char *escape_quotes(const char *src);
 static int	locale_date_order(const char *locale);
-static bool chklocale(const char *locale);
+static bool check_locale_name(const char *locale);
+static bool check_locale_encoding(const char *locale, int encoding);
 static void setlocales(void);
 static void usage(const char *progname);
 
@@ -2187,7 +2188,7 @@ locale_date_order(const char *locale)
  * this should match the backend check_locale() function
  */
 static bool
-chklocale(const char *locale)
+check_locale_name(const char *locale)
 {
 	bool		ret;
 	int			category = LC_CTYPE;
@@ -2210,6 +2211,50 @@ chklocale(const char *locale)
 
 	return ret;
 }
+
+/*
+ * check if the chosen encoding matches the encoding required by the locale
+ *
+ * this should match the similar check in the backend createdb() function
+ */
+static bool
+check_locale_encoding(const char *locale, int user_enc)
+{
+	int			locale_enc;
+
+	locale_enc = pg_get_encoding_from_locale(locale);
+
+	/* We allow selection of SQL_ASCII --- see notes in createdb() */
+	if (!(locale_enc == user_enc ||
+		  locale_enc == PG_SQL_ASCII ||
+		  user_enc == PG_SQL_ASCII
+#ifdef WIN32
+
+	/*
+	 * On win32, if the encoding chosen is UTF8, all locales are OK
+	 * (assuming the actual locale name passed the checks above). This is
+	 * because UTF8 is a pseudo-codepage, that we convert to UTF16 before
+	 * doing any operations on, and UTF16 supports all locales.
+	 */
+		  || user_enc == PG_UTF8
+#endif
+		  ))
+	{
+		fprintf(stderr, _("%s: encoding mismatch\n"), progname);
+		fprintf(stderr,
+			   _("The encoding you selected (%s) and the encoding that the\n"
+			  "selected locale uses (%s) do not match.  This would lead to\n"
+			"misbehavior in various character string processing functions.\n"
+			   "Rerun %s and either do not specify an encoding explicitly,\n"
+				 "or choose a matching combination.\n"),
+				pg_encoding_to_char(user_enc),
+				pg_encoding_to_char(locale_enc),
+				progname);
+		return false;
+	}
+	return true;
+}
+
 
 /*
  * set up the locale variables
@@ -2241,17 +2286,17 @@ setlocales(void)
 	 * override absent/invalid config settings from initdb's locale settings
 	 */
 
-	if (strlen(lc_ctype) == 0 || !chklocale(lc_ctype))
+	if (strlen(lc_ctype) == 0 || !check_locale_name(lc_ctype))
 		lc_ctype = xstrdup(setlocale(LC_CTYPE, NULL));
-	if (strlen(lc_collate) == 0 || !chklocale(lc_collate))
+	if (strlen(lc_collate) == 0 || !check_locale_name(lc_collate))
 		lc_collate = xstrdup(setlocale(LC_COLLATE, NULL));
-	if (strlen(lc_numeric) == 0 || !chklocale(lc_numeric))
+	if (strlen(lc_numeric) == 0 || !check_locale_name(lc_numeric))
 		lc_numeric = xstrdup(setlocale(LC_NUMERIC, NULL));
-	if (strlen(lc_time) == 0 || !chklocale(lc_time))
+	if (strlen(lc_time) == 0 || !check_locale_name(lc_time))
 		lc_time = xstrdup(setlocale(LC_TIME, NULL));
-	if (strlen(lc_monetary) == 0 || !chklocale(lc_monetary))
+	if (strlen(lc_monetary) == 0 || !check_locale_name(lc_monetary))
 		lc_monetary = xstrdup(setlocale(LC_MONETARY, NULL));
-	if (strlen(lc_messages) == 0 || !chklocale(lc_messages))
+	if (strlen(lc_messages) == 0 || !check_locale_name(lc_messages))
 #if defined(LC_MESSAGES) && !defined(WIN32)
 	{
 		/* when available get the current locale setting */
@@ -2452,6 +2497,7 @@ main(int argc, char *argv[])
 								 * environment */
 	char		bin_dir[MAXPGPATH];
 	char	   *pg_data_native;
+	int			user_enc;
 
 #ifdef WIN32
 	char	   *restrict_env;
@@ -2868,44 +2914,12 @@ main(int argc, char *argv[])
 		}
 	}
 	else
-	{
-		int			user_enc;
-		int			ctype_enc;
-
 		encodingid = get_encoding_id(encoding);
-		user_enc = atoi(encodingid);
 
-		ctype_enc = pg_get_encoding_from_locale(lc_ctype);
-
-		/* We allow selection of SQL_ASCII --- see notes in createdb() */
-		if (!(ctype_enc == user_enc ||
-			  ctype_enc == PG_SQL_ASCII ||
-			  user_enc == PG_SQL_ASCII
-#ifdef WIN32
-
-		/*
-		 * On win32, if the encoding chosen is UTF8, all locales are OK
-		 * (assuming the actual locale name passed the checks above). This is
-		 * because UTF8 is a pseudo-codepage, that we convert to UTF16 before
-		 * doing any operations on, and UTF16 supports all locales.
-		 */
-			  || user_enc == PG_UTF8
-#endif
-			  ))
-		{
-			fprintf(stderr, _("%s: encoding mismatch\n"), progname);
-			fprintf(stderr,
-			   _("The encoding you selected (%s) and the encoding that the\n"
-			  "selected locale uses (%s) do not match.  This would lead to\n"
-			"misbehavior in various character string processing functions.\n"
-			   "Rerun %s and either do not specify an encoding explicitly,\n"
-				 "or choose a matching combination.\n"),
-					pg_encoding_to_char(user_enc),
-					pg_encoding_to_char(ctype_enc),
-					progname);
-			exit(1);
-		}
-	}
+	user_enc = atoi(encodingid);
+	if (!check_locale_encoding(lc_ctype, user_enc) ||
+		!check_locale_encoding(lc_collate, user_enc))
+		exit(1); /* check_locale_encoding printed the error */
 
 	if (strlen(default_text_search_config) == 0)
 	{

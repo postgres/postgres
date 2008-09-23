@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.88 2008/09/23 09:20:34 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.89 2008/09/23 10:58:03 heikki Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -320,10 +320,10 @@ initdb --locale=sv_SE
 
   <para>
    An important restriction, however, is that each database's character set
-   must be compatible with the database's <envar>LC_CTYPE</> setting.
-   When <envar>LC_CTYPE</> is <literal>C</> or <literal>POSIX</>, any
-   character set is allowed, but for other settings of <envar>LC_CTYPE</>
-   there is only one character set that will work correctly.
+   must be compatible with the database's <envar>LC_CTYPE</> and
+   <envvar>LC_COLLATE</> locale settings. For <literal>C</> or
+   <literal>POSIX</> locale, any character set is allowed, but for other
+   locales there is only one character set that will work correctly.
   </para>
 
    <sect2 id="multibyte-charset-supported">
