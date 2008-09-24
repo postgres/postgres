@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.193 2008/09/16 22:31:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.194 2008/09/24 19:46:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2888,7 +2888,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 				{
 					case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-						*fsec += val + fval;
+						*fsec += rint(val + fval);
 #else
 						*fsec += (val + fval) * 1e-6;
 #endif
@@ -2897,7 +2897,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 
 					case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-						*fsec += (val + fval) * 1000;
+						*fsec += rint((val + fval) * 1000);
 #else
 						*fsec += (val + fval) * 1e-3;
 #endif
@@ -2907,7 +2907,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 					case DTK_SECOND:
 						tm->tm_sec += val;
 #ifdef HAVE_INT64_TIMESTAMP
-						*fsec += fval * 1000000;
+						*fsec += rint(fval * 1000000);
 #else
 						*fsec += fval;
 #endif
@@ -2932,7 +2932,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
-							*fsec += (fval - sec) * 1000000;
+							*fsec += rint((fval - sec) * 1000000);
 #else
 							*fsec += fval - sec;
 #endif
@@ -2950,7 +2950,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
-							*fsec += (fval - sec) * 1000000;
+							*fsec += rint((fval - sec) * 1000000);
 #else
 							*fsec += fval - sec;
 #endif
@@ -2969,7 +2969,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
-							*fsec += (fval - sec) * 1000000;
+							*fsec += rint((fval - sec) * 1000000);
 #else
 							*fsec += fval - sec;
 #endif
@@ -2995,7 +2995,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 								sec = fval;
 								tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
-								*fsec += (fval - sec) * 1000000;
+								*fsec += rint((fval - sec) * 1000000);
 #else
 								*fsec += fval - sec;
 #endif
@@ -3022,7 +3022,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 								sec = fval;
 								tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
-								*fsec += (fval - sec) * 1000000;
+								*fsec += rint((fval - sec) * 1000000);
 #else
 								*fsec += fval - sec;
 #endif
