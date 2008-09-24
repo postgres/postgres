@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.133 2008/07/18 03:32:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.134 2008/09/24 19:51:22 momjian Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -3036,7 +3036,8 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
       <para>
        Data type <type>RECORD</type>; variable holding the new
        database row for <command>INSERT</>/<command>UPDATE</> operations in row-level
-       triggers. This variable is <symbol>NULL</symbol> in statement-level triggers.
+       triggers. This variable is <symbol>NULL</symbol> in statement-level triggers
+       and for <command>DELETE</command> operations.
       </para>
      </listitem>
     </varlistentry>
@@ -3047,7 +3048,8 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
       <para>
        Data type <type>RECORD</type>; variable holding the old
        database row for <command>UPDATE</>/<command>DELETE</> operations in row-level
-       triggers. This variable is <symbol>NULL</symbol> in statement-level triggers.
+       triggers. This variable is <symbol>NULL</symbol> in statement-level triggers
+       and for <command>INSERT</command> operations.
       </para>
      </listitem>
     </varlistentry>
