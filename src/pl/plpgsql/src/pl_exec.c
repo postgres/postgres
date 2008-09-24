@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.220 2008/09/09 15:14:08 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.221 2008/09/24 14:40:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5149,7 +5149,7 @@ static void
 validate_tupdesc_compat(TupleDesc expected, TupleDesc returned, const char *msg)
 {
 	int		   i;
-	const char dropped_column_type[] = gettext_noop("n/a (dropped column)");
+	const char *dropped_column_type = gettext_noop("n/a (dropped column)");
 
 	if (!expected || !returned)
 		ereport(ERROR,
