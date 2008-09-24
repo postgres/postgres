@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.501 2008/09/23 09:20:37 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.502 2008/09/24 19:33:15 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1653,8 +1653,8 @@ dumpDatabase(Archive *AH)
 	i_oid = PQfnumber(res, "oid");
 	i_dba = PQfnumber(res, "dba");
 	i_encoding = PQfnumber(res, "encoding");
-	i_collate = PQfnumber(res, "collate");
-	i_ctype = PQfnumber(res, "ctype");
+	i_collate = PQfnumber(res, "datcollate");
+	i_ctype = PQfnumber(res, "datctype");
 	i_tablespace = PQfnumber(res, "tablespace");
 
 	dbCatId.tableoid = atooid(PQgetvalue(res, 0, i_tableoid));
