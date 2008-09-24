@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.53 2006/10/04 00:30:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.53.2.1 2008/09/24 08:59:44 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -366,7 +366,7 @@ ReadControlFile(void)
 	char	   *buffer;
 	pg_crc32	crc;
 
-	if ((fd = open(XLOG_CONTROL_FILE, O_RDONLY, 0)) < 0)
+	if ((fd = open(XLOG_CONTROL_FILE, O_RDONLY | PG_BINARY, 0)) < 0)
 	{
 		/*
 		 * If pg_control is not there at all, or we can't read it, the odds
