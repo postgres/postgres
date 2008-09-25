@@ -254,6 +254,14 @@ WHERE p1.typelem = p2.oid AND NOT
 -----+---------+-----+---------
 (0 rows)
 
+-- Array types should have same typdelim as their element types
+SELECT p1.oid, p1.typname, p2.oid, p2.typname
+FROM pg_type AS p1, pg_type AS p2
+WHERE p1.typarray = p2.oid AND NOT (p1.typdelim = p2.typdelim);
+ oid | typname | oid | typname 
+-----+---------+-----+---------
+(0 rows)
+
 -- Check for bogus typanalyze routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2

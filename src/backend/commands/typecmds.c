@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.123 2008/08/28 23:09:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.124 2008/09/25 03:28:56 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -497,7 +497,7 @@ DefineType(List *names, List *parameters)
 			   TYPTYPE_BASE,	/* type-type (base type) */
 			   TYPCATEGORY_ARRAY, /* type-category (array) */
 			   false,			/* array types are never preferred */
-			   DEFAULT_TYPDELIM,	/* array element delimiter */
+			   delimiter,		/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
 			   F_ARRAY_OUT,		/* output procedure */
 			   F_ARRAY_RECV,	/* receive procedure */
