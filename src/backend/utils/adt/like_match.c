@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * like_match.c
- *	  like expression handling internal code.
+ *	  LIKE pattern matching internal code.
  *
- * This file is included by like.c four times, to provide natching code for
- * single-byte encodings, UTF8, and for other multi-byte encodings,
- * and case insensitive matches for single byte encodings.
- * UTF8 is a special case because we can use a much more efficient version
- * of NextChar than can be used for other multi-byte encodings.
+ * This file is included by like.c four times, to provide matching code for
+ * (1) single-byte encodings, (2) UTF8, (3) other multi-byte encodings,
+ * and (4) case insensitive matches in single byte encodings.
+ * (UTF8 is a special case because we can use a much more efficient version
+ * of NextChar than can be used for general multi-byte encodings.)
  *
  * Before the inclusion, we need to define following macros:
  *
@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.21 2008/03/01 03:26:34 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.22 2008/09/26 02:16:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,9 +96,14 @@ MatchText(char *t, int tlen, char *p, int plen)
 	{
 		if (*p == '\\')
 		{
-			/* Next byte must match literally, whatever it is */
+			/* Next pattern byte must match literally, whatever it is */
 			NextByte(p, plen);
-			if ((plen <= 0) || *p != *t)
+			/* ... and there had better be one, per SQL standard */
+			if (plen <= 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
+						 errmsg("LIKE pattern must not end with escape character")));
+			if (*p != *t)
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
