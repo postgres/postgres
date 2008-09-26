@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.147 2008/09/11 17:32:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.148 2008/09/26 15:35:28 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -2537,7 +2537,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				out->ms *= len == 1 ? 100 :
 					len == 2 ? 10 : 1;
 
-				s += len + SKIP_THth(n->suffix);
+				s += SKIP_THth(n->suffix);
 				break;
 			case DCH_US:			/* microsecond */
 				len = from_char_parse_int_len(&out->us, &s, 6, n);
@@ -2548,7 +2548,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 					len == 4 ? 100 :
 					len == 5 ? 10 : 1;
 
-				s += len + SKIP_THth(n->suffix);
+				s += SKIP_THth(n->suffix);
 				break;
 			case DCH_SSSS:
 				from_char_parse_int(&out->ssss, &s, n);
