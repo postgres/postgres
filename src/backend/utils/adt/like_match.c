@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.20.2.1 2008/03/01 03:26:44 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.20.2.2 2008/09/27 16:57:43 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 		{
 			/* Next byte must match literally, whatever it is */
 			NextByte(p, plen);
-			if ((plen <= 0) || *p != *t)
+			if ((plen <= 0) || TCHAR(*p) != TCHAR(*t))
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
