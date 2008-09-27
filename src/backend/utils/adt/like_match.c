@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.22 2008/09/26 02:16:40 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.23 2008/09/27 16:53:54 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 						 errmsg("LIKE pattern must not end with escape character")));
-			if (*p != *t)
+			if (TCHAR(*p) != TCHAR(*t))
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
