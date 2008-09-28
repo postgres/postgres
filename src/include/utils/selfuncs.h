@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.46 2008/08/16 00:01:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.47 2008/09/28 19:51:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,12 +64,13 @@
 
 
 /* Return data from examine_variable and friends */
-typedef struct
+typedef struct VariableStatData
 {
 	Node	   *var;			/* the Var or expression tree */
 	RelOptInfo *rel;			/* Relation, or NULL if not identifiable */
 	HeapTuple	statsTuple;		/* pg_statistic tuple, or NULL if none */
 	/* NB: if statsTuple!=NULL, it must be freed when caller is done */
+	void		(*freefunc) (HeapTuple tuple);	/* how to free statsTuple */
 	Oid			vartype;		/* exposed type of expression */
 	Oid			atttype;		/* type to pass to get_attstatsslot */
 	int32		atttypmod;		/* typmod to pass to get_attstatsslot */
@@ -79,7 +80,7 @@ typedef struct
 #define ReleaseVariableStats(vardata)  \
 	do { \
 		if (HeapTupleIsValid((vardata).statsTuple)) \
-			ReleaseSysCache((vardata).statsTuple); \
+			(* (vardata).freefunc) ((vardata).statsTuple); \
 	} while(0)
 
 
@@ -96,6 +97,18 @@ typedef enum
 
 
 /* selfuncs.c */
+
+/* Hooks for plugins to get control when we ask for stats */
+typedef bool (*get_relation_stats_hook_type) (PlannerInfo *root,
+											  RangeTblEntry *rte,
+											  AttrNumber attnum,
+											  VariableStatData *vardata);
+extern PGDLLIMPORT get_relation_stats_hook_type get_relation_stats_hook;
+typedef bool (*get_index_stats_hook_type) (PlannerInfo *root,
+										   Oid indexOid,
+										   AttrNumber indexattnum,
+										   VariableStatData *vardata);
+extern PGDLLIMPORT get_index_stats_hook_type get_index_stats_hook;
 
 extern void examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				 VariableStatData *vardata);

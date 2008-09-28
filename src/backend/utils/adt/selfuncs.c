@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.253 2008/08/25 22:42:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.254 2008/09/28 19:51:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,10 @@
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
 
+
+/* Hooks for plugins to get control when we ask for stats */
+get_relation_stats_hook_type get_relation_stats_hook = NULL;
+get_index_stats_hook_type get_index_stats_hook = NULL;
 
 static double var_eq_const(VariableStatData *vardata, Oid operator,
 			 Datum constval, bool constisnull,
@@ -2935,7 +2939,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 		 * complicated.
 		 */
 		examine_variable(root, groupexpr, 0, &vardata);
-		if (vardata.statsTuple != NULL || vardata.isunique)
+		if (HeapTupleIsValid(vardata.statsTuple) || vardata.isunique)
 		{
 			varinfos = add_unique_group_var(root, varinfos,
 											groupexpr, &vardata);
@@ -3942,6 +3946,7 @@ get_join_variables(PlannerInfo *root, List *args, SpecialJoinInfo *sjinfo,
  *		subquery, not one in the current query).
  *	statsTuple: the pg_statistic entry for the variable, if one exists;
  *		otherwise NULL.
+ *	freefunc: pointer to a function to release statsTuple with.
  *	vartype: exposed type of the expression; this should always match
  *		the declared input type of the operator we are estimating for.
  *	atttype, atttypmod: type data to pass to get_attstatsslot().  This is
@@ -3986,7 +3991,18 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 
 		rte = root->simple_rte_array[var->varno];
 
-		if (rte->inh)
+		if (get_relation_stats_hook &&
+			(*get_relation_stats_hook) (root, rte, var->varattno, vardata))
+		{
+			/*
+			 * The hook took control of acquiring a stats tuple.  If it
+			 * did supply a tuple, it'd better have supplied a freefunc.
+			 */
+			if (HeapTupleIsValid(vardata->statsTuple) &&
+				!vardata->freefunc)
+				elog(ERROR, "no function provided to release variable stats with");
+		}
+		else if (rte->inh)
 		{
 			/*
 			 * XXX This means the Var represents a column of an append
@@ -4000,6 +4016,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 												 ObjectIdGetDatum(rte->relid),
 												 Int16GetDatum(var->varattno),
 												 0, 0);
+			vardata->freefunc = ReleaseSysCache;
 		}
 		else
 		{
@@ -4116,10 +4133,28 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 							index->indpred == NIL)
 							vardata->isunique = true;
 						/* Has it got stats? */
-						vardata->statsTuple = SearchSysCache(STATRELATT,
-										   ObjectIdGetDatum(index->indexoid),
-													  Int16GetDatum(pos + 1),
-															 0, 0);
+						if (get_index_stats_hook &&
+							(*get_index_stats_hook) (root, index->indexoid,
+													 pos + 1, vardata))
+						{
+							/*
+							 * The hook took control of acquiring a stats
+							 * tuple.  If it did supply a tuple, it'd better
+							 * have supplied a freefunc.
+							 */
+							if (HeapTupleIsValid(vardata->statsTuple) &&
+								!vardata->freefunc)
+								elog(ERROR, "no function provided to release variable stats with");
+						}
+						else
+						{
+							vardata->statsTuple =
+								SearchSysCache(STATRELATT,
+											   ObjectIdGetDatum(index->indexoid),
+											   Int16GetDatum(pos + 1),
+											   0, 0);
+							vardata->freefunc = ReleaseSysCache;
+						}
 						if (vardata->statsTuple)
 							break;
 					}
@@ -5551,7 +5586,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
 	Oid			relid;
 	AttrNumber	colnum;
-	HeapTuple	tuple;
+	VariableStatData vardata;
 	double		numIndexTuples;
 	List	   *indexBoundQuals;
 	int			indexcol;
@@ -5756,17 +5791,34 @@ btcostestimate(PG_FUNCTION_ARGS)
 		colnum = 1;
 	}
 
-	tuple = SearchSysCache(STATRELATT,
-						   ObjectIdGetDatum(relid),
-						   Int16GetDatum(colnum),
-						   0, 0);
+	MemSet(&vardata, 0, sizeof(vardata));
 
-	if (HeapTupleIsValid(tuple))
+	if (get_index_stats_hook &&
+		(*get_index_stats_hook) (root, relid, colnum, &vardata))
+	{
+		/*
+		 * The hook took control of acquiring a stats tuple.  If it did supply
+		 * a tuple, it'd better have supplied a freefunc.
+		 */
+		if (HeapTupleIsValid(vardata.statsTuple) &&
+			!vardata.freefunc)
+			elog(ERROR, "no function provided to release variable stats with");
+	}
+	else
+	{
+		vardata.statsTuple = SearchSysCache(STATRELATT,
+											ObjectIdGetDatum(relid),
+											Int16GetDatum(colnum),
+											0, 0);
+		vardata.freefunc = ReleaseSysCache;
+	}
+
+	if (HeapTupleIsValid(vardata.statsTuple))
 	{
 		float4	   *numbers;
 		int			nnumbers;
 
-		if (get_attstatsslot(tuple, InvalidOid, 0,
+		if (get_attstatsslot(vardata.statsTuple, InvalidOid, 0,
 							 STATISTIC_KIND_CORRELATION,
 							 index->fwdsortop[0],
 							 NULL, NULL, &numbers, &nnumbers))
@@ -5783,7 +5835,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 			free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
 		}
-		else if (get_attstatsslot(tuple, InvalidOid, 0,
+		else if (get_attstatsslot(vardata.statsTuple, InvalidOid, 0,
 								  STATISTIC_KIND_CORRELATION,
 								  index->revsortop[0],
 								  NULL, NULL, &numbers, &nnumbers))
@@ -5800,8 +5852,9 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 			free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
 		}
-		ReleaseSysCache(tuple);
 	}
+
+	ReleaseVariableStats(vardata);
 
 	PG_RETURN_VOID();
 }

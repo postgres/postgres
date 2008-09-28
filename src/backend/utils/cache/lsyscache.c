@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.159 2008/08/02 21:32:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.160 2008/09/28 19:51:40 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -34,6 +34,9 @@
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
+/* Hook for plugins to get control in get_attavgwidth() */
+get_attavgwidth_hook_type get_attavgwidth_hook = NULL;
 
 
 /*				---------- AMOP CACHES ----------						 */
@@ -2492,20 +2495,30 @@ get_typmodout(Oid typid)
  *
  *	  Given the table and attribute number of a column, get the average
  *	  width of entries in the column.  Return zero if no data available.
+ *
+ * Calling a hook at this point looks somewhat strange, but is required
+ * because the optimizer calls this function without any other way for
+ * plug-ins to control the result.
  */
 int32
 get_attavgwidth(Oid relid, AttrNumber attnum)
 {
 	HeapTuple	tp;
+	int32		stawidth;
 
+	if (get_attavgwidth_hook)
+	{
+		stawidth = (*get_attavgwidth_hook) (relid, attnum);
+		if (stawidth > 0)
+			return stawidth;
+	}
 	tp = SearchSysCache(STATRELATT,
 						ObjectIdGetDatum(relid),
 						Int16GetDatum(attnum),
 						0, 0);
 	if (HeapTupleIsValid(tp))
 	{
-		int32		stawidth = ((Form_pg_statistic) GETSTRUCT(tp))->stawidth;
-
+		stawidth = ((Form_pg_statistic) GETSTRUCT(tp))->stawidth;
 		ReleaseSysCache(tp);
 		if (stawidth > 0)
 			return stawidth;
@@ -2523,6 +2536,9 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * already-looked-up tuple in the pg_statistic cache.  We do this since
  * most callers will want to extract more than one value from the cache
  * entry, and we don't want to repeat the cache lookup unnecessarily.
+ * Also, this API allows this routine to be used with statistics tuples
+ * that have been provided by a stats hook and didn't really come from
+ * pg_statistic.
  *
  * statstuple: pg_statistics tuple to be examined.
  * atttype: type OID of attribute (can be InvalidOid if values == NULL).
