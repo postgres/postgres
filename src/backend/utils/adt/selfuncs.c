@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.254 2008/09/28 19:51:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.255 2008/09/28 20:42:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5777,40 +5777,63 @@ btcostestimate(PG_FUNCTION_ARGS)
 	if (found_saop)
 		PG_RETURN_VOID();
 
+	MemSet(&vardata, 0, sizeof(vardata));
+
 	if (index->indexkeys[0] != 0)
 	{
 		/* Simple variable --- look to stats for the underlying table */
-		relid = getrelid(index->rel->relid, root->parse->rtable);
+		RangeTblEntry *rte = planner_rt_fetch(index->rel->relid, root);
+
+		Assert(rte->rtekind == RTE_RELATION);
+		relid = rte->relid;
 		Assert(relid != InvalidOid);
 		colnum = index->indexkeys[0];
+
+		if (get_relation_stats_hook &&
+			(*get_relation_stats_hook) (root, rte, colnum, &vardata))
+		{
+			/*
+			 * The hook took control of acquiring a stats tuple.  If it did
+			 * supply a tuple, it'd better have supplied a freefunc.
+			 */
+			if (HeapTupleIsValid(vardata.statsTuple) &&
+				!vardata.freefunc)
+				elog(ERROR, "no function provided to release variable stats with");
+		}
+		else
+		{
+			vardata.statsTuple = SearchSysCache(STATRELATT,
+												ObjectIdGetDatum(relid),
+												Int16GetDatum(colnum),
+												0, 0);
+			vardata.freefunc = ReleaseSysCache;
+		}
 	}
 	else
 	{
 		/* Expression --- maybe there are stats for the index itself */
 		relid = index->indexoid;
 		colnum = 1;
-	}
 
-	MemSet(&vardata, 0, sizeof(vardata));
-
-	if (get_index_stats_hook &&
-		(*get_index_stats_hook) (root, relid, colnum, &vardata))
-	{
-		/*
-		 * The hook took control of acquiring a stats tuple.  If it did supply
-		 * a tuple, it'd better have supplied a freefunc.
-		 */
-		if (HeapTupleIsValid(vardata.statsTuple) &&
-			!vardata.freefunc)
-			elog(ERROR, "no function provided to release variable stats with");
-	}
-	else
-	{
-		vardata.statsTuple = SearchSysCache(STATRELATT,
-											ObjectIdGetDatum(relid),
-											Int16GetDatum(colnum),
-											0, 0);
-		vardata.freefunc = ReleaseSysCache;
+		if (get_index_stats_hook &&
+			(*get_index_stats_hook) (root, relid, colnum, &vardata))
+		{
+			/*
+			 * The hook took control of acquiring a stats tuple.  If it did
+			 * supply a tuple, it'd better have supplied a freefunc.
+			 */
+			if (HeapTupleIsValid(vardata.statsTuple) &&
+				!vardata.freefunc)
+				elog(ERROR, "no function provided to release variable stats with");
+		}
+		else
+		{
+			vardata.statsTuple = SearchSysCache(STATRELATT,
+												ObjectIdGetDatum(relid),
+												Int16GetDatum(colnum),
+												0, 0);
+			vardata.freefunc = ReleaseSysCache;
+		}
 	}
 
 	if (HeapTupleIsValid(vardata.statsTuple))
