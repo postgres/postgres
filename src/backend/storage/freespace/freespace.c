@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.61 2008/09/30 10:52:13 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.62 2008/09/30 14:15:58 tgl Exp $
  *
  *
  * NOTES:
@@ -382,7 +382,8 @@ fsm_space_needed_to_cat(Size needed)
 
 	/* Can't ask for more space than the highest category represents */
 	if (needed > MaxFSMRequestSize)
-		elog(ERROR, "invalid FSM request size %d", needed);
+			elog(ERROR, "invalid FSM request size %lu",
+				 (unsigned long) needed);
 
 	if (needed == 0)
 		return 1;
