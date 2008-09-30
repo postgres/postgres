@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.103 2008/06/26 18:25:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.104 2008/09/30 12:51:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -573,7 +573,7 @@ read_post_opts(void)
 {
 	if (post_opts == NULL)
 	{
-		post_opts = "";		/* defatult */
+		post_opts = "";		/* default */
 		if (ctl_command == RESTART_COMMAND)
 		{
 			char	  **optlines;
