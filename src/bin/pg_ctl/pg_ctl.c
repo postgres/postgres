@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.74.2.5 2008/06/27 01:53:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.74.2.6 2008/09/30 13:14:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,6 +589,8 @@ read_post_opts(void)
 					*arg1 = '\0';	/* terminate so we get only program name */
 					post_opts = arg1 + 1; /* point past whitespace */
 				}
+				else
+					post_opts = "";
 				if (postgres_path == NULL)
 					postgres_path = optline;
 			}
