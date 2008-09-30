@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.161 2008/09/23 10:58:03 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.162 2008/09/30 10:52:13 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,6 @@ static int	output_errno = 0;
 /* defaults */
 static int	n_connections = 10;
 static int	n_buffers = 50;
-static int	n_fsm_pages = 20000;
 
 /*
  * Warning messages for authentication methods
@@ -1041,13 +1040,10 @@ static void
 test_config_settings(void)
 {
 	/*
-	 * These macros define the minimum shared_buffers we want for a given
-	 * max_connections value, and the max_fsm_pages setting to be used for a
-	 * given shared_buffers value.	The arrays show the settings to try.
+	 * This macro defines the minimum shared_buffers we want for a given
+	 * max_connections value. The arrays show the settings to try.
 	 */
-
 #define MIN_BUFS_FOR_CONNS(nconns)	((nconns) * 10)
-#define FSM_FOR_BUFS(nbuffers)	((nbuffers) > 1000 ? 50 * (nbuffers) : 20000)
 
 	static const int trial_conns[] = {
 		100, 50, 40, 30, 20, 10
@@ -1065,7 +1061,6 @@ test_config_settings(void)
 				status,
 				test_conns,
 				test_buffs,
-				test_max_fsm,
 				ok_buffers = 0;
 
 
@@ -1076,16 +1071,14 @@ test_config_settings(void)
 	{
 		test_conns = trial_conns[i];
 		test_buffs = MIN_BUFS_FOR_CONNS(test_conns);
-		test_max_fsm = FSM_FOR_BUFS(test_buffs);
 
 		snprintf(cmd, sizeof(cmd),
 				 SYSTEMQUOTE "\"%s\" --boot -x0 %s "
 				 "-c max_connections=%d "
 				 "-c shared_buffers=%d "
-				 "-c max_fsm_pages=%d "
 				 "< \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 				 backend_exec, boot_options,
-				 test_conns, test_buffs, test_max_fsm,
+				 test_conns, test_buffs,
 				 DEVNULL, DEVNULL);
 		status = system(cmd);
 		if (status == 0)
@@ -1100,7 +1093,7 @@ test_config_settings(void)
 
 	printf("%d\n", n_connections);
 
-	printf(_("selecting default shared_buffers/max_fsm_pages ... "));
+	printf(_("selecting default shared_buffers ... "));
 	fflush(stdout);
 
 	for (i = 0; i < bufslen; i++)
@@ -1112,28 +1105,25 @@ test_config_settings(void)
 			test_buffs = ok_buffers;
 			break;
 		}
-		test_max_fsm = FSM_FOR_BUFS(test_buffs);
 
 		snprintf(cmd, sizeof(cmd),
 				 SYSTEMQUOTE "\"%s\" --boot -x0 %s "
 				 "-c max_connections=%d "
 				 "-c shared_buffers=%d "
-				 "-c max_fsm_pages=%d "
 				 "< \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 				 backend_exec, boot_options,
-				 n_connections, test_buffs, test_max_fsm,
+				 n_connections, test_buffs,
 				 DEVNULL, DEVNULL);
 		status = system(cmd);
 		if (status == 0)
 			break;
 	}
 	n_buffers = test_buffs;
-	n_fsm_pages = FSM_FOR_BUFS(n_buffers);
 
 	if ((n_buffers * (BLCKSZ / 1024)) % 1024 == 0)
-		printf("%dMB/%d\n", (n_buffers * (BLCKSZ / 1024)) / 1024, n_fsm_pages);
+		printf("%dMB\n", (n_buffers * (BLCKSZ / 1024)) / 1024);
 	else
-		printf("%dkB/%d\n", n_buffers * (BLCKSZ / 1024), n_fsm_pages);
+		printf("%dkB\n", n_buffers * (BLCKSZ / 1024));
 }
 
 /*
@@ -1163,9 +1153,6 @@ setup_config(void)
 		snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB",
 				 n_buffers * (BLCKSZ / 1024));
 	conflines = replace_token(conflines, "#shared_buffers = 32MB", repltok);
-
-	snprintf(repltok, sizeof(repltok), "max_fsm_pages = %d", n_fsm_pages);
-	conflines = replace_token(conflines, "#max_fsm_pages = 204800", repltok);
 
 #if DEF_PGPORT != 5432
 	snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);

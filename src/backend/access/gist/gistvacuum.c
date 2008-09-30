@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.36 2008/06/12 09:12:30 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.37 2008/09/30 10:52:10 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
+#include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
 
@@ -518,10 +519,7 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	Relation	rel = info->index;
 	BlockNumber npages,
 				blkno;
-	BlockNumber totFreePages,
-				nFreePages,
-			   *freePages,
-				maxFreePages;
+	BlockNumber	totFreePages;
 	BlockNumber lastBlock = GIST_ROOT_BLKNO,
 				lastFilledBlock = GIST_ROOT_BLKNO;
 	bool		needLock;
@@ -589,13 +587,7 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	if (needLock)
 		UnlockRelationForExtension(rel, ExclusiveLock);
 
-	maxFreePages = npages;
-	if (maxFreePages > MaxFSMPages)
-		maxFreePages = MaxFSMPages;
-
-	totFreePages = nFreePages = 0;
-	freePages = (BlockNumber *) palloc(sizeof(BlockNumber) * maxFreePages);
-
+	totFreePages = 0;
 	for (blkno = GIST_ROOT_BLKNO + 1; blkno < npages; blkno++)
 	{
 		Buffer		buffer;
@@ -609,9 +601,8 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 
 		if (PageIsNew(page) || GistPageIsDeleted(page))
 		{
-			if (nFreePages < maxFreePages)
-				freePages[nFreePages++] = blkno;
 			totFreePages++;
+			RecordFreeIndexPage(rel, blkno);
 		}
 		else
 			lastFilledBlock = blkno;
@@ -619,24 +610,14 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	}
 	lastBlock = npages - 1;
 
-	if (info->vacuum_full && nFreePages > 0)
+	if (info->vacuum_full && lastFilledBlock < lastBlock)
 	{							/* try to truncate index */
-		int			i;
+		FreeSpaceMapTruncateRel(rel, lastFilledBlock + 1);
+		RelationTruncate(rel, lastFilledBlock + 1);
 
-		for (i = 0; i < nFreePages; i++)
-			if (freePages[i] >= lastFilledBlock)
-			{
-				totFreePages = nFreePages = i;
-				break;
-			}
-
-		if (lastBlock > lastFilledBlock)
-			RelationTruncate(rel, lastFilledBlock + 1);
 		stats->std.pages_removed = lastBlock - lastFilledBlock;
+		totFreePages = totFreePages - stats->std.pages_removed;
 	}
-
-	RecordIndexFreeSpace(&rel->rd_node, totFreePages, nFreePages, freePages);
-	pfree(freePages);
 
 	/* return statistics */
 	stats->std.pages_free = totFreePages;

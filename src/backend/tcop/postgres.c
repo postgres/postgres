@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.556 2008/08/19 18:30:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.557 2008/09/30 10:52:13 heikki Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -57,7 +57,6 @@
 #include "postmaster/autovacuum.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/bufmgr.h"
-#include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
@@ -3257,13 +3256,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		StartupXLOG();
 		on_shmem_exit(ShutdownXLOG, 0);
-
-		/*
-		 * Read any existing FSM cache file, and register to write one out at
-		 * exit.
-		 */
-		LoadFreeSpaceMap();
-		on_shmem_exit(DumpFreeSpaceMap, 0);
 
 		/*
 		 * We have to build the flat file for pg_database, but not for the

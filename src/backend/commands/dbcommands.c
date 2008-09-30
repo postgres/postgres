@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.212 2008/09/23 10:58:03 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.213 2008/09/30 10:52:12 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,6 @@
 #include "postmaster/bgwriter.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
-#include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
@@ -795,11 +794,6 @@ dropdb(const char *dbname, bool missing_ok)
 	 * dirty buffer to the dead database later...
 	 */
 	DropDatabaseBuffers(db_id);
-
-	/*
-	 * Also, clean out any entries in the shared free space map.
-	 */
-	FreeSpaceMapForgetDatabase(db_id);
 
 	/*
 	 * Tell the stats collector to forget it immediately, too.
@@ -1639,9 +1633,6 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		/* Drop pages for this database that are in the shared buffer cache */
 		DropDatabaseBuffers(xlrec->db_id);
-
-		/* Also, clean out any entries in the shared free space map */
-		FreeSpaceMapForgetDatabase(xlrec->db_id);
 
 		/* Also, clean out any fsync requests that might be pending in md.c */
 		ForgetDatabaseFsyncRequests(xlrec->db_id);

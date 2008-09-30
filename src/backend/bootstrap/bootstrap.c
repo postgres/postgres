@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.245 2008/09/01 20:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.246 2008/09/30 10:52:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@
 #include "postmaster/bgwriter.h"
 #include "postmaster/walwriter.h"
 #include "storage/bufmgr.h"
-#include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
@@ -419,7 +418,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		case StartupProcess:
 			bootstrap_signals();
 			StartupXLOG();
-			LoadFreeSpaceMap();
 			BuildFlatFiles(false);
 			proc_exit(0);		/* startup done */
 

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.377 2008/09/11 14:01:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.378 2008/09/30 10:52:12 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -505,14 +505,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 		 * (autovacuum.c does this for itself.)
 		 */
 		vac_update_datfrozenxid();
-
-		/*
-		 * If it was a database-wide VACUUM, print FSM usage statistics (we
-		 * don't make you be superuser to see these).  We suppress this in
-		 * autovacuum, too.
-		 */
-		if (all_rels)
-			PrintFreeSpaceMapStatistics(elevel);
 	}
 
 	/*
@@ -1272,8 +1264,9 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 		}
 	}
 
-	/* update shared free space map with final free space info */
+	/* update thefree space map with final free space info, and vacuum it */
 	vac_update_fsm(onerel, &fraged_pages, vacrelstats->rel_pages);
+	FreeSpaceMapVacuum(onerel);
 
 	/* update statistics in pg_class */
 	vac_update_relstats(RelationGetRelid(onerel), vacrelstats->rel_pages,
@@ -2849,6 +2842,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	/* Truncate relation, if needed */
 	if (blkno < nblocks)
 	{
+		FreeSpaceMapTruncateRel(onerel, blkno);
 		RelationTruncate(onerel, blkno);
 		vacrelstats->rel_pages = blkno; /* set new number of blocks */
 	}
@@ -3243,6 +3237,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 				(errmsg("\"%s\": truncated %u to %u pages",
 						RelationGetRelationName(onerel),
 						vacrelstats->rel_pages, relblocks)));
+		FreeSpaceMapTruncateRel(onerel, relblocks);
 		RelationTruncate(onerel, relblocks);
 		vacrelstats->rel_pages = relblocks;		/* set new number of blocks */
 	}
@@ -3475,8 +3470,8 @@ tid_reaped(ItemPointer itemptr, void *state)
 }
 
 /*
- * Update the shared Free Space Map with the info we now have about
- * free space in the relation, discarding any old info the map may have.
+ * Update the Free Space Map with the info we now have about free space in
+ * the relation.
  */
 static void
 vac_update_fsm(Relation onerel, VacPageList fraged_pages,
@@ -3484,25 +3479,7 @@ vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 {
 	int			nPages = fraged_pages->num_pages;
 	VacPage    *pagedesc = fraged_pages->pagedesc;
-	Size		threshold;
-	FSMPageData *pageSpaces;
-	int			outPages;
 	int			i;
-
-	/*
-	 * We only report pages with free space at least equal to the average
-	 * request size --- this avoids cluttering FSM with uselessly-small bits
-	 * of space.  Although FSM would discard pages with little free space
-	 * anyway, it's important to do this prefiltering because (a) it reduces
-	 * the time spent holding the FSM lock in RecordRelationFreeSpace, and (b)
-	 * FSM uses the number of pages reported as a statistic for guiding space
-	 * management.	If we didn't threshold our reports the same way
-	 * vacuumlazy.c does, we'd be skewing that statistic.
-	 */
-	threshold = GetAvgFSMRequestSize(&onerel->rd_node);
-
-	pageSpaces = (FSMPageData *) palloc(nPages * sizeof(FSMPageData));
-	outPages = 0;
 
 	for (i = 0; i < nPages; i++)
 	{
@@ -3514,17 +3491,9 @@ vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 		if (pagedesc[i]->blkno >= rel_pages)
 			break;
 
-		if (pagedesc[i]->free >= threshold)
-		{
-			FSMPageSetPageNum(&pageSpaces[outPages], pagedesc[i]->blkno);
-			FSMPageSetSpace(&pageSpaces[outPages], pagedesc[i]->free);
-			outPages++;
-		}
+		RecordPageWithFreeSpace(onerel, pagedesc[i]->blkno, pagedesc[i]->free);
 	}
 
-	RecordRelationFreeSpace(&onerel->rd_node, outPages, outPages, pageSpaces);
-
-	pfree(pageSpaces);
 }
 
 /* Copy a VacPage structure */

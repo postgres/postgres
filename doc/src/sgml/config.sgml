@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.190 2008/08/25 19:03:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.191 2008/09/30 10:52:09 heikki Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -896,80 +896,6 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      </variablelist>
-     </sect2>
-     <sect2 id="runtime-config-resource-fsm">
-     <title>Free Space Map</title>
-
-     <indexterm>
-      <primary>free space map</primary>
-     </indexterm>
-
-     <para>
-      These parameters control the size of the shared <firstterm>free space
-      map</> (<acronym>FSM</>), which tracks the locations of unused space in the database.
-      An undersized free space map can cause the database to consume
-      increasing amounts of disk space over time, because free space that
-      is not in the map cannot be re-used; instead <productname>PostgreSQL</>
-      will request more disk space from the operating system when it needs
-      to store new data.
-      The last few lines displayed by a database-wide <command>VACUUM VERBOSE</>
-      command can help in determining if the current settings are adequate.
-      A <literal>NOTICE</> message is also printed during such an operation
-      if the current settings are too low.
-     </para>
-
-     <para>
-      Increasing these parameters might cause <productname>PostgreSQL</>
-      to request more <systemitem class="osname">System V</> shared
-      memory than your operating system's default configuration
-      allows. See <xref linkend="sysvipc"> for information on how to
-      adjust those parameters, if necessary.
-     </para>
-
-     <variablelist>
-     <varlistentry id="guc-max-fsm-pages" xreflabel="max_fsm_pages">
-      <term><varname>max_fsm_pages</varname> (<type>integer</type>)</term>
-      <indexterm>
-       <primary><varname>max_fsm_pages</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Sets the maximum number of disk pages for which free space will
-        be tracked in the shared free-space map.  Six bytes of shared memory
-        are consumed for each page slot.  This setting must be at least
-        16 * <varname>max_fsm_relations</varname>.  The default is chosen
-        by <application>initdb</> depending on the amount of available memory,
-        and can range from 20k to 200k pages.
-        This parameter can only be set at server start.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-max-fsm-relations" xreflabel="max_fsm_relations">
-      <term><varname>max_fsm_relations</varname> (<type>integer</type>)</term>
-      <indexterm>
-       <primary><varname>max_fsm_relations</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Sets the maximum number of relations (tables and indexes) for which
-        free space will be tracked in the shared free-space map.  Roughly
-        seventy bytes of shared memory are consumed for each slot.
-        The default is one thousand relations.
-        This parameter can only be set at server start.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     </variablelist>
-
-     <note>
-      <para>
-       See the <xref linkend="sql-vacuum" endterm="sql-vacuum-title">
-       command for information on setting this parameter.
-      </para>
-     </note>
-
      </sect2>
 
      <sect2 id="runtime-config-resource-kernel">

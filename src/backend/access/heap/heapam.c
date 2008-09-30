@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.263 2008/09/11 14:01:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.264 2008/09/30 10:52:10 heikki Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -4721,6 +4721,9 @@ heap_sync(Relation rel)
 	/* FlushRelationBuffers will have opened rd_smgr */
 	smgrimmedsync(rel->rd_smgr, MAIN_FORKNUM);
 
+	/* sync FSM as well */
+	smgrimmedsync(rel->rd_smgr, FSM_FORKNUM);
+
 	/* toast heap, if any */
 	if (OidIsValid(rel->rd_rel->reltoastrelid))
 	{
@@ -4729,6 +4732,7 @@ heap_sync(Relation rel)
 		toastrel = heap_open(rel->rd_rel->reltoastrelid, AccessShareLock);
 		FlushRelationBuffers(toastrel);
 		smgrimmedsync(toastrel->rd_smgr, MAIN_FORKNUM);
+		smgrimmedsync(toastrel->rd_smgr, FSM_FORKNUM);
 		heap_close(toastrel, AccessShareLock);
 	}
 }

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgfreespacemap.sgml,v 2.2 2007/12/10 05:32:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgfreespacemap.sgml,v 2.3 2008/09/30 10:52:09 heikki Exp $ -->
 
 <sect1 id="pgfreespacemap">
  <title>pg_freespacemap</title>
@@ -9,183 +9,66 @@
 
  <para>
   The <filename>pg_freespacemap</> module provides a means for examining the
-  free space map (FSM). It provides two C functions:
-  <function>pg_freespacemap_relations</function> and
-  <function>pg_freespacemap_pages</function> that each return a set of
-  records, plus two views <structname>pg_freespacemap_relations</structname>
-  and <structname>pg_freespacemap_pages</structname> that wrap the functions
-  for convenient use.
+  free space map (FSM). It provides a function called
+  <function>pg_freespacemap</function>, or two overloaded functions, to be
+  precise. The functions show the value recorded in the free space map for
+  a given page, or for all pages in the relation.
  </para>
 
  <para>
-  By default public access is revoked from the functions and views, just in
-  case there are security issues lurking.
+  By default public access is revoked from the functions, just in case
+  there are security issues lurking.
  </para>
 
  <sect2>
-  <title>The <filename>pg_freespacemap</> views</title>
+  <title>Functions</title>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <function>pg_freespacemap(rel regclass IN, blkno bigint IN) returns int2</function>
+    </term>
+
+    <listitem>
+     <para>
+      Returns the amount of free space on the page of the relation, specified
+      by <literal>blkno</>, according to the FSM.
+      (blkno).
+     </para>
+    </listitem>
+   </varlistentry>
+
+
+   <varlistentry>
+    <term>
+     <function>pg_freespacemap(rel regclass IN, blkno OUT int4, avail OUT int2)</function>
+    </term>
+
+    <listitem>
+     <para>
+      Displays the the amount of free space on each page of the relation,
+      according to the FSM. A set of <literal>(blkno int4, avail int2)</>
+      tuples is returned, one tuple for each page in the relation.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
 
   <para>
-   The definitions of the columns exposed by the views are:
-  </para>
-
-  <table>
-   <title><structname>pg_freespacemap_relations</> Columns</title>
-
-   <tgroup cols="4">
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-    <tbody>
-
-     <row>
-      <entry><structfield>reltablespace</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal>pg_tablespace.oid</literal></entry>
-      <entry>Tablespace OID of the relation</entry>
-     </row>
-     <row>
-      <entry><structfield>reldatabase</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal>pg_database.oid</literal></entry>
-      <entry>Database OID of the relation</entry>
-     </row>
-     <row>
-      <entry><structfield>relfilenode</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal>pg_class.relfilenode</literal></entry>
-      <entry>Relfilenode of the relation</entry>
-     </row>
-     <row>
-      <entry><structfield>avgrequest</structfield></entry>
-      <entry><type>integer</type></entry>
-      <entry></entry>
-      <entry>Moving average of free space requests (NULL for indexes)</entry>
-     </row>
-     <row>
-      <entry><structfield>interestingpages</structfield></entry>
-      <entry><type>integer</type></entry>
-      <entry></entry>
-      <entry>Count of pages last reported as containing useful free space</entry>
-     </row>
-     <row>
-      <entry><structfield>storedpages</structfield></entry>
-      <entry><type>integer</type></entry>
-      <entry></entry>
-      <entry>Count of pages actually stored in free space map</entry>
-     </row>
-     <row>
-      <entry><structfield>nextpage</structfield></entry>
-      <entry><type>integer</type></entry>
-      <entry></entry>
-      <entry>Page index (from 0) to start next search at</entry>
-     </row>
-
-    </tbody>
-   </tgroup>
-  </table>
-
-  <table>
-   <title><structname>pg_freespacemap_pages</> Columns</title>
-
-   <tgroup cols="4">
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-    <tbody>
-
-     <row>
-      <entry><structfield>reltablespace</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal>pg_tablespace.oid</literal></entry>
-      <entry>Tablespace OID of the relation</entry>
-     </row>
-     <row>
-      <entry><structfield>reldatabase</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal>pg_database.oid</literal></entry>
-      <entry>Database OID of the relation</entry>
-     </row>
-     <row>
-      <entry><structfield>relfilenode</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal>pg_class.relfilenode</literal></entry>
-      <entry>Relfilenode of the relation</entry>
-     </row>
-     <row>
-      <entry><structfield>relblocknumber</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Page number within the relation</entry>
-     </row>
-     <row>
-      <entry><structfield>bytes</structfield></entry>
-      <entry><type>integer</type></entry>
-      <entry></entry>
-      <entry>Free bytes in the page, or NULL for an index page (see below)</entry>
-     </row>
-
-    </tbody>
-   </tgroup>
-  </table>
-
-  <para>
-   For <structname>pg_freespacemap_relations</structname>, there is one row
-   for each relation in the free space map.
-   <structfield>storedpages</structfield> is the number of pages actually
-   stored in the map, while <structfield>interestingpages</structfield> is the
-   number of pages the last <command>VACUUM</> thought had useful amounts of
-   free space.
-  </para>
-
-  <para>
-   If <structfield>storedpages</structfield> is consistently less than
-   <structfield>interestingpages</> then it'd be a good idea to increase
-   <varname>max_fsm_pages</varname>.  Also, if the number of rows in
-   <structname>pg_freespacemap_relations</structname> is close to
-   <varname>max_fsm_relations</varname>, then you should consider increasing
-   <varname>max_fsm_relations</varname>.
-  </para>
-
-  <para>
-   For <structname>pg_freespacemap_pages</structname>, there is one row for
-   each page in the free space map. The number of rows for a relation will
-   match the <structfield>storedpages</structfield> column in
-   <structname>pg_freespacemap_relations</structname>.
+   The values stored in the free space map are not exact. They're rounded
+   to precision of 1/256th of BLCKSZ (32 bytes with default BLCKSZ), and
+   they're not kept fully up-to-date as tuples are inserted and updated.
   </para>
 
   <para>
    For indexes, what is tracked is entirely-unused pages, rather than free
-   space within pages.  Therefore, the average request size and free bytes
-   within a page are not meaningful, and are shown as NULL.
+   space within pages.  Therefore, the values are not meaningful, just
+   whether a page is full or empty.
   </para>
 
   <para>
-   Because the map is shared by all the databases, there will normally be
-   entries for relations not belonging to the current database.  This means
-   that there may not be matching join rows in <structname>pg_class</> for
-   some rows, or that there could even be incorrect joins.  If you are
-   trying to join against <structname>pg_class</>, it's a good idea to
-   restrict the join to rows having <structfield>reldatabase</> equal to
-   the current database's OID or zero.
-  </para>
-
-  <para>
-   When either of the views is accessed, internal free space map locks are
-   taken for long enough to copy all the state data that the view will display.
-   This ensures that the views produce a consistent set of results, while not
-   blocking normal activity longer than necessary.  Nonetheless there
-   could be some impact on database performance if they are read often.
+   NOTE: The interface was changed in version 8.4, to reflect the new FSM
+   implementation introduced in the same version.
   </para>
  </sect2>
 
@@ -193,45 +76,37 @@
   <title>Sample output</title>
 
   <programlisting>
-regression=# SELECT c.relname, r.avgrequest, r.interestingpages, r.storedpages
-             FROM pg_freespacemap_relations r INNER JOIN pg_class c
-             ON r.relfilenode = c.relfilenode AND
-                r.reldatabase IN (0, (SELECT oid FROM pg_database
-                                      WHERE datname = current_database()))
-             ORDER BY r.storedpages DESC LIMIT 10;
-             relname             | avgrequest | interestingpages | storedpages
----------------------------------+------------+------------------+-------------
- onek                            |        256 |              109 |         109
- pg_attribute                    |        167 |               93 |          93
- pg_class                        |        191 |               49 |          49
- pg_attribute_relid_attnam_index |            |               48 |          48
- onek2                           |        256 |               37 |          37
- pg_depend                       |         95 |               26 |          26
- pg_type                         |        199 |               16 |          16
- pg_rewrite                      |       1011 |               13 |          13
- pg_class_relname_nsp_index      |            |               10 |          10
- pg_proc                         |        302 |                8 |           8
-(10 rows)
+postgres=# SELECT * FROM pg_freespace('foo');
+ blkno | avail 
+-------+-------
+     0 |     0
+     1 |     0
+     2 |     0
+     3 |    32
+     4 |   704
+     5 |   704
+     6 |   704
+     7 |  1216
+     8 |   704
+     9 |   704
+    10 |   704
+    11 |   704
+    12 |   704
+    13 |   704
+    14 |   704
+    15 |   704
+    16 |   704
+    17 |   704
+    18 |   704
+    19 |  3648
+(20 rows)
 
-regression=# SELECT c.relname, p.relblocknumber, p.bytes
-             FROM pg_freespacemap_pages p INNER JOIN pg_class c
-             ON p.relfilenode = c.relfilenode AND
-                p.reldatabase IN (0, (SELECT oid FROM pg_database
-                                      WHERE datname = current_database()))
-             ORDER BY c.relname LIMIT 10;
-   relname    | relblocknumber | bytes
---------------+----------------+-------
- a_star       |              0 |  8040
- abstime_tbl  |              0 |  7908
- aggtest      |              0 |  8008
- altinhoid    |              0 |  8128
- altstartwith |              0 |  8128
- arrtest      |              0 |  7172
- b_star       |              0 |  7976
- box_tbl      |              0 |  7912
- bt_f8_heap   |             54 |  7728
- bt_i4_heap   |             49 |  8008
-(10 rows)
+postgres=# SELECT * FROM pg_freespace('foo', 7);
+ pg_freespace 
+--------------
+         1216
+(1 row)
+
   </programlisting>
  </sect2>
 
@@ -239,7 +114,9 @@ regression=# SELECT c.relname, p.relblocknumber, p.bytes
   <title>Author</title>
 
   <para>
-   Mark Kirkwood <email>markir@paradise.net.nz</email>
+   Original version by Mark Kirkwood <email>markir@paradise.net.nz</email>.
+   Rewritten in version 8.4 to suit new FSM implementation by Heikki
+   Linnakangas <email>heikki@enterprisedb.com</email>
   </para>
  </sect2>
 

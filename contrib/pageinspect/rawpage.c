@@ -8,7 +8,7 @@
  * Copyright (c) 2007-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.6 2008/05/12 00:00:43 alvherre Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.7 2008/09/30 10:52:09 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,8 @@ Datum
 get_raw_page(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_P(0);
-	uint32		blkno = PG_GETARG_UINT32(1);
+	uint32		forknum = PG_GETARG_UINT32(1);
+	uint32		blkno = PG_GETARG_UINT32(2);
 
 	Relation	rel;
 	RangeVar   *relrv;
@@ -53,6 +54,11 @@ get_raw_page(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to use raw functions"))));
+
+	if (forknum > MAX_FORKNUM)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid fork number")));
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
@@ -80,7 +86,7 @@ get_raw_page(PG_FUNCTION_ARGS)
 
 	/* Take a verbatim copy of the page */
 
-	buf = ReadBuffer(rel, blkno);
+	buf = ReadBufferWithFork(rel, forknum, blkno);
 	LockBuffer(buf, BUFFER_LOCK_SHARE);
 
 	memcpy(raw_page_data, BufferGetPage(buf), BLCKSZ);

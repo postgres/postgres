@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.16 2008/08/11 11:05:11 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.17 2008/09/30 10:52:14 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,11 +23,12 @@
 typedef enum ForkNumber
 {
 	InvalidForkNumber = -1,
-	MAIN_FORKNUM = 0
-	/* NOTE: change NUM_FORKS below when you add new forks */
+	MAIN_FORKNUM = 0,
+	FSM_FORKNUM
+	/* NOTE: change MAX_FORKNUM below when you add new forks */
 } ForkNumber;
 
-#define MAX_FORKNUM		MAIN_FORKNUM
+#define MAX_FORKNUM		FSM_FORKNUM
 
 /*
  * RelFileNode must provide all that we need to know to physically access

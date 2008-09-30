@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.417 2008/09/23 09:20:34 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.418 2008/09/30 10:52:10 heikki Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1115,16 +1115,6 @@ set semsys:seminfo_semmsl=32
       <row>
        <entry><xref linkend="guc-wal-buffers"></>
        <entry>8200 (assuming 8 kB <symbol>XLOG_BLCKSZ</>)</entry>
-      </row>
-
-      <row>
-       <entry><xref linkend="guc-max-fsm-relations"></>
-       <entry>70</>
-      </row>
-
-      <row>
-       <entry><xref linkend="guc-max-fsm-pages"></>
-       <entry>6</>
       </row>
 
       <row>

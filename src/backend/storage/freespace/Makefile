@@ -4,7 +4,7 @@
 #    Makefile for storage/freespace
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/storage/freespace/Makefile,v 1.4 2008/02/19 10:30:08 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/storage/freespace/Makefile,v 1.5 2008/09/30 10:52:13 heikki Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +12,6 @@ subdir = src/backend/storage/freespace
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = freespace.o
+OBJS = freespace.o fsmpage.o indexfsm.o
 
 include $(top_srcdir)/src/backend/common.mk

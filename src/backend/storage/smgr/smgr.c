@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.111 2008/08/11 11:05:11 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.112 2008/09/30 10:52:13 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "access/xlogutils.h"
 #include "commands/tablespace.h"
 #include "storage/bufmgr.h"
-#include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"
 #include "utils/hsearch.h"
@@ -475,13 +474,6 @@ smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum,
 	DropRelFileNodeBuffers(rnode, forknum, isTemp, 0);
 
 	/*
-	 * Tell the free space map to forget this relation.  It won't be accessed
-	 * any more anyway, but we may as well recycle the map space quickly.
-	 */
-	if (forknum == MAIN_FORKNUM)
-		FreeSpaceMapForgetRel(&rnode);
-
-	/*
 	 * It'd be nice to tell the stats collector to forget it immediately, too.
 	 * But we can't because we don't know the OID (and in cases involving
 	 * relfilenode swaps, it's not always clear which table OID to forget,
@@ -576,13 +568,6 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
 	 * just drop them without bothering to write the contents.
 	 */
 	DropRelFileNodeBuffers(reln->smgr_rnode, forknum, isTemp, nblocks);
-
-	/*
-	 * Tell the free space map to forget anything it may have stored for the
-	 * about-to-be-deleted blocks.	We want to be sure it won't return bogus
-	 * block numbers later on.
-	 */
-	FreeSpaceMapTruncateRel(&reln->smgr_rnode, nblocks);
 
 	/* Do the truncation */
 	(*(smgrsw[reln->smgr_which].smgr_truncate)) (reln, forknum, nblocks,
@@ -904,13 +889,6 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 		 */
 		DropRelFileNodeBuffers(xlrec->rnode, xlrec->forknum, false,
 							   xlrec->blkno);
-
-		/*
-		 * Tell the free space map to forget anything it may have stored for
-		 * the about-to-be-deleted blocks.	We want to be sure it won't return
-		 * bogus block numbers later on.
-		 */
-		FreeSpaceMapTruncateRel(&reln->smgr_rnode, xlrec->blkno);
 
 		/* Do the truncation */
 		(*(smgrsw[reln->smgr_which].smgr_truncate)) (reln,

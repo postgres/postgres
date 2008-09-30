@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.21 2008/07/11 21:06:29 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.22 2008/09/30 10:52:10 heikki Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -20,6 +20,7 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
+#include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 
 typedef struct
@@ -678,10 +679,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	bool		needLock;
 	BlockNumber npages,
 				blkno;
-	BlockNumber totFreePages,
-				nFreePages,
-			   *freePages,
-				maxFreePages;
+	BlockNumber totFreePages;
 	BlockNumber lastBlock = GIN_ROOT_BLKNO,
 				lastFilledBlock = GIN_ROOT_BLKNO;
 
@@ -711,12 +709,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	if (needLock)
 		UnlockRelationForExtension(index, ExclusiveLock);
 
-	maxFreePages = npages;
-	if (maxFreePages > MaxFSMPages)
-		maxFreePages = MaxFSMPages;
-
-	totFreePages = nFreePages = 0;
-	freePages = (BlockNumber *) palloc(sizeof(BlockNumber) * maxFreePages);
+	totFreePages =  0;
 
 	for (blkno = GIN_ROOT_BLKNO + 1; blkno < npages; blkno++)
 	{
@@ -731,8 +724,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 
 		if (GinPageIsDeleted(page))
 		{
-			if (nFreePages < maxFreePages)
-				freePages[nFreePages++] = blkno;
+			RecordFreeIndexPage(index, blkno);
 			totFreePages++;
 		}
 		else
@@ -742,25 +734,16 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	}
 	lastBlock = npages - 1;
 
-	if (info->vacuum_full && nFreePages > 0)
+	if (info->vacuum_full && lastBlock > lastFilledBlock)
 	{
 		/* try to truncate index */
-		int			i;
-
-		for (i = 0; i < nFreePages; i++)
-			if (freePages[i] >= lastFilledBlock)
-			{
-				totFreePages = nFreePages = i;
-				break;
-			}
-
-		if (lastBlock > lastFilledBlock)
-			RelationTruncate(index, lastFilledBlock + 1);
+		FreeSpaceMapTruncateRel(index, lastFilledBlock + 1);
+		RelationTruncate(index, lastFilledBlock + 1);
 
 		stats->pages_removed = lastBlock - lastFilledBlock;
+		totFreePages = totFreePages - stats->pages_removed;
 	}
 
-	RecordIndexFreeSpace(&index->rd_node, totFreePages, nFreePages, freePages);
 	stats->pages_free = totFreePages;
 
 	if (needLock)

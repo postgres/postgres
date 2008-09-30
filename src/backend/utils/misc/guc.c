@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.473 2008/09/23 21:12:03 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.474 2008/09/30 10:52:13 heikki Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -57,7 +57,6 @@
 #include "regex/regex.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
-#include "storage/freespace.h"
 #include "tcop/tcopprot.h"
 #include "tsearch/ts_cache.h"
 #include "utils/builtins.h"
@@ -446,8 +445,6 @@ const char *const config_group_names[] =
 	gettext_noop("Resource Usage"),
 	/* RESOURCES_MEM */
 	gettext_noop("Resource Usage / Memory"),
-	/* RESOURCES_FSM */
-	gettext_noop("Resource Usage / Free Space Map"),
 	/* RESOURCES_KERNEL */
 	gettext_noop("Resource Usage / Kernel Resources"),
 	/* WAL */
@@ -1526,23 +1523,6 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&vacuum_freeze_min_age,
 		100000000, 0, 1000000000, NULL, NULL
-	},
-
-	{
-		{"max_fsm_relations", PGC_POSTMASTER, RESOURCES_FSM,
-			gettext_noop("Sets the maximum number of tables and indexes for which free space is tracked."),
-			NULL
-		},
-		&MaxFSMRelations,
-		1000, 100, INT_MAX, NULL, NULL
-	},
-	{
-		{"max_fsm_pages", PGC_POSTMASTER, RESOURCES_FSM,
-			gettext_noop("Sets the maximum number of disk pages for which free space is tracked."),
-			NULL
-		},
-		&MaxFSMPages,
-		20000, 1000, INT_MAX, NULL, NULL
 	},
 
 	{

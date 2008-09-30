@@ -2,12 +2,12 @@
 #
 # pageinspect Makefile
 #
-# $PostgreSQL: pgsql/contrib/pageinspect/Makefile,v 1.3 2007/11/10 23:59:51 momjian Exp $
+# $PostgreSQL: pgsql/contrib/pageinspect/Makefile,v 1.4 2008/09/30 10:52:09 heikki Exp $
 #
 #-------------------------------------------------------------------------
 
 MODULE_big	= pageinspect
-OBJS		= rawpage.o heapfuncs.o btreefuncs.o
+OBJS		= rawpage.o heapfuncs.o btreefuncs.o fsmfuncs.o
 DATA_built	= pageinspect.sql
 DATA      	= uninstall_pageinspect.sql
 

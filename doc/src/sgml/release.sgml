@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.585 2008/09/17 20:57:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.586 2008/09/30 10:52:09 heikki Exp $ -->
 <!--
 
 Typical markup:
@@ -6004,8 +6004,7 @@ current_date &lt; 2017-11-17
       <para>
        Increase default values for <link
        linkend="guc-shared-buffers"><varname>shared_buffers</></link>
-       and <link
-       linkend="guc-max-fsm-pages"><varname>max_fsm_pages</></link>
+       and <varname>max_fsm_pages</>
        (Andrew)
       </para>
      </listitem>

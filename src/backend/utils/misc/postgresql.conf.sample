@@ -114,13 +114,6 @@
 #maintenance_work_mem = 16MB		# min 1MB
 #max_stack_depth = 2MB			# min 100kB
 
-# - Free Space Map -
-
-#max_fsm_pages = 204800			# min max_fsm_relations*16, 6 bytes each
-					# (change requires restart)
-#max_fsm_relations = 1000		# min 100, ~70 bytes each
-					# (change requires restart)
-
 # - Kernel Resource Usage -
 
 #max_files_per_process = 1000		# min 25

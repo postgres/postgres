@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.339 2008/08/28 23:09:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.340 2008/09/30 10:52:12 heikki Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -56,6 +56,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "storage/bufmgr.h"
+#include "storage/freespace.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -294,14 +295,22 @@ heap_create(const char *relname,
 	/*
 	 * Have the storage manager create the relation's disk file, if needed.
 	 *
-	 * We only create storage for the main fork here. The caller is
-	 * responsible for creating any additional forks if needed.
+	 * We create storage for the main fork here, and also for the FSM for a
+	 * heap or toast relation. The caller is responsible for creating any
+	 * additional forks if needed.
 	 */
 	if (create_storage)
 	{
 		Assert(rel->rd_smgr == NULL);
 		RelationOpenSmgr(rel);
 		smgrcreate(rel->rd_smgr, MAIN_FORKNUM, rel->rd_istemp, false);
+
+		/*
+		 * For a real heap, create FSM fork as well. Indexams are
+		 * responsible for creating any extra forks themselves.
+		 */
+		if (relkind == RELKIND_RELATION || relkind == RELKIND_TOASTVALUE)
+			smgrcreate(rel->rd_smgr, FSM_FORKNUM, rel->rd_istemp, false);
 	}
 
 	return rel;
@@ -2256,7 +2265,11 @@ RelationTruncateIndexes(Relation heapRelation)
 		/* Fetch info needed for index_build */
 		indexInfo = BuildIndexInfo(currentIndex);
 
-		/* Now truncate the actual file (and discard buffers) */
+		/*
+		 * Now truncate the actual file (and discard buffers). The indexam
+		 * is responsible for truncating the FSM in index_build(), if
+		 * applicable.
+		 */
 		RelationTruncate(currentIndex, 0);
 
 		/* Initialize the index and rebuild */
@@ -2310,7 +2323,8 @@ heap_truncate(List *relids)
 	{
 		Relation	rel = lfirst(cell);
 
-		/* Truncate the actual file (and discard buffers) */
+		/* Truncate the FSM and actual file (and discard buffers) */
+		FreeSpaceMapTruncateRel(rel, 0);
 		RelationTruncate(rel, 0);
 
 		/* If this relation has indexes, truncate the indexes too */

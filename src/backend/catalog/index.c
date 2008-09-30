@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.304 2008/09/15 18:43:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.305 2008/09/30 10:52:12 heikki Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -920,7 +920,7 @@ index_drop(Oid indexId)
 	RelationOpenSmgr(userIndexRelation);
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 		if (smgrexists(userIndexRelation->rd_smgr, forknum))
-			smgrscheduleunlink(userIndexRelation->rd_smgr, forknum, 
+			smgrscheduleunlink(userIndexRelation->rd_smgr, forknum,
 							   userIndexRelation->rd_istemp);
 	RelationCloseSmgr(userIndexRelation);
 
@@ -1322,7 +1322,7 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 	/*
 	 * ... and create storage for corresponding forks in the new relfilenode.
 	 *
-	 * NOTE: any conflict in relfilenode value will be caught here 
+	 * NOTE: any conflict in relfilenode value will be caught here
 	 */
 	newrnode = relation->rd_node;
 	newrnode.relNode = newrelfilenode;
@@ -1330,6 +1330,14 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 
 	/* Create the main fork, like heap_create() does */
 	smgrcreate(srel, MAIN_FORKNUM, relation->rd_istemp, false);
+
+	/*
+	 * For a heap, create FSM fork as well. Indexams are responsible for
+	 * creating any extra forks themselves.
+	 */
+	if (relation->rd_rel->relkind == RELKIND_RELATION ||
+		relation->rd_rel->relkind == RELKIND_TOASTVALUE)
+		smgrcreate(srel, FSM_FORKNUM, relation->rd_istemp, false);
 
 	/* schedule unlinking old files */
 	for (i = 0; i <= MAX_FORKNUM; i++)
@@ -2310,7 +2318,10 @@ reindex_index(Oid indexId)
 
 		if (inplace)
 		{
-			/* Truncate the actual file (and discard buffers) */
+			/*
+			 * Truncate the actual file (and discard buffers). The indexam
+			 * is responsible for truncating the FSM, if applicable
+			 */
 			RelationTruncate(iRel, 0);
 		}
 		else

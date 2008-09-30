@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.24 2008/08/05 12:09:30 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.25 2008/09/30 10:52:10 heikki Exp $ -->
 
 <chapter id="storage">
 
@@ -130,7 +130,12 @@ there.
 <para>
 Each table and index is stored in a separate file, named after the table
 or index's <firstterm>filenode</> number, which can be found in
-<structname>pg_class</>.<structfield>relfilenode</>.
+<structname>pg_class</>.<structfield>relfilenode</>. In addition to the
+main file (aka. main fork), a <firstterm>free space map</> (see
+<xref linkend="storage-fsm">) that stores information about free space
+available in the relation, is stored in a file named after the filenode
+number, with the the _1 suffix. For example, if the table's filenode number
+is 12345, the FSM file is named <filename>12345_1</>.
 </para>
 
 <caution>
@@ -363,6 +368,48 @@ raw data size including the <acronym>TOAST</> table, and that the main table
 contained only about 10% of the entire data (the URLs and some small HTML
 pages). There was no run time difference compared to an un-<acronym>TOAST</>ed
 comparison table, in which all the HTML pages were cut down to 7 kB to fit.
+</para>
+
+</sect1>
+
+<sect1 id="storage-fsm">
+
+<title>Free Space Map</title>
+
+    <indexterm>
+     <primary>Free Space Map</primary>
+    </indexterm>
+    <indexterm><primary>FSM</><see>Free Space Map</></indexterm>
+
+<para>
+A Free Space Map is stored with every heap and index relation, except for
+hash indexes, to keep track of available space in the relation. It's stored
+along the main relation data, in a separate FSM relation fork, named after
+relfilenode of the relation, but with a <literal>_1</> suffix. For example,
+if the relfilenode of a relation is 12345, the FSM is stored in a file called
+<filename>12345_1</>, in the same directory as the main relation file.
+</para>
+
+<para>
+The Free Space Map is organized as a tree of <acronym>FSM</> pages. The
+bottom level <acronym>FSM</> pages stores the free space available on every
+heap (or index) page, using one byte to represent each heap page. The upper
+levels aggregate information from the lower levels.
+</para>
+
+<para>
+Within each <acronym>FSM</> page is a binary tree, stored in an array with
+one byte per node. Each leaf node represents a heap page, or a lower level
+<acronym>FSM</> page. In each non-leaf node, the higher of its children's
+values is stored. The maximum value in the leaf nodes is therefore stored
+at the root.
+</para>
+
+<para>
+See <filename>src/backend/storage/freespace/README</> for more details on
+how the <acronym>FSM</> is structured, and how it's updated and searched.
+<xref linkend="pgfreespacemap"> contrib module can be used to view the
+information stored in free space maps.
 </para>
 
 </sect1>

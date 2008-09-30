@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.51 2008/02/03 16:24:08 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.52 2008/09/30 10:52:10 heikki Exp $
 PostgreSQL documentation
 -->
 
@@ -96,11 +96,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
     <term><literal>VERBOSE</literal></term>
     <listitem>
      <para>
-      Prints a detailed vacuum activity report for each table. Can be used
-      to help determine appropriate settings for
-      <xref linkend="guc-max-fsm-pages">,
-      <xref linkend="guc-max-fsm-relations">, and
-      <xref linkend="guc-default-statistics-target">.
+      Prints a detailed vacuum activity report for each table.
      </para>
     </listitem>
    </varlistentry>

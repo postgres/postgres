@@ -1,44 +1,26 @@
-/* $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.sql.in,v 1.8 2007/11/13 04:24:28 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.sql.in,v 1.9 2008/09/30 10:52:09 heikki Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
 
--- Register the functions.
-CREATE OR REPLACE FUNCTION pg_freespacemap_pages()
-RETURNS SETOF RECORD
-AS 'MODULE_PATHNAME', 'pg_freespacemap_pages'
+-- Register the C function.
+CREATE OR REPLACE FUNCTION pg_freespace(regclass, int4)
+RETURNS int2
+AS 'MODULE_PATHNAME', 'pg_freespace'
 LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION pg_freespacemap_relations()
+-- pg_freespace shows the recorded space avail at each block in a relation
+CREATE OR REPLACE FUNCTION
+  pg_freespace(rel regclass, blkno OUT int4, avail OUT int2)
 RETURNS SETOF RECORD
-AS 'MODULE_PATHNAME', 'pg_freespacemap_relations'
-LANGUAGE C;
+AS $$
+  SELECT blkno::int4, pg_freespace($1, blkno::int4) AS avail
+  FROM generate_series(0, pg_relation_size($1) / current_setting('block_size')::bigint - 1) AS blkno;
+$$
+LANGUAGE SQL;
 
 
--- Create views for convenient access.
-CREATE VIEW pg_freespacemap_pages AS
-	SELECT P.* FROM pg_freespacemap_pages() AS P
-	(reltablespace oid,
-	 reldatabase oid,
-	 relfilenode oid,
-	 relblocknumber bigint,
-	 bytes integer);
- 
-CREATE VIEW pg_freespacemap_relations AS
-	SELECT P.* FROM pg_freespacemap_relations() AS P
-	(reltablespace oid,
-	 reldatabase oid,
-	 relfilenode oid,
-	 avgrequest integer,
-	 interestingpages integer,
-	 storedpages integer,
-	 nextpage integer);
-
- 
 -- Don't want these to be available to public.
-REVOKE ALL ON FUNCTION pg_freespacemap_pages() FROM PUBLIC;
-REVOKE ALL ON pg_freespacemap_pages FROM PUBLIC;
-
-REVOKE ALL ON FUNCTION pg_freespacemap_relations() FROM PUBLIC;
-REVOKE ALL ON pg_freespacemap_relations FROM PUBLIC;
+REVOKE ALL ON FUNCTION pg_freespace(regclass, int4) FROM PUBLIC;
+REVOKE ALL ON FUNCTION pg_freespace(regclass) FROM PUBLIC;

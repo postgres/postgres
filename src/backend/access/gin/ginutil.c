@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.16 2008/07/11 21:06:29 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.17 2008/09/30 10:52:10 heikki Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -19,6 +19,7 @@
 #include "catalog/pg_type.h" 
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
+#include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 
 void
@@ -151,7 +152,7 @@ GinNewBuffer(Relation index)
 	/* First, try to get a page from FSM */
 	for (;;)
 	{
-		BlockNumber blkno = GetFreeIndexPage(&index->rd_node);
+		BlockNumber blkno = GetFreeIndexPage(index);
 
 		if (blkno == InvalidBlockNumber)
 			break;

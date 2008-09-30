@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.151 2008/06/12 09:12:29 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.152 2008/09/30 10:52:10 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/indexfsm.h"
 #include "utils/memutils.h"
 
 const XLogRecPtr XLogRecPtrForTemp = {1, 1};
@@ -101,6 +102,9 @@ gistbuild(PG_FUNCTION_ARGS)
 	if (RelationGetNumberOfBlocks(index) != 0)
 		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
+
+	/* Initialize FSM */
+	InitIndexFreeSpaceMap(index);
 
 	/* no locking is needed */
 	initGISTstate(&buildstate.giststate, index);
