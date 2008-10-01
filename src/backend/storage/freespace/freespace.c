@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.63 2008/10/01 08:12:14 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.64 2008/10/01 14:59:23 tgl Exp $
  *
  *
  * NOTES:
@@ -612,7 +612,7 @@ fsm_search(Relation rel, uint8 min_cat)
 	{
 		int slot;
 		Buffer buf;
-		uint8 max_avail;
+		uint8 max_avail = 0;
 
 		/*
 		 * Read the FSM page. The root page is created if it doesn't exist
@@ -634,10 +634,7 @@ fsm_search(Relation rel, uint8 min_cat)
 			UnlockReleaseBuffer(buf);
 		}
 		else
-		{
 			slot = -1;
-			max_avail = 0;
-		}
 
 		if (slot != -1)
 		{
