@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.62 2008/03/23 00:54:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.63 2008/10/01 19:51:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ ExecMaterial(MaterialState *node)
 	estate = node->ss.ps.state;
 	dir = estate->es_direction;
 	forward = ScanDirectionIsForward(dir);
-	tuplestorestate = (Tuplestorestate *) node->tuplestorestate;
+	tuplestorestate = node->tuplestorestate;
 
 	/*
 	 * If first time through, and we need a tuplestore, initialize it.
@@ -60,7 +60,19 @@ ExecMaterial(MaterialState *node)
 	{
 		tuplestorestate = tuplestore_begin_heap(true, false, work_mem);
 		tuplestore_set_eflags(tuplestorestate, node->eflags);
-		node->tuplestorestate = (void *) tuplestorestate;
+		if (node->eflags & EXEC_FLAG_MARK)
+		{
+			/*
+			 * Allocate a second read pointer to serve as the mark.
+			 * We know it must have index 1, so needn't store that.
+			 */
+			int		ptrn;
+
+			ptrn = tuplestore_alloc_read_pointer(tuplestorestate,
+												 node->eflags);
+			Assert(ptrn == 1);
+		}
+		node->tuplestorestate = tuplestorestate;
 	}
 
 	/*
@@ -236,7 +248,7 @@ ExecEndMaterial(MaterialState *node)
 	 * Release tuplestore resources
 	 */
 	if (node->tuplestorestate != NULL)
-		tuplestore_end((Tuplestorestate *) node->tuplestorestate);
+		tuplestore_end(node->tuplestorestate);
 	node->tuplestorestate = NULL;
 
 	/*
@@ -262,7 +274,10 @@ ExecMaterialMarkPos(MaterialState *node)
 	if (!node->tuplestorestate)
 		return;
 
-	tuplestore_markpos((Tuplestorestate *) node->tuplestorestate);
+	/*
+	 * copy the active read pointer to the mark.
+	 */
+	tuplestore_copy_read_pointer(node->tuplestorestate, 0, 1);
 }
 
 /* ----------------------------------------------------------------
@@ -283,9 +298,9 @@ ExecMaterialRestrPos(MaterialState *node)
 		return;
 
 	/*
-	 * restore the scan to the previously marked position
+	 * copy the mark to the active read pointer.
 	 */
-	tuplestore_restorepos((Tuplestorestate *) node->tuplestorestate);
+	tuplestore_copy_read_pointer(node->tuplestorestate, 1, 0);
 }
 
 /* ----------------------------------------------------------------
@@ -322,14 +337,14 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 		if (((PlanState *) node)->lefttree->chgParam != NULL ||
 			(node->eflags & EXEC_FLAG_REWIND) == 0)
 		{
-			tuplestore_end((Tuplestorestate *) node->tuplestorestate);
+			tuplestore_end(node->tuplestorestate);
 			node->tuplestorestate = NULL;
 			if (((PlanState *) node)->lefttree->chgParam == NULL)
 				ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 			node->eof_underlying = false;
 		}
 		else
-			tuplestore_rescan((Tuplestorestate *) node->tuplestorestate);
+			tuplestore_rescan(node->tuplestorestate);
 	}
 	else
 	{

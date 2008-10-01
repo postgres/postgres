@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.97 2008/08/05 21:28:29 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.98 2008/10/01 19:51:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,10 +239,6 @@ ExecMarkPos(PlanState *node)
 			ExecTidMarkPos((TidScanState *) node);
 			break;
 
-		case T_FunctionScanState:
-			ExecFunctionMarkPos((FunctionScanState *) node);
-			break;
-
 		case T_ValuesScanState:
 			ExecValuesMarkPos((ValuesScanState *) node);
 			break;
@@ -296,10 +292,6 @@ ExecRestrPos(PlanState *node)
 			ExecTidRestrPos((TidScanState *) node);
 			break;
 
-		case T_FunctionScanState:
-			ExecFunctionRestrPos((FunctionScanState *) node);
-			break;
-
 		case T_ValuesScanState:
 			ExecValuesRestrPos((ValuesScanState *) node);
 			break;
@@ -332,7 +324,7 @@ ExecRestrPos(PlanState *node)
  * (However, since the only present use of mark/restore is in mergejoin,
  * there is no need to support mark/restore in any plan type that is not
  * capable of generating ordered output.  So the seqscan, tidscan,
- * functionscan, and valuesscan support is actually useless code at present.)
+ * and valuesscan support is actually useless code at present.)
  */
 bool
 ExecSupportsMarkRestore(NodeTag plantype)
@@ -342,7 +334,6 @@ ExecSupportsMarkRestore(NodeTag plantype)
 		case T_SeqScan:
 		case T_IndexScan:
 		case T_TidScan:
-		case T_FunctionScan:
 		case T_ValuesScan:
 		case T_Material:
 		case T_Sort:

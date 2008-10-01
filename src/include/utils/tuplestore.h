@@ -11,6 +11,8 @@
  * before it has all been written.	This is particularly useful for cursors,
  * because it allows random access within the already-scanned portion of
  * a query without having to process the underlying scan to completion.
+ * Also, it is possible to support multiple independent read pointers.
+ *
  * A temporary file is used to handle the data if it exceeds the
  * space limit specified by the caller.
  *
@@ -22,7 +24,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.23 2008/03/25 19:26:53 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.24 2008/10/01 19:51:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,16 +59,21 @@ extern void tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 /* tuplestore_donestoring() used to be required, but is no longer used */
 #define tuplestore_donestoring(state)	((void) 0)
 
+extern int	tuplestore_alloc_read_pointer(Tuplestorestate *state, int eflags);
+
+extern void tuplestore_select_read_pointer(Tuplestorestate *state, int ptr);
+
+extern void tuplestore_copy_read_pointer(Tuplestorestate *state,
+										 int srcptr, int destptr);
+
 extern bool tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
 						TupleTableSlot *slot);
 extern bool tuplestore_advance(Tuplestorestate *state, bool forward);
 
-extern void tuplestore_end(Tuplestorestate *state);
-
 extern bool tuplestore_ateof(Tuplestorestate *state);
 
 extern void tuplestore_rescan(Tuplestorestate *state);
-extern void tuplestore_markpos(Tuplestorestate *state);
-extern void tuplestore_restorepos(Tuplestorestate *state);
+
+extern void tuplestore_end(Tuplestorestate *state);
 
 #endif   /* TUPLESTORE_H */
