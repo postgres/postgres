@@ -36,36 +36,36 @@ CREATE FUNCTION user_relns()
 
 CREATE FUNCTION pt_in_widget(point, widget)
    RETURNS bool
-   AS '@abs_builddir@/regress@DLSUFFIX@'
+   AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C;
 
 CREATE FUNCTION overpaid(emp)
    RETURNS bool
-   AS '@abs_builddir@/regress@DLSUFFIX@'
+   AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C;
 
 CREATE FUNCTION boxarea(box)
    RETURNS float8
-   AS '@abs_builddir@/regress@DLSUFFIX@'
+   AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C;
 
 CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
-   AS '@abs_builddir@/regress@DLSUFFIX@'
+   AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C;
 
 CREATE FUNCTION reverse_name(name)
    RETURNS name
-   AS '@abs_builddir@/regress@DLSUFFIX@'
+   AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C;
 
 CREATE FUNCTION oldstyle_length(int4, text)
    RETURNS int4
-   AS '@abs_builddir@/regress@DLSUFFIX@'
+   AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C;
 
 --
 -- Function dynamic loading
 --
-LOAD '@abs_builddir@/regress@DLSUFFIX@';
+LOAD '@libdir@/regress@DLSUFFIX@';
 

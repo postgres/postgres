@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.47 2008/08/05 05:16:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.48 2008/10/01 22:38:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,10 @@ typedef struct _resultmap
  * out where "make install" will put stuff under the temp_install directory.
  * In non-temp_install mode, the only thing we need is the location of psql,
  * which we expect to find in psqldir, or in the PATH if psqldir isn't given.
+ *
+ * XXX Because pg_regress is not installed in bindir, we can't support
+ * this for relocatable trees as it is.  --psqldir would need to be
+ * specified in those cases.
  */
 char	   *bindir = PGBINDIR;
 char	   *libdir = LIBDIR;
@@ -70,7 +74,7 @@ _stringlist *dblist = NULL;
 bool		debug = false;
 char	   *inputdir = ".";
 char	   *outputdir = ".";
-char	   *psqldir = NULL;
+char	   *psqldir = PGBINDIR;
 static _stringlist *loadlanguage = NULL;
 static int	max_connections = 0;
 static char *encoding = NULL;
@@ -83,8 +87,8 @@ static int	temp_port = 65432;
 static bool nolocale = false;
 static char *hostname = NULL;
 static int	port = -1;
+static char *dlpath = PKGLIBDIR;
 static char *user = NULL;
-static char *srcdir = NULL;
 static _stringlist *extraroles = NULL;
 
 /* internal variables */
@@ -391,10 +395,8 @@ replace_string(char *string, char *replace, char *replacement)
  * the given suffix.
  */
 static void
-convert_sourcefiles_in(char *source, char *dest, char *suffix)
+convert_sourcefiles_in(char *source_subdir, char *dest_subdir, char *suffix)
 {
-	char		abs_srcdir[MAXPGPATH];
-	char		abs_builddir[MAXPGPATH];
 	char		testtablespace[MAXPGPATH];
 	char		indir[MAXPGPATH];
 	struct stat	st;
@@ -403,27 +405,7 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 	char	  **names;
 	int			count = 0;
 
-#ifdef WIN32
-	char	   *c;
-#endif
-
-	if (!getcwd(abs_builddir, sizeof(abs_builddir)))
-	{
-		fprintf(stderr, _("%s: could not get current directory: %s\n"),
-				progname, strerror(errno));
-		exit_nicely(2);
-	}
-
-	/*
-	 * in a VPATH build, use the provided source directory; otherwise, use the
-	 * current directory.
-	 */
-	if (srcdir)
-		strlcpy(abs_srcdir, srcdir, MAXPGPATH);
-	else
-		strlcpy(abs_srcdir, abs_builddir, MAXPGPATH);
-
-	snprintf(indir, MAXPGPATH, "%s/%s", abs_srcdir, source);
+	snprintf(indir, MAXPGPATH, "%s/%s", inputdir, source_subdir);
 
 	/* Check that indir actually exists and is a directory */
 	ret = stat(indir, &st);
@@ -441,17 +423,7 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 		/* Error logged in pgfnames */
 		exit_nicely(2);
 
-#ifdef WIN32
-	/* in Win32, replace backslashes with forward slashes */
-	for (c = abs_builddir; *c; c++)
-		if (*c == '\\')
-			*c = '/';
-	for (c = abs_srcdir; *c; c++)
-		if (*c == '\\')
-			*c = '/';
-#endif
-
-	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", abs_builddir);
+	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", outputdir);
 
 #ifdef WIN32
 	/*
@@ -490,7 +462,7 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 		/* build the full actual paths to open */
 		snprintf(prefix, strlen(*name) - 6, "%s", *name);
 		snprintf(srcfile, MAXPGPATH, "%s/%s", indir, *name);
-		snprintf(destfile, MAXPGPATH, "%s/%s.%s", dest, prefix, suffix);
+		snprintf(destfile, MAXPGPATH, "%s/%s.%s", dest_subdir, prefix, suffix);
 
 		infile = fopen(srcfile, "r");
 		if (!infile)
@@ -508,9 +480,10 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 		}
 		while (fgets(line, sizeof(line), infile))
 		{
-			replace_string(line, "@abs_srcdir@", abs_srcdir);
-			replace_string(line, "@abs_builddir@", abs_builddir);
+			replace_string(line, "@abs_srcdir@", inputdir);
+			replace_string(line, "@abs_builddir@", outputdir);
 			replace_string(line, "@testtablespace@", testtablespace);
+			replace_string(line, "@libdir@", dlpath);
 			replace_string(line, "@DLSUFFIX@", DLSUFFIX);
 			fputs(line, outfile);
 		}
@@ -520,7 +493,7 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 
 	/*
 	 * If we didn't process any files, complain because it probably means
-	 * somebody neglected to pass the needed --srcdir argument.
+	 * somebody neglected to pass the needed --inputdir argument.
 	 */
 	if (count <= 0)
 	{
@@ -1087,7 +1060,7 @@ file_line_count(const char *file)
 	return l;
 }
 
-static bool
+bool
 file_exists(const char *file)
 {
 	FILE	   *f = fopen(file, "r");
@@ -1792,6 +1765,34 @@ create_role(const char *rolename, const _stringlist * granted_dbs)
 	}
 }
 
+static char *
+make_absolute_path(const char *in)
+{
+	char *result;
+
+	if (is_absolute_path(in))
+		result = strdup(in);
+	else
+	{
+		static char		cwdbuf[MAXPGPATH];
+
+		if (!cwdbuf[0])
+		{
+			if (!getcwd(cwdbuf, sizeof(cwdbuf)))
+			{
+				fprintf(stderr, _("could not get current working directory: %s\n"), strerror(errno));
+				exit_nicely(2);
+			}
+		}
+
+		result = malloc(strlen(cwdbuf) + strlen(in) + 2);
+		sprintf(result, "%s/%s", cwdbuf, in);
+	}
+
+	canonicalize_path(result);
+	return result;
+}
+
 static void
 help(void)
 {
@@ -1812,7 +1813,7 @@ help(void)
 	printf(_("  --outputdir=DIR           place output files in DIR (default \".\")\n"));
 	printf(_("  --schedule=FILE           use test ordering schedule from FILE\n"));
 	printf(_("                            (can be used multiple times to concatenate)\n"));
-	printf(_("  --srcdir=DIR              absolute path to source directory (for VPATH builds)\n"));
+	printf(_("  --dlpath=DIR              look for dynamic libraries in DIR\n"));
 	printf(_("  --temp-install=DIR        create a temporary installation in DIR\n"));
 	printf(_("\n"));
 	printf(_("Options for \"temp-install\" mode:\n"));
@@ -1861,7 +1862,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"port", required_argument, NULL, 14},
 		{"user", required_argument, NULL, 15},
 		{"psqldir", required_argument, NULL, 16},
-		{"srcdir", required_argument, NULL, 17},
+		{"dlpath", required_argument, NULL, 17},
 		{"create-role", required_argument, NULL, 18},
 		{"temp-config", required_argument, NULL, 19},
 		{NULL, 0, NULL, 0}
@@ -1922,22 +1923,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				add_stringlist_item(&schedulelist, optarg);
 				break;
 			case 9:
-				/* temp_install must be absolute path */
-				if (is_absolute_path(optarg))
-					temp_install = strdup(optarg);
-				else
-				{
-					char		cwdbuf[MAXPGPATH];
-
-					if (!getcwd(cwdbuf, sizeof(cwdbuf)))
-					{
-						fprintf(stderr, _("could not get current working directory: %s\n"), strerror(errno));
-						exit_nicely(2);
-					}
-					temp_install = malloc(strlen(cwdbuf) + strlen(optarg) + 2);
-					sprintf(temp_install, "%s/%s", cwdbuf, optarg);
-				}
-				canonicalize_path(temp_install);
+				temp_install = make_absolute_path(optarg);
 				break;
 			case 10:
 				nolocale = true;
@@ -1969,7 +1955,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 					psqldir = strdup(optarg);
 				break;
 			case 17:
-				srcdir = strdup(optarg);
+				dlpath = strdup(optarg);
 				break;
 			case 18:
 				split_to_stringlist(strdup(optarg), ", ", &extraroles);
@@ -1996,6 +1982,10 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 
 	if (temp_install)
 		port = temp_port;
+
+	inputdir = make_absolute_path(inputdir);
+	outputdir = make_absolute_path(outputdir);
+	dlpath = make_absolute_path(dlpath);
 
 	/*
 	 * Initialization

@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.74 2008/05/30 00:04:32 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.75 2008/10/01 22:38:57 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -65,8 +65,11 @@ pg_regress.o: pg_regress.c $(top_builddir)/src/port/pg_config_paths.h
 $(top_builddir)/src/port/pg_config_paths.h: $(top_builddir)/src/Makefile.global
 	$(MAKE) -C $(top_builddir)/src/port pg_config_paths.h
 
-install: pg_regress$(X)
+install: all installdirs
 	$(INSTALL_PROGRAM) pg_regress$(X) '$(DESTDIR)$(pgxsdir)/$(subdir)/pg_regress$(X)'
+
+installdirs:
+	$(mkinstalldirs) '$(DESTDIR)$(pgxsdir)/$(subdir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(pgxsdir)/$(subdir)/pg_regress$(X)'
@@ -83,34 +86,28 @@ all: all-lib
 
 # Test input and expected files.  These are created by pg_regress itself, so we
 # don't have a rule to create them.  We do need rules to clean them however.
-ifile_list := $(subst .source,, $(notdir $(wildcard $(top_srcdir)/$(subdir)/input/*.source)))
-input_files  := $(foreach file, $(ifile_list), sql/$(file).sql)
-ofile_list := $(subst .source,, $(notdir $(wildcard $(top_srcdir)/$(subdir)/output/*.source)))
-output_files := $(foreach file, $(ofile_list), expected/$(file).out)
+input_files = $(patsubst $(srcdir)/input/%.source,sql/%.sql, $(wildcard $(srcdir)/input/*.source))
+output_files := $(patsubst $(srcdir)/output/%.source,expected/%.out, $(wildcard $(srcdir)/output/*.source))
 
-ifneq ($(PORTNAME),win32)
-abs_srcdir := $(shell cd $(srcdir) && pwd)
-abs_builddir := $(shell pwd)
-else
-abs_srcdir := $(shell cd $(srcdir) && pwd -W)
-abs_builddir := $(shell pwd -W)
-endif
 
-# When doing a VPATH build, copy over the remaining .sql and .out
-# files so that the driver script can find them.  We have to use an
-# absolute path for the targets, because otherwise make will try to
-# locate the missing files using VPATH, and will find them in
-# $(srcdir), but the point here is that we want to copy them from
-# $(srcdir) to the build directory.
+# not installed by default
 
-ifdef VPATH
-remaining_files_src := $(wildcard $(srcdir)/sql/*.sql) $(wildcard $(srcdir)/expected/*.out) $(srcdir)/resultmap
-remaining_files_build := $(patsubst $(srcdir)/%, $(abs_builddir)/%, $(remaining_files_src))
+regress_data_files = \
+	$(filter-out $(addprefix $(srcdir)/,$(output_files)),$(wildcard $(srcdir)/expected/*.out)) \
+	$(wildcard $(srcdir)/input/*.source) \
+	$(wildcard $(srcdir)/output/*.source) \
+	$(filter-out $(addprefix $(srcdir)/,$(input_files)),$(wildcard $(srcdir)/sql/*.sql)) \
+	$(wildcard $(srcdir)/data/*.data) \
+	$(srcdir)/parallel_schedule $(srcdir)/serial_schedule $(srcdir)/resultmap
 
-all: $(remaining_files_build)
-$(remaining_files_build): $(abs_builddir)/%: $(srcdir)/%
-	ln -s $< $@
-endif
+install-tests: all install install-lib installdirs-tests
+	$(MAKE) -C $(top_builddir)/contrib/spi install
+	for file in $(regress_data_files); do \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(pkglibdir)/regress/'$$file; \
+	done
+
+installdirs-tests: installdirs
+	$(mkinstalldirs)  $(patsubst $(srcdir)/%/,'$(DESTDIR)$(pkglibdir)/regress/%',$(sort $(dir $(regress_data_files))))
 
 
 # Get some extra C modules from contrib/spi...
@@ -144,14 +141,16 @@ tablespace-setup:
 ## Run tests
 ##
 
+pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
+
 check: all
-	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --srcdir=$(abs_srcdir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE) $(TEMP_CONF)
+	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF)
 
 installcheck: all
-	./pg_regress --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule --srcdir=$(abs_srcdir) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
+	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule
 
 installcheck-parallel: all
-	./pg_regress --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --srcdir=$(abs_srcdir) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
+	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT)
 
 
 # old interfaces follow...
@@ -161,10 +160,10 @@ runtest: installcheck
 runtest-parallel: installcheck-parallel
 
 bigtest: all
-	./pg_regress --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule --srcdir=$(abs_srcdir) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) numeric_big 
+	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule numeric_big 
 
 bigcheck: all
-	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --srcdir=$(abs_srcdir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE) numeric_big
+	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) numeric_big
 
 
 ##
@@ -173,15 +172,9 @@ bigcheck: all
 
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
-	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
-	rm -f $(output_files) $(input_files) pg_regress_main.o pg_regress.o pg_regress$(X)
+	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX) pg_regress_main.o pg_regress.o pg_regress$(X)
 # things created by various check targets
+	rm -f $(output_files) $(input_files)
 	rm -rf testtablespace
 	rm -rf results tmp_check log
 	rm -f regression.diffs regression.out regress.out run_check.out
-ifeq ($(PORTNAME), cygwin)
-	rm -f regress.def
-endif
-ifdef VPATH
-	rm -f $(remaining_files_build)
-endif
