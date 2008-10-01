@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.62 2008/09/30 14:15:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.63 2008/10/01 08:12:14 heikki Exp $
  *
  *
  * NOTES:
@@ -122,6 +122,8 @@ static int fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 							  uint8 newValue, uint8 minValue);
 static BlockNumber fsm_search(Relation rel, uint8 min_cat);
 static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof);
+
+static void fsm_redo_truncate(xl_fsm_truncate *xlrec);
 
 
 /******** Public API ********/
@@ -281,7 +283,7 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 	 * record, but that's not enough to zero out the last remaining FSM page.
 	 * (if we didn't need to zero out anything above, we can skip this)
 	 */
-	if (!rel->rd_istemp && !InRecovery && first_removed_slot != 0)
+	if (!rel->rd_istemp && first_removed_slot != 0)
 	{
 		xl_fsm_truncate xlrec;
 		XLogRecData		rdata;
@@ -310,8 +312,8 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 	 * Need to invalidate the relcache entry, because rd_fsm_nblocks_cache
 	 * seen by other backends is no longer valid.
 	 */
-	if (!InRecovery)
-		CacheInvalidateRelcache(rel);
+	CacheInvalidateRelcache(rel);
+
 	rel->rd_fsm_nblocks_cache = new_nfsmblocks;
 }
 
@@ -762,6 +764,43 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 
 /****** WAL-logging ******/
 
+static void
+fsm_redo_truncate(xl_fsm_truncate *xlrec)
+{
+	FSMAddress	first_removed_address;
+	uint16		first_removed_slot;
+	BlockNumber fsmblk;
+	Buffer		buf;
+
+	/* Get the location in the FSM of the first removed heap block */
+	first_removed_address = fsm_get_location(xlrec->nheapblocks,
+											 &first_removed_slot);
+	fsmblk = fsm_logical_to_physical(first_removed_address);
+
+	/*
+	 * Zero out the tail of the last remaining FSM page. We rely on the
+	 * replay of the smgr truncation record to remove completely unused
+	 * pages.
+	 */
+	buf = XLogReadBufferWithFork(xlrec->node, FSM_FORKNUM, fsmblk, false);
+	if (BufferIsValid(buf))
+	{
+		fsm_truncate_avail(BufferGetPage(buf), first_removed_slot);
+		MarkBufferDirty(buf);
+		UnlockReleaseBuffer(buf);
+	}
+	else
+	{
+		/*
+		 * The page doesn't exist. Because FSM extensions are not WAL-logged,
+		 * it's normal to have a truncation record for a page that doesn't
+		 * exist. Tell xlogutils.c not to PANIC at the end of recovery
+		 * because of the missing page
+		 */
+		XLogTruncateRelation(xlrec->node, FSM_FORKNUM, fsmblk);
+	}
+}
+
 void
 fsm_redo(XLogRecPtr lsn, XLogRecord *record)
 {
@@ -770,15 +809,7 @@ fsm_redo(XLogRecPtr lsn, XLogRecord *record)
 	switch (info)
 	{
 		case XLOG_FSM_TRUNCATE:
-			{
-				xl_fsm_truncate *xlrec;
-				Relation rel;
-
-				xlrec = (xl_fsm_truncate *) XLogRecGetData(record);
-				rel = CreateFakeRelcacheEntry(xlrec->node);
-				FreeSpaceMapTruncateRel(rel, xlrec->nheapblocks);
-				FreeFakeRelcacheEntry(rel);
-			}
+			fsm_redo_truncate((xl_fsm_truncate *) XLogRecGetData(record));
 			break;
 		default:
 			elog(PANIC, "fsm_redo: unknown op code %u", info);
