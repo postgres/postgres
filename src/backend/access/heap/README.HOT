@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.3 2008/03/21 13:23:27 momjian Exp $
+$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.4 2008/10/02 20:59:31 momjian Exp $
 
 Heap Only Tuples (HOT)
 ======================
@@ -301,21 +301,22 @@ in the new index might change within a pre-existing HOT chain, creating
 a "broken" chain that can't be indexed properly.
 
 To address this issue, regular (non-concurrent) CREATE INDEX makes the
-new index usable only by transactions newer than the CREATE INDEX
-command.  This prevents transactions that can see the inconsistent HOT
-chains from trying to use the new index and getting incorrect results.  
-New transactions can only see the rows visible after the index was
-created, hence the HOT chains are consistent for them.
+new index usable only by new transactions and transactions that don't
+have snapshots older than the the CREATE INDEX command.  This prevents
+queries that can see the inconsistent HOT chains from trying to use the
+new index and getting incorrect results.  Queries that can see the index
+can only see the rows that were visible after the index was created,
+hence the HOT chains are consistent for them.
 
 Entries in the new index point to root tuples (tuples with current index
 pointers) so that our index uses the same index pointers as all other
 indexes on the table.  However the row we want to index is actually at
 the *end* of the chain, ie, the most recent live tuple on the HOT chain.
 That is the one we compute the index entry values for, but the TID
-we put into the index is that of the root tuple.  Since transactions that
+we put into the index is that of the root tuple.  Since queries that
 will be allowed to use the new index cannot see any of the older tuple
 versions in the chain, the fact that they might not match the index entry
-isn't a problem.  (Such transactions will check the tuple visibility
+isn't a problem.  (Such queries will check the tuple visibility
 information of the older versions and ignore them, without ever looking at
 their contents, so the content inconsistency is OK.)  Subsequent updates
 to the live tuple will be allowed to extend the HOT chain only if they are
@@ -331,21 +332,19 @@ catalog.  In that case we deal with it by waiting for the source
 transaction to commit or roll back.  (We could do that for user tables
 too, but since the case is unexpected we prefer to throw an error.)
 
-Practically, we prevent old transactions from using the new index by
-setting pg_index.indcheckxmin to TRUE.  Queries are allowed to use such an
-index only after pg_index.xmin is below their TransactionXmin horizon,
-thereby ensuring that any incompatible rows in HOT chains are dead to them.
-(pg_index.xmin will be the XID of the CREATE INDEX transaction.  The reason
-for using xmin rather than a normal column is that the regular vacuum
-freezing mechanism will take care of converting xmin to FrozenTransactionId
-before it can wrap around.)
+Practically, we prevent certain transactions from using the new index by
+setting pg_index.indcheckxmin to TRUE.  Transactions are allowed to use
+such an index only after pg_index.xmin is below their TransactionXmin
+horizon, thereby ensuring that any incompatible rows in HOT chains are
+dead to them. (pg_index.xmin will be the XID of the CREATE INDEX
+transaction.  The reason for using xmin rather than a normal column is
+that the regular vacuum freezing mechanism will take care of converting
+xmin to FrozenTransactionId before it can wrap around.)
 
 This means in particular that the transaction creating the index will be
-unable to use the index.  We alleviate that problem somewhat by not setting
-indcheckxmin unless the table actually contains HOT chains with
-RECENTLY_DEAD members.  (In 8.4 we may be able to improve the situation,
-at least for non-serializable transactions, because we expect to be able to
-advance TransactionXmin intratransaction.)
+unable to use the index if the transaction has old snapshots.  We
+alleviate that problem somewhat by not setting indcheckxmin unless the
+table actually contains HOT chains with RECENTLY_DEAD members.
 
 Another unpleasant consequence is that it is now risky to use SnapshotAny
 in an index scan: if the index was created more recently than the last
