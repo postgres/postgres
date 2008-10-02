@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.174.2.4 2008/06/09 19:34:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.174.2.5 2008/10/02 13:47:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3711,7 +3711,7 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 					is_before = TRUE;
 				}
 				sprintf(cp, "%s%d.%02d secs", is_nonzero ? " " : "",
-						tm->tm_sec, ((int) sec) / 10000);
+						tm->tm_sec, abs((int) rint(sec / 10000.0)));
 				cp += strlen(cp);
 #else
 				fsec += tm->tm_sec;
