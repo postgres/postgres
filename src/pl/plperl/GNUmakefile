@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.35 2008/10/01 22:38:56 petere Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.36 2008/10/02 08:11:11 petere Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -57,7 +57,7 @@ installdirs: installdirs-lib
 uninstall: uninstall-lib
 
 installcheck: submake
-	$(top_builddir)/src/test/regress/pg_regress --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
 
 .PHONY: submake
 submake:

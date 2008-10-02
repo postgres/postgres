@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.30 2008/10/01 22:38:56 petere Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.31 2008/10/02 08:11:11 petere Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -73,7 +73,7 @@ installdirs: installdirs-lib
 uninstall: uninstall-lib
 
 installcheck: submake
-	$(top_builddir)/src/test/regress/pg_regress --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
 
 .PHONY: submake
 submake:
