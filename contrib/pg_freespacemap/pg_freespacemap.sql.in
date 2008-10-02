@@ -1,26 +1,26 @@
-/* $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.sql.in,v 1.10 2008/09/30 11:17:07 heikki Exp $ */
+/* $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.sql.in,v 1.11 2008/10/02 12:20:50 heikki Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
 
 -- Register the C function.
-CREATE OR REPLACE FUNCTION pg_freespace(regclass, int4)
+CREATE OR REPLACE FUNCTION pg_freespace(regclass, bigint)
 RETURNS int2
 AS 'MODULE_PATHNAME', 'pg_freespace'
 LANGUAGE C;
 
 -- pg_freespace shows the recorded space avail at each block in a relation
 CREATE OR REPLACE FUNCTION
-  pg_freespace(rel regclass, blkno OUT int4, avail OUT int2)
+  pg_freespace(rel regclass, blkno OUT bigint, avail OUT int2)
 RETURNS SETOF RECORD
 AS $$
-  SELECT blkno::int4, pg_freespace($1, blkno::int4) AS avail
+  SELECT blkno, pg_freespace($1, blkno) AS avail
   FROM generate_series(0, pg_relation_size($1) / current_setting('block_size')::bigint - 1) AS blkno;
 $$
 LANGUAGE SQL;
 
 
 -- Don't want these to be available to public.
-REVOKE ALL ON FUNCTION pg_freespace(regclass, int4) FROM PUBLIC;
+REVOKE ALL ON FUNCTION pg_freespace(regclass, bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION pg_freespace(regclass) FROM PUBLIC;
