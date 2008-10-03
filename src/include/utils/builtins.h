@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.320 2008/09/06 00:01:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.321 2008/10/03 07:33:10 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -389,10 +389,8 @@ extern Datum pg_tablespace_size_oid(PG_FUNCTION_ARGS);
 extern Datum pg_tablespace_size_name(PG_FUNCTION_ARGS);
 extern Datum pg_database_size_oid(PG_FUNCTION_ARGS);
 extern Datum pg_database_size_name(PG_FUNCTION_ARGS);
-extern Datum pg_relation_size_oid(PG_FUNCTION_ARGS);
-extern Datum pg_relation_size_name(PG_FUNCTION_ARGS);
-extern Datum pg_total_relation_size_oid(PG_FUNCTION_ARGS);
-extern Datum pg_total_relation_size_name(PG_FUNCTION_ARGS);
+extern Datum pg_relation_size(PG_FUNCTION_ARGS);
+extern Datum pg_total_relation_size(PG_FUNCTION_ARGS);
 extern Datum pg_size_pretty(PG_FUNCTION_ARGS);
 
 /* genfile.c */

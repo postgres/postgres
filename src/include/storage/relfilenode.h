@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.17 2008/09/30 10:52:14 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.18 2008/10/03 07:33:10 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,10 @@ typedef enum ForkNumber
 	InvalidForkNumber = -1,
 	MAIN_FORKNUM = 0,
 	FSM_FORKNUM
-	/* NOTE: change MAX_FORKNUM below when you add new forks */
+	/*
+	 * NOTE: if you add a new fork, change MAX_FORKNUM below and update the
+	 * name to number mapping in utils/adt/dbsize.c
+	 */
 } ForkNumber;
 
 #define MAX_FORKNUM		FSM_FORKNUM

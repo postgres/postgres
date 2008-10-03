@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.20 2008/08/11 11:05:11 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.21 2008/10/03 07:33:09 heikki Exp $
  *
  */
 
@@ -248,15 +248,14 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
  * calculate size of a relation
  */
 static int64
-calculate_relation_size(RelFileNode *rfn)
+calculate_relation_size(RelFileNode *rfn, ForkNumber forknum)
 {
 	int64		totalsize = 0;
 	char	   *relationpath;
 	char		pathname[MAXPGPATH];
 	unsigned int segcount = 0;
 
-	/* XXX: This ignores the other forks. */
-	relationpath = relpath(*rfn, MAIN_FORKNUM);
+	relationpath = relpath(*rfn, forknum);
 
 	for (segcount = 0;; segcount++)
 	{
@@ -284,34 +283,47 @@ calculate_relation_size(RelFileNode *rfn)
 	return totalsize;
 }
 
+
+/*
+ * XXX: Consider making this global and moving elsewhere. But currently
+ * there's no other users for this.
+ *
+ * Remember to also update the errhint below if you add entries, and the
+ * documentation for pg_relation_size().
+ */
+static char *forkNames[] = {
+	"main", /* MAIN_FORKNUM */
+	"fsm"   /* FSM_FORKNUM */
+};
+
+static ForkNumber
+forkname_to_number(char *forkName)
+{
+	ForkNumber forkNum;
+
+	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+		if (strcmp(forkNames[forkNum], forkName) == 0)
+			return forkNum;
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("invalid fork name"),
+			 errhint("Valid fork names are 'main' and 'fsm'")));
+	return InvalidForkNumber; /* keep compiler quiet */
+}
+
 Datum
-pg_relation_size_oid(PG_FUNCTION_ARGS)
+pg_relation_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
+	text	   *forkName = PG_GETARG_TEXT_P(1);
 	Relation	rel;
 	int64		size;
 
 	rel = relation_open(relOid, AccessShareLock);
 
-	size = calculate_relation_size(&(rel->rd_node));
-
-	relation_close(rel, AccessShareLock);
-
-	PG_RETURN_INT64(size);
-}
-
-Datum
-pg_relation_size_name(PG_FUNCTION_ARGS)
-{
-	text	   *relname = PG_GETARG_TEXT_P(0);
-	RangeVar   *relrv;
-	Relation	rel;
-	int64		size;
-
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	rel = relation_openrv(relrv, AccessShareLock);
-
-	size = calculate_relation_size(&(rel->rd_node));
+	size = calculate_relation_size(&(rel->rd_node),
+							   forkname_to_number(text_to_cstring(forkName)));
 
 	relation_close(rel, AccessShareLock);
 
@@ -330,12 +342,15 @@ calculate_total_relation_size(Oid Relid)
 	Oid			toastOid;
 	int64		size;
 	ListCell   *cell;
+	ForkNumber	forkNum;
 
 	heapRel = relation_open(Relid, AccessShareLock);
 	toastOid = heapRel->rd_rel->reltoastrelid;
 
 	/* Get the heap size */
-	size = calculate_relation_size(&(heapRel->rd_node));
+	size = 0;
+	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+		size += calculate_relation_size(&(heapRel->rd_node), forkNum);
 
 	/* Include any dependent indexes */
 	if (heapRel->rd_rel->relhasindex)
@@ -349,7 +364,8 @@ calculate_total_relation_size(Oid Relid)
 
 			iRel = relation_open(idxOid, AccessShareLock);
 
-			size += calculate_relation_size(&(iRel->rd_node));
+			for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+				size += calculate_relation_size(&(iRel->rd_node), forkNum);
 
 			relation_close(iRel, AccessShareLock);
 		}
@@ -367,22 +383,9 @@ calculate_total_relation_size(Oid Relid)
 }
 
 Datum
-pg_total_relation_size_oid(PG_FUNCTION_ARGS)
+pg_total_relation_size(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
-
-	PG_RETURN_INT64(calculate_total_relation_size(relid));
-}
-
-Datum
-pg_total_relation_size_name(PG_FUNCTION_ARGS)
-{
-	text	   *relname = PG_GETARG_TEXT_P(0);
-	RangeVar   *relrv;
-	Oid			relid;
-
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	relid = RangeVarGetRelid(relrv, false);
 
 	PG_RETURN_INT64(calculate_total_relation_size(relid));
 }
