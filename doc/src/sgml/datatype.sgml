@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.228 2008/09/11 15:27:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.229 2008/10/03 15:37:18 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3187,23 +3187,39 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </indexterm>
 
     <para>
-     The <type>macaddr</> type stores MAC addresses, i.e., Ethernet
-     card hardware addresses (although MAC addresses are used for
-     other purposes as well).  Input is accepted in various customary
-     formats, including
+     The <type>macaddr</> type stores MAC addresses, known for example
+     from Ethernet card hardware addresses (although MAC addresses are
+     used for other purposes as well).  Input is accepted in the
+     following formats:
 
      <simplelist>
+      <member><literal>'08:00:2b:01:02:03'</></member>
+      <member><literal>'08-00-2b-01-02-03'</></member>
       <member><literal>'08002b:010203'</></member>
       <member><literal>'08002b-010203'</></member>
       <member><literal>'0800.2b01.0203'</></member>
-      <member><literal>'08-00-2b-01-02-03'</></member>
-      <member><literal>'08:00:2b:01:02:03'</></member>
+      <member><literal>'08002b010203'</></member>
      </simplelist>
 
-     which would all specify the same
-     address.  Upper and lower case is accepted for the digits
+     These examples would all specify the same address.  Upper and
+     lower case is accepted for the digits
      <literal>a</> through <literal>f</>.  Output is always in the
-     last of the forms shown.
+     first of the forms shown.
+    </para>
+
+    <para>
+     IEEE Std 802-2001 specifies the second shown form (with hyphens)
+     as the canonical form for MAC addresses, and specifies the first
+     form (with colons) as the bit-reversed notation, so that
+     08-00-2b-01-02-03 = 01:00:4D:08:04:0C.  This convention is widely
+     ignored nowadays, and it is only relevant for obsolete network
+     protocols (such as Token Ring).  PostgreSQL makes no provisions
+     for bit reversal, and all accepted formats use the canonical LSB
+     order.
+    </para>
+
+    <para>
+     The remaining four input formats are not part of any standard.
     </para>
    </sect2>
 
