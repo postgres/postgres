@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.243 2008/09/05 12:11:18 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.244 2008/10/03 15:35:17 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -592,6 +592,20 @@ endif # enable_nls
 #
 # Coverage
 
+# Explanation of involved files:
+#   foo.c	source file
+#   foo.o	object file
+#   foo.gcno	gcov graph (a.k.a. "notes") file, created at compile time
+#		(by gcc -ftest-coverage)
+#   foo.gcda	gcov data file, created when the program is run (for
+#		programs compiled with gcc -fprofile-arcs)
+#   foo.c.gcov	gcov output file with coverage information, created by
+#		gcov from foo.gcda (by "make coverage")
+#   foo.c.gcov.out  stdout captured when foo.c.gcov is created, mildly
+#		interesting
+#   lcov.info	lcov tracefile, built from gcda files in one directory,
+#		later collected by "make coverage-html"
+
 ifeq ($(enable_coverage), yes)
 
 # There is a strange interaction between lcov and existing .gcov
@@ -599,11 +613,9 @@ ifeq ($(enable_coverage), yes)
 
 gcda_files := $(wildcard *.gcda)
 
-lcov.info:
+lcov.info: $(gcda_files)
 	rm -f *.gcov
-ifneq (,$(gcda_files))
-	$(LCOV) -d . -c -o $@ $(LCOVFLAGS)
-endif
+	$(if $^,$(LCOV) -d . -c -o $@ $(LCOVFLAGS))
 
 %.c.gcov: %.gcda | lcov.info
 	$(GCOV) -b -f -p -o . $(GCOVFLAGS) $*.c >$*.c.gcov.out
