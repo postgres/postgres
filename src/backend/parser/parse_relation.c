@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.135 2008/09/01 20:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.136 2008/10/04 21:56:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,6 +316,35 @@ GetRTEByRangeTablePosn(ParseState *pstate,
 	}
 	Assert(varno > 0 && varno <= list_length(pstate->p_rtable));
 	return rt_fetch(varno, pstate->p_rtable);
+}
+
+/*
+ * Fetch the CTE for a CTE-reference RTE.
+ */
+CommonTableExpr *
+GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte)
+{
+	Index		levelsup;
+	ListCell   *lc;
+
+	Assert(rte->rtekind == RTE_CTE);
+	levelsup = rte->ctelevelsup;
+	while (levelsup-- > 0)
+	{
+		pstate = pstate->parentParseState;
+		if (!pstate)			/* shouldn't happen */
+			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
+	}
+	foreach(lc, pstate->p_ctenamespace)
+	{
+		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+
+		if (strcmp(cte->ctename, rte->ctename) == 0)
+			return cte;
+	}
+	/* shouldn't happen */
+	elog(ERROR, "could not find CTE \"%s\"", rte->ctename);
+	return NULL;				/* keep compiler quiet */
 }
 
 /*
@@ -1109,6 +1138,88 @@ addRangeTableEntryForJoin(ParseState *pstate,
 }
 
 /*
+ * Add an entry for a CTE reference to the pstate's range table (p_rtable).
+ *
+ * This is much like addRangeTableEntry() except that it makes a CTE RTE.
+ */
+RangeTblEntry *
+addRangeTableEntryForCTE(ParseState *pstate,
+						 CommonTableExpr *cte,
+						 Index levelsup,
+						 Alias *alias,
+						 bool inFromCl)
+{
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	char	   *refname = alias ? alias->aliasname : cte->ctename;
+	Alias	   *eref;
+	int			numaliases;
+	int			varattno;
+	ListCell   *lc;
+
+	rte->rtekind = RTE_CTE;
+	rte->ctename = cte->ctename;
+	rte->ctelevelsup = levelsup;
+
+	/* Self-reference if and only if CTE's parse analysis isn't completed */
+	rte->self_reference = !IsA(cte->ctequery, Query);
+	Assert(cte->cterecursive || !rte->self_reference);
+	/* Bump the CTE's refcount if this isn't a self-reference */
+	if (!rte->self_reference)
+		cte->cterefcount++;
+
+	rte->ctecoltypes = cte->ctecoltypes;
+	rte->ctecoltypmods = cte->ctecoltypmods;
+
+	rte->alias = alias;
+	if (alias)
+		eref = copyObject(alias);
+	else
+		eref = makeAlias(refname, NIL);
+	numaliases = list_length(eref->colnames);
+
+	/* fill in any unspecified alias columns */
+	varattno = 0;
+	foreach(lc, cte->ctecolnames)
+	{
+		varattno++;
+		if (varattno > numaliases)
+			eref->colnames = lappend(eref->colnames, lfirst(lc));
+	}
+	if (varattno < numaliases)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("table \"%s\" has %d columns available but %d columns specified",
+						refname, varattno, numaliases)));
+
+	rte->eref = eref;
+
+	/*----------
+	 * Flags:
+	 * - this RTE should be expanded to include descendant tables,
+	 * - this RTE is in the FROM clause,
+	 * - this RTE should be checked for appropriate access rights.
+	 *
+	 * Subqueries are never checked for access rights.
+	 *----------
+	 */
+	rte->inh = false;			/* never true for subqueries */
+	rte->inFromCl = inFromCl;
+
+	rte->requiredPerms = 0;
+	rte->checkAsUser = InvalidOid;
+
+	/*
+	 * Add completed RTE to pstate's range table list, but not to join list
+	 * nor namespace --- caller must do that if appropriate.
+	 */
+	if (pstate != NULL)
+		pstate->p_rtable = lappend(pstate->p_rtable, rte);
+
+	return rte;
+}
+
+
+/*
  * Has the specified refname been selected FOR UPDATE/FOR SHARE?
  *
  * Note: we pay no attention to whether it's FOR UPDATE vs FOR SHARE.
@@ -1444,6 +1555,41 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				}
 			}
 			break;
+		case RTE_CTE:
+			{
+				ListCell   *aliasp_item = list_head(rte->eref->colnames);
+				ListCell   *lct;
+				ListCell   *lcm;
+
+				varattno = 0;
+				forboth(lct, rte->ctecoltypes, lcm, rte->ctecoltypmods)
+				{
+					Oid		coltype = lfirst_oid(lct);
+					int32	coltypmod = lfirst_int(lcm);
+
+					varattno++;
+
+					if (colnames)
+					{
+						/* Assume there is one alias per output column */
+						char	   *label = strVal(lfirst(aliasp_item));
+
+						*colnames = lappend(*colnames, makeString(pstrdup(label)));
+						aliasp_item = lnext(aliasp_item);
+					}
+
+					if (colvars)
+					{
+						Var		   *varnode;
+
+						varnode = makeVar(rtindex, varattno,
+										  coltype, coltypmod,
+										  sublevels_up);
+						*colvars = lappend(*colvars, varnode);
+					}
+				}
+			}
+			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
 	}
@@ -1750,6 +1896,14 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				*vartypmod = exprTypmod(aliasvar);
 			}
 			break;
+		case RTE_CTE:
+			{
+				/* CTE RTE --- get type info from lists in the RTE */
+				Assert(attnum > 0 && attnum <= list_length(rte->ctecoltypes));
+				*vartype = list_nth_oid(rte->ctecoltypes, attnum - 1);
+				*vartypmod = list_nth_int(rte->ctecoltypmods, attnum - 1);
+			}
+			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
 	}
@@ -1788,7 +1942,8 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 			break;
 		case RTE_SUBQUERY:
 		case RTE_VALUES:
-			/* Subselect and Values RTEs never have dropped columns */
+		case RTE_CTE:
+			/* Subselect, Values, CTE RTEs never have dropped columns */
 			result = false;
 			break;
 		case RTE_JOIN:

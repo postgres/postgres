@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.104 2008/09/23 09:20:35 heikki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.105 2008/10/04 21:56:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,6 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+[ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
 SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replaceable> [, ...] ) ] ]
     * | <replaceable class="parameter">expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...]
     [ FROM <replaceable class="parameter">from_item</replaceable> [, ...] ]
@@ -36,9 +37,14 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
 
     [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
     ( <replaceable class="parameter">select</replaceable> ) [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ]
+    <replaceable class="parameter">with_query_name</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
     <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] | <replaceable class="parameter">column_definition</replaceable> [, ...] ) ]
     <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] )
     <replaceable class="parameter">from_item</replaceable> [ NATURAL ] <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable> [ ON <replaceable class="parameter">join_condition</replaceable> | USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) ]
+
+and <replaceable class="parameter">with_query</replaceable> is:
+
+    <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS ( <replaceable class="parameter">select</replaceable> )
 </synopsis>
 
  </refsynopsisdiv>
@@ -51,6 +57,17 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
    The general processing of <command>SELECT</command> is as follows:
 
    <orderedlist>
+    <listitem>
+     <para>
+      All queries in the <literal>WITH</literal> list are computed.
+      These effectively serve as temporary tables that can be referenced
+      in the <literal>FROM</literal> list.  A <literal>WITH</literal> query
+      that is referenced more than once in <literal>FROM</literal> is
+      computed only once.
+      (See <xref linkend="sql-with" endterm="sql-with-title"> below.)
+     </para>
+    </listitem>
+
     <listitem>
      <para>
       All elements in the <literal>FROM</literal> list are computed.
@@ -163,6 +180,56 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
  <refsect1>
   <title>Parameters</title>
 
+  <refsect2 id="SQL-WITH">
+   <title id="sql-with-title"><literal>WITH</literal> Clause</title>
+
+   <para>
+    The <literal>WITH</literal> clause allows you to specify one or more
+    subqueries that can be referenced by name in the primary query.
+    The subqueries effectively act as temporary tables or views
+    for the duration of the primary query.
+   </para>
+
+   <para>
+    A name (without schema qualification) must be specified for each
+    <literal>WITH</literal> query.  Optionally, a list of column names
+    can be specified; if this is omitted,
+    the column names are inferred from the subquery.
+   </para>
+
+   <para>
+    If <literal>RECURSIVE</literal> is specified, it allows a
+    subquery to reference itself by name.  Such a subquery must have
+    the form
+<synopsis>
+<replaceable class="parameter">non_recursive_term</replaceable> UNION ALL <replaceable class="parameter">recursive_term</replaceable>
+</synopsis>
+    where the recursive self-reference must appear on the right-hand
+    side of <literal>UNION ALL</>.  Only one recursive self-reference
+    is permitted per query.
+   </para>
+
+   <para>
+    Another effect of <literal>RECURSIVE</literal> is that
+    <literal>WITH</literal> queries need not be ordered: a query
+    can reference another one that is later in the list.  (However,
+    circular references, or mutual recursion, are not implemented.)
+    Without <literal>RECURSIVE</literal>, <literal>WITH</literal> queries
+    can only reference sibling <literal>WITH</literal> queries
+    that are earlier in the <literal>WITH</literal> list.
+   </para>
+
+   <para>
+    A useful property of <literal>WITH</literal> queries is that they
+    are evaluated only once per execution of the primary query,
+    even if the primary query refers to them more than once.
+   </para>
+
+   <para>
+    See <xref linkend="queries-with"> for additional information.
+   </para>
+  </refsect2>
+
   <refsect2 id="SQL-FROM">
    <title id="sql-from-title"><literal>FROM</literal> Clause</title>
 
@@ -197,7 +264,7 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term><replaceable class="parameter">alias</replaceable></term>
       <listitem>
@@ -215,7 +282,7 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term><replaceable class="parameter">select</replaceable></term>
       <listitem>
@@ -229,6 +296,21 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
         provided for it.  A
         <xref linkend="sql-values" endterm="sql-values-title"> command
         can also be used here.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">with_query_name</replaceable></term>
+      <listitem>
+       <para>
+        A <literal>WITH</> query is referenced by writing its name,
+        just as though the query's name were a table name.  (In fact,
+        the <literal>WITH</> query hides any real table of the same name
+        for the purposes of the primary query.  If necessary, you can
+        refer to a real table of the same name by schema-qualifying
+        the table's name.)
+        An alias can be provided in the same way as for a table.
        </para>
       </listitem>
      </varlistentry>
@@ -256,7 +338,7 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term><replaceable class="parameter">join_type</replaceable></term>
       <listitem>
@@ -339,7 +421,7 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term><literal>ON <replaceable class="parameter">join_condition</replaceable></literal></term>
       <listitem>
@@ -352,7 +434,7 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term><literal>USING ( <replaceable class="parameter">join_column</replaceable> [, ...] )</literal></term>
       <listitem>
@@ -380,7 +462,7 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
     </variablelist>
    </para>
   </refsect2>
-   
+
   <refsect2 id="SQL-WHERE">
    <title id="sql-where-title"><literal>WHERE</literal> Clause</title>
 
@@ -397,7 +479,7 @@ WHERE <replaceable class="parameter">condition</replaceable>
     substituted for any variable references.
    </para>
   </refsect2>
-  
+
   <refsect2 id="SQL-GROUPBY">
    <title id="sql-groupby-title"><literal>GROUP BY</literal> Clause</title>
 
@@ -444,7 +526,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
     where <replaceable class="parameter">condition</replaceable> is
     the same as specified for the <literal>WHERE</literal> clause.
    </para>
-    
+
    <para>
     <literal>HAVING</literal> eliminates group rows that do not
     satisfy the condition.  <literal>HAVING</literal> is different
@@ -456,7 +538,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
     unambiguously reference a grouping column, unless the reference
     appears within an aggregate function.
    </para>
-    
+
    <para>
     The presence of <literal>HAVING</literal> turns a query into a grouped
     query even if there is no <literal>GROUP BY</> clause.  This is the
@@ -518,7 +600,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
     the output column names will be the same as the table columns' names.
    </para>
   </refsect2>
-  
+
   <refsect2 id="SQL-UNION">
    <title id="sql-union-title"><literal>UNION</literal> Clause</title>
 
@@ -537,7 +619,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
     the <literal>UNION</literal>, not to its right-hand input
     expression.)
    </para>
-    
+
    <para>
     The <literal>UNION</literal> operator computes the set union of
     the rows returned by the involved <command>SELECT</command>
@@ -548,7 +630,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
     number of columns, and corresponding columns must be of compatible
     data types.
    </para>
-    
+
    <para>
     The result of <literal>UNION</> does not contain any duplicate
     rows unless the <literal>ALL</> option is specified.
@@ -556,13 +638,13 @@ HAVING <replaceable class="parameter">condition</replaceable>
     <literal>UNION ALL</> is usually significantly quicker than
     <literal>UNION</>; use <literal>ALL</> when you can.)
    </para>
-    
+
    <para>
     Multiple <literal>UNION</> operators in the same
     <command>SELECT</command> statement are evaluated left to right,
     unless otherwise indicated by parentheses.
    </para>
-    
+
    <para>
     Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> cannot be
     specified either for a <literal>UNION</> result or for any input of a
@@ -590,7 +672,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
     <command>SELECT</command> statements.  A row is in the
     intersection of two result sets if it appears in both result sets.
    </para>
-    
+
    <para>
     The result of <literal>INTERSECT</literal> does not contain any
     duplicate rows unless the <literal>ALL</> option is specified.
@@ -598,7 +680,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
     left table and <replaceable>n</> duplicates in the right table will appear
     min(<replaceable>m</>,<replaceable>n</>) times in the result set.
    </para>
-    
+
    <para>
     Multiple <literal>INTERSECT</literal> operators in the same
     <command>SELECT</command> statement are evaluated left to right,
@@ -608,7 +690,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
     C</literal> will be read as <literal>A UNION (B INTERSECT
     C)</literal>.
    </para>
-    
+
    <para>
     Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> cannot be
     specified either for an <literal>INTERSECT</> result or for any input of
@@ -635,7 +717,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
     that are in the result of the left <command>SELECT</command>
     statement but not in the result of the right one.
    </para>
-    
+
    <para>
     The result of <literal>EXCEPT</literal> does not contain any
     duplicate rows unless the <literal>ALL</> option is specified.
@@ -643,14 +725,14 @@ HAVING <replaceable class="parameter">condition</replaceable>
     left table and <replaceable>n</> duplicates in the right table will appear
     max(<replaceable>m</>-<replaceable>n</>,0) times in the result set.
    </para>
-    
+
    <para>
     Multiple <literal>EXCEPT</literal> operators in the same
     <command>SELECT</command> statement are evaluated left to right,
     unless parentheses dictate otherwise.  <literal>EXCEPT</> binds at
     the same level as <literal>UNION</>.
    </para>
-    
+
    <para>
     Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> cannot be
     specified either for an <literal>EXCEPT</> result or for any input of
@@ -689,7 +771,7 @@ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | 
     possible to assign a name to an output column using the
     <literal>AS</> clause.
    </para>
-    
+
    <para>
     It is also possible to use arbitrary expressions in the
     <literal>ORDER BY</literal> clause, including columns that do not
@@ -712,7 +794,7 @@ SELECT name FROM distributors ORDER BY code;
     make in the same situation.  This inconsistency is made to be
     compatible with the SQL standard.
    </para>
-    
+
    <para>
     Optionally one can add the key word <literal>ASC</> (ascending) or
     <literal>DESC</> (descending) after any expression in the
@@ -789,7 +871,7 @@ SELECT DISTINCT ON (location) location, time, report
     desired precedence of rows within each <literal>DISTINCT ON</> group.
    </para>
   </refsect2>
-  
+
   <refsect2 id="SQL-LIMIT">
    <title id="sql-limit-title"><literal>LIMIT</literal> Clause</title>
 
@@ -1106,8 +1188,60 @@ SELECT * FROM distributors_2(111) AS (f1 int, f2 text);
  111 | Walt Disney
 </programlisting>
   </para>
+
+  <para>
+   This example shows how to use a simple <literal>WITH</> clause:
+
+<programlisting>
+WITH t AS (
+    SELECT random() as x FROM generate_series(1, 3)
+  )
+SELECT * FROM t
+UNION ALL
+SELECT * FROM t
+
+         x          
+--------------------
+  0.534150459803641
+  0.520092216785997
+ 0.0735620250925422
+  0.534150459803641
+  0.520092216785997
+ 0.0735620250925422
+</programlisting>
+
+   Notice that the <literal>WITH</> query was evaluated only once,
+   so that we got two sets of the same three random values.
+  </para>
+
+  <para>
+   This example uses <literal>WITH RECURSIVE</literal> to find all
+   subordinates (direct or indirect) of the employee Mary, and their
+   level of indirectness, from a table that shows only direct
+   subordinates:
+
+<programlisting>
+WITH RECURSIVE employee_recursive(distance, employee_name, manager_name) AS (
+    SELECT 1, employee_name, manager_name
+    FROM employee
+    WHERE manager_name = 'Mary'
+  UNION ALL
+    SELECT er.distance + 1, e.employee_name, e.manager_name
+    FROM employee_recursive er, employee e
+    WHERE er.employee_name = e.manager_name
+  )
+SELECT distance, employee_name FROM employee_recursive;
+</programlisting>
+
+   Notice the typical form of recursive queries:
+   an initial condition, followed by <literal>UNION ALL</literal>,
+   followed by the recursive part of the query. Be sure that the
+   recursive part of the query will eventually return no tuples, or
+   else the query will loop indefinitely.  (See <xref linkend="queries-with">
+   for more examples.)
+  </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 
@@ -1116,7 +1250,7 @@ SELECT * FROM distributors_2(111) AS (f1 int, f2 text);
    with the SQL standard.  But there are some extensions and some
    missing features.
   </para>
-  
+
   <refsect2>
    <title>Omitted <literal>FROM</literal> Clauses</title>
 
@@ -1196,7 +1330,7 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
 
    <para>
     SQL:1999 and later use a slightly different definition which is not
-    entirely upward compatible with SQL-92.  
+    entirely upward compatible with SQL-92.
     In most cases, however, <productname>PostgreSQL</productname>
     will interpret an <literal>ORDER BY</literal> or <literal>GROUP
     BY</literal> expression the same way SQL:1999 does.

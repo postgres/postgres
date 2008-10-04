@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.339 2008/09/09 18:58:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.340 2008/10/04 21:56:53 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -332,6 +332,16 @@ _outAppend(StringInfo str, Append *node)
 }
 
 static void
+_outRecursiveUnion(StringInfo str, RecursiveUnion *node)
+{
+	WRITE_NODE_TYPE("RECURSIVEUNION");
+
+	_outPlanInfo(str, (Plan *) node);
+
+	WRITE_INT_FIELD(wtParam);
+}
+
+static void
 _outBitmapAnd(StringInfo str, BitmapAnd *node)
 {
 	WRITE_NODE_TYPE("BITMAPAND");
@@ -444,6 +454,27 @@ _outValuesScan(StringInfo str, ValuesScan *node)
 	_outScanInfo(str, (Scan *) node);
 
 	WRITE_NODE_FIELD(values_lists);
+}
+
+static void
+_outCteScan(StringInfo str, CteScan *node)
+{
+	WRITE_NODE_TYPE("CTESCAN");
+
+	_outScanInfo(str, (Scan *) node);
+
+	WRITE_INT_FIELD(ctePlanId);
+	WRITE_INT_FIELD(cteParam);
+}
+
+static void
+_outWorkTableScan(StringInfo str, WorkTableScan *node)
+{
+	WRITE_NODE_TYPE("WORKTABLESCAN");
+
+	_outScanInfo(str, (Scan *) node);
+
+	WRITE_INT_FIELD(wtParam);
 }
 
 static void
@@ -1382,6 +1413,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(resultRelations);
 	WRITE_NODE_FIELD(returningLists);
 	WRITE_NODE_FIELD(init_plans);
+	WRITE_NODE_FIELD(cte_plan_ids);
 	WRITE_NODE_FIELD(eq_classes);
 	WRITE_NODE_FIELD(canon_pathkeys);
 	WRITE_NODE_FIELD(left_join_clauses);
@@ -1398,6 +1430,8 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_BOOL_FIELD(hasJoinRTEs);
 	WRITE_BOOL_FIELD(hasHavingQual);
 	WRITE_BOOL_FIELD(hasPseudoConstantQuals);
+	WRITE_BOOL_FIELD(hasRecursion);
+	WRITE_INT_FIELD(wt_param_id);
 }
 
 static void
@@ -1648,6 +1682,7 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 	WRITE_NODE_FIELD(whereClause);
 	WRITE_NODE_FIELD(groupClause);
 	WRITE_NODE_FIELD(havingClause);
+	WRITE_NODE_FIELD(withClause);
 	WRITE_NODE_FIELD(valuesLists);
 	WRITE_NODE_FIELD(sortClause);
 	WRITE_NODE_FIELD(limitOffset);
@@ -1793,6 +1828,8 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_BOOL_FIELD(hasAggs);
 	WRITE_BOOL_FIELD(hasSubLinks);
 	WRITE_BOOL_FIELD(hasDistinctOn);
+	WRITE_BOOL_FIELD(hasRecursive);
+	WRITE_NODE_FIELD(cteList);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(jointree);
 	WRITE_NODE_FIELD(targetList);
@@ -1829,6 +1866,32 @@ _outRowMarkClause(StringInfo str, RowMarkClause *node)
 }
 
 static void
+_outWithClause(StringInfo str, WithClause *node)
+{
+	WRITE_NODE_TYPE("WITHCLAUSE");
+
+	WRITE_NODE_FIELD(ctes);
+	WRITE_BOOL_FIELD(recursive);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
+_outCommonTableExpr(StringInfo str, CommonTableExpr *node)
+{
+	WRITE_NODE_TYPE("COMMONTABLEEXPR");
+
+	WRITE_STRING_FIELD(ctename);
+	WRITE_NODE_FIELD(aliascolnames);
+	WRITE_NODE_FIELD(ctequery);
+	WRITE_LOCATION_FIELD(location);
+	WRITE_BOOL_FIELD(cterecursive);
+	WRITE_INT_FIELD(cterefcount);
+	WRITE_NODE_FIELD(ctecolnames);
+	WRITE_NODE_FIELD(ctecoltypes);
+	WRITE_NODE_FIELD(ctecoltypmods);
+}
+
+static void
 _outSetOperationStmt(StringInfo str, SetOperationStmt *node)
 {
 	WRITE_NODE_TYPE("SETOPERATIONSTMT");
@@ -1861,6 +1924,10 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 		case RTE_SUBQUERY:
 			WRITE_NODE_FIELD(subquery);
 			break;
+		case RTE_JOIN:
+			WRITE_ENUM_FIELD(jointype, JoinType);
+			WRITE_NODE_FIELD(joinaliasvars);
+			break;
 		case RTE_FUNCTION:
 			WRITE_NODE_FIELD(funcexpr);
 			WRITE_NODE_FIELD(funccoltypes);
@@ -1869,9 +1936,12 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 		case RTE_VALUES:
 			WRITE_NODE_FIELD(values_lists);
 			break;
-		case RTE_JOIN:
-			WRITE_ENUM_FIELD(jointype, JoinType);
-			WRITE_NODE_FIELD(joinaliasvars);
+		case RTE_CTE:
+			WRITE_STRING_FIELD(ctename);
+			WRITE_UINT_FIELD(ctelevelsup);
+			WRITE_BOOL_FIELD(self_reference);
+			WRITE_NODE_FIELD(ctecoltypes);
+			WRITE_NODE_FIELD(ctecoltypmods);
 			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d", (int) node->rtekind);
@@ -2060,6 +2130,25 @@ _outSortBy(StringInfo str, SortBy *node)
 }
 
 static void
+_outRangeSubselect(StringInfo str, RangeSubselect *node)
+{
+	WRITE_NODE_TYPE("RANGESUBSELECT");
+
+	WRITE_NODE_FIELD(subquery);
+	WRITE_NODE_FIELD(alias);
+}
+
+static void
+_outRangeFunction(StringInfo str, RangeFunction *node)
+{
+	WRITE_NODE_TYPE("RANGEFUNCTION");
+
+	WRITE_NODE_FIELD(funccallnode);
+	WRITE_NODE_FIELD(alias);
+	WRITE_NODE_FIELD(coldeflist);
+}
+
+static void
 _outConstraint(StringInfo str, Constraint *node)
 {
 	WRITE_NODE_TYPE("CONSTRAINT");
@@ -2159,6 +2248,9 @@ _outNode(StringInfo str, void *obj)
 			case T_Append:
 				_outAppend(str, obj);
 				break;
+			case T_RecursiveUnion:
+				_outRecursiveUnion(str, obj);
+				break;
 			case T_BitmapAnd:
 				_outBitmapAnd(str, obj);
 				break;
@@ -2191,6 +2283,12 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_ValuesScan:
 				_outValuesScan(str, obj);
+				break;
+			case T_CteScan:
+				_outCteScan(str, obj);
+				break;
+			case T_WorkTableScan:
+				_outWorkTableScan(str, obj);
 				break;
 			case T_Join:
 				_outJoin(str, obj);
@@ -2473,6 +2571,12 @@ _outNode(StringInfo str, void *obj)
 			case T_RowMarkClause:
 				_outRowMarkClause(str, obj);
 				break;
+			case T_WithClause:
+				_outWithClause(str, obj);
+				break;
+			case T_CommonTableExpr:
+				_outCommonTableExpr(str, obj);
+				break;
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);
 				break;
@@ -2508,6 +2612,12 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_SortBy:
 				_outSortBy(str, obj);
+				break;
+			case T_RangeSubselect:
+				_outRangeSubselect(str, obj);
+				break;
+			case T_RangeFunction:
+				_outRangeFunction(str, obj);
 				break;
 			case T_Constraint:
 				_outConstraint(str, obj);

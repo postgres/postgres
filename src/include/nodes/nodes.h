@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.212 2008/09/09 18:58:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.213 2008/10/04 21:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ typedef enum NodeTag
 	T_Plan = 100,
 	T_Result,
 	T_Append,
+	T_RecursiveUnion,
 	T_BitmapAnd,
 	T_BitmapOr,
 	T_Scan,
@@ -55,6 +56,8 @@ typedef enum NodeTag
 	T_SubqueryScan,
 	T_FunctionScan,
 	T_ValuesScan,
+	T_CteScan,
+	T_WorkTableScan,
 	T_Join,
 	T_NestLoop,
 	T_MergeJoin,
@@ -78,6 +81,7 @@ typedef enum NodeTag
 	T_PlanState = 200,
 	T_ResultState,
 	T_AppendState,
+	T_RecursiveUnionState,
 	T_BitmapAndState,
 	T_BitmapOrState,
 	T_ScanState,
@@ -89,6 +93,8 @@ typedef enum NodeTag
 	T_SubqueryScanState,
 	T_FunctionScanState,
 	T_ValuesScanState,
+	T_CteScanState,
+	T_WorkTableScanState,
 	T_JoinState,
 	T_NestLoopState,
 	T_MergeJoinState,
@@ -352,6 +358,8 @@ typedef enum NodeTag
 	T_LockingClause,
 	T_RowMarkClause,
 	T_XmlSerialize,
+	T_WithClause,
+	T_CommonTableExpr,
 
 	/*
 	 * TAGS FOR RANDOM OTHER STUFF

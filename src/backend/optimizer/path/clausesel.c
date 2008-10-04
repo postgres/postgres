@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.93 2008/08/22 00:16:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.94 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,29 +550,17 @@ clause_selectivity(PlannerInfo *root,
 		if (var->varlevelsup == 0 &&
 			(varRelid == 0 || varRelid == (int) var->varno))
 		{
-			RangeTblEntry *rte = planner_rt_fetch(var->varno, root);
-
-			if (rte->rtekind == RTE_SUBQUERY)
-			{
-				/*
-				 * XXX not smart about subquery references... any way to do
-				 * better than default?
-				 */
-			}
-			else
-			{
-				/*
-				 * A Var at the top of a clause must be a bool Var. This is
-				 * equivalent to the clause reln.attribute = 't', so we
-				 * compute the selectivity as if that is what we have.
-				 */
-				s1 = restriction_selectivity(root,
-											 BooleanEqualOperator,
-											 list_make2(var,
-														makeBoolConst(true,
-																	  false)),
-											 varRelid);
-			}
+			/*
+			 * A Var at the top of a clause must be a bool Var. This is
+			 * equivalent to the clause reln.attribute = 't', so we
+			 * compute the selectivity as if that is what we have.
+			 */
+			s1 = restriction_selectivity(root,
+										 BooleanEqualOperator,
+										 list_make2(var,
+													makeBoolConst(true,
+																  false)),
+										 varRelid);
 		}
 	}
 	else if (IsA(clause, Const))

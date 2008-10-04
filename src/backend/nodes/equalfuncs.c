@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.331 2008/09/01 20:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.332 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -808,6 +808,8 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_SCALAR_FIELD(hasAggs);
 	COMPARE_SCALAR_FIELD(hasSubLinks);
 	COMPARE_SCALAR_FIELD(hasDistinctOn);
+	COMPARE_SCALAR_FIELD(hasRecursive);
+	COMPARE_NODE_FIELD(cteList);
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
 	COMPARE_NODE_FIELD(targetList);
@@ -868,6 +870,7 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 	COMPARE_NODE_FIELD(whereClause);
 	COMPARE_NODE_FIELD(groupClause);
 	COMPARE_NODE_FIELD(havingClause);
+	COMPARE_NODE_FIELD(withClause);
 	COMPARE_NODE_FIELD(valuesLists);
 	COMPARE_NODE_FIELD(sortClause);
 	COMPARE_NODE_FIELD(limitOffset);
@@ -1932,12 +1935,17 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 	COMPARE_SCALAR_FIELD(rtekind);
 	COMPARE_SCALAR_FIELD(relid);
 	COMPARE_NODE_FIELD(subquery);
+	COMPARE_SCALAR_FIELD(jointype);
+	COMPARE_NODE_FIELD(joinaliasvars);
 	COMPARE_NODE_FIELD(funcexpr);
 	COMPARE_NODE_FIELD(funccoltypes);
 	COMPARE_NODE_FIELD(funccoltypmods);
 	COMPARE_NODE_FIELD(values_lists);
-	COMPARE_SCALAR_FIELD(jointype);
-	COMPARE_NODE_FIELD(joinaliasvars);
+	COMPARE_STRING_FIELD(ctename);
+	COMPARE_SCALAR_FIELD(ctelevelsup);
+	COMPARE_SCALAR_FIELD(self_reference);
+	COMPARE_NODE_FIELD(ctecoltypes);
+	COMPARE_NODE_FIELD(ctecoltypmods);
 	COMPARE_NODE_FIELD(alias);
 	COMPARE_NODE_FIELD(eref);
 	COMPARE_SCALAR_FIELD(inh);
@@ -1965,6 +1973,32 @@ _equalRowMarkClause(RowMarkClause *a, RowMarkClause *b)
 	COMPARE_SCALAR_FIELD(rti);
 	COMPARE_SCALAR_FIELD(forUpdate);
 	COMPARE_SCALAR_FIELD(noWait);
+
+	return true;
+}
+
+static bool
+_equalWithClause(WithClause *a, WithClause *b)
+{
+	COMPARE_NODE_FIELD(ctes);
+	COMPARE_SCALAR_FIELD(recursive);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalCommonTableExpr(CommonTableExpr *a, CommonTableExpr *b)
+{
+	COMPARE_STRING_FIELD(ctename);
+	COMPARE_NODE_FIELD(aliascolnames);
+	COMPARE_NODE_FIELD(ctequery);
+	COMPARE_LOCATION_FIELD(location);
+	COMPARE_SCALAR_FIELD(cterecursive);
+	COMPARE_SCALAR_FIELD(cterefcount);
+	COMPARE_NODE_FIELD(ctecolnames);
+	COMPARE_NODE_FIELD(ctecoltypes);
+	COMPARE_NODE_FIELD(ctecoltypmods);
 
 	return true;
 }
@@ -2592,6 +2626,12 @@ equal(void *a, void *b)
 			break;
 		case T_RowMarkClause:
 			retval = _equalRowMarkClause(a, b);
+			break;
+		case T_WithClause:
+			retval = _equalWithClause(a, b);
+			break;
+		case T_CommonTableExpr:
+			retval = _equalCommonTableExpr(a, b);
 			break;
 		case T_FkConstraint:
 			retval = _equalFkConstraint(a, b);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.248 2008/09/05 21:07:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.249 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,10 @@ static FunctionScan *create_functionscan_plan(PlannerInfo *root, Path *best_path
 						 List *tlist, List *scan_clauses);
 static ValuesScan *create_valuesscan_plan(PlannerInfo *root, Path *best_path,
 					   List *tlist, List *scan_clauses);
+static CteScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
+									List *tlist, List *scan_clauses);
+static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_path,
+												List *tlist, List *scan_clauses);
 static NestLoop *create_nestloop_plan(PlannerInfo *root, NestPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
@@ -93,6 +97,10 @@ static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
 				  List *funccoltypes, List *funccoltypmods);
 static ValuesScan *make_valuesscan(List *qptlist, List *qpqual,
 				Index scanrelid, List *values_lists);
+static CteScan *make_ctescan(List *qptlist, List *qpqual,
+							 Index scanrelid, int ctePlanId, int cteParam);
+static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
+										 Index scanrelid, int wtParam);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
 static NestLoop *make_nestloop(List *tlist,
@@ -148,6 +156,8 @@ create_plan(PlannerInfo *root, Path *best_path)
 		case T_SubqueryScan:
 		case T_FunctionScan:
 		case T_ValuesScan:
+		case T_CteScan:
+		case T_WorkTableScan:
 			plan = create_scan_plan(root, best_path);
 			break;
 		case T_HashJoin:
@@ -270,6 +280,20 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 												   scan_clauses);
 			break;
 
+		case T_CteScan:
+			plan = (Plan *) create_ctescan_plan(root,
+												best_path,
+												tlist,
+												scan_clauses);
+			break;
+
+		case T_WorkTableScan:
+			plan = (Plan *) create_worktablescan_plan(root,
+													  best_path,
+													  tlist,
+													  scan_clauses);
+			break;
+
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) best_path->pathtype);
@@ -324,12 +348,13 @@ use_physical_tlist(RelOptInfo *rel)
 
 	/*
 	 * We can do this for real relation scans, subquery scans, function scans,
-	 * and values scans (but not for, eg, joins).
+	 * values scans, and CTE scans (but not for, eg, joins).
 	 */
 	if (rel->rtekind != RTE_RELATION &&
 		rel->rtekind != RTE_SUBQUERY &&
 		rel->rtekind != RTE_FUNCTION &&
-		rel->rtekind != RTE_VALUES)
+		rel->rtekind != RTE_VALUES &&
+		rel->rtekind != RTE_CTE)
 		return false;
 
 	/*
@@ -375,6 +400,8 @@ disuse_physical_tlist(Plan *plan, Path *path)
 		case T_SubqueryScan:
 		case T_FunctionScan:
 		case T_ValuesScan:
+		case T_CteScan:
+		case T_WorkTableScan:
 			plan->targetlist = build_relation_tlist(path->parent);
 			break;
 		default:
@@ -1335,6 +1362,145 @@ create_valuesscan_plan(PlannerInfo *root, Path *best_path,
 	return scan_plan;
 }
 
+/*
+ * create_ctescan_plan
+ *	 Returns a ctescan plan for the base relation scanned by 'best_path'
+ *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
+ */
+static CteScan *
+create_ctescan_plan(PlannerInfo *root, Path *best_path,
+					List *tlist, List *scan_clauses)
+{
+	CteScan	   *scan_plan;
+	Index		scan_relid = best_path->parent->relid;
+	RangeTblEntry *rte;
+	SubPlan	   *ctesplan = NULL;
+	int			plan_id;
+	int			cte_param_id;
+	PlannerInfo *cteroot;
+	Index		levelsup;
+	int			ndx;
+	ListCell   *lc;
+
+	Assert(scan_relid > 0);
+	rte = planner_rt_fetch(scan_relid, root);
+	Assert(rte->rtekind == RTE_CTE);
+	Assert(!rte->self_reference);
+
+	/*
+	 * Find the referenced CTE, and locate the SubPlan previously made for it.
+	 */
+	levelsup = rte->ctelevelsup;
+	cteroot = root;
+	while (levelsup-- > 0)
+	{
+		cteroot = cteroot->parent_root;
+		if (!cteroot)			/* shouldn't happen */
+			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
+	}
+	/*
+	 * Note: cte_plan_ids can be shorter than cteList, if we are still working
+	 * on planning the CTEs (ie, this is a side-reference from another CTE).
+	 * So we mustn't use forboth here.
+	 */
+	ndx = 0;
+	foreach(lc, cteroot->parse->cteList)
+	{
+		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+
+		if (strcmp(cte->ctename, rte->ctename) == 0)
+			break;
+		ndx++;
+	}
+	if (lc == NULL)				/* shouldn't happen */
+		elog(ERROR, "could not find CTE \"%s\"", rte->ctename);
+	if (ndx >= list_length(cteroot->cte_plan_ids))
+		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
+	plan_id = list_nth_int(cteroot->cte_plan_ids, ndx);
+	Assert(plan_id > 0);
+	foreach(lc, cteroot->init_plans)
+	{
+		ctesplan = (SubPlan *) lfirst(lc);
+		if (ctesplan->plan_id == plan_id)
+			break;
+	}
+	if (lc == NULL)				/* shouldn't happen */
+		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
+
+	/*
+	 * We need the CTE param ID, which is the sole member of the
+	 * SubPlan's setParam list.
+	 */
+	cte_param_id = linitial_int(ctesplan->setParam);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
+
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	scan_plan = make_ctescan(tlist, scan_clauses, scan_relid,
+							 plan_id, cte_param_id);
+
+	copy_path_costsize(&scan_plan->scan.plan, best_path);
+
+	return scan_plan;
+}
+
+/*
+ * create_worktablescan_plan
+ *	 Returns a worktablescan plan for the base relation scanned by 'best_path'
+ *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
+ */
+static WorkTableScan *
+create_worktablescan_plan(PlannerInfo *root, Path *best_path,
+						  List *tlist, List *scan_clauses)
+{
+	WorkTableScan *scan_plan;
+	Index		scan_relid = best_path->parent->relid;
+	RangeTblEntry *rte;
+	Index		levelsup;
+	PlannerInfo *cteroot;
+
+	Assert(scan_relid > 0);
+	rte = planner_rt_fetch(scan_relid, root);
+	Assert(rte->rtekind == RTE_CTE);
+	Assert(rte->self_reference);
+
+	/*
+	 * We need to find the worktable param ID, which is in the plan level
+	 * that's processing the recursive UNION, which is one level *below*
+	 * where the CTE comes from.
+	 */
+	levelsup = rte->ctelevelsup;
+	if (levelsup == 0)			/* shouldn't happen */
+			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
+	levelsup--;
+	cteroot = root;
+	while (levelsup-- > 0)
+	{
+		cteroot = cteroot->parent_root;
+		if (!cteroot)			/* shouldn't happen */
+			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
+	}
+	if (cteroot->wt_param_id < 0)	/* shouldn't happen */
+		elog(ERROR, "could not find param ID for CTE \"%s\"", rte->ctename);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
+
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	scan_plan = make_worktablescan(tlist, scan_clauses, scan_relid,
+								   cteroot->wt_param_id);
+
+	copy_path_costsize(&scan_plan->scan.plan, best_path);
+
+	return scan_plan;
+}
+
+
 /*****************************************************************************
  *
  *	JOIN METHODS
@@ -2291,6 +2457,48 @@ make_valuesscan(List *qptlist,
 	return node;
 }
 
+static CteScan *
+make_ctescan(List *qptlist,
+			 List *qpqual,
+			 Index scanrelid,
+			 int ctePlanId,
+			 int cteParam)
+{
+	CteScan *node = makeNode(CteScan);
+	Plan	   *plan = &node->scan.plan;
+
+	/* cost should be inserted by caller */
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
+	node->ctePlanId = ctePlanId;
+	node->cteParam = cteParam;
+
+	return node;
+}
+
+static WorkTableScan *
+make_worktablescan(List *qptlist,
+				   List *qpqual,
+				   Index scanrelid,
+				   int wtParam)
+{
+	WorkTableScan *node = makeNode(WorkTableScan);
+	Plan	   *plan = &node->scan.plan;
+
+	/* cost should be inserted by caller */
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
+	node->wtParam = wtParam;
+
+	return node;
+}
+
 Append *
 make_append(List *appendplans, bool isTarget, List *tlist)
 {
@@ -2329,6 +2537,26 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 	plan->righttree = NULL;
 	node->appendplans = appendplans;
 	node->isTarget = isTarget;
+
+	return node;
+}
+
+RecursiveUnion *
+make_recursive_union(List *tlist,
+					 Plan *lefttree,
+					 Plan *righttree,
+					 int wtParam)
+{
+	RecursiveUnion *node = makeNode(RecursiveUnion);
+	Plan	   *plan = &node->plan;
+
+	cost_recursive_union(plan, lefttree, righttree);
+
+	plan->targetlist = tlist;
+	plan->qual = NIL;
+	plan->lefttree = lefttree;
+	plan->righttree = righttree;
+	node->wtParam = wtParam;
 
 	return node;
 }
@@ -3284,6 +3512,7 @@ is_projection_capable_plan(Plan *plan)
 		case T_SetOp:
 		case T_Limit:
 		case T_Append:
+		case T_RecursiveUnion:
 			return false;
 		default:
 			break;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.243 2008/09/09 18:58:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.244 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	}
 
 	/* primary planning entry point (may recurse for subqueries) */
-	top_plan = subquery_planner(glob, parse, 1, tuple_fraction, &root);
+	top_plan = subquery_planner(glob, parse, NULL,
+								false, tuple_fraction, &root);
 
 	/*
 	 * If creating a plan for a scrollable cursor, make sure it can run
@@ -228,7 +229,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
  *
  * glob is the global state for the current planner run.
  * parse is the querytree produced by the parser & rewriter.
- * level is the current recursion depth (1 at the top-level Query).
+ * parent_root is the immediate parent Query's info (NULL at the top level).
+ * hasRecursion is true if this is a recursive WITH query.
  * tuple_fraction is the fraction of tuples we expect will be retrieved.
  * tuple_fraction is interpreted as explained for grouping_planner, below.
  *
@@ -249,7 +251,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
  */
 Plan *
 subquery_planner(PlannerGlobal *glob, Query *parse,
-				 Index level, double tuple_fraction,
+				 PlannerInfo *parent_root,
+				 bool hasRecursion, double tuple_fraction,
 				 PlannerInfo **subroot)
 {
 	int			num_old_subplans = list_length(glob->subplans);
@@ -263,11 +266,27 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root = makeNode(PlannerInfo);
 	root->parse = parse;
 	root->glob = glob;
-	root->query_level = level;
+	root->query_level = parent_root ? parent_root->query_level + 1 : 1;
+	root->parent_root = parent_root;
 	root->planner_cxt = CurrentMemoryContext;
 	root->init_plans = NIL;
+	root->cte_plan_ids = NIL;
 	root->eq_classes = NIL;
 	root->append_rel_list = NIL;
+
+	root->hasRecursion = hasRecursion;
+	if (hasRecursion)
+		root->wt_param_id = SS_assign_worktable_param(root);
+	else
+		root->wt_param_id = -1;
+	root->non_recursive_plan = NULL;
+
+	/*
+	 * If there is a WITH list, process each WITH query and build an
+	 * initplan SubPlan structure for it.
+	 */
+	if (parse->cteList)
+		SS_process_ctes(root);
 
 	/*
 	 * Look for ANY and EXISTS SubLinks in WHERE and JOIN/ON clauses, and try
@@ -776,7 +795,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		/*
 		 * Construct the plan for set operations.  The result will not need
-		 * any work except perhaps a top-level sort and/or LIMIT.
+		 * any work except perhaps a top-level sort and/or LIMIT.  Note that
+		 * any special work for recursive unions is the responsibility of
+		 * plan_set_operations.
 		 */
 		result_plan = plan_set_operations(root, tuple_fraction,
 										  &set_sortclauses);
@@ -837,6 +858,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		bool		use_hashed_grouping = false;
 
 		MemSet(&agg_counts, 0, sizeof(AggClauseCounts));
+
+		/* A recursive query should always have setOperations */
+		Assert(!root->hasRecursion);
 
 		/* Preprocess GROUP BY clause, if any */
 		if (parse->groupClause)

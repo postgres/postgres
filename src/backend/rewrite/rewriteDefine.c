@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.129 2008/08/25 22:42:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.130 2008/10/04 21:56:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -635,17 +635,23 @@ setRuleCheckAsUser_Query(Query *qry, Oid userid)
 			rte->checkAsUser = userid;
 	}
 
+	/* Recurse into subquery-in-WITH */
+	foreach(l, qry->cteList)
+	{
+		CommonTableExpr *cte = (CommonTableExpr *) lfirst(l);
+
+		setRuleCheckAsUser_Query((Query *) cte->ctequery, userid);
+	}
+
 	/* If there are sublinks, search for them and process their RTEs */
-	/* ignore subqueries in rtable because we already processed them */
 	if (qry->hasSubLinks)
 		query_tree_walker(qry, setRuleCheckAsUser_walker, (void *) &userid,
-						  QTW_IGNORE_RT_SUBQUERIES);
+						  QTW_IGNORE_RC_SUBQUERIES);
 }
 
 
 /*
  * Change the firing semantics of an existing rule.
- *
  */
 void
 EnableDisableRule(Relation rel, const char *rulename,

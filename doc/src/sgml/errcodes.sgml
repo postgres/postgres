@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.24 2008/05/15 22:39:48 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.25 2008/10/04 21:56:52 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -988,6 +988,12 @@
 <entry><literal>42803</literal></entry>
 <entry>GROUPING ERROR</entry>
 <entry>grouping_error</entry>
+</row>
+
+<row>
+<entry><literal>42P19</literal></entry>
+<entry>INVALID RECURSION</entry>
+<entry>invalid_recursion</entry>
 </row>
 
 <row>

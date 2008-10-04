@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.284 2008/09/06 20:18:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.285 2008/10/04 21:56:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,7 @@ static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 static void get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 			  TupleDesc resultDesc, int prettyFlags, int startIndent);
 static void get_values_def(List *values_lists, deparse_context *context);
+static void get_with_clause(Query *query, deparse_context *context);
 static void get_select_query_def(Query *query, deparse_context *context,
 					 TupleDesc resultDesc);
 static void get_insert_query_def(Query *query, deparse_context *context);
@@ -2205,6 +2206,73 @@ get_values_def(List *values_lists, deparse_context *context)
 }
 
 /* ----------
+ * get_with_clause			- Parse back a WITH clause
+ * ----------
+ */
+static void
+get_with_clause(Query *query, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	const char	*sep;
+	ListCell	*l;
+
+	if (query->cteList == NIL)
+		return;
+
+	if (PRETTY_INDENT(context))
+	{
+		context->indentLevel += PRETTYINDENT_STD;
+		appendStringInfoChar(buf, ' ');
+	}
+
+	if (query->hasRecursive)
+		sep = "WITH RECURSIVE ";
+	else
+		sep = "WITH ";
+	foreach(l, query->cteList)
+	{
+		CommonTableExpr *cte = (CommonTableExpr *) lfirst(l);
+
+		appendStringInfoString(buf, sep);
+		appendStringInfoString(buf, quote_identifier(cte->ctename));
+		if (cte->aliascolnames)
+		{
+			bool		first = true;
+			ListCell   *col;
+
+			appendStringInfoChar(buf, '(');
+			foreach(col, cte->aliascolnames)
+			{
+				if (first)
+					first = false;
+				else
+					appendStringInfoString(buf, ", ");
+				appendStringInfoString(buf,
+									   quote_identifier(strVal(lfirst(col))));
+			}
+			appendStringInfoChar(buf, ')');
+		}
+		appendStringInfoString(buf, " AS (");
+		if (PRETTY_INDENT(context))
+			appendContextKeyword(context, "", 0, 0, 0);
+		get_query_def((Query *) cte->ctequery, buf, context->namespaces, NULL,
+					  context->prettyFlags, context->indentLevel);
+		if (PRETTY_INDENT(context))
+			appendContextKeyword(context, "", 0, 0, 0);
+		appendStringInfoChar(buf, ')');
+		sep = ", ";
+	}
+
+	if (PRETTY_INDENT(context))
+	{
+		context->indentLevel -= PRETTYINDENT_STD;
+		appendContextKeyword(context, "", 0, 0, 0);
+	}
+	else
+		appendStringInfoChar(buf, ' ');
+}
+
+/* ----------
  * get_select_query_def			- Parse back a SELECT parsetree
  * ----------
  */
@@ -2214,13 +2282,16 @@ get_select_query_def(Query *query, deparse_context *context,
 {
 	StringInfo	buf = context->buf;
 	bool		force_colno;
-	char	   *sep;
+	const char *sep;
 	ListCell   *l;
+
+	/* Insert the WITH clause if given */
+	get_with_clause(query, context);
 
 	/*
 	 * If the Query node has a setOperations tree, then it's the top level of
-	 * a UNION/INTERSECT/EXCEPT query; only the ORDER BY and LIMIT fields are
-	 * interesting in the top query itself.
+	 * a UNION/INTERSECT/EXCEPT query; only the WITH, ORDER BY and LIMIT
+	 * fields are interesting in the top query itself.
 	 */
 	if (query->setOperations)
 	{
@@ -2507,8 +2578,9 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 
 		Assert(subquery != NULL);
 		Assert(subquery->setOperations == NULL);
-		/* Need parens if ORDER BY, FOR UPDATE, or LIMIT; see gram.y */
-		need_paren = (subquery->sortClause ||
+		/* Need parens if WITH, ORDER BY, FOR UPDATE, or LIMIT; see gram.y */
+		need_paren = (subquery->cteList ||
+					  subquery->sortClause ||
 					  subquery->rowMarks ||
 					  subquery->limitOffset ||
 					  subquery->limitCount);
@@ -2522,6 +2594,12 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 	else if (IsA(setOp, SetOperationStmt))
 	{
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
+
+		if (PRETTY_INDENT(context))
+		{
+			context->indentLevel += PRETTYINDENT_STD;
+			appendStringInfoSpaces(buf, PRETTYINDENT_STD);
+		}
 
 		/*
 		 * We force parens whenever nesting two SetOperationStmts. There are
@@ -2570,6 +2648,9 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 		get_setop_query(op->rarg, query, context, resultDesc);
 		if (need_paren)
 			appendStringInfoChar(buf, ')');
+
+		if (PRETTY_INDENT(context))
+			context->indentLevel -= PRETTYINDENT_STD;
 	}
 	else
 	{
@@ -2730,11 +2811,15 @@ get_insert_query_def(Query *query, deparse_context *context)
 	}
 	else if (values_rte)
 	{
+		/* A WITH clause is possible here */
+		get_with_clause(query, context);
 		/* Add the multi-VALUES expression lists */
 		get_values_def(values_rte->values_lists, context);
 	}
 	else
 	{
+		/* A WITH clause is possible here */
+		get_with_clause(query, context);
 		/* Add the single-VALUES expression list */
 		appendContextKeyword(context, "VALUES (",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
@@ -3359,6 +3444,13 @@ get_name_for_var_field(Var *var, int fieldno,
 			 * We couldn't get here unless a function is declared with one of
 			 * its result columns as RECORD, which is not allowed.
 			 */
+			break;
+		case RTE_CTE:
+			/*
+			 * XXX not implemented yet, we need more infrastructure in
+			 * deparse_namespace and explain.c.
+			 */
+			elog(ERROR, "deparsing field references to whole-row vars from WITH queries not implemented yet");
 			break;
 	}
 
@@ -5029,6 +5121,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			need_paren = false;
 			break;
 
+		case CTE_SUBLINK:		/* shouldn't occur in a SubLink */
 		default:
 			elog(ERROR, "unrecognized sublink type: %d",
 				 (int) sublink->subLinkType);
@@ -5129,6 +5222,9 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			case RTE_VALUES:
 				/* Values list RTE */
 				get_values_def(rte->values_lists, context);
+				break;
+			case RTE_CTE:
+				appendStringInfoString(buf, quote_identifier(rte->ctename));
 				break;
 			default:
 				elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);

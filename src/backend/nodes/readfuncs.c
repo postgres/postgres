@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.214 2008/09/01 20:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.215 2008/10/04 21:56:53 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -155,6 +155,8 @@ _readQuery(void)
 	READ_BOOL_FIELD(hasAggs);
 	READ_BOOL_FIELD(hasSubLinks);
 	READ_BOOL_FIELD(hasDistinctOn);
+	READ_BOOL_FIELD(hasRecursive);
+	READ_NODE_FIELD(cteList);
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
 	READ_NODE_FIELD(targetList);
@@ -226,6 +228,27 @@ _readRowMarkClause(void)
 	READ_UINT_FIELD(rti);
 	READ_BOOL_FIELD(forUpdate);
 	READ_BOOL_FIELD(noWait);
+
+	READ_DONE();
+}
+
+/*
+ * _readCommonTableExpr
+ */
+static CommonTableExpr *
+_readCommonTableExpr(void)
+{
+	READ_LOCALS(CommonTableExpr);
+
+	READ_STRING_FIELD(ctename);
+	READ_NODE_FIELD(aliascolnames);
+	READ_NODE_FIELD(ctequery);
+	READ_LOCATION_FIELD(location);
+	READ_BOOL_FIELD(cterecursive);
+	READ_INT_FIELD(cterefcount);
+	READ_NODE_FIELD(ctecolnames);
+	READ_NODE_FIELD(ctecoltypes);
+	READ_NODE_FIELD(ctecoltypmods);
 
 	READ_DONE();
 }
@@ -1007,6 +1030,10 @@ _readRangeTblEntry(void)
 		case RTE_SUBQUERY:
 			READ_NODE_FIELD(subquery);
 			break;
+		case RTE_JOIN:
+			READ_ENUM_FIELD(jointype, JoinType);
+			READ_NODE_FIELD(joinaliasvars);
+			break;
 		case RTE_FUNCTION:
 			READ_NODE_FIELD(funcexpr);
 			READ_NODE_FIELD(funccoltypes);
@@ -1015,9 +1042,12 @@ _readRangeTblEntry(void)
 		case RTE_VALUES:
 			READ_NODE_FIELD(values_lists);
 			break;
-		case RTE_JOIN:
-			READ_ENUM_FIELD(jointype, JoinType);
-			READ_NODE_FIELD(joinaliasvars);
+		case RTE_CTE:
+			READ_STRING_FIELD(ctename);
+			READ_UINT_FIELD(ctelevelsup);
+			READ_BOOL_FIELD(self_reference);
+			READ_NODE_FIELD(ctecoltypes);
+			READ_NODE_FIELD(ctecoltypmods);
 			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d",
@@ -1060,6 +1090,8 @@ parseNodeString(void)
 		return_value = _readSortGroupClause();
 	else if (MATCH("ROWMARKCLAUSE", 13))
 		return_value = _readRowMarkClause();
+	else if (MATCH("COMMONTABLEEXPR", 15))
+		return_value = _readCommonTableExpr();
 	else if (MATCH("SETOPERATIONSTMT", 16))
 		return_value = _readSetOperationStmt();
 	else if (MATCH("ALIAS", 5))

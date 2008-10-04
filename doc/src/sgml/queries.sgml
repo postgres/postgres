@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.45 2008/02/15 22:17:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.46 2008/10/04 21:56:52 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -28,10 +28,11 @@
    used to specify queries.  The general syntax of the
    <command>SELECT</command> command is
 <synopsis>
-SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression</replaceable> <optional><replaceable>sort_specification</replaceable></optional>
+<optional>WITH <replaceable>with_queries</replaceable></optional> SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression</replaceable> <optional><replaceable>sort_specification</replaceable></optional>
 </synopsis>
    The following sections describe the details of the select list, the
-   table expression, and the sort specification.
+   table expression, and the sort specification.  <literal>WITH</>
+   queries are treated last since they are an advanced feature.
   </para>
 
   <para>
@@ -107,7 +108,7 @@ SELECT random();
 
   <sect2 id="queries-from">
    <title>The <literal>FROM</literal> Clause</title>
- 
+
    <para>
     The <xref linkend="sql-from" endterm="sql-from-title"> derives a
     table from one or more other tables given in a comma-separated
@@ -211,7 +212,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 <replaceable>T1</replaceable> { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable> USING ( <replaceable>join column list</replaceable> )
 <replaceable>T1</replaceable> NATURAL { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable>
 </synopsis>
-        
+
        <para>
         The words <literal>INNER</literal> and
         <literal>OUTER</literal> are optional in all forms.
@@ -303,7 +304,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
           </para>
          </listitem>
         </varlistentry>
-         
+
         <varlistentry>
          <term><literal>RIGHT OUTER JOIN</></term>
 
@@ -326,7 +327,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
           </para>
          </listitem>
         </varlistentry>
-         
+
         <varlistentry>
          <term><literal>FULL OUTER JOIN</></term>
 
@@ -1042,7 +1043,7 @@ SELECT a AS value, b + c AS sum FROM ...
    <para>
     If no output column name is specified using <literal>AS</>,
     the system assigns a default column name.  For simple column references,
-    this is the name of the referenced column.  For function 
+    this is the name of the referenced column.  For function
     calls, this is the name of the function.  For complex expressions,
     the system will generate a generic name.
    </para>
@@ -1302,7 +1303,7 @@ SELECT a, max(b) FROM table1 GROUP BY a ORDER BY 1;
 <programlisting>
 SELECT a + b AS sum, c FROM table1 ORDER BY sum + c;          -- wrong
 </programlisting>
-   This restriction is made to reduce ambiguity.  There is still 
+   This restriction is made to reduce ambiguity.  There is still
    ambiguity if an <literal>ORDER BY</> item is a simple name that
    could match either an output column name or a column from the table
    expression.  The output column is used in such cases.  This would
@@ -1451,6 +1452,187 @@ SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression
   <para>
    For more information see <xref linkend="sql-values"
    endterm="sql-values-title">.
+  </para>
+
+ </sect1>
+
+
+ <sect1 id="queries-with">
+  <title><literal>WITH</literal> Queries</title>
+
+  <indexterm zone="queries-with">
+   <primary>WITH</primary>
+   <secondary>in SELECT</secondary>
+  </indexterm>
+
+  <indexterm>
+   <primary>common table expression</primary>
+   <see>WITH</see>
+  </indexterm>
+
+  <para>
+   <literal>WITH</> provides a way to write subqueries for use in a larger
+   <literal>SELECT</> query.  The subqueries can be thought of as defining
+   temporary tables that exist just for this query.  One use of this feature
+   is to break down complicated queries into simpler parts.  An example is:
+
+<programlisting>
+WITH regional_sales AS (
+        SELECT region, SUM(amount) AS total_sales
+        FROM orders
+        GROUP BY region
+     ), top_regions AS (
+        SELECT region
+        FROM regional_sales
+        WHERE total_sales &gt; (SELECT SUM(total_sales)/10 FROM regional_sales)
+     )
+SELECT region,
+       product,
+       SUM(quantity) AS product_units,
+       SUM(amount) AS product_sales
+FROM orders
+WHERE region IN (SELECT region FROM top_regions)
+GROUP BY region, product;
+</programlisting>
+
+   which displays per-product sales totals in only the top sales regions.
+   This example could have been written without <literal>WITH</>,
+   but we'd have needed two levels of nested sub-SELECTs.  It's a bit
+   easier to follow this way.
+  </para>
+
+  <para>
+   The optional <literal>RECURSIVE</> modifier changes <literal>WITH</>
+   from a mere syntactic convenience into a feature that accomplishes
+   things not otherwise possible in standard SQL.  Using
+   <literal>RECURSIVE</>, a <literal>WITH</> query can refer to its own
+   output.  A very simple example is this query to sum the integers from 1
+   through 100:
+
+<programlisting>
+WITH RECURSIVE t(n) AS (
+    VALUES (1)
+  UNION ALL
+    SELECT n+1 FROM t WHERE n &lt; 100
+)
+SELECT sum(n) FROM t;
+</programlisting>
+
+   The general form of a recursive <literal>WITH</> query is always a
+   <firstterm>non-recursive term</>, then <literal>UNION ALL</>, then a
+   <firstterm>recursive term</>, where only the recursive term can contain
+   a reference to the query's own output.  Such a query is executed as
+   follows:
+  </para>
+
+  <procedure>
+   <title>Recursive Query Evaluation</title>
+
+   <step performance="required">
+    <para>
+     Evaluate the non-recursive term.  Include all its output rows in the
+     result of the recursive query, and also place them in a temporary
+     <firstterm>working table</>.
+    </para>
+   </step>
+
+   <step performance="required">
+    <para>
+     So long as the working table is not empty, repeat these steps:
+    </para>
+    <substeps>
+     <step performance="required">
+      <para>
+       Evaluate the recursive term, substituting the current contents of
+       the working table for the recursive self-reference.  Include all its
+       output rows in the result of the recursive query, and also place them
+       in a temporary <firstterm>intermediate table</>.
+      </para>
+     </step>
+
+     <step performance="required">
+      <para>
+       Replace the contents of the working table with the contents of the
+       intermediate table, then empty the intermediate table.
+      </para>
+     </step>
+    </substeps>
+   </step>
+  </procedure>
+
+  <note>
+   <para>
+    Strictly speaking, this process is iteration not recursion, but
+    <literal>RECURSIVE</> is the terminology chosen by the SQL standards
+    committee.
+   </para>
+  </note>
+
+  <para>
+   In the example above, the working table has just a single row in each step,
+   and it takes on the values from 1 through 100 in successive steps.  In
+   the 100th step, there is no output because of the <literal>WHERE</>
+   clause, and so the query terminates.
+  </para>
+
+  <para>
+   Recursive queries are typically used to deal with hierarchical or
+   tree-structured data.  A useful example is this query to find all the
+   direct and indirect sub-parts of a product, given only a table that
+   shows immediate inclusions:
+
+<programlisting>
+WITH RECURSIVE included_parts(sub_part, part, quantity) AS (
+    SELECT sub_part, part, quantity FROM parts WHERE part = 'our_product'
+  UNION ALL
+    SELECT p.sub_part, p.part, p.quantity
+    FROM included_parts pr, parts p
+    WHERE p.part = pr.sub_part
+  )
+SELECT sub_part, SUM(quantity) as total_quantity
+FROM included_parts
+GROUP BY sub_part
+</programlisting>
+  </para>
+
+  <para>
+   When working with recursive queries it is important to be sure that
+   the recursive part of the query will eventually return no tuples,
+   or else the query will loop indefinitely.  A useful trick for
+   development purposes is to place a <literal>LIMIT</> in the parent
+   query.  For example, this query would loop forever without the
+   <literal>LIMIT</>:
+
+<programlisting>
+WITH RECURSIVE t(n) AS (
+    SELECT 1
+  UNION ALL
+    SELECT n+1 FROM t
+)
+SELECT n FROM t LIMIT 100;
+</programlisting>
+
+   This works because <productname>PostgreSQL</productname>'s implementation
+   evaluates only as many rows of a <literal>WITH</> query as are actually
+   demanded by the parent query.  Using this trick in production is not
+   recommended, because other systems might work differently.
+  </para>
+
+  <para>
+   A useful property of <literal>WITH</> queries is that they are evaluated
+   only once per execution of the parent query, even if they are referred to
+   more than once by the parent query or sibling <literal>WITH</> queries.
+   Thus, expensive calculations that are needed in multiple places can be
+   placed within a <literal>WITH</> query to avoid redundant work.  Another
+   possible application is to prevent unwanted multiple evaluations of
+   functions with side-effects.
+   However, the other side of this coin is that the optimizer is less able to
+   push restrictions from the parent query down into a <literal>WITH</> query
+   than an ordinary sub-query.  The <literal>WITH</> query will generally be
+   evaluated as stated, without suppression of rows that the parent query
+   might discard afterwards.  (But, as mentioned above, evaluation might stop
+   early if the reference(s) to the query demand only a limited number of
+   rows.)
   </para>
 
  </sect1>

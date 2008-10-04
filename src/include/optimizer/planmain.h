@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.112 2008/09/09 18:58:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.113 2008/10/04 21:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,8 @@ extern Plan *create_plan(PlannerInfo *root, Path *best_path);
 extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan, List *subrtable);
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
+extern RecursiveUnion *make_recursive_union(List *tlist,
+			   Plan *lefttree, Plan *righttree, int wtParam);
 extern Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
 						List *pathkeys, double limit_tuples);
 extern Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,

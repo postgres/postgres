@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.89 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.90 2008/10/04 21:56:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -272,6 +272,14 @@ print_rt(List *rtable)
 				printf("%d\t%s\t[subquery]",
 					   i, rte->eref->aliasname);
 				break;
+			case RTE_JOIN:
+				printf("%d\t%s\t[join]",
+					   i, rte->eref->aliasname);
+				break;
+			case RTE_SPECIAL:
+				printf("%d\t%s\t[special]",
+					   i, rte->eref->aliasname);
+				break;
 			case RTE_FUNCTION:
 				printf("%d\t%s\t[rangefunction]",
 					   i, rte->eref->aliasname);
@@ -280,12 +288,8 @@ print_rt(List *rtable)
 				printf("%d\t%s\t[values list]",
 					   i, rte->eref->aliasname);
 				break;
-			case RTE_JOIN:
-				printf("%d\t%s\t[join]",
-					   i, rte->eref->aliasname);
-				break;
-			case RTE_SPECIAL:
-				printf("%d\t%s\t[special]",
+			case RTE_CTE:
+				printf("%d\t%s\t[cte]",
 					   i, rte->eref->aliasname);
 				break;
 			default:

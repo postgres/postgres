@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.62 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.63 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,7 @@
 #include "executor/nodeMaterial.h"
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeNestloop.h"
+#include "executor/nodeRecursiveunion.h"
 #include "executor/nodeResult.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeSetOp.h"
@@ -103,7 +104,10 @@
 #include "executor/nodeTidscan.h"
 #include "executor/nodeUnique.h"
 #include "executor/nodeValuesscan.h"
+#include "executor/nodeCtescan.h"
+#include "executor/nodeWorktablescan.h"
 #include "miscadmin.h"
+
 
 /* ------------------------------------------------------------------------
  *		ExecInitNode
@@ -145,6 +149,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		case T_Append:
 			result = (PlanState *) ExecInitAppend((Append *) node,
 												  estate, eflags);
+			break;
+
+		case T_RecursiveUnion:
+			result = (PlanState *) ExecInitRecursiveUnion((RecursiveUnion *) node,
+														  estate, eflags);
 			break;
 
 		case T_BitmapAnd:
@@ -198,6 +207,16 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		case T_ValuesScan:
 			result = (PlanState *) ExecInitValuesScan((ValuesScan *) node,
 													  estate, eflags);
+			break;
+
+		case T_CteScan:
+			result = (PlanState *) ExecInitCteScan((CteScan *) node,
+												   estate, eflags);
+			break;
+
+		case T_WorkTableScan:
+			result = (PlanState *) ExecInitWorkTableScan((WorkTableScan *) node,
+														 estate, eflags);
 			break;
 
 			/*
@@ -323,6 +342,10 @@ ExecProcNode(PlanState *node)
 			result = ExecAppend((AppendState *) node);
 			break;
 
+		case T_RecursiveUnionState:
+			result = ExecRecursiveUnion((RecursiveUnionState *) node);
+			break;
+
 			/* BitmapAndState does not yield tuples */
 
 			/* BitmapOrState does not yield tuples */
@@ -358,6 +381,14 @@ ExecProcNode(PlanState *node)
 
 		case T_ValuesScanState:
 			result = ExecValuesScan((ValuesScanState *) node);
+			break;
+
+		case T_CteScanState:
+			result = ExecCteScan((CteScanState *) node);
+			break;
+
+		case T_WorkTableScanState:
+			result = ExecWorkTableScan((WorkTableScanState *) node);
 			break;
 
 			/*
@@ -501,6 +532,9 @@ ExecCountSlotsNode(Plan *node)
 		case T_Append:
 			return ExecCountSlotsAppend((Append *) node);
 
+		case T_RecursiveUnion:
+			return ExecCountSlotsRecursiveUnion((RecursiveUnion *) node);
+
 		case T_BitmapAnd:
 			return ExecCountSlotsBitmapAnd((BitmapAnd *) node);
 
@@ -533,6 +567,12 @@ ExecCountSlotsNode(Plan *node)
 
 		case T_ValuesScan:
 			return ExecCountSlotsValuesScan((ValuesScan *) node);
+
+		case T_CteScan:
+			return ExecCountSlotsCteScan((CteScan *) node);
+
+		case T_WorkTableScan:
+			return ExecCountSlotsWorkTableScan((WorkTableScan *) node);
 
 			/*
 			 * join nodes
@@ -620,6 +660,10 @@ ExecEndNode(PlanState *node)
 			ExecEndAppend((AppendState *) node);
 			break;
 
+		case T_RecursiveUnionState:
+			ExecEndRecursiveUnion((RecursiveUnionState *) node);
+			break;
+
 		case T_BitmapAndState:
 			ExecEndBitmapAnd((BitmapAndState *) node);
 			break;
@@ -661,6 +705,14 @@ ExecEndNode(PlanState *node)
 
 		case T_ValuesScanState:
 			ExecEndValuesScan((ValuesScanState *) node);
+			break;
+
+		case T_CteScanState:
+			ExecEndCteScan((CteScanState *) node);
+			break;
+
+		case T_WorkTableScanState:
+			ExecEndWorkTableScan((WorkTableScanState *) node);
 			break;
 
 			/*

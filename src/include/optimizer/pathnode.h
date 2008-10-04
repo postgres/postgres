@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.78 2008/08/14 18:48:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.79 2008/10/04 21:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,8 @@ extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 extern Path *create_subqueryscan_path(RelOptInfo *rel, List *pathkeys);
 extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel);
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel);
 
 extern NestPath *create_nestloop_path(PlannerInfo *root,
 					 RelOptInfo *joinrel,

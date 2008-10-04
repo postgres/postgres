@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.54 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.55 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -567,10 +567,18 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->parse = subquery;
 	subroot->glob = root->glob;
 	subroot->query_level = root->query_level;
+	subroot->parent_root = root->parent_root;
 	subroot->planner_cxt = CurrentMemoryContext;
 	subroot->init_plans = NIL;
+	subroot->cte_plan_ids = NIL;
 	subroot->eq_classes = NIL;
 	subroot->append_rel_list = NIL;
+	subroot->hasRecursion = false;
+	subroot->wt_param_id = -1;
+	subroot->non_recursive_plan = NULL;
+
+	/* No CTEs to worry about */
+	Assert(subquery->cteList == NIL);
 
 	/*
 	 * Pull up any SubLinks within the subquery's quals, so that we don't
@@ -916,8 +924,8 @@ is_simple_subquery(Query *subquery)
 		return false;
 
 	/*
-	 * Can't pull up a subquery involving grouping, aggregation, sorting, or
-	 * limiting.
+	 * Can't pull up a subquery involving grouping, aggregation, sorting,
+	 * limiting, or WITH.  (XXX WITH could possibly be allowed later)
 	 */
 	if (subquery->hasAggs ||
 		subquery->groupClause ||
@@ -925,7 +933,8 @@ is_simple_subquery(Query *subquery)
 		subquery->sortClause ||
 		subquery->distinctClause ||
 		subquery->limitOffset ||
-		subquery->limitCount)
+		subquery->limitCount ||
+		subquery->cteList)
 		return false;
 
 	/*
@@ -985,11 +994,12 @@ is_simple_union_all(Query *subquery)
 		return false;
 	Assert(IsA(topop, SetOperationStmt));
 
-	/* Can't handle ORDER BY, LIMIT/OFFSET, or locking */
+	/* Can't handle ORDER BY, LIMIT/OFFSET, locking, or WITH */
 	if (subquery->sortClause ||
 		subquery->limitOffset ||
 		subquery->limitCount ||
-		subquery->rowMarks)
+		subquery->rowMarks ||
+		subquery->cteList)
 		return false;
 
 	/* Recursively check the tree of set operations */

@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.40 2008/10/01 19:51:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.41 2008/10/04 21:56:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@ typedef enum
 typedef struct
 {
 	int			eflags;			/* capability flags */
-	bool		eof_reached;	/* read reached EOF */
+	bool		eof_reached;	/* read has reached EOF */
 	int			current;		/* next array index to read */
 	int			file;			/* temp file# */
 	off_t		offset;			/* byte offset in file */
@@ -374,6 +374,39 @@ tuplestore_alloc_read_pointer(Tuplestorestate *state, int eflags)
 }
 
 /*
+ * tuplestore_clear
+ *
+ *	Delete all the contents of a tuplestore, and reset its read pointers
+ *	to the start.
+ */
+void
+tuplestore_clear(Tuplestorestate *state)
+{
+	int			i;
+	TSReadPointer *readptr;
+
+	if (state->myfile)
+		BufFileClose(state->myfile);
+	state->myfile = NULL;
+	if (state->memtuples)
+	{
+		for (i = 0; i < state->memtupcount; i++)
+		{
+			FREEMEM(state, GetMemoryChunkSpace(state->memtuples[i]));
+			pfree(state->memtuples[i]);
+		}
+	}
+	state->status = TSS_INMEM;
+	state->memtupcount = 0;
+	readptr = state->readptrs;
+	for (i = 0; i < state->readptrcount; readptr++, i++)
+	{
+		readptr->eof_reached = false;
+		readptr->current = 0;
+	}
+}
+
+/*
  * tuplestore_end
  *
  *	Release resources and clean up.
@@ -463,9 +496,13 @@ tuplestore_ateof(Tuplestorestate *state)
  *
  * Note that the input tuple is always copied; the caller need not save it.
  *
- * Any read pointer that is currently "AT EOF" remains so (the read pointer
- * implicitly advances along with the write pointer); otherwise the read
- * pointer is unchanged.  This is for the convenience of nodeMaterial.c.
+ * If the active read pointer is currently "at EOF", it remains so (the read
+ * pointer implicitly advances along with the write pointer); otherwise the
+ * read pointer is unchanged.  Non-active read pointers do not move, which
+ * means they are certain to not be "at EOF" immediately after puttuple.
+ * This curious-seeming behavior is for the convenience of nodeMaterial.c and
+ * nodeCtescan.c, which would otherwise need to do extra pointer repositioning
+ * steps.
  *
  * tuplestore_puttupleslot() is a convenience routine to collect data from
  * a TupleTableSlot without an extra copy operation.
@@ -519,9 +556,25 @@ tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 static void
 tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 {
+	TSReadPointer *readptr;
+	int			i;
+
 	switch (state->status)
 	{
 		case TSS_INMEM:
+
+			/*
+			 * Update read pointers as needed; see API spec above.
+			 */
+			readptr = state->readptrs;
+			for (i = 0; i < state->readptrcount; readptr++, i++)
+			{
+				if (readptr->eof_reached && i != state->activeptr)
+				{
+					readptr->eof_reached = false;
+					readptr->current = state->memtupcount;
+				}
+			}
 
 			/*
 			 * Grow the array as needed.  Note that we try to grow the array
@@ -572,6 +625,24 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 			dumptuples(state);
 			break;
 		case TSS_WRITEFILE:
+
+			/*
+			 * Update read pointers as needed; see API spec above.
+			 * Note: BufFileTell is quite cheap, so not worth trying
+			 * to avoid multiple calls.
+			 */
+			readptr = state->readptrs;
+			for (i = 0; i < state->readptrcount; readptr++, i++)
+			{
+				if (readptr->eof_reached && i != state->activeptr)
+				{
+					readptr->eof_reached = false;
+					BufFileTell(state->myfile,
+								&readptr->file,
+								&readptr->offset);
+				}
+			}
+
 			WRITETUP(state, tuple);
 			break;
 		case TSS_READFILE:
@@ -588,6 +659,21 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 							SEEK_SET) != 0)
 				elog(ERROR, "tuplestore seek to EOF failed");
 			state->status = TSS_WRITEFILE;
+
+			/*
+			 * Update read pointers as needed; see API spec above.
+			 */
+			readptr = state->readptrs;
+			for (i = 0; i < state->readptrcount; readptr++, i++)
+			{
+				if (readptr->eof_reached && i != state->activeptr)
+				{
+					readptr->eof_reached = false;
+					readptr->file = state->writepos_file;
+					readptr->offset = state->writepos_offset;
+				}
+			}
+
 			WRITETUP(state, tuple);
 			break;
 		default:

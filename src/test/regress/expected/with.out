@@ -1,0 +1,666 @@
+--
+-- Tests for common table expressions (WITH query, ... SELECT ...)
+--
+-- Basic WITH
+WITH q1(x,y) AS (SELECT 1,2)
+SELECT * FROM q1, q1 AS q2;
+ x | y | x | y 
+---+---+---+---
+ 1 | 2 | 1 | 2
+(1 row)
+
+-- Multiple uses are evaluated only once
+SELECT count(*) FROM (
+  WITH q1(x) AS (SELECT random() FROM generate_series(1, 5))
+    SELECT * FROM q1
+  UNION
+    SELECT * FROM q1
+) ss;
+ count 
+-------
+     5
+(1 row)
+
+-- WITH RECURSIVE
+-- sum of 1..100
+WITH RECURSIVE t(n) AS (
+    VALUES (1)
+UNION ALL
+    SELECT n+1 FROM t WHERE n < 100
+)
+SELECT sum(n) FROM t;
+ sum  
+------
+ 5050
+(1 row)
+
+WITH RECURSIVE t(n) AS (
+    SELECT (VALUES(1))
+UNION ALL
+    SELECT n+1 FROM t WHERE n < 5
+)
+SELECT * FROM t;
+ n 
+---
+ 1
+ 2
+ 3
+ 4
+ 5
+(5 rows)
+
+-- This'd be an infinite loop, but outside query reads only as much as needed
+WITH RECURSIVE t(n) AS (
+    VALUES (1)
+UNION ALL
+    SELECT n+1 FROM t)
+SELECT * FROM t LIMIT 10;
+ n  
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+(10 rows)
+
+--
+-- Some examples with a tree
+--
+-- department structure represented here is as follows:
+--
+-- ROOT-+->A-+->B-+->C
+--      |         |
+--      |         +->D-+->F
+--      +->E-+->G
+CREATE TEMP TABLE department (
+	id INTEGER PRIMARY KEY,  -- department ID
+	parent_department INTEGER REFERENCES department, -- upper department ID
+	name TEXT -- department name
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "department_pkey" for table "department"
+INSERT INTO department VALUES (0, NULL, 'ROOT');
+INSERT INTO department VALUES (1, 0, 'A');
+INSERT INTO department VALUES (2, 1, 'B');
+INSERT INTO department VALUES (3, 2, 'C');
+INSERT INTO department VALUES (4, 2, 'D');
+INSERT INTO department VALUES (5, 0, 'E');
+INSERT INTO department VALUES (6, 4, 'F');
+INSERT INTO department VALUES (7, 5, 'G');
+-- extract all departments under 'A'. Result should be A, B, C, D and F
+WITH RECURSIVE subdepartment AS
+(
+	-- non recursive term
+	SELECT * FROM department WHERE name = 'A'
+	UNION ALL
+	-- recursive term
+	SELECT d.* FROM department AS d, subdepartment AS sd
+		WHERE d.parent_department = sd.id
+)
+SELECT * FROM subdepartment ORDER BY name;
+ id | parent_department | name 
+----+-------------------+------
+  1 |                 0 | A
+  2 |                 1 | B
+  3 |                 2 | C
+  4 |                 2 | D
+  6 |                 4 | F
+(5 rows)
+
+-- extract all departments under 'A' with "level" number
+WITH RECURSIVE subdepartment(level, id, parent_department, name) AS
+(
+	-- non recursive term
+	SELECT 1, * FROM department WHERE name = 'A'
+	UNION ALL
+	-- recursive term
+	SELECT sd.level + 1, d.* FROM department AS d, subdepartment AS sd
+		WHERE d.parent_department = sd.id
+)
+SELECT * FROM subdepartment ORDER BY name;
+ level | id | parent_department | name 
+-------+----+-------------------+------
+     1 |  1 |                 0 | A
+     2 |  2 |                 1 | B
+     3 |  3 |                 2 | C
+     3 |  4 |                 2 | D
+     4 |  6 |                 4 | F
+(5 rows)
+
+-- extract all departments under 'A' with "level" number.
+-- Only shows level 2 or more
+WITH RECURSIVE subdepartment(level, id, parent_department, name) AS
+(
+	-- non recursive term
+	SELECT 1, * FROM department WHERE name = 'A'
+	UNION ALL
+	-- recursive term
+	SELECT sd.level + 1, d.* FROM department AS d, subdepartment AS sd
+		WHERE d.parent_department = sd.id
+)
+SELECT * FROM subdepartment WHERE level >= 2 ORDER BY name;
+ level | id | parent_department | name 
+-------+----+-------------------+------
+     2 |  2 |                 1 | B
+     3 |  3 |                 2 | C
+     3 |  4 |                 2 | D
+     4 |  6 |                 4 | F
+(4 rows)
+
+-- "RECURSIVE" is ignored if the query has no self-reference
+WITH RECURSIVE subdepartment AS
+(
+	-- note lack of recursive UNION structure
+	SELECT * FROM department WHERE name = 'A'
+)
+SELECT * FROM subdepartment ORDER BY name;
+ id | parent_department | name 
+----+-------------------+------
+  1 |                 0 | A
+(1 row)
+
+-- inside subqueries
+SELECT count(*) FROM (
+    WITH RECURSIVE t(n) AS (
+        SELECT 1 UNION ALL SELECT n + 1 FROM t WHERE n < 500
+    )
+    SELECT * FROM t) AS t WHERE n < (
+        SELECT count(*) FROM (
+            WITH RECURSIVE t(n) AS (
+                   SELECT 1 UNION ALL SELECT n + 1 FROM t WHERE n < 100
+                )
+            SELECT * FROM t WHERE n < 50000
+         ) AS t WHERE n < 100);
+ count 
+-------
+    98
+(1 row)
+
+-- use same CTE twice at different subquery levels
+WITH q1(x,y) AS (
+    SELECT hundred, sum(ten) FROM tenk1 GROUP BY hundred
+  )
+SELECT count(*) FROM q1 WHERE y > (SELECT sum(y)/100 FROM q1 qsub);
+ count 
+-------
+    50
+(1 row)
+
+-- via a VIEW
+CREATE TEMPORARY VIEW vsubdepartment AS
+	WITH RECURSIVE subdepartment AS
+	(
+		 -- non recursive term
+		SELECT * FROM department WHERE name = 'A'
+		UNION ALL
+		-- recursive term
+		SELECT d.* FROM department AS d, subdepartment AS sd
+			WHERE d.parent_department = sd.id
+	)
+	SELECT * FROM subdepartment;
+SELECT * FROM vsubdepartment ORDER BY name;
+ id | parent_department | name 
+----+-------------------+------
+  1 |                 0 | A
+  2 |                 1 | B
+  3 |                 2 | C
+  4 |                 2 | D
+  6 |                 4 | F
+(5 rows)
+
+-- Check reverse listing
+SELECT pg_get_viewdef('vsubdepartment'::regclass);
+                                                                                                                                                                                    pg_get_viewdef                                                                                                                                                                                     
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ WITH RECURSIVE subdepartment AS (SELECT department.id, department.parent_department, department.name FROM department WHERE (department.name = 'A'::text) UNION ALL SELECT d.id, d.parent_department, d.name FROM department d, subdepartment sd WHERE (d.parent_department = sd.id)) SELECT subdepartment.id, subdepartment.parent_department, subdepartment.name FROM subdepartment;
+(1 row)
+
+SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
+                                    pg_get_viewdef                                    
+--------------------------------------------------------------------------------------
+  WITH RECURSIVE subdepartment AS (
+                  SELECT department.id, department.parent_department, department.name
+                    FROM department
+                   WHERE department.name = 'A'::text
+         UNION ALL 
+                  SELECT d.id, d.parent_department, d.name
+                    FROM department d, subdepartment sd
+                   WHERE d.parent_department = sd.id
+         )
+  SELECT subdepartment.id, subdepartment.parent_department, subdepartment.name
+    FROM subdepartment;
+(1 row)
+
+-- recursive term has sub-UNION
+WITH RECURSIVE t(i,j) AS (
+	VALUES (1,2)
+	UNION ALL
+	SELECT t2.i, t.j+1 FROM
+		(SELECT 2 AS i UNION ALL SELECT 3 AS i) AS t2
+		JOIN t ON (t2.i = t.i+1))
+	SELECT * FROM t;
+ i | j 
+---+---
+ 1 | 2
+ 2 | 3
+ 3 | 4
+(3 rows)
+
+--
+-- different tree example
+--
+CREATE TEMPORARY TABLE tree(
+    id INTEGER PRIMARY KEY,
+    parent_id INTEGER REFERENCES tree(id)
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tree_pkey" for table "tree"
+INSERT INTO tree
+VALUES (1, NULL), (2, 1), (3,1), (4,2), (5,2), (6,2), (7,3), (8,3),
+       (9,4), (10,4), (11,7), (12,7), (13,7), (14, 9), (15,11), (16,11);
+--
+-- get all paths from "second level" nodes to leaf nodes
+--
+WITH RECURSIVE t(id, path) AS (
+    VALUES(1,ARRAY[]::integer[])
+UNION ALL
+    SELECT tree.id, t.path || tree.id
+    FROM tree JOIN t ON (tree.parent_id = t.id)
+)
+SELECT t1.*, t2.* FROM t AS t1 JOIN t AS t2 ON
+	(t1.path[1] = t2.path[1] AND
+	array_upper(t1.path,1) = 1 AND
+	array_upper(t2.path,1) > 1)
+	ORDER BY t1.id, t2.id;
+ id | path | id |    path     
+----+------+----+-------------
+  2 | {2}  |  4 | {2,4}
+  2 | {2}  |  5 | {2,5}
+  2 | {2}  |  6 | {2,6}
+  2 | {2}  |  9 | {2,4,9}
+  2 | {2}  | 10 | {2,4,10}
+  2 | {2}  | 14 | {2,4,9,14}
+  3 | {3}  |  7 | {3,7}
+  3 | {3}  |  8 | {3,8}
+  3 | {3}  | 11 | {3,7,11}
+  3 | {3}  | 12 | {3,7,12}
+  3 | {3}  | 13 | {3,7,13}
+  3 | {3}  | 15 | {3,7,11,15}
+  3 | {3}  | 16 | {3,7,11,16}
+(13 rows)
+
+-- just count 'em
+WITH RECURSIVE t(id, path) AS (
+    VALUES(1,ARRAY[]::integer[])
+UNION ALL
+    SELECT tree.id, t.path || tree.id
+    FROM tree JOIN t ON (tree.parent_id = t.id)
+)
+SELECT t1.id, count(t2.*) FROM t AS t1 JOIN t AS t2 ON
+	(t1.path[1] = t2.path[1] AND
+	array_upper(t1.path,1) = 1 AND
+	array_upper(t2.path,1) > 1)
+	GROUP BY t1.id
+	ORDER BY t1.id;
+ id | count 
+----+-------
+  2 |     6
+  3 |     7
+(2 rows)
+
+--
+-- test multiple WITH queries
+--
+WITH RECURSIVE
+  y (id) AS (VALUES (1)),
+  x (id) AS (SELECT * FROM y UNION ALL SELECT id+1 FROM x WHERE id < 5)
+SELECT * FROM x;
+ id 
+----
+  1
+  2
+  3
+  4
+  5
+(5 rows)
+
+-- forward reference OK
+WITH RECURSIVE
+    x(id) AS (SELECT * FROM y UNION ALL SELECT id+1 FROM x WHERE id < 5),
+    y(id) AS (values (1))
+ SELECT * FROM x;
+ id 
+----
+  1
+  2
+  3
+  4
+  5
+(5 rows)
+
+WITH RECURSIVE
+   x(id) AS
+     (VALUES (1) UNION ALL SELECT id+1 FROM x WHERE id < 5),
+   y(id) AS
+     (VALUES (1) UNION ALL SELECT id+1 FROM y WHERE id < 10)
+ SELECT y.*, x.* FROM y LEFT JOIN x USING (id);
+ id | id 
+----+----
+  1 |  1
+  2 |  2
+  3 |  3
+  4 |  4
+  5 |  5
+  6 |   
+  7 |   
+  8 |   
+  9 |   
+ 10 |   
+(10 rows)
+
+WITH RECURSIVE
+   x(id) AS
+     (VALUES (1) UNION ALL SELECT id+1 FROM x WHERE id < 5),
+   y(id) AS
+     (VALUES (1) UNION ALL SELECT id+1 FROM x WHERE id < 10)
+ SELECT y.*, x.* FROM y LEFT JOIN x USING (id);
+ id | id 
+----+----
+  1 |  1
+  2 |  2
+  3 |  3
+  4 |  4
+  5 |  5
+  6 |   
+(6 rows)
+
+WITH RECURSIVE
+   x(id) AS
+     (SELECT 1 UNION ALL SELECT id+1 FROM x WHERE id < 3 ),
+   y(id) AS
+     (SELECT * FROM x UNION ALL SELECT * FROM x),
+   z(id) AS
+     (SELECT * FROM x UNION ALL SELECT id+1 FROM z WHERE id < 10)
+ SELECT * FROM z;
+ id 
+----
+  1
+  2
+  3
+  2
+  3
+  4
+  3
+  4
+  5
+  4
+  5
+  6
+  5
+  6
+  7
+  6
+  7
+  8
+  7
+  8
+  9
+  8
+  9
+ 10
+  9
+ 10
+ 10
+(27 rows)
+
+WITH RECURSIVE
+   x(id) AS
+     (SELECT 1 UNION ALL SELECT id+1 FROM x WHERE id < 3 ),
+   y(id) AS
+     (SELECT * FROM x UNION ALL SELECT * FROM x),
+   z(id) AS
+     (SELECT * FROM y UNION ALL SELECT id+1 FROM z WHERE id < 10)
+ SELECT * FROM z;
+ id 
+----
+  1
+  2
+  3
+  1
+  2
+  3
+  2
+  3
+  4
+  2
+  3
+  4
+  3
+  4
+  5
+  3
+  4
+  5
+  4
+  5
+  6
+  4
+  5
+  6
+  5
+  6
+  7
+  5
+  6
+  7
+  6
+  7
+  8
+  6
+  7
+  8
+  7
+  8
+  9
+  7
+  8
+  9
+  8
+  9
+ 10
+  8
+  9
+ 10
+  9
+ 10
+  9
+ 10
+ 10
+ 10
+(54 rows)
+
+--
+-- error cases
+--
+-- UNION (should be supported someday)
+WITH RECURSIVE x(n) AS (SELECT 1 UNION SELECT n+1 FROM x)
+	SELECT * FROM x;
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 UNION SELECT n+1 FROM x)
+                       ^
+-- INTERSECT
+WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT SELECT n+1 FROM x)
+	SELECT * FROM x;
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT SELECT n+1 FROM x...
+                       ^
+WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT ALL SELECT n+1 FROM x)
+	SELECT * FROM x;
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT ALL SELECT n+1 FR...
+                       ^
+-- EXCEPT
+WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT SELECT n+1 FROM x)
+	SELECT * FROM x;
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT SELECT n+1 FROM x)
+                       ^
+WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT ALL SELECT n+1 FROM x)
+	SELECT * FROM x;
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT ALL SELECT n+1 FROM ...
+                       ^
+-- no non-recursive term
+WITH RECURSIVE x(n) AS (SELECT n FROM x)
+	SELECT * FROM x;
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+LINE 1: WITH RECURSIVE x(n) AS (SELECT n FROM x)
+                       ^
+-- recursive term in the left hand side (strictly speaking, should allow this)
+WITH RECURSIVE x(n) AS (SELECT n FROM x UNION ALL SELECT 1)
+	SELECT * FROM x;
+ERROR:  recursive reference to query "x" must not appear within its non-recursive term
+LINE 1: WITH RECURSIVE x(n) AS (SELECT n FROM x UNION ALL SELECT 1)
+                                              ^
+CREATE TEMPORARY TABLE y (a INTEGER);
+INSERT INTO y SELECT generate_series(1, 10);
+-- LEFT JOIN
+WITH RECURSIVE x(n) AS (SELECT a FROM y WHERE a = 1
+	UNION ALL
+	SELECT x.n+1 FROM y LEFT JOIN x ON x.n = y.a WHERE n < 10)
+SELECT * FROM x;
+ERROR:  recursive reference to query "x" must not appear within an outer join
+LINE 3:  SELECT x.n+1 FROM y LEFT JOIN x ON x.n = y.a WHERE n < 10)
+                                       ^
+-- RIGHT JOIN
+WITH RECURSIVE x(n) AS (SELECT a FROM y WHERE a = 1
+	UNION ALL
+	SELECT x.n+1 FROM x RIGHT JOIN y ON x.n = y.a WHERE n < 10)
+SELECT * FROM x;
+ERROR:  recursive reference to query "x" must not appear within an outer join
+LINE 3:  SELECT x.n+1 FROM x RIGHT JOIN y ON x.n = y.a WHERE n < 10)
+                           ^
+-- FULL JOIN
+WITH RECURSIVE x(n) AS (SELECT a FROM y WHERE a = 1
+	UNION ALL
+	SELECT x.n+1 FROM x FULL JOIN y ON x.n = y.a WHERE n < 10)
+SELECT * FROM x;
+ERROR:  recursive reference to query "x" must not appear within an outer join
+LINE 3:  SELECT x.n+1 FROM x FULL JOIN y ON x.n = y.a WHERE n < 10)
+                           ^
+-- subquery
+WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM x
+                          WHERE n IN (SELECT * FROM x))
+  SELECT * FROM x;
+ERROR:  recursive reference to query "x" must not appear within a subquery
+LINE 2:                           WHERE n IN (SELECT * FROM x))
+                                                            ^
+-- aggregate functions
+WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT count(*) FROM x)
+  SELECT * FROM x;
+ERROR:  aggregates not allowed in a recursive query's recursive term
+LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT count(*) F...
+                                                          ^
+WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT sum(n) FROM x)
+  SELECT * FROM x;
+ERROR:  aggregates not allowed in a recursive query's recursive term
+LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT sum(n) FRO...
+                                                          ^
+-- ORDER BY
+WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM x ORDER BY 1)
+  SELECT * FROM x;
+ERROR:  ORDER BY in a recursive query is not implemented
+LINE 1: ...VE x(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM x ORDER BY 1)
+                                                                     ^
+-- LIMIT/OFFSET
+WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM x LIMIT 10 OFFSET 1)
+  SELECT * FROM x;
+ERROR:  OFFSET in a recursive query is not implemented
+LINE 1: ... AS (SELECT 1 UNION ALL SELECT n+1 FROM x LIMIT 10 OFFSET 1)
+                                                                     ^
+-- FOR UPDATE
+WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM x FOR UPDATE)
+  SELECT * FROM x;
+ERROR:  FOR UPDATE/SHARE in a recursive query is not implemented
+-- target list has a recursive query name
+WITH RECURSIVE x(id) AS (values (1)
+    UNION ALL
+    SELECT (SELECT * FROM x) FROM x WHERE id < 5
+) SELECT * FROM x;
+ERROR:  recursive reference to query "x" must not appear within a subquery
+LINE 3:     SELECT (SELECT * FROM x) FROM x WHERE id < 5
+                                  ^
+-- mutual recursive query (not implemented)
+WITH RECURSIVE
+  x (id) AS (SELECT 1 UNION ALL SELECT id+1 FROM y WHERE id < 5),
+  y (id) AS (SELECT 1 UNION ALL SELECT id+1 FROM x WHERE id < 5)
+SELECT * FROM x;
+ERROR:  mutual recursion between WITH items is not implemented
+LINE 2:   x (id) AS (SELECT 1 UNION ALL SELECT id+1 FROM y WHERE id ...
+          ^
+-- non-linear recursion is not allowed
+WITH RECURSIVE foo(i) AS
+    (values (1)
+    UNION ALL
+       (SELECT i+1 FROM foo WHERE i < 10
+          UNION ALL
+       SELECT i+1 FROM foo WHERE i < 5)
+) SELECT * FROM foo;
+ERROR:  recursive reference to query "foo" must not appear more than once
+LINE 6:        SELECT i+1 FROM foo WHERE i < 5)
+                               ^
+WITH RECURSIVE foo(i) AS
+    (values (1)
+    UNION ALL
+	   SELECT * FROM
+       (SELECT i+1 FROM foo WHERE i < 10
+          UNION ALL
+       SELECT i+1 FROM foo WHERE i < 5) AS t
+) SELECT * FROM foo;
+ERROR:  recursive reference to query "foo" must not appear more than once
+LINE 7:        SELECT i+1 FROM foo WHERE i < 5) AS t
+                               ^
+WITH RECURSIVE foo(i) AS
+    (values (1)
+    UNION ALL
+       (SELECT i+1 FROM foo WHERE i < 10
+          EXCEPT
+       SELECT i+1 FROM foo WHERE i < 5)
+) SELECT * FROM foo;
+ERROR:  recursive reference to query "foo" must not appear within EXCEPT
+LINE 6:        SELECT i+1 FROM foo WHERE i < 5)
+                               ^
+WITH RECURSIVE foo(i) AS
+    (values (1)
+    UNION ALL
+       (SELECT i+1 FROM foo WHERE i < 10
+          INTERSECT
+       SELECT i+1 FROM foo WHERE i < 5)
+) SELECT * FROM foo;
+ERROR:  recursive reference to query "foo" must not appear more than once
+LINE 6:        SELECT i+1 FROM foo WHERE i < 5)
+                               ^
+-- Wrong type induced from non-recursive term
+WITH RECURSIVE foo(i) AS
+   (SELECT i FROM (VALUES(1),(2)) t(i)
+   UNION ALL
+   SELECT (i+1)::numeric(10,0) FROM foo WHERE i < 10)
+SELECT * FROM foo;
+ERROR:  recursive query "foo" column 1 has type integer in non-recursive term but type numeric overall
+LINE 2:    (SELECT i FROM (VALUES(1),(2)) t(i)
+                   ^
+HINT:  Cast the output of the non-recursive term to the correct type.
+-- rejects different typmod, too (should we allow this?)
+WITH RECURSIVE foo(i) AS
+   (SELECT i::numeric(3,0) FROM (VALUES(1),(2)) t(i)
+   UNION ALL
+   SELECT (i+1)::numeric(10,0) FROM foo WHERE i < 10)
+SELECT * FROM foo;
+ERROR:  recursive query "foo" column 1 has type numeric(3,0) in non-recursive term but type numeric overall
+LINE 2:    (SELECT i::numeric(3,0) FROM (VALUES(1),(2)) t(i)
+                   ^
+HINT:  Cast the output of the non-recursive term to the correct type.

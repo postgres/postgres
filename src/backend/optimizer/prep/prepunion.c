@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.155 2008/08/28 23:09:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.156 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,10 @@ static Plan *recurse_set_operations(Node *setOp, PlannerInfo *root,
 					   List *colTypes, bool junkOK,
 					   int flag, List *refnames_tlist,
 					   List **sortClauses, double *pNumGroups);
+static Plan *generate_recursion_plan(SetOperationStmt *setOp,
+						PlannerInfo *root, double tuple_fraction,
+						List *refnames_tlist,
+						List **sortClauses);
 static Plan *generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 					double tuple_fraction,
 					List *refnames_tlist,
@@ -148,6 +152,14 @@ plan_set_operations(PlannerInfo *root, double tuple_fraction,
 	Assert(leftmostQuery != NULL);
 
 	/*
+	 * If the topmost node is a recursive union, it needs special processing.
+	 */
+	if (root->hasRecursion)
+		return generate_recursion_plan(topop, root, tuple_fraction,
+									   leftmostQuery->targetList,
+									   sortClauses);
+
+	/*
 	 * Recurse on setOperations tree to generate plans for set ops. The final
 	 * output plan should have just the column types shown as the output from
 	 * the top-level node, plus possibly resjunk working columns (we can rely
@@ -200,8 +212,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 * Generate plan for primitive subquery
 		 */
 		subplan = subquery_planner(root->glob, subquery,
-								   root->query_level + 1,
-								   tuple_fraction,
+								   root,
+								   false, tuple_fraction,
 								   &subroot);
 
 		/*
@@ -291,6 +303,58 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 			 (int) nodeTag(setOp));
 		return NULL;			/* keep compiler quiet */
 	}
+}
+
+/*
+ * Generate plan for a recursive UNION node
+ */
+static Plan *
+generate_recursion_plan(SetOperationStmt *setOp, PlannerInfo *root,
+						double tuple_fraction,
+						List *refnames_tlist,
+						List **sortClauses)
+{
+	Plan	   *plan;
+	Plan	   *lplan;
+	Plan	   *rplan;
+	List	   *tlist;
+
+	/* Parser should have rejected other cases */
+	if (setOp->op != SETOP_UNION || !setOp->all)
+		elog(ERROR, "only UNION ALL queries can be recursive");
+	/* Worktable ID should be assigned */
+	Assert(root->wt_param_id >= 0);
+
+	/*
+	 * Unlike a regular UNION node, process the left and right inputs
+	 * separately without any intention of combining them into one Append.
+	 */
+	lplan = recurse_set_operations(setOp->larg, root, tuple_fraction,
+								   setOp->colTypes, false, -1,
+								   refnames_tlist, sortClauses, NULL);
+	/* The right plan will want to look at the left one ... */
+	root->non_recursive_plan = lplan;
+	rplan = recurse_set_operations(setOp->rarg, root, tuple_fraction,
+								   setOp->colTypes, false, -1,
+								   refnames_tlist, sortClauses, NULL);
+	root->non_recursive_plan = NULL;
+
+	/*
+	 * Generate tlist for RecursiveUnion plan node --- same as in Append cases
+	 */
+	tlist = generate_append_tlist(setOp->colTypes, false,
+								  list_make2(lplan, rplan),
+								  refnames_tlist);
+
+	/*
+	 * And make the plan node.
+	 */
+	plan = (Plan *) make_recursive_union(tlist, lplan, rplan,
+										 root->wt_param_id);
+
+	*sortClauses = NIL;			/* result of UNION ALL is always unsorted */
+
+	return plan;
 }
 
 /*
@@ -1346,7 +1410,7 @@ adjust_appendrel_attrs(Node *node, AppendRelInfo *appinfo)
 		newnode = query_tree_mutator((Query *) node,
 									 adjust_appendrel_attrs_mutator,
 									 (void *) appinfo,
-									 QTW_IGNORE_RT_SUBQUERIES);
+									 QTW_IGNORE_RC_SUBQUERIES);
 		if (newnode->resultRelation == appinfo->parent_relid)
 		{
 			newnode->resultRelation = appinfo->child_relid;

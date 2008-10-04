@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.405 2008/09/09 18:58:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.406 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,27 @@ _copyAppend(Append *from)
 	 */
 	COPY_NODE_FIELD(appendplans);
 	COPY_SCALAR_FIELD(isTarget);
+
+	return newnode;
+}
+
+/*
+ * _copyRecursiveUnion
+ */
+static RecursiveUnion *
+_copyRecursiveUnion(RecursiveUnion *from)
+{
+	RecursiveUnion	   *newnode = makeNode(RecursiveUnion);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(wtParam);
 
 	return newnode;
 }
@@ -417,6 +438,49 @@ _copyValuesScan(ValuesScan *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(values_lists);
+
+	return newnode;
+}
+
+/*
+ * _copyCteScan
+ */
+static CteScan *
+_copyCteScan(CteScan *from)
+{
+	CteScan *newnode = makeNode(CteScan);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyScanFields((Scan *) from, (Scan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(ctePlanId);
+	COPY_SCALAR_FIELD(cteParam);
+
+	return newnode;
+}
+
+/*
+ * _copyWorkTableScan
+ */
+static WorkTableScan *
+_copyWorkTableScan(WorkTableScan *from)
+{
+	WorkTableScan *newnode = makeNode(WorkTableScan);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyScanFields((Scan *) from, (Scan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(wtParam);
 
 	return newnode;
 }
@@ -1572,12 +1636,17 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	COPY_SCALAR_FIELD(rtekind);
 	COPY_SCALAR_FIELD(relid);
 	COPY_NODE_FIELD(subquery);
+	COPY_SCALAR_FIELD(jointype);
+	COPY_NODE_FIELD(joinaliasvars);
 	COPY_NODE_FIELD(funcexpr);
 	COPY_NODE_FIELD(funccoltypes);
 	COPY_NODE_FIELD(funccoltypmods);
 	COPY_NODE_FIELD(values_lists);
-	COPY_SCALAR_FIELD(jointype);
-	COPY_NODE_FIELD(joinaliasvars);
+	COPY_STRING_FIELD(ctename);
+	COPY_SCALAR_FIELD(ctelevelsup);
+	COPY_SCALAR_FIELD(self_reference);
+	COPY_NODE_FIELD(ctecoltypes);
+	COPY_NODE_FIELD(ctecoltypmods);
 	COPY_NODE_FIELD(alias);
 	COPY_NODE_FIELD(eref);
 	COPY_SCALAR_FIELD(inh);
@@ -1628,6 +1697,36 @@ _copyRowMarkClause(RowMarkClause *from)
 	COPY_SCALAR_FIELD(rti);
 	COPY_SCALAR_FIELD(forUpdate);
 	COPY_SCALAR_FIELD(noWait);
+
+	return newnode;
+}
+
+static WithClause *
+_copyWithClause(WithClause *from)
+{
+	WithClause *newnode = makeNode(WithClause);
+
+	COPY_NODE_FIELD(ctes);
+	COPY_SCALAR_FIELD(recursive);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static CommonTableExpr *
+_copyCommonTableExpr(CommonTableExpr *from)
+{
+	CommonTableExpr *newnode = makeNode(CommonTableExpr);
+
+	COPY_STRING_FIELD(ctename);
+	COPY_NODE_FIELD(aliascolnames);
+	COPY_NODE_FIELD(ctequery);
+	COPY_LOCATION_FIELD(location);
+	COPY_SCALAR_FIELD(cterecursive);
+	COPY_SCALAR_FIELD(cterefcount);
+	COPY_NODE_FIELD(ctecolnames);
+	COPY_NODE_FIELD(ctecoltypes);
+	COPY_NODE_FIELD(ctecoltypmods);
 
 	return newnode;
 }
@@ -1931,6 +2030,8 @@ _copyQuery(Query *from)
 	COPY_SCALAR_FIELD(hasAggs);
 	COPY_SCALAR_FIELD(hasSubLinks);
 	COPY_SCALAR_FIELD(hasDistinctOn);
+	COPY_SCALAR_FIELD(hasRecursive);
+	COPY_NODE_FIELD(cteList);
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(jointree);
 	COPY_NODE_FIELD(targetList);
@@ -1999,6 +2100,7 @@ _copySelectStmt(SelectStmt *from)
 	COPY_NODE_FIELD(whereClause);
 	COPY_NODE_FIELD(groupClause);
 	COPY_NODE_FIELD(havingClause);
+	COPY_NODE_FIELD(withClause);
 	COPY_NODE_FIELD(valuesLists);
 	COPY_NODE_FIELD(sortClause);
 	COPY_NODE_FIELD(limitOffset);
@@ -3104,6 +3206,9 @@ copyObject(void *from)
 		case T_Append:
 			retval = _copyAppend(from);
 			break;
+		case T_RecursiveUnion:
+			retval = _copyRecursiveUnion(from);
+			break;
 		case T_BitmapAnd:
 			retval = _copyBitmapAnd(from);
 			break;
@@ -3136,6 +3241,12 @@ copyObject(void *from)
 			break;
 		case T_ValuesScan:
 			retval = _copyValuesScan(from);
+			break;
+		case T_CteScan:
+			retval = _copyCteScan(from);
+			break;
+		case T_WorkTableScan:
+			retval = _copyWorkTableScan(from);
 			break;
 		case T_Join:
 			retval = _copyJoin(from);
@@ -3671,6 +3782,12 @@ copyObject(void *from)
 			break;
 		case T_RowMarkClause:
 			retval = _copyRowMarkClause(from);
+			break;
+		case T_WithClause:
+			retval = _copyWithClause(from);
+			break;
+		case T_CommonTableExpr:
+			retval = _copyCommonTableExpr(from);
 			break;
 		case T_FkConstraint:
 			retval = _copyFkConstraint(from);

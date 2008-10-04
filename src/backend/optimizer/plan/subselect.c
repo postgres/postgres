@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.140 2008/08/28 23:09:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.141 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,6 +213,20 @@ generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod)
 }
 
 /*
+ * Assign a (nonnegative) PARAM_EXEC ID for a recursive query's worktable.
+ */
+int
+SS_assign_worktable_param(PlannerInfo *root)
+{
+	Param	   *param;
+
+	/* We generate a Param of datatype INTERNAL */
+	param = generate_new_param(root, INTERNALOID, -1);
+	/* ... but the caller only cares about its ID */
+	return param->paramid;
+}
+
+/*
  * Get the datatype of the first column of the plan's output.
  *
  * This is stored for ARRAY_SUBLINK and for exprType(), which doesn't have any
@@ -308,8 +322,8 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 	 * Generate the plan for the subquery.
 	 */
 	plan = subquery_planner(root->glob, subquery,
-							root->query_level + 1,
-							tuple_fraction,
+							root,
+							false, tuple_fraction,
 							&subroot);
 
 	/* And convert to SubPlan or InitPlan format. */
@@ -342,8 +356,8 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 		{
 			/* Generate the plan for the ANY subquery; we'll need all rows */
 			plan = subquery_planner(root->glob, subquery,
-									root->query_level + 1,
-									0.0,
+									root,
+									false, 0.0,
 									&subroot);
 
 			/* Now we can check if it'll fit in work_mem */
@@ -549,6 +563,8 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 			{
 				case T_Material:
 				case T_FunctionScan:
+				case T_CteScan:
+				case T_WorkTableScan:
 				case T_Sort:
 					use_material = false;
 					break;
@@ -796,6 +812,123 @@ hash_ok_operator(OpExpr *expr)
 	}
 	ReleaseSysCache(tup);
 	return true;
+}
+
+
+/*
+ * SS_process_ctes: process a query's WITH list
+ *
+ * We plan each interesting WITH item and convert it to an initplan.
+ * A side effect is to fill in root->cte_plan_ids with a list that
+ * parallels root->parse->cteList and provides the subplan ID for
+ * each CTE's initplan.
+ */
+void
+SS_process_ctes(PlannerInfo *root)
+{
+	ListCell   *lc;
+
+	Assert(root->cte_plan_ids == NIL);
+
+	foreach(lc, root->parse->cteList)
+	{
+		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+		Query	   *subquery;
+		Plan	   *plan;
+		PlannerInfo *subroot;
+		SubPlan    *splan;
+		Bitmapset  *tmpset;
+		int			paramid;
+		Param	   *prm;
+
+		/*
+		 * Ignore CTEs that are not actually referenced anywhere.
+		 */
+		if (cte->cterefcount == 0)
+		{
+			/* Make a dummy entry in cte_plan_ids */
+			root->cte_plan_ids = lappend_int(root->cte_plan_ids, -1);
+			continue;
+		}
+
+		/*
+		 * Copy the source Query node.  Probably not necessary, but let's
+		 * keep this similar to make_subplan.
+		 */
+		subquery = (Query *) copyObject(cte->ctequery);
+
+		/*
+		 * Generate the plan for the CTE query.  Always plan for full
+		 * retrieval --- we don't have enough info to predict otherwise.
+		 */
+		plan = subquery_planner(root->glob, subquery,
+								root,
+								cte->cterecursive, 0.0,
+								&subroot);
+
+		/*
+		 * Make a SubPlan node for it.  This is just enough unlike
+		 * build_subplan that we can't share code.
+		 *
+		 * Note plan_id isn't set till further down, likewise the cost fields.
+		 */
+		splan = makeNode(SubPlan);
+		splan->subLinkType = CTE_SUBLINK;
+		splan->testexpr = NULL;
+		splan->paramIds = NIL;
+		splan->firstColType = get_first_col_type(plan);
+		splan->useHashTable = false;
+		splan->unknownEqFalse = false;
+		splan->setParam = NIL;
+		splan->parParam = NIL;
+		splan->args = NIL;
+
+		/*
+		 * Make parParam and args lists of param IDs and expressions that
+		 * current query level will pass to this child plan.  Even though
+		 * this is an initplan, there could be side-references to earlier
+		 * initplan's outputs, specifically their CTE output parameters.
+		 */
+		tmpset = bms_copy(plan->extParam);
+		while ((paramid = bms_first_member(tmpset)) >= 0)
+		{
+			PlannerParamItem *pitem = list_nth(root->glob->paramlist, paramid);
+
+			if (pitem->abslevel == root->query_level)
+			{
+				prm = (Param *) pitem->item;
+				if (!IsA(prm, Param) ||
+					prm->paramtype != INTERNALOID)
+					elog(ERROR, "bogus local parameter passed to WITH query");
+
+				splan->parParam = lappend_int(splan->parParam, paramid);
+				splan->args = lappend(splan->args, copyObject(prm));
+			}
+		}
+		bms_free(tmpset);
+
+		/*
+		 * Assign a param to represent the query output.  We only really
+		 * care about reserving a parameter ID number.
+		 */
+		prm = generate_new_param(root, INTERNALOID, -1);
+		splan->setParam = list_make1_int(prm->paramid);
+
+		/*
+		 * Add the subplan and its rtable to the global lists.
+		 */
+		root->glob->subplans = lappend(root->glob->subplans, plan);
+		root->glob->subrtables = lappend(root->glob->subrtables,
+										 subroot->parse->rtable);
+		splan->plan_id = list_length(root->glob->subplans);
+
+		root->init_plans = lappend(root->init_plans, splan);
+
+		root->cte_plan_ids = lappend_int(root->cte_plan_ids, splan->plan_id);
+
+		/* Lastly, fill in the cost estimates for use later */
+		cost_subplan(root, splan, plan);
+	}
 }
 
 /*
@@ -1589,6 +1722,9 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 
 		paramid++;
 	}
+	/* Also include the recursion working table, if any */
+	if (root->wt_param_id >= 0)
+		valid_params = bms_add_member(valid_params, root->wt_param_id);
 
 	/*
 	 * Now recurse through plan tree.
@@ -1719,6 +1855,18 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 							  &context);
 			break;
 
+		case T_CteScan:
+			context.paramids =
+				bms_add_member(context.paramids,
+							   ((CteScan *) plan)->cteParam);
+			break;
+
+		case T_WorkTableScan:
+			context.paramids =
+				bms_add_member(context.paramids,
+							   ((WorkTableScan *) plan)->wtParam);
+			break;
+
 		case T_Append:
 			{
 				ListCell   *l;
@@ -1790,6 +1938,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 							  &context);
 			break;
 
+		case T_RecursiveUnion:
 		case T_Hash:
 		case T_Agg:
 		case T_SeqScan:
@@ -1815,6 +1964,15 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 									   finalize_plan(root,
 													 plan->righttree,
 													 valid_params));
+
+	/*
+	 * RecursiveUnion *generates* its worktable param, so don't bubble that up
+	 */
+	if (IsA(plan, RecursiveUnion))
+	{
+		context.paramids = bms_del_member(context.paramids,
+										  ((RecursiveUnion *) plan)->wtParam);
+	}
 
 	/* Now we have all the paramids */
 

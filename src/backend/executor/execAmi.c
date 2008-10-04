@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.98 2008/10/01 19:51:49 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.99 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "executor/nodeMaterial.h"
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeNestloop.h"
+#include "executor/nodeRecursiveunion.h"
 #include "executor/nodeResult.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeSetOp.h"
@@ -39,6 +40,8 @@
 #include "executor/nodeTidscan.h"
 #include "executor/nodeUnique.h"
 #include "executor/nodeValuesscan.h"
+#include "executor/nodeCtescan.h"
+#include "executor/nodeWorktablescan.h"
 
 
 /*
@@ -121,6 +124,10 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 			ExecReScanAppend((AppendState *) node, exprCtxt);
 			break;
 
+		case T_RecursiveUnionState:
+			ExecRecursiveUnionReScan((RecursiveUnionState *) node, exprCtxt);
+			break;
+
 		case T_BitmapAndState:
 			ExecReScanBitmapAnd((BitmapAndState *) node, exprCtxt);
 			break;
@@ -159,6 +166,14 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 
 		case T_ValuesScanState:
 			ExecValuesReScan((ValuesScanState *) node, exprCtxt);
+			break;
+
+		case T_CteScanState:
+			ExecCteScanReScan((CteScanState *) node, exprCtxt);
+			break;
+
+		case T_WorkTableScanState:
+			ExecWorkTableScanReScan((WorkTableScanState *) node, exprCtxt);
 			break;
 
 		case T_NestLoopState:
@@ -396,6 +411,8 @@ ExecSupportsBackwardScan(Plan *node)
 		case T_TidScan:
 		case T_FunctionScan:
 		case T_ValuesScan:
+		case T_CteScan:
+		case T_WorkTableScan:
 			return true;
 
 		case T_SubqueryScan:

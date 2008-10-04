@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.113 2008/09/01 20:42:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.114 2008/10/04 21:56:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,13 +183,13 @@ bool
 checkExprHasSubLink(Node *node)
 {
 	/*
-	 * If a Query is passed, examine it --- but we need not recurse into
-	 * sub-Queries.
+	 * If a Query is passed, examine it --- but we should not recurse into
+	 * sub-Queries that are in its rangetable or CTE list.
 	 */
 	return query_or_expression_tree_walker(node,
 										   checkExprHasSubLink_walker,
 										   NULL,
-										   QTW_IGNORE_RT_SUBQUERIES);
+										   QTW_IGNORE_RC_SUBQUERIES);
 }
 
 static bool
@@ -543,7 +543,7 @@ adjust_relid_set(Relids relids, int oldrelid, int newrelid)
  * that sublink are not affected, only outer references to vars that belong
  * to the expression's original query level or parents thereof.
  *
- * Aggref nodes are adjusted similarly.
+ * Likewise for other nodes containing levelsup fields, such as Aggref.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * Var nodes in-place.	The given expression tree should have been copied
@@ -585,6 +585,17 @@ IncrementVarSublevelsUp_walker(Node *node,
 			agg->agglevelsup += context->delta_sublevels_up;
 		/* fall through to recurse into argument */
 	}
+	if (IsA(node, RangeTblEntry))
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) node;
+
+		if (rte->rtekind == RTE_CTE)
+		{
+			if (rte->ctelevelsup >= context->min_sublevels_up)
+				rte->ctelevelsup += context->delta_sublevels_up;
+		}
+		return false;			/* allow range_table_walker to continue */
+	}
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
@@ -593,7 +604,8 @@ IncrementVarSublevelsUp_walker(Node *node,
 		context->min_sublevels_up++;
 		result = query_tree_walker((Query *) node,
 								   IncrementVarSublevelsUp_walker,
-								   (void *) context, 0);
+								   (void *) context,
+								   QTW_EXAMINE_RTES);
 		context->min_sublevels_up--;
 		return result;
 	}
@@ -617,7 +629,7 @@ IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 	query_or_expression_tree_walker(node,
 									IncrementVarSublevelsUp_walker,
 									(void *) &context,
-									0);
+									QTW_EXAMINE_RTES);
 }
 
 /*
@@ -636,7 +648,7 @@ IncrementVarSublevelsUp_rtable(List *rtable, int delta_sublevels_up,
 	range_table_walker(rtable,
 					   IncrementVarSublevelsUp_walker,
 					   (void *) &context,
-					   0);
+					   QTW_EXAMINE_RTES);
 }
 
 

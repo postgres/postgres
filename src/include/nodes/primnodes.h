@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.141 2008/09/01 20:42:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.142 2008/10/04 21:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,6 +386,7 @@ typedef struct BoolExpr
  *	ROWCOMPARE_SUBLINK	(lefthand) op (SELECT ...)
  *	EXPR_SUBLINK		(SELECT with single targetlist item ...)
  *	ARRAY_SUBLINK		ARRAY(SELECT with single targetlist item ...)
+ *	CTE_SUBLINK			WITH query (never actually part of an expression)
  * For ALL, ANY, and ROWCOMPARE, the lefthand is a list of expressions of the
  * same length as the subselect's targetlist.  ROWCOMPARE will *always* have
  * a list with more than one entry; if the subselect has just one target
@@ -412,6 +413,9 @@ typedef struct BoolExpr
  *
  * In EXISTS, EXPR, and ARRAY SubLinks, testexpr and operName are unused and
  * are always null.
+ *
+ * The CTE_SUBLINK case never occurs in actual SubLink nodes, but it is used
+ * in SubPlans generated for WITH subqueries.
  */
 typedef enum SubLinkType
 {
@@ -420,7 +424,8 @@ typedef enum SubLinkType
 	ANY_SUBLINK,
 	ROWCOMPARE_SUBLINK,
 	EXPR_SUBLINK,
-	ARRAY_SUBLINK
+	ARRAY_SUBLINK,
+	CTE_SUBLINK					/* for SubPlans only */
 } SubLinkType;
 
 

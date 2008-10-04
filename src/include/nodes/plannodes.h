@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.103 2008/09/09 18:58:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.104 2008/10/04 21:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,6 +181,20 @@ typedef struct Append
 	List	   *appendplans;
 	bool		isTarget;
 } Append;
+
+/* ----------------
+ *	RecursiveUnion node -
+ *		Generate a recursive union of two subplans.
+ *
+ * The "outer" subplan is always the non-recursive term, and the "inner"
+ * subplan is the recursive term.
+ * ----------------
+ */
+typedef struct RecursiveUnion
+{
+	Plan		plan;
+	int			wtParam;		/* ID of Param representing work table */
+} RecursiveUnion;
 
 /* ----------------
  *	 BitmapAnd node -
@@ -357,6 +371,28 @@ typedef struct ValuesScan
 	Scan		scan;
 	List	   *values_lists;	/* list of expression lists */
 } ValuesScan;
+
+/* ----------------
+ *		CteScan node
+ * ----------------
+ */
+typedef struct CteScan
+{
+	Scan		scan;
+	int			ctePlanId;		/* ID of init SubPlan for CTE */
+	int			cteParam;		/* ID of Param representing CTE output */
+} CteScan;
+
+/* ----------------
+ *		WorkTableScan node
+ * ----------------
+ */
+typedef struct WorkTableScan
+{
+	Scan		scan;
+	int			wtParam;		/* ID of Param representing work table */
+} WorkTableScan;
+
 
 /*
  * ==========

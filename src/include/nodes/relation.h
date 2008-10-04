@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.159 2008/09/09 18:58:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.160 2008/10/04 21:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,8 @@ typedef struct PlannerInfo
 
 	Index		query_level;	/* 1 at the outermost Query */
 
+	struct PlannerInfo *parent_root; /* NULL at outermost Query */
+
 	/*
 	 * simple_rel_array holds pointers to "base rels" and "other rels" (see
 	 * comments for RelOptInfo for more info).	It is indexed by rangetable
@@ -138,7 +140,9 @@ typedef struct PlannerInfo
 
 	List	   *returningLists; /* list of lists of TargetEntry, or NIL */
 
-	List	   *init_plans;		/* init subplans for query */
+	List	   *init_plans;		/* init SubPlans for query */
+
+	List	   *cte_plan_ids;	/* per-CTE-item list of subplan IDs */
 
 	List	   *eq_classes;		/* list of active EquivalenceClasses */
 
@@ -178,6 +182,11 @@ typedef struct PlannerInfo
 	bool		hasHavingQual;	/* true if havingQual was non-null */
 	bool		hasPseudoConstantQuals; /* true if any RestrictInfo has
 										 * pseudoconstant = true */
+	bool		hasRecursion;	/* true if planning a recursive WITH item */
+
+	/* These fields are used only when hasRecursion is true: */
+	int			wt_param_id;			/* PARAM_EXEC ID for the work table */
+	struct Plan *non_recursive_plan;	/* plan for non-recursive term */
 } PlannerInfo;
 
 
@@ -542,8 +551,9 @@ typedef struct PathKey
 } PathKey;
 
 /*
- * Type "Path" is used as-is for sequential-scan paths.  For other
- * path types it is the first component of a larger struct.
+ * Type "Path" is used as-is for sequential-scan paths, as well as some other
+ * simple plan types that we don't need any extra information in the path for.
+ * For other path types it is the first component of a larger struct.
  *
  * Note: "pathtype" is the NodeTag of the Plan node we could build from this
  * Path.  It is partially redundant with the Path's NodeTag, but allows us

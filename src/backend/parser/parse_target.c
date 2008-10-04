@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.164 2008/09/01 20:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.165 2008/10/04 21:56:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,6 +295,24 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 		case RTE_FUNCTION:
 		case RTE_VALUES:
 			/* not a simple relation, leave it unmarked */
+			break;
+		case RTE_CTE:
+			/* CTE reference: copy up from the subquery */
+			if (attnum != InvalidAttrNumber)
+			{
+				CommonTableExpr *cte = GetCTEForRTE(pstate, rte);
+				TargetEntry *ste;
+
+				/* should be analyzed by now */
+				Assert(IsA(cte->ctequery, Query));
+				ste = get_tle_by_resno(((Query *) cte->ctequery)->targetList,
+									   attnum);
+				if (ste == NULL || ste->resjunk)
+					elog(ERROR, "subquery %s does not have attribute %d",
+						 rte->eref->aliasname, attnum);
+				tle->resorigtbl = ste->resorigtbl;
+				tle->resorigcol = ste->resorigcol;
+			}
 			break;
 	}
 }
@@ -1175,6 +1193,44 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 			 * We couldn't get here unless a function is declared with one of
 			 * its result columns as RECORD, which is not allowed.
 			 */
+			break;
+		case RTE_CTE:
+			{
+				/* CTE reference: examine subquery's output expr */
+				CommonTableExpr *cte = GetCTEForRTE(pstate, rte);
+				TargetEntry *ste;
+
+				/* should be analyzed by now */
+				Assert(IsA(cte->ctequery, Query));
+				ste = get_tle_by_resno(((Query *) cte->ctequery)->targetList,
+									   attnum);
+				if (ste == NULL || ste->resjunk)
+					elog(ERROR, "subquery %s does not have attribute %d",
+						 rte->eref->aliasname, attnum);
+				expr = (Node *) ste->expr;
+				if (IsA(expr, Var))
+				{
+					/*
+					 * Recurse into the CTE to see what its Var refers to. We
+					 * have to build an additional level of ParseState to keep
+					 * in step with varlevelsup in the CTE; furthermore it
+					 * could be an outer CTE.
+					 */
+					ParseState	mypstate;
+					Index		levelsup;
+
+					MemSet(&mypstate, 0, sizeof(mypstate));
+					/* this loop must work, since GetCTEForRTE did */
+					for (levelsup = 0; levelsup < rte->ctelevelsup; levelsup++)
+						pstate = pstate->parentParseState;
+					mypstate.parentParseState = pstate;
+					mypstate.p_rtable = ((Query *) cte->ctequery)->rtable;
+					/* don't bother filling the rest of the fake pstate */
+
+					return expandRecordVariable(&mypstate, (Var *) expr, 0);
+				}
+				/* else fall through to inspect the expression */
+			}
 			break;
 	}
 

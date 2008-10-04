@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.25 2008/05/15 22:39:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.26 2008/10/04 21:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,6 +246,7 @@
 #define ERRCODE_INSUFFICIENT_PRIVILEGE		MAKE_SQLSTATE('4','2', '5','0','1')
 #define ERRCODE_CANNOT_COERCE				MAKE_SQLSTATE('4','2', '8','4','6')
 #define ERRCODE_GROUPING_ERROR				MAKE_SQLSTATE('4','2', '8','0','3')
+#define ERRCODE_INVALID_RECURSION			MAKE_SQLSTATE('4','2', 'P','1','9')
 #define ERRCODE_INVALID_FOREIGN_KEY			MAKE_SQLSTATE('4','2', '8','3','0')
 #define ERRCODE_INVALID_NAME				MAKE_SQLSTATE('4','2', '6','0','2')
 #define ERRCODE_NAME_TOO_LONG				MAKE_SQLSTATE('4','2', '6','2','2')

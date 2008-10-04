@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.56 2008/09/01 20:42:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.57 2008/10/04 21:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,10 @@
  * implicit RTEs into p_relnamespace but not p_varnamespace, so that they
  * do not affect the set of columns available for unqualified references.
  *
+ * p_ctenamespace: list of CommonTableExprs (WITH items) that are visible
+ * at the moment.  This is different from p_relnamespace because you have
+ * to make an RTE before you can access a CTE.
+ *
  * p_paramtypes: an array of p_numparams type OIDs for $n parameter symbols
  * (zeroth entry in array corresponds to $1).  If p_variableparams is true, the
  * set of param types is not predetermined; in that case, a zero array entry
@@ -68,6 +72,7 @@ typedef struct ParseState
 								 * node's fromlist) */
 	List	   *p_relnamespace; /* current namespace for relations */
 	List	   *p_varnamespace; /* current namespace for columns */
+	List	   *p_ctenamespace; /* current namespace for common table exprs */
 	Oid		   *p_paramtypes;	/* OIDs of types for $n parameter symbols */
 	int			p_numparams;	/* allocated size of p_paramtypes[] */
 	int			p_next_resno;	/* next targetlist resno to assign */

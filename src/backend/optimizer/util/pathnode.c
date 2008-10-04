@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.147 2008/09/05 21:07:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.148 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1215,6 +1215,45 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
 	cost_valuesscan(pathnode, root, rel);
+
+	return pathnode;
+}
+
+/*
+ * create_ctescan_path
+ *	  Creates a path corresponding to a scan of a non-self-reference CTE,
+ *	  returning the pathnode.
+ */
+Path *
+create_ctescan_path(PlannerInfo *root, RelOptInfo *rel)
+{
+	Path	   *pathnode = makeNode(Path);
+
+	pathnode->pathtype = T_CteScan;
+	pathnode->parent = rel;
+	pathnode->pathkeys = NIL;	/* XXX for now, result is always unordered */
+
+	cost_ctescan(pathnode, root, rel);
+
+	return pathnode;
+}
+
+/*
+ * create_worktablescan_path
+ *	  Creates a path corresponding to a scan of a self-reference CTE,
+ *	  returning the pathnode.
+ */
+Path *
+create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel)
+{
+	Path	   *pathnode = makeNode(Path);
+
+	pathnode->pathtype = T_WorkTableScan;
+	pathnode->parent = rel;
+	pathnode->pathkeys = NIL;	/* result is always unordered */
+
+	/* Cost is the same as for a regular CTE scan */
+	cost_ctescan(pathnode, root, rel);
 
 	return pathnode;
 }

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.624 2008/09/23 09:20:35 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.625 2008/10/04 21:56:54 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -119,7 +119,8 @@ static List *extractArgTypes(List *parameters);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *lockingClause,
-								Node *limitOffset, Node *limitCount);
+								Node *limitOffset, Node *limitCount,
+								WithClause *withClause);
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n, int location);
 static void doNegateFloat(Value *v);
@@ -160,6 +161,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	Alias				*alias;
 	RangeVar			*range;
 	IntoClause			*into;
+	WithClause			*with;
 	A_Indices			*aind;
 	ResTarget			*target;
 	PrivTarget			*privtarget;
@@ -377,6 +379,10 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <ival>	document_or_content
 %type <boolean> xml_whitespace_option
 
+%type <node> 	common_table_expr
+%type <with> 	with_clause
+%type <list>	cte_list
+
 
 /*
  * If you make any token changes, update the keyword table in
@@ -443,9 +449,9 @@ static TypeName *TableFuncTypeName(List *columns);
 
 	QUOTE
 
-	READ REAL REASSIGN RECHECK REFERENCES REINDEX RELATIVE_P RELEASE RENAME
-	REPEATABLE REPLACE REPLICA RESET RESTART RESTRICT RETURNING RETURNS REVOKE
-	RIGHT ROLE ROLLBACK ROW ROWS RULE
+	READ REAL REASSIGN RECHECK RECURSIVE REFERENCES REINDEX RELATIVE_P RELEASE
+	RENAME REPEATABLE REPLACE REPLICA RESET RESTART RESTRICT RETURNING RETURNS
+	REVOKE RIGHT ROLE ROLLBACK ROW ROWS RULE
 
 	SAVEPOINT SCHEMA SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE
 	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
@@ -6276,6 +6282,10 @@ select_with_parens:
 		;
 
 /*
+ * This rule parses the equivalent of the standard's <query expression>.
+ * The duplicative productions are annoying, but hard to get rid of without
+ * creating shift/reduce conflicts.
+ *
  *	FOR UPDATE/SHARE may be before or after LIMIT/OFFSET.
  *	In <=7.2.X, LIMIT/OFFSET had to be after FOR UPDATE
  *	We now support both orderings, but prefer LIMIT/OFFSET before FOR UPDATE/SHARE
@@ -6286,20 +6296,50 @@ select_no_parens:
 			| select_clause sort_clause
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, NIL,
-										NULL, NULL);
+										NULL, NULL, NULL);
 					$$ = $1;
 				}
 			| select_clause opt_sort_clause for_locking_clause opt_select_limit
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, $3,
-										list_nth($4, 0), list_nth($4, 1));
+										list_nth($4, 0), list_nth($4, 1),
+										NULL);
 					$$ = $1;
 				}
 			| select_clause opt_sort_clause select_limit opt_for_locking_clause
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, $4,
-										list_nth($3, 0), list_nth($3, 1));
+										list_nth($3, 0), list_nth($3, 1),
+										NULL);
 					$$ = $1;
+				}
+			| with_clause simple_select
+				{
+					insertSelectOptions((SelectStmt *) $2, NULL, NIL,
+										NULL, NULL,
+										$1);
+					$$ = $2;
+				}
+			| with_clause select_clause sort_clause
+				{
+					insertSelectOptions((SelectStmt *) $2, $3, NIL,
+										NULL, NULL,
+										$1);
+					$$ = $2;
+				}
+			| with_clause select_clause opt_sort_clause for_locking_clause opt_select_limit
+				{
+					insertSelectOptions((SelectStmt *) $2, $3, $4,
+										list_nth($5, 0), list_nth($5, 1),
+										$1);
+					$$ = $2;
+				}
+			| with_clause select_clause opt_sort_clause select_limit opt_for_locking_clause
+				{
+					insertSelectOptions((SelectStmt *) $2, $3, $5,
+										list_nth($4, 0), list_nth($4, 1),
+										$1);
+					$$ = $2;
 				}
 		;
 
@@ -6323,10 +6363,10 @@ select_clause:
  *		(SELECT foo UNION SELECT bar) ORDER BY baz
  * not
  *		SELECT foo UNION (SELECT bar ORDER BY baz)
- * Likewise FOR UPDATE and LIMIT.  Therefore, those clauses are described
- * as part of the select_no_parens production, not simple_select.
- * This does not limit functionality, because you can reintroduce sort and
- * limit clauses inside parentheses.
+ * Likewise for WITH, FOR UPDATE and LIMIT.  Therefore, those clauses are
+ * described as part of the select_no_parens production, not simple_select.
+ * This does not limit functionality, because you can reintroduce these
+ * clauses inside parentheses.
  *
  * NOTE: only the leftmost component SelectStmt should have INTO.
  * However, this is not checked by the grammar; parse analysis must check it.
@@ -6359,6 +6399,47 @@ simple_select:
 				{
 					$$ = makeSetOp(SETOP_EXCEPT, $3, $1, $4);
 				}
+		;
+
+/*
+ * SQL standard WITH clause looks like:
+ *
+ * WITH [ RECURSIVE ] <query name> [ (<column>,...) ]
+ *		AS (query) [ SEARCH or CYCLE clause ]
+ *
+ * We don't currently support the SEARCH or CYCLE clause.
+ */
+with_clause:
+		WITH cte_list
+			{
+				$$ = makeNode(WithClause);
+				$$->ctes = $2;
+				$$->recursive = false;
+				$$->location = @1;
+			}
+		| WITH RECURSIVE cte_list
+			{
+				$$ = makeNode(WithClause);
+				$$->ctes = $3;
+				$$->recursive = true;
+				$$->location = @1;
+			}
+		;
+
+cte_list:
+		common_table_expr						{ $$ = list_make1($1); }
+		| cte_list ',' common_table_expr		{ $$ = lappend($1, $3); }
+		;
+
+common_table_expr:  name opt_name_list AS select_with_parens
+			{
+				CommonTableExpr *n = makeNode(CommonTableExpr);
+				n->ctename = $1;
+				n->aliascolnames = $2;
+				n->ctequery = $4;
+				n->location = @1;
+				$$ = (Node *) n;
+			}
 		;
 
 into_clause:
@@ -9349,6 +9430,7 @@ unreserved_keyword:
 			| READ
 			| REASSIGN
 			| RECHECK
+			| RECURSIVE
 			| REINDEX
 			| RELATIVE_P
 			| RELEASE
@@ -9416,7 +9498,6 @@ unreserved_keyword:
 			| VIEW
 			| VOLATILE
 			| WHITESPACE_P
-			| WITH
 			| WITHOUT
 			| WORK
 			| WRITE
@@ -9599,6 +9680,7 @@ reserved_keyword:
 			| VARIADIC
 			| WHEN
 			| WHERE
+			| WITH
 		;
 
 
@@ -9922,8 +10004,11 @@ findLeftmostSelect(SelectStmt *node)
 static void
 insertSelectOptions(SelectStmt *stmt,
 					List *sortClause, List *lockingClause,
-					Node *limitOffset, Node *limitCount)
+					Node *limitOffset, Node *limitCount,
+					WithClause *withClause)
 {
+	Assert(IsA(stmt, SelectStmt));
+
 	/*
 	 * Tests here are to reject constructs like
 	 *	(SELECT foo ORDER BY bar) ORDER BY baz
@@ -9956,6 +10041,15 @@ insertSelectOptions(SelectStmt *stmt,
 					 errmsg("multiple LIMIT clauses not allowed"),
 					 scanner_errposition(exprLocation(limitCount))));
 		stmt->limitCount = limitCount;
+	}
+	if (withClause)
+	{
+		if (stmt->withClause)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("multiple WITH clauses not allowed"),
+					 scanner_errposition(exprLocation((Node *) withClause))));
+		stmt->withClause = withClause;
 	}
 }
 

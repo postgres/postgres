@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.90 2008/08/14 18:47:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.91 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 		case RTE_SUBQUERY:
 		case RTE_FUNCTION:
 		case RTE_VALUES:
+		case RTE_CTE:
 
 			/*
 			 * Subquery, function, or values list --- set up attr range and

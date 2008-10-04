@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.375 2008/09/08 00:47:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.376 2008/10/04 21:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,9 @@ typedef struct Query
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasSubLinks;	/* has subquery SubLink */
 	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
+	bool		hasRecursive;	/* WITH RECURSIVE was specified */
+
+	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
 	List	   *rtable;			/* list of range table entries */
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
@@ -563,7 +566,8 @@ typedef enum RTEKind
 	RTE_JOIN,					/* join */
 	RTE_SPECIAL,				/* special rule relation (NEW or OLD) */
 	RTE_FUNCTION,				/* function in FROM */
-	RTE_VALUES					/* VALUES (<exprlist>), (<exprlist>), ... */
+	RTE_VALUES,					/* VALUES (<exprlist>), (<exprlist>), ... */
+	RTE_CTE						/* common table expr (WITH list element) */
 } RTEKind;
 
 typedef struct RangeTblEntry
@@ -589,6 +593,20 @@ typedef struct RangeTblEntry
 	Query	   *subquery;		/* the sub-query */
 
 	/*
+	 * Fields valid for a join RTE (else NULL/zero):
+	 *
+	 * joinaliasvars is a list of Vars or COALESCE expressions corresponding
+	 * to the columns of the join result.  An alias Var referencing column K
+	 * of the join result can be replaced by the K'th element of joinaliasvars
+	 * --- but to simplify the task of reverse-listing aliases correctly, we
+	 * do not do that until planning time.	In a Query loaded from a stored
+	 * rule, it is also possible for joinaliasvars items to be NULL Consts,
+	 * denoting columns dropped since the rule was made.
+	 */
+	JoinType	jointype;		/* type of join */
+	List	   *joinaliasvars;	/* list of alias-var expansions */
+
+	/*
 	 * Fields valid for a function RTE (else NULL):
 	 *
 	 * If the function returns RECORD, funccoltypes lists the column types
@@ -605,18 +623,13 @@ typedef struct RangeTblEntry
 	List	   *values_lists;	/* list of expression lists */
 
 	/*
-	 * Fields valid for a join RTE (else NULL/zero):
-	 *
-	 * joinaliasvars is a list of Vars or COALESCE expressions corresponding
-	 * to the columns of the join result.  An alias Var referencing column K
-	 * of the join result can be replaced by the K'th element of joinaliasvars
-	 * --- but to simplify the task of reverse-listing aliases correctly, we
-	 * do not do that until planning time.	In a Query loaded from a stored
-	 * rule, it is also possible for joinaliasvars items to be NULL Consts,
-	 * denoting columns dropped since the rule was made.
+	 * Fields valid for a CTE RTE (else NULL/zero):
 	 */
-	JoinType	jointype;		/* type of join */
-	List	   *joinaliasvars;	/* list of alias-var expansions */
+	char	   *ctename;		/* name of the WITH list item */
+	Index		ctelevelsup;	/* number of query levels up */
+	bool		self_reference;	/* is this a recursive self-reference? */
+	List	   *ctecoltypes;	/* OID list of column type OIDs */
+	List	   *ctecoltypmods;	/* integer list of column typmods */
 
 	/*
 	 * Fields valid in all RTEs:
@@ -696,6 +709,43 @@ typedef struct RowMarkClause
 	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
 	bool		noWait;			/* NOWAIT option */
 } RowMarkClause;
+
+/*
+ * WithClause -
+ *     representation of WITH clause
+ *
+ * Note: WithClause does not propagate into the Query representation;
+ * but CommonTableExpr does.
+ */
+typedef struct WithClause
+{
+	NodeTag		type;
+	List	   *ctes;			/* list of CommonTableExprs */
+	bool		recursive;		/* true = WITH RECURSIVE */
+	int			location;		/* token location, or -1 if unknown */
+} WithClause;
+
+/*
+ * CommonTableExpr -
+ *     representation of WITH list element
+ *
+ * We don't currently support the SEARCH or CYCLE clause.
+ */
+typedef struct CommonTableExpr
+{
+	NodeTag		type;
+	char	   *ctename;		/* query name (never qualified) */
+	List	   *aliascolnames;	/* optional list of column names */
+	Node	   *ctequery;		/* subquery (SelectStmt or Query) */
+	int			location;		/* token location, or -1 if unknown */
+	/* These fields are set during parse analysis: */
+	bool		cterecursive;	/* is this CTE actually recursive? */
+	int			cterefcount;	/* number of RTEs referencing this CTE
+								 * (excluding internal self-references) */
+	List	   *ctecolnames;	/* list of output column names */
+	List	   *ctecoltypes;	/* OID list of output column type OIDs */
+	List	   *ctecoltypmods;	/* integer list of output column typmods */
+} CommonTableExpr;
 
 /*****************************************************************************
  *		Optimizable Statements
@@ -781,6 +831,7 @@ typedef struct SelectStmt
 	Node	   *whereClause;	/* WHERE qualification */
 	List	   *groupClause;	/* GROUP BY clauses */
 	Node	   *havingClause;	/* HAVING conditional-expression */
+	WithClause *withClause;		/* WITH clause */
 
 	/*
 	 * In a "leaf" node representing a VALUES list, the above fields are all

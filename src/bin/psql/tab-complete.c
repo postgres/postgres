@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.172 2008/09/08 00:47:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.173 2008/10/04 21:56:54 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -615,7 +615,7 @@ psql_completion(char *text, int start, int end)
 		"GRANT", "INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY", "PREPARE",
 		"REASSIGN", "REINDEX", "RELEASE", "RESET", "REVOKE", "ROLLBACK",
 		"SAVEPOINT", "SELECT", "SET", "SHOW", "START", "TRUNCATE", "UNLISTEN",
-		"UPDATE", "VACUUM", "VALUES", NULL
+		"UPDATE", "VACUUM", "VALUES", "WITH", NULL
 	};
 
 	static const char *const backslash_commands[] = {
@@ -2043,6 +2043,10 @@ psql_completion(char *text, int start, int end)
 			 (pg_strcasecmp(prev_wd, "VERBOSE") == 0 &&
 			  pg_strcasecmp(prev2_wd, "ANALYZE") == 0))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+
+/* WITH [RECURSIVE] */
+	else if (pg_strcasecmp(prev_wd, "WITH") == 0)
+		COMPLETE_WITH_CONST("RECURSIVE");
 
 /* ANALYZE */
 	/* If the previous word is ANALYZE, produce list of tables */

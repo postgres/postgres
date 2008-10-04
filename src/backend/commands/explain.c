@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.178 2008/08/19 18:30:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.179 2008/10/04 21:56:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,6 +429,9 @@ explain_outNode(StringInfo str,
 		case T_Append:
 			pname = "Append";
 			break;
+		case T_RecursiveUnion:
+			pname = "Recursive Union";
+			break;
 		case T_BitmapAnd:
 			pname = "BitmapAnd";
 			break;
@@ -536,6 +539,12 @@ explain_outNode(StringInfo str,
 			break;
 		case T_ValuesScan:
 			pname = "Values Scan";
+			break;
+		case T_CteScan:
+			pname = "CTE Scan";
+			break;
+		case T_WorkTableScan:
+			pname = "WorkTable Scan";
 			break;
 		case T_Material:
 			pname = "Materialize";
@@ -721,6 +730,40 @@ explain_outNode(StringInfo str,
 								 quote_identifier(valsname));
 			}
 			break;
+		case T_CteScan:
+			if (((Scan *) plan)->scanrelid > 0)
+			{
+				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
+											  es->rtable);
+
+				/* Assert it's on a non-self-reference CTE */
+				Assert(rte->rtekind == RTE_CTE);
+				Assert(!rte->self_reference);
+
+				appendStringInfo(str, " on %s",
+								 quote_identifier(rte->ctename));
+				if (strcmp(rte->eref->aliasname, rte->ctename) != 0)
+					appendStringInfo(str, " %s",
+									 quote_identifier(rte->eref->aliasname));
+			}
+			break;
+		case T_WorkTableScan:
+			if (((Scan *) plan)->scanrelid > 0)
+			{
+				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
+											  es->rtable);
+
+				/* Assert it's on a self-reference CTE */
+				Assert(rte->rtekind == RTE_CTE);
+				Assert(rte->self_reference);
+
+				appendStringInfo(str, " on %s",
+								 quote_identifier(rte->ctename));
+				if (strcmp(rte->eref->aliasname, rte->ctename) != 0)
+					appendStringInfo(str, " %s",
+									 quote_identifier(rte->eref->aliasname));
+			}
+			break;
 		default:
 			break;
 	}
@@ -787,6 +830,8 @@ explain_outNode(StringInfo str,
 		case T_SeqScan:
 		case T_FunctionScan:
 		case T_ValuesScan:
+		case T_CteScan:
+		case T_WorkTableScan:
 			show_scan_qual(plan->qual,
 						   "Filter",
 						   ((Scan *) plan)->scanrelid,
@@ -1070,6 +1115,9 @@ show_plan_tlist(Plan *plan,
 		return;
 	/* The tlist of an Append isn't real helpful, so suppress it */
 	if (IsA(plan, Append))
+		return;
+	/* Likewise for RecursiveUnion */
+	if (IsA(plan, RecursiveUnion))
 		return;
 
 	/* Set up deparsing context */
