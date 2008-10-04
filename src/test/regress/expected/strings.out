@@ -1240,3 +1240,146 @@ select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, '
  a\bcd | a\b'cd | a\b''cd | abcd\ | ab\'cd | \\
 (1 row)
 
+--
+-- Additional string functions
+--
+SELECT initcap('hi THOMAS');
+  initcap  
+-----------
+ Hi Thomas
+(1 row)
+
+SELECT lpad('hi', 5, 'xy');
+ lpad  
+-------
+ xyxhi
+(1 row)
+
+SELECT lpad('hi', 5);
+ lpad  
+-------
+    hi
+(1 row)
+
+SELECT lpad('hi', -5, 'xy');
+ lpad 
+------
+ 
+(1 row)
+
+SELECT lpad('hello', 2);
+ lpad 
+------
+ he
+(1 row)
+
+SELECT lpad('hi', 5, '');
+ lpad 
+------
+ hi
+(1 row)
+
+SELECT rpad('hi', 5, 'xy');
+ rpad  
+-------
+ hixyx
+(1 row)
+
+SELECT rpad('hi', 5);
+ rpad  
+-------
+ hi   
+(1 row)
+
+SELECT rpad('hi', -5, 'xy');
+ rpad 
+------
+ 
+(1 row)
+
+SELECT rpad('hello', 2);
+ rpad 
+------
+ he
+(1 row)
+
+SELECT rpad('hi', 5, '');
+ rpad 
+------
+ hi
+(1 row)
+
+SELECT ltrim('zzzytrim', 'xyz');
+ ltrim 
+-------
+ trim
+(1 row)
+
+SELECT translate('', '14', 'ax');
+ translate 
+-----------
+ 
+(1 row)
+
+SELECT translate('12345', '14', 'ax');
+ translate 
+-----------
+ a23x5
+(1 row)
+
+SELECT ascii('x');
+ ascii 
+-------
+   120
+(1 row)
+
+SELECT ascii('');
+ ascii 
+-------
+     0
+(1 row)
+
+SELECT chr(65);
+ chr 
+-----
+ A
+(1 row)
+
+SELECT chr(0);
+ERROR:  null character not permitted
+SELECT repeat('Pg', 4);
+  repeat  
+----------
+ PgPgPgPg
+(1 row)
+
+SELECT repeat('Pg', -4);
+ repeat 
+--------
+ 
+(1 row)
+
+SELECT trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea);
+ btrim 
+-------
+ Tom
+(1 row)
+
+SELECT btrim(E'\\000trim\\000'::bytea, E'\\000'::bytea);
+ btrim 
+-------
+ trim
+(1 row)
+
+SELECT btrim(''::bytea, E'\\000'::bytea);
+ btrim 
+-------
+ 
+(1 row)
+
+SELECT btrim(E'\\000trim\\000'::bytea, ''::bytea);
+    btrim     
+--------------
+ \000trim\000
+(1 row)
+

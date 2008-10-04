@@ -450,3 +450,41 @@ select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   as f4, 'ab\'
 set standard_conforming_strings = off;
 
 select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd' as f5, '\\\\' as f6;
+
+
+--
+-- Additional string functions
+--
+
+SELECT initcap('hi THOMAS');
+
+SELECT lpad('hi', 5, 'xy');
+SELECT lpad('hi', 5);
+SELECT lpad('hi', -5, 'xy');
+SELECT lpad('hello', 2);
+SELECT lpad('hi', 5, '');
+
+SELECT rpad('hi', 5, 'xy');
+SELECT rpad('hi', 5);
+SELECT rpad('hi', -5, 'xy');
+SELECT rpad('hello', 2);
+SELECT rpad('hi', 5, '');
+
+SELECT ltrim('zzzytrim', 'xyz');
+
+SELECT translate('', '14', 'ax');
+SELECT translate('12345', '14', 'ax');
+
+SELECT ascii('x');
+SELECT ascii('');
+
+SELECT chr(65);
+SELECT chr(0);
+
+SELECT repeat('Pg', 4);
+SELECT repeat('Pg', -4);
+
+SELECT trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea);
+SELECT btrim(E'\\000trim\\000'::bytea, E'\\000'::bytea);
+SELECT btrim(''::bytea, E'\\000'::bytea);
+SELECT btrim(E'\\000trim\\000'::bytea, ''::bytea);
