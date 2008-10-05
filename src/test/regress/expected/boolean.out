@@ -11,7 +11,19 @@ SELECT 1 AS one;
 (1 row)
 
 -- ******************testing built-in type bool********************
--- check bool type-casting as well as and, or, not in qualifications--
+-- check bool input syntax
+SELECT true AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT false AS false;
+ false 
+-------
+ f
+(1 row)
+
 SELECT bool 't' AS true;
  true 
 ------
@@ -24,6 +36,83 @@ SELECT bool '   f           ' AS false;
  f
 (1 row)
 
+SELECT bool 'true' AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT bool 'test' AS error;
+ERROR:  invalid input syntax for type boolean: "test"
+LINE 1: SELECT bool 'test' AS error;
+                    ^
+SELECT bool 'false' AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT bool 'foo' AS error;
+ERROR:  invalid input syntax for type boolean: "foo"
+LINE 1: SELECT bool 'foo' AS error;
+                    ^
+SELECT bool 'y' AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT bool 'yes' AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT bool 'yeah' AS error;
+ERROR:  invalid input syntax for type boolean: "yeah"
+LINE 1: SELECT bool 'yeah' AS error;
+                    ^
+SELECT bool 'n' AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT bool 'no' AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT bool 'nay' AS error;
+ERROR:  invalid input syntax for type boolean: "nay"
+LINE 1: SELECT bool 'nay' AS error;
+                    ^
+SELECT bool '1' AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT bool '11' AS error;
+ERROR:  invalid input syntax for type boolean: "11"
+LINE 1: SELECT bool '11' AS error;
+                    ^
+SELECT bool '0' AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT bool '000' AS error;
+ERROR:  invalid input syntax for type boolean: "000"
+LINE 1: SELECT bool '000' AS error;
+                    ^
+SELECT bool '' AS error;
+ERROR:  invalid input syntax for type boolean: ""
+LINE 1: SELECT bool '' AS error;
+                    ^
+-- and, or, not in qualifications
 SELECT bool 't' or bool 'f' AS true;
  true 
 ------
@@ -49,6 +138,30 @@ SELECT bool 't' = bool 'f' AS false;
 (1 row)
 
 SELECT bool 't' <> bool 'f' AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT bool 't' > bool 'f' AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT bool 't' >= bool 'f' AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT bool 'f' < bool 't' AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT bool 'f' <= bool 't' AS true;
  true 
 ------
  t
