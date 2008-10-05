@@ -139,7 +139,6 @@ select '9223372036854775800'::int8 - '-9223372036854775800'::int8;
 select '-9223372036854775800'::int8 - '9223372036854775800'::int8;
 
 select '9223372036854775800'::int8 * '9223372036854775800'::int8;
-select '-9223372036854775808'::int8 / '-1'::int8;
 
 select '9223372036854775800'::int8 / '0'::int8;
 select '9223372036854775800'::int8 % '0'::int8;
@@ -149,7 +148,6 @@ select abs('-9223372036854775808'::int8);
 select '9223372036854775800'::int8 + '100'::int4;
 select '-9223372036854775800'::int8 - '100'::int4;
 select '9223372036854775800'::int8 * '100'::int4;
-select '-9223372036854775808'::int8 / '-1'::int4;
 
 select '100'::int4 + '9223372036854775800'::int8;
 select '-100'::int4 - '9223372036854775800'::int8;
@@ -158,7 +156,6 @@ select '100'::int4 * '9223372036854775800'::int8;
 select '9223372036854775800'::int8 + '100'::int2;
 select '-9223372036854775800'::int8 - '100'::int2;
 select '9223372036854775800'::int8 * '100'::int2;
-select '-9223372036854775808'::int8 / '-1'::int2;
 select '-9223372036854775808'::int8 / '0'::int2;
 
 select '100'::int2 + '9223372036854775800'::int8;
@@ -176,8 +173,6 @@ SELECT CAST('42'::int2 AS int8), CAST('-37'::int2 AS int8);
 
 SELECT CAST(q1 AS float4), CAST(q2 AS float8) FROM INT8_TBL;
 SELECT CAST('36854775807.0'::float4 AS int8);
-SELECT CAST('9223372036854775807.0'::float4 AS int8);
-SELECT CAST('9223372036854775807.0'::float8 AS int8);
 SELECT CAST('922337203685477580700.0'::float8 AS int8);
 
 SELECT CAST(q1 AS oid) FROM INT8_TBL;

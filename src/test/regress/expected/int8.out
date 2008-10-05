@@ -669,8 +669,6 @@ select '-9223372036854775800'::int8 - '9223372036854775800'::int8;
 ERROR:  bigint out of range
 select '9223372036854775800'::int8 * '9223372036854775800'::int8;
 ERROR:  bigint out of range
-select '-9223372036854775808'::int8 / '-1'::int8;
-ERROR:  bigint out of range
 select '9223372036854775800'::int8 / '0'::int8;
 ERROR:  division by zero
 select '9223372036854775800'::int8 % '0'::int8;
@@ -683,8 +681,6 @@ select '-9223372036854775800'::int8 - '100'::int4;
 ERROR:  bigint out of range
 select '9223372036854775800'::int8 * '100'::int4;
 ERROR:  bigint out of range
-select '-9223372036854775808'::int8 / '-1'::int4;
-ERROR:  bigint out of range
 select '100'::int4 + '9223372036854775800'::int8;
 ERROR:  bigint out of range
 select '-100'::int4 - '9223372036854775800'::int8;
@@ -696,8 +692,6 @@ ERROR:  bigint out of range
 select '-9223372036854775800'::int8 - '100'::int2;
 ERROR:  bigint out of range
 select '9223372036854775800'::int8 * '100'::int2;
-ERROR:  bigint out of range
-select '-9223372036854775808'::int8 / '-1'::int2;
 ERROR:  bigint out of range
 select '-9223372036854775808'::int8 / '0'::int2;
 ERROR:  division by zero
@@ -747,10 +741,6 @@ SELECT CAST('36854775807.0'::float4 AS int8);
  36854775808
 (1 row)
 
-SELECT CAST('9223372036854775807.0'::float4 AS int8);
-ERROR:  bigint out of range
-SELECT CAST('9223372036854775807.0'::float8 AS int8);
-ERROR:  bigint out of range
 SELECT CAST('922337203685477580700.0'::float8 AS int8);
 ERROR:  bigint out of range
 SELECT CAST(q1 AS oid) FROM INT8_TBL;
