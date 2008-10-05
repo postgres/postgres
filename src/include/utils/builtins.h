@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.321 2008/10/03 07:33:10 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.322 2008/10/05 17:33:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,10 +77,6 @@ extern Datum boollt(PG_FUNCTION_ARGS);
 extern Datum boolgt(PG_FUNCTION_ARGS);
 extern Datum boolle(PG_FUNCTION_ARGS);
 extern Datum boolge(PG_FUNCTION_ARGS);
-extern Datum istrue(PG_FUNCTION_ARGS);
-extern Datum isfalse(PG_FUNCTION_ARGS);
-extern Datum isnottrue(PG_FUNCTION_ARGS);
-extern Datum isnotfalse(PG_FUNCTION_ARGS);
 extern Datum booland_statefunc(PG_FUNCTION_ARGS);
 extern Datum boolor_statefunc(PG_FUNCTION_ARGS);
 
@@ -399,8 +395,6 @@ extern Datum pg_read_file(PG_FUNCTION_ARGS);
 extern Datum pg_ls_dir(PG_FUNCTION_ARGS);
 
 /* misc.c */
-extern Datum nullvalue(PG_FUNCTION_ARGS);
-extern Datum nonnullvalue(PG_FUNCTION_ARGS);
 extern Datum current_database(PG_FUNCTION_ARGS);
 extern Datum current_query(PG_FUNCTION_ARGS);
 extern Datum pg_cancel_backend(PG_FUNCTION_ARGS);

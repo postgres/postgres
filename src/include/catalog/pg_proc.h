@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.516 2008/10/03 07:33:09 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.517 2008/10/05 17:33:16 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1189,11 +1189,6 @@ DESCR("convert text to char");
 DATA(insert OID = 946 (  text			   PGNSP PGUID 12 1 0 0 f f t f i 1 25 "18" _null_ _null_ _null_	char_text _null_ _null_ _null_ ));
 DESCR("convert char to text");
 
-DATA(insert OID = 950 (  istrue			   PGNSP PGUID 12 1 0 0 f f f f i 1 16 "16" _null_ _null_ _null_	istrue _null_ _null_ _null_ ));
-DESCR("bool is true (not false or unknown)");
-DATA(insert OID = 951 (  isfalse		   PGNSP PGUID 12 1 0 0 f f f f i 1 16 "16" _null_ _null_ _null_	isfalse _null_ _null_ _null_ ));
-DESCR("bool is false (not true or unknown)");
-
 DATA(insert OID = 952 (  lo_open		   PGNSP PGUID 12 1 0 0 f f t f v 2 23 "26 23" _null_ _null_ _null_ lo_open _null_ _null_ _null_ ));
 DESCR("large object open");
 DATA(insert OID = 953 (  lo_close		   PGNSP PGUID 12 1 0 0 f f t f v 1 23 "23" _null_ _null_ _null_	lo_close _null_ _null_ _null_ ));
@@ -1285,10 +1280,6 @@ DESCR("equal");
 DATA(insert OID = 1026 (  timezone		   PGNSP PGUID 12 1 0 0 f f t f i 2 1114 "1186 1184" _null_ _null_ _null_ timestamptz_izone _null_ _null_ _null_ ));
 DESCR("adjust timestamp to new time zone");
 
-DATA(insert OID = 1029 (  nullvalue		   PGNSP PGUID 12 1 0 0 f f f f i 1 16 "2276" _null_ _null_ _null_ nullvalue _null_ _null_ _null_ ));
-DESCR("(internal)");
-DATA(insert OID = 1030 (  nonnullvalue	   PGNSP PGUID 12 1 0 0 f f f f i 1 16 "2276" _null_ _null_ _null_ nonnullvalue _null_ _null_ _null_ ));
-DESCR("(internal)");
 DATA(insert OID = 1031 (  aclitemin		   PGNSP PGUID 12 1 0 0 f f t f s 1 1033 "2275" _null_ _null_ _null_	aclitemin _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 1032 (  aclitemout	   PGNSP PGUID 12 1 0 0 f f t f s 1 2275 "1033" _null_ _null_ _null_	aclitemout _null_ _null_ _null_ ));
@@ -1839,11 +1830,6 @@ DATA(insert OID = 1415 (  ishorizontal		PGNSP PGUID 12 1 0 0 f f t f i 1	16 "628
 DESCR("horizontal?");
 DATA(insert OID = 1416 (  point				PGNSP PGUID 12 1 0 0 f f t f i 1 600 "718" _null_ _null_ _null_ circle_center _null_ _null_ _null_ ));
 DESCR("center of");
-
-DATA(insert OID = 1417 (  isnottrue			PGNSP PGUID 12 1 0 0 f f f f i 1 16 "16" _null_ _null_ _null_ isnottrue _null_ _null_ _null_ ));
-DESCR("bool is not true (ie, false or unknown)");
-DATA(insert OID = 1418 (  isnotfalse		PGNSP PGUID 12 1 0 0 f f f f i 1 16 "16" _null_ _null_ _null_ isnotfalse _null_ _null_ _null_ ));
-DESCR("bool is not false (ie, true or unknown)");
 
 DATA(insert OID = 1419 (  time				PGNSP PGUID 12 1 0 0 f f t f i 1 1083 "1186" _null_ _null_ _null_ interval_time _null_ _null_ _null_ ));
 DESCR("convert interval to time");
