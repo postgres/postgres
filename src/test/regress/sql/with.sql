@@ -38,6 +38,17 @@ UNION ALL
     SELECT n+1 FROM t)
 SELECT * FROM t LIMIT 10;
 
+-- Test behavior with an unknown-type literal in the WITH
+WITH q AS (SELECT 'foo' AS x)
+SELECT x, x IS OF (unknown) as is_unknown FROM q;
+
+WITH RECURSIVE t(n) AS (
+    SELECT 'foo'
+UNION ALL
+    SELECT n || ' bar' FROM t WHERE length(n) < 20
+)
+SELECT n, n IS OF (text) as is_text FROM t;
+
 --
 -- Some examples with a tree
 --

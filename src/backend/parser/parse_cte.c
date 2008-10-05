@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.1 2008/10/04 21:56:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.2 2008/10/05 22:50:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "catalog/pg_type.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
 #include "parser/parse_cte.h"
@@ -339,6 +340,8 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 	foreach(tlistitem, tlist)
 	{
 		TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
+		Oid			coltype;
+		int32		coltypmod;
 
 		if (te->resjunk)
 			continue;
@@ -351,10 +354,23 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 			attrname = pstrdup(te->resname);
 			cte->ctecolnames = lappend(cte->ctecolnames, makeString(attrname));
 		}
-		cte->ctecoltypes = lappend_oid(cte->ctecoltypes,
-									   exprType((Node *) te->expr));
-		cte->ctecoltypmods = lappend_int(cte->ctecoltypmods,
-										 exprTypmod((Node *) te->expr));
+		coltype = exprType((Node *) te->expr);
+		coltypmod = exprTypmod((Node *) te->expr);
+		/*
+		 * If the CTE is recursive, force the exposed column type of any
+		 * "unknown" column to "text".  This corresponds to the fact that
+		 * SELECT 'foo' UNION SELECT 'bar' will ultimately produce text.
+		 * We might see "unknown" as a result of an untyped literal in
+		 * the non-recursive term's select list, and if we don't convert
+		 * to text then we'll have a mismatch against the UNION result.
+		 */
+		if (cte->cterecursive && coltype == UNKNOWNOID)
+		{
+			coltype = TEXTOID;
+			coltypmod = -1;		/* should be -1 already, but be sure */
+		}
+		cte->ctecoltypes = lappend_oid(cte->ctecoltypes, coltype);
+		cte->ctecoltypmods = lappend_int(cte->ctecoltypmods, coltypmod);
 	}
 	if (varattno < numaliases)
 		ereport(ERROR,

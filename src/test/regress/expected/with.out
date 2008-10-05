@@ -69,6 +69,30 @@ SELECT * FROM t LIMIT 10;
  10
 (10 rows)
 
+-- Test behavior with an unknown-type literal in the WITH
+WITH q AS (SELECT 'foo' AS x)
+SELECT x, x IS OF (unknown) as is_unknown FROM q;
+  x  | is_unknown 
+-----+------------
+ foo | t
+(1 row)
+
+WITH RECURSIVE t(n) AS (
+    SELECT 'foo'
+UNION ALL
+    SELECT n || ' bar' FROM t WHERE length(n) < 20
+)
+SELECT n, n IS OF (text) as is_text FROM t;
+            n            | is_text 
+-------------------------+---------
+ foo                     | t
+ foo bar                 | t
+ foo bar bar             | t
+ foo bar bar bar         | t
+ foo bar bar bar bar     | t
+ foo bar bar bar bar bar | t
+(6 rows)
+
 --
 -- Some examples with a tree
 --
