@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.165 2008/10/04 21:56:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.166 2008/10/05 22:20:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,8 +297,16 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 			/* not a simple relation, leave it unmarked */
 			break;
 		case RTE_CTE:
-			/* CTE reference: copy up from the subquery */
-			if (attnum != InvalidAttrNumber)
+			/*
+			 * CTE reference: copy up from the subquery, if possible.
+			 * If the RTE is a recursive self-reference then we can't do
+			 * anything because we haven't finished analyzing it yet.
+			 * However, it's no big loss because we must be down inside
+			 * the recursive term of a recursive CTE, and so any markings
+			 * on the current targetlist are not going to affect the results
+			 * anyway.
+			 */
+			if (attnum != InvalidAttrNumber && !rte->self_reference)
 			{
 				CommonTableExpr *cte = GetCTEForRTE(pstate, rte);
 				TargetEntry *ste;
@@ -1195,8 +1203,9 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 			 */
 			break;
 		case RTE_CTE:
+			/* CTE reference: examine subquery's output expr */
+			if (!rte->self_reference)
 			{
-				/* CTE reference: examine subquery's output expr */
 				CommonTableExpr *cte = GetCTEForRTE(pstate, rte);
 				TargetEntry *ste;
 

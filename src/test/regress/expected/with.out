@@ -96,20 +96,20 @@ INSERT INTO department VALUES (7, 5, 'G');
 WITH RECURSIVE subdepartment AS
 (
 	-- non recursive term
-	SELECT * FROM department WHERE name = 'A'
+	SELECT name as root_name, * FROM department WHERE name = 'A'
 	UNION ALL
 	-- recursive term
-	SELECT d.* FROM department AS d, subdepartment AS sd
+	SELECT sd.root_name, d.* FROM department AS d, subdepartment AS sd
 		WHERE d.parent_department = sd.id
 )
 SELECT * FROM subdepartment ORDER BY name;
- id | parent_department | name 
-----+-------------------+------
-  1 |                 0 | A
-  2 |                 1 | B
-  3 |                 2 | C
-  4 |                 2 | D
-  6 |                 4 | F
+ root_name | id | parent_department | name 
+-----------+----+-------------------+------
+ A         |  1 |                 0 | A
+ A         |  2 |                 1 | B
+ A         |  3 |                 2 | C
+ A         |  4 |                 2 | D
+ A         |  6 |                 4 | F
 (5 rows)
 
 -- extract all departments under 'A' with "level" number
