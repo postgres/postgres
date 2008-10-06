@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.166 2008/10/05 22:20:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.167 2008/10/06 15:15:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,7 +308,7 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 			 */
 			if (attnum != InvalidAttrNumber && !rte->self_reference)
 			{
-				CommonTableExpr *cte = GetCTEForRTE(pstate, rte);
+				CommonTableExpr *cte = GetCTEForRTE(pstate, rte, netlevelsup);
 				TargetEntry *ste;
 
 				/* should be analyzed by now */
@@ -1206,7 +1206,7 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 			/* CTE reference: examine subquery's output expr */
 			if (!rte->self_reference)
 			{
-				CommonTableExpr *cte = GetCTEForRTE(pstate, rte);
+				CommonTableExpr *cte = GetCTEForRTE(pstate, rte, netlevelsup);
 				TargetEntry *ste;
 
 				/* should be analyzed by now */
@@ -1230,7 +1230,9 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 
 					MemSet(&mypstate, 0, sizeof(mypstate));
 					/* this loop must work, since GetCTEForRTE did */
-					for (levelsup = 0; levelsup < rte->ctelevelsup; levelsup++)
+					for (levelsup = 0;
+						 levelsup < rte->ctelevelsup + netlevelsup;
+						 levelsup++)
 						pstate = pstate->parentParseState;
 					mypstate.parentParseState = pstate;
 					mypstate.p_rtable = ((Query *) cte->ctequery)->rtable;

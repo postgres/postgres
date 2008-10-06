@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.137 2008/10/06 02:12:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.138 2008/10/06 15:15:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,15 +371,23 @@ GetRTEByRangeTablePosn(ParseState *pstate,
 
 /*
  * Fetch the CTE for a CTE-reference RTE.
+ *
+ * rtelevelsup is the number of query levels above the given pstate that the
+ * RTE came from.  Callers that don't have this information readily available
+ * may pass -1 instead.
  */
 CommonTableExpr *
-GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte)
+GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte, int rtelevelsup)
 {
 	Index		levelsup;
 	ListCell   *lc;
 
+	/* Determine RTE's levelsup if caller didn't know it */
+	if (rtelevelsup < 0)
+		(void) RTERangeTablePosn(pstate, rte, &rtelevelsup);
+
 	Assert(rte->rtekind == RTE_CTE);
-	levelsup = rte->ctelevelsup;
+	levelsup = rte->ctelevelsup + rtelevelsup;
 	while (levelsup-- > 0)
 	{
 		pstate = pstate->parentParseState;

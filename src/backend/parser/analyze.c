@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.380 2008/10/04 21:56:54 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.381 2008/10/06 15:15:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1896,7 +1896,7 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc)
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 									 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to an outer-level WITH query")));
-						cte = GetCTEForRTE(pstate, rte);
+						cte = GetCTEForRTE(pstate, rte, -1);
 						/* should be analyzed by now */
 						Assert(IsA(cte->ctequery, Query));
 						transformLockingClause(pstate,
@@ -1989,7 +1989,7 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc)
 											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 											 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to an outer-level WITH query"),
 											 parser_errposition(pstate, thisrel->location)));
-								cte = GetCTEForRTE(pstate, rte);
+								cte = GetCTEForRTE(pstate, rte, -1);
 								/* should be analyzed by now */
 								Assert(IsA(cte->ctequery, Query));
 								transformLockingClause(pstate,
