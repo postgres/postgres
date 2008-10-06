@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.7 2008/05/30 00:04:32 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.8 2008/10/06 02:55:20 tgl Exp $
 
 use strict;
 
@@ -95,6 +95,7 @@ sub installcheck
 {
     my @args = (
         "../../../$Config/pg_regress/pg_regress",
+        "--dlpath=.",
         "--psqldir=../../../$Config/psql",
         "--schedule=${schedule}_schedule",
         "--multibyte=SQL_ASCII",
@@ -111,6 +112,7 @@ sub check
 {
     my @args = (
         "../../../$Config/pg_regress/pg_regress",
+        "--dlpath=.",
         "--psqldir=../../../$Config/psql",
         "--schedule=${schedule}_schedule",
         "--multibyte=SQL_ASCII",
