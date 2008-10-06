@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.78 2008/08/11 11:05:10 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.79 2008/10/06 14:13:17 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,38 @@
 
 
 #define OIDCHARS		10			/* max chars printed by %u */
-#define FORKNUMCHARS	1			/* max chars for a fork number */
+#define FORKNAMECHARS	4			/* max chars for a fork name */
 
+/*
+ * Lookup table of fork name by fork number.
+ *
+ * If you add a new entry, remember to update the errhint below, and the
+ * documentation for pg_relation_size(). Also keep FORKNAMECHARS above
+ * up-to-date.
+ */
+const char *forkNames[] = {
+	"main", /* MAIN_FORKNUM */
+	"fsm"   /* FSM_FORKNUM */
+};
+
+/*
+ * forkname_to_number - look up fork number by name
+ */
+ForkNumber
+forkname_to_number(char *forkName)
+{
+	ForkNumber forkNum;
+
+	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+		if (strcmp(forkNames[forkNum], forkName) == 0)
+			return forkNum;
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("invalid fork name"),
+			 errhint("Valid fork names are 'main' and 'fsm'")));
+	return InvalidForkNumber; /* keep compiler quiet */
+}
 
 /*
  * relpath			- construct path to a relation's file
@@ -61,22 +91,22 @@ relpath(RelFileNode rnode, ForkNumber forknum)
 	{
 		/* Shared system relations live in {datadir}/global */
 		Assert(rnode.dbNode == 0);
-		pathlen = 7 + OIDCHARS + 1 + FORKNUMCHARS + 1;
+		pathlen = 7 + OIDCHARS + 1 + FORKNAMECHARS + 1;
 		path = (char *) palloc(pathlen);
 		if (forknum != MAIN_FORKNUM)
-			snprintf(path, pathlen, "global/%u_%u",
-					 rnode.relNode, forknum);
+			snprintf(path, pathlen, "global/%u_%s",
+					 rnode.relNode, forkNames[forknum]);
 		else
 			snprintf(path, pathlen, "global/%u", rnode.relNode);
 	}
 	else if (rnode.spcNode == DEFAULTTABLESPACE_OID)
 	{
 		/* The default tablespace is {datadir}/base */
-		pathlen = 5 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNUMCHARS + 1;
+		pathlen = 5 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
 		path = (char *) palloc(pathlen);
 		if (forknum != MAIN_FORKNUM)
-			snprintf(path, pathlen, "base/%u/%u_%u",
-					 rnode.dbNode, rnode.relNode, forknum);
+			snprintf(path, pathlen, "base/%u/%u_%s",
+					 rnode.dbNode, rnode.relNode, forkNames[forknum]);
 		else
 			snprintf(path, pathlen, "base/%u/%u",
 					 rnode.dbNode, rnode.relNode);
@@ -85,11 +115,12 @@ relpath(RelFileNode rnode, ForkNumber forknum)
 	{
 		/* All other tablespaces are accessed via symlinks */
 		pathlen = 10 + OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS + 1
-			+ FORKNUMCHARS + 1;
+			+ FORKNAMECHARS + 1;
 		path = (char *) palloc(pathlen);
 		if (forknum != MAIN_FORKNUM)
-			snprintf(path, pathlen, "pg_tblspc/%u/%u/%u_%u",
-					 rnode.spcNode, rnode.dbNode, rnode.relNode, forknum);
+			snprintf(path, pathlen, "pg_tblspc/%u/%u/%u_%s",
+					 rnode.spcNode, rnode.dbNode, rnode.relNode,
+					 forkNames[forknum]);
 		else
 			snprintf(path, pathlen, "pg_tblspc/%u/%u/%u",
 					 rnode.spcNode, rnode.dbNode, rnode.relNode);

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.25 2008/09/30 10:52:10 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.26 2008/10/06 14:13:17 heikki Exp $ -->
 
 <chapter id="storage">
 
@@ -134,8 +134,7 @@ or index's <firstterm>filenode</> number, which can be found in
 main file (aka. main fork), a <firstterm>free space map</> (see
 <xref linkend="storage-fsm">) that stores information about free space
 available in the relation, is stored in a file named after the filenode
-number, with the the _1 suffix. For example, if the table's filenode number
-is 12345, the FSM file is named <filename>12345_1</>.
+number, with the the <literal>_fsm</> suffix.
 </para>
 
 <caution>
@@ -385,9 +384,9 @@ comparison table, in which all the HTML pages were cut down to 7 kB to fit.
 A Free Space Map is stored with every heap and index relation, except for
 hash indexes, to keep track of available space in the relation. It's stored
 along the main relation data, in a separate FSM relation fork, named after
-relfilenode of the relation, but with a <literal>_1</> suffix. For example,
+relfilenode of the relation, but with a <literal>_fsm</> suffix. For example,
 if the relfilenode of a relation is 12345, the FSM is stored in a file called
-<filename>12345_1</>, in the same directory as the main relation file.
+<filename>12345_fsm</>, in the same directory as the main relation file.
 </para>
 
 <para>

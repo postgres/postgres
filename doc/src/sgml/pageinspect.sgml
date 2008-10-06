@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pageinspect.sgml,v 1.4 2008/09/30 10:52:09 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pageinspect.sgml,v 1.5 2008/10/06 14:13:17 heikki Exp $ -->
 
 <sect1 id="pageinspect">
  <title>pageinspect</title>
@@ -19,7 +19,7 @@
   <variablelist>
    <varlistentry>
     <term>
-     <function>get_raw_page(relname text, forknum int, blkno int) returns bytea</function>
+     <function>get_raw_page(relname text, fork text, blkno int) returns bytea</function>
     </term>
 
     <listitem>
@@ -27,8 +27,8 @@
       <function>get_raw_page</function> reads the specified block of the named
       table and returns a copy as a <type>bytea</> value.  This allows a
       single time-consistent copy of the block to be obtained.
-      <literal>forknum</literal> should be 0 for the main data fork, or 1 for
-      the FSM.
+      <literal>fork</literal> should be <literal>'main'</literal> for the main
+      data fork, or <literal>'fsm'</literal> for the FSM.
      </para>
     </listitem>
    </varlistentry>

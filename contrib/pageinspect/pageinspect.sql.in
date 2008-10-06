@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pageinspect/pageinspect.sql.in,v 1.5 2008/09/30 10:52:09 heikki Exp $ */
+/* $PostgreSQL: pgsql/contrib/pageinspect/pageinspect.sql.in,v 1.6 2008/10/06 14:13:17 heikki Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -6,14 +6,14 @@ SET search_path = public;
 --
 -- get_raw_page()
 --
-CREATE OR REPLACE FUNCTION get_raw_page(text, int4, int4)
+CREATE OR REPLACE FUNCTION get_raw_page(text, text, int4)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'get_raw_page'
 LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION get_raw_page(text, int4) 
 RETURNS bytea
-AS $$ SELECT get_raw_page($1, 0, $2); $$
+AS $$ SELECT get_raw_page($1, 'main', $2); $$
 LANGUAGE SQL STRICT;
 
 --

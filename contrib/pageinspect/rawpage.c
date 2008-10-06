@@ -8,7 +8,7 @@
  * Copyright (c) 2007-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.7 2008/09/30 10:52:09 heikki Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.8 2008/10/06 14:13:17 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "access/heapam.h"
 #include "access/transam.h"
+#include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "fmgr.h"
@@ -41,8 +42,9 @@ Datum
 get_raw_page(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_P(0);
-	uint32		forknum = PG_GETARG_UINT32(1);
+	text	   *forkname = PG_GETARG_TEXT_P(1);
 	uint32		blkno = PG_GETARG_UINT32(2);
+	ForkNumber	forknum;
 
 	Relation	rel;
 	RangeVar   *relrv;
@@ -55,10 +57,7 @@ get_raw_page(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to use raw functions"))));
 
-	if (forknum > MAX_FORKNUM)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid fork number")));
+	forknum = forkname_to_number(text_to_cstring(forkname));
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);

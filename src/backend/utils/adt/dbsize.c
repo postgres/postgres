@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.21 2008/10/03 07:33:09 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.22 2008/10/06 14:13:17 heikki Exp $
  *
  */
 
@@ -281,35 +281,6 @@ calculate_relation_size(RelFileNode *rfn, ForkNumber forknum)
 	}
 
 	return totalsize;
-}
-
-
-/*
- * XXX: Consider making this global and moving elsewhere. But currently
- * there's no other users for this.
- *
- * Remember to also update the errhint below if you add entries, and the
- * documentation for pg_relation_size().
- */
-static char *forkNames[] = {
-	"main", /* MAIN_FORKNUM */
-	"fsm"   /* FSM_FORKNUM */
-};
-
-static ForkNumber
-forkname_to_number(char *forkName)
-{
-	ForkNumber forkNum;
-
-	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		if (strcmp(forkNames[forkNum], forkName) == 0)
-			return forkNum;
-
-	ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("invalid fork name"),
-			 errhint("Valid fork names are 'main' and 'fsm'")));
-	return InvalidForkNumber; /* keep compiler quiet */
 }
 
 Datum
