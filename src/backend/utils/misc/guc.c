@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.474 2008/09/30 10:52:13 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.475 2008/10/06 13:05:36 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -6067,6 +6067,8 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 	{
 		case PGC_BOOL:
 			{
+				struct config_bool *lconf = (struct config_bool *) conf;
+
 				/* min_val */
 				values[9] = NULL;
 
@@ -6075,6 +6077,12 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 
 				/* enumvals */
 				values[11] = NULL;
+
+				/* boot_val */
+				values[12] = pstrdup(lconf->boot_val ? "on" : "off");
+
+				/* reset_val */
+				values[13] = pstrdup(lconf->reset_val ? "on" : "off");
 			}
 			break;
 
@@ -6092,6 +6100,14 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 
 				/* enumvals */
 				values[11] = NULL;
+
+ 				/* boot_val */
+ 				snprintf(buffer, sizeof(buffer), "%d", lconf->boot_val);
+ 				values[12] = pstrdup(buffer);
+
+ 				/* reset_val */
+ 				snprintf(buffer, sizeof(buffer), "%d", lconf->reset_val);
+ 				values[13] = pstrdup(buffer);
 			}
 			break;
 
@@ -6109,11 +6125,21 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 
 				/* enumvals */
 				values[11] = NULL;
+
+ 				/* boot_val */
+ 				snprintf(buffer, sizeof(buffer), "%g", lconf->boot_val);
+ 				values[12] = pstrdup(buffer);
+
+ 				/* reset_val */
+ 				snprintf(buffer, sizeof(buffer), "%g", lconf->reset_val);
+ 				values[13] = pstrdup(buffer);
 			}
 			break;
 
 		case PGC_STRING:
 			{
+ 				struct config_string *lconf = (struct config_string *) conf;
+
 				/* min_val */
 				values[9] = NULL;
 
@@ -6122,11 +6148,25 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 
 				/* enumvals */
 				values[11] = NULL;
+
+ 				/* boot_val */
+ 				if (lconf->boot_val == NULL)
+ 					values[12] = NULL;
+				else
+					values[12] = pstrdup(lconf->boot_val);
+
+ 				/* reset_val */
+ 				if (lconf->reset_val == NULL)
+ 					values[13] = NULL;
+				else
+					values[13] = pstrdup(lconf->reset_val);
 			}
 			break;
 
 		case PGC_ENUM:
 			{
+ 				struct config_enum *lconf = (struct config_enum *) conf;
+
 				/* min_val */
 				values[9] = NULL;
 
@@ -6135,6 +6175,12 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 
 				/* enumvals */
 				values[11] = config_enum_get_options((struct config_enum *) conf, "", "");
+
+ 				/* boot_val */
+				values[12] = pstrdup(config_enum_lookup_by_value(lconf, lconf->boot_val));
+
+ 				/* reset_val */
+				values[13] = pstrdup(config_enum_lookup_by_value(lconf, lconf->reset_val));
 			}
 			break;
 
@@ -6152,6 +6198,12 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 
 				/* enumvals */
 				values[11] = NULL;
+
+ 				/* boot_val */
+ 				values[12] = NULL;
+
+ 				/* reset_val */
+ 				values[13] = NULL;
 			}
 			break;
 	}
@@ -6163,14 +6215,14 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 	 */
 	if (conf->source == PGC_S_FILE && superuser())
 	{
-		values[12] = conf->sourcefile;
+		values[14] = conf->sourcefile;
 		snprintf(buffer, sizeof(buffer), "%d", conf->sourceline);
-		values[13] = pstrdup(buffer);
+		values[15] = pstrdup(buffer);
 	}
 	else
 	{
-		values[12] = NULL;
-		values[13] = NULL;
+		values[14] = NULL;
+		values[15] = NULL;
 	}
 }
 
@@ -6207,7 +6259,7 @@ show_config_by_name(PG_FUNCTION_ARGS)
  * show_all_settings - equiv to SHOW ALL command but implemented as
  * a Table Function.
  */
-#define NUM_PG_SETTINGS_ATTS	14
+#define NUM_PG_SETTINGS_ATTS	16
 
 Datum
 show_all_settings(PG_FUNCTION_ARGS)
@@ -6259,9 +6311,13 @@ show_all_settings(PG_FUNCTION_ARGS)
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "enumvals",
 						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 13, "sourcefile",
+ 		TupleDescInitEntry(tupdesc, (AttrNumber) 13, "boot_val",
+ 						   TEXTOID, -1, 0);
+ 		TupleDescInitEntry(tupdesc, (AttrNumber) 14, "reset_val",
+ 						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 15, "sourcefile",
 						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 14, "sourceline",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 16, "sourceline",
 						   INT4OID, -1, 0);
 
 		/*

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.176 2008/09/23 09:20:33 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.177 2008/10/06 13:05:36 mha Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -6434,6 +6434,18 @@
       <entry><type>text</type></entry>
       <entry>Allowed values in enum parameters (NULL for non-enum
       values)</entry>
+     </row>
+     <row>
+      <entry><structfield>boot_val</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>Parameter value assumed at server startup if the parameter is
+      not otherwise set</entry>
+     </row>
+     <row>
+      <entry><structfield>reset_val</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>Default run-time session value for the parameter that it will
+      revert to if <command>RESET</command></entry>
      </row>
      <row>
       <entry><structfield>sourcefile</structfield></entry>
