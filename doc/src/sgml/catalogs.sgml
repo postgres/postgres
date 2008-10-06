@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.177 2008/10/06 13:05:36 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.178 2008/10/06 13:59:37 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -6352,7 +6352,8 @@
   <para>
    The view <structname>pg_settings</structname> provides access to
    run-time parameters of the server.  It is essentially an alternative
-   interface to the <command>SHOW</> and <command>SET</> commands.
+   interface to the <xref linkend="sql-show" endterm="sql-show-title">
+   and <xref linkend="sql-set" endterm="sql-set-title"> commands.
    It also provides access to some facts about each parameter that are
    not directly available from <command>SHOW</>, such as minimum and
    maximum values.
@@ -6398,7 +6399,7 @@
      <row>
       <entry><structfield>extra_desc</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Additional, more detailed, information about the parameter</entry>
+      <entry>Additional, more detailed, description of the parameter</entry>
      </row>
      <row>
       <entry><structfield>context</structfield></entry>
@@ -6432,7 +6433,7 @@
      <row>
       <entry><structfield>enumvals</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Allowed values in enum parameters (NULL for non-enum
+      <entry>Allowed values of an enum parameter (NULL for non-enum
       values)</entry>
      </row>
      <row>
@@ -6444,21 +6445,23 @@
      <row>
       <entry><structfield>reset_val</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Default run-time session value for the parameter that it will
-      revert to if <command>RESET</command></entry>
+      <entry>Value that <command>RESET</command> would reset the parameter to
+      in the current session</entry>
      </row>
      <row>
       <entry><structfield>sourcefile</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Input file the current value was set from (NULL for values set in
-      sources other than configuration files).  Helpful when using
-      configuration include directives.</entry>
+      <entry>Configuration file the current value was set in (NULL for
+      values set from sources other than configuration files, or when
+      examined by a non-superuser).
+      Helpful when using configuration include directives</entry>
      </row>
      <row>
       <entry><structfield>sourceline</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry>Line number within the sourcefile the current value was set
-      from (NULL for values set in sources other than configuration files)
+      <entry><type>integer</type></entry>
+      <entry>Line number within the configuration file the current value was
+      set at (NULL for values set from sources other than configuration files,
+      or when examined by a non-superuser)
       </entry>
      </row>
     </tbody>
