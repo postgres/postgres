@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.114 2008/10/04 21:56:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.115 2008/10/06 17:39:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1057,18 +1057,20 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 			{
 				/* Must expand whole-tuple reference into RowExpr */
 				RowExpr    *rowexpr;
+				List	   *colnames;
 				List	   *fields;
 
 				/*
 				 * If generating an expansion for a var of a named rowtype
 				 * (ie, this is a plain relation RTE), then we must include
 				 * dummy items for dropped columns.  If the var is RECORD (ie,
-				 * this is a JOIN), then omit dropped columns.
+				 * this is a JOIN), then omit dropped columns.  Either way,
+				 * attach column names to the RowExpr for use of ruleutils.c.
 				 */
 				expandRTE(context->target_rte,
 						  this_varno, this_varlevelsup, var->location,
 						  (var->vartype != RECORDOID),
-						  NULL, &fields);
+						  &colnames, &fields);
 				/* Adjust the generated per-field Vars... */
 				fields = (List *) ResolveNew_mutator((Node *) fields,
 													 context);
@@ -1076,6 +1078,7 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 				rowexpr->args = fields;
 				rowexpr->row_typeid = var->vartype;
 				rowexpr->row_format = COERCE_IMPLICIT_CAST;
+				rowexpr->colnames = colnames;
 				rowexpr->location = -1;
 
 				return (Node *) rowexpr;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.33 2008/10/04 21:56:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.34 2008/10/06 17:39:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1172,6 +1172,7 @@ expression_tree_walker(Node *node,
 		case T_ArrayExpr:
 			return walker(((ArrayExpr *) node)->elements, context);
 		case T_RowExpr:
+			/* Assume colnames isn't interesting */
 			return walker(((RowExpr *) node)->args, context);
 		case T_RowCompareExpr:
 			{
@@ -1735,6 +1736,7 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, rowexpr, RowExpr);
 				MUTATE(newnode->args, rowexpr->args, List *);
+				/* Assume colnames needn't be duplicated */
 				return (Node *) newnode;
 			}
 			break;
@@ -2174,6 +2176,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			}
 			break;
 		case T_RowExpr:
+			/* Assume colnames isn't interesting */
 			return walker(((RowExpr *) node)->args, context);
 		case T_CoalesceExpr:
 			return walker(((CoalesceExpr *) node)->args, context);

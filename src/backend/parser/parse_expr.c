@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.234 2008/09/01 20:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.235 2008/10/06 17:39:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1534,6 +1534,7 @@ transformRowExpr(ParseState *pstate, RowExpr *r)
 	/* Barring later casting, we consider the type RECORD */
 	newr->row_typeid = RECORDOID;
 	newr->row_format = COERCE_IMPLICIT_CAST;
+	newr->colnames = NIL;		/* ROW() has anonymous columns */
 	newr->location = r->location;
 
 	return (Node *) newr;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.285 2008/10/04 21:56:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.286 2008/10/06 17:39:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3235,6 +3235,18 @@ get_name_for_var_field(Var *var, int fieldno,
 	deparse_namespace *dpns;
 	TupleDesc	tupleDesc;
 	Node	   *expr;
+
+	/*
+	 * If it's a RowExpr that was expanded from a whole-row Var, use the
+	 * column names attached to it.
+	 */
+	if (IsA(var, RowExpr))
+	{
+		RowExpr	   *r = (RowExpr *) var;
+
+		if (fieldno > 0 && fieldno <= list_length(r->colnames))
+			return strVal(list_nth(r->colnames, fieldno - 1));
+	}
 
 	/*
 	 * If it's a Var of type RECORD, we have to find what the Var refers to;

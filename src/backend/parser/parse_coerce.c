@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.167 2008/09/10 18:29:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.168 2008/10/06 17:39:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -926,6 +926,7 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 	rowexpr->args = newargs;
 	rowexpr->row_typeid = targetTypeId;
 	rowexpr->row_format = cformat;
+	rowexpr->colnames = NIL;	/* not needed for named target type */
 	rowexpr->location = location;
 	return (Node *) rowexpr;
 }

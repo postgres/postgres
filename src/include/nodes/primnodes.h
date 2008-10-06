@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.142 2008/10/04 21:56:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.143 2008/10/06 17:39:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -740,6 +740,12 @@ typedef struct ArrayExpr
  * not RECORD types, since those are built from the RowExpr itself rather
  * than vice versa.)  It is important not to assume that length(args) is
  * the same as the number of columns logically present in the rowtype.
+ *
+ * colnames is NIL in a RowExpr built from an ordinary ROW() expression.
+ * It is provided in cases where we expand a whole-row Var into a RowExpr,
+ * to retain the column alias names of the RTE that the Var referenced
+ * (which would otherwise be very difficult to extract from the parsetree).
+ * Like the args list, it is one-for-one with physical fields of the rowtype.
  */
 typedef struct RowExpr
 {
@@ -754,6 +760,7 @@ typedef struct RowExpr
 	 * parsetrees.	We must assume typmod -1 for a RowExpr node.
 	 */
 	CoercionForm row_format;	/* how to display this node */
+	List	   *colnames;		/* list of String, or NIL */
 	int			location;		/* token location, or -1 if unknown */
 } RowExpr;
 

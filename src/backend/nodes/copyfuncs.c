@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.406 2008/10/04 21:56:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.407 2008/10/06 17:39:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1257,6 +1257,7 @@ _copyRowExpr(RowExpr *from)
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(row_typeid);
 	COPY_SCALAR_FIELD(row_format);
+	COPY_NODE_FIELD(colnames);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
