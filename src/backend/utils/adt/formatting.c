@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.148 2008/09/26 15:35:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.149 2008/10/06 05:03:27 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -1549,7 +1549,7 @@ char *
 str_initcap(const char *buff, size_t nbytes)
 {
 	char		*result;
-	bool		wasalnum = false;
+	int			wasalnum = false;
 
 	if (!buff)
 		return NULL;
