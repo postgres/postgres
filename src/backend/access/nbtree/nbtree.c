@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.162 2008/09/30 10:52:10 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.163 2008/10/06 08:04:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -573,6 +573,9 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 		btvacuumscan(info, stats, NULL, NULL, 0);
 	}
+
+	/* Finally, vacuum the FSM */
+	IndexFreeSpaceMapVacuum(info->index);
 
 	/*
 	 * During a non-FULL vacuum it's quite possible for us to be fooled by

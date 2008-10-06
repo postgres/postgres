@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/indexfsm.c,v 1.1 2008/09/30 10:52:13 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/indexfsm.c,v 1.2 2008/10/06 08:04:11 heikki Exp $
  *
  *
  * NOTES:
@@ -89,4 +89,13 @@ void
 IndexFreeSpaceMapTruncate(Relation rel, BlockNumber nblocks)
 {
 	FreeSpaceMapTruncateRel(rel, nblocks);
+}
+
+/*
+ * IndexFreeSpaceMapVacuum - scan and fix any inconsistencies in the FSM
+ */
+void
+IndexFreeSpaceMapVacuum(Relation rel)
+{
+	FreeSpaceMapVacuum(rel);
 }
