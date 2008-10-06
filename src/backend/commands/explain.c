@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.179 2008/10/04 21:56:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.180 2008/10/06 20:29:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ static void explain_outNode(StringInfo str,
 static void show_plan_tlist(Plan *plan,
 							StringInfo str, int indent, ExplainState *es);
 static void show_scan_qual(List *qual, const char *qlabel,
-			   int scanrelid, Plan *outer_plan, Plan *inner_plan,
+			   int scanrelid, Plan *scan_plan, Plan *outer_plan,
 			   StringInfo str, int indent, ExplainState *es);
 static void show_upper_qual(List *qual, const char *qlabel, Plan *plan,
 				StringInfo str, int indent, ExplainState *es);
@@ -804,19 +804,19 @@ explain_outNode(StringInfo str,
 			show_scan_qual(((IndexScan *) plan)->indexqualorig,
 						   "Index Cond",
 						   ((Scan *) plan)->scanrelid,
-						   outer_plan, NULL,
+						   plan, outer_plan,
 						   str, indent, es);
 			show_scan_qual(plan->qual,
 						   "Filter",
 						   ((Scan *) plan)->scanrelid,
-						   outer_plan, NULL,
+						   plan, outer_plan,
 						   str, indent, es);
 			break;
 		case T_BitmapIndexScan:
 			show_scan_qual(((BitmapIndexScan *) plan)->indexqualorig,
 						   "Index Cond",
 						   ((Scan *) plan)->scanrelid,
-						   outer_plan, NULL,
+						   plan, outer_plan,
 						   str, indent, es);
 			break;
 		case T_BitmapHeapScan:
@@ -824,7 +824,7 @@ explain_outNode(StringInfo str,
 			show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig,
 						   "Recheck Cond",
 						   ((Scan *) plan)->scanrelid,
-						   outer_plan, NULL,
+						   plan, outer_plan,
 						   str, indent, es);
 			/* FALL THRU */
 		case T_SeqScan:
@@ -835,15 +835,14 @@ explain_outNode(StringInfo str,
 			show_scan_qual(plan->qual,
 						   "Filter",
 						   ((Scan *) plan)->scanrelid,
-						   outer_plan, NULL,
+						   plan, outer_plan,
 						   str, indent, es);
 			break;
 		case T_SubqueryScan:
 			show_scan_qual(plan->qual,
 						   "Filter",
 						   ((Scan *) plan)->scanrelid,
-						   outer_plan,
-						   ((SubqueryScan *) plan)->subplan,
+						   plan, outer_plan,
 						   str, indent, es);
 			break;
 		case T_TidScan:
@@ -859,12 +858,12 @@ explain_outNode(StringInfo str,
 				show_scan_qual(tidquals,
 							   "TID Cond",
 							   ((Scan *) plan)->scanrelid,
-							   outer_plan, NULL,
+							   plan, outer_plan,
 							   str, indent, es);
 				show_scan_qual(plan->qual,
 							   "Filter",
 							   ((Scan *) plan)->scanrelid,
-							   outer_plan, NULL,
+							   plan, outer_plan,
 							   str, indent, es);
 			}
 			break;
@@ -1121,9 +1120,10 @@ show_plan_tlist(Plan *plan,
 		return;
 
 	/* Set up deparsing context */
-	context = deparse_context_for_plan((Node *) outerPlan(plan),
-									   (Node *) innerPlan(plan),
-									   es->rtable);
+	context = deparse_context_for_plan((Node *) plan,
+									   NULL,
+									   es->rtable,
+									   es->pstmt->subplans);
 	useprefix = list_length(es->rtable) > 1;
 
 	/* Emit line prefix */
@@ -1153,12 +1153,11 @@ show_plan_tlist(Plan *plan,
  * Show a qualifier expression for a scan plan node
  *
  * Note: outer_plan is the referent for any OUTER vars in the scan qual;
- * this would be the outer side of a nestloop plan.  inner_plan should be
- * NULL except for a SubqueryScan plan node, where it should be the subplan.
+ * this would be the outer side of a nestloop plan.  Pass NULL if none.
  */
 static void
 show_scan_qual(List *qual, const char *qlabel,
-			   int scanrelid, Plan *outer_plan, Plan *inner_plan,
+			   int scanrelid, Plan *scan_plan, Plan *outer_plan,
 			   StringInfo str, int indent, ExplainState *es)
 {
 	List	   *context;
@@ -1175,10 +1174,11 @@ show_scan_qual(List *qual, const char *qlabel,
 	node = (Node *) make_ands_explicit(qual);
 
 	/* Set up deparsing context */
-	context = deparse_context_for_plan((Node *) outer_plan,
-									   (Node *) inner_plan,
-									   es->rtable);
-	useprefix = (outer_plan != NULL || inner_plan != NULL);
+	context = deparse_context_for_plan((Node *) scan_plan,
+									   (Node *) outer_plan,
+									   es->rtable,
+									   es->pstmt->subplans);
+	useprefix = (outer_plan != NULL || IsA(scan_plan, SubqueryScan));
 
 	/* Deparse the expression */
 	exprstr = deparse_expression(node, context, useprefix, false);
@@ -1207,9 +1207,10 @@ show_upper_qual(List *qual, const char *qlabel, Plan *plan,
 		return;
 
 	/* Set up deparsing context */
-	context = deparse_context_for_plan((Node *) outerPlan(plan),
-									   (Node *) innerPlan(plan),
-									   es->rtable);
+	context = deparse_context_for_plan((Node *) plan,
+									   NULL,
+									   es->rtable,
+									   es->pstmt->subplans);
 	useprefix = list_length(es->rtable) > 1;
 
 	/* Deparse the expression */
@@ -1244,9 +1245,10 @@ show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
 	appendStringInfo(str, "  %s: ", qlabel);
 
 	/* Set up deparsing context */
-	context = deparse_context_for_plan((Node *) outerPlan(sortplan),
-									   NULL,	/* Sort has no innerPlan */
-									   es->rtable);
+	context = deparse_context_for_plan((Node *) sortplan,
+									   NULL,
+									   es->rtable,
+									   es->pstmt->subplans);
 	useprefix = list_length(es->rtable) > 1;
 
 	for (keyno = 0; keyno < nkeys; keyno++)

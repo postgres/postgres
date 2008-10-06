@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.286 2008/10/06 17:39:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.287 2008/10/06 20:29:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,14 +91,19 @@ typedef struct
  * A Var having varlevelsup=N refers to the N'th item (counting from 0) in
  * the current context's namespaces list.
  *
- * The rangetable is the list of actual RTEs from the query tree.
+ * The rangetable is the list of actual RTEs from the query tree, and the
+ * cte list is the list of actual CTEs.
  *
  * For deparsing plan trees, we provide for outer and inner subplan nodes.
  * The tlists of these nodes are used to resolve OUTER and INNER varnos.
+ * Also, in the plan-tree case we don't have access to the parse-time CTE
+ * list, so we need a list of subplans instead.
  */
 typedef struct
 {
 	List	   *rtable;			/* List of RangeTblEntry nodes */
+	List	   *ctes;			/* List of CommonTableExpr nodes */
+	List	   *subplans;		/* List of subplans, in plan-tree case */
 	Plan	   *outer_plan;		/* OUTER subplan, or NULL if none */
 	Plan	   *inner_plan;		/* INNER subplan, or NULL if none */
 } deparse_namespace;
@@ -162,6 +167,7 @@ static void get_setop_query(Node *setOp, Query *query,
 static Node *get_rule_sortgroupclause(SortGroupClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
+static void push_plan(deparse_namespace *dpns, Plan *subplan);
 static char *get_variable(Var *var, int levelsup, bool showstar,
 			 deparse_context *context);
 static RangeTblEntry *find_rte_by_refname(const char *refname,
@@ -197,7 +203,7 @@ static void get_opclass_name(Oid opclass, Oid actual_datatype,
 static Node *processIndirection(Node *node, deparse_context *context,
 				   bool printit);
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
-static char *generate_relation_name(Oid relid);
+static char *generate_relation_name(Oid relid, List *namespaces);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 									bool *is_variadic);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
@@ -514,13 +520,14 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 			appendStringInfo(&buf, " TRUNCATE");
 	}
 	appendStringInfo(&buf, " ON %s ",
-					 generate_relation_name(trigrec->tgrelid));
+					 generate_relation_name(trigrec->tgrelid, NIL));
 
 	if (trigrec->tgisconstraint)
 	{
 		if (trigrec->tgconstrrelid != InvalidOid)
 			appendStringInfo(&buf, "FROM %s ",
-							 generate_relation_name(trigrec->tgconstrrelid));
+							 generate_relation_name(trigrec->tgconstrrelid,
+													NIL));
 		if (!trigrec->tgdeferrable)
 			appendStringInfo(&buf, "NOT ");
 		appendStringInfo(&buf, "DEFERRABLE INITIALLY ");
@@ -720,7 +727,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
 		appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
 						 idxrec->indisunique ? "UNIQUE " : "",
 						 quote_identifier(NameStr(idxrelrec->relname)),
-						 generate_relation_name(indrelid),
+						 generate_relation_name(indrelid, NIL),
 						 quote_identifier(NameStr(amrec->amname)));
 
 	/*
@@ -911,7 +918,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 	if (fullCommand && OidIsValid(conForm->conrelid))
 	{
 		appendStringInfo(&buf, "ALTER TABLE ONLY %s ADD CONSTRAINT %s ",
-						 generate_relation_name(conForm->conrelid),
+						 generate_relation_name(conForm->conrelid, NIL),
 						 quote_identifier(NameStr(conForm->conname)));
 	}
 
@@ -937,7 +944,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				/* add foreign relation name */
 				appendStringInfo(&buf, ") REFERENCES %s(",
-								 generate_relation_name(conForm->confrelid));
+								 generate_relation_name(conForm->confrelid,
+														NIL));
 
 				/* Fetch and build referenced-column list */
 				val = SysCacheGetAttr(CONSTROID, tup,
@@ -1802,6 +1810,8 @@ deparse_context_for(const char *aliasname, Oid relid)
 
 	/* Build one-element rtable */
 	dpns->rtable = list_make1(rte);
+	dpns->ctes = NIL;
+	dpns->subplans = NIL;
 	dpns->outer_plan = dpns->inner_plan = NULL;
 
 	/* Return a one-deep namespace stack */
@@ -1812,29 +1822,47 @@ deparse_context_for(const char *aliasname, Oid relid)
  * deparse_context_for_plan		- Build deparse context for a plan node
  *
  * When deparsing an expression in a Plan tree, we might have to resolve
- * OUTER or INNER references.  Pass the plan nodes whose targetlists define
- * such references, or NULL when none are expected.  (outer_plan and
- * inner_plan really ought to be declared as "Plan *", but we use "Node *"
- * to avoid having to include plannodes.h in builtins.h.)
+ * OUTER or INNER references.  To do this, the caller must provide the
+ * parent Plan node.  In the normal case of a join plan node, OUTER and
+ * INNER references can be resolved by drilling down into the left and
+ * right child plans.  A special case is that a nestloop inner indexscan
+ * might have OUTER Vars, but the outer side of the join is not a child
+ * plan node.  To handle such cases the outer plan node must be passed
+ * separately.  (Pass NULL for outer_plan otherwise.)
  *
- * As a special case, when deparsing a SubqueryScan plan, pass the subplan
- * as inner_plan (there won't be any regular innerPlan() in this case).
+ * Note: plan and outer_plan really ought to be declared as "Plan *", but
+ * we use "Node *" to avoid having to include plannodes.h in builtins.h.
  *
  * The plan's rangetable list must also be passed.  We actually prefer to use
- * the rangetable to resolve simple Vars, but the subplan inputs are needed
+ * the rangetable to resolve simple Vars, but the plan inputs are necessary
  * for Vars that reference expressions computed in subplan target lists.
+ *
+ * We also need the list of subplans associated with the Plan tree; this
+ * is for resolving references to CTE subplans.
  */
 List *
-deparse_context_for_plan(Node *outer_plan, Node *inner_plan,
-						 List *rtable)
+deparse_context_for_plan(Node *plan, Node *outer_plan,
+						 List *rtable, List *subplans)
 {
 	deparse_namespace *dpns;
 
 	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
 
 	dpns->rtable = rtable;
-	dpns->outer_plan = (Plan *) outer_plan;
-	dpns->inner_plan = (Plan *) inner_plan;
+	dpns->ctes = NIL;
+	dpns->subplans = subplans;
+
+	/*
+	 * Set up outer_plan and inner_plan from the Plan node (this includes
+	 * various special cases for particular Plan types).
+	 */
+	push_plan(dpns, (Plan *) plan);
+
+	/*
+	 * If outer_plan is given, that overrides whatever we got from the plan.
+	 */
+	if (outer_plan)
+		dpns->outer_plan = (Plan *) outer_plan;
 
 	/* Return a one-deep namespace stack */
 	return list_make1(dpns);
@@ -1937,7 +1965,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	}
 
 	/* The relation the rule is fired on */
-	appendStringInfo(buf, " TO %s", generate_relation_name(ev_class));
+	appendStringInfo(buf, " TO %s", generate_relation_name(ev_class, NIL));
 	if (ev_attr > 0)
 		appendStringInfo(buf, ".%s",
 						 quote_identifier(get_relid_attribute_name(ev_class,
@@ -1982,6 +2010,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		context.prettyFlags = prettyFlags;
 		context.indentLevel = PRETTYINDENT_STD;
 		dpns.rtable = query->rtable;
+		dpns.ctes = query->cteList;
+		dpns.subplans = NIL;
 		dpns.outer_plan = dpns.inner_plan = NULL;
 
 		get_rule_expr(qual, &context, false);
@@ -2125,6 +2155,8 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	context.indentLevel = startIndent;
 
 	dpns.rtable = query->rtable;
+	dpns.ctes = query->cteList;
+	dpns.subplans = NIL;
 	dpns.outer_plan = dpns.inner_plan = NULL;
 
 	switch (query->commandType)
@@ -2749,7 +2781,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		appendStringInfoChar(buf, ' ');
 	}
 	appendStringInfo(buf, "INSERT INTO %s (",
-					 generate_relation_name(rte->relid));
+					 generate_relation_name(rte->relid, NIL));
 
 	/*
 	 * Add the insert-column-names list.  To handle indirection properly, we
@@ -2861,7 +2893,7 @@ get_update_query_def(Query *query, deparse_context *context)
 	}
 	appendStringInfo(buf, "UPDATE %s%s",
 					 only_marker(rte),
-					 generate_relation_name(rte->relid));
+					 generate_relation_name(rte->relid, NIL));
 	if (rte->alias != NULL)
 		appendStringInfo(buf, " %s",
 						 quote_identifier(rte->alias->aliasname));
@@ -2942,7 +2974,7 @@ get_delete_query_def(Query *query, deparse_context *context)
 	}
 	appendStringInfo(buf, "DELETE FROM %s%s",
 					 only_marker(rte),
-					 generate_relation_name(rte->relid));
+					 generate_relation_name(rte->relid, NIL));
 	if (rte->alias != NULL)
 		appendStringInfo(buf, " %s",
 						 quote_identifier(rte->alias->aliasname));
@@ -3003,6 +3035,8 @@ get_utility_query_def(Query *query, deparse_context *context)
  * (although in a Plan tree there really shouldn't be any).
  *
  * Caller must save and restore outer_plan and inner_plan around this.
+ *
+ * We also use this to initialize the fields during deparse_context_for_plan.
  */
 static void
 push_plan(deparse_namespace *dpns, Plan *subplan)
@@ -3019,9 +3053,19 @@ push_plan(deparse_namespace *dpns, Plan *subplan)
 	/*
 	 * For a SubqueryScan, pretend the subplan is INNER referent.  (We don't
 	 * use OUTER because that could someday conflict with the normal meaning.)
+	 * Likewise, for a CteScan, pretend the subquery's plan is INNER referent.
 	 */
 	if (IsA(subplan, SubqueryScan))
 		dpns->inner_plan = ((SubqueryScan *) subplan)->subplan;
+	else if (IsA(subplan, CteScan))
+	{
+		int		ctePlanId = ((CteScan *) subplan)->ctePlanId;
+
+		if (ctePlanId > 0 && ctePlanId <= list_length(dpns->subplans))
+			dpns->inner_plan = list_nth(dpns->subplans, ctePlanId - 1);
+		else
+			dpns->inner_plan = NULL;
+	}
 	else
 		dpns->inner_plan = innerPlan(subplan);
 }
@@ -3346,8 +3390,8 @@ get_name_for_var_field(Var *var, int fieldno,
 	 * This part has essentially the same logic as the parser's
 	 * expandRecordVariable() function, but we are dealing with a different
 	 * representation of the input context, and we only need one field name
-	 * not a TupleDesc.  Also, we need a special case for deparsing Plan
-	 * trees, because the subquery field has been removed from SUBQUERY RTEs.
+	 * not a TupleDesc.  Also, we need special cases for finding subquery
+	 * and CTE subplans when deparsing Plan trees.
 	 */
 	expr = (Node *) var;		/* default if we can't drill down */
 
@@ -3364,10 +3408,10 @@ get_name_for_var_field(Var *var, int fieldno,
 			 */
 			break;
 		case RTE_SUBQUERY:
+			/* Subselect-in-FROM: examine sub-select's output expr */
 			{
 				if (rte->subquery)
 				{
-					/* Subselect-in-FROM: examine sub-select's output expr */
 					TargetEntry *ste = get_tle_by_resno(rte->subquery->targetList,
 														attnum);
 
@@ -3387,6 +3431,8 @@ get_name_for_var_field(Var *var, int fieldno,
 						const char *result;
 
 						mydpns.rtable = rte->subquery->rtable;
+						mydpns.ctes = rte->subquery->cteList;
+						mydpns.subplans = NIL;
 						mydpns.outer_plan = mydpns.inner_plan = NULL;
 
 						context->namespaces = lcons(&mydpns,
@@ -3406,10 +3452,10 @@ get_name_for_var_field(Var *var, int fieldno,
 				{
 					/*
 					 * We're deparsing a Plan tree so we don't have complete
-					 * RTE entries.  But the only place we'd see a Var
-					 * directly referencing a SUBQUERY RTE is in a
-					 * SubqueryScan plan node, and we can look into the child
-					 * plan's tlist instead.
+					 * RTE entries (in particular, rte->subquery is NULL).
+					 * But the only place we'd see a Var directly referencing
+					 * a SUBQUERY RTE is in a SubqueryScan plan node, and we
+					 * can look into the child plan's tlist instead.
 					 */
 					TargetEntry *tle;
 					Plan	   *save_outer;
@@ -3458,11 +3504,107 @@ get_name_for_var_field(Var *var, int fieldno,
 			 */
 			break;
 		case RTE_CTE:
-			/*
-			 * XXX not implemented yet, we need more infrastructure in
-			 * deparse_namespace and explain.c.
-			 */
-			elog(ERROR, "deparsing field references to whole-row vars from WITH queries not implemented yet");
+			/* CTE reference: examine subquery's output expr */
+			{
+				CommonTableExpr *cte = NULL;
+				Index		ctelevelsup;
+				ListCell   *lc;
+
+				/*
+				 * Try to find the referenced CTE using the namespace stack.
+				 */
+				ctelevelsup = rte->ctelevelsup + netlevelsup;
+				if (ctelevelsup >= list_length(context->namespaces))
+					lc = NULL;
+				else
+				{
+					deparse_namespace *ctedpns;
+
+					ctedpns = (deparse_namespace *)
+						list_nth(context->namespaces, ctelevelsup);
+					foreach(lc, ctedpns->ctes)
+					{
+						cte = (CommonTableExpr *) lfirst(lc);
+						if (strcmp(cte->ctename, rte->ctename) == 0)
+							break;
+					}
+				}
+				if (lc != NULL)
+				{
+					Query	   *ctequery = (Query *) cte->ctequery;
+					TargetEntry *ste = get_tle_by_resno(ctequery->targetList,
+														attnum);
+
+					if (ste == NULL || ste->resjunk)
+						elog(ERROR, "subquery %s does not have attribute %d",
+							 rte->eref->aliasname, attnum);
+					expr = (Node *) ste->expr;
+					if (IsA(expr, Var))
+					{
+						/*
+						 * Recurse into the CTE to see what its Var refers
+						 * to.  We have to build an additional level of
+						 * namespace to keep in step with varlevelsup in the
+						 * CTE.  Furthermore it could be an outer CTE, so
+						 * we may have to delete some levels of namespace.
+						 */
+						List	   *save_nslist = context->namespaces;
+						List	   *new_nslist;
+						deparse_namespace mydpns;
+						const char *result;
+
+						mydpns.rtable = ctequery->rtable;
+						mydpns.ctes = ctequery->cteList;
+						mydpns.subplans = NIL;
+						mydpns.outer_plan = mydpns.inner_plan = NULL;
+
+						new_nslist = list_copy_tail(context->namespaces,
+													ctelevelsup);
+						context->namespaces = lcons(&mydpns, new_nslist);
+
+						result = get_name_for_var_field((Var *) expr, fieldno,
+														0, context);
+
+						context->namespaces = save_nslist;
+
+						return result;
+					}
+					/* else fall through to inspect the expression */
+				}
+				else
+				{
+					/*
+					 * We're deparsing a Plan tree so we don't have a CTE
+					 * list.  But the only place we'd see a Var directly
+					 * referencing a CTE RTE is in a CteScan plan node, and
+					 * we can look into the subplan's tlist instead.
+					 */
+					TargetEntry *tle;
+					Plan	   *save_outer;
+					Plan	   *save_inner;
+					const char *result;
+
+					if (!dpns->inner_plan)
+						elog(ERROR, "failed to find plan for CTE %s",
+							 rte->eref->aliasname);
+					tle = get_tle_by_resno(dpns->inner_plan->targetlist,
+										   attnum);
+					if (!tle)
+						elog(ERROR, "bogus varattno for subquery var: %d",
+							 attnum);
+					Assert(netlevelsup == 0);
+					save_outer = dpns->outer_plan;
+					save_inner = dpns->inner_plan;
+					push_plan(dpns, dpns->inner_plan);
+
+					result = get_name_for_var_field((Var *) tle->expr, fieldno,
+													levelsup, context);
+
+					dpns->outer_plan = save_outer;
+					dpns->inner_plan = save_inner;
+					return result;
+				}
+			}
 			break;
 	}
 
@@ -5218,7 +5360,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				/* Normal relation RTE */
 				appendStringInfo(buf, "%s%s",
 								 only_marker(rte),
-								 generate_relation_name(rte->relid));
+								 generate_relation_name(rte->relid,
+														context->namespaces));
 				break;
 			case RTE_SUBQUERY:
 				/* Subquery RTE */
@@ -5756,12 +5899,19 @@ quote_qualified_identifier(const char *namespace,
  *		Compute the name to display for a relation specified by OID
  *
  * The result includes all necessary quoting and schema-prefixing.
+ *
+ * If namespaces isn't NIL, it must be a list of deparse_namespace nodes.
+ * We will forcibly qualify the relation name if it equals any CTE name
+ * visible in the namespace list.
  */
 static char *
-generate_relation_name(Oid relid)
+generate_relation_name(Oid relid, List *namespaces)
 {
 	HeapTuple	tp;
 	Form_pg_class reltup;
+	bool		need_qual;
+	ListCell   *nslist;
+	char	   *relname;
 	char	   *nspname;
 	char	   *result;
 
@@ -5771,14 +5921,39 @@ generate_relation_name(Oid relid)
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for relation %u", relid);
 	reltup = (Form_pg_class) GETSTRUCT(tp);
+	relname = NameStr(reltup->relname);
 
-	/* Qualify the name if not visible in search path */
-	if (RelationIsVisible(relid))
-		nspname = NULL;
-	else
+	/* Check for conflicting CTE name */
+	need_qual = false;
+	foreach(nslist, namespaces)
+	{
+		deparse_namespace *dpns = (deparse_namespace *) lfirst(nslist);
+		ListCell   *ctlist;
+
+		foreach(ctlist, dpns->ctes)
+		{
+			CommonTableExpr *cte = (CommonTableExpr *) lfirst(ctlist);
+
+			if (strcmp(cte->ctename, relname) == 0)
+			{
+				need_qual = true;
+				break;
+			}
+		}
+		if (need_qual)
+			break;
+	}
+
+	/* Otherwise, qualify the name if not visible in search path */
+	if (!need_qual)
+		need_qual = !RelationIsVisible(relid);
+
+	if (need_qual)
 		nspname = get_namespace_name(reltup->relnamespace);
+	else
+		nspname = NULL;
 
-	result = quote_qualified_identifier(nspname, NameStr(reltup->relname));
+	result = quote_qualified_identifier(nspname, relname);
 
 	ReleaseSysCache(tp);
 

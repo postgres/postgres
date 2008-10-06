@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.322 2008/10/05 17:33:17 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.323 2008/10/06 20:29:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,8 +549,8 @@ extern Datum pg_get_function_result(PG_FUNCTION_ARGS);
 extern char *deparse_expression(Node *expr, List *dpcontext,
 				   bool forceprefix, bool showimplicit);
 extern List *deparse_context_for(const char *aliasname, Oid relid);
-extern List *deparse_context_for_plan(Node *outer_plan, Node *inner_plan,
-						 List *rtable);
+extern List *deparse_context_for_plan(Node *plan, Node *outer_plan,
+						 List *rtable, List *subplans);
 extern const char *quote_identifier(const char *ident);
 extern char *quote_qualified_identifier(const char *namespace,
 						   const char *ident);
