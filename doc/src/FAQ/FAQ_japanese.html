@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:	Thu Apr 24 15:58:18 EDT 2008</p>
+<p>原文最終更新日:	Tue Sep 23 16:19:49 EDT 2008</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -153,7 +153,7 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
       クトは、だれでも参加ができる開発者とユーザのコミュニティにより方向
       付けられます。読者がやらなければならないことは、メーリングリストを
       サブスクライブして、議論に 参加することです。（<a
-      href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">Developer's
+      href="http://wiki.postgresql.org/wiki/Developer_FAQ">Developer's
       FAQ</a>には、PostgreSQL開発に加わり方についての情報があります。）</p>
 
 
@@ -236,8 +236,8 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
     <p>PostgreSQL は、Win2000 SP4, WinXP, そして、Win2003 など Microsoft
     Windows NTベースのオペレーティングシステムで、ネイティブに走ります。
     あらかじめパッケージにされたインストーラが<a href= 
-    "http://www.postgresql.org/ftp/win32/">
-    http://www.postgresql.org/ftp/win32/</a>
+    "http://www.postgresql.org/download/windows">
+    http://www.postgresql.org/download/windows</a>
     からダウンロードできます。
     MSDOSベースのWindowsのバージョン(Win95, Win98, WinMe)では、Cygwinを
     使って PostgreSQL を走らせることができます。</p>
@@ -251,7 +251,8 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
     </pre></small>
 
     <p>次のサイトに Novell Netware 6 への移植版もあります。
-    <a href="http://forge.novell.com">http://forge.novell.com</a>
+    <a href="http://developer.novell.com/wiki/index.php/Postgresql">
+http://developer.novell.com/wiki/index.php/Postgresql</a>
     また、OS/2 (eComStation) バージョンは、<a href=
     "http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F">
     http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F</a>にあります。</p>
@@ -268,7 +269,7 @@ href="mailto:juk at postgresql.jp">juk at postgresql.jp</a>)<br /></p>
 
 <h4 id="item1.6">1.6</a>) 最新のリリースはどれですか？</h4>
 
-    <p>PostgreSQL の最新版はバージョン 8.3.1 です。</p>
+    <p>PostgreSQL の最新版はバージョン 8.3.4 です。</p>
     <p>我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを
     行なうことを計画しています。</p>
 
@@ -422,7 +423,7 @@ http://www.postgresql.org/docs/</a>でオンラインでも閲覧できます。
     にあります。
 
     PostgreSQL 技術情報記事も、<a href=
-    "http://www.postgresql.org/docs/techdocs">http://www.postgresql.org/docs/techdocs</a>
+    "http://wiki.postgresql.org/wiki/Community_Generated_Articles%2C_Guides%2C_and_Documentation">http://wiki.postgresql.org/wiki/Community_Generated_Articles%2C_Guides%2C_and_Documentation</a>
     にあります。</p>
 
     <p><small><pre>
@@ -462,6 +463,9 @@ http://www.postgresql.org/docs/</a>でオンラインでも閲覧できます。
     <li><a href=
     "http://mysite.verizon.net/Graeme_Birchall/id1.html">http://mysite.verizon.net/Graeme_Birchall/id1.html</a>
     </li>
+    <li><a href=
+    "http://sqlzoo.net">http://sqlzoo.net</a>
+    </li>
     </ul>
     にあります。</p>
 
@@ -491,7 +495,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
 <h4 id="item1.13">1.13</a>) 他の<small>DBMS</small>と比べPostgreSQLはどうなのですか？ PostgreSQLを組み込みに使えますか？</h4>
 
-    <p>ソフトウェアを計る方法にはいくつかあります。機能と性能と信頼性と
+    <p>ソフトウェアを評価する方法にはいくつかあります。機能と性能と信頼性と
     サポートと価格です。</p> 
 
     <dl>
@@ -628,7 +632,9 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 <h4 id="item2.3">2.3</a>) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？</h4>
 
 
-    <p>商用とオープンソース開発者によるもの両方で、PostgreSQLには多くのGUIツールが利用可能で、詳細なリストは、<a href="http://www.postgresql.org/docs/techdocs">PostgreSQLコミュニティ文書</a> でごらんください。</p>
+    <p>商用とオープンソース開発者によるもの両方で、PostgreSQLには多くのGUIツールが利用可能で、詳細なリストは、<a
+href="http://wiki.postgresql.org/wiki/Community_Guide_to_PostgreSQL_GUI_Tools">
+PostgreSQL GUI ツールについてのコミュニティガイド</a> にてごらんください。</p>
 
     <p><small><pre>
     [訳注:
@@ -723,8 +729,10 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
 <h4 id="item3.4">3.4</a>) どのようなデバグ機能が使えますか？</h4>
 
-    <p>サーバ構成変数には多くの <code>log_*</code> があり、クエリとプロ
-    セスの統計を出力することができ、デバグと性能計測にとても便利です。</p>
+    <p>サーバ構成変数については、
+href="http://www.postgresql.org/docs/current/interactive/runtime-config-logging.html">http://www.postgresql.org/docs/current/interactive/runtime-config-logging.html</a>
+    に示されるように多くの <code>log_*</code> があり、クエリとプロセス
+    の統計情報を出力することができ、デバグや性能測定にはとても便利です。</p>
 
 
 <h4 id="item3.5">3.5</a>) 接続しようとするときに <i>'Sorry, too many clients'</i> が出るのはなぜですか？</h4>
@@ -792,9 +800,9 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     ドウェアに比べると、より信頼性が高く、より性能も良いのです。
     PostgreSQL はほとんどのハードウェアで稼働しますが、信頼性や性能が重
     要な場合は、使用中のハードウェアのオプションについて調査することが
-    賢明です。我々のメーリングリスト上でもハードウェアオプションのトレー
-    ドオフについて議論することができます。</p>
-
+    賢明です。バッテリーバックアップ付きのキャッシュを持つディスクコント
+    ローラも役に立ちます。我々のメーリングリスト上でもハードウェアオプショ
+    ンのトレードオフについて議論することができます。</p>
 <hr />
 
 
@@ -803,13 +811,13 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 <h4 id="item4.1">4.1</a>) 最初の数ロウのみを <small>SELECT</small>するにはどうしますか？ランダムなロウ？
 </h4>
 
-    <p>たったの数行のロウを取り出すために、何行必要かがわかれば、
-    <small>SELECT</small> のときに <small>LIMIT</small> を使います。
-    <small>ORDER BY</small>にインデックスがマッチした場合、まったくクエ
-    リが実行されないこともあります。<small>SELECT</small> のときに何行
-    が必要かを知らなければ、カーソルを使い<small>FETCH</small>します。</p>
+    <p>取得したいロウがほんの数行で、<small>SELECT</small>  の実行時に取得するロウの
+    数が分かっていれば <small>LIMIT</small> を使いましょう。インデックスが 
+    <small>ORDER BY</small> とマッチすれば、クエリ全体を(丸ごと)実行しなくても済む場合も
+   あります。<small>SELECT</small> する時点でロウの数が不明なら、カーソルを使って
+   <small>FETCH</small> しましょう。
 
-   <p>ランダムロウを<small>SELECT</small>するには、次の文を使います： 
+   <p>ランダムにロウを<small>SELECT</small>するには、次の文を使います： 
 <pre>
     SELECT col
     FROM tab
@@ -1231,8 +1239,8 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 <h4 id="item4.18">4.18</a>) 関数から複数のロウまたはカラムを返すにはどうしますか？</h4>
 
     <p>集合を返す関数(Set Returning Functions):
-    <a href="http://www.postgresql.org/docs/techdocs.17">
-    http://www.postgresql.org/docs/techdocs.17</a></p>
+    <a href="http://wiki.postgresql.org/wiki/Return_more_than_one_row_of_data_from_PL/pgSQL_functions">
+    http://wiki.postgresql.org/wiki/Return_more_than_one_row_of_data_from_PL/pgSQL_functions</a>
     を使うと簡単です</p>。
 
 
@@ -1298,7 +1306,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
 
     <p><i>createdb -E</i>コマンドオプションに UTF8 あるいは EUC_JP
-    のエンコーディングを指定してデータベースを作成すか、次のように
+    のエンコーディングを指定してデータベースを作成するか、次のように
     エンコーディングを指定してデータベースを作成してください。</p>
 <pre>
         CREATE DATABASE dbname WITH ENCODING 'UTF8';
@@ -1337,7 +1345,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2008年4月25日
+  最終更新日:	2008年10月8日
   翻訳者:	桑村 潤 (<a href="mailto:juk at postgresql.jp">Jun KUWAMURA &lt;juk at postgresql.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1357,6 +1365,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 		神谷 英孝(<a href="mailto:hkamiya at catvmics.ne.jp">Hidetaka KAMIYA &lt;hkamiya at catvmics.ne.jp&gt;</a>)
 		菅原 敦(<a href="mailto:asugawar at f3.dion.ne.jp">Atsushi SUGAWARA &lt;asugawar at f3.dion.ne.jp&gt;</a>)
 		稲葉 香理(<a href="mailto:i-kaori at sraoss.co.jp">Kaori Inaba &lt;i-kaori at sraoss.co.jp&gt;</a>)
+		芳賀 靖史(<a href="mailto:yasufumi.haga at nifty.com">Yasufumi Haga &lt;yasufumi.haga at nifty.com&gt;</a>)
 
   をはじめ、ポストグレスに関する話題豊富な日本語PostgreSQLメーリングリスト、
   和訳のきっかけを作ってくれたり、いつもチェックをしてくれる

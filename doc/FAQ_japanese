@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Thu Apr 24 15:58:18 EDT 2008
+原文最終更新日: Tue Sep 23 16:19:49 EDT 2008
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at postgresql.jp)
@@ -211,9 +211,9 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 PostgreSQL は、Win2000 SP4, WinXP, そして、Win2003 など Microsoft Windows NTベ
 ースのオペレーティングシステムで、ネイティブに走ります。あらかじめパッケージに
-されたインストーラが http://www.postgresql.org/ftp/win32/ からダウンロードでき
-ます。 MSDOSベースのWindowsのバージョン(Win95, Win98, WinMe)では、Cygwinを使っ
-て PostgreSQL を走らせることができます。
+されたインストーラが http://www.postgresql.org/download/windows からダウンロー
+ドできます。 MSDOSベースのWindowsのバージョン(Win95, Win98, WinMe)では、Cygwin
+を使って PostgreSQL を走らせることができます。
 
     [訳注
         日本語での情報は、次の Windows版に関するFAQの和訳をごらんくださ
@@ -222,9 +222,10 @@ PostgreSQL は、Win2000 SP4, WinXP, そして、Win2003 など Microsoft Windows NTベ
     ]
 
 
-次のサイトに Novell Netware 6 への移植版もあります。 http://forge.novell.com ま
-た、OS/2 (eComStation) バージョンは、 http://hobbes.nmsu.edu/cgi-bin/h-search?
-sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2Fにあります。
+次のサイトに Novell Netware 6 への移植版もあります。 http://
+developer.novell.com/wiki/index.php/Postgresql また、OS/2 (eComStation) バージ
+ョンは、 http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=
+postgreSQL&stype=all&sort=type&dir=%2Fにあります。
 
 
 1.5) PostgreSQL はどこから入手できますか？
@@ -234,7 +235,7 @@ ftp://ftp.postgresql.org/pub/ を使います。
 
 1.6) 最新のリリースはどれですか？
 
-PostgreSQL の最新版はバージョン 8.3.1 です。
+PostgreSQL の最新版はバージョン 8.3.4 です。
 
 我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを行なうことを計
 画しています。
@@ -343,7 +344,8 @@ PostgreSQLは拡張されたSQL:2003のサブセットをサポートします。我々のページの TODO
 
 
 購入可能な書籍の目録は、http://www.postgresql.org/docs/books/ にあります。
-PostgreSQL 技術情報記事も、http://www.postgresql.org/docs/techdocs にあります。
+PostgreSQL 技術情報記事も、http://wiki.postgresql.org/wiki/
+Community_Generated_Articles%2C_Guides%2C_and_Documentation にあります。
 
     [訳注:
         日本語の書籍等については、日本PostgreSQLユーザ会の、http://www.postgresql.jp/PostgreSQL/references.html
@@ -369,7 +371,8 @@ Practical SQL Handbook, Bowman Judith S. et al., Addison-Wesley も多くのユーザ
 http://www.intermedia.net/support/sql/sqltut.shtm
 http://sqlcourse.com
 http://www.w3schools.com/sql/default.asp
-http://mysite.verizon.net/Graeme_Birchall/id1.html にあります。
+http://mysite.verizon.net/Graeme_Birchall/id1.html
+http://sqlzoo.net にあります。
 
     [訳注:
          日本PostgreSQLユーザ会の日本語の参考文献の紹介ページ
@@ -394,8 +397,8 @@ http://www.postgresql.jp/PostgreSQL/references.html
 1.13) 他のDBMSと比べPostgreSQLはどうなのですか？ PostgreSQLを組み込みに使えます
 か？
 
-ソフトウェアを計る方法にはいくつかあります。機能と性能と信頼性とサポートと価格
-です。
+ソフトウェアを評価する方法にはいくつかあります。機能と性能と信頼性とサポートと
+価格です。
 
 機能(Features)
     PostgreSQLは、トランザクション、サブクエリ、トリガー、ビュー、外部キー整合
@@ -495,7 +498,8 @@ Web への拡張のためには、PHP(http://www.php.net/) が卓越したインターフェースとな
 2.3) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？
 
 商用とオープンソース開発者によるもの両方で、PostgreSQLには多くのGUIツールが利用
-可能で、詳細なリストは、PostgreSQLコミュニティ文書でごらんください。
+可能で、詳細なリストは、 PostgreSQL GUI ツールについてのコミュニティガイドにて
+ごらんください。
 
     [訳注:
         pgAdmin3 はPostgreSQL標準GUI管理ツールで、Windows版(PostgreSQL
@@ -563,8 +567,11 @@ Web への拡張のためには、PHP(http://www.php.net/) が卓越したインターフェースとな
 
 3.4) どのようなデバグ機能が使えますか？
 
-サーバ構成変数には多くの log_* があり、クエリとプロセスの統計を出力することがで
-き、デバグと性能計測にとても便利です。
+サーバ構成変数については、 href="http://www.postgresql.org/docs/current/
+interactive/runtime-config-logging.html">http://www.postgresql.org/docs/current
+/interactive/runtime-config-logging.html に示されるように多くの log_* があり、
+クエリとプロセスの統計情報を出力することができ、デバグや性能測定にはとても便利
+です。
 
 3.5) 接続しようとするときに 'Sorry, too many clients' が出るのはなぜですか？
 
@@ -619,8 +626,9 @@ PCハードウェアはほとんど互換性がありますので、ほとんどの人は、すべてのPCハード
 SCSI、および、高品質マザーボードは、安いハードウェアに比べると、より信頼性が高
 く、より性能も良いのです。 PostgreSQL はほとんどのハードウェアで稼働しますが、
 信頼性や性能が重要な場合は、使用中のハードウェアのオプションについて調査するこ
-とが賢明です。我々のメーリングリスト上でもハードウェアオプションのトレードオフ
-について議論することができます。
+とが賢明です。バッテリーバックアップ付きのキャッシュを持つディスクコントローラ
+も役に立ちます。我々のメーリングリスト上でもハードウェアオプションのトレードオ
+フについて議論することができます。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -628,12 +636,12 @@ SCSI、および、高品質マザーボードは、安いハードウェアに比べると、より信頼性が高
 
 4.1) 最初の数ロウのみを SELECTするにはどうしますか？ランダムなロウ？
 
-たったの数行のロウを取り出すために、何行必要かがわかれば、 SELECT のときに
-LIMIT を使います。 ORDER BYにインデックスがマッチした場合、まったくクエリが実行
-されないこともあります。SELECT のときに何行が必要かを知らなければ、カーソルを使
-いFETCHします。
+取得したいロウがほんの数行で、SELECT の実行時に取得するロウの数が分かっていれば
+LIMIT を使いましょう。インデックスが ORDER BY とマッチすれば、クエリ全体を(丸ご
+と)実行しなくても済む場合もあります。SELECT する時点でロウの数が不明なら、カー
+ソルを使って FETCH しましょう。
 
-ランダムロウをSELECTするには、次の文を使います：
+ランダムにロウをSELECTするには、次の文を使います：
 
     SELECT col
     FROM tab
@@ -983,10 +991,8 @@ contrib/dblink はデータベース間(cross-database)の問い合わせを関数呼出しにより許
 
 4.18) 関数から複数のロウまたはカラムを返すにはどうしますか？
 
-集合を返す関数(Set Returning Functions): http://www.postgresql.org/docs/
-techdocs.17
-
-を使うと簡単です
+集合を返す関数(Set Returning Functions): http://wiki.postgresql.org/wiki/
+Return_more_than_one_row_of_data_from_PL/pgSQL_functions を使うと簡単です
 
 。
 
@@ -1041,8 +1047,8 @@ with OID ##### does not exist" というエラーを受け取るのでしょうか？
 5.1)日本語がうまく扱えないのはなぜですか？
 
 createdb -Eコマンドオプションに UTF8 あるいは EUC_JP のエンコーディングを指定し
-てデータベースを作成すか、次のようにエンコーディングを指定してデータベースを作
-成してください。
+てデータベースを作成するか、次のようにエンコーディングを指定してデータベースを
+作成してください。
 
         CREATE DATABASE dbname WITH ENCODING 'UTF8';
     もしくは、
@@ -1073,7 +1079,7 @@ Itagaki氏によって、Mecabという形態素解析プログラムを利用する日本語全文検索モジ
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2008年4月25日
+  最終更新日:   2008年10月8日
   翻訳者:       桑村 潤 (Jun KUWAMURA <juk at postgresql.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1093,6 +1099,7 @@ Itagaki氏によって、Mecabという形態素解析プログラムを利用する日本語全文検索モジ
                 神谷 英孝(Hidetaka KAMIYA <hkamiya at catvmics.ne.jp>)
                 菅原 敦(Atsushi SUGAWARA <asugawar at f3.dion.ne.jp>)
                 稲葉 香理(Kaori Inaba <i-kaori at sraoss.co.jp>)
+                芳賀 靖史(Yasufumi Haga <yasufumi.haga at nifty.com>)
 
   をはじめ、ポストグレスに関する話題豊富な日本語PostgreSQLメーリングリスト、
   和訳のきっかけを作ってくれたり、いつもチェックをしてくれる
