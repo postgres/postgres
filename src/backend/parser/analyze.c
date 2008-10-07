@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.381 2008/10/06 15:15:22 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.382 2008/10/07 01:47:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -426,11 +426,15 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 				exprType((Node *) tle->expr) == UNKNOWNOID)
 				expr = tle->expr;
 			else
-				expr = (Expr *) makeVar(rtr->rtindex,
-										tle->resno,
-										exprType((Node *) tle->expr),
-										exprTypmod((Node *) tle->expr),
-										0);
+			{
+				Var	   *var = makeVar(rtr->rtindex,
+									  tle->resno,
+									  exprType((Node *) tle->expr),
+									  exprTypmod((Node *) tle->expr),
+									  0);
+				var->location = exprLocation((Node *) tle->expr);
+				expr = (Expr *) var;
+			}
 			exprList = lappend(exprList, expr);
 		}
 

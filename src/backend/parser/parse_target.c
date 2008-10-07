@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.167 2008/10/06 15:15:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.168 2008/10/07 01:47:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,6 +343,11 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
  * location		error cursor position for the target column, or -1
  *
  * Returns the modified expression.
+ *
+ * Note: location points at the target column name (SET target or INSERT
+ * column name list entry), and must therefore be -1 in an INSERT that
+ * omits the column name list.  So we should usually prefer to use
+ * exprLocation(expr) for errors that can happen in a default INSERT.
  */
 Expr *
 transformAssignedExpr(ParseState *pstate,
@@ -446,9 +451,11 @@ transformAssignedExpr(ParseState *pstate,
 		 * For normal non-qualified target column, do type checking and
 		 * coercion.
 		 */
+		Node   *orig_expr = (Node *) expr;
+
 		expr = (Expr *)
 			coerce_to_target_type(pstate,
-								  (Node *) expr, type_id,
+								  orig_expr, type_id,
 								  attrtype, attrtypmod,
 								  COERCION_ASSIGNMENT,
 								  COERCE_IMPLICIT_CAST,
@@ -462,7 +469,7 @@ transformAssignedExpr(ParseState *pstate,
 							format_type_be(attrtype),
 							format_type_be(type_id)),
 				 errhint("You will need to rewrite or cast the expression."),
-					 parser_errposition(pstate, location)));
+					 parser_errposition(pstate, exprLocation(orig_expr))));
 	}
 
 	return expr;
