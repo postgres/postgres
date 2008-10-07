@@ -8,15 +8,15 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/fsmpage.c,v 1.1 2008/09/30 10:52:13 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/fsmpage.c,v 1.2 2008/10/07 21:10:11 tgl Exp $
  *
  * NOTES:
  *
  *  The public functions in this file form an API that hides the internal
  *  structure of a FSM page. This allows freespace.c to treat each FSM page
  *  as a black box with SlotsPerPage "slots". fsm_set_avail() and
- *  fsm_get_avail() let's you get/set the value of a slot, and
- *  fsm_search_avail() let's you search for a slot with value >= X.
+ *  fsm_get_avail() let you get/set the value of a slot, and
+ *  fsm_search_avail() lets you search for a slot with value >= X.
  *
  *-------------------------------------------------------------------------
  */
@@ -25,14 +25,16 @@
 #include "storage/bufmgr.h"
 #include "storage/fsm_internals.h"
 
-/* macros to navigate the tree within a page. */
+/* Macros to navigate the tree within a page. Root has index zero. */
 #define leftchild(x)	(2 * (x) + 1)
 #define rightchild(x)	(2 * (x) + 2)
 #define parentof(x)		(((x) - 1) / 2)
 
-/* returns right sibling of x, wrapping around within the level */
+/*
+ * Find right neighbor of x, wrapping around within the level
+ */
 static int
-rightsibling(int x)
+rightneighbor(int x)
 {
 	/*
 	 * Move right. This might wrap around, stepping to the leftmost node at
@@ -42,8 +44,9 @@ rightsibling(int x)
 
 	/*
 	 * Check if we stepped to the leftmost node at next level, and correct
-	 * if so. The leftmost nodes at each level are of form x = 2^level - 1, so
-	 * check if (x + 1) is a power of two.
+	 * if so. The leftmost nodes at each level are numbered x = 2^level - 1,
+	 * so check if (x + 1) is a power of two, using a standard
+	 * twos-complement-arithmetic trick.
 	 */
 	if (((x + 1) & x) == 0)
 		x = parentof(x);
@@ -52,8 +55,7 @@ rightsibling(int x)
 }
 
 /*
- * Sets the value of a slot on page. Returns true if the page was
- * modified.
+ * Sets the value of a slot on page. Returns true if the page was modified.
  *
  * The caller must hold an exclusive lock on the page.
  */
@@ -101,8 +103,8 @@ fsm_set_avail(Page page, int slot, uint8 value)
 	} while (nodeno > 0);
 
 	/*
-	 * sanity check: if the new value value is higher than the value
-	 * at the top, the tree is corrupt.
+	 * sanity check: if the new value is (still) higher than the value
+	 * at the top, the tree is corrupt.  If so, rebuild.
 	 */
 	if (value > fsmpage->fp_nodes[0])
 		fsm_rebuild_page(page);
@@ -121,11 +123,14 @@ fsm_get_avail(Page page, int slot)
 {
 	FSMPage fsmpage = (FSMPage) PageGetContents(page);
 
+	Assert(slot < LeafNodesPerPage);
+
 	return fsmpage->fp_nodes[NonLeafNodesPerPage + slot];
 }
 
 /*
  * Returns the value at the root of a page.
+ *
  * Since this is just a read-only access of a single byte, the page doesn't
  * need to be locked.
  */
@@ -133,12 +138,13 @@ uint8
 fsm_get_max_avail(Page page)
 {
 	FSMPage fsmpage = (FSMPage) PageGetContents(page);
+
 	return fsmpage->fp_nodes[0];
 }
 
 /*
- * Searches for a slot with min. category. Returns slot number, or -1 if 
- * none found.
+ * Searches for a slot with category at least minvalue.
+ * Returns slot number, or -1 if none found.
  *
  * The caller must hold at least a shared lock on the page, and this
  * function can unlock and lock the page again in exclusive mode if it
@@ -146,7 +152,7 @@ fsm_get_max_avail(Page page)
  * caller is already holding an exclusive lock, to avoid extra work.
  *
  * If advancenext is false, fp_next_slot is set to point to the returned
- * slot, and if it's true, to the slot next to the returned slot.
+ * slot, and if it's true, to the slot after the returned slot.
  */
 int
 fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
@@ -160,33 +166,44 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 
  restart:
 	/*
-	 * Check the root first, and exit quickly if there's no page with
+	 * Check the root first, and exit quickly if there's no leaf with
 	 * enough free space
 	 */
 	if (fsmpage->fp_nodes[0] < minvalue)
 		return -1;
 
-
-	/* fp_next_slot is just a hint, so check that it's sane */
+	/*
+	 * Start search using fp_next_slot.  It's just a hint, so check that it's
+	 * sane.  (This also handles wrapping around when the prior call returned
+	 * the last slot on the page.)
+	 */
 	target = fsmpage->fp_next_slot;
 	if (target < 0 || target >= LeafNodesPerPage)
 		target = 0;
 	target += NonLeafNodesPerPage;
 
-	/*
-	 * Start the search from the target slot. At every step, move one
-	 * node to the right, and climb up to the parent. Stop when we reach a
-	 * node with enough free space. (note that moving to the right only
-	 * makes a difference if we're on the right child of the parent)
+	/*----------
+	 * Start the search from the target slot.  At every step, move one
+	 * node to the right, then climb up to the parent.  Stop when we reach
+	 * a node with enough free space (as we must, since the root has enough
+	 * space).
 	 *
-	 * The idea is to graduall expand our "search triangle", that is, all
-	 * nodes covered by the current node. In the beginning, just the target
-	 * node is included, and more nodes to the right of the target node,
-	 * taking wrap-around into account, is included at each step. Nodes are
-	 * added to the search triangle in left-to-right order, starting from
-	 * the target node. This ensures that we'll find the first suitable node
-	 * to the right of the target node, and not some other node with enough
-	 * free space.
+	 * The idea is to gradually expand our "search triangle", that is, all
+	 * nodes covered by the current node, and to be sure we search to the
+	 * right from the start point.  At the first step, only the target slot
+	 * is examined.  When we move up from a left child to its parent, we are
+	 * adding the right-hand subtree of that parent to the search triangle.
+	 * When we move right then up from a right child, we are dropping the
+	 * current search triangle (which we know doesn't contain any suitable
+	 * page) and instead looking at the next-larger-size triangle to its
+	 * right.  So we never look left from our original start point, and at
+	 * each step the size of the search triangle doubles, ensuring it takes
+	 * only log2(N) work to search N pages.
+	 *
+	 * The "move right" operation will wrap around if it hits the right edge
+	 * of the tree, so the behavior is still good if we start near the right.
+	 * Note also that the move-and-climb behavior ensures that we can't end
+	 * up on one of the missing nodes at the right of the leaf level.
 	 *
 	 * For example, consider this tree:
 	 *
@@ -196,25 +213,27 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 	 *  4 5 5 7 2 6 5 2
 	 *              T
 	 *
-	 * Imagine that target node is the node indicated by the letter T, and
-	 * we're searching for a node with value of 6 or higher. The search
-	 * begins at T. At first iteration, we move to the right, and to the
-	 * parent, arriving the rightmost 5. At the 2nd iteration, we move to the
-	 * right, wrapping around, and climb up, arriving at the 7 at the 2nd
-	 * level. 7 satisfies our search, so we descend down to the bottom,
-	 * following the path of sevens.
+	 * Assume that the target node is the node indicated by the letter T,
+	 * and we're searching for a node with value of 6 or higher. The search
+	 * begins at T. At the first iteration, we move to the right, then to the
+	 * parent, arriving at the rightmost 5. At the second iteration, we move
+	 * to the right, wrapping around, then climb up, arriving at the 7 on the
+	 * third level.  7 satisfies our search, so we descend down to the bottom,
+	 * following the path of sevens.  This is in fact the first suitable page
+	 * to the right of (allowing for wraparound) our start point.
+	 *----------
 	 */
 	nodeno = target;
 	while (nodeno > 0)
 	{
 		if (fsmpage->fp_nodes[nodeno] >= minvalue)
 			break;
-		
+
 		/*
-		 * Move to the right, wrapping around at the level if necessary, and
-		 * climb up.
+		 * Move to the right, wrapping around on same level if necessary,
+		 * then climb up.
 		 */
-		nodeno = parentof(rightsibling(nodeno));
+		nodeno = parentof(rightneighbor(nodeno));
 	}
 
 	/*
@@ -271,10 +290,10 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 	slot = nodeno - NonLeafNodesPerPage;
 
 	/*
-	 * Update the next slot pointer. Note that we do this even if we're only
+	 * Update the next-target pointer. Note that we do this even if we're only
 	 * holding a shared lock, on the grounds that it's better to use a shared
 	 * lock and get a garbled next pointer every now and then, than take the
-	 * concurrency hit of an exlusive lock.
+	 * concurrency hit of an exclusive lock.
 	 *
 	 * Wrap-around is handled at the beginning of this function.
 	 */
@@ -324,7 +343,7 @@ fsm_rebuild_page(Page page)
 	int		nodeno;
 
 	/*
-	 * Start from the lowest non-leaflevel, at last node, working our way
+	 * Start from the lowest non-leaf level, at last node, working our way
 	 * backwards, through all non-leaf nodes at all levels, up to the root.
 	 */
 	for (nodeno = NonLeafNodesPerPage - 1; nodeno >= 0; nodeno--)
@@ -333,6 +352,7 @@ fsm_rebuild_page(Page page)
 		int rchild = lchild + 1;
 		uint8 newvalue = 0;
 
+		/* The first few nodes we examine might have zero or one child. */
 		if (lchild < NodesPerPage)
 			newvalue = fsmpage->fp_nodes[lchild];
 
@@ -349,4 +369,3 @@ fsm_rebuild_page(Page page)
 
 	return changed;
 }
-
