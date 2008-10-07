@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.41 2008/10/04 21:56:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.42 2008/10/07 00:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,13 +434,17 @@ tuplestore_end(Tuplestorestate *state)
 void
 tuplestore_select_read_pointer(Tuplestorestate *state, int ptr)
 {
-	TSReadPointer *readptr = &state->readptrs[ptr];
+	TSReadPointer *readptr;
+	TSReadPointer *oldptr;
 
 	Assert(ptr >= 0 && ptr < state->readptrcount);
 
 	/* No work if already active */
 	if (ptr == state->activeptr)
 		return;
+
+	readptr = &state->readptrs[ptr];
+	oldptr = &state->readptrs[state->activeptr];
 
 	switch (state->status)
 	{
@@ -450,9 +454,18 @@ tuplestore_select_read_pointer(Tuplestorestate *state, int ptr)
 			break;
 		case TSS_READFILE:
 			/*
+			 * First, save the current read position in the pointer about
+			 * to become inactive.
+			 */
+			if (!oldptr->eof_reached)
+				BufFileTell(state->myfile,
+							&oldptr->file,
+							&oldptr->offset);
+
+			/*
 			 * We have to make the temp file's seek position equal to the
-			 * logical position of the read pointer.  In eof_reached state,
-			 * that's the EOF, which we have available from the saved
+			 * logical position of the new read pointer.  In eof_reached
+			 * state, that's the EOF, which we have available from the saved
 			 * write position.
 			 */
 			if (readptr->eof_reached)
