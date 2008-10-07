@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.242.2.3 2008/05/19 04:14:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.242.2.4 2008/10/07 11:15:48 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5830,6 +5830,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	Oid			oldTableSpace;
 	Oid			reltoastrelid;
 	Oid			reltoastidxid;
+	Oid			newrelfilenode;
 	RelFileNode newrnode;
 	SMgrRelation dstrel;
 	Relation	pg_class;
@@ -5890,9 +5891,18 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 		elog(ERROR, "cache lookup failed for relation %u", tableOid);
 	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
+	/*
+	 * Relfilenodes are not unique across tablespaces, so we need to allocate
+	 * a new one in the new tablespace.
+	 */
+	newrelfilenode = GetNewRelFileNode(newTableSpace,
+									   rel->rd_rel->relisshared,
+									   NULL);
+
 	/* create another storage file. Is it a little ugly ? */
 	/* NOTE: any conflict in relfilenode value will be caught here */
 	newrnode = rel->rd_node;
+	newrnode.relNode = newrelfilenode;
 	newrnode.spcNode = newTableSpace;
 
 	dstrel = smgropen(newrnode);
@@ -5913,6 +5923,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 
 	/* update the pg_class row */
 	rd_rel->reltablespace = (newTableSpace == MyDatabaseTableSpace) ? InvalidOid : newTableSpace;
+	rd_rel->relfilenode = newrelfilenode;
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);
 
