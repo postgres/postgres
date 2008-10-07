@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.373 2008/10/04 21:56:55 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.374 2008/10/07 12:43:55 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -621,8 +621,8 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
 %type  <str>	columnref values_clause AllConstVar prep_type_clause ExecuteStmt
 %type  <str>	insert_column_item DropRuleStmt ctext_expr execute_param_clause 
-%type  <str>	createfunc_opt_item set_rest 
-%type  <str>	CreateFunctionStmt createfunc_opt_list func_table
+%type  <str>	createfunc_opt_item set_rest with_clause common_table_expr
+%type  <str>	CreateFunctionStmt createfunc_opt_list func_table cte_list
 %type  <str>	DropUserStmt copy_from copy_opt_list copy_opt_item
 %type  <str>	opt_oids TableLikeClause key_action opt_definition
 %type  <str>	cast_context row qual_Op qual_all_Op opt_default
@@ -632,7 +632,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	ConstBit GenericType TableFuncElementList opt_analyze
 %type  <str>	opt_sort_clause subquery_Op transaction_mode_item
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
-%type  <str>	indicator ecpg_using ecpg_into DeallocateStmt
+%type  <str>	indicator ecpg_using ecpg_into DeallocateStmt interval_second
 %type  <str>	storage_declaration storage_clause opt_initializer c_anything
 %type  <str>	variable_list variable c_thing c_term ECPGKeywords_vanames
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
@@ -2099,7 +2099,7 @@ DefineStmt:  CREATE AGGREGATE func_name aggr_args definition
 			{ $$ = cat_str(4, make_str("create aggregate"), $3, $4, $5); }
 		| CREATE AGGREGATE func_name old_aggr_definition
 			{ $$ = cat_str(3, make_str("create aggregate"), $3, $4); }
-		| CREATE OPERATOR all_Op definition
+		| CREATE OPERATOR any_operator definition
 			{ $$ = cat_str(3, make_str("create operator"), $3, $4); }
 		| CREATE TYPE_P any_name definition
 			{ $$ = cat_str(3, make_str("create type"), $3, $4); }
@@ -2169,8 +2169,8 @@ opclass_item_list:	opclass_item		{ $$ = $1; }
 
 opclass_item:	OPERATOR PosIntConst any_operator opt_recheck
 			{ $$ = cat_str(4, make_str("operator"), $2, $3, $4); }
-		| OPERATOR PosIntConst any_operator '(' oper_argtypes ')' opt_recheck
-			{ $$ =  cat_str(7, make_str("operator"), $2, $3, make_str("("), $5, make_str(")"), $7); }
+		| OPERATOR PosIntConst any_operator oper_argtypes opt_recheck
+			{ $$ =  cat_str(5, make_str("operator"), $2, $3, $4, $5); }
 		| FUNCTION PosIntConst func_name func_args
 			{ $$ = cat_str(4, make_str("function"), $2, $3, $4); }
 		| FUNCTION PosIntConst '(' type_list ')' func_name func_args
@@ -2397,8 +2397,8 @@ CommentStmt:   COMMENT ON comment_type name IS comment_text
 			{ $$ = cat_str(5, make_str("comment on aggregate"), $4, $5, make_str("is"), $7); }
 		| COMMENT ON FUNCTION func_name func_args IS comment_text
 			{ $$ = cat_str(5, make_str("comment on function"), $4, $5, make_str("is"), $7); }
-		| COMMENT ON OPERATOR all_Op '(' oper_argtypes ')' IS comment_text
-			{ $$ = cat_str(6, make_str("comment on operator"), $4, make_str("("), $6, make_str(") is"), $9); }
+		| COMMENT ON OPERATOR any_operator oper_argtypes IS comment_text
+			{ $$ = cat_str(5, make_str("comment on operator"), $4, $5, make_str("is"), $7); }
 		| COMMENT ON TRIGGER name ON any_name IS comment_text
 			{ $$ = cat_str(6, make_str("comment on trigger"), $4, make_str("on"), $6, make_str("is"), $8); }
 		| COMMENT ON RULE name ON any_name IS comment_text
@@ -2761,23 +2761,23 @@ RemoveAggrStmt:  DROP AGGREGATE func_name aggr_args opt_drop_behavior
 			{ $$ = cat_str(4, make_str("drop aggregate if exists"), $5, $6, $7); }
 		;
 
-RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')' opt_drop_behavior
-			{ $$ = cat_str(6, make_str("drop operator"), $3, make_str("("), $5, make_str(")"), $7); }
-		| DROP OPERATOR IF_P EXISTS any_operator '(' oper_argtypes ')' opt_drop_behavior
-			{ $$ = cat_str(6, make_str("drop operator if exists"), $5, make_str("("), $7, make_str(")"), $9); }
+RemoveOperStmt:  DROP OPERATOR any_operator oper_argtypes opt_drop_behavior
+			{ $$ = cat_str(4, make_str("drop operator"), $3, $4, $5); }
+		| DROP OPERATOR IF_P EXISTS any_operator oper_argtypes opt_drop_behavior
+			{ $$ = cat_str(4, make_str("drop operator if exists"), $5, $6, $7); }
 		;
 
-oper_argtypes:	Typename
+oper_argtypes:	'(' Typename ')'
 			{
 				mmerror(PARSE_ERROR, ET_ERROR, "parser: argument type missing (use NONE for unary operators)");
 				$$ = make_str("none");
 			}
-		| Typename ',' Typename
-			{ $$ = cat_str(3, $1, make_str(","), $3); }
-		| NONE ',' Typename			/* left unary */
-			{ $$ = cat2_str(make_str("none,"), $3); }
-		| Typename ',' NONE			/* right unary */
-			{ $$ = cat2_str($1, make_str(", none")); }
+		| '(' Typename ',' Typename ')'
+			{ $$ = cat_str(5, make_str("("), $2, make_str(","), $4, make_str(")")); }
+		| '(' NONE ',' Typename ')'		/* left unary */
+			{ $$ = cat_str(3, make_str("(none,"), $4, make_str(")")); }
+		| '(' Typename ',' NONE ')'		/* right unary */
+			{ $$ = cat_str(3, make_str("("), $2, make_str(", none)")); }
 		;
 
 any_operator:
@@ -2930,8 +2930,8 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 			{ $$ = cat_str(4, make_str("alter function"), $3, make_str("owner to"), $6); }
 		| ALTER opt_procedural LANGUAGE name OWNER TO RoleId
 			{ $$ = cat_str(6, make_str("alter"), $2, make_str("language"), $4, make_str("owner to"), $7); }
-		| ALTER OPERATOR any_operator '(' oper_argtypes ')' OWNER TO RoleId
-			{ $$ = cat_str(6, make_str("alter operator"), $3, make_str("("), $5, make_str(") owner to"), $9); }
+		| ALTER OPERATOR any_operator oper_argtypes OWNER TO RoleId
+			{ $$ = cat_str(5, make_str("alter operator"), $3, $4, make_str("owner to"), $7); }
 		| ALTER OPERATOR CLASS any_name USING access_method OWNER TO RoleId
 			{ $$ = cat_str(6, make_str("alter operator class"), $4, make_str("using"), $6, make_str("owner to"), $9); }
 		| ALTER OPERATOR FAMILY any_name USING access_method OWNER TO RoleId
@@ -3162,6 +3162,14 @@ createdb_opt_item:	TABLESPACE opt_equal name
 			{ $$ = cat_str(3, make_str("encoding"), $2, $3); }
 		| ENCODING opt_equal DEFAULT
 			{ $$ = cat_str(3, make_str("encoding"), $2, make_str("default")); }
+		| COLLATE opt_equal StringConst
+			{ $$ = cat_str(3, make_str("collate"), $2, $3); }
+		| COLLATE opt_equal DEFAULT
+			{ $$ = cat_str(3, make_str("collate"), $2, make_str("default")); }
+		| CTYPE opt_equal StringConst
+			{ $$ = cat_str(3, make_str("ctype"), $2, $3); }
+		| CTYPE opt_equal DEFAULT
+			{ $$ = cat_str(3, make_str("ctype"), $2, make_str("default")); }
 		| CONNECTION LIMIT opt_equal PosIntConst
 			{ $$ = cat_str(3, make_str("connection limit"), $3, $4); }
 		| OWNER opt_equal name
@@ -3598,6 +3606,14 @@ select_no_parens:	   simple_select
 			{ $$ = cat_str(4, $1, $2, $3, $4); }
 		| select_clause opt_sort_clause select_limit opt_for_locking_clause
 			{ $$ = cat_str(4, $1, $2, $3, $4); }
+		| with_clause simple_select
+			{ $$ = cat2_str($1, $2); }
+		| with_clause select_clause sort_clause
+			{ $$ = cat_str(3, $1, $2, $3); }
+		| with_clause select_clause opt_sort_clause for_locking_clause opt_select_limit
+			{ $$ = cat_str(5, $1, $2, $3, $4, $5); }
+		| with_clause select_clause opt_sort_clause select_limit opt_for_locking_clause
+			{ $$ = cat_str(5, $1, $2, $3, $4, $5); }
 		;
 
 select_clause: simple_select		{ $$ = $1; }
@@ -3616,6 +3632,21 @@ simple_select:	SELECT opt_distinct target_list
 			{ $$ = cat_str(4, $1, make_str("intersect"), $3, $4); }
 		| select_clause EXCEPT opt_all select_clause
 			{ $$ = cat_str(4, $1, make_str("except"), $3, $4); }
+		;
+
+with_clause:
+		WITH cte_list			{ $$ = cat2_str(make_str("with"), $2); }
+		| WITH RECURSIVE cte_list	{ $$ = cat2_str(make_str("with recursive"), $3); }
+		;
+
+cte_list:
+		common_table_expr			{ $$ = $1; }
+		| cte_list ',' common_table_expr	{ $$ = cat_str(3, $1, make_str(","), $3); }
+		;
+
+
+common_table_expr:  name opt_name_list AS select_with_parens
+			{ $$ = cat_str(4, $1, $2, make_str("as"), $4); }
 		;
 
 into_clause:  INTO OptTempTableName
@@ -3756,7 +3787,7 @@ for_locking_item:
 		;
 
 locked_rels_list:
-		OF name_list		{ $$ = cat2_str(make_str("of"), $2); }
+		OF qualified_name_list	{ $$ = cat2_str(make_str("of"), $2); }
 		| /* EMPTY */		{ $$ = EMPTY; }
 		;
 
@@ -4123,22 +4154,26 @@ opt_timezone:  WITH TIME ZONE
 			{ $$ = EMPTY; }
 		;
 
-opt_interval:  YEAR_P			{ $$ = make_str("year"); }
-		| MONTH_P				{ $$ = make_str("month"); }
-		| DAY_P					{ $$ = make_str("day"); }
-		| HOUR_P				{ $$ = make_str("hour"); }
-		| MINUTE_P				{ $$ = make_str("minute"); }
-		| SECOND_P				{ $$ = make_str("second"); }
+opt_interval:  YEAR_P				{ $$ = make_str("year"); }
+		| MONTH_P			{ $$ = make_str("month"); }
+		| DAY_P				{ $$ = make_str("day"); }
+		| HOUR_P			{ $$ = make_str("hour"); }
+		| MINUTE_P			{ $$ = make_str("minute"); }
+		| interval_second		{ $$ = $1; }
 		| YEAR_P TO MONTH_P		{ $$ = make_str("year to month"); }
 		| DAY_P TO HOUR_P		{ $$ = make_str("day to hour"); }
 		| DAY_P TO MINUTE_P		{ $$ = make_str("day to minute"); }
-		| DAY_P TO SECOND_P		{ $$ = make_str("day to second"); }
-		| HOUR_P TO MINUTE_P	{ $$ = make_str("hour to minute"); }
-		| MINUTE_P TO SECOND_P	{ $$ = make_str("minute to second"); }
-		| HOUR_P TO SECOND_P	{ $$ = make_str("hour to second"); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
+		| DAY_P TO interval_second	{ $$ = make_str("day to second"); }
+		| HOUR_P TO MINUTE_P		{ $$ = make_str("hour to minute"); }
+		| MINUTE_P TO interval_second	{ $$ = make_str("minute to second"); }
+		| HOUR_P TO interval_second	{ $$ = make_str("hour to second"); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
+interval_second:
+		SECOND_P			{ $$ = make_str("second"); }
+		| SECOND_P '(' PosIntConst ')'	{ $$ = cat_str(3, make_str("second("), $3, make_str(")")); }
+		;
 
 /*****************************************************************************
  *
@@ -6518,6 +6553,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| CREATEROLE		{ $$ = make_str("createrole"); }
 		| CREATEUSER		{ $$ = make_str("createuser"); }
 		| CSV				{ $$ = make_str("csv"); }
+		| CTYPE			{ $$ = make_str("ctype"); }
 		| CURSOR			{ $$ = make_str("cursor"); }
 		| CYCLE				{ $$ = make_str("cycle"); }
 		| DATABASE			{ $$ = make_str("database"); }
@@ -6630,6 +6666,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| READ				{ $$ = make_str("read"); }
 		| REASSIGN			{ $$ = make_str("reassign"); }
 		| RECHECK			{ $$ = make_str("recheck"); }
+		| RECURSIVE			{ $$ = make_str("recursive"); }
 		| REINDEX			{ $$ = make_str("reindex"); }
 		| RELATIVE_P		{ $$ = make_str("relative"); }
 		| RELEASE			{ $$ = make_str("release"); }
@@ -6696,7 +6733,6 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| VIEW				{ $$ = make_str("view"); }
 		| VOLATILE			{ $$ = make_str("volatile"); }
 		| WHITESPACE_P			{ $$ = make_str("whitespace"); }
-		| WITH				{ $$ = make_str("with"); }
 		| WITHOUT			{ $$ = make_str("without"); }
 		| WORK				{ $$ = make_str("work"); }
 		| WRITE  			{ $$ = make_str("write"); }
@@ -6885,6 +6921,7 @@ reserved_keyword:
 		| VARIADIC			{ $$ = make_str("variadic"); }
 		| WHEN				{ $$ = make_str("when"); }
 		| WHERE				{ $$ = make_str("where"); }
+		| WITH				{ $$ = make_str("with"); }
 		;
 
 
