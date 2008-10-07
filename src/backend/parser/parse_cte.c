@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.2 2008/10/05 22:50:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.3 2008/10/07 19:27:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -601,11 +601,11 @@ checkWellFormedRecursion(CteState *cstate)
 		if (!cte->cterecursive)
 			continue;
 
-		/* Must have top-level UNION ALL */
-		if (stmt->op != SETOP_UNION || !stmt->all)
+		/* Must have top-level UNION */
+		if (stmt->op != SETOP_UNION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_RECURSION),
-					 errmsg("recursive query \"%s\" does not have the form non-recursive-term UNION ALL recursive-term",
+					 errmsg("recursive query \"%s\" does not have the form non-recursive-term UNION [ALL] recursive-term",
 							cte->ctename),
 					 parser_errposition(cstate->pstate, cte->location)));
 
@@ -628,7 +628,7 @@ checkWellFormedRecursion(CteState *cstate)
 			elog(ERROR, "missing recursive reference");
 
 		/*
-		 * Disallow ORDER BY and similar decoration atop the UNION ALL.
+		 * Disallow ORDER BY and similar decoration atop the UNION.
 		 * These don't make sense because it's impossible to figure out what
 		 * they mean when we have only part of the recursive query's results.
 		 * (If we did allow them, we'd have to check for recursive references

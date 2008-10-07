@@ -31,10 +31,24 @@ UNION ALL
 )
 SELECT * FROM t;
 
+-- This is an infinite loop with UNION ALL, but not with UNION
+WITH RECURSIVE t(n) AS (
+    SELECT 1
+UNION
+    SELECT 10-n FROM t)
+SELECT * FROM t;
+
 -- This'd be an infinite loop, but outside query reads only as much as needed
 WITH RECURSIVE t(n) AS (
     VALUES (1)
 UNION ALL
+    SELECT n+1 FROM t)
+SELECT * FROM t LIMIT 10;
+
+-- UNION case should have same property
+WITH RECURSIVE t(n) AS (
+    SELECT 1
+UNION
     SELECT n+1 FROM t)
 SELECT * FROM t LIMIT 10;
 
@@ -264,10 +278,6 @@ WITH RECURSIVE
 --
 -- error cases
 --
-
--- UNION (should be supported someday)
-WITH RECURSIVE x(n) AS (SELECT 1 UNION SELECT n+1 FROM x)
-	SELECT * FROM x;
 
 -- INTERSECT
 WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT SELECT n+1 FROM x)

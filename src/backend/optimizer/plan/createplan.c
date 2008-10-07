@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.249 2008/10/04 21:56:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.250 2008/10/07 19:27:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2545,10 +2545,13 @@ RecursiveUnion *
 make_recursive_union(List *tlist,
 					 Plan *lefttree,
 					 Plan *righttree,
-					 int wtParam)
+					 int wtParam,
+					 List *distinctList,
+					 long numGroups)
 {
 	RecursiveUnion *node = makeNode(RecursiveUnion);
 	Plan	   *plan = &node->plan;
+	int			numCols = list_length(distinctList);
 
 	cost_recursive_union(plan, lefttree, righttree);
 
@@ -2557,6 +2560,37 @@ make_recursive_union(List *tlist,
 	plan->lefttree = lefttree;
 	plan->righttree = righttree;
 	node->wtParam = wtParam;
+
+	/*
+	 * convert SortGroupClause list into arrays of attr indexes and equality
+	 * operators, as wanted by executor
+	 */
+	node->numCols = numCols;
+	if (numCols > 0)
+	{
+		int			keyno = 0;
+		AttrNumber *dupColIdx;
+		Oid		   *dupOperators;
+		ListCell   *slitem;
+
+		dupColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
+		dupOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+
+		foreach(slitem, distinctList)
+		{
+			SortGroupClause *sortcl = (SortGroupClause *) lfirst(slitem);
+			TargetEntry *tle = get_sortgroupclause_tle(sortcl,
+													   plan->targetlist);
+
+			dupColIdx[keyno] = tle->resno;
+			dupOperators[keyno] = sortcl->eqop;
+			Assert(OidIsValid(dupOperators[keyno]));
+			keyno++;
+		}
+		node->dupColIdx = dupColIdx;
+		node->dupOperators = dupOperators;
+	}
+	node->numGroups = numGroups;
 
 	return node;
 }

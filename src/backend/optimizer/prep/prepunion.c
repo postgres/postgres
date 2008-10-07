@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.157 2008/10/06 17:39:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.158 2008/10/07 19:27:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,10 +318,12 @@ generate_recursion_plan(SetOperationStmt *setOp, PlannerInfo *root,
 	Plan	   *lplan;
 	Plan	   *rplan;
 	List	   *tlist;
+	List	   *groupList;
+	long		numGroups;
 
 	/* Parser should have rejected other cases */
-	if (setOp->op != SETOP_UNION || !setOp->all)
-		elog(ERROR, "only UNION ALL queries can be recursive");
+	if (setOp->op != SETOP_UNION)
+		elog(ERROR, "only UNION queries can be recursive");
 	/* Worktable ID should be assigned */
 	Assert(root->wt_param_id >= 0);
 
@@ -347,12 +349,45 @@ generate_recursion_plan(SetOperationStmt *setOp, PlannerInfo *root,
 								  refnames_tlist);
 
 	/*
+	 * If UNION, identify the grouping operators
+	 */
+	if (setOp->all)
+	{
+		groupList = NIL;
+		numGroups = 0;
+	}
+	else
+	{
+		double	dNumGroups;
+
+		/* Identify the grouping semantics */
+		groupList = generate_setop_grouplist(setOp, tlist);
+
+		/* We only support hashing here */
+		if (!grouping_is_hashable(groupList))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("could not implement recursive UNION"),
+					 errdetail("All column datatypes must be hashable.")));
+
+		/*
+		 * For the moment, take the number of distinct groups as equal to
+		 * the total input size, ie, the worst case.
+		 */
+		dNumGroups = lplan->plan_rows + rplan->plan_rows * 10;
+
+		/* Also convert to long int --- but 'ware overflow! */
+		numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
+	}
+
+	/*
 	 * And make the plan node.
 	 */
 	plan = (Plan *) make_recursive_union(tlist, lplan, rplan,
-										 root->wt_param_id);
+										 root->wt_param_id,
+										 groupList, numGroups);
 
-	*sortClauses = NIL;			/* result of UNION ALL is always unsorted */
+	*sortClauses = NIL;			/* RecursiveUnion result is always unsorted */
 
 	return plan;
 }

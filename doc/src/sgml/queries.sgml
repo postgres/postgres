@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.46 2008/10/04 21:56:52 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.47 2008/10/07 19:27:03 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -1519,7 +1519,8 @@ SELECT sum(n) FROM t;
 </programlisting>
 
    The general form of a recursive <literal>WITH</> query is always a
-   <firstterm>non-recursive term</>, then <literal>UNION ALL</>, then a
+   <firstterm>non-recursive term</>, then <literal>UNION</> (or
+   <literal>UNION ALL</>), then a
    <firstterm>recursive term</>, where only the recursive term can contain
    a reference to the query's own output.  Such a query is executed as
    follows:
@@ -1530,9 +1531,10 @@ SELECT sum(n) FROM t;
 
    <step performance="required">
     <para>
-     Evaluate the non-recursive term.  Include all its output rows in the
-     result of the recursive query, and also place them in a temporary
-     <firstterm>working table</>.
+     Evaluate the non-recursive term.  For <literal>UNION</> (but not
+     <literal>UNION ALL</>), discard duplicate rows.  Include all remaining
+     rows in the result of the recursive query, and also place them in a
+     temporary <firstterm>working table</>.
     </para>
    </step>
 
@@ -1544,9 +1546,11 @@ SELECT sum(n) FROM t;
      <step performance="required">
       <para>
        Evaluate the recursive term, substituting the current contents of
-       the working table for the recursive self-reference.  Include all its
-       output rows in the result of the recursive query, and also place them
-       in a temporary <firstterm>intermediate table</>.
+       the working table for the recursive self-reference.
+       For <literal>UNION</> (but not <literal>UNION ALL</>), discard
+       duplicate rows and rows that duplicate any previous result row.
+       Include all remaining rows in the result of the recursive query, and
+       also place them in a temporary <firstterm>intermediate table</>.
       </para>
      </step>
 
@@ -1598,10 +1602,13 @@ GROUP BY sub_part
   <para>
    When working with recursive queries it is important to be sure that
    the recursive part of the query will eventually return no tuples,
-   or else the query will loop indefinitely.  A useful trick for
-   development purposes is to place a <literal>LIMIT</> in the parent
-   query.  For example, this query would loop forever without the
-   <literal>LIMIT</>:
+   or else the query will loop indefinitely.  Sometimes, using
+   <literal>UNION</> instead of <literal>UNION ALL</> can accomplish this
+   by discarding rows that duplicate previous output rows; this catches
+   cycles that would otherwise repeat.  A useful trick for testing queries
+   when you are not certain if they might loop is to place a <literal>LIMIT</>
+   in the parent query.  For example, this query would loop forever without
+   the <literal>LIMIT</>:
 
 <programlisting>
 WITH RECURSIVE t(n) AS (
@@ -1614,7 +1621,7 @@ SELECT n FROM t LIMIT 100;
 
    This works because <productname>PostgreSQL</productname>'s implementation
    evaluates only as many rows of a <literal>WITH</> query as are actually
-   demanded by the parent query.  Using this trick in production is not
+   fetched by the parent query.  Using this trick in production is not
    recommended, because other systems might work differently.
   </para>
 

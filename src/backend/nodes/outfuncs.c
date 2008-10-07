@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.341 2008/10/06 17:39:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.342 2008/10/07 19:27:04 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -334,11 +334,24 @@ _outAppend(StringInfo str, Append *node)
 static void
 _outRecursiveUnion(StringInfo str, RecursiveUnion *node)
 {
+	int i;
+
 	WRITE_NODE_TYPE("RECURSIVEUNION");
 
 	_outPlanInfo(str, (Plan *) node);
 
 	WRITE_INT_FIELD(wtParam);
+	WRITE_INT_FIELD(numCols);
+
+	appendStringInfo(str, " :dupColIdx");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %d", node->dupColIdx[i]);
+
+	appendStringInfo(str, " :dupOperators");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %u", node->dupOperators[i]);
+
+	WRITE_LONG_FIELD(numGroups);
 }
 
 static void

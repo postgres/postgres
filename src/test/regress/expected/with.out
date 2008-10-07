@@ -49,10 +49,42 @@ SELECT * FROM t;
  5
 (5 rows)
 
+-- This is an infinite loop with UNION ALL, but not with UNION
+WITH RECURSIVE t(n) AS (
+    SELECT 1
+UNION
+    SELECT 10-n FROM t)
+SELECT * FROM t;
+ n 
+---
+ 1
+ 9
+(2 rows)
+
 -- This'd be an infinite loop, but outside query reads only as much as needed
 WITH RECURSIVE t(n) AS (
     VALUES (1)
 UNION ALL
+    SELECT n+1 FROM t)
+SELECT * FROM t LIMIT 10;
+ n  
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+(10 rows)
+
+-- UNION case should have same property
+WITH RECURSIVE t(n) AS (
+    SELECT 1
+UNION
     SELECT n+1 FROM t)
 SELECT * FROM t LIMIT 10;
  n  
@@ -510,38 +542,32 @@ WITH RECURSIVE
 --
 -- error cases
 --
--- UNION (should be supported someday)
-WITH RECURSIVE x(n) AS (SELECT 1 UNION SELECT n+1 FROM x)
-	SELECT * FROM x;
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
-LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 UNION SELECT n+1 FROM x)
-                       ^
 -- INTERSECT
 WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT SELECT n+1 FROM x)
 	SELECT * FROM x;
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION [ALL] recursive-term
 LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT SELECT n+1 FROM x...
                        ^
 WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT ALL SELECT n+1 FROM x)
 	SELECT * FROM x;
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION [ALL] recursive-term
 LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT ALL SELECT n+1 FR...
                        ^
 -- EXCEPT
 WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT SELECT n+1 FROM x)
 	SELECT * FROM x;
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION [ALL] recursive-term
 LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT SELECT n+1 FROM x)
                        ^
 WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT ALL SELECT n+1 FROM x)
 	SELECT * FROM x;
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION [ALL] recursive-term
 LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT ALL SELECT n+1 FROM ...
                        ^
 -- no non-recursive term
 WITH RECURSIVE x(n) AS (SELECT n FROM x)
 	SELECT * FROM x;
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION [ALL] recursive-term
 LINE 1: WITH RECURSIVE x(n) AS (SELECT n FROM x)
                        ^
 -- recursive term in the left hand side (strictly speaking, should allow this)

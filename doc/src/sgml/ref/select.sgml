@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.105 2008/10/04 21:56:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.106 2008/10/07 19:27:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -202,10 +202,10 @@ and <replaceable class="parameter">with_query</replaceable> is:
     subquery to reference itself by name.  Such a subquery must have
     the form
 <synopsis>
-<replaceable class="parameter">non_recursive_term</replaceable> UNION ALL <replaceable class="parameter">recursive_term</replaceable>
+<replaceable class="parameter">non_recursive_term</replaceable> UNION [ ALL ] <replaceable class="parameter">recursive_term</replaceable>
 </synopsis>
     where the recursive self-reference must appear on the right-hand
-    side of <literal>UNION ALL</>.  Only one recursive self-reference
+    side of the <literal>UNION</>.  Only one recursive self-reference
     is permitted per query.
    </para>
 
@@ -1234,7 +1234,7 @@ SELECT distance, employee_name FROM employee_recursive;
 </programlisting>
 
    Notice the typical form of recursive queries:
-   an initial condition, followed by <literal>UNION ALL</literal>,
+   an initial condition, followed by <literal>UNION</literal>,
    followed by the recursive part of the query. Be sure that the
    recursive part of the query will eventually return no tuples, or
    else the query will loop indefinitely.  (See <xref linkend="queries-with">
