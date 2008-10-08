@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.138 2008/08/11 11:05:11 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.139 2008/10/08 01:14:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,12 @@ extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation relation_open_nowait(Oid relationId, LOCKMODE lockmode);
 extern Relation relation_openrv(const RangeVar *relation, LOCKMODE lockmode);
+extern Relation try_relation_openrv(const RangeVar *relation, LOCKMODE lockmode);
 extern void relation_close(Relation relation, LOCKMODE lockmode);
 
 extern Relation heap_open(Oid relationId, LOCKMODE lockmode);
 extern Relation heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
+extern Relation try_heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
 
 #define heap_close(r,l)  relation_close(r,l)
 

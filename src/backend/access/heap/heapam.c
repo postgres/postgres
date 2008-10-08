@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.264 2008/09/30 10:52:10 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.265 2008/10/08 01:14:44 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1017,6 +1017,45 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 }
 
 /* ----------------
+ *		try_relation_openrv - open any relation specified by a RangeVar
+ *
+ *		Same as relation_openrv, but return NULL instead of failing for
+ *		relation-not-found.  (Note that some other causes, such as
+ *		permissions problems, will still result in an ereport.)
+ * ----------------
+ */
+Relation
+try_relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
+{
+	Oid			relOid;
+
+	/*
+	 * Check for shared-cache-inval messages before trying to open the
+	 * relation.  This is needed to cover the case where the name identifies a
+	 * rel that has been dropped and recreated since the start of our
+	 * transaction: if we don't flush the old syscache entry then we'll latch
+	 * onto that entry and suffer an error when we do RelationIdGetRelation.
+	 * Note that relation_open does not need to do this, since a relation's
+	 * OID never changes.
+	 *
+	 * We skip this if asked for NoLock, on the assumption that the caller has
+	 * already ensured some appropriate lock is held.
+	 */
+	if (lockmode != NoLock)
+		AcceptInvalidationMessages();
+
+	/* Look up the appropriate relation using namespace search */
+	relOid = RangeVarGetRelid(relation, true);
+
+	/* Return NULL on not-found */
+	if (!OidIsValid(relOid))
+		return NULL;
+
+	/* Let relation_open do the rest */
+	return relation_open(relOid, lockmode);
+}
+
+/* ----------------
  *		relation_close - close any relation
  *
  *		If lockmode is not "NoLock", we then release the specified lock.
@@ -1093,6 +1132,37 @@ heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is a composite type",
 						RelationGetRelationName(r))));
+
+	return r;
+}
+
+/* ----------------
+ *		try_heap_openrv - open a heap relation specified
+ *		by a RangeVar node
+ *
+ *		As above, but return NULL instead of failing for relation-not-found.
+ * ----------------
+ */
+Relation
+try_heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
+{
+	Relation	r;
+
+	r = try_relation_openrv(relation, lockmode);
+
+	if (r)
+	{
+		if (r->rd_rel->relkind == RELKIND_INDEX)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is an index",
+							RelationGetRelationName(r))));
+		else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is a composite type",
+							RelationGetRelationName(r))));
+	}
 
 	return r;
 }

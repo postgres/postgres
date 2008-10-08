@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.3 2008/10/07 19:27:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.4 2008/10/08 01:14:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +108,7 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 
 	/* Only one WITH clause per query level */
 	Assert(pstate->p_ctenamespace == NIL);
+	Assert(pstate->p_future_ctes == NIL);
 
 	/*
 	 * For either type of WITH, there must not be duplicate CTE names in
@@ -216,14 +217,20 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 		/*
 		 * For non-recursive WITH, just analyze each CTE in sequence and then
 		 * add it to the ctenamespace.  This corresponds to the spec's
-		 * definition of the scope of each WITH name.
+		 * definition of the scope of each WITH name.  However, to allow
+		 * error reports to be aware of the possibility of an erroneous
+		 * reference, we maintain a list in p_future_ctes of the
+		 * not-yet-visible CTEs.
 		 */
+		pstate->p_future_ctes = list_copy(withClause->ctes);
+
 		foreach(lc, withClause->ctes)
 		{
 			CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
 
 			analyzeCTE(pstate, cte);
 			pstate->p_ctenamespace = lappend(pstate->p_ctenamespace, cte);
+			pstate->p_future_ctes = list_delete_first(pstate->p_future_ctes);
 		}
  	}
 
