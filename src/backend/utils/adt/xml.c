@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.77 2008/09/16 00:49:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.78 2008/10/09 15:49:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1568,8 +1568,6 @@ map_sql_value_to_xml_value(Datum value, Oid type)
 {
 	StringInfoData buf;
 
-	initStringInfo(&buf);
-
 	if (type_is_array(type))
 	{
 		ArrayType  *array;
@@ -1591,6 +1589,8 @@ map_sql_value_to_xml_value(Datum value, Oid type)
 						  &elem_values, &elem_nulls,
 						  &num_elems);
 
+		initStringInfo(&buf);
+
 		for (i = 0; i < num_elems; i++)
 		{
 			if (elem_nulls[i])
@@ -1604,6 +1604,8 @@ map_sql_value_to_xml_value(Datum value, Oid type)
 
 		pfree(elem_values);
 		pfree(elem_nulls);
+
+		return buf.data;
 	}
 	else
 	{
@@ -1687,62 +1689,73 @@ map_sql_value_to_xml_value(Datum value, Oid type)
 
 					return pstrdup(buf);
 				}
+
+#ifdef USE_LIBXML
+			case BYTEAOID:
+				{
+					bytea	   *bstr = DatumGetByteaPP(value);
+					xmlBufferPtr buf;
+					xmlTextWriterPtr writer;
+					char	   *result;
+
+					xml_init();
+
+					buf = xmlBufferCreate();
+					writer = xmlNewTextWriterMemory(buf, 0);
+
+					if (xmlbinary == XMLBINARY_BASE64)
+						xmlTextWriterWriteBase64(writer, VARDATA_ANY(bstr),
+												 0, VARSIZE_ANY_EXHDR(bstr));
+					else
+						xmlTextWriterWriteBinHex(writer, VARDATA_ANY(bstr),
+												 0, VARSIZE_ANY_EXHDR(bstr));
+
+					xmlFreeTextWriter(writer);
+					result = pstrdup((const char *) xmlBufferContent(buf));
+					xmlBufferFree(buf);
+					return result;
+				}
+#endif   /* USE_LIBXML */
+
 		}
 
+		/*
+		 * otherwise, just use the type's native text representation
+		 */
 		getTypeOutputInfo(type, &typeOut, &isvarlena);
 		str = OidOutputFunctionCall(typeOut, value);
 
+		/* ... exactly as-is for XML */
 		if (type == XMLOID)
 			return str;
 
-#ifdef USE_LIBXML
-		if (type == BYTEAOID)
-		{
-			xmlBufferPtr buf;
-			xmlTextWriterPtr writer;
-			char	   *result;
+		/* otherwise, translate special characters as needed */
+		initStringInfo(&buf);
 
-			xml_init();
-
-			buf = xmlBufferCreate();
-			writer = xmlNewTextWriterMemory(buf, 0);
-
-			if (xmlbinary == XMLBINARY_BASE64)
-				xmlTextWriterWriteBase64(writer, VARDATA(value), 0, VARSIZE(value) - VARHDRSZ);
-			else
-				xmlTextWriterWriteBinHex(writer, VARDATA(value), 0, VARSIZE(value) - VARHDRSZ);
-
-			xmlFreeTextWriter(writer);
-			result = pstrdup((const char *) xmlBufferContent(buf));
-			xmlBufferFree(buf);
-			return result;
-		}
-#endif   /* USE_LIBXML */
-
-		for (p = str; *p; p += pg_mblen(p))
+		for (p = str; *p; p++)
 		{
 			switch (*p)
 			{
 				case '&':
-					appendStringInfo(&buf, "&amp;");
+					appendStringInfoString(&buf, "&amp;");
 					break;
 				case '<':
-					appendStringInfo(&buf, "&lt;");
+					appendStringInfoString(&buf, "&lt;");
 					break;
 				case '>':
-					appendStringInfo(&buf, "&gt;");
+					appendStringInfoString(&buf, "&gt;");
 					break;
 				case '\r':
-					appendStringInfo(&buf, "&#x0d;");
+					appendStringInfoString(&buf, "&#x0d;");
 					break;
 				default:
-					appendBinaryStringInfo(&buf, p, pg_mblen(p));
+					appendStringInfoCharMacro(&buf, *p);
 					break;
 			}
 		}
-	}
 
-	return buf.data;
+		return buf.data;
+	}
 }
 
 
