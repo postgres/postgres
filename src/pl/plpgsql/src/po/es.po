@@ -1,0 +1,764 @@
+# Spanish message translation file for plpgsql
+#
+# Álvaro Herrera <alvherre@alvh.no-ip.org> 2008
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: plpgsql 8.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-10-09 13:11-0400\n"
+"PO-Revision-Date: 2008-09-05 11:39-0400\n"
+"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pl_comp.c:418 pl_handler.c:177
+#, c-format
+msgid "plpgsql functions cannot take type %s"
+msgstr "las funciones plpgsql no pueden tener el tipo %s como argumento"
+
+#: pl_comp.c:501
+#, c-format
+msgid "could not determine actual return type for polymorphic function \"%s\""
+msgstr ""
+"no se pudo determinar el tipo verdadero de resultado para la función "
+"polimórfica «%s»"
+
+#: pl_comp.c:533
+msgid "trigger functions can only be called as triggers"
+msgstr ""
+"las funciones de disparador sólo pueden ser invocadas como disparadores"
+
+#: pl_comp.c:537 pl_handler.c:162
+#, c-format
+msgid "plpgsql functions cannot return type %s"
+msgstr "las funciones plpgsql no pueden retornar el tipo %s"
+
+#: pl_comp.c:578
+msgid "trigger functions cannot have declared arguments"
+msgstr "las funciones de trigger no pueden tener argumentos declarados"
+
+#: pl_comp.c:579
+msgid "You probably want to use TG_NARGS and TG_ARGV instead."
+msgstr "Probablemente desea usar TG_NARGS y TG_ARGV."
+
+#: pl_comp.c:769
+#, c-format
+msgid "compile of PL/pgSQL function \"%s\" near line %d"
+msgstr "compilación de la función PL/pgSQL \"%s\" cerca de la línea %d"
+
+#: pl_comp.c:942
+#, c-format
+msgid "row \"%s\" has no field \"%s\""
+msgstr "la fila «%s» no tiene un campo llamado \"%s\""
+
+#: pl_comp.c:1044
+#, c-format
+msgid "row \"%s.%s\" has no field \"%s\""
+msgstr "la fila «%s.%s» no tiene un campo llamado \"%s\""
+
+#: pl_comp.c:1356
+#, c-format
+msgid "relation \"%s\" does not exist"
+msgstr "no existe la relación «%s»"
+
+#: pl_comp.c:1401
+#, c-format
+msgid "relation \"%s.%s\" does not exist"
+msgstr "no existe la relación «%s.%s»"
+
+#: pl_comp.c:1484
+#, c-format
+msgid "variable \"%s\" has pseudo-type %s"
+msgstr "la variable «%s» tiene pseudotipo %s"
+
+#: pl_comp.c:1545
+#, c-format
+msgid "relation \"%s\" is not a table"
+msgstr "la relación «%s» no es una tabla"
+
+#: pl_comp.c:1718
+#, c-format
+msgid "type \"%s\" is only a shell"
+msgstr "el tipo «%s» está inconcluso"
+
+#: pl_comp.c:1788 pl_comp.c:1841
+#, c-format
+msgid "unrecognized exception condition \"%s\""
+msgstr "no se reconoce la condición de excepción «%s»"
+
+#: pl_comp.c:1993
+#, c-format
+msgid ""
+"could not determine actual argument type for polymorphic function \"%s\""
+msgstr ""
+"no se pudo determinar el tipo verdadero de resultado para la función "
+"polimórfica «%s»"
+
+#: pl_exec.c:233 pl_exec.c:505
+msgid "during initialization of execution state"
+msgstr "durante la inicialización del estado de ejecución"
+
+#: pl_exec.c:240 pl_exec.c:632
+msgid "while storing call arguments into local variables"
+msgstr ""
+"mientras se almacenaban los argumentos de invocación en variables locales"
+
+#: pl_exec.c:295 pl_exec.c:643
+msgid "during function entry"
+msgstr "durante el ingreso a la función"
+
+#: pl_exec.c:326 pl_exec.c:674
+msgid "CONTINUE cannot be used outside a loop"
+msgstr "CONTINUE no puede usarse fuera de un bucle"
+
+#: pl_exec.c:330 pl_exec.c:678
+msgid "RAISE without parameters cannot be used outside an exception handler"
+msgstr "RAISE sin parámetros no puede ser usado fuera de un manejador de excepción"
+
+#: pl_exec.c:334
+msgid "control reached end of function without RETURN"
+msgstr "la ejecución alcanzó el fin de la función sin encontrar RETURN"
+
+#: pl_exec.c:341
+msgid "while casting return value to function's return type"
+msgstr "mientras se hacía conversión del valor de retorno al tipo de retorno de la función"
+
+#: pl_exec.c:354 pl_exec.c:2355
+msgid "set-valued function called in context that cannot accept a set"
+msgstr ""
+"se llamó una función que retorna un conjunto en un contexto que no puede "
+"aceptarlo"
+
+#: pl_exec.c:389
+msgid "returned record type does not match expected record type"
+msgstr "el tipo de registro retornado no coincide con el tipo de registro esperado"
+
+#: pl_exec.c:446 pl_exec.c:686
+msgid "during function exit"
+msgstr "durante la salida de la función"
+
+#: pl_exec.c:682
+msgid "control reached end of trigger procedure without RETURN"
+msgstr "la ejecución alcanzó el fin del procedimiento disparador sin encontrar RETURN"
+
+#: pl_exec.c:691
+msgid "trigger procedure cannot return a set"
+msgstr "los procedimientos disparadores no pueden retornar conjuntos"
+
+#: pl_exec.c:709
+msgid "returned tuple structure does not match table of trigger event"
+msgstr "la estructura de tupla retornada no coincide con el evento de trigger"
+
+#: pl_exec.c:773
+#, c-format
+msgid "PL/pgSQL function \"%s\" line %d %s"
+msgstr "función PL/pgSQL «%s» en la línea %d %s"
+
+#: pl_exec.c:784
+#, c-format
+msgid "PL/pgSQL function \"%s\" %s"
+msgstr "función PL/pgSQL «%s» %s"
+
+#. translator: last %s is a plpgsql statement type name
+#: pl_exec.c:792
+#, c-format
+msgid "PL/pgSQL function \"%s\" line %d at %s"
+msgstr "función PL/pgSQL «%s» en la línea %d en %s"
+
+#: pl_exec.c:798
+#, c-format
+msgid "PL/pgSQL function \"%s\""
+msgstr "función PL/pgSQL «%s»"
+
+#: pl_exec.c:907
+msgid "during statement block local variable initialization"
+msgstr "durante inicialización de variables locales en el bloque de sentencias"
+
+#: pl_exec.c:949
+#, c-format
+msgid "variable \"%s\" declared NOT NULL cannot default to NULL"
+msgstr "la variable «%s» declarada NOT NULL no puede tener un valor por omisión NULL"
+
+#: pl_exec.c:997
+msgid "during statement block entry"
+msgstr "durante la entrada al bloque de sentencias"
+
+#: pl_exec.c:1018
+msgid "during statement block exit"
+msgstr "durante la salida del bloque de sentencias"
+
+#: pl_exec.c:1060
+msgid "during exception cleanup"
+msgstr "durante la finalización por excepción"
+
+#: pl_exec.c:1524
+msgid "case not found"
+msgstr ""
+
+#: pl_exec.c:1525
+msgid "CASE statement is missing ELSE part."
+msgstr "A la sentencia CASE le falta la parte ELSE."
+
+#: pl_exec.c:1681
+msgid "lower bound of FOR loop cannot be NULL"
+msgstr "el límite inferior de un ciclo FOR no puede ser NULL"
+
+#: pl_exec.c:1696
+msgid "upper bound of FOR loop cannot be NULL"
+msgstr "el límite superior de un ciclo FOR no puede ser NULL"
+
+#: pl_exec.c:1713
+msgid "BY value of FOR loop cannot be NULL"
+msgstr "el valor BY de un ciclo FOR no puede ser NULL"
+
+#: pl_exec.c:1719
+msgid "BY value of FOR loop must be greater than zero"
+msgstr "el valor BY de un ciclo FOR debe ser mayor que cero"
+
+#: pl_exec.c:1891 pl_exec.c:3113
+#, c-format
+msgid "cursor \"%s\" already in use"
+msgstr "el cursor «%s» ya está en uso"
+
+#: pl_exec.c:1914 pl_exec.c:3207
+msgid "arguments given for cursor without arguments"
+msgstr "se dieron argumentos a un cursor sin argumentos"
+
+#: pl_exec.c:1933 pl_exec.c:3226
+msgid "arguments required for cursor"
+msgstr "se requieren argumentos para el cursor"
+
+#: pl_exec.c:2151 /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2400
+msgid "cannot use RETURN NEXT in a non-SETOF function"
+msgstr "no se puede usar RETURN NEXT en una función que no es SETOF"
+
+#: pl_exec.c:2175 pl_exec.c:2236
+msgid "wrong result type supplied in RETURN NEXT"
+msgstr "se pasó un tipo incorrecto de resultado a RETURN NEXT"
+
+#: pl_exec.c:2198 pl_exec.c:3597 pl_exec.c:3897 pl_exec.c:3936
+#, fuzzy, c-format
+msgid "record \"%s\" is not assigned yet"
+msgstr "el directorio «%s» no está vacío"
+
+#: pl_exec.c:2200 pl_exec.c:3599 pl_exec.c:3899 pl_exec.c:3938
+msgid "The tuple structure of a not-yet-assigned record is indeterminate."
+msgstr ""
+
+#: pl_exec.c:2203 pl_exec.c:2217
+msgid "wrong record type supplied in RETURN NEXT"
+msgstr ""
+
+#: pl_exec.c:2261
+#, fuzzy
+msgid "RETURN NEXT must have a parameter"
+msgstr "no se puede usar una función de agregación en un parámetro a EXECUTE"
+
+#: pl_exec.c:2292 /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2447
+msgid "cannot use RETURN QUERY in a non-SETOF function"
+msgstr ""
+
+#: pl_exec.c:2311
+msgid "structure of query does not match function result type"
+msgstr ""
+
+#: pl_exec.c:2423
+#, fuzzy
+msgid "too few parameters specified for RAISE"
+msgstr "el parámetro «%s» fue especificado más de una vez"
+
+#: pl_exec.c:2449
+#, fuzzy
+msgid "too many parameters specified for RAISE"
+msgstr "se especificaron demasiados alias de columna para la función %s"
+
+#: pl_exec.c:2469
+msgid "RAISE statement option cannot be NULL"
+msgstr ""
+
+#: pl_exec.c:2479 pl_exec.c:2488 pl_exec.c:2496 pl_exec.c:2504
+#, fuzzy, c-format
+msgid "RAISE option already specified: %s"
+msgstr "no se ha especificado un cuerpo para la función"
+
+#: pl_exec.c:2682 pl_exec.c:2977
+msgid "cannot COPY to/from client in PL/pgSQL"
+msgstr ""
+
+#: pl_exec.c:2686 pl_exec.c:2981
+msgid "cannot begin/end transactions in PL/pgSQL"
+msgstr ""
+
+#: pl_exec.c:2687 pl_exec.c:2982
+msgid "Use a BEGIN block with an EXCEPTION clause instead."
+msgstr ""
+
+#: pl_exec.c:2828 pl_exec.c:3006
+msgid "INTO used with a command that cannot return data"
+msgstr ""
+
+#: pl_exec.c:2848 pl_exec.c:3026
+#, fuzzy
+msgid "query returned no rows"
+msgstr "la consulta no regresó renglones: %s\n"
+
+#: pl_exec.c:2857 pl_exec.c:3035
+#, fuzzy
+msgid "query returned more than one row"
+msgstr "la consulta no regresó renglones: %s\n"
+
+#: pl_exec.c:2871
+#, fuzzy
+msgid "query has no destination for result data"
+msgstr "Define el destino de la salida del registro del servidor."
+
+#: pl_exec.c:2872
+msgid "If you want to discard the results of a SELECT, use PERFORM instead."
+msgstr ""
+
+#: pl_exec.c:2905 pl_exec.c:3154 pl_exec.c:5425
+msgid "cannot EXECUTE a null querystring"
+msgstr ""
+
+#: pl_exec.c:2969
+#, fuzzy
+msgid "EXECUTE of SELECT ... INTO is not implemented yet"
+msgstr "CREATE ASSERTION no está implementado"
+
+#: pl_exec.c:3288 pl_exec.c:3384
+#, c-format
+msgid "cursor variable \"%s\" is NULL"
+msgstr ""
+
+#: pl_exec.c:3295 pl_exec.c:3391
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "no existe el cursor «%s»"
+
+#: pl_exec.c:3309
+msgid "relative or absolute cursor position is NULL"
+msgstr ""
+
+#: pl_exec.c:3451
+#, c-format
+msgid "NULL cannot be assigned to variable \"%s\" declared NOT NULL"
+msgstr ""
+
+#: pl_exec.c:3496
+msgid "cannot assign non-composite value to a row variable"
+msgstr ""
+
+#: pl_exec.c:3538
+msgid "cannot assign non-composite value to a record variable"
+msgstr ""
+
+#: pl_exec.c:3609 pl_exec.c:3943
+#, fuzzy, c-format
+msgid "record \"%s\" has no field \"%s\""
+msgstr "la tabla «%s» no tiene índices"
+
+#: pl_exec.c:3716
+#, fuzzy, c-format
+msgid "number of array dimensions exceeds the maximum allowed, %d"
+msgstr ""
+"el número de dimensiones del array (%d) excede el máximo permitido (%d)"
+
+#: pl_exec.c:3730
+#, fuzzy
+msgid "subscripted object is not an array"
+msgstr "no se puede poner subíndices al tipo %s porque no es un array"
+
+#: pl_exec.c:3753
+#, fuzzy
+msgid "array subscript in assignment must not be NULL"
+msgstr "subíndice de array en asignación no puede ser nulo"
+
+#: pl_exec.c:3859 pl_exec.c:3884 pl_exec.c:3921
+#, c-format
+msgid "type of \"%s\" does not match that when preparing the plan"
+msgstr ""
+
+#: pl_exec.c:3950
+#, c-format
+msgid "type of \"%s.%s\" does not match that when preparing the plan"
+msgstr ""
+
+#: pl_exec.c:3975
+#, c-format
+msgid "type of tgargv[%d] does not match that when preparing the plan"
+msgstr ""
+
+#: pl_exec.c:4068
+#, fuzzy, c-format
+msgid "query \"%s\" did not return data"
+msgstr "el argumento de %s no debe retornar un conjunto"
+
+#: pl_exec.c:4085
+#, fuzzy, c-format
+msgid "query \"%s\" returned more than one row"
+msgstr "el parámetro «%s» fue especificado más de una vez"
+
+#: pl_exec.c:4090
+#, fuzzy, c-format
+msgid "query \"%s\" returned %d columns"
+msgstr "la subconsulta debe retornar una columna"
+
+#: pl_exec.c:4148
+#, fuzzy, c-format
+msgid "query \"%s\" is not a SELECT"
+msgstr "el cursor «%s» no es una orden SELECT"
+
+#: pl_exec.c:5152
+msgid "n/a (dropped column)"
+msgstr ""
+
+#: pl_exec.c:5157 pl_exec.c:5162 pl_exec.c:5171
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pl_exec.c:5163
+#, fuzzy, c-format
+msgid ""
+"Number of returned columns (%d) does not match expected column count (%d)."
+msgstr "el número de columnas del índice (%d) excede el límite (%d)"
+
+#: pl_exec.c:5172
+#, fuzzy, c-format
+msgid "Returned type %s does not match expected type %s in column %s."
+msgstr "el número de columnas del índice (%d) excede el límite (%d)"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:357
+msgid "row or record variable cannot be CONSTANT"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:366
+msgid "row or record variable cannot be NOT NULL"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:375
+msgid "default value for row or record variable is not supported"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:524
+msgid "only positional parameters can be aliased"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:534
+#, fuzzy, c-format
+msgid "function has no parameter \"%s\""
+msgstr "parámetro de sinónimo no reconocido «%s»"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:746
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:750
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:754
+#, fuzzy
+msgid "expected an integer variable"
+msgstr "se esperaba un nombre de tipo"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1009
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1198
+msgid ""
+"loop variable of loop over rows must be a record or row variable or list of "
+"scalar variables"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1046
+msgid "cursor FOR loop must have just one target variable"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1058
+msgid "cursor FOR loop must use a bound cursor variable"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1134
+msgid "integer FOR loop must have just one target variable"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1167
+#, fuzzy
+msgid "cannot specify REVERSE in query FOR loop"
+msgstr "no se puede especificar DELIMITER en modo BINARY"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1258
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2612
+#, fuzzy, c-format
+msgid "\"%s\" is not a scalar variable"
+msgstr "«%s» no es una tabla"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1311
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1351
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1395
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2169
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2259
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2877
+#, fuzzy
+msgid "unexpected end of function definition"
+msgstr "fin inesperado de la entrada\n"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1415
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1437
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1451
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1459
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1532
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1619
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1788
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1792
+msgid "syntax error"
+msgstr "error de sintaxis"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1441
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1443
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1796
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1798
+#, fuzzy
+msgid "invalid SQLSTATE code"
+msgstr "el código de ExecStatusType no es válido"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1583
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2561
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2806
+#, fuzzy, c-format
+msgid "syntax error at \"%s\""
+msgstr "error de sintaxis en tsquery: «%s»"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1585
+msgid "Expected FOR to open a reference cursor."
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1672
+msgid "cursor variable must be a simple variable"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1679
+#, fuzzy, c-format
+msgid "\"%s\" must be of type cursor or refcursor"
+msgstr "debe ser dueño del tipo %s o el tipo %s"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1686
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1690
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1694
+msgid "expected a cursor or refcursor variable"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:1919
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2974
+#, fuzzy
+msgid "too many variables specified in SQL statement"
+msgstr "se especificaron demasiados alias de columna para la función %s"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2004
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2014
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2107
+msgid "mismatched parentheses"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2019
+#, fuzzy, c-format
+msgid "missing \"%s\" at end of SQL expression"
+msgstr "falta un campo en el archivo «%s» al final de la línea %d"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2024
+#, fuzzy, c-format
+msgid "missing \"%s\" at end of SQL statement"
+msgstr "falta un campo en el archivo «%s» al final de la línea %d"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2109
+#, fuzzy
+msgid "incomplete datatype declaration"
+msgstr "carácter multibyte incompleto\n"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2134
+#, fuzzy
+msgid "missing datatype declaration"
+msgstr "salvando las definiciones de la base de datos\n"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2173
+#, fuzzy
+msgid "INTO specified more than once"
+msgstr "la columna «%s» fue especificada más de una vez"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2322
+msgid "expected FROM or IN"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2343
+msgid ""
+"RETURN cannot have a parameter in function returning set; use RETURN NEXT or "
+"RETURN QUERY"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2349
+#, fuzzy
+msgid "RETURN cannot have a parameter in function with OUT parameters"
+msgstr "no se puede usar una función de agregación en un parámetro a EXECUTE"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2355
+msgid "RETURN cannot have a parameter in function returning void"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2374
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2378
+msgid ""
+"RETURN must specify a record or row variable in function returning tuple"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2411
+#, fuzzy
+msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
+msgstr "no se puede usar una función de agregación en un parámetro a EXECUTE"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2427
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2431
+msgid ""
+"RETURN NEXT must specify a record or row variable in function returning tuple"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2494
+#, c-format
+msgid "\"%s\" is declared CONSTANT"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2511
+#, fuzzy
+msgid "cannot assign to tg_argv"
+msgstr "no se puede asignar a la columna de sistema «%s»"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2562
+msgid ""
+"Expected record variable, row variable, or list of scalar variables "
+"following INTO."
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2596
+#, fuzzy
+msgid "too many INTO variables specified"
+msgstr "se especificaron demasiados alias de columna para la función %s"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2730
+#, c-format
+msgid "SQL statement in PL/PgSQL function \"%s\" near line %d"
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2744
+#, fuzzy
+msgid "no such label"
+msgstr "no hay un savepoint con ese nombre"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2758
+#, fuzzy, c-format
+msgid "end label \"%s\" specified for unlabelled block"
+msgstr "el nombre de tabla «%s» fue especificado más de una vez"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2767
+#, c-format
+msgid "end label \"%s\" differs from block's label \"%s\""
+msgstr ""
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2797
+#, fuzzy, c-format
+msgid "cursor \"%s\" has no arguments"
+msgstr "no existe el cursor «%s»"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2819
+#, fuzzy, c-format
+msgid "cursor \"%s\" has arguments"
+msgstr "no existe el cursor «%s»"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2857
+#, fuzzy
+msgid "expected \")\""
+msgstr "«=» inesperado"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2894
+#, fuzzy, c-format
+msgid "unrecognized RAISE statement option \"%s\""
+msgstr "no se reconoce la codificación: «%s»"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/gram.y:2899
+#, fuzzy
+msgid "syntax error, expected \"=\""
+msgstr "error de sintaxis en tsvector: «%s»"
+
+#: pl_funcs.c:359
+#, c-format
+msgid "there is no variable \"%s\" in the current block"
+msgstr ""
+
+#: pl_funcs.c:415
+#, fuzzy, c-format
+msgid "unterminated \" in name: %s"
+msgstr "un comentario /* está inconcluso"
+
+#: pl_funcs.c:439
+#, c-format
+msgid "qualified identifier cannot be used here: %s"
+msgstr ""
+
+#: pl_funcs.c:471
+msgid "statement block"
+msgstr "bloque de sentencias"
+
+#: pl_funcs.c:473
+msgid "assignment"
+msgstr "asignación"
+
+#: pl_funcs.c:483
+#, fuzzy
+msgid "FOR with integer loop variable"
+msgstr "se esperaba un nombre de tipo"
+
+#: pl_funcs.c:485
+#, fuzzy
+msgid "FOR over SELECT rows"
+msgstr "cierra un cursor"
+
+#: pl_funcs.c:487
+msgid "FOR over cursor"
+msgstr "FOR sobre un cursor"
+
+#: pl_funcs.c:499
+#, fuzzy
+msgid "SQL statement"
+msgstr "sentencia SQL: «%s»"
+
+#: pl_funcs.c:501
+#, fuzzy
+msgid "EXECUTE statement"
+msgstr "sentencia: %s"
+
+#: pl_funcs.c:503
+#, fuzzy
+msgid "FOR over EXECUTE statement"
+msgstr "sentencia: %s"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/scan.l:232
+msgid "unterminated quoted identifier"
+msgstr "un identificador entre comillas está inconcluso"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/scan.l:257
+msgid "unterminated comment"
+msgstr "comentario inconcluso"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/scan.l:296
+msgid "unterminated string"
+msgstr "cadena de caracteres inconclusa"
+
+#: /pgsql/source/00head/src/pl/plpgsql/src/scan.l:333
+msgid "unterminated dollar-quoted string"
+msgstr "cadena separada por $ inconclusa"
+
+#. translator: %s is typically "syntax error"
+#: /pgsql/source/00head/src/pl/plpgsql/src/scan.l:396
+#, c-format
+msgid "%s at end of input"
+msgstr "%s al final de la entrada"
+
+#. translator: first %s is typically "syntax error"
+#: /pgsql/source/00head/src/pl/plpgsql/src/scan.l:405
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s en o cerca de «%s»"
