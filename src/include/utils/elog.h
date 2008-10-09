@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.95 2008/10/09 17:24:05 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.96 2008/10/09 22:22:31 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@
  * wish to use a different message catalog from the backend's.	To avoid having
  * one copy of the default text domain per .o file, we define it as NULL here
  * and have errstart insert the default text domain.  Modules can either use
- * ereport_domain() directly, or preferrably they can override the TEXTDOMAIN
+ * ereport_domain() directly, or preferably they can override the TEXTDOMAIN
  * macro.
  *----------
  */
@@ -281,7 +281,7 @@ typedef struct ErrorData
 	const char *filename;		/* __FILE__ of ereport() call */
 	int			lineno;			/* __LINE__ of ereport() call */
 	const char *funcname;		/* __func__ of ereport() call */
-	const char *domain;			/* message domain, NULL if default */
+	const char *domain;			/* message domain */
 	int			sqlerrcode;		/* encoded ERRSTATE */
 	char	   *message;		/* primary error message */
 	char	   *detail;			/* detail error message */
