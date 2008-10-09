@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.81.2.2 2007/01/30 22:05:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.81.2.3 2008/10/09 16:35:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -525,6 +525,10 @@ typedef struct
 typedef struct PLpgSQL_func_hashkey
 {								/* Hash lookup key for functions */
 	Oid			funcOid;
+
+	bool		isTrigger;		/* true if called as a trigger */
+
+	/* be careful that pad bytes in this struct get zeroed! */
 
 	/*
 	 * For a trigger function, the OID of the relation triggered on is part of
