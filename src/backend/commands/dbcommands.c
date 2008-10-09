@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.213 2008/09/30 10:52:12 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.214 2008/10/09 10:34:06 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -539,10 +539,15 @@ createdb(const CreatedbStmt *stmt)
 	copyTemplateDependencies(src_dboid, dboid);
 
 	/*
-	 * Force dirty buffers out to disk, to ensure source database is
-	 * up-to-date for the copy.
+	 * Force a checkpoint before starting the copy. This will force dirty
+	 * buffers out to disk, to ensure source database is up-to-date on disk
+	 * for the copy. FlushDatabaseBuffers() would suffice for that, but we
+	 * also want to process any pending unlink requests. Otherwise, if a
+	 * checkpoint happened while we're copying files, a file might be deleted
+	 * just when we're about to copy it, causing the lstat() call in copydir()
+	 * to fail with ENOENT.
 	 */
-	FlushDatabaseBuffers(src_dboid);
+	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 	/*
 	 * Once we start copying subdirectories, we need to be able to clean 'em
