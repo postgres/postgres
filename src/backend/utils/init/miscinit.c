@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.167 2008/03/27 17:24:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.168 2008/10/09 17:24:05 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1211,4 +1211,18 @@ process_local_preload_libraries(void)
 	load_libraries(local_preload_libraries_string,
 				   "local_preload_libraries",
 				   true);
+}
+
+void
+set_text_domain(const char *domain)
+{
+#ifdef ENABLE_NLS
+	if (my_exec_path[0] != '\0')
+	{
+		char	locale_path[MAXPGPATH];
+
+		get_locale_path(my_exec_path, locale_path);
+		bindtextdomain(domain, locale_path);
+	}
+#endif
 }

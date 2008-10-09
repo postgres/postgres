@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.206 2008/09/01 20:42:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.207 2008/10/09 17:24:05 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,7 @@ static void write_csvlog(ErrorData *edata);
  */
 bool
 errstart(int elevel, const char *filename, int lineno,
-		 const char *funcname)
+		 const char *funcname, const char *domain)
 {
 	ErrorData  *edata;
 	bool		output_to_server;
@@ -290,6 +290,8 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->filename = filename;
 	edata->lineno = lineno;
 	edata->funcname = funcname;
+	/* the default text domain is the backend's */
+	edata->domain = domain ? domain : "postgres";
 	/* Select default errcode based on elevel */
 	if (elevel >= ERROR)
 		edata->sqlerrcode = ERRCODE_INTERNAL_ERROR;
@@ -611,7 +613,7 @@ errcode_for_socket_access(void)
 		char		   *fmtbuf; \
 		StringInfoData	buf; \
 		/* Internationalize the error format string */ \
-		fmt = _(fmt); \
+		fmt = dgettext(edata->domain, fmt); \
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
 		initStringInfo(&buf); \
@@ -982,7 +984,7 @@ elog_finish(int elevel, const char *fmt,...)
 	 */
 	errordata_stack_depth--;
 	errno = edata->saved_errno;
-	if (!errstart(elevel, edata->filename, edata->lineno, edata->funcname))
+	if (!errstart(elevel, edata->filename, edata->lineno, edata->funcname, NULL))
 		return;					/* nothing to do */
 
 	/*

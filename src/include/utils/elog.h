@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.94 2008/09/01 20:42:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.95 2008/10/09 17:24:05 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,14 +92,26 @@
  * ERRCODE_INTERNAL_ERROR if elevel is ERROR or more, ERRCODE_WARNING
  * if elevel is WARNING, or ERRCODE_SUCCESSFUL_COMPLETION if elevel is
  * NOTICE or below.
+ *
+ * ereport_domain() allows a message domain to be specified, for modules that
+ * wish to use a different message catalog from the backend's.	To avoid having
+ * one copy of the default text domain per .o file, we define it as NULL here
+ * and have errstart insert the default text domain.  Modules can either use
+ * ereport_domain() directly, or preferrably they can override the TEXTDOMAIN
+ * macro.
  *----------
  */
-#define ereport(elevel, rest)  \
-	(errstart(elevel, __FILE__, __LINE__, PG_FUNCNAME_MACRO) ? \
+#define ereport_domain(elevel, domain, rest)	\
+	(errstart(elevel, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain) ? \
 	 (errfinish rest) : (void) 0)
 
+#define ereport(level, rest)	\
+	ereport_domain(level, TEXTDOMAIN, rest)
+
+#define TEXTDOMAIN NULL
+
 extern bool errstart(int elevel, const char *filename, int lineno,
-		 const char *funcname);
+		 const char *funcname, const char *domain);
 extern void errfinish(int dummy,...);
 
 extern int	errcode(int sqlerrcode);
@@ -269,6 +281,7 @@ typedef struct ErrorData
 	const char *filename;		/* __FILE__ of ereport() call */
 	int			lineno;			/* __LINE__ of ereport() call */
 	const char *funcname;		/* __func__ of ereport() call */
+	const char *domain;			/* message domain, NULL if default */
 	int			sqlerrcode;		/* encoded ERRSTATE */
 	char	   *message;		/* primary error message */
 	char	   *detail;			/* detail error message */
