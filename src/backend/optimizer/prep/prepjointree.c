@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.55 2008/10/04 21:56:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.56 2008/10/09 19:27:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,7 +383,7 @@ inline_set_returning_functions(PlannerInfo *root)
 			Query  *funcquery;
 
 			/* Check safety of expansion, and expand if possible */
-			funcquery = inline_set_returning_function(root, rte->funcexpr);
+			funcquery = inline_set_returning_function(root, rte);
 			if (funcquery)
 			{
 				/* Successful expansion, replace the rtable entry */

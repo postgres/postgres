@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.268 2008/10/04 21:56:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.269 2008/10/09 19:27:40 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -111,6 +111,7 @@ static Query *substitute_actual_srf_parameters(Query *expr,
 											   int nargs, List *args);
 static Node *substitute_actual_srf_parameters_mutator(Node *node,
 							substitute_actual_srf_parameters_context *context);
+static bool tlist_matches_coltypelist(List *tlist, List *coltypelist);
 
 
 /*****************************************************************************
@@ -3659,17 +3660,16 @@ evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod)
  * inline_set_returning_function
  *		Attempt to "inline" a set-returning function in the FROM clause.
  *
- * "node" is the expression from an RTE_FUNCTION rangetable entry.  If it
- * represents a call of a set-returning SQL function that can safely be
- * inlined, expand the function and return the substitute Query structure.
- * Otherwise, return NULL.
+ * "rte" is an RTE_FUNCTION rangetable entry.  If it represents a call of a
+ * set-returning SQL function that can safely be inlined, expand the function
+ * and return the substitute Query structure.  Otherwise, return NULL.
  *
  * This has a good deal of similarity to inline_function(), but that's
  * for the non-set-returning case, and there are enough differences to
  * justify separate functions.
  */
 Query *
-inline_set_returning_function(PlannerInfo *root, Node *node)
+inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 {
 	FuncExpr   *fexpr;
 	HeapTuple	func_tuple;
@@ -3686,6 +3686,8 @@ inline_set_returning_function(PlannerInfo *root, Node *node)
 	Query	   *querytree;
 	int			i;
 
+	Assert(rte->rtekind == RTE_FUNCTION);
+
 	/*
 	 * It doesn't make a lot of sense for a SQL SRF to refer to itself
 	 * in its own FROM clause, since that must cause infinite recursion
@@ -3695,9 +3697,9 @@ inline_set_returning_function(PlannerInfo *root, Node *node)
 	check_stack_depth();
 
 	/* Fail if FROM item isn't a simple FuncExpr */
-	if (node == NULL || !IsA(node, FuncExpr))
+	fexpr = (FuncExpr *) rte->funcexpr;
+	if (fexpr == NULL || !IsA(fexpr, FuncExpr))
 		return NULL;
-	fexpr = (FuncExpr *) node;
 
 	/*
 	 * The function must be declared to return a set, else inlining would
@@ -3705,10 +3707,6 @@ inline_set_returning_function(PlannerInfo *root, Node *node)
 	 * one row.
 	 */
 	if (!fexpr->funcretset)
-		return NULL;
-
-	/* Fail if function returns RECORD ... we don't have enough context */
-	if (fexpr->funcresulttype == RECORDOID)
 		return NULL;
 
 	/*
@@ -3837,8 +3835,19 @@ inline_set_returning_function(PlannerInfo *root, Node *node)
 	if (!check_sql_fn_retval(fexpr->funcid, fexpr->funcresulttype,
 							 querytree_list,
 							 true, NULL) &&
-		get_typtype(fexpr->funcresulttype) == TYPTYPE_COMPOSITE)
+		(get_typtype(fexpr->funcresulttype) == TYPTYPE_COMPOSITE ||
+		 fexpr->funcresulttype == RECORDOID))
 		goto fail;				/* reject not-whole-tuple-result cases */
+
+	/*
+	 * If it returns RECORD, we have to check against the column type list
+	 * provided in the RTE; check_sql_fn_retval can't do that.  (If no match,
+	 * we just fail to inline, rather than complaining; see notes for
+	 * tlist_matches_coltypelist.)
+	 */
+	if (fexpr->funcresulttype == RECORDOID &&
+		!tlist_matches_coltypelist(querytree->targetList, rte->funccoltypes))
+		goto fail;
 
 	/*
 	 * Looks good --- substitute parameters into the query.
@@ -3937,4 +3946,47 @@ substitute_actual_srf_parameters_mutator(Node *node,
 	return expression_tree_mutator(node,
 								   substitute_actual_srf_parameters_mutator,
 								   (void *) context);
+}
+
+/*
+ * Check whether a SELECT targetlist emits the specified column types,
+ * to see if it's safe to inline a function returning record.
+ *
+ * We insist on exact match here.  The executor allows binary-coercible
+ * cases too, but we don't have a way to preserve the correct column types
+ * in the correct places if we inline the function in such a case.
+ *
+ * Note that we only check type OIDs not typmods; this agrees with what the
+ * executor would do at runtime, and attributing a specific typmod to a
+ * function result is largely wishful thinking anyway.
+ */
+static bool
+tlist_matches_coltypelist(List *tlist, List *coltypelist)
+{
+	ListCell   *tlistitem;
+	ListCell   *clistitem;
+
+	clistitem = list_head(coltypelist);
+	foreach(tlistitem, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(tlistitem);
+		Oid			coltype;
+
+		if (tle->resjunk)
+			continue;			/* ignore junk columns */
+
+		if (clistitem == NULL)
+			return false;		/* too many tlist items */
+
+		coltype = lfirst_oid(clistitem);
+		clistitem = lnext(clistitem);
+
+		if (exprType((Node *) tle->expr) != coltype)
+			return false;		/* column type mismatch */
+	}
+
+	if (clistitem != NULL)
+		return false;			/* too few tlist items */
+
+	return true;
 }
