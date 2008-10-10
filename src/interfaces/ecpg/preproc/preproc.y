@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.311.2.7 2008/06/05 06:25:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.311.2.8 2008/10/10 12:19:32 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -913,7 +913,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
  *****************************************************************************/
 
 CreateRoleStmt: CREATE ROLE RoleId opt_with OptRoleList
-			{ $$ = cat_str(4, make_str("create role"), $3, make_str("with"), $5); }
+			{ $$ = cat_str(4, make_str("create role"), $3, $4, $5); }
 		;
 
 opt_with:  WITH 		{ $$ = make_str("with"); }
