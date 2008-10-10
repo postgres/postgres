@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.303.4.8 2007/11/06 08:33:18 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.303.4.9 2008/10/10 12:19:18 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -893,7 +893,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
  *****************************************************************************/
 
 CreateUserStmt: CREATE USER UserId opt_with OptUserList
-			{ $$ = cat_str(4, make_str("create user"), $3, make_str("with"), $5); }
+			{ $$ = cat_str(4, make_str("create user"), $3, $4, $5); }
 		;
 
 opt_with:  WITH 		{ $$ = make_str("with"); }
