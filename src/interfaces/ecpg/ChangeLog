@@ -2378,6 +2378,10 @@ Wed, 20 Aug 2008 15:49:23 +0200
 Tue, 07 Oct 2008 14:35:26 +0200
 
 	- Synced parser.
+
+Fri, 10 Oct 2008 14:03:05 +0200
+
+	- Fixed "create role" parsing to accept optional "with" argument.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.
