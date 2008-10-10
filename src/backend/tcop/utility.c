@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.289.2.1 2008/03/14 17:26:01 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.289.2.2 2008/10/10 13:48:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2365,6 +2365,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_VariableShowStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_DiscardStmt:
 			lev = LOGSTMT_ALL;
 			break;
 
