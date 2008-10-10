@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.81 2008/01/16 22:07:04 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.82 2008/10/10 21:46:34 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,6 @@ COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable c
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
     [ [ WITH ] 
           [ BINARY ]
-          [ HEADER ]
           [ OIDS ]
           [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
           [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
@@ -214,7 +213,7 @@ COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable c
     <term><literal>HEADER</literal></term>
     <listitem>
      <para>
-      Specifies the file contains a header line with the names of each
+      Specifies that the file contains a header line with the names of each
       column in the file.  On output, the first line contains the column 
       names from the table, and on input, the first line is ignored.
      </para>
