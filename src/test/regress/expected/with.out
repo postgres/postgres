@@ -292,6 +292,89 @@ SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
     FROM subdepartment;
 (1 row)
 
+-- corner case in which sub-WITH gets initialized first
+with recursive q as (
+      select * from department
+    union all
+      (with x as (select * from q)
+       select * from x)
+    )
+select * from q limit 24;
+ id | parent_department | name 
+----+-------------------+------
+  0 |                   | ROOT
+  1 |                 0 | A
+  2 |                 1 | B
+  3 |                 2 | C
+  4 |                 2 | D
+  5 |                 0 | E
+  6 |                 4 | F
+  7 |                 5 | G
+  0 |                   | ROOT
+  1 |                 0 | A
+  2 |                 1 | B
+  3 |                 2 | C
+  4 |                 2 | D
+  5 |                 0 | E
+  6 |                 4 | F
+  7 |                 5 | G
+  0 |                   | ROOT
+  1 |                 0 | A
+  2 |                 1 | B
+  3 |                 2 | C
+  4 |                 2 | D
+  5 |                 0 | E
+  6 |                 4 | F
+  7 |                 5 | G
+(24 rows)
+
+with recursive q as (
+      select * from department
+    union all
+      (with recursive x as (
+           select * from department
+         union all
+           (select * from q union all select * from x)
+        )
+       select * from x)
+    )
+select * from q limit 32;
+ id | parent_department | name 
+----+-------------------+------
+  0 |                   | ROOT
+  1 |                 0 | A
+  2 |                 1 | B
+  3 |                 2 | C
+  4 |                 2 | D
+  5 |                 0 | E
+  6 |                 4 | F
+  7 |                 5 | G
+  0 |                   | ROOT
+  1 |                 0 | A
+  2 |                 1 | B
+  3 |                 2 | C
+  4 |                 2 | D
+  5 |                 0 | E
+  6 |                 4 | F
+  7 |                 5 | G
+  0 |                   | ROOT
+  1 |                 0 | A
+  2 |                 1 | B
+  3 |                 2 | C
+  4 |                 2 | D
+  5 |                 0 | E
+  6 |                 4 | F
+  7 |                 5 | G
+  0 |                   | ROOT
+  1 |                 0 | A
+  2 |                 1 | B
+  3 |                 2 | C
+  4 |                 2 | D
+  5 |                 0 | E
+  6 |                 4 | F
+  7 |                 5 | G
+(32 rows)
+
 -- recursive term has sub-UNION
 WITH RECURSIVE t(i,j) AS (
 	VALUES (1,2)

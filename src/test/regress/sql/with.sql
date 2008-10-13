@@ -178,6 +178,27 @@ SELECT * FROM vsubdepartment ORDER BY name;
 SELECT pg_get_viewdef('vsubdepartment'::regclass);
 SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
 
+-- corner case in which sub-WITH gets initialized first
+with recursive q as (
+      select * from department
+    union all
+      (with x as (select * from q)
+       select * from x)
+    )
+select * from q limit 24;
+
+with recursive q as (
+      select * from department
+    union all
+      (with recursive x as (
+           select * from department
+         union all
+           (select * from q union all select * from x)
+        )
+       select * from x)
+    )
+select * from q limit 32;
+
 -- recursive term has sub-UNION
 WITH RECURSIVE t(i,j) AS (
 	VALUES (1,2)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.1 2008/10/04 21:56:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.2 2008/10/13 00:41:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,40 @@ TupleTableSlot *
 ExecWorkTableScan(WorkTableScanState *node)
 {
 	/*
+	 * On the first call, find the ancestor RecursiveUnion's state
+	 * via the Param slot reserved for it.  (We can't do this during node
+	 * init because there are corner cases where we'll get the init call
+	 * before the RecursiveUnion does.)
+	 */
+	if (node->rustate == NULL)
+	{
+		WorkTableScan *plan = (WorkTableScan *) node->ss.ps.plan;
+		EState	   *estate = node->ss.ps.state;
+		ParamExecData *param;
+
+		param = &(estate->es_param_exec_vals[plan->wtParam]);
+		Assert(param->execPlan == NULL);
+		Assert(!param->isnull);
+		node->rustate = (RecursiveUnionState *) DatumGetPointer(param->value);
+		Assert(node->rustate && IsA(node->rustate, RecursiveUnionState));
+
+		/*
+		 * The scan tuple type (ie, the rowtype we expect to find in the work
+		 * table) is the same as the result rowtype of the ancestor
+		 * RecursiveUnion node.  Note this depends on the assumption that
+		 * RecursiveUnion doesn't allow projection.
+		 */
+		ExecAssignScanType(&node->ss,
+						   ExecGetResultType(&node->rustate->ps));
+
+		/*
+		 * Now we can initialize the projection info.  This must be
+		 * completed before we can call ExecScan().
+		 */
+		ExecAssignScanProjectionInfo(&node->ss);
+	}
+
+	/*
 	 * use WorkTableScanNext as access method
 	 */
 	return ExecScan(&node->ss, (ExecScanAccessMtd) WorkTableScanNext);
@@ -78,7 +112,6 @@ WorkTableScanState *
 ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 {
 	WorkTableScanState *scanstate;
-	ParamExecData *prmdata;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & EXEC_FLAG_MARK));
@@ -95,16 +128,7 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	scanstate = makeNode(WorkTableScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
-
-	/*
-	 * Find the ancestor RecursiveUnion's state
-	 * via the Param slot reserved for it.
-	 */
-	prmdata = &(estate->es_param_exec_vals[node->wtParam]);
-	Assert(prmdata->execPlan == NULL);
-	Assert(!prmdata->isnull);
-	scanstate->rustate = (RecursiveUnionState *) DatumGetPointer(prmdata->value);
-	Assert(scanstate->rustate && IsA(scanstate->rustate, RecursiveUnionState));
+	scanstate->rustate = NULL;	/* we'll set this later */
 
 	/*
 	 * Miscellaneous initialization
@@ -132,19 +156,9 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	ExecInitScanTupleSlot(estate, &scanstate->ss);
 
 	/*
-	 * The scan tuple type (ie, the rowtype we expect to find in the work
-	 * table) is the same as the result rowtype of the ancestor RecursiveUnion
-	 * node.  Note this depends on the assumption that RecursiveUnion doesn't
-	 * allow projection.
-	 */
-	ExecAssignScanType(&scanstate->ss,
-					   ExecGetResultType(&scanstate->rustate->ps));
-
-	/*
-	 * Initialize result tuple type and projection info.
+	 * Initialize result tuple type, but not yet projection info.
 	 */
 	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
-	ExecAssignScanProjectionInfo(&scanstate->ss);
 
 	scanstate->ss.ps.ps_TupFromTlist = false;
 
@@ -190,5 +204,7 @@ void
 ExecWorkTableScanReScan(WorkTableScanState *node, ExprContext *exprCtxt)
 {
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	tuplestore_rescan(node->rustate->working_table);
+	/* No need (or way) to rescan if ExecWorkTableScan not called yet */
+	if (node->rustate)
+		tuplestore_rescan(node->rustate->working_table);
 }
