@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $PostgreSQL: pgsql/src/tools/findoidjoins/make_oidjoins_check,v 1.2 2006/03/11 04:38:42 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/findoidjoins/make_oidjoins_check,v 1.3 2008/10/13 12:59:29 tgl Exp $
 
 # You first run findoidjoins on the template1 database, and send that
 # output into this script to generate a list of SQL statements.
@@ -54,7 +54,7 @@ $AWK -F'[ \.]' '\
 	{
 		printf "\
 --\n\
--- This is created by pgsql/contrib/findoidjoins/make_oidjoin_check\n\
+-- This is created by pgsql/src/tools/findoidjoins/make_oidjoins_check\n\
 --\n";
 	}
 	{
