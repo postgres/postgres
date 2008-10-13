@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.448 2008/10/03 07:33:08 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.449 2008/10/13 16:25:19 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10666,6 +10666,20 @@ AND
    nulls are considered equal (not distinct).  Thus the result will always
    be either true or false, never null.
   </para>
+
+  <note>
+   <para>
+    The SQL specification requires row-wise comparison to return NULL if the
+    result depends on comparing two NULL values or a NULL and a non-NULL.
+    <productname>PostgreSQL</productname> does this only when comparing the
+    results of two row constructors or comparing a row constructor to the
+    output of a subquery (as in <xref linkend="functions-subquery">).
+    In other contexts where two composite-type values are compared, two
+    NULL field values are considered equal, and a NULL is considered larger
+    than a non-NULL.  This is necessary in order to have consistent sorting
+    and indexing behavior for composite types.
+   </para>
+  </note>
 
   </sect2>
  </sect1>

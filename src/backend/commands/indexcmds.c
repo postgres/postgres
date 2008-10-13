@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.179 2008/08/25 22:42:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.180 2008/10/13 16:25:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -795,7 +795,8 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			atttype = attform->atttypid;
 			ReleaseSysCache(atttuple);
 		}
-		else if (attribute->expr && IsA(attribute->expr, Var))
+		else if (attribute->expr && IsA(attribute->expr, Var) &&
+				 ((Var *) attribute->expr)->varattno != InvalidAttrNumber)
 		{
 			/* Tricky tricky, he wrote (column) ... treat as simple attr */
 			Var		   *var = (Var *) attribute->expr;

@@ -251,6 +251,28 @@ SELECT t1.id, count(t2.*) FROM t AS t1 JOIN t AS t2 ON
 	ORDER BY t1.id;
 
 --
+-- test cycle detection
+--
+create temp table graph( f int, t int, label text );
+
+insert into graph values
+	(1, 2, 'arc 1 -> 2'),
+	(1, 3, 'arc 1 -> 3'),
+	(2, 3, 'arc 2 -> 3'),
+	(1, 4, 'arc 1 -> 4'),
+	(4, 5, 'arc 4 -> 5'),
+	(5, 1, 'arc 5 -> 1');
+
+with recursive search_graph(f, t, label, path, cycle) as (
+	select *, array[row(g.f, g.t)], false from graph g
+	union all
+	select g.*, path || array[row(g.f, g.t)], row(g.f, g.t) = any(path)
+	from graph g, search_graph sg
+	where g.f = sg.t and not cycle
+)
+select * from search_graph;
+
+--
 -- test multiple WITH queries
 --
 WITH RECURSIVE

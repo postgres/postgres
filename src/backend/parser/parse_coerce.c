@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.168 2008/10/06 17:39:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.169 2008/10/13 16:25:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@ static Node *coerce_record_to_complex(ParseState *pstate, Node *node,
 						 CoercionContext ccontext,
 						 CoercionForm cformat,
 						 int location);
+static bool is_complex_array(Oid typid);
 
 
 /*
@@ -402,6 +403,21 @@ coerce_type(ParseState *pstate, Node *node,
 		/* NB: we do NOT want a RelabelType here */
 		return node;
 	}
+#ifdef NOT_USED
+	if (inputTypeId == RECORDARRAYOID &&
+		is_complex_array(targetTypeId))
+	{
+		/* Coerce record[] to a specific complex array type */
+		/* not implemented yet ... */
+	}
+#endif
+	if (targetTypeId == RECORDARRAYOID &&
+		is_complex_array(inputTypeId))
+	{
+		/* Coerce a specific complex array type to record[] */
+		/* NB: we do NOT want a RelabelType here */
+		return node;
+	}
 	if (typeInheritsFrom(inputTypeId, targetTypeId))
 	{
 		/*
@@ -490,6 +506,23 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		 */
 		if (targetTypeId == RECORDOID &&
 			ISCOMPLEX(inputTypeId))
+			continue;
+
+#ifdef NOT_USED					/* not implemented yet */
+		/*
+		 * If input is record[] and target is a composite array type,
+		 * assume we can coerce (may need tighter checking here)
+		 */
+		if (inputTypeId == RECORDARRAYOID &&
+			is_complex_array(targetTypeId))
+			continue;
+#endif
+
+		/*
+		 * If input is a composite array type and target is record[], accept
+		 */
+		if (targetTypeId == RECORDARRAYOID &&
+			is_complex_array(inputTypeId))
 			continue;
 
 		/*
@@ -1724,8 +1757,8 @@ IsPreferredType(TYPCATEGORY category, Oid type)
  * invokable, no-function-needed pg_cast entry.  Also, a domain is always
  * binary-coercible to its base type, though *not* vice versa (in the other
  * direction, one must apply domain constraint checks before accepting the
- * value as legitimate).  We also need to special-case the polymorphic
- * ANYARRAY type.
+ * value as legitimate).  We also need to special-case various polymorphic
+ * types.
  *
  * This function replaces IsBinaryCompatible(), which was an inherently
  * symmetric test.	Since the pg_cast entries aren't necessarily symmetric,
@@ -1763,6 +1796,16 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 	/* Also accept any enum type as coercible to ANYENUM */
 	if (targettype == ANYENUMOID)
 		if (type_is_enum(srctype))
+			return true;
+
+	/* Also accept any composite type as coercible to RECORD */
+	if (targettype == RECORDOID)
+		if (ISCOMPLEX(srctype))
+			return true;
+
+	/* Also accept any composite array type as coercible to RECORD[] */
+	if (targettype == RECORDARRAYOID)
+		if (is_complex_array(srctype))
 			return true;
 
 	/* Else look in pg_cast */
@@ -2001,4 +2044,19 @@ find_typmod_coercion_function(Oid typeId,
 		result = COERCION_PATH_NONE;
 
 	return result;
+}
+
+/*
+ * is_complex_array
+ *		Is this type an array of composite?
+ *
+ * Note: this will not return true for record[]; check for RECORDARRAYOID
+ * separately if needed.
+ */
+static bool
+is_complex_array(Oid typid)
+{
+	Oid			elemtype = get_element_type(typid);
+
+	return (OidIsValid(elemtype) && ISCOMPLEX(elemtype));
 }

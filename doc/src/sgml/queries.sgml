@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.47 2008/10/07 19:27:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.48 2008/10/13 16:25:19 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -1604,8 +1604,85 @@ GROUP BY sub_part
    the recursive part of the query will eventually return no tuples,
    or else the query will loop indefinitely.  Sometimes, using
    <literal>UNION</> instead of <literal>UNION ALL</> can accomplish this
-   by discarding rows that duplicate previous output rows; this catches
-   cycles that would otherwise repeat.  A useful trick for testing queries
+   by discarding rows that duplicate previous output rows.  However, often a
+   cycle does not involve output rows that are completely duplicate: it may be
+   necessary to check just one or a few fields to see if the same point has
+   been reached before.  The standard method for handling such situations is
+   to compute an array of the already-visited values.  For example, consider
+   the following query that searches a table <structname>graph</> using a
+   <structfield>link</> field:
+
+<programlisting>
+WITH RECURSIVE search_graph(id, link, data, depth) AS (
+        SELECT g.id, g.link, g.data, 1
+        FROM graph g
+      UNION ALL
+        SELECT g.id, g.link, g.data, sg.depth + 1
+        FROM graph g, search_graph sg
+        WHERE g.id = sg.link
+)
+SELECT * FROM search_graph;
+</programlisting>
+
+   This query will loop if the <structfield>link</> relationships contain
+   cycles.  Because we require a <quote>depth</> output, just changing
+   <literal>UNION ALL</> to <literal>UNION</> would not eliminate the looping.
+   Instead we need to recognize whether we have reached the same row again
+   while following a particular path of links.  We add two columns
+   <structfield>path</> and <structfield>cycle</> to the loop-prone query:
+
+<programlisting>
+WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS (
+        SELECT g.id, g.link, g.data, 1,
+          ARRAY[g.id],
+          false
+        FROM graph g
+      UNION ALL
+        SELECT g.id, g.link, g.data, sg.depth + 1,
+          path || ARRAY[g.id],
+          g.id = ANY(path)
+        FROM graph g, search_graph sg
+        WHERE g.id = sg.link AND NOT cycle
+)
+SELECT * FROM search_graph;
+</programlisting>
+
+   Aside from preventing cycles, the array value is often useful in its own
+   right as representing the <quote>path</> taken to reach any particular row.
+  </para>
+
+  <para>
+   In the general case where more than one field needs to be checked to
+   recognize a cycle, use an array of rows.  For example, if we needed to
+   compare fields <structfield>f1</> and <structfield>f2</>:
+
+<programlisting>
+WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS (
+        SELECT g.id, g.link, g.data, 1,
+          ARRAY[ROW(g.f1, g.f2)],
+          false
+        FROM graph g
+      UNION ALL
+        SELECT g.id, g.link, g.data, sg.depth + 1,
+          path || ARRAY[ROW(g.f1, g.f2)],
+          ROW(g.f1, g.f2) = ANY(path)
+        FROM graph g, search_graph sg
+        WHERE g.id = sg.link AND NOT cycle
+)
+SELECT * FROM search_graph;
+</programlisting>
+  </para>
+
+  <tip>
+   <para>
+    Omit the <literal>ROW()</> syntax in the common case where only one field
+    needs to be checked to recognize a cycle.  This allows a simple array
+    rather than a composite-type array to be used, gaining efficiency.
+   </para>
+  </tip>
+
+  <para>
+   A helpful trick for testing queries
    when you are not certain if they might loop is to place a <literal>LIMIT</>
    in the parent query.  For example, this query would loop forever without
    the <literal>LIMIT</>:

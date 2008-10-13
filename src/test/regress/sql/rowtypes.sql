@@ -113,3 +113,10 @@ order by thousand, tenthous;
 select ROW();
 select ROW() IS NULL;
 select ROW() = ROW();
+
+-- Check ability to create arrays of anonymous rowtypes
+select array[ row(1,2), row(3,4), row(5,6) ];
+
+-- Check ability to compare an anonymous row to elements of an array
+select row(1,1.1) = any (array[ row(7,7.7), row(1,1.1), row(0,0.0) ]);
+select row(1,1.1) = any (array[ row(7,7.7), row(1,1.0), row(0,0.0) ]);

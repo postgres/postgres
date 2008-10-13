@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * rowtypes.c
- *	  I/O functions for generic composite types.
+ *	  I/O and comparison functions for generic composite types.
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.21 2008/05/12 00:00:51 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.22 2008/10/13 16:25:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,24 @@ typedef struct RecordIOData
 	int			ncolumns;
 	ColumnIOData columns[1];	/* VARIABLE LENGTH ARRAY */
 } RecordIOData;
+
+/*
+ * structure to cache metadata needed for record comparison
+ */
+typedef struct ColumnCompareData
+{
+	TypeCacheEntry *typentry;	/* has everything we need, actually */
+} ColumnCompareData;
+
+typedef struct RecordCompareData
+{
+	int			ncolumns;		/* allocated length of columns[] */
+	Oid			record1_type;
+	int32		record1_typmod;
+	Oid			record2_type;
+	int32		record2_typmod;
+	ColumnCompareData columns[1];	/* VARIABLE LENGTH ARRAY */
+} RecordCompareData;
 
 
 /*
@@ -733,4 +751,480 @@ record_send(PG_FUNCTION_ARGS)
 	ReleaseTupleDesc(tupdesc);
 
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+
+/*
+ * record_cmp()
+ * Internal comparison function for records.
+ *
+ * Returns -1, 0 or 1
+ *
+ * Do not assume that the two inputs are exactly the same record type;
+ * for instance we might be comparing an anonymous ROW() construct against a
+ * named composite type.  We will compare as long as they have the same number
+ * of non-dropped columns of the same types.
+ */
+static int
+record_cmp(FunctionCallInfo fcinfo)
+{
+	HeapTupleHeader record1 = PG_GETARG_HEAPTUPLEHEADER(0);
+	HeapTupleHeader record2 = PG_GETARG_HEAPTUPLEHEADER(1);
+	int			result = 0;
+	Oid			tupType1;
+	Oid			tupType2;
+	int32		tupTypmod1;
+	int32		tupTypmod2;
+	TupleDesc	tupdesc1;
+	TupleDesc	tupdesc2;
+	HeapTupleData tuple1;
+	HeapTupleData tuple2;
+	int			ncolumns1;
+	int			ncolumns2;
+	RecordCompareData *my_extra;
+	int			ncols;
+	Datum	   *values1;
+	Datum	   *values2;
+	bool	   *nulls1;
+	bool	   *nulls2;
+	int			i1;
+	int			i2;
+	int			j;
+
+	/* Extract type info from the tuples */
+	tupType1 = HeapTupleHeaderGetTypeId(record1);
+	tupTypmod1 = HeapTupleHeaderGetTypMod(record1);
+	tupdesc1 = lookup_rowtype_tupdesc(tupType1, tupTypmod1);
+	ncolumns1 = tupdesc1->natts;
+	tupType2 = HeapTupleHeaderGetTypeId(record2);
+	tupTypmod2 = HeapTupleHeaderGetTypMod(record2);
+	tupdesc2 = lookup_rowtype_tupdesc(tupType2, tupTypmod2);
+	ncolumns2 = tupdesc2->natts;
+
+	/* Build temporary HeapTuple control structures */
+	tuple1.t_len = HeapTupleHeaderGetDatumLength(record1);
+	ItemPointerSetInvalid(&(tuple1.t_self));
+	tuple1.t_tableOid = InvalidOid;
+	tuple1.t_data = record1;
+	tuple2.t_len = HeapTupleHeaderGetDatumLength(record2);
+	ItemPointerSetInvalid(&(tuple2.t_self));
+	tuple2.t_tableOid = InvalidOid;
+	tuple2.t_data = record2;
+
+	/*
+	 * We arrange to look up the needed comparison info just once per series
+	 * of calls, assuming the record types don't change underneath us.
+	 */
+	ncols = Max(ncolumns1, ncolumns2);
+	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL ||
+		my_extra->ncolumns < ncols)
+	{
+		fcinfo->flinfo->fn_extra =
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   sizeof(RecordCompareData) - sizeof(ColumnCompareData)
+							   + ncols * sizeof(ColumnCompareData));
+		my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+		my_extra->ncolumns = ncols;
+		my_extra->record1_type = InvalidOid;
+		my_extra->record1_typmod = 0;
+		my_extra->record2_type = InvalidOid;
+		my_extra->record2_typmod = 0;
+	}
+
+	if (my_extra->record1_type != tupType1 ||
+		my_extra->record1_typmod != tupTypmod1 ||
+		my_extra->record2_type != tupType2 ||
+		my_extra->record2_typmod != tupTypmod2)
+	{
+		MemSet(my_extra->columns, 0, ncols * sizeof(ColumnCompareData));
+		my_extra->record1_type = tupType1;
+		my_extra->record1_typmod = tupTypmod1;
+		my_extra->record2_type = tupType2;
+		my_extra->record2_typmod = tupTypmod2;
+	}
+
+	/* Break down the tuples into fields */
+	values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
+	nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
+	values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
+	nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
+
+	/*
+	 * Scan corresponding columns, allowing for dropped columns in different
+	 * places in the two rows.  i1 and i2 are physical column indexes,
+	 * j is the logical column index.
+	 */
+	i1 = i2 = j = 0;
+	while (i1 < ncolumns1 || i2 < ncolumns2)
+	{
+		TypeCacheEntry *typentry;
+		FunctionCallInfoData locfcinfo;
+		int32		cmpresult;
+
+		/*
+		 * Skip dropped columns
+		 */
+		if (i1 < ncolumns1 && tupdesc1->attrs[i1]->attisdropped)
+		{
+			i1++;
+			continue;
+		}
+		if (i2 < ncolumns2 && tupdesc2->attrs[i2]->attisdropped)
+		{
+			i2++;
+			continue;
+		}
+		if (i1 >= ncolumns1 || i2 >= ncolumns2)
+			break;				/* we'll deal with mismatch below loop */
+
+		/*
+		 * Have two matching columns, they must be same type
+		 */
+		if (tupdesc1->attrs[i1]->atttypid !=
+			tupdesc2->attrs[i2]->atttypid)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("cannot compare dissimilar column types %s and %s at record column %d",
+							format_type_be(tupdesc1->attrs[i1]->atttypid),
+							format_type_be(tupdesc2->attrs[i2]->atttypid),
+							j+1)));
+
+		/*
+		 * Lookup the comparison function if not done already
+		 */
+		typentry = my_extra->columns[j].typentry;
+		if (typentry == NULL ||
+			typentry->type_id != tupdesc1->attrs[i1]->atttypid)
+		{
+			typentry = lookup_type_cache(tupdesc1->attrs[i1]->atttypid,
+										 TYPECACHE_CMP_PROC_FINFO);
+			if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("could not identify a comparison function for type %s",
+								format_type_be(typentry->type_id))));
+			my_extra->columns[j].typentry = typentry;
+		}
+
+		/*
+		 * We consider two NULLs equal; NULL > not-NULL.
+		 */
+		if (!nulls1[i1] || !nulls2[i2])
+		{
+			if (nulls1[i1])
+			{
+				/* arg1 is greater than arg2 */
+				result = 1;
+				break;
+			}
+			if (nulls2[i2])
+			{
+				/* arg1 is less than arg2 */
+				result = -1;
+				break;
+			}
+
+			/* Compare the pair of elements */
+			InitFunctionCallInfoData(locfcinfo, &typentry->cmp_proc_finfo, 2,
+									 NULL, NULL);
+			locfcinfo.arg[0] = values1[i1];
+			locfcinfo.arg[1] = values2[i2];
+			locfcinfo.argnull[0] = false;
+			locfcinfo.argnull[1] = false;
+			locfcinfo.isnull = false;
+			cmpresult = DatumGetInt32(FunctionCallInvoke(&locfcinfo));
+
+			if (cmpresult < 0)
+			{
+				/* arg1 is less than arg2 */
+				result = -1;
+				break;
+			}
+			else if (cmpresult > 0)
+			{
+				/* arg1 is greater than arg2 */
+				result = 1;
+				break;
+			}
+		}
+
+		/* equal, so continue to next column */
+		i1++, i2++, j++;
+	}
+
+	/*
+	 * If we didn't break out of the loop early, check for column count
+	 * mismatch.  (We do not report such mismatch if we found unequal
+	 * column values; is that a feature or a bug?)
+	 */
+	if (result == 0)
+	{
+		if (i1 != ncolumns1 || i2 != ncolumns2)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("cannot compare record types with different numbers of columns")));
+	}
+
+	pfree(values1);
+	pfree(nulls1);
+	pfree(values2);
+	pfree(nulls2);
+	ReleaseTupleDesc(tupdesc1);
+	ReleaseTupleDesc(tupdesc2);
+
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(record1, 0);
+	PG_FREE_IF_COPY(record2, 1);
+
+	return result;
+}
+
+/*
+ * record_eq :
+ *		  compares two records for equality
+ * result :
+ *		  returns true if the records are equal, false otherwise.
+ *
+ * Note: we do not use record_cmp here, since equality may be meaningful in
+ * datatypes that don't have a total ordering (and hence no btree support).
+ */
+Datum
+record_eq(PG_FUNCTION_ARGS)
+{
+	HeapTupleHeader record1 = PG_GETARG_HEAPTUPLEHEADER(0);
+	HeapTupleHeader record2 = PG_GETARG_HEAPTUPLEHEADER(1);
+	bool		result = true;
+	Oid			tupType1;
+	Oid			tupType2;
+	int32		tupTypmod1;
+	int32		tupTypmod2;
+	TupleDesc	tupdesc1;
+	TupleDesc	tupdesc2;
+	HeapTupleData tuple1;
+	HeapTupleData tuple2;
+	int			ncolumns1;
+	int			ncolumns2;
+	RecordCompareData *my_extra;
+	int			ncols;
+	Datum	   *values1;
+	Datum	   *values2;
+	bool	   *nulls1;
+	bool	   *nulls2;
+	int			i1;
+	int			i2;
+	int			j;
+
+	/* Extract type info from the tuples */
+	tupType1 = HeapTupleHeaderGetTypeId(record1);
+	tupTypmod1 = HeapTupleHeaderGetTypMod(record1);
+	tupdesc1 = lookup_rowtype_tupdesc(tupType1, tupTypmod1);
+	ncolumns1 = tupdesc1->natts;
+	tupType2 = HeapTupleHeaderGetTypeId(record2);
+	tupTypmod2 = HeapTupleHeaderGetTypMod(record2);
+	tupdesc2 = lookup_rowtype_tupdesc(tupType2, tupTypmod2);
+	ncolumns2 = tupdesc2->natts;
+
+	/* Build temporary HeapTuple control structures */
+	tuple1.t_len = HeapTupleHeaderGetDatumLength(record1);
+	ItemPointerSetInvalid(&(tuple1.t_self));
+	tuple1.t_tableOid = InvalidOid;
+	tuple1.t_data = record1;
+	tuple2.t_len = HeapTupleHeaderGetDatumLength(record2);
+	ItemPointerSetInvalid(&(tuple2.t_self));
+	tuple2.t_tableOid = InvalidOid;
+	tuple2.t_data = record2;
+
+	/*
+	 * We arrange to look up the needed comparison info just once per series
+	 * of calls, assuming the record types don't change underneath us.
+	 */
+	ncols = Max(ncolumns1, ncolumns2);
+	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL ||
+		my_extra->ncolumns < ncols)
+	{
+		fcinfo->flinfo->fn_extra =
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   sizeof(RecordCompareData) - sizeof(ColumnCompareData)
+							   + ncols * sizeof(ColumnCompareData));
+		my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+		my_extra->ncolumns = ncols;
+		my_extra->record1_type = InvalidOid;
+		my_extra->record1_typmod = 0;
+		my_extra->record2_type = InvalidOid;
+		my_extra->record2_typmod = 0;
+	}
+
+	if (my_extra->record1_type != tupType1 ||
+		my_extra->record1_typmod != tupTypmod1 ||
+		my_extra->record2_type != tupType2 ||
+		my_extra->record2_typmod != tupTypmod2)
+	{
+		MemSet(my_extra->columns, 0, ncols * sizeof(ColumnCompareData));
+		my_extra->record1_type = tupType1;
+		my_extra->record1_typmod = tupTypmod1;
+		my_extra->record2_type = tupType2;
+		my_extra->record2_typmod = tupTypmod2;
+	}
+
+	/* Break down the tuples into fields */
+	values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
+	nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
+	values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
+	nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
+
+	/*
+	 * Scan corresponding columns, allowing for dropped columns in different
+	 * places in the two rows.  i1 and i2 are physical column indexes,
+	 * j is the logical column index.
+	 */
+	i1 = i2 = j = 0;
+	while (i1 < ncolumns1 || i2 < ncolumns2)
+	{
+		TypeCacheEntry *typentry;
+		FunctionCallInfoData locfcinfo;
+		bool		oprresult;
+
+		/*
+		 * Skip dropped columns
+		 */
+		if (i1 < ncolumns1 && tupdesc1->attrs[i1]->attisdropped)
+		{
+			i1++;
+			continue;
+		}
+		if (i2 < ncolumns2 && tupdesc2->attrs[i2]->attisdropped)
+		{
+			i2++;
+			continue;
+		}
+		if (i1 >= ncolumns1 || i2 >= ncolumns2)
+			break;				/* we'll deal with mismatch below loop */
+
+		/*
+		 * Have two matching columns, they must be same type
+		 */
+		if (tupdesc1->attrs[i1]->atttypid !=
+			tupdesc2->attrs[i2]->atttypid)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("cannot compare dissimilar column types %s and %s at record column %d",
+							format_type_be(tupdesc1->attrs[i1]->atttypid),
+							format_type_be(tupdesc2->attrs[i2]->atttypid),
+							j+1)));
+
+		/*
+		 * Lookup the equality function if not done already
+		 */
+		typentry = my_extra->columns[j].typentry;
+		if (typentry == NULL ||
+			typentry->type_id != tupdesc1->attrs[i1]->atttypid)
+		{
+			typentry = lookup_type_cache(tupdesc1->attrs[i1]->atttypid,
+										 TYPECACHE_EQ_OPR_FINFO);
+			if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("could not identify an equality operator for type %s",
+								format_type_be(typentry->type_id))));
+			my_extra->columns[j].typentry = typentry;
+		}
+
+		/*
+		 * We consider two NULLs equal; NULL > not-NULL.
+		 */
+		if (!nulls1[i1] || !nulls2[i2])
+		{
+			if (nulls1[i1] || nulls2[i2])
+			{
+				result = false;
+				break;
+			}
+
+			/* Compare the pair of elements */
+			InitFunctionCallInfoData(locfcinfo, &typentry->eq_opr_finfo, 2,
+									 NULL, NULL);
+			locfcinfo.arg[0] = values1[i1];
+			locfcinfo.arg[1] = values2[i2];
+			locfcinfo.argnull[0] = false;
+			locfcinfo.argnull[1] = false;
+			locfcinfo.isnull = false;
+			oprresult = DatumGetBool(FunctionCallInvoke(&locfcinfo));
+			if (!oprresult)
+			{
+				result = false;
+				break;
+			}
+		}
+
+		/* equal, so continue to next column */
+		i1++, i2++, j++;
+	}
+
+	/*
+	 * If we didn't break out of the loop early, check for column count
+	 * mismatch.  (We do not report such mismatch if we found unequal
+	 * column values; is that a feature or a bug?)
+	 */
+	if (result)
+	{
+		if (i1 != ncolumns1 || i2 != ncolumns2)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("cannot compare record types with different numbers of columns")));
+	}
+
+	pfree(values1);
+	pfree(nulls1);
+	pfree(values2);
+	pfree(nulls2);
+	ReleaseTupleDesc(tupdesc1);
+	ReleaseTupleDesc(tupdesc2);
+
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(record1, 0);
+	PG_FREE_IF_COPY(record2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+record_ne(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(!DatumGetBool(record_eq(fcinfo)));
+}
+
+Datum
+record_lt(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(record_cmp(fcinfo) < 0);
+}
+
+Datum
+record_gt(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(record_cmp(fcinfo) > 0);
+}
+
+Datum
+record_le(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(record_cmp(fcinfo) <= 0);
+}
+
+Datum
+record_ge(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(record_cmp(fcinfo) >= 0);
+}
+
+Datum
+btrecordcmp(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT32(record_cmp(fcinfo));
 }
