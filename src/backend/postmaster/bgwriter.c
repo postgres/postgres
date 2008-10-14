@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.52 2008/09/30 10:52:13 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.53 2008/10/14 08:06:39 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1012,6 +1012,7 @@ ForwardFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 	}
 	request = &BgWriterShmem->requests[BgWriterShmem->num_requests++];
 	request->rnode = rnode;
+	request->forknum = forknum;
 	request->segno = segno;
 	LWLockRelease(BgWriterCommLock);
 	return true;
