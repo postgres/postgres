@@ -1157,3 +1157,30 @@ SELECT DATE_TRUNC('DECADE', DATE '0002-12-31 BC'); -- 0011-01-01 BC
  Mon Jan 01 00:00:00 0011 PST BC
 (1 row)
 
+--
+-- test infinity
+--
+select 'infinity'::date, '-infinity'::date;
+   date   |   date    
+----------+-----------
+ infinity | -infinity
+(1 row)
+
+select 'infinity'::date > 'today'::date as t;
+ t 
+---
+ t
+(1 row)
+
+select '-infinity'::date < 'today'::date as t;
+ t 
+---
+ t
+(1 row)
+
+select isfinite('infinity'::date), isfinite('-infinity'::date), isfinite('today'::date);
+ isfinite | isfinite | isfinite 
+----------+----------+----------
+ f        | f        | t
+(1 row)
+

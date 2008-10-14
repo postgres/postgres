@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.40 2008/03/21 01:31:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.41 2008/10/14 17:12:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,20 @@ typedef struct
 	TimeADT		time;			/* all time units other than months and years */
 	int32		zone;			/* numeric time zone, in seconds */
 } TimeTzADT;
+
+/*
+ * Infinity and minus infinity must be the max and min values of DateADT.
+ * We could use INT_MIN and INT_MAX here, but seems better to not assume that
+ * int32 == int.
+ */
+#define DATEVAL_NOBEGIN		((DateADT) (-0x7fffffff - 1))
+#define DATEVAL_NOEND		((DateADT) 0x7fffffff)
+
+#define DATE_NOBEGIN(j)		((j) = DATEVAL_NOBEGIN)
+#define DATE_IS_NOBEGIN(j)	((j) == DATEVAL_NOBEGIN)
+#define DATE_NOEND(j)		((j) = DATEVAL_NOEND)
+#define DATE_IS_NOEND(j)	((j) == DATEVAL_NOEND)
+#define DATE_NOT_FINITE(j)	(DATE_IS_NOBEGIN(j) || DATE_IS_NOEND(j))
 
 /*
  * Macros for fmgr-callable functions.
@@ -90,6 +104,7 @@ extern Datum date_le(PG_FUNCTION_ARGS);
 extern Datum date_gt(PG_FUNCTION_ARGS);
 extern Datum date_ge(PG_FUNCTION_ARGS);
 extern Datum date_cmp(PG_FUNCTION_ARGS);
+extern Datum date_finite(PG_FUNCTION_ARGS);
 extern Datum date_larger(PG_FUNCTION_ARGS);
 extern Datum date_smaller(PG_FUNCTION_ARGS);
 extern Datum date_mi(PG_FUNCTION_ARGS);

@@ -269,3 +269,10 @@ SELECT DATE_TRUNC('CENTURY', DATE '0055-08-10 BC'); -- 0100-01-01 BC
 SELECT DATE_TRUNC('DECADE', DATE '1993-12-25'); -- 1990-01-01
 SELECT DATE_TRUNC('DECADE', DATE '0004-12-25'); -- 0001-01-01 BC
 SELECT DATE_TRUNC('DECADE', DATE '0002-12-31 BC'); -- 0011-01-01 BC
+--
+-- test infinity
+--
+select 'infinity'::date, '-infinity'::date;
+select 'infinity'::date > 'today'::date as t;
+select '-infinity'::date < 'today'::date as t;
+select isfinite('infinity'::date), isfinite('-infinity'::date), isfinite('today'::date);

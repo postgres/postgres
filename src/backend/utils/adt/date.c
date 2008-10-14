@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.142 2008/07/07 18:09:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.143 2008/10/14 17:12:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #endif
 
 
+static void EncodeSpecialDate(DateADT dt, char *str);
 static int	time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec);
 static int	timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp);
 static int	tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result);
@@ -147,6 +148,14 @@ date_in(PG_FUNCTION_ARGS)
 			GetEpochTime(tm);
 			break;
 
+		case DTK_LATE:
+			DATE_NOEND(date);
+			PG_RETURN_DATEADT(date);
+
+		case DTK_EARLY:
+			DATE_NOBEGIN(date);
+			PG_RETURN_DATEADT(date);
+
 		default:
 			DateTimeParseError(DTERR_BAD_FORMAT, str, "date");
 			break;
@@ -174,10 +183,14 @@ date_out(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 
-	j2date(date + POSTGRES_EPOCH_JDATE,
-		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
-
-	EncodeDateOnly(tm, DateStyle, buf);
+	if (DATE_NOT_FINITE(date))
+		EncodeSpecialDate(date, buf);
+	else
+	{
+		j2date(date + POSTGRES_EPOCH_JDATE,
+			   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+		EncodeDateOnly(tm, DateStyle, buf);
+	}
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
@@ -206,6 +219,20 @@ date_send(PG_FUNCTION_ARGS)
 	pq_begintypsend(&buf);
 	pq_sendint(&buf, date, sizeof(date));
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+/*
+ * Convert reserved date values to string.
+ */
+static void
+EncodeSpecialDate(DateADT dt, char *str)
+{
+	if (DATE_IS_NOBEGIN(dt))
+		strcpy(str, EARLY);
+	else if (DATE_IS_NOEND(dt))
+		strcpy(str, LATE);
+	else						/* shouldn't happen */
+		elog(ERROR, "invalid argument for EncodeSpecialDate");
 }
 
 
@@ -281,6 +308,14 @@ date_cmp(PG_FUNCTION_ARGS)
 }
 
 Datum
+date_finite(PG_FUNCTION_ARGS)
+{
+	DateADT		date = PG_GETARG_DATEADT(0);
+
+	PG_RETURN_BOOL(!DATE_NOT_FINITE(date));
+}
+
+Datum
 date_larger(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
@@ -306,6 +341,11 @@ date_mi(PG_FUNCTION_ARGS)
 	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
 	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
 
+	if (DATE_NOT_FINITE(dateVal1) || DATE_NOT_FINITE(dateVal2))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("cannot subtract infinite dates")));
+
 	PG_RETURN_INT32((int32) (dateVal1 - dateVal2));
 }
 
@@ -318,6 +358,9 @@ date_pli(PG_FUNCTION_ARGS)
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
 	int32		days = PG_GETARG_INT32(1);
 
+	if (DATE_NOT_FINITE(dateVal))
+		days = 0;				/* can't change infinity */
+
 	PG_RETURN_DATEADT(dateVal + days);
 }
 
@@ -328,6 +371,9 @@ date_mii(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
 	int32		days = PG_GETARG_INT32(1);
+
+	if (DATE_NOT_FINITE(dateVal))
+		days = 0;				/* can't change infinity */
 
 	PG_RETURN_DATEADT(dateVal - days);
 }
@@ -342,18 +388,25 @@ date2timestamp(DateADT dateVal)
 {
 	Timestamp	result;
 
+	if (DATE_IS_NOBEGIN(dateVal))
+		TIMESTAMP_NOBEGIN(result);
+	else if (DATE_IS_NOEND(dateVal))
+		TIMESTAMP_NOEND(result);
+	else
+	{
 #ifdef HAVE_INT64_TIMESTAMP
-	/* date is days since 2000, timestamp is microseconds since same... */
-	result = dateVal * USECS_PER_DAY;
-	/* Date's range is wider than timestamp's, so must check for overflow */
-	if (result / USECS_PER_DAY != dateVal)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("date out of range for timestamp")));
+		/* date is days since 2000, timestamp is microseconds since same... */
+		result = dateVal * USECS_PER_DAY;
+		/* Date's range is wider than timestamp's, so check for overflow */
+		if (result / USECS_PER_DAY != dateVal)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("date out of range for timestamp")));
 #else
-	/* date is days since 2000, timestamp is seconds since same... */
-	result = dateVal * (double) SECS_PER_DAY;
+		/* date is days since 2000, timestamp is seconds since same... */
+		result = dateVal * (double) SECS_PER_DAY;
 #endif
+	}
 
 	return result;
 }
@@ -366,24 +419,30 @@ date2timestamptz(DateADT dateVal)
 			   *tm = &tt;
 	int			tz;
 
-	j2date(dateVal + POSTGRES_EPOCH_JDATE,
-		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
-
-	tm->tm_hour = 0;
-	tm->tm_min = 0;
-	tm->tm_sec = 0;
-	tz = DetermineTimeZoneOffset(tm, session_timezone);
+	if (DATE_IS_NOBEGIN(dateVal))
+		TIMESTAMP_NOBEGIN(result);
+	else if (DATE_IS_NOEND(dateVal))
+		TIMESTAMP_NOEND(result);
+	else
+	{
+		j2date(dateVal + POSTGRES_EPOCH_JDATE,
+			   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+		tm->tm_hour = 0;
+		tm->tm_min = 0;
+		tm->tm_sec = 0;
+		tz = DetermineTimeZoneOffset(tm, session_timezone);
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = dateVal * USECS_PER_DAY + tz * USECS_PER_SEC;
-	/* Date's range is wider than timestamp's, so must check for overflow */
-	if ((result - tz * USECS_PER_SEC) / USECS_PER_DAY != dateVal)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("date out of range for timestamp")));
+		result = dateVal * USECS_PER_DAY + tz * USECS_PER_SEC;
+		/* Date's range is wider than timestamp's, so check for overflow */
+		if ((result - tz * USECS_PER_SEC) / USECS_PER_DAY != dateVal)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("date out of range for timestamp")));
 #else
-	result = dateVal * (double) SECS_PER_DAY + tz;
+		result = dateVal * (double) SECS_PER_DAY + tz;
 #endif
+	}
 
 	return result;
 }
@@ -797,15 +856,19 @@ timestamp_date(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	fsec_t		fsec;
 
-	if (TIMESTAMP_NOT_FINITE(timestamp))
-		PG_RETURN_NULL();
+	if (TIMESTAMP_IS_NOBEGIN(timestamp))
+		DATE_NOBEGIN(result);
+	else if (TIMESTAMP_IS_NOEND(timestamp))
+		DATE_NOEND(result);
+	else
+	{
+		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 
-	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp out of range")));
-
-	result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+		result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+	}
 
 	PG_RETURN_DATEADT(result);
 }
@@ -840,15 +903,19 @@ timestamptz_date(PG_FUNCTION_ARGS)
 	int			tz;
 	char	   *tzn;
 
-	if (TIMESTAMP_NOT_FINITE(timestamp))
-		PG_RETURN_NULL();
+	if (TIMESTAMP_IS_NOBEGIN(timestamp))
+		DATE_NOBEGIN(result);
+	else if (TIMESTAMP_IS_NOEND(timestamp))
+		DATE_NOEND(result);
+	else
+	{
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 
-	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp out of range")));
-
-	result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+		result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+	}
 
 	PG_RETURN_DATEADT(result);
 }
@@ -869,16 +936,19 @@ abstime_date(PG_FUNCTION_ARGS)
 	switch (abstime)
 	{
 		case INVALID_ABSTIME:
-		case NOSTART_ABSTIME:
-		case NOEND_ABSTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				   errmsg("cannot convert reserved abstime value to date")));
+			result = 0;			/* keep compiler quiet */
+			break;
 
-			/*
-			 * pretend to drop through to make compiler think that result will
-			 * be set
-			 */
+		case NOSTART_ABSTIME:
+			DATE_NOBEGIN(result);
+			break;
+
+		case NOEND_ABSTIME:
+			DATE_NOEND(result);
+			break;
 
 		default:
 			abstime2tm(abstime, &tz, tm, NULL);
@@ -1452,9 +1522,9 @@ datetime_timestamp(PG_FUNCTION_ARGS)
 	TimeADT		time = PG_GETARG_TIMEADT(1);
 	Timestamp	result;
 
-	result = DatumGetTimestamp(DirectFunctionCall1(date_timestamp,
-												   DateADTGetDatum(date)));
-	result += time;
+	result = date2timestamp(date);
+	if (!TIMESTAMP_NOT_FINITE(result))
+		result += time;
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -2304,11 +2374,18 @@ datetimetz_timestamptz(PG_FUNCTION_ARGS)
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
 	TimestampTz result;
 
+	if (DATE_IS_NOBEGIN(date))
+		TIMESTAMP_NOBEGIN(result);
+	else if (DATE_IS_NOEND(date))
+		TIMESTAMP_NOEND(result);
+	else
+	{
 #ifdef HAVE_INT64_TIMESTAMP
-	result = date * USECS_PER_DAY + time->time + time->zone * USECS_PER_SEC;
+		result = date * USECS_PER_DAY + time->time + time->zone * USECS_PER_SEC;
 #else
-	result = date * (double) SECS_PER_DAY + time->time + time->zone;
+		result = date * (double) SECS_PER_DAY + time->time + time->zone;
 #endif
+	}
 
 	PG_RETURN_TIMESTAMP(result);
 }

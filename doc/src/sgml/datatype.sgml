@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.229 2008/10/03 15:37:18 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.230 2008/10/14 17:12:32 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2032,12 +2032,12 @@ January 8 04:05:06 1999 PST
          </row>
          <row>
           <entry><literal>infinity</literal></entry>
-          <entry><type>timestamp</type></entry>
+          <entry><type>date</type>, <type>timestamp</type></entry>
           <entry>later than all other time stamps</entry>
          </row>
          <row>
           <entry><literal>-infinity</literal></entry>
-          <entry><type>timestamp</type></entry>
+          <entry><type>date</type>, <type>timestamp</type></entry>
           <entry>earlier than all other time stamps</entry>
          </row>
          <row>
