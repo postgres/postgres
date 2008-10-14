@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.49 2008/10/14 00:12:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.50 2008/10/14 00:41:34 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -1681,6 +1681,15 @@ SELECT * FROM search_graph;
    </para>
   </tip>
 
+  <tip>
+   <para>
+    The recursive query evaluation algorithm produces its output in
+    breadth-first search order.  You can display the results in depth-first
+    search order by making the outer query <literal>ORDER BY</> a
+    <quote>path</> column constructed in this way.
+   </para>
+  </tip>
+
   <para>
    A helpful trick for testing queries
    when you are not certain if they might loop is to place a <literal>LIMIT</>
@@ -1699,7 +1708,9 @@ SELECT n FROM t LIMIT 100;
    This works because <productname>PostgreSQL</productname>'s implementation
    evaluates only as many rows of a <literal>WITH</> query as are actually
    fetched by the parent query.  Using this trick in production is not
-   recommended, because other systems might work differently.
+   recommended, because other systems might work differently.  Also, it
+   usually won't work if you make the outer query sort the recursive query's
+   results or join them to some other table.
   </para>
 
   <para>
