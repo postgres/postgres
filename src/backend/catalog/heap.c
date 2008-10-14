@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.340 2008/09/30 10:52:12 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.341 2008/10/14 23:27:40 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -551,7 +551,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	if (relkind != RELKIND_VIEW && relkind != RELKIND_COMPOSITE_TYPE)
 	{
 		dpp = SysAtt;
-		for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
+		for (i = 0; i < (int) lengthof(SysAtt); i++, dpp++)
 		{
 			if (tupdesc->tdhasoid ||
 				(*dpp)->attnum != ObjectIdAttributeNumber)
@@ -587,7 +587,6 @@ AddNewAttributeTuples(Oid new_rel_oid,
 
 				heap_freetuple(tup);
 			}
-			dpp++;
 		}
 	}
 
