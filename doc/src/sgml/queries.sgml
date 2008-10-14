@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.48 2008/10/13 16:25:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.49 2008/10/14 00:12:44 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -1639,7 +1639,7 @@ WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS (
         FROM graph g
       UNION ALL
         SELECT g.id, g.link, g.data, sg.depth + 1,
-          path || ARRAY[g.id],
+          path || g.id,
           g.id = ANY(path)
         FROM graph g, search_graph sg
         WHERE g.id = sg.link AND NOT cycle
@@ -1664,7 +1664,7 @@ WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS (
         FROM graph g
       UNION ALL
         SELECT g.id, g.link, g.data, sg.depth + 1,
-          path || ARRAY[ROW(g.f1, g.f2)],
+          path || ROW(g.f1, g.f2),
           ROW(g.f1, g.f2) = ANY(path)
         FROM graph g, search_graph sg
         WHERE g.id = sg.link AND NOT cycle
