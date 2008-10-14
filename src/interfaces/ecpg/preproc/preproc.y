@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.375 2008/10/10 12:17:18 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.376 2008/10/14 09:31:04 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -658,7 +658,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	AlterOwnerStmt OptTableSpaceOwner CreateTableSpaceStmt
 %type  <str>	DropTableSpaceStmt indirection indirection_el ECPGSetDescriptorHeader
 %type  <str>	AlterDatabaseStmt CreateRoleStmt OptRoleList AlterRoleStmt AlterRoleSetStmt
-%type  <str>	DropRoleStmt add_drop opt_validator common_func_opt_item
+%type  <str>	DropRoleStmt add_drop opt_validator common_func_opt_item Param
 %type  <str>	opt_grant_admin_option AlterFunctionStmt alterfunc_opt_list opt_restrict
 %type  <str>	AlterObjectSchemaStmt alterdb_opt_list for_locking_clause opt_for_locking_clause
 %type  <str>	locked_rels_list opt_granted_by RevokeRoleStmt alterdb_opt_item using_clause
@@ -3939,7 +3939,7 @@ where_clause:  WHERE a_expr		{ $$ = cat2_str(make_str("where"), $2); }
 
 where_or_current_clause:  WHERE a_expr			{ $$ = cat2_str(make_str("where"), $2); }
 		| WHERE CURRENT_P OF name		{ $$ = cat2_str(make_str("where current of"), $4); }
-		| WHERE CURRENT_P OF PARAM		{ $$ = make_str("where current of param"); }
+		| WHERE CURRENT_P OF Param		{ $$ = cat2_str(make_str("where current of"), $4); }
 		| /*EMPTY*/				{ $$ = EMPTY;  /* no qualifiers */ }
 		;
 
@@ -4397,8 +4397,8 @@ c_expr: columnref
 			{ $$ = $1;	}
 		| AexprConst
 			{ $$ = $1;	}
-		| PARAM opt_indirection
-			{ $$ = cat2_str(make_str("param"), $2); }
+		| Param opt_indirection
+			{ $$ = cat2_str($1, $2); }
 		| '(' a_expr ')' opt_indirection
 			{ $$ = cat_str(4, make_str("("), $2, make_str(")"), $4); }
 		| case_expr
@@ -4920,6 +4920,7 @@ AexprConst:  PosAllConst
 			{ $$ = $1; }
 		;
 
+Param:   PARAM				{ $$ = make_name();};
 Iconst:  ICONST				{ $$ = make_name();};
 Fconst:  FCONST				{ $$ = make_name();};
 Bconst:  BCONST				{ $$ = make_name();};

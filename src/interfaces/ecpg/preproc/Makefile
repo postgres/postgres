@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2008, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.136 2008/08/29 13:02:32 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.137 2008/10/14 09:31:04 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -55,7 +55,6 @@ endif
 ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
 # instead of maintaining our own list, take the one from the backend
-# we cannot just link it in, but must copy and make some minor changes
 keywords.c: % : $(top_srcdir)/src/backend/parser/%
 	rm -f $@ && $(LN_S) $< .
 

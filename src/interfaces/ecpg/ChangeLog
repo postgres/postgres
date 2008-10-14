@@ -2382,6 +2382,10 @@ Tue, 07 Oct 2008 14:35:26 +0200
 Fri, 10 Oct 2008 14:03:05 +0200
 
 	- Fixed "create role" parsing to accept optional "with" argument.
+
+Tue, 14 Oct 2008 11:25:51 +0200
+
+	- Fixed parameter parsing.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.

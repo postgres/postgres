@@ -39,7 +39,16 @@ int main(int argc, char* argv[]) {
   EXEC SQL FETCH :count IN C INTO :i, :str;
   printf("%d: %s\n", i, str);
 
-  EXEC SQL CLOSE C;
+  EXEC SQL DECLARE D CURSOR FOR SELECT * FROM My_Table WHERE Item1 = $1;
+
+  EXEC SQL OPEN D using 1;
+
+  EXEC SQL WHENEVER NOT FOUND DO BREAK;
+  while (1) {
+  	EXEC SQL FETCH 1 IN D INTO :i, :str;
+	printf("%d: %s\n", i, str);
+  }
+  EXEC SQL CLOSE D;
 
   EXEC SQL DROP TABLE My_Table;
 
