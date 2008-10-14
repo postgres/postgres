@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.177 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.178 2008/10/14 17:19:50 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/toasting.h"
 #include "commands/cluster.h"
 #include "commands/tablecmds.h"
@@ -568,6 +569,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	char		NewHeapName[NAMEDATALEN];
 	TransactionId frozenXid;
 	ObjectAddress object;
+	Relation	newrel;
 
 	/* Mark the correct index as clustered */
 	mark_index_clustered(OldHeap, indexOid);
@@ -622,6 +624,35 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	 * because reindex_relation does it.
 	 */
 	reindex_relation(tableOid, false);
+
+	/*
+	 * At this point, everything is kosher except that the toast table's name
+	 * corresponds to the temporary table.  The name is irrelevant to
+	 * the backend because it's referenced by OID, but users looking at the
+	 * catalogs could be confused.  Rename it to prevent this problem.
+	 *
+	 * Note no lock required on the relation, because we already hold an
+	 * exclusive lock on it.
+	 */
+	newrel = heap_open(tableOid, NoLock);
+	if (OidIsValid(newrel->rd_rel->reltoastrelid))
+	{
+		char		NewToastName[NAMEDATALEN];
+		Relation	toastrel;
+
+		/* rename the toast table ... */
+		snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u", tableOid);
+		RenameRelationInternal(newrel->rd_rel->reltoastrelid, NewToastName,
+							   PG_TOAST_NAMESPACE);
+
+		/* ... and its index too */
+		toastrel = relation_open(newrel->rd_rel->reltoastrelid, AccessShareLock);
+		snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u_index", tableOid);
+		RenameRelationInternal(toastrel->rd_rel->reltoastidxid, NewToastName,
+							   PG_TOAST_NAMESPACE);
+		relation_close(toastrel, AccessShareLock);
+	}
+	relation_close(newrel, NoLock);
 }
 
 /*
