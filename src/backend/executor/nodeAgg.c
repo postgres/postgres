@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.161 2008/09/08 00:22:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.162 2008/10/16 19:25:55 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -665,9 +665,6 @@ build_hash_table(AggState *aggstate)
 	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
 	MemoryContext tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
 	Size		entrysize;
-	Bitmapset  *colnos;
-	List	   *collist;
-	int			i;
 
 	Assert(node->aggstrategy == AGG_HASHED);
 	Assert(node->numGroups > 0);
@@ -683,30 +680,40 @@ build_hash_table(AggState *aggstate)
 											  entrysize,
 											  aggstate->aggcontext,
 											  tmpmem);
+}
 
-	/*
-	 * Create a list of the tuple columns that actually need to be stored in
-	 * hashtable entries.  The incoming tuples from the child plan node will
-	 * contain grouping columns, other columns referenced in our targetlist
-	 * and qual, columns used to compute the aggregate functions, and perhaps
-	 * just junk columns we don't use at all.  Only columns of the first two
-	 * types need to be stored in the hashtable, and getting rid of the others
-	 * can make the table entries significantly smaller.  To avoid messing up
-	 * Var numbering, we keep the same tuple descriptor for hashtable entries
-	 * as the incoming tuples have, but set unwanted columns to NULL in the
-	 * tuples that go into the table.
-	 *
-	 * To eliminate duplicates, we build a bitmapset of the needed columns,
-	 * then convert it to an integer list (cheaper to scan at runtime). The
-	 * list is in decreasing order so that the first entry is the largest;
-	 * lookup_hash_entry depends on this to use slot_getsomeattrs correctly.
-	 *
-	 * Note: at present, searching the tlist/qual is not really necessary
-	 * since the parser should disallow any unaggregated references to
-	 * ungrouped columns.  However, the search will be needed when we add
-	 * support for SQL99 semantics that allow use of "functionally dependent"
-	 * columns that haven't been explicitly grouped by.
-	 */
+/*
+ * Create a list of the tuple columns that actually need to be stored in
+ * hashtable entries.  The incoming tuples from the child plan node will
+ * contain grouping columns, other columns referenced in our targetlist and
+ * qual, columns used to compute the aggregate functions, and perhaps just
+ * junk columns we don't use at all.  Only columns of the first two types
+ * need to be stored in the hashtable, and getting rid of the others can
+ * make the table entries significantly smaller.  To avoid messing up Var
+ * numbering, we keep the same tuple descriptor for hashtable entries as the
+ * incoming tuples have, but set unwanted columns to NULL in the tuples that
+ * go into the table.
+ *
+ * To eliminate duplicates, we build a bitmapset of the needed columns, then
+ * convert it to an integer list (cheaper to scan at runtime). The list is
+ * in decreasing order so that the first entry is the largest;
+ * lookup_hash_entry depends on this to use slot_getsomeattrs correctly.
+ * Note that the list is preserved over ExecReScanAgg, so we allocate it in
+ * the per-query context (unlike the hash table itself).
+ *
+ * Note: at present, searching the tlist/qual is not really necessary since
+ * the parser should disallow any unaggregated references to ungrouped
+ * columns.  However, the search will be needed when we add support for
+ * SQL99 semantics that allow use of "functionally dependent" columns that
+ * haven't been explicitly grouped by.
+ */
+static List *
+find_hash_columns(AggState *aggstate)
+{
+	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
+	Bitmapset  *colnos;
+	List	   *collist;
+	int			i;
 
 	/* Find Vars that will be needed in tlist and qual */
 	colnos = find_unaggregated_cols(aggstate);
@@ -717,7 +724,9 @@ build_hash_table(AggState *aggstate)
 	collist = NIL;
 	while ((i = bms_first_member(colnos)) >= 0)
 		collist = lcons_int(i, collist);
-	aggstate->hash_needed = collist;
+	bms_free(colnos);
+
+	return collist;
 }
 
 /*
@@ -1325,6 +1334,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	{
 		build_hash_table(aggstate);
 		aggstate->table_filled = false;
+		/* Compute the columns we actually need to hash on */
+		aggstate->hash_needed = find_hash_columns(aggstate);
 	}
 	else
 	{
