@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.107.2.1 2005/02/10 20:37:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.107.2.2 2008/10/16 13:23:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,7 +559,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 
 	SPI_result = 0;
 
-	if (fnumber > tuple->t_data->t_natts || fnumber == 0 ||
+	if (fnumber > tupdesc->natts || fnumber == 0 ||
 		fnumber <= FirstLowInvalidHeapAttributeNumber)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
@@ -609,7 +609,7 @@ SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool *isnull)
 {
 	SPI_result = 0;
 
-	if (fnumber > tuple->t_data->t_natts || fnumber == 0 ||
+	if (fnumber > tupdesc->natts || fnumber == 0 ||
 		fnumber <= FirstLowInvalidHeapAttributeNumber)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
