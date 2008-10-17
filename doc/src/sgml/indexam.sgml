@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.27 2008/08/14 18:47:58 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.28 2008/10/17 22:10:29 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -474,15 +474,20 @@ amrestrpos (IndexScanDesc scan);
    normally would.  (This will only occur for access
    methods that advertise they support ordered scans.)  After the
    first call, <function>amgettuple</> must be prepared to advance the scan in
-   either direction from the most recently returned entry.
+   either direction from the most recently returned entry.  (But if
+   <structname>pg_am</>.<structfield>amcanbackward</> is false, all subsequent
+   calls will have the same direction as the first one.)
   </para>
 
   <para>
-   The access method must support <quote>marking</> a position in a scan
-   and later returning to the marked position.  The same position might be
-   restored multiple times.  However, only one position need be remembered
-   per scan; a new <function>ammarkpos</> call overrides the previously
-   marked position.
+   Access methods that support ordered scans must support <quote>marking</> a
+   position in a scan and later returning to the marked position.  The same
+   position might be restored multiple times.  However, only one position need
+   be remembered per scan; a new <function>ammarkpos</> call overrides the
+   previously marked position.  An access method that does not support
+   ordered scans should still provide mark and restore functions in
+   <structname>pg_am</>, but it is sufficient to have them throw errors if
+   called.
   </para>
 
   <para>

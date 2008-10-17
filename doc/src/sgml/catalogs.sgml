@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.178 2008/10/06 13:59:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.179 2008/10/17 22:10:29 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -399,6 +399,13 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Does the access method support ordered scans?</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amcanbackward</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Does the access method support backward scanning?</entry>
      </row>
 
      <row>
