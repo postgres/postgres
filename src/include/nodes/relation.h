@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.160 2008/10/04 21:56:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.161 2008/10/17 20:23:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,8 +244,10 @@ typedef struct PlannerInfo
  *		width - avg. number of bytes per tuple in the relation after the
  *				appropriate projections have been done (ie, output width)
  *		reltargetlist - List of Var nodes for the attributes we need to
- *						output from this relation (in no particular order)
- *						NOTE: in a child relation, may contain RowExprs
+ *						output from this relation (in no particular order,
+ *						but all rels of an appendrel set must use same order)
+ *						NOTE: in a child relation, may contain RowExpr or
+ *						ConvertRowtypeExpr representing a whole-row Var
  *		pathlist - List of Path nodes, one for each potentially useful
  *				   method of generating the relation
  *		cheapest_startup_path - the pathlist member with lowest startup cost
@@ -337,7 +339,7 @@ typedef struct RelOptInfo
 	int			width;			/* estimated avg width of result tuples */
 
 	/* materialization information */
-	List	   *reltargetlist;	/* needed Vars */
+	List	   *reltargetlist;	/* Vars to be output by scan of relation */
 	List	   *pathlist;		/* Path structures */
 	struct Path *cheapest_startup_path;
 	struct Path *cheapest_total_path;
@@ -350,7 +352,7 @@ typedef struct RelOptInfo
 	AttrNumber	max_attr;		/* largest attrno of rel */
 	Relids	   *attr_needed;	/* array indexed [min_attr .. max_attr] */
 	int32	   *attr_widths;	/* array indexed [min_attr .. max_attr] */
-	List	   *indexlist;
+	List	   *indexlist;		/* list of IndexOptInfo */
 	BlockNumber pages;
 	double		tuples;
 	struct Plan *subplan;		/* if subquery */
