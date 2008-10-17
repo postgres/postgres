@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.32 2008/08/23 10:37:24 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.33 2008/10/17 17:02:21 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@ typedef struct GISTScanOpaqueData
 	GISTSearchStack *stack;
 	GISTSearchStack *markstk;
 	uint16		flags;
+	bool        qual_ok;        /* false if qual can never be satisfied */
 	GISTSTATE  *giststate;
 	MemoryContext tempCxt;
 	Buffer		curbuf;
