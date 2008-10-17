@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.90 2008/09/15 18:43:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.91 2008/10/17 23:50:57 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -92,17 +92,15 @@ typedef struct HashScanOpaqueData
 	BlockNumber hashso_bucket_blkno;
 
 	/*
-	 * We also want to remember which buffers we're currently examining in the
-	 * scan. We keep these buffers pinned (but not locked) across hashgettuple
+	 * We also want to remember which buffer we're currently examining in the
+	 * scan. We keep the buffer pinned (but not locked) across hashgettuple
 	 * calls, in order to avoid doing a ReadBuffer() for every tuple in the
 	 * index.
 	 */
 	Buffer		hashso_curbuf;
-	Buffer		hashso_mrkbuf;
 
-	/* Current and marked position of the scan */
+	/* Current position of the scan */
 	ItemPointerData hashso_curpos;
-	ItemPointerData hashso_mrkpos;
 } HashScanOpaqueData;
 
 typedef HashScanOpaqueData *HashScanOpaque;

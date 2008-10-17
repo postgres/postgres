@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.105 2008/09/15 18:43:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.106 2008/10/17 23:50:57 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -345,10 +345,9 @@ hashbeginscan(PG_FUNCTION_ARGS)
 	so = (HashScanOpaque) palloc(sizeof(HashScanOpaqueData));
 	so->hashso_bucket_valid = false;
 	so->hashso_bucket_blkno = 0;
-	so->hashso_curbuf = so->hashso_mrkbuf = InvalidBuffer;
-	/* set positions invalid (this will cause _hash_first call) */
+	so->hashso_curbuf = InvalidBuffer;
+	/* set position invalid (this will cause _hash_first call) */
 	ItemPointerSetInvalid(&(so->hashso_curpos));
-	ItemPointerSetInvalid(&(so->hashso_mrkpos));
 
 	scan->opaque = so;
 
@@ -372,23 +371,18 @@ hashrescan(PG_FUNCTION_ARGS)
 	/* if we are called from beginscan, so is still NULL */
 	if (so)
 	{
-		/* release any pins we still hold */
+		/* release any pin we still hold */
 		if (BufferIsValid(so->hashso_curbuf))
 			_hash_dropbuf(rel, so->hashso_curbuf);
 		so->hashso_curbuf = InvalidBuffer;
-
-		if (BufferIsValid(so->hashso_mrkbuf))
-			_hash_dropbuf(rel, so->hashso_mrkbuf);
-		so->hashso_mrkbuf = InvalidBuffer;
 
 		/* release lock on bucket, too */
 		if (so->hashso_bucket_blkno)
 			_hash_droplock(rel, so->hashso_bucket_blkno, HASH_SHARE);
 		so->hashso_bucket_blkno = 0;
 
-		/* set positions invalid (this will cause _hash_first call) */
+		/* set position invalid (this will cause _hash_first call) */
 		ItemPointerSetInvalid(&(so->hashso_curpos));
-		ItemPointerSetInvalid(&(so->hashso_mrkpos));
 	}
 
 	/* Update scan key, if a new one is given */
@@ -417,14 +411,10 @@ hashendscan(PG_FUNCTION_ARGS)
 	/* don't need scan registered anymore */
 	_hash_dropscan(scan);
 
-	/* release any pins we still hold */
+	/* release any pin we still hold */
 	if (BufferIsValid(so->hashso_curbuf))
 		_hash_dropbuf(rel, so->hashso_curbuf);
 	so->hashso_curbuf = InvalidBuffer;
-
-	if (BufferIsValid(so->hashso_mrkbuf))
-		_hash_dropbuf(rel, so->hashso_mrkbuf);
-	so->hashso_mrkbuf = InvalidBuffer;
 
 	/* release lock on bucket, too */
 	if (so->hashso_bucket_blkno)
@@ -443,24 +433,7 @@ hashendscan(PG_FUNCTION_ARGS)
 Datum
 hashmarkpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	HashScanOpaque so = (HashScanOpaque) scan->opaque;
-	Relation	rel = scan->indexRelation;
-
-	/* release pin on old marked data, if any */
-	if (BufferIsValid(so->hashso_mrkbuf))
-		_hash_dropbuf(rel, so->hashso_mrkbuf);
-	so->hashso_mrkbuf = InvalidBuffer;
-	ItemPointerSetInvalid(&(so->hashso_mrkpos));
-
-	/* bump pin count on current buffer and copy to marked buffer */
-	if (ItemPointerIsValid(&(so->hashso_curpos)))
-	{
-		IncrBufferRefCount(so->hashso_curbuf);
-		so->hashso_mrkbuf = so->hashso_curbuf;
-		so->hashso_mrkpos = so->hashso_curpos;
-	}
-
+	elog(ERROR, "hash does not support mark/restore");
 	PG_RETURN_VOID();
 }
 
@@ -470,24 +443,7 @@ hashmarkpos(PG_FUNCTION_ARGS)
 Datum
 hashrestrpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	HashScanOpaque so = (HashScanOpaque) scan->opaque;
-	Relation	rel = scan->indexRelation;
-
-	/* release pin on current data, if any */
-	if (BufferIsValid(so->hashso_curbuf))
-		_hash_dropbuf(rel, so->hashso_curbuf);
-	so->hashso_curbuf = InvalidBuffer;
-	ItemPointerSetInvalid(&(so->hashso_curpos));
-
-	/* bump pin count on marked buffer and copy to current buffer */
-	if (ItemPointerIsValid(&(so->hashso_mrkpos)))
-	{
-		IncrBufferRefCount(so->hashso_mrkbuf);
-		so->hashso_curbuf = so->hashso_mrkbuf;
-		so->hashso_curpos = so->hashso_mrkpos;
-	}
-
+	elog(ERROR, "hash does not support mark/restore");
 	PG_RETURN_VOID();
 }
 
