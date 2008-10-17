@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.15 2008/06/17 16:09:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.16 2008/10/17 17:27:46 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1621,7 +1621,7 @@ hlCover(HeadlineParsedText *prs, TSQuery query, int *p, int *q)
 	QueryItem  *item = GETQUERY(query);
 	int			pos = *p;
 
-	*q = 0;
+	*q = -1;
 	*p = 0x7fffffff;
 
 	for (j = 0; j < query->size; j++)
@@ -1643,7 +1643,7 @@ hlCover(HeadlineParsedText *prs, TSQuery query, int *p, int *q)
 		item++;
 	}
 
-	if (*q == 0)
+	if (*q < 0)
 		return false;
 
 	item = GETQUERY(query);
