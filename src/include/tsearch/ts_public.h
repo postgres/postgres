@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.10 2008/06/18 18:42:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.11 2008/10/17 18:05:19 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,8 +52,10 @@ typedef struct
 	int4		curwords;
 	char	   *startsel;
 	char	   *stopsel;
+	char	   *fragdelim;
 	int2		startsellen;
 	int2		stopsellen;
+	int2		fragdelimlen;         
 } HeadlineParsedText;
 
 /*

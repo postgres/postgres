@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.45 2008/09/23 09:20:34 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.46 2008/10/17 18:05:19 teodor Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -1100,6 +1100,29 @@ ORDER BY rank DESC LIMIT 10;
      </listitem>
      <listitem>
       <para>
+       <literal>MaxFragments</literal>: maximum number of text excerpts 
+       or fragments that matches the query words. It also triggers a 
+       different headline generation function than the default one. This
+       function finds text fragments with as many query words as possible and 
+       stretches  those fragments around the query words. As a result 
+       query words are close to the middle of each fragment and have words on 
+       each side. Each fragment will be of at  most MaxWords and will not 
+       have words of size less than or equal to ShortWord at the start or 
+       end of a  fragment. If all query words are not found in the document, 
+       then  a single fragment of MinWords will be displayed.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>FragmentDelimiter</literal>: When more than one fragments are 
+       displayed, then the fragments will be separated by this delimiter. This 
+       option is effective only if MaxFragments is greater than 1 and there are
+       more than one fragments to be diplayed. This option has no effect on the
+       default headline generation function.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
        <literal>HighlightAll</literal>: Boolean flag;  if
        <literal>true</literal> the whole document will be highlighted.
       </para>
@@ -1109,7 +1132,7 @@ ORDER BY rank DESC LIMIT 10;
     Any unspecified options receive these defaults:
 
 <programlisting>
-StartSel=&lt;b&gt;, StopSel=&lt;/b&gt;, MaxWords=35, MinWords=15, ShortWord=3, HighlightAll=FALSE
+StartSel=&lt;b&gt;, StopSel=&lt;/b&gt;, MaxFragments=0, FragmentDelimiter=" ... ", MaxWords=35, MinWords=15, ShortWord=3, HighlightAll=FALSE
 </programlisting>
    </para>
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.16 2008/10/17 17:27:46 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.17 2008/10/17 18:05:19 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1684,18 +1684,247 @@ hlCover(HeadlineParsedText *prs, TSQuery query, int *p, int *q)
 	return false;
 }
 
-Datum
-prsd_headline(PG_FUNCTION_ARGS)
+static void 
+mark_fragment(HeadlineParsedText *prs, int highlight, int startpos, int endpos)
 {
-	HeadlineParsedText *prs = (HeadlineParsedText *) PG_GETARG_POINTER(0);
-	List	   *prsoptions = (List *) PG_GETARG_POINTER(1);
-	TSQuery		query = PG_GETARG_TSQUERY(2);
+	int   i;
 
-	/* from opt + start and and tag */
-	int			min_words = 15;
-	int			max_words = 35;
-	int			shortword = 3;
+	for (i = startpos; i <= endpos; i++)
+	{
+		if (prs->words[i].item)
+			prs->words[i].selected = 1;
+		if (highlight == 0)
+		{
+			if (HLIDIGNORE(prs->words[i].type))
+				prs->words[i].replace = 1;
+		}
+		else
+		{
+			if (XMLHLIDIGNORE(prs->words[i].type))
+				prs->words[i].replace = 1;
+		}
 
+		prs->words[i].in = (prs->words[i].repeated) ? 0 : 1;
+	}
+}
+
+typedef struct 
+{
+	int4 startpos;
+	int4 endpos;
+	int4 poslen;
+	int4 curlen;
+	int2 in;
+	int2 excluded;
+} CoverPos;
+
+static void 
+get_next_fragment(HeadlineParsedText *prs, int *startpos, int *endpos,
+			int *curlen, int *poslen, int max_words)
+{
+	int i;
+	/* Objective: Generate a fragment of words between startpos and endpos 
+	 * such that it has at most max_words and both ends has query words. 
+	 * If the startpos and endpos are the endpoints of the cover and the 
+	 * cover has fewer words than max_words, then this function should 
+	 * just return the cover 
+	 */
+	/* first move startpos to an item */
+	for(i = *startpos; i <= *endpos; i++)
+	{
+		*startpos = i;
+		if (prs->words[i].item && !prs->words[i].repeated)
+			break;
+	}
+	/* cut endpos to have only max_words */
+	*curlen = 0;
+	*poslen = 0;
+	for(i = *startpos; i <= *endpos && *curlen < max_words; i++) 
+	{
+		if (!NONWORDTOKEN(prs->words[i].type))
+			*curlen += 1;
+		if (prs->words[i].item && !prs->words[i].repeated)
+			*poslen += 1;
+	}
+	/* if the cover was cut then move back endpos to a query item */ 		
+	if (*endpos > i)
+	{
+		*endpos = i;
+		for(i = *endpos; i >= *startpos; i --)
+		{
+			*endpos = i;
+			if (prs->words[i].item && !prs->words[i].repeated)
+				break;
+			if (!NONWORDTOKEN(prs->words[i].type))
+				*curlen -= 1;
+		}		
+	}	
+}
+
+static void
+mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
+                        int shortword, int min_words, 
+			int max_words, int max_fragments)
+{
+	int4           	poslen, curlen, i, f, num_f = 0;
+	int4		stretch, maxstretch, posmarker;
+
+	int4           	startpos = 0, 
+ 			endpos   = 0,
+			p        = 0,
+			q        = 0;
+
+	int4		numcovers = 0, 
+			maxcovers = 32;
+
+	int4          	minI, minwords, maxitems;
+	CoverPos	*covers;
+
+	covers = palloc(maxcovers * sizeof(CoverPos));
+ 
+	/* get all covers */
+	while (hlCover(prs, query, &p, &q))
+	{
+		startpos = p;
+		endpos   = q;
+
+		/* Break the cover into smaller fragments such that each fragment
+		 * has at most max_words. Also ensure that each end of the fragment
+		 * is a query word. This will allow us to stretch the fragment in 
+		 * either direction
+		 */
+
+		while (startpos <= endpos)
+		{
+			get_next_fragment(prs, &startpos, &endpos, &curlen, &poslen, max_words);
+			if (numcovers >= maxcovers)
+			{
+				maxcovers *= 2;
+				covers     = repalloc(covers, sizeof(CoverPos) * maxcovers);
+			}
+			covers[numcovers].startpos = startpos;
+			covers[numcovers].endpos   = endpos;
+			covers[numcovers].curlen   = curlen;
+			covers[numcovers].poslen   = poslen;
+			covers[numcovers].in       = 0;
+			covers[numcovers].excluded = 0;
+			numcovers ++;
+			startpos = endpos + 1;
+			endpos   = q;
+		}	
+		/* move p to generate the next cover */
+ 		p++;
+	}
+
+	/* choose best covers */
+	for (f = 0; f < max_fragments; f++)
+	{
+		maxitems = 0;
+		minwords = 0x7fffffff;
+		minI = -1;
+		/* Choose the cover that contains max items.
+		 * In case of tie choose the one with smaller 
+		 * number of words. 
+		 */
+		for (i = 0; i < numcovers; i ++)
+		{
+			if (!covers[i].in &&  !covers[i].excluded && 
+  				(maxitems < covers[i].poslen || (maxitems == covers[i].poslen
+				&& minwords > covers[i].curlen)))
+			{
+				maxitems = covers[i].poslen;
+				minwords = covers[i].curlen;
+				minI     = i;
+			}
+		}
+		/* if a cover was found mark it */
+		if (minI >= 0)
+		{
+			covers[minI].in = 1;
+			/* adjust the size of cover */
+			startpos = covers[minI].startpos;
+			endpos   = covers[minI].endpos;
+			curlen   = covers[minI].curlen;
+			/* stretch the cover if cover size is lower than max_words */
+			if (curlen < max_words) 
+			{
+				/* divide the stretch on both sides of cover */
+				maxstretch = (max_words - curlen)/2;
+				/* first stretch the startpos 
+				 * stop stretching if 
+				 * 	1. we hit the beginning of document
+				 * 	2. exceed maxstretch
+				 * 	3. we hit an already marked fragment 
+				 */
+				stretch   = 0;
+				posmarker = startpos;
+				for (i = startpos - 1; i >= 0 && stretch < maxstretch && !prs->words[i].in; i--)
+				{
+					if (!NONWORDTOKEN(prs->words[i].type))
+					{
+						curlen  ++;
+						stretch ++;
+					}
+					posmarker = i;
+				}
+				/* cut back startpos till we find a non short token */
+				for (i = posmarker; i < startpos && (NOENDTOKEN(prs->words[i].type) || prs->words[i].len <= shortword); i++)
+				{
+					if (!NONWORDTOKEN(prs->words[i].type))
+						curlen --;
+				}
+				startpos = i;
+				/* now stretch the endpos as much as possible*/
+				posmarker = endpos;
+				for (i = endpos + 1; i < prs->curwords && curlen < max_words && !prs->words[i].in; i++)
+				{
+					if (!NONWORDTOKEN(prs->words[i].type))
+						curlen  ++;
+					posmarker = i;	
+				}
+				/* cut back endpos till we find a non-short token */
+				for ( i = posmarker; i > endpos && (NOENDTOKEN(prs->words[i].type) || prs->words[i].len <= shortword); i--)
+				{
+					if (!NONWORDTOKEN(prs->words[i].type))
+						curlen --;
+				}
+				endpos = i;
+			}
+			covers[minI].startpos = startpos;
+			covers[minI].endpos   = endpos;
+			covers[minI].curlen   = curlen;
+			/* Mark the chosen fragments (covers) */
+			mark_fragment(prs, highlight, startpos, endpos);
+			num_f ++;
+			/* exclude overlapping covers */
+			for (i = 0; i < numcovers; i ++)
+			{
+				if (i != minI && ( (covers[i].startpos >= covers[minI].startpos && covers[i].startpos <= covers[minI].endpos)  || (covers[i].endpos >= covers[minI].startpos && covers[i].endpos <= covers[minI].endpos))) 
+					covers[i].excluded = 1;
+			}
+		}
+		else
+			break;
+	}
+
+	/* show at least min_words we have not marked anything*/
+	if (num_f <= 0)
+	{
+		startpos = endpos = curlen = 0;
+		for (i = 0; i < prs->curwords && curlen < min_words; i++)
+		{
+			if (!NONWORDTOKEN(prs->words[i].type))
+				curlen++;
+			endpos = i;
+		}
+		mark_fragment(prs, highlight, startpos, endpos);
+	}
+	pfree(covers);
+}
+static void
+mark_hl_words(HeadlineParsedText *prs, TSQuery query, int highlight, 
+		int shortword, int min_words, int max_words)
+{
 	int			p = 0,
 				q = 0;
 	int			bestb = -1,
@@ -1707,56 +1936,9 @@ prsd_headline(PG_FUNCTION_ARGS)
 				curlen;
 
 	int			i;
-	int			highlight = 0;
-	ListCell   *l;
-
-	/* config */
-	prs->startsel = NULL;
-	prs->stopsel = NULL;
-	foreach(l, prsoptions)
-	{
-		DefElem    *defel = (DefElem *) lfirst(l);
-		char	   *val = defGetString(defel);
-
-		if (pg_strcasecmp(defel->defname, "MaxWords") == 0)
-			max_words = pg_atoi(val, sizeof(int32), 0);
-		else if (pg_strcasecmp(defel->defname, "MinWords") == 0)
-			min_words = pg_atoi(val, sizeof(int32), 0);
-		else if (pg_strcasecmp(defel->defname, "ShortWord") == 0)
-			shortword = pg_atoi(val, sizeof(int32), 0);
-		else if (pg_strcasecmp(defel->defname, "StartSel") == 0)
-			prs->startsel = pstrdup(val);
-		else if (pg_strcasecmp(defel->defname, "StopSel") == 0)
-			prs->stopsel = pstrdup(val);
-		else if (pg_strcasecmp(defel->defname, "HighlightAll") == 0)
-			highlight = (pg_strcasecmp(val, "1") == 0 ||
-						 pg_strcasecmp(val, "on") == 0 ||
-						 pg_strcasecmp(val, "true") == 0 ||
-						 pg_strcasecmp(val, "t") == 0 ||
-						 pg_strcasecmp(val, "y") == 0 ||
-						 pg_strcasecmp(val, "yes") == 0);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unrecognized headline parameter: \"%s\"",
-							defel->defname)));
-	}
 
 	if (highlight == 0)
 	{
-		if (min_words >= max_words)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("MinWords should be less than MaxWords")));
-		if (min_words <= 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("MinWords should be positive")));
-		if (shortword < 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("ShortWord should be >= 0")));
-
 		while (hlCover(prs, query, &p, &q))
 		{
 			/* find cover len in words */
@@ -1877,12 +2059,95 @@ prsd_headline(PG_FUNCTION_ARGS)
 		prs->words[i].in = (prs->words[i].repeated) ? 0 : 1;
 	}
 
+}
+
+Datum
+prsd_headline(PG_FUNCTION_ARGS)
+{
+	HeadlineParsedText *prs = (HeadlineParsedText *) PG_GETARG_POINTER(0);
+	List	   *prsoptions = (List *) PG_GETARG_POINTER(1);
+	TSQuery		query = PG_GETARG_TSQUERY(2);
+
+	/* from opt + start and and tag */
+	int			min_words     = 15;
+	int			max_words     = 35;
+	int			shortword     = 3;
+	int			max_fragments = 0;
+	int			highlight     = 0;
+	ListCell   *l;
+
+	/* config */
+	prs->startsel = NULL;
+	prs->stopsel = NULL;
+	foreach(l, prsoptions)
+	{
+		DefElem    *defel = (DefElem *) lfirst(l);
+		char	   *val = defGetString(defel);
+
+		if (pg_strcasecmp(defel->defname, "MaxWords") == 0)
+			max_words = pg_atoi(val, sizeof(int32), 0);
+		else if (pg_strcasecmp(defel->defname, "MinWords") == 0)
+			min_words = pg_atoi(val, sizeof(int32), 0);
+		else if (pg_strcasecmp(defel->defname, "ShortWord") == 0)
+			shortword = pg_atoi(val, sizeof(int32), 0);
+		else if (pg_strcasecmp(defel->defname, "MaxFragments") == 0)
+			max_fragments = pg_atoi(val, sizeof(int32), 0);
+		else if (pg_strcasecmp(defel->defname, "StartSel") == 0)
+			prs->startsel = pstrdup(val);
+		else if (pg_strcasecmp(defel->defname, "StopSel") == 0)
+			prs->stopsel = pstrdup(val);
+		else if (pg_strcasecmp(defel->defname, "FragmentDelimiter") == 0)
+			prs->fragdelim = pstrdup(val);
+		else if (pg_strcasecmp(defel->defname, "HighlightAll") == 0)
+			highlight = (pg_strcasecmp(val, "1") == 0 ||
+						 pg_strcasecmp(val, "on") == 0 ||
+						 pg_strcasecmp(val, "true") == 0 ||
+						 pg_strcasecmp(val, "t") == 0 ||
+						 pg_strcasecmp(val, "y") == 0 ||
+						 pg_strcasecmp(val, "yes") == 0);
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized headline parameter: \"%s\"",
+							defel->defname)));
+	}
+
+	if (highlight == 0)
+	{
+		if (min_words >= max_words)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("MinWords should be less than MaxWords")));
+		if (min_words <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("MinWords should be positive")));
+		if (shortword < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("ShortWord should be >= 0")));
+		if (max_fragments < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("MaxFragments should be >= 0")));
+	}				 
+
+	if (max_fragments == 0)
+		/* call the default headline generator */
+		mark_hl_words(prs, query, highlight, shortword, min_words, max_words);
+	else
+		mark_hl_fragments(prs, query, highlight, shortword, min_words, max_words, max_fragments);
+
 	if (!prs->startsel)
 		prs->startsel = pstrdup("<b>");
 	if (!prs->stopsel)
 		prs->stopsel = pstrdup("</b>");
+	if (!prs->fragdelim)
+		prs->fragdelim = pstrdup(" ... ");
 	prs->startsellen = strlen(prs->startsel);
 	prs->stopsellen = strlen(prs->stopsel);
+	prs->fragdelimlen = strlen(prs->fragdelim);
 
 	PG_RETURN_POINTER(prs);
 }
+
