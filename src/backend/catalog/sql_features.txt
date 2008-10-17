@@ -106,13 +106,13 @@ E101	Basic data manipulation	01	INSERT statement	YES
 E101	Basic data manipulation	03	Searched UPDATE statement	YES	
 E101	Basic data manipulation	04	Searched DELETE statement	YES	
 E111	Single row SELECT statement			YES	
-E121	Basic cursor support			NO	
+E121	Basic cursor support			YES	
 E121	Basic cursor support	01	DECLARE CURSOR	YES	
 E121	Basic cursor support	02	ORDER BY columns need not be in select list	YES	
 E121	Basic cursor support	03	Value expressions in ORDER BY clause	YES	
 E121	Basic cursor support	04	OPEN statement	YES	
-E121	Basic cursor support	06	Positioned UPDATE statement	NO	
-E121	Basic cursor support	07	Positioned DELETE statement	NO	
+E121	Basic cursor support	06	Positioned UPDATE statement	YES	
+E121	Basic cursor support	07	Positioned DELETE statement	YES	
 E121	Basic cursor support	08	CLOSE statement	YES	
 E121	Basic cursor support	10	FETCH statement implicit NEXT	YES	
 E121	Basic cursor support	17	WITH HOLD cursors	YES	
@@ -290,7 +290,6 @@ F771	Connection management			YES
 F781	Self-referencing operations			YES	
 F791	Insensitive cursors			YES	
 F801	Full set function			YES	
-F811	Extended flagging			NO	
 F812	Basic flagging			NO	
 F813	Extended flagging			NO	
 F821	Local table references			NO	
