@@ -107,7 +107,7 @@ hlCover(HLPRSTEXT * prs, QUERYTYPE * query, int *p, int *q)
 	ITEM	   *item = GETQUERY(query);
 	int			pos = *p;
 
-	*q = 0;
+	*q = -1;
 	*p = 0x7fffffff;
 
 	for (j = 0; j < query->size; j++)
@@ -129,7 +129,7 @@ hlCover(HLPRSTEXT * prs, QUERYTYPE * query, int *p, int *q)
 		item++;
 	}
 
-	if (*q == 0)
+	if (*q < 0)
 		return false;
 
 	item = GETQUERY(query);
