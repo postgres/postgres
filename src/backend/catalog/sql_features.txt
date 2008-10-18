@@ -547,7 +547,7 @@ X082	XML namespace declarations in DML			NO
 X083	XML namespace declarations in DDL			NO	
 X084	XML namespace declarations in compound statements			NO	
 X085	Predefined namespace prefixes			NO	
-X086	XML namespace declarations in XMLTable
+X086	XML namespace declarations in XMLTable			NO	
 X090	XML document predicate			YES	
 X091	XML content predicate			NO	
 X096	XMLExists			NO	
