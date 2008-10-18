@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.28 2008/09/08 00:47:40 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.29 2008/10/18 07:49:46 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -211,10 +211,13 @@ TRUNCATE othertable CASCADE;
   <title>Compatibility</title>
 
   <para>
-   The draft SQL:2008 standard includes a <command>TRUNCATE</command> command,
-   but at this writing it is uncertain whether that will reach standardization
-   or be fully compatible with <productname>PostgreSQL</productname>'s
-   implementation.
+   The SQL:2008 standard includes a <command>TRUNCATE</command> command with the syntax
+   <literal>TRUNCATE TABLE <replaceable>tablename</replaceable></literal>.
+   The clauses <literal>CONTINUE IDENTITY</literal>/<literal>RESTART IDENTITY</literal>
+   also appear in that standard but have slightly different but related meanings.
+   Some of the concurrency behavior of this command is left implementation-defined
+   by the standard, so the above notes should be considered and compared with
+   other implementations if necessary.
   </para>
  </refsect1>
 </refentry>
