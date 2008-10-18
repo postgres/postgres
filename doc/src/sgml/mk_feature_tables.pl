@@ -1,6 +1,6 @@
 # /usr/bin/perl -w
 
-# $PostgreSQL: pgsql/doc/src/sgml/mk_feature_tables.pl,v 2.2 2006/03/11 04:38:30 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/mk_feature_tables.pl,v 2.3 2008/10/18 00:35:32 petere Exp $
 
 my $yesno = $ARGV[0];
 
@@ -30,6 +30,8 @@ while (<FEAT>) {
 
     $is_supported eq $yesno || next;
 
+    $feature_name =~ s/</&lt;/g;
+    $feature_name =~ s/>/&gt;/g;
     $subfeature_name =~ s/</&lt;/g;
     $subfeature_name =~ s/>/&gt;/g;
 
