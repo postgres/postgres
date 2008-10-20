@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.76 2008/10/17 17:02:21 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.77 2008/10/20 13:39:44 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -493,16 +493,6 @@ gistfindnext(IndexScanDesc scan, OffsetNumber n, ScanDirection dir)
 	 * memory
 	 */
 	oldcxt = MemoryContextSwitchTo(so->tempCxt);
-
-	/*
-	 * If we modified the index during the scan, we may have a pointer to a
-	 * ghost tuple, before the scan.  If this is the case, back up one.
-	 */
-	if (so->flags & GS_CURBEFORE)
-	{
-		so->flags &= ~GS_CURBEFORE;
-		n = OffsetNumberPrev(n);
-	}
 
 	while (n >= FirstOffsetNumber && n <= maxoff)
 	{

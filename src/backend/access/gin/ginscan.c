@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.18 2008/09/04 11:47:05 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.19 2008/10/20 13:39:44 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -114,7 +114,7 @@ resetScanKeys(GinScanKey keys, uint32 nkeys)
 #endif
 
 static void
-freeScanKeys(GinScanKey keys, uint32 nkeys, bool removeRes)
+freeScanKeys(GinScanKey keys, uint32 nkeys)
 {
 	uint32		i,
 				j;
@@ -130,14 +130,13 @@ freeScanKeys(GinScanKey keys, uint32 nkeys, bool removeRes)
 		{
 			if (key->scanEntry[j].buffer != InvalidBuffer)
 				ReleaseBuffer(key->scanEntry[j].buffer);
-			if (removeRes && key->scanEntry[j].list)
+			if (key->scanEntry[j].list)
 				pfree(key->scanEntry[j].list);
-			if (removeRes && key->scanEntry[j].partialMatch)
+			if (key->scanEntry[j].partialMatch)
 				tbm_free(key->scanEntry[j].partialMatch);
 		}
 
-		if (removeRes)
-			pfree(key->entryRes);
+		pfree(key->entryRes);
 		pfree(key->scanEntry);
 	}
 
@@ -233,11 +232,10 @@ ginrescan(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		freeScanKeys(so->keys, so->nkeys, TRUE);
-		freeScanKeys(so->markPos, so->nkeys, FALSE);
+		freeScanKeys(so->keys, so->nkeys);
 	}
 
-	so->markPos = so->keys = NULL;
+	so->keys = NULL;
 
 	if (scankey && scan->numberOfKeys > 0)
 	{
@@ -257,8 +255,7 @@ ginendscan(PG_FUNCTION_ARGS)
 
 	if (so != NULL)
 	{
-		freeScanKeys(so->keys, so->nkeys, TRUE);
-		freeScanKeys(so->markPos, so->nkeys, FALSE);
+		freeScanKeys(so->keys, so->nkeys);
 
 		MemoryContextDelete(so->tempCtx);
 
@@ -268,60 +265,16 @@ ginendscan(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-static GinScanKey
-copyScanKeys(GinScanKey keys, uint32 nkeys, bool restart)
-{
-	GinScanKey	newkeys;
-	uint32		i,
-				j;
-
-	newkeys = (GinScanKey) palloc(sizeof(GinScanKeyData) * nkeys);
-	memcpy(newkeys, keys, sizeof(GinScanKeyData) * nkeys);
-
-	for (i = 0; i < nkeys; i++)
-	{
-		newkeys[i].scanEntry = (GinScanEntry) palloc(sizeof(GinScanEntryData) * keys[i].nentries);
-		memcpy(newkeys[i].scanEntry, keys[i].scanEntry, sizeof(GinScanEntryData) * keys[i].nentries);
-
-		for (j = 0; j < keys[i].nentries; j++)
-		{
-			if (keys[i].scanEntry[j].buffer != InvalidBuffer)
-				IncrBufferRefCount(keys[i].scanEntry[j].buffer);
-			if (keys[i].scanEntry[j].master)
-			{
-				int			masterN = keys[i].scanEntry[j].master - keys[i].scanEntry;
-
-				newkeys[i].scanEntry[j].master = newkeys[i].scanEntry + masterN;
-			}
-
-			if ( restart )
-				ginrestartentry( &keys[i].scanEntry[j] );
-		}
-	}
-
-	return newkeys;
-}
-
 Datum
 ginmarkpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	GinScanOpaque so = (GinScanOpaque) scan->opaque;
-
-	freeScanKeys(so->markPos, so->nkeys, FALSE);
-	so->markPos = copyScanKeys(so->keys, so->nkeys, FALSE);
-
+	elog(ERROR, "GIN does not support mark/restore");
 	PG_RETURN_VOID();
 }
 
 Datum
 ginrestrpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	GinScanOpaque so = (GinScanOpaque) scan->opaque;
-
-	freeScanKeys(so->keys, so->nkeys, FALSE);
-	so->keys = copyScanKeys(so->markPos, so->nkeys, TRUE);
-
+	elog(ERROR, "GIN does not support mark/restore");
 	PG_RETURN_VOID();
 }

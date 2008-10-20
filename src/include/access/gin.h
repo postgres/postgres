@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.24 2008/07/13 21:50:04 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.25 2008/10/20 13:39:44 teodor Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -426,8 +426,6 @@ typedef struct GinScanOpaqueData
 	uint32		nkeys;
 	bool		isVoidRes;		/* true if ginstate.extractQueryFn guarantees
 								 * that nothing will be found */
-
-	GinScanKey	markPos;
 } GinScanOpaqueData;
 
 typedef GinScanOpaqueData *GinScanOpaque;
@@ -449,7 +447,6 @@ extern PGDLLIMPORT int GinFuzzySearchLimit;
 
 extern Datum gingetbitmap(PG_FUNCTION_ARGS);
 extern Datum gingettuple(PG_FUNCTION_ARGS);
-extern void ginrestartentry(GinScanEntry entry);
 
 /* ginvacuum.c */
 extern Datum ginbulkdelete(PG_FUNCTION_ARGS);
