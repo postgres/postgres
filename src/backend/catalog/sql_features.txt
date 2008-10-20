@@ -455,7 +455,6 @@ T331	Basic roles			NO
 T332	Extended roles			NO	
 T351	Bracketed SQL comments (/*...*/ comments)			YES	
 T401	INSERT into a cursor			NO	
-T411	UPDATE statement: SET ROW option			NO	
 T431	Extended grouping capabilities			NO	
 T432	Nested and concatenated GROUPING SETS			NO	
 T433	Multiargument GROUPING function			NO	
