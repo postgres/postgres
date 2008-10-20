@@ -406,7 +406,7 @@ T131	Recursive query			NO
 T132	Recursive query in subquery			NO	
 T141	SIMILAR predicate			YES	
 T151	DISTINCT predicate			YES	
-T152	DISTINCT predicate with negation			NO	
+T152	DISTINCT predicate with negation			YES	
 T171	LIKE clause in table definition			YES	
 T172	AS subquery clause in table definition			NO	
 T173	Extended LIKE clause in table definition			NO	
