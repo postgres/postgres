@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.265 2008/08/11 11:05:10 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.266 2008/10/20 19:18:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,7 +254,6 @@ static void CommitTransaction(void);
 static TransactionId RecordTransactionAbort(bool isSubXact);
 static void StartTransaction(void);
 
-static void RecordSubTransactionCommit(void);
 static void StartSubTransaction(void);
 static void CommitSubTransaction(void);
 static void AbortSubTransaction(void);
@@ -952,11 +951,7 @@ RecordTransactionCommit(void)
 		 * Now we may update the CLOG, if we wrote a COMMIT record above
 		 */
 		if (markXidCommitted)
-		{
-			TransactionIdCommit(xid);
-			/* to avoid race conditions, the parent must commit first */
-			TransactionIdCommitTree(nchildren, children);
-		}
+			TransactionIdCommitTree(xid, nchildren, children);
 	}
 	else
 	{
@@ -974,11 +969,7 @@ RecordTransactionCommit(void)
 		 * flushed before the CLOG may be updated.
 		 */
 		if (markXidCommitted)
-		{
-			TransactionIdAsyncCommit(xid, XactLastRecEnd);
-			/* to avoid race conditions, the parent must commit first */
-			TransactionIdAsyncCommitTree(nchildren, children, XactLastRecEnd);
-		}
+			TransactionIdAsyncCommitTree(xid, nchildren, children, XactLastRecEnd);
 	}
 
 	/*
@@ -1156,36 +1147,6 @@ AtSubCommit_childXids(void)
 	s->maxChildXids = 0;
 }
 
-/*
- * RecordSubTransactionCommit
- */
-static void
-RecordSubTransactionCommit(void)
-{
-	TransactionId xid = GetCurrentTransactionIdIfAny();
-
-	/*
-	 * We do not log the subcommit in XLOG; it doesn't matter until the
-	 * top-level transaction commits.
-	 *
-	 * We must mark the subtransaction subcommitted in the CLOG if it had a
-	 * valid XID assigned.	If it did not, nobody else will ever know about
-	 * the existence of this subxact.  We don't have to deal with deletions
-	 * scheduled for on-commit here, since they'll be reassigned to our parent
-	 * (who might still abort).
-	 */
-	if (TransactionIdIsValid(xid))
-	{
-		/* XXX does this really need to be a critical section? */
-		START_CRIT_SECTION();
-
-		/* Record subtransaction subcommit */
-		TransactionIdSubCommit(xid);
-
-		END_CRIT_SECTION();
-	}
-}
-
 /* ----------------------------------------------------------------
  *						AbortTransaction stuff
  * ----------------------------------------------------------------
@@ -1288,14 +1249,8 @@ RecordTransactionAbort(bool isSubXact)
 	 * waiting for already-aborted subtransactions.  It is OK to do it without
 	 * having flushed the ABORT record to disk, because in event of a crash
 	 * we'd be assumed to have aborted anyway.
-	 *
-	 * The ordering here isn't critical but it seems best to mark the parent
-	 * first.  This assures an atomic transition of all the subtransactions to
-	 * aborted state from the point of view of concurrent
-	 * TransactionIdDidAbort calls.
 	 */
-	TransactionIdAbort(xid);
-	TransactionIdAbortTree(nchildren, children);
+	TransactionIdAbortTree(xid, nchildren, children);
 
 	END_CRIT_SECTION();
 
@@ -3791,8 +3746,11 @@ CommitSubTransaction(void)
 	/* Must CCI to ensure commands of subtransaction are seen as done */
 	CommandCounterIncrement();
 
-	/* Mark subtransaction as subcommitted */
-	RecordSubTransactionCommit();
+	/* 
+	 * Prior to 8.4 we marked subcommit in clog at this point.  We now only
+	 * perform that step, if required, as part of the atomic update of the
+	 * whole transaction tree at top level commit or abort.
+	 */
 
 	/* Post-commit cleanup */
 	if (TransactionIdIsValid(s->transactionId))
@@ -4259,11 +4217,9 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid)
 	TransactionId max_xid;
 	int			i;
 
-	TransactionIdCommit(xid);
-
-	/* Mark committed subtransactions as committed */
+	/* Mark the transaction committed in pg_clog */
 	sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
-	TransactionIdCommitTree(xlrec->nsubxacts, sub_xids);
+	TransactionIdCommitTree(xid, xlrec->nsubxacts, sub_xids);
 
 	/* Make sure nextXid is beyond any XID mentioned in the record */
 	max_xid = xid;
@@ -4299,11 +4255,9 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	TransactionId max_xid;
 	int			i;
 
-	TransactionIdAbort(xid);
-
-	/* Mark subtransactions as aborted */
+	/* Mark the transaction aborted in pg_clog */
 	sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
-	TransactionIdAbortTree(xlrec->nsubxacts, sub_xids);
+	TransactionIdAbortTree(xid, xlrec->nsubxacts, sub_xids);
 
 	/* Make sure nextXid is beyond any XID mentioned in the record */
 	max_xid = xid;

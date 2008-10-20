@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.76 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.77 2008/10/20 19:18:18 alvherre Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -40,15 +40,12 @@ static const XLogRecPtr InvalidXLogRecPtr = {0, 0};
 
 /* Local functions */
 static XidStatus TransactionLogFetch(TransactionId transactionId);
-static void TransactionLogUpdate(TransactionId transactionId,
-					 XidStatus status, XLogRecPtr lsn);
 
 
 /* ----------------------------------------------------------------
  *		Postgres log access method interface
  *
  *		TransactionLogFetch
- *		TransactionLogUpdate
  * ----------------------------------------------------------------
  */
 
@@ -100,41 +97,6 @@ TransactionLogFetch(TransactionId transactionId)
 	return xidstatus;
 }
 
-/*
- *		TransactionLogUpdate
- *
- * Store the new status of a transaction.  The commit record LSN must be
- * passed when recording an async commit; else it should be InvalidXLogRecPtr.
- */
-static inline void
-TransactionLogUpdate(TransactionId transactionId,
-					 XidStatus status, XLogRecPtr lsn)
-{
-	/*
-	 * update the commit log
-	 */
-	TransactionIdSetStatus(transactionId, status, lsn);
-}
-
-/*
- * TransactionLogMultiUpdate
- *
- * Update multiple transaction identifiers to a given status.
- * Don't depend on this being atomic; it's not.
- */
-static inline void
-TransactionLogMultiUpdate(int nxids, TransactionId *xids,
-						  XidStatus status, XLogRecPtr lsn)
-{
-	int			i;
-
-	Assert(nxids != 0);
-
-	for (i = 0; i < nxids; i++)
-		TransactionIdSetStatus(xids[i], status, lsn);
-}
-
-
 /* ----------------------------------------------------------------
  *						Interface functions
  *
@@ -144,11 +106,12 @@ TransactionLogMultiUpdate(int nxids, TransactionId *xids,
  *		   these functions test the transaction status of
  *		   a specified transaction id.
  *
- *		TransactionIdCommit
- *		TransactionIdAbort
+ *		TransactionIdCommitTree
+ *		TransactionIdAsyncCommitTree
+ *		TransactionIdAbortTree
  *		========
- *		   these functions set the transaction status
- *		   of the specified xid.
+ *		   these functions set the transaction status of the specified
+ *		   transaction tree.
  *
  * See also TransactionIdIsInProgress, which once was in this module
  * but now lives in procarray.c.
@@ -287,76 +250,22 @@ TransactionIdIsKnownCompleted(TransactionId transactionId)
 	return false;
 }
 
-
-/*
- * TransactionIdCommit
- *		Commits the transaction associated with the identifier.
- *
- * Note:
- *		Assumes transaction identifier is valid.
- */
-void
-TransactionIdCommit(TransactionId transactionId)
-{
-	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_COMMITTED,
-						 InvalidXLogRecPtr);
-}
-
-/*
- * TransactionIdAsyncCommit
- *		Same as above, but for async commits.  The commit record LSN is needed.
- */
-void
-TransactionIdAsyncCommit(TransactionId transactionId, XLogRecPtr lsn)
-{
-	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_COMMITTED, lsn);
-}
-
-/*
- * TransactionIdAbort
- *		Aborts the transaction associated with the identifier.
- *
- * Note:
- *		Assumes transaction identifier is valid.
- *		No async version of this is needed.
- */
-void
-TransactionIdAbort(TransactionId transactionId)
-{
-	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_ABORTED,
-						 InvalidXLogRecPtr);
-}
-
-/*
- * TransactionIdSubCommit
- *		Marks the subtransaction associated with the identifier as
- *		sub-committed.
- *
- * Note:
- *		No async version of this is needed.
- */
-void
-TransactionIdSubCommit(TransactionId transactionId)
-{
-	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_SUB_COMMITTED,
-						 InvalidXLogRecPtr);
-}
-
 /*
  * TransactionIdCommitTree
- *		Marks all the given transaction ids as committed.
+ *		Marks the given transaction and children as committed
  *
- * The caller has to be sure that this is used only to mark subcommitted
- * subtransactions as committed, and only *after* marking the toplevel
- * parent as committed.  Otherwise there is a race condition against
- * TransactionIdDidCommit.
+ * "xid" is a toplevel transaction commit, and the xids array contains its
+ * committed subtransactions.
+ *
+ * This commit operation is not guaranteed to be atomic, but if not, subxids
+ * are correctly marked subcommit first.
  */
 void
-TransactionIdCommitTree(int nxids, TransactionId *xids)
+TransactionIdCommitTree(TransactionId xid, int nxids, TransactionId *xids)
 {
-	if (nxids > 0)
-		TransactionLogMultiUpdate(nxids, xids, TRANSACTION_STATUS_COMMITTED,
-								  InvalidXLogRecPtr);
+	return TransactionIdSetTreeStatus(xid, nxids, xids,
+									  TRANSACTION_STATUS_COMMITTED,
+									  InvalidXLogRecPtr);
 }
 
 /*
@@ -364,28 +273,29 @@ TransactionIdCommitTree(int nxids, TransactionId *xids)
  *		Same as above, but for async commits.  The commit record LSN is needed.
  */
 void
-TransactionIdAsyncCommitTree(int nxids, TransactionId *xids, XLogRecPtr lsn)
+TransactionIdAsyncCommitTree(TransactionId xid, int nxids, TransactionId *xids,
+							 XLogRecPtr lsn)
 {
-	if (nxids > 0)
-		TransactionLogMultiUpdate(nxids, xids, TRANSACTION_STATUS_COMMITTED,
-								  lsn);
+	return TransactionIdSetTreeStatus(xid, nxids, xids,
+									  TRANSACTION_STATUS_COMMITTED, lsn);
 }
 
 /*
  * TransactionIdAbortTree
- *		Marks all the given transaction ids as aborted.
+ *		Marks the given transaction and children as aborted.
+ *
+ * "xid" is a toplevel transaction commit, and the xids array contains its
+ * committed subtransactions.
  *
  * We don't need to worry about the non-atomic behavior, since any onlookers
  * will consider all the xacts as not-yet-committed anyway.
  */
 void
-TransactionIdAbortTree(int nxids, TransactionId *xids)
+TransactionIdAbortTree(TransactionId xid, int nxids, TransactionId *xids)
 {
-	if (nxids > 0)
-		TransactionLogMultiUpdate(nxids, xids, TRANSACTION_STATUS_ABORTED,
-								  InvalidXLogRecPtr);
+	TransactionIdSetTreeStatus(xid, nxids, xids,
+							   TRANSACTION_STATUS_ABORTED, InvalidXLogRecPtr);
 }
-
 
 /*
  * TransactionIdPrecedes --- is id1 logically < id2?
