@@ -245,7 +245,7 @@ F401	Extended joined table			YES
 F401	Extended joined table	01	NATURAL JOIN	YES	
 F401	Extended joined table	02	FULL OUTER JOIN	YES	
 F401	Extended joined table	04	CROSS JOIN	YES	
-F402	Named column joins for LOBs, arrays, and multisets			NO	
+F402	Named column joins for LOBs, arrays, and multisets			YES	
 F403	Partitioned joined tables			NO	
 F411	Time zone specification			YES	differences regarding literal interpretation
 F421	National character			YES	
