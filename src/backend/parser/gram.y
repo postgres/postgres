@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.625 2008/10/04 21:56:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.626 2008/10/20 14:26:28 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2185,7 +2185,7 @@ ConstraintAttr:
  * tables completely decoupled except for the original commonality in definitions.
  *
  * This is very similar to CREATE TABLE AS except for the INCLUDING DEFAULTS extension
- * which is a part of SQL 200N
+ * which is a part of SQL:2003.
  */
 TableLikeClause:
 			LIKE qualified_name TableLikeOptionList
