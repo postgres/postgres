@@ -58,7 +58,7 @@ E051	Basic query specification			YES
 E051	Basic query specification	01	SELECT DISTINCT	YES	
 E051	Basic query specification	02	GROUP BY clause	YES	
 E051	Basic query specification	04	GROUP BY can contain columns not in <select list>	YES	
-E051	Basic query specification	05	Select list items can be renamed	YES	AS is required
+E051	Basic query specification	05	Select list items can be renamed	YES	
 E051	Basic query specification	06	HAVING clause	YES	
 E051	Basic query specification	07	Qualified * in select list	YES	
 E051	Basic query specification	08	Correlation names in the FROM clause	YES	
