@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.77 2008/10/20 19:18:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.78 2008/10/20 20:38:24 alvherre Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -263,9 +263,9 @@ TransactionIdIsKnownCompleted(TransactionId transactionId)
 void
 TransactionIdCommitTree(TransactionId xid, int nxids, TransactionId *xids)
 {
-	return TransactionIdSetTreeStatus(xid, nxids, xids,
-									  TRANSACTION_STATUS_COMMITTED,
-									  InvalidXLogRecPtr);
+	TransactionIdSetTreeStatus(xid, nxids, xids,
+							   TRANSACTION_STATUS_COMMITTED,
+							   InvalidXLogRecPtr);
 }
 
 /*
@@ -276,8 +276,8 @@ void
 TransactionIdAsyncCommitTree(TransactionId xid, int nxids, TransactionId *xids,
 							 XLogRecPtr lsn)
 {
-	return TransactionIdSetTreeStatus(xid, nxids, xids,
-									  TRANSACTION_STATUS_COMMITTED, lsn);
+	TransactionIdSetTreeStatus(xid, nxids, xids,
+							   TRANSACTION_STATUS_COMMITTED, lsn);
 }
 
 /*
