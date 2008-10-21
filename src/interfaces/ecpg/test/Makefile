@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.72 2007/08/14 10:01:53 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.73 2008/10/21 10:51:24 petere Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -54,7 +54,7 @@ clean distclean maintainer-clean:
 	$(MAKE) -C compat_informix $@
 	$(MAKE) -C thread $@
 	rm -rf tmp_check results log
-	rm -f pg_regress regression.diffs pg_regress_ecpg.o
+	rm -f pg_regress regression.diffs regression.out pg_regress_ecpg.o
 
 # Build regression test driver
 
