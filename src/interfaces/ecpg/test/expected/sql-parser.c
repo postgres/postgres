@@ -101,7 +101,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
   for (i=0; i<3; i++)
   	printf("item[%d] = %d\n", i, ind[i] ? -1 : item[i]);
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table T ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter table T alter  Item1  type bigint  ", ECPGt_EOIT, ECPGt_EORT);
 #line 31 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -109,16 +109,35 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 31 "parser.pgc"
+
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter table T alter column Item2 set data type smallint  ", ECPGt_EOIT, ECPGt_EORT);
+#line 32 "parser.pgc"
+
+if (sqlca.sqlwarn[0] == 'W') sqlprint();
+#line 32 "parser.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 32 "parser.pgc"
+
+
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table T ", ECPGt_EOIT, ECPGt_EORT);
+#line 34 "parser.pgc"
+
+if (sqlca.sqlwarn[0] == 'W') sqlprint();
+#line 34 "parser.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 34 "parser.pgc"
 
 
   { ECPGdisconnect(__LINE__, "ALL");
-#line 33 "parser.pgc"
+#line 36 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 33 "parser.pgc"
+#line 36 "parser.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 33 "parser.pgc"
+#line 36 "parser.pgc"
 
 
   return 0;

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.376 2008/10/14 09:31:04 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.377 2008/10/21 08:38:16 petere Exp $ */
 
 /* Copyright comment */
 %{
@@ -392,7 +392,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 /* special embedded SQL token */
 %token	SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK
 		SQL_CALL SQL_CARDINALITY SQL_CONNECT
-		SQL_COUNT SQL_DATA
+		SQL_COUNT
 		SQL_DATETIME_INTERVAL_CODE
 		SQL_DATETIME_INTERVAL_PRECISION SQL_DESCRIBE
 		SQL_DESCRIPTOR SQL_DISCONNECT SQL_FOUND
@@ -431,7 +431,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	CREATEROLE CREATEUSER CROSS CSV CTYPE CURRENT_P CURRENT_DATE CURRENT_ROLE
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
-	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
+	DATA_P DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS DESC
 	DICTIONARY DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
 
@@ -584,7 +584,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	def_elem def_list definition DefineStmt select_with_parens
 %type  <str>	opt_instead event RuleActionList opt_using CreateAssertStmt
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
-%type  <str>	RuleStmt opt_column oper_argtypes NumConst var_name
+%type  <str>	RuleStmt opt_column opt_set_data oper_argtypes NumConst var_name
 %type  <str>	MathOp RemoveFuncStmt ECPGunreserved_con opt_database_name
 %type  <str>	RemoveAggrStmt opt_procedural select_no_parens CreateCastStmt
 %type  <str>	RemoveOperStmt RenameStmt all_Op opt_trusted opt_lancompiler
@@ -1398,9 +1398,9 @@ alter_table_cmd:
 /* ALTER TABLE <name> DROP [COLUMN] <colname> {RESTRICT|CASCADE} */
 		| DROP opt_column ColId opt_drop_behavior
 			{ $$ = cat_str(4, make_str("drop"), $2, $3, $4); }
-/* ALTER TABLE <name> ALTER [COLUMN] <colname> TYPE <typename> [ USING <expression> ] */
-		| ALTER opt_column ColId TYPE_P Typename alter_using
-			{ $$ = cat_str(6, make_str("alter"), $2, $3, make_str("type"), $5, $6); }
+/* ALTER TABLE <name> ALTER [COLUMN] <colname> [SET DATA] TYPE <typename> [ USING <expression> ] */
+		| ALTER opt_column ColId opt_set_data TYPE_P Typename alter_using
+			{ $$ = cat_str(7, make_str("alter"), $2, $3, $4, make_str("type"), $6, $7); }
 /* ALTER TABLE <name> ADD CONSTRAINT ... */
 		| ADD_P TableConstraint
 			{ $$ = cat_str(2, make_str("add"), $2); }
@@ -2888,6 +2888,10 @@ RenameStmt:  ALTER AGGREGATE func_name aggr_args RENAME TO name
 		;
 
 opt_column:  COLUMN			{ $$ = make_str("column"); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
+		;
+
+opt_set_data:  SET DATA_P			{ $$ = make_str("set data"); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
@@ -6140,7 +6144,7 @@ ECPGSetDescItem: descriptor_item '=' AllConstVar
 
 
 descriptor_item:	SQL_CARDINALITY			{ $$ = ECPGd_cardinality; }
-		| SQL_DATA				{ $$ = ECPGd_data; }
+		| DATA_P				{ $$ = ECPGd_data; }
 		| SQL_DATETIME_INTERVAL_CODE		{ $$ = ECPGd_di_code; }
 		| SQL_DATETIME_INTERVAL_PRECISION 	{ $$ = ECPGd_di_precision; }
 		| SQL_INDICATOR				{ $$ = ECPGd_indicator; }
@@ -6360,7 +6364,6 @@ ECPGKeywords_vanames:  SQL_BREAK		{ $$ = make_str("break"); }
 		| SQL_CALL						{ $$ = make_str("call"); }
 		| SQL_CARDINALITY				{ $$ = make_str("cardinality"); }
 		| SQL_COUNT						{ $$ = make_str("count"); }
-		| SQL_DATA						{ $$ = make_str("data"); }
 		| SQL_DATETIME_INTERVAL_CODE	{ $$ = make_str("datetime_interval_code"); }
 		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = make_str("datetime_interval_precision"); }
 		| SQL_FOUND						{ $$ = make_str("found"); }
@@ -6557,6 +6560,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| CTYPE			{ $$ = make_str("ctype"); }
 		| CURSOR			{ $$ = make_str("cursor"); }
 		| CYCLE				{ $$ = make_str("cycle"); }
+		| DATA_P			{ $$ = make_str("data"); }
 		| DATABASE			{ $$ = make_str("database"); }
 /*		| DAY_P				{ $$ = make_str("day"); }*/
 		| DEALLOCATE		{ $$ = make_str("deallocate"); }

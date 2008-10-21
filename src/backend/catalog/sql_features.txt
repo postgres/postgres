@@ -236,7 +236,7 @@ F381	Extended schema manipulation			YES
 F381	Extended schema manipulation	01	ALTER TABLE statement: ALTER COLUMN clause	YES	
 F381	Extended schema manipulation	02	ALTER TABLE statement: ADD CONSTRAINT clause	YES	
 F381	Extended schema manipulation	03	ALTER TABLE statement: DROP CONSTRAINT clause	YES	
-F382	Alter column data type			NO	PostgreSQL syntax differs
+F382	Alter column data type			YES	
 F391	Long identifiers			YES	
 F392	Unicode escapes in identifiers			NO	
 F393	Unicode escapes in literals			NO	

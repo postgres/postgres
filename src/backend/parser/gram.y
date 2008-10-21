@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.626 2008/10/20 14:26:28 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.627 2008/10/21 08:38:15 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -304,7 +304,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <boolean> copy_from
 
-%type <ival>	opt_column event cursor_options opt_hold
+%type <ival>	opt_column event cursor_options opt_hold opt_set_data
 %type <objtype>	reindex_type drop_type comment_type
 
 %type <node>	fetch_direction select_limit_value select_offset_value
@@ -407,7 +407,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	CREATEROLE CREATEUSER CROSS CSV CTYPE CURRENT_P CURRENT_DATE CURRENT_ROLE
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
-	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
+	DATA_P DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS DESC
 	DICTIONARY DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
 
@@ -1534,16 +1534,16 @@ alter_table_cmd:
 					$$ = (Node *)n;
 				}
 			/*
-			 * ALTER TABLE <name> ALTER [COLUMN] <colname> TYPE <typename>
+			 * ALTER TABLE <name> ALTER [COLUMN] <colname> [SET DATA] TYPE <typename>
 			 *		[ USING <expression> ]
 			 */
-			| ALTER opt_column ColId TYPE_P Typename alter_using
+			| ALTER opt_column ColId opt_set_data TYPE_P Typename alter_using
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AlterColumnType;
 					n->name = $3;
-					n->def = (Node *) $5;
-					n->transform = $6;
+					n->def = (Node *) $6;
+					n->transform = $7;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> ADD CONSTRAINT ... */
@@ -4851,6 +4851,10 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 		;
 
 opt_column: COLUMN									{ $$ = COLUMN; }
+			| /*EMPTY*/								{ $$ = 0; }
+		;
+
+opt_set_data: SET DATA_P									{ $$ = 1; }
 			| /*EMPTY*/								{ $$ = 0; }
 		;
 
@@ -9317,6 +9321,7 @@ unreserved_keyword:
 			| CURRENT_P
 			| CURSOR
 			| CYCLE
+			| DATA_P
 			| DATABASE
 			| DAY_P
 			| DEALLOCATE
