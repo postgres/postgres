@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.91 2008/08/28 23:09:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.92 2008/10/21 20:42:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,13 +168,14 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		List	   *vars;
 		ListCell   *l;
 
-		vars = pull_var_clause((Node *) parse->returningList, false);
+		vars = pull_var_clause((Node *) parse->returningList, true);
 		foreach(l, vars)
 		{
 			Var		   *var = (Var *) lfirst(l);
 			TargetEntry *tle;
 
-			if (var->varno == result_relation)
+			if (IsA(var, Var) &&
+				var->varno == result_relation)
 				continue;		/* don't need it */
 
 			if (tlist_member((Node *) var, tlist))

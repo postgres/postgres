@@ -3,12 +3,18 @@
  * var.c
  *	  Var node manipulation routines
  *
+ * Note: for most purposes, PlaceHolderVar is considered a Var too,
+ * even if its contained expression is variable-free.  Also, CurrentOfExpr
+ * is treated as a Var for purposes of determining whether an expression
+ * contains variables.
+ *
+ *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.80 2008/10/06 17:39:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.81 2008/10/21 20:42:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +56,7 @@ typedef struct
 typedef struct
 {
 	List	   *varlist;
-	bool		includeUpperVars;
+	bool		includePlaceHolderVars;
 } pull_var_clause_context;
 
 typedef struct
@@ -126,6 +132,26 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 
 		if (context->sublevels_up == 0)
 			context->varnos = bms_add_member(context->varnos, cexpr->cvarno);
+		return false;
+	}
+	if (IsA(node, PlaceHolderVar))
+	{
+		/*
+		 * Normally, we can just take the varnos in the contained expression.
+		 * But if it is variable-free, use the PHV's syntactic relids.
+		 */
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+		pull_varnos_context subcontext;
+
+		subcontext.varnos = NULL;
+		subcontext.sublevels_up = context->sublevels_up;
+		(void) pull_varnos_walker((Node *) phv->phexpr, &subcontext);
+
+		if (bms_is_empty(subcontext.varnos) &&
+			phv->phlevelsup == context->sublevels_up)
+			context->varnos = bms_add_members(context->varnos, phv->phrels);
+		else
+			context->varnos = bms_join(context->varnos, subcontext.varnos);
 		return false;
 	}
 	if (IsA(node, Query))
@@ -215,6 +241,12 @@ contain_var_clause_walker(Node *node, void *context)
 	}
 	if (IsA(node, CurrentOfExpr))
 		return true;
+	if (IsA(node, PlaceHolderVar))
+	{
+		if (((PlaceHolderVar *) node)->phlevelsup == 0)
+			return true;		/* abort the tree traversal and return true */
+		/* else fall through to check the contained expr */
+	}
 	return expression_tree_walker(node, contain_var_clause_walker, context);
 }
 
@@ -255,6 +287,12 @@ contain_vars_of_level_walker(Node *node, int *sublevels_up)
 		if (*sublevels_up == 0)
 			return true;
 		return false;
+	}
+	if (IsA(node, PlaceHolderVar))
+	{
+		if (((PlaceHolderVar *) node)->phlevelsup == *sublevels_up)
+			return true;		/* abort the tree traversal and return true */
+		/* else fall through to check the contained expr */
 	}
 	if (IsA(node, Query))
 	{
@@ -329,6 +367,7 @@ locate_var_of_level_walker(Node *node,
 		/* since CurrentOfExpr doesn't carry location, nothing we can do */
 		return false;
 	}
+	/* No extra code needed for PlaceHolderVar; just look in contained expr */
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
@@ -398,6 +437,7 @@ locate_var_of_relation_walker(Node *node,
 		/* since CurrentOfExpr doesn't carry location, nothing we can do */
 		return false;
 	}
+	/* No extra code needed for PlaceHolderVar; just look in contained expr */
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
@@ -527,6 +567,30 @@ find_minimum_var_level_walker(Node *node,
 			}
 		}
 	}
+	/* Likewise, make sure PlaceHolderVar is treated correctly */
+	if (IsA(node, PlaceHolderVar))
+	{
+		int			phlevelsup = ((PlaceHolderVar *) node)->phlevelsup;
+
+		/* convert levelsup to frame of reference of original query */
+		phlevelsup -= context->sublevels_up;
+		/* ignore local vars of subqueries */
+		if (phlevelsup >= 0)
+		{
+			if (context->min_varlevel < 0 ||
+				context->min_varlevel > phlevelsup)
+			{
+				context->min_varlevel = phlevelsup;
+
+				/*
+				 * As soon as we find a local variable, we can abort the tree
+				 * traversal, since min_varlevel is then certainly 0.
+				 */
+				if (phlevelsup == 0)
+					return true;
+			}
+		}
+	}
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
@@ -548,25 +612,30 @@ find_minimum_var_level_walker(Node *node,
 
 /*
  * pull_var_clause
- *	  Recursively pulls all var nodes from an expression clause.
+ *	  Recursively pulls all Var nodes from an expression clause.
  *
- *	  Upper-level vars (with varlevelsup > 0) are included only
- *	  if includeUpperVars is true.	Most callers probably want
- *	  to ignore upper-level vars.
+ *	  PlaceHolderVars are included too, if includePlaceHolderVars is true.
+ *	  If it isn't true, an error is thrown if any are found.
+ *	  Note that Vars within a PHV's expression are *not* included.
  *
- *	  Returns list of varnodes found.  Note the varnodes themselves are not
+ *	  CurrentOfExpr nodes are *not* included.
+ *
+ *	  Upper-level vars (with varlevelsup > 0) are not included.
+ *	  (These probably represent errors too, but we don't complain.)
+ *
+ *	  Returns list of nodes found.  Note the nodes themselves are not
  *	  copied, only referenced.
  *
  * Does not examine subqueries, therefore must only be used after reduction
  * of sublinks to subplans!
  */
 List *
-pull_var_clause(Node *node, bool includeUpperVars)
+pull_var_clause(Node *node, bool includePlaceHolderVars)
 {
 	pull_var_clause_context context;
 
 	context.varlist = NIL;
-	context.includeUpperVars = includeUpperVars;
+	context.includePlaceHolderVars = includePlaceHolderVars;
 
 	pull_var_clause_walker(node, &context);
 	return context.varlist;
@@ -579,8 +648,17 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 		return false;
 	if (IsA(node, Var))
 	{
-		if (((Var *) node)->varlevelsup == 0 || context->includeUpperVars)
+		if (((Var *) node)->varlevelsup == 0)
 			context->varlist = lappend(context->varlist, node);
+		return false;
+	}
+	if (IsA(node, PlaceHolderVar))
+	{
+		if (!context->includePlaceHolderVars)
+			elog(ERROR, "PlaceHolderVar found where not expected");
+		if (((PlaceHolderVar *) node)->phlevelsup == 0)
+			context->varlist = lappend(context->varlist, node);
+		/* we do NOT descend into the contained expression */
 		return false;
 	}
 	return expression_tree_walker(node, pull_var_clause_walker,
@@ -596,6 +674,9 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  *	  into RowExpr constructs that name the individual output Vars.  This
  *	  is necessary since we will not scan the JOIN as a base relation, which
  *	  is the only way that the executor can directly handle whole-row Vars.
+ *
+ * This also adjusts relid sets found in some expression node types to
+ * substitute the contained base rels for any join relid.
  *
  * NOTE: this is used on not-yet-planned expressions.  We do not expect it
  * to be applied directly to a Query node.
@@ -702,6 +783,40 @@ flatten_join_alias_vars_mutator(Node *node,
 												fslink->righthand);
 		}
 		return (Node *) fslink;
+	}
+	if (IsA(node, PlaceHolderVar))
+	{
+		/* Copy the PlaceHolderVar node with correct mutation of subnodes */
+		PlaceHolderVar *phv;
+
+		phv = (PlaceHolderVar *) expression_tree_mutator(node,
+											 flatten_join_alias_vars_mutator,
+														 (void *) context);
+		/* now fix PlaceHolderVar's relid sets */
+		if (phv->phlevelsup == context->sublevels_up)
+		{
+			phv->phrels = alias_relid_set(context->root,
+										  phv->phrels);
+		}
+		return (Node *) phv;
+	}
+	if (IsA(node, PlaceHolderInfo))
+	{
+		/* Copy the PlaceHolderInfo node with correct mutation of subnodes */
+		PlaceHolderInfo *phinfo;
+
+		phinfo = (PlaceHolderInfo *) expression_tree_mutator(node,
+											 flatten_join_alias_vars_mutator,
+															 (void *) context);
+		/* now fix PlaceHolderInfo's relid sets */
+		if (context->sublevels_up == 0)
+		{
+			phinfo->ph_eval_at = alias_relid_set(context->root,
+												 phinfo->ph_eval_at);
+			phinfo->ph_needed = alias_relid_set(context->root,
+												phinfo->ph_needed);
+		}
+		return (Node *) phinfo;
 	}
 
 	if (IsA(node, Query))

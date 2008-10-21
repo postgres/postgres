@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.174 2008/10/04 21:56:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.175 2008/10/21 20:42:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,6 +423,10 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				Var		   *parentvar = (Var *) lfirst(parentvars);
 				Var		   *childvar = (Var *) lfirst(childvars);
 
+				/*
+				 * Accumulate per-column estimates too.  Whole-row Vars and
+				 * PlaceHolderVars can be ignored here.
+				 */
 				if (IsA(parentvar, Var) &&
 					IsA(childvar, Var))
 				{
@@ -1105,11 +1109,24 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 	 * Examine all Vars used in clause; since it's a restriction clause, all
 	 * such Vars must refer to subselect output columns.
 	 */
-	vars = pull_var_clause(qual, false);
+	vars = pull_var_clause(qual, true);
 	foreach(vl, vars)
 	{
 		Var		   *var = (Var *) lfirst(vl);
 		TargetEntry *tle;
+
+		/*
+		 * XXX Punt if we find any PlaceHolderVars in the restriction clause.
+		 * It's not clear whether a PHV could safely be pushed down, and even
+		 * less clear whether such a situation could arise in any cases of
+		 * practical interest anyway.  So for the moment, just refuse to push
+		 * down.
+		 */
+		if (!IsA(var, Var))
+		{
+			safe = false;
+			break;
+		}
 
 		Assert(var->varno == rti);
 

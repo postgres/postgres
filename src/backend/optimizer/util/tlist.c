@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.82 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.83 2008/10/21 20:42:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ tlist_member_ignore_relabel(Node *node, List *targetlist)
 List *
 flatten_tlist(List *tlist)
 {
-	List	   *vlist = pull_var_clause((Node *) tlist, false);
+	List	   *vlist = pull_var_clause((Node *) tlist, true);
 	List	   *new_tlist;
 
 	new_tlist = add_to_flat_tlist(NIL, vlist);
@@ -104,7 +104,7 @@ flatten_tlist(List *tlist)
  *		Add more vars to a flattened tlist (if they're not already in it)
  *
  * 'tlist' is the flattened tlist
- * 'vars' is a list of var nodes
+ * 'vars' is a list of Var and/or PlaceHolderVar nodes
  *
  * Returns the extended tlist.
  */
@@ -116,9 +116,9 @@ add_to_flat_tlist(List *tlist, List *vars)
 
 	foreach(v, vars)
 	{
-		Var		   *var = (Var *) lfirst(v);
+		Node	   *var = (Node *) lfirst(v);
 
-		if (!tlist_member((Node *) var, tlist))
+		if (!tlist_member(var, tlist))
 		{
 			TargetEntry *tle;
 

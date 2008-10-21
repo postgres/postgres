@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.158 2008/10/07 19:27:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.159 2008/10/21 20:42:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1584,7 +1584,39 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 											 context->child_relid);
 		return (Node *) fslink;
 	}
-	/* Shouldn't need to handle SpecialJoinInfo or AppendRelInfo here */
+	if (IsA(node, PlaceHolderVar))
+	{
+		/* Copy the PlaceHolderVar node with correct mutation of subnodes */
+		PlaceHolderVar *phv;
+
+		phv = (PlaceHolderVar *) expression_tree_mutator(node,
+											  adjust_appendrel_attrs_mutator,
+														 (void *) context);
+		/* now fix PlaceHolderVar's relid sets */
+		if (phv->phlevelsup == 0)
+			phv->phrels = adjust_relid_set(phv->phrels,
+										   context->parent_relid,
+										   context->child_relid);
+		return (Node *) phv;
+	}
+	if (IsA(node, PlaceHolderInfo))
+	{
+		/* Copy the PlaceHolderInfo node with correct mutation of subnodes */
+		PlaceHolderInfo *phinfo;
+
+		phinfo = (PlaceHolderInfo *) expression_tree_mutator(node,
+											  adjust_appendrel_attrs_mutator,
+															 (void *) context);
+		/* now fix PlaceHolderInfo's relid sets */
+		phinfo->ph_eval_at = adjust_relid_set(phinfo->ph_eval_at,
+											  context->parent_relid,
+											  context->child_relid);
+		phinfo->ph_needed = adjust_relid_set(phinfo->ph_needed,
+											 context->parent_relid,
+											 context->child_relid);
+		return (Node *) phinfo;
+	}
+	/* Shouldn't need to handle other planner auxiliary nodes here */
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
 

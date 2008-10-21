@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.213 2008/10/04 21:56:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.214 2008/10/21 20:42:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,8 +213,10 @@ typedef enum NodeTag
 	T_RestrictInfo,
 	T_InnerIndexscanInfo,
 	T_FlattenedSubLink,
+	T_PlaceHolderVar,
 	T_SpecialJoinInfo,
 	T_AppendRelInfo,
+	T_PlaceHolderInfo,
 	T_PlannerParamItem,
 
 	/*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.141 2008/10/04 21:56:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.142 2008/10/21 20:42:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1040,6 +1040,10 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 
 	/*
 	 * And finally, build the FlattenedSubLink node.
+	 *
+	 * Note: at this point left_varnos may well contain join relids, since
+	 * the testexpr hasn't been run through flatten_join_alias_vars.  This
+	 * will get fixed when flatten_join_alias_vars is run.
 	 */
 	fslink = makeNode(FlattenedSubLink);
 	fslink->jointype = JOIN_SEMI;
@@ -1189,6 +1193,9 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 
 	/*
 	 * And finally, build the FlattenedSubLink node.
+	 *
+	 * Note: at this point left_varnos and subselect_varnos may well contain
+	 * join relids.  This will get fixed when flatten_join_alias_vars is run.
 	 */
 	fslink = makeNode(FlattenedSubLink);
 	fslink->jointype = under_not ? JOIN_ANTI : JOIN_SEMI;

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.255 2008/09/28 20:42:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.256 2008/10/21 20:42:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2951,7 +2951,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 		/*
 		 * Else pull out the component Vars
 		 */
-		varshere = pull_var_clause(groupexpr, false);
+		varshere = pull_var_clause(groupexpr, true);
 
 		/*
 		 * If we find any variable-free GROUP BY item, then either it is a

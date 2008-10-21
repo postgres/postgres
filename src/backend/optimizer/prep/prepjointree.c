@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.56 2008/10/09 19:27:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.57 2008/10/21 20:42:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/placeholder.h"
 #include "optimizer/prep.h"
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
@@ -60,7 +61,8 @@ static bool is_simple_subquery(Query *subquery);
 static bool is_simple_union_all(Query *subquery);
 static bool is_simple_union_all_recurse(Node *setOp, Query *setOpQuery,
 							List *colTypes);
-static bool has_nullable_targetlist(Query *subquery);
+static List *insert_targetlist_placeholders(PlannerInfo *root, List *tlist,
+											int varno, bool wrap_non_vars);
 static bool is_safe_append_member(Query *subquery);
 static void resolvenew_in_jointree(Node *jtnode, int varno,
 					   RangeTblEntry *rte, List *subtlist);
@@ -71,8 +73,8 @@ static void reduce_outer_joins_pass2(Node *jtnode,
 						 Relids nonnullable_rels,
 						 List *nonnullable_vars,
 						 List *forced_null_vars);
-static void fix_flattened_sublink_relids(Node *node,
-										 int varno, Relids subrelids);
+static void substitute_multiple_relids(Node *node,
+									   int varno, Relids subrelids);
 static void fix_append_rel_relids(List *append_rel_list, int varno,
 					  Relids subrelids);
 static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
@@ -406,11 +408,13 @@ inline_set_returning_functions(PlannerInfo *root)
  *		converted into "append relations".
  *
  * below_outer_join is true if this jointree node is within the nullable
- * side of an outer join.  This restricts what we can do.
+ * side of an outer join.  This forces use of the PlaceHolderVar mechanism
+ * for non-nullable targetlist items.
  *
  * append_rel_member is true if we are looking at a member subquery of
- * an append relation.	This puts some different restrictions on what
- * we can do.
+ * an append relation.	This forces use of the PlaceHolderVar mechanism
+ * for all non-Var targetlist items, and puts some additional restrictions
+ * on what can be pulled up.
  *
  * A tricky aspect of this code is that if we pull up a subquery we have
  * to replace Vars that reference the subquery's outputs throughout the
@@ -434,24 +438,13 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode,
 
 		/*
 		 * Is this a subquery RTE, and if so, is the subquery simple enough to
-		 * pull up?  (If not, do nothing at this node.)
-		 *
-		 * If we are inside an outer join, only pull up subqueries whose
-		 * targetlists are nullable --- otherwise substituting their tlist
-		 * entries for upper Var references would do the wrong thing (the
-		 * results wouldn't become NULL when they're supposed to).
-		 *
-		 * XXX This could be improved by generating pseudo-variables for such
-		 * expressions; we'd have to figure out how to get the pseudo-
-		 * variables evaluated at the right place in the modified plan tree.
-		 * Fix it someday.
+		 * pull up?
 		 *
 		 * If we are looking at an append-relation member, we can't pull it up
 		 * unless is_safe_append_member says so.
 		 */
 		if (rte->rtekind == RTE_SUBQUERY &&
 			is_simple_subquery(rte->subquery) &&
-			(!below_outer_join || has_nullable_targetlist(rte->subquery)) &&
 			(!append_rel_member || is_safe_append_member(rte->subquery)))
 			return pull_up_simple_subquery(root, jtnode, rte,
 										   below_outer_join,
@@ -459,12 +452,9 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode,
 
 		/*
 		 * Alternatively, is it a simple UNION ALL subquery?  If so, flatten
-		 * into an "append relation".  We can do this regardless of
-		 * nullability considerations since this transformation does not
-		 * result in propagating non-Var expressions into upper levels of the
-		 * query.
+		 * into an "append relation".
 		 *
-		 * It's also safe to do this regardless of whether this query is
+		 * It's safe to do this regardless of whether this query is
 		 * itself an appendrel member.	(If you're thinking we should try to
 		 * flatten the two levels of appendrel together, you're right; but we
 		 * handle that in set_append_rel_pathlist, not here.)
@@ -472,6 +462,8 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode,
 		if (rte->rtekind == RTE_SUBQUERY &&
 			is_simple_union_all(rte->subquery))
 			return pull_up_simple_union_all(root, jtnode, rte);
+
+		/* Otherwise, do nothing at this node. */
 	}
 	else if (IsA(jtnode, FromExpr))
 	{
@@ -573,6 +565,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->cte_plan_ids = NIL;
 	subroot->eq_classes = NIL;
 	subroot->append_rel_list = NIL;
+	subroot->placeholder_list = NIL;
 	subroot->hasRecursion = false;
 	subroot->wt_param_id = -1;
 	subroot->non_recursive_plan = NULL;
@@ -614,7 +607,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * pull_up_subqueries.
 	 */
 	if (is_simple_subquery(subquery) &&
-		(!below_outer_join || has_nullable_targetlist(subquery)) &&
 		(!append_rel_member || is_safe_append_member(subquery)))
 	{
 		/* good to go */
@@ -635,11 +627,12 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	/*
 	 * Adjust level-0 varnos in subquery so that we can append its rangetable
 	 * to upper query's.  We have to fix the subquery's append_rel_list
-	 * as well.
+	 * and placeholder_list as well.
 	 */
 	rtoffset = list_length(parse->rtable);
 	OffsetVarNodes((Node *) subquery, rtoffset, 0);
 	OffsetVarNodes((Node *) subroot->append_rel_list, rtoffset, 0);
+	OffsetVarNodes((Node *) subroot->placeholder_list, rtoffset, 0);
 
 	/*
 	 * Upper-level vars in subquery are now one level closer to their parent
@@ -647,6 +640,20 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 */
 	IncrementVarSublevelsUp((Node *) subquery, -1, 1);
 	IncrementVarSublevelsUp((Node *) subroot->append_rel_list, -1, 1);
+	IncrementVarSublevelsUp((Node *) subroot->placeholder_list, -1, 1);
+
+	/*
+	 * The subquery's targetlist items are now in the appropriate form to
+	 * insert into the top query, but if we are under an outer join then
+	 * non-nullable items have to be turned into PlaceHolderVars.  If we
+	 * are dealing with an appendrel member then anything that's not a
+	 * simple Var has to be turned into a PlaceHolderVar.
+	 */
+	if (below_outer_join || append_rel_member)
+		subtlist = insert_targetlist_placeholders(root, subquery->targetList,
+												  varno, append_rel_member);
+	else
+		subtlist = subquery->targetList;
 
 	/*
 	 * Replace all of the top query's references to the subquery's outputs
@@ -654,7 +661,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * replace any of the jointree structure. (This'd be a lot cleaner if we
 	 * could use query_tree_mutator.)
 	 */
-	subtlist = subquery->targetList;
 	parse->targetList = (List *)
 		ResolveNew((Node *) parse->targetList,
 				   varno, 0, rte,
@@ -700,29 +706,41 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	parse->rowMarks = list_concat(parse->rowMarks, subquery->rowMarks);
 
 	/*
-	 * We also have to fix the relid sets of any FlattenedSubLink nodes in
-	 * the parent query.  (This could perhaps be done by ResolveNew, but it
-	 * would clutter that routine's API unreasonably.)
+	 * We also have to fix the relid sets of any FlattenedSubLink,
+	 * PlaceHolderVar, and PlaceHolderInfo nodes in the parent query.
+	 * (This could perhaps be done by ResolveNew, but it would clutter that
+	 * routine's API unreasonably.)  Note in particular that any placeholder
+	 * nodes just created by insert_targetlist_placeholders() wiil be adjusted.
 	 *
 	 * Likewise, relids appearing in AppendRelInfo nodes have to be fixed (but
 	 * we took care of their translated_vars lists above).	We already checked
 	 * that this won't require introducing multiple subrelids into the
 	 * single-slot AppendRelInfo structs.
 	 */
-	if (parse->hasSubLinks || root->append_rel_list)
+	if (parse->hasSubLinks || root->placeholder_list || root->append_rel_list)
 	{
 		Relids		subrelids;
 
 		subrelids = get_relids_in_jointree((Node *) subquery->jointree, false);
-		fix_flattened_sublink_relids((Node *) parse, varno, subrelids);
-		fix_append_rel_relids(root->append_rel_list, varno, subrelids);
+		substitute_multiple_relids((Node *) parse,
+								   varno, subrelids);
+		substitute_multiple_relids((Node *) root->placeholder_list,
+								   varno, subrelids);
+		fix_append_rel_relids(root->append_rel_list,
+							  varno, subrelids);
 	}
 
 	/*
-	 * And now add subquery's AppendRelInfos to our list.
+	 * And now add subquery's AppendRelInfos and PlaceHolderInfos to our lists.
+	 * Note that any placeholders pulled up from the subquery will appear
+	 * after any we just created; this preserves the property that placeholders
+	 * can only refer to other placeholders that appear later in the list
+	 * (needed by fix_placeholder_eval_levels).
 	 */
 	root->append_rel_list = list_concat(root->append_rel_list,
 										subroot->append_rel_list);
+	root->placeholder_list = list_concat(root->placeholder_list,
+										 subroot->placeholder_list);
 
 	/*
 	 * We don't have to do the equivalent bookkeeping for outer-join info,
@@ -950,7 +968,9 @@ is_simple_subquery(Query *subquery)
 	 * Don't pull up a subquery that has any volatile functions in its
 	 * targetlist.	Otherwise we might introduce multiple evaluations of these
 	 * functions, if they get copied to multiple places in the upper query,
-	 * leading to surprising results.
+	 * leading to surprising results.  (Note: the PlaceHolderVar mechanism
+	 * doesn't quite guarantee single evaluation; else we could pull up anyway
+	 * and just wrap such items in PlaceHolderVars ...)
 	 */
 	if (contain_volatile_functions((Node *) subquery->targetList))
 		return false;
@@ -959,8 +979,12 @@ is_simple_subquery(Query *subquery)
 	 * Hack: don't try to pull up a subquery with an empty jointree.
 	 * query_planner() will correctly generate a Result plan for a jointree
 	 * that's totally empty, but I don't think the right things happen if an
-	 * empty FromExpr appears lower down in a jointree. Not worth working hard
-	 * on this, just to collapse SubqueryScan/Result into Result...
+	 * empty FromExpr appears lower down in a jointree.  It would pose a
+	 * problem for the PlaceHolderVar mechanism too, since we'd have no
+	 * way to identify where to evaluate a PHV coming out of the subquery.
+	 * Not worth working hard on this, just to collapse SubqueryScan/Result
+	 * into Result; especially since the SubqueryScan can often be optimized
+	 * away by setrefs.c anyway.
 	 */
 	if (subquery->jointree->fromlist == NIL)
 		return false;
@@ -1043,40 +1067,59 @@ is_simple_union_all_recurse(Node *setOp, Query *setOpQuery, List *colTypes)
 }
 
 /*
- * has_nullable_targetlist
- *	  Check a subquery in the range table to see if all the non-junk
- *	  targetlist items are simple variables or strict functions of simple
- *	  variables (and, hence, will correctly go to NULL when examined above
- *	  the point of an outer join).
+ * insert_targetlist_placeholders
+ *	  Insert PlaceHolderVar nodes into any non-junk targetlist items that are
+ *	  not simple variables or strict functions of simple variables (and hence
+ *	  might not correctly go to NULL when examined above the point of an outer
+ *	  join).  We assume we can modify the tlist items in-place.
  *
- * NOTE: it would be correct (and useful) to ignore output columns that aren't
- * actually referenced by the enclosing query ... but we do not have that
- * information available at this point.
+ * varno is the upper-query relid of the subquery; this is used as the
+ * syntactic location of the PlaceHolderVars.
+ * If wrap_non_vars is true then *only* simple Var references escape being
+ * wrapped with PlaceHolderVars.
  */
-static bool
-has_nullable_targetlist(Query *subquery)
+static List *
+insert_targetlist_placeholders(PlannerInfo *root, List *tlist,
+							   int varno, bool wrap_non_vars)
 {
-	ListCell   *l;
+	ListCell   *lc;
 
-	foreach(l, subquery->targetList)
+	foreach(lc, tlist)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
 
 		/* ignore resjunk columns */
 		if (tle->resjunk)
 			continue;
 
-		/* Must contain a Var of current level */
-		if (!contain_vars_of_level((Node *) tle->expr, 0))
-			return false;
+		/*
+		 * Simple Vars always escape being wrapped.  This is common enough
+		 * to deserve a fast path even if we aren't doing wrap_non_vars.
+		 */
+		if (tle->expr && IsA(tle->expr, Var) &&
+			((Var *) tle->expr)->varlevelsup == 0)
+			continue;
 
-		/* Must not contain any non-strict constructs */
-		if (contain_nonstrict_functions((Node *) tle->expr))
-			return false;
+		if (!wrap_non_vars)
+		{
+			/*
+			 * If it contains a Var of current level, and does not contain
+			 * any non-strict constructs, then it's certainly nullable and we
+			 * don't need to insert a PlaceHolderVar.  (Note: in future maybe
+			 * we should insert PlaceHolderVars anyway, when a tlist item is
+			 * expensive to evaluate?
+			 */
+			if (contain_vars_of_level((Node *) tle->expr, 0) &&
+				!contain_nonstrict_functions((Node *) tle->expr))
+				continue;
+		}
 
-		/* This one's OK, keep scanning */
+		/* Else wrap it in a PlaceHolderVar */
+		tle->expr = (Expr *) make_placeholder_expr(root,
+												   tle->expr,
+												   bms_make_singleton(varno));
 	}
-	return true;
+	return tlist;
 }
 
 /*
@@ -1088,7 +1131,6 @@ static bool
 is_safe_append_member(Query *subquery)
 {
 	FromExpr   *jtnode;
-	ListCell   *l;
 
 	/*
 	 * It's only safe to pull up the child if its jointree contains exactly
@@ -1112,24 +1154,6 @@ is_safe_append_member(Query *subquery)
 	}
 	if (!IsA(jtnode, RangeTblRef))
 		return false;
-
-	/*
-	 * XXX For the moment we also have to insist that the subquery's tlist
-	 * includes only simple Vars.  This is pretty annoying, but fixing it
-	 * seems to require nontrivial changes --- mainly because joinrel tlists
-	 * are presently assumed to contain only Vars.	Perhaps a pseudo-variable
-	 * mechanism similar to the one speculated about in pull_up_subqueries'
-	 * comments would help?  FIXME someday.
-	 */
-	foreach(l, subquery->targetList)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-
-		if (tle->resjunk)
-			continue;
-		if (!(tle->expr && IsA(tle->expr, Var)))
-			return false;
-	}
 
 	return true;
 }
@@ -1579,28 +1603,29 @@ reduce_outer_joins_pass2(Node *jtnode,
 }
 
 /*
- * fix_flattened_sublink_relids - adjust FlattenedSubLink nodes after
- * pulling up a subquery
+ * substitute_multiple_relids - adjust node relid sets after pulling up
+ * a subquery
  *
- * Find any FlattenedSubLink nodes in the given tree that reference the
- * pulled-up relid, and change them to reference the replacement relid(s).
- * We do not need to recurse into subqueries, since no subquery of the
- * current top query could contain such a reference.
+ * Find any FlattenedSubLink, PlaceHolderVar, or PlaceHolderInfo nodes in the
+ * given tree that reference the pulled-up relid, and change them to reference
+ * the replacement relid(s).  We do not need to recurse into subqueries, since
+ * no subquery of the current top query could (yet) contain such a reference.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.  This should be OK since the tree was copied by ResolveNew
- * earlier.
+ * earlier.  Avoid scribbling on the original values of the bitmapsets, though,
+ * because expression_tree_mutator doesn't copy those.
  */
 
 typedef struct
 {
 	int			varno;
 	Relids		subrelids;
-} fix_flattened_sublink_relids_context;
+} substitute_multiple_relids_context;
 
 static bool
-fix_flattened_sublink_relids_walker(Node *node,
-							   fix_flattened_sublink_relids_context *context)
+substitute_multiple_relids_walker(Node *node,
+								  substitute_multiple_relids_context *context)
 {
 	if (node == NULL)
 		return false;
@@ -1610,28 +1635,61 @@ fix_flattened_sublink_relids_walker(Node *node,
 
 		if (bms_is_member(context->varno, fslink->lefthand))
 		{
+			fslink->lefthand = bms_union(fslink->lefthand,
+										 context->subrelids);
 			fslink->lefthand = bms_del_member(fslink->lefthand,
 											  context->varno);
-			fslink->lefthand = bms_add_members(fslink->lefthand,
-											   context->subrelids);
 		}
 		if (bms_is_member(context->varno, fslink->righthand))
 		{
+			fslink->righthand = bms_union(fslink->righthand,
+										  context->subrelids);
 			fslink->righthand = bms_del_member(fslink->righthand,
 											   context->varno);
-			fslink->righthand = bms_add_members(fslink->righthand,
-												context->subrelids);
 		}
 		/* fall through to examine children */
 	}
-	return expression_tree_walker(node, fix_flattened_sublink_relids_walker,
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		if (bms_is_member(context->varno, phv->phrels))
+		{
+			phv->phrels = bms_union(phv->phrels,
+									context->subrelids);
+			phv->phrels = bms_del_member(phv->phrels,
+										 context->varno);
+		}
+		/* fall through to examine children */
+	}
+	if (IsA(node, PlaceHolderInfo))
+	{
+		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) node;
+
+		if (bms_is_member(context->varno, phinfo->ph_eval_at))
+		{
+			phinfo->ph_eval_at = bms_union(phinfo->ph_eval_at,
+										   context->subrelids);
+			phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at,
+												context->varno);
+		}
+		if (bms_is_member(context->varno, phinfo->ph_needed))
+		{
+			phinfo->ph_needed = bms_union(phinfo->ph_needed,
+										  context->subrelids);
+			phinfo->ph_needed = bms_del_member(phinfo->ph_needed,
+											   context->varno);
+		}
+		/* fall through to examine children */
+	}
+	return expression_tree_walker(node, substitute_multiple_relids_walker,
 								  (void *) context);
 }
 
 static void
-fix_flattened_sublink_relids(Node *node, int varno, Relids subrelids)
+substitute_multiple_relids(Node *node, int varno, Relids subrelids)
 {
-	fix_flattened_sublink_relids_context context;
+	substitute_multiple_relids_context context;
 
 	context.varno = varno;
 	context.subrelids = subrelids;
@@ -1640,7 +1698,7 @@ fix_flattened_sublink_relids(Node *node, int varno, Relids subrelids)
 	 * Must be prepared to start with a Query or a bare expression tree.
 	 */
 	query_or_expression_tree_walker(node,
-									fix_flattened_sublink_relids_walker,
+									substitute_multiple_relids_walker,
 									(void *) &context,
 									0);
 }

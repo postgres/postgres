@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.12 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.13 2008/10/21 20:42:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -687,7 +687,7 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 	foreach(lc, ec->ec_members)
 	{
 		EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc);
-		List	   *vars = pull_var_clause((Node *) cur_em->em_expr, false);
+		List	   *vars = pull_var_clause((Node *) cur_em->em_expr, true);
 
 		add_vars_to_targetlist(root, vars, ec->ec_relids);
 		list_free(vars);

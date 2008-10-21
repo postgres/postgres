@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.145 2008/10/04 21:56:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.146 2008/10/21 20:42:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,8 @@ typedef struct
 {
 	List	   *tlist;			/* underlying target list */
 	int			num_vars;		/* number of plain Var tlist entries */
-	bool		has_non_vars;	/* are there non-plain-Var entries? */
+	bool		has_ph_vars;	/* are there PlaceHolderVar entries? */
+	bool		has_non_vars;	/* are there other entries? */
 	/* array of num_vars entries: */
 	tlist_vinfo vars[1];		/* VARIABLE LENGTH ARRAY */
 } indexed_tlist;				/* VARIABLE LENGTH STRUCT */
@@ -741,15 +742,16 @@ fix_scan_expr(PlannerGlobal *glob, Node *node, int rtoffset)
 	context.glob = glob;
 	context.rtoffset = rtoffset;
 
-	if (rtoffset != 0)
+	if (rtoffset != 0 || glob->lastPHId != 0)
 	{
 		return fix_scan_expr_mutator(node, &context);
 	}
 	else
 	{
 		/*
-		 * If rtoffset == 0, we don't need to change any Vars, which makes
-		 * it OK to just scribble on the input node tree instead of copying
+		 * If rtoffset == 0, we don't need to change any Vars, and if there
+		 * are no placeholders anywhere we won't need to remove them.  Then
+		 * it's OK to just scribble on the input node tree instead of copying
 		 * (since the only change, filling in any unset opfuncid fields,
 		 * is harmless).  This saves just enough cycles to be noticeable on
 		 * trivial queries.
@@ -790,6 +792,13 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		cexpr->cvarno += context->rtoffset;
 		return (Node *) cexpr;
 	}
+	if (IsA(node, PlaceHolderVar))
+	{
+		/* At scan level, we should always just evaluate the contained expr */
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		return fix_scan_expr_mutator((Node *) phv->phexpr, context);
+	}
 	fix_expr_common(context->glob, node);
 	return expression_tree_mutator(node, fix_scan_expr_mutator,
 								   (void *) context);
@@ -800,6 +809,7 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
 {
 	if (node == NULL)
 		return false;
+	Assert(!IsA(node, PlaceHolderVar));
 	fix_expr_common(context->glob, node);
 	return expression_tree_walker(node, fix_scan_expr_walker,
 								  (void *) context);
@@ -1199,6 +1209,7 @@ build_tlist_index(List *tlist)
 			   list_length(tlist) * sizeof(tlist_vinfo));
 
 	itlist->tlist = tlist;
+	itlist->has_ph_vars = false;
 	itlist->has_non_vars = false;
 
 	/* Find the Vars and fill in the index array */
@@ -1216,6 +1227,8 @@ build_tlist_index(List *tlist)
 			vinfo->resno = tle->resno;
 			vinfo++;
 		}
+		else if (tle->expr && IsA(tle->expr, PlaceHolderVar))
+			itlist->has_ph_vars = true;
 		else
 			itlist->has_non_vars = true;
 	}
@@ -1229,7 +1242,9 @@ build_tlist_index(List *tlist)
  * build_tlist_index_other_vars --- build a restricted tlist index
  *
  * This is like build_tlist_index, but we only index tlist entries that
- * are Vars and belong to some rel other than the one specified.
+ * are Vars belonging to some rel other than the one specified.  We will set
+ * has_ph_vars (allowing PlaceHolderVars to be matched), but not has_non_vars
+ * (so nothing other than Vars and PlaceHolderVars can be matched).
  */
 static indexed_tlist *
 build_tlist_index_other_vars(List *tlist, Index ignore_rel)
@@ -1244,6 +1259,7 @@ build_tlist_index_other_vars(List *tlist, Index ignore_rel)
 			   list_length(tlist) * sizeof(tlist_vinfo));
 
 	itlist->tlist = tlist;
+	itlist->has_ph_vars = false;
 	itlist->has_non_vars = false;
 
 	/* Find the desired Vars and fill in the index array */
@@ -1264,6 +1280,8 @@ build_tlist_index_other_vars(List *tlist, Index ignore_rel)
 				vinfo++;
 			}
 		}
+		else if (tle->expr && IsA(tle->expr, PlaceHolderVar))
+			itlist->has_ph_vars = true;
 	}
 
 	itlist->num_vars = (vinfo - itlist->vars);
@@ -1314,7 +1332,8 @@ search_indexed_tlist_for_var(Var *var, indexed_tlist *itlist,
  * If a match is found, return a Var constructed to reference the tlist item.
  * If no match, return NULL.
  *
- * NOTE: it is a waste of time to call this if !itlist->has_non_vars
+ * NOTE: it is a waste of time to call this unless itlist->has_ph_vars or
+ * itlist->has_non_vars
  */
 static Var *
 search_indexed_tlist_for_non_var(Node *node,
@@ -1429,6 +1448,31 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		/* No referent found for Var */
 		elog(ERROR, "variable not found in subplan target lists");
 	}
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		/* See if the PlaceHolderVar has bubbled up from a lower plan node */
+		if (context->outer_itlist->has_ph_vars)
+		{
+			newvar = search_indexed_tlist_for_non_var((Node *) phv,
+													  context->outer_itlist,
+													  OUTER);
+			if (newvar)
+				return (Node *) newvar;
+		}
+		if (context->inner_itlist && context->inner_itlist->has_ph_vars)
+		{
+			newvar = search_indexed_tlist_for_non_var((Node *) phv,
+													  context->inner_itlist,
+													  INNER);
+			if (newvar)
+				return (Node *) newvar;
+		}
+
+		/* If not supplied by input plans, evaluate the contained expr */
+		return fix_join_expr_mutator((Node *) phv->phexpr, context);
+	}
 	/* Try matching more complex expressions too, if tlists have any */
 	if (context->outer_itlist->has_non_vars)
 	{
@@ -1512,6 +1556,22 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 			elog(ERROR, "variable not found in subplan target list");
 		return (Node *) newvar;
 	}
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		/* See if the PlaceHolderVar has bubbled up from a lower plan node */
+		if (context->subplan_itlist->has_ph_vars)
+		{
+			newvar = search_indexed_tlist_for_non_var((Node *) phv,
+													  context->subplan_itlist,
+													  OUTER);
+			if (newvar)
+				return (Node *) newvar;
+		}
+		/* If not supplied by input plan, evaluate the contained expr */
+		return fix_upper_expr_mutator((Node *) phv->phexpr, context);
+	}
 	/* Try matching more complex expressions too, if tlist has any */
 	if (context->subplan_itlist->has_non_vars)
 	{
@@ -1564,6 +1624,13 @@ set_returning_clause_references(PlannerGlobal *glob,
 	 * top plan's targetlist for Vars of non-result relations, and use
 	 * fix_join_expr to convert RETURNING Vars into references to those tlist
 	 * entries, while leaving result-rel Vars as-is.
+	 *
+	 * PlaceHolderVars will also be sought in the targetlist, but no
+	 * more-complex expressions will be.  Note that it is not possible for
+	 * a PlaceHolderVar to refer to the result relation, since the result
+	 * is never below an outer join.  If that case could happen, we'd have
+	 * to be prepared to pick apart the PlaceHolderVar and evaluate its
+	 * contained expression instead.
 	 */
 	itlist = build_tlist_index_other_vars(topplan->targetlist, resultRelation);
 
@@ -1721,6 +1788,7 @@ extract_query_dependencies_walker(Node *node, PlannerGlobal *context)
 {
 	if (node == NULL)
 		return false;
+	Assert(!IsA(node, PlaceHolderVar));
 	/* Extract function dependencies and check for regclass Consts */
 	fix_expr_common(context, node);
 	if (IsA(node, Query))

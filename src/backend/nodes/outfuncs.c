@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.342 2008/10/07 19:27:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.343 2008/10/21 20:42:52 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1412,6 +1412,8 @@ _outPlannerGlobal(StringInfo str, PlannerGlobal *node)
 	WRITE_NODE_FIELD(finalrtable);
 	WRITE_NODE_FIELD(relationOids);
 	WRITE_NODE_FIELD(invalItems);
+	WRITE_UINT_FIELD(lastPHId);
+	WRITE_BOOL_FIELD(transientPlan);
 }
 
 static void
@@ -1435,6 +1437,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(full_join_clauses);
 	WRITE_NODE_FIELD(join_info_list);
 	WRITE_NODE_FIELD(append_rel_list);
+	WRITE_NODE_FIELD(placeholder_list);
 	WRITE_NODE_FIELD(query_pathkeys);
 	WRITE_NODE_FIELD(group_pathkeys);
 	WRITE_NODE_FIELD(distinct_pathkeys);
@@ -1591,6 +1594,17 @@ _outFlattenedSubLink(StringInfo str, FlattenedSubLink *node)
 }
 
 static void
+_outPlaceHolderVar(StringInfo str, PlaceHolderVar *node)
+{
+	WRITE_NODE_TYPE("PLACEHOLDERVAR");
+
+	WRITE_NODE_FIELD(phexpr);
+	WRITE_BITMAPSET_FIELD(phrels);
+	WRITE_UINT_FIELD(phid);
+	WRITE_UINT_FIELD(phlevelsup);
+}
+
+static void
 _outSpecialJoinInfo(StringInfo str, SpecialJoinInfo *node)
 {
 	WRITE_NODE_TYPE("SPECIALJOININFO");
@@ -1617,6 +1631,18 @@ _outAppendRelInfo(StringInfo str, AppendRelInfo *node)
 	WRITE_NODE_FIELD(col_mappings);
 	WRITE_NODE_FIELD(translated_vars);
 	WRITE_OID_FIELD(parent_reloid);
+}
+
+static void
+_outPlaceHolderInfo(StringInfo str, PlaceHolderInfo *node)
+{
+	WRITE_NODE_TYPE("PLACEHOLDERINFO");
+
+	WRITE_UINT_FIELD(phid);
+	WRITE_NODE_FIELD(ph_var);
+	WRITE_BITMAPSET_FIELD(ph_eval_at);
+	WRITE_BITMAPSET_FIELD(ph_needed);
+	WRITE_INT_FIELD(ph_width);
 }
 
 static void
@@ -2539,11 +2565,17 @@ _outNode(StringInfo str, void *obj)
 			case T_FlattenedSubLink:
 				_outFlattenedSubLink(str, obj);
 				break;
+			case T_PlaceHolderVar:
+				_outPlaceHolderVar(str, obj);
+				break;
 			case T_SpecialJoinInfo:
 				_outSpecialJoinInfo(str, obj);
 				break;
 			case T_AppendRelInfo:
 				_outAppendRelInfo(str, obj);
+				break;
+			case T_PlaceHolderInfo:
+				_outPlaceHolderInfo(str, obj);
 				break;
 			case T_PlannerParamItem:
 				_outPlannerParamItem(str, obj);

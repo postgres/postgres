@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.91 2008/10/04 21:56:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.92 2008/10/21 20:42:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "optimizer/placeholder.h"
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
@@ -354,6 +355,7 @@ build_join_rel(PlannerInfo *root,
 	 */
 	build_joinrel_tlist(root, joinrel, outer_rel);
 	build_joinrel_tlist(root, joinrel, inner_rel);
+	add_placeholders_to_joinrel(root, joinrel);
 
 	/*
 	 * Construct restrict and join clause lists for the new joinrel. (The
@@ -403,7 +405,8 @@ build_join_rel(PlannerInfo *root,
 
 /*
  * build_joinrel_tlist
- *	  Builds a join relation's target list.
+ *	  Builds a join relation's target list from an input relation.
+ *	  (This is invoked twice to handle the two input relations.)
  *
  * The join's targetlist includes all Vars of its member relations that
  * will still be needed above the join.  This subroutine adds all such
@@ -421,16 +424,23 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 
 	foreach(vars, input_rel->reltargetlist)
 	{
-		Var		   *origvar = (Var *) lfirst(vars);
+		Node	   *origvar = (Node *) lfirst(vars);
 		Var		   *var;
 		RelOptInfo *baserel;
 		int			ndx;
 
 		/*
+		 * Ignore PlaceHolderVars in the input tlists; we'll make our
+		 * own decisions about whether to copy them.
+		 */
+		if (IsA(origvar, PlaceHolderVar))
+			continue;
+
+		/*
 		 * We can't run into any child RowExprs here, but we could find a
 		 * whole-row Var with a ConvertRowtypeExpr atop it.
 		 */
-		var = origvar;
+		var = (Var *) origvar;
 		while (!IsA(var, Var))
 		{
 			if (IsA(var, ConvertRowtypeExpr))

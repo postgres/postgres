@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.408 2008/10/07 19:27:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.409 2008/10/21 20:42:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1593,6 +1593,22 @@ _copyFlattenedSubLink(FlattenedSubLink *from)
 }
 
 /*
+ * _copyPlaceHolderVar
+ */
+static PlaceHolderVar *
+_copyPlaceHolderVar(PlaceHolderVar *from)
+{
+	PlaceHolderVar *newnode = makeNode(PlaceHolderVar);
+
+	COPY_NODE_FIELD(phexpr);
+	COPY_BITMAPSET_FIELD(phrels);
+	COPY_SCALAR_FIELD(phid);
+	COPY_SCALAR_FIELD(phlevelsup);
+
+	return newnode;
+}
+
+/*
  * _copySpecialJoinInfo
  */
 static SpecialJoinInfo *
@@ -1627,6 +1643,23 @@ _copyAppendRelInfo(AppendRelInfo *from)
 	COPY_NODE_FIELD(col_mappings);
 	COPY_NODE_FIELD(translated_vars);
 	COPY_SCALAR_FIELD(parent_reloid);
+
+	return newnode;
+}
+
+/*
+ * _copyPlaceHolderInfo
+ */
+static PlaceHolderInfo *
+_copyPlaceHolderInfo(PlaceHolderInfo *from)
+{
+	PlaceHolderInfo *newnode = makeNode(PlaceHolderInfo);
+
+	COPY_SCALAR_FIELD(phid);
+	COPY_NODE_FIELD(ph_var);
+	COPY_BITMAPSET_FIELD(ph_eval_at);
+	COPY_BITMAPSET_FIELD(ph_needed);
+	COPY_SCALAR_FIELD(ph_width);
 
 	return newnode;
 }
@@ -3438,11 +3471,17 @@ copyObject(void *from)
 		case T_FlattenedSubLink:
 			retval = _copyFlattenedSubLink(from);
 			break;
+		case T_PlaceHolderVar:
+			retval = _copyPlaceHolderVar(from);
+			break;
 		case T_SpecialJoinInfo:
 			retval = _copySpecialJoinInfo(from);
 			break;
 		case T_AppendRelInfo:
 			retval = _copyAppendRelInfo(from);
+			break;
+		case T_PlaceHolderInfo:
+			retval = _copyPlaceHolderInfo(from);
 			break;
 
 			/*

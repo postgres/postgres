@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.34 2008/10/06 17:39:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.35 2008/10/21 20:42:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,6 +220,9 @@ exprType(Node *expr)
 		case T_CurrentOfExpr:
 			type = BOOLOID;
 			break;
+		case T_PlaceHolderVar:
+			type = exprType((Node *) ((PlaceHolderVar *) expr)->phexpr);
+			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
 			type = InvalidOid;	/* keep compiler quiet */
@@ -420,6 +423,8 @@ exprTypmod(Node *expr)
 			return ((CoerceToDomainValue *) expr)->typeMod;
 		case T_SetToDefault:
 			return ((SetToDefault *) expr)->typeMod;
+		case T_PlaceHolderVar:
+			return exprTypmod((Node *) ((PlaceHolderVar *) expr)->phexpr);
 		default:
 			break;
 	}
@@ -876,6 +881,10 @@ exprLocation(Node *expr)
 		case T_CommonTableExpr:
 			loc = ((CommonTableExpr *) expr)->location;
 			break;
+		case T_PlaceHolderVar:
+			/* just use argument's location */
+			loc = exprLocation((Node *) ((PlaceHolderVar *) expr)->phexpr);
+			break;
 		default:
 			/* for any other node type it's just unknown... */
 			loc = -1;
@@ -1272,11 +1281,12 @@ expression_tree_walker(Node *node,
 			{
 				FlattenedSubLink *fslink = (FlattenedSubLink *) node;
 
-				if (expression_tree_walker((Node *) fslink->quals,
-										   walker, context))
+				if (walker(fslink->quals, context))
 					return true;
 			}
 			break;
+		case T_PlaceHolderVar:
+			return walker(((PlaceHolderVar *) node)->phexpr, context);
 		case T_AppendRelInfo:
 			{
 				AppendRelInfo *appinfo = (AppendRelInfo *) node;
@@ -1286,6 +1296,8 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_PlaceHolderInfo:
+			return walker(((PlaceHolderInfo *) node)->ph_var, context);
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -1918,6 +1930,17 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
+		case T_PlaceHolderVar:
+			{
+				PlaceHolderVar *phv = (PlaceHolderVar *) node;
+				PlaceHolderVar *newnode;
+
+				FLATCOPY(newnode, phv, PlaceHolderVar);
+				MUTATE(newnode->phexpr, phv->phexpr, Expr *);
+				/* Assume we need not copy the relids bitmapset */
+				return (Node *) newnode;
+			}
+			break;
 		case T_AppendRelInfo:
 			{
 				AppendRelInfo *appinfo = (AppendRelInfo *) node;
@@ -1925,6 +1948,17 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, appinfo, AppendRelInfo);
 				MUTATE(newnode->translated_vars, appinfo->translated_vars, List *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_PlaceHolderInfo:
+			{
+				PlaceHolderInfo *phinfo = (PlaceHolderInfo *) node;
+				PlaceHolderInfo *newnode;
+
+				FLATCOPY(newnode, phinfo, PlaceHolderInfo);
+				MUTATE(newnode->ph_var, phinfo->ph_var, PlaceHolderVar *);
+				/* Assume we need not copy the relids bitmapsets */
 				return (Node *) newnode;
 			}
 			break;

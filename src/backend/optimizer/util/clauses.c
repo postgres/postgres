@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.269 2008/10/09 19:27:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.270 2008/10/21 20:42:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1188,6 +1188,12 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 			result = find_nonnullable_rels_walker((Node *) expr->quals,
 												  top_level);
 	}
+	else if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		result = find_nonnullable_rels_walker((Node *) phv->phexpr, top_level);
+	}
 	return result;
 }
 
@@ -1392,6 +1398,12 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 		if (expr->jointype == JOIN_SEMI)
 			result = find_nonnullable_vars_walker((Node *) expr->quals,
 												  top_level);
+	}
+	else if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		result = find_nonnullable_vars_walker((Node *) phv->phexpr, top_level);
 	}
 	return result;
 }
@@ -1921,6 +1933,7 @@ eval_const_expressions(PlannerInfo *root, Node *node)
  *	  constant.  This effectively means that we plan using the first supplied
  *	  value of the Param.
  * 2. Fold stable, as well as immutable, functions to constants.
+ * 3. Reduce PlaceHolderVar nodes to their contained expressions.
  *--------------------
  */
 Node *
@@ -2822,6 +2835,20 @@ eval_const_expressions_mutator(Node *node,
 		newfslink->righthand = fslink->righthand;
 		newfslink->quals = quals;
 		return (Node *) newfslink;
+	}
+	if (IsA(node, PlaceHolderVar) && context->estimate)
+	{
+		/*
+		 * In estimation mode, just strip the PlaceHolderVar node altogether;
+		 * this amounts to estimating that the contained value won't be forced
+		 * to null by an outer join.  In regular mode we just use the default
+		 * behavior (ie, simplify the expression but leave the PlaceHolderVar
+		 * node intact).
+		 */
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		return eval_const_expressions_mutator((Node *) phv->phexpr,
+											  context);
 	}
 
 	/*
