@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.267 2008/10/07 11:15:41 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.268 2008/10/21 10:38:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5520,8 +5520,8 @@ ATPrepAlterColumnType(List **wqueue,
 	if (transform == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("column \"%s\" cannot be cast to type \"%s\"",
-						colName, TypeNameToString(typename))));
+				 errmsg("column \"%s\" cannot be cast to type %s",
+						colName, format_type_be(targettype))));
 
 	/*
 	 * Add a work queue item to make ATRewriteTable update the column
@@ -5619,8 +5619,8 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 		if (defaultexpr == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-			errmsg("default for column \"%s\" cannot be cast to type \"%s\"",
-				   colName, TypeNameToString(typename))));
+			errmsg("default for column \"%s\" cannot be cast to type %s",
+				   colName, format_type_be(targettype))));
 	}
 	else
 		defaultexpr = NULL;
