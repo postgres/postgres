@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.62.2.1 2008/08/23 10:41:38 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.62.2.2 2008/10/22 12:55:59 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,11 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 	{
 		while( ntids < maxtids && so->curPageData < so->nPageData )
 		{
-			tids[ ntids ] = scan->xs_ctup.t_self = so->pageData[ so->curPageData ];
+			tids[ ntids ] = scan->xs_ctup.t_self = so->pageData[ so->curPageData ].heapPtr;
+			ItemPointerSet(&scan->currentItemData,
+							   BufferGetBlockNumber(so->curbuf), 
+							   so->pageData[ so->curPageData ].pageOffset);
+
 				
 			so->curPageData ++;
 			ntids++;
@@ -247,8 +251,13 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 			{
 				while( ntids < maxtids && so->curPageData < so->nPageData )
 				{
-					tids[ ntids ] = scan->xs_ctup.t_self = so->pageData[ so->curPageData ];
+					tids[ ntids ] = scan->xs_ctup.t_self = 
+						so->pageData[ so->curPageData ].heapPtr;
 				
+					ItemPointerSet(&scan->currentItemData,
+								   BufferGetBlockNumber(so->curbuf), 
+								   so->pageData[ so->curPageData ].pageOffset);
+
 					so->curPageData ++;
 					ntids++;
 				}
@@ -293,13 +302,11 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 				 * we can efficiently resume the index scan later.
 				 */
 
-				ItemPointerSet(&(scan->currentItemData),
-							   BufferGetBlockNumber(so->curbuf), n);
-
 				if (!(ignore_killed_tuples && ItemIdDeleted(PageGetItemId(p, n))))
 				{
 					it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-					so->pageData[ so->nPageData ] = it->t_tid;
+					so->pageData[ so->nPageData ].heapPtr = it->t_tid;
+					so->pageData[ so->nPageData ].pageOffset = n;
 					so->nPageData ++;
 				}
 			}
