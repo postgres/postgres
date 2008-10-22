@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.78 2008/10/20 16:35:14 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.79 2008/10/22 12:53:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 
 		for (offset = FirstOffsetNumber; offset <= maxoff; offset = OffsetNumberNext(offset))
 		{
-				IndexTuple	ituple = (IndexTuple) PageGetItem(p, PageGetItemId(p, offset));
+			IndexTuple	ituple = (IndexTuple) PageGetItem(p, PageGetItemId(p, offset));
 
 			if (ItemPointerEquals(&(ituple->t_tid), iptr))
 			{
@@ -139,24 +139,28 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 	if ( so->qual_ok == false )
 		return 0;
 
-	if (ItemPointerIsValid(&so->curpos) == false)
+	if ( so->curbuf == InvalidBuffer ) 
 	{
-		/* Being asked to fetch the first entry, so start at the root */
-		Assert(so->curbuf == InvalidBuffer);
-		Assert(so->stack == NULL);
+		if (ItemPointerIsValid(&so->curpos) == false)
+		{
+			/* Being asked to fetch the first entry, so start at the root */
+			Assert(so->curbuf == InvalidBuffer);
+			Assert(so->stack == NULL);
 
-		so->curbuf = ReadBuffer(scan->indexRelation, GIST_ROOT_BLKNO);
+			so->curbuf = ReadBuffer(scan->indexRelation, GIST_ROOT_BLKNO);
 
-		stk = so->stack = (GISTSearchStack *) palloc0(sizeof(GISTSearchStack));
+			stk = so->stack = (GISTSearchStack *) palloc0(sizeof(GISTSearchStack));
 
-		stk->next = NULL;
-		stk->block = GIST_ROOT_BLKNO;
+			stk->next = NULL;
+			stk->block = GIST_ROOT_BLKNO;
 
-		pgstat_count_index_scan(scan->indexRelation);
-	}
-	else if (so->curbuf == InvalidBuffer)
-	{
-		return 0;
+			pgstat_count_index_scan(scan->indexRelation);
+		} 
+		else
+		{
+			/* scan is finished */
+			return 0;
+		}
 	}
 
 	/*
@@ -171,8 +175,13 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 
 		if ( so->curPageData < so->nPageData )
 		{
-			scan->xs_ctup.t_self = so->pageData[ so->curPageData ].iptr;
+			scan->xs_ctup.t_self = so->pageData[ so->curPageData ].heapPtr;
 			scan->xs_recheck = so->pageData[ so->curPageData ].recheck;
+
+			ItemPointerSet(&so->curpos,
+							BufferGetBlockNumber(so->curbuf),
+							so->pageData[ so->curPageData ].pageOffset);
+
 			so->curPageData ++;
 
 			return 1;
@@ -307,8 +316,6 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 				 * return success. Note that we keep "curbuf" pinned so that
 				 * we can efficiently resume the index scan later.
 				 */
-				ItemPointerSet(&(so->curpos),
-							   BufferGetBlockNumber(so->curbuf), n);
 
 				if (!(scan->ignore_killed_tuples &&
 					  ItemIdIsDead(PageGetItemId(p, n))))
@@ -319,7 +326,8 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 						tbm_add_tuples(tbm, &it->t_tid, 1, scan->xs_recheck);
 					else 
 					{
-						so->pageData[ so->nPageData ].iptr = it->t_tid;
+						so->pageData[ so->nPageData ].heapPtr = it->t_tid;
+						so->pageData[ so->nPageData ].pageOffset = n;
 						so->pageData[ so->nPageData ].recheck = scan->xs_recheck;
 						so->nPageData ++;
 					}
