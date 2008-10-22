@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.69.2.2 2008/10/17 17:02:42 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.69.2.3 2008/10/22 12:54:25 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 
 		for (offset = FirstOffsetNumber; offset <= maxoff; offset = OffsetNumberNext(offset))
 		{
-				IndexTuple	ituple = (IndexTuple) PageGetItem(p, PageGetItemId(p, offset));
+			IndexTuple	ituple = (IndexTuple) PageGetItem(p, PageGetItemId(p, offset));
 
 			if (ItemPointerEquals(&(ituple->t_tid), iptr))
 			{
@@ -157,7 +157,11 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 	{
 		while( ntids < maxtids && so->curPageData < so->nPageData )
 		{
-			tids[ ntids ] = scan->xs_ctup.t_self = so->pageData[ so->curPageData ];
+			tids[ ntids ] = scan->xs_ctup.t_self = so->pageData[ so->curPageData ].heapPtr;
+			ItemPointerSet(&(so->curpos),
+							   BufferGetBlockNumber(so->curbuf), 
+							   so->pageData[ so->curPageData ].pageOffset);
+
 				
 			so->curPageData ++;
 			ntids++;
@@ -251,8 +255,13 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 			{
 				while( ntids < maxtids && so->curPageData < so->nPageData )
 				{
-					tids[ ntids ] = scan->xs_ctup.t_self = so->pageData[ so->curPageData ];
+					tids[ ntids ] = scan->xs_ctup.t_self = 
+						so->pageData[ so->curPageData ].heapPtr;
 				
+					ItemPointerSet(&(so->curpos),
+								   BufferGetBlockNumber(so->curbuf), 
+								   so->pageData[ so->curPageData ].pageOffset);
+
 					so->curPageData ++;
 					ntids++;
 				}
@@ -297,13 +306,11 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 				 * we can efficiently resume the index scan later.
 				 */
 
-				ItemPointerSet(&(so->curpos),
-							   BufferGetBlockNumber(so->curbuf), n);
-
 				if (!(ignore_killed_tuples && ItemIdIsDead(PageGetItemId(p, n))))
 				{
 					it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-					so->pageData[ so->nPageData ] = it->t_tid;
+					so->pageData[ so->nPageData ].heapPtr = it->t_tid;
+					so->pageData[ so->nPageData ].pageOffset = n;
 					so->nPageData ++;
 				}
 			}
