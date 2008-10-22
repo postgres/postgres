@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.1 2008/10/21 20:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.2 2008/10/22 20:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,7 @@
 
 /*
  * make_placeholder_expr
- *		Make a PlaceHolderVar (and corresponding PlaceHolderInfo)
- *		for the given expression.
+ *		Make a PlaceHolderVar for the given expression.
  *
  * phrels is the syntactic location (as a set of baserels) to attribute
  * to the expression.
@@ -35,34 +34,25 @@ PlaceHolderVar *
 make_placeholder_expr(PlannerInfo *root, Expr *expr, Relids phrels)
 {
 	PlaceHolderVar *phv = makeNode(PlaceHolderVar);
-	PlaceHolderInfo *phinfo = makeNode(PlaceHolderInfo);
 
 	phv->phexpr = expr;
 	phv->phrels = phrels;
 	phv->phid = ++(root->glob->lastPHId);
 	phv->phlevelsup = 0;
 
-	phinfo->phid = phv->phid;
-	phinfo->ph_var = copyObject(phv);
-	phinfo->ph_eval_at = pull_varnos((Node *) phv);
-	/* ph_eval_at may change later, see fix_placeholder_eval_levels */
-	phinfo->ph_needed = NULL;		/* initially it's unused */
-	/* for the moment, estimate width using just the datatype info */
-	phinfo->ph_width = get_typavgwidth(exprType((Node *) expr),
-									   exprTypmod((Node *) expr));
-
-	root->placeholder_list = lappend(root->placeholder_list, phinfo);
-
 	return phv;
 }
 
 /*
  * find_placeholder_info
- *		Fetch the PlaceHolderInfo for the given PHV; error if not found
+ *		Fetch the PlaceHolderInfo for the given PHV; create it if not found
+ *
+ * Note: this should only be called after query_planner() has started.
  */
 PlaceHolderInfo *
 find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv)
 {
+	PlaceHolderInfo *phinfo;
 	ListCell   *lc;
 
 	/* if this ever isn't true, we'd need to be able to look in parent lists */
@@ -70,20 +60,33 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv)
 
 	foreach(lc, root->placeholder_list)
 	{
-		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
-
+		phinfo = (PlaceHolderInfo *) lfirst(lc);
 		if (phinfo->phid == phv->phid)
 			return phinfo;
 	}
-	elog(ERROR, "could not find PlaceHolderInfo with id %u", phv->phid);
-	return NULL;				/* keep compiler quiet */
+
+	/* Not found, so create it */
+	phinfo = makeNode(PlaceHolderInfo);
+
+	phinfo->phid = phv->phid;
+	phinfo->ph_var = copyObject(phv);
+	phinfo->ph_eval_at = pull_varnos((Node *) phv);
+	/* ph_eval_at may change later, see fix_placeholder_eval_levels */
+	phinfo->ph_needed = NULL;		/* initially it's unused */
+	/* for the moment, estimate width using just the datatype info */
+	phinfo->ph_width = get_typavgwidth(exprType((Node *) phv->phexpr),
+									   exprTypmod((Node *) phv->phexpr));
+
+	root->placeholder_list = lappend(root->placeholder_list, phinfo);
+
+	return phinfo;
 }
 
 /*
  * fix_placeholder_eval_levels
  *		Adjust the target evaluation levels for placeholders
  *
- * The initial eval_at level set by make_placeholder_expr was the set of
+ * The initial eval_at level set by find_placeholder_info was the set of
  * rels used in the placeholder's expression (or the whole subselect if
  * the expr is variable-free).  If the subselect contains any outer joins
  * that can null any of those rels, we must delay evaluation to above those
@@ -103,18 +106,8 @@ fix_placeholder_eval_levels(PlannerInfo *root)
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc1);
 		Relids		syn_level = phinfo->ph_var->phrels;
 		Relids		eval_at = phinfo->ph_eval_at;
-		BMS_Membership eval_membership;
 		bool		found_some;
 		ListCell   *lc2;
-
-		/*
-		 * Ignore unreferenced placeholders.  Note: if a placeholder is
-		 * referenced only by some other placeholder's expr, we will do
-		 * the right things because the referencing placeholder must appear
-		 * earlier in the list.
-		 */
-		if (bms_is_empty(phinfo->ph_needed))
-			continue;
 
 		/*
 		 * Check for delays due to lower outer joins.  This is the same logic
@@ -160,11 +153,13 @@ fix_placeholder_eval_levels(PlannerInfo *root)
 		/*
 		 * Now that we know where to evaluate the placeholder, make sure that
 		 * any vars or placeholders it uses will be available at that join
-		 * level.  (Note that this has to be done within this loop to make
-		 * sure we don't skip over such placeholders when we get to them.)
+		 * level.  NOTE: this could cause more PlaceHolderInfos to be added
+		 * to placeholder_list.  That is okay because we'll process them
+		 * before falling out of the foreach loop.  Also, it could cause
+		 * the ph_needed sets of existing list entries to expand, which
+		 * is also okay because this loop doesn't examine those.
 		 */
-		eval_membership = bms_membership(eval_at);
-		if (eval_membership == BMS_MULTIPLE)
+		if (bms_membership(eval_at) == BMS_MULTIPLE)
 		{
 			List	   *vars = pull_var_clause((Node *) phinfo->ph_var->phexpr,
 											   true);
@@ -172,14 +167,22 @@ fix_placeholder_eval_levels(PlannerInfo *root)
 			add_vars_to_targetlist(root, vars, eval_at);
 			list_free(vars);
 		}
+	}
 
-		/*
-		 * Also, if the placeholder can be computed at a base rel and is
-		 * needed above it, add it to that rel's targetlist.  (This is
-		 * essentially the same logic as in add_placeholders_to_joinrel, but
-		 * we can't do that part until joinrels are formed.)
-		 */
-		if (eval_membership == BMS_SINGLETON)
+	/*
+	 * Now, if any placeholder can be computed at a base rel and is needed
+	 * above it, add it to that rel's targetlist.  (This is essentially the
+	 * same logic as in add_placeholders_to_joinrel, but we can't do that part
+	 * until joinrels are formed.)  We have to do this as a separate step
+	 * because the ph_needed values aren't stable until the previous loop
+	 * finishes.
+	 */
+	foreach(lc1, root->placeholder_list)
+	{
+		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc1);
+		Relids		eval_at = phinfo->ph_eval_at;
+
+		if (bms_membership(eval_at) == BMS_SINGLETON)
 		{
 			int			varno = bms_singleton_member(eval_at);
 			RelOptInfo *rel = find_base_rel(root, varno);

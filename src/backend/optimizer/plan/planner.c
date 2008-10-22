@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.245 2008/10/21 20:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.246 2008/10/22 20:17:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ planner_hook_type planner_hook = NULL;
 #define EXPRKIND_RTFUNC		2
 #define EXPRKIND_VALUES		3
 #define EXPRKIND_LIMIT		4
-#define EXPRKIND_AUXINFO	5
+#define EXPRKIND_APPINFO	5
 
 
 static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
@@ -274,7 +274,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->cte_plan_ids = NIL;
 	root->eq_classes = NIL;
 	root->append_rel_list = NIL;
-	root->placeholder_list = NIL;
 
 	root->hasRecursion = hasRecursion;
 	if (hasRecursion)
@@ -380,10 +379,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 
 	root->append_rel_list = (List *)
 		preprocess_expression(root, (Node *) root->append_rel_list,
-							  EXPRKIND_AUXINFO);
-	root->placeholder_list = (List *)
-		preprocess_expression(root, (Node *) root->placeholder_list,
-							  EXPRKIND_AUXINFO);
+							  EXPRKIND_APPINFO);
 
 	/* Also need to preprocess expressions for function and values RTEs */
 	foreach(l, parse->rtable)
@@ -664,11 +660,10 @@ inheritance_planner(PlannerInfo *root)
 		subroot.returningLists = NIL;
 		subroot.init_plans = NIL;
 		/* We needn't modify the child's append_rel_list */
-		subroot.placeholder_list = (List *)
-			adjust_appendrel_attrs((Node *) root->placeholder_list,
-								   appinfo);
 		/* There shouldn't be any OJ info to translate, as yet */
 		Assert(subroot.join_info_list == NIL);
+		/* and we haven't created PlaceHolderInfos, either */
+		Assert(subroot.placeholder_list == NIL);
 
 		/* Generate plan */
 		subplan = grouping_planner(&subroot, 0.0 /* retrieve all tuples */ );

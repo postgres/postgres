@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.162 2008/10/21 20:42:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.163 2008/10/22 20:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1290,6 +1290,9 @@ typedef struct AppendRelInfo
  * The idea is to evaluate the expression at (only) the ph_eval_at join level,
  * then allow it to bubble up like a Var until the ph_needed join level.
  * ph_needed has the same definition as attr_needed for a regular Var.
+ *
+ * We create a PlaceHolderInfo only after determining that the PlaceHolderVar
+ * is actually referenced in the plan tree.
  */
 
 typedef struct PlaceHolderInfo

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.81 2008/10/21 20:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.82 2008/10/22 20:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -800,24 +800,6 @@ flatten_join_alias_vars_mutator(Node *node,
 		}
 		return (Node *) phv;
 	}
-	if (IsA(node, PlaceHolderInfo))
-	{
-		/* Copy the PlaceHolderInfo node with correct mutation of subnodes */
-		PlaceHolderInfo *phinfo;
-
-		phinfo = (PlaceHolderInfo *) expression_tree_mutator(node,
-											 flatten_join_alias_vars_mutator,
-															 (void *) context);
-		/* now fix PlaceHolderInfo's relid sets */
-		if (context->sublevels_up == 0)
-		{
-			phinfo->ph_eval_at = alias_relid_set(context->root,
-												 phinfo->ph_eval_at);
-			phinfo->ph_needed = alias_relid_set(context->root,
-												phinfo->ph_needed);
-		}
-		return (Node *) phinfo;
-	}
 
 	if (IsA(node, Query))
 	{
@@ -834,6 +816,9 @@ flatten_join_alias_vars_mutator(Node *node,
 	}
 	/* Already-planned tree not supported */
 	Assert(!IsA(node, SubPlan));
+	/* Shouldn't need to handle these planner auxiliary nodes here */
+	Assert(!IsA(node, SpecialJoinInfo));
+	Assert(!IsA(node, PlaceHolderInfo));
 
 	return expression_tree_mutator(node, flatten_join_alias_vars_mutator,
 								   (void *) context);

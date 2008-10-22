@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.57 2008/10/21 20:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.58 2008/10/22 20:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -565,7 +565,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->cte_plan_ids = NIL;
 	subroot->eq_classes = NIL;
 	subroot->append_rel_list = NIL;
-	subroot->placeholder_list = NIL;
 	subroot->hasRecursion = false;
 	subroot->wt_param_id = -1;
 	subroot->non_recursive_plan = NULL;
@@ -627,12 +626,11 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	/*
 	 * Adjust level-0 varnos in subquery so that we can append its rangetable
 	 * to upper query's.  We have to fix the subquery's append_rel_list
-	 * and placeholder_list as well.
+	 * as well.
 	 */
 	rtoffset = list_length(parse->rtable);
 	OffsetVarNodes((Node *) subquery, rtoffset, 0);
 	OffsetVarNodes((Node *) subroot->append_rel_list, rtoffset, 0);
-	OffsetVarNodes((Node *) subroot->placeholder_list, rtoffset, 0);
 
 	/*
 	 * Upper-level vars in subquery are now one level closer to their parent
@@ -640,7 +638,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 */
 	IncrementVarSublevelsUp((Node *) subquery, -1, 1);
 	IncrementVarSublevelsUp((Node *) subroot->append_rel_list, -1, 1);
-	IncrementVarSublevelsUp((Node *) subroot->placeholder_list, -1, 1);
 
 	/*
 	 * The subquery's targetlist items are now in the appropriate form to
@@ -706,48 +703,42 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	parse->rowMarks = list_concat(parse->rowMarks, subquery->rowMarks);
 
 	/*
-	 * We also have to fix the relid sets of any FlattenedSubLink,
-	 * PlaceHolderVar, and PlaceHolderInfo nodes in the parent query.
-	 * (This could perhaps be done by ResolveNew, but it would clutter that
-	 * routine's API unreasonably.)  Note in particular that any placeholder
-	 * nodes just created by insert_targetlist_placeholders() wiil be adjusted.
+	 * We also have to fix the relid sets of any FlattenedSubLink and
+	 * PlaceHolderVar nodes in the parent query.  (This could perhaps be done
+	 * by ResolveNew, but it would clutter that routine's API unreasonably.)
+	 * Note in particular that any PlaceHolderVar nodes just created by
+	 * insert_targetlist_placeholders() will be adjusted, so having created
+	 * them with the subquery's varno is correct.
 	 *
 	 * Likewise, relids appearing in AppendRelInfo nodes have to be fixed (but
 	 * we took care of their translated_vars lists above).	We already checked
 	 * that this won't require introducing multiple subrelids into the
 	 * single-slot AppendRelInfo structs.
 	 */
-	if (parse->hasSubLinks || root->placeholder_list || root->append_rel_list)
+	if (parse->hasSubLinks || root->glob->lastPHId != 0 ||
+		root->append_rel_list)
 	{
 		Relids		subrelids;
 
 		subrelids = get_relids_in_jointree((Node *) subquery->jointree, false);
-		substitute_multiple_relids((Node *) parse,
-								   varno, subrelids);
-		substitute_multiple_relids((Node *) root->placeholder_list,
-								   varno, subrelids);
-		fix_append_rel_relids(root->append_rel_list,
-							  varno, subrelids);
+		substitute_multiple_relids((Node *) parse, varno, subrelids);
+		fix_append_rel_relids(root->append_rel_list, varno, subrelids);
 	}
 
 	/*
-	 * And now add subquery's AppendRelInfos and PlaceHolderInfos to our lists.
-	 * Note that any placeholders pulled up from the subquery will appear
-	 * after any we just created; this preserves the property that placeholders
-	 * can only refer to other placeholders that appear later in the list
-	 * (needed by fix_placeholder_eval_levels).
+	 * And now add subquery's AppendRelInfos to our list.
 	 */
 	root->append_rel_list = list_concat(root->append_rel_list,
 										subroot->append_rel_list);
-	root->placeholder_list = list_concat(root->placeholder_list,
-										 subroot->placeholder_list);
 
 	/*
 	 * We don't have to do the equivalent bookkeeping for outer-join info,
-	 * because that hasn't been set up yet.
+	 * because that hasn't been set up yet.  placeholder_list likewise.
 	 */
 	Assert(root->join_info_list == NIL);
 	Assert(subroot->join_info_list == NIL);
+	Assert(root->placeholder_list == NIL);
+	Assert(subroot->placeholder_list == NIL);
 
 	/*
 	 * Miscellaneous housekeeping.
@@ -1606,10 +1597,10 @@ reduce_outer_joins_pass2(Node *jtnode,
  * substitute_multiple_relids - adjust node relid sets after pulling up
  * a subquery
  *
- * Find any FlattenedSubLink, PlaceHolderVar, or PlaceHolderInfo nodes in the
- * given tree that reference the pulled-up relid, and change them to reference
- * the replacement relid(s).  We do not need to recurse into subqueries, since
- * no subquery of the current top query could (yet) contain such a reference.
+ * Find any FlattenedSubLink or PlaceHolderVar nodes in the given tree that
+ * reference the pulled-up relid, and change them to reference the replacement
+ * relid(s).  We do not need to recurse into subqueries, since no subquery of
+ * the current top query could (yet) contain such a reference.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.  This should be OK since the tree was copied by ResolveNew
@@ -1662,26 +1653,11 @@ substitute_multiple_relids_walker(Node *node,
 		}
 		/* fall through to examine children */
 	}
-	if (IsA(node, PlaceHolderInfo))
-	{
-		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) node;
+	/* Shouldn't need to handle planner auxiliary nodes here */
+	Assert(!IsA(node, SpecialJoinInfo));
+	Assert(!IsA(node, AppendRelInfo));
+	Assert(!IsA(node, PlaceHolderInfo));
 
-		if (bms_is_member(context->varno, phinfo->ph_eval_at))
-		{
-			phinfo->ph_eval_at = bms_union(phinfo->ph_eval_at,
-										   context->subrelids);
-			phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at,
-												context->varno);
-		}
-		if (bms_is_member(context->varno, phinfo->ph_needed))
-		{
-			phinfo->ph_needed = bms_union(phinfo->ph_needed,
-										  context->subrelids);
-			phinfo->ph_needed = bms_del_member(phinfo->ph_needed,
-											   context->varno);
-		}
-		/* fall through to examine children */
-	}
 	return expression_tree_walker(node, substitute_multiple_relids_walker,
 								  (void *) context);
 }

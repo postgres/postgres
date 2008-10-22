@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.111 2008/10/21 20:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.112 2008/10/22 20:17:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * for "simple" rels.
 	 *
 	 * NOTE: append_rel_list was set up by subquery_planner, so do not touch
-	 * here; ditto placeholder_list; eq_classes may contain data already, too.
+	 * here; eq_classes may contain data already, too.
 	 */
 	root->simple_rel_array_size = list_length(parse->rtable) + 1;
 	root->simple_rel_array = (RelOptInfo **)
@@ -145,6 +145,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	root->right_join_clauses = NIL;
 	root->full_join_clauses = NIL;
 	root->join_info_list = NIL;
+	root->placeholder_list = NIL;
 	root->initial_rels = NIL;
 
 	/*
