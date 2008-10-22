@@ -319,15 +319,15 @@ F851	<order by clause> in subqueries			YES
 F852	Top-level <order by clause> in views			YES	
 F855	Nested <order by clause> in <query expression>			YES	
 F856	Nested <fetch first clause> in <query expression>			YES	
-F857	Top-level <fetch first clause> in <query expression>			NO	same as LIMIT
-F858	<fetch first clause> in subqueries			NO	same as LIMIT
-F859	Top-level <fetch first clause> in views			NO	same as LIMIT
-F860	<fetch first row count> in <fetch first clause>			NO	same as LIMIT
-F861	Top-level <result offset clause> in <query expression>			NO	same as OFFSET
-F862	<result offset clause> in subqueries			NO	same as OFFSET
-F863	Nested <result offset clause> in <query expression>			NO	same as OFFSET
-F864	Top-level <result offset clause> in views			NO	same as OFFSET
-F865	<offset row count> in <result offset clause>			NO	same as OFFSET
+F857	Top-level <fetch first clause> in <query expression>			YES	
+F858	<fetch first clause> in subqueries			YES	
+F859	Top-level <fetch first clause> in views			YES	
+F860	<fetch first row count> in <fetch first clause>			YES	
+F861	Top-level <result offset clause> in <query expression>			YES	
+F862	<result offset clause> in subqueries			YES	
+F863	Nested <result offset clause> in <query expression>			YES	
+F864	Top-level <result offset clause> in views			YES	
+F865	<offset row count> in <result offset clause>			YES	
 S011	Distinct data types			NO	
 S011	Distinct data types	01	USER_DEFINED_TYPES view	NO	
 S023	Basic structured types			NO	

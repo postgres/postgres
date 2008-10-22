@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.627 2008/10/21 08:38:15 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.628 2008/10/22 11:00:34 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -308,6 +308,8 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <objtype>	reindex_type drop_type comment_type
 
 %type <node>	fetch_direction select_limit_value select_offset_value
+				select_offset_value2 opt_select_fetch_first_value
+%type <ival>	row_or_rows first_or_next
 
 %type <list>	OptSeqOptList SeqOptList
 %type <defelt>	SeqOptElem
@@ -6579,6 +6581,13 @@ select_limit:
 							 errhint("Use separate LIMIT and OFFSET clauses."),
 							 scanner_errposition(@1)));
 				}
+			/* SQL:2008 syntax variants */
+			| OFFSET select_offset_value2 row_or_rows
+				{ $$ = list_make2($2, NULL); }
+			| FETCH first_or_next opt_select_fetch_first_value row_or_rows ONLY
+				{ $$ = list_make2(NULL, $3); }
+			| OFFSET select_offset_value2 row_or_rows FETCH first_or_next opt_select_fetch_first_value row_or_rows ONLY
+				{ $$ = list_make2($2, $6); }
 		;
 
 opt_select_limit:
@@ -6596,9 +6605,39 @@ select_limit_value:
 				}
 		;
 
+/*
+ * Allowing full expressions without parentheses causes various parsing
+ * problems with the trailing ROW/ROWS key words.  SQL only calls for
+ * constants, so we allow the rest only with parentheses.
+ */
+opt_select_fetch_first_value:
+			SignedIconst		{ $$ = makeIntConst($1, @1); }
+			| '(' a_expr ')'	{ $$ = $2; }
+			| /*EMPTY*/		{ $$ = makeIntConst(1, -1); }
+		;
+
 select_offset_value:
 			a_expr									{ $$ = $1; }
 		;
+
+/*
+ * Again, the trailing ROW/ROWS in this case prevent the full expression
+ * syntax.  c_expr is the best we can do.
+ */
+select_offset_value2:
+			c_expr									{ $$ = $1; }
+		;
+
+/* noise words */
+row_or_rows:
+			ROW		{ $$ = 0; }
+			| ROWS		{ $$ = 0; }
+
+/* noise words */
+first_or_next:
+			FIRST_P		{ $$ = 0; }
+			| NEXT		{ $$ = 0; }
+
 
 group_clause:
 			GROUP_P BY expr_list					{ $$ = $3; }
@@ -9218,6 +9257,7 @@ Sconst:		SCONST									{ $$ = $1; };
 RoleId:		ColId									{ $$ = $1; };
 
 SignedIconst: ICONST								{ $$ = $1; }
+			| '+' ICONST							{ $$ = + $2; }
 			| '-' ICONST							{ $$ = - $2; }
 		;
 
@@ -9351,7 +9391,6 @@ unreserved_keyword:
 			| EXPLAIN
 			| EXTERNAL
 			| FAMILY
-			| FETCH
 			| FIRST_P
 			| FORCE
 			| FORWARD
@@ -9641,6 +9680,7 @@ reserved_keyword:
 			| END_P
 			| EXCEPT
 			| FALSE_P
+			| FETCH
 			| FOR
 			| FOREIGN
 			| FROM

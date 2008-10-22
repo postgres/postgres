@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/values.sgml,v 1.4 2007/02/01 00:28:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/values.sgml,v 1.5 2008/10/22 11:00:34 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -23,7 +23,8 @@ PostgreSQL documentation
 VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ...]
     [ ORDER BY <replaceable class="parameter">sort_expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [, ...] ]
     [ LIMIT { <replaceable class="parameter">count</replaceable> | ALL } ]
-    [ OFFSET <replaceable class="parameter">start</replaceable> ]
+    [ OFFSET <replaceable class="parameter">start</replaceable> [ ROW | ROWS ] ]
+    [ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { ROW | ROWS } ONLY ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -48,8 +49,10 @@ VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ..
   <para>
    Within larger commands, <command>VALUES</> is syntactically allowed
    anywhere that <command>SELECT</> is.  Because it is treated like a
-   <command>SELECT</> by the grammar, it is possible to use the <literal>ORDER
-   BY</>, <literal>LIMIT</>, and <literal>OFFSET</> clauses with a
+   <command>SELECT</> by the grammar, it is possible to use
+   the <literal>ORDER BY</>, <literal>LIMIT</> (or
+   equivalently <literal>FETCH FIRST</literal>),
+   and <literal>OFFSET</> clauses with a
    <command>VALUES</> command.
   </para>
  </refsect1>
@@ -227,9 +230,10 @@ WHERE ip_address IN (VALUES('192.168.0.1'::inet), ('192.168.0.10'), ('192.168.1.
   <title>Compatibility</title>
 
   <para>
-   <command>VALUES</command> conforms to the SQL standard, except that
+   <command>VALUES</command> conforms to the SQL standard.
    <literal>LIMIT</literal> and <literal>OFFSET</literal> are
-   <productname>PostgreSQL</productname> extensions.
+   <productname>PostgreSQL</productname> extensions; see also
+   under <xref linkend="sql-select" endterm="sql-select-title">.
   </para>
  </refsect1>
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.203 2008/10/21 08:38:15 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.204 2008/10/22 11:00:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"extract", EXTRACT, COL_NAME_KEYWORD},
 	{"false", FALSE_P, RESERVED_KEYWORD},
 	{"family", FAMILY, UNRESERVED_KEYWORD},
-	{"fetch", FETCH, UNRESERVED_KEYWORD},
+	{"fetch", FETCH, RESERVED_KEYWORD},
 	{"first", FIRST_P, UNRESERVED_KEYWORD},
 	{"float", FLOAT_P, COL_NAME_KEYWORD},
 	{"for", FOR, RESERVED_KEYWORD},
