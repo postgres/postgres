@@ -409,7 +409,7 @@ T151	DISTINCT predicate			YES
 T152	DISTINCT predicate with negation			YES	
 T171	LIKE clause in table definition			YES	
 T172	AS subquery clause in table definition			NO	
-T173	Extended LIKE clause in table definition			NO	
+T173	Extended LIKE clause in table definition			YES	
 T174	Identity columns			NO	
 T175	Generated columns			NO	
 T176	Sequence generator support			NO	
