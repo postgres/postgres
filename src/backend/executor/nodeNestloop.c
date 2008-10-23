@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.48 2008/08/15 19:20:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.49 2008/10/23 14:34:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,12 +79,6 @@ ExecNestLoop(NestLoopState *node)
 	econtext = node->js.ps.ps_ExprContext;
 
 	/*
-	 * get the current outer tuple
-	 */
-	outerTupleSlot = node->js.ps.ps_OuterTupleSlot;
-	econtext->ecxt_outertuple = outerTupleSlot;
-
-	/*
 	 * Check to see if we're still projecting out tuples from a previous join
 	 * tuple (because there is a function-returning-set in the projection
 	 * expressions).  If so, try to project another one.
@@ -135,7 +129,6 @@ ExecNestLoop(NestLoopState *node)
 			}
 
 			ENL1_printf("saving new outer tuple information");
-			node->js.ps.ps_OuterTupleSlot = outerTupleSlot;
 			econtext->ecxt_outertuple = outerTupleSlot;
 			node->nl_NeedNewOuter = false;
 			node->nl_MatchedOuter = false;
@@ -357,7 +350,6 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	/*
 	 * finally, wipe the current outer tuple clean.
 	 */
-	nlstate->js.ps.ps_OuterTupleSlot = NULL;
 	nlstate->js.ps.ps_TupFromTlist = false;
 	nlstate->nl_NeedNewOuter = true;
 	nlstate->nl_MatchedOuter = false;
@@ -426,8 +418,6 @@ ExecReScanNestLoop(NestLoopState *node, ExprContext *exprCtxt)
 	if (outerPlan->chgParam == NULL)
 		ExecReScan(outerPlan, exprCtxt);
 
-	/* let outerPlan to free its result tuple ... */
-	node->js.ps.ps_OuterTupleSlot = NULL;
 	node->js.ps.ps_TupFromTlist = false;
 	node->nl_NeedNewOuter = true;
 	node->nl_MatchedOuter = false;

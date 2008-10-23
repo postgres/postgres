@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.95 2008/08/15 19:20:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.96 2008/10/23 14:34:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,7 +193,6 @@ ExecHashJoin(HashJoinState *node)
 				return NULL;
 			}
 
-			node->js.ps.ps_OuterTupleSlot = outerTupleSlot;
 			econtext->ecxt_outertuple = outerTupleSlot;
 			node->hj_NeedNewOuter = false;
 			node->hj_MatchedOuter = false;
@@ -482,7 +481,6 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	/* child Hash node needs to evaluate inner hash keys, too */
 	((HashState *) innerPlanState(hjstate))->hashkeys = rclauses;
 
-	hjstate->js.ps.ps_OuterTupleSlot = NULL;
 	hjstate->js.ps.ps_TupFromTlist = false;
 	hjstate->hj_NeedNewOuter = true;
 	hjstate->hj_MatchedOuter = false;
@@ -884,7 +882,6 @@ ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 	node->hj_CurBucketNo = 0;
 	node->hj_CurTuple = NULL;
 
-	node->js.ps.ps_OuterTupleSlot = NULL;
 	node->js.ps.ps_TupFromTlist = false;
 	node->hj_NeedNewOuter = true;
 	node->hj_MatchedOuter = false;
