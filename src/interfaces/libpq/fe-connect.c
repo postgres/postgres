@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.356 2008/01/29 02:06:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.356.2.1 2008/10/23 16:17:22 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1998,6 +1998,10 @@ freePGconn(PGconn *conn)
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	if (conn->krbsrvname)
 		free(conn->krbsrvname);
+#endif
+#if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
+	if (conn->gsslib)
+		free(conn->gsslib);
 #endif
 	/* Note that conn->Pfdebug is not ours to close or free */
 	if (conn->last_query)
