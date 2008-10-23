@@ -5,18 +5,18 @@
 # Authentication" for a complete description.  A short synopsis
 # follows.
 #
-# This file controls PostgreSQL ident-based authentication. It maps
-# ident user names (typically Unix user names) to their corresponding
+# This file controls PostgreSQL username mapping. It maps
+# external user names to their corresponding
 # PostgreSQL user names.  Records are of the form:
 #
-# MAPNAME  IDENT-USERNAME  PG-USERNAME
+# MAPNAME  SYSTEM-USERNAME  PG-USERNAME
 #
 # (The uppercase quantities must be replaced by actual values.)
 #
 # MAPNAME is the (otherwise freely chosen) map name that was used in
-# pg_hba.conf.  IDENT-USERNAME is the detected user name of the
+# pg_hba.conf.  SYSTEM-USERNAME is the detected user name of the
 # client.  PG-USERNAME is the requested PostgreSQL user name.  The
-# existence of a record specifies that IDENT-USERNAME may connect as
+# existence of a record specifies that SYSTEM-USERNAME may connect as
 # PG-USERNAME.  Multiple maps may be specified in this file and used
 # by pg_hba.conf.
 #
@@ -28,8 +28,8 @@
 # Put your actual configuration here
 # ----------------------------------
 #
-# No map names are defined in the default configuration.  If all ident
+# No map names are defined in the default configuration.  If all system
 # user names and PostgreSQL user names are the same, you don't need
 # this file.
 
-# MAPNAME     IDENT-USERNAME    PG-USERNAME
+# MAPNAME     SYSTEM-USERNAME    PG-USERNAME

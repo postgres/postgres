@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.168 2008/09/15 12:32:56 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.169 2008/10/23 13:31:10 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,9 +126,8 @@ char	   *pg_krb_realm = NULL;
  * MIT Kerberos authentication system - protocol version 5
  *----------------------------------------------------------------
  */
-static int pg_krb5_recvauth(Port *port);
-
 #ifdef KRB5
+static int pg_krb5_recvauth(Port *port);
 
 #include <krb5.h>
 /* Some old versions of Kerberos do not include <com_err.h> in <krb5.h> */
@@ -150,14 +149,14 @@ static krb5_principal pg_krb5_server;
  * GSSAPI Authentication
  *----------------------------------------------------------------
  */
-static int pg_GSS_recvauth(Port *port);
-
 #ifdef ENABLE_GSS
 #if defined(HAVE_GSSAPI_H)
 #include <gssapi.h>
 #else
 #include <gssapi/gssapi.h>
 #endif
+
+static int pg_GSS_recvauth(Port *port);
 #endif /* ENABLE_GSS */
 
 
@@ -165,12 +164,11 @@ static int pg_GSS_recvauth(Port *port);
  * SSPI Authentication
  *----------------------------------------------------------------
  */
-static int pg_SSPI_recvauth(Port *port);
-
 #ifdef ENABLE_SSPI
 typedef		SECURITY_STATUS
 			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (
 													   PCtxtHandle, void **);
+static int pg_SSPI_recvauth(Port *port);
 #endif
 
 
@@ -236,16 +234,12 @@ auth_failed(Port *port, int status)
 		case uaPassword:
 			errstr = gettext_noop("password authentication failed for user \"%s\"");
 			break;
-#ifdef USE_PAM
 		case uaPAM:
 			errstr = gettext_noop("PAM authentication failed for user \"%s\"");
 			break;
-#endif   /* USE_PAM */
-#ifdef USE_LDAP
 		case uaLDAP:
 			errstr = gettext_noop("LDAP authentication failed for user \"%s\"");
 			break;
-#endif   /* USE_LDAP */
 		default:
 			errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
 			break;
@@ -316,18 +310,30 @@ ClientAuthentication(Port *port)
 			}
 
 		case uaKrb5:
+#ifdef KRB5
 			sendAuthRequest(port, AUTH_REQ_KRB5);
 			status = pg_krb5_recvauth(port);
+#else
+			Assert(false);
+#endif
 			break;
 
 		case uaGSS:
+#ifdef ENABLE_GSS
 			sendAuthRequest(port, AUTH_REQ_GSS);
 			status = pg_GSS_recvauth(port);
+#else
+			Assert(false);
+#endif
 			break;
 
 		case uaSSPI:
+#ifdef ENABLE_SSPI
 			sendAuthRequest(port, AUTH_REQ_SSPI);
 			status = pg_SSPI_recvauth(port);
+#else
+			Assert(false);
+#endif
 			break;
 
 		case uaIdent:
@@ -377,18 +383,22 @@ ClientAuthentication(Port *port)
 			status = recv_and_check_password_packet(port);
 			break;
 
-#ifdef USE_PAM
 		case uaPAM:
+#ifdef USE_PAM
 			pam_port_cludge = port;
 			status = CheckPAMAuth(port, port->user_name, "");
-			break;
+#else
+			Assert(false);
 #endif   /* USE_PAM */
-
-#ifdef USE_LDAP
-		case uaLDAP:
-			status = CheckLDAPAuth(port);
 			break;
+
+		case uaLDAP:
+#ifdef USE_LDAP
+			status = CheckLDAPAuth(port);
+#else
+			Assert(false);
 #endif
+			break;
 
 		case uaTrust:
 			status = STATUS_OK;
@@ -713,35 +723,14 @@ pg_krb5_recvauth(Port *port)
 		return STATUS_ERROR;
 	}
 
-	if (pg_krb_caseins_users)
-		ret = pg_strncasecmp(port->user_name, kusername, SM_DATABASE_USER);
-	else
-		ret = strncmp(port->user_name, kusername, SM_DATABASE_USER);
-	if (ret)
-	{
-		ereport(LOG,
-				(errmsg("unexpected Kerberos user name received from client (received \"%s\", expected \"%s\")",
-						port->user_name, kusername)));
-		ret = STATUS_ERROR;
-	}
-	else
-		ret = STATUS_OK;
+	ret = check_usermap(port->hba->usermap, port->user_name, kusername,
+						pg_krb_caseins_users);
 
 	krb5_free_ticket(pg_krb5_context, ticket);
 	krb5_auth_con_free(pg_krb5_context, auth_context);
 	free(kusername);
 
 	return ret;
-}
-#else
-
-static int
-pg_krb5_recvauth(Port *port)
-{
-	ereport(LOG,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("Kerberos 5 not implemented on this server")));
-	return STATUS_ERROR;
 }
 #endif   /* KRB5 */
 
@@ -1020,38 +1009,13 @@ pg_GSS_recvauth(Port *port)
 		return STATUS_ERROR;
 	}
 
-	if (pg_krb_caseins_users)
-		ret = pg_strcasecmp(port->user_name, gbuf.value);
-	else
-		ret = strcmp(port->user_name, gbuf.value);
-
-	if (ret)
-	{
-		/* GSS name and PGUSER are not equivalent */
-		elog(DEBUG2,
-			 "provided username (%s) and GSSAPI username (%s) don't match",
-			 port->user_name, (char *) gbuf.value);
-
-		gss_release_buffer(&lmin_s, &gbuf);
-		return STATUS_ERROR;
-	}
+	ret = check_usermap(port->hba->usermap, port->user_name, gbuf.value,
+						pg_krb_caseins_users);
 
 	gss_release_buffer(&lmin_s, &gbuf);
 
 	return STATUS_OK;
 }
-
-#else							/* no ENABLE_GSS */
-
-static int
-pg_GSS_recvauth(Port *port)
-{
-	ereport(LOG,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("GSSAPI not implemented on this server")));
-	return STATUS_ERROR;
-}
-
 #endif   /* ENABLE_GSS */
 
 
@@ -1328,30 +1292,8 @@ pg_SSPI_recvauth(Port *port)
 	 * We have the username (without domain/realm) in accountname, compare to
 	 * the supplied value. In SSPI, always compare case insensitive.
 	 */
-	if (pg_strcasecmp(port->user_name, accountname))
-	{
-		/* GSS name and PGUSER are not equivalent */
-		elog(DEBUG2,
-			 "provided username (%s) and SSPI username (%s) don't match",
-			 port->user_name, accountname);
-
-		return STATUS_ERROR;
-	}
-
-	return STATUS_OK;
+	return check_usermap(port->hba->usermap, port->user_name, accountname, true);
 }
-
-#else							/* no ENABLE_SSPI */
-
-static int
-pg_SSPI_recvauth(Port *port)
-{
-	ereport(LOG,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("SSPI not implemented on this server")));
-	return STATUS_ERROR;
-}
-
 #endif   /* ENABLE_SSPI */
 
 
@@ -1795,14 +1737,7 @@ authident(hbaPort *port)
 			return STATUS_ERROR;
 	}
 
-	ereport(DEBUG2,
-			(errmsg("Ident protocol identifies remote user as \"%s\"",
-					ident_user)));
-
-	if (check_ident_usermap(port->hba->usermap, port->user_name, ident_user))
-		return STATUS_OK;
-	else
-		return STATUS_ERROR;
+	return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
 }
 
 
@@ -1913,8 +1848,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 														 * not allocated */
 
 	/* Optionally, one can set the service name in pg_hba.conf */
-	if (port->hba->auth_arg && port->hba->auth_arg[0] != '\0')
-		retval = pam_start(port->hba->auth_arg, "pgsql@",
+	if (port->hba->pamservice && port->hba->pamservice[0] != '\0')
+		retval = pam_start(port->hba->pamservice, "pgsql@",
 						   &pam_passw_conv, &pamh);
 	else
 		retval = pam_start(PGSQL_PAM_SERVICE, "pgsql@",
@@ -2000,76 +1935,20 @@ static int
 CheckLDAPAuth(Port *port)
 {
 	char	   *passwd;
-	char		server[128];
-	char		basedn[128];
-	char		prefix[128];
-	char		suffix[128];
 	LDAP	   *ldap;
-	bool		ssl = false;
 	int			r;
 	int			ldapversion = LDAP_VERSION3;
-	int			ldapport = LDAP_PORT;
 	char		fulluser[NAMEDATALEN + 256 + 1];
 
-	if (!port->hba->auth_arg || port->hba->auth_arg[0] == '\0')
+	if (!port->hba->ldapserver|| port->hba->ldapserver[0] == '\0')
 	{
 		ereport(LOG,
-				(errmsg("LDAP configuration URL not specified")));
+				(errmsg("LDAP server not specified")));
 		return STATUS_ERROR;
 	}
 
-	/*
-	 * Crack the LDAP url. We do a very trivial parse:
-	 *
-	 * ldap[s]://<server>[:<port>]/<basedn>[;prefix[;suffix]]
-	 *
-	 * This code originally used "%127s" for the suffix, but that doesn't
-	 * work for embedded whitespace.  We know that tokens formed by
-	 * hba.c won't include newlines, so we can use a "not newline" scanset
-	 * instead.
-	 */
-
-	server[0] = '\0';
-	basedn[0] = '\0';
-	prefix[0] = '\0';
-	suffix[0] = '\0';
-
-	/* ldap, including port number */
-	r = sscanf(port->hba->auth_arg,
-			   "ldap://%127[^:]:%d/%127[^;];%127[^;];%127[^\n]",
-			   server, &ldapport, basedn, prefix, suffix);
-	if (r < 3)
-	{
-		/* ldaps, including port number */
-		r = sscanf(port->hba->auth_arg,
-				   "ldaps://%127[^:]:%d/%127[^;];%127[^;];%127[^\n]",
-				   server, &ldapport, basedn, prefix, suffix);
-		if (r >= 3)
-			ssl = true;
-	}
-	if (r < 3)
-	{
-		/* ldap, no port number */
-		r = sscanf(port->hba->auth_arg,
-				   "ldap://%127[^/]/%127[^;];%127[^;];%127[^\n]",
-				   server, basedn, prefix, suffix);
-	}
-	if (r < 2)
-	{
-		/* ldaps, no port number */
-		r = sscanf(port->hba->auth_arg,
-				   "ldaps://%127[^/]/%127[^;];%127[^;];%127[^\n]",
-				   server, basedn, prefix, suffix);
-		if (r >= 2)
-			ssl = true;
-	}
-	if (r < 2)
-	{
-		ereport(LOG,
-				(errmsg("invalid LDAP URL: \"%s\"",
-						port->hba->auth_arg)));
-		return STATUS_ERROR;
-	}
+	if (port->hba->ldapport == 0)
+		port->hba->ldapport = LDAP_PORT;
 
 	sendAuthRequest(port, AUTH_REQ_PASSWORD);
 
@@ -2077,7 +1956,7 @@ CheckLDAPAuth(Port *port)
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-	ldap = ldap_init(server, ldapport);
+	ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
 	if (!ldap)
 	{
 #ifndef WIN32
@@ -2100,7 +1979,7 @@ CheckLDAPAuth(Port *port)
 		return STATUS_ERROR;
 	}
 
-	if (ssl)
+	if (port->hba->ldaptls)
 	{
 #ifndef WIN32
 		if ((r = ldap_start_tls_s(ldap, NULL, NULL)) != LDAP_SUCCESS)
@@ -2155,7 +2034,9 @@ CheckLDAPAuth(Port *port)
 	}
 
 	snprintf(fulluser, sizeof(fulluser), "%s%s%s",
-			 prefix, port->user_name, suffix);
+			 port->hba->ldapprefix ? port->hba->ldapprefix : "",
+			 port->user_name,
+			 port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
 	fulluser[sizeof(fulluser) - 1] = '\0';
 
 	r = ldap_simple_bind_s(ldap, fulluser, passwd);
@@ -2165,7 +2046,7 @@ CheckLDAPAuth(Port *port)
 	{
 		ereport(LOG,
 				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": error code %d",
-						fulluser, server, r)));
+						fulluser, port->hba->ldapserver, r)));
 		return STATUS_ERROR;
 	}
 

@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.49 2008/09/15 12:32:57 mha Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.50 2008/10/23 13:31:10 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,13 +25,9 @@ typedef enum UserAuth
 	uaCrypt,
 	uaMD5,
 	uaGSS,
-	uaSSPI
-#ifdef USE_PAM
-	,uaPAM
-#endif   /* USE_PAM */
-#ifdef USE_LDAP
-	,uaLDAP
-#endif
+	uaSSPI,
+	uaPAM,
+	uaLDAP
 } UserAuth;
 
 typedef enum ConnType
@@ -51,8 +47,14 @@ typedef struct
 	struct sockaddr_storage addr;
 	struct sockaddr_storage mask;
 	UserAuth	auth_method;
+
 	char	   *usermap;
-	char	   *auth_arg;
+	char	   *pamservice;
+	bool		ldaptls;
+	char	   *ldapserver;
+	int			ldapport;
+	char	   *ldapprefix;
+	char	   *ldapsuffix;
 } HbaLine;
 
 typedef struct Port hbaPort;
@@ -64,8 +66,9 @@ extern void load_role(void);
 extern int	hba_getauthmethod(hbaPort *port);
 extern bool read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
 					  Oid *dbtablespace, TransactionId *dbfrozenxid);
-extern bool check_ident_usermap(const char *usermap_name,
-					  const char *pg_role, const char *ident_user);
+extern int  check_usermap(const char *usermap_name,
+					  const char *pg_role, const char *auth_user,
+					  bool case_sensitive);
 extern bool pg_isblank(const char c);
 
 #endif   /* HBA_H */

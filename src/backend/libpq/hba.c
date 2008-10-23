@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.168 2008/09/15 20:55:04 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.169 2008/10/23 13:31:10 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -565,6 +565,44 @@ check_db(const char *dbname, const char *role, char *param_str)
 
 
 /*
+ * Macros used to check and report on invalid configuration options.
+ * INVALID_AUTH_OPTION = reports when an option is specified for a method where it's
+ *                       not supported.
+ * REQUIRE_AUTH_OPTION = same as INVALID_AUTH_OPTION, except it also checks if the
+ *                       method is actually the one specified. Used as a shortcut when
+ *                       the option is only valid for one authentication method.
+ * MANDATORY_AUTH_ARG  = check if a required option is set for an authentication method,
+ *                       reporting error if it's not.
+ */
+#define INVALID_AUTH_OPTION(optname, validmethods) do {\
+	ereport(LOG, \
+			(errcode(ERRCODE_CONFIG_FILE_ERROR), \
+			 errmsg("authentication option '%s' is only valid for authentication methods '%s'", \
+					optname, validmethods), \
+			 errcontext("line %d of configuration file \"%s\"", \
+					line_num, HbaFileName))); \
+	goto hba_other_error; \
+} while (0);
+
+#define REQUIRE_AUTH_OPTION(methodval, optname, validmethods) do {\
+	if (parsedline->auth_method != methodval) \
+		INVALID_AUTH_OPTION("ldaptls", "ldap"); \
+} while (0);
+
+#define MANDATORY_AUTH_ARG(argvar, argname, authname) do {\
+	if (argvar == NULL) {\
+		ereport(LOG, \
+				(errcode(ERRCODE_CONFIG_FILE_ERROR), \
+				 errmsg("authentication method '%s' requires argument '%s' to be set", \
+						authname, argname), \
+				 errcontext("line %d of configuration file \"%s\"", \
+						line_num, HbaFileName))); \
+		goto hba_other_error; \
+	} \
+} while (0);
+
+
+/*
  * Parse one line in the hba config file and store the result in
  * a HbaLine structure.
  */
@@ -801,37 +839,101 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		goto hba_other_error;
 	}
 
-	/* Get the authentication argument token, if any */
-	line_item = lnext(line_item);
-	if (line_item)
+	/* Parse remaining arguments */
+	while ((line_item = lnext(line_item)) != NULL)
 	{
-		token = lfirst(line_item);
-		parsedline->auth_arg= pstrdup(token);
-	}
+		char *c;
 
-	/* 
-	 * Backwards compatible format of ident authentication - support "naked" ident map
-	 * name, as well as "sameuser"/"samerole"
-	 */
-	if (parsedline->auth_method == uaIdent)
-	{
-		if (parsedline->auth_arg && strlen(parsedline->auth_arg))
+		token = lfirst(line_item);
+
+		c = strchr(token, '=');
+		if (c == NULL)
 		{
-			if (strcmp(parsedline->auth_arg, "sameuser\n") == 0 ||
-				strcmp(parsedline->auth_arg, "samerole\n") == 0)
+			/*
+			 * Got something that's not a name=value pair.
+			 *
+			 * XXX: attempt to do some backwards compatible parsing here?
+			 */
+			ereport(LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("authentication option not in name=value format: %s", token),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+			goto hba_other_error;
+		}
+		else
+		{
+			*c++ = '\0'; /* token now holds "name", c holds "value" */
+			if (strcmp(token, "map") == 0)
 			{
-				/* This is now the default */
-				pfree(parsedline->auth_arg);
-				parsedline->auth_arg = NULL;
-				parsedline->usermap = NULL;
+				if (parsedline->auth_method != uaIdent &&
+					parsedline->auth_method != uaKrb5 &&
+					parsedline->auth_method != uaGSS &&
+					parsedline->auth_method != uaSSPI)
+					INVALID_AUTH_OPTION("map", "ident, krb5, gssapi and sspi");
+				parsedline->usermap = pstrdup(c);
+			}
+			else if (strcmp(token, "pamservice") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaPAM, "pamservice", "pam");
+				parsedline->pamservice = pstrdup(c);
+			}
+			else if (strcmp(token, "ldaptls") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaLDAP, "ldaptls", "ldap");
+				if (strcmp(c, "1") == 0)
+					parsedline->ldaptls = true;
+				else
+					parsedline->ldaptls = false;
+			}
+			else if (strcmp(token, "ldapserver") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaLDAP, "ldapserver", "ldap");
+				parsedline->ldapserver = pstrdup(c);
+			}
+			else if (strcmp(token, "ldapport") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaLDAP, "ldapport", "ldap");
+				parsedline->ldapport = atoi(c);
+				if (parsedline->ldapport == 0)
+				{
+					ereport(LOG,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("invalid ldap port '%s'", c),
+							 errcontext("line %d of configuration file \"%s\"",
+										line_num, HbaFileName)));
+					goto hba_other_error;
+				}
+			}
+			else if (strcmp(token, "ldapprefix") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaLDAP, "ldapprefix", "ldap");
+				parsedline->ldapprefix = pstrdup(c);
+			}
+			else if (strcmp(token, "ldapsuffix") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaLDAP, "ldapsuffix", "ldap");
+				parsedline->ldapsuffix = pstrdup(c);
 			}
 			else
 			{
-				/* Specific ident map specified */
-				parsedline->usermap = parsedline->auth_arg;
-				parsedline->auth_arg = NULL;
+				ereport(LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("unknown authentication option name '%s'", token),
+						 errcontext("line %d of configuration file \"%s\"",
+									line_num, HbaFileName)));
+				goto hba_other_error;
 			}
 		}
+	}
+
+	/*
+	 * Check if the selected authentication method has any mandatory arguments that
+	 * are not set.
+	 */
+	if (parsedline->auth_method == uaLDAP)
+	{
+		MANDATORY_AUTH_ARG(parsedline->ldapserver, "ldapserver", "ldap");
 	}
 	
 	return true;
@@ -1018,8 +1120,14 @@ free_hba_record(HbaLine *record)
 		pfree(record->database);
 	if (record->role)
 		pfree(record->role);
-	if (record->auth_arg)
-		pfree(record->auth_arg);
+	if (record->pamservice)
+		pfree(record->pamservice);
+	if (record->ldapserver)
+		pfree(record->ldapserver);
+	if (record->ldapprefix)
+		pfree(record->ldapprefix);
+	if (record->ldapsuffix)
+		pfree(record->ldapsuffix);
 }
 
 /*
@@ -1150,7 +1258,7 @@ read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
 static void
 parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 					const char *pg_role, const char *ident_user,
-					bool *found_p, bool *error_p)
+					bool case_insensitive, bool *found_p, bool *error_p)
 {
 	ListCell   *line_item;
 	char	   *token;
@@ -1183,10 +1291,20 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 	file_pgrole = token;
 
 	/* Match? */
-	if (strcmp(file_map, usermap_name) == 0 &&
-		strcmp(file_pgrole, pg_role) == 0 &&
-		strcmp(file_ident_user, ident_user) == 0)
-		*found_p = true;
+	if (case_insensitive)
+	{
+		if (strcmp(file_map, usermap_name) == 0 &&
+			pg_strcasecmp(file_pgrole, pg_role) == 0 &&
+			pg_strcasecmp(file_ident_user, ident_user) == 0)
+			*found_p = true;
+	}
+	else
+	{
+		if (strcmp(file_map, usermap_name) == 0 &&
+			strcmp(file_pgrole, pg_role) == 0 &&
+			strcmp(file_ident_user, ident_user) == 0)
+			*found_p = true;
+	}
 
 	return;
 
@@ -1210,22 +1328,32 @@ ident_syntax:
  *	file.  That's an implied map where "pgrole" must be identical to
  *	"ident_user" in order to be authorized.
  *
- *	Iff authorized, return true.
+ *	Iff authorized, return STATUS_OK, otherwise return STATUS_ERROR.
  */
-bool
-check_ident_usermap(const char *usermap_name,
+int
+check_usermap(const char *usermap_name,
 					const char *pg_role,
-					const char *ident_user)
+					const char *auth_user,
+					bool case_insensitive)
 {
 	bool		found_entry = false,
 				error = false;
 
 	if (usermap_name == NULL || usermap_name[0] == '\0')
 	{
-		if (strcmp(pg_role, ident_user) == 0)
-			found_entry = true;
-		else
-			found_entry = false;
+		if (case_insensitive)
+		{
+			if (pg_strcasecmp(pg_role, auth_user) == 0)
+				return STATUS_OK;
+		}
+		else {
+			if (strcmp(pg_role, auth_user) == 0)
+				return STATUS_OK;
+		}
+		ereport(LOG,
+				(errmsg("provided username (%s) and authenticated username (%s) don't match",
+						auth_user, pg_role)));
+		return STATUS_ERROR;
 	}
 	else
 	{
@@ -1235,13 +1363,20 @@ check_ident_usermap(const char *usermap_name,
 		forboth(line_cell, ident_lines, num_cell, ident_line_nums)
 		{
 			parse_ident_usermap(lfirst(line_cell), lfirst_int(num_cell),
-								usermap_name, pg_role, ident_user,
+								usermap_name, pg_role, auth_user, case_insensitive,
 								&found_entry, &error);
 			if (found_entry || error)
 				break;
 		}
 	}
-	return found_entry;
+	if (!found_entry && !error)
+	{
+		ereport(LOG,
+				(errmsg("no match in usermap for user '%s' authenticated as '%s'",
+						pg_role, auth_user),
+				 errcontext("usermap '%s'", usermap_name)));
+	}
+	return found_entry?STATUS_OK:STATUS_ERROR;
 }
 
 

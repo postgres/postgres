@@ -9,10 +9,10 @@
 # are authenticated, which PostgreSQL user names they can use, which
 # databases they can access.  Records take one of these forms:
 #
-# local      DATABASE  USER  METHOD  [OPTION]
-# host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
-# hostssl    DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
-# hostnossl  DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
+# local      DATABASE  USER  METHOD  [OPTIONS]
+# host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTIONS]
+# hostssl    DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTIONS]
+# hostnossl  DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTIONS]
 #
 # (The uppercase items must be replaced by actual values.)
 #
@@ -38,7 +38,10 @@
 # "krb5", "ident", "pam" or "ldap".  Note that "password" sends passwords
 # in clear text; "md5" is preferred since it sends encrypted passwords.
 #
-# OPTION is the ident map or the name of the PAM service, depending on METHOD.
+# OPTIONS are a set of options for the authentication in the format
+# NAME=VALUE. The available options depend on the different authentication
+# methods - refer to the "Client Authentication" section in the documentation
+# for a list of which options are available for which authentication methods.
 #
 # Database and user names containing spaces, commas, quotes and other special
 # characters must be quoted. Quoting one of the keywords "all", "sameuser" or

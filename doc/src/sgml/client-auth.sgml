@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.108 2008/09/15 12:41:54 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.109 2008/10/23 13:31:09 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -96,13 +96,13 @@
   <para>
    A record can have one of the seven formats
 <synopsis>
-local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
-host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
-hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
-hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
-host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
-hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
-hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
+local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
 </synopsis>
    The meaning of the fields is as follows:
 
@@ -422,11 +422,13 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>auth-option</replaceable></term>
+     <term><replaceable>auth-options</replaceable></term>
      <listitem>
       <para>
-       The meaning of this optional field depends on the chosen
-       authentication method.  Details appear below.
+       This field contains zero or more name-value pairs with
+       extra options passed to this authentication method. Details
+       about which options are available for which authentication
+       method appear below.
       </para>
      </listitem>
     </varlistentry>
@@ -534,7 +536,7 @@ host    all         all         0.0.0.0/0             krb5
 # "omicron" that says "bryanh" is allowed to connect as "guest1".
 #
 # TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-host    all         all         192.168.0.0/16        ident omicron
+host    all         all         192.168.0.0/16        ident map=omicron
 
 # If these are the only three lines for local connections, they will
 # allow local users to connect only to their own databases (databases
@@ -555,6 +557,92 @@ local   all         @admins,+support                  md5
 local   db1,db2,@demodbs  all                         md5
 </programlisting>
    </example>
+ </sect1>
+
+ <sect1 id="auth-username-maps">
+  <title>Username maps</title>
+
+  <indexterm zone="auth-username-maps">
+   <primary>Username maps</primary>
+  </indexterm>
+
+  <para>
+   When using an external authentication system like Ident or GSSAPI,
+   the name of the operating system user that initiated the connection may
+   not be the same as the database user he is requesting to connect as.
+   In this case, a user name map can be applied to map the operating system
+   username to a database user, using the <filename>pg_ident.conf</filename>
+   file. In order to use username mapping, specify
+   <literal>map</literal>=<replaceable>map-name</replaceable>
+   in the options field in <filename>pg_hba.conf</filename>. This option is
+   supported for all authentication methods that receive external usernames.
+   Since the <filename>pg_ident.conf</filename> file can contain multiple maps,
+   the name of the map to be used is specified in the
+   <replaceable>map-name</replaceable> parameter in <filename>pg_hba.conf</filename>
+   to indicate which map to use for each individual connection.
+  </para>
+
+  <para>
+   Ident maps are defined in the ident map file, which by default is named
+   <filename>pg_ident.conf</><indexterm><primary>pg_ident.conf</primary></indexterm>
+   and is stored in the
+   cluster's data directory.  (It is possible to place the map file
+   elsewhere, however; see the <xref linkend="guc-ident-file">
+   configuration parameter.)
+   The ident map file contains lines of the general form:
+<synopsis>
+<replaceable>map-name</> <replaceable>system-username</> <replaceable>database-username</>
+</synopsis>
+   Comments and whitespace are handled in the same way as in
+   <filename>pg_hba.conf</>.  The
+   <replaceable>map-name</> is an arbitrary name that will be used to
+   refer to this mapping in <filename>pg_hba.conf</filename>. The other
+   two fields specify which operating system user is allowed to connect
+   as which database user. The same <replaceable>map-name</> can be
+   used repeatedly to specify more user-mappings within a single map.
+   There is no restriction regarding how many database users a given
+   operating system user can correspond to, nor vice versa.
+  </para>
+
+  <para>
+   The <filename>pg_ident.conf</filename> file is read on start-up and
+   when the main server process receives a
+   <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
+   signal. If you edit the file on an
+   active system, you will need to signal the server
+   (using <literal>pg_ctl reload</> or <literal>kill -HUP</>) to make it
+   re-read the file.
+  </para>
+
+  <para>
+   A <filename>pg_ident.conf</filename> file that could be used in
+   conjunction with the <filename>pg_hba.conf</> file in <xref
+   linkend="example-pg-hba.conf"> is shown in <xref
+   linkend="example-pg-ident.conf">. In this example setup, anyone
+   logged in to a machine on the 192.168 network that does not have the
+   Unix user name <literal>bryanh</>, <literal>ann</>, or
+   <literal>robert</> would not be granted access. Unix user
+   <literal>robert</> would only be allowed access when he tries to
+   connect as <productname>PostgreSQL</> user <literal>bob</>, not
+   as <literal>robert</> or anyone else. <literal>ann</> would
+   only be allowed to connect as <literal>ann</>. User
+   <literal>bryanh</> would be allowed to connect as either
+   <literal>bryanh</> himself or as <literal>guest1</>.
+  </para>
+
+  <example id="example-pg-ident.conf">
+   <title>An example <filename>pg_ident.conf</> file</title>
+<programlisting>
+# MAPNAME     IDENT-USERNAME    PG-USERNAME
+
+omicron       bryanh            bryanh
+omicron       ann               ann
+# bob has user name robert on these machines
+omicron       robert            bob
+# bryanh can also connect as guest1
+omicron       bryanh            guest1
+</programlisting>
+  </example>
  </sect1>
 
  <sect1 id="auth-methods">
@@ -685,7 +773,21 @@ local   db1,db2,@demodbs  all                         md5
     GSSAPI support has to be enabled when <productname>PostgreSQL</> is built;
     see <xref linkend="installation"> for more information.
    </para>
-   
+
+   <para>
+    The following configuration options are supported for <productname>GSSAPI</productname>:
+    <variablelist>
+     <varlistentry>
+      <term>map</term>
+      <listitem>
+       <para>
+        Allows for mapping between system and database usernames. See
+        <xref linkend="auth-username-maps"> for details.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
   </sect2>
 
   <sect2 id="sspi-auth">
@@ -713,6 +815,20 @@ local   db1,db2,@demodbs  all                         md5
     for details.
    </para>
 
+   <para>
+    The following configuration options are supported for <productname>SSPI</productname>:
+    <variablelist>
+     <varlistentry>
+      <term>map</term>
+      <listitem>
+       <para>
+        Allows for mapping between system and database usernames. See
+        <xref linkend="auth-username-maps"> for details.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
   </sect2>
 
   <sect2 id="kerberos-auth">
@@ -846,6 +962,21 @@ local   db1,db2,@demodbs  all                         md5
     depending on the connection type.
    </para>
 
+   <para>
+    The following configuration options are supported for <productname>GSSAPI</productname>:
+    <variablelist>
+     <varlistentry>
+      <term>map</term>
+      <listitem>
+       <para>
+        Allows for mapping between system and database usernames. See
+        <xref linkend="auth-username-maps"> for details.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
    <sect3>
     <title>Ident Authentication over TCP/IP</title>
 
@@ -918,83 +1049,6 @@ local   db1,db2,@demodbs  all                         md5
     </para>
     </sect3>
 
-   <sect3 id="auth-ident-maps">
-    <title>Ident Maps</title>
-
-   <para>
-    When using ident-based authentication, after having determined the
-    name of the operating system user that initiated the connection,
-    <productname>PostgreSQL</productname> checks whether that user is
-    allowed to connect as the database user he is requesting to connect
-    as. This is controlled by the ident map argument that follows the
-    <literal>ident</> key word in the <filename>pg_hba.conf</filename>
-    file. If an ident map is not specified, the database user will be
-    checked with the same name as the operating system user. Other maps
-    must be created manually.
-   </para>
-
-   <para>
-    Ident maps are defined in the ident map file, which by default is named
-    <filename>pg_ident.conf</><indexterm><primary>pg_ident.conf</primary></indexterm>
-    and is stored in the
-    cluster's data directory.  (It is possible to place the map file
-    elsewhere, however; see the <xref linkend="guc-ident-file">
-    configuration parameter.)
-    The ident map file contains lines of the general form:
-<synopsis>
-<replaceable>map-name</> <replaceable>ident-username</> <replaceable>database-username</>
-</synopsis>
-    Comments and whitespace are handled in the same way as in
-    <filename>pg_hba.conf</>.  The
-    <replaceable>map-name</> is an arbitrary name that will be used to
-    refer to this mapping in <filename>pg_hba.conf</filename>. The other
-    two fields specify which operating system user is allowed to connect
-    as which database user. The same <replaceable>map-name</> can be
-    used repeatedly to specify more user-mappings within a single map.
-    There is no restriction regarding how many database users a given
-    operating system user can correspond to, nor vice versa.
-   </para>
-
-  <para>
-   The <filename>pg_ident.conf</filename> file is read on start-up and
-   when the main server process receives a
-   <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
-   signal. If you edit the file on an
-   active system, you will need to signal the server
-   (using <literal>pg_ctl reload</> or <literal>kill -HUP</>) to make it
-   re-read the file.
-  </para>
-
-   <para>
-    A <filename>pg_ident.conf</filename> file that could be used in
-    conjunction with the <filename>pg_hba.conf</> file in <xref
-    linkend="example-pg-hba.conf"> is shown in <xref
-    linkend="example-pg-ident.conf">. In this example setup, anyone
-    logged in to a machine on the 192.168 network that does not have the
-    Unix user name <literal>bryanh</>, <literal>ann</>, or
-    <literal>robert</> would not be granted access. Unix user
-    <literal>robert</> would only be allowed access when he tries to
-    connect as <productname>PostgreSQL</> user <literal>bob</>, not
-    as <literal>robert</> or anyone else. <literal>ann</> would
-    only be allowed to connect as <literal>ann</>. User
-    <literal>bryanh</> would be allowed to connect as either
-    <literal>bryanh</> himself or as <literal>guest1</>.
-   </para>
-
-   <example id="example-pg-ident.conf">
-    <title>An example <filename>pg_ident.conf</> file</title>
-<programlisting>
-# MAPNAME     IDENT-USERNAME    PG-USERNAME
-
-omicron       bryanh            bryanh
-omicron       ann               ann
-# bob has user name robert on these machines
-omicron       robert            bob
-# bryanh can also connect as guest1
-omicron       bryanh            guest1
-</programlisting>
-   </example>
-   </sect3>
   </sect2>
 
   <sect2 id="auth-ldap">
@@ -1007,49 +1061,84 @@ omicron       bryanh            guest1
    <para>
     This authentication method operates similarly to
     <literal>password</literal> except that it uses LDAP
-    as the authentication method. LDAP is used only to validate
+    as the password verification method. LDAP is used only to validate
     the user name/password pairs. Therefore the user must already
     exist in the database before LDAP can be used for
-    authentication. The server and parameters used are specified
-    after the <literal>ldap</> key word in the file
-    <filename>pg_hba.conf</filename>. The format of this parameter is:
-    <synopsis>
-ldap[<replaceable>s</>]://<replaceable>servername</>[:<replaceable>port</>]/<replaceable>base dn</replaceable>[;<replaceable>prefix</>[;<replaceable>suffix</>]]
-    </synopsis>
-    Commas are used to specify multiple items in an <literal>ldap</>
-    component.  However, because unquoted commas are treated as item
-    separators in <filename>pg_hba.conf</filename>, it is wise to
-    double-quote the <literal>ldap</> URL to preserve any commas present,
-    e.g.:
-    <synopsis>
-"ldap://ldap.example.net/dc=example,dc=net;EXAMPLE\"
-    </synopsis>
+    authentication.
+   </para>
 
-   </para>
    <para>
-    If <literal>ldaps</> is specified instead of <literal>ldap</>,
-    TLS encryption will be enabled for the connection. Note that this
-    will encrypt only the connection between the PostgreSQL server
-    and the LDAP server. The connection between the client and the
-    PostgreSQL server is not affected by this setting. To make use of
-    TLS encryption, you might need to configure the LDAP library prior
-    to configuring PostgreSQL. Note that encrypted LDAP is available only
-    if the platform's LDAP library supports it.
-   </para>
-   <para>
-    If no port is specified, the default port as configured in the
-    LDAP library will be used.
-   </para>
-   <para>
-    The server will bind to the distinguished name specified as
-    <replaceable>base dn</> using the user name supplied by the client.
-    If <replaceable>prefix</> and <replaceable>suffix</> is 
-    specified, it will be prepended and appended to the user name
+    The server will bind to the distinguished name constructed as
+    <replaceable>prefix</> <replaceable>username</> <replaceable>suffix</>.
     before the bind. Typically, the prefix parameter is used to specify
     <replaceable>cn=</>, or <replaceable>DOMAIN\</> in an Active
-    Directory environment.
+    Directory environment, and suffix is used to specify the remaining part
+    of the DN in a non-Active Directory environment.
    </para>
-   
+
+   <para>
+    The following configuration options are supported for LDAP:
+    <variablelist>
+     <varlistentry>
+      <term>ldapserver</term>
+      <listitem>
+       <para>
+        Name or IP of LDAP server to connect to.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>ldapprefix</term>
+      <listitem>
+       <para>
+        String to prepend to the username when building the base DN to
+        bind as.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>ldapsuffix</term>
+      <listitem>
+       <para>
+        String to append to the username when building the base DN to
+        bind as.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>ldapport</term>
+      <listitem>
+       <para>
+        Port number on LDAP server to connect to. If no port is specified,
+        the default port in the LDAP library will be used.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>ldaptls</term>
+      <listitem>
+       <para>
+        Set to 1 to make the connection between PostgreSQL and the
+        LDAP server use TLS encryption. Note that this only encrypts
+        the traffic to the LDAP server - the connection to the client
+        may still be unencrypted unless TLS is used there as well.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <note>
+    <para>
+     Since LDAP often uses commas and spaces to separate the different
+     parts of a DN, it is advised to always use double-quoted parameter
+     values when configuring LDAP options, such as:
+    </para>
+   </note>
+    <synopsis>
+ldapserver=ldap.example.net prefix="cn=" suffix="dc=example, dc=net"
+    </synopsis>
+
   </sect2>
 
   <sect2 id="auth-pam">
@@ -1063,9 +1152,7 @@ ldap[<replaceable>s</>]://<replaceable>servername</>[:<replaceable>port</>]/<rep
     This authentication method operates similarly to
     <literal>password</literal> except that it uses PAM (Pluggable
     Authentication Modules) as the authentication mechanism. The
-    default PAM service name is <literal>postgresql</literal>. You can
-    optionally supply your own service name after the <literal>pam</>
-    key word in the file <filename>pg_hba.conf</filename>.
+    default PAM service name is <literal>postgresql</literal>.
     PAM is used only to validate user name/password pairs.
     Therefore the user must already exist in the database before PAM
     can be used for authentication.  For more information about 
@@ -1073,6 +1160,20 @@ ldap[<replaceable>s</>]://<replaceable>servername</>[:<replaceable>port</>]/<rep
     <productname>Linux-PAM</> Page</ulink>
     and the <ulink url="http://www.sun.com/software/solaris/pam/">
     <systemitem class="osname">Solaris</> PAM Page</ulink>.
+   </para>
+
+   <para>
+    The following configuration options are supported for PAM:
+    <variablelist>
+     <varlistentry>
+      <term>pamservice</term>
+      <listitem>
+       <para>
+        PAM service name.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
 
    <note>
