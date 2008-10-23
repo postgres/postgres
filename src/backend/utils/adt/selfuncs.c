@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.256 2008/10/21 20:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.257 2008/10/23 00:24:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2143,9 +2143,21 @@ eqjoinsel_inner(Oid operator,
 		 * XXX Can we be smarter if we have an MCV list for just one side? It
 		 * seems that if we assume equal distribution for the other side, we
 		 * end up with the same answer anyway.
+		 *
+		 * An additional hack we use here is to clamp the nd1 and nd2 values
+		 * to not more than what we are estimating the input relation sizes
+		 * to be, providing a crude correction for the selectivity of
+		 * restriction clauses on those relations.  (We don't do that in the
+		 * other path since there we are comparing the nd values to stats for
+		 * the whole relations.)
 		 */
 		double		nullfrac1 = stats1 ? stats1->stanullfrac : 0.0;
 		double		nullfrac2 = stats2 ? stats2->stanullfrac : 0.0;
+
+		if (vardata1->rel)
+			nd1 = Min(nd1, vardata1->rel->rows);
+		if (vardata2->rel)
+			nd2 = Min(nd2, vardata2->rel->rows);
 
 		selec = (1.0 - nullfrac1) * (1.0 - nullfrac2);
 		if (nd1 > nd2)
@@ -2304,6 +2316,11 @@ eqjoinsel_semi(Oid operator,
 		 * about nd1 vs nd2.
 		 */
 		double		nullfrac1 = stats1 ? stats1->stanullfrac : 0.0;
+
+		if (vardata1->rel)
+			nd1 = Min(nd1, vardata1->rel->rows);
+		if (vardata2->rel)
+			nd2 = Min(nd2, vardata2->rel->rows);
 
 		if (nd1 <= nd2 || nd2 <= 0)
 			selec = 1.0 - nullfrac1;
