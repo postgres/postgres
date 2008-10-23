@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.162 2008/10/16 19:25:55 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.163 2008/10/23 15:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1284,6 +1284,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	ExecAssignResultTypeFromTL(&aggstate->ss.ps);
 	ExecAssignProjectionInfo(&aggstate->ss.ps, NULL);
 
+	aggstate->ss.ps.ps_TupFromTlist = false;
+
 	/*
 	 * get the count of aggregates in targetlist and quals
 	 */
@@ -1646,6 +1648,8 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 	int			aggno;
 
 	node->agg_done = false;
+
+	node->ss.ps.ps_TupFromTlist = false;
 
 	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
 	{

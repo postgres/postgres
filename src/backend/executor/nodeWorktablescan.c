@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.2 2008/10/13 00:41:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.3 2008/10/23 15:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,6 +204,8 @@ void
 ExecWorkTableScanReScan(WorkTableScanState *node, ExprContext *exprCtxt)
 {
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	node->ss.ps.ps_TupFromTlist = false;
+
 	/* No need (or way) to rescan if ExecWorkTableScan not called yet */
 	if (node->rustate)
 		tuplestore_rescan(node->rustate->working_table);

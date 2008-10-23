@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.71 2008/09/08 00:22:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.72 2008/10/23 15:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,6 +247,8 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	ExecAssignResultTypeFromTL(&grpstate->ss.ps);
 	ExecAssignProjectionInfo(&grpstate->ss.ps, NULL);
 
+	grpstate->ss.ps.ps_TupFromTlist = false;
+
 	/*
 	 * Precompute fmgr lookup data for inner loop
 	 */
@@ -286,6 +288,7 @@ void
 ExecReScanGroup(GroupState *node, ExprContext *exprCtxt)
 {
 	node->grp_done = FALSE;
+	node->ss.ps.ps_TupFromTlist = false;
 	/* must clear first tuple */
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
