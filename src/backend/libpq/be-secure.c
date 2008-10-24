@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.84 2008/03/31 02:43:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.85 2008/10/24 12:24:35 mha Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -44,32 +44,6 @@
  *	  Because the risk of cryptanalysis increases as large
  *	  amounts of data are sent with the same session key, the
  *	  session keys are periodically renegotiated.
- *
- * PATCH LEVEL
- *	  milestone 1: fix basic coding errors
- *	  [*] existing SSL code pulled out of existing files.
- *	  [*] SSL_get_error() after SSL_read() and SSL_write(),
- *		  SSL_shutdown(), default to TLSv1.
- *
- *	  milestone 2: provide endpoint authentication (server)
- *	  [*] client verifies server cert
- *	  [*] client verifies server hostname
- *
- *	  milestone 3: improve confidentially, support perfect forward secrecy
- *	  [ ] use 'random' file, read from '/dev/urandom?'
- *	  [*] emphermal DH keys, default values
- *	  [*] periodic renegotiation
- *	  [*] private key permissions
- *
- *	  milestone 4: provide endpoint authentication (client)
- *	  [*] server verifies client certificates
- *
- *	  milestone 5: provide informational callbacks
- *	  [*] provide informational callbacks
- *
- *	  other changes
- *	  [ ] tcp-wrappers
- *	  [ ] more informative psql
  *
  *-------------------------------------------------------------------------
  */
