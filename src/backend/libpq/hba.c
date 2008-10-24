@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.169 2008/10/23 13:31:10 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.170 2008/10/24 12:48:31 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -581,7 +581,7 @@ check_db(const char *dbname, const char *role, char *param_str)
 					optname, validmethods), \
 			 errcontext("line %d of configuration file \"%s\"", \
 					line_num, HbaFileName))); \
-	goto hba_other_error; \
+	return false; \
 } while (0);
 
 #define REQUIRE_AUTH_OPTION(methodval, optname, validmethods) do {\
@@ -597,7 +597,7 @@ check_db(const char *dbname, const char *role, char *param_str)
 						authname, argname), \
 				 errcontext("line %d of configuration file \"%s\"", \
 						line_num, HbaFileName))); \
-		goto hba_other_error; \
+		return false; \
 	} \
 } while (0);
 
@@ -704,7 +704,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				*cidr_slash = '/';
 			if (gai_result)
 				pg_freeaddrinfo_all(hints.ai_family, gai_result);
-			goto hba_other_error;
+			return false;
 		}
 
 		if (cidr_slash)
@@ -739,7 +739,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 							line_num, HbaFileName)));
 				if (gai_result)
 					pg_freeaddrinfo_all(hints.ai_family, gai_result);
-				goto hba_other_error;
+				return false;
 			}
 
 			memcpy(&parsedline->mask, gai_result->ai_addr, gai_result->ai_addrlen);
@@ -751,7 +751,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("IP address and mask do not match in file \"%s\" line %d",
 								HbaFileName, line_num)));
-				goto hba_other_error;
+				return false;
 			}
 		}
 	} /* != ctLocal */
@@ -813,7 +813,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 						token),
 				 errcontext("line %d of configuration file \"%s\"",
 						line_num, HbaFileName)));
-		goto hba_other_error;
+		return false;
 	}
 
 	if (unsupauth)
@@ -824,7 +824,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 						token),
 				 errcontext("line %d of configuration file \"%s\"",
 						line_num, HbaFileName)));
-		goto hba_other_error;
+		return false;
 	}
 
 	/* Invalid authentication combinations */
@@ -836,7 +836,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				 errmsg("krb5 authentication is not supported on local sockets"),
 				 errcontext("line %d of configuration file \"%s\"",
 						line_num, HbaFileName)));
-		goto hba_other_error;
+		return false;
 	}
 
 	/* Parse remaining arguments */
@@ -859,7 +859,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 					 errmsg("authentication option not in name=value format: %s", token),
 					 errcontext("line %d of configuration file \"%s\"",
 								line_num, HbaFileName)));
-			goto hba_other_error;
+			return false;
 		}
 		else
 		{
@@ -902,7 +902,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 							 errmsg("invalid ldap port '%s'", c),
 							 errcontext("line %d of configuration file \"%s\"",
 										line_num, HbaFileName)));
-					goto hba_other_error;
+					return false;
 				}
 			}
 			else if (strcmp(token, "ldapprefix") == 0)
@@ -922,7 +922,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 						 errmsg("unknown authentication option name '%s'", token),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
-				goto hba_other_error;
+				return false;
 			}
 		}
 	}
@@ -953,8 +953,6 @@ hba_syntax:
 				 errcontext("line %d of configuration file \"%s\"",
 						line_num, HbaFileName)));
 
-	/* Come here if suitable message already logged */
-hba_other_error:
 	return false;
 }
 
