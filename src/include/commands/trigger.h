@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.68 2008/09/19 14:43:46 mha Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.69 2008/10/24 23:42:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,10 +56,8 @@ typedef struct TriggerData
 
 /* More TriggerEvent flags, used only within trigger.c */
 
-#define AFTER_TRIGGER_DONE				0x00000010
-#define AFTER_TRIGGER_IN_PROGRESS		0x00000020
-#define AFTER_TRIGGER_DEFERRABLE		0x00000040
-#define AFTER_TRIGGER_INITDEFERRED		0x00000080
+#define AFTER_TRIGGER_DEFERRABLE		0x00000010
+#define AFTER_TRIGGER_INITDEFERRED		0x00000020
 
 #define TRIGGER_FIRED_BY_INSERT(event)	\
 		(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
