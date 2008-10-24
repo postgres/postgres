@@ -11,64 +11,9 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.105 2008/05/16 18:30:53 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.106 2008/10/24 12:29:11 mha Exp $
  *
  * NOTES
- *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
- *
- *	  The client *requires* a valid server certificate.  Since
- *	  SSH tunnels provide anonymous confidentiality, the presumption
- *	  is that sites that want endpoint authentication will use the
- *	  direct SSL support, while sites that are comfortable with
- *	  anonymous connections will use SSH tunnels.
- *
- *	  This code verifies the server certificate, to detect simple
- *	  "man-in-the-middle" and "impersonation" attacks.	The
- *	  server certificate, or better yet the CA certificate used
- *	  to sign the server certificate, should be present in the
- *	  "~/.postgresql/root.crt" file.  If this file isn't
- *	  readable, or the server certificate can't be validated,
- *	  pqsecure_open_client() will return an error code.
- *
- *	  Additionally, the server certificate's "common name" must
- *	  resolve to the other end of the socket.  This makes it
- *	  substantially harder to pull off a "man-in-the-middle" or
- *	  "impersonation" attack even if the server's private key
- *	  has been stolen.	This check limits acceptable network
- *	  layers to Unix sockets (weird, but legal), TCPv4 and TCPv6.
- *
- *	  Unfortunately neither the current front- or back-end handle
- *	  failure gracefully, resulting in the backend hiccupping.
- *	  This points out problems in each (the frontend shouldn't even
- *	  try to do SSL if pqsecure_initialize() fails, and the backend
- *	  shouldn't crash/recover if an SSH negotiation fails.  The
- *	  backend definitely needs to be fixed, to prevent a "denial
- *	  of service" attack, but I don't know enough about how the
- *	  backend works (especially that pre-SSL negotiation) to identify
- *	  a fix.
- *
- *	  ...
- *
- *	  Unlike the server's static private key, the client's
- *	  static private key (~/.postgresql/postgresql.key)
- *	  should normally be stored encrypted.	However we still
- *	  support EPH since it's useful for other reasons.
- *
- *	  ...
- *
- *	  Client certificates are supported, if the server requests
- *	  or requires them.  Client certificates can be used for
- *	  authentication, to prevent sessions from being hijacked,
- *	  or to allow "road warriors" to access the database while
- *	  keeping it closed to everyone else.
- *
- *	  The user's certificate and private key are located in
- *		~/.postgresql/postgresql.crt
- *	  and
- *		~/.postgresql/postgresql.key
- *	  respectively.
- *
- *	  ...
  *
  *	  We don't provide informational callbacks here (like
  *	  info_cb() in be-secure.c), since there's mechanism to
