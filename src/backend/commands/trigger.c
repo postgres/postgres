@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.195.2.5 2008/05/27 21:13:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.195.2.6 2008/10/25 03:32:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2256,7 +2256,9 @@ afterTriggerMarkEvents(AfterTriggerEventList *events,
  * afterTriggerInvokeEvents()
  *
  *	Scan the given event list for events that are marked as to be fired
- *	in the current firing cycle, and fire them.
+ *	in the current firing cycle, and fire them.  query_depth is the index in
+ *	afterTriggers->query_stack, or -1 to examine afterTriggers->events.
+ *	(We have to be careful here because query_stack could move under us.)
  *
  *	If estate isn't NULL, then we expect that all the firable events are
  *	for triggers of the relations included in the estate's result relation
@@ -2269,11 +2271,12 @@ afterTriggerMarkEvents(AfterTriggerEventList *events,
  * ----------
  */
 static void
-afterTriggerInvokeEvents(AfterTriggerEventList *events,
+afterTriggerInvokeEvents(int query_depth,
 						 CommandId firing_id,
 						 EState *estate,
 						 bool delete_ok)
 {
+	AfterTriggerEventList *events;
 	AfterTriggerEvent event,
 				prev_event;
 	MemoryContext per_tuple_context;
@@ -2292,6 +2295,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
 	prev_event = NULL;
+	events = (query_depth >= 0) ? &afterTriggers->query_stack[query_depth] : &afterTriggers->events;
 	event = events->head;
 
 	while (event != NULL)
@@ -2409,7 +2413,10 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 			if (prev_event)
 				prev_event->ate_next = next_event;
 			else
+			{
+				events = (query_depth >= 0) ? &afterTriggers->query_stack[query_depth] : &afterTriggers->events;
 				events->head = next_event;
+			}
 			pfree(event);
 		}
 		else
@@ -2422,6 +2429,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 	}
 
 	/* Update list tail pointer in case we just deleted tail event */
+	events = (query_depth >= 0) ? &afterTriggers->query_stack[query_depth] : &afterTriggers->events;
 	events->tail = prev_event;
 
 	/* Release working resources */
@@ -2532,8 +2540,6 @@ AfterTriggerBeginQuery(void)
 void
 AfterTriggerEndQuery(EState *estate)
 {
-	AfterTriggerEventList *events;
-
 	/* Must be inside a transaction */
 	Assert(afterTriggers != NULL);
 
@@ -2550,18 +2556,20 @@ AfterTriggerEndQuery(EState *estate)
 	 * IMMEDIATE: all events we have decided to defer will be available for it
 	 * to fire.
 	 *
-	 * We loop in case a trigger queues more events.
+	 * We loop in case a trigger queues more events at the same query level
+	 * (is that even possible?).  Be careful here: firing a trigger could
+	 * result in query_stack being repalloc'd, so we can't save its address
+	 * across afterTriggerInvokeEvents calls.
 	 *
 	 * If we find no firable events, we don't have to increment
 	 * firing_counter.
 	 */
-	events = &afterTriggers->query_stack[afterTriggers->query_depth];
-	while (afterTriggerMarkEvents(events, &afterTriggers->events, true))
+	while (afterTriggerMarkEvents(&afterTriggers->query_stack[afterTriggers->query_depth], &afterTriggers->events, true))
 	{
 		CommandId	firing_id = afterTriggers->firing_counter++;
 
 		/* OK to delete the immediate events after processing them */
-		afterTriggerInvokeEvents(events, firing_id, estate, true);
+		afterTriggerInvokeEvents(afterTriggers->query_depth, firing_id, estate, true);
 	}
 
 	afterTriggers->query_depth--;
@@ -2607,7 +2615,7 @@ AfterTriggerFireDeferred(void)
 	{
 		CommandId	firing_id = afterTriggers->firing_counter++;
 
-		afterTriggerInvokeEvents(events, firing_id, NULL, true);
+		afterTriggerInvokeEvents(-1, firing_id, NULL, true);
 	}
 
 	Assert(events->head == NULL);
@@ -3056,7 +3064,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 			 * but we'd better not if inside a subtransaction, since the
 			 * subtransaction could later get rolled back.
 			 */
-			afterTriggerInvokeEvents(events, firing_id, NULL,
+			afterTriggerInvokeEvents(-1, firing_id, NULL,
 									 !IsSubTransaction());
 		}
 	}
