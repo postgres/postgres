@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.143 2008/10/21 20:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.144 2008/10/25 19:51:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@ static SpecialJoinInfo *make_outerjoininfo(PlannerInfo *root,
 static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						bool is_deduced,
 						bool below_outer_join,
+						JoinType jointype,
 						Relids qualscope,
 						Relids ojscope,
 						Relids outerjoin_nonnullable);
@@ -342,7 +343,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 												 below_outer_join);
 			else
 				distribute_qual_to_rels(root, qual,
-										false, below_outer_join,
+										false, below_outer_join, JOIN_INNER,
 										*qualscope, NULL, NULL);
 		}
 	}
@@ -452,7 +453,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 												 below_outer_join);
 			else
 				distribute_qual_to_rels(root, qual,
-										false, below_outer_join,
+										false, below_outer_join, j->jointype,
 										*qualscope,
 										ojscope, nonnullable_rels);
 		}
@@ -712,6 +713,7 @@ make_outerjoininfo(PlannerInfo *root,
  * 'is_deduced': TRUE if the qual came from implied-equality deduction
  * 'below_outer_join': TRUE if the qual is from a JOIN/ON that is below the
  *		nullable side of a higher-level outer join
+ * 'jointype': type of join the qual is from (JOIN_INNER for a WHERE clause)
  * 'qualscope': set of baserels the qual's syntactic scope covers
  * 'ojscope': NULL if not an outer-join qual, else the minimum set of baserels
  *		needed to form this join
@@ -728,6 +730,7 @@ static void
 distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						bool is_deduced,
 						bool below_outer_join,
+						JoinType jointype,
 						Relids qualscope,
 						Relids ojscope,
 						Relids outerjoin_nonnullable)
@@ -848,11 +851,16 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		maybe_equivalence = false;
 		maybe_outer_join = false;
 	}
-	else if (bms_overlap(relids, outerjoin_nonnullable))
+	else if (bms_overlap(relids, outerjoin_nonnullable) &&
+			 (jointype != JOIN_SEMI ||
+			  bms_nonempty_difference(relids, outerjoin_nonnullable)))
 	{
 		/*
 		 * The qual is attached to an outer join and mentions (some of the)
-		 * rels on the nonnullable side, so it's not degenerate.
+		 * rels on the nonnullable side, so it's not degenerate.  (For a
+		 * JOIN_SEMI qual, we consider it non-degenerate only if it mentions
+		 * both sides of the join --- if it mentions only one side, it can
+		 * be pushed down.)
 		 *
 		 * We can't use such a clause to deduce equivalence (the left and
 		 * right sides might be unequal above the join because one of them has
@@ -1024,7 +1032,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 												   restrictinfo);
 				return;
 			}
-			if (bms_equal(outerjoin_nonnullable, qualscope))
+			if (jointype == JOIN_FULL)
 			{
 				/* FULL JOIN (above tests cannot match in this case) */
 				root->full_join_clauses = lappend(root->full_join_clauses,
@@ -1077,9 +1085,8 @@ distribute_sublink_quals_to_rels(PlannerInfo *root,
 		Node   *qual = (Node *) lfirst(l);
 
 		distribute_qual_to_rels(root, qual,
-								false, below_outer_join,
-								qualscope, ojscope,
-								fslink->lefthand);
+								false, below_outer_join, fslink->jointype,
+								qualscope, ojscope, fslink->lefthand);
 	}
 
 	/* Now we can add the SpecialJoinInfo to join_info_list */
@@ -1373,7 +1380,7 @@ process_implied_equality(PlannerInfo *root,
 	 * Push the new clause into all the appropriate restrictinfo lists.
 	 */
 	distribute_qual_to_rels(root, (Node *) clause,
-							true, below_outer_join,
+							true, below_outer_join, JOIN_INNER,
 							qualscope, NULL, NULL);
 }
 
