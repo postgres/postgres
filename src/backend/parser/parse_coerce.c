@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.146 2006/11/28 12:54:41 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.146.2.1 2008/10/25 17:19:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -920,7 +920,8 @@ coerce_to_bigint(ParseState *pstate, Node *node,
  * typeids is a nonempty list of type OIDs.  Note that earlier items
  * in the list will be preferred if there is doubt.
  * 'context' is a phrase to use in the error message if we fail to select
- * a usable type.
+ * a usable type.  Pass NULL to have the routine return InvalidOid
+ * rather than throwing an error on failure.
  */
 Oid
 select_common_type(List *typeids, const char *context)
@@ -951,6 +952,8 @@ select_common_type(List *typeids, const char *context)
 				/*
 				 * both types in different categories? then not much hope...
 				 */
+				if (context == NULL)
+					return InvalidOid;
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 
