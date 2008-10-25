@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.235 2008/10/06 17:39:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.236 2008/10/25 17:19:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -974,29 +975,45 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	}
 
 	/*
-	 * If not forced by presence of RowExpr, try to resolve a common scalar
-	 * type for all the expressions, and see if it has an array type. (But if
-	 * there's only one righthand expression, we may as well just fall through
-	 * and generate a simple = comparison.)
+	 * We prefer a boolean tree to ScalarArrayOpExpr if any of these are true:
+	 *
+	 * 1. We have a RowExpr anywhere.
+	 *
+	 * 2. There's only one righthand expression --- best to just generate a
+	 * simple = comparison.
+	 *
+	 * 3. There's a reasonably small number of righthand expressions and
+	 * they contain any Vars.  This is a heuristic to support cases like
+	 * WHERE '555-1212' IN (tab.home_phone, tab.work_phone), which can be
+	 * optimized into an OR of indexscans on different indexes so long as
+	 * it's left as an OR tree.  (It'd be better to leave this decision
+	 * to the planner, no doubt, but the amount of code required to reformat
+	 * the expression later on seems out of proportion to the benefit.)
 	 */
-	if (!haveRowExpr && list_length(rexprs) != 1)
+	if (!(haveRowExpr ||
+		  list_length(rexprs) == 1 ||
+		  (list_length(rexprs) <= 32 &&
+		   contain_vars_of_level((Node *) rexprs, 0))))
 	{
 		List	   *allexprs;
 		Oid			scalar_type;
 		Oid			array_type;
 
 		/*
-		 * Select a common type for the array elements.  Note that since the
-		 * LHS' type is first in the list, it will be preferred when there is
-		 * doubt (eg, when all the RHS items are unknown literals).
+		 * Try to select a common type for the array elements.  Note that
+		 * since the LHS' type is first in the list, it will be preferred when
+		 * there is doubt (eg, when all the RHS items are unknown literals).
 		 *
 		 * Note: use list_concat here not lcons, to avoid damaging rexprs.
 		 */
 		allexprs = list_concat(list_make1(lexpr), rexprs);
-		scalar_type = select_common_type(pstate, allexprs, "IN", NULL);
+		scalar_type = select_common_type(pstate, allexprs, NULL, NULL);
 
 		/* Do we have an array type to use? */
-		array_type = get_array_type(scalar_type);
+		if (OidIsValid(scalar_type))
+			array_type = get_array_type(scalar_type);
+		else
+			array_type = InvalidOid;
 		if (array_type != InvalidOid)
 		{
 			/*

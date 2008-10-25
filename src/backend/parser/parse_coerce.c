@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.169 2008/10/13 16:25:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.170 2008/10/25 17:19:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1085,13 +1085,14 @@ parser_coercion_errposition(ParseState *pstate,
 /*
  * select_common_type()
  *		Determine the common supertype of a list of input expressions.
- *		This is used for determining the output type of CASE and UNION
- *		constructs.
+ *		This is used for determining the output type of CASE, UNION,
+ *		and similar constructs.
  *
  * 'exprs' is a *nonempty* list of expressions.  Note that earlier items
  * in the list will be preferred if there is doubt.
  * 'context' is a phrase to use in the error message if we fail to select
- * a usable type.
+ * a usable type.  Pass NULL to have the routine return InvalidOid
+ * rather than throwing an error on failure.
  * 'which_expr': if not NULL, receives a pointer to the particular input
  * expression from which the result type was taken.
  */
@@ -1166,6 +1167,8 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
 				/*
 				 * both types in different categories? then not much hope...
 				 */
+				if (context == NULL)
+					return InvalidOid;
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 				/*------
