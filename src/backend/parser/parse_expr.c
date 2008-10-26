@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.236 2008/10/25 17:19:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.237 2008/10/26 02:46:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -939,11 +939,13 @@ transformAExprOf(ParseState *pstate, A_Expr *a)
 static Node *
 transformAExprIn(ParseState *pstate, A_Expr *a)
 {
+	Node	   *result = NULL;
 	Node	   *lexpr;
 	List	   *rexprs;
+	List	   *rvars;
+	List	   *rnonvars;
 	bool		useOr;
 	bool		haveRowExpr;
-	Node	   *result;
 	ListCell   *l;
 
 	/*
@@ -959,41 +961,33 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	 * possible if the inputs are all scalars (no RowExprs) and there is a
 	 * suitable array type available.  If not, we fall back to a boolean
 	 * condition tree with multiple copies of the lefthand expression.
+	 * Also, any IN-list items that contain Vars are handled as separate
+	 * boolean conditions, because that gives the planner more scope for
+	 * optimization on such clauses.
 	 *
 	 * First step: transform all the inputs, and detect whether any are
-	 * RowExprs.
+	 * RowExprs or contain Vars.
 	 */
 	lexpr = transformExpr(pstate, a->lexpr);
 	haveRowExpr = (lexpr && IsA(lexpr, RowExpr));
-	rexprs = NIL;
+	rexprs = rvars = rnonvars = NIL;
 	foreach(l, (List *) a->rexpr)
 	{
 		Node	   *rexpr = transformExpr(pstate, lfirst(l));
 
 		haveRowExpr |= (rexpr && IsA(rexpr, RowExpr));
 		rexprs = lappend(rexprs, rexpr);
+		if (contain_vars_of_level(rexpr, 0))
+			rvars = lappend(rvars, rexpr);
+		else
+			rnonvars = lappend(rnonvars, rexpr);
 	}
 
 	/*
-	 * We prefer a boolean tree to ScalarArrayOpExpr if any of these are true:
-	 *
-	 * 1. We have a RowExpr anywhere.
-	 *
-	 * 2. There's only one righthand expression --- best to just generate a
-	 * simple = comparison.
-	 *
-	 * 3. There's a reasonably small number of righthand expressions and
-	 * they contain any Vars.  This is a heuristic to support cases like
-	 * WHERE '555-1212' IN (tab.home_phone, tab.work_phone), which can be
-	 * optimized into an OR of indexscans on different indexes so long as
-	 * it's left as an OR tree.  (It'd be better to leave this decision
-	 * to the planner, no doubt, but the amount of code required to reformat
-	 * the expression later on seems out of proportion to the benefit.)
+	 * ScalarArrayOpExpr is only going to be useful if there's more than
+	 * one non-Var righthand item.  Also, it won't work for RowExprs.
 	 */
-	if (!(haveRowExpr ||
-		  list_length(rexprs) == 1 ||
-		  (list_length(rexprs) <= 32 &&
-		   contain_vars_of_level((Node *) rexprs, 0))))
+	if (!haveRowExpr && list_length(rnonvars) > 1)
 	{
 		List	   *allexprs;
 		Oid			scalar_type;
@@ -1004,9 +998,9 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		 * since the LHS' type is first in the list, it will be preferred when
 		 * there is doubt (eg, when all the RHS items are unknown literals).
 		 *
-		 * Note: use list_concat here not lcons, to avoid damaging rexprs.
+		 * Note: use list_concat here not lcons, to avoid damaging rnonvars.
 		 */
-		allexprs = list_concat(list_make1(lexpr), rexprs);
+		allexprs = list_concat(list_make1(lexpr), rnonvars);
 		scalar_type = select_common_type(pstate, allexprs, NULL, NULL);
 
 		/* Do we have an array type to use? */
@@ -1017,14 +1011,14 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		if (array_type != InvalidOid)
 		{
 			/*
-			 * OK: coerce all the right-hand inputs to the common type and
-			 * build an ArrayExpr for them.
+			 * OK: coerce all the right-hand non-Var inputs to the common type
+			 * and build an ArrayExpr for them.
 			 */
 			List	   *aexprs;
 			ArrayExpr  *newa;
 
 			aexprs = NIL;
-			foreach(l, rexprs)
+			foreach(l, rnonvars)
 			{
 				Node	   *rexpr = (Node *) lfirst(l);
 
@@ -1040,19 +1034,21 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 			newa->multidims = false;
 			newa->location = -1;
 
-			return (Node *) make_scalar_array_op(pstate,
-												 a->name,
-												 useOr,
-												 lexpr,
-												 (Node *) newa,
-												 a->location);
+			result = (Node *) make_scalar_array_op(pstate,
+												   a->name,
+												   useOr,
+												   lexpr,
+												   (Node *) newa,
+												   a->location);
+
+			/* Consider only the Vars (if any) in the loop below */
+			rexprs = rvars;
 		}
 	}
 
 	/*
 	 * Must do it the hard way, ie, with a boolean expression tree.
 	 */
-	result = NULL;
 	foreach(l, rexprs)
 	{
 		Node	   *rexpr = (Node *) lfirst(l);
