@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.363 2008/10/23 16:17:19 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.364 2008/10/27 09:42:31 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,7 +699,7 @@ connectNoDelay(PGconn *conn)
 	{
 		char		sebuf[256];
 
-		printfPQExpBuffer(&conn->errorMessage,
+		appendPQExpBuffer(&conn->errorMessage,
 			libpq_gettext("could not set socket to TCP no delay mode: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
@@ -729,7 +729,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 						   NULL, 0,
 						   service, sizeof(service),
 						   NI_NUMERICSERV);
-		printfPQExpBuffer(&conn->errorMessage,
+		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not connect to server: %s\n"
 							"\tIs the server running locally and accepting\n"
 							"\tconnections on Unix domain socket \"%s\"?\n"),
@@ -739,7 +739,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 	else
 #endif   /* HAVE_UNIX_SOCKETS */
 	{
-		printfPQExpBuffer(&conn->errorMessage,
+		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not connect to server: %s\n"
 					 "\tIs the server running on host \"%s\" and accepting\n"
 										"\tTCP/IP connections on port %s?\n"),
@@ -829,11 +829,11 @@ connectDBStart(PGconn *conn)
 	if (ret || !addrs)
 	{
 		if (node)
-			printfPQExpBuffer(&conn->errorMessage,
+			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not translate host name \"%s\" to address: %s\n"),
 							  node, gai_strerror(ret));
 		else
-			printfPQExpBuffer(&conn->errorMessage,
+			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not translate Unix-domain socket path \"%s\" to address: %s\n"),
 							  portstr, gai_strerror(ret));
 		if (addrs)
@@ -924,6 +924,8 @@ connectDBComplete(PGconn *conn)
 		switch (flag)
 		{
 			case PGRES_POLLING_OK:
+				/* Reset stored error messages since we now have a working connection */
+				resetPQExpBuffer(&conn->errorMessage);
 				return 1;		/* success! */
 
 			case PGRES_POLLING_READING:
@@ -1033,7 +1035,7 @@ PQconnectPoll(PGconn *conn)
 			break;
 
 		default:
-			printfPQExpBuffer(&conn->errorMessage,
+			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext(
 											"invalid connection state, "
 								 "probably indicative of memory corruption\n"
@@ -1077,7 +1079,7 @@ keep_going:						/* We will come back to here until there is
 							conn->addr_cur = addr_cur->ai_next;
 							continue;
 						}
-						printfPQExpBuffer(&conn->errorMessage,
+						appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not create socket: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						break;
@@ -1100,7 +1102,7 @@ keep_going:						/* We will come back to here until there is
 					}
 					if (!pg_set_noblock(conn->sock))
 					{
-						printfPQExpBuffer(&conn->errorMessage,
+						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not set socket to non-blocking mode: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						closesocket(conn->sock);
@@ -1112,7 +1114,7 @@ keep_going:						/* We will come back to here until there is
 #ifdef F_SETFD
 					if (fcntl(conn->sock, F_SETFD, FD_CLOEXEC) == -1)
 					{
-						printfPQExpBuffer(&conn->errorMessage,
+						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not set socket to close-on-exec mode: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						closesocket(conn->sock);
@@ -1199,7 +1201,7 @@ keep_going:						/* We will come back to here until there is
 				if (getsockopt(conn->sock, SOL_SOCKET, SO_ERROR,
 							   (char *) &optval, &optlen) == -1)
 				{
-					printfPQExpBuffer(&conn->errorMessage,
+					appendPQExpBuffer(&conn->errorMessage,
 					libpq_gettext("could not get socket error status: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					goto error_return;
@@ -1237,7 +1239,7 @@ keep_going:						/* We will come back to here until there is
 								(struct sockaddr *) & conn->laddr.addr,
 								&conn->laddr.salen) < 0)
 				{
-					printfPQExpBuffer(&conn->errorMessage,
+					appendPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("could not get client address from socket: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					goto error_return;
@@ -1281,7 +1283,7 @@ keep_going:						/* We will come back to here until there is
 					pv = htonl(NEGOTIATE_SSL_CODE);
 					if (pqPacketSend(conn, 0, &pv, sizeof(pv)) != STATUS_OK)
 					{
-						printfPQExpBuffer(&conn->errorMessage,
+						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not send SSL negotiation packet: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						goto error_return;
@@ -1303,6 +1305,7 @@ keep_going:						/* We will come back to here until there is
 														EnvironmentOptions);
 				if (!startpacket)
 				{
+					/* will not appendbuffer here, since it's likely to also run out of memory */
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("out of memory\n"));
 					goto error_return;
@@ -1316,7 +1319,7 @@ keep_going:						/* We will come back to here until there is
 				 */
 				if (pqPacketSend(conn, 0, startpacket, packetlen) != STATUS_OK)
 				{
-					printfPQExpBuffer(&conn->errorMessage,
+					appendPQExpBuffer(&conn->errorMessage,
 						libpq_gettext("could not send startup packet: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					free(startpacket);
@@ -1381,7 +1384,7 @@ keep_going:						/* We will come back to here until there is
 						if (conn->sslmode[0] == 'r')	/* "require" */
 						{
 							/* Require SSL, but server does not want it */
-							printfPQExpBuffer(&conn->errorMessage,
+							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("server does not support SSL, but SSL was required\n"));
 							goto error_return;
 						}
@@ -1398,7 +1401,7 @@ keep_going:						/* We will come back to here until there is
 						if (conn->sslmode[0] == 'r')	/* "require" */
 						{
 							/* Require SSL, but server is too old */
-							printfPQExpBuffer(&conn->errorMessage,
+							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("server does not support SSL, but SSL was required\n"));
 							goto error_return;
 						}
@@ -1414,7 +1417,7 @@ keep_going:						/* We will come back to here until there is
 					}
 					else
 					{
-						printfPQExpBuffer(&conn->errorMessage,
+						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("received invalid response to SSL negotiation: %c\n"),
 										  SSLok);
 						goto error_return;
@@ -1489,7 +1492,7 @@ keep_going:						/* We will come back to here until there is
 				 */
 				if (!(beresp == 'R' || beresp == 'E'))
 				{
-					printfPQExpBuffer(&conn->errorMessage,
+					appendPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
 									  "expected authentication request from "
 												"server, but received %c\n"),
@@ -1522,7 +1525,7 @@ keep_going:						/* We will come back to here until there is
 				 */
 				if (beresp == 'R' && (msgLength < 8 || msgLength > 2000))
 				{
-					printfPQExpBuffer(&conn->errorMessage,
+					appendPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
 									  "expected authentication request from "
 												"server, but received %c\n"),
@@ -1534,7 +1537,7 @@ keep_going:						/* We will come back to here until there is
 				{
 					/* Handle error from a pre-3.0 server */
 					conn->inCursor = conn->inStart + 1; /* reread data */
-					if (pqGets(&conn->errorMessage, conn))
+					if (pqGets_append(&conn->errorMessage, conn))
 					{
 						/* We'll come back when there is more data */
 						return PGRES_POLLING_READING;
@@ -1601,7 +1604,7 @@ keep_going:						/* We will come back to here until there is
 					}
 					else
 					{
-						if (pqGets(&conn->errorMessage, conn))
+						if (pqGets_append(&conn->errorMessage, conn))
 						{
 							/* We'll come back when there is more data */
 							return PGRES_POLLING_READING;
@@ -1788,7 +1791,7 @@ keep_going:						/* We will come back to here until there is
 				if (res)
 				{
 					if (res->resultStatus != PGRES_FATAL_ERROR)
-						printfPQExpBuffer(&conn->errorMessage,
+						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("unexpected message from server during startup\n"));
 
 					/*
@@ -1855,7 +1858,7 @@ keep_going:						/* We will come back to here until there is
 			return PGRES_POLLING_OK;
 
 		default:
-			printfPQExpBuffer(&conn->errorMessage,
+			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext(
 											"invalid connection state %c, "
 								 "probably indicative of memory corruption\n"

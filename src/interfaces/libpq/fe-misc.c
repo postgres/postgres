@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.135 2008/08/20 11:53:45 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.136 2008/10/27 09:42:31 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,14 +106,14 @@ pqPutc(char c, PGconn *conn)
 
 
 /*
- * pqGets:
+ * pqGets[_append]:
  * get a null-terminated string from the connection,
  * and store it in an expansible PQExpBuffer.
  * If we run out of memory, all of the string is still read,
  * but the excess characters are silently discarded.
  */
-int
-pqGets(PQExpBuffer buf, PGconn *conn)
+static int
+pqGets_internal(PQExpBuffer buf, PGconn *conn, bool resetbuffer)
 {
 	/* Copy conn data to locals for faster search loop */
 	char	   *inBuffer = conn->inBuffer;
@@ -129,7 +129,9 @@ pqGets(PQExpBuffer buf, PGconn *conn)
 
 	slen = inCursor - conn->inCursor;
 
-	resetPQExpBuffer(buf);
+	if (resetbuffer)
+		resetPQExpBuffer(buf);
+
 	appendBinaryPQExpBuffer(buf, inBuffer + conn->inCursor, slen);
 
 	conn->inCursor = ++inCursor;
@@ -139,6 +141,18 @@ pqGets(PQExpBuffer buf, PGconn *conn)
 				buf->data);
 
 	return 0;
+}
+
+int
+pqGets(PQExpBuffer buf, PGconn *conn)
+{
+	return pqGets_internal(buf, conn, true);
+}
+
+int
+pqGets_append(PQExpBuffer buf, PGconn *conn)
+{
+	return pqGets_internal(buf, conn, false);
 }
 
 

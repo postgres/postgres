@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.265 2008/09/22 14:21:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.266 2008/10/27 09:42:31 mha Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -1137,10 +1137,11 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
        Nearly all <application>libpq</> functions will set a message for
        <function>PQerrorMessage</function> if they fail.  Note that by
        <application>libpq</application> convention, a nonempty
-       <function>PQerrorMessage</function> result will include a trailing
-       newline. The caller should not free the result directly. It will
-       be freed when the associated <structname>PGconn</> handle is passed
-       to <function>PQfinish</function>.  The result string should not be
+       <function>PQerrorMessage</function> result can be multiple lines,
+       and will include a trailing newline. The caller should not free
+       the result directly. It will be freed when the associated
+       <structname>PGconn</> handle is passed to
+       <function>PQfinish</function>.  The result string should not be
        expected to remain the same across operations on the
        <literal>PGconn</> structure.
       </para>

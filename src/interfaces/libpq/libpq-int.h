@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.134 2008/09/22 14:21:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.135 2008/10/27 09:42:31 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -519,6 +519,7 @@ extern int	pqCheckInBufferSpace(size_t bytes_needed, PGconn *conn);
 extern int	pqGetc(char *result, PGconn *conn);
 extern int	pqPutc(char c, PGconn *conn);
 extern int	pqGets(PQExpBuffer buf, PGconn *conn);
+extern int	pqGets_append(PQExpBuffer buf, PGconn *conn);
 extern int	pqPuts(const char *s, PGconn *conn);
 extern int	pqGetnchar(char *s, size_t len, PGconn *conn);
 extern int	pqPutnchar(const char *s, size_t len, PGconn *conn);
