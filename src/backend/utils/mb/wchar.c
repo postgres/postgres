@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.40.4.4 2007/03/26 11:46:25 ishii Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.40.4.5 2008/10/27 19:37:48 tgl Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -1352,7 +1352,20 @@ report_untranslatable_char(int src_encoding, int dest_encoding,
 	for (j = 0; j < jlimit; j++)
 		p += sprintf(p, "%02x", (unsigned char) mbstr[j]);
 
-	ereport(ERROR,
+	/*
+	 * In an error recursion situation, don't try to translate the message.
+	 * This gets us out of trouble if the problem is failure to convert
+	 * this very message (after translation) to the client encoding.
+	 */
+	if (in_error_recursion_trouble())
+		ereport(ERROR,
+			(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
+			 errmsg_internal("character 0x%s of encoding \"%s\" has no equivalent in \"%s\"",
+					buf,
+					pg_enc2name_tbl[src_encoding].name,
+					pg_enc2name_tbl[dest_encoding].name)));
+	else
+		ereport(ERROR,
 			(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
 			 errmsg("character 0x%s of encoding \"%s\" has no equivalent in \"%s\"",
 					buf,
