@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.170 2008/10/24 12:48:31 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.171 2008/10/27 20:04:45 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -637,8 +637,13 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 #ifdef USE_SSL
 			parsedline->conntype = ctHostSSL;
 #else
-			/* We don't accept this keyword at all if no SSL support */
-			goto hba_syntax;
+			ereport(LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("hostssl not supported on this platform"),
+					 errhint("compile with --enable-ssl to use SSL connections"),
+					 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+			return false;
 #endif
 		}
 #ifdef USE_SSL
@@ -654,18 +659,40 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		}
 	} /* record type */
 	else
-		goto hba_syntax;
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("invalid connection type \"%s\"",
+						token),
+				 errcontext("line %d of configuration file \"%s\"",
+						line_num, HbaFileName)));
+		return false;
+	}
 
 	/* Get the database. */
 	line_item = lnext(line_item);
 	if (!line_item)
-		goto hba_syntax;
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("end-of-line before database specification"),
+				 errcontext("line %d of configuration file \"%s\"",
+						line_num, HbaFileName)));
+		return false;
+	}
 	parsedline->database = pstrdup(lfirst(line_item));
 
 	/* Get the role. */
 	line_item = lnext(line_item);
 	if (!line_item)
-		goto hba_syntax;
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("end-of-line before role specification"),
+				 errcontext("line %d of configuration file \"%s\"",
+						line_num, HbaFileName)));
+		return false;
+	}
 	parsedline->role = pstrdup(lfirst(line_item));
 
 	if (parsedline->conntype != ctLocal)
@@ -673,7 +700,14 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		/* Read the IP address field. (with or without CIDR netmask) */
 		line_item = lnext(line_item);
 		if (!line_item)
-			goto hba_syntax;
+		{
+			ereport(LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("end-of-line before ip address specification"),
+					 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+			return false;
+		}
 		token = pstrdup(lfirst(line_item));
 
 		/* Check if it has a CIDR suffix and if so isolate it */
@@ -718,14 +752,29 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		{
 			if (pg_sockaddr_cidr_mask(&parsedline->mask, cidr_slash + 1,
 									  parsedline->addr.ss_family) < 0)
-				goto hba_syntax;
+			{
+				ereport(LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("invalid CIDR mask in address \"%s\"",
+								token),
+						 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+				return false;
+			}
 		}
 		else
 		{
 			/* Read the mask field. */
 			line_item = lnext(line_item);
 			if (!line_item)
-				goto hba_syntax;
+			{
+				ereport(LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("end-of-line before netmask specification"),
+						 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+				return false;
+			}
 			token = lfirst(line_item);
 
 			ret = pg_getaddrinfo_all(token, NULL, &hints, &gai_result);
@@ -759,7 +808,14 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 	/* Get the authentication method */
 	line_item = lnext(line_item);
 	if (!line_item)
-		goto hba_syntax;
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("end-of-line before authentication method"),
+				 errcontext("line %d of configuration file \"%s\"",
+						line_num, HbaFileName)));
+		return false;
+	}
 	token = lfirst(line_item);
 
 	unsupauth = NULL;
@@ -937,23 +993,6 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 	}
 	
 	return true;
-
-hba_syntax:
-	if (line_item)
-		ereport(LOG,
-				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("invalid token \"%s\"",
-						(char *) lfirst(line_item)),
-				 errcontext("line %d of configuration file \"%s\"",
-						line_num, HbaFileName)));
-	else
-		ereport(LOG,
-				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("missing field at end of line"),
-				 errcontext("line %d of configuration file \"%s\"",
-						line_num, HbaFileName)));
-
-	return false;
 }
 
 
