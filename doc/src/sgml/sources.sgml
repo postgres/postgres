@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.31 2008/09/07 02:01:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.32 2008/10/27 19:37:21 tgl Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -176,7 +176,7 @@ ereport(ERROR,
     <para>
      <function>errmsg_internal(const char *msg, ...)</function> is the same as
      <function>errmsg</>, except that the message string will not be
-     included in the internationalization message dictionary.
+     translated nor included in the internationalization message dictionary.
      This should be used for <quote>cannot happen</> cases that are probably
      not worth expending translation effort on.
     </para>
@@ -271,7 +271,7 @@ elog(level, "format string", ...);
 ereport(level, (errmsg_internal("format string", ...)));
 </programlisting>
     Notice that the SQLSTATE error code is always defaulted, and the message
-    string is not included in the internationalization message dictionary.
+    string is not subject to translation.
     Therefore, <function>elog</> should be used only for internal errors and
     low-level debug logging.  Any message that is likely to be of interest to
     ordinary users should go through <function>ereport</>.  Nonetheless,
