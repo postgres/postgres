@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.5 2008/09/11 14:01:10 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.6 2008/10/27 22:15:05 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -616,19 +616,14 @@ AtEOXact_Snapshot(bool isCommit)
 
 		/* complain about unpopped active snapshots */
 		for (active = ActiveSnapshot; active != NULL; active = active->as_next)
-		{
-			ereport(WARNING,
-					(errmsg("snapshot %p still active", active)));
-		}
+			elog(WARNING, "snapshot %p still active", active);
 
 		/* complain about any unregistered snapshot */
 		for (regd = RegisteredSnapshotList; regd != NULL; regd = regd->s_next)
-		{
-			ereport(WARNING,
-					(errmsg("snapshot %p not destroyed at commit (%d regd refs, %d active refs)",
-							regd->s_snap, regd->s_snap->regd_count,
-							regd->s_snap->active_count)));
-		}
+			elog(WARNING,
+				 "snapshot %p not destroyed at commit (%d regd refs, %d active refs)",
+				 regd->s_snap, regd->s_snap->regd_count,
+				 regd->s_snap->active_count);
 	}
 
 	/*
