@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.92 2008/03/10 12:39:22 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.93 2008/10/27 09:37:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -150,6 +150,17 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
    special syntax:
 
    <variablelist>
+    <varlistentry>
+     <term><literal>SCHEMA</literal></term>
+     <listitem>
+      <para>
+       <literal>SET SCHEMA '<replaceable>value</>'</> is an alias for
+       <literal>SET search_path TO <replaceable>value</></>.  Only one
+       schema can be specified using this syntax.
+      </para>
+     </listitem>
+    </varlistentry>
+
     <varlistentry>
      <term><literal>NAMES</literal></term>
      <listitem>

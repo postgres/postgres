@@ -295,8 +295,8 @@ F731	INSERT column privileges			NO
 F741	Referential MATCH types			NO	no partial match yet
 F751	View CHECK enhancements			NO	
 F761	Session management			YES	
-F762	CURRENT_CATALOG			NO	same as current_database()
-F763	CURRENT_SCHEMA			NO	same as current_schema()
+F762	CURRENT_CATALOG			YES	
+F763	CURRENT_SCHEMA			YES	
 F771	Connection management			YES	
 F781	Self-referencing operations			YES	
 F791	Insensitive cursors			YES	

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.450 2008/10/14 17:12:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.451 2008/10/27 09:37:46 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -3184,7 +3184,8 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     function fails and returns null.  To indicate the part of the
     pattern that should be returned on success, the pattern must contain
     two occurrences of the escape character followed by a double quote
-    (<literal>"</>).  The text matching the portion of the pattern
+    (<literal>"</>). <!-- " font-lock sanity -->
+    The text matching the portion of the pattern
     between these markers is returned.
    </para>
 
@@ -10933,13 +10934,19 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
 
      <tbody>
       <row>
+       <entry><literal><function>current_catalog</function></literal></entry>
+       <entry><type>name</type></entry>
+       <entry>name of current database (called <quote>catalog</quote> in the SQL standard)</entry>
+      </row>
+
+      <row>
        <entry><literal><function>current_database</function>()</literal></entry>
        <entry><type>name</type></entry>
        <entry>name of current database</entry>
       </row>
 
       <row>
-       <entry><literal><function>current_schema</function>()</literal></entry>
+       <entry><literal><function>current_schema</function>[()]</literal></entry>
        <entry><type>name</type></entry>
        <entry>name of current schema</entry>
       </row>
@@ -11056,6 +11063,10 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
    </indexterm>
 
    <indexterm>
+    <primary>current_catalog</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>current_database</primary>
    </indexterm>
 
@@ -11083,9 +11094,12 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
 
    <note>
     <para>
-     <function>current_user</function>, <function>session_user</function>, and
-     <function>user</function> have special syntactic status in <acronym>SQL</acronym>:
-     they must be called without trailing parentheses.
+     <function>current_catalog</function>, <function>current_schema</function>,
+     <function>current_user</function>, <function>session_user</function>,
+     and <function>user</function> have special syntactic status
+     in <acronym>SQL</acronym>: they must be called without trailing
+     parentheses (optional in PostgreSQL in the case
+     of <function>current_schema</function>).
     </para>
    </note>
 

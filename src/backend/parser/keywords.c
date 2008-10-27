@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.204 2008/10/22 11:00:34 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.205 2008/10/27 09:37:47 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"cascaded", CASCADED, UNRESERVED_KEYWORD},
 	{"case", CASE, RESERVED_KEYWORD},
 	{"cast", CAST, RESERVED_KEYWORD},
+	{"catalog", CATALOG_P, UNRESERVED_KEYWORD},
 	{"chain", CHAIN, UNRESERVED_KEYWORD},
 	{"char", CHAR_P, COL_NAME_KEYWORD},
 	{"character", CHARACTER, COL_NAME_KEYWORD},
@@ -116,8 +117,10 @@ const ScanKeyword ScanKeywords[] = {
 	{"csv", CSV, UNRESERVED_KEYWORD},
 	{"ctype", CTYPE, UNRESERVED_KEYWORD},
 	{"current", CURRENT_P, UNRESERVED_KEYWORD},
+	{"current_catalog", CURRENT_CATALOG, RESERVED_KEYWORD},
 	{"current_date", CURRENT_DATE, RESERVED_KEYWORD},
 	{"current_role", CURRENT_ROLE, RESERVED_KEYWORD},
+	{"current_schema", CURRENT_SCHEMA, TYPE_FUNC_NAME_KEYWORD},
 	{"current_time", CURRENT_TIME, RESERVED_KEYWORD},
 	{"current_timestamp", CURRENT_TIMESTAMP, RESERVED_KEYWORD},
 	{"current_user", CURRENT_USER, RESERVED_KEYWORD},

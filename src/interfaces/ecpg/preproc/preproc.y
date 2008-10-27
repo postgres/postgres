@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.377 2008/10/21 08:38:16 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.378 2008/10/27 09:37:47 petere Exp $ */
 
 /* Copyright comment */
 %{
@@ -423,12 +423,13 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
 	BOOLEAN_P BOTH BY
 
-	CACHE CALLED CASCADE CASCADED CASE CAST CHAIN CHAR_P
+	CACHE CALLED CASCADE CASCADED CASE CAST CATALOG_P CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS 
 	CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE CREATEDB
-	CREATEROLE CREATEUSER CROSS CSV CTYPE CURRENT_P CURRENT_DATE CURRENT_ROLE
+	CREATEROLE CREATEUSER CROSS CSV CTYPE CURRENT_P
+	CURRENT_CATALOG CURRENT_DATE CURRENT_ROLE CURRENT_SCHEMA
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
 	DATA_P DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
@@ -1217,6 +1218,10 @@ set_rest:	/* Generic SET syntaxes: */
 			{ $$ = cat2_str(make_str("transaction"), $2); }
 		| SESSION CHARACTERISTICS AS TRANSACTION transaction_mode_list
 			{ $$ = cat2_str(make_str("session characteristics as transaction"), $5); }
+		| CATALOG_P Sconst
+			{ $$ = cat2_str(make_str("catalog"), $2); }
+		| SCHEMA Sconst
+			{ $$ = cat2_str(make_str("schema"), $2); }
 		| NAMES opt_encoding
 			{ $$ = cat2_str(make_str("names"), $2); }
 		| ROLE ColId_or_Sconst
@@ -4469,6 +4474,10 @@ func_expr:      func_name '(' ')'
 			{ $$ = make_str("session_user"); }
 		| USER
 			{ $$ = make_str("user"); }
+		| CURRENT_CATALOG
+			{ $$ = make_str("current_catalog"); }
+		| CURRENT_SCHEMA
+			{ $$ = make_str("current_schema"); }
 		| CAST '(' a_expr AS Typename ')'
 			{ $$ = cat_str(5, make_str("cast("), $3, make_str("as"), $5, make_str(")")); }
 		| EXTRACT '(' extract_list ')'
@@ -6867,10 +6876,12 @@ reserved_keyword:
 		| CONSTRAINT		{ $$ = make_str("constraint"); }
 		| CREATE			{ $$ = make_str("create"); }
 		| CURRENT_P                     { $$ = make_str("current"); }
+		| CURRENT_CATALOG	{ $$ = make_str("current_catalog"); }
 		| CURRENT_DATE		{ $$ = make_str("current_date"); }
 		| CURRENT_TIME		{ $$ = make_str("current_time"); }
 		| CURRENT_TIMESTAMP	{ $$ = make_str("current_timestamp"); }
 		| CURRENT_ROLE		{ $$ = make_str("current_role"); }
+		| CURRENT_SCHEMA	{ $$ = make_str("current_schema"); }
 		| CURRENT_USER		{ $$ = make_str("current_user"); }
 		| DEFAULT			{ $$ = make_str("default"); }
 		| DEFERRABLE		{ $$ = make_str("deferrable"); }

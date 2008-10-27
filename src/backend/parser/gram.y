@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.629 2008/10/27 08:47:14 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.630 2008/10/27 09:37:47 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -401,12 +401,13 @@ static TypeName *TableFuncTypeName(List *columns);
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
 	BOOLEAN_P BOTH BY
 
-	CACHE CALLED CASCADE CASCADED CASE CAST CHAIN CHAR_P
+	CACHE CALLED CASCADE CASCADED CASE CAST CATALOG_P CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS
 	CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE CREATEDB
-	CREATEROLE CREATEUSER CROSS CSV CTYPE CURRENT_P CURRENT_DATE CURRENT_ROLE
+	CREATEROLE CREATEUSER CROSS CSV CTYPE CURRENT_P
+	CURRENT_CATALOG CURRENT_DATE CURRENT_ROLE CURRENT_SCHEMA
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
 	DATA_P DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
@@ -1131,6 +1132,22 @@ set_rest:	/* Generic SET syntaxes: */
 					n->kind = VAR_SET_MULTI;
 					n->name = "SESSION CHARACTERISTICS";
 					n->args = $5;
+					$$ = n;
+				}
+			| CATALOG_P Sconst
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("current database cannot be changed"),
+							 scanner_errposition(@2)));
+					$$ = NULL; /*not reached*/
+				}
+			| SCHEMA Sconst
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->kind = VAR_SET_VALUE;
+					n->name = "search_path";
+					n->args = list_make1(makeStringConst($2, @2));
 					$$ = n;
 				}
 			| NAMES opt_encoding
@@ -8401,6 +8418,28 @@ func_expr:	func_name '(' ')'
 					n->location = @1;
 					$$ = (Node *)n;
 				}
+			| CURRENT_CATALOG
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = SystemFuncName("current_database");
+					n->args = NIL;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
+					n->location = @1;
+					$$ = (Node *)n;
+				}
+			| CURRENT_SCHEMA
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = SystemFuncName("current_schema");
+					n->args = NIL;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
+					n->location = @1;
+					$$ = (Node *)n;
+				}
 			| CAST '(' a_expr AS Typename ')'
 				{ $$ = makeTypeCast($3, $5, @1); }
 			| EXTRACT '(' extract_list ')'
@@ -9336,6 +9375,7 @@ unreserved_keyword:
 			| CALLED
 			| CASCADE
 			| CASCADED
+			| CATALOG_P
 			| CHAIN
 			| CHARACTERISTICS
 			| CHECKPOINT
@@ -9625,6 +9665,7 @@ type_func_name_keyword:
 			| BETWEEN
 			| BINARY
 			| CROSS
+			| CURRENT_SCHEMA
 			| FREEZE
 			| FULL
 			| ILIKE
@@ -9667,6 +9708,7 @@ reserved_keyword:
 			| COLUMN
 			| CONSTRAINT
 			| CREATE
+			| CURRENT_CATALOG
 			| CURRENT_DATE
 			| CURRENT_ROLE
 			| CURRENT_TIME
