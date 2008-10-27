@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.63 2003/08/08 21:42:55 momjian Exp $
+ * $Id: elog.h,v 1.63.4.1 2008/10/27 19:37:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,5 +179,6 @@ extern int	Use_syslog;
 
 /* Other exported functions */
 extern void DebugFileOpen(void);
+extern bool in_error_recursion_trouble(void);
 
 #endif   /* ELOG_H */

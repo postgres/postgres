@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.125.2.4 2008/07/08 22:18:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.125.2.5 2008/10/27 19:37:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,6 +148,21 @@ static const char *print_pid(void);
 static void append_with_tabs(StringInfo buf, const char *str);
 
 
+
+/*
+ * in_error_recursion_trouble --- are we at risk of infinite error recursion?
+ *
+ * This function exists to provide common control of various fallback steps
+ * that we take if we think we are facing infinite error recursion.  See the
+ * callers for details.
+ */
+bool
+in_error_recursion_trouble(void)
+{
+	/* Pull the plug if recurse more than once */
+	return (recursion_depth > 2);
+}
+
 /*
  * errstart --- begin an error-reporting cycle
  *
@@ -254,12 +269,12 @@ errstart(int elevel, const char *filename, int lineno,
 		MemoryContextReset(ErrorContext);
 
 		/*
-		 * If we recurse more than once, the problem might be something broken
+		 * Infinite error recursion might be due to something broken
 		 * in a context traceback routine.  Abandon them too.  We also
 		 * abandon attempting to print the error statement (which, if long,
 		 * could itself be the source of the recursive failure).
 		 */
-		if (recursion_depth > 2)
+		if (in_error_recursion_trouble())
 		{
 			error_context_stack = NULL;
 			debug_query_string = NULL;
@@ -617,18 +632,20 @@ errcode_for_socket_access(void)
  * it's common code for errmsg(), errdetail(), etc.  Must be called inside
  * a routine that is declared like "const char *fmt, ..." and has an edata
  * pointer set up.	The message is assigned to edata->targetfield, or
- * appended to it if appendval is true.
+ * appended to it if appendval is true.  The message is subject to translation
+ * if translateit is true.
  *
  * Note: we pstrdup the buffer rather than just transferring its storage
  * to the edata field because the buffer might be considerably larger than
  * really necessary.
  */
-#define EVALUATE_MESSAGE(targetfield, appendval)  \
+#define EVALUATE_MESSAGE(targetfield, appendval, translateit)  \
 	{ \
 		char		   *fmtbuf; \
 		StringInfoData	buf; \
 		/* Internationalize the error format string */ \
-		fmt = gettext(fmt); \
+		if (translateit) \
+			fmt = gettext(fmt); \
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
 		initStringInfo(&buf); \
@@ -675,7 +692,7 @@ errmsg(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(message, false);
+	EVALUATE_MESSAGE(message, false, true);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -687,9 +704,12 @@ errmsg(const char *fmt,...)
  * errmsg_internal --- add a primary error message text to the current error
  *
  * This is exactly like errmsg() except that strings passed to errmsg_internal
- * are customarily left out of the internationalization message dictionary.
- * This should be used for "can't happen" cases that are probably not worth
- * spending translation effort on.
+ * are not translated, and are customarily left out of the
+ * internationalization message dictionary.  This should be used for "can't
+ * happen" cases that are probably not worth spending translation effort on.
+ * We also use this for certain cases where we *must* not try to translate
+ * the message because the translation would fail and result in infinite
+ * error recursion.
  */
 int
 errmsg_internal(const char *fmt,...)
@@ -701,7 +721,7 @@ errmsg_internal(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(message, false);
+	EVALUATE_MESSAGE(message, false, false);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -722,7 +742,7 @@ errdetail(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(detail, false);
+	EVALUATE_MESSAGE(detail, false, true);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -743,7 +763,7 @@ errhint(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(hint, false);
+	EVALUATE_MESSAGE(hint, false, true);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -768,7 +788,7 @@ errcontext(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(context, true);
+	EVALUATE_MESSAGE(context, true, true);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -838,12 +858,12 @@ elog_finish(int elevel, const char *fmt,...)
 		return;					/* nothing to do */
 
 	/*
-	 * Format error message just like errmsg().
+	 * Format error message just like errmsg_internal().
 	 */
 	recursion_depth++;
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(message, false);
+	EVALUATE_MESSAGE(message, false, false);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1395,6 +1415,10 @@ useful_strerror(int errnum)
 
 /*
  * error_severity --- get localized string representing elevel
+ *
+ * Note: in an error recursion situation, we stop localizing the tags
+ * for ERROR and above.  This is necessary because the problem might be
+ * failure to convert one of these strings to the client encoding.
  */
 static const char *
 error_severity(int elevel)
@@ -1424,13 +1448,22 @@ error_severity(int elevel)
 			prefix = gettext("WARNING");
 			break;
 		case ERROR:
-			prefix = gettext("ERROR");
+			if (in_error_recursion_trouble())
+				prefix = "ERROR";
+			else
+				prefix = gettext("ERROR");
 			break;
 		case FATAL:
-			prefix = gettext("FATAL");
+			if (in_error_recursion_trouble())
+				prefix = "FATAL";
+			else
+				prefix = gettext("FATAL");
 			break;
 		case PANIC:
-			prefix = gettext("PANIC");
+			if (in_error_recursion_trouble())
+				prefix = "PANIC";
+			else
+				prefix = gettext("PANIC");
 			break;
 		default:
 			prefix = "???";
