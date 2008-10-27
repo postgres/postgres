@@ -480,9 +480,9 @@ T615	LEAD and LAG functions			NO
 T616	Null treatment option for LEAD and LAG functions			NO	
 T617	FIRST_VALUE and LAST_VALUE function			NO	
 T618	NTH_VALUE function			NO	
-T621	Enhanced numeric functions			NO	
+T621	Enhanced numeric functions			YES	
 T631	IN predicate with one list element			NO	
-T641	Multiple column assignment			NO	
+T641	Multiple column assignment			NO	only some syntax variants supported
 T651	SQL-schema statements in SQL routines			NO	
 T652	SQL-dynamic statements in SQL routines			NO	
 T653	SQL-schema statements in external routines			NO	
