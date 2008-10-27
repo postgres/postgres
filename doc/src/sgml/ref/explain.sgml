@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.42 2008/04/18 01:42:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.43 2008/10/27 08:47:13 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -78,7 +78,8 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
     statement will happen as usual.  If you wish to use
     <command>EXPLAIN ANALYZE</command> on an
     <command>INSERT</command>, <command>UPDATE</command>,
-    <command>DELETE</command>, or <command>EXECUTE</command> statement
+    <command>DELETE</command>, <command>CREATE TABLE AS</command>,
+    or <command>EXECUTE</command> statement
     without letting the command affect your data, use this approach:
 <programlisting>
 BEGIN;
@@ -116,8 +117,9 @@ ROLLBACK;
     <listitem>
      <para>
       Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
-      <command>DELETE</>, <command>VALUES</>, <command>EXECUTE</>, or
-      <command>DECLARE</> statement, whose execution plan you wish to see.
+      <command>DELETE</>, <command>VALUES</>, <command>EXECUTE</>,
+      <command>DECLARE</>, or <command>CREATE TABLE AS</command>
+      statement, whose execution plan you wish to see.
      </para>
     </listitem>
    </varlistentry>

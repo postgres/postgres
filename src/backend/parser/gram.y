@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.628 2008/10/22 11:00:34 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.629 2008/10/27 08:47:14 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5898,6 +5898,7 @@ ExplainableStmt:
 			| UpdateStmt
 			| DeleteStmt
 			| DeclareCursorStmt
+			| CreateAsStmt
 			| ExecuteStmt					/* by default all are $$=$1 */
 		;
 
