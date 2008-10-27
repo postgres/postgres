@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.265 2008/10/08 01:14:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.266 2008/10/27 21:50:12 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -3818,6 +3818,8 @@ log_heap_freeze(Relation reln, Buffer buffer,
 
 	/* Caller should not call me on a temp relation */
 	Assert(!reln->rd_istemp);
+	/* nor when there are no tuples to freeze */
+	Assert(offcnt > 0);
 
 	xlrec.node = reln->rd_node;
 	xlrec.block = BufferGetBlockNumber(buffer);
@@ -3833,16 +3835,8 @@ log_heap_freeze(Relation reln, Buffer buffer,
 	 * it is.  When XLogInsert stores the whole buffer, the offsets array need
 	 * not be stored too.
 	 */
-	if (offcnt > 0)
-	{
-		rdata[1].data = (char *) offsets;
-		rdata[1].len = offcnt * sizeof(OffsetNumber);
-	}
-	else
-	{
-		rdata[1].data = NULL;
-		rdata[1].len = 0;
-	}
+	rdata[1].data = (char *) offsets;
+	rdata[1].len = offcnt * sizeof(OffsetNumber);
 	rdata[1].buffer = buffer;
 	rdata[1].buffer_std = true;
 	rdata[1].next = NULL;
