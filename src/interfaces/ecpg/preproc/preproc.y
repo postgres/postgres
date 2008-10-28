@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.378 2008/10/27 09:37:47 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.379 2008/10/28 14:09:45 petere Exp $ */
 
 /* Copyright comment */
 %{
@@ -505,7 +505,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
  * list and so can never be entered directly.  The filter in parser.c
  * creates these tokens when required.
  */
-%token           NULLS_FIRST NULLS_LAST WITH_CASCADED WITH_LOCAL WITH_CHECK
+%token           NULLS_FIRST NULLS_LAST WITH_TIME
 
 /* Special token types, not actually keywords - see the "lex" file */
 %token <str>	IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP BCONST
@@ -3100,22 +3100,18 @@ ViewStmt:  CREATE OptTemp VIEW qualified_name opt_column_list AS SelectStmt opt_
 			{ $$ = cat_str(8, make_str("create or replace"), $4, make_str("view"), $6, $7, make_str("as"), $9, $10); }
 		;
 
-/*
- * We use merged tokens here to avoid creating shift/reduce conflicts against
- * a whole lot of other uses of WITH.
- */
 opt_check_option:
-                   WITH_CHECK OPTION
+                   WITH CHECK OPTION
 		   { 
 		   	mmerror(PARSE_ERROR, ET_ERROR, "WITH CHECK OPTION not implemented");
 			$$ = EMPTY;
 		   }
-                   | WITH_CASCADED CHECK OPTION
+                   | WITH CASCADED CHECK OPTION
 		   { 
 		   	mmerror(PARSE_ERROR, ET_ERROR, "WITH CHECK OPTION not implemented");
 			$$ = EMPTY;
 		   }
-		   | WITH_LOCAL CHECK OPTION
+		   | WITH LOCAL CHECK OPTION
 		   {
 		   	mmerror(PARSE_ERROR, ET_ERROR, "WITH CHECK OPTION not implemented");
 			$$ = EMPTY;
@@ -4155,7 +4151,7 @@ ConstInterval:	INTERVAL
 			{ $$ = make_str("interval"); }
 		;
 
-opt_timezone:  WITH TIME ZONE
+opt_timezone:  WITH_TIME ZONE
 			{ $$ = make_str("with time zone"); }
 		| WITHOUT TIME ZONE
 			{ $$ = make_str("without time zone"); }

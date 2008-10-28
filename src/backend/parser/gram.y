@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.630 2008/10/27 09:37:47 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.631 2008/10/28 14:09:45 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -216,7 +216,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <ival>	opt_lock lock_type cast_context
 %type <boolean>	opt_force opt_or_replace
 				opt_grant_grant_option opt_grant_admin_option
-				opt_nowait opt_if_exists
+				opt_nowait opt_if_exists opt_with_data
 
 %type <list>	OptRoleList
 %type <defelt>	OptRoleElem
@@ -485,7 +485,7 @@ static TypeName *TableFuncTypeName(List *columns);
  * list and so can never be entered directly.  The filter in parser.c
  * creates these tokens when required.
  */
-%token			NULLS_FIRST NULLS_LAST WITH_CASCADED WITH_LOCAL WITH_CHECK
+%token			NULLS_FIRST NULLS_LAST WITH_TIME
 
 /* Special token types, not actually keywords - see the "lex" file */
 %token <str>	IDENT FCONST SCONST BCONST XCONST Op
@@ -2416,7 +2416,7 @@ OptConsTableSpace:   USING INDEX TABLESPACE name	{ $$ = $4; }
  */
 
 CreateAsStmt:
-		CREATE OptTemp TABLE create_as_target AS SelectStmt
+		CREATE OptTemp TABLE create_as_target AS SelectStmt opt_with_data
 				{
 					/*
 					 * When the SelectStmt is a set-operation tree, we must
@@ -2433,6 +2433,9 @@ CreateAsStmt:
 								 scanner_errposition(exprLocation((Node *) n->intoClause))));
 					$4->rel->istemp = $2;
 					n->intoClause = $4;
+					/* Implement WITH NO DATA by forcing top-level LIMIT 0 */
+					if (!$7)
+						((SelectStmt *) $6)->limitCount = makeIntConst(0, -1);
 					$$ = $6;
 				}
 		;
@@ -2473,6 +2476,12 @@ CreateAsElement:
 					n->constraints = NIL;
 					$$ = (Node *)n;
 				}
+		;
+
+opt_with_data:
+			WITH DATA_P								{ $$ = TRUE; }
+			| WITH NO DATA_P						{ $$ = FALSE; }
+			| /*EMPTY*/								{ $$ = TRUE; }
 		;
 
 
@@ -5387,24 +5396,20 @@ ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list
 				}
 		;
 
-/*
- * We use merged tokens here to avoid creating shift/reduce conflicts against
- * a whole lot of other uses of WITH.
- */
 opt_check_option:
-		WITH_CHECK OPTION
+		WITH CHECK OPTION
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("WITH CHECK OPTION is not implemented")));
 				}
-		| WITH_CASCADED CHECK OPTION
+		| WITH CASCADED CHECK OPTION
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("WITH CHECK OPTION is not implemented")));
 				}
-		| WITH_LOCAL CHECK OPTION
+		| WITH LOCAL CHECK OPTION
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -7509,7 +7514,7 @@ ConstInterval:
 		;
 
 opt_timezone:
-			WITH TIME ZONE							{ $$ = TRUE; }
+			WITH_TIME ZONE							{ $$ = TRUE; }
 			| WITHOUT TIME ZONE						{ $$ = FALSE; }
 			| /*EMPTY*/								{ $$ = FALSE; }
 		;

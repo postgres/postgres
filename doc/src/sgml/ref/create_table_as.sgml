@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.37 2007/06/03 17:06:12 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.38 2008/10/28 14:09:44 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -26,6 +26,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
     [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
     [ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
     AS <replaceable>query</replaceable>
+    [ WITH [ NO ] DATA ]
 </synopsis>
  </refsynopsisdiv>
   
@@ -201,6 +202,18 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><literal>WITH [ NO ] DATA</></term>
+    <listitem>
+     <para>
+      This clause specifies whether or not the data produced by the query
+      should be copied into the new table.  If not, only the table structure
+      is copied.  The default is to copy the data.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </refsect1>
 
@@ -265,7 +278,7 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
 
   <para>
    <command>CREATE TABLE AS</command> conforms to the <acronym>SQL</acronym>
-   standard, with the following exceptions:
+   standard.  The following are nonstandard extensions:
 
    <itemizedlist spacing="compact">
     <listitem>
@@ -278,12 +291,8 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
 
     <listitem>
      <para>
-      The standard defines a <literal>WITH [ NO ] DATA</literal> clause;
-      this is not currently implemented by <productname>PostgreSQL</>.
-      The behavior provided by <productname>PostgreSQL</> is equivalent
-      to the standard's <literal>WITH DATA</literal> case.
-      <literal>WITH NO DATA</literal> can be simulated by appending
-      <literal>LIMIT 0</> to the query.
+      In the standard, the <literal>WITH [ NO ] DATA</literal> clause
+      is required; in PostgreSQL it is optional.
      </para>
     </listitem>
 
